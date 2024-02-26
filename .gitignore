@@ -1,4 +1,5 @@
-.pytest_cache
+.pytest_cache/
+.coverage
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

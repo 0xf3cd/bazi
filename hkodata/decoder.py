@@ -14,7 +14,7 @@ from .common import END_YEAR, START_YEAR, get_jieqi_encoded_data_path, get_lunar
 from .encoder import do_encode, encoded_data_ready
 
 
-type JieqiDates = dict[Jieqi, datetime] # Jieqi -> Solar-calendar Date
+JieqiDates = dict[Jieqi, datetime] # Jieqi -> Solar-calendar Date
 
 class DecodedJieqiDates:
   '''
