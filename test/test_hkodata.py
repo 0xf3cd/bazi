@@ -3,7 +3,7 @@
 
 import unittest
 import random
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from bazi import hkodata, Jieqi, Ganzhi
 
 class TestHkoData(unittest.TestCase):
@@ -23,18 +23,18 @@ class TestHkoData(unittest.TestCase):
       self.assertEqual(i, hkodata.bytes_to_int(i_bytes))
 
   def test_date_bytes_conversion(self) -> None:
-    self.assertEqual(hkodata.date_to_bytes(datetime(2000, 1, 1)), hkodata.date_to_bytes(datetime(2000, 1, 1)))
-    self.assertNotEqual(hkodata.date_to_bytes(datetime(2000, 1, 1)), hkodata.date_to_bytes(datetime(2000, 1, 2)))
-    self.assertEqual(hkodata.bytes_to_date(b'\x00\x01\x01\x01'), datetime(1, 1, 1))
-    self.assertEqual(hkodata.bytes_to_date(hkodata.date_to_bytes(datetime(2024, 2, 25))), datetime(2024, 2, 25))
+    self.assertEqual(hkodata.date_to_bytes(date(2000, 1, 1)), hkodata.date_to_bytes(date(2000, 1, 1)))
+    self.assertNotEqual(hkodata.date_to_bytes(date(2000, 1, 1)), hkodata.date_to_bytes(date(2000, 1, 2)))
+    self.assertEqual(hkodata.bytes_to_date(b'\x00\x01\x01\x01'), date(1, 1, 1))
+    self.assertEqual(hkodata.bytes_to_date(hkodata.date_to_bytes(date(2024, 2, 25))), date(2024, 2, 25))
 
-    dt: datetime = datetime(
+    dt: date = date(
       year=random.randint(1600, 2500),
       month=random.randint(1, 12),
       day=random.randint(1, 28), # Not using 29, 30, or 31 here, to avoid invalid day (e.g. 2024-2-31)
     )
     for _ in range(512):
-      dt: datetime = dt + timedelta(days=random.randint(1, 3))
+      dt: date = dt + timedelta(days=random.randint(1, 3))
       dt_bytes: bytes = hkodata.date_to_bytes(dt)
       self.assertEqual(dt, hkodata.bytes_to_date(dt_bytes))
       self.assertEqual(len(dt_bytes), 4, msg=f'expect the length of dt_bytes to be 4, but got {len(dt_bytes)}')
@@ -43,11 +43,11 @@ class TestHkoData(unittest.TestCase):
       self.assertEqual(hkodata.bytes_to_int(dt_bytes[3:4]), dt.day)
 
     with self.assertRaises(OverflowError):
-      hkodata.date_to_bytes(datetime(90000000000000000, 1, 1))
+      hkodata.date_to_bytes(date(90000000000000000, 1, 1))
     with self.assertRaises(ValueError):
-      hkodata.date_to_bytes(datetime(2024, 64, 1))
+      hkodata.date_to_bytes(date(2024, 64, 1))
     with self.assertRaises(ValueError):
-      hkodata.date_to_bytes(datetime(2024, 12, 32))
+      hkodata.date_to_bytes(date(2024, 12, 32))
     with self.assertRaises(ValueError):
       hkodata.bytes_to_date(b'\x00\x01\x00\x00')
     with self.assertRaises(AssertionError):
@@ -79,13 +79,13 @@ class TestHkoData(unittest.TestCase):
       for jieqi in Jieqi:
         self.assertEqual(decoded_jieqi.get(year, jieqi), decoded_jieqi[year][jieqi])
     
-    self.assertEqual(decoded_jieqi[1964][Jieqi.寒露], datetime(1964, 10, 8))
-    self.assertEqual(decoded_jieqi[1997][Jieqi.小寒], datetime(1997, 1, 5))
-    self.assertEqual(decoded_jieqi[2024][Jieqi.立春], datetime(2024, 2, 4))
+    self.assertEqual(decoded_jieqi[1964][Jieqi.寒露], date(1964, 10, 8))
+    self.assertEqual(decoded_jieqi[1997][Jieqi.小寒], date(1997, 1, 5))
+    self.assertEqual(decoded_jieqi[2024][Jieqi.立春], date(2024, 2, 4))
 
-    self.assertEqual(decoded_jieqi.get(1964, Jieqi.寒露), datetime(1964, 10, 8))
-    self.assertEqual(decoded_jieqi.get(1997, Jieqi.小寒), datetime(1997, 1, 5))
-    self.assertEqual(decoded_jieqi.get(2024, Jieqi.立春), datetime(2024, 2, 4))
+    self.assertEqual(decoded_jieqi.get(1964, Jieqi.寒露), date(1964, 10, 8))
+    self.assertEqual(decoded_jieqi.get(1997, Jieqi.小寒), date(1997, 1, 5))
+    self.assertEqual(decoded_jieqi.get(2024, Jieqi.立春), date(2024, 2, 4))
 
     another_decoded_jieqi: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
     self.assertListEqual(list(decoded_jieqi.supported_year_range()), list(another_decoded_jieqi.supported_year_range()))
@@ -109,14 +109,14 @@ class TestHkoData(unittest.TestCase):
     with self.assertRaises(AssertionError):
       decoded_jieqi[:] # type: ignore
     with self.assertRaises(AssertionError):
-      decoded_jieqi[datetime(2024, 1, 1)] # type: ignore
+      decoded_jieqi[date(2024, 1, 1)] # type: ignore
 
     data1 = decoded_jieqi[2024]
     data2 = decoded_jieqi[2024]
     self.assertEqual(data1, data2)
     self.assertIsNot(data1, data2)
 
-    data2[Jieqi.惊蛰] = datetime(1999, 1, 1)
+    data2[Jieqi.惊蛰] = date(1999, 1, 1)
     data3 = decoded_jieqi[2024]
     self.assertEqual(data1, data3)
     self.assertNotEqual(data1, data2)
@@ -142,14 +142,14 @@ class TestHkoData(unittest.TestCase):
 
     lichun_2024_date = decoded_jieqi.get(2024, Jieqi.立春)
     lichun_2024_date_ = decoded_jieqi.get(2024, Jieqi.立春)
-    lichun_2024_date_ = datetime(9999, 9, 9)
+    lichun_2024_date_ = date(9999, 9, 9)
     self.assertNotEqual(lichun_2024_date, lichun_2024_date_)
     self.assertEqual(lichun_2024_date, decoded_jieqi.get(2024, Jieqi.立春))
 
     jieqi_dates_in_2024 = decoded_jieqi[2024]
     self.assertEqual(jieqi_dates_in_2024[Jieqi.立春], lichun_2024_date)
 
-    jieqi_dates_in_2024[Jieqi.立春] = datetime(1996, 2, 4)
+    jieqi_dates_in_2024[Jieqi.立春] = date(1996, 2, 4)
     self.assertNotEqual(jieqi_dates_in_2024[Jieqi.立春], lichun_2024_date)
     self.assertEqual(decoded_jieqi.get(2024, Jieqi.立春), lichun_2024_date)
 
@@ -180,21 +180,21 @@ class TestHkoData(unittest.TestCase):
         self.assertEqual(len(info1['days_counts']), 12)
 
     expected_days_counts_2000: list[int] = [30, 30, 29, 29, 30, 29, 29, 30, 29, 30, 30, 29]
-    self.assertEqual(decoded_lunardate[2000]['frist_day_solar'], datetime(2000, 2, 5))
+    self.assertEqual(decoded_lunardate[2000]['frist_day_solar'], date(2000, 2, 5))
     self.assertFalse(decoded_lunardate[2000]['leap'])
     self.assertIsNone(decoded_lunardate[2000]['leap_month'])
     self.assertListEqual(decoded_lunardate[2000]['days_counts'], expected_days_counts_2000)
     self.assertEqual(decoded_lunardate[2000]['ganzhi'], Ganzhi.from_str('庚辰'))
 
     expected_days_counts_2001: list[int] = [30, 30, 29, 30, 29, 30, 29, 29, 30, 29, 30, 29, 30]
-    self.assertEqual(decoded_lunardate[2001]['frist_day_solar'], datetime(2001, 1, 24))
+    self.assertEqual(decoded_lunardate[2001]['frist_day_solar'], date(2001, 1, 24))
     self.assertTrue(decoded_lunardate[2001]['leap'])
     self.assertEqual(decoded_lunardate[2001]['leap_month'], 4)
     self.assertListEqual(decoded_lunardate[2001]['days_counts'], expected_days_counts_2001)
     self.assertEqual(decoded_lunardate[2001]['ganzhi'], Ganzhi.from_str('辛巳'))
 
     expected_days_counts_2024: list[int] = [29, 30, 29, 29, 30, 29, 30, 30, 29, 30, 30, 29]
-    self.assertEqual(decoded_lunardate[2024]['frist_day_solar'], datetime(2024, 2, 10))
+    self.assertEqual(decoded_lunardate[2024]['frist_day_solar'], date(2024, 2, 10))
     self.assertFalse(decoded_lunardate[2024]['leap'])
     self.assertIsNone(decoded_lunardate[2024]['leap_month'])
     self.assertListEqual(decoded_lunardate[2024]['days_counts'], expected_days_counts_2024)
@@ -223,7 +223,7 @@ class TestHkoData(unittest.TestCase):
     with self.assertRaises(AssertionError):
       decoded_lunardate.get('1984') # type: ignore
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get(datetime(year=1984, month=1, day=1)) # type: ignore
+      decoded_lunardate.get(date(year=1984, month=1, day=1)) # type: ignore
     
     temp = decoded_lunardate[2024]
     temp['days_counts'].append(29)
@@ -235,7 +235,7 @@ class TestHkoData(unittest.TestCase):
     self.assertNotEqual(new_2024_info['ganzhi'], temp['ganzhi'])
 
     expected_days_counts_2024: list[int] = [29, 30, 29, 29, 30, 29, 30, 30, 29, 30, 30, 29]
-    self.assertEqual(new_2024_info['frist_day_solar'], datetime(2024, 2, 10))
+    self.assertEqual(new_2024_info['frist_day_solar'], date(2024, 2, 10))
     self.assertFalse(new_2024_info['leap'])
     self.assertIsNone(new_2024_info['leap_month'])
     self.assertListEqual(new_2024_info['days_counts'], expected_days_counts_2024)

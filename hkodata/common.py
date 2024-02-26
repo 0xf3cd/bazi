@@ -6,7 +6,7 @@
 # Define variables and functions used in other .py files in hkodata directory.
 
 from pathlib import Path
-from datetime import datetime
+from datetime import date
 
 START_YEAR: int = 1901
 END_YEAR: int = 2100
@@ -62,7 +62,7 @@ def int_to_bytes(n: int, length: int) -> bytes:
 def bytes_to_int(b: bytes) -> int:
   return int.from_bytes(b, 'big')
 
-def date_to_bytes(dt: datetime) -> bytes:
+def date_to_bytes(dt: date) -> bytes:
   y: int = dt.year
   m: int = dt.month
   d: int = dt.day
@@ -70,9 +70,9 @@ def date_to_bytes(dt: datetime) -> bytes:
   assert len(result) == 4 # Aligned to 4 bytes.
   return result
 
-def bytes_to_date(b: bytes) -> datetime:
+def bytes_to_date(b: bytes) -> date:
   assert len(b) == 4
   y: int = bytes_to_int(b[0:2])
   m: int = bytes_to_int(b[2:3])
   d: int = bytes_to_int(b[3:4])
-  return datetime(y, m, d)
+  return date(y, m, d)

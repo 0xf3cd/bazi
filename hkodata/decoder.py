@@ -6,7 +6,7 @@
 # Decode the encoded data produced by encoder.py.
 
 from pathlib import Path
-from datetime import datetime
+from datetime import date, datetime
 from typing import TypedDict, Optional
 
 from ..Defines import Jieqi, Ganzhi
@@ -14,7 +14,7 @@ from .common import END_YEAR, START_YEAR, get_jieqi_encoded_data_path, get_lunar
 from .encoder import do_encode, encoded_data_ready
 
 
-JieqiDates = dict[Jieqi, datetime] # Jieqi -> Solar-calendar Date
+JieqiDates = dict[Jieqi, date] # Jieqi -> Solar-calendar Date
 
 class DecodedJieqiDates:
   '''
@@ -76,7 +76,7 @@ class DecodedJieqiDates:
     # Decode the bytes to `JieqiDates`.
     return { jq : bytes_to_date(self.__read_bytes_for_jieqi(year, jq)) for jq in self._actual_jieqi_order }
 
-  def get(self, year: int, jieqi: Jieqi) -> datetime:
+  def get(self, year: int, jieqi: Jieqi) -> date:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
     '''
@@ -93,7 +93,7 @@ class LunarYearInfo(TypedDict):
   '''
   The information of a lunar year.
   '''
-  frist_day_solar: datetime    # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
+  frist_day_solar: date        # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
   leap: bool                   # Whether the year is leap or not.
   leap_month: Optional[int]    # If `leap` is False, this field is None. Otherwise, it is the month of the leap.
   days_counts: list[int]       # The number of days in each month. It contains 12 elements for normal years, and 13 elements for leap years.
@@ -144,7 +144,7 @@ class DecodedLunarYears:
     assert len(data_bytes) == 8
 
     # Parse the bytes.
-    frist_day_solar: datetime = bytes_to_date(data_bytes[:4])
+    frist_day_solar: date = bytes_to_date(data_bytes[:4])
     ganzhi_index: int = bytes_to_int(data_bytes[4:5])
     ganzhi: Ganzhi = DecodedLunarYears.sexagenary_cycle[ganzhi_index]
     leap_month: int = bytes_to_int(data_bytes[5:6])
