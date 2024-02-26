@@ -11,7 +11,13 @@ from pathlib import Path
 from datetime import datetime
 
 if __name__ == '__main__':
-  from common import *
+  from common import (
+    START_YEAR, END_YEAR,
+    get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
+    get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
+    jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
+    date_to_bytes, int_to_bytes,
+  )
 
   import sys
   sys.path.append(Path(__file__).parent.parent.as_posix())
@@ -23,7 +29,7 @@ else:
     get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
     get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
     jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
-    date_to_bytes, bytes_to_date, int_to_bytes,
+    date_to_bytes, int_to_bytes,
   )
 
 
@@ -41,7 +47,7 @@ def download_one_year_data(txt_path: Path, year: int) -> bool:
 
 def do_download() -> None:
   if raw_data_ready():
-    print(f'> Data already exists, and all data is complete. Do nothing.')
+    print('> Data already exists, and all data is complete. Do nothing.')
     return
 
   data_dir = get_data_base_path()
@@ -98,7 +104,7 @@ def extract_from_raw_txts() -> dict[int, list[str]]:
   return ret
 
 def encode_jieqi() -> None:
-  print(f'> Encoding jieqi data...')
+  print('> Encoding jieqi data...')
 
   extractions: dict[int, list[str]] = extract_from_raw_txts()
   sorted_years: list[int] = list(extractions.keys())
@@ -107,7 +113,7 @@ def encode_jieqi() -> None:
   dates_to_write: list[datetime] = []
   for year in sorted_years:
     valid_lines: list[str] = extractions[year]
-    jieqi_lines: list[str] = [l for l in valid_lines if len(l.split()) == 4]
+    jieqi_lines: list[str] = [line for line in valid_lines if len(line.split()) == 4]
     assert len(jieqi_lines) == 24
     assert jieqi_lines[0].split()[-1] == '小寒' # Starts with 小寒
 
@@ -181,7 +187,7 @@ def encode_one_lunar_year_lines(lunar_year: int, lines: list[str], ganzhi: Ganzh
   # Last, use 2 bytes to indicate how many days are there in every month.
   # The least significant 13 bits are indicating whether the 13 months are long or short. If no long month, just use least significant 12 bits.
   first_days_indices: list[int] = [idx for idx, line in enumerate(lines) if '月' in line.split()[1]]
-  days_count_of_each_month: list[int] = [r - l for l, r in zip(first_days_indices, first_days_indices[1:] + [len(lines)])]
+  days_count_of_each_month: list[int] = [right - left for left, right in zip(first_days_indices, first_days_indices[1:] + [len(lines)])]
   if has_leap_month:
     assert len(first_days_indices) == 13
     assert len(days_count_of_each_month) == 13
@@ -201,7 +207,7 @@ def encode_one_lunar_year_lines(lunar_year: int, lines: list[str], ganzhi: Ganzh
   return final_bytes
 
 def encode_lunardate() -> None:
-  print(f'> Encoding lunar date data...')
+  print('> Encoding lunar date data...')
 
   lunar_year_lines: dict[int, list[str]] = parse_lines_in_lunar_years()
   lunar_year_ganzhis: dict[int, Ganzhi] = parse_ganzhis_in_lunar_years()
@@ -215,7 +221,7 @@ def do_encode() -> None:
     do_download()
 
   if encoded_data_ready():
-    print(f'> Encoded data already exists. Do nothing.')
+    print('> Encoded data already exists. Do nothing.')
     return
 
   encode_jieqi()

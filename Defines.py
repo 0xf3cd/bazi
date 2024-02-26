@@ -31,7 +31,7 @@ class Tiangan(Enum):
 
   @classmethod
   def from_str(cls, s: str) -> 'Tiangan':
-    assert type(s) is str
+    assert isinstance(s, str)
     return cls(s)
   
   @classmethod
@@ -75,7 +75,7 @@ class Dizhi(Enum):
 
   @classmethod
   def from_str(cls, s: str) -> 'Dizhi':
-    assert type(s) is str
+    assert isinstance(s, str)
     return cls(s)
   
   @classmethod
@@ -187,7 +187,7 @@ class Jieqi(Enum):
 
   @classmethod
   def from_str(cls, s: str) -> 'Jieqi':
-    assert type(s) is str
+    assert isinstance(s, str)
     assert len(s) == 2
     return cls(s)
   
