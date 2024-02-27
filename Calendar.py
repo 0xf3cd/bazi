@@ -1,10 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import calendar
 from enum import Enum
-from datetime import date, timedelta
+from datetime import date
 
-from bazi import Ganzhi
-from bazi.hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
+from bazi import Ganzhi, Jieqi
+from bazi.hkodata import DecodedJieqiDates, JieqiDates, DecodedLunarYears, LunarYearInfo
 
 class CalendarType(Enum):
   '''
@@ -42,23 +43,23 @@ class CalendarType(Enum):
   干支历 = GANZHI
 
 
-class SolarDate:
+class CalendarDate:
   '''
-  SolarDate represents a date in the solar calendar / gregorian calendar.
+  CalendarDate is a thin wrapper of the date.
+  ATTENTION: No validity check when instantiating.
   '''
-  def __init__(self, year: int, month: int, day: int) -> None:
+
+  def __init__(self, year: int, month: int, day: int, date_type: CalendarType) -> None:
     # Type check at runtime.
     assert isinstance(year, int)
     assert isinstance(month, int)
     assert isinstance(day, int)
-
-    # Range check at runtime.
-    assert 1 <= month <= 12
-    assert 1 <= day <= 31
+    assert isinstance(date_type, CalendarType)
 
     self._year = year
     self._month = month
     self._day = day
+    self._date_type = date_type
 
   @property
   def year(self) -> int:
@@ -72,145 +73,83 @@ class SolarDate:
   def day(self) -> int:
     return self._day
 
-  def to_date(self) -> date:
-    return date(self.year, self.month, self.day)
+  @property
+  def date_type(self) -> CalendarType:
+    return self._date_type
   
-  @classmethod
-  def from_date(cls, d: date) -> 'SolarDate':
-    return cls(d.year, d.month, d.day)
-
   def __eq__(self, other: object) -> bool:
-    if isinstance(other, (date, SolarDate)): # Notice that `datetime` is a subclass of `date`.
-      return self.year == other.year and self.month == other.month and self.day == other.day
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    if self.year != other.year or self.month != other.month or self.day != other.day:
+      return False
+    return True
+  
+  def __ne__(self, other: object) -> bool:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    return not self.__eq__(other)
+  
+  def __lt__(self, other: object) -> bool:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    if self.year != other.year:
+      return self.year < other.year
+    if self.month != other.month:
+      return self.month < other.month
+    if self.day != other.day:
+      return self.day < other.day
     return False
   
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
-
-
-class LunarDate:
-  '''
-  LunarDate represents a date in the lunar calendar.
-  '''
-  def __init__(self, year: int, month: int, day: int, is_leap_month: bool, year_ganzhi: Ganzhi) -> None:
-    # Type check at runtime.
-    assert isinstance(year, int)
-    assert isinstance(month, int)
-    assert isinstance(day, int)
-    assert isinstance(is_leap_month, bool)
-    assert isinstance(year_ganzhi, Ganzhi)
-
-    # Range check at runtime.
-    assert 1 <= month <= 12
-    assert 1 <= day <= 30 # Lunar months only contain 29 or 30 days.
-
-    self._year = year
-    self._month = month
-    self._day = day
-    self._is_leap_month = is_leap_month
-    self._year_ganzhi = year_ganzhi
-
-  @property
-  def year(self) -> int:
-    return self._year
-
-  @property
-  def month(self) -> int:
-    return self._month
-
-  @property
-  def day(self) -> int:
-    return self._day
-
-  @property
-  def is_leap_month(self) -> bool:
-    return self._is_leap_month
-
-  @property
-  def year_ganzhi(self) -> Ganzhi:
-    return self._year_ganzhi
-
-  def __eq__(self, other: object) -> bool:
-    if not isinstance(other, LunarDate):
-      return False
-    if self.year != other.year or self.month != other.month or self.day != other.day:
-      return False
-    if self.is_leap_month != other.is_leap_month:
-      return False
-    if self.year_ganzhi != other.year_ganzhi:
-      return False
+  def __le__(self, other: object) -> bool:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    if self.year != other.year:
+      return self.year < other.year
+    if self.month != other.month:
+      return self.month < other.month
+    if self.day != other.day:
+      return self.day < other.day
     return True
   
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
-
-
-class GanzhiDate:
-  '''
-  GanzhiDate represents a date in the ganzhi calendar.
-  '''
-  def __init__(self, year: int, month: int, day: int, year_ganzhi: Ganzhi, month_ganzhi: Ganzhi, day_ganzhi: Ganzhi) -> None:
-    # Type check at runtime.
-    assert isinstance(year, int)
-    assert isinstance(month, int)
-    assert isinstance(day, int)
-    assert isinstance(year_ganzhi, Ganzhi)
-    assert isinstance(month_ganzhi, Ganzhi)
-    assert isinstance(day_ganzhi, Ganzhi)
-
-    # Range check at runtime.
-    assert 1 <= month <= 12
-    # assert 1 <= day <= 30 # TODO: Range check on the `day`?
-
-    self._year = year
-    self._month = month
-    self._day = day
-    self._year_ganzhi = year_ganzhi
-    self._month_ganzhi = month_ganzhi
-    self._day_ganzhi = day_ganzhi
-
-  @property
-  def year(self) -> int:
-    return self._year
-
-  @property
-  def month(self) -> int:
-    return self._month
-
-  @property
-  def day(self) -> int:
-    return self._day
-
-  @property
-  def year_ganzhi(self) -> Ganzhi:
-    return self._year_ganzhi
-
-  @property
-  def month_ganzhi(self) -> Ganzhi:
-    return self._month_ganzhi
-
-  @property
-  def day_ganzhi(self) -> Ganzhi:
-    return self._day_ganzhi
-
-  def __eq__(self, other: object) -> bool:
-    if not isinstance(other, GanzhiDate):
-      return False
-    if self.year != other.year or self.month != other.month or self.day != other.day:
-      return False
-    if self.year_ganzhi != other.year_ganzhi:
-      return False
-    if self.month_ganzhi != other.month_ganzhi:
-      return False
-    if self.day_ganzhi != other.day_ganzhi:
-      return False
-    return True
+  def __gt__(self, other: object) -> bool:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    if self.year != other.year:
+      return self.year > other.year
+    if self.month != other.month:
+      return self.month > other.month
+    if self.day != other.day:
+      return self.day > other.day
+    return False
   
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
+  def __ge__(self, other: object) -> bool:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    if self.year != other.year:
+      return self.year > other.year
+    if self.month != other.month:
+      return self.month > other.month
+    if self.day != other.day:
+      return self.day > other.day
+    return True
 
 
 class CalendarUtils:
+  def __init__(self) -> None:
+    raise NotImplementedError('Please use static methods.')
+  
   # Create two databases as class variables, where we can query the Jieqi and Lunar year info.
   jieqi_dates_db: DecodedJieqiDates = DecodedJieqiDates()
   lunar_years_db: DecodedLunarYears = DecodedLunarYears()
@@ -218,20 +157,167 @@ class CalendarUtils:
   # Store the sexagenary cycle as a class variable.
   sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
-  def __init__(self) -> None:
-    raise NotImplementedError('Please use static methods.')
+  @staticmethod
+  def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
+    # TODO: This is hardcoded. Change it?
+    # 1901-02-19 is the first day (in solar) in lunar year 1901.
+    if date_type == CalendarType.SOLAR:
+      return CalendarDate(1901, 2, 19, CalendarType.SOLAR)
+    elif date_type == CalendarType.LUNAR:
+      return CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+    else:
+      assert date_type == CalendarType.GANZHI
+      return CalendarDate(1901, 1, 16, CalendarType.GANZHI)
+    
+  @staticmethod
+  def get_max_supported_date(date_type: CalendarType) -> CalendarDate:
+    # TODO: This is hardcoded. Change it?
+    # Because of the validity check in `is_valid_ganzhi_date`, we can only support 2099-12-30 (in ganzhi calendar).
+    # 2099-12-30 is also the last day (in ganzhi calendar) in ganzhi year 2099.
+    if date_type == CalendarType.SOLAR:
+      return CalendarDate(2100, 2, 3, CalendarType.SOLAR)
+    elif date_type == CalendarType.LUNAR:
+      return CalendarDate(2099, 12, 25, CalendarType.LUNAR)
+    else:
+      assert date_type == CalendarType.GANZHI
+      return CalendarDate(2099, 12, 30, CalendarType.GANZHI)
   
   @staticmethod
-  def lunar_to_solar(lunar_date: LunarDate) -> SolarDate:
-    assert isinstance(lunar_date, LunarDate)
-    assert lunar_date.year in CalendarUtils.lunar_years_db.supported_year_range(), f'Year {lunar_date.year} is not supported.'
-    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_date.year)
+  def is_valid_solar_date(d: CalendarDate) -> bool:
+    '''
+    Check if the input date is valid.
+    Will also check if the date is in the supported range. If not, return False.
 
-    # Sanity check.
-    if lunar_date.is_leap_month:
-      assert info['leap']
-      assert info['leap_month'] == lunar_date.month
-      assert len(info['days_counts']) == 13
+    Args: 
+      - d: CalendarDate object, expected to be of `CalendarType.SOLAR`.
+
+    Return: True if valid, False otherwise.
+    '''
+
+    if d.date_type != CalendarType.SOLAR:
+      return False
+    if d < CalendarUtils.get_min_supported_date(CalendarType.SOLAR):
+      return False
+    if d > CalendarUtils.get_max_supported_date(CalendarType.SOLAR):
+      return False
+
+    if d.year <= 0:
+      return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
+    if d.month < 1 or d.month > 12:
+      return False
     
-    raise NotImplementedError('Please use static methods.')
+    if d.month in [1, 3, 5, 7, 8, 10, 12]:
+      if d.day < 1 or d.day > 31:
+        return False
+    elif d.month in [4, 6, 9, 11]:
+      if d.day < 1 or d.day > 30:
+        return False
+    else:
+      assert d.month == 2
+      if calendar.isleap(d.year):
+        if d.day < 1 or d.day > 29:
+          return False
+      else:
+        if d.day < 1 or d.day > 28:
+          return False
+
+    return True
+
+  @staticmethod
+  def is_valid_lunar_date(d: CalendarDate) -> bool:
+    '''
+    Check if the input date is valid.
+    Will also check if the date is in the supported range. If not, return False.
+
+    Args: 
+      - d: CalendarDate object, expected to be of `CalendarType.LUNAR`.
+
+    Return: True if valid, False otherwise.
+    '''
+
+    if d.date_type != CalendarType.LUNAR:
+      return False
+    if d < CalendarUtils.get_min_supported_date(CalendarType.LUNAR):
+      return False
+    if d > CalendarUtils.get_max_supported_date(CalendarType.LUNAR):
+      return False
+    
+    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(d.year)
+    
+    if d.year <= 0:
+      return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
+    if d.month < 1 or d.month > len(info['days_counts']):
+      return False 
+    if d.day < 1 or d.day > 30:
+      return False
+    
+    days_in_month: int = info['days_counts'][d.month - 1]
+    if d.day > days_in_month:
+      return False
+
+    return True
   
+  @staticmethod
+  def is_valid_ganzhi_date(d: CalendarDate) -> bool:
+    '''
+    Check if the input date is valid.
+    Will also check if the date is in the supported range. If not, return False.
+
+    Args: 
+      - d: CalendarDate object, expected to be of `CalendarType.GANZHI`.
+
+    Return: True if valid, False otherwise.
+    '''
+
+    if d.date_type != CalendarType.GANZHI:
+      return False
+    if d < CalendarUtils.get_min_supported_date(CalendarType.GANZHI):
+      return False
+    if d > CalendarUtils.get_max_supported_date(CalendarType.GANZHI):
+      return False
+    
+    if d.year <= 0:
+      return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
+    if d.month < 1 or d.month > 12:
+      return False 
+    if d.day < 1 or d.day > 32: # Max gap between Ganzhi months is 32 days.
+      return False
+    
+    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(d.year)
+    if d.day > days_counts[d.month - 1]:
+      return False
+
+    return True
+
+  @staticmethod
+  def is_valid(d: CalendarDate) -> bool:
+    if d.date_type not in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
+      return False
+
+    if d.date_type == CalendarType.SOLAR:
+      return CalendarUtils.is_valid_solar_date(d)
+    elif d.date_type == CalendarType.LUNAR:
+      return CalendarUtils.is_valid_lunar_date(d)
+    else:
+      assert d.date_type == CalendarType.GANZHI
+      return CalendarUtils.is_valid_ganzhi_date(d)
+
+  @staticmethod
+  def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
+    assert ganzhi_year <= CalendarUtils.get_max_supported_date(CalendarType.GANZHI).year
+
+    jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
+    assert jieqi_list[0] == Jieqi.立春 # The first jieqi in every year should be 立春.
+    assert len(jieqi_list) == 12
+
+    start_dates: list[date] = []
+    for jq in jieqi_list[:11]: # First 11 jieqis are in solar year `ganzhi_year`.
+      start_dates.append(CalendarUtils.jieqi_dates_db.get(ganzhi_year, jq))
+    for jq in jieqi_list[11:]: # Last 1 jieqis are in solar year `ganzhi_year + 1`.
+      start_dates.append(CalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, jq))
+    
+    end_dates: list[date] = start_dates[1:] + [CalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
+    days_counts: list[int] = [(end - start).days for start, end in zip(start_dates, end_dates)]
+    assert len(days_counts) == 12
+
+    return days_counts

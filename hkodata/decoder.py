@@ -6,7 +6,7 @@
 # Decode the encoded data produced by encoder.py.
 
 from pathlib import Path
-from datetime import date, datetime
+from datetime import date
 from typing import TypedDict, Optional
 
 from ..Defines import Jieqi, Ganzhi
@@ -23,7 +23,7 @@ class DecodedJieqiDates:
   TODO: Creation of `DecodedJieqiDates` can be time-consuming. Optimization needed in the future??
   ''' 
 
-  date_bytes_len: int = len(date_to_bytes(datetime.now()))
+  date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
 
   def __init__(self) -> None:
     if not encoded_data_ready():
