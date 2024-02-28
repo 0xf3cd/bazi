@@ -166,7 +166,7 @@ class TestHkoData(unittest.TestCase):
       self.assertIsNot(info1, info2)
       self.assertEqual(set(info1.keys()), set(info2.keys()))
 
-      self.assertEqual(info1['frist_day_solar'], info2['frist_day_solar'])
+      self.assertEqual(info1['first_solar_day'], info2['first_solar_day'])
       self.assertEqual(info1['leap'], info2['leap'])
       self.assertEqual(info1['leap_month'], info2['leap_month'])
       self.assertEqual(info1['days_counts'], info2['days_counts'])
@@ -180,21 +180,21 @@ class TestHkoData(unittest.TestCase):
         self.assertEqual(len(info1['days_counts']), 12)
 
     expected_days_counts_2000: list[int] = [30, 30, 29, 29, 30, 29, 29, 30, 29, 30, 30, 29]
-    self.assertEqual(decoded_lunardate[2000]['frist_day_solar'], date(2000, 2, 5))
+    self.assertEqual(decoded_lunardate[2000]['first_solar_day'], date(2000, 2, 5))
     self.assertFalse(decoded_lunardate[2000]['leap'])
     self.assertIsNone(decoded_lunardate[2000]['leap_month'])
     self.assertListEqual(decoded_lunardate[2000]['days_counts'], expected_days_counts_2000)
     self.assertEqual(decoded_lunardate[2000]['ganzhi'], Ganzhi.from_str('庚辰'))
 
     expected_days_counts_2001: list[int] = [30, 30, 29, 30, 29, 30, 29, 29, 30, 29, 30, 29, 30]
-    self.assertEqual(decoded_lunardate[2001]['frist_day_solar'], date(2001, 1, 24))
+    self.assertEqual(decoded_lunardate[2001]['first_solar_day'], date(2001, 1, 24))
     self.assertTrue(decoded_lunardate[2001]['leap'])
     self.assertEqual(decoded_lunardate[2001]['leap_month'], 4)
     self.assertListEqual(decoded_lunardate[2001]['days_counts'], expected_days_counts_2001)
     self.assertEqual(decoded_lunardate[2001]['ganzhi'], Ganzhi.from_str('辛巳'))
 
     expected_days_counts_2024: list[int] = [29, 30, 29, 29, 30, 29, 30, 30, 29, 30, 30, 29]
-    self.assertEqual(decoded_lunardate[2024]['frist_day_solar'], date(2024, 2, 10))
+    self.assertEqual(decoded_lunardate[2024]['first_solar_day'], date(2024, 2, 10))
     self.assertFalse(decoded_lunardate[2024]['leap'])
     self.assertIsNone(decoded_lunardate[2024]['leap_month'])
     self.assertListEqual(decoded_lunardate[2024]['days_counts'], expected_days_counts_2024)
@@ -235,7 +235,7 @@ class TestHkoData(unittest.TestCase):
     self.assertNotEqual(new_2024_info['ganzhi'], temp['ganzhi'])
 
     expected_days_counts_2024: list[int] = [29, 30, 29, 29, 30, 29, 30, 30, 29, 30, 30, 29]
-    self.assertEqual(new_2024_info['frist_day_solar'], date(2024, 2, 10))
+    self.assertEqual(new_2024_info['first_solar_day'], date(2024, 2, 10))
     self.assertFalse(new_2024_info['leap'])
     self.assertIsNone(new_2024_info['leap_month'])
     self.assertListEqual(new_2024_info['days_counts'], expected_days_counts_2024)

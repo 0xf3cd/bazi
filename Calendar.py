@@ -2,7 +2,7 @@
 
 import calendar
 from enum import Enum
-from datetime import date
+from datetime import date, timedelta
 
 from bazi import Ganzhi, Jieqi
 from bazi.hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
@@ -77,11 +77,17 @@ class CalendarDate:
   def date_type(self) -> CalendarType:
     return self._date_type
   
+  def __str__(self) -> str:
+    return f'({self.year}-{self.month}-{self.day}, {self.date_type.name})'
+  
+  def __repr__(self) -> str:
+    return f'CalendarDate({self.year}, {self.month}, {self.day}, {self.date_type.name})'
+  
   def __eq__(self, other: object) -> bool:
     if not isinstance(other, CalendarDate):
       raise TypeError('Not a CalendarDate object.')
     if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
+      return False
     if self.year != other.year or self.month != other.month or self.day != other.day:
       return False
     return True
@@ -89,8 +95,6 @@ class CalendarDate:
   def __ne__(self, other: object) -> bool:
     if not isinstance(other, CalendarDate):
       raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
     return not self.__eq__(other)
   
   def __lt__(self, other: object) -> bool:
@@ -177,7 +181,7 @@ class CalendarUtils:
     if date_type == CalendarType.SOLAR:
       return CalendarDate(2100, 2, 3, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
-      return CalendarDate(2099, 12, 25, CalendarType.LUNAR)
+      return CalendarDate(2099, 13, 25, CalendarType.LUNAR) # 2099 is a leap year on lunar calendar.
     else:
       assert date_type == CalendarType.GANZHI
       return CalendarDate(2099, 12, 30, CalendarType.GANZHI)
@@ -321,3 +325,17 @@ class CalendarUtils:
     assert len(days_counts) == 12
 
     return days_counts
+  
+  @staticmethod
+  def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
+    assert CalendarUtils.is_valid_lunar_date(lunar_date)
+    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_date.year)
+
+    passed_days_count: int = -1
+    for month_idx in range(lunar_date.month - 1):
+      passed_days_count += info['days_counts'][month_idx]
+    passed_days_count += lunar_date.day
+
+    first_solar_date: date = info['first_solar_day']
+    cur_solar_date: date = first_solar_date + timedelta(days=passed_days_count)
+    return CalendarDate(cur_solar_date.year, cur_solar_date.month, cur_solar_date.day, CalendarType.SOLAR)

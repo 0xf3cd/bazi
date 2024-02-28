@@ -34,9 +34,9 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(sd, CalendarDate(2023, 1, 1, CalendarType.SOLAR))
     self.assertNotEqual(sd, CalendarDate(2024, 2, 1, CalendarType.SOLAR))
     self.assertNotEqual(sd, CalendarDate(2024, 1, 30, CalendarType.SOLAR))
+    self.assertNotEqual(sd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
+    self.assertNotEqual(sd, CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(sd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
     with self.assertRaises(TypeError):
       self.assertNotEqual(sd, date(2024, 1, 1))
     with self.assertRaises(TypeError):
@@ -73,9 +73,9 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(ld, CalendarDate(2024, 2, 1, CalendarType.LUNAR))
     self.assertNotEqual(ld, CalendarDate(2024, 1, 30, CalendarType.LUNAR))
     self.assertNotEqual(ld, CalendarDate(2024, 13, 29, CalendarType.LUNAR)) # Notice that there can be 13 lunar months in a lunar year.
-    
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(ld, CalendarDate(2024, 1, 1, CalendarType.SOLAR))
+    self.assertNotEqual(ld, CalendarDate(2024, 1, 1, CalendarType.SOLAR))
+    self.assertNotEqual(ld, CalendarDate(2024, 1, 1, CalendarType.GANZHI))
+
     with self.assertRaises(TypeError):
       self.assertNotEqual(ld, date(2024, 1, 1))
     with self.assertRaises(TypeError):
@@ -111,9 +111,9 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(gzd, CalendarDate(2023, 1, 1, CalendarType.GANZHI))
     self.assertNotEqual(gzd, CalendarDate(2024, 2, 1, CalendarType.GANZHI))
     self.assertNotEqual(gzd, CalendarDate(2024, 1, 30, CalendarType.GANZHI))
+    self.assertNotEqual(gzd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
+    self.assertNotEqual(gzd, CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(gzd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
     with self.assertRaises(TypeError):
       self.assertNotEqual(gzd, date(2024, 1, 1))
     with self.assertRaises(TypeError):
@@ -138,13 +138,13 @@ class TestCalendarDate(unittest.TestCase):
 
   def test_date_cmp_operators(self) -> None:
     # Use solar dates to test date operators.
-    for _ in range(512):
-      y1, m1, d1 = random.randint(1, 9999), random.randint(1, 12), random.randint(1, 28)
-      y2, m2, d2 = random.randint(1, 9999), random.randint(1, 12), random.randint(1, 28)
-      date1: date = date(y1, m1, d1)
-      date2: date = date(y2, m2, d2)
-      c_date1: CalendarDate = CalendarDate(y1, m1, d1, CalendarType.SOLAR)
-      c_date2: CalendarDate = CalendarDate(y2, m2, d2, CalendarType.SOLAR)
+    random_date_list: list[date] = []
+    for _ in range(256):
+      random_date_list.append(date(random.randint(1, 9999), random.randint(1, 12), random.randint(1, 28)))
+
+    for date1, date2 in product(random_date_list, random_date_list):
+      c_date1: CalendarDate = CalendarDate(date1.year, date1.month, date1.day, CalendarType.SOLAR)
+      c_date2: CalendarDate = CalendarDate(date2.year, date2.month, date2.day, CalendarType.SOLAR)
       
       if date1 < date2:
         self.assertTrue(c_date1 < c_date2)
@@ -194,12 +194,19 @@ class TestCalendarDate(unittest.TestCase):
     ]
 
     for d1, d2 in product(calendar_dates, calendar_dates):
+      bool1: bool = d1 == d2
+      bool2: bool = d1 != d2
+      
+      # Either bool1 or bool2 is True.
+      self.assertTrue(bool1 or bool2)
+      self.assertFalse(bool1 and bool2)
+
+      self.assertEqual(d1 == d2, d2 == d1)
+      self.assertEqual(d1 != d2, d2 != d1)
+
+      # Following subtests need `d1` to be of the same `CalendarType` as `d2`.
       if d1.date_type == d2.date_type:
         continue
-      with self.assertRaises(TypeError):
-        d1 == d2 # type: ignore
-      with self.assertRaises(TypeError):
-        d1 != d2 # type: ignore
       with self.assertRaises(TypeError):
         d1 < d2 # type: ignore
       with self.assertRaises(TypeError):
@@ -234,6 +241,32 @@ class TestCalendarDate(unittest.TestCase):
         d2 > d1 # type: ignore
       with self.assertRaises(TypeError):
         d2 >= d1 # type: ignore
+
+  def test_str_repr(self) -> None:
+    random_date_list: list[CalendarDate] = []
+    for _ in range(256):
+      random_date_list.append(
+        CalendarDate(
+          random.randint(1902, 2099),
+          random.randint(1, 12),
+          random.randint(1, 28),
+          random.choice(list(CalendarType))
+        )
+      )
+
+    for d in random_date_list:
+      self.assertEqual(str(d), d.__str__())
+      self.assertEqual(repr(d), d.__repr__())
+      self.assertEqual(str(d), str(d))
+      self.assertEqual(repr(d), repr(d))
+    
+    for d1, d2 in product(random_date_list, random_date_list):
+      if d1 == d2:
+        self.assertEqual(str(d1), str(d2))
+        self.assertEqual(repr(d1), repr(d2))
+      if d1 != d2:
+        self.assertNotEqual(str(d1), str(d2))
+        self.assertNotEqual(repr(d1), repr(d2))    
 
 
 class TestCalendarUtils(unittest.TestCase):
@@ -362,3 +395,49 @@ class TestCalendarUtils(unittest.TestCase):
       def __init__(self, anything: Any) -> None:
         self.date_type = anything
     self.assertFalse(CalendarUtils.is_valid(__DuckTypeClass(0))) # type: ignore # Test duck type.
+
+  @staticmethod
+  def __solar_date_gen(d: CalendarDate):
+    assert d.date_type == CalendarType.SOLAR
+    _d: date = date(d.year, d.month, d.day)
+    while True:
+      yield CalendarDate(_d.year, _d.month, _d.day, CalendarType.SOLAR)
+      _d = _d + timedelta(days=1)
+
+  @staticmethod
+  def __lunar_date_gen(d: CalendarDate):
+    assert d.date_type == CalendarType.LUNAR
+    _y, _m, _d = d.year, d.month, d.day
+    _lunar_year_db: DecodedLunarYears = DecodedLunarYears()
+    _year_data = _lunar_year_db.get(_y)
+    while True:
+      yield CalendarDate(_y, _m, _d, CalendarType.LUNAR)
+      _d += 1
+      if _d > _year_data['days_counts'][_m - 1]:
+        _d = 1
+        _m += 1
+        if _m > len(_year_data['days_counts']):
+          _m = 1
+          _y += 1
+          _year_data = _lunar_year_db.get(_y)
+          
+  def test_lunar_to_solar(self) -> None:
+    min_lunar_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.LUNAR)
+    max_lunar_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.LUNAR)
+
+    self.assertEqual(CalendarUtils.lunar_to_solar(min_lunar_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    self.assertEqual(CalendarUtils.lunar_to_solar(max_lunar_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.SOLAR))
+
+    solar_date_gen = self.__solar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    lunar_date_gen = self.__lunar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+
+    while True:
+      solar_date = next(solar_date_gen)
+      lunar_date = next(lunar_date_gen)
+      self.assertEqual(solar_date, CalendarUtils.lunar_to_solar(lunar_date))
+
+      if lunar_date == max_lunar_date:
+        self.assertEqual(solar_date, CalendarUtils.get_max_supported_date(CalendarType.SOLAR))
+        break

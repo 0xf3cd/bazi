@@ -40,9 +40,4 @@ class Bazi:
   def minute(self) -> int:
     return self.datetime.minute
   
-  @property
-  def 年柱(self) -> str:
-    # return self._datetime.strftime('%Y年 %m月 %d日 %H时 %M分'
-    return ''
-  
 八字 = Bazi

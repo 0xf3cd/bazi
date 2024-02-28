@@ -93,7 +93,7 @@ class LunarYearInfo(TypedDict):
   '''
   The information of a lunar year.
   '''
-  frist_day_solar: date        # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
+  first_solar_day: date        # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
   leap: bool                   # Whether the year is leap or not.
   leap_month: Optional[int]    # If `leap` is False, this field is None. Otherwise, it is the month of the leap.
   days_counts: list[int]       # The number of days in each month. It contains 12 elements for normal years, and 13 elements for leap years.
@@ -144,7 +144,7 @@ class DecodedLunarYears:
     assert len(data_bytes) == 8
 
     # Parse the bytes.
-    frist_day_solar: date = bytes_to_date(data_bytes[:4])
+    first_solar_day: date = bytes_to_date(data_bytes[:4])
     ganzhi_index: int = bytes_to_int(data_bytes[4:5])
     ganzhi: Ganzhi = DecodedLunarYears.sexagenary_cycle[ganzhi_index]
     leap_month: int = bytes_to_int(data_bytes[5:6])
@@ -159,7 +159,7 @@ class DecodedLunarYears:
         days_count_of_each_month.append(29)
 
     return {
-      'frist_day_solar': frist_day_solar,
+      'first_solar_day': first_solar_day,
       'leap': leap_month != 0,
       'leap_month': leap_month if leap_month != 0 else None,
       'days_counts': days_count_of_each_month,

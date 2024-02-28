@@ -22,7 +22,7 @@ mem = psutil.virtual_memory()
 print('#' * term_width)
 
 print(f'-- {sys.argv}')
-print(f'-- system time: {start_time.isoformat()}')
+print(f'-- system time: {start_time.astimezone()} ({start_time.astimezone().tzinfo})')
 print(f'-- python executable: {sys.executable}')
 print(f'-- python version: {sys.version}')
 print(f'-- pid: {os.getpid()}')
@@ -87,4 +87,4 @@ print(f'-- Tests exited with code {color}{test_ret}{colorama.Style.RESET_ALL}')
 color = colorama.Fore.GREEN if ruff_ret == 0 else colorama.Fore.RED
 print(f'-- Ruff exited with code {color}{ruff_ret}{colorama.Style.RESET_ALL}')
 
-sys.exit(test_ret | ruff_ret) # Mix the two return codes just to convey the failure.
+sys.exit(test_ret | ruff_ret) # Mix the two return codes just to convey the failure if any.
