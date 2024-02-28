@@ -176,15 +176,14 @@ class CalendarUtils:
   @staticmethod
   def get_max_supported_date(date_type: CalendarType) -> CalendarDate:
     # TODO: This is hardcoded. Change it?
-    # Because of the validity check in `is_valid_ganzhi_date`, we can only support 2099-12-30 (in ganzhi calendar).
-    # 2099-12-30 is also the last day (in ganzhi calendar) in ganzhi year 2099.
+    # Because of the implementation of `solar_to_lunar`, the last supported solar date will be 2099-12-31.
     if date_type == CalendarType.SOLAR:
-      return CalendarDate(2100, 2, 3, CalendarType.SOLAR)
+      return CalendarDate(2099, 12, 31, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
-      return CalendarDate(2099, 13, 25, CalendarType.LUNAR) # 2099 is a leap year on lunar calendar.
+      return CalendarDate(2099, 12, 20, CalendarType.LUNAR) # 2099 is a leap year on lunar calendar.
     else:
       assert date_type == CalendarType.GANZHI
-      return CalendarDate(2099, 12, 30, CalendarType.GANZHI)
+      return CalendarDate(2099, 11, 25, CalendarType.GANZHI)
   
   @staticmethod
   def is_valid_solar_date(d: CalendarDate) -> bool:
@@ -328,7 +327,8 @@ class CalendarUtils:
   
   @staticmethod
   def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
-    assert CalendarUtils.is_valid_lunar_date(lunar_date)
+    assert lunar_date.date_type == CalendarType.LUNAR
+    assert CalendarUtils.is_valid(lunar_date)
     info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_date.year)
 
     passed_days_count: int = -1
@@ -339,3 +339,88 @@ class CalendarUtils:
     first_solar_date: date = info['first_solar_day']
     cur_solar_date: date = first_solar_date + timedelta(days=passed_days_count)
     return CalendarDate(cur_solar_date.year, cur_solar_date.month, cur_solar_date.day, CalendarType.SOLAR)
+  
+  @staticmethod
+  def solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
+    assert solar_date.date_type == CalendarType.SOLAR
+    assert CalendarUtils.is_valid(solar_date)
+
+    # First, figure out the solar date falls into which lunar year.
+    lunar_year: int = solar_date.year
+    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_year)
+    first_solar_day: date = info['first_solar_day']
+    if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day):
+      lunar_year -= 1
+      info = CalendarUtils.lunar_years_db.get(lunar_year)
+      first_solar_day = info['first_solar_day']
+
+    # Compute how many days have passed since `first_solar_day`.
+    passed_days_count: int = (date(solar_date.year, solar_date.month, solar_date.day) - first_solar_day).days
+
+    # Then, figure out the solar date falls into which lunar month.
+    days_counts: list[int] = info['days_counts']
+    month_idx: int = 0
+    while passed_days_count >= days_counts[month_idx]:
+      passed_days_count -= days_counts[month_idx]
+      month_idx += 1
+    assert passed_days_count < days_counts[month_idx]
+
+    return CalendarDate(lunar_year, month_idx + 1, passed_days_count + 1, CalendarType.LUNAR)
+
+  @staticmethod
+  def ganzhi_to_solar(ganzhi_date: CalendarDate) -> CalendarDate:
+    assert ganzhi_date.date_type == CalendarType.GANZHI
+    assert CalendarUtils.is_valid(ganzhi_date)
+
+    # Figure out how many days have passed in the ganzhi year.
+    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(ganzhi_date.year)
+    passed_days_count: int = 0
+    for month_idx in range(ganzhi_date.month - 1):
+      passed_days_count += days_counts[month_idx]
+    passed_days_count += ganzhi_date.day - 1
+
+    # Figure out the solar date.
+    first_solar_date: date = CalendarUtils.jieqi_dates_db.get(ganzhi_date.year, Jieqi.立春)
+    cur_solar_date: date = first_solar_date + timedelta(days=passed_days_count)
+    return CalendarDate(cur_solar_date.year, cur_solar_date.month, cur_solar_date.day, CalendarType.SOLAR)
+
+  @staticmethod
+  def solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
+    assert solar_date.date_type == CalendarType.SOLAR
+    assert CalendarUtils.is_valid(solar_date)
+
+    # Figure out the ganzhi date falls into which ganzhi year.
+    ganzhi_year: int = solar_date.year
+    first_solar_day: date = CalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+    if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day): # Falls into the previous ganzhi year.
+      ganzhi_year -= 1
+      first_solar_day = CalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+
+    # Compute how many days have passed in the ganzhi year.
+    passed_days_count: int = (date(solar_date.year, solar_date.month, solar_date.day) - first_solar_day).days
+
+    # Then, figure out the ganzhi date falls into which ganzhi month.
+    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(ganzhi_year)
+    month_idx: int = 0
+    while passed_days_count >= days_counts[month_idx]:
+      passed_days_count -= days_counts[month_idx]
+      month_idx += 1
+    assert passed_days_count < days_counts[month_idx]
+
+    return CalendarDate(ganzhi_year, month_idx + 1, passed_days_count + 1, CalendarType.GANZHI)
+
+  @staticmethod
+  def lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
+    assert lunar_date.date_type == CalendarType.LUNAR
+    assert CalendarUtils.is_valid(lunar_date)
+
+    solar_date: CalendarDate = CalendarUtils.lunar_to_solar(lunar_date)
+    return CalendarUtils.solar_to_ganzhi(solar_date)
+    
+  @staticmethod
+  def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
+    assert ganzhi_date.date_type == CalendarType.GANZHI
+    assert CalendarUtils.is_valid(ganzhi_date)
+
+    solar_date: CalendarDate = CalendarUtils.ganzhi_to_solar(ganzhi_date)
+    return CalendarUtils.solar_to_lunar(solar_date)

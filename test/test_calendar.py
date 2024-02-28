@@ -420,6 +420,22 @@ class TestCalendarUtils(unittest.TestCase):
           _m = 1
           _y += 1
           _year_data = _lunar_year_db.get(_y)
+
+  @staticmethod
+  def __ganzhi_date_gen(d: CalendarDate):
+    assert d.date_type == CalendarType.GANZHI
+    _y, _m, _d = d.year, d.month, d.day
+    _month_lengths: list[int] = CalendarUtils.days_counts_in_ganzhi_year(_y)
+    while True:
+      yield CalendarDate(_y, _m, _d, CalendarType.GANZHI)
+      _d += 1
+      if _d > _month_lengths[_m - 1]:
+        _d = 1
+        _m += 1
+        if _m > 12:
+          _m = 1
+          _y += 1
+          _month_lengths = CalendarUtils.days_counts_in_ganzhi_year(_y)
           
   def test_lunar_to_solar(self) -> None:
     min_lunar_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.LUNAR)
@@ -441,3 +457,184 @@ class TestCalendarUtils(unittest.TestCase):
       if lunar_date == max_lunar_date:
         self.assertEqual(solar_date, CalendarUtils.get_max_supported_date(CalendarType.SOLAR))
         break
+
+  def test_solar_to_lunar(self) -> None:
+    min_solar_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.SOLAR)
+    max_solar_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.SOLAR)
+
+    self.assertEqual(CalendarUtils.solar_to_lunar(min_solar_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+    self.assertEqual(CalendarUtils.solar_to_lunar(max_solar_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.LUNAR))
+
+    solar_date_gen = self.__solar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    lunar_date_gen = self.__lunar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+
+    while True:
+      solar_date = next(solar_date_gen)
+      lunar_date = next(lunar_date_gen)
+      self.assertEqual(lunar_date, CalendarUtils.solar_to_lunar(solar_date))
+
+      if solar_date == max_solar_date:
+        self.assertEqual(lunar_date, CalendarUtils.get_max_supported_date(CalendarType.LUNAR))
+        break
+
+  def test_ganzhi_to_solar(self) -> None:
+    min_ganzhi_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.GANZHI)
+    max_ganzhi_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.GANZHI)
+
+    self.assertEqual(CalendarUtils.ganzhi_to_solar(min_ganzhi_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    self.assertEqual(CalendarUtils.ganzhi_to_solar(max_ganzhi_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.SOLAR))
+    
+    solar_date_gen = self.__solar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    ganzhi_date_gen = self.__ganzhi_date_gen(CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+
+    while True:
+      solar_date = next(solar_date_gen)
+      ganzhi_date = next(ganzhi_date_gen)
+      self.assertEqual(solar_date, CalendarUtils.ganzhi_to_solar(ganzhi_date))
+
+      if ganzhi_date == max_ganzhi_date:
+        self.assertEqual(solar_date, CalendarUtils.get_max_supported_date(CalendarType.SOLAR))
+        break
+
+  def test_solar_to_ganzhi(self) -> None:
+    min_solar_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.SOLAR)
+    max_solar_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.SOLAR)
+
+    self.assertEqual(CalendarUtils.solar_to_ganzhi(min_solar_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+    self.assertEqual(CalendarUtils.solar_to_ganzhi(max_solar_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.GANZHI))
+
+    solar_date_gen = self.__solar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    ganzhi_date_gen = self.__ganzhi_date_gen(CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+
+    while True:
+      solar_date = next(solar_date_gen)
+      ganzhi_date = next(ganzhi_date_gen)
+      self.assertEqual(ganzhi_date, CalendarUtils.solar_to_ganzhi(solar_date))
+
+      if solar_date == max_solar_date:
+        self.assertEqual(ganzhi_date, CalendarUtils.get_max_supported_date(CalendarType.GANZHI))
+        break
+
+  def test_lunar_to_ganzhi(self) -> None:
+    min_lunar_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.LUNAR)
+    max_lunar_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.LUNAR)
+
+    self.assertEqual(CalendarUtils.lunar_to_ganzhi(min_lunar_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+    self.assertEqual(CalendarUtils.lunar_to_ganzhi(max_lunar_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.GANZHI))
+
+    lunar_date_gen = self.__lunar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+    ganzhi_date_gen = self.__ganzhi_date_gen(CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+
+    while True:
+      lunar_date = next(lunar_date_gen)
+      ganzhi_date = next(ganzhi_date_gen)
+      self.assertEqual(ganzhi_date, CalendarUtils.lunar_to_ganzhi(lunar_date))
+
+      if lunar_date == max_lunar_date:
+        self.assertEqual(ganzhi_date, CalendarUtils.get_max_supported_date(CalendarType.GANZHI))
+        break
+
+  def test_ganzhi_to_lunar(self) -> None:
+    min_ganzhi_date: CalendarDate = CalendarUtils.get_min_supported_date(CalendarType.GANZHI)
+    max_ganzhi_date: CalendarDate = CalendarUtils.get_max_supported_date(CalendarType.GANZHI)
+
+    self.assertEqual(CalendarUtils.ganzhi_to_lunar(min_ganzhi_date),
+                     CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+    self.assertEqual(CalendarUtils.ganzhi_to_lunar(max_ganzhi_date),
+                     CalendarUtils.get_max_supported_date(CalendarType.LUNAR))
+
+    ganzhi_date_gen = self.__ganzhi_date_gen(CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+    lunar_date_gen = self.__lunar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+
+    while True:
+      ganzhi_date = next(ganzhi_date_gen)
+      lunar_date = next(lunar_date_gen)
+      self.assertEqual(lunar_date, CalendarUtils.ganzhi_to_lunar(ganzhi_date))
+
+      if ganzhi_date == max_ganzhi_date:
+        self.assertEqual(lunar_date, CalendarUtils.get_max_supported_date(CalendarType.LUNAR))
+        break
+
+  def test_complex_date_conversions(self) -> None:
+    solar_date_gen = self.__solar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.SOLAR))
+    lunar_date_gen = self.__lunar_date_gen(CalendarUtils.get_min_supported_date(CalendarType.LUNAR))
+    ganzhi_date_gen = self.__ganzhi_date_gen(CalendarUtils.get_min_supported_date(CalendarType.GANZHI))
+
+    for _ in range(4096):
+      solar_date = next(solar_date_gen)
+      lunar_date = next(lunar_date_gen)
+      ganzhi_date = next(ganzhi_date_gen)
+
+      with self.subTest('ganzhi'):
+        _solar_date = CalendarUtils.ganzhi_to_solar(ganzhi_date)
+        _lunar_date = CalendarUtils.ganzhi_to_lunar(ganzhi_date)
+
+        self.assertEqual(solar_date, _solar_date)
+        self.assertEqual(lunar_date, _lunar_date)
+        self.assertEqual(ganzhi_date, CalendarUtils.solar_to_ganzhi(_solar_date))
+        self.assertEqual(ganzhi_date, CalendarUtils.lunar_to_ganzhi(_lunar_date))
+
+      with self.subTest('solar'):
+        _lunar_date = CalendarUtils.solar_to_lunar(solar_date)
+        _ganzhi_date = CalendarUtils.solar_to_ganzhi(solar_date)
+
+        self.assertEqual(lunar_date, _lunar_date)
+        self.assertEqual(ganzhi_date, _ganzhi_date)
+        self.assertEqual(solar_date, CalendarUtils.lunar_to_solar(_lunar_date))
+        self.assertEqual(solar_date, CalendarUtils.ganzhi_to_solar(_ganzhi_date))
+
+      with self.subTest('lunar'):
+        _solar_date = CalendarUtils.lunar_to_solar(lunar_date)
+        _ganzhi_date = CalendarUtils.lunar_to_ganzhi(lunar_date)
+
+        self.assertEqual(solar_date, _solar_date)
+        self.assertEqual(ganzhi_date, _ganzhi_date)
+        self.assertEqual(lunar_date, CalendarUtils.solar_to_lunar(_solar_date))
+        self.assertEqual(lunar_date, CalendarUtils.ganzhi_to_lunar(_ganzhi_date))
+
+  def test_date_conversions_negative(self) -> None:
+    with self.subTest('ganzhi_to_lunar negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.ganzhi_to_lunar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.ganzhi_to_lunar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
+
+    with self.subTest('lunar_to_ganzhi negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.lunar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.LUNAR))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.lunar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
+
+    with self.subTest('solar_to_lunar negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.solar_to_lunar(CalendarDate(1, 1, 1, CalendarType.SOLAR))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.solar_to_lunar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
+
+    with self.subTest('lunar_to_solar negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.lunar_to_solar(CalendarDate(1, 1, 1, CalendarType.LUNAR))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.lunar_to_solar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
+
+    with self.subTest('solar_to_ganzhi negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.solar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.SOLAR))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.solar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
+
+    with self.subTest('ganzhi_to_solar negative'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.ganzhi_to_solar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
+      with self.assertRaises(AssertionError):
+        CalendarUtils.ganzhi_to_solar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
+
+    
