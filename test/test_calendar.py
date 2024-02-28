@@ -5,6 +5,7 @@ import unittest
 import random
 from datetime import date, timedelta
 from itertools import product
+from typing import Any
 
 from bazi.hkodata import DecodedLunarYears, DecodedJieqiDates
 from bazi import (
@@ -309,13 +310,55 @@ class TestCalendarUtils(unittest.TestCase):
 
 
   def test_days_counts_in_ganzhi_year(self) -> None:
-    # TODO: Implement me!
-    pass
+    min_year: int = CalendarUtils.get_min_supported_date(CalendarType.GANZHI).year
+    max_year: int = CalendarUtils.get_max_supported_date(CalendarType.GANZHI).year
+
+    # Test negative cases first.
+    with self.assertRaises(AssertionError):
+      CalendarUtils.days_counts_in_ganzhi_year(-1)
+    with self.assertRaises(AssertionError):
+      CalendarUtils.days_counts_in_ganzhi_year(min_year - 1)
+    with self.assertRaises(AssertionError):
+      CalendarUtils.days_counts_in_ganzhi_year(max_year + 1)
+
+    # Test edge cases.
+    days_counts = CalendarUtils.days_counts_in_ganzhi_year(min_year)
+    for count in days_counts:
+      self.assertTrue(29 <= count <= 32) 
+    days_counts = CalendarUtils.days_counts_in_ganzhi_year(max_year)
+    for count in days_counts:
+      self.assertTrue(29 <= count <= 32) 
+
+    jieqi_dates_db: DecodedJieqiDates = DecodedJieqiDates()
+    month_starting_jieqis: list[Jieqi] = [ # List the jieqis that start new months in this ganzhi year.
+      Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种, Jieqi.小暑, 
+      Jieqi.立秋, Jieqi.白露, Jieqi.寒露, Jieqi.立冬, Jieqi.大雪, Jieqi.小寒,
+    ]
+    for year in range(min_year, max_year + 1):
+      dates: list[date] = []
+      # First 11 Jieqis will be in `year`, and the last Jieqi will be in `year + 1`.
+      for jq in month_starting_jieqis[:-1]:
+        dates.append(jieqi_dates_db.get(year, jq))
+      dates.append(jieqi_dates_db.get(year + 1, month_starting_jieqis[-1]))
+      dates.append(CalendarUtils.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
+
+      days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(year)
+      for idx, (start_date, next_start_date) in enumerate(zip(dates[:-1], dates[1:])):
+        days_in_this_month: int = days_counts[idx]
+        self.assertEqual(days_in_this_month, (next_start_date - start_date).days)
+      
 
   def test_is_valid(self) -> None:
-    # TODO: Implement me!
-    pass
+    for date_type in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
+      min_date: CalendarDate = CalendarUtils.get_min_supported_date(date_type)
+      max_date: CalendarDate = CalendarUtils.get_max_supported_date(date_type)
 
-  def test_supported_range(self) -> None:
-    # TODO: Implement me!
-    pass
+      self.assertTrue(CalendarUtils.is_valid(min_date))
+      self.assertTrue(CalendarUtils.is_valid(max_date))
+      self.assertFalse(CalendarUtils.is_valid(CalendarDate(0, 1, 1, date_type))) # Out or supported range.
+      self.assertFalse(CalendarUtils.is_valid(CalendarDate(9999, 1, 1, date_type))) # Out of supported range.
+
+    class __DuckTypeClass:
+      def __init__(self, anything: Any) -> None:
+        self.date_type = anything
+    self.assertFalse(CalendarUtils.is_valid(__DuckTypeClass(0))) # type: ignore # Test duck type.

@@ -5,7 +5,7 @@ from enum import Enum
 from datetime import date
 
 from bazi import Ganzhi, Jieqi
-from bazi.hkodata import DecodedJieqiDates, JieqiDates, DecodedLunarYears, LunarYearInfo
+from bazi.hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 class CalendarType(Enum):
   '''

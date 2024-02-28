@@ -1,4 +1,6 @@
 requests
+colorama
+psutil
 pytest
 ruff
 coverage

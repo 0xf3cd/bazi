@@ -1,6 +1,7 @@
 .pytest_cache/
 .ruff_cache/
 .coverage
+covhtml/
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
