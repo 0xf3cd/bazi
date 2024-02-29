@@ -4,7 +4,7 @@
 import unittest
 import random
 from datetime import date, datetime
-from bazi import BaziGender, Bazi, 八字, CalendarDate, CalendarType, CalendarUtils
+from bazi import BaziGender, BaziPrecision, Bazi, 八字
 
 
 class TestBaziGender(unittest.TestCase):
@@ -23,118 +23,79 @@ class TestBaziGender(unittest.TestCase):
 
 
 class TestBazi(unittest.TestCase):
-  def test_init_with_date(self) -> None:
+  def test_init(self) -> None:
     for _ in range(128):
-      random_d: date = date(
+      random_dt: datetime = datetime(
         year=random.randint(1950, 2000),
         month=random.randint(1, 12),
         day=random.randint(1, 28),
-      )
-
-      bazi: Bazi = Bazi(random_d, 15, BaziGender.男)
-
-      self.assertEqual(bazi.solar_date, CalendarDate(random_d.year, random_d.month, random_d.day, CalendarType.SOLAR))
-      self.assertEqual(bazi.hour, 15)
-      self.assertEqual(bazi.gender, BaziGender.男)
-
-      # Also test that `datetime` is acceptable, since `datetime` is subclass of `date`.
-      random_dt: datetime = datetime(
-        year=random_d.year,
-        month=random_d.month,
-        day=random_d.day,
-        hour=23,
+        hour=random.randint(0, 23),
         minute=random.randint(0, 59),
         second=random.randint(0, 59)
       )
 
-      bazi: Bazi = Bazi(random_dt, 15, BaziGender.男)
-
-      self.assertEqual(bazi.solar_date, CalendarDate(random_d.year, random_d.month, random_d.day, CalendarType.SOLAR))
-      self.assertNotEqual(bazi.hour, random_dt.hour) # `datetime.hour` is ignored by `bazi.__init__`.
-      self.assertEqual(bazi.hour, 15)
-      self.assertEqual(bazi.gender, BaziGender.男)
-
-  def test_init_with_solar_date(self) -> None:
-    for _ in range(128):
-      random_solar_date: CalendarDate = CalendarDate(
-        year=random.randint(1950, 2000),
-        month=random.randint(1, 12),
-        day=random.randint(1, 28),
-        date_type=CalendarType.SOLAR
+      bazi: Bazi = Bazi(
+        birth_time=random_dt,
+        gender=BaziGender.男,
+        precision=BaziPrecision.DAY,
       )
 
-      bazi: Bazi = Bazi(random_solar_date, 15, BaziGender.男)
-
-      self.assertEqual(bazi.solar_date, random_solar_date)
-      self.assertEqual(bazi.hour, 15)
+      self.assertEqual(bazi.solar_birth_date, date(random_dt.year, random_dt.month, random_dt.day))
+      self.assertEqual(bazi.hour, random_dt.hour)
+      self.assertEqual(bazi.minute, random_dt.minute)
       self.assertEqual(bazi.gender, BaziGender.男)
-
-  def test_init_with_ganzhi_date(self) -> None:
-    for _ in range(128):
-      random_ganzhi_date: CalendarDate = CalendarDate(
-        year=random.randint(1950, 2000),
-        month=random.randint(1, 12),
-        day=random.randint(1, 28),
-        date_type=CalendarType.GANZHI
-      )
-
-      bazi: Bazi = Bazi(random_ganzhi_date, 15, BaziGender.男)
-
-      self.assertEqual(bazi.solar_date, CalendarUtils.ganzhi_to_solar(random_ganzhi_date))
-      self.assertEqual(bazi.hour, 15)
-      self.assertEqual(bazi.gender, BaziGender.男)
-
-  def test_init_with_lunar_date(self) -> None:
-    for _ in range(128):
-      random_lunar_date: CalendarDate = CalendarDate(
-        year=random.randint(1950, 2000),
-        month=random.randint(1, 12), # Not using (1, 13) here, since we don't know which years are leap years.
-        day=random.randint(1, 28),
-        date_type=CalendarType.LUNAR
-      )
-
-      bazi: Bazi = Bazi(random_lunar_date, 15, BaziGender.男)
-
-      self.assertEqual(bazi.solar_date, CalendarUtils.lunar_to_solar(random_lunar_date))
-      self.assertEqual(bazi.hour, 15)
-      self.assertEqual(bazi.gender, BaziGender.男)
+      self.assertEqual(bazi.precision, BaziPrecision.DAY)
 
   def test_chinese(self) -> None:
     self.assertIs(Bazi, 八字)
 
     for _ in range(128):
-      random_d: date = date(
+      random_dt: datetime = datetime(
         year=random.randint(1950, 2000),
         month=random.randint(1, 12),
         day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+        second=random.randint(0, 59)
       )
 
-      bazi: 八字 = 八字(random_d, 15, BaziGender.男)
+      bazi: 八字 = 八字(
+        birth_time=random_dt,
+        gender=BaziGender.男,
+        precision=BaziPrecision.DAY,
+      )
 
-      self.assertEqual(bazi.solar_date, CalendarDate(random_d.year, random_d.month, random_d.day, CalendarType.SOLAR))
-      self.assertEqual(bazi.hour, 15)
+      self.assertEqual(bazi.solar_birth_date, date(random_dt.year, random_dt.month, random_dt.day))
+      self.assertEqual(bazi.hour, random_dt.hour)
+      self.assertEqual(bazi.minute, random_dt.minute)
       self.assertEqual(bazi.gender, BaziGender.男)
+      self.assertEqual(bazi.precision, BaziPrecision.DAY)
 
   def test_invalid_arguments(self) -> None:
-    random_d: date = date(
+    random_dt: datetime = datetime(
       year=random.randint(1950, 2000),
       month=random.randint(1, 12),
       day=random.randint(1, 28),
+      hour=random.randint(0, 23),
+      minute=random.randint(0, 59),
+      second=random.randint(0, 59)
     )
 
-    with self.assertRaises(TypeError):
-      Bazi(random_d, 15) # type: ignore # Missing `gender`
-    with self.assertRaises(TypeError):
-      Bazi(random_d, BaziGender.女) # type: ignore # Missing `hour`
     with self.assertRaises(AssertionError):
-      Bazi(CalendarDate(999999, 3, 30, CalendarType.SOLAR), 20, BaziGender.男) # Invalid year
+      Bazi(birth_time=random_dt, gender=BaziGender.男) # type: ignore # Missing `precision`
     with self.assertRaises(AssertionError):
-      Bazi(CalendarDate(2024, 13, 3, CalendarType.SOLAR), 20, BaziGender.男) # Invalid month
+      Bazi(birth_time=random_dt, precision=BaziPrecision.DAY) # type: ignore # Missing `gender`
     with self.assertRaises(AssertionError):
-      Bazi(CalendarDate(2024, 1, 0, CalendarType.SOLAR), 20, BaziGender.男) # Invalid day
+      Bazi(birth_time='2024-03-03', gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore # Currently doesn't take string as input
     with self.assertRaises(AssertionError):
-      Bazi(CalendarDate(2024, 1, 30, CalendarType.SOLAR), 24, BaziGender.男) # Invalid hour
+      Bazi(birth_time=date(9999, 1, 1), gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore
     with self.assertRaises(AssertionError):
-      Bazi(CalendarDate(2024, 8, 1, CalendarType.SOLAR), -1, BaziGender.男) # Yet another invalid hour
-    with self.assertRaises(AssertionError):
-      Bazi('2024-01-30', 13, BaziGender.男) # type: ignore # Currently doesn't take string as input
+      dt: datetime = datetime(
+        year=9999, # Out of supported range.
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+        second=random.randint(0, 59)
+      )
+      Bazi(birth_time=dt, gender=BaziGender.男, precision=BaziPrecision.DAY)

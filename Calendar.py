@@ -150,6 +150,13 @@ class CalendarDate:
     if self.day != other.day:
       return self.day > other.day
     return True
+  
+  def to_date(self) -> date:
+    if self.date_type == CalendarType.SOLAR:
+      return date(self.year, self.month, self.day)
+    else:
+      solar_calendardate: CalendarDate = CalendarUtils.to_solar(self)
+      return date(solar_calendardate.year, solar_calendardate.month, solar_calendardate.day)
 
 
 class CalendarUtils:

@@ -327,6 +327,13 @@ class TestCalendarDate(unittest.TestCase):
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)
 
+  def test_to_date(self) -> None:
+    d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+    self.assertEqual(d.to_date(), date(2000, 1, 1))
+
+    d = CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+    self.assertEqual(d.to_date(), date(1901, 2, 19))
+
 
 class TestCalendarUtils(unittest.TestCase):
   def test_calendar_utils_init(self) -> None:
