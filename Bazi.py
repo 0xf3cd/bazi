@@ -5,7 +5,9 @@ from enum import Enum
 from datetime import date, datetime
 from typing import TypedDict, Unpack
 
-from bazi import CalendarDate, CalendarUtils
+from bazi import (
+  CalendarDate, CalendarUtils, Jieqi, Tiangan, Dizhi, Ganzhi, hkodata
+)
 
 
 class BaziGender(Enum):
@@ -71,6 +73,10 @@ class Bazi:
 
   ATTENTION: this class does not know anything about timezone. 
   '''
+
+  # Save the Jieqi data as a class variable.
+  __jieqi_db: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
+
   def __init__(self, **kwargs: Unpack[BaziArgs]) -> None:
     '''
     Input the birth time. We don't care about the timezone.
@@ -106,8 +112,22 @@ class Bazi:
     assert isinstance(kwargs['precision'], BaziPrecision)
     self._precision: BaziPrecision = copy.deepcopy(kwargs['precision'])
 
+    self.__gen_ganzhi_info() # Generate ganzhi-related info.
+
+  def __gen_ganzhi_info(self) -> None:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
+
+    ganzhi_calendardate: CalendarDate = CalendarUtils.to_ganzhi(self._solar_birth_date)
+
+    if self._precision == BaziPrecision.DAY:
+      # Figure out the solar date falls into which ganzhi year.
+      solar_year: int = self._solar_birth_date.year
+      lichun_date: date = self.__jieqi_db.get(solar_year, Jieqi.立夏)
+      self._ganzhi_year: int = solar_year if self._solar_birth_date.to_date() >= lichun_date else solar_year - 1
+
+      # Figure out the ganzhi month.
+      self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
 
   @property
   def solar_birth_date(self) -> date:
