@@ -40,6 +40,14 @@ class Tiangan(Enum):
   
   def __str__(self) -> str:
     return str(self.value)
+  
+  @property
+  def index(self) -> int:
+    return Tiangan.as_list().index(self)
+  
+  @staticmethod
+  def from_index(i: int) -> 'Tiangan':
+    return Tiangan.as_list()[i]
 
 天干 = Tiangan # Alias
 
@@ -84,6 +92,14 @@ class Dizhi(Enum):
   
   def __str__(self) -> str:
     return str(self.value)
+  
+  @property
+  def index(self) -> int:
+    return Dizhi.as_list().index(self)
+  
+  @staticmethod
+  def from_index(i: int) -> 'Dizhi':
+    return Dizhi.as_list()[i]
 
 地支 = Dizhi  # Alias
 

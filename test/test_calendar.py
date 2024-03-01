@@ -3,6 +3,7 @@
 
 import unittest
 import random
+import copy
 from datetime import date, timedelta
 from itertools import product
 from typing import Any
@@ -267,6 +268,71 @@ class TestCalendarDate(unittest.TestCase):
       if d1 != d2:
         self.assertNotEqual(str(d1), str(d2))
         self.assertNotEqual(repr(d1), repr(d2))    
+
+  def test_malicious_writes(self) -> None:
+    with self.subTest('Write to properties'):
+      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+      with self.assertRaises(AttributeError):
+        d.year = 1999 # type: ignore
+      with self.assertRaises(AttributeError):
+        d.month = 2 # type: ignore
+      with self.assertRaises(AttributeError):
+        d.day = 10 # type: ignore
+      with self.assertRaises(AttributeError):
+        d.date_type = CalendarType.LUNAR # type: ignore
+
+    with self.subTest('Write to underlying instance variables'):
+      # Not really expect users to really write to the underlying instance variables though.
+      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+      d._year = 1999
+      d._month = 2
+      d._day = 10
+      d._date_type = CalendarType.LUNAR
+      self.assertEqual(d, CalendarDate(1999, 2, 10, CalendarType.LUNAR))
+    
+  def test_copy(self) -> None:
+    with self.subTest('Test shallow copy'):
+      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+      d_copy = copy.copy(d)
+      self.assertEqual(d, d_copy)
+      self.assertIsNot(d, d_copy)
+
+      d_copy._year += 1
+      self.assertNotEqual(d, d_copy)
+      self.assertNotEqual(d_copy, d)
+
+      d_copy._year -= 1
+      self.assertEqual(d, d_copy)
+      self.assertEqual(d_copy, d)
+
+      d_copy._date_type = CalendarType.LUNAR
+      self.assertNotEqual(d, d_copy)
+      self.assertNotEqual(d_copy, d)
+
+    with self.subTest('Test deep copy'):
+      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+      d_copy = copy.deepcopy(d)
+      self.assertEqual(d, d_copy)
+      self.assertIsNot(d, d_copy)
+
+      d_copy._year += 1
+      self.assertNotEqual(d, d_copy)
+      self.assertNotEqual(d_copy, d)
+
+      d_copy._year -= 1
+      self.assertEqual(d, d_copy)
+      self.assertEqual(d_copy, d)
+
+      d_copy._date_type = CalendarType.LUNAR
+      self.assertNotEqual(d, d_copy)
+      self.assertNotEqual(d_copy, d)
+
+  def test_to_date(self) -> None:
+    d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+    self.assertEqual(d.to_date(), date(2000, 1, 1))
+
+    d = CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+    self.assertEqual(d.to_date(), date(1901, 2, 19))
 
 
 class TestCalendarUtils(unittest.TestCase):
@@ -637,4 +703,50 @@ class TestCalendarUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         CalendarUtils.ganzhi_to_solar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
+  def test_to_solar(self) -> None:
+    with self.subTest('Positive cases'):
+      d: date = date(2023, 5, 8)
+      solar_date: CalendarDate = CalendarUtils.to_solar(d)
+      self.assertEqual(solar_date, CalendarDate(2023, 5, 8, CalendarType.SOLAR))
+      self.assertEqual(solar_date, CalendarUtils.to_solar(d))
+      self.assertEqual(solar_date, CalendarUtils.to_solar(solar_date))
+      self.assertEqual(solar_date, CalendarUtils.to_solar(CalendarUtils.solar_to_lunar(solar_date)))
+      self.assertEqual(solar_date, CalendarUtils.to_solar(CalendarUtils.solar_to_ganzhi(solar_date)))
     
+    with self.subTest('Negative cases'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_solar(CalendarDate(9999, 1, 1, CalendarType.SOLAR)) # Invalid date
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_solar('2024-01-01') # type: ignore # Invalid type
+
+  def test_to_lunar(self) -> None:
+    with self.subTest('Positive cases'):
+      d: date = date(2023, 5, 8)
+      lunar_date: CalendarDate = CalendarUtils.to_lunar(d)
+      self.assertEqual(lunar_date, CalendarUtils.solar_to_lunar(CalendarDate(2023, 5, 8, CalendarType.SOLAR)))
+      self.assertEqual(lunar_date, CalendarUtils.to_lunar(d))
+      self.assertEqual(lunar_date, CalendarUtils.to_lunar(lunar_date))
+      self.assertEqual(lunar_date, CalendarUtils.to_lunar(CalendarUtils.lunar_to_solar(lunar_date)))
+      self.assertEqual(lunar_date, CalendarUtils.to_lunar(CalendarUtils.lunar_to_ganzhi(lunar_date)))
+    
+    with self.subTest('Negative cases'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_lunar(CalendarDate(9999, 1, 1, CalendarType.LUNAR)) # Invalid date
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_lunar('2024-01-01') # type: ignore # Invalid type
+
+  def test_to_ganzhi(self) -> None:
+    with self.subTest('Positive cases'):
+      d: date = date(2023, 5, 8)
+      ganzhi_date: CalendarDate = CalendarUtils.to_ganzhi(d)
+      self.assertEqual(ganzhi_date, CalendarUtils.solar_to_ganzhi(CalendarDate(2023, 5, 8, CalendarType.SOLAR)))
+      self.assertEqual(ganzhi_date, CalendarUtils.to_ganzhi(d))
+      self.assertEqual(ganzhi_date, CalendarUtils.to_ganzhi(ganzhi_date))
+      self.assertEqual(ganzhi_date, CalendarUtils.to_ganzhi(CalendarUtils.ganzhi_to_solar(ganzhi_date)))
+      self.assertEqual(ganzhi_date, CalendarUtils.to_ganzhi(CalendarUtils.ganzhi_to_lunar(ganzhi_date)))
+    
+    with self.subTest('Negative cases'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_ganzhi(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_ganzhi('2024-01-01') # type: ignore # Invalid type

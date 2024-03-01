@@ -1,11 +1,13 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import copy
 import calendar
+
 from enum import Enum
 from datetime import date, timedelta
 
-from bazi import Ganzhi, Jieqi
-from bazi.hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
+from .Defines import Ganzhi, Jieqi
+from .hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 class CalendarType(Enum):
   '''
@@ -148,6 +150,13 @@ class CalendarDate:
     if self.day != other.day:
       return self.day > other.day
     return True
+  
+  def to_date(self) -> date:
+    if self.date_type == CalendarType.SOLAR:
+      return date(self.year, self.month, self.day)
+    else:
+      solar_calendardate: CalendarDate = CalendarUtils.to_solar(self)
+      return date(solar_calendardate.year, solar_calendardate.month, solar_calendardate.day)
 
 
 class CalendarUtils:
@@ -424,3 +433,80 @@ class CalendarUtils:
 
     solar_date: CalendarDate = CalendarUtils.ganzhi_to_solar(ganzhi_date)
     return CalendarUtils.solar_to_lunar(solar_date)
+  
+  @staticmethod
+  def __to_calendardate(d: date | CalendarDate) -> CalendarDate:
+    if isinstance(d, date):
+      ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
+    else:
+      assert isinstance(d, CalendarDate)
+      ret = copy.deepcopy(d)
+
+    assert CalendarUtils.is_valid(ret)
+    return ret
+
+  @staticmethod
+  def to_solar(d: date | CalendarDate) -> CalendarDate:
+    '''
+    Convert the input date to a `CalendarDate` with `SOLAR` type.
+    
+    Args:
+    - d: (date | CalendarDate) The input date.
+      - If `d` is of `date` type, it will be interpreted as a solar date.
+
+    Return: (CalendarDate) a converted date with `SOLAR` type.
+    '''
+
+    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+
+    if calendardate.date_type == CalendarType.SOLAR:
+      return copy.deepcopy(calendardate)
+    elif calendardate.date_type == CalendarType.LUNAR:
+      return CalendarUtils.lunar_to_solar(calendardate)
+    else:
+      assert calendardate.date_type == CalendarType.GANZHI
+      return CalendarUtils.ganzhi_to_solar(calendardate)
+
+  @staticmethod
+  def to_lunar(d: date | CalendarDate) -> CalendarDate:
+    '''
+    Convert the input date to a `CalendarDate` with `LUNAR` type.
+
+    Args:
+    - d: (date | CalendarDate) The input date.
+      - If `d` is of `date` type, it will be interpreted as a solar date.
+
+    Return: (CalendarDate) a converted date with `LUNAR` type.
+    '''
+
+    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+
+    if calendardate.date_type == CalendarType.LUNAR:
+      return copy.deepcopy(calendardate)
+    elif calendardate.date_type == CalendarType.SOLAR:
+      return CalendarUtils.solar_to_lunar(calendardate)
+    else:
+      assert calendardate.date_type == CalendarType.GANZHI
+      return CalendarUtils.ganzhi_to_lunar(calendardate)
+    
+  @staticmethod
+  def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
+    '''
+    Convert the input date to a `CalendarDate` with `GANZHI` type.
+
+    Args:
+    - d: (date | CalendarDate) The input date.
+      - If `d` is of `date` type, it will be interpreted as a solar date.
+
+    Return: (CalendarDate) a converted date with `GANZHI` type.
+    '''
+
+    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+
+    if calendardate.date_type == CalendarType.GANZHI:
+      return copy.deepcopy(calendardate)
+    elif calendardate.date_type == CalendarType.SOLAR:
+      return CalendarUtils.solar_to_ganzhi(calendardate)
+    else:
+      assert calendardate.date_type == CalendarType.LUNAR
+      return CalendarUtils.lunar_to_ganzhi(calendardate)
