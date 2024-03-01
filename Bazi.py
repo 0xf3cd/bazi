@@ -3,12 +3,12 @@
 import copy
 from enum import Enum
 from datetime import date, datetime, timedelta
-from typing import TypedDict, Unpack
+from typing import TypedDict, Unpack, NamedTuple
 
-from bazi import (
-  CalendarDate, CalendarUtils, Jieqi, Tiangan, Dizhi, Ganzhi, hkodata,
-  Utils,
-)
+from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
+from .Calendar import CalendarDate, CalendarUtils
+from . import Utils
+from . import hkodata
 
 
 class BaziGender(Enum):
@@ -34,7 +34,7 @@ class BaziGender(Enum):
 
 class BaziPrecision(Enum):
   '''
-  BaziPrecision is used to specify the precision when generating the Bazi natal chart.
+  BaziPrecision is used to specify the precision when generating the Bazi chart.
 
   As per the rules of Bazi system, new years start on the days of Start of Spring (LICHUN / 立春), and new months start
   on the days of 12 Jieqis (LICHUN, JINGZHE, QINGMING, LIXIA... / 立春, 惊蛰, 清明, 立夏...).
@@ -60,6 +60,13 @@ class BaziPrecision(Enum):
   DAY    = 0
   HOUR   = 1
   MINUTE = 2
+
+
+class BaziChart(NamedTuple):
+  year: Ganzhi
+  month: Ganzhi
+  day: Ganzhi
+  hour: Ganzhi
 
 
 class BaziArgs(TypedDict):
@@ -133,14 +140,14 @@ class Bazi:
       # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
       self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
       assert 1 <= self._ganzhi_month <= 12
-      self._month_dizhi: Dizhi = Dizhi.as_list()[(2 + self._ganzhi_month - 1) % 12]
+      self._month_dizhi: Dizhi = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
 
       # Figure out the ganzhi day, as well as the Day Ganzhi (日柱).
       day_offset: int = 0 if self._birth_time.hour < 23 else 1
       self._day_ganzhi: Ganzhi = Utils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
 
       # Finally, find out the Hour Dizhi (时柱地支).
-      self._hour_dizhi: Dizhi = Dizhi.as_list()[int((self._hour + 1) / 2) % 12]
+      self._hour_dizhi: Dizhi = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
 
   @property
   def solar_birth_date(self) -> date:
@@ -166,8 +173,29 @@ class Bazi:
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
     '''
     Return the 4 Dizhis of Year, Month, Day, Hour (in that order!).
+    返回年、月、日、时的地支。
     '''
     return (self._year_ganzhi.dizhi, self._month_dizhi, 
             self._day_ganzhi.dizhi, self._hour_dizhi,)
   
+  @property
+  def four_tiangans(self) -> tuple[Tiangan, Tiangan, Tiangan, Tiangan]:
+    '''
+    Return the 4 Tiangans of Year, Month, Day, Hour (in that order!).
+    返回年、月、日、时的天干。
+    '''
+    return (self._year_ganzhi.tiangan, Utils.find_month_tiangan(self._year_ganzhi.tiangan, self._month_dizhi), 
+            self._day_ganzhi.tiangan, Utils.find_hour_tiangan(self._day_ganzhi.tiangan, self._hour_dizhi))
+  
+  @property
+  def chart(self) -> BaziChart:
+    '''
+    Return the 4 Ganzhis of Year, Month, Day, Hour.
+    返回年、月、日、时的天干地支（即返回八字）。
+
+    Return: (BaziChart) the 4 Ganzhis of Year, Month, Day, Hour.
+    '''
+    ganzhis: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
+    return BaziChart(year=ganzhis[0], month=ganzhis[1], day=ganzhis[2], hour=ganzhis[3])
+
 八字 = Bazi

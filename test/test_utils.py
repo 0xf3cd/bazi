@@ -3,7 +3,10 @@
 
 import unittest
 from datetime import date, datetime, timedelta
-from bazi import get_day_ganzhi, CalendarUtils, Ganzhi
+from bazi import (
+  get_day_ganzhi, find_month_tiangan, find_hour_tiangan, 
+  CalendarUtils, Ganzhi, Tiangan, Dizhi
+)
 
 class TestUtils(unittest.TestCase):
   def test_get_day_ganzhi_basic(self) -> None:
@@ -42,3 +45,16 @@ class TestUtils(unittest.TestCase):
       (CalendarUtils.to_ganzhi(date(1997, 1, 30)), Ganzhi.from_str('壬申')),
     ]:
       self.assertEqual(get_day_ganzhi(d), ganzhi)
+
+  def test_find_month_tiangan(self) -> None:
+    self.assertEqual(find_month_tiangan(Tiangan.甲, Dizhi.寅), Tiangan.丙)
+    self.assertEqual(find_month_tiangan(Tiangan.壬, Dizhi.子), Tiangan.壬)
+    self.assertEqual(find_month_tiangan(Tiangan.丁, Dizhi.丑), Tiangan.癸)
+    self.assertEqual(find_month_tiangan(Tiangan.戊, Dizhi.巳), Tiangan.丁)
+
+  def test_find_hour_tiangan(self) -> None:
+    self.assertEqual(find_hour_tiangan(Tiangan.甲, Dizhi.寅), Tiangan.丙)
+    self.assertEqual(find_hour_tiangan(Tiangan.壬, Dizhi.子), Tiangan.庚)
+    self.assertEqual(find_hour_tiangan(Tiangan.丁, Dizhi.丑), Tiangan.辛)
+    self.assertEqual(find_hour_tiangan(Tiangan.戊, Dizhi.巳), Tiangan.丁)
+    self.assertEqual(find_hour_tiangan(Tiangan.丙, Dizhi.卯), Tiangan.辛)

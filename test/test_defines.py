@@ -76,6 +76,34 @@ class TestTiangan(unittest.TestCase):
 
     self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
 
+  def test_index(self) -> None:
+    self.assertEqual(Tiangan.甲.index, 0)
+    self.assertEqual(Tiangan.乙.index, 1)
+    self.assertEqual(Tiangan.丙.index, 2)
+    self.assertEqual(Tiangan.丁.index, 3)
+    self.assertEqual(Tiangan.戊.index, 4)
+    self.assertEqual(Tiangan.己.index, 5)
+    self.assertEqual(Tiangan.庚.index, 6)
+    self.assertEqual(Tiangan.辛.index, 7)
+    self.assertEqual(Tiangan.壬.index, 8)
+    self.assertEqual(Tiangan.癸.index, 9)
+
+  def test_from_index(self) -> None:
+    self.assertEqual(Tiangan.from_index(0), Tiangan.甲)
+    self.assertEqual(Tiangan.from_index(1), Tiangan.乙)
+    self.assertEqual(Tiangan.from_index(2), Tiangan.丙)
+    self.assertEqual(Tiangan.from_index(3), Tiangan.丁)
+    self.assertEqual(Tiangan.from_index(4), Tiangan.戊)
+    self.assertEqual(Tiangan.from_index(5), Tiangan.己)
+    self.assertEqual(Tiangan.from_index(6), Tiangan.庚)
+    self.assertEqual(Tiangan.from_index(7), Tiangan.辛)
+    self.assertEqual(Tiangan.from_index(8), Tiangan.壬)
+    self.assertEqual(Tiangan.from_index(9), Tiangan.癸)
+    with self.assertRaises(IndexError):
+      Tiangan.from_index(10)
+    with self.assertRaises(IndexError):
+      Tiangan.from_index(-11)
+
 class TestDizhi(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(12, len(Dizhi))
@@ -146,6 +174,37 @@ class TestDizhi(unittest.TestCase):
 
     self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
 
+  def test_index(self) -> None:
+    self.assertEqual(Dizhi.子.index, 0)
+    self.assertEqual(Dizhi.丑.index, 1)
+    self.assertEqual(Dizhi.寅.index, 2)
+    self.assertEqual(Dizhi.卯.index, 3)
+    self.assertEqual(Dizhi.辰.index, 4)
+    self.assertEqual(Dizhi.巳.index, 5)
+    self.assertEqual(Dizhi.午.index, 6)
+    self.assertEqual(Dizhi.未.index, 7)
+    self.assertEqual(Dizhi.申.index, 8)
+    self.assertEqual(Dizhi.酉.index, 9)
+    self.assertEqual(Dizhi.戌.index, 10)
+    self.assertEqual(Dizhi.亥.index, 11)
+
+  def test_from_index(self) -> None:
+    self.assertEqual(Dizhi.from_index(0), Dizhi.子)
+    self.assertEqual(Dizhi.from_index(1), Dizhi.丑)
+    self.assertEqual(Dizhi.from_index(2), Dizhi.寅)
+    self.assertEqual(Dizhi.from_index(3), Dizhi.卯)
+    self.assertEqual(Dizhi.from_index(4), Dizhi.辰)
+    self.assertEqual(Dizhi.from_index(5), Dizhi.巳)
+    self.assertEqual(Dizhi.from_index(6), Dizhi.午)
+    self.assertEqual(Dizhi.from_index(7), Dizhi.未)
+    self.assertEqual(Dizhi.from_index(8), Dizhi.申)
+    self.assertEqual(Dizhi.from_index(9), Dizhi.酉)
+    self.assertEqual(Dizhi.from_index(10), Dizhi.戌)
+    self.assertEqual(Dizhi.from_index(11), Dizhi.亥)
+    with self.assertRaises(IndexError):
+      Dizhi.from_index(12)
+    with self.assertRaises(IndexError):
+      Dizhi.from_index(-13)
 
 class TestGanzhi(unittest.TestCase):
   def test_basic(self) -> None:
