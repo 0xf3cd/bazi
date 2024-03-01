@@ -111,7 +111,7 @@ def run_ruff() -> int:
   print('\n' + '#' * term_width)
   print('>> Checking for style violations...')
 
-  ruff_ret: int = subprocess.run(['ruff', str(Path(__file__).parent)]).returncode
+  ruff_ret: int = subprocess.run(['ruff', 'check', str(Path(__file__).parent)]).returncode
   print('>> Checking style violations completed...')
 
   if ruff_ret == 0:

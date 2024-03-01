@@ -2,8 +2,8 @@
 
 from .Defines import Tiangan
 
-# The mappings are used figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
-YEAR_TO_MONTH_MAPPINGS: dict[Tiangan, Tiangan] = {
+# The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
+YEAR_TO_MONTH_TABLE: dict[Tiangan, Tiangan] = {
   Tiangan.甲 : Tiangan.丙, # First month in year of "甲" is "丙寅".
   Tiangan.乙 : Tiangan.戊, # First month in year of "乙" is "戊寅".
   Tiangan.丙 : Tiangan.庚, # First month in year of "丙" is "庚寅".
@@ -16,7 +16,8 @@ YEAR_TO_MONTH_MAPPINGS: dict[Tiangan, Tiangan] = {
   Tiangan.癸 : Tiangan.甲, # First month in year of "癸" is "甲寅".
 }
 
-DAY_TO_HOUR_MAPPINGS: dict[Tiangan, Tiangan] = {
+# The mappings are used to figure out the first hour's Tiangan in a ganzhi day, i.e. 日上起时表.
+DAY_TO_HOUR_TABLE: dict[Tiangan, Tiangan] = {
   Tiangan.甲 : Tiangan.甲, # First hour in day of "甲" is "甲子".
   Tiangan.乙 : Tiangan.丙, # First hour in day of "乙" is "丙子".
   Tiangan.丙 : Tiangan.戊, # First hour in day of "丙" is "戊子".

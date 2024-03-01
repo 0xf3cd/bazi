@@ -7,7 +7,7 @@ from typing import TypedDict, Unpack, NamedTuple
 
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
 from .Calendar import CalendarDate, CalendarUtils
-from . import Utils
+from .Utils import BaziUtils
 from . import hkodata
 
 
@@ -144,7 +144,7 @@ class Bazi:
 
       # Figure out the ganzhi day, as well as the Day Ganzhi (日柱).
       day_offset: int = 0 if self._birth_time.hour < 23 else 1
-      self._day_ganzhi: Ganzhi = Utils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
+      self._day_ganzhi: Ganzhi = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
 
       # Finally, find out the Hour Dizhi (时柱地支).
       self._hour_dizhi: Dizhi = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
@@ -184,8 +184,8 @@ class Bazi:
     Return the 4 Tiangans of Year, Month, Day, Hour (in that order!).
     返回年、月、日、时的天干。
     '''
-    return (self._year_ganzhi.tiangan, Utils.find_month_tiangan(self._year_ganzhi.tiangan, self._month_dizhi), 
-            self._day_ganzhi.tiangan, Utils.find_hour_tiangan(self._day_ganzhi.tiangan, self._hour_dizhi))
+    return (self._year_ganzhi.tiangan, BaziUtils.find_month_tiangan(self._year_ganzhi.tiangan, self._month_dizhi), 
+            self._day_ganzhi.tiangan, BaziUtils.find_hour_tiangan(self._day_ganzhi.tiangan, self._hour_dizhi))
   
   @property
   def chart(self) -> BaziChart:
