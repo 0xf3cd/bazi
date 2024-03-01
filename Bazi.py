@@ -63,10 +63,10 @@ class BaziPrecision(Enum):
 
 
 class BaziChart(NamedTuple):
-  year: Ganzhi
+  year:  Ganzhi
   month: Ganzhi
-  day: Ganzhi
-  hour: Ganzhi
+  day:   Ganzhi
+  hour:  Ganzhi
 
 
 class BaziArgs(TypedDict):
@@ -131,20 +131,20 @@ class Bazi:
 
     if self._precision == BaziPrecision.DAY:
       # Figure out the solar date falls into which ganzhi year.
-      # Also figure out the Year Ganzhi (年柱).
+      # Also figure out the Year Ganzhi / Year Pillar (年柱).
       solar_year: int = self._solar_birth_date.year
       lichun_date: date = self.__jieqi_db.get(solar_year, Jieqi.立春)
       self._ganzhi_year: int = solar_year if self._solar_birth_date.to_date() >= lichun_date else solar_year - 1
-      self._year_ganzhi: Ganzhi = self.__lunar_db.get(self._ganzhi_year)['ganzhi']
+      self._year_pillar: Ganzhi = self.__lunar_db.get(self._ganzhi_year)['ganzhi']
 
       # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
       self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
       assert 1 <= self._ganzhi_month <= 12
       self._month_dizhi: Dizhi = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
 
-      # Figure out the ganzhi day, as well as the Day Ganzhi (日柱).
+      # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
       day_offset: int = 0 if self._birth_time.hour < 23 else 1
-      self._day_ganzhi: Ganzhi = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
+      self._day_pillar: Ganzhi = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
 
       # Finally, find out the Hour Dizhi (时柱地支).
       self._hour_dizhi: Dizhi = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
@@ -172,30 +172,28 @@ class Bazi:
   @property
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
     '''
-    Return the 4 Dizhis of Year, Month, Day, Hour (in that order!).
+    Return the 4 Dizhis of Year, Month, Day, and Hour pillars (in that order!).
     返回年、月、日、时的地支。
     '''
-    return (self._year_ganzhi.dizhi, self._month_dizhi, 
-            self._day_ganzhi.dizhi, self._hour_dizhi,)
+    return (self._year_pillar.dizhi, self._month_dizhi, 
+            self._day_pillar.dizhi, self._hour_dizhi,)
   
   @property
   def four_tiangans(self) -> tuple[Tiangan, Tiangan, Tiangan, Tiangan]:
     '''
-    Return the 4 Tiangans of Year, Month, Day, Hour (in that order!).
+    Return the 4 Tiangans of Year, Month, Day, and Hour pillars (in that order!).
     返回年、月、日、时的天干。
     '''
-    return (self._year_ganzhi.tiangan, BaziUtils.find_month_tiangan(self._year_ganzhi.tiangan, self._month_dizhi), 
-            self._day_ganzhi.tiangan, BaziUtils.find_hour_tiangan(self._day_ganzhi.tiangan, self._hour_dizhi))
+    return (self._year_pillar.tiangan, BaziUtils.find_month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
+            self._day_pillar.tiangan, BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
   
   @property
   def chart(self) -> BaziChart:
     '''
-    Return the 4 Ganzhis of Year, Month, Day, Hour.
+    Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.
     返回年、月、日、时的天干地支（即返回八字）。
-
-    Return: (BaziChart) the 4 Ganzhis of Year, Month, Day, Hour.
     '''
-    ganzhis: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
-    return BaziChart(year=ganzhis[0], month=ganzhis[1], day=ganzhis[2], hour=ganzhis[3])
+    pillars: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
+    return BaziChart(year=pillars[0], month=pillars[1], day=pillars[2], hour=pillars[3])
 
 八字 = Bazi

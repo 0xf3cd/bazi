@@ -3,7 +3,7 @@
 
 import unittest
 from datetime import date, datetime, timedelta
-from bazi import CalendarUtils, Ganzhi, Tiangan, Dizhi
+from bazi import CalendarUtils, Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang
 from bazi.Utils import BaziUtils
 
 
@@ -57,3 +57,9 @@ class TestUtils(unittest.TestCase):
     self.assertEqual(BaziUtils.find_hour_tiangan(Tiangan.丁, Dizhi.丑), Tiangan.辛)
     self.assertEqual(BaziUtils.find_hour_tiangan(Tiangan.戊, Dizhi.巳), Tiangan.丁)
     self.assertEqual(BaziUtils.find_hour_tiangan(Tiangan.丙, Dizhi.卯), Tiangan.辛)
+
+  def test_tiangan_trais(self) -> None:
+    for idx, tg in enumerate(Tiangan):
+      expected_wuxing: Wuxing = Wuxing.as_list()[idx // 2]
+      expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
+      self.assertEqual(BaziUtils.get_tiangan_traits(tg), (expected_wuxing, expected_yinyang))

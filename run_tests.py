@@ -18,15 +18,18 @@ import colorama
 # Get the argument from terminal. If `coverage`, then generate coverage report.
 argparse = argparse.ArgumentParser()
 argparse.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
-argparse.add_argument('-r', '--ruff', action='store_true', help='Whether or not to run ruff.')
-argparse.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
 argparse.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
+
+argparse.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
+argparse.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
+argparse.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
 
 args = argparse.parse_args()
 do_cov: bool = args.coverage
-do_ruff: bool = args.ruff
-expression: Optional[str] = args.expression
 minimum_cov_rate: float = args.coverage_rate
+run_slow_test: bool = args.slow_test
+run_hko_test: bool = args.hkodata_test
+expression: Optional[str] = args.expression
 
 term_width: int = shutil.get_terminal_size().columns
 
@@ -61,12 +64,18 @@ def print_sysinfo() -> None:
 # Run tests and generate html coverage report.
 def run_tests() -> int:
   print('\n' + '#' * term_width)
-  print('>> Running tests...')
+  print('>> Running bazi tests...')
 
   # Make `bazi` importable from the current directory.
   sys.path.append(str(Path(__file__).parent.parent))
-  from bazi import test # noqa: E402
-  ret_code: int = test.run_tests(expression=expression)
+  from bazi import run_bazi_tests # noqa: E402
+  ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
+
+  if run_hko_test:
+    print('\n' + '#' * term_width)
+    print('>> Running hkodata tests...')
+    from bazi import run_hkodata_tests # noqa: E402
+    ret_code |= run_hkodata_tests(expression=expression)
 
   if ret_code != 0:
     # Print in red.
@@ -133,8 +142,7 @@ def main() -> None:
   else:
     ret_code |= run_tests()
 
-  if do_ruff:
-    ret_code |= run_ruff()
+  ret_code |= run_ruff()
 
   print('\n' + '#' * term_width)
   end_time: datetime = datetime.now()

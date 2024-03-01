@@ -1,8 +1,6 @@
-name: Run Tests with pytest  
+name: Workflow on Pull Request - Run All Tests with pytest  
   
 on:
-  push:
-    branches: [ '**' ]
   pull_request:
     branches: [ main ]
 
@@ -26,4 +24,4 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x run_tests.py
-          ./run_tests.py -c -r
+          ./run_tests.py -c -cr 90 -hko -s # Running slow and hkodata tests. Also checking coverage.

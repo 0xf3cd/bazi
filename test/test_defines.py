@@ -2,7 +2,11 @@
 # test_defines.py
 
 import unittest
-from bazi import Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气
+from itertools import product
+from bazi import (
+  Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
+  Wuxing, 五行, Yinyang
+)
 
 
 class TestTiangan(unittest.TestCase):
@@ -413,3 +417,115 @@ class TestJieqi(unittest.TestCase):
 
     self.assertEqual(''.join([str(jq) for jq in Jieqi.as_list()]), 
                      '立春雨水惊蛰春分清明谷雨立夏小满芒种夏至小暑大暑立秋处暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒')
+
+
+class TestWuxing(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(Wuxing), 5)
+    self.assertEqual(Wuxing.金.value, '金')
+    self.assertNotEqual(Wuxing.金, Wuxing.木)
+    self.assertNotEqual(Wuxing.金.value, Wuxing.木.value)
+
+  def test_alias(self) -> None:
+    self.assertIs(Wuxing.木, Wuxing.MU)
+    self.assertIs(Wuxing.木, Wuxing.WOOD)
+
+    self.assertIs(Wuxing.火, Wuxing.HUO)
+    self.assertIs(Wuxing.火, Wuxing.FIRE)
+
+    self.assertIs(Wuxing.土, Wuxing.TU)
+    self.assertIs(Wuxing.土, Wuxing.EARTH)
+
+    self.assertIs(Wuxing.金, Wuxing.JIN)
+    self.assertIs(Wuxing.金, Wuxing.METAL)
+
+    self.assertIs(Wuxing.水, Wuxing.SHUI)
+    self.assertIs(Wuxing.水, Wuxing.WATER)
+
+    self.assertIs(Wuxing, 五行)
+
+  def test_as_list(self) -> None:
+    self.assertEqual(len(Wuxing.as_list()), 5)
+    self.assertEqual(Wuxing.as_list()[0], Wuxing.木)
+    self.assertEqual(Wuxing.as_list()[1], Wuxing.火)
+    self.assertEqual(Wuxing.as_list()[2], Wuxing.土)
+    self.assertEqual(Wuxing.as_list()[3], Wuxing.金)
+    self.assertEqual(Wuxing.as_list()[4], Wuxing.水)
+
+  def test_from_str(self) -> None:
+    self.assertIs(Wuxing.from_str('木'), Wuxing.木)
+    self.assertIs(Wuxing.from_str('火'), Wuxing.火)
+    self.assertIs(Wuxing.from_str('土'), Wuxing.土)
+    self.assertIs(Wuxing.from_str('金'), Wuxing.金)
+    self.assertIs(Wuxing.from_str('水'), Wuxing.水)
+
+    with self.assertRaises(AssertionError):
+      Wuxing.from_str('')
+    with self.assertRaises(AssertionError):
+      Wuxing.from_str('木木')
+    with self.assertRaises(ValueError):
+      Wuxing.from_str('甲')
+    with self.assertRaises(ValueError):
+      Wuxing.from_str('辰')
+
+  def test_str(self) -> None:
+    for wx in Wuxing:
+      self.assertEqual(str(wx), wx.value)
+      self.assertEqual(Wuxing.from_str(str(wx)), wx)
+
+    self.assertEqual(''.join([str(wx) for wx in Wuxing]), '木火土金水')
+
+  def test_generates_and_destructs(self) -> None:
+    self.assertTrue(Wuxing.木.generates(Wuxing.火))
+    self.assertTrue(Wuxing.火.destructs(Wuxing.金))
+
+    wx_list: list[Wuxing] = Wuxing.as_list()
+    for wx1, wx2 in product(wx_list, wx_list):
+      wx1_index: int = wx_list.index(wx1)
+      wx2_index: int = wx_list.index(wx2)
+      
+      if (wx1_index + 1) % 5 == wx2_index:
+        self.assertTrue(wx1.generates(wx2))
+        self.assertFalse(wx2.generates(wx1))
+        self.assertFalse(wx1.destructs(wx2))
+      else:
+        self.assertFalse(wx1.generates(wx2))
+
+      if (wx1_index + 2) % 5 == wx2_index:
+        self.assertTrue(wx1.destructs(wx2))
+        self.assertFalse(wx2.destructs(wx1))
+        self.assertFalse(wx1.generates(wx2))
+      else:
+        self.assertFalse(wx1.destructs(wx2))
+
+
+class TestYinyang(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(Yinyang), 2)
+    self.assertIs(Yinyang.阴, Yinyang.YIN)
+    self.assertIs(Yinyang.阳, Yinyang.YANG)
+
+    self.assertEqual(Yinyang.阴.value, '阴')
+    self.assertNotEqual(Yinyang.阴, Yinyang.阳)
+    self.assertNotEqual(Yinyang.阴.value, Yinyang.阳.value)
+
+    self.assertEqual(len(Yinyang.as_list()), 2)
+    self.assertEqual(Yinyang.as_list()[0], Yinyang.阳)
+    self.assertEqual(Yinyang.as_list()[1], Yinyang.阴)
+
+  def test_str(self) -> None:
+    self.assertEqual(str(Yinyang.阴), '阴')
+    self.assertEqual(str(Yinyang.阳), '阳')
+    self.assertEqual(''.join([str(e) for e in Yinyang.as_list()]), '阳阴')
+
+    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
+
+    with self.assertRaises(ValueError):
+      Yinyang.from_str('甲')
+    with self.assertRaises(ValueError):
+      Yinyang.from_str('辰')
+
+  def test_opposite(self) -> None:
+    self.assertEqual(Yinyang.阴.opposite, Yinyang.阳)
+    self.assertEqual(Yinyang.阳.opposite, Yinyang.阴)

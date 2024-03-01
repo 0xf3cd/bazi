@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_calendar.py
 
+import pytest
 import unittest
 import random
 import copy
@@ -13,6 +14,8 @@ from bazi import (
   Jieqi, CalendarType, CalendarUtils, CalendarDate
 )
 
+
+@pytest.mark.slow
 class TestCalendarType(unittest.TestCase):
   def test_calendar_type(self) -> None:
     self.assertIs(CalendarType.SOLAR, CalendarType.公历)
@@ -21,6 +24,7 @@ class TestCalendarType(unittest.TestCase):
     self.assertEqual(len(CalendarType), 3)
 
 
+@pytest.mark.slow
 class TestCalendarDate(unittest.TestCase):
   def test_solar_date(self) -> None:
     sd = CalendarDate(2024, 1, 1, CalendarType.SOLAR)
@@ -335,6 +339,7 @@ class TestCalendarDate(unittest.TestCase):
     self.assertEqual(d.to_date(), date(1901, 2, 19))
 
 
+@pytest.mark.slow
 class TestCalendarUtils(unittest.TestCase):
   def test_calendar_utils_init(self) -> None:
     with self.assertRaises(NotImplementedError):

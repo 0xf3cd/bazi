@@ -1,7 +1,8 @@
+import copy
 from datetime import date
-from .Defines import Ganzhi, Tiangan, Dizhi
+from .Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang
 from .Calendar import CalendarUtils, CalendarDate
-from .Rules import YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE
+from .Rules import YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS
 
 class BaziUtils:
   @staticmethod
@@ -56,3 +57,17 @@ class BaziUtils:
     first_hour_tiangan: Tiangan = DAY_TO_HOUR_TABLE[day_tiangan]
     hour_tiangan_index: int = (first_hour_tiangan.index + hour_index) % 10
     return Tiangan.from_index(hour_tiangan_index)
+
+  @staticmethod
+  def get_tiangan_traits(tg: Tiangan) -> tuple[Wuxing, Yinyang]:
+    '''
+    Get the Wuxing and Yinyang of the given Tiangan.
+    输入天干，返回它的五行和阴阳。
+
+    Args:
+    - tg: (Tiangan) The Tiangan.
+
+    Return: (tuple[Wuxing, Yinyang]) The Wuxing and Yinyang of the given Tiangan.
+    '''
+
+    return copy.deepcopy(TIANGAN_TRAITS[tg])

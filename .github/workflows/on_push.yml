@@ -1,0 +1,27 @@
+name: Workflow on Push - Run Partial Tests with pytest  
+  
+on:
+  push:
+    branches: [ '**' ]
+
+jobs:  
+  build:  
+    runs-on: ubuntu-latest  
+    strategy:  
+      matrix:  
+        python-version: ["3.12"]  
+  
+    steps:  
+      - uses: actions/checkout@v4
+      - name: Set up python ${{ matrix.python-version }}  
+        uses: actions/setup-python@v5 
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |  
+          python -m pip install --upgrade pip  
+          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi  
+      - name: Testing and linting
+        run: |
+          chmod +x run_tests.py
+          ./run_tests.py # Not running slow and hkodata tests.
