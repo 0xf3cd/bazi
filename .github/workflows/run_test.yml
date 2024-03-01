@@ -26,4 +26,4 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x run_tests.py
-          ./run_tests.py -c
+          ./run_tests.py -c -r

@@ -2,11 +2,12 @@
 
 import copy
 from enum import Enum
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import TypedDict, Unpack
 
 from bazi import (
-  CalendarDate, CalendarUtils, Jieqi, Tiangan, Dizhi, Ganzhi, hkodata
+  CalendarDate, CalendarUtils, Jieqi, Tiangan, Dizhi, Ganzhi, hkodata,
+  Utils,
 )
 
 
@@ -76,6 +77,7 @@ class Bazi:
 
   # Save the Jieqi data as a class variable.
   __jieqi_db: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
+  __lunar_db: hkodata.DecodedLunarYears = hkodata.DecodedLunarYears()
 
   def __init__(self, **kwargs: Unpack[BaziArgs]) -> None:
     '''
@@ -122,12 +124,23 @@ class Bazi:
 
     if self._precision == BaziPrecision.DAY:
       # Figure out the solar date falls into which ganzhi year.
+      # Also figure out the Year Ganzhi (年柱).
       solar_year: int = self._solar_birth_date.year
-      lichun_date: date = self.__jieqi_db.get(solar_year, Jieqi.立夏)
+      lichun_date: date = self.__jieqi_db.get(solar_year, Jieqi.立春)
       self._ganzhi_year: int = solar_year if self._solar_birth_date.to_date() >= lichun_date else solar_year - 1
+      self._year_ganzhi: Ganzhi = self.__lunar_db.get(self._ganzhi_year)['ganzhi']
 
-      # Figure out the ganzhi month.
+      # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
       self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
+      assert 1 <= self._ganzhi_month <= 12
+      self._month_dizhi: Dizhi = Dizhi.as_list()[(2 + self._ganzhi_month - 1) % 12]
+
+      # Figure out the ganzhi day, as well as the Day Ganzhi (日柱).
+      day_offset: int = 0 if self._birth_time.hour < 23 else 1
+      self._day_ganzhi: Ganzhi = Utils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
+
+      # Finally, find out the Hour Dizhi (时柱地支).
+      self._hour_dizhi: Dizhi = Dizhi.as_list()[int((self._hour + 1) / 2) % 12]
 
   @property
   def solar_birth_date(self) -> date:
@@ -148,5 +161,13 @@ class Bazi:
   @property
   def precision(self) -> BaziPrecision:
     return self._precision
+  
+  @property
+  def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
+    '''
+    Return the 4 Dizhis of Year, Month, Day, Hour (in that order!).
+    '''
+    return (self._year_ganzhi.dizhi, self._month_dizhi, 
+            self._day_ganzhi.dizhi, self._hour_dizhi,)
   
 八字 = Bazi

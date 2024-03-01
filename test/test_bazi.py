@@ -4,7 +4,8 @@
 import unittest
 import random
 from datetime import date, datetime
-from bazi import BaziGender, BaziPrecision, Bazi, 八字
+from zoneinfo import ZoneInfo
+from bazi import BaziGender, BaziPrecision, Bazi, 八字, Dizhi
 
 
 class TestBaziGender(unittest.TestCase):
@@ -99,3 +100,70 @@ class TestBazi(unittest.TestCase):
         second=random.randint(0, 59)
       )
       Bazi(birth_time=dt, gender=BaziGender.男, precision=BaziPrecision.DAY)
+    with self.assertRaises(AssertionError):
+      Bazi(
+        birth_time=datetime(
+          year=2000,
+          month=1,
+          day=1,
+          hour=7,
+          minute=0,
+          second=0,
+          tzinfo=ZoneInfo('Asia/Shanghai') # Doesn't support timezone.
+        ),
+        gender=BaziGender.男,
+        precision=BaziPrecision.DAY,
+      )
+
+  def test_correctness(self) -> None:
+    '''
+    Test the correctness of `Bazi` on the given test cases.
+    Precision is at `DAY` level.
+    '''
+    def __create_bazi(dt: datetime) -> Bazi:
+      return Bazi(
+        birth_time=dt,
+        gender=BaziGender.男,
+        precision=BaziPrecision.DAY,
+      )
+    
+    def __subtest(dt: datetime, dizhi_strs: list[str]) -> None:
+      assert len(dizhi_strs) == 4
+
+      bazi = __create_bazi(dt)
+      self.assertEqual(bazi.four_dizhis, (
+        Dizhi.from_str(dizhi_strs[0]),
+        Dizhi.from_str(dizhi_strs[1]),
+        Dizhi.from_str(dizhi_strs[2]),
+        Dizhi.from_str(dizhi_strs[3]),
+      ))
+
+    with self.subTest('Basic cases'):
+      # Data was collected from "测测" app on my iPhone 15 Pro Max.
+      __subtest(datetime(2024, 2, 6, 11, 55), ['辰', '寅', '子', '午'])
+      __subtest(datetime(1984, 4, 2, 4, 2), ['子', '卯', '寅', '寅'])
+
+      __subtest(datetime(1998, 3, 17, 13, 0), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 13, 59), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 14, 0), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 14, 59), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 15, 0), ['寅', '卯', '亥', '申'])
+      __subtest(datetime(1998, 3, 17, 23, 0), ['寅', '卯', '子', '子'])
+      __subtest(datetime(1998, 3, 18, 0, 59), ['寅', '卯', '子', '子'])
+      __subtest(datetime(1998, 3, 18, 1, 0), ['寅', '卯', '子', '丑'])
+
+    with self.subTest('Edge cases'):
+      __subtest(datetime(1998, 3, 17, 13, 0), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 13, 59), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 14, 0), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 14, 59), ['寅', '卯', '亥', '未'])
+      __subtest(datetime(1998, 3, 17, 15, 0), ['寅', '卯', '亥', '申'])
+      __subtest(datetime(1998, 3, 17, 23, 0), ['寅', '卯', '子', '子'])
+      __subtest(datetime(1998, 3, 18, 0, 59), ['寅', '卯', '子', '子'])
+      __subtest(datetime(1998, 3, 18, 1, 0), ['寅', '卯', '子', '丑'])
+
+      __subtest(datetime(2000, 2, 3, 0, 0), ['卯', '丑', '卯', '子'])
+      __subtest(datetime(2000, 2, 3, 22, 59), ['卯', '丑', '卯', '亥'])
+      __subtest(datetime(2000, 2, 3, 23, 0), ['卯', '丑', '辰', '子'])
+      __subtest(datetime(2000, 2, 4, 0, 0), ['辰', '寅', '辰', '子'])
+      __subtest(datetime(2000, 2, 4, 1, 0), ['辰', '寅', '辰', '丑'])
