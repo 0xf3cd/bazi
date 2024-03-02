@@ -115,22 +115,23 @@ class TestBazi(unittest.TestCase):
         precision=BaziPrecision.DAY,
       )
 
+  @staticmethod
+  def __create_bazi(dt: datetime) -> Bazi:
+    return Bazi(
+      birth_time=dt,
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+
   def test_four_dizhis_correctness(self) -> None:
     '''
     Test the correctness of `Bazi` on the given test cases.
     Precision is at `DAY` level.
     '''
-    def __create_bazi(dt: datetime) -> Bazi:
-      return Bazi(
-        birth_time=dt,
-        gender=BaziGender.男,
-        precision=BaziPrecision.DAY,
-      )
-    
     def __subtest(dt: datetime, dizhi_strs: list[str]) -> None:
       assert len(dizhi_strs) == 4
 
-      bazi = __create_bazi(dt)
+      bazi = self.__create_bazi(dt)
       self.assertEqual(bazi.four_dizhis, (
         Dizhi.from_str(dizhi_strs[0]),
         Dizhi.from_str(dizhi_strs[1]),
@@ -169,17 +170,10 @@ class TestBazi(unittest.TestCase):
       __subtest(datetime(2000, 2, 4, 1, 0), ['辰', '寅', '辰', '丑'])
 
   def test_four_tiangans_correctness(self) -> None:
-    def __create_bazi(dt: datetime) -> Bazi:
-      return Bazi(
-        birth_time=dt,
-        gender=BaziGender.男,
-        precision=BaziPrecision.DAY,
-      )
-    
     def __subtest(dt: datetime, tiangan_strs: list[str]) -> None:
       assert len(tiangan_strs) == 4
 
-      bazi = __create_bazi(dt)
+      bazi = self.__create_bazi(dt)
       self.assertEqual(bazi.four_tiangans, (
         Tiangan.from_str(tiangan_strs[0]),
         Tiangan.from_str(tiangan_strs[1]),
@@ -192,22 +186,34 @@ class TestBazi(unittest.TestCase):
     __subtest(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
   
   def test_chart(self) -> None:
-    def __create_bazi(dt: datetime) -> Bazi:
-      return Bazi(
-        birth_time=dt,
-        gender=BaziGender.男,
-        precision=BaziPrecision.DAY,
-      )
-    
     def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
       assert len(ganzhi_strs) == 4
 
-      bazi = __create_bazi(dt)
+      bazi = self.__create_bazi(dt)
       chart: BaziChart = bazi.chart
       self.assertEqual(chart.year, Ganzhi.from_str(ganzhi_strs[0]))
       self.assertEqual(chart.month, Ganzhi.from_str(ganzhi_strs[1]))
       self.assertEqual(chart.day, Ganzhi.from_str(ganzhi_strs[2]))
       self.assertEqual(chart.hour, Ganzhi.from_str(ganzhi_strs[3]))
+
+    __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
+    __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
+    __subtest(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+
+  def test_consistency(self) -> None:
+    def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
+      assert len(ganzhi_strs) == 4
+
+      bazi = self.__create_bazi(dt)
+      chart: BaziChart = bazi.chart
+
+      self.assertEqual(bazi.day_master, chart.day.tiangan)
+      self.assertEqual(bazi.month_commander, chart.month.dizhi)
+
+      self.assertEqual(bazi.year_pillar, chart.year)
+      self.assertEqual(bazi.month_pillari, chart.month)
+      self.assertEqual(bazi.day_pillar, chart.day)
+      self.assertEqual(bazi.hour_pillar, chart.hour)
 
     __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])

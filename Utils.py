@@ -2,7 +2,9 @@ import copy
 from datetime import date
 from .Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang
 from .Calendar import CalendarUtils, CalendarDate
-from .Rules import YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS
+from .Rules import (
+  YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, HIDDEN_TIANGANS_PERCENTAGE_TABLE
+)
 
 class BaziUtils:
   @staticmethod
@@ -71,3 +73,13 @@ class BaziUtils:
     '''
 
     return copy.deepcopy(TIANGAN_TRAITS[tg])
+  
+  @staticmethod
+  def get_hidden_tiangans(dz: Dizhi) -> dict[Tiangan, int]:
+    '''
+    Return the percentage of hidden Tiangans in the given Dizhi.
+
+    Return: (dict[Tiangan, int]) The percentage of hidden Tiangans in the given Dizhi.
+    '''
+
+    return copy.deepcopy(HIDDEN_TIANGANS_PERCENTAGE_TABLE[dz])

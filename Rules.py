@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from .Defines import Tiangan, Wuxing, Yinyang
+from .Defines import Tiangan, Dizhi, Wuxing, Yinyang
 
 # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
 YEAR_TO_MONTH_TABLE: dict[Tiangan, Tiangan] = {
@@ -30,7 +30,8 @@ DAY_TO_HOUR_TABLE: dict[Tiangan, Tiangan] = {
   Tiangan.癸 : Tiangan.壬, # First hour in day of "癸" is "壬子".
 }
 
-# The table is used to query the Wuxing and Yinyang of a given Tiangan.
+# The table is used to query the Wuxing and Yinyang of a given Tiangan (i.e. Stem / 天干).
+# 该字典用于查询给定天干的五行和阴阳。
 TIANGAN_TRAITS: dict[Tiangan, tuple[Wuxing, Yinyang]] = {
   Tiangan.甲 : (Wuxing.木, Yinyang.阳),
   Tiangan.乙 : (Wuxing.木, Yinyang.阴),
@@ -42,4 +43,21 @@ TIANGAN_TRAITS: dict[Tiangan, tuple[Wuxing, Yinyang]] = {
   Tiangan.辛 : (Wuxing.金, Yinyang.阴),
   Tiangan.壬 : (Wuxing.水, Yinyang.阳),
   Tiangan.癸 : (Wuxing.水, Yinyang.阴),
+}
+
+# The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
+# 该字典用于查询给定地支的藏干和它们所占的百分比。
+HIDDEN_TIANGANS_PERCENTAGE_TABLE: dict[Dizhi, dict[Tiangan, int]] = {
+  Dizhi.子 : { Tiangan.癸 : 100 },
+  Dizhi.丑 : { Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 },
+  Dizhi.寅 : { Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10 },
+  Dizhi.卯 : { Tiangan.乙 : 100 },
+  Dizhi.辰 : { Tiangan.戊 : 60, Tiangan.乙 : 30, Tiangan.癸 : 10 },
+  Dizhi.巳 : { Tiangan.丙 : 60, Tiangan.庚 : 30, Tiangan.戊 : 10 },
+  Dizhi.午 : { Tiangan.丁 : 70, Tiangan.己 : 30 },
+  Dizhi.未 : { Tiangan.己 : 60, Tiangan.丁 : 30, Tiangan.乙 : 10 },
+  Dizhi.申 : { Tiangan.庚 : 60, Tiangan.壬 : 30, Tiangan.戊 : 10 },
+  Dizhi.酉 : { Tiangan.辛 : 100 },
+  Dizhi.戌 : { Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 },
+  Dizhi.亥 : { Tiangan.壬 : 70, Tiangan.甲 : 30 },
 }

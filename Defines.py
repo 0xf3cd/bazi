@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 
 class Tiangan(Enum):
-  '''Tiangan / 天干'''
+  '''Tiangan / Stem / 天干'''
   JIA  = '甲'
   YI   = '乙'
   BING = '丙'
@@ -53,7 +53,7 @@ class Tiangan(Enum):
 
 
 class Dizhi(Enum):
-  '''Dizhi / 地支'''
+  '''Dizhi / Branch / 地支'''
   ZI   = '子'
   CHOU = '丑'
   YIN  = '寅'
@@ -105,7 +105,7 @@ class Dizhi(Enum):
 
 
 class Ganzhi(NamedTuple):
-  '''Ganzhi / 干支'''
+  '''Ganzhi / Stem-branch / 干支'''
   tiangan: Tiangan
   dizhi: Dizhi
 
@@ -219,24 +219,18 @@ class Jieqi(Enum):
 
 class Wuxing(Enum):
   '''Wuxing / 五行'''
-  MU   = '木'
-  HUO  = '火'
-  TU   = '土'
-  JIN  = '金'
-  SHUI = '水'
+  WOOD  = '木'
+  FIRE  = '火'
+  EARTH = '土'
+  METAL = '金'
+  WATER = '水'
 
   # Aliases
-  木 = MU
-  火 = HUO
-  土 = TU
-  金 = JIN
-  水 = SHUI
-
-  WOOD  = MU
-  FIRE  = HUO
-  EARTH = TU
-  METAL = JIN
-  WATER = SHUI
+  木 = WOOD
+  火 = FIRE
+  土 = EARTH
+  金 = METAL
+  水 = WATER
 
   @classmethod
   def from_str(cls, s: str) -> 'Wuxing':
@@ -341,3 +335,77 @@ class Yinyang(Enum):
     return Yinyang.YIN if self is Yinyang.YANG else Yinyang.YANG
 
 阴阳 = Yinyang # Alias
+
+
+class Shishen(Enum):
+  '''Shishen / Ten Gods / 十神'''
+  BIJIAN    = '比肩'
+  JIECAI    = '劫财'
+  SHISHEN   = '食神' # This is not "Ten Gods" in Chinese. This means "Eating God" instead.
+  SHANGGUAN = '伤官'
+  ZHENGCAI  = '正财'
+  PIANCAI   = '偏财'
+  ZHENGGUAN = '正官'
+  QISHA     = '七杀'
+  ZHENGYIN  = '正印'
+  PIANYIN   = '偏印'
+
+  # Aliases
+  比肩 = BIJIAN
+  劫财 = JIECAI
+  食神 = SHISHEN
+  伤官 = SHANGGUAN
+  正财 = ZHENGCAI
+  偏财 = PIANCAI
+  正官 = ZHENGGUAN
+  七杀 = QISHA
+  正印 = ZHENGYIN
+  偏印 = PIANYIN
+
+  @staticmethod
+  def str_mapping_table() -> dict[str, str]:
+    '''
+    Return the mapping rules (from one Chinese character to the full name) for the Shishens.
+    '''
+    return {
+      '比': '比肩',
+      '劫': '劫财',
+      '食': '食神',
+      '伤': '伤官',
+      '才': '正财',
+      '财': '偏财',
+      '官': '正官',
+      '杀': '七杀',
+      '印': '正印',
+      '枭': '偏印',
+    }
+
+  @staticmethod
+  def from_str(s: str) -> 'Shishen':
+    assert isinstance(s, str)
+    assert len(s) in [1, 2]
+
+    if len(s) == 1:
+      t: dict[str, str] = Shishen.str_mapping_table()
+      assert s in t
+      s = t[s]
+
+    return Shishen(s)
+  
+  @classmethod
+  def as_list(cls) -> list['Shishen']:
+    return list(cls)
+  
+  def __str__(self) -> str:
+    return str(self.value)
+  
+  @property
+  def abbr(self) -> str:
+    '''
+    The short version of this Shishen. For example, "比" for "比肩", "才" for "正财", etc.
+    '''
+    t = Shishen.str_mapping_table()
+    reversed_t = { v : k for k, v in t.items() }
+    return reversed_t[str(self)]
+
+十神 = Shishen # Alias

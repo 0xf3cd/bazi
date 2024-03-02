@@ -188,6 +188,32 @@ class Bazi:
             self._day_pillar.tiangan, BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
   
   @property
+  def day_master(self) -> Tiangan:
+    return self._day_pillar.tiangan
+
+  @property
+  def month_commander(self) -> Dizhi:
+    return self._month_dizhi
+
+  @property
+  def year_pillar(self) -> Ganzhi:
+    return self._year_pillar
+  
+  @property
+  def month_pillari(self) -> Ganzhi:
+    month_tiangan: Tiangan = BaziUtils.find_month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
+    return Ganzhi(month_tiangan, self._month_dizhi)
+  
+  @property
+  def day_pillar(self) -> Ganzhi:
+    return self._day_pillar
+  
+  @property
+  def hour_pillar(self) -> Ganzhi:
+    hour_tiangan: Tiangan = BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
+    return Ganzhi(hour_tiangan, self._hour_dizhi)
+  
+  @property
   def chart(self) -> BaziChart:
     '''
     Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.

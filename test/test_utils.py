@@ -63,3 +63,12 @@ class TestUtils(unittest.TestCase):
       expected_wuxing: Wuxing = Wuxing.as_list()[idx // 2]
       expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
       self.assertEqual(BaziUtils.get_tiangan_traits(tg), (expected_wuxing, expected_yinyang))
+
+  def test_get_hidden_tiangans(self) -> None:
+    for dz in Dizhi:
+      percentages: dict[Tiangan, int] = BaziUtils.get_hidden_tiangans(dz)
+      self.assertGreaterEqual(len(percentages), 1)
+      self.assertLessEqual(len(percentages), 3)
+      self.assertEqual(sum(percentages.values()), 100)
+      for tg in percentages.keys():
+        self.assertIn(tg, Tiangan)
