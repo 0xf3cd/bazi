@@ -1,8 +1,9 @@
 import copy
 from datetime import date
-from .Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang
+from .Defines import Ganzhi, Tiangan, Dizhi
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
+  TraitTuple, HiddenTianganDict,
   YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, DIZHI_TRAITS, 
   HIDDEN_TIANGANS_PERCENTAGE_TABLE
 )
@@ -62,7 +63,7 @@ class BaziUtils:
     return Tiangan.from_index(hour_tiangan_index)
 
   @staticmethod
-  def get_tiangan_traits(tg: Tiangan) -> tuple[Wuxing, Yinyang]:
+  def get_tiangan_traits(tg: Tiangan) -> TraitTuple:
     '''
     Get the Wuxing and Yinyang of the given Tiangan.
     输入天干，返回它的五行和阴阳。
@@ -70,13 +71,13 @@ class BaziUtils:
     Args:
     - tg: (Tiangan) The Tiangan.
 
-    Return: (tuple[Wuxing, Yinyang]) The Wuxing and Yinyang of the given Tiangan.
+    Return: (TraitTuple) The Wuxing and Yinyang of the given Tiangan.
     '''
 
     return copy.deepcopy(TIANGAN_TRAITS[tg])
   
   @staticmethod
-  def get_dizhi_traits(dz: Dizhi) -> tuple[Wuxing, Yinyang]:
+  def get_dizhi_traits(dz: Dizhi) -> TraitTuple:
     '''
     Get the Wuxing and Yinyang of the given Dizhi.
     输入地支，返回它的五行和阴阳。
@@ -84,17 +85,21 @@ class BaziUtils:
     Args:
     - dz: (Dizhi) The Dizhi.
 
-    Return: (tuple[Wuxing, Yinyang]) The Wuxing and Yinyang of the given Dizhi.
+    Return: (TraitTuple) The Wuxing and Yinyang of the given Dizhi.
     '''
 
     return copy.deepcopy(DIZHI_TRAITS[dz])
   
   @staticmethod
-  def get_hidden_tiangans(dz: Dizhi) -> dict[Tiangan, int]:
+  def get_hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
     '''
     Return the percentage of hidden Tiangans in the given Dizhi.
+    输入地支，返回其中的藏干，以及各藏干的百分比。
 
-    Return: (dict[Tiangan, int]) The percentage of hidden Tiangans in the given Dizhi.
+    Args:
+    - dz: (Dizhi) The Dizhi.
+
+    Return: (HiddenTianganDict) The percentage of hidden Tiangans in the given Dizhi.
     '''
 
     return copy.deepcopy(HIDDEN_TIANGANS_PERCENTAGE_TABLE[dz])

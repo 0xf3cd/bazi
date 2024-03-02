@@ -3,9 +3,10 @@
 import copy
 from enum import Enum
 from datetime import date, datetime, timedelta
-from typing import TypedDict, Unpack, NamedTuple
+from typing import TypedDict, Unpack, Type, Sequence, Iterator
 
-from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Yinyang, Wuxing
+from .Rules import TraitTuple, HiddenTianganDict
+from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
 from .Calendar import CalendarDate, CalendarUtils
 from .Utils import BaziUtils
 from . import hkodata
@@ -62,11 +63,38 @@ class BaziPrecision(Enum):
   MINUTE = 2
 
 
-class BaziPillars(NamedTuple):
-  year:  Ganzhi
-  month: Ganzhi
-  day:   Ganzhi
-  hour:  Ganzhi
+class BaziData[T]:
+  '''
+  A generic class for storing Bazi data.
+  T is the type of the data. And a `BaziData` object stores 4 T objects for year, month, day, and hour.
+  '''
+  def __init__(self, generic_type: Type[T], data: Sequence[T]) -> None:
+    self._type: Type[T] = generic_type
+    
+    assert len(data) == 4
+    self._year: T = copy.deepcopy(data[0])
+    self._month: T = copy.deepcopy(data[1])
+    self._day: T = copy.deepcopy(data[2])
+    self._hour: T = copy.deepcopy(data[3])
+
+  @property
+  def year(self) -> T:
+    return copy.deepcopy(self._year)
+
+  @property
+  def month(self) -> T:
+    return copy.deepcopy(self._month)
+
+  @property
+  def day(self) -> T:
+    return copy.deepcopy(self._day)
+
+  @property
+  def hour(self) -> T:
+    return copy.deepcopy(self._hour)
+  
+  def __iter__(self) -> Iterator[T]:
+    return iter((self._year, self._month, self._day, self._hour))
 
 
 class BaziArgs(TypedDict):
@@ -232,18 +260,34 @@ class Bazi:
     return Ganzhi(hour_tiangan, self._hour_dizhi)
   
   @property
-  def pillars(self) -> BaziPillars:
+  def pillars(self) -> BaziData[Ganzhi]:
     '''
     Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.
     返回年、月、日、时的天干地支（即返回八字）。
     '''
     pillars: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
-    return BaziPillars(year=pillars[0], month=pillars[1], day=pillars[2], hour=pillars[3])
+    return BaziData(Ganzhi, pillars)
 
 八字 = Bazi
 
 
 class BaziChart:
+  class PillarData[T, U]:
+    '''
+    A helper class for storing the data of a Pillar.
+    '''
+    def __init__(self, tg: T, dz: U) -> None:
+      self._tg = copy.deepcopy(tg)
+      self._dz = copy.deepcopy(dz)
+
+    @property
+    def tiangan(self) -> T:
+      return copy.deepcopy(self._tg)
+    
+    @property
+    def dizhi(self) -> U:
+      return copy.deepcopy(self._dz)
+
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
     self._bazi: Bazi = copy.deepcopy(bazi)
@@ -252,18 +296,19 @@ class BaziChart:
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
 
-  # class BaziTraits:
-  #   def __init__(self, pillars: BaziPillars) -> None:
-  #     pass
+  PillarTraits = PillarData[TraitTuple, TraitTuple] # Type alias for traits.
+  @property
+  def traits(self) -> BaziData[PillarTraits]:
+    tiangan_traits: list[TraitTuple] = [BaziUtils.get_tiangan_traits(tg) for tg in self._bazi.four_tiangans]
+    dizhi_traits: list[TraitTuple] = [BaziUtils.get_dizhi_traits(dz) for dz in self._bazi.four_dizhis]
+    pillar_data: list = [self.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
+    return BaziData(self.PillarTraits, pillar_data)
   
-  # @property
-  # def traits(self) -> BaziTraits:
-  #   '''
-  #   `traits` is a tuple of the Yinyang and Wuxing traits of each Tiangans and Dizhis in the chart.
-  #   '''
-  #   year = self.__Traits.__Pillar(
-  #     tiangan=BaziUtils.get_tiangan_traits(self._bazi.year_pillar.tiangan),
-  #     dizhi=BaziUtils.get_dizhi_traits(self._bazi.year_pillar.dizhi)
-  #   )
+  PillarHiddenTiangans = PillarData[None, HiddenTianganDict] # Type alias for hidden tiangans.
+  @property
+  def hidden_tiangans(self) -> BaziData[PillarHiddenTiangans]:
+    dizhi_hidden_tiangans: list[HiddenTianganDict] = [BaziUtils.get_hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
+    pillar_data: list = [self.PillarHiddenTiangans(None, hidden) for hidden in dizhi_hidden_tiangans]
+    return BaziData(self.PillarHiddenTiangans, pillar_data)
 
 命盘 = BaziChart

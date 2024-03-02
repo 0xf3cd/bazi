@@ -6,9 +6,10 @@ import random
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from bazi import (
-  Tiangan, Dizhi, Ganzhi,
-  BaziGender, BaziPrecision, BaziPillars, Bazi, 八字,
-  BaziChart, 命盘
+  Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
+  BaziGender, BaziPrecision, BaziData, Bazi, 八字,
+  BaziChart, 命盘,
+  TraitTuple
 )
 
 
@@ -194,7 +195,7 @@ class TestBazi(unittest.TestCase):
       assert len(ganzhi_strs) == 4
 
       bazi = self.__create_bazi(dt)
-      pillars: BaziPillars = bazi.pillars
+      pillars: BaziData[Ganzhi] = bazi.pillars
       self.assertEqual(pillars.year, Ganzhi.from_str(ganzhi_strs[0]))
       self.assertEqual(pillars.month, Ganzhi.from_str(ganzhi_strs[1]))
       self.assertEqual(pillars.day, Ganzhi.from_str(ganzhi_strs[2]))
@@ -209,7 +210,7 @@ class TestBazi(unittest.TestCase):
       assert len(ganzhi_strs) == 4
 
       bazi = self.__create_bazi(dt)
-      pillars: BaziPillars = bazi.pillars
+      pillars: BaziData[Ganzhi] = bazi.pillars
 
       self.assertEqual(bazi.day_master, pillars.day.tiangan)
       self.assertEqual(bazi.month_commander, pillars.month.dizhi)
@@ -249,3 +250,53 @@ class TestBaziChart(unittest.TestCase):
         BaziChart('1984-04-02 04:02:00') # type: ignore
       with self.assertRaises(TypeError):
         BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore
+
+  def test_traits(self) -> None:
+    bazi: Bazi = Bazi(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    chart: BaziChart = BaziChart(bazi)
+    traits: BaziData[BaziChart.PillarTraits] = chart.traits
+
+    self.assertEqual(traits.year.tiangan, TraitTuple(Wuxing.木, Yinyang.阳))  # 甲
+    self.assertEqual(traits.year.dizhi, TraitTuple(Wuxing.水, Yinyang.阳))    # 子
+
+    self.assertEqual(traits.month.tiangan, TraitTuple(Wuxing.火, Yinyang.阴)) # 丁
+    self.assertEqual(traits.month.dizhi, TraitTuple(Wuxing.木, Yinyang.阴))   # 卯
+
+    self.assertEqual(traits.day.tiangan, TraitTuple(Wuxing.火, Yinyang.阳))   # 丙
+    self.assertEqual(traits.day.dizhi, TraitTuple(Wuxing.木, Yinyang.阳))     # 寅
+
+    self.assertEqual(traits.hour.tiangan, TraitTuple(Wuxing.金, Yinyang.阳))  # 庚
+    self.assertEqual(traits.hour.dizhi, TraitTuple(Wuxing.木, Yinyang.阳))    # 寅
+
+    for pillar, pillar_traits in zip(bazi.pillars, traits):
+      self.assertEqual(BaziUtils.get_tiangan_traits(pillar.tiangan), pillar_traits.tiangan)
+      self.assertEqual(BaziUtils.get_dizhi_traits(pillar.dizhi), pillar_traits.dizhi)
+
+  def test_hidden_tiangans(self) -> None:
+    bazi: Bazi = Bazi(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    chart: BaziChart = BaziChart(bazi)
+    hidden_tiangans: BaziData[BaziChart.PillarHiddenTiangans] = chart.hidden_tiangans
+
+    for hidden in hidden_tiangans:
+      self.assertIsNone(hidden.tiangan) # There's no hidden tiangans in tiangan.
+    
+    self.assertDictEqual(hidden_tiangans.year.dizhi, {  # 子
+      Tiangan.癸 : 100,
+    })
+    self.assertDictEqual(hidden_tiangans.month.dizhi, { # 卯
+      Tiangan.乙 : 100,
+    })
+    self.assertDictEqual(hidden_tiangans.day.dizhi, {   # 寅
+      Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
+    })
+    self.assertDictEqual(hidden_tiangans.hour.dizhi, {  # 寅
+      Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
+    })
