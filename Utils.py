@@ -3,7 +3,8 @@ from datetime import date
 from .Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
-  YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, HIDDEN_TIANGANS_PERCENTAGE_TABLE
+  YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, DIZHI_TRAITS, 
+  HIDDEN_TIANGANS_PERCENTAGE_TABLE
 )
 
 class BaziUtils:
@@ -73,6 +74,20 @@ class BaziUtils:
     '''
 
     return copy.deepcopy(TIANGAN_TRAITS[tg])
+  
+  @staticmethod
+  def get_dizhi_traits(dz: Dizhi) -> tuple[Wuxing, Yinyang]:
+    '''
+    Get the Wuxing and Yinyang of the given Dizhi.
+    输入地支，返回它的五行和阴阳。
+
+    Args:
+    - dz: (Dizhi) The Dizhi.
+
+    Return: (tuple[Wuxing, Yinyang]) The Wuxing and Yinyang of the given Dizhi.
+    '''
+
+    return copy.deepcopy(DIZHI_TRAITS[dz])
   
   @staticmethod
   def get_hidden_tiangans(dz: Dizhi) -> dict[Tiangan, int]:

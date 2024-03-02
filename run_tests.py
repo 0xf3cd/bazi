@@ -120,13 +120,18 @@ def run_ruff() -> int:
   print('\n' + '#' * term_width)
   print('>> Checking for style violations...')
 
-  ruff_ret: int = subprocess.run(['ruff', 'check', str(Path(__file__).parent)]).returncode
+  proc: subprocess.CompletedProcess = subprocess.run([
+    'ruff', 'check', str(Path(__file__).parent)
+  ], capture_output=True)
+  ruff_ret: int = proc.returncode
   print('>> Checking style violations completed...')
 
   if ruff_ret == 0:
     print(colorama.Fore.GREEN + '>> No style violations found!' + colorama.Style.RESET_ALL)
   else:
     print(colorama.Fore.RED + '>> Violations detected!' + colorama.Style.RESET_ALL)
+    print(proc.stdout.decode('utf-8'))
+    print(proc.stderr.decode('utf-8'))
 
   return ruff_ret
 
@@ -152,7 +157,7 @@ def main() -> None:
   if ret_code == 0:
     print(colorama.Fore.GREEN + '>> All tasks passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Some tasks failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
 
   sys.exit(ret_code)
 

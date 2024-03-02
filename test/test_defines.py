@@ -13,6 +13,7 @@ class TestTiangan(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(len(Tiangan), 10)
     self.assertEqual(Tiangan.JIA.value, '甲')
+    self.assertEqual(Tiangan('甲').value, '甲')
     self.assertNotEqual(Tiangan.WU, Tiangan.REN)
     self.assertNotEqual(Tiangan.WU.value, Tiangan.REN.value)
 
@@ -73,12 +74,14 @@ class TestTiangan(unittest.TestCase):
     self.assertNotEqual(Tiangan.from_str('丁'), Tiangan.from_str('甲'))
                         
   def test_str(self) -> None:
-    for e in Dizhi:
+    for e in Tiangan:
       self.assertEqual(str(e), e.value)
-    for e in Dizhi.as_list():
+      self.assertIs(Tiangan(str(e)), e)
+    for e in Tiangan.as_list():
       self.assertEqual(str(e), e.value)
+      self.assertIs(Tiangan(str(e)), e)
 
-    self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
+    self.assertEqual('甲乙丙丁戊己庚辛壬癸', ''.join([str(e) for e in Tiangan.as_list()]))
 
   def test_index(self) -> None:
     self.assertEqual(Tiangan.甲.index, 0)
@@ -112,6 +115,7 @@ class TestDizhi(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(12, len(Dizhi))
     self.assertEqual('子', Dizhi.ZI.value)
+    self.assertEqual(Dizhi('子'), Dizhi.子)
     self.assertNotEqual(Dizhi.WEI, Dizhi.SHEN)
     self.assertNotEqual(Dizhi.WEI.value, Dizhi.SHEN.value)
 
@@ -173,8 +177,10 @@ class TestDizhi(unittest.TestCase):
   def test_str(self) -> None:
     for e in Dizhi:
       self.assertEqual(str(e), e.value)
+      self.assertIs(Dizhi(str(e)), e)
     for e in Dizhi.as_list():
       self.assertEqual(str(e), e.value)
+      self.assertIs(Dizhi(str(e)), e)
 
     self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
 
@@ -325,6 +331,7 @@ class TestJieqi(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(len(Jieqi), 24)
     self.assertEqual(Jieqi.QINGMING.value, '清明')
+    self.assertEqual(Jieqi('清明'), Jieqi.清明)
     self.assertNotEqual(Jieqi.QINGMING, Jieqi.LICHUN)
     self.assertNotEqual(Jieqi.QINGMING.value, Jieqi.LICHUN.value)
 
@@ -377,6 +384,7 @@ class TestJieqi(unittest.TestCase):
 
     for jq in Jieqi:
       self.assertEqual(Jieqi.from_str(str(jq)), jq)
+      self.assertEqual(Jieqi(str(jq)), jq)
 
     self.assertEqual(Jieqi.from_str('秋分'), Jieqi.秋分)
     self.assertEqual(Jieqi.from_str('秋分'), Jieqi.from_str('秋分'))
@@ -422,7 +430,9 @@ class TestJieqi(unittest.TestCase):
 class TestWuxing(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(len(Wuxing), 5)
+    self.assertEqual(Wuxing.METAL.value, '金')
     self.assertEqual(Wuxing.金.value, '金')
+    self.assertEqual(Wuxing('金'), Wuxing.金)
     self.assertNotEqual(Wuxing.金, Wuxing.木)
     self.assertNotEqual(Wuxing.金.value, Wuxing.木.value)
 
@@ -508,6 +518,11 @@ class TestYinyang(unittest.TestCase):
   def test_str(self) -> None:
     self.assertEqual(str(Yinyang.阴), '阴')
     self.assertEqual(str(Yinyang.阳), '阳')
+    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
+    self.assertEqual(Yinyang('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang('阳'), Yinyang.阳)
+
     self.assertEqual(''.join([str(e) for e in Yinyang.as_list()]), '阳阴')
 
     self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
@@ -548,6 +563,7 @@ class TestShishen(unittest.TestCase):
       for s in Shishen:
         self.assertEqual(str(s), s.value)
         self.assertEqual(Shishen.from_str(str(s)), s)
+        self.assertEqual(Shishen(str(s)), s)
 
       self.assertEqual(''.join([str(s) for s in Shishen.as_list()]), 
                       '比肩劫财食神伤官正财偏财正官七杀正印偏印')

@@ -45,6 +45,23 @@ TIANGAN_TRAITS: dict[Tiangan, tuple[Wuxing, Yinyang]] = {
   Tiangan.癸 : (Wuxing.水, Yinyang.阴),
 }
 
+# The table is used to query the Wuxing and Yinyang of a given Dizhi (i.e. Branch / 地支).
+# 该字典用于查询给定地支的五行和阴阳。
+DIZHI_TRAITS: dict[Dizhi, tuple[Wuxing, Yinyang]] = {
+  Dizhi.子 : (Wuxing.水, Yinyang.阳),
+  Dizhi.丑 : (Wuxing.土, Yinyang.阴),
+  Dizhi.寅 : (Wuxing.木, Yinyang.阳),
+  Dizhi.卯 : (Wuxing.木, Yinyang.阴),
+  Dizhi.辰 : (Wuxing.土, Yinyang.阳),
+  Dizhi.巳 : (Wuxing.火, Yinyang.阴),
+  Dizhi.午 : (Wuxing.火, Yinyang.阳),
+  Dizhi.未 : (Wuxing.土, Yinyang.阴),
+  Dizhi.申 : (Wuxing.金, Yinyang.阳),
+  Dizhi.酉 : (Wuxing.金, Yinyang.阴),
+  Dizhi.戌 : (Wuxing.土, Yinyang.阳),
+  Dizhi.亥 : (Wuxing.水, Yinyang.阴),
+}
+
 # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
 # 该字典用于查询给定地支的藏干和它们所占的百分比。
 HIDDEN_TIANGANS_PERCENTAGE_TABLE: dict[Dizhi, dict[Tiangan, int]] = {

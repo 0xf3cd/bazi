@@ -58,11 +58,33 @@ class TestUtils(unittest.TestCase):
     self.assertEqual(BaziUtils.find_hour_tiangan(Tiangan.戊, Dizhi.巳), Tiangan.丁)
     self.assertEqual(BaziUtils.find_hour_tiangan(Tiangan.丙, Dizhi.卯), Tiangan.辛)
 
-  def test_tiangan_trais(self) -> None:
+  def test_tiangan_traits(self) -> None:
     for idx, tg in enumerate(Tiangan):
       expected_wuxing: Wuxing = Wuxing.as_list()[idx // 2]
       expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
       self.assertEqual(BaziUtils.get_tiangan_traits(tg), (expected_wuxing, expected_yinyang))
+
+  def test_dizhi_traits(self) -> None:
+    self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('子')), (Wuxing('水'), Yinyang('阳')))
+    self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('辰')), (Wuxing('土'), Yinyang('阳')))
+    self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('巳')), (Wuxing('火'), Yinyang('阴')))
+    self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('丑')), (Wuxing('土'), Yinyang('阴')))
+
+    for idx, dz in enumerate(Dizhi):
+      month_idx: int = (idx - 2) % 12
+      if month_idx % 3 == 2:
+        expected_wuxing: Wuxing = Wuxing.土
+      elif month_idx < 3:
+        expected_wuxing: Wuxing = Wuxing.木
+      elif month_idx < 6:
+        expected_wuxing: Wuxing = Wuxing.火
+      elif month_idx < 9:
+        expected_wuxing: Wuxing = Wuxing.金
+      else:
+        expected_wuxing: Wuxing = Wuxing.水
+      
+      expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
+      self.assertEqual(BaziUtils.get_dizhi_traits(dz), (expected_wuxing, expected_yinyang))
 
   def test_get_hidden_tiangans(self) -> None:
     for dz in Dizhi:

@@ -5,7 +5,11 @@ import unittest
 import random
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
-from bazi import BaziGender, BaziPrecision, BaziChart, Bazi, 八字, Tiangan, Dizhi, Ganzhi
+from bazi import (
+  Tiangan, Dizhi, Ganzhi,
+  BaziGender, BaziPrecision, BaziPillars, Bazi, 八字,
+  BaziChart, 命盘
+)
 
 
 class TestBaziGender(unittest.TestCase):
@@ -190,11 +194,11 @@ class TestBazi(unittest.TestCase):
       assert len(ganzhi_strs) == 4
 
       bazi = self.__create_bazi(dt)
-      chart: BaziChart = bazi.chart
-      self.assertEqual(chart.year, Ganzhi.from_str(ganzhi_strs[0]))
-      self.assertEqual(chart.month, Ganzhi.from_str(ganzhi_strs[1]))
-      self.assertEqual(chart.day, Ganzhi.from_str(ganzhi_strs[2]))
-      self.assertEqual(chart.hour, Ganzhi.from_str(ganzhi_strs[3]))
+      pillars: BaziPillars = bazi.pillars
+      self.assertEqual(pillars.year, Ganzhi.from_str(ganzhi_strs[0]))
+      self.assertEqual(pillars.month, Ganzhi.from_str(ganzhi_strs[1]))
+      self.assertEqual(pillars.day, Ganzhi.from_str(ganzhi_strs[2]))
+      self.assertEqual(pillars.hour, Ganzhi.from_str(ganzhi_strs[3]))
 
     __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
@@ -205,16 +209,43 @@ class TestBazi(unittest.TestCase):
       assert len(ganzhi_strs) == 4
 
       bazi = self.__create_bazi(dt)
-      chart: BaziChart = bazi.chart
+      pillars: BaziPillars = bazi.pillars
 
-      self.assertEqual(bazi.day_master, chart.day.tiangan)
-      self.assertEqual(bazi.month_commander, chart.month.dizhi)
+      self.assertEqual(bazi.day_master, pillars.day.tiangan)
+      self.assertEqual(bazi.month_commander, pillars.month.dizhi)
 
-      self.assertEqual(bazi.year_pillar, chart.year)
-      self.assertEqual(bazi.month_pillari, chart.month)
-      self.assertEqual(bazi.day_pillar, chart.day)
-      self.assertEqual(bazi.hour_pillar, chart.hour)
+      self.assertEqual(bazi.year_pillar, pillars.year)
+      self.assertEqual(bazi.month_pillar, pillars.month)
+      self.assertEqual(bazi.day_pillar, pillars.day)
+      self.assertEqual(bazi.hour_pillar, pillars.hour)
+
+      self.assertEqual(bazi.four_tiangans, tuple([tg for tg, _ in pillars]))
+      self.assertEqual(bazi.four_dizhis, tuple([dz for _, dz in pillars]))
 
     __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
     __subtest(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+
+
+class TestBaziChart(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertIs(BaziChart, 命盘)
+
+  def test_malicious(self) -> None:
+    with self.subTest('Modification attemp'):
+      bazi: Bazi = Bazi(
+        birth_time=datetime(1984, 4, 2, 4, 2),
+        gender=BaziGender.男,
+        precision=BaziPrecision.DAY,
+      )
+      chart: BaziChart = BaziChart(bazi)
+
+      bazi._day_pillar = Ganzhi.from_str('甲子')
+      self.assertEqual(chart.bazi._day_pillar, Ganzhi.from_str('丙寅'))
+      self.assertEqual(bazi._day_pillar, Ganzhi.from_str('甲子'))
+
+    with self.subTest('Invalid __init__ parameters'):
+      with self.assertRaises(AssertionError):
+        BaziChart('1984-04-02 04:02:00') # type: ignore
+      with self.assertRaises(TypeError):
+        BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore

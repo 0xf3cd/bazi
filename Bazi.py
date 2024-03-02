@@ -5,7 +5,7 @@ from enum import Enum
 from datetime import date, datetime, timedelta
 from typing import TypedDict, Unpack, NamedTuple
 
-from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
+from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Yinyang, Wuxing
 from .Calendar import CalendarDate, CalendarUtils
 from .Utils import BaziUtils
 from . import hkodata
@@ -62,7 +62,7 @@ class BaziPrecision(Enum):
   MINUTE = 2
 
 
-class BaziChart(NamedTuple):
+class BaziPillars(NamedTuple):
   year:  Ganzhi
   month: Ganzhi
   day:   Ganzhi
@@ -189,37 +189,81 @@ class Bazi:
   
   @property
   def day_master(self) -> Tiangan:
+    '''
+    Day Master is the Tiangan of the Day Pillar (日主).
+    '''
     return self._day_pillar.tiangan
 
   @property
   def month_commander(self) -> Dizhi:
+    '''
+    Month Commander is the Dizhi of the Month Pillar (月令 / 月柱地支).
+    '''
     return self._month_dizhi
 
   @property
   def year_pillar(self) -> Ganzhi:
+    '''
+    Year Pillar is the Ganzhi of the Year (年柱).
+    '''
     return self._year_pillar
   
   @property
-  def month_pillari(self) -> Ganzhi:
+  def month_pillar(self) -> Ganzhi:
+    '''
+    Month Pillar is the Ganzhi of the Month (月柱).
+    '''
     month_tiangan: Tiangan = BaziUtils.find_month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
     return Ganzhi(month_tiangan, self._month_dizhi)
   
   @property
   def day_pillar(self) -> Ganzhi:
+    '''
+    Day Pillar is the Ganzhi of the Day (日柱).
+    '''
     return self._day_pillar
   
   @property
   def hour_pillar(self) -> Ganzhi:
+    '''
+    Hour Pillar is the Ganzhi of the Hour (时柱).
+    '''
     hour_tiangan: Tiangan = BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
     return Ganzhi(hour_tiangan, self._hour_dizhi)
   
   @property
-  def chart(self) -> BaziChart:
+  def pillars(self) -> BaziPillars:
     '''
     Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.
     返回年、月、日、时的天干地支（即返回八字）。
     '''
     pillars: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
-    return BaziChart(year=pillars[0], month=pillars[1], day=pillars[2], hour=pillars[3])
+    return BaziPillars(year=pillars[0], month=pillars[1], day=pillars[2], hour=pillars[3])
 
 八字 = Bazi
+
+
+class BaziChart:
+  def __init__(self, bazi: Bazi) -> None:
+    assert isinstance(bazi, Bazi)
+    self._bazi: Bazi = copy.deepcopy(bazi)
+
+  @property
+  def bazi(self) -> Bazi:
+    return copy.deepcopy(self._bazi)
+
+  # class BaziTraits:
+  #   def __init__(self, pillars: BaziPillars) -> None:
+  #     pass
+  
+  # @property
+  # def traits(self) -> BaziTraits:
+  #   '''
+  #   `traits` is a tuple of the Yinyang and Wuxing traits of each Tiangans and Dizhis in the chart.
+  #   '''
+  #   year = self.__Traits.__Pillar(
+  #     tiangan=BaziUtils.get_tiangan_traits(self._bazi.year_pillar.tiangan),
+  #     dizhi=BaziUtils.get_dizhi_traits(self._bazi.year_pillar.dizhi)
+  #   )
+
+命盘 = BaziChart
