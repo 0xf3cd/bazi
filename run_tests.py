@@ -24,12 +24,15 @@ argparse.add_argument('-s', '--slow-test', action='store_true', help='Whether or
 argparse.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
 argparse.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
 
+argparse.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
+
 args = argparse.parse_args()
 do_cov: bool = args.coverage
 minimum_cov_rate: float = args.coverage_rate
 run_slow_test: bool = args.slow_test
 run_hko_test: bool = args.hkodata_test
 expression: Optional[str] = args.expression
+do_demo: bool = args.demo
 
 term_width: int = shutil.get_terminal_size().columns
 
@@ -136,6 +139,26 @@ def run_ruff() -> int:
   return ruff_ret
 
 
+def run_demo() -> int:
+  print('\n' + '#' * term_width)
+  print('>> Running demo...')
+
+  proc: subprocess.CompletedProcess = subprocess.run([
+    'python3', str(Path(__file__).parent / 'run_demos.py')
+  ], capture_output=True)
+  demo_ret: int = proc.returncode
+
+  print(proc.stdout.decode('utf-8'))
+  print(proc.stderr.decode('utf-8'))
+
+  if demo_ret == 0:
+    print(colorama.Fore.GREEN + '>> Demo passed!' + colorama.Style.RESET_ALL)
+  else:
+    print(colorama.Fore.RED + '>> Demo failed!' + colorama.Style.RESET_ALL)
+
+  return demo_ret
+
+
 def main() -> None:
   start_time: datetime = datetime.now()
   ret_code: int = 0
@@ -146,6 +169,9 @@ def main() -> None:
     ret_code |= run_coverage(run_tests)
   else:
     ret_code |= run_tests()
+
+  if do_demo:
+    ret_code |= run_demo()
 
   ret_code |= run_ruff()
 

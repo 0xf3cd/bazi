@@ -16,8 +16,8 @@ class BaziGender(Enum):
   '''
   BaziGender is used to specify the gender of the person.
   '''
-  YANG = 0
-  YIN = 1
+  YANG = '男'
+  YIN = '女'
 
   # Aliases
   MALE = YANG
@@ -31,6 +31,9 @@ class BaziGender(Enum):
 
   乾 = YANG
   坤 = YIN
+
+  def __str__(self) -> str:
+    return str(self.value)
 
 
 class BaziPrecision(Enum):
