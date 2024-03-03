@@ -5,9 +5,10 @@ import unittest
 import random
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
+from typing import Optional
 from bazi import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
-  BaziGender, BaziPrecision, BaziData, Bazi, 八字,
+  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen,
   BaziChart, 命盘,
   TraitTuple
 )
@@ -232,6 +233,18 @@ class TestBaziChart(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertIs(BaziChart, 命盘)
 
+    bazi: Bazi = Bazi(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    chart: BaziChart = BaziChart(bazi)
+
+    self.assertTrue(chart.is_day_master(bazi.day_master))
+    for tg in Tiangan:
+      if tg is not bazi.day_master:
+        self.assertFalse(chart.is_day_master(tg))
+
   def test_malicious(self) -> None:
     with self.subTest('Modification attemp'):
       bazi: Bazi = Bazi(
@@ -260,6 +273,8 @@ class TestBaziChart(unittest.TestCase):
     chart: BaziChart = BaziChart(bazi)
     traits: BaziData[BaziChart.PillarTraits] = chart.traits
 
+    self.assertEqual(len(list(traits)), 4)
+
     self.assertEqual(traits.year.tiangan, TraitTuple(Wuxing.木, Yinyang.阳))  # 甲
     self.assertEqual(traits.year.dizhi, TraitTuple(Wuxing.水, Yinyang.阳))    # 子
 
@@ -285,6 +300,8 @@ class TestBaziChart(unittest.TestCase):
     chart: BaziChart = BaziChart(bazi)
     hidden_tiangans: BaziData[BaziChart.PillarHiddenTiangans] = chart.hidden_tiangans
 
+    self.assertEqual(len(list(hidden_tiangans)), 4)
+
     for hidden in hidden_tiangans:
       self.assertIsNone(hidden.tiangan) # There's no hidden tiangans in tiangan.
     
@@ -300,3 +317,77 @@ class TestBaziChart(unittest.TestCase):
     self.assertDictEqual(hidden_tiangans.hour.dizhi, {  # 寅
       Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
     })
+
+  def test_shishens(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+
+    self.assertEqual(len(list(shishens)), 4)
+
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    self.assertEqual(shishens.year.tiangan, Shishen.偏印)
+    self.assertEqual(shishens.year.dizhi, Shishen.正官)
+
+    self.assertEqual(shishens.month.tiangan, Shishen.劫财)
+    self.assertEqual(shishens.month.dizhi, Shishen.正印)
+
+    self.assertEqual(shishens.day.tiangan, None) # Day master's shishen is None.
+    self.assertEqual(shishens.day.dizhi, Shishen.偏印)
+
+    self.assertEqual(shishens.hour.tiangan, Shishen.偏财)
+    self.assertEqual(shishens.hour.dizhi, Shishen.偏印)
+
+  def test_consistency(self) -> None:
+    '''
+    Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are consistent.
+    '''
+    for _ in range(256):
+      chart: BaziChart = BaziChart.create(
+        birth_time=datetime(
+          random.randint(1903, 2097),
+          random.randint(1, 12),
+          random.randint(1, 28),
+          random.randint(0, 23),
+          random.randint(0, 59),
+        ),
+        gender=random.choice(list(BaziGender)),
+        precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
+      )
+
+      day_master: Tiangan = chart.bazi.day_master
+      pillars: BaziData[Ganzhi] = chart.bazi.pillars
+      traits: BaziData[BaziChart.PillarTraits] = chart.traits
+      hidden_tiangans: BaziData[BaziChart.PillarHiddenTiangans] = chart.hidden_tiangans
+      shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+
+      # The major component in hidden Tiangans of a Dizhi is expected to be of the same Wuxing as the Dizhi.
+      # 地支中的主气（即本气）应该和地支本身的五行一致。
+      for pillar_traits, pillar_hidden_tiangans in zip(traits, hidden_tiangans):
+        major_tiangan: Tiangan = max(pillar_hidden_tiangans.dizhi.items(), key=lambda pair: pair[1])[0]
+        self.assertEqual(pillar_traits.dizhi.wuxing, BaziUtils.get_tiangan_traits(major_tiangan).wuxing)
+
+      # Double-check that the shishens are correct.
+      # 确保各个天干地支的十神准确。
+      for pillar_idx, (pillar, pillar_traits, pillar_shishens) in enumerate(zip(pillars, traits, shishens)):
+        # Check Dizhi.
+        dz_shishen: Shishen = pillar_shishens.dizhi
+        dz_traits: TraitTuple = pillar_traits.dizhi
+        self.assertEqual(dz_shishen, BaziUtils.get_shishen(day_master, pillar.dizhi))
+        self.assertEqual(dz_traits, BaziUtils.get_dizhi_traits(pillar.dizhi))
+
+        # Check Tiangan.
+        tg_shishen: Optional[Shishen] = pillar_shishens.tiangan
+        if pillar_idx == 2: # Day master.
+          self.assertIsNone(tg_shishen)
+          continue
+
+        tg_traits: TraitTuple = pillar_traits.tiangan
+        self.assertEqual(tg_shishen, BaziUtils.get_shishen(day_master, pillar.tiangan))
+        self.assertEqual(tg_traits, BaziUtils.get_tiangan_traits(pillar.tiangan))

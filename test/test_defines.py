@@ -575,14 +575,14 @@ class TestShishen(unittest.TestCase):
       self.assertIs(Shishen.from_str('劫'), Shishen.劫财)
       self.assertIs(Shishen.from_str('食'), Shishen.食神)
       self.assertIs(Shishen.from_str('伤'), Shishen.伤官)
-      self.assertIs(Shishen.from_str('才'), Shishen.正财)
-      self.assertIs(Shishen.from_str('财'), Shishen.偏财)
+      self.assertIs(Shishen.from_str('财'), Shishen.正财)
+      self.assertIs(Shishen.from_str('才'), Shishen.偏财)
       self.assertIs(Shishen.from_str('官'), Shishen.正官)
       self.assertIs(Shishen.from_str('杀'), Shishen.七杀)
       self.assertIs(Shishen.from_str('印'), Shishen.正印)
       self.assertIs(Shishen.from_str('枭'), Shishen.偏印)
 
-      self.assertEqual(''.join([s.abbr for s in Shishen]), '比劫食伤才财官杀印枭')
+      self.assertEqual(''.join([s.abbr for s in Shishen]), '比劫食伤财才官杀印枭')
 
       with self.assertRaises(AssertionError):
         Shishen.from_str('甲')

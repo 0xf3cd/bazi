@@ -3,10 +3,10 @@
 import copy
 from enum import Enum
 from datetime import date, datetime, timedelta
-from typing import TypedDict, Unpack, Type, Sequence, Iterator
+from typing import TypedDict, Unpack, Type, Sequence, Iterator, Optional
 
 from .Rules import TraitTuple, HiddenTianganDict
-from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
+from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen
 from .Calendar import CalendarDate, CalendarUtils
 from .Utils import BaziUtils
 from . import hkodata
@@ -291,24 +291,98 @@ class BaziChart:
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
     self._bazi: Bazi = copy.deepcopy(bazi)
+  
+  @classmethod
+  def create(cls, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> 'BaziChart':
+    bazi: Bazi = Bazi(
+      birth_time=birth_time,
+      gender=gender,
+      precision=precision,
+    )
+    return cls(bazi)
+  
+  def is_day_master(self, tg: Tiangan) -> bool:
+    '''
+    Return True if the input Tiangan is the Tiangan of the Day Pillar (i.e. Day Master / 日主).
+    '''
+    return tg == self.bazi.day_master
 
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
 
-  PillarTraits = PillarData[TraitTuple, TraitTuple] # Type alias for traits.
+  PillarTraits = PillarData[TraitTuple, TraitTuple]
   @property
   def traits(self) -> BaziData[PillarTraits]:
+    '''
+    The traits (i.e. Yinyang and Wuxing) of Tiangans and Dizhis in pillars of Year, Month, Day, and Hour.
+    年、月、日、时的天干地支的阴阳和五行。
+
+    Usage:
+    ```
+    traits = chart.traits
+    
+    print(traits.year.tiangan) # Print the trait of Year's Tiangan (年柱天干)
+    assert traits.hour.dizhi == TraitTuple(Wuxing.木, Yinyang.阳) # Access the trait of Hour's Dizhi (时柱地支)
+
+    for pillar_traits in traits: # Iterate all pillars in the order of "Year, Month, Day, and Hour"
+      print(pillar_traits.tiangan) # Print the trait of Tiangan of the Pillar
+      print(pillar_traits.dizhi)   # Print the trait of Dizhi of the Pillar
+    ```
+    '''
+    # Get the traits of the four tiangans and four dizhis
     tiangan_traits: list[TraitTuple] = [BaziUtils.get_tiangan_traits(tg) for tg in self._bazi.four_tiangans]
     dizhi_traits: list[TraitTuple] = [BaziUtils.get_dizhi_traits(dz) for dz in self._bazi.four_dizhis]
-    pillar_data: list = [self.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
-    return BaziData(self.PillarTraits, pillar_data)
+    pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
+    return BaziData(BaziChart.PillarTraits, pillar_data)
   
-  PillarHiddenTiangans = PillarData[None, HiddenTianganDict] # Type alias for hidden tiangans.
+  PillarHiddenTiangans = PillarData[None, HiddenTianganDict]
   @property
   def hidden_tiangans(self) -> BaziData[PillarHiddenTiangans]:
+    '''
+    The hidden Tiangans in all Dizhis of current bazi.
+    当前八字的所有地支中的藏干。
+
+    Usage:
+    ```
+    hidden = chart.hidden_tiangans
+
+    print(hidden.year.dizhi)  # Print the hidden tiangans of Year
+    print(hidden.month.dizhi) # Print the hidden tiangans of Month
+    print(hidden.day.dizhi)   # Print the hidden tiangans of Day
+    print(hidden.hour.dizhi)  # Print the hidden tiangans of Hour
+
+    for pillar_data in hidden: # Iterate in the order of "Year, Month, Day, and Hour"
+      assert pillar_data.tiangan is None # The hidden Tiangans are in Dizhis, so there's no data for the Tiangans.
+      assert isinstance(pillar_data.dizhi, HiddenTianganDict)
+    ```
+    '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [BaziUtils.get_hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
-    pillar_data: list = [self.PillarHiddenTiangans(None, hidden) for hidden in dizhi_hidden_tiangans]
-    return BaziData(self.PillarHiddenTiangans, pillar_data)
+    pillar_data: list = [BaziChart.PillarHiddenTiangans(None, hidden) for hidden in dizhi_hidden_tiangans]
+    return BaziData(BaziChart.PillarHiddenTiangans, pillar_data)
+  
+  PillarShishens = PillarData[Optional[Shishen], Shishen]
+  @property
+  def shishens(self) -> BaziData[PillarShishens]:
+    '''
+    The Shishens of all Tiangans and Dizhis of Year, Month, Day, and Hour.
+    Notice that Day Master is not classified into any Shishen, as per the rules.
+    年、月、日、时柱的天干地支所对应的十神。注意，日主没有十神。
+    '''
+
+    day_master: Tiangan = self._bazi.day_master
+
+    shishen_list: list[BaziChart.PillarShishens] = []
+    for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
+      tg_shishen: Optional[Shishen] = BaziUtils.get_shishen(day_master, tg)
+      # Remember to set the Day Master's position to `None`.
+      if pillar_idx == 2:
+        tg_shishen = None
+
+      dz_shishen: Shishen = BaziUtils.get_shishen(day_master, dz)
+      shishen_list.append(BaziChart.PillarShishens(tg_shishen, dz_shishen))
+
+    assert len(shishen_list) == 4
+    return BaziData(self.PillarShishens, shishen_list)
 
 命盘 = BaziChart

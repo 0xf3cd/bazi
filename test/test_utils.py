@@ -3,7 +3,9 @@
 
 import unittest
 from datetime import date, datetime, timedelta
-from bazi import CalendarUtils, Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, TraitTuple, HiddenTianganDict
+from bazi import (
+  CalendarUtils, Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, TraitTuple, HiddenTianganDict
+)
 from bazi.Utils import BaziUtils
 
 
@@ -94,3 +96,21 @@ class TestUtils(unittest.TestCase):
       self.assertEqual(sum(percentages.values()), 100)
       for tg in percentages.keys():
         self.assertIn(tg, Tiangan)
+
+  def test_get_shishen(self) -> None:
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.甲), Shishen.比肩)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.乙), Shishen.劫财)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.寅), Shishen.比肩)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.卯), Shishen.劫财)
+
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.丙), Shishen.食神)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.午), Shishen.伤官)
+    
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.戊), Shishen.偏财)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.未), Shishen.正财)
+
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.辛), Shishen.正官)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.申), Shishen.七杀)
+
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.壬), Shishen.偏印)
+    self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.子), Shishen.正印)

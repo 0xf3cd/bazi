@@ -1,6 +1,6 @@
 import copy
 from datetime import date
-from .Defines import Ganzhi, Tiangan, Dizhi
+from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
   TraitTuple, HiddenTianganDict,
@@ -21,6 +21,8 @@ class BaziUtils:
     Return: (Ganzhi) The Day Ganzhi (日柱).
     '''
 
+    assert isinstance(dt, (date, CalendarDate))
+
     solar_date: CalendarDate = CalendarUtils.to_solar(dt)
     jiazi_day_date: date = date(2024, 3, 1) # 2024-03-01 is a day of "甲子".
     offset: int = (solar_date.to_date() - jiazi_day_date).days
@@ -38,6 +40,9 @@ class BaziUtils:
 
     Return: (Tiangan) The Tiangan of the Month Ganzhi (月柱天干).
     '''
+
+    assert isinstance(year_tiangan, Tiangan)
+    assert isinstance(month_dizhi, Dizhi)
 
     month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
     first_month_tiangan: Tiangan = YEAR_TO_MONTH_TABLE[year_tiangan]
@@ -57,6 +62,9 @@ class BaziUtils:
     Return: (Tiangan) The Tiangan of the Hour Ganzhi (时柱天干).
     '''
 
+    assert isinstance(day_tiangan, Tiangan)
+    assert isinstance(hour_dizhi, Dizhi)
+
     hour_index: int = hour_dizhi.index
     first_hour_tiangan: Tiangan = DAY_TO_HOUR_TABLE[day_tiangan]
     hour_tiangan_index: int = (first_hour_tiangan.index + hour_index) % 10
@@ -74,6 +82,7 @@ class BaziUtils:
     Return: (TraitTuple) The Wuxing and Yinyang of the given Tiangan.
     '''
 
+    assert isinstance(tg, Tiangan)
     return copy.deepcopy(TIANGAN_TRAITS[tg])
   
   @staticmethod
@@ -88,6 +97,7 @@ class BaziUtils:
     Return: (TraitTuple) The Wuxing and Yinyang of the given Dizhi.
     '''
 
+    assert isinstance(dz, Dizhi)
     return copy.deepcopy(DIZHI_TRAITS[dz])
   
   @staticmethod
@@ -102,4 +112,67 @@ class BaziUtils:
     Return: (HiddenTianganDict) The percentage of hidden Tiangans in the given Dizhi.
     '''
 
+    assert isinstance(dz, Dizhi)
     return copy.deepcopy(HIDDEN_TIANGANS_PERCENTAGE_TABLE[dz])
+  
+  @staticmethod
+  def get_shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
+    '''
+    Get the Shishen of the given Tiangan.
+    输入日主和某天干或者地支，返回天干或地支对应的十神。
+
+    Args:
+    - day_master: (Tiangan) The Tiangan of the Day Master.
+    - other: (Tiangan | Dizhi) The Tiangan or Dizhi of the other.
+
+    Return: (Shishen) The Shishen of the given Tiangan or Dizhi.
+
+    Example:
+    - get_shishen(Tiangan("甲"), Tiagan("甲")) -> Shishen("比肩") # "甲" is the "比肩" of "甲".
+    - get_shishen(Tiangan("甲"), Dizhi("寅")) -> Shishen("比肩")  # "寅" is the "比肩" of "甲".
+    - get_shishen(Tiangan("壬"), Dizhi("戌")) -> Shishen("七杀")  # "戌" is the "七杀" of "壬".
+    '''
+
+    assert isinstance(day_master, Tiangan)
+    assert isinstance(other, (Tiangan, Dizhi))
+
+    if isinstance(other, Tiangan):
+      other_tg: Tiangan = other
+    else:
+      hidden_tiangans: HiddenTianganDict = BaziUtils.get_hidden_tiangans(other)
+      # Find out the key of the hidden tiangan with the highest percentage (即寻找地支中的主气).
+      other_tg: Tiangan = max(hidden_tiangans.items(), key=lambda pair: pair[1])[0]
+
+    day_master_traits: TraitTuple = BaziUtils.get_tiangan_traits(day_master)
+    other_traits: TraitTuple = BaziUtils.get_tiangan_traits(other_tg)
+
+    homogeneous: bool = day_master_traits.yinyang == other_traits.yinyang # Whether the two Tiangans are of the same Yinyang type.
+    day_master_wuxing: Wuxing = day_master_traits.wuxing # The Wuxing of the Day Master.
+    other_wuxing: Wuxing = other_traits.wuxing           # The Wuxing of the other.
+    
+    if day_master_wuxing == other_wuxing:           # 比劫
+      if homogeneous:
+        return Shishen.from_str('比')
+      else:
+        return Shishen.from_str('劫')
+    elif day_master_wuxing.generates(other_wuxing): # 食伤
+      if homogeneous:
+        return Shishen.from_str('食')
+      else:
+        return Shishen.from_str('伤')
+    elif day_master_wuxing.destructs(other_wuxing): # 财星
+      if homogeneous:
+        return Shishen.from_str('才')
+      else:
+        return Shishen.from_str('财')
+    elif other_wuxing.generates(day_master_wuxing): # 印枭
+      if homogeneous:
+        return Shishen.from_str('枭')
+      else:
+        return Shishen.from_str('印')
+    else:                                           # 官杀
+      assert other_wuxing.destructs(day_master_wuxing) 
+      if homogeneous:
+        return Shishen.from_str('杀')
+      else:
+        return Shishen.from_str('官')
