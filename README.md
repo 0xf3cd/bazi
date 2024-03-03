@@ -3,8 +3,9 @@
 
 ## Instructions
 * Install requirements by `python -m pip install -r Requirements.txt`
-* Run linter: `ruff .`
-* Run tests: `python -m pytest`
-  * Use `python -m pytest` to ensure that pytest is running with the correct python version if using Conda
-* Get test coverage:
-  * `coverage run -m pytest test -v -s`, then `coverage report -m`
+* Run linter: `ruff check .`
+* Run tests: `./run_tests.py`
+  * By default, hkodata tests and slow tests won't be running.
+  * Add `-hko` argument to also run hkodata tests, like: `./run_tests.py -hko`.
+  * Add `-s` argument to also run slow tests, like: `./run_tests.py -s`.
+* Get test coverage: `./run_tests.py -c`

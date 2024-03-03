@@ -2,13 +2,18 @@
 # test_defines.py
 
 import unittest
-from bazi import Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气
+from itertools import product
+from bazi import (
+  Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
+  Wuxing, 五行, Yinyang, 阴阳, Shishen, 十神
+)
 
 
 class TestTiangan(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(len(Tiangan), 10)
     self.assertEqual(Tiangan.JIA.value, '甲')
+    self.assertEqual(Tiangan('甲').value, '甲')
     self.assertNotEqual(Tiangan.WU, Tiangan.REN)
     self.assertNotEqual(Tiangan.WU.value, Tiangan.REN.value)
 
@@ -69,12 +74,14 @@ class TestTiangan(unittest.TestCase):
     self.assertNotEqual(Tiangan.from_str('丁'), Tiangan.from_str('甲'))
                         
   def test_str(self) -> None:
-    for e in Dizhi:
+    for e in Tiangan:
       self.assertEqual(str(e), e.value)
-    for e in Dizhi.as_list():
+      self.assertIs(Tiangan(str(e)), e)
+    for e in Tiangan.as_list():
       self.assertEqual(str(e), e.value)
+      self.assertIs(Tiangan(str(e)), e)
 
-    self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
+    self.assertEqual('甲乙丙丁戊己庚辛壬癸', ''.join([str(e) for e in Tiangan.as_list()]))
 
   def test_index(self) -> None:
     self.assertEqual(Tiangan.甲.index, 0)
@@ -108,6 +115,7 @@ class TestDizhi(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(12, len(Dizhi))
     self.assertEqual('子', Dizhi.ZI.value)
+    self.assertEqual(Dizhi('子'), Dizhi.子)
     self.assertNotEqual(Dizhi.WEI, Dizhi.SHEN)
     self.assertNotEqual(Dizhi.WEI.value, Dizhi.SHEN.value)
 
@@ -169,8 +177,10 @@ class TestDizhi(unittest.TestCase):
   def test_str(self) -> None:
     for e in Dizhi:
       self.assertEqual(str(e), e.value)
+      self.assertIs(Dizhi(str(e)), e)
     for e in Dizhi.as_list():
       self.assertEqual(str(e), e.value)
+      self.assertIs(Dizhi(str(e)), e)
 
     self.assertEqual('子丑寅卯辰巳午未申酉戌亥', ''.join([str(e) for e in Dizhi.as_list()]))
 
@@ -321,6 +331,7 @@ class TestJieqi(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertEqual(len(Jieqi), 24)
     self.assertEqual(Jieqi.QINGMING.value, '清明')
+    self.assertEqual(Jieqi('清明'), Jieqi.清明)
     self.assertNotEqual(Jieqi.QINGMING, Jieqi.LICHUN)
     self.assertNotEqual(Jieqi.QINGMING.value, Jieqi.LICHUN.value)
 
@@ -373,6 +384,7 @@ class TestJieqi(unittest.TestCase):
 
     for jq in Jieqi:
       self.assertEqual(Jieqi.from_str(str(jq)), jq)
+      self.assertEqual(Jieqi(str(jq)), jq)
 
     self.assertEqual(Jieqi.from_str('秋分'), Jieqi.秋分)
     self.assertEqual(Jieqi.from_str('秋分'), Jieqi.from_str('秋分'))
@@ -413,3 +425,174 @@ class TestJieqi(unittest.TestCase):
 
     self.assertEqual(''.join([str(jq) for jq in Jieqi.as_list()]), 
                      '立春雨水惊蛰春分清明谷雨立夏小满芒种夏至小暑大暑立秋处暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒')
+
+
+class TestWuxing(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(Wuxing), 5)
+    self.assertEqual(Wuxing.METAL.value, '金')
+    self.assertEqual(Wuxing.金.value, '金')
+    self.assertEqual(Wuxing('金'), Wuxing.金)
+    self.assertNotEqual(Wuxing.金, Wuxing.木)
+    self.assertNotEqual(Wuxing.金.value, Wuxing.木.value)
+
+  def test_alias(self) -> None:
+    self.assertIs(Wuxing.木, Wuxing.WOOD)
+    self.assertIs(Wuxing.火, Wuxing.FIRE)
+    self.assertIs(Wuxing.土, Wuxing.EARTH)
+    self.assertIs(Wuxing.金, Wuxing.METAL)
+    self.assertIs(Wuxing.水, Wuxing.WATER)
+    self.assertIs(Wuxing, 五行)
+
+  def test_as_list(self) -> None:
+    self.assertEqual(len(Wuxing.as_list()), 5)
+    self.assertEqual(Wuxing.as_list()[0], Wuxing.木)
+    self.assertEqual(Wuxing.as_list()[1], Wuxing.火)
+    self.assertEqual(Wuxing.as_list()[2], Wuxing.土)
+    self.assertEqual(Wuxing.as_list()[3], Wuxing.金)
+    self.assertEqual(Wuxing.as_list()[4], Wuxing.水)
+
+  def test_from_str(self) -> None:
+    self.assertIs(Wuxing.from_str('木'), Wuxing.木)
+    self.assertIs(Wuxing.from_str('火'), Wuxing.火)
+    self.assertIs(Wuxing.from_str('土'), Wuxing.土)
+    self.assertIs(Wuxing.from_str('金'), Wuxing.金)
+    self.assertIs(Wuxing.from_str('水'), Wuxing.水)
+
+    with self.assertRaises(AssertionError):
+      Wuxing.from_str('')
+    with self.assertRaises(AssertionError):
+      Wuxing.from_str('木木')
+    with self.assertRaises(ValueError):
+      Wuxing.from_str('甲')
+    with self.assertRaises(ValueError):
+      Wuxing.from_str('辰')
+
+  def test_str(self) -> None:
+    for wx in Wuxing:
+      self.assertEqual(str(wx), wx.value)
+      self.assertEqual(Wuxing.from_str(str(wx)), wx)
+
+    self.assertEqual(''.join([str(wx) for wx in Wuxing]), '木火土金水')
+
+  def test_generates_and_destructs(self) -> None:
+    self.assertTrue(Wuxing.木.generates(Wuxing.火))
+    self.assertTrue(Wuxing.火.destructs(Wuxing.金))
+
+    wx_list: list[Wuxing] = Wuxing.as_list()
+    for wx1, wx2 in product(wx_list, wx_list):
+      wx1_index: int = wx_list.index(wx1)
+      wx2_index: int = wx_list.index(wx2)
+      
+      if (wx1_index + 1) % 5 == wx2_index:
+        self.assertTrue(wx1.generates(wx2))
+        self.assertFalse(wx2.generates(wx1))
+        self.assertFalse(wx1.destructs(wx2))
+      else:
+        self.assertFalse(wx1.generates(wx2))
+
+      if (wx1_index + 2) % 5 == wx2_index:
+        self.assertTrue(wx1.destructs(wx2))
+        self.assertFalse(wx2.destructs(wx1))
+        self.assertFalse(wx1.generates(wx2))
+      else:
+        self.assertFalse(wx1.destructs(wx2))
+
+
+class TestYinyang(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(Yinyang), 2)
+    self.assertIs(Yinyang.阴, Yinyang.YIN)
+    self.assertIs(Yinyang.阳, Yinyang.YANG)
+
+    self.assertEqual(Yinyang.阴.value, '阴')
+    self.assertNotEqual(Yinyang.阴, Yinyang.阳)
+    self.assertNotEqual(Yinyang.阴.value, Yinyang.阳.value)
+
+    self.assertEqual(len(Yinyang.as_list()), 2)
+    self.assertEqual(Yinyang.as_list()[0], Yinyang.阳)
+    self.assertEqual(Yinyang.as_list()[1], Yinyang.阴)
+
+    self.assertIs(阴阳, Yinyang)
+
+  def test_str(self) -> None:
+    self.assertEqual(str(Yinyang.阴), '阴')
+    self.assertEqual(str(Yinyang.阳), '阳')
+    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
+    self.assertEqual(Yinyang('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang('阳'), Yinyang.阳)
+
+    self.assertEqual(''.join([str(e) for e in Yinyang.as_list()]), '阳阴')
+
+    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
+    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
+
+    with self.assertRaises(ValueError):
+      Yinyang.from_str('甲')
+    with self.assertRaises(ValueError):
+      Yinyang.from_str('辰')
+
+  def test_opposite(self) -> None:
+    self.assertEqual(Yinyang.阴.opposite, Yinyang.阳)
+    self.assertEqual(Yinyang.阳.opposite, Yinyang.阴)
+
+
+class TestShishen(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(Shishen), 10)
+    self.assertEqual(len(Shishen.as_list()), 10)
+    self.assertIs(十神, Shishen)
+    self.assertEqual(Shishen('比肩').value, '比肩')
+    self.assertEqual(Shishen('食神').value, '食神')
+    self.assertNotEqual(Shishen('偏印').value, '食神')
+
+  def test_str(self) -> None:
+    with self.subTest('Two characters - fullname'):
+      self.assertEqual(str(Shishen.比肩), '比肩')
+      self.assertEqual(str(Shishen.劫财), '劫财')
+      self.assertEqual(str(Shishen.食神), '食神')
+      self.assertEqual(str(Shishen.伤官), '伤官')
+      self.assertEqual(str(Shishen.正财), '正财')
+      self.assertEqual(str(Shishen.偏财), '偏财')
+      self.assertEqual(str(Shishen.正官), '正官')
+      self.assertEqual(str(Shishen.七杀), '七杀')
+      self.assertEqual(str(Shishen.正印), '正印')
+      self.assertEqual(str(Shishen.偏印), '偏印')
+
+      for s in Shishen:
+        self.assertEqual(str(s), s.value)
+        self.assertEqual(Shishen.from_str(str(s)), s)
+        self.assertEqual(Shishen(str(s)), s)
+
+      self.assertEqual(''.join([str(s) for s in Shishen.as_list()]), 
+                      '比肩劫财食神伤官正财偏财正官七杀正印偏印')
+      
+    with self.subTest('One character - abbreviation'):
+      self.assertEqual(len(Shishen.str_mapping_table()), 10)
+
+      self.assertIs(Shishen.from_str('比'), Shishen.比肩)
+      self.assertIs(Shishen.from_str('劫'), Shishen.劫财)
+      self.assertIs(Shishen.from_str('食'), Shishen.食神)
+      self.assertIs(Shishen.from_str('伤'), Shishen.伤官)
+      self.assertIs(Shishen.from_str('财'), Shishen.正财)
+      self.assertIs(Shishen.from_str('才'), Shishen.偏财)
+      self.assertIs(Shishen.from_str('官'), Shishen.正官)
+      self.assertIs(Shishen.from_str('杀'), Shishen.七杀)
+      self.assertIs(Shishen.from_str('印'), Shishen.正印)
+      self.assertIs(Shishen.from_str('枭'), Shishen.偏印)
+
+      self.assertEqual(''.join([s.abbr for s in Shishen]), '比劫食伤财才官杀印枭')
+
+      with self.assertRaises(AssertionError):
+        Shishen.from_str('甲')
+      with self.assertRaises(AssertionError):
+        Shishen.from_str('辰')
+      with self.assertRaises(AssertionError):
+        Shishen.from_str('')
+      with self.assertRaises(ValueError):
+        Shishen.from_str('甲子')
+      with self.assertRaises(ValueError):
+        Shishen.from_str('比间')
+      with self.assertRaises(ValueError):
+        Shishen.from_str('枭神')

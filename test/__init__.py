@@ -1,5 +1,5 @@
-from .run_tests import run_tests
+from .bazi_tests import run_bazi_tests
 
 __all__ = [
-  'run_tests',
+  'run_bazi_tests',
 ]

@@ -1,3 +1,5 @@
+from .test import hkodata_tests
+
 from .common import (
   START_YEAR, END_YEAR,
   get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
@@ -13,6 +15,7 @@ from .decoder import (
 )
 
 __all__ = [
+  'hkodata_tests',
   'START_YEAR', 'END_YEAR',
   'get_data_base_path', 'get_raw_txt_file_paths', 'raw_data_ready',
   'get_jieqi_encoded_data_path', 'get_lunardate_encoded_data_path', 'encoded_data_ready',

@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 
 class Tiangan(Enum):
-  '''Tiangan / 天干'''
+  '''Tiangan / Stem / 天干'''
   JIA  = '甲'
   YI   = '乙'
   BING = '丙'
@@ -53,7 +53,7 @@ class Tiangan(Enum):
 
 
 class Dizhi(Enum):
-  '''Dizhi / 地支'''
+  '''Dizhi / Branch / 地支'''
   ZI   = '子'
   CHOU = '丑'
   YIN  = '寅'
@@ -105,7 +105,7 @@ class Dizhi(Enum):
 
 
 class Ganzhi(NamedTuple):
-  '''Ganzhi / 干支'''
+  '''Ganzhi / Stem-branch / 干支'''
   tiangan: Tiangan
   dizhi: Dizhi
 
@@ -215,3 +215,197 @@ class Jieqi(Enum):
     return str(self.value)
 
 节气 = Jieqi # Alias
+
+
+class Wuxing(Enum):
+  '''Wuxing / 五行'''
+  WOOD  = '木'
+  FIRE  = '火'
+  EARTH = '土'
+  METAL = '金'
+  WATER = '水'
+
+  # Aliases
+  木 = WOOD
+  火 = FIRE
+  土 = EARTH
+  金 = METAL
+  水 = WATER
+
+  @classmethod
+  def from_str(cls, s: str) -> 'Wuxing':
+    assert isinstance(s, str)
+    assert len(s) == 1
+    return cls(s)
+
+  @classmethod
+  def as_list(cls) -> list['Wuxing']:
+    return list(cls)
+
+  def __str__(self) -> str:
+    return str(self.value)
+  
+  def generates(self, wx: 'Wuxing') -> bool:
+    '''
+    Check if the input wuxing can be generated from the current.
+    检查五行的相生关系，如果当前的五行可以生出输入的五行，则返回 True，否则返回 False。
+
+    Args:
+    - self: Wuxing object
+    - wx: Wuxing object
+
+    Returns:
+    - True if the input wuxing can be generated from the current.
+    - False otherwise
+
+    Examples:
+    - Wuxing.水.generates(Wuxing.木) -> True  # Water nourishes Wood / 水生木
+    - Wuxing.木.generates(Wuxing.火) -> True  # Wood feeds Fire / 木生火
+    - Wuxing.火.generates(Wuxing.木) -> False # Fire does not generate Wood / 火不生木
+    '''
+    if self is Wuxing.木:
+      return wx is Wuxing.火
+    elif self is Wuxing.火:
+      return wx is Wuxing.土
+    elif self is Wuxing.土:
+      return wx is Wuxing.金
+    elif self is Wuxing.金:
+      return wx is Wuxing.水
+    else:
+      assert self is Wuxing.水
+      return wx is Wuxing.木
+    
+  def destructs(self, wx: 'Wuxing') -> bool:
+    '''
+    Check if the input wuxing can be destroyed by the current.
+    检查五行的相克关系，如果当前的五行克输入的五行，则返回 True，否则返回 False。
+
+    Args:
+    - self: Wuxing object
+    - wx: Wuxing object
+
+    Returns:
+    - True if the input wuxing can be destroyed by the current.
+    - False otherwise
+
+    Examples:
+    - Wuxing.金.destructs(Wuxing.木) -> True  # Metal destroys Wood / 金克木
+    - Wuxing.土.destructs(Wuxing.水) -> True  # Earth destroys Water / 土克水
+    - Wuxing.水.destructs(Wuxing.土) -> False # Water does not destroy Earth / 水不克土
+    '''
+    if self is Wuxing.木:
+      return wx is Wuxing.土
+    elif self is Wuxing.火:
+      return wx is Wuxing.金
+    elif self is Wuxing.土:
+      return wx is Wuxing.水
+    elif self is Wuxing.金:
+      return wx is Wuxing.木
+    else:
+      assert self is Wuxing.水
+      return wx is Wuxing.火
+
+五行 = Wuxing # Alias
+
+
+class Yinyang(Enum):
+  '''Yinyang / 阴阳'''
+  YANG = '阳'
+  YIN  = '阴'
+
+  # Aliases
+  阳 = YANG
+  阴 = YIN
+
+  @classmethod
+  def from_str(cls, s: str) -> 'Yinyang':
+    assert isinstance(s, str)
+    assert len(s) == 1
+    return cls(s)
+  
+  @classmethod
+  def as_list(cls) -> list['Yinyang']:
+    return list(cls)
+  
+  def __str__(self) -> str:
+    return str(self.value)
+
+  @property
+  def opposite(self) -> 'Yinyang':
+    return Yinyang.YIN if self is Yinyang.YANG else Yinyang.YANG
+
+阴阳 = Yinyang # Alias
+
+
+class Shishen(Enum):
+  '''Shishen / Ten Gods / 十神'''
+  BIJIAN    = '比肩'
+  JIECAI    = '劫财'
+  SHISHEN   = '食神' # This is not "Ten Gods" in Chinese. This means "Eating God" instead.
+  SHANGGUAN = '伤官'
+  ZHENGCAI  = '正财'
+  PIANCAI   = '偏财'
+  ZHENGGUAN = '正官'
+  QISHA     = '七杀'
+  ZHENGYIN  = '正印'
+  PIANYIN   = '偏印'
+
+  # Aliases
+  比肩 = BIJIAN
+  劫财 = JIECAI
+  食神 = SHISHEN
+  伤官 = SHANGGUAN
+  正财 = ZHENGCAI
+  偏财 = PIANCAI
+  正官 = ZHENGGUAN
+  七杀 = QISHA
+  正印 = ZHENGYIN
+  偏印 = PIANYIN
+
+  @staticmethod
+  def str_mapping_table() -> dict[str, str]:
+    '''
+    Return the mapping rules (from one Chinese character to the full name) for the Shishens.
+    '''
+    return {
+      '比': '比肩',
+      '劫': '劫财',
+      '食': '食神',
+      '伤': '伤官',
+      '财': '正财',
+      '才': '偏财',
+      '官': '正官',
+      '杀': '七杀',
+      '印': '正印',
+      '枭': '偏印',
+    }
+
+  @staticmethod
+  def from_str(s: str) -> 'Shishen':
+    assert isinstance(s, str)
+    assert len(s) in [1, 2]
+
+    if len(s) == 1:
+      t: dict[str, str] = Shishen.str_mapping_table()
+      assert s in t
+      s = t[s]
+
+    return Shishen(s)
+  
+  @classmethod
+  def as_list(cls) -> list['Shishen']:
+    return list(cls)
+  
+  def __str__(self) -> str:
+    return str(self.value)
+  
+  @property
+  def abbr(self) -> str:
+    '''
+    The short version of this Shishen. For example, "比" for "比肩", "才" for "正财", etc.
+    '''
+    t = Shishen.str_mapping_table()
+    reversed_t = { v : k for k, v in t.items() }
+    return reversed_t[str(self)]
+
+十神 = Shishen # Alias
