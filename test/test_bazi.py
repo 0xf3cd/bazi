@@ -28,6 +28,12 @@ class TestBaziGender(unittest.TestCase):
     self.assertIs(BaziGender.YIN, BaziGender.阴)
     self.assertIs(BaziGender.YIN, BaziGender.坤)
 
+  def test_str(self) -> None:
+    self.assertEqual(str(BaziGender.YANG), '男')
+    self.assertEqual(str(BaziGender.YIN), '女')
+    self.assertIs(BaziGender.YANG, BaziGender('男'))
+    self.assertIs(BaziGender.YIN, BaziGender('女'))
+
 
 class TestBazi(unittest.TestCase):
   def test_init(self) -> None:
