@@ -2,6 +2,7 @@
 > 排盘、五行、十神、纳音、刑冲破害、合会
 
 ## Instructions
+* Python version should be >= 3.9
 * Install requirements by `python -m pip install -r Requirements.txt`
 * Run linter: `ruff check .`
 * Run tests: `./run_tests.py`

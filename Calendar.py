@@ -5,6 +5,7 @@ import calendar
 
 from enum import Enum
 from datetime import date, timedelta
+from typing import Union
 
 from .Defines import Ganzhi, Jieqi
 from .hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
@@ -435,7 +436,7 @@ class CalendarUtils:
     return CalendarUtils.solar_to_lunar(solar_date)
   
   @staticmethod
-  def __to_calendardate(d: date | CalendarDate) -> CalendarDate:
+  def __to_calendardate(d: Union[date, CalendarDate]) -> CalendarDate:
     if isinstance(d, date):
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
     else:
@@ -446,12 +447,12 @@ class CalendarUtils:
     return ret
 
   @staticmethod
-  def to_solar(d: date | CalendarDate) -> CalendarDate:
+  def to_solar(d: Union[date, CalendarDate]) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `SOLAR` type.
     
     Args:
-    - d: (date | CalendarDate) The input date.
+    - d: (Union[date, CalendarDate]) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `SOLAR` type.
@@ -468,12 +469,12 @@ class CalendarUtils:
       return CalendarUtils.ganzhi_to_solar(calendardate)
 
   @staticmethod
-  def to_lunar(d: date | CalendarDate) -> CalendarDate:
+  def to_lunar(d: Union[date, CalendarDate]) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `LUNAR` type.
 
     Args:
-    - d: (date | CalendarDate) The input date.
+    - d: (Union[date, CalendarDate]) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `LUNAR` type.
@@ -490,12 +491,12 @@ class CalendarUtils:
       return CalendarUtils.ganzhi_to_lunar(calendardate)
     
   @staticmethod
-  def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
+  def to_ganzhi(d: Union[date, CalendarDate]) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `GANZHI` type.
 
     Args:
-    - d: (date | CalendarDate) The input date.
+    - d: (Union[date, CalendarDate]) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `GANZHI` type.

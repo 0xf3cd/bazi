@@ -4,6 +4,7 @@ import sys
 import random
 from pathlib import Path
 from datetime import datetime
+from typing import Union
 
 import colorama
 
@@ -14,14 +15,14 @@ from bazi import (
   HiddenTianganDict
 )
 
-def get_wuxing(s: Tiangan | Dizhi) -> Wuxing:
+def get_wuxing(s: Union[Tiangan, Dizhi]) -> Wuxing:
   assert isinstance(s, (Tiangan, Dizhi))
   if isinstance(s, Dizhi):
     return BaziUtils.get_dizhi_traits(s).wuxing
   else:
     return BaziUtils.get_tiangan_traits(s).wuxing
 
-def colored_str(s: Tiangan | Dizhi) -> str:
+def colored_str(s: Union[Tiangan, Dizhi]) -> str:
   assert isinstance(s, (Tiangan, Dizhi))
 
   color_mapping_table: dict[Wuxing, str] = {
@@ -35,7 +36,7 @@ def colored_str(s: Tiangan | Dizhi) -> str:
   wx = get_wuxing(s)
   return color_mapping_table[wx] + str(s) + colorama.Style.RESET_ALL
 
-def get_trait_str(s: Tiangan | Dizhi) -> str:
+def get_trait_str(s: Union[Tiangan, Dizhi]) -> str:
   assert isinstance(s, (Tiangan, Dizhi))
 
   if isinstance(s, Dizhi):

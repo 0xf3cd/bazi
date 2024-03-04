@@ -94,9 +94,9 @@ class TestBazi(unittest.TestCase):
       second=random.randint(0, 59)
     )
 
-    with self.assertRaises(AssertionError):
+    with self.assertRaises(TypeError):
       Bazi(birth_time=random_dt, gender=BaziGender.男) # type: ignore # Missing `precision`
-    with self.assertRaises(AssertionError):
+    with self.assertRaises(TypeError):
       Bazi(birth_time=random_dt, precision=BaziPrecision.DAY) # type: ignore # Missing `gender`
     with self.assertRaises(AssertionError):
       Bazi(birth_time='2024-03-03', gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore # Currently doesn't take string as input

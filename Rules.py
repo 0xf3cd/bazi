@@ -69,7 +69,7 @@ DIZHI_TRAITS: dict[Dizhi, TraitTuple] = {
 }
 
 
-type HiddenTianganDict = dict[Tiangan, int]
+HiddenTianganDict = dict[Tiangan, int]
 
 # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
 # 该字典用于查询给定地支的藏干和它们所占的百分比。
