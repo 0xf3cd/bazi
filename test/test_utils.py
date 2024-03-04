@@ -4,7 +4,8 @@
 import unittest
 from datetime import date, datetime, timedelta
 from bazi import (
-  CalendarUtils, Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, TraitTuple, HiddenTianganDict
+  CalendarUtils, TraitTuple, HiddenTianganDict,
+  Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng,
 )
 from bazi.Utils import BaziUtils
 
@@ -114,3 +115,56 @@ class TestUtils(unittest.TestCase):
 
     self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Tiangan.壬), Shishen.偏印)
     self.assertEqual(BaziUtils.get_shishen(Tiangan.甲, Dizhi.子), Shishen.正印)
+
+  def test_get_nayin_str(self) -> None:
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('甲子')), '海中金')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('乙丑')), '海中金')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('丙寅')), '炉中火')
+
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('癸卯')), '金箔金')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('甲辰')), '覆灯火')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('乙巳')), '覆灯火')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('丙午')), '天河水')
+
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('辛酉')), '石榴木')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('壬戌')), '大海水')
+    self.assertEqual(BaziUtils.get_nayin_str(Ganzhi.from_str('癸亥')), '大海水')
+
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    for tg in Tiangan:
+      for dz in Dizhi:
+        gz: Ganzhi = Ganzhi(tg, dz)
+        if gz in cycle:
+          self.assertEqual(len(BaziUtils.get_nayin_str(gz)), 3)
+        else:
+          with self.assertRaises(AssertionError):
+            BaziUtils.get_nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayins.
+
+  def test_shier_zhangsheng(self) -> None:
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('甲亥')), ShierZhangsheng.长生)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('甲午')), ShierZhangsheng.死)
+
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('乙亥')), ShierZhangsheng.死)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('乙丑')), ShierZhangsheng.衰)
+
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('丙午')), ShierZhangsheng.帝旺)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('丙未')), ShierZhangsheng.衰)
+
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('丁未')), ShierZhangsheng.冠带)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('丁戌')), ShierZhangsheng.养)
+
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('戊戌')), ShierZhangsheng.墓)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('戊亥')), ShierZhangsheng.绝)
+
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('己亥')), ShierZhangsheng.胎)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('庚辰')), ShierZhangsheng.养)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('辛酉')), ShierZhangsheng.临官)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('壬申')), ShierZhangsheng.长生)
+    self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_str('癸卯')), ShierZhangsheng.长生)
+
+    for dz in Dizhi:
+      self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_strs('丙', str(dz))),
+                       BaziUtils.get_shier_zhangsheng(Ganzhi.from_strs('戊', str(dz))))
+      self.assertEqual(BaziUtils.get_shier_zhangsheng(Ganzhi.from_strs('丁', str(dz))),
+                       BaziUtils.get_shier_zhangsheng(Ganzhi.from_strs('己', str(dz))))

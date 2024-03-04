@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 from typing import TypedDict, Unpack, Type, Sequence, Iterator, Optional
 
 from .Rules import TraitTuple, HiddenTianganDict
-from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen
+from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
 from .Calendar import CalendarDate, CalendarUtils
 from .Utils import BaziUtils
 from . import hkodata
@@ -401,5 +401,45 @@ class BaziChart:
 
     assert len(shishen_list) == 4
     return BaziData(self.PillarShishens, shishen_list)
+  
+  @property
+  def nayins(self) -> BaziData[str]:
+    '''
+    The Nayins of the pillars of Year, Month, Day, and Hour.
+    年、月、日、时柱的纳音。
+
+    Usage:
+    ```
+    nayins = chart.nayins
+
+    print(nayins.year) # Print the Nayin of the Year pillar
+
+    for nayin in nayins: # Iterate in the order of "Year, Month, Day, and Hour"
+      print(nayin)
+    ```
+    '''
+
+    nayin_list: list[str] = [BaziUtils.get_nayin_str(gz) for gz in self._bazi.pillars]
+    return BaziData(str, nayin_list)
+  
+  @property
+  def shier_zhangshengs(self) -> BaziData[ShierZhangsheng]:
+    '''
+    The Shier Zhangshengs (i.e. 12 stages of growth) of 4 pillars of Year, Month, Day, and Hour.
+    年、月、日、时柱的十二长生。
+
+    Usage:
+    ```
+    zhangshengs = chart.shier_zhangshengs
+
+    print(zhangshengs.day) # Print the Zhangsheng of the Day pillar
+
+    for zs in zhangshengs: # Interate in the order of "Year, Month, Day, and Hour"
+      pass
+    ```
+    '''
+
+    zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.get_shier_zhangsheng(gz) for gz in self._bazi.pillars]
+    return BaziData(ShierZhangsheng, zhangsheng_list)
 
 命盘 = BaziChart

@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from typing import Optional
 from bazi import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
-  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen,
+  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
   BaziChart, 命盘,
   TraitTuple, HiddenTianganDict
 )
@@ -346,6 +346,44 @@ class TestBaziChart(unittest.TestCase):
 
     self.assertEqual(shishens.hour.tiangan, Shishen.偏财)
     self.assertEqual(shishens.hour.dizhi, Shishen.偏印)
+
+  def test_nayins(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    nayins: BaziData[str] = chart.nayins
+
+    self.assertEqual(len(list(nayins)), 4)
+
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    self.assertEqual(nayins.year, '海中金')
+    self.assertEqual(nayins.month, '炉中火')
+    self.assertEqual(nayins.day, '炉中火')
+    self.assertEqual(nayins.hour, '松柏木')
+
+  def test_shier_zhangshengs(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangshengs
+
+    self.assertEqual(len(list(zhangshengs)), 4)
+
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    self.assertEqual(zhangshengs.year, ShierZhangsheng.沐浴)
+    self.assertEqual(zhangshengs.month, ShierZhangsheng.病)
+    self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
+    self.assertEqual(zhangshengs.hour, ShierZhangsheng.绝)
 
   def test_consistency(self) -> None:
     '''
