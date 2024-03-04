@@ -1,11 +1,11 @@
 import copy
 from datetime import date
-from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing
+from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
   TraitTuple, HiddenTianganDict,
   YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, DIZHI_TRAITS, 
-  HIDDEN_TIANGANS_PERCENTAGE_TABLE
+  HIDDEN_TIANGANS_PERCENTAGE_TABLE, NAYIN_TABLE, TIANGAN_ZHANGSHENG_TABLE
 )
 
 class BaziUtils:
@@ -176,3 +176,57 @@ class BaziUtils:
         return Shishen.from_str('杀')
       else:
         return Shishen.from_str('官')
+
+  @staticmethod
+  def get_nayin_str(gz: Ganzhi) -> str:
+    '''
+    Get the Nayin string of the given Ganzhi (i.e. pillar).
+    输入干支，返回干支对应的纳音。
+
+    Args:
+    - gz: (Ganzhi) The Ganzhi / pillar.
+
+    Return: (str) The Nayin string of the given Ganzhi.
+
+    Example:
+    - get_nayin_str(Ganzhi.from_str("甲子")) -> "海中金"
+    '''
+
+    assert isinstance(gz, Ganzhi)
+    
+    tg, dz = gz
+    tg_traits, dz_traits = BaziUtils.get_tiangan_traits(tg), BaziUtils.get_dizhi_traits(dz)
+    assert tg_traits.yinyang == dz_traits.yinyang # The yinyang of Tiangan and Dizhi should be the same.
+
+    return NAYIN_TABLE[gz]
+
+  @staticmethod
+  def get_shier_zhangsheng(gz: Ganzhi) -> ShierZhangsheng:
+    '''
+    Get the shier zhangsheng for the input Ganzhi (i.e. pillar).
+    输入干支，返回干支对应的十二长生。
+
+    Args:
+    - gz: (Ganzhi) The Ganzhi / pillar.
+
+    Return: (ShierZhangsheng) The Shier Zhangsheng of the given Ganzhi.
+
+    Example:
+    - get_shier_zhangsheng(Ganzhi.from_str("甲子")) -> ShierZhangsheng.沐浴
+    - get_shier_zhangsheng(Ganzhi.from_str("丙午")) -> ShierZhangsheng.帝旺
+    - get_shier_zhangsheng(Ganzhi.from_str("辛丑")) -> ShierZhangsheng.养
+    '''
+    
+    assert isinstance(gz, Ganzhi)
+
+    tg, dz = gz
+    tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
+    zhangsheng_place: Dizhi = TIANGAN_ZHANGSHENG_TABLE[tg]
+
+    if tg_yinyang is Yinyang.YIN:
+      offset: int = zhangsheng_place.index - dz.index
+    else:
+      assert tg_yinyang is Yinyang.YANG
+      offset: int = dz.index - zhangsheng_place.index
+
+    return ShierZhangsheng.from_index(offset % 12)

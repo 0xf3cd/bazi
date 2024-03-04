@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from typing import NamedTuple
-from .Defines import Tiangan, Dizhi, Wuxing, Yinyang
+from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
 YEAR_TO_MONTH_TABLE: dict[Tiangan, Tiangan] = {
@@ -86,4 +86,41 @@ HIDDEN_TIANGANS_PERCENTAGE_TABLE: dict[Dizhi, HiddenTianganDict] = {
   Dizhi.酉 : { Tiangan.辛 : 100 },
   Dizhi.戌 : { Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 },
   Dizhi.亥 : { Tiangan.壬 : 70, Tiangan.甲 : 30 },
+}
+
+# The list of all 30 Nayins (纳音) in string.
+NAYIN_STR_LIST: list[str] = [
+  '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火', 
+  '涧下水', '城头土', '白蜡金', '杨柳木', '泉中水', '屋上土', 
+  '霹雳火', '松柏木', '长流水', '沙中金', '山下火', '平地木', 
+  '壁上土', '金箔金', '覆灯火', '天河水', '大驿土', '钗钏金', 
+  '桑柘木', '大溪水', '沙中土', '天上火', '石榴木', '大海水',
+]
+
+def __gen_nayin_mapping_table() -> dict[Ganzhi, str]:
+  '''
+  Generate the mapping table of Ganzhi to the corresponding Nayin.
+  '''
+  nayin_mapping_table: dict[Ganzhi, str] = {}
+  cycle = Ganzhi.list_sexagenary_cycle()
+  for gz in cycle:
+    nayin_mapping_table[gz] = NAYIN_STR_LIST[cycle.index(gz) // 2]
+  return nayin_mapping_table
+
+NAYIN_TABLE: dict[Ganzhi, str] = __gen_nayin_mapping_table()
+
+
+# The table is used to query the dizhi where the Zhangsheng locates for each Tiangan.
+# 该字典用于查询每个天干的长生所在的地支。
+TIANGAN_ZHANGSHENG_TABLE: dict[Tiangan, Dizhi] = {
+  Tiangan.甲 : Dizhi.亥,
+  Tiangan.乙 : Dizhi.午,
+  Tiangan.丙 : Dizhi.寅,
+  Tiangan.丁 : Dizhi.酉,
+  Tiangan.戊 : Dizhi.寅,
+  Tiangan.己 : Dizhi.酉,
+  Tiangan.庚 : Dizhi.巳,
+  Tiangan.辛 : Dizhi.子,
+  Tiangan.壬 : Dizhi.申,
+  Tiangan.癸 : Dizhi.卯,
 }

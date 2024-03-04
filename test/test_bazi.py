@@ -8,9 +8,9 @@ from zoneinfo import ZoneInfo
 from typing import Optional
 from bazi import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
-  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen,
+  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
   BaziChart, 命盘,
-  TraitTuple
+  TraitTuple, HiddenTianganDict
 )
 
 
@@ -304,23 +304,20 @@ class TestBaziChart(unittest.TestCase):
       precision=BaziPrecision.DAY,
     )
     chart: BaziChart = BaziChart(bazi)
-    hidden_tiangans: BaziData[BaziChart.PillarHiddenTiangans] = chart.hidden_tiangans
+    hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
 
     self.assertEqual(len(list(hidden_tiangans)), 4)
 
-    for hidden in hidden_tiangans:
-      self.assertIsNone(hidden.tiangan) # There's no hidden tiangans in tiangan.
-    
-    self.assertDictEqual(hidden_tiangans.year.dizhi, {  # 子
+    self.assertDictEqual(hidden_tiangans.year, {  # 子
       Tiangan.癸 : 100,
     })
-    self.assertDictEqual(hidden_tiangans.month.dizhi, { # 卯
+    self.assertDictEqual(hidden_tiangans.month, { # 卯
       Tiangan.乙 : 100,
     })
-    self.assertDictEqual(hidden_tiangans.day.dizhi, {   # 寅
+    self.assertDictEqual(hidden_tiangans.day, {   # 寅
       Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
     })
-    self.assertDictEqual(hidden_tiangans.hour.dizhi, {  # 寅
+    self.assertDictEqual(hidden_tiangans.hour, {  # 寅
       Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
     })
 
@@ -350,6 +347,44 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(shishens.hour.tiangan, Shishen.偏财)
     self.assertEqual(shishens.hour.dizhi, Shishen.偏印)
 
+  def test_nayins(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    nayins: BaziData[str] = chart.nayins
+
+    self.assertEqual(len(list(nayins)), 4)
+
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    self.assertEqual(nayins.year, '海中金')
+    self.assertEqual(nayins.month, '炉中火')
+    self.assertEqual(nayins.day, '炉中火')
+    self.assertEqual(nayins.hour, '松柏木')
+
+  def test_shier_zhangshengs(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangshengs
+
+    self.assertEqual(len(list(zhangshengs)), 4)
+
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    self.assertEqual(zhangshengs.year, ShierZhangsheng.沐浴)
+    self.assertEqual(zhangshengs.month, ShierZhangsheng.病)
+    self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
+    self.assertEqual(zhangshengs.hour, ShierZhangsheng.绝)
+
   def test_consistency(self) -> None:
     '''
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are consistent.
@@ -370,13 +405,13 @@ class TestBaziChart(unittest.TestCase):
       day_master: Tiangan = chart.bazi.day_master
       pillars: BaziData[Ganzhi] = chart.bazi.pillars
       traits: BaziData[BaziChart.PillarTraits] = chart.traits
-      hidden_tiangans: BaziData[BaziChart.PillarHiddenTiangans] = chart.hidden_tiangans
+      hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
       shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
 
       # The major component in hidden Tiangans of a Dizhi is expected to be of the same Wuxing as the Dizhi.
       # 地支中的主气（即本气）应该和地支本身的五行一致。
       for pillar_traits, pillar_hidden_tiangans in zip(traits, hidden_tiangans):
-        major_tiangan: Tiangan = max(pillar_hidden_tiangans.dizhi.items(), key=lambda pair: pair[1])[0]
+        major_tiangan: Tiangan = max(pillar_hidden_tiangans.items(), key=lambda pair: pair[1])[0]
         self.assertEqual(pillar_traits.dizhi.wuxing, BaziUtils.get_tiangan_traits(major_tiangan).wuxing)
 
       # Double-check that the shishens are correct.

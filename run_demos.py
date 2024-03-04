@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import random
 from pathlib import Path
 from datetime import datetime
 
@@ -8,8 +9,9 @@ import colorama
 
 sys.path.append(str(Path(__file__).parent.parent))
 from bazi import (
-  Tiangan, Dizhi, Wuxing, Ganzhi,
-  Bazi, BaziChart, BaziGender, BaziPrecision, BaziUtils
+  Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng,
+  Bazi, BaziChart, BaziGender, BaziPrecision, BaziUtils,
+  HiddenTianganDict
 )
 
 def get_wuxing(s: Tiangan | Dizhi) -> Wuxing:
@@ -50,7 +52,9 @@ def print_basic_info(chart: BaziChart) -> None:
 
   pillars: list[Ganzhi] = list(bazi.pillars)
   shishens: list[BaziChart.PillarShishens] = list(chart.shishens)
-  hidden_tiangans: list[BaziChart.PillarHiddenTiangans] = list(chart.hidden_tiangans)
+  hidden_tiangans: list[HiddenTianganDict] = list(chart.hidden_tiangans)
+  nayins: list[str] = list(chart.nayins)
+  zhangshengs: list[ShierZhangsheng] = list(chart.shier_zhangshengs)
 
   print('     天干                  地支                  地支藏干')
   for idx, head in enumerate(['年', '月', '日', '时']):
@@ -64,21 +68,28 @@ def print_basic_info(chart: BaziChart) -> None:
     dz_traits: str = get_trait_str(dz)
 
     if idx == 2:
-      tg_shishen: str = colorama.Back.LIGHTBLACK_EX + '日主' + colorama.Style.RESET_ALL
+      tg_shishen: str = colorama.Back.LIGHTBLUE_EX + colorama.Fore.BLACK + '日主' + colorama.Style.RESET_ALL
     else:
       assert shishens[idx].tiangan is not None
       tg_shishen: str = str(shishens[idx].tiangan)
     dz_shishen: str = str(shishens[idx].dizhi)
 
-    hidden_dict = hidden_tiangans[idx].dizhi
+    hidden_dict: HiddenTianganDict = hidden_tiangans[idx]
     hidden_tgs: str = ' '.join([f'{colored_str(tg)} [{get_trait_str(tg)}]' for tg in hidden_dict.keys()])
 
     print(f'{head}：  {tg_str} [{tg_traits}] <{tg_shishen}>      {dz_str} [{dz_traits}] <{dz_shishen}>     {hidden_tgs}')
+    print(f'  -- 纳音：{nayins[idx]}  -- 十二长生：{zhangshengs[idx]}')
 
 def demo() -> None:
   chart: BaziChart = BaziChart.create(
-    birth_time=datetime(1984, 4, 3, 2, 1),
-    gender=BaziGender.男,
+    birth_time=datetime(
+      year=random.randint(1902, 2098),
+      month=random.randint(1, 12),
+      day=random.randint(1, 28),
+      hour=random.randint(0, 23),
+      minute=random.randint(0, 59),
+    ),
+    gender=random.choice(list(BaziGender)),
     precision=BaziPrecision.DAY,
   )
 

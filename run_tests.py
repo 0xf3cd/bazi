@@ -143,13 +143,16 @@ def run_demo() -> int:
   print('\n' + '#' * term_width)
   print('>> Running demo...')
 
-  proc: subprocess.CompletedProcess = subprocess.run([
+  cmds: list[str] = [
     'python3', str(Path(__file__).parent / 'run_demos.py')
-  ], capture_output=True)
-  demo_ret: int = proc.returncode
-
-  print(proc.stdout.decode('utf-8'))
-  print(proc.stderr.decode('utf-8'))
+  ]
+  if platform.system() == 'Windows':
+    demo_ret: int = subprocess.run(cmds).returncode
+  else:
+    proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
+    demo_ret: int = proc.returncode
+    print(proc.stdout.decode('utf-8'))
+    print(proc.stderr.decode('utf-8'))
 
   if demo_ret == 0:
     print(colorama.Fore.GREEN + '>> Demo passed!' + colorama.Style.RESET_ALL)
