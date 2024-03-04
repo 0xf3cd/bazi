@@ -9,7 +9,8 @@ import colorama
 sys.path.append(str(Path(__file__).parent.parent))
 from bazi import (
   Tiangan, Dizhi, Wuxing, Ganzhi,
-  Bazi, BaziChart, BaziGender, BaziPrecision, BaziUtils
+  Bazi, BaziChart, BaziGender, BaziPrecision, BaziUtils,
+  HiddenTianganDict
 )
 
 def get_wuxing(s: Tiangan | Dizhi) -> Wuxing:
@@ -50,7 +51,7 @@ def print_basic_info(chart: BaziChart) -> None:
 
   pillars: list[Ganzhi] = list(bazi.pillars)
   shishens: list[BaziChart.PillarShishens] = list(chart.shishens)
-  hidden_tiangans: list[BaziChart.PillarHiddenTiangans] = list(chart.hidden_tiangans)
+  hidden_tiangans: list[HiddenTianganDict] = list(chart.hidden_tiangans)
 
   print('     天干                  地支                  地支藏干')
   for idx, head in enumerate(['年', '月', '日', '时']):
@@ -70,7 +71,7 @@ def print_basic_info(chart: BaziChart) -> None:
       tg_shishen: str = str(shishens[idx].tiangan)
     dz_shishen: str = str(shishens[idx].dizhi)
 
-    hidden_dict = hidden_tiangans[idx].dizhi
+    hidden_dict: HiddenTianganDict = hidden_tiangans[idx]
     hidden_tgs: str = ' '.join([f'{colored_str(tg)} [{get_trait_str(tg)}]' for tg in hidden_dict.keys()])
 
     print(f'{head}：  {tg_str} [{tg_traits}] <{tg_shishen}>      {dz_str} [{dz_traits}] <{dz_shishen}>     {hidden_tgs}')

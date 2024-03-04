@@ -1,6 +1,7 @@
 requests
 colorama
 psutil
+tzdata
 pytest
 ruff
 coverage

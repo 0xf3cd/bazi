@@ -143,13 +143,9 @@ def run_demo() -> int:
   print('\n' + '#' * term_width)
   print('>> Running demo...')
 
-  proc: subprocess.CompletedProcess = subprocess.run([
+  demo_ret: int = subprocess.run([
     'python3', str(Path(__file__).parent / 'run_demos.py')
-  ], capture_output=True)
-  demo_ret: int = proc.returncode
-
-  print(proc.stdout.decode('utf-8'))
-  print(proc.stderr.decode('utf-8'))
+  ]).returncode
 
   if demo_ret == 0:
     print(colorama.Fore.GREEN + '>> Demo passed!' + colorama.Style.RESET_ALL)
