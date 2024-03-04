@@ -1,5 +1,7 @@
 import copy
 from datetime import date
+from typing import Union
+
 from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
@@ -10,13 +12,13 @@ from .Rules import (
 
 class BaziUtils:
   @staticmethod
-  def get_day_ganzhi(dt: date | CalendarDate) -> Ganzhi:
+  def get_day_ganzhi(dt: Union[date, CalendarDate]) -> Ganzhi:
     '''
     Return the corresponding Ganzhi of the given date in the sexagenary cycle.
     返回输入日期的日柱。
 
     Args:
-    - dt: (date | CalendarDate) A date in the sexagenary cycle.
+    - dt: (Union[date, CalendarDate]) A date in the sexagenary cycle.
 
     Return: (Ganzhi) The Day Ganzhi (日柱).
     '''
@@ -116,14 +118,14 @@ class BaziUtils:
     return copy.deepcopy(HIDDEN_TIANGANS_PERCENTAGE_TABLE[dz])
   
   @staticmethod
-  def get_shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
+  def get_shishen(day_master: Tiangan, other: Union[Tiangan, Dizhi]) -> Shishen:
     '''
     Get the Shishen of the given Tiangan.
     输入日主和某天干或者地支，返回天干或地支对应的十神。
 
     Args:
     - day_master: (Tiangan) The Tiangan of the Day Master.
-    - other: (Tiangan | Dizhi) The Tiangan or Dizhi of the other.
+    - other: (Union[Tiangan, Dizhi]) The Tiangan or Dizhi of the other.
 
     Return: (Shishen) The Shishen of the given Tiangan or Dizhi.
 

@@ -3,7 +3,7 @@
 import copy
 from enum import Enum
 from datetime import date, datetime, timedelta
-from typing import TypedDict, Unpack, Type, Sequence, Iterator, Optional
+from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
@@ -65,8 +65,8 @@ class BaziPrecision(Enum):
   HOUR   = 1
   MINUTE = 2
 
-
-class BaziData[T]:
+T = TypeVar('T')
+class BaziData(Generic[T]):
   '''
   A generic class for storing Bazi data.
   T is the type of the data. And a `BaziData` object stores 4 T objects for year, month, day, and hour.
@@ -100,11 +100,6 @@ class BaziData[T]:
     return iter((self._year, self._month, self._day, self._hour))
 
 
-class BaziArgs(TypedDict):
-  birth_time: datetime
-  gender:     BaziGender
-  precision:  BaziPrecision
-
 class Bazi:
   '''
   Bazi (八字) is not aware of the timezone. We don't care abot the timezone when creating a Bazi object.
@@ -117,22 +112,20 @@ class Bazi:
   __jieqi_db: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
   __lunar_db: hkodata.DecodedLunarYears = hkodata.DecodedLunarYears()
 
-  def __init__(self, **kwargs: Unpack[BaziArgs]) -> None:
+  def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> None:
     '''
     Input the birth time. We don't care about the timezone.
     
     Args:
-    - kwargs: (BaziArgs) The dictionary containing the following information:
-      - birth_time: (datetime) The birth date. Note that no timezone should be set.
-        - If `d` is of `date` type, it will be interpreted as a solar date.
-        - Otherwise, it will be converted to `CalendarDate` with `SOLAR` type.
-      - gender: (BaziGender) The gender of the person.
-      - precision: (BaziPrecision) The precision of the birth time.
+    - birth_time: (datetime) The birth date. Note that no timezone should be set.
+      - If `d` is of `date` type, it will be interpreted as a solar date.
+      - Otherwise, it will be converted to `CalendarDate` with `SOLAR` type.
+    - gender: (BaziGender) The gender of the person.
+    - precision: (BaziPrecision) The precision of the birth time.
     '''
 
-    assert 'birth_time' in kwargs
-    assert isinstance(kwargs['birth_time'], datetime)
-    self._birth_time: datetime = copy.deepcopy(kwargs['birth_time'])
+    assert isinstance(birth_time, datetime)
+    self._birth_time: datetime = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
     self._solar_birth_date: CalendarDate = CalendarUtils.to_solar(self._birth_time)
@@ -144,13 +137,11 @@ class Bazi:
     self._minute: int = self._birth_time.minute
     assert self._minute >= 0 and self._minute < 60
 
-    assert 'gender' in kwargs
-    assert isinstance(kwargs['gender'], BaziGender)
-    self._gender: BaziGender = copy.deepcopy(kwargs['gender'])
+    assert isinstance(gender, BaziGender)
+    self._gender: BaziGender = copy.deepcopy(gender)
 
-    assert 'precision' in kwargs
-    assert isinstance(kwargs['precision'], BaziPrecision)
-    self._precision: BaziPrecision = copy.deepcopy(kwargs['precision'])
+    assert isinstance(precision, BaziPrecision)
+    self._precision: BaziPrecision = copy.deepcopy(precision)
 
     self.__gen_ganzhi_info() # Generate ganzhi-related info.
 
@@ -274,21 +265,24 @@ class Bazi:
 八字 = Bazi
 
 
+TianganDataType = TypeVar('TianganDataType')
+DizhiDataType = TypeVar('DizhiDataType')
+
 class BaziChart:
-  class PillarData[T, U]:
+  class PillarData(Generic[TianganDataType, DizhiDataType]):
     '''
     A helper class for storing the data of a Pillar.
     '''
-    def __init__(self, tg: T, dz: U) -> None:
+    def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
       self._tg = copy.deepcopy(tg)
       self._dz = copy.deepcopy(dz)
 
     @property
-    def tiangan(self) -> T:
+    def tiangan(self) -> TianganDataType:
       return copy.deepcopy(self._tg)
     
     @property
-    def dizhi(self) -> U:
+    def dizhi(self) -> DizhiDataType:
       return copy.deepcopy(self._dz)
 
   def __init__(self, bazi: Bazi) -> None:
