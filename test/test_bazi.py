@@ -3,6 +3,7 @@
 
 import unittest
 import random
+import json
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -432,3 +433,118 @@ class TestBaziChart(unittest.TestCase):
         tg_traits: TraitTuple = pillar_traits.tiangan
         self.assertEqual(tg_shishen, BaziUtils.get_shishen(day_master, pillar.tiangan))
         self.assertEqual(tg_traits, BaziUtils.get_tiangan_traits(pillar.tiangan))
+
+  def test_json(self) -> None:
+    for _ in range(64):
+      dt: datetime = datetime(
+        random.randint(1903, 2097),
+        random.randint(1, 12),
+        random.randint(1, 28),
+        random.randint(0, 23),
+        random.randint(0, 59),
+      )
+      chart: BaziChart = BaziChart.create(
+        birth_time=dt,
+        gender=random.choice(list(BaziGender)),
+        precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
+      )
+
+      j: dict = chart.json
+      j_str: str = json.dumps(j)
+      __j: dict = json.loads(j_str)
+
+      self.assertEqual(j, __j)
+
+      # Do something bad on the JSON object `__j`.
+      # This shouldn't have any effect on `chart`.
+      __j['datetime'] = datetime.now().isoformat()
+      __j['gender'] = 'male'
+      __j['tiangan_traits'], __j['dizhi_traits'] = __j['dizhi_traits'], __j['tiangan_traits']
+      __j['tiangan_shishens'], __j['dizhi_shishens'] = __j['dizhi_shishens'], __j['tiangan_shishens']
+      self.assertEqual(chart.json, j)
+      self.assertNotEqual(chart.json, __j)
+
+      self.assertEqual(datetime.fromisoformat(j['birth_time']), dt)
+      self.assertEqual(j['precision'], 'day') # Currently only supports DAY-level precision.
+
+      j_gender: BaziGender = BaziGender.MALE
+      if j['gender'] == 'female':
+        j_gender = BaziGender.FEMALE
+      self.assertEqual(j_gender, chart.bazi.gender)
+
+      __chart: BaziChart = BaziChart.create(datetime.fromisoformat(j['birth_time']), j_gender, BaziPrecision.DAY)
+
+      self.assertEqual(j, __chart.json)
+
+  def test_json_correctness(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    
+    #           Year    Month     Day     Hour
+    # Tiangan    甲       丁       丙       庚
+    #   Dizhi    子       卯       寅       寅
+
+    j: dict = chart.json
+    j_str: str = json.dumps(j)
+    __j: dict = json.loads(j_str)
+
+    self.assertEqual(j, __j)
+
+    self.assertEqual(j['pillars'], {
+      'year': '甲子',
+      'month': '丁卯',
+      'day': '丙寅',
+      'hour': '庚寅',
+    })
+
+    self.assertEqual(j['tiangan_traits'], {
+      'year': '阳木',
+      'month': '阴火',
+      'day': '阳火',
+      'hour': '阳金',
+    })
+
+    self.assertEqual(j['dizhi_traits'], {
+      'year': '阳水',
+      'month': '阴木',
+      'day': '阳木',
+      'hour': '阳木',
+    })
+
+    self.assertEqual(j['hidden_tiangans'], {
+      'year': { '癸': 100 },
+      'month': { '乙': 100 },
+      'day': { '甲': 60, '丙': 30, '戊': 10 },
+      'hour': { '甲': 60, '丙': 30, '戊': 10 },
+    })
+
+    self.assertEqual(j['tiangan_shishens'], {
+      'year': '偏印',
+      'month': '劫财',
+      'day': None,
+      'hour': '偏财',
+    })
+
+    self.assertEqual(j['dizhi_shishens'], {
+      'year': '正官',
+      'month': '正印',
+      'day': '偏印',
+      'hour': '偏印',
+    })
+
+    self.assertEqual(j['nayins'], {
+      'year': '海中金',
+      'month': '炉中火',
+      'day': '炉中火',
+      'hour': '松柏木',
+    })
+
+    self.assertEqual(j['12zhangshengs'], {
+      'year': '沐浴',
+      'month': '病',
+      'day': '长生',
+      'hour': '绝',
+    })

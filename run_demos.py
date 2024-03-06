@@ -2,6 +2,7 @@
 
 import sys
 import random
+from pprint import pprint
 from pathlib import Path
 from datetime import datetime
 from typing import Union
@@ -95,6 +96,9 @@ def demo() -> None:
   )
 
   print_basic_info(chart)
+
+  print('\n' + 'chart json:')
+  pprint(chart.json)
 
 if __name__ == '__main__':
   demo()
