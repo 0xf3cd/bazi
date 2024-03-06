@@ -2,7 +2,7 @@
 
 import copy
 from enum import Enum
-from datetime import date, datetime, timedelta
+from datetime import date, time, datetime, timedelta
 from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar
 
 from .Rules import TraitTuple, HiddenTianganDict
@@ -435,5 +435,39 @@ class BaziChart:
 
     zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.get_shier_zhangsheng(gz) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
+  
+  @property
+  def json(self) -> dict:
+    d: date = self._bazi.solar_birth_date
+    dt: datetime = datetime.combine(d, time(self._bazi.hour, self._bazi._minute))
+
+    gender_strs: dict[BaziGender, str] = {
+      BaziGender.男: 'male',
+      BaziGender.女: 'female',
+    }
+
+    precision_strs: dict[BaziPrecision, str] = {
+      BaziPrecision.DAY: 'day',
+      BaziPrecision.HOUR: 'hour',
+      BaziPrecision.MINUTE: 'minute',
+    }
+
+    def __prep_hidden_tiangans(h: HiddenTianganDict) -> dict[str, int]:
+      return { str(k) : v for k, v in h.items() }
+
+    keys: list[str] = ['year', 'month', 'day', 'hour']
+    return {
+      'birth_time': dt.isoformat(),
+      'gender': gender_strs[self._bazi.gender],
+      'precision': precision_strs[self._bazi.precision],
+      'pillars': { k : str(p) for k, p in zip(keys, self._bazi.pillars) },
+      'tiangan_traits': { k : str(t.tiangan) for k, t in zip(keys, self.traits) },
+      'dizhi_traits': { k : str(t.dizhi) for k, t in zip(keys, self.traits) },
+      'hidden_tiangans': { k : __prep_hidden_tiangans(h) for k, h in zip(keys, self.hidden_tiangans) },
+      'tiangan_shishens': { k : str(s.tiangan) if s.tiangan is not None else None for k, s in zip(keys, self.shishens) },
+      'dizhi_shishens': { k : str(s.dizhi) for k, s in zip(keys, self.shishens) },
+      'nayins': { k : n for k, n in zip(keys, self.nayins) },
+      '12zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
+    }
 
 命盘 = BaziChart

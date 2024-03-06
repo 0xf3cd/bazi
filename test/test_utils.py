@@ -66,6 +66,7 @@ class TestUtils(unittest.TestCase):
       expected_wuxing: Wuxing = Wuxing.as_list()[idx // 2]
       expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
       self.assertEqual(BaziUtils.get_tiangan_traits(tg), TraitTuple(expected_wuxing, expected_yinyang))
+      self.assertEqual(str(BaziUtils.get_tiangan_traits(tg)), str(expected_yinyang) + str(expected_wuxing))
 
   def test_dizhi_traits(self) -> None:
     self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('子')), TraitTuple(Wuxing('水'), Yinyang('阳')))

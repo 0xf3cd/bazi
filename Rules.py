@@ -36,6 +36,9 @@ class TraitTuple(NamedTuple):
   wuxing: Wuxing
   yinyang: Yinyang
 
+  def __str__(self) -> str:
+    return str(self.yinyang) + str(self.wuxing)
+
 # The table is used to query the Wuxing and Yinyang of a given Tiangan (i.e. Stem / 天干).
 # 该字典用于查询给定天干的五行和阴阳。
 TIANGAN_TRAITS: dict[Tiangan, TraitTuple] = {
