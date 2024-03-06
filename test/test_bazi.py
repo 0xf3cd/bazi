@@ -6,7 +6,8 @@ import random
 import json
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
-from typing import Optional
+from itertools import product
+from typing import Optional, Union
 from bazi import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
   BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
@@ -548,3 +549,40 @@ class TestBaziChart(unittest.TestCase):
       'day': '长生',
       'hour': '绝',
     })
+
+  def test_create(self) -> None:
+    with self.assertRaises(ValueError):
+      BaziChart.create('WrongDatetimeFormat', BaziGender.FEMALE, BaziPrecision.DAY)
+    with self.assertRaises(ValueError):
+      BaziChart.create(datetime.now(), 'femal', BaziPrecision.DAY)
+    with self.assertRaises(ValueError):
+      BaziChart.create(datetime.now(), BaziGender.FEMALE, 'dya')
+
+    # Create a datetime and set its timezone to Asia/Shanghai.
+    _dt: datetime = datetime.now()
+    _dt = _dt.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
+    with self.assertRaises(AssertionError):
+      BaziChart.create(_dt, BaziGender.FEMALE, BaziPrecision.DAY)
+    with self.assertRaises(AssertionError):
+      BaziChart.create(_dt.isoformat(), BaziGender.FEMALE, BaziPrecision.DAY)
+
+    now: datetime = datetime.now()
+    dt_options: list[Union[str, datetime]] = [now, now.isoformat()]
+    male_options: list[Union[str, BaziGender]] = [BaziGender.男, BaziGender.YANG, BaziGender.阳, 'Male', '男', 'MALE']
+    female_options: list[Union[str, BaziGender]] = [BaziGender.YIN, BaziGender.FEMALE, '女', 'FEMALE', 'female']
+    day_precision_options: list[Union[str, BaziPrecision]] = [BaziPrecision.DAY, 'day', 'DAY', 'Day', '日', '天', 'd', 'D']
+
+    expected_chart: BaziChart = BaziChart.create(now, BaziGender.FEMALE, BaziPrecision.DAY)
+    for dt, g, p in product(dt_options, female_options, day_precision_options):
+      chart: BaziChart = BaziChart.create(dt, g, p)
+      self.assertEqual(chart.json, expected_chart.json)
+    
+    expected_chart: BaziChart = BaziChart.create(now, BaziGender.MALE, BaziPrecision.DAY)
+    for dt, g, p in product(dt_options, male_options, day_precision_options):
+      chart: BaziChart = BaziChart.create(dt, g, p)
+      self.assertEqual(chart.json, expected_chart.json)
+
+    unsupported_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']
+    for dt, g, p in product(dt_options, male_options + female_options, unsupported_precision_options):
+      with self.assertRaises(AssertionError):
+        BaziChart.create(dt, g, p) # Other level precision is not supported at the moment

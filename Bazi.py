@@ -3,7 +3,7 @@
 import copy
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar
+from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
@@ -288,13 +288,79 @@ class BaziChart:
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
     self._bazi: Bazi = copy.deepcopy(bazi)
+
+  @staticmethod
+  def __parse_bazi_args(
+    birth_time: Union[datetime, str],
+    gender: Union[BaziGender, str], 
+    precision: Union[BaziPrecision, str]
+  ) -> tuple[datetime, BaziGender, BaziPrecision]:
+    if isinstance(birth_time, datetime):
+      _birth_time: datetime = birth_time
+    else:
+      assert isinstance(birth_time, str)
+      _birth_time: datetime = datetime.fromisoformat(birth_time)
+
+    assert _birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
+
+    if isinstance(gender, BaziGender):
+      _gender: BaziGender = gender
+    else:
+      assert isinstance(gender, str)
+      if gender.lower() in ['男', 'male']:
+        _gender: BaziGender = BaziGender.MALE
+      elif gender.lower() in ['女', 'female']:
+        _gender: BaziGender = BaziGender.FEMALE
+      else:
+        raise ValueError(f'Currently not support gender: {gender}')
+
+    if isinstance(precision, BaziPrecision):
+      _precision: BaziPrecision = precision
+    else:
+      assert isinstance(precision, str)
+      if precision.lower() in ['分', '分钟', 'm', 'min', 'minute']:
+        _precision: BaziPrecision = BaziPrecision.MINUTE
+      elif precision.lower() in ['时', '小时', 'h', 'hour']:
+        _precision: BaziPrecision = BaziPrecision.HOUR
+      elif precision.lower() in ['天', '日', 'd', 'day']:
+        _precision: BaziPrecision = BaziPrecision.DAY
+      else:
+        raise ValueError(f'Unsupported precision: {precision}')
+      
+    return _birth_time, _gender, _precision
   
   @classmethod
-  def create(cls, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> 'BaziChart':
+  def create(cls, 
+             birth_time: Union[datetime, str],
+             gender: Union[BaziGender, str], 
+             precision: Union[BaziPrecision, str]
+  ) -> 'BaziChart':
+    '''
+    Classmethod that creates a `BaziChart` object from the inputs.
+
+    Args:
+    - birth_time: (Union[datetime, str]) The birth date. Note that no timezone should be set.
+      - if `datetime` type: it will be interpreted as a solar date to feed to `Bazi`.
+      - if `str` type: it will be converted by `datetime.fromisoformat`.
+    - gender: (Union[BaziGender, str]) The gender of the person.
+      - if `BaziGender` type: it will be directly fed to `Bazi`.
+      - if `str` type: it will be converted by `BaziGender`. 
+        - Supported values: "男"/"女"/"male"/"female" (case insensitive).
+    - precision: (Union[BaziPrecision, str]) The precision of the birth time.
+      - if `BaziPrecision` type: it will be directly fed to `Bazi`.
+      - if `str` type: it will be converted by `BaziPrecision`. 
+        - Supported values: "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day" (case insensitive).
+    '''
+
+    assert isinstance(birth_time, (datetime, str))
+    assert isinstance(gender, (BaziGender, str))
+    assert isinstance(precision, (BaziPrecision, str))
+
+    _birth_time, _gender, _precision = cls.__parse_bazi_args(birth_time, gender, precision)
     bazi: Bazi = Bazi(
-      birth_time=birth_time,
-      gender=gender,
-      precision=precision,
+      birth_time=_birth_time,
+      gender=_gender,
+      precision=_precision,
     )
     return cls(bazi)
   
