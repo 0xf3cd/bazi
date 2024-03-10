@@ -382,10 +382,10 @@ class TestBaziChart(unittest.TestCase):
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    self.assertEqual(zhangshengs.year, ShierZhangsheng.沐浴)
-    self.assertEqual(zhangshengs.month, ShierZhangsheng.病)
+    self.assertEqual(zhangshengs.year, ShierZhangsheng.胎)
+    self.assertEqual(zhangshengs.month, ShierZhangsheng.沐浴)
     self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
-    self.assertEqual(zhangshengs.hour, ShierZhangsheng.绝)
+    self.assertEqual(zhangshengs.hour, ShierZhangsheng.长生)
 
   def test_consistency(self) -> None:
     '''
@@ -544,10 +544,10 @@ class TestBaziChart(unittest.TestCase):
     })
 
     self.assertEqual(j['12zhangshengs'], {
-      'year': '沐浴',
-      'month': '病',
+      'year': '胎',
+      'month': '沐浴',
       'day': '长生',
-      'hour': '绝',
+      'hour': '长生',
     })
 
   def test_create(self) -> None:
