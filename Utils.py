@@ -203,25 +203,26 @@ class BaziUtils:
     return NAYIN_TABLE[gz]
 
   @staticmethod
-  def get_shier_zhangsheng(gz: Ganzhi) -> ShierZhangsheng:
+  def get_shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
     '''
-    Get the shier zhangsheng for the input Ganzhi (i.e. pillar).
-    输入干支，返回干支对应的十二长生。
+    Get the shier zhangsheng for the input Tiangan and Dizhi.
+    输入天干和地支，返回对应的十二长生。
 
     Args:
-    - gz: (Ganzhi) The Ganzhi / pillar.
+    - tg: (Tiangan) The Tiangan.
+    - dz: (Dizhi) The Dizhi.
 
     Return: (ShierZhangsheng) The Shier Zhangsheng of the given Ganzhi.
 
     Example:
-    - get_shier_zhangsheng(Ganzhi.from_str("甲子")) -> ShierZhangsheng.沐浴
-    - get_shier_zhangsheng(Ganzhi.from_str("丙午")) -> ShierZhangsheng.帝旺
-    - get_shier_zhangsheng(Ganzhi.from_str("辛丑")) -> ShierZhangsheng.养
+    - get_shier_zhangsheng(Tiangan.甲, Dizhi.子) -> ShierZhangsheng.沐浴
+    - get_shier_zhangsheng(Tiangan.丙, Dizhi.午) -> ShierZhangsheng.帝旺
+    - get_shier_zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
     '''
     
-    assert isinstance(gz, Ganzhi)
+    assert isinstance(tg, Tiangan)
+    assert isinstance(dz, Dizhi)
 
-    tg, dz = gz
     tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
     zhangsheng_place: Dizhi = TIANGAN_ZHANGSHENG_TABLE[tg]
 
