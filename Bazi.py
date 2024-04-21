@@ -117,9 +117,7 @@ class Bazi:
     Input the birth time. We don't care about the timezone.
     
     Args:
-    - birth_time: (datetime) The birth date. Note that no timezone should be set.
-      - If `d` is of `date` type, it will be interpreted as a solar date.
-      - Otherwise, it will be converted to `CalendarDate` with `SOLAR` type.
+    - birth_time: (datetime) The birth date (in Georgian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
     - precision: (BaziPrecision) The precision of the birth time.
     '''
@@ -419,8 +417,7 @@ class BaziChart:
     ```
     '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [BaziUtils.get_hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
-    # pillar_data: list = [BaziChart.PillarHiddenTiangans(None, hidden) for hidden in dizhi_hidden_tiangans]
-    return BaziData[HiddenTianganDict](type(HiddenTianganDict), dizhi_hidden_tiangans)
+    return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
   PillarShishens = PillarData[Optional[Shishen], Shishen]
   @property
