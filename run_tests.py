@@ -70,19 +70,19 @@ def run_tests() -> int:
   print('>> Running bazi tests...')
 
   # Make `bazi` importable from the current directory.
-  sys.path.append(str(Path(__file__).parent.parent))
-  from bazi import run_bazi_tests # noqa: E402
+  sys.path.append(str(Path(__file__).parent / 'src'))
+  from src import run_bazi_tests # noqa: E402
   ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
 
   if run_hko_test:
     print('\n' + '#' * term_width)
     print('>> Running hkodata tests...')
-    from bazi import run_hkodata_tests # noqa: E402
+    from src import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
 
   if ret_code != 0:
     # Print in red.
-    print(colorama.Fore.RED + F'>> Tests failed with exit code {ret_code}' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + f'>> Tests failed with exit code {ret_code}' + colorama.Style.RESET_ALL)
 
   return ret_code
 

@@ -4,7 +4,7 @@
 import unittest
 import random
 from datetime import datetime
-from bazi import BaziChart, BaziGender, BaziPrecision, Shishen, ShishenDescription, Interpretation
+from src import BaziChart, BaziGender, BaziPrecision, Shishen, ShishenDescription, Interpretation
 
 class TestInterpreter(unittest.TestCase):
   def test_interpret_shishen(self) -> None:

@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from itertools import product
 from typing import Optional, Union
 
-from bazi import (
+from src import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
   BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
   BaziChart, 命盘,
@@ -253,7 +253,9 @@ class TestBazi(unittest.TestCase):
     self.assertIsNot(bazi._day_pillar, bazi2._day_pillar)
     self.assertEqual(bazi._day_pillar, bazi2._day_pillar)
 
-    bazi._day_pillar = Ganzhi.from_str('甲子')
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    next_day_pillar: Ganzhi = cycle[(cycle.index(bazi._day_pillar) + 1) % len(cycle)]
+    bazi._day_pillar = next_day_pillar
     self.assertNotEqual(bazi._day_pillar, bazi2._day_pillar)
 
 

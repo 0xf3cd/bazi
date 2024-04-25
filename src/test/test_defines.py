@@ -3,7 +3,7 @@
 
 import unittest
 from itertools import product
-from bazi import (
+from src import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
   Wuxing, 五行, Yinyang, 阴阳, Shishen, 十神,
   ShierZhangsheng, 十二长生,

@@ -3,11 +3,11 @@
 
 import unittest
 from datetime import date, datetime, timedelta
-from bazi import (
+from src import (
   CalendarUtils, TraitTuple, HiddenTianganDict,
   Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng,
 )
-from bazi.Utils import BaziUtils
+from src.Utils import BaziUtils
 
 
 class TestUtils(unittest.TestCase):

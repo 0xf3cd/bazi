@@ -9,8 +9,8 @@ from datetime import date, timedelta
 from itertools import product
 from typing import Any
 
-from bazi.hkodata import DecodedLunarYears, DecodedJieqiDates
-from bazi import (
+from src.hkodata import DecodedLunarYears, DecodedJieqiDates
+from src import (
   Jieqi, CalendarType, CalendarUtils, CalendarDate
 )
 
