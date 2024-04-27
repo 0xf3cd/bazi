@@ -2,6 +2,7 @@
 .ruff_cache/
 .coverage
 covhtml/
+output_data/
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

@@ -2,10 +2,8 @@
 # test_interpreter.py
 
 import unittest
-import random
-from datetime import datetime
 from src import (
-  BaziChart, BaziGender, BaziPrecision, Shishen, Tiangan,
+  BaziChart, Shishen, Tiangan,
   ShishenDescription, TianganDescription, Interpreter
 )
 
@@ -47,17 +45,6 @@ class TestInterpreter(unittest.TestCase):
       self.assertEqual(result, Interpreter.interpret_tiangan(tg))
 
   def test_chart(self) -> None:
-    chart: BaziChart = BaziChart.create(
-      birth_time=datetime(
-        random.randint(1903, 2097),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.randint(0, 23),
-        random.randint(0, 59),
-      ),
-      gender=random.choice(list(BaziGender)),
-      precision=BaziPrecision.DAY,
-    )
-
+    chart: BaziChart = BaziChart.random()
     interpretation: Interpreter = Interpreter(chart)
     self.assertEqual(chart.json, interpretation.chart.json)
