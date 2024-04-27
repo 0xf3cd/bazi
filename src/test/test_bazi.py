@@ -414,17 +414,7 @@ class TestBaziChart(unittest.TestCase):
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are consistent.
     '''
     for _ in range(256):
-      chart: BaziChart = BaziChart.create(
-        birth_time=datetime(
-          random.randint(1903, 2097),
-          random.randint(1, 12),
-          random.randint(1, 28),
-          random.randint(0, 23),
-          random.randint(0, 59),
-        ),
-        gender=random.choice(list(BaziGender)),
-        precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
-      )
+      chart: BaziChart = BaziChart.random()
 
       day_master: Tiangan = chart.bazi.day_master
       pillars: BaziData[Ganzhi] = chart.bazi.pillars
@@ -610,17 +600,7 @@ class TestBaziChart(unittest.TestCase):
         BaziChart.create(dt, g, p) # Other level precision is not supported at the moment
 
   def test_deepcopy(self) -> None:
-    chart: BaziChart = BaziChart.create(
-      birth_time=datetime(
-        random.randint(1903, 2097),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.randint(0, 23),
-        random.randint(0, 59),
-      ),
-      gender=random.choice(list(BaziGender)),
-      precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
-    )
+    chart: BaziChart = BaziChart.random()
 
     chart2: BaziChart = copy.deepcopy(chart)
 
@@ -628,17 +608,7 @@ class TestBaziChart(unittest.TestCase):
     self.assertIsNot(chart._bazi, chart2._bazi)
 
     old_bazi: Bazi = chart._bazi
-    chart._bazi = BaziChart.create(
-      birth_time=datetime(
-        random.randint(1903, 2097),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.randint(0, 23),
-        random.randint(0, 59),
-      ),
-      gender=random.choice(list(BaziGender)),
-      precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
-    )._bazi
+    chart._bazi = BaziChart.random()._bazi
 
     self.assertIsNot(chart.bazi, old_bazi)
     self.assertIsNot(chart._bazi, old_bazi)

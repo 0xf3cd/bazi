@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import random
 from enum import Enum
 from datetime import date, time, datetime, timedelta
 from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union, TypedDict, cast
@@ -396,6 +397,26 @@ class BaziChart:
       precision=_precision,
     )
     return cls(bazi)
+  
+  @classmethod
+  def random(cls) -> 'BaziChart':
+    '''
+    Classmethod that creates a random `BaziChart` object.
+
+    Note that the precision is currently set to `BaziPrecision.DAY`.
+    Note that the year is in [1902, 2098], and day is in [1, 28].
+    '''
+    return BaziChart.create(
+      birth_time=datetime(
+        year=random.randint(1902, 2098),
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+      ),
+      gender=random.choice(list(BaziGender)),
+      precision=BaziPrecision.DAY,
+    )
   
   def is_day_master(self, tg: Tiangan) -> bool:
     '''

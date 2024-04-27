@@ -20,10 +20,10 @@ class Interpreter:
     return copy.deepcopy(SHISHEN_DESCRIPTIONS[shishen])
   
   @staticmethod
-  def interpret_tiangan(day_master: Tiangan) -> TianganDescription:
-    '''Interpret the given Tiangan (i.e. day master / 日主) and return the description.'''
-    assert isinstance(day_master, Tiangan)
-    return copy.deepcopy(TIANGAN_DESCRIPTIONS[day_master])
+  def interpret_tiangan(tg: Tiangan) -> TianganDescription:
+    '''Interpret the given Tiangan and return the description.'''
+    assert isinstance(tg, Tiangan)
+    return copy.deepcopy(TIANGAN_DESCRIPTIONS[tg])
 
   def __init__(self, chart: BaziChart) -> None:
     '''
