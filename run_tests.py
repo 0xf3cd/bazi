@@ -96,7 +96,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
       '*/__init__.py',
       '*/run_tests.py',
       '*/test/*',
-      'hkodata/encoder.py',
+      'src/hkodata/encoder.py',
     ]
   )
   cov.start()

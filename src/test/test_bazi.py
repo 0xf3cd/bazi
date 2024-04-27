@@ -14,7 +14,7 @@ from typing import Optional, Union
 from src import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
   BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
-  BaziChart, 命盘,
+  BaziChart, 命盘, BaziChartJson,
   TraitTuple, HiddenTianganDict
 )
 
@@ -472,7 +472,7 @@ class TestBaziChart(unittest.TestCase):
         precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
       )
 
-      j: dict = chart.json
+      j: BaziChartJson = chart.json
       j_str: str = json.dumps(j)
       __j: dict = json.loads(j_str)
 
@@ -510,7 +510,7 @@ class TestBaziChart(unittest.TestCase):
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    j: dict = chart.json
+    j: BaziChartJson = chart.json
     j_str: str = json.dumps(j)
     __j: dict = json.loads(j_str)
 
@@ -565,7 +565,7 @@ class TestBaziChart(unittest.TestCase):
       'hour': '松柏木',
     })
 
-    self.assertEqual(j['12zhangshengs'], {
+    self.assertEqual(j['shier_zhangshengs'], {
       'year': '胎',
       'month': '沐浴',
       'day': '长生',

@@ -3,7 +3,7 @@
 import copy
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union
+from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union, TypedDict, cast
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
@@ -263,6 +263,41 @@ class Bazi:
 八字 = Bazi
 
 
+class FourPillars(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  str
+  month: str
+  day:   str
+  hour:  str
+
+class TgShishens(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  str
+  month: str
+  day:   None
+  hour:  str
+
+class DzHiddenTiangans(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  dict[str, int]
+  month: dict[str, int]
+  day:   dict[str, int]
+  hour:  dict[str, int]
+
+class BaziChartJson(TypedDict):
+  birth_time: str
+  gender: str
+  precision: str
+  pillars: FourPillars
+  nayins: FourPillars
+  shier_zhangshengs: FourPillars
+  tiangan_traits: FourPillars
+  tiangan_shishens: TgShishens
+  dizhi_traits: FourPillars
+  dizhi_shishens: TgShishens
+  hidden_tiangans: DzHiddenTiangans
+
+
 TianganDataType = TypeVar('TianganDataType')
 DizhiDataType = TypeVar('DizhiDataType')
 
@@ -502,7 +537,7 @@ class BaziChart:
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
   @property
-  def json(self) -> dict:
+  def json(self) -> BaziChartJson:
     d: date = self._bazi.solar_birth_date
     dt: datetime = datetime.combine(d, time(self._bazi.hour, self._bazi._minute))
 
@@ -521,7 +556,7 @@ class BaziChart:
       return { str(k) : v for k, v in h.items() }
 
     keys: list[str] = ['year', 'month', 'day', 'hour']
-    return {
+    return cast(BaziChartJson, { # TODO: Fix this type casting. It's ugly.
       'birth_time': dt.isoformat(),
       'gender': gender_strs[self._bazi.gender],
       'precision': precision_strs[self._bazi.precision],
@@ -532,7 +567,7 @@ class BaziChart:
       'tiangan_shishens': { k : str(s.tiangan) if s.tiangan is not None else None for k, s in zip(keys, self.shishens) },
       'dizhi_shishens': { k : str(s.dizhi) for k, s in zip(keys, self.shishens) },
       'nayins': { k : n for k, n in zip(keys, self.nayins) },
-      '12zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
-    }
+      'shier_zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
+    })
 
 命盘 = BaziChart

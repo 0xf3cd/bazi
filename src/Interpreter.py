@@ -3,10 +3,12 @@
 import copy
 
 from .Bazi import BaziChart
-from .Defines import Shishen
-from .Descriptions import ShishenDescription, SHISHEN_DESCRIPTIONS
+from .Defines import Shishen, Tiangan
+from .Descriptions import (
+  ShishenDescription, SHISHEN_DESCRIPTIONS, TianganDescription, TIANGAN_DESCRIPTIONS
+)
 
-class Interpretation:
+class Interpreter:
   '''
   This class takes a BaziChart and interprets it.
   '''
@@ -16,6 +18,12 @@ class Interpretation:
     '''Interpret the given Shishen and return the corresponding description.'''
     assert isinstance(shishen, Shishen)
     return copy.deepcopy(SHISHEN_DESCRIPTIONS[shishen])
+  
+  @staticmethod
+  def interpret_tiangan(day_master: Tiangan) -> TianganDescription:
+    '''Interpret the given Tiangan (i.e. day master / 日主) and return the description.'''
+    assert isinstance(day_master, Tiangan)
+    return copy.deepcopy(TIANGAN_DESCRIPTIONS[day_master])
 
   def __init__(self, chart: BaziChart) -> None:
     '''
@@ -30,6 +38,8 @@ class Interpretation:
     '''
     assert isinstance(chart, BaziChart)
     self._chart: BaziChart = copy.deepcopy(chart)
+
+    # TODO: To be implemented.
 
   @property
   def chart(self) -> BaziChart:
