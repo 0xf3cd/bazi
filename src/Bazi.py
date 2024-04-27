@@ -3,7 +3,7 @@
 import copy
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union
+from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union, TypedDict, cast
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
@@ -117,9 +117,7 @@ class Bazi:
     Input the birth time. We don't care about the timezone.
     
     Args:
-    - birth_time: (datetime) The birth date. Note that no timezone should be set.
-      - If `d` is of `date` type, it will be interpreted as a solar date.
-      - Otherwise, it will be converted to `CalendarDate` with `SOLAR` type.
+    - birth_time: (datetime) The birth date (in Georgian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
     - precision: (BaziPrecision) The precision of the birth time.
     '''
@@ -263,6 +261,41 @@ class Bazi:
     return BaziData(Ganzhi, pillars)
 
 八字 = Bazi
+
+
+class FourPillars(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  str
+  month: str
+  day:   str
+  hour:  str
+
+class TgShishens(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  str
+  month: str
+  day:   None
+  hour:  str
+
+class DzHiddenTiangans(TypedDict):
+  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+  year:  dict[str, int]
+  month: dict[str, int]
+  day:   dict[str, int]
+  hour:  dict[str, int]
+
+class BaziChartJson(TypedDict):
+  birth_time: str
+  gender: str
+  precision: str
+  pillars: FourPillars
+  nayins: FourPillars
+  shier_zhangshengs: FourPillars
+  tiangan_traits: FourPillars
+  tiangan_shishens: TgShishens
+  dizhi_traits: FourPillars
+  dizhi_shishens: TgShishens
+  hidden_tiangans: DzHiddenTiangans
 
 
 TianganDataType = TypeVar('TianganDataType')
@@ -419,8 +452,7 @@ class BaziChart:
     ```
     '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [BaziUtils.get_hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
-    # pillar_data: list = [BaziChart.PillarHiddenTiangans(None, hidden) for hidden in dizhi_hidden_tiangans]
-    return BaziData[HiddenTianganDict](type(HiddenTianganDict), dizhi_hidden_tiangans)
+    return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
   PillarShishens = PillarData[Optional[Shishen], Shishen]
   @property
@@ -505,7 +537,7 @@ class BaziChart:
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
   @property
-  def json(self) -> dict:
+  def json(self) -> BaziChartJson:
     d: date = self._bazi.solar_birth_date
     dt: datetime = datetime.combine(d, time(self._bazi.hour, self._bazi._minute))
 
@@ -524,7 +556,7 @@ class BaziChart:
       return { str(k) : v for k, v in h.items() }
 
     keys: list[str] = ['year', 'month', 'day', 'hour']
-    return {
+    return cast(BaziChartJson, { # TODO: Fix this type casting. It's ugly.
       'birth_time': dt.isoformat(),
       'gender': gender_strs[self._bazi.gender],
       'precision': precision_strs[self._bazi.precision],
@@ -535,7 +567,7 @@ class BaziChart:
       'tiangan_shishens': { k : str(s.tiangan) if s.tiangan is not None else None for k, s in zip(keys, self.shishens) },
       'dizhi_shishens': { k : str(s.dizhi) for k, s in zip(keys, self.shishens) },
       'nayins': { k : n for k, n in zip(keys, self.nayins) },
-      '12zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
-    }
+      'shier_zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
+    })
 
 命盘 = BaziChart

@@ -106,8 +106,8 @@ def __gen_nayin_mapping_table() -> dict[Ganzhi, str]:
   '''
   nayin_mapping_table: dict[Ganzhi, str] = {}
   cycle = Ganzhi.list_sexagenary_cycle()
-  for gz in cycle:
-    nayin_mapping_table[gz] = NAYIN_STR_LIST[cycle.index(gz) // 2]
+  for index, gz in enumerate(cycle):
+    nayin_mapping_table[gz] = NAYIN_STR_LIST[index // 2]
   return nayin_mapping_table
 
 NAYIN_TABLE: dict[Ganzhi, str] = __gen_nayin_mapping_table()

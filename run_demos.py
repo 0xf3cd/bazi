@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 
-import sys
 import random
 from pprint import pprint
-from pathlib import Path
 from datetime import datetime
 from typing import Union
 
 import colorama
 
-sys.path.append(str(Path(__file__).parent.parent))
-from bazi import (
+from src import (
   Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng,
   Bazi, BaziChart, BaziGender, BaziPrecision, BaziUtils,
   HiddenTianganDict

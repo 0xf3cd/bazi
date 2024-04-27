@@ -9,9 +9,11 @@ from .Defines import (
   ShierZhangsheng, 十二长生,
 )
 from .Calendar import CalendarType, CalendarUtils, CalendarDate
-from .Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘
+from .Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘, BaziChartJson
 from .Rules import TraitTuple, HiddenTianganDict
 from .Utils import BaziUtils
+from .Descriptions import ShishenDescription, TianganDescription
+from .Interpreter import Interpreter
 
 __all__ = [
   'run_bazi_tests', 'run_hkodata_tests', 
@@ -20,6 +22,7 @@ __all__ = [
   'Wuxing', '五行', 'Yinyang', '阴阳', 'Shishen', '十神',
   'ShierZhangsheng', '十二长生',
   'CalendarType', 'CalendarUtils', 'CalendarDate',
-  'BaziGender', 'BaziPrecision', 'BaziData', 'Bazi', '八字', 'BaziChart', '命盘',
-  'TraitTuple', 'HiddenTianganDict', 'BaziUtils'
+  'BaziGender', 'BaziPrecision', 'BaziData', 'Bazi', '八字', 'BaziChart', '命盘', 'BaziChartJson',
+  'TraitTuple', 'HiddenTianganDict', 'BaziUtils',
+  'ShishenDescription', 'TianganDescription', 'Interpreter'
 ]

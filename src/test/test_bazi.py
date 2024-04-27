@@ -4,14 +4,17 @@
 import unittest
 import random
 import json
+import copy
+
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from itertools import product
 from typing import Optional, Union
-from bazi import (
+
+from src import (
   Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
   BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
-  BaziChart, 命盘,
+  BaziChart, 命盘, BaziChartJson,
   TraitTuple, HiddenTianganDict
 )
 
@@ -236,6 +239,25 @@ class TestBazi(unittest.TestCase):
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
     __subtest(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
 
+  def test_deepcopy(self) -> None:
+    bazi: Bazi = Bazi(
+      birth_time=datetime(1984, 4, 2, 4, 2),
+      gender=BaziGender.男,
+      precision=BaziPrecision.DAY,
+    )
+    bazi2: Bazi = copy.deepcopy(bazi)
+
+    self.assertIsNot(bazi._solar_birth_date, bazi2._solar_birth_date)
+    self.assertIsNot(bazi._year_pillar, bazi2._year_pillar)
+
+    self.assertIsNot(bazi._day_pillar, bazi2._day_pillar)
+    self.assertEqual(bazi._day_pillar, bazi2._day_pillar)
+
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    next_day_pillar: Ganzhi = cycle[(cycle.index(bazi._day_pillar) + 1) % len(cycle)]
+    bazi._day_pillar = next_day_pillar
+    self.assertNotEqual(bazi._day_pillar, bazi2._day_pillar)
+
 
 class TestBaziChart(unittest.TestCase):
   def test_basic(self) -> None:
@@ -450,7 +472,7 @@ class TestBaziChart(unittest.TestCase):
         precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
       )
 
-      j: dict = chart.json
+      j: BaziChartJson = chart.json
       j_str: str = json.dumps(j)
       __j: dict = json.loads(j_str)
 
@@ -488,7 +510,7 @@ class TestBaziChart(unittest.TestCase):
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    j: dict = chart.json
+    j: BaziChartJson = chart.json
     j_str: str = json.dumps(j)
     __j: dict = json.loads(j_str)
 
@@ -543,7 +565,7 @@ class TestBaziChart(unittest.TestCase):
       'hour': '松柏木',
     })
 
-    self.assertEqual(j['12zhangshengs'], {
+    self.assertEqual(j['shier_zhangshengs'], {
       'year': '胎',
       'month': '沐浴',
       'day': '长生',
@@ -586,3 +608,37 @@ class TestBaziChart(unittest.TestCase):
     for dt, g, p in product(dt_options, male_options + female_options, unsupported_precision_options):
       with self.assertRaises(AssertionError):
         BaziChart.create(dt, g, p) # Other level precision is not supported at the moment
+
+  def test_deepcopy(self) -> None:
+    chart: BaziChart = BaziChart.create(
+      birth_time=datetime(
+        random.randint(1903, 2097),
+        random.randint(1, 12),
+        random.randint(1, 28),
+        random.randint(0, 23),
+        random.randint(0, 59),
+      ),
+      gender=random.choice(list(BaziGender)),
+      precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
+    )
+
+    chart2: BaziChart = copy.deepcopy(chart)
+
+    self.assertIsNot(chart.bazi, chart2.bazi)
+    self.assertIsNot(chart._bazi, chart2._bazi)
+
+    old_bazi: Bazi = chart._bazi
+    chart._bazi = BaziChart.create(
+      birth_time=datetime(
+        random.randint(1903, 2097),
+        random.randint(1, 12),
+        random.randint(1, 28),
+        random.randint(0, 23),
+        random.randint(0, 59),
+      ),
+      gender=random.choice(list(BaziGender)),
+      precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
+    )._bazi
+
+    self.assertIsNot(chart.bazi, old_bazi)
+    self.assertIsNot(chart._bazi, old_bazi)
