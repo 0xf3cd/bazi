@@ -6,7 +6,7 @@ from itertools import product
 from src import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
   Wuxing, 五行, Yinyang, 阴阳, Shishen, 十神,
-  ShierZhangsheng, 十二长生,
+  ShierZhangsheng, 十二长生, TianganRelation, 天干关系,
 )
 
 
@@ -626,3 +626,23 @@ class TestShierZhangsheng(unittest.TestCase):
 
       self.assertEqual(''.join([str(zs) for zs in ShierZhangsheng.as_list()]),
                        '长生沐浴冠带临官帝旺衰病死墓绝胎养')
+
+
+class TestTianganRelation(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertIs(TianganRelation, 天干关系)
+    self.assertEqual(len(TianganRelation), 4) # 合、冲、生、克
+
+  def test_str(self) -> None:
+    for relation in TianganRelation:
+      self.assertEqual(str(relation), relation.value)
+      self.assertEqual(f'{relation}', relation.value)
+      self.assertEqual(TianganRelation.from_str(str(relation)), relation)
+      self.assertEqual(TianganRelation(str(relation)), relation)
+
+    with self.assertRaises(ValueError):
+      TianganRelation.from_str('甲')
+    with self.assertRaises(ValueError):
+      TianganRelation.from_str('和')
+    with self.assertRaises(ValueError):
+      TianganRelation.from_str('冲 ')

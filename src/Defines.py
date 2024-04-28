@@ -461,3 +461,27 @@ class ShierZhangsheng(Enum):
     return str(self.value)
 
 十二长生 = ShierZhangsheng
+ 
+
+class TianganRelation(Enum):
+  '''TianganRelation / Tiangan Relations / 天干之间的关系'''
+  HE    = '合'
+  CHONG = '冲'
+  SHENG = '生'
+  KE    = '克'
+
+  # Aliases
+  合 = HE
+  冲 = CHONG
+  生 = SHENG
+  克 = KE
+
+  def __str__(self) -> str:
+    return str(self.value)
+  
+  @classmethod
+  def from_str(cls, s: str) -> 'TianganRelation':
+    assert isinstance(s, str)
+    return cls(s)
+
+天干关系 = TianganRelation

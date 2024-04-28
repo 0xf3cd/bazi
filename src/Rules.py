@@ -1,5 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import itertools
 from typing import NamedTuple
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
@@ -127,3 +128,52 @@ TIANGAN_ZHANGSHENG_TABLE: dict[Tiangan, Dizhi] = {
   Tiangan.壬 : Dizhi.申,
   Tiangan.癸 : Dizhi.卯,
 }
+
+
+# The table is used to query the HE relation across all Tiangans.
+# 该表格用于查询天干之间的相合关系。
+TIANGAN_HE_TABLE: list[set[Tiangan]] = [
+  set((Tiangan.甲, Tiangan.己)),
+  set((Tiangan.乙, Tiangan.庚)),
+  set((Tiangan.丙, Tiangan.辛)),
+  set((Tiangan.丁, Tiangan.壬)),
+  set((Tiangan.戊, Tiangan.癸)),
+]
+
+
+# The table is used to query the CHONG relation across all Tiangans.
+# 该表格用于查询天干之间的相冲关系。
+TIANGAN_CHONG_TABLE: list[set[Tiangan]] = [
+  set((Tiangan.甲, Tiangan.庚)),
+  set((Tiangan.乙, Tiangan.辛)),
+  set((Tiangan.丙, Tiangan.壬)),
+  set((Tiangan.丁, Tiangan.癸)),
+]
+
+
+def __populate_tg_sheng_table() -> list[set[Tiangan]]:
+  ret: list[set[Tiangan]] = []
+  for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+    tg1_trait: TraitTuple = TIANGAN_TRAITS[tg1]
+    tg2_trait: TraitTuple = TIANGAN_TRAITS[tg2]
+    if tg1_trait.wuxing.generates(tg2_trait.wuxing): # Yinyang not considered. 天干相生不考虑阴阳。
+      ret.append({tg1, tg2})
+  return ret
+
+# The table is used to query the SHENG relation across all Tiangans.
+# 该表格用于查询天干之间的相生关系。
+TIANGAN_SHENG_TABLE: list[set[Tiangan]] = __populate_tg_sheng_table()
+
+
+def __populate_tg_ke_table() -> list[set[Tiangan]]:
+  ret: list[set[Tiangan]] = []
+  for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+    tg1_trait: TraitTuple = TIANGAN_TRAITS[tg1]
+    tg2_trait: TraitTuple = TIANGAN_TRAITS[tg2]
+    if tg1_trait.wuxing.destructs(tg2_trait.wuxing): # Yinyang not considered. 天干相克不考虑阴阳。
+      ret.append({tg1, tg2})
+  return ret
+
+# The table is used to query the KE relation across all Tiangans.
+# 该表格用于查询天干之间的相克关系。
+TIANGAN_KE_TABLE: list[set[Tiangan]] = __populate_tg_ke_table()
