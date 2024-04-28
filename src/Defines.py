@@ -485,3 +485,37 @@ class TianganRelation(Enum):
     return cls(s)
 
 天干关系 = TianganRelation
+
+
+class DizhiRelation(Enum):
+  '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
+  SANHUI = '三会'
+  SANHE  = '三合'
+  LIUHE  = '六合'
+  CHONG  = '冲'
+  XING   = '刑'
+  HAI    = '害'
+  PO     = '破'
+  SHENG  = '生'
+  KE     = '克'
+
+  # Aliases
+  三会 = SANHUI
+  三合 = SANHE
+  六合 = LIUHE
+  冲  = CHONG
+  刑  = XING
+  害  = HAI
+  破  = PO
+  生  = SHENG
+  克  = KE
+
+  def __str__(self) -> str:
+    return str(self.value)
+  
+  @classmethod
+  def from_str(cls, s: str) -> 'DizhiRelation':
+    assert isinstance(s, str)
+    return cls(s)
+
+地支关系 = DizhiRelation

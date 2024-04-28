@@ -6,7 +6,8 @@ from itertools import product
 from src import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
   Wuxing, 五行, Yinyang, 阴阳, Shishen, 十神,
-  ShierZhangsheng, 十二长生, TianganRelation, 天干关系,
+  ShierZhangsheng, 十二长生, TianganRelation, 天干关系, 
+  DizhiRelation, 地支关系,
 )
 
 
@@ -646,3 +647,27 @@ class TestTianganRelation(unittest.TestCase):
       TianganRelation.from_str('和')
     with self.assertRaises(ValueError):
       TianganRelation.from_str('冲 ')
+
+    self.assertEqual(''.join([str(relation) for relation in TianganRelation]), '合冲生克')
+
+
+class TestDizhiRelation(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertIs(DizhiRelation, 地支关系)
+    self.assertEqual(len(DizhiRelation), 9) # 三会、三合、六合、冲、刑、害、破、生、克
+
+  def test_str(self) -> None:
+    for relation in DizhiRelation:
+      self.assertEqual(str(relation), relation.value)
+      self.assertEqual(f'{relation}', relation.value)
+      self.assertEqual(DizhiRelation.from_str(str(relation)), relation)
+      self.assertEqual(DizhiRelation(str(relation)), relation)
+
+    with self.assertRaises(ValueError):
+      DizhiRelation.from_str('甲')
+    with self.assertRaises(ValueError):
+      DizhiRelation.from_str('八合')
+    with self.assertRaises(ValueError):
+      DizhiRelation.from_str('冲 ')
+
+    self.assertEqual(''.join([str(relation) for relation in DizhiRelation]), '三会三合六合冲刑害破生克')
