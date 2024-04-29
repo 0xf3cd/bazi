@@ -8,9 +8,9 @@ from datetime import date, datetime, timedelta
 
 from src import (
   CalendarUtils, TraitTuple, HiddenTianganDict,
-  Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation,
+  Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation,
 )
-from src.Utils import BaziUtils, RelationUtils
+from src.Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
 
 
 class TestBaziUtils(unittest.TestCase):
@@ -174,9 +174,9 @@ class TestBaziUtils(unittest.TestCase):
                        BaziUtils.get_shier_zhangsheng(*Ganzhi.from_strs('己', str(dz))))
 
 
-class TestRelationUtils(unittest.TestCase):
+class TestTianganRelationUtils(unittest.TestCase):
   @staticmethod
-  def __equal(l1: list[frozenset[Tiangan]], l2: list[set[Tiangan]]) -> bool:
+  def __tg_equal(l1: list[frozenset[Tiangan]], l2: list[set[Tiangan]]) -> bool:
     if len(l1) != len(l2):
       return False
     for s in l1:
@@ -184,35 +184,35 @@ class TestRelationUtils(unittest.TestCase):
         return False
     return True
 
-  def test_get_tiangan_relations_basic(self) -> None:
+  def test_find_tiangan_combos_basic(self) -> None:
     for relation in TianganRelation:
-      empty_result: list[frozenset[Tiangan]] = RelationUtils.get_tiangan_relations([], relation)
+      empty_result: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos([], relation)
       self.assertEqual(len(empty_result), 0)
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.合), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.合), 
       [
         {Tiangan.丙, Tiangan.辛},
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.冲), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.冲), 
       [
         {Tiangan.甲, Tiangan.庚},
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.生), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.生), 
       [
         {Tiangan.甲, Tiangan.丙},
         {Tiangan.甲, Tiangan.丁},
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.克), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛), TianganRelation.克), 
       [
         {Tiangan.庚, Tiangan.甲},
         {Tiangan.辛, Tiangan.甲},
@@ -223,20 +223,20 @@ class TestRelationUtils(unittest.TestCase):
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合), 
       [
         {Tiangan.壬, Tiangan.丁},
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲), 
       []
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生), 
       [
         {Tiangan.丁, Tiangan.戊},
         {Tiangan.戊, Tiangan.辛},
@@ -244,8 +244,8 @@ class TestRelationUtils(unittest.TestCase):
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.克), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.克), 
       [
         {Tiangan.戊, Tiangan.壬},
         {Tiangan.壬, Tiangan.丁},
@@ -253,40 +253,44 @@ class TestRelationUtils(unittest.TestCase):
       ]
     ))
 
-  def test_get_tiangan_relations_negative(self) -> None:
+  def test_find_tiangan_combos_negative(self) -> None:
+    with self.assertRaises(TypeError):
+      TianganRelationUtils.find_tiangan_combos(Tiangan.辛, TianganRelation.合) # type: ignore
+    with self.assertRaises(TypeError):
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Dizhi.子)) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Dizhi.子), TianganRelation.合) # type: ignore
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Dizhi.子), TianganRelation.合) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.get_tiangan_relations(('甲', '丙', '辛'), TianganRelation.合) # type: ignore
+      TianganRelationUtils.find_tiangan_combos(('甲', '丙', '辛'), TianganRelation.合) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, '辛'), TianganRelation.合) # type: ignore
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, '辛'), TianganRelation.合) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), '合') # type: ignore
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), '合') # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.get_tiangan_relations((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), 'HE') # type: ignore
+      TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), 'HE') # type: ignore
 
     # Invoke the method and do bad things on the result.
-    RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
-    RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(frozenset({Tiangan.壬, Tiangan.丁}))
-    sheng_result = RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
+    TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
+    TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(frozenset({Tiangan.壬, Tiangan.丁}))
+    sheng_result = TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
     sheng_result[0] = frozenset((Tiangan.丁,))
     sheng_result[1] = frozenset((Tiangan.壬, Tiangan.戊))
 
     # Make sure the method still returns the correct result.
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合), 
       [
         {Tiangan.壬, Tiangan.丁},
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲), 
       []
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生), 
       [
         {Tiangan.丁, Tiangan.戊},
         {Tiangan.戊, Tiangan.辛},
@@ -294,8 +298,8 @@ class TestRelationUtils(unittest.TestCase):
       ]
     ))
 
-    self.assertTrue(self.__equal(
-      RelationUtils.get_tiangan_relations((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.克), 
+    self.assertTrue(self.__tg_equal(
+      TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.克), 
       [
         {Tiangan.戊, Tiangan.壬},
         {Tiangan.壬, Tiangan.丁},
@@ -303,7 +307,7 @@ class TestRelationUtils(unittest.TestCase):
       ]
     ))
 
-  def test_get_tiangan_relations_correctness(self) -> None:
+  def test_find_tiangan_combos_correctness(self) -> None:
     # Generate the expected relation combos/pairs, which are used later in this test.
     expected_he:    set[frozenset[Tiangan]] = set()
     expected_chong: set[frozenset[Tiangan]] = set()
@@ -342,14 +346,14 @@ class TestRelationUtils(unittest.TestCase):
       return result
 
     for _ in range(100):
-      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, 10))
+      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
 
-      for combo in RelationUtils.get_tiangan_relations(tiangans, TianganRelation.合):
+      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.合):
         self.assertEqual(len(combo), 2)
         tg1, tg2 = tuple(combo)
         self.assertIn(tg1.index - tg2.index, [5, -5])
 
-      for combo in RelationUtils.get_tiangan_relations(tiangans, TianganRelation.冲):
+      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.冲):
         self.assertEqual(len(combo), 2)
         trait1, trait2 = [BaziUtils.get_tiangan_traits(tg) for tg in combo]
         # No Tiangan of `Wuxing.土` is involved in the "Chong" relation.
@@ -359,41 +363,32 @@ class TestRelationUtils(unittest.TestCase):
         wx1, wx2 = trait1.wuxing, trait2.wuxing
         self.assertTrue(wx1.destructs(wx2) or wx2.destructs(wx1))
 
-      for combo in RelationUtils.get_tiangan_relations(tiangans, TianganRelation.生):
+      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.生):
         self.assertEqual(len(combo), 2)
         # We don't care Tiangan's Yinyang when talking about the "Sheng" relation.
         wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo]
         self.assertTrue(wx1.generates(wx2) or wx2.generates(wx1))
 
-      for combo in RelationUtils.get_tiangan_relations(tiangans, TianganRelation.克):
+      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.克):
         self.assertEqual(len(combo), 2)
         # We don't care Tiangan's Yinyang when talking about the "Ke" relation.
         wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo]
         self.assertTrue(wx1.destructs(wx2) or wx2.destructs(wx1))
 
-      he_combos: list[frozenset[Tiangan]] = RelationUtils.get_tiangan_relations(tiangans, TianganRelation.合)
-      expected_he_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, TianganRelation.合)
-      self.assertEqual(len(expected_he_combos), len(he_combos))
-      for combo in he_combos:
-        self.assertIn(combo, expected_he_combos)
+    for relation in TianganRelation:
+      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      combos1: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans, relation)
+      combos2: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans + tiangans, relation)
+      self.assertEqual(len(combos1), len(combos2))
+      for combo in combos1:
+        self.assertIn(combo, combos2)
 
-      chong_combos: list[frozenset[Tiangan]] = RelationUtils.get_tiangan_relations(tiangans, TianganRelation.冲)
-      expected_chong_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, TianganRelation.冲)
-      self.assertEqual(len(expected_chong_combos), len(chong_combos))
-      for combo in chong_combos:
-        self.assertIn(combo, expected_chong_combos)
-
-      sheng_combos: list[frozenset[Tiangan]] = RelationUtils.get_tiangan_relations(tiangans, TianganRelation.生)
-      expected_sheng_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, TianganRelation.生)
-      self.assertEqual(len(expected_sheng_combos), len(sheng_combos))
-      for combo in sheng_combos:
-        self.assertIn(combo, expected_sheng_combos)
-
-      ke_combos: list[frozenset[Tiangan]] = RelationUtils.get_tiangan_relations(tiangans, TianganRelation.克)
-      expected_ke_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, TianganRelation.克)
-      self.assertEqual(len(expected_ke_combos), len(ke_combos))
-      for combo in ke_combos:
-        self.assertIn(combo, expected_ke_combos)
+      for _ in range(100):
+        combos: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans, relation)
+        expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
+        self.assertEqual(len(expected_combos), len(combos))
+        for combo in combos:
+          self.assertIn(combo, expected_combos)
 
   def test_hehua(self) -> None:
     expected: dict[frozenset[Tiangan], Wuxing] = {
@@ -407,13 +402,88 @@ class TestRelationUtils(unittest.TestCase):
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg_set: set[Tiangan] = {tg1, tg2}
       if any(tg_set == s for s in expected):
-        self.assertEqual(RelationUtils.hehua(tg1, tg2), expected[frozenset(tg_set)])
+        self.assertEqual(TianganRelationUtils.hehua(tg1, tg2), expected[frozenset(tg_set)])
       else:
-        self.assertIsNone(RelationUtils.hehua(tg1, tg2))
+        self.assertIsNone(TianganRelationUtils.hehua(tg1, tg2))
 
     with self.assertRaises(AssertionError):
-      RelationUtils.hehua(Tiangan.甲, Dizhi.子) # type: ignore
+      TianganRelationUtils.hehua(Tiangan.甲, Dizhi.子) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.hehua(Dizhi.子, Tiangan.甲) # type: ignore
+      TianganRelationUtils.hehua(Dizhi.子, Tiangan.甲) # type: ignore
     with self.assertRaises(AssertionError):
-      RelationUtils.hehua('甲', '己') # type: ignore
+      TianganRelationUtils.hehua('甲', '己') # type: ignore
+
+
+class TestDizhiRelationUtils(unittest.TestCase):
+  def test_find_dizhi_combos_negative(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.find_dizhi_combos(Dizhi.子, DizhiRelation.生) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.find_dizhi_combos(['甲', '己'], DizhiRelation.克) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], '生') # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
+
+  @staticmethod
+  def __dz_equal(l1: list[frozenset[Dizhi]], l2: list[set[Dizhi]]) -> bool:
+    if len(l1) != len(l2):
+      return False
+    for s in l1:
+      if s not in l2:
+        return False
+    return True
+
+  def test_find_dizhi_combos_sanhui(self) -> None:
+    sanhui_combos: list[frozenset[Dizhi]] = [
+      frozenset((Dizhi.from_index(2), Dizhi.from_index(3), Dizhi.from_index(4))),
+      frozenset((Dizhi.from_index(5), Dizhi.from_index(6), Dizhi.from_index(7))),
+      frozenset((Dizhi.from_index(8), Dizhi.from_index(9), Dizhi.from_index(10))),
+      frozenset((Dizhi.from_index(11), Dizhi.from_index(0), Dizhi.from_index(1))),
+    ]
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.三会),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.三会),
+      [set(c) for c in sanhui_combos],
+    ))
+    
+    for _ in range(100):
+      dizhis: set[Dizhi] = set(random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.三会)
+      expected_result: list[set[Dizhi]] = [set(c) for c in sanhui_combos if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_sanhui(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui(Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.sanhui('亥', '子', '丑') # type: ignore
+
+    expected: dict[frozenset[Dizhi], Wuxing] = {
+      frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)): Wuxing.木,
+      frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)): Wuxing.火,
+      frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)): Wuxing.金,
+      frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)): Wuxing.水,
+    }
+    for dizhis in itertools.combinations(Dizhi, 3):
+      fs: frozenset[Dizhi] = frozenset(dizhis)
+      if fs in expected:
+        for combo in itertools.permutations(dizhis):
+          self.assertEqual(DizhiRelationUtils.sanhui(*combo), expected[fs])
+      else:
+        for combo in itertools.permutations(dizhis):
+          self.assertIsNone(DizhiRelationUtils.sanhui(*dizhis))

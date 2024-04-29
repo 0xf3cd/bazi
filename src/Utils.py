@@ -1,15 +1,11 @@
 import copy
 from datetime import date
-from typing import Union, Sequence, Optional
+from typing import Union, Iterable, Optional
 
 from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
 from .Calendar import CalendarUtils, CalendarDate
-from .Rules import (
-  TraitTuple, HiddenTianganDict,
-  YEAR_TO_MONTH_TABLE, DAY_TO_HOUR_TABLE, TIANGAN_TRAITS, DIZHI_TRAITS, 
-  HIDDEN_TIANGANS_PERCENTAGE_TABLE, NAYIN_TABLE, TIANGAN_ZHANGSHENG_TABLE,
-  TIANGAN_HE_TABLE, TIANGAN_CHONG_TABLE, TIANGAN_SHENG_TABLE, TIANGAN_KE_TABLE,
-)
+from .Rules import TraitTuple, HiddenTianganDict, RULES
+
 
 class BaziUtils:
   @staticmethod
@@ -48,7 +44,7 @@ class BaziUtils:
     assert isinstance(month_dizhi, Dizhi)
 
     month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
-    first_month_tiangan: Tiangan = YEAR_TO_MONTH_TABLE[year_tiangan]
+    first_month_tiangan: Tiangan = RULES.YEAR_TO_MONTH_TABLE[year_tiangan]
     month_tiangan_index: int = (first_month_tiangan.index + month_index) % 10
     return Tiangan.from_index(month_tiangan_index)
 
@@ -69,7 +65,7 @@ class BaziUtils:
     assert isinstance(hour_dizhi, Dizhi)
 
     hour_index: int = hour_dizhi.index
-    first_hour_tiangan: Tiangan = DAY_TO_HOUR_TABLE[day_tiangan]
+    first_hour_tiangan: Tiangan = RULES.DAY_TO_HOUR_TABLE[day_tiangan]
     hour_tiangan_index: int = (first_hour_tiangan.index + hour_index) % 10
     return Tiangan.from_index(hour_tiangan_index)
 
@@ -86,7 +82,7 @@ class BaziUtils:
     '''
 
     assert isinstance(tg, Tiangan)
-    return copy.deepcopy(TIANGAN_TRAITS[tg])
+    return copy.deepcopy(RULES.TIANGAN_TRAITS[tg])
   
   @staticmethod
   def get_dizhi_traits(dz: Dizhi) -> TraitTuple:
@@ -101,7 +97,7 @@ class BaziUtils:
     '''
 
     assert isinstance(dz, Dizhi)
-    return copy.deepcopy(DIZHI_TRAITS[dz])
+    return copy.deepcopy(RULES.DIZHI_TRAITS[dz])
   
   @staticmethod
   def get_hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
@@ -116,7 +112,7 @@ class BaziUtils:
     '''
 
     assert isinstance(dz, Dizhi)
-    return copy.deepcopy(HIDDEN_TIANGANS_PERCENTAGE_TABLE[dz])
+    return copy.deepcopy(RULES.HIDDEN_TIANGANS[dz])
   
   @staticmethod
   def get_shishen(day_master: Tiangan, other: Union[Tiangan, Dizhi]) -> Shishen:
@@ -201,7 +197,7 @@ class BaziUtils:
     tg_traits, dz_traits = BaziUtils.get_tiangan_traits(tg), BaziUtils.get_dizhi_traits(dz)
     assert tg_traits.yinyang == dz_traits.yinyang # The yinyang of Tiangan and Dizhi should be the same.
 
-    return NAYIN_TABLE[gz]
+    return RULES.NAYIN[gz]
 
   @staticmethod
   def get_shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
@@ -225,7 +221,7 @@ class BaziUtils:
     assert isinstance(dz, Dizhi)
 
     tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
-    zhangsheng_place: Dizhi = TIANGAN_ZHANGSHENG_TABLE[tg]
+    zhangsheng_place: Dizhi = RULES.TIANGAN_ZHANGSHENG[tg]
 
     if tg_yinyang is Yinyang.YIN:
       offset: int = zhangsheng_place.index - dz.index
@@ -236,12 +232,12 @@ class BaziUtils:
     return ShierZhangsheng.from_index(offset % 12)
 
 
-class RelationUtils:
+class TianganRelationUtils:
   @staticmethod
-  def get_tiangan_relations(tiangans: Sequence[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
+  def find_tiangan_combos(tiangans: Iterable[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
     '''
-    Check the relations among the given Tiangans.
-    检查给定的天干之间的关系。
+    Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
+    返回`tiangans`中所有满足该关系的组合。
 
     Args:
     - tiangans: (Sequence[Tiangan]) The Tiangans to check.
@@ -250,13 +246,13 @@ class RelationUtils:
     Return: (list[frozenset[Tiangan]]) The result containing all matching Tiangan combos.
 
     Examples:
-    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
+    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
       - return: [{Tiangan.丙, Tiangan.辛}]
-    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
+    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
       - return: [{Tiangan.甲, Tiangan.庚}]
-    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
+    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
       - return: [{Tiangan.甲, Tiangan.丙}, {Tiangan.甲, Tiangan.丁}]
-    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
+    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
       - return: [{Tiangan.甲, Tiangan.庚}, {Tiangan.甲, Tiangan.辛}, {Tiangan.丙, Tiangan.庚}, {Tiangan.丙, Tiangan.辛},
                  {Tiangan.丁, Tiangan.庚}, {Tiangan.丁, Tiangan.辛}]
     '''
@@ -267,21 +263,20 @@ class RelationUtils:
       assert isinstance(tg, Tiangan)
 
     if relation is TianganRelation.合:
-      return [copy.deepcopy(combo) for combo in TIANGAN_HE_TABLE if tg_set.issuperset(combo)]
+      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_HE if tg_set.issuperset(combo)]
     elif relation is TianganRelation.冲:
-      return [frozenset(combo) for combo in TIANGAN_CHONG_TABLE if tg_set.issuperset(combo)]
+      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_CHONG if tg_set.issuperset(combo)]
     elif relation is TianganRelation.生:
-      return [frozenset(combo) for combo in TIANGAN_SHENG_TABLE if tg_set.issuperset(combo)]
-    elif relation is TianganRelation.克:
-      return [frozenset(combo) for combo in TIANGAN_KE_TABLE if tg_set.issuperset(combo)]
-      
-    assert False, f'Invalid TianganRelation: {relation}'
+      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_SHENG if tg_set.issuperset(combo)]
+    else: 
+      assert relation is TianganRelation.克
+      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_KE if tg_set.issuperset(combo)]
 
   @staticmethod
   def hehua(tiangan1: Tiangan, tiangan2: Tiangan) -> Optional[Wuxing]:
     '''
-    Check if the input two Tiangans are in HE relation. If so, return the corresponding Wuxing.
-    检查输入的两个天干是否构成相合关系。如果是，返回合化后形成的五行。
+    Check if the input two Tiangans are in HE relation. If so, return the corresponding Wuxing. If not, return `None`.
+    检查输入的两个天干是否构成相合关系。如果是，返回合化后形成的五行。如果不是，返回 `None`。
 
     Note that the two Tiangans may not qualify for Hehua (合化), which depends on the bazi chart.
     This method simply returns the Wuxing that we get from Hehua (合化).
@@ -292,13 +287,78 @@ class RelationUtils:
     - tiangan1: (Tiangan) The first Tiangan.
     - tiangan2: (Tiangan) The second Tiangan.
 
-    Return: (Wuxing) The Wuxing that the two Tiangans are in HE relation.
+    Return: (Optional[Wuxing]) The Wuxing that the two Tiangans form, or None if the two Tiangans are not in HE relation.
     '''
 
     assert isinstance(tiangan1, Tiangan)
     assert isinstance(tiangan2, Tiangan)
 
     fs: frozenset[Tiangan] = frozenset((tiangan1, tiangan2))
-    if fs in TIANGAN_HE_TABLE:
-      return TIANGAN_HE_TABLE[fs]
+    if fs in RULES.TIANGAN_HE:
+      return RULES.TIANGAN_HE[fs]
     return None
+  
+
+class DizhiRelationUtils:
+  @staticmethod
+  def find_dizhi_combos(dizhis: Iterable[Dizhi], relation: DizhiRelation) -> list[frozenset[Dizhi]]:
+    '''
+    Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
+    返回`dizhis`中所有满足该关系的组合。
+
+    Args:
+    - dizhis: (Sequence[Dizhi]) The Dizhis to check.
+    - relation: (DizhiRelation) The relation to check.
+
+    Return: (list[frozenset[Dizhi]]) The result containing all matching Dizhi combos.
+
+    Examples:
+    - find_dizhi_combos(Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
+      - return: [{Dizhi.寅, Dizhi.卯, Dizhi.辰}]
+    '''
+
+    assert isinstance(relation, DizhiRelation)
+    dz_set: set[Dizhi] = set(dizhis)
+    for dz in dz_set:
+      assert isinstance(dz, Dizhi)
+
+    if relation is DizhiRelation.三会:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHUI if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.六合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_LIUHE if dz_set.issuperset(combo)]
+    return []
+
+  @staticmethod
+  def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
+    '''
+    Check if the input Dizhis are in Sanhui (三会) relation. If so, return the corresponding Wuxing. If not, return `None`.
+    检查输入的地支是否构成三会关系。如果是，返回三会后形成的五行。否则返回 `None`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+    - dz3: (Dizhi) The third Dizhi.
+
+    Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in Sanhui (三会) relation.
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
+    return RULES.DIZHI_SANHUI.get(combo, None)
+  
+  # @staticmethod
+  # def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
+  #   '''
+  #   Check if the input Dizhis are in Liuhe (六合) relation. If so, return the corresponding Wuxing. If not, return `None`.
+  #   检查输入的地支是否构成六合关系。如果是，返回六合后形成的五行。否则返回 `None`。
+
+  #   Args:
+  #   - dz1: (Dizhi) The first Dizhi.
+  #   - dz2: (Dizhi) The second Dizhi.
+
+  #   Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in Liuhe (六合) relation.
+  #   '''
+
+  #   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+  #   combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  #   return RULES.DIZHI_LIUHE.get(combo, None)
