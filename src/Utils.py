@@ -2,7 +2,7 @@ import copy
 from datetime import date
 from typing import Union, Sequence, Optional
 
-from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation
+from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import (
   TraitTuple, HiddenTianganDict,
@@ -237,53 +237,45 @@ class BaziUtils:
 
 
 class RelationUtils:
-  TianganRelationResult = dict[TianganRelation, list[set[Tiangan]]]
-
   @staticmethod
-  def get_tiangan_relations(tiangans: Sequence[Tiangan]) -> TianganRelationResult:
+  def get_tiangan_relations(tiangans: Sequence[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
     '''
     Check the relations among the given Tiangans.
     检查给定的天干之间的关系。
 
     Args:
     - tiangans: (Sequence[Tiangan]) The Tiangans to check.
+    - relation: (TianganRelation) The relation to check.
 
-    Return: (TianganRelationResult) The result of the check.
+    Return: (list[frozenset[Tiangan]]) The result containing all matching Tiangan combos.
 
     Examples:
-    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛]):
-      - TianganRelation.合: [{Tiangan.丙, Tiangan.辛}],
-      - TianganRelation.冲: [{Tiangan.甲, Tiangan.庚}],
-      - TianganRelation.生: [{Tiangan.甲, Tiangan.丙}, {Tiangan.甲, Tiangan.丁}],
-      - TianganRelation.克: [{Tiangan.甲, Tiangan.庚}, {Tiangan.甲, Tiangan.辛}, {Tiangan.丙, Tiangan.庚}, {Tiangan.丙, Tiangan.辛},
-                             {Tiangan.丁, Tiangan.庚}, {Tiangan.丁, Tiangan.辛}],
+    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
+      - return: [{Tiangan.丙, Tiangan.辛}]
+    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
+      - return: [{Tiangan.甲, Tiangan.庚}]
+    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
+      - return: [{Tiangan.甲, Tiangan.丙}, {Tiangan.甲, Tiangan.丁}]
+    - get_tiangan_relations([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
+      - return: [{Tiangan.甲, Tiangan.庚}, {Tiangan.甲, Tiangan.辛}, {Tiangan.丙, Tiangan.庚}, {Tiangan.丙, Tiangan.辛},
+                 {Tiangan.丁, Tiangan.庚}, {Tiangan.丁, Tiangan.辛}]
     '''
 
+    assert isinstance(relation, TianganRelation)
     tg_set: set[Tiangan] = set(tiangans)
     for tg in tg_set:
       assert isinstance(tg, Tiangan)
 
-    d: RelationUtils.TianganRelationResult = {
-      TianganRelation.合: [],
-      TianganRelation.冲: [],
-      TianganRelation.生: [],
-      TianganRelation.克: [],
-    }
-
-    for he_combo in TIANGAN_HE_TABLE:
-      if tg_set.issuperset(he_combo):
-        d[TianganRelation.合].append(copy.deepcopy(set(he_combo)))
-    for chong_combo in TIANGAN_CHONG_TABLE:
-      if tg_set.issuperset(chong_combo):
-        d[TianganRelation.冲].append(copy.deepcopy(chong_combo))
-    for sheng_combo in TIANGAN_SHENG_TABLE:
-      if tg_set.issuperset(sheng_combo):
-        d[TianganRelation.生].append(copy.deepcopy(sheng_combo))
-    for ke_combo in TIANGAN_KE_TABLE:
-      if tg_set.issuperset(ke_combo):
-        d[TianganRelation.克].append(copy.deepcopy(ke_combo))
+    if relation is TianganRelation.合:
+      return [copy.deepcopy(combo) for combo in TIANGAN_HE_TABLE if tg_set.issuperset(combo)]
+    elif relation is TianganRelation.冲:
+      return [frozenset(combo) for combo in TIANGAN_CHONG_TABLE if tg_set.issuperset(combo)]
+    elif relation is TianganRelation.生:
+      return [frozenset(combo) for combo in TIANGAN_SHENG_TABLE if tg_set.issuperset(combo)]
+    elif relation is TianganRelation.克:
+      return [frozenset(combo) for combo in TIANGAN_KE_TABLE if tg_set.issuperset(combo)]
       
-    return d
+    assert False, f'Invalid TianganRelation: {relation}'
 
   @staticmethod
   def hehua(tiangan1: Tiangan, tiangan2: Tiangan) -> Optional[Wuxing]:

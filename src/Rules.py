@@ -177,3 +177,13 @@ def __populate_tg_ke_table() -> list[set[Tiangan]]:
 # The table is used to query the KE relation across all Tiangans.
 # 该表格用于查询天干之间的相克关系。
 TIANGAN_KE_TABLE: list[set[Tiangan]] = __populate_tg_ke_table()
+
+
+# The table is used to query the SANHUI (三会) relation across all Dizhis.
+# 该表格用于查询地支之间的三会局。
+DIZHI_SANHUI_TABLE: dict[frozenset[Dizhi], Wuxing] = {
+  frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)) : Wuxing.木,
+  frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)) : Wuxing.火,
+  frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)) : Wuxing.金,
+  frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
+}
