@@ -490,8 +490,11 @@ class TianganRelation(Enum):
 class DizhiRelation(Enum):
   '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
   SANHUI = '三会'
-  SANHE  = '三合'
   LIUHE  = '六合'
+  ANHE   = '暗合'
+  SANHE  = '三合'
+  BANHE  = '半合'
+  GONG   = '拱'
   CHONG  = '冲'
   XING   = '刑'
   HAI    = '害'
@@ -499,10 +502,14 @@ class DizhiRelation(Enum):
   SHENG  = '生'
   KE     = '克'
 
+
   # Aliases
   三会 = SANHUI
-  三合 = SANHE
   六合 = LIUHE
+  暗合 = ANHE
+  三合 = SANHE
+  半合 = BANHE
+  拱  = GONG
   冲  = CHONG
   刑  = XING
   害  = HAI

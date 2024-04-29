@@ -1,6 +1,6 @@
 import copy
 from datetime import date
-from typing import Union, Sequence
+from typing import Union, Sequence, Optional
 
 from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation
 from .Calendar import CalendarUtils, CalendarDate
@@ -272,7 +272,7 @@ class RelationUtils:
 
     for he_combo in TIANGAN_HE_TABLE:
       if tg_set.issuperset(he_combo):
-        d[TianganRelation.合].append(copy.deepcopy(he_combo))
+        d[TianganRelation.合].append(copy.deepcopy(set(he_combo)))
     for chong_combo in TIANGAN_CHONG_TABLE:
       if tg_set.issuperset(chong_combo):
         d[TianganRelation.冲].append(copy.deepcopy(chong_combo))
@@ -284,3 +284,29 @@ class RelationUtils:
         d[TianganRelation.克].append(copy.deepcopy(ke_combo))
       
     return d
+
+  @staticmethod
+  def hehua(tiangan1: Tiangan, tiangan2: Tiangan) -> Optional[Wuxing]:
+    '''
+    Check if the input two Tiangans are in HE relation. If so, return the corresponding Wuxing.
+    检查输入的两个天干是否构成相合关系。如果是，返回合化后形成的五行。
+
+    Note that the two Tiangans may not qualify for Hehua (合化), which depends on the bazi chart.
+    This method simply returns the Wuxing that we get from Hehua (合化).
+    注意，这两个天干可能并不能合化。具体需要根据八字原盘来决定。
+    此方法仅返回合化后形成的五行。
+
+    Args:
+    - tiangan1: (Tiangan) The first Tiangan.
+    - tiangan2: (Tiangan) The second Tiangan.
+
+    Return: (Wuxing) The Wuxing that the two Tiangans are in HE relation.
+    '''
+
+    assert isinstance(tiangan1, Tiangan)
+    assert isinstance(tiangan2, Tiangan)
+
+    fs: frozenset[Tiangan] = frozenset((tiangan1, tiangan2))
+    if fs in TIANGAN_HE_TABLE:
+      return TIANGAN_HE_TABLE[fs]
+    return None

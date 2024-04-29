@@ -654,7 +654,7 @@ class TestTianganRelation(unittest.TestCase):
 class TestDizhiRelation(unittest.TestCase):
   def test_basic(self) -> None:
     self.assertIs(DizhiRelation, 地支关系)
-    self.assertEqual(len(DizhiRelation), 9) # 三会、三合、六合、冲、刑、害、破、生、克
+    self.assertEqual(len(DizhiRelation), 12) # 三会、六合、暗合、三合、半合、拱、冲、刑、害、破、生、克
 
   def test_str(self) -> None:
     for relation in DizhiRelation:
@@ -670,4 +670,4 @@ class TestDizhiRelation(unittest.TestCase):
     with self.assertRaises(ValueError):
       DizhiRelation.from_str('冲 ')
 
-    self.assertEqual(''.join([str(relation) for relation in DizhiRelation]), '三会三合六合冲刑害破生克')
+    self.assertEqual(''.join([str(relation) for relation in DizhiRelation]), '三会六合暗合三合半合拱冲刑害破生克')

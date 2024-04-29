@@ -270,7 +270,7 @@ class TestRelationUtils(unittest.TestCase):
 
       if abs(tg1.index - tg2.index) == 5: # Check "He" relation. 合。
         expected_he.add(frozenset(combo))
-      if all([wx is not Wuxing.土 for wx in [wx1, wx2]]): # Check "Chong" relation. 冲。
+      if all(wx is not Wuxing.土 for wx in [wx1, wx2]): # Check "Chong" relation. 冲。
         if abs(tg1.index - tg2.index) == 6:
           expected_chong.add(frozenset(combo))
       if wx1.generates(wx2) or wx2.generates(wx1): # Check "Sheng" relation. 生。
@@ -343,3 +343,26 @@ class TestRelationUtils(unittest.TestCase):
       self.assertEqual(len(expected_ke_combos), len(result[TianganRelation.克]))
       for combo in result[TianganRelation.克]:
         self.assertIn(combo, expected_ke_combos)
+
+  def test_hehua(self) -> None:
+    expected: dict[frozenset[Tiangan], Wuxing] = {
+      frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
+      frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
+      frozenset((Tiangan.丙, Tiangan.辛)) : Wuxing.水,
+      frozenset((Tiangan.丁, Tiangan.壬)) : Wuxing.木,
+      frozenset((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
+    }
+
+    for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+      tg_set: set[Tiangan] = {tg1, tg2}
+      if any(tg_set == s for s in expected):
+        self.assertEqual(RelationUtils.hehua(tg1, tg2), expected[frozenset(tg_set)])
+      else:
+        self.assertIsNone(RelationUtils.hehua(tg1, tg2))
+
+    with self.assertRaises(AssertionError):
+      RelationUtils.hehua(Tiangan.甲, Dizhi.子) # type: ignore
+    with self.assertRaises(AssertionError):
+      RelationUtils.hehua(Dizhi.子, Tiangan.甲) # type: ignore
+    with self.assertRaises(AssertionError):
+      RelationUtils.hehua('甲', '己') # type: ignore

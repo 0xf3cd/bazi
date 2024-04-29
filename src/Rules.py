@@ -132,13 +132,13 @@ TIANGAN_ZHANGSHENG_TABLE: dict[Tiangan, Dizhi] = {
 
 # The table is used to query the HE relation across all Tiangans.
 # 该表格用于查询天干之间的相合关系。
-TIANGAN_HE_TABLE: list[set[Tiangan]] = [
-  set((Tiangan.甲, Tiangan.己)),
-  set((Tiangan.乙, Tiangan.庚)),
-  set((Tiangan.丙, Tiangan.辛)),
-  set((Tiangan.丁, Tiangan.壬)),
-  set((Tiangan.戊, Tiangan.癸)),
-]
+TIANGAN_HE_TABLE: dict[frozenset[Tiangan], Wuxing] = {
+  frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
+  frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
+  frozenset((Tiangan.丙, Tiangan.辛)) : Wuxing.水,
+  frozenset((Tiangan.丁, Tiangan.壬)) : Wuxing.木,
+  frozenset((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
+}
 
 
 # The table is used to query the CHONG relation across all Tiangans.
