@@ -390,7 +390,14 @@ class TestTianganRelationUtils(unittest.TestCase):
         for combo in combos:
           self.assertIn(combo, expected_combos)
 
-  def test_hehua(self) -> None:
+  def test_he(self) -> None:
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.he(Tiangan.甲, Dizhi.子) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.he(Dizhi.子, Tiangan.甲) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.he('甲', '己') # type: ignore
+
     expected: dict[frozenset[Tiangan], Wuxing] = {
       frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
       frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
@@ -402,16 +409,62 @@ class TestTianganRelationUtils(unittest.TestCase):
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg_set: set[Tiangan] = {tg1, tg2}
       if any(tg_set == s for s in expected):
-        self.assertEqual(TianganRelationUtils.hehua(tg1, tg2), expected[frozenset(tg_set)])
+        self.assertEqual(TianganRelationUtils.he(tg1, tg2), expected[frozenset(tg_set)])
+        self.assertEqual(TianganRelationUtils.he(tg2, tg1), expected[frozenset(tg_set)])
       else:
-        self.assertIsNone(TianganRelationUtils.hehua(tg1, tg2))
+        self.assertIsNone(TianganRelationUtils.he(tg1, tg2))
+        self.assertIsNone(TianganRelationUtils.he(tg2, tg1))
 
+  def test_chong(self) -> None:
     with self.assertRaises(AssertionError):
-      TianganRelationUtils.hehua(Tiangan.甲, Dizhi.子) # type: ignore
+      TianganRelationUtils.chong(Tiangan.甲, Dizhi.子) # type: ignore
     with self.assertRaises(AssertionError):
-      TianganRelationUtils.hehua(Dizhi.子, Tiangan.甲) # type: ignore
+      TianganRelationUtils.chong(Dizhi.子, Tiangan.甲) # type: ignore
     with self.assertRaises(AssertionError):
-      TianganRelationUtils.hehua('甲', '己') # type: ignore
+      TianganRelationUtils.chong('甲', '庚') # type: ignore
+
+    for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+      wx1, wx2 = BaziUtils.get_tiangan_traits(tg1).wuxing, BaziUtils.get_tiangan_traits(tg2).wuxing
+      if all(wx is not Wuxing('土') for wx in [wx1, wx2]):
+        if abs(tg1.index - tg2.index) == 6:
+          self.assertTrue(TianganRelationUtils.chong(tg1, tg2))
+          self.assertTrue(TianganRelationUtils.chong(tg2, tg1))
+          continue
+      # Else, the two Tiangans are not in CHONG relation.
+      self.assertFalse(TianganRelationUtils.chong(tg1, tg2))
+      self.assertFalse(TianganRelationUtils.chong(tg2, tg1))
+
+  def test_sheng(self) -> None:
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.sheng(Tiangan.甲, Dizhi.子) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.sheng(Dizhi.子, Tiangan.甲) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.sheng('甲', '庚') # type: ignore
+
+    for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+      wx1, wx2 = BaziUtils.get_tiangan_traits(tg1).wuxing, BaziUtils.get_tiangan_traits(tg2).wuxing
+      if wx1.generates(wx2):
+        self.assertTrue(TianganRelationUtils.sheng(tg1, tg2))
+        self.assertFalse(TianganRelationUtils.sheng(tg2, tg1))
+      else:
+        self.assertFalse(TianganRelationUtils.sheng(tg1, tg2))
+
+  def test_ke(self) -> None:
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.ke(Tiangan.甲, Dizhi.子) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.ke(Dizhi.子, Tiangan.甲) # type: ignore
+    with self.assertRaises(AssertionError):
+      TianganRelationUtils.ke('甲', '庚') # type: ignore
+
+    for tg1, tg2 in itertools.product(Tiangan, Tiangan):
+      wx1, wx2 = BaziUtils.get_tiangan_traits(tg1).wuxing, BaziUtils.get_tiangan_traits(tg2).wuxing
+      if wx1.destructs(wx2):
+        self.assertTrue(TianganRelationUtils.ke(tg1, tg2))
+        self.assertFalse(TianganRelationUtils.ke(tg2, tg1))
+      else:
+        self.assertFalse(TianganRelationUtils.ke(tg1, tg2))
 
 
 class TestDizhiRelationUtils(unittest.TestCase):
@@ -465,6 +518,8 @@ class TestDizhiRelationUtils(unittest.TestCase):
     with self.assertRaises(TypeError):
       DizhiRelationUtils.sanhui(Dizhi.子, Dizhi.辰) # type: ignore
     with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhui(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
       DizhiRelationUtils.sanhui((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
     with self.assertRaises(TypeError):
       DizhiRelationUtils.sanhui({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
@@ -473,12 +528,16 @@ class TestDizhiRelationUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiRelationUtils.sanhui('亥', '子', '丑') # type: ignore
 
-    expected: dict[frozenset[Dizhi], Wuxing] = {
-      frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)): Wuxing.木,
-      frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)): Wuxing.火,
-      frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)): Wuxing.金,
-      frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)): Wuxing.水,
+    dizhi_tuples: list[tuple[Dizhi, Dizhi, Dizhi]] = [
+      (Dizhi.寅, Dizhi.卯, Dizhi.辰), # Spring / 春
+      (Dizhi.巳, Dizhi.午, Dizhi.未), # Summer / 夏
+      (Dizhi.申, Dizhi.酉, Dizhi.戌), # Fall   / 秋
+      (Dizhi.亥, Dizhi.子, Dizhi.丑), # Winter / 冬
+    ]
+    expected: dict[frozenset[Dizhi], Wuxing] = { 
+      frozenset(dizhis) : BaziUtils.get_dizhi_traits(dizhis[0]).wuxing for dizhis in dizhi_tuples 
     }
+    
     for dizhis in itertools.combinations(Dizhi, 3):
       fs: frozenset[Dizhi] = frozenset(dizhis)
       if fs in expected:
@@ -487,3 +546,9 @@ class TestDizhiRelationUtils(unittest.TestCase):
       else:
         for combo in itertools.permutations(dizhis):
           self.assertIsNone(DizhiRelationUtils.sanhui(*dizhis))
+
+  def test_find_dizhi_combos_liuhe(self) -> None:
+    pass
+
+  def test_liuhe(self) -> None:
+    pass
