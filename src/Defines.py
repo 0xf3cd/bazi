@@ -489,33 +489,37 @@ class TianganRelation(Enum):
 
 class DizhiRelation(Enum):
   '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
-  SANHUI = '三会'
-  LIUHE  = '六合'
-  ANHE   = '暗合'
-  SANHE  = '三合'
-  BANHE  = '半合'
-  GONG   = '拱'
-  CHONG  = '冲'
-  XING   = '刑'
-  HAI    = '害'
-  PO     = '破'
-  SHENG  = '生'
-  KE     = '克'
+  SANHUI   = '三会'
+  LIUHE    = '六合'
+  ANHE     = '暗合'
+  TONGHE   = '通合'
+  TONGLUHE = '通禄合'
+  SANHE    = '三合'
+  BANHE    = '半合'
+  GONG     = '拱'
+  CHONG    = '冲'
+  XING     = '刑'
+  HAI      = '害'
+  PO       = '破'
+  SHENG    = '生'
+  KE       = '克'
 
 
   # Aliases
-  三会 = SANHUI
-  六合 = LIUHE
-  暗合 = ANHE
-  三合 = SANHE
-  半合 = BANHE
-  拱  = GONG
-  冲  = CHONG
-  刑  = XING
-  害  = HAI
-  破  = PO
-  生  = SHENG
-  克  = KE
+  三会   = SANHUI
+  六合   = LIUHE
+  暗合   = ANHE
+  通合   = TONGHE
+  通禄合 = TONGLUHE
+  三合   = SANHE
+  半合   = BANHE
+  拱    = GONG
+  冲    = CHONG
+  刑    = XING
+  害    = HAI
+  破    = PO
+  生    = SHENG
+  克    = KE
 
   def __str__(self) -> str:
     return str(self.value)

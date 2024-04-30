@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import itertools
+from enum import Enum
 from typing import NamedTuple
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
@@ -249,5 +250,73 @@ class Rules:
       frozenset((Dizhi.巳, Dizhi.申)): Wuxing.水,
       frozenset((Dizhi.午, Dizhi.未)): Wuxing.土,
     }
+  
+  class AnheDef(Enum):
+    '''
+    The definition of ANHE relation. Different definitions mean different query tables.
+    不同的地支暗合关系看法。
+    '''
+    NORMAL           = 0 # 卯申、巳酉、亥午、子巳、寅午 - 这也是所谓的“通禄合”/“通禄暗合”，与天干五合一一对应。
+    NORMAL_EXTENDED  = 1 # 卯申、巳酉、亥午、子巳、寅午 + 寅丑。这六组的藏干没有明显的冲突，而且有藏干相合的关系。
+    MANGPAI          = 2 # 卯申、寅丑、午亥。盲派最认可这三对暗合。
+
+  # The tables are used to query the ANHE (暗合) relation across all Dizhis.
+  # ANHE relation is a non-directional/mutual relation.
+  # All tables for different `AnheDef` are returned as a dict.
+  # 该表格用于查询地支之间的暗合关系。
+  # 暗合关系是无方向的。
+  @property
+  def DIZHI_ANHE(self) -> dict[AnheDef, frozenset[frozenset[Dizhi]]]:
+    d: dict[Rules.AnheDef, frozenset[frozenset[Dizhi]]] = {}
+
+    d[Rules.AnheDef.NORMAL] = frozenset([
+      frozenset((Dizhi.卯, Dizhi.申)),
+      frozenset((Dizhi.巳, Dizhi.酉)),
+      frozenset((Dizhi.亥, Dizhi.午)),
+      frozenset((Dizhi.子, Dizhi.巳)),
+      frozenset((Dizhi.寅, Dizhi.午)),
+    ])
+
+    d[Rules.AnheDef.NORMAL_EXTENDED] = frozenset([
+      frozenset((Dizhi.卯, Dizhi.申)),
+      frozenset((Dizhi.巳, Dizhi.酉)),
+      frozenset((Dizhi.亥, Dizhi.午)),
+      frozenset((Dizhi.子, Dizhi.巳)),
+      frozenset((Dizhi.寅, Dizhi.午)),
+      frozenset((Dizhi.寅, Dizhi.丑)),
+    ])
+
+    d[Rules.AnheDef.MANGPAI] = frozenset([
+      frozenset((Dizhi.卯, Dizhi.申)),
+      frozenset((Dizhi.寅, Dizhi.丑)),
+      frozenset((Dizhi.午, Dizhi.亥)),
+    ])
+    
+    return d
+  
+  # The table is used to query the TONGHE (通合) relation across all Dizhis.
+  # TONGHE relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的通合关系。
+  # 通合关系是无方向的。通合代表藏干中所有气都能两两相合。
+  @property
+  def DIZHI_TONGHE(self) -> frozenset[frozenset[Dizhi]]:
+    return frozenset([
+      frozenset((Dizhi.寅, Dizhi.丑)),
+      frozenset((Dizhi.午, Dizhi.亥)),
+    ])
+  
+  # The table is used to query the TONGLUHE (通禄合) relation across all Dizhis.
+  # TONGLUHE relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的通禄合关系。
+  # 通禄合关系是无方向的。若两个天干相合，那么它们在地支中的禄身也能相合，从而构成地支的通禄合关系。
+  @property
+  def DIZHI_TONGLUHE(self) -> frozenset[frozenset[Dizhi]]:
+    return frozenset([
+      frozenset((Dizhi.卯, Dizhi.申)),
+      frozenset((Dizhi.巳, Dizhi.酉)),
+      frozenset((Dizhi.亥, Dizhi.午)),
+      frozenset((Dizhi.子, Dizhi.巳)),
+      frozenset((Dizhi.寅, Dizhi.午)),
+    ])
 
 RULES: Rules = Rules()

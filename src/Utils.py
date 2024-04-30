@@ -417,6 +417,10 @@ class DizhiRelationUtils:
     - 对于无方向的关系来说（合、会），我们不用关心返回结果中的方向。
     - 对于有方向的关系来说（生、克等），请使用其他静态方法来检查（如 `DizhiRelationUtils.sheng`， `DizhiRelationUtils.ke` 等）。
 
+    Note:
+    - For ANHE relation, the `Rules.AnheDef.NORMAL_EXTENDED` definition is used, as it is the widest definition.
+    - 对于暗合关系的查询，默认使用 `Rules.AnheDef.NORMAL_EXTENDED` 定义，因为它包含最多的暗合地支组合。
+
     Args:
     - dizhis: (Sequence[Dizhi]) The Dizhis to check.
     - relation: (DizhiRelation) The relation to check.
@@ -426,6 +430,9 @@ class DizhiRelationUtils:
     Examples:
     - find_dizhi_combos(Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
       - return: [{Dizhi.寅, Dizhi.卯, Dizhi.辰}]
+    - find_dizhi_combos(Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
+      - return: [{ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑}]
+      - `Rules.AnheDef.NORMAL_EXTENDED` is used.
     '''
 
     assert isinstance(relation, DizhiRelation)
