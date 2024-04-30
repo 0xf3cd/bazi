@@ -435,8 +435,8 @@ class DizhiRelationUtils:
 
     if relation is DizhiRelation.三会:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHUI if dz_set.issuperset(combo)]
-    # elif relation is DizhiRelation.六合:
-    #   return [copy.deepcopy(combo) for combo in RULES.DIZHI_LIUHE if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.六合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_LIUHE if dz_set.issuperset(combo)]
     return []
 
   @staticmethod
@@ -452,26 +452,28 @@ class DizhiRelationUtils:
     - dz2: (Dizhi) The second Dizhi.
     - dz3: (Dizhi) The third Dizhi.
 
-    Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in Sanhui (三会) relation.
+    Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in SANHUI (三会) relation.
     '''
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
     return RULES.DIZHI_SANHUI.get(combo, None)
   
-  # @staticmethod
-  # def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
-  #   '''
-  #   Check if the input Dizhis are in Liuhe (六合) relation. If so, return the corresponding Wuxing. If not, return `None`.
-  #   检查输入的地支是否构成六合关系。如果是，返回六合后形成的五行。否则返回 `None`。
+  @staticmethod
+  def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
+    '''
+    Check if the input Dizhis are in LIUHE (六合) relation. If so, return the corresponding Wuxing. If not, return `None`.
+    We don't care the order of the inputs, since LIUHE relation is non-directional/mutual.
+    检查输入的地支是否构成六合关系。如果是，返回六合后形成的五行。否则返回 `None`。
+    返回结果与输入的地支顺序无关，因为六合关系是无方向的。
 
-  #   Args:
-  #   - dz1: (Dizhi) The first Dizhi.
-  #   - dz2: (Dizhi) The second Dizhi.
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
 
-  #   Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in Liuhe (六合) relation.
-  #   '''
+    Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in LIUHE (六合) relation.
+    '''
 
-  #   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  #   combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-  #   return RULES.DIZHI_LIUHE.get(combo, None)
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+    return RULES.DIZHI_LIUHE.get(combo, None)

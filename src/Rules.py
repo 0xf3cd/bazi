@@ -222,7 +222,9 @@ class Rules:
 
 
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
+  # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
+  # 三会是无方向的。如寅卯辰三会木局是三个地支之间相互的关系。
   @property
   def DIZHI_SANHUI(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
@@ -234,16 +236,18 @@ class Rules:
   
 
   # The table is used to query the LIUHE (六合) relation across all Dizhis.
+  # LIUHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的六合局。
-  # @property
-  # def DIZHI_LIUHE(self) -> dict[frozenset[Dizhi], Wuxing]:
-  #   return {
-  #     frozenset((Dizhi.子, Dizhi.丑)): Wuxing.土,
-  #     frozenset((Dizhi.寅, Dizhi.亥)): Wuxing.木,
-  #     frozenset((Dizhi.卯, Dizhi.戌)): Wuxing.火,
-  #     frozenset((Dizhi.辰, Dizhi.酉)): Wuxing.金,
-  #     frozenset((Dizhi.巳, Dizhi.申)): Wuxing.水,
-  #     frozenset((Dizhi.午, Dizhi.未)): Wuxing.土,
-  #   }
+  # 六合关系是无方向的。如子、丑相合是相互的关系。
+  @property
+  def DIZHI_LIUHE(self) -> dict[frozenset[Dizhi], Wuxing]:
+    return {
+      frozenset((Dizhi.子, Dizhi.丑)): Wuxing.土,
+      frozenset((Dizhi.寅, Dizhi.亥)): Wuxing.木,
+      frozenset((Dizhi.卯, Dizhi.戌)): Wuxing.火,
+      frozenset((Dizhi.辰, Dizhi.酉)): Wuxing.金,
+      frozenset((Dizhi.巳, Dizhi.申)): Wuxing.水,
+      frozenset((Dizhi.午, Dizhi.未)): Wuxing.土,
+    }
 
 RULES: Rules = Rules()

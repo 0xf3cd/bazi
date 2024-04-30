@@ -4,6 +4,7 @@
 import random
 import unittest
 import itertools
+from typing import Union, Optional
 from datetime import date, datetime, timedelta
 
 from src import (
@@ -480,8 +481,9 @@ class TestDizhiRelationUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
 
+  DzCmpType = Union[list[set[Dizhi]], list[frozenset[Dizhi]]]
   @staticmethod
-  def __dz_equal(l1: list[frozenset[Dizhi]], l2: list[set[Dizhi]]) -> bool:
+  def __dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
     if len(l1) != len(l2):
       return False
     for s in l1:
@@ -548,7 +550,62 @@ class TestDizhiRelationUtils(unittest.TestCase):
           self.assertIsNone(DizhiRelationUtils.sanhui(*dizhis))
 
   def test_find_dizhi_combos_liuhe(self) -> None:
-    pass
+    liuhe_combos: list[frozenset[Dizhi]] = [
+      frozenset((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
+    ]
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.六合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.六合),
+      liuhe_combos,
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.六合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in liuhe_combos if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
 
   def test_liuhe(self) -> None:
-    pass
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.liuhe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.liuhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.liuhe((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.liuhe({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.liuhe([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.liuhe('亥', '子') # type: ignore
+
+    liuhe_combos: list[frozenset[Dizhi]] = [
+      frozenset((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
+    ]
+
+    for dz1, dz2 in itertools.permutations(Dizhi, 2):
+      liuhe_result: Optional[Wuxing] = DizhiRelationUtils.liuhe(dz1, dz2)
+      liuhe_result2: Optional[Wuxing] = DizhiRelationUtils.liuhe(dz2, dz1)
+      self.assertEqual(liuhe_result, liuhe_result2)
+      
+      if frozenset((dz1, dz2)) in liuhe_combos:
+        wx1, wx2 = BaziUtils.get_dizhi_traits(dz1).wuxing, BaziUtils.get_dizhi_traits(dz2).wuxing
+        if wx1.generates(wx2):
+          self.assertEqual(liuhe_result, wx2)
+        elif wx2.generates(wx1):
+          self.assertEqual(liuhe_result, wx1)
+        else:
+          self.assertTrue(wx1.destructs(wx2) or wx2.destructs(wx1))
+          if {dz1, dz2} == {Dizhi.子, Dizhi.丑}:
+            self.assertEqual(liuhe_result, Wuxing.土)
+          elif {dz1, dz2} == {Dizhi.卯, Dizhi.戌}:
+            self.assertEqual(liuhe_result, Wuxing.火)
+          else:
+            self.assertEqual({dz1, dz2}, {Dizhi.申, Dizhi.巳})
+            self.assertEqual(liuhe_result, Wuxing.水)
+      else:
+        self.assertIsNone(liuhe_result)
