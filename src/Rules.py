@@ -325,7 +325,7 @@ class Rules:
       frozenset((Dizhi.寅, Dizhi.丑)),
       frozenset((Dizhi.午, Dizhi.亥)),
     ])
-  
+
   # The table is used to query the TONGLUHE (通禄合) relation across all Dizhis.
   # TONGLUHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的通禄合关系。

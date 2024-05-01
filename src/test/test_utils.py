@@ -523,7 +523,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
 
-  DzCmpType = Union[list[set[Dizhi]], list[frozenset[Dizhi]]]
+  DzCmpType = Union[list[set[Dizhi]], list[frozenset[Dizhi]], set[frozenset[Dizhi]], frozenset[frozenset[Dizhi]]]
   @staticmethod
   def __dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
     if len(l1) != len(l2):
@@ -723,3 +723,99 @@ class TestDizhiRelationUtils(unittest.TestCase):
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
       self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2), frozenset((dz1, dz2)) in normal_combos)
       self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2), DizhiRelationUtils.anhe(dz2, dz1))
+
+  def test_find_dizhi_combos_tonghe(self) -> None:
+    tonghe_combos: set[frozenset[Dizhi]] = set()
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      hidden1, hidden2 = BaziUtils.get_hidden_tiangans(dz1), BaziUtils.get_hidden_tiangans(dz2)
+      if len(hidden1) != len(hidden2):
+        continue
+      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
+      if all(tg in hidden2 for tg in expected_hidden2):
+        tonghe_combos.add(frozenset((dz1, dz2)))
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.通合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.通合),
+      tonghe_combos,
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.通合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in tonghe_combos if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_tonghe(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tonghe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tonghe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tonghe((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tonghe({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tonghe([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.tonghe('亥', '子') # type: ignore
+
+    tonghe_combos: set[frozenset[Dizhi]] = set()
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      hidden1, hidden2 = BaziUtils.get_hidden_tiangans(dz1), BaziUtils.get_hidden_tiangans(dz2)
+      if len(hidden1) != len(hidden2):
+        continue
+      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
+      if all(tg in hidden2 for tg in expected_hidden2):
+        tonghe_combos.add(frozenset((dz1, dz2)))
+
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      self.assertEqual(DizhiRelationUtils.tonghe(dz1, dz2), frozenset((dz1, dz2)) in tonghe_combos)
+      self.assertEqual(DizhiRelationUtils.tonghe(dz1, dz2), DizhiRelationUtils.tonghe(dz2, dz1))
+
+  def test_find_dizhi_combos_tongluhe(self) -> None:
+    tongluhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支禄身。
+      frozenset((BaziUtils.get_tiangan_lu(tg1), BaziUtils.get_tiangan_lu(tg2))) 
+      for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganRelationUtils.he(tg1, tg2) is not None
+    ]
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.通禄合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.通禄合),
+      tongluhe_combos,
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.通禄合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in tongluhe_combos if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_tongluhe(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tongluhe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tongluhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tongluhe((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tongluhe({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.tongluhe([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.tongluhe('亥', '子') # type: ignore
+
+    tongluhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支禄身。
+      frozenset((BaziUtils.get_tiangan_lu(tg1), BaziUtils.get_tiangan_lu(tg2))) 
+      for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganRelationUtils.he(tg1, tg2) is not None
+    ]
+
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      self.assertEqual(DizhiRelationUtils.tongluhe(dz1, dz2), frozenset((dz1, dz2)) in tongluhe_combos)
+      self.assertEqual(DizhiRelationUtils.tongluhe(dz1, dz2), DizhiRelationUtils.tongluhe(dz2, dz1))

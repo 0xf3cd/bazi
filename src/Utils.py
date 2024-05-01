@@ -494,6 +494,10 @@ class DizhiRelationUtils:
     elif relation is DizhiRelation.暗合:
       query_table = RULES.DIZHI_ANHE[RULES.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
       return [copy.deepcopy(combo) for combo in query_table if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.通合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGHE if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.通禄合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGLUHE if dz_set.issuperset(combo)]
     return []
 
   @staticmethod
@@ -577,3 +581,51 @@ class DizhiRelationUtils:
     assert isinstance(anhe_def, Rules.AnheDef)
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
     return combo in RULES.DIZHI_ANHE[anhe_def]
+  
+  @staticmethod
+  def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in TONGHE (通合) relation. If so, return `True`. If not, return `False`.
+    检查输入的地支是否构成通合关系。如果是，返回 `True`。否则返回 `False`。
+    通合指的是两个地支的所有藏干都两两相合。通合常用于盲派。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in TONGHE (通合) relation.
+
+    Examples:
+    - tonghe(Dizhi.寅, Dizhi.午)
+      - return: False
+    - tonghe(Dizhi.寅, Dizhi.丑)
+      - return: True
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+    return combo in RULES.DIZHI_TONGHE
+  
+  @staticmethod
+  def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in TONGLUHE (通禄合) relation. If so, return `True`. If not, return `False`.
+    检查输入的地支是否构成通禄合关系。如果是，返回 `True`。否则返回 `False`。
+    通禄合指的是五合的天干在地支对应的禄身之间的相合。通禄合常用于盲派。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in TONGLUHE (通禄合) relation.
+
+    Examples:
+    - tonghe(Dizhi.寅, Dizhi.午)
+      - return: True
+    - tonghe(Dizhi.寅, Dizhi.丑)
+      - return: False
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+    return combo in RULES.DIZHI_TONGLUHE
