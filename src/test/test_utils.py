@@ -4,7 +4,7 @@
 import random
 import unittest
 import itertools
-from typing import Union, Optional
+from typing import Union, Optional, Iterable
 from datetime import date, datetime, timedelta
 
 from src import (
@@ -218,12 +218,15 @@ class TestBaziUtils(unittest.TestCase):
 
 
 class TestTianganRelationUtils(unittest.TestCase):
+  TgCmpType = Union[list[set[Tiangan]], Iterable[frozenset[Tiangan]]]    
   @staticmethod
-  def __tg_equal(l1: list[frozenset[Tiangan]], l2: list[set[Tiangan]]) -> bool:
-    if len(l1) != len(l2):
+  def __tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
+    _l1 = list(l1)
+    _l2 = list(l2)
+    if len(_l1) != len(_l2):
       return False
-    for s in l1:
-      if s not in l2:
+    for s in _l1:
+      if s not in _l2:
         return False
     return True
 
@@ -523,13 +526,15 @@ class TestDizhiRelationUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
 
-  DzCmpType = Union[list[set[Dizhi]], list[frozenset[Dizhi]], set[frozenset[Dizhi]], frozenset[frozenset[Dizhi]]]
+  DzCmpType = Union[list[set[Dizhi]], Iterable[frozenset[Dizhi]]]
   @staticmethod
   def __dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
-    if len(l1) != len(l2):
+    _l1 = list(l1)
+    _l2 = list(l2)
+    if len(_l1) != len(_l2):
       return False
-    for s in l1:
-      if s not in l2:
+    for s in _l1:
+      if s not in _l2:
         return False
     return True
 
@@ -582,7 +587,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       frozenset(dizhis) : BaziUtils.get_dizhi_traits(dizhis[0]).wuxing for dizhis in dizhi_tuples 
     }
     
-    for dizhis in itertools.combinations(Dizhi, 3):
+    for dizhis in itertools.product(Dizhi, repeat=3):
       fs: frozenset[Dizhi] = frozenset(dizhis)
       if fs in expected:
         for combo in itertools.permutations(dizhis):
@@ -819,3 +824,109 @@ class TestDizhiRelationUtils(unittest.TestCase):
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
       self.assertEqual(DizhiRelationUtils.tongluhe(dz1, dz2), frozenset((dz1, dz2)) in tongluhe_combos)
       self.assertEqual(DizhiRelationUtils.tongluhe(dz1, dz2), DizhiRelationUtils.tongluhe(dz2, dz1))
+
+  @staticmethod
+  def __gen_sanhe_table() -> dict[frozenset[Dizhi], Wuxing]:
+    return {
+      frozenset((
+        dz, 
+        Dizhi.from_index((dz.index + 4) % 12), 
+        Dizhi.from_index((dz.index - 4) % 12),
+      )) : BaziUtils.get_dizhi_traits(dz).wuxing
+      for dz in [Dizhi('子'), Dizhi('午'), Dizhi('卯'), Dizhi('酉')]
+    }
+
+  def test_find_dizhi_combos_sanhe(self) -> None:
+    sanhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_sanhe_table()
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.三合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.三合),
+      sanhe_table.keys(),
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.三合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in sanhe_table if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_sanhe(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe(Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.sanhe([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.sanhe('亥', '子', '丑') # type: ignore
+
+    sanhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_sanhe_table()
+    
+    for dizhis in itertools.product(Dizhi, repeat=3):
+      fs: frozenset[Dizhi] = frozenset(dizhis)
+      if fs in sanhe_table:
+        for combo in itertools.permutations(dizhis):
+          self.assertEqual(DizhiRelationUtils.sanhe(*combo), sanhe_table[fs])
+      else:
+        for combo in itertools.permutations(dizhis):
+          self.assertIsNone(DizhiRelationUtils.sanhe(*dizhis))
+
+  @staticmethod
+  def __gen_banhe_table() -> dict[frozenset[Dizhi], Wuxing]:
+    pivots: set[Dizhi] = set((Dizhi('子'), Dizhi('午'), Dizhi('卯'), Dizhi('酉'))) # 四中神
+    sanhe_table: dict[frozenset[Dizhi], Wuxing] = TestDizhiRelationUtils.__gen_sanhe_table()
+
+    d: dict[frozenset[Dizhi], Wuxing] = {}
+    for sanhe_dizhis, wx in sanhe_table.items():
+      for dz1, dz2 in itertools.combinations(sanhe_dizhis, 2):
+        if any(dz in pivots for dz in (dz1, dz2)): # 半合局需要出现中神
+          d[frozenset((dz1, dz2))] = wx
+    return d
+
+  def test_find_dizhi_combos_banhe(self) -> None:
+    banhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_banhe_table()
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.半合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.半合),
+      banhe_table.keys()
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.半合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in banhe_table if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_banhe(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.banhe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.banhe(Dizhi.子, Dizhi.辰, Dizhi.申) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.banhe((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.banhe({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.banhe([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.banhe('亥', '子') # type: ignore
+
+    banhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_banhe_table()
+
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      self.assertEqual(DizhiRelationUtils.banhe(dz1, dz2), banhe_table.get(frozenset((dz1, dz2)), None))
+      self.assertEqual(DizhiRelationUtils.banhe(dz1, dz2), DizhiRelationUtils.banhe(dz2, dz1))

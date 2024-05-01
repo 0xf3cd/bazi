@@ -496,11 +496,10 @@ class DizhiRelation(Enum):
   TONGLUHE = '通禄合'
   SANHE    = '三合'
   BANHE    = '半合'
-  GONG     = '拱'
-  CHONG    = '冲'
   XING     = '刑'
-  HAI      = '害'
+  CHONG    = '冲'
   PO       = '破'
+  HAI      = '害'
   SHENG    = '生'
   KE       = '克'
 
@@ -513,11 +512,10 @@ class DizhiRelation(Enum):
   通禄合 = TONGLUHE
   三合   = SANHE
   半合   = BANHE
-  拱    = GONG
-  冲    = CHONG
   刑    = XING
-  害    = HAI
+  冲    = CHONG
   破    = PO
+  害    = HAI
   生    = SHENG
   克    = KE
 

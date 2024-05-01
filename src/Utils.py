@@ -487,6 +487,7 @@ class DizhiRelationUtils:
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
     dz_set: set[Dizhi] = set(dizhis)
 
+    # The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
     if relation is DizhiRelation.三会:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHUI if dz_set.issuperset(combo)]
     elif relation is DizhiRelation.六合:
@@ -498,6 +499,10 @@ class DizhiRelationUtils:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGHE if dz_set.issuperset(combo)]
     elif relation is DizhiRelation.通禄合:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGLUHE if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.三合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHE if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.半合:
+      return [copy.deepcopy(combo) for combo in RULES.DIZHI_BANHE if dz_set.issuperset(combo)]
     return []
 
   @staticmethod
@@ -629,3 +634,52 @@ class DizhiRelationUtils:
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
     return combo in RULES.DIZHI_TONGLUHE
+  
+  @staticmethod
+  def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
+    '''
+    Check if the input Dizhis are in SANHE (三合) relation. If so, return the corresponding Wuxing. If not, return `None`.
+    检查输入的地支是否构成三合关系。如果是，返回对应的五行。如果不是，返回 `None`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+    - dz3: (Dizhi) The third Dizhi.
+
+    Return: (Optional[Wuxing]) The corresponding Wuxing if the Dizhis form in SANHE (三合) relation. Otherwise, return `None`.
+
+    Examples:
+    - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未)
+      - return: Wuxing.木
+    - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.丑)
+      - return: None
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
+    return RULES.DIZHI_SANHE.get(combo, None)
+
+  @staticmethod
+  def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
+    '''
+    Check if the input Dizhis are in BANHE (半合) relation. If so, return the corresponding Wuxing. If not, return `None`.
+    检查输入的地支是否构成半合关系。如果是，返回对应的五行。如果不是，返回 `None`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (Optional[Wuxing]) The corresponding Wuxing if the Dizhis form in BANHE (半合) relation. Otherwise, return `None`.
+
+    Examples:
+    - banhe(Dizhi.亥, Dizhi.卯)
+      - return: Wuxing.木
+    - banhe(Dizhi.卯, Dizhi.未)
+      - return: Wuxing.木
+    - banhe(Dizhi.亥, Dizhi.丑)
+      - return: None
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+    return RULES.DIZHI_BANHE.get(combo, None)

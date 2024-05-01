@@ -261,12 +261,12 @@ class Rules:
   @property
   def DIZHI_LIUHE(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
-      frozenset((Dizhi.子, Dizhi.丑)): Wuxing.土,
-      frozenset((Dizhi.寅, Dizhi.亥)): Wuxing.木,
-      frozenset((Dizhi.卯, Dizhi.戌)): Wuxing.火,
-      frozenset((Dizhi.辰, Dizhi.酉)): Wuxing.金,
-      frozenset((Dizhi.巳, Dizhi.申)): Wuxing.水,
-      frozenset((Dizhi.午, Dizhi.未)): Wuxing.土,
+      frozenset((Dizhi.子, Dizhi.丑)) : Wuxing.土,
+      frozenset((Dizhi.寅, Dizhi.亥)) : Wuxing.木,
+      frozenset((Dizhi.卯, Dizhi.戌)) : Wuxing.火,
+      frozenset((Dizhi.辰, Dizhi.酉)) : Wuxing.金,
+      frozenset((Dizhi.巳, Dizhi.申)) : Wuxing.水,
+      frozenset((Dizhi.午, Dizhi.未)) : Wuxing.土,
     }
   
   class AnheDef(Enum):
@@ -339,3 +339,33 @@ class Rules:
       frozenset((Dizhi.子, Dizhi.巳)),
       frozenset((Dizhi.寅, Dizhi.午)),
     ])
+  
+  # The table is used to query the SANHE (三合) relation across all Dizhis.
+  # SANHE relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的三合局。
+  # 三合关系是无方向的。
+  @property
+  def DIZHI_SANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
+    return {
+      frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Wuxing.金,
+      frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Wuxing.木,
+      frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Wuxing.水,
+      frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Wuxing.火,
+    }
+
+  # The table is used to query the BANHE (半合) relation across all Dizhis.
+  # BANHE relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的半合局。
+  # 半合关系是无方向的。
+  @property
+  def DIZHI_BANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
+    return {
+      frozenset((Dizhi.巳, Dizhi.酉)) : Wuxing.金,
+      frozenset((Dizhi.酉, Dizhi.丑)) : Wuxing.金,
+      frozenset((Dizhi.亥, Dizhi.卯)) : Wuxing.木,
+      frozenset((Dizhi.卯, Dizhi.未)) : Wuxing.木,
+      frozenset((Dizhi.申, Dizhi.子)) : Wuxing.水,
+      frozenset((Dizhi.子, Dizhi.辰)) : Wuxing.水,
+      frozenset((Dizhi.寅, Dizhi.午)) : Wuxing.火,
+      frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
+    }
