@@ -11,7 +11,7 @@ from .Defines import (
 )
 from .Calendar import CalendarType, CalendarUtils, CalendarDate
 from .Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘, BaziChartJson
-from .Rules import TraitTuple, HiddenTianganDict
+from .Rules import TraitTuple, HiddenTianganDict, Rules
 from .Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
 from .Descriptions import ShishenDescription, TianganDescription
 from .Interpreter import Interpreter
@@ -25,6 +25,6 @@ __all__ = [
   'TianganRelation', '天干关系', 'DizhiRelation', '地支关系',
   'CalendarType', 'CalendarUtils', 'CalendarDate',
   'BaziGender', 'BaziPrecision', 'BaziData', 'Bazi', '八字', 'BaziChart', '命盘', 'BaziChartJson',
-  'TraitTuple', 'HiddenTianganDict', 'BaziUtils', 'TianganRelationUtils', 'DizhiRelationUtils',
+  'TraitTuple', 'HiddenTianganDict', 'Rules', 'BaziUtils', 'TianganRelationUtils', 'DizhiRelationUtils',
   'ShishenDescription', 'TianganDescription', 'Interpreter'
 ]

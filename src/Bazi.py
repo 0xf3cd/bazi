@@ -554,7 +554,7 @@ class BaziChart:
 
     day_master: Tiangan = self._bazi.day_master
 
-    zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.get_shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
+    zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.get_12zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
   @property

@@ -4,8 +4,9 @@ from typing import Union, Iterable, Optional
 
 from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
 from .Calendar import CalendarUtils, CalendarDate
-from .Rules import TraitTuple, HiddenTianganDict, RULES
+from .Rules import TraitTuple, HiddenTianganDict, Rules
 
+RULES: Rules = Rules()
 
 class BaziUtils:
   @staticmethod
@@ -200,7 +201,7 @@ class BaziUtils:
     return RULES.NAYIN[gz]
 
   @staticmethod
-  def get_shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
+  def get_12zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
     '''
     Get the shier zhangsheng for the input Tiangan and Dizhi.
     输入天干和地支，返回对应的十二长生。
@@ -212,9 +213,9 @@ class BaziUtils:
     Return: (ShierZhangsheng) The Shier Zhangsheng of the given Ganzhi.
 
     Example:
-    - get_shier_zhangsheng(Tiangan.甲, Dizhi.子) -> ShierZhangsheng.沐浴
-    - get_shier_zhangsheng(Tiangan.丙, Dizhi.午) -> ShierZhangsheng.帝旺
-    - get_shier_zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
+    - get_12zhangsheng(Tiangan.甲, Dizhi.子) -> ShierZhangsheng.沐浴
+    - get_12zhangsheng(Tiangan.丙, Dizhi.午) -> ShierZhangsheng.帝旺
+    - get_12zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
     '''
     
     assert isinstance(tg, Tiangan)
@@ -230,6 +231,53 @@ class BaziUtils:
       offset: int = dz.index - zhangsheng_place.index
 
     return ShierZhangsheng.from_index(offset % 12)
+  
+  @staticmethod
+  def find_12zhangsheng_dizhi(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
+    '''
+    Find the Dizhi of the input Tiangan and ShierZhangsheng.
+    输入天干和十二长生，返回对应的地支。
+
+    This is intended to be the opposite query of `get_12zhangsheng`.
+    本方法用于反向查询十二长生所在地支。
+
+    Args:
+    - tg: (Tiangan) The Tiangan.
+    - place: (ShierZhangsheng) The ShierZhangsheng.
+
+    Return: (Dizhi) The Dizhi of the given Tiangan and ShierZhangsheng.
+
+    Example:
+    - find_12zhangsheng_dizhi(Tiangan.甲, ShierZhangsheng.沐浴) -> Dizhi.子
+    - find_12zhangsheng_dizhi(Tiangan.丙, ShierZhangsheng.帝旺) -> Dizhi.午
+    - find_12zhangsheng_dizhi(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
+    '''
+
+    assert isinstance(tg, Tiangan)
+    assert isinstance(place, ShierZhangsheng)
+
+    tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
+    zhangsheng_dizhi: Dizhi = RULES.TIANGAN_ZHANGSHENG[tg]
+    offset: int = place.index if tg_yinyang is Yinyang.YANG else -place.index
+    return Dizhi.from_index((zhangsheng_dizhi.index + offset) % 12)
+  
+  @staticmethod
+  def get_tiangan_lu(tg: Tiangan) -> Dizhi:
+    '''
+    Return the Dizhi of Lu (禄) for the given Tiangan.
+    输入天干，返回该天干对应的禄。
+
+    Args:
+    - tg: (Tiangan) The Tiangan.
+
+    Return: (Dizhi) The Lu Dizhi of the given Tiangan.
+
+    Example:
+    - get_lu(Tiangan.甲) -> Dizhi.寅
+    '''
+
+    assert isinstance(tg, Tiangan)
+    return RULES.TIANGAN_LU[tg]
 
 
 class TianganRelationUtils:
@@ -436,14 +484,16 @@ class DizhiRelationUtils:
     '''
 
     assert isinstance(relation, DizhiRelation)
+    assert all(isinstance(dz, Dizhi) for dz in dizhis)
     dz_set: set[Dizhi] = set(dizhis)
-    for dz in dz_set:
-      assert isinstance(dz, Dizhi)
 
     if relation is DizhiRelation.三会:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHUI if dz_set.issuperset(combo)]
     elif relation is DizhiRelation.六合:
       return [copy.deepcopy(combo) for combo in RULES.DIZHI_LIUHE if dz_set.issuperset(combo)]
+    elif relation is DizhiRelation.暗合:
+      query_table = RULES.DIZHI_ANHE[RULES.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
+      return [copy.deepcopy(combo) for combo in query_table if dz_set.issuperset(combo)]
     return []
 
   @staticmethod
@@ -460,6 +510,12 @@ class DizhiRelationUtils:
     - dz3: (Dizhi) The third Dizhi.
 
     Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in SANHUI (三会) relation.
+
+    Examples:
+    - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰)
+      - return: Wuxing.木
+    - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.丑)
+      - return: None
     '''
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
@@ -479,8 +535,45 @@ class DizhiRelationUtils:
     - dz2: (Dizhi) The second Dizhi.
 
     Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in LIUHE (六合) relation.
+
+    Examples:
+    - liuhe(Dizhi.寅, Dizhi.亥)
+      - return: Wuxing.木
+    - liuhe(Dizhi.寅, Dizhi.辰)
+      - return: None
     '''
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
     return RULES.DIZHI_LIUHE.get(combo, None)
+  
+  @staticmethod
+  def anhe(dz1: Dizhi, dz2: Dizhi, anhe_def: Rules.AnheDef = Rules.AnheDef.NORMAL) -> bool:
+    '''
+    Check if the input Dizhis are in ANHE (暗合) relation. If so, return `True`. If not, return `False`.
+    There are multiple definitions for ANHE. The default definition is `Rules.AnheDef.NORMAL`.
+    检查输入的地支是否构成暗合关系。如果是，返回 `True`。否则返回 `False`。
+    暗合关系的看法有多种，默认使用 `Rules.AnheDef.NORMAL`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+    - anhe_def: (Rules.AnheDef) The definition of the ANHE relation. Default to `Rules.AnheDef.NORMAL`.
+
+    Return: (bool) Whether the Dizhis form in ANHE (暗合) relation.
+
+    Examples:
+    - anhe(Dizhi.寅, Dizhi.午)
+      - return: True
+    - anhe(Dizhi.寅, Dizhi.丑)
+      - return: False
+    - anhe(Dizhi.寅, Dizhi.丑, Rules.AnheDef.NORMAL_EXTENDED)
+      - return: True
+    - anhe(Dizhi.寅, Dizhi.午, Rules.AnheDef.MANGPAI)
+      - return: False
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    assert isinstance(anhe_def, Rules.AnheDef)
+    combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+    return combo in RULES.DIZHI_ANHE[anhe_def]

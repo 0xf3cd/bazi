@@ -155,6 +155,24 @@ class Rules:
       Tiangan.壬 : Dizhi.申,
       Tiangan.癸 : Dizhi.卯,
     }
+  
+
+  # This table is used to query Tiangans' LU (禄) in Dizhis.
+  # 该字典用于查询天干的禄/禄身。
+  @property
+  def TIANGAN_LU(self) -> dict[Tiangan, Dizhi]:
+    return {
+      Tiangan.甲 : Dizhi.寅,
+      Tiangan.乙 : Dizhi.卯,
+      Tiangan.丙 : Dizhi.巳,
+      Tiangan.丁 : Dizhi.午,
+      Tiangan.戊 : Dizhi.巳,
+      Tiangan.己 : Dizhi.午,
+      Tiangan.庚 : Dizhi.申,
+      Tiangan.辛 : Dizhi.酉,
+      Tiangan.壬 : Dizhi.亥,
+      Tiangan.癸 : Dizhi.子,
+    }
 
 
   # The table is used to query the HE (合) relation across all Tiangans.
@@ -259,6 +277,9 @@ class Rules:
     NORMAL           = 0 # 卯申、巳酉、亥午、子巳、寅午 - 这也是所谓的“通禄合”/“通禄暗合”，与天干五合一一对应。
     NORMAL_EXTENDED  = 1 # 卯申、巳酉、亥午、子巳、寅午 + 寅丑。这六组的藏干没有明显的冲突，而且有藏干相合的关系。
     MANGPAI          = 2 # 卯申、寅丑、午亥。盲派最认可这三对暗合。
+    # No change should be made to the existing definitions.
+    # Only add new definitions.
+
 
   # The tables are used to query the ANHE (暗合) relation across all Dizhis.
   # ANHE relation is a non-directional/mutual relation.
@@ -291,7 +312,7 @@ class Rules:
       frozenset((Dizhi.寅, Dizhi.丑)),
       frozenset((Dizhi.午, Dizhi.亥)),
     ])
-    
+
     return d
   
   # The table is used to query the TONGHE (通合) relation across all Dizhis.
@@ -318,5 +339,3 @@ class Rules:
       frozenset((Dizhi.子, Dizhi.巳)),
       frozenset((Dizhi.寅, Dizhi.午)),
     ])
-
-RULES: Rules = Rules()

@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 from src import (
   CalendarUtils, TraitTuple, HiddenTianganDict,
   Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation,
+  Rules,
 )
 from src.Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
 
@@ -145,34 +146,75 @@ class TestBaziUtils(unittest.TestCase):
           with self.assertRaises(AssertionError):
             BaziUtils.get_nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayins.
 
-  def test_shier_zhangsheng(self) -> None:
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('甲亥')), ShierZhangsheng.长生)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('甲午')), ShierZhangsheng.死)
+  def test_get_12zhangsheng(self) -> None:
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('甲亥')), ShierZhangsheng.长生)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('甲午')), ShierZhangsheng.死)
 
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('乙亥')), ShierZhangsheng.死)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('乙丑')), ShierZhangsheng.衰)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('乙亥')), ShierZhangsheng.死)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('乙丑')), ShierZhangsheng.衰)
 
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('丙午')), ShierZhangsheng.帝旺)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('丙未')), ShierZhangsheng.衰)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('丙午')), ShierZhangsheng.帝旺)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('丙未')), ShierZhangsheng.衰)
 
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('丁未')), ShierZhangsheng.冠带)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('丁戌')), ShierZhangsheng.养)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('丁未')), ShierZhangsheng.冠带)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('丁戌')), ShierZhangsheng.养)
 
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('戊戌')), ShierZhangsheng.墓)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('戊亥')), ShierZhangsheng.绝)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('戊戌')), ShierZhangsheng.墓)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('戊亥')), ShierZhangsheng.绝)
 
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('己亥')), ShierZhangsheng.胎)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('庚辰')), ShierZhangsheng.养)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('辛酉')), ShierZhangsheng.临官)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('壬申')), ShierZhangsheng.长生)
-    self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_str('癸卯')), ShierZhangsheng.长生)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('己亥')), ShierZhangsheng.胎)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('庚辰')), ShierZhangsheng.养)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('辛酉')), ShierZhangsheng.临官)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('壬申')), ShierZhangsheng.长生)
+    self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_str('癸卯')), ShierZhangsheng.长生)
 
     for dz in Dizhi:
-      self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_strs('丙', str(dz))),
-                       BaziUtils.get_shier_zhangsheng(*Ganzhi.from_strs('戊', str(dz))))
-      self.assertEqual(BaziUtils.get_shier_zhangsheng(*Ganzhi.from_strs('丁', str(dz))),
-                       BaziUtils.get_shier_zhangsheng(*Ganzhi.from_strs('己', str(dz))))
+      self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_strs('丙', str(dz))),
+                       BaziUtils.get_12zhangsheng(*Ganzhi.from_strs('戊', str(dz))))
+      self.assertEqual(BaziUtils.get_12zhangsheng(*Ganzhi.from_strs('丁', str(dz))),
+                       BaziUtils.get_12zhangsheng(*Ganzhi.from_strs('己', str(dz))))
+      
+  def test_find_12zhangsheng_dizhi(self) -> None:
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('甲'), ShierZhangsheng.沐浴), Dizhi('子'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('甲'), ShierZhangsheng.长生), Dizhi('亥'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('甲'), ShierZhangsheng.死), Dizhi('午'))
+
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('乙'), ShierZhangsheng.死), Dizhi('亥'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('乙'), ShierZhangsheng.衰), Dizhi('丑'))
+
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丙'), ShierZhangsheng.帝旺), Dizhi('午'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丙'), ShierZhangsheng.衰), Dizhi('未'))
+
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丁'), ShierZhangsheng.冠带), Dizhi('未'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丁'), ShierZhangsheng.养), Dizhi('戌'))
+
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('戊'), ShierZhangsheng.墓), Dizhi('戌'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('戊'), ShierZhangsheng.绝), Dizhi('亥'))
+
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('己'), ShierZhangsheng.胎), Dizhi('亥'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('庚'), ShierZhangsheng.养), Dizhi('辰'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('辛'), ShierZhangsheng.临官), Dizhi('酉'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('壬'), ShierZhangsheng.长生), Dizhi('申'))
+    self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('癸'), ShierZhangsheng.长生), Dizhi('卯'))
+
+    for place in ShierZhangsheng:
+      self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丙'), place), 
+                       BaziUtils.find_12zhangsheng_dizhi(Tiangan('戊'), place))
+      self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(Tiangan('丁'), place), 
+                       BaziUtils.find_12zhangsheng_dizhi(Tiangan('己'), place))
+      
+  def test_12zhangsheng_consistency(self) -> None:
+    for tg, dz in itertools.product(Tiangan, Dizhi):
+      zs: ShierZhangsheng = BaziUtils.get_12zhangsheng(tg, dz)
+      self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(tg, zs), dz)
+    for tg, zs in itertools.product(Tiangan, ShierZhangsheng):
+      dz: Dizhi = BaziUtils.find_12zhangsheng_dizhi(tg, zs)
+      self.assertEqual(BaziUtils.get_12zhangsheng(tg, dz), zs)
+
+  def test_get_tiangan_lu(self) -> None:
+    for tg in Tiangan:
+      self.assertEqual(BaziUtils.get_tiangan_lu(tg), BaziUtils.find_12zhangsheng_dizhi(tg, ShierZhangsheng('临官')))
 
 
 class TestTianganRelationUtils(unittest.TestCase):
@@ -609,3 +651,75 @@ class TestDizhiRelationUtils(unittest.TestCase):
             self.assertEqual(liuhe_result, Wuxing.水)
       else:
         self.assertIsNone(liuhe_result)
+
+  def test_find_dizhi_combos_anhe(self) -> None:
+    anhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支暗合，5组。
+      frozenset((BaziUtils.get_tiangan_lu(tg1), BaziUtils.get_tiangan_lu(tg2))) 
+      for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganRelationUtils.he(tg1, tg2) is not None
+    ] + [ # `NORMAL_EXTENDED` 中额外的1组。
+      frozenset((Dizhi.寅, Dizhi.丑)), 
+    ]
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.暗合),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(Dizhi, DizhiRelation.暗合),
+      anhe_combos,
+    ))
+
+    for _ in range(100):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.暗合)
+      expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_anhe(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.anhe('亥', '子') # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.anhe(Dizhi.子, Dizhi.辰, Rules.AnheDef.NORMAL + 100) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.anhe(Dizhi.子, Dizhi.辰, 'Rules.AnheDef.NORMAL') # type: ignore
+
+    normal_combos: list[frozenset[Dizhi]] = [
+      frozenset((BaziUtils.get_tiangan_lu(tg1), BaziUtils.get_tiangan_lu(tg2))) 
+      for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganRelationUtils.he(tg1, tg2) is not None
+    ] 
+    
+    normal_extended_combos: list[frozenset[Dizhi]] = normal_combos + [
+      frozenset((Dizhi.寅, Dizhi.丑)), 
+    ]
+
+    mangpai_combos: list[frozenset[Dizhi]] = [
+      frozenset((Dizhi.寅, Dizhi.丑)), 
+      frozenset((Dizhi.午, Dizhi.亥)), 
+      frozenset((Dizhi.卯, Dizhi.申)), 
+    ]
+
+    expected: dict[Rules.AnheDef, list[frozenset[Dizhi]]] = {
+      Rules.AnheDef.NORMAL: normal_combos,
+      Rules.AnheDef.NORMAL_EXTENDED: normal_extended_combos,
+      Rules.AnheDef.MANGPAI: mangpai_combos
+    }
+
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      for anhe_def in Rules.AnheDef:
+        self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2, anhe_def), frozenset((dz1, dz2)) in expected[anhe_def])
+        self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2, anhe_def), DizhiRelationUtils.anhe(dz2, dz1, anhe_def))
+
+    # Ensure the default definition is `NORMAL`.
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2), frozenset((dz1, dz2)) in normal_combos)
+      self.assertEqual(DizhiRelationUtils.anhe(dz1, dz2), DizhiRelationUtils.anhe(dz2, dz1))
