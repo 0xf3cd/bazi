@@ -271,7 +271,7 @@ class Rules:
   
   class AnheDef(Enum):
     '''
-    The definition of ANHE relation. Different definitions mean different query tables.
+    The definitions of ANHE relation. Different definitions mean different query tables.
     不同的地支暗合关系看法。
     '''
     NORMAL           = 0 # 卯申、巳酉、亥午、子巳、寅午 - 这也是所谓的“通禄合”/“通禄暗合”，与天干五合一一对应。
@@ -369,3 +369,33 @@ class Rules:
       frozenset((Dizhi.寅, Dizhi.午)) : Wuxing.火,
       frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
     }
+  
+  class XingDef(Enum):
+    '''
+    The definitions of XING relation. This makes a difference on two combos - 丑未戌、寅巳申。
+    不同的地支相刑的看法。主要区别在于丑未戌、寅巳申之间相刑的定义。
+    '''
+    STRICT = 0 # For 丑未戌 and 寅巳申, a XING relation is formed only when all three Dizhis appear.
+    LOOSE  = 1 # For 丑未戌 and 寅巳申, a XING relation is formed if any two of the three Dizhis appear.
+
+  # The table is used to query the XING (刑) relation across all Dizhis.
+  # XING relation is a directional relation.
+  # 该表格用于查询地支之间的刑。
+  # 相刑是有方向的。
+  @property
+  def DIZHI_XING(self) -> frozenset[frozenset[tuple[Dizhi, Dizhi]]]:
+    return frozenset([
+      frozenset(( # 丑未戌三刑
+        (Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)
+      )),
+      frozenset(( # 寅巳申三刑
+        (Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)
+      )),
+      frozenset(( # 子卯相刑
+        (Dizhi.子, Dizhi.卯), (Dizhi.卯, Dizhi.子),
+      )),
+    ] + [
+      frozenset(( # 辰午酉亥自刑
+        (dz, dz),
+      )) for dz in [Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥]
+    ])
