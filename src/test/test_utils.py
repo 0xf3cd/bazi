@@ -518,7 +518,7 @@ class TestTianganRelationUtils(unittest.TestCase):
 @pytest.mark.errorprone
 class TestDizhiRelationUtils(unittest.TestCase):
   def test_find_dizhi_combos_negative(self) -> None:
-    with self.assertRaises(TypeError):
+    with self.assertRaises(AssertionError):
       DizhiRelationUtils.find_dizhi_combos(Dizhi.子, DizhiRelation.生) # type: ignore
     with self.assertRaises(TypeError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午]) # type: ignore
@@ -528,6 +528,8 @@ class TestDizhiRelationUtils(unittest.TestCase):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], '生') # type: ignore
     with self.assertRaises(AssertionError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.find_dizhi_combos(set([Dizhi.子, Dizhi.午]), DizhiRelation.冲) # type: ignore
 
   DzCmpType = Union[list[set[Dizhi]], Iterable[frozenset[Dizhi]]]
   @staticmethod
@@ -1117,3 +1119,45 @@ class TestDizhiRelationUtils(unittest.TestCase):
       else:
         self.assertEqual(loose_result, Rules.XingSubType.三刑)
         self.assertIn(dz_tuple, sanxing_list)
+
+  def test_find_dizhi_combos_chong(self) -> None:
+    chong_table: list[set[Dizhi]] = [set(dz_tuple) for dz_tuple in zip(Dizhi.as_list()[:6], Dizhi.as_list()[6:])]
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.冲),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(list(Dizhi), DizhiRelation.冲),
+      chong_table,
+    ))
+
+    for _ in range(500):
+      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.冲)
+      expected_result: list[set[Dizhi]] = [c for c in chong_table if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_chong(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.chong([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.chong('亥', '子') # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.chong(Tiangan.甲, '子') # type: ignore
+
+    chong_table: list[set[Dizhi]] = [set(dz_tuple) for dz_tuple in zip(Dizhi.as_list()[:6], Dizhi.as_list()[6:])]
+
+    for dz1, dz2 in itertools.product(Dizhi, repeat=2):
+      self.assertEqual(DizhiRelationUtils.chong(dz1, dz2), DizhiRelationUtils.chong(dz2, dz1))
+      self.assertEqual(DizhiRelationUtils.chong(dz1, dz2), set((dz1, dz2)) in chong_table)

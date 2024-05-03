@@ -434,3 +434,16 @@ class Rules:
   @classproperty
   def DIZHI_XING(self) -> 'Rules.XingTable':
     return Rules.XingTable()
+
+
+  # The table is used to query the CHONG (冲) relation across all Dizhis.
+  # CHONG relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的冲。
+  # 相冲是无方向的，两个地支之间互相相冲。
+  @classproperty
+  def DIZHI_CHONG(self) -> frozenset[frozenset[Dizhi]]:
+    return frozenset([frozenset(dz_tuple) for dz_tuple in (
+      (Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), 
+      (Dizhi.寅, Dizhi.申), (Dizhi.卯, Dizhi.酉), 
+      (Dizhi.辰, Dizhi.戌), (Dizhi.巳, Dizhi.亥),
+    )])

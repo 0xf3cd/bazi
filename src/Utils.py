@@ -512,7 +512,8 @@ class DizhiRelationUtils:
       - 申 is missing - "寅巳申" all three dizhis are required to form a XING relation.
     '''
 
-    assert isinstance(relation, DizhiRelation)
+    assert isinstance(relation, DizhiRelation), f'Unexpected type of relation: {type(relation)}'
+    assert isinstance(dizhis, Sequence), "Non-sequence input loses the info of Dizhis' frequency."
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
     dz_tuple: tuple[Dizhi, ...] = tuple(dizhis)
 
@@ -551,6 +552,9 @@ class DizhiRelationUtils:
           ret.add(frozenset(xing_tuple))
 
       return list(ret)
+    
+    elif relation is DizhiRelation.冲:
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_CHONG if combo.issubset(dz_tuple)]
 
     return []
 
@@ -781,3 +785,27 @@ class DizhiRelationUtils:
 
     xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
     return xing_rules.get(dizhis, None)
+
+  @staticmethod
+  def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in CHONG (冲) relation. If so, return `True`. If not, return `False`.
+    检查输入的地支是否构成冲关系。如果是，返回 `True`。否则返回 `False`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in CHONG (冲) relation.
+
+    Examples:
+    - chong(Dizhi.子, Dizhi.午)
+      - return: True
+    - chong(Dizhi.午, Dizhi.子)
+      - return: True
+    - chong(Dizhi.子, Dizhi.丑)
+      - return: False
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    return frozenset((dz1, dz2)) in Rules.DIZHI_CHONG
