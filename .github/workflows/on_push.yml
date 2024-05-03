@@ -24,4 +24,4 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x run_tests.py
-          ./run_tests.py # Not running slow and hkodata tests.
+          ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.

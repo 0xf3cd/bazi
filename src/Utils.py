@@ -540,13 +540,16 @@ class DizhiRelationUtils:
       return [copy.deepcopy(combo) for combo in Rules.DIZHI_BANHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.刑:
-      xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[Rules.XingDef.STRICT]
       dz_counter: Counter[Dizhi] = Counter(dz_tuple)
 
       ret: set[frozenset[Dizhi]] = set()
-      for xing_tuple in xing_rules.keys():
-        if dz_counter >= Counter(xing_tuple):
+      for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.STRICT]:
+        # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
+        # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
+        xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
+        if dz_counter & xing_dz_counter == xing_dz_counter:
           ret.add(frozenset(xing_tuple))
+
       return list(ret)
 
     return []

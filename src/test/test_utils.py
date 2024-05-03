@@ -2,6 +2,7 @@
 # test_utils.py
 
 import random
+import pytest
 import unittest
 import itertools
 from typing import Union, Optional, Iterable
@@ -217,6 +218,7 @@ class TestBaziUtils(unittest.TestCase):
       self.assertEqual(BaziUtils.get_tiangan_lu(tg), BaziUtils.find_12zhangsheng_dizhi(tg, ShierZhangsheng('临官')))
 
 
+@pytest.mark.errorprone
 class TestTianganRelationUtils(unittest.TestCase):
   TgCmpType = Union[list[set[Tiangan]], Iterable[frozenset[Tiangan]]]    
   @staticmethod
@@ -513,6 +515,7 @@ class TestTianganRelationUtils(unittest.TestCase):
         self.assertFalse(TianganRelationUtils.ke(tg1, tg2))
 
 
+@pytest.mark.errorprone
 class TestDizhiRelationUtils(unittest.TestCase):
   def test_find_dizhi_combos_negative(self) -> None:
     with self.assertRaises(TypeError):
