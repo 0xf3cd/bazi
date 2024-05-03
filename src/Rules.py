@@ -2,7 +2,7 @@
 
 import itertools
 from enum import Enum
-from typing import NamedTuple
+from typing import NamedTuple, TypeVar, Callable, Generic
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
@@ -17,22 +17,28 @@ class TraitTuple(NamedTuple):
 HiddenTianganDict = dict[Tiangan, int]
 
 
+PropertyType = TypeVar('PropertyType')
+class classproperty(Generic[PropertyType]):
+  def __init__(self, func: Callable[..., PropertyType]) -> None:
+    self.fget: Callable[..., PropertyType] = func
+  def __get__(self, instance, owner) -> PropertyType:
+    return self.fget(owner)
+
 '''
 TODO:
-Currently, all tables in `RuleReader` are returned by @property methods. 
+Currently, all tables in `Rules` are returned by @classproperty methods. 
 When accessing a table in `Rules`, a new table (a dict/list/whatever) is created every time.
-This is intended - in order to avoid malicious/unintended modification of the table.
+This is intended - in order to avoid malicious/unintended modification on the table.
 
 However, this raises a performance concern. As generating a new table upon every access is an expensive operation.
 Instead, a immutable table should be returned - so that the table can't be modified anyways,
 and there's no need to return a new table every time.
-For future reference: tuple and frozenset are built-in immutable data structures.
 
 With that being said, I think current implementation is fine - I don't care much about the performace at this point.
 '''
 class Rules:
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
-  @property
+  @classproperty
   def YEAR_TO_MONTH_TABLE(self) -> dict[Tiangan, Tiangan]:
     return {
       Tiangan.甲 : Tiangan.丙, # First month in year of "甲" is "丙寅".
@@ -48,7 +54,7 @@ class Rules:
     }
 
   # The mappings are used to figure out the first hour's Tiangan in a ganzhi day, i.e. 日上起时表.
-  @property
+  @classproperty
   def DAY_TO_HOUR_TABLE(self) -> dict[Tiangan, Tiangan]:
     return {
       Tiangan.甲 : Tiangan.甲, # First hour in day of "甲" is "甲子".
@@ -65,7 +71,7 @@ class Rules:
 
   # The table is used to query the Wuxing and Yinyang of a given Tiangan (i.e. Stem / 天干).
   # 该字典用于查询给定天干的五行和阴阳。
-  @property
+  @classproperty
   def TIANGAN_TRAITS(self) -> dict[Tiangan, TraitTuple]:
     return {
       Tiangan.甲 : TraitTuple(Wuxing.木, Yinyang.阳),
@@ -83,7 +89,7 @@ class Rules:
 
   # The table is used to query the Wuxing and Yinyang of a given Dizhi (i.e. Branch / 地支).
   # 该字典用于查询给定地支的五行和阴阳。
-  @property
+  @classproperty
   def DIZHI_TRAITS(self) -> dict[Dizhi, TraitTuple]:
     return {
       Dizhi.子 : TraitTuple(Wuxing.水, Yinyang.阳),
@@ -103,7 +109,7 @@ class Rules:
 
   # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
   # 该字典用于查询给定地支的藏干和它们所占的百分比。
-  @property
+  @classproperty
   def HIDDEN_TIANGANS(self) -> dict[Dizhi, HiddenTianganDict]:
     return {
       Dizhi.子 : { Tiangan.癸 : 100 },
@@ -123,7 +129,7 @@ class Rules:
 
   # The table is used to query the NAYIN (纳音) of a given Ganzhi (i.e. Stem-branch / Ganzhi / 干支).
   # 该字典用于查询给定干支的纳音。
-  @property
+  @classproperty
   def NAYIN(self) -> dict[Ganzhi, str]:
     NAYIN_STR_LIST: list[str] = [
       '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火', 
@@ -141,7 +147,7 @@ class Rules:
 
   # The table is used to query the dizhi where the Zhangsheng locates for each Tiangan.
   # 该字典用于查询每个天干的长生所在的地支。
-  @property
+  @classproperty
   def TIANGAN_ZHANGSHENG(self) -> dict[Tiangan, Dizhi]:
     return {
       Tiangan.甲 : Dizhi.亥,
@@ -159,7 +165,7 @@ class Rules:
 
   # This table is used to query Tiangans' LU (禄) in Dizhis.
   # 该字典用于查询天干的禄/禄身。
-  @property
+  @classproperty
   def TIANGAN_LU(self) -> dict[Tiangan, Dizhi]:
     return {
       Tiangan.甲 : Dizhi.寅,
@@ -179,7 +185,7 @@ class Rules:
   # HE relation is a non-directional/mutual relation.
   # 该表格用于查询天干之间的相合关系。
   # 相合关系是无方向的。如甲己相合是双向的关系，互相相合。
-  @property
+  @classproperty
   def TIANGAN_HE(self) -> dict[frozenset[Tiangan], Wuxing]:
     return {
       frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
@@ -194,7 +200,7 @@ class Rules:
   # CHONG relation is a non-directional/mutual relation.
   # 该表格用于查询天干之间的相冲关系。
   # 相冲关系是无方向的。如甲庚相冲是双向的关系，互相相冲。相冲双方均减力，旺者减力小，弱者减力大。
-  @property
+  @classproperty
   def TIANGAN_CHONG(self) -> frozenset[frozenset[Tiangan]]:
     return frozenset((
       frozenset((Tiangan.甲, Tiangan.庚)),
@@ -210,7 +216,7 @@ class Rules:
   # 该表格用于查询天干之间的相生关系。
   # 相生关系是单向的。如甲丁相生，则是甲木生丁火。
   # 天干相生不考虑阴阳，只考虑五行。
-  @property
+  @classproperty
   def TIANGAN_SHENG(self) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = self.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
@@ -228,7 +234,7 @@ class Rules:
   # 该表格用于查询天干之间的相克关系。
   # 相克关系是单向的。如壬丙相克，是壬水克丙火。
   # 天干相克不考虑阴阳，只考虑五行。
-  @property
+  @classproperty
   def TIANGAN_KE(self) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = self.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
@@ -244,7 +250,7 @@ class Rules:
   # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
   # 三会是无方向的。如寅卯辰三会木局是三个地支之间相互的关系。
-  @property
+  @classproperty
   def DIZHI_SANHUI(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
       frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)) : Wuxing.木,
@@ -258,7 +264,7 @@ class Rules:
   # LIUHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的六合局。
   # 六合关系是无方向的。如子、丑相合是相互的关系。
-  @property
+  @classproperty
   def DIZHI_LIUHE(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
       frozenset((Dizhi.子, Dizhi.丑)) : Wuxing.土,
@@ -280,46 +286,49 @@ class Rules:
     # No change should be made to the existing definitions.
     # Only add new definitions.
 
+  class AnheTable:
+    def __getitem__(self, anhe_def: 'Rules.AnheDef') -> frozenset[frozenset[Dizhi]]:
+      assert isinstance(anhe_def, Rules.AnheDef)
+      if anhe_def == Rules.AnheDef.NORMAL:
+        return frozenset([
+          frozenset((Dizhi.卯, Dizhi.申)),
+          frozenset((Dizhi.巳, Dizhi.酉)),
+          frozenset((Dizhi.亥, Dizhi.午)),
+          frozenset((Dizhi.子, Dizhi.巳)),
+          frozenset((Dizhi.寅, Dizhi.午)),
+        ])
+      elif anhe_def == Rules.AnheDef.NORMAL_EXTENDED:
+        return frozenset([
+          frozenset((Dizhi.卯, Dizhi.申)),
+          frozenset((Dizhi.巳, Dizhi.酉)),
+          frozenset((Dizhi.亥, Dizhi.午)),
+          frozenset((Dizhi.子, Dizhi.巳)),
+          frozenset((Dizhi.寅, Dizhi.午)),
+          frozenset((Dizhi.寅, Dizhi.丑)),
+        ])
+      elif anhe_def == Rules.AnheDef.MANGPAI:
+        return frozenset([
+          frozenset((Dizhi.卯, Dizhi.申)),
+          frozenset((Dizhi.寅, Dizhi.丑)),
+          frozenset((Dizhi.午, Dizhi.亥)),
+        ])
+      else:
+        raise ValueError(f'Invalid anhe_def: {anhe_def}')
 
   # The tables are used to query the ANHE (暗合) relation across all Dizhis.
   # ANHE relation is a non-directional/mutual relation.
   # All tables for different `AnheDef` are returned as a dict.
   # 该表格用于查询地支之间的暗合关系。
   # 暗合关系是无方向的。
-  @property
-  def DIZHI_ANHE(self) -> dict[AnheDef, frozenset[frozenset[Dizhi]]]:
-    d: dict[Rules.AnheDef, frozenset[frozenset[Dizhi]]] = {}
-
-    d[Rules.AnheDef.NORMAL] = frozenset([
-      frozenset((Dizhi.卯, Dizhi.申)),
-      frozenset((Dizhi.巳, Dizhi.酉)),
-      frozenset((Dizhi.亥, Dizhi.午)),
-      frozenset((Dizhi.子, Dizhi.巳)),
-      frozenset((Dizhi.寅, Dizhi.午)),
-    ])
-
-    d[Rules.AnheDef.NORMAL_EXTENDED] = frozenset([
-      frozenset((Dizhi.卯, Dizhi.申)),
-      frozenset((Dizhi.巳, Dizhi.酉)),
-      frozenset((Dizhi.亥, Dizhi.午)),
-      frozenset((Dizhi.子, Dizhi.巳)),
-      frozenset((Dizhi.寅, Dizhi.午)),
-      frozenset((Dizhi.寅, Dizhi.丑)),
-    ])
-
-    d[Rules.AnheDef.MANGPAI] = frozenset([
-      frozenset((Dizhi.卯, Dizhi.申)),
-      frozenset((Dizhi.寅, Dizhi.丑)),
-      frozenset((Dizhi.午, Dizhi.亥)),
-    ])
-
-    return d
+  @classproperty
+  def DIZHI_ANHE(self) -> AnheTable:
+    return Rules.AnheTable()
   
   # The table is used to query the TONGHE (通合) relation across all Dizhis.
   # TONGHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的通合关系。
   # 通合关系是无方向的。通合代表藏干中所有气都能两两相合。
-  @property
+  @classproperty
   def DIZHI_TONGHE(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.寅, Dizhi.丑)),
@@ -330,7 +339,7 @@ class Rules:
   # TONGLUHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的通禄合关系。
   # 通禄合关系是无方向的。若两个天干相合，那么它们在地支中的禄身也能相合，从而构成地支的通禄合关系。
-  @property
+  @classproperty
   def DIZHI_TONGLUHE(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.卯, Dizhi.申)),
@@ -344,7 +353,7 @@ class Rules:
   # SANHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三合局。
   # 三合关系是无方向的。
-  @property
+  @classproperty
   def DIZHI_SANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
       frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Wuxing.金,
@@ -357,7 +366,7 @@ class Rules:
   # BANHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的半合局。
   # 半合关系是无方向的。
-  @property
+  @classproperty
   def DIZHI_BANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
     return {
       frozenset((Dizhi.巳, Dizhi.酉)) : Wuxing.金,
@@ -378,24 +387,50 @@ class Rules:
     STRICT = 0 # For 丑未戌 and 寅巳申, a XING relation is formed only when all three Dizhis appear.
     LOOSE  = 1 # For 丑未戌 and 寅巳申, a XING relation is formed if any two of the three Dizhis appear.
 
+  class XingSubType(Enum):
+    SANXING   = 0 # 丑未戌、寅巳申三刑
+    ZIMAOXING = 1 # 子卯相刑
+    ZIXING    = 2 # 自刑
+
+    三刑   = SANXING
+    子卯刑 = ZIMAOXING
+    自刑   = ZIXING
+
+  class XingTable:
+    @property
+    def strict(self) -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = {}
+      for dz_tuple in itertools.permutations((Dizhi.丑, Dizhi.未, Dizhi.戌)):
+        d[dz_tuple] = Rules.XingSubType.三刑
+      for dz_tuple in itertools.permutations((Dizhi.寅, Dizhi.巳, Dizhi.申)):
+        d[dz_tuple] = Rules.XingSubType.三刑
+      for dz_tuple in itertools.permutations((Dizhi.子, Dizhi.卯)):
+        d[dz_tuple] = Rules.XingSubType.子卯刑
+      for dz in (Dizhi.午, Dizhi.辰, Dizhi.酉, Dizhi.亥):
+        d[(dz, dz)] = Rules.XingSubType.自刑
+      return d
+    
+    @property
+    def loose(self) -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = self.strict
+      for dz_tuple in ((Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)):
+        d[dz_tuple] = Rules.XingSubType.三刑
+      for dz_tuple in ((Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)):
+        d[dz_tuple] = Rules.XingSubType.三刑
+      return d
+
+    def __getitem__(self, xing_def: 'Rules.XingDef') -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+      if xing_def is Rules.XingDef.STRICT:
+        return self.strict
+      elif xing_def is Rules.XingDef.LOOSE:
+        return self.loose
+      else:
+        raise ValueError(f'Invalid xing_def: {xing_def}')
+
   # The table is used to query the XING (刑) relation across all Dizhis.
   # XING relation is a directional relation.
   # 该表格用于查询地支之间的刑。
   # 相刑是有方向的。
-  @property
-  def DIZHI_XING(self) -> frozenset[frozenset[tuple[Dizhi, Dizhi]]]:
-    return frozenset([
-      frozenset(( # 丑未戌三刑
-        (Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)
-      )),
-      frozenset(( # 寅巳申三刑
-        (Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)
-      )),
-      frozenset(( # 子卯相刑
-        (Dizhi.子, Dizhi.卯), (Dizhi.卯, Dizhi.子),
-      )),
-    ] + [
-      frozenset(( # 辰午酉亥自刑
-        (dz, dz),
-      )) for dz in [Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥]
-    ])
+  @classproperty
+  def DIZHI_XING(self) -> 'Rules.XingTable':
+    return Rules.XingTable()

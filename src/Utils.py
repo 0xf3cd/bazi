@@ -1,12 +1,12 @@
 import copy
 from datetime import date
+from collections import Counter
 from typing import Union, Sequence, Optional
 
 from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import TraitTuple, HiddenTianganDict, Rules
 
-RULES: Rules = Rules()
 
 class BaziUtils:
   @staticmethod
@@ -45,7 +45,7 @@ class BaziUtils:
     assert isinstance(month_dizhi, Dizhi)
 
     month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
-    first_month_tiangan: Tiangan = RULES.YEAR_TO_MONTH_TABLE[year_tiangan]
+    first_month_tiangan: Tiangan = Rules.YEAR_TO_MONTH_TABLE[year_tiangan]
     month_tiangan_index: int = (first_month_tiangan.index + month_index) % 10
     return Tiangan.from_index(month_tiangan_index)
 
@@ -66,7 +66,7 @@ class BaziUtils:
     assert isinstance(hour_dizhi, Dizhi)
 
     hour_index: int = hour_dizhi.index
-    first_hour_tiangan: Tiangan = RULES.DAY_TO_HOUR_TABLE[day_tiangan]
+    first_hour_tiangan: Tiangan = Rules.DAY_TO_HOUR_TABLE[day_tiangan]
     hour_tiangan_index: int = (first_hour_tiangan.index + hour_index) % 10
     return Tiangan.from_index(hour_tiangan_index)
 
@@ -83,7 +83,7 @@ class BaziUtils:
     '''
 
     assert isinstance(tg, Tiangan)
-    return copy.deepcopy(RULES.TIANGAN_TRAITS[tg])
+    return copy.deepcopy(Rules.TIANGAN_TRAITS[tg])
   
   @staticmethod
   def get_dizhi_traits(dz: Dizhi) -> TraitTuple:
@@ -98,7 +98,7 @@ class BaziUtils:
     '''
 
     assert isinstance(dz, Dizhi)
-    return copy.deepcopy(RULES.DIZHI_TRAITS[dz])
+    return copy.deepcopy(Rules.DIZHI_TRAITS[dz])
   
   @staticmethod
   def get_hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
@@ -113,7 +113,7 @@ class BaziUtils:
     '''
 
     assert isinstance(dz, Dizhi)
-    return copy.deepcopy(RULES.HIDDEN_TIANGANS[dz])
+    return copy.deepcopy(Rules.HIDDEN_TIANGANS[dz])
   
   @staticmethod
   def get_shishen(day_master: Tiangan, other: Union[Tiangan, Dizhi]) -> Shishen:
@@ -198,7 +198,7 @@ class BaziUtils:
     tg_traits, dz_traits = BaziUtils.get_tiangan_traits(tg), BaziUtils.get_dizhi_traits(dz)
     assert tg_traits.yinyang == dz_traits.yinyang # The yinyang of Tiangan and Dizhi should be the same.
 
-    return RULES.NAYIN[gz]
+    return Rules.NAYIN[gz]
 
   @staticmethod
   def get_12zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
@@ -222,7 +222,7 @@ class BaziUtils:
     assert isinstance(dz, Dizhi)
 
     tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
-    zhangsheng_place: Dizhi = RULES.TIANGAN_ZHANGSHENG[tg]
+    zhangsheng_place: Dizhi = Rules.TIANGAN_ZHANGSHENG[tg]
 
     if tg_yinyang is Yinyang.YIN:
       offset: int = zhangsheng_place.index - dz.index
@@ -257,7 +257,7 @@ class BaziUtils:
     assert isinstance(place, ShierZhangsheng)
 
     tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
-    zhangsheng_dizhi: Dizhi = RULES.TIANGAN_ZHANGSHENG[tg]
+    zhangsheng_dizhi: Dizhi = Rules.TIANGAN_ZHANGSHENG[tg]
     offset: int = place.index if tg_yinyang is Yinyang.YANG else -place.index
     return Dizhi.from_index((zhangsheng_dizhi.index + offset) % 12)
   
@@ -277,7 +277,7 @@ class BaziUtils:
     '''
 
     assert isinstance(tg, Tiangan)
-    return RULES.TIANGAN_LU[tg]
+    return Rules.TIANGAN_LU[tg]
 
 
 class TianganRelationUtils:
@@ -323,14 +323,14 @@ class TianganRelationUtils:
     tg_tuple: tuple[Tiangan, ...] = tuple(tiangans)
 
     if relation is TianganRelation.合:
-      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_HE if combo.issubset(tg_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.TIANGAN_HE if combo.issubset(tg_tuple)]
     elif relation is TianganRelation.冲:
-      return [copy.deepcopy(combo) for combo in RULES.TIANGAN_CHONG if combo.issubset(tg_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.TIANGAN_CHONG if combo.issubset(tg_tuple)]
     elif relation is TianganRelation.生:
-      return [frozenset(combo) for combo in RULES.TIANGAN_SHENG if set(tg_tuple).issuperset(combo)]
+      return [frozenset(combo) for combo in Rules.TIANGAN_SHENG if set(tg_tuple).issuperset(combo)]
     else: 
       assert relation is TianganRelation.克
-      return [frozenset(combo) for combo in RULES.TIANGAN_KE if set(tg_tuple).issuperset(combo)]
+      return [frozenset(combo) for combo in Rules.TIANGAN_KE if set(tg_tuple).issuperset(combo)]
 
   @staticmethod
   def he(tg1: Tiangan, tg2: Tiangan) -> Optional[Wuxing]:
@@ -362,8 +362,8 @@ class TianganRelationUtils:
     assert isinstance(tg2, Tiangan)
 
     fs: frozenset[Tiangan] = frozenset((tg1, tg2))
-    if fs in RULES.TIANGAN_HE:
-      return RULES.TIANGAN_HE[fs]
+    if fs in Rules.TIANGAN_HE:
+      return Rules.TIANGAN_HE[fs]
     return None
   
   @staticmethod
@@ -391,7 +391,7 @@ class TianganRelationUtils:
 
     assert isinstance(tg1, Tiangan)
     assert isinstance(tg2, Tiangan)
-    return frozenset((tg1, tg2)) in RULES.TIANGAN_CHONG
+    return frozenset((tg1, tg2)) in Rules.TIANGAN_CHONG
   
   @staticmethod
   def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
@@ -418,7 +418,7 @@ class TianganRelationUtils:
 
     assert isinstance(tg1, Tiangan)
     assert isinstance(tg2, Tiangan)
-    return (tg1, tg2) in RULES.TIANGAN_SHENG
+    return (tg1, tg2) in Rules.TIANGAN_SHENG
   
   @staticmethod
   def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
@@ -445,7 +445,7 @@ class TianganRelationUtils:
 
     assert isinstance(tg1, Tiangan)
     assert isinstance(tg2, Tiangan)
-    return (tg1, tg2) in RULES.TIANGAN_KE
+    return (tg1, tg2) in Rules.TIANGAN_KE
   
 
 class DizhiRelationUtils:
@@ -518,46 +518,37 @@ class DizhiRelationUtils:
 
     # The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
     if relation is DizhiRelation.三会:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHUI if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_SANHUI if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.六合:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_LIUHE if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_LIUHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.暗合:
-      anhe_table: frozenset[frozenset[Dizhi]] = RULES.DIZHI_ANHE[RULES.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
+      anhe_table: frozenset[frozenset[Dizhi]] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
       return [copy.deepcopy(combo) for combo in anhe_table if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.通合:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGHE if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_TONGHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.通禄合:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_TONGLUHE if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.三合:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_SANHE if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_SANHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.半合:
-      return [copy.deepcopy(combo) for combo in RULES.DIZHI_BANHE if combo.issubset(dz_tuple)]
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_BANHE if combo.issubset(dz_tuple)]
     
     elif relation is DizhiRelation.刑:
-      xing_table: list[set[Dizhi]] = []
-      for combos in RULES.DIZHI_XING:
-        flattened: set[Dizhi] = set()
-        for combo in combos:
-          flattened.update(combo)
-        xing_table.append(flattened)
+      xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[Rules.XingDef.STRICT]
+      dz_counter: Counter[Dizhi] = Counter(dz_tuple)
 
-      def __valid(combo: set[Dizhi]) -> bool:
-        if len(combo) == 1: # Special handling for 自刑 cases.
-          __dz: Dizhi = list(combo)[0]
-          assert __dz in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥)
-          __count: int = sum(dz == __dz for dz in dz_tuple)
-          return __count >= 2
-        else: # All other cases (子卯、丑未戌、寅巳申).
-          return combo.issubset(dz_tuple)
+      ret: set[frozenset[Dizhi]] = set()
+      for xing_tuple in xing_rules.keys():
+        if dz_counter >= Counter(xing_tuple):
+          ret.add(frozenset(xing_tuple))
+      return list(ret)
 
-      return [frozenset(combo) for combo in xing_table if __valid(combo)]
-      
     return []
 
   @staticmethod
@@ -584,7 +575,7 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
-    return RULES.DIZHI_SANHUI.get(combo, None)
+    return Rules.DIZHI_SANHUI.get(combo, None)
   
   @staticmethod
   def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
@@ -609,7 +600,7 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-    return RULES.DIZHI_LIUHE.get(combo, None)
+    return Rules.DIZHI_LIUHE.get(combo, None)
   
   @staticmethod
   def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NORMAL) -> bool:
@@ -640,7 +631,7 @@ class DizhiRelationUtils:
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     assert isinstance(definition, Rules.AnheDef)
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-    return combo in RULES.DIZHI_ANHE[definition]
+    return combo in Rules.DIZHI_ANHE[definition]
   
   @staticmethod
   def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -664,7 +655,7 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-    return combo in RULES.DIZHI_TONGHE
+    return combo in Rules.DIZHI_TONGHE
   
   @staticmethod
   def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -688,7 +679,7 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-    return combo in RULES.DIZHI_TONGLUHE
+    return combo in Rules.DIZHI_TONGLUHE
   
   @staticmethod
   def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
@@ -712,7 +703,7 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
-    return RULES.DIZHI_SANHE.get(combo, None)
+    return Rules.DIZHI_SANHE.get(combo, None)
 
   @staticmethod
   def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
@@ -737,17 +728,17 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     combo: frozenset[Dizhi] = frozenset((dz1, dz2))
-    return RULES.DIZHI_BANHE.get(combo, None)
+    return Rules.DIZHI_BANHE.get(combo, None)
 
   @staticmethod
-  def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.STRICT) -> bool:
+  def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.STRICT) -> Optional[Rules.XingSubType]:
     '''
-    Check if the input Dizhis is a exact match for XING (刑) relation. If so, return `True`. If not, return `False`.
+    Check if the input Dizhis is a exact match for XING (刑) relation. If so, return the type of the XING relation. If not, return `None`.
     There are multiple definitions for 刑. The default definition is `Rules.XingDef.STRICT`.
     If `Rules.XingDef.LOOSE` is used, then the `dizhis` order (direction) matters.
     If `Rules.XingDef.STRICT` is used, then the `dizhis` order does not matter.
 
-    检查输入的地支是否刚好构成相刑关系。如果是，返回 `True`。否则返回 `False`。
+    检查输入的地支是否刚好构成相刑关系。如果是，返回相刑的类型。如果不是，返回 `None`。
     相刑关系的看法有多种，默认使用 `Rules.XingDef.STRICT`。
     如果使用 `Rules.XingDef.LOOSE`，则 `dizhis` 的顺序会影响结果。
     如果使用 `Rules.XingDef.STRICT`，则 `dizhis` 的顺序不会影响结果。
@@ -760,34 +751,30 @@ class DizhiRelationUtils:
     - *dizhis: (Dizhi) The Dizhis to check.
     - definition: (Rules.XingDef) The definition for 刑.
 
-    Return: (bool) Whether the Dizhis form in XING (刑) relation.
+    Return: (Optional[Rules.XingSubType]) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
 
     Examples:
     - xing([Dizhi.寅, Dizhi.巳, Dizhi.申])
-      - return: True
+      - return: XingSubType.SANXING
     - xing([Dizhi.寅, Dizhi.巳], Rules.XingDef.STRICT)
-      - return: False
+      - return: None
     - xing([Dizhi.寅, Dizhi.巳], Rules.XingDef.LOOSE)
-      - return: True
+      - return: XingSubType.SANXING
     - xing((Dizhi.午))
-      - return: False
+      - return: None
     - xing((Dizhi.午, Dizhi.午))
-      - return: True
+      - return: XingSubType.ZIXING
     - xing((Dizhi.午), Rules.XingDef.LOOSE)
-      - return: False
+      - return: None
     - xing([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午]) # Not a exact match.
-      - return: False
+      - return: None
     - xing([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午]) # Multiple matches.
-      - return: False
+      - return: None
     '''
 
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
     assert 0 <= len(dizhis) <= 3
     assert isinstance(definition, Rules.XingDef)
-    
-    if definition is Rules.XingDef.STRICT:
-      pass
-    else:
-      assert definition is Rules.XingDef.LOOSE
-    
-    raise NotImplementedError
+
+    xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
+    return xing_rules.get(dizhis, None)

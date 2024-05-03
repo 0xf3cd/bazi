@@ -391,7 +391,7 @@ class TestTianganRelationUtils(unittest.TestCase):
           result.append(set(combo))
       return result
 
-    for _ in range(100):
+    for _ in range(500):
       tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
 
       for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.合):
@@ -429,7 +429,7 @@ class TestTianganRelationUtils(unittest.TestCase):
       for combo in combos1:
         self.assertIn(combo, combos2)
 
-      for _ in range(100):
+      for _ in range(500):
         combos: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans, relation)
         expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
         self.assertEqual(len(expected_combos), len(combos))
@@ -555,7 +555,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       [set(c) for c in sanhui_combos],
     ))
     
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.三会)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhui_combos if c.issubset(dizhis)]
@@ -610,7 +610,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       liuhe_combos,
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.六合)
       expected_result: list[set[Dizhi]] = [set(c) for c in liuhe_combos if c.issubset(dizhis)]
@@ -674,7 +674,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       anhe_combos,
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.暗合)
       expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
@@ -748,7 +748,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       tonghe_combos,
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.通合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tonghe_combos if c.issubset(dizhis)]
@@ -796,7 +796,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       tongluhe_combos,
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.通禄合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tongluhe_combos if c.issubset(dizhis)]
@@ -848,7 +848,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       sanhe_table.keys(),
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.三合)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhe_table if c.issubset(dizhis)]
@@ -905,7 +905,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       banhe_table.keys()
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.半合)
       expected_result: list[set[Dizhi]] = [set(c) for c in banhe_table if c.issubset(dizhis)]
@@ -945,14 +945,24 @@ class TestDizhiRelationUtils(unittest.TestCase):
     def __find_qualified(dizhis: list[Dizhi]) -> list[set[Dizhi]]:
       ret: list[set[Dizhi]] = []
       for required in xing_expected:
-        count = lambda dz : sum(dz == d for d in dizhis)
-        if all(count(dz) >= required[dz] for dz in required):
+        if all(
+          sum(dz == d for d in dizhis) >= required[dz] 
+          for dz in required
+        ):
           ret.append(set(required.keys())) 
       return ret
 
     self.assertTrue(self.__dz_equal(
       DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.刑),
       [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.卯], DizhiRelation.刑),
+      [{Dizhi.子, Dizhi.卯}],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([Dizhi.卯, Dizhi.子], DizhiRelation.刑),
+      [{Dizhi.子, Dizhi.卯}],
     ))
     self.assertTrue(self.__dz_equal(
       DizhiRelationUtils.find_dizhi_combos(list(Dizhi), DizhiRelation.刑),
@@ -963,7 +973,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       [set(d.keys()) for d in xing_expected]
     ))
 
-    for _ in range(100):
+    for _ in range(500):
       dizhis: list[Dizhi] = [] 
       for _ in range(random.randint(1, 4)):
         dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
@@ -971,6 +981,136 @@ class TestDizhiRelationUtils(unittest.TestCase):
       expected_result: list[set[Dizhi]] = __find_qualified(dizhis)
       self.assertTrue(self.__dz_equal(result, expected_result))
 
-  def test_xing(self) -> None:
-    # DizhiRelationUtils.xing(definition=Rules.XingDef.LOOSE)
-    pass
+  def test_xing_negative(self) -> None:
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰)
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing((Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing({Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing([Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing('亥', '子') # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing(Dizhi.子, Dizhi.辰, Rules.XingDef.LOOSE) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.xing(Dizhi.子, Dizhi.辰, definition='Rules.X.NORMAL') # type: ignore
+
+    for dz in Dizhi:
+      self.assertIsNone(DizhiRelationUtils.xing(dz))
+      self.assertIsNone(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.STRICT))
+      self.assertIsNone(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+
+    for _ in range(500):
+      random_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(4, len(Dizhi)))
+      with self.assertRaises(AssertionError):
+        self.assertIsNone(DizhiRelationUtils.xing(*random_dizhis))
+      with self.assertRaises(AssertionError):
+        self.assertIsNone(DizhiRelationUtils.xing(*random_dizhis, definition=Rules.XingDef.STRICT))
+      with self.assertRaises(AssertionError):
+        self.assertIsNone(DizhiRelationUtils.xing(*random_dizhis, definition=Rules.XingDef.LOOSE))
+
+  def test_xing_strict(self) -> None:
+    self.assertIsNone(DizhiRelationUtils.xing())
+    self.assertIsNone(DizhiRelationUtils.xing(definition=Rules.XingDef.STRICT))
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥), Rules.XingSubType.自刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.卯, Dizhi.子), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅), None)
+
+    def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[Rules.XingSubType]:
+      # In `XingDef.STRICT` mode, we don't care about the direction.
+      __fs: frozenset[Dizhi] = frozenset(__dizhis)
+      if __fs in [frozenset((Dizhi.丑, Dizhi.戌, Dizhi.未)), frozenset((Dizhi.寅, Dizhi.巳, Dizhi.申))]:
+        return Rules.XingSubType.三刑
+      elif __fs == frozenset((Dizhi.子, Dizhi.卯)):
+        return Rules.XingSubType.子卯刑
+      elif len(__fs) == 1 and len(__dizhis) == 2:
+        if __dizhis[0] in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥):
+          return Rules.XingSubType.自刑
+      return None
+    
+    for dz in Dizhi:
+      self.assertIsNone(DizhiRelationUtils.xing(dz))
+      self.assertIsNone(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.STRICT))
+
+    for dz1, dz2 in itertools.product(Dizhi, Dizhi):
+      strict_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(dz1, dz2)
+      strict_result2: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(dz2, dz1)
+      strict_result3: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(dz1, dz2, definition=Rules.XingDef.STRICT)
+      self.assertEqual(strict_result, strict_result2)
+      self.assertEqual(strict_result, strict_result3)
+      self.assertEqual(strict_result, __expected_strict_xing((dz1, dz2)))
+
+    for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
+      strict_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple)
+      for dz1, dz2, dz3 in itertools.permutations(dz_tuple, 3):
+        self.assertEqual(strict_result, DizhiRelationUtils.xing(dz1, dz2, dz3))
+        self.assertEqual(strict_result, DizhiRelationUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
+
+  def test_xing_loose(self) -> None:
+    self.assertIsNone(DizhiRelationUtils.xing(definition=Rules.XingDef.LOOSE))
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), Rules.XingSubType.自刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.LOOSE), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.LOOSE), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.LOOSE), None)
+
+    sanxing_list: list[tuple[Dizhi, ...]] = [
+      (Dizhi.丑, Dizhi.戌),
+      (Dizhi.戌, Dizhi.未),
+      (Dizhi.未, Dizhi.丑),
+      (Dizhi.寅, Dizhi.巳),
+      (Dizhi.巳, Dizhi.申),
+      (Dizhi.申, Dizhi.寅),
+      *(list(itertools.permutations((Dizhi.丑, Dizhi.戌, Dizhi.未)))),
+      *(list(itertools.permutations((Dizhi.寅, Dizhi.巳, Dizhi.申)))),
+    ]
+
+    zimaoxing_list: list[tuple[Dizhi, ...]] = [
+      (Dizhi.子, Dizhi.卯),
+      (Dizhi.卯, Dizhi.子),
+    ]
+
+    zixing_list: list[tuple[Dizhi, ...]] = [
+      (dz, dz) for dz in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥)
+    ]
+
+    for dz in Dizhi:
+      self.assertIsNone(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+
+    for dz_tuple in itertools.product(Dizhi, Dizhi):
+      loose_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
+      if loose_result is Rules.XingSubType.三刑:
+        self.assertIn(dz_tuple, sanxing_list)
+      elif loose_result is Rules.XingSubType.子卯刑:
+        self.assertIn(dz_tuple, zimaoxing_list)
+      elif loose_result is Rules.XingSubType.自刑:
+        self.assertIn(dz_tuple, zixing_list)
+      else:
+        self.assertIsNone(loose_result)
+        self.assertNotIn(dz_tuple, sanxing_list)
+        self.assertNotIn(dz_tuple, zimaoxing_list)
+        self.assertNotIn(dz_tuple, zixing_list)
+
+    for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
+      loose_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
+      if loose_result is None:
+        self.assertNotIn(dz_tuple, sanxing_list)
+        self.assertNotIn(dz_tuple, zimaoxing_list)
+        self.assertNotIn(dz_tuple, zixing_list)
+      else:
+        self.assertEqual(loose_result, Rules.XingSubType.三刑)
+        self.assertIn(dz_tuple, sanxing_list)
