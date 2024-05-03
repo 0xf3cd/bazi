@@ -287,33 +287,44 @@ class Rules:
     # Only add new definitions.
 
   class AnheTable:
+    @property
+    def normal(self) -> frozenset[frozenset[Dizhi]]:
+      return frozenset([
+        frozenset((Dizhi.卯, Dizhi.申)),
+        frozenset((Dizhi.巳, Dizhi.酉)),
+        frozenset((Dizhi.亥, Dizhi.午)),
+        frozenset((Dizhi.子, Dizhi.巳)),
+        frozenset((Dizhi.寅, Dizhi.午)),
+      ])
+    
+    @property
+    def normal_extended(self) -> frozenset[frozenset[Dizhi]]:
+      return frozenset([
+        frozenset((Dizhi.卯, Dizhi.申)),
+        frozenset((Dizhi.巳, Dizhi.酉)),
+        frozenset((Dizhi.亥, Dizhi.午)),
+        frozenset((Dizhi.子, Dizhi.巳)),
+        frozenset((Dizhi.寅, Dizhi.午)),
+        frozenset((Dizhi.寅, Dizhi.丑)),
+      ])
+    
+    @property
+    def mangpai(self) -> frozenset[frozenset[Dizhi]]:
+      return frozenset([
+        frozenset((Dizhi.卯, Dizhi.申)),
+        frozenset((Dizhi.寅, Dizhi.丑)),
+        frozenset((Dizhi.午, Dizhi.亥)),
+      ])
+
     def __getitem__(self, anhe_def: 'Rules.AnheDef') -> frozenset[frozenset[Dizhi]]:
       assert isinstance(anhe_def, Rules.AnheDef)
       if anhe_def == Rules.AnheDef.NORMAL:
-        return frozenset([
-          frozenset((Dizhi.卯, Dizhi.申)),
-          frozenset((Dizhi.巳, Dizhi.酉)),
-          frozenset((Dizhi.亥, Dizhi.午)),
-          frozenset((Dizhi.子, Dizhi.巳)),
-          frozenset((Dizhi.寅, Dizhi.午)),
-        ])
+        return self.normal
       elif anhe_def == Rules.AnheDef.NORMAL_EXTENDED:
-        return frozenset([
-          frozenset((Dizhi.卯, Dizhi.申)),
-          frozenset((Dizhi.巳, Dizhi.酉)),
-          frozenset((Dizhi.亥, Dizhi.午)),
-          frozenset((Dizhi.子, Dizhi.巳)),
-          frozenset((Dizhi.寅, Dizhi.午)),
-          frozenset((Dizhi.寅, Dizhi.丑)),
-        ])
-      elif anhe_def == Rules.AnheDef.MANGPAI:
-        return frozenset([
-          frozenset((Dizhi.卯, Dizhi.申)),
-          frozenset((Dizhi.寅, Dizhi.丑)),
-          frozenset((Dizhi.午, Dizhi.亥)),
-        ])
+        return self.normal_extended
       else:
-        raise ValueError(f'Invalid anhe_def: {anhe_def}')
+        assert anhe_def == Rules.AnheDef.MANGPAI
+        return self.mangpai
 
   # The tables are used to query the ANHE (暗合) relation across all Dizhis.
   # ANHE relation is a non-directional/mutual relation.
@@ -420,12 +431,12 @@ class Rules:
       return d
 
     def __getitem__(self, xing_def: 'Rules.XingDef') -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+      assert isinstance(xing_def, Rules.XingDef)
       if xing_def is Rules.XingDef.STRICT:
         return self.strict
-      elif xing_def is Rules.XingDef.LOOSE:
-        return self.loose
       else:
-        raise ValueError(f'Invalid xing_def: {xing_def}')
+        assert xing_def is Rules.XingDef.LOOSE
+        return self.loose
 
   # The table is used to query the XING (刑) relation across all Dizhis.
   # XING relation is a directional relation.
@@ -446,4 +457,16 @@ class Rules:
       (Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), 
       (Dizhi.寅, Dizhi.申), (Dizhi.卯, Dizhi.酉), 
       (Dizhi.辰, Dizhi.戌), (Dizhi.巳, Dizhi.亥),
+    )])
+
+  # The table is used to query the PO (破) relation across all Dizhis.
+  # PO relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的破。
+  # 相破是无方向的，两个地支之间互相破坏。
+  @classproperty
+  def DIZHI_PO(self) -> frozenset[frozenset[Dizhi]]:
+    return frozenset([frozenset(dz_tuple) for dz_tuple in (
+      (Dizhi.子, Dizhi.酉), (Dizhi.卯, Dizhi.午),
+      (Dizhi.辰, Dizhi.丑), (Dizhi.未, Dizhi.戌),
+      (Dizhi.寅, Dizhi.亥), (Dizhi.巳, Dizhi.申),
     )])

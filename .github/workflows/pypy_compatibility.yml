@@ -1,0 +1,27 @@
+name: Workflow for PyPy Compatibility - Run Partial Tests with pytest  
+  
+on:
+  push:
+    branches: [ '**' ]
+
+jobs:  
+  build:  
+    runs-on: ubuntu-latest  
+    strategy:  
+      matrix:  
+        pypy-version: ["pypy3.9", "pypy3.10"]  
+  
+    steps:  
+      - uses: actions/checkout@v4
+      - name: Set up PyPy ${{ matrix.pypy-version }}  
+        uses: actions/setup-python@v5 
+        with:
+          python-version: ${{ matrix.pypy-version }}
+      - name: Install dependencies
+        run: |  
+          pypy -m ensurepip
+          pypy -m pip install --upgrade pip  
+          if [ -f Requirements.txt ]; then pypy -m pip install -r Requirements.txt; fi  
+      - name: Testing
+        run: |
+          pypy ./run_tests.py -nl -s -hko

@@ -517,7 +517,7 @@ class DizhiRelationUtils:
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
     dz_tuple: tuple[Dizhi, ...] = tuple(dizhis)
 
-    # The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
+    # TODO: The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
     if relation is DizhiRelation.三会:
       return [copy.deepcopy(combo) for combo in Rules.DIZHI_SANHUI if combo.issubset(dz_tuple)]
     
@@ -555,6 +555,9 @@ class DizhiRelationUtils:
     
     elif relation is DizhiRelation.冲:
       return [copy.deepcopy(combo) for combo in Rules.DIZHI_CHONG if combo.issubset(dz_tuple)]
+    
+    elif relation is DizhiRelation.破:
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_PO if combo.issubset(dz_tuple)]
 
     return []
 
@@ -809,3 +812,29 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     return frozenset((dz1, dz2)) in Rules.DIZHI_CHONG
+
+  @staticmethod
+  def po(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in PO (破) relation. If so, return `True`. If not, return `False`.
+    检查输入的地支是否构成破关系。如果是，返回 `True`。否则返回 `False`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in PO (破) relation.
+
+    Examples:
+    - po(Dizhi.卯, Dizhi.午)
+      - return: True
+    - po(Dizhi.午, Dizhi.卯)
+      - return: True
+    - po(Dizhi.丑, Dizhi.子)
+      - return: False
+    - po(Dizhi.丑, Dizhi.辰)
+      - return: True
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    return frozenset((dz1, dz2)) in Rules.DIZHI_PO

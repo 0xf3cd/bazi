@@ -20,6 +20,8 @@ argparse = argparse.ArgumentParser()
 argparse.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
 argparse.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
+argparse.add_argument('-nl', '--no-linter', action='store_true', help='Whether or not to skip linting.')
+
 argparse.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
 argparse.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
 argparse.add_argument('-ep', '--errorprone-test', type=int, help='Whether or not to rerun errorprone tests.', default=0)
@@ -31,6 +33,7 @@ argparse.add_argument('-i', '--interpreter', action='store_true', help='Whether 
 args = argparse.parse_args()
 do_cov: bool = args.coverage
 minimum_cov_rate: float = args.coverage_rate
+skip_linter: bool = args.no_linter
 run_slow_test: bool = args.slow_test
 run_hko_test: bool = args.hkodata_test
 run_errorprone_test_rounds: int = args.errorprone_test
@@ -206,7 +209,8 @@ def main() -> None:
   if do_interpreter:
     ret_code |= run_interpreter()
 
-  ret_code |= run_ruff()
+  if not skip_linter:
+    ret_code |= run_ruff()
 
   print('\n' + '#' * term_width)
   end_time: datetime = datetime.now()

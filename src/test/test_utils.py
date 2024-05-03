@@ -1062,16 +1062,26 @@ class TestDizhiRelationUtils(unittest.TestCase):
 
   def test_xing_loose(self) -> None:
     self.assertIsNone(DizhiRelationUtils.xing(definition=Rules.XingDef.LOOSE))
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), Rules.XingSubType.自刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.LOOSE), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.LOOSE), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.LOOSE), None)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.LOOSE), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.LOOSE), None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+                     None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.自刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+                     None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+                     None)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.LOOSE), 
+                     Rules.XingSubType.三刑)
+    self.assertEqual(DizhiRelationUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.LOOSE), 
+                     None)
 
     sanxing_list: list[tuple[Dizhi, ...]] = [
       (Dizhi.丑, Dizhi.戌),
@@ -1159,5 +1169,53 @@ class TestDizhiRelationUtils(unittest.TestCase):
     chong_table: list[set[Dizhi]] = [set(dz_tuple) for dz_tuple in zip(Dizhi.as_list()[:6], Dizhi.as_list()[6:])]
 
     for dz1, dz2 in itertools.product(Dizhi, repeat=2):
-      self.assertEqual(DizhiRelationUtils.chong(dz1, dz2), DizhiRelationUtils.chong(dz2, dz1))
+      self.assertEqual(DizhiRelationUtils.chong(dz1, dz2), DizhiRelationUtils.chong(dz2, dz1), 'CHONG (冲) is a bi-directional relation')
       self.assertEqual(DizhiRelationUtils.chong(dz1, dz2), set((dz1, dz2)) in chong_table)
+
+  @staticmethod
+  def __gen_po_table() -> list[set[Dizhi]]:
+    return [set((
+      Dizhi.from_index(dz_idx), Dizhi.from_index((dz_idx - 3) % 12),
+    )) for dz_idx in range(0, 12, 2)]
+
+  def test_find_dizhi_combos_po(self) -> None:
+    po_table: list[set[Dizhi]] = self.__gen_po_table()
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.破),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(list(Dizhi), DizhiRelation.破),
+      po_table,
+    ))
+
+    for _ in range(500):
+      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.破)
+      expected_result: list[set[Dizhi]] = [c for c in po_table if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_po(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.po([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.po([Dizhi.亥, Dizhi.子], [Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.po('亥', '子') # type: ignore
+
+    po_table: list[set[Dizhi]] = self.__gen_po_table()
+
+    for dz1, dz2 in itertools.product(Dizhi, repeat=2):
+      self.assertEqual(DizhiRelationUtils.po(dz1, dz2), DizhiRelationUtils.po(dz2, dz1), 'PO (破) is a bi-directional relation')
+      self.assertEqual(DizhiRelationUtils.po(dz1, dz2), set((dz1, dz2)) in po_table)
