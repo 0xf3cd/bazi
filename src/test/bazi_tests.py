@@ -14,7 +14,7 @@ def run_bazi_tests(expression: Optional[str] = None, slow_tests: bool = False) -
     args.extend(['-m', 'not slow'])
   return pytest.main(args)
 
-def run_errorprone_bazi_tests(expression: Optional[str] = None, repeat: int = 3) -> int:
+def run_errorprone_bazi_tests(expression: Optional[str] = None) -> int:
   args: list[str] = [
     os.path.dirname(os.path.realpath(__file__)),
     '-v',
@@ -25,10 +25,4 @@ def run_errorprone_bazi_tests(expression: Optional[str] = None, repeat: int = 3)
   if expression is not None:
     args.extend(['-k', expression])
 
-  ret_code: int = 0
-  for _ in range(repeat):
-    ret_code |= pytest.main(args)
-    if ret_code != 0:
-      break
-
-  return ret_code
+  return pytest.main(args)

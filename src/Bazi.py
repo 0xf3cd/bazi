@@ -10,7 +10,6 @@ from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
 from .Calendar import CalendarDate, CalendarUtils
 from .Utils import BaziUtils
-from . import hkodata
 
 
 class BaziGender(Enum):
@@ -109,10 +108,6 @@ class Bazi:
   ATTENTION: this class does not know anything about timezone. 
   '''
 
-  # Save the Jieqi data as a class variable.
-  __jieqi_db: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
-  __lunar_db: hkodata.DecodedLunarYears = hkodata.DecodedLunarYears()
-
   def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> None:
     '''
     Input the birth time. We don't care about the timezone.
@@ -154,9 +149,9 @@ class Bazi:
       # Figure out the solar date falls into which ganzhi year.
       # Also figure out the Year Ganzhi / Year Pillar (年柱).
       solar_year: int = self._solar_birth_date.year
-      lichun_date: date = self.__jieqi_db.get(solar_year, Jieqi.立春)
+      lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
       self._ganzhi_year: int = solar_year if self._solar_birth_date.to_date() >= lichun_date else solar_year - 1
-      self._year_pillar: Ganzhi = self.__lunar_db.get(self._ganzhi_year)['ganzhi']
+      self._year_pillar: Ganzhi = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
 
       # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
       self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.

@@ -55,10 +55,12 @@ class DecodedJieqiDates:
 
   @property
   def start_year(self) -> int:
+    '''Note: Gregorian/Solar year / 公历年'''
     return self._start_year
   
   @property
   def end_year(self) -> int:
+    '''Note: Gregorian/Solar year / 公历年'''
     return self._end_year
 
   def __read_bytes_for_jieqi(self, year: int, jieqi: Jieqi) -> bytes:
@@ -67,6 +69,7 @@ class DecodedJieqiDates:
     return self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len + offset : (year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len + offset + DecodedJieqiDates.date_bytes_len]
 
   def __getitem__(self, year: int) -> JieqiDates:
+    '''Note: `year` means Gregorian/Solar year / 公历年'''
     assert year in self.supported_year_range()
 
     # Extract the bytes for the input `year`.
@@ -79,6 +82,8 @@ class DecodedJieqiDates:
   def get(self, year: int, jieqi: Jieqi) -> date:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
+
+    Note: `year` means Gregorian/Solar year / 公历年
     '''
     assert year in self.supported_year_range()
     if year not in self._cached_datetimes:
@@ -86,6 +91,7 @@ class DecodedJieqiDates:
     return self._cached_datetimes[year][jieqi]
   
   def supported_year_range(self) -> range:
+    '''Note: Gregorian/Solar year / 公历年'''
     return range(self.start_year, self.end_year + 1)
 
 
@@ -125,10 +131,12 @@ class DecodedLunarYears:
 
   @property
   def start_year(self) -> int:
+    '''Note: Lunar year / 阴历年'''
     return self._start_year
   
   @property
   def end_year(self) -> int:
+    '''Note: Lunar year / 阴历年'''
     return self._end_year
 
   def __read_bytes_for_lunar_year(self, lunar_year: int) -> bytes:
@@ -167,4 +175,5 @@ class DecodedLunarYears:
     }
 
   def supported_year_range(self) -> range:
+    '''Note: Lunar year / 阴历年'''
     return range(self.start_year, self.end_year + 1)

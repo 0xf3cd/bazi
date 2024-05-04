@@ -10,7 +10,7 @@ from collections import Counter
 from typing import Union, Optional, Iterable, Any
 from datetime import date, datetime, timedelta
 
-from src.Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation
+from src.Defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation
 from src.Calendar import CalendarUtils
 from src.Rules import TraitTuple, HiddenTianganDict, Rules
 from src.Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
@@ -53,6 +53,47 @@ class TestBaziUtils(unittest.TestCase):
       (CalendarUtils.to_ganzhi(date(1997, 1, 30)), Ganzhi.from_str('壬申')),
     ]:
       self.assertEqual(BaziUtils.get_day_ganzhi(d), ganzhi)
+
+  def test_get_jieqi_date(self) -> None:
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year('2024', Jieqi.大寒)) # type: ignore
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year(2024, '大寒')) # type: ignore
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year(9999, Jieqi.大寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year(2101, Jieqi.小寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year(0, Jieqi.大寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year(1900, Jieqi.冬至)) # Out of supported solar year range.
+
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(1901, Jieqi.小寒), date(1901, 1, 6))
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(2100, Jieqi.冬至), date(2100, 12, 22))
+
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(2024, Jieqi.大寒), date(2024, 1, 20))
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(1997, Jieqi.小寒), date(1997, 1, 5))
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(2000, Jieqi.立春), date(2000, 2, 4))
+    self.assertEqual(BaziUtils.get_jieqi_date_in_solar_year(2005, Jieqi.雨水), date(2005, 2, 18))
+
+    random_solar_year: int = random.randint(1901, 2100)
+    dates: list[date] = []
+    for jieqi in [Jieqi.小寒, Jieqi.大寒] + Jieqi.as_list()[:-2]: # The first Jieqi in a solar year is always "小寒".
+      dates.append(BaziUtils.get_jieqi_date_in_solar_year(random_solar_year, jieqi))
+    for d1, d2 in zip(dates, dates[1:]):
+      self.assertLess(d1, d2)
+
+  def test_get_ganzhi_year_ganzhi(self) -> None:
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_ganzhi_year_ganzhi('2024')) # type: ignore
+    self.assertRaises(AssertionError, lambda: BaziUtils.get_ganzhi_year_ganzhi((2024,))) # type: ignore
+
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(1836), Ganzhi.from_str('丙申'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(1930), Ganzhi.from_str('庚午'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(1902), Ganzhi.from_str('壬寅'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(1984), Ganzhi.from_str('甲子'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(2024), Ganzhi.from_str('甲辰'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(2075), Ganzhi.from_str('乙未'))
+    self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(2123), Ganzhi.from_str('癸未'))
+
+    for _ in range(20):
+      random_ganzhi_year: int = random.randint(1000, 9999)
+      another_random_ganzhi_year: int = random.randint(-20, 20) * 60 + random_ganzhi_year
+      self.assertEqual(BaziUtils.get_ganzhi_year_ganzhi(another_random_ganzhi_year),
+                       BaziUtils.get_ganzhi_year_ganzhi(random_ganzhi_year))
 
   def test_find_month_tiangan(self) -> None:
     self.assertEqual(BaziUtils.find_month_tiangan(Tiangan.甲, Dizhi.寅), Tiangan.丙)

@@ -87,11 +87,19 @@ def run_tests() -> int:
     from src.hkodata.test import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
 
-  if run_errorprone_test_rounds > 0:
+  from src.test import run_errorprone_bazi_tests # noqa: E402
+  for round in range(run_errorprone_test_rounds):
     print('\n' + '#' * term_width)
-    print(f'>> Rerunning errorprone tests for {run_errorprone_test_rounds} rounds...')
-    from src.test import run_errorprone_bazi_tests # noqa: E402
-    ret_code |= run_errorprone_bazi_tests(expression=expression, repeat=run_errorprone_test_rounds)
+    print(f'>> Rerunning errorprone tests... Round {round + 1}/{run_errorprone_test_rounds}.')
+
+    round_ret_code: int = run_errorprone_bazi_tests(expression=expression)
+    ret_code |= round_ret_code
+
+    if round_ret_code == 0:
+      print(colorama.Fore.GREEN + f'>> Round {round + 1}/{run_errorprone_test_rounds} OK!' + colorama.Style.RESET_ALL)
+    else:
+      print(colorama.Fore.RED + f'>> Round {round + 1}/{run_errorprone_test_rounds} failed! Stopping...' + colorama.Style.RESET_ALL)
+      break
 
   if ret_code != 0:
     # Print in red.

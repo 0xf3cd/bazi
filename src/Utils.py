@@ -3,7 +3,8 @@ from datetime import date
 from collections import Counter
 from typing import Union, Sequence, Optional
 
-from .Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
+from . import hkodata
+from .Defines import Ganzhi, Tiangan, Dizhi, Jieqi, Shishen, Wuxing, Yinyang, ShierZhangsheng, TianganRelation, DizhiRelation
 from .Calendar import CalendarUtils, CalendarDate
 from .Rules import TraitTuple, HiddenTianganDict, Rules
 
@@ -27,6 +28,43 @@ class BaziUtils:
     jiazi_day_date: date = date(2024, 3, 1) # 2024-03-01 is a day of "甲子".
     offset: int = (solar_date.to_date() - jiazi_day_date).days
     return Ganzhi.list_sexagenary_cycle()[offset % 60]
+  
+  # Save the Jieqi data as a class variable.
+  __jieqi_db: hkodata.DecodedJieqiDates = hkodata.DecodedJieqiDates()
+
+  @staticmethod
+  def get_jieqi_date_in_solar_year(solar_year: int, jieqi: Jieqi) -> date:
+    '''
+    Find out the date of the given Jieqi in the given solar/gregorian year.
+    输入公历年份和节气，返回节气日期。
+
+    Args:
+    - solar_year: (int) The solar year.
+    - jieqi: (Jieqi) The Jieqi.
+
+    Return: (date) The date of the Jieqi in the given solar/gregorian year.
+    '''
+
+    assert isinstance(solar_year, int)
+    assert isinstance(jieqi, Jieqi)
+
+    assert solar_year in BaziUtils.__jieqi_db.supported_year_range()
+    return BaziUtils.__jieqi_db.get(solar_year, jieqi)
+  
+  @staticmethod
+  def get_ganzhi_year_ganzhi(ganzhi_year: int) -> Ganzhi:
+    '''
+    Find out the Ganzhi of the given ganzhi year in the sexagenary cycle.
+    输入干支历年份，返回对应的天干和地支。
+
+    Args:
+    - ganzhi_year: (int) The year.
+
+    Return: (Ganzhi) The Ganzhi of the given ganzhi year in the sexagenary cycle.
+    '''
+
+    assert isinstance(ganzhi_year, int)
+    return Ganzhi.list_sexagenary_cycle()[(ganzhi_year - 1984) % 60] # 1984 is the year of "甲子".
 
   @staticmethod
   def find_month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
