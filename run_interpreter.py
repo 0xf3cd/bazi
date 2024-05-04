@@ -4,11 +4,9 @@ import re
 from pathlib import Path
 
 from run_demos import get_basic_info
-from src import (
-  Bazi, BaziChart, BaziChartJson,
-  Tiangan, Shishen,
-  Interpreter, ShishenDescription, TianganDescription
-)  
+from src.Bazi import Bazi, BaziChart, BaziChartJson
+from src.Defines import Tiangan, Shishen
+from src.Interpreter import Interpreter, ShishenDescription, TianganDescription
 
 
 def interpret(chart: BaziChart) -> str:

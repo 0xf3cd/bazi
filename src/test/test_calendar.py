@@ -10,9 +10,8 @@ from itertools import product
 from typing import Any
 
 from src.hkodata import DecodedLunarYears, DecodedJieqiDates
-from src import (
-  Jieqi, CalendarType, CalendarUtils, CalendarDate
-)
+from src.Calendar import CalendarType, CalendarDate, CalendarUtils
+from src.Defines import Jieqi
 
 
 @pytest.mark.slow

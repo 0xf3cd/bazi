@@ -4,7 +4,8 @@
 import unittest
 import random
 from datetime import date, timedelta
-from src import hkodata, Jieqi, Ganzhi
+from src import hkodata
+from src.Defines import Jieqi, Ganzhi
 
 class TestHkoData(unittest.TestCase):
   def test_traditional_chinese_jieqi(self) -> None:

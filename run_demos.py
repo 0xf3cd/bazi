@@ -5,10 +5,11 @@ from typing import Union
 
 import colorama
 
-from src import (
-  Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng,
-  Bazi, BaziChart, BaziUtils, HiddenTianganDict,
-)
+from src.Bazi import Bazi, BaziChart
+from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
+from src.Rules import HiddenTianganDict
+from src.Utils import BaziUtils
+
 
 def get_wuxing(s: Union[Tiangan, Dizhi]) -> Wuxing:
   assert isinstance(s, (Tiangan, Dizhi))
