@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from itertools import product
 from typing import Any
 
-from src.hkodata import DecodedLunarYears, DecodedJieqiDates
+from src.HkoData import DecodedLunarYears, DecodedJieqiDates
 from src.Calendar import CalendarType, CalendarDate, CalendarUtils
 from src.Defines import Jieqi
 

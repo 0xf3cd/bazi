@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from typing import Union
 
 from .Defines import Ganzhi, Jieqi
-from .hkodata import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
+from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 class CalendarType(Enum):
   '''

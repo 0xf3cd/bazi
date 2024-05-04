@@ -84,7 +84,7 @@ def run_tests() -> int:
   if run_hko_test:
     print('\n' + '#' * term_width)
     print('>> Running hkodata tests...')
-    from src.hkodata.test import run_hkodata_tests # noqa: E402
+    from src.HkoData.test import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
 
   from src.test import run_errorprone_bazi_tests # noqa: E402
