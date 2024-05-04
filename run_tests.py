@@ -20,8 +20,11 @@ argparse = argparse.ArgumentParser()
 argparse.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
 argparse.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
+argparse.add_argument('-nl', '--no-linter', action='store_true', help='Whether or not to skip linting.')
+
 argparse.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
 argparse.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
+argparse.add_argument('-ep', '--errorprone-test', type=int, help='Whether or not to rerun errorprone tests.', default=0)
 argparse.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
 
 argparse.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
@@ -30,8 +33,10 @@ argparse.add_argument('-i', '--interpreter', action='store_true', help='Whether 
 args = argparse.parse_args()
 do_cov: bool = args.coverage
 minimum_cov_rate: float = args.coverage_rate
+skip_linter: bool = args.no_linter
 run_slow_test: bool = args.slow_test
 run_hko_test: bool = args.hkodata_test
+run_errorprone_test_rounds: int = args.errorprone_test
 expression: Optional[str] = args.expression
 do_demo: bool = args.demo
 do_interpreter: bool = args.interpreter
@@ -73,14 +78,20 @@ def run_tests() -> int:
 
   # Make `bazi` importable from the current directory.
   sys.path.append(str(Path(__file__).parent / 'src'))
-  from src import run_bazi_tests # noqa: E402
+  from src.test import run_bazi_tests # noqa: E402
   ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
 
   if run_hko_test:
     print('\n' + '#' * term_width)
     print('>> Running hkodata tests...')
-    from src import run_hkodata_tests # noqa: E402
+    from src.hkodata.test import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
+
+  if run_errorprone_test_rounds > 0:
+    print('\n' + '#' * term_width)
+    print(f'>> Rerunning errorprone tests for {run_errorprone_test_rounds} rounds...')
+    from src.test import run_errorprone_bazi_tests # noqa: E402
+    ret_code |= run_errorprone_bazi_tests(expression=expression, repeat=run_errorprone_test_rounds)
 
   if ret_code != 0:
     # Print in red.
@@ -198,7 +209,8 @@ def main() -> None:
   if do_interpreter:
     ret_code |= run_interpreter()
 
-  ret_code |= run_ruff()
+  if not skip_linter:
+    ret_code |= run_ruff()
 
   print('\n' + '#' * term_width)
   end_time: datetime = datetime.now()

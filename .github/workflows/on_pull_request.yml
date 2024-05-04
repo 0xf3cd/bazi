@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest  
     strategy:  
       matrix:  
-        python-version: ["3.9"]  
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
   
     steps:  
       - uses: actions/checkout@v4
@@ -24,4 +24,4 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x run_tests.py
-          ./run_tests.py -c -cr 90 -hko -s -d -i # Running slow and hkodata tests. Also checking coverage.
+          ./run_tests.py -c -cr 90 -hko -s -ep 10 -d -i # Running slow and hkodata tests. Rerunning errorprone tests. Also checking coverage.

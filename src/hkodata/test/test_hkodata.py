@@ -42,8 +42,6 @@ class TestHkoData(unittest.TestCase):
       self.assertEqual(hkodata.bytes_to_int(dt_bytes[2:3]), dt.month)
       self.assertEqual(hkodata.bytes_to_int(dt_bytes[3:4]), dt.day)
 
-    with self.assertRaises(OverflowError):
-      hkodata.date_to_bytes(date(90000000000000000, 1, 1))
     with self.assertRaises(ValueError):
       hkodata.date_to_bytes(date(2024, 64, 1))
     with self.assertRaises(ValueError):

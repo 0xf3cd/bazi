@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest  
     strategy:  
       matrix:  
-        python-version: ["3.9"]  
+        python-version: ["3.9", "3.12"]  
   
     steps:  
       - uses: actions/checkout@v4
@@ -24,4 +24,4 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x run_tests.py
-          ./run_tests.py # Not running slow and hkodata tests.
+          ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.

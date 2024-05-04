@@ -1,0 +1,27 @@
+name: Workflow for GraalPy Compatibility - Run Partial Tests with pytest  
+  
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:  
+  build:  
+    runs-on: ubuntu-latest  
+    strategy:  
+      matrix:  
+        graalpy-version: ["graalpy-23.1.0", "graalpy-24.0.0"]  
+  
+    steps:  
+      - uses: actions/checkout@v4
+      - name: Set up GraalPy ${{ matrix.graalpy-version }}  
+        uses: actions/setup-python@v5 
+        with:
+          python-version: ${{ matrix.graalpy-version }}
+      - name: Install dependencies
+        run: |  
+          graalpy -m ensurepip
+          graalpy -m pip install --upgrade pip  
+          if [ -f Requirements.txt ]; then graalpy -m pip install -r Requirements.txt; fi  
+      - name: Testing
+        run: |
+          graalpy ./run_tests.py -nl -s -hko -d -i
