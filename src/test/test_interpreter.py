@@ -2,10 +2,10 @@
 # test_interpreter.py
 
 import unittest
-from src import (
-  BaziChart, Shishen, Tiangan,
-  ShishenDescription, TianganDescription, Interpreter
-)
+
+from src.Defines import Tiangan, Shishen
+from src.Bazi import BaziChart
+from src.Interpreter import Interpreter, ShishenDescription, TianganDescription
 
 class TestInterpreter(unittest.TestCase):
   def test_interpret_shishen(self) -> None:

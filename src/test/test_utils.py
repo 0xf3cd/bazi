@@ -10,11 +10,9 @@ from collections import Counter
 from typing import Union, Optional, Iterable, Any
 from datetime import date, datetime, timedelta
 
-from src import (
-  CalendarUtils, TraitTuple, HiddenTianganDict,
-  Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation,
-  Rules,
-)
+from src.Defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation
+from src.Calendar import CalendarUtils
+from src.Rules import TraitTuple, HiddenTianganDict, Rules
 from src.Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
 
 

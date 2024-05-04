@@ -11,12 +11,10 @@ from zoneinfo import ZoneInfo
 from itertools import product
 from typing import Optional, Union
 
-from src import (
-  Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, BaziUtils,
-  BaziGender, BaziPrecision, BaziData, Bazi, 八字, Shishen, ShierZhangsheng,
-  BaziChart, 命盘, BaziChartJson,
-  TraitTuple, HiddenTianganDict
-)
+from src.Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘, BaziChartJson
+from src.Rules import TraitTuple, HiddenTianganDict
+from src.Utils import BaziUtils
 
 
 class TestBaziGender(unittest.TestCase):
