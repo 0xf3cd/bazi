@@ -24,7 +24,7 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.
+          ./run_tests.py -ep 3 -d # Not running slow and hkodata tests. But rerunning errorprone tests.
   
   test-on-macos:  
     runs-on: macos-latest
@@ -45,7 +45,7 @@ jobs:
       - name: Testing and linting
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.
+          ./run_tests.py -ep 3 -d # Not running slow and hkodata tests. But rerunning errorprone tests.
 
   test-on-windows:  
     runs-on: windows-latest
@@ -65,4 +65,6 @@ jobs:
           if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" } 
       - name: Testing and linting
         run: |
-          python ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.
+          chcp.com 65001
+          $env:PYTHONIOENCODING = "utf-8"
+          python ./run_tests.py -ep 3 -d # Not running slow and hkodata tests. But rerunning errorprone tests.

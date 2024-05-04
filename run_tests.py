@@ -53,6 +53,9 @@ def print_sysinfo() -> None:
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
   print(f'-- python version: {sys.version}')
+  print(f'-- python path: {sys.path}')
+  print(f'-- default encoding: {sys.getdefaultencoding()}')
+
   print(f'-- pid: {os.getpid()}')
   print(f'-- cwd: {os.getcwd()}')
   print(f'-- node: {platform.node()}')
