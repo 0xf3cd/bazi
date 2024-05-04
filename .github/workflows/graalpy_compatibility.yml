@@ -1,7 +1,7 @@
 name: Workflow for GraalPy Compatibility - Run Partial Tests with pytest  
   
 on:
-  push:
+  pull_request:
     branches: [ main ]
 
 jobs:  
@@ -24,4 +24,4 @@ jobs:
           if [ -f Requirements.txt ]; then graalpy -m pip install -r Requirements.txt; fi  
       - name: Testing
         run: |
-          graalpy ./run_tests.py -nl -s -hko
+          graalpy ./run_tests.py -nl -s -hko -d -i

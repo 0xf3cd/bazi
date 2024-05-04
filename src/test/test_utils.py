@@ -7,7 +7,7 @@ import pytest
 import unittest
 import itertools
 from collections import Counter
-from typing import Union, Optional, Iterable
+from typing import Union, Optional, Iterable, Any
 from datetime import date, datetime, timedelta
 
 from src import (
@@ -318,6 +318,14 @@ class TestTianganRelationUtils(unittest.TestCase):
       TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), '合') # type: ignore
     with self.assertRaises(AssertionError):
       TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), 'HE') # type: ignore
+
+    for dz_relation in DizhiRelation:
+      with self.assertRaises(AssertionError):
+        TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), dz_relation) # type: ignore
+
+    for relation in TianganRelation:
+      with self.assertRaises(AssertionError):
+        TianganRelationUtils.find_tiangan_combos((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), str(relation)) # type: ignore
 
     # Invoke the method and do bad things on the result.
     TianganRelationUtils.find_tiangan_combos((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
@@ -1326,18 +1334,22 @@ class TestDizhiRelationUtils(unittest.TestCase):
         self.assertFalse(DizhiRelationUtils.ke(dz1, dz2))
 
   def test_find_dizhi_combos_negative(self) -> None:
-    with self.assertRaises(AssertionError):
-      DizhiRelationUtils.find_dizhi_combos(Dizhi.子, DizhiRelation.生) # type: ignore
     with self.assertRaises(TypeError):
       DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午]) # type: ignore
-    with self.assertRaises(AssertionError):
-      DizhiRelationUtils.find_dizhi_combos(['甲', '己'], DizhiRelation.克) # type: ignore
-    with self.assertRaises(AssertionError):
-      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], '生') # type: ignore
-    with self.assertRaises(AssertionError):
-      DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], TianganRelation.冲) # type: ignore
-    with self.assertRaises(AssertionError):
-      DizhiRelationUtils.find_dizhi_combos(set([Dizhi.子, Dizhi.午]), DizhiRelation.冲) # type: ignore
+
+    for tg_relation in TianganRelation:
+      with self.assertRaises(AssertionError):
+        DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], tg_relation) # type: ignore
+
+    for relation in DizhiRelation:
+      with self.assertRaises(AssertionError):
+        DizhiRelationUtils.find_dizhi_combos(Dizhi.子, relation) # type: ignore
+      with self.assertRaises(AssertionError):
+        DizhiRelationUtils.find_dizhi_combos(['甲', '己'], relation) # type: ignore
+      with self.assertRaises(AssertionError):
+        DizhiRelationUtils.find_dizhi_combos([Dizhi.子, Dizhi.午], str(relation)) # type: ignore
+      with self.assertRaises(AssertionError):
+        DizhiRelationUtils.find_dizhi_combos(set([Dizhi.子, Dizhi.午]), relation) # type: ignore
 
   def test_find_dizhi_combos_integration(self) -> None:
     for relation in DizhiRelation:
@@ -1350,7 +1362,9 @@ class TestDizhiRelationUtils(unittest.TestCase):
         result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, relation)
         for _ in range(2):
           random.shuffle(dizhis)
+          copied: list[Dizhi] = copy.deepcopy(dizhis)
           self.assertTrue(self.__dz_equal(result, DizhiRelationUtils.find_dizhi_combos(dizhis, relation)))
+          self.assertListEqual(copied, dizhis) # Ensure `find_dizhi_combos` has no effect on the input `dizhis`.
 
         result2: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis + dizhis, relation)
         result3: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis + dizhis + dizhis, relation)
@@ -1369,3 +1383,66 @@ class TestDizhiRelationUtils(unittest.TestCase):
 
         self.assertTrue(self.__dz_equal(result_patched, result2))
         self.assertTrue(self.__dz_equal(result_patched, result3))
+
+  @staticmethod
+  def __run_all_relation_methods(dizhis: list[Dizhi]) -> list[Any]:
+    '''This test basically iterates all possible permutations of `dizhis` and invokes all relation checking methods.'''
+    dizhi_set: set[Dizhi] = set(dizhis)
+    sorted_dizhis: list[Dizhi] = sorted(dizhi_set, key=lambda dz : dz.index)
+    result: list[Any] = []
+
+    result.append(DizhiRelationUtils.xing(definition=Rules.XingDef.STRICT))
+    result.append(DizhiRelationUtils.xing(definition=Rules.XingDef.LOOSE))
+
+    for dz in sorted_dizhis:
+      result.append(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.STRICT))
+      result.append(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+
+    for dz_tuple in itertools.permutations(sorted_dizhis, 2):
+      result.append(DizhiRelationUtils.liuhe(*dz_tuple))
+      result.append(DizhiRelationUtils.anhe(*dz_tuple, definition=Rules.AnheDef.NORMAL))
+      result.append(DizhiRelationUtils.anhe(*dz_tuple, definition=Rules.AnheDef.NORMAL_EXTENDED))
+      result.append(DizhiRelationUtils.anhe(*dz_tuple, definition=Rules.AnheDef.MANGPAI))
+      result.append(DizhiRelationUtils.tonghe(*dz_tuple))
+      result.append(DizhiRelationUtils.tongluhe(*dz_tuple))
+      result.append(DizhiRelationUtils.banhe(*dz_tuple))
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT))
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE))
+      result.append(DizhiRelationUtils.chong(*dz_tuple))
+      result.append(DizhiRelationUtils.po(*dz_tuple))
+      result.append(DizhiRelationUtils.hai(*dz_tuple))
+      result.append(DizhiRelationUtils.sheng(*dz_tuple))
+      result.append(DizhiRelationUtils.ke(*dz_tuple))
+
+    for dz_tuple in itertools.permutations(sorted_dizhis, 3):
+      result.append(DizhiRelationUtils.sanhui(*dz_tuple))
+      result.append(DizhiRelationUtils.sanhe(*dz_tuple))
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT))
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE))
+    
+    return result
+
+  def test_consistency(self) -> None:
+    '''This test mainly tests that staticmethods in `DizhiRelationUtils` give consistent results.'''
+    dizhis: list[Dizhi] = []
+    for _ in range(random.randint(1, 3)):
+      dizhis.extend(random.sample(list(Dizhi), random.randint(0, 5)))
+    copied_dizhis: list[Dizhi] = copy.deepcopy(dizhis)
+
+    for relation in DizhiRelation:
+      relation_results: list[list[Any]] = []
+      combo_results: list[list[frozenset[Dizhi]]] = []
+      for _ in range(7):
+        if random.randint(0, 1) == 0:
+          relation_results.append(self.__run_all_relation_methods(dizhis))
+        if random.randint(0, 1) == 0:
+          combo_results.append(DizhiRelationUtils.find_dizhi_combos(dizhis, relation))
+
+      if len(relation_results) >= 2:
+        for r in relation_results[1:]:
+          self.assertEqual(relation_results[0], r)
+      if len(combo_results) >= 2:
+        for r in combo_results[1:]:
+          self.assertEqual(combo_results[0], r)
+
+    self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.

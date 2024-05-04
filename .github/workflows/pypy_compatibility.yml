@@ -1,15 +1,15 @@
 name: Workflow for PyPy Compatibility - Run Partial Tests with pytest  
   
 on:
-  push:
-    branches: [ '**' ]
+  pull_request:
+    branches: [ main ]
 
 jobs:  
   build:  
     runs-on: ubuntu-latest  
     strategy:  
       matrix:  
-        pypy-version: ["pypy3.9", "pypy3.10"]  
+        pypy-version: ["pypy3.9", "pypy3.10"]
   
     steps:  
       - uses: actions/checkout@v4
@@ -24,4 +24,4 @@ jobs:
           if [ -f Requirements.txt ]; then pypy -m pip install -r Requirements.txt; fi  
       - name: Testing
         run: |
-          pypy ./run_tests.py -nl -s -hko
+          pypy ./run_tests.py -nl -s -hko -d -i
