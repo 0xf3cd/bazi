@@ -8,7 +8,7 @@ from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union, 
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
-from .Calendar import CalendarDate, CalendarUtils
+from .Calendar import CalendarDate, HkoDataCalendarUtils
 from .Utils import BaziUtils
 
 
@@ -122,8 +122,8 @@ class Bazi:
     self._birth_time: datetime = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
-    self._solar_birth_date: CalendarDate = CalendarUtils.to_solar(self._birth_time)
-    assert CalendarUtils.is_valid_solar_date(self._solar_birth_date) # Here we are also checking if the date falls into the supported range.
+    self._solar_birth_date: CalendarDate = HkoDataCalendarUtils.to_solar(self._birth_time)
+    assert HkoDataCalendarUtils.is_valid_solar_date(self._solar_birth_date) # Here we are also checking if the date falls into the supported range.
 
     self._hour: int = self._birth_time.hour
     assert self._hour >= 0 and self._hour < 24
@@ -143,14 +143,14 @@ class Bazi:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
 
-    ganzhi_calendardate: CalendarDate = CalendarUtils.to_ganzhi(self._solar_birth_date)
+    ganzhi_calendardate: CalendarDate = HkoDataCalendarUtils.to_ganzhi(self._solar_birth_date)
 
     if self._precision == BaziPrecision.DAY:
       # Figure out the solar date falls into which ganzhi year.
       # Also figure out the Year Ganzhi / Year Pillar (年柱).
       solar_year: int = self._solar_birth_date.year
       lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
-      self._ganzhi_year: int = solar_year if CalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
+      self._ganzhi_year: int = solar_year if HkoDataCalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
       self._year_pillar: Ganzhi = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
 
       # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
@@ -167,7 +167,7 @@ class Bazi:
 
   @property
   def solar_birth_date(self) -> date:
-    return CalendarUtils.to_date(self._solar_birth_date)
+    return HkoDataCalendarUtils.to_date(self._solar_birth_date)
 
   @property
   def hour(self) -> int:

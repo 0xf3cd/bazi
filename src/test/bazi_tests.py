@@ -17,7 +17,7 @@ def run_bazi_tests(expression: Optional[str] = None, slow_tests: bool = False) -
 def run_errorprone_bazi_tests(expression: Optional[str] = None) -> int:
   args: list[str] = [
     os.path.dirname(os.path.realpath(__file__)),
-    '-v',
+    '-q',
     '-x',
     '-m', 'errorprone',
   ]

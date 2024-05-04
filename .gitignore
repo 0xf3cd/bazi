@@ -1,5 +1,6 @@
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
 covhtml/
 output_data/

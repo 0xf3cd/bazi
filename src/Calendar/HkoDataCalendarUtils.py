@@ -6,11 +6,15 @@ import calendar
 from datetime import date, timedelta
 from typing import Union
 
-from .Calendar import CalendarType, CalendarDate
+from .CalendarDefines import CalendarType, CalendarDate
 from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
+from .CalendarUtilsProtocol import CalendarUtilsProtocol
+
 from ..Defines import Ganzhi, Jieqi
 
-class CalendarUtils:
+
+class HkoDataCalendarUtils(CalendarUtilsProtocol):
+  '''The underlying data used in this class is from HkoData.'''
   def __init__(self) -> None:
     raise NotImplementedError('Please use static methods.')
   
@@ -59,9 +63,9 @@ class CalendarUtils:
 
     if d.date_type != CalendarType.SOLAR:
       return False
-    if d < CalendarUtils.get_min_supported_date(CalendarType.SOLAR):
+    if d < HkoDataCalendarUtils.get_min_supported_date(CalendarType.SOLAR):
       return False
-    if d > CalendarUtils.get_max_supported_date(CalendarType.SOLAR):
+    if d > HkoDataCalendarUtils.get_max_supported_date(CalendarType.SOLAR):
       return False
 
     if d.year <= 0:
@@ -100,12 +104,12 @@ class CalendarUtils:
 
     if d.date_type != CalendarType.LUNAR:
       return False
-    if d < CalendarUtils.get_min_supported_date(CalendarType.LUNAR):
+    if d < HkoDataCalendarUtils.get_min_supported_date(CalendarType.LUNAR):
       return False
-    if d > CalendarUtils.get_max_supported_date(CalendarType.LUNAR):
+    if d > HkoDataCalendarUtils.get_max_supported_date(CalendarType.LUNAR):
       return False
     
-    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(d.year)
+    info: LunarYearInfo = HkoDataCalendarUtils.lunar_years_db.get(d.year)
     
     if d.year <= 0:
       return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
@@ -134,9 +138,9 @@ class CalendarUtils:
 
     if d.date_type != CalendarType.GANZHI:
       return False
-    if d < CalendarUtils.get_min_supported_date(CalendarType.GANZHI):
+    if d < HkoDataCalendarUtils.get_min_supported_date(CalendarType.GANZHI):
       return False
-    if d > CalendarUtils.get_max_supported_date(CalendarType.GANZHI):
+    if d > HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI):
       return False
     
     if d.year <= 0:
@@ -146,7 +150,7 @@ class CalendarUtils:
     if d.day < 1 or d.day > 32: # Max gap between Ganzhi months is 32 days.
       return False
     
-    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(d.year)
+    days_counts: list[int] = HkoDataCalendarUtils.days_counts_in_ganzhi_year(d.year)
     if d.day > days_counts[d.month - 1]:
       return False
 
@@ -158,16 +162,16 @@ class CalendarUtils:
       return False
 
     if d.date_type == CalendarType.SOLAR:
-      return CalendarUtils.is_valid_solar_date(d)
+      return HkoDataCalendarUtils.is_valid_solar_date(d)
     elif d.date_type == CalendarType.LUNAR:
-      return CalendarUtils.is_valid_lunar_date(d)
+      return HkoDataCalendarUtils.is_valid_lunar_date(d)
     else:
       assert d.date_type == CalendarType.GANZHI
-      return CalendarUtils.is_valid_ganzhi_date(d)
+      return HkoDataCalendarUtils.is_valid_ganzhi_date(d)
 
   @staticmethod
   def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
-    assert ganzhi_year <= CalendarUtils.get_max_supported_date(CalendarType.GANZHI).year
+    assert ganzhi_year <= HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI).year
 
     jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
     assert jieqi_list[0] == Jieqi.立春 # The first jieqi in every year should be 立春.
@@ -175,11 +179,11 @@ class CalendarUtils:
 
     start_dates: list[date] = []
     for jq in jieqi_list[:11]: # First 11 jieqis are in solar year `ganzhi_year`.
-      start_dates.append(CalendarUtils.jieqi_dates_db.get(ganzhi_year, jq))
+      start_dates.append(HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_year, jq))
     for jq in jieqi_list[11:]: # Last 1 jieqis are in solar year `ganzhi_year + 1`.
-      start_dates.append(CalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, jq))
+      start_dates.append(HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, jq))
     
-    end_dates: list[date] = start_dates[1:] + [CalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
+    end_dates: list[date] = start_dates[1:] + [HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
     days_counts: list[int] = [(end - start).days for start, end in zip(start_dates, end_dates)]
     assert len(days_counts) == 12
 
@@ -188,8 +192,8 @@ class CalendarUtils:
   @staticmethod
   def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
     assert lunar_date.date_type == CalendarType.LUNAR
-    assert CalendarUtils.is_valid(lunar_date)
-    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_date.year)
+    assert HkoDataCalendarUtils.is_valid(lunar_date)
+    info: LunarYearInfo = HkoDataCalendarUtils.lunar_years_db.get(lunar_date.year)
 
     passed_days_count: int = -1
     for month_idx in range(lunar_date.month - 1):
@@ -203,15 +207,15 @@ class CalendarUtils:
   @staticmethod
   def solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
     assert solar_date.date_type == CalendarType.SOLAR
-    assert CalendarUtils.is_valid(solar_date)
+    assert HkoDataCalendarUtils.is_valid(solar_date)
 
     # First, figure out the solar date falls into which lunar year.
     lunar_year: int = solar_date.year
-    info: LunarYearInfo = CalendarUtils.lunar_years_db.get(lunar_year)
+    info: LunarYearInfo = HkoDataCalendarUtils.lunar_years_db.get(lunar_year)
     first_solar_day: date = info['first_solar_day']
     if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day):
       lunar_year -= 1
-      info = CalendarUtils.lunar_years_db.get(lunar_year)
+      info = HkoDataCalendarUtils.lunar_years_db.get(lunar_year)
       first_solar_day = info['first_solar_day']
 
     # Compute how many days have passed since `first_solar_day`.
@@ -230,37 +234,37 @@ class CalendarUtils:
   @staticmethod
   def ganzhi_to_solar(ganzhi_date: CalendarDate) -> CalendarDate:
     assert ganzhi_date.date_type == CalendarType.GANZHI
-    assert CalendarUtils.is_valid(ganzhi_date)
+    assert HkoDataCalendarUtils.is_valid(ganzhi_date)
 
     # Figure out how many days have passed in the ganzhi year.
-    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(ganzhi_date.year)
+    days_counts: list[int] = HkoDataCalendarUtils.days_counts_in_ganzhi_year(ganzhi_date.year)
     passed_days_count: int = 0
     for month_idx in range(ganzhi_date.month - 1):
       passed_days_count += days_counts[month_idx]
     passed_days_count += ganzhi_date.day - 1
 
     # Figure out the solar date.
-    first_solar_date: date = CalendarUtils.jieqi_dates_db.get(ganzhi_date.year, Jieqi.立春)
+    first_solar_date: date = HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_date.year, Jieqi.立春)
     cur_solar_date: date = first_solar_date + timedelta(days=passed_days_count)
     return CalendarDate(cur_solar_date.year, cur_solar_date.month, cur_solar_date.day, CalendarType.SOLAR)
 
   @staticmethod
   def solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
     assert solar_date.date_type == CalendarType.SOLAR
-    assert CalendarUtils.is_valid(solar_date)
+    assert HkoDataCalendarUtils.is_valid(solar_date)
 
     # Figure out the ganzhi date falls into which ganzhi year.
     ganzhi_year: int = solar_date.year
-    first_solar_day: date = CalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+    first_solar_day: date = HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
     if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day): # Falls into the previous ganzhi year.
       ganzhi_year -= 1
-      first_solar_day = CalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+      first_solar_day = HkoDataCalendarUtils.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
 
     # Compute how many days have passed in the ganzhi year.
     passed_days_count: int = (date(solar_date.year, solar_date.month, solar_date.day) - first_solar_day).days
 
     # Then, figure out the ganzhi date falls into which ganzhi month.
-    days_counts: list[int] = CalendarUtils.days_counts_in_ganzhi_year(ganzhi_year)
+    days_counts: list[int] = HkoDataCalendarUtils.days_counts_in_ganzhi_year(ganzhi_year)
     month_idx: int = 0
     while passed_days_count >= days_counts[month_idx]:
       passed_days_count -= days_counts[month_idx]
@@ -272,18 +276,18 @@ class CalendarUtils:
   @staticmethod
   def lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
     assert lunar_date.date_type == CalendarType.LUNAR
-    assert CalendarUtils.is_valid(lunar_date)
+    assert HkoDataCalendarUtils.is_valid(lunar_date)
 
-    solar_date: CalendarDate = CalendarUtils.lunar_to_solar(lunar_date)
-    return CalendarUtils.solar_to_ganzhi(solar_date)
+    solar_date: CalendarDate = HkoDataCalendarUtils.lunar_to_solar(lunar_date)
+    return HkoDataCalendarUtils.solar_to_ganzhi(solar_date)
     
   @staticmethod
   def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
     assert ganzhi_date.date_type == CalendarType.GANZHI
-    assert CalendarUtils.is_valid(ganzhi_date)
+    assert HkoDataCalendarUtils.is_valid(ganzhi_date)
 
-    solar_date: CalendarDate = CalendarUtils.ganzhi_to_solar(ganzhi_date)
-    return CalendarUtils.solar_to_lunar(solar_date)
+    solar_date: CalendarDate = HkoDataCalendarUtils.ganzhi_to_solar(ganzhi_date)
+    return HkoDataCalendarUtils.solar_to_lunar(solar_date)
   
   @staticmethod
   def __to_calendardate(d: Union[date, CalendarDate]) -> CalendarDate:
@@ -293,7 +297,7 @@ class CalendarUtils:
       assert isinstance(d, CalendarDate)
       ret = copy.deepcopy(d)
 
-    assert CalendarUtils.is_valid(ret)
+    assert HkoDataCalendarUtils.is_valid(ret)
     return ret
 
   @staticmethod
@@ -308,15 +312,15 @@ class CalendarUtils:
     Return: (CalendarDate) a converted date with `SOLAR` type.
     '''
 
-    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+    calendardate: CalendarDate = HkoDataCalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
 
     if calendardate.date_type == CalendarType.SOLAR:
       return copy.deepcopy(calendardate)
     elif calendardate.date_type == CalendarType.LUNAR:
-      return CalendarUtils.lunar_to_solar(calendardate)
+      return HkoDataCalendarUtils.lunar_to_solar(calendardate)
     else:
       assert calendardate.date_type == CalendarType.GANZHI
-      return CalendarUtils.ganzhi_to_solar(calendardate)
+      return HkoDataCalendarUtils.ganzhi_to_solar(calendardate)
 
   @staticmethod
   def to_lunar(d: Union[date, CalendarDate]) -> CalendarDate:
@@ -330,15 +334,15 @@ class CalendarUtils:
     Return: (CalendarDate) a converted date with `LUNAR` type.
     '''
 
-    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+    calendardate: CalendarDate = HkoDataCalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
 
     if calendardate.date_type == CalendarType.LUNAR:
       return copy.deepcopy(calendardate)
     elif calendardate.date_type == CalendarType.SOLAR:
-      return CalendarUtils.solar_to_lunar(calendardate)
+      return HkoDataCalendarUtils.solar_to_lunar(calendardate)
     else:
       assert calendardate.date_type == CalendarType.GANZHI
-      return CalendarUtils.ganzhi_to_lunar(calendardate)
+      return HkoDataCalendarUtils.ganzhi_to_lunar(calendardate)
     
   @staticmethod
   def to_ganzhi(d: Union[date, CalendarDate]) -> CalendarDate:
@@ -352,15 +356,15 @@ class CalendarUtils:
     Return: (CalendarDate) a converted date with `GANZHI` type.
     '''
 
-    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+    calendardate: CalendarDate = HkoDataCalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
 
     if calendardate.date_type == CalendarType.GANZHI:
       return copy.deepcopy(calendardate)
     elif calendardate.date_type == CalendarType.SOLAR:
-      return CalendarUtils.solar_to_ganzhi(calendardate)
+      return HkoDataCalendarUtils.solar_to_ganzhi(calendardate)
     else:
       assert calendardate.date_type == CalendarType.LUNAR
-      return CalendarUtils.lunar_to_ganzhi(calendardate)
+      return HkoDataCalendarUtils.lunar_to_ganzhi(calendardate)
 
   @staticmethod
   def to_date(d: Union[date, CalendarDate]) -> date:
@@ -374,6 +378,6 @@ class CalendarUtils:
     Return: (date) a converted date with `date` type.
     '''
 
-    calendardate: CalendarDate = CalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
-    solar_date: CalendarDate = CalendarUtils.to_solar(calendardate)
+    calendardate: CalendarDate = HkoDataCalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
+    solar_date: CalendarDate = HkoDataCalendarUtils.to_solar(calendardate)
     return date(solar_date.year, solar_date.month, solar_date.day)

@@ -1,7 +1,7 @@
 from .test import run_bazi_tests, run_errorprone_bazi_tests
 from .Calendar.HkoData.test import run_hkodata_tests
 
-from .Calendar import Calendar
+from . import Calendar
 
 from . import Defines
 from . import Bazi

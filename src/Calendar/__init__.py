@@ -1,8 +1,8 @@
 from . import HkoData
-from .Calendar import CalendarType, CalendarDate
-from .CalendarUtils import CalendarUtils
+from .CalendarDefines import CalendarType, CalendarDate
+from .HkoDataCalendarUtils import HkoDataCalendarUtils
 
 __all__ = [
   'HkoData',
-  'CalendarType', 'CalendarDate', 'CalendarUtils',
+  'CalendarType', 'CalendarDate', 'HkoDataCalendarUtils',
 ]
