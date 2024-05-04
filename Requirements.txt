@@ -5,3 +5,4 @@ tzdata
 pytest
 ruff
 coverage
+mypy

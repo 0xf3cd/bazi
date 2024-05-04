@@ -168,8 +168,8 @@ class TestCalendarDate(unittest.TestCase):
     )
     for _ in range(512):
       next_date: date = cur_date + timedelta(days=1)
-      c_date1: CalendarDate = CalendarDate(cur_date.year, cur_date.month, cur_date.day, CalendarType.SOLAR)
-      c_date2: CalendarDate = CalendarDate(next_date.year, next_date.month, next_date.day, CalendarType.SOLAR)
+      c_date1 = CalendarDate(cur_date.year, cur_date.month, cur_date.day, CalendarType.SOLAR)
+      c_date2 = CalendarDate(next_date.year, next_date.month, next_date.day, CalendarType.SOLAR)
 
       self.assertTrue(c_date1 < c_date2)
       self.assertTrue(c_date1 <= c_date2)
@@ -218,31 +218,31 @@ class TestCalendarDate(unittest.TestCase):
       with self.assertRaises(TypeError):
         d1 >= d2 # type: ignore
 
-    for d1, d2 in zip(calendar_dates, [date(2024, 1, 1)] * 3):
+    for d1, dt in zip(calendar_dates, [date(2024, 1, 1)] * 3):
       with self.assertRaises(TypeError):
-        d1 == d2 # type: ignore
+        d1 == dt # type: ignore
       with self.assertRaises(TypeError):
-        d1 != d2 # type: ignore
+        d1 != dt # type: ignore
       with self.assertRaises(TypeError):
-        d1 < d2 # type: ignore
+        d1 < dt # type: ignore
       with self.assertRaises(TypeError):
-        d1 <= d2 # type: ignore
+        d1 <= dt # type: ignore
       with self.assertRaises(TypeError):
-        d1 > d2 # type: ignore
+        d1 > dt # type: ignore
       with self.assertRaises(TypeError):
-        d1 >= d2 # type: ignore
+        d1 >= dt # type: ignore
       with self.assertRaises(TypeError):
-        d2 == d1 # type: ignore
+        dt == d1 # type: ignore
       with self.assertRaises(TypeError):
-        d2 != d1 # type: ignore
+        dt != d1 # type: ignore
       with self.assertRaises(TypeError):
-        d2 < d1 # type: ignore
+        dt < d1 # type: ignore
       with self.assertRaises(TypeError):
-        d2 <= d1 # type: ignore
+        dt <= d1 # type: ignore
       with self.assertRaises(TypeError):
-        d2 > d1 # type: ignore
+        dt > d1 # type: ignore
       with self.assertRaises(TypeError):
-        d2 >= d1 # type: ignore
+        dt >= d1 # type: ignore
 
   def test_str_repr(self) -> None:
     random_date_list: list[CalendarDate] = []

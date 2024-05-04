@@ -324,35 +324,35 @@ class BaziChart:
     gender: Union[BaziGender, str], 
     precision: Union[BaziPrecision, str]
   ) -> tuple[datetime, BaziGender, BaziPrecision]:
-    if isinstance(birth_time, datetime):
-      _birth_time: datetime = birth_time
-    else:
-      assert isinstance(birth_time, str)
-      _birth_time: datetime = datetime.fromisoformat(birth_time)
+    
+    assert isinstance(birth_time, (datetime, str))
+    _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
 
     assert _birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
+    _gender: BaziGender
     if isinstance(gender, BaziGender):
-      _gender: BaziGender = gender
+      _gender = gender
     else:
       assert isinstance(gender, str)
       if gender.lower() in ['男', 'male']:
-        _gender: BaziGender = BaziGender.MALE
+        _gender = BaziGender.MALE
       elif gender.lower() in ['女', 'female']:
-        _gender: BaziGender = BaziGender.FEMALE
+        _gender = BaziGender.FEMALE
       else:
         raise ValueError(f'Currently not support gender: {gender}')
 
+    _precision: BaziPrecision
     if isinstance(precision, BaziPrecision):
-      _precision: BaziPrecision = precision
+      _precision = precision
     else:
       assert isinstance(precision, str)
       if precision.lower() in ['分', '分钟', 'm', 'min', 'minute']:
-        _precision: BaziPrecision = BaziPrecision.MINUTE
+        _precision = BaziPrecision.MINUTE
       elif precision.lower() in ['时', '小时', 'h', 'hour']:
-        _precision: BaziPrecision = BaziPrecision.HOUR
+        _precision = BaziPrecision.HOUR
       elif precision.lower() in ['天', '日', 'd', 'day']:
-        _precision: BaziPrecision = BaziPrecision.DAY
+        _precision = BaziPrecision.DAY
       else:
         raise ValueError(f'Unsupported precision: {precision}')
       

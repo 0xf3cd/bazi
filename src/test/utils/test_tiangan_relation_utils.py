@@ -189,22 +189,22 @@ class TestTianganRelationUtils(unittest.TestCase):
         expected = expected_ke
 
       result: list[set[Tiangan]] = []
-      for combo in itertools.combinations(tiangans, 2):
-        if frozenset(combo) in expected:
-          result.append(set(combo))
+      for combo_tuple in itertools.combinations(tiangans, 2):
+        if frozenset(combo_tuple) in expected:
+          result.append(set(combo_tuple))
       return result
 
     for _ in range(500):
       tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
 
-      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.合):
-        self.assertEqual(len(combo), 2)
-        tg1, tg2 = tuple(combo)
+      for combo_fs in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.合):
+        self.assertEqual(len(combo_fs), 2)
+        tg1, tg2 = tuple(combo_fs)
         self.assertIn(tg1.index - tg2.index, [5, -5])
 
-      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.冲):
-        self.assertEqual(len(combo), 2)
-        trait1, trait2 = [BaziUtils.get_tiangan_traits(tg) for tg in combo]
+      for combo_fs in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.冲):
+        self.assertEqual(len(combo_fs), 2)
+        trait1, trait2 = [BaziUtils.get_tiangan_traits(tg) for tg in combo_fs]
         # No Tiangan of `Wuxing.土` is involved in the "Chong" relation.
         self.assertNotEqual(trait1.wuxing, Wuxing.土)
         self.assertNotEqual(trait2.wuxing, Wuxing.土)
@@ -212,32 +212,32 @@ class TestTianganRelationUtils(unittest.TestCase):
         wx1, wx2 = trait1.wuxing, trait2.wuxing
         self.assertTrue(wx1.destructs(wx2) or wx2.destructs(wx1))
 
-      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.生):
-        self.assertEqual(len(combo), 2)
+      for combo_fs in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.生):
+        self.assertEqual(len(combo_fs), 2)
         # We don't care Tiangan's Yinyang when talking about the "Sheng" relation.
-        wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo]
+        wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo_fs]
         self.assertTrue(wx1.generates(wx2) or wx2.generates(wx1))
 
-      for combo in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.克):
-        self.assertEqual(len(combo), 2)
+      for combo_fs in TianganRelationUtils.find_tiangan_combos(tiangans, TianganRelation.克):
+        self.assertEqual(len(combo_fs), 2)
         # We don't care Tiangan's Yinyang when talking about the "Ke" relation.
-        wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo]
+        wx1, wx2 = [BaziUtils.get_tiangan_traits(tg).wuxing for tg in combo_fs]
         self.assertTrue(wx1.destructs(wx2) or wx2.destructs(wx1))
 
     for relation in TianganRelation:
-      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      tiangans = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
       combos1: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans, relation)
       combos2: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans + tiangans, relation)
       self.assertEqual(len(combos1), len(combos2))
-      for combo in combos1:
-        self.assertIn(combo, combos2)
+      for combo_fs in combos1:
+        self.assertIn(combo_fs, combos2)
 
       for _ in range(500):
         combos: list[frozenset[Tiangan]] = TianganRelationUtils.find_tiangan_combos(tiangans, relation)
         expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
         self.assertEqual(len(expected_combos), len(combos))
-        for combo in combos:
-          self.assertIn(combo, expected_combos)
+        for combo_fs in combos:
+          self.assertIn(combo_fs, expected_combos)
 
   def test_he(self) -> None:
     with self.assertRaises(AssertionError):
