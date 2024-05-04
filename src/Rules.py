@@ -483,3 +483,37 @@ class Rules:
       (Dizhi.寅, Dizhi.巳), (Dizhi.卯, Dizhi.辰),
       (Dizhi.申, Dizhi.亥), (Dizhi.酉, Dizhi.戌),
     )])
+
+
+  # The table is used to query the SHENG (生) relation across all Dizhis.
+  # SHENG relation is a uni-directional relation.
+  # Yinyang is not considered in SHENG relation - only Wuxing is considered.
+  # 该表格用于查询地支之间的相生关系。
+  # 相生关系是单向的。如丙寅相生，则是寅木生丙火。
+  # 地支相生不考虑阴阳，只考虑五行。
+  @classproperty
+  def DIZHI_SHENG(self) -> frozenset[tuple[Dizhi, Dizhi]]:
+    dizhi_traits: dict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    ret: list[tuple[Dizhi, Dizhi]] = []
+    for dz1, dz2 in itertools.permutations(Dizhi, 2):
+      trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
+      if trait1.wuxing.generates(trait2.wuxing):
+        ret.append((dz1, dz2))
+    return frozenset(ret)
+  
+
+  # The table is used to query the KE (克) relation across all Dizhis.
+  # KE relation is a uni-directional relation.
+  # Yinyang is not considered in KE relation - only Wuxing is considered.
+  # 该表格用于查询地支之间的相克关系。
+  # 相克关系是单向的。如寅丑相克，则是寅木克丑土。
+  # 地支相克不考虑阴阳，只考虑五行。
+  @classproperty
+  def DIZHI_KE(self) -> frozenset[tuple[Dizhi, Dizhi]]:
+    dizhi_traits: dict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    ret: list[tuple[Dizhi, Dizhi]] = []
+    for dz1, dz2 in itertools.permutations(Dizhi, 2):
+      trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
+      if trait1.wuxing.destructs(trait2.wuxing):
+        ret.append((dz1, dz2))
+    return frozenset(ret)

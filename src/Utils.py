@@ -515,6 +515,7 @@ class DizhiRelationUtils:
     assert isinstance(relation, DizhiRelation), f'Unexpected type of relation: {type(relation)}'
     assert isinstance(dizhis, Sequence), "Non-sequence input loses the info of Dizhis' frequency."
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
+    
     dz_tuple: tuple[Dizhi, ...] = tuple(dizhis)
 
     # TODO: The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
@@ -562,7 +563,10 @@ class DizhiRelationUtils:
     elif relation is DizhiRelation.害:
       return [copy.deepcopy(combo) for combo in Rules.DIZHI_HAI if combo.issubset(dz_tuple)]
 
-    return []
+    # Else, `relation` must be `生` or `克`.
+    assert relation is DizhiRelation.生 or relation is DizhiRelation.克
+    rules: frozenset[tuple[Dizhi, Dizhi]] = Rules.DIZHI_KE if relation is DizhiRelation.克 else Rules.DIZHI_SHENG
+    return [frozenset(combo) for combo in rules if all(dz in dz_tuple for dz in combo)]
 
   @staticmethod
   def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
@@ -867,3 +871,63 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     return frozenset((dz1, dz2)) in Rules.DIZHI_HAI
+
+  @staticmethod
+  def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in SHENG (生) relation. If so, return `True`. If not, return `False`.
+    Yinyang is not checked - only Wuxing is considered.
+    检查输入的地支是否构成生关系。如果是，返回 `True`。否则返回 `False`。
+    相生关系只关注五行，不区分阴阳。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in SHENG (生) relation.
+
+    Examples:
+    - sheng(Dizhi.卯, Dizhi.癸)
+      - return: False
+    - sheng(Dizhi.癸, Dizhi.卯)
+      - return: True
+    - sheng(Dizhi.丑, Dizhi.子)
+      - return: False
+    - sheng(Dizhi.丑, Dizhi.午)
+      - return: False
+    - sheng(Dizhi.午, Dizhi.丑)
+      - return: True
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    return (dz1, dz2) in Rules.DIZHI_SHENG
+  
+  @staticmethod
+  def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in KE (克) relation. If so, return `True`. If not, return `False`.
+    Yinyang is not checked - only Wuxing is considered.
+    检查输入的地支是否构成相克关系。如果是，返回 `True`。否则返回 `False`。
+    相克关系只关注五行，不区分阴阳。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in KE (克) relation.
+
+    Examples:
+    - ke(Dizhi.子, Dizhi.巳)
+      - return: True
+    - ke(Dizhi.巳, Dizhi.子)
+      - return: False
+    - ke(Dizhi.丑, Dizhi.子)
+      - return: True
+    - ke(Dizhi.丑, Dizhi.午)
+      - return: False
+    - ke(Dizhi.午, Dizhi.丑)
+      - return: False
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    return (dz1, dz2) in Rules.DIZHI_KE
