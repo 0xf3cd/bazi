@@ -11,7 +11,6 @@ from typing import Union, Optional, Iterable, Any
 from datetime import date, datetime, timedelta
 
 from src.Defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng, TianganRelation, DizhiRelation
-from src.Calendar import CalendarUtils
 from src.Rules import TraitTuple, HiddenTianganDict, Rules
 from src.Utils import BaziUtils, TianganRelationUtils, DizhiRelationUtils
 
@@ -20,7 +19,7 @@ class TestBaziUtils(unittest.TestCase):
   def test_get_day_ganzhi_basic(self) -> None:
     with self.subTest('Basic'):
       d: date = date(2024, 3, 1)
-      self.assertEqual(BaziUtils.get_day_ganzhi(d), BaziUtils.get_day_ganzhi(CalendarUtils.to_solar(d)))
+      self.assertEqual(BaziUtils.get_day_ganzhi(d), BaziUtils.get_day_ganzhi(d))
 
       dt: datetime = datetime(2024, 3, 1, 15, 34, 6)
       self.assertEqual(BaziUtils.get_day_ganzhi(d), BaziUtils.get_day_ganzhi(dt)) # `BaziUtils.get_day_ganzhi` also takes `datetime` objects.
@@ -42,17 +41,6 @@ class TestBaziUtils(unittest.TestCase):
       for offset in range(-2000, 2000):
         d: date = date(2024, 3, 1) + timedelta(days=offset)
         self.assertEqual(BaziUtils.get_day_ganzhi(d), Ganzhi.list_sexagenary_cycle()[offset % 60])
-
-  def test_get_day_ganzhi_advanced(self) -> None:
-    for d, ganzhi in [
-      (CalendarUtils.to_lunar(date(2024, 3, 1)), Ganzhi.from_str('甲子')),
-      (CalendarUtils.to_ganzhi(date(2024, 3, 1)), Ganzhi.from_str('甲子')),
-      (CalendarUtils.to_lunar(date(1933, 11, 1)), Ganzhi.from_str('辛未')),
-      (CalendarUtils.to_ganzhi(date(1933, 11, 1)), Ganzhi.from_str('辛未')),
-      (CalendarUtils.to_lunar(date(1997, 1, 30)), Ganzhi.from_str('壬申')),
-      (CalendarUtils.to_ganzhi(date(1997, 1, 30)), Ganzhi.from_str('壬申')),
-    ]:
-      self.assertEqual(BaziUtils.get_day_ganzhi(d), ganzhi)
 
   def test_get_jieqi_date(self) -> None:
     self.assertRaises(AssertionError, lambda: BaziUtils.get_jieqi_date_in_solar_year('2024', Jieqi.大寒)) # type: ignore

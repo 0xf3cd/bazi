@@ -20,10 +20,10 @@ if __name__ == '__main__':
   )
 
   import sys
-  sys.path.append(Path(__file__).parent.parent.as_posix())
+  sys.path.append(Path(__file__).parent.parent.parent.as_posix())
   from Defines import Ganzhi
 else:
-  from ..Defines import Ganzhi
+  from ...Defines import Ganzhi
   from .common import (
     START_YEAR, END_YEAR,
     get_data_base_path, get_raw_txt_file_paths, raw_data_ready,

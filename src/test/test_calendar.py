@@ -5,12 +5,12 @@ import pytest
 import unittest
 import random
 import copy
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from itertools import product
 from typing import Any
 
-from src.HkoData import DecodedLunarYears, DecodedJieqiDates
 from src.Calendar import CalendarType, CalendarDate, CalendarUtils
+from src.Calendar.HkoData import DecodedLunarYears, DecodedJieqiDates
 from src.Defines import Jieqi
 
 
@@ -329,13 +329,6 @@ class TestCalendarDate(unittest.TestCase):
       d_copy._date_type = CalendarType.LUNAR
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)
-
-  def test_to_date(self) -> None:
-    d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
-    self.assertEqual(d.to_date(), date(2000, 1, 1))
-
-    d = CalendarDate(1901, 1, 1, CalendarType.LUNAR)
-    self.assertEqual(d.to_date(), date(1901, 2, 19))
 
 
 @pytest.mark.slow
@@ -754,3 +747,22 @@ class TestCalendarUtils(unittest.TestCase):
         CalendarUtils.to_ganzhi(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
       with self.assertRaises(AssertionError):
         CalendarUtils.to_ganzhi('2024-01-01') # type: ignore # Invalid type
+
+  def test_to_date(self) -> None:
+    d = date(2023, 5, 8)
+    self.assertEqual(CalendarUtils.to_date(d), d)
+
+    dt = datetime(2023, 5, 8, 1, 2, 3)
+    self.assertEqual(CalendarUtils.to_date(dt), d)
+
+    cd = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+    self.assertEqual(CalendarUtils.to_date(cd), date(2000, 1, 1))
+
+    cd = CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+    self.assertEqual(CalendarUtils.to_date(cd), date(1901, 2, 19))
+
+    with self.subTest('Negative cases'):
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
+      with self.assertRaises(AssertionError):
+        CalendarUtils.to_date('2024-01-01') # type: ignore # Invalid type

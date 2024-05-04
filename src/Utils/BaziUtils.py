@@ -1,33 +1,34 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
-from datetime import date
+from datetime import date, datetime
 from typing import Union
 
-from .. import HkoData
+from ..Calendar import HkoData
 from ..Defines import Ganzhi, Tiangan, Dizhi, Jieqi, Shishen, Wuxing, Yinyang, ShierZhangsheng
-from ..Calendar import CalendarUtils, CalendarDate
 from ..Rules import TraitTuple, HiddenTianganDict, Rules
 
 
 class BaziUtils:
   @staticmethod
-  def get_day_ganzhi(dt: Union[date, CalendarDate]) -> Ganzhi:
+  def get_day_ganzhi(dt: date) -> Ganzhi:
     '''
     Return the corresponding Ganzhi of the given date in the sexagenary cycle.
     返回输入日期的日柱。
 
     Args:
-    - dt: (Union[date, CalendarDate]) A date in the sexagenary cycle.
+    - dt: (date) A date.
 
     Return: (Ganzhi) The Day Ganzhi (日柱).
     '''
 
-    assert isinstance(dt, (date, CalendarDate))
+    assert isinstance(dt, date)
+    if isinstance(dt, datetime):
+      # `dt` is a datetime object. Convert it to a date object.
+      dt = date(dt.year, dt.month, dt.day)
 
-    solar_date: CalendarDate = CalendarUtils.to_solar(dt)
     jiazi_day_date: date = date(2024, 3, 1) # 2024-03-01 is a day of "甲子".
-    offset: int = (solar_date.to_date() - jiazi_day_date).days
+    offset: int = (dt - jiazi_day_date).days
     return Ganzhi.list_sexagenary_cycle()[offset % 60]
   
   # Save the Jieqi data as a class variable.

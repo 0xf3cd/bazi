@@ -4,7 +4,7 @@
 import unittest
 import random
 from datetime import date, timedelta
-from src import HkoData
+from src.Calendar import HkoData
 from src.Defines import Jieqi, Ganzhi
 
 class TestHkoData(unittest.TestCase):

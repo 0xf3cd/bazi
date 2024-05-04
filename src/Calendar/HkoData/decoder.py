@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import date
 from typing import TypedDict, Optional
 
-from ..Defines import Jieqi, Ganzhi
+from ...Defines import Jieqi, Ganzhi
 from .common import END_YEAR, START_YEAR, get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, date_to_bytes, bytes_to_date, bytes_to_int
 from .encoder import do_encode, encoded_data_ready
 

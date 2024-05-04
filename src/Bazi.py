@@ -150,7 +150,7 @@ class Bazi:
       # Also figure out the Year Ganzhi / Year Pillar (年柱).
       solar_year: int = self._solar_birth_date.year
       lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
-      self._ganzhi_year: int = solar_year if self._solar_birth_date.to_date() >= lichun_date else solar_year - 1
+      self._ganzhi_year: int = solar_year if CalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
       self._year_pillar: Ganzhi = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
 
       # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
@@ -167,7 +167,7 @@ class Bazi:
 
   @property
   def solar_birth_date(self) -> date:
-    return self._solar_birth_date.to_date()
+    return CalendarUtils.to_date(self._solar_birth_date)
 
   @property
   def hour(self) -> int:
