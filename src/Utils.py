@@ -558,6 +558,9 @@ class DizhiRelationUtils:
     
     elif relation is DizhiRelation.破:
       return [copy.deepcopy(combo) for combo in Rules.DIZHI_PO if combo.issubset(dz_tuple)]
+    
+    elif relation is DizhiRelation.害:
+      return [copy.deepcopy(combo) for combo in Rules.DIZHI_HAI if combo.issubset(dz_tuple)]
 
     return []
 
@@ -838,3 +841,29 @@ class DizhiRelationUtils:
 
     assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
     return frozenset((dz1, dz2)) in Rules.DIZHI_PO
+
+  @staticmethod
+  def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
+    '''
+    Check if the input Dizhis are in HAI (害) relation. If so, return `True`. If not, return `False`.
+    检查输入的地支是否构成相害关系。如果是，返回 `True`。否则返回 `False`。
+
+    Args:
+    - dz1: (Dizhi) The first Dizhi.
+    - dz2: (Dizhi) The second Dizhi.
+
+    Return: (bool) Whether the Dizhis form in HAI (害) relation.
+
+    Examples:
+    - hai(Dizhi.卯, Dizhi.辰)
+      - return: True
+    - hai(Dizhi.辰, Dizhi.卯)
+      - return: True
+    - hai(Dizhi.丑, Dizhi.子)
+      - return: False
+    - hai(Dizhi.丑, Dizhi.午)
+      - return: True
+    '''
+
+    assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
+    return frozenset((dz1, dz2)) in Rules.DIZHI_HAI

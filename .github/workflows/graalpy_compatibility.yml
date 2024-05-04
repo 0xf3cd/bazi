@@ -2,14 +2,14 @@ name: Workflow for GraalPy Compatibility - Run Partial Tests with pytest
   
 on:
   push:
-    branches: [ '**' ]
+    branches: [ main ]
 
 jobs:  
   build:  
     runs-on: ubuntu-latest  
     strategy:  
       matrix:  
-        graalpy-version: ["graalpy-23.0", "graalpy-24.0"]  
+        graalpy-version: ["graalpy-23.1.0", "graalpy-24.0.0"]  
   
     steps:  
       - uses: actions/checkout@v4

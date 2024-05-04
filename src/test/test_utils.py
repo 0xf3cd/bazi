@@ -1219,3 +1219,56 @@ class TestDizhiRelationUtils(unittest.TestCase):
     for dz1, dz2 in itertools.product(Dizhi, repeat=2):
       self.assertEqual(DizhiRelationUtils.po(dz1, dz2), DizhiRelationUtils.po(dz2, dz1), 'PO (破) is a bi-directional relation')
       self.assertEqual(DizhiRelationUtils.po(dz1, dz2), set((dz1, dz2)) in po_table)
+
+  @staticmethod
+  def __gen_hai_table() -> set[frozenset[Dizhi]]:
+    ret: set[frozenset[Dizhi]] = set()
+    for dz1, dz2 in itertools.combinations(Dizhi, 2):
+      if DizhiRelationUtils.liuhe(dz1, dz2):
+        dz1_chong: Dizhi = Dizhi.from_index((dz1.index + 6) % 12)
+        dz2_chong: Dizhi = Dizhi.from_index((dz2.index + 6) % 12)
+        ret.add(frozenset((dz1, dz2_chong)))
+        ret.add(frozenset((dz1_chong, dz2)))
+    return ret
+  
+  def test_find_dizhi_combos_hai(self) -> None:
+    hai_set: set[frozenset[Dizhi]] = self.__gen_hai_table()
+
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos([], DizhiRelation.害),
+      [],
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(list(Dizhi), DizhiRelation.害),
+      hai_set,
+    ))
+    self.assertTrue(self.__dz_equal(
+      DizhiRelationUtils.find_dizhi_combos(list(Dizhi), DizhiRelation.害),
+      hai_set,
+    ))
+
+    for _ in range(500):
+      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      result: list[frozenset[Dizhi]] = DizhiRelationUtils.find_dizhi_combos(dizhis, DizhiRelation.害)
+      expected_result: list[frozenset[Dizhi]] = [c for c in hai_set if c.issubset(dizhis)]
+      self.assertTrue(self.__dz_equal(result, expected_result))
+
+  def test_hai(self) -> None:
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.hai(Dizhi.子) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.hai(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.hai((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
+    with self.assertRaises(TypeError):
+      DizhiRelationUtils.hai({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.hai([Dizhi.亥], [Dizhi.丑]) # type: ignore
+    with self.assertRaises(AssertionError):
+      DizhiRelationUtils.hai('亥', '丑') # type: ignore
+
+    hai_set: set[frozenset[Dizhi]] = self.__gen_hai_table()
+
+    for dz1, dz2 in itertools.product(Dizhi, repeat=2):
+      self.assertEqual(DizhiRelationUtils.hai(dz1, dz2), DizhiRelationUtils.hai(dz2, dz1), 'HAI (害) is a bi-directional relation')
+      self.assertEqual(DizhiRelationUtils.hai(dz1, dz2), frozenset((dz1, dz2)) in hai_set)

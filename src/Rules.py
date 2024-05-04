@@ -470,3 +470,16 @@ class Rules:
       (Dizhi.辰, Dizhi.丑), (Dizhi.未, Dizhi.戌),
       (Dizhi.寅, Dizhi.亥), (Dizhi.巳, Dizhi.申),
     )])
+
+
+  # The table is used to query the HAI (害, i.e. 穿) relation across all Dizhis.
+  # HAI relation is a non-directional/mutual relation.
+  # 该表格用于查询地支之间的害（即相穿）。
+  # 相害是无方向的，两个地支之间两两相害。
+  @classproperty
+  def DIZHI_HAI(self) -> frozenset[frozenset[Dizhi]]:
+    return frozenset([frozenset(dz_tuple) for dz_tuple in (
+      (Dizhi.子, Dizhi.未), (Dizhi.丑, Dizhi.午),
+      (Dizhi.寅, Dizhi.巳), (Dizhi.卯, Dizhi.辰),
+      (Dizhi.申, Dizhi.亥), (Dizhi.酉, Dizhi.戌),
+    )])
