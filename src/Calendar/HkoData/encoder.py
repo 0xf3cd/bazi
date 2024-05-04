@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 
 if __name__ == '__main__':
-  from common import (
+  from common import ( # type: ignore # somehow mypy can't find it.
     START_YEAR, END_YEAR,
     get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
     get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
   import sys
   sys.path.append(Path(__file__).parent.parent.parent.as_posix())
-  from Defines import Ganzhi
+  from Defines import Ganzhi # type: ignore # somehow mypy can't find it.
 else:
   from ...Defines import Ganzhi
   from .common import (
@@ -60,16 +60,14 @@ def do_download() -> None:
   to_retry: dict[int, Path] = {}
   for year, txt_path in get_raw_txt_file_paths().items():
     print(f'> Collecting {year}...')
-    success: bool = download_one_year_data(txt_path, year)
-    if not success:
+    if not download_one_year_data(txt_path, year):
       print(f'> Failed to download {year}. Retry later.')
       to_retry[year] = txt_path
 
   if len(to_retry) > 0:
     print(f'> Data for {list(to_retry.keys())} failed to be downloaded. Retrying now...')
     for year in to_retry:
-      success: bool = download_one_year_data(to_retry[year], year)
-      if not success:
+      if not download_one_year_data(to_retry[year], year):
         print(f'> WARNING: Failed to download {year} in the retry attempt.')
 
   assert raw_data_ready(), 'Some data is missing.'

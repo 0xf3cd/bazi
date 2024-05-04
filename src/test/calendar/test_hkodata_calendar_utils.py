@@ -118,7 +118,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       dates.append(jieqi_dates_db.get(year + 1, month_starting_jieqis[-1]))
       dates.append(HkoDataCalendarUtils.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
 
-      days_counts: list[int] = HkoDataCalendarUtils.days_counts_in_ganzhi_year(year)
+      days_counts = HkoDataCalendarUtils.days_counts_in_ganzhi_year(year)
       for idx, (start_date, next_start_date) in enumerate(zip(dates[:-1], dates[1:])):
         days_in_this_month: int = days_counts[idx]
         self.assertEqual(days_in_this_month, (next_start_date - start_date).days)

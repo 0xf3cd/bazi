@@ -584,12 +584,12 @@ class TestBaziChart(unittest.TestCase):
 
     expected_chart: BaziChart = BaziChart.create(now, BaziGender.FEMALE, BaziPrecision.DAY)
     for dt, g, p in product(dt_options, female_options, day_precision_options):
-      chart: BaziChart = BaziChart.create(dt, g, p)
+      chart = BaziChart.create(dt, g, p)
       self.assertEqual(chart.json, expected_chart.json)
     
-    expected_chart: BaziChart = BaziChart.create(now, BaziGender.MALE, BaziPrecision.DAY)
+    expected_chart = BaziChart.create(now, BaziGender.MALE, BaziPrecision.DAY)
     for dt, g, p in product(dt_options, male_options, day_precision_options):
-      chart: BaziChart = BaziChart.create(dt, g, p)
+      chart = BaziChart.create(dt, g, p)
       self.assertEqual(chart.json, expected_chart.json)
 
     unsupported_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']

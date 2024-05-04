@@ -35,7 +35,7 @@ class TestHkoData(unittest.TestCase):
       day=random.randint(1, 28), # Not using 29, 30, or 31 here, to avoid invalid day (e.g. 2024-2-31)
     )
     for _ in range(512):
-      dt: date = dt + timedelta(days=random.randint(1, 3))
+      dt = dt + timedelta(days=random.randint(1, 3))
       dt_bytes: bytes = HkoData.date_to_bytes(dt)
       self.assertEqual(dt, HkoData.bytes_to_date(dt_bytes))
       self.assertEqual(len(dt_bytes), 4, msg=f'expect the length of dt_bytes to be 4, but got {len(dt_bytes)}')

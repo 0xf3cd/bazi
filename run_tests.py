@@ -16,28 +16,36 @@ import colorama
 
 
 # Get the argument from terminal. If `coverage`, then generate coverage report.
-argparse = argparse.ArgumentParser()
-argparse.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
-argparse.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
+argparser = argparse.ArgumentParser()
 
-argparse.add_argument('-nl', '--no-linter', action='store_true', help='Whether or not to skip linting.')
+argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
+argparser.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
+argparser.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
+argparser.add_argument('-ep', '--errorprone-test', type=int, help='Whether or not to rerun errorprone tests.', default=0)
+argparser.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
 
-argparse.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
-argparse.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
-argparse.add_argument('-ep', '--errorprone-test', type=int, help='Whether or not to rerun errorprone tests.', default=0)
-argparse.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
+argparser.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
+argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
-argparse.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
-argparse.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
+argparser.add_argument('-nl', '--no-linter', action='store_true', help='Whether or not to skip linting.')
+argparser.add_argument('-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
 
-args = argparse.parse_args()
-do_cov: bool = args.coverage
-minimum_cov_rate: float = args.coverage_rate
-skip_linter: bool = args.no_linter
+argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
+argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
+
+args = argparser.parse_args()
+
+skip_test: bool = args.no_test
 run_slow_test: bool = args.slow_test
 run_hko_test: bool = args.hkodata_test
 run_errorprone_test_rounds: int = args.errorprone_test
 expression: Optional[str] = args.expression
+
+do_cov: bool = args.coverage
+minimum_cov_rate: float = args.coverage_rate
+skip_linter: bool = args.no_linter
+do_mypy: bool = args.mypy
+
 do_demo: bool = args.demo
 do_interpreter: bool = args.interpreter
 
@@ -53,7 +61,6 @@ def print_sysinfo() -> None:
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
   print(f'-- python version: {sys.version}')
-  print(f'-- python path: {sys.path}')
   print(f'-- default encoding: {sys.getdefaultencoding()}')
 
   print(f'-- pid: {os.getpid()}')
@@ -166,13 +173,13 @@ def run_ruff() -> int:
 def run_proc_and_print(cmds: list[str]) -> int:
   '''This method is mainly for compatability with Windows.'''
   if platform.system() == 'Windows':
-    ret: int = subprocess.run(cmds).returncode
+    return subprocess.run(cmds).returncode
   else:
     proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
     ret: int = proc.returncode
     print(proc.stdout.decode('utf-8'))
     print(proc.stderr.decode('utf-8'))
-  return ret
+    return ret
 
 
 def run_demo() -> int:
@@ -203,16 +210,31 @@ def run_interpreter() -> int:
   return ret
 
 
+def run_mypy() -> int:
+  print('\n' + '#' * term_width)
+  print('>> Running mypy...')
+  ret: int = run_proc_and_print([
+    'python3', '-m', 'mypy', str(Path(__file__).parent)
+  ])
+
+  if ret == 0:
+    print(colorama.Fore.GREEN + '>> Mypy passed!' + colorama.Style.RESET_ALL)
+  else:
+    print(colorama.Fore.RED + '>> Mypy failed!' + colorama.Style.RESET_ALL)
+  return ret
+
+
 def main() -> None:
   start_time: datetime = datetime.now()
   ret_code: int = 0
 
   print_sysinfo()
 
-  if do_cov:
-    ret_code |= run_coverage(run_tests)
-  else:
-    ret_code |= run_tests()
+  if not skip_test:
+    if do_cov:
+      ret_code |= run_coverage(run_tests)
+    else:
+      ret_code |= run_tests()
 
   if do_demo:
     ret_code |= run_demo()
@@ -222,6 +244,9 @@ def main() -> None:
 
   if not skip_linter:
     ret_code |= run_ruff()
+
+  if do_mypy:
+    ret_code |= run_mypy()
 
   print('\n' + '#' * term_width)
   end_time: datetime = datetime.now()

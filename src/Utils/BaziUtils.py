@@ -176,12 +176,15 @@ class BaziUtils:
     assert isinstance(day_master, Tiangan)
     assert isinstance(other, (Tiangan, Dizhi))
 
-    if isinstance(other, Tiangan):
-      other_tg: Tiangan = other
-    else:
-      hidden_tiangans: HiddenTianganDict = BaziUtils.get_hidden_tiangans(other)
-      # Find out the key of the hidden tiangan with the highest percentage (即寻找地支中的主气).
-      other_tg: Tiangan = max(hidden_tiangans.items(), key=lambda pair: pair[1])[0]
+    def __find_tg() -> Tiangan:
+      if isinstance(other, Tiangan):
+        return other
+      else:
+        hidden_tiangans: HiddenTianganDict = BaziUtils.get_hidden_tiangans(other)
+        # Find out the key of the hidden tiangan with the highest percentage (即寻找地支中的主气).
+        return max(hidden_tiangans.items(), key=lambda pair: pair[1])[0]
+    
+    other_tg: Tiangan = __find_tg()
 
     day_master_traits: TraitTuple = BaziUtils.get_tiangan_traits(day_master)
     other_traits: TraitTuple = BaziUtils.get_tiangan_traits(other_tg)
@@ -264,11 +267,9 @@ class BaziUtils:
     tg_yinyang: Yinyang = BaziUtils.get_tiangan_traits(tg).yinyang
     zhangsheng_place: Dizhi = Rules.TIANGAN_ZHANGSHENG[tg]
 
+    offset: int = dz.index - zhangsheng_place.index
     if tg_yinyang is Yinyang.YIN:
-      offset: int = zhangsheng_place.index - dz.index
-    else:
-      assert tg_yinyang is Yinyang.YANG
-      offset: int = dz.index - zhangsheng_place.index
+      offset = zhangsheng_place.index - dz.index
 
     return ShierZhangsheng.from_index(offset % 12)
   

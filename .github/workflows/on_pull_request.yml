@@ -21,10 +21,12 @@ jobs:
         run: |  
           python -m pip install --upgrade pip  
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
-      - name: Testing and linting
+          mypy --disable-error-code=import-untyped .
+          mypy --install-types --non-interactive
+      - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -c -cr 90 -hko -s -ep 10 -d -i
+          ./run_tests.py -c -cr 90 -hko -s -mypy -ep 10 -d -i
 
   test-on-macos:  
     runs-on: macos-latest
@@ -42,10 +44,12 @@ jobs:
         run: |  
           python -m pip install --upgrade pip  
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
-      - name: Testing and linting
+          mypy --disable-error-code=import-untyped .
+          mypy --install-types --non-interactive
+      - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -c -cr 90 -hko -s -ep 10 -d -i
+          ./run_tests.py -c -cr 90 -hko -s -mypy -ep 10 -d -i
   
   test-on-windows:  
     runs-on: windows-latest
@@ -62,9 +66,11 @@ jobs:
       - name: Install dependencies
         run: |  
           python -m pip install --upgrade pip  
-          if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" } 
-      - name: Testing and linting
+          if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" }
+          mypy --disable-error-code=import-untyped .
+          mypy --install-types --non-interactive
+      - name: Testing, linting, and statc type checking
         run: |
           chcp.com 65001
           $env:PYTHONIOENCODING = "utf-8"
-          python ./run_tests.py -c -cr 90 -hko -s -ep 10 -d -i
+          python ./run_tests.py -c -cr 90 -hko -s -mypy -ep 10 -d -i

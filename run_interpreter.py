@@ -20,9 +20,9 @@ def interpret(chart: BaziChart) -> str:
   def __gen_pillar_str(key: str) -> str:
     assert key in ['year', 'month', 'day', 'hour']
     __s: str = ''
-    __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，"
-    __s += '日元' if key == 'day' else j['tiangan_shishens'][key]
-    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishens'][key]}）。"
+    __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，" # type: ignore # mypy complains.
+    __s += '日元' if key == 'day' else j['tiangan_shishens'][key] # type: ignore # mypy complains.
+    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishens'][key]}）。" # type: ignore # mypy complains.
     return __s
   
   s += '\n' + '-' * 60 + '\n'

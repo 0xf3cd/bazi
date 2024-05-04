@@ -21,7 +21,7 @@ class TestBaziUtils(unittest.TestCase):
       self.assertEqual(BaziUtils.get_day_ganzhi(d), BaziUtils.get_day_ganzhi(dt)) # `BaziUtils.get_day_ganzhi` also takes `datetime` objects.
 
     with self.subTest('Correctness'):
-      d: date = date(2024, 3, 1)
+      d = date(2024, 3, 1)
       self.assertEqual(BaziUtils.get_day_ganzhi(d), Ganzhi.from_str('甲子'))
       self.assertEqual(BaziUtils.get_day_ganzhi(d + timedelta(days=1)), Ganzhi.from_str('乙丑'))
       self.assertEqual(BaziUtils.get_day_ganzhi(d - timedelta(days=1)), Ganzhi.from_str('癸亥'))
@@ -35,7 +35,7 @@ class TestBaziUtils(unittest.TestCase):
       self.assertEqual(BaziUtils.get_day_ganzhi(date(2003, 7, 12)), Ganzhi.from_str('丙戌'))
 
       for offset in range(-2000, 2000):
-        d: date = date(2024, 3, 1) + timedelta(days=offset)
+        d = date(2024, 3, 1) + timedelta(days=offset)
         self.assertEqual(BaziUtils.get_day_ganzhi(d), Ganzhi.list_sexagenary_cycle()[offset % 60])
 
   def test_get_jieqi_date(self) -> None:
@@ -106,17 +106,18 @@ class TestBaziUtils(unittest.TestCase):
     self.assertEqual(BaziUtils.get_dizhi_traits(Dizhi('丑')), TraitTuple(Wuxing('土'), Yinyang('阴')))
 
     for idx, dz in enumerate(Dizhi):
+      expected_wuxing: Wuxing
       month_idx: int = (idx - 2) % 12
       if month_idx % 3 == 2:
-        expected_wuxing: Wuxing = Wuxing.土
+        expected_wuxing = Wuxing.土
       elif month_idx < 3:
-        expected_wuxing: Wuxing = Wuxing.木
+        expected_wuxing = Wuxing.木
       elif month_idx < 6:
-        expected_wuxing: Wuxing = Wuxing.火
+        expected_wuxing = Wuxing.火
       elif month_idx < 9:
-        expected_wuxing: Wuxing = Wuxing.金
+        expected_wuxing = Wuxing.金
       else:
-        expected_wuxing: Wuxing = Wuxing.水
+        expected_wuxing = Wuxing.水
       
       expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
       self.assertEqual(BaziUtils.get_dizhi_traits(dz), TraitTuple(expected_wuxing, expected_yinyang))
@@ -235,7 +236,7 @@ class TestBaziUtils(unittest.TestCase):
       zs: ShierZhangsheng = BaziUtils.get_12zhangsheng(tg, dz)
       self.assertEqual(BaziUtils.find_12zhangsheng_dizhi(tg, zs), dz)
     for tg, zs in itertools.product(Tiangan, ShierZhangsheng):
-      dz: Dizhi = BaziUtils.find_12zhangsheng_dizhi(tg, zs)
+      dz: Dizhi = BaziUtils.find_12zhangsheng_dizhi(tg, zs) # type: ignore
       self.assertEqual(BaziUtils.get_12zhangsheng(tg, dz), zs)
 
   def test_get_tiangan_lu(self) -> None:

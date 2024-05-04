@@ -40,7 +40,7 @@ def get_trait_str(s: Union[Tiangan, Dizhi]) -> str:
   return f'{traits.yinyang}{traits.wuxing}'
 
 def get_basic_info(chart: BaziChart) -> str:
-  s: str = '' # The output string.
+  s: str = '\n' # The output string.
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = get_wuxing(bazi.day_master)
   s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_birth_date}\n\n'
@@ -64,7 +64,7 @@ def get_basic_info(chart: BaziChart) -> str:
       tg_shishen: str = colorama.Back.LIGHTBLUE_EX + colorama.Fore.BLACK + '日主' + colorama.Style.RESET_ALL
     else:
       assert shishens[idx].tiangan is not None
-      tg_shishen: str = str(shishens[idx].tiangan)
+      tg_shishen: str = str(shishens[idx].tiangan) # type: ignore # mypy complains.
     dz_shishen: str = str(shishens[idx].dizhi)
 
     hidden_dict: HiddenTianganDict = hidden_tiangans[idx]

@@ -15,9 +15,9 @@ class TestInterpreter(unittest.TestCase):
       keys: list[str] = ['general', 'in_good_status', 'in_bad_status', 'relationship']
       for k in keys:
         self.assertIn(k, result)
-        self.assertIsInstance(result[k], list)
-        self.assertGreaterEqual(len(result[k]), 1)
-        for d in result[k]:
+        self.assertIsInstance(result[k], list) # type: ignore # mypy complains.
+        self.assertGreaterEqual(len(result[k]), 1) # type: ignore # mypy complains.
+        for d in result[k]: # type: ignore # mypy complains.
           self.assertIsInstance(d, str)
           self.assertGreaterEqual(len(d), 1)
 
@@ -33,9 +33,9 @@ class TestInterpreter(unittest.TestCase):
       keys: list[str] = ['general', 'personality']
       for k in keys:
         self.assertIn(k, result)
-        self.assertIsInstance(result[k], list)
-        self.assertGreaterEqual(len(result[k]), 1)
-        for d in result[k]:
+        self.assertIsInstance(result[k], list) # type: ignore # mypy complains.
+        self.assertGreaterEqual(len(result[k]), 1) # type: ignore # mypy complains.
+        for d in result[k]: # type: ignore # mypy complains.
           self.assertIsInstance(d, str)
           self.assertGreaterEqual(len(d), 1)
 

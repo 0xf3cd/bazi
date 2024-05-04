@@ -541,10 +541,10 @@ class TestDizhiRelationUtils(unittest.TestCase):
       self.assertEqual(strict_result, __expected_strict_xing((dz1, dz2)))
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      strict_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple)
+      strict_result4: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple)
       for dz1, dz2, dz3 in itertools.permutations(dz_tuple, 3):
-        self.assertEqual(strict_result, DizhiRelationUtils.xing(dz1, dz2, dz3))
-        self.assertEqual(strict_result, DizhiRelationUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
+        self.assertEqual(strict_result4, DizhiRelationUtils.xing(dz1, dz2, dz3))
+        self.assertEqual(strict_result4, DizhiRelationUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
 
   def test_xing_loose(self) -> None:
     self.assertIsNone(DizhiRelationUtils.xing(definition=Rules.XingDef.LOOSE))
@@ -592,6 +592,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
     for dz in Dizhi:
       self.assertIsNone(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.LOOSE))
 
+    dz_tuple: tuple[Dizhi, ...]
     for dz_tuple in itertools.product(Dizhi, Dizhi):
       loose_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
       if loose_result is Rules.XingSubType.三刑:
@@ -607,13 +608,13 @@ class TestDizhiRelationUtils(unittest.TestCase):
         self.assertNotIn(dz_tuple, zixing_list)
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      loose_result: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
-      if loose_result is None:
+      loose_result2: Optional[Rules.XingSubType] = DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
+      if loose_result2 is None:
         self.assertNotIn(dz_tuple, sanxing_list)
         self.assertNotIn(dz_tuple, zimaoxing_list)
         self.assertNotIn(dz_tuple, zixing_list)
       else:
-        self.assertEqual(loose_result, Rules.XingSubType.三刑)
+        self.assertEqual(loose_result2, Rules.XingSubType.三刑)
         self.assertIn(dz_tuple, sanxing_list)
 
   def test_find_dizhi_combos_chong(self) -> None:
@@ -888,6 +889,7 @@ class TestDizhiRelationUtils(unittest.TestCase):
       result.append(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.STRICT))
       result.append(DizhiRelationUtils.xing(dz, definition=Rules.XingDef.LOOSE))
 
+    dz_tuple: tuple[Dizhi, ...]
     for dz_tuple in itertools.permutations(sorted_dizhis, 2):
       result.append(DizhiRelationUtils.liuhe(*dz_tuple))
       result.append(DizhiRelationUtils.anhe(*dz_tuple, definition=Rules.AnheDef.NORMAL))
@@ -905,10 +907,10 @@ class TestDizhiRelationUtils(unittest.TestCase):
       result.append(DizhiRelationUtils.ke(*dz_tuple))
 
     for dz_tuple in itertools.permutations(sorted_dizhis, 3):
-      result.append(DizhiRelationUtils.sanhui(*dz_tuple))
-      result.append(DizhiRelationUtils.sanhe(*dz_tuple))
-      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT))
-      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE))
+      result.append(DizhiRelationUtils.sanhui(*dz_tuple)) # Mypy complains... # type: ignore
+      result.append(DizhiRelationUtils.sanhe(*dz_tuple)) # Mypy complains... # type: ignore
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT)) # Mypy complains... # type: ignore
+      result.append(DizhiRelationUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)) # Mypy complains... # type: ignore
     
     return result
 
