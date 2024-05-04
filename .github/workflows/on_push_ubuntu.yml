@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |  
           python -m pip install --upgrade pip  
-          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi  
+          if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" } 
       - name: Testing and linting
         run: |
           python ./run_tests.py -ep 3 # Not running slow and hkodata tests. But rerunning errorprone tests.

@@ -78,16 +78,16 @@ def run_tests() -> int:
 
   # Make `bazi` importable from the current directory.
   sys.path.append(str(Path(__file__).parent / 'src'))
-  from src.test import run_bazi_tests # noqa: E402
+  from src import run_bazi_tests # noqa: E402
   ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
 
   if run_hko_test:
     print('\n' + '#' * term_width)
     print('>> Running hkodata tests...')
-    from src.HkoData.test import run_hkodata_tests # noqa: E402
+    from src import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
 
-  from src.test import run_errorprone_bazi_tests # noqa: E402
+  from src import run_errorprone_bazi_tests # noqa: E402
   for round in range(run_errorprone_test_rounds):
     print('\n' + '#' * term_width)
     print(f'>> Rerunning errorprone tests... Round {round + 1}/{run_errorprone_test_rounds}.')
