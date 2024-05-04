@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |  
           python -m pip install --upgrade pip  
-          if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" } 
+          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
       - name: Testing and linting
         run: |
           chmod +x ./run_tests.py
@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |  
           python -m pip install --upgrade pip  
-          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi  
+          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
       - name: Testing and linting
         run: |
           chmod +x ./run_tests.py
@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |  
           python -m pip install --upgrade pip  
-          if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi  
+          if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" } 
       - name: Testing and linting
         run: |
           python ./run_tests.py -c -cr 90 -hko -s -ep 10 -d -i
