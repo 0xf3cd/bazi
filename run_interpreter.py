@@ -64,7 +64,7 @@ def interpret(chart: BaziChart) -> str:
 
 
 def save_knowledge_base() -> None:
-  tg_dir_path: Path = Path(__file__).parent / 'output_data'  / 'knowledge_base ' / 'tiangan'
+  tg_dir_path: Path = Path(__file__).parent / 'output_data'  / 'knowledge_base' / 'tiangan'
   if not tg_dir_path.exists():
     tg_dir_path.mkdir(parents=True)
 
@@ -79,7 +79,7 @@ def save_knowledge_base() -> None:
       f.write('\n'.join(tg_desc['personality']))
       f.write('\n\n')
 
-  ss_dir_path: Path = Path(__file__).parent / 'output_data' / 'knowledge_base ' / 'shishen'
+  ss_dir_path: Path = Path(__file__).parent / 'output_data' / 'knowledge_base' / 'shishen'
   if not ss_dir_path.exists():
     ss_dir_path.mkdir(parents=True)
 

@@ -53,6 +53,9 @@ def print_sysinfo() -> None:
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
   print(f'-- python version: {sys.version}')
+  print(f'-- python path: {sys.path}')
+  print(f'-- default encoding: {sys.getdefaultencoding()}')
+
   print(f'-- pid: {os.getpid()}')
   print(f'-- cwd: {os.getcwd()}')
   print(f'-- node: {platform.node()}')
@@ -78,20 +81,28 @@ def run_tests() -> int:
 
   # Make `bazi` importable from the current directory.
   sys.path.append(str(Path(__file__).parent / 'src'))
-  from src.test import run_bazi_tests # noqa: E402
+  from src import run_bazi_tests # noqa: E402
   ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
 
   if run_hko_test:
     print('\n' + '#' * term_width)
     print('>> Running hkodata tests...')
-    from src.hkodata.test import run_hkodata_tests # noqa: E402
+    from src import run_hkodata_tests # noqa: E402
     ret_code |= run_hkodata_tests(expression=expression)
 
-  if run_errorprone_test_rounds > 0:
+  from src import run_errorprone_bazi_tests # noqa: E402
+  for round in range(run_errorprone_test_rounds):
     print('\n' + '#' * term_width)
-    print(f'>> Rerunning errorprone tests for {run_errorprone_test_rounds} rounds...')
-    from src.test import run_errorprone_bazi_tests # noqa: E402
-    ret_code |= run_errorprone_bazi_tests(expression=expression, repeat=run_errorprone_test_rounds)
+    print(f'>> Rerunning errorprone tests... Round {round + 1}/{run_errorprone_test_rounds}.')
+
+    round_ret_code: int = run_errorprone_bazi_tests(expression=expression)
+    ret_code |= round_ret_code
+
+    if round_ret_code == 0:
+      print(colorama.Fore.GREEN + f'>> Round {round + 1}/{run_errorprone_test_rounds} OK!' + colorama.Style.RESET_ALL)
+    else:
+      print(colorama.Fore.RED + f'>> Round {round + 1}/{run_errorprone_test_rounds} failed! Stopping...' + colorama.Style.RESET_ALL)
+      break
 
   if ret_code != 0:
     # Print in red.
@@ -109,7 +120,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
       '*/__init__.py',
       '*/run_tests.py',
       '*/test/*',
-      'src/hkodata/encoder.py',
+      'src/Calendar/HkoData/encoder.py',
     ]
   )
   cov.start()
