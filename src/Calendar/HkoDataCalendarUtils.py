@@ -381,3 +381,22 @@ class HkoDataCalendarUtils(CalendarUtilsProtocol):
     calendardate: CalendarDate = HkoDataCalendarUtils.__to_calendardate(d) # `calendardate` is already validated.
     solar_date: CalendarDate = HkoDataCalendarUtils.to_solar(calendardate)
     return date(solar_date.year, solar_date.month, solar_date.day)
+
+  @staticmethod
+  def query_jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
+    '''
+    Find out the date of the given Jieqi in the given solar/gregorian year.
+    输入公历年份和节气，返回节气日期。
+
+    Args:
+    - solar_year: (int) The solar year.
+    - jieqi: (Jieqi) The Jieqi.
+
+    Return: (date) The date of the Jieqi in the given solar/gregorian year.
+    '''
+
+    assert isinstance(solar_year, int)
+    assert isinstance(jieqi, Jieqi)
+
+    assert solar_year in HkoDataCalendarUtils.jieqi_dates_db.supported_year_range()
+    return HkoDataCalendarUtils.jieqi_dates_db.get(solar_year, jieqi)

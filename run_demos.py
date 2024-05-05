@@ -15,9 +15,9 @@ from src.Utils import BaziUtils
 def get_wuxing(s: Union[Tiangan, Dizhi]) -> Wuxing:
   assert isinstance(s, (Tiangan, Dizhi))
   if isinstance(s, Dizhi):
-    return BaziUtils.get_dizhi_traits(s).wuxing
+    return BaziUtils.traits(s).wuxing
   else:
-    return BaziUtils.get_tiangan_traits(s).wuxing
+    return BaziUtils.traits(s).wuxing
 
 def colored_str(s: Union[Tiangan, Dizhi]) -> str:
   assert isinstance(s, (Tiangan, Dizhi))
@@ -35,9 +35,9 @@ def colored_str(s: Union[Tiangan, Dizhi]) -> str:
 def get_trait_str(s: Union[Tiangan, Dizhi]) -> str:
   assert isinstance(s, (Tiangan, Dizhi))
   if isinstance(s, Dizhi):
-    traits = BaziUtils.get_dizhi_traits(s)
+    traits = BaziUtils.traits(s)
   else:
-    traits = BaziUtils.get_tiangan_traits(s)
+    traits = BaziUtils.traits(s)
   return f'{traits.yinyang}{traits.wuxing}'
 
 def get_basic_info(chart: BaziChart) -> str:

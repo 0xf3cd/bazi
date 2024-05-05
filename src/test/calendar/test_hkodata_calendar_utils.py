@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_hkodata_calendar_utils.py
 
+import random
 import pytest
 import unittest
 
@@ -446,3 +447,26 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         HkoDataCalendarUtils.to_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
       with self.assertRaises(AssertionError):
         HkoDataCalendarUtils.to_date('2024-01-01') # type: ignore # Invalid type
+
+  def test_get_jieqi_date(self) -> None:
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date('2024', Jieqi.大寒)) # type: ignore
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date(2024, '大寒')) # type: ignore
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date(9999, Jieqi.大寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date(2101, Jieqi.小寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date(0, Jieqi.大寒)) # Out of supported solar year range.
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.query_jieqi_date(1900, Jieqi.冬至)) # Out of supported solar year range.
+
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(1901, Jieqi.小寒), date(1901, 1, 6))
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(2100, Jieqi.冬至), date(2100, 12, 22))
+
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(2024, Jieqi.大寒), date(2024, 1, 20))
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(1997, Jieqi.小寒), date(1997, 1, 5))
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(2000, Jieqi.立春), date(2000, 2, 4))
+    self.assertEqual(HkoDataCalendarUtils.query_jieqi_date(2005, Jieqi.雨水), date(2005, 2, 18))
+
+    random_solar_year: int = random.randint(1901, 2100)
+    dates: list[date] = []
+    for jieqi in [Jieqi.小寒, Jieqi.大寒] + Jieqi.as_list()[:-2]: # The first Jieqi in a solar year is always "小寒".
+      dates.append(HkoDataCalendarUtils.query_jieqi_date(random_solar_year, jieqi))
+    for d1, d2 in zip(dates, dates[1:]):
+      self.assertLess(d1, d2)

@@ -146,9 +146,9 @@ class Bazi:
     # Figure out the solar date falls into which ganzhi year.
     # Also figure out the Year Ganzhi / Year Pillar (年柱).
     solar_year: int = self._solar_birth_date.year
-    lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
+    lichun_date: date = HkoDataCalendarUtils.query_jieqi_date(solar_year, Jieqi.立春)
     self._ganzhi_year: Final[int] = solar_year if HkoDataCalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
-    self._year_pillar: Final[Ganzhi] = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
+    self._year_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_year(self._ganzhi_year)
 
     # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
     self._ganzhi_month: Final[int] = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
@@ -157,7 +157,7 @@ class Bazi:
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     day_offset: int = 0 if self._birth_time.hour < 23 else 1
-    self._day_pillar: Final[Ganzhi] = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
+    self._day_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
@@ -197,8 +197,8 @@ class Bazi:
     Return the 4 Tiangans of Year, Month, Day, and Hour pillars (in that order!).
     返回年、月、日、时的天干。
     '''
-    return (self._year_pillar.tiangan, BaziUtils.find_month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
-            self._day_pillar.tiangan, BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
+    return (self._year_pillar.tiangan, BaziUtils.month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
+            self._day_pillar.tiangan, BaziUtils.hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
   
   @property
   def day_master(self) -> Tiangan:
@@ -226,7 +226,7 @@ class Bazi:
     '''
     Month Pillar is the Ganzhi of the Month (月柱).
     '''
-    month_tiangan: Tiangan = BaziUtils.find_month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
+    month_tiangan: Tiangan = BaziUtils.month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
     return Ganzhi(month_tiangan, self._month_dizhi)
   
   @property
@@ -241,7 +241,7 @@ class Bazi:
     '''
     Hour Pillar is the Ganzhi of the Hour (时柱).
     '''
-    hour_tiangan: Tiangan = BaziUtils.find_hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
+    hour_tiangan: Tiangan = BaziUtils.hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
     return Ganzhi(hour_tiangan, self._hour_dizhi)
   
   @property

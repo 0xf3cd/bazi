@@ -319,8 +319,8 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(traits.hour.dizhi, TraitTuple(Wuxing.木, Yinyang.阳))    # 寅
 
     for pillar, pillar_traits in zip(bazi.pillars, traits):
-      self.assertEqual(BaziUtils.get_tiangan_traits(pillar.tiangan), pillar_traits.tiangan)
-      self.assertEqual(BaziUtils.get_dizhi_traits(pillar.dizhi), pillar_traits.dizhi)
+      self.assertEqual(BaziUtils.tiangan_traits(pillar.tiangan), pillar_traits.tiangan)
+      self.assertEqual(BaziUtils.dizhi_traits(pillar.dizhi), pillar_traits.dizhi)
 
   def test_hidden_tiangans(self) -> None:
     bazi: Bazi = Bazi(
@@ -427,7 +427,7 @@ class TestBaziChart(unittest.TestCase):
       # 地支中的主气（即本气）应该和地支本身的五行一致。
       for pillar_traits, pillar_hidden_tiangans in zip(traits, hidden_tiangans):
         major_tiangan: Tiangan = max(pillar_hidden_tiangans.items(), key=lambda pair: pair[1])[0]
-        self.assertEqual(pillar_traits.dizhi.wuxing, BaziUtils.get_tiangan_traits(major_tiangan).wuxing)
+        self.assertEqual(pillar_traits.dizhi.wuxing, BaziUtils.tiangan_traits(major_tiangan).wuxing)
 
       # Double-check that the shishens are correct.
       # 确保各个天干地支的十神准确。
@@ -435,8 +435,8 @@ class TestBaziChart(unittest.TestCase):
         # Check Dizhi.
         dz_shishen: Shishen = pillar_shishens.dizhi
         dz_traits: TraitTuple = pillar_traits.dizhi
-        self.assertEqual(dz_shishen, BaziUtils.get_shishen(day_master, pillar.dizhi))
-        self.assertEqual(dz_traits, BaziUtils.get_dizhi_traits(pillar.dizhi))
+        self.assertEqual(dz_shishen, BaziUtils.shishen(day_master, pillar.dizhi))
+        self.assertEqual(dz_traits, BaziUtils.dizhi_traits(pillar.dizhi))
 
         # Check Tiangan.
         tg_shishen: Optional[Shishen] = pillar_shishens.tiangan
@@ -445,8 +445,8 @@ class TestBaziChart(unittest.TestCase):
           continue
 
         tg_traits: TraitTuple = pillar_traits.tiangan
-        self.assertEqual(tg_shishen, BaziUtils.get_shishen(day_master, pillar.tiangan))
-        self.assertEqual(tg_traits, BaziUtils.get_tiangan_traits(pillar.tiangan))
+        self.assertEqual(tg_shishen, BaziUtils.shishen(day_master, pillar.tiangan))
+        self.assertEqual(tg_traits, BaziUtils.tiangan_traits(pillar.tiangan))
 
   def test_json(self) -> None:
     for _ in range(64):
