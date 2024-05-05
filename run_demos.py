@@ -7,7 +7,7 @@ import colorama
 
 from src.Bazi import Bazi, BaziChart
 from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
-from src.Rules import HiddenTianganDict
+from src.Common import HiddenTianganDict
 from src.Utils import BaziUtils
 
 

@@ -2,21 +2,9 @@
 
 import itertools
 from enum import Enum
-from typing import NamedTuple
 
-from .Common import classproperty
+from .Common import classproperty, TraitTuple, HiddenTianganDict
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
-
-
-class TraitTuple(NamedTuple):
-  wuxing: Wuxing
-  yinyang: Yinyang
-
-  def __str__(self) -> str:
-    return str(self.yinyang) + str(self.wuxing)
-
-
-HiddenTianganDict = dict[Tiangan, int]
 
 
 '''

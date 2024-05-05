@@ -5,9 +5,9 @@ from typing import Final
 
 from .Bazi import BaziChart
 from .Defines import Shishen, Tiangan
-from .Descriptions import (
-  ShishenDescription, SHISHEN_DESCRIPTIONS, TianganDescription, TIANGAN_DESCRIPTIONS
-)
+from .Common import ShishenDescription, TianganDescription
+from .Descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
+
 
 class Interpreter:
   '''

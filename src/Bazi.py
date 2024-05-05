@@ -5,11 +5,11 @@ import random
 from enum import Enum
 from datetime import date, time, datetime, timedelta
 from typing import (
-  cast, Type, Sequence, Iterator, Optional, Generic, TypeVar, 
+  Type, Sequence, Iterator, Optional, Generic, TypeVar, 
   Union, TypedDict, Final,
 )
 
-from .Rules import TraitTuple, HiddenTianganDict
+from .Common import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
 from .Calendar import CalendarDate, HkoDataCalendarUtils
 from .Utils import BaziUtils
@@ -257,41 +257,6 @@ class Bazi:
     return BaziData(Ganzhi, pillars)
 
 八字 = Bazi
-
-
-class FourPillars(TypedDict):
-  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
-  year:  str
-  month: str
-  day:   str
-  hour:  str
-
-class TgShishens(TypedDict):
-  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
-  year:  str
-  month: str
-  day:   None
-  hour:  str
-
-class DzHiddenTiangans(TypedDict):
-  '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
-  year:  dict[str, int]
-  month: dict[str, int]
-  day:   dict[str, int]
-  hour:  dict[str, int]
-
-class BaziChartJson(TypedDict):
-  birth_time: str
-  gender: str
-  precision: str
-  pillars: FourPillars
-  nayins: FourPillars
-  shier_zhangshengs: FourPillars
-  tiangan_traits: FourPillars
-  tiangan_shishens: TgShishens
-  dizhi_traits: FourPillars
-  dizhi_shishens: TgShishens
-  hidden_tiangans: DzHiddenTiangans
 
 
 TianganDataType = TypeVar('TianganDataType')
@@ -552,8 +517,29 @@ class BaziChart:
     zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.get_12zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
+  
+  class FourPillars(TypedDict):
+    '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
+    year:  str
+    month: str
+    day:   str
+    hour:  str
+
+  class JsonDict(TypedDict):
+    birth_time: str
+    gender: str
+    precision: str
+    pillars: 'BaziChart.FourPillars'
+    nayins: 'BaziChart.FourPillars'
+    shier_zhangshengs: 'BaziChart.FourPillars'
+    tiangan_traits: 'BaziChart.FourPillars'
+    dizhi_traits: 'BaziChart.FourPillars'
+    tiangan_shishens: 'BaziChart.FourPillars'
+    dizhi_shishens: 'BaziChart.FourPillars'
+    hidden_tiangans: 'BaziChart.FourPillars'
+
   @property
-  def json(self) -> BaziChartJson:
+  def json(self) -> JsonDict:
     d: date = self._bazi.solar_birth_date
     dt: datetime = datetime.combine(d, time(self._bazi.hour, self._bazi._minute))
 
@@ -568,22 +554,27 @@ class BaziChart:
       BaziPrecision.MINUTE: 'minute',
     }
 
-    def __prep_hidden_tiangans(h: HiddenTianganDict) -> dict[str, int]:
-      return { str(k) : v for k, v in h.items() }
-
-    keys: list[str] = ['year', 'month', 'day', 'hour']
-    return cast(BaziChartJson, { # TODO: Fix this type casting. It's ugly.
+    def __prep_hidden_tiangans(h: HiddenTianganDict) -> str:
+      str_list: list[str] = [f'{k}:{v}' for k, v in h.items()]
+      str_list = sorted(str_list, key=lambda s: int(s.split(':')[1]), reverse=True)
+      return ','.join(str_list)
+    
+    def __gen_fourpillars(data: list[str]) -> BaziChart.FourPillars:
+      assert len(data) == 4
+      return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+    
+    return {
       'birth_time': dt.isoformat(),
       'gender': gender_strs[self._bazi.gender],
       'precision': precision_strs[self._bazi.precision],
-      'pillars': { k : str(p) for k, p in zip(keys, self._bazi.pillars) },
-      'tiangan_traits': { k : str(t.tiangan) for k, t in zip(keys, self.traits) },
-      'dizhi_traits': { k : str(t.dizhi) for k, t in zip(keys, self.traits) },
-      'hidden_tiangans': { k : __prep_hidden_tiangans(h) for k, h in zip(keys, self.hidden_tiangans) },
-      'tiangan_shishens': { k : str(s.tiangan) if s.tiangan is not None else None for k, s in zip(keys, self.shishens) },
-      'dizhi_shishens': { k : str(s.dizhi) for k, s in zip(keys, self.shishens) },
-      'nayins': { k : n for k, n in zip(keys, self.nayins) },
-      'shier_zhangshengs': { k : str(z) for k, z in zip(keys, self.shier_zhangshengs) },
-    })
+      'pillars': __gen_fourpillars([str(p) for p in self._bazi.pillars]),
+      'nayins': __gen_fourpillars([str(p) for p in self.nayins]),
+      'shier_zhangshengs': __gen_fourpillars([str(sz) for sz in self.shier_zhangshengs]),
+      'tiangan_traits': __gen_fourpillars([str(t.tiangan) for t in self.traits]),
+      'dizhi_traits': __gen_fourpillars([str(t.dizhi) for t in self.traits]),
+      'tiangan_shishens': __gen_fourpillars([str(s.tiangan) for s in self.shishens]),
+      'dizhi_shishens': __gen_fourpillars([str(s.dizhi) for s in self.shishens]),
+      'hidden_tiangans': __gen_fourpillars([__prep_hidden_tiangans(h) for h in self.hidden_tiangans]),
+    }
 
 命盘 = BaziChart
