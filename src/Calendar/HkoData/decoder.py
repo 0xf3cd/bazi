@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# bazi/src/Calendar/HkoData/encoder.py
+# bazi/hko/decoder.py
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 #
 # Decode the encoded data produced by encoder.py.

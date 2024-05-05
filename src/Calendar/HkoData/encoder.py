@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# bazi/src/Calendar/HkoData/encoder.py
+# bazi/hko/encoder.py
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 #
 # Download the raw data from Hong Kong Observatory (hko) and encode the downloaded hko data.
@@ -40,7 +40,7 @@ def download_one_year_data(txt_path: Path, year: int) -> bool:
   response = requests.get(url)
   if response.status_code == 200:
     response.encoding = 'big5'
-    with txt_path.open('w', encoding='utf-8') as f:
+    with txt_path.open('w') as f:
       f.write(response.text) # The file is encoded in utf-8, not big5.
     return True
   return False # Failed to download.
@@ -95,7 +95,7 @@ def extract_from_raw_txts() -> dict[int, list[str]]:
     assert txt_path.exists()
     assert txt_path.is_file()
 
-    with txt_path.open('r', encoding='utf-8') as f:
+    with txt_path.open('r') as f:
       ret[year] = [line for line in f if is_valid_line(line)]
       assert len(ret[year]) in [365, 366], f'Unexpected number of days in {txt_path}.'
     
@@ -149,7 +149,7 @@ def parse_ganzhis_in_lunar_years() -> dict[int, Ganzhi]:
   raw_txt_paths: dict[int, Path] = get_raw_txt_file_paths()
   ret: dict[int, Ganzhi] = {}
   for lunar_year in range(START_YEAR, END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
-    with raw_txt_paths[lunar_year].open('r', encoding='utf-8') as f:
+    with raw_txt_paths[lunar_year].open('r') as f:
       first_line: str = f.readline().strip()
       ganzhi_str: str = first_line.split('(')[-1].split('-')[0].strip()
       ret[lunar_year] = Ganzhi.from_str(ganzhi_str)

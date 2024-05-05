@@ -4,10 +4,7 @@ import copy
 import random
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import (
-  cast, Type, Sequence, Iterator, Optional, Generic, TypeVar, 
-  Union, TypedDict, Final,
-)
+from typing import Type, Sequence, Iterator, Optional, Generic, TypeVar, Union, TypedDict, cast
 
 from .Rules import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
@@ -78,10 +75,10 @@ class BaziData(Generic[T]):
     self._type: Type[T] = generic_type
     
     assert len(data) == 4
-    self._year: Final[T] = copy.deepcopy(data[0])
-    self._month: Final[T] = copy.deepcopy(data[1])
-    self._day: Final[T] = copy.deepcopy(data[2])
-    self._hour: Final[T] = copy.deepcopy(data[3])
+    self._year: T = copy.deepcopy(data[0])
+    self._month: T = copy.deepcopy(data[1])
+    self._day: T = copy.deepcopy(data[2])
+    self._hour: T = copy.deepcopy(data[3])
 
   @property
   def year(self) -> T:
@@ -122,48 +119,51 @@ class Bazi:
     '''
 
     assert isinstance(birth_time, datetime)
-    self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
+    self._birth_time: datetime = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
-    self._solar_birth_date: Final[CalendarDate] = HkoDataCalendarUtils.to_solar(self._birth_time)
+    self._solar_birth_date: CalendarDate = HkoDataCalendarUtils.to_solar(self._birth_time)
     assert HkoDataCalendarUtils.is_valid_solar_date(self._solar_birth_date) # Here we are also checking if the date falls into the supported range.
 
-    self._hour: Final[int] = self._birth_time.hour
+    self._hour: int = self._birth_time.hour
     assert self._hour >= 0 and self._hour < 24
 
-    self._minute: Final[int] = self._birth_time.minute
+    self._minute: int = self._birth_time.minute
     assert self._minute >= 0 and self._minute < 60
 
     assert isinstance(gender, BaziGender)
-    self._gender: Final[BaziGender] = copy.deepcopy(gender)
+    self._gender: BaziGender = copy.deepcopy(gender)
 
     assert isinstance(precision, BaziPrecision)
-    self._precision: Final[BaziPrecision] = copy.deepcopy(precision)
+    self._precision: BaziPrecision = copy.deepcopy(precision)
 
-    # Generate ganzhi-related info.
+    self.__gen_ganzhi_info() # Generate ganzhi-related info.
+
+  def __gen_ganzhi_info(self) -> None:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
 
     ganzhi_calendardate: CalendarDate = HkoDataCalendarUtils.to_ganzhi(self._solar_birth_date)
 
-    # Figure out the solar date falls into which ganzhi year.
-    # Also figure out the Year Ganzhi / Year Pillar (年柱).
-    solar_year: int = self._solar_birth_date.year
-    lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
-    self._ganzhi_year: Final[int] = solar_year if HkoDataCalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
-    self._year_pillar: Final[Ganzhi] = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
+    if self._precision == BaziPrecision.DAY:
+      # Figure out the solar date falls into which ganzhi year.
+      # Also figure out the Year Ganzhi / Year Pillar (年柱).
+      solar_year: int = self._solar_birth_date.year
+      lichun_date: date = BaziUtils.get_jieqi_date_in_solar_year(solar_year, Jieqi.立春)
+      self._ganzhi_year: int = solar_year if HkoDataCalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
+      self._year_pillar: Ganzhi = BaziUtils.get_ganzhi_year_ganzhi(self._ganzhi_year)
 
-    # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
-    self._ganzhi_month: Final[int] = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
-    assert 1 <= self._ganzhi_month <= 12
-    self._month_dizhi: Final[Dizhi] = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
+      # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
+      self._ganzhi_month: int = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
+      assert 1 <= self._ganzhi_month <= 12
+      self._month_dizhi: Dizhi = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
 
-    # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
-    day_offset: int = 0 if self._birth_time.hour < 23 else 1
-    self._day_pillar: Final[Ganzhi] = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
+      # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
+      day_offset: int = 0 if self._birth_time.hour < 23 else 1
+      self._day_pillar: Ganzhi = BaziUtils.get_day_ganzhi(timedelta(days=day_offset) + self._birth_time)
 
-    # Finally, find out the Hour Dizhi (时柱地支).
-    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
+      # Finally, find out the Hour Dizhi (时柱地支).
+      self._hour_dizhi: Dizhi = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
 
   @property
   def solar_birth_date(self) -> date:
@@ -303,8 +303,8 @@ class BaziChart:
     A helper class for storing the data of a Pillar.
     '''
     def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
-      self._tg: Final[TianganDataType] = copy.deepcopy(tg)
-      self._dz: Final[DizhiDataType] = copy.deepcopy(dz)
+      self._tg = copy.deepcopy(tg)
+      self._dz = copy.deepcopy(dz)
 
     @property
     def tiangan(self) -> TianganDataType:
@@ -316,7 +316,7 @@ class BaziChart:
 
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
-    self._bazi: Final[Bazi] = copy.deepcopy(bazi)
+    self._bazi: Bazi = copy.deepcopy(bazi)
 
   @staticmethod
   def __parse_bazi_args(
