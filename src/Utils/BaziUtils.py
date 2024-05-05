@@ -6,7 +6,8 @@ from typing import Union
 
 from ..Calendar import HkoData
 from ..Defines import Ganzhi, Tiangan, Dizhi, Jieqi, Shishen, Wuxing, Yinyang, ShierZhangsheng
-from ..Rules import TraitTuple, HiddenTianganDict, Rules
+from ..Common import TraitTuple, HiddenTianganDict
+from ..Rules import Rules
 
 
 class BaziUtils:

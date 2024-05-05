@@ -5,8 +5,9 @@ from pathlib import Path
 
 from run_demos import get_basic_info
 from src.Bazi import Bazi, BaziChart, BaziChartJson
+from src.Common import ShishenDescription, TianganDescription
 from src.Defines import Tiangan, Shishen
-from src.Interpreter import Interpreter, ShishenDescription, TianganDescription
+from src.Interpreter import Interpreter
 
 
 def interpret(chart: BaziChart) -> str:

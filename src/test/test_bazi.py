@@ -13,7 +13,7 @@ from typing import Optional, Union
 
 from src.Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘, BaziChartJson
-from src.Rules import TraitTuple, HiddenTianganDict
+from src.Common import TraitTuple, HiddenTianganDict
 from src.Utils import BaziUtils
 
 

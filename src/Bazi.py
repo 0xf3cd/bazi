@@ -9,7 +9,7 @@ from typing import (
   Union, TypedDict, Final,
 )
 
-from .Rules import TraitTuple, HiddenTianganDict
+from .Common import TraitTuple, HiddenTianganDict
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng
 from .Calendar import CalendarDate, HkoDataCalendarUtils
 from .Utils import BaziUtils
