@@ -8,7 +8,7 @@ from ..Defines import Dizhi, Wuxing, DizhiRelation
 from ..Rules import Rules
 
 
-class DizhiRelationUtils:
+class DizhiUtils:
   @staticmethod
   def find_dizhi_combos(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> list[frozenset[Dizhi]]:
     '''
@@ -19,22 +19,22 @@ class DizhiRelationUtils:
     - The returned frozensets don't reveal the directions.
     - For example, if the returned value for SHENG relation is [{午, 寅}], then we are unable to infer it is 寅 that generates 午 or 午 that generates 寅.
     - For mutual/non-directional relations (e.g. SANHE, SANHUI, ...), that's fine, because we don't care about the direction.
-    - For uni-directional relations, please use other static methods in this class to check that (e.g. `DizhiRelationUtils.sheng`, `DizhiRelationUtils.ke`, ...). 
+    - For uni-directional relations, please use other static methods in this class to check that (e.g. `DizhiUtils.sheng`, `DizhiUtils.ke`, ...). 
     - For XING relation, it's a bit more complicated.
       - Some definitions require all the Dizhis to appear in order to qualify the SANXING (三刑) relation (a subset of XING).
       - Some definitions consider only two Dizhis appearing a valid XING relation (e.g. only 丑 and 未 can form a XING relation).
       - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that all three Dizhis to present in order to qualify the XING relation.
-      - Use `DizhiRelationUtils.xing` to do more fine-grained checking.
+      - Use `DizhiUtils.xing` to do more fine-grained checking.
     - 返回的 frozensets 中没有体现关系作用的方向。
     - 比如说，如果检查输入地支的相生关系并返回 [{午, 寅}]，那么不能从返回结果中看出是寅生午还是午生寅。
     - 对于无方向的关系来说（合、会），我们不用关心返回结果中的方向。
-    - 对于有方向的关系来说（生、克等），请使用其他静态方法来检查（如 `DizhiRelationUtils.sheng`， `DizhiRelationUtils.ke` 等）。
+    - 对于有方向的关系来说（生、克等），请使用其他静态方法来检查（如 `DizhiUtils.sheng`， `DizhiUtils.ke` 等）。
     - 对于刑关系，更复杂一些：
       - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
       - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
       - 对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。
       - 本方法的实现中，对于丑未戌、寅巳申三刑，需要同时出现三个地支才算相刑。
-      - 请使用 `DizhiRelationUtils.xing` 来进行更细粒度的检查。
+      - 请使用 `DizhiUtils.xing` 来进行更细粒度的检查。
 
     Note:
     - For ANHE relation, the `Rules.AnheDef.NORMAL_EXTENDED` definition is used, as it is the widest definition.

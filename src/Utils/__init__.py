@@ -1,9 +1,9 @@
 from .BaziUtils import BaziUtils
-from .TianganRelationUtils import TianganRelationUtils
-from .DizhiRelationUtils import DizhiRelationUtils
+from .TianganUtils import TianganUtils
+from .DizhiUtils import DizhiUtils
 
 __all__ = [
   'BaziUtils',
-  'TianganRelationUtils',
-  'DizhiRelationUtils',
+  'TianganUtils',
+  'DizhiUtils',
 ]

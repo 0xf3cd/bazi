@@ -7,7 +7,7 @@ from ..Defines import Tiangan, Wuxing, TianganRelation
 from ..Rules import Rules
 
 
-class TianganRelationUtils:
+class TianganUtils:
   @staticmethod
   def find_tiangan_combos(tiangans: Sequence[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
     '''
@@ -18,11 +18,11 @@ class TianganRelationUtils:
     - The returned frozensets don't reveal the directions.
     - For example, if the returned value for SHENG relation is [{甲, 丁}], then we are unable to infer it is 甲 that generates 丁 or 丁 that generates 甲.
     - For mutual/non-directional relations (e.g. HE and CHONG), that's fine, because we don't care about the direction.
-    - For uni-directional relations, please use other static methods in this class to check that (e.g. `TianganRelationUtils.sheng` and `TianganRelationUtils.ke`). 
+    - For uni-directional relations, please use other static methods in this class to check that (e.g. `TianganUtils.sheng` and `TianganUtils.ke`). 
     - 返回的 frozensets 中没有体现关系作用的方向。
     - 比如说，如果检查输入天干的相生关系并返回 [{甲, 丁}]，那么不能从返回结果中看出是甲生丁还是丁生甲。
     - 对于无方向的关系来说（合、冲），我们不用关心返回结果中的方向。
-    - 对于有方向的关系来说（生、克），请使用其他静态方法来检查（如 `TianganRelationUtils.sheng` 和 `TianganRelationUtils.ke`）。
+    - 对于有方向的关系来说（生、克），请使用其他静态方法来检查（如 `TianganUtils.sheng` 和 `TianganUtils.ke`）。
 
     Args:
     - tiangans: (Sequence[Tiangan]) The Tiangans to check.
