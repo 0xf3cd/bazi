@@ -253,7 +253,7 @@ class TestBazi(unittest.TestCase):
 
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
     next_day_pillar: Ganzhi = cycle[(cycle.index(bazi._day_pillar) + 1) % len(cycle)]
-    bazi._day_pillar = next_day_pillar
+    bazi._day_pillar = next_day_pillar # type: ignore
     self.assertNotEqual(bazi._day_pillar, bazi2._day_pillar)
 
 
@@ -282,7 +282,7 @@ class TestBaziChart(unittest.TestCase):
       )
       chart: BaziChart = BaziChart(bazi)
 
-      bazi._day_pillar = Ganzhi.from_str('甲子')
+      bazi._day_pillar = Ganzhi.from_str('甲子') # type: ignore
       self.assertEqual(chart.bazi._day_pillar, Ganzhi.from_str('丙寅'))
       self.assertEqual(bazi._day_pillar, Ganzhi.from_str('甲子'))
 
@@ -606,7 +606,7 @@ class TestBaziChart(unittest.TestCase):
     self.assertIsNot(chart._bazi, chart2._bazi)
 
     old_bazi: Bazi = chart._bazi
-    chart._bazi = BaziChart.random()._bazi
+    chart._bazi = BaziChart.random()._bazi # type: ignore
 
     self.assertIsNot(chart.bazi, old_bazi)
     self.assertIsNot(chart._bazi, old_bazi)

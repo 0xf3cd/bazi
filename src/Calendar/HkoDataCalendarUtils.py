@@ -4,7 +4,7 @@ import copy
 import calendar
 
 from datetime import date, timedelta
-from typing import Union
+from typing import Union, Final
 
 from .CalendarDefines import CalendarType, CalendarDate
 from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
@@ -19,11 +19,11 @@ class HkoDataCalendarUtils(CalendarUtilsProtocol):
     raise NotImplementedError('Please use static methods.')
   
   # Create two databases as class variables, where we can query the Jieqi and Lunar year info.
-  jieqi_dates_db: DecodedJieqiDates = DecodedJieqiDates()
-  lunar_years_db: DecodedLunarYears = DecodedLunarYears()
+  jieqi_dates_db: Final[DecodedJieqiDates] = DecodedJieqiDates()
+  lunar_years_db: Final[DecodedLunarYears] = DecodedLunarYears()
 
   # Store the sexagenary cycle as a class variable.
-  sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+  sexagenary_cycle: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
 
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate:

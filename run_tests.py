@@ -127,7 +127,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
       '*/__init__.py',
       '*/run_tests.py',
       '*/test/*',
-      'src/Calendar/HkoData/encoder.py',
+      'src/Calendar/HkoData/encoder.py', # The raw data already downloaded. No much need to fully test the encoder.
     ]
   )
   cov.start()
