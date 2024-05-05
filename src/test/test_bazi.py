@@ -12,9 +12,12 @@ from itertools import product
 from typing import Optional, Union
 
 from src.Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘
+from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字
 from src.Common import TraitTuple, HiddenTianganDict
 from src.Utils import BaziUtils
+
+from src.Charts import BaziChart
+from src.Charts.BaziChart import 命盘
 
 
 class TestBaziGender(unittest.TestCase):

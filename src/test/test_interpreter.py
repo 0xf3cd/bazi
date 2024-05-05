@@ -5,7 +5,7 @@ import unittest
 
 from src.Common import ShishenDescription, TianganDescription
 from src.Defines import Tiangan, Shishen
-from src.Bazi import BaziChart
+from src.Charts import BaziChart
 from src.Interpreter import Interpreter
 
 class TestInterpreter(unittest.TestCase):

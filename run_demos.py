@@ -5,7 +5,8 @@ from typing import Union
 
 import colorama
 
-from src.Bazi import Bazi, BaziChart
+from src.Bazi import Bazi
+from src.Charts.BaziChart import BaziChart
 from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
 from src.Common import HiddenTianganDict
 from src.Utils import BaziUtils

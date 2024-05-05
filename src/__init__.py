@@ -8,10 +8,12 @@ from . import Defines
 from . import Bazi
 from . import Rules
 from . import Utils
+from . import Charts
 from . import Descriptions
 from . import Interpreter
 
 __all__ = [
   'run_hkodata_tests', 'run_bazi_tests', 'run_errorprone_bazi_tests',
-  'Common', 'Defines', 'Calendar', 'Bazi', 'Rules', 'Utils', 'Descriptions', 'Interpreter',
+  'Common', 'Defines', 'Calendar', 'Bazi', 'Rules', 'Utils', 
+  'Charts', 'Descriptions', 'Interpreter',
 ]

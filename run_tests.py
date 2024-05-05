@@ -218,9 +218,9 @@ def run_mypy() -> int:
   ])
 
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> Mypy passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Mypy failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
