@@ -1,14 +1,21 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import TypeVar, Callable, Generic, Final, NamedTuple, TypedDict
+import copy
+
+from typing import (
+  TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
+  Sequence, Iterator, Type,
+)
 from .Defines import Wuxing, Yinyang, Tiangan
 
-PropertyType = TypeVar('PropertyType')
-class classproperty(Generic[PropertyType]):
-  def __init__(self, func: Callable[..., PropertyType]) -> None:
-    self.fget: Final[Callable[..., PropertyType]] = func
-  def __get__(self, instance, owner) -> PropertyType:
-    return self.fget(owner)
+
+# Decorator for class property.
+ClassPropertyType = TypeVar('ClassPropertyType')
+class classproperty(Generic[ClassPropertyType]):
+  def __init__(self, func: Callable[..., ClassPropertyType]) -> None:
+    self._fget: Final[Callable[..., ClassPropertyType]] = func
+  def __get__(self, instance, owner) -> ClassPropertyType:
+    return self._fget(owner)
 
 
 class TraitTuple(NamedTuple):
@@ -23,6 +30,61 @@ class TraitTuple(NamedTuple):
 # The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
 # 代表地支中的藏干和它们所占的百分比。
 HiddenTianganDict = dict[Tiangan, int]
+
+
+PillarDataType = TypeVar('PillarDataType')
+class BaziData(Generic[PillarDataType]):
+  '''
+  A generic class for storing Bazi data.
+  `PillarDataType` is the type of the data. And a `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
+  '''
+  def __init__(self, generic_type: Type[PillarDataType], data: Sequence[PillarDataType]) -> None:
+    self._type: Final[Type[PillarDataType]] = generic_type
+    
+    assert len(data) == 4
+    self._year: Final[PillarDataType] = copy.deepcopy(data[0])
+    self._month: Final[PillarDataType] = copy.deepcopy(data[1])
+    self._day: Final[PillarDataType] = copy.deepcopy(data[2])
+    self._hour: Final[PillarDataType] = copy.deepcopy(data[3])
+
+  @property
+  def year(self) -> PillarDataType:
+    return copy.deepcopy(self._year)
+
+  @property
+  def month(self) -> PillarDataType:
+    return copy.deepcopy(self._month)
+
+  @property
+  def day(self) -> PillarDataType:
+    return copy.deepcopy(self._day)
+
+  @property
+  def hour(self) -> PillarDataType:
+    return copy.deepcopy(self._hour)
+  
+  def __iter__(self) -> Iterator[PillarDataType]:
+    return iter((self._year, self._month, self._day, self._hour))
+
+
+TianganDataType = TypeVar('TianganDataType')
+DizhiDataType = TypeVar('DizhiDataType')
+class PillarData(Generic[TianganDataType, DizhiDataType]):
+  '''
+  A helper class for storing the data of a Pillar.
+  Can be used with `BaziData` class.
+  '''
+  def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
+    self._tg: Final[TianganDataType] = copy.deepcopy(tg)
+    self._dz: Final[DizhiDataType] = copy.deepcopy(dz)
+
+  @property
+  def tiangan(self) -> TianganDataType:
+    return copy.deepcopy(self._tg)
+  
+  @property
+  def dizhi(self) -> DizhiDataType:
+    return copy.deepcopy(self._dz)
 
 
 class ShishenDescription(TypedDict):

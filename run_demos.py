@@ -77,7 +77,7 @@ def get_basic_info(chart: BaziChart) -> str:
   return s
 
 def demo() -> None:
-  chart: BaziChart = BaziChart.random()
+  chart: BaziChart = BaziChart(Bazi.random())
   info: str = get_basic_info(chart)
   print(info)
   print('\n' + 'chart json:')

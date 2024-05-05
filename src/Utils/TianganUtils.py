@@ -9,7 +9,7 @@ from ..Rules import Rules
 
 class TianganUtils:
   @staticmethod
-  def find_tiangan_combos(tiangans: Sequence[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
+  def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> list[frozenset[Tiangan]]:
     '''
     Find all possible Tiangan combos in the given `tiangans` that satisfy the `relation`.
     返回 `tiangans` 中所有满足该关系的组合。
@@ -31,14 +31,14 @@ class TianganUtils:
     Return: (list[frozenset[Tiangan]]) The result containing all matching Tiangan combos. Note that returned frozensets don't reveal the directions.
 
     Examples:
-    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
+    - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
       - return: [{Tiangan.丙, Tiangan.辛}]
-    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
+    - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
       - return: [{Tiangan.甲, Tiangan.庚}]
-    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
+    - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
       - return: [{Tiangan.甲, Tiangan.丙}, {Tiangan.甲, Tiangan.丁}]
       - Note that the returned frozensets don't contain the direction.
-    - find_tiangan_combos([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
+    - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
       - return: [{Tiangan.甲, Tiangan.庚}, {Tiangan.甲, Tiangan.辛}, {Tiangan.丙, Tiangan.庚}, {Tiangan.丙, Tiangan.辛},
                  {Tiangan.丁, Tiangan.庚}, {Tiangan.丁, Tiangan.辛}]
       - Note that the returned frozensets don't contain the direction.

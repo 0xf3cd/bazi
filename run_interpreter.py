@@ -111,7 +111,7 @@ def save_chart_examples(count: int = 50) -> None:
     dir_path.mkdir(parents=True)
 
   for i in range(count):
-    chart: BaziChart = BaziChart.random()
+    chart: BaziChart = BaziChart(Bazi.random())
     info: str = get_basic_info(chart)
     interpretation: str = interpret(chart)
 
@@ -126,7 +126,7 @@ def save_chart_examples(count: int = 50) -> None:
 
 
 if __name__ == '__main__':
-  chart: BaziChart = BaziChart.random()
+  chart: BaziChart = BaziChart(Bazi.random())
   info: str = get_basic_info(chart)
   interpretation: str = interpret(chart)
 
