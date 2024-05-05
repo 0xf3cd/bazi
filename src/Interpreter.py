@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+from typing import Final
 
 from .Bazi import BaziChart
 from .Defines import Shishen, Tiangan
@@ -37,7 +38,7 @@ class Interpreter:
       AssertionError: If the provided chart is not an instance of BaziChart.
     '''
     assert isinstance(chart, BaziChart)
-    self._chart: BaziChart = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = copy.deepcopy(chart)
 
     # TODO: To be implemented.
 

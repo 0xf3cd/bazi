@@ -2,7 +2,9 @@
 
 import itertools
 from enum import Enum
-from typing import NamedTuple, TypeVar, Callable, Generic
+from typing import NamedTuple
+
+from .Common import classproperty
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
@@ -16,13 +18,6 @@ class TraitTuple(NamedTuple):
 
 HiddenTianganDict = dict[Tiangan, int]
 
-
-PropertyType = TypeVar('PropertyType')
-class classproperty(Generic[PropertyType]):
-  def __init__(self, func: Callable[..., PropertyType]) -> None:
-    self.fget: Callable[..., PropertyType] = func
-  def __get__(self, instance, owner) -> PropertyType:
-    return self.fget(owner)
 
 '''
 TODO:
