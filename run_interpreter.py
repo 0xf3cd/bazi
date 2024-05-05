@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from run_demos import get_basic_info
-from src.Bazi import Bazi, BaziChart, BaziChartJson
+from src.Bazi import Bazi, BaziChart
 from src.Common import ShishenDescription, TianganDescription
 from src.Defines import Tiangan, Shishen
 from src.Interpreter import Interpreter
@@ -12,7 +12,7 @@ from src.Interpreter import Interpreter
 
 def interpret(chart: BaziChart) -> str:
   s: str = '' # The string to return.
-  j: BaziChartJson = chart.json
+  j: BaziChart.JsonDict = chart.json
 
   bazi: Bazi = chart.bazi
   s += f'出生时间：{bazi.solar_birth_date}, {bazi.hour}:{bazi.minute}\n'

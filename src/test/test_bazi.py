@@ -12,7 +12,7 @@ from itertools import product
 from typing import Optional, Union
 
 from src.Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘, BaziChartJson
+from src.Bazi import BaziGender, BaziPrecision, BaziData, Bazi, 八字, BaziChart, 命盘
 from src.Common import TraitTuple, HiddenTianganDict
 from src.Utils import BaziUtils
 
@@ -460,7 +460,7 @@ class TestBaziChart(unittest.TestCase):
         precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
       )
 
-      j: BaziChartJson = chart.json
+      j: BaziChart.JsonDict = chart.json
       j_str: str = json.dumps(j)
       __j: dict = json.loads(j_str)
 
@@ -498,7 +498,7 @@ class TestBaziChart(unittest.TestCase):
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    j: BaziChartJson = chart.json
+    j: BaziChart.JsonDict = chart.json
     j_str: str = json.dumps(j)
     __j: dict = json.loads(j_str)
 
@@ -526,16 +526,16 @@ class TestBaziChart(unittest.TestCase):
     })
 
     self.assertEqual(j['hidden_tiangans'], {
-      'year': { '癸': 100 },
-      'month': { '乙': 100 },
-      'day': { '甲': 60, '丙': 30, '戊': 10 },
-      'hour': { '甲': 60, '丙': 30, '戊': 10 },
+      'year': '癸:100',
+      'month': '乙:100',
+      'day': '甲:60,丙:30,戊:10',
+      'hour': '甲:60,丙:30,戊:10',
     })
 
     self.assertEqual(j['tiangan_shishens'], {
       'year': '偏印',
       'month': '劫财',
-      'day': None,
+      'day': 'None',
       'hour': '偏财',
     })
 
