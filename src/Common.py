@@ -4,7 +4,7 @@ import copy
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type,
+  Sequence, Iterator, Type, Mapping,
 )
 from .Defines import Wuxing, Yinyang, Tiangan
 
@@ -27,16 +27,39 @@ class TraitTuple(NamedTuple):
     return str(self.yinyang) + str(self.wuxing)
 
 
-# The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
-# 代表地支中的藏干和它们所占的百分比。
-HiddenTianganDict = dict[Tiangan, int]
+class HiddenTianganDict(Mapping[Tiangan, int]):
+  '''
+  `HiddenTianganDict` reveals the hidden Tiangans info.
+  The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
+  A `HiddenTianganDict` is simply a `Mapping` with a customized `__str__` function.
+
+  `HiddenTianganDict` 代表了某个地支的藏干和藏干各自所占的百分比。
+  '''
+  def __init__(self, data: Mapping[Tiangan, int]) -> None:
+    self._data: Final[frozenset[tuple[Tiangan, int]]] = frozenset(data.items())
+
+  def __iter__(self) -> Iterator[Tiangan]:
+    return iter(tg for tg, _ in self._data)
+
+  def __len__(self) -> int:
+    return len(self._data)
+
+  def __getitem__(self, key: Tiangan) -> int:
+    for tg, percent in self._data:
+      if tg == key:
+        return percent
+    raise KeyError(f'{key} not found')
+  
+  def __str__(self) -> str:
+    sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
+    return ','.join([f'{k}:{v}' for k, v in sorted_kv])
 
 
 PillarDataType = TypeVar('PillarDataType')
 class BaziData(Generic[PillarDataType]):
   '''
   A generic class for storing Bazi data.
-  `PillarDataType` is the type of the data. And a `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
+  A `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
   '''
   def __init__(self, generic_type: Type[PillarDataType], data: Sequence[PillarDataType]) -> None:
     self._type: Final[Type[PillarDataType]] = generic_type
@@ -85,6 +108,37 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   @property
   def dizhi(self) -> DizhiDataType:
     return copy.deepcopy(self._dz)
+
+
+class BaziJson:
+  '''
+  The class that represents bazi-related charts in JSON format.
+  '''
+
+  class FourPillars(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    year:  str
+    month: str
+    day:   str
+    hour:  str
+
+  @staticmethod
+  def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
+    assert len(data) == 4
+    return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+
+  class BaziChartJsonDict(TypedDict):
+    birth_time: str
+    gender: str
+    precision: str
+    pillars: 'BaziJson.FourPillars'
+    nayins: 'BaziJson.FourPillars'
+    shier_zhangshengs: 'BaziJson.FourPillars'
+    tiangan_traits: 'BaziJson.FourPillars'
+    dizhi_traits: 'BaziJson.FourPillars'
+    tiangan_shishens: 'BaziJson.FourPillars'
+    dizhi_shishens: 'BaziJson.FourPillars'
+    hidden_tiangans: 'BaziJson.FourPillars'
 
 
 class ShishenDescription(TypedDict):

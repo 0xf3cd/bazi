@@ -95,18 +95,18 @@ class Rules:
   @classproperty
   def HIDDEN_TIANGANS(self) -> dict[Dizhi, HiddenTianganDict]:
     return {
-      Dizhi.子 : { Tiangan.癸 : 100 },
-      Dizhi.丑 : { Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 },
-      Dizhi.寅 : { Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10 },
-      Dizhi.卯 : { Tiangan.乙 : 100 },
-      Dizhi.辰 : { Tiangan.戊 : 60, Tiangan.乙 : 30, Tiangan.癸 : 10 },
-      Dizhi.巳 : { Tiangan.丙 : 60, Tiangan.庚 : 30, Tiangan.戊 : 10 },
-      Dizhi.午 : { Tiangan.丁 : 70, Tiangan.己 : 30 },
-      Dizhi.未 : { Tiangan.己 : 60, Tiangan.丁 : 30, Tiangan.乙 : 10 },
-      Dizhi.申 : { Tiangan.庚 : 60, Tiangan.壬 : 30, Tiangan.戊 : 10 },
-      Dizhi.酉 : { Tiangan.辛 : 100 },
-      Dizhi.戌 : { Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 },
-      Dizhi.亥 : { Tiangan.壬 : 70, Tiangan.甲 : 30 },
+      Dizhi.子 : HiddenTianganDict({ Tiangan.癸 : 100 }),
+      Dizhi.丑 : HiddenTianganDict({ Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 }),
+      Dizhi.寅 : HiddenTianganDict({ Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10 }),
+      Dizhi.卯 : HiddenTianganDict({ Tiangan.乙 : 100 }),
+      Dizhi.辰 : HiddenTianganDict({ Tiangan.戊 : 60, Tiangan.乙 : 30, Tiangan.癸 : 10 }),
+      Dizhi.巳 : HiddenTianganDict({ Tiangan.丙 : 60, Tiangan.庚 : 30, Tiangan.戊 : 10 }),
+      Dizhi.午 : HiddenTianganDict({ Tiangan.丁 : 70, Tiangan.己 : 30 }),
+      Dizhi.未 : HiddenTianganDict({ Tiangan.己 : 60, Tiangan.丁 : 30, Tiangan.乙 : 10 }),
+      Dizhi.申 : HiddenTianganDict({ Tiangan.庚 : 60, Tiangan.壬 : 30, Tiangan.戊 : 10 }),
+      Dizhi.酉 : HiddenTianganDict({ Tiangan.辛 : 100 }),
+      Dizhi.戌 : HiddenTianganDict({ Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 }),
+      Dizhi.亥 : HiddenTianganDict({ Tiangan.壬 : 70, Tiangan.甲 : 30 }),
     }
 
 

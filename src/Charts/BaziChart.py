@@ -1,12 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
-from datetime import date, time, datetime
-from typing import Optional, TypedDict, Final
+from typing import Optional, Final
 
-from ..Common import TraitTuple, HiddenTianganDict, BaziData, PillarData
+from ..Common import TraitTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
 from ..Defines import Tiangan, Shishen, ShierZhangsheng
-from ..Bazi import Bazi, BaziGender, BaziPrecision
+from ..Bazi import Bazi
 from ..Utils import BaziUtils
 
 class BaziChart:
@@ -154,64 +153,27 @@ class BaziChart:
     zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
-  
-  class FourPillars(TypedDict):
-    '''Not expected to be accessed directly. Used in `BaziChartJson`.'''
-    year:  str
-    month: str
-    day:   str
-    hour:  str
-
-  class JsonDict(TypedDict):
-    birth_time: str
-    gender: str
-    precision: str
-    pillars: 'BaziChart.FourPillars'
-    nayins: 'BaziChart.FourPillars'
-    shier_zhangshengs: 'BaziChart.FourPillars'
-    tiangan_traits: 'BaziChart.FourPillars'
-    dizhi_traits: 'BaziChart.FourPillars'
-    tiangan_shishens: 'BaziChart.FourPillars'
-    dizhi_shishens: 'BaziChart.FourPillars'
-    hidden_tiangans: 'BaziChart.FourPillars'
 
   @property
-  def json(self) -> JsonDict:
-    d: date = self._bazi.solar_birth_date
-    dt: datetime = datetime.combine(d, time(self._bazi.hour, self._bazi._minute))
+  def json(self) -> BaziJson.BaziChartJsonDict:
+    '''
+    A json dict representing the `BaziChart`.
+    代表此 `BaziChart` 的 json 字典。
+    '''
 
-    gender_strs: dict[BaziGender, str] = {
-      BaziGender.男: 'male',
-      BaziGender.女: 'female',
-    }
-
-    precision_strs: dict[BaziPrecision, str] = {
-      BaziPrecision.DAY: 'day',
-      BaziPrecision.HOUR: 'hour',
-      BaziPrecision.MINUTE: 'minute',
-    }
-
-    def __prep_hidden_tiangans(h: HiddenTianganDict) -> str:
-      str_list: list[str] = [f'{k}:{v}' for k, v in h.items()]
-      str_list = sorted(str_list, key=lambda s: int(s.split(':')[1]), reverse=True)
-      return ','.join(str_list)
-    
-    def __gen_fourpillars(data: list[str]) -> BaziChart.FourPillars:
-      assert len(data) == 4
-      return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
-    
+    f = BaziJson.gen_fourpillars
     return {
-      'birth_time': dt.isoformat(),
-      'gender': gender_strs[self._bazi.gender],
-      'precision': precision_strs[self._bazi.precision],
-      'pillars': __gen_fourpillars([str(p) for p in self._bazi.pillars]),
-      'nayins': __gen_fourpillars([str(p) for p in self.nayins]),
-      'shier_zhangshengs': __gen_fourpillars([str(sz) for sz in self.shier_zhangshengs]),
-      'tiangan_traits': __gen_fourpillars([str(t.tiangan) for t in self.traits]),
-      'dizhi_traits': __gen_fourpillars([str(t.dizhi) for t in self.traits]),
-      'tiangan_shishens': __gen_fourpillars([str(s.tiangan) for s in self.shishens]),
-      'dizhi_shishens': __gen_fourpillars([str(s.dizhi) for s in self.shishens]),
-      'hidden_tiangans': __gen_fourpillars([__prep_hidden_tiangans(h) for h in self.hidden_tiangans]),
+      'birth_time': self._bazi.solar_datetime.isoformat(),
+      'gender': str(self._bazi.gender),
+      'precision': str(self._bazi.precision),
+      'pillars': f([str(p) for p in self._bazi.pillars]),
+      'nayins': f([str(ny) for ny in self.nayins]),
+      'shier_zhangshengs': f([str(sz) for sz in self.shier_zhangshengs]),
+      'tiangan_traits': f([str(t.tiangan) for t in self.traits]),
+      'dizhi_traits': f([str(t.dizhi) for t in self.traits]),
+      'tiangan_shishens': f([str(s.tiangan) for s in self.shishens]),
+      'dizhi_shishens': f([str(s.dizhi) for s in self.shishens]),
+      'hidden_tiangans': f([str(h) for h in self.hidden_tiangans]),
     }
 
 原盘 = BaziChart

@@ -29,10 +29,19 @@ class TestBaziGender(unittest.TestCase):
     self.assertIs(BaziGender.YIN, BaziGender.坤)
 
   def test_str(self) -> None:
-    self.assertEqual(str(BaziGender.YANG), '男')
-    self.assertEqual(str(BaziGender.YIN), '女')
+    self.assertEqual(str(BaziGender.YANG), 'male')
+    self.assertEqual(str(BaziGender.YIN), 'female')
     self.assertIs(BaziGender.YANG, BaziGender('男'))
     self.assertIs(BaziGender.YIN, BaziGender('女'))
+
+
+class TestBaziPrecision(unittest.TestCase):
+  def test_basic(self) -> None:
+    self.assertEqual(len(BaziPrecision), 3)
+
+    self.assertEqual(str(BaziPrecision.DAY), 'day')
+    self.assertEqual(str(BaziPrecision.HOUR), 'hour')
+    self.assertEqual(str(BaziPrecision.MINUTE), 'minute')
 
 
 class TestBazi(unittest.TestCase):
@@ -53,7 +62,7 @@ class TestBazi(unittest.TestCase):
         precision=BaziPrecision.DAY,
       )
 
-      self.assertEqual(bazi.solar_birth_date, date(random_dt.year, random_dt.month, random_dt.day))
+      self.assertEqual(bazi.solar_date, date(random_dt.year, random_dt.month, random_dt.day))
       self.assertEqual(bazi.hour, random_dt.hour)
       self.assertEqual(bazi.minute, random_dt.minute)
       self.assertEqual(bazi.gender, BaziGender.男)
@@ -78,7 +87,7 @@ class TestBazi(unittest.TestCase):
         precision=BaziPrecision.DAY,
       )
 
-      self.assertEqual(bazi.solar_birth_date, date(random_dt.year, random_dt.month, random_dt.day))
+      self.assertEqual(bazi.solar_date, date(random_dt.year, random_dt.month, random_dt.day))
       self.assertEqual(bazi.hour, random_dt.hour)
       self.assertEqual(bazi.minute, random_dt.minute)
       self.assertEqual(bazi.gender, BaziGender.男)
@@ -196,6 +205,23 @@ class TestBazi(unittest.TestCase):
     __subtest(datetime(1984, 4, 2, 4, 2), ['甲', '丁', '丙', '庚'])
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚', '戊', '壬', '辛'])
     __subtest(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
+
+  def test_date_time(self) -> None:
+    bazi: Bazi = self.__create_bazi(datetime(1984, 4, 2, 4, 2))
+    self.assertEqual(bazi.solar_date, date(1984, 4, 2))
+    self.assertEqual(bazi.hour, 4)
+    self.assertEqual(bazi.minute, 2)
+    self.assertEqual(bazi.solar_datetime, datetime(1984, 4, 2, 4, 2))
+
+    random_bazi: Bazi = Bazi.random()
+    with self.assertRaises(AttributeError):
+      random_bazi.solar_date = date(1984, 4, 3) # type: ignore
+    with self.assertRaises(AttributeError):
+      random_bazi.hour = 9 # type: ignore
+    with self.assertRaises(AttributeError):
+      random_bazi.minute = 8 # type: ignore
+    with self.assertRaises(AttributeError):
+      random_bazi.solar_datetime = datetime(1984, 4, 3, 9, 8) # type: ignore
   
   def test_chart(self) -> None:
     def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
@@ -242,7 +268,7 @@ class TestBazi(unittest.TestCase):
     )
     bazi2: Bazi = copy.deepcopy(bazi)
 
-    self.assertIsNot(bazi._solar_birth_date, bazi2._solar_birth_date)
+    self.assertIsNot(bazi._solar_date, bazi2._solar_date)
     self.assertIsNot(bazi._year_pillar, bazi2._year_pillar)
 
     self.assertIsNot(bazi._day_pillar, bazi2._day_pillar)
@@ -281,7 +307,7 @@ class TestBazi(unittest.TestCase):
       self.assertListEqual(list(bazi.pillars), list(expected_bazi.pillars))
       self.assertEqual(bazi.gender, expected_bazi.gender)
       self.assertEqual(bazi.precision, expected_bazi.precision)
-      self.assertEqual(bazi.solar_birth_date, expected_bazi.solar_birth_date)
+      self.assertEqual(bazi.solar_date, expected_bazi.solar_date)
       self.assertEqual(bazi.hour, expected_bazi.hour)
       self.assertEqual(bazi.minute, expected_bazi.minute)
     
@@ -291,7 +317,7 @@ class TestBazi(unittest.TestCase):
       self.assertListEqual(list(bazi.pillars), list(expected_bazi.pillars))
       self.assertEqual(bazi.gender, expected_bazi.gender)
       self.assertEqual(bazi.precision, expected_bazi.precision)
-      self.assertEqual(bazi.solar_birth_date, expected_bazi.solar_birth_date)
+      self.assertEqual(bazi.solar_date, expected_bazi.solar_date)
       self.assertEqual(bazi.hour, expected_bazi.hour)
       self.assertEqual(bazi.minute, expected_bazi.minute)
 

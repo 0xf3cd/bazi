@@ -11,7 +11,7 @@ from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, Bazi
-from src.Common import TraitTuple, HiddenTianganDict, BaziData
+from src.Common import TraitTuple, HiddenTianganDict, BaziData, BaziJson
 from src.Utils import BaziUtils
 
 from src.Charts import BaziChart
@@ -91,16 +91,16 @@ class TestBaziChart(unittest.TestCase):
 
     self.assertEqual(len(list(hidden_tiangans)), 4)
 
-    self.assertDictEqual(hidden_tiangans.year, {  # 子
+    self.assertDictEqual(dict(hidden_tiangans.year), {  # 子
       Tiangan.癸 : 100,
     })
-    self.assertDictEqual(hidden_tiangans.month, { # 卯
+    self.assertDictEqual(dict(hidden_tiangans.month), { # 卯
       Tiangan.乙 : 100,
     })
-    self.assertDictEqual(hidden_tiangans.day, {   # 寅
+    self.assertDictEqual(dict(hidden_tiangans.day), {   # 寅
       Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
     })
-    self.assertDictEqual(hidden_tiangans.hour, {  # 寅
+    self.assertDictEqual(dict(hidden_tiangans.hour), {  # 寅
       Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
     })
 
@@ -221,7 +221,7 @@ class TestBaziChart(unittest.TestCase):
         precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
       ))
 
-      j: BaziChart.JsonDict = chart.json
+      j: BaziJson.BaziChartJsonDict = chart.json
       j_str: str = json.dumps(j)
       __j: dict = json.loads(j_str)
 
@@ -261,7 +261,7 @@ class TestBaziChart(unittest.TestCase):
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    j: BaziChart.JsonDict = chart.json
+    j: BaziJson.BaziChartJsonDict = chart.json
     j_str: str = json.dumps(j)
     __j: dict = json.loads(j_str)
 
