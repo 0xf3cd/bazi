@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import functools
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
@@ -12,10 +13,38 @@ from .Defines import Wuxing, Yinyang, Tiangan
 # Decorator for class property.
 ClassPropertyType = TypeVar('ClassPropertyType')
 class classproperty(Generic[ClassPropertyType]):
-  def __init__(self, func: Callable[..., ClassPropertyType]) -> None:
-    self._fget: Final[Callable[..., ClassPropertyType]] = func
+  def __init__(self, fget: Callable[..., ClassPropertyType]) -> None:
+    self._fget: Final[Callable[..., ClassPropertyType]] = fget
   def __get__(self, instance, owner) -> ClassPropertyType:
+    if self._fget.__code__.co_argcount == 0:
+      return self._fget()
     return self._fget(owner)
+
+
+class cached_classproperty(Generic[ClassPropertyType]):
+  def __init__(self, func: Callable[..., ClassPropertyType]) -> None:
+    self._takes_arg: Final[bool] = func.__code__.co_argcount > 0
+    self._fget: Final[Callable[..., ClassPropertyType]] = functools.cache(func)
+  def __get__(self, instance, owner) -> ClassPropertyType:
+    if self._takes_arg:
+      return self._fget(owner)
+    return self._fget()
+
+
+FrozenDictKeyType = TypeVar('FrozenDictKeyType')
+FrozenDictValueType = TypeVar('FrozenDictValueType')
+class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
+  '''
+  My simple implementation of a frozen, immutable dict.
+  '''
+  def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
+    self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = copy.deepcopy(data)
+  def __getitem__(self, key: FrozenDictKeyType) -> FrozenDictValueType:
+    return self._data[key]
+  def __iter__(self) -> Iterator[FrozenDictKeyType]:
+    return iter(self._data)
+  def __len__(self) -> int:
+    return len(self._data)
 
 
 class TraitTuple(NamedTuple):
@@ -27,29 +56,14 @@ class TraitTuple(NamedTuple):
     return str(self.yinyang) + str(self.wuxing)
 
 
-class HiddenTianganDict(Mapping[Tiangan, int]):
+class HiddenTianganDict(frozendict[Tiangan, int]):
   '''
   `HiddenTianganDict` reveals the hidden Tiangans info.
   The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
-  A `HiddenTianganDict` is simply a `Mapping` with a customized `__str__` function.
+  A `HiddenTianganDict` is simply a `frozetndict` with a customized `__str__` function.
 
   `HiddenTianganDict` 代表了某个地支的藏干和藏干各自所占的百分比。
   '''
-  def __init__(self, data: Mapping[Tiangan, int]) -> None:
-    self._data: Final[frozenset[tuple[Tiangan, int]]] = frozenset(data.items())
-
-  def __iter__(self) -> Iterator[Tiangan]:
-    return iter(tg for tg, _ in self._data)
-
-  def __len__(self) -> int:
-    return len(self._data)
-
-  def __getitem__(self, key: Tiangan) -> int:
-    for tg, percent in self._data:
-      if tg == key:
-        return percent
-    raise KeyError(f'{key} not found')
-  
   def __str__(self) -> str:
     sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
     return ','.join([f'{k}:{v}' for k, v in sorted_kv])

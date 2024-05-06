@@ -4,6 +4,7 @@ import copy
 from collections import Counter
 from typing import Sequence, Optional
 
+from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
 from ..Rules import Rules
 
@@ -353,7 +354,7 @@ class DizhiUtils:
     assert 0 <= len(dizhis) <= 3
     assert isinstance(definition, Rules.XingDef)
 
-    xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
+    xing_rules: frozendict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
     return xing_rules.get(dizhis, None)
 
   @staticmethod
