@@ -1,11 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import random
+
 from enum import Enum
-from datetime import date, datetime, timedelta
-from typing import (
-  Type, Sequence, Iterator, Generic, TypeVar, Final,
-)
+from datetime import date, time, datetime, timedelta
+from typing import Final, Union
 
 from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
 from .Calendar import CalendarDate, HkoDataCalendarUtils
@@ -33,7 +33,12 @@ class BaziGender(Enum):
   坤 = YIN
 
   def __str__(self) -> str:
-    return str(self.value)
+    if self is self.MALE:
+      return 'male'
+    else:
+      assert self is self.FEMALE
+      return 'female'
+
 
 
 class BaziPrecision(Enum):
@@ -65,52 +70,43 @@ class BaziPrecision(Enum):
   HOUR   = 1
   MINUTE = 2
 
-T = TypeVar('T')
-class BaziData(Generic[T]):
-  '''
-  A generic class for storing Bazi data.
-  T is the type of the data. And a `BaziData` object stores 4 T objects for year, month, day, and hour.
-  '''
-  def __init__(self, generic_type: Type[T], data: Sequence[T]) -> None:
-    self._type: Type[T] = generic_type
-    
-    assert len(data) == 4
-    self._year: Final[T] = copy.deepcopy(data[0])
-    self._month: Final[T] = copy.deepcopy(data[1])
-    self._day: Final[T] = copy.deepcopy(data[2])
-    self._hour: Final[T] = copy.deepcopy(data[3])
-
-  @property
-  def year(self) -> T:
-    return copy.deepcopy(self._year)
-
-  @property
-  def month(self) -> T:
-    return copy.deepcopy(self._month)
-
-  @property
-  def day(self) -> T:
-    return copy.deepcopy(self._day)
-
-  @property
-  def hour(self) -> T:
-    return copy.deepcopy(self._hour)
-  
-  def __iter__(self) -> Iterator[T]:
-    return iter((self._year, self._month, self._day, self._hour))
+  def __str__(self) -> str:
+    if self is self.DAY:
+      return 'day'
+    elif self is self.HOUR:
+      return 'hour'
+    else:
+      assert self is self.MINUTE
+      return 'minute'
 
 
 class Bazi:
   '''
-  Bazi (八字) is not aware of the timezone. We don't care abot the timezone when creating a Bazi object.
-  Timezone should be well-processed outside of this class.
+  `Bazi` (八字) is the class that only stores very basic information.
+  A `Bazi` object stores 4 pillars of year, month, day, and hour.
+  For all other information (transits / shishen / ...), please see `src/Charts` (e.g. `BaziChart`).
 
-  ATTENTION: this class does not know anything about timezone. 
+  八字是仅存储基本信息的类。一个 `Bazi` 对象存储着年、月、日、时的四柱八个字。
+  对于其他信息（流年大运 / 十神等），请参阅 `src/Charts`（例如 `BaziChart`）。
+
+  Note:
+  - We don't care about the timezone. `Bazi` knows nothing about timezone.
+  - We don't care about the true solar time / daylight saving time - it should be well-processed outside of this class.
+  - `Bazi` 不考虑时差。时差需要在外部处理。
+  - `Bazi` 不考虑真太阳时和夏令时。这些时间需要在外部处理。
   '''
 
   def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> None:
     '''
-    Input the birth time. We don't care about the timezone.
+    `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birt time and gender as input, 
+    and figures out the pillars of year, month, day, and hour.
+    `Bazi` 接受出生时间和性别作为输入，计算年、月、日、时的八字。
+    
+    Note:
+    - We don't care about the timezone. `Bazi` knows nothing about timezone.
+    - We don't care about the true solar time / daylight saving time - it should be well-processed outside of this class.
+    - `Bazi` 不考虑时差。时差需要在外部处理。
+    - `Bazi` 不考虑真太阳时和夏令时。这些时间需要在外部处理。
     
     Args:
     - birth_time: (datetime) The birth date (in Georgian calendar) and time. Note that no timezone should be set.
@@ -122,8 +118,8 @@ class Bazi:
     self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
-    self._solar_birth_date: Final[CalendarDate] = HkoDataCalendarUtils.to_solar(self._birth_time)
-    assert HkoDataCalendarUtils.is_valid_solar_date(self._solar_birth_date) # Here we are also checking if the date falls into the supported range.
+    self._solar_date: Final[CalendarDate] = HkoDataCalendarUtils.to_solar(self._birth_time)
+    assert HkoDataCalendarUtils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
 
     self._hour: Final[int] = self._birth_time.hour
     assert self._hour >= 0 and self._hour < 24
@@ -141,13 +137,13 @@ class Bazi:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
 
-    ganzhi_calendardate: CalendarDate = HkoDataCalendarUtils.to_ganzhi(self._solar_birth_date)
+    ganzhi_calendardate: CalendarDate = HkoDataCalendarUtils.to_ganzhi(self._solar_date)
 
     # Figure out the solar date falls into which ganzhi year.
     # Also figure out the Year Ganzhi / Year Pillar (年柱).
-    solar_year: int = self._solar_birth_date.year
+    solar_year: int = self._solar_date.year
     lichun_date: date = HkoDataCalendarUtils.query_jieqi_date(solar_year, Jieqi.立春)
-    self._ganzhi_year: Final[int] = solar_year if HkoDataCalendarUtils.to_date(self._solar_birth_date) >= lichun_date else solar_year - 1
+    self._ganzhi_year: Final[int] = solar_year if HkoDataCalendarUtils.to_date(self._solar_date) >= lichun_date else solar_year - 1
     self._year_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_year(self._ganzhi_year)
 
     # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
@@ -162,9 +158,104 @@ class Bazi:
     # Finally, find out the Hour Dizhi (时柱地支).
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
 
+  @staticmethod
+  def __parse_bazi_args(
+    birth_time: Union[datetime, str],
+    gender: Union[BaziGender, str], 
+    precision: Union[BaziPrecision, str]
+  ) -> tuple[datetime, BaziGender, BaziPrecision]:
+    
+    assert isinstance(birth_time, (datetime, str))
+    _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
+
+    assert _birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
+
+    _gender: BaziGender
+    if isinstance(gender, BaziGender):
+      _gender = gender
+    else:
+      assert isinstance(gender, str)
+      if gender.lower() in ['男', 'male']:
+        _gender = BaziGender.MALE
+      elif gender.lower() in ['女', 'female']:
+        _gender = BaziGender.FEMALE
+      else:
+        raise ValueError(f'Currently not support gender: {gender}')
+
+    _precision: BaziPrecision
+    if isinstance(precision, BaziPrecision):
+      _precision = precision
+    else:
+      assert isinstance(precision, str)
+      if precision.lower() in ['分', '分钟', 'm', 'min', 'minute']:
+        _precision = BaziPrecision.MINUTE
+      elif precision.lower() in ['时', '小时', 'h', 'hour']:
+        _precision = BaziPrecision.HOUR
+      elif precision.lower() in ['天', '日', 'd', 'day']:
+        _precision = BaziPrecision.DAY
+      else:
+        raise ValueError(f'Unsupported precision: {precision}')
+      
+    return _birth_time, _gender, _precision
+
+  @staticmethod
+  def create(
+    birth_time: Union[datetime, str],
+    gender: Union[BaziGender, str], 
+    precision: Union[BaziPrecision, str]
+  ) -> 'Bazi':
+    '''
+    Staticmethod that creates a `Bazi` object from the inputs.
+
+    Args:
+    - birth_time: (Union[datetime, str]) The birth date. Note that no timezone should be set.
+      - if `datetime` type: it will be interpreted as a solar date to feed to `Bazi`.
+      - if `str` type: it will be converted by `datetime.fromisoformat`.
+    - gender: (Union[BaziGender, str]) The gender of the person.
+      - if `BaziGender` type: it will be directly fed to `Bazi`.
+      - if `str` type: it will be converted by `BaziGender`. 
+        - Supported values: "男"/"女"/"male"/"female" (case insensitive).
+    - precision: (Union[BaziPrecision, str]) The precision of the birth time.
+      - if `BaziPrecision` type: it will be directly fed to `Bazi`.
+      - if `str` type: it will be converted by `BaziPrecision`. 
+        - Supported values: "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day" (case insensitive).
+    '''
+
+    assert isinstance(birth_time, (datetime, str))
+    assert isinstance(gender, (BaziGender, str))
+    assert isinstance(precision, (BaziPrecision, str))
+
+    _birth_time, _gender, _precision = Bazi.__parse_bazi_args(birth_time, gender, precision)
+    bazi: Bazi = Bazi(
+      birth_time=_birth_time,
+      gender=_gender,
+      precision=_precision,
+    )
+    return bazi
+  
+  @staticmethod
+  def random() -> 'Bazi':
+    '''
+    Classmethod that creates a random `Bazi` object. Mainly for testing purpose.
+
+    Note that the precision is currently set to `BaziPrecision.DAY`.
+    Note that the year is in [1902, 2098], and day is in [1, 28].
+    '''
+    return Bazi.create(
+      birth_time=datetime(
+        year=random.randint(1902, 2098),
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+      ),
+      gender=random.choice(list(BaziGender)),
+      precision=BaziPrecision.DAY,
+    )
+
   @property
-  def solar_birth_date(self) -> date:
-    return HkoDataCalendarUtils.to_date(self._solar_birth_date)
+  def solar_date(self) -> date:
+    return HkoDataCalendarUtils.to_date(self._solar_date)
 
   @property
   def hour(self) -> int:
@@ -173,6 +264,10 @@ class Bazi:
   @property
   def minute(self) -> int:
     return self._minute
+  
+  @property
+  def solar_datetime(self) -> datetime:
+    return datetime.combine(self.solar_date, time(self.hour, self.minute))
   
   @property
   def gender(self) -> BaziGender:
@@ -245,12 +340,18 @@ class Bazi:
     return Ganzhi(hour_tiangan, self._hour_dizhi)
   
   @property
-  def pillars(self) -> BaziData[Ganzhi]:
+  def pillars(self) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
     '''
     Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.
     返回年、月、日、时的天干地支（即返回八字）。
     '''
-    pillars: list[Ganzhi] = [Ganzhi(tg, dz) for tg, dz in zip(self.four_tiangans, self.four_dizhis)]
-    return BaziData(Ganzhi, pillars)
+    tgs: tuple[Tiangan, Tiangan, Tiangan, Tiangan] = self.four_tiangans
+    dzs: tuple[Dizhi, Dizhi, Dizhi, Dizhi] = self.four_dizhis
+    return (
+      Ganzhi(tgs[0], dzs[0]),
+      Ganzhi(tgs[1], dzs[1]),
+      Ganzhi(tgs[2], dzs[2]),
+      Ganzhi(tgs[3], dzs[3]),
+    )
 
 八字 = Bazi

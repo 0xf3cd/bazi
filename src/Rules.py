@@ -3,27 +3,15 @@
 import itertools
 from enum import Enum
 
-from .Common import classproperty, TraitTuple, HiddenTianganDict
+from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-'''
-TODO:
-Currently, all tables in `Rules` are returned by @classproperty methods. 
-When accessing a table in `Rules`, a new table (a dict/list/whatever) is created every time.
-This is intended - in order to avoid malicious/unintended modification on the table.
-
-However, this raises a performance concern. As generating a new table upon every access is an expensive operation.
-Instead, a immutable table should be returned - so that the table can't be modified anyways,
-and there's no need to return a new table every time.
-
-With that being said, I think current implementation is fine - I don't care much about the performace at this point.
-'''
 class Rules:
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
-  def YEAR_TO_MONTH_TABLE(self) -> dict[Tiangan, Tiangan]:
-    return {
+  def YEAR_TO_MONTH_TABLE(self) -> frozendict[Tiangan, Tiangan]:
+    return frozendict({
       Tiangan.甲 : Tiangan.丙, # First month in year of "甲" is "丙寅".
       Tiangan.乙 : Tiangan.戊, # First month in year of "乙" is "戊寅".
       Tiangan.丙 : Tiangan.庚, # First month in year of "丙" is "庚寅".
@@ -34,12 +22,12 @@ class Rules:
       Tiangan.辛 : Tiangan.庚, # First month in year of "辛" is "庚寅".
       Tiangan.壬 : Tiangan.壬, # First month in year of "壬" is "壬寅".
       Tiangan.癸 : Tiangan.甲, # First month in year of "癸" is "甲寅".
-    }
+    })
 
   # The mappings are used to figure out the first hour's Tiangan in a ganzhi day, i.e. 日上起时表.
   @classproperty
-  def DAY_TO_HOUR_TABLE(self) -> dict[Tiangan, Tiangan]:
-    return {
+  def DAY_TO_HOUR_TABLE(self) -> frozendict[Tiangan, Tiangan]:
+    return frozendict({
       Tiangan.甲 : Tiangan.甲, # First hour in day of "甲" is "甲子".
       Tiangan.乙 : Tiangan.丙, # First hour in day of "乙" is "丙子".
       Tiangan.丙 : Tiangan.戊, # First hour in day of "丙" is "戊子".
@@ -50,13 +38,13 @@ class Rules:
       Tiangan.辛 : Tiangan.戊, # First hour in day of "辛" is "戊子".
       Tiangan.壬 : Tiangan.庚, # First hour in day of "壬" is "庚子".
       Tiangan.癸 : Tiangan.壬, # First hour in day of "癸" is "壬子".
-    }
+    })
 
   # The table is used to query the Wuxing and Yinyang of a given Tiangan (i.e. Stem / 天干).
   # 该字典用于查询给定天干的五行和阴阳。
   @classproperty
-  def TIANGAN_TRAITS(self) -> dict[Tiangan, TraitTuple]:
-    return {
+  def TIANGAN_TRAITS(self) -> frozendict[Tiangan, TraitTuple]:
+    return frozendict({
       Tiangan.甲 : TraitTuple(Wuxing.木, Yinyang.阳),
       Tiangan.乙 : TraitTuple(Wuxing.木, Yinyang.阴),
       Tiangan.丙 : TraitTuple(Wuxing.火, Yinyang.阳),
@@ -67,14 +55,14 @@ class Rules:
       Tiangan.辛 : TraitTuple(Wuxing.金, Yinyang.阴),
       Tiangan.壬 : TraitTuple(Wuxing.水, Yinyang.阳),
       Tiangan.癸 : TraitTuple(Wuxing.水, Yinyang.阴),
-    }
+    })
 
 
   # The table is used to query the Wuxing and Yinyang of a given Dizhi (i.e. Branch / 地支).
   # 该字典用于查询给定地支的五行和阴阳。
   @classproperty
-  def DIZHI_TRAITS(self) -> dict[Dizhi, TraitTuple]:
-    return {
+  def DIZHI_TRAITS(self) -> frozendict[Dizhi, TraitTuple]:
+    return frozendict({
       Dizhi.子 : TraitTuple(Wuxing.水, Yinyang.阳),
       Dizhi.丑 : TraitTuple(Wuxing.土, Yinyang.阴),
       Dizhi.寅 : TraitTuple(Wuxing.木, Yinyang.阳),
@@ -87,33 +75,33 @@ class Rules:
       Dizhi.酉 : TraitTuple(Wuxing.金, Yinyang.阴),
       Dizhi.戌 : TraitTuple(Wuxing.土, Yinyang.阳),
       Dizhi.亥 : TraitTuple(Wuxing.水, Yinyang.阴),
-    }
+    })
 
 
   # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
   # 该字典用于查询给定地支的藏干和它们所占的百分比。
   @classproperty
-  def HIDDEN_TIANGANS(self) -> dict[Dizhi, HiddenTianganDict]:
-    return {
-      Dizhi.子 : { Tiangan.癸 : 100 },
-      Dizhi.丑 : { Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 },
-      Dizhi.寅 : { Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10 },
-      Dizhi.卯 : { Tiangan.乙 : 100 },
-      Dizhi.辰 : { Tiangan.戊 : 60, Tiangan.乙 : 30, Tiangan.癸 : 10 },
-      Dizhi.巳 : { Tiangan.丙 : 60, Tiangan.庚 : 30, Tiangan.戊 : 10 },
-      Dizhi.午 : { Tiangan.丁 : 70, Tiangan.己 : 30 },
-      Dizhi.未 : { Tiangan.己 : 60, Tiangan.丁 : 30, Tiangan.乙 : 10 },
-      Dizhi.申 : { Tiangan.庚 : 60, Tiangan.壬 : 30, Tiangan.戊 : 10 },
-      Dizhi.酉 : { Tiangan.辛 : 100 },
-      Dizhi.戌 : { Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 },
-      Dizhi.亥 : { Tiangan.壬 : 70, Tiangan.甲 : 30 },
-    }
+  def HIDDEN_TIANGANS(self) -> frozendict[Dizhi, HiddenTianganDict]:
+    return frozendict({
+      Dizhi.子 : HiddenTianganDict({ Tiangan.癸 : 100 }),
+      Dizhi.丑 : HiddenTianganDict({ Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 }),
+      Dizhi.寅 : HiddenTianganDict({ Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10 }),
+      Dizhi.卯 : HiddenTianganDict({ Tiangan.乙 : 100 }),
+      Dizhi.辰 : HiddenTianganDict({ Tiangan.戊 : 60, Tiangan.乙 : 30, Tiangan.癸 : 10 }),
+      Dizhi.巳 : HiddenTianganDict({ Tiangan.丙 : 60, Tiangan.庚 : 30, Tiangan.戊 : 10 }),
+      Dizhi.午 : HiddenTianganDict({ Tiangan.丁 : 70, Tiangan.己 : 30 }),
+      Dizhi.未 : HiddenTianganDict({ Tiangan.己 : 60, Tiangan.丁 : 30, Tiangan.乙 : 10 }),
+      Dizhi.申 : HiddenTianganDict({ Tiangan.庚 : 60, Tiangan.壬 : 30, Tiangan.戊 : 10 }),
+      Dizhi.酉 : HiddenTianganDict({ Tiangan.辛 : 100 }),
+      Dizhi.戌 : HiddenTianganDict({ Tiangan.戊 : 60, Tiangan.辛 : 30, Tiangan.丁 : 10 }),
+      Dizhi.亥 : HiddenTianganDict({ Tiangan.壬 : 70, Tiangan.甲 : 30 }),
+    })
 
 
   # The table is used to query the NAYIN (纳音) of a given Ganzhi (i.e. Stem-branch / Ganzhi / 干支).
   # 该字典用于查询给定干支的纳音。
   @classproperty
-  def NAYIN(self) -> dict[Ganzhi, str]:
+  def NAYIN(self) -> frozendict[Ganzhi, str]:
     NAYIN_STR_LIST: list[str] = [
       '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火', 
       '涧下水', '城头土', '白蜡金', '杨柳木', '泉中水', '屋上土', 
@@ -125,14 +113,14 @@ class Rules:
     cycle = Ganzhi.list_sexagenary_cycle()
     for index, gz in enumerate(cycle):
       nayin_mapping_table[gz] = NAYIN_STR_LIST[index // 2]
-    return nayin_mapping_table
+    return frozendict(nayin_mapping_table)
 
 
   # The table is used to query the dizhi where the Zhangsheng locates for each Tiangan.
   # 该字典用于查询每个天干的长生所在的地支。
   @classproperty
-  def TIANGAN_ZHANGSHENG(self) -> dict[Tiangan, Dizhi]:
-    return {
+  def TIANGAN_ZHANGSHENG(self) -> frozendict[Tiangan, Dizhi]:
+    return frozendict({
       Tiangan.甲 : Dizhi.亥,
       Tiangan.乙 : Dizhi.午,
       Tiangan.丙 : Dizhi.寅,
@@ -143,14 +131,14 @@ class Rules:
       Tiangan.辛 : Dizhi.子,
       Tiangan.壬 : Dizhi.申,
       Tiangan.癸 : Dizhi.卯,
-    }
+    })
   
 
   # This table is used to query Tiangans' LU (禄) in Dizhis.
   # 该字典用于查询天干的禄/禄身。
   @classproperty
-  def TIANGAN_LU(self) -> dict[Tiangan, Dizhi]:
-    return {
+  def TIANGAN_LU(self) -> frozendict[Tiangan, Dizhi]:
+    return frozendict({
       Tiangan.甲 : Dizhi.寅,
       Tiangan.乙 : Dizhi.卯,
       Tiangan.丙 : Dizhi.巳,
@@ -161,7 +149,7 @@ class Rules:
       Tiangan.辛 : Dizhi.酉,
       Tiangan.壬 : Dizhi.亥,
       Tiangan.癸 : Dizhi.子,
-    }
+    })
 
 
   # The table is used to query the HE (合) relation across all Tiangans.
@@ -169,14 +157,14 @@ class Rules:
   # 该表格用于查询天干之间的相合关系。
   # 相合关系是无方向的。如甲己相合是双向的关系，互相相合。
   @classproperty
-  def TIANGAN_HE(self) -> dict[frozenset[Tiangan], Wuxing]:
-    return {
+  def TIANGAN_HE(self) -> frozendict[frozenset[Tiangan], Wuxing]:
+    return frozendict({
       frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
       frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
       frozenset((Tiangan.丙, Tiangan.辛)) : Wuxing.水,
       frozenset((Tiangan.丁, Tiangan.壬)) : Wuxing.木,
       frozenset((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
-    }
+    })
 
 
   # The table is used to query the CHONG (冲) relation across all Tiangans.
@@ -201,7 +189,7 @@ class Rules:
   # 天干相生不考虑阴阳，只考虑五行。
   @classproperty
   def TIANGAN_SHENG(self) -> frozenset[tuple[Tiangan, Tiangan]]:
-    traits_rule = self.TIANGAN_TRAITS
+    traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg1_trait: TraitTuple = traits_rule[tg1]
@@ -219,7 +207,7 @@ class Rules:
   # 天干相克不考虑阴阳，只考虑五行。
   @classproperty
   def TIANGAN_KE(self) -> frozenset[tuple[Tiangan, Tiangan]]:
-    traits_rule = self.TIANGAN_TRAITS
+    traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg1_trait: TraitTuple = traits_rule[tg1]
@@ -234,13 +222,13 @@ class Rules:
   # 该表格用于查询地支之间的三会局。
   # 三会是无方向的。如寅卯辰三会木局是三个地支之间相互的关系。
   @classproperty
-  def DIZHI_SANHUI(self) -> dict[frozenset[Dizhi], Wuxing]:
-    return {
+  def DIZHI_SANHUI(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+    return frozendict({
       frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)) : Wuxing.木,
       frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)) : Wuxing.火,
       frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)) : Wuxing.金,
       frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
-    }
+    })
   
 
   # The table is used to query the LIUHE (六合) relation across all Dizhis.
@@ -248,15 +236,15 @@ class Rules:
   # 该表格用于查询地支之间的六合局。
   # 六合关系是无方向的。如子、丑相合是相互的关系。
   @classproperty
-  def DIZHI_LIUHE(self) -> dict[frozenset[Dizhi], Wuxing]:
-    return {
+  def DIZHI_LIUHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+    return frozendict({
       frozenset((Dizhi.子, Dizhi.丑)) : Wuxing.土,
       frozenset((Dizhi.寅, Dizhi.亥)) : Wuxing.木,
       frozenset((Dizhi.卯, Dizhi.戌)) : Wuxing.火,
       frozenset((Dizhi.辰, Dizhi.酉)) : Wuxing.金,
       frozenset((Dizhi.巳, Dizhi.申)) : Wuxing.水,
       frozenset((Dizhi.午, Dizhi.未)) : Wuxing.土,
-    }
+    })
   
   class AnheDef(Enum):
     '''
@@ -270,7 +258,7 @@ class Rules:
     # Only add new definitions.
 
   class AnheTable:
-    @property
+    @classproperty
     def normal(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -280,7 +268,7 @@ class Rules:
         frozenset((Dizhi.寅, Dizhi.午)),
       ])
     
-    @property
+    @classproperty
     def normal_extended(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -291,7 +279,7 @@ class Rules:
         frozenset((Dizhi.寅, Dizhi.丑)),
       ])
     
-    @property
+    @classproperty
     def mangpai(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -348,21 +336,21 @@ class Rules:
   # 该表格用于查询地支之间的三合局。
   # 三合关系是无方向的。
   @classproperty
-  def DIZHI_SANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
-    return {
+  def DIZHI_SANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+    return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Wuxing.金,
       frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Wuxing.木,
       frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Wuxing.水,
       frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Wuxing.火,
-    }
+    })
 
   # The table is used to query the BANHE (半合) relation across all Dizhis.
   # BANHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的半合局。
   # 半合关系是无方向的。
   @classproperty
-  def DIZHI_BANHE(self) -> dict[frozenset[Dizhi], Wuxing]:
-    return {
+  def DIZHI_BANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+    return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉)) : Wuxing.金,
       frozenset((Dizhi.酉, Dizhi.丑)) : Wuxing.金,
       frozenset((Dizhi.亥, Dizhi.卯)) : Wuxing.木,
@@ -371,7 +359,7 @@ class Rules:
       frozenset((Dizhi.子, Dizhi.辰)) : Wuxing.水,
       frozenset((Dizhi.寅, Dizhi.午)) : Wuxing.火,
       frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
-    }
+    })
   
   class XingDef(Enum):
     '''
@@ -391,8 +379,8 @@ class Rules:
     自刑   = ZIXING
 
   class XingTable:
-    @property
-    def strict(self) -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+    @classproperty
+    def strict(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       d: dict[tuple[Dizhi, ...], Rules.XingSubType] = {}
       for dz_tuple in itertools.permutations((Dizhi.丑, Dizhi.未, Dizhi.戌)):
         d[dz_tuple] = Rules.XingSubType.三刑
@@ -402,18 +390,18 @@ class Rules:
         d[dz_tuple] = Rules.XingSubType.子卯刑
       for dz in (Dizhi.午, Dizhi.辰, Dizhi.酉, Dizhi.亥):
         d[(dz, dz)] = Rules.XingSubType.自刑
-      return d
+      return frozendict(d)
     
-    @property
-    def loose(self) -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
-      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = self.strict
+    @classproperty
+    def loose(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = dict(Rules.XingTable.strict)
       for dz_tuple in ((Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)):
         d[dz_tuple] = Rules.XingSubType.三刑
       for dz_tuple in ((Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)):
         d[dz_tuple] = Rules.XingSubType.三刑
-      return d
+      return frozendict(d)
 
-    def __getitem__(self, xing_def: 'Rules.XingDef') -> dict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+    def __getitem__(self, xing_def: 'Rules.XingDef') -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       assert isinstance(xing_def, Rules.XingDef)
       if xing_def is Rules.XingDef.STRICT:
         return self.strict
@@ -476,7 +464,7 @@ class Rules:
   # 地支相生不考虑阴阳，只考虑五行。
   @classproperty
   def DIZHI_SHENG(self) -> frozenset[tuple[Dizhi, Dizhi]]:
-    dizhi_traits: dict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
       trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
@@ -493,7 +481,7 @@ class Rules:
   # 地支相克不考虑阴阳，只考虑五行。
   @classproperty
   def DIZHI_KE(self) -> frozenset[tuple[Dizhi, Dizhi]]:
-    dizhi_traits: dict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
       trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]

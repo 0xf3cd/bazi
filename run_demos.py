@@ -44,7 +44,7 @@ def get_basic_info(chart: BaziChart) -> str:
   s: str = '\n' # The output string.
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = get_wuxing(bazi.day_master)
-  s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_birth_date}\n\n'
+  s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_date}\n\n'
 
   pillars: list[Ganzhi] = list(bazi.pillars)
   shishens: list[BaziChart.PillarShishens] = list(chart.shishens)
@@ -77,7 +77,7 @@ def get_basic_info(chart: BaziChart) -> str:
   return s
 
 def demo() -> None:
-  chart: BaziChart = BaziChart.random()
+  chart: BaziChart = BaziChart(Bazi.random())
   info: str = get_basic_info(chart)
   print(info)
   print('\n' + 'chart json:')

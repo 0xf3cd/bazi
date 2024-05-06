@@ -1,9 +1,10 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_HkoData.py
 
-import unittest
 import random
 import shutil
+import hashlib
+import unittest
 import tempfile
 
 from pathlib import Path
@@ -343,6 +344,10 @@ class TestHkoData(unittest.TestCase):
     shutil.move(lunardate_path, temp_dir / 'lunardate.bin')
     self.assertFalse(HkoData.common.encoded_data_ready())
 
+    # Ensure the encoded binary files are gone.
+    self.assertFalse(jieqi_path.exists())
+    self.assertFalse(lunardate_path.exists())
+
     # Encode them again.
     self.assertIsNotNone(HkoData.DecodedJieqiDates())
     self.assertTrue(HkoData.common.encoded_data_ready())
@@ -353,6 +358,16 @@ class TestHkoData(unittest.TestCase):
     # Encode them again.
     self.assertIsNotNone(HkoData.DecodedLunarYears())
     self.assertTrue(HkoData.common.encoded_data_ready())
+
+    # Ensure the new encoded binary files are the same as the old ones.
+    prev_jieqi_md5: str = hashlib.md5((temp_dir / 'jieqi.bin').read_bytes()).hexdigest()
+    prev_lunardate_md5: str = hashlib.md5((temp_dir / 'lunardate.bin').read_bytes()).hexdigest()
+
+    new_jieqi_md5: str = hashlib.md5(jieqi_path.read_bytes()).hexdigest()
+    new_lunardate_md5: str = hashlib.md5(lunardate_path.read_bytes()).hexdigest()
+
+    self.assertEqual(prev_jieqi_md5, new_jieqi_md5)
+    self.assertEqual(prev_lunardate_md5, new_lunardate_md5)
 
     # Wrap up...
     shutil.rmtree(temp_dir)

@@ -6,17 +6,17 @@ from pathlib import Path
 from run_demos import get_basic_info
 from src.Bazi import Bazi
 from src.Charts.BaziChart import BaziChart
-from src.Common import ShishenDescription, TianganDescription
+from src.Common import ShishenDescription, TianganDescription, BaziJson
 from src.Defines import Tiangan, Shishen
 from src.Interpreter import Interpreter
 
 
 def interpret(chart: BaziChart) -> str:
   s: str = '' # The string to return.
-  j: BaziChart.JsonDict = chart.json
+  j: BaziJson.BaziChartJsonDict = chart.json
 
   bazi: Bazi = chart.bazi
-  s += f'出生时间：{bazi.solar_birth_date}, {bazi.hour}:{bazi.minute}\n'
+  s += f'出生时间：{bazi.solar_date}, {bazi.hour}:{bazi.minute}\n'
   s += f'性别：{bazi.gender}\n'
 
   def __gen_pillar_str(key: str) -> str:
@@ -111,7 +111,7 @@ def save_chart_examples(count: int = 50) -> None:
     dir_path.mkdir(parents=True)
 
   for i in range(count):
-    chart: BaziChart = BaziChart.random()
+    chart: BaziChart = BaziChart(Bazi.random())
     info: str = get_basic_info(chart)
     interpretation: str = interpret(chart)
 
@@ -126,7 +126,7 @@ def save_chart_examples(count: int = 50) -> None:
 
 
 if __name__ == '__main__':
-  chart: BaziChart = BaziChart.random()
+  chart: BaziChart = BaziChart(Bazi.random())
   info: str = get_basic_info(chart)
   interpretation: str = interpret(chart)
 

@@ -5,6 +5,7 @@ import unittest
 
 from src.Common import ShishenDescription, TianganDescription
 from src.Defines import Tiangan, Shishen
+from src.Bazi import Bazi
 from src.Charts import BaziChart
 from src.Interpreter import Interpreter
 
@@ -46,6 +47,6 @@ class TestInterpreter(unittest.TestCase):
       self.assertEqual(result, Interpreter.interpret_tiangan(tg))
 
   def test_chart(self) -> None:
-    chart: BaziChart = BaziChart.random()
+    chart: BaziChart = BaziChart(Bazi.random())
     interpretation: Interpreter = Interpreter(chart)
     self.assertEqual(chart.json, interpretation.chart.json)

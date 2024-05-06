@@ -1,14 +1,50 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import TypeVar, Callable, Generic, Final, NamedTuple, TypedDict
+import copy
+import functools
+
+from typing import (
+  TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
+  Sequence, Iterator, Type, Mapping,
+)
 from .Defines import Wuxing, Yinyang, Tiangan
 
-PropertyType = TypeVar('PropertyType')
-class classproperty(Generic[PropertyType]):
-  def __init__(self, func: Callable[..., PropertyType]) -> None:
-    self.fget: Final[Callable[..., PropertyType]] = func
-  def __get__(self, instance, owner) -> PropertyType:
-    return self.fget(owner)
+
+# Decorator for class property.
+ClassPropertyType = TypeVar('ClassPropertyType')
+class classproperty(Generic[ClassPropertyType]):
+  def __init__(self, fget: Callable[..., ClassPropertyType]) -> None:
+    self._fget: Final[Callable[..., ClassPropertyType]] = fget
+  def __get__(self, instance, owner) -> ClassPropertyType:
+    if self._fget.__code__.co_argcount == 0:
+      return self._fget()
+    return self._fget(owner)
+
+
+class cached_classproperty(Generic[ClassPropertyType]):
+  def __init__(self, func: Callable[..., ClassPropertyType]) -> None:
+    self._takes_arg: Final[bool] = func.__code__.co_argcount > 0
+    self._fget: Final[Callable[..., ClassPropertyType]] = functools.cache(func)
+  def __get__(self, instance, owner) -> ClassPropertyType:
+    if self._takes_arg:
+      return self._fget(owner)
+    return self._fget()
+
+
+FrozenDictKeyType = TypeVar('FrozenDictKeyType')
+FrozenDictValueType = TypeVar('FrozenDictValueType')
+class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
+  '''
+  My simple implementation of a frozen, immutable dict.
+  '''
+  def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
+    self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = copy.deepcopy(data)
+  def __getitem__(self, key: FrozenDictKeyType) -> FrozenDictValueType:
+    return self._data[key]
+  def __iter__(self) -> Iterator[FrozenDictKeyType]:
+    return iter(self._data)
+  def __len__(self) -> int:
+    return len(self._data)
 
 
 class TraitTuple(NamedTuple):
@@ -20,9 +56,103 @@ class TraitTuple(NamedTuple):
     return str(self.yinyang) + str(self.wuxing)
 
 
-# The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
-# 代表地支中的藏干和它们所占的百分比。
-HiddenTianganDict = dict[Tiangan, int]
+class HiddenTianganDict(frozendict[Tiangan, int]):
+  '''
+  `HiddenTianganDict` reveals the hidden Tiangans info.
+  The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
+  A `HiddenTianganDict` is simply a `frozetndict` with a customized `__str__` function.
+
+  `HiddenTianganDict` 代表了某个地支的藏干和藏干各自所占的百分比。
+  '''
+  def __str__(self) -> str:
+    sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
+    return ','.join([f'{k}:{v}' for k, v in sorted_kv])
+
+
+PillarDataType = TypeVar('PillarDataType')
+class BaziData(Generic[PillarDataType]):
+  '''
+  A generic class for storing Bazi data.
+  A `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
+  '''
+  def __init__(self, generic_type: Type[PillarDataType], data: Sequence[PillarDataType]) -> None:
+    self._type: Final[Type[PillarDataType]] = generic_type
+    
+    assert len(data) == 4
+    self._year: Final[PillarDataType] = copy.deepcopy(data[0])
+    self._month: Final[PillarDataType] = copy.deepcopy(data[1])
+    self._day: Final[PillarDataType] = copy.deepcopy(data[2])
+    self._hour: Final[PillarDataType] = copy.deepcopy(data[3])
+
+  @property
+  def year(self) -> PillarDataType:
+    return copy.deepcopy(self._year)
+
+  @property
+  def month(self) -> PillarDataType:
+    return copy.deepcopy(self._month)
+
+  @property
+  def day(self) -> PillarDataType:
+    return copy.deepcopy(self._day)
+
+  @property
+  def hour(self) -> PillarDataType:
+    return copy.deepcopy(self._hour)
+  
+  def __iter__(self) -> Iterator[PillarDataType]:
+    return iter((self._year, self._month, self._day, self._hour))
+
+
+TianganDataType = TypeVar('TianganDataType')
+DizhiDataType = TypeVar('DizhiDataType')
+class PillarData(Generic[TianganDataType, DizhiDataType]):
+  '''
+  A helper class for storing the data of a Pillar.
+  Can be used with `BaziData` class.
+  '''
+  def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
+    self._tg: Final[TianganDataType] = copy.deepcopy(tg)
+    self._dz: Final[DizhiDataType] = copy.deepcopy(dz)
+
+  @property
+  def tiangan(self) -> TianganDataType:
+    return copy.deepcopy(self._tg)
+  
+  @property
+  def dizhi(self) -> DizhiDataType:
+    return copy.deepcopy(self._dz)
+
+
+class BaziJson:
+  '''
+  The class that represents bazi-related charts in JSON format.
+  '''
+
+  class FourPillars(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    year:  str
+    month: str
+    day:   str
+    hour:  str
+
+  @staticmethod
+  def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
+    assert len(data) == 4
+    return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+
+  class BaziChartJsonDict(TypedDict):
+    birth_time: str
+    gender: str
+    precision: str
+    pillars: 'BaziJson.FourPillars'
+    nayins: 'BaziJson.FourPillars'
+    shier_zhangshengs: 'BaziJson.FourPillars'
+    tiangan_traits: 'BaziJson.FourPillars'
+    dizhi_traits: 'BaziJson.FourPillars'
+    tiangan_shishens: 'BaziJson.FourPillars'
+    dizhi_shishens: 'BaziJson.FourPillars'
+    hidden_tiangans: 'BaziJson.FourPillars'
 
 
 class ShishenDescription(TypedDict):

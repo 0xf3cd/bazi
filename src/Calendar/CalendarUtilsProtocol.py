@@ -1,9 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from datetime import date
-from typing import Union, Protocol
+from typing import Union, Protocol, runtime_checkable
 from .CalendarDefines import CalendarType, CalendarDate
 
+
+@runtime_checkable
 class CalendarUtilsProtocol(Protocol):
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...

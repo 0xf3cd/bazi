@@ -4,13 +4,14 @@ import copy
 from collections import Counter
 from typing import Sequence, Optional
 
+from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
 from ..Rules import Rules
 
 
 class DizhiUtils:
   @staticmethod
-  def find_dizhi_combos(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> list[frozenset[Dizhi]]:
+  def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> list[frozenset[Dizhi]]:
     '''
     Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
     返回`dizhis`中所有满足该关系的组合。
@@ -55,18 +56,18 @@ class DizhiUtils:
     Return: (list[frozenset[Dizhi]]) The result containing all matching Dizhi combos.
 
     Examples:
-    - find_dizhi_combos([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
+    - search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
       - return: [{Dizhi.寅, Dizhi.卯, Dizhi.辰}]
-    - find_dizhi_combos([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
+    - search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
       - return: [{ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑}]
       - `Rules.AnheDef.NORMAL_EXTENDED` is used.
-    - find_dizhi_combos([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
+    - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
       - return: [{ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳, Dizhi.申 }]
       - Only one 辰 appears in the input - not forming a XING relation.
-    - find_dizhi_combos([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)
+    - search([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)
       - return: [{ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }] # Only one 辰 in the returned set!
       - 辰 appear twice in the input - forming a XING relation.
-    - find_dizhi_combos([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
+    - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
       - return: [{ Dizhi.子, Dizhi.卯}]
       - `Rules.XingDef.STRICT` is used.
       - 申 is missing - "寅巳申" all three dizhis are required to form a XING relation.
@@ -353,7 +354,7 @@ class DizhiUtils:
     assert 0 <= len(dizhis) <= 3
     assert isinstance(definition, Rules.XingDef)
 
-    xing_rules: dict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
+    xing_rules: frozendict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
     return xing_rules.get(dizhis, None)
 
   @staticmethod
