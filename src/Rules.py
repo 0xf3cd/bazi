@@ -1,13 +1,14 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import itertools
+import functools
 from enum import Enum
 
-from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict
+from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, NotAttrSetableMetaClass
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-class Rules:
+class Rules(metaclass=NotAttrSetableMetaClass):
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
   def YEAR_TO_MONTH_TABLE(self) -> frozendict[Tiangan, Tiangan]:

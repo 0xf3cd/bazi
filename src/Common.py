@@ -27,14 +27,22 @@ class ReadOnlyMetaClass(type):
       if inspect.isfunction(v) or inspect.ismethod(v):
         raise TypeError(f'{name} cannot contain functions.')
 
-    def overridden_setattr(self, key, value):
+    def overridden_setattr(*args, **kwargs):
       raise AttributeError(f'{name} is read-only')
     cls.__setattr__ = overridden_setattr
     
-    def overridden_getattribute(self, name):
-      return copy.deepcopy(attrs[name])
+    def overridden_getattribute(*args, **kwargs):
+      assert len(args) >= 2
+      return copy.deepcopy(attrs[args[1]])
     cls.__getattribute__ = overridden_getattribute
 
+    return type.__new__(cls, name, bases, attrs)
+
+class NotAttrSetableMetaClass(type):
+  def __new__(cls: Type, name: str, bases: tuple[Type], attrs: dict[str, Any]) -> Type:
+    def overridden_setattr(*args, **kwargs):
+      raise AttributeError(f'Class {name} is read-only')
+    cls.__setattr__ = overridden_setattr
     return type.__new__(cls, name, bases, attrs)
 
 
@@ -44,9 +52,12 @@ class classproperty(Generic[ClassPropertyType]):
   def __init__(self, fget: Callable[..., ClassPropertyType]) -> None:
     self._fget: Final[Callable[..., ClassPropertyType]] = fget
   def __get__(self, instance, owner) -> ClassPropertyType:
-    if self._fget.__code__.co_argcount == 0:
+    sig = inspect.signature(self._fget)
+    if len(sig.parameters) == 0:
       return self._fget()
     return self._fget(owner)
+  def __set__(self, instance, value) -> None:
+    raise AttributeError('Class property is read-only.')
 
 
 FrozenDictKeyType = TypeVar('FrozenDictKeyType')
