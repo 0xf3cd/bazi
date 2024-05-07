@@ -38,7 +38,12 @@ class ReadOnlyMetaClass(type):
 
     return type.__new__(cls, name, bases, attrs)
 
+
 class NotAttrSetableMetaClass(type):
+  '''
+  This meta class ensures a class is not attribute-setable, which means that
+  the Class's methods and variables/properties are not settable once the class is created.
+  '''
   def __new__(cls: Type, name: str, bases: tuple[Type], attrs: dict[str, Any]) -> Type:
     def overridden_setattr(*args, **kwargs):
       raise AttributeError(f'Class {name} is read-only')

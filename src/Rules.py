@@ -9,8 +9,26 @@ from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
 class Rules(metaclass=NotAttrSetableMetaClass):
+  '''
+  `Rules` represents rules/tables that the project uses.
+  The class itself is immutable - its attributes are not writtable.
+  All table are lazy evaluated and cached.
+  
+  Usage:
+  ```
+  ytm_table: frozendict[Tiangan, Tiangan] = Rules.YEAR_TO_MONTH_TABLE
+
+  r = Rules()
+  assert ytm_table == r.YEAR_TO_MONTH_TABLE
+
+  Rules.YEAR_TO_MONTH_TABLE = frozendict({}) # Error raised!
+  r.YEAR_TO_MONTH_TABLE = frozendict({}) # Error raised!
+  ```
+  '''
+
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
+  @functools.cache
   def YEAR_TO_MONTH_TABLE(self) -> frozendict[Tiangan, Tiangan]:
     return frozendict({
       Tiangan.甲 : Tiangan.丙, # First month in year of "甲" is "丙寅".
@@ -27,6 +45,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
 
   # The mappings are used to figure out the first hour's Tiangan in a ganzhi day, i.e. 日上起时表.
   @classproperty
+  @functools.cache
   def DAY_TO_HOUR_TABLE(self) -> frozendict[Tiangan, Tiangan]:
     return frozendict({
       Tiangan.甲 : Tiangan.甲, # First hour in day of "甲" is "甲子".
@@ -44,6 +63,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # The table is used to query the Wuxing and Yinyang of a given Tiangan (i.e. Stem / 天干).
   # 该字典用于查询给定天干的五行和阴阳。
   @classproperty
+  @functools.cache
   def TIANGAN_TRAITS(self) -> frozendict[Tiangan, TraitTuple]:
     return frozendict({
       Tiangan.甲 : TraitTuple(Wuxing.木, Yinyang.阳),
@@ -62,6 +82,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # The table is used to query the Wuxing and Yinyang of a given Dizhi (i.e. Branch / 地支).
   # 该字典用于查询给定地支的五行和阴阳。
   @classproperty
+  @functools.cache
   def DIZHI_TRAITS(self) -> frozendict[Dizhi, TraitTuple]:
     return frozendict({
       Dizhi.子 : TraitTuple(Wuxing.水, Yinyang.阳),
@@ -82,6 +103,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
   # 该字典用于查询给定地支的藏干和它们所占的百分比。
   @classproperty
+  @functools.cache
   def HIDDEN_TIANGANS(self) -> frozendict[Dizhi, HiddenTianganDict]:
     return frozendict({
       Dizhi.子 : HiddenTianganDict({ Tiangan.癸 : 100 }),
@@ -102,6 +124,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # The table is used to query the NAYIN (纳音) of a given Ganzhi (i.e. Stem-branch / Ganzhi / 干支).
   # 该字典用于查询给定干支的纳音。
   @classproperty
+  @functools.cache
   def NAYIN(self) -> frozendict[Ganzhi, str]:
     NAYIN_STR_LIST: list[str] = [
       '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火', 
@@ -120,6 +143,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # The table is used to query the dizhi where the Zhangsheng locates for each Tiangan.
   # 该字典用于查询每个天干的长生所在的地支。
   @classproperty
+  @functools.cache
   def TIANGAN_ZHANGSHENG(self) -> frozendict[Tiangan, Dizhi]:
     return frozendict({
       Tiangan.甲 : Dizhi.亥,
@@ -138,6 +162,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # This table is used to query Tiangans' LU (禄) in Dizhis.
   # 该字典用于查询天干的禄/禄身。
   @classproperty
+  @functools.cache
   def TIANGAN_LU(self) -> frozendict[Tiangan, Dizhi]:
     return frozendict({
       Tiangan.甲 : Dizhi.寅,
@@ -158,6 +183,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询天干之间的相合关系。
   # 相合关系是无方向的。如甲己相合是双向的关系，互相相合。
   @classproperty
+  @functools.cache
   def TIANGAN_HE(self) -> frozendict[frozenset[Tiangan], Wuxing]:
     return frozendict({
       frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
@@ -173,6 +199,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询天干之间的相冲关系。
   # 相冲关系是无方向的。如甲庚相冲是双向的关系，互相相冲。相冲双方均减力，旺者减力小，弱者减力大。
   @classproperty
+  @functools.cache
   def TIANGAN_CHONG(self) -> frozenset[frozenset[Tiangan]]:
     return frozenset((
       frozenset((Tiangan.甲, Tiangan.庚)),
@@ -189,6 +216,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 相生关系是单向的。如甲丁相生，则是甲木生丁火。
   # 天干相生不考虑阴阳，只考虑五行。
   @classproperty
+  @functools.cache
   def TIANGAN_SHENG(self) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
@@ -207,6 +235,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 相克关系是单向的。如壬丙相克，是壬水克丙火。
   # 天干相克不考虑阴阳，只考虑五行。
   @classproperty
+  @functools.cache
   def TIANGAN_KE(self) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
@@ -223,6 +252,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的三会局。
   # 三会是无方向的。如寅卯辰三会木局是三个地支之间相互的关系。
   @classproperty
+  @functools.cache
   def DIZHI_SANHUI(self) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)) : Wuxing.木,
@@ -237,6 +267,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的六合局。
   # 六合关系是无方向的。如子、丑相合是相互的关系。
   @classproperty
+  @functools.cache
   def DIZHI_LIUHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.子, Dizhi.丑)) : Wuxing.土,
@@ -258,8 +289,9 @@ class Rules(metaclass=NotAttrSetableMetaClass):
     # No change should be made to the existing definitions.
     # Only add new definitions.
 
-  class AnheTable:
+  class AnheTable(metaclass=NotAttrSetableMetaClass):
     @classproperty
+    @functools.cache
     def normal(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -270,6 +302,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
       ])
     
     @classproperty
+    @functools.cache
     def normal_extended(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -281,6 +314,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
       ])
     
     @classproperty
+    @functools.cache
     def mangpai(self) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
@@ -304,6 +338,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的暗合关系。
   # 暗合关系是无方向的。
   @classproperty
+  @functools.cache
   def DIZHI_ANHE(self) -> AnheTable:
     return Rules.AnheTable()
   
@@ -312,6 +347,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的通合关系。
   # 通合关系是无方向的。通合代表藏干中所有气都能两两相合。
   @classproperty
+  @functools.cache
   def DIZHI_TONGHE(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.寅, Dizhi.丑)),
@@ -323,6 +359,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的通禄合关系。
   # 通禄合关系是无方向的。若两个天干相合，那么它们在地支中的禄身也能相合，从而构成地支的通禄合关系。
   @classproperty
+  @functools.cache
   def DIZHI_TONGLUHE(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.卯, Dizhi.申)),
@@ -337,6 +374,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的三合局。
   # 三合关系是无方向的。
   @classproperty
+  @functools.cache
   def DIZHI_SANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Wuxing.金,
@@ -350,6 +388,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的半合局。
   # 半合关系是无方向的。
   @classproperty
+  @functools.cache
   def DIZHI_BANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉)) : Wuxing.金,
@@ -379,8 +418,9 @@ class Rules(metaclass=NotAttrSetableMetaClass):
     子卯刑 = ZIMAOXING
     自刑   = ZIXING
 
-  class XingTable:
+  class XingTable(metaclass=NotAttrSetableMetaClass):
     @classproperty
+    @functools.cache
     def strict(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       d: dict[tuple[Dizhi, ...], Rules.XingSubType] = {}
       for dz_tuple in itertools.permutations((Dizhi.丑, Dizhi.未, Dizhi.戌)):
@@ -394,6 +434,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
       return frozendict(d)
     
     @classproperty
+    @functools.cache
     def loose(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       d: dict[tuple[Dizhi, ...], Rules.XingSubType] = dict(Rules.XingTable.strict)
       for dz_tuple in ((Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)):
@@ -415,6 +456,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的刑。
   # 相刑是有方向的。
   @classproperty
+  @functools.cache
   def DIZHI_XING(self) -> 'Rules.XingTable':
     return Rules.XingTable()
 
@@ -424,6 +466,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的冲。
   # 相冲是无方向的，两个地支之间互相相冲。
   @classproperty
+  @functools.cache
   def DIZHI_CHONG(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), 
@@ -436,6 +479,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的破。
   # 相破是无方向的，两个地支之间互相破坏。
   @classproperty
+  @functools.cache
   def DIZHI_PO(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.酉), (Dizhi.卯, Dizhi.午),
@@ -449,6 +493,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 该表格用于查询地支之间的害（即相穿）。
   # 相害是无方向的，两个地支之间两两相害。
   @classproperty
+  @functools.cache
   def DIZHI_HAI(self) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.未), (Dizhi.丑, Dizhi.午),
@@ -464,6 +509,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 相生关系是单向的。如丙寅相生，则是寅木生丙火。
   # 地支相生不考虑阴阳，只考虑五行。
   @classproperty
+  @functools.cache
   def DIZHI_SHENG(self) -> frozenset[tuple[Dizhi, Dizhi]]:
     dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
@@ -481,6 +527,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
   # 相克关系是单向的。如寅丑相克，则是寅木克丑土。
   # 地支相克不考虑阴阳，只考虑五行。
   @classproperty
+  @functools.cache
   def DIZHI_KE(self) -> frozenset[tuple[Dizhi, Dizhi]]:
     dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
