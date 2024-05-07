@@ -1,13 +1,41 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
-import functools
+import inspect
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping,
+  Sequence, Iterator, Type, Mapping, Any
 )
 from .Defines import Wuxing, Yinyang, Tiangan
+
+
+class ReadOnlyMetaClass(type):
+  '''
+  This meta class is intended to be used as the meta data of classes that only contains 
+  class variables (i.e. class properties / class-wise shared properties).
+
+  This meta class overrides the `__setattr__` and `__getattribute__` methods:
+  - `__setattr__`: Raise an `AttributeError`.
+  - `__getattribute__`: Deepcopy the original value and return the copied value.
+  '''
+  def __new__(cls: Type, name: str, bases: tuple[Type], attrs: dict[str, Any]) -> Type:
+    # Make sure the new class doesn't contain classmethods.
+    for k, v in attrs.items():
+      if isinstance(v, (classmethod, staticmethod)):
+        raise TypeError(f'{name} cannot contain classmethods or staticmethods.')
+      if inspect.isfunction(v) or inspect.ismethod(v):
+        raise TypeError(f'{name} cannot contain functions.')
+
+    def overridden_setattr(self, key, value):
+      raise AttributeError(f'{name} is read-only')
+    cls.__setattr__ = overridden_setattr
+    
+    def overridden_getattribute(self, name):
+      return copy.deepcopy(attrs[name])
+    cls.__getattribute__ = overridden_getattribute
+
+    return type.__new__(cls, name, bases, attrs)
 
 
 # Decorator for class property.
@@ -19,16 +47,6 @@ class classproperty(Generic[ClassPropertyType]):
     if self._fget.__code__.co_argcount == 0:
       return self._fget()
     return self._fget(owner)
-
-
-class cached_classproperty(Generic[ClassPropertyType]):
-  def __init__(self, func: Callable[..., ClassPropertyType]) -> None:
-    self._takes_arg: Final[bool] = func.__code__.co_argcount > 0
-    self._fget: Final[Callable[..., ClassPropertyType]] = functools.cache(func)
-  def __get__(self, instance, owner) -> ClassPropertyType:
-    if self._takes_arg:
-      return self._fget(owner)
-    return self._fget()
 
 
 FrozenDictKeyType = TypeVar('FrozenDictKeyType')
