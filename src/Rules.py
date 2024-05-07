@@ -4,11 +4,11 @@ import itertools
 import functools
 from enum import Enum
 
-from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, NotAttrSetableMetaClass
+from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, ImmutableMetaClass
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-class Rules(metaclass=NotAttrSetableMetaClass):
+class Rules(metaclass=ImmutableMetaClass):
   '''
   `Rules` represents rules/tables that the project uses.
   The class itself is immutable - its attributes are not writtable.
@@ -289,7 +289,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
     # No change should be made to the existing definitions.
     # Only add new definitions.
 
-  class AnheTable(metaclass=NotAttrSetableMetaClass):
+  class AnheTable(metaclass=ImmutableMetaClass):
     @classproperty
     @functools.cache
     def normal(self) -> frozenset[frozenset[Dizhi]]:
@@ -418,7 +418,7 @@ class Rules(metaclass=NotAttrSetableMetaClass):
     子卯刑 = ZIMAOXING
     自刑   = ZIXING
 
-  class XingTable(metaclass=NotAttrSetableMetaClass):
+  class XingTable(metaclass=ImmutableMetaClass):
     @classproperty
     @functools.cache
     def strict(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:

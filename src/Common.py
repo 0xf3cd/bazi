@@ -10,7 +10,7 @@ from typing import (
 from .Defines import Wuxing, Yinyang, Tiangan
 
 
-class ReadOnlyMetaClass(type):
+class DeepcopyImmutableMetaClass(type):
   '''
   This meta class is intended to be used as the meta data of classes that only contains 
   class variables (i.e. class properties / class-wise shared properties).
@@ -39,7 +39,7 @@ class ReadOnlyMetaClass(type):
     return type.__new__(cls, name, bases, attrs)
 
 
-class NotAttrSetableMetaClass(type):
+class ImmutableMetaClass(type):
   '''
   This meta class ensures a class is not attribute-setable, which means that
   the Class's methods and variables/properties are not settable once the class is created.
@@ -74,7 +74,9 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
   def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
     self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = copy.deepcopy(data)
   def __getitem__(self, key: FrozenDictKeyType) -> FrozenDictValueType:
-    return self._data[key]
+    # Use deepcopy to avoid changing the original dict.
+    # The value may not be deepcopyable though...
+    return copy.deepcopy(self._data[key])
   def __iter__(self) -> Iterator[FrozenDictKeyType]:
     return iter(self._data)
   def __len__(self) -> int:

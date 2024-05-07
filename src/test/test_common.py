@@ -2,7 +2,7 @@
 # test_common.py
 
 import unittest
-from src.Common import classproperty, NotAttrSetableMetaClass, ReadOnlyMetaClass
+from src.Common import classproperty, ImmutableMetaClass, DeepcopyImmutableMetaClass, frozendict
 
 class TestCommon(unittest.TestCase):
 
@@ -55,8 +55,8 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(AttributeError):
       tc.property6 = 1
 
-  def test_not_attr_setable_meta_class(self) -> None:
-    class TestClass(metaclass=NotAttrSetableMetaClass):
+  def test_immutable_meta_class(self) -> None:
+    class TestClass(metaclass=ImmutableMetaClass):
       A: int = 1
       B: list[int] = [2, 3]
       C: list[int] = B
@@ -75,7 +75,7 @@ class TestCommon(unittest.TestCase):
     TestClass.B.append(4) # Should not raise.
 
   def test_readonly_meta_class(self) -> None:
-    class TestClass(metaclass=ReadOnlyMetaClass):
+    class TestClass(metaclass=DeepcopyImmutableMetaClass):
       A: int = 1
       B: list[int] = [2, 3]
       C: list[int] = B
@@ -91,7 +91,7 @@ class TestCommon(unittest.TestCase):
       # ReadOnlyMetaClass cannot contain staticmethods.
       class TestSubclass2(TestClass):
         @staticmethod
-        def somemethod(self):
+        def somemethod():
           return 0
         
     with self.assertRaises(TypeError):
@@ -127,3 +127,20 @@ class TestCommon(unittest.TestCase):
       self.assertEqual(TestClass.C, [2, 3])
       TestClass.C.append(4) # Should not raise.
       self.assertEqual(TestClass.C, [2, 3])
+
+  def test_frozendict(self) -> None:
+    fd: frozendict[int, int] = frozendict({1: 2, 3: 4})
+    self.assertEqual(fd[1], 2)
+    self.assertEqual(fd[3], 4)
+    with self.assertRaises(TypeError):
+      fd[1] = 100 # type: ignore
+
+    fd2: frozendict[int, list[int]] = frozendict({1: [2, 3]})
+    self.assertEqual(fd2[1], [2, 3])
+    with self.assertRaises(TypeError):
+      fd2[1] = [4, 5] # type: ignore
+    with self.assertRaises(KeyError):
+      fd2[2]
+    
+    fd2[1].append(6)
+    self.assertEqual(fd2[1], [2, 3])
