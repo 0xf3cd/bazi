@@ -14,7 +14,7 @@ from .CalendarUtilsProtocol import CalendarUtilsProtocol
 from ..Defines import Ganzhi, Jieqi
 
 
-class HkoDataCalendarUtils():
+class HkoDataCalendarUtils:
   '''The underlying data used in this class is from HkoData.'''
   def __init__(self) -> None:
     raise NotImplementedError('Please use static methods.')
