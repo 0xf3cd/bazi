@@ -285,10 +285,10 @@ class TestCalendarDate(unittest.TestCase):
     with self.subTest('Write to underlying instance variables'):
       # Not really expect users to really write to the underlying instance variables though.
       d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
-      d._year = 1999
-      d._month = 2
-      d._day = 10
-      d._date_type = CalendarType.LUNAR
+      d._year = 1999 # type: ignore
+      d._month = 2 # type: ignore
+      d._day = 10 # type: ignore
+      d._date_type = CalendarType.LUNAR # type: ignore
       self.assertEqual(d, CalendarDate(1999, 2, 10, CalendarType.LUNAR))
     
   def test_copy(self) -> None:
@@ -298,15 +298,15 @@ class TestCalendarDate(unittest.TestCase):
       self.assertEqual(d, d_copy)
       self.assertIsNot(d, d_copy)
 
-      d_copy._year += 1
+      d_copy._year += 1 # type: ignore
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)
 
-      d_copy._year -= 1
+      d_copy._year -= 1 # type: ignore
       self.assertEqual(d, d_copy)
       self.assertEqual(d_copy, d)
 
-      d_copy._date_type = CalendarType.LUNAR
+      d_copy._date_type = CalendarType.LUNAR # type: ignore
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)
 
@@ -316,14 +316,14 @@ class TestCalendarDate(unittest.TestCase):
       self.assertEqual(d, d_copy)
       self.assertIsNot(d, d_copy)
 
-      d_copy._year += 1
+      d_copy._year += 1 # type: ignore
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)
 
-      d_copy._year -= 1
+      d_copy._year -= 1 # type: ignore
       self.assertEqual(d, d_copy)
       self.assertEqual(d_copy, d)
 
-      d_copy._date_type = CalendarType.LUNAR
+      d_copy._date_type = CalendarType.LUNAR # type: ignore
       self.assertNotEqual(d, d_copy)
       self.assertNotEqual(d_copy, d)

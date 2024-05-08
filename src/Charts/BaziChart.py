@@ -8,6 +8,7 @@ from ..Defines import Tiangan, Shishen, ShierZhangsheng
 from ..Bazi import Bazi
 from ..Utils import BaziUtils
 
+
 class BaziChart:
   '''
   `BaziChart` is a class that reveals the basic information of a given `Bazi`,

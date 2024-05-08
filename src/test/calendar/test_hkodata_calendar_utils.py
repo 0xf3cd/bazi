@@ -8,7 +8,7 @@ import unittest
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from src.Calendar import CalendarType, CalendarDate, HkoDataCalendarUtils
+from src.Calendar import CalendarType, CalendarDate, HkoDataCalendarUtils, CalendarUtilsProtocol
 from src.Calendar.HkoData import DecodedLunarYears, DecodedJieqiDates
 from src.Defines import Jieqi
 
@@ -17,6 +17,9 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
   def test_calendar_utils_init(self) -> None:
     with self.assertRaises(NotImplementedError):
       HkoDataCalendarUtils() # Only expect to use static methods of the class.
+
+  def test_conformance(self) -> None:
+    self.assertIsInstance(HkoDataCalendarUtils, CalendarUtilsProtocol)
 
   def test_is_valid_solar_date(self) -> None:
     d: date = date(1902, 1, 1)

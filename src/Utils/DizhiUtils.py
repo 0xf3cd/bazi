@@ -1,6 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 from collections import Counter
 from typing import Sequence, Optional
 
@@ -10,15 +9,20 @@ from ..Rules import Rules
 
 
 class DizhiUtils:
+  '''
+  This class is used to find all possible Dizhi combos that satisfy different `DizhiRelation`s.
+  All methods' returns are expected to be immutable.
+  '''
+
   @staticmethod
-  def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> list[frozenset[Dizhi]]:
+  def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[Dizhi], ...]:
     '''
     Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
     返回`dizhis`中所有满足该关系的组合。
 
     Note:
     - The returned frozensets don't reveal the directions.
-    - For example, if the returned value for SHENG relation is [{午, 寅}], then we are unable to infer it is 寅 that generates 午 or 午 that generates 寅.
+    - For example, if the returned value for SHENG relation is ({午, 寅}), then we are unable to infer it is 寅 that generates 午 or 午 that generates 寅.
     - For mutual/non-directional relations (e.g. SANHE, SANHUI, ...), that's fine, because we don't care about the direction.
     - For uni-directional relations, please use other static methods in this class to check that (e.g. `DizhiUtils.sheng`, `DizhiUtils.ke`, ...). 
     - For XING relation, it's a bit more complicated.
@@ -27,7 +31,7 @@ class DizhiUtils:
       - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that all three Dizhis to present in order to qualify the XING relation.
       - Use `DizhiUtils.xing` to do more fine-grained checking.
     - 返回的 frozensets 中没有体现关系作用的方向。
-    - 比如说，如果检查输入地支的相生关系并返回 [{午, 寅}]，那么不能从返回结果中看出是寅生午还是午生寅。
+    - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
     - 对于无方向的关系来说（合、会），我们不用关心返回结果中的方向。
     - 对于有方向的关系来说（生、克等），请使用其他静态方法来检查（如 `DizhiUtils.sheng`， `DizhiUtils.ke` 等）。
     - 对于刑关系，更复杂一些：
@@ -57,18 +61,18 @@ class DizhiUtils:
 
     Examples:
     - search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
-      - return: [{Dizhi.寅, Dizhi.卯, Dizhi.辰}]
+      - return: ({Dizhi.寅, Dizhi.卯, Dizhi.辰})
     - search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
-      - return: [{ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑}]
+      - return: ({ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑})
       - `Rules.AnheDef.NORMAL_EXTENDED` is used.
     - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
-      - return: [{ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳, Dizhi.申 }]
+      - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳, Dizhi.申 })
       - Only one 辰 appears in the input - not forming a XING relation.
     - search([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)
-      - return: [{ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }] # Only one 辰 in the returned set!
+      - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }) # Only one 辰 in the returned set!
       - 辰 appear twice in the input - forming a XING relation.
     - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
-      - return: [{ Dizhi.子, Dizhi.卯}]
+      - return: ({ Dizhi.子, Dizhi.卯})
       - `Rules.XingDef.STRICT` is used.
       - 申 is missing - "寅巳申" all three dizhis are required to form a XING relation.
     '''
@@ -76,34 +80,31 @@ class DizhiUtils:
     assert isinstance(relation, DizhiRelation), f'Unexpected type of relation: {type(relation)}'
     assert isinstance(dizhis, Sequence), "Non-sequence input loses the info of Dizhis' frequency."
     assert all(isinstance(dz, Dizhi) for dz in dizhis)
-    
-    dz_tuple: tuple[Dizhi, ...] = tuple(dizhis)
 
-    # TODO: The following `copy.deepcopy` can be removed actually... Since frozenset is immutable.
     if relation is DizhiRelation.三会:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_SANHUI if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_SANHUI if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.六合:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_LIUHE if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_LIUHE if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.暗合:
       anhe_table: frozenset[frozenset[Dizhi]] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
-      return [copy.deepcopy(combo) for combo in anhe_table if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in anhe_table if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.通合:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_TONGHE if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_TONGHE if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.通禄合:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.三合:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_SANHE if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_SANHE if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.半合:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_BANHE if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_BANHE if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.刑:
-      dz_counter: Counter[Dizhi] = Counter(dz_tuple)
+      dz_counter: Counter[Dizhi] = Counter(dizhis)
 
       ret: set[frozenset[Dizhi]] = set()
       for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.STRICT]:
@@ -113,21 +114,23 @@ class DizhiUtils:
         if dz_counter & xing_dz_counter == xing_dz_counter:
           ret.add(frozenset(xing_tuple))
 
-      return list(ret)
+      return tuple(ret)
     
     elif relation is DizhiRelation.冲:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_CHONG if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_CHONG if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.破:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_PO if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_PO if combo.issubset(dizhis))
     
     elif relation is DizhiRelation.害:
-      return [copy.deepcopy(combo) for combo in Rules.DIZHI_HAI if combo.issubset(dz_tuple)]
+      return tuple(combo for combo in Rules.DIZHI_HAI if combo.issubset(dizhis))
 
     # Else, `relation` must be `生` or `克`.
     assert relation is DizhiRelation.生 or relation is DizhiRelation.克
     rules: frozenset[tuple[Dizhi, Dizhi]] = Rules.DIZHI_KE if relation is DizhiRelation.克 else Rules.DIZHI_SHENG
-    return [frozenset(combo) for combo in rules if all(dz in dz_tuple for dz in combo)]
+    frozen_rules: frozenset[frozenset[Dizhi]] = frozenset(map(frozenset, rules))
+    dz_set: set[Dizhi] = set(dizhis)
+    return tuple(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
 
   @staticmethod
   def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
