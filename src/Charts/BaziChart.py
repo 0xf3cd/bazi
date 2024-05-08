@@ -8,6 +8,8 @@ from ..Defines import Tiangan, Shishen, ShierZhangsheng
 from ..Bazi import Bazi
 from ..Utils import BaziUtils
 
+from .ChartProtocol import ChartProtocol
+
 
 class BaziChart:
   '''
@@ -178,3 +180,6 @@ class BaziChart:
     }
 
 原盘 = BaziChart
+
+
+assert isinstance(BaziChart, ChartProtocol)

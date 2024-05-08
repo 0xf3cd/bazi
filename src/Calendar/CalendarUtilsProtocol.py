@@ -7,6 +7,7 @@ from .CalendarDefines import CalendarType, CalendarDate
 
 @runtime_checkable
 class CalendarUtilsProtocol(Protocol):
+  '''The protocol that all CalendarUtils classes conform to.'''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...
   @staticmethod

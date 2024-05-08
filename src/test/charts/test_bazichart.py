@@ -16,9 +16,14 @@ from src.Utils import BaziUtils
 
 from src.Charts import BaziChart
 from src.Charts.BaziChart import 原盘
+from src.Charts.ChartProtocol import ChartProtocol
 
 
 class TestBaziChart(unittest.TestCase):
+  def test_protocol_conformance(self) -> None:
+    self.assertIsInstance(BaziChart(Bazi.random()), ChartProtocol)
+    self.assertIsInstance(BaziChart, ChartProtocol)
+
   def test_basic(self) -> None:
     self.assertIs(BaziChart, 原盘)
 

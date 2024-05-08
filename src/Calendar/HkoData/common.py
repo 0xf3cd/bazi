@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# bazi/hko/common.py
+# bazi/src/Calendar/HkoData/common.py
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 #
 # Define variables and functions used in other .py files in hkodata directory.
