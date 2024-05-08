@@ -5,6 +5,8 @@
 #
 # Decode the encoded data produced by encoder.py.
 
+import functools
+
 from pathlib import Path
 from datetime import date
 from typing import TypedDict, Optional, Final
@@ -41,17 +43,17 @@ class DecodedJieqiDates:
       encoded_bytes: bytes = f.read()
     
     assert len(encoded_bytes) == 24 * (self._end_year - self._start_year + 1) * DecodedJieqiDates.date_bytes_len
-    self._bytes = encoded_bytes
+    self._bytes: Final[bytes] = encoded_bytes
 
     # In Georgian calendar, the first Jieqi is "小寒".
     # But in `Jieqi`'s order, the first Jieqi is "立春".
     jieqi_list: list[Jieqi] = Jieqi.as_list()
-    self._actual_jieqi_order: list[Jieqi] = jieqi_list[-2:] + jieqi_list[:-2] # This is the real order in HKO data.
+    self._actual_jieqi_order: Final[list[Jieqi]] = jieqi_list[-2:] + jieqi_list[:-2] # This is the real order in HKO data.
 
-    self._jieqi_offset_mapping: dict[Jieqi, int] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
+    self._jieqi_offset_mapping: Final[dict[Jieqi, int]] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
     assert len(self._jieqi_offset_mapping) == 24
 
-    self._cached_datetimes: dict[int, JieqiDates] = {}
+    self._cached_datetimes: Final[dict[int, JieqiDates]] = {}
 
   @property
   def start_year(self) -> int:
@@ -63,6 +65,7 @@ class DecodedJieqiDates:
     '''Note: Gregorian/Solar year / 公历年'''
     return self._end_year
 
+  @functools.cache
   def __read_bytes_for_jieqi(self, year: int, jieqi: Jieqi) -> bytes:
     assert year in self.supported_year_range()
     offset: int = self._jieqi_offset_mapping[jieqi]
@@ -79,6 +82,7 @@ class DecodedJieqiDates:
     # Decode the bytes to `JieqiDates`.
     return { jq : bytes_to_date(self.__read_bytes_for_jieqi(year, jq)) for jq in self._actual_jieqi_order }
 
+  @functools.cache
   def get(self, year: int, jieqi: Jieqi) -> date:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
@@ -127,7 +131,7 @@ class DecodedLunarYears:
       encoded_bytes: bytes = f.read()
     
     assert len(encoded_bytes) == 8 * (self.end_year - self.start_year + 1) # hkodata.END_YEAR not included, since the data for it is incomplete.
-    self._bytes = encoded_bytes
+    self._bytes: Final[bytes] = encoded_bytes
 
   @property
   def start_year(self) -> int:
@@ -139,14 +143,12 @@ class DecodedLunarYears:
     '''Note: Lunar year / 阴历年'''
     return self._end_year
 
+  @functools.cache
   def __read_bytes_for_lunar_year(self, lunar_year: int) -> bytes:
     assert lunar_year in self.supported_year_range()
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
-    return self.get(lunar_year)
-
-  def get(self, lunar_year: int) -> LunarYearInfo:
     assert lunar_year in self.supported_year_range()
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
@@ -173,6 +175,14 @@ class DecodedLunarYears:
       'days_counts': days_count_of_each_month,
       'ganzhi': ganzhi
     }
+
+  @functools.cache
+  def get(self, lunar_year: int) -> LunarYearInfo:
+    '''
+    This method is encouraged to be used over `__getitem__`, since it leverages the cache.
+    '''
+    assert lunar_year in self.supported_year_range()
+    return self.__getitem__(lunar_year)
 
   def supported_year_range(self) -> range:
     '''Note: Lunar year / 阴历年'''
