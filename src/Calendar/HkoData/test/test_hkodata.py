@@ -72,8 +72,8 @@ class TestHkoData(unittest.TestCase):
     for year in decoded_jieqi.supported_year_range():
       self.assertEqual(len(decoded_jieqi[year]), 24)
 
-    self.assertEqual(min(decoded_jieqi.supported_year_range()), HkoData.START_YEAR)
-    self.assertEqual(max(decoded_jieqi.supported_year_range()), HkoData.END_YEAR)
+    self.assertEqual(min(decoded_jieqi.supported_year_range()), HkoData.HkoYearLimits.START_YEAR)
+    self.assertEqual(max(decoded_jieqi.supported_year_range()), HkoData.HkoYearLimits.END_YEAR)
 
     for year in decoded_jieqi.supported_year_range():
       jieqi_dates_dict: HkoData.JieqiDates = decoded_jieqi[year]
@@ -292,6 +292,7 @@ class TestHkoData(unittest.TestCase):
       all_txt_paths: dict[int, Path] = HkoData.common.get_raw_txt_file_paths()
       random.choice(list(all_txt_paths.values())).unlink()
       self.assertFalse(HkoData.common.raw_data_ready())
+
     finally:
       # Finally restore the original data folder.
       # Also ensure the data is ready again after the above malicious operations.

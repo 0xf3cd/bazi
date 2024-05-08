@@ -7,10 +7,10 @@
 
 from pathlib import Path
 from datetime import date
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, Final
 
 from ...Defines import Jieqi, Ganzhi
-from .common import END_YEAR, START_YEAR, get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, date_to_bytes, bytes_to_date, bytes_to_int
+from .common import HkoYearLimits, get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, date_to_bytes, bytes_to_date, bytes_to_int
 from .encoder import do_encode, encoded_data_ready
 
 
@@ -29,8 +29,8 @@ class DecodedJieqiDates:
     if not encoded_data_ready():
       do_encode()
 
-    self._start_year = START_YEAR
-    self._end_year = END_YEAR
+    self._start_year: Final[int] = HkoYearLimits.START_YEAR
+    self._end_year: Final[int] = HkoYearLimits.END_YEAR
 
     jieqi_encoded_path: Path = get_jieqi_encoded_data_path()
     assert jieqi_encoded_path.exists() and jieqi_encoded_path.is_file()
@@ -116,8 +116,8 @@ class DecodedLunarYears:
     if not encoded_data_ready():
       do_encode()
 
-    self._start_year = START_YEAR
-    self._end_year = END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.
+    self._start_year: Final[int] = HkoYearLimits.START_YEAR
+    self._end_year: Final[int] = HkoYearLimits.END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.
 
     lunardate_encoded_path: Path = get_lunardate_encoded_data_path()
     assert lunardate_encoded_path.exists() and lunardate_encoded_path.is_file()

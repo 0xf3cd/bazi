@@ -12,7 +12,7 @@ from datetime import datetime
 
 if __name__ == '__main__':
   from common import ( # type: ignore # somehow mypy can't find it.
-    START_YEAR, END_YEAR,
+    HkoYearLimits,
     get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
     get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
     jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 else:
   from ...Defines import Ganzhi
   from .common import (
-    START_YEAR, END_YEAR,
+    HkoYearLimits,
     get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
     get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
     jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
@@ -135,12 +135,12 @@ def parse_lines_in_lunar_years() -> dict[int, list[str]]:
     all_lines.extend(extractions[year])
 
   zhengyue_line_indices: list[int] = [idx for idx, line in enumerate(all_lines) if '正月' in line]
-  assert len(zhengyue_line_indices) == END_YEAR - START_YEAR + 1
+  assert len(zhengyue_line_indices) == HkoYearLimits.END_YEAR - HkoYearLimits.START_YEAR + 1
 
   ret: dict[int, list[str]] = {}
-  for lunar_year in range(START_YEAR, END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
-    line_start_idx: int = zhengyue_line_indices[lunar_year - START_YEAR]
-    line_end_idx: int = zhengyue_line_indices[lunar_year - START_YEAR + 1]
+  for lunar_year in range(HkoYearLimits.START_YEAR, HkoYearLimits.END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
+    line_start_idx: int = zhengyue_line_indices[lunar_year - HkoYearLimits.START_YEAR]
+    line_end_idx: int = zhengyue_line_indices[lunar_year - HkoYearLimits.START_YEAR + 1]
     ret[lunar_year] = all_lines[line_start_idx:line_end_idx]
 
   return ret
@@ -148,7 +148,7 @@ def parse_lines_in_lunar_years() -> dict[int, list[str]]:
 def parse_ganzhis_in_lunar_years() -> dict[int, Ganzhi]:  
   raw_txt_paths: dict[int, Path] = get_raw_txt_file_paths()
   ret: dict[int, Ganzhi] = {}
-  for lunar_year in range(START_YEAR, END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
+  for lunar_year in range(HkoYearLimits.START_YEAR, HkoYearLimits.END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
     with raw_txt_paths[lunar_year].open('r', encoding='utf-8') as f:
       first_line: str = f.readline().strip()
       ganzhi_str: str = first_line.split('(')[-1].split('-')[0].strip()

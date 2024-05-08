@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from enum import Enum
+from typing import Final
 
 class CalendarType(Enum):
   '''
@@ -51,10 +52,10 @@ class CalendarDate:
     assert isinstance(day, int)
     assert isinstance(date_type, CalendarType)
 
-    self._year = year
-    self._month = month
-    self._day = day
-    self._date_type = date_type
+    self._year: Final[int] = year
+    self._month: Final[int] = month
+    self._day: Final[int] = day
+    self._date_type: Final[CalendarType] = date_type
 
   @property
   def year(self) -> int:
@@ -143,3 +144,6 @@ class CalendarDate:
     if self.day != other.day:
       return self.day > other.day
     return True
+
+  def __hash__(self) -> int:
+    return hash((self.year, self.month, self.day, self.date_type))
