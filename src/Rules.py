@@ -12,7 +12,7 @@ class Rules(metaclass=ImmutableMetaClass):
   '''
   `Rules` represents rules/tables that the project uses.
   The class itself is immutable - its attributes are not writtable.
-  All table are lazy evaluated and cached.
+  All tables are lazy evaluated and cached.
   
   Usage:
   ```

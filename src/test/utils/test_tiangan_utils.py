@@ -27,7 +27,7 @@ class TestTianganUtils(unittest.TestCase):
 
   def test_search_basic(self) -> None:
     for relation in TianganRelation:
-      empty_result: list[frozenset[Tiangan]] = TianganUtils.search([], relation)
+      empty_result: tuple[frozenset[Tiangan], ...] = TianganUtils.search([], relation)
       self.assertEqual(len(empty_result), 0)
 
     self.assertTrue(self.__tg_equal(
@@ -119,11 +119,13 @@ class TestTianganUtils(unittest.TestCase):
         TianganUtils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), str(relation)) # type: ignore
 
     # Invoke the method and do bad things on the result.
-    TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
-    TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(frozenset({Tiangan.壬, Tiangan.丁}))
-    sheng_result = TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
-    sheng_result[0] = frozenset((Tiangan.丁,))
-    sheng_result[1] = frozenset((Tiangan.壬, Tiangan.戊))
+    # TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
+    # TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(frozenset({Tiangan.壬, Tiangan.丁}))
+    # sheng_result = TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
+    # sheng_result[0] = frozenset((Tiangan.丁,))
+    # sheng_result[1] = frozenset((Tiangan.壬, Tiangan.戊))
+    #
+    # No need to do bad things again since the return type `tuple` is immutable.
 
     # Make sure the method still returns the correct result.
     self.assertTrue(self.__tg_equal(
@@ -226,14 +228,14 @@ class TestTianganUtils(unittest.TestCase):
 
     for relation in TianganRelation:
       tiangans = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
-      combos1: list[frozenset[Tiangan]] = TianganUtils.search(tiangans, relation)
-      combos2: list[frozenset[Tiangan]] = TianganUtils.search(tiangans + tiangans, relation)
+      combos1: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans, relation)
+      combos2: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans + tiangans, relation)
       self.assertEqual(len(combos1), len(combos2))
       for combo_fs in combos1:
         self.assertIn(combo_fs, combos2)
 
       for _ in range(500):
-        combos: list[frozenset[Tiangan]] = TianganUtils.search(tiangans, relation)
+        combos: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans, relation)
         expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
         self.assertEqual(len(expected_combos), len(combos))
         for combo_fs in combos:
