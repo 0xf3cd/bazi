@@ -48,7 +48,7 @@ class TestDizhiUtils(unittest.TestCase):
     
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.三会)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.三会)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhui_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -103,7 +103,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.六合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.六合)
       expected_result: list[set[Dizhi]] = [set(c) for c in liuhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -167,7 +167,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.暗合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.暗合)
       expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -241,7 +241,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.通合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.通合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tonghe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -289,7 +289,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.通禄合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.通禄合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tongluhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -341,7 +341,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.三合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.三合)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhe_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -398,7 +398,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.半合)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.半合)
       expected_result: list[set[Dizhi]] = [set(c) for c in banhe_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -468,7 +468,7 @@ class TestDizhiUtils(unittest.TestCase):
       dizhis: list[Dizhi] = [] 
       for _ in range(random.randint(1, 4)):
         dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.刑)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.刑)
       expected_result: list[set[Dizhi]] = __find_qualified(dizhis)
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -631,7 +631,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.冲)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.冲)
       expected_result: list[set[Dizhi]] = [c for c in chong_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -679,7 +679,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.破)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.破)
       expected_result: list[set[Dizhi]] = [c for c in po_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -736,7 +736,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.害)
+      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.害)
       expected_result: list[frozenset[Dizhi]] = [c for c in hai_set if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -763,8 +763,8 @@ class TestDizhiUtils(unittest.TestCase):
   def test_search_sheng_ke(self) -> None:
     for _ in range(200):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      sheng_result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.生)
-      ke_result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, DizhiRelation.克)
+      sheng_result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.生)
+      ke_result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.克)
 
       for fs in sheng_result:
         for dz in fs:
@@ -850,19 +850,19 @@ class TestDizhiUtils(unittest.TestCase):
           dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
 
         dizhi_counter: Counter[Dizhi] = Counter(dizhis)
-        result: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis, relation)
+        result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, relation)
         for _ in range(2):
           random.shuffle(dizhis)
           copied: list[Dizhi] = copy.deepcopy(dizhis)
           self.assertTrue(self.__dz_equal(result, DizhiUtils.search(dizhis, relation)))
           self.assertListEqual(copied, dizhis) # Ensure `search` has no effect on the input `dizhis`.
 
-        result2: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis + dizhis, relation)
-        result3: list[frozenset[Dizhi]] = DizhiUtils.search(dizhis + dizhis + dizhis, relation)
+        result2: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis + dizhis, relation)
+        result3: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis + dizhis + dizhis, relation)
 
         # Expectedly, `result2` and `result3` should be equal to `result1`.
         # The only exception is 自刑。
-        result_patched: list[frozenset[Dizhi]] = copy.deepcopy(result)
+        result_patched: tuple[frozenset[Dizhi], ...] = copy.deepcopy(result)
         if relation is DizhiRelation.刑:
           for dz in (Dizhi.午, Dizhi.辰, Dizhi.酉, Dizhi.亥):
             if dizhi_counter[dz] == 1:
@@ -870,7 +870,7 @@ class TestDizhiUtils(unittest.TestCase):
               self.assertNotIn(fs, result_patched)
               self.assertIn(fs, result2)
               self.assertIn(fs, result3)
-              result_patched.append(fs) # Patch it up.
+              result_patched = result_patched + (fs,) # Patch it up.
 
         self.assertTrue(self.__dz_equal(result_patched, result2))
         self.assertTrue(self.__dz_equal(result_patched, result3))
@@ -923,7 +923,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for relation in DizhiRelation:
       relation_results: list[list[Any]] = []
-      combo_results: list[list[frozenset[Dizhi]]] = []
+      combo_results: list[tuple[frozenset[Dizhi], ...]] = []
       for _ in range(7):
         if random.randint(0, 1) == 0:
           relation_results.append(self.__run_all_relation_methods(dizhis))
@@ -931,10 +931,10 @@ class TestDizhiUtils(unittest.TestCase):
           combo_results.append(DizhiUtils.search(dizhis, relation))
 
       if len(relation_results) >= 2:
-        for r in relation_results[1:]:
-          self.assertEqual(relation_results[0], r)
+        for rr in relation_results[1:]:
+          self.assertEqual(relation_results[0], rr)
       if len(combo_results) >= 2:
-        for r in combo_results[1:]:
-          self.assertEqual(combo_results[0], r)
+        for cr in combo_results[1:]:
+          self.assertEqual(combo_results[0], cr)
 
     self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
