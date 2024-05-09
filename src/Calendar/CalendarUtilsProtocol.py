@@ -9,7 +9,17 @@ from .CalendarDefines import CalendarType, CalendarDate
 
 @runtime_checkable
 class CalendarUtilsProtocol(Protocol):
-  '''The protocol that all CalendarUtils classes conform to.'''
+  '''
+  The protocol that all CalendarUtils classes conform to.
+  
+  Currently, only HKO-data-based calendar utils are supported/implemented, which is at
+  day-level precision, meaning that we are unable to know the accurate time of Jieqis.
+
+  In the future, I plan to implement a C++-based calendar utils, using astronomical algorithms.
+  With that, it becomes possible to know the accurate time of Jieqis.
+
+  Creating this protocol just to ensure the smooth migration to future C++-based calendar utils.
+  '''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...
   @staticmethod
@@ -48,3 +58,7 @@ class CalendarUtilsProtocol(Protocol):
   def jieqi_date(solar_year: int, jieqi: Jieqi) -> date: ...
   @staticmethod
   def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime: ...
+  @staticmethod
+  def locate_prev_jie(dt: datetime) -> tuple[Jieqi, datetime]: ...
+  @staticmethod
+  def locate_next_jie(dt: datetime) -> tuple[Jieqi, datetime]: ...
