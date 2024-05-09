@@ -91,7 +91,7 @@ class TestBaziChart(unittest.TestCase):
       precision=BaziPrecision.DAY,
     )
     chart: BaziChart = BaziChart(bazi)
-    hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
+    hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangan
 
     self.assertEqual(len(list(hidden_tiangans)), 4)
 
@@ -114,7 +114,7 @@ class TestBaziChart(unittest.TestCase):
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+    shishens: BaziData[BaziChart.PillarShishens] = chart.shishen
 
     self.assertEqual(len(list(shishens)), 4)
 
@@ -134,32 +134,32 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(shishens.hour.tiangan, Shishen.偏财)
     self.assertEqual(shishens.hour.dizhi, Shishen.偏印)
 
-  def test_nayins(self) -> None:
+  def test_nayin(self) -> None:
     chart: BaziChart = BaziChart(Bazi.create(
       birth_time=datetime(1984, 4, 2, 4, 2),
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    nayins: BaziData[str] = chart.nayins
+    nayin: BaziData[str] = chart.nayin
 
-    self.assertEqual(len(list(nayins)), 4)
+    self.assertEqual(len(list(nayin)), 4)
 
     #           Year    Month     Day     Hour
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    self.assertEqual(nayins.year, '海中金')
-    self.assertEqual(nayins.month, '炉中火')
-    self.assertEqual(nayins.day, '炉中火')
-    self.assertEqual(nayins.hour, '松柏木')
+    self.assertEqual(nayin.year, '海中金')
+    self.assertEqual(nayin.month, '炉中火')
+    self.assertEqual(nayin.day, '炉中火')
+    self.assertEqual(nayin.hour, '松柏木')
 
-  def test_shier_zhangshengs(self) -> None:
+  def test_shier_zhangsheng(self) -> None:
     chart: BaziChart = BaziChart(Bazi.create(
       birth_time=datetime(1984, 4, 2, 4, 2),
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangshengs
+    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangsheng
 
     self.assertEqual(len(list(zhangshengs)), 4)
 
@@ -182,8 +182,8 @@ class TestBaziChart(unittest.TestCase):
       day_master: Tiangan = chart.bazi.day_master
       pillars: list[Ganzhi] = list(chart.bazi.pillars)
       traits: BaziData[BaziChart.PillarTraits] = chart.traits
-      hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
-      shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+      hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangan
+      shishens: BaziData[BaziChart.PillarShishens] = chart.shishen
 
       # The major component in hidden Tiangans of a Dizhi is expected to be of the same Wuxing as the Dizhi.
       # 地支中的主气（即本气）应该和地支本身的五行一致。
@@ -274,10 +274,10 @@ class TestBaziChart(unittest.TestCase):
         self.assertEqual(chart.bazi, expected.bazi)
 
         self.assertListEqual(list(chart.traits), list(expected.traits))
-        self.assertListEqual(list(chart.hidden_tiangans), list(expected.hidden_tiangans))
-        self.assertListEqual(list(chart.shishens), list(expected.shishens))
-        self.assertListEqual(list(chart.nayins), list(expected.nayins))
-        self.assertListEqual(list(chart.shier_zhangshengs), list(expected.shier_zhangshengs))
+        self.assertListEqual(list(chart.hidden_tiangan), list(expected.hidden_tiangan))
+        self.assertListEqual(list(chart.shishen), list(expected.shishen))
+        self.assertListEqual(list(chart.nayin), list(expected.nayin))
+        self.assertListEqual(list(chart.shier_zhangsheng), list(expected.shier_zhangsheng))
 
         gen, expected_gen = chart.dayun, expected.dayun
         self.assertEqual(next(gen), next(expected_gen))
@@ -312,7 +312,7 @@ class TestBaziChart(unittest.TestCase):
       __j['datetime'] = datetime.now().isoformat()
       __j['gender'] = 'male'
       __j['tiangan_traits'], __j['dizhi_traits'] = __j['dizhi_traits'], __j['tiangan_traits']
-      __j['tiangan_shishens'], __j['dizhi_shishens'] = __j['dizhi_shishens'], __j['tiangan_shishens']
+      __j['tiangan_shishen'], __j['dizhi_shishen'] = __j['dizhi_shishen'], __j['tiangan_shishen']
       self.assertEqual(chart.json, j)
       self.assertNotEqual(chart.json, __j)
 
@@ -368,35 +368,35 @@ class TestBaziChart(unittest.TestCase):
       'hour': '阳木',
     })
 
-    self.assertEqual(j['hidden_tiangans'], {
+    self.assertEqual(j['hidden_tiangan'], {
       'year': '癸:100',
       'month': '乙:100',
       'day': '甲:60,丙:30,戊:10',
       'hour': '甲:60,丙:30,戊:10',
     })
 
-    self.assertEqual(j['tiangan_shishens'], {
+    self.assertEqual(j['tiangan_shishen'], {
       'year': '偏印',
       'month': '劫财',
       'day': 'None',
       'hour': '偏财',
     })
 
-    self.assertEqual(j['dizhi_shishens'], {
+    self.assertEqual(j['dizhi_shishen'], {
       'year': '正官',
       'month': '正印',
       'day': '偏印',
       'hour': '偏印',
     })
 
-    self.assertEqual(j['nayins'], {
+    self.assertEqual(j['nayin'], {
       'year': '海中金',
       'month': '炉中火',
       'day': '炉中火',
       'hour': '松柏木',
     })
 
-    self.assertEqual(j['shier_zhangshengs'], {
+    self.assertEqual(j['shier_zhangsheng'], {
       'year': '胎',
       'month': '沐浴',
       'day': '长生',

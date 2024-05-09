@@ -23,8 +23,8 @@ def interpret(chart: BaziChart) -> str:
     assert key in ['year', 'month', 'day', 'hour']
     __s: str = ''
     __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，" # type: ignore # mypy complains.
-    __s += '日元' if key == 'day' else j['tiangan_shishens'][key] # type: ignore # mypy complains.
-    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishens'][key]}）。" # type: ignore # mypy complains.
+    __s += '日元' if key == 'day' else j['tiangan_shishen'][key] # type: ignore # mypy complains.
+    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishen'][key]}）。" # type: ignore # mypy complains.
     return __s
   
   s += '\n' + '-' * 60 + '\n'
@@ -42,7 +42,7 @@ def interpret(chart: BaziChart) -> str:
   s += '日主的个性：' + ''.join(day_master_desc['personality']) + '\n\n'
 
   shishens: dict[Shishen, int] = { ss : 0 for ss in Shishen }
-  for pillar_shishens in chart.shishens:
+  for pillar_shishens in chart.shishen:
     if pillar_shishens.tiangan is not None:
       shishens[pillar_shishens.tiangan] += 1
     shishens[pillar_shishens.dizhi] += 1

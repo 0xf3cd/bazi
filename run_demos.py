@@ -40,10 +40,10 @@ def get_basic_info(chart: BaziChart) -> str:
   s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_date}\n\n'
 
   pillars: list[Ganzhi] = list(bazi.pillars)
-  shishens: list[BaziChart.PillarShishens] = list(chart.shishens)
-  hidden_tiangans: list[HiddenTianganDict] = list(chart.hidden_tiangans)
-  nayins: list[str] = list(chart.nayins)
-  zhangshengs: list[ShierZhangsheng] = list(chart.shier_zhangshengs)
+  shishens: list[BaziChart.PillarShishens] = list(chart.shishen)
+  hidden_tiangan: list[HiddenTianganDict] = list(chart.hidden_tiangan)
+  nayin: list[str] = list(chart.nayin)
+  zhangsheng: list[ShierZhangsheng] = list(chart.shier_zhangsheng)
 
   s += '     天干                  地支                  地支藏干\n'
   for idx, head in enumerate(['年', '月', '日', '时']):
@@ -61,11 +61,11 @@ def get_basic_info(chart: BaziChart) -> str:
       tg_shishen: str = str(shishens[idx].tiangan) # type: ignore # mypy complains.
     dz_shishen: str = str(shishens[idx].dizhi)
 
-    hidden_dict: HiddenTianganDict = hidden_tiangans[idx]
+    hidden_dict: HiddenTianganDict = hidden_tiangan[idx]
     hidden_tgs: str = ' '.join([f'{colored_str(tg)} [{get_trait_str(tg)}]' for tg in hidden_dict.keys()])
 
     s += f'{head}：  {tg_str} [{tg_traits}] <{tg_shishen}>      {dz_str} [{dz_traits}] <{dz_shishen}>     {hidden_tgs}\n'
-    s += f'  -- 纳音：{nayins[idx]}  -- 十二长生：{zhangshengs[idx]}\n'
+    s += f'  -- 纳音：{nayin[idx]}  -- 十二长生：{zhangsheng[idx]}\n'
 
   return s
 

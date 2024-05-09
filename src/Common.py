@@ -224,13 +224,13 @@ class BaziJson:
     gender: str
     precision: str
     pillars: 'BaziJson.FourPillars'
-    nayins: 'BaziJson.FourPillars'
-    shier_zhangshengs: 'BaziJson.FourPillars'
+    nayin: 'BaziJson.FourPillars'
+    shier_zhangsheng: 'BaziJson.FourPillars'
     tiangan_traits: 'BaziJson.FourPillars'
     dizhi_traits: 'BaziJson.FourPillars'
-    tiangan_shishens: 'BaziJson.FourPillars'
-    dizhi_shishens: 'BaziJson.FourPillars'
-    hidden_tiangans: 'BaziJson.FourPillars'
+    tiangan_shishen: 'BaziJson.FourPillars'
+    dizhi_shishen: 'BaziJson.FourPillars'
+    hidden_tiangan: 'BaziJson.FourPillars'
 
 
 class ShishenDescription(TypedDict):

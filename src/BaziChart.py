@@ -52,14 +52,14 @@ class BaziChart:
     return BaziData(BaziChart.PillarTraits, pillar_data)
   
   @property
-  def hidden_tiangans(self) -> BaziData[HiddenTianganDict]:
+  def hidden_tiangan(self) -> BaziData[HiddenTianganDict]:
     '''
     The hidden Tiangans in all Dizhis of current bazi.
     当前八字的所有地支中的藏干。
 
     Usage:
     ```
-    hidden = chart.hidden_tiangans
+    hidden = chart.hidden_tiangan
 
     print(hidden.year)  # Print the hidden tiangans of Year
     print(hidden.month) # Print the hidden tiangans of Month
@@ -75,7 +75,7 @@ class BaziChart:
   
   PillarShishens = PillarData[Optional[Shishen], Shishen]
   @property
-  def shishens(self) -> BaziData[PillarShishens]:
+  def shishen(self) -> BaziData[PillarShishens]:
     '''
     The Shishens of all Tiangans and Dizhis of Year, Month, Day, and Hour.
     Notice that Day Master is not classified into any Shishen, as per the rules.
@@ -83,7 +83,7 @@ class BaziChart:
 
     Usage:
     ```
-    shishens = chart.shishens
+    shishens = chart.shishen
 
     print(shishens.year.tiangan) # Print the Shishen of Year's Tiangan
     print(shishens.hour.dizhi)   # Print the Shishen of Hour's Dizhi
@@ -114,18 +114,18 @@ class BaziChart:
     return BaziData(self.PillarShishens, shishen_list)
   
   @property
-  def nayins(self) -> BaziData[str]:
+  def nayin(self) -> BaziData[str]:
     '''
-    The Nayins of the pillars of Year, Month, Day, and Hour.
+    The nayins of the pillars of Year, Month, Day, and Hour.
     年、月、日、时柱的纳音。
 
     Usage:
     ```
-    nayins = chart.nayins
+    nayin = chart.nayin
 
-    print(nayins.year) # Print the Nayin of the Year pillar
+    print(nayin.year) # Print the Nayin of the Year pillar
 
-    for nayin in nayins: # Iterate in the order of "Year, Month, Day, and Hour"
+    for nayin in nayin: # Iterate in the order of "Year, Month, Day, and Hour"
       print(nayin)
     ```
     '''
@@ -134,14 +134,14 @@ class BaziChart:
     return BaziData(str, nayin_list)
   
   @property
-  def shier_zhangshengs(self) -> BaziData[ShierZhangsheng]:
+  def shier_zhangsheng(self) -> BaziData[ShierZhangsheng]:
     '''
     The Shier Zhangshengs (i.e. 12 stages of growth) of 4 pillars of Year, Month, Day, and Hour.
     年、月、日、时柱的十二长生。
 
     Usage:
     ```
-    zhangshengs = chart.shier_zhangshengs
+    zhangshengs = chart.shier_zhangsheng
 
     print(zhangshengs.day) # Print the Zhangsheng of the Day pillar
 
@@ -200,13 +200,13 @@ class BaziChart:
       'gender': str(self._bazi.gender),
       'precision': str(self._bazi.precision),
       'pillars': f([str(p) for p in self._bazi.pillars]),
-      'nayins': f([str(ny) for ny in self.nayins]),
-      'shier_zhangshengs': f([str(sz) for sz in self.shier_zhangshengs]),
+      'nayin': f([str(ny) for ny in self.nayin]),
+      'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
       'tiangan_traits': f([str(t.tiangan) for t in self.traits]),
       'dizhi_traits': f([str(t.dizhi) for t in self.traits]),
-      'tiangan_shishens': f([str(s.tiangan) for s in self.shishens]),
-      'dizhi_shishens': f([str(s.dizhi) for s in self.shishens]),
-      'hidden_tiangans': f([str(h) for h in self.hidden_tiangans]),
+      'tiangan_shishen': f([str(s.tiangan) for s in self.shishen]),
+      'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
+      'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
     }
 
 命盘 = BaziChart
