@@ -497,3 +497,132 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       datetimes.append(HkoDataCalendarUtils.jieqi_moment(random_solar_year, jieqi))
     for d1, d2 in zip(datetimes, datetimes[1:]):
       self.assertLess(d1, d2)
+
+  def test_prev_jie(self) -> None:
+    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
+    
+    self.assertRaises(AssertionError, HkoDataCalendarUtils.prev_jie, '2024-06-15')
+    self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, datetime(1899, 12, 31))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, datetime(2101, 1, 1))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, supported_range[0] - timedelta(microseconds=1))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, supported_range[1])
+
+    for _ in range(500):
+      random_dt: datetime = datetime(
+        year=random.randint(1800, 2200),
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+        second=random.randint(0, 59),
+      )
+      if supported_range[0] <= random_dt < supported_range[1]: # In supported range.
+        self.assertIsInstance(HkoDataCalendarUtils.prev_jie(random_dt), tuple)
+      else:
+        self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, random_dt)
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪)),
+      (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪) + timedelta(microseconds=1)),
+      (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪) - timedelta(microseconds=1)),
+      (Jieqi.立冬, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.立冬))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒)),
+      (Jieqi.小寒, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒) - timedelta(microseconds=1)),
+      (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2023, Jieqi.大雪))
+    )
+
+    first_year: int = HkoDataCalendarUtils.jieqi_dates_db.start_year
+    jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+    for jie1, jie2 in zip(jie_list, jie_list[1:]):
+      self.assertTupleEqual(
+        HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(first_year, jie1)),
+        (jie1, HkoDataCalendarUtils.jieqi_moment(first_year, jie1))
+      )
+      self.assertTupleEqual(
+        HkoDataCalendarUtils.prev_jie(HkoDataCalendarUtils.jieqi_moment(first_year, jie2) - timedelta(microseconds=1)),
+        (jie1, HkoDataCalendarUtils.jieqi_moment(first_year, jie1))
+      )
+  
+  def test_next_jie(self) -> None:
+    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
+    
+    self.assertRaises(AssertionError, HkoDataCalendarUtils.next_jie, '2024-06-15')
+    self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, datetime(1899, 12, 31))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, datetime(2101, 1, 1))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, supported_range[0] - timedelta(microseconds=1))
+    self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, supported_range[1])
+
+    for _ in range(500):
+      random_dt: datetime = datetime(
+        year=random.randint(1800, 2200),
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+        second=random.randint(0, 59),
+      )
+      if supported_range[0] <= random_dt < supported_range[1]: # In supported range.
+        self.assertIsInstance(HkoDataCalendarUtils.next_jie(random_dt), tuple)
+      else:
+        self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, random_dt)
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒)),
+      (Jieqi.立春, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.立春))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒) + timedelta(microseconds=1)),
+      (Jieqi.立春, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.立春))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒) - timedelta(microseconds=1)),
+      (Jieqi.小寒, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.小寒))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪)),
+      (Jieqi.小寒, HkoDataCalendarUtils.jieqi_moment(2025, Jieqi.小寒))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪) + timedelta(microseconds=1)),
+      (Jieqi.小寒, HkoDataCalendarUtils.jieqi_moment(2025, Jieqi.小寒))
+    )
+
+    self.assertTupleEqual(
+      HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪) - timedelta(microseconds=1)),
+      (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪))
+    )
+
+    last_year: int = HkoDataCalendarUtils.jieqi_dates_db.end_year
+    jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+    for jie1, jie2 in zip(jie_list, jie_list[1:]):
+      self.assertTupleEqual(
+        HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(last_year, jie1)),
+        (jie2, HkoDataCalendarUtils.jieqi_moment(last_year, jie2))
+      )
+      self.assertTupleEqual(
+        HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(last_year, jie1) - timedelta(microseconds=1)),
+        (jie1, HkoDataCalendarUtils.jieqi_moment(last_year, jie1))
+      )
+      self.assertTupleEqual(
+        HkoDataCalendarUtils.next_jie(HkoDataCalendarUtils.jieqi_moment(last_year, jie2) - timedelta(microseconds=1)),
+        (jie2, HkoDataCalendarUtils.jieqi_moment(last_year, jie2))
+      )

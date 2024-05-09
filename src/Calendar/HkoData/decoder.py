@@ -47,8 +47,7 @@ class DecodedJieqiDates:
 
     # In Georgian calendar, the first Jieqi is "小寒".
     # But in `Jieqi`'s order, the first Jieqi is "立春".
-    jieqi_list: list[Jieqi] = Jieqi.as_list()
-    self._actual_jieqi_order: Final[list[Jieqi]] = jieqi_list[-2:] + jieqi_list[:-2] # This is the real order in HKO data.
+    self._actual_jieqi_order: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=False) # This is the real order in HKO data.
 
     self._jieqi_offset_mapping: Final[dict[Jieqi, int]] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
     assert len(self._jieqi_offset_mapping) == 24

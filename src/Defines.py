@@ -208,8 +208,18 @@ class Jieqi(Enum):
     return cls(s)
   
   @classmethod
-  def as_list(cls) -> list['Jieqi']:
-    return list(cls)
+  def as_list(cls, ganzhi_year: bool = True) -> list['Jieqi']:
+    '''
+    If `ganzhi_year` is True (which is the default case), returning the Jieqis
+    starting from "立春", as "立春" is the first Jieqi in any ganzhi year.
+
+    If `ganzhi_year` is False, returning the Jieqis starting from "小寒",
+    as "小寒" is the first Jieqi in any solar year.
+    '''
+    if ganzhi_year:
+      return list(cls)
+    else: # Return in the order that Jieqis appear in a solar year.
+      return list(cls)[-2:] + list(cls)[:-2]
 
   def __str__(self) -> str:
     return str(self.value)

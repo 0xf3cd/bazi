@@ -365,6 +365,14 @@ class TestJieqi(unittest.TestCase):
       Jieqi.立春, Jieqi.雨水, Jieqi.惊蛰, Jieqi.春分, Jieqi.清明, Jieqi.谷雨, Jieqi.立夏, Jieqi.小满, Jieqi.芒种, Jieqi.夏至, Jieqi.小暑, Jieqi.大暑, 
       Jieqi.立秋, Jieqi.处暑, Jieqi.白露, Jieqi.秋分, Jieqi.寒露, Jieqi.霜降, Jieqi.立冬, Jieqi.小雪, Jieqi.大雪, Jieqi.冬至, Jieqi.小寒, Jieqi.大寒
     ])
+    self.assertListEqual(Jieqi.as_list(ganzhi_year=True), [
+      Jieqi.立春, Jieqi.雨水, Jieqi.惊蛰, Jieqi.春分, Jieqi.清明, Jieqi.谷雨, Jieqi.立夏, Jieqi.小满, Jieqi.芒种, Jieqi.夏至, Jieqi.小暑, Jieqi.大暑, 
+      Jieqi.立秋, Jieqi.处暑, Jieqi.白露, Jieqi.秋分, Jieqi.寒露, Jieqi.霜降, Jieqi.立冬, Jieqi.小雪, Jieqi.大雪, Jieqi.冬至, Jieqi.小寒, Jieqi.大寒
+    ])
+    self.assertListEqual(Jieqi.as_list(ganzhi_year=False), [
+      Jieqi.小寒, Jieqi.大寒, Jieqi.立春, Jieqi.雨水, Jieqi.惊蛰, Jieqi.春分, Jieqi.清明, Jieqi.谷雨, Jieqi.立夏, Jieqi.小满, Jieqi.芒种, Jieqi.夏至,
+      Jieqi.小暑, Jieqi.大暑, Jieqi.立秋, Jieqi.处暑, Jieqi.白露, Jieqi.秋分, Jieqi.寒露, Jieqi.霜降, Jieqi.立冬, Jieqi.小雪, Jieqi.大雪, Jieqi.冬至, 
+    ])
 
   def test_from_str(self) -> None:
     with self.assertRaises(ValueError):

@@ -121,11 +121,11 @@ class BaziChart:
 
     Usage:
     ```
-    nayin = chart.nayin
+    nayins = chart.nayin
 
-    print(nayin.year) # Print the Nayin of the Year pillar
+    print(nayins.year) # Print the Nayin of the Year pillar
 
-    for nayin in nayin: # Iterate in the order of "Year, Month, Day, and Hour"
+    for nayin in nayins: # Iterate in the order of "Year, Month, Day, and Hour"
       print(nayin)
     ```
     '''

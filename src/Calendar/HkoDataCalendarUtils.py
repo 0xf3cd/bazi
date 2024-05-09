@@ -449,17 +449,22 @@ class HkoDataCalendarUtils(metaclass=ImmutableMetaClass):
     return datetime.combine(dt, time(0, 0, 0))
   
   @classproperty
-  def supported_jie_range(cls) -> tuple[datetime, datetime]:
+  def supported_jie_boundaries(cls) -> tuple[datetime, datetime]:
+    '''
+    Return a tuple of datetimes representing the first and last supported Jie accurate time.
+    When using methods `prev_jie` and `next_jie`, the input datetime should be in: 
+    `[returned_tuple[0], returned_tuple[1])` (`returned_tuple[0]` included, `returned_tuple[1]` not).
+    '''
     supported_first_year: int = HkoDataCalendarUtils.jieqi_dates_db.start_year
     supported_last_year: int = HkoDataCalendarUtils.jieqi_dates_db.end_year
     return (
       HkoDataCalendarUtils.jieqi_moment(supported_first_year, Jieqi.小寒), # 小寒 is the first Jie of any solar year.
-      HkoDataCalendarUtils.jieqi_moment(supported_last_year, Jieqi.大寒), # 大寒 is the last Jie of any solar year.
+      HkoDataCalendarUtils.jieqi_moment(supported_last_year, Jieqi.大雪), # 大雪 is the last Jie of any solar year.
     )
 
   @staticmethod
   @functools.lru_cache(maxsize=512)
-  def locate_prev_jie(dt: datetime) -> tuple[Jieqi, datetime]:
+  def prev_jie(dt: datetime) -> tuple[Jieqi, datetime]:
     '''
     Find out the previous Jie (节), not Jieqi, for the given solar datetime.
     输入某时间点，返回这个时间点之前的一个节令（不包含中气），以及对应的时间点。
@@ -470,17 +475,17 @@ class HkoDataCalendarUtils(metaclass=ImmutableMetaClass):
     Return: (tuple[Jieqi, datetime]) The previous Jie (节), and its solar datetime.
 
     Examples:
-    - locate_prev_jie(jieqi_moment(2024, Jieqi.小寒))
+    - prev_jie(jieqi_moment(2024, Jieqi.小寒))
       - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
-    - locate_prev_jie(jieqi_moment(2024, Jieqi.小寒) + timedelta(seconds=1))
+    - prev_jie(jieqi_moment(2024, Jieqi.小寒) + timedelta(seconds=1))
       - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
-    - locate_prev_jie(jieqi_moment(2024, Jieqi.小寒) - timedelta(seconds=1))
+    - prev_jie(jieqi_moment(2024, Jieqi.小寒) - timedelta(seconds=1))
       - return: (Jieqi.大雪, jieqi_moment(2023, Jieqi.大雪))
     '''
 
     assert isinstance(dt, datetime)
 
-    supported_jie_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_range
+    supported_jie_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
     if dt < supported_jie_range[0]:
       raise ValueError(f'"{dt}" is out of the supported range. The first available Jie is "{supported_jie_range[0]}"')
     if dt >= supported_jie_range[1]:
@@ -490,8 +495,7 @@ class HkoDataCalendarUtils(metaclass=ImmutableMetaClass):
     if dt >= daxue_dt:
       return (Jieqi.大雪, daxue_dt)
 
-    ordered_jies: list[Jieqi] = (list(Jieqi)[-2:] + list(Jieqi)[:-2])[::2]
-    reversed_jies: list[Jieqi] = ordered_jies[::-1]
+    reversed_jies: list[Jieqi] = list(reversed(Jieqi.as_list(ganzhi_year=False)[::2]))
     for jie1, jie2 in zip(reversed_jies[1:], reversed_jies):
       jie1_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year, jie1)
       jie2_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year, jie2)
@@ -504,7 +508,7 @@ class HkoDataCalendarUtils(metaclass=ImmutableMetaClass):
   
   @staticmethod
   @functools.lru_cache(maxsize=512)
-  def locate_next_jie(dt: datetime) -> tuple[Jieqi, datetime]:
+  def next_jie(dt: datetime) -> tuple[Jieqi, datetime]:
     '''
     Find out the next Jie (节), not Jieqi, for the given solar datetime.
     输入某时间点，返回这个时间点之后的一个节令（不包含中气），以及对应的时间点。
@@ -513,12 +517,38 @@ class HkoDataCalendarUtils(metaclass=ImmutableMetaClass):
     - dt: (datetime) The datetime.
 
     Return: (tuple[Jieqi, datetime]) The next Jie (节), and its solar datetime.
+
+    Examples:
+    - next_jie(jieqi_moment(2024, Jieqi.小寒))
+      - return: (Jieqi.立春, jieqi_moment(2024, Jieqi.立春))
+    - next_jie(jieqi_moment(2024, Jieqi.小寒) + timedelta(seconds=1))
+      - return: (Jieqi.立春, jieqi_moment(2024, Jieqi.立春))
+    - next_jie(jieqi_moment(2024, Jieqi.小寒) - timedelta(seconds=1))
+      - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
     '''
 
     assert isinstance(dt, datetime)
 
-    # ordered_jieqi: list[Jieqi] = list(Jieqi)[-2:] + list(Jieqi)[:-2]
-    return (Jieqi.BAILU, datetime(2024, 1, 1, 0, 0, 0))
+    supported_jie_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
+    if dt < supported_jie_range[0]:
+      raise ValueError(f'"{dt}" is out of the supported range. The first available Jie is "{supported_jie_range[0]}"')
+    if dt >= supported_jie_range[1]:
+      raise ValueError(f'"{dt}" is out of the supported range. The last available Jie is "{supported_jie_range[1]}"')
+
+    xiaohan_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year, Jieqi.小寒)
+    if dt < xiaohan_dt:
+      return (Jieqi.小寒, xiaohan_dt)
+    
+    jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+    for jie1, jie2 in zip(jies, jies[1:]):
+      jie1_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year, jie1)
+      jie2_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year, jie2)
+      if jie1_dt <= dt < jie2_dt:
+        return (jie2, jie2_dt)
+
+    next_xiaohan_dt: datetime = HkoDataCalendarUtils.jieqi_moment(dt.year + 1, Jieqi.小寒)
+    assert dt < next_xiaohan_dt
+    return (Jieqi.小寒, next_xiaohan_dt)
 
 
 # Ensure `HkoDataCalendarUtils` conforms to the `CalendarUtilsProtocol` protocol.
