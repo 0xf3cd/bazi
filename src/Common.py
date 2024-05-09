@@ -5,7 +5,7 @@ import inspect
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping, Any
+  Sequence, Iterator, Type, Mapping, Any, Protocol, runtime_checkable,
 )
 from .Defines import Wuxing, Yinyang, Tiangan
 
@@ -156,8 +156,22 @@ class BaziData(Generic[PillarDataType]):
     return not self.__eq__(other)
 
 
-TianganDataType = TypeVar('TianganDataType')
-DizhiDataType = TypeVar('DizhiDataType')
+TianganDataType = TypeVar('TianganDataType', covariant=True)
+DizhiDataType = TypeVar('DizhiDataType', covariant=True)
+
+@runtime_checkable
+class PillarDataProtocol(Protocol[TianganDataType, DizhiDataType]):
+  '''
+  The protocol that all PillarData classes conform to.
+  '''
+  @property
+  def tiangan(self) -> TianganDataType: ...
+  @property
+  def dizhi(self) -> DizhiDataType: ...
+  def __eq__(self, other: object) -> bool: ...
+  def __ne__(self, other: object) -> bool: ...
+
+
 class PillarData(Generic[TianganDataType, DizhiDataType]):
   '''
   A helper class for storing the data of a Pillar.

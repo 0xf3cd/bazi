@@ -350,3 +350,9 @@ class TestBazi(unittest.TestCase):
       self.assertEqual(bazi, Bazi.create(dt, gender, precision))
       self.assertNotEqual(bazi, Bazi.create(dt, __toggle_gender(gender), precision))
       self.assertNotEqual(bazi, Bazi.create(__inc_datetime(dt), gender, precision))
+
+      self.assertNotEqual(bazi, 0)
+
+      bazi_hacked: Bazi = Bazi.create(dt, gender, precision)
+      bazi_hacked._precision = BaziPrecision.HOUR # type: ignore # Intended for testing only.
+      self.assertNotEqual(bazi, bazi_hacked)

@@ -2,7 +2,14 @@
 # test_common.py
 
 import unittest
-from src.Common import classproperty, ImmutableMetaClass, DeepcopyImmutableMetaClass, frozendict
+
+from typing import Optional
+
+from src.Defines import Shishen
+from src.Common import (
+  classproperty, ImmutableMetaClass, DeepcopyImmutableMetaClass, frozendict, 
+  PillarData, BaziData,
+)
 
 class TestCommon(unittest.TestCase):
 
@@ -144,3 +151,90 @@ class TestCommon(unittest.TestCase):
     
     fd2[1].append(6)
     self.assertEqual(fd2[1], [2, 3])
+
+  def test_pillardata(self) -> None:
+    combo1: PillarData[str, int] = PillarData('a', 1)
+    combo2: PillarData[str, int] = PillarData('a', 1)
+    combo3: PillarData[str, int] = PillarData('a ', 1)
+    combo4: PillarData[str, float] = PillarData('a', 1.1)
+    self.assertEqual(combo1, combo2)
+    self.assertNotEqual(combo1, combo3)
+    self.assertNotEqual(combo1, combo4)
+
+    self.assertEqual(combo1.tiangan, 'a')
+    self.assertEqual(combo1.dizhi, 1)
+    self.assertEqual(combo4.dizhi, 1.1)
+
+    combo5: PillarData[None, Shishen] = PillarData(None, Shishen.七杀)
+    self.assertEqual(combo5, PillarData(None, Shishen.七杀))
+    self.assertNotEqual(combo5, PillarData(Shishen.七杀, Shishen.七杀))
+    self.assertNotEqual(combo5, PillarData(None, Shishen.正官))
+
+    self.assertNotEqual(combo5, Shishen.正官)
+    self.assertNotEqual(combo5, (None, Shishen.七杀))
+
+  def test_bazidata(self) -> None:
+    bd1: BaziData[int] = BaziData(int, [1, 2, 3, 4])
+    bd2: BaziData[int] = BaziData(int, [1, 2, 3, 4])
+    bd3: BaziData[int] = BaziData(int, [1, 2, 3, 5])
+    self.assertEqual(bd1, bd2)
+    self.assertNotEqual(bd1, bd3)
+    self.assertNotEqual(bd1, [1, 2, 3, 4])
+
+    self.assertEqual(bd1.year, 1)
+    self.assertEqual(bd1.month, 2)
+    self.assertEqual(bd1.day, 3)
+    self.assertEqual(bd1.hour, 4)
+    self.assertEqual(bd3.hour, 5)
+
+    with self.assertRaises(AssertionError):
+      BaziData(PillarData[None, Shishen], [])
+
+
+    bd5: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(None, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.偏印),
+      PillarData(Shishen.正官, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.正官),
+    ])
+
+    bd6: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(None, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.偏印),
+      PillarData(Shishen.正官, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.正官),
+    ])
+
+    bd7: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(Shishen.比肩, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.偏印),
+      PillarData(Shishen.正官, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.正官),
+    ])
+
+    bd8: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(None, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.伤官),
+      PillarData(Shishen.正官, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.正官),
+    ])
+
+    bd9: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(None, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.偏印),
+      PillarData(None, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.正官),
+    ])
+
+    bd10: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
+      PillarData(None, Shishen.七杀),
+      PillarData(Shishen.伤官, Shishen.偏印),
+      PillarData(Shishen.正官, Shishen.食神),
+      PillarData(Shishen.七杀, Shishen.伤官),
+    ])
+
+    self.assertEqual(bd5, bd6)
+    self.assertNotEqual(bd5, bd7)
+    self.assertNotEqual(bd5, bd8)
+    self.assertNotEqual(bd5, bd9)
+    self.assertNotEqual(bd5, bd10)
