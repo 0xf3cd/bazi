@@ -7,7 +7,7 @@ from enum import Enum
 from datetime import date, time, datetime, timedelta
 from typing import Final, Union
 
-from .Defines import Jieqi, Tiangan, Dizhi, Ganzhi
+from .Defines import Tiangan, Dizhi, Ganzhi
 from .Calendar import CalendarDate, HkoDataCalendarUtils
 from .Utils import BaziUtils
 
@@ -115,6 +115,9 @@ class Bazi:
     '''
 
     assert isinstance(birth_time, datetime)
+    assert isinstance(gender, BaziGender)
+    assert isinstance(precision, BaziPrecision)
+
     self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
@@ -127,11 +130,8 @@ class Bazi:
     self._minute: Final[int] = self._birth_time.minute
     assert self._minute >= 0 and self._minute < 60
 
-    assert isinstance(gender, BaziGender)
-    self._gender: Final[BaziGender] = copy.deepcopy(gender)
-
-    assert isinstance(precision, BaziPrecision)
-    self._precision: Final[BaziPrecision] = copy.deepcopy(precision)
+    self._gender: Final[BaziGender] = gender
+    self._precision: Final[BaziPrecision] = precision
 
     # Generate ganzhi-related info.
     # TODO: Currently only supports `DAY` precision.
@@ -141,9 +141,7 @@ class Bazi:
 
     # Figure out the solar date falls into which ganzhi year.
     # Also figure out the Year Ganzhi / Year Pillar (年柱).
-    solar_year: int = self._solar_date.year
-    lichun_date: date = HkoDataCalendarUtils.query_jieqi_date(solar_year, Jieqi.立春)
-    self._ganzhi_year: Final[int] = solar_year if HkoDataCalendarUtils.to_date(self._solar_date) >= lichun_date else solar_year - 1
+    self._ganzhi_year: Final[int] = ganzhi_calendardate.year
     self._year_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_year(self._ganzhi_year)
 
     # Figure out the ganzhi month. Also find out the Month Dizhi (月令).

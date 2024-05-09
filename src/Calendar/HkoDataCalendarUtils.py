@@ -4,7 +4,7 @@ import copy
 import calendar
 import functools
 
-from datetime import date, timedelta
+from datetime import date, time, datetime, timedelta
 from typing import Union, Final
 
 from .CalendarDefines import CalendarType, CalendarDate
@@ -403,7 +403,7 @@ class HkoDataCalendarUtils:
 
   @staticmethod
   @functools.lru_cache(maxsize=512)
-  def query_jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
+  def jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
     '''
     Find out the date of the given Jieqi in the given solar/gregorian year.
     输入公历年份和节气，返回节气日期。
@@ -420,6 +420,32 @@ class HkoDataCalendarUtils:
 
     assert solar_year in HkoDataCalendarUtils.jieqi_dates_db.supported_year_range()
     return HkoDataCalendarUtils.jieqi_dates_db.get(solar_year, jieqi)
+  
+  @staticmethod
+  @functools.lru_cache(maxsize=512)
+  def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
+    '''
+    Find out the accurate moment (datetime) of the given Jieqi in the given solar/gregorian year.
+    输入公历年份和节气，返回节气的具体时刻。
+
+    Args:
+    - solar_year: (int) The solar year.
+    - jieqi: (Jieqi) The Jieqi.
+
+    Note:
+    - Hongkong Observatory's data is only at day-level precision.
+    - So the returned moment is always at the beginning of the day.
+    - 香港天文台只提供精度到日的数据。所以返回值是节气当日的 00:00:00。
+
+    Return: (datetime) The accurate moment of the Jieqi in the given solar/gregorian year.
+    '''
+
+    assert isinstance(solar_year, int)
+    assert isinstance(jieqi, Jieqi)
+
+    assert solar_year in HkoDataCalendarUtils.jieqi_dates_db.supported_year_range()
+    dt: date = HkoDataCalendarUtils.jieqi_dates_db.get(solar_year, jieqi)
+    return datetime.combine(dt, time(0, 0, 0))
 
 
 # Ensure `HkoDataCalendarUtils` conforms to the `CalendarUtilsProtocol` protocol.

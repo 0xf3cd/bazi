@@ -1,7 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from datetime import date
+from datetime import date, datetime
 from typing import Union, Protocol, runtime_checkable
+
+from ..Defines import Jieqi
 from .CalendarDefines import CalendarType, CalendarDate
 
 
@@ -42,3 +44,7 @@ class CalendarUtilsProtocol(Protocol):
   def to_ganzhi(d: Union[date, CalendarDate]) -> CalendarDate: ...
   @staticmethod
   def to_date(d: Union[date, CalendarDate]) -> date: ...
+  @staticmethod
+  def jieqi_date(solar_year: int, jieqi: Jieqi) -> date: ...
+  @staticmethod
+  def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime: ...
