@@ -1,14 +1,13 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
-from typing import Optional, Final
 
-from ..Common import TraitTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
-from ..Defines import Tiangan, Shishen, ShierZhangsheng
-from ..Bazi import Bazi
-from ..Utils import BaziUtils
+from typing import Optional, Final, Generator
 
-from .ChartProtocol import ChartProtocol
+from .Common import TraitTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
+from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
+from .Bazi import Bazi, BaziGender
+from .Utils import BaziUtils
 
 
 class BaziChart:
@@ -156,6 +155,37 @@ class BaziChart:
     zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
+  @property
+  def dayun(self) -> Generator[Ganzhi, None, None]:
+    '''
+    A generator that produces the Ganzhis for Dayuns (大运). Each dayun lasts for 10 years.
+    用于排大运的生成器。
+
+    Usage: 
+    ```
+    chart: BaziChart = BaziChart(bazi)
+
+    gen = chart.dayun
+    first_ten_dayuns: list[Ganzhi] = [next(gen) for _ in range(10)]
+
+    for gz in chart.dayun: # Infinite loop...
+      print(gz)
+    ``` 
+    '''
+
+    is_male: bool = (self._bazi.gender is BaziGender.男)
+    is_year_dz_yang: bool = (BaziUtils.traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
+    order: bool = (is_male == is_year_dz_yang)
+    step: int = 1 if order else -1
+
+    def __dayun_generator():
+      tg, dz = self._bazi.month_pillar
+      while True:
+        tg = Tiangan.from_index((tg.index + step) % 10)
+        dz = Dizhi.from_index((dz.index + step) % 12)
+        yield Ganzhi(tg, dz)
+
+    return __dayun_generator()
 
   @property
   def json(self) -> BaziJson.BaziChartJsonDict:
@@ -179,7 +209,4 @@ class BaziChart:
       'hidden_tiangans': f([str(h) for h in self.hidden_tiangans]),
     }
 
-原盘 = BaziChart
-
-
-assert isinstance(BaziChart, ChartProtocol)
+命盘 = BaziChart

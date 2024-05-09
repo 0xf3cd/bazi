@@ -6,7 +6,7 @@ import random
 import copy
 
 from itertools import product
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Union
 
@@ -325,3 +325,28 @@ class TestBazi(unittest.TestCase):
     for dt, g, p in product(dt_options, male_options + female_options, unsupported_precision_options):
       with self.assertRaises(AssertionError):
         Bazi.create(dt, g, p) # Other level precision is not supported at the moment
+
+  def test_eq_ne(self) -> None:
+    def __random_info() -> tuple[datetime, BaziGender, BaziPrecision]:
+      return (datetime(
+        year=random.randint(1950, 2000),
+        month=random.randint(1, 12),
+        day=random.randint(1, 28),
+        hour=random.randint(0, 23),
+        minute=random.randint(0, 59),
+        second=random.randint(0, 59)
+      ), random.choice(list(BaziGender)), BaziPrecision.DAY)
+    
+    def __toggle_gender(g: BaziGender) -> BaziGender:
+      return BaziGender.MALE if g is BaziGender.FEMALE else BaziGender.FEMALE
+    
+    def __inc_datetime(dt: datetime) -> datetime:
+      return dt + timedelta(days=1)
+
+    for _ in range(64):
+      dt, gender, precision = __random_info()
+
+      bazi: Bazi = Bazi.create(dt, gender, precision)
+      self.assertEqual(bazi, Bazi.create(dt, gender, precision))
+      self.assertNotEqual(bazi, Bazi.create(dt, __toggle_gender(gender), precision))
+      self.assertNotEqual(bazi, Bazi.create(__inc_datetime(dt), gender, precision))

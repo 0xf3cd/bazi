@@ -3,7 +3,7 @@
 import copy
 from typing import Final
 
-from .Charts import BaziChart
+from .BaziChart import BaziChart
 from .Defines import Shishen, Tiangan
 from .Common import ShishenDescription, TianganDescription
 from .Descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS

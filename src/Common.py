@@ -138,6 +138,22 @@ class BaziData(Generic[PillarDataType]):
   
   def __iter__(self) -> Iterator[PillarDataType]:
     return iter((self._year, self._month, self._day, self._hour))
+  
+  def __eq__(self, other: object) -> bool:
+    if not isinstance(other, BaziData):
+      return False
+    if self.year != other.year:
+      return False
+    if self.month != other.month:
+      return False
+    if self.day != other.day:
+      return False
+    if self.hour != other.hour:
+      return False
+    return True
+  
+  def __ne__(self, other: object) -> bool:
+    return not self.__eq__(other)
 
 
 TianganDataType = TypeVar('TianganDataType')
@@ -158,6 +174,18 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   @property
   def dizhi(self) -> DizhiDataType:
     return copy.deepcopy(self._dz)
+  
+  def __eq__(self, other: object) -> bool:
+    if not isinstance(other, PillarData):
+      return False
+    if self.tiangan != other.tiangan:
+      return False
+    if self.dizhi != other.dizhi:
+      return False
+    return True
+  
+  def __ne__(self, other: object) -> bool:
+    return not self.__eq__(other)
 
 
 class BaziJson:

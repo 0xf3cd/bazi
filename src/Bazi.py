@@ -353,5 +353,19 @@ class Bazi:
       Ganzhi(tgs[2], dzs[2]),
       Ganzhi(tgs[3], dzs[3]),
     )
+  
+  def __eq__(self, other: object) -> bool:
+    if not isinstance(other, Bazi):
+      return False
+    if self.solar_datetime != other.solar_datetime:
+      return False
+    if self.gender != other.gender:
+      return False
+    if self.precision != other.precision:
+      return False
+    return True
+  
+  def __ne__(self, other: object) -> bool:
+    return not self.__eq__(other)
 
 八字 = Bazi

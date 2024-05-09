@@ -6,7 +6,7 @@ import random
 import json
 import copy
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
@@ -14,18 +14,12 @@ from src.Bazi import BaziGender, BaziPrecision, Bazi
 from src.Common import TraitTuple, HiddenTianganDict, BaziData, BaziJson
 from src.Utils import BaziUtils
 
-from src.Charts import BaziChart
-from src.Charts.BaziChart import 原盘
-from src.Charts.ChartProtocol import ChartProtocol
+from src.BaziChart import BaziChart, 命盘
 
 
 class TestBaziChart(unittest.TestCase):
-  def test_protocol_conformance(self) -> None:
-    self.assertIsInstance(BaziChart(Bazi.random()), ChartProtocol)
-    self.assertIsInstance(BaziChart, ChartProtocol)
-
   def test_basic(self) -> None:
-    self.assertIs(BaziChart, 原盘)
+    self.assertIs(BaziChart, 命盘)
 
     bazi: Bazi = Bazi(
       birth_time=datetime(1984, 4, 2, 4, 2),
@@ -39,6 +33,8 @@ class TestBaziChart(unittest.TestCase):
       if tg is not bazi.day_master:
         self.assertNotEqual(chart.bazi.day_master, tg)
 
+    self.assertRaises(AssertionError, lambda: BaziChart(date(2024, 1, 1)))  # type: ignore
+
   def test_malicious(self) -> None:
     with self.subTest('Modification attemp'):
       bazi: Bazi = Bazi(
@@ -51,6 +47,9 @@ class TestBaziChart(unittest.TestCase):
       bazi._day_pillar = Ganzhi.from_str('甲子') # type: ignore
       self.assertEqual(chart.bazi._day_pillar, Ganzhi.from_str('丙寅'))
       self.assertEqual(bazi._day_pillar, Ganzhi.from_str('甲子'))
+
+    with self.assertRaises(AttributeError):
+      BaziChart(Bazi.random()).bazi = Bazi.random()  # type: ignore
 
     with self.subTest('Invalid __init__ parameters'):
       with self.assertRaises(AssertionError):
@@ -173,9 +172,9 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
     self.assertEqual(zhangshengs.hour, ShierZhangsheng.长生)
 
-  def test_consistency(self) -> None:
+  def test_correctness(self) -> None:
     '''
-    Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are consistent.
+    Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
     '''
     for _ in range(256):
       chart: BaziChart = BaziChart(Bazi.random())
@@ -210,6 +209,82 @@ class TestBaziChart(unittest.TestCase):
         tg_traits: TraitTuple = pillar_traits.tiangan
         self.assertEqual(tg_shishen, BaziUtils.shishen(day_master, pillar.tiangan))
         self.assertEqual(tg_traits, BaziUtils.tiangan_traits(pillar.tiangan))
+
+  def test_dayun_sexagenary_cycle(self) -> None:
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      chart: BaziChart = BaziChart(random_bazi)
+
+      dayun_gen = chart.dayun
+      first_60_dayuns: list[Ganzhi] = [next(dayun_gen) for _ in range(60)]
+      next_60_dayuns: list[Ganzhi] = [next(dayun_gen) for _ in range(60)]
+
+      self.assertListEqual(first_60_dayuns, next_60_dayuns)
+      self.assertSetEqual(set(first_60_dayuns), set(Ganzhi.list_sexagenary_cycle()))
+
+  def test_dayun_order(self) -> None:
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      
+      month_gz: Ganzhi = random_bazi.month_pillar
+      year_dz_yinyaang: Yinyang = BaziUtils.dizhi_traits(random_bazi.year_pillar.dizhi).yinyang
+
+      cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+      expected_first_dayun: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
+      if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴):
+        expected_first_dayun = cycle[(cycle.index(month_gz) - 1) % 60]
+      elif (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
+        expected_first_dayun = cycle[(cycle.index(month_gz) - 1) % 60]
+      
+      chart: BaziChart = BaziChart(random_bazi)
+      first_dayun = next(chart.dayun)
+
+      self.assertEqual(first_dayun, expected_first_dayun)
+
+  def test_dayun_correctness(self) -> None:
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    chart1: BaziChart = BaziChart(bazi1)
+    bazi1_dayun_gen = chart1.dayun
+    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('己卯'))
+    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('庚辰'))
+    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('辛巳'))
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    chart2: BaziChart = BaziChart(bazi2)
+    bazi2_dayun_gen = chart2.dayun
+    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('戊辰'))
+    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('己巳'))
+    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('庚午'))
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    chart3: BaziChart = BaziChart(bazi3)
+    bazi3_dayun_gen = chart3.dayun
+    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('丙寅'))
+    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('乙丑'))
+    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('甲子'))
+
+  def test_consistency(self) -> None:
+    '''Ensure every run gives the consistent results...'''
+    for _ in range(16):
+      random_bazi: Bazi = Bazi.random()
+      expected: BaziChart = BaziChart(random_bazi)
+
+      for __ in range(10):
+        chart: BaziChart = BaziChart(random_bazi)
+        self.assertEqual(chart.bazi, expected.bazi)
+
+        self.assertListEqual(list(chart.traits), list(expected.traits))
+        self.assertListEqual(list(chart.hidden_tiangans), list(expected.hidden_tiangans))
+        self.assertListEqual(list(chart.shishens), list(expected.shishens))
+        self.assertListEqual(list(chart.nayins), list(expected.nayins))
+        self.assertListEqual(list(chart.shier_zhangshengs), list(expected.shier_zhangshengs))
+
+        gen, expected_gen = chart.dayun, expected.dayun
+        self.assertEqual(next(gen), next(expected_gen))
+        self.assertEqual(next(gen), next(expected_gen))
+        self.assertEqual(next(gen), next(expected_gen))
+
+        self.assertDictEqual(chart.json, expected.json)
 
   def test_json(self) -> None:
     for _ in range(64):
