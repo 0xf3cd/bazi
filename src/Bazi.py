@@ -8,8 +8,14 @@ from datetime import date, time, datetime, timedelta
 from typing import Final, Union
 
 from .Defines import Tiangan, Dizhi, Ganzhi
-from .Calendar import CalendarDate, HkoDataCalendarUtils
-from .Utils import BaziUtils
+from .Calendar import CalendarDate
+
+from .Utils.BaziUtils import (
+  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
+)
+from .Calendar.HkoDataCalendarUtils import (
+  to_solar, to_ganzhi, to_date, is_valid_solar_date,
+)
 
 
 class BaziGender(Enum):
@@ -121,8 +127,8 @@ class Bazi:
     self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
-    self._solar_date: Final[CalendarDate] = HkoDataCalendarUtils.to_solar(self._birth_time)
-    assert HkoDataCalendarUtils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
+    self._solar_date: Final[CalendarDate] = to_solar(self._birth_time)
+    assert is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
 
     self._hour: Final[int] = self._birth_time.hour
     assert self._hour >= 0 and self._hour < 24
@@ -137,12 +143,12 @@ class Bazi:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
 
-    ganzhi_calendardate: CalendarDate = HkoDataCalendarUtils.to_ganzhi(self._solar_date)
+    ganzhi_calendardate: CalendarDate = to_ganzhi(self._solar_date)
 
     # Figure out the solar date falls into which ganzhi year.
     # Also figure out the Year Ganzhi / Year Pillar (年柱).
     self._ganzhi_year: Final[int] = ganzhi_calendardate.year
-    self._year_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_year(self._ganzhi_year)
+    self._year_pillar: Final[Ganzhi] = ganzhi_of_year(self._ganzhi_year)
 
     # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
     self._ganzhi_month: Final[int] = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
@@ -151,7 +157,7 @@ class Bazi:
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     day_offset: int = 0 if self._birth_time.hour < 23 else 1
-    self._day_pillar: Final[Ganzhi] = BaziUtils.ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
+    self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
@@ -253,7 +259,7 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    return HkoDataCalendarUtils.to_date(self._solar_date)
+    return to_date(self._solar_date)
 
   @property
   def hour(self) -> int:
@@ -290,8 +296,8 @@ class Bazi:
     Return the 4 Tiangans of Year, Month, Day, and Hour pillars (in that order!).
     返回年、月、日、时的天干。
     '''
-    return (self._year_pillar.tiangan, BaziUtils.month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
-            self._day_pillar.tiangan, BaziUtils.hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
+    return (self._year_pillar.tiangan, month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
+            self._day_pillar.tiangan, hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
   
   @property
   def day_master(self) -> Tiangan:
@@ -319,8 +325,8 @@ class Bazi:
     '''
     Month Pillar is the Ganzhi of the Month (月柱).
     '''
-    month_tiangan: Tiangan = BaziUtils.month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
-    return Ganzhi(month_tiangan, self._month_dizhi)
+    tg: Tiangan = month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
+    return Ganzhi(tg, self._month_dizhi)
   
   @property
   def day_pillar(self) -> Ganzhi:
@@ -334,8 +340,8 @@ class Bazi:
     '''
     Hour Pillar is the Ganzhi of the Hour (时柱).
     '''
-    hour_tiangan: Tiangan = BaziUtils.hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
-    return Ganzhi(hour_tiangan, self._hour_dizhi)
+    tg: Tiangan = hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
+    return Ganzhi(tg, self._hour_dizhi)
   
   @property
   def pillars(self) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:

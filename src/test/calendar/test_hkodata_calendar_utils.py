@@ -14,11 +14,9 @@ from src.Defines import Jieqi
 
 @pytest.mark.slow
 class TestHkoDataCalendarUtils(unittest.TestCase):
-  def test_calendar_utils_init(self) -> None:
-    with self.assertRaises(NotImplementedError):
-      HkoDataCalendarUtils() # Only expect to use static methods of the class.
-
   def test_conformance(self) -> None:
+    # HkoDataCalendarUtils is a module...
+    # Making sure all required methods are implemented.
     self.assertIsInstance(HkoDataCalendarUtils, CalendarUtilsProtocol)
 
   def test_is_valid_solar_date(self) -> None:
@@ -120,7 +118,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       for jq in month_starting_jieqis[:-1]:
         dates.append(jieqi_dates_db.get(year, jq))
       dates.append(jieqi_dates_db.get(year + 1, month_starting_jieqis[-1]))
-      dates.append(HkoDataCalendarUtils.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
+      dates.append(HkoDataCalendarUtils.HkoDB.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
 
       days_counts = HkoDataCalendarUtils.days_counts_in_ganzhi_year(year)
       for idx, (start_date, next_start_date) in enumerate(zip(dates[:-1], dates[1:])):
@@ -499,7 +497,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       self.assertLess(d1, d2)
 
   def test_prev_jie(self) -> None:
-    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
+    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries()
     
     self.assertRaises(AssertionError, HkoDataCalendarUtils.prev_jie, '2024-06-15')
     self.assertRaises(ValueError, HkoDataCalendarUtils.prev_jie, datetime(1899, 12, 31))
@@ -546,7 +544,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2023, Jieqi.大雪))
     )
 
-    first_year: int = HkoDataCalendarUtils.jieqi_dates_db.start_year
+    first_year: int = HkoDataCalendarUtils.HkoDB.jieqi_dates_db.start_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
     for jie1, jie2 in zip(jie_list, jie_list[1:]):
       self.assertTupleEqual(
@@ -559,7 +557,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       )
   
   def test_next_jie(self) -> None:
-    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries
+    supported_range: tuple[datetime, datetime] = HkoDataCalendarUtils.supported_jie_boundaries()
     
     self.assertRaises(AssertionError, HkoDataCalendarUtils.next_jie, '2024-06-15')
     self.assertRaises(ValueError, HkoDataCalendarUtils.next_jie, datetime(1899, 12, 31))
@@ -611,7 +609,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       (Jieqi.大雪, HkoDataCalendarUtils.jieqi_moment(2024, Jieqi.大雪))
     )
 
-    last_year: int = HkoDataCalendarUtils.jieqi_dates_db.end_year
+    last_year: int = HkoDataCalendarUtils.HkoDB.jieqi_dates_db.end_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
     for jie1, jie2 in zip(jie_list, jie_list[1:]):
       self.assertTupleEqual(

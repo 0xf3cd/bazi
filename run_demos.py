@@ -9,7 +9,7 @@ from src.Bazi import Bazi
 from src.BaziChart import BaziChart
 from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
 from src.Common import HiddenTianganDict
-from src.Utils import BaziUtils
+from src.Utils.BaziUtils import traits
 
 
 def colored_str(s: Union[Tiangan, Dizhi]) -> str:
@@ -22,21 +22,21 @@ def colored_str(s: Union[Tiangan, Dizhi]) -> str:
     Wuxing.土: colorama.Fore.MAGENTA,
   }
 
-  wx = BaziUtils.traits(s).wuxing
+  wx = traits(s).wuxing
   return color_mapping_table[wx] + str(s) + colorama.Style.RESET_ALL
 
 def get_trait_str(s: Union[Tiangan, Dizhi]) -> str:
   assert isinstance(s, (Tiangan, Dizhi))
   if isinstance(s, Dizhi):
-    traits = BaziUtils.traits(s)
+    t = traits(s)
   else:
-    traits = BaziUtils.traits(s)
-  return f'{traits.yinyang}{traits.wuxing}'
+    t = traits(s)
+  return f'{t.yinyang}{t.wuxing}'
 
 def get_basic_info(chart: BaziChart) -> str:
   s: str = '\n' # The output string.
   bazi: Bazi = chart.bazi
-  day_master_wx: Wuxing = BaziUtils.traits(bazi.day_master).wuxing
+  day_master_wx: Wuxing = traits(bazi.day_master).wuxing
   s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_date}\n\n'
 
   pillars: list[Ganzhi] = list(bazi.pillars)

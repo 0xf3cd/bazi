@@ -7,7 +7,10 @@ from typing import Optional, Final, Generator
 from .Common import TraitTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
 from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
-from .Utils import BaziUtils
+
+from .Utils.BaziUtils import (
+  traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str
+)
 
 
 class BaziChart:
@@ -46,8 +49,8 @@ class BaziChart:
     ```
     '''
     # Get the traits of the four tiangans and four dizhis
-    tiangan_traits: list[TraitTuple] = [BaziUtils.traits(tg) for tg in self._bazi.four_tiangans]
-    dizhi_traits: list[TraitTuple] = [BaziUtils.traits(dz) for dz in self._bazi.four_dizhis]
+    tiangan_traits: list[TraitTuple] = [traits(tg) for tg in self._bazi.four_tiangans]
+    dizhi_traits: list[TraitTuple] = [traits(dz) for dz in self._bazi.four_dizhis]
     pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
     return BaziData(BaziChart.PillarTraits, pillar_data)
   
@@ -70,7 +73,7 @@ class BaziChart:
       pass
     ```
     '''
-    dizhi_hidden_tiangans: list[HiddenTianganDict] = [BaziUtils.hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
+    dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
     return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
   PillarShishens = PillarData[Optional[Shishen], Shishen]
@@ -102,12 +105,12 @@ class BaziChart:
 
     shishen_list: list[BaziChart.PillarShishens] = []
     for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
-      tg_shishen: Optional[Shishen] = BaziUtils.shishen(day_master, tg)
+      tg_shishen: Optional[Shishen] = shishen(day_master, tg)
       # Remember to set the Day Master's position to `None`.
       if pillar_idx == 2:
         tg_shishen = None
 
-      dz_shishen: Shishen = BaziUtils.shishen(day_master, dz)
+      dz_shishen: Shishen = shishen(day_master, dz)
       shishen_list.append(BaziChart.PillarShishens(tg_shishen, dz_shishen))
 
     assert len(shishen_list) == 4
@@ -130,7 +133,7 @@ class BaziChart:
     ```
     '''
 
-    nayin_list: list[str] = [BaziUtils.nayin_str(gz) for gz in self._bazi.pillars]
+    nayin_list: list[str] = [nayin_str(gz) for gz in self._bazi.pillars]
     return BaziData(str, nayin_list)
   
   @property
@@ -152,7 +155,7 @@ class BaziChart:
 
     day_master: Tiangan = self._bazi.day_master
 
-    zhangsheng_list: list[ShierZhangsheng] = [BaziUtils.shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
+    zhangsheng_list: list[ShierZhangsheng] = [shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
   @property
@@ -174,7 +177,7 @@ class BaziChart:
     '''
 
     is_male: bool = (self._bazi.gender is BaziGender.男)
-    is_year_dz_yang: bool = (BaziUtils.traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
+    is_year_dz_yang: bool = (traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
     order: bool = (is_male == is_year_dz_yang)
     step: int = 1 if order else -1
 
