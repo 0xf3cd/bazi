@@ -5,7 +5,7 @@ import inspect
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping, Any, Protocol, runtime_checkable,
+  Sequence, Iterator, Type, Mapping, Any,
 )
 from .Defines import Wuxing, Yinyang, Tiangan
 
@@ -19,7 +19,7 @@ class DeepcopyImmutableMetaClass(type):
   - `__setattr__`: Raise an `AttributeError`.
   - `__getattribute__`: Deepcopy the original value and return the copied value.
   '''
-  def __new__(cls: Type, name: str, bases: tuple[Type], attrs: dict[str, Any]) -> Type:
+  def __new__(cls: Type['DeepcopyImmutableMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'DeepcopyImmutableMetaClass':
     # Make sure the new class doesn't contain classmethods.
     for k, v in attrs.items():
       if isinstance(v, (classmethod, staticmethod)):
@@ -29,12 +29,12 @@ class DeepcopyImmutableMetaClass(type):
 
     def overridden_setattr(*args, **kwargs):
       raise AttributeError(f'{name} is read-only')
-    cls.__setattr__ = overridden_setattr
+    cls.__setattr__ = overridden_setattr # type: ignore # Forcely override the `__setattr__` method.
     
     def overridden_getattribute(*args, **kwargs):
       assert len(args) >= 2
       return copy.deepcopy(attrs[args[1]])
-    cls.__getattribute__ = overridden_getattribute
+    cls.__getattribute__ = overridden_getattribute # type: ignore # Forcely override the `__getattribute__` method.
 
     return type.__new__(cls, name, bases, attrs)
 
@@ -44,10 +44,10 @@ class ImmutableMetaClass(type):
   This meta class ensures a class is not attribute-setable, which means that
   the Class's methods and variables/properties are not settable once the class is created.
   '''
-  def __new__(cls: Type, name: str, bases: tuple[Type], attrs: dict[str, Any]) -> Type:
+  def __new__(cls: Type['ImmutableMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'ImmutableMetaClass':
     def overridden_setattr(*args, **kwargs):
       raise AttributeError(f'Class {name} is read-only')
-    cls.__setattr__ = overridden_setattr
+    cls.__setattr__ = overridden_setattr # type: ignore # Forcely override the `__setattr__` method.
     return type.__new__(cls, name, bases, attrs)
 
 
@@ -158,18 +158,6 @@ class BaziData(Generic[PillarDataType]):
 
 TianganDataType = TypeVar('TianganDataType', covariant=True)
 DizhiDataType = TypeVar('DizhiDataType', covariant=True)
-
-@runtime_checkable
-class PillarDataProtocol(Protocol[TianganDataType, DizhiDataType]):
-  '''
-  The protocol that all PillarData classes conform to.
-  '''
-  @property
-  def tiangan(self) -> TianganDataType: ...
-  @property
-  def dizhi(self) -> DizhiDataType: ...
-  def __eq__(self, other: object) -> bool: ...
-  def __ne__(self, other: object) -> bool: ...
 
 
 class PillarData(Generic[TianganDataType, DizhiDataType]):

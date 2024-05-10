@@ -214,7 +214,9 @@ def run_mypy() -> int:
   print('\n' + '#' * term_width)
   print('>> Running mypy...')
   ret: int = run_proc_and_print([
-    'python3', '-m', 'mypy', str(Path(__file__).parent)
+    'python3', '-m', 'mypy', str(Path(__file__).parent), 
+    '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
+    '--warn-return-any', '--warn-unreachable',
   ])
 
   if ret == 0:

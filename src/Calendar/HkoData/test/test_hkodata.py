@@ -130,11 +130,11 @@ class TestHkoData(unittest.TestCase):
   def test_decode_jieqi_get_negative(self) -> None:
     decoded_jieqi: HkoData.DecodedJieqiDates = HkoData.DecodedJieqiDates()
     with self.assertRaises(TypeError):
-      decoded_jieqi.get(2024) # type: ignore
+      decoded_jieqi.get(2024)
     with self.assertRaises(TypeError):
-      decoded_jieqi.get(Jieqi.春分) # type: ignore
+      decoded_jieqi.get(Jieqi.春分)
     with self.assertRaises(AssertionError):
-      decoded_jieqi.get('1000', Jieqi.寒露) # type: ignore
+      decoded_jieqi.get('1000', Jieqi.寒露)
     with self.assertRaises(AssertionError):
       decoded_jieqi.get(1000, Jieqi.寒露)
     with self.assertRaises(AssertionError):
@@ -224,11 +224,11 @@ class TestHkoData(unittest.TestCase):
     with self.assertRaises(AssertionError):
       decoded_lunardate[max(decoded_lunardate.supported_year_range()) + 1]
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get('a') # type: ignore
+      decoded_lunardate.get('a')
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get('1984') # type: ignore
+      decoded_lunardate.get('1984')
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get(date(year=1984, month=1, day=1)) # type: ignore
+      decoded_lunardate.get(date(year=1984, month=1, day=1))
     
     temp = decoded_lunardate[2024]
     temp['days_counts'].append(29)

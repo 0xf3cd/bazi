@@ -2,6 +2,7 @@
 
 import copy
 
+from datetime import date, time, datetime, timedelta
 from typing import Optional, Final, Generator
 
 from .Common import TraitTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
@@ -159,6 +160,26 @@ class BaziChart:
     return BaziData(ShierZhangsheng, zhangsheng_list)
   
   @property
+  def dayun_order(self) -> bool:
+    '''
+    `True` if the Ganzhis of Dayuns are in a forward order.
+    `False` if the Ganzhis of Dayuns are in a backward order.
+
+    `True` 代表大运是顺排的，`False` 代表大运是逆排的。
+    '''
+    is_male: bool = (self._bazi.gender is BaziGender.男)
+    is_year_dz_yang: bool = (traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
+    return is_male == is_year_dz_yang
+  
+  @property
+  def day_start_date(self) -> date:
+    '''
+    The date of the first day when first Dayun (大运) starts.
+    大运起运日期。
+    '''
+    return datetime(2024, 5, 9, 11, 56, 47)
+  
+  @property
   def dayun(self) -> Generator[Ganzhi, None, None]:
     '''
     A generator that produces the Ganzhis for Dayuns (大运). Each dayun lasts for 10 years.
@@ -176,12 +197,8 @@ class BaziChart:
     ``` 
     '''
 
-    is_male: bool = (self._bazi.gender is BaziGender.男)
-    is_year_dz_yang: bool = (traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
-    order: bool = (is_male == is_year_dz_yang)
-    step: int = 1 if order else -1
-
-    def __dayun_generator():
+    def __dayun_generator() -> Generator[Ganzhi, None, None]:
+      step: Final[int] = 1 if self.dayun_order else -1
       tg, dz = self._bazi.month_pillar
       while True:
         tg = Tiangan.from_index((tg.index + step) % 10)

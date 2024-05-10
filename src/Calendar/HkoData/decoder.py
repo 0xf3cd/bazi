@@ -148,7 +148,9 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
+    assert isinstance(lunar_year, int)
     assert lunar_year in self.supported_year_range()
+
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
 
@@ -180,6 +182,7 @@ class DecodedLunarYears:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
     '''
+    assert isinstance(lunar_year, int)
     assert lunar_year in self.supported_year_range()
     return self.__getitem__(lunar_year)
 

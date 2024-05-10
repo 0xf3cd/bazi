@@ -209,40 +209,26 @@ class TestCalendarDate(unittest.TestCase):
       # Following subtests need `d1` to be of the same `CalendarType` as `d2`.
       if d1.date_type == d2.date_type:
         continue
-      with self.assertRaises(TypeError):
-        d1 < d2 # type: ignore
-      with self.assertRaises(TypeError):
-        d1 <= d2 # type: ignore
-      with self.assertRaises(TypeError):
-        d1 > d2 # type: ignore
-      with self.assertRaises(TypeError):
-        d1 >= d2 # type: ignore
+
+      self.assertRaises(TypeError, lambda : d1 < d2)
+      self.assertRaises(TypeError, lambda : d1 <= d2)
+      self.assertRaises(TypeError, lambda : d1 > d2)
+      self.assertRaises(TypeError, lambda : d1 >= d2)
 
     for d1, dt in zip(calendar_dates, [date(2024, 1, 1)] * 3):
-      with self.assertRaises(TypeError):
-        d1 == dt # type: ignore
-      with self.assertRaises(TypeError):
-        d1 != dt # type: ignore
-      with self.assertRaises(TypeError):
-        d1 < dt # type: ignore
-      with self.assertRaises(TypeError):
-        d1 <= dt # type: ignore
-      with self.assertRaises(TypeError):
-        d1 > dt # type: ignore
-      with self.assertRaises(TypeError):
-        d1 >= dt # type: ignore
-      with self.assertRaises(TypeError):
-        dt == d1 # type: ignore
-      with self.assertRaises(TypeError):
-        dt != d1 # type: ignore
-      with self.assertRaises(TypeError):
-        dt < d1 # type: ignore
-      with self.assertRaises(TypeError):
-        dt <= d1 # type: ignore
-      with self.assertRaises(TypeError):
-        dt > d1 # type: ignore
-      with self.assertRaises(TypeError):
-        dt >= d1 # type: ignore
+      self.assertRaises(TypeError, lambda : d1 == dt)
+      self.assertRaises(TypeError, lambda : d1 != dt)
+      self.assertRaises(TypeError, lambda : d1 < dt)
+      self.assertRaises(TypeError, lambda : d1 <= dt)
+      self.assertRaises(TypeError, lambda : d1 > dt)
+      self.assertRaises(TypeError, lambda : d1 >= dt)
+
+      self.assertRaises(TypeError, lambda : dt == d1)
+      self.assertRaises(TypeError, lambda : dt != d1)
+      self.assertRaises(TypeError, lambda : dt < d1)
+      self.assertRaises(TypeError, lambda : dt <= d1)
+      self.assertRaises(TypeError, lambda : dt > d1)
+      self.assertRaises(TypeError, lambda : dt >= d1)
 
   def test_str_repr(self) -> None:
     random_date_list: list[CalendarDate] = []

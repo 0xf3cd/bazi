@@ -37,9 +37,9 @@ class TestRules(unittest.TestCase):
     self.assertIs(ytm_table, r.YEAR_TO_MONTH_TABLE)
 
     with self.assertRaises(AttributeError):
-      Rules.YEAR_TO_MONTH_TABLE = frozendict({}) # type: ignore # Error raised!
+      Rules.YEAR_TO_MONTH_TABLE = frozendict({}) # type: ignore
     with self.assertRaises(AttributeError):
-      r.YEAR_TO_MONTH_TABLE = frozendict({}) # type: ignore # Error raised!
+      r.YEAR_TO_MONTH_TABLE = frozendict({})
 
   def test_cache(self) -> None:
     self.assertIs(Rules.DIZHI_PO, Rules.DIZHI_PO)

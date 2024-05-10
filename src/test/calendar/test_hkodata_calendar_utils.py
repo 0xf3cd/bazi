@@ -12,13 +12,13 @@ from src.Calendar import CalendarType, CalendarDate, HkoDataCalendarUtils, Calen
 from src.Calendar.HkoData import DecodedLunarYears, DecodedJieqiDates
 from src.Defines import Jieqi
 
-@pytest.mark.slow
 class TestHkoDataCalendarUtils(unittest.TestCase):
   def test_conformance(self) -> None:
     # HkoDataCalendarUtils is a module...
     # Making sure all required methods are implemented.
     self.assertIsInstance(HkoDataCalendarUtils, CalendarUtilsProtocol)
 
+  @pytest.mark.slow
   def test_is_valid_solar_date(self) -> None:
     d: date = date(1902, 1, 1)
     while d < date(2099, 1, 1):
@@ -40,6 +40,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
     self.assertFalse(HkoDataCalendarUtils.is_valid_solar_date(CalendarDate(2023, 1, 32, CalendarType.SOLAR)))
     self.assertFalse(HkoDataCalendarUtils.is_valid_solar_date(CalendarDate(0, 1, 15, CalendarType.SOLAR)))
 
+  @pytest.mark.slow
   def test_is_valid_lunar_date(self) -> None:
     lunar_years_db: DecodedLunarYears = DecodedLunarYears()
     min_year: int = HkoDataCalendarUtils.get_min_supported_date(CalendarType.LUNAR).year + 1
@@ -64,6 +65,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
 
       self.assertFalse(HkoDataCalendarUtils.is_valid_lunar_date(CalendarDate(year, len(info['days_counts']) + 1, 1, CalendarType.LUNAR)))
 
+  @pytest.mark.slow
   def test_is_valid_ganzhi_date(self) -> None:
     def __run_test_in_ganzhi_year(year: int) -> None:
       days_counts: list[int] = HkoDataCalendarUtils.days_counts_in_ganzhi_year(year)
@@ -86,7 +88,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
     self.assertFalse(HkoDataCalendarUtils.is_valid_ganzhi_date(CalendarDate(0, 1, 1, CalendarType.GANZHI))) # Out or supported range.
     self.assertFalse(HkoDataCalendarUtils.is_valid_ganzhi_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI))) # Out of supported range.
 
-
+  @pytest.mark.slow
   def test_days_counts_in_ganzhi_year(self) -> None:
     min_year: int = HkoDataCalendarUtils.get_min_supported_date(CalendarType.GANZHI).year
     max_year: int = HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI).year
@@ -124,7 +126,6 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       for idx, (start_date, next_start_date) in enumerate(zip(dates[:-1], dates[1:])):
         days_in_this_month: int = days_counts[idx]
         self.assertEqual(days_in_this_month, (next_start_date - start_date).days)
-      
 
   def test_is_valid(self) -> None:
     for date_type in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
@@ -139,7 +140,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
     class __DuckTypeClass:
       def __init__(self, anything: Any) -> None:
         self.date_type = anything
-    self.assertFalse(HkoDataCalendarUtils.is_valid(__DuckTypeClass(0))) # type: ignore # Test duck type.
+    self.assertFalse(HkoDataCalendarUtils.is_valid(__DuckTypeClass(0))) # Test duck type.
 
   @staticmethod
   def __solar_date_gen(d: CalendarDate):
@@ -181,7 +182,8 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
           _m = 1
           _y += 1
           _month_lengths = HkoDataCalendarUtils.days_counts_in_ganzhi_year(_y)
-          
+  
+  @pytest.mark.slow
   def test_lunar_to_solar(self) -> None:
     min_lunar_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.LUNAR)
     max_lunar_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.LUNAR)
@@ -203,6 +205,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(solar_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.SOLAR))
         break
 
+  @pytest.mark.slow
   def test_solar_to_lunar(self) -> None:
     min_solar_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.SOLAR)
     max_solar_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.SOLAR)
@@ -224,6 +227,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(lunar_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.LUNAR))
         break
 
+  @pytest.mark.slow
   def test_ganzhi_to_solar(self) -> None:
     min_ganzhi_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.GANZHI)
     max_ganzhi_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI)
@@ -245,6 +249,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(solar_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.SOLAR))
         break
 
+  @pytest.mark.slow
   def test_solar_to_ganzhi(self) -> None:
     min_solar_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.SOLAR)
     max_solar_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.SOLAR)
@@ -266,6 +271,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(ganzhi_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI))
         break
 
+  @pytest.mark.slow
   def test_lunar_to_ganzhi(self) -> None:
     min_lunar_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.LUNAR)
     max_lunar_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.LUNAR)
@@ -287,6 +293,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(ganzhi_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI))
         break
 
+  @pytest.mark.slow
   def test_ganzhi_to_lunar(self) -> None:
     min_ganzhi_date: CalendarDate = HkoDataCalendarUtils.get_min_supported_date(CalendarType.GANZHI)
     max_ganzhi_date: CalendarDate = HkoDataCalendarUtils.get_max_supported_date(CalendarType.GANZHI)
@@ -308,6 +315,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         self.assertEqual(lunar_date, HkoDataCalendarUtils.get_max_supported_date(CalendarType.LUNAR))
         break
 
+  @pytest.mark.slow
   def test_complex_date_conversions(self) -> None:
     solar_date_gen = self.__solar_date_gen(HkoDataCalendarUtils.get_min_supported_date(CalendarType.SOLAR))
     lunar_date_gen = self.__lunar_date_gen(HkoDataCalendarUtils.get_min_supported_date(CalendarType.LUNAR))
@@ -396,7 +404,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         HkoDataCalendarUtils.to_solar(CalendarDate(9999, 1, 1, CalendarType.SOLAR)) # Invalid date
       with self.assertRaises(AssertionError):
-        HkoDataCalendarUtils.to_solar('2024-01-01') # type: ignore # Invalid type
+        HkoDataCalendarUtils.to_solar('2024-01-01') # Invalid type
 
   def test_to_lunar(self) -> None:
     with self.subTest('Positive cases'):
@@ -412,7 +420,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         HkoDataCalendarUtils.to_lunar(CalendarDate(9999, 1, 1, CalendarType.LUNAR)) # Invalid date
       with self.assertRaises(AssertionError):
-        HkoDataCalendarUtils.to_lunar('2024-01-01') # type: ignore # Invalid type
+        HkoDataCalendarUtils.to_lunar('2024-01-01') # Invalid type
 
   def test_to_ganzhi(self) -> None:
     with self.subTest('Positive cases'):
@@ -428,7 +436,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         HkoDataCalendarUtils.to_ganzhi(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
       with self.assertRaises(AssertionError):
-        HkoDataCalendarUtils.to_ganzhi('2024-01-01') # type: ignore # Invalid type
+        HkoDataCalendarUtils.to_ganzhi('2024-01-01') # Invalid type
 
   def test_to_date(self) -> None:
     d = date(2023, 5, 8)
@@ -447,11 +455,11 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         HkoDataCalendarUtils.to_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
       with self.assertRaises(AssertionError):
-        HkoDataCalendarUtils.to_date('2024-01-01') # type: ignore # Invalid type
+        HkoDataCalendarUtils.to_date('2024-01-01') # Invalid type
 
   def test_get_jieqi_date(self) -> None:
-    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date('2024', Jieqi.大寒)) # type: ignore
-    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date(2024, '大寒')) # type: ignore
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date('2024', Jieqi.大寒))
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date(2024, '大寒'))
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date(9999, Jieqi.大寒)) # Out of supported solar year range.
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date(2101, Jieqi.小寒)) # Out of supported solar year range.
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_date(0, Jieqi.大寒)) # Out of supported solar year range.
@@ -467,14 +475,14 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
 
     random_solar_year: int = random.randint(1901, 2100)
     dates: list[date] = []
-    for jieqi in [Jieqi.小寒, Jieqi.大寒] + Jieqi.as_list()[:-2]: # The first Jieqi in a solar year is always "小寒".
+    for jieqi in Jieqi.as_list(ganzhi_year=False):
       dates.append(HkoDataCalendarUtils.jieqi_date(random_solar_year, jieqi))
     for d1, d2 in zip(dates, dates[1:]):
       self.assertLess(d1, d2)
 
   def test_get_jieqi_moment(self) -> None:
-    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment('2024', Jieqi.大寒)) # type: ignore
-    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment(2024, '大寒')) # type: ignore
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment('2024', Jieqi.大寒))
+    self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment(2024, '大寒'))
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment(9999, Jieqi.大寒)) # Out of supported solar year range.
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment(2101, Jieqi.小寒)) # Out of supported solar year range.
     self.assertRaises(AssertionError, lambda: HkoDataCalendarUtils.jieqi_moment(0, Jieqi.大寒)) # Out of supported solar year range.
@@ -491,7 +499,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
 
     random_solar_year: int = random.randint(1901, 2100)
     datetimes: list[datetime] = []
-    for jieqi in [Jieqi.小寒, Jieqi.大寒] + Jieqi.as_list()[:-2]: # The first Jieqi in a solar year is always "小寒".
+    for jieqi in Jieqi.as_list(ganzhi_year=False): # The first Jieqi in a solar year is always "小寒".
       datetimes.append(HkoDataCalendarUtils.jieqi_moment(random_solar_year, jieqi))
     for d1, d2 in zip(datetimes, datetimes[1:]):
       self.assertLess(d1, d2)
