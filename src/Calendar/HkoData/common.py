@@ -8,9 +8,9 @@
 from pathlib import Path
 from datetime import date
 
-from ...Common import ImmutableMetaClass
+from ...Common import Immutable
 
-class HkoYearLimits(metaclass=ImmutableMetaClass):
+class HkoYearLimits(Immutable):
   START_YEAR: int = 1901
   END_YEAR: int = 2100
 

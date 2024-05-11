@@ -12,7 +12,11 @@ from datetime import date
 from typing import TypedDict, Optional, Final
 
 from ...Defines import Jieqi, Ganzhi
-from .common import HkoYearLimits, get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, date_to_bytes, bytes_to_date, bytes_to_int
+
+from .common import (
+  HkoYearLimits, date_to_bytes, bytes_to_date, bytes_to_int,
+  get_jieqi_encoded_data_path, get_lunardate_encoded_data_path,
+)
 from .encoder import do_encode, encoded_data_ready
 
 

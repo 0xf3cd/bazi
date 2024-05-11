@@ -11,17 +11,17 @@ from .CalendarDefines import CalendarType, CalendarDate
 from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 from ..Defines import Ganzhi, Jieqi
-from ..Common import ImmutableMetaClass
+from ..Common import Const
 
 
-class HkoDB(metaclass=ImmutableMetaClass): # Databases
+# `HkoDB` are Databases.
+class HkoDB(Const):
   # Create two databases as class variables, where we can query the Jieqi and Lunar year info.
   jieqi_dates_db: Final[DecodedJieqiDates] = DecodedJieqiDates()
   lunar_years_db: Final[DecodedLunarYears] = DecodedLunarYears()
 
   # Store the sexagenary cycle as a class variable.
-  sexagenary_cycle: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
-
+  sexagenary_cycle: Final[tuple[Ganzhi, ...]] = tuple(Ganzhi.list_sexagenary_cycle())
 
 
 @functools.lru_cache(maxsize=512)

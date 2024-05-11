@@ -7,8 +7,8 @@ from typing import Optional
 
 from src.Defines import Shishen
 from src.Common import (
-  classproperty, ImmutableMetaClass, DeepcopyImmutableMetaClass, frozendict, 
-  PillarData, BaziData,
+  classproperty, frozendict, PillarData, BaziData,
+  ConstMetaClass, Const, ImmutableMetaClass, Immutable,
 )
 
 class TestCommon(unittest.TestCase):
@@ -62,8 +62,8 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(AttributeError):
       tc.property6 = 1
 
-  def test_immutable_meta_class(self) -> None:
-    class TestClass(metaclass=ImmutableMetaClass):
+  def test_const_meta_class(self) -> None:
+    class TestClass(metaclass=ConstMetaClass):
       A: int = 1
       B: list[int] = [2, 3]
       C: list[int] = B
@@ -79,37 +79,91 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(AttributeError):
       TestClass.C = []
 
+    # `Const` just means the value can't be changed. But the underlying data may still be changed.
+    # E.g., if the underlying data is a list, we can still add an element to it.
     TestClass.B.append(4) # Should not raise.
+    self.assertEqual(TestClass.B, [2, 3, 4])
+    self.assertEqual(TestClass.C, [2, 3, 4])
 
-  def test_readonly_meta_class(self) -> None:
-    class TestClass(metaclass=DeepcopyImmutableMetaClass):
+  def test_const(self) -> None:
+    class TestClass(Const):
+      A: int = 1
+      B: list[int] = [2, 3]
+      C: list[int] = B
+      def somemethod(self) -> int:
+        return 0
+    with self.assertRaises(NotImplementedError):
+      TestClass()
+
+    with self.subTest('Test value readablility'):
+      self.assertEqual(TestClass.A, 1)
+      self.assertEqual(TestClass.B, [2, 3])
+      self.assertEqual(TestClass.C, [2, 3])
+
+    with self.subTest('Test constants'):
+      self.assertIs(TestClass.A, TestClass.A)
+      self.assertIs(TestClass.B, TestClass.B)
+
+    with self.assertRaises(AttributeError):
+      TestClass.A = 2
+    with self.assertRaises(AttributeError):
+      TestClass.B = []
+    with self.assertRaises(AttributeError):
+      TestClass.C = []
+    with self.assertRaises(AttributeError):
+      TestClass.somemethod = lambda _self : 1 # type: ignore
+
+    with self.subTest('Test valur mutability'):
+      TestClass.B.append(4) # Should not raise.
+      self.assertEqual(TestClass.B, [2, 3, 4])
+      self.assertEqual(TestClass.C, [2, 3, 4])
+
+  def test_immutable_meta_class(self) -> None:
+    class TestClass(metaclass=ImmutableMetaClass):
       A: int = 1
       B: list[int] = [2, 3]
       C: list[int] = B
 
-    with self.assertRaises(TypeError):
-      # ReadOnlyMetaClass cannot contain classmethods.
+    with self.subTest('Test instantiation'):
+      TestClass() # Should not raise.
+
+    with self.subTest('Test classmethod'):
       class TestSubclass1(TestClass):
         @classmethod
         def somemethod(cls):
           return 0
+
+      self.assertEqual(TestSubclass1.somemethod(), 0)
+      with self.assertRaises(AttributeError):
+        TestSubclass1.somemethod = lambda : 0 # type: ignore
+      with self.subTest('Test instantiation'):
+        TestSubclass1() # Should not raise.
         
-    with self.assertRaises(TypeError):
-      # ReadOnlyMetaClass cannot contain staticmethods.
+    with self.subTest('Test staticmethod'):
       class TestSubclass2(TestClass):
         @staticmethod
         def somemethod():
           return 0
+
+      self.assertEqual(TestSubclass2.somemethod(), 0)
+      with self.assertRaises(AttributeError):
+        TestSubclass2.somemethod = lambda : 0 # type: ignore
+      with self.subTest('Test instantiation'):
+        TestSubclass2() # Should not raise.
         
-    with self.assertRaises(TypeError):
-      # ReadOnlyMetaClass cannot contain methods.
+    with self.subTest('Test normal method'):
       class TestSubclass3(TestClass):
         def somemethod(self):
           return 0
+        
+      with self.assertRaises(AttributeError):
+        TestSubclass3.somemethod = lambda self : 0 # type: ignore
+      tsc = TestSubclass3()
+      self.assertEqual(tsc.somemethod(), 0)
+      self.assertEqual(tsc.A, 1)
+      self.assertEqual(tsc.B, [2, 3])
+      self.assertEqual(tsc.C, [2, 3])
     
-    with self.subTest('Test initialization'):
-      TestClass() # Should not raise.
-
     with self.subTest('Attributes read'):
       self.assertEqual(TestClass.A, 1)
       self.assertEqual(TestClass.B, [2, 3])
@@ -122,9 +176,9 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(AttributeError):
       TestClass.C = []
     with self.assertRaises(AttributeError):
-      TestClass.method1 = lambda: 0 # type: ignore # Attribute not even exiting.
+      TestClass.method1 = lambda: 0 # Attribute not even exiting.
     with self.assertRaises(AttributeError):
-      TestClass.method2 = lambda: 0 # type: ignore # Attribute not even exiting.
+      TestClass.method2 = lambda: 0 # Attribute not even exiting.
 
     with self.subTest('Attribute deepcopy'):
       self.assertEqual(TestClass.B, [2, 3])
@@ -134,6 +188,47 @@ class TestCommon(unittest.TestCase):
       self.assertEqual(TestClass.C, [2, 3])
       TestClass.C.append(4) # Should not raise.
       self.assertEqual(TestClass.C, [2, 3])
+
+  def test_immutable_class(self) -> None:
+    class TestClass(Immutable):
+      A: int = 1
+      B: list[int] = [2, 3]
+      C: list[int] = B
+      def somemethod(self) -> int:
+        return 0
+      @staticmethod
+      def ret_B() -> list[int]:
+        return TestClass.B
+      @classproperty
+      def classprop(cls) -> list[int]:
+        return cls.C
+      
+    with self.assertRaises(NotImplementedError):
+      TestClass()
+      
+    with self.subTest('Test value reads'):
+      self.assertEqual(TestClass.B, [2, 3])
+      self.assertEqual(TestClass.C, [2, 3])
+      self.assertEqual(TestClass.classprop, [2, 3])
+
+    with self.subTest('Test immutable'):
+      TestClass.classprop.pop()
+      TestClass.C.append(100)
+      self.assertEqual(TestClass.C, [2, 3])
+      self.assertEqual(TestClass.classprop, [2, 3])
+
+      self.assertIsNot(TestClass.B, TestClass.B) # Deepcopy.
+
+    with self.assertRaises(AttributeError):
+      TestClass.A = 2
+    with self.assertRaises(AttributeError):
+      TestClass.B = []
+    with self.assertRaises(AttributeError):
+      TestClass.C = []
+    with self.assertRaises(AttributeError):
+      TestClass.method1 = lambda: 0 # Attribute not even exiting.
+    with self.assertRaises(AttributeError):
+      TestClass.somemethod = lambda: 0 # type: ignore
 
   def test_frozendict(self) -> None:
     fd: frozendict[int, int] = frozendict({1: 2, 3: 4})
@@ -189,7 +284,6 @@ class TestCommon(unittest.TestCase):
 
     with self.assertRaises(AssertionError):
       BaziData(PillarData[None, Shishen], [])
-
 
     bd5: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
       PillarData(None, Shishen.七杀),

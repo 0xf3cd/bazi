@@ -10,7 +10,56 @@ from typing import (
 from .Defines import Wuxing, Yinyang, Tiangan
 
 
-class DeepcopyImmutableMetaClass(type):
+class ConstMetaClass(type):
+  '''
+  This meta class ensures a class is not attribute-setable, which means that
+  the Class's methods and variables/properties are not settable once the class is defined.
+  '''
+  def __new__(cls: Type['ConstMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'ConstMetaClass':
+    return super(ConstMetaClass, cls).__new__(cls, name, bases, attrs)
+  
+  def __setattr__(self, name: str, value: Any) -> None:
+    raise AttributeError('ConstMetaClass class attribute is read-only')
+
+  def __delattr__(self, name: str) -> None:
+    raise AttributeError('ConstMetaClass class attribute is read-only')
+
+
+
+class Const(metaclass=ConstMetaClass):
+  '''
+  All subclasses of this class are not instantiable. 
+  It is expected that child classes only contain class variables.
+
+  The class variables can't be changed once the class is defined.
+  However, the class variables can still be mutable.
+
+  Example:
+  ```
+  class SomeClass(Const):
+    A: int = 1
+    B: list[int] = [2, 3]
+    C: list[int] = B
+
+  assert SomeClass.A == 1
+  assert SomeClass.B == [2, 3]
+  assert SomeClass.C == [2, 3]
+  assert SomeClass.B is SomeClass.C
+
+  SomeClass.A = 2  # AttributeError
+  SomeClass.B = [] # AttributeError
+
+  SomeClass.B.append(4) # OK!!
+  assert SomeClass.B == [2, 3, 4]
+  assert SomeClass.C == [2, 3, 4]
+  ```
+  '''
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
+    raise NotImplementedError('Const cannot be instantiated')
+
+
+
+class ImmutableMetaClass(type):
   '''
   This meta class is intended to be used as the meta data of classes that only contains 
   class variables (i.e. class properties / class-wise shared properties).
@@ -19,36 +68,55 @@ class DeepcopyImmutableMetaClass(type):
   - `__setattr__`: Raise an `AttributeError`.
   - `__getattribute__`: Deepcopy the original value and return the copied value.
   '''
-  def __new__(cls: Type['DeepcopyImmutableMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'DeepcopyImmutableMetaClass':
-    # Make sure the new class doesn't contain classmethods.
-    for k, v in attrs.items():
-      if isinstance(v, (classmethod, staticmethod)):
-        raise TypeError(f'{name} cannot contain classmethods or staticmethods.')
-      if inspect.isfunction(v) or inspect.ismethod(v):
-        raise TypeError(f'{name} cannot contain functions.')
 
-    def overridden_setattr(*args, **kwargs):
-      raise AttributeError(f'{name} is read-only')
-    cls.__setattr__ = overridden_setattr # type: ignore # Forcely override the `__setattr__` method.
-    
-    def overridden_getattribute(*args, **kwargs):
-      assert len(args) >= 2
-      return copy.deepcopy(attrs[args[1]])
-    cls.__getattribute__ = overridden_getattribute # type: ignore # Forcely override the `__getattribute__` method.
-
-    return type.__new__(cls, name, bases, attrs)
-
-
-class ImmutableMetaClass(type):
-  '''
-  This meta class ensures a class is not attribute-setable, which means that
-  the Class's methods and variables/properties are not settable once the class is created.
-  '''
   def __new__(cls: Type['ImmutableMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'ImmutableMetaClass':
-    def overridden_setattr(*args, **kwargs):
-      raise AttributeError(f'Class {name} is read-only')
-    cls.__setattr__ = overridden_setattr # type: ignore # Forcely override the `__setattr__` method.
-    return type.__new__(cls, name, bases, attrs)
+    return super(ImmutableMetaClass, cls).__new__(cls, name, bases, attrs)
+  
+  def __setattr__(cls, name: str, value: Any) -> None:
+    raise AttributeError('ImmutableMetaClass class attribute is read-only')
+  
+  def __delattr__(cls, name: str) -> None:
+    raise AttributeError('ImmutableMetaClass class attribute is read-only')
+  
+  def __getattribute__(cls, name: str) -> Any:
+    val = super(ImmutableMetaClass, cls).__getattribute__(name)
+    if inspect.isfunction(val) or inspect.ismethod(val) or isinstance(val, (classmethod, staticmethod)):
+      return val
+    return copy.deepcopy(val)
+
+
+
+class Immutable(metaclass=ImmutableMetaClass):
+  '''
+  All subclasses of this class are not instantiable. 
+  It is expected that child classes only contain class variables.
+
+  The class variables can't be changed once the class is defined.
+  When accessing class variables, the deep-copies of the original values are returned - not the original values.
+
+  Example:
+  ```
+  class SomeClass(Immutable):
+    A: int = 1
+    B: list[int] = [2, 3]
+    C: list[int] = B
+
+  assert SomeClass.A == 1
+  assert SomeClass.B == [2, 3]
+  assert SomeClass.C == [2, 3]
+  assert SomeClass.B is not SomeClass.B # Deepcopy upon every access.
+
+  SomeClass.A = 2  # AttributeError
+  SomeClass.B = [] # AttributeError
+
+  SomeClass.B.append(4) # OK!!
+  assert SomeClass.B == [2, 3] # Not changed!
+  assert SomeClass.C == [2, 3] # Not changed!
+  ```
+  '''
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
+    raise NotImplementedError('Immutable cannot be instantiated')
+
 
 
 # Decorator for class property.
@@ -63,6 +131,7 @@ class classproperty(Generic[ClassPropertyType]):
     return self._fget(owner)
   def __set__(self, instance, value) -> None:
     raise AttributeError('Class property is read-only.')
+
 
 
 FrozenDictKeyType = TypeVar('FrozenDictKeyType')
@@ -83,6 +152,7 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
     return len(self._data)
 
 
+
 class TraitTuple(NamedTuple):
   '''Representing the Wuxing and Yinyang of a Tiangan or Dizhi. 某天干或地支的五行和阴阳。'''
   wuxing: Wuxing
@@ -90,6 +160,7 @@ class TraitTuple(NamedTuple):
 
   def __str__(self) -> str:
     return str(self.yinyang) + str(self.wuxing)
+
 
 
 class HiddenTianganDict(frozendict[Tiangan, int]):
@@ -103,6 +174,7 @@ class HiddenTianganDict(frozendict[Tiangan, int]):
   def __str__(self) -> str:
     sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
     return ','.join([f'{k}:{v}' for k, v in sorted_kv])
+
 
 
 PillarDataType = TypeVar('PillarDataType')
@@ -156,10 +228,9 @@ class BaziData(Generic[PillarDataType]):
     return not self.__eq__(other)
 
 
+
 TianganDataType = TypeVar('TianganDataType', covariant=True)
 DizhiDataType = TypeVar('DizhiDataType', covariant=True)
-
-
 class PillarData(Generic[TianganDataType, DizhiDataType]):
   '''
   A helper class for storing the data of a Pillar.
@@ -188,6 +259,7 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
+
 
 
 class BaziJson:
@@ -221,6 +293,7 @@ class BaziJson:
     hidden_tiangan: 'BaziJson.FourPillars'
 
 
+
 class ShishenDescription(TypedDict):
   # The general descriptions of the Shishen.
   # 这个十神的基本描述。
@@ -237,6 +310,7 @@ class ShishenDescription(TypedDict):
   # The views of relationship and friendship represeted by the Shishen.
   # 这个十神代表的恋爱观和交友观。
   relationship:   list[str]
+
 
 
 # The description of the Tiangan, including the meanings, interpretations, images, traits, personalities that it has.

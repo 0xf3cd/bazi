@@ -4,11 +4,13 @@ import itertools
 import functools
 from enum import Enum
 
-from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, ImmutableMetaClass
+from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, Const, ConstMetaClass
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-class Rules(metaclass=ImmutableMetaClass):
+# Using `Const` here. So the same, cached tables are returned without deep copy.
+# The returned the tables are expected to be immutable - so no deep copy is needed.
+class Rules(Const):
   '''
   `Rules` represents rules/tables that the project uses.
   The class itself is immutable - its attributes are not writtable.
@@ -289,7 +291,7 @@ class Rules(metaclass=ImmutableMetaClass):
     # No change should be made to the existing definitions.
     # Only add new definitions.
 
-  class AnheTable(metaclass=ImmutableMetaClass):
+  class AnheTable(metaclass=ConstMetaClass):
     @classproperty
     @functools.cache
     def normal(self) -> frozenset[frozenset[Dizhi]]:
@@ -418,7 +420,7 @@ class Rules(metaclass=ImmutableMetaClass):
     子卯刑 = ZIMAOXING
     自刑   = ZIXING
 
-  class XingTable(metaclass=ImmutableMetaClass):
+  class XingTable(metaclass=ConstMetaClass):
     @classproperty
     @functools.cache
     def strict(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
