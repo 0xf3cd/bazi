@@ -16,23 +16,23 @@ class TestCommon(unittest.TestCase):
   def test_classproperty(self) -> None:
     class TestClass:
       @classproperty
-      def property1(self) -> int:
+      def property1(cls) -> int:
         return 1
       @classproperty
       def property2() -> int: # type: ignore
         return 2
       @classproperty
-      def property3(self) -> int:
-        return self.property1 + self.property2
+      def property3(cls) -> int:
+        return cls.property1 + cls.property2
       @classproperty
-      def property4(self) -> int:
+      def property4(cls) -> int:
         return TestClass.property1 + TestClass.property3
       @classproperty
       def property5() -> int: # type: ignore
         return TestClass.property1 + TestClass.property4
       @classproperty
-      def property6(self) -> int:
-        return self.property1 + TestClass.property5
+      def property6(cls) -> int:
+        return cls.property1 + TestClass.property5
 
     self.assertEqual(TestClass.property1, 1)
     self.assertEqual(TestClass.property2, 2)
