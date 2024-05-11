@@ -6,7 +6,6 @@ import inspect
 import unittest
 
 from src.Rules import Rules
-from src.Common import frozendict
 
 class TestRules(unittest.TestCase):
   @staticmethod

@@ -25,8 +25,6 @@ JieqiDates = dict[Jieqi, date] # Jieqi -> Solar-calendar Date
 class DecodedJieqiDates:
   '''
   This class is used to query the solar-calendar date (Gregorian Calendar) of each Jieqi in each solar-calendar year.
-
-  TODO: Creation of `DecodedJieqiDates` can be time-consuming. Optimization needed in the future??
   ''' 
 
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))

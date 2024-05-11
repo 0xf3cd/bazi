@@ -11,7 +11,7 @@ from .CalendarDefines import CalendarType, CalendarDate
 from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 from ..Defines import Ganzhi, Jieqi
-from ..Common import Const
+from ..Common import Const, JieqiTime
 
 
 # `HkoDB` are Databases.
@@ -26,7 +26,6 @@ class HkoDB(Const):
 
 @functools.lru_cache(maxsize=512)
 def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
-  # TODO: This is hardcoded. Change it?
   # 1901-02-19 is the first day (in solar) in lunar year 1901.
   if date_type == CalendarType.SOLAR:
     return CalendarDate(1901, 2, 19, CalendarType.SOLAR)
@@ -39,7 +38,6 @@ def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def get_max_supported_date(date_type: CalendarType) -> CalendarDate:
-  # TODO: This is hardcoded. Change it?
   # Because of the implementation of `solar_to_lunar`, the last supported solar date will be 2099-12-31.
   if date_type == CalendarType.SOLAR:
     return CalendarDate(2099, 12, 31, CalendarType.SOLAR)
@@ -461,7 +459,7 @@ def supported_jie_boundaries() -> tuple[datetime, datetime]:
 
 
 @functools.lru_cache(maxsize=512)
-def prev_jie(dt: datetime) -> tuple[Jieqi, datetime]:
+def prev_jie(dt: datetime) -> JieqiTime:
   '''
   Find out the previous Jie (节), not Jieqi, for the given solar datetime.
   输入某时间点，返回这个时间点之前的一个节令（不包含中气），以及对应的时间点。
@@ -469,7 +467,7 @@ def prev_jie(dt: datetime) -> tuple[Jieqi, datetime]:
   Args:
   - dt: (datetime) The datetime.
 
-  Return: (tuple[Jieqi, datetime]) The previous Jie (节), and its solar datetime.
+  Return: (JieqiTime) The previous Jie (节), and its solar datetime.
 
   Examples:
   - prev_jie(jieqi_moment(2024, Jieqi.小寒))
@@ -490,22 +488,22 @@ def prev_jie(dt: datetime) -> tuple[Jieqi, datetime]:
 
   daxue_dt: datetime = jieqi_moment(dt.year, Jieqi.大雪)
   if dt >= daxue_dt:
-    return (Jieqi.大雪, daxue_dt)
+    return JieqiTime(Jieqi.大雪, daxue_dt)
 
   reversed_jies: list[Jieqi] = list(reversed(Jieqi.as_list(ganzhi_year=False)[::2]))
   for jie1, jie2 in zip(reversed_jies[1:], reversed_jies):
     jie1_dt: datetime = jieqi_moment(dt.year, jie1)
     jie2_dt: datetime = jieqi_moment(dt.year, jie2)
     if jie1_dt <= dt < jie2_dt:
-      return (jie1, jie1_dt)
+      return JieqiTime(jie1, jie1_dt)
 
   last_daxue_dt: datetime = jieqi_moment(dt.year - 1, Jieqi.大雪)
   assert last_daxue_dt <= dt
-  return (Jieqi.大雪, last_daxue_dt)
+  return JieqiTime(Jieqi.大雪, last_daxue_dt)
 
 
 @functools.lru_cache(maxsize=512)
-def next_jie(dt: datetime) -> tuple[Jieqi, datetime]:
+def next_jie(dt: datetime) -> JieqiTime:
   '''
   Find out the next Jie (节), not Jieqi, for the given solar datetime.
   输入某时间点，返回这个时间点之后的一个节令（不包含中气），以及对应的时间点。
@@ -513,7 +511,7 @@ def next_jie(dt: datetime) -> tuple[Jieqi, datetime]:
   Args:
   - dt: (datetime) The datetime.
 
-  Return: (tuple[Jieqi, datetime]) The next Jie (节), and its solar datetime.
+  Return: (JieqiTime) The next Jie (节), and its solar datetime.
 
   Examples:
   - next_jie(jieqi_moment(2024, Jieqi.小寒))
@@ -534,15 +532,15 @@ def next_jie(dt: datetime) -> tuple[Jieqi, datetime]:
 
   xiaohan_dt: datetime = jieqi_moment(dt.year, Jieqi.小寒)
   if dt < xiaohan_dt:
-    return (Jieqi.小寒, xiaohan_dt)
+    return JieqiTime(Jieqi.小寒, xiaohan_dt)
   
   jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
   for jie1, jie2 in zip(jies, jies[1:]):
     jie1_dt: datetime = jieqi_moment(dt.year, jie1)
     jie2_dt: datetime = jieqi_moment(dt.year, jie2)
     if jie1_dt <= dt < jie2_dt:
-      return (jie2, jie2_dt)
+      return JieqiTime(jie2, jie2_dt)
 
   next_xiaohan_dt: datetime = jieqi_moment(dt.year + 1, Jieqi.小寒)
   assert dt < next_xiaohan_dt
-  return (Jieqi.小寒, next_xiaohan_dt)
+  return JieqiTime(Jieqi.小寒, next_xiaohan_dt)

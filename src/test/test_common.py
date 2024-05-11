@@ -73,6 +73,8 @@ class TestCommon(unittest.TestCase):
     self.assertEqual(TestClass.C, [2, 3])
 
     with self.assertRaises(AttributeError):
+      del TestClass.A
+    with self.assertRaises(AttributeError):
       TestClass.A = 2
     with self.assertRaises(AttributeError):
       TestClass.B = []
@@ -169,6 +171,8 @@ class TestCommon(unittest.TestCase):
       self.assertEqual(TestClass.B, [2, 3])
       self.assertEqual(TestClass.C, [2, 3])
     
+    with self.assertRaises(AttributeError):
+      del TestClass.A
     with self.assertRaises(AttributeError):
       TestClass.A = 2
     with self.assertRaises(AttributeError):

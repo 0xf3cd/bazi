@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import Union, Protocol, runtime_checkable
 
 from ..Defines import Jieqi
+from ..Common import JieqiTime
 from .CalendarDefines import CalendarType, CalendarDate
 
 
@@ -59,6 +60,6 @@ class CalendarUtilsProtocol(Protocol):
   @staticmethod
   def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime: ...
   @staticmethod
-  def prev_jie(dt: datetime) -> tuple[Jieqi, datetime]: ...
+  def prev_jie(dt: datetime) -> JieqiTime: ...
   @staticmethod
-  def next_jie(dt: datetime) -> tuple[Jieqi, datetime]: ...
+  def next_jie(dt: datetime) -> JieqiTime: ...

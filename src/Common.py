@@ -3,11 +3,13 @@
 import copy
 import inspect
 
+from datetime import datetime
+
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
   Sequence, Iterator, Type, Mapping, Any,
 )
-from .Defines import Wuxing, Yinyang, Tiangan
+from .Defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
 
 class ConstMetaClass(type):
@@ -155,11 +157,25 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
 
 class TraitTuple(NamedTuple):
   '''Representing the Wuxing and Yinyang of a Tiangan or Dizhi. 某天干或地支的五行和阴阳。'''
-  wuxing: Wuxing
+  wuxing:  Wuxing
   yinyang: Yinyang
 
   def __str__(self) -> str:
     return str(self.yinyang) + str(self.wuxing)
+
+
+
+class DayunTuple(NamedTuple):
+  '''Representing the Dayun of a bazi chart. 八字命盘的某步大运。'''
+  start_time: datetime
+  ganzhi:     Ganzhi
+
+
+
+class JieqiTime(NamedTuple):
+  ''''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
+  jieqi:  Jieqi
+  moment: datetime
 
 
 

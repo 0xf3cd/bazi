@@ -6,7 +6,7 @@ import random
 import json
 import copy
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
@@ -172,7 +172,7 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
     self.assertEqual(zhangshengs.hour, ShierZhangsheng.长生)
 
-  def test_correctness(self) -> None:
+  def test_basic_info_correctness(self) -> None:
     '''
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
     '''
@@ -216,8 +216,8 @@ class TestBaziChart(unittest.TestCase):
       chart: BaziChart = BaziChart(random_bazi)
 
       dayun_gen = chart.dayun
-      first_60_dayuns: list[Ganzhi] = [next(dayun_gen) for _ in range(60)]
-      next_60_dayuns: list[Ganzhi] = [next(dayun_gen) for _ in range(60)]
+      first_60_dayuns: list[Ganzhi] = [next(dayun_gen).ganzhi for _ in range(60)]
+      next_60_dayuns: list[Ganzhi] = [next(dayun_gen).ganzhi for _ in range(60)]
 
       self.assertListEqual(first_60_dayuns, next_60_dayuns)
       self.assertSetEqual(set(first_60_dayuns), set(Ganzhi.list_sexagenary_cycle()))
@@ -230,38 +230,69 @@ class TestBaziChart(unittest.TestCase):
       year_dz_yinyaang: Yinyang = BaziUtils.dizhi_traits(random_bazi.year_pillar.dizhi).yinyang
 
       cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
-      expected_first_dayun: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
+      expected_first_dayun_gz: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
+      expected_order: bool = True
       if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴):
-        expected_first_dayun = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_order = False
       elif (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
-        expected_first_dayun = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_order = False
       
       chart: BaziChart = BaziChart(random_bazi)
       first_dayun = next(chart.dayun)
 
-      self.assertEqual(first_dayun, expected_first_dayun)
+      self.assertEqual(first_dayun.ganzhi, expected_first_dayun_gz)
+      self.assertEqual(chart.dayun_order, expected_order)
 
-  def test_dayun_correctness(self) -> None:
+  def test_dayun_start_datetime(self) -> None:
+    # TODO: currently `HkoDataCalendarUtils` only supports day-level precision,
+    # which makes the `delta` a lot bigger.
+    # After supporting finer precision, this test should be updated.
+    delta: timedelta = timedelta(days=120)
+
     bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
-    chart1: BaziChart = BaziChart(bazi1)
-    bazi1_dayun_gen = chart1.dayun
-    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('己卯'))
-    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('庚辰'))
-    self.assertEqual(next(bazi1_dayun_gen), Ganzhi.from_str('辛巳'))
+    bazi1_dayun_gen = BaziChart(bazi1).dayun
+    self.assertAlmostEqual(
+      next(bazi1_dayun_gen).start_time, 
+      datetime(2009, 12, 30),
+      delta=delta,
+    )
 
     bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
-    chart2: BaziChart = BaziChart(bazi2)
-    bazi2_dayun_gen = chart2.dayun
-    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('戊辰'))
-    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('己巳'))
-    self.assertEqual(next(bazi2_dayun_gen), Ganzhi.from_str('庚午'))
+    bazi2_dayun_gen = BaziChart(bazi2).dayun
+    self.assertAlmostEqual(
+      next(bazi2_dayun_gen).start_time, 
+      datetime(1985, 3, 5),
+      delta=delta,
+    )
 
     bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
-    chart3: BaziChart = BaziChart(bazi3)
-    bazi3_dayun_gen = chart3.dayun
-    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('丙寅'))
-    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('乙丑'))
-    self.assertEqual(next(bazi3_dayun_gen), Ganzhi.from_str('甲子'))
+    bazi3_dayun_gen = BaziChart(bazi3).dayun
+    self.assertAlmostEqual(
+      next(bazi3_dayun_gen).start_time, 
+      datetime(1993, 5, 25),
+      delta=delta,
+    )
+
+  def test_dayun_ganzhi(self) -> None:
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    bazi1_dayun_gen = BaziChart(bazi1).dayun
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('己卯'))
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('庚辰'))
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('辛巳'))
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    bazi2_dayun_gen = BaziChart(bazi2).dayun
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('戊辰'))
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('己巳'))
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('庚午'))
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    bazi3_dayun_gen = BaziChart(bazi3).dayun
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('丙寅'))
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('乙丑'))
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('甲子'))
 
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
