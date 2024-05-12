@@ -12,6 +12,9 @@ from typing import (
 from .Defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
 
+######################################################
+#region Metaclasses and decorators
+
 class ConstMetaClass(type):
   '''
   This meta class ensures a class is not attribute-setable, which means that
@@ -25,7 +28,6 @@ class ConstMetaClass(type):
 
   def __delattr__(self, name: str) -> None:
     raise AttributeError('ConstMetaClass class attribute is read-only')
-
 
 
 class Const(metaclass=ConstMetaClass):
@@ -60,7 +62,6 @@ class Const(metaclass=ConstMetaClass):
     raise NotImplementedError('Const cannot be instantiated')
 
 
-
 class ImmutableMetaClass(type):
   '''
   This meta class is intended to be used as the meta data of classes that only contains 
@@ -85,7 +86,6 @@ class ImmutableMetaClass(type):
     if inspect.isfunction(val) or inspect.ismethod(val) or isinstance(val, (classmethod, staticmethod)):
       return val
     return copy.deepcopy(val)
-
 
 
 class Immutable(metaclass=ImmutableMetaClass):
@@ -119,8 +119,6 @@ class Immutable(metaclass=ImmutableMetaClass):
   def __init__(self, *args: Any, **kwargs: Any) -> None:
     raise NotImplementedError('Immutable cannot be instantiated')
 
-
-
 # Decorator for class property.
 ClassPropertyType = TypeVar('ClassPropertyType')
 class classproperty(Generic[ClassPropertyType]):
@@ -134,7 +132,12 @@ class classproperty(Generic[ClassPropertyType]):
   def __set__(self, instance, value) -> None:
     raise AttributeError('Class property is read-only.')
 
+#endregion
 
+
+
+######################################################
+#region Immutable data structures
 
 FrozenDictKeyType = TypeVar('FrozenDictKeyType')
 FrozenDictValueType = TypeVar('FrozenDictValueType')
@@ -153,7 +156,12 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
   def __len__(self) -> int:
     return len(self._data)
 
+#endregion
 
+
+
+######################################################
+#region Bazi
 
 class TraitTuple(NamedTuple):
   '''Representing the Wuxing and Yinyang of a Tiangan or Dizhi. 某天干或地支的五行和阴阳。'''
@@ -164,19 +172,28 @@ class TraitTuple(NamedTuple):
     return str(self.yinyang) + str(self.wuxing)
 
 
-
 class DayunTuple(NamedTuple):
   '''Representing the Dayun of a bazi chart. 八字命盘的某步大运。'''
-  start_time: datetime
-  ganzhi:     Ganzhi
+  ganzhi_year: int
+  ganzhi:      Ganzhi
 
+
+class XiaoyunTuple(NamedTuple):
+  '''Representing the Xiaoyun of a bazi chart. 八字命盘的某个小运。'''
+  xusui:  int    # 虚岁
+  ganzhi: Ganzhi
+
+
+class LiunianTuple(NamedTuple):
+  '''Representing a Liunian. 流年。'''
+  ganzhi_year: int
+  ganzhi:      Ganzhi
 
 
 class JieqiTime(NamedTuple):
   ''''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
   jieqi:  Jieqi
   moment: datetime
-
 
 
 class HiddenTianganDict(frozendict[Tiangan, int]):
@@ -190,7 +207,6 @@ class HiddenTianganDict(frozendict[Tiangan, int]):
   def __str__(self) -> str:
     sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
     return ','.join([f'{k}:{v}' for k, v in sorted_kv])
-
 
 
 PillarDataType = TypeVar('PillarDataType')
@@ -244,7 +260,6 @@ class BaziData(Generic[PillarDataType]):
     return not self.__eq__(other)
 
 
-
 TianganDataType = TypeVar('TianganDataType', covariant=True)
 DizhiDataType = TypeVar('DizhiDataType', covariant=True)
 class PillarData(Generic[TianganDataType, DizhiDataType]):
@@ -276,7 +291,12 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
 
+#endregion
 
+
+
+######################################################
+#region JSON
 
 class BaziJson:
   '''
@@ -308,7 +328,12 @@ class BaziJson:
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
 
+#endregion
 
+
+
+######################################################
+#region Descriptions / Interpretations
 
 class ShishenDescription(TypedDict):
   # The general descriptions of the Shishen.
@@ -328,7 +353,6 @@ class ShishenDescription(TypedDict):
   relationship:   list[str]
 
 
-
 # The description of the Tiangan, including the meanings, interpretations, images, traits, personalities that it has.
 class TianganDescription(TypedDict):
   # The general description(s) of a given Tiangan.
@@ -336,3 +360,5 @@ class TianganDescription(TypedDict):
 
   # The personalities that the given Tiangan reveals.
   personality: list[str]
+
+#endregion

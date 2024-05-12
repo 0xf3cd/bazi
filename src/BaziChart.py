@@ -5,13 +5,16 @@ import copy
 from datetime import datetime, timedelta
 from typing import Optional, Final, Generator
 
-from .Common import TraitTuple, DayunTuple, HiddenTianganDict, BaziData, PillarData, BaziJson
+from .Common import (
+  TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
+  HiddenTianganDict, BaziData, PillarData, BaziJson
+)
 from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
 
-from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie
+from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie, to_ganzhi
 from .Utils.BaziUtils import (
-  traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str
+  traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year
 )
 
 
@@ -173,10 +176,10 @@ class BaziChart:
     return is_male == is_year_dz_yang
   
   @property
-  def dayun_start_datetime(self) -> datetime:
+  def dayun_start_moment(self) -> datetime:
     '''
-    The date of the first day when first Dayun (大运) starts.
-    大运起运日期。
+    The moment when first Dayun (大运) starts (solar/gregorian calendar).
+    大运起运时间（公历）。
     '''
     birthtime: Final[datetime] = self._bazi.solar_datetime
 
@@ -198,20 +201,14 @@ class BaziChart:
     A generator that produces the Ganzhis for Dayuns (大运). Each dayun lasts for 10 years.
     用于排大运的生成器。
 
-    The generator generates tuples of (start_time, Ganzhi), where:
-    - `start_time` is the moment (datetime) of the start of the dayun
-    - `Ganzhi` is the Ganzhi of the dayun
-
-    返回的生成器会生成 (start_time, Ganzhi) 的元组，其中:
-    - `start_time` 是大运的开始时间
-    - `Ganzhi` 是大运的干支
-
     Usage: 
     ```
     chart: BaziChart = BaziChart(bazi)
 
     gen = chart.dayun
     first_ten_dayuns: list[DayunTuple] = [next(gen) for _ in range(10)]
+
+    next_ten_dayuns: list[DayunTuple] = list(itertools.islice(gen, 10))
 
     for start_time, gz in chart.dayun: # Infinite loop...
       print(start_time, gz) # Print the start time and Ganzhi of the dayun
@@ -220,16 +217,60 @@ class BaziChart:
 
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
-      start_time: datetime = self.dayun_start_datetime
+      ganzhi_year: int = to_ganzhi(self.dayun_start_moment).year
       tg, dz = self._bazi.month_pillar
 
       while True:
         tg = Tiangan.from_index((tg.index + step) % 10)
         dz = Dizhi.from_index((dz.index + step) % 12)
-        yield DayunTuple(start_time, Ganzhi(tg, dz))
-        start_time = start_time.replace(year=start_time.year + 10) # One Dayun lasts for 10 years...
+        yield DayunTuple(ganzhi_year, Ganzhi(tg, dz))
+        ganzhi_year += 10
 
     return __dayun_generator()
+  
+  @property
+  def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:
+    '''
+    A tuple containing all Xiaoyuns (小运).
+    一个包含所有小运的元组。
+
+    Usage:
+    ```
+    chart: BaziChart = BaziChart(bazi)
+
+    for xusui_age, ganzhi in chart.xiaoyun:
+      print(f'虚岁: {xusui_age}, 小运: {ganzhi}')
+    ```
+    '''
+
+    ret: list[XiaoyunTuple] = []
+
+    # xusui_age: int = 1 # "虚岁" starts from 1...
+    # Leap years can make this complex... The good thing is that Xiaoyun is not that important.
+
+    return tuple(ret)
+  
+  @property
+  def liunian(self) -> Generator[LiunianTuple, None, None]:
+    '''
+    A generator that produces the Liunians (流年).
+    一个生成器，用于生成流年。
+
+    Usage:
+    ```
+    chart: BaziChart = BaziChart(bazi)
+
+    for year, ganzhi in chart.liunian: # Infinite loop...
+      print(year, ganzhi) # Prints something like "2024 甲辰"
+    ```
+    '''
+
+    def __liunian_generator() -> Generator[LiunianTuple, None, None]:
+      year: int = to_ganzhi(self._bazi.solar_datetime).year
+      while True:
+        yield LiunianTuple(year, ganzhi_of_year(year))
+        year += 1
+    return __liunian_generator()
 
   @property
   def json(self) -> BaziJson.BaziChartJsonDict:

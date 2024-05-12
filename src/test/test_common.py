@@ -193,7 +193,7 @@ class TestCommon(unittest.TestCase):
       TestClass.C.append(4) # Should not raise.
       self.assertEqual(TestClass.C, [2, 3])
 
-  def test_immutable_class(self) -> None:
+  def test_immutable(self) -> None:
     class TestClass(Immutable):
       A: int = 1
       B: list[int] = [2, 3]

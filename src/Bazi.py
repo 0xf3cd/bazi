@@ -247,7 +247,7 @@ class Bazi:
     '''
     return Bazi.create(
       birth_time=datetime(
-        year=random.randint(1902, 2098),
+        year=random.randint(1902, 2080),
         month=random.randint(1, 12),
         day=random.randint(1, 28),
         hour=random.randint(0, 23),

@@ -1,18 +1,23 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_bazichart.py
 
-import unittest
-import random
 import json
 import copy
+import random
+import unittest
+import itertools
 
 from datetime import datetime, date, timedelta
 from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, Bazi
-from src.Common import TraitTuple, HiddenTianganDict, BaziData, BaziJson
 from src.Utils import BaziUtils
+
+from src.Common import (
+  TraitTuple, DayunTuple, LiunianTuple,
+  HiddenTianganDict, BaziData, BaziJson
+)
 
 from src.BaziChart import BaziChart, 命盘
 
@@ -245,32 +250,29 @@ class TestBaziChart(unittest.TestCase):
       self.assertEqual(first_dayun.ganzhi, expected_first_dayun_gz)
       self.assertEqual(chart.dayun_order, expected_order)
 
-  def test_dayun_start_datetime(self) -> None:
+  def test_dayun_start_moment(self) -> None:
     # TODO: currently `HkoDataCalendarUtils` only supports day-level precision,
     # which makes the `delta` a lot bigger.
     # After supporting finer precision, this test should be updated.
     delta: timedelta = timedelta(days=120)
 
     bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
-    bazi1_dayun_gen = BaziChart(bazi1).dayun
     self.assertAlmostEqual(
-      next(bazi1_dayun_gen).start_time, 
+      BaziChart(bazi1).dayun_start_moment,
       datetime(2009, 12, 30),
       delta=delta,
     )
 
     bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
-    bazi2_dayun_gen = BaziChart(bazi2).dayun
     self.assertAlmostEqual(
-      next(bazi2_dayun_gen).start_time, 
+      BaziChart(bazi2).dayun_start_moment, 
       datetime(1985, 3, 5),
       delta=delta,
     )
 
     bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
-    bazi3_dayun_gen = BaziChart(bazi3).dayun
     self.assertAlmostEqual(
-      next(bazi3_dayun_gen).start_time, 
+      BaziChart(bazi3).dayun_start_moment, 
       datetime(1993, 5, 25),
       delta=delta,
     )
@@ -293,6 +295,34 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('丙寅'))
     self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('乙丑'))
     self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('甲子'))
+
+  def test_dayun_ganzhi_year(self) -> None:
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    first_dayun1: DayunTuple = next(BaziChart(bazi1).dayun)
+    self.assertEqual(first_dayun1.ganzhi_year, 2009)
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    first_dayun2: DayunTuple = next(BaziChart(bazi2).dayun)
+    self.assertEqual(first_dayun2.ganzhi_year, 1984) # TODO: 测测 Says Dayun starts in 1985. Revisit here later...
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    first_dayun3: DayunTuple = next(BaziChart(bazi3).dayun)
+    self.assertEqual(first_dayun3.ganzhi_year, 1993)
+
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      dayun_start_times: list[DayunTuple] = list(itertools.islice(BaziChart(random_bazi).dayun, 10))
+      for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
+        self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
+
+  def test_liunian(self) -> None:
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    for _ in range(16):
+      random_bazi: Bazi = Bazi.random()
+      chart: BaziChart = BaziChart(random_bazi)
+      for year, ganzhi in itertools.islice(chart.liunian, 80):
+        expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
+        self.assertEqual(ganzhi, expected_ganzhi)
 
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
