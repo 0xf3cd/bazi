@@ -1,26 +1,30 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_bazichart.py
 
-import unittest
-import random
 import json
 import copy
 
-from datetime import datetime
+import unittest
+import itertools
+
+from datetime import datetime, date, timedelta
 from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, Bazi
-from src.Common import TraitTuple, HiddenTianganDict, BaziData, BaziJson
 from src.Utils import BaziUtils
 
-from src.Charts import BaziChart
-from src.Charts.BaziChart import 原盘
+from src.Common import (
+  TraitTuple, DayunTuple, XiaoyunTuple,
+  HiddenTianganDict, BaziData, BaziJson
+)
+
+from src.BaziChart import BaziChart, 命盘
 
 
 class TestBaziChart(unittest.TestCase):
   def test_basic(self) -> None:
-    self.assertIs(BaziChart, 原盘)
+    self.assertIs(BaziChart, 命盘)
 
     bazi: Bazi = Bazi(
       birth_time=datetime(1984, 4, 2, 4, 2),
@@ -34,6 +38,8 @@ class TestBaziChart(unittest.TestCase):
       if tg is not bazi.day_master:
         self.assertNotEqual(chart.bazi.day_master, tg)
 
+    self.assertRaises(AssertionError, lambda: BaziChart(date(2024, 1, 1)))  # type: ignore
+
   def test_malicious(self) -> None:
     with self.subTest('Modification attemp'):
       bazi: Bazi = Bazi(
@@ -46,6 +52,9 @@ class TestBaziChart(unittest.TestCase):
       bazi._day_pillar = Ganzhi.from_str('甲子') # type: ignore
       self.assertEqual(chart.bazi._day_pillar, Ganzhi.from_str('丙寅'))
       self.assertEqual(bazi._day_pillar, Ganzhi.from_str('甲子'))
+
+    with self.assertRaises(AttributeError):
+      BaziChart(Bazi.random()).bazi = Bazi.random()  # type: ignore
 
     with self.subTest('Invalid __init__ parameters'):
       with self.assertRaises(AssertionError):
@@ -87,7 +96,7 @@ class TestBaziChart(unittest.TestCase):
       precision=BaziPrecision.DAY,
     )
     chart: BaziChart = BaziChart(bazi)
-    hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
+    hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangan
 
     self.assertEqual(len(list(hidden_tiangans)), 4)
 
@@ -110,7 +119,7 @@ class TestBaziChart(unittest.TestCase):
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+    shishens: BaziData[BaziChart.PillarShishens] = chart.shishen
 
     self.assertEqual(len(list(shishens)), 4)
 
@@ -130,32 +139,32 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(shishens.hour.tiangan, Shishen.偏财)
     self.assertEqual(shishens.hour.dizhi, Shishen.偏印)
 
-  def test_nayins(self) -> None:
+  def test_nayin(self) -> None:
     chart: BaziChart = BaziChart(Bazi.create(
       birth_time=datetime(1984, 4, 2, 4, 2),
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    nayins: BaziData[str] = chart.nayins
+    nayin: BaziData[str] = chart.nayin
 
-    self.assertEqual(len(list(nayins)), 4)
+    self.assertEqual(len(list(nayin)), 4)
 
     #           Year    Month     Day     Hour
     # Tiangan    甲       丁       丙       庚
     #   Dizhi    子       卯       寅       寅
 
-    self.assertEqual(nayins.year, '海中金')
-    self.assertEqual(nayins.month, '炉中火')
-    self.assertEqual(nayins.day, '炉中火')
-    self.assertEqual(nayins.hour, '松柏木')
+    self.assertEqual(nayin.year, '海中金')
+    self.assertEqual(nayin.month, '炉中火')
+    self.assertEqual(nayin.day, '炉中火')
+    self.assertEqual(nayin.hour, '松柏木')
 
-  def test_shier_zhangshengs(self) -> None:
+  def test_shier_zhangsheng(self) -> None:
     chart: BaziChart = BaziChart(Bazi.create(
       birth_time=datetime(1984, 4, 2, 4, 2),
       gender=BaziGender.男,
       precision=BaziPrecision.DAY,
     ))
-    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangshengs
+    zhangshengs: BaziData[ShierZhangsheng] = chart.shier_zhangsheng
 
     self.assertEqual(len(list(zhangshengs)), 4)
 
@@ -168,9 +177,9 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
     self.assertEqual(zhangshengs.hour, ShierZhangsheng.长生)
 
-  def test_consistency(self) -> None:
+  def test_basic_info_correctness(self) -> None:
     '''
-    Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are consistent.
+    Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
     '''
     for _ in range(256):
       chart: BaziChart = BaziChart(Bazi.random())
@@ -178,8 +187,8 @@ class TestBaziChart(unittest.TestCase):
       day_master: Tiangan = chart.bazi.day_master
       pillars: list[Ganzhi] = list(chart.bazi.pillars)
       traits: BaziData[BaziChart.PillarTraits] = chart.traits
-      hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangans
-      shishens: BaziData[BaziChart.PillarShishens] = chart.shishens
+      hidden_tiangans: BaziData[HiddenTianganDict] = chart.hidden_tiangan
+      shishens: BaziData[BaziChart.PillarShishens] = chart.shishen
 
       # The major component in hidden Tiangans of a Dizhi is expected to be of the same Wuxing as the Dizhi.
       # 地支中的主气（即本气）应该和地支本身的五行一致。
@@ -206,20 +215,165 @@ class TestBaziChart(unittest.TestCase):
         self.assertEqual(tg_shishen, BaziUtils.shishen(day_master, pillar.tiangan))
         self.assertEqual(tg_traits, BaziUtils.tiangan_traits(pillar.tiangan))
 
+  def test_dayun_sexagenary_cycle(self) -> None:
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      chart: BaziChart = BaziChart(random_bazi)
+
+      dayun_gen = chart.dayun
+      first_60_dayuns: list[Ganzhi] = [next(dayun_gen).ganzhi for _ in range(60)]
+      next_60_dayuns: list[Ganzhi] = [next(dayun_gen).ganzhi for _ in range(60)]
+
+      self.assertListEqual(first_60_dayuns, next_60_dayuns)
+      self.assertSetEqual(set(first_60_dayuns), set(Ganzhi.list_sexagenary_cycle()))
+
+  def test_dayun_order(self) -> None:
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      
+      month_gz: Ganzhi = random_bazi.month_pillar
+      year_dz_yinyaang: Yinyang = BaziUtils.dizhi_traits(random_bazi.year_pillar.dizhi).yinyang
+
+      cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+      expected_first_dayun_gz: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
+      expected_order: bool = True
+      if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴):
+        expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_order = False
+      elif (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
+        expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
+        expected_order = False
+      
+      chart: BaziChart = BaziChart(random_bazi)
+      first_dayun = next(chart.dayun)
+
+      self.assertEqual(first_dayun.ganzhi, expected_first_dayun_gz)
+      self.assertEqual(chart.dayun_order, expected_order)
+
+  def test_dayun_start_moment(self) -> None:
+    # TODO: currently `HkoDataCalendarUtils` only supports day-level precision,
+    # which makes the `delta` a lot bigger.
+    # After supporting finer precision, this test should be updated.
+    delta: timedelta = timedelta(days=120)
+
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    self.assertAlmostEqual(
+      BaziChart(bazi1).dayun_start_moment,
+      datetime(2009, 12, 30),
+      delta=delta,
+    )
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    self.assertAlmostEqual(
+      BaziChart(bazi2).dayun_start_moment, 
+      datetime(1985, 3, 5),
+      delta=delta,
+    )
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    self.assertAlmostEqual(
+      BaziChart(bazi3).dayun_start_moment, 
+      datetime(1993, 5, 25),
+      delta=delta,
+    )
+
+  def test_dayun_ganzhi(self) -> None:
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    bazi1_dayun_gen = BaziChart(bazi1).dayun
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('己卯'))
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('庚辰'))
+    self.assertEqual(next(bazi1_dayun_gen).ganzhi, Ganzhi.from_str('辛巳'))
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    bazi2_dayun_gen = BaziChart(bazi2).dayun
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('戊辰'))
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('己巳'))
+    self.assertEqual(next(bazi2_dayun_gen).ganzhi, Ganzhi.from_str('庚午'))
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    bazi3_dayun_gen = BaziChart(bazi3).dayun
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('丙寅'))
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('乙丑'))
+    self.assertEqual(next(bazi3_dayun_gen).ganzhi, Ganzhi.from_str('甲子'))
+
+  def test_dayun_ganzhi_year(self) -> None:
+    bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    first_dayun1: DayunTuple = next(BaziChart(bazi1).dayun)
+    self.assertEqual(first_dayun1.ganzhi_year, 2009)
+
+    bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
+    first_dayun2: DayunTuple = next(BaziChart(bazi2).dayun)
+    self.assertEqual(first_dayun2.ganzhi_year, 1984) # TODO: 测测 Says Dayun starts in 1985. Revisit here later...
+
+    bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
+    first_dayun3: DayunTuple = next(BaziChart(bazi3).dayun)
+    self.assertEqual(first_dayun3.ganzhi_year, 1993)
+
+    for _ in range(10):
+      random_bazi: Bazi = Bazi.random()
+      dayun_start_times: list[DayunTuple] = list(itertools.islice(BaziChart(random_bazi).dayun, 10))
+      for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
+        self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
+
+  def test_xiaoyun(self) -> None:
+    def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
+      xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
+      expected: list[Ganzhi] = [Ganzhi.from_str(s) for s in expected_xiaoyun_str.split()]
+      self.assertEqual(len(xiaoyuns), len(expected))
+      for age, gz in enumerate(expected, start=1):
+        self.assertEqual(xiaoyuns[age-1].xusui, age)
+        self.assertEqual(xiaoyuns[age-1].ganzhi, gz)
+    
+    # Data collected from https://p.china95.net/paipan/bazi/
+    __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.MALE, BaziPrecision.DAY), 
+              '戊子 丁亥 丙戌 乙酉')
+    __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY), 
+              '庚寅 辛卯 壬辰 癸巳 甲午 乙未 丙申 丁酉')
+    __subtest(Bazi.create(datetime(2017, 8, 16, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
+              '丙子 乙亥 甲戌 癸酉')
+    __subtest(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
+              '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
+
+  def test_liunian(self) -> None:
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    for _ in range(16):
+      random_bazi: Bazi = Bazi.random()
+      chart: BaziChart = BaziChart(random_bazi)
+      for year, ganzhi in itertools.islice(chart.liunian, 80):
+        expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
+        self.assertEqual(ganzhi, expected_ganzhi)
+
+  def test_consistency(self) -> None:
+    '''Ensure every run gives the consistent results...'''
+    for _ in range(16):
+      random_bazi: Bazi = Bazi.random()
+      expected: BaziChart = BaziChart(random_bazi)
+
+      for __ in range(10):
+        chart: BaziChart = BaziChart(random_bazi)
+        self.assertEqual(chart.bazi, expected.bazi)
+
+        self.assertListEqual(list(chart.traits), list(expected.traits))
+        self.assertListEqual(list(chart.hidden_tiangan), list(expected.hidden_tiangan))
+        self.assertListEqual(list(chart.shishen), list(expected.shishen))
+        self.assertListEqual(list(chart.nayin), list(expected.nayin))
+        self.assertListEqual(list(chart.shier_zhangsheng), list(expected.shier_zhangsheng))
+
+        self.assertEqual(chart.dayun_order, expected.dayun_order)
+        self.assertEqual(chart.dayun_start_moment, expected.dayun_start_moment)
+        self.assertEqual(chart.xiaoyun, expected.xiaoyun)
+
+        self.assertEqual(list(itertools.islice(chart.liunian, 100)), 
+                         list(itertools.islice(expected.liunian, 100)))
+        self.assertEqual(list(itertools.islice(chart.dayun, 100)), 
+                         list(itertools.islice(expected.dayun, 100)))
+
+        self.assertDictEqual(chart.json, expected.json)
+
   def test_json(self) -> None:
     for _ in range(64):
-      dt: datetime = datetime(
-        random.randint(1903, 2097),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.randint(0, 23),
-        random.randint(0, 59),
-      )
-      chart: BaziChart = BaziChart(Bazi.create(
-        birth_time=dt,
-        gender=random.choice(list(BaziGender)),
-        precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
-      ))
+      chart: BaziChart = BaziChart(Bazi.random())
+      dt: datetime = chart.bazi.solar_datetime
 
       j: BaziJson.BaziChartJsonDict = chart.json
       j_str: str = json.dumps(j)
@@ -232,7 +386,7 @@ class TestBaziChart(unittest.TestCase):
       __j['datetime'] = datetime.now().isoformat()
       __j['gender'] = 'male'
       __j['tiangan_traits'], __j['dizhi_traits'] = __j['dizhi_traits'], __j['tiangan_traits']
-      __j['tiangan_shishens'], __j['dizhi_shishens'] = __j['dizhi_shishens'], __j['tiangan_shishens']
+      __j['tiangan_shishen'], __j['dizhi_shishen'] = __j['dizhi_shishen'], __j['tiangan_shishen']
       self.assertEqual(chart.json, j)
       self.assertNotEqual(chart.json, __j)
 
@@ -288,35 +442,35 @@ class TestBaziChart(unittest.TestCase):
       'hour': '阳木',
     })
 
-    self.assertEqual(j['hidden_tiangans'], {
+    self.assertEqual(j['hidden_tiangan'], {
       'year': '癸:100',
       'month': '乙:100',
       'day': '甲:60,丙:30,戊:10',
       'hour': '甲:60,丙:30,戊:10',
     })
 
-    self.assertEqual(j['tiangan_shishens'], {
+    self.assertEqual(j['tiangan_shishen'], {
       'year': '偏印',
       'month': '劫财',
       'day': 'None',
       'hour': '偏财',
     })
 
-    self.assertEqual(j['dizhi_shishens'], {
+    self.assertEqual(j['dizhi_shishen'], {
       'year': '正官',
       'month': '正印',
       'day': '偏印',
       'hour': '偏印',
     })
 
-    self.assertEqual(j['nayins'], {
+    self.assertEqual(j['nayin'], {
       'year': '海中金',
       'month': '炉中火',
       'day': '炉中火',
       'hour': '松柏木',
     })
 
-    self.assertEqual(j['shier_zhangshengs'], {
+    self.assertEqual(j['shier_zhangsheng'], {
       'year': '胎',
       'month': '沐浴',
       'day': '长生',

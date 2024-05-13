@@ -1,5 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import functools
+
 from enum import Enum
 from typing import NamedTuple
 
@@ -107,7 +109,7 @@ class Dizhi(Enum):
 class Ganzhi(NamedTuple):
   '''Ganzhi / Stem-branch / 干支'''
   tiangan: Tiangan
-  dizhi: Dizhi
+  dizhi:   Dizhi
 
   @classmethod
   def from_strs(cls, tiangan_str: str, dizhi_str: str) -> 'Ganzhi':
@@ -144,6 +146,18 @@ class Ganzhi(NamedTuple):
     Return: a list of strings representing the 60 ganzhi pairs.
     '''
     return [str(gz) for gz in Ganzhi.list_sexagenary_cycle()]
+
+  @functools.lru_cache(maxsize=1024)
+  def next(self, step: int = 1) -> 'Ganzhi':
+    assert isinstance(step, int)
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    return cycle[(cycle.index(self) + step) % 60]
+
+  @functools.lru_cache(maxsize=1024)
+  def prev(self, step: int = 1) -> 'Ganzhi':
+    assert isinstance(step, int)
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    return cycle[(cycle.index(self) - step) % 60]
 
 干支 = Ganzhi # Alias
 
@@ -208,8 +222,18 @@ class Jieqi(Enum):
     return cls(s)
   
   @classmethod
-  def as_list(cls) -> list['Jieqi']:
-    return list(cls)
+  def as_list(cls, ganzhi_year: bool = True) -> list['Jieqi']:
+    '''
+    If `ganzhi_year` is True (which is the default case), returning the Jieqis
+    starting from "立春", as "立春" is the first Jieqi in any ganzhi year.
+
+    If `ganzhi_year` is False, returning the Jieqis starting from "小寒",
+    as "小寒" is the first Jieqi in any solar year.
+    '''
+    if ganzhi_year:
+      return list(cls)
+    else: # Return in the order that Jieqis appear in a solar year.
+      return list(cls)[-2:] + list(cls)[:-2]
 
   def __str__(self) -> str:
     return str(self.value)

@@ -1,6 +1,6 @@
-from .BaziUtils import BaziUtils
-from .TianganUtils import TianganUtils
-from .DizhiUtils import DizhiUtils
+from . import BaziUtils
+from . import TianganUtils
+from . import DizhiUtils
 
 __all__ = [
   'BaziUtils',

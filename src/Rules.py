@@ -4,11 +4,13 @@ import itertools
 import functools
 from enum import Enum
 
-from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, ImmutableMetaClass
+from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, Const, ConstMetaClass
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-class Rules(metaclass=ImmutableMetaClass):
+# Using `Const` here. So the same, cached tables are returned without deep copy.
+# The returned the tables are expected to be immutable - so no deep copy is needed.
+class Rules(Const):
   '''
   `Rules` represents rules/tables that the project uses.
   The class itself is immutable - its attributes are not writtable.
@@ -29,7 +31,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
   @functools.cache
-  def YEAR_TO_MONTH_TABLE(self) -> frozendict[Tiangan, Tiangan]:
+  def YEAR_TO_MONTH_TABLE(cls) -> frozendict[Tiangan, Tiangan]:
     return frozendict({
       Tiangan.甲 : Tiangan.丙, # First month in year of "甲" is "丙寅".
       Tiangan.乙 : Tiangan.戊, # First month in year of "乙" is "戊寅".
@@ -46,7 +48,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # The mappings are used to figure out the first hour's Tiangan in a ganzhi day, i.e. 日上起时表.
   @classproperty
   @functools.cache
-  def DAY_TO_HOUR_TABLE(self) -> frozendict[Tiangan, Tiangan]:
+  def DAY_TO_HOUR_TABLE(cls) -> frozendict[Tiangan, Tiangan]:
     return frozendict({
       Tiangan.甲 : Tiangan.甲, # First hour in day of "甲" is "甲子".
       Tiangan.乙 : Tiangan.丙, # First hour in day of "乙" is "丙子".
@@ -64,7 +66,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询给定天干的五行和阴阳。
   @classproperty
   @functools.cache
-  def TIANGAN_TRAITS(self) -> frozendict[Tiangan, TraitTuple]:
+  def TIANGAN_TRAITS(cls) -> frozendict[Tiangan, TraitTuple]:
     return frozendict({
       Tiangan.甲 : TraitTuple(Wuxing.木, Yinyang.阳),
       Tiangan.乙 : TraitTuple(Wuxing.木, Yinyang.阴),
@@ -83,7 +85,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询给定地支的五行和阴阳。
   @classproperty
   @functools.cache
-  def DIZHI_TRAITS(self) -> frozendict[Dizhi, TraitTuple]:
+  def DIZHI_TRAITS(cls) -> frozendict[Dizhi, TraitTuple]:
     return frozendict({
       Dizhi.子 : TraitTuple(Wuxing.水, Yinyang.阳),
       Dizhi.丑 : TraitTuple(Wuxing.土, Yinyang.阴),
@@ -104,7 +106,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询给定地支的藏干和它们所占的百分比。
   @classproperty
   @functools.cache
-  def HIDDEN_TIANGANS(self) -> frozendict[Dizhi, HiddenTianganDict]:
+  def HIDDEN_TIANGANS(cls) -> frozendict[Dizhi, HiddenTianganDict]:
     return frozendict({
       Dizhi.子 : HiddenTianganDict({ Tiangan.癸 : 100 }),
       Dizhi.丑 : HiddenTianganDict({ Tiangan.己 : 60, Tiangan.癸 : 30, Tiangan.辛 : 10 }),
@@ -125,7 +127,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询给定干支的纳音。
   @classproperty
   @functools.cache
-  def NAYIN(self) -> frozendict[Ganzhi, str]:
+  def NAYIN(cls) -> frozendict[Ganzhi, str]:
     NAYIN_STR_LIST: list[str] = [
       '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火', 
       '涧下水', '城头土', '白蜡金', '杨柳木', '泉中水', '屋上土', 
@@ -144,7 +146,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询每个天干的长生所在的地支。
   @classproperty
   @functools.cache
-  def TIANGAN_ZHANGSHENG(self) -> frozendict[Tiangan, Dizhi]:
+  def TIANGAN_ZHANGSHENG(cls) -> frozendict[Tiangan, Dizhi]:
     return frozendict({
       Tiangan.甲 : Dizhi.亥,
       Tiangan.乙 : Dizhi.午,
@@ -163,7 +165,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 该字典用于查询天干的禄/禄身。
   @classproperty
   @functools.cache
-  def TIANGAN_LU(self) -> frozendict[Tiangan, Dizhi]:
+  def TIANGAN_LU(cls) -> frozendict[Tiangan, Dizhi]:
     return frozendict({
       Tiangan.甲 : Dizhi.寅,
       Tiangan.乙 : Dizhi.卯,
@@ -184,7 +186,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相合关系是无方向的。如甲己相合是双向的关系，互相相合。
   @classproperty
   @functools.cache
-  def TIANGAN_HE(self) -> frozendict[frozenset[Tiangan], Wuxing]:
+  def TIANGAN_HE(cls) -> frozendict[frozenset[Tiangan], Wuxing]:
     return frozendict({
       frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
       frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
@@ -200,7 +202,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相冲关系是无方向的。如甲庚相冲是双向的关系，互相相冲。相冲双方均减力，旺者减力小，弱者减力大。
   @classproperty
   @functools.cache
-  def TIANGAN_CHONG(self) -> frozenset[frozenset[Tiangan]]:
+  def TIANGAN_CHONG(cls) -> frozenset[frozenset[Tiangan]]:
     return frozenset((
       frozenset((Tiangan.甲, Tiangan.庚)),
       frozenset((Tiangan.乙, Tiangan.辛)),
@@ -217,7 +219,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 天干相生不考虑阴阳，只考虑五行。
   @classproperty
   @functools.cache
-  def TIANGAN_SHENG(self) -> frozenset[tuple[Tiangan, Tiangan]]:
+  def TIANGAN_SHENG(cls) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
@@ -236,7 +238,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 天干相克不考虑阴阳，只考虑五行。
   @classproperty
   @functools.cache
-  def TIANGAN_KE(self) -> frozenset[tuple[Tiangan, Tiangan]]:
+  def TIANGAN_KE(cls) -> frozenset[tuple[Tiangan, Tiangan]]:
     traits_rule = Rules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
@@ -253,7 +255,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 三会是无方向的。如寅卯辰三会木局是三个地支之间相互的关系。
   @classproperty
   @functools.cache
-  def DIZHI_SANHUI(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+  def DIZHI_SANHUI(cls) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.寅, Dizhi.卯, Dizhi.辰)) : Wuxing.木,
       frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)) : Wuxing.火,
@@ -268,7 +270,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 六合关系是无方向的。如子、丑相合是相互的关系。
   @classproperty
   @functools.cache
-  def DIZHI_LIUHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+  def DIZHI_LIUHE(cls) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.子, Dizhi.丑)) : Wuxing.土,
       frozenset((Dizhi.寅, Dizhi.亥)) : Wuxing.木,
@@ -289,10 +291,10 @@ class Rules(metaclass=ImmutableMetaClass):
     # No change should be made to the existing definitions.
     # Only add new definitions.
 
-  class AnheTable(metaclass=ImmutableMetaClass):
+  class AnheTable(metaclass=ConstMetaClass):
     @classproperty
     @functools.cache
-    def normal(self) -> frozenset[frozenset[Dizhi]]:
+    def normal(cls) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
         frozenset((Dizhi.巳, Dizhi.酉)),
@@ -303,7 +305,7 @@ class Rules(metaclass=ImmutableMetaClass):
     
     @classproperty
     @functools.cache
-    def normal_extended(self) -> frozenset[frozenset[Dizhi]]:
+    def normal_extended(cls) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
         frozenset((Dizhi.巳, Dizhi.酉)),
@@ -315,7 +317,7 @@ class Rules(metaclass=ImmutableMetaClass):
     
     @classproperty
     @functools.cache
-    def mangpai(self) -> frozenset[frozenset[Dizhi]]:
+    def mangpai(cls) -> frozenset[frozenset[Dizhi]]:
       return frozenset([
         frozenset((Dizhi.卯, Dizhi.申)),
         frozenset((Dizhi.寅, Dizhi.丑)),
@@ -339,7 +341,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 暗合关系是无方向的。
   @classproperty
   @functools.cache
-  def DIZHI_ANHE(self) -> AnheTable:
+  def DIZHI_ANHE(cls) -> AnheTable:
     return Rules.AnheTable()
   
   # The table is used to query the TONGHE (通合) relation across all Dizhis.
@@ -348,7 +350,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 通合关系是无方向的。通合代表藏干中所有气都能两两相合。
   @classproperty
   @functools.cache
-  def DIZHI_TONGHE(self) -> frozenset[frozenset[Dizhi]]:
+  def DIZHI_TONGHE(cls) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.寅, Dizhi.丑)),
       frozenset((Dizhi.午, Dizhi.亥)),
@@ -360,7 +362,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 通禄合关系是无方向的。若两个天干相合，那么它们在地支中的禄身也能相合，从而构成地支的通禄合关系。
   @classproperty
   @functools.cache
-  def DIZHI_TONGLUHE(self) -> frozenset[frozenset[Dizhi]]:
+  def DIZHI_TONGLUHE(cls) -> frozenset[frozenset[Dizhi]]:
     return frozenset([
       frozenset((Dizhi.卯, Dizhi.申)),
       frozenset((Dizhi.巳, Dizhi.酉)),
@@ -375,7 +377,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 三合关系是无方向的。
   @classproperty
   @functools.cache
-  def DIZHI_SANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+  def DIZHI_SANHE(cls) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Wuxing.金,
       frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Wuxing.木,
@@ -389,7 +391,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 半合关系是无方向的。
   @classproperty
   @functools.cache
-  def DIZHI_BANHE(self) -> frozendict[frozenset[Dizhi], Wuxing]:
+  def DIZHI_BANHE(cls) -> frozendict[frozenset[Dizhi], Wuxing]:
     return frozendict({
       frozenset((Dizhi.巳, Dizhi.酉)) : Wuxing.金,
       frozenset((Dizhi.酉, Dizhi.丑)) : Wuxing.金,
@@ -418,10 +420,10 @@ class Rules(metaclass=ImmutableMetaClass):
     子卯刑 = ZIMAOXING
     自刑   = ZIXING
 
-  class XingTable(metaclass=ImmutableMetaClass):
+  class XingTable(metaclass=ConstMetaClass):
     @classproperty
     @functools.cache
-    def strict(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+    def strict(cls) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       d: dict[tuple[Dizhi, ...], Rules.XingSubType] = {}
       for dz_tuple in itertools.permutations((Dizhi.丑, Dizhi.未, Dizhi.戌)):
         d[dz_tuple] = Rules.XingSubType.三刑
@@ -435,7 +437,7 @@ class Rules(metaclass=ImmutableMetaClass):
     
     @classproperty
     @functools.cache
-    def loose(self) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
+    def loose(cls) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
       d: dict[tuple[Dizhi, ...], Rules.XingSubType] = dict(Rules.XingTable.strict)
       for dz_tuple in ((Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)):
         d[dz_tuple] = Rules.XingSubType.三刑
@@ -457,7 +459,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相刑是有方向的。
   @classproperty
   @functools.cache
-  def DIZHI_XING(self) -> 'Rules.XingTable':
+  def DIZHI_XING(cls) -> 'Rules.XingTable':
     return Rules.XingTable()
 
 
@@ -467,7 +469,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相冲是无方向的，两个地支之间互相相冲。
   @classproperty
   @functools.cache
-  def DIZHI_CHONG(self) -> frozenset[frozenset[Dizhi]]:
+  def DIZHI_CHONG(cls) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), 
       (Dizhi.寅, Dizhi.申), (Dizhi.卯, Dizhi.酉), 
@@ -480,7 +482,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相破是无方向的，两个地支之间互相破坏。
   @classproperty
   @functools.cache
-  def DIZHI_PO(self) -> frozenset[frozenset[Dizhi]]:
+  def DIZHI_PO(cls) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.酉), (Dizhi.卯, Dizhi.午),
       (Dizhi.辰, Dizhi.丑), (Dizhi.未, Dizhi.戌),
@@ -494,7 +496,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 相害是无方向的，两个地支之间两两相害。
   @classproperty
   @functools.cache
-  def DIZHI_HAI(self) -> frozenset[frozenset[Dizhi]]:
+  def DIZHI_HAI(cls) -> frozenset[frozenset[Dizhi]]:
     return frozenset([frozenset(dz_tuple) for dz_tuple in (
       (Dizhi.子, Dizhi.未), (Dizhi.丑, Dizhi.午),
       (Dizhi.寅, Dizhi.巳), (Dizhi.卯, Dizhi.辰),
@@ -510,7 +512,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 地支相生不考虑阴阳，只考虑五行。
   @classproperty
   @functools.cache
-  def DIZHI_SHENG(self) -> frozenset[tuple[Dizhi, Dizhi]]:
+  def DIZHI_SHENG(cls) -> frozenset[tuple[Dizhi, Dizhi]]:
     dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
@@ -528,7 +530,7 @@ class Rules(metaclass=ImmutableMetaClass):
   # 地支相克不考虑阴阳，只考虑五行。
   @classproperty
   @functools.cache
-  def DIZHI_KE(self) -> frozenset[tuple[Dizhi, Dizhi]]:
+  def DIZHI_KE(cls) -> frozenset[tuple[Dizhi, Dizhi]]:
     dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):

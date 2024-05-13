@@ -6,7 +6,6 @@ import inspect
 import unittest
 
 from src.Rules import Rules
-from src.Common import frozendict
 
 class TestRules(unittest.TestCase):
   @staticmethod
@@ -30,17 +29,6 @@ class TestRules(unittest.TestCase):
     self.assertIs(Rules.TIANGAN_ZHANGSHENG, Rules.TIANGAN_ZHANGSHENG)
     self.assertIs(Rules.TIANGAN_TRAITS, Rules.TIANGAN_TRAITS)
 
-  def test_init(self) -> None:
-    ytm_table = Rules.YEAR_TO_MONTH_TABLE
-    r = Rules()
-    self.assertEqual(ytm_table, r.YEAR_TO_MONTH_TABLE)
-    self.assertIs(ytm_table, r.YEAR_TO_MONTH_TABLE)
-
-    with self.assertRaises(AttributeError):
-      Rules.YEAR_TO_MONTH_TABLE = frozendict({}) # type: ignore # Error raised!
-    with self.assertRaises(AttributeError):
-      r.YEAR_TO_MONTH_TABLE = frozendict({}) # type: ignore # Error raised!
-
   def test_cache(self) -> None:
     self.assertIs(Rules.DIZHI_PO, Rules.DIZHI_PO)
     self.assertIs(Rules.HIDDEN_TIANGANS, Rules.HIDDEN_TIANGANS) 
@@ -52,23 +40,12 @@ class TestRules(unittest.TestCase):
     # Actually maybe this is an overkill because no one is going to change `Rules`'s attributes...
     table_names: list[str] = TestRules.list_all_rules()
     self.assertGreater(len(table_names), 0)
-    r = Rules()
-    r2 = Rules()
+
     for attr in table_names:
       self.assertEqual(getattr(Rules, attr), getattr(Rules, attr))
-      self.assertEqual(getattr(r, attr), getattr(Rules, attr))
-      self.assertEqual(getattr(r2, attr), getattr(Rules, attr))
-
       self.assertIs(getattr(Rules, attr), getattr(Rules, attr)) # Ensure cached
-      self.assertIs(getattr(r, attr), getattr(Rules, attr)) # Ensure cached
-      self.assertIs(getattr(r2, attr), getattr(Rules, attr)) # Ensure cached
-
       with self.assertRaises(AttributeError):
         setattr(Rules, attr, '') # Error raised!
-      with self.assertRaises(AttributeError):
-        setattr(r, attr, '') # Error raised!
-      with self.assertRaises(AttributeError):
-        setattr(r2, attr, '') # Error raised!
 
   def test_anhetable(self) -> None:
     # I just want `Rules.AnheTable` to be a immutable Class...

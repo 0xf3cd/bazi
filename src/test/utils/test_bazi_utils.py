@@ -148,7 +148,7 @@ class TestBaziUtils(unittest.TestCase):
           self.assertEqual(len(BaziUtils.nayin_str(gz)), 3)
         else:
           with self.assertRaises(AssertionError):
-            BaziUtils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayins.
+            BaziUtils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
 
   def test_12zhangsheng(self) -> None:
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)

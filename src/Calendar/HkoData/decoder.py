@@ -12,7 +12,11 @@ from datetime import date
 from typing import TypedDict, Optional, Final
 
 from ...Defines import Jieqi, Ganzhi
-from .common import HkoYearLimits, get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, date_to_bytes, bytes_to_date, bytes_to_int
+
+from .common import (
+  HkoYearLimits, date_to_bytes, bytes_to_date, bytes_to_int,
+  get_jieqi_encoded_data_path, get_lunardate_encoded_data_path,
+)
 from .encoder import do_encode, encoded_data_ready
 
 
@@ -21,8 +25,6 @@ JieqiDates = dict[Jieqi, date] # Jieqi -> Solar-calendar Date
 class DecodedJieqiDates:
   '''
   This class is used to query the solar-calendar date (Gregorian Calendar) of each Jieqi in each solar-calendar year.
-
-  TODO: Creation of `DecodedJieqiDates` can be time-consuming. Optimization needed in the future??
   ''' 
 
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
@@ -47,8 +49,7 @@ class DecodedJieqiDates:
 
     # In Georgian calendar, the first Jieqi is "小寒".
     # But in `Jieqi`'s order, the first Jieqi is "立春".
-    jieqi_list: list[Jieqi] = Jieqi.as_list()
-    self._actual_jieqi_order: Final[list[Jieqi]] = jieqi_list[-2:] + jieqi_list[:-2] # This is the real order in HKO data.
+    self._actual_jieqi_order: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=False) # This is the real order in HKO data.
 
     self._jieqi_offset_mapping: Final[dict[Jieqi, int]] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
     assert len(self._jieqi_offset_mapping) == 24
@@ -149,7 +150,9 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
+    assert isinstance(lunar_year, int)
     assert lunar_year in self.supported_year_range()
+
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
 
@@ -181,6 +184,7 @@ class DecodedLunarYears:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
     '''
+    assert isinstance(lunar_year, int)
     assert lunar_year in self.supported_year_range()
     return self.__getitem__(lunar_year)
 
