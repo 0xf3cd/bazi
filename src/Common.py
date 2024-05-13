@@ -83,10 +83,12 @@ class ImmutableMetaClass(type):
   
   def __getattribute__(cls, name: str) -> Any:
     val = super(ImmutableMetaClass, cls).__getattribute__(name)
-    if inspect.isfunction(val) or inspect.ismethod(val) or isinstance(val, (classmethod, staticmethod)):
-      return val
-    return copy.deepcopy(val)
-
+    try:
+      if inspect.isfunction(val) or inspect.ismethod(val) or isinstance(val, (classmethod, staticmethod)):
+        return val
+      return copy.deepcopy(val)
+    except TypeError:
+      raise NotImplementedError('Not supported yet...')
 
 class Immutable(metaclass=ImmutableMetaClass):
   '''
@@ -314,6 +316,19 @@ class BaziJson:
   def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
     assert len(data) == 4
     return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+  
+  class Transits(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
+    dayun_start_time: str
+
+    # key: xusui / 虚岁
+    # value: xiaoyun at this xusui age / 对应虚岁的小运
+    xiaoyun: dict[str, str]
+
+    # key: ganzhi year that current dayun starts/ 该步大运开始的干支年
+    # value: dayun in str / 该步大运
+    dayun: dict[str, str]
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str
@@ -327,6 +342,7 @@ class BaziJson:
     tiangan_shishen: 'BaziJson.FourPillars'
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
+    transits: 'BaziJson.Transits'
 
 #endregion
 

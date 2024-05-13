@@ -3,7 +3,7 @@
 
 import json
 import copy
-import random
+
 import unittest
 import itertools
 
@@ -359,27 +359,21 @@ class TestBaziChart(unittest.TestCase):
         self.assertListEqual(list(chart.nayin), list(expected.nayin))
         self.assertListEqual(list(chart.shier_zhangsheng), list(expected.shier_zhangsheng))
 
-        gen, expected_gen = chart.dayun, expected.dayun
-        self.assertEqual(next(gen), next(expected_gen))
-        self.assertEqual(next(gen), next(expected_gen))
-        self.assertEqual(next(gen), next(expected_gen))
+        self.assertEqual(chart.dayun_order, expected.dayun_order)
+        self.assertEqual(chart.dayun_start_moment, expected.dayun_start_moment)
+        self.assertEqual(chart.xiaoyun, expected.xiaoyun)
+
+        self.assertEqual(list(itertools.islice(chart.liunian, 100)), 
+                         list(itertools.islice(expected.liunian, 100)))
+        self.assertEqual(list(itertools.islice(chart.dayun, 100)), 
+                         list(itertools.islice(expected.dayun, 100)))
 
         self.assertDictEqual(chart.json, expected.json)
 
   def test_json(self) -> None:
     for _ in range(64):
-      dt: datetime = datetime(
-        random.randint(1903, 2097),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.randint(0, 23),
-        random.randint(0, 59),
-      )
-      chart: BaziChart = BaziChart(Bazi.create(
-        birth_time=dt,
-        gender=random.choice(list(BaziGender)),
-        precision=BaziPrecision.DAY, # Currently only supports DAY-level precision.
-      ))
+      chart: BaziChart = BaziChart(Bazi.random())
+      dt: datetime = chart.bazi.solar_datetime
 
       j: BaziJson.BaziChartJsonDict = chart.json
       j_str: str = json.dumps(j)

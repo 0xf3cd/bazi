@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import itertools
 
 from datetime import datetime, timedelta
 from typing import Optional, Final, Generator
@@ -9,7 +10,7 @@ from .Common import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
   HiddenTianganDict, BaziData, PillarData, BaziJson
 )
-from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
+from .Defines import Tiangan, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
 
 from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie, to_ganzhi
@@ -179,7 +180,7 @@ class BaziChart:
   def dayun_start_moment(self) -> datetime:
     '''
     The moment when first Dayun (大运) starts (solar/gregorian calendar).
-    大运起运时间（公历）。
+    大运开始的时间 / 交运时间（公历）。
     '''
     birthtime: Final[datetime] = self._bazi.solar_datetime
 
@@ -279,6 +280,12 @@ class BaziChart:
     代表此 `BaziChart` 的 json 字典。
     '''
 
+    transits: BaziJson.Transits = {
+      'dayun_start_time': self.dayun_start_moment.isoformat(),
+      'xiaoyun': { str(age) : str(xiaoyun) for age, xiaoyun in self.xiaoyun },
+      'dayun': { str(year) : str(dayun) for year, dayun in itertools.islice(self.dayun, 10) },
+    }
+
     f = BaziJson.gen_fourpillars
     return {
       'birth_time': self._bazi.solar_datetime.isoformat(),
@@ -292,6 +299,7 @@ class BaziChart:
       'tiangan_shishen': f([str(s.tiangan) for s in self.shishen]),
       'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
+      'transits': transits,
     }
 
 命盘 = BaziChart

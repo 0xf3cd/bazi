@@ -125,9 +125,19 @@ class TestCommon(unittest.TestCase):
       A: int = 1
       B: list[int] = [2, 3]
       C: list[int] = B
-
+     
     with self.subTest('Test instantiation'):
       TestClass() # Should not raise.
+
+    with self.subTest('Test non-deepcopyable'):
+      self.assertRaises(NotImplementedError, lambda: TestClass.__dict__) # Mostly for test coverage...
+
+    with self.subTest('Test __*__ names'):
+      with self.assertRaises(AttributeError):
+        TestClass.__setattr__ = lambda _self, _name, _value : 0 # type: ignore
+      with self.assertRaises(AttributeError):
+        TestClass.__getattribute__ = lambda _self, _name : 0 # type: ignore
+      self.assertTrue(TestClass.__annotations__) # Should not raise.
 
     with self.subTest('Test classmethod'):
       class TestSubclass1(TestClass):
@@ -209,7 +219,14 @@ class TestCommon(unittest.TestCase):
       
     with self.assertRaises(NotImplementedError):
       TestClass()
-      
+
+    with self.subTest('Test __*__ names'):
+      with self.assertRaises(AttributeError):
+        TestClass.__setattr__ = lambda _self, _name, _value : 0 # type: ignore
+      with self.assertRaises(AttributeError):
+        TestClass.__getattribute__ = lambda _self, _name : 0 # type: ignore
+      self.assertTrue(TestClass.__annotations__) # Should not raise.
+
     with self.subTest('Test value reads'):
       self.assertEqual(TestClass.B, [2, 3])
       self.assertEqual(TestClass.C, [2, 3])

@@ -10,7 +10,7 @@ from typing import Union, Final
 from .CalendarDefines import CalendarType, CalendarDate
 from .HkoData import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
-from ..Defines import Ganzhi, Jieqi
+from ..Defines import Jieqi
 from ..Common import Const, JieqiTime
 
 
