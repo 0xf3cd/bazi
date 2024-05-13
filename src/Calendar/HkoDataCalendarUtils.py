@@ -20,10 +20,6 @@ class HkoDB(Const):
   jieqi_dates_db: Final[DecodedJieqiDates] = DecodedJieqiDates()
   lunar_years_db: Final[DecodedLunarYears] = DecodedLunarYears()
 
-  # Store the sexagenary cycle as a class variable.
-  sexagenary_cycle: Final[tuple[Ganzhi, ...]] = tuple(Ganzhi.list_sexagenary_cycle())
-
-
 @functools.lru_cache(maxsize=512)
 def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
   # 1901-02-19 is the first day (in solar) in lunar year 1901.

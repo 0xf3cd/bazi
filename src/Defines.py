@@ -1,5 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import functools
+
 from enum import Enum
 from typing import NamedTuple
 
@@ -107,7 +109,7 @@ class Dizhi(Enum):
 class Ganzhi(NamedTuple):
   '''Ganzhi / Stem-branch / 干支'''
   tiangan: Tiangan
-  dizhi: Dizhi
+  dizhi:   Dizhi
 
   @classmethod
   def from_strs(cls, tiangan_str: str, dizhi_str: str) -> 'Ganzhi':
@@ -144,6 +146,18 @@ class Ganzhi(NamedTuple):
     Return: a list of strings representing the 60 ganzhi pairs.
     '''
     return [str(gz) for gz in Ganzhi.list_sexagenary_cycle()]
+
+  @functools.lru_cache(maxsize=1024)
+  def next(self, step: int = 1) -> 'Ganzhi':
+    assert isinstance(step, int)
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    return cycle[(cycle.index(self) + step) % 60]
+
+  @functools.lru_cache(maxsize=1024)
+  def prev(self, step: int = 1) -> 'Ganzhi':
+    assert isinstance(step, int)
+    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+    return cycle[(cycle.index(self) - step) % 60]
 
 干支 = Ganzhi # Alias
 

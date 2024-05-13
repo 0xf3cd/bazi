@@ -2,6 +2,8 @@
 # test_defines.py
 
 import unittest
+import random
+
 from itertools import product
 from src.Defines import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
@@ -328,6 +330,60 @@ class TestGanzhi(unittest.TestCase):
     for i, gz_str in enumerate(sexagenary_cycle_strs):
       self.assertEqual(gz_str, f'{tg_list[i % 10]}{dz_list[i % 12]}')
 
+  def test_ganzhi_next_prev(self) -> None:
+    with self.subTest('negative'):
+      with self.assertRaises(AssertionError):
+        Ganzhi(Tiangan.甲, Dizhi.子).next('1')
+      with self.assertRaises(AssertionError):
+        Ganzhi(Tiangan.甲, Dizhi.子).prev('1')
+      with self.assertRaises(AssertionError):
+        Ganzhi(Tiangan.甲, Dizhi.子).next(3.5)
+      with self.assertRaises(AssertionError):
+        Ganzhi(Tiangan.甲, Dizhi.子).prev(3.5)
+
+    def __random_gz() -> Ganzhi:
+      while True:
+        tg: Tiangan = random.choice(Tiangan.as_list())
+        dz: Dizhi = random.choice(Dizhi.as_list())
+        if (tg.index % 2) == (dz.index % 2):
+          return Ganzhi(tg, dz)
+
+    with self.subTest('correctness'):
+      self.assertEqual(Ganzhi(Tiangan.甲, Dizhi.子).next(1), Ganzhi(Tiangan.乙, Dizhi.丑))
+      self.assertEqual(Ganzhi(Tiangan.甲, Dizhi.子).prev(-1), Ganzhi(Tiangan.乙, Dizhi.丑))
+      self.assertEqual(Ganzhi(Tiangan.甲, Dizhi.子).prev(1), Ganzhi(Tiangan.癸, Dizhi.亥))
+      self.assertEqual(Ganzhi(Tiangan.甲, Dizhi.子).next(-1), Ganzhi(Tiangan.癸, Dizhi.亥))
+
+      cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
+      for _ in range(16):
+        random_gz1: Ganzhi = __random_gz()
+        self.assertEqual(random_gz1, random_gz1.next(0))
+        self.assertEqual(random_gz1, random_gz1.next(60))
+        self.assertEqual(random_gz1, random_gz1.prev(0))
+        self.assertEqual(random_gz1, random_gz1.prev(60))
+
+        random_int: int = random.randint(-1000, 1000)
+        self.assertEqual(random_gz1.next(random_int), 
+                         cycle[(cycle.index(random_gz1) + random_int) % 60])
+        self.assertEqual(random_gz1.prev(random_int),
+                         cycle[(cycle.index(random_gz1) - random_int) % 60])
+
+    with self.subTest('immutability'):
+      gz: Ganzhi = Ganzhi(Tiangan.甲, Dizhi.子)
+      self.assertIsNot(gz, gz.next(0))
+      self.assertIsNot(gz, gz.prev(0))
+
+    with self.subTest('consistency'):
+      for _ in range(16):
+        random_gz2: Ganzhi = __random_gz()
+        for __ in range(16):
+          x: int = random.randint(-1000, 1000)
+          self.assertEqual(random_gz2,
+                           random_gz2.next(x).prev(x))
+          self.assertEqual(random_gz2,
+                           random_gz2.prev(x).next(x))
+          self.assertEqual(random_gz2.next(x), random_gz2.prev(-x))
+          self.assertEqual(random_gz2.prev(x), random_gz2.next(-x))
 
 class TestJieqi(unittest.TestCase):
   def test_basic(self) -> None:

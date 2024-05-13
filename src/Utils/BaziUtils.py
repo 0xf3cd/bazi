@@ -29,7 +29,7 @@ def ganzhi_of_day(dt: date) -> Ganzhi:
 
   jiazi_day_date: date = date(2024, 3, 1) # 2024-03-01 is a day of "甲子".
   offset: int = (dt - jiazi_day_date).days
-  return Ganzhi.list_sexagenary_cycle()[offset % 60]
+  return Ganzhi(Tiangan.甲, Dizhi.子).next(offset)
 
 
 def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
@@ -44,7 +44,7 @@ def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
   '''
 
   assert isinstance(ganzhi_year, int)
-  return Ganzhi.list_sexagenary_cycle()[(ganzhi_year - 1984) % 60] # 1984 is the year of "甲子".
+  return Ganzhi(Tiangan.甲, Dizhi.子).next(ganzhi_year - 1984) # 1984 is the year of "甲子".
 
 
 def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:

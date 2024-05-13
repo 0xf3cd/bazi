@@ -15,7 +15,7 @@ from src.Bazi import BaziGender, BaziPrecision, Bazi
 from src.Utils import BaziUtils
 
 from src.Common import (
-  TraitTuple, DayunTuple, LiunianTuple,
+  TraitTuple, DayunTuple, XiaoyunTuple,
   HiddenTianganDict, BaziData, BaziJson
 )
 
@@ -314,6 +314,25 @@ class TestBaziChart(unittest.TestCase):
       dayun_start_times: list[DayunTuple] = list(itertools.islice(BaziChart(random_bazi).dayun, 10))
       for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
         self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
+
+  def test_xiaoyun(self) -> None:
+    def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
+      xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
+      expected: list[Ganzhi] = [Ganzhi.from_str(s) for s in expected_xiaoyun_str.split()]
+      self.assertEqual(len(xiaoyuns), len(expected))
+      for age, gz in enumerate(expected, start=1):
+        self.assertEqual(xiaoyuns[age-1].xusui, age)
+        self.assertEqual(xiaoyuns[age-1].ganzhi, gz)
+    
+    # Data collected from https://p.china95.net/paipan/bazi/
+    __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.MALE, BaziPrecision.DAY), 
+              '戊子 丁亥 丙戌 乙酉')
+    __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY), 
+              '庚寅 辛卯 壬辰 癸巳 甲午 乙未 丙申 丁酉')
+    __subtest(Bazi.create(datetime(2017, 8, 16, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
+              '丙子 乙亥 甲戌 癸酉')
+    __subtest(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
+              '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
 
   def test_liunian(self) -> None:
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()

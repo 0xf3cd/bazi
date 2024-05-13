@@ -218,13 +218,12 @@ class BaziChart:
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
       ganzhi_year: int = to_ganzhi(self.dayun_start_moment).year
-      tg, dz = self._bazi.month_pillar
+      gz: Ganzhi = self._bazi.month_pillar.next(step)
 
       while True:
-        tg = Tiangan.from_index((tg.index + step) % 10)
-        dz = Dizhi.from_index((dz.index + step) % 12)
-        yield DayunTuple(ganzhi_year, Ganzhi(tg, dz))
+        yield DayunTuple(ganzhi_year, gz)
         ganzhi_year += 10
+        gz = gz.next(step)
 
     return __dayun_generator()
   
@@ -243,12 +242,13 @@ class BaziChart:
     ```
     '''
 
-    ret: list[XiaoyunTuple] = []
+    step: Final[int] = 1 if self.dayun_order else -1
+    until_xusui_age: Final[int] = 1 + to_ganzhi(self.dayun_start_moment).year - to_ganzhi(self._bazi.solar_datetime).year
 
-    # xusui_age: int = 1 # "虚岁" starts from 1...
-    # Leap years can make this complex... The good thing is that Xiaoyun is not that important.
+    def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
+      return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
 
-    return tuple(ret)
+    return tuple(__xiaoyun_at_age(age) for age in range(1, until_xusui_age + 1))
   
   @property
   def liunian(self) -> Generator[LiunianTuple, None, None]:
