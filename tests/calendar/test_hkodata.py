@@ -4,8 +4,10 @@
 import random
 import shutil
 import hashlib
-import unittest
 import tempfile
+
+import pytest
+import unittest
 
 from pathlib import Path
 from datetime import date, timedelta
@@ -13,6 +15,8 @@ from datetime import date, timedelta
 from src.Calendar import HkoData
 from src.Defines import Jieqi, Ganzhi
 
+
+@pytest.mark.hkodata
 class TestHkoData(unittest.TestCase):
   def test_traditional_chinese_jieqi(self) -> None:
     self.assertEqual(len(HkoData.jieqi_list_in_traditional_chinese), 24)
@@ -248,7 +252,7 @@ class TestHkoData(unittest.TestCase):
 
   def test_file_existence(self) -> None:
     '''The data files should exist and be readable.'''
-    data_path: Path = Path(__file__).parent.parent / 'data'
+    data_path: Path = HkoData.get_data_base_path()
     self.assertTrue(data_path.exists() and data_path.is_dir())
 
     txt_paths: dict[int, Path] = HkoData.common.get_raw_txt_file_paths()
@@ -301,6 +305,7 @@ class TestHkoData(unittest.TestCase):
 
       shutil.rmtree(temp_dir)
 
+  @pytest.mark.slow
   def test_do_encode(self) -> None:
     self.assertTrue(HkoData.common.encoded_data_ready())
 

@@ -2,16 +2,16 @@
 # test_tiangan_relation_utils.py
 
 import random
-import pytest
-import unittest
 import itertools
 from typing import Union, Iterable
+
+import pytest
+import unittest
 
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Utils import BaziUtils, TianganUtils
 
 
-@pytest.mark.errorprone
 class TestTianganUtils(unittest.TestCase):
   TgCmpType = Union[list[set[Tiangan]], Iterable[frozenset[Tiangan]]]    
   @staticmethod
@@ -158,6 +158,7 @@ class TestTianganUtils(unittest.TestCase):
       ]
     ))
 
+  @pytest.mark.slow
   def test_search_correctness(self) -> None:
     # Generate the expected relation combos/pairs, which are used later in this test.
     expected_he:    set[frozenset[Tiangan]] = set()
@@ -196,7 +197,7 @@ class TestTianganUtils(unittest.TestCase):
           result.append(set(combo_tuple))
       return result
 
-    for _ in range(500):
+    for _ in range(512):
       tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
 
       for combo_fs in TianganUtils.search(tiangans, TianganRelation.合):
@@ -234,7 +235,7 @@ class TestTianganUtils(unittest.TestCase):
       for combo_fs in combos1:
         self.assertIn(combo_fs, combos2)
 
-      for _ in range(500):
+      for _ in range(512):
         combos: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans, relation)
         expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
         self.assertEqual(len(expected_combos), len(combos))

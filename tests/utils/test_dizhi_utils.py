@@ -3,9 +3,10 @@
 
 import copy
 import random
+import itertools
+
 import pytest
 import unittest
-import itertools
 
 from collections import Counter
 from typing import Union, Optional, Iterable, Any
@@ -15,7 +16,6 @@ from src.Rules import Rules
 from src.Utils import BaziUtils, TianganUtils, DizhiUtils
 
 
-@pytest.mark.errorprone
 class TestDizhiUtils(unittest.TestCase):
   DzCmpType = Union[list[set[Dizhi]], Iterable[frozenset[Dizhi]]]
   @staticmethod
@@ -502,6 +502,7 @@ class TestDizhiUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         self.assertIsNone(DizhiUtils.xing(*random_dizhis, definition=Rules.XingDef.LOOSE))
 
+  @pytest.mark.slow
   def test_xing_strict(self) -> None:
     self.assertIsNone(DizhiUtils.xing())
     self.assertIsNone(DizhiUtils.xing(definition=Rules.XingDef.STRICT))
@@ -842,9 +843,10 @@ class TestDizhiUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         DizhiUtils.search(set([Dizhi.子, Dizhi.午]), relation) # type: ignore
 
+  @pytest.mark.slow
   def test_search_integration(self) -> None:
     for relation in DizhiRelation:
-      for round in range(200):
+      for round in range(300):
         dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
         for _ in range(random.randint(0, 2)):
           dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
@@ -914,6 +916,7 @@ class TestDizhiUtils(unittest.TestCase):
     
     return result
 
+  @pytest.mark.slow
   def test_consistency(self) -> None:
     '''This test mainly tests that staticmethods in `DizhiUtils` give consistent results.'''
     dizhis: list[Dizhi] = []
@@ -924,7 +927,7 @@ class TestDizhiUtils(unittest.TestCase):
     for relation in DizhiRelation:
       relation_results: list[list[Any]] = []
       combo_results: list[tuple[frozenset[Dizhi], ...]] = []
-      for _ in range(7):
+      for _ in range(8):
         if random.randint(0, 1) == 0:
           relation_results.append(self.__run_all_relation_methods(dizhis))
         if random.randint(0, 1) == 0:

@@ -24,4 +24,4 @@ jobs:
           if [ -f Requirements.txt ]; then pypy -m pip install -r Requirements.txt; fi  
       - name: Testing
         run: |
-          pypy ./run_tests.py -nl -s -hko -d -i
+          pypy ./run_tests.py -s -hko -d -i
