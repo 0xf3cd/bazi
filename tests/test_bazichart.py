@@ -3,9 +3,10 @@
 
 import json
 import copy
-
-import unittest
 import itertools
+
+import pytest
+import unittest
 
 from datetime import datetime, date, timedelta
 from typing import Optional
@@ -177,6 +178,7 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(zhangshengs.day, ShierZhangsheng.长生)
     self.assertEqual(zhangshengs.hour, ShierZhangsheng.长生)
 
+  @pytest.mark.slow
   def test_basic_info_correctness(self) -> None:
     '''
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
@@ -343,9 +345,10 @@ class TestBaziChart(unittest.TestCase):
         expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
         self.assertEqual(ganzhi, expected_ganzhi)
 
+  @pytest.mark.slow
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
-    for _ in range(16):
+    for _ in range(128):
       random_bazi: Bazi = Bazi.random()
       expected: BaziChart = BaziChart(random_bazi)
 
@@ -370,8 +373,9 @@ class TestBaziChart(unittest.TestCase):
 
         self.assertDictEqual(chart.json, expected.json)
 
+  @pytest.mark.slow
   def test_json(self) -> None:
-    for _ in range(64):
+    for _ in range(128):
       chart: BaziChart = BaziChart(Bazi.random())
       dt: datetime = chart.bazi.solar_datetime
 

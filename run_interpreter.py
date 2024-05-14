@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from run_demos import get_basic_info
+from run_demo import get_basic_info
 from src.Bazi import Bazi
 from src.BaziChart import BaziChart
 from src.Common import ShishenDescription, TianganDescription, BaziJson

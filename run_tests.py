@@ -7,10 +7,12 @@ import psutil
 import platform
 import argparse
 import subprocess
+
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Final
 
+import pytest
 import coverage
 import colorama
 
@@ -18,38 +20,42 @@ import colorama
 # Get the argument from terminal. If `coverage`, then generate coverage report.
 argparser = argparse.ArgumentParser()
 
+# Test related.
 argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
 argparser.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
 argparser.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
-argparser.add_argument('-ep', '--errorprone-test', type=int, help='Whether or not to rerun errorprone tests.', default=0)
 argparser.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
+argparser.add_argument('-v', '--verbose', action='store_true', help='Whether or not to print verbose information during testing.')
 
+# Coverage.
 argparser.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
 argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
-argparser.add_argument('-nl', '--no-linter', action='store_true', help='Whether or not to skip linting.')
+# Linter and static type check.
+argparser.add_argument('-l', '--linter', action='store_true', help='Whether or not to skip linting.')
 argparser.add_argument('-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
 
+# Demo and interpreter.
 argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
 argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
 
 args = argparser.parse_args()
 
-skip_test: bool = args.no_test
-run_slow_test: bool = args.slow_test
-run_hko_test: bool = args.hkodata_test
-run_errorprone_test_rounds: int = args.errorprone_test
-expression: Optional[str] = args.expression
+skip_test: Final[bool] = args.no_test
+run_slow_test: Final[bool] = args.slow_test
+run_hko_test: Final[bool] = args.hkodata_test
+expression: Final[Optional[str]] = args.expression
+test_verbose: Final[bool] = args.verbose
 
-do_cov: bool = args.coverage
-minimum_cov_rate: float = args.coverage_rate
-skip_linter: bool = args.no_linter
-do_mypy: bool = args.mypy
+do_cov: Final[bool] = args.coverage
+minimum_cov_rate: Final[float] = args.coverage_rate
+do_linter: Final[bool] = args.linter
+do_mypy: Final[bool] = args.mypy
 
-do_demo: bool = args.demo
-do_interpreter: bool = args.interpreter
+do_demo: Final[bool] = args.demo
+do_interpreter: Final[bool] = args.interpreter
 
-term_width: int = shutil.get_terminal_size().columns
+term_width: Final[int] = shutil.get_terminal_size().columns
 
 def print_sysinfo() -> None:
   # Print system time and other info.
@@ -86,31 +92,26 @@ def run_tests() -> int:
   print('\n' + '#' * term_width)
   print('>> Running bazi tests...')
 
-  # Make `bazi` importable from the current directory.
-  sys.path.append(str(Path(__file__).parent / 'src'))
-  from src import run_bazi_tests # noqa: E402
-  ret_code: int = run_bazi_tests(expression=expression, slow_tests=run_slow_test)
+  pytest_args: list[str] = [
+    str(Path(os.path.realpath(__file__)).parent / 'tests'),
+    '-x',
+  ]
 
-  if run_hko_test:
-    print('\n' + '#' * term_width)
-    print('>> Running hkodata tests...')
-    from src import run_hkodata_tests # noqa: E402
-    ret_code |= run_hkodata_tests(expression=expression)
+  if test_verbose:
+    pytest_args.append('-v')
 
-  from src import run_errorprone_bazi_tests # noqa: E402
-  for round in range(run_errorprone_test_rounds):
-    print('\n' + '#' * term_width)
-    print(f'>> Rerunning errorprone tests... Round {round + 1}/{run_errorprone_test_rounds}.')
+  if expression is not None:
+    pytest_args.extend(['-k', expression])
+  else:
+    marks: list[str] = ['not slow', 'not hkodata']
+    if run_slow_test:
+      marks.remove('not slow')
+    if run_hko_test:
+      marks.remove('not hkodata')
+    if len(marks) > 0:
+      pytest_args.extend(['-m', ' and '.join(marks)])
 
-    round_ret_code: int = run_errorprone_bazi_tests(expression=expression)
-    ret_code |= round_ret_code
-
-    if round_ret_code == 0:
-      print(colorama.Fore.GREEN + f'>> Round {round + 1}/{run_errorprone_test_rounds} OK!' + colorama.Style.RESET_ALL)
-    else:
-      print(colorama.Fore.RED + f'>> Round {round + 1}/{run_errorprone_test_rounds} failed! Stopping...' + colorama.Style.RESET_ALL)
-      break
-
+  ret_code: int = pytest.main(pytest_args)
   if ret_code != 0:
     # Print in red.
     print(colorama.Fore.RED + f'>> Tests failed with exit code {ret_code}' + colorama.Style.RESET_ALL)
@@ -126,7 +127,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
     omit=[
       '*/__init__.py',
       '*/run_tests.py',
-      '*/test/*',
+      '*/tests/*',
       'src/Calendar/HkoData/encoder.py', # The raw data already downloaded. No much need to fully test the encoder.
     ]
   )
@@ -186,7 +187,7 @@ def run_demo() -> int:
   print('\n' + '#' * term_width)
   print('>> Running demo...')
   ret: int = run_proc_and_print([
-    'python3', str(Path(__file__).parent / 'run_demos.py')
+    'python3', str(Path(__file__).parent / 'run_demo.py')
   ])
 
   if ret == 0:
@@ -244,7 +245,7 @@ def main() -> None:
   if do_interpreter:
     ret_code |= run_interpreter()
 
-  if not skip_linter:
+  if do_linter:
     ret_code |= run_ruff()
 
   if do_mypy:
