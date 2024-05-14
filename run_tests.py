@@ -17,7 +17,7 @@ import coverage
 import colorama
 
 
-# Get the argument from terminal. If `coverage`, then generate coverage report.
+# Get the argument from terminal.
 argparser = argparse.ArgumentParser()
 
 # Test related.
@@ -57,8 +57,9 @@ do_interpreter: Final[bool] = args.interpreter
 
 term_width: Final[int] = shutil.get_terminal_size().columns
 
+
 def print_sysinfo() -> None:
-  # Print system time and other info.
+  '''Print system time and other info.'''
   mem = psutil.virtual_memory()
   this_moment: datetime = datetime.now()
   print('#' * term_width)
@@ -87,8 +88,20 @@ def print_sysinfo() -> None:
   print(f'-- disk usage: {psutil.disk_usage("/").percent}%')
 
 
-# Run tests and generate html coverage report.
+def run_proc_and_print(cmds: list[str]) -> int:
+  '''This method is mainly for compatability with Windows. It creates a subprocess and runs the commands.'''
+  if platform.system() == 'Windows':
+    return subprocess.run(cmds).returncode
+  else:
+    proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
+    ret: int = proc.returncode
+    print(proc.stdout.decode('utf-8'))
+    print(proc.stderr.decode('utf-8'))
+    return ret
+
+
 def run_tests() -> int:
+  '''Run tests with pytest, with args from terminal.'''
   print('\n' + '#' * term_width)
   print('>> Running bazi tests...')
 
@@ -100,26 +113,26 @@ def run_tests() -> int:
   if test_verbose:
     pytest_args.append('-v')
 
-  if expression is not None:
+  if expression is not None: # If `-k` is set, we don't care `-s` and `-hko`...
     pytest_args.extend(['-k', expression])
   else:
-    marks: list[str] = ['not slow', 'not hkodata']
-    if run_slow_test:
-      marks.remove('not slow')
-    if run_hko_test:
-      marks.remove('not hkodata')
+    marks: list[str] = []
+    if not run_slow_test:
+      marks.append('not slow')
+    if not run_hko_test:
+      marks.append('not hkodata')
     if len(marks) > 0:
       pytest_args.extend(['-m', ' and '.join(marks)])
 
   ret_code: int = pytest.main(pytest_args)
   if ret_code != 0:
-    # Print in red.
     print(colorama.Fore.RED + f'>> Tests failed with exit code {ret_code}' + colorama.Style.RESET_ALL)
 
   return ret_code
 
 
 def run_coverage(test_f: Callable[[], int]) -> int:
+  '''Run tests, and generate coverage report.'''
   print('\n' + '#' * term_width)
   print(f'>> Running {test_f} with coverage...')
 
@@ -151,7 +164,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
 
 
 def run_ruff() -> int:
-  # Use `ruff` to check for style violations.
+  '''Use `ruff` to check for style violations.'''
   print('\n' + '#' * term_width)
   print('>> Checking for style violations...')
 
@@ -171,19 +184,25 @@ def run_ruff() -> int:
   return ruff_ret
 
 
-def run_proc_and_print(cmds: list[str]) -> int:
-  '''This method is mainly for compatability with Windows.'''
-  if platform.system() == 'Windows':
-    return subprocess.run(cmds).returncode
+def run_mypy() -> int:
+  '''Do static type checking with `mypy`'''
+  print('\n' + '#' * term_width)
+  print('>> Running mypy...')
+  ret: int = run_proc_and_print([
+    'python3', '-m', 'mypy', str(Path(__file__).parent), 
+    '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
+    '--warn-return-any', '--warn-unreachable',
+  ])
+
+  if ret == 0:
+    print(colorama.Fore.GREEN + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
   else:
-    proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
-    ret: int = proc.returncode
-    print(proc.stdout.decode('utf-8'))
-    print(proc.stderr.decode('utf-8'))
-    return ret
+    print(colorama.Fore.RED + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
+  return ret
 
 
 def run_demo() -> int:
+  '''Run demo by executing `run_demo.py`'''
   print('\n' + '#' * term_width)
   print('>> Running demo...')
   ret: int = run_proc_and_print([
@@ -198,6 +217,7 @@ def run_demo() -> int:
 
 
 def run_interpreter() -> int:
+  '''Run interpreter by executing `run_interpreter.py`'''
   print('\n' + '#' * term_width)
   print('>> Running interpreter...')
   ret: int = run_proc_and_print([
@@ -208,22 +228,6 @@ def run_interpreter() -> int:
     print(colorama.Fore.GREEN + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
   else:
     print(colorama.Fore.RED + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
-  return ret
-
-
-def run_mypy() -> int:
-  print('\n' + '#' * term_width)
-  print('>> Running mypy...')
-  ret: int = run_proc_and_print([
-    'python3', '-m', 'mypy', str(Path(__file__).parent), 
-    '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
-    '--warn-return-any', '--warn-unreachable',
-  ])
-
-  if ret == 0:
-    print(colorama.Fore.GREEN + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
-  else:
-    print(colorama.Fore.RED + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
