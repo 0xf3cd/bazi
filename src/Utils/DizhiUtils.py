@@ -3,7 +3,7 @@
 from collections import Counter
 from typing import Sequence, Optional
 
-from ..Common import frozendict
+from ..Common import frozendict, DizhiCombo, DizhiRelationCombos
 from ..Defines import Dizhi, Wuxing, DizhiRelation
 from ..Rules import Rules
 
@@ -36,7 +36,7 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
   return Rules.DIZHI_SANHUI.get(combo, None)
 
 
@@ -61,7 +61,7 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return Rules.DIZHI_LIUHE.get(combo, None)
 
 
@@ -92,7 +92,7 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NO
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
   assert isinstance(definition, Rules.AnheDef)
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return combo in Rules.DIZHI_ANHE[definition]
 
 
@@ -116,7 +116,7 @@ def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return combo in Rules.DIZHI_TONGHE
 
 
@@ -140,7 +140,7 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return combo in Rules.DIZHI_TONGLUHE
 
 
@@ -164,7 +164,7 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2, dz3))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
   return Rules.DIZHI_SANHE.get(combo, None)
 
 
@@ -189,7 +189,7 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  combo: frozenset[Dizhi] = frozenset((dz1, dz2))
+  combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return Rules.DIZHI_BANHE.get(combo, None)
 
 
@@ -263,7 +263,7 @@ def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return frozenset((dz1, dz2)) in Rules.DIZHI_CHONG
+  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_CHONG
 
 
 def po(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -289,7 +289,7 @@ def po(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return frozenset((dz1, dz2)) in Rules.DIZHI_PO
+  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_PO
 
 
 def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -315,7 +315,7 @@ def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return frozenset((dz1, dz2)) in Rules.DIZHI_HAI
+  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_HAI
 
 
 def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -378,25 +378,25 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in Rules.DIZHI_KE
 
 
-def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[Dizhi], ...]:
+def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCombos:
   '''
   Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
   返回`dizhis`中所有满足该关系的组合。
 
   Note:
-  - The returned frozensets don't reveal the directions.
+  - The returned combos don't reveal the directions.
   - For example, if the returned value for SHENG relation is ({午, 寅}), then we are unable to infer it is 寅 that generates 午 or 午 that generates 寅.
   - For mutual/non-directional relations (e.g. SANHE, SANHUI, ...), that's fine, because we don't care about the direction.
-  - For uni-directional relations, please use other static methods in this class to check that (e.g. `sheng`, `ke`, ...). 
+  - For uni-directional relations, please use other methods in this class to check that (e.g. `sheng`, `ke`, ...). 
   - For XING relation, it's a bit more complicated.
     - Some definitions require all the Dizhis to appear in order to qualify the SANXING (三刑) relation (a subset of XING).
     - Some definitions consider only two Dizhis appearing a valid XING relation (e.g. only 丑 and 未 can form a XING relation).
     - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that all three Dizhis to present in order to qualify the XING relation.
     - Use `xing` to do more fine-grained checking.
-  - 返回的 frozensets 中没有体现关系作用的方向。
+  - 返回的 combos 中没有体现关系作用的方向。
   - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
   - 对于无方向的关系来说（合、会），我们不用关心返回结果中的方向。
-  - 对于有方向的关系来说（生、克等），请使用其他静态方法来检查（如 `sheng`， `ke` 等）。
+  - 对于有方向的关系来说（生、克等），请使用其他方法来检查（如 `sheng`， `ke` 等）。
   - 对于刑关系，更复杂一些：
     - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
     - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
@@ -420,7 +420,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[
   - dizhis: (Sequence[Dizhi]) The Dizhis to check.
   - relation: (DizhiRelation) The relation to check.
 
-  Return: (list[frozenset[Dizhi]]) The result containing all matching Dizhi combos.
+  Return: (DizhiRelationCombos) The result containing all matching Dizhi combos.
 
   Examples:
   - search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
@@ -451,7 +451,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[
     return tuple(combo for combo in Rules.DIZHI_LIUHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.暗合:
-    anhe_table: frozenset[frozenset[Dizhi]] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
+    anhe_table: frozenset[DizhiCombo] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
     return tuple(combo for combo in anhe_table if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.通合:
@@ -469,13 +469,13 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[
   elif relation is DizhiRelation.刑:
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
-    ret: set[frozenset[Dizhi]] = set()
+    ret: set[DizhiCombo] = set()
     for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.STRICT]:
       # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
       # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
       if dz_counter & xing_dz_counter == xing_dz_counter:
-        ret.add(frozenset(xing_tuple))
+        ret.add(DizhiCombo(xing_tuple))
 
     return tuple(ret)
   
@@ -491,7 +491,6 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> tuple[frozenset[
   # Else, `relation` must be `生` or `克`.
   assert relation is DizhiRelation.生 or relation is DizhiRelation.克
   rules: frozenset[tuple[Dizhi, Dizhi]] = Rules.DIZHI_KE if relation is DizhiRelation.克 else Rules.DIZHI_SHENG
-  frozen_rules: frozenset[frozenset[Dizhi]] = frozenset(map(frozenset, rules))
+  frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
   dz_set: set[Dizhi] = set(dizhis)
   return tuple(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
-

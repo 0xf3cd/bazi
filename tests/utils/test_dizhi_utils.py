@@ -11,13 +11,14 @@ import unittest
 from collections import Counter
 from typing import Union, Optional, Iterable, Any
 
+from src.Common import DizhiCombo, DizhiRelationCombos
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Rules import Rules
 from src.Utils import BaziUtils, TianganUtils, DizhiUtils
 
 
 class TestDizhiUtils(unittest.TestCase):
-  DzCmpType = Union[list[set[Dizhi]], Iterable[frozenset[Dizhi]]]
+  DzCmpType = Union[list[set[Dizhi]], Iterable[DizhiCombo]]
   @staticmethod
   def __dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
     _l1 = list(l1)
@@ -30,11 +31,11 @@ class TestDizhiUtils(unittest.TestCase):
     return True
 
   def test_search_sanhui(self) -> None:
-    sanhui_combos: list[frozenset[Dizhi]] = [
-      frozenset((Dizhi.from_index(2), Dizhi.from_index(3), Dizhi.from_index(4))),
-      frozenset((Dizhi.from_index(5), Dizhi.from_index(6), Dizhi.from_index(7))),
-      frozenset((Dizhi.from_index(8), Dizhi.from_index(9), Dizhi.from_index(10))),
-      frozenset((Dizhi.from_index(11), Dizhi.from_index(0), Dizhi.from_index(1))),
+    sanhui_combos: list[DizhiCombo] = [
+      DizhiCombo((Dizhi.from_index(2), Dizhi.from_index(3), Dizhi.from_index(4))),
+      DizhiCombo((Dizhi.from_index(5), Dizhi.from_index(6), Dizhi.from_index(7))),
+      DizhiCombo((Dizhi.from_index(8), Dizhi.from_index(9), Dizhi.from_index(10))),
+      DizhiCombo((Dizhi.from_index(11), Dizhi.from_index(0), Dizhi.from_index(1))),
     ]
 
     self.assertTrue(self.__dz_equal(
@@ -48,7 +49,7 @@ class TestDizhiUtils(unittest.TestCase):
     
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.三会)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.三会)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhui_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -74,12 +75,12 @@ class TestDizhiUtils(unittest.TestCase):
       (Dizhi.申, Dizhi.酉, Dizhi.戌), # Fall   / 秋
       (Dizhi.亥, Dizhi.子, Dizhi.丑), # Winter / 冬
     ]
-    expected: dict[frozenset[Dizhi], Wuxing] = { 
-      frozenset(dizhis) : BaziUtils.traits(dizhis[0]).wuxing for dizhis in dizhi_tuples 
+    expected: dict[DizhiCombo, Wuxing] = { 
+      DizhiCombo(dizhis) : BaziUtils.traits(dizhis[0]).wuxing for dizhis in dizhi_tuples 
     }
     
     for dizhis in itertools.product(Dizhi, repeat=3):
-      fs: frozenset[Dizhi] = frozenset(dizhis)
+      fs: DizhiCombo = DizhiCombo(dizhis)
       if fs in expected:
         for combo in itertools.permutations(dizhis):
           self.assertEqual(DizhiUtils.sanhui(*combo), expected[fs])
@@ -88,8 +89,8 @@ class TestDizhiUtils(unittest.TestCase):
           self.assertIsNone(DizhiUtils.sanhui(*dizhis))
 
   def test_search_liuhe(self) -> None:
-    liuhe_combos: list[frozenset[Dizhi]] = [
-      frozenset((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
+    liuhe_combos: list[DizhiCombo] = [
+      DizhiCombo((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
     ]
 
     self.assertTrue(self.__dz_equal(
@@ -103,7 +104,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.六合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.六合)
       expected_result: list[set[Dizhi]] = [set(c) for c in liuhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -121,8 +122,8 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.liuhe('亥', '子') # type: ignore
 
-    liuhe_combos: list[frozenset[Dizhi]] = [
-      frozenset((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
+    liuhe_combos: list[DizhiCombo] = [
+      DizhiCombo((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
     ]
 
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
@@ -130,7 +131,7 @@ class TestDizhiUtils(unittest.TestCase):
       liuhe_result2: Optional[Wuxing] = DizhiUtils.liuhe(dz2, dz1)
       self.assertEqual(liuhe_result, liuhe_result2)
       
-      if frozenset((dz1, dz2)) in liuhe_combos:
+      if DizhiCombo((dz1, dz2)) in liuhe_combos:
         wx1, wx2 = BaziUtils.traits(dz1).wuxing, BaziUtils.traits(dz2).wuxing
         if wx1.generates(wx2):
           self.assertEqual(liuhe_result, wx2)
@@ -149,11 +150,11 @@ class TestDizhiUtils(unittest.TestCase):
         self.assertIsNone(liuhe_result)
 
   def test_search_anhe(self) -> None:
-    anhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支暗合，5组。
-      frozenset((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
+    anhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支暗合，5组。
+      DizhiCombo((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
       for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganUtils.he(tg1, tg2) is not None
     ] + [ # `NORMAL_EXTENDED` 中额外的1组。
-      frozenset((Dizhi.寅, Dizhi.丑)), 
+      DizhiCombo((Dizhi.寅, Dizhi.丑)), 
     ]
 
     self.assertTrue(self.__dz_equal(
@@ -167,7 +168,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.暗合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.暗合)
       expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -189,22 +190,22 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.anhe(Dizhi.子, Dizhi.辰, definition='Rules.AnheDef.NORMAL') # type: ignore
 
-    normal_combos: list[frozenset[Dizhi]] = [
-      frozenset((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
+    normal_combos: list[DizhiCombo] = [
+      DizhiCombo((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
       for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganUtils.he(tg1, tg2) is not None
     ] 
     
-    normal_extended_combos: list[frozenset[Dizhi]] = normal_combos + [
-      frozenset((Dizhi.寅, Dizhi.丑)), 
+    normal_extended_combos: list[DizhiCombo] = normal_combos + [
+      DizhiCombo((Dizhi.寅, Dizhi.丑)), 
     ]
 
-    mangpai_combos: list[frozenset[Dizhi]] = [
-      frozenset((Dizhi.寅, Dizhi.丑)), 
-      frozenset((Dizhi.午, Dizhi.亥)), 
-      frozenset((Dizhi.卯, Dizhi.申)), 
+    mangpai_combos: list[DizhiCombo] = [
+      DizhiCombo((Dizhi.寅, Dizhi.丑)), 
+      DizhiCombo((Dizhi.午, Dizhi.亥)), 
+      DizhiCombo((Dizhi.卯, Dizhi.申)), 
     ]
 
-    expected: dict[Rules.AnheDef, list[frozenset[Dizhi]]] = {
+    expected: dict[Rules.AnheDef, list[DizhiCombo]] = {
       Rules.AnheDef.NORMAL: normal_combos,
       Rules.AnheDef.NORMAL_EXTENDED: normal_extended_combos,
       Rules.AnheDef.MANGPAI: mangpai_combos
@@ -212,23 +213,23 @@ class TestDizhiUtils(unittest.TestCase):
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
       for anhe_def in Rules.AnheDef:
-        self.assertEqual(DizhiUtils.anhe(dz1, dz2, definition=anhe_def), frozenset((dz1, dz2)) in expected[anhe_def])
+        self.assertEqual(DizhiUtils.anhe(dz1, dz2, definition=anhe_def), DizhiCombo((dz1, dz2)) in expected[anhe_def])
         self.assertEqual(DizhiUtils.anhe(dz1, dz2, definition=anhe_def), DizhiUtils.anhe(dz2, dz1, definition=anhe_def))
 
     # Ensure the default definition is `NORMAL`.
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      self.assertEqual(DizhiUtils.anhe(dz1, dz2), frozenset((dz1, dz2)) in normal_combos)
+      self.assertEqual(DizhiUtils.anhe(dz1, dz2), DizhiCombo((dz1, dz2)) in normal_combos)
       self.assertEqual(DizhiUtils.anhe(dz1, dz2), DizhiUtils.anhe(dz2, dz1))
 
   def test_search_tonghe(self) -> None:
-    tonghe_combos: set[frozenset[Dizhi]] = set()
+    tonghe_combos: set[DizhiCombo] = set()
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
       hidden1, hidden2 = BaziUtils.hidden_tiangans(dz1), BaziUtils.hidden_tiangans(dz2)
       if len(hidden1) != len(hidden2):
         continue
       expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
       if all(tg in hidden2 for tg in expected_hidden2):
-        tonghe_combos.add(frozenset((dz1, dz2)))
+        tonghe_combos.add(DizhiCombo((dz1, dz2)))
 
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search([], DizhiRelation.通合),
@@ -241,7 +242,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.通合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.通合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tonghe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -259,22 +260,22 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.tonghe('亥', '子') # type: ignore
 
-    tonghe_combos: set[frozenset[Dizhi]] = set()
+    tonghe_combos: set[DizhiCombo] = set()
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
       hidden1, hidden2 = BaziUtils.hidden_tiangans(dz1), BaziUtils.hidden_tiangans(dz2)
       if len(hidden1) != len(hidden2):
         continue
       expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
       if all(tg in hidden2 for tg in expected_hidden2):
-        tonghe_combos.add(frozenset((dz1, dz2)))
+        tonghe_combos.add(DizhiCombo((dz1, dz2)))
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      self.assertEqual(DizhiUtils.tonghe(dz1, dz2), frozenset((dz1, dz2)) in tonghe_combos)
+      self.assertEqual(DizhiUtils.tonghe(dz1, dz2), DizhiCombo((dz1, dz2)) in tonghe_combos)
       self.assertEqual(DizhiUtils.tonghe(dz1, dz2), DizhiUtils.tonghe(dz2, dz1))
 
   def test_search_tongluhe(self) -> None:
-    tongluhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支禄身。
-      frozenset((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
+    tongluhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支禄身。
+      DizhiCombo((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
       for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganUtils.he(tg1, tg2) is not None
     ]
 
@@ -289,7 +290,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.通禄合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.通禄合)
       expected_result: list[set[Dizhi]] = [set(c) for c in tongluhe_combos if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -307,19 +308,19 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.tongluhe('亥', '子') # type: ignore
 
-    tongluhe_combos: list[frozenset[Dizhi]] = [ # 天干五合对应的地支禄身。
-      frozenset((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
+    tongluhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支禄身。
+      DizhiCombo((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
       for tg1, tg2 in itertools.combinations(Tiangan, 2) if TianganUtils.he(tg1, tg2) is not None
     ]
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      self.assertEqual(DizhiUtils.tongluhe(dz1, dz2), frozenset((dz1, dz2)) in tongluhe_combos)
+      self.assertEqual(DizhiUtils.tongluhe(dz1, dz2), DizhiCombo((dz1, dz2)) in tongluhe_combos)
       self.assertEqual(DizhiUtils.tongluhe(dz1, dz2), DizhiUtils.tongluhe(dz2, dz1))
 
   @staticmethod
-  def __gen_sanhe_table() -> dict[frozenset[Dizhi], Wuxing]:
+  def __gen_sanhe_table() -> dict[DizhiCombo, Wuxing]:
     return {
-      frozenset((
+      DizhiCombo((
         dz, 
         Dizhi.from_index((dz.index + 4) % 12), 
         Dizhi.from_index((dz.index - 4) % 12),
@@ -328,7 +329,7 @@ class TestDizhiUtils(unittest.TestCase):
     }
 
   def test_search_sanhe(self) -> None:
-    sanhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_sanhe_table()
+    sanhe_table: dict[DizhiCombo, Wuxing] = self.__gen_sanhe_table()
 
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search([], DizhiRelation.三合),
@@ -341,7 +342,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.三合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.三合)
       expected_result: list[set[Dizhi]] = [set(c) for c in sanhe_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -361,10 +362,10 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.sanhe('亥', '子', '丑') # type: ignore
 
-    sanhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_sanhe_table()
+    sanhe_table: dict[DizhiCombo, Wuxing] = self.__gen_sanhe_table()
     
     for dizhis in itertools.product(Dizhi, repeat=3):
-      fs: frozenset[Dizhi] = frozenset(dizhis)
+      fs: DizhiCombo = DizhiCombo(dizhis)
       if fs in sanhe_table:
         for combo in itertools.permutations(dizhis):
           self.assertEqual(DizhiUtils.sanhe(*combo), sanhe_table[fs])
@@ -373,19 +374,19 @@ class TestDizhiUtils(unittest.TestCase):
           self.assertIsNone(DizhiUtils.sanhe(*dizhis))
 
   @staticmethod
-  def __gen_banhe_table() -> dict[frozenset[Dizhi], Wuxing]:
+  def __gen_banhe_table() -> dict[DizhiCombo, Wuxing]:
     pivots: set[Dizhi] = set((Dizhi('子'), Dizhi('午'), Dizhi('卯'), Dizhi('酉'))) # 四中神
-    sanhe_table: dict[frozenset[Dizhi], Wuxing] = TestDizhiUtils.__gen_sanhe_table()
+    sanhe_table: dict[DizhiCombo, Wuxing] = TestDizhiUtils.__gen_sanhe_table()
 
-    d: dict[frozenset[Dizhi], Wuxing] = {}
+    d: dict[DizhiCombo, Wuxing] = {}
     for sanhe_dizhis, wx in sanhe_table.items():
       for dz1, dz2 in itertools.combinations(sanhe_dizhis, 2):
         if any(dz in pivots for dz in (dz1, dz2)): # 半合局需要出现中神
-          d[frozenset((dz1, dz2))] = wx
+          d[DizhiCombo((dz1, dz2))] = wx
     return d
 
   def test_search_banhe(self) -> None:
-    banhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_banhe_table()
+    banhe_table: dict[DizhiCombo, Wuxing] = self.__gen_banhe_table()
 
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search([], DizhiRelation.半合),
@@ -398,7 +399,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.半合)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.半合)
       expected_result: list[set[Dizhi]] = [set(c) for c in banhe_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -416,10 +417,10 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.banhe('亥', '子') # type: ignore
 
-    banhe_table: dict[frozenset[Dizhi], Wuxing] = self.__gen_banhe_table()
+    banhe_table: dict[DizhiCombo, Wuxing] = self.__gen_banhe_table()
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      self.assertEqual(DizhiUtils.banhe(dz1, dz2), banhe_table.get(frozenset((dz1, dz2)), None))
+      self.assertEqual(DizhiUtils.banhe(dz1, dz2), banhe_table.get(DizhiCombo((dz1, dz2)), None))
       self.assertEqual(DizhiUtils.banhe(dz1, dz2), DizhiUtils.banhe(dz2, dz1))
 
   def test_search_xing(self) -> None:
@@ -468,7 +469,7 @@ class TestDizhiUtils(unittest.TestCase):
       dizhis: list[Dizhi] = [] 
       for _ in range(random.randint(1, 4)):
         dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.刑)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.刑)
       expected_result: list[set[Dizhi]] = __find_qualified(dizhis)
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -519,10 +520,10 @@ class TestDizhiUtils(unittest.TestCase):
 
     def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[Rules.XingSubType]:
       # In `XingDef.STRICT` mode, we don't care about the direction.
-      __fs: frozenset[Dizhi] = frozenset(__dizhis)
-      if __fs in [frozenset((Dizhi.丑, Dizhi.戌, Dizhi.未)), frozenset((Dizhi.寅, Dizhi.巳, Dizhi.申))]:
+      __fs: DizhiCombo = DizhiCombo(__dizhis)
+      if __fs in [DizhiCombo((Dizhi.丑, Dizhi.戌, Dizhi.未)), DizhiCombo((Dizhi.寅, Dizhi.巳, Dizhi.申))]:
         return Rules.XingSubType.三刑
-      elif __fs == frozenset((Dizhi.子, Dizhi.卯)):
+      elif __fs == DizhiCombo((Dizhi.子, Dizhi.卯)):
         return Rules.XingSubType.子卯刑
       elif len(__fs) == 1 and len(__dizhis) == 2:
         if __dizhis[0] in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥):
@@ -632,7 +633,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.冲)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.冲)
       expected_result: list[set[Dizhi]] = [c for c in chong_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -680,7 +681,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.破)
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.破)
       expected_result: list[set[Dizhi]] = [c for c in po_table if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
@@ -709,18 +710,18 @@ class TestDizhiUtils(unittest.TestCase):
       self.assertEqual(DizhiUtils.po(dz1, dz2), set((dz1, dz2)) in po_table)
 
   @staticmethod
-  def __gen_hai_table() -> set[frozenset[Dizhi]]:
-    ret: set[frozenset[Dizhi]] = set()
+  def __gen_hai_table() -> set[DizhiCombo]:
+    ret: set[DizhiCombo] = set()
     for dz1, dz2 in itertools.combinations(Dizhi, 2):
       if DizhiUtils.liuhe(dz1, dz2):
         dz1_chong: Dizhi = Dizhi.from_index((dz1.index + 6) % 12)
         dz2_chong: Dizhi = Dizhi.from_index((dz2.index + 6) % 12)
-        ret.add(frozenset((dz1, dz2_chong)))
-        ret.add(frozenset((dz1_chong, dz2)))
+        ret.add(DizhiCombo((dz1, dz2_chong)))
+        ret.add(DizhiCombo((dz1_chong, dz2)))
     return ret
   
   def test_search_hai(self) -> None:
-    hai_set: set[frozenset[Dizhi]] = self.__gen_hai_table()
+    hai_set: set[DizhiCombo] = self.__gen_hai_table()
 
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search([], DizhiRelation.害),
@@ -737,8 +738,8 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(500):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.害)
-      expected_result: list[frozenset[Dizhi]] = [c for c in hai_set if c.issubset(dizhis)]
+      result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.害)
+      expected_result: list[DizhiCombo] = [c for c in hai_set if c.issubset(dizhis)]
       self.assertTrue(self.__dz_equal(result, expected_result))
 
   def test_hai(self) -> None:
@@ -755,17 +756,17 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.hai('亥', '丑') # type: ignore
 
-    hai_set: set[frozenset[Dizhi]] = self.__gen_hai_table()
+    hai_set: set[DizhiCombo] = self.__gen_hai_table()
 
     for dz1, dz2 in itertools.product(Dizhi, repeat=2):
       self.assertEqual(DizhiUtils.hai(dz1, dz2), DizhiUtils.hai(dz2, dz1), 'HAI (害) is a bi-directional relation')
-      self.assertEqual(DizhiUtils.hai(dz1, dz2), frozenset((dz1, dz2)) in hai_set)
+      self.assertEqual(DizhiUtils.hai(dz1, dz2), DizhiCombo((dz1, dz2)) in hai_set)
 
   def test_search_sheng_ke(self) -> None:
     for _ in range(200):
       dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      sheng_result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.生)
-      ke_result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, DizhiRelation.克)
+      sheng_result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.生)
+      ke_result: DizhiRelationCombos = DizhiUtils.search(dizhis, DizhiRelation.克)
 
       for fs in sheng_result:
         for dz in fs:
@@ -777,9 +778,9 @@ class TestDizhiUtils(unittest.TestCase):
       for dz1, dz2 in itertools.combinations(dizhis, 2):
         wx1, wx2 = BaziUtils.traits(dz1).wuxing, BaziUtils.traits(dz2).wuxing
         if wx1.generates(wx2) or wx2.generates(wx1):
-          self.assertTrue(frozenset((dz1, dz2)) in sheng_result)
+          self.assertTrue(DizhiCombo((dz1, dz2)) in sheng_result)
         if wx1.destructs(wx2) or wx2.destructs(wx1):
-          self.assertTrue(frozenset((dz1, dz2)) in ke_result)
+          self.assertTrue(DizhiCombo((dz1, dz2)) in ke_result)
 
   def test_sheng(self) -> None:
     with self.assertRaises(TypeError):
@@ -852,23 +853,23 @@ class TestDizhiUtils(unittest.TestCase):
           dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
 
         dizhi_counter: Counter[Dizhi] = Counter(dizhis)
-        result: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis, relation)
+        result: DizhiRelationCombos = DizhiUtils.search(dizhis, relation)
         for _ in range(2):
           random.shuffle(dizhis)
           copied: list[Dizhi] = copy.deepcopy(dizhis)
           self.assertTrue(self.__dz_equal(result, DizhiUtils.search(dizhis, relation)))
           self.assertListEqual(copied, dizhis) # Ensure `search` has no effect on the input `dizhis`.
 
-        result2: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis + dizhis, relation)
-        result3: tuple[frozenset[Dizhi], ...] = DizhiUtils.search(dizhis + dizhis + dizhis, relation)
+        result2: DizhiRelationCombos = DizhiUtils.search(dizhis + dizhis, relation)
+        result3: DizhiRelationCombos = DizhiUtils.search(dizhis + dizhis + dizhis, relation)
 
         # Expectedly, `result2` and `result3` should be equal to `result1`.
         # The only exception is 自刑。
-        result_patched: tuple[frozenset[Dizhi], ...] = copy.deepcopy(result)
+        result_patched: DizhiRelationCombos = copy.deepcopy(result)
         if relation is DizhiRelation.刑:
           for dz in (Dizhi.午, Dizhi.辰, Dizhi.酉, Dizhi.亥):
             if dizhi_counter[dz] == 1:
-              fs = frozenset((dz,))
+              fs = DizhiCombo((dz,))
               self.assertNotIn(fs, result_patched)
               self.assertIn(fs, result2)
               self.assertIn(fs, result3)
@@ -926,7 +927,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for relation in DizhiRelation:
       relation_results: list[list[Any]] = []
-      combo_results: list[tuple[frozenset[Dizhi], ...]] = []
+      combo_results: list[DizhiRelationCombos] = []
       for _ in range(8):
         if random.randint(0, 1) == 0:
           relation_results.append(self.__run_all_relation_methods(dizhis))

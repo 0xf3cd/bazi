@@ -31,6 +31,11 @@ class BaziChart:
     assert isinstance(bazi, Bazi)
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
+  @classmethod
+  def random(cls) -> 'BaziChart':
+    '''Mainly for testing purpose.'''
+    return cls(Bazi.random())
+
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
