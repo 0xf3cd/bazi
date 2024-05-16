@@ -336,6 +336,54 @@ class TestTianganUtils(unittest.TestCase):
         self.assertEqual(discovery, discovery2)
 
   @pytest.mark.slow
+  def test_discover_mutually(self) -> None:
+    for _ in range(512):
+      tiangans1: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      tiangans2: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+
+      if random.randint(0, 2) == 0:
+        tiangans1.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+      if random.randint(0, 2) == 0:
+        tiangans2.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+
+      discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(tiangans1, tiangans2)
+
+      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans1, tiangans2)) # Test consistency
+      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans2, tiangans1)) # Test equivalence
+
+      expected: dict[TianganRelation, list[TianganCombo]] = {
+        TianganRelation.合: [],
+        TianganRelation.冲: [],
+        TianganRelation.生: [],
+        TianganRelation.克: [],
+      }
+
+      for tg1, tg2 in itertools.product(tiangans1, tiangans2):
+        if TianganUtils.he(tg1, tg2):
+          combo = TianganCombo((tg1, tg2))
+          self.assertIn(combo, discovery[TianganRelation.合])
+          expected[TianganRelation.合].append(combo)
+          
+        if TianganUtils.chong(tg1, tg2):
+          combo = TianganCombo((tg1, tg2))
+          self.assertIn(combo, discovery[TianganRelation.冲])
+          expected[TianganRelation.冲].append(combo)
+
+        if TianganUtils.sheng(tg1, tg2) or TianganUtils.sheng(tg2, tg1):
+          combo = TianganCombo((tg1, tg2))
+          self.assertIn(combo, discovery[TianganRelation.生])
+          expected[TianganRelation.生].append(combo)
+
+        if TianganUtils.ke(tg1, tg2) or TianganUtils.ke(tg2, tg1):
+          combo = TianganCombo((tg1, tg2))
+          self.assertIn(combo, discovery[TianganRelation.克])
+          expected[TianganRelation.克].append(combo)
+
+      for rel, expected_combos in expected.items():
+        for combo in discovery[rel]:
+          self.assertIn(combo, expected_combos)
+
+  @pytest.mark.slow
   def test_results_matched(self) -> None:
     '''Test that the results of different methods are the same.'''
     for _ in range(512):
@@ -368,3 +416,13 @@ class TestTianganUtils(unittest.TestCase):
           r1, r2 = TianganUtils.ke(tg1, tg2), TianganUtils.ke(tg2, tg1)
           self.assertTrue(r1 or r2)
           self.assertFalse(r1 and r2)
+
+      tiangans_part1: set[Tiangan] = set(random.sample(tiangans, random.randint(0, len(tiangans))))
+      tiangans_part2: set[Tiangan] = set(tiangans) - tiangans_part1
+      mutual_discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(list(tiangans_part1), list(tiangans_part2))
+
+      for rel, mutual_combos in mutual_discovery.items():
+        expected = discovery[rel]
+        for combo in mutual_combos:
+          self.assertIn(combo, expected)
+        self.assertGreaterEqual(len(expected), len(mutual_combos))

@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Final
 
 from ..Defines import Tiangan, Wuxing, TianganRelation
 from ..Common import frozendict, TianganCombo, TianganRelationCombos, TianganRelationDiscovery
@@ -150,16 +150,16 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   Return: (TianganRelationCombos) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
 
   Examples:
-  - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.合):
-    - return: ({Tiangan.丙, Tiangan.辛})
-  - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.冲):
-    - return: ({Tiangan.甲, Tiangan.庚})
-  - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.生):
-    - return: ({Tiangan.甲, Tiangan.丙}, {Tiangan.甲, Tiangan.丁})
+  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.合):
+    - return: ({丙, 辛})
+  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.冲):
+    - return: ({甲, 庚})
+  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):
+    - return: ({甲, 丙}, {甲, 丁})
     - Note that the returned combos don't contain the direction.
-  - search([Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛], TianganRelation.克):
-    - return: ({Tiangan.甲, Tiangan.庚}, {Tiangan.甲, Tiangan.辛}, {Tiangan.丙, Tiangan.庚}, {Tiangan.丙, Tiangan.辛},
-                {Tiangan.丁, Tiangan.庚}, {Tiangan.丁, Tiangan.辛})
+  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):
+    - return: ({甲, 庚}, {甲, 辛}, {丙, 庚}, {丙, 辛},
+               {丁, 庚}, {丁, 辛})
     - Note that the returned combos don't contain the direction.
   '''
 
@@ -167,26 +167,26 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   assert all(isinstance(tg, Tiangan) for tg in tiangans)
 
   if relation is TianganRelation.合:
-    return tuple(combo for combo in Rules.TIANGAN_HE if combo.issubset(tiangans))
+    return TianganRelationCombos(combo for combo in Rules.TIANGAN_HE if combo.issubset(tiangans))
   elif relation is TianganRelation.冲:
-    return tuple(combo for combo in Rules.TIANGAN_CHONG if combo.issubset(tiangans))
+    return TianganRelationCombos(combo for combo in Rules.TIANGAN_CHONG if combo.issubset(tiangans))
   
   # Otherwise, relation is `TianganRelation.生` or `TianganRelation.克`.
-  tg_set: set[Tiangan] = set(tiangans)
+  tg_set: Final[set[Tiangan]] = set(tiangans)
 
   if relation is TianganRelation.生:
-    return tuple(frozenset(combo) for combo in Rules.TIANGAN_SHENG if tg_set.issuperset(combo))
+    return TianganRelationCombos(TianganCombo(combo) for combo in Rules.TIANGAN_SHENG if tg_set.issuperset(combo))
   else: 
     assert relation is TianganRelation.克
-    return tuple(frozenset(combo) for combo in Rules.TIANGAN_KE if tg_set.issuperset(combo))
+    return TianganRelationCombos(TianganCombo(combo) for combo in Rules.TIANGAN_KE if tg_set.issuperset(combo))
 
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
-  Discover all possible Tiangan relations (HE, CHONG, SHENG, KE...) in the given `tiangans`.
+  Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) in the given `tiangans`.
   This method further invokes `search`.
 
-  返回给定天干组合中所有可能的天干关系（合、冲、生、克等）。
+  返回给定天干中所有可能的天干关系组合（合、冲、生、克等）。
   这个方法通过调用 `search` 来实现。
 
   Note:
@@ -200,7 +200,59 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
 
   assert all(isinstance(tg, Tiangan) for tg in tiangans)
-
   return frozendict({
     rel : search(tiangans, rel) for rel in TianganRelation
+  })
+
+
+def discover_mutually(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
+  '''
+  Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) among the given `tiangans1` and `tiangans2`.
+  Note that it is required that the Tiangans in a combo come from both `tiangans1` and `tiangans2`, which means
+  `tiangans1` and `tiangans2` mutually form the combos.
+
+  找到输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
+  注意返回的天干组合中的天干必须同时来自两组 `tiangans1` 和 `tiangans2` 中。
+
+  Args:
+  - tiangans1: (Sequence[Tiangan]) The first set of Tiangans to check.
+  - tiangans2: (Sequence[Tiangan]) The second set of Tiangans to check.
+
+  Return: (TianganRelationDiscovery) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
+  
+  Examples:
+  - discover_mutually([甲], [己])
+    - return: {
+      TianganRelation.合: TianganRelationCombos({甲, 己},),
+      TianganRelation.冲: TianganRelationCombos(), // empty
+      TianganRelation.生: TianganRelationCombos(), // empty
+      TianganRelation.克: TianganRelationCombos({甲, 己},)
+    }
+  - discover_mutually([甲, 己], [])
+    - return: {
+      TianganRelation.合: TianganRelationCombos(), // empty
+      TianganRelation.冲: TianganRelationCombos(), // empty
+      TianganRelation.生: TianganRelationCombos(), // empty
+      TianganRelation.克: TianganRelationCombos(), // empty
+    }
+  '''
+
+  assert all(isinstance(tg, Tiangan) for tg in tiangans1)
+  assert all(isinstance(tg, Tiangan) for tg in tiangans2)
+
+  tg1_set: Final[set[Tiangan]] = set(tiangans1)
+  tg2_set: Final[set[Tiangan]] = set(tiangans2)
+
+  def __is_valid(combo: TianganCombo) -> bool:
+    if combo.isdisjoint(tg1_set): # This means Tiangans in `combo` are all from `tiangans2`.
+      return False
+    if combo.isdisjoint(tg2_set): # This means Tiangans in `combo` are all from `tiangans1`.
+      return False
+    return True
+
+  # Discover all possible combos with `tg1_set` and `tg2_set` combined.
+  # Check each combo's validity and only keep valid ones.
+  return frozendict({
+    rel : TianganRelationCombos(filter(__is_valid, combos)) 
+    for rel, combos in discover(list(tg1_set | tg2_set)).items()
   })

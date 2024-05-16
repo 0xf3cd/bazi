@@ -445,26 +445,26 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
 
   if relation is DizhiRelation.三会:
-    return tuple(combo for combo in Rules.DIZHI_SANHUI if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_SANHUI if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.六合:
-    return tuple(combo for combo in Rules.DIZHI_LIUHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_LIUHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.暗合:
     anhe_table: frozenset[DizhiCombo] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
-    return tuple(combo for combo in anhe_table if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in anhe_table if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.通合:
-    return tuple(combo for combo in Rules.DIZHI_TONGHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_TONGHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.通禄合:
-    return tuple(combo for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.三合:
-    return tuple(combo for combo in Rules.DIZHI_SANHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_SANHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.半合:
-    return tuple(combo for combo in Rules.DIZHI_BANHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_BANHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.刑:
     dz_counter: Counter[Dizhi] = Counter(dizhis)
@@ -477,20 +477,20 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
       if dz_counter & xing_dz_counter == xing_dz_counter:
         ret.add(DizhiCombo(xing_tuple))
 
-    return tuple(ret)
+    return DizhiRelationCombos(ret)
   
   elif relation is DizhiRelation.冲:
-    return tuple(combo for combo in Rules.DIZHI_CHONG if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_CHONG if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.破:
-    return tuple(combo for combo in Rules.DIZHI_PO if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_PO if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.害:
-    return tuple(combo for combo in Rules.DIZHI_HAI if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in Rules.DIZHI_HAI if combo.issubset(dizhis))
 
   # Else, `relation` must be `生` or `克`.
   assert relation is DizhiRelation.生 or relation is DizhiRelation.克
   rules: frozenset[tuple[Dizhi, Dizhi]] = Rules.DIZHI_KE if relation is DizhiRelation.克 else Rules.DIZHI_SHENG
   frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
   dz_set: set[Dizhi] = set(dizhis)
-  return tuple(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
+  return DizhiRelationCombos(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
