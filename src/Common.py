@@ -9,7 +9,7 @@ from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
   Sequence, Iterator, Type, Mapping, Any,
 )
-from .Defines import Wuxing, Yinyang, Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation
+from .Defines import Wuxing, Yinyang, Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
 
 
 ######################################################
@@ -365,6 +365,9 @@ DizhiCombo = frozenset[Dizhi]
 
 '''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
 DizhiRelationCombos = tuple[DizhiCombo, ...]
+
+'''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
+DizhiRelationDiscovery = frozendict[DizhiRelation, DizhiRelationCombos]
 
 #endregion
 
