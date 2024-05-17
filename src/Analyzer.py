@@ -58,10 +58,13 @@ class TransitAnalyzer:
       for age, gz in chart.xiaoyun
     })
 
-    assert len(self._liunian_ganzhis) == 200
-    assert len(self._dayun_ganzhis) == 200
-
   def supports(self, gz_year: int, level: Level) -> bool:
+    '''
+    Returns `True` if the given `gz_year` and `level` are supported by this `TransitAnalyzer`.
+    '''
+    assert isinstance(gz_year, int)
+    assert isinstance(level, TransitAnalyzer.Level) and level in TransitAnalyzer.Level
+
     if level.value & TransitAnalyzer.Level.XIAOYUN.value:
       if gz_year not in self._xiaoyun_ganzhis:
         return False
@@ -86,6 +89,9 @@ class TransitAnalyzer:
 
     Returns: (TianganRelationDiscovery) Analysis results of Tiangans of the given year.
     '''
+
+    assert isinstance(gz_year, int)
+    assert isinstance(level, TransitAnalyzer.Level) and level in TransitAnalyzer.Level
 
     if not self.supports(gz_year, level):
       raise ValueError(f'Inputs not supported. Year: {gz_year}, level: {level}')
