@@ -260,6 +260,10 @@ class Bazi:
   @property
   def solar_date(self) -> date:
     return to_date(self._solar_date)
+  
+  @property
+  def ganzhi_date(self) -> CalendarDate:
+    return to_ganzhi(self._solar_date)
 
   @property
   def hour(self) -> int:

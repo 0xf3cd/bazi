@@ -272,7 +272,7 @@ class BaziChart:
     '''
 
     def __liunian_generator() -> Generator[LiunianTuple, None, None]:
-      year: int = to_ganzhi(self._bazi.solar_datetime).year
+      year: int = self._bazi.ganzhi_date.year
       while True:
         yield LiunianTuple(year, ganzhi_of_year(year))
         year += 1

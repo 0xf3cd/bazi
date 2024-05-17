@@ -10,11 +10,10 @@ from .Defines import Tiangan, Dizhi, Ganzhi
 
 from .BaziChart import BaziChart
 from .Utils import TianganUtils
-from .Calendar.HkoDataCalendarUtils import to_ganzhi
 
-class AtBirthRelation:
+class AtBirthAnalyzer:
   '''
-  This class takes 4 Tiangans and 4 Dizhis at birth and analyzes them.
+  This class does analysis on birth chart (i.e. 4 pillars of Year, Month, Day, and Hour).
   '''
   def __init__(self, chart: BaziChart) -> None:
     self._tiangans: Final[tuple[Tiangan, Tiangan, Tiangan, Tiangan]] = chart.bazi.four_tiangans
@@ -26,9 +25,9 @@ class AtBirthRelation:
 
 
 
-class TransitRelation:
+class TransitAnalyzer:
   '''
-  This class analyzes the relations of Tiangans and Dizhis in transit chart (i.e. Liunian and Dayun / 流年大运).
+  This class analyzes the transit chart (i.e. Liunian and Dayun / 流年大运).
   '''
 
   class Level(Enum):
@@ -53,7 +52,7 @@ class TransitRelation:
       for offset in range(10)
     })
 
-    birth_gz_year: Final[int] = to_ganzhi(chart.bazi.solar_date).year
+    birth_gz_year: Final[int] = chart.bazi.ganzhi_date.year
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
       birth_gz_year + age - 1 : gz
       for age, gz in chart.xiaoyun
@@ -63,13 +62,13 @@ class TransitRelation:
     assert len(self._dayun_ganzhis) == 200
 
   def supports(self, gz_year: int, level: Level) -> bool:
-    if level.value & TransitRelation.Level.XIAOYUN.value:
+    if level.value & TransitAnalyzer.Level.XIAOYUN.value:
       if gz_year not in self._xiaoyun_ganzhis:
         return False
-    if level.value & TransitRelation.Level.DAYUN.value:
+    if level.value & TransitAnalyzer.Level.DAYUN.value:
       if gz_year not in self._dayun_ganzhis:
         return False
-    if level.value & TransitRelation.Level.LIUNIAN.value:
+    if level.value & TransitAnalyzer.Level.LIUNIAN.value:
       if gz_year not in self._liunian_ganzhis:
         return False
     return True
@@ -92,11 +91,11 @@ class TransitRelation:
       raise ValueError(f'Inputs not supported. Year: {gz_year}, level: {level}')
 
     transit_tiangans: list[Tiangan] = []
-    if level.value & TransitRelation.Level.XIAOYUN.value:
+    if level.value & TransitAnalyzer.Level.XIAOYUN.value:
       transit_tiangans.append(self._xiaoyun_ganzhis[gz_year].tiangan)
-    if level.value & TransitRelation.Level.DAYUN.value:
+    if level.value & TransitAnalyzer.Level.DAYUN.value:
       transit_tiangans.append(self._dayun_ganzhis[gz_year].tiangan)
-    if level.value & TransitRelation.Level.LIUNIAN.value:
+    if level.value & TransitAnalyzer.Level.LIUNIAN.value:
       transit_tiangans.append(self._liunian_ganzhis[gz_year].tiangan)
     
     assert len(transit_tiangans) > 0

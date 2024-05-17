@@ -169,7 +169,7 @@ def run_ruff() -> int:
   print('>> Checking for style violations...')
 
   proc: subprocess.CompletedProcess = subprocess.run([
-    'ruff', 'check', str(Path(__file__).parent)
+    'python3', '-m', 'ruff', 'check', str(Path(__file__).parent)
   ], capture_output=True)
   ruff_ret: int = proc.returncode
   print('>> Checking style violations completed...')

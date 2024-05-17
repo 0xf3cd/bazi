@@ -3,59 +3,61 @@
 
 import pytest
 import unittest
+import itertools
 
 from src.Common import TianganRelationDiscovery
 from src.Utils import TianganUtils
 
 from src.Bazi import Bazi
 from src.BaziChart import BaziChart
-from src.Analyzer import AtBirthRelation, TransitRelation
+from src.Analyzer import AtBirthAnalyzer, TransitAnalyzer
 
 
-class TestAtBirthRelation(unittest.TestCase):
+class TestAtBirthAnalyzer(unittest.TestCase):
   @pytest.mark.slow
   def test_tiangan(self) -> None:
     for _ in range(128):
       bazi: Bazi = Bazi.random()
       chart: BaziChart = BaziChart(bazi)
-      relation: AtBirthRelation = AtBirthRelation(chart)
+      analyzer: AtBirthAnalyzer = AtBirthAnalyzer(chart)
 
       with self.subTest('new discovery dict'):
-        self.assertIsNot(relation.tiangan, relation.tiangan)
+        self.assertIsNot(analyzer.tiangan, analyzer.tiangan)
       with self.subTest('equality'):
-        self.assertEqual(relation.tiangan, relation.tiangan)
+        self.assertEqual(analyzer.tiangan, analyzer.tiangan)
 
       expected: TianganRelationDiscovery = TianganUtils.discover(bazi.four_tiangans)
-      self.assertEqual(expected, relation.tiangan)
+      self.assertEqual(expected, analyzer.tiangan)
 
 
-class TestTransitRelation(unittest.TestCase):
+class TestTransitAnalyzer(unittest.TestCase):
+  @pytest.mark.slow
   def test_supports(self) -> None:
     for _ in range(128):
       bazi: Bazi = Bazi.random()
       chart: BaziChart = BaziChart(bazi)
-      relation: TransitRelation = TransitRelation(chart)
+      analyzer: TransitAnalyzer = TransitAnalyzer(chart)
 
-      relation.supports(1, TransitRelation.Level.DAYUN_LIUNIAN)
+      for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
+        for level in TransitAnalyzer.Level:
+          self.assertFalse(analyzer.supports(gz_year, level))
 
-  # @pytest.mark.slow
-  # def test_tiangan_supported_years(self) -> None:
-  #   for _ in range(128):
-  #     bazi: Bazi = Bazi.random()
-  #     chart: BaziChart = BaziChart(bazi)
-  #     relation: TransitRelation = TransitRelation(chart)
-  #     supported_years: set[int] = relation.supported_ganzhi_years
+      first_dayun_gz_year: int = next(chart.dayun).ganzhi_year
+      for gz_year in range(chart.bazi.ganzhi_date.year, chart.bazi.ganzhi_date.year + len(chart.xiaoyun)):
+        self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.XIAOYUN))
+        self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.LIUNIAN))
+        self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.XIAOYUN_LIUNIAN))
 
-  #     with self.subTest('test supported ganzhi years'):
-  #       for gz_year in supported_years:
-  #         for level in TransitRelation.Level:
-  #           self.assertIsNotNone(relation.tiangan(gz_year, level))
+        # The last Xiaoyun year may also be the first Dayun year - this is the only expected overlap.
+        if analyzer.supports(gz_year, TransitAnalyzer.Level.DAYUN):
+          self.assertEqual(gz_year, first_dayun_gz_year)
+        else:
+          self.assertLess(gz_year, first_dayun_gz_year)
 
-  #     with self.subTest('test out of supported years'):
-  #       for level in TransitRelation.Level:
-  #         for year in range(max(supported_years) + 1, 10):
-  #           self.assertRaises(ValueError, relation.tiangan, year, level)
-  #         for year in range(min(supported_years) - 1, min(supported_years) - 10, -1):
-  #           self.assertRaises(ValueError, relation.tiangan, year, level)
+      for start_gz_year, _ in itertools.islice(chart.dayun, 10): # Expect the first 10 dayuns to be supported anyways...
+        for gz_year in range(start_gz_year, start_gz_year + 10):
+          self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.DAYUN))
+          self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.LIUNIAN))
+          self.assertTrue(analyzer.supports(gz_year, TransitAnalyzer.Level.DAYUN_LIUNIAN))
 
   # TODO: more tests...
