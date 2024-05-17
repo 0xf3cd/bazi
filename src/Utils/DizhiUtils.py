@@ -3,7 +3,7 @@
 from collections import Counter
 from typing import Sequence, Optional
 
-from ..Common import frozendict, DizhiCombo, DizhiRelationCombos
+from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
 from ..Rules import Rules
 
@@ -12,6 +12,16 @@ from ..Rules import Rules
 Functions in this file are used to find all possible Dizhi combos that satisfy different `DizhiRelation`s.
 All methods' returns are expected to be immutable.
 '''
+
+
+'''Represents a Dizhi combo that satisfies a certain `DizhiRelation`.'''
+DizhiCombo = frozenset[Dizhi]
+
+'''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
+DizhiRelationCombos = tuple[DizhiCombo, ...]
+
+'''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
+DizhiRelationDiscovery = frozendict[DizhiRelation, DizhiRelationCombos]
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:

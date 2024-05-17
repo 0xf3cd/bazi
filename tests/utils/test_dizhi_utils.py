@@ -11,10 +11,10 @@ import unittest
 from collections import Counter
 from typing import Union, Optional, Iterable, Any
 
-from src.Common import DizhiCombo, DizhiRelationCombos
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Rules import Rules
 from src.Utils import BaziUtils, TianganUtils, DizhiUtils
+from src.Utils.DizhiUtils import DizhiCombo, DizhiRelationCombos
 
 
 class TestDizhiUtils(unittest.TestCase):

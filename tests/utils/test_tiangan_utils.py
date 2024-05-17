@@ -8,9 +8,9 @@ from typing import Union, Iterable
 import pytest
 import unittest
 
-from src.Common import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Utils import BaziUtils, TianganUtils
+from src.Utils.TianganUtils import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
 
 
 class TestTianganUtils(unittest.TestCase):

@@ -9,7 +9,7 @@ from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
   Sequence, Iterator, Type, Mapping, Any,
 )
-from .Defines import Wuxing, Yinyang, Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
+from .Defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
 
 ######################################################
@@ -349,25 +349,7 @@ class BaziJson:
 
 
 ######################################################
-#region Relation Analysis
-
-'''Represents a Tiangan combo that satisfies a certain `TianganRelation`.'''
-TianganCombo = frozenset[Tiangan]
-
-'''A list of all possible Tiangan combos that satisfy a certain `TianganRelation`.'''
-TianganRelationCombos = tuple[TianganCombo, ...]
-
-'''A frozendict that stores the Tiangan combos that satisfy every `TianganRelation`.'''
-TianganRelationDiscovery = frozendict[TianganRelation, TianganRelationCombos]
-
-'''Represents a Dizhi combo that satisfies a certain `DizhiRelation`.'''
-DizhiCombo = frozenset[Dizhi]
-
-'''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
-DizhiRelationCombos = tuple[DizhiCombo, ...]
-
-'''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
-DizhiRelationDiscovery = frozendict[DizhiRelation, DizhiRelationCombos]
+#region Analysis
 
 #endregion
 

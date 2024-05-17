@@ -3,7 +3,7 @@
 from typing import Sequence, Optional, Final
 
 from ..Defines import Tiangan, Wuxing, TianganRelation
-from ..Common import frozendict, TianganCombo, TianganRelationCombos, TianganRelationDiscovery
+from ..Common import frozendict
 from ..Rules import Rules
 
 
@@ -11,6 +11,16 @@ from ..Rules import Rules
 Functions in this file are used to find all possible Tiangan combos that satisfy different `TianganRelation`s.
 All methods' returns are expected to be immutable.
 '''
+
+
+'''Represents a Tiangan combo that satisfies a certain `TianganRelation`.'''
+TianganCombo = frozenset[Tiangan]
+
+'''A list of all possible Tiangan combos that satisfy a certain `TianganRelation`.'''
+TianganRelationCombos = tuple[TianganCombo, ...]
+
+'''A frozendict that stores the Tiangan combos that satisfy every `TianganRelation`.'''
+TianganRelationDiscovery = frozendict[TianganRelation, TianganRelationCombos]
 
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Optional[Wuxing]:
