@@ -66,7 +66,7 @@ term_width: Final[int] = shutil.get_terminal_size().columns
 def print_args() -> None:
   '''Print terminal arguments.'''
   print('#' * term_width)
-  print(colorama.Fore.GREEN + '>> Terminal args:' + colorama.Style.RESET_ALL)
+  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Terminal args:' + colorama.Style.RESET_ALL)
 
   def colored(x: Any) -> str:
     if isinstance(x, bool):
@@ -92,13 +92,14 @@ def print_args() -> None:
   print(f'-- do_demo:          {colored(do_demo)}')
   print(f'-- do_interpreter:   {colored(do_interpreter)}')
 
+
 def print_sysinfo() -> None:
   '''Print system time and other info.'''
   mem = psutil.virtual_memory()
   this_moment: datetime = datetime.now()
 
-  print('#' * term_width)
-  print(colorama.Fore.GREEN + '>> Sys info:' + colorama.Style.RESET_ALL)
+  print('\n' + '#' * term_width)
+  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Sys info:' + colorama.Style.RESET_ALL)
 
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
@@ -210,9 +211,9 @@ def run_ruff() -> int:
   print('>> Checking style violations completed...')
 
   if ruff_ret == 0:
-    print(colorama.Fore.GREEN + '>> No style violations found!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> No style violations found!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Violations detected!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Violations detected!' + colorama.Style.RESET_ALL)
     print(proc.stdout.decode('utf-8'))
     print(proc.stderr.decode('utf-8'))
 
@@ -230,9 +231,9 @@ def run_mypy() -> int:
   ])
 
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -245,9 +246,9 @@ def run_demo() -> int:
   ])
 
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> Demo passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Demo passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Demo failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Demo failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -260,9 +261,9 @@ def run_interpreter() -> int:
   ])
   
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -297,9 +298,9 @@ def main() -> None:
   print(f'-- Time elapsed: {end_time - start_time}')
 
   if ret_code == 0:
-    print(colorama.Fore.GREEN + '>> All tasks passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> All tasks passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
 
   sys.exit(ret_code)
 

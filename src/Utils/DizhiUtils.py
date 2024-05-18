@@ -504,3 +504,27 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
   dz_set: set[Dizhi] = set(dizhis)
   return DizhiRelationCombos(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
+
+
+def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
+  '''
+  Discover all possible Dizhi combos of all `DizhiRelation`s (SANHUI, LIUHE, XING...) in the given `dizhis`.
+  This method further invokes `search`.
+
+  返回给定地支中所有可能的地支关系组合（三会、六合、刑等）。
+  这个方法通过调用 `search` 来实现。
+
+  Note:
+  - The returned frozendict has all `DizhiRelation` keys, but some values may be empty.
+  - 返回的字典的键为所有的 `DizhiRelation`，但返回字典的某些值可能为空（即 `DizhiRelationCombos` 可能为空）。
+
+  Args:
+  - dizhis: (Sequence[Dizhi]) The Dizhis to check.
+
+  Return: (DizhiRelationDiscovery) The result containing all matching Dizhi combos. Note that returned combos don't reveal the directions.
+  '''
+
+  assert all(isinstance(dz, Dizhi) for dz in dizhis)
+  return frozendict({
+    rel : search(dizhis, rel) for rel in DizhiRelation
+  })

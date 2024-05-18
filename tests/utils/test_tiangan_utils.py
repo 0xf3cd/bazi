@@ -426,3 +426,12 @@ class TestTianganUtils(unittest.TestCase):
         for combo in mutual_combos:
           self.assertIn(combo, expected)
         self.assertGreaterEqual(len(expected), len(mutual_combos))
+
+      with self.subTest('discover / discover_mutually consistency'):
+        part1_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part1))
+        part2_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part2))
+
+        for rel in TianganRelation:
+          expected_combined: set[TianganCombo] = set(discovery[rel])
+          combined: set[TianganCombo] = set(part1_discoverty[rel]) | set(part2_discoverty[rel]) | set(mutual_discovery[rel])
+          self.assertSetEqual(expected_combined, combined)

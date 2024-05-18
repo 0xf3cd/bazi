@@ -14,7 +14,7 @@ from typing import Union, Optional, Iterable, Any
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Rules import Rules
 from src.Utils import BaziUtils, TianganUtils, DizhiUtils
-from src.Utils.DizhiUtils import DizhiCombo, DizhiRelationCombos
+from src.Utils.DizhiUtils import DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery
 
 
 class TestDizhiUtils(unittest.TestCase):
@@ -918,27 +918,48 @@ class TestDizhiUtils(unittest.TestCase):
     return result
 
   @pytest.mark.slow
+  def test_discover(self) -> None:
+    for _ in range(512):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))) + \
+                            random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      discovery: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
+
+      with self.subTest('correctness'):
+        for rel in DizhiRelation:
+          self.assertIn(rel, discovery)
+          self.assertSetEqual(set(discovery[rel]), set(DizhiUtils.search(dizhis, rel)))
+
+      with self.subTest('consistency'):
+        discovery2: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
+        self.assertEqual(discovery, discovery2)
+
+
+  @pytest.mark.slow
   def test_consistency(self) -> None:
     '''This test mainly tests that staticmethods in `DizhiUtils` give consistent results.'''
-    dizhis: list[Dizhi] = []
-    for _ in range(random.randint(1, 3)):
-      dizhis.extend(random.sample(list(Dizhi), random.randint(0, 5)))
-    copied_dizhis: list[Dizhi] = copy.deepcopy(dizhis)
+    for attempt in range(8):
+      dizhis: list[Dizhi] = []
+      for _ in range(random.randint(0, 4)):
+        dizhis.extend(random.sample(list(Dizhi), random.randint(0, 5)))
+      copied_dizhis: list[Dizhi] = copy.deepcopy(dizhis)
 
-    for relation in DizhiRelation:
-      relation_results: list[list[Any]] = []
-      combo_results: list[DizhiRelationCombos] = []
-      for _ in range(8):
-        if random.randint(0, 1) == 0:
-          relation_results.append(self.__run_all_relation_methods(dizhis))
-        if random.randint(0, 1) == 0:
-          combo_results.append(DizhiUtils.search(dizhis, relation))
+      for relation in DizhiRelation:
+        relation_results: list[list[Any]] = []
+        combo_results: list[DizhiRelationCombos] = []
+        discover_results: list[DizhiRelationDiscovery] = []
+        for _ in range(8):
+          if random.randint(0, 1) == 0:
+            relation_results.append(self.__run_all_relation_methods(dizhis))
+          if random.randint(0, 1) == 0:
+            combo_results.append(DizhiUtils.search(dizhis, relation))
+          if random.randint(0, 1) == 0:
+            discover_results.append(DizhiUtils.discover(dizhis))
+        
+        for rr1, rr2 in zip(relation_results, relation_results[1:]):
+          self.assertEqual(rr1, rr2)
+        for cr1, cr2 in zip(combo_results, combo_results[1:]):
+          self.assertEqual(cr1, cr2)
+        for dr1, dr2 in zip(discover_results, discover_results[1:]):
+          self.assertEqual(dr1, dr2)
 
-      if len(relation_results) >= 2:
-        for rr in relation_results[1:]:
-          self.assertEqual(relation_results[0], rr)
-      if len(combo_results) >= 2:
-        for cr in combo_results[1:]:
-          self.assertEqual(combo_results[0], cr)
-
-    self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
+      self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
