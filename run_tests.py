@@ -10,6 +10,7 @@ import subprocess
 
 from datetime import datetime
 from pathlib import Path
+from functools import reduce
 from typing import Callable, Optional, Final, Any
 
 import pytest
@@ -35,7 +36,7 @@ argparser.add_argument('-c', '--coverage', action='store_true', help='Whether or
 argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
 # Linter and static type check.
-argparser.add_argument('-l', '--linter', action='store_true', help='Whether or not to skip linting.')
+argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='Whether or not to skip linting.')
 argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
 
 # Demo and interpreter.
@@ -54,7 +55,7 @@ verbose: Final[bool] = args.verbose
 
 do_cov: Final[bool] = args.coverage or all_the_way
 minimum_cov_rate: Final[float] = args.coverage_rate
-do_linter: Final[bool] = args.linter or all_the_way
+do_ruff: Final[bool] = args.ruff or all_the_way
 do_mypy: Final[bool] = args.mypy or all_the_way
 
 do_demo: Final[bool] = args.demo or all_the_way
@@ -63,10 +64,22 @@ do_interpreter: Final[bool] = args.interpreter or all_the_way
 term_width: Final[int] = shutil.get_terminal_size().columns
 
 
+def green_print(s: str) -> None:
+  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
+
+
+def red_print(s: str) -> None:
+  print(colorama.Fore.RED + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
+
+
+def cyan_print(s: str) -> None:
+  print(colorama.Fore.LIGHTCYAN_EX + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
+
+
 def print_args() -> None:
   '''Print terminal arguments.'''
   print('#' * term_width)
-  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Terminal args:' + colorama.Style.RESET_ALL)
+  cyan_print('>> 🌵🏜️ Terminal args:')
 
   def colored(x: Any) -> str:
     if isinstance(x, bool):
@@ -86,7 +99,7 @@ def print_args() -> None:
   print(f'-- do_cov:           {colored(do_cov)}')
   print(f'-- minimum_cov_rate: {colored(str(minimum_cov_rate) + "%")}')
 
-  print(f'-- do_linter:        {colored(do_linter)}')
+  print(f'-- do_ruff:          {colored(do_ruff)}')
   print(f'-- do_mypy:          {colored(do_mypy)}')
 
   print(f'-- do_demo:          {colored(do_demo)}')
@@ -99,7 +112,7 @@ def print_sysinfo() -> None:
   this_moment: datetime = datetime.now()
 
   print('\n' + '#' * term_width)
-  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Sys info:' + colorama.Style.RESET_ALL)
+  cyan_print('>> 🔦🖥️ Sys info:')
 
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
@@ -124,7 +137,7 @@ def print_sysinfo() -> None:
   print(f'-- disk usage: {psutil.disk_usage("/").percent}%')
 
 
-def run_proc_and_print(cmds: list[str]) -> int:
+def run_proc_and_print(cmds: list[str], print_details: bool = False) -> int:
   '''This method is mainly for compatability with Windows. It creates a subprocess and runs the commands.'''
   if platform.system() == 'Windows':
     return subprocess.run(cmds).returncode
@@ -132,9 +145,9 @@ def run_proc_and_print(cmds: list[str]) -> int:
     proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
     ret: int = proc.returncode
 
-    if verbose:
+    if print_details:
       print(proc.stdout.decode('utf-8'))
-    if (err_info := proc.stderr.decode('utf-8')).strip() != '': # Print errors if any
+    if (err_info := proc.stderr.decode('utf-8')).strip() != '' or print_details:
       print(err_info)
 
     return ret
@@ -143,7 +156,7 @@ def run_proc_and_print(cmds: list[str]) -> int:
 def run_tests() -> int:
   '''Run tests with pytest, with args from terminal.'''
   print('\n' + '#' * term_width)
-  print('>> Running bazi tests...')
+  cyan_print('>> 🌳🌏 Running bazi tests...')
 
   pytest_args: list[str] = [
     str(Path(os.path.realpath(__file__)).parent / 'tests'),
@@ -174,7 +187,7 @@ def run_tests() -> int:
 def run_coverage(test_f: Callable[[], int]) -> int:
   '''Run tests, and generate coverage report.'''
   print('\n' + '#' * term_width)
-  print(f'>> Running {test_f} with coverage...')
+  cyan_print(f'>> 🐍🦕 Running {test_f} with coverage...')
 
   cov = coverage.Coverage(
     omit=[
@@ -206,20 +219,18 @@ def run_coverage(test_f: Callable[[], int]) -> int:
 def run_ruff() -> int:
   '''Use `ruff` to check for style violations.'''
   print('\n' + '#' * term_width)
-  print('>> Checking for style violations...')
+  cyan_print('>> 📝🕵️ Checking for style violations...')
 
-  proc: subprocess.CompletedProcess = subprocess.run([
+  ruff_ret: int = run_proc_and_print([
     'python3', '-m', 'ruff', 'check', str(Path(__file__).parent)
-  ], capture_output=True)
-  ruff_ret: int = proc.returncode
+  ], print_details=True)
+
   print('>> Checking style violations completed...')
 
   if ruff_ret == 0:
-    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> No style violations found!' + colorama.Style.RESET_ALL)
+    green_print('>> No style violations found!')
   else:
-    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Violations detected!' + colorama.Style.RESET_ALL)
-    print(proc.stdout.decode('utf-8'))
-    print(proc.stderr.decode('utf-8'))
+    red_print('>> Violations detected!')
 
   return ruff_ret
 
@@ -227,86 +238,103 @@ def run_ruff() -> int:
 def run_mypy() -> int:
   '''Do static type checking with `mypy`'''
   print('\n' + '#' * term_width)
-  print('>> Running mypy...')
+  cyan_print('>> 👾🪐 Running mypy...')
+
   ret: int = run_proc_and_print([
     'python3', '-m', 'mypy', str(Path(__file__).parent), 
     '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
     '--warn-return-any', '--warn-unreachable',
-  ])
+  ], print_details=True)
 
   if ret == 0:
-    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
+    green_print('>> mypy static type checking passed!')
   else:
-    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
+    red_print('>> mypy static type checking failed!')
   return ret
 
 
 def run_demo() -> int:
   '''Run demo by executing `run_demo.py`'''
   print('\n' + '#' * term_width)
-  print('>> Running demo...')
+  cyan_print('>> 🌲🏕️ Running demo...')
+
   ret: int = run_proc_and_print([
     'python3', str(Path(__file__).parent / 'run_demo.py')
-  ])
+  ], print_details=verbose)
 
   if ret == 0:
-    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Demo passed!' + colorama.Style.RESET_ALL)
+    green_print('>> Demo passed!')
   else:
-    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Demo failed!' + colorama.Style.RESET_ALL)
+    red_print('>> Demo failed!')
   return ret
 
 
 def run_interpreter() -> int:
   '''Run interpreter by executing `run_interpreter.py`'''
   print('\n' + '#' * term_width)
-  print('>> Running interpreter...')
+  cyan_print('>> 🚞🌋 Running interpreter...')
+
   ret: int = run_proc_and_print([
     'python3', str(Path(__file__).parent / 'run_interpreter.py')
-  ])
+  ], print_details=verbose)
   
   if ret == 0:
-    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
+    green_print('>> Interpreter passed!')
   else:
-    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
+    red_print('>> Interpreter failed!')
   return ret
 
 
 def main() -> None:
   start_time: datetime = datetime.now()
-  ret_code: int = 0
 
   print_args()
   print_sysinfo()
 
+  subprocess_status: dict[str, tuple[int, float]] = {}
+  def run_subprocess(name: str, f: Callable[[], int]) -> None:
+    subprocess_start_time: datetime = datetime.now()
+    subprocess_status[name] = (f(), (datetime.now() - subprocess_start_time).total_seconds())
+
   if not skip_test:
     if do_cov:
-      ret_code |= run_coverage(run_tests)
+      run_subprocess('coverage with tests', lambda: run_coverage(run_tests))
     else:
-      ret_code |= run_tests()
+      run_subprocess('tests', run_tests)
 
   if do_demo:
-    ret_code |= run_demo()
+    run_subprocess('demo', run_demo)
 
   if do_interpreter:
-    ret_code |= run_interpreter()
+    run_subprocess('interpreter', run_interpreter)
 
-  if do_linter:
-    ret_code |= run_ruff()
+  if do_ruff:
+    run_subprocess('ruff', run_ruff)
 
   if do_mypy:
-    ret_code |= run_mypy()
+    run_subprocess('mypy', run_mypy)
 
   print('\n' + '#' * term_width)
   end_time: datetime = datetime.now()
   print(f'-- Finished at {end_time.isoformat()}')
   print(f'-- Time elapsed: {end_time - start_time}')
 
-  if ret_code == 0:
-    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> All tasks passed!' + colorama.Style.RESET_ALL)
-  else:
-    print(colorama.Fore.RED + colorama.Style.BRIGHT + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
+  max_name_len: Final[int] = max(map(lambda x : len(x), subprocess_status.keys()))
+  resolved_retcode: Final[int] = reduce(lambda x, y : x | y, map(lambda x: x[0], subprocess_status.values()))
 
-  sys.exit(ret_code)
+  print('-- Sub-tasks status:')
+  for name, (sp_retcode, sp_time) in subprocess_status.items():
+    ok: bool = sp_retcode == 0
+    name_color: str = colorama.Fore.GREEN if ok else colorama.Fore.YELLOW
+    name = name_color + name.ljust(max_name_len + 1) + colorama.Style.RESET_ALL
+    print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {sp_time} seconds')
+
+  if resolved_retcode == 0:
+    green_print('>> All tasks passed! 💖✨')
+  else:
+    red_print(f'>> Some tasks failed! Exit with code {resolved_retcode} 😥💥')
+
+  sys.exit(resolved_retcode)
 
 
 if __name__ == '__main__':

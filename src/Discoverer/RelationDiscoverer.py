@@ -158,7 +158,7 @@ class RelationDiscoverer:
     return Result(
       at_birth = self._atbirth_tiangan_discovery,
       transits = TianganUtils.discover(transit_tiangans),
-      mutual   = TianganUtils.discover_mutually(self._atbirth_tiangans, transit_tiangans),
+      mutual   = TianganUtils.discover_mutual(self._atbirth_tiangans, transit_tiangans),
     )
 
   def dizhi(self, gz_year: int, option: TransitOption) -> Result[DizhiUtils.DizhiRelationDiscovery]:
@@ -213,5 +213,5 @@ class RelationDiscoverer:
     return Result(
       at_birth = self._atbirth_dizhi_discovery,
       transits = DizhiUtils.discover(transit_dizhis),
-      mutual   = DizhiUtils.discover_mutually(self._atbirth_dizhis, transit_dizhis),
+      mutual   = DizhiUtils.discover_mutual(self._atbirth_dizhis, transit_dizhis),
     )

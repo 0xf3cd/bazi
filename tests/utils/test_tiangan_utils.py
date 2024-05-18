@@ -336,7 +336,7 @@ class TestTianganUtils(unittest.TestCase):
         self.assertEqual(discovery, discovery2)
 
   @pytest.mark.slow
-  def test_discover_mutually(self) -> None:
+  def test_discover_mutual(self) -> None:
     def __random_tg_lists() -> tuple[list[Tiangan], list[Tiangan]]:
       tiangans1: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
       tiangans2: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
@@ -350,10 +350,10 @@ class TestTianganUtils(unittest.TestCase):
 
     for _ in range(512):
       tiangans1, tiangans2 = __random_tg_lists()
-      discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(tiangans1, tiangans2)
+      discovery: TianganRelationDiscovery = TianganUtils.discover_mutual(tiangans1, tiangans2)
 
-      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans1, tiangans2)) # Test consistency
-      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans2, tiangans1)) # Test symmertry/equivalence
+      self.assertEqual(discovery, TianganUtils.discover_mutual(tiangans1, tiangans2)) # Test consistency
+      self.assertEqual(discovery, TianganUtils.discover_mutual(tiangans2, tiangans1)) # Test symmertry/equivalence
 
       expected: dict[TianganRelation, list[TianganCombo]] = {
         TianganRelation.合: [],
@@ -421,7 +421,7 @@ class TestTianganUtils(unittest.TestCase):
 
       tiangans_part1: set[Tiangan] = set(random.sample(tiangans, random.randint(0, len(tiangans))))
       tiangans_part2: set[Tiangan] = set(tiangans) - tiangans_part1
-      mutual_discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(list(tiangans_part1), list(tiangans_part2))
+      mutual_discovery: TianganRelationDiscovery = TianganUtils.discover_mutual(list(tiangans_part1), list(tiangans_part2))
 
       for rel, mutual_combos in mutual_discovery.items():
         expected = discovery[rel]
@@ -429,7 +429,7 @@ class TestTianganUtils(unittest.TestCase):
           self.assertIn(combo, expected)
         self.assertGreaterEqual(len(expected), len(mutual_combos))
 
-      with self.subTest('discover / discover_mutually consistency'):
+      with self.subTest('discover / discover_mutual consistency'):
         part1_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part1))
         part2_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part2))
 

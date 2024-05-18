@@ -130,7 +130,7 @@ class TestRelationDiscoverer(unittest.TestCase):
 
           self.assertEqual(result.at_birth, TianganUtils.discover(chart.bazi.four_tiangans), 'At-birth / 原局')
           self.assertEqual(result.transits, TianganUtils.discover(transit_tiangans), 'Transits / 运（即大运、流年、小运）')
-          self.assertEqual(result.mutual, TianganUtils.discover_mutually(chart.bazi.four_tiangans, transit_tiangans), 'Mutual / 原局和运之间的互相作用力/关系')
+          self.assertEqual(result.mutual, TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tiangans), 'Mutual / 原局和运之间的互相作用力/关系')
 
           expected_combined: TianganUtils.TianganRelationDiscovery = TianganUtils.discover(list(chart.bazi.four_tiangans) + transit_tiangans)
           for rel in TianganRelation:
@@ -264,7 +264,7 @@ class TestRelationDiscoverer(unittest.TestCase):
 
           self.assertEqual(result.at_birth, DizhiUtils.discover(chart.bazi.four_dizhis), 'At-birth / 原局')
           self.assertEqual(result.transits, DizhiUtils.discover(transit_dizhis), 'Transits / 运（即大运、流年、小运）')
-          self.assertEqual(result.mutual, DizhiUtils.discover_mutually(chart.bazi.four_dizhis, transit_dizhis), 'Mutual / 原局和运之间的互相作用力/关系')
+          self.assertEqual(result.mutual, DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dizhis), 'Mutual / 原局和运之间的互相作用力/关系')
 
           expected_combined = DizhiUtils.discover(list(chart.bazi.four_dizhis) + transit_dizhis)
           for rel in DizhiRelation:

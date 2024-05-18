@@ -934,7 +934,7 @@ class TestDizhiUtils(unittest.TestCase):
         self.assertEqual(discovery, discovery2)
 
   @pytest.mark.slow
-  def test_discover_mutually(self) -> None:
+  def test_discover_mutual(self) -> None:
     def __random_dz_lists() -> tuple[list[Dizhi], list[Dizhi]]:
       dizhis1: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
       dizhis2: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
@@ -948,10 +948,10 @@ class TestDizhiUtils(unittest.TestCase):
 
     for _ in range(16):
       dizhis1, dizhis2 = __random_dz_lists()
-      discovery: DizhiRelationDiscovery = DizhiUtils.discover_mutually(dizhis1, dizhis2)
+      discovery: DizhiRelationDiscovery = DizhiUtils.discover_mutual(dizhis1, dizhis2)
 
-      self.assertEqual(discovery, DizhiUtils.discover_mutually(dizhis1, dizhis2)) # Test consistency
-      self.assertEqual(discovery, DizhiUtils.discover_mutually(dizhis2, dizhis1)) # Test symmetry/equivalence
+      self.assertEqual(discovery, DizhiUtils.discover_mutual(dizhis1, dizhis2)) # Test consistency
+      self.assertEqual(discovery, DizhiUtils.discover_mutual(dizhis2, dizhis1)) # Test symmetry/equivalence
 
       expected: dict[DizhiRelation, set[DizhiCombo]] = {
         rel : set() for rel in DizhiRelation
@@ -1018,7 +1018,7 @@ class TestDizhiUtils(unittest.TestCase):
         relation_results: list[list[Any]] = []
         combo_results: list[DizhiRelationCombos] = []
         discover_results: list[DizhiRelationDiscovery] = []
-        discover_mutually_results: list[DizhiRelationDiscovery] = []
+        discover_mutual_results: list[DizhiRelationDiscovery] = []
 
         dizhis_p1, dizhis_p2 = __split(dizhis)
        
@@ -1030,8 +1030,8 @@ class TestDizhiUtils(unittest.TestCase):
           if random.randint(0, 1) == 0:
             discover_results.append(DizhiUtils.discover(dizhis))
           if random.randint(0, 1) == 0:
-            discover_mutually_results.append(DizhiUtils.discover_mutually(dizhis_p1, dizhis_p2))
-            discover_mutually_results.append(DizhiUtils.discover_mutually(dizhis_p2, dizhis_p1))
+            discover_mutual_results.append(DizhiUtils.discover_mutual(dizhis_p1, dizhis_p2))
+            discover_mutual_results.append(DizhiUtils.discover_mutual(dizhis_p2, dizhis_p1))
 
         for rr1, rr2 in zip(relation_results, relation_results[1:]):
           self.assertEqual(rr1, rr2)
@@ -1039,7 +1039,7 @@ class TestDizhiUtils(unittest.TestCase):
           self.assertEqual(cr1, cr2)
         for dr1, dr2 in zip(discover_results, discover_results[1:]):
           self.assertEqual(dr1, dr2)
-        for dmr1, dmr2 in zip(discover_mutually_results, discover_mutually_results[1:]):
+        for dmr1, dmr2 in zip(discover_mutual_results, discover_mutual_results[1:]):
           self.assertEqual(dmr1, dmr2)
 
       self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
