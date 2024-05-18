@@ -337,7 +337,7 @@ class TestTianganUtils(unittest.TestCase):
 
   @pytest.mark.slow
   def test_discover_mutually(self) -> None:
-    for _ in range(512):
+    def __random_tg_lists() -> tuple[list[Tiangan], list[Tiangan]]:
       tiangans1: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
       tiangans2: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
 
@@ -346,10 +346,14 @@ class TestTianganUtils(unittest.TestCase):
       if random.randint(0, 2) == 0:
         tiangans2.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
 
+      return tiangans1, tiangans2
+
+    for _ in range(512):
+      tiangans1, tiangans2 = __random_tg_lists()
       discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(tiangans1, tiangans2)
 
       self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans1, tiangans2)) # Test consistency
-      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans2, tiangans1)) # Test equivalence
+      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans2, tiangans1)) # Test symmertry/equivalence
 
       expected: dict[TianganRelation, list[TianganCombo]] = {
         TianganRelation.合: [],
@@ -359,23 +363,21 @@ class TestTianganUtils(unittest.TestCase):
       }
 
       for tg1, tg2 in itertools.product(tiangans1, tiangans2):
+        combo = TianganCombo((tg1, tg2))
+
         if TianganUtils.he(tg1, tg2):
-          combo = TianganCombo((tg1, tg2))
           self.assertIn(combo, discovery[TianganRelation.合])
           expected[TianganRelation.合].append(combo)
           
         if TianganUtils.chong(tg1, tg2):
-          combo = TianganCombo((tg1, tg2))
           self.assertIn(combo, discovery[TianganRelation.冲])
           expected[TianganRelation.冲].append(combo)
 
         if TianganUtils.sheng(tg1, tg2) or TianganUtils.sheng(tg2, tg1):
-          combo = TianganCombo((tg1, tg2))
           self.assertIn(combo, discovery[TianganRelation.生])
           expected[TianganRelation.生].append(combo)
 
         if TianganUtils.ke(tg1, tg2) or TianganUtils.ke(tg2, tg1):
-          combo = TianganCombo((tg1, tg2))
           self.assertIn(combo, discovery[TianganRelation.克])
           expected[TianganRelation.克].append(combo)
 

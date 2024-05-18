@@ -73,7 +73,7 @@ def print_args() -> None:
       if x:
         return colorama.Fore.LIGHTGREEN_EX + colorama.Style.BRIGHT + str(x) + colorama.Style.RESET_ALL
       return colorama.Fore.LIGHTYELLOW_EX + colorama.Style.DIM + str(x) + colorama.Style.RESET_ALL
-    return colorama.Fore.LIGHTMAGENTA_EX + str(x) + colorama.Style.RESET_ALL
+    return str(x)
 
   print(f'-- {sys.argv}')
   print(f'-- all_the_way:      {colored(all_the_way)}')

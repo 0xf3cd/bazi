@@ -75,17 +75,17 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
   return Rules.DIZHI_LIUHE.get(combo, None)
 
 
-def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NORMAL) -> bool:
+def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NORMAL_EXTENDED) -> bool:
   '''
   Check if the input Dizhis are in ANHE (暗合) relation. If so, return `True`. If not, return `False`.
-  There are multiple definitions for ANHE. The default definition is `Rules.AnheDef.NORMAL`.
+  There are multiple definitions for ANHE. The default definition is `Rules.AnheDef.NORMAL_EXTENDED`.
   检查输入的地支是否构成暗合关系。如果是，返回 `True`。否则返回 `False`。
-  暗合关系的看法有多种，默认使用 `Rules.AnheDef.NORMAL`。
+  暗合关系的看法有多种，默认使用 `Rules.AnheDef.NORMAL_EXTENDED`。
 
   Args:
   - dz1: (Dizhi) The first Dizhi.
   - dz2: (Dizhi) The second Dizhi.
-  - definition: (Rules.AnheDef) The definition of the ANHE relation. Default to `Rules.AnheDef.NORMAL`.
+  - definition: (Rules.AnheDef) The definition of the ANHE relation. Default to `Rules.AnheDef.NORMAL_EXTENDED`.
 
   Return: (bool) Whether the Dizhis form in ANHE (暗合) relation.
 
@@ -93,9 +93,9 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NO
   - anhe(Dizhi.寅, Dizhi.午)
     - return: True
   - anhe(Dizhi.寅, Dizhi.丑)
-    - return: False
-  - anhe(Dizhi.寅, Dizhi.丑, Rules.AnheDef.NORMAL_EXTENDED)
     - return: True
+  - anhe(Dizhi.寅, Dizhi.丑, Rules.AnheDef.NORMAL)
+    - return: False
   - anhe(Dizhi.寅, Dizhi.午, Rules.AnheDef.MANGPAI)
     - return: False
   '''
@@ -226,26 +226,26 @@ def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.STRICT) -> Op
   Return: (Optional[Rules.XingSubType]) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
 
   Examples:
-  - xing([Dizhi.寅, Dizhi.巳, Dizhi.申])
+  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申])
     - return: XingSubType.SANXING
-  - xing([Dizhi.寅, Dizhi.巳], Rules.XingDef.STRICT)
+  - xing(*[Dizhi.寅, Dizhi.巳], Rules.XingDef.STRICT)
     - return: None
-  - xing([Dizhi.寅, Dizhi.巳], Rules.XingDef.LOOSE)
+  - xing(*[Dizhi.寅, Dizhi.巳], Rules.XingDef.LOOSE)
     - return: XingSubType.SANXING
-  - xing((Dizhi.午))
+  - xing(Dizhi.午)
     - return: None
-  - xing((Dizhi.午, Dizhi.午))
+  - xing(Dizhi.午, Dizhi.午)
     - return: XingSubType.ZIXING
-  - xing((Dizhi.午), Rules.XingDef.LOOSE)
+  - xing(Dizhi.午, Rules.XingDef.LOOSE)
     - return: None
-  - xing([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午]) # Not a exact match.
+  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午]) # Not a exact match.
     - return: None
-  - xing([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午]) # Multiple matches.
+  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午]) # Multiple matches.
     - return: None
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
-  assert 0 <= len(dizhis) <= 3
+  assert len(dizhis) <= 3
   assert isinstance(definition, Rules.XingDef)
 
   xing_rules: frozendict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]

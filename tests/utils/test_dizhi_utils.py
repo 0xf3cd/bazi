@@ -9,7 +9,7 @@ import pytest
 import unittest
 
 from collections import Counter
-from typing import Union, Optional, Iterable, Any
+from typing import Union, Optional, Iterable, Any, Callable
 
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Rules import Rules
@@ -218,7 +218,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     # Ensure the default definition is `NORMAL`.
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      self.assertEqual(DizhiUtils.anhe(dz1, dz2), DizhiCombo((dz1, dz2)) in normal_combos)
+      self.assertEqual(DizhiUtils.anhe(dz1, dz2), DizhiCombo((dz1, dz2)) in normal_extended_combos)
       self.assertEqual(DizhiUtils.anhe(dz1, dz2), DizhiUtils.anhe(dz2, dz1))
 
   def test_search_tonghe(self) -> None:
@@ -933,6 +933,63 @@ class TestDizhiUtils(unittest.TestCase):
         discovery2: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
         self.assertEqual(discovery, discovery2)
 
+  @pytest.mark.slow
+  def test_discover_mutually(self) -> None:
+    def __random_dz_lists() -> tuple[list[Dizhi], list[Dizhi]]:
+      dizhis1: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      dizhis2: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+
+      if random.randint(0, 2) == 0:
+        dizhis1.extend(random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))))
+      if random.randint(0, 2) == 0:
+        dizhis2.extend(random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))))
+
+      return dizhis1, dizhis2
+
+    for _ in range(16):
+      dizhis1, dizhis2 = __random_dz_lists()
+      discovery: DizhiRelationDiscovery = DizhiUtils.discover_mutually(dizhis1, dizhis2)
+
+      self.assertEqual(discovery, DizhiUtils.discover_mutually(dizhis1, dizhis2)) # Test consistency
+      self.assertEqual(discovery, DizhiUtils.discover_mutually(dizhis2, dizhis1)) # Test symmetry/equivalence
+
+      expected: dict[DizhiRelation, set[DizhiCombo]] = {
+        rel : set() for rel in DizhiRelation
+      }
+      
+      rules: list[tuple[DizhiRelation, Callable[..., Any], int]] = [
+        (DizhiRelation.三会, DizhiUtils.sanhui, 3),
+        (DizhiRelation.三合, DizhiUtils.sanhe, 3),
+        (DizhiRelation.刑, DizhiUtils.xing, 3),
+        (DizhiRelation.六合, DizhiUtils.liuhe, 2),
+        (DizhiRelation.暗合, DizhiUtils.anhe, 2),
+        (DizhiRelation.通合, DizhiUtils.tonghe, 2),
+        (DizhiRelation.通禄合, DizhiUtils.tongluhe, 2),
+        (DizhiRelation.半合, DizhiUtils.banhe, 2),
+        (DizhiRelation.刑, DizhiUtils.xing, 2),
+        (DizhiRelation.冲, DizhiUtils.chong, 2),
+        (DizhiRelation.破, DizhiUtils.po, 2),
+        (DizhiRelation.害, DizhiUtils.hai, 2),
+        (DizhiRelation.生, DizhiUtils.sheng, 2),
+        (DizhiRelation.克, DizhiUtils.ke, 2),
+      ]
+      
+      # Fill `expected`...
+      dizhis1_set, dizhis2_set = set(dizhis1), set(dizhis2)
+      for rel, f, n in rules:
+        for dz_tuple in itertools.permutations(dizhis1 + dizhis2, n):
+          combo = DizhiCombo(dz_tuple)
+          if not f(*dz_tuple):
+            continue
+          if any(combo.isdisjoint(s) for s in (dizhis1_set, dizhis2_set)):
+            continue
+
+          self.assertIn(combo, discovery[rel])
+          expected[rel].add(combo)
+
+      for rel, expected_combos in expected.items():
+        for combo in discovery[rel]:
+          self.assertIn(combo, expected_combos)
 
   @pytest.mark.slow
   def test_consistency(self) -> None:
