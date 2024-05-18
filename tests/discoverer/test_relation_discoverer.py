@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_analyzer.py
+# test_discoverer.py
 
 import pytest
 import unittest
@@ -12,33 +12,33 @@ from src.Utils import BaziUtils, TianganUtils, DizhiUtils
 from src.Calendar.HkoDataCalendarUtils import to_ganzhi
 
 from src.BaziChart import BaziChart
-from src.Analyzer import RelationAnalyzer, Result
+from src.Discoverer.RelationDiscoverer import RelationDiscoverer, Result
 
 
-class TestRelationAnalysis(unittest.TestCase):
+class TestRelationDiscoverer(unittest.TestCase):
   def test_supports(self) -> None:
     for _ in range(5):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
-      self.assertRaises(AssertionError, analyzer.supports, '1999', RelationAnalyzer.TransitOption.XIAOYUN)
-      self.assertRaises(AssertionError, analyzer.supports, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, analyzer.supports, 1999, 0x1 | 0x4)
+      self.assertRaises(AssertionError, discoverer.support, '1999', RelationDiscoverer.TransitOption.XIAOYUN)
+      self.assertRaises(AssertionError, discoverer.support, 1999, 'XIAOYUN')
+      self.assertRaises(AssertionError, discoverer.support, 1999, 0x1 | 0x4)
 
       with self.subTest('Test ganzhi years before the birth year. Expect not to support.'):
         for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
-          for option in RelationAnalyzer.TransitOption:
-            self.assertFalse(analyzer.supports(gz_year, option))
+          for option in RelationDiscoverer.TransitOption:
+            self.assertFalse(discoverer.support(gz_year, option))
 
       with self.subTest('Test Xiaoyun / 小运.'):
         first_dayun_gz_year: int = next(chart.dayun).ganzhi_year
         for gz_year in range(chart.bazi.ganzhi_date.year, chart.bazi.ganzhi_date.year + len(chart.xiaoyun)):
-          self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.XIAOYUN))
-          self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.LIUNIAN))
-          self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.XIAOYUN_LIUNIAN))
+          self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.XIAOYUN))
+          self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.LIUNIAN))
+          self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.XIAOYUN_LIUNIAN))
 
           # The last Xiaoyun year may also be the first Dayun year - this is the only expected overlap.
-          if analyzer.supports(gz_year, RelationAnalyzer.TransitOption.DAYUN):
+          if discoverer.support(gz_year, RelationDiscoverer.TransitOption.DAYUN):
             self.assertEqual(gz_year, first_dayun_gz_year)
           else:
             self.assertLess(gz_year, first_dayun_gz_year)
@@ -46,46 +46,46 @@ class TestRelationAnalysis(unittest.TestCase):
       with self.subTest('Test Dayun / 大运.'):
         for start_gz_year, _ in itertools.islice(chart.dayun, 10): # Expect the first 10 dayuns to be supported anyways...
           for gz_year in range(start_gz_year, start_gz_year + 10):
-            self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.DAYUN))
-            self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.LIUNIAN))
-            self.assertTrue(analyzer.supports(gz_year, RelationAnalyzer.TransitOption.DAYUN_LIUNIAN))
+            self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.DAYUN))
+            self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.LIUNIAN))
+            self.assertTrue(discoverer.support(gz_year, RelationDiscoverer.TransitOption.DAYUN_LIUNIAN))
 
   @pytest.mark.slow
   def test_tiangan_negative(self) -> None:
     for _ in range(16):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
-      self.assertRaises(AssertionError, analyzer.tiangan, '1999', RelationAnalyzer.TransitOption.XIAOYUN)
-      self.assertRaises(AssertionError, analyzer.tiangan, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, analyzer.tiangan, 1999, 0x1 | 0x4)
+      self.assertRaises(AssertionError, discoverer.tiangan, '1999', RelationDiscoverer.TransitOption.XIAOYUN)
+      self.assertRaises(AssertionError, discoverer.tiangan, 1999, 'XIAOYUN')
+      self.assertRaises(AssertionError, discoverer.tiangan, 1999, 0x1 | 0x4)
 
       for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
-        for option in RelationAnalyzer.TransitOption:
-          self.assertRaises(ValueError, analyzer.tiangan, gz_year, option)
+        for option in RelationDiscoverer.TransitOption:
+          self.assertRaises(ValueError, discoverer.tiangan, gz_year, option)
 
       # Iteration starting from the first liunian (which is the birth ganzhi year).
       random_selected = random.sample(list(itertools.islice(chart.liunian, 300)), 100)
       for gz_year, _ in random_selected:
-        for option in RelationAnalyzer.TransitOption:
-          if analyzer.supports(gz_year, option):
-            self.assertIsNotNone(analyzer.tiangan(gz_year, option))
+        for option in RelationDiscoverer.TransitOption:
+          if discoverer.support(gz_year, option):
+            self.assertIsNotNone(discoverer.tiangan(gz_year, option))
           else:
-            self.assertRaises(ValueError, analyzer.tiangan, gz_year, option)
+            self.assertRaises(ValueError, discoverer.tiangan, gz_year, option)
 
   @pytest.mark.slow
   def test_tiangan_misc(self) -> None:
     for _ in range(128):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
       for dayun_start_gz_year, _ in itertools.islice(chart.dayun, 10):
-        for option in RelationAnalyzer.TransitOption:
-          if not analyzer.supports(dayun_start_gz_year, option):
+        for option in RelationDiscoverer.TransitOption:
+          if not discoverer.support(dayun_start_gz_year, option):
             continue
 
-          r1 = analyzer.tiangan(dayun_start_gz_year, option)
-          r2 = analyzer.tiangan(dayun_start_gz_year, option)
+          r1 = discoverer.tiangan(dayun_start_gz_year, option)
+          r2 = discoverer.tiangan(dayun_start_gz_year, option)
           with self.subTest('new object'):
             self.assertIsNot(r1, r2)
           with self.subTest('equality'):
@@ -97,7 +97,7 @@ class TestRelationAnalysis(unittest.TestCase):
   def test_tiangan_correctness(self) -> None:
     for _ in range(64):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
       xiaoyun_tiangans: dict[int, Tiangan] = {
         chart.bazi.ganzhi_date.year + age - 1 : xy.tiangan
@@ -112,20 +112,20 @@ class TestRelationAnalysis(unittest.TestCase):
       random.shuffle(random_liunians)
 
       for gz_year, _ in random_liunians:
-        for option in RelationAnalyzer.TransitOption:
-          if not analyzer.supports(gz_year, option):
+        for option in RelationDiscoverer.TransitOption:
+          if not discoverer.support(gz_year, option):
             continue
           
-          result: Result[TianganUtils.TianganRelationDiscovery] = analyzer.tiangan(gz_year, option)
+          result: Result[TianganUtils.TianganRelationDiscovery] = discoverer.tiangan(gz_year, option)
           self.assertIsNotNone(result)
 
           transit_tiangans: list[Tiangan] = []
-          if option.value & RelationAnalyzer.TransitOption.XIAOYUN.value:
+          if option.value & RelationDiscoverer.TransitOption.XIAOYUN.value:
             transit_tiangans.append(xiaoyun_tiangans[gz_year])
-          if option.value & RelationAnalyzer.TransitOption.DAYUN.value:
+          if option.value & RelationDiscoverer.TransitOption.DAYUN.value:
             dayun_index: int = (gz_year - dayun_start_gz_year) // 10
             transit_tiangans.append(dayun_tiangans[dayun_index])
-          if option.value & RelationAnalyzer.TransitOption.LIUNIAN.value:
+          if option.value & RelationDiscoverer.TransitOption.LIUNIAN.value:
             transit_tiangans.append(BaziUtils.ganzhi_of_year(gz_year).tiangan)
 
           self.assertEqual(result.at_birth, TianganUtils.discover(chart.bazi.four_tiangans), 'At-birth / 原局')
@@ -140,15 +140,15 @@ class TestRelationAnalysis(unittest.TestCase):
   def test_tiangan_malicious(self) -> None:
     '''This test assumes that the `tiangan` method is not cached and always returns a new object. May be an overkill though...'''
     chart: BaziChart = BaziChart.random()
-    analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+    discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
     gz_year: int = next(chart.dayun).ganzhi_year + random.randint(0, 100)
-    options: RelationAnalyzer.TransitOption = random.choice([RelationAnalyzer.TransitOption.DAYUN, 
-                                                             RelationAnalyzer.TransitOption.LIUNIAN, 
-                                                             RelationAnalyzer.TransitOption.DAYUN_LIUNIAN])
+    options: RelationDiscoverer.TransitOption = random.choice([RelationDiscoverer.TransitOption.DAYUN, 
+                                                             RelationDiscoverer.TransitOption.LIUNIAN, 
+                                                             RelationDiscoverer.TransitOption.DAYUN_LIUNIAN])
 
-    r1 = analyzer.tiangan(gz_year, options)
-    r2 = analyzer.tiangan(gz_year, options)
+    r1 = discoverer.tiangan(gz_year, options)
+    r2 = discoverer.tiangan(gz_year, options)
 
     self.assertEqual(r1.at_birth, r2.at_birth)
     self.assertEqual(r1.transits, r2.transits)
@@ -179,7 +179,7 @@ class TestRelationAnalysis(unittest.TestCase):
     self.assertNotEqual(r1.transits, r2.transits)
     self.assertNotEqual(r1.mutual, r2.mutual)
 
-    r3 = analyzer.tiangan(gz_year, options)
+    r3 = discoverer.tiangan(gz_year, options)
     self.assertEqual(r2.at_birth, r3.at_birth)
     self.assertEqual(r2.transits, r3.transits)
     self.assertEqual(r2.mutual, r3.mutual)
@@ -188,38 +188,38 @@ class TestRelationAnalysis(unittest.TestCase):
   def test_dizhi_negative(self) -> None:
     for _ in range(16):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
-      self.assertRaises(AssertionError, analyzer.dizhi, '1999', RelationAnalyzer.TransitOption.XIAOYUN)
-      self.assertRaises(AssertionError, analyzer.dizhi, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, analyzer.dizhi, 1999, 0x1 | 0x4)
+      self.assertRaises(AssertionError, discoverer.dizhi, '1999', RelationDiscoverer.TransitOption.XIAOYUN)
+      self.assertRaises(AssertionError, discoverer.dizhi, 1999, 'XIAOYUN')
+      self.assertRaises(AssertionError, discoverer.dizhi, 1999, 0x1 | 0x4)
 
       for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
-        for option in RelationAnalyzer.TransitOption:
-          self.assertRaises(ValueError, analyzer.dizhi, gz_year, option)
+        for option in RelationDiscoverer.TransitOption:
+          self.assertRaises(ValueError, discoverer.dizhi, gz_year, option)
 
       # Iteration starting from the first liunian (which is the birth ganzhi year).
       random_selected = random.sample(list(itertools.islice(chart.liunian, 300)), 100)
       for gz_year, _ in random_selected:
-        for option in RelationAnalyzer.TransitOption:
-          if analyzer.supports(gz_year, option):
-            self.assertIsNotNone(analyzer.dizhi(gz_year, option))
+        for option in RelationDiscoverer.TransitOption:
+          if discoverer.support(gz_year, option):
+            self.assertIsNotNone(discoverer.dizhi(gz_year, option))
           else:
-            self.assertRaises(ValueError, analyzer.dizhi, gz_year, option)
+            self.assertRaises(ValueError, discoverer.dizhi, gz_year, option)
 
   @pytest.mark.slow
   def test_dizhi_misc(self) -> None:
     for _ in range(64):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
       for dayun_start_gz_year, _ in itertools.islice(chart.dayun, 10):
-        for option in RelationAnalyzer.TransitOption:
-          if not analyzer.supports(dayun_start_gz_year, option):
+        for option in RelationDiscoverer.TransitOption:
+          if not discoverer.support(dayun_start_gz_year, option):
             continue
 
-          r1 = analyzer.dizhi(dayun_start_gz_year, option)
-          r2 = analyzer.dizhi(dayun_start_gz_year, option)
+          r1 = discoverer.dizhi(dayun_start_gz_year, option)
+          r2 = discoverer.dizhi(dayun_start_gz_year, option)
           with self.subTest('new object'):
             self.assertIsNot(r1, r2)
           with self.subTest('equality'):
@@ -231,7 +231,7 @@ class TestRelationAnalysis(unittest.TestCase):
   def test_dizhi_correctness(self) -> None:
     for _ in range(32):
       chart: BaziChart = BaziChart.random()
-      analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+      discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
       xiaoyun_dizhis: dict[int, Dizhi] = {
         chart.bazi.ganzhi_date.year + age - 1 : xy.dizhi
@@ -246,20 +246,20 @@ class TestRelationAnalysis(unittest.TestCase):
       random.shuffle(random_liunians)
 
       for gz_year, _ in random_liunians:
-        for option in RelationAnalyzer.TransitOption:
-          if not analyzer.supports(gz_year, option):
+        for option in RelationDiscoverer.TransitOption:
+          if not discoverer.support(gz_year, option):
             continue
 
-          result: Result[DizhiUtils.DizhiRelationDiscovery] = analyzer.dizhi(gz_year, option)
+          result: Result[DizhiUtils.DizhiRelationDiscovery] = discoverer.dizhi(gz_year, option)
           self.assertIsNotNone(result)
 
           transit_dizhis: list[Dizhi] = []
-          if option.value & RelationAnalyzer.TransitOption.XIAOYUN.value:
+          if option.value & RelationDiscoverer.TransitOption.XIAOYUN.value:
             transit_dizhis.append(xiaoyun_dizhis[gz_year])
-          if option.value & RelationAnalyzer.TransitOption.DAYUN.value:
+          if option.value & RelationDiscoverer.TransitOption.DAYUN.value:
             dayun_index: int = (gz_year - dayun_start_gz_year) // 10
             transit_dizhis.append(dayun_dizhis[dayun_index])
-          if option.value & RelationAnalyzer.TransitOption.LIUNIAN.value:
+          if option.value & RelationDiscoverer.TransitOption.LIUNIAN.value:
             transit_dizhis.append(BaziUtils.ganzhi_of_year(gz_year).dizhi)
 
           self.assertEqual(result.at_birth, DizhiUtils.discover(chart.bazi.four_dizhis), 'At-birth / 原局')
@@ -274,15 +274,15 @@ class TestRelationAnalysis(unittest.TestCase):
   def test_dizhi_malicious(self) -> None:
     '''This test assumes that the 'dizhi' method is not cached and always returns a new object. May be an overkill though...'''
     chart: BaziChart = BaziChart.random()
-    analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+    discoverer: RelationDiscoverer = RelationDiscoverer(chart)
 
     gz_year: int = next(chart.dayun).ganzhi_year + random.randint(0, 100)
-    options: RelationAnalyzer.TransitOption = random.choice([RelationAnalyzer.TransitOption.DAYUN, 
-                                                             RelationAnalyzer.TransitOption.LIUNIAN, 
-                                                             RelationAnalyzer.TransitOption.DAYUN_LIUNIAN])
+    options: RelationDiscoverer.TransitOption = random.choice([RelationDiscoverer.TransitOption.DAYUN, 
+                                                             RelationDiscoverer.TransitOption.LIUNIAN, 
+                                                             RelationDiscoverer.TransitOption.DAYUN_LIUNIAN])
 
-    r1 = analyzer.dizhi(gz_year, options)
-    r2 = analyzer.dizhi(gz_year, options)
+    r1 = discoverer.dizhi(gz_year, options)
+    r2 = discoverer.dizhi(gz_year, options)
 
     self.assertEqual(r1.at_birth, r2.at_birth)
     self.assertEqual(r1.transits, r2.transits)
@@ -313,7 +313,7 @@ class TestRelationAnalysis(unittest.TestCase):
     self.assertNotEqual(r1.transits, r2.transits)
     self.assertNotEqual(r1.mutual, r2.mutual)
 
-    r3 = analyzer.dizhi(gz_year, options)
+    r3 = discoverer.dizhi(gz_year, options)
     self.assertEqual(r2.at_birth, r3.at_birth)
     self.assertEqual(r2.transits, r3.transits)
     self.assertEqual(r2.mutual, r3.mutual)

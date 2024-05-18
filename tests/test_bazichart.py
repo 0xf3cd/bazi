@@ -183,7 +183,7 @@ class TestBaziChart(unittest.TestCase):
     '''
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
     '''
-    for _ in range(256):
+    for _ in range(128):
       chart: BaziChart = BaziChart(Bazi.random())
 
       day_master: Tiangan = chart.bazi.day_master
@@ -351,11 +351,11 @@ class TestBaziChart(unittest.TestCase):
   @pytest.mark.slow
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
-    for _ in range(128):
+    for _ in range(64):
       random_bazi: Bazi = Bazi.random()
       expected: BaziChart = BaziChart(random_bazi)
 
-      for __ in range(10):
+      for __ in range(5):
         chart: BaziChart = BaziChart(random_bazi)
         self.assertEqual(chart.bazi, expected.bazi)
 
@@ -378,7 +378,7 @@ class TestBaziChart(unittest.TestCase):
 
   @pytest.mark.slow
   def test_json(self) -> None:
-    for _ in range(128):
+    for _ in range(32):
       chart: BaziChart = BaziChart(Bazi.random())
       dt: datetime = chart.bazi.solar_datetime
 

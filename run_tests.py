@@ -50,7 +50,7 @@ skip_test: Final[bool] = args.no_test and not all_the_way
 run_slow_test: Final[bool] = args.slow_test or all_the_way
 run_hko_test: Final[bool] = args.hkodata_test or all_the_way
 expression: Final[Optional[str]] = args.expression if not all_the_way else None # '--all/-a' takes precedence over '--expression/-k'
-test_verbose: Final[bool] = args.verbose
+verbose: Final[bool] = args.verbose
 
 do_cov: Final[bool] = args.coverage or all_the_way
 minimum_cov_rate: Final[float] = args.coverage_rate
@@ -81,7 +81,7 @@ def print_args() -> None:
   print(f'-- run_slow_test:    {colored(run_slow_test)}')
   print(f'-- run_hko_test:     {colored(run_hko_test)}')
   print(f'-- expression:       {colored(expression)}')
-  print(f'-- test_verbose:     {colored(test_verbose)}')
+  print(f'-- verbose:          {colored(verbose)}')
 
   print(f'-- do_cov:           {colored(do_cov)}')
   print(f'-- minimum_cov_rate: {colored(str(minimum_cov_rate) + "%")}')
@@ -131,8 +131,12 @@ def run_proc_and_print(cmds: list[str]) -> int:
   else:
     proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
     ret: int = proc.returncode
-    print(proc.stdout.decode('utf-8'))
-    print(proc.stderr.decode('utf-8'))
+
+    if verbose:
+      print(proc.stdout.decode('utf-8'))
+    if (err_info := proc.stderr.decode('utf-8')).strip() != '': # Print errors if any
+      print(err_info)
+
     return ret
 
 
@@ -146,7 +150,7 @@ def run_tests() -> int:
     '-x',
   ]
 
-  if test_verbose:
+  if verbose:
     pytest_args.append('-v')
 
   if expression is not None: # If `-k` is set, we don't care `-s` and `-hko`...
