@@ -4,9 +4,10 @@
 import pytest
 import unittest
 
+import random
 import itertools
 
-from src.Defines import Tiangan
+from src.Defines import Tiangan, TianganRelation
 from src.Utils import BaziUtils, TianganUtils
 from src.Calendar.HkoDataCalendarUtils import to_ganzhi
 
@@ -93,7 +94,7 @@ class TestRelationAnalysis(unittest.TestCase):
 
   @pytest.mark.slow
   def test_tiangan_correctness(self) -> None:
-    for _ in range(32):
+    for _ in range(64):
       chart: BaziChart = BaziChart.random()
       analyzer: RelationAnalyzer = RelationAnalyzer(chart)
 
@@ -105,7 +106,11 @@ class TestRelationAnalysis(unittest.TestCase):
       dayun_start_gz_year: int = to_ganzhi(chart.dayun_start_moment).year
       dayun_tiangans: list[Tiangan] = list(dy.ganzhi.tiangan for dy in itertools.islice(chart.dayun, 50))
 
-      for gz_year, _ in itertools.islice(chart.liunian, 200):
+      # Randomly select 50 ganzhi years to test...
+      random_liunians = random.sample(list(itertools.islice(chart.liunian, 200)), 20)
+      random.shuffle(random_liunians)
+
+      for gz_year, _ in random_liunians:
         for option in RelationAnalyzer.TransitOption:
           if not analyzer.supports(gz_year, option):
             continue
@@ -125,3 +130,54 @@ class TestRelationAnalysis(unittest.TestCase):
           self.assertEqual(result.at_birth, TianganUtils.discover(chart.bazi.four_tiangans), 'At-birth / 原局')
           self.assertEqual(result.transits, TianganUtils.discover(transit_tiangans), 'Transits / 运（即大运、流年、小运）')
           self.assertEqual(result.mutual, TianganUtils.discover_mutually(chart.bazi.four_tiangans, transit_tiangans), 'Mutual / 原局和运之间的互相作用力/关系')
+
+          expected_combined: TianganUtils.TianganRelationDiscovery = TianganUtils.discover(list(chart.bazi.four_tiangans) + transit_tiangans)
+          for rel in TianganRelation:
+            self.assertSetEqual(set(expected_combined[rel]), set(list(result.at_birth[rel]) + list(result.transits[rel]) + list(result.mutual[rel])))
+
+  def test_tiangan_malicious(self) -> None:
+    '''This test assumes that the `tiangan` method is not cached and always returns a new object. May be an overkill though...'''
+    chart: BaziChart = BaziChart.random()
+    analyzer: RelationAnalyzer = RelationAnalyzer(chart)
+
+    gz_year: int = next(chart.dayun).ganzhi_year + random.randint(0, 100)
+    options: RelationAnalyzer.TransitOption = random.choice([RelationAnalyzer.TransitOption.DAYUN, 
+                                                             RelationAnalyzer.TransitOption.LIUNIAN, 
+                                                             RelationAnalyzer.TransitOption.DAYUN_LIUNIAN])
+
+    r1 = analyzer.tiangan(gz_year, options)
+    r2 = analyzer.tiangan(gz_year, options)
+
+    self.assertEqual(r1.at_birth, r2.at_birth)
+    self.assertEqual(r1.transits, r2.transits)
+    self.assertEqual(r1.mutual, r2.mutual)
+
+    def __random_discovery() -> TianganUtils.TianganRelationDiscovery:
+      return TianganUtils.discover(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+    
+    while True:
+      new_at_birth = __random_discovery()
+      if new_at_birth != r1.at_birth:
+        r1._at_birth = new_at_birth # type: ignore
+        break
+
+    while True:
+      new_transits = __random_discovery()
+      if new_transits != r1.transits:
+        r1._transits = new_transits # type: ignore
+        break
+
+    while True:
+      new_mutual = __random_discovery()
+      if new_mutual != r1.mutual:
+        r1._mutual = new_mutual # type: ignore
+        break
+
+    self.assertNotEqual(r1.at_birth, r2.at_birth)
+    self.assertNotEqual(r1.transits, r2.transits)
+    self.assertNotEqual(r1.mutual, r2.mutual)
+
+    r3 = analyzer.tiangan(gz_year, options)
+    self.assertEqual(r2.at_birth, r3.at_birth)
+    self.assertEqual(r2.transits, r3.transits)
+    self.assertEqual(r2.mutual, r3.mutual)
