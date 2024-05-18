@@ -10,7 +10,7 @@ from .Common import frozendict
 from .Defines import Tiangan, Dizhi, Ganzhi
 
 from .BaziChart import BaziChart
-from .Utils import TianganUtils
+from .Utils import TianganUtils, DizhiUtils
 
 
 ResultDataType = TypeVar('ResultDataType')
@@ -86,6 +86,7 @@ class RelationAnalyzer:
 
     # Cache at-birth tiangan relation analysis since it won't change...
     self._atbirth_tiangan_analysis: Final[TianganUtils.TianganRelationDiscovery] = TianganUtils.discover(self._atbirth_tiangans)
+    self._atbirth_dizhi_analysis: Final[DizhiUtils.DizhiRelationDiscovery] = DizhiUtils.discover(self._atbirth_dizhis)
 
   def supports(self, gz_year: int, option: TransitOption) -> bool:
     '''
@@ -113,7 +114,7 @@ class RelationAnalyzer:
 
     Args:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit Tiangans. 干支纪年法中的年，主要用于计算运（大运流年等）的天干。
-    - `option`: Specifies the Tiangas to be picked from transits. 用于指定是否考虑流年、小运、大运等。
+    - `option`: Specifies the Tiangans to be picked from transits. 用于指定是否考虑流年、小运、大运等。
 
     Returns: (Result[TianganRelationDiscovery]) Analysis results of Tiangans of the given year.
 
@@ -155,7 +156,62 @@ class RelationAnalyzer:
       transit_tiangans.append(self._liunian_ganzhis[gz_year].tiangan)
 
     return Result(
-      at_birth = self._atbirth_tiangan_analysis, # Sending an immutable analysis result.
+      at_birth = self._atbirth_tiangan_analysis,
       transits = TianganUtils.discover(transit_tiangans),
       mutual   = TianganUtils.discover_mutually(self._atbirth_tiangans, transit_tiangans),
+    )
+
+  def dizhi(self, gz_year: int, option: TransitOption) -> Result[DizhiUtils.DizhiRelationDiscovery]:
+    '''
+    Return a `Result[DizhiRelationDiscovery]` object that represents Dizhis' relations of the at-birth 4 Dizhis and transit Dizhis.
+
+    返回一个 `Result[DizhiRelationDiscovery]`, 代表了原局、运、原局和运之间的关系的分析结果。
+
+    Args:
+    - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit Dizhis. 干支纪年法中的年，主要用于计算运（大运流年等）的地支。
+    - `option`: Specifies the Dizhis to be picked from transits. 用于指定是否考虑流年、小运、大运等。
+
+    Returns: (Result[DizhiRelationDiscovery]) Analysis results of Dizhis of the given year.
+
+    Examples:
+    - dizhi(1984, TransitOption.DAYUN_LIUNIAN)
+      - Transit Dizhis picked from Dayun (the Dayun that 1984 falls into) and Liunian (1984).
+        1984 年所属的大运和流年的地支参与分析。
+      - Result contains / 返回结果:
+        - at_birth: The relations between at-birth Dizhis that can be analyzed from birth chart.
+                    原局的四地支之间的关系。
+        - transits: The relations between transit Dizhis - for this example, the relation between Dayun's Dizhi and Liunian's Dizhi.
+                    运（小运、大运、流年）的地支之间的关系，对于这个例子来说则是流年地支和大运地支之间的关系。
+        - mutual: The mutual relations between at-birth Dizhis and transit Dizhis.
+                  原局地支和运（小运、大运、流年）地支之间的关系/互相作用力，对于这个例子来说是原局四地支与流年大运地支之间形成的力量关系。
+    - dizhi(2024, TransitOption.XIAOYUN)
+      - Transit Dizhis picked from Xiaoyun of ganzhi year 2024.
+        2024 年对应的小运的地支参与分析。
+      - Result contains / 返回结果:
+        - at_birth: The relations between at-birth Dizhis that can be analyzed from birth chart.
+                    原局的四地支之间的关系。
+        - transits: The relations between transit Dizhis - for this example, the result will be empty because only Xiaoyun is selected.
+                    运（小运、大运、流年）的地支之间的关系，对于这个例子来说结果为空，因为只有小运参与分析（需要至少两个地支才能形成地支关系）。
+        - mutual: The mutual relations between at-birth Dizhis and transit Dizhis.
+                  原局地支和运（小运、大运、流年）地支之间的关系/互相作用力，对于这个例子来说是原局四地支与小运地支之间形成的力量关系。
+    '''
+
+    assert isinstance(gz_year, int)
+    assert isinstance(option, RelationAnalyzer.TransitOption) and option in RelationAnalyzer.TransitOption
+
+    if not self.supports(gz_year, option):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, option: {option}')
+    
+    transit_dizhis: list[Dizhi] = []
+    if option.value & RelationAnalyzer.TransitOption.XIAOYUN.value:
+      transit_dizhis.append(self._xiaoyun_ganzhis[gz_year].dizhi)
+    if option.value & RelationAnalyzer.TransitOption.DAYUN.value:
+      transit_dizhis.append(self._dayun_ganzhis[gz_year].dizhi)
+    if option.value & RelationAnalyzer.TransitOption.LIUNIAN.value:
+      transit_dizhis.append(self._liunian_ganzhis[gz_year].dizhi)
+
+    return Result(
+      at_birth = self._atbirth_dizhi_analysis,
+      transits = DizhiUtils.discover(transit_dizhis),
+      mutual   = DizhiUtils.discover_mutually(self._atbirth_dizhis, transit_dizhis),
     )
