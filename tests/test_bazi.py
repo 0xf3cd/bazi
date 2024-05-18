@@ -12,7 +12,7 @@ from typing import Union
 
 from src.Defines import Tiangan, Dizhi, Ganzhi
 from src.Bazi import BaziGender, BaziPrecision, Bazi, 八字
-
+from src.Calendar import HkoDataCalendarUtils
 
 class TestBaziGender(unittest.TestCase):
   def test_basic(self) -> None:
@@ -206,6 +206,14 @@ class TestBazi(unittest.TestCase):
     __subtest(datetime(2000, 2, 4, 22, 1), ['庚', '戊', '壬', '辛'])
     __subtest(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
 
+  def test_ganzhi_date(self) -> None:
+    bazi: Bazi = self.__create_bazi(datetime(1984, 4, 2, 4, 2))
+    self.assertEqual(bazi.ganzhi_date, HkoDataCalendarUtils.to_ganzhi(date(1984, 4, 2)))
+    
+    for _ in range(10):
+      bazi = Bazi.random()
+      self.assertEqual(bazi.ganzhi_date, HkoDataCalendarUtils.to_ganzhi(bazi.solar_date))
+
   def test_date_time(self) -> None:
     bazi: Bazi = self.__create_bazi(datetime(1984, 4, 2, 4, 2))
     self.assertEqual(bazi.solar_date, date(1984, 4, 2))
@@ -223,7 +231,7 @@ class TestBazi(unittest.TestCase):
     with self.assertRaises(AttributeError):
       random_bazi.solar_datetime = datetime(1984, 4, 3, 9, 8) # type: ignore
   
-  def test_chart(self) -> None:
+  def test_pillars(self) -> None:
     def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
       assert len(ganzhi_strs) == 4
 

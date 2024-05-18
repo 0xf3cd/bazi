@@ -10,7 +10,7 @@ import subprocess
 
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional, Final
+from typing import Callable, Optional, Final, Any
 
 import pytest
 import coverage
@@ -19,6 +19,9 @@ import colorama
 
 # Get the argument from terminal.
 argparser = argparse.ArgumentParser()
+
+argparser.add_argument('-a', '--all', action='store_true', 
+                       help='Run all tests; run coverage, lint and static type check; and run demo and interpreter.')
 
 # Test related.
 argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
@@ -33,7 +36,7 @@ argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met mini
 
 # Linter and static type check.
 argparser.add_argument('-l', '--linter', action='store_true', help='Whether or not to skip linting.')
-argparser.add_argument('-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
+argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
 
 # Demo and interpreter.
 argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
@@ -41,30 +44,63 @@ argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether
 
 args = argparser.parse_args()
 
-skip_test: Final[bool] = args.no_test
-run_slow_test: Final[bool] = args.slow_test
-run_hko_test: Final[bool] = args.hkodata_test
-expression: Final[Optional[str]] = args.expression
+all_the_way: Final[bool] = args.all
+
+skip_test: Final[bool] = args.no_test and not all_the_way
+run_slow_test: Final[bool] = args.slow_test or all_the_way
+run_hko_test: Final[bool] = args.hkodata_test or all_the_way
+expression: Final[Optional[str]] = args.expression if not all_the_way else None # '--all/-a' takes precedence over '--expression/-k'
 test_verbose: Final[bool] = args.verbose
 
-do_cov: Final[bool] = args.coverage
+do_cov: Final[bool] = args.coverage or all_the_way
 minimum_cov_rate: Final[float] = args.coverage_rate
-do_linter: Final[bool] = args.linter
-do_mypy: Final[bool] = args.mypy
+do_linter: Final[bool] = args.linter or all_the_way
+do_mypy: Final[bool] = args.mypy or all_the_way
 
-do_demo: Final[bool] = args.demo
-do_interpreter: Final[bool] = args.interpreter
+do_demo: Final[bool] = args.demo or all_the_way
+do_interpreter: Final[bool] = args.interpreter or all_the_way
 
 term_width: Final[int] = shutil.get_terminal_size().columns
+
+
+def print_args() -> None:
+  '''Print terminal arguments.'''
+  print('#' * term_width)
+  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Terminal args:' + colorama.Style.RESET_ALL)
+
+  def colored(x: Any) -> str:
+    if isinstance(x, bool):
+      if x:
+        return colorama.Fore.LIGHTGREEN_EX + colorama.Style.BRIGHT + str(x) + colorama.Style.RESET_ALL
+      return colorama.Fore.LIGHTYELLOW_EX + colorama.Style.DIM + str(x) + colorama.Style.RESET_ALL
+    return str(x)
+
+  print(f'-- {sys.argv}')
+  print(f'-- all_the_way:      {colored(all_the_way)}')
+  print(f'-- skip_test:        {colored(skip_test)}')
+  print(f'-- run_slow_test:    {colored(run_slow_test)}')
+  print(f'-- run_hko_test:     {colored(run_hko_test)}')
+  print(f'-- expression:       {colored(expression)}')
+  print(f'-- test_verbose:     {colored(test_verbose)}')
+
+  print(f'-- do_cov:           {colored(do_cov)}')
+  print(f'-- minimum_cov_rate: {colored(str(minimum_cov_rate) + "%")}')
+
+  print(f'-- do_linter:        {colored(do_linter)}')
+  print(f'-- do_mypy:          {colored(do_mypy)}')
+
+  print(f'-- do_demo:          {colored(do_demo)}')
+  print(f'-- do_interpreter:   {colored(do_interpreter)}')
 
 
 def print_sysinfo() -> None:
   '''Print system time and other info.'''
   mem = psutil.virtual_memory()
   this_moment: datetime = datetime.now()
-  print('#' * term_width)
 
-  print(f'-- {sys.argv}')
+  print('\n' + '#' * term_width)
+  print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Sys info:' + colorama.Style.RESET_ALL)
+
   print(f'-- system time: {this_moment.astimezone()} ({this_moment.astimezone().tzinfo})')
   print(f'-- python executable: {sys.executable}')
   print(f'-- python version: {sys.version}')
@@ -169,15 +205,15 @@ def run_ruff() -> int:
   print('>> Checking for style violations...')
 
   proc: subprocess.CompletedProcess = subprocess.run([
-    'ruff', 'check', str(Path(__file__).parent)
+    'python3', '-m', 'ruff', 'check', str(Path(__file__).parent)
   ], capture_output=True)
   ruff_ret: int = proc.returncode
   print('>> Checking style violations completed...')
 
   if ruff_ret == 0:
-    print(colorama.Fore.GREEN + '>> No style violations found!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> No style violations found!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Violations detected!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Violations detected!' + colorama.Style.RESET_ALL)
     print(proc.stdout.decode('utf-8'))
     print(proc.stderr.decode('utf-8'))
 
@@ -195,9 +231,9 @@ def run_mypy() -> int:
   ])
 
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> mypy static type checking passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> mypy static type checking failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -210,9 +246,9 @@ def run_demo() -> int:
   ])
 
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> Demo passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Demo passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Demo failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Demo failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -225,9 +261,9 @@ def run_interpreter() -> int:
   ])
   
   if ret == 0:
-    print(colorama.Fore.GREEN + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> Interpreter passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + '>> Interpreter failed!' + colorama.Style.RESET_ALL)
   return ret
 
 
@@ -235,6 +271,7 @@ def main() -> None:
   start_time: datetime = datetime.now()
   ret_code: int = 0
 
+  print_args()
   print_sysinfo()
 
   if not skip_test:
@@ -261,9 +298,9 @@ def main() -> None:
   print(f'-- Time elapsed: {end_time - start_time}')
 
   if ret_code == 0:
-    print(colorama.Fore.GREEN + '>> All tasks passed!' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.GREEN + colorama.Style.BRIGHT + '>> All tasks passed!' + colorama.Style.RESET_ALL)
   else:
-    print(colorama.Fore.RED + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.RED + colorama.Style.BRIGHT + f'>> Some tasks failed! Exit with code {ret_code}' + colorama.Style.RESET_ALL)
 
   sys.exit(ret_code)
 

@@ -259,7 +259,13 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
+    '''The birth date (in solar/georgian calendar) / 公历出生日期'''
     return to_date(self._solar_date)
+  
+  @property
+  def ganzhi_date(self) -> CalendarDate:
+    '''The birth date (in ganzhi calendar) / 干支历出生日期'''
+    return to_ganzhi(self._solar_date)
 
   @property
   def hour(self) -> int:
@@ -271,6 +277,7 @@ class Bazi:
   
   @property
   def solar_datetime(self) -> datetime:
+    '''The exact birth time (in solar/georgian calendar) / 出生时刻（公历）'''
     return datetime.combine(self.solar_date, time(self.hour, self.minute))
   
   @property

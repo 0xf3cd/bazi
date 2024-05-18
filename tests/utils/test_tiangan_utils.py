@@ -10,10 +10,11 @@ import unittest
 
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.Utils import BaziUtils, TianganUtils
+from src.Utils.TianganUtils import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
 
 
 class TestTianganUtils(unittest.TestCase):
-  TgCmpType = Union[list[set[Tiangan]], Iterable[frozenset[Tiangan]]]    
+  TgCmpType = Union[list[set[Tiangan]], Iterable[TianganCombo]]    
   @staticmethod
   def __tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
     _l1 = list(l1)
@@ -27,7 +28,7 @@ class TestTianganUtils(unittest.TestCase):
 
   def test_search_basic(self) -> None:
     for relation in TianganRelation:
-      empty_result: tuple[frozenset[Tiangan], ...] = TianganUtils.search([], relation)
+      empty_result: TianganRelationCombos = TianganUtils.search([], relation)
       self.assertEqual(len(empty_result), 0)
 
     self.assertTrue(self.__tg_equal(
@@ -120,10 +121,10 @@ class TestTianganUtils(unittest.TestCase):
 
     # Invoke the method and do bad things on the result.
     # TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
-    # TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(frozenset({Tiangan.壬, Tiangan.丁}))
+    # TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(TianganCombo({Tiangan.壬, Tiangan.丁}))
     # sheng_result = TianganUtils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
-    # sheng_result[0] = frozenset((Tiangan.丁,))
-    # sheng_result[1] = frozenset((Tiangan.壬, Tiangan.戊))
+    # sheng_result[0] = TianganCombo((Tiangan.丁,))
+    # sheng_result[1] = TianganCombo((Tiangan.壬, Tiangan.戊))
     #
     # No need to do bad things again since the return type `tuple` is immutable.
 
@@ -161,10 +162,10 @@ class TestTianganUtils(unittest.TestCase):
   @pytest.mark.slow
   def test_search_correctness(self) -> None:
     # Generate the expected relation combos/pairs, which are used later in this test.
-    expected_he:    set[frozenset[Tiangan]] = set()
-    expected_chong: set[frozenset[Tiangan]] = set()
-    expected_sheng: set[frozenset[Tiangan]] = set()
-    expected_ke:    set[frozenset[Tiangan]] = set()
+    expected_he:    set[TianganCombo] = set()
+    expected_chong: set[TianganCombo] = set()
+    expected_sheng: set[TianganCombo] = set()
+    expected_ke:    set[TianganCombo] = set()
     for combo in itertools.product(Tiangan, Tiangan):
       tg1, tg2 = combo
       if tg1 == tg2:
@@ -173,17 +174,17 @@ class TestTianganUtils(unittest.TestCase):
       wx1, wx2 = trait1.wuxing, trait2.wuxing
 
       if abs(tg1.index - tg2.index) == 5: # Check "He" relation. 合。
-        expected_he.add(frozenset(combo))
+        expected_he.add(TianganCombo(combo))
       if all(wx is not Wuxing.土 for wx in [wx1, wx2]): # Check "Chong" relation. 冲。
         if abs(tg1.index - tg2.index) == 6:
-          expected_chong.add(frozenset(combo))
+          expected_chong.add(TianganCombo(combo))
       if wx1.generates(wx2) or wx2.generates(wx1): # Check "Sheng" relation. 生。
-        expected_sheng.add(frozenset(combo))
+        expected_sheng.add(TianganCombo(combo))
       if wx1.destructs(wx2) or wx2.destructs(wx1): # Check "Ke" relation. 克。
-        expected_ke.add(frozenset(combo))
+        expected_ke.add(TianganCombo(combo))
 
     def __find_relation_combos(tiangans: list[Tiangan], relation: TianganRelation) -> list[set[Tiangan]]:
-      expected: set[frozenset[Tiangan]] = expected_he
+      expected: set[TianganCombo] = expected_he
       if relation is TianganRelation.冲:
         expected = expected_chong
       if relation is TianganRelation.生:
@@ -193,7 +194,7 @@ class TestTianganUtils(unittest.TestCase):
 
       result: list[set[Tiangan]] = []
       for combo_tuple in itertools.combinations(tiangans, 2):
-        if frozenset(combo_tuple) in expected:
+        if TianganCombo(combo_tuple) in expected:
           result.append(set(combo_tuple))
       return result
 
@@ -229,14 +230,14 @@ class TestTianganUtils(unittest.TestCase):
 
     for relation in TianganRelation:
       tiangans = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
-      combos1: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans, relation)
-      combos2: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans + tiangans, relation)
+      combos1: TianganRelationCombos = TianganUtils.search(tiangans, relation)
+      combos2: TianganRelationCombos = TianganUtils.search(tiangans + tiangans, relation)
       self.assertEqual(len(combos1), len(combos2))
       for combo_fs in combos1:
         self.assertIn(combo_fs, combos2)
 
       for _ in range(512):
-        combos: tuple[frozenset[Tiangan], ...] = TianganUtils.search(tiangans, relation)
+        combos: TianganRelationCombos = TianganUtils.search(tiangans, relation)
         expected_combos: list[set[Tiangan]] = __find_relation_combos(tiangans, relation)
         self.assertEqual(len(expected_combos), len(combos))
         for combo_fs in combos:
@@ -250,19 +251,19 @@ class TestTianganUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       TianganUtils.he('甲', '己') # type: ignore
 
-    expected: dict[frozenset[Tiangan], Wuxing] = {
-      frozenset((Tiangan.甲, Tiangan.己)) : Wuxing.土,
-      frozenset((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
-      frozenset((Tiangan.丙, Tiangan.辛)) : Wuxing.水,
-      frozenset((Tiangan.丁, Tiangan.壬)) : Wuxing.木,
-      frozenset((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
+    expected: dict[TianganCombo, Wuxing] = {
+      TianganCombo((Tiangan.甲, Tiangan.己)) : Wuxing.土,
+      TianganCombo((Tiangan.乙, Tiangan.庚)) : Wuxing.金,
+      TianganCombo((Tiangan.丙, Tiangan.辛)) : Wuxing.水,
+      TianganCombo((Tiangan.丁, Tiangan.壬)) : Wuxing.木,
+      TianganCombo((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
     }
 
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg_set: set[Tiangan] = {tg1, tg2}
       if any(tg_set == s for s in expected):
-        self.assertEqual(TianganUtils.he(tg1, tg2), expected[frozenset(tg_set)])
-        self.assertEqual(TianganUtils.he(tg2, tg1), expected[frozenset(tg_set)])
+        self.assertEqual(TianganUtils.he(tg1, tg2), expected[TianganCombo(tg_set)])
+        self.assertEqual(TianganUtils.he(tg2, tg1), expected[TianganCombo(tg_set)])
       else:
         self.assertIsNone(TianganUtils.he(tg1, tg2))
         self.assertIsNone(TianganUtils.he(tg2, tg1))
@@ -317,3 +318,122 @@ class TestTianganUtils(unittest.TestCase):
         self.assertFalse(TianganUtils.ke(tg2, tg1))
       else:
         self.assertFalse(TianganUtils.ke(tg1, tg2))
+
+  @pytest.mark.slow
+  def test_discover(self) -> None:
+    for _ in range(512):
+      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))) + \
+                                random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      discovery: TianganRelationDiscovery = TianganUtils.discover(tiangans)
+
+      with self.subTest('correctness'):
+        for rel in TianganRelation:
+          self.assertIn(rel, discovery)
+          self.assertSetEqual(set(discovery[rel]), set(TianganUtils.search(tiangans, rel)))
+
+      with self.subTest('consistency'):
+        discovery2: TianganRelationDiscovery = TianganUtils.discover(tiangans)
+        self.assertEqual(discovery, discovery2)
+
+  @pytest.mark.slow
+  def test_discover_mutually(self) -> None:
+    def __random_tg_lists() -> tuple[list[Tiangan], list[Tiangan]]:
+      tiangans1: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      tiangans2: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+
+      if random.randint(0, 2) == 0:
+        tiangans1.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+      if random.randint(0, 2) == 0:
+        tiangans2.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+
+      return tiangans1, tiangans2
+
+    for _ in range(512):
+      tiangans1, tiangans2 = __random_tg_lists()
+      discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(tiangans1, tiangans2)
+
+      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans1, tiangans2)) # Test consistency
+      self.assertEqual(discovery, TianganUtils.discover_mutually(tiangans2, tiangans1)) # Test symmertry/equivalence
+
+      expected: dict[TianganRelation, list[TianganCombo]] = {
+        TianganRelation.合: [],
+        TianganRelation.冲: [],
+        TianganRelation.生: [],
+        TianganRelation.克: [],
+      }
+
+      for tg1, tg2 in itertools.product(tiangans1, tiangans2):
+        combo = TianganCombo((tg1, tg2))
+
+        if TianganUtils.he(tg1, tg2):
+          self.assertIn(combo, discovery[TianganRelation.合])
+          expected[TianganRelation.合].append(combo)
+          
+        if TianganUtils.chong(tg1, tg2):
+          self.assertIn(combo, discovery[TianganRelation.冲])
+          expected[TianganRelation.冲].append(combo)
+
+        if TianganUtils.sheng(tg1, tg2) or TianganUtils.sheng(tg2, tg1):
+          self.assertIn(combo, discovery[TianganRelation.生])
+          expected[TianganRelation.生].append(combo)
+
+        if TianganUtils.ke(tg1, tg2) or TianganUtils.ke(tg2, tg1):
+          self.assertIn(combo, discovery[TianganRelation.克])
+          expected[TianganRelation.克].append(combo)
+
+      for rel, expected_combos in expected.items():
+        for combo in discovery[rel]:
+          self.assertIn(combo, expected_combos)
+
+  @pytest.mark.slow
+  def test_results_matched(self) -> None:
+    '''Test that the results of different methods are the same.'''
+    for _ in range(512):
+      tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))) + \
+                                random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+      discovery: TianganRelationDiscovery = TianganUtils.discover(tiangans)
+
+      with self.subTest('HE / 合'): # Non-directional relation
+        for combo in discovery[TianganRelation.合]:
+          self.assertEqual(len(combo), 2)
+          self.assertTrue(TianganUtils.he(*combo))
+
+      with self.subTest('CHONG / 冲'): # Non-directional relation
+        for combo in discovery[TianganRelation.冲]:
+          self.assertEqual(len(combo), 2)
+          self.assertTrue(TianganUtils.chong(*combo))
+
+      with self.subTest('SHENG / 生'): # Directional relation
+        for combo in discovery[TianganRelation.生]:
+          self.assertEqual(len(combo), 2)
+          tg1, tg2 = combo
+          r1, r2 = TianganUtils.sheng(tg1, tg2), TianganUtils.sheng(tg2, tg1)
+          self.assertTrue(r1 or r2)
+          self.assertFalse(r1 and r2)
+
+      with self.subTest('KE / 克'): # Directional relation
+        for combo in discovery[TianganRelation.克]:
+          self.assertEqual(len(combo), 2)
+          tg1, tg2 = combo
+          r1, r2 = TianganUtils.ke(tg1, tg2), TianganUtils.ke(tg2, tg1)
+          self.assertTrue(r1 or r2)
+          self.assertFalse(r1 and r2)
+
+      tiangans_part1: set[Tiangan] = set(random.sample(tiangans, random.randint(0, len(tiangans))))
+      tiangans_part2: set[Tiangan] = set(tiangans) - tiangans_part1
+      mutual_discovery: TianganRelationDiscovery = TianganUtils.discover_mutually(list(tiangans_part1), list(tiangans_part2))
+
+      for rel, mutual_combos in mutual_discovery.items():
+        expected = discovery[rel]
+        for combo in mutual_combos:
+          self.assertIn(combo, expected)
+        self.assertGreaterEqual(len(expected), len(mutual_combos))
+
+      with self.subTest('discover / discover_mutually consistency'):
+        part1_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part1))
+        part2_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part2))
+
+        for rel in TianganRelation:
+          expected_combined: set[TianganCombo] = set(discovery[rel])
+          combined: set[TianganCombo] = set(part1_discoverty[rel]) | set(part2_discoverty[rel]) | set(mutual_discovery[rel])
+          self.assertSetEqual(expected_combined, combined)

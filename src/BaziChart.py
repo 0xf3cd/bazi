@@ -31,6 +31,11 @@ class BaziChart:
     assert isinstance(bazi, Bazi)
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
+  @classmethod
+  def random(cls) -> 'BaziChart':
+    '''Mainly for testing purpose.'''
+    return cls(Bazi.random())
+
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
@@ -267,7 +272,7 @@ class BaziChart:
     '''
 
     def __liunian_generator() -> Generator[LiunianTuple, None, None]:
-      year: int = to_ganzhi(self._bazi.solar_datetime).year
+      year: int = self._bazi.ganzhi_date.year
       while True:
         yield LiunianTuple(year, ganzhi_of_year(year))
         year += 1

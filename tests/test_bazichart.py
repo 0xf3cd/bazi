@@ -345,6 +345,9 @@ class TestBaziChart(unittest.TestCase):
         expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
         self.assertEqual(ganzhi, expected_ganzhi)
 
+      # The first liunian is also the birth ganzhi year.
+      self.assertEqual(next(chart.liunian).ganzhi_year, random_bazi.ganzhi_date.year)
+
   @pytest.mark.slow
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
