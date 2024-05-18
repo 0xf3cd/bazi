@@ -218,10 +218,10 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
 def discover_mutually(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
   Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) among the given `tiangans1` and `tiangans2`.
-  Note that it is required that the Tiangans in a combo come from both `tiangans1` and `tiangans2`, which means
-  `tiangans1` and `tiangans2` mutually form the combos.
+  Note that it is required that the Tiangans in a returned combo come from both `tiangans1` and `tiangans2`, which means
+  `tiangans1` and `tiangans2` mutually form the combo.
 
-  找到输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
+  找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
   注意返回的天干组合中的天干必须同时来自两组 `tiangans1` 和 `tiangans2` 中。
 
   Args:

@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from collections import Counter
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Final
 
 from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
@@ -527,4 +527,41 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
   return frozendict({
     rel : search(dizhis, rel) for rel in DizhiRelation
+  })
+
+
+def discover_mutually(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> DizhiRelationDiscovery:
+  '''
+  Discover all possible Dizhi combos of all `DizhiRelation`s (SANHUI, LIUHE, XING...) among the given `dizhis1` and `dizhis2`.
+  Note that it is required that the Dizhis in a returned combo come from both `dizhis1` and `dizhis2`, which means
+  `dizhis1` and `dizhis2` mutually form the combo.
+
+  找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
+  注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
+
+  Args:
+  - dizhis1: (Sequence[Dizhi]) The first set of Dizhis to check.
+  - dizhis2: (Sequence[Dizhi]) The second set of Dizhis to check.
+
+  Return: (DizhiRelationDiscovery) The result containing all matching Dizhi combos. Note that returned combos don't reveal the directions.
+  '''
+
+  assert all(isinstance(dz, Dizhi) for dz in dizhis1)
+  assert all(isinstance(dz, Dizhi) for dz in dizhis2)
+  
+  dz1_set: Final[set[Dizhi]] = set(dizhis1)
+  dz2_set: Final[set[Dizhi]] = set(dizhis2)
+
+  def __is_valid(combo: DizhiCombo) -> bool:
+    if combo.isdisjoint(dz1_set): # This means Dizhis in `combo` are all from `dizhis2`.
+      return False
+    if combo.isdisjoint(dz2_set): # This means Dizhis in `combo` are all from `dizhis1`.
+      return False
+    return True
+  
+  # Discover all possible combos with `dz1_set` and `dz2_set` combined.
+  # Check each combo's validity and only keep valid ones.
+  return frozendict({
+    rel : DizhiRelationCombos(filter(__is_valid, combos))
+    for rel, combos in discover(list(dizhis1) + list(dizhis2)).items()
   })
