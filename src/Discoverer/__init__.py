@@ -1,5 +1,5 @@
-from . import RelationDiscoverer
+from . import GanzhiDiscoverer
 
 __all__ = [
-  'RelationDiscoverer',
+  'GanzhiDiscoverer',
 ]

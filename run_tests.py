@@ -13,7 +13,6 @@ import unicodedata
 
 from datetime import datetime
 from pathlib import Path
-from functools import reduce
 from typing import Callable, Optional, Final, Any, Generator
 
 import emoji
@@ -72,23 +71,29 @@ term_width: Final[int] = shutil.get_terminal_size().columns
 
 # region: Formats and Prints
 
-def emoji_pair_generator() -> Generator[str, None, None]:
-  animal: str = u'🐙🐴🦕🦅🦖🦆🦜🐫🐃🐊'
-  food: str = u'🌮🍋🥭🥒🍉🥝🥑🍆🌽'
-  weirdo: str = u'🧊📸🧯🛸🔒🪑🌈🪩🌙✨🔥🔦📟🌔🌎'
-  desert_and_tree: str = u'🌵🏜️🏕️🌴'
+animal: Final[str] = u'🐙🐴🦕🦅🦖🦆🦜🐫🐃🐊🦇'
+food: Final[str] = u'🌮🍋🥭🥒🍉🥝🥑🍆🌽'
+weirdo: Final[str] = u'🧊📸🧯🛸🔒🪑🌈🪩🌙🔮✨🔥🔦📟🌔🌎💖👾💣💥🧯'
+desert_and_tree: Final[str] = u'🌵🏜️🏕️🌴🏝️'
 
+def random_emoji() -> str:
+  while True:
+    c: str = random.choice(random.choice([animal, food, weirdo, desert_and_tree]))
+    if emoji.is_emoji(c):
+      return c
+
+def emoji_pair_generator() -> Generator[str, None, None]:
   def random_ep(s: str) -> str:
     filtered: str = ''.join(filter(emoji.is_emoji, s))
-    return ''.join(random.sample(filtered, k=2))
+    return u''.join(random.sample(filtered, k=2))
   
   emoji_pairs: list[str] = [
     u'🍜🥘', u'🌙✨', u'🌵🏜️', u'🔗🌐', u'💡🧠',
     u'📝🕵️', u'🪐🛰️', u'🌲🏕️', u'🗻🌋', u'🎃🕯️',
     *[random_ep(animal) for _ in range(2)],
     *[random_ep(food) for _ in range(2)],
-    *[random_ep(weirdo) for _ in range(3)],
-    *[random_ep(desert_and_tree) for _ in range(3)],
+    *[random_ep(weirdo) for _ in range(4)],
+    *[random_ep(desert_and_tree) for _ in range(2)],
   ]
 
   emoji_pairs = list(set(emoji_pairs))
@@ -98,7 +103,7 @@ def emoji_pair_generator() -> Generator[str, None, None]:
       continue
     yield ep
 
-emoji_pair = emoji_pair_generator()
+emoji_pair: Final = emoji_pair_generator()
 
 
 def str_width(s: str):
@@ -112,7 +117,7 @@ def str_width(s: str):
 def devider() -> str:
   if term_width < 15:
     return '=' * term_width
-  # return '=' * term_width
+
   ep: str = next(emoji_pair)
   ending_str: str = '=' * (term_width - str_width(ep) - 4)
   return f'== {ep} {ending_str}'
@@ -124,10 +129,11 @@ def green_print(s: str) -> None:
 def red_print(s: str) -> None:
   print(colorama.Fore.RED + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
 
-
 def bold_print(s: str) -> None:
   print(colorama.Back.LIGHTBLACK_EX + colorama.Style.BRIGHT + s.ljust(term_width) + colorama.Style.RESET_ALL)
 
+
+# region: Sub-tasks
 
 def print_args() -> None:
   '''Print terminal arguments.'''
@@ -188,9 +194,6 @@ def print_sysinfo() -> None:
   print(f'-- memory size: {mem.total // 1024 // 1024} MB')
   print(f'-- usable memory size: {mem.available // 1024 // 1024} MB')
   print(f'-- disk usage: {psutil.disk_usage("/").percent}%')
-
-
-# region: Sub-tasks
 
 def run_proc_and_print(cmds: list[str], print_details: bool = False) -> int:
   '''This method is mainly for compatability with Windows. It creates a subprocess and runs the commands.'''
@@ -389,12 +392,10 @@ def main() -> None:
     ok: bool = sp_retcode == 0
     name_color: str = colorama.Fore.GREEN if ok else colorama.Fore.YELLOW
     name = name_color + name.ljust(max_name_len + 1) + colorama.Style.RESET_ALL
-    time_str: str = f'{sp_time:.5f}'.ljust(7)
+    time_str: str = f'{sp_time:.5f}'[:7]
+    print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random_emoji()}')
 
-    print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random.choice(next(emoji_pair))}')
-
-
-  resolved_retcode: int = reduce(lambda x, y : x | y, map(lambda x: x[0], subprocess_status.values()))
+  resolved_retcode: int = sum(map(lambda x: x[0], subprocess_status.values()))
   if resolved_retcode == 0:
     green_print('>> All tasks passed! 💖✨👾')
   else:
