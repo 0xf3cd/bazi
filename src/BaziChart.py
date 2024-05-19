@@ -8,7 +8,8 @@ from typing import Optional, Final, Generator
 
 from .Common import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
-  HiddenTianganDict, BaziData, PillarData, BaziJson
+  HiddenTianganDict, BaziData, PillarData, BaziJson,
+  DayunDatabase,
 )
 from .Defines import Tiangan, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
@@ -232,6 +233,14 @@ class BaziChart:
         gz = gz.next(step)
 
     return __dayun_generator()
+  
+  @property
+  def dayun_db(self) -> DayunDatabase:
+    '''
+    A database that figures out a given Ganzhi year falls into which Dayun (大运).
+    一个数据库，用于某个干支年查询该干支年所属大运。
+    '''
+    return DayunDatabase(self.dayun)
   
   @property
   def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:

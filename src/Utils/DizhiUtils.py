@@ -530,7 +530,7 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   })
 
 
-def discover_mutually(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> DizhiRelationDiscovery:
+def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   '''
   Discover all possible Dizhi combos of all `DizhiRelation`s (SANHUI, LIUHE, XING...) among the given `dizhis1` and `dizhis2`.
   Note that it is required that the Dizhis in a returned combo come from both `dizhis1` and `dizhis2`, which means
@@ -544,6 +544,26 @@ def discover_mutually(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Diz
   - dizhis2: (Sequence[Dizhi]) The second set of Dizhis to check.
 
   Return: (DizhiRelationDiscovery) The result containing all matching Dizhi combos. Note that returned combos don't reveal the directions.
+  
+  Examples:
+  - discover_mutual([子], [丑])
+    - return: {
+      DizhiRelation.合: DizhiRelationCombos({子, 丑},),
+      DizhiRelation.冲: DizhiRelationCombos(), // empty
+      DizhiRelation.生: DizhiRelationCombos(), // empty
+      DizhiRelation.克: DizhiRelationCombos({子, 丑},)
+      DizhiRelation.刑: DizhiRelationCombos(), // empty
+      // ... and other empty DizhiRelationCombos...
+    }
+  - discover_mutual([子, 丑], [])
+    - return: {
+      DizhiRelation.合: DizhiRelationCombos(), // empty
+      DizhiRelation.冲: DizhiRelationCombos(), // empty
+      DizhiRelation.生: DizhiRelationCombos(), // empty
+      DizhiRelation.克: DizhiRelationCombos(), // empty
+      DizhiRelation.刑: DizhiRelationCombos(), // empty
+      // ... and so on
+    }
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis1)

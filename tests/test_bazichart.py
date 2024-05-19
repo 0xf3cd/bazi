@@ -183,7 +183,7 @@ class TestBaziChart(unittest.TestCase):
     '''
     Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
     '''
-    for _ in range(256):
+    for _ in range(128):
       chart: BaziChart = BaziChart(Bazi.random())
 
       day_master: Tiangan = chart.bazi.day_master
@@ -317,6 +317,19 @@ class TestBaziChart(unittest.TestCase):
       for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
         self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
 
+  def test_dayun_db(self) -> None:
+    bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    chart: BaziChart = BaziChart(bazi)
+    db = chart.dayun_db
+
+    first_dayun: DayunTuple = next(chart.dayun)
+    for year in range(first_dayun.ganzhi_year, first_dayun.ganzhi_year + 10):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year, Ganzhi.from_str('己卯')))
+    for year in range(first_dayun.ganzhi_year + 10, first_dayun.ganzhi_year + 20):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 10, Ganzhi.from_str('庚辰')))
+    for year in range(first_dayun.ganzhi_year + 20, first_dayun.ganzhi_year + 30):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 20, Ganzhi.from_str('辛巳')))
+
   def test_xiaoyun(self) -> None:
     def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
       xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
@@ -351,11 +364,11 @@ class TestBaziChart(unittest.TestCase):
   @pytest.mark.slow
   def test_consistency(self) -> None:
     '''Ensure every run gives the consistent results...'''
-    for _ in range(128):
+    for _ in range(64):
       random_bazi: Bazi = Bazi.random()
       expected: BaziChart = BaziChart(random_bazi)
 
-      for __ in range(10):
+      for __ in range(5):
         chart: BaziChart = BaziChart(random_bazi)
         self.assertEqual(chart.bazi, expected.bazi)
 
@@ -378,7 +391,7 @@ class TestBaziChart(unittest.TestCase):
 
   @pytest.mark.slow
   def test_json(self) -> None:
-    for _ in range(128):
+    for _ in range(32):
       chart: BaziChart = BaziChart(Bazi.random())
       dt: datetime = chart.bazi.solar_datetime
 

@@ -215,7 +215,7 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   })
 
 
-def discover_mutually(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
+def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
   Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) among the given `tiangans1` and `tiangans2`.
   Note that it is required that the Tiangans in a returned combo come from both `tiangans1` and `tiangans2`, which means
@@ -231,14 +231,14 @@ def discover_mutually(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]
   Return: (TianganRelationDiscovery) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
   
   Examples:
-  - discover_mutually([甲], [己])
+  - discover_mutual([甲], [己])
     - return: {
       TianganRelation.合: TianganRelationCombos({甲, 己},),
       TianganRelation.冲: TianganRelationCombos(), // empty
       TianganRelation.生: TianganRelationCombos(), // empty
       TianganRelation.克: TianganRelationCombos({甲, 己},)
     }
-  - discover_mutually([甲, 己], [])
+  - discover_mutual([甲, 己], [])
     - return: {
       TianganRelation.合: TianganRelationCombos(), // empty
       TianganRelation.冲: TianganRelationCombos(), // empty
