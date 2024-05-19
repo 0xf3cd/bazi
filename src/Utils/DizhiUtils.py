@@ -518,6 +518,10 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   - The returned frozendict has all `DizhiRelation` keys, but some values may be empty.
   - 返回的字典的键为所有的 `DizhiRelation`，但返回字典的某些值可能为空（即 `DizhiRelationCombos` 可能为空）。
 
+  Note:
+  - For XING relation, `XingDef.STRICT` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
+  - 对于相刑的关系，使用 `XingDef.STRICT` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
+
   Args:
   - dizhis: (Sequence[Dizhi]) The Dizhis to check.
 
@@ -538,6 +542,10 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
 
   找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
   注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
+
+  Note:
+  - For XING relation, `XingDef.STRICT` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
+  - 对于相刑的关系，使用 `XingDef.STRICT` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
 
   Args:
   - dizhis1: (Sequence[Dizhi]) The first set of Dizhis to check.

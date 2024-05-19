@@ -71,14 +71,16 @@ term_width: Final[int] = shutil.get_terminal_size().columns
 
 # region: Formats and Prints
 
-animal: Final[str] = u'🐙🐴🦕🦅🦖🦆🦜🐫🐃🐊🦇'
-food: Final[str] = u'🌮🍋🥭🥒🍉🥝🥑🍆🌽'
-weirdo: Final[str] = u'🧊📸🧯🛸🔒🪑🌈🪩🌙🔮✨🔥🔦📟🌔🌎💖👾💣💥🧯'
-desert_and_tree: Final[str] = u'🌵🏜️🏕️🌴🏝️'
+animal1: Final[str] = u'🦑🦀🦞🦐🦪'
+animal2: Final[str] = u'🐃🐍🐊🦇🦕🦅🦖🦥🦦🐫🐅🦔'
+food: Final[str] = u'🍋🥭🥒🍉🥝🥑🍆🌽🍑🫐🍍🍇🥬🫚🫛🥩🥓🌮🍱🍢'
+astrology: Final[str] = u'🌙🔮✨💫⭐🌟🌔🌓🌗🌘🌎🌏🪐🛰️🛸👾👽🗿'
+weirdo: Final[str] = u'🧊📸🧯🔒🪑🌈💖💞💕💗💓🪩🔥🔦📟💣💥👬🔗🖇️⛓️🫗💅'
+desert_and_tree: Final[str] = u'🌵🏜️🌲🏕️🌴🏝️'
 
 def random_emoji() -> str:
   while True:
-    c: str = random.choice(random.choice([animal, food, weirdo, desert_and_tree]))
+    c: str = random.choice(u''.join([animal1, animal2, food, astrology, weirdo, desert_and_tree]))
     if emoji.is_emoji(c):
       return c
 
@@ -88,10 +90,12 @@ def emoji_pair_generator() -> Generator[str, None, None]:
     return u''.join(random.sample(filtered, k=2))
   
   emoji_pairs: list[str] = [
-    u'🍜🥘', u'🌙✨', u'🌵🏜️', u'🔗🌐', u'💡🧠',
+    u'💖💅', u'🌙✨', u'🌵🏜️', u'🔗🌐', u'💡🧠',
     u'📝🕵️', u'🪐🛰️', u'🌲🏕️', u'🗻🌋', u'🎃🕯️',
-    *[random_ep(animal) for _ in range(2)],
+    *[random_ep(animal1) for _ in range(1)],
+    *[random_ep(animal2) for _ in range(2)],
     *[random_ep(food) for _ in range(2)],
+    *[random_ep(astrology) for _ in range(4)],
     *[random_ep(weirdo) for _ in range(4)],
     *[random_ep(desert_and_tree) for _ in range(2)],
   ]
@@ -122,6 +126,7 @@ def devider() -> str:
   ending_str: str = '=' * (term_width - str_width(ep) - 4)
   return f'== {ep} {ending_str}'
 
+
 def green_print(s: str) -> None:
   print(colorama.Fore.GREEN + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
 
@@ -129,8 +134,9 @@ def green_print(s: str) -> None:
 def red_print(s: str) -> None:
   print(colorama.Fore.RED + colorama.Style.BRIGHT + s + colorama.Style.RESET_ALL)
 
+
 def bold_print(s: str) -> None:
-  print(colorama.Back.LIGHTBLACK_EX + colorama.Style.BRIGHT + s.ljust(term_width) + colorama.Style.RESET_ALL)
+  print(colorama.Back.LIGHTBLACK_EX + colorama.Fore.LIGHTWHITE_EX + colorama.Style.BRIGHT + s.ljust(term_width) + colorama.Style.RESET_ALL)
 
 
 # region: Sub-tasks
@@ -397,9 +403,11 @@ def main() -> None:
 
   resolved_retcode: int = sum(map(lambda x: x[0], subprocess_status.values()))
   if resolved_retcode == 0:
-    green_print('>> All tasks passed! 💖✨👾')
+    green_print('>> All tasks passed! ' + 
+                u''.join(random.sample(u'🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
   else:
-    red_print(f'>> Some tasks failed! Exit with code {resolved_retcode} 💣💥🧯')
+    red_print(f'>> Some tasks failed! Exit with code {resolved_retcode} ' + 
+              u''.join(random.sample(u'🧯💣💥💅👽🗿🔥', 3)))
 
   sys.exit(resolved_retcode)
 

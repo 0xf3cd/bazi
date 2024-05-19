@@ -6,12 +6,15 @@ import unittest
 
 import random
 import itertools
+from datetime import datetime
 
 from src.Common import PillarData
 from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
-from src.BaziChart import BaziChart
 from src.Utils import TianganUtils, DizhiUtils, BaziUtils
 from src.Calendar.HkoDataCalendarUtils import to_ganzhi
+
+from src.Bazi import Bazi, BaziGender, BaziPrecision
+from src.BaziChart import BaziChart
 from src.Discoverer.GanzhiDiscoverer import GanzhiDiscoverer, TransitOptions
 
 
@@ -173,10 +176,221 @@ class TestGanzhiDiscoverer(unittest.TestCase):
 
           expected_tiangan_combined: TianganUtils.TianganRelationDiscovery = TianganUtils.discover(list(chart.bazi.four_tiangans) + transit_tiangans)
           for tg_rel in TianganRelation:
-            self.assertSetEqual(set(expected_tiangan_combined[tg_rel]), 
-                                set(list(at_birth.tiangan[tg_rel]) + list(transits.tiangan[tg_rel]) + list(mutual.tiangan[tg_rel])))
-            
+            self.assertSetEqual(set(expected_tiangan_combined[tg_rel]),
+                                set(at_birth.tiangan[tg_rel]) | set(transits.tiangan[tg_rel]) | set(mutual.tiangan[tg_rel]))
+                  
           expected_dizhi_combined: DizhiUtils.DizhiRelationDiscovery = DizhiUtils.discover(list(chart.bazi.four_dizhis) + transit_dizhis)
           for dz_rel in DizhiRelation:
             self.assertSetEqual(set(expected_dizhi_combined[dz_rel]), 
-                                set(list(at_birth.dizhi[dz_rel]) + list(transits.dizhi[dz_rel]) + list(mutual.dizhi[dz_rel])))
+                                set(at_birth.dizhi[dz_rel]) | set(transits.dizhi[dz_rel]) | set(mutual.dizhi[dz_rel]))
+
+
+@pytest.mark.integration
+class TestGanzhiDiscovererIntegration(unittest.TestCase):
+  '''
+  Integration tests are mainly aiming to test the correctness of `GanzhiDiscoverer`.
+  The Bazi cases are collected from "测测" app / "问真八字" web site.
+
+  In this project, `search`, `discover`, and `discover_mutual` methods in `TianganUtils` and `DizhiUtils` will
+  return all possible combos.
+  However, for 测测 and 问真八字, they only consider part of the combos. For example, 
+  they don't consider SHENG / 生 relation.
+
+  So in the following tests, we only test that the relation combos that 测测/问真八字 find 
+  are in `GanzhiDiscoverer`'s returns. 
+  There can be some combos in `GanzhiDiscoverer`'s returns but not in 测测/问真八字's results.
+  '''
+
+  @staticmethod
+  def __check_tiangan(expected: dict[TianganRelation, list[TianganUtils.TianganCombo]], actual: TianganUtils.TianganRelationDiscovery) -> bool:
+    for rel, expected_combos in expected.items():
+      if rel not in actual:
+        return False
+      for combo in expected_combos:
+        if combo not in actual[rel]:
+          return False
+    return True
+
+  @staticmethod
+  def __check_dizhi(expected: dict[DizhiRelation, list[DizhiUtils.DizhiCombo]], actual: DizhiUtils.DizhiRelationDiscovery) -> bool:
+    for rel, expected_combos in expected.items():
+      if rel not in actual:
+        return False
+      for combo in expected_combos:
+        if combo not in actual[rel]:
+          return False
+    return True
+
+  def test_case1(self) -> None:
+    '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
+    bazi: Bazi = Bazi(
+      birth_time=datetime(1984, 4, 1, 11, 8),
+      gender=BaziGender.MALE,
+      precision=BaziPrecision.DAY,
+    )
+    chart: BaziChart = BaziChart(bazi)
+    discoverer: GanzhiDiscoverer = GanzhiDiscoverer(chart)
+
+    with self.subTest('pillar correctness'):
+      self.assertEqual(bazi.year_pillar, Ganzhi.from_str('甲子'))
+      self.assertEqual(bazi.month_pillar, Ganzhi.from_str('丁卯'))
+      self.assertEqual(bazi.day_pillar, Ganzhi.from_str('乙丑'))
+      self.assertEqual(bazi.hour_pillar, Ganzhi.from_str('壬午'))
+      self.assertEqual(chart.xiaoyun[0].ganzhi, Ganzhi.from_str('癸未'))
+      self.assertEqual(next(chart.dayun).ganzhi, Ganzhi.from_str('戊辰'))
+      self.assertEqual(1985, next(chart.dayun).ganzhi_year)
+
+    with self.subTest('at birth'):
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.合 : [frozenset({Tiangan.丁, Tiangan.壬})],
+      }, discoverer.at_birth.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.子, Dizhi.丑})],
+        DizhiRelation.刑 : [frozenset({Dizhi.子, Dizhi.卯})],
+        DizhiRelation.冲 : [frozenset({Dizhi.子, Dizhi.午})],
+        DizhiRelation.破 : [frozenset({Dizhi.午, Dizhi.卯})],
+        DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
+      }, discoverer.at_birth.dizhi))
+
+    with self.subTest('1993 dayun and liunian'):
+      dayun_liunian = discoverer.transits(1993, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.合 : [frozenset({Tiangan.戊, Tiangan.癸})],
+      }, dayun_liunian.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉})],
+      }, dayun_liunian.dizhi))
+
+    with self.subTest('2024 dayun and liunian - mutual'):
+      mutual = discoverer.mutual(2024, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
+      }, mutual.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
+        DizhiRelation.半合 : [frozenset({Dizhi.子, Dizhi.辰}), frozenset({Dizhi.卯, Dizhi.未})],
+        # DizhiRelation.刑 : [frozenset({Dizhi.未, Dizhi.丑})], # STRICT mode is used for XING relation.
+        DizhiRelation.冲 : [frozenset({Dizhi.未, Dizhi.丑})],
+        DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
+        DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子}), frozenset({Dizhi.辰, Dizhi.卯})],
+      }, mutual.dizhi))
+
+    with self.subTest('2051 dayun and liunian'):
+      dayun_liunian = discoverer.transits(2051, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
+      }, dayun_liunian.dizhi))
+
+    with self.subTest('2051 dayun and liunian - mutual'):
+      mutual = discoverer.mutual(2051, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
+      }, mutual.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.卯, Dizhi.戌}), frozenset({Dizhi.午, Dizhi.未})],
+        DizhiRelation.半合 : [frozenset({Dizhi.卯, Dizhi.未}), frozenset({Dizhi.午, Dizhi.戌})],
+        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌})], # STRICT mode is used for XING relation.
+        DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
+        DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子})],
+      }, mutual.dizhi))
+
+  def test_case2(self) -> None:
+    '''From 测测 and 问真八字'''
+    bazi: Bazi = Bazi(
+      birth_time=datetime(2024, 5, 19, 18, 59),
+      gender=BaziGender.FEMALE,
+      precision=BaziPrecision.DAY,
+    )
+    chart: BaziChart = BaziChart(bazi)
+    discoverer: GanzhiDiscoverer = GanzhiDiscoverer(chart)
+
+    with self.subTest('pillar correctness'):
+      self.assertEqual(bazi.year_pillar, Ganzhi.from_str('甲辰'))
+      self.assertEqual(bazi.month_pillar, Ganzhi.from_str('己巳'))
+      self.assertEqual(bazi.day_pillar, Ganzhi.from_str('癸未'))
+      self.assertEqual(bazi.hour_pillar, Ganzhi.from_str('辛酉'))
+      self.assertEqual(chart.xiaoyun[0].ganzhi, Ganzhi.from_str('庚申'))
+      self.assertEqual(next(chart.dayun).ganzhi, Ganzhi.from_str('戊辰'))
+      self.assertEqual(2029, next(chart.dayun).ganzhi_year)
+
+    with self.subTest('at birth'):
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
+        TianganRelation.克 : [frozenset({Tiangan.己, Tiangan.癸})],
+      }, discoverer.at_birth.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉})],
+        DizhiRelation.半合 : [frozenset({Dizhi.巳, Dizhi.酉})],
+      }, discoverer.at_birth.dizhi))
+
+    with self.subTest('2024 xiaoyun and liunian - mutual'): 
+      # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
+      mutual = discoverer.mutual(2024, TransitOptions.XIAOYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
+        TianganRelation.克 : [frozenset({Tiangan.庚, Tiangan.甲})],
+      }, mutual.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉}), frozenset({Dizhi.巳, Dizhi.申})],
+        DizhiRelation.刑 : [frozenset({Dizhi.辰})], # No frozenset({Dizhi.巳, Dizhi.申}) here since STRICT mode is used.
+        DizhiRelation.破 : [frozenset({Dizhi.巳, Dizhi.申})],
+      }, mutual.dizhi))
+
+    with self.subTest('2052 dayun and liunian - transits'):
+      transits = discoverer.transits(2052, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.冲 : [frozenset({Tiangan.丙, Tiangan.壬})],
+      }, transits.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.冲 : [frozenset({Dizhi.寅, Dizhi.申})],
+      }, transits.dizhi))
+
+    with self.subTest('2052 dayun and liunian - mutual'):
+      mutual = discoverer.mutual(2052, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.合 : [frozenset({Tiangan.丙, Tiangan.辛})],
+      }, mutual.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.巳, Dizhi.申})],
+        DizhiRelation.破 : [frozenset({Dizhi.巳, Dizhi.申})],
+        DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申})],
+      }, mutual.dizhi))
+
+    with self.subTest('2062 dayun and liunian - transits'):
+      transits = discoverer.transits(2062, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
+      }, transits.dizhi))
+
+    with self.subTest('2062 dayun and liunian - mutual'):
+      mutual = discoverer.mutual(2062, TransitOptions.DAYUN_LIUNIAN)
+
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.冲 : [frozenset({Tiangan.乙, Tiangan.辛})],
+        TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.己})],
+      }, mutual.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
+        DizhiRelation.三合 : [frozenset({Dizhi.巳, Dizhi.酉, Dizhi.丑})],
+        DizhiRelation.三会 : [frozenset({Dizhi.巳, Dizhi.午, Dizhi.未})],
+        DizhiRelation.刑 : [], # STRICT mode is used here so no XING relation combos...
+        DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
+        DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
+      }, mutual.dizhi))
