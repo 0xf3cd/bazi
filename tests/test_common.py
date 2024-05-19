@@ -3,13 +3,20 @@
 
 import unittest
 
+import random
+import itertools
+
 from typing import Optional
 
 from src.Defines import Shishen
 from src.Common import (
   classproperty, frozendict, PillarData, BaziData,
   ConstMetaClass, Const, ImmutableMetaClass, Immutable,
+  DayunTuple, DayunDatabase,
 )
+
+from src.BaziChart import BaziChart
+
 
 class TestCommon(unittest.TestCase):
 
@@ -353,3 +360,26 @@ class TestCommon(unittest.TestCase):
     self.assertNotEqual(bd5, bd8)
     self.assertNotEqual(bd5, bd9)
     self.assertNotEqual(bd5, bd10)
+
+  def test_dayun_database(self) -> None:
+    chart: BaziChart = BaziChart.random()
+
+    expected: dict[int, DayunTuple] = {}
+    for start_year, dayun_ganzhi in itertools.islice(chart.dayun, 100):
+      for year in range(start_year, start_year + 10): # A dayun lasts for 10 years.
+        expected[year] = DayunTuple(start_year, dayun_ganzhi)
+
+    db: DayunDatabase = DayunDatabase(chart.dayun)
+    self.assertRaises(AssertionError, lambda : db[next(chart.dayun).ganzhi_year - 1]) # Test the year before the start of the dayun.
+
+    years: list[int] = list(expected.keys())
+
+    for year in random.sample(years, 100):
+      self.assertEqual(db[year], expected[year])
+    
+    for year in random.sample(years, 100):
+      self.assertEqual(db[year], expected[year])
+    
+    random.shuffle(years)
+    for year in years:
+      self.assertEqual(db[year], expected[year])

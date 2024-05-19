@@ -317,6 +317,19 @@ class TestBaziChart(unittest.TestCase):
       for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
         self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
 
+  def test_dayun_db(self) -> None:
+    bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+    chart: BaziChart = BaziChart(bazi)
+    db = chart.dayun_db
+
+    first_dayun: DayunTuple = next(chart.dayun)
+    for year in range(first_dayun.ganzhi_year, first_dayun.ganzhi_year + 10):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year, Ganzhi.from_str('己卯')))
+    for year in range(first_dayun.ganzhi_year + 10, first_dayun.ganzhi_year + 20):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 10, Ganzhi.from_str('庚辰')))
+    for year in range(first_dayun.ganzhi_year + 20, first_dayun.ganzhi_year + 30):
+      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 20, Ganzhi.from_str('辛巳')))
+
   def test_xiaoyun(self) -> None:
     def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
       xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
