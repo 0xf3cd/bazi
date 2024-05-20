@@ -203,15 +203,15 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
   return Rules.DIZHI_BANHE.get(combo, None)
 
 
-def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.STRICT) -> Optional[Rules.XingSubType]:
+def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.LOOSE) -> Optional[Rules.XingSubType]:
   '''
   Check if the input Dizhis is a exact match for XING (刑) relation. If so, return the type of the XING relation. If not, return `None`.
-  There are multiple definitions for 刑. The default definition is `Rules.XingDef.STRICT`.
+  There are multiple definitions for 刑. The default definition is `Rules.XingDef.LOOSE`.
   If `Rules.XingDef.LOOSE` is used, then the `dizhis` order (direction) matters.
   If `Rules.XingDef.STRICT` is used, then the `dizhis` order does not matter.
 
   检查输入的地支是否刚好构成相刑关系。如果是，返回相刑的类型。如果不是，返回 `None`。
-  相刑关系的看法有多种，默认使用 `Rules.XingDef.STRICT`。
+  相刑关系的看法有多种，默认使用 `Rules.XingDef.LOOSE`。
   如果使用 `Rules.XingDef.LOOSE`，则 `dizhis` 的顺序会影响结果。
   如果使用 `Rules.XingDef.STRICT`，则 `dizhis` 的顺序不会影响结果。
 
@@ -401,7 +401,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   - For XING relation, it's a bit more complicated.
     - Some definitions require all the Dizhis to appear in order to qualify the SANXING (三刑) relation (a subset of XING).
     - Some definitions consider only two Dizhis appearing a valid XING relation (e.g. only 丑 and 未 can form a XING relation).
-    - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that all three Dizhis to present in order to qualify the XING relation.
+    - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that any two of the three to present in order to qualify the XING relation.
     - Use `xing` to do more fine-grained checking.
   - 返回的 combos 中没有体现关系作用的方向。
   - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
@@ -411,7 +411,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
     - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
     - 对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。
-    - 本方法的实现中，对于丑未戌、寅巳申三刑，需要同时出现三个地支才算相刑。
+    - 本方法的实现中，对于丑未戌、寅巳申三刑，只需要同时出现两个地支就算相刑。
     - 请使用 `xing` 来进行更细粒度的检查。
 
   Note:
@@ -439,15 +439,14 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     - return: ({ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑})
     - `Rules.AnheDef.NORMAL_EXTENDED` is used.
   - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
-    - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳, Dizhi.申 })
+    - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })
     - Only one 辰 appears in the input - not forming a XING relation.
   - search([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)
-    - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }) # Only one 辰 in the returned set!
+    - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 }, { Dizhi.辰 }) # Only one 辰 in the returned set!
     - 辰 appear twice in the input - forming a XING relation.
   - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
-    - return: ({ Dizhi.子, Dizhi.卯})
-    - `Rules.XingDef.STRICT` is used.
-    - 申 is missing - "寅巳申" all three dizhis are required to form a XING relation.
+    - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳 })
+    - `Rules.XingDef.LOOSE` is used.
   '''
 
   assert isinstance(relation, DizhiRelation), f'Unexpected type of relation: {type(relation)}'
@@ -480,7 +479,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
     ret: set[DizhiCombo] = set()
-    for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.STRICT]:
+    for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.LOOSE]:
       # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
       # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
@@ -519,8 +518,8 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   - 返回的字典的键为所有的 `DizhiRelation`，但返回字典的某些值可能为空（即 `DizhiRelationCombos` 可能为空）。
 
   Note:
-  - For XING relation, `XingDef.STRICT` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
-  - 对于相刑的关系，使用 `XingDef.STRICT` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
+  - For XING relation, `XingDef.LOOSE` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
+  - 对于相刑的关系，使用 `XingDef.LOOSE` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
 
   Args:
   - dizhis: (Sequence[Dizhi]) The Dizhis to check.
@@ -544,8 +543,8 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
 
   Note:
-  - For XING relation, `XingDef.STRICT` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
-  - 对于相刑的关系，使用 `XingDef.STRICT` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
+  - For XING relation, `XingDef.LOOSE` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
+  - 对于相刑的关系，使用 `XingDef.LOOSE` 模式。对于暗合的关系，使用 `AnheDef.NORMAL_EXTENDED` 模式。
 
   Args:
   - dizhis1: (Sequence[Dizhi]) The first set of Dizhis to check.
