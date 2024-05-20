@@ -238,7 +238,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       self.assertEqual(bazi.hour_pillar, Ganzhi.from_str('壬午'))
       self.assertEqual(chart.xiaoyun[0].ganzhi, Ganzhi.from_str('癸未'))
       self.assertEqual(next(chart.dayun).ganzhi, Ganzhi.from_str('戊辰'))
-      self.assertEqual(1985, next(chart.dayun).ganzhi_year)
+      self.assertEqual(next(chart.dayun).ganzhi_year, 1985)
 
     with self.subTest('at birth'):
       self.assertTrue(self.__check_tiangan({
@@ -274,7 +274,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
         DizhiRelation.半合 : [frozenset({Dizhi.子, Dizhi.辰}), frozenset({Dizhi.卯, Dizhi.未})],
-        # DizhiRelation.刑 : [frozenset({Dizhi.未, Dizhi.丑})], # STRICT mode is used for XING relation.
+        DizhiRelation.刑 : [frozenset({Dizhi.未, Dizhi.丑})], # LOOSE mode is used for XING relation.
         DizhiRelation.冲 : [frozenset({Dizhi.未, Dizhi.丑})],
         DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
         DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子}), frozenset({Dizhi.辰, Dizhi.卯})],
@@ -285,6 +285,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
+        DizhiRelation.刑 : [frozenset({Dizhi.未, Dizhi.戌})],
       }, dayun_liunian.dizhi))
 
     with self.subTest('2051 dayun and liunian - mutual'):
@@ -297,7 +298,9 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.卯, Dizhi.戌}), frozenset({Dizhi.午, Dizhi.未})],
         DizhiRelation.半合 : [frozenset({Dizhi.卯, Dizhi.未}), frozenset({Dizhi.午, Dizhi.戌})],
-        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌})], # STRICT mode is used for XING relation.
+        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌}),
+                            frozenset({Dizhi.未, Dizhi.丑}),
+                            frozenset({Dizhi.戌, Dizhi.丑}),], # LOOSE mode is used for XING relation.
         DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
         DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子})],
       }, mutual.dizhi))
@@ -319,7 +322,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       self.assertEqual(bazi.hour_pillar, Ganzhi.from_str('辛酉'))
       self.assertEqual(chart.xiaoyun[0].ganzhi, Ganzhi.from_str('庚申'))
       self.assertEqual(next(chart.dayun).ganzhi, Ganzhi.from_str('戊辰'))
-      self.assertEqual(2029, next(chart.dayun).ganzhi_year)
+      self.assertEqual(next(chart.dayun).ganzhi_year, 2029)
 
     with self.subTest('at birth'):
       self.assertTrue(self.__check_tiangan({
@@ -343,7 +346,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉}), frozenset({Dizhi.巳, Dizhi.申})],
-        DizhiRelation.刑 : [frozenset({Dizhi.辰})], # No frozenset({Dizhi.巳, Dizhi.申}) here since STRICT mode is used.
+        DizhiRelation.刑 : [frozenset({Dizhi.辰}), frozenset({Dizhi.巳, Dizhi.申})], # LOOSE mode is used.
         DizhiRelation.破 : [frozenset({Dizhi.巳, Dizhi.申})],
       }, mutual.dizhi))
 
@@ -356,6 +359,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.冲 : [frozenset({Dizhi.寅, Dizhi.申})],
+        DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.申})],
       }, transits.dizhi))
 
     with self.subTest('2052 dayun and liunian - mutual'):
@@ -368,7 +372,9 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.巳, Dizhi.申})],
         DizhiRelation.破 : [frozenset({Dizhi.巳, Dizhi.申})],
-        DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申})],
+        DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申}),
+                           frozenset({Dizhi.寅, Dizhi.巳}),
+                           frozenset({Dizhi.巳, Dizhi.申}),],
       }, mutual.dizhi))
 
     with self.subTest('2062 dayun and liunian - transits'):
@@ -390,7 +396,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
         DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
         DizhiRelation.三合 : [frozenset({Dizhi.巳, Dizhi.酉, Dizhi.丑})],
         DizhiRelation.三会 : [frozenset({Dizhi.巳, Dizhi.午, Dizhi.未})],
-        DizhiRelation.刑 : [], # STRICT mode is used here so no XING relation combos...
+        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未})], # LOOSE mode is used here...
         DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
         DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
       }, mutual.dizhi))

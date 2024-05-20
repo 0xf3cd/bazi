@@ -432,6 +432,13 @@ class TestDizhiUtils(unittest.TestCase):
       { Dizhi.子 : 1, Dizhi.卯 : 1, },
       { Dizhi.寅 : 1, Dizhi.巳 : 1, Dizhi.申 : 1, },
       { Dizhi.丑 : 1, Dizhi.未 : 1, Dizhi.戌 : 1, },
+    ] + [ # LOOSE def.
+      { Dizhi.寅 : 1, Dizhi.巳 : 1, },
+      { Dizhi.巳 : 1, Dizhi.申 : 1, },
+      { Dizhi.寅 : 1, Dizhi.申 : 1, },
+      { Dizhi.丑 : 1, Dizhi.未 : 1, },
+      { Dizhi.未 : 1, Dizhi.戌 : 1, },
+      { Dizhi.丑 : 1, Dizhi.戌 : 1, },
     ]
 
     def __find_qualified(dizhis: list[Dizhi]) -> list[set[Dizhi]]:
@@ -458,7 +465,9 @@ class TestDizhiUtils(unittest.TestCase):
     ))
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search(list(Dizhi), DizhiRelation.刑),
-      [{Dizhi.子, Dizhi.卯}, {Dizhi.寅, Dizhi.巳, Dizhi.申}, {Dizhi.丑, Dizhi.未, Dizhi.戌}],
+      [{Dizhi.子, Dizhi.卯}, 
+       {Dizhi.寅, Dizhi.巳, Dizhi.申}, {Dizhi.寅, Dizhi.巳}, {Dizhi.巳, Dizhi.申}, {Dizhi.寅, Dizhi.申}, 
+       {Dizhi.丑, Dizhi.未, Dizhi.戌}, {Dizhi.丑, Dizhi.未}, {Dizhi.未, Dizhi.戌}, {Dizhi.丑, Dizhi.戌}],
     ))
     self.assertTrue(self.__dz_equal(
       DizhiUtils.search(list(Dizhi) + [Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥], DizhiRelation.刑),
@@ -507,16 +516,16 @@ class TestDizhiUtils(unittest.TestCase):
   def test_xing_strict(self) -> None:
     self.assertIsNone(DizhiUtils.xing())
     self.assertIsNone(DizhiUtils.xing(definition=Rules.XingDef.STRICT))
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥), Rules.XingSubType.自刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, definition=Rules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.STRICT), Rules.XingSubType.自刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.STRICT), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.STRICT), Rules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.STRICT), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.STRICT), Rules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.STRICT), None)
 
     def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[Rules.XingSubType]:
       # In `XingDef.STRICT` mode, we don't care about the direction.
@@ -531,21 +540,20 @@ class TestDizhiUtils(unittest.TestCase):
       return None
     
     for dz in Dizhi:
-      self.assertIsNone(DizhiUtils.xing(dz))
       self.assertIsNone(DizhiUtils.xing(dz, definition=Rules.XingDef.STRICT))
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      strict_result: Optional[Rules.XingSubType] = DizhiUtils.xing(dz1, dz2)
-      strict_result2: Optional[Rules.XingSubType] = DizhiUtils.xing(dz2, dz1)
+      strict_result: Optional[Rules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=Rules.XingDef.STRICT)
+      strict_result2: Optional[Rules.XingSubType] = DizhiUtils.xing(dz2, dz1, definition=Rules.XingDef.STRICT)
       strict_result3: Optional[Rules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=Rules.XingDef.STRICT)
       self.assertEqual(strict_result, strict_result2)
       self.assertEqual(strict_result, strict_result3)
       self.assertEqual(strict_result, __expected_strict_xing((dz1, dz2)))
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      strict_result4: Optional[Rules.XingSubType] = DizhiUtils.xing(*dz_tuple)
+      strict_result4: Optional[Rules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT)
       for dz1, dz2, dz3 in itertools.permutations(dz_tuple, 3):
-        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3))
+        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
         self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
 
   def test_xing_loose(self) -> None:
@@ -845,6 +853,7 @@ class TestDizhiUtils(unittest.TestCase):
         DizhiUtils.search(set([Dizhi.子, Dizhi.午]), relation) # type: ignore
 
   @pytest.mark.slow
+  @pytest.mark.integration
   def test_search_integration(self) -> None:
     for relation in DizhiRelation:
       for round in range(300):
