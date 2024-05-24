@@ -4,7 +4,7 @@ from typing import Sequence, Optional, Final
 
 from ..Defines import Tiangan, Wuxing, TianganRelation
 from ..Common import frozendict
-from ..Rules import Rules
+from ..Rules import TianganRules
 
 
 '''
@@ -52,8 +52,8 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Optional[Wuxing]:
   assert isinstance(tg2, Tiangan)
 
   fs: TianganCombo = TianganCombo((tg1, tg2))
-  if fs in Rules.TIANGAN_HE:
-    return Rules.TIANGAN_HE[fs]
+  if fs in TianganRules.TIANGAN_HE:
+    return TianganRules.TIANGAN_HE[fs]
   return None
 
 
@@ -81,7 +81,7 @@ def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
 
   assert isinstance(tg1, Tiangan)
   assert isinstance(tg2, Tiangan)
-  return TianganCombo((tg1, tg2)) in Rules.TIANGAN_CHONG
+  return TianganCombo((tg1, tg2)) in TianganRules.TIANGAN_CHONG
 
 
 def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
@@ -108,7 +108,7 @@ def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
 
   assert isinstance(tg1, Tiangan)
   assert isinstance(tg2, Tiangan)
-  return (tg1, tg2) in Rules.TIANGAN_SHENG
+  return (tg1, tg2) in TianganRules.TIANGAN_SHENG
 
 
 def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
@@ -135,7 +135,7 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
 
   assert isinstance(tg1, Tiangan)
   assert isinstance(tg2, Tiangan)
-  return (tg1, tg2) in Rules.TIANGAN_KE
+  return (tg1, tg2) in TianganRules.TIANGAN_KE
 
 
 def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRelationCombos:
@@ -177,18 +177,18 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   assert all(isinstance(tg, Tiangan) for tg in tiangans)
 
   if relation is TianganRelation.合:
-    return TianganRelationCombos(combo for combo in Rules.TIANGAN_HE if combo.issubset(tiangans))
+    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_HE if combo.issubset(tiangans))
   elif relation is TianganRelation.冲:
-    return TianganRelationCombos(combo for combo in Rules.TIANGAN_CHONG if combo.issubset(tiangans))
+    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_CHONG if combo.issubset(tiangans))
   
   # Otherwise, relation is `TianganRelation.生` or `TianganRelation.克`.
   tg_set: Final[set[Tiangan]] = set(tiangans)
 
   if relation is TianganRelation.生:
-    return TianganRelationCombos(TianganCombo(combo) for combo in Rules.TIANGAN_SHENG if tg_set.issuperset(combo))
+    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_SHENG if tg_set.issuperset(combo))
   else: 
     assert relation is TianganRelation.克
-    return TianganRelationCombos(TianganCombo(combo) for combo in Rules.TIANGAN_KE if tg_set.issuperset(combo))
+    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_KE if tg_set.issuperset(combo))
 
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:

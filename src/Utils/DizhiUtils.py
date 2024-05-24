@@ -5,7 +5,7 @@ from typing import Sequence, Optional, Final
 
 from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
-from ..Rules import Rules
+from ..Rules import DizhiRules
 
 
 '''
@@ -47,7 +47,7 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
   combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
-  return Rules.DIZHI_SANHUI.get(combo, None)
+  return DizhiRules.DIZHI_SANHUI.get(combo, None)
 
 
 def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
@@ -72,20 +72,20 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
-  return Rules.DIZHI_LIUHE.get(combo, None)
+  return DizhiRules.DIZHI_LIUHE.get(combo, None)
 
 
-def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NORMAL_EXTENDED) -> bool:
+def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED) -> bool:
   '''
   Check if the input Dizhis are in ANHE (暗合) relation. If so, return `True`. If not, return `False`.
-  There are multiple definitions for ANHE. The default definition is `Rules.AnheDef.NORMAL_EXTENDED`.
+  There are multiple definitions for ANHE. The default definition is `DizhiRules.AnheDef.NORMAL_EXTENDED`.
   检查输入的地支是否构成暗合关系。如果是，返回 `True`。否则返回 `False`。
-  暗合关系的看法有多种，默认使用 `Rules.AnheDef.NORMAL_EXTENDED`。
+  暗合关系的看法有多种，默认使用 `DizhiRules.AnheDef.NORMAL_EXTENDED`。
 
   Args:
   - dz1: (Dizhi) The first Dizhi.
   - dz2: (Dizhi) The second Dizhi.
-  - definition: (Rules.AnheDef) The definition of the ANHE relation. Default to `Rules.AnheDef.NORMAL_EXTENDED`.
+  - definition: (DizhiRules.AnheDef) The definition of the ANHE relation. Default to `DizhiRules.AnheDef.NORMAL_EXTENDED`.
 
   Return: (bool) Whether the Dizhis form in ANHE (暗合) relation.
 
@@ -94,16 +94,16 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: Rules.AnheDef = Rules.AnheDef.NO
     - return: True
   - anhe(Dizhi.寅, Dizhi.丑)
     - return: True
-  - anhe(Dizhi.寅, Dizhi.丑, Rules.AnheDef.NORMAL)
+  - anhe(Dizhi.寅, Dizhi.丑, DizhiRules.AnheDef.NORMAL)
     - return: False
-  - anhe(Dizhi.寅, Dizhi.午, Rules.AnheDef.MANGPAI)
+  - anhe(Dizhi.寅, Dizhi.午, DizhiRules.AnheDef.MANGPAI)
     - return: False
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  assert isinstance(definition, Rules.AnheDef)
+  assert isinstance(definition, DizhiRules.AnheDef)
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
-  return combo in Rules.DIZHI_ANHE[definition]
+  return combo in DizhiRules.DIZHI_ANHE[definition]
 
 
 def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -127,7 +127,7 @@ def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
-  return combo in Rules.DIZHI_TONGHE
+  return combo in DizhiRules.DIZHI_TONGHE
 
 
 def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -151,7 +151,7 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
-  return combo in Rules.DIZHI_TONGLUHE
+  return combo in DizhiRules.DIZHI_TONGLUHE
 
 
 def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
@@ -175,7 +175,7 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3))
   combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
-  return Rules.DIZHI_SANHE.get(combo, None)
+  return DizhiRules.DIZHI_SANHE.get(combo, None)
 
 
 def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
@@ -200,20 +200,20 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
-  return Rules.DIZHI_BANHE.get(combo, None)
+  return DizhiRules.DIZHI_BANHE.get(combo, None)
 
 
-def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.LOOSE) -> Optional[Rules.XingSubType]:
+def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> Optional[DizhiRules.XingSubType]:
   '''
   Check if the input Dizhis is a exact match for XING (刑) relation. If so, return the type of the XING relation. If not, return `None`.
-  There are multiple definitions for 刑. The default definition is `Rules.XingDef.LOOSE`.
-  If `Rules.XingDef.LOOSE` is used, then the `dizhis` order (direction) matters.
-  If `Rules.XingDef.STRICT` is used, then the `dizhis` order does not matter.
+  There are multiple definitions for 刑. The default definition is `DizhiRules.XingDef.LOOSE`.
+  If `DizhiRules.XingDef.LOOSE` is used, then the `dizhis` order (direction) matters.
+  If `DizhiRules.XingDef.STRICT` is used, then the `dizhis` order does not matter.
 
   检查输入的地支是否刚好构成相刑关系。如果是，返回相刑的类型。如果不是，返回 `None`。
-  相刑关系的看法有多种，默认使用 `Rules.XingDef.LOOSE`。
-  如果使用 `Rules.XingDef.LOOSE`，则 `dizhis` 的顺序会影响结果。
-  如果使用 `Rules.XingDef.STRICT`，则 `dizhis` 的顺序不会影响结果。
+  相刑关系的看法有多种，默认使用 `DizhiRules.XingDef.LOOSE`。
+  如果使用 `DizhiRules.XingDef.LOOSE`，则 `dizhis` 的顺序会影响结果。
+  如果使用 `DizhiRules.XingDef.STRICT`，则 `dizhis` 的顺序不会影响结果。
 
   Note:
   - Maximum length of the input `dizhis` is 3.
@@ -221,22 +221,22 @@ def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.LOOSE) -> Opt
 
   Args:
   - *dizhis: (Dizhi) The Dizhis to check.
-  - definition: (Rules.XingDef) The definition for 刑.
+  - definition: (DizhiRules.XingDef) The definition for 刑.
 
-  Return: (Optional[Rules.XingSubType]) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
+  Return: (Optional[DizhiRules.XingSubType]) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
 
   Examples:
   - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申])
     - return: XingSubType.SANXING
-  - xing(*[Dizhi.寅, Dizhi.巳], Rules.XingDef.STRICT)
+  - xing(*[Dizhi.寅, Dizhi.巳], DizhiRules.XingDef.STRICT)
     - return: None
-  - xing(*[Dizhi.寅, Dizhi.巳], Rules.XingDef.LOOSE)
+  - xing(*[Dizhi.寅, Dizhi.巳], DizhiRules.XingDef.LOOSE)
     - return: XingSubType.SANXING
   - xing(Dizhi.午)
     - return: None
   - xing(Dizhi.午, Dizhi.午)
     - return: XingSubType.ZIXING
-  - xing(Dizhi.午, Rules.XingDef.LOOSE)
+  - xing(Dizhi.午, DizhiRules.XingDef.LOOSE)
     - return: None
   - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午]) # Not a exact match.
     - return: None
@@ -246,9 +246,9 @@ def xing(*dizhis: Dizhi, definition: Rules.XingDef = Rules.XingDef.LOOSE) -> Opt
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
   assert len(dizhis) <= 3
-  assert isinstance(definition, Rules.XingDef)
+  assert isinstance(definition, DizhiRules.XingDef)
 
-  xing_rules: frozendict[tuple[Dizhi, ...], Rules.XingSubType] = Rules.DIZHI_XING[definition]
+  xing_rules: frozendict[tuple[Dizhi, ...], DizhiRules.XingSubType] = DizhiRules.DIZHI_XING[definition]
   return xing_rules.get(dizhis, None)
 
 
@@ -273,7 +273,7 @@ def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_CHONG
+  return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_CHONG
 
 
 def po(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -299,7 +299,7 @@ def po(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_PO
+  return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_PO
 
 
 def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -325,7 +325,7 @@ def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return DizhiCombo((dz1, dz2)) in Rules.DIZHI_HAI
+  return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_HAI
 
 
 def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -355,7 +355,7 @@ def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return (dz1, dz2) in Rules.DIZHI_SHENG
+  return (dz1, dz2) in DizhiRules.DIZHI_SHENG
 
 
 def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
@@ -385,7 +385,7 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in (dz1, dz2))
-  return (dz1, dz2) in Rules.DIZHI_KE
+  return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
 def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCombos:
@@ -415,15 +415,15 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     - 请使用 `xing` 来进行更细粒度的检查。
 
   Note:
-  - For ANHE relation, the `Rules.AnheDef.NORMAL_EXTENDED` definition is used, as it is the widest definition.
-  - 对于暗合关系的查询，默认使用 `Rules.AnheDef.NORMAL_EXTENDED` 定义，因为它包含最多的暗合地支组合。
+  - For ANHE relation, the `DizhiRules.AnheDef.NORMAL_EXTENDED` definition is used, as it is the widest definition.
+  - 对于暗合关系的查询，默认使用 `DizhiRules.AnheDef.NORMAL_EXTENDED` 定义，因为它包含最多的暗合地支组合。
 
   Note:
   - For XING relation, all Dizhis should appear in order to qualify the XING relation.
-  - `Rules.XingDef.NORMAL` definition is used.
+  - `DizhiRules.XingDef.NORMAL` definition is used.
   - e.g., if only 丑 and 未 appear in the input, then the XING relation is not satisfied (戌 missing).
   - 对于刑关系，所有的地支都出现才能满足相刑关系。
-  - 默认使用 `Rules.XingDef.NORMAL` 定义。
+  - 默认使用 `DizhiRules.XingDef.NORMAL` 定义。
   - 举例来说，如果输入中只有丑、未，那么不符合相刑关系（缺少戌）。
 
   Args:
@@ -437,7 +437,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     - return: ({Dizhi.寅, Dizhi.卯, Dizhi.辰})
   - search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
     - return: ({ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑})
-    - `Rules.AnheDef.NORMAL_EXTENDED` is used.
+    - `DizhiRules.AnheDef.NORMAL_EXTENDED` is used.
   - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
     - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })
     - Only one 辰 appears in the input - not forming a XING relation.
@@ -446,7 +446,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     - 辰 appear twice in the input - forming a XING relation.
   - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
     - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳 })
-    - `Rules.XingDef.LOOSE` is used.
+    - `DizhiRules.XingDef.LOOSE` is used.
   '''
 
   assert isinstance(relation, DizhiRelation), f'Unexpected type of relation: {type(relation)}'
@@ -454,32 +454,32 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
 
   if relation is DizhiRelation.三会:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_SANHUI if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHUI if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.六合:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_LIUHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_LIUHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.暗合:
-    anhe_table: frozenset[DizhiCombo] = Rules.DIZHI_ANHE[Rules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
+    anhe_table: frozenset[DizhiCombo] = DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
     return DizhiRelationCombos(combo for combo in anhe_table if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.通合:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_TONGHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.通禄合:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_TONGLUHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGLUHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.三合:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_SANHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.半合:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_BANHE if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_BANHE if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.刑:
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
     ret: set[DizhiCombo] = set()
-    for xing_tuple in Rules.DIZHI_XING[Rules.XingDef.LOOSE]:
+    for xing_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]:
       # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
       # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
@@ -489,17 +489,17 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
     return DizhiRelationCombos(ret)
   
   elif relation is DizhiRelation.冲:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_CHONG if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_CHONG if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.破:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_PO if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_PO if combo.issubset(dizhis))
   
   elif relation is DizhiRelation.害:
-    return DizhiRelationCombos(combo for combo in Rules.DIZHI_HAI if combo.issubset(dizhis))
+    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_HAI if combo.issubset(dizhis))
 
   # Else, `relation` must be `生` or `克`.
   assert relation is DizhiRelation.生 or relation is DizhiRelation.克
-  rules: frozenset[tuple[Dizhi, Dizhi]] = Rules.DIZHI_KE if relation is DizhiRelation.克 else Rules.DIZHI_SHENG
+  rules: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
   frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
   dz_set: set[Dizhi] = set(dizhis)
   return DizhiRelationCombos(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))

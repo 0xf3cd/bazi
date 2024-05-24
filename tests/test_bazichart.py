@@ -63,6 +63,12 @@ class TestBaziChart(unittest.TestCase):
       with self.assertRaises(TypeError):
         BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore
 
+  def test_house_of_relationship(self) -> None:
+    for _ in range(5):
+      bazi = Bazi.random()
+      chart = BaziChart(bazi)
+      self.assertEqual(chart.house_of_relationship, bazi.four_dizhis[2])
+
   def test_traits(self) -> None:
     bazi: Bazi = Bazi(
       birth_time=datetime(1984, 4, 2, 4, 2),

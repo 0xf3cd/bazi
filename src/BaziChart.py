@@ -11,7 +11,7 @@ from .Common import (
   HiddenTianganDict, BaziData, PillarData, BaziJson,
   DayunDatabase,
 )
-from .Defines import Tiangan, Ganzhi, Shishen, ShierZhangsheng, Yinyang
+from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
 
 from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie, to_ganzhi
@@ -40,6 +40,11 @@ class BaziChart:
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
+  
+  @property
+  def house_of_relationship(self) -> Dizhi:
+    '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
+    return self._bazi.day_pillar.dizhi
 
   PillarTraits = PillarData[TraitTuple, TraitTuple]
   @property

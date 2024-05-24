@@ -8,26 +8,11 @@ from .Common import classproperty, frozendict, TraitTuple, HiddenTianganDict, Co
 from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
-# Using `Const` here. So the same, cached tables are returned without deep copy.
-# The returned the tables are expected to be immutable - so no deep copy is needed.
-class Rules(Const):
-  '''
-  `Rules` represents rules/tables that the project uses.
-  The class itself is immutable - its attributes are not writtable.
-  All tables are lazy evaluated and cached.
-  
-  Usage:
-  ```
-  ytm_table: frozendict[Tiangan, Tiangan] = Rules.YEAR_TO_MONTH_TABLE
+# All Rule classes are subclassed from `Const`, making the classproperty tables cached.
+# The classproperty tables are expected to be immutable - so no deep copy is needed.
 
-  r = Rules()
-  assert ytm_table == r.YEAR_TO_MONTH_TABLE
 
-  Rules.YEAR_TO_MONTH_TABLE = frozendict({}) # Error raised!
-  r.YEAR_TO_MONTH_TABLE = frozendict({}) # Error raised!
-  ```
-  '''
-
+class BaziRules(Const):
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
   @functools.cache
@@ -80,7 +65,6 @@ class Rules(Const):
       Tiangan.癸 : TraitTuple(Wuxing.水, Yinyang.阴),
     })
 
-
   # The table is used to query the Wuxing and Yinyang of a given Dizhi (i.e. Branch / 地支).
   # 该字典用于查询给定地支的五行和阴阳。
   @classproperty
@@ -100,7 +84,6 @@ class Rules(Const):
       Dizhi.戌 : TraitTuple(Wuxing.土, Yinyang.阳),
       Dizhi.亥 : TraitTuple(Wuxing.水, Yinyang.阴),
     })
-
 
   # The table is used to find the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
   # 该字典用于查询给定地支的藏干和它们所占的百分比。
@@ -122,7 +105,6 @@ class Rules(Const):
       Dizhi.亥 : HiddenTianganDict({ Tiangan.壬 : 70, Tiangan.甲 : 30 }),
     })
 
-
   # The table is used to query the NAYIN (纳音) of a given Ganzhi (i.e. Stem-branch / Ganzhi / 干支).
   # 该字典用于查询给定干支的纳音。
   @classproperty
@@ -141,7 +123,6 @@ class Rules(Const):
       nayin_mapping_table[gz] = NAYIN_STR_LIST[index // 2]
     return frozendict(nayin_mapping_table)
 
-
   # The table is used to query the dizhi where the Zhangsheng locates for each Tiangan.
   # 该字典用于查询每个天干的长生所在的地支。
   @classproperty
@@ -159,7 +140,6 @@ class Rules(Const):
       Tiangan.壬 : Dizhi.申,
       Tiangan.癸 : Dizhi.卯,
     })
-  
 
   # This table is used to query Tiangans' LU (禄) in Dizhis.
   # 该字典用于查询天干的禄/禄身。
@@ -180,6 +160,8 @@ class Rules(Const):
     })
 
 
+
+class TianganRules(Const):
   # The table is used to query the HE (合) relation across all Tiangans.
   # HE relation is a non-directional/mutual relation.
   # 该表格用于查询天干之间的相合关系。
@@ -195,7 +177,6 @@ class Rules(Const):
       frozenset((Tiangan.戊, Tiangan.癸)) : Wuxing.火,
     })
 
-
   # The table is used to query the CHONG (冲) relation across all Tiangans.
   # CHONG relation is a non-directional/mutual relation.
   # 该表格用于查询天干之间的相冲关系。
@@ -210,7 +191,6 @@ class Rules(Const):
       frozenset((Tiangan.丁, Tiangan.癸)),
     ))
 
-
   # The table is used to query the SHENG (生) relation across all Tiangans.
   # SHENG relation is a uni-directional relation.
   # Yinyang is not considered in SHENG relation - only Wuxing is considered.
@@ -220,7 +200,7 @@ class Rules(Const):
   @classproperty
   @functools.cache
   def TIANGAN_SHENG(cls) -> frozenset[tuple[Tiangan, Tiangan]]:
-    traits_rule = Rules.TIANGAN_TRAITS
+    traits_rule = BaziRules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg1_trait: TraitTuple = traits_rule[tg1]
@@ -228,7 +208,6 @@ class Rules(Const):
       if tg1_trait.wuxing.generates(tg2_trait.wuxing): # Yinyang not considered. 天干相生不考虑阴阳。
         ret.append((tg1, tg2)) # Direction: tg1 -> tg2
     return frozenset(ret)
-
 
   # The table is used to query the KE (克) relation across all Tiangans.
   # KE relation is a uni-directional relation.
@@ -239,7 +218,7 @@ class Rules(Const):
   @classproperty
   @functools.cache
   def TIANGAN_KE(cls) -> frozenset[tuple[Tiangan, Tiangan]]:
-    traits_rule = Rules.TIANGAN_TRAITS
+    traits_rule = BaziRules.TIANGAN_TRAITS
     ret: list[tuple[Tiangan, Tiangan]] = []
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       tg1_trait: TraitTuple = traits_rule[tg1]
@@ -249,6 +228,8 @@ class Rules(Const):
     return frozenset(ret)
 
 
+
+class DizhiRules(Const):
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
@@ -263,7 +244,6 @@ class Rules(Const):
       frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
     })
   
-
   # The table is used to query the LIUHE (六合) relation across all Dizhis.
   # LIUHE relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的六合局。
@@ -324,14 +304,14 @@ class Rules(Const):
         frozenset((Dizhi.午, Dizhi.亥)),
       ])
 
-    def __getitem__(self, anhe_def: 'Rules.AnheDef') -> frozenset[frozenset[Dizhi]]:
-      assert isinstance(anhe_def, Rules.AnheDef)
-      if anhe_def == Rules.AnheDef.NORMAL:
+    def __getitem__(self, anhe_def: 'DizhiRules.AnheDef') -> frozenset[frozenset[Dizhi]]:
+      assert isinstance(anhe_def, DizhiRules.AnheDef)
+      if anhe_def == DizhiRules.AnheDef.NORMAL:
         return self.normal
-      elif anhe_def == Rules.AnheDef.NORMAL_EXTENDED:
+      elif anhe_def == DizhiRules.AnheDef.NORMAL_EXTENDED:
         return self.normal_extended
       else:
-        assert anhe_def == Rules.AnheDef.MANGPAI
+        assert anhe_def == DizhiRules.AnheDef.MANGPAI
         return self.mangpai
 
   # The tables are used to query the ANHE (暗合) relation across all Dizhis.
@@ -342,7 +322,7 @@ class Rules(Const):
   @classproperty
   @functools.cache
   def DIZHI_ANHE(cls) -> AnheTable:
-    return Rules.AnheTable()
+    return DizhiRules.AnheTable()
   
   # The table is used to query the TONGHE (通合) relation across all Dizhis.
   # TONGHE relation is a non-directional/mutual relation.
@@ -423,34 +403,34 @@ class Rules(Const):
   class XingTable(metaclass=ConstMetaClass):
     @classproperty
     @functools.cache
-    def strict(cls) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
-      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = {}
+    def strict(cls) -> frozendict[tuple[Dizhi, ...], 'DizhiRules.XingSubType']:
+      d: dict[tuple[Dizhi, ...], DizhiRules.XingSubType] = {}
       for dz_tuple in itertools.permutations((Dizhi.丑, Dizhi.未, Dizhi.戌)):
-        d[dz_tuple] = Rules.XingSubType.三刑
+        d[dz_tuple] = DizhiRules.XingSubType.三刑
       for dz_tuple in itertools.permutations((Dizhi.寅, Dizhi.巳, Dizhi.申)):
-        d[dz_tuple] = Rules.XingSubType.三刑
+        d[dz_tuple] = DizhiRules.XingSubType.三刑
       for dz_tuple in itertools.permutations((Dizhi.子, Dizhi.卯)):
-        d[dz_tuple] = Rules.XingSubType.子卯刑
+        d[dz_tuple] = DizhiRules.XingSubType.子卯刑
       for dz in (Dizhi.午, Dizhi.辰, Dizhi.酉, Dizhi.亥):
-        d[(dz, dz)] = Rules.XingSubType.自刑
+        d[(dz, dz)] = DizhiRules.XingSubType.自刑
       return frozendict(d)
     
     @classproperty
     @functools.cache
-    def loose(cls) -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
-      d: dict[tuple[Dizhi, ...], Rules.XingSubType] = dict(Rules.XingTable.strict)
+    def loose(cls) -> frozendict[tuple[Dizhi, ...], 'DizhiRules.XingSubType']:
+      d: dict[tuple[Dizhi, ...], DizhiRules.XingSubType] = dict(DizhiRules.XingTable.strict)
       for dz_tuple in ((Dizhi.丑, Dizhi.戌), (Dizhi.戌, Dizhi.未), (Dizhi.未, Dizhi.丑)):
-        d[dz_tuple] = Rules.XingSubType.三刑
+        d[dz_tuple] = DizhiRules.XingSubType.三刑
       for dz_tuple in ((Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)):
-        d[dz_tuple] = Rules.XingSubType.三刑
+        d[dz_tuple] = DizhiRules.XingSubType.三刑
       return frozendict(d)
 
-    def __getitem__(self, xing_def: 'Rules.XingDef') -> frozendict[tuple[Dizhi, ...], 'Rules.XingSubType']:
-      assert isinstance(xing_def, Rules.XingDef)
-      if xing_def is Rules.XingDef.STRICT:
+    def __getitem__(self, xing_def: 'DizhiRules.XingDef') -> frozendict[tuple[Dizhi, ...], 'DizhiRules.XingSubType']:
+      assert isinstance(xing_def, DizhiRules.XingDef)
+      if xing_def is DizhiRules.XingDef.STRICT:
         return self.strict
       else:
-        assert xing_def is Rules.XingDef.LOOSE
+        assert xing_def is DizhiRules.XingDef.LOOSE
         return self.loose
 
   # The table is used to query the XING (刑) relation across all Dizhis.
@@ -459,9 +439,8 @@ class Rules(Const):
   # 相刑是有方向的。
   @classproperty
   @functools.cache
-  def DIZHI_XING(cls) -> 'Rules.XingTable':
-    return Rules.XingTable()
-
+  def DIZHI_XING(cls) -> 'DizhiRules.XingTable':
+    return DizhiRules.XingTable()
 
   # The table is used to query the CHONG (冲) relation across all Dizhis.
   # CHONG relation is a non-directional/mutual relation.
@@ -489,7 +468,6 @@ class Rules(Const):
       (Dizhi.寅, Dizhi.亥), (Dizhi.巳, Dizhi.申),
     )])
 
-
   # The table is used to query the HAI (害, i.e. 穿) relation across all Dizhis.
   # HAI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的害（即相穿）。
@@ -503,7 +481,6 @@ class Rules(Const):
       (Dizhi.申, Dizhi.亥), (Dizhi.酉, Dizhi.戌),
     )])
 
-
   # The table is used to query the SHENG (生) relation across all Dizhis.
   # SHENG relation is a uni-directional relation.
   # Yinyang is not considered in SHENG relation - only Wuxing is considered.
@@ -513,7 +490,7 @@ class Rules(Const):
   @classproperty
   @functools.cache
   def DIZHI_SHENG(cls) -> frozenset[tuple[Dizhi, Dizhi]]:
-    dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    dizhi_traits: frozendict[Dizhi, TraitTuple] = BaziRules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
       trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
@@ -521,7 +498,6 @@ class Rules(Const):
         ret.append((dz1, dz2))
     return frozenset(ret)
   
-
   # The table is used to query the KE (克) relation across all Dizhis.
   # KE relation is a uni-directional relation.
   # Yinyang is not considered in KE relation - only Wuxing is considered.
@@ -531,7 +507,7 @@ class Rules(Const):
   @classproperty
   @functools.cache
   def DIZHI_KE(cls) -> frozenset[tuple[Dizhi, Dizhi]]:
-    dizhi_traits: frozendict[Dizhi, TraitTuple] = Rules.DIZHI_TRAITS
+    dizhi_traits: frozendict[Dizhi, TraitTuple] = BaziRules.DIZHI_TRAITS
     ret: list[tuple[Dizhi, Dizhi]] = []
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
       trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
