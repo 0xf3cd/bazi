@@ -514,3 +514,20 @@ class DizhiRules(Const):
       if trait1.wuxing.destructs(trait2.wuxing):
         ret.append((dz1, dz2))
     return frozenset(ret)
+
+
+
+class RelationshipRules(Const):
+  @classproperty
+  @functools.cache
+  def TAOHUA(cls) -> frozendict[Dizhi, Dizhi]:
+    return frozendict({
+      Dizhi(k_str) : Dizhi(v_str)
+      for k_strs, v_str in {
+        '申子辰' : '酉',
+        '寅午戌' : '卯',
+        '亥卯未' : '子',
+        '巳酉丑' : '午',
+      }.items()
+      for k_str in k_strs
+    })
