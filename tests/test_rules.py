@@ -5,7 +5,7 @@ import re
 import inspect
 import unittest
 
-from src.Rules import BaziRules, TianganRules, DizhiRules
+from src.Rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 class TestRules(unittest.TestCase):
   def test_basic(self) -> None:
@@ -14,6 +14,7 @@ class TestRules(unittest.TestCase):
     self.assertEqual(BaziRules.TIANGAN_TRAITS, BaziRules.TIANGAN_TRAITS)
     self.assertEqual(TianganRules.TIANGAN_HE, TianganRules.TIANGAN_HE)
     self.assertEqual(DizhiRules.DIZHI_PO, DizhiRules.DIZHI_PO)
+    self.assertEqual(ShenshaRules.TAOHUA, ShenshaRules.TAOHUA)
 
   def test_cache(self) -> None:
     self.assertIs(BaziRules.HIDDEN_TIANGANS, BaziRules.HIDDEN_TIANGANS) 
@@ -21,6 +22,7 @@ class TestRules(unittest.TestCase):
     self.assertIs(BaziRules.TIANGAN_TRAITS, BaziRules.TIANGAN_TRAITS)
     self.assertIs(TianganRules.TIANGAN_HE, TianganRules.TIANGAN_HE)
     self.assertIs(DizhiRules.DIZHI_PO, DizhiRules.DIZHI_PO)
+    self.assertIs(ShenshaRules.TAOHUA, ShenshaRules.TAOHUA)
 
   def test_anhetable(self) -> None:
     # I just want `DizhiRules.AnheTable` to be a immutable Class...
@@ -72,7 +74,7 @@ class TestRules(unittest.TestCase):
         if re.match(r'^[A-Z_]+$', member[0])
       ]
     
-    for klass in [BaziRules, TianganRules, DizhiRules]:
+    for klass in [BaziRules, TianganRules, DizhiRules, ShenshaRules]:
       table_names: list[str] = list_all_rules(klass)
       self.assertGreater(len(table_names), 0)
 

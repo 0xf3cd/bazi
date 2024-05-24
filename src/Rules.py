@@ -13,6 +13,8 @@ from .Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
 class BaziRules(Const):
+  '''Rules for `Bazi` and `BaziChart`.'''
+
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
   @classproperty
   @functools.cache
@@ -162,6 +164,8 @@ class BaziRules(Const):
 
 
 class TianganRules(Const):
+  '''Rules for Tiangan relations / 天干关系'''
+
   # The table is used to query the HE (合) relation across all Tiangans.
   # HE relation is a non-directional/mutual relation.
   # 该表格用于查询天干之间的相合关系。
@@ -230,6 +234,8 @@ class TianganRules(Const):
 
 
 class DizhiRules(Const):
+  '''Rules for Dizhi relations / 地支关系'''
+
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
@@ -517,7 +523,11 @@ class DizhiRules(Const):
 
 
 
-class RelationshipRules(Const):
+class ShenshaRules(Const):
+  '''Rules for Shensha / 神煞'''
+
+  # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
+  # 该表格用于查询桃花星。桃花即咸池桃花。
   @classproperty
   @functools.cache
   def TAOHUA(cls) -> frozendict[Dizhi, Dizhi]:
@@ -528,6 +538,80 @@ class RelationshipRules(Const):
         '寅午戌' : '卯',
         '亥卯未' : '子',
         '巳酉丑' : '午',
+      }.items()
+      for k_str in k_strs
+    })
+  
+  # The table is used to find out HONGYAN (红艳).
+  # 该表格用于查询红艳星。
+  @classproperty
+  @functools.cache
+  def HONGYAN(cls) -> frozendict[Tiangan, Dizhi]:
+    return frozendict({
+      Tiangan.甲 : Dizhi.午,
+      Tiangan.乙 : Dizhi.申,
+      Tiangan.丙 : Dizhi.寅,
+      Tiangan.丁 : Dizhi.未,
+      Tiangan.戊 : Dizhi.辰,
+      Tiangan.己 : Dizhi.辰,
+      Tiangan.庚 : Dizhi.戌,
+      Tiangan.辛 : Dizhi.酉,
+      Tiangan.壬 : Dizhi.子,
+      Tiangan.癸 : Dizhi.申,
+    })
+  
+  # The table is used to find out HONGLUAN (红鸾).
+  # 该表格用于查询红鸾星。
+  @classproperty
+  @functools.cache
+  def HONGLUAN(cls) -> frozendict[Dizhi, Dizhi]:
+    return frozendict({
+      Dizhi.子 : Dizhi.卯,
+      Dizhi.丑 : Dizhi.寅,
+      Dizhi.寅 : Dizhi.丑,
+      Dizhi.卯 : Dizhi.子,
+      Dizhi.辰 : Dizhi.亥,
+      Dizhi.巳 : Dizhi.戌,
+      Dizhi.午 : Dizhi.酉,
+      Dizhi.未 : Dizhi.申,
+      Dizhi.申 : Dizhi.未,
+      Dizhi.酉 : Dizhi.午,
+      Dizhi.戌 : Dizhi.巳,
+      Dizhi.亥 : Dizhi.辰,
+    })
+
+  # The table is used to find out TIANXI (天喜).
+  # 该表格用于查询天喜星。
+  @classproperty
+  @functools.cache
+  def TIANXI(cls) -> frozendict[Dizhi, Dizhi]:
+    return frozendict({
+      Dizhi.子 : Dizhi.酉,
+      Dizhi.丑 : Dizhi.申,
+      Dizhi.寅 : Dizhi.未,
+      Dizhi.卯 : Dizhi.午,
+      Dizhi.辰 : Dizhi.巳,
+      Dizhi.巳 : Dizhi.辰,
+      Dizhi.午 : Dizhi.卯,
+      Dizhi.未 : Dizhi.寅,
+      Dizhi.申 : Dizhi.丑,
+      Dizhi.酉 : Dizhi.子,
+      Dizhi.戌 : Dizhi.亥,
+      Dizhi.亥 : Dizhi.戌,
+    })
+
+  # The table is used to find out YIMA (驿马).
+  # 该表格用于查询驿马星。
+  @classproperty
+  @functools.cache
+  def YIMA(cls) -> frozendict[Dizhi, Dizhi]:
+    return frozendict({
+      Dizhi(k_str) : Dizhi(v_str)
+      for k_strs, v_str in {
+        '申子辰' : '寅',
+        '寅午戌' : '申',
+        '亥卯未' : '巳',
+        '巳酉丑' : '亥',
       }.items()
       for k_str in k_strs
     })

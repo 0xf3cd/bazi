@@ -1,11 +1,11 @@
 from . import BaziUtils
 from . import TianganUtils
 from . import DizhiUtils
-from . import RelationshipUtils
+from . import ShenshaUtils
 
 __all__ = [
   'BaziUtils',
   'TianganUtils',
   'DizhiUtils',
-  'RelationshipUtils',
+  'ShenshaUtils',
 ]
