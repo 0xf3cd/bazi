@@ -160,29 +160,59 @@ class TestGanzhiDiscoverer(unittest.TestCase):
           transit_dizhis: list[Dizhi] = [gz.dizhi for gz in transit_ganzhis]
 
           at_birth = discoverer.at_birth
-          self.assertEqual(at_birth, 
-                           PillarData(TianganUtils.discover(chart.bazi.four_tiangans), DizhiUtils.discover(chart.bazi.four_dizhis)), 
-                           'At-birth / 原局')
-          
           transits = discoverer.transits(gz_year, option)
-          self.assertEqual(transits, 
-                           PillarData(TianganUtils.discover(transit_tiangans), DizhiUtils.discover(transit_dizhis)),
-                           'Transits / 运（即大运、流年、小运）')
-          
           mutual = discoverer.mutual(gz_year, option)
-          self.assertEqual(mutual, 
-                           PillarData(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tiangans), DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dizhis)), 
-                           'Mutual / 原局和运之间的互相作用力/关系')
 
-          expected_tiangan_combined: TianganUtils.TianganRelationDiscovery = TianganUtils.discover(list(chart.bazi.four_tiangans) + transit_tiangans)
-          for tg_rel in TianganRelation:
-            self.assertSetEqual(set(expected_tiangan_combined[tg_rel]),
-                                set(at_birth.tiangan[tg_rel]) | set(transits.tiangan[tg_rel]) | set(mutual.tiangan[tg_rel]))
-                  
-          expected_dizhi_combined: DizhiUtils.DizhiRelationDiscovery = DizhiUtils.discover(list(chart.bazi.four_dizhis) + transit_dizhis)
-          for dz_rel in DizhiRelation:
-            self.assertSetEqual(set(expected_dizhi_combined[dz_rel]), 
-                                set(at_birth.dizhi[dz_rel]) | set(transits.dizhi[dz_rel]) | set(mutual.dizhi[dz_rel]))
+          with self.subTest('method correctness'):
+            self.assertEqual(at_birth, 
+                            PillarData(TianganUtils.discover(chart.bazi.four_tiangans), DizhiUtils.discover(chart.bazi.four_dizhis)), 
+                            'At-birth / 原局')
+            self.assertEqual(transits, 
+                            PillarData(TianganUtils.discover(transit_tiangans), DizhiUtils.discover(transit_dizhis)),
+                            'Transits / 运（即大运、流年、小运）')
+            self.assertEqual(mutual, 
+                            PillarData(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tiangans), DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dizhis)), 
+                            'Mutual / 原局和运之间的互相作用力/关系')
+
+          with self.subTest('tiangan correctness'):
+            expected_tiangan_combined: TianganUtils.TianganRelationDiscovery = TianganUtils.discover(list(chart.bazi.four_tiangans) + transit_tiangans)
+            actual_tiangan_combined: dict[TianganRelation, set[TianganUtils.TianganCombo]] = {}
+            
+            for tg_rel in TianganRelation:
+              tiangan_set: set[TianganUtils.TianganCombo] = set()
+              if tg_rel in at_birth.tiangan:
+                tiangan_set.update(at_birth.tiangan[tg_rel])
+              if tg_rel in transits.tiangan:
+                tiangan_set.update(transits.tiangan[tg_rel])
+              if tg_rel in mutual.tiangan:
+                tiangan_set.update(mutual.tiangan[tg_rel])
+              if len(tiangan_set) > 0:
+                actual_tiangan_combined[tg_rel] = tiangan_set
+
+            for tg_rel in TianganRelation:
+              self.assertEqual(tg_rel in actual_tiangan_combined, tg_rel in expected_tiangan_combined)
+              if tg_rel in actual_tiangan_combined:
+                self.assertSetEqual(actual_tiangan_combined[tg_rel], set(expected_tiangan_combined[tg_rel]))
+
+          with self.subTest('dizhi correctness'):
+            expected_dizhi_combined: DizhiUtils.DizhiRelationDiscovery = DizhiUtils.discover(list(chart.bazi.four_dizhis) + transit_dizhis)
+            actual_dizhi_combined: dict[DizhiRelation, set[DizhiUtils.DizhiCombo]] = {}
+            
+            for dz_rel in DizhiRelation:
+              dizhi_set: set[DizhiUtils.DizhiCombo] = set()
+              if dz_rel in at_birth.dizhi:
+                dizhi_set.update(at_birth.dizhi[dz_rel])
+              if dz_rel in transits.dizhi:
+                dizhi_set.update(transits.dizhi[dz_rel])
+              if dz_rel in mutual.dizhi:
+                dizhi_set.update(mutual.dizhi[dz_rel])
+              if len(dizhi_set) > 0:
+                actual_dizhi_combined[dz_rel] = dizhi_set
+
+            for dz_rel in DizhiRelation:
+              self.assertEqual(dz_rel in actual_dizhi_combined, dz_rel in expected_dizhi_combined)
+              if dz_rel in actual_dizhi_combined:
+                self.assertSetEqual(actual_dizhi_combined[dz_rel], set(expected_dizhi_combined[dz_rel]))
 
 
 @pytest.mark.integration

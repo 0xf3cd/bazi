@@ -7,10 +7,11 @@ from . import BaziChart
 from . import Rules
 from . import Utils
 from . import Discoverer
+from . import Analyzer
 from . import Descriptions
 from . import Interpreter
 
 __all__ = [
-  'Common', 'Defines', 'Calendar', 'Bazi', 'Rules', 'Utils', 
-  'Discoverer', 'BaziChart', 'Descriptions', 'Interpreter',
+  'Common', 'Defines', 'Calendar', 'Bazi', 'BaziChart', 'Rules', 'Utils', 
+  'Discoverer', 'Analyzer', 'Descriptions', 'Interpreter',
 ]

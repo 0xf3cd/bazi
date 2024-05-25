@@ -514,8 +514,8 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   这个方法通过调用 `search` 来实现。
 
   Note:
-  - The returned frozendict has all `DizhiRelation` keys, but some values may be empty.
-  - 返回的字典的键为所有的 `DizhiRelation`，但返回字典的某些值可能为空（即 `DizhiRelationCombos` 可能为空）。
+  - It is possible that some `DizhiRelation`s are not in the returned frozendict as keys.
+  - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
 
   Note:
   - For XING relation, `XingDef.LOOSE` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
@@ -529,7 +529,9 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
   return frozendict({
-    rel : search(dizhis, rel) for rel in DizhiRelation
+    rel : result
+    for rel in DizhiRelation
+    if len(result := search(dizhis, rel)) > 0
   })
 
 
@@ -541,6 +543,10 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
 
   找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
   注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
+
+  Note:
+  - It is possible that some `DizhiRelation`s are not in the returned frozendict as keys.
+  - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
 
   Note:
   - For XING relation, `XingDef.LOOSE` is used; For ANHE relation, `AnheDef.NORMAL_EXTENDED` is used.
@@ -556,21 +562,10 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   - discover_mutual([子], [丑])
     - return: {
       DizhiRelation.合: DizhiRelationCombos({子, 丑},),
-      DizhiRelation.冲: DizhiRelationCombos(), // empty
-      DizhiRelation.生: DizhiRelationCombos(), // empty
       DizhiRelation.克: DizhiRelationCombos({子, 丑},)
-      DizhiRelation.刑: DizhiRelationCombos(), // empty
-      // ... and other empty DizhiRelationCombos...
     }
   - discover_mutual([子, 丑], [])
-    - return: {
-      DizhiRelation.合: DizhiRelationCombos(), // empty
-      DizhiRelation.冲: DizhiRelationCombos(), // empty
-      DizhiRelation.生: DizhiRelationCombos(), // empty
-      DizhiRelation.克: DizhiRelationCombos(), // empty
-      DizhiRelation.刑: DizhiRelationCombos(), // empty
-      // ... and so on
-    }
+    - return: {} // Empty returned frozendict!
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis1)
@@ -589,6 +584,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   # Discover all possible combos with `dz1_set` and `dz2_set` combined.
   # Check each combo's validity and only keep valid ones.
   return frozendict({
-    rel : DizhiRelationCombos(filter(__is_valid, combos))
+    rel : result
     for rel, combos in discover(list(dizhis1) + list(dizhis2)).items()
+    if len(result := DizhiRelationCombos(filter(__is_valid, combos))) > 0
   })

@@ -1,24 +1,14 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
 from typing import Final
 
-from ..Common import frozendict, PillarData, DayunDatabase
+from ..Common import frozendict, PillarData, DayunDatabase, TransitOptions
 from ..Defines import Tiangan, Dizhi, Ganzhi
 
 from ..BaziChart import BaziChart
 
 from ..Utils import BaziUtils, TianganUtils, DizhiUtils
 from ..Calendar.CalendarDefines import CalendarDate
-
-
-class TransitOptions(Enum):
-  '''Specifies whether Dayun / Xiaoyun / Liunian transits should be considered. 用于指定是否考虑大运流年、小运、流年等。'''
-  XIAOYUN         = 0x1
-  DAYUN           = 0x2
-  LIUNIAN         = 0x4
-  XIAOYUN_LIUNIAN = 0x1 | 0x4 # Pylance doesn't like "XIAOYUN | LIUNIAN"
-  DAYUN_LIUNIAN   = 0x2 | 0x4 # Pylance doesn't like "DAYUN | LIUNIAN"
 
 
 class GanzhiDiscoverer:

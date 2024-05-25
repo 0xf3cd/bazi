@@ -7,12 +7,15 @@ import shutil
 import psutil
 import platform
 import argparse
-import itertools
 import subprocess
 import unicodedata
 
-from datetime import datetime
+import operator
+import functools
+import itertools
+
 from pathlib import Path
+from datetime import datetime
 from typing import Callable, Optional, Final, Any, Generator
 
 import emoji
@@ -349,11 +352,34 @@ def run_interpreter() -> int:
   return ret
 
 
-def run_subtasks() -> dict[str, tuple[int, float]]:
-  subtask_status: dict[str, tuple[int, float]] = {}
+class SubTaskStatuses:
+  def __init__(self) -> None:
+    self._retcodes: Final[dict[str, int]] = {}
+    self._times: Final[dict[str, float]] = {}
+
+  def set(self, name: str, retcode: int, time: float) -> None:
+    self._retcodes[name] = retcode
+    self._times[name] = time
+
+  def keys(self) -> list[str]:
+    assert set(self._retcodes.keys()) == set(self._times.keys())
+    return list(self._retcodes.keys())
+  
+  @property
+  def max_key_len(self) -> int:
+    return max(map(len, self.keys()))
+  
+  def retcode(self, name: str) -> int:
+    return self._retcodes[name]
+  
+  def time(self, name: str) -> float:
+    return self._times[name]
+
+def run_subtasks() -> SubTaskStatuses:
+  s: Final[SubTaskStatuses] = SubTaskStatuses()
   def run_subtask(name: str, f: Callable[[], int]) -> None:
     subtask_start_time: datetime = datetime.now()
-    subtask_status[name] = (f(), (datetime.now() - subtask_start_time).total_seconds())
+    s.set(name, f(), (datetime.now() - subtask_start_time).total_seconds())
 
   if not skip_test:
     if do_cov:
@@ -373,7 +399,7 @@ def run_subtasks() -> dict[str, tuple[int, float]]:
   if do_mypy:
     run_subtask('mypy', run_mypy)
 
-  return subtask_status
+  return s
 
 
 # region: Main
@@ -383,7 +409,7 @@ def main() -> None:
 
   print_args()
   print_sysinfo()
-  subprocess_status: dict[str, tuple[int, float]] = run_subtasks()
+  statuses: SubTaskStatuses = run_subtasks()
 
   end_time: datetime = datetime.now()
 
@@ -393,15 +419,16 @@ def main() -> None:
   print(f'-- Time elapsed: {end_time - start_time}')
 
   print('-- Sub-tasks status:')
-  max_name_len: int = max(map(lambda x : len(x), subprocess_status.keys()))
-  for name, (sp_retcode, sp_time) in subprocess_status.items():
-    ok: bool = sp_retcode == 0
+  for name in statuses.keys():
+    ok: bool = (0 == statuses.retcode(name))
+    elapsed: float = statuses.time(name)
     name_color: str = colorama.Fore.GREEN if ok else colorama.Fore.YELLOW
-    name = name_color + name.ljust(max_name_len + 1) + colorama.Style.RESET_ALL
-    time_str: str = f'{sp_time:.5f}'[:7]
+    name = name_color + name.ljust(statuses.max_key_len + 1) + colorama.Style.RESET_ALL
+    time_str: str = f'{elapsed:.5f}'[:7]
     print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random_emoji()}')
 
-  resolved_retcode: int = sum(map(lambda x: x[0], subprocess_status.values()))
+  retcodes: map[int] = map(statuses.retcode, statuses.keys())
+  resolved_retcode: int = functools.reduce(operator.or_, retcodes)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 
                 u''.join(random.sample(u'🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))

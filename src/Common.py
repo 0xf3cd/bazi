@@ -3,6 +3,7 @@
 import copy
 import inspect
 
+from enum import unique, IntFlag
 from datetime import datetime
 
 from typing import (
@@ -366,6 +367,22 @@ class BaziJson:
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
+
+#endregion
+
+
+
+######################################################
+#region Discoverer / Analyzer
+
+@unique
+class TransitOptions(IntFlag):
+  '''Specifies whether Dayun / Xiaoyun / Liunian transits should be considered. 用于指定是否考虑大运流年、小运、流年等。'''
+  XIAOYUN         = 0x1
+  DAYUN           = 0x2
+  LIUNIAN         = 0x4
+  XIAOYUN_LIUNIAN = XIAOYUN | LIUNIAN
+  DAYUN_LIUNIAN   = DAYUN   | LIUNIAN
 
 #endregion
 

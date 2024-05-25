@@ -328,8 +328,10 @@ class TestTianganUtils(unittest.TestCase):
 
       with self.subTest('correctness'):
         for rel in TianganRelation:
-          self.assertIn(rel, discovery)
-          self.assertSetEqual(set(discovery[rel]), set(TianganUtils.search(tiangans, rel)))
+          if rel in discovery:
+            self.assertSetEqual(set(discovery[rel]), set(TianganUtils.search(tiangans, rel)))
+          else:
+            self.assertEqual(len(TianganUtils.search(tiangans, rel)), 0)
 
       with self.subTest('consistency'):
         discovery2: TianganRelationDiscovery = TianganUtils.discover(tiangans)
@@ -382,8 +384,11 @@ class TestTianganUtils(unittest.TestCase):
           expected[TianganRelation.克].append(combo)
 
       for rel, expected_combos in expected.items():
-        for combo in discovery[rel]:
-          self.assertIn(combo, expected_combos)
+        if rel in discovery:
+          for combo in discovery[rel]:
+            self.assertIn(combo, expected_combos)
+        else:
+          self.assertEqual(len(expected_combos), 0)
 
   @pytest.mark.slow
   def test_results_matched(self) -> None:
@@ -394,30 +399,34 @@ class TestTianganUtils(unittest.TestCase):
       discovery: TianganRelationDiscovery = TianganUtils.discover(tiangans)
 
       with self.subTest('HE / 合'): # Non-directional relation
-        for combo in discovery[TianganRelation.合]:
-          self.assertEqual(len(combo), 2)
-          self.assertTrue(TianganUtils.he(*combo))
+        if TianganRelation.合 in discovery:
+          for combo in discovery[TianganRelation.合]:
+            self.assertEqual(len(combo), 2)
+            self.assertTrue(TianganUtils.he(*combo))
 
       with self.subTest('CHONG / 冲'): # Non-directional relation
-        for combo in discovery[TianganRelation.冲]:
-          self.assertEqual(len(combo), 2)
-          self.assertTrue(TianganUtils.chong(*combo))
+        if TianganRelation.冲 in discovery:
+          for combo in discovery[TianganRelation.冲]:
+            self.assertEqual(len(combo), 2)
+            self.assertTrue(TianganUtils.chong(*combo))
 
       with self.subTest('SHENG / 生'): # Directional relation
-        for combo in discovery[TianganRelation.生]:
-          self.assertEqual(len(combo), 2)
-          tg1, tg2 = combo
-          r1, r2 = TianganUtils.sheng(tg1, tg2), TianganUtils.sheng(tg2, tg1)
-          self.assertTrue(r1 or r2)
-          self.assertFalse(r1 and r2)
+        if TianganRelation.生 in discovery:
+          for combo in discovery[TianganRelation.生]:
+            self.assertEqual(len(combo), 2)
+            tg1, tg2 = combo
+            r1, r2 = TianganUtils.sheng(tg1, tg2), TianganUtils.sheng(tg2, tg1)
+            self.assertTrue(r1 or r2)
+            self.assertFalse(r1 and r2)
 
       with self.subTest('KE / 克'): # Directional relation
-        for combo in discovery[TianganRelation.克]:
-          self.assertEqual(len(combo), 2)
-          tg1, tg2 = combo
-          r1, r2 = TianganUtils.ke(tg1, tg2), TianganUtils.ke(tg2, tg1)
-          self.assertTrue(r1 or r2)
-          self.assertFalse(r1 and r2)
+        if TianganRelation.克 in discovery:
+          for combo in discovery[TianganRelation.克]:
+            self.assertEqual(len(combo), 2)
+            tg1, tg2 = combo
+            r1, r2 = TianganUtils.ke(tg1, tg2), TianganUtils.ke(tg2, tg1)
+            self.assertTrue(r1 or r2)
+            self.assertFalse(r1 and r2)
 
       tiangans_part1: set[Tiangan] = set(random.sample(tiangans, random.randint(0, len(tiangans))))
       tiangans_part2: set[Tiangan] = set(tiangans) - tiangans_part1
@@ -434,6 +443,15 @@ class TestTianganUtils(unittest.TestCase):
         part2_discoverty: TianganRelationDiscovery = TianganUtils.discover(list(tiangans_part2))
 
         for rel in TianganRelation:
-          expected_combined: set[TianganCombo] = set(discovery[rel])
-          combined: set[TianganCombo] = set(part1_discoverty[rel]) | set(part2_discoverty[rel]) | set(mutual_discovery[rel])
-          self.assertSetEqual(expected_combined, combined)
+          actual: set[TianganCombo] = set()
+          if rel in part1_discoverty:
+            actual.update(part1_discoverty[rel])
+          if rel in part2_discoverty:
+            actual.update(part2_discoverty[rel])
+          if rel in mutual_discovery:
+            actual.update(mutual_discovery[rel])
+
+          if rel in discovery:
+            self.assertSetEqual(set(discovery[rel]), actual)
+          else:
+            self.assertEqual(len(actual), 0)

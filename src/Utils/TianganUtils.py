@@ -200,8 +200,8 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   这个方法通过调用 `search` 来实现。
 
   Note:
-  - The returned frozendict has all `TianganRelation` keys, but some values may be empty.
-  - 返回的字典的键为所有的 `TianganRelation`，但返回字典的某些值可能为空（即 `TianganRelationCombos` 可能为空）。
+  - It is possible that some `TianganRelation`s are not in the returned frozendict as keys.
+  - 返回的字典的键中可能不包含所有的 `TianganRelation`。
 
   Args:
   - tiangans: (Sequence[Tiangan]) The Tiangans to check.
@@ -211,7 +211,9 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
 
   assert all(isinstance(tg, Tiangan) for tg in tiangans)
   return frozendict({
-    rel : search(tiangans, rel) for rel in TianganRelation
+    rel : result
+    for rel in TianganRelation
+    if len(result := search(tiangans, rel)) > 0
   })
 
 
@@ -224,6 +226,10 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
   注意返回的天干组合中的天干必须同时来自两组 `tiangans1` 和 `tiangans2` 中。
 
+  Note:
+  - It is possible that some `TianganRelation`s are not in the returned frozendict as keys.
+  - 返回的字典的键中可能不包含所有的 `TianganRelation`。
+
   Args:
   - tiangans1: (Sequence[Tiangan]) The first set of Tiangans to check.
   - tiangans2: (Sequence[Tiangan]) The second set of Tiangans to check.
@@ -234,17 +240,10 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   - discover_mutual([甲], [己])
     - return: {
       TianganRelation.合: TianganRelationCombos({甲, 己},),
-      TianganRelation.冲: TianganRelationCombos(), // empty
-      TianganRelation.生: TianganRelationCombos(), // empty
       TianganRelation.克: TianganRelationCombos({甲, 己},)
     }
   - discover_mutual([甲, 己], [])
-    - return: {
-      TianganRelation.合: TianganRelationCombos(), // empty
-      TianganRelation.冲: TianganRelationCombos(), // empty
-      TianganRelation.生: TianganRelationCombos(), // empty
-      TianganRelation.克: TianganRelationCombos(), // empty
-    }
+    - return: {} // Empty returned frozendict!
   '''
 
   assert all(isinstance(tg, Tiangan) for tg in tiangans1)
@@ -263,6 +262,7 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   # Discover all possible combos with `tg1_set` and `tg2_set` combined.
   # Check each combo's validity and only keep valid ones.
   return frozendict({
-    rel : TianganRelationCombos(filter(__is_valid, combos)) 
+    rel : result
     for rel, combos in discover(list(tg1_set | tg2_set)).items()
+    if len(result := TianganRelationCombos(filter(__is_valid, combos))) > 0
   })

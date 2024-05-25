@@ -935,8 +935,10 @@ class TestDizhiUtils(unittest.TestCase):
 
       with self.subTest('correctness'):
         for rel in DizhiRelation:
-          self.assertIn(rel, discovery)
-          self.assertSetEqual(set(discovery[rel]), set(DizhiUtils.search(dizhis, rel)))
+          if rel in discovery:
+            self.assertSetEqual(set(discovery[rel]), set(DizhiUtils.search(dizhis, rel)))
+          else:
+            self.assertEqual(len(DizhiUtils.search(dizhis, rel)), 0)
 
       with self.subTest('consistency'):
         discovery2: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
@@ -997,8 +999,11 @@ class TestDizhiUtils(unittest.TestCase):
           expected[rel].add(combo)
 
       for rel, expected_combos in expected.items():
-        for combo in discovery[rel]:
-          self.assertIn(combo, expected_combos)
+        if rel in discovery:
+          for combo in discovery[rel]:
+            self.assertIn(combo, expected_combos)
+        else:
+          self.assertEqual(len(expected_combos), 0)
 
   @pytest.mark.slow
   def test_consistency(self) -> None:
