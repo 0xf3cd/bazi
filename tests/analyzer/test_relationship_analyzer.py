@@ -6,7 +6,7 @@ import unittest
 
 import itertools
 
-from src.Defines import Tiangan, Dizhi, TianganRelation, DizhiRelation
+from src.Defines import Tiangan, Dizhi
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils
 from src.BaziChart import BaziChart
 from src.Analyzer.Relationship import RelationshipAnalyzer
@@ -65,16 +65,53 @@ class TestRelationshipAnalyzer(unittest.TestCase):
         self.assertSetEqual(analyzer.at_birth['tianxi'], analyzer.at_birth['tianxi'], 'Constancy')
 
       with self.subTest('House of Relationship / 婚姻宫'):
-        expected_house_relations: set[DizhiRelation] = set(DizhiUtils.discover_mutual([y, m, h], [d]).keys())
-        self.assertSetEqual(analyzer.at_birth['house_relations'], expected_house_relations)
-        self.assertSetEqual(analyzer.at_birth['house_relations'], analyzer.at_birth['house_relations'], 'Constancy')
+        self.assertEqual(analyzer.at_birth['house_relations'], DizhiUtils.discover_mutual([y, m, h], [d]))
+        self.assertEqual(analyzer.at_birth['house_relations'], analyzer.at_birth['house_relations'], 'Constancy')
 
       with self.subTest('Day Master Relations / 日主关系'):
-        expected_day_master_relations: set[TianganRelation] = \
-          set(TianganUtils.discover_mutual([
-            chart.bazi.year_pillar.tiangan, 
-            chart.bazi.month_pillar.tiangan,
-            chart.bazi.hour_pillar.tiangan
-          ], [dm]).keys())
-        self.assertSetEqual(analyzer.at_birth['day_master_relations'], expected_day_master_relations)
-        self.assertSetEqual(analyzer.at_birth['day_master_relations'], analyzer.at_birth['day_master_relations'], 'Constancy')
+        self.assertEqual(analyzer.at_birth['day_master_relations'], TianganUtils.discover_mutual([
+          chart.bazi.year_pillar.tiangan, 
+          chart.bazi.month_pillar.tiangan,
+          chart.bazi.hour_pillar.tiangan
+        ], [dm]))
+        self.assertEqual(analyzer.at_birth['day_master_relations'], analyzer.at_birth['day_master_relations'], 'Constancy')
+
+      with self.subTest('Relationship Star Relations / 夫妻星关系'):
+        stars = chart.relationship_stars
+        for tg_combos in analyzer.at_birth['tg_star_relations'].values():
+          for tg_combo in tg_combos:
+            self.assertIn(stars.tiangan, tg_combo)
+        for dz_combos in analyzer.at_birth['dz_star_relations'].values():
+          for dz_combo in dz_combos:
+            self.assertTrue(any(dz in dz_combo for dz in stars.dizhi))
+
+        self.assertEqual(analyzer.at_birth['tg_star_relations'], analyzer.at_birth['tg_star_relations'], 'Constancy')
+        self.assertEqual(analyzer.at_birth['dz_star_relations'], analyzer.at_birth['dz_star_relations'], 'Constancy')
+
+
+  @pytest.mark.slow
+  def test_filtered(self) -> None:
+    '''Test "tg_star_relations" and "dz_star_relations" only contain filtered combos.'''
+    for _ in range(16):
+      chart: BaziChart = BaziChart.random()
+      analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
+      stars = chart.relationship_stars
+      
+      with self.subTest('at_birth'):
+        at_birth_analysis = analyzer.at_birth
+
+        for tg_rel, tg_combos in TianganUtils.discover(chart.bazi.four_tiangans).items():
+          if tg_rel not in at_birth_analysis['tg_star_relations']:
+            self.assertTrue(all(stars.tiangan not in tg_combo for tg_combo in tg_combos))
+          else:
+            for tg_combo in tg_combos:
+              self.assertEqual(stars.tiangan in tg_combo,
+                               tg_combo in at_birth_analysis['tg_star_relations'][tg_rel])
+              
+        for dz_rel, dz_combos in DizhiUtils.discover(chart.bazi.four_dizhis).items():
+          if dz_rel not in at_birth_analysis['dz_star_relations']:
+            self.assertTrue(all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi))
+          else:
+            for dz_combo in dz_combos:
+              self.assertEqual(any(dz in dz_combo for dz in stars.dizhi),
+                               dz_combo in at_birth_analysis['dz_star_relations'][dz_rel])

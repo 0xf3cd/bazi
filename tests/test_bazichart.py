@@ -69,6 +69,21 @@ class TestBaziChart(unittest.TestCase):
       chart = BaziChart(bazi)
       self.assertEqual(chart.house_of_relationship, bazi.four_dizhis[2])
 
+  def test_relationship_stars(self) -> None:
+    for _ in range(5):
+      bazi = Bazi.random()
+      chart = BaziChart(bazi)
+      stars = chart.relationship_stars
+
+      expected = Shishen.正财 if bazi.gender is BaziGender.男 else Shishen.正官
+      self.assertEqual(expected, BaziUtils.shishen(bazi.day_master, stars.tiangan))
+      for dz in stars.dizhi:
+        self.assertEqual(expected, BaziUtils.shishen(bazi.day_master, dz))
+
+      if len(stars.dizhi) != 1:
+        self.assertEqual(2, len(stars.dizhi))
+        self.assertTrue(all(BaziUtils.traits(dz).wuxing is Wuxing.土 for dz in stars.dizhi))
+
   def test_traits(self) -> None:
     bazi: Bazi = Bazi(
       birth_time=datetime(1984, 4, 2, 4, 2),

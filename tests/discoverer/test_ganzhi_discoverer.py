@@ -70,29 +70,29 @@ class TestGanzhiDiscoverer(unittest.TestCase):
       chart: BaziChart = BaziChart.random()
       discoverer: GanzhiDiscoverer = GanzhiDiscoverer(chart)
 
-      self.assertRaises(AssertionError, discoverer.transits, '1999', TransitOptions.XIAOYUN)
-      self.assertRaises(AssertionError, discoverer.transits, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, discoverer.transits, 1999, 0x1 | 0x4)
+      self.assertRaises(AssertionError, discoverer.transits_only, '1999', TransitOptions.XIAOYUN)
+      self.assertRaises(AssertionError, discoverer.transits_only, 1999, 'XIAOYUN')
+      self.assertRaises(AssertionError, discoverer.transits_only, 1999, 0x1 | 0x4)
 
-      self.assertRaises(AssertionError, discoverer.mutual, '1999', TransitOptions.XIAOYUN)
-      self.assertRaises(AssertionError, discoverer.mutual, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, discoverer.mutual, 1999, 0x1 | 0x4)
+      self.assertRaises(AssertionError, discoverer.transits_mutual, '1999', TransitOptions.XIAOYUN)
+      self.assertRaises(AssertionError, discoverer.transits_mutual, 1999, 'XIAOYUN')
+      self.assertRaises(AssertionError, discoverer.transits_mutual, 1999, 0x1 | 0x4)
 
       for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
         for option in TransitOptions:
-          self.assertRaises(ValueError, discoverer.transits, gz_year, option)
-          self.assertRaises(ValueError, discoverer.mutual, gz_year, option)
+          self.assertRaises(ValueError, discoverer.transits_only, gz_year, option)
+          self.assertRaises(ValueError, discoverer.transits_mutual, gz_year, option)
 
       # Iteration starting from the first liunian (which is the birth ganzhi year).
       random_selected = random.sample(list(itertools.islice(chart.liunian, 300)), 100)
       for gz_year, _ in random_selected:
         for option in TransitOptions:
           if discoverer.support(gz_year, option):
-            self.assertIsNotNone(discoverer.transits(gz_year, option))
-            self.assertIsNotNone(discoverer.mutual(gz_year, option))
+            self.assertIsNotNone(discoverer.transits_only(gz_year, option))
+            self.assertIsNotNone(discoverer.transits_mutual(gz_year, option))
           else:
-            self.assertRaises(ValueError, discoverer.transits, gz_year, option)
-            self.assertRaises(ValueError, discoverer.mutual, gz_year, option)
+            self.assertRaises(ValueError, discoverer.transits_only, gz_year, option)
+            self.assertRaises(ValueError, discoverer.transits_mutual, gz_year, option)
 
   @pytest.mark.slow
   def test_misc(self) -> None:
@@ -106,23 +106,23 @@ class TestGanzhiDiscoverer(unittest.TestCase):
             continue
 
           with self.subTest('identical returns'):
-            self.assertIsNot(discoverer.transits(dayun_start_gz_year, option),
-                             discoverer.transits(dayun_start_gz_year, option))
-            self.assertIsNot(discoverer.mutual(dayun_start_gz_year, option),
-                             discoverer.mutual(dayun_start_gz_year, option))
+            self.assertIsNot(discoverer.transits_only(dayun_start_gz_year, option),
+                             discoverer.transits_only(dayun_start_gz_year, option))
+            self.assertIsNot(discoverer.transits_mutual(dayun_start_gz_year, option),
+                             discoverer.transits_mutual(dayun_start_gz_year, option))
             
           with self.subTest('equality'):
-            self.assertEqual(discoverer.transits(dayun_start_gz_year, option),
-                             discoverer.transits(dayun_start_gz_year, option))
-            self.assertEqual(discoverer.mutual(dayun_start_gz_year, option),
-                             discoverer.mutual(dayun_start_gz_year, option))
+            self.assertEqual(discoverer.transits_only(dayun_start_gz_year, option),
+                             discoverer.transits_only(dayun_start_gz_year, option))
+            self.assertEqual(discoverer.transits_mutual(dayun_start_gz_year, option),
+                             discoverer.transits_mutual(dayun_start_gz_year, option))
 
           with self.subTest('another discoverer'):
             discoverer2: GanzhiDiscoverer = GanzhiDiscoverer(chart)
-            self.assertEqual(discoverer.transits(dayun_start_gz_year, option),
-                             discoverer2.transits(dayun_start_gz_year, option))
-            self.assertEqual(discoverer.mutual(dayun_start_gz_year, option),
-                             discoverer2.mutual(dayun_start_gz_year, option))
+            self.assertEqual(discoverer.transits_only(dayun_start_gz_year, option),
+                             discoverer2.transits_only(dayun_start_gz_year, option))
+            self.assertEqual(discoverer.transits_mutual(dayun_start_gz_year, option),
+                             discoverer2.transits_mutual(dayun_start_gz_year, option))
 
   @pytest.mark.slow
   def test_correctness(self) -> None:
@@ -160,8 +160,8 @@ class TestGanzhiDiscoverer(unittest.TestCase):
           transit_dizhis: list[Dizhi] = [gz.dizhi for gz in transit_ganzhis]
 
           at_birth = discoverer.at_birth
-          transits = discoverer.transits(gz_year, option)
-          mutual = discoverer.mutual(gz_year, option)
+          transits = discoverer.transits_only(gz_year, option)
+          mutual = discoverer.transits_mutual(gz_year, option)
 
           with self.subTest('method correctness'):
             self.assertEqual(at_birth, 
@@ -284,7 +284,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, discoverer.at_birth.dizhi))
 
     with self.subTest('1993 dayun and liunian'):
-      dayun_liunian = discoverer.transits(1993, TransitOptions.DAYUN_LIUNIAN)
+      dayun_liunian = discoverer.transits_only(1993, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.戊, Tiangan.癸})],
@@ -295,7 +295,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, dayun_liunian.dizhi))
 
     with self.subTest('2024 dayun and liunian - mutual'):
-      mutual = discoverer.mutual(2024, TransitOptions.DAYUN_LIUNIAN)
+      mutual = discoverer.transits_mutual(2024, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -311,7 +311,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, mutual.dizhi))
 
     with self.subTest('2051 dayun and liunian'):
-      dayun_liunian = discoverer.transits(2051, TransitOptions.DAYUN_LIUNIAN)
+      dayun_liunian = discoverer.transits_only(2051, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
@@ -319,7 +319,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, dayun_liunian.dizhi))
 
     with self.subTest('2051 dayun and liunian - mutual'):
-      mutual = discoverer.mutual(2051, TransitOptions.DAYUN_LIUNIAN)
+      mutual = discoverer.transits_mutual(2051, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -367,7 +367,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
 
     with self.subTest('2024 xiaoyun and liunian - mutual'): 
       # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
-      mutual = discoverer.mutual(2024, TransitOptions.XIAOYUN_LIUNIAN)
+      mutual = discoverer.transits_mutual(2024, TransitOptions.XIAOYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
@@ -381,7 +381,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, mutual.dizhi))
 
     with self.subTest('2052 dayun and liunian - transits'):
-      transits = discoverer.transits(2052, TransitOptions.DAYUN_LIUNIAN)
+      transits = discoverer.transits_only(2052, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.丙, Tiangan.壬})],
@@ -393,7 +393,7 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, transits.dizhi))
 
     with self.subTest('2052 dayun and liunian - mutual'):
-      mutual = discoverer.mutual(2052, TransitOptions.DAYUN_LIUNIAN)
+      mutual = discoverer.transits_mutual(2052, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.丙, Tiangan.辛})],
@@ -408,14 +408,14 @@ class TestGanzhiDiscovererIntegration(unittest.TestCase):
       }, mutual.dizhi))
 
     with self.subTest('2062 dayun and liunian - transits'):
-      transits = discoverer.transits(2062, TransitOptions.DAYUN_LIUNIAN)
+      transits = discoverer.transits_only(2062, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
       }, transits.dizhi))
 
     with self.subTest('2062 dayun and liunian - mutual'):
-      mutual = discoverer.mutual(2062, TransitOptions.DAYUN_LIUNIAN)
+      mutual = discoverer.transits_mutual(2062, TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.乙, Tiangan.辛})],

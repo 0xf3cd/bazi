@@ -14,6 +14,8 @@ from ..Calendar.CalendarDefines import CalendarDate
 class GanzhiDiscoverer:
   '''Discovers the Tiangan's and Dizhi's relations of the birth chart and transits. 原局和小运/大运/流年的天干地支关系分析。'''
 
+  GanzhiRelationDiscovery = PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
+
   def __init__(self, chart: BaziChart) -> None:
     self._birth_ganzhi_date: CalendarDate = chart.bazi.ganzhi_date
 
@@ -28,10 +30,6 @@ class GanzhiDiscoverer:
 
     self._first_dayun_start_gz_year: Final[int] = next(chart.dayun).ganzhi_year
     self._dayun_db: Final[DayunDatabase] = chart.dayun_db
-
-  @property
-  def at_birth(self) -> PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
-    return PillarData(TianganUtils.discover(self._atbirth_tiangans), DizhiUtils.discover(self._atbirth_dizhis))
 
   def support(self, gz_year: int, option: TransitOptions) -> bool:
     '''
@@ -87,18 +85,30 @@ class GanzhiDiscoverer:
       transit_ganzhis.append(BaziUtils.ganzhi_of_year(gz_year))
 
     return tuple(transit_ganzhis)
-
-  def transits(self, gz_year: int, option: TransitOptions) -> PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
+  
+  @property
+  def at_birth(self) -> GanzhiRelationDiscovery:
     '''
-    Return a `PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]` object that represents Tiangans' and Dizhis' relations of transit pillars.
+    Return a `GanzhiRelationDiscovery` object that represents Tiangans' and Dizhis' relations at birth.
+
+    返回一个 `GanzhiRelationDiscovery`，代表了出生时的天干地支关系。
+    '''
+    return GanzhiDiscoverer.GanzhiRelationDiscovery(
+      TianganUtils.discover(self._atbirth_tiangans),
+      DizhiUtils.discover(self._atbirth_dizhis)
+    )
+
+  def transits_only(self, gz_year: int, option: TransitOptions) -> GanzhiRelationDiscovery:
+    '''
+    Return a `GanzhiRelationDiscovery` object that represents Tiangans' and Dizhis' relations of transit pillars.
     
-    返回一个 `PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]`, 代表了小运/大运/流年之间关系的分析结果。
+    返回一个 `GanzhiRelationDiscovery`, 代表了小运/大运/流年之间关系的分析结果。
 
     Args:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
     - `option`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
-
-    Returns: (PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
+  
+    Returns: (GanzhiRelationDiscovery) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
     
     Example:
     - mutual(1984, TransitOptions.DAYUN_LIUNIAN)
@@ -110,22 +120,22 @@ class GanzhiDiscoverer:
     '''
 
     transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, option)
-    return PillarData(
-      TianganUtils.discover(tuple(map(lambda gz : gz.tiangan, transit_ganzhis))),
+    return GanzhiDiscoverer.GanzhiRelationDiscovery(
+      TianganUtils.discover(tuple(map(lambda gz : gz.tiangan, transit_ganzhis))), 
       DizhiUtils.discover(tuple(map(lambda gz : gz.dizhi, transit_ganzhis))),
     )
 
-  def mutual(self, gz_year: int, option: TransitOptions) -> PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
+  def transits_mutual(self, gz_year: int, option: TransitOptions) -> GanzhiRelationDiscovery:
     '''
-    Return a `PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]` object that represents Tiangans' and Dizhis' relations of the at-birth 4 pillars and transit pillars.
+    Return a `GanzhiRelationDiscovery` object that represents Tiangans' and Dizhis' relations of the at-birth 4 pillars and transit pillars.
 
-    返回一个 `PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]`, 代表了原局和运（小运/大运/流年）之间的关系的分析结果。
+    返回一个 `GanzhiRelationDiscovery`, 代表了原局和运（小运/大运/流年）之间的关系的分析结果。
 
     Args:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
     - `option`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
 
-    Returns: (PillarData[TianganRelationDiscovery, DizhiRelationDiscovery]) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
+    Returns: (GanzhiRelationDiscovery) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
 
     Examples:
     - mutual(1984, TransitOptions.DAYUN_LIUNIAN)
@@ -141,7 +151,7 @@ class GanzhiDiscoverer:
     '''
 
     transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, option)
-    return PillarData(
-      TianganUtils.discover_mutual(self._atbirth_tiangans, tuple(map(lambda gz : gz.tiangan, transit_ganzhis))),
+    return GanzhiDiscoverer.GanzhiRelationDiscovery(
+      TianganUtils.discover_mutual(self._atbirth_tiangans, tuple(map(lambda gz : gz.tiangan, transit_ganzhis))), 
       DizhiUtils.discover_mutual(self._atbirth_dizhis, tuple(map(lambda gz : gz.dizhi, transit_ganzhis))),
     )

@@ -1,7 +1,8 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+
 from collections import Counter
-from typing import Sequence, Optional, Final
+from typing import Sequence, Optional, Final, Callable
 
 from ..Common import frozendict
 from ..Defines import Dizhi, Wuxing, DizhiRelation
@@ -21,7 +22,23 @@ DizhiCombo = frozenset[Dizhi]
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 '''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
-DizhiRelationDiscovery = frozendict[DizhiRelation, DizhiRelationCombos]
+class DizhiRelationDiscovery(frozendict[DizhiRelation, DizhiRelationCombos]):
+  def filter(self, f: 'DizhiRelationDiscoveryFilter') -> 'DizhiRelationDiscovery':
+    '''Filter out Dizhi combos based on the given filter function `f`.'''
+    assert callable(f)
+    return DizhiRelationDiscovery({
+      rel : filtered
+      for rel, combos in self.items()
+      if len(
+        filtered := DizhiRelationCombos(filter(
+          lambda c : f(rel, c), 
+          combos,
+        ))
+      ) > 0
+    })
+
+'''A function that filters Dizhi combos based on the given `DizhiRelation` and `DizhiCombo`.'''
+DizhiRelationDiscoveryFilter = Callable[[DizhiRelation, DizhiCombo], bool]
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
@@ -528,7 +545,7 @@ def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
   '''
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
-  return frozendict({
+  return DizhiRelationDiscovery({
     rel : result
     for rel in DizhiRelation
     if len(result := search(dizhis, rel)) > 0
@@ -583,7 +600,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   
   # Discover all possible combos with `dz1_set` and `dz2_set` combined.
   # Check each combo's validity and only keep valid ones.
-  return frozendict({
+  return DizhiRelationDiscovery({
     rel : result
     for rel, combos in discover(list(dizhis1) + list(dizhis2)).items()
     if len(result := DizhiRelationCombos(filter(__is_valid, combos))) > 0

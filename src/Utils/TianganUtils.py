@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import Sequence, Optional, Final
+from typing import Sequence, Optional, Final, Callable
 
 from ..Defines import Tiangan, Wuxing, TianganRelation
 from ..Common import frozendict
@@ -20,7 +20,23 @@ TianganCombo = frozenset[Tiangan]
 TianganRelationCombos = tuple[TianganCombo, ...]
 
 '''A frozendict that stores the Tiangan combos that satisfy every `TianganRelation`.'''
-TianganRelationDiscovery = frozendict[TianganRelation, TianganRelationCombos]
+class TianganRelationDiscovery(frozendict[TianganRelation, TianganRelationCombos]):
+  def filter(self, f: 'TianganRelationDiscoveryFilter') -> 'TianganRelationDiscovery':
+    '''Filter out Tiangan combos based on the given filter function `f`.'''
+    assert callable(f)
+    return TianganRelationDiscovery({
+      rel : filtered
+      for rel, combos in self.items()
+      if len(
+        filtered := TianganRelationCombos(filter(
+          lambda c : f(rel, c), 
+          combos,
+        ))
+      ) > 0
+    })
+
+'''A function that filters Tiangan combos based on the given `TianganRelation` and `TianganCombo`.'''
+TianganRelationDiscoveryFilter = Callable[[TianganRelation, TianganCombo], bool]
 
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Optional[Wuxing]:
@@ -210,7 +226,7 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
 
   assert all(isinstance(tg, Tiangan) for tg in tiangans)
-  return frozendict({
+  return TianganRelationDiscovery({
     rel : result
     for rel in TianganRelation
     if len(result := search(tiangans, rel)) > 0
@@ -261,7 +277,7 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
 
   # Discover all possible combos with `tg1_set` and `tg2_set` combined.
   # Check each combo's validity and only keep valid ones.
-  return frozendict({
+  return TianganRelationDiscovery({
     rel : result
     for rel, combos in discover(list(tg1_set | tg2_set)).items()
     if len(result := TianganRelationCombos(filter(__is_valid, combos))) > 0

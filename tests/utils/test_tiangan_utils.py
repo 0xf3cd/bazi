@@ -455,3 +455,32 @@ class TestTianganUtils(unittest.TestCase):
             self.assertSetEqual(set(discovery[rel]), actual)
           else:
             self.assertEqual(len(actual), 0)
+
+
+  def test_discovery_filter(self) -> None:
+    for _ in range(5):
+      tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+      discovery: TianganRelationDiscovery = TianganUtils.discover(tiangans)
+
+      self.assertEqual(discovery, 
+                       discovery.filter(lambda rel, combo : True))
+      
+      forbidden_tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+      forbidden_relations: list[TianganRelation] = random.sample(list(TianganRelation), random.randint(0, len(TianganRelation)))
+      
+      def filter_func(rel: TianganRelation, combo: TianganCombo) -> bool:
+        if rel in forbidden_relations:
+          return False
+        if any(tg in combo for tg in forbidden_tiangans):
+          return False
+        return True
+      
+      filtered = discovery.filter(filter_func)
+
+      for rel in forbidden_relations:
+        self.assertNotIn(rel, filtered)
+
+      for rel, combos in filtered.items():
+        for combo in combos:
+          self.assertTrue(all(tg not in combo for tg in forbidden_tiangans))
+          self.assertIn(combo, discovery[rel])

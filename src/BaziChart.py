@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import functools
 import itertools
 
 from datetime import datetime, timedelta
@@ -45,6 +46,30 @@ class BaziChart:
   def house_of_relationship(self) -> Dizhi:
     '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
     return self._bazi.day_pillar.dizhi
+  
+  @property
+  def relationship_stars(self) -> PillarData[Tiangan, tuple[Dizhi, ...]]:
+    '''Relationship Star / 夫妻星 / 配偶星.
+    
+    Usage:
+    ```
+    stars = chart.relationship_stars
+
+    print(stars.tiangan) # Print the Tiangan that represents the Relationship Star
+
+    print(stars.dizhi)   # Print the Dizhi tuple that represent the Relationship Star
+    assert 1 <= len(stars.dizhi) <= 2 # There can be 1 or 2 representations of Relationship Star in Dizhis
+    ```
+    '''
+    expected_shishen: Final[Shishen] = Shishen.正官 if self._bazi.gender is BaziGender.FEMALE else Shishen.正财
+
+    f = functools.partial(shishen, self._bazi.day_master)
+    found_tg = list(filter(lambda tg : f(tg) is expected_shishen, Tiangan))
+    found_dz = list(filter(lambda dz : f(dz) is expected_shishen, Dizhi))
+
+    assert len(found_tg) == 1
+    assert 1 <= len(found_dz) <= 2
+    return PillarData(found_tg[0], tuple(found_dz))
 
   PillarTraits = PillarData[TraitTuple, TraitTuple]
   @property

@@ -1057,3 +1057,30 @@ class TestDizhiUtils(unittest.TestCase):
           self.assertEqual(dmr1, dmr2)
 
       self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
+
+  def test_discovery_filter(self) -> None:
+    for _ in range(5):
+      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      discovery: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
+
+      self.assertEqual(discovery, discovery.filter(lambda rel, combos : True))
+
+      forbidden_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      forbidden_relations: list[DizhiRelation] = random.sample(list(DizhiRelation), random.randint(0, len(DizhiRelation)))
+      
+      def filter_func(rel: DizhiRelation, combo: DizhiCombo) -> bool:
+        if rel in forbidden_relations:
+          return False
+        if any(dz in combo for dz in forbidden_dizhis):
+          return False
+        return True
+      
+      filtered = discovery.filter(filter_func)
+
+      for rel in forbidden_relations:
+        self.assertNotIn(rel, filtered)
+
+      for rel, combos in filtered.items():
+        for combo in combos:
+          self.assertTrue(all(dz not in combo for dz in forbidden_dizhis))
+          self.assertIn(combo, discovery[rel])
