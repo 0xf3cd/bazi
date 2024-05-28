@@ -2,13 +2,12 @@
 
 from typing import Final
 
-from ..Common import frozendict, PillarData, DayunDatabase, TransitOptions
+from ..Common import PillarData
 from ..Defines import Tiangan, Dizhi, Ganzhi
 
-from ..BaziChart import BaziChart
+from ..BaziChart import BaziChart, TransitOptions, TransitDatabase
 
-from ..Utils import BaziUtils, TianganUtils, DizhiUtils
-from ..Calendar.CalendarDefines import CalendarDate
+from ..Utils import TianganUtils, DizhiUtils
 
 
 class GanzhiDiscoverer:
@@ -17,41 +16,20 @@ class GanzhiDiscoverer:
   GanzhiRelationDiscovery = PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
 
   def __init__(self, chart: BaziChart) -> None:
-    self._birth_ganzhi_date: CalendarDate = chart.bazi.ganzhi_date
-
     self._atbirth_tiangans: Final[tuple[Tiangan, Tiangan, Tiangan, Tiangan]] = chart.bazi.four_tiangans
     self._atbirth_dizhis: Final[tuple[Dizhi, Dizhi, Dizhi, Dizhi]] = chart.bazi.four_dizhis
 
-    birth_gz_year: Final[int] = chart.bazi.ganzhi_date.year
-    self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
-      birth_gz_year + age - 1 : gz
-      for age, gz in chart.xiaoyun
-    })
+    self._transit_db: Final[TransitDatabase] = TransitDatabase(chart)
 
-    self._first_dayun_start_gz_year: Final[int] = next(chart.dayun).ganzhi_year
-    self._dayun_db: Final[DayunDatabase] = chart.dayun_db
-
-  def support(self, gz_year: int, option: TransitOptions) -> bool:
+  def support(self, gz_year: int, options: TransitOptions) -> bool:
     '''
-    Returns `True` if the given `gz_year` and `option` are both supported.
+    Returns `True` if the given `gz_year` and `options` are both supported.
     '''
-    assert isinstance(gz_year, int)
-    assert isinstance(option, TransitOptions) and option in TransitOptions
-
-    if option.value & TransitOptions.XIAOYUN.value:
-      if gz_year not in self._xiaoyun_ganzhis:
-        return False
-    if option.value & TransitOptions.DAYUN.value:
-      if gz_year < self._first_dayun_start_gz_year:
-        return False
-    if option.value & TransitOptions.LIUNIAN.value:
-      if gz_year < self._birth_ganzhi_date.year:
-        return False
-    return True
+    return self._transit_db.support(gz_year, options)
   
-  def __validate_and_get_transit_ganzhis(self, gz_year: int, option: TransitOptions) -> tuple[Ganzhi, ...]:
+  def __validate_and_get_transit_ganzhis(self, gz_year: int, options: TransitOptions) -> tuple[Ganzhi, ...]:
     '''
-    Return the Ganzhis of the transits of the given `gz_year` and `option`.
+    Return the Ganzhis of the transits of the given `gz_year` and `options`.
 
     返回所选中的小运、大运或流年对应的干支。
 
@@ -59,7 +37,7 @@ class GanzhiDiscoverer:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
     - `option`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
 
-    Returns: (tuple[Ganzhi]) The Ganzhis of the transits of the given `gz_year` and `option`.
+    Returns: (tuple[Ganzhi]) The Ganzhis of the transits of the given `gz_year` and `options`.
     
     Example:
     - transit_ganzhis(1984, TransitOptions.DAYUN_LIUNIAN)
@@ -68,23 +46,12 @@ class GanzhiDiscoverer:
     '''
 
     assert isinstance(gz_year, int)
-    assert isinstance(option, TransitOptions) and option in TransitOptions
+    assert isinstance(options, TransitOptions) and options in TransitOptions
 
-    if not self.support(gz_year, option):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, option: {option}')
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, option: {options}')
     
-    transit_ganzhis: list[Ganzhi] = []
-    if option.value & TransitOptions.XIAOYUN.value:
-      assert gz_year in self._xiaoyun_ganzhis
-      transit_ganzhis.append(self._xiaoyun_ganzhis[gz_year])
-    if option.value & TransitOptions.DAYUN.value:
-      assert gz_year >= self._first_dayun_start_gz_year
-      transit_ganzhis.append(self._dayun_db[gz_year].ganzhi)
-    if option.value & TransitOptions.LIUNIAN.value:
-      assert gz_year >= self._birth_ganzhi_date.year
-      transit_ganzhis.append(BaziUtils.ganzhi_of_year(gz_year))
-
-    return tuple(transit_ganzhis)
+    return self._transit_db.ganzhis(gz_year, options)
   
   @property
   def at_birth(self) -> GanzhiRelationDiscovery:
@@ -98,7 +65,7 @@ class GanzhiDiscoverer:
       DizhiUtils.discover(self._atbirth_dizhis)
     )
 
-  def transits_only(self, gz_year: int, option: TransitOptions) -> GanzhiRelationDiscovery:
+  def transits_only(self, gz_year: int, options: TransitOptions) -> GanzhiRelationDiscovery:
     '''
     Return a `GanzhiRelationDiscovery` object that represents Tiangans' and Dizhis' relations of transit pillars.
     
@@ -106,7 +73,7 @@ class GanzhiDiscoverer:
 
     Args:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
-    - `option`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
+    - `options`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
   
     Returns: (GanzhiRelationDiscovery) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
     
@@ -119,13 +86,13 @@ class GanzhiDiscoverer:
         返回结果将会为空，因为只有小运被选中。而至少需要 2 个天干或地支才能够构成某种关系。
     '''
 
-    transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, option)
+    transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, options)
     return GanzhiDiscoverer.GanzhiRelationDiscovery(
       TianganUtils.discover(tuple(map(lambda gz : gz.tiangan, transit_ganzhis))), 
       DizhiUtils.discover(tuple(map(lambda gz : gz.dizhi, transit_ganzhis))),
     )
 
-  def transits_mutual(self, gz_year: int, option: TransitOptions) -> GanzhiRelationDiscovery:
+  def transits_mutual(self, gz_year: int, options: TransitOptions) -> GanzhiRelationDiscovery:
     '''
     Return a `GanzhiRelationDiscovery` object that represents Tiangans' and Dizhis' relations of the at-birth 4 pillars and transit pillars.
 
@@ -133,7 +100,7 @@ class GanzhiDiscoverer:
 
     Args:
     - `gz_year`: The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
-    - `option`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
+    - `options`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
 
     Returns: (GanzhiRelationDiscovery) Discovery results of pillars (i.e. Tiangans and Dizhis) of the given year.
 
@@ -150,7 +117,7 @@ class GanzhiDiscoverer:
         返回结果：原局四柱和运（小运、大运、流年）之间的关系/互相作用力，对于这个例子来说是原局的天干地支与小运的天干地支之间形成的力量关系。
     '''
 
-    transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, option)
+    transit_ganzhis: tuple[Ganzhi, ...] = self.__validate_and_get_transit_ganzhis(gz_year, options)
     return GanzhiDiscoverer.GanzhiRelationDiscovery(
       TianganUtils.discover_mutual(self._atbirth_tiangans, tuple(map(lambda gz : gz.tiangan, transit_ganzhis))), 
       DizhiUtils.discover_mutual(self._atbirth_dizhis, tuple(map(lambda gz : gz.dizhi, transit_ganzhis))),

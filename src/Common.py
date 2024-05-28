@@ -3,12 +3,11 @@
 import copy
 import inspect
 
-from enum import unique, IntFlag
 from datetime import datetime
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping, Generator, Any,
+  Sequence, Iterator, Type, Mapping, Any,
 )
 from .Defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
@@ -294,29 +293,6 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
 
-
-class DayunDatabase:
-  '''A database that figures out a given Ganzhi year falls into which Dayun (大运).'''
-  def __init__(self, gen: Generator[DayunTuple, None, None]) -> None:
-    self._gen: Final[Generator[DayunTuple, None, None]] = gen
-    self._cache: Final[dict[int, Ganzhi]] = {}
-
-    self._first_dayun: DayunTuple = next(self._gen)
-    self._cache[self._first_dayun.ganzhi_year] = self._first_dayun.ganzhi
-
-  def __getitem__(self, gz_year: int) -> DayunTuple:
-    assert isinstance(gz_year, int)
-    assert gz_year >= self._first_dayun.ganzhi_year
-
-    dayun_idx: int = (gz_year - self._first_dayun.ganzhi_year) // 10
-    expected_gz_year: int = self._first_dayun.ganzhi_year + 10 * dayun_idx
-
-    while expected_gz_year not in self._cache:
-      next_dayun: DayunTuple = next(self._gen)
-      self._cache[next_dayun.ganzhi_year] = next_dayun.ganzhi
-
-    return DayunTuple(expected_gz_year, self._cache[expected_gz_year])
-
 #endregion
 
 
@@ -367,22 +343,6 @@ class BaziJson:
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
-
-#endregion
-
-
-
-######################################################
-#region Discoverer / Analyzer
-
-@unique
-class TransitOptions(IntFlag):
-  '''Specifies whether Dayun / Xiaoyun / Liunian transits should be considered. 用于指定是否考虑大运流年、小运、流年等。'''
-  XIAOYUN         = 0x1
-  DAYUN           = 0x2
-  LIUNIAN         = 0x4
-  XIAOYUN_LIUNIAN = XIAOYUN | LIUNIAN
-  DAYUN_LIUNIAN   = DAYUN   | LIUNIAN
 
 #endregion
 

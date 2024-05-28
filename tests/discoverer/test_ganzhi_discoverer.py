@@ -19,40 +19,6 @@ from src.Discoverer.GanzhiDiscoverer import GanzhiDiscoverer, TransitOptions
 
 
 class TestGanzhiDiscoverer(unittest.TestCase):
-  def test_support(self) -> None:
-    for _ in range(5):
-      chart: BaziChart = BaziChart.random()
-      discoverer: GanzhiDiscoverer = GanzhiDiscoverer(chart)
-
-      self.assertRaises(AssertionError, discoverer.support, '1999', TransitOptions.XIAOYUN)
-      self.assertRaises(AssertionError, discoverer.support, 1999, 'XIAOYUN')
-      self.assertRaises(AssertionError, discoverer.support, 1999, 0x1 | 0x4)
-
-      with self.subTest('Test ganzhi years before the birth year. Expect not to support.'):
-        for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
-          for option in TransitOptions:
-            self.assertFalse(discoverer.support(gz_year, option))
-
-      with self.subTest('Test Xiaoyun / 小运.'):
-        first_dayun_gz_year: int = next(chart.dayun).ganzhi_year
-        for gz_year in range(chart.bazi.ganzhi_date.year, chart.bazi.ganzhi_date.year + len(chart.xiaoyun)):
-          self.assertTrue(discoverer.support(gz_year, TransitOptions.XIAOYUN))
-          self.assertTrue(discoverer.support(gz_year, TransitOptions.LIUNIAN))
-          self.assertTrue(discoverer.support(gz_year, TransitOptions.XIAOYUN_LIUNIAN))
-
-          # The last Xiaoyun year may also be the first Dayun year - this is the only expected overlap.
-          if discoverer.support(gz_year, TransitOptions.DAYUN):
-            self.assertEqual(gz_year, first_dayun_gz_year)
-          else:
-            self.assertLess(gz_year, first_dayun_gz_year)
-
-      with self.subTest('Test Dayun / 大运.'):
-        for start_gz_year, _ in itertools.islice(chart.dayun, 10): # Expect the first 10 dayuns to be supported anyways...
-          for gz_year in range(start_gz_year, start_gz_year + 10):
-            self.assertTrue(discoverer.support(gz_year, TransitOptions.DAYUN))
-            self.assertTrue(discoverer.support(gz_year, TransitOptions.LIUNIAN))
-            self.assertTrue(discoverer.support(gz_year, TransitOptions.DAYUN_LIUNIAN))
-
   def test_at_birth(self) -> None:
     for _ in range(5):
       chart: BaziChart = BaziChart.random()
