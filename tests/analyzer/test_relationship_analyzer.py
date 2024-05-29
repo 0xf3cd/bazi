@@ -4,11 +4,12 @@
 import pytest
 import unittest
 
+import random
 import itertools
 
 from src.Defines import Tiangan, Dizhi
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils
-from src.BaziChart import BaziChart
+from src.BaziChart import BaziChart, TransitOptions
 from src.Analyzer.Relationship import RelationshipAnalyzer
 
 
@@ -131,6 +132,61 @@ class TestAtBirthAnalysis(unittest.TestCase):
           for dz_combo in dz_combos:
             self.assertEqual(any(dz in dz_combo for dz in stars.dizhi),
                              dz_combo in at_birth.star_relations.dizhi[dz_rel])
+
+
+
+class TestTransitAnalysis(unittest.TestCase):
+  @pytest.mark.slow
+  def test_shensha(self) -> None:
+    for _ in range(100):
+      chart = BaziChart.random()      
+      db = chart.transit_db
+
+      dm = chart.bazi.day_master
+      y_dz = chart.bazi.year_pillar.dizhi
+      d_dz = chart.bazi.day_pillar.dizhi
+
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(20):
+        randon_year: int = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options: TransitOptions = random.choice(list(TransitOptions))
+        if not db.support(randon_year, random_options):
+          continue
+
+        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+        actual = transits_analysis.shensha(randon_year, random_options)
+
+        with self.subTest('Taohua / 桃花'):
+          expected: list[Dizhi] = []
+          for dz in transit_dz:
+            if ShenshaUtils.taohua(y_dz, dz):
+              expected.append(dz)
+            if ShenshaUtils.taohua(d_dz, dz):
+              expected.append(dz)
+          self.assertSetEqual(actual['taohua'], set(expected))
+
+        with self.subTest('Hongyan / 红艳'):
+          expected: list[Dizhi] = []
+          for dz in transit_dz:
+            if ShenshaUtils.hongyan(dm, dz):
+              expected.append(dz)
+          self.assertSetEqual(actual['hongyan'], set(expected))
+
+        with self.subTest('Hongluan / 红鸾'):
+          expected: list[Dizhi] = []
+          for dz in transit_dz:
+            if ShenshaUtils.hongluan(y_dz, dz):
+              expected.append(dz)
+          self.assertSetEqual(actual['hongluan'], set(expected))
+
+        with self.subTest('Tianxi / 天喜'):
+          expected: list[Dizhi] = []
+          for dz in transit_dz:
+            if ShenshaUtils.tianxi(y_dz, dz):
+              expected.append(dz)
+          self.assertSetEqual(actual['tianxi'], set(expected))
 
 
 # TODO: Integration tests on `RelationshipAnalyzer`.

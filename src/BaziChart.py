@@ -11,7 +11,7 @@ from typing import Optional, Final, Generator
 from .Common import (
   frozendict,
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
-  HiddenTianganDict, BaziData, PillarData, BaziJson,
+  HiddenTianganDict, BaziData, GanzhiData, BaziJson,
 )
 from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
@@ -50,7 +50,7 @@ class BaziChart:
     return self._bazi.day_pillar.dizhi
   
   @property
-  def relationship_stars(self) -> PillarData[Tiangan, tuple[Dizhi, ...]]:
+  def relationship_stars(self) -> GanzhiData[Tiangan, tuple[Dizhi, ...]]:
     '''Relationship Star / 夫妻星 / 配偶星.
     
     Usage:
@@ -66,14 +66,14 @@ class BaziChart:
     expected_shishen: Final[Shishen] = Shishen.正官 if self._bazi.gender is BaziGender.FEMALE else Shishen.正财
 
     f = functools.partial(shishen, self._bazi.day_master)
-    found_tg = list(filter(lambda tg : f(tg) is expected_shishen, Tiangan))
-    found_dz = list(filter(lambda dz : f(dz) is expected_shishen, Dizhi))
+    found_tg = tuple(filter(lambda tg : f(tg) is expected_shishen, Tiangan))
+    found_dz = tuple(filter(lambda dz : f(dz) is expected_shishen, Dizhi))
 
     assert len(found_tg) == 1
     assert 1 <= len(found_dz) <= 2
-    return PillarData(found_tg[0], tuple(found_dz))
+    return GanzhiData(found_tg[0], found_dz)
 
-  PillarTraits = PillarData[TraitTuple, TraitTuple]
+  PillarTraits = GanzhiData[TraitTuple, TraitTuple]
   @property
   def traits(self) -> BaziData[PillarTraits]:
     '''
@@ -120,7 +120,7 @@ class BaziChart:
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
     return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
-  PillarShishens = PillarData[Optional[Shishen], Shishen]
+  PillarShishens = GanzhiData[Optional[Shishen], Shishen]
   @property
   def shishen(self) -> BaziData[PillarShishens]:
     '''

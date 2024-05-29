@@ -5,9 +5,9 @@ import copy
 from itertools import starmap, product, compress, chain
 from typing import Final, TypedDict, Callable, Union, Iterable
 
-from ..Common import PillarData
+from ..Common import GanzhiData
 from ..Defines import Tiangan, Dizhi
-from ..BaziChart import BaziChart
+from ..BaziChart import BaziChart, TransitOptions, TransitDatabase
 from ..Utils import ShenshaUtils, TianganUtils, DizhiUtils
 from ..Discoverer.GanzhiDiscoverer import GanzhiDiscoverer
 
@@ -39,10 +39,10 @@ class ShenshaAnalysis(TypedDict):
 
 
 class AtBirthAnalysis:
-  '''Analysis of Relationship at Birth (出生时的亲密关系分析)'''
+  '''Analysis of Relationship at Birth / 出生时的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = copy.deepcopy(chart)
-    self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(self._chart)
+    self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(chart)
 
   @property
   def shensha(self) -> ShenshaAnalysis:
@@ -68,22 +68,64 @@ class AtBirthAnalysis:
     return DizhiUtils.discover_mutual([d_dz], [y_dz, m_dz, h_dz])
   
   @property
-  def star_relations(self) -> PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
+  def star_relations(self) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
     '''Relations that the Star of Relationship / 配偶星 / 婚姻星 has.'''
     stars = self._chart.relationship_stars
     at_birth_discovery = self._ganzhi_discoverer.at_birth
 
     tg = at_birth_discovery.tiangan.filter(lambda _, combo : stars.tiangan in combo)
     dz = at_birth_discovery.dizhi.filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
-    return PillarData(tg, dz)
+    return GanzhiData(tg, dz)
+
+
+
+class TransitAnalysis:
+  '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
+  def __init__(self, chart: BaziChart) -> None:
+    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._transit_db: Final[TransitDatabase] = chart.transit_db
+    self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(chart)
+
+  def shensha(self, gz_year: int, options: TransitOptions) -> ShenshaAnalysis:
+    '''
+    Return the relationship-related Shenshas of the given transits.
+
+    返回给定流年大运等的亲密关系相关的神煞（桃花、红艳、红鸾、天喜）。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+
+    Returns:
+    - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
+    '''
+
+    assert self._transit_db.support(gz_year, options)
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
+
+    dm = self._chart.bazi.day_master
+    y_dz = self._chart.bazi.year_pillar.dizhi
+    d_dz = self._chart.bazi.day_pillar.dizhi
+
+    return {
+      'taohua' :  frozenset(find_shensha(ShenshaUtils.taohua,   ([y_dz, d_dz], transit_dizhis))),
+      'hongyan':  frozenset(find_shensha(ShenshaUtils.hongyan,  ([dm],         transit_dizhis))),
+      'hongluan': frozenset(find_shensha(ShenshaUtils.hongluan, ([y_dz],       transit_dizhis))),
+      'tianxi':   frozenset(find_shensha(ShenshaUtils.tianxi,   ([y_dz],       transit_dizhis))),
+    }
 
 
 
 class RelationshipAnalyzer:
   '''A thin wrapper of `AtBirthAnalysis` and `TransitAnalysis`.'''
-  def __init__(self, bazi_chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(bazi_chart)
+  def __init__(self, chart: BaziChart) -> None:
+    self._chart: Final[BaziChart] = copy.deepcopy(chart)
 
   @property
   def at_birth(self) -> AtBirthAnalysis:
     return AtBirthAnalysis(self._chart)
+
+  @property
+  def transits(self) -> TransitAnalysis:
+    return TransitAnalysis(self._chart)

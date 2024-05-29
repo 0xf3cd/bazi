@@ -8,7 +8,7 @@ import random
 import itertools
 from datetime import datetime
 
-from src.Common import PillarData
+from src.Common import GanzhiData
 from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.Utils import TianganUtils, DizhiUtils, BaziUtils
 from src.Calendar.HkoDataCalendarUtils import to_ganzhi
@@ -131,13 +131,13 @@ class TestGanzhiDiscoverer(unittest.TestCase):
 
           with self.subTest('method correctness'):
             self.assertEqual(at_birth, 
-                            PillarData(TianganUtils.discover(chart.bazi.four_tiangans), DizhiUtils.discover(chart.bazi.four_dizhis)), 
+                            GanzhiData(TianganUtils.discover(chart.bazi.four_tiangans), DizhiUtils.discover(chart.bazi.four_dizhis)), 
                             'At-birth / 原局')
             self.assertEqual(transits, 
-                            PillarData(TianganUtils.discover(transit_tiangans), DizhiUtils.discover(transit_dizhis)),
+                            GanzhiData(TianganUtils.discover(transit_tiangans), DizhiUtils.discover(transit_dizhis)),
                             'Transits / 运（即大运、流年、小运）')
             self.assertEqual(mutual, 
-                            PillarData(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tiangans), DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dizhis)), 
+                            GanzhiData(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tiangans), DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dizhis)), 
                             'Mutual / 原局和运之间的互相作用力/关系')
 
           with self.subTest('tiangan correctness'):

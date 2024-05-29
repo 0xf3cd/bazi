@@ -2,7 +2,7 @@
 
 from typing import Final
 
-from ..Common import PillarData
+from ..Common import GanzhiData
 from ..Defines import Tiangan, Dizhi, Ganzhi
 
 from ..BaziChart import BaziChart, TransitOptions, TransitDatabase
@@ -13,7 +13,7 @@ from ..Utils import TianganUtils, DizhiUtils
 class GanzhiDiscoverer:
   '''Discovers the Tiangan's and Dizhi's relations of the birth chart and transits. 原局和小运/大运/流年的天干地支关系分析。'''
 
-  GanzhiRelationDiscovery = PillarData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
+  GanzhiRelationDiscovery = GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
 
   def __init__(self, chart: BaziChart) -> None:
     self._atbirth_tiangans: Final[tuple[Tiangan, Tiangan, Tiangan, Tiangan]] = chart.bazi.four_tiangans

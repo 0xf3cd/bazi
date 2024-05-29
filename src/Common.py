@@ -264,9 +264,9 @@ class BaziData(Generic[PillarDataType]):
 
 TianganDataType = TypeVar('TianganDataType', covariant=True)
 DizhiDataType = TypeVar('DizhiDataType', covariant=True)
-class PillarData(Generic[TianganDataType, DizhiDataType]):
+class GanzhiData(Generic[TianganDataType, DizhiDataType]):
   '''
-  A helper class for storing the data of a Pillar.
+  A helper class for storing the data of a Pillar/Ganzhi.
   Can be used with `BaziData` class.
   '''
   def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
@@ -282,7 +282,7 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
     return copy.deepcopy(self._dz)
   
   def __eq__(self, other: object) -> bool:
-    if not isinstance(other, PillarData):
+    if not isinstance(other, GanzhiData):
       return False
     if self.tiangan != other.tiangan:
       return False
