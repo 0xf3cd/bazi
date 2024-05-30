@@ -36,6 +36,19 @@ class DizhiRelationDiscovery(frozendict[DizhiRelation, DizhiRelationCombos]):
         ))
       ) > 0
     })
+  
+  def merge(self, other: 'DizhiRelationDiscovery') -> 'DizhiRelationDiscovery':
+    '''Merge two `DizhiRelationDiscovery` together.'''
+    assert isinstance(other, DizhiRelationDiscovery)
+    d: dict[DizhiRelation, set[DizhiCombo]] = {}
+
+    for rel, combos in self.items():
+      d[rel] = set(combos)
+    for rel, combos in other.items():
+      d[rel] = d.get(rel, set()) | set(combos)
+
+    return DizhiRelationDiscovery({ rel : DizhiRelationCombos(combos) for rel, combos in d.items() })
+
 
 '''A function that filters Dizhi combos based on the given `DizhiRelation` and `DizhiCombo`.'''
 DizhiRelationDiscoveryFilter = Callable[[DizhiRelation, DizhiCombo], bool]

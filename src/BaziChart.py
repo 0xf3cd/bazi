@@ -442,7 +442,7 @@ class TransitDatabase:
     assert isinstance(options, TransitOptions) and options in TransitOptions
 
     if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, option: {options}')
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
 
     transit_ganzhis: list[Ganzhi] = []
     if options.value & TransitOptions.XIAOYUN.value:

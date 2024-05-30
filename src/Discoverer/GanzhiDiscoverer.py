@@ -49,7 +49,7 @@ class GanzhiDiscoverer:
     assert isinstance(options, TransitOptions) and options in TransitOptions
 
     if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, option: {options}')
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
     
     return self._transit_db.ganzhis(gz_year, options)
   

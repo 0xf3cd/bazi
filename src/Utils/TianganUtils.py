@@ -34,6 +34,19 @@ class TianganRelationDiscovery(frozendict[TianganRelation, TianganRelationCombos
         ))
       ) > 0
     })
+  
+  def merge(self, other: 'TianganRelationDiscovery') -> 'TianganRelationDiscovery':
+    '''Merge two `TianganRelationDiscovery` together.'''
+    assert isinstance(other, TianganRelationDiscovery)
+    d: dict[TianganRelation, set[TianganCombo]] = {}
+
+    for rel, combos in self.items():
+      d[rel] = set(combos)
+    for rel, combos in other.items():
+      d[rel] = d.get(rel, set()) | set(combos)
+
+    return TianganRelationDiscovery({ rel : TianganRelationCombos(combos) for rel, combos in d.items() })
+    
 
 '''A function that filters Tiangan combos based on the given `TianganRelation` and `TianganCombo`.'''
 TianganRelationDiscoveryFilter = Callable[[TianganRelation, TianganCombo], bool]

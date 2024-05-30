@@ -69,7 +69,7 @@ class AtBirthAnalysis:
   
   @property
   def star_relations(self) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
-    '''Relations that the Star of Relationship / 配偶星 / 婚姻星 has.'''
+    '''Relations that the Star(s) of Relationship / 配偶星 / 婚姻星 has.'''
     stars = self._chart.relationship_stars
     at_birth_discovery = self._ganzhi_discoverer.at_birth
 
@@ -86,6 +86,12 @@ class TransitAnalysis:
     self._transit_db: Final[TransitDatabase] = chart.transit_db
     self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(chart)
 
+  def support(self, gz_year: int, options: TransitOptions) -> bool:
+    '''
+    Returns `True` if the given `gz_year` and `options` are both supported.
+    '''
+    return self._transit_db.support(gz_year, options) and self._ganzhi_discoverer.support(gz_year, options)
+
   def shensha(self, gz_year: int, options: TransitOptions) -> ShenshaAnalysis:
     '''
     Return the relationship-related Shenshas of the given transits.
@@ -100,7 +106,7 @@ class TransitAnalysis:
     - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
     '''
 
-    assert self._transit_db.support(gz_year, options)
+    assert self.support(gz_year, options)
     transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
@@ -114,6 +120,44 @@ class TransitAnalysis:
       'hongluan': frozenset(find_shensha(ShenshaUtils.hongluan, ([y_dz],       transit_dizhis))),
       'tianxi':   frozenset(find_shensha(ShenshaUtils.tianxi,   ([y_dz],       transit_dizhis))),
     }
+  
+  def day_master_relations(self, gz_year: int, options: TransitOptions) -> TianganUtils.TianganRelationDiscovery:
+    '''
+    Return the Tiangan relations that the day master and other transit Tiangans form.
+    
+    返回日主和其他流运的天干之间的关系。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+
+    Returns: (TianganUtils.TianganRelationDiscovery) The Tiangan relations that the day master and other transit Tiangans form.
+    '''
+
+    assert self.support(gz_year, options)
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_tiangans = tuple(gz.tiangan for gz in transit_ganzhis)
+
+    return TianganUtils.discover_mutual([self._chart.bazi.day_master], transit_tiangans)
+
+  def house_relations(self, gz_year: int, options: TransitOptions) -> DizhiUtils.DizhiRelationDiscovery:
+    '''
+    Return the Dizhi relations that the House of Relationship and other transit Dizhis form.
+
+    返回配偶宫/婚姻宫和其他流运的地支之间的关系。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+
+    Returns: (DizhiUtils.DizhiRelationDiscovery) The Dizhi relations that the House of Relationship and other transit Dizhis form.
+    '''
+
+    assert self.support(gz_year, options)
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
+
+    return DizhiUtils.discover_mutual([self._chart.house_of_relationship], transit_dizhis)
 
 
 

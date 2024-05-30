@@ -149,17 +149,17 @@ class TestTransitAnalysis(unittest.TestCase):
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(20):
-        randon_year: int = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options: TransitOptions = random.choice(list(TransitOptions))
-        if not db.support(randon_year, random_options):
+      for __ in range(100):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        if not transits_analysis.support(randon_year, random_options):
           continue
 
         transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
         actual = transits_analysis.shensha(randon_year, random_options)
 
         with self.subTest('Taohua / 桃花'):
-          expected: list[Dizhi] = []
+          expected = []
           for dz in transit_dz:
             if ShenshaUtils.taohua(y_dz, dz):
               expected.append(dz)
@@ -168,25 +168,73 @@ class TestTransitAnalysis(unittest.TestCase):
           self.assertSetEqual(actual['taohua'], set(expected))
 
         with self.subTest('Hongyan / 红艳'):
-          expected: list[Dizhi] = []
+          expected = []
           for dz in transit_dz:
             if ShenshaUtils.hongyan(dm, dz):
               expected.append(dz)
           self.assertSetEqual(actual['hongyan'], set(expected))
 
         with self.subTest('Hongluan / 红鸾'):
-          expected: list[Dizhi] = []
+          expected = []
           for dz in transit_dz:
             if ShenshaUtils.hongluan(y_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['hongluan'], set(expected))
 
         with self.subTest('Tianxi / 天喜'):
-          expected: list[Dizhi] = []
+          expected = []
           for dz in transit_dz:
             if ShenshaUtils.tianxi(y_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['tianxi'], set(expected))
 
+  @pytest.mark.slow
+  def test_day_master_relations(self) -> None:
+    for _ in range(100):
+      chart = BaziChart.random()
+      db = chart.transit_db
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(100):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        if not transits_analysis.support(randon_year, random_options):
+          continue
+        
+        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(randon_year, random_options))
+        expected = TianganUtils.discover_mutual([chart.bazi.day_master], transit_tg)
+        actual = transits_analysis.day_master_relations(randon_year, random_options)
+
+        self.assertSetEqual(set(actual.keys()), set(expected.keys()))
+        for rel in expected:
+          self.assertIn(rel, actual)
+          self.assertSetEqual(set(actual[rel]), set(expected[rel]))
+
+  @pytest.mark.slow
+  def test_house_relations(self) -> None:
+    for _ in range(100):
+      chart = BaziChart.random()
+      db = chart.transit_db
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(100):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        if not transits_analysis.support(randon_year, random_options):
+          continue
+        
+        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+        expected = DizhiUtils.discover_mutual([chart.house_of_relationship], transit_dz)
+        actual = transits_analysis.house_relations(randon_year, random_options)
+
+        self.assertSetEqual(set(actual.keys()), set(expected.keys()))
+        for rel in expected:
+          self.assertIn(rel, actual)
+          self.assertSetEqual(set(actual[rel]), set(expected[rel]))
+
+
 
 # TODO: Integration tests on `RelationshipAnalyzer`.
+# Also test `TransitDatabase`?

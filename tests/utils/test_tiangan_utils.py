@@ -456,7 +456,6 @@ class TestTianganUtils(unittest.TestCase):
           else:
             self.assertEqual(len(actual), 0)
 
-
   def test_discovery_filter(self) -> None:
     for _ in range(5):
       tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
@@ -484,3 +483,35 @@ class TestTianganUtils(unittest.TestCase):
         for combo in combos:
           self.assertTrue(all(tg not in combo for tg in forbidden_tiangans))
           self.assertIn(combo, discovery[rel])
+
+  def test_discovery_merge(self) -> None:
+    for _ in range(3):
+      tiangans1: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+      discovery1: TianganRelationDiscovery = TianganUtils.discover(tiangans1)
+
+      tiangans2: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+      discovery2: TianganRelationDiscovery = TianganUtils.discover(tiangans2)
+
+      merged = discovery1.merge(discovery2)
+
+      with self.subTest('merge consistency'):
+        merged_ = discovery2.merge(discovery1)
+        self.assertSetEqual(set(merged), set(merged_))
+        for rel, combos in merged.items():
+          self.assertIn(rel, merged_)
+          self.assertSetEqual(set(combos), set(merged_[rel]))
+
+      with self.subTest('correctness'):
+        for rel, combos in discovery1.items():
+          self.assertIn(rel, merged)
+          for combo in combos:
+            self.assertIn(combo, merged[rel])
+
+        for rel, combos in discovery2.items():
+          self.assertIn(rel, merged)
+          for combo in combos:
+            self.assertIn(combo, merged[rel])
+
+        for rel, combos in merged.items():
+          expected = set(discovery1.get(rel, set())) | set(discovery2.get(rel, set()))
+          self.assertSetEqual(set(combos), expected)
