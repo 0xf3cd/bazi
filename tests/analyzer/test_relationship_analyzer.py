@@ -134,7 +134,6 @@ class TestAtBirthAnalysis(unittest.TestCase):
                              dz_combo in at_birth.star_relations.dizhi[dz_rel])
 
 
-
 class TestTransitAnalysis(unittest.TestCase):
   @pytest.mark.slow
   def test_shensha(self) -> None:

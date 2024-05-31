@@ -9,7 +9,6 @@ from ..Common import GanzhiData
 from ..Defines import Tiangan, Dizhi
 from ..BaziChart import BaziChart, TransitOptions, TransitDatabase
 from ..Utils import ShenshaUtils, TianganUtils, DizhiUtils
-from ..Discoverer.GanzhiDiscoverer import GanzhiDiscoverer
 
 
 _FirstArgType = Iterable[Union[Tiangan, Dizhi]]
@@ -42,7 +41,6 @@ class AtBirthAnalysis:
   '''Analysis of Relationship at Birth / 出生时的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = copy.deepcopy(chart)
-    self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(chart)
 
   @property
   def shensha(self) -> ShenshaAnalysis:
@@ -71,10 +69,9 @@ class AtBirthAnalysis:
   def star_relations(self) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
     '''Relations that the Star(s) of Relationship / 配偶星 / 婚姻星 has.'''
     stars = self._chart.relationship_stars
-    at_birth_discovery = self._ganzhi_discoverer.at_birth
 
-    tg = at_birth_discovery.tiangan.filter(lambda _, combo : stars.tiangan in combo)
-    dz = at_birth_discovery.dizhi.filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
+    tg = TianganUtils.discover(self._chart.bazi.four_tiangans).filter(lambda _, combo : stars.tiangan in combo)
+    dz = DizhiUtils.discover(self._chart.bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
     return GanzhiData(tg, dz)
 
 
@@ -84,13 +81,12 @@ class TransitAnalysis:
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = copy.deepcopy(chart)
     self._transit_db: Final[TransitDatabase] = chart.transit_db
-    self._ganzhi_discoverer: Final[GanzhiDiscoverer] = GanzhiDiscoverer(chart)
 
   def support(self, gz_year: int, options: TransitOptions) -> bool:
     '''
     Returns `True` if the given `gz_year` and `options` are both supported.
     '''
-    return self._transit_db.support(gz_year, options) and self._ganzhi_discoverer.support(gz_year, options)
+    return self._transit_db.support(gz_year, options)
 
   def shensha(self, gz_year: int, options: TransitOptions) -> ShenshaAnalysis:
     '''
