@@ -7,7 +7,8 @@ from typing import Final, TypedDict, Callable, Union, Iterable
 
 from ..Common import GanzhiData
 from ..Defines import Tiangan, Dizhi
-from ..BaziChart import BaziChart, TransitOptions, TransitDatabase
+from ..BaziChart import BaziChart
+from ..Transits import TransitOptions, TransitDatabase
 from ..Utils import ShenshaUtils, TianganUtils, DizhiUtils
 
 
@@ -80,7 +81,7 @@ class TransitAnalysis:
   '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = copy.deepcopy(chart)
-    self._transit_db: Final[TransitDatabase] = chart.transit_db
+    self._transit_db: Final[TransitDatabase] = TransitDatabase(chart)
 
   def support(self, gz_year: int, options: TransitOptions) -> bool:
     '''

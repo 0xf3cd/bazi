@@ -9,7 +9,8 @@ import itertools
 
 from src.Defines import Tiangan, Dizhi
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils
-from src.BaziChart import BaziChart, TransitOptions
+from src.BaziChart import BaziChart
+from src.Transits import TransitOptions, TransitDatabase
 from src.Analyzer.Relationship import RelationshipAnalyzer
 
 
@@ -139,7 +140,7 @@ class TestTransitAnalysis(unittest.TestCase):
   def test_shensha(self) -> None:
     for _ in range(100):
       chart = BaziChart.random()      
-      db = chart.transit_db
+      db = TransitDatabase(chart)
 
       dm = chart.bazi.day_master
       y_dz = chart.bazi.year_pillar.dizhi
@@ -191,7 +192,7 @@ class TestTransitAnalysis(unittest.TestCase):
   def test_day_master_relations(self) -> None:
     for _ in range(100):
       chart = BaziChart.random()
-      db = chart.transit_db
+      db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
@@ -214,7 +215,7 @@ class TestTransitAnalysis(unittest.TestCase):
   def test_house_relations(self) -> None:
     for _ in range(100):
       chart = BaziChart.random()
-      db = chart.transit_db
+      db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
