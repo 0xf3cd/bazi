@@ -7,11 +7,11 @@ import unittest
 import random
 import itertools
 
-from src.Defines import Tiangan, Dizhi
-from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils
+from src.Defines import Tiangan, Dizhi, Shishen
+from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils, BaziUtils
 from src.BaziChart import BaziChart
 from src.Transits import TransitOptions, TransitDatabase
-from src.Analyzer.Relationship import RelationshipAnalyzer
+from src.Analyzer.Relationship import RelationshipAnalyzer, TransitAnalysis
 
 
 class TestAtBirthAnalysis(unittest.TestCase):
@@ -136,6 +136,27 @@ class TestAtBirthAnalysis(unittest.TestCase):
 
 
 class TestTransitAnalysis(unittest.TestCase):
+  @staticmethod
+  def __equal(discovery1, discovery2) -> bool:
+    if type(discovery1) is not type(discovery2):
+      return False
+    if set(discovery1.keys()) != set(discovery2.keys()):
+      return False
+    for key in discovery1.keys():
+      if set(discovery1[key]) != set(discovery2[key]):
+        return False
+    return True
+  
+  @staticmethod
+  def __random_transit_options() -> TransitOptions:
+    return random.choice([
+      TransitOptions.DAYUN,
+      TransitOptions.DAYUN_LIUNIAN,
+      TransitOptions.LIUNIAN,
+      TransitOptions.XIAOYUN,
+      TransitOptions.XIAOYUN_LIUNIAN
+    ])
+
   @pytest.mark.slow
   def test_shensha(self) -> None:
     for _ in range(100):
@@ -151,7 +172,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(100):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        random_options = self.__random_transit_options()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -198,7 +219,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(100):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        random_options = self.__random_transit_options()
         if not transits_analysis.support(randon_year, random_options):
           continue
         
@@ -206,10 +227,7 @@ class TestTransitAnalysis(unittest.TestCase):
         expected = TianganUtils.discover_mutual([chart.bazi.day_master], transit_tg)
         actual = transits_analysis.day_master_relations(randon_year, random_options)
 
-        self.assertSetEqual(set(actual.keys()), set(expected.keys()))
-        for rel in expected:
-          self.assertIn(rel, actual)
-          self.assertSetEqual(set(actual[rel]), set(expected[rel]))
+        self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
 
   @pytest.mark.slow
   def test_house_relations(self) -> None:
@@ -221,7 +239,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(100):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = random.choice([TransitOptions.DAYUN_LIUNIAN, TransitOptions.XIAOYUN_LIUNIAN, TransitOptions.LIUNIAN, TransitOptions.DAYUN])
+        random_options = self.__random_transit_options()
         if not transits_analysis.support(randon_year, random_options):
           continue
         
@@ -229,11 +247,124 @@ class TestTransitAnalysis(unittest.TestCase):
         expected = DizhiUtils.discover_mutual([chart.house_of_relationship], transit_dz)
         actual = transits_analysis.house_relations(randon_year, random_options)
 
-        self.assertSetEqual(set(actual.keys()), set(expected.keys()))
-        for rel in expected:
-          self.assertIn(rel, actual)
-          self.assertSetEqual(set(actual[rel]), set(expected[rel]))
+        self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
 
+  @pytest.mark.slow
+  def test_star_relations(self) -> None:
+    for _ in range(50):
+      chart = BaziChart.random()
+      stars = chart.relationship_stars
+
+      db = TransitDatabase(chart)
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(50):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = self.__random_transit_options()
+        random_level = random.choice([
+          TransitAnalysis.Level.TRANSITS_ONLY, 
+          TransitAnalysis.Level.MUTUAL, 
+          TransitAnalysis.Level.ALL
+        ]) # mypy with Python 3.12 is problematic here on type checking... Explicitly list all enum values.
+        if not transits_analysis.support(randon_year, random_options):
+          continue
+        
+        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(randon_year, random_options))
+        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+
+        tg_discovery = TianganUtils.TianganRelationDiscovery({})
+        dz_discovery = DizhiUtils.DizhiRelationDiscovery({})
+        if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
+          tg_discovery = tg_discovery.merge(TianganUtils.discover(transit_tg))
+          dz_discovery = dz_discovery.merge(DizhiUtils.discover(transit_dz))
+        if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
+          tg_discovery = tg_discovery.merge(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
+          dz_discovery = dz_discovery.merge(DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
+
+        actual = transits_analysis.star_relations(randon_year, random_options, level=random_level)
+
+        with self.subTest('Tiangan'):
+          for tg_rel, tg_combos in actual.tiangan.items():
+            self.assertIn(tg_rel, tg_discovery)
+            for tg_combo in tg_combos:
+              self.assertIn(tg_combo, tg_discovery[tg_rel])
+          
+          for tg_rel, tg_combos in tg_discovery.items():
+            for tg_combo in tg_combos:
+              if stars.tiangan in tg_combo:
+                self.assertIn(tg_combo, actual.tiangan[tg_rel])
+
+          self.assertTrue(TestTransitAnalysis.__equal(actual.tiangan, tg_discovery.filter(
+            lambda _, combo : stars.tiangan in combo
+          )))
+
+        with self.subTest('Dizhi'):
+          for dz_rel, dz_combos in actual.dizhi.items():
+            self.assertIn(dz_rel, dz_discovery)
+            for dz_combo in dz_combos:
+              self.assertIn(dz_combo, dz_discovery[dz_rel])
+          
+          for dz_rel, dz_combos in dz_discovery.items():
+            for dz_combo in dz_combos:
+              if len(dz_combo & set(stars.dizhi)) > 0:
+                self.assertIn(dz_combo, actual.dizhi[dz_rel])
+
+          self.assertTrue(TestTransitAnalysis.__equal(actual.dizhi, dz_discovery.filter(
+            lambda _, combo : len(combo & set(stars.dizhi)) > 0
+          )))
+
+  @pytest.mark.slow
+  def test_zhengyin(self) -> None:
+    for _ in range(100):
+      chart = BaziChart.random()
+      db = TransitDatabase(chart)
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(100):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = self.__random_transit_options()
+        if not transits_analysis.support(randon_year, random_options):
+          continue
+
+        expected_tg: bool = False
+        expected_dz: bool = False
+        for gz in db.ganzhis(randon_year, random_options):
+          if BaziUtils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
+            expected_tg = True
+          if BaziUtils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
+            expected_dz = True
+
+        actual = transits_analysis.zhengyin(randon_year, random_options)
+        self.assertEqual(expected_tg, actual.tiangan)
+        self.assertEqual(expected_dz, actual.dizhi)
+
+  @pytest.mark.slow
+  def test_star(self) -> None:
+    for _ in range(100):
+      chart = BaziChart.random()
+      db = TransitDatabase(chart)
+      analyzer = RelationshipAnalyzer(chart)
+      transits_analysis = analyzer.transits
+
+      for __ in range(100):
+        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+        random_options = self.__random_transit_options()
+        if not transits_analysis.support(randon_year, random_options):
+          continue
+
+        expected_tg: bool = False
+        expected_dz: bool = False
+        for gz in db.ganzhis(randon_year, random_options):
+          if gz.tiangan == chart.relationship_stars.tiangan:
+            expected_tg = True
+          if gz.dizhi in chart.relationship_stars.dizhi:
+            expected_dz = True
+
+        actual = transits_analysis.star(randon_year, random_options)
+        self.assertEqual(expected_tg, actual.tiangan)
+        self.assertEqual(expected_dz, actual.dizhi)
 
 
 # TODO: Integration tests on `RelationshipAnalyzer`.

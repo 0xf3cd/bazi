@@ -3,14 +3,13 @@
 
 import json
 import copy
-import random
 import itertools
 
 import pytest
 import unittest
 
 from datetime import datetime, date, timedelta
-from typing import Optional, Sequence
+from typing import Optional
 
 from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, Bazi

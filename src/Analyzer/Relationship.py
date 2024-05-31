@@ -1,15 +1,17 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import functools
 
+from enum import IntFlag, unique
 from itertools import starmap, product, compress, chain
 from typing import Final, TypedDict, Callable, Union, Iterable
 
 from ..Common import GanzhiData
-from ..Defines import Tiangan, Dizhi
+from ..Defines import Tiangan, Dizhi, Shishen
 from ..BaziChart import BaziChart
 from ..Transits import TransitOptions, TransitDatabase
-from ..Utils import ShenshaUtils, TianganUtils, DizhiUtils
+from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
 
 
 _FirstArgType = Iterable[Union[Tiangan, Dizhi]]
@@ -155,6 +157,107 @@ class TransitAnalysis:
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
     return DizhiUtils.discover_mutual([self._chart.house_of_relationship], transit_dizhis)
+  
+  @unique
+  class Level(IntFlag):
+    # Analyze only transits. 只分析流运。
+    TRANSITS_ONLY        = 1 << 0
+
+    # Analyze the effects that transits and at-birth have on each other. 分析流运和原局互相的影响。
+    MUTUAL               = 1 << 1
+
+    # Analyze all effects, basically all of above. 分析所有影响。
+    ALL                  = TRANSITS_ONLY | MUTUAL
+
+  def star_relations(
+    self, 
+    gz_year: int, 
+    options: TransitOptions, 
+    *, level: Level = Level.ALL,
+  ) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
+    '''
+    Return the Tiangan and Dizhi relations that the House of Relationship and other Ganzhis form.
+
+    返回配偶宫/婚姻宫和其他干支之间的关系。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - level: (Level) The level of the analysis. 返回分析的级别。
+
+    Returns: (GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the House of Relationship and other transit Ganzhis form.
+    '''
+
+    assert level in TransitAnalysis.Level
+    assert self.support(gz_year, options)
+
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_tg = tuple(gz.tiangan for gz in transit_ganzhis)
+    transit_dz = tuple(gz.dizhi for gz in transit_ganzhis)
+
+    at_birth_tg = self._chart.bazi.four_tiangans
+    at_birth_dz = self._chart.bazi.four_dizhis
+
+    tg = TianganUtils.TianganRelationDiscovery({})
+    dz = DizhiUtils.DizhiRelationDiscovery({})
+    if level & TransitAnalysis.Level.TRANSITS_ONLY:
+      tg = tg.merge(TianganUtils.discover(transit_tg))
+      dz = dz.merge(DizhiUtils.discover(transit_dz))
+    if level & TransitAnalysis.Level.MUTUAL:
+      tg = tg.merge(TianganUtils.discover_mutual(at_birth_tg, transit_tg))
+      dz = dz.merge(DizhiUtils.discover_mutual(at_birth_dz, transit_dz))
+
+    stars = self._chart.relationship_stars
+    return GanzhiData(
+      tg.filter(lambda _, combo : stars.tiangan in combo),
+      dz.filter(lambda _, combo : any(dz in combo for dz in stars.dizhi)),
+    )
+  
+  def zhengyin(self, gz_year: int, options: TransitOptions) -> GanzhiData[bool, bool]:
+    '''
+    Check if the transits' Tiangans and Dizhis contain Zhengyin (正印).
+
+    检查流运的天干地支是否包含正印，即是否在走正印运。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+
+    Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain Zhengyin (正印).
+    '''
+
+    assert self.support(gz_year, options)
+  
+    f = functools.partial(BaziUtils.shishen, self._chart.bazi.day_master)
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+
+    return GanzhiData(
+      any(f(gz.tiangan) is Shishen.正印 for gz in transit_ganzhis),
+      any(f(gz.dizhi)   is Shishen.正印 for gz in transit_ganzhis),
+    )
+  
+  def star(self, gz_year: int, options: TransitOptions) -> GanzhiData[bool, bool]:
+    '''
+    Check if the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
+
+    检查流运的天干地支是否包含夫妻星/婚姻星。
+
+    Args:
+    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
+    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+
+    Returns: (bool) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
+    '''
+
+    assert self.support(gz_year, options)
+
+    stars = self._chart.relationship_stars
+    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+
+    return GanzhiData(
+      any(gz.tiangan is stars.tiangan for gz in transit_ganzhis),
+      any(gz.dizhi   in stars.dizhi   for gz in transit_ganzhis),
+    )
 
 
 

@@ -7,7 +7,8 @@ import unittest
 from datetime import datetime
 
 from src.Bazi import Bazi, BaziGender, BaziPrecision
-from src.BaziChart import BaziChart, TransitOptions, TransitDatabase
+from src.BaziChart import BaziChart
+from src.Transits import TransitOptions, TransitDatabase
 from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.Utils import TianganUtils, DizhiUtils
 
@@ -56,7 +57,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       precision=BaziPrecision.DAY,
     )
     chart: BaziChart = BaziChart(bazi)
-    db: TransitDatabase = chart.transit_db
+    db: TransitDatabase = TransitDatabase(chart)
 
     with self.subTest('pillar correctness'):
       self.assertEqual(bazi.year_pillar, Ganzhi.from_str('甲子'))
@@ -140,7 +141,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       precision=BaziPrecision.DAY,
     )
     chart: BaziChart = BaziChart(bazi)
-    db: TransitDatabase = chart.transit_db
+    db: TransitDatabase = TransitDatabase(chart)
 
     with self.subTest('pillar correctness'):
       self.assertEqual(bazi.year_pillar, Ganzhi.from_str('甲辰'))
