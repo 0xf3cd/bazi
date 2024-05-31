@@ -7,7 +7,7 @@ from datetime import datetime
 
 from typing import (
   TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping, Generator, Any,
+  Sequence, Iterator, Type, Mapping, Any,
 )
 from .Defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
@@ -264,9 +264,9 @@ class BaziData(Generic[PillarDataType]):
 
 TianganDataType = TypeVar('TianganDataType', covariant=True)
 DizhiDataType = TypeVar('DizhiDataType', covariant=True)
-class PillarData(Generic[TianganDataType, DizhiDataType]):
+class GanzhiData(Generic[TianganDataType, DizhiDataType]):
   '''
-  A helper class for storing the data of a Pillar.
+  A helper class for storing the data of a Pillar/Ganzhi.
   Can be used with `BaziData` class.
   '''
   def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
@@ -282,7 +282,7 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
     return copy.deepcopy(self._dz)
   
   def __eq__(self, other: object) -> bool:
-    if not isinstance(other, PillarData):
+    if not isinstance(other, GanzhiData):
       return False
     if self.tiangan != other.tiangan:
       return False
@@ -292,29 +292,6 @@ class PillarData(Generic[TianganDataType, DizhiDataType]):
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
-
-
-class DayunDatabase:
-  '''A database that figures out a given Ganzhi year falls into which Dayun (大运).'''
-  def __init__(self, gen: Generator[DayunTuple, None, None]) -> None:
-    self._gen: Final[Generator[DayunTuple, None, None]] = gen
-    self._cache: Final[dict[int, Ganzhi]] = {}
-
-    self._first_dayun: DayunTuple = next(self._gen)
-    self._cache[self._first_dayun.ganzhi_year] = self._first_dayun.ganzhi
-
-  def __getitem__(self, gz_year: int) -> DayunTuple:
-    assert isinstance(gz_year, int)
-    assert gz_year >= self._first_dayun.ganzhi_year
-
-    dayun_idx: int = (gz_year - self._first_dayun.ganzhi_year) // 10
-    expected_gz_year: int = self._first_dayun.ganzhi_year + 10 * dayun_idx
-
-    while expected_gz_year not in self._cache:
-      next_dayun: DayunTuple = next(self._gen)
-      self._cache[next_dayun.ganzhi_year] = next_dayun.ganzhi
-
-    return DayunTuple(expected_gz_year, self._cache[expected_gz_year])
 
 #endregion
 

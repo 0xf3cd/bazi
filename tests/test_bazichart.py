@@ -63,6 +63,27 @@ class TestBaziChart(unittest.TestCase):
       with self.assertRaises(TypeError):
         BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore
 
+  def test_house_of_relationship(self) -> None:
+    for _ in range(5):
+      bazi = Bazi.random()
+      chart = BaziChart(bazi)
+      self.assertEqual(chart.house_of_relationship, bazi.four_dizhis[2])
+
+  def test_relationship_stars(self) -> None:
+    for _ in range(5):
+      bazi = Bazi.random()
+      chart = BaziChart(bazi)
+      stars = chart.relationship_stars
+
+      expected = Shishen.正财 if bazi.gender is BaziGender.男 else Shishen.正官
+      self.assertEqual(expected, BaziUtils.shishen(bazi.day_master, stars.tiangan))
+      for dz in stars.dizhi:
+        self.assertEqual(expected, BaziUtils.shishen(bazi.day_master, dz))
+
+      if len(stars.dizhi) != 1:
+        self.assertEqual(2, len(stars.dizhi))
+        self.assertTrue(all(BaziUtils.traits(dz).wuxing is Wuxing.土 for dz in stars.dizhi))
+
   def test_traits(self) -> None:
     bazi: Bazi = Bazi(
       birth_time=datetime(1984, 4, 2, 4, 2),
@@ -317,19 +338,6 @@ class TestBaziChart(unittest.TestCase):
       for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
         self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
 
-  def test_dayun_db(self) -> None:
-    bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
-    chart: BaziChart = BaziChart(bazi)
-    db = chart.dayun_db
-
-    first_dayun: DayunTuple = next(chart.dayun)
-    for year in range(first_dayun.ganzhi_year, first_dayun.ganzhi_year + 10):
-      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year, Ganzhi.from_str('己卯')))
-    for year in range(first_dayun.ganzhi_year + 10, first_dayun.ganzhi_year + 20):
-      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 10, Ganzhi.from_str('庚辰')))
-    for year in range(first_dayun.ganzhi_year + 20, first_dayun.ganzhi_year + 30):
-      self.assertEqual(db[year], DayunTuple(first_dayun.ganzhi_year + 20, Ganzhi.from_str('辛巳')))
-
   def test_xiaoyun(self) -> None:
     def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
       xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
@@ -510,3 +518,4 @@ class TestBaziChart(unittest.TestCase):
 
     self.assertIsNot(chart.bazi, old_bazi)
     self.assertIsNot(chart._bazi, old_bazi)
+

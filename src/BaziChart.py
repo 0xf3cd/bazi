@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import copy
+import functools
 import itertools
 
 from datetime import datetime, timedelta
@@ -8,10 +9,9 @@ from typing import Optional, Final, Generator
 
 from .Common import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
-  HiddenTianganDict, BaziData, PillarData, BaziJson,
-  DayunDatabase,
+  HiddenTianganDict, BaziData, GanzhiData, BaziJson,
 )
-from .Defines import Tiangan, Ganzhi, Shishen, ShierZhangsheng, Yinyang
+from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
 
 from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie, to_ganzhi
@@ -40,8 +40,37 @@ class BaziChart:
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
+  
+  @property
+  def house_of_relationship(self) -> Dizhi:
+    '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
+    return self._bazi.day_pillar.dizhi
+  
+  @property
+  def relationship_stars(self) -> GanzhiData[Tiangan, tuple[Dizhi, ...]]:
+    '''Relationship Star / 夫妻星 / 配偶星.
+    
+    Usage:
+    ```
+    stars = chart.relationship_stars
 
-  PillarTraits = PillarData[TraitTuple, TraitTuple]
+    print(stars.tiangan) # Print the Tiangan that represents the Relationship Star
+
+    print(stars.dizhi)   # Print the Dizhi tuple that represent the Relationship Star
+    assert 1 <= len(stars.dizhi) <= 2 # There can be 1 or 2 representations of Relationship Star in Dizhis
+    ```
+    '''
+    expected_shishen: Final[Shishen] = Shishen.正官 if self._bazi.gender is BaziGender.FEMALE else Shishen.正财
+
+    f = functools.partial(shishen, self._bazi.day_master)
+    found_tg = tuple(filter(lambda tg : f(tg) is expected_shishen, Tiangan))
+    found_dz = tuple(filter(lambda dz : f(dz) is expected_shishen, Dizhi))
+
+    assert len(found_tg) == 1
+    assert 1 <= len(found_dz) <= 2
+    return GanzhiData(found_tg[0], found_dz)
+
+  PillarTraits = GanzhiData[TraitTuple, TraitTuple]
   @property
   def traits(self) -> BaziData[PillarTraits]:
     '''
@@ -88,7 +117,7 @@ class BaziChart:
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
     return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
-  PillarShishens = PillarData[Optional[Shishen], Shishen]
+  PillarShishens = GanzhiData[Optional[Shishen], Shishen]
   @property
   def shishen(self) -> BaziData[PillarShishens]:
     '''
@@ -233,15 +262,7 @@ class BaziChart:
         gz = gz.next(step)
 
     return __dayun_generator()
-  
-  @property
-  def dayun_db(self) -> DayunDatabase:
-    '''
-    A database that figures out a given Ganzhi year falls into which Dayun (大运).
-    一个数据库，用于某个干支年查询该干支年所属大运。
-    '''
-    return DayunDatabase(self.dayun)
-  
+
   @property
   def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:
     '''

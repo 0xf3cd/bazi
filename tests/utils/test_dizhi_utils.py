@@ -12,7 +12,7 @@ from collections import Counter
 from typing import Union, Optional, Iterable, Any, Callable
 
 from src.Defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
-from src.Rules import Rules
+from src.Rules import DizhiRules
 from src.Utils import BaziUtils, TianganUtils, DizhiUtils
 from src.Utils.DizhiUtils import DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery
 
@@ -186,9 +186,9 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.anhe('亥', '子') # type: ignore
     with self.assertRaises(TypeError):
-      DizhiUtils.anhe(Dizhi.子, Dizhi.辰, Rules.AnheDef.NORMAL + 100) # type: ignore
+      DizhiUtils.anhe(Dizhi.子, Dizhi.辰, DizhiRules.AnheDef.NORMAL + 100) # type: ignore
     with self.assertRaises(AssertionError):
-      DizhiUtils.anhe(Dizhi.子, Dizhi.辰, definition='Rules.AnheDef.NORMAL') # type: ignore
+      DizhiUtils.anhe(Dizhi.子, Dizhi.辰, definition='DizhiRules.AnheDef.NORMAL') # type: ignore
 
     normal_combos: list[DizhiCombo] = [
       DizhiCombo((BaziUtils.lu(tg1), BaziUtils.lu(tg2))) 
@@ -205,14 +205,14 @@ class TestDizhiUtils(unittest.TestCase):
       DizhiCombo((Dizhi.卯, Dizhi.申)), 
     ]
 
-    expected: dict[Rules.AnheDef, list[DizhiCombo]] = {
-      Rules.AnheDef.NORMAL: normal_combos,
-      Rules.AnheDef.NORMAL_EXTENDED: normal_extended_combos,
-      Rules.AnheDef.MANGPAI: mangpai_combos
+    expected: dict[DizhiRules.AnheDef, list[DizhiCombo]] = {
+      DizhiRules.AnheDef.NORMAL: normal_combos,
+      DizhiRules.AnheDef.NORMAL_EXTENDED: normal_extended_combos,
+      DizhiRules.AnheDef.MANGPAI: mangpai_combos
     }
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      for anhe_def in Rules.AnheDef:
+      for anhe_def in DizhiRules.AnheDef:
         self.assertEqual(DizhiUtils.anhe(dz1, dz2, definition=anhe_def), DizhiCombo((dz1, dz2)) in expected[anhe_def])
         self.assertEqual(DizhiUtils.anhe(dz1, dz2, definition=anhe_def), DizhiUtils.anhe(dz2, dz1, definition=anhe_def))
 
@@ -494,89 +494,89 @@ class TestDizhiUtils(unittest.TestCase):
     with self.assertRaises(AssertionError):
       DizhiUtils.xing('亥', '子') # type: ignore
     with self.assertRaises(AssertionError):
-      DizhiUtils.xing(Dizhi.子, Dizhi.辰, Rules.XingDef.LOOSE) # type: ignore
+      DizhiUtils.xing(Dizhi.子, Dizhi.辰, DizhiRules.XingDef.LOOSE) # type: ignore
     with self.assertRaises(AssertionError):
-      DizhiUtils.xing(Dizhi.子, Dizhi.辰, definition='Rules.X.NORMAL') # type: ignore
+      DizhiUtils.xing(Dizhi.子, Dizhi.辰, definition='DizhiRules.X.NORMAL') # type: ignore
 
     for dz in Dizhi:
       self.assertIsNone(DizhiUtils.xing(dz))
-      self.assertIsNone(DizhiUtils.xing(dz, definition=Rules.XingDef.STRICT))
-      self.assertIsNone(DizhiUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+      self.assertIsNone(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.STRICT))
+      self.assertIsNone(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.LOOSE))
 
     for _ in range(500):
       random_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(4, len(Dizhi)))
       with self.assertRaises(AssertionError):
         self.assertIsNone(DizhiUtils.xing(*random_dizhis))
       with self.assertRaises(AssertionError):
-        self.assertIsNone(DizhiUtils.xing(*random_dizhis, definition=Rules.XingDef.STRICT))
+        self.assertIsNone(DizhiUtils.xing(*random_dizhis, definition=DizhiRules.XingDef.STRICT))
       with self.assertRaises(AssertionError):
-        self.assertIsNone(DizhiUtils.xing(*random_dizhis, definition=Rules.XingDef.LOOSE))
+        self.assertIsNone(DizhiUtils.xing(*random_dizhis, definition=DizhiRules.XingDef.LOOSE))
 
   @pytest.mark.slow
   def test_xing_strict(self) -> None:
     self.assertIsNone(DizhiUtils.xing())
-    self.assertIsNone(DizhiUtils.xing(definition=Rules.XingDef.STRICT))
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, definition=Rules.XingDef.STRICT), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.STRICT), Rules.XingSubType.自刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.STRICT), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.STRICT), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.STRICT), Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.STRICT), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.STRICT), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.STRICT), Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.STRICT), None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.STRICT), None)
+    self.assertIsNone(DizhiUtils.xing(definition=DizhiRules.XingDef.STRICT))
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, definition=DizhiRules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, definition=DizhiRules.XingDef.STRICT), DizhiRules.XingSubType.自刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=DizhiRules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, definition=DizhiRules.XingDef.STRICT), DizhiRules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子, definition=DizhiRules.XingDef.STRICT), DizhiRules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=DizhiRules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=DizhiRules.XingDef.STRICT), DizhiRules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=DizhiRules.XingDef.STRICT), DizhiRules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.STRICT), None)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, definition=DizhiRules.XingDef.STRICT), None)
 
-    def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[Rules.XingSubType]:
+    def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[DizhiRules.XingSubType]:
       # In `XingDef.STRICT` mode, we don't care about the direction.
       __fs: DizhiCombo = DizhiCombo(__dizhis)
       if __fs in [DizhiCombo((Dizhi.丑, Dizhi.戌, Dizhi.未)), DizhiCombo((Dizhi.寅, Dizhi.巳, Dizhi.申))]:
-        return Rules.XingSubType.三刑
+        return DizhiRules.XingSubType.三刑
       elif __fs == DizhiCombo((Dizhi.子, Dizhi.卯)):
-        return Rules.XingSubType.子卯刑
+        return DizhiRules.XingSubType.子卯刑
       elif len(__fs) == 1 and len(__dizhis) == 2:
         if __dizhis[0] in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥):
-          return Rules.XingSubType.自刑
+          return DizhiRules.XingSubType.自刑
       return None
     
     for dz in Dizhi:
-      self.assertIsNone(DizhiUtils.xing(dz, definition=Rules.XingDef.STRICT))
+      self.assertIsNone(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.STRICT))
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      strict_result: Optional[Rules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=Rules.XingDef.STRICT)
-      strict_result2: Optional[Rules.XingSubType] = DizhiUtils.xing(dz2, dz1, definition=Rules.XingDef.STRICT)
-      strict_result3: Optional[Rules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=Rules.XingDef.STRICT)
+      strict_result: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
+      strict_result2: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(dz2, dz1, definition=DizhiRules.XingDef.STRICT)
+      strict_result3: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
       self.assertEqual(strict_result, strict_result2)
       self.assertEqual(strict_result, strict_result3)
       self.assertEqual(strict_result, __expected_strict_xing((dz1, dz2)))
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      strict_result4: Optional[Rules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT)
+      strict_result4: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.STRICT)
       for dz1, dz2, dz3 in itertools.permutations(dz_tuple, 3):
-        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
-        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=Rules.XingDef.STRICT))
+        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=DizhiRules.XingDef.STRICT))
+        self.assertEqual(strict_result4, DizhiUtils.xing(dz1, dz2, dz3, definition=DizhiRules.XingDef.STRICT))
 
   def test_xing_loose(self) -> None:
-    self.assertIsNone(DizhiUtils.xing(definition=Rules.XingDef.LOOSE))
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+    self.assertIsNone(DizhiUtils.xing(definition=DizhiRules.XingDef.LOOSE))
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, definition=DizhiRules.XingDef.LOOSE), 
                      None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.自刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.自刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.亥, Dizhi.亥, Dizhi.亥, definition=DizhiRules.XingDef.LOOSE), 
                      None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.子卯刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=Rules.XingDef.LOOSE), 
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.卯, Dizhi.子, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.子卯刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.子, Dizhi.卯, Dizhi.亥, definition=DizhiRules.XingDef.LOOSE), 
                      None)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, definition=Rules.XingDef.LOOSE), 
-                     Rules.XingSubType.三刑)
-    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, definition=Rules.XingDef.LOOSE), 
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, Dizhi.申, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.LOOSE), 
+                     DizhiRules.XingSubType.三刑)
+    self.assertEqual(DizhiUtils.xing(Dizhi.巳, Dizhi.寅, definition=DizhiRules.XingDef.LOOSE), 
                      None)
 
     sanxing_list: list[tuple[Dizhi, ...]] = [
@@ -600,16 +600,16 @@ class TestDizhiUtils(unittest.TestCase):
     ]
 
     for dz in Dizhi:
-      self.assertIsNone(DizhiUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+      self.assertIsNone(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.LOOSE))
 
     dz_tuple: tuple[Dizhi, ...]
     for dz_tuple in itertools.product(Dizhi, Dizhi):
-      loose_result: Optional[Rules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
-      if loose_result is Rules.XingSubType.三刑:
+      loose_result: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
+      if loose_result is DizhiRules.XingSubType.三刑:
         self.assertIn(dz_tuple, sanxing_list)
-      elif loose_result is Rules.XingSubType.子卯刑:
+      elif loose_result is DizhiRules.XingSubType.子卯刑:
         self.assertIn(dz_tuple, zimaoxing_list)
-      elif loose_result is Rules.XingSubType.自刑:
+      elif loose_result is DizhiRules.XingSubType.自刑:
         self.assertIn(dz_tuple, zixing_list)
       else:
         self.assertIsNone(loose_result)
@@ -618,13 +618,13 @@ class TestDizhiUtils(unittest.TestCase):
         self.assertNotIn(dz_tuple, zixing_list)
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      loose_result2: Optional[Rules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)
+      loose_result2: Optional[DizhiRules.XingSubType] = DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
       if loose_result2 is None:
         self.assertNotIn(dz_tuple, sanxing_list)
         self.assertNotIn(dz_tuple, zimaoxing_list)
         self.assertNotIn(dz_tuple, zixing_list)
       else:
-        self.assertEqual(loose_result2, Rules.XingSubType.三刑)
+        self.assertEqual(loose_result2, DizhiRules.XingSubType.三刑)
         self.assertIn(dz_tuple, sanxing_list)
 
   def test_search_chong(self) -> None:
@@ -894,24 +894,24 @@ class TestDizhiUtils(unittest.TestCase):
     sorted_dizhis: list[Dizhi] = sorted(dizhi_set, key=lambda dz : dz.index)
     result: list[Any] = []
 
-    result.append(DizhiUtils.xing(definition=Rules.XingDef.STRICT))
-    result.append(DizhiUtils.xing(definition=Rules.XingDef.LOOSE))
+    result.append(DizhiUtils.xing(definition=DizhiRules.XingDef.STRICT))
+    result.append(DizhiUtils.xing(definition=DizhiRules.XingDef.LOOSE))
 
     for dz in sorted_dizhis:
-      result.append(DizhiUtils.xing(dz, definition=Rules.XingDef.STRICT))
-      result.append(DizhiUtils.xing(dz, definition=Rules.XingDef.LOOSE))
+      result.append(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.STRICT))
+      result.append(DizhiUtils.xing(dz, definition=DizhiRules.XingDef.LOOSE))
 
     dz_tuple: tuple[Dizhi, ...]
     for dz_tuple in itertools.permutations(sorted_dizhis, 2):
       result.append(DizhiUtils.liuhe(*dz_tuple))
-      result.append(DizhiUtils.anhe(*dz_tuple, definition=Rules.AnheDef.NORMAL))
-      result.append(DizhiUtils.anhe(*dz_tuple, definition=Rules.AnheDef.NORMAL_EXTENDED))
-      result.append(DizhiUtils.anhe(*dz_tuple, definition=Rules.AnheDef.MANGPAI))
+      result.append(DizhiUtils.anhe(*dz_tuple, definition=DizhiRules.AnheDef.NORMAL))
+      result.append(DizhiUtils.anhe(*dz_tuple, definition=DizhiRules.AnheDef.NORMAL_EXTENDED))
+      result.append(DizhiUtils.anhe(*dz_tuple, definition=DizhiRules.AnheDef.MANGPAI))
       result.append(DizhiUtils.tonghe(*dz_tuple))
       result.append(DizhiUtils.tongluhe(*dz_tuple))
       result.append(DizhiUtils.banhe(*dz_tuple))
-      result.append(DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT))
-      result.append(DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE))
+      result.append(DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.STRICT))
+      result.append(DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE))
       result.append(DizhiUtils.chong(*dz_tuple))
       result.append(DizhiUtils.po(*dz_tuple))
       result.append(DizhiUtils.hai(*dz_tuple))
@@ -921,8 +921,8 @@ class TestDizhiUtils(unittest.TestCase):
     for dz_tuple in itertools.permutations(sorted_dizhis, 3):
       result.append(DizhiUtils.sanhui(*dz_tuple)) # Mypy complains... # type: ignore
       result.append(DizhiUtils.sanhe(*dz_tuple)) # Mypy complains... # type: ignore
-      result.append(DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.STRICT)) # Mypy complains... # type: ignore
-      result.append(DizhiUtils.xing(*dz_tuple, definition=Rules.XingDef.LOOSE)) # Mypy complains... # type: ignore
+      result.append(DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.STRICT)) # Mypy complains... # type: ignore
+      result.append(DizhiUtils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)) # Mypy complains... # type: ignore
     
     return result
 
@@ -935,8 +935,10 @@ class TestDizhiUtils(unittest.TestCase):
 
       with self.subTest('correctness'):
         for rel in DizhiRelation:
-          self.assertIn(rel, discovery)
-          self.assertSetEqual(set(discovery[rel]), set(DizhiUtils.search(dizhis, rel)))
+          if rel in discovery:
+            self.assertSetEqual(set(discovery[rel]), set(DizhiUtils.search(dizhis, rel)))
+          else:
+            self.assertEqual(len(DizhiUtils.search(dizhis, rel)), 0)
 
       with self.subTest('consistency'):
         discovery2: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
@@ -997,8 +999,11 @@ class TestDizhiUtils(unittest.TestCase):
           expected[rel].add(combo)
 
       for rel, expected_combos in expected.items():
-        for combo in discovery[rel]:
-          self.assertIn(combo, expected_combos)
+        if rel in discovery:
+          for combo in discovery[rel]:
+            self.assertIn(combo, expected_combos)
+        else:
+          self.assertEqual(len(expected_combos), 0)
 
   @pytest.mark.slow
   def test_consistency(self) -> None:
@@ -1052,3 +1057,63 @@ class TestDizhiUtils(unittest.TestCase):
           self.assertEqual(dmr1, dmr2)
 
       self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
+
+  def test_discovery_filter(self) -> None:
+    for _ in range(5):
+      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      discovery: DizhiRelationDiscovery = DizhiUtils.discover(dizhis)
+
+      self.assertEqual(discovery, discovery.filter(lambda rel, combos : True))
+
+      forbidden_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      forbidden_relations: list[DizhiRelation] = random.sample(list(DizhiRelation), random.randint(0, len(DizhiRelation)))
+      
+      def filter_func(rel: DizhiRelation, combo: DizhiCombo) -> bool:
+        if rel in forbidden_relations:
+          return False
+        if any(dz in combo for dz in forbidden_dizhis):
+          return False
+        return True
+      
+      filtered = discovery.filter(filter_func)
+
+      for rel in forbidden_relations:
+        self.assertNotIn(rel, filtered)
+
+      for rel, combos in filtered.items():
+        for combo in combos:
+          self.assertTrue(all(dz not in combo for dz in forbidden_dizhis))
+          self.assertIn(combo, discovery[rel])
+
+  @pytest.mark.slow
+  def test_discovery_merge(self) -> None:
+    for _ in range(5):
+      dizhis1: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      dizhis2: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      
+      discovery1 = DizhiUtils.discover(dizhis1)
+      discovery2 = DizhiUtils.discover(dizhis2)
+
+      merged = discovery1.merge(discovery2)
+
+      with self.subTest('merge consistency'):
+        merged_ = discovery2.merge(discovery1)
+        self.assertSetEqual(set(merged), set(merged_))
+        for rel, combos in merged.items():
+          self.assertIn(rel, merged_)
+          self.assertSetEqual(set(combos), set(merged_[rel]))
+
+      with self.subTest('correctness'):
+        for rel, combos in discovery1.items():
+          self.assertIn(rel, merged)
+          for combo in combos:
+            self.assertIn(combo, merged[rel])
+
+        for rel, combos in discovery2.items():
+          self.assertIn(rel, merged)
+          for combo in combos:
+            self.assertIn(combo, merged[rel])
+
+        for rel, combos in merged.items():
+          expected = set(discovery1.get(rel, set())) | set(discovery2.get(rel, set()))
+          self.assertSetEqual(set(combos), expected)

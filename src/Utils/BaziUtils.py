@@ -7,7 +7,7 @@ from typing import Union
 
 from ..Defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
 from ..Common import TraitTuple, HiddenTianganDict
-from ..Rules import Rules
+from ..Rules import BaziRules
 
 
 
@@ -63,7 +63,7 @@ def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
   assert isinstance(month_dizhi, Dizhi)
 
   month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
-  first_month_tiangan: Tiangan = Rules.YEAR_TO_MONTH_TABLE[year_tiangan]
+  first_month_tiangan: Tiangan = BaziRules.YEAR_TO_MONTH_TABLE[year_tiangan]
   month_tiangan_index: int = (first_month_tiangan.index + month_index) % 10
   return Tiangan.from_index(month_tiangan_index)
 
@@ -84,7 +84,7 @@ def hour_tiangan(day_tiangan: Tiangan, hour_dizhi: Dizhi) -> Tiangan:
   assert isinstance(hour_dizhi, Dizhi)
 
   hour_index: int = hour_dizhi.index
-  first_hour_tiangan: Tiangan = Rules.DAY_TO_HOUR_TABLE[day_tiangan]
+  first_hour_tiangan: Tiangan = BaziRules.DAY_TO_HOUR_TABLE[day_tiangan]
   hour_tiangan_index: int = (first_hour_tiangan.index + hour_index) % 10
   return Tiangan.from_index(hour_tiangan_index)
 
@@ -101,7 +101,7 @@ def tiangan_traits(tg: Tiangan) -> TraitTuple:
   '''
 
   assert isinstance(tg, Tiangan)
-  return copy.deepcopy(Rules.TIANGAN_TRAITS[tg])
+  return copy.deepcopy(BaziRules.TIANGAN_TRAITS[tg])
 
 
 def dizhi_traits(dz: Dizhi) -> TraitTuple:
@@ -116,7 +116,7 @@ def dizhi_traits(dz: Dizhi) -> TraitTuple:
   '''
 
   assert isinstance(dz, Dizhi)
-  return copy.deepcopy(Rules.DIZHI_TRAITS[dz])
+  return copy.deepcopy(BaziRules.DIZHI_TRAITS[dz])
 
 
 def traits(tg_or_dz: Union[Tiangan, Dizhi]) -> TraitTuple:
@@ -150,7 +150,7 @@ def hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
   '''
 
   assert isinstance(dz, Dizhi)
-  return copy.deepcopy(Rules.HIDDEN_TIANGANS[dz])
+  return copy.deepcopy(BaziRules.HIDDEN_TIANGANS[dz])
 
 
 def shishen(day_master: Tiangan, other: Union[Tiangan, Dizhi]) -> Shishen:
@@ -238,7 +238,7 @@ def nayin_str(gz: Ganzhi) -> str:
   tg_traits, dz_traits = traits(tg), traits(dz)
   assert tg_traits.yinyang == dz_traits.yinyang # The yinyang of Tiangan and Dizhi should be the same.
 
-  return Rules.NAYIN[gz]
+  return BaziRules.NAYIN[gz]
 
 
 def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
@@ -262,7 +262,7 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
   assert isinstance(dz, Dizhi)
 
   tg_yinyang: Yinyang = traits(tg).yinyang
-  zhangsheng_place: Dizhi = Rules.TIANGAN_ZHANGSHENG[tg]
+  zhangsheng_place: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
 
   offset: int = dz.index - zhangsheng_place.index
   if tg_yinyang is Yinyang.YIN:
@@ -295,7 +295,7 @@ def from_12zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   assert isinstance(place, ShierZhangsheng)
 
   tg_yinyang: Yinyang = traits(tg).yinyang
-  zhangsheng_dizhi: Dizhi = Rules.TIANGAN_ZHANGSHENG[tg]
+  zhangsheng_dizhi: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
   offset: int = place.index if tg_yinyang is Yinyang.YANG else -place.index
   return Dizhi.from_index((zhangsheng_dizhi.index + offset) % 12)
 
@@ -315,4 +315,4 @@ def lu(tg: Tiangan) -> Dizhi:
   '''
 
   assert isinstance(tg, Tiangan)
-  return Rules.TIANGAN_LU[tg]
+  return BaziRules.TIANGAN_LU[tg]

@@ -3,19 +3,15 @@
 
 import unittest
 
-import random
-import itertools
 
 from typing import Optional
 
 from src.Defines import Shishen
 from src.Common import (
-  classproperty, frozendict, PillarData, BaziData,
-  ConstMetaClass, Const, ImmutableMetaClass, Immutable,
-  DayunTuple, DayunDatabase,
+  classproperty, frozendict, GanzhiData, BaziData,
+  ConstMetaClass, Const, ImmutableMetaClass, Immutable
 )
 
-from src.BaziChart import BaziChart
 
 
 class TestCommon(unittest.TestCase):
@@ -276,10 +272,10 @@ class TestCommon(unittest.TestCase):
     self.assertEqual(fd2[1], [2, 3])
 
   def test_pillardata(self) -> None:
-    combo1: PillarData[str, int] = PillarData('a', 1)
-    combo2: PillarData[str, int] = PillarData('a', 1)
-    combo3: PillarData[str, int] = PillarData('a ', 1)
-    combo4: PillarData[str, float] = PillarData('a', 1.1)
+    combo1: GanzhiData[str, int] = GanzhiData('a', 1)
+    combo2: GanzhiData[str, int] = GanzhiData('a', 1)
+    combo3: GanzhiData[str, int] = GanzhiData('a ', 1)
+    combo4: GanzhiData[str, float] = GanzhiData('a', 1.1)
     self.assertEqual(combo1, combo2)
     self.assertNotEqual(combo1, combo3)
     self.assertNotEqual(combo1, combo4)
@@ -288,10 +284,10 @@ class TestCommon(unittest.TestCase):
     self.assertEqual(combo1.dizhi, 1)
     self.assertEqual(combo4.dizhi, 1.1)
 
-    combo5: PillarData[None, Shishen] = PillarData(None, Shishen.七杀)
-    self.assertEqual(combo5, PillarData(None, Shishen.七杀))
-    self.assertNotEqual(combo5, PillarData(Shishen.七杀, Shishen.七杀))
-    self.assertNotEqual(combo5, PillarData(None, Shishen.正官))
+    combo5: GanzhiData[None, Shishen] = GanzhiData(None, Shishen.七杀)
+    self.assertEqual(combo5, GanzhiData(None, Shishen.七杀))
+    self.assertNotEqual(combo5, GanzhiData(Shishen.七杀, Shishen.七杀))
+    self.assertNotEqual(combo5, GanzhiData(None, Shishen.正官))
 
     self.assertNotEqual(combo5, Shishen.正官)
     self.assertNotEqual(combo5, (None, Shishen.七杀))
@@ -311,48 +307,48 @@ class TestCommon(unittest.TestCase):
     self.assertEqual(bd3.hour, 5)
 
     with self.assertRaises(AssertionError):
-      BaziData(PillarData[None, Shishen], [])
+      BaziData(GanzhiData[None, Shishen], [])
 
-    bd5: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(None, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.偏印),
-      PillarData(Shishen.正官, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.正官),
+    bd5: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(None, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.偏印),
+      GanzhiData(Shishen.正官, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd6: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(None, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.偏印),
-      PillarData(Shishen.正官, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.正官),
+    bd6: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(None, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.偏印),
+      GanzhiData(Shishen.正官, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd7: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(Shishen.比肩, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.偏印),
-      PillarData(Shishen.正官, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.正官),
+    bd7: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(Shishen.比肩, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.偏印),
+      GanzhiData(Shishen.正官, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd8: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(None, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.伤官),
-      PillarData(Shishen.正官, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.正官),
+    bd8: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(None, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.伤官),
+      GanzhiData(Shishen.正官, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd9: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(None, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.偏印),
-      PillarData(None, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.正官),
+    bd9: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(None, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.偏印),
+      GanzhiData(None, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd10: BaziData[PillarData[Optional[Shishen], Shishen]] = BaziData(PillarData[Optional[Shishen], Shishen], [
-      PillarData(None, Shishen.七杀),
-      PillarData(Shishen.伤官, Shishen.偏印),
-      PillarData(Shishen.正官, Shishen.食神),
-      PillarData(Shishen.七杀, Shishen.伤官),
+    bd10: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+      GanzhiData(None, Shishen.七杀),
+      GanzhiData(Shishen.伤官, Shishen.偏印),
+      GanzhiData(Shishen.正官, Shishen.食神),
+      GanzhiData(Shishen.七杀, Shishen.伤官),
     ])
 
     self.assertEqual(bd5, bd6)
@@ -360,26 +356,3 @@ class TestCommon(unittest.TestCase):
     self.assertNotEqual(bd5, bd8)
     self.assertNotEqual(bd5, bd9)
     self.assertNotEqual(bd5, bd10)
-
-  def test_dayun_database(self) -> None:
-    chart: BaziChart = BaziChart.random()
-
-    expected: dict[int, DayunTuple] = {}
-    for start_year, dayun_ganzhi in itertools.islice(chart.dayun, 100):
-      for year in range(start_year, start_year + 10): # A dayun lasts for 10 years.
-        expected[year] = DayunTuple(start_year, dayun_ganzhi)
-
-    db: DayunDatabase = DayunDatabase(chart.dayun)
-    self.assertRaises(AssertionError, lambda : db[next(chart.dayun).ganzhi_year - 1]) # Test the year before the start of the dayun.
-
-    years: list[int] = list(expected.keys())
-
-    for year in random.sample(years, 100):
-      self.assertEqual(db[year], expected[year])
-    
-    for year in random.sample(years, 100):
-      self.assertEqual(db[year], expected[year])
-    
-    random.shuffle(years)
-    for year in years:
-      self.assertEqual(db[year], expected[year])
