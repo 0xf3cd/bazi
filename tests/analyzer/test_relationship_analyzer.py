@@ -238,6 +238,7 @@ class TestTransitAnalysis(unittest.TestCase):
   def test_house_relations(self) -> None:
     for _ in range(32):
       chart = BaziChart.random()
+      house = chart.house_of_relationship
       bazi = chart.bazi
       db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
@@ -254,31 +255,23 @@ class TestTransitAnalysis(unittest.TestCase):
         actual = transits_analysis.house_relations(randon_year, random_options)
         for _, combos in actual.items():
           for combo in combos:
-            self.assertTrue(chart.house_of_relationship in combo)
+            self.assertTrue(house in combo)
             self.assertFalse(set(transit_dz).isdisjoint(combo))
 
-        print(list(actual.keys()))
-        
-        expected = DizhiUtils.discover_mutual([chart.house_of_relationship], transit_dz)
-
-        def __discover(rel: DizhiRelation):
-          def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]):
-            if len(combo) != 3:
-              return False
-            for dz1 in transit_dz:
-              for dz2 in [bazi.year_pillar.dizhi, bazi.month_pillar.dizhi,  bazi.hour_pillar.dizhi]:
-                if combo == frozenset([dz1, dz2, chart.house_of_relationship]):
-                  return True
+        def __expected_filter(dz_rel: DizhiRelation, combo: DizhiUtils.DizhiCombo):
+          # `house` must appear in the combo.
+          if house not in combo:
             return False
 
-          return DizhiUtils.DizhiRelationDiscovery({
-            rel : DizhiUtils.search(list(bazi.four_dizhis) + transit_dz, rel)
-          }).filter(__filter)
+          # Special handling for 自刑 cases.
+          if len(combo) == 1:
+            assert dz_rel is DizhiRelation.刑
+            return house in transit_dz
 
-        expected = expected.merge(__discover(DizhiRelation.三合))
-        expected = expected.merge(__discover(DizhiRelation.三会))
-        expected = expected.merge(__discover(DizhiRelation.刑))
-
+          return not (combo - {house}).isdisjoint(transit_dz)
+ 
+        expected = DizhiUtils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
+        
         self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
 
   @pytest.mark.slow
@@ -397,7 +390,3 @@ class TestTransitAnalysis(unittest.TestCase):
         actual = transits_analysis.star(randon_year, random_options)
         self.assertEqual(expected_tg, actual.tiangan)
         self.assertEqual(expected_dz, actual.dizhi)
-
-
-# TODO: Integration tests on `RelationshipAnalyzer`.
-# Also test `TransitDatabase`?

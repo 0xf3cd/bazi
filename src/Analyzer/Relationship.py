@@ -162,23 +162,34 @@ class TransitAnalysis:
     transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
     transit_dizhis = [gz.dizhi for gz in transit_ganzhis]
 
-    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
-    # So not using `discover_mutual([self._chart.house_of_relationship], transit_dizhis)` here,
-    # otherwise some combos will be missed (specifically, for Sanhe/Sanhui/Sanxing relations).
     house = self._chart.house_of_relationship
-    def __valid(dz_rel: DizhiRelation, combo: DizhiUtils.DizhiCombo):
-      if house not in combo:
-        return False
-      
-      copied = combo - {house}
-      if dz_rel is DizhiRelation.刑 and len(combo) == 1:
-        copied |= {house}
+    bazi = self._chart.bazi
 
-      return any(dz in copied for dz in transit_dizhis)
- 
-    return DizhiUtils.discover(
-      list(self._chart.bazi.four_dizhis) + transit_dizhis
-    ).filter(__valid)
+    result = DizhiUtils.discover_mutual([house], transit_dizhis)
+
+    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
+    # So `discover_mutual([house], transit_dizhis)` may contain incomplete results.
+    #
+    # Combos that contain 3 Dizhis are missing. So adding them manually.
+
+    def __discover(rel: DizhiRelation):
+      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]):
+        if len(combo) != 3:
+          return False
+        for dz1 in transit_dizhis:
+          for dz2 in [bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi]:
+            if combo == frozenset([dz1, dz2, house]):
+              return True
+        return False
+
+      return DizhiUtils.DizhiRelationDiscovery({
+        rel : DizhiUtils.search(list(bazi.four_dizhis) + transit_dizhis, rel)
+      }).filter(__filter)
+
+    result = result.merge(__discover(DizhiRelation.三合))
+    result = result.merge(__discover(DizhiRelation.三会))
+    result = result.merge(__discover(DizhiRelation.刑))
+    return result
   
   @unique
   class Level(IntFlag):

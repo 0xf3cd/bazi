@@ -46,6 +46,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
     chart: BaziChart = BaziChart(bazi)
     db: TransitDatabase = TransitDatabase(chart)
     analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
+    transits: TransitAnalysis = analyzer.transits
 
     with self.subTest('basic info correctness'):
       self.assertEqual(bazi.year_pillar, Ganzhi.from_str('甲子'))
@@ -89,8 +90,6 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertEqual(len(at_birth.star_relations.dizhi), 0)
 
     with self.subTest('1990'):
-      transits: TransitAnalysis = analyzer.transits
-
       self.assertSetEqual(set(db.ganzhis(1990, TransitOptions.DAYUN_LIUNIAN)),
                           {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')})
 
@@ -141,9 +140,55 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertFalse(transits.star(1990, TransitOptions.LIUNIAN).tiangan)
       self.assertFalse(transits.star(1990, TransitOptions.LIUNIAN).dizhi)
 
-    with self.subTest('2031'):
-      transits: TransitAnalysis = analyzer.transits
+    with self.subTest('2018'):
+      self.assertSetEqual(set(db.ganzhis(2018, TransitOptions.DAYUN_LIUNIAN)),
+                          {Ganzhi.from_str('辛未'), Ganzhi.from_str('戊戌')})
+      
+      shensha = transits.shensha(2018, TransitOptions.DAYUN_LIUNIAN)
+      self.assertSetEqual(shensha['taohua'],   set())
+      self.assertSetEqual(shensha['hongluan'], set())
+      self.assertSetEqual(shensha['hongyan'],  set())
+      self.assertSetEqual(shensha['tianxi'],   set())
 
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
+                             frozenset({Tiangan.乙, Tiangan.戊})],
+      }, transits.day_master_relations(2018, TransitOptions.DAYUN_LIUNIAN)))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌}),
+                           frozenset({Dizhi.丑, Dizhi.未})],
+        DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
+      }, transits.house_relations(2018, TransitOptions.DAYUN_LIUNIAN)))
+
+      star_relations_all = transits.star_relations(2018, TransitOptions.DAYUN_LIUNIAN) # level is `ALL` by default.
+      
+      self.assertTrue(self.__check_tiangan({
+        TianganRelation.克 : [frozenset({Tiangan.甲, Tiangan.戊}),
+                             frozenset({Tiangan.壬, Tiangan.戊})],
+      }, star_relations_all.tiangan))
+
+      self.assertTrue(self.__check_dizhi({
+        DizhiRelation.六合 : [frozenset({Dizhi.戌, Dizhi.卯})],
+        DizhiRelation.半合 : [frozenset({Dizhi.戌, Dizhi.午})],
+        DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌})],
+        DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
+        DizhiRelation.生 : [frozenset({Dizhi.戌, Dizhi.午})],
+        DizhiRelation.克 : [frozenset({Dizhi.戌, Dizhi.卯}),
+                           frozenset({Dizhi.戌, Dizhi.子})],
+      }, star_relations_all.dizhi))
+
+      self.assertFalse(transits.zhengyin(2018, TransitOptions.DAYUN_LIUNIAN).tiangan)
+      self.assertFalse(transits.zhengyin(2018, TransitOptions.DAYUN_LIUNIAN).dizhi)
+
+      self.assertTrue(transits.star(2018, TransitOptions.DAYUN_LIUNIAN).tiangan)
+      self.assertTrue(transits.star(2018, TransitOptions.DAYUN_LIUNIAN).dizhi)
+      self.assertTrue(transits.star(2018, TransitOptions.LIUNIAN).tiangan)
+      self.assertTrue(transits.star(2018, TransitOptions.LIUNIAN).dizhi)
+      self.assertFalse(transits.star(2018, TransitOptions.DAYUN).tiangan)
+      self.assertFalse(transits.star(2018, TransitOptions.DAYUN).dizhi)
+
+    with self.subTest('2031'):
       self.assertSetEqual(set(db.ganzhis(2031, TransitOptions.DAYUN_LIUNIAN)),
                           {Ganzhi.from_str('辛亥'), Ganzhi.from_str('壬申')})
 
@@ -163,3 +208,13 @@ class TestRelationshipAnalysis(unittest.TestCase):
         DizhiRelation.克 : [frozenset({Dizhi.丑, Dizhi.亥})],
         DizhiRelation.三会 : [frozenset({Dizhi.亥, Dizhi.子, Dizhi.丑})],
       }, transits.house_relations(2031, TransitOptions.DAYUN_LIUNIAN)))
+
+      star_relations_all = transits.star_relations(2031, TransitOptions.DAYUN_LIUNIAN) # level is `ALL` by default.
+      self.assertEqual(0, len(star_relations_all.tiangan))
+      self.assertEqual(0, len(star_relations_all.dizhi))
+
+      self.assertTrue(transits.zhengyin(2031, TransitOptions.DAYUN_LIUNIAN).tiangan)
+      self.assertTrue(transits.zhengyin(2031, TransitOptions.DAYUN_LIUNIAN).dizhi)
+
+      self.assertFalse(transits.star(2031, TransitOptions.DAYUN_LIUNIAN).tiangan)
+      self.assertFalse(transits.star(2031, TransitOptions.DAYUN_LIUNIAN).dizhi)
