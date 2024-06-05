@@ -5,9 +5,10 @@ import pytest
 import unittest
 
 import random
+import logging
 
 from datetime import datetime
-from typing import cast, Union
+from typing import cast, Union, Iterable
 
 from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
 from src.Utils import TianganUtils, DizhiUtils, BaziUtils, ShenshaUtils
@@ -16,6 +17,9 @@ from src.BaziChart import BaziChart
 from src.Transits import TransitOptions, TransitDatabase
 from src.Analyzer.Relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.Rules import DizhiRules
+
+
+logger = logging.getLogger(__name__)
 
 
 DiscoveryType = Union[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
@@ -363,7 +367,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           house_dz = chart.house_of_relationship
           other_dz = set([bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi])
           house_relations = transits.house_relations(year, option)
-          
+
           for dz_rel, dz_expected_list in house_relation_expected.items():
             expected_dz_combos: set[frozenset[Dizhi]] = set()
             for dz_expected in dz_expected_list:
@@ -372,7 +376,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
               if len(dz_expected) == 1: # Non 三合、三会、三刑 cases
                 if from_transits == dz_expected:
                   expected_dz_combos.add(frozenset({house_dz} | dz_expected))
-              
+
               else: # 三合、三会、三刑 cases
                 assert len(dz_expected) == 2
                 if from_transits == dz_expected:
@@ -415,10 +419,14 @@ class TestRelationshipAnalysis(unittest.TestCase):
 
           # Test MUTUAL
           mutual_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.MUTUAL)
-          expected_mutual_tg_star_relations = TianganUtils.discover_mutual(chart.bazi.four_tiangans, list(transits_tg)).filter(
+          expected_mutual_tg_star_relations = TianganUtils.discover_mutual(
+            bazi.four_tiangans, list(transits_tg)
+          ).filter(
             lambda _, combo : Tiangan.癸 in combo
           )
-          expected_mutual_dz_star_relations = DizhiUtils.discover_mutual(chart.bazi.four_dizhis, list(transits_dz)).filter(
+          expected_mutual_dz_star_relations = DizhiUtils.discover_mutual(
+            bazi.four_dizhis, list(transits_dz)
+          ).filter(
             lambda _, combo : Dizhi.子 in combo
           )
 
@@ -433,11 +441,15 @@ class TestRelationshipAnalysis(unittest.TestCase):
           self.assertTrue(_equal(all_star_relations.tiangan, expected_all_tg_star_relations))
           self.assertTrue(_equal(all_star_relations.dizhi, expected_all_dz_star_relations))
 
-          self.assertTrue(_equal(all_star_relations.tiangan, TianganUtils.discover(list(transits_tg) + list(bazi.four_tiangans)).filter(
-            lambda _, combo : Tiangan.癸 in combo and not combo.isdisjoint(transits_tg)
+          self.assertTrue(_equal(all_star_relations.tiangan, TianganUtils.discover(
+            list(transits_tg) + list(bazi.four_tiangans)
+          ).filter(
+            lambda _, combo : Tiangan.癸 in combo and len(combo.intersection(transits_tg)) > 0
           )))
-          self.assertTrue(_equal(all_star_relations.dizhi, DizhiUtils.discover(list(transits_dz) + list(bazi.four_dizhis)).filter(
-            lambda _, combo : Dizhi.子 in combo and not combo.isdisjoint(transits_dz)
+          self.assertTrue(_equal(all_star_relations.dizhi, DizhiUtils.discover(
+            list(transits_dz) + list(bazi.four_dizhis)
+          ).filter(
+            lambda _, combo : Dizhi.子 in combo and len(combo.intersection(transits_dz)) > 0
           )))
 
     with self.subTest('transits - zhengyin and star'):
@@ -471,9 +483,13 @@ class TestRelationshipAnalysis(unittest.TestCase):
           self.assertEqual(star_result.dizhi, any(is_star(dz) for dz in transits_dz))
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.parametrize('bazi', [Bazi.random() for _ in range(5)])
 def test_random_cases(bazi: Bazi) -> None:
+  logger.debug(f'birth time: {bazi.solar_datetime}, gender: {bazi.gender}, precision: {bazi.precision}')
+  logger.debug(f'year: {bazi.year_pillar}, month: {bazi.month_pillar}, day: {bazi.day_pillar}, hour: {bazi.hour_pillar}')
+
   chart = BaziChart(bazi)
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
   house = chart.house_of_relationship
@@ -523,9 +539,13 @@ def test_random_cases(bazi: Bazi) -> None:
       transits_tg_set = set(gz.tiangan for gz in transits_gz)
       transits_dz_set = set(gz.dizhi for gz in transits_gz)
 
-      expected_tg_relations = TianganUtils.discover_mutual([chart.bazi.day_master], list(transits_tg_set))
-      expected_dz_relations = DizhiUtils.discover_mutual([house], list(transits_dz_set)).merge(
-        DizhiUtils.discover_mutual([house], list(transits_dz_set) + [y_dz, m_dz, h_dz]).filter(
+      expected_tg_relations = TianganUtils.discover_mutual([bazi.day_master], list(transits_tg_set))
+      expected_dz_relations = DizhiUtils.discover_mutual(
+        [house], list(transits_dz_set)
+      ).merge(
+        DizhiUtils.discover_mutual(
+          [house], list(transits_dz_set) + [y_dz, m_dz, h_dz]
+        ).filter(
           lambda _, combo : len(combo) == 3
         ).filter(
           lambda _, combo : not combo.isdisjoint(filter(lambda dz : dz is not house, transits_dz_set))
@@ -538,30 +558,61 @@ def test_random_cases(bazi: Bazi) -> None:
       assert _equal(expected_tg_relations, tg_relations)
       assert _equal(expected_dz_relations, dz_relations)
 
-      if house in [Dizhi.午, Dizhi.亥, Dizhi.辰]: # 自刑 cases
+      def __trirelation(expected_combo: Iterable[Dizhi]) -> bool:
+        __dz_set = set(expected_combo)
+        assert len(__dz_set) == 3
+        if house not in __dz_set:
+          return False
+
+        other_dz = __dz_set - {house}
+        assert len(other_dz) == 2
+
+        if other_dz.isdisjoint(transits_dz_set):
+          return False
+        
+        __dz_set = transits_dz_set.union([y_dz, m_dz, h_dz])
+        count = sum(map(lambda dz : dz in __dz_set, other_dz))
+        return count == 2
+      
+      # 三刑 cases
+      expected_sanxing_combos: set[frozenset[Dizhi]] = set(
+        frozenset(dz_tuple) 
+        for dz_tuple in DizhiRules.DIZHI_XING.loose 
+        if len(dz_tuple) == 3 and __trirelation(dz_tuple)
+      )
+      filtered_dz_relations = dz_relations.filter(
+        lambda rel, combo : rel is DizhiRelation.刑 and len(combo) == 3
+      )
+
+      if len(expected_sanxing_combos) == 0:
+        assert DizhiRelation.刑 not in filtered_dz_relations
+      else:
+        assert len(expected_sanxing_combos) == len(filtered_dz_relations[DizhiRelation.刑])
+        for c in expected_sanxing_combos:
+          assert c in filtered_dz_relations[DizhiRelation.刑]
+
+      # 三合 cases
+      expected_sanhe_combos: set[frozenset[Dizhi]] = set(dz_fs for dz_fs in DizhiRules.DIZHI_SANHE if __trirelation(dz_fs))
+      if len(expected_sanhe_combos) == 0:
+        assert DizhiRelation.三合 not in dz_relations
+      else:
+        assert len(expected_sanhe_combos) == len(dz_relations[DizhiRelation.三合])
+        for c in expected_sanhe_combos:
+          assert c in dz_relations[DizhiRelation.三合]
+
+      # 三会 cases
+      expected_sanhui_combos: set[frozenset[Dizhi]] = set(dz_fs for dz_fs in DizhiRules.DIZHI_SANHUI if __trirelation(dz_fs))
+      if len(expected_sanhui_combos) == 0:
+        assert DizhiRelation.三会 not in dz_relations
+      else:
+        assert len(expected_sanhui_combos) == len(dz_relations[DizhiRelation.三会])
+        for c in expected_sanhui_combos:
+          assert c in dz_relations[DizhiRelation.三会]
+
+      # 自刑 cases
+      if house in [Dizhi.午, Dizhi.亥, Dizhi.辰]:
         if house in transits_dz_set:
           assert frozenset({house}) in dz_relations[DizhiRelation.刑]
-
-      for dz_tuple in DizhiRules.DIZHI_XING.loose: # 三刑 cases
-        if len(dz_tuple) == 3 and house in dz_tuple:
-          other_dz = frozenset(dz_tuple) - {house}
-          assert len(other_dz) == 2
-          if not transits_dz_set.isdisjoint(other_dz):
-            count = sum(map(lambda dz : 1 if dz in [y_dz, m_dz, h_dz] or dz in transits_dz_set else 0, other_dz))
-            if count == 2:
-              assert frozenset(dz_tuple) in dz_relations[DizhiRelation.刑]
-        
-      for dz_fs in DizhiRules.DIZHI_SANHE: # 三合 cases
-        if house in dz_fs:
-          other_dz = dz_fs - {house}
-          if other_dz & transits_dz_set == other_dz:
-            assert dz_fs in dz_relations[DizhiRelation.三合]
-
-      for dz_fs in DizhiRules.DIZHI_SANHUI: # 三会 cases
-        if house in dz_fs:
-          other_dz = dz_fs - {house}
-          if other_dz & transits_dz_set == other_dz:
-            assert dz_fs in dz_relations[DizhiRelation.三会]
 
   # star relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
@@ -585,7 +636,7 @@ def test_random_cases(bazi: Bazi) -> None:
         expected_transits_only_tg = TianganUtils.discover_mutual([stars.tiangan], tg_list)
 
       expected_transits_only_dz = DizhiUtils.discover(transits_dz_list).filter(
-        lambda _, combo : not combo.isdisjoint(stars.dizhi)
+        lambda _, combo : len(combo.intersection(stars.dizhi)) > 0
       )
 
       assert _equal(transits_only_star_relations.tiangan, expected_transits_only_tg)
@@ -594,12 +645,16 @@ def test_random_cases(bazi: Bazi) -> None:
       # MUTUAL
       mutual_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.MUTUAL)
 
-      expected_mutual_tg = TianganUtils.discover_mutual(bazi.four_tiangans, transits_tg_list).filter(
+      expected_mutual_tg = TianganUtils.discover_mutual(
+        bazi.four_tiangans, transits_tg_list
+      ).filter(
         lambda _, combo : stars.tiangan in combo
       )
 
-      expected_mutual_dz = DizhiUtils.discover_mutual(bazi.four_dizhis, transits_dz_list).filter(
-        lambda _, combo : len(combo & set(stars.dizhi)) > 0
+      expected_mutual_dz = DizhiUtils.discover_mutual(
+        bazi.four_dizhis, transits_dz_list
+      ).filter(
+        lambda _, combo : len(combo.intersection(stars.dizhi)) > 0
       )
 
       assert _equal(mutual_star_relations.tiangan, expected_mutual_tg)
@@ -611,17 +666,27 @@ def test_random_cases(bazi: Bazi) -> None:
       assert _equal(all_star_relations.tiangan, expected_transits_only_tg.merge(expected_mutual_tg))
       assert _equal(all_star_relations.dizhi, expected_transits_only_dz.merge(expected_mutual_dz))
 
-      assert _equal(all_star_relations.tiangan, TianganUtils.discover(transits_tg_list + list(bazi.four_tiangans)).filter(
-        lambda _, combo : stars.tiangan in combo
-      ).filter(
-        lambda _, combo : not combo.isdisjoint(transits_tg_list)
-      ))
+      assert _equal(
+        all_star_relations.tiangan, 
+        TianganUtils.discover(
+          transits_tg_list + list(bazi.four_tiangans)
+        ).filter(
+          lambda _, combo : stars.tiangan in combo
+        ).filter(
+          lambda _, combo : len(combo.intersection(transits_tg_list)) > 0
+        )
+      )
 
-      assert _equal(all_star_relations.dizhi, DizhiUtils.discover(transits_dz_list + list(bazi.four_dizhis)).filter(
-        lambda _, combo : len(combo & set(stars.dizhi)) > 0
-      ).filter(
-        lambda _, combo : not combo.isdisjoint(transits_dz_list)
-      ))
+      assert _equal(
+        all_star_relations.dizhi, 
+        DizhiUtils.discover(
+          transits_dz_list + list(bazi.four_dizhis)
+        ).filter(
+          lambda _, combo : len(combo.intersection(stars.dizhi)) > 0
+        ).filter(
+          lambda _, combo : len(combo.intersection(transits_dz_list)) > 0
+        )
+      )
 
   # zhengyin and star methods
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
@@ -640,4 +705,4 @@ def test_random_cases(bazi: Bazi) -> None:
       stars = chart.relationship_stars
       star_results = transits.star(year, option)
       assert star_results.tiangan == (stars.tiangan in transits_tg_set)
-      assert star_results.dizhi != set(transits_dz_set).isdisjoint(stars.dizhi)
+      assert star_results.dizhi == (not transits_dz_set.isdisjoint(stars.dizhi))

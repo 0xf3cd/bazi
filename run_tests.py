@@ -50,6 +50,7 @@ argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Wheth
 # Demo and interpreter.
 argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
 argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
+argparser.add_argument('-ra', '--relationship-analyzer', action='store_true', help='Whether or not to run relationship analyzer.')
 
 args = argparser.parse_args()
 
@@ -68,6 +69,7 @@ do_mypy: Final[bool] = args.mypy or all_the_way
 
 do_demo: Final[bool] = args.demo or all_the_way
 do_interpreter: Final[bool] = args.interpreter or all_the_way
+do_relationship_analyzer: Final[bool] = args.relationship_analyzer or all_the_way
 
 term_width: Final[int] = shutil.get_terminal_size().columns
 
@@ -157,21 +159,22 @@ def print_args() -> None:
     return str(x)
 
   print(f'-- {sys.argv}')
-  print(f'-- all_the_way:      {colored(all_the_way)}')
-  print(f'-- skip_test:        {colored(skip_test)}')
-  print(f'-- run_slow_test:    {colored(run_slow_test)}')
-  print(f'-- run_hko_test:     {colored(run_hko_test)}')
-  print(f'-- expression:       {colored(expression)}')
-  print(f'-- verbose:          {colored(verbose)}')
+  print(f'-- all_the_way:                {colored(all_the_way)}')
+  print(f'-- skip_test:                  {colored(skip_test)}')
+  print(f'-- run_slow_test:              {colored(run_slow_test)}')
+  print(f'-- run_hko_test:               {colored(run_hko_test)}')
+  print(f'-- expression:                 {colored(expression)}')
+  print(f'-- verbose:                    {colored(verbose)}')
 
-  print(f'-- do_cov:           {colored(do_cov)}')
-  print(f'-- minimum_cov_rate: {colored(str(minimum_cov_rate) + "%")}')
+  print(f'-- do_cov:                     {colored(do_cov)}')
+  print(f'-- minimum_cov_rate:           {colored(str(minimum_cov_rate) + "%")}')
 
-  print(f'-- do_ruff:          {colored(do_ruff)}')
-  print(f'-- do_mypy:          {colored(do_mypy)}')
+  print(f'-- do_ruff:                    {colored(do_ruff)}')
+  print(f'-- do_mypy:                    {colored(do_mypy)}')
 
-  print(f'-- do_demo:          {colored(do_demo)}')
-  print(f'-- do_interpreter:   {colored(do_interpreter)}')
+  print(f'-- do_demo:                    {colored(do_demo)}')
+  print(f'-- do_interpreter:             {colored(do_interpreter)}')
+  print(f'-- do_relationship_analyzer:   {colored(do_relationship_analyzer)}')
 
 
 def print_sysinfo() -> None:
@@ -232,6 +235,7 @@ def run_tests() -> int:
 
   if verbose:
     pytest_args.append('-v')
+    pytest_args.extend(['--capture=no', '--log-cli-level=DEBUG', '--log-format=%(levelname)s::%(lineno)s %(message)s'])
 
   if expression is not None: # If `-k` is set, we don't care `-s` and `-hko`...
     pytest_args.extend(['-k', expression])
@@ -352,6 +356,22 @@ def run_interpreter() -> int:
   return ret
 
 
+def run_relationship_analyzer() -> int:
+  '''Run relationship analyzer by executing `run_relationship_analyzer.py`'''
+  print('\n' + devider())
+  bold_print('>> Running relationship analyzer...')
+
+  ret: int = run_proc_and_print([
+    'python3', str(Path(__file__).parent / 'run_relationship_analyzer.py')
+  ], print_details=verbose)
+  
+  if ret == 0:
+    green_print(f'>> {next(emoji_pair)} Relationship analyzer passed!')
+  else:
+    red_print(f'>> {next(emoji_pair)} Relationship analyzer failed!')
+  return ret
+
+
 class SubTaskStatuses:
   def __init__(self) -> None:
     self._retcodes: Final[dict[str, int]] = {}
@@ -392,6 +412,9 @@ def run_subtasks() -> SubTaskStatuses:
 
   if do_interpreter:
     run_subtask('interpreter', run_interpreter)
+
+  if do_relationship_analyzer:
+    run_subtask('relationship analyzer', run_relationship_analyzer)
 
   if do_ruff:
     run_subtask('ruff', run_ruff)
