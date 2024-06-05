@@ -853,8 +853,7 @@ class TestDizhiUtils(unittest.TestCase):
         DizhiUtils.search(set([Dizhi.子, Dizhi.午]), relation) # type: ignore
 
   @pytest.mark.slow
-  @pytest.mark.integration
-  def test_search_integration(self) -> None:
+  def test_search(self) -> None:
     for relation in DizhiRelation:
       for round in range(300):
         dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
@@ -1004,6 +1003,45 @@ class TestDizhiUtils(unittest.TestCase):
             self.assertIn(combo, expected_combos)
         else:
           self.assertEqual(len(expected_combos), 0)
+
+  def test_edge_cases(self) -> None:
+    '''Test `discover_mutual` on 三合、三会、三刑、自刑'''
+    for combo_fs in DizhiRules.DIZHI_SANHE.keys():
+      part1 = [random.choice(list(combo_fs))]
+      part2 = list(combo_fs - set(part1))
+
+      self.assertNotIn(DizhiRelation.三合, DizhiUtils.discover_mutual([], [*combo_fs]))
+
+      self.assertTupleEqual((combo_fs,), 
+                            DizhiUtils.discover_mutual(part1, part2)[DizhiRelation.三合])
+      self.assertEqual(DizhiUtils.discover_mutual(part1, part2), 
+                       DizhiUtils.discover_mutual(part2, part1))
+
+    for combo_fs in DizhiRules.DIZHI_SANHUI.keys():
+      part1 = [random.choice(list(combo_fs))]
+      part2 = list(combo_fs - set(part1))
+
+      self.assertNotIn(DizhiRelation.三会, DizhiUtils.discover_mutual([], [*combo_fs]))
+
+      self.assertTupleEqual((combo_fs,), 
+                            DizhiUtils.discover_mutual(part1, part2)[DizhiRelation.三会])
+      self.assertEqual(DizhiUtils.discover_mutual(part1, part2), 
+                       DizhiUtils.discover_mutual(part2, part1))
+    
+    for combo_tuple, _ in DizhiRules.DIZHI_XING.loose.items():
+      part1 = [random.choice(combo_tuple)]
+      part2 = list(combo_tuple)
+      part2.remove(part1[0])
+
+      self.assertNotIn(DizhiRelation.刑, DizhiUtils.discover_mutual([], [*combo_tuple]))
+
+      self.assertIn(frozenset(combo_tuple), 
+                    DizhiUtils.discover_mutual(part1, part2)[DizhiRelation.刑])
+      self.assertEqual(DizhiUtils.discover_mutual(part1, part2), 
+                       DizhiUtils.discover_mutual(part2, part1))
+      
+    self.assertTupleEqual((frozenset({Dizhi.午}),),
+                          DizhiUtils.discover_mutual([Dizhi.午], [Dizhi.午])[DizhiRelation.刑])
 
   @pytest.mark.slow
   def test_consistency(self) -> None:

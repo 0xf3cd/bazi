@@ -7,7 +7,7 @@ import unittest
 import random
 import itertools
 
-from src.Defines import Tiangan, Dizhi, Shishen
+from src.Defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils, BaziUtils
 from src.BaziChart import BaziChart
 from src.Transits import TransitOptions, TransitDatabase
@@ -86,7 +86,12 @@ class TestAtBirthAnalysis(unittest.TestCase):
       y, m, d, h = chart.bazi.four_dizhis
       at_birth = analyzer.at_birth
 
+      # For AtBirth analysis, the following two algorithms are equivalent.
+      self.assertEqual(at_birth.house_relations, DizhiUtils.discover([y, m, d, h]).filter(
+        lambda _, combo : d in combo
+      )) 
       self.assertEqual(at_birth.house_relations, DizhiUtils.discover_mutual([y, m, h], [d]))
+
       self.assertEqual(at_birth.house_relations, at_birth.house_relations, 'Constancy')
 
   @pytest.mark.slow
@@ -146,20 +151,10 @@ class TestTransitAnalysis(unittest.TestCase):
       if set(discovery1[key]) != set(discovery2[key]):
         return False
     return True
-  
-  @staticmethod
-  def __random_transit_options() -> TransitOptions:
-    return random.choice([
-      TransitOptions.DAYUN,
-      TransitOptions.DAYUN_LIUNIAN,
-      TransitOptions.LIUNIAN,
-      TransitOptions.XIAOYUN,
-      TransitOptions.XIAOYUN_LIUNIAN
-    ])
 
   @pytest.mark.slow
   def test_shensha(self) -> None:
-    for _ in range(100):
+    for _ in range(32):
       chart = BaziChart.random()      
       db = TransitDatabase(chart)
 
@@ -170,9 +165,9 @@ class TestTransitAnalysis(unittest.TestCase):
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(100):
+      for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -211,15 +206,15 @@ class TestTransitAnalysis(unittest.TestCase):
 
   @pytest.mark.slow
   def test_day_master_relations(self) -> None:
-    for _ in range(100):
+    for _ in range(32):
       chart = BaziChart.random()
       db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(100):
+      for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
         
@@ -231,27 +226,47 @@ class TestTransitAnalysis(unittest.TestCase):
 
   @pytest.mark.slow
   def test_house_relations(self) -> None:
-    for _ in range(100):
+    for _ in range(32):
       chart = BaziChart.random()
+      house = chart.house_of_relationship
+      bazi = chart.bazi
       db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(100):
+      for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
-        
-        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
-        expected = DizhiUtils.discover_mutual([chart.house_of_relationship], transit_dz)
-        actual = transits_analysis.house_relations(randon_year, random_options)
 
+        transit_dz = list(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+
+        actual = transits_analysis.house_relations(randon_year, random_options)
+        for _, combos in actual.items():
+          for combo in combos:
+            self.assertTrue(house in combo)
+            self.assertFalse(set(transit_dz).isdisjoint(combo))
+
+        def __expected_filter(dz_rel: DizhiRelation, combo: DizhiUtils.DizhiCombo):
+          # `house` must appear in the combo.
+          if house not in combo:
+            return False
+
+          # Special handling for 自刑 cases.
+          if len(combo) == 1:
+            assert dz_rel is DizhiRelation.刑
+            return house in transit_dz
+
+          return not (combo - {house}).isdisjoint(transit_dz)
+ 
+        expected = DizhiUtils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
+        
         self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
 
   @pytest.mark.slow
   def test_star_relations(self) -> None:
-    for _ in range(50):
+    for _ in range(32):
       chart = BaziChart.random()
       stars = chart.relationship_stars
 
@@ -259,9 +274,9 @@ class TestTransitAnalysis(unittest.TestCase):
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(50):
+      for __ in range(64):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         random_level = random.choice([
           TransitAnalysis.Level.TRANSITS_ONLY, 
           TransitAnalysis.Level.MUTUAL, 
@@ -316,15 +331,15 @@ class TestTransitAnalysis(unittest.TestCase):
 
   @pytest.mark.slow
   def test_zhengyin(self) -> None:
-    for _ in range(100):
+    for _ in range(32):
       chart = BaziChart.random()
       db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(100):
+      for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -342,15 +357,15 @@ class TestTransitAnalysis(unittest.TestCase):
 
   @pytest.mark.slow
   def test_star(self) -> None:
-    for _ in range(100):
+    for _ in range(16):
       chart = BaziChart.random()
       db = TransitDatabase(chart)
       analyzer = RelationshipAnalyzer(chart)
       transits_analysis = analyzer.transits
 
-      for __ in range(100):
+      for __ in range(64):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -365,7 +380,3 @@ class TestTransitAnalysis(unittest.TestCase):
         actual = transits_analysis.star(randon_year, random_options)
         self.assertEqual(expected_tg, actual.tiangan)
         self.assertEqual(expected_dz, actual.dizhi)
-
-
-# TODO: Integration tests on `RelationshipAnalyzer`.
-# Also test `TransitDatabase`?

@@ -8,7 +8,7 @@ from itertools import starmap, product, compress, chain
 from typing import Final, TypedDict, Callable, Union, Iterable
 
 from ..Common import GanzhiData
-from ..Defines import Tiangan, Dizhi, Shishen
+from ..Defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from ..BaziChart import BaziChart
 from ..Transits import TransitOptions, TransitDatabase
 from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
@@ -65,8 +65,14 @@ class AtBirthAnalysis:
   @property
   def house_relations(self) -> DizhiUtils.DizhiRelationDiscovery:
     '''Relations that the House of Relationship / 婚姻宫 has.'''
-    y_dz, m_dz, d_dz, h_dz = self._chart.bazi.four_dizhis
-    return DizhiUtils.discover_mutual([d_dz], [y_dz, m_dz, h_dz])
+    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
+    # So use `discover` here instead of `discover_mutual`, otherwise some combos will be missed.
+    #
+    # With that being said, for AtBirth analysis, this problem doesn't exist.
+    # Still use `discover` with `filter` though - it is expected to be equivalent to `discover_mutual([d_dz], [*other_three_dz])`
+    return DizhiUtils.discover(self._chart.bazi.four_dizhis).filter(
+      lambda _, combo : self._chart.house_of_relationship in combo
+    )
   
   @property
   def star_relations(self) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
@@ -154,9 +160,36 @@ class TransitAnalysis:
 
     assert self.support(gz_year, options)
     transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
-    transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
+    transit_dizhis = [gz.dizhi for gz in transit_ganzhis]
 
-    return DizhiUtils.discover_mutual([self._chart.house_of_relationship], transit_dizhis)
+    house = self._chart.house_of_relationship
+    bazi = self._chart.bazi
+
+    result = DizhiUtils.discover_mutual([house], transit_dizhis)
+
+    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
+    # So `discover_mutual([house], transit_dizhis)` may contain incomplete results.
+    #
+    # Combos that contain 3 Dizhis are missing. So adding them manually.
+
+    def __discover(rel: DizhiRelation):
+      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]):
+        if len(combo) != 3:
+          return False
+        for dz1 in transit_dizhis:
+          for dz2 in [bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi]:
+            if combo == frozenset([dz1, dz2, house]):
+              return True
+        return False
+
+      return DizhiUtils.DizhiRelationDiscovery({
+        rel : DizhiUtils.search(list(bazi.four_dizhis) + transit_dizhis, rel)
+      }).filter(__filter)
+
+    result = result.merge(__discover(DizhiRelation.三合))
+    result = result.merge(__discover(DizhiRelation.三会))
+    result = result.merge(__discover(DizhiRelation.刑))
+    return result
   
   @unique
   class Level(IntFlag):
