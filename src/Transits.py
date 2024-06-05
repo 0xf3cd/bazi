@@ -1,5 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import random
+
 from enum import unique, IntFlag
 from typing import Final, Generator
 
@@ -41,6 +43,19 @@ class TransitOptions(IntFlag):
   LIUNIAN         = 0x4
   XIAOYUN_LIUNIAN = XIAOYUN | LIUNIAN
   DAYUN_LIUNIAN   = DAYUN   | LIUNIAN
+
+  @staticmethod
+  def random() -> 'TransitOptions':
+    '''Mainly for testing purpose.'''
+    # Python 3.9 complains about the return type if using `random.choice(list(TransitOptions))`.
+    # So explicitly list all options here.
+    return random.choice([
+      TransitOptions.XIAOYUN,
+      TransitOptions.DAYUN,
+      TransitOptions.LIUNIAN,
+      TransitOptions.XIAOYUN_LIUNIAN,
+      TransitOptions.DAYUN_LIUNIAN,
+    ])
 
 
 class TransitDatabase:

@@ -151,16 +151,6 @@ class TestTransitAnalysis(unittest.TestCase):
       if set(discovery1[key]) != set(discovery2[key]):
         return False
     return True
-  
-  @staticmethod
-  def __random_transit_options() -> TransitOptions:
-    return random.choice([
-      TransitOptions.DAYUN,
-      TransitOptions.DAYUN_LIUNIAN,
-      TransitOptions.LIUNIAN,
-      TransitOptions.XIAOYUN,
-      TransitOptions.XIAOYUN_LIUNIAN
-    ])
 
   @pytest.mark.slow
   def test_shensha(self) -> None:
@@ -177,7 +167,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -224,7 +214,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
         
@@ -246,7 +236,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -286,7 +276,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(64):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         random_level = random.choice([
           TransitAnalysis.Level.TRANSITS_ONLY, 
           TransitAnalysis.Level.MUTUAL, 
@@ -349,7 +339,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(128):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
@@ -375,7 +365,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
       for __ in range(64):
         randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = self.__random_transit_options()
+        random_options = TransitOptions.random()
         if not transits_analysis.support(randon_year, random_options):
           continue
 
