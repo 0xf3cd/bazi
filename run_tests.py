@@ -44,7 +44,7 @@ argparser.add_argument('-c', '--coverage', action='store_true', help='Whether or
 argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: 80.0', default=80.0)
 
 # Linter and static type check.
-argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='Whether or not to skip linting.')
+argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='Whether or not to run linting (ruff).')
 argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
 
 # Demo and interpreter.

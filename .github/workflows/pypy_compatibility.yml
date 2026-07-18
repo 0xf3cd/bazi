@@ -1,27 +1,30 @@
-name: Workflow for PyPy Compatibility - Run Partial Tests with pytest  
-  
+name: Workflow for PyPy Compatibility - Run Partial Tests with pytest
+
 on:
   pull_request:
     branches: [ main ]
 
-jobs:  
-  build:  
-    runs-on: ubuntu-latest  
-    strategy:  
-      matrix:  
-        pypy-version: ["pypy3.9", "pypy3.10"]
-  
-    steps:  
-      - uses: actions/checkout@v4
-      - name: Set up PyPy ${{ matrix.pypy-version }}  
-        uses: actions/setup-python@v5 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pypy-version: ["pypy3.11"]
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up PyPy ${{ matrix.pypy-version }}
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.pypy-version }}
       - name: Install dependencies
-        run: |  
+        # This job never runs ruff/mypy/coverage, so skip them: mypy 2.x pulls in
+        # ast-serialize (Rust/PyO3), which needs a slow cargo build under PyPy.
+        run: |
           pypy -m ensurepip
-          pypy -m pip install --upgrade pip  
-          if [ -f Requirements.txt ]; then pypy -m pip install -r Requirements.txt; fi  
+          pypy -m pip install --upgrade pip
+          grep -v -E '^(ruff|mypy|coverage)==' Requirements.txt > requirements-pypy.txt
+          pypy -m pip install -r requirements-pypy.txt
       - name: Testing
         run: |
           pypy ./run_tests.py -s -hko -d -i
