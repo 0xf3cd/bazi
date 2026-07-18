@@ -1,6 +1,6 @@
 requests==2.31.0
 colorama==0.4.6
-psutil==5.9.8
+psutil==7.2.2
 tzdata==2024.1
 pytest==8.1.0
 ruff==0.15.22
