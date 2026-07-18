@@ -1,25 +1,25 @@
-name: Workflow on Pull Request - Run All Tests with pytest  
-  
+name: Workflow on Pull Request - Run All Tests with pytest
+
 on:
   pull_request:
     branches: [ main ]
 
-jobs:  
-  test-on-ubuntu:  
+jobs:
+  test-on-ubuntu:
     runs-on: ubuntu-latest
-    strategy:  
-      matrix:  
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-  
-    steps:  
-      - uses: actions/checkout@v4
-      - name: Set up python ${{ matrix.python-version }}  
-        uses: actions/setup-python@v5 
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"] # min / max of the supported window
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |  
-          python -m pip install --upgrade pip  
+        run: |
+          python -m pip install --upgrade pip
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
           mypy --disable-error-code=import-untyped .
           mypy --install-types --non-interactive
@@ -28,21 +28,21 @@ jobs:
           chmod +x ./run_tests.py
           ./run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i
 
-  test-on-macos:  
+  test-on-macos:
     runs-on: macos-latest
-    strategy:  
-      matrix:  
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-  
-    steps:  
-      - uses: actions/checkout@v4
-      - name: Set up python ${{ matrix.python-version }}  
-        uses: actions/setup-python@v5 
+    strategy:
+      matrix:
+        python-version: ["3.14"] # latest only; version coverage lives on ubuntu
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |  
-          python -m pip install --upgrade pip  
+        run: |
+          python -m pip install --upgrade pip
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
           mypy --disable-error-code=import-untyped .
           mypy --install-types --non-interactive
@@ -50,22 +50,22 @@ jobs:
         run: |
           chmod +x ./run_tests.py
           ./run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i
-  
-  test-on-windows:  
+
+  test-on-windows:
     runs-on: windows-latest
-    strategy:  
-      matrix:  
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-  
-    steps:  
-      - uses: actions/checkout@v4
-      - name: Set up python ${{ matrix.python-version }}  
-        uses: actions/setup-python@v5 
+    strategy:
+      matrix:
+        python-version: ["3.14"] # latest only; guards platform encoding/path quirks
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |  
-          python -m pip install --upgrade pip  
+        run: |
+          python -m pip install --upgrade pip
           if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" }
           mypy --disable-error-code=import-untyped .
           mypy --install-types --non-interactive
