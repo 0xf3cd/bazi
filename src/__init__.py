@@ -9,8 +9,9 @@ from . import Utils
 from . import Analyzer
 from . import Descriptions
 from . import Interpreter
+from . import TransitChart
 
 __all__ = [
   'Common', 'Defines', 'Calendar', 'Bazi', 'BaziChart', 'Rules', 'Utils', 
-  'Analyzer', 'Descriptions', 'Interpreter',
+  'Analyzer', 'Descriptions', 'Interpreter', 'TransitChart',
 ]
