@@ -12,7 +12,7 @@ jobs:
         python-version: ["3.11", "3.14"] # min / max of the supported window
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -35,7 +35,7 @@ jobs:
         python-version: ["3.14"] # latest only; version coverage lives on ubuntu
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -58,7 +58,7 @@ jobs:
         python-version: ["3.14"] # latest only; guards platform encoding/path quirks
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
