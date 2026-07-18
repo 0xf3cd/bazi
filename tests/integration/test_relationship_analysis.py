@@ -20,7 +20,7 @@ from src.Rules import DizhiRules
 
 DiscoveryType = Union[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]
 def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
-  assert type(d1) == type(d2)
+  assert type(d1) is type(d2)
   if set(d1.keys()) != set(d2.keys()):
     return False
   for rel, combos in d1.items():
