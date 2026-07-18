@@ -1,4 +1,4 @@
-requests==2.31.0
+requests==2.34.2
 colorama==0.4.6
 psutil==5.9.8
 tzdata==2024.1
