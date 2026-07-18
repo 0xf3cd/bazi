@@ -22,7 +22,7 @@ class TestCommon(unittest.TestCase):
       def property1(cls) -> int:
         return 1
       @classproperty
-      def property2() -> int: # type: ignore
+      def property2() -> int:
         return 2
       @classproperty
       def property3(cls) -> int:
@@ -31,7 +31,7 @@ class TestCommon(unittest.TestCase):
       def property4(cls) -> int:
         return TestClass.property1 + TestClass.property3
       @classproperty
-      def property5() -> int: # type: ignore
+      def property5() -> int:
         return TestClass.property1 + TestClass.property4
       @classproperty
       def property6(cls) -> int:
