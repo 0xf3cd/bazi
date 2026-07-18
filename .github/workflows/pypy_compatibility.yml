@@ -18,12 +18,13 @@ jobs:
         with:
           python-version: ${{ matrix.pypy-version }}
       - name: Install dependencies
-        # This job never runs ruff/mypy/coverage, so skip them: mypy 2.x pulls in
+        # This job never runs ruff/mypy, so skip them: mypy 2.x pulls in
         # ast-serialize (Rust/PyO3), which needs a slow cargo build under PyPy.
+        # `coverage` stays: run_tests.py imports it unconditionally at module level.
         run: |
           pypy -m ensurepip
           pypy -m pip install --upgrade pip
-          grep -v -E '^(ruff|mypy|coverage)==' Requirements.txt > requirements-pypy.txt
+          grep -v -E '^(ruff|mypy)==' Requirements.txt > requirements-pypy.txt
           pypy -m pip install -r requirements-pypy.txt
       - name: Testing
         run: |
