@@ -1,6 +1,6 @@
 # Copilot Instructions — bazi
 
-八字排盘引擎 (Bazi/Four Pillars library). Conventions live in `CLAUDE.md` and `README.md` §Instructions — read them first.
+八字排盘引擎 (Bazi/Four Pillars library). Conventions live in `AGENTS.md` and `README.md` §Instructions — read them first.
 
 ## Review focus
 
