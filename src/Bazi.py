@@ -115,7 +115,7 @@ class Bazi:
     - `Bazi` 不考虑真太阳时和夏令时。这些时间需要在外部处理。
     
     Args:
-    - birth_time: (datetime) The birth date (in Georgian calendar) and time. Note that no timezone should be set.
+    - birth_time: (datetime) The birth date (in Gregorian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
     - precision: (BaziPrecision) The precision of the birth time.
     - backend: (CalendarBackend) The calendar backend used for all calendar conversions.
@@ -279,7 +279,7 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    '''The birth date (in solar/georgian calendar) / 公历出生日期'''
+    '''The birth date (in solar/gregorian calendar) / 公历出生日期'''
     return self._utils.to_date(self._solar_date)
   
   @property
@@ -297,7 +297,7 @@ class Bazi:
   
   @property
   def solar_datetime(self) -> datetime:
-    '''The exact birth time (in solar/georgian calendar) / 出生时刻（公历）'''
+    '''The exact birth time (in solar/gregorian calendar) / 出生时刻（公历）'''
     return datetime.combine(self.solar_date, time(self.hour, self.minute))
   
   @property
