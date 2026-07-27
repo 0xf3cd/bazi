@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_HkoData.py
+# test_hkodata.py
 
 import random
 import shutil

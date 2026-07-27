@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_tiangan_relation_utils.py
+# test_tiangan_utils.py
 
 import random
 import itertools
