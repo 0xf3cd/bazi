@@ -13,6 +13,7 @@ from pathlib import Path
 from datetime import date, timedelta
 
 from src.Calendar import HkoData
+from src.Calendar.HkoData import Encoder
 from src.Defines import Jieqi, Ganzhi
 
 
@@ -255,21 +256,21 @@ class TestHkoData(unittest.TestCase):
     data_path: Path = HkoData.get_data_base_path()
     self.assertTrue(data_path.exists() and data_path.is_dir())
 
-    txt_paths: dict[int, Path] = HkoData.common.get_raw_txt_file_paths()
+    txt_paths: dict[int, Path] = HkoData.Common.get_raw_txt_file_paths()
     for path in txt_paths.values():
       self.assertTrue(path.exists() and path.is_file())
       with open(path, 'r', encoding='utf-8') as f:
         self.assertTrue(f.read() != '')
 
-    self.assertTrue(HkoData.common.raw_data_ready())
+    self.assertTrue(HkoData.Common.raw_data_ready())
 
   def test_raw_data_ready(self) -> None:
-    self.assertTrue(HkoData.common.raw_data_ready())
+    self.assertTrue(HkoData.Common.raw_data_ready())
 
     # Do something bad in between.
 
     temp_dir: Path = Path(tempfile.mkdtemp())
-    data_path: Path = HkoData.common.get_data_base_path()
+    data_path: Path = HkoData.Common.get_data_base_path()
     self.assertTrue(temp_dir.exists() and temp_dir.is_dir())
     self.assertTrue(data_path.exists() and data_path.is_dir())
 
@@ -278,12 +279,12 @@ class TestHkoData(unittest.TestCase):
 
     try:
       shutil.move(data_path, temp_dir / 'data2')
-      self.assertFalse(HkoData.common.raw_data_ready())
+      self.assertFalse(HkoData.Common.raw_data_ready())
 
       # Create a file called "data" (not a folder).
       with open(data_path, 'w') as f:
         f.write('I am not a folder!!!')
-      self.assertFalse(HkoData.common.raw_data_ready())
+      self.assertFalse(HkoData.Common.raw_data_ready())
 
       # Remove the fake "data" file.
       data_path.unlink()
@@ -291,58 +292,66 @@ class TestHkoData(unittest.TestCase):
 
       # Copy the original data folder back.
       shutil.copytree(temp_dir / 'data', data_path)
-      self.assertTrue(HkoData.common.raw_data_ready())
+      self.assertTrue(HkoData.Common.raw_data_ready())
 
-      all_txt_paths: dict[int, Path] = HkoData.common.get_raw_txt_file_paths()
+      all_txt_paths: dict[int, Path] = HkoData.Common.get_raw_txt_file_paths()
       random.choice(list(all_txt_paths.values())).unlink()
-      self.assertFalse(HkoData.common.raw_data_ready())
+      self.assertFalse(HkoData.Common.raw_data_ready())
 
     finally:
       # Finally restore the original data folder.
       # Also ensure the data is ready again after the above malicious operations.
       shutil.copytree(temp_dir / 'data', data_path, dirs_exist_ok=True)
-      self.assertTrue(HkoData.common.raw_data_ready())
+      self.assertTrue(HkoData.Common.raw_data_ready())
 
       shutil.rmtree(temp_dir)
 
   @pytest.mark.slow
   def test_do_encode(self) -> None:
-    self.assertTrue(HkoData.common.encoded_data_ready())
+    self.assertTrue(HkoData.Common.encoded_data_ready())
 
     # Do something bad in between.
 
     temp_dir: Path = Path(tempfile.mkdtemp())
-    jieqi_path: Path = HkoData.common.get_jieqi_encoded_data_path()
-    lunardate_path: Path = HkoData.common.get_lunardate_encoded_data_path()
+    jieqi_path: Path = HkoData.Common.get_jieqi_encoded_data_path()
+    lunardate_path: Path = HkoData.Common.get_lunardate_encoded_data_path()
     self.assertTrue(temp_dir.exists() and temp_dir.is_dir())
     self.assertTrue(jieqi_path.exists() and jieqi_path.is_file())
     self.assertTrue(lunardate_path.exists() and lunardate_path.is_file())
 
     # Copy the data folder to the temporary folder.
-    data_path: Path = HkoData.common.get_data_base_path()
+    data_path: Path = HkoData.Common.get_data_base_path()
     shutil.copytree(data_path, temp_dir / 'data')
 
     try:
       # Copy the encoded binary files to the temporary folder.
       shutil.move(jieqi_path, temp_dir / 'jieqi.bin')
-      self.assertFalse(HkoData.common.encoded_data_ready())
+      self.assertFalse(HkoData.Common.encoded_data_ready())
       shutil.move(lunardate_path, temp_dir / 'lunardate.bin')
-      self.assertFalse(HkoData.common.encoded_data_ready())
+      self.assertFalse(HkoData.Common.encoded_data_ready())
 
       # Ensure the encoded binary files are gone.
       self.assertFalse(jieqi_path.exists())
       self.assertFalse(lunardate_path.exists())
 
-      # Encode them again.
+      # The decoder only reads the committed data files; it never re-encodes them.
+      with self.assertRaises(AssertionError):
+        HkoData.DecodedJieqiDates()
+      with self.assertRaises(AssertionError):
+        HkoData.DecodedLunarYears()
+
+      # Encode them again, with the offline encoder tool.
+      Encoder.do_encode()
       self.assertIsNotNone(HkoData.DecodedJieqiDates())
-      self.assertTrue(HkoData.common.encoded_data_ready())
+      self.assertTrue(HkoData.Common.encoded_data_ready())
 
       lunardate_path.unlink()
-      self.assertFalse(HkoData.common.encoded_data_ready())
+      self.assertFalse(HkoData.Common.encoded_data_ready())
 
-      # Encode them again.
+      # Encode them again, with the offline encoder tool.
+      Encoder.do_encode()
       self.assertIsNotNone(HkoData.DecodedLunarYears())
-      self.assertTrue(HkoData.common.encoded_data_ready())
+      self.assertTrue(HkoData.Common.encoded_data_ready())
 
       # Ensure the new encoded binary files are the same as the old ones.
       prev_jieqi_md5: str = hashlib.md5((temp_dir / 'jieqi.bin').read_bytes()).hexdigest()
@@ -358,6 +367,6 @@ class TestHkoData(unittest.TestCase):
       # Finally restore the original data folder.
       # Also ensure the data is ready again after the above malicious operations.
       shutil.copytree(temp_dir / 'data', data_path, dirs_exist_ok=True)
-      self.assertTrue(HkoData.common.raw_data_ready())
+      self.assertTrue(HkoData.Common.raw_data_ready())
 
       shutil.rmtree(temp_dir)
