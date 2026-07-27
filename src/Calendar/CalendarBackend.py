@@ -69,4 +69,5 @@ def calendar_utils_of(backend: Union[CalendarBackend, str]) -> CalendarUtilsProt
 
   # Invariant: every enum member must be wired up above. Reaching here means we
   # added a member but forgot to resolve it -- not something users can trigger.
-  assert False, f'Backend not wired up in `calendar_utils_of`: {_backend}' # pragma: no cover # Unreachable invariant guard.
+  # `raise` instead of `assert` so the guard survives `python -O`.
+  raise AssertionError(f'Backend not wired up in `calendar_utils_of`: {_backend}') # pragma: no cover # Unreachable invariant guard.

@@ -104,7 +104,7 @@ class Bazi:
   def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision,
                backend: CalendarBackend = CalendarBackend.HKO) -> None:
     '''
-    `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birt time and gender as input, 
+    `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birth time and gender as input, 
     and figures out the pillars of year, month, day, and hour.
     `Bazi` 接受出生时间和性别作为输入，计算年、月、日、时的八字。
     

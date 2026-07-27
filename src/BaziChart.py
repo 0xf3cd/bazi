@@ -291,7 +291,8 @@ class BaziChart:
     '''
 
     step: Final[int] = 1 if self.dayun_order else -1
-    until_xusui_age: Final[int] = 1 + self._utils.to_ganzhi(self.dayun_start_moment).year - self._utils.to_ganzhi(self._bazi.solar_datetime).year
+    utils: Final[CalendarUtilsProtocol] = self._utils
+    until_xusui_age: Final[int] = 1 + utils.to_ganzhi(self.dayun_start_moment).year - utils.to_ganzhi(self._bazi.solar_datetime).year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
       return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
