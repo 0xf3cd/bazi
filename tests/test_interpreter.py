@@ -5,8 +5,7 @@ import unittest
 
 from src.Common import ShishenDescription, TianganDescription
 from src.Defines import Tiangan, Shishen
-from src.Bazi import Bazi
-from src.BaziChart import BaziChart
+from src.Descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
 from src.Interpreter import Interpreter
 
 class TestInterpreter(unittest.TestCase):
@@ -46,7 +45,19 @@ class TestInterpreter(unittest.TestCase):
 
       self.assertEqual(result, Interpreter.interpret_tiangan(tg))
 
-  def test_chart(self) -> None:
-    chart: BaziChart = BaziChart(Bazi.random())
-    interpretation: Interpreter = Interpreter(chart)
-    self.assertEqual(chart.json, interpretation.chart.json)
+  def test_corpus_is_frozen(self) -> None:
+    # The corpus tables are frozen: reassigning an entry must fail, and mutating a
+    # returned description must not corrupt the corpus.
+    # 语料表是冻结的：覆盖条目必须报错；修改返回的描述不能污染语料库。
+    with self.assertRaises(TypeError):
+      SHISHEN_DESCRIPTIONS[Shishen.比肩] = SHISHEN_DESCRIPTIONS[Shishen.比肩] # type: ignore # mypy complains.
+    with self.assertRaises(TypeError):
+      TIANGAN_DESCRIPTIONS[Tiangan.甲] = TIANGAN_DESCRIPTIONS[Tiangan.甲] # type: ignore # mypy complains.
+
+    mutated_shishen: ShishenDescription = Interpreter.interpret_shishen(Shishen.比肩)
+    mutated_shishen['general'].append('污染内容')
+    self.assertNotIn('污染内容', Interpreter.interpret_shishen(Shishen.比肩)['general'])
+
+    mutated_tg: TianganDescription = Interpreter.interpret_tiangan(Tiangan.甲)
+    mutated_tg['general'].append('污染内容')
+    self.assertNotIn('污染内容', Interpreter.interpret_tiangan(Tiangan.甲)['general'])

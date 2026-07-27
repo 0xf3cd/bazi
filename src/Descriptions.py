@@ -1,11 +1,16 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from .Common import ShishenDescription, TianganDescription
+from typing import Final
+
+from .Common import ShishenDescription, TianganDescription, frozendict
 from .Defines import Shishen, Tiangan
 
 
 # This table stores the descriptions of each Shishen.
-SHISHEN_DESCRIPTIONS: dict[Shishen, ShishenDescription] = {
+# The corpus tables are frozen: access via `frozendict` returns a deep copy,
+# so the corpus can never be mutated from outside.
+# 语料表是冻结的：通过 `frozendict` 访问返回深拷贝，外部无法篡改语料。
+SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
   Shishen.比肩 : {
     'general': [
       '代表同辈、竞争、合作。',
@@ -316,11 +321,11 @@ SHISHEN_DESCRIPTIONS: dict[Shishen, ShishenDescription] = {
       '和他们恋爱，需要敞开心扉，探索生活的多种可能性，也需要欣赏、支持他在生活中的探索和创造。',
     ],
   },
-}
+})
 
 
-# The dictionary for descriptions of the Tiangan.
-TIANGAN_DESCRIPTIONS: dict[Tiangan, TianganDescription] = {
+# The dictionary for descriptions of the Tiangan. Frozen as above. / 天干语料表，同上冻结。
+TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendict({
   Tiangan.甲: {
     'general': [
       '甲为阳木，比做参天大树，栋梁之才。',
@@ -439,4 +444,4 @@ TIANGAN_DESCRIPTIONS: dict[Tiangan, TianganDescription] = {
       '若癸水日主身旺癸为忌神，为人表面心如止水，内心想入非非，好幻想，不切实际，喜钻牛角尖。',
     ],
   },
-}
+})
