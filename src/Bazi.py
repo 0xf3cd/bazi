@@ -8,13 +8,12 @@ from datetime import date, time, datetime, timedelta
 from typing import Final, Union
 
 from .Defines import Tiangan, Dizhi, Ganzhi
-from .Calendar import CalendarDate
+from .Calendar import (
+  CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of,
+)
 
 from .Utils.BaziUtils import (
   month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
-)
-from .Calendar.HkoDataCalendarUtils import (
-  to_solar, to_ganzhi, to_date, is_valid_solar_date,
 )
 
 
@@ -102,7 +101,8 @@ class Bazi:
   - `Bazi` 不考虑真太阳时和夏令时。这些时间需要在外部处理。
   '''
 
-  def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision) -> None:
+  def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision,
+               backend: CalendarBackend = CalendarBackend.HKO) -> None:
     '''
     `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birt time and gender as input, 
     and figures out the pillars of year, month, day, and hour.
@@ -118,17 +118,22 @@ class Bazi:
     - birth_time: (datetime) The birth date (in Georgian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
     - precision: (BaziPrecision) The precision of the birth time.
+    - backend: (CalendarBackend) The calendar backend used for all calendar conversions.
     '''
 
     assert isinstance(birth_time, datetime)
     assert isinstance(gender, BaziGender)
     assert isinstance(precision, BaziPrecision)
+    assert isinstance(backend, CalendarBackend)
+
+    self._backend: Final[CalendarBackend] = backend
+    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(backend)
 
     self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
-    self._solar_date: Final[CalendarDate] = to_solar(self._birth_time)
-    assert is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
+    self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
+    assert utils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
 
     self._hour: Final[int] = self._birth_time.hour
     assert self._hour >= 0 and self._hour < 24
@@ -143,7 +148,7 @@ class Bazi:
     # TODO: Currently only supports `DAY` precision.
     assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
 
-    ganzhi_calendardate: CalendarDate = to_ganzhi(self._solar_date)
+    ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
 
     # Figure out the solar date falls into which ganzhi year.
     # Also figure out the Year Ganzhi / Year Pillar (年柱).
@@ -166,8 +171,9 @@ class Bazi:
   def __parse_bazi_args(
     birth_time: Union[datetime, str],
     gender: Union[BaziGender, str], 
-    precision: Union[BaziPrecision, str]
-  ) -> tuple[datetime, BaziGender, BaziPrecision]:
+    precision: Union[BaziPrecision, str],
+    backend: Union[CalendarBackend, str]
+  ) -> tuple[datetime, BaziGender, BaziPrecision, CalendarBackend]:
     
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
@@ -199,14 +205,22 @@ class Bazi:
         _precision = BaziPrecision.DAY
       else:
         raise ValueError(f'Unsupported precision: {precision}')
-      
-    return _birth_time, _gender, _precision
+
+    _backend: CalendarBackend
+    if isinstance(backend, CalendarBackend):
+      _backend = backend
+    else:
+      assert isinstance(backend, str)
+      _backend = CalendarBackend.from_str(backend)
+
+    return _birth_time, _gender, _precision, _backend
 
   @staticmethod
   def create(
     birth_time: Union[datetime, str],
     gender: Union[BaziGender, str], 
-    precision: Union[BaziPrecision, str]
+    precision: Union[BaziPrecision, str],
+    backend: Union[CalendarBackend, str] = CalendarBackend.HKO
   ) -> 'Bazi':
     '''
     Staticmethod that creates a `Bazi` object from the inputs.
@@ -223,17 +237,23 @@ class Bazi:
       - if `BaziPrecision` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `BaziPrecision`. 
         - Supported values: "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day" (case insensitive).
+    - backend: (Union[CalendarBackend, str]) The calendar backend used for all calendar conversions.
+      - if `CalendarBackend` type: it will be directly fed to `Bazi`.
+      - if `str` type: it will be converted by `CalendarBackend.from_str`.
+        - Supported values: the member names and values of `CalendarBackend` (e.g. "HKO"/"hko", case insensitive).
     '''
 
     assert isinstance(birth_time, (datetime, str))
     assert isinstance(gender, (BaziGender, str))
     assert isinstance(precision, (BaziPrecision, str))
+    assert isinstance(backend, (CalendarBackend, str))
 
-    _birth_time, _gender, _precision = Bazi.__parse_bazi_args(birth_time, gender, precision)
+    _birth_time, _gender, _precision, _backend = Bazi.__parse_bazi_args(birth_time, gender, precision, backend)
     bazi: Bazi = Bazi(
       birth_time=_birth_time,
       gender=_gender,
       precision=_precision,
+      backend=_backend,
     )
     return bazi
   
@@ -260,12 +280,12 @@ class Bazi:
   @property
   def solar_date(self) -> date:
     '''The birth date (in solar/georgian calendar) / 公历出生日期'''
-    return to_date(self._solar_date)
+    return self._utils.to_date(self._solar_date)
   
   @property
   def ganzhi_date(self) -> CalendarDate:
     '''The birth date (in ganzhi calendar) / 干支历出生日期'''
-    return to_ganzhi(self._solar_date)
+    return self._utils.to_ganzhi(self._solar_date)
 
   @property
   def hour(self) -> int:
@@ -287,6 +307,23 @@ class Bazi:
   @property
   def precision(self) -> BaziPrecision:
     return self._precision
+
+  @property
+  def backend(self) -> CalendarBackend:
+    '''The calendar backend that this `Bazi` uses / 此命盘使用的历法后端'''
+    return self._backend
+
+  @property
+  def _utils(self) -> CalendarUtilsProtocol:
+    '''
+    The resolved calendar utils of `self.backend`. Resolved on each access, so nothing
+    non-deepcopyable (i.e. the utils module) is stored on the instance.
+    当前历法后端对应的实际工具。每次访问时现解析，实例上不存模块引用，保证 `Bazi` 可 deepcopy。
+
+    Do NOT turn this into a `cached_property` -- that would write the module into
+    the instance dict and break `deepcopy`.
+    '''
+    return calendar_utils_of(self._backend)
   
   @property
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
@@ -373,6 +410,8 @@ class Bazi:
     if self.gender != other.gender:
       return False
     if self.precision != other.precision:
+      return False
+    if self.backend != other.backend:
       return False
     return True
   

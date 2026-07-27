@@ -14,10 +14,12 @@ __all__ = [
   'Analyzer', 'Descriptions', 'Interpreter', 'TransitChart',
 ]
 
-# `Bazi` / `BaziChart` (and everything built on top of them) instantiate the HKO
-# decoder databases at import time, which requires the encoded data files to be
-# present. Import them lazily (PEP 562) so the offline encoder
-# (`python -m src.Calendar.HkoData.Encoder`) can still run when the data is missing.
+# Since #66, `Bazi` / `BaziChart` resolve their calendar backend lazily (see
+# `Calendar/CalendarBackend.py`), so importing them no longer loads any calendar
+# data -- that now happens on the first `Bazi` construction. Keep these submodules
+# lazy (PEP 562) regardless: `import src` stays cheap, and the offline encoder
+# (`python -m src.Calendar.HkoData.Encoder`) can never accidentally pull in the
+# chart layer.
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'Bazi', 'BaziChart', 'Analyzer', 'Interpreter', 'TransitChart',
 })

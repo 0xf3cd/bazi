@@ -14,7 +14,7 @@ from .Common import (
 from .Defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .Bazi import Bazi, BaziGender
 
-from .Calendar.HkoDataCalendarUtils import prev_jie, next_jie, to_ganzhi
+from .Calendar import CalendarUtilsProtocol, calendar_utils_of
 from .Utils.BaziUtils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year
 )
@@ -40,6 +40,18 @@ class BaziChart:
   @property
   def bazi(self) -> Bazi:
     return copy.deepcopy(self._bazi)
+
+  @property
+  def _utils(self) -> CalendarUtilsProtocol:
+    '''
+    The resolved calendar utils of the underlying `Bazi`'s backend. Resolved on each access,
+    so nothing non-deepcopyable (i.e. the utils module) is stored on the instance.
+    底层 `Bazi` 所用历法后端对应的实际工具。每次访问时现解析，实例上不存模块引用，保证 `BaziChart` 可 deepcopy。
+
+    Do NOT turn this into a `cached_property` -- that would write the module into
+    the instance dict and break `deepcopy`.
+    '''
+    return calendar_utils_of(self._bazi.backend)
   
   @property
   def house_of_relationship(self) -> Dizhi:
@@ -221,8 +233,8 @@ class BaziChart:
 
     def __gap() -> timedelta:
       if self.dayun_order:
-        return next_jie(birthtime).moment - birthtime
-      return birthtime - prev_jie(birthtime).moment
+        return self._utils.next_jie(birthtime).moment - birthtime
+      return birthtime - self._utils.prev_jie(birthtime).moment
     
     def __diff() -> timedelta:
       gap: Final[timedelta] = __gap()
@@ -253,7 +265,7 @@ class BaziChart:
 
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
-      ganzhi_year: int = to_ganzhi(self.dayun_start_moment).year
+      ganzhi_year: int = self._utils.to_ganzhi(self.dayun_start_moment).year
       gz: Ganzhi = self._bazi.month_pillar.next(step)
 
       while True:
@@ -279,7 +291,7 @@ class BaziChart:
     '''
 
     step: Final[int] = 1 if self.dayun_order else -1
-    until_xusui_age: Final[int] = 1 + to_ganzhi(self.dayun_start_moment).year - to_ganzhi(self._bazi.solar_datetime).year
+    until_xusui_age: Final[int] = 1 + self._utils.to_ganzhi(self.dayun_start_moment).year - self._utils.to_ganzhi(self._bazi.solar_datetime).year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
       return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
@@ -326,6 +338,7 @@ class BaziChart:
       'birth_time': self._bazi.solar_datetime.isoformat(),
       'gender': str(self._bazi.gender),
       'precision': str(self._bazi.precision),
+      'backend': str(self._bazi.backend),
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
