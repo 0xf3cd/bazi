@@ -434,7 +434,8 @@ def main() -> None:
     print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random_emoji()}')
 
   retcodes: map[int] = map(statuses.retcode, statuses.keys())
-  resolved_retcode: int = functools.reduce(operator.or_, retcodes)
+  # Note that there may be no subtasks at all (e.g. bare `-nt`), in which case treat it as success.
+  resolved_retcode: int = functools.reduce(operator.or_, retcodes, 0)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 
                 u''.join(random.sample(u'🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
