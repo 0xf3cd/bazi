@@ -405,15 +405,12 @@ class Bazi:
   def __eq__(self, other: object) -> bool:
     if not isinstance(other, Bazi):
       return False
-    if self.solar_datetime != other.solar_datetime:
-      return False
-    if self.gender != other.gender:
-      return False
-    if self.precision != other.precision:
-      return False
-    if self.backend != other.backend:
-      return False
-    return True
+    return (
+      self.solar_datetime == other.solar_datetime
+      and self.gender == other.gender
+      and self.precision == other.precision
+      and self.backend == other.backend
+    )
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
