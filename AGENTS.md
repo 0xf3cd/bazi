@@ -34,6 +34,15 @@ those, don't restate them here. Two rules the README doesn't spell out:
 - `ruff` / `mypy` run on **default** config. There is intentionally NO
   pyproject.toml / ruff.toml / mypy.ini — do NOT add one.
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
+- Before opening a PR, verify locally with the **same gates CI runs** — the PR
+  workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i`.
+  Quick local equivalent (run all three, they are all hard gates):
+  - `ruff check .`
+  - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
+    (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
+  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/tests/*,src/Calendar/HkoData/Encoder.py' -m pytest tests/`
+    then `python -m coverage report --show-missing` — must stay at **100%**
+    (intentionally unreachable lines carry `# pragma: no cover` + a reason).
 
 ## File conventions
 - Every source file opens with the copyright header, verbatim except the year:
