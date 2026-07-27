@@ -14,8 +14,13 @@ from ..Transits import TransitOptions, TransitDatabase
 from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
 
 
+'''The type of the first argument passed to Shensha-finding functions: an iterable of Tiangan or Dizhi.'''
 _FirstArgType = Iterable[Union[Tiangan, Dizhi]]
+
+'''The type of the second argument passed to Shensha-finding functions: an iterable of Dizhi.'''
 _SecondArgType = Iterable[Dizhi]
+
+'''The type of the argument tuple that `find_shensha` accepts.'''
 _ArgsType = tuple[_FirstArgType, _SecondArgType]
 
 def find_shensha(
@@ -172,8 +177,8 @@ class TransitAnalysis:
     #
     # Combos that contain 3 Dizhis are missing. So adding them manually.
 
-    def __discover(rel: DizhiRelation):
-      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]):
+    def __discover(rel: DizhiRelation) -> DizhiUtils.DizhiRelationDiscovery:
+      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]) -> bool:
         if len(combo) != 3:
           return False
         for dz1 in transit_dizhis:
@@ -209,16 +214,16 @@ class TransitAnalysis:
     *, level: Level = Level.ALL,
   ) -> GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]:
     '''
-    Return the Tiangan and Dizhi relations that the House of Relationship and other Ganzhis form.
+    Return the Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
 
-    返回配偶宫/婚姻宫和其他干支之间的关系。
+    返回配偶星/婚姻星和其他流运的干支之间的关系。
 
     Args:
     - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
     - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
     - level: (Level) The level of the analysis. 返回分析的级别。
 
-    Returns: (GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the House of Relationship and other transit Ganzhis form.
+    Returns: (GanzhiData[TianganUtils.TianganRelationDiscovery, DizhiUtils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
     '''
 
     assert level in TransitAnalysis.Level
@@ -279,7 +284,7 @@ class TransitAnalysis:
     - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
     - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
 
-    Returns: (bool) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
+    Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
     '''
 
     assert self.support(gz_year, options)

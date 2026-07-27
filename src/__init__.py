@@ -11,7 +11,7 @@ from . import Descriptions
 
 __all__ = [
   'Common', 'Defines', 'Calendar', 'Bazi', 'BaziChart', 'Rules', 'Utils', 
-  'Analyzer', 'Descriptions', 'Interpreter', 'TransitChart',
+  'Analyzer', 'Descriptions', 'Interpreter', 'Transits', 'TransitChart',
 ]
 
 # Since #66, `Bazi` / `BaziChart` resolve their calendar backend lazily (see
@@ -21,7 +21,7 @@ __all__ = [
 # (`python -m src.Calendar.HkoData.Encoder`) can never accidentally pull in the
 # chart layer.
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
-  'Bazi', 'BaziChart', 'Analyzer', 'Interpreter', 'TransitChart',
+  'Bazi', 'BaziChart', 'Analyzer', 'Interpreter', 'Transits', 'TransitChart',
 })
 
 def __getattr__(name: str) -> Any:

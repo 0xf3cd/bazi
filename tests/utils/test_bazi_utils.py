@@ -150,7 +150,7 @@ class TestBaziUtils(unittest.TestCase):
           with self.assertRaises(AssertionError):
             BaziUtils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
 
-  def test_12zhangsheng(self) -> None:
+  def test_shier_zhangsheng(self) -> None:
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲亥')), ShierZhangsheng.长生)
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲午')), ShierZhangsheng.死)
@@ -179,43 +179,43 @@ class TestBaziUtils(unittest.TestCase):
       self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_strs('丁', str(dz))),
                        BaziUtils.shier_zhangsheng(*Ganzhi.from_strs('己', str(dz))))
       
-  def test_from_12zhangsheng(self) -> None:
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('甲'), ShierZhangsheng.沐浴), Dizhi('子'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('甲'), ShierZhangsheng.长生), Dizhi('亥'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('甲'), ShierZhangsheng.死), Dizhi('午'))
+  def test_from_shier_zhangsheng(self) -> None:
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('甲'), ShierZhangsheng.沐浴), Dizhi('子'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('甲'), ShierZhangsheng.长生), Dizhi('亥'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('甲'), ShierZhangsheng.死), Dizhi('午'))
 
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('乙'), ShierZhangsheng.死), Dizhi('亥'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('乙'), ShierZhangsheng.衰), Dizhi('丑'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('乙'), ShierZhangsheng.死), Dizhi('亥'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('乙'), ShierZhangsheng.衰), Dizhi('丑'))
 
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丙'), ShierZhangsheng.帝旺), Dizhi('午'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丙'), ShierZhangsheng.衰), Dizhi('未'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丙'), ShierZhangsheng.帝旺), Dizhi('午'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丙'), ShierZhangsheng.衰), Dizhi('未'))
 
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丁'), ShierZhangsheng.冠带), Dizhi('未'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丁'), ShierZhangsheng.养), Dizhi('戌'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丁'), ShierZhangsheng.冠带), Dizhi('未'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丁'), ShierZhangsheng.养), Dizhi('戌'))
 
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('戊'), ShierZhangsheng.墓), Dizhi('戌'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('戊'), ShierZhangsheng.绝), Dizhi('亥'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('戊'), ShierZhangsheng.墓), Dizhi('戌'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('戊'), ShierZhangsheng.绝), Dizhi('亥'))
 
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('己'), ShierZhangsheng.胎), Dizhi('亥'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('庚'), ShierZhangsheng.养), Dizhi('辰'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('辛'), ShierZhangsheng.临官), Dizhi('酉'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('壬'), ShierZhangsheng.长生), Dizhi('申'))
-    self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('癸'), ShierZhangsheng.长生), Dizhi('卯'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('己'), ShierZhangsheng.胎), Dizhi('亥'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('庚'), ShierZhangsheng.养), Dizhi('辰'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('辛'), ShierZhangsheng.临官), Dizhi('酉'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('壬'), ShierZhangsheng.长生), Dizhi('申'))
+    self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('癸'), ShierZhangsheng.长生), Dizhi('卯'))
 
     for place in ShierZhangsheng:
-      self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丙'), place), 
-                       BaziUtils.from_12zhangsheng(Tiangan('戊'), place))
-      self.assertEqual(BaziUtils.from_12zhangsheng(Tiangan('丁'), place), 
-                       BaziUtils.from_12zhangsheng(Tiangan('己'), place))
+      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丙'), place),
+                       BaziUtils.from_shier_zhangsheng(Tiangan('戊'), place))
+      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丁'), place),
+                       BaziUtils.from_shier_zhangsheng(Tiangan('己'), place))
       
-  def test_12zhangsheng_consistency(self) -> None:
+  def test_shier_zhangsheng_consistency(self) -> None:
     for tg, dz in itertools.product(Tiangan, Dizhi):
       zs: ShierZhangsheng = BaziUtils.shier_zhangsheng(tg, dz)
-      self.assertEqual(BaziUtils.from_12zhangsheng(tg, zs), dz)
+      self.assertEqual(BaziUtils.from_shier_zhangsheng(tg, zs), dz)
     for tg, zs in itertools.product(Tiangan, ShierZhangsheng):
-      dz: Dizhi = BaziUtils.from_12zhangsheng(tg, zs) # type: ignore
+      dz: Dizhi = BaziUtils.from_shier_zhangsheng(tg, zs) # type: ignore
       self.assertEqual(BaziUtils.shier_zhangsheng(tg, dz), zs)
 
   def test_lu(self) -> None:
     for tg in Tiangan:
-      self.assertEqual(BaziUtils.lu(tg), BaziUtils.from_12zhangsheng(tg, ShierZhangsheng('临官')))
+      self.assertEqual(BaziUtils.lu(tg), BaziUtils.from_shier_zhangsheng(tg, ShierZhangsheng('临官')))

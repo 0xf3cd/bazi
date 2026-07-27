@@ -103,7 +103,7 @@ class Dizhi(Enum):
   def from_index(i: int) -> 'Dizhi':
     return Dizhi.as_list()[i]
 
-地支 = Dizhi  # Alias
+地支 = Dizhi # Alias
 
 
 class Ganzhi(NamedTuple):
@@ -426,7 +426,7 @@ class Shishen(Enum):
   @property
   def abbr(self) -> str:
     '''
-    The short version of this Shishen. For example, "比" for "比肩", "才" for "正财", etc.
+    The short version of this Shishen. For example, "比" for "比肩", "财" for "正财", etc.
     '''
     t = Shishen.str_mapping_table()
     reversed_t = { v : k for k, v in t.items() }
@@ -484,7 +484,7 @@ class ShierZhangsheng(Enum):
   def __str__(self) -> str:
     return str(self.value)
 
-十二长生 = ShierZhangsheng
+十二长生 = ShierZhangsheng # Alias
  
 
 class TianganRelation(Enum):
@@ -508,7 +508,7 @@ class TianganRelation(Enum):
     assert isinstance(s, str)
     return cls(s)
 
-天干关系 = TianganRelation
+天干关系 = TianganRelation # Alias
 
 
 class DizhiRelation(Enum):
@@ -526,7 +526,6 @@ class DizhiRelation(Enum):
   HAI      = '害'
   SHENG    = '生'
   KE       = '克'
-
 
   # Aliases
   三会   = SANHUI
@@ -551,4 +550,4 @@ class DizhiRelation(Enum):
     assert isinstance(s, str)
     return cls(s)
 
-地支关系 = DizhiRelation
+地支关系 = DizhiRelation # Alias

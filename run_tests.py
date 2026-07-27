@@ -2,6 +2,7 @@
 
 import os
 import sys
+import io
 import random
 import shutil
 import psutil
@@ -23,6 +24,11 @@ import pytest
 import coverage
 import colorama
 
+
+# Ensure UTF-8 output, so that emojis can be printed on Windows consoles (e.g. cp1252).
+# If `sys.stdout` has been replaced by a non-standard writer, leave it as is.
+if isinstance(sys.stdout, io.TextIOWrapper):
+  sys.stdout.reconfigure(encoding='utf-8')
 
 # region: Arg Parsing
 
@@ -289,7 +295,7 @@ def run_ruff() -> int:
   bold_print('>> Checking for style violations...')
 
   ruff_ret: int = run_proc_and_print([
-    'python3', '-m', 'ruff', 'check', str(Path(__file__).parent)
+    sys.executable, '-m', 'ruff', 'check', str(Path(__file__).parent)
   ], print_details=True)
 
   print('>> Checking style violations completed...')
@@ -308,7 +314,7 @@ def run_mypy() -> int:
   bold_print('>> Running mypy...')
 
   ret: int = run_proc_and_print([
-    'python3', '-m', 'mypy', str(Path(__file__).parent), 
+    sys.executable, '-m', 'mypy', str(Path(__file__).parent),
     '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
     '--warn-return-any', '--warn-unreachable',
   ], print_details=True)
@@ -326,7 +332,7 @@ def run_demo() -> int:
   bold_print('>> Running demo...')
 
   ret: int = run_proc_and_print([
-    'python3', str(Path(__file__).parent / 'run_demo.py')
+    sys.executable, str(Path(__file__).parent / 'run_demo.py')
   ], print_details=verbose)
 
   if ret == 0:
@@ -342,7 +348,7 @@ def run_interpreter() -> int:
   bold_print('>> Running interpreter...')
 
   ret: int = run_proc_and_print([
-    'python3', str(Path(__file__).parent / 'run_interpreter.py')
+    sys.executable, str(Path(__file__).parent / 'run_interpreter.py')
   ], print_details=verbose)
   
   if ret == 0:
@@ -428,7 +434,8 @@ def main() -> None:
     print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random_emoji()}')
 
   retcodes: map[int] = map(statuses.retcode, statuses.keys())
-  resolved_retcode: int = functools.reduce(operator.or_, retcodes)
+  # Note that there may be no subtasks at all (e.g. bare `-nt`), in which case treat it as success.
+  resolved_retcode: int = functools.reduce(operator.or_, retcodes, 0)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 
                 u''.join(random.sample(u'🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))

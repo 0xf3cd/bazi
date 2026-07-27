@@ -47,8 +47,8 @@ class TransitOptions(IntFlag):
   @staticmethod
   def random() -> 'TransitOptions':
     '''Mainly for testing purpose.'''
-    # Python 3.9 complains about the return type if using `random.choice(list(TransitOptions))`.
-    # So explicitly list all options here.
+    # `list(TransitOptions)` only yields single-bit members on Python 3.11+,
+    # silently dropping the composite options. So explicitly list all options here.
     return random.choice([
       TransitOptions.XIAOYUN,
       TransitOptions.DAYUN,
