@@ -19,7 +19,8 @@ from .Common import (
 )
 
 
-JieqiDates = dict[Jieqi, date] # Jieqi -> Solar-calendar Date
+'''Jieqi -> Solar-calendar Date'''
+JieqiDates = dict[Jieqi, date]
 
 class DecodedJieqiDates:
   '''

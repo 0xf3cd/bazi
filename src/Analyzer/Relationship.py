@@ -14,8 +14,13 @@ from ..Transits import TransitOptions, TransitDatabase
 from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
 
 
+'''The type of the first argument passed to Shensha-finding functions: an iterable of Tiangan or Dizhi.'''
 _FirstArgType = Iterable[Union[Tiangan, Dizhi]]
+
+'''The type of the second argument passed to Shensha-finding functions: an iterable of Dizhi.'''
 _SecondArgType = Iterable[Dizhi]
+
+'''The type of the argument tuple that `find_shensha` accepts.'''
 _ArgsType = tuple[_FirstArgType, _SecondArgType]
 
 def find_shensha(
@@ -172,8 +177,8 @@ class TransitAnalysis:
     #
     # Combos that contain 3 Dizhis are missing. So adding them manually.
 
-    def __discover(rel: DizhiRelation):
-      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]):
+    def __discover(rel: DizhiRelation) -> DizhiUtils.DizhiRelationDiscovery:
+      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]) -> bool:
         if len(combo) != 3:
           return False
         for dz1 in transit_dizhis:

@@ -271,7 +271,7 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
   return ShierZhangsheng.from_index(offset % 12)
 
 
-def from_12zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
+def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   '''
   Find the Dizhi of the input Tiangan and ShierZhangsheng.
   输入天干和十二长生，返回对应的地支。
@@ -286,9 +286,9 @@ def from_12zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   Return: (Dizhi) The Dizhi of the given Tiangan and ShierZhangsheng.
 
   Example:
-  - from_12zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) -> Dizhi.子
-  - from_12zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) -> Dizhi.午
-  - from_12zhangsheng(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
+  - from_shier_zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) -> Dizhi.子
+  - from_shier_zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) -> Dizhi.午
+  - from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
   '''
 
   assert isinstance(tg, Tiangan)
