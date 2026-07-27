@@ -334,6 +334,7 @@ class BaziJson:
     birth_time: str
     gender: str
     precision: str
+    backend: str
     pillars: 'BaziJson.FourPillars'
     nayin: 'BaziJson.FourPillars'
     shier_zhangsheng: 'BaziJson.FourPillars'

@@ -4,10 +4,12 @@ from typing import Any
 from . import HkoData
 from .CalendarDefines import CalendarType, CalendarDate
 from .CalendarUtilsProtocol import CalendarUtilsProtocol
+from .CalendarBackend import CalendarBackend, calendar_utils_of
 
 __all__ = [
   'HkoData',
   'CalendarType', 'CalendarDate', 'CalendarUtilsProtocol', 'HkoDataCalendarUtils',
+  'CalendarBackend', 'calendar_utils_of',
 ]
 
 def __getattr__(name: str) -> Any:
