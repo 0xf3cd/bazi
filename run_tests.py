@@ -314,7 +314,7 @@ def run_mypy() -> int:
   bold_print('>> Running mypy...')
 
   ret: int = run_proc_and_print([
-    sys.executable, '-m', 'mypy', str(Path(__file__).parent), 
+    sys.executable, '-m', 'mypy', str(Path(__file__).parent),
     '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
     '--warn-return-any', '--warn-unreachable',
   ], print_details=True)

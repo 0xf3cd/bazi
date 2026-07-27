@@ -150,7 +150,7 @@ class TestBaziUtils(unittest.TestCase):
           with self.assertRaises(AssertionError):
             BaziUtils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
 
-  def test_12zhangsheng(self) -> None:
+  def test_shier_zhangsheng(self) -> None:
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲子')), ShierZhangsheng.沐浴)
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲亥')), ShierZhangsheng.长生)
     self.assertEqual(BaziUtils.shier_zhangsheng(*Ganzhi.from_str('甲午')), ShierZhangsheng.死)
@@ -203,12 +203,12 @@ class TestBaziUtils(unittest.TestCase):
     self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('癸'), ShierZhangsheng.长生), Dizhi('卯'))
 
     for place in ShierZhangsheng:
-      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丙'), place), 
+      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丙'), place),
                        BaziUtils.from_shier_zhangsheng(Tiangan('戊'), place))
-      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丁'), place), 
+      self.assertEqual(BaziUtils.from_shier_zhangsheng(Tiangan('丁'), place),
                        BaziUtils.from_shier_zhangsheng(Tiangan('己'), place))
       
-  def test_12zhangsheng_consistency(self) -> None:
+  def test_shier_zhangsheng_consistency(self) -> None:
     for tg, dz in itertools.product(Tiangan, Dizhi):
       zs: ShierZhangsheng = BaziUtils.shier_zhangsheng(tg, dz)
       self.assertEqual(BaziUtils.from_shier_zhangsheng(tg, zs), dz)

@@ -22,6 +22,6 @@
     * Add `-c` to collect coverage data during testing. This also produces a coverage report in `./covhtml`.
     * Add `-cr <rate>`/`--coverage-rate <rate>` to set the minimum coverage rate (default: 80.0); only takes effect when coverage runs (`-c` or `-a`).
     * Add `-r`/`--ruff` to run the linter after tests.
-    * Add `-mypy` to run mypy static type checker after tests.
+    * Add `-m`/`-mypy`/`--mypy` to run mypy static type checker after tests.
     * Add `-d` to run `./run_demo.py` after tests.
     * Add `-i` to run `./run_interpreter.py` after tests. 
