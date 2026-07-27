@@ -193,7 +193,7 @@ class LiunianTuple(NamedTuple):
 
 
 class JieqiTime(NamedTuple):
-  ''''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
+  '''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
   jieqi:  Jieqi
   moment: datetime
 
@@ -202,7 +202,7 @@ class HiddenTianganDict(frozendict[Tiangan, int]):
   '''
   `HiddenTianganDict` reveals the hidden Tiangans info.
   The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
-  A `HiddenTianganDict` is simply a `frozetndict` with a customized `__str__` function.
+  A `HiddenTianganDict` is simply a `frozendict` with a customized `__str__` function.
 
   `HiddenTianganDict` 代表了某个地支的藏干和藏干各自所占的百分比。
   '''

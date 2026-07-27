@@ -426,7 +426,7 @@ class Shishen(Enum):
   @property
   def abbr(self) -> str:
     '''
-    The short version of this Shishen. For example, "比" for "比肩", "才" for "正财", etc.
+    The short version of this Shishen. For example, "比" for "比肩", "财" for "正财", etc.
     '''
     t = Shishen.str_mapping_table()
     reversed_t = { v : k for k, v in t.items() }

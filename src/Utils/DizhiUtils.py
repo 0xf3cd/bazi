@@ -173,9 +173,9 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) Whether the Dizhis form in TONGLUHE (通禄合) relation.
 
   Examples:
-  - tonghe(Dizhi.寅, Dizhi.午)
+  - tongluhe(Dizhi.寅, Dizhi.午)
     - return: True
-  - tonghe(Dizhi.寅, Dizhi.丑)
+  - tongluhe(Dizhi.寅, Dizhi.丑)
     - return: False
   '''
 
@@ -372,9 +372,9 @@ def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) Whether the Dizhis form in SHENG (生) relation.
 
   Examples:
-  - sheng(Dizhi.卯, Dizhi.癸)
+  - sheng(Dizhi.卯, Dizhi.亥)
     - return: False
-  - sheng(Dizhi.癸, Dizhi.卯)
+  - sheng(Dizhi.亥, Dizhi.卯)
     - return: True
   - sheng(Dizhi.丑, Dizhi.子)
     - return: False
@@ -431,7 +431,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   - For XING relation, it's a bit more complicated.
     - Some definitions require all the Dizhis to appear in order to qualify the SANXING (三刑) relation (a subset of XING).
     - Some definitions consider only two Dizhis appearing a valid XING relation (e.g. only 丑 and 未 can form a XING relation).
-    - In this method, for 丑未戌 and 寅卯巳 SANXING, it is required that any two of the three to present in order to qualify the XING relation.
+    - In this method, for 丑未戌 and 寅巳申 SANXING, it is required that any two of the three to present in order to qualify the XING relation.
     - Use `xing` to do more fine-grained checking.
   - 返回的 combos 中没有体现关系作用的方向。
   - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
@@ -449,12 +449,10 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   - 对于暗合关系的查询，默认使用 `DizhiRules.AnheDef.NORMAL_EXTENDED` 定义，因为它包含最多的暗合地支组合。
 
   Note:
-  - For XING relation, all Dizhis should appear in order to qualify the XING relation.
-  - `DizhiRules.XingDef.NORMAL` definition is used.
-  - e.g., if only 丑 and 未 appear in the input, then the XING relation is not satisfied (戌 missing).
-  - 对于刑关系，所有的地支都出现才能满足相刑关系。
-  - 默认使用 `DizhiRules.XingDef.NORMAL` 定义。
-  - 举例来说，如果输入中只有丑、未，那么不符合相刑关系（缺少戌）。
+  - For XING relation, `DizhiRules.XingDef.LOOSE` definition is used.
+  - e.g., if only 丑 and 未 appear in the input, the XING relation is considered satisfied (戌 missing, but `LOOSE` definition only requires any two of the three).
+  - 对于刑关系，默认使用 `DizhiRules.XingDef.LOOSE` 定义。
+  - 举例来说，即使输入中只有丑、未，也符合相刑关系（缺少戌，但 `LOOSE` 定义只要求三个地支中出现两个）。
 
   Args:
   - dizhis: (Sequence[Dizhi]) The Dizhis to check.
@@ -591,7 +589,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   Examples:
   - discover_mutual([子], [丑])
     - return: {
-      DizhiRelation.合: DizhiRelationCombos({子, 丑},),
+      DizhiRelation.六合: DizhiRelationCombos({子, 丑},),
       DizhiRelation.克: DizhiRelationCombos({子, 丑},)
     }
   - discover_mutual([子, 丑], [])

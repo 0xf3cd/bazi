@@ -89,10 +89,10 @@ class Bazi:
   '''
   `Bazi` (八字) is the class that only stores very basic information.
   A `Bazi` object stores 4 pillars of year, month, day, and hour.
-  For all other information (transits / shishen / ...), please see `src/Charts` (e.g. `BaziChart`).
+  For all other information (transits / shishen / ...), please see `src/BaziChart` (e.g. `BaziChart`).
 
   八字是仅存储基本信息的类。一个 `Bazi` 对象存储着年、月、日、时的四柱八个字。
-  对于其他信息（流年大运 / 十神等），请参阅 `src/Charts`（例如 `BaziChart`）。
+  对于其他信息（流年大运 / 十神等），请参阅 `src/BaziChart`（例如 `BaziChart`）。
 
   Note:
   - We don't care about the timezone. `Bazi` knows nothing about timezone.
@@ -260,10 +260,10 @@ class Bazi:
   @staticmethod
   def random() -> 'Bazi':
     '''
-    Classmethod that creates a random `Bazi` object. Mainly for testing purpose.
+    Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
 
     Note that the precision is currently set to `BaziPrecision.DAY`.
-    Note that the year is in [1902, 2098], and day is in [1, 28].
+    Note that the year is in [1902, 2080], and day is in [1, 28].
     '''
     return Bazi.create(
       birth_time=datetime(
