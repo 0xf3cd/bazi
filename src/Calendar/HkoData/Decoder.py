@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
-#
-# bazi/src/Calendar/HkoData/encoder.py
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
+# bazi/src/Calendar/HkoData/Decoder.py
 #
-# Decode the encoded data produced by encoder.py.
+# Decode the encoded data produced by Encoder.py.
+# The decoder only reads the committed binary data files under `HkoData/data/`;
+# it never downloads or re-encodes anything (use Encoder.py as an offline tool for that).
 
 import functools
 
@@ -13,11 +13,10 @@ from typing import TypedDict, Optional, Final
 
 from ...Defines import Jieqi, Ganzhi
 
-from .common import (
+from .Common import (
   HkoYearLimits, date_to_bytes, bytes_to_date, bytes_to_int,
-  get_jieqi_encoded_data_path, get_lunardate_encoded_data_path,
+  get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
 )
-from .encoder import do_encode, encoded_data_ready
 
 
 JieqiDates = dict[Jieqi, date] # Jieqi -> Solar-calendar Date
@@ -30,8 +29,10 @@ class DecodedJieqiDates:
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
 
   def __init__(self) -> None:
+    # Explicit raise (not assert): this is the public fail-fast contract for library
+    # consumers, and it must survive `python -O`.
     if not encoded_data_ready():
-      do_encode()
+      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.')
 
     self._start_year: Final[int] = HkoYearLimits.START_YEAR
     self._end_year: Final[int] = HkoYearLimits.END_YEAR
@@ -54,8 +55,6 @@ class DecodedJieqiDates:
     self._jieqi_offset_mapping: Final[dict[Jieqi, int]] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
     assert len(self._jieqi_offset_mapping) == 24
 
-    self._cached_datetimes: Final[dict[int, JieqiDates]] = {}
-
   @property
   def start_year(self) -> int:
     '''Note: Gregorian/Solar year / 公历年'''
@@ -66,7 +65,6 @@ class DecodedJieqiDates:
     '''Note: Gregorian/Solar year / 公历年'''
     return self._end_year
 
-  @functools.cache
   def __read_bytes_for_jieqi(self, year: int, jieqi: Jieqi) -> bytes:
     assert year in self.supported_year_range()
     offset: int = self._jieqi_offset_mapping[jieqi]
@@ -91,9 +89,7 @@ class DecodedJieqiDates:
     Note: `year` means Gregorian/Solar year / 公历年
     '''
     assert year in self.supported_year_range()
-    if year not in self._cached_datetimes:
-      self._cached_datetimes[year] = self.__getitem__(year)
-    return self._cached_datetimes[year][jieqi]
+    return self[year][jieqi]
   
   def supported_year_range(self) -> range:
     '''Note: Gregorian/Solar year / 公历年'''
@@ -118,8 +114,10 @@ class DecodedLunarYears:
   sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
   def __init__(self) -> None:
+    # Explicit raise (not assert): this is the public fail-fast contract for library
+    # consumers, and it must survive `python -O`.
     if not encoded_data_ready():
-      do_encode()
+      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.')
 
     self._start_year: Final[int] = HkoYearLimits.START_YEAR
     self._end_year: Final[int] = HkoYearLimits.END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.

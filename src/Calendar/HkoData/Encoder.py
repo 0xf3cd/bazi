@@ -1,43 +1,46 @@
-#!/usr/bin/env python3
-#
-# bazi/src/Calendar/HkoData/encoder.py
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
+# bazi/src/Calendar/HkoData/Encoder.py
 #
 # Download the raw data from Hong Kong Observatory (hko) and encode the downloaded hko data.
+#
+# This module is an offline tool, only used when the data under `HkoData/data/`
+# needs to be regenerated. It is not needed at runtime: the decoder only reads
+# the committed data files. `requests` is deliberately not in Requirements.txt --
+# install it manually (`pip install requests`) and run this tool from the repo root:
+#   python -m src.Calendar.HkoData.Encoder
 
-import requests
 import re
-from pathlib import Path
+
 from datetime import datetime
+from importlib import import_module
+from pathlib import Path
+from typing import Any
 
-if __name__ == '__main__':
-  from common import ( # type: ignore # somehow mypy can't find it.
-    HkoYearLimits,
-    get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
-    get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
-    jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
-    date_to_bytes, int_to_bytes,
-  )
+from ...Defines import Ganzhi
 
-  import sys
-  sys.path.append(Path(__file__).parent.parent.parent.as_posix())
-  from Defines import Ganzhi # type: ignore # somehow mypy can't find it.
-else:
-  from ...Defines import Ganzhi
-  from .common import (
-    HkoYearLimits,
-    get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
-    get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
-    jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
-    date_to_bytes, int_to_bytes,
-  )
+from .Common import (
+  HkoYearLimits,
+  get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
+  get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
+  jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
+  date_to_bytes, int_to_bytes,
+)
 
 
 __sexagenary_cycle__: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
 def download_one_year_data(txt_path: Path, year: int) -> bool:
+  # Lazy-load `requests`: it is only needed when regenerating the data, so importing
+  # this module (and certainly the decoder) never requires `requests` to be installed.
+  try:
+    requests: Any = import_module('requests')
+  except ModuleNotFoundError as e:
+    if e.name != 'requests':
+      raise # A transitive dependency of `requests` is missing; don't misreport it.
+    raise ModuleNotFoundError('`requests` is not installed. Run `pip install requests` to regenerate the HKO data.', name='requests') from None
+
   url = f'https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T{year}c.txt'
-  response = requests.get(url)
+  response = requests.get(url, timeout=30)
   if response.status_code == 200:
     response.encoding = 'big5'
     with txt_path.open('w', encoding='utf-8') as f:
