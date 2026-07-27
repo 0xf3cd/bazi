@@ -335,9 +335,9 @@ class TestHkoData(unittest.TestCase):
       self.assertFalse(lunardate_path.exists())
 
       # The decoder only reads the committed data files; it never re-encodes them.
-      with self.assertRaises(AssertionError):
+      with self.assertRaises(RuntimeError):
         HkoData.DecodedJieqiDates()
-      with self.assertRaises(AssertionError):
+      with self.assertRaises(RuntimeError):
         HkoData.DecodedLunarYears()
 
       # Encode them again, with the offline encoder tool.

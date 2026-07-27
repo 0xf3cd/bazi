@@ -29,7 +29,10 @@ class DecodedJieqiDates:
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
 
   def __init__(self) -> None:
-    assert encoded_data_ready(), 'Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.'
+    # Explicit raise (not assert): this is the public fail-fast contract for library
+    # consumers, and it must survive `python -O`.
+    if not encoded_data_ready():
+      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.')
 
     self._start_year: Final[int] = HkoYearLimits.START_YEAR
     self._end_year: Final[int] = HkoYearLimits.END_YEAR
@@ -111,7 +114,10 @@ class DecodedLunarYears:
   sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
   def __init__(self) -> None:
-    assert encoded_data_ready(), 'Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.'
+    # Explicit raise (not assert): this is the public fail-fast contract for library
+    # consumers, and it must survive `python -O`.
+    if not encoded_data_ready():
+      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.Calendar.HkoData.Encoder` from the repo root to regenerate them.')
 
     self._start_year: Final[int] = HkoYearLimits.START_YEAR
     self._end_year: Final[int] = HkoYearLimits.END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.

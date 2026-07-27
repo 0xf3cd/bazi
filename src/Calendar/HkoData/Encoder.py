@@ -37,10 +37,10 @@ def download_one_year_data(txt_path: Path, year: int) -> bool:
   except ModuleNotFoundError as e:
     if e.name != 'requests':
       raise # A transitive dependency of `requests` is missing; don't misreport it.
-    raise ModuleNotFoundError('`requests` is not installed. Run `pip install requests` to regenerate the HKO data.') from None
+    raise ModuleNotFoundError('`requests` is not installed. Run `pip install requests` to regenerate the HKO data.', name='requests') from None
 
   url = f'https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T{year}c.txt'
-  response = requests.get(url)
+  response = requests.get(url, timeout=30)
   if response.status_code == 200:
     response.encoding = 'big5'
     with txt_path.open('w', encoding='utf-8') as f:
