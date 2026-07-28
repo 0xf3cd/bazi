@@ -13,7 +13,7 @@ from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.Utils import TianganUtils, DizhiUtils, BaziUtils, ShenshaUtils
 from src.Bazi import Bazi, BaziGender, BaziPrecision
 from src.BaziChart import BaziChart
-from src.Transits import TransitOptions, TransitDatabase
+from src.Transits import TransitMoment, TransitOptions, TransitDatabase
 from src.Analyzer.Relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.Rules import DizhiRules
 
@@ -105,7 +105,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertEqual(len(at_birth.star_relations.dizhi), 0)
 
     with self.subTest('1990'):
-      self.assertSetEqual(set(db.ganzhis(1990, TransitOptions.DAYUN_LIUNIAN)),
+      self.assertSetEqual(set(db.ganzhis(TransitMoment(1990), TransitOptions.DAYUN_LIUNIAN)),
                           {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')})
 
       shensha = transits.shensha(1990, TransitOptions.DAYUN_LIUNIAN)
@@ -157,7 +157,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertFalse(transits.star(1990, TransitOptions.LIUNIAN).dizhi)
 
     with self.subTest('2018'):
-      self.assertSetEqual(set(db.ganzhis(2018, TransitOptions.DAYUN_LIUNIAN)),
+      self.assertSetEqual(set(db.ganzhis(TransitMoment(2018), TransitOptions.DAYUN_LIUNIAN)),
                           {Ganzhi.from_str('辛未'), Ganzhi.from_str('戊戌')})
       
       shensha = transits.shensha(2018, TransitOptions.DAYUN_LIUNIAN)
@@ -206,7 +206,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertFalse(transits.star(2018, TransitOptions.DAYUN).dizhi)
 
     with self.subTest('2031'):
-      self.assertSetEqual(set(db.ganzhis(2031, TransitOptions.DAYUN_LIUNIAN)),
+      self.assertSetEqual(set(db.ganzhis(TransitMoment(2031), TransitOptions.DAYUN_LIUNIAN)),
                           {Ganzhi.from_str('辛亥'), Ganzhi.from_str('壬申')})
 
       shensha = transits.shensha(2031, TransitOptions.DAYUN_LIUNIAN)
@@ -308,7 +308,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
         if not transits.support(random_year, random_option):
           continue
 
-        transits_gz = db.ganzhis(random_year, random_option)
+        transits_gz = db.ganzhis(TransitMoment(random_year), random_option)
         transits_dz = set(gz.dizhi for gz in transits_gz)
 
         self.assertDictEqual(transits.shensha(random_year, random_option), {
@@ -330,7 +330,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           if not transits.support(year, option):
             continue
 
-          transits_gz = db.ganzhis(year, option)
+          transits_gz = db.ganzhis(TransitMoment(year), option)
           transits_tg = set(gz.tiangan for gz in transits_gz)
 
           for tg_rel, tg_combos in transits.day_master_relations(year, option).items():
@@ -363,7 +363,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           if not transits.support(year, option):
             continue
 
-          transits_gz = db.ganzhis(year, option)
+          transits_gz = db.ganzhis(TransitMoment(year), option)
           transits_dz = set(gz.dizhi for gz in transits_gz)
 
           house_dz = chart.house_of_relationship
@@ -403,7 +403,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           if not transits.support(year, option):
             continue
 
-          transits_gz = db.ganzhis(year, option)
+          transits_gz = db.ganzhis(TransitMoment(year), option)
           transits_tg = set(gz.tiangan for gz in transits_gz)
           transits_dz = set(gz.dizhi for gz in transits_gz)
 
@@ -464,7 +464,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           if not transits.support(year, option):
             continue
 
-          transits_gz = db.ganzhis(year, option)
+          transits_gz = db.ganzhis(TransitMoment(year), option)
           transits_tg = set(gz.tiangan for gz in transits_gz)
           transits_dz = set(gz.dizhi for gz in transits_gz)
 
@@ -502,7 +502,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if not transits.support(year, option):
         continue
 
-      transits_gz = db.ganzhis(year, option)
+      transits_gz = db.ganzhis(TransitMoment(year), option)
       transits_dz_set = set(gz.dizhi for gz in transits_gz)
 
       def __taohua(dz: Dizhi) -> bool:
@@ -530,7 +530,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if not transits.support(year, option):
         continue
 
-      transits_gz = db.ganzhis(year, option)
+      transits_gz = db.ganzhis(TransitMoment(year), option)
       transits_tg_set = set(gz.tiangan for gz in transits_gz)
       transits_dz_set = set(gz.dizhi for gz in transits_gz)
 
@@ -580,7 +580,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if not transits.support(year, option):
         continue
 
-      transits_gz = db.ganzhis(year, option)
+      transits_gz = db.ganzhis(TransitMoment(year), option)
       transits_tg_list = list(gz.tiangan for gz in transits_gz)
       transits_dz_list = list(gz.dizhi for gz in transits_gz)
 
@@ -640,7 +640,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if not transits.support(year, option):
         continue
 
-      transits_gz = db.ganzhis(year, option)
+      transits_gz = db.ganzhis(TransitMoment(year), option)
       transits_tg_set = set(gz.tiangan for gz in transits_gz)
       transits_dz_set = set(gz.dizhi for gz in transits_gz)
 
