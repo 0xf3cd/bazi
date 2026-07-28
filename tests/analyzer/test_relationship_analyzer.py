@@ -10,7 +10,7 @@ import itertools
 from src.Defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils, BaziUtils
 from src.BaziChart import BaziChart
-from src.Transits import TransitOptions, TransitDatabase
+from src.Transits import TransitMoment, TransitOptions, TransitDatabase
 from src.Analyzer.Relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
 
@@ -182,7 +182,7 @@ class TestTransitAnalysis(unittest.TestCase):
         if not transits_analysis.support(randon_year, random_options):
           continue
 
-        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
         actual = transits_analysis.shensha(randon_year, random_options)
 
         with self.subTest('Taohua / 桃花'):
@@ -238,7 +238,7 @@ class TestTransitAnalysis(unittest.TestCase):
         if not transits_analysis.support(randon_year, random_options):
           continue
         
-        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(randon_year, random_options))
+        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
         expected = TianganUtils.discover_mutual([chart.bazi.day_master], transit_tg)
         actual = transits_analysis.day_master_relations(randon_year, random_options)
 
@@ -260,7 +260,7 @@ class TestTransitAnalysis(unittest.TestCase):
         if not transits_analysis.support(randon_year, random_options):
           continue
 
-        transit_dz = list(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+        transit_dz = list(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
 
         actual = transits_analysis.house_relations(randon_year, random_options)
         for _, combos in actual.items():
@@ -305,8 +305,8 @@ class TestTransitAnalysis(unittest.TestCase):
         if not transits_analysis.support(randon_year, random_options):
           continue
         
-        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(randon_year, random_options))
-        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(randon_year, random_options))
+        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
 
         tg_discovery = TianganUtils.TianganRelationDiscovery({})
         dz_discovery = DizhiUtils.DizhiRelationDiscovery({})
@@ -365,7 +365,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
         expected_tg: bool = False
         expected_dz: bool = False
-        for gz in db.ganzhis(randon_year, random_options):
+        for gz in db.ganzhis(TransitMoment(randon_year), random_options):
           if BaziUtils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
             expected_tg = True
           if BaziUtils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
@@ -391,7 +391,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
         expected_tg: bool = False
         expected_dz: bool = False
-        for gz in db.ganzhis(randon_year, random_options):
+        for gz in db.ganzhis(TransitMoment(randon_year), random_options):
           if gz.tiangan == chart.relationship_stars.tiangan:
             expected_tg = True
           if gz.dizhi in chart.relationship_stars.dizhi:

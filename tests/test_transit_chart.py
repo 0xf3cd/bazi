@@ -7,7 +7,8 @@ from datetime import datetime
 
 from src.Bazi import Bazi, BaziGender, BaziPrecision
 from src.BaziChart import BaziChart
-from src.Transits import TransitOptions, TransitDatabase
+from src.Defines import Dizhi
+from src.Transits import TransitMoment, TransitOptions, TransitDatabase
 from src.TransitChart import TransitChart, 流年大运
 
 
@@ -36,17 +37,20 @@ class TestTransitChart(unittest.TestCase):
 
     for gz_year in (first_dayun_gz_year, first_dayun_gz_year + 7, first_dayun_gz_year + 25):
       for option in TransitOptions:
-        self.assertEqual(transits.support(gz_year, option), db.support(gz_year, option))
-        if transits.support(gz_year, option):
-          self.assertEqual(transits.ganzhis(gz_year, option), db.ganzhis(gz_year, option))
+        self.assertEqual(transits.support(TransitMoment(gz_year), option), db.support(TransitMoment(gz_year), option))
+        if transits.support(TransitMoment(gz_year), option):
+          self.assertEqual(transits.ganzhis(TransitMoment(gz_year), option), db.ganzhis(TransitMoment(gz_year), option))
 
   def test_delegation_negative(self) -> None:
     bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
     transits: TransitChart = TransitChart(BaziChart(bazi))
 
     self.assertRaises(AssertionError, lambda: transits.support('1999', TransitOptions.XIAOYUN)) # type: ignore
-    self.assertRaises(AssertionError, lambda: transits.ganzhis(1999, 'XIAOYUN')) # type: ignore
+    self.assertRaises(AssertionError, lambda: transits.support(1999, TransitOptions.XIAOYUN)) # type: ignore # int no longer accepted; `TransitMoment` required.
+    self.assertRaises(AssertionError, lambda: transits.ganzhis(TransitMoment(1999), 'XIAOYUN')) # type: ignore
+    # Month/day-granularity moments are rejected until #48 / #48 落地前，月/日粒度的 moment 显式拒绝。
+    self.assertRaises(NotImplementedError, lambda: transits.support(TransitMoment(2000, gz_month=Dizhi.寅), TransitOptions.LIUNIAN))
 
     first_dayun_gz_year: int = next(transits.bazi_chart.dayun).ganzhi_year
-    self.assertFalse(transits.support(first_dayun_gz_year - 1, TransitOptions.DAYUN))
-    self.assertRaises(ValueError, lambda: transits.ganzhis(first_dayun_gz_year - 1, TransitOptions.DAYUN))
+    self.assertFalse(transits.support(TransitMoment(first_dayun_gz_year - 1), TransitOptions.DAYUN))
+    self.assertRaises(ValueError, lambda: transits.ganzhis(TransitMoment(first_dayun_gz_year - 1), TransitOptions.DAYUN))

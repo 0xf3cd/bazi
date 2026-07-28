@@ -8,7 +8,7 @@ from datetime import datetime
 
 from src.Bazi import Bazi, BaziGender, BaziPrecision
 from src.BaziChart import BaziChart
-from src.Transits import TransitOptions, TransitDatabase
+from src.Transits import TransitMoment, TransitOptions, TransitDatabase
 from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.Utils import TianganUtils, DizhiUtils
 
@@ -82,7 +82,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover(chart.bazi.four_dizhis)))
 
     with self.subTest('1993 dayun and liunian - transits only'):
-      ganzhis = db.ganzhis(1993, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(1993), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.戊, Tiangan.癸})],
@@ -93,7 +93,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2024 dayun and liunian - between transits and at-birth'):
-      ganzhis = db.ganzhis(2024, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2024), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -109,7 +109,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2051 dayun and liunian - transits only'):
-      ganzhis = db.ganzhis(2051, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
@@ -117,7 +117,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2051 dayun and liunian - between transits and at-birth'):
-      ganzhis = db.ganzhis(2051, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -165,7 +165,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
 
     with self.subTest('2024 xiaoyun and liunian - between transits and at-birth'): 
       # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
-      ganzhis = db.ganzhis(2024, TransitOptions.XIAOYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2024), TransitOptions.XIAOYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
@@ -179,7 +179,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2052 dayun and liunian - transits only'):
-      ganzhis = db.ganzhis(2052, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.丙, Tiangan.壬})],
@@ -191,7 +191,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2052 dayun and liunian - between transits and at-birth'):
-      ganzhis = db.ganzhis(2052, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.丙, Tiangan.辛})],
@@ -206,14 +206,14 @@ class TestTianganDizhiRelations(unittest.TestCase):
       }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2062 dayun and liunian - transits only'):
-      ganzhis = db.ganzhis(2062, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
       }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2062 dayun and liunian - between transits and at-birth'):
-      ganzhis = db.ganzhis(2062, TransitOptions.DAYUN_LIUNIAN)
+      ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.乙, Tiangan.辛})],

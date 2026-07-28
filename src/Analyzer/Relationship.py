@@ -12,7 +12,8 @@ from ..Common import GanzhiData, frozendict
 from ..Defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from ..Bazi import Bazi
 from ..BaziChart import BaziChart
-from ..Transits import TransitOptions, TransitDatabase
+from ..Transits import TransitMoment, TransitOptions
+from ..TransitChart import TransitChart
 from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
 
 
@@ -167,13 +168,13 @@ class TransitAnalysis:
   '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = copy.deepcopy(chart)
-    self._transit_db: Final[TransitDatabase] = TransitDatabase(chart)
+    self._transit_chart: Final[TransitChart] = TransitChart(self._chart)
 
   def support(self, gz_year: int, options: TransitOptions) -> bool:
     '''
     Returns `True` if the given `gz_year` and `options` are both supported.
     '''
-    return self._transit_db.support(gz_year, options)
+    return self._transit_chart.support(TransitMoment(gz_year), options)
 
   def shensha(self, gz_year: int, options: TransitOptions) -> ShenshaAnalysis:
     '''
@@ -190,7 +191,7 @@ class TransitAnalysis:
     '''
 
     assert self.support(gz_year, options)
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
     bazi = self._chart.bazi
@@ -216,7 +217,7 @@ class TransitAnalysis:
     '''
 
     assert self.support(gz_year, options)
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_tiangans = tuple(gz.tiangan for gz in transit_ganzhis)
 
     return TianganUtils.discover_mutual([self._chart.bazi.day_master], transit_tiangans)
@@ -235,7 +236,7 @@ class TransitAnalysis:
     '''
 
     assert self.support(gz_year, options)
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_dizhis = [gz.dizhi for gz in transit_ganzhis]
 
     house = self._chart.house_of_relationship
@@ -300,7 +301,7 @@ class TransitAnalysis:
     assert level in TransitAnalysis.Level
     assert self.support(gz_year, options)
 
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_tg = tuple(gz.tiangan for gz in transit_ganzhis)
     transit_dz = tuple(gz.dizhi for gz in transit_ganzhis)
 
@@ -338,7 +339,7 @@ class TransitAnalysis:
     assert self.support(gz_year, options)
   
     f = functools.partial(BaziUtils.shishen, self._chart.bazi.day_master)
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
 
     return GanzhiData(
       any(f(gz.tiangan) is Shishen.正印 for gz in transit_ganzhis),
@@ -361,7 +362,7 @@ class TransitAnalysis:
     assert self.support(gz_year, options)
 
     stars = self._chart.relationship_stars
-    transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
+    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
 
     return GanzhiData(
       any(gz.tiangan is stars.tiangan for gz in transit_ganzhis),

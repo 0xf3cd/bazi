@@ -6,7 +6,7 @@ from typing import Final
 
 from .Defines import Ganzhi
 from .BaziChart import BaziChart
-from .Transits import TransitOptions, TransitDatabase
+from .Transits import TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
 
 
 class TransitChart:
@@ -37,37 +37,45 @@ class TransitChart:
     '''The underlying `BaziChart` (原盘). A defensive copy is returned. 返回防御性拷贝。'''
     return copy.deepcopy(self._bazi_chart)
 
-  def support(self, gz_year: int, options: TransitOptions) -> bool:
+  def support(self, moment: TransitMoment, options: TransitOptions) -> bool:
     '''
-    Return whether the given `gz_year` and `options` are supported by this `TransitChart`.
-    返回当前 `TransitChart` 是否支持给定的干支年和选项。
+    Return whether the given `moment` and `options` are supported by this `TransitChart`.
+    返回当前 `TransitChart` 是否支持给定的时刻和选项。
 
     Args:
-    - `gz_year`: (int) The year in Ganzhi calendar. 干支纪年法中的年。
+    - `moment`: (TransitMoment) The moment in Ganzhi calendar. 干支历法中的时刻。Only the year granularity is supported for now (目前仅支持年粒度)。
     - `options`: (TransitOptions) Specifies the transits to be picked. 用于指定是否考虑流年、小运、大运等。
 
-    Return: (bool) Whether the given `gz_year` and `options` are supported by this `TransitChart`.
+    Return: (bool) Whether the given `moment` and `options` are supported by this `TransitChart`.
+
+    Note: raises `NotImplementedError` for month/day-granularity moments until #48. / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`。
     '''
 
-    assert isinstance(gz_year, int)
-    assert isinstance(options, TransitOptions) and options in TransitOptions
-    return self._transit_db.support(gz_year, options)
+    assert isinstance(moment, TransitMoment)
+    assert isinstance(options, TransitOptions)
+    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
+    assert options in _ALL_OPTIONS
+    return self._transit_db.support(moment, options)
 
-  def ganzhis(self, gz_year: int, options: TransitOptions) -> tuple[Ganzhi, ...]:
+  def ganzhis(self, moment: TransitMoment, options: TransitOptions) -> tuple[Ganzhi, ...]:
     '''
-    Return the Ganzhis of the selected transits for the given `gz_year` and `options`.
+    Return the Ganzhis of the selected transits for the given `moment` and `options`.
     返回所选中的小运、大运或流年等对应的干支。
 
     Args:
-    - `gz_year`: (int) The year in Ganzhi calendar, mainly used to compute the transit pillars. 干支纪年法中的年，主要用于计算运（小运/大运/流年）的天干地支。
+    - `moment`: (TransitMoment) The moment in Ganzhi calendar, mainly used to compute the transit pillars. 干支历法中的时刻，主要用于计算运（小运/大运/流年）的天干地支。Only the year granularity is supported for now (目前仅支持年粒度)。
     - `options`: (TransitOptions) Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
 
-    Return: (tuple[Ganzhi, ...]) The Ganzhis of the selected transits for the given `gz_year` and `options`.
+    Return: (tuple[Ganzhi, ...]) The Ganzhis of the selected transits for the given `moment` and `options`.
+
+    Note: raises `NotImplementedError` for month/day-granularity moments until #48 (via `TransitDatabase`). / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`（经 `TransitDatabase` 冒出）。
     '''
 
-    assert isinstance(gz_year, int)
-    assert isinstance(options, TransitOptions) and options in TransitOptions
-    return self._transit_db.ganzhis(gz_year, options)
+    assert isinstance(moment, TransitMoment)
+    assert isinstance(options, TransitOptions)
+    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
+    assert options in _ALL_OPTIONS
+    return self._transit_db.ganzhis(moment, options)
 
 
 流年大运 = TransitChart
