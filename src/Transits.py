@@ -143,7 +143,9 @@ class TransitDatabase:
 
     assert isinstance(moment, TransitMoment)
     assert isinstance(options, TransitOptions)
-    assert options in TransitOptions
+    # `options in TransitOptions` rejects unnamed composites (e.g. XIAOYUN|DAYUN) on
+    # Python 3.11 (EnumType.__contains__ semantics), so check the enumerated space instead.
+    assert options in _ALL_OPTIONS
     _ensure_year_moment(moment)
 
     gz_year: Final[int] = moment.gz_year
@@ -175,7 +177,9 @@ class TransitDatabase:
     '''
 
     assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions) and options in TransitOptions
+    assert isinstance(options, TransitOptions)
+    # See `support` for why `_ALL_OPTIONS` instead of `options in TransitOptions` (3.11 semantics).
+    assert options in _ALL_OPTIONS
 
     if not self.support(moment, options):
       raise ValueError(f'Inputs not supported. Moment: {moment}, options: {options}')

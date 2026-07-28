@@ -6,7 +6,7 @@ from typing import Final
 
 from .Defines import Ganzhi
 from .BaziChart import BaziChart
-from .Transits import TransitMoment, TransitOptions, TransitDatabase
+from .Transits import TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
 
 
 class TransitChart:
@@ -52,7 +52,9 @@ class TransitChart:
     '''
 
     assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions) and options in TransitOptions
+    assert isinstance(options, TransitOptions)
+    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
+    assert options in _ALL_OPTIONS
     return self._transit_db.support(moment, options)
 
   def ganzhis(self, moment: TransitMoment, options: TransitOptions) -> tuple[Ganzhi, ...]:
@@ -70,7 +72,9 @@ class TransitChart:
     '''
 
     assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions) and options in TransitOptions
+    assert isinstance(options, TransitOptions)
+    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
+    assert options in _ALL_OPTIONS
     return self._transit_db.ganzhis(moment, options)
 
 
