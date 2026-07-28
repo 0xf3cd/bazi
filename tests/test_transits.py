@@ -65,6 +65,9 @@ class TestTransitDatabase(unittest.TestCase):
       self.assertRaises(AssertionError, lambda: db.support(1999, TransitOptions.XIAOYUN)) # type: ignore # int no longer accepted; `TransitMoment` required.
       self.assertRaises(AssertionError, lambda: db.support(TransitMoment(1999), 'XIAOYUN')) # type: ignore
       self.assertRaises(AssertionError, lambda: db.support(TransitMoment(1999), 0x1 | 0x4)) # type: ignore
+      # Zero-value and unknown-bit flags are rejected on all Python versions (3.12+'s `in` used to let them through).
+      self.assertRaises(AssertionError, lambda: db.support(TransitMoment(1999), TransitOptions(0)))
+      self.assertRaises(AssertionError, lambda: db.support(TransitMoment(1999), TransitOptions(0x8)))
 
       with self.subTest('Test ganzhi years before the birth year. Expect not to support.'):
         for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
@@ -188,5 +191,10 @@ class TestAllOptions(unittest.TestCase):
     self.assertEqual(len(_ALL_OPTIONS), 2 ** len(singles) - 1)
     # The unnamed combo that the old hand-listed `random()` never returned.
     self.assertIn(TransitOptions.XIAOYUN | TransitOptions.DAYUN, _ALL_OPTIONS)
+    # Every enumerated option is non-zero and composed of known bits only.
+    # (Do NOT assert `opt in TransitOptions` here -- on Python 3.11 the enum `in`
+    # rejects unnamed composites, which is exactly what this test enumerates.)
+    full_mask = sum(opt.value for opt in singles)
     for opt in _ALL_OPTIONS:
-      self.assertIn(opt, TransitOptions)
+      self.assertGreater(opt.value, 0)
+      self.assertEqual(full_mask, opt.value | full_mask)
