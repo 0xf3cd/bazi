@@ -83,6 +83,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       # 问真八字以乙日主见午为红艳，但 `Rules.HONGYAN` 中以乙日主见申为红艳，所以这里为空。
       self.assertSetEqual(at_birth.shensha['hongyan'],  set()) 
       self.assertSetEqual(at_birth.shensha['tianxi'],   set())
+      self.assertSetEqual(at_birth.shensha['yima'],     set())
 
       # 感情分析主要关心日主被合的情况，但原局日主没有被合。
       # 虽然我们不关心相生关系，但在这里还是检查一下。
@@ -112,6 +113,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertSetEqual(shensha['hongluan'], set())
       self.assertSetEqual(shensha['hongyan'],  set())
       self.assertSetEqual(shensha['tianxi'],   set())
+      self.assertSetEqual(shensha['yima'],     set())
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
@@ -163,6 +165,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertSetEqual(shensha['hongluan'], set())
       self.assertSetEqual(shensha['hongyan'],  set())
       self.assertSetEqual(shensha['tianxi'],   set())
+      self.assertSetEqual(shensha['yima'],     set())
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
@@ -211,6 +214,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertSetEqual(shensha['hongluan'], set())
       self.assertSetEqual(shensha['hongyan'],  {Dizhi.申})
       self.assertSetEqual(shensha['tianxi'],   set())
+      self.assertSetEqual(shensha['yima'],     {Dizhi.亥})
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛})],
@@ -262,6 +266,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
       self.assertSetEqual(at_birth.shensha['hongluan'], set())
       self.assertSetEqual(at_birth.shensha['hongyan'],  set()) 
       self.assertSetEqual(at_birth.shensha['tianxi'],   set())
+      self.assertSetEqual(at_birth.shensha['yima'],     set())
 
       # 感情分析主要关心日主被合的情况，但原局日主没有被合。
       # 虽然我们不关心其他关系，但在这里还是检查一下。
@@ -293,6 +298,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
         'hongyan'  : frozenset([Dizhi.寅]),
         'hongluan' : frozenset([Dizhi.卯]),
         'tianxi'   : frozenset([Dizhi.酉]),
+        'yima'     : frozenset([Dizhi.寅, Dizhi.申]),
       }
 
       db = TransitDatabase(chart)
@@ -502,16 +508,21 @@ def test_random_cases(bazi: Bazi) -> None:
       def __taohua(dz: Dizhi) -> bool:
         return ShenshaUtils.taohua(y_dz, dz) or ShenshaUtils.taohua(d_dz, dz)
       
+      def __yima(dz: Dizhi) -> bool:
+        return ShenshaUtils.yima(y_dz, dz) or ShenshaUtils.yima(d_dz, dz)
+
       expected_taohua:   set[Dizhi] = set(filter(__taohua, transits_dz_set))
       expected_hongyan:  set[Dizhi] = set(filter(lambda dz : ShenshaUtils.hongyan(dm, dz), transits_dz_set))
       expected_hongluan: set[Dizhi] = set(filter(lambda dz : ShenshaUtils.hongluan(y_dz, dz), transits_dz_set))
       expected_tianxi:   set[Dizhi] = set(filter(lambda dz : ShenshaUtils.tianxi(y_dz, dz), transits_dz_set))
+      expected_yima:     set[Dizhi] = set(filter(__yima, transits_dz_set))
 
       shensha = transits.shensha(year, option)
       assert expected_taohua == shensha['taohua']
       assert expected_hongyan == shensha['hongyan']
       assert expected_hongluan == shensha['hongluan']
       assert expected_tianxi == shensha['tianxi']
+      assert expected_yima == shensha['yima']
 
   # day master and house relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):

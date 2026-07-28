@@ -17,6 +17,8 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
     str_list.append(f'红艳：{", ".join(str(x) for x in dz_fs)}')
   if len(dz_fs := shensha['tianxi']) > 0:
     str_list.append(f'天喜：{", ".join(str(x) for x in dz_fs)}')
+  if len(dz_fs := shensha['yima']) > 0:
+    str_list.append(f'驿马：{", ".join(str(x) for x in dz_fs)}')
   return str_list
 
 
@@ -30,7 +32,7 @@ if __name__ == '__main__':
 
   shensha_str_list = shensha_strs(analyzer.at_birth.shensha)
   if len(shensha_str_list) == 0:
-    print('原局无桃花、红艳、红鸾、天喜星')
+    print('原局无桃花、红艳、红鸾、天喜、驿马星')
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))
@@ -40,7 +42,7 @@ if __name__ == '__main__':
   gz_year = chart.bazi.ganzhi_date.year + 20
   liunian_shensha_str_list = shensha_strs(analyzer.transits.shensha(gz_year, TransitOptions.LIUNIAN))
   if len(liunian_shensha_str_list) == 0:
-    print(f'{gz_year} 流年无桃花、红艳、红鸾、天喜星')
+    print(f'{gz_year} 流年无桃花、红艳、红鸾、天喜、驿马星')
   else:
     print(f'{gz_year} 流年神煞：')
     print('\n'.join(liunian_shensha_str_list))
