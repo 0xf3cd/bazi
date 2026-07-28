@@ -11,7 +11,7 @@ from src.Defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils, BaziUtils
 from src.BaziChart import BaziChart
 from src.Transits import TransitOptions, TransitDatabase
-from src.Analyzer.Relationship import RelationshipAnalyzer, TransitAnalysis
+from src.Analyzer.Relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
 
 class TestAtBirthAnalysis(unittest.TestCase):
@@ -60,6 +60,17 @@ class TestAtBirthAnalysis(unittest.TestCase):
             expected_tianxi.append(dz2)
         self.assertSetEqual(at_birth.shensha['tianxi'], set(expected_tianxi))
         self.assertSetEqual(at_birth.shensha['tianxi'], at_birth.shensha['tianxi'], 'Constancy')
+
+      with self.subTest('Yima / 驿马'):
+        expected_yima: list[Dizhi] = []
+        for dz1, dz2 in itertools.product([y], [m, d, h]):
+          if ShenshaUtils.yima(dz1, dz2):
+            expected_yima.append(dz2)
+        for dz1, dz2 in itertools.product([d], [y, m, h]):
+          if ShenshaUtils.yima(dz1, dz2):
+            expected_yima.append(dz2)
+        self.assertSetEqual(at_birth.shensha['yima'], set(expected_yima))
+        self.assertSetEqual(at_birth.shensha['yima'], at_birth.shensha['yima'], 'Constancy')
 
   @pytest.mark.slow
   def test_day_master_relations(self) -> None:
@@ -203,6 +214,15 @@ class TestTransitAnalysis(unittest.TestCase):
             if ShenshaUtils.tianxi(y_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['tianxi'], set(expected))
+
+        with self.subTest('Yima / 驿马'):
+          expected = []
+          for dz in transit_dz:
+            if ShenshaUtils.yima(y_dz, dz):
+              expected.append(dz)
+            if ShenshaUtils.yima(d_dz, dz):
+              expected.append(dz)
+          self.assertSetEqual(actual['yima'], set(expected))
 
   @pytest.mark.slow
   def test_day_master_relations(self) -> None:
@@ -380,3 +400,10 @@ class TestTransitAnalysis(unittest.TestCase):
         actual = transits_analysis.star(randon_year, random_options)
         self.assertEqual(expected_tg, actual.tiangan)
         self.assertEqual(expected_dz, actual.dizhi)
+
+
+class TestShenshaRegistry(unittest.TestCase):
+  def test_registry_matches_shensha_analysis_keys(self) -> None:
+    '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
+    self.assertSetEqual(set(_REGISTRY.keys()),
+                        set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__))

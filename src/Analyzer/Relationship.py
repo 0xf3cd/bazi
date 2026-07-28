@@ -3,12 +3,14 @@
 import copy
 import functools
 
-from enum import IntFlag, unique
+from dataclasses import dataclass
+from enum import Enum, IntFlag, auto, unique
 from itertools import starmap, product, compress, chain
 from typing import Final, TypedDict, Callable, Union, Iterable
 
-from ..Common import GanzhiData
+from ..Common import GanzhiData, frozendict
 from ..Defines import Tiangan, Dizhi, Shishen, DizhiRelation
+from ..Bazi import Bazi
 from ..BaziChart import BaziChart
 from ..Transits import TransitOptions, TransitDatabase
 from ..Utils import BaziUtils, ShenshaUtils, TianganUtils, DizhiUtils
@@ -33,6 +35,76 @@ def find_shensha(
   return map(lambda x : x[1], compress(producted_args, results))
 
 
+@unique
+class _KeySource(Enum):
+  '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
+  YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
+  YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
+  DAY_MASTER        = auto() # By the day master (看日主).
+
+
+@dataclass(frozen=True)
+class _ShenshaSpec:
+  '''
+  The spec of a Shensha: the predicate and the key source (神煞的规格：判断函数和查询 key).
+
+  Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
+  pairs with `DAY_MASTER`). This contract is guarded by the runtime asserts in `ShenshaUtils`
+  and the registry tests, not by the type system.
+  '''
+  predicate: Callable[..., bool]
+  key:       _KeySource
+
+
+'''The registry of the Shenshas that relationship analysis currently supports (亲密关系分析目前支持的神煞注册表).'''
+_REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
+  'taohua'  : _ShenshaSpec(ShenshaUtils.taohua,   _KeySource.YEAR_OR_DAY_DIZHI),
+  'hongyan' : _ShenshaSpec(ShenshaUtils.hongyan,  _KeySource.DAY_MASTER),
+  'hongluan': _ShenshaSpec(ShenshaUtils.hongluan, _KeySource.YEAR_DIZHI),
+  'tianxi'  : _ShenshaSpec(ShenshaUtils.tianxi,   _KeySource.YEAR_DIZHI),
+  'yima'    : _ShenshaSpec(ShenshaUtils.yima,     _KeySource.YEAR_OR_DAY_DIZHI),
+})
+
+
+def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
+  '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。'''
+  dm = bazi.day_master
+  y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
+
+  args: tuple[_ArgsType, ...]
+  if spec.key is _KeySource.YEAR_DIZHI:
+    args = (([y_dz], [m_dz, d_dz, h_dz]),)
+  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
+    args = (([y_dz], [m_dz, d_dz, h_dz]), ([d_dz], [y_dz, m_dz, h_dz]))
+  elif spec.key is _KeySource.DAY_MASTER:
+    args = (([dm], [y_dz, m_dz, d_dz, h_dz]),)
+  else:
+    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
+    # added a member but forgot to update this evaluator -- not something users can trigger.
+    # `raise` instead of `assert` so the guard survives `python -O`.
+    raise AssertionError(f'`_KeySource` not wired up in `_eval_at_birth`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
+
+  return frozenset(find_shensha(spec.predicate, *args))
+
+
+def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizhi]) -> frozenset[Dizhi]:
+  '''Evaluate a Shensha against the transit Dizhis / 在流运地支上评估某个神煞。'''
+  first_args: _FirstArgType
+  if spec.key is _KeySource.YEAR_DIZHI:
+    first_args = [bazi.year_pillar.dizhi]
+  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
+    first_args = [bazi.year_pillar.dizhi, bazi.day_pillar.dizhi]
+  elif spec.key is _KeySource.DAY_MASTER:
+    first_args = [bazi.day_master]
+  else:
+    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
+    # added a member but forgot to update this evaluator -- not something users can trigger.
+    # `raise` instead of `assert` so the guard survives `python -O`.
+    raise AssertionError(f'`_KeySource` not wired up in `_eval_transits`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
+
+  return frozenset(find_shensha(spec.predicate, (first_args, transit_dizhis)))
+
+
 
 class ShenshaAnalysis(TypedDict):
   # The Taohua Dizhis   (桃花星所在地支)
@@ -43,6 +115,8 @@ class ShenshaAnalysis(TypedDict):
   hongluan: frozenset[Dizhi]
   # The Tianxi Dizhis   (天喜星所在地支)
   tianxi:   frozenset[Dizhi]
+  # The Yima Dizhis     (驿马星所在地支)
+  yima:     frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -52,14 +126,13 @@ class AtBirthAnalysis:
 
   @property
   def shensha(self) -> ShenshaAnalysis:
-    dm = self._chart.bazi.day_master
-    y_dz, m_dz, d_dz, h_dz = self._chart.bazi.four_dizhis
+    bazi = self._chart.bazi
     return {
-      'taohua' :  frozenset(find_shensha(ShenshaUtils.taohua,   ([y_dz],  [m_dz, d_dz, h_dz]), 
-                                                                ([d_dz],  [y_dz, m_dz, h_dz]))),
-      'hongyan':  frozenset(find_shensha(ShenshaUtils.hongyan,  ([dm],    [y_dz, m_dz, d_dz, h_dz]))),
-      'hongluan': frozenset(find_shensha(ShenshaUtils.hongluan, ([y_dz],  [m_dz, d_dz, h_dz]))),
-      'tianxi':   frozenset(find_shensha(ShenshaUtils.tianxi,   ([y_dz],  [m_dz, d_dz, h_dz]))),
+      'taohua' :  _eval_at_birth(_REGISTRY['taohua'],   bazi),
+      'hongyan':  _eval_at_birth(_REGISTRY['hongyan'],  bazi),
+      'hongluan': _eval_at_birth(_REGISTRY['hongluan'], bazi),
+      'tianxi':   _eval_at_birth(_REGISTRY['tianxi'],   bazi),
+      'yima'   :  _eval_at_birth(_REGISTRY['yima'],     bazi),
     }
 
   @property
@@ -106,7 +179,7 @@ class TransitAnalysis:
     '''
     Return the relationship-related Shenshas of the given transits.
 
-    返回给定流年大运等的亲密关系相关的神煞（桃花、红艳、红鸾、天喜）。
+    返回给定流年大运等的亲密关系相关的神煞（桃花、红艳、红鸾、天喜、驿马）。
 
     Args:
     - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
@@ -120,15 +193,13 @@ class TransitAnalysis:
     transit_ganzhis = self._transit_db.ganzhis(gz_year, options)
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
-    dm = self._chart.bazi.day_master
-    y_dz = self._chart.bazi.year_pillar.dizhi
-    d_dz = self._chart.bazi.day_pillar.dizhi
-
+    bazi = self._chart.bazi
     return {
-      'taohua' :  frozenset(find_shensha(ShenshaUtils.taohua,   ([y_dz, d_dz], transit_dizhis))),
-      'hongyan':  frozenset(find_shensha(ShenshaUtils.hongyan,  ([dm],         transit_dizhis))),
-      'hongluan': frozenset(find_shensha(ShenshaUtils.hongluan, ([y_dz],       transit_dizhis))),
-      'tianxi':   frozenset(find_shensha(ShenshaUtils.tianxi,   ([y_dz],       transit_dizhis))),
+      'taohua' :  _eval_transits(_REGISTRY['taohua'],   bazi, transit_dizhis),
+      'hongyan':  _eval_transits(_REGISTRY['hongyan'],  bazi, transit_dizhis),
+      'hongluan': _eval_transits(_REGISTRY['hongluan'], bazi, transit_dizhis),
+      'tianxi':   _eval_transits(_REGISTRY['tianxi'],   bazi, transit_dizhis),
+      'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
     }
   
   def day_master_relations(self, gz_year: int, options: TransitOptions) -> TianganUtils.TianganRelationDiscovery:
