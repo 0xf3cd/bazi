@@ -1,0 +1,30 @@
+# celestial-calendar lunar year table (algo2)
+# schema_version: 1
+# fixture: true  (5-year slice for Loader unit tests; not the shipped table)
+# celestial_version: 0.4.0
+# release_asset: celestial-calendar v0.4.0 / macos_arm64.zip
+# dylib_sha256: 4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5
+# generated_by: scratchpad/gen_fixtures.py (S0 throwaway)
+# generated_on: 2026-07-29
+# source_api: get_lunar_year_info(uint8_t algo, int32_t year)
+# algo: 2  (leap-second aware UTC+8 via jde_to_utc8, celestial #84)
+# timescale: leap-second aware UTC+08:00
+# year_range: 1901..2099 inclusive -- BOTH algos clamped to this window.
+#   algo2 natively reports [410, 5000], which is a placeholder sentinel
+#   (algo2.hpp:443-446 "actually has no limit, simply use").  Clamping keeps one
+#   range contract for both algos.  Widening is a follow-up issue.
+# leap_month: 1..12, or 0 when the year has no leap month.
+#   NOTE: HkoData spells the same thing as `None`; the Loader normalizes.
+# month_len_bits: raw uint16 from the ABI, LSB-first (bit i = the (i+1)-th lunar
+#   month in sequence, leap month occupying its own slot; 1 = 30 days, 0 = 29 days).
+# days_counts: decoded from month_len_bits, 12 or 13 entries -- redundant on purpose,
+#   so a hand-edit of either column is caught by the Loader cross-check.
+# ganzhi: (lunar_year - 4) mod 60 over Ganzhi.list_sexagenary_cycle().
+#   Not consumed at runtime; verified 199/199 against HkoData at generation.
+# columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi
+# rows: 5
+1901 1901-02-19 0 0x0752 29,30,29,29,30,29,30,29,30,30,30,29 辛丑
+1914 1914-01-26 5 0x12ab 30,30,29,30,29,30,29,30,29,30,29,29,30 甲寅
+1917 1917-01-23 2 0x0b69 30,29,29,30,29,30,30,29,30,30,29,30,29 丁巳
+1979 1979-01-28 6 0x0b69 30,29,29,30,29,30,30,29,30,30,29,30,29 己未
+2024 2024-02-10 0 0x06d2 29,30,29,29,30,29,30,30,29,30,30,29 甲辰

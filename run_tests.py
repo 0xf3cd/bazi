@@ -268,6 +268,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
       '*/run_tests.py',
       '*/tests/*',
       'src/Calendar/HkoData/Encoder.py', # The raw data already downloaded. No much need to fully test the encoder.
+      'src/Calendar/CelestialData/Generator.py', # Offline tool, same as the HkoData encoder above.
     ]
   )
   cov.start()
