@@ -47,14 +47,17 @@ those, don't restate them here. Two rules the README doesn't spell out:
 ## PR workflow
 - Branch from `main`; PR body in Chinese, four sections (内容 / 测试 / 验证 / 范围说明);
   squash-merge is the author's call.
-- Before the PR: run the double review round per the shared `review-rounds` skill
-  (`~/ai_memory/skills/review-rounds/SKILL.md`, driver-agnostic — same process as
-  celestial-calendar): a correctness adversarial round × a style/design round,
-  R1 → batched fixes → R2 re-verify; don't touch the worktree while reviewers read.
-  Cross-model calls are plain CLI (`claude -p … --model <model>` / `kimi -p` /
-  `grok -p`); task briefs go on disk for the callee to read.
-- Commits are SK-signed and agents can't sign: commit via GraphQL
-  `createCommitOnBranch` (GitHub signs it), or write a script for the author to run.
+- Before the PR: run a double review round (same process as celestial-calendar) —
+  a correctness adversarial round × a style/design round; R1 findings → batched
+  fixes → R2 re-verify; don't touch the worktree while reviewers read. Reviewers
+  are independent AI models invoked as plain CLI (`claude -p …` / `kimi -p` /
+  `grok -p`), with task briefs written to disk for the callee to read. The detailed
+  playbook is the author's `review-rounds` skill
+  (`~/ai_memory/skills/review-rounds/SKILL.md` — author-machine tooling, not
+  tracked in this repo); contributors without it follow the summary in this bullet.
+- Commits must be signed; the author signs with a hardware security key, which
+  agents can't operate. Agents commit via GraphQL `createCommitOnBranch` (GitHub
+  signs the commit), or write a commit script for the author to run.
 
 ## File conventions
 - Every source file opens with the copyright header, verbatim except the year:
