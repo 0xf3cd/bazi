@@ -44,6 +44,21 @@ those, don't restate them here. Two rules the README doesn't spell out:
     then `python -m coverage report --show-missing` — must stay at **100%**
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
 
+## PR workflow
+- Branch from `main`; PR body in Chinese, four sections (内容 / 测试 / 验证 / 范围说明);
+  squash-merge is the author's call.
+- Before the PR: run a double review round (same process as celestial-calendar) —
+  a correctness adversarial round × a style/design round; R1 findings → batched
+  fixes → R2 re-verify; don't touch the worktree while reviewers read. Reviewers
+  are independent AI models invoked as plain CLI (`claude -p …` / `kimi -p` /
+  `grok -p`), with task briefs written to disk for the callee to read. The detailed
+  playbook is the author's `review-rounds` skill
+  (`~/ai_memory/skills/review-rounds/SKILL.md` — author-machine tooling, not
+  tracked in this repo); contributors without it follow the summary in this bullet.
+- Commits must be signed; the author signs with a hardware security key, which
+  agents can't operate. Agents commit via GraphQL `createCommitOnBranch` (GitHub
+  signs the commit), or write a commit script for the author to run.
+
 ## File conventions
 - Every source file opens with the copyright header, verbatim except the year:
   `# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`
@@ -52,6 +67,16 @@ those, don't restate them here. Two rules the README doesn't spell out:
 - Module filenames are **PascalCase** (`BaziChart.py`). NOT snake_case.
 - Imports: stdlib → third-party → local (relative `from ..Defines import ...`),
   blank line between groups; long typing imports use the grouped `from typing import (…)` form.
+- Multi-line call layout: when an argument is itself a call, or the call grows long,
+  put each argument on its own line and the closing `)` on its own line at the call's
+  indentation (same rule as celestial-calendar). Trivial short calls stay on one line.
+  ```python
+  bazi = Bazi.create(
+    birth_time,
+    gender,
+    precision,
+  )
+  ```
 
 ## Ubiquitous language = Pinyin
 Domain terms keep Pinyin names, never translated (`Tiangan`, `Shensha`, `he`, `chong`).
