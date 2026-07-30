@@ -13,7 +13,7 @@
 #   itself sits near midnight, 0.9s flips the whole *date* attribution.
 #   Measured worst case in window: 1979 大寒 is 4s from midnight.
 # rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)
-# year_range: 1901..2100 inclusive (fixture: 1901,1914,1917,1979,2024)
+# year_range: 1901,1914,1917,1979,2024 (sparse -- the shipped table is 1901..2100)
 # jq_idx: 0..23, identical to bazi `list(Jieqi)` index (0=立春 .. 23=大寒), asserted at generation
 # note: 小寒/大寒 (idx 22/23) of year Y fall in January of Y -- rows are not date-sorted
 # columns: year jq_idx name date time

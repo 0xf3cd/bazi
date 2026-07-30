@@ -111,6 +111,31 @@ class TestJieqiDateWhitelist(unittest.TestCase):
     self.assertEqual([(row.year, row.name) for row in flipped_jies()],
                      [(1917, '大雪'), (1927, '白露')])
 
+  def test_the_derivations_preconditions_hold(self) -> None:
+    '''
+    `affected_ganzhi_months` models a flipped 节 as moving the start of exactly one ganzhi
+    month.  That holds for every 节 except 立春, which is also the *end* of the previous
+    ganzhi year's twelfth month: a flipped 立春 would perturb `(Y - 1, 12)` too, and would
+    falsify the "yearly totals unchanged" check below, since the day gained and the day lost
+    would land in different ganzhi years.
+
+    No shipped table flips 立春, so rather than carry untested branches for a configuration
+    that does not exist, the assumption is asserted here: if a re-baked table ever flips one,
+    this fails first and names what to generalise.  Layer (c) stays *sound* either way --
+    every test there compares a measured set against the derived one, so an unmodelled
+    divergence still turns the suite red.  What this guard protects is the diagnosis.
+    '''
+    self.assertNotIn(
+      Jieqi.立春, {jieqi_of(row) for row in flipped_jies()},
+      'a flipped 立春 also moves (Y - 1, 12): generalise `affected_ganzhi_months` and the '
+      'yearly-total assertion before deleting this guard')
+
+    # The same reasoning at the window edge: the derived days are checked against a scan
+    # bounded by the supported solar range, so a flip in the final month would push the
+    # derived set past where that scan can see it.
+    last: date = HKO.to_date(HKO.get_max_supported_date(CalendarType.SOLAR))
+    self.assertLessEqual(max(affected_solar_days()), last)
+
 
 class TestLunarSurfaceIsIdentical(unittest.TestCase):
   '''Layer (a): celestial's algo1 is the same HKO almanac data, so this is strict.'''

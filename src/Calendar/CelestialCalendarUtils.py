@@ -174,12 +174,19 @@ class CelestialCalendarUtils:
 
   # -- Ganzhi month lengths --------------------------------------------------------
 
-  @functools.lru_cache(maxsize=512)
   def days_counts_in_ganzhi_year(self, ganzhi_year: int) -> list[int]:
     '''
     The length in days of each of the 12 ganzhi months of `ganzhi_year`, measured between
     consecutive 节 *dates* (the ganzhi calendar is date-level, see the module docstring).
     '''
+    # A fresh list per call, from a cache that holds a tuple.  Returning the cached list
+    # itself would let a caller's in-place edit poison every later answer -- and the poison
+    # spreads rather than staying put: `is_valid_ganzhi_date` caches verdicts derived from
+    # this, so undoing the edit does not undo the damage, and no `cache_clear` recovers it.
+    return list(self.__days_counts_in_ganzhi_year(ganzhi_year))
+
+  @functools.lru_cache(maxsize=512)
+  def __days_counts_in_ganzhi_year(self, ganzhi_year: int) -> tuple[int, ...]:
     # A ganzhi year needs the 立春 of the next solar year to close its last month.
     assert ganzhi_year in self._jieqi_table.supported_year_range()
     assert ganzhi_year + 1 in self._jieqi_table.supported_year_range()
@@ -193,7 +200,8 @@ class CelestialCalendarUtils:
     start_dates += [self.jieqi_date(ganzhi_year + 1, jq) for jq in jies[11:]]
     end_dates: list[date] = start_dates[1:] + [self.jieqi_date(ganzhi_year + 1, Jieqi.立春)]
 
-    days_counts: list[int] = [(end - start).days for start, end in zip(start_dates, end_dates)]
+    days_counts: tuple[int, ...] = tuple((end - start).days
+                                         for start, end in zip(start_dates, end_dates))
     assert len(days_counts) == 12
     return days_counts
 
@@ -407,7 +415,9 @@ class CelestialCalendarUtils:
     assert solar_year in self._jieqi_table.supported_year_range()
     return self._jieqi_table.get(solar_year, jieqi)
 
-  @functools.lru_cache(maxsize=1)
+  # maxsize=2, not 1: the cache is class-level, so `ALGO1` and `ALGO2` are two distinct
+  # keys and a size of 1 would make the two singletons evict each other on every call.
+  @functools.lru_cache(maxsize=2)
   def supported_jie_boundaries(self) -> tuple[datetime, datetime]:
     '''
     Return a tuple of datetimes representing the first and last supported Jie accurate time.

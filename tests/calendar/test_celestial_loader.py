@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_celestial_loader.py
 
+import hashlib
 import tempfile
 import unittest
 
@@ -30,6 +31,25 @@ class TestShippedTables(unittest.TestCase):
     for algo in (1, 2):
       table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
       self.assertEqual(table.supported_year_range(), range(1901, 2100))
+
+  def test_data_sections_are_frozen(self) -> None:
+    '''
+    The real moments are the reason this backend exists, yet only nine of the 4,800 are
+    pinned by value anywhere in the suite (seven by the parity whitelist, two directed).
+    Degrading the other 4,791 to midnight passes every other test -- measured, not supposed.
+    So the data sections are hashed: a re-bake stays possible, but it has to come with a
+    deliberate update to this expectation instead of slipping through.  `#` lines are
+    excluded, so re-generating on another day does not trip it.
+    '''
+    digests: dict[str, str] = {
+      'jieqi_moments.txt':     '93475d53800b683dedd4b23c03232e992212cf6369938120e829e1cd0c686c9d',
+      'lunar_years_algo1.txt': '3e238a2e0494b5af8a53f24e2cae150406972e7ecaa3ce673ceba785bbf3b51d',
+      'lunar_years_algo2.txt': '787229f4d253280f5fc0fc5b47adeb9292228ca503aab7032307d6dbde83bb53',
+    }
+    self.assertEqual(sorted(digests), sorted(TABLE_NAMES)) # Every shipped table is covered.
+    for name, digest in digests.items():
+      payload: str = '\n'.join(data_lines(DATA_DIR / name))
+      self.assertEqual(hashlib.sha256(payload.encode('utf-8')).hexdigest(), digest, name)
 
   def test_fixture_rows_appear_verbatim_in_the_shipped_tables(self) -> None:
     '''
@@ -157,6 +177,13 @@ class TestCorruptTables(unittest.TestCase):
     path = self.__write(self.__replace(self.jieqi_lines, '1901 00 ', '1901 00 大寒 1901-02-04 19:39:57'))
     with self.assertRaises(ValueError):
       JieqiMomentTable(path)
+
+  def test_jieqi_index_out_of_range(self) -> None:
+    # 24 is past the end; -1 would otherwise alias from the *end* of the list and read as
+    # 大寒, letting a corrupt row through as long as its name matched that alias.
+    for bad in ('1901 24 立春 1901-02-04 19:39:57', '1901 -1 大寒 1901-02-04 19:39:57'):
+      with self.assertRaises(ValueError):
+        JieqiMomentTable(self.__write(self.__replace(self.jieqi_lines, '1901 00 ', bad)))
 
   def test_duplicate_jieqi_row(self) -> None:
     lines = self.__replace(self.jieqi_lines, '1901 01 ', '1901 00 立春 1901-02-19 15:45:00')

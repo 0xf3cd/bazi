@@ -98,6 +98,20 @@ class TestConversions(unittest.TestCase):
     span: int = (ALGO1.jieqi_date(2025, Jieqi.立春) - ALGO1.jieqi_date(2024, Jieqi.立春)).days
     self.assertEqual(sum(counts), span)
 
+  def test_ganzhi_month_lengths_cannot_poison_the_cache(self) -> None:
+    '''
+    The lengths come from a cache, so handing back the cached list itself would let one
+    caller's in-place edit corrupt every later answer.  Worse, it would not stay contained:
+    `is_valid_ganzhi_date` caches verdicts computed from these lengths, so the wrong answers
+    would outlive the edit and no `cache_clear` would bring them back.
+    '''
+    counts: list[int] = ALGO1.days_counts_in_ganzhi_year(2000)
+    self.assertIsNot(counts, ALGO1.days_counts_in_ganzhi_year(2000))
+
+    counts[0] = 999
+    self.assertEqual(ALGO1.days_counts_in_ganzhi_year(2000)[0], 30)
+    self.assertTrue(ALGO1.is_valid_ganzhi_date(ganzhi(2000, 1, 29)))
+
   def test_round_trips(self) -> None:
     # Every day of a leap lunar year and of a plain one, both ways round.
     for year in (2023, 2024):
@@ -132,7 +146,9 @@ class TestConversions(unittest.TestCase):
       self.assertEqual(ALGO1.to_date(d), date(2024, 2, 4))
 
   def test_to_family_returns_copies(self) -> None:
-    # The identity paths must not hand out the caller's own object, nor a shared one.
+    # The identity paths must not hand the caller its own object back.  Two calls with the
+    # same argument *do* share one object (the cache holds it), which is harmless because
+    # `CalendarDate` exposes only getters over `Final` fields -- and it matches HKO.
     d: CalendarDate = solar(2024, 2, 4)
     self.assertIsNot(ALGO1.to_solar(d), d)
     self.assertIsNot(ALGO1.to_lunar(ALGO1.to_lunar(d)), ALGO1.to_lunar(d))

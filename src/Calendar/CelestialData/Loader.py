@@ -107,7 +107,13 @@ class JieqiMomentTable:
     self._moments: dict[tuple[int, Jieqi], datetime] = {}
 
     for year_str, idx_str, name, date_str, time_str in rows:
-      jieqi: Jieqi = JIEQI_BY_INDEX[int(idx_str)]
+      # Bounds-checked rather than indexed straight in: an out-of-range index would raise a
+      # bare `IndexError` instead of this module's `ValueError` contract, and a *negative*
+      # one would quietly alias from the end of the list (`-1` reads as 大寒).
+      idx: int = int(idx_str)
+      if not 0 <= idx < len(JIEQI_BY_INDEX):
+        raise ValueError(f'{path}: jq_idx {idx_str} is outside 0..{len(JIEQI_BY_INDEX) - 1}')
+      jieqi: Jieqi = JIEQI_BY_INDEX[idx]
       if name != jieqi.value:
         raise ValueError(f'{path}: jq_idx {idx_str} is {jieqi.value}, but the row says {name!r}')
       key = (int(year_str), jieqi)
