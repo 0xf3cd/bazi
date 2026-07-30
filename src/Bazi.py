@@ -55,21 +55,37 @@ class BaziPrecision(Enum):
 
   So, even born on the same day, two persons can have different Year Ganzhi (年柱) and Month Ganzhi (月柱).
 
-  There are 3 levels of precision: DAY, HOUR, and MINUTE. 
-  Different levels apply different rules to determine the starts of years and months. 
-  That is to say, even the same birth time can have different Year Ganzhis and Month Ganzhis on 3 different levels.
+  The 3 levels -- DAY, HOUR, MINUTE -- are three granularities of ONE rule, not three
+  approximations of a single truth. A birth belongs to the new year / month when
+  `birth >= jieqi`, compared at the granularity the birth is known to; a tie resolves to the
+  NEW pillar. That tie-break is the same one the calendar layer freezes -- see
+  `Calendar/CelestialData/SCHEMA.md`, "Boundary convention".
+  三档是同一条规则的三个粒度，不是对同一真值的三种逼近：出生按「已知的粒度」与节气时刻比较，
+  `birth >= jieqi` 归新年 / 新月，相等归新。
 
-  For example, say the day of LICHUN / 立春 in 2000 is 2000-02-04 (in solar / gregorian calendar), and the exact time is 8:35 PM.
-  - DAY:
-    - People born on 2000-02-03 will have "己卯" as the Year Ganzhi, and Month Dizhi is "丑".
-    - However, people born on 2000-02-04 will have "庚辰" as the Year Ganzhi, and Month Dizhi is "寅".
-      - This means even people born before 8:35 PM on 2000-02-04 will be falling into "庚辰" and "寅".
-  - HOUR:
-    - People born in range [2000-02-04 12:00 AM (i.e. 00:00), 2000-02-04 7:59 PM (i.e. 19:59)] will have "己卯" as the Year Ganzhi, and Month Dizhi is "丑".
-    - People born in range [2000-02-04 8:00 PM (i.e. 20:00), 2000-02-04 11:59 PM (i.e. 23:59)] will have "庚辰" as the Year Ganzhi, and Month Dizhi is "寅".
-  - MINUTE:
-    - People born in range [2000-02-04 12:00 AM (i.e. 00:00), 2000-02-04 8:34 PM (i.e. 20:34)] will have "己卯" as the Year Ganzhi, and Month Dizhi is "丑".
-    - People born in range [2000-02-04 8:35 PM (i.e. 20:35), 2000-02-04 11:59 PM (i.e. 23:59)] will have "庚辰" as the Year Ganzhi, and Month Dizhi is "寅".
+  - DAY    -- the birth is known to the day, so dates are compared.    只知道日期，比到日。
+  - HOUR   -- known to the 时辰, so (date, 时辰) is compared.           知道时辰，比到时辰。
+  - MINUTE -- known to the minute, so (date, hour, minute) is compared. 知道到分，比到分。
+
+  `HOUR` means a 时辰 (a traditional double-hour, 子时 starting at 23:00), not a clock hour:
+  birth records come at day, 时辰, or minute granularity -- never "hour but not minute".
+
+  For example, LICHUN / 立春 of 2000 falls at 2000-02-04 20:40:23 (per the celestial backend;
+  the HKO backend publishes the date only). Then:
+  - DAY:    everyone born on 2000-02-04 gets "庚辰" and Month Dizhi "寅", including those born
+            before 20:40:23 -- at day granularity, 02-04 >= 02-04 is a tie, and ties go new.
+            Those born on 2000-02-03 get "己卯" and "丑".
+  - HOUR:   born in 戌时 [19:00, 21:00), the 时辰 holding the jieqi, gets "庚辰" and "寅" (a tie
+            again); born in 酉时 [17:00, 19:00) or earlier that day gets "己卯" and "丑".
+  - MINUTE: born at or after 20:40 gets "庚辰" and "寅"; before it, "己卯" and "丑".
+
+  This is a rule, not an estimate, and the difference is visible at the extremes: LICHUN of
+  2017 falls at 2017-02-03 23:34:03, so DAY assigns all of 02-03 to the new year even though
+  98% of that day precedes the jieqi. That is what the rule says, not a defect in it -- an
+  estimator would have to flip its answer based on a clock time the DAY caller is not claiming
+  to know, which would also make ganzhi month lengths depend on it.
+
+  Only DAY is implemented so far; HOUR and MINUTE are https://github.com/0xf3cd/bazi/issues/6.
   '''
   DAY    = 0
   HOUR   = 1
@@ -161,6 +177,12 @@ class Bazi:
     self._month_dizhi: Final[Dizhi] = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
+    #
+    # 晚子时换日: the day pillar rolls at 23:00 (when 子时 begins), which the year and month
+    # pillars above deliberately do NOT do -- they compare dates, per `BaziPrecision`. So a
+    # birth at 23:30 takes the *next* day's day pillar while keeping the *current* date's year
+    # and month pillars. Both halves of that are variants tracked in issue #69, and a 子正换日
+    # variant has to say which pillars it moves; `test_bazi` pins today's answer meanwhile.
     day_offset: int = 0 if self._birth_time.hour < 23 else 1
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 

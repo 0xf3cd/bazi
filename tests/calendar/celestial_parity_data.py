@@ -35,8 +35,9 @@ class JieqiDateDivergence(NamedTuple):
 
 # Exactly 7 divergences in the whole 1901..2100 window (4800 rows).
 # The 1912..1928 cluster is pre-1972 UT1-proxy / early-epoch ΔT model noise; the two
-# directions do not share one sign (1912/1913 flip one way, 1917/1927/1928 the other),
-# so no constant correction (e.g. LMT) can explain them -- per-entry attribution only.
+# directions do not share one sign (1912/1913 flip one way, 1917/1927/1928 the other), so no
+# single constant correction explains the whole set -- per-entry attribution only. The two 节
+# among them do have a candidate mechanism of their own; see their attributions.
 JIEQI_DATE_DIVERGENCES: Final[tuple[JieqiDateDivergence, ...]] = (
   JieqiDateDivergence(
     year=1912, jq_idx=19, name='小雪',
@@ -62,9 +63,15 @@ JIEQI_DATE_DIVERGENCES: Final[tuple[JieqiDateDivergence, ...]] = (
     celestial_moment=datetime(1917, 12, 8, 0, 1, 5),
     hko_date=date(1917, 12, 7),
     attribution=(
-      '节 (month boundary -- propagates into ganzhi-calendar methods). 65s after '
-      'midnight, celestial one day LATER than HKO: opposite sign to 1912/1913, '
-      'which rules out a constant-offset explanation. Same early-epoch ΔT noise class.'
+      '节 (month boundary -- propagates into ganzhi-calendar methods). 65s after midnight, '
+      'celestial one day LATER than HKO. Candidate mechanism (issue #69 appendix): China '
+      'adopted the 120°E standard time in 1929; before that the almanac was computed in '
+      'Beijing local mean time, UTC+7:45:40, which is 14m20s earlier -- enough to move a '
+      'moment this close to midnight onto the previous date, which is what HKO publishes. '
+      'Hypothesis not closed: of the 5 pre-1929 节 inside that 14m20s window, HKO matches '
+      'local mean time on only this one and 1927 白露, and 120°E on the other three, so its '
+      'own convention is inconsistent. Sign differs from 1912/1913, so this is not a single '
+      'offset applied throughout.'
     ),
   ),
   JieqiDateDivergence(
@@ -72,8 +79,10 @@ JIEQI_DATE_DIVERGENCES: Final[tuple[JieqiDateDivergence, ...]] = (
     celestial_moment=datetime(1927, 9, 9, 0, 5, 30),
     hko_date=date(1927, 9, 8),
     attribution=(
-      '节 (month boundary -- propagates into ganzhi-calendar methods). 5m30s after '
-      'midnight, celestial one day later than HKO. Same early-epoch ΔT noise class.'
+      '节 (month boundary -- propagates into ganzhi-calendar methods). 5m30s after midnight, '
+      'celestial one day later than HKO. Same candidate mechanism as 1917 大雪: pre-1929 '
+      'Beijing local mean time (UTC+7:45:40) would place it on 09-08, which is HKO\'s date. '
+      'The two 节 in this whitelist are exactly the two the mechanism accounts for.'
     ),
   ),
   JieqiDateDivergence(

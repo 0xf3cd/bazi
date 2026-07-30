@@ -346,6 +346,11 @@ class CelestialCalendarUtils:
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `GANZHI` type.
+
+    Note: `datetime` is a `date` subclass, so it is accepted here and **its time of day is
+    discarded** -- the answer is the same for every moment of a given day, even though this
+    backend knows the jieqi moment to the second. Ganzhi attribution is date-level by design;
+    which granularity a chart compares at is `BaziPrecision`'s decision, not this method's.
     '''
 
     calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
@@ -365,7 +370,8 @@ class CelestialCalendarUtils:
 
     Args:
     - d: (Union[date, CalendarDate]) The input date.
-      - If `d` is of `datetime` type, it will be casted to `date`.
+      - If `d` is of `datetime` type, it will be casted to `date` (the time of day is
+        discarded -- `datetime` is accepted because it is a `date` subclass).
 
     Return: (date) a converted date with `date` type.
     '''
