@@ -315,9 +315,12 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date, dylib_sha256: 
 
 
 def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date, dylib_sha256: str) -> str:
+  # Machine-readable header lines carry the bare value only; prose goes to continuation
+  # lines (`#` + two spaces) -- Lane C's fixture convention, so the Loader never parses
+  # prose as part of a value.
   algo_note: Final[dict[int, str]] = {
-    1: 'HKO official almanac lineage -- the default',
-    2: 'leap-second aware UTC+8 via jde_to_utc8, celestial #84',
+    1: 'HKO official almanac lineage -- the default.',
+    2: 'Leap-second aware UTC+8 via jde_to_utc8, celestial #84.',
   }
   timescale_note: Final[dict[int, str]] = {
     1: 'HKO official civil dates (no astronomical timescale involved)',
@@ -326,7 +329,8 @@ def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date, dyl
   header: list[str] = [
     f'# celestial-calendar lunar year table (algo{algo})',
     *_common_header(generated_on, dylib_sha256, 'get_lunar_year_info(uint8_t algo, int32_t year)'),
-    f'# algo: {algo}  ({algo_note[algo]})',
+    f'# algo: {algo}',
+    f'#   {algo_note[algo]}',
     f'# timescale: {timescale_note[algo]}',
     f'# year_range: {LUNAR_START_YEAR}..{LUNAR_END_YEAR} inclusive -- BOTH algos clamped to this window.',
     '#   algo2 natively reports [410, 5000], which is a placeholder sentinel',
