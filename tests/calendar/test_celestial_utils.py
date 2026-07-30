@@ -10,6 +10,10 @@ from src.Calendar.CalendarDefines import CalendarType, CalendarDate
 from src.Calendar.CelestialCalendarUtils import ALGO1, ALGO2
 from src.Defines import Jieqi
 
+# The whitelist's single source of truth.  Bare sibling import -- see the NOTE in
+# `test_celestial_tables.py` for why `from tests.calendar...` is not used.
+from celestial_parity_data import ALGO2_DIVERGENT_YEARS
+
 
 def solar(year: int, month: int, day: int) -> CalendarDate:
   return CalendarDate(year, month, day, CalendarType.SOLAR)
@@ -234,11 +238,6 @@ class TestJieqi(unittest.TestCase):
 
 
 class TestDualLunarAlgorithms(unittest.TestCase):
-  # celestial's own `src/test/lunar/diff_test.cpp` records these as the only years where
-  # the two algorithms disagree in this window.  Recorded, not judged: algo1 tracks the
-  # HKO almanac and stays the default.
-  KNOWN_DIVERGENT_YEARS: list[int] = [1914, 1915, 1916, 1920, 2057, 2097]
-
   def test_divergence_is_exactly_the_known_years(self) -> None:
     '''
     Scanned over the whole window rather than over month starts: 1915's difference is in
@@ -257,7 +256,7 @@ class TestDualLunarAlgorithms(unittest.TestCase):
         diverging_years |= {algo1_lunar.year, algo2_lunar.year}
       day += timedelta(days=1)
 
-    self.assertEqual(sorted(diverging_years), self.KNOWN_DIVERGENT_YEARS)
+    self.assertEqual(tuple(sorted(diverging_years)), ALGO2_DIVERGENT_YEARS)
     # Each divergence is one lunar month shifted by a day, so it spans exactly 30 days.
     self.assertEqual(len(diverging_days), 150)
 

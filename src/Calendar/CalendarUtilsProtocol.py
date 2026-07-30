@@ -13,13 +13,11 @@ class CalendarUtilsProtocol(Protocol):
   '''
   The protocol that all CalendarUtils classes conform to.
 
-  What implementations differ on is jieqi precision.  `HkoDataCalendarUtils` reads the Hong
-  Kong Observatory almanac, which publishes dates only, so `jieqi_moment` can answer no
-  better than midnight of that date.  `CelestialCalendarUtils` reads tables baked from
-  celestial-calendar and answers to the second.
-
-  Everything else is date-level by design and the two agree, which is what makes them
-  substitutable: both descend from the same almanac.
+  Implementations may differ only in the *precision* of `jieqi_moment`: a data source that
+  publishes jieqi dates but not their moments can answer no better than midnight of that
+  date (`HkoDataCalendarUtils`), while one carrying the real moments answers to the second
+  (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
+  what makes conforming implementations substitutable for one another.
   '''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...

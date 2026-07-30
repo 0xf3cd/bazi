@@ -68,6 +68,9 @@ class JieqiMomentQuery(ctypes.Structure):
   ]
 
 class LunarYearInfo(ctypes.Structure):
+  # The name mirrors the C struct in `celestial.h` and is unrelated to the identically named
+  # `TypedDict` in `Loader.py`, which mirrors HkoData's record instead.
+  #
   # `month_len` is a scalar uint16, NOT an array: declaring it as `c_uint16 * 13`
   # inflates the struct past the register-return threshold, breaks the struct-by-value
   # ABI, and every call then silently returns `valid = false` (no crash).
@@ -155,23 +158,11 @@ class LunarRow:
   ganzhi:          Ganzhi
 
 
-def _query_jieqi_moment(lib: ctypes.CDLL, year: int, jq_idx: int) -> JieqiMomentQuery:
-  query: JieqiMomentQuery = lib.query_jieqi_moment(c_int32(year), c_uint8(jq_idx))
-  return query
-
 def _jieqi_name(lib: ctypes.CDLL, jq_idx: int) -> str:
   buf = (c_char * 32)()
   if not lib.get_jieqi_name(c_uint8(jq_idx), buf, c_uint32(32)):
     raise RuntimeError(f'get_jieqi_name({jq_idx}) failed.')
   return buf.value.decode('utf-8')
-
-def _supported_lunar_year_range(lib: ctypes.CDLL, algo: int) -> SupportedLunarYearRange:
-  year_range: SupportedLunarYearRange = lib.get_supported_lunar_year_range(c_uint8(algo))
-  return year_range
-
-def _lunar_year_info(lib: ctypes.CDLL, algo: int, year: int) -> LunarYearInfo:
-  info: LunarYearInfo = lib.get_lunar_year_info(c_uint8(algo), c_int32(year))
-  return info
 
 
 def _ut1_moment_to_utc8(query: JieqiMomentQuery) -> datetime:
@@ -199,7 +190,7 @@ def _gen_jieqi_rows(lib: ctypes.CDLL) -> list[JieqiRow]:
   rows: list[JieqiRow] = []
   for year in range(JIEQI_START_YEAR, JIEQI_END_YEAR + 1):
     for idx, jq in enumerate(jieqi_list):
-      query: JieqiMomentQuery = _query_jieqi_moment(lib, year, idx)
+      query: JieqiMomentQuery = lib.query_jieqi_moment(year, idx)
       # Per-row valid gate: the struct contract signals failure with `valid == false`,
       # silently -- a wrong ctypes layout makes EVERY row invalid without crashing.
       if not query.valid:
@@ -231,7 +222,7 @@ def _encode_days_counts(days_counts: tuple[int, ...]) -> int:
 def _gen_lunar_rows(lib: ctypes.CDLL, algo: int) -> list[LunarRow]:
   assert algo in (1, 2)
 
-  year_range: SupportedLunarYearRange = _supported_lunar_year_range(lib, algo)
+  year_range: SupportedLunarYearRange = lib.get_supported_lunar_year_range(algo)
   if not year_range.valid:
     raise RuntimeError(f'get_supported_lunar_year_range({algo}) returned valid = false.')
   if year_range.start > LUNAR_START_YEAR or year_range.end < LUNAR_END_YEAR:
@@ -244,7 +235,7 @@ def _gen_lunar_rows(lib: ctypes.CDLL, algo: int) -> list[LunarRow]:
 
   rows: list[LunarRow] = []
   for lunar_year in range(LUNAR_START_YEAR, LUNAR_END_YEAR + 1): # The clamp; see LUNAR_END_YEAR.
-    info: LunarYearInfo = _lunar_year_info(lib, algo, lunar_year)
+    info: LunarYearInfo = lib.get_lunar_year_info(algo, lunar_year)
     # Per-row valid gate.
     if not info.valid:
       raise RuntimeError(f'Per-row valid gate failed: get_lunar_year_info({algo}, {lunar_year}) returned valid = false.')
@@ -318,7 +309,7 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date, dylib_sha256: 
 
 def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date, dylib_sha256: str) -> str:
   # Machine-readable header lines carry the bare value only; prose goes to continuation
-  # lines (`#` + two spaces) -- Lane C's fixture convention, so the Loader never parses
+  # lines (`#` + two spaces) -- the convention `SCHEMA.md` states, so the Loader never parses
   # prose as part of a value.  Per-column prose therefore hangs off `columns` rather than
   # taking a key of its own: a `# leap_month: 1..12, or 0 when ...` line reads to the
   # Loader as a provenance key whose value is a sentence.

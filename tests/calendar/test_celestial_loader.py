@@ -34,11 +34,10 @@ class TestShippedTables(unittest.TestCase):
 
   def test_data_sections_are_frozen(self) -> None:
     '''
-    The real moments are the reason this backend exists, yet only nine of the 4,800 are
-    pinned by value anywhere in the suite (seven by the parity whitelist, two directed).
-    Degrading the other 4,791 to midnight passes every other test -- measured, not supposed.
-    So the data sections are hashed: a re-bake stays possible, but it has to come with a
-    deliberate update to this expectation instead of slipping through.  `#` lines are
+    The real moments are the reason this backend exists, yet only a handful of the 4,800 are
+    pinned by value anywhere else in the suite -- the parity whitelist plus a few directed
+    cases.  So the data sections are hashed: a re-bake stays possible, but it has to come
+    with a deliberate update to this expectation instead of slipping through.  `#` lines are
     excluded, so re-generating on another day does not trip it.
     '''
     digests: dict[str, str] = {
@@ -54,7 +53,8 @@ class TestShippedTables(unittest.TestCase):
   def test_fixture_rows_appear_verbatim_in_the_shipped_tables(self) -> None:
     '''
     The fixtures and the shipped tables were written by two generators that never shared
-    code (S0's throwaway and `CelestialData/Generator.py`).  Byte-identical data lines on
+    code (the fixtures came from a throwaway script, the tables from
+    `CelestialData/Generator.py`).  Byte-identical data lines on
     the overlapping years is therefore a check on `SCHEMA.md` itself, not just on the data.
     '''
     for name in TABLE_NAMES:
@@ -67,7 +67,7 @@ class TestShippedTables(unittest.TestCase):
 
 class TestFixtureTables(unittest.TestCase):
   '''
-  The fixtures are a 5-year slice in the shipped format, frozen at S0.  Being a sparse
+  The fixtures are a 5-year slice in the shipped format, frozen when the schema was.  Being a sparse
   slice, they are loaded with `contiguous_years=False`; the shipped tables use the strict
   default.
   '''

@@ -5,7 +5,7 @@
 # celestial_version: 0.4.0
 # release_asset: celestial-calendar v0.4.0 / macos_arm64.zip
 # dylib_sha256: 4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5
-# generated_by: scratchpad/gen_fixtures.py (S0 throwaway)
+# generated_by: scratchpad/gen_fixtures.py (a throwaway, not a maintained tool)
 # generated_on: 2026-07-29
 # source_api: get_lunar_year_info(uint8_t algo, int32_t year)
 # algo: 1

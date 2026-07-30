@@ -59,7 +59,9 @@ class CelestialCalendarUtils:
   @functools.lru_cache(maxsize=512)
   def get_min_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if date_type == CalendarType.SOLAR:
-      # The first day of the earliest lunar year the table covers.
+      # Anchored on the lunar table for the same reason as `get_max_supported_date` below:
+      # `solar_to_lunar` looks the lunar year up by the solar year, so a supported solar date
+      # must have a lunar year to land in.
       first: date = self._lunar_table.get(min(self._lunar_table.supported_year_range()))['first_solar_day']
       return CalendarDate(first.year, first.month, first.day, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
@@ -179,10 +181,8 @@ class CelestialCalendarUtils:
     The length in days of each of the 12 ganzhi months of `ganzhi_year`, measured between
     consecutive 节 *dates* (the ganzhi calendar is date-level, see the module docstring).
     '''
-    # A fresh list per call, from a cache that holds a tuple.  Returning the cached list
-    # itself would let a caller's in-place edit poison every later answer -- and the poison
-    # spreads rather than staying put: `is_valid_ganzhi_date` caches verdicts derived from
-    # this, so undoing the edit does not undo the damage, and no `cache_clear` recovers it.
+    # A fresh list per call, from a cache that holds a tuple: returning the cached list
+    # itself would let a caller's in-place edit poison every later answer.
     return list(self.__days_counts_in_ganzhi_year(ganzhi_year))
 
   @functools.lru_cache(maxsize=512)

@@ -26,11 +26,9 @@ class CalendarBackend(Enum):
     同上，但采用 celestial-calendar 的第二套阴历算法。199 个支持年份中有 6 年与
     CELESTIAL 不同；CELESTIAL 贴合香港天文台官方历书，应优先选用。
 
-  The lunar algorithm is part of the backend's identity rather than a switch on it: the
-  utils cache aggressively, so a mutable switch would let a flip silently return results
-  computed under the previous algorithm.
-  阴历算法是后端身份的一部分，而非其上的开关：历法工具大量缓存，可变开关会让切换后
-  静默返回按旧算法算出的结果。
+  The lunar algorithm is part of the backend's identity rather than a switch on it; see
+  `CelestialCalendarUtils` for why.
+  阴历算法是后端身份的一部分，而非其上的开关；原因见 `CelestialCalendarUtils`。
 
   See https://github.com/0xf3cd/bazi/issues/2 and
       https://github.com/0xf3cd/bazi/issues/6
@@ -85,7 +83,8 @@ def calendar_utils_of(backend: Union[CalendarBackend, str]) -> CalendarUtilsProt
     # The protocol is spelled with staticmethods, which fits the module-shaped HKO backend;
     # this one is an object, because its two lunar algorithms need separate state. Both
     # satisfy the protocol when called, and `test_calendar_backend` asserts that at runtime
-    # for every member, which is the check this `cast` gives up.
+    # for every member, which is the check this `cast` gives up. Unifying the two shapes is
+    # tracked in issue #86.
     return cast(CalendarUtilsProtocol, utils)
 
   # Invariant: every enum member must be wired up above. Reaching here means we

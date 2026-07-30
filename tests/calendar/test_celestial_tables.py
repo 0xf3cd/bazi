@@ -5,7 +5,7 @@
 # the tables are checked against HkoData DIRECTLY, not through any protocol implementation
 # -- so the tables are verified before any consumer exists, and a bad table cannot silently
 # poison the charts downstream. The table parser below is deliberately a minimal independent
-# reader (not Lane C's `Loader.py`): writer (Generator.py), loader (Lane C), and this reader
+# reader (not `Loader.py`): writer (`Generator.py`), loader (`Loader.py`), and this reader
 # are three independent implementations of the same `SCHEMA.md`, so the schema itself is tested.
 #
 # NOTE: parity proves EQUIVALENCE, not truth (parity 证的是等价性,不是真值). HkoData and
@@ -127,13 +127,13 @@ def _load_lunar_table(path: Path) -> tuple[dict[str, str], list[_LunarRow]]:
 
 class TestHeaderKeysAreClosed(unittest.TestCase):
   '''
-  SCHEMA.md declares the provenance namespace closed.  The generator used to spend keys on
-  column documentation -- `# leap_month: 1..12, or 0 when the year has no leap month.` --
-  which every reader here and in `Loader` took for a provenance key whose value happened to
-  be a sentence.  Prose about a column belongs on continuation lines under `columns`.
+  SCHEMA.md declares the provenance namespace closed, and a column name must never take a
+  key of its own: `# leap_month: 1..12, or 0 when the year has no leap month.` reads to every
+  parser here and in `Loader` as a provenance key whose value happens to be a sentence.
+  Prose about a column belongs on continuation lines under `columns`.
 
-  One contract stated in three places (this file, the generator, the loader's regex) drifted
-  apart once; this is what makes the next drift fail rather than ship.
+  The contract is stated in three independent places -- this file, the generator, and the
+  loader's regex -- so nothing but a test can keep them from drifting apart.
   '''
 
   def test_shipped_tables(self) -> None:
