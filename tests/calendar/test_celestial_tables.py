@@ -37,8 +37,18 @@ JIEQI_TABLE_PATH: Final[Path] = DATA_DIR / 'jieqi_moments.txt'
 ALGO1_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo1.txt'
 ALGO2_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo2.txt'
 
+FIXTURE_DIR: Final[Path] = Path(__file__).parent / 'celestial_fixtures'
+
 JIEQI_LIST: Final[list[Jieqi]] = list(Jieqi)
 SEXAGENARY_CYCLE: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
+
+# SCHEMA.md's closed provenance namespace, restated here as the assertable form of it.
+_COMMON_HEADER_KEYS: Final[frozenset[str]] = frozenset({
+  'schema_version', 'celestial_version', 'release_asset', 'dylib_sha256', 'generated_by',
+  'generated_on', 'source_api', 'timescale', 'year_range', 'columns', 'rows',
+})
+JIEQI_HEADER_KEYS: Final[frozenset[str]] = _COMMON_HEADER_KEYS | {'rounding', 'timescale_caveat'}
+LUNAR_HEADER_KEYS: Final[frozenset[str]] = _COMMON_HEADER_KEYS | {'algo'}
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +124,36 @@ def _load_lunar_table(path: Path) -> tuple[dict[str, str], list[_LunarRow]]:
 
 
 # ---------------------------------------------------------------------------
+
+class TestHeaderKeysAreClosed(unittest.TestCase):
+  '''
+  SCHEMA.md declares the provenance namespace closed.  The generator used to spend keys on
+  column documentation -- `# leap_month: 1..12, or 0 when the year has no leap month.` --
+  which every reader here and in `Loader` took for a provenance key whose value happened to
+  be a sentence.  Prose about a column belongs on continuation lines under `columns`.
+
+  One contract stated in three places (this file, the generator, the loader's regex) drifted
+  apart once; this is what makes the next drift fail rather than ship.
+  '''
+
+  def test_shipped_tables(self) -> None:
+    for path, expected in ((JIEQI_TABLE_PATH, JIEQI_HEADER_KEYS),
+                           (ALGO1_TABLE_PATH, LUNAR_HEADER_KEYS),
+                           (ALGO2_TABLE_PATH, LUNAR_HEADER_KEYS)):
+      with self.subTest(table=path.name):
+        header, _ = _read_table(path)
+        self.assertEqual(frozenset(header), expected)
+
+  def test_fixtures(self) -> None:
+    # The fixtures carry one key more and are otherwise the same format, which is the whole
+    # point of them: a Loader that passes on a fixture is reading the shipped layout.
+    for name, expected in (('jieqi_moments.txt', JIEQI_HEADER_KEYS),
+                           ('lunar_years_algo1.txt', LUNAR_HEADER_KEYS),
+                           ('lunar_years_algo2.txt', LUNAR_HEADER_KEYS)):
+      with self.subTest(fixture=name):
+        header, _ = _read_table(FIXTURE_DIR / name)
+        self.assertEqual(frozenset(header), expected | {'fixture'})
+
 
 class TestJieqiTableShape(unittest.TestCase):
   '''The jieqi table itself: row count, ordering, jq_idx <-> name, the 小寒/大寒 January note.'''

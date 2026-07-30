@@ -1,6 +1,7 @@
 # celestial-calendar jieqi moment table
 # schema_version: 1
-# fixture: true  (5-year slice for Loader unit tests; not the shipped table)
+# fixture: true
+#   A sparse slice for Loader unit tests, not the shipped table.
 # celestial_version: 0.4.0
 # release_asset: celestial-calendar v0.4.0 / macos_arm64.zip
 # dylib_sha256: 4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5
@@ -14,9 +15,11 @@
 #   Measured worst case in window: 1979 大寒 is 4s from midnight.
 # rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)
 # year_range: 1901,1914,1917,1979,2024 (sparse -- the shipped table is 1901..2100)
-# jq_idx: 0..23, identical to bazi `list(Jieqi)` index (0=立春 .. 23=大寒), asserted at generation
-# note: 小寒/大寒 (idx 22/23) of year Y fall in January of Y -- rows are not date-sorted
 # columns: year jq_idx name date time
+#   jq_idx is 0..23, identical to the bazi `list(Jieqi)` index (0=立春 .. 23=大寒), and
+#   `name` is cross-checked against get_jieqi_name at generation.
+#   Rows ascend by (year, jq_idx), which is not date order: 小寒/大寒 (idx 22/23) of
+#   year Y fall in January of Y.
 # rows: 120
 1901 00 立春 1901-02-04 19:39:57
 1901 01 雨水 1901-02-19 15:45:00

@@ -302,9 +302,11 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date, dylib_sha256: 
     '#   Measured worst case in window: 1979 大寒 is 4s from midnight.',
     '# rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)',
     f'# year_range: {JIEQI_START_YEAR}..{JIEQI_END_YEAR} inclusive',
-    '# jq_idx: 0..23, identical to bazi `list(Jieqi)` index (0=立春 .. 23=大寒), asserted at generation',
-    '# note: 小寒/大寒 (idx 22/23) of year Y fall in January of Y -- rows are not date-sorted',
     '# columns: year jq_idx name date time',
+    '#   jq_idx is 0..23, identical to the bazi `list(Jieqi)` index (0=立春 .. 23=大寒), and',
+    '#   `name` is cross-checked against get_jieqi_name at generation.',
+    '#   Rows ascend by (year, jq_idx), which is not date order: 小寒/大寒 (idx 22/23) of',
+    '#   year Y fall in January of Y.',
     f'# rows: {len(rows)}',
   ]
   lines: list[str] = [
@@ -317,7 +319,9 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date, dylib_sha256: 
 def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date, dylib_sha256: str) -> str:
   # Machine-readable header lines carry the bare value only; prose goes to continuation
   # lines (`#` + two spaces) -- Lane C's fixture convention, so the Loader never parses
-  # prose as part of a value.
+  # prose as part of a value.  Per-column prose therefore hangs off `columns` rather than
+  # taking a key of its own: a `# leap_month: 1..12, or 0 when ...` line reads to the
+  # Loader as a provenance key whose value is a sentence.
   algo_note: Final[dict[int, str]] = {
     1: 'HKO official almanac lineage -- the default.',
     2: 'Leap-second aware UTC+8 via jde_to_utc8, celestial #84.',
@@ -336,15 +340,16 @@ def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date, dyl
     '#   algo2 natively reports [410, 5000], which is a placeholder sentinel',
     '#   (algo2.hpp:443-446 "actually has no limit, simply use").  Clamping keeps one',
     '#   range contract for both algos.  Widening is a follow-up issue.',
-    '# leap_month: 1..12, or 0 when the year has no leap month.',
-    '#   NOTE: HkoData spells the same thing as `None`; the Loader normalizes.',
-    '# month_len_bits: raw uint16 from the ABI, LSB-first (bit i = the (i+1)-th lunar',
-    '#   month in sequence, leap month occupying its own slot; 1 = 30 days, 0 = 29 days).',
-    '# days_counts: decoded from month_len_bits, 12 or 13 entries -- redundant on purpose,',
-    '#   so a hand-edit of either column is caught by the Loader cross-check.',
-    '# ganzhi: (lunar_year - 4) mod 60 over Ganzhi.list_sexagenary_cycle().',
-    '#   Not consumed at runtime; verified 199/199 against HkoData at generation.',
     '# columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi',
+    '#   leap_month -- 1..12, or 0 when the year has no leap month.  HkoData spells the same',
+    '#   thing as `None`; the Loader normalizes.',
+    '#   month_len_bits -- raw uint16 from the ABI, LSB-first (bit i = the (i+1)-th lunar',
+    '#   month in sequence, leap month occupying its own slot; 1 = 30 days, 0 = 29 days).',
+    '#   days_counts -- decoded from month_len_bits, 12 or 13 entries; redundant on purpose,',
+    '#   so a hand-edit of either column is caught by the Loader cross-check.',
+    '#   ganzhi -- (lunar_year - 4) mod 60 over Ganzhi.list_sexagenary_cycle(); not consumed',
+    '#   at runtime.  The 199/199 agreement with HkoData is checked by the test suite, not',
+    '#   here: see tests/calendar/test_celestial_tables.py.',
     f'# rows: {len(rows)}',
   ]
   lines: list[str] = [

@@ -12,14 +12,14 @@ from .CalendarDefines import CalendarType, CalendarDate
 class CalendarUtilsProtocol(Protocol):
   '''
   The protocol that all CalendarUtils classes conform to.
-  
-  Currently, only HKO-data-based calendar utils are supported/implemented, which is at
-  day-level precision, meaning that we are unable to know the accurate time of Jieqis.
 
-  In the future, I plan to implement a C++-based calendar utils, using astronomical algorithms.
-  With that, it becomes possible to know the accurate time of Jieqis.
+  What implementations differ on is jieqi precision.  `HkoDataCalendarUtils` reads the Hong
+  Kong Observatory almanac, which publishes dates only, so `jieqi_moment` can answer no
+  better than midnight of that date.  `CelestialCalendarUtils` reads tables baked from
+  celestial-calendar and answers to the second.
 
-  Creating this protocol just to ensure the smooth migration to future C++-based calendar utils.
+  Everything else is date-level by design and the two agree, which is what makes them
+  substitutable: both descend from the same almanac.
   '''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...

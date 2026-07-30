@@ -45,6 +45,14 @@ rows                exact row count; the loader asserts it against the lines it 
 columns             space-separated column names, in order
 ```
 
+Optional keys: `timescale_caveat` and `rounding` (jieqi table), `algo` (lunar tables),
+`fixture` (fixtures only). **The key set is closed** — a column name must never become a
+key of its own, because `# leap_month: 1..12, or 0 when …` reads to the loader as a
+provenance key whose value is a sentence. Per-column prose belongs on continuation lines
+under `columns`. `tests/calendar/test_celestial_tables.py` asserts the parsed key set of
+every shipped table and fixture against this list, so the three statements of the contract
+— this document, the generator, and the loader's regex — cannot drift apart silently.
+
 ## `jieqi_moments.txt`
 
 ```
@@ -92,20 +100,22 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
   `None`; the loader normalises when comparing.
 - `month_len_bits` — the raw `uint16` from the ABI, hex. **LSB-first**: bit *i* is the
   *(i+1)*-th lunar month in sequence (a leap month occupies its own slot), `1` = 30 days,
-  `0` = 29 days. Verified against HkoData `days_counts` 199/199 for algo1.
+  `0` = 29 days. Agrees with HkoData `days_counts` 199/199 for algo1 — checked by
+  `tests/calendar/test_celestial_tables.py`, not at generation.
 - `days_counts` — decoded from `month_len_bits`, 12 or 13 entries. Redundant on purpose:
   the loader asserts the two agree, so hand-editing either one fails.
 - `ganzhi` — `(lunar_year - 4) mod 60` over `Ganzhi.list_sexagenary_cycle()`. Not consumed
-  at runtime (HKO's `LunarYearInfo` carries it, so parity needs the column to exist);
-  verified 199/199 against HkoData at generation.
+  at runtime (HKO's `LunarYearInfo` carries it, so parity needs the column to exist); its
+  199/199 agreement with HkoData is a test, not a generation gate. The generator imports
+  nothing from `HkoData` — the four gates it does enforce are listed below.
 - **algo1 is the default.** It is the HKO official-almanac lineage — the lunar surface is a
   display concern and should track the official almanac; the four pillars are jieqi-based
   and never consume the lunar calendar. algo2 (leap-second aware UTC+8 via `jde_to_utc8`,
   celestial #84) is opt-in.
 - The two algos are known to disagree on exactly **6 years in this window**:
   `1914, 1915, 1916, 1920, 2057, 2097` (celestial `src/test/lunar/diff_test.cpp`;
-  independently reproduced here against HkoData — algo1 matches HKO 199/199, so algo2's
-  differences from HKO are exactly its differences from algo1).
+  independently reproduced against HkoData by the test suite — algo1 matches HKO 199/199,
+  so algo2's differences from HKO are exactly its differences from algo1).
 
 ## Generator hard gates
 
