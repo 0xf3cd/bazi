@@ -28,32 +28,15 @@ from datetime import date, timedelta
 from src.Calendar import HkoDataCalendarUtils as HKO
 from src.Calendar.CalendarDefines import CalendarType, CalendarDate
 from src.Calendar.CelestialCalendarUtils import ALGO1 as CEL
+from src.Calendar.CelestialData.Loader import JIEQI_BY_INDEX
 from src.Defines import Jieqi
 
+# The whitelist's single source of truth, shared with parity layers a/b.  Imported as a
+# bare sibling module: the test suite has no `__init__.py`, so pytest puts this directory
+# on `sys.path` -- and `from tests.calendar...` would be shadowed at runtime by a stray
+# regular `tests` package in site-packages.
+from celestial_parity_data import JIEQI_DATE_DIVERGENCES, JieqiDateDivergence
 
-# The frozen whitelist: (solar year, jieqi, celestial date, HKO date).
-#
-# Measured over the whole 1901-2100 x 24 table: 7 disagreements out of 4800, every one of
-# them a moment within ~12 minutes of midnight.  Times are the stored (truncated) ones.
-#
-# Five of the seven cluster in 1901-1928, but they do not point the same way (1912/1913
-# fall on the earlier date while 1917/1927/1928 fall on the later one), so this is not a
-# constant offset -- issue #69's Beijing local mean time would not explain it either.  It
-# is old-epoch / delta-T noise, which is why each row is attributed individually rather
-# than exempted by a formula.
-#
-# NOTE (integration): Lane G's `celestial_parity_data.py` is meant to be the single source
-# of this list, together with layer (b).  Until it lands, this copy anchors layer (c); the
-# two must agree, and a disagreement is itself a finding.
-JIEQI_DATE_WHITELIST: list[tuple[int, Jieqi, date, date]] = [
-  (1912, Jieqi.小雪, date(1912, 11, 22), date(1912, 11, 23)), # 23:48:13, 气
-  (1913, Jieqi.秋分, date(1913, 9, 23), date(1913, 9, 24)),   # 23:52:48, 气
-  (1917, Jieqi.大雪, date(1917, 12, 8), date(1917, 12, 7)),   # 00:01:05, 节 -- propagates
-  (1927, Jieqi.白露, date(1927, 9, 9), date(1927, 9, 8)),     # 00:05:30, 节 -- propagates
-  (1928, Jieqi.夏至, date(1928, 6, 22), date(1928, 6, 21)),   # 00:06:27, 气
-  (1979, Jieqi.大寒, date(1979, 1, 20), date(1979, 1, 21)),   # 23:59:56, 气 -- 4s from midnight
-  (2084, Jieqi.春分, date(2084, 3, 20), date(2084, 3, 19)),   # 00:00:30, 气
-]
 
 JIES: list[Jieqi] = Jieqi.as_list()[::2] # The 12 节: only these start ganzhi months.
 
@@ -62,9 +45,13 @@ def solar(day: date) -> CalendarDate:
   return CalendarDate(day.year, day.month, day.day, CalendarType.SOLAR)
 
 
-def flipped_jies() -> list[tuple[int, Jieqi, date, date]]:
+def jieqi_of(row: JieqiDateDivergence) -> Jieqi:
+  return JIEQI_BY_INDEX[row.jq_idx]
+
+
+def flipped_jies() -> list[JieqiDateDivergence]:
   '''The whitelist rows that are 节. Only these can move a ganzhi month boundary.'''
-  return [row for row in JIEQI_DATE_WHITELIST if row[1] in JIES]
+  return [row for row in JIEQI_DATE_DIVERGENCES if row.is_jie]
 
 
 def affected_solar_days() -> set[date]:
@@ -74,9 +61,9 @@ def affected_solar_days() -> set[date]:
   ganzhi month or day index.
   '''
   days: set[date] = set()
-  for year, jieqi, cel, hko in flipped_jies():
-    end: date = CEL.next_jie(CEL.jieqi_moment(year, jieqi)).moment.date()
-    day: date = min(cel, hko)
+  for row in flipped_jies():
+    end: date = CEL.next_jie(CEL.jieqi_moment(row.year, jieqi_of(row))).moment.date()
+    day: date = min(row.celestial_moment.date(), row.hko_date)
     while day < end:
       days.add(day)
       day += timedelta(days=1)
@@ -86,28 +73,42 @@ def affected_solar_days() -> set[date]:
 def affected_ganzhi_months() -> set[tuple[int, int]]:
   '''The (ganzhi year, ganzhi month) pairs that a moved 节 starts.'''
   months: set[tuple[int, int]] = set()
-  for year, jieqi, _, _ in flipped_jies():
+  for row in flipped_jies():
     # 立春 starts ganzhi month 1; 小寒, the twelfth 节, starts month 12 of the *previous*
     # ganzhi year, since it falls in January.
-    index: int = JIES.index(jieqi)
-    months.add((year - 1 if jieqi is Jieqi.小寒 else year, index + 1))
+    jieqi: Jieqi = jieqi_of(row)
+    months.add((row.year - 1 if jieqi is Jieqi.小寒 else row.year, JIES.index(jieqi) + 1))
   return months
 
 
 class TestJieqiDateWhitelist(unittest.TestCase):
-  def test_whitelist_is_exact_over_the_table(self) -> None:
-    '''The anchor for layer (c): the difference set is exactly these rows, no more.'''
-    measured: list[tuple[int, Jieqi, date, date]] = []
+  def test_whitelist_is_exact_through_the_backend(self) -> None:
+    '''
+    The anchor for layer (c).  Layer (b) checks the same whitelist against the raw table
+    with its own minimal parser; this one goes through `Loader` + `CelestialCalendarUtils`,
+    so the two together also prove that the consumer path reproduces the table faithfully.
+    '''
+    measured: list[tuple[int, int, date]] = []
     for year in range(1901, 2101):
-      for jq in Jieqi.as_list():
+      for jq_idx, jq in enumerate(JIEQI_BY_INDEX):
         cel, hko = CEL.jieqi_date(year, jq), HKO.jieqi_date(year, jq)
         if cel != hko:
-          measured.append((year, jq, cel, hko))
-    self.assertEqual(measured, JIEQI_DATE_WHITELIST)
+          measured.append((year, jq_idx, cel))
+    self.assertEqual(
+      measured,
+      [(row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES],
+    )
+
+  def test_moments_match_the_whitelist(self) -> None:
+    # Not just the dates: the stored moments themselves, so a re-baked table with a
+    # different rounding policy cannot pass by accident.
+    for row in JIEQI_DATE_DIVERGENCES:
+      self.assertEqual(CEL.jieqi_moment(row.year, jieqi_of(row)), row.celestial_moment)
+      self.assertEqual(HKO.jieqi_date(row.year, jieqi_of(row)), row.hko_date)
 
   def test_only_two_of_them_are_jie(self) -> None:
     # Only 节 start ganzhi months, so only these two can propagate into ganzhi methods.
-    self.assertEqual([(y, jq.value) for y, jq, _, _ in flipped_jies()],
+    self.assertEqual([(row.year, row.name) for row in flipped_jies()],
                      [(1917, '大雪'), (1927, '白露')])
 
 

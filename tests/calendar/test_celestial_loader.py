@@ -8,13 +8,41 @@ from datetime import date, datetime
 from pathlib import Path
 
 from src.Calendar.CelestialData.Loader import (
-  JIEQI_BY_INDEX, JIEQI_COLUMNS, LUNAR_COLUMNS, SCHEMA_VERSION,
+  DATA_DIR, JIEQI_BY_INDEX, JIEQI_COLUMNS, LUNAR_COLUMNS, SCHEMA_VERSION,
   JieqiMomentTable, LunarYearTable,
 )
 from src.Defines import Ganzhi, Jieqi
 
 
 FIXTURES: Path = Path(__file__).parent / 'celestial_fixtures'
+TABLE_NAMES: list[str] = ['jieqi_moments.txt', 'lunar_years_algo1.txt', 'lunar_years_algo2.txt']
+
+
+def data_lines(path: Path) -> list[str]:
+  return [line for line in path.read_text(encoding='utf-8').splitlines() if not line.startswith('#')]
+
+
+class TestShippedTables(unittest.TestCase):
+  '''The tables that actually ship, loaded with the strict contiguity check.'''
+
+  def test_they_cover_the_whole_window(self) -> None:
+    self.assertEqual(JieqiMomentTable().supported_year_range(), range(1901, 2101))
+    for algo in (1, 2):
+      table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
+      self.assertEqual(table.supported_year_range(), range(1901, 2100))
+
+  def test_fixture_rows_appear_verbatim_in_the_shipped_tables(self) -> None:
+    '''
+    The fixtures and the shipped tables were written by two generators that never shared
+    code (S0's throwaway and `CelestialData/Generator.py`).  Byte-identical data lines on
+    the overlapping years is therefore a check on `SCHEMA.md` itself, not just on the data.
+    '''
+    for name in TABLE_NAMES:
+      fixture_rows: list[str] = data_lines(FIXTURES / name)
+      shipped_rows: set[str] = set(data_lines(DATA_DIR / name))
+      self.assertEqual(len(fixture_rows), 120 if name.startswith('jieqi') else 5, name)
+      for row in fixture_rows:
+        self.assertIn(row, shipped_rows, f'{name}: fixture row absent from the shipped table')
 
 
 class TestFixtureTables(unittest.TestCase):
