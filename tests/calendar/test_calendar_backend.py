@@ -10,18 +10,26 @@ from datetime import datetime
 from src.Calendar import (
   CalendarBackend, CalendarUtilsProtocol, HkoDataCalendarUtils, calendar_utils_of,
 )
+from src.Calendar.CelestialCalendarUtils import ALGO1, ALGO2
 from src.Bazi import Bazi, BaziGender, BaziPrecision
 from src.BaziChart import BaziChart
 
 
 class TestCalendarBackend(unittest.TestCase):
   def test_basic(self) -> None:
-    self.assertEqual(len(CalendarBackend), 1)
+    self.assertEqual(len(CalendarBackend), 3)
     self.assertEqual(str(CalendarBackend.HKO), 'hko')
+    self.assertEqual(str(CalendarBackend.CELESTIAL), 'celestial')
+    self.assertEqual(str(CalendarBackend.CELESTIAL_ALGO2), 'celestial-algo2')
 
   def test_from_str(self) -> None:
     for s in ['hko', 'HKO', 'Hko']:
       self.assertIs(CalendarBackend.from_str(s), CalendarBackend.HKO)
+    for s in ['celestial', 'CELESTIAL', 'Celestial']:
+      self.assertIs(CalendarBackend.from_str(s), CalendarBackend.CELESTIAL)
+    # Both the member name and the value resolve, and they differ in spelling here.
+    for s in ['celestial-algo2', 'CELESTIAL_ALGO2', 'celestial_algo2']:
+      self.assertIs(CalendarBackend.from_str(s), CalendarBackend.CELESTIAL_ALGO2)
 
     with self.assertRaises(ValueError):
       CalendarBackend.from_str('lunar') # Not a supported backend.
@@ -34,8 +42,15 @@ class TestCalendarBackend(unittest.TestCase):
     self.assertIs(utils, HkoDataCalendarUtils)
     self.assertIsInstance(utils, CalendarUtilsProtocol)
 
+    self.assertIs(calendar_utils_of(CalendarBackend.CELESTIAL), ALGO1)
+    self.assertIs(calendar_utils_of(CalendarBackend.CELESTIAL_ALGO2), ALGO2)
+
     # Strings are also accepted and resolved the same way.
     self.assertIs(calendar_utils_of('hko'), HkoDataCalendarUtils)
+    self.assertIs(calendar_utils_of('celestial'), ALGO1)
+
+    for backend in CalendarBackend:
+      self.assertIsInstance(calendar_utils_of(backend), CalendarUtilsProtocol)
 
     with self.assertRaises(ValueError):
       calendar_utils_of('lunar')

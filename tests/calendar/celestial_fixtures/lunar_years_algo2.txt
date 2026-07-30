@@ -7,7 +7,8 @@
 # generated_by: scratchpad/gen_fixtures.py (S0 throwaway)
 # generated_on: 2026-07-29
 # source_api: get_lunar_year_info(uint8_t algo, int32_t year)
-# algo: 2  (leap-second aware UTC+8 via jde_to_utc8, celestial #84)
+# algo: 2
+#   Leap-second aware UTC+8 via jde_to_utc8, celestial #84.
 # timescale: leap-second aware UTC+08:00
 # year_range: 1901..2099 inclusive -- BOTH algos clamped to this window.
 #   algo2 natively reports [410, 5000], which is a placeholder sentinel
