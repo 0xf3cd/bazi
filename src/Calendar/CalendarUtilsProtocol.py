@@ -18,6 +18,14 @@ class CalendarUtilsProtocol(Protocol):
   date (`HkoDataCalendarUtils`), while one carrying the real moments answers to the second
   (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
   what makes conforming implementations substitutable for one another.
+
+  Two methods ride on that precision and escape the "must agree" rule: `prev_jie`/`next_jie`
+  name the jie bracketing a moment, so between midnight and the true moment of a jieqi day the
+  two backends legitimately name different jie.  The divergence is moment-shaped, not noise
+  (~1.6% of random moments, all landing on jieqi days), and it propagates: `BaziChart`'s da-yun
+  start counts jie from birth, so a jieqi-day birth can shift it by a full da-yun step (~10
+  years).  Date-level queries stay within the frozen parity whitelist instead (see
+  `tests/calendar/celestial_parity_data.py`).
   '''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...

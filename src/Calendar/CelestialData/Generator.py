@@ -384,9 +384,21 @@ def main() -> None:
   data_dir.mkdir(parents=True, exist_ok=True)
 
   generated_on: date = date.today()
-  _write_table(data_dir / 'jieqi_moments.txt',     _render_jieqi_table(jieqi_rows, generated_on, dylib_sha256), EXPECTED_JIEQI_ROWS)
-  _write_table(data_dir / 'lunar_years_algo1.txt', _render_lunar_table(algo1_rows, 1, generated_on, dylib_sha256), EXPECTED_LUNAR_ROWS)
-  _write_table(data_dir / 'lunar_years_algo2.txt', _render_lunar_table(algo2_rows, 2, generated_on, dylib_sha256), EXPECTED_LUNAR_ROWS)
+  _write_table(
+    data_dir / 'jieqi_moments.txt',
+    _render_jieqi_table(jieqi_rows, generated_on, dylib_sha256),
+    EXPECTED_JIEQI_ROWS,
+  )
+  _write_table(
+    data_dir / 'lunar_years_algo1.txt',
+    _render_lunar_table(algo1_rows, 1, generated_on, dylib_sha256),
+    EXPECTED_LUNAR_ROWS,
+  )
+  _write_table(
+    data_dir / 'lunar_years_algo2.txt',
+    _render_lunar_table(algo2_rows, 2, generated_on, dylib_sha256),
+    EXPECTED_LUNAR_ROWS,
+  )
 
 
 if __name__ == '__main__':

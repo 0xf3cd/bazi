@@ -50,6 +50,19 @@ class TestShippedTables(unittest.TestCase):
       payload: str = '\n'.join(data_lines(DATA_DIR / name))
       self.assertEqual(hashlib.sha256(payload.encode('utf-8')).hexdigest(), digest, name)
 
+  def test_dylib_provenance_value_is_pinned(self) -> None:
+    '''
+    The closed header namespace (test_celestial_tables.py) pins key *names* only, and the data
+    digests above exclude `#` lines -- so without this test the recorded dylib identity could
+    be swapped for any 64-hex string unnoticed.  Re-baking with a new dylib is legitimate, but
+    it has to update this expectation deliberately in the same commit.
+    '''
+    expected: str = '4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5'
+    self.assertEqual(JieqiMomentTable().provenance['dylib_sha256'], expected)
+    for algo in (1, 2):
+      table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
+      self.assertEqual(table.provenance['dylib_sha256'], expected)
+
   def test_fixture_rows_appear_verbatim_in_the_shipped_tables(self) -> None:
     '''
     The fixtures and the shipped tables were written by two generators that never shared
