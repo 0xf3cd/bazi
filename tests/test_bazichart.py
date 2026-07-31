@@ -547,7 +547,6 @@ class TestBaziChart(unittest.TestCase):
     self.assertIsNot(chart._bazi, old_bazi)
 
 
-
 class TestBaziChartHourMinutePrecisions(unittest.TestCase):
   '''
   HOUR / MINUTE charts (issue #6): the dayun counting and the birth-side year consume the
@@ -591,6 +590,27 @@ class TestBaziChartHourMinutePrecisions(unittest.TestCase):
     birth: datetime = chart.bazi.solar_datetime
     gap: timedelta = datetime(2009, 2, 4, 0, 49, 48) - birth
     self.assertEqual(chart.dayun_start_moment, birth + (gap / timedelta(days=3)) * timedelta(days=365))
+
+  def test_backward_clamp_across_midnight_matches_the_same_shichen(self) -> None:
+    '''
+    R1 convergence find (grok / fable / kimi independently): the cross-midnight tie birth
+    (2009-02-03 23:30, male -> backward, clamp) must produce the SAME xiaoyun and dayun-year
+    face as its same-子时 sibling on the jieqi's own day (02-04 00:30) -- the four pillars
+    are identical, so the charts must be too. Before the fix, the day-level relabel of the
+    clamped start (= the birth itself, whose civil day still carries the OLD year) emptied
+    the xiaoyun and put the first dayun in 2008, contradicting the 己丑 2009 year pillar.
+    '''
+    across: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', 'hour'))
+    same_day: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'male', 'hour'))
+
+    self.assertEqual(list(across.bazi.pillars), list(same_day.bazi.pillars))
+    self.assertFalse(across.dayun_order)
+    self.assertEqual(across.dayun_start_moment, across.bazi.solar_datetime) # Clamped.
+
+    self.assertEqual(across.xiaoyun, same_day.xiaoyun)
+    self.assertEqual(len(across.xiaoyun), 1)
+    self.assertEqual(next(across.dayun).ganzhi_year, 2009)   # == the year pillar's year,
+    self.assertEqual(next(same_day.dayun).ganzhi_year, 2009) # on both sides of midnight.
 
   def test_liunian_and_xiaoyun_start_from_the_attributed_year(self) -> None:
     '''

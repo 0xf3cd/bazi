@@ -90,6 +90,7 @@ class BaziPrecision(Enum):
   2009 falls at 2009-02-04 00:49:48, in the 子时 that began at 02-03 23:00, so a HOUR birth
   at 2009-02-03 23:30 ties and belongs to the new year -- on a day that DAY assigns to the
   old side. The granularities are three readings of one rule, not nested refinements.
+  子时跨午夜，tie 时辰可始于节气前一公历日——三档是同一规则的三种读法，不是嵌套细化。
 
   HOUR and MINUTE need real jieqi moments, so they require the celestial backend --
   `Bazi.__init__` rejects the HKO backend for them (its `jieqi_moment` is a midnight
@@ -109,7 +110,7 @@ class BaziPrecision(Enum):
       return 'minute'
 
 
-'''Maps each Jie (节) to the ganzhi month it opens: 立春 -> 1 (寅月), ..., 小寒 -> 12 (丑月).'''
+'''Maps each Jie (节) to the ganzhi month it opens: 立春 -> 1 (寅月), ..., 小寒 -> 12 (丑月). / 每个节到其所开干支月的映射：立春开寅月，……，小寒开丑月。'''
 _GANZHI_MONTH_OF_JIE: Final[dict[Jieqi, int]] = {
   jie : month
   for month, jie in enumerate(Jieqi.as_list(ganzhi_year=True)[::2], start=1)
@@ -208,8 +209,8 @@ class Bazi:
     self._gender: Final[BaziGender] = gender
     self._precision: Final[BaziPrecision] = precision
 
-    # Generate ganzhi-related info: which ganzhi year / month the birth belongs to, compared
-    # per `BaziPrecision` (`birth >= jieqi` at the known granularity, ties go new).
+    # Which ganzhi year / month owns the birth, compared per `BaziPrecision`
+    # (`birth >= jieqi` at the known granularity, ties go new).
     ganzhi_year: int
     ganzhi_month: int
     bracketing_jies: Optional[tuple[JieqiTime, JieqiTime]] = None
@@ -259,9 +260,10 @@ class Bazi:
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     #
     # 晚子时换日: the day pillar rolls at 23:00 (when 子时 begins), which the year and month
-    # pillars above deliberately do NOT do -- they compare dates, per `BaziPrecision`. So a
-    # birth at 23:30 takes the *next* day's day pillar while keeping the *current* date's year
-    # and month pillars. Both halves of that are variants tracked in issue #69, and a 子正换日
+    # pillars above deliberately do NOT do -- they follow `BaziPrecision`'s attribution
+    # (dates at DAY, truncated moments at HOUR/MINUTE). So a 23:30 birth takes the *next*
+    # day's day pillar while its year/month attribution stays put, except inside a tie
+    # window. Both halves of that are variants tracked in issue #69, and a 子正换日
     # variant has to say which pillars it moves; `test_bazi` pins today's answer meanwhile.
     day_offset: int = 0 if self._birth_time.hour < 23 else 1
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)

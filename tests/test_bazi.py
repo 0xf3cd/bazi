@@ -112,12 +112,18 @@ class TestBaziHourMinutePrecisions(unittest.TestCase):
 
   @staticmethod
   def __truncated(dt: datetime, precision: BaziPrecision) -> datetime:
-    '''Independent re-statement of the granularity truncation, for oracle use.'''
+    '''
+    Independent re-statement of the granularity truncation, for oracle use. HOUR scans the
+    时辰 boundaries (the odd clock hours, plus the previous day's 23:00) and takes the latest
+    one at or before `dt` -- deliberately NOT the shift-floor-shift formula `src.Bazi` uses,
+    so the oracle and the implementation cannot share a truncation error.
+    '''
     if precision is BaziPrecision.MINUTE:
       return dt.replace(second=0, microsecond=0)
     assert precision is BaziPrecision.HOUR
-    shifted: datetime = dt + timedelta(hours=1)
-    return datetime.combine(shifted.date(), time(shifted.hour - (shifted.hour % 2))) - timedelta(hours=1)
+    boundaries: list[datetime] = [datetime.combine(dt.date() - timedelta(days=1), time(23))]
+    boundaries += [datetime.combine(dt.date(), time(h)) for h in range(1, 24, 2)]
+    return max(b for b in boundaries if b <= dt)
 
   def test_goldens_from_the_docstring(self) -> None:
     '''
@@ -270,17 +276,19 @@ class TestBaziHourMinutePrecisions(unittest.TestCase):
     # The biased sampling must actually have exercised the divergence windows.
     self.assertGreater(divergent, 100)
 
-  @pytest.mark.slow
   def test_minute_vs_moment_level_prev_jie(self) -> None:
     '''
     MINUTE attribution vs the moment-level `prev_jie`: the two may disagree ONLY at a
     same-minute tie (birth in the same minute as the jieqi but before its true second --
-    ties go new, `prev_jie` stays old). At any other moment they must agree.
+    ties go new, `prev_jie` stays old). At any other moment they must agree, and the
+    sampling must actually produce ties -- without the floor assertion, an implementation
+    degenerated to pure moment-level `prev_jie` would sail through green.
     '''
     utils = calendar_utils_of(CalendarBackend.CELESTIAL)
     rng = random.Random(72) # Seeded with the issue this rule closes.
 
     all_jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+    disagree: int = 0
     for _ in range(2_000):
       jie_moment: datetime = utils.jieqi_moment(rng.randint(1902, 2080), rng.choice(all_jies))
       birth: datetime = (jie_moment + timedelta(seconds=rng.randint(-90, 90))).replace(second=0, microsecond=0)
@@ -291,11 +299,14 @@ class TestBaziHourMinutePrecisions(unittest.TestCase):
 
       with self.subTest(birth=birth):
         if attribution_owning != moment_owning:
+          disagree += 1
           next_j: JieqiTime = utils.next_jie(birth)
           self.assertEqual(attribution_owning, next_j)
           self.assertEqual(next_j.moment.replace(second=0, microsecond=0), birth) # Same minute.
           self.assertLess(birth, next_j.moment)                                   # Before the true second.
         self.assertEqual(bazi.month_commander, self.JIE_MONTH_DIZHI[attribution_owning.jieqi])
+
+    self.assertGreater(disagree, 0) # At seed 72 the ties number in the hundreds.
 
 
 class TestBazi(unittest.TestCase):

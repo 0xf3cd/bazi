@@ -198,3 +198,42 @@ class TestAllOptions(unittest.TestCase):
     for opt in _ALL_OPTIONS:
       self.assertGreater(opt.value, 0)
       self.assertEqual(full_mask, opt.value | full_mask)
+
+
+class TestTransitDatabaseHourMinutePrecisions(unittest.TestCase):
+  '''
+  HOUR / MINUTE charts (issue #6): the database's birth-side year must be the chart's own
+  precision-attributed `Bazi.ganzhi_year`, not the day-level `ganzhi_date.year`.
+  '''
+
+  def test_birth_year_is_precision_attributed(self) -> None:
+    '''
+    Cross-midnight tie chart (2009-02-03 23:30 female, HOUR): the chart's year pillar is
+    己丑 2009, its liunian generator starts at 2009, and its dayun starts in 2018 (虚岁 10).
+    Before the fix the day-level 2008 leaked in: `ganzhis(2008, LIUNIAN)` returned 戊子 --
+    a ganzhi this chart's liunian never produces -- and 虚岁 10 mapped to 2017, so the true
+    dayun-start year 2018 answered `support == False` for xiaoyun.
+    '''
+    chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'hour'))
+    self.assertEqual(chart.bazi.ganzhi_year, 2009)
+    db: TransitDatabase = TransitDatabase(chart)
+
+    for options in (TransitOptions.LIUNIAN, TransitOptions.XIAOYUN):
+      with self.subTest(options=options):
+        self.assertFalse(db.support(TransitMoment(2008), options))
+        self.assertTrue(db.support(TransitMoment(2009), options))
+
+    self.assertTrue(db.support(TransitMoment(2018), TransitOptions.XIAOYUN)) # 虚岁 10, the dayun-start year.
+    self.assertFalse(db.support(TransitMoment(2019), TransitOptions.XIAOYUN)) # Past the xiaoyun range.
+    self.assertEqual(
+      db.ganzhis(TransitMoment(2009), TransitOptions.LIUNIAN),
+      (chart.bazi.year_pillar,), # The first liunian IS the year pillar.
+    )
+
+  def test_day_precision_unchanged(self) -> None:
+    '''At DAY the two year channels agree, so the database is unaffected by the migration.'''
+    chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'day'))
+    self.assertEqual(chart.bazi.ganzhi_year, chart.bazi.ganzhi_date.year)
+    db: TransitDatabase = TransitDatabase(chart)
+    self.assertTrue(db.support(TransitMoment(2008), TransitOptions.LIUNIAN))  # 戊子 2008 IS this chart's first liunian.
+    self.assertFalse(db.support(TransitMoment(2007), TransitOptions.LIUNIAN))
