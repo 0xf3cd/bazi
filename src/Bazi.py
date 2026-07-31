@@ -113,12 +113,14 @@ class Bazi:
   Note:
   - We don't care about the timezone. `Bazi` knows nothing about timezone.
   - We don't care about the true solar time / daylight saving time - it should be well-processed outside of this class.
+  - The year pillar turns at 立春, not at 正月初一 (this library follows the 立春 school).
   - `Bazi` 不考虑时差。时差需要在外部处理。
   - `Bazi` 不考虑真太阳时和夏令时。这些时间需要在外部处理。
+  - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
 
   def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision,
-               backend: CalendarBackend = CalendarBackend.HKO) -> None:
+               backend: CalendarBackend = CalendarBackend.CELESTIAL) -> None:
     '''
     `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birth time and gender as input, 
     and figures out the pillars of year, month, day, and hour.
@@ -242,7 +244,7 @@ class Bazi:
     birth_time: Union[datetime, str],
     gender: Union[BaziGender, str], 
     precision: Union[BaziPrecision, str],
-    backend: Union[CalendarBackend, str] = CalendarBackend.HKO
+    backend: Union[CalendarBackend, str] = CalendarBackend.CELESTIAL
   ) -> 'Bazi':
     '''
     Staticmethod that creates a `Bazi` object from the inputs.

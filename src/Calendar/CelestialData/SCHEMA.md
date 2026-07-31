@@ -23,7 +23,7 @@ The loader is path-parameterised so the same code reads either.
 
 ## File format
 
-UTF-8 text, LF endings, trailing newline. Every line starting with `#` is header;
+UTF-8 text, trailing newline. LF is the on-disk convention; readers normalise line endings (`splitlines()`), so a CRLF file loads — and hashes — identically. Every line starting with `#` is header;
 data lines follow, one record per line, fields separated by single spaces.
 No blank lines. Rows are emitted in ascending `(year, jq_idx)` / `(lunar_year)` order.
 

@@ -274,29 +274,30 @@ class TestBaziChart(unittest.TestCase):
       self.assertEqual(chart.dayun_order, expected_order)
 
   def test_dayun_start_moment(self) -> None:
-    # TODO: currently `HkoDataCalendarUtils` only supports day-level precision,
-    # which makes the `delta` a lot bigger.
-    # After supporting finer precision, this test should be updated.
-    delta: timedelta = timedelta(days=120)
+    # Golden values from 测测, kept as provenance: 2009-12-30 / 1985-03-05 / 1993-05-25.
+    # The expectations are the celestial backend's answers, pinned to the shipped tables:
+    # the 3-days-to-1-year rule amplifies jieqi-moment drift ~122x (1s -> ~2min), so any
+    # re-bake that moves a jieqi goes red here -- and trips the frozen table hash first.
+    delta: timedelta = timedelta(seconds=1)
 
     bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
     self.assertAlmostEqual(
       BaziChart(bazi1).dayun_start_moment,
-      datetime(2009, 12, 30),
+      datetime(2009, 12, 26, 21, 8, 25),
       delta=delta,
     )
 
     bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
     self.assertAlmostEqual(
-      BaziChart(bazi2).dayun_start_moment, 
-      datetime(1985, 3, 5),
+      BaziChart(bazi2).dayun_start_moment,
+      datetime(1985, 3, 4, 11, 17, 55),
       delta=delta,
     )
 
     bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
     self.assertAlmostEqual(
-      BaziChart(bazi3).dayun_start_moment, 
-      datetime(1993, 5, 25),
+      BaziChart(bazi3).dayun_start_moment,
+      datetime(1993, 5, 24, 0, 24, 13, 333333),
       delta=delta,
     )
 
@@ -326,7 +327,8 @@ class TestBaziChart(unittest.TestCase):
 
     bazi2: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
     first_dayun2: DayunTuple = next(BaziChart(bazi2).dayun)
-    self.assertEqual(first_dayun2.ganzhi_year, 1984) # TODO: 测测 Says Dayun starts in 1985. Revisit here later...
+    # celestial start 1985-03-04 is past 立春 1985; lunar_python / china95 / 测测 all agree.
+    self.assertEqual(first_dayun2.ganzhi_year, 1985)
 
     bazi3: Bazi = Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.FEMALE, BaziPrecision.DAY)
     first_dayun3: DayunTuple = next(BaziChart(bazi3).dayun)
@@ -356,6 +358,11 @@ class TestBaziChart(unittest.TestCase):
               '丙子 乙亥 甲戌 癸酉')
     __subtest(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
               '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
+
+    # Directed: celestial moves this man's dayun start past 立春 1985, so xiaoyun gains a year
+    # (HKO gives '辛卯' alone); china95 lists exactly '辛卯 壬辰' for the same birth.
+    __subtest(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY),
+              '辛卯 壬辰')
 
   def test_liunian(self) -> None:
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
@@ -427,7 +434,8 @@ class TestBaziChart(unittest.TestCase):
       self.assertEqual(j_gender, chart.bazi.gender)
 
       __chart: BaziChart = BaziChart(
-        Bazi.create(datetime.fromisoformat(j['birth_time']), j_gender, BaziPrecision.DAY)
+        Bazi.create(datetime.fromisoformat(j['birth_time']), j_gender, BaziPrecision.DAY,
+                    backend=j['backend'])
       )
 
       self.assertEqual(j, __chart.json)

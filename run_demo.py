@@ -11,7 +11,7 @@ from src.BaziChart import BaziChart
 from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
 from src.Common import HiddenTianganDict
 from src.Utils.BaziUtils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
-from src.Calendar.HkoDataCalendarUtils import prev_jie, next_jie
+from src.Calendar.CalendarBackend import calendar_utils_of
 
 
 T = TypeVar('T')
@@ -85,8 +85,9 @@ def get_transit_info(chart: BaziChart) -> str:
   day_master: Tiangan = chart.bazi.day_master
   s: str = '\n' # The output string.
 
-  jie_before = prev_jie(chart.bazi.solar_datetime)
-  jie_after = next_jie(chart.bazi.solar_datetime)
+  utils = calendar_utils_of(chart.bazi.backend)
+  jie_before = utils.prev_jie(chart.bazi.solar_datetime)
+  jie_after = utils.next_jie(chart.bazi.solar_datetime)
 
   s += f'出生时刻前一节：{jie_before.jieqi} - {jie_before.moment.isoformat()}\n'
   s += f'出生时刻后一节：{jie_after.jieqi} - {jie_after.moment.isoformat()}\n'
