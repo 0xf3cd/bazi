@@ -173,6 +173,7 @@ def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
   # itself would let a caller's in-place edit poison every later answer.
   return list(__days_counts_in_ganzhi_year(ganzhi_year))
 
+
 @functools.lru_cache(maxsize=512)
 def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
   assert ganzhi_year <= get_max_supported_date(CalendarType.GANZHI).year
