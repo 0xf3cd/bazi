@@ -71,21 +71,18 @@ def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
     # `hko_data_calendar_utils` instantiates the decoder databases at import time.
     # Import it lazily so that users of other backends never pay that cost.
     from . import hko_data_calendar_utils
-    # A module structurally conforms to `CalendarUtilsProtocol` at runtime (the
-    # protocol's staticmethods are satisfied by module-level functions), but mypy
-    # cannot see that, hence the `cast`.
+    # A module structurally conforms to `CalendarUtilsProtocol` at runtime (calls on it hit
+    # module-level functions with the same signatures, minus `self`), but mypy cannot see a
+    # module as an instance, hence the `cast`.  `test_calendar_backend` asserts the runtime
+    # conformance for every member, which is the check this `cast` gives up.
     return cast(CalendarUtilsProtocol, hko_data_calendar_utils)
 
   if _backend in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2):
     # Likewise lazy: reading the tables costs the same as the HKO decoder.
     from .celestial_calendar_utils import ALGO1, ALGO2
-    utils = ALGO1 if _backend is CalendarBackend.CELESTIAL else ALGO2
-    # The protocol is spelled with staticmethods, which fits the module-shaped HKO backend;
-    # this one is an object, because its two lunar algorithms need separate state. Both
-    # satisfy the protocol when called, and `test_calendar_backend` asserts that at runtime
-    # for every member, which is the check this `cast` gives up. Unifying the two shapes is
-    # tracked in issue #86.
-    return cast(CalendarUtilsProtocol, utils)
+    # An instance satisfies the instance-shaped protocol directly (issue #86), so this
+    # branch is fully type-checked -- no `cast`.
+    return ALGO1 if _backend is CalendarBackend.CELESTIAL else ALGO2
 
   # Invariant: every enum member must be wired up above. Reaching here means we
   # added a member but forgot to resolve it -- not something users can trigger.
