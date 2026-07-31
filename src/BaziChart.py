@@ -232,9 +232,15 @@ class BaziChart:
     birthtime: Final[datetime] = self._bazi.solar_datetime
 
     def __gap() -> timedelta:
+      # Count from `Bazi.bracketing_jies` -- the same source the month pillar's attribution
+      # uses -- so the jie counted here is always the jie that owns the birth month.
+      prev_j, next_j = self._bazi.bracketing_jies
       if self.dayun_order:
-        return self._utils.next_jie(birthtime).moment - birthtime
-      return birthtime - self._utils.prev_jie(birthtime).moment
+        return next_j.moment - birthtime
+      # Ties go new, so under HOUR/MINUTE the owning jie's true moment can fall up to one
+      # granularity unit *after* the birth; the dayun then starts at the birth itself. For
+      # DAY, `prev_jie(birthtime).moment <= birthtime` always holds and the clamp is inert.
+      return max(timedelta(0), birthtime - prev_j.moment)
     
     def __diff() -> timedelta:
       gap: Final[timedelta] = __gap()
@@ -292,7 +298,9 @@ class BaziChart:
 
     step: Final[int] = 1 if self.dayun_order else -1
     utils: Final[CalendarUtilsProtocol] = self._utils
-    until_xusui_age: Final[int] = 1 + utils.to_ganzhi(self.dayun_start_moment).year - utils.to_ganzhi(self._bazi.solar_datetime).year
+    # The birth-side year is `Bazi.ganzhi_year` (precision-attributed, same source as the
+    # year pillar); the dayun start is a future moment, labelled at day level as before.
+    until_xusui_age: Final[int] = 1 + utils.to_ganzhi(self.dayun_start_moment).year - self._bazi.ganzhi_year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
       return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
@@ -315,7 +323,9 @@ class BaziChart:
     '''
 
     def __liunian_generator() -> Generator[LiunianTuple, None, None]:
-      year: int = self._bazi.ganzhi_date.year
+      # Start from `Bazi.ganzhi_year` (precision-attributed, same source as the year pillar),
+      # so the first liunian's ganzhi always equals the year pillar.
+      year: int = self._bazi.ganzhi_year
       while True:
         yield LiunianTuple(year, ganzhi_of_year(year))
         year += 1
