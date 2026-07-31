@@ -232,9 +232,16 @@ class BaziChart:
     birthtime: Final[datetime] = self._bazi.solar_datetime
 
     def __gap() -> timedelta:
+      # Count from `Bazi.bracketing_jies`: under HOUR/MINUTE that is exactly the jie owning
+      # the month pillar; under DAY it keeps the adjudicated moment-level counting, which on
+      # a jieqi's day can legitimately name a different jie (see `Bazi.bracketing_jies`).
+      prev_j, next_j = self._bazi.bracketing_jies
       if self.dayun_order:
-        return self._utils.next_jie(birthtime).moment - birthtime
-      return birthtime - self._utils.prev_jie(birthtime).moment
+        return next_j.moment - birthtime
+      # Ties go new, so under HOUR/MINUTE the owning jie's true moment can fall up to one
+      # granularity unit *after* the birth; the dayun then starts at the birth itself. For
+      # DAY, `prev_jie(birthtime).moment <= birthtime` always holds and the clamp is inert.
+      return max(timedelta(0), birthtime - prev_j.moment)
     
     def __diff() -> timedelta:
       gap: Final[timedelta] = __gap()
@@ -242,7 +249,21 @@ class BaziChart:
       return years * timedelta(days=365) # Assume 1 year = 365 days.
     
     return birthtime + __diff()
-  
+
+  @property
+  def _dayun_start_ganzhi_year(self) -> int:
+    '''
+    The ganzhi year the first dayun starts in: the day-level label of `dayun_start_moment`,
+    floored at `Bazi.ganzhi_year`. The start never precedes the birth, so its year can never
+    precede the birth's attributed year -- but a clamped start IS the birth itself, and on a
+    cross-midnight tie chart (HOUR) its civil day still carries the OLD day-level year;
+    without the floor that would mislabel the first dayun and empty the xiaoyun. The floor
+    is inert for DAY, whose attribution is day-level and monotone in time.
+    交运干支年：交运时刻的日级年份标注，下限为 `Bazi.ganzhi_year`（交运不早于出生，其年份在
+    盘面自身的归属体系里也不得早于出生年）。
+    '''
+    return max(self._utils.to_ganzhi(self.dayun_start_moment).year, self._bazi.ganzhi_year)
+
   @property
   def dayun(self) -> Generator[DayunTuple, None, None]:
     '''
@@ -265,7 +286,7 @@ class BaziChart:
 
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
-      ganzhi_year: int = self._utils.to_ganzhi(self.dayun_start_moment).year
+      ganzhi_year: int = self._dayun_start_ganzhi_year
       gz: Ganzhi = self._bazi.month_pillar.next(step)
 
       while True:
@@ -291,8 +312,10 @@ class BaziChart:
     '''
 
     step: Final[int] = 1 if self.dayun_order else -1
-    utils: Final[CalendarUtilsProtocol] = self._utils
-    until_xusui_age: Final[int] = 1 + utils.to_ganzhi(self.dayun_start_moment).year - utils.to_ganzhi(self._bazi.solar_datetime).year
+    # Xiaoyun covers the xusui ages before the first dayun starts. Both ends of the
+    # subtraction live in the chart's own attribution (see `_dayun_start_ganzhi_year`),
+    # so the count can never go below one.
+    until_xusui_age: Final[int] = 1 + self._dayun_start_ganzhi_year - self._bazi.ganzhi_year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
       return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
@@ -315,7 +338,9 @@ class BaziChart:
     '''
 
     def __liunian_generator() -> Generator[LiunianTuple, None, None]:
-      year: int = self._bazi.ganzhi_date.year
+      # Start from `Bazi.ganzhi_year` (precision-attributed, same source as the year pillar),
+      # so the first liunian's ganzhi always equals the year pillar.
+      year: int = self._bazi.ganzhi_year
       while True:
         yield LiunianTuple(year, ganzhi_of_year(year))
         year += 1

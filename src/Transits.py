@@ -10,7 +10,6 @@ from typing import Final, Generator
 
 from .Common import DayunTuple, frozendict
 from .Defines import Ganzhi, Dizhi
-from .Calendar import CalendarDate
 from .Utils.BaziUtils import ganzhi_of_year
 from .BaziChart import BaziChart
 
@@ -117,11 +116,14 @@ _ALL_OPTIONS: Final[tuple[TransitOptions, ...]] = tuple(_all_options())
 class TransitDatabase:
   '''A database that figures out the Ganzhis of transits.'''
   def __init__(self, chart: BaziChart) -> None:
-    self._birth_ganzhi_date: CalendarDate = chart.bazi.ganzhi_date
+    # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
+    # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
+    # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one and admit
+    # liunian years the chart's own generator never produces.
+    self._birth_ganzhi_year: Final[int] = chart.bazi.ganzhi_year
 
-    birth_gz_year: Final[int] = chart.bazi.ganzhi_date.year
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
-      birth_gz_year + age - 1 : gz
+      self._birth_ganzhi_year + age - 1 : gz
       for age, gz in chart.xiaoyun
     })
 
@@ -156,7 +158,7 @@ class TransitDatabase:
       if gz_year < self._first_dayun_start_gz_year:
         return False
     if options.value & TransitOptions.LIUNIAN.value:
-      if gz_year < self._birth_ganzhi_date.year:
+      if gz_year < self._birth_ganzhi_year:
         return False
 
     return True
@@ -193,7 +195,7 @@ class TransitDatabase:
       assert gz_year >= self._first_dayun_start_gz_year
       transit_ganzhis.append(self._dayun_db[gz_year].ganzhi)
     if options.value & TransitOptions.LIUNIAN.value:
-      assert gz_year >= self._birth_ganzhi_date.year
+      assert gz_year >= self._birth_ganzhi_year
       transit_ganzhis.append(ganzhi_of_year(gz_year))
 
     return tuple(transit_ganzhis)

@@ -3,6 +3,7 @@
 
 import json
 import copy
+import random
 import itertools
 
 import pytest
@@ -11,7 +12,7 @@ import unittest
 from datetime import datetime, date, timedelta
 from typing import Optional
 
-from src.Defines import Tiangan, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from src.Defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.Bazi import BaziGender, BaziPrecision, Bazi
 from src.Utils import BaziUtils
 
@@ -406,8 +407,25 @@ class TestBaziChart(unittest.TestCase):
 
   @pytest.mark.slow
   def test_json(self) -> None:
+    def __random_chart() -> BaziChart:
+      # `Bazi.random()` is DAY-only; HOUR / MINUTE roundtrips are covered here too (issue #6).
+      precision: BaziPrecision = random.choice(list(BaziPrecision))
+      if precision is BaziPrecision.DAY:
+        return BaziChart(Bazi.random())
+      return BaziChart(Bazi.create(
+        birth_time=datetime(
+          year=random.randint(1902, 2080),
+          month=random.randint(1, 12),
+          day=random.randint(1, 28),
+          hour=random.randint(0, 23),
+          minute=random.randint(0, 59),
+        ),
+        gender=random.choice(list(BaziGender)),
+        precision=precision,
+      ))
+
     for _ in range(32):
-      chart: BaziChart = BaziChart(Bazi.random())
+      chart: BaziChart = __random_chart()
       dt: datetime = chart.bazi.solar_datetime
 
       j: BaziJson.BaziChartJsonDict = chart.json
@@ -426,15 +444,16 @@ class TestBaziChart(unittest.TestCase):
       self.assertNotEqual(chart.json, __j)
 
       self.assertEqual(datetime.fromisoformat(j['birth_time']), dt)
-      self.assertEqual(j['precision'], 'day') # Currently only supports DAY-level precision.
+      self.assertEqual(j['precision'], str(chart.bazi.precision))
 
       j_gender: BaziGender = BaziGender.MALE
       if j['gender'] == 'female':
         j_gender = BaziGender.FEMALE
       self.assertEqual(j_gender, chart.bazi.gender)
 
+      # The rebuild parses everything -- precision included -- from the json itself.
       __chart: BaziChart = BaziChart(
-        Bazi.create(datetime.fromisoformat(j['birth_time']), j_gender, BaziPrecision.DAY,
+        Bazi.create(datetime.fromisoformat(j['birth_time']), j_gender, j['precision'],
                     backend=j['backend'])
       )
 
@@ -527,3 +546,91 @@ class TestBaziChart(unittest.TestCase):
     self.assertIsNot(chart.bazi, old_bazi)
     self.assertIsNot(chart._bazi, old_bazi)
 
+
+class TestBaziChartHourMinutePrecisions(unittest.TestCase):
+  '''
+  HOUR / MINUTE charts (issue #6): the dayun counting and the birth-side year consume the
+  same attribution source as the pillars (`Bazi.bracketing_jies` / `Bazi.ganzhi_year`), so
+  a chart cannot contradict itself about which jie owns the birth month.
+  '''
+
+  def test_backward_dayun_counts_from_the_month_owning_jie(self) -> None:
+    '''
+    立春 2009 = 02-04 00:49:48. A HOUR birth at 02-04 00:30 ties into the new year (己丑, 阴),
+    so a male chart runs backward -- and the month-owning jie is 立春, whose true moment lies
+    19m48s AFTER the birth. Counting back to the owning jie gives a negative gap, clamped to
+    zero: the dayun starts at the birth itself. (Moment-level counting would instead walk ~29
+    days back to 小寒, starting the dayun ~9.7 years late and contradicting the 寅 month.)
+    '''
+    chart: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'male', 'hour'))
+    self.assertEqual(chart.bazi.month_commander, Dizhi.寅)
+    self.assertFalse(chart.dayun_order)
+    self.assertEqual(chart.dayun_start_moment, chart.bazi.solar_datetime)
+
+  def test_forward_dayun_skips_the_tie_jie(self) -> None:
+    '''
+    Same tie birth, female -> forward. The "next" jie must be the one AFTER the owning 立春,
+    i.e. 惊蛰 (2009-03-05 18:47:32) -- the owning jie already opened the birth month and does
+    not count as next, even though its true moment lies after the birth.
+    '''
+    chart: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'female', 'hour'))
+    self.assertTrue(chart.dayun_order)
+    birth: datetime = chart.bazi.solar_datetime
+    gap: timedelta = datetime(2009, 3, 5, 18, 47, 32) - birth
+    self.assertEqual(chart.dayun_start_moment, birth + (gap / timedelta(days=3)) * timedelta(days=365))
+
+  def test_minute_precision_counts_to_the_true_moment(self) -> None:
+    '''
+    The same birth at MINUTE precision is NOT a tie (00:30 < 00:49): the year stays 戊子 (阳,
+    male -> forward), and the next jie is 立春 itself, 19m48s away.
+    '''
+    chart: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'male', 'minute'))
+    self.assertEqual(chart.bazi.month_commander, Dizhi.丑)
+    self.assertTrue(chart.dayun_order)
+    birth: datetime = chart.bazi.solar_datetime
+    gap: timedelta = datetime(2009, 2, 4, 0, 49, 48) - birth
+    self.assertEqual(chart.dayun_start_moment, birth + (gap / timedelta(days=3)) * timedelta(days=365))
+
+  def test_backward_clamp_across_midnight_matches_the_same_shichen(self) -> None:
+    '''
+    R1 convergence find (grok / fable / kimi independently): the cross-midnight tie birth
+    (2009-02-03 23:30, male -> backward, clamp) must produce the SAME xiaoyun and dayun-year
+    face as its same-子时 sibling on the jieqi's own day (02-04 00:30) -- the four pillars
+    are identical, so the charts must be too. Before the fix, the day-level relabel of the
+    clamped start (= the birth itself, whose civil day still carries the OLD year) emptied
+    the xiaoyun and put the first dayun in 2008, contradicting the 己丑 2009 year pillar.
+    '''
+    across: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', 'hour'))
+    same_day: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'male', 'hour'))
+
+    self.assertEqual(list(across.bazi.pillars), list(same_day.bazi.pillars))
+    self.assertFalse(across.dayun_order)
+    self.assertEqual(across.dayun_start_moment, across.bazi.solar_datetime) # Clamped.
+
+    self.assertEqual(across.xiaoyun, same_day.xiaoyun)
+    self.assertEqual(len(across.xiaoyun), 1)
+    self.assertEqual(next(across.dayun).ganzhi_year, 2009)   # == the year pillar's year,
+    self.assertEqual(next(same_day.dayun).ganzhi_year, 2009) # on both sides of midnight.
+
+  def test_liunian_and_xiaoyun_start_from_the_attributed_year(self) -> None:
+    '''
+    The cross-midnight tie birth (2009-02-03 23:30, HOUR) belongs to 己丑 2009; the same
+    moment at DAY belongs to 戊子 2008. In both charts the first liunian must equal the year
+    pillar -- the invariant that keeps a chart self-consistent -- and the xiaoyun age count
+    follows the same attributed year (pinned lengths: forward 己丑 chart 10, backward 戊子
+    chart 11).
+    '''
+    expected: list[tuple[str, int, str, int]] = [
+      ('hour', 2009, '己丑', 10),
+      ('day',  2008, '戊子', 11),
+    ]
+    for precision, first_year, year_pillar, xiaoyun_len in expected:
+      with self.subTest(precision=precision):
+        chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', precision))
+        self.assertEqual(str(chart.bazi.year_pillar), year_pillar)
+
+        first_liunian = next(chart.liunian)
+        self.assertEqual(first_liunian.ganzhi_year, first_year)
+        self.assertEqual(first_liunian.ganzhi, chart.bazi.year_pillar)
+
+        self.assertEqual(len(chart.xiaoyun), xiaoyun_len)
