@@ -9,7 +9,7 @@ import functools
 
 from pathlib import Path
 from datetime import date
-from typing import TypedDict, Optional, Final
+from typing import TypedDict, Final
 
 from ...defines import Jieqi, Ganzhi
 
@@ -103,7 +103,7 @@ class LunarYearInfo(TypedDict):
   '''
   first_solar_day: date        # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
   leap: bool                   # Whether the year is leap or not.
-  leap_month: Optional[int]    # If `leap` is False, this field is None. Otherwise, it is the month of the leap.
+  leap_month: int | None    # If `leap` is False, this field is None. Otherwise, it is the month of the leap.
   days_counts: list[int]       # The number of days in each month. It contains 12 elements for normal years, and 13 elements for leap years.
   ganzhi: Ganzhi               # The Tiangan-Dizhi pair of the year.
 

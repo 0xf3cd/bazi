@@ -10,7 +10,6 @@ import pytest
 import unittest
 
 from datetime import datetime, date, timedelta
-from typing import Optional
 
 from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, BaziPrecision, Bazi
@@ -230,7 +229,7 @@ class TestBaziChart(unittest.TestCase):
         self.assertEqual(dz_traits, bazi_utils.dizhi_traits(pillar.dizhi))
 
         # Check Tiangan.
-        tg_shishen: Optional[Shishen] = pillar_shishens.tiangan
+        tg_shishen: Shishen | None = pillar_shishens.tiangan
         if pillar_idx == 2: # Day master.
           self.assertIsNone(tg_shishen)
           continue
@@ -261,10 +260,7 @@ class TestBaziChart(unittest.TestCase):
       cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
       expected_first_dayun_gz: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
       expected_order: bool = True
-      if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴):
-        expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
-        expected_order = False
-      elif (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
+      if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴) or (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
         expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
         expected_order = False
       
@@ -338,7 +334,7 @@ class TestBaziChart(unittest.TestCase):
     for _ in range(10):
       random_bazi: Bazi = Bazi.random()
       dayun_start_times: list[DayunTuple] = list(itertools.islice(BaziChart(random_bazi).dayun, 10))
-      for dayun1, dayun2 in zip(dayun_start_times, dayun_start_times[1:]):
+      for dayun1, dayun2 in itertools.pairwise(dayun_start_times):
         self.assertEqual(dayun2.ganzhi_year - dayun1.ganzhi_year, 10)
 
   def test_xiaoyun(self) -> None:

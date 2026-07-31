@@ -105,7 +105,7 @@ class TestBaziUtils(unittest.TestCase):
       self.assertGreaterEqual(len(percentages), 1)
       self.assertLessEqual(len(percentages), 3)
       self.assertEqual(sum(percentages.values()), 100)
-      for tg in percentages.keys():
+      for tg in percentages:
         self.assertIn(tg, Tiangan)
 
   def test_shishen(self) -> None:

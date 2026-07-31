@@ -4,7 +4,6 @@
 import unittest
 
 
-from typing import Optional
 
 from src.defines import Shishen
 from src.common import (
@@ -68,7 +67,7 @@ class TestCommon(unittest.TestCase):
   def test_const_meta_class(self) -> None:
     class TestClass(metaclass=ConstMetaClass):
       A: int = 1
-      B: list[int] = [2, 3]
+      B: list[int] = [2, 3] # noqa: RUF012 # the raw mutable class attr is the test subject
       C: list[int] = B
 
     self.assertEqual(TestClass.A, 1)
@@ -93,7 +92,7 @@ class TestCommon(unittest.TestCase):
   def test_const(self) -> None:
     class TestClass(Const):
       A: int = 1
-      B: list[int] = [2, 3]
+      B: list[int] = [2, 3] # noqa: RUF012 # the raw mutable class attr is the test subject
       C: list[int] = B
       def somemethod(self) -> int:
         return 0
@@ -126,7 +125,7 @@ class TestCommon(unittest.TestCase):
   def test_immutable_meta_class(self) -> None:
     class TestClass(metaclass=ImmutableMetaClass):
       A: int = 1
-      B: list[int] = [2, 3]
+      B: list[int] = [2, 3] # noqa: RUF012 # the raw mutable class attr is the test subject
       C: list[int] = B
      
     with self.subTest('Test instantiation'):
@@ -209,7 +208,7 @@ class TestCommon(unittest.TestCase):
   def test_immutable(self) -> None:
     class TestClass(Immutable):
       A: int = 1
-      B: list[int] = [2, 3]
+      B: list[int] = [2, 3] # noqa: RUF012 # the raw mutable class attr is the test subject
       C: list[int] = B
       def somemethod(self) -> int:
         return 0
@@ -309,42 +308,42 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(AssertionError):
       BaziData(GanzhiData[None, Shishen], [])
 
-    bd5: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd5: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd6: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd6: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd7: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd7: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(Shishen.比肩, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd8: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd8: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.伤官),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd9: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd9: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(None, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
     ])
 
-    bd10: BaziData[GanzhiData[Optional[Shishen], Shishen]] = BaziData(GanzhiData[Optional[Shishen], Shishen], [
+    bd10: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),

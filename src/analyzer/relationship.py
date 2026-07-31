@@ -6,7 +6,8 @@ import functools
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
 from itertools import starmap, product, compress, chain
-from typing import Final, TypedDict, Callable, Union, Iterable
+from typing import Final, TypedDict
+from collections.abc import Callable, Iterable
 
 from ..common import GanzhiData, frozendict
 from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
@@ -18,7 +19,7 @@ from ..utils import bazi_utils, shensha_utils, tiangan_utils, dizhi_utils
 
 
 '''The type of the first argument passed to Shensha-finding functions: an iterable of Tiangan or Dizhi.'''
-_FirstArgType = Iterable[Union[Tiangan, Dizhi]]
+_FirstArgType = Iterable[Tiangan | Dizhi]
 
 '''The type of the second argument passed to Shensha-finding functions: an iterable of Dizhi.'''
 _SecondArgType = Iterable[Dizhi]
@@ -31,9 +32,9 @@ def find_shensha(
   *args: _ArgsType,
 ) -> Iterable[Dizhi]:
   '''An fp-styled helper private/internal function for finding Shensha (神煞).'''
-  producted_args = list(chain(*map(lambda a : product(*a), args)))
+  producted_args = list(chain(*(product(*a) for a in args)))
   results = starmap(f, producted_args)
-  return map(lambda x : x[1], compress(producted_args, results))
+  return (x[1] for x in compress(producted_args, results))
 
 
 @unique

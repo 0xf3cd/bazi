@@ -5,7 +5,8 @@ import functools
 import itertools
 
 from datetime import datetime, timedelta
-from typing import Optional, Final, Generator
+from typing import Final
+from collections.abc import Generator
 
 from .common import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
@@ -129,7 +130,7 @@ class BaziChart:
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
     return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
   
-  PillarShishens = GanzhiData[Optional[Shishen], Shishen]
+  PillarShishens = GanzhiData[Shishen | None, Shishen]
   @property
   def shishen(self) -> BaziData[PillarShishens]:
     '''
@@ -158,7 +159,7 @@ class BaziChart:
 
     shishen_list: list[BaziChart.PillarShishens] = []
     for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
-      tg_shishen: Optional[Shishen] = shishen(day_master, tg)
+      tg_shishen: Shishen | None = shishen(day_master, tg)
       # Remember to set the Day Master's position to `None`.
       if pillar_idx == 2:
         tg_shishen = None

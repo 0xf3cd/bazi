@@ -9,8 +9,8 @@ import pytest
 
 from itertools import product
 from datetime import date, time, datetime, timedelta
+from typing import ClassVar
 from zoneinfo import ZoneInfo
-from typing import Union
 
 from src.common import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
@@ -103,7 +103,7 @@ class TestBaziHourMinutePrecisions(unittest.TestCase):
 
   # The jie owning a birth month opens it: 立春 opens 寅月, and so on. Written out as data
   # (not derived from enum order) so the tests share no derivation with `src.Bazi`.
-  JIE_MONTH_DIZHI: dict[Jieqi, Dizhi] = {
+  JIE_MONTH_DIZHI: ClassVar[dict[Jieqi, Dizhi]] = {
     Jieqi.立春 : Dizhi.寅,  Jieqi.惊蛰 : Dizhi.卯,  Jieqi.清明 : Dizhi.辰,
     Jieqi.立夏 : Dizhi.巳,  Jieqi.芒种 : Dizhi.午,  Jieqi.小暑 : Dizhi.未,
     Jieqi.立秋 : Dizhi.申,  Jieqi.白露 : Dizhi.酉,  Jieqi.寒露 : Dizhi.戌,
@@ -177,9 +177,8 @@ class TestBaziHourMinutePrecisions(unittest.TestCase):
   def test_hko_backend_rejected(self) -> None:
     '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
     for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
-      with self.subTest(precision=precision):
-        with self.assertRaises(ValueError):
-          Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, precision, CalendarBackend.HKO)
+      with self.subTest(precision=precision), self.assertRaises(ValueError):
+        Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, precision, CalendarBackend.HKO)
     self.assertEqual(str(Bazi.create('2000-02-04 19:30', 'male', 'day', backend='hko').year_pillar), '庚辰')
 
   def test_ganzhi_year_and_bracketing_jies_are_the_attribution(self) -> None:
@@ -569,10 +568,10 @@ class TestBazi(unittest.TestCase):
       Bazi.create(_dt.isoformat(), BaziGender.FEMALE, BaziPrecision.DAY)
 
     now: datetime = datetime.now()
-    dt_options: list[Union[str, datetime]] = [now, now.isoformat()]
-    male_options: list[Union[str, BaziGender]] = [BaziGender.男, BaziGender.YANG, BaziGender.阳, 'Male', '男', 'MALE']
-    female_options: list[Union[str, BaziGender]] = [BaziGender.YIN, BaziGender.FEMALE, '女', 'FEMALE', 'female']
-    day_precision_options: list[Union[str, BaziPrecision]] = [BaziPrecision.DAY, 'day', 'DAY', 'Day', '日', '天', 'd', 'D']
+    dt_options: list[str | datetime] = [now, now.isoformat()]
+    male_options: list[str | BaziGender] = [BaziGender.男, BaziGender.YANG, BaziGender.阳, 'Male', '男', 'MALE']
+    female_options: list[str | BaziGender] = [BaziGender.YIN, BaziGender.FEMALE, '女', 'FEMALE', 'female']
+    day_precision_options: list[str | BaziPrecision] = [BaziPrecision.DAY, 'day', 'DAY', 'Day', '日', '天', 'd', 'D']
 
     expected_bazi: Bazi = Bazi.create(now, BaziGender.FEMALE, BaziPrecision.DAY)
     for dt, g, p in product(dt_options, female_options, day_precision_options):

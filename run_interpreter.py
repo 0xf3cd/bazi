@@ -47,8 +47,7 @@ def interpret(chart: BaziChart) -> str:
       shishens[pillar_shishens.tiangan] += 1
     shishens[pillar_shishens.dizhi] += 1
   
-  for ss in shishens:
-    count: int = shishens[ss]
+  for ss, count in shishens.items():
     if count == 0:
       continue
     

@@ -5,7 +5,7 @@ import random
 
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import Final, Optional, Union
+from typing import Final
 
 from .common import JieqiTime
 from .defines import Tiangan, Dizhi, Ganzhi, Jieqi
@@ -29,14 +29,14 @@ class BaziGender(Enum):
   MALE = YANG
   FEMALE = YIN
 
-  男 = YANG
-  女 = YIN
+  男 = YANG # noqa: PIE796 # deliberate alias
+  女 = YIN # noqa: PIE796 # deliberate alias
 
-  阳 = YANG
-  阴 = YIN
+  阳 = YANG # noqa: PIE796 # deliberate alias
+  阴 = YIN # noqa: PIE796 # deliberate alias
 
-  乾 = YANG
-  坤 = YIN
+  乾 = YANG # noqa: PIE796 # deliberate alias
+  坤 = YIN # noqa: PIE796 # deliberate alias
 
   def __str__(self) -> str:
     if self is self.MALE:
@@ -213,7 +213,7 @@ class Bazi:
     # (`birth >= jieqi` at the known granularity, ties go new).
     ganzhi_year: int
     ganzhi_month: int
-    bracketing_jies: Optional[tuple[JieqiTime, JieqiTime]] = None
+    bracketing_jies: tuple[JieqiTime, JieqiTime] | None = None
     if self._precision is BaziPrecision.DAY:
       # DAY compares dates: the `to_ganzhi` channel drops the time, so a jieqi's whole day
       # falls on its new side. `bracketing_jies` stays moment-level for DAY (see the property).
@@ -246,7 +246,7 @@ class Bazi:
       ganzhi_year = owning.moment.year - (1 if owning.jieqi is Jieqi.小寒 else 0)
       ganzhi_month = _GANZHI_MONTH_OF_JIE[owning.jieqi]
 
-    self._bracketing_jies: Final[Optional[tuple[JieqiTime, JieqiTime]]] = bracketing_jies
+    self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime] | None] = bracketing_jies
 
     # The Year Ganzhi / Year Pillar (年柱).
     self._ganzhi_year: Final[int] = ganzhi_year
@@ -273,10 +273,10 @@ class Bazi:
 
   @staticmethod
   def __parse_bazi_args(
-    birth_time: Union[datetime, str],
-    gender: Union[BaziGender, str], 
-    precision: Union[BaziPrecision, str],
-    backend: Union[CalendarBackend, str]
+    birth_time: datetime | str,
+    gender: BaziGender | str, 
+    precision: BaziPrecision | str,
+    backend: CalendarBackend | str
   ) -> tuple[datetime, BaziGender, BaziPrecision, CalendarBackend]:
     
     assert isinstance(birth_time, (datetime, str))
@@ -321,10 +321,10 @@ class Bazi:
 
   @staticmethod
   def create(
-    birth_time: Union[datetime, str],
-    gender: Union[BaziGender, str], 
-    precision: Union[BaziPrecision, str],
-    backend: Union[CalendarBackend, str] = CalendarBackend.CELESTIAL
+    birth_time: datetime | str,
+    gender: BaziGender | str, 
+    precision: BaziPrecision | str,
+    backend: CalendarBackend | str = CalendarBackend.CELESTIAL
   ) -> 'Bazi':
     '''
     Staticmethod that creates a `Bazi` object from the inputs.

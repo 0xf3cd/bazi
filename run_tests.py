@@ -17,7 +17,8 @@ import itertools
 
 from pathlib import Path
 from datetime import datetime
-from typing import Callable, Optional, Final, Any, Generator
+from typing import Final, Any
+from collections.abc import Callable, Generator, Iterator
 
 import emoji
 import pytest
@@ -64,7 +65,7 @@ all_the_way: Final[bool] = args.all
 skip_test: Final[bool] = args.no_test and not all_the_way
 run_slow_test: Final[bool] = args.slow_test or all_the_way
 run_hko_test: Final[bool] = args.hkodata_test or all_the_way
-expression: Final[Optional[str]] = args.expression if not all_the_way else None # '--all/-a' takes precedence over '--expression/-k'
+expression: Final[str | None] = args.expression if not all_the_way else None # '--all/-a' takes precedence over '--expression/-k'
 verbose: Final[bool] = args.verbose
 
 do_cov: Final[bool] = args.coverage or all_the_way
@@ -80,27 +81,27 @@ term_width: Final[int] = shutil.get_terminal_size().columns
 
 # region: Formats and Prints
 
-animal1: Final[str] = u'🦑🦀🦞🦐🦪'
-animal2: Final[str] = u'🐃🐍🐊🦇🦕🦅🦖🦥🦦🐫🐅🦔'
-food: Final[str] = u'🍋🥭🥒🍉🥝🥑🍆🌽🍑🫐🍍🍇🥬🫚🫛🥩🥓🌮🍱🍢'
-astrology: Final[str] = u'🌙🔮✨💫⭐🌟🌔🌓🌗🌘🌎🌏🪐🛰️🛸👾👽🗿'
-weirdo: Final[str] = u'🧊📸🧯🔒🪑🌈💖💞💕💗💓🪩🔥🔦📟💣💥👬🔗🖇️⛓️🫗💅'
-desert_and_tree: Final[str] = u'🌵🏜️🌲🏕️🌴🏝️'
+animal1: Final[str] = '🦑🦀🦞🦐🦪'
+animal2: Final[str] = '🐃🐍🐊🦇🦕🦅🦖🦥🦦🐫🐅🦔'
+food: Final[str] = '🍋🥭🥒🍉🥝🥑🍆🌽🍑🫐🍍🍇🥬🫚🫛🥩🥓🌮🍱🍢'
+astrology: Final[str] = '🌙🔮✨💫⭐🌟🌔🌓🌗🌘🌎🌏🪐🛰️🛸👾👽🗿'
+weirdo: Final[str] = '🧊📸🧯🔒🪑🌈💖💞💕💗💓🪩🔥🔦📟💣💥👬🔗🖇️⛓️🫗💅'
+desert_and_tree: Final[str] = '🌵🏜️🌲🏕️🌴🏝️'
 
 def random_emoji() -> str:
   while True:
-    c: str = random.choice(u''.join([animal1, animal2, food, astrology, weirdo, desert_and_tree]))
+    c: str = random.choice(f'{animal1}{animal2}{food}{astrology}{weirdo}{desert_and_tree}')
     if emoji.is_emoji(c):
       return c
 
 def emoji_pair_generator() -> Generator[str, None, None]:
   def random_ep(s: str) -> str:
     filtered: str = ''.join(filter(emoji.is_emoji, s))
-    return u''.join(random.sample(filtered, k=2))
+    return ''.join(random.sample(filtered, k=2))
   
   emoji_pairs: list[str] = [
-    u'💖💅', u'🌙✨', u'🌵🏜️', u'🔗🌐', u'💡🧠',
-    u'📝🕵️', u'🪐🛰️', u'🌲🏕️', u'🗻🌋', u'🎃🕯️',
+    '💖💅', '🌙✨', '🌵🏜️', '🔗🌐', '💡🧠',
+    '📝🕵️', '🪐🛰️', '🌲🏕️', '🗻🌋', '🎃🕯️',
     *[random_ep(animal1) for _ in range(1)],
     *[random_ep(animal2) for _ in range(2)],
     *[random_ep(food) for _ in range(2)],
@@ -213,9 +214,9 @@ def print_sysinfo() -> None:
 def run_proc_and_print(cmds: list[str], print_details: bool = False) -> int:
   '''This method is mainly for compatability with Windows. It creates a subprocess and runs the commands.'''
   if platform.system() == 'Windows':
-    return subprocess.run(cmds).returncode
+    return subprocess.run(cmds, check=False).returncode
   else:
-    proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True)
+    proc: subprocess.CompletedProcess = subprocess.run(cmds, capture_output=True, check=False)
     ret: int = proc.returncode
 
     if print_details:
@@ -371,6 +372,9 @@ class SubTaskStatuses:
   def keys(self) -> list[str]:
     assert set(self._retcodes.keys()) == set(self._times.keys())
     return list(self._retcodes.keys())
+
+  def __iter__(self) -> Iterator[str]:
+    return iter(self.keys())
   
   @property
   def max_key_len(self) -> int:
@@ -426,7 +430,7 @@ def main() -> None:
   print(f'-- Time elapsed: {end_time - start_time}')
 
   print('-- Sub-tasks status:')
-  for name in statuses.keys():
+  for name in statuses:
     ok: bool = (0 == statuses.retcode(name))
     elapsed: float = statuses.time(name)
     name_color: str = colorama.Fore.GREEN if ok else colorama.Fore.YELLOW
@@ -439,10 +443,10 @@ def main() -> None:
   resolved_retcode: int = functools.reduce(operator.or_, retcodes, 0)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 
-                u''.join(random.sample(u'🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
+                ''.join(random.sample('🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
   else:
     red_print(f'>> Some tasks failed! Exit with code {resolved_retcode} ' + 
-              u''.join(random.sample(u'🧯💣💥💅👽🗿🔥', 3)))
+              ''.join(random.sample('🧯💣💥💅👽🗿🔥', 3)))
 
   sys.exit(resolved_retcode)
 

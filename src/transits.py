@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from enum import unique, IntFlag
 from itertools import combinations
-from typing import Final, Generator
+from typing import Final
+from collections.abc import Generator
 
 from .common import DayunTuple, frozendict
 from .defines import Ganzhi, Dizhi
@@ -151,15 +152,12 @@ class TransitDatabase:
     _ensure_year_moment(moment)
 
     gz_year: Final[int] = moment.gz_year
-    if options.value & TransitOptions.XIAOYUN.value:
-      if gz_year not in self._xiaoyun_ganzhis:
-        return False
-    if options.value & TransitOptions.DAYUN.value:
-      if gz_year < self._first_dayun_start_gz_year:
-        return False
-    if options.value & TransitOptions.LIUNIAN.value:
-      if gz_year < self._birth_ganzhi_year:
-        return False
+    if options.value & TransitOptions.XIAOYUN.value and gz_year not in self._xiaoyun_ganzhis:
+      return False
+    if options.value & TransitOptions.DAYUN.value and gz_year < self._first_dayun_start_gz_year:
+      return False
+    if options.value & TransitOptions.LIUNIAN.value and gz_year < self._birth_ganzhi_year: # noqa: SIM103 # symmetric guard clauses, one per option
+      return False
 
     return True
 

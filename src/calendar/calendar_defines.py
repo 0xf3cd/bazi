@@ -84,9 +84,7 @@ class CalendarDate:
       raise TypeError('Not a CalendarDate object.')
     if self.date_type != other.date_type:
       return False
-    if self.year != other.year or self.month != other.month or self.day != other.day:
-      return False
-    return True
+    return self.year == other.year and self.month == other.month and self.day == other.day
   
   def __ne__(self, other: object) -> bool:
     if not isinstance(other, CalendarDate):

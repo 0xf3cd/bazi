@@ -3,7 +3,7 @@
 
 import random
 import itertools
-from typing import Union, Iterable
+from collections.abc import Iterable
 
 import pytest
 import unittest
@@ -14,7 +14,7 @@ from src.utils.tiangan_utils import TianganCombo, TianganRelationCombos, Tiangan
 
 
 class TestTianganUtils(unittest.TestCase):
-  TgCmpType = Union[list[set[Tiangan]], Iterable[TianganCombo]]    
+  TgCmpType = list[set[Tiangan]] | Iterable[TianganCombo]    
   @staticmethod
   def __tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
     _l1 = list(l1)
@@ -175,9 +175,8 @@ class TestTianganUtils(unittest.TestCase):
 
       if abs(tg1.index - tg2.index) == 5: # Check "He" relation. 合。
         expected_he.add(TianganCombo(combo))
-      if all(wx is not Wuxing.土 for wx in [wx1, wx2]): # Check "Chong" relation. 冲。
-        if abs(tg1.index - tg2.index) == 6:
-          expected_chong.add(TianganCombo(combo))
+      if all(wx is not Wuxing.土 for wx in [wx1, wx2]) and abs(tg1.index - tg2.index) == 6: # Check "Chong" relation. 冲。
+        expected_chong.add(TianganCombo(combo))
       if wx1.generates(wx2) or wx2.generates(wx1): # Check "Sheng" relation. 生。
         expected_sheng.add(TianganCombo(combo))
       if wx1.destructs(wx2) or wx2.destructs(wx1): # Check "Ke" relation. 克。
@@ -278,11 +277,10 @@ class TestTianganUtils(unittest.TestCase):
 
     for tg1, tg2 in itertools.product(Tiangan, Tiangan):
       wx1, wx2 = bazi_utils.traits(tg1).wuxing, bazi_utils.traits(tg2).wuxing
-      if all(wx is not Wuxing('土') for wx in [wx1, wx2]):
-        if abs(tg1.index - tg2.index) == 6:
-          self.assertTrue(tiangan_utils.chong(tg1, tg2))
-          self.assertTrue(tiangan_utils.chong(tg2, tg1))
-          continue
+      if all(wx is not Wuxing('土') for wx in [wx1, wx2]) and abs(tg1.index - tg2.index) == 6:
+        self.assertTrue(tiangan_utils.chong(tg1, tg2))
+        self.assertTrue(tiangan_utils.chong(tg2, tg1))
+        continue
       # Else, the two Tiangans are not in CHONG relation.
       self.assertFalse(tiangan_utils.chong(tg1, tg2))
       self.assertFalse(tiangan_utils.chong(tg2, tg1))
@@ -470,9 +468,7 @@ class TestTianganUtils(unittest.TestCase):
       def filter_func(rel: TianganRelation, combo: TianganCombo) -> bool:
         if rel in forbidden_relations:
           return False
-        if any(tg in combo for tg in forbidden_tiangans):
-          return False
-        return True
+        return not any(tg in combo for tg in forbidden_tiangans)
       
       filtered = discovery.filter(filter_func)
 

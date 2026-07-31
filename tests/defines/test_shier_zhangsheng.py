@@ -13,7 +13,7 @@ class TestShierZhangsheng(unittest.TestCase):
     self.assertIs(ShierZhangsheng, 十二长生)
     self.assertEqual(len(ShierZhangsheng), 12)
     self.assertEqual(len(ShierZhangsheng.as_list()), 12)
-    self.assertEqual(list(ShierZhangsheng)[0].value, '长生')
+    self.assertEqual(next(iter(ShierZhangsheng)).value, '长生')
     self.assertEqual(list(ShierZhangsheng)[-1].value, '养')
 
   def test_index(self) -> None:
