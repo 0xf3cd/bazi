@@ -5,14 +5,17 @@ import unittest
 import random
 import copy
 
+import pytest
+
 from itertools import product
-from datetime import date, datetime, timedelta
+from datetime import date, time, datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Union
 
-from src.Defines import Tiangan, Dizhi, Ganzhi
+from src.Common import JieqiTime
+from src.Defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.Bazi import BaziGender, BaziPrecision, Bazi, 八字
-from src.Calendar import HkoDataCalendarUtils
+from src.Calendar import HkoDataCalendarUtils, CalendarBackend, calendar_utils_of
 
 class TestBaziGender(unittest.TestCase):
   def test_basic(self) -> None:
@@ -90,6 +93,209 @@ class TestBaziPrecision(unittest.TestCase):
         self.assertEqual(str(bazi.year_pillar), year)
         self.assertEqual(str(bazi.month_pillar), month)
         self.assertEqual(str(bazi.day_pillar), day)
+
+
+class TestBaziHourMinutePrecisions(unittest.TestCase):
+  '''
+  HOUR / MINUTE precisions (issue #6): `birth >= jieqi` compared at the known granularity,
+  ties go new. The reference rule text is the `BaziPrecision` docstring.
+  '''
+
+  # The jie owning a birth month opens it: 立春 opens 寅月, and so on. Written out as data
+  # (not derived from enum order) so the tests share no derivation with `src.Bazi`.
+  JIE_MONTH_DIZHI: dict[Jieqi, Dizhi] = {
+    Jieqi.立春 : Dizhi.寅,  Jieqi.惊蛰 : Dizhi.卯,  Jieqi.清明 : Dizhi.辰,
+    Jieqi.立夏 : Dizhi.巳,  Jieqi.芒种 : Dizhi.午,  Jieqi.小暑 : Dizhi.未,
+    Jieqi.立秋 : Dizhi.申,  Jieqi.白露 : Dizhi.酉,  Jieqi.寒露 : Dizhi.戌,
+    Jieqi.立冬 : Dizhi.亥,  Jieqi.大雪 : Dizhi.子,  Jieqi.小寒 : Dizhi.丑,
+  }
+
+  @staticmethod
+  def __truncated(dt: datetime, precision: BaziPrecision) -> datetime:
+    '''Independent re-statement of the granularity truncation, for oracle use.'''
+    if precision is BaziPrecision.MINUTE:
+      return dt.replace(second=0, microsecond=0)
+    assert precision is BaziPrecision.HOUR
+    shifted: datetime = dt + timedelta(hours=1)
+    return datetime.combine(shifted.date(), time(shifted.hour - (shifted.hour % 2))) - timedelta(hours=1)
+
+  def test_goldens_from_the_docstring(self) -> None:
+    '''
+    The `BaziPrecision` docstring's worked examples, pinned:
+    - 立春 2000 = 02-04 20:40:23 -- the same-day 时辰 tie (戌时) and the minute tie.
+    - 立春 2017 = 02-03 23:34:03 -- the tie 时辰 (子时) starts at 23:00 of the jieqi's own day.
+    - 立春 2009 = 02-04 00:49:48 -- the tie 时辰 starts on the PREVIOUS civil day, so HOUR
+      attributes a 02-03 23:30 birth to the new year on a day DAY assigns to the old side.
+      The granularities are three readings of one rule, not nested refinements.
+    '''
+    expected: list[tuple[str, str, str, Dizhi]] = [
+      ('2000-02-04 19:30', 'hour',   '庚辰', Dizhi.寅), # 戌时 [19:00, 21:00) holds the jieqi: tie -> new.
+      ('2000-02-04 20:59', 'hour',   '庚辰', Dizhi.寅),
+      ('2000-02-04 18:59', 'hour',   '己卯', Dizhi.丑), # 酉时: before the jieqi's 时辰 -> old.
+      ('2000-02-04 20:40', 'minute', '庚辰', Dizhi.寅), # Same minute as the jieqi: tie -> new.
+      ('2000-02-04 20:41', 'minute', '庚辰', Dizhi.寅),
+      ('2000-02-04 20:39', 'minute', '己卯', Dizhi.丑),
+      ('2000-02-05 04:00', 'hour',   '庚辰', Dizhi.寅), # Plain interior moments, both sides.
+      ('2000-02-03 12:00', 'minute', '己卯', Dizhi.丑),
+
+      ('2017-02-03 23:10', 'hour',   '丁酉', Dizhi.寅), # 子时 starts 23:00, holds 立春 23:34:03: tie.
+      ('2017-02-04 00:30', 'hour',   '丁酉', Dizhi.寅), # Still the same 子时, next civil day.
+      ('2017-02-03 22:30', 'hour',   '丙申', Dizhi.丑), # 亥时 -> old, on a day DAY assigns new.
+      ('2017-02-03 23:10', 'minute', '丙申', Dizhi.丑), # At minute granularity 23:10 < 23:34.
+      ('2017-02-03 23:34', 'minute', '丁酉', Dizhi.寅),
+
+      ('2009-02-03 23:30', 'hour',   '己丑', Dizhi.寅), # Cross-midnight tie: 立春 02-04 00:49:48.
+      ('2009-02-04 00:30', 'hour',   '己丑', Dizhi.寅), # The tie seen from the jieqi's own day.
+      ('2009-02-03 22:59', 'hour',   '戊子', Dizhi.丑), # 亥时, right before the tie window opens.
+      ('2009-02-04 00:49', 'minute', '己丑', Dizhi.寅),
+      ('2009-02-04 00:48', 'minute', '戊子', Dizhi.丑),
+      ('2009-01-10 12:00', 'minute', '戊子', Dizhi.丑), # 丑月 interior: owned by 小寒 of 2009.
+    ]
+    for moment, precision, year_pillar, month_dizhi in expected:
+      with self.subTest(moment=moment, precision=precision):
+        bazi: Bazi = Bazi.create(moment, 'male', precision)
+        self.assertEqual(str(bazi.year_pillar), year_pillar)
+        self.assertEqual(bazi.month_commander, month_dizhi)
+
+  def test_day_and_hour_pillars_ignore_precision(self) -> None:
+    '''Precision only moves the year/month attribution; the day/hour pillars must not move.'''
+    moments: list[str] = ['2009-02-03 23:30', '2017-02-03 23:10', '2000-02-04 20:39', '1984-02-04 12:30']
+    for moment in moments:
+      day_bazi: Bazi = Bazi.create(moment, 'female', 'day')
+      for precision in ('hour', 'minute'):
+        with self.subTest(moment=moment, precision=precision):
+          bazi: Bazi = Bazi.create(moment, 'female', precision)
+          self.assertEqual(bazi.day_pillar, day_bazi.day_pillar)
+          self.assertEqual(bazi.hour_pillar, day_bazi.hour_pillar)
+
+  def test_hko_backend_rejected(self) -> None:
+    '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
+    for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
+      with self.subTest(precision=precision):
+        with self.assertRaises(ValueError):
+          Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, precision, CalendarBackend.HKO)
+    self.assertEqual(str(Bazi.create('2000-02-04 19:30', 'male', 'day', backend='hko').year_pillar), '庚辰')
+
+  def test_ganzhi_year_and_bracketing_jies_are_the_attribution(self) -> None:
+    '''`ganzhi_year` / `bracketing_jies` expose exactly what the pillars were derived from.'''
+    bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', 'hour')
+    self.assertEqual(bazi.ganzhi_year, 2009)
+    owning, following = bazi.bracketing_jies
+    self.assertEqual(owning, JieqiTime(Jieqi.立春, datetime(2009, 2, 4, 0, 49, 48)))
+    self.assertEqual(following.jieqi, Jieqi.惊蛰)
+    # The owning jie's true moment lies AFTER the birth -- that is what a tie looks like.
+    self.assertGreater(owning.moment, bazi.solar_datetime)
+    # `ganzhi_date` stays a day-level channel: on the jieqi's own day the two channels agree
+    # (DAY gives the whole day to the new side), but for the cross-midnight tie birth on the
+    # PREVIOUS day they legitimately disagree.
+    self.assertEqual(bazi.ganzhi_date.year, 2009)
+    advance: Bazi = Bazi.create('2009-02-03 23:30', 'male', 'hour')
+    self.assertEqual(advance.ganzhi_year, 2009)
+    self.assertEqual(advance.ganzhi_date.year, 2008)
+
+  @pytest.mark.slow
+  def test_attribution_matches_scan_oracle(self) -> None:
+    '''
+    Independent oracle, two derivations compared:
+    - Year: compare the truncated birth against the truncated 立春 of its solar year directly.
+    - Month: linearly scan all nearby Jies and take the LAST one whose truncated moment is
+      <= the truncated birth (ties go new), then map it to a month via literal data.
+    The scan shares none of `Bazi.__init__`'s bracketing/tie-flip shortcut, so a bug in
+    either derivation shows up as a mismatch.
+
+    Also pins the divergence-from-DAY shape: a finer granularity may disagree with DAY only
+    around a jie's own day -- retreating (jieqi-day birth before the jie's truncated moment)
+    or advancing (previous-day 晚子时 birth tying a 00:xx jie across midnight). Both windows
+    are sampled densely by biasing half the moments to fall near a jie.
+    '''
+    utils = calendar_utils_of(CalendarBackend.CELESTIAL)
+    rng = random.Random(6) # Deterministic sampling; seeded with the issue number.
+
+    all_jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+
+    def __random_moment() -> datetime:
+      uniform: datetime = datetime(
+        rng.randint(1902, 2080), rng.randint(1, 12), rng.randint(1, 28),
+        rng.randint(0, 23), rng.randint(0, 59),
+      )
+      if rng.random() < 0.5:
+        return uniform
+      # Bias near a jie so tie windows (rare under uniform sampling) are exercised densely.
+      jie_moment: datetime = utils.jieqi_moment(uniform.year, rng.choice(all_jies))
+      biased: datetime = jie_moment + timedelta(minutes=rng.randint(-180, 180))
+      return biased.replace(second=0, microsecond=0)
+
+    total: int = 30_000
+    divergent: int = 0
+    for _ in range(total):
+      birth: datetime = __random_moment()
+      day_bazi: Bazi = Bazi(birth, BaziGender.女, BaziPrecision.DAY)
+
+      candidates: list[JieqiTime] = sorted(
+        (JieqiTime(jie, utils.jieqi_moment(year, jie))
+         for year in (birth.year - 1, birth.year) for jie in all_jies),
+        key=lambda jt: jt.moment,
+      )
+
+      for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
+        with self.subTest(birth=birth, precision=precision):
+          bazi: Bazi = Bazi(birth, BaziGender.女, precision)
+
+          trunc_birth: datetime = self.__truncated(birth, precision)
+          lichun: datetime = utils.jieqi_moment(birth.year, Jieqi.立春)
+          expected_year: int = birth.year if trunc_birth >= self.__truncated(lichun, precision) else birth.year - 1
+          self.assertEqual(bazi.ganzhi_year, expected_year)
+
+          owning: JieqiTime = max(
+            (jt for jt in candidates if self.__truncated(jt.moment, precision) <= trunc_birth),
+            key=lambda jt: jt.moment,
+          )
+          self.assertEqual(bazi.month_commander, self.JIE_MONTH_DIZHI[owning.jieqi])
+
+          # Divergence-from-DAY shape: only inside a tie window around a jie's own day.
+          if (bazi.year_pillar, bazi.month_commander) != (day_bazi.year_pillar, day_bazi.month_commander):
+            divergent += 1
+            day_owning: JieqiTime = max(
+              (jt for jt in candidates if jt.moment.date() <= birth.date()),
+              key=lambda jt: jt.moment,
+            )
+            if owning.moment > day_owning.moment:  # Advance: cross-midnight 晚子时 tie.
+              self.assertIs(precision, BaziPrecision.HOUR)
+              self.assertEqual(self.__truncated(owning.moment, precision), trunc_birth)
+              self.assertLess(birth.date(), owning.moment.date())
+            else:                                  # Retreat: jieqi-day birth before the moment.
+              self.assertEqual(birth.date(), day_owning.moment.date())
+              self.assertLess(trunc_birth, self.__truncated(day_owning.moment, precision))
+
+    # The biased sampling must actually have exercised the divergence windows.
+    self.assertGreater(divergent, 100)
+
+  @pytest.mark.slow
+  def test_minute_vs_moment_level_prev_jie(self) -> None:
+    '''
+    MINUTE attribution vs the moment-level `prev_jie`: the two may disagree ONLY at a
+    same-minute tie (birth in the same minute as the jieqi but before its true second --
+    ties go new, `prev_jie` stays old). At any other moment they must agree.
+    '''
+    utils = calendar_utils_of(CalendarBackend.CELESTIAL)
+    rng = random.Random(72) # Seeded with the issue this rule closes.
+
+    all_jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+    for _ in range(2_000):
+      jie_moment: datetime = utils.jieqi_moment(rng.randint(1902, 2080), rng.choice(all_jies))
+      birth: datetime = (jie_moment + timedelta(seconds=rng.randint(-90, 90))).replace(second=0, microsecond=0)
+
+      bazi: Bazi = Bazi(birth, BaziGender.男, BaziPrecision.MINUTE)
+      moment_owning: JieqiTime = utils.prev_jie(birth)
+      attribution_owning: JieqiTime = bazi.bracketing_jies[0]
+
+      with self.subTest(birth=birth):
+        if attribution_owning != moment_owning:
+          next_j: JieqiTime = utils.next_jie(birth)
+          self.assertEqual(attribution_owning, next_j)
+          self.assertEqual(next_j.moment.replace(second=0, microsecond=0), birth) # Same minute.
+          self.assertLess(birth, next_j.moment)                                   # Before the true second.
+        self.assertEqual(bazi.month_commander, self.JIE_MONTH_DIZHI[attribution_owning.jieqi])
 
 
 class TestBazi(unittest.TestCase):
@@ -377,10 +583,12 @@ class TestBazi(unittest.TestCase):
       self.assertEqual(bazi.hour, expected_bazi.hour)
       self.assertEqual(bazi.minute, expected_bazi.minute)
 
-    unsupported_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']
-    for dt, g, p in product(dt_options, male_options + female_options, unsupported_precision_options):
-      with self.assertRaises(AssertionError):
-        Bazi.create(dt, g, p) # Other level precision is not supported at the moment
+    finer_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']
+    for dt, g, p in product(dt_options, male_options + female_options, finer_precision_options):
+      bazi = Bazi.create(dt, g, p) # Supported since issue #6 -- on the celestial backend only.
+      self.assertIn(bazi.precision, (BaziPrecision.HOUR, BaziPrecision.MINUTE))
+      with self.assertRaises(ValueError):
+        Bazi.create(dt, g, p, backend='hko') # HKO has no real jieqi moments.
 
   def test_eq_ne(self) -> None:
     def __random_info() -> tuple[datetime, BaziGender, BaziPrecision]:

@@ -5,9 +5,10 @@ import random
 
 from enum import Enum
 from datetime import date, time, datetime, timedelta
-from typing import Final, Union
+from typing import Final, Optional, Union
 
-from .Defines import Tiangan, Dizhi, Ganzhi
+from .Common import JieqiTime
+from .Defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from .Calendar import (
   CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of,
 )
@@ -85,7 +86,14 @@ class BaziPrecision(Enum):
   estimator would have to flip its answer based on a clock time the DAY caller is not claiming
   to know, which would also make ganzhi month lengths depend on it.
 
-  Only DAY is implemented so far; HOUR and MINUTE are https://github.com/0xf3cd/bazi/issues/6.
+  Because 子时 spans midnight, the tie 时辰 can start on the previous civil day: LICHUN of
+  2009 falls at 2009-02-04 00:49:48, in the 子时 that began at 02-03 23:00, so a HOUR birth
+  at 2009-02-03 23:30 ties and belongs to the new year -- on a day that DAY assigns to the
+  old side. The granularities are three readings of one rule, not nested refinements.
+
+  HOUR and MINUTE need real jieqi moments, so they require the celestial backend --
+  `Bazi.__init__` rejects the HKO backend for them (its `jieqi_moment` is a midnight
+  placeholder, see `CalendarUtilsProtocol`).
   '''
   DAY    = 0
   HOUR   = 1
@@ -99,6 +107,44 @@ class BaziPrecision(Enum):
     else:
       assert self is self.MINUTE
       return 'minute'
+
+
+'''Maps each Jie (节) to the ganzhi month it opens: 立春 -> 1 (寅月), ..., 小寒 -> 12 (丑月).'''
+_GANZHI_MONTH_OF_JIE: Final[dict[Jieqi, int]] = {
+  jie : month
+  for month, jie in enumerate(Jieqi.as_list(ganzhi_year=True)[::2], start=1)
+}
+
+
+def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
+  '''
+  Truncate `dt` to the start of `precision`'s granularity unit, so that two truncated values
+  compare per the `BaziPrecision` rule (`birth >= jieqi`, ties go new).
+  把时刻截断到 `precision` 粒度单位的起点，截断后的两个时刻即可按 `BaziPrecision` 规则比较。
+
+  Note:
+  - HOUR truncates to the start of the 时辰 (the odd clock hours: 23, 1, 3, ..., 21). The
+    start is a full datetime, not a (date, 时辰-index) pair: 子时 spans midnight, so a 23:30
+    birth must order *after* the same day's 亥时 -- an in-day index would order it first.
+  - MINUTE drops seconds and below.
+  - DAY is deliberately unsupported here: it compares dates via the `to_ganzhi` channel.
+
+  Args:
+  - dt: (datetime) The moment to truncate.
+  - precision: (BaziPrecision) `HOUR` or `MINUTE`.
+
+  Return: (datetime) The start of the granularity unit containing `dt`.
+  '''
+
+  assert isinstance(dt, datetime)
+  assert precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
+
+  if precision is BaziPrecision.MINUTE:
+    return dt.replace(second=0, microsecond=0)
+
+  # Shift by 1 hour so 时辰 starts land on the even-hour grid, floor, then shift back.
+  shifted: Final[datetime] = dt + timedelta(hours=1)
+  return datetime.combine(shifted.date(), time(shifted.hour - (shifted.hour % 2))) - timedelta(hours=1)
 
 
 class Bazi:
@@ -162,19 +208,51 @@ class Bazi:
     self._gender: Final[BaziGender] = gender
     self._precision: Final[BaziPrecision] = precision
 
-    # Generate ganzhi-related info.
-    # TODO: Currently only supports `DAY` precision.
-    assert self._precision == BaziPrecision.DAY, 'see https://github.com/0xf3cd/bazi/issues/6'
+    # Generate ganzhi-related info: which ganzhi year / month the birth belongs to, compared
+    # per `BaziPrecision` (`birth >= jieqi` at the known granularity, ties go new).
+    ganzhi_year: int
+    ganzhi_month: int
+    bracketing_jies: Optional[tuple[JieqiTime, JieqiTime]] = None
+    if self._precision is BaziPrecision.DAY:
+      # DAY compares dates: the `to_ganzhi` channel drops the time, so a jieqi's whole day
+      # falls on its new side. `bracketing_jies` stays moment-level for DAY (see the property).
+      ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
+      ganzhi_year = ganzhi_calendardate.year
+      ganzhi_month = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
+    else:
+      if self._backend is CalendarBackend.HKO:
+        raise ValueError(
+          f'{self._precision} needs real jieqi moments, which the HKO backend cannot provide '
+          '(its `jieqi_moment` is a midnight placeholder). Use `CalendarBackend.CELESTIAL`.'
+        )
 
-    ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
+      # The truncated birth can never exceed the truncated next jie (truncation is monotone),
+      # so `>=` can only hit as a tie -- in which case the next jie owns the birth month, and
+      # its true moment may be up to one granularity unit after the birth (子时 spans midnight,
+      # so for HOUR the tie window may even start on the previous civil day).
+      birth_moment: Final[datetime] = self.solar_datetime
+      prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
+      next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
+      if _truncated(birth_moment, self._precision) >= _truncated(next_j.moment, self._precision):
+        bracketing_jies = (next_j, utils.next_jie(next_j.moment))
+      else:
+        bracketing_jies = (prev_j, next_j)
 
-    # Figure out the solar date falls into which ganzhi year.
-    # Also figure out the Year Ganzhi / Year Pillar (年柱).
-    self._ganzhi_year: Final[int] = ganzhi_calendardate.year
+      # Derive the ganzhi year / month from the owning jie -- the same source `BaziChart`
+      # consumes via `bracketing_jies`, so the chart cannot contradict itself. 小寒 opens the
+      # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
+      owning: Final[JieqiTime] = bracketing_jies[0]
+      ganzhi_year = owning.moment.year - (1 if owning.jieqi is Jieqi.小寒 else 0)
+      ganzhi_month = _GANZHI_MONTH_OF_JIE[owning.jieqi]
+
+    self._bracketing_jies: Final[Optional[tuple[JieqiTime, JieqiTime]]] = bracketing_jies
+
+    # The Year Ganzhi / Year Pillar (年柱).
+    self._ganzhi_year: Final[int] = ganzhi_year
     self._year_pillar: Final[Ganzhi] = ganzhi_of_year(self._ganzhi_year)
 
-    # Figure out the ganzhi month. Also find out the Month Dizhi (月令).
-    self._ganzhi_month: Final[int] = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
+    # The ganzhi month and the Month Dizhi (月令).
+    self._ganzhi_month: Final[int] = ganzhi_month
     assert 1 <= self._ganzhi_month <= 12
     self._month_dizhi: Final[Dizhi] = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
 
@@ -308,8 +386,43 @@ class Bazi:
   
   @property
   def ganzhi_date(self) -> CalendarDate:
-    '''The birth date (in ganzhi calendar) / 干支历出生日期'''
+    '''
+    The birth date (in ganzhi calendar) / 干支历出生日期
+
+    Note: this is a day-level channel by definition -- its input is a date. Under `HOUR` /
+    `MINUTE` precision it can disagree with `ganzhi_year` / the year and month pillars inside
+    a jieqi's tie window; precision-attributed consumers should use `ganzhi_year` instead.
+    '''
     return self._utils.to_ganzhi(self._solar_date)
+
+  @property
+  def ganzhi_year(self) -> int:
+    '''
+    The ganzhi year the birth belongs to, attributed at `self.precision` -- the year pillar is
+    `ganzhi_of_year` of exactly this. 按 `self.precision` 粒度归属的出生干支年，年柱即由它推出。
+    '''
+    return self._ganzhi_year
+
+  @property
+  def bracketing_jies(self) -> tuple[JieqiTime, JieqiTime]:
+    '''
+    The two Jies (节) bracketing the birth, per `self.precision`. This is the single source
+    that the year/month attribution and `BaziChart`'s dayun counting share, so a chart cannot
+    contradict itself about which jie owns the birth month.
+    按 `self.precision` 归属的出生前后两节。年/月柱归属与大运数节共用此单一来源，保证盘面自洽。
+
+    Note:
+    - HOUR / MINUTE: `[0]` is the jie owning the birth month (granularity-aware, ties go new --
+      so its true moment may be up to one granularity unit *after* the birth), `[1]` the jie
+      after it.
+    - DAY: moment-level `prev_jie` / `next_jie` of the birth moment -- unchanged pre-existing
+      behaviour. The DAY month pillar compares dates while these compare moments, so on a
+      jieqi's day they legitimately disagree; that trade-off is pinned by `test_bazi` and
+      documented in `CalendarUtilsProtocol`.
+    '''
+    if self._bracketing_jies is not None:
+      return self._bracketing_jies
+    return (self._utils.prev_jie(self.solar_datetime), self._utils.next_jie(self.solar_datetime))
 
   @property
   def hour(self) -> int:
