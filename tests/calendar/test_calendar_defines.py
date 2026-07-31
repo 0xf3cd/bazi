@@ -8,7 +8,7 @@ import copy
 from datetime import date, timedelta
 from itertools import product
 
-from src.Calendar import CalendarType, CalendarDate
+from src.calendar import CalendarType, CalendarDate
 
 
 class TestCalendarType(unittest.TestCase):

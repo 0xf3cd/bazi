@@ -1,14 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_celestial_tables.py
 #
-# Parity layers a/b for the committed CelestialData tables (`src/Calendar/CelestialData/data/`):
-# the tables are checked against HkoData DIRECTLY, not through any protocol implementation
+# Parity layers a/b for the committed celestial_data tables (`src/calendar/celestial_data/data/`):
+# the tables are checked against hko_data DIRECTLY, not through any protocol implementation
 # -- so the tables are verified before any consumer exists, and a bad table cannot silently
 # poison the charts downstream. The table parser below is deliberately a minimal independent
-# reader (not `Loader.py`): writer (`Generator.py`), loader (`Loader.py`), and this reader
+# reader (not `loader.py`): writer (`generator.py`), loader (`loader.py`), and this reader
 # are three independent implementations of the same `SCHEMA.md`, so the schema itself is tested.
 #
-# NOTE: parity proves EQUIVALENCE, not truth (parity 证的是等价性,不是真值). HkoData and
+# NOTE: parity proves EQUIVALENCE, not truth (parity 证的是等价性,不是真值). hko_data and
 # celestial algo1 share the HKO official-almanac lineage (official dispositions such as the
 # 2033 issue agree by construction); the truth side is covered by celestial's own
 # HKO x DE441 dual-axis validation (0.525 min).
@@ -19,8 +19,8 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Final, NamedTuple
 
-from src.Defines import Jieqi, Ganzhi
-from src.Calendar import HkoData
+from src.defines import Jieqi, Ganzhi
+from src.calendar import hko_data
 
 # NOTE on the import form: the test suite has no `__init__.py`, so pytest (prepend mode)
 # puts this directory itself on sys.path -- the parity data module is imported as a bare
@@ -31,7 +31,7 @@ from celestial_parity_data import (
 )
 
 
-DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'src' / 'Calendar' / 'CelestialData' / 'data'
+DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'src' / 'calendar' / 'celestial_data' / 'data'
 
 JIEQI_TABLE_PATH: Final[Path] = DATA_DIR / 'jieqi_moments.txt'
 ALGO1_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo1.txt'
@@ -129,7 +129,7 @@ class TestHeaderKeysAreClosed(unittest.TestCase):
   '''
   SCHEMA.md declares the provenance namespace closed, and a column name must never take a
   key of its own: `# leap_month: 1..12, or 0 when the year has no leap month.` reads to every
-  parser here and in `Loader` as a provenance key whose value happens to be a sentence.
+  parser here and in `loader` as a provenance key whose value happens to be a sentence.
   Prose about a column belongs on continuation lines under `columns`.
 
   The contract is stated in three independent places -- this file, the generator, and the
@@ -146,7 +146,7 @@ class TestHeaderKeysAreClosed(unittest.TestCase):
 
   def test_fixtures(self) -> None:
     # The fixtures carry one key more and are otherwise the same format, which is the whole
-    # point of them: a Loader that passes on a fixture is reading the shipped layout.
+    # point of them: a loader that passes on a fixture is reading the shipped layout.
     for name, expected in (('jieqi_moments.txt', JIEQI_HEADER_KEYS),
                            ('lunar_years_algo1.txt', LUNAR_HEADER_KEYS),
                            ('lunar_years_algo2.txt', LUNAR_HEADER_KEYS)):
@@ -184,7 +184,7 @@ class TestJieqiTableShape(unittest.TestCase):
 
 class TestJieqiDateParity(unittest.TestCase):
   '''
-  Layer b: the table's jieqi DATES vs HkoData, over the whole window (200 x 24 = 4800).
+  Layer b: the table's jieqi DATES vs hko_data, over the whole window (200 x 24 = 4800).
   The divergences must be exactly the frozen whitelist in `celestial_parity_data.py`
   -- the entry count itself is asserted, so a new unexplained divergence turns this red.
   '''
@@ -206,7 +206,7 @@ class TestJieqiDateParity(unittest.TestCase):
     )
 
   def test_dates_vs_hko(self) -> None:
-    hko_jieqi: HkoData.DecodedJieqiDates = HkoData.DecodedJieqiDates()
+    hko_jieqi: hko_data.DecodedJieqiDates = hko_data.DecodedJieqiDates()
     _, _, rows = _load_jieqi_table()
 
     divergences: dict[tuple[int, int], tuple[datetime, date]] = {}
@@ -270,22 +270,22 @@ class TestLunarTableShape(unittest.TestCase):
 
 class TestLunarParity(unittest.TestCase):
   '''
-  Layer a: the lunar tables vs HkoData, field by field
+  Layer a: the lunar tables vs hko_data, field by field
   (`first_solar_date` / `leap_month` / `days_counts` / `ganzhi`).
   algo1 is HKO-lineage and must match 199/199; algo2 diverges on exactly the six
   whitelisted years (`ALGO2_DIVERGENT_YEARS`).
   '''
 
   def _hko_differences(self, rows: list[_LunarRow]) -> dict[int, list[str]]:
-    '''Field-level differences against HkoData, keyed by lunar year (empty means a match).'''
-    hko_lunar: HkoData.DecodedLunarYears = HkoData.DecodedLunarYears()
+    '''Field-level differences against hko_data, keyed by lunar year (empty means a match).'''
+    hko_lunar: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
     differences: dict[int, list[str]] = {}
     for row in rows:
-      hko: HkoData.LunarYearInfo = hko_lunar.get(row.lunar_year)
+      hko: hko_data.LunarYearInfo = hko_lunar.get(row.lunar_year)
       diffs: list[str] = []
       if row.first_solar_date != hko['first_solar_day']:
         diffs.append(f'first_solar_date {row.first_solar_date} vs HKO {hko["first_solar_day"]}')
-      # HkoData spells "no leap month" as None; the table uses 0. Normalise when comparing.
+      # hko_data spells "no leap month" as None; the table uses 0. Normalise when comparing.
       if (row.leap_month if row.leap_month != 0 else None) != hko['leap_month']:
         diffs.append(f'leap_month {row.leap_month} vs HKO {hko["leap_month"]}')
       if list(row.days_counts) != hko['days_counts']:
@@ -310,7 +310,7 @@ class TestLunarParity(unittest.TestCase):
     self.assertEqual(len(differences), 6)
 
   def test_ganzhi_matches_hko(self) -> None:
-    hko_lunar: HkoData.DecodedLunarYears = HkoData.DecodedLunarYears()
+    hko_lunar: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
     for path in (ALGO1_TABLE_PATH, ALGO2_TABLE_PATH):
       _, rows = _load_lunar_table(path)
       mismatches: list[str] = [

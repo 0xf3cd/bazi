@@ -5,8 +5,8 @@ import unittest
 
 import random
 
-from src.Defines import Tiangan, Dizhi
-from src.Utils import ShenshaUtils
+from src.defines import Tiangan, Dizhi
+from src.utils import shensha_utils
 
 
 class TestShenshaUtils(unittest.TestCase):
@@ -19,8 +19,8 @@ class TestShenshaUtils(unittest.TestCase):
 
     for _ in range(16):
       dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-      self.assertEqual(ShenshaUtils.taohua(dz1, dz2), expected_table[dz1] is dz2)
-      self.assertEqual(ShenshaUtils.taohua(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
+      self.assertEqual(shensha_utils.taohua(dz1, dz2), expected_table[dz1] is dz2)
+      self.assertEqual(shensha_utils.taohua(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
 
   def test_hongyan(self) -> None:
     expected_table: dict[Dizhi, list[Tiangan]] = {
@@ -37,8 +37,8 @@ class TestShenshaUtils(unittest.TestCase):
     for _ in range(16):
       tg, dz = random.choice(Tiangan.as_list()), random.choice(Dizhi.as_list())
       expected_result: bool = dz in expected_table and tg in expected_table[dz]
-      self.assertEqual(ShenshaUtils.hongyan(tg, dz), expected_result)
-      self.assertEqual(ShenshaUtils.hongyan(tg, dz), expected_result, 'Result consistency')
+      self.assertEqual(shensha_utils.hongyan(tg, dz), expected_result)
+      self.assertEqual(shensha_utils.hongyan(tg, dz), expected_result, 'Result consistency')
 
   def test_hongluan(self) -> None:
     expected_table: dict[Dizhi, Dizhi] = {}
@@ -55,8 +55,8 @@ class TestShenshaUtils(unittest.TestCase):
 
     for _ in range(16):
       dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-      self.assertEqual(ShenshaUtils.hongluan(dz1, dz2), expected_table[dz1] is dz2)
-      self.assertEqual(ShenshaUtils.hongluan(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
+      self.assertEqual(shensha_utils.hongluan(dz1, dz2), expected_table[dz1] is dz2)
+      self.assertEqual(shensha_utils.hongluan(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
 
   def test_tianxi(self) -> None:
     expected_table: dict[Dizhi, Dizhi] = {}
@@ -73,8 +73,8 @@ class TestShenshaUtils(unittest.TestCase):
 
     for _ in range(16):
       dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-      self.assertEqual(ShenshaUtils.tianxi(dz1, dz2), expected_table[dz1] is dz2)
-      self.assertEqual(ShenshaUtils.tianxi(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
+      self.assertEqual(shensha_utils.tianxi(dz1, dz2), expected_table[dz1] is dz2)
+      self.assertEqual(shensha_utils.tianxi(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
 
   def test_yima(self) -> None:
     expected_table: dict[Dizhi, Dizhi] = {
@@ -85,5 +85,5 @@ class TestShenshaUtils(unittest.TestCase):
 
     for _ in range(16):
       dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-      self.assertEqual(ShenshaUtils.yima(dz1, dz2), expected_table[dz1] is dz2)
-      self.assertEqual(ShenshaUtils.yima(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')
+      self.assertEqual(shensha_utils.yima(dz1, dz2), expected_table[dz1] is dz2)
+      self.assertEqual(shensha_utils.yima(dz1, dz2), expected_table[dz1] is dz2, 'Result consistency')

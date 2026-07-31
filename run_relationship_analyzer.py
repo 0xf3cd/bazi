@@ -2,9 +2,9 @@
 
 from run_demo import get_basic_info
 
-from src.BaziChart import BaziChart
-from src.Transits import TransitOptions
-from src.Analyzer.Relationship import RelationshipAnalyzer, ShenshaAnalysis
+from src.bazi_chart import BaziChart
+from src.transits import TransitOptions
+from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
 
 
 def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:

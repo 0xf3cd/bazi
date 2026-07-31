@@ -5,11 +5,11 @@ import unittest
 
 from datetime import datetime
 
-from src.Bazi import Bazi, BaziGender, BaziPrecision
-from src.BaziChart import BaziChart
-from src.Defines import Dizhi
-from src.Transits import TransitMoment, TransitOptions, TransitDatabase
-from src.TransitChart import TransitChart, 流年大运
+from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi_chart import BaziChart
+from src.defines import Dizhi
+from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.transit_chart import TransitChart, 流年大运
 
 
 class TestTransitChart(unittest.TestCase):

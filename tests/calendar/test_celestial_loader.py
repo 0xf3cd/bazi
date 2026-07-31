@@ -8,11 +8,11 @@ import unittest
 from datetime import date, datetime
 from pathlib import Path
 
-from src.Calendar.CelestialData.Loader import (
+from src.calendar.celestial_data.loader import (
   DATA_DIR, JIEQI_BY_INDEX, JIEQI_COLUMNS, LUNAR_COLUMNS, SCHEMA_VERSION,
   JieqiMomentTable, LunarYearTable,
 )
-from src.Defines import Ganzhi, Jieqi
+from src.defines import Ganzhi, Jieqi
 
 
 FIXTURES: Path = Path(__file__).parent / 'celestial_fixtures'
@@ -67,7 +67,7 @@ class TestShippedTables(unittest.TestCase):
     '''
     The fixtures and the shipped tables were written by two generators that never shared
     code (the fixtures came from a throwaway script, the tables from
-    `CelestialData/Generator.py`).  Byte-identical data lines on
+    `celestial_data/generator.py`).  Byte-identical data lines on
     the overlapping years is therefore a check on `SCHEMA.md` itself, not just on the data.
     '''
     for name in TABLE_NAMES:
@@ -118,7 +118,7 @@ class TestFixtureTables(unittest.TestCase):
       info = table.get(1901)
       self.assertEqual(info['first_solar_day'], date(1901, 2, 19))
       self.assertFalse(info['leap'])
-      self.assertIsNone(info['leap_month']) # The table spells this as 0; HkoData as None.
+      self.assertIsNone(info['leap_month']) # The table spells this as 0; hko_data as None.
       self.assertEqual(len(info['days_counts']), 12)
       self.assertEqual(info['ganzhi'], Ganzhi.from_str('辛丑'))
 
@@ -169,7 +169,7 @@ class TestCorruptTables(unittest.TestCase):
   def test_missing_file(self) -> None:
     with self.assertRaises(RuntimeError) as ctx:
       JieqiMomentTable(FIXTURES / 'does_not_exist.txt')
-    self.assertIn('Generator', str(ctx.exception)) # Tell the reader how to regenerate it.
+    self.assertIn('generator', str(ctx.exception)) # Tell the reader how to regenerate it.
 
   def test_schema_version_mismatch(self) -> None:
     path = self.__write(self.__replace(self.jieqi_lines, '# schema_version:', '# schema_version: 999'))

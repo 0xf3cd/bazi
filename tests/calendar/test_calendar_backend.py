@@ -7,12 +7,12 @@ import unittest
 
 from datetime import datetime
 
-from src.Calendar import (
-  CalendarBackend, CalendarUtilsProtocol, HkoDataCalendarUtils, calendar_utils_of,
+from src.calendar import (
+  CalendarBackend, CalendarUtilsProtocol, hko_data_calendar_utils, calendar_utils_of,
 )
-from src.Calendar.CelestialCalendarUtils import ALGO1, ALGO2
-from src.Bazi import Bazi, BaziGender, BaziPrecision
-from src.BaziChart import BaziChart
+from src.calendar.celestial_calendar_utils import ALGO1, ALGO2
+from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi_chart import BaziChart
 
 
 class TestCalendarBackend(unittest.TestCase):
@@ -39,14 +39,14 @@ class TestCalendarBackend(unittest.TestCase):
 
   def test_calendar_utils_of(self) -> None:
     utils = calendar_utils_of(CalendarBackend.HKO)
-    self.assertIs(utils, HkoDataCalendarUtils)
+    self.assertIs(utils, hko_data_calendar_utils)
     self.assertIsInstance(utils, CalendarUtilsProtocol)
 
     self.assertIs(calendar_utils_of(CalendarBackend.CELESTIAL), ALGO1)
     self.assertIs(calendar_utils_of(CalendarBackend.CELESTIAL_ALGO2), ALGO2)
 
     # Strings are also accepted and resolved the same way.
-    self.assertIs(calendar_utils_of('hko'), HkoDataCalendarUtils)
+    self.assertIs(calendar_utils_of('hko'), hko_data_calendar_utils)
     self.assertIs(calendar_utils_of('celestial'), ALGO1)
 
     for backend in CalendarBackend:
@@ -76,8 +76,8 @@ class TestBaziBackend(unittest.TestCase):
     # The backend-resolved utils should produce results identical to direct HKO calls.
     bazi: Bazi = Bazi(datetime(2000, 2, 4, 20, 35), BaziGender.FEMALE, BaziPrecision.DAY,
                       backend=CalendarBackend.HKO)
-    self.assertEqual(bazi.solar_date, HkoDataCalendarUtils.to_date(datetime(2000, 2, 4)))
-    self.assertEqual(bazi.ganzhi_date, HkoDataCalendarUtils.to_ganzhi(bazi.solar_date))
+    self.assertEqual(bazi.solar_date, hko_data_calendar_utils.to_date(datetime(2000, 2, 4)))
+    self.assertEqual(bazi.ganzhi_date, hko_data_calendar_utils.to_ganzhi(bazi.solar_date))
 
   def test_init_rejects_str_backend(self) -> None:
     # `__init__` only takes the enum; strings go through `Bazi.create` (same

@@ -6,31 +6,31 @@ import unittest
 
 from datetime import datetime
 
-from src.Bazi import Bazi, BaziGender, BaziPrecision
-from src.BaziChart import BaziChart
-from src.Transits import TransitMoment, TransitOptions, TransitDatabase
-from src.Defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
-from src.Utils import TianganUtils, DizhiUtils
+from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi_chart import BaziChart
+from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
+from src.utils import tiangan_utils, dizhi_utils
 
 
 @pytest.mark.integration
 class TestTianganDizhiRelations(unittest.TestCase):
   '''
-  Integration tests are mainly aiming to test the correctness of `TianganUtils` and `DizhiUtils` in transit context.
+  Integration tests are mainly aiming to test the correctness of `tiangan_utils` and `dizhi_utils` in transit context.
   The Bazi cases are collected from "测测" app / "问真八字" web site.
 
-  In this project, `search`, `discover`, and `discover_mutual` methods in `TianganUtils` and `DizhiUtils` will
+  In this project, `search`, `discover`, and `discover_mutual` methods in `tiangan_utils` and `dizhi_utils` will
   return all possible combos.
   However, for 测测 and 问真八字, they only consider part of the combos. For example, 
   they don't consider SHENG / 生 relation.
 
   So in the following tests, we only test that the relation combos that 测测/问真八字 find 
-  are in `TianganUtils`'s and `DizhiUtils`'s returns. 
+  are in `tiangan_utils`'s and `dizhi_utils`'s returns. 
   There can be some combos in the returns but not in 测测/问真八字's results.
   '''
 
   @staticmethod
-  def __check_tiangan(expected: dict[TianganRelation, list[TianganUtils.TianganCombo]], actual: TianganUtils.TianganRelationDiscovery) -> bool:
+  def __check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
     for rel, expected_combos in expected.items():
       if rel not in actual:
         return False
@@ -40,7 +40,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
     return True
 
   @staticmethod
-  def __check_dizhi(expected: dict[DizhiRelation, list[DizhiUtils.DizhiCombo]], actual: DizhiUtils.DizhiRelationDiscovery) -> bool:
+  def __check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], actual: dizhi_utils.DizhiRelationDiscovery) -> bool:
     for rel, expected_combos in expected.items():
       if rel not in actual:
         return False
@@ -71,7 +71,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
     with self.subTest('at birth'):
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.丁, Tiangan.壬})],
-      }, TianganUtils.discover(chart.bazi.four_tiangans)))
+      }, tiangan_utils.discover(chart.bazi.four_tiangans)))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.子, Dizhi.丑})],
@@ -79,25 +79,25 @@ class TestTianganDizhiRelations(unittest.TestCase):
         DizhiRelation.冲 : [frozenset({Dizhi.子, Dizhi.午})],
         DizhiRelation.破 : [frozenset({Dizhi.午, Dizhi.卯})],
         DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
-      }, DizhiUtils.discover(chart.bazi.four_dizhis)))
+      }, dizhi_utils.discover(chart.bazi.four_dizhis)))
 
     with self.subTest('1993 dayun and liunian - transits only'):
       ganzhis = db.ganzhis(TransitMoment(1993), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.戊, Tiangan.癸})],
-      }, TianganUtils.discover(tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover(tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉})],
-      }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2024 dayun and liunian - between transits and at-birth'):
       ganzhis = db.ganzhis(TransitMoment(2024), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
-      }, TianganUtils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
@@ -106,7 +106,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
         DizhiRelation.冲 : [frozenset({Dizhi.未, Dizhi.丑})],
         DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
         DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子}), frozenset({Dizhi.辰, Dizhi.卯})],
-      }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2051 dayun and liunian - transits only'):
       ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
@@ -114,14 +114,14 @@ class TestTianganDizhiRelations(unittest.TestCase):
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
         DizhiRelation.刑 : [frozenset({Dizhi.未, Dizhi.戌})],
-      }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2051 dayun and liunian - between transits and at-birth'):
       ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
-      }, TianganUtils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.卯, Dizhi.戌}), frozenset({Dizhi.午, Dizhi.未})],
@@ -131,7 +131,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
                             frozenset({Dizhi.戌, Dizhi.丑}),], # LOOSE mode is used for XING relation.
         DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
         DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子})],
-      }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
   def test_case2(self) -> None:
     '''From 测测 and 问真八字'''
@@ -156,12 +156,12 @@ class TestTianganDizhiRelations(unittest.TestCase):
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
         TianganRelation.克 : [frozenset({Tiangan.己, Tiangan.癸})],
-      }, TianganUtils.discover(bazi.four_tiangans)))
+      }, tiangan_utils.discover(bazi.four_tiangans)))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉})],
         DizhiRelation.半合 : [frozenset({Dizhi.巳, Dizhi.酉})],
-      }, DizhiUtils.discover(bazi.four_dizhis)))
+      }, dizhi_utils.discover(bazi.four_dizhis)))
 
     with self.subTest('2024 xiaoyun and liunian - between transits and at-birth'): 
       # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
@@ -170,32 +170,32 @@ class TestTianganDizhiRelations(unittest.TestCase):
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
         TianganRelation.克 : [frozenset({Tiangan.庚, Tiangan.甲})],
-      }, TianganUtils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.辰, Dizhi.酉}), frozenset({Dizhi.巳, Dizhi.申})],
         DizhiRelation.刑 : [frozenset({Dizhi.辰}), frozenset({Dizhi.巳, Dizhi.申})], # LOOSE mode is used.
         DizhiRelation.破 : [frozenset({Dizhi.巳, Dizhi.申})],
-      }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2052 dayun and liunian - transits only'):
       ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.丙, Tiangan.壬})],
-      }, TianganUtils.discover(tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover(tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.冲 : [frozenset({Dizhi.寅, Dizhi.申})],
         DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.申})],
-      }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2052 dayun and liunian - between transits and at-birth'):
       ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_tiangan({
         TianganRelation.合 : [frozenset({Tiangan.丙, Tiangan.辛})],
-      }, TianganUtils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.巳, Dizhi.申})],
@@ -203,14 +203,14 @@ class TestTianganDizhiRelations(unittest.TestCase):
         DizhiRelation.刑 : [frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申}),
                            frozenset({Dizhi.寅, Dizhi.巳}),
                            frozenset({Dizhi.巳, Dizhi.申}),],
-      }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2062 dayun and liunian - transits only'):
       ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
-      }, DizhiUtils.discover(tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis))))
 
     with self.subTest('2062 dayun and liunian - between transits and at-birth'):
       ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
@@ -218,7 +218,7 @@ class TestTianganDizhiRelations(unittest.TestCase):
       self.assertTrue(self.__check_tiangan({
         TianganRelation.冲 : [frozenset({Tiangan.乙, Tiangan.辛})],
         TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.己})],
-      }, TianganUtils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
+      }, tiangan_utils.discover_mutual(bazi.four_tiangans, tuple(gz.tiangan for gz in ganzhis))))
 
       self.assertTrue(self.__check_dizhi({
         DizhiRelation.六合 : [frozenset({Dizhi.午, Dizhi.未})],
@@ -227,4 +227,4 @@ class TestTianganDizhiRelations(unittest.TestCase):
         DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未})], # LOOSE mode is used here...
         DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
         DizhiRelation.破 : [frozenset({Dizhi.丑, Dizhi.辰})],
-      }, DizhiUtils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))
+      }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis))))

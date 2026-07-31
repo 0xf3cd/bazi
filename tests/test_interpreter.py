@@ -3,10 +3,10 @@
 
 import unittest
 
-from src.Common import ShishenDescription, TianganDescription
-from src.Defines import Tiangan, Shishen
-from src.Descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
-from src.Interpreter import Interpreter
+from src.common import ShishenDescription, TianganDescription
+from src.defines import Tiangan, Shishen
+from src.descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
+from src.interpreter import Interpreter
 
 class TestInterpreter(unittest.TestCase):
   def test_interpret_shishen(self) -> None:

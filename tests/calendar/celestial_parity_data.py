@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # tests/calendar/celestial_parity_data.py
 #
-# The frozen whitelist of known divergences between the committed CelestialData tables
-# (`src/Calendar/CelestialData/data/`) and HkoData -- the single source of truth
+# The frozen whitelist of known divergences between the committed celestial_data tables
+# (`src/calendar/celestial_data/data/`) and hko_data -- the single source of truth
 # (唯一真源). `test_celestial_tables.py` (parity layers a/b) verifies the tables against
-# HkoData with exactly this whitelist, and layer c (`test_celestial_parity_derived.py`) derives its expectations
+# hko_data with exactly this whitelist, and layer c (`test_celestial_parity_derived.py`) derives its expectations
 # from these entries mechanically. No formulaic exemption: every entry carries its own
 # attribution, and the entry count itself is asserted.
 
@@ -117,5 +117,5 @@ JIEQI_DATE_DIVERGENCES: Final[tuple[JieqiDateDivergence, ...]] = (
 
 # The lunar years where algo2 disagrees with HKO (and therefore with algo1, which
 # matches HKO 199/199) on `first_solar_date` / `leap_month` / `days_counts`.
-# Matches celestial `src/test/lunar/diff_test.cpp`; independently reproduced against HkoData.
+# Matches celestial `src/test/lunar/diff_test.cpp`; independently reproduced against hko_data.
 ALGO2_DIVERGENT_YEARS: Final[tuple[int, ...]] = (1914, 1915, 1916, 1920, 2057, 2097)
