@@ -528,7 +528,7 @@ class TestDizhiUtils(unittest.TestCase):
     self.assertEqual(dizhi_utils.xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.STRICT), None)
     self.assertEqual(dizhi_utils.xing(Dizhi.巳, Dizhi.寅, definition=DizhiRules.XingDef.STRICT), None)
 
-    def __expected_strict_xing(dizhis: tuple[Dizhi, ...], /) -> DizhiRules.XingSubType | None:
+    def __expected_strict_xing(dizhis: tuple[Dizhi, ...]) -> DizhiRules.XingSubType | None:
       # In `XingDef.STRICT` mode, we don't care about the direction.
       __fs: DizhiCombo = DizhiCombo(dizhis)
       if __fs in [DizhiCombo((Dizhi.丑, Dizhi.戌, Dizhi.未)), DizhiCombo((Dizhi.寅, Dizhi.巳, Dizhi.申))]:

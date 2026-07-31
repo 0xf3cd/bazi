@@ -254,7 +254,7 @@ class BaziData(Generic[PillarDataType]):
       return False
     if self.day != other.day:
       return False
-    return bool(self.hour == other.hour)
+    return bool(self.hour == other.hour) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
@@ -284,7 +284,7 @@ class GanzhiData(Generic[TianganDataType_co, DizhiDataType_co]):
       return False
     if self.tiangan != other.tiangan:
       return False
-    return bool(self.dizhi == other.dizhi)
+    return bool(self.dizhi == other.dizhi) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)

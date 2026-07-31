@@ -260,7 +260,11 @@ class TestBaziChart(unittest.TestCase):
       cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
       expected_first_dayun_gz: Ganzhi = cycle[(cycle.index(month_gz) + 1) % 60]
       expected_order: bool = True
-      if (random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴) or (random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳):
+      reverse: bool = (
+        ((random_bazi.gender is BaziGender.男) and (year_dz_yinyaang is Yinyang.阴)) or
+        ((random_bazi.gender is BaziGender.女) and (year_dz_yinyaang is Yinyang.阳))
+      )
+      if reverse:
         expected_first_dayun_gz = cycle[(cycle.index(month_gz) - 1) % 60]
         expected_order = False
       
