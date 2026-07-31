@@ -455,12 +455,13 @@ class Bazi:
   @property
   def _utils(self) -> CalendarUtilsProtocol:
     '''
-    The resolved calendar utils of `self.backend`. Resolved on each access, so nothing
-    non-deepcopyable (i.e. the utils module) is stored on the instance.
-    当前历法后端对应的实际工具。每次访问时现解析，实例上不存模块引用，保证 `Bazi` 可 deepcopy。
+    The resolved calendar utils of `self.backend`. Resolved on each access, so the resolved
+    utils -- the HKO module or a celestial singleton -- is never stored on the instance.
+    当前历法后端对应的实际工具。每次访问时现解析，实例上不存解析结果，保证 `Bazi` 可安全 deepcopy。
 
-    Do NOT turn this into a `cached_property` -- that would write the module into
-    the instance dict and break `deepcopy`.
+    Do NOT turn this into a `cached_property` -- that would write the resolved utils into
+    the instance dict, where the module breaks `deepcopy` loudly and a singleton would be
+    silently duplicated, forking its caches.
     '''
     return calendar_utils_of(self._backend)
   

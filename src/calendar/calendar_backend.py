@@ -73,8 +73,11 @@ def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
     from . import hko_data_calendar_utils
     # A module structurally conforms to `CalendarUtilsProtocol` at runtime (calls on it hit
     # module-level functions with the same signatures, minus `self`), but mypy cannot see a
-    # module as an instance, hence the `cast`.  `test_calendar_backend` asserts the runtime
-    # conformance for every member, which is the check this `cast` gives up.
+    # module as an instance, hence the `cast`.  The `cast` silences the static member-and-
+    # signature check; the runtime nets only partially pay that back: `test_calendar_backend`'s
+    # isinstance asserts member existence (nothing more -- `runtime_checkable` ignores
+    # signatures), and `test_hko_data_calendar_utils` exercises the real signatures by
+    # direct calls.
     return cast(CalendarUtilsProtocol, hko_data_calendar_utils)
 
   if _backend in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2):
