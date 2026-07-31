@@ -25,11 +25,11 @@ import unittest
 
 from datetime import date, datetime, time, timedelta
 
-from src.Calendar import HkoDataCalendarUtils as HKO
-from src.Calendar.CalendarDefines import CalendarType, CalendarDate
-from src.Calendar.CelestialCalendarUtils import ALGO1 as CEL
-from src.Calendar.CelestialData.Loader import JIEQI_BY_INDEX
-from src.Defines import Jieqi
+from src.calendar import hko_data_calendar_utils as HKO
+from src.calendar.calendar_defines import CalendarType, CalendarDate
+from src.calendar.celestial_calendar_utils import ALGO1 as CEL
+from src.calendar.celestial_data.loader import JIEQI_BY_INDEX
+from src.defines import Jieqi
 
 # The whitelist's single source of truth, shared with parity layers a/b.  Imported as a
 # bare sibling module: the test suite has no `__init__.py`, so pytest puts this directory
@@ -85,7 +85,7 @@ class TestJieqiDateWhitelist(unittest.TestCase):
   def test_whitelist_is_exact_through_the_backend(self) -> None:
     '''
     The anchor for layer (c).  Layer (b) checks the same whitelist against the raw table
-    with its own minimal parser; this one goes through `Loader` + `CelestialCalendarUtils`,
+    with its own minimal parser; this one goes through `loader` + `CelestialCalendarUtils`,
     so the two together also prove that the consumer path reproduces the table faithfully.
     '''
     measured: list[tuple[int, int, date]] = []

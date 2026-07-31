@@ -6,8 +6,8 @@ import unittest
 
 from typing import Optional
 
-from src.Defines import Shishen
-from src.Common import (
+from src.defines import Shishen
+from src.common import (
   classproperty, frozendict, GanzhiData, BaziData,
   ConstMetaClass, Const, ImmutableMetaClass, Immutable
 )

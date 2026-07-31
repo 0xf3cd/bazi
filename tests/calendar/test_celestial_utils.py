@@ -5,10 +5,10 @@ import unittest
 
 from datetime import date, datetime, timedelta
 
-from src.Calendar import CalendarUtilsProtocol
-from src.Calendar.CalendarDefines import CalendarType, CalendarDate
-from src.Calendar.CelestialCalendarUtils import ALGO1, ALGO2
-from src.Defines import Jieqi
+from src.calendar import CalendarUtilsProtocol
+from src.calendar.calendar_defines import CalendarType, CalendarDate
+from src.calendar.celestial_calendar_utils import ALGO1, ALGO2
+from src.defines import Jieqi
 
 # The whitelist's single source of truth.  Bare sibling import -- see the NOTE in
 # `test_celestial_tables.py` for why `from tests.calendar...` is not used.

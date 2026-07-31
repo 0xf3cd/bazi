@@ -5,7 +5,7 @@ import re
 import inspect
 import unittest
 
-from src.Rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
+from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 class TestRules(unittest.TestCase):
   def test_basic(self) -> None:

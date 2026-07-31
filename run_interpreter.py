@@ -4,11 +4,11 @@ import re
 from pathlib import Path
 
 from run_demo import get_basic_info
-from src.Bazi import Bazi
-from src.BaziChart import BaziChart
-from src.Common import ShishenDescription, TianganDescription, BaziJson
-from src.Defines import Tiangan, Shishen
-from src.Interpreter import Interpreter
+from src.bazi import Bazi
+from src.bazi_chart import BaziChart
+from src.common import ShishenDescription, TianganDescription, BaziJson
+from src.defines import Tiangan, Shishen
+from src.interpreter import Interpreter
 
 
 def interpret(chart: BaziChart) -> str:

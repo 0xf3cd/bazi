@@ -7,11 +7,11 @@ import unittest
 import random
 import itertools
 
-from src.Defines import Tiangan, Dizhi, Shishen, DizhiRelation
-from src.Utils import ShenshaUtils, TianganUtils, DizhiUtils, BaziUtils
-from src.BaziChart import BaziChart
-from src.Transits import TransitMoment, TransitOptions, TransitDatabase
-from src.Analyzer.Relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
+from src.defines import Tiangan, Dizhi, Shishen, DizhiRelation
+from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
+from src.bazi_chart import BaziChart
+from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
 
 class TestAtBirthAnalysis(unittest.TestCase):
@@ -29,10 +29,10 @@ class TestAtBirthAnalysis(unittest.TestCase):
       with self.subTest('Taohua / 桃花'):
         expected_taohua: list[Dizhi] = []
         for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if ShenshaUtils.taohua(dz1, dz2):
+          if shensha_utils.taohua(dz1, dz2):
             expected_taohua.append(dz2)
         for dz1, dz2 in itertools.product([d], [y, m, h]):
-          if ShenshaUtils.taohua(dz1, dz2):
+          if shensha_utils.taohua(dz1, dz2):
             expected_taohua.append(dz2)
         self.assertSetEqual(at_birth.shensha['taohua'], set(expected_taohua))
         self.assertSetEqual(at_birth.shensha['taohua'], at_birth.shensha['taohua'], 'Constancy')
@@ -40,7 +40,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
       with self.subTest('Hongyan / 红艳'):
         expected_hongyan: list[Dizhi] = []
         for tg, dz in itertools.product([dm], [y, m, d, h]):
-          if ShenshaUtils.hongyan(tg, dz):
+          if shensha_utils.hongyan(tg, dz):
             expected_hongyan.append(dz)
         self.assertSetEqual(at_birth.shensha['hongyan'], set(expected_hongyan))
         self.assertSetEqual(at_birth.shensha['hongyan'], at_birth.shensha['hongyan'], 'Constancy')
@@ -48,7 +48,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
       with self.subTest('Hongluan / 红鸾'):
         expected_hongluan: list[Dizhi] = []
         for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if ShenshaUtils.hongluan(dz1, dz2):
+          if shensha_utils.hongluan(dz1, dz2):
             expected_hongluan.append(dz2)
         self.assertSetEqual(at_birth.shensha['hongluan'], set(expected_hongluan))
         self.assertSetEqual(at_birth.shensha['hongluan'], at_birth.shensha['hongluan'], 'Constancy')
@@ -56,7 +56,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
       with self.subTest('Tianxi / 天喜'):
         expected_tianxi: list[Dizhi] = []
         for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if ShenshaUtils.tianxi(dz1, dz2):
+          if shensha_utils.tianxi(dz1, dz2):
             expected_tianxi.append(dz2)
         self.assertSetEqual(at_birth.shensha['tianxi'], set(expected_tianxi))
         self.assertSetEqual(at_birth.shensha['tianxi'], at_birth.shensha['tianxi'], 'Constancy')
@@ -64,10 +64,10 @@ class TestAtBirthAnalysis(unittest.TestCase):
       with self.subTest('Yima / 驿马'):
         expected_yima: list[Dizhi] = []
         for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if ShenshaUtils.yima(dz1, dz2):
+          if shensha_utils.yima(dz1, dz2):
             expected_yima.append(dz2)
         for dz1, dz2 in itertools.product([d], [y, m, h]):
-          if ShenshaUtils.yima(dz1, dz2):
+          if shensha_utils.yima(dz1, dz2):
             expected_yima.append(dz2)
         self.assertSetEqual(at_birth.shensha['yima'], set(expected_yima))
         self.assertSetEqual(at_birth.shensha['yima'], at_birth.shensha['yima'], 'Constancy')
@@ -81,7 +81,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
       dm = chart.bazi.day_master
       at_birth = analyzer.at_birth
 
-      self.assertEqual(at_birth.day_master_relations, TianganUtils.discover_mutual([
+      self.assertEqual(at_birth.day_master_relations, tiangan_utils.discover_mutual([
         chart.bazi.year_pillar.tiangan, 
         chart.bazi.month_pillar.tiangan,
         chart.bazi.hour_pillar.tiangan
@@ -98,10 +98,10 @@ class TestAtBirthAnalysis(unittest.TestCase):
       at_birth = analyzer.at_birth
 
       # For AtBirth analysis, the following two algorithms are equivalent.
-      self.assertEqual(at_birth.house_relations, DizhiUtils.discover([y, m, d, h]).filter(
+      self.assertEqual(at_birth.house_relations, dizhi_utils.discover([y, m, d, h]).filter(
         lambda _, combo : d in combo
       )) 
-      self.assertEqual(at_birth.house_relations, DizhiUtils.discover_mutual([y, m, h], [d]))
+      self.assertEqual(at_birth.house_relations, dizhi_utils.discover_mutual([y, m, h], [d]))
 
       self.assertEqual(at_birth.house_relations, at_birth.house_relations, 'Constancy')
 
@@ -134,7 +134,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
       stars = chart.relationship_stars
       at_birth = analyzer.at_birth
 
-      for tg_rel, tg_combos in TianganUtils.discover(chart.bazi.four_tiangans).items():
+      for tg_rel, tg_combos in tiangan_utils.discover(chart.bazi.four_tiangans).items():
         if tg_rel not in at_birth.star_relations.tiangan:
           self.assertTrue(all(stars.tiangan not in tg_combo for tg_combo in tg_combos))
         else:
@@ -142,7 +142,7 @@ class TestAtBirthAnalysis(unittest.TestCase):
             self.assertEqual(stars.tiangan in tg_combo,
                              tg_combo in at_birth.star_relations.tiangan[tg_rel])
             
-      for dz_rel, dz_combos in DizhiUtils.discover(chart.bazi.four_dizhis).items():
+      for dz_rel, dz_combos in dizhi_utils.discover(chart.bazi.four_dizhis).items():
         if dz_rel not in at_birth.star_relations.dizhi:
           self.assertTrue(all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi))
         else:
@@ -188,39 +188,39 @@ class TestTransitAnalysis(unittest.TestCase):
         with self.subTest('Taohua / 桃花'):
           expected = []
           for dz in transit_dz:
-            if ShenshaUtils.taohua(y_dz, dz):
+            if shensha_utils.taohua(y_dz, dz):
               expected.append(dz)
-            if ShenshaUtils.taohua(d_dz, dz):
+            if shensha_utils.taohua(d_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['taohua'], set(expected))
 
         with self.subTest('Hongyan / 红艳'):
           expected = []
           for dz in transit_dz:
-            if ShenshaUtils.hongyan(dm, dz):
+            if shensha_utils.hongyan(dm, dz):
               expected.append(dz)
           self.assertSetEqual(actual['hongyan'], set(expected))
 
         with self.subTest('Hongluan / 红鸾'):
           expected = []
           for dz in transit_dz:
-            if ShenshaUtils.hongluan(y_dz, dz):
+            if shensha_utils.hongluan(y_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['hongluan'], set(expected))
 
         with self.subTest('Tianxi / 天喜'):
           expected = []
           for dz in transit_dz:
-            if ShenshaUtils.tianxi(y_dz, dz):
+            if shensha_utils.tianxi(y_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['tianxi'], set(expected))
 
         with self.subTest('Yima / 驿马'):
           expected = []
           for dz in transit_dz:
-            if ShenshaUtils.yima(y_dz, dz):
+            if shensha_utils.yima(y_dz, dz):
               expected.append(dz)
-            if ShenshaUtils.yima(d_dz, dz):
+            if shensha_utils.yima(d_dz, dz):
               expected.append(dz)
           self.assertSetEqual(actual['yima'], set(expected))
 
@@ -239,7 +239,7 @@ class TestTransitAnalysis(unittest.TestCase):
           continue
         
         transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
-        expected = TianganUtils.discover_mutual([chart.bazi.day_master], transit_tg)
+        expected = tiangan_utils.discover_mutual([chart.bazi.day_master], transit_tg)
         actual = transits_analysis.day_master_relations(randon_year, random_options)
 
         self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
@@ -268,7 +268,7 @@ class TestTransitAnalysis(unittest.TestCase):
             self.assertTrue(house in combo)
             self.assertFalse(set(transit_dz).isdisjoint(combo))
 
-        def __expected_filter(dz_rel: DizhiRelation, combo: DizhiUtils.DizhiCombo):
+        def __expected_filter(dz_rel: DizhiRelation, combo: dizhi_utils.DizhiCombo):
           # `house` must appear in the combo.
           if house not in combo:
             return False
@@ -280,7 +280,7 @@ class TestTransitAnalysis(unittest.TestCase):
 
           return not (combo - {house}).isdisjoint(transit_dz)
  
-        expected = DizhiUtils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
+        expected = dizhi_utils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
         
         self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
 
@@ -308,14 +308,14 @@ class TestTransitAnalysis(unittest.TestCase):
         transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
         transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
 
-        tg_discovery = TianganUtils.TianganRelationDiscovery({})
-        dz_discovery = DizhiUtils.DizhiRelationDiscovery({})
+        tg_discovery = tiangan_utils.TianganRelationDiscovery({})
+        dz_discovery = dizhi_utils.DizhiRelationDiscovery({})
         if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
-          tg_discovery = tg_discovery.merge(TianganUtils.discover(transit_tg))
-          dz_discovery = dz_discovery.merge(DizhiUtils.discover(transit_dz))
+          tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
+          dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz))
         if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
-          tg_discovery = tg_discovery.merge(TianganUtils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
-          dz_discovery = dz_discovery.merge(DizhiUtils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
+          tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
+          dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
 
         actual = transits_analysis.star_relations(randon_year, random_options, level=random_level)
 
@@ -366,9 +366,9 @@ class TestTransitAnalysis(unittest.TestCase):
         expected_tg: bool = False
         expected_dz: bool = False
         for gz in db.ganzhis(TransitMoment(randon_year), random_options):
-          if BaziUtils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
+          if bazi_utils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
             expected_tg = True
-          if BaziUtils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
+          if bazi_utils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
             expected_dz = True
 
         actual = transits_analysis.zhengyin(randon_year, random_options)

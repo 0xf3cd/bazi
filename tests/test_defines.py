@@ -5,7 +5,7 @@ import unittest
 import random
 
 from itertools import product
-from src.Defines import (
+from src.defines import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支, Jieqi, 节气,
   Wuxing, 五行, Yinyang, 阴阳, Shishen, 十神,
   ShierZhangsheng, 十二长生, TianganRelation, 天干关系, 

@@ -7,14 +7,14 @@ import random
 import itertools
 from datetime import date, datetime
 
-from src.Common import DayunTuple
-from src.Defines import Ganzhi, Dizhi
-from src.Utils import BaziUtils
+from src.common import DayunTuple
+from src.defines import Ganzhi, Dizhi
+from src.utils import bazi_utils
 
-from src.Calendar.HkoDataCalendarUtils import to_ganzhi
-from src.Bazi import Bazi, BaziGender, BaziPrecision
-from src.BaziChart import BaziChart
-from src.Transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
+from src.calendar.hko_data_calendar_utils import to_ganzhi
+from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi_chart import BaziChart
+from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
 
 
 class TestDayunDatabase(unittest.TestCase):
@@ -126,7 +126,7 @@ class TestTransitDatabase(unittest.TestCase):
             dayun_index: int = (gz_year - dayun_start_gz_year) // 10
             transit_ganzhis.append(dayun_ganzhis[dayun_index])
           if option.value & TransitOptions.LIUNIAN.value:
-            transit_ganzhis.append(BaziUtils.ganzhi_of_year(gz_year))
+            transit_ganzhis.append(bazi_utils.ganzhi_of_year(gz_year))
 
           actual = db.ganzhis(TransitMoment(gz_year), option)
           self.assertEqual(len(actual), len(transit_ganzhis))

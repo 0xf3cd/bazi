@@ -12,10 +12,10 @@ from datetime import date, time, datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Union
 
-from src.Common import JieqiTime
-from src.Defines import Tiangan, Dizhi, Ganzhi, Jieqi
-from src.Bazi import BaziGender, BaziPrecision, Bazi, 八字
-from src.Calendar import HkoDataCalendarUtils, CalendarBackend, calendar_utils_of
+from src.common import JieqiTime
+from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
+from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
+from src.calendar import hko_data_calendar_utils, CalendarBackend, calendar_utils_of
 
 class TestBaziGender(unittest.TestCase):
   def test_basic(self) -> None:
@@ -473,11 +473,11 @@ class TestBazi(unittest.TestCase):
 
   def test_ganzhi_date(self) -> None:
     bazi: Bazi = self.__create_bazi(datetime(1984, 4, 2, 4, 2))
-    self.assertEqual(bazi.ganzhi_date, HkoDataCalendarUtils.to_ganzhi(date(1984, 4, 2)))
+    self.assertEqual(bazi.ganzhi_date, hko_data_calendar_utils.to_ganzhi(date(1984, 4, 2)))
     
     for _ in range(10):
       bazi = Bazi.random()
-      self.assertEqual(bazi.ganzhi_date, HkoDataCalendarUtils.to_ganzhi(bazi.solar_date))
+      self.assertEqual(bazi.ganzhi_date, hko_data_calendar_utils.to_ganzhi(bazi.solar_date))
 
   def test_date_time(self) -> None:
     bazi: Bazi = self.__create_bazi(datetime(1984, 4, 2, 4, 2))

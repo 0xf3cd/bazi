@@ -6,12 +6,12 @@ import itertools
 from pprint import pprint
 from typing import Union, Iterable, Generator, TypeVar
 
-from src.Bazi import Bazi
-from src.BaziChart import BaziChart
-from src.Defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
-from src.Common import HiddenTianganDict
-from src.Utils.BaziUtils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
-from src.Calendar.CalendarBackend import calendar_utils_of
+from src.bazi import Bazi
+from src.bazi_chart import BaziChart
+from src.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
+from src.common import HiddenTianganDict
+from src.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
+from src.calendar.calendar_backend import calendar_utils_of
 
 
 T = TypeVar('T')

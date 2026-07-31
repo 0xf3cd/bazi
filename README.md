@@ -4,7 +4,7 @@
 ## Instructions
 * Python version should be >= 3.11
 * Install requirements by `python -m pip install -r Requirements.txt`
-* The encoded HKO data under `src/Calendar/HkoData/data/` is committed to the repo; the library only reads it at runtime. To regenerate the data, `pip install requests` manually (deliberately not in Requirements.txt) and run `python -m src.Calendar.HkoData.Encoder` from the repo root.
+* The encoded HKO data under `src/calendar/hko_data/data/` is committed to the repo; the library only reads it at runtime. To regenerate the data, `pip install requests` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.hko_data.encoder` from the repo root.
 * Run linter: `ruff check .`
 * Run static type checker: `mypy .`
 * Run tests: `./run_tests.py`
