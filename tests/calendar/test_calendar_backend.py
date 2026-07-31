@@ -60,18 +60,11 @@ class TestCalendarBackend(unittest.TestCase):
 
 
 class TestBaziBackend(unittest.TestCase):
-  def test_default_backend(self) -> None:
-    bazi: Bazi = Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY)
-    self.assertIs(bazi.backend, CalendarBackend.HKO)
-
   def test_create_with_backend(self) -> None:
-    bazi_default: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day')
     bazi_enum: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day', backend=CalendarBackend.HKO)
     bazi_str: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day', backend='hko')
 
-    self.assertIs(bazi_default.backend, CalendarBackend.HKO)
-    self.assertEqual(bazi_default, bazi_enum)
-    self.assertEqual(bazi_default, bazi_str)
+    self.assertEqual(bazi_enum, bazi_str) # enum and string spellings resolve the same way
 
     with self.assertRaises(ValueError):
       Bazi.create('1984-04-02 04:02', 'male', 'day', backend='lunar')
@@ -93,12 +86,22 @@ class TestBaziBackend(unittest.TestCase):
       Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
            backend='hko') # type: ignore[arg-type]
 
-  def test_random_uses_default_backend(self) -> None:
-    self.assertIs(Bazi.random().backend, CalendarBackend.HKO)
+  def test_default_backend_is_celestial(self) -> None:
+    '''
+    #93 flipped the default from HKO to CELESTIAL.  The switch is two quiet keyword
+    defaults, so pin every construction path that can pick it up implicitly.
+    '''
+    self.assertIs(Bazi(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY).backend,
+                  CalendarBackend.CELESTIAL)
+    self.assertIs(Bazi.create('2000-02-04 22:01', 'male', 'day').backend, CalendarBackend.CELESTIAL)
+    self.assertIs(Bazi.random().backend, CalendarBackend.CELESTIAL)
 
   def test_json_contains_backend(self) -> None:
     chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY))
-    self.assertEqual(chart.json['backend'], 'hko')
+    self.assertEqual(chart.json['backend'], 'celestial') # the default
+    hko_chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
+                                          backend=CalendarBackend.HKO))
+    self.assertEqual(hko_chart.json['backend'], 'hko')
 
   def test_celestial_backend_end_to_end(self) -> None:
     '''

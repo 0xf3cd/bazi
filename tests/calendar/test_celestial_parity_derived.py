@@ -23,7 +23,7 @@ HKO x DE441 dual-axis golden tests (0.525 min agreement over 2022-2028).
 
 import unittest
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from src.Calendar import HkoDataCalendarUtils as HKO
 from src.Calendar.CalendarDefines import CalendarType, CalendarDate
@@ -94,9 +94,10 @@ class TestJieqiDateWhitelist(unittest.TestCase):
         cel, hko = CEL.jieqi_date(year, jq), HKO.jieqi_date(year, jq)
         if cel != hko:
           measured.append((year, jq_idx, cel))
+    # Sorted: the signal is the key set, not the scan order (layer (b) compares as a set too).
     self.assertEqual(
-      measured,
-      [(row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES],
+      sorted(measured),
+      sorted((row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES),
     )
 
   def test_moments_match_the_whitelist(self) -> None:
@@ -110,6 +111,47 @@ class TestJieqiDateWhitelist(unittest.TestCase):
     # Only 节 start ganzhi months, so only these two can propagate into ganzhi methods.
     self.assertEqual([(row.year, row.name) for row in flipped_jies()],
                      [(1917, '大雪'), (1927, '白露')])
+
+  def test_prev_next_jie_diverge_only_inside_the_moment_window(self) -> None:
+    '''
+    `prev_jie`/`next_jie` escape layer (c) by design (see the protocol's carve-out): inside
+    the window between the two backends' ideas of when a jie starts, they legitimately name
+    different jie -- and `dayun_start_moment` rides on it.  Both backends answer over the 12
+    节 only, so this pins the shape of that escape for every 节: the window is
+    [min(hko_date, true date) midnight, true moment); inside it the backends are exactly one
+    节 apart, outside it they agree.  A day-level regression that *narrows* a window turns
+    red here; a widening one moves the probes along with it and is caught by the whitelist
+    tests above instead.
+    '''
+    cel_first, cel_last = CEL.supported_jie_boundaries()
+    hko_first, hko_last = HKO.supported_jie_boundaries()
+    cycle: list[Jieqi] = JIES
+    for year in range(1901, 2101):
+      for jq_idx, jq in enumerate(cycle):
+        moment: datetime = CEL.jieqi_moment(year, jq)
+        window_start: datetime = datetime.combine(
+          min(HKO.jieqi_date(year, jq), moment.date()),
+          time.min,
+        )
+        prev_jq: Jieqi = cycle[(jq_idx - 1) % len(cycle)]
+        next_jq: Jieqi = cycle[(jq_idx + 1) % len(cycle)]
+
+        inside: datetime = window_start + (moment - window_start) / 2
+        if inside >= cel_first: # else both queries fall off the table edge (小寒 1901)
+          self.assertEqual(CEL.prev_jie(inside).jieqi, prev_jq, (year, jq))
+          self.assertEqual(CEL.next_jie(inside).jieqi, jq, (year, jq))
+        if inside < hko_last: # else both queries fall off the table edge (大雪 2100)
+          self.assertEqual(HKO.prev_jie(inside).jieqi, jq, (year, jq))
+          self.assertEqual(HKO.next_jie(inside).jieqi, next_jq, (year, jq))
+
+        before: datetime = window_start - timedelta(seconds=1)
+        if before >= cel_first and before >= hko_first:
+          self.assertEqual(CEL.prev_jie(before).jieqi, HKO.prev_jie(before).jieqi, (year, jq))
+          self.assertEqual(CEL.next_jie(before).jieqi, HKO.next_jie(before).jieqi, (year, jq))
+        after: datetime = moment + timedelta(seconds=1)
+        if after < cel_last and after < hko_last:
+          self.assertEqual(CEL.prev_jie(after).jieqi, HKO.prev_jie(after).jieqi, (year, jq))
+          self.assertEqual(CEL.next_jie(after).jieqi, HKO.next_jie(after).jieqi, (year, jq))
 
   def test_the_derivations_preconditions_hold(self) -> None:
     '''
