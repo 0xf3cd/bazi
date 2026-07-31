@@ -33,6 +33,12 @@ Build / lint / type-check / test commands live in **README.md §Instructions** �
 those, don't restate them here. Two rules the README doesn't spell out:
 - `ruff` / `mypy` run on **default** config. There is intentionally NO
   pyproject.toml / ruff.toml / mypy.ini — do NOT add one.
+- NEVER run `ruff format` (or any auto-formatter) — it destroys the deliberate
+  vertical alignment (see Idioms). `ruff check` is the only ruff gate.
+- `ruff` is version-pinned in Requirements.txt; bumping it is a deliberate,
+  reviewed change (new default rules get triaged one by one). Resolve new-rule
+  hits by fixing the code or, where a rule fights the house style, an inline
+  `# noqa: <RULE>` with a reason — never by adding a config file.
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
   workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i`.
@@ -40,7 +46,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
-  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/tests/*,src/Calendar/HkoData/Encoder.py,src/Calendar/CelestialData/Generator.py' -m pytest tests/`
+  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing` — must stay at **100%**
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
 
@@ -64,8 +70,12 @@ those, don't restate them here. Two rules the README doesn't spell out:
   `# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`
   New files use the **current year**; never change the year on an existing file.
   Exempt: `__init__.py` files and the root `run_*.py` entry scripts carry no header.
-- Module filenames are **PascalCase** (`BaziChart.py`). NOT snake_case.
-- Imports: stdlib → third-party → local (relative `from ..Defines import ...`),
+- Module filenames and package directories are **snake_case** (`bazi_chart.py`,
+  `calendar/`). NOT PascalCase — the old PascalCase convention was a C++
+  carry-over, flipped repo-wide on 2026-07-31. Class names stay PascalCase.
+- Indentation is **2 spaces** (a fleet-wide convention that deliberately
+  overrides PEP 8's 4) — never re-indent.
+- Imports: stdlib → third-party → local (relative `from ..defines import ...`),
   blank line between groups; long typing imports use the grouped `from typing import (…)` form.
 - Multi-line call layout: when an argument is itself a call, or the call grows long,
   put each argument on its own line and the closing `)` on its own line at the call's
@@ -88,9 +98,9 @@ the author and AI assistants downstream.
 
 ## Docstrings are bilingual + structured
 English first, then 中文, then `Note` / `Args` / `Return` / `Examples`; types in parens.
-Bilingual is mandatory in knowledge-dense layers (`Rules` / `Defines` / `Utils` /
-`Descriptions` — rules, tables, 命理 semantics). Infrastructure layers (`Common`,
-`Calendar`, `Transits` — mechanism code) may be English-only.
+Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` /
+`descriptions` — rules, tables, 命理 semantics). Infrastructure layers (`common`,
+`calendar`, `transits` — mechanism code) may be English-only.
 
 ## Typing & immutability (non-negotiable)
 - Fully typed; `mypy .` must pass. Lean on `Final/Optional/Callable/TypedDict/NamedTuple`.
@@ -107,16 +117,17 @@ Bilingual is mandatory in knowledge-dense layers (`Rules` / `Defines` / `Utils` 
 - Expose computed results as `@property` (use `functools.cached_property` for
   expensive immutable results).
 - Deliberate vertical alignment of `=` / dict `:` — preserve when editing nearby.
-- Reuse `Const`/metaclass + `#region` patterns from `Common.py`; don't reinvent.
+- Reuse `Const`/metaclass + `#region` patterns from `common.py`; don't reinvent.
 
 ## Tests
-- Mirror src layout (`src/Utils/TianganUtils.py` → `tests/utils/test_tiangan_utils.py`).
+- Mirror src layout (`src/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).
 - `unittest.TestCase` subclasses, `self.assertEqual/assertTrue`; pytest runs them.
 - Data-driven: inline expected combos as literal sets. Integration → `tests/integration/`.
 
 ## AI do / don't
-- DON'T add black/isort/a config file, snake_case modules, English-only docstrings
-  in knowledge-dense layers, or English domain names — each breaks the house style.
+- DON'T add black/isort/a config file, PascalCase module filenames, English-only
+  docstrings in knowledge-dense layers, or English domain names — each breaks the
+  house style. DON'T run `ruff format` or re-indent (2-space indent is charter).
 - DON'T add deps casually; keep Requirements.txt lean.
 - Anonymise any real chart in examples (化名, birthplace → province).
 - Match the neighbouring file's texture; internal consistency > external "best practice".
