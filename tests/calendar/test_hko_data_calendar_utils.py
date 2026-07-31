@@ -127,6 +127,24 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
         days_in_this_month: int = days_counts[idx]
         self.assertEqual(days_in_this_month, (next_start_date - start_date).days)
 
+  def test_days_counts_in_ganzhi_year_cannot_poison_the_cache(self) -> None:
+    '''
+    The lengths come from a cache, so handing back the cached list itself would let one
+    caller's in-place edit corrupt every later answer.  Worse, it would not stay contained:
+    `is_valid_ganzhi_date` caches verdicts computed from these lengths, so a wrong answer
+    cached during the poisoned window would outlive the edit (issue #92).
+    '''
+    counts: list[int] = hko_data_calendar_utils.days_counts_in_ganzhi_year(2000)
+    self.assertIsNot(counts, hko_data_calendar_utils.days_counts_in_ganzhi_year(2000))
+
+    # Poison, then FIRST-query a verdict computed from the lengths: month 1 of ganzhi
+    # year 2000 has 30 days, so day 31 must stay invalid even while the edit is live.
+    hko_data_calendar_utils.is_valid_ganzhi_date.cache_clear()
+    self.assertEqual(counts[0], 30)
+    counts[0] = 999
+    self.assertEqual(hko_data_calendar_utils.days_counts_in_ganzhi_year(2000)[0], 30)
+    self.assertFalse(hko_data_calendar_utils.is_valid_ganzhi_date(CalendarDate(2000, 1, 31, CalendarType.GANZHI)))
+
   def test_is_valid(self) -> None:
     for date_type in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
       min_date: CalendarDate = hko_data_calendar_utils.get_min_supported_date(date_type)
