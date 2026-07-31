@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from enum import Enum
-from typing import Union, cast
+from typing import cast
 
 from .calendar_utils_protocol import CalendarUtilsProtocol
 
@@ -58,7 +58,7 @@ class CalendarBackend(Enum):
     raise ValueError(f'Unsupported backend: {s}')
 
 
-def calendar_utils_of(backend: Union[CalendarBackend, str]) -> CalendarUtilsProtocol:
+def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
   '''
   Resolve a `CalendarBackend` to the actual calendar utils, lazily.
   The resolved utils conform to `CalendarUtilsProtocol`.

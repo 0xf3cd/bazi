@@ -1,0 +1,29 @@
+# Minimal rule-face config (charter: AGENTS.md). ruff 0.16 flipped its zero-config
+# default from a small rule set to nearly all stable families; this file declares ONLY
+# which rules apply. Formatting/style parameters must never appear here (the repo's
+# vertical alignment and hand-grouped imports are deliberate and not machine-enforced).
+# Rules stay pinned to the version in Requirements.txt; upgrades re-triage per rule.
+
+[lint]
+ignore = [
+  # Naive local time IS the domain model: a bazi chart is cast from local birth time,
+  # and timezone handling is deliberately out of scope (true-solar-time preprocessing
+  # is a separate layer, see issue #2). tzinfo-aware datetimes would be wrong here.
+  "DTZ",
+  # Caching instance/class methods is a deliberate design: rules.py table properties,
+  # calendar backend singletons, and enum member helpers (Ganzhi.next/prev) all cache
+  # on purpose, and every holder is bounded (singletons / fixed 60-member enums).
+  "B019",
+  # Imports are hand-ordered by dependency layer and hand-grouped with aligned
+  # multi-name lines; alphabetical resorting destroys both. Same stance as the
+  # charter's "never ruff format".
+  "I001",
+  # __all__ lists are hand-ordered semantically (dependency layer, class/alias
+  # pairing), same rationale as I001.
+  "RUF022",
+]
+
+[lint.per-file-ignores]
+# Test loops routinely define small lambdas/functions that are consumed within the
+# same iteration, where late binding cannot bite. In src/ the rule stays active.
+"tests/**" = ["B023"]

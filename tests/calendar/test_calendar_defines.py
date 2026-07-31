@@ -175,12 +175,12 @@ class TestCalendarDate(unittest.TestCase):
       self.assertFalse(c_date1 == c_date2)
       self.assertTrue(c_date1 != c_date2)
 
-      self.assertTrue(c_date1 >= c_date1)
-      self.assertTrue(c_date1 <= c_date1)
-      self.assertFalse(c_date1 > c_date1)
-      self.assertFalse(c_date1 < c_date1)
-      self.assertTrue(c_date1 == c_date1)
-      self.assertFalse(c_date1 != c_date1)
+      self.assertTrue(c_date1 >= c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
+      self.assertTrue(c_date1 <= c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
+      self.assertFalse(c_date1 > c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
+      self.assertFalse(c_date1 < c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
+      self.assertTrue(c_date1 == c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
+      self.assertFalse(c_date1 != c_date1) # noqa: PLR0124 # reflexivity is the behavior under test
 
       cur_date = next_date
 

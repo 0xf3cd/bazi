@@ -3,7 +3,6 @@
 import copy
 
 from datetime import date, datetime
-from typing import Union
 
 from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
 from ..common import TraitTuple, HiddenTianganDict
@@ -119,7 +118,7 @@ def dizhi_traits(dz: Dizhi) -> TraitTuple:
   return copy.deepcopy(BaziRules.DIZHI_TRAITS[dz])
 
 
-def traits(tg_or_dz: Union[Tiangan, Dizhi]) -> TraitTuple:
+def traits(tg_or_dz: Tiangan | Dizhi) -> TraitTuple:
   '''
   Get the Wuxing and Yinyang of the given Tiangan or Dizhi.
   输入天干或者地支，返回它的五行和阴阳。
@@ -153,7 +152,7 @@ def hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
   return copy.deepcopy(BaziRules.HIDDEN_TIANGANS[dz])
 
 
-def shishen(day_master: Tiangan, other: Union[Tiangan, Dizhi]) -> Shishen:
+def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
   '''
   Get the Shishen of the given Tiangan.
   输入日主和某天干或者地支，返回天干或地支对应的十神。

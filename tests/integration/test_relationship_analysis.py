@@ -7,7 +7,7 @@ import unittest
 import random
 
 from datetime import datetime
-from typing import cast, Union
+from typing import cast
 
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
@@ -18,13 +18,13 @@ from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, Tra
 from src.rules import DizhiRules
 
 
-DiscoveryType = Union[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]
+DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
   assert type(d1) is type(d2)
   if set(d1.keys()) != set(d2.keys()):
     return False
   for rel, combos in d1.items():
-    if not set(combos) == set(d2[rel]):  # type: ignore
+    if set(combos) != set(d2[rel]):  # type: ignore
       return False
   return True
 
@@ -309,7 +309,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
           continue
 
         transits_gz = db.ganzhis(TransitMoment(random_year), random_option)
-        transits_dz = set(gz.dizhi for gz in transits_gz)
+        transits_dz = {gz.dizhi for gz in transits_gz}
 
         self.assertDictEqual(transits.shensha(random_year, random_option), {
           name : cast(frozenset[Dizhi], fs) & transits_dz
@@ -331,7 +331,7 @@ class TestRelationshipAnalysis(unittest.TestCase):
             continue
 
           transits_gz = db.ganzhis(TransitMoment(year), option)
-          transits_tg = set(gz.tiangan for gz in transits_gz)
+          transits_tg = {gz.tiangan for gz in transits_gz}
 
           for tg_rel, tg_combos in transits.day_master_relations(year, option).items():
             expected_tg_combos = {
@@ -364,10 +364,10 @@ class TestRelationshipAnalysis(unittest.TestCase):
             continue
 
           transits_gz = db.ganzhis(TransitMoment(year), option)
-          transits_dz = set(gz.dizhi for gz in transits_gz)
+          transits_dz = {gz.dizhi for gz in transits_gz}
 
           house_dz = chart.house_of_relationship
-          other_dz = set([bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi])
+          other_dz = {bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi}
           house_relations = transits.house_relations(year, option)
           
           for dz_rel, dz_expected_list in house_relation_expected.items():
@@ -404,8 +404,8 @@ class TestRelationshipAnalysis(unittest.TestCase):
             continue
 
           transits_gz = db.ganzhis(TransitMoment(year), option)
-          transits_tg = set(gz.tiangan for gz in transits_gz)
-          transits_dz = set(gz.dizhi for gz in transits_gz)
+          transits_tg = {gz.tiangan for gz in transits_gz}
+          transits_dz = {gz.dizhi for gz in transits_gz}
 
           # Test TRANSITS_ONLY
           transits_only_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.TRANSITS_ONLY)
@@ -447,10 +447,10 @@ class TestRelationshipAnalysis(unittest.TestCase):
           )))
 
     with self.subTest('transits - zhengyin and star'):
-      def is_zhengyin(tg_or_dz: Union[Tiangan, Dizhi]) -> bool:
+      def is_zhengyin(tg_or_dz: Tiangan | Dizhi) -> bool:
         return Shishen.正印 is bazi_utils.shishen(bazi.day_master, tg_or_dz)
       
-      def is_star(tg_or_dz: Union[Tiangan, Dizhi]) -> bool:
+      def is_star(tg_or_dz: Tiangan | Dizhi) -> bool:
         return Shishen.正官 is bazi_utils.shishen(bazi.day_master, tg_or_dz)
 
       self.assertTrue(is_star(Tiangan.癸))
@@ -465,8 +465,8 @@ class TestRelationshipAnalysis(unittest.TestCase):
             continue
 
           transits_gz = db.ganzhis(TransitMoment(year), option)
-          transits_tg = set(gz.tiangan for gz in transits_gz)
-          transits_dz = set(gz.dizhi for gz in transits_gz)
+          transits_tg = {gz.tiangan for gz in transits_gz}
+          transits_dz = {gz.dizhi for gz in transits_gz}
 
           zhengyin_result = transits.zhengyin(year, option)
           self.assertEqual(zhengyin_result.tiangan, any(is_zhengyin(tg) for tg in transits_tg))
@@ -503,7 +503,7 @@ def test_random_cases(bazi: Bazi) -> None:
         continue
 
       transits_gz = db.ganzhis(TransitMoment(year), option)
-      transits_dz_set = set(gz.dizhi for gz in transits_gz)
+      transits_dz_set = {gz.dizhi for gz in transits_gz}
 
       def __taohua(dz: Dizhi) -> bool:
         return shensha_utils.taohua(y_dz, dz) or shensha_utils.taohua(d_dz, dz)
@@ -531,8 +531,8 @@ def test_random_cases(bazi: Bazi) -> None:
         continue
 
       transits_gz = db.ganzhis(TransitMoment(year), option)
-      transits_tg_set = set(gz.tiangan for gz in transits_gz)
-      transits_dz_set = set(gz.dizhi for gz in transits_gz)
+      transits_tg_set = {gz.tiangan for gz in transits_gz}
+      transits_dz_set = {gz.dizhi for gz in transits_gz}
 
       expected_tg_relations = tiangan_utils.discover_mutual([chart.bazi.day_master], list(transits_tg_set))
       expected_dz_relations = dizhi_utils.discover_mutual([house], list(transits_dz_set)).merge(
@@ -549,16 +549,15 @@ def test_random_cases(bazi: Bazi) -> None:
       assert _equal(expected_tg_relations, tg_relations)
       assert _equal(expected_dz_relations, dz_relations)
 
-      if house in [Dizhi.午, Dizhi.亥, Dizhi.辰]: # 自刑 cases
-        if house in transits_dz_set:
-          assert frozenset({house}) in dz_relations[DizhiRelation.刑]
+      if house in [Dizhi.午, Dizhi.亥, Dizhi.辰] and house in transits_dz_set: # 自刑 cases
+        assert frozenset({house}) in dz_relations[DizhiRelation.刑]
 
       for dz_tuple in DizhiRules.DIZHI_XING.loose: # 三刑 cases
         if len(dz_tuple) == 3 and house in dz_tuple:
           other_dz = frozenset(dz_tuple) - {house}
           assert len(other_dz) == 2
           if not transits_dz_set.isdisjoint(other_dz):
-            count = sum(map(lambda dz : 1 if dz in [y_dz, m_dz, h_dz] or dz in transits_dz_set else 0, other_dz))
+            count = sum(1 if dz in [y_dz, m_dz, h_dz] or dz in transits_dz_set else 0 for dz in other_dz)
             if count == 2:
               assert frozenset(dz_tuple) in dz_relations[DizhiRelation.刑]
         
@@ -581,8 +580,8 @@ def test_random_cases(bazi: Bazi) -> None:
         continue
 
       transits_gz = db.ganzhis(TransitMoment(year), option)
-      transits_tg_list = list(gz.tiangan for gz in transits_gz)
-      transits_dz_list = list(gz.dizhi for gz in transits_gz)
+      transits_tg_list = [gz.tiangan for gz in transits_gz]
+      transits_dz_list = [gz.dizhi for gz in transits_gz]
 
       stars = chart.relationship_stars
 
@@ -641,8 +640,8 @@ def test_random_cases(bazi: Bazi) -> None:
         continue
 
       transits_gz = db.ganzhis(TransitMoment(year), option)
-      transits_tg_set = set(gz.tiangan for gz in transits_gz)
-      transits_dz_set = set(gz.dizhi for gz in transits_gz)
+      transits_tg_set = {gz.tiangan for gz in transits_gz}
+      transits_dz_set = {gz.dizhi for gz in transits_gz}
 
       zhengyin_results = transits.zhengyin(year, option)
       assert zhengyin_results.tiangan == any(bazi_utils.shishen(dm, tg) is Shishen.正印 for tg in transits_tg_set)

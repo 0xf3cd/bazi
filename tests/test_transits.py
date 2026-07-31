@@ -105,7 +105,7 @@ class TestTransitDatabase(unittest.TestCase):
       }
 
       dayun_start_gz_year: int = to_ganzhi(chart.dayun_start_moment).year
-      dayun_ganzhis: list[Ganzhi] = list(dy.ganzhi for dy in itertools.islice(chart.dayun, 50))
+      dayun_ganzhis: list[Ganzhi] = [dy.ganzhi for dy in itertools.islice(chart.dayun, 50)]
 
       # Randomly select 20 ganzhi years to test...
       random_liunians = random.sample(list(itertools.islice(chart.liunian, 200)), 20)

@@ -24,7 +24,7 @@ import functools
 
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Final, Union
+from typing import Final
 
 from .calendar_defines import CalendarType, CalendarDate
 from .celestial_data.loader import (
@@ -132,10 +132,7 @@ class CelestialCalendarUtils:
     days_counts: list[int] = self._lunar_table.get(d.year)['days_counts']
     if d.month < 1 or d.month > len(days_counts):
       return False
-    if d.day < 1 or d.day > days_counts[d.month - 1]:
-      return False
-
-    return True
+    return 1 <= d.day <= days_counts[d.month - 1]
 
   @functools.lru_cache(maxsize=512)
   def is_valid_ganzhi_date(self, d: CalendarDate) -> bool:
@@ -159,10 +156,7 @@ class CelestialCalendarUtils:
       return False
 
     days_counts: list[int] = self.days_counts_in_ganzhi_year(d.year)
-    if d.day < 1 or d.day > days_counts[d.month - 1]:
-      return False
-
-    return True
+    return 1 <= d.day <= days_counts[d.month - 1]
 
   @functools.lru_cache(maxsize=512)
   def is_valid(self, d: CalendarDate) -> bool:
@@ -282,7 +276,7 @@ class CelestialCalendarUtils:
   # -- `to_*` family ---------------------------------------------------------------
 
   @functools.lru_cache(maxsize=512)
-  def __to_calendardate(self, d: Union[date, CalendarDate]) -> CalendarDate:
+  def __to_calendardate(self, d: date | CalendarDate) -> CalendarDate:
     if isinstance(d, date):
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
     else:
@@ -293,7 +287,7 @@ class CelestialCalendarUtils:
     return ret
 
   @functools.lru_cache(maxsize=512)
-  def to_solar(self, d: Union[date, CalendarDate]) -> CalendarDate:
+  def to_solar(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `SOLAR` type.
 
@@ -315,7 +309,7 @@ class CelestialCalendarUtils:
       return self.ganzhi_to_solar(calendardate)
 
   @functools.lru_cache(maxsize=512)
-  def to_lunar(self, d: Union[date, CalendarDate]) -> CalendarDate:
+  def to_lunar(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `LUNAR` type.
 
@@ -337,7 +331,7 @@ class CelestialCalendarUtils:
       return self.ganzhi_to_lunar(calendardate)
 
   @functools.lru_cache(maxsize=512)
-  def to_ganzhi(self, d: Union[date, CalendarDate]) -> CalendarDate:
+  def to_ganzhi(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `GANZHI` type.
 
@@ -364,7 +358,7 @@ class CelestialCalendarUtils:
       return self.lunar_to_ganzhi(calendardate)
 
   @functools.lru_cache(maxsize=512)
-  def to_date(self, d: Union[date, CalendarDate]) -> date:
+  def to_date(self, d: date | CalendarDate) -> date:
     '''
     Convert the input date to a `date` type.
 

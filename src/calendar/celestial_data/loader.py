@@ -17,7 +17,7 @@ import re
 
 from datetime import date, datetime
 from pathlib import Path
-from typing import Final, Optional, TypedDict
+from typing import Final, TypedDict
 
 from ...defines import Ganzhi, Jieqi
 
@@ -47,7 +47,7 @@ class LunarYearInfo(TypedDict):
   '''
   first_solar_day: date
   leap: bool
-  leap_month: Optional[int]
+  leap_month: int | None
   days_counts: list[int]
   ganzhi: Ganzhi
 

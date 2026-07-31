@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import Sequence, Optional, Final, Callable
+from typing import Final
+from collections.abc import Sequence, Callable
 
 from ..defines import Tiangan, Wuxing, TianganRelation
 from ..common import frozendict
@@ -52,7 +53,7 @@ class TianganRelationDiscovery(frozendict[TianganRelation, TianganRelationCombos
 TianganRelationDiscoveryFilter = Callable[[TianganRelation, TianganCombo], bool]
 
 
-def he(tg1: Tiangan, tg2: Tiangan) -> Optional[Wuxing]:
+def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   '''
   Check if the input two Tiangans are in HE relation. If so, return the corresponding Wuxing. If not, return `None`.
   We don't care the order of the inputs, since HE relation is non-directional/mutual.
@@ -282,11 +283,8 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   tg2_set: Final[set[Tiangan]] = set(tiangans2)
 
   def __is_valid(combo: TianganCombo) -> bool:
-    if combo.isdisjoint(tg1_set): # This means Tiangans in `combo` are all from `tiangans2`.
-      return False
-    if combo.isdisjoint(tg2_set): # This means Tiangans in `combo` are all from `tiangans1`.
-      return False
-    return True
+    # Disjoint from either set means all Tiangans in `combo` come from the other side only.
+    return not combo.isdisjoint(tg1_set) and not combo.isdisjoint(tg2_set)
 
   # Discover all possible combos with `tg1_set` and `tg2_set` combined.
   # Check each combo's validity and only keep valid ones.

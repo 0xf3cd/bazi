@@ -9,7 +9,8 @@ import pytest
 import unittest
 
 from collections import Counter
-from typing import Union, Optional, Iterable, Any, Callable
+from typing import Any
+from collections.abc import Iterable, Callable
 
 from src.defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
 from src.rules import DizhiRules
@@ -18,7 +19,7 @@ from src.utils.dizhi_utils import DizhiCombo, DizhiRelationCombos, DizhiRelation
 
 
 class TestDizhiUtils(unittest.TestCase):
-  DzCmpType = Union[list[set[Dizhi]], Iterable[DizhiCombo]]
+  DzCmpType = list[set[Dizhi]] | Iterable[DizhiCombo]
   @staticmethod
   def __dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
     _l1 = list(l1)
@@ -127,8 +128,8 @@ class TestDizhiUtils(unittest.TestCase):
     ]
 
     for dz1, dz2 in itertools.permutations(Dizhi, 2):
-      liuhe_result: Optional[Wuxing] = dizhi_utils.liuhe(dz1, dz2)
-      liuhe_result2: Optional[Wuxing] = dizhi_utils.liuhe(dz2, dz1)
+      liuhe_result: Wuxing | None = dizhi_utils.liuhe(dz1, dz2)
+      liuhe_result2: Wuxing | None = dizhi_utils.liuhe(dz2, dz1)
       self.assertEqual(liuhe_result, liuhe_result2)
       
       if DizhiCombo((dz1, dz2)) in liuhe_combos:
@@ -227,7 +228,7 @@ class TestDizhiUtils(unittest.TestCase):
       hidden1, hidden2 = bazi_utils.hidden_tiangans(dz1), bazi_utils.hidden_tiangans(dz2)
       if len(hidden1) != len(hidden2):
         continue
-      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
+      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1]
       if all(tg in hidden2 for tg in expected_hidden2):
         tonghe_combos.add(DizhiCombo((dz1, dz2)))
 
@@ -265,7 +266,7 @@ class TestDizhiUtils(unittest.TestCase):
       hidden1, hidden2 = bazi_utils.hidden_tiangans(dz1), bazi_utils.hidden_tiangans(dz2)
       if len(hidden1) != len(hidden2):
         continue
-      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1.keys()]
+      expected_hidden2: list[Tiangan] = [Tiangan.from_index((tg.index + 5) % 10) for tg in hidden1]
       if all(tg in hidden2 for tg in expected_hidden2):
         tonghe_combos.add(DizhiCombo((dz1, dz2)))
 
@@ -375,7 +376,7 @@ class TestDizhiUtils(unittest.TestCase):
 
   @staticmethod
   def __gen_banhe_table() -> dict[DizhiCombo, Wuxing]:
-    pivots: set[Dizhi] = set((Dizhi('子'), Dizhi('午'), Dizhi('卯'), Dizhi('酉'))) # 四中神
+    pivots: set[Dizhi] = {Dizhi('子'), Dizhi('午'), Dizhi('卯'), Dizhi('酉')} # 四中神
     sanhe_table: dict[DizhiCombo, Wuxing] = TestDizhiUtils.__gen_sanhe_table()
 
     d: dict[DizhiCombo, Wuxing] = {}
@@ -527,31 +528,30 @@ class TestDizhiUtils(unittest.TestCase):
     self.assertEqual(dizhi_utils.xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.STRICT), None)
     self.assertEqual(dizhi_utils.xing(Dizhi.巳, Dizhi.寅, definition=DizhiRules.XingDef.STRICT), None)
 
-    def __expected_strict_xing(__dizhis: tuple[Dizhi, ...]) -> Optional[DizhiRules.XingSubType]:
+    def __expected_strict_xing(dizhis: tuple[Dizhi, ...]) -> DizhiRules.XingSubType | None:
       # In `XingDef.STRICT` mode, we don't care about the direction.
-      __fs: DizhiCombo = DizhiCombo(__dizhis)
+      __fs: DizhiCombo = DizhiCombo(dizhis)
       if __fs in [DizhiCombo((Dizhi.丑, Dizhi.戌, Dizhi.未)), DizhiCombo((Dizhi.寅, Dizhi.巳, Dizhi.申))]:
         return DizhiRules.XingSubType.三刑
       elif __fs == DizhiCombo((Dizhi.子, Dizhi.卯)):
         return DizhiRules.XingSubType.子卯刑
-      elif len(__fs) == 1 and len(__dizhis) == 2:
-        if __dizhis[0] in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥):
-          return DizhiRules.XingSubType.自刑
+      elif len(__fs) == 1 and len(dizhis) == 2 and dizhis[0] in (Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥):
+        return DizhiRules.XingSubType.自刑
       return None
     
     for dz in Dizhi:
       self.assertIsNone(dizhi_utils.xing(dz, definition=DizhiRules.XingDef.STRICT))
 
     for dz1, dz2 in itertools.product(Dizhi, Dizhi):
-      strict_result: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
-      strict_result2: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(dz2, dz1, definition=DizhiRules.XingDef.STRICT)
-      strict_result3: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
+      strict_result: DizhiRules.XingSubType | None = dizhi_utils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
+      strict_result2: DizhiRules.XingSubType | None = dizhi_utils.xing(dz2, dz1, definition=DizhiRules.XingDef.STRICT)
+      strict_result3: DizhiRules.XingSubType | None = dizhi_utils.xing(dz1, dz2, definition=DizhiRules.XingDef.STRICT)
       self.assertEqual(strict_result, strict_result2)
       self.assertEqual(strict_result, strict_result3)
       self.assertEqual(strict_result, __expected_strict_xing((dz1, dz2)))
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      strict_result4: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.STRICT)
+      strict_result4: DizhiRules.XingSubType | None = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.STRICT)
       for dz1, dz2, dz3 in itertools.permutations(dz_tuple, 3):
         self.assertEqual(strict_result4, dizhi_utils.xing(dz1, dz2, dz3, definition=DizhiRules.XingDef.STRICT))
         self.assertEqual(strict_result4, dizhi_utils.xing(dz1, dz2, dz3, definition=DizhiRules.XingDef.STRICT))
@@ -604,7 +604,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     dz_tuple: tuple[Dizhi, ...]
     for dz_tuple in itertools.product(Dizhi, Dizhi):
-      loose_result: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
+      loose_result: DizhiRules.XingSubType | None = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
       if loose_result is DizhiRules.XingSubType.三刑:
         self.assertIn(dz_tuple, sanxing_list)
       elif loose_result is DizhiRules.XingSubType.子卯刑:
@@ -618,7 +618,7 @@ class TestDizhiUtils(unittest.TestCase):
         self.assertNotIn(dz_tuple, zixing_list)
 
     for dz_tuple in itertools.product(Dizhi, Dizhi, Dizhi):
-      loose_result2: Optional[DizhiRules.XingSubType] = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
+      loose_result2: DizhiRules.XingSubType | None = dizhi_utils.xing(*dz_tuple, definition=DizhiRules.XingDef.LOOSE)
       if loose_result2 is None:
         self.assertNotIn(dz_tuple, sanxing_list)
         self.assertNotIn(dz_tuple, zimaoxing_list)
@@ -667,13 +667,13 @@ class TestDizhiUtils(unittest.TestCase):
 
     for dz1, dz2 in itertools.product(Dizhi, repeat=2):
       self.assertEqual(dizhi_utils.chong(dz1, dz2), dizhi_utils.chong(dz2, dz1), 'CHONG (冲) is a bi-directional relation')
-      self.assertEqual(dizhi_utils.chong(dz1, dz2), set((dz1, dz2)) in chong_table)
+      self.assertEqual(dizhi_utils.chong(dz1, dz2), {dz1, dz2} in chong_table)
 
   @staticmethod
   def __gen_po_table() -> list[set[Dizhi]]:
-    return [set((
+    return [{
       Dizhi.from_index(dz_idx), Dizhi.from_index((dz_idx - 3) % 12),
-    )) for dz_idx in range(0, 12, 2)]
+    } for dz_idx in range(0, 12, 2)]
 
   def test_search_po(self) -> None:
     po_table: list[set[Dizhi]] = self.__gen_po_table()
@@ -715,7 +715,7 @@ class TestDizhiUtils(unittest.TestCase):
 
     for dz1, dz2 in itertools.product(Dizhi, repeat=2):
       self.assertEqual(dizhi_utils.po(dz1, dz2), dizhi_utils.po(dz2, dz1), 'PO (破) is a bi-directional relation')
-      self.assertEqual(dizhi_utils.po(dz1, dz2), set((dz1, dz2)) in po_table)
+      self.assertEqual(dizhi_utils.po(dz1, dz2), {dz1, dz2} in po_table)
 
   @staticmethod
   def __gen_hai_table() -> set[DizhiCombo]:
@@ -850,7 +850,7 @@ class TestDizhiUtils(unittest.TestCase):
       with self.assertRaises(AssertionError):
         dizhi_utils.search([Dizhi.子, Dizhi.午], str(relation)) # type: ignore
       with self.assertRaises(AssertionError):
-        dizhi_utils.search(set([Dizhi.子, Dizhi.午]), relation) # type: ignore
+        dizhi_utils.search({Dizhi.子, Dizhi.午}, relation) # type: ignore
 
   @pytest.mark.slow
   def test_search(self) -> None:
@@ -1006,7 +1006,7 @@ class TestDizhiUtils(unittest.TestCase):
 
   def test_edge_cases(self) -> None:
     '''Test `discover_mutual` on 三合、三会、三刑、自刑'''
-    for combo_fs in DizhiRules.DIZHI_SANHE.keys():
+    for combo_fs in DizhiRules.DIZHI_SANHE:
       part1 = [random.choice(list(combo_fs))]
       part2 = list(combo_fs - set(part1))
 
@@ -1017,7 +1017,7 @@ class TestDizhiUtils(unittest.TestCase):
       self.assertEqual(dizhi_utils.discover_mutual(part1, part2), 
                        dizhi_utils.discover_mutual(part2, part1))
 
-    for combo_fs in DizhiRules.DIZHI_SANHUI.keys():
+    for combo_fs in DizhiRules.DIZHI_SANHUI:
       part1 = [random.choice(list(combo_fs))]
       part2 = list(combo_fs - set(part1))
 
@@ -1028,7 +1028,7 @@ class TestDizhiUtils(unittest.TestCase):
       self.assertEqual(dizhi_utils.discover_mutual(part1, part2), 
                        dizhi_utils.discover_mutual(part2, part1))
     
-    for combo_tuple, _ in DizhiRules.DIZHI_XING.loose.items():
+    for combo_tuple in DizhiRules.DIZHI_XING.loose:
       part1 = [random.choice(combo_tuple)]
       part2 = list(combo_tuple)
       part2.remove(part1[0])
@@ -1085,13 +1085,13 @@ class TestDizhiUtils(unittest.TestCase):
             discover_mutual_results.append(dizhi_utils.discover_mutual(dizhis_p1, dizhis_p2))
             discover_mutual_results.append(dizhi_utils.discover_mutual(dizhis_p2, dizhis_p1))
 
-        for rr1, rr2 in zip(relation_results, relation_results[1:]):
+        for rr1, rr2 in itertools.pairwise(relation_results):
           self.assertEqual(rr1, rr2)
-        for cr1, cr2 in zip(combo_results, combo_results[1:]):
+        for cr1, cr2 in itertools.pairwise(combo_results):
           self.assertEqual(cr1, cr2)
-        for dr1, dr2 in zip(discover_results, discover_results[1:]):
+        for dr1, dr2 in itertools.pairwise(discover_results):
           self.assertEqual(dr1, dr2)
-        for dmr1, dmr2 in zip(discover_mutual_results, discover_mutual_results[1:]):
+        for dmr1, dmr2 in itertools.pairwise(discover_mutual_results):
           self.assertEqual(dmr1, dmr2)
 
       self.assertEqual(dizhis, copied_dizhis) # Ensure the order of `dizhis` was not changed.
@@ -1109,9 +1109,7 @@ class TestDizhiUtils(unittest.TestCase):
       def filter_func(rel: DizhiRelation, combo: DizhiCombo) -> bool:
         if rel in forbidden_relations:
           return False
-        if any(dz in combo for dz in forbidden_dizhis):
-          return False
-        return True
+        return not any(dz in combo for dz in forbidden_dizhis)
       
       filtered = discovery.filter(filter_func)
 

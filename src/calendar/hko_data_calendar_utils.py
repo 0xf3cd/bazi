@@ -3,9 +3,10 @@
 import copy
 import calendar  # the stdlib module -- NOT the `src.calendar` package this file lives in
 import functools
+import itertools
 
 from datetime import date, time, datetime, timedelta
-from typing import Union, Final
+from typing import Final
 
 from .calendar_defines import CalendarType, CalendarDate
 from .hko_data import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
@@ -115,10 +116,7 @@ def is_valid_lunar_date(d: CalendarDate) -> bool:
     return False
   
   days_in_month: int = info['days_counts'][d.month - 1]
-  if d.day > days_in_month:
-    return False
-
-  return True
+  return d.day <= days_in_month
 
 
 @functools.lru_cache(maxsize=512)
@@ -148,10 +146,7 @@ def is_valid_ganzhi_date(d: CalendarDate) -> bool:
     return False
   
   days_counts: list[int] = days_counts_in_ganzhi_year(d.year)
-  if d.day > days_counts[d.month - 1]:
-    return False
-
-  return True
+  return d.day <= days_counts[d.month - 1]
 
 
 @functools.lru_cache(maxsize=512)
@@ -302,7 +297,7 @@ def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
 
 
 @functools.lru_cache(maxsize=512)
-def __to_calendardate(d: Union[date, CalendarDate]) -> CalendarDate:
+def __to_calendardate(d: date | CalendarDate) -> CalendarDate:
   if isinstance(d, date):
     ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
   else:
@@ -314,7 +309,7 @@ def __to_calendardate(d: Union[date, CalendarDate]) -> CalendarDate:
 
 
 @functools.lru_cache(maxsize=512)
-def to_solar(d: Union[date, CalendarDate]) -> CalendarDate:
+def to_solar(d: date | CalendarDate) -> CalendarDate:
   '''
   Convert the input date to a `CalendarDate` with `SOLAR` type.
   
@@ -337,7 +332,7 @@ def to_solar(d: Union[date, CalendarDate]) -> CalendarDate:
 
 
 @functools.lru_cache(maxsize=512)
-def to_lunar(d: Union[date, CalendarDate]) -> CalendarDate:
+def to_lunar(d: date | CalendarDate) -> CalendarDate:
   '''
   Convert the input date to a `CalendarDate` with `LUNAR` type.
 
@@ -360,7 +355,7 @@ def to_lunar(d: Union[date, CalendarDate]) -> CalendarDate:
   
 
 @functools.lru_cache(maxsize=512)
-def to_ganzhi(d: Union[date, CalendarDate]) -> CalendarDate:
+def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
   '''
   Convert the input date to a `CalendarDate` with `GANZHI` type.
 
@@ -383,7 +378,7 @@ def to_ganzhi(d: Union[date, CalendarDate]) -> CalendarDate:
 
 
 @functools.lru_cache(maxsize=512)
-def to_date(d: Union[date, CalendarDate]) -> date:
+def to_date(d: date | CalendarDate) -> date:
   '''
   Convert the input date to a `date` type.
 
@@ -537,7 +532,7 @@ def next_jie(dt: datetime) -> JieqiTime:
     return JieqiTime(Jieqi.小寒, xiaohan_dt)
   
   jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
-  for jie1, jie2 in zip(jies, jies[1:]):
+  for jie1, jie2 in itertools.pairwise(jies):
     jie1_dt: datetime = jieqi_moment(dt.year, jie1)
     jie2_dt: datetime = jieqi_moment(dt.year, jie2)
     if jie1_dt <= dt < jie2_dt:

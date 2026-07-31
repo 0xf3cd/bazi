@@ -2,7 +2,8 @@
 
 
 from collections import Counter
-from typing import Sequence, Optional, Final, Callable
+from typing import Final
+from collections.abc import Sequence, Callable
 
 from ..common import frozendict
 from ..defines import Dizhi, Wuxing, DizhiRelation
@@ -54,7 +55,7 @@ class DizhiRelationDiscovery(frozendict[DizhiRelation, DizhiRelationCombos]):
 DizhiRelationDiscoveryFilter = Callable[[DizhiRelation, DizhiCombo], bool]
 
 
-def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
+def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   '''
   Check if the input Dizhis are in SANHUI (三会) relation. If so, return the corresponding Wuxing. If not, return `None`.
   We don't care the order of the inputs, since SANHUI relation is non-directional/mutual.
@@ -80,7 +81,7 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
   return DizhiRules.DIZHI_SANHUI.get(combo, None)
 
 
-def liuhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
+def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   '''
   Check if the input Dizhis are in LIUHE (六合) relation. If so, return the corresponding Wuxing. If not, return `None`.
   We don't care the order of the inputs, since LIUHE relation is non-directional/mutual.
@@ -184,7 +185,7 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
   return combo in DizhiRules.DIZHI_TONGLUHE
 
 
-def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
+def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   '''
   Check if the input Dizhis are in SANHE (三合) relation. If so, return the corresponding Wuxing. If not, return `None`.
   检查输入的地支是否构成三合关系。如果是，返回对应的五行。如果不是，返回 `None`。
@@ -208,7 +209,7 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Optional[Wuxing]:
   return DizhiRules.DIZHI_SANHE.get(combo, None)
 
 
-def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
+def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   '''
   Check if the input Dizhis are in BANHE (半合) relation. If so, return the corresponding Wuxing. If not, return `None`.
   检查输入的地支是否构成半合关系。如果是，返回对应的五行。如果不是，返回 `None`。
@@ -233,7 +234,7 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Optional[Wuxing]:
   return DizhiRules.DIZHI_BANHE.get(combo, None)
 
 
-def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> Optional[DizhiRules.XingSubType]:
+def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRules.XingSubType | None:
   '''
   Check if the input Dizhis is a exact match for XING (刑) relation. If so, return the type of the XING relation. If not, return `None`.
   There are multiple definitions for 刑. The default definition is `DizhiRules.XingDef.LOOSE`.
@@ -603,11 +604,8 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
   dz2_set: Final[set[Dizhi]] = set(dizhis2)
 
   def __is_valid(combo: DizhiCombo) -> bool:
-    if combo.isdisjoint(dz1_set): # This means Dizhis in `combo` are all from `dizhis2`.
-      return False
-    if combo.isdisjoint(dz2_set): # This means Dizhis in `combo` are all from `dizhis1`.
-      return False
-    return True
+    # Disjoint from either set means all Dizhis in `combo` come from the other side only.
+    return not combo.isdisjoint(dz1_set) and not combo.isdisjoint(dz2_set)
   
   # Discover all possible combos with `dz1_set` and `dz2_set` combined.
   # Check each combo's validity and only keep valid ones.

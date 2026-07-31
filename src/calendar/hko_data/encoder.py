@@ -69,8 +69,8 @@ def do_download() -> None:
 
   if len(to_retry) > 0:
     print(f'> Data for {list(to_retry.keys())} failed to be downloaded. Retrying now...')
-    for year in to_retry:
-      if not download_one_year_data(to_retry[year], year):
+    for year, txt_path in to_retry.items():
+      if not download_one_year_data(txt_path, year):
         print(f'> WARNING: Failed to download {year} in the retry attempt.')
 
   assert raw_data_ready(), 'Some data is missing.'
@@ -88,9 +88,7 @@ def extract_from_raw_txts() -> dict[int, list[str]]:
       return False
     if '日' not in line:
       return False
-    if '夏令時間' in line:
-      return False
-    return True
+    return '夏令時間' not in line
   
   txt_paths: dict[int, Path] = get_raw_txt_file_paths()
   ret: dict[int, list[str]] = {}

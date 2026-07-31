@@ -4,7 +4,8 @@ import colorama
 import itertools
 
 from pprint import pprint
-from typing import Union, Iterable, Generator, TypeVar
+from typing import TypeVar
+from collections.abc import Iterable, Generator
 
 from src.bazi import Bazi
 from src.bazi_chart import BaziChart
@@ -23,7 +24,7 @@ def batched(it: Iterable[T], n: int) -> Generator[tuple[T, ...], None, None]:
     yield tuple(it_list[i:i + n])
 
 
-def colored_str(s: Union[Tiangan, Dizhi, Ganzhi]) -> str:
+def colored_str(s: Tiangan | Dizhi | Ganzhi) -> str:
   color_mapping_table: dict[Wuxing, str] = {
     Wuxing.火: colorama.Fore.RED,
     Wuxing.木: colorama.Fore.GREEN,
@@ -39,7 +40,7 @@ def colored_str(s: Union[Tiangan, Dizhi, Ganzhi]) -> str:
     return color_mapping_table[wx] + str(s) + colorama.Style.RESET_ALL
 
 
-def traits_str(s: Union[Tiangan, Dizhi]) -> str:
+def traits_str(s: Tiangan | Dizhi) -> str:
   t = traits(s)
   return f'{t.yinyang}{t.wuxing}'
 
@@ -47,7 +48,7 @@ def traits_str(s: Union[Tiangan, Dizhi]) -> str:
 def hidden_tg_str(d: HiddenTianganDict, day_master: Tiangan) -> str:
   def f(tg: Tiangan) -> str:
     return f'{colored_str(tg)} [{traits_str(tg)}] <{shishen(day_master, tg).abbr}>'
-  return ' '.join(f(tg) for tg in d.keys())
+  return ' '.join(f(tg) for tg in d)
 
 
 def get_basic_info(chart: BaziChart) -> str:
@@ -72,7 +73,7 @@ def get_basic_info(chart: BaziChart) -> str:
       tg_shishen = colorama.Back.LIGHTBLUE_EX + colorama.Fore.BLACK + '日主' + colorama.Style.RESET_ALL
 
     tg_str: str = f'{colored_str(tg)} [{traits_str(tg)}] <{tg_shishen}>'
-    dz_str: str = f'{colored_str(dz)} [{traits_str(dz)}] <{str(shishens[idx].dizhi)}>'
+    dz_str: str = f'{colored_str(dz)} [{traits_str(dz)}] <{shishens[idx].dizhi!s}>'
     hd_str: str = hidden_tg_str(hidden_tiangan[idx], bazi.day_master)
 
     s += f'{head}：  {tg_str}      {dz_str}     {hd_str}\n'

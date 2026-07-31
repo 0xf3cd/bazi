@@ -2,6 +2,7 @@
 # test_hkodata_calendar_utils.py
 
 import random
+import itertools
 import pytest
 import unittest
 
@@ -123,7 +124,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       dates.append(hko_data_calendar_utils.HkoDB.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
 
       days_counts = hko_data_calendar_utils.days_counts_in_ganzhi_year(year)
-      for idx, (start_date, next_start_date) in enumerate(zip(dates[:-1], dates[1:])):
+      for idx, (start_date, next_start_date) in enumerate(itertools.pairwise(dates)):
         days_in_this_month: int = days_counts[idx]
         self.assertEqual(days_in_this_month, (next_start_date - start_date).days)
 
@@ -495,7 +496,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
     dates: list[date] = []
     for jieqi in Jieqi.as_list(ganzhi_year=False):
       dates.append(hko_data_calendar_utils.jieqi_date(random_solar_year, jieqi))
-    for d1, d2 in zip(dates, dates[1:]):
+    for d1, d2 in itertools.pairwise(dates):
       self.assertLess(d1, d2)
 
   def test_get_jieqi_moment(self) -> None:
@@ -519,7 +520,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
     datetimes: list[datetime] = []
     for jieqi in Jieqi.as_list(ganzhi_year=False): # The first Jieqi in a solar year is always "小寒".
       datetimes.append(hko_data_calendar_utils.jieqi_moment(random_solar_year, jieqi))
-    for d1, d2 in zip(datetimes, datetimes[1:]):
+    for d1, d2 in itertools.pairwise(datetimes):
       self.assertLess(d1, d2)
 
   def test_prev_jie(self) -> None:
@@ -572,7 +573,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
 
     first_year: int = hko_data_calendar_utils.HkoDB.jieqi_dates_db.start_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
-    for jie1, jie2 in zip(jie_list, jie_list[1:]):
+    for jie1, jie2 in itertools.pairwise(jie_list):
       self.assertTupleEqual(
         hko_data_calendar_utils.prev_jie(hko_data_calendar_utils.jieqi_moment(first_year, jie1)),
         (jie1, hko_data_calendar_utils.jieqi_moment(first_year, jie1))
@@ -637,7 +638,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
 
     last_year: int = hko_data_calendar_utils.HkoDB.jieqi_dates_db.end_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
-    for jie1, jie2 in zip(jie_list, jie_list[1:]):
+    for jie1, jie2 in itertools.pairwise(jie_list):
       self.assertTupleEqual(
         hko_data_calendar_utils.next_jie(hko_data_calendar_utils.jieqi_moment(last_year, jie1)),
         (jie2, hko_data_calendar_utils.jieqi_moment(last_year, jie2))

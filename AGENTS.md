@@ -31,14 +31,18 @@ an engine:
 ## Toolchain
 Build / lint / type-check / test commands live in **README.md §Instructions** — follow
 those, don't restate them here. Two rules the README doesn't spell out:
-- `ruff` / `mypy` run on **default** config. There is intentionally NO
-  pyproject.toml / ruff.toml / mypy.ini — do NOT add one.
+- `ruff` runs on its default rule face minus the few family-level carve-outs in
+  `ruff.toml`. That file declares the **rule face only** (ignores with a written
+  rationale each); formatting/style parameters must NEVER appear in it. `mypy`
+  runs config-less (flags live in `run_tests.py`) — do NOT add mypy.ini/pyproject.
 - NEVER run `ruff format` (or any auto-formatter) — it destroys the deliberate
   vertical alignment (see Idioms). `ruff check` is the only ruff gate.
 - `ruff` is version-pinned in Requirements.txt; bumping it is a deliberate,
   reviewed change (new default rules get triaged one by one). Resolve new-rule
-  hits by fixing the code or, where a rule fights the house style, an inline
-  `# noqa: <RULE>` with a reason — never by adding a config file.
+  hits by fixing the code, or an inline `# noqa: <RULE>` with a reason where a
+  single site is deliberate; a `ruff.toml` ignore (with rationale) is reserved
+  for whole families that fight the domain or the house style; scoped carve-outs
+  (`per-file-ignores`, rationale included) where a family only fights one tree.
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
   workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i`.
@@ -103,8 +107,8 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 `calendar`, `transits` — mechanism code) may be English-only.
 
 ## Typing & immutability (non-negotiable)
-- Fully typed; `mypy .` must pass. Lean on `Final/Optional/Callable/TypedDict/NamedTuple`.
-- Returns immutable: `frozenset`, `frozendict` (from `..Common`), `tuple`,
+- Fully typed; `mypy .` must pass. Lean on `Final`, `X | None` unions (PEP 604, not `Optional`), `Callable`, `TypedDict`, `NamedTuple`.
+- Returns immutable: `frozenset`, `frozendict` (from `..common`), `tuple`,
   or `@dataclass(frozen=True)` for small immutable value types (the preferred shape —
   no hand-written `__init__`/`__eq__` boilerplate).
 - Rule tables are plain `Final` class attributes — no `@classproperty` / `functools.cache`

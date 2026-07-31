@@ -6,9 +6,9 @@ import inspect
 from datetime import datetime
 
 from typing import (
-  TypeVar, Callable, Generic, Final, NamedTuple, TypedDict,
-  Sequence, Iterator, Type, Mapping, Any,
+  TypeVar, Generic, Final, NamedTuple, TypedDict, Any,
 )
+from collections.abc import Callable, Sequence, Iterator, Mapping
 from .defines import Wuxing, Yinyang, Tiangan, Ganzhi, Jieqi
 
 
@@ -20,8 +20,8 @@ class ConstMetaClass(type):
   This meta class ensures a class is not attribute-setable, which means that
   the Class's methods and variables/properties are not settable once the class is defined.
   '''
-  def __new__(cls: Type['ConstMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'ConstMetaClass':
-    return super(ConstMetaClass, cls).__new__(cls, name, bases, attrs)
+  def __new__(cls: type['ConstMetaClass'], name: str, bases: tuple[type], attrs: dict[str, Any]) -> 'ConstMetaClass':
+    return super().__new__(cls, name, bases, attrs)
   
   def __setattr__(self, name: str, value: Any) -> None:
     raise AttributeError('ConstMetaClass class attribute is read-only')
@@ -72,8 +72,8 @@ class ImmutableMetaClass(type):
   - `__getattribute__`: Deepcopy the original value and return the copied value.
   '''
 
-  def __new__(cls: Type['ImmutableMetaClass'], name: str, bases: tuple[Type], attrs: dict[str, Any]) -> 'ImmutableMetaClass':
-    return super(ImmutableMetaClass, cls).__new__(cls, name, bases, attrs)
+  def __new__(cls: type['ImmutableMetaClass'], name: str, bases: tuple[type], attrs: dict[str, Any]) -> 'ImmutableMetaClass':
+    return super().__new__(cls, name, bases, attrs)
   
   def __setattr__(cls, name: str, value: Any) -> None:
     raise AttributeError('ImmutableMetaClass class attribute is read-only')
@@ -82,7 +82,7 @@ class ImmutableMetaClass(type):
     raise AttributeError('ImmutableMetaClass class attribute is read-only')
   
   def __getattribute__(cls, name: str) -> Any:
-    val = super(ImmutableMetaClass, cls).__getattribute__(name)
+    val = super().__getattribute__(name)
     try:
       if inspect.isfunction(val) or inspect.ismethod(val) or isinstance(val, (classmethod, staticmethod)):
         return val
@@ -217,8 +217,8 @@ class BaziData(Generic[PillarDataType]):
   A generic class for storing Bazi data.
   A `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
   '''
-  def __init__(self, generic_type: Type[PillarDataType], data: Sequence[PillarDataType]) -> None:
-    self._type: Final[Type[PillarDataType]] = generic_type
+  def __init__(self, generic_type: type[PillarDataType], data: Sequence[PillarDataType]) -> None:
+    self._type: Final[type[PillarDataType]] = generic_type
     
     assert len(data) == 4
     self._year: Final[PillarDataType] = copy.deepcopy(data[0])
@@ -254,31 +254,29 @@ class BaziData(Generic[PillarDataType]):
       return False
     if self.day != other.day:
       return False
-    if self.hour != other.hour:
-      return False
-    return True
+    return bool(self.hour == other.hour) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
 
 
-TianganDataType = TypeVar('TianganDataType', covariant=True)
-DizhiDataType = TypeVar('DizhiDataType', covariant=True)
-class GanzhiData(Generic[TianganDataType, DizhiDataType]):
+TianganDataType_co = TypeVar('TianganDataType_co', covariant=True)
+DizhiDataType_co = TypeVar('DizhiDataType_co', covariant=True)
+class GanzhiData(Generic[TianganDataType_co, DizhiDataType_co]):
   '''
   A helper class for storing the data of a Pillar/Ganzhi.
   Can be used with `BaziData` class.
   '''
-  def __init__(self, tg: TianganDataType, dz: DizhiDataType) -> None:
-    self._tg: Final[TianganDataType] = copy.deepcopy(tg)
-    self._dz: Final[DizhiDataType] = copy.deepcopy(dz)
+  def __init__(self, tg: TianganDataType_co, dz: DizhiDataType_co) -> None:
+    self._tg: Final[TianganDataType_co] = copy.deepcopy(tg)
+    self._dz: Final[DizhiDataType_co] = copy.deepcopy(dz)
 
   @property
-  def tiangan(self) -> TianganDataType:
+  def tiangan(self) -> TianganDataType_co:
     return copy.deepcopy(self._tg)
   
   @property
-  def dizhi(self) -> DizhiDataType:
+  def dizhi(self) -> DizhiDataType_co:
     return copy.deepcopy(self._dz)
   
   def __eq__(self, other: object) -> bool:
@@ -286,9 +284,7 @@ class GanzhiData(Generic[TianganDataType, DizhiDataType]):
       return False
     if self.tiangan != other.tiangan:
       return False
-    if self.dizhi != other.dizhi:
-      return False
-    return True
+    return bool(self.dizhi == other.dizhi) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)

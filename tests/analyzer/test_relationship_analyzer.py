@@ -158,7 +158,7 @@ class TestTransitAnalysis(unittest.TestCase):
       return False
     if set(discovery1.keys()) != set(discovery2.keys()):
       return False
-    for key in discovery1.keys():
+    for key in discovery1:
       if set(discovery1[key]) != set(discovery2[key]):
         return False
     return True
@@ -260,10 +260,10 @@ class TestTransitAnalysis(unittest.TestCase):
         if not transits_analysis.support(randon_year, random_options):
           continue
 
-        transit_dz = list(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+        transit_dz = [gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options)]
 
         actual = transits_analysis.house_relations(randon_year, random_options)
-        for _, combos in actual.items():
+        for combos in actual.values():
           for combo in combos:
             self.assertTrue(house in combo)
             self.assertFalse(set(transit_dz).isdisjoint(combo))
