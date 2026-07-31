@@ -187,4 +187,13 @@ class LunarYearTable:
     return self._year_range
 
   def get(self, lunar_year: int) -> LunarYearInfo:
-    return self._years[lunar_year]
+    info: LunarYearInfo = self._years[lunar_year]
+    # A fresh record per call (with a fresh `days_counts` list), so a caller's in-place
+    # edit cannot corrupt the table's own copy. The other values are immutable.
+    return LunarYearInfo(
+      first_solar_day=info['first_solar_day'],
+      leap=info['leap'],
+      leap_month=info['leap_month'],
+      days_counts=list(info['days_counts']),
+      ganzhi=info['ganzhi'],
+    )

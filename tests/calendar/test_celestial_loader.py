@@ -127,6 +127,17 @@ class TestFixtureTables(unittest.TestCase):
       self.assertEqual(leap['leap_month'], 2)
       self.assertEqual(len(leap['days_counts']), 13)
 
+  def test_lunar_get_returns_a_copy(self) -> None:
+    # A copy, so a caller's in-place edit cannot corrupt the table's own record (issue #92).
+    table = LunarYearTable(FIXTURES / 'lunar_years_algo1.txt', contiguous_years=False)
+    info = table.get(1901)
+    self.assertIsNot(info, table.get(1901))
+    self.assertIsNot(info['days_counts'], table.get(1901)['days_counts'])
+
+    original = list(info['days_counts'])
+    info['days_counts'][0] = 999
+    self.assertEqual(table.get(1901)['days_counts'], original)
+
   def test_the_two_algos_differ_on_1914(self) -> None:
     # 1914 is one of the six years celestial's own diff_test.cpp records as divergent.
     algo1 = LunarYearTable(FIXTURES / 'lunar_years_algo1.txt', contiguous_years=False).get(1914)

@@ -168,8 +168,14 @@ def is_valid(d: CalendarDate) -> bool:
     return is_valid_ganzhi_date(d)
 
 
-@functools.lru_cache(maxsize=512)
 def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
+  # A fresh list per call, from a cache that holds a tuple: returning the cached list
+  # itself would let a caller's in-place edit poison every later answer.
+  return list(__days_counts_in_ganzhi_year(ganzhi_year))
+
+
+@functools.lru_cache(maxsize=512)
+def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
   assert ganzhi_year <= get_max_supported_date(CalendarType.GANZHI).year
 
   jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
@@ -183,7 +189,7 @@ def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
     start_dates.append(HkoDB.jieqi_dates_db.get(ganzhi_year + 1, jq))
   
   end_dates: list[date] = start_dates[1:] + [HkoDB.jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
-  days_counts: list[int] = [(end - start).days for start, end in zip(start_dates, end_dates)]
+  days_counts: tuple[int, ...] = tuple((end - start).days for start, end in zip(start_dates, end_dates))
   assert len(days_counts) == 12
 
   return days_counts

@@ -179,13 +179,25 @@ class DecodedLunarYears:
     }
 
   @functools.cache
+  def __cached_info(self, lunar_year: int) -> LunarYearInfo:
+    return self.__getitem__(lunar_year)
+
   def get(self, lunar_year: int) -> LunarYearInfo:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
+    The returned record is rebuilt per call (with a fresh `days_counts` list), so mutating
+    it cannot poison the cache. The other values are immutable and safe to share.
     '''
     assert isinstance(lunar_year, int)
     assert lunar_year in self.supported_year_range()
-    return self.__getitem__(lunar_year)
+    info: LunarYearInfo = self.__cached_info(lunar_year)
+    return LunarYearInfo(
+      first_solar_day=info['first_solar_day'],
+      leap=info['leap'],
+      leap_month=info['leap_month'],
+      days_counts=list(info['days_counts']),
+      ganzhi=info['ganzhi'],
+    )
 
   def supported_year_range(self) -> range:
     '''Note: Lunar year / 阴历年'''

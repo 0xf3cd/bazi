@@ -218,6 +218,22 @@ class TestHkoData(unittest.TestCase):
       expected_ganzhi: Ganzhi = sexagenary_cycle[diff % len(sexagenary_cycle)]
       self.assertEqual(decoded_lunardate[year]['ganzhi'], expected_ganzhi)
 
+  def test_decode_lunar_year_get_returns_a_copy(self) -> None:
+    '''
+    `get` leverages a cache, so it must hand back a rebuilt record: mutating what a caller
+    received must not corrupt later answers (issue #92).
+    '''
+    decoded_lunardate: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
+    info: hko_data.LunarYearInfo = decoded_lunardate.get(2000)
+    self.assertIsNot(info, decoded_lunardate.get(2000))
+    self.assertIsNot(info['days_counts'], decoded_lunardate.get(2000)['days_counts'])
+
+    original_days_counts: list[int] = list(info['days_counts'])
+    info['days_counts'][0] = 999
+    info['leap_month'] = 7
+    self.assertEqual(decoded_lunardate.get(2000)['days_counts'], original_days_counts)
+    self.assertIsNone(decoded_lunardate.get(2000)['leap_month'])
+
   def test_decode_lunar_year_negative(self) -> None:
     decoded_lunardate: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
     with self.assertRaises(AssertionError):
@@ -229,11 +245,11 @@ class TestHkoData(unittest.TestCase):
     with self.assertRaises(AssertionError):
       decoded_lunardate[max(decoded_lunardate.supported_year_range()) + 1]
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get('a')
+      decoded_lunardate.get('a') # type: ignore
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get('1984')
+      decoded_lunardate.get('1984') # type: ignore
     with self.assertRaises(AssertionError):
-      decoded_lunardate.get(date(year=1984, month=1, day=1))
+      decoded_lunardate.get(date(year=1984, month=1, day=1)) # type: ignore
     
     temp = decoded_lunardate[2024]
     temp['days_counts'].append(29)
