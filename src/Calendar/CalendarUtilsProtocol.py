@@ -12,14 +12,20 @@ from .CalendarDefines import CalendarType, CalendarDate
 class CalendarUtilsProtocol(Protocol):
   '''
   The protocol that all CalendarUtils classes conform to.
-  
-  Currently, only HKO-data-based calendar utils are supported/implemented, which is at
-  day-level precision, meaning that we are unable to know the accurate time of Jieqis.
 
-  In the future, I plan to implement a C++-based calendar utils, using astronomical algorithms.
-  With that, it becomes possible to know the accurate time of Jieqis.
+  Implementations may differ only in the *precision* of `jieqi_moment`: a data source that
+  publishes jieqi dates but not their moments can answer no better than midnight of that
+  date (`HkoDataCalendarUtils`), while one carrying the real moments answers to the second
+  (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
+  what makes conforming implementations substitutable for one another.
 
-  Creating this protocol just to ensure the smooth migration to future C++-based calendar utils.
+  Two methods ride on that precision and escape the "must agree" rule: `prev_jie`/`next_jie`
+  name the jie bracketing a moment, so between midnight and the true moment of a jieqi day the
+  two backends legitimately name different jie.  The divergence is moment-shaped, not noise
+  (~1.6% of random moments, all landing on jieqi days), and it propagates: `BaziChart`'s da-yun
+  start counts jie from birth, so a jieqi-day birth can shift it by a full da-yun step (~10
+  years).  Date-level queries stay within the frozen parity whitelist instead (see
+  `tests/calendar/celestial_parity_data.py`).
   '''
   @staticmethod
   def get_min_supported_date(date_type: CalendarType) -> CalendarDate: ...

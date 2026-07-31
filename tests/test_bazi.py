@@ -43,6 +43,54 @@ class TestBaziPrecision(unittest.TestCase):
     self.assertEqual(str(BaziPrecision.HOUR), 'hour')
     self.assertEqual(str(BaziPrecision.MINUTE), 'minute')
 
+  def test_day_precision_compares_dates_not_moments(self) -> None:
+    '''
+    `DAY` compares dates, so the whole of a jieqi's day falls on the new side of it -- the tie
+    at day granularity resolves to the new pillar, as `BaziPrecision` documents.
+
+    Pinned because nothing else would notice it changing. The behaviour rests on `datetime`
+    being a `date` subclass, so `to_ganzhi` accepts it and drops the time; anyone "fixing" that
+    to honour the moment would silently move ~1.6% of charts, which is exactly how the question
+    stayed open long enough to become issue #72. Changing the rule should mean deleting this
+    test on purpose.
+    '''
+    # 立春 2000 is 02-04 20:40:23 (celestial); the HKO almanac publishes 02-04.  So every
+    # moment of 02-04 gives 庚辰/寅 -- including 00:00, which precedes the jieqi by 20 hours.
+    expected: list[tuple[str, str, Dizhi]] = [
+      ('2000-02-03 12:00', '己卯', Dizhi.丑),
+      ('2000-02-04 00:00', '庚辰', Dizhi.寅), # 20h40m before the jieqi, still the new pillar.
+      ('2000-02-04 20:40', '庚辰', Dizhi.寅),
+      ('2000-02-04 23:59', '庚辰', Dizhi.寅),
+    ]
+    for backend in ('hko', 'celestial'):
+      for moment, year_pillar, month_dizhi in expected:
+        with self.subTest(backend=backend, moment=moment):
+          bazi: Bazi = Bazi.create(moment, 'male', 'day', backend=backend)
+          self.assertEqual(str(bazi.year_pillar), year_pillar)
+          self.assertEqual(bazi.month_commander, month_dizhi)
+
+  def test_the_23_oclock_rollover_moves_only_the_day_pillar(self) -> None:
+    '''
+    晚子时换日 moves the day pillar to the next day, while the year and month pillars keep
+    comparing dates -- so a 23:30 birth carries the next day's day pillar and the current
+    date's year/month pillars. Both halves are 流派 variants tracked in issue #69; this pins
+    which answer is today's default, so that making it configurable is a deliberate carry-over
+    rather than whatever the code happened to do.
+    '''
+    # 1984-02-04 is the 立春 date, so the year/month pillars turn over between these rows while
+    # the day pillar turns over an hour earlier, at 23:00.
+    expected: list[tuple[str, str, str, str]] = [
+      ('1984-02-03 22:30', '癸亥', '乙丑', '丁卯'),
+      ('1984-02-03 23:30', '癸亥', '乙丑', '戊辰'), # Day pillar already rolled, year/month not.
+      ('1984-02-04 00:30', '甲子', '丙寅', '戊辰'), # Year/month rolled, day pillar unchanged.
+    ]
+    for moment, year, month, day in expected:
+      with self.subTest(moment=moment):
+        bazi: Bazi = Bazi.create(moment, 'male', 'day')
+        self.assertEqual(str(bazi.year_pillar), year)
+        self.assertEqual(str(bazi.month_pillar), month)
+        self.assertEqual(str(bazi.day_pillar), day)
+
 
 class TestBazi(unittest.TestCase):
   def test_init(self) -> None:

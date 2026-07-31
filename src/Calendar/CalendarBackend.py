@@ -16,21 +16,30 @@ class CalendarBackend(Enum):
     meaning that the accurate times of Jieqis are unknown.
     基于香港天文台数据的历法。日级精度，即无法得知节气的准确时刻。
 
-  In the future, an astronomical-algorithm-based backend will be added,
-  which knows the accurate times of Jieqis (minute-level precision) and
-  hence unlocks true solar time and higher-precision Bazi charts.
-  未来会加入基于天文算法的后端，得知节气的准确时刻（分钟级精度），
-  从而解锁真太阳时和更高精度的命盘。
+  - CELESTIAL: based on astronomical algorithms (the `celestial-calendar` project).
+    Knows the accurate moments of Jieqis, at second granularity.
+    基于天文算法（`celestial-calendar` 项目）的历法。得知节气的准确时刻，精度到秒。
+
+  - CELESTIAL_ALGO2: the same, with the second of celestial-calendar's two lunar
+    algorithms. It differs from CELESTIAL on 6 of the 199 supported lunar years;
+    CELESTIAL tracks the official HKO almanac and is the one to prefer.
+    同上，但采用 celestial-calendar 的第二套阴历算法。199 个支持年份中有 6 年与
+    CELESTIAL 不同；CELESTIAL 贴合香港天文台官方历书，应优先选用。
+
+  The lunar algorithm is part of the backend's identity rather than a switch on it; see
+  `CelestialCalendarUtils` for why.
+  阴历算法是后端身份的一部分，而非其上的开关；原因见 `CelestialCalendarUtils`。
 
   See https://github.com/0xf3cd/bazi/issues/2 and
       https://github.com/0xf3cd/bazi/issues/6
   '''
   HKO = 'hko'
+  CELESTIAL = 'celestial'
+  CELESTIAL_ALGO2 = 'celestial-algo2'
 
   def __str__(self) -> str:
-    # Invariant: every enum member must be covered here.
-    assert self is self.HKO
-    return 'hko'
+    # The value *is* the wire format, so a new member cannot be forgotten here.
+    return self.value
 
   @staticmethod
   def from_str(s: str) -> 'CalendarBackend':
@@ -66,6 +75,17 @@ def calendar_utils_of(backend: Union[CalendarBackend, str]) -> CalendarUtilsProt
     # protocol's staticmethods are satisfied by module-level functions), but mypy
     # cannot see that, hence the `cast`.
     return cast(CalendarUtilsProtocol, HkoDataCalendarUtils)
+
+  if _backend in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2):
+    # Likewise lazy: reading the tables costs the same as the HKO decoder.
+    from .CelestialCalendarUtils import ALGO1, ALGO2
+    utils = ALGO1 if _backend is CalendarBackend.CELESTIAL else ALGO2
+    # The protocol is spelled with staticmethods, which fits the module-shaped HKO backend;
+    # this one is an object, because its two lunar algorithms need separate state. Both
+    # satisfy the protocol when called, and `test_calendar_backend` asserts that at runtime
+    # for every member, which is the check this `cast` gives up. Unifying the two shapes is
+    # tracked in issue #86.
+    return cast(CalendarUtilsProtocol, utils)
 
   # Invariant: every enum member must be wired up above. Reaching here means we
   # added a member but forgot to resolve it -- not something users can trigger.
