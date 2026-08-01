@@ -17,7 +17,8 @@ from .bazi_chart import BaziChart
 
 
 class DayunDatabase:
-  '''A database that figures out a given Ganzhi year falls into which Dayun (大运).'''
+  '''Locates the Dayun (大运) that a given Ganzhi year falls into, by closed-form
+  arithmetic from the first Dayun. 由首运闭式定位任一干支年所属的大运。'''
   def __init__(self, chart: BaziChart) -> None:
     self._first_dayun: Final[DayunTuple] = next(chart.dayun)
     self._step: Final[int] = 1 if chart.dayun_order else -1

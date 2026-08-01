@@ -642,9 +642,8 @@ class TestBazi(unittest.TestCase):
     self.assertEqual(len({bazi, same, other}), 2)
 
   def test_sub_minute_truncation(self) -> None:
-    # `solar_datetime` deliberately truncates to the minute (MINUTE is the finest
-    # `BaziPrecision`), and `__eq__`/`__hash__` build on the truncated value: two births
-    # in the same minute are the same Bazi.
+    # Two births in the same minute are the same Bazi -- `Bazi.solar_datetime` is the
+    # SSOT on why sub-minute parts are dropped.
     dt: datetime = datetime(2000, 2, 4, 22, 1)
     bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
     sub_minute: Bazi = Bazi.create(dt.replace(second=37, microsecond=999999),

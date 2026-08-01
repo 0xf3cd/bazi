@@ -34,7 +34,7 @@ class TianganDescription(TypedDict):
 
 
 # This table stores the descriptions of each Shishen.
-# The corpus tables are frozen mappings, but entries are returned as-is — anyone
+# The corpus tables are frozen mappings, but entries are returned as-is -- anyone
 # reading them directly must not mutate the results. `Interpreter.interpret_*` is
 # the mutation-safe boundary: it deep-copies entries before returning.
 # 语料表是冻结映射，但取条目原样返回——直接读表者不得修改结果。

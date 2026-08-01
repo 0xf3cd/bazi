@@ -552,9 +552,9 @@ class Bazi:
     return not self.__eq__(other)
 
   def __hash__(self) -> int:
-    # In sync with `__eq__`. All four inputs sit behind `Final` fields, so the hash
-    # is stable across the object's lifetime. 与 `__eq__` 同步；四个输入都在 `Final`
-    # 字段之后，对象生命周期内哈希稳定。
+    # Same four inputs as `__eq__`, all derived from `Final` state: stable under the
+    # public API (private reassignment is not defended against, as everywhere else).
+    # 与 `__eq__` 同源四元组，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
     return hash((self.solar_datetime, self.gender, self.precision, self.backend))
 
 八字 = Bazi

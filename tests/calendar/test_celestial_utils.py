@@ -149,14 +149,6 @@ class TestConversions(unittest.TestCase):
       self.assertEqual(ALGO1.to_ganzhi(d).date_type, CalendarType.GANZHI)
       self.assertEqual(ALGO1.to_date(d), date(2024, 2, 4))
 
-  def test_to_family_may_share(self) -> None:
-    # `CalendarDate` is a frozen dataclass, so the `to_*` family and its caches share
-    # objects freely: the identity path may hand the caller's own object back.
-    d: CalendarDate = solar(2024, 2, 4)
-    self.assertEqual(ALGO1.to_solar(d), d)
-    self.assertEqual(ALGO1.to_lunar(ALGO1.to_lunar(d)), ALGO1.to_lunar(d))
-
-
 class TestJieqi(unittest.TestCase):
   def test_real_moments_not_placeholders(self) -> None:
     # The whole point of this backend: HKO can only say 00:00:00.

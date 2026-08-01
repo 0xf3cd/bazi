@@ -64,11 +64,11 @@ class Wuxing(BaziEnum):
     '''
     return _DESTRUCTS[self] is wx
 
-五行 = Wuxing # Alias
-
-
 # Both relations are walks along the generation cycle (相生环: 木→火→土→金→水→木):
 # generation is one step, destruction two steps (隔位相克).
-_CYCLE: Final[list[Wuxing]] = [Wuxing.木, Wuxing.火, Wuxing.土, Wuxing.金, Wuxing.水]
-_GENERATES: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 1) % 5] for i, wx in enumerate(_CYCLE) }
-_DESTRUCTS: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 2) % 5] for i, wx in enumerate(_CYCLE) }
+_CYCLE: Final[tuple[Wuxing, ...]] = (Wuxing.木, Wuxing.火, Wuxing.土, Wuxing.金, Wuxing.水)
+_GENERATES: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 1) % len(_CYCLE)] for i, wx in enumerate(_CYCLE) }
+_DESTRUCTS: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 2) % len(_CYCLE)] for i, wx in enumerate(_CYCLE) }
+
+
+五行 = Wuxing # Alias

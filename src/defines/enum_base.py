@@ -13,6 +13,8 @@ def _members(cls: type[Enum]) -> tuple[Enum, ...]:
 
 @functools.cache
 def _member_indexes(cls: type[Enum]) -> dict[Enum, int]:
+  # This cached table IS the O(1) `index` mechanism (not lazy loading of a rule table).
+  # Module-private; callers only read. 缓存表即 O(1) 下标本体；模块私有，只读消费。
   return { member : index for index, member in enumerate(cls) }
 
 
@@ -57,6 +59,10 @@ class IndexedBaziEnum(BaziEnum):
 
   @classmethod
   def from_index(cls, i: int) -> Self:
+    '''Definition-order lookup with `list`-style indexing: negative indexes wrap,
+    out-of-range raises IndexError. 定义序取成员，下标语义同 `list`：负数回绕，越界 IndexError。'''
     member = _members(cls)[i]
+    # `functools.cache` erases the helper's generic type; this narrows it back for mypy
+    # and doubles as a runtime guard. cache 包装抹平泛型，此断言兼作 mypy 窄化与运行时防线。
     assert isinstance(member, cls)
     return member

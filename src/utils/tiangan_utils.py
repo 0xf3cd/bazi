@@ -1,11 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from typing import Final
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence
 
 from ..defines import Tiangan, Wuxing, TianganRelation
-from ..data_types import RelationDiscovery
 from ..rules import TianganRules
+from .relation_discovery import RelationDiscovery
 
 
 '''
@@ -20,15 +20,9 @@ TianganCombo = frozenset[Tiangan]
 '''A list of all possible Tiangan combos that satisfy a certain `TianganRelation`.'''
 TianganRelationCombos = tuple[TianganCombo, ...]
 
-'''A frozendict that stores the Tiangan combos that satisfy every `TianganRelation`.
-`filter` / `merge` / `mutual_only` come from the generic `RelationDiscovery` base.'''
 class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
-  pass
-
-
-
-'''A function that filters Tiangan combos based on the given `TianganRelation` and `TianganCombo`.'''
-TianganRelationDiscoveryFilter = Callable[[TianganRelation, TianganCombo], bool]
+  '''A frozen mapping from `TianganRelation` to the Tiangan combos that satisfy it.
+  天干关系到满足它的天干组合的冻结映射。'''
 
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:

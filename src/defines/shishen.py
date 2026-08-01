@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from typing import Self
+
 from .enum_base import BaziEnum
 
 
@@ -47,7 +49,7 @@ class Shishen(BaziEnum):
     }
 
   @classmethod
-  def from_str(cls, s: str) -> 'Shishen':
+  def from_str(cls, s: str) -> Self:
     # Overrides the base: also accepts the single-char aliases (e.g. '比' -> 比肩).
     # 覆盖基类：额外接受单字别名。
     assert isinstance(s, str)
@@ -58,7 +60,7 @@ class Shishen(BaziEnum):
       assert s in t
       s = t[s]
 
-    return Shishen(s)
+    return cls(s)
 
   @property
   def abbr(self) -> str:

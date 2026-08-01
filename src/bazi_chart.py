@@ -96,9 +96,9 @@ class BaziChart:
 
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
-    # `Bazi` is the one mutable domain object; the chart is its isolation boundary,
-    # so take a private copy here (and hand out copies in the `bazi` property below).
-    # `Bazi` 是唯一可变的领域对象，命盘是它的隔离边界：进出各深拷一次。
+    # `Bazi` is not frozen (private state can be reassigned), so keep an isolated copy --
+    # `test_malicious` pins that poisoning the caller's object never reaches the chart.
+    # `Bazi` 并非 frozen（私有状态可被改写），故持隔离副本；test_malicious 钉住污染不透传。
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
@@ -108,9 +108,9 @@ class BaziChart:
 
   @property
   def bazi(self) -> Bazi:
-    # A fresh copy per access, and deliberately NOT a `cached_property`: a cached shared
-    # `Bazi` could be mutated through the returned handle, breaking the chart's isolation.
-    # 每次访问深拷一份，故意不用 `cached_property`：缓存共享件会经返回句柄被改，破坏隔离。
+    '''A fresh deep copy per access -- deliberately NOT a `cached_property`, since a cached
+    shared `Bazi` could be mutated through the returned handle.
+    每次访问深拷一份，故意不用 `cached_property`：缓存共享件会经返回句柄被改。'''
     return copy.deepcopy(self._bazi)
 
   @property
@@ -127,7 +127,7 @@ class BaziChart:
     '''
     return calendar_utils_of(self._bazi.backend)
   
-  @functools.cached_property
+  @property
   def house_of_relationship(self) -> Dizhi:
     '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
     return self._bazi.day_pillar.dizhi

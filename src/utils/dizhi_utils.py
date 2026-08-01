@@ -3,12 +3,12 @@
 
 from collections import Counter
 from typing import Final
-from collections.abc import Sequence, Callable, Collection
+from collections.abc import Sequence, Collection
 
 from ..common import frozendict
-from ..data_types import RelationDiscovery
 from ..defines import Dizhi, Wuxing, DizhiRelation
 from ..rules import DizhiRules
+from .relation_discovery import RelationDiscovery
 
 
 '''
@@ -23,13 +23,9 @@ DizhiCombo = frozenset[Dizhi]
 '''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
-'''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
-  '''`filter` / `merge` / `mutual_only` come from the generic `RelationDiscovery` base.'''
-
-
-'''A function that filters Dizhi combos based on the given `DizhiRelation` and `DizhiCombo`.'''
-DizhiRelationDiscoveryFilter = Callable[[DizhiRelation, DizhiCombo], bool]
+  '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
+  地支关系到满足它的地支组合的冻结映射。'''
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:

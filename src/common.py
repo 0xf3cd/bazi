@@ -15,9 +15,9 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
 
   Shallow-frozen: the mapping itself never changes, and lookups return the stored
   values as-is (no defensive copies). A holder of mutable values protects them at
-  its own boundary (e.g. `Interpreter` deep-copies corpus entries).
+  its own boundary.
   浅冻结：映射本身不可变，取值原样返回、不做防御性拷贝。持有可变值的一方在自己的
-  边界自行防护（如 `Interpreter` 深拷语料条目）。
+  边界自行防护。
   '''
   def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
     self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = dict(data)

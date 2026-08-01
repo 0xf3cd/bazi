@@ -33,7 +33,7 @@ def find_shensha(
 ) -> Iterable[Dizhi]:
   '''A private/internal helper for finding Shensha (神煞): yield the Dizhi of every
   (key, dizhi) pair that the predicate `f` accepts.'''
-  return (dz for first, second in args for key, dz in product(first, second) if f(key, dz))
+  return (dz for keys, dizhis in args for key, dz in product(keys, dizhis) if f(key, dz))
 
 
 @unique

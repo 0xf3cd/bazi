@@ -47,7 +47,8 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(TypeError):
       hash(frozendict({1: [2, 3]}))
 
-    # The chain #63.4 cares about: `BaziData[HiddenTianganDict]` is hashable.
+    # `BaziData[HiddenTianganDict]` must stay hashable -- the hidden-tiangan chain
+    # is frozendict all the way down.
     htd: HiddenTianganDict = HiddenTianganDict({Tiangan.甲: 60, Tiangan.丙: 30, Tiangan.戊: 10})
     bd: BaziData[HiddenTianganDict] = BaziData(htd, htd, htd, htd)
     self.assertEqual(hash(bd), hash(BaziData(htd, htd, htd, htd)))
