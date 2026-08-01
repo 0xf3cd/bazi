@@ -152,6 +152,7 @@ def test_filtered() -> None:
 
 
 DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
+'''Operand type of `_equal`: either relation-discovery flavor.'''
 def _equal(discovery1: DiscoveryType, discovery2: DiscoveryType) -> bool:
   if type(discovery1) is not type(discovery2):
     return False
