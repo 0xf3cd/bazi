@@ -1,11 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from typing import Final
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence
 
 from ..defines import Tiangan, Wuxing, TianganRelation
-from ..common import frozendict
 from ..rules import TianganRules
+from .relation_discovery import RelationDiscovery
 
 
 '''
@@ -20,37 +20,9 @@ TianganCombo = frozenset[Tiangan]
 '''A list of all possible Tiangan combos that satisfy a certain `TianganRelation`.'''
 TianganRelationCombos = tuple[TianganCombo, ...]
 
-'''A frozendict that stores the Tiangan combos that satisfy every `TianganRelation`.'''
-class TianganRelationDiscovery(frozendict[TianganRelation, TianganRelationCombos]):
-  def filter(self, f: 'TianganRelationDiscoveryFilter') -> 'TianganRelationDiscovery':
-    '''Filter out Tiangan combos based on the given filter function `f`.'''
-    assert callable(f)
-    return TianganRelationDiscovery({
-      rel : filtered
-      for rel, combos in self.items()
-      if len(
-        filtered := TianganRelationCombos(filter(
-          lambda c : f(rel, c), 
-          combos,
-        ))
-      ) > 0
-    })
-  
-  def merge(self, other: 'TianganRelationDiscovery') -> 'TianganRelationDiscovery':
-    '''Merge two `TianganRelationDiscovery` together.'''
-    assert isinstance(other, TianganRelationDiscovery)
-    d: dict[TianganRelation, set[TianganCombo]] = {}
-
-    for rel, combos in self.items():
-      d[rel] = set(combos)
-    for rel, combos in other.items():
-      d[rel] = d.get(rel, set()) | set(combos)
-
-    return TianganRelationDiscovery({ rel : TianganRelationCombos(combos) for rel, combos in d.items() })
-    
-
-'''A function that filters Tiangan combos based on the given `TianganRelation` and `TianganCombo`.'''
-TianganRelationDiscoveryFilter = Callable[[TianganRelation, TianganCombo], bool]
+class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
+  '''A frozen mapping from `TianganRelation` to the Tiangan combos that satisfy it.
+  天干关系到满足它的天干组合的冻结映射。'''
 
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
@@ -282,14 +254,8 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   tg1_set: Final[set[Tiangan]] = set(tiangans1)
   tg2_set: Final[set[Tiangan]] = set(tiangans2)
 
-  def __is_valid(combo: TianganCombo) -> bool:
-    # Disjoint from either set means all Tiangans in `combo` come from the other side only.
-    return not combo.isdisjoint(tg1_set) and not combo.isdisjoint(tg2_set)
-
-  # Discover all possible combos with `tg1_set` and `tg2_set` combined.
-  # Check each combo's validity and only keep valid ones.
-  return TianganRelationDiscovery({
-    rel : result
-    for rel, combos in discover(list(tg1_set | tg2_set)).items()
-    if len(result := TianganRelationCombos(filter(__is_valid, combos))) > 0
-  })
+  # Tiangan relations are multiplicity-blind, so the two sides combine by set union.
+  # Deliberately different from `dizhi_utils.discover_mutual`, which CONCATENATES the
+  # inputs because 自刑 there depends on multiplicity.
+  # 天干关系不看重数，两侧集合并即可——与地支侧的拼接是刻意分歧（自刑依赖重数）。
+  return discover(list(tg1_set | tg2_set)).mutual_only(tg1_set, tg2_set)

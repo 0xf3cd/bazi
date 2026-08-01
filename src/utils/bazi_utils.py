@@ -1,7 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
-
 from datetime import date, datetime
 
 from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
@@ -100,7 +98,7 @@ def tiangan_traits(tg: Tiangan) -> TraitTuple:
   '''
 
   assert isinstance(tg, Tiangan)
-  return copy.deepcopy(BaziRules.TIANGAN_TRAITS[tg])
+  return BaziRules.TIANGAN_TRAITS[tg]
 
 
 def dizhi_traits(dz: Dizhi) -> TraitTuple:
@@ -115,7 +113,7 @@ def dizhi_traits(dz: Dizhi) -> TraitTuple:
   '''
 
   assert isinstance(dz, Dizhi)
-  return copy.deepcopy(BaziRules.DIZHI_TRAITS[dz])
+  return BaziRules.DIZHI_TRAITS[dz]
 
 
 def traits(tg_or_dz: Tiangan | Dizhi) -> TraitTuple:
@@ -149,7 +147,7 @@ def hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
   '''
 
   assert isinstance(dz, Dizhi)
-  return copy.deepcopy(BaziRules.HIDDEN_TIANGANS[dz])
+  return BaziRules.HIDDEN_TIANGANS[dz]
 
 
 def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:

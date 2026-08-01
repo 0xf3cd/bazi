@@ -507,7 +507,7 @@ class TestBaziChart(unittest.TestCase):
     self.assertEqual(j['tiangan_shishen'], {
       'year': '偏印',
       'month': '劫财',
-      'day': 'None',
+      'day': None, # The day master itself has no Shishen -- a real JSON null, not 'None'.
       'hour': '偏财',
     })
 

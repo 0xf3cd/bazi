@@ -38,6 +38,21 @@ class BaziJson:
     assert len(data) == 4
     return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
 
+  class TianganShishens(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`. Entries are `None`
+    (JSON null) where no Shishen exists -- i.e. `day`, the day master itself.
+    没有十神的位置为 None（JSON null）——即日主自身所在的 `day`。'''
+    year:  str | None
+    month: str | None
+    day:   str | None
+    hour:  str | None
+
+  @staticmethod
+  def gen_tiangan_shishens(data: Sequence[Shishen | None]) -> 'BaziJson.TianganShishens':
+    assert len(data) == 4
+    strs: list[str | None] = [None if s is None else str(s) for s in data]
+    return { 'year': strs[0], 'month': strs[1], 'day': strs[2], 'hour': strs[3] }
+
   class Transits(TypedDict):
     '''Not expected to be accessed directly. Used in `JsonDict`.'''
     # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
@@ -61,7 +76,7 @@ class BaziJson:
     shier_zhangsheng: 'BaziJson.FourPillars'
     tiangan_traits: 'BaziJson.FourPillars'
     dizhi_traits: 'BaziJson.FourPillars'
-    tiangan_shishen: 'BaziJson.FourPillars'
+    tiangan_shishen: 'BaziJson.TianganShishens'
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
@@ -72,11 +87,18 @@ class BaziChart:
   `BaziChart` is a class that reveals the basic information of a given `Bazi`,
   for example, the traits (i.e. Wuxing and Yinyang), Shishens, ShierZhangshengs, and HiddenTiangans...
 
+  Derived quantities are cached on first access: the chart assumes its `_bazi` is never
+  rebound after construction (rebinding it leaves already-warmed caches stale).
+
   `BaziChart` 提供原盘中的一些信息，如天干地支的阴阳和五行、十神、十二长生、纳音、地支藏干等。
+  盘面派生量首次访问后缓存：命盘假定构造后 `_bazi` 不再被重绑（重绑不会刷新已暖缓存）。
   '''
 
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
+    # `Bazi` is not frozen (private state can be reassigned), so keep an isolated copy --
+    # `test_malicious` pins that poisoning the caller's object never reaches the chart.
+    # `Bazi` 并非 frozen（私有状态可被改写），故持隔离副本；test_malicious 钉住污染不透传。
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
@@ -86,6 +108,9 @@ class BaziChart:
 
   @property
   def bazi(self) -> Bazi:
+    '''A fresh deep copy per access -- deliberately NOT a `cached_property`, since a cached
+    shared `Bazi` could be mutated through the returned handle.
+    每次访问深拷一份，故意不用 `cached_property`：缓存共享件会经返回句柄被改。'''
     return copy.deepcopy(self._bazi)
 
   @property
@@ -107,7 +132,7 @@ class BaziChart:
     '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
     return self._bazi.day_pillar.dizhi
   
-  @property
+  @functools.cached_property
   def relationship_stars(self) -> GanzhiData[Tiangan, tuple[Dizhi, ...]]:
     '''Relationship Star / 夫妻星 / 配偶星.
     
@@ -132,7 +157,7 @@ class BaziChart:
     return GanzhiData(found_tg[0], found_dz)
 
   PillarTraits = GanzhiData[TraitTuple, TraitTuple]
-  @property
+  @functools.cached_property
   def traits(self) -> BaziData[PillarTraits]:
     '''
     The traits (i.e. Yinyang and Wuxing) of Tiangans and Dizhis in pillars of Year, Month, Day, and Hour.
@@ -156,7 +181,7 @@ class BaziChart:
     pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
     return BaziData(*pillar_data)
   
-  @property
+  @functools.cached_property
   def hidden_tiangan(self) -> BaziData[HiddenTianganDict]:
     '''
     The hidden Tiangans in all Dizhis of current bazi.
@@ -179,7 +204,7 @@ class BaziChart:
     return BaziData(*dizhi_hidden_tiangans)
   
   PillarShishens = GanzhiData[Shishen | None, Shishen]
-  @property
+  @functools.cached_property
   def shishen(self) -> BaziData[PillarShishens]:
     '''
     The Shishens of all Tiangans and Dizhis of Year, Month, Day, and Hour.
@@ -218,7 +243,7 @@ class BaziChart:
     assert len(shishen_list) == 4
     return BaziData(*shishen_list)
   
-  @property
+  @functools.cached_property
   def nayin(self) -> BaziData[str]:
     '''
     The nayins of the pillars of Year, Month, Day, and Hour.
@@ -238,7 +263,7 @@ class BaziChart:
     nayin_list: list[str] = [nayin_str(gz) for gz in self._bazi.pillars]
     return BaziData(*nayin_list)
   
-  @property
+  @functools.cached_property
   def shier_zhangsheng(self) -> BaziData[ShierZhangsheng]:
     '''
     The Shier Zhangshengs (i.e. 12 stages of growth) of 4 pillars of Year, Month, Day, and Hour.
@@ -260,7 +285,7 @@ class BaziChart:
     zhangsheng_list: list[ShierZhangsheng] = [shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
     return BaziData(*zhangsheng_list)
   
-  @property
+  @functools.cached_property
   def dayun_order(self) -> bool:
     '''
     `True` if the Ganzhis of Dayuns are in a forward order.
@@ -272,7 +297,7 @@ class BaziChart:
     is_year_dz_yang: bool = (traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)
     return is_male == is_year_dz_yang
   
-  @property
+  @functools.cached_property
   def dayun_start_moment(self) -> datetime:
     '''
     The moment when first Dayun (大运) starts (solar/gregorian calendar).
@@ -299,7 +324,7 @@ class BaziChart:
     
     return birthtime + __diff()
 
-  @property
+  @functools.cached_property
   def _dayun_start_ganzhi_year(self) -> int:
     '''
     The ganzhi year the first dayun starts in: the day-level label of `dayun_start_moment`,
@@ -345,7 +370,7 @@ class BaziChart:
 
     return __dayun_generator()
 
-  @property
+  @functools.cached_property
   def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:
     '''
     A tuple containing all Xiaoyuns (小运).
@@ -419,7 +444,7 @@ class BaziChart:
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
       'tiangan_traits': f([str(t.tiangan) for t in self.traits]),
       'dizhi_traits': f([str(t.dizhi) for t in self.traits]),
-      'tiangan_shishen': f([str(s.tiangan) for s in self.shishen]),
+      'tiangan_shishen': BaziJson.gen_tiangan_shishens([s.tiangan for s in self.shishen]),
       'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
       'transits': transits,

@@ -3,11 +3,12 @@
 
 from collections import Counter
 from typing import Final
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence, Collection
 
 from ..common import frozendict
 from ..defines import Dizhi, Wuxing, DizhiRelation
 from ..rules import DizhiRules
+from .relation_discovery import RelationDiscovery
 
 
 '''
@@ -22,37 +23,9 @@ DizhiCombo = frozenset[Dizhi]
 '''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
-'''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
-class DizhiRelationDiscovery(frozendict[DizhiRelation, DizhiRelationCombos]):
-  def filter(self, f: 'DizhiRelationDiscoveryFilter') -> 'DizhiRelationDiscovery':
-    '''Filter out Dizhi combos based on the given filter function `f`.'''
-    assert callable(f)
-    return DizhiRelationDiscovery({
-      rel : filtered
-      for rel, combos in self.items()
-      if len(
-        filtered := DizhiRelationCombos(filter(
-          lambda c : f(rel, c), 
-          combos,
-        ))
-      ) > 0
-    })
-  
-  def merge(self, other: 'DizhiRelationDiscovery') -> 'DizhiRelationDiscovery':
-    '''Merge two `DizhiRelationDiscovery` together.'''
-    assert isinstance(other, DizhiRelationDiscovery)
-    d: dict[DizhiRelation, set[DizhiCombo]] = {}
-
-    for rel, combos in self.items():
-      d[rel] = set(combos)
-    for rel, combos in other.items():
-      d[rel] = d.get(rel, set()) | set(combos)
-
-    return DizhiRelationDiscovery({ rel : DizhiRelationCombos(combos) for rel, combos in d.items() })
-
-
-'''A function that filters Dizhi combos based on the given `DizhiRelation` and `DizhiCombo`.'''
-DizhiRelationDiscoveryFilter = Callable[[DizhiRelation, DizhiCombo], bool]
+class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
+  '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
+  地支关系到满足它的地支组合的冻结映射。'''
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
@@ -419,6 +392,26 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
+# The subset-style relations `search` supports, mapped to their combo tables (暗合
+# pre-resolves the widest `AnheDef.NORMAL_EXTENDED` definition at build time). Tables are
+# stored as-is -- wrapping the mapping tables in `frozenset` would trade their stable
+# definition-order iteration for per-process hash order.
+# `search` 支持的子集型关系与其组合表（暗合建表时预解最宽的 `NORMAL_EXTENDED` 定义）。
+# 表原样存放——若包一层 `frozenset`，映射表稳定的定义序迭代会退化成逐进程哈希序。
+_SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, Collection[DizhiCombo]]] = frozendict({
+  DizhiRelation.三会:  DizhiRules.DIZHI_SANHUI,
+  DizhiRelation.六合:  DizhiRules.DIZHI_LIUHE,
+  DizhiRelation.暗合:  DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED],
+  DizhiRelation.通合:  DizhiRules.DIZHI_TONGHE,
+  DizhiRelation.通禄合: DizhiRules.DIZHI_TONGLUHE,
+  DizhiRelation.三合:  DizhiRules.DIZHI_SANHE,
+  DizhiRelation.半合:  DizhiRules.DIZHI_BANHE,
+  DizhiRelation.冲:   DizhiRules.DIZHI_CHONG,
+  DizhiRelation.破:   DizhiRules.DIZHI_PO,
+  DizhiRelation.害:   DizhiRules.DIZHI_HAI,
+})
+
+
 def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCombos:
   '''
   Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
@@ -482,56 +475,30 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   assert isinstance(dizhis, Sequence), "Non-sequence input loses the info of Dizhis' frequency."
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
 
-  if relation is DizhiRelation.三会:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHUI if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.六合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_LIUHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.暗合:
-    anhe_table: frozenset[DizhiCombo] = DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
-    return DizhiRelationCombos(combo for combo in anhe_table if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.通合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.通禄合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGLUHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.三合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.半合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_BANHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.刑:
+  if relation is DizhiRelation.刑:
+    # Multiset-sensitive, so plain subset tests don't apply: 自刑 needs the same Dizhi twice.
+    # 多重集语义（自刑要求同一地支出现两次），普通子集判定不适用。
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
     ret: set[DizhiCombo] = set()
     for xing_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]:
-      # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
-      # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
       if dz_counter & xing_dz_counter == xing_dz_counter:
         ret.add(DizhiCombo(xing_tuple))
 
     return DizhiRelationCombos(ret)
-  
-  elif relation is DizhiRelation.冲:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_CHONG if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.破:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_PO if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.害:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_HAI if combo.issubset(dizhis))
 
-  # Else, `relation` must be `生` or `克`.
-  assert relation is DizhiRelation.生 or relation is DizhiRelation.克
-  rules: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
-  frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
-  dz_set: set[Dizhi] = set(dizhis)
-  return DizhiRelationCombos(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
+  if relation is DizhiRelation.生 or relation is DizhiRelation.克:
+    # The rule tables hold directed (subject, object) pairs -- fold them into direction-less
+    # combos first. 生克规则表存的是有向对，先折叠成无向组合。
+    pairs: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
+    pair_combos: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, pairs))
+    dz_set: set[Dizhi] = set(dizhis)
+    return DizhiRelationCombos(combo for combo in pair_combos if combo.issubset(dz_set))
+
+  # Every other relation shares one shape: keep the table combos fully present in the input.
+  # 其余关系同构：保留完整出现在输入中的组合。
+  return DizhiRelationCombos(combo for combo in _SUBSET_SEARCH_COMBOS[relation] if combo.issubset(dizhis))
 
 
 def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:
@@ -599,18 +566,10 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis1)
   assert all(isinstance(dz, Dizhi) for dz in dizhis2)
-  
-  dz1_set: Final[set[Dizhi]] = set(dizhis1)
-  dz2_set: Final[set[Dizhi]] = set(dizhis2)
 
-  def __is_valid(combo: DizhiCombo) -> bool:
-    # Disjoint from either set means all Dizhis in `combo` come from the other side only.
-    return not combo.isdisjoint(dz1_set) and not combo.isdisjoint(dz2_set)
-  
-  # Discover all possible combos with `dz1_set` and `dz2_set` combined.
-  # Check each combo's validity and only keep valid ones.
-  return DizhiRelationDiscovery({
-    rel : result
-    for rel, combos in discover(list(dizhis1) + list(dizhis2)).items()
-    if len(result := DizhiRelationCombos(filter(__is_valid, combos))) > 0
-  })
+  # 自刑 depends on multiplicity (the same Dizhi appearing once on each side forms 自刑),
+  # so the two sides CONCATENATE -- a set union would silently break it. Deliberately
+  # different from `tiangan_utils.discover_mutual`.
+  # 自刑依赖重数（同一地支两侧各现一次也构成自刑），故两侧拼接——集合并会静默破坏
+  # 自刑。与天干侧的集合并是刻意分歧。
+  return discover(list(dizhis1) + list(dizhis2)).mutual_only(set(dizhis1), set(dizhis2))

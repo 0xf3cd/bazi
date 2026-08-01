@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from .enum_base import IndexedBaziEnum
 
 
-class Tiangan(Enum):
+class Tiangan(IndexedBaziEnum):
   '''Tiangan / Stem / 天干'''
   JIA  = '甲'
   YI   = '乙'
@@ -27,25 +27,5 @@ class Tiangan(Enum):
   辛  =  XIN
   壬  =  REN
   癸  =  GUI
-
-  @classmethod
-  def from_str(cls, s: str) -> 'Tiangan':
-    assert isinstance(s, str)
-    return cls(s)
-  
-  @classmethod
-  def as_list(cls) -> list['Tiangan']:
-    return list(cls)
-  
-  def __str__(self) -> str:
-    return str(self.value)
-  
-  @property
-  def index(self) -> int:
-    return Tiangan.as_list().index(self)
-  
-  @staticmethod
-  def from_index(i: int) -> 'Tiangan':
-    return Tiangan.as_list()[i]
 
 天干 = Tiangan # Alias

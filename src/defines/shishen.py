@@ -1,9 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from typing import Self
+
+from .enum_base import BaziEnum
 
 
-class Shishen(Enum):
+class Shishen(BaziEnum):
   '''Shishen / Ten Gods / 十神'''
   BIJIAN    = '比肩'
   JIECAI    = '劫财'
@@ -46,8 +48,10 @@ class Shishen(Enum):
       '枭': '偏印',
     }
 
-  @staticmethod
-  def from_str(s: str) -> 'Shishen':
+  @classmethod
+  def from_str(cls, s: str) -> Self:
+    # Overrides the base: also accepts the single-char aliases (e.g. '比' -> 比肩).
+    # 覆盖基类：额外接受单字别名。
     assert isinstance(s, str)
     assert len(s) in [1, 2]
 
@@ -56,15 +60,8 @@ class Shishen(Enum):
       assert s in t
       s = t[s]
 
-    return Shishen(s)
-  
-  @classmethod
-  def as_list(cls) -> list['Shishen']:
-    return list(cls)
-  
-  def __str__(self) -> str:
-    return str(self.value)
-  
+    return cls(s)
+
   @property
   def abbr(self) -> str:
     '''

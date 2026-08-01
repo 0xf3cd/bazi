@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from .enum_base import BaziEnum
 
 
-class Yinyang(Enum):
+class Yinyang(BaziEnum):
   '''Yinyang / 阴阳'''
   YANG = '阳'
   YIN  = '阴'
@@ -13,17 +13,8 @@ class Yinyang(Enum):
   阴 = YIN
 
   @classmethod
-  def from_str(cls, s: str) -> 'Yinyang':
-    assert isinstance(s, str)
-    assert len(s) == 1
-    return cls(s)
-  
-  @classmethod
-  def as_list(cls) -> list['Yinyang']:
-    return list(cls)
-  
-  def __str__(self) -> str:
-    return str(self.value)
+  def _str_len(cls) -> int | None:
+    return 1
 
   @property
   def opposite(self) -> 'Yinyang':

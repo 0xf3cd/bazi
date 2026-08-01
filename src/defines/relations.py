@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from .enum_base import BaziEnum
 
 
-class TianganRelation(Enum):
+class TianganRelation(BaziEnum):
   '''TianganRelation / Tiangan Relations / 天干之间的关系'''
   HE    = '合'
   CHONG = '冲'
@@ -16,18 +16,10 @@ class TianganRelation(Enum):
   生 = SHENG
   克 = KE
 
-  def __str__(self) -> str:
-    return str(self.value)
-  
-  @classmethod
-  def from_str(cls, s: str) -> 'TianganRelation':
-    assert isinstance(s, str)
-    return cls(s)
-
 天干关系 = TianganRelation # Alias
 
 
-class DizhiRelation(Enum):
+class DizhiRelation(BaziEnum):
   '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
   SANHUI   = '三会'
   LIUHE    = '六合'
@@ -57,13 +49,5 @@ class DizhiRelation(Enum):
   害    = HAI
   生    = SHENG
   克    = KE
-
-  def __str__(self) -> str:
-    return str(self.value)
-  
-  @classmethod
-  def from_str(cls, s: str) -> 'DizhiRelation':
-    assert isinstance(s, str)
-    return cls(s)
 
 地支关系 = DizhiRelation # Alias

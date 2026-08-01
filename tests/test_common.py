@@ -5,9 +5,9 @@ import unittest
 
 
 
-from src.defines import Shishen
+from src.defines import Shishen, Tiangan
 from src.common import frozendict
-from src.data_types import GanzhiData, BaziData
+from src.data_types import GanzhiData, BaziData, HiddenTianganDict
 
 
 
@@ -20,15 +20,39 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(TypeError):
       fd[1] = 100 # type: ignore
 
-    fd2: frozendict[int, list[int]] = frozendict({1: [2, 3]})
-    self.assertEqual(fd2[1], [2, 3])
+    # The mapping itself is detached from the source dict...
+    src_dict: dict[int, list[int]] = {1: [2, 3]}
+    fd2: frozendict[int, list[int]] = frozendict(src_dict)
+    src_dict[9] = [9]
+    self.assertNotIn(9, fd2)
     with self.assertRaises(TypeError):
       fd2[1] = [4, 5] # type: ignore
     with self.assertRaises(KeyError):
       fd2[2]
-    
-    fd2[1].append(6)
-    self.assertEqual(fd2[1], [2, 3])
+
+    # ...but the frozendict is shallow-frozen: values are returned as-is, not copied.
+    self.assertIs(fd2[1], fd2[1])
+    self.assertIs(fd2[1], src_dict[1])
+
+  def test_frozendict_hash(self) -> None:
+    # Tuple semantics: equal contents hash equal, regardless of insertion order.
+    fd1: frozendict[int, int] = frozendict({1: 2, 3: 4})
+    fd2: frozendict[int, int] = frozendict({3: 4, 1: 2})
+    self.assertEqual(fd1, fd2)
+    self.assertEqual(hash(fd1), hash(fd2))
+    self.assertEqual(len({fd1, fd2}), 1)
+    self.assertEqual(len({fd1, frozendict({1: 2})}), 2)
+
+    # Unhashable contents surface as TypeError on the first hash attempt.
+    with self.assertRaises(TypeError):
+      hash(frozendict({1: [2, 3]}))
+
+    # `BaziData[HiddenTianganDict]` must stay hashable -- the hidden-tiangan chain
+    # is frozendict all the way down.
+    htd: HiddenTianganDict = HiddenTianganDict({Tiangan.甲: 60, Tiangan.丙: 30, Tiangan.戊: 10})
+    bd: BaziData[HiddenTianganDict] = BaziData(htd, htd, htd, htd)
+    self.assertEqual(hash(bd), hash(BaziData(htd, htd, htd, htd)))
+    self.assertIn(bd, {bd})
 
   def test_pillardata(self) -> None:
     combo1: GanzhiData[str, int] = GanzhiData('a', 1)

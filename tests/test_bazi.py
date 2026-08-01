@@ -630,3 +630,26 @@ class TestBazi(unittest.TestCase):
       bazi_hacked: Bazi = Bazi.create(dt, gender, precision)
       bazi_hacked._precision = BaziPrecision.HOUR # type: ignore # Intended for testing only.
       self.assertNotEqual(bazi, bazi_hacked)
+
+  def test_hash(self) -> None:
+    dt: datetime = datetime(2000, 2, 4, 22, 1)
+    bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+    same: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+    self.assertEqual(hash(bazi), hash(same))
+    self.assertEqual(len({bazi, same}), 1) # In sync with `__eq__`: usable for set dedup.
+
+    other: Bazi = Bazi.create(dt, BaziGender.FEMALE, BaziPrecision.DAY)
+    self.assertEqual(len({bazi, same, other}), 2)
+
+  def test_sub_minute_truncation(self) -> None:
+    # Two births in the same minute are the same Bazi -- `Bazi.solar_datetime` is the
+    # SSOT on why sub-minute parts are dropped.
+    dt: datetime = datetime(2000, 2, 4, 22, 1)
+    bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+    sub_minute: Bazi = Bazi.create(dt.replace(second=37, microsecond=999999),
+                                   BaziGender.MALE, BaziPrecision.DAY)
+    self.assertEqual(sub_minute.solar_datetime, dt)
+    self.assertEqual(sub_minute.hour, 22)
+    self.assertEqual(sub_minute.minute, 1)
+    self.assertEqual(bazi, sub_minute)
+    self.assertEqual(hash(bazi), hash(sub_minute))

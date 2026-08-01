@@ -1,11 +1,10 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 import functools
 
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
-from itertools import starmap, product, compress, chain
+from itertools import product
 from typing import Final, TypedDict
 from collections.abc import Callable, Iterable
 
@@ -32,10 +31,9 @@ def find_shensha(
   f: Callable[..., bool],
   *args: _ArgsType,
 ) -> Iterable[Dizhi]:
-  '''An fp-styled helper private/internal function for finding Shensha (神煞).'''
-  producted_args = list(chain(*(product(*a) for a in args)))
-  results = starmap(f, producted_args)
-  return (x[1] for x in compress(producted_args, results))
+  '''A private/internal helper for finding Shensha (神煞): yield the Dizhi of every
+  (key, dizhi) pair that the predicate `f` accepts.'''
+  return (dz for keys, dizhis in args for key, dz in product(keys, dizhis) if f(key, dz))
 
 
 @unique
@@ -125,7 +123,7 @@ class ShenshaAnalysis(TypedDict):
 class AtBirthAnalysis:
   '''Analysis of Relationship at Birth / 出生时的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
 
   @property
   def shensha(self) -> ShenshaAnalysis:
@@ -169,7 +167,7 @@ class AtBirthAnalysis:
 class TransitAnalysis:
   '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
     self._transit_chart: Final[TransitChart] = TransitChart(self._chart)
 
   def support(self, gz_year: int, options: TransitOptions) -> bool:
@@ -376,12 +374,12 @@ class TransitAnalysis:
 class RelationshipAnalyzer:
   '''A thin wrapper of `AtBirthAnalysis` and `TransitAnalysis`.'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
 
-  @property
+  @functools.cached_property
   def at_birth(self) -> AtBirthAnalysis:
     return AtBirthAnalysis(self._chart)
 
-  @property
+  @functools.cached_property
   def transits(self) -> TransitAnalysis:
     return TransitAnalysis(self._chart)

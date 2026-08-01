@@ -1,6 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 import random
 
 from enum import Enum
@@ -193,17 +192,11 @@ class Bazi:
     self._backend: Final[CalendarBackend] = backend
     utils: Final[CalendarUtilsProtocol] = calendar_utils_of(backend)
 
-    self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
+    self._birth_time: Final[datetime] = birth_time
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
     assert utils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
-
-    self._hour: Final[int] = self._birth_time.hour
-    assert self._hour >= 0 and self._hour < 24
-
-    self._minute: Final[int] = self._birth_time.minute
-    assert self._minute >= 0 and self._minute < 60
 
     self._gender: Final[BaziGender] = gender
     self._precision: Final[BaziPrecision] = precision
@@ -268,7 +261,7 @@ class Bazi:
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
-    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._hour + 1) // 2 % 12)
+    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._birth_time.hour + 1) // 2 % 12)
 
   @staticmethod
   def __parse_bazi_args(
@@ -427,16 +420,20 @@ class Bazi:
 
   @property
   def hour(self) -> int:
-    return self._hour
-  
+    return self._birth_time.hour
+
   @property
   def minute(self) -> int:
-    return self._minute
-  
+    return self._birth_time.minute
+
   @property
   def solar_datetime(self) -> datetime:
-    '''The exact birth time (in solar/gregorian calendar) / 出生时刻（公历）'''
-    return datetime.combine(self.solar_date, time(self.hour, self.minute))
+    '''The birth time (in solar/gregorian calendar), truncated to the minute.
+    Sub-minute parts are deliberately dropped: MINUTE is the finest `BaziPrecision`, so
+    ganzhi attribution never reads below it, and `__eq__`/`__hash__` build on this value.
+    出生时刻（公历），显式截断到分钟——秒以下刻意丢弃：MINUTE 已是最细的排盘精度，
+    干支归属不读秒，`__eq__`/`__hash__` 也建立在截断值上。'''
+    return self._birth_time.replace(second=0, microsecond=0)
   
   @property
   def gender(self) -> BaziGender:
@@ -553,5 +550,11 @@ class Bazi:
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
+
+  def __hash__(self) -> int:
+    # Same four inputs as `__eq__`, all derived from `Final` state: stable under the
+    # public API (private reassignment is not defended against, as everywhere else).
+    # 与 `__eq__` 同源四元组，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
+    return hash((self.solar_datetime, self.gender, self.precision, self.backend))
 
 八字 = Bazi
