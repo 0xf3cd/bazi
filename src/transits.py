@@ -8,7 +8,6 @@ from enum import unique, IntFlag
 from functools import reduce
 from itertools import combinations
 from typing import Final
-from collections.abc import Generator
 
 from .common import frozendict
 from .data_types import DayunTuple
@@ -20,24 +19,18 @@ from .bazi_chart import BaziChart
 class DayunDatabase:
   '''A database that figures out a given Ganzhi year falls into which Dayun (大运).'''
   def __init__(self, chart: BaziChart) -> None:
-    self._gen: Final[Generator[DayunTuple, None, None]] = chart.dayun
-    self._first_dayun: Final[DayunTuple] = next(self._gen)
-    self._cache: Final[dict[int, Ganzhi]] = {
-      self._first_dayun.ganzhi_year : self._first_dayun.ganzhi,
-    }
+    self._first_dayun: Final[DayunTuple] = next(chart.dayun)
+    self._step: Final[int] = 1 if chart.dayun_order else -1
 
   def __getitem__(self, gz_year: int) -> DayunTuple:
     assert isinstance(gz_year, int)
     assert gz_year >= self._first_dayun.ganzhi_year
 
+    # Dayuns are arithmetic: each lasts 10 years and steps the sexagenary cycle by one.
+    # 大运是等差序列：每运十年，六十甲子进（退）一位，直接按下标闭式计算。
     dayun_idx: int = (gz_year - self._first_dayun.ganzhi_year) // 10
-    expected_gz_year: int = self._first_dayun.ganzhi_year + 10 * dayun_idx
-
-    while expected_gz_year not in self._cache:
-      next_dayun: DayunTuple = next(self._gen)
-      self._cache[next_dayun.ganzhi_year] = next_dayun.ganzhi
-
-    return DayunTuple(expected_gz_year, self._cache[expected_gz_year])
+    return DayunTuple(self._first_dayun.ganzhi_year + 10 * dayun_idx,
+                      self._first_dayun.ganzhi.next(self._step * dayun_idx))
 
 
 @dataclass(frozen=True)
