@@ -121,7 +121,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       for jq in month_starting_jieqis[:-1]:
         dates.append(jieqi_dates_db.get(year, jq))
       dates.append(jieqi_dates_db.get(year + 1, month_starting_jieqis[-1]))
-      dates.append(hko_data_utils.HkoDB.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
+      dates.append(hko_data_utils.jieqi_dates_db.get(year + 1, Jieqi.立春)) # Start of the next ganzhi year.
 
       days_counts = hko_data_utils.days_counts_in_ganzhi_year(year)
       for idx, (start_date, next_start_date) in enumerate(itertools.pairwise(dates)):
@@ -571,7 +571,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       (Jieqi.大雪, hko_data_utils.jieqi_moment(2023, Jieqi.大雪))
     )
 
-    first_year: int = hko_data_utils.HkoDB.jieqi_dates_db.start_year
+    first_year: int = hko_data_utils.jieqi_dates_db.start_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
     for jie1, jie2 in itertools.pairwise(jie_list):
       self.assertTupleEqual(
@@ -636,7 +636,7 @@ class TestHkoDataCalendarUtils(unittest.TestCase):
       (Jieqi.大雪, hko_data_utils.jieqi_moment(2024, Jieqi.大雪))
     )
 
-    last_year: int = hko_data_utils.HkoDB.jieqi_dates_db.end_year
+    last_year: int = hko_data_utils.jieqi_dates_db.end_year
     jie_list: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
     for jie1, jie2 in itertools.pairwise(jie_list):
       self.assertTupleEqual(
