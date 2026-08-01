@@ -13,7 +13,7 @@
     * `ruff` and `mypy` won't run;
     * demo and interpreter won't run.
   * Arguments:
-    * Add `-a`/`--all` to run everything: all tests (including hkodata and slow tests), coverage, linter, static type check, demo and interpreter. This takes precedence over `-nt` and `-k`.
+    * Add `-a`/`--all` to run everything: all tests (including hkodata and slow tests), coverage, linter, static type check, demo, interpreter, and the `python -O` contract smoke. This takes precedence over `-nt` and `-k`.
     * Add `-nt`/`--no-test` to skip tests and coverage.
     * Add `-hko` to also run hkodata tests, like: `./run_tests.py -hko`.
     * Add `-s` to also run slow tests, like: `./run_tests.py -s`.
@@ -24,4 +24,5 @@
     * Add `-r`/`--ruff` to run the linter after tests.
     * Add `-m`/`-mypy`/`--mypy` to run mypy static type checker after tests.
     * Add `-d` to run `./run_demo.py` after tests.
-    * Add `-i` to run `./run_interpreter.py` after tests. 
+    * Add `-i` to run `./run_interpreter.py` after tests.
+    * Add `-osmoke`/`--o-smoke` to run the `python -O` public-contract smoke script (`tests/o_smoke.py`) after tests.

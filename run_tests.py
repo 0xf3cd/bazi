@@ -58,6 +58,10 @@ argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Wheth
 argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
 argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
 
+# `python -O` public-contract smoke.
+argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
+                       help='Whether or not to run the `python -O` public-contract smoke script (tests/o_smoke.py).')
+
 args = argparser.parse_args()
 
 all_the_way: Final[bool] = args.all
@@ -75,6 +79,8 @@ do_mypy: Final[bool] = args.mypy or all_the_way
 
 do_demo: Final[bool] = args.demo or all_the_way
 do_interpreter: Final[bool] = args.interpreter or all_the_way
+
+do_osmoke: Final[bool] = args.o_smoke or all_the_way
 
 term_width: Final[int] = shutil.get_terminal_size().columns
 
@@ -179,6 +185,8 @@ def print_args() -> None:
 
   print(f'-- do_demo:          {colored(do_demo)}')
   print(f'-- do_interpreter:   {colored(do_interpreter)}')
+
+  print(f'-- do_osmoke:        {colored(do_osmoke)}')
 
 
 def print_sysinfo() -> None:
@@ -360,6 +368,22 @@ def run_interpreter() -> int:
   return ret
 
 
+def run_o_smoke() -> int:
+  '''Run the `python -O` public-contract smoke script (`tests/o_smoke.py`).'''
+  print('\n' + devider())
+  bold_print('>> Running -O contract smoke...')
+
+  ret: int = run_proc_and_print([
+    sys.executable, '-O', str(Path(__file__).parent / 'tests' / 'o_smoke.py')
+  ], print_details=True)
+
+  if ret == 0:
+    green_print(f'>> {next(emoji_pair)} -O contract smoke passed!')
+  else:
+    red_print(f'>> {next(emoji_pair)} -O contract smoke failed!')
+  return ret
+
+
 class SubTaskStatuses:
   def __init__(self) -> None:
     self._retcodes: Final[dict[str, int]] = {}
@@ -403,6 +427,9 @@ def run_subtasks() -> SubTaskStatuses:
 
   if do_interpreter:
     run_subtask('interpreter', run_interpreter)
+
+  if do_osmoke:
+    run_subtask('-O smoke', run_o_smoke)
 
   if do_ruff:
     run_subtask('ruff', run_ruff)

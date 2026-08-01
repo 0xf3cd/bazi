@@ -45,14 +45,16 @@ those, don't restate them here. Two rules the README doesn't spell out:
   (`per-file-ignores`, rationale included) where a family only fights one tree.
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
-  workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i`.
-  Quick local equivalent (run all three, they are all hard gates):
+  workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke`.
+  Quick local equivalent (run all four, they are all hard gates):
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
   - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing` — must stay at **100%**
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
+  - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
+    (see Idioms below; the script refuses to run without `-O`).
 
 ## PR workflow
 - Branch from `main`; PR body in Chinese, four sections (内容 / 测试 / 验证 / 范围说明);
@@ -116,7 +118,11 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 - Document type aliases with a string literal above them.
 
 ## Idioms to keep
-- Defensive `assert isinstance(...)` / `assert callable(...)` at function entry.
+- Defensive `assert isinstance(...)` / `assert callable(...)` at function entry —
+  for **internal helpers only** (callers inside `src/` already validated the values).
+  Public-boundary input checks are explicit `raise TypeError/ValueError`: the
+  fail-fast contract must survive `python -O` (canonical note: `hko_data/decoder.py`;
+  gate: `tests/o_smoke.py`).
 - FP where it reads well (map/filter/starmap/product/compress, walrus, functools).
 - Expose computed results as `@property` (use `functools.cached_property` for
   expensive immutable results).
