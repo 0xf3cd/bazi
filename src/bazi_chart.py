@@ -87,7 +87,11 @@ class BaziChart:
   `BaziChart` is a class that reveals the basic information of a given `Bazi`,
   for example, the traits (i.e. Wuxing and Yinyang), Shishens, ShierZhangshengs, and HiddenTiangans...
 
+  Derived quantities are cached on first access: the chart assumes its `_bazi` is never
+  rebound after construction (rebinding it leaves already-warmed caches stale).
+
   `BaziChart` 提供原盘中的一些信息，如天干地支的阴阳和五行、十神、十二长生、纳音、地支藏干等。
+  盘面派生量首次访问后缓存：命盘假定构造后 `_bazi` 不再被重绑（重绑不会刷新已暖缓存）。
   '''
 
   def __init__(self, bazi: Bazi) -> None:

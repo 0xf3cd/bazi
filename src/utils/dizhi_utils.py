@@ -3,7 +3,7 @@
 
 from collections import Counter
 from typing import Final
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence, Callable, Collection
 
 from ..common import frozendict
 from ..data_types import RelationDiscovery
@@ -396,20 +396,20 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
-# The subset-style relations `search` supports, mapped to their combo tables. 暗合
-# pre-resolves `AnheDef.NORMAL_EXTENDED` (the widest definition) at build time. The
-# remaining relations deviate from the subset shape and are special-cased in `search`:
-# 刑 is multiset-sensitive, 生/克 hold directed pairs.
-# `search` 支持的子集型关系与其组合表。暗合在建表时预解最宽的 `NORMAL_EXTENDED` 定义；
-# 其余关系不符合子集形状，在 `search` 内单列：刑是多重集语义，生/克存有向对。
-_SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, frozenset[DizhiCombo]]] = frozendict({
-  DizhiRelation.三会:  frozenset(DizhiRules.DIZHI_SANHUI),
-  DizhiRelation.六合:  frozenset(DizhiRules.DIZHI_LIUHE),
+# The subset-style relations `search` supports, mapped to their combo tables (暗合
+# pre-resolves the widest `AnheDef.NORMAL_EXTENDED` definition at build time). Tables are
+# stored as-is -- wrapping the mapping tables in `frozenset` would trade their stable
+# definition-order iteration for per-process hash order.
+# `search` 支持的子集型关系与其组合表（暗合建表时预解最宽的 `NORMAL_EXTENDED` 定义）。
+# 表原样存放——若包一层 `frozenset`，映射表稳定的定义序迭代会退化成逐进程哈希序。
+_SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, Collection[DizhiCombo]]] = frozendict({
+  DizhiRelation.三会:  DizhiRules.DIZHI_SANHUI,
+  DizhiRelation.六合:  DizhiRules.DIZHI_LIUHE,
   DizhiRelation.暗合:  DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED],
   DizhiRelation.通合:  DizhiRules.DIZHI_TONGHE,
   DizhiRelation.通禄合: DizhiRules.DIZHI_TONGLUHE,
-  DizhiRelation.三合:  frozenset(DizhiRules.DIZHI_SANHE),
-  DizhiRelation.半合:  frozenset(DizhiRules.DIZHI_BANHE),
+  DizhiRelation.三合:  DizhiRules.DIZHI_SANHE,
+  DizhiRelation.半合:  DizhiRules.DIZHI_BANHE,
   DizhiRelation.冲:   DizhiRules.DIZHI_CHONG,
   DizhiRelation.破:   DizhiRules.DIZHI_PO,
   DizhiRelation.害:   DizhiRules.DIZHI_HAI,
