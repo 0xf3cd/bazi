@@ -66,3 +66,6 @@ okx_logs/
 nohup.out
 
 node_modules/
+
+# Review-round scratch (task briefs, diffs, reviewer probes) -- see AGENTS.md PR workflow.
+.review/

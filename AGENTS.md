@@ -122,8 +122,9 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
   for **internal helpers only** (callers inside `src/` already validated the values).
   Public-boundary input checks are explicit `raise TypeError/ValueError` —
   `isinstance`/`callable` failures are `TypeError`; bad values, ranges and members
-  are `ValueError`; messages follow `Expected X, got {type(x)}` /
-  `Unsupported ...: {value}`. The fail-fast contract must survive `python -O`
+  are `ValueError` (the type follows the check as written: an exhausted `else` over
+  a public enum argument is a membership check, hence `ValueError`); messages follow
+  `Expected X, got {type(x)}` / `Unsupported ...: {value}`. The fail-fast contract must survive `python -O`
   (canonical note: `hko_data/decoder.py`; gate: `tests/o_smoke.py`).
 - FP where it reads well (map/filter/starmap/product/compress, walrus, functools).
 - Expose computed results as `@property` (use `functools.cached_property` for

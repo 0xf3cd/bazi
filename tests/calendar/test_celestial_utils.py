@@ -209,7 +209,7 @@ def test_to_family_negative() -> None:
   with pytest.raises(ValueError):
     ALGO1.to_solar(date(1901, 1, 1)) # An in-window year, yet before the first supported day.
   with pytest.raises(ValueError):
-    ALGO1.to_lunar(lunar(9999, 1, 1)) # Out of the supported range.
+    ALGO1.to_lunar(lunar(9999, 1, 1))
   with pytest.raises(ValueError):
     ALGO1.to_ganzhi(solar(1901, 1, 1)) # Before the first supported day.
   with pytest.raises(TypeError):
