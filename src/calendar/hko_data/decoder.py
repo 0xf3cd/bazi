@@ -121,7 +121,7 @@ class DecodedLunarYears:
       raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.calendar.hko_data.encoder` from the repo root to regenerate them.')
 
     self._start_year: Final[int] = START_YEAR
-    self._end_year: Final[int] = END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.
+    self._end_year: Final[int] = END_YEAR - 1 # END_YEAR not included, since the data for it is incomplete.
 
     lunardate_encoded_path: Path = get_lunardate_encoded_data_path()
     assert lunardate_encoded_path.exists() and lunardate_encoded_path.is_file()
@@ -130,7 +130,7 @@ class DecodedLunarYears:
     with lunardate_encoded_path.open('rb') as f:
       encoded_bytes: bytes = f.read()
     
-    assert len(encoded_bytes) == 8 * (self.end_year - self.start_year + 1) # hkodata.END_YEAR not included, since the data for it is incomplete.
+    assert len(encoded_bytes) == 8 * (self.end_year - self.start_year + 1) # END_YEAR not included, since the data for it is incomplete.
     self._bytes: Final[bytes] = encoded_bytes
 
   @property

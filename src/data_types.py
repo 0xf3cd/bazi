@@ -71,13 +71,13 @@ class BaziData(Generic[PillarDataType]):
     return iter((self.year, self.month, self.day, self.hour))
 
 
-TianganDataType_co = TypeVar('TianganDataType_co', covariant=True)
-DizhiDataType_co = TypeVar('DizhiDataType_co', covariant=True)
+TianganDataType = TypeVar('TianganDataType')
+DizhiDataType = TypeVar('DizhiDataType')
 @dataclass(frozen=True)
-class GanzhiData(Generic[TianganDataType_co, DizhiDataType_co]):
+class GanzhiData(Generic[TianganDataType, DizhiDataType]):
   '''
   A helper class for storing the data of a Pillar/Ganzhi.
   Can be used with `BaziData` class.
   '''
-  tiangan: TianganDataType_co
-  dizhi: DizhiDataType_co
+  tiangan: TianganDataType
+  dizhi: DizhiDataType
