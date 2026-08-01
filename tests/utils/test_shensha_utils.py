@@ -3,6 +3,8 @@
 
 import random
 
+import pytest
+
 from src.defines import Tiangan, Dizhi
 from src.utils import shensha_utils
 
@@ -18,6 +20,13 @@ def test_taohua() -> None:
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
+
+def test_taohua_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.taohua('申', Dizhi.酉) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.taohua(Dizhi.申, '酉') # type: ignore
 
 
 def test_hongyan() -> None:
@@ -39,6 +48,13 @@ def test_hongyan() -> None:
     assert shensha_utils.hongyan(tg, dz) == expected_result # Second call must answer the same (determinism across calls).
 
 
+def test_hongyan_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.hongyan('癸', Dizhi.申) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.hongyan(Tiangan.癸, '申') # type: ignore
+
+
 def test_hongluan() -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
   for dz1, dz2 in [
@@ -56,6 +72,13 @@ def test_hongluan() -> None:
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
+
+def test_hongluan_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.hongluan('申', Dizhi.未) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.hongluan(Dizhi.申, '未') # type: ignore
 
 
 def test_tianxi() -> None:
@@ -77,6 +100,13 @@ def test_tianxi() -> None:
     assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
 
 
+def test_tianxi_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.tianxi('寅', Dizhi.未) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.tianxi(Dizhi.寅, '未') # type: ignore
+
+
 def test_yima() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi(k_str) : Dizhi(v_str)
@@ -88,3 +118,10 @@ def test_yima() -> None:
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
+
+def test_yima_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.yima('申', Dizhi.寅) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.yima(Dizhi.申, '寅') # type: ignore

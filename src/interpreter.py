@@ -32,7 +32,8 @@ class Interpreter:
     Returns:
     - (ShishenDescription) A deep copy of the corpus entry. / 语料库对应条目的深拷贝。
     '''
-    assert isinstance(shishen, Shishen)
+    if not isinstance(shishen, Shishen):
+      raise TypeError(f'Expected Shishen, got {type(shishen)}')
     return copy.deepcopy(SHISHEN_DESCRIPTIONS[shishen])
 
   @staticmethod
@@ -47,5 +48,6 @@ class Interpreter:
     Returns:
     - (TianganDescription) A deep copy of the corpus entry. / 语料库对应条目的深拷贝。
     '''
-    assert isinstance(tg, Tiangan)
+    if not isinstance(tg, Tiangan):
+      raise TypeError(f'Expected Tiangan, got {type(tg)}')
     return copy.deepcopy(TIANGAN_DESCRIPTIONS[tg])

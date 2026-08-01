@@ -43,9 +43,9 @@ def test_from_str() -> None:
   assert Wuxing.from_str('金') is Wuxing.金
   assert Wuxing.from_str('水') is Wuxing.水
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Wuxing.from_str('')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Wuxing.from_str('木木')
   with pytest.raises(ValueError):
     Wuxing.from_str('甲')

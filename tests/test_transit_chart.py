@@ -22,9 +22,9 @@ def test_basic() -> None:
 
 
 def test_basic_negative() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitChart(BaziChart.random().bazi) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitChart(datetime(2024, 1, 1)) # type: ignore
 
   with pytest.raises(AttributeError):
@@ -49,12 +49,20 @@ def test_delegation_negative() -> None:
   bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
   transits: TransitChart = TransitChart(BaziChart(bazi))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     transits.support('1999', TransitOptions.XIAOYUN) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     transits.support(1999, TransitOptions.XIAOYUN) # type: ignore # int no longer accepted; `TransitMoment` required.
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
+    transits.support(TransitMoment(1999), 'XIAOYUN') # type: ignore
+  with pytest.raises(ValueError):
+    transits.support(TransitMoment(1999), TransitOptions(0))
+  with pytest.raises(TypeError):
+    transits.ganzhis('1999', TransitOptions.XIAOYUN) # type: ignore
+  with pytest.raises(TypeError):
     transits.ganzhis(TransitMoment(1999), 'XIAOYUN') # type: ignore
+  with pytest.raises(ValueError):
+    transits.ganzhis(TransitMoment(1999), TransitOptions(0))
   # Month/day-granularity moments are rejected until #48 / #48 落地前，月/日粒度的 moment 显式拒绝。
   with pytest.raises(NotImplementedError):
     transits.support(TransitMoment(2000, gz_month=Dizhi.寅), TransitOptions.LIUNIAN)

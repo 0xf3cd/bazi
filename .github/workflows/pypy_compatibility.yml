@@ -28,4 +28,4 @@ jobs:
           pypy -m pip install -r requirements-pypy.txt
       - name: Testing
         run: |
-          pypy ./run_tests.py -s -hko -d -i
+          pypy ./run_tests.py -s -hko -d -i -osmoke

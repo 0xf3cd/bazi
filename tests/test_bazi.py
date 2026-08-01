@@ -368,11 +368,15 @@ def test_invalid_arguments() -> None:
     Bazi(birth_time=random_dt, gender=BaziGender.男) # type: ignore # Missing `precision`
   with pytest.raises(TypeError):
     Bazi(birth_time=random_dt, precision=BaziPrecision.DAY) # type: ignore # Missing `gender`
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi(birth_time='2024-03-03', gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore # Currently doesn't take string as input
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi(birth_time=date(9999, 1, 1), gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
+    Bazi(birth_time=random_dt, gender='男', precision=BaziPrecision.DAY) # type: ignore # `__init__` only takes the enum.
+  with pytest.raises(TypeError):
+    Bazi(birth_time=random_dt, gender=BaziGender.男, precision='day') # type: ignore # `__init__` only takes the enum.
+  with pytest.raises(ValueError):
     dt: datetime = datetime(
       year=9999, # Out of supported range.
       month=random.randint(1, 12),
@@ -382,7 +386,7 @@ def test_invalid_arguments() -> None:
       second=random.randint(0, 59)
     )
     Bazi(birth_time=dt, gender=BaziGender.男, precision=BaziPrecision.DAY)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Bazi(
       birth_time=datetime(
         year=2000,
@@ -555,12 +559,19 @@ def test_create() -> None:
   with pytest.raises(ValueError):
     Bazi.create(datetime.now(), BaziGender.FEMALE, 'dya')
 
+  with pytest.raises(TypeError):
+    Bazi.create(19840402, BaziGender.FEMALE, BaziPrecision.DAY) # type: ignore
+  with pytest.raises(TypeError):
+    Bazi.create(datetime.now(), 1984, BaziPrecision.DAY) # type: ignore
+  with pytest.raises(TypeError):
+    Bazi.create(datetime.now(), BaziGender.FEMALE, 1984) # type: ignore
+
   # Create a datetime and set its timezone to Asia/Shanghai.
   _dt: datetime = datetime.now()
   _dt = _dt.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Bazi.create(_dt, BaziGender.FEMALE, BaziPrecision.DAY)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Bazi.create(_dt.isoformat(), BaziGender.FEMALE, BaziPrecision.DAY)
 
   now: datetime = datetime.now()
@@ -595,6 +606,20 @@ def test_create() -> None:
     assert bazi.precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
     with pytest.raises(ValueError):
       Bazi.create(dt, g, p, backend='hko') # HKO has no real jieqi moments.
+
+
+def test_supported_date_window_edges() -> None:
+  '''
+  The supported date window, pinned as a `Bazi`-level contract: one day outside either
+  edge raises (the calendar funnel validates the converted date), the edges themselves
+  construct. The window itself is the celestial backend's, pinned in its own tests.
+  '''
+  with pytest.raises(ValueError):
+    Bazi.create(datetime(1901, 2, 18, 12), 'male', 'day')
+  with pytest.raises(ValueError):
+    Bazi.create(datetime(2100, 1, 1, 12), 'male', 'day')
+  assert Bazi.create(datetime(1901, 2, 19, 12), 'male', 'day').solar_date == date(1901, 2, 19)
+  assert Bazi.create(datetime(2099, 12, 31, 12), 'male', 'day').solar_date == date(2099, 12, 31)
 
 
 def test_eq_ne() -> None:

@@ -50,8 +50,10 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
     - return: Wuxing("土")
   '''
 
-  assert isinstance(tg1, Tiangan)
-  assert isinstance(tg2, Tiangan)
+  if not isinstance(tg1, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
+  if not isinstance(tg2, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
 
   fs: TianganCombo = TianganCombo((tg1, tg2))
   if fs in TianganRules.TIANGAN_HE:
@@ -81,8 +83,10 @@ def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: True
   '''
 
-  assert isinstance(tg1, Tiangan)
-  assert isinstance(tg2, Tiangan)
+  if not isinstance(tg1, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
+  if not isinstance(tg2, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
   return TianganCombo((tg1, tg2)) in TianganRules.TIANGAN_CHONG
 
 
@@ -108,8 +112,10 @@ def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: False
   '''
 
-  assert isinstance(tg1, Tiangan)
-  assert isinstance(tg2, Tiangan)
+  if not isinstance(tg1, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
+  if not isinstance(tg2, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
   return (tg1, tg2) in TianganRules.TIANGAN_SHENG
 
 
@@ -135,8 +141,10 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: True
   '''
 
-  assert isinstance(tg1, Tiangan)
-  assert isinstance(tg2, Tiangan)
+  if not isinstance(tg1, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
+  if not isinstance(tg2, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
   return (tg1, tg2) in TianganRules.TIANGAN_KE
 
 
@@ -175,8 +183,10 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
     - Note that the returned combos don't contain the direction.
   '''
 
-  assert isinstance(relation, TianganRelation)
-  assert all(isinstance(tg, Tiangan) for tg in tiangans)
+  if not isinstance(relation, TianganRelation):
+    raise TypeError(f'Expected TianganRelation, got {type(relation)}')
+  if not all(isinstance(tg, Tiangan) for tg in tiangans):
+    raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
 
   if relation is TianganRelation.合:
     return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_HE if combo.issubset(tiangans))
@@ -211,7 +221,8 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   Return: (TianganRelationDiscovery) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
   '''
 
-  assert all(isinstance(tg, Tiangan) for tg in tiangans)
+  if not all(isinstance(tg, Tiangan) for tg in tiangans):
+    raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
   return TianganRelationDiscovery({
     rel : result
     for rel in TianganRelation
@@ -248,8 +259,10 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
     - return: {} // Empty returned frozendict!
   '''
 
-  assert all(isinstance(tg, Tiangan) for tg in tiangans1)
-  assert all(isinstance(tg, Tiangan) for tg in tiangans2)
+  if not all(isinstance(tg, Tiangan) for tg in tiangans1):
+    raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans1]}')
+  if not all(isinstance(tg, Tiangan) for tg in tiangans2):
+    raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans2]}')
 
   tg1_set: Final[set[Tiangan]] = set(tiangans1)
   tg2_set: Final[set[Tiangan]] = set(tiangans2)

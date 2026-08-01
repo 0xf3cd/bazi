@@ -190,7 +190,8 @@ class TransitAnalysis:
     - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
     '''
 
-    assert self.support(gz_year, options)
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
@@ -216,7 +217,8 @@ class TransitAnalysis:
     Returns: (tiangan_utils.TianganRelationDiscovery) The Tiangan relations that the day master and other transit Tiangans form.
     '''
 
-    assert self.support(gz_year, options)
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_tiangans = tuple(gz.tiangan for gz in transit_ganzhis)
 
@@ -235,7 +237,8 @@ class TransitAnalysis:
     Returns: (dizhi_utils.DizhiRelationDiscovery) The Dizhi relations that the House of Relationship and other transit Dizhis form.
     '''
 
-    assert self.support(gz_year, options)
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_dizhis = [gz.dizhi for gz in transit_ganzhis]
 
@@ -279,6 +282,9 @@ class TransitAnalysis:
     # Analyze all effects, basically all of above. 分析所有影响。
     ALL                  = TRANSITS_ONLY | MUTUAL
 
+  '''The constant level space for the `level` gate. `level` 闸的常量级别空间。'''
+  _ALL_LEVELS: Final[tuple[Level, ...]] = (Level.TRANSITS_ONLY, Level.MUTUAL, Level.ALL)
+
   def star_relations(
     self, 
     gz_year: int, 
@@ -298,8 +304,12 @@ class TransitAnalysis:
     Returns: (GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
     '''
 
-    assert level in TransitAnalysis.Level
-    assert self.support(gz_year, options)
+    if not isinstance(level, TransitAnalysis.Level):
+      raise TypeError(f'Expected Level, got {type(level)}')
+    if level not in TransitAnalysis._ALL_LEVELS:
+      raise ValueError(f'Unsupported level: {level}')
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
 
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
     transit_tg = tuple(gz.tiangan for gz in transit_ganzhis)
@@ -336,7 +346,8 @@ class TransitAnalysis:
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain Zhengyin (正印).
     '''
 
-    assert self.support(gz_year, options)
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
   
     f = functools.partial(bazi_utils.shishen, self._chart.bazi.day_master)
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
@@ -359,7 +370,8 @@ class TransitAnalysis:
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
     '''
 
-    assert self.support(gz_year, options)
+    if not self.support(gz_year, options):
+      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
 
     stars = self._chart.relationship_stars
     transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)

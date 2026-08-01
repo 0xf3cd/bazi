@@ -37,7 +37,7 @@ def test_basic() -> None:
     if tg is not bazi.day_master:
       assert chart.bazi.day_master != tg
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     BaziChart(date(2024, 1, 1))  # type: ignore
 
 
@@ -58,7 +58,7 @@ def test_malicious() -> None:
     BaziChart(Bazi.random()).bazi = Bazi.random()  # type: ignore
 
   # Invalid __init__ parameters
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     BaziChart('1984-04-02 04:02:00') # type: ignore
   with pytest.raises(TypeError):
     BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore

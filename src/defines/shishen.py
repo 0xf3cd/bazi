@@ -52,12 +52,15 @@ class Shishen(BaziEnum):
   def from_str(cls, s: str) -> Self:
     # Overrides the base: also accepts the single-char aliases (e.g. '比' -> 比肩).
     # 覆盖基类：额外接受单字别名。
-    assert isinstance(s, str)
-    assert len(s) in [1, 2]
+    if not isinstance(s, str):
+      raise TypeError(f'Expected str, got {type(s)}')
+    if len(s) not in [1, 2]:
+      raise ValueError(f'Unsupported Shishen string: {s}')
 
     if len(s) == 1:
       t: dict[str, str] = Shishen.str_mapping_table()
-      assert s in t
+      if s not in t:
+        raise ValueError(f'Unsupported Shishen string: {s}')
       s = t[s]
 
     return cls(s)

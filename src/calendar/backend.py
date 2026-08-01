@@ -51,7 +51,8 @@ class CalendarBackend(Enum):
     Args:
     - s: (str) The string to parse. Raises `ValueError` if it matches no backend.
     '''
-    assert isinstance(s, str)
+    if not isinstance(s, str):
+      raise TypeError(f'Expected str, got {type(s)}')
     for member in CalendarBackend:
       if s.lower() in (member.name.lower(), member.value.lower()):
         return member
@@ -64,7 +65,8 @@ def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
   The resolved utils conform to `CalendarUtilsProtocol`.
   把历法后端声明解析成实际的历法工具（懒加载），解析结果遵循 `CalendarUtilsProtocol`。
   '''
-  assert isinstance(backend, (CalendarBackend, str))
+  if not isinstance(backend, (CalendarBackend, str)):
+    raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
   _backend: CalendarBackend = backend if isinstance(backend, CalendarBackend) else CalendarBackend.from_str(backend)
 
   if _backend is CalendarBackend.HKO:

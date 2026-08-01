@@ -35,7 +35,7 @@ def test_from_str() -> None:
   with pytest.raises(ValueError):
     CalendarBackend.from_str('lunar') # Not a supported backend.
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarBackend.from_str(42) # type: ignore[arg-type]
 
 
@@ -57,7 +57,7 @@ def test_calendar_utils_of() -> None:
   with pytest.raises(ValueError):
     calendar_utils_of('lunar')
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     calendar_utils_of(42) # type: ignore[arg-type]
 
 
@@ -70,7 +70,7 @@ def test_create_with_backend() -> None:
   with pytest.raises(ValueError):
     Bazi.create('1984-04-02 04:02', 'male', 'day', backend='lunar')
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi.create('1984-04-02 04:02', 'male', 'day', backend=42) # type: ignore[arg-type]
 
 
@@ -85,7 +85,7 @@ def test_consistent_with_hko_utils() -> None:
 def test_init_rejects_str_backend() -> None:
   # `__init__` only takes the enum; strings go through `Bazi.create` (same
   # contract split as `gender` / `precision`).
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
          backend='hko') # type: ignore[arg-type]
 

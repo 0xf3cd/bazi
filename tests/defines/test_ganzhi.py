@@ -60,11 +60,11 @@ def test_from_strs() -> None:
     Ganzhi.from_strs('子', '子')
   with pytest.raises(ValueError):
     Ganzhi.from_strs('甲', '甲')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi.from_strs('甲', Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi.from_strs(Tiangan.甲, '子') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi.from_strs(0, 0) # type: ignore
 
 
@@ -75,11 +75,11 @@ def test_from_str() -> None:
 
   with pytest.raises(ValueError):
     Ganzhi.from_str('假子')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Ganzhi.from_str('JIA子')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Ganzhi.from_str('Jia子')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Ganzhi.from_str('甲子子')
   with pytest.raises(ValueError):
     Ganzhi.from_str('子甲')
@@ -128,13 +128,13 @@ def test_list_sexagenary_cycle_strs() -> None:
 
 def test_ganzhi_next_prev() -> None:
   # Negative.
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi(Tiangan.甲, Dizhi.子).next('1')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi(Tiangan.甲, Dizhi.子).prev('1')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi(Tiangan.甲, Dizhi.子).next(3.5)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Ganzhi(Tiangan.甲, Dizhi.子).prev(3.5)
 
   def __random_gz() -> Ganzhi:

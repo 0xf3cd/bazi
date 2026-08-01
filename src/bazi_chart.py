@@ -95,7 +95,8 @@ class BaziChart:
   '''
 
   def __init__(self, bazi: Bazi) -> None:
-    assert isinstance(bazi, Bazi)
+    if not isinstance(bazi, Bazi):
+      raise TypeError(f'Expected Bazi, got {type(bazi)}')
     # `Bazi` is not frozen (private state can be reassigned), so keep an isolated copy --
     # `test_malicious` pins that poisoning the caller's object never reaches the chart.
     # `Bazi` 并非 frozen（私有状态可被改写），故持隔离副本；test_malicious 钉住污染不透传。

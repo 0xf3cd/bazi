@@ -26,7 +26,8 @@ class TransitChart:
     - `bazi_chart`: (BaziChart) The bazi chart (原盘) to generate the transit chart from.
     '''
 
-    assert isinstance(bazi_chart, BaziChart)
+    if not isinstance(bazi_chart, BaziChart):
+      raise TypeError(f'Expected BaziChart, got {type(bazi_chart)}')
     self._bazi_chart: Final[BaziChart] = bazi_chart
     self._transit_db: Final[TransitDatabase] = TransitDatabase(self._bazi_chart)
 
@@ -51,10 +52,13 @@ class TransitChart:
     Note: raises `NotImplementedError` for month/day-granularity moments until #48. / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`。
     '''
 
-    assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions)
+    if not isinstance(moment, TransitMoment):
+      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
+    if not isinstance(options, TransitOptions):
+      raise TypeError(f'Expected TransitOptions, got {type(options)}')
     # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
-    assert options in _ALL_OPTIONS
+    if options not in _ALL_OPTIONS:
+      raise ValueError(f'Unsupported options: {options}')
     return self._transit_db.support(moment, options)
 
   def ganzhis(self, moment: TransitMoment, options: TransitOptions) -> tuple[Ganzhi, ...]:
@@ -71,10 +75,13 @@ class TransitChart:
     Note: raises `NotImplementedError` for month/day-granularity moments until #48 (via `TransitDatabase`). / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`（经 `TransitDatabase` 冒出）。
     '''
 
-    assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions)
+    if not isinstance(moment, TransitMoment):
+      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
+    if not isinstance(options, TransitOptions):
+      raise TypeError(f'Expected TransitOptions, got {type(options)}')
     # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
-    assert options in _ALL_OPTIONS
+    if options not in _ALL_OPTIONS:
+      raise ValueError(f'Unsupported options: {options}')
     return self._transit_db.ganzhis(moment, options)
 
 

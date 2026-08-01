@@ -40,7 +40,9 @@ def test_dayun_database() -> None:
       expected[year] = DayunTuple(start_year, dayun_ganzhi)
 
   db: DayunDatabase = DayunDatabase(chart)
-  with pytest.raises(AssertionError): # Test the year before the start of the dayun.
+  with pytest.raises(TypeError):
+    db['2000'] # type: ignore
+  with pytest.raises(ValueError): # Test the year before the start of the dayun.
     db[next(chart.dayun).ganzhi_year - 1]
 
   years: list[int] = list(expected.keys())
@@ -61,18 +63,18 @@ def test_support() -> None:
     chart: BaziChart = BaziChart.random()
     db: TransitDatabase = TransitDatabase(chart)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       db.support('1999', TransitOptions.XIAOYUN) # type: ignore
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       db.support(1999, TransitOptions.XIAOYUN) # type: ignore # int no longer accepted; `TransitMoment` required.
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       db.support(TransitMoment(1999), 'XIAOYUN') # type: ignore
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       db.support(TransitMoment(1999), 0x1 | 0x4) # type: ignore
     # Zero-value and unknown-bit flags are rejected on all Python versions (3.12+'s `in` used to let them through).
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
       db.support(TransitMoment(1999), TransitOptions(0))
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
       db.support(TransitMoment(1999), TransitOptions(0x8))
 
     # Ganzhi years before the birth year are not supported.
@@ -105,6 +107,13 @@ def test_ganzhis() -> None:
   for _ in range(4):
     chart = BaziChart.random()
     db: TransitDatabase = TransitDatabase(chart)
+
+    with pytest.raises(TypeError):
+      db.ganzhis('1999', TransitOptions.XIAOYUN) # type: ignore
+    with pytest.raises(TypeError):
+      db.ganzhis(TransitMoment(1999), 'XIAOYUN') # type: ignore
+    with pytest.raises(ValueError):
+      db.ganzhis(TransitMoment(1999), TransitOptions(0))
 
     xiaoyun_ganzhis: dict[int, Ganzhi] = {
       chart.bazi.ganzhi_date.year + age - 1 : xy
@@ -170,17 +179,17 @@ def test_value_semantics() -> None:
 
 
 def test_invalid() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitMoment('1990') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitMoment(1990, gz_month=3) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitMoment(1990, solar_date='1990-05-20') # type: ignore
   # `datetime` is a `date` subclass but breaks the value semantics / datetime 是 date 子类，但破坏值语义（与 date 不相等、hash 不同）。
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     TransitMoment(1990, solar_date=datetime(1990, 5, 20, 12, 0))
   # The month and day granularities are mutually exclusive / 月粒度与日粒度互斥。
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     TransitMoment(1990, gz_month=Dizhi.寅, solar_date=date(1990, 5, 20))
 
 

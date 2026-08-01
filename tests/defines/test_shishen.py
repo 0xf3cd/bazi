@@ -53,11 +53,11 @@ def test_str() -> None:
 
   assert ''.join([s.abbr for s in Shishen]) == '比劫食伤财才官杀印枭'
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Shishen.from_str('甲')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Shishen.from_str('辰')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Shishen.from_str('')
   with pytest.raises(ValueError):
     Shishen.from_str('甲子')
@@ -65,3 +65,5 @@ def test_str() -> None:
     Shishen.from_str('比间')
   with pytest.raises(ValueError):
     Shishen.from_str('枭神')
+  with pytest.raises(TypeError):
+    Shishen.from_str(0) # type: ignore

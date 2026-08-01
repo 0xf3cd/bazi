@@ -24,8 +24,10 @@ class DayunDatabase:
     self._step: Final[int] = 1 if chart.dayun_order else -1
 
   def __getitem__(self, gz_year: int) -> DayunTuple:
-    assert isinstance(gz_year, int)
-    assert gz_year >= self._first_dayun.ganzhi_year
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if gz_year < self._first_dayun.ganzhi_year:
+      raise ValueError(f'Year {gz_year} is before the first dayun year {self._first_dayun.ganzhi_year}')
 
     # Dayuns are arithmetic: each lasts 10 years and steps the sexagenary cycle by one.
     # 大运是等差序列：每运十年，六十甲子进（退）一位，直接按下标闭式计算。
@@ -60,12 +62,16 @@ class TransitMoment:
     # semantics (a `datetime` never equals a `date`, and their hashes differ), so require
     # the exact type here. 运行时类型检查。datetime 是 date 的子类但破坏值语义（不相等、
     # hash 不同），故此处要求精确类型。
-    assert isinstance(self.gz_year, int)
-    assert self.gz_month is None or isinstance(self.gz_month, Dizhi)
-    assert self.solar_date is None or type(self.solar_date) is date
+    if not isinstance(self.gz_year, int):
+      raise TypeError(f'Expected int, got {type(self.gz_year)}')
+    if self.gz_month is not None and not isinstance(self.gz_month, Dizhi):
+      raise TypeError(f'Expected Dizhi, got {type(self.gz_month)}')
+    if self.solar_date is not None and type(self.solar_date) is not date:
+      raise TypeError(f'Expected date (not datetime), got {type(self.solar_date)}')
     # The month and day granularities are mutually exclusive: a day's Ganzhi is fully
     # determined by `solar_date`, no `gz_month` needed. 月粒度与日粒度互斥（日柱由 solar_date 唯一确定）。
-    assert not (self.gz_month is not None and self.solar_date is not None)
+    if self.gz_month is not None and self.solar_date is not None:
+      raise ValueError(f'gz_month and solar_date are mutually exclusive: {self}')
 
 
 def _ensure_year_moment(moment: TransitMoment) -> None:
@@ -140,11 +146,14 @@ class TransitDatabase:
     Note: raises `NotImplementedError` for month/day-granularity moments until #48. / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`。
     '''
 
-    assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions)
+    if not isinstance(moment, TransitMoment):
+      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
+    if not isinstance(options, TransitOptions):
+      raise TypeError(f'Expected TransitOptions, got {type(options)}')
     # `options in TransitOptions` rejects unnamed composites (e.g. XIAOYUN|DAYUN) on
     # Python 3.11 (EnumType.__contains__ semantics), so check the enumerated space instead.
-    assert options in _ALL_OPTIONS
+    if options not in _ALL_OPTIONS:
+      raise ValueError(f'Unsupported options: {options}')
     _ensure_year_moment(moment)
 
     gz_year: Final[int] = moment.gz_year
@@ -172,10 +181,13 @@ class TransitDatabase:
     Note: raises `NotImplementedError` for month/day-granularity moments until #48 (via `support`). / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`（经 `support` 冒出）。
     '''
 
-    assert isinstance(moment, TransitMoment)
-    assert isinstance(options, TransitOptions)
+    if not isinstance(moment, TransitMoment):
+      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
+    if not isinstance(options, TransitOptions):
+      raise TypeError(f'Expected TransitOptions, got {type(options)}')
     # See `support` for why `_ALL_OPTIONS` instead of `options in TransitOptions` (3.11 semantics).
-    assert options in _ALL_OPTIONS
+    if options not in _ALL_OPTIONS:
+      raise ValueError(f'Unsupported options: {options}')
 
     if not self.support(moment, options):
       raise ValueError(f'Inputs not supported. Moment: {moment}, options: {options}')

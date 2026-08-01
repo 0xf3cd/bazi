@@ -19,7 +19,8 @@ class Ganzhi(NamedTuple):
   
   @classmethod
   def from_str(cls, tiangan_dizhi_str: str) -> 'Ganzhi':
-    assert len(tiangan_dizhi_str) == 2
+    if len(tiangan_dizhi_str) != 2:
+      raise ValueError(f'Unsupported Ganzhi string: {tiangan_dizhi_str}')
     return cls(Tiangan.from_str(tiangan_dizhi_str[0]), Dizhi.from_str(tiangan_dizhi_str[1]))
   
   def __str__(self) -> str:
@@ -51,13 +52,15 @@ class Ganzhi(NamedTuple):
 
   @functools.lru_cache(maxsize=1024)
   def next(self, step: int = 1) -> 'Ganzhi':
-    assert isinstance(step, int)
+    if not isinstance(step, int):
+      raise TypeError(f'Expected int, got {type(step)}')
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
     return cycle[(cycle.index(self) + step) % 60]
 
   @functools.lru_cache(maxsize=1024)
   def prev(self, step: int = 1) -> 'Ganzhi':
-    assert isinstance(step, int)
+    if not isinstance(step, int):
+      raise TypeError(f'Expected int, got {type(step)}')
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
     return cycle[(cycle.index(self) - step) % 60]
 

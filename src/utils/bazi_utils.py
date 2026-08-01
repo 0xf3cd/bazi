@@ -19,7 +19,8 @@ def ganzhi_of_day(dt: date) -> Ganzhi:
   Return: (Ganzhi) The Day Ganzhi (日柱).
   '''
 
-  assert isinstance(dt, date)
+  if not isinstance(dt, date):
+    raise TypeError(f'Expected date, got {type(dt)}')
   if isinstance(dt, datetime):
     # `dt` is a datetime object. Convert it to a date object.
     dt = date(dt.year, dt.month, dt.day)
@@ -40,7 +41,8 @@ def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
   Return: (Ganzhi) The Ganzhi of the given ganzhi year in the sexagenary cycle.
   '''
 
-  assert isinstance(ganzhi_year, int)
+  if not isinstance(ganzhi_year, int):
+    raise TypeError(f'Expected int, got {type(ganzhi_year)}')
   return Ganzhi(Tiangan.甲, Dizhi.子).next(ganzhi_year - 1984) # 1984 is the year of "甲子".
 
 
@@ -56,8 +58,10 @@ def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
   Return: (Tiangan) The Tiangan of the Month Ganzhi (月柱天干).
   '''
 
-  assert isinstance(year_tiangan, Tiangan)
-  assert isinstance(month_dizhi, Dizhi)
+  if not isinstance(year_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(year_tiangan)}')
+  if not isinstance(month_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(month_dizhi)}')
 
   month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
   first_month_tiangan: Tiangan = BaziRules.YEAR_TO_MONTH_TABLE[year_tiangan]
@@ -77,8 +81,10 @@ def hour_tiangan(day_tiangan: Tiangan, hour_dizhi: Dizhi) -> Tiangan:
   Return: (Tiangan) The Tiangan of the Hour Ganzhi (时柱天干).
   '''
 
-  assert isinstance(day_tiangan, Tiangan)
-  assert isinstance(hour_dizhi, Dizhi)
+  if not isinstance(day_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(day_tiangan)}')
+  if not isinstance(hour_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(hour_dizhi)}')
 
   hour_index: int = hour_dizhi.index
   first_hour_tiangan: Tiangan = BaziRules.DAY_TO_HOUR_TABLE[day_tiangan]
@@ -97,7 +103,8 @@ def tiangan_traits(tg: Tiangan) -> TraitTuple:
   Return: (TraitTuple) The Wuxing and Yinyang of the given Tiangan.
   '''
 
-  assert isinstance(tg, Tiangan)
+  if not isinstance(tg, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg)}')
   return BaziRules.TIANGAN_TRAITS[tg]
 
 
@@ -112,7 +119,8 @@ def dizhi_traits(dz: Dizhi) -> TraitTuple:
   Return: (TraitTuple) The Wuxing and Yinyang of the given Dizhi.
   '''
 
-  assert isinstance(dz, Dizhi)
+  if not isinstance(dz, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dz)}')
   return BaziRules.DIZHI_TRAITS[dz]
 
 
@@ -127,7 +135,8 @@ def traits(tg_or_dz: Tiangan | Dizhi) -> TraitTuple:
   Return: (TraitTuple) The Wuxing and Yinyang of the given Tiangan or Dizhi.
   '''
 
-  assert isinstance(tg_or_dz, (Tiangan, Dizhi))
+  if not isinstance(tg_or_dz, (Tiangan, Dizhi)):
+    raise TypeError(f'Expected Tiangan or Dizhi, got {type(tg_or_dz)}')
   if isinstance(tg_or_dz, Tiangan):
     return tiangan_traits(tg_or_dz)
   else:
@@ -146,7 +155,8 @@ def hidden_tiangans(dz: Dizhi) -> HiddenTianganDict:
   Return: (HiddenTianganDict) The percentage of hidden Tiangans in the given Dizhi.
   '''
 
-  assert isinstance(dz, Dizhi)
+  if not isinstance(dz, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dz)}')
   return BaziRules.HIDDEN_TIANGANS[dz]
 
 
@@ -167,8 +177,10 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
   - shishen(Tiangan("壬"), Dizhi("戌")) -> Shishen("七杀")  # "戌" is the "七杀" of "壬".
   '''
 
-  assert isinstance(day_master, Tiangan)
-  assert isinstance(other, (Tiangan, Dizhi))
+  if not isinstance(day_master, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
+  if not isinstance(other, (Tiangan, Dizhi)):
+    raise TypeError(f'Expected Tiangan or Dizhi, got {type(other)}')
 
   def __find_tg() -> Tiangan:
     if isinstance(other, Tiangan):
@@ -229,7 +241,8 @@ def nayin_str(gz: Ganzhi) -> str:
   - nayin_str(Ganzhi.from_str("甲子")) -> "海中金"
   '''
 
-  assert isinstance(gz, Ganzhi)
+  if not isinstance(gz, Ganzhi):
+    raise TypeError(f'Expected Ganzhi, got {type(gz)}')
   
   tg, dz = gz
   tg_traits, dz_traits = traits(tg), traits(dz)
@@ -255,8 +268,10 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
   - shier_zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
   '''
   
-  assert isinstance(tg, Tiangan)
-  assert isinstance(dz, Dizhi)
+  if not isinstance(tg, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg)}')
+  if not isinstance(dz, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dz)}')
 
   tg_yinyang: Yinyang = traits(tg).yinyang
   zhangsheng_place: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
@@ -288,8 +303,10 @@ def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   - from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
   '''
 
-  assert isinstance(tg, Tiangan)
-  assert isinstance(place, ShierZhangsheng)
+  if not isinstance(tg, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg)}')
+  if not isinstance(place, ShierZhangsheng):
+    raise TypeError(f'Expected ShierZhangsheng, got {type(place)}')
 
   tg_yinyang: Yinyang = traits(tg).yinyang
   zhangsheng_dizhi: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
@@ -311,5 +328,6 @@ def lu(tg: Tiangan) -> Dizhi:
   - lu(Tiangan.甲) -> Dizhi.寅
   '''
 
-  assert isinstance(tg, Tiangan)
+  if not isinstance(tg, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(tg)}')
   return BaziRules.TIANGAN_LU[tg]

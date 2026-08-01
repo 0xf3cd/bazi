@@ -47,6 +47,16 @@ def test_interpret_tiangan() -> None:
     assert result == Interpreter.interpret_tiangan(tg)
 
 
+def test_interpret_shishen_negative() -> None:
+  with pytest.raises(TypeError):
+    Interpreter.interpret_shishen('比肩') # type: ignore
+
+
+def test_interpret_tiangan_negative() -> None:
+  with pytest.raises(TypeError):
+    Interpreter.interpret_tiangan('甲') # type: ignore
+
+
 def test_corpus_is_frozen() -> None:
   # The corpus tables are frozen: reassigning an entry must fail, and mutating a
   # returned description must not corrupt the corpus.
