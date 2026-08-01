@@ -117,13 +117,13 @@ def test_decode_jieqi_getitem_negative() -> None:
     decoded_jieqi[min(decoded_jieqi.supported_year_range()) - 1]
   with pytest.raises(ValueError):
     decoded_jieqi[max(decoded_jieqi.supported_year_range()) + 1]
-  with pytest.raises(ValueError):
+  with pytest.raises(TypeError):
     decoded_jieqi['2024'] # type: ignore
-  with pytest.raises(ValueError):
+  with pytest.raises(TypeError):
     decoded_jieqi[Jieqi.芒种] # type: ignore
-  with pytest.raises(ValueError):
+  with pytest.raises(TypeError):
     decoded_jieqi[:] # type: ignore
-  with pytest.raises(ValueError):
+  with pytest.raises(TypeError):
     decoded_jieqi[date(2024, 1, 1)] # type: ignore
 
   data1 = decoded_jieqi[2024]
@@ -144,7 +144,7 @@ def test_decode_jieqi_get_negative() -> None:
     decoded_jieqi.get(2024)
   with pytest.raises(TypeError):
     decoded_jieqi.get(Jieqi.春分)
-  with pytest.raises(ValueError):
+  with pytest.raises(TypeError):
     decoded_jieqi.get('1000', Jieqi.寒露)
   with pytest.raises(ValueError):
     decoded_jieqi.get(1000, Jieqi.寒露)

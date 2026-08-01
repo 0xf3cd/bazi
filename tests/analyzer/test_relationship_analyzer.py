@@ -417,22 +417,20 @@ def test_transit_analysis_negative() -> None:
   bad_year = chart.bazi.ganzhi_year - 1
   assert not transits_analysis.support(bad_year, TransitOptions.LIUNIAN)
 
-  with pytest.raises(ValueError):
-    transits_analysis.shensha(bad_year, TransitOptions.LIUNIAN)
-  with pytest.raises(ValueError):
-    transits_analysis.day_master_relations(bad_year, TransitOptions.LIUNIAN)
-  with pytest.raises(ValueError):
-    transits_analysis.house_relations(bad_year, TransitOptions.LIUNIAN)
-  with pytest.raises(ValueError):
-    transits_analysis.star_relations(bad_year, TransitOptions.LIUNIAN)
-  with pytest.raises(ValueError):
-    transits_analysis.zhengyin(bad_year, TransitOptions.LIUNIAN)
-  with pytest.raises(ValueError):
-    transits_analysis.star(bad_year, TransitOptions.LIUNIAN)
+  for analysis in (transits_analysis.shensha, transits_analysis.day_master_relations,
+                   transits_analysis.house_relations, transits_analysis.star_relations,
+                   transits_analysis.zhengyin, transits_analysis.star):
+    with pytest.raises(ValueError):
+      analysis(bad_year, TransitOptions.LIUNIAN)
 
-  # A plain int with an unknown bit is not a `Level` member (the year is supported; the level gate fires first anyway).
-  with pytest.raises(ValueError):
+  # The level gate fires before the support check, so a supported year still raises.
+  with pytest.raises(TypeError):
     transits_analysis.star_relations(chart.bazi.ganzhi_year, TransitOptions.LIUNIAN, level=0x8) # type: ignore
+  # IntFlag happily constructs pseudo-members (undefined bit / empty flag); the gate rejects them by value.
+  with pytest.raises(ValueError):
+    transits_analysis.star_relations(chart.bazi.ganzhi_year, TransitOptions.LIUNIAN, level=TransitAnalysis.Level(0x8))
+  with pytest.raises(ValueError):
+    transits_analysis.star_relations(chart.bazi.ganzhi_year, TransitOptions.LIUNIAN, level=TransitAnalysis.Level(0))
 
 
 def test_registry_matches_shensha_analysis_keys() -> None:

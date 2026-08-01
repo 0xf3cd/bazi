@@ -58,11 +58,14 @@ def test_the_three_bounds_are_one_physical_day() -> None:
     assert ALGO1.to_date(bound(CalendarType.GANZHI)) == day
 
 
-def test_get_min_max_supported_dates_negative() -> None:
+def test_get_min_supported_date_negative() -> None:
   with pytest.raises(ValueError):
-    ALGO1.get_min_supported_date(42) # Not a CalendarType.
+    ALGO1.get_min_supported_date(42)
+
+
+def test_get_max_supported_date_negative() -> None:
   with pytest.raises(ValueError):
-    ALGO1.get_max_supported_date(42) # Not a CalendarType.
+    ALGO1.get_max_supported_date(42)
 
 
 def test_solar() -> None:
@@ -156,34 +159,34 @@ def test_dates_before_the_year_boundaries() -> None:
 
 def test_date_conversions_negative() -> None:
   with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_lunar(ganzhi(1, 1, 1)) # Out of the supported range.
+    ALGO1.ganzhi_to_lunar(ganzhi(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_lunar(solar(2024, 1, 1)) # Wrong date type.
+    ALGO1.ganzhi_to_lunar(solar(2024, 1, 1))
 
   with pytest.raises(ValueError):
-    ALGO1.lunar_to_ganzhi(lunar(1, 1, 1)) # Out of the supported range.
+    ALGO1.lunar_to_ganzhi(lunar(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.lunar_to_ganzhi(solar(2024, 1, 1)) # Wrong date type.
+    ALGO1.lunar_to_ganzhi(solar(2024, 1, 1))
 
   with pytest.raises(ValueError):
-    ALGO1.solar_to_lunar(solar(1, 1, 1)) # Out of the supported range.
+    ALGO1.solar_to_lunar(solar(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.solar_to_lunar(ganzhi(2024, 1, 1)) # Wrong date type.
+    ALGO1.solar_to_lunar(ganzhi(2024, 1, 1))
 
   with pytest.raises(ValueError):
-    ALGO1.lunar_to_solar(lunar(1, 1, 1)) # Out of the supported range.
+    ALGO1.lunar_to_solar(lunar(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.lunar_to_solar(ganzhi(2024, 1, 1)) # Wrong date type.
+    ALGO1.lunar_to_solar(ganzhi(2024, 1, 1))
 
   with pytest.raises(ValueError):
-    ALGO1.solar_to_ganzhi(solar(1, 1, 1)) # Out of the supported range.
+    ALGO1.solar_to_ganzhi(solar(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.solar_to_ganzhi(ganzhi(2024, 1, 1)) # Wrong date type.
+    ALGO1.solar_to_ganzhi(ganzhi(2024, 1, 1))
 
   with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_solar(ganzhi(1, 1, 1)) # Out of the supported range.
+    ALGO1.ganzhi_to_solar(ganzhi(1, 1, 1))
   with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_solar(solar(2024, 1, 1)) # Wrong date type.
+    ALGO1.ganzhi_to_solar(solar(2024, 1, 1))
 
 
 def test_to_family() -> None:
@@ -204,7 +207,7 @@ def test_to_family() -> None:
 def test_to_family_negative() -> None:
   # Both checks live in the shared funnel, so every `to_*` carries the same contract.
   with pytest.raises(ValueError):
-    ALGO1.to_solar(date(1901, 1, 1)) # An in-window year, yet before the first supported day (#63).
+    ALGO1.to_solar(date(1901, 1, 1)) # An in-window year, yet before the first supported day.
   with pytest.raises(ValueError):
     ALGO1.to_lunar(lunar(9999, 1, 1)) # Out of the supported range.
   with pytest.raises(ValueError):

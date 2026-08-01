@@ -120,9 +120,11 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 ## Idioms to keep
 - Defensive `assert isinstance(...)` / `assert callable(...)` at function entry —
   for **internal helpers only** (callers inside `src/` already validated the values).
-  Public-boundary input checks are explicit `raise TypeError/ValueError`: the
-  fail-fast contract must survive `python -O` (canonical note: `hko_data/decoder.py`;
-  gate: `tests/o_smoke.py`).
+  Public-boundary input checks are explicit `raise TypeError/ValueError` —
+  `isinstance`/`callable` failures are `TypeError`; bad values, ranges and members
+  are `ValueError`; messages follow `Expected X, got {type(x)}` /
+  `Unsupported ...: {value}`. The fail-fast contract must survive `python -O`
+  (canonical note: `hko_data/decoder.py`; gate: `tests/o_smoke.py`).
 - FP where it reads well (map/filter/starmap/product/compress, walrus, functools).
 - Expose computed results as `@property` (use `functools.cached_property` for
   expensive immutable results).

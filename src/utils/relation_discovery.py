@@ -33,7 +33,7 @@ class RelationDiscovery(
     '''Merge two discoveries together (set-union of combos per relation).
     合并两个发现结果（每个关系下的组合做集合并）。'''
     if not isinstance(other, type(self)):
-      raise TypeError(f'Expected {type(self)}, got {type(other)}')
+      raise TypeError(f'Expected {type(self).__name__}, got {type(other)}')
     d: dict[RelationType, set[frozenset[RelationItemType]]] = {}
 
     for rel, combos in self.items():

@@ -80,7 +80,7 @@ class CalendarDate:
     if not isinstance(other, CalendarDate):
       raise TypeError('Not a CalendarDate object.')
     if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
+      raise TypeError('objects not of the same CalendarType.')
     return (self.year, self.month, self.day), (other.year, other.month, other.day)
 
   def __lt__(self, other: object) -> bool:

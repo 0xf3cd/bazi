@@ -170,7 +170,8 @@ def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
 @functools.lru_cache(maxsize=512)
 def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
   if ganzhi_year > get_max_supported_date(CalendarType.GANZHI).year:
-    raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range (last supported: {get_max_supported_date(CalendarType.GANZHI).year})')
+    raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range '
+                     f'[{get_min_supported_date(CalendarType.GANZHI).year}, {get_max_supported_date(CalendarType.GANZHI).year}]')
 
   jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
   assert jieqi_list[0] == Jieqi.立春 # The first jieqi in every year should be 立春.

@@ -465,7 +465,8 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   - 举例来说，即使输入中只有丑、未，也符合相刑关系（缺少戌，但 `LOOSE` 定义只要求三个地支中出现两个）。
 
   Args:
-  - dizhis: (Sequence[Dizhi]) The Dizhis to check.
+  - dizhis: (Sequence[Dizhi]) The Dizhis to check. A sequence rather than a set --
+    the frequency of Dizhis matters.
   - relation: (DizhiRelation) The relation to check.
 
   Return: (DizhiRelationCombos) The result containing all matching Dizhi combos.
@@ -490,7 +491,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   if not isinstance(relation, DizhiRelation):
     raise TypeError(f'Expected DizhiRelation, got {type(relation)}')
   if not isinstance(dizhis, Sequence):
-    raise TypeError(f"Expected a Sequence, got {type(dizhis)} (non-sequence input loses the info of Dizhis' frequency)")
+    raise TypeError(f'Expected a Sequence, got {type(dizhis)}')
   if not all(isinstance(dz, Dizhi) for dz in dizhis):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
 

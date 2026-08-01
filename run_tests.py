@@ -37,7 +37,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='Run all tests; run coverage, lint and static type check; and run demo and interpreter.')
+                       help='Run all tests; run coverage, lint and static type check; run demo and interpreter; and run the `python -O` contract smoke.')
 
 # Test related.
 argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
@@ -371,16 +371,16 @@ def run_interpreter() -> int:
 def run_o_smoke() -> int:
   '''Run the `python -O` public-contract smoke script (`tests/o_smoke.py`).'''
   print('\n' + devider())
-  bold_print('>> Running -O contract smoke...')
+  bold_print('>> Running o_smoke (`python -O` contract smoke)...')
 
   ret: int = run_proc_and_print([
     sys.executable, '-O', str(Path(__file__).parent / 'tests' / 'o_smoke.py')
   ], print_details=True)
 
   if ret == 0:
-    green_print(f'>> {next(emoji_pair)} -O contract smoke passed!')
+    green_print(f'>> {next(emoji_pair)} o_smoke passed!')
   else:
-    red_print(f'>> {next(emoji_pair)} -O contract smoke failed!')
+    red_print(f'>> {next(emoji_pair)} o_smoke failed!')
   return ret
 
 
@@ -429,7 +429,7 @@ def run_subtasks() -> SubTaskStatuses:
     run_subtask('interpreter', run_interpreter)
 
   if do_osmoke:
-    run_subtask('-O smoke', run_o_smoke)
+    run_subtask('o_smoke', run_o_smoke)
 
   if do_ruff:
     run_subtask('ruff', run_ruff)

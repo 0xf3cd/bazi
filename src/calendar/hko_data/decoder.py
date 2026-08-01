@@ -73,6 +73,8 @@ class DecodedJieqiDates:
 
   def __getitem__(self, year: int) -> JieqiDates:
     '''Note: `year` means Gregorian/Solar year / 公历年'''
+    if not isinstance(year, int):
+      raise TypeError(f'Expected int, got {type(year)}')
     if year not in self.supported_year_range():
       raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
 
@@ -90,6 +92,8 @@ class DecodedJieqiDates:
 
     Note: `year` means Gregorian/Solar year / 公历年
     '''
+    if not isinstance(year, int):
+      raise TypeError(f'Expected int, got {type(year)}')
     if year not in self.supported_year_range():
       raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
     return self[year][jieqi]

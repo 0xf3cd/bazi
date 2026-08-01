@@ -200,6 +200,7 @@ class Bazi:
     if self._birth_time.tzinfo is not None:
       raise ValueError('Timezone should be well-processed outside of this class.')
 
+    # `to_solar` is also the window gate: an out-of-window birth time raises ValueError here.
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
 
     self._gender: Final[BaziGender] = gender

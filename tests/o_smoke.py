@@ -4,8 +4,8 @@
 '''
 Smoke-checks the public fail-fast contract under `python -O`: every face below must
 raise its documented TypeError/ValueError even with asserts stripped (issue #102).
-Before #102 these faces degraded under `-O` into silent wrong answers (e.g. a tz-aware
-birth time quietly accepted) or deep internal KeyErrors.
+Without these gates, `-O` turns each face into a silent wrong answer (e.g. a tz-aware
+birth time quietly accepted) or a deep internal KeyError.
 
 Standalone by design -- no `test_` prefix, so pytest does not collect it; the gates
 run it via `run_tests.py -osmoke` as `python -O tests/o_smoke.py`. Runnable from any
@@ -25,6 +25,7 @@ def main() -> int:
     print('o_smoke.py must run under `python -O`: it checks the contract that outlives stripped asserts.')
     return 2
 
+  # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   from datetime import date, datetime
   from collections.abc import Callable
   from zoneinfo import ZoneInfo
@@ -52,7 +53,7 @@ def main() -> int:
      lambda: hko_data_utils.jieqi_moment(1900, Jieqi.冬至)),
     ('TransitMoment mutually exclusive fields', ValueError,
      lambda: TransitMoment(2024, Dizhi.子, date(2024, 6, 1))),
-    ('dayun past supported window (#63.1)', ValueError,
+    ('dayun past supported window', ValueError,
      lambda: next(BaziChart(Bazi.create(datetime(2091, 6, 1, 12), 'male', 'day')).dayun)),
     ('hko get_min_supported_date garbage date_type', ValueError,
      lambda: hko_data_utils.get_min_supported_date(42)),
@@ -69,7 +70,7 @@ def main() -> int:
       failures.append(f'{label}: no exception, expected {expected.__name__}')
     except expected:
       pass
-    except Exception as e: # noqa: BLE001 -- a smoke harness reports whatever actually leaked
+    except Exception as e: # noqa: BLE001 # a smoke harness reports whatever actually leaked
       failures.append(f'{label}: {type(e).__name__} ({e}), expected {expected.__name__}')
 
   for line in failures:
