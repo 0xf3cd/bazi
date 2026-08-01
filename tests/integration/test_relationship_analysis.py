@@ -20,8 +20,8 @@ from src.rules import DizhiRules
 pytestmark = pytest.mark.integration
 
 
-DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 '''Operand type of `_equal`: either relation-discovery flavor.'''
+DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
   assert type(d1) is type(d2)
   if set(d1.keys()) != set(d2.keys()):

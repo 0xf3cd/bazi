@@ -151,8 +151,8 @@ def test_filtered() -> None:
           assert any(dz in dz_combo for dz in stars.dizhi) == (dz_combo in at_birth.star_relations.dizhi[dz_rel])
 
 
-DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 '''Operand type of `_equal`: either relation-discovery flavor.'''
+DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 def _equal(discovery1: DiscoveryType, discovery2: DiscoveryType) -> bool:
   if type(discovery1) is not type(discovery2):
     return False
