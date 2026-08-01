@@ -553,4 +553,10 @@ class Bazi:
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
 
+  def __hash__(self) -> int:
+    # In sync with `__eq__`. All four inputs sit behind `Final` fields, so the hash
+    # is stable across the object's lifetime. 与 `__eq__` 同步；四个输入都在 `Final`
+    # 字段之后，对象生命周期内哈希稳定。
+    return hash((self.solar_datetime, self.gender, self.precision, self.backend))
+
 八字 = Bazi

@@ -630,3 +630,13 @@ class TestBazi(unittest.TestCase):
       bazi_hacked: Bazi = Bazi.create(dt, gender, precision)
       bazi_hacked._precision = BaziPrecision.HOUR # type: ignore # Intended for testing only.
       self.assertNotEqual(bazi, bazi_hacked)
+
+  def test_hash(self) -> None:
+    dt: datetime = datetime(2000, 2, 4, 22, 1)
+    bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+    same: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+    self.assertEqual(hash(bazi), hash(same))
+    self.assertEqual(len({bazi, same}), 1) # In sync with `__eq__`: usable for set dedup.
+
+    other: Bazi = Bazi.create(dt, BaziGender.FEMALE, BaziPrecision.DAY)
+    self.assertEqual(len({bazi, same, other}), 2)

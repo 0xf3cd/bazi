@@ -38,6 +38,21 @@ class BaziJson:
     assert len(data) == 4
     return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
 
+  class TianganShishens(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`. Entries are `None`
+    (JSON null) where no Shishen exists -- i.e. `day`, the day master itself.
+    没有十神的位置为 None（JSON null）——即日主自身所在的 `day`。'''
+    year:  str | None
+    month: str | None
+    day:   str | None
+    hour:  str | None
+
+  @staticmethod
+  def gen_tiangan_shishens(data: Sequence[Shishen | None]) -> 'BaziJson.TianganShishens':
+    assert len(data) == 4
+    strs: list[str | None] = [None if s is None else str(s) for s in data]
+    return { 'year': strs[0], 'month': strs[1], 'day': strs[2], 'hour': strs[3] }
+
   class Transits(TypedDict):
     '''Not expected to be accessed directly. Used in `JsonDict`.'''
     # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
@@ -61,7 +76,7 @@ class BaziJson:
     shier_zhangsheng: 'BaziJson.FourPillars'
     tiangan_traits: 'BaziJson.FourPillars'
     dizhi_traits: 'BaziJson.FourPillars'
-    tiangan_shishen: 'BaziJson.FourPillars'
+    tiangan_shishen: 'BaziJson.TianganShishens'
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
@@ -425,7 +440,7 @@ class BaziChart:
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
       'tiangan_traits': f([str(t.tiangan) for t in self.traits]),
       'dizhi_traits': f([str(t.dizhi) for t in self.traits]),
-      'tiangan_shishen': f([str(s.tiangan) for s in self.shishen]),
+      'tiangan_shishen': BaziJson.gen_tiangan_shishens([s.tiangan for s in self.shishen]),
       'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
       'transits': transits,

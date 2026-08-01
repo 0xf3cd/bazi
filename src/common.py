@@ -21,12 +21,22 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
   '''
   def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
     self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = dict(data)
+    self._hash: int | None = None
   def __getitem__(self, key: FrozenDictKeyType) -> FrozenDictValueType:
     return self._data[key]
   def __iter__(self) -> Iterator[FrozenDictKeyType]:
     return iter(self._data)
   def __len__(self) -> int:
     return len(self._data)
+  def __hash__(self) -> int:
+    # Tuple semantics, computed lazily: equal contents hash equal (in sync with
+    # `Mapping.__eq__`), and unhashable contents (e.g. the description corpus holds
+    # lists) raise TypeError on the first hash attempt.
+    # 元组语义，惰性计算：内容相等则哈希相等（与 `Mapping.__eq__` 一致），
+    # 内容不可哈希（如语料表的 list 值）则首次求哈希时抛 TypeError。
+    if self._hash is None:
+      self._hash = hash(frozenset(self._data.items()))
+    return self._hash
 
 #endregion
 
