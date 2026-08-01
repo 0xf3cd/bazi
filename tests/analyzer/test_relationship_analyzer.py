@@ -2,7 +2,6 @@
 # test_relationship_analyzer.py
 
 import pytest
-import unittest
 
 import random
 import itertools
@@ -14,396 +13,389 @@ from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
 
-class TestAtBirthAnalysis(unittest.TestCase):
-  @pytest.mark.slow
-  def test_shensha(self) -> None:
-    for _ in range(100):
-      chart = BaziChart.random()
-      analyzer = RelationshipAnalyzer(chart)
+@pytest.mark.slow
+def test_at_birth_shensha() -> None:
+  for _ in range(100):
+    chart = BaziChart.random()
+    analyzer = RelationshipAnalyzer(chart)
 
-      dm: Tiangan = chart.bazi.day_master
-      y, m, d, h = chart.bazi.four_dizhis
+    dm: Tiangan = chart.bazi.day_master
+    y, m, d, h = chart.bazi.four_dizhis
 
-      at_birth = analyzer.at_birth
+    at_birth = analyzer.at_birth
 
-      with self.subTest('Taohua / 桃花'):
-        expected_taohua: list[Dizhi] = []
-        for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if shensha_utils.taohua(dz1, dz2):
-            expected_taohua.append(dz2)
-        for dz1, dz2 in itertools.product([d], [y, m, h]):
-          if shensha_utils.taohua(dz1, dz2):
-            expected_taohua.append(dz2)
-        self.assertSetEqual(at_birth.shensha['taohua'], set(expected_taohua))
-        self.assertSetEqual(at_birth.shensha['taohua'], at_birth.shensha['taohua'], 'Constancy')
+    # Taohua / 桃花
+    expected_taohua: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.taohua(dz1, dz2):
+        expected_taohua.append(dz2)
+    for dz1, dz2 in itertools.product([d], [y, m, h]):
+      if shensha_utils.taohua(dz1, dz2):
+        expected_taohua.append(dz2)
+    assert at_birth.shensha['taohua'] == set(expected_taohua)
+    assert at_birth.shensha['taohua'] == at_birth.shensha['taohua'], 'Constancy'
 
-      with self.subTest('Hongyan / 红艳'):
-        expected_hongyan: list[Dizhi] = []
-        for tg, dz in itertools.product([dm], [y, m, d, h]):
-          if shensha_utils.hongyan(tg, dz):
-            expected_hongyan.append(dz)
-        self.assertSetEqual(at_birth.shensha['hongyan'], set(expected_hongyan))
-        self.assertSetEqual(at_birth.shensha['hongyan'], at_birth.shensha['hongyan'], 'Constancy')
+    # Hongyan / 红艳
+    expected_hongyan: list[Dizhi] = []
+    for tg, dz in itertools.product([dm], [y, m, d, h]):
+      if shensha_utils.hongyan(tg, dz):
+        expected_hongyan.append(dz)
+    assert at_birth.shensha['hongyan'] == set(expected_hongyan)
+    assert at_birth.shensha['hongyan'] == at_birth.shensha['hongyan'], 'Constancy'
 
-      with self.subTest('Hongluan / 红鸾'):
-        expected_hongluan: list[Dizhi] = []
-        for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if shensha_utils.hongluan(dz1, dz2):
-            expected_hongluan.append(dz2)
-        self.assertSetEqual(at_birth.shensha['hongluan'], set(expected_hongluan))
-        self.assertSetEqual(at_birth.shensha['hongluan'], at_birth.shensha['hongluan'], 'Constancy')
+    # Hongluan / 红鸾
+    expected_hongluan: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.hongluan(dz1, dz2):
+        expected_hongluan.append(dz2)
+    assert at_birth.shensha['hongluan'] == set(expected_hongluan)
+    assert at_birth.shensha['hongluan'] == at_birth.shensha['hongluan'], 'Constancy'
 
-      with self.subTest('Tianxi / 天喜'):
-        expected_tianxi: list[Dizhi] = []
-        for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if shensha_utils.tianxi(dz1, dz2):
-            expected_tianxi.append(dz2)
-        self.assertSetEqual(at_birth.shensha['tianxi'], set(expected_tianxi))
-        self.assertSetEqual(at_birth.shensha['tianxi'], at_birth.shensha['tianxi'], 'Constancy')
+    # Tianxi / 天喜
+    expected_tianxi: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.tianxi(dz1, dz2):
+        expected_tianxi.append(dz2)
+    assert at_birth.shensha['tianxi'] == set(expected_tianxi)
+    assert at_birth.shensha['tianxi'] == at_birth.shensha['tianxi'], 'Constancy'
 
-      with self.subTest('Yima / 驿马'):
-        expected_yima: list[Dizhi] = []
-        for dz1, dz2 in itertools.product([y], [m, d, h]):
-          if shensha_utils.yima(dz1, dz2):
-            expected_yima.append(dz2)
-        for dz1, dz2 in itertools.product([d], [y, m, h]):
-          if shensha_utils.yima(dz1, dz2):
-            expected_yima.append(dz2)
-        self.assertSetEqual(at_birth.shensha['yima'], set(expected_yima))
-        self.assertSetEqual(at_birth.shensha['yima'], at_birth.shensha['yima'], 'Constancy')
+    # Yima / 驿马
+    expected_yima: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.yima(dz1, dz2):
+        expected_yima.append(dz2)
+    for dz1, dz2 in itertools.product([d], [y, m, h]):
+      if shensha_utils.yima(dz1, dz2):
+        expected_yima.append(dz2)
+    assert at_birth.shensha['yima'] == set(expected_yima)
+    assert at_birth.shensha['yima'] == at_birth.shensha['yima'], 'Constancy'
 
-  @pytest.mark.slow
-  def test_day_master_relations(self) -> None:
-    for _ in range(100):
-      chart = BaziChart.random()
-      analyzer = RelationshipAnalyzer(chart)
+@pytest.mark.slow
+def test_at_birth_day_master_relations() -> None:
+  for _ in range(100):
+    chart = BaziChart.random()
+    analyzer = RelationshipAnalyzer(chart)
 
-      dm = chart.bazi.day_master
-      at_birth = analyzer.at_birth
+    dm = chart.bazi.day_master
+    at_birth = analyzer.at_birth
 
-      self.assertEqual(at_birth.day_master_relations, tiangan_utils.discover_mutual([
-        chart.bazi.year_pillar.tiangan, 
-        chart.bazi.month_pillar.tiangan,
-        chart.bazi.hour_pillar.tiangan
-      ], [dm]))
-      self.assertEqual(at_birth.day_master_relations, at_birth.day_master_relations, 'Constancy')
+    assert at_birth.day_master_relations == tiangan_utils.discover_mutual([
+      chart.bazi.year_pillar.tiangan,
+      chart.bazi.month_pillar.tiangan,
+      chart.bazi.hour_pillar.tiangan
+    ], [dm])
+    assert at_birth.day_master_relations == at_birth.day_master_relations, 'Constancy'
 
-  @pytest.mark.slow
-  def test_house_relations(self) -> None:
-    for _ in range(100):
-      chart = BaziChart.random()
-      analyzer = RelationshipAnalyzer(chart)
+@pytest.mark.slow
+def test_at_birth_house_relations() -> None:
+  for _ in range(100):
+    chart = BaziChart.random()
+    analyzer = RelationshipAnalyzer(chart)
 
-      y, m, d, h = chart.bazi.four_dizhis
-      at_birth = analyzer.at_birth
+    y, m, d, h = chart.bazi.four_dizhis
+    at_birth = analyzer.at_birth
 
-      # For AtBirth analysis, the following two algorithms are equivalent.
-      self.assertEqual(at_birth.house_relations, dizhi_utils.discover([y, m, d, h]).filter(
-        lambda _, combo : d in combo
-      )) 
-      self.assertEqual(at_birth.house_relations, dizhi_utils.discover_mutual([y, m, h], [d]))
+    # For AtBirth analysis, the following two algorithms are equivalent.
+    assert at_birth.house_relations == dizhi_utils.discover([y, m, d, h]).filter(
+      lambda _, combo : d in combo
+    )
+    assert at_birth.house_relations == dizhi_utils.discover_mutual([y, m, h], [d])
 
-      self.assertEqual(at_birth.house_relations, at_birth.house_relations, 'Constancy')
+    assert at_birth.house_relations == at_birth.house_relations, 'Constancy'
 
-  @pytest.mark.slow
-  def test_star_relations(self) -> None:
-    for _ in range(100):
-      chart = BaziChart.random()
-      analyzer = RelationshipAnalyzer(chart)
+@pytest.mark.slow
+def test_at_birth_star_relations() -> None:
+  for _ in range(100):
+    chart = BaziChart.random()
+    analyzer = RelationshipAnalyzer(chart)
 
-      at_birth = analyzer.at_birth
-      stars = chart.relationship_stars
-      
-      for tg_combos in at_birth.star_relations.tiangan.values():
+    at_birth = analyzer.at_birth
+    stars = chart.relationship_stars
+
+    for tg_combos in at_birth.star_relations.tiangan.values():
+      for tg_combo in tg_combos:
+        assert stars.tiangan in tg_combo
+    for dz_combos in at_birth.star_relations.dizhi.values():
+      for dz_combo in dz_combos:
+        assert any(dz in dz_combo for dz in stars.dizhi)
+
+    assert at_birth.star_relations.tiangan == at_birth.star_relations.tiangan, 'Constancy'
+    assert at_birth.star_relations.dizhi == at_birth.star_relations.dizhi, 'Constancy'
+
+@pytest.mark.slow
+def test_filtered() -> None:
+  '''Test "star_relations" only contain filtered combos.'''
+  for _ in range(16):
+    chart: BaziChart = BaziChart.random()
+    analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
+
+    stars = chart.relationship_stars
+    at_birth = analyzer.at_birth
+
+    for tg_rel, tg_combos in tiangan_utils.discover(chart.bazi.four_tiangans).items():
+      if tg_rel not in at_birth.star_relations.tiangan:
+        assert all(stars.tiangan not in tg_combo for tg_combo in tg_combos)
+      else:
         for tg_combo in tg_combos:
-          self.assertIn(stars.tiangan, tg_combo)
-      for dz_combos in at_birth.star_relations.dizhi.values():
+          assert (stars.tiangan in tg_combo) == (tg_combo in at_birth.star_relations.tiangan[tg_rel])
+
+    for dz_rel, dz_combos in dizhi_utils.discover(chart.bazi.four_dizhis).items():
+      if dz_rel not in at_birth.star_relations.dizhi:
+        assert all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi)
+      else:
         for dz_combo in dz_combos:
-          self.assertTrue(any(dz in dz_combo for dz in stars.dizhi))
-
-      self.assertEqual(at_birth.star_relations.tiangan, at_birth.star_relations.tiangan, 'Constancy')
-      self.assertEqual(at_birth.star_relations.dizhi, at_birth.star_relations.dizhi, 'Constancy')
-
-  @pytest.mark.slow
-  def test_filtered(self) -> None:
-    '''Test "star_relations" only contain filtered combos.'''
-    for _ in range(16):
-      chart: BaziChart = BaziChart.random()
-      analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
-
-      stars = chart.relationship_stars
-      at_birth = analyzer.at_birth
-
-      for tg_rel, tg_combos in tiangan_utils.discover(chart.bazi.four_tiangans).items():
-        if tg_rel not in at_birth.star_relations.tiangan:
-          self.assertTrue(all(stars.tiangan not in tg_combo for tg_combo in tg_combos))
-        else:
-          for tg_combo in tg_combos:
-            self.assertEqual(stars.tiangan in tg_combo,
-                             tg_combo in at_birth.star_relations.tiangan[tg_rel])
-            
-      for dz_rel, dz_combos in dizhi_utils.discover(chart.bazi.four_dizhis).items():
-        if dz_rel not in at_birth.star_relations.dizhi:
-          self.assertTrue(all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi))
-        else:
-          for dz_combo in dz_combos:
-            self.assertEqual(any(dz in dz_combo for dz in stars.dizhi),
-                             dz_combo in at_birth.star_relations.dizhi[dz_rel])
+          assert any(dz in dz_combo for dz in stars.dizhi) == (dz_combo in at_birth.star_relations.dizhi[dz_rel])
 
 
-class TestTransitAnalysis(unittest.TestCase):
-  @staticmethod
-  def __equal(discovery1, discovery2) -> bool:
-    if type(discovery1) is not type(discovery2):
+def _equal(discovery1, discovery2) -> bool:
+  if type(discovery1) is not type(discovery2):
+    return False
+  if set(discovery1.keys()) != set(discovery2.keys()):
+    return False
+  for key in discovery1:
+    if set(discovery1[key]) != set(discovery2[key]):
       return False
-    if set(discovery1.keys()) != set(discovery2.keys()):
-      return False
-    for key in discovery1:
-      if set(discovery1[key]) != set(discovery2[key]):
-        return False
-    return True
+  return True
 
-  @pytest.mark.slow
-  def test_shensha(self) -> None:
-    for _ in range(32):
-      chart = BaziChart.random()      
-      db = TransitDatabase(chart)
+@pytest.mark.slow
+def test_transit_shensha() -> None:
+  for _ in range(32):
+    chart = BaziChart.random()
+    db = TransitDatabase(chart)
 
-      dm = chart.bazi.day_master
-      y_dz = chart.bazi.year_pillar.dizhi
-      d_dz = chart.bazi.day_pillar.dizhi
+    dm = chart.bazi.day_master
+    y_dz = chart.bazi.year_pillar.dizhi
+    d_dz = chart.bazi.day_pillar.dizhi
 
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
 
-      for __ in range(128):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        if not transits_analysis.support(randon_year, random_options):
-          continue
+    for __ in range(128):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      if not transits_analysis.support(randon_year, random_options):
+        continue
 
-        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
-        actual = transits_analysis.shensha(randon_year, random_options)
+      transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+      actual = transits_analysis.shensha(randon_year, random_options)
 
-        with self.subTest('Taohua / 桃花'):
-          expected = []
-          for dz in transit_dz:
-            if shensha_utils.taohua(y_dz, dz):
-              expected.append(dz)
-            if shensha_utils.taohua(d_dz, dz):
-              expected.append(dz)
-          self.assertSetEqual(actual['taohua'], set(expected))
+      # Taohua / 桃花
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.taohua(y_dz, dz):
+          expected.append(dz)
+        if shensha_utils.taohua(d_dz, dz):
+          expected.append(dz)
+      assert actual['taohua'] == set(expected)
 
-        with self.subTest('Hongyan / 红艳'):
-          expected = []
-          for dz in transit_dz:
-            if shensha_utils.hongyan(dm, dz):
-              expected.append(dz)
-          self.assertSetEqual(actual['hongyan'], set(expected))
+      # Hongyan / 红艳
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.hongyan(dm, dz):
+          expected.append(dz)
+      assert actual['hongyan'] == set(expected)
 
-        with self.subTest('Hongluan / 红鸾'):
-          expected = []
-          for dz in transit_dz:
-            if shensha_utils.hongluan(y_dz, dz):
-              expected.append(dz)
-          self.assertSetEqual(actual['hongluan'], set(expected))
+      # Hongluan / 红鸾
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.hongluan(y_dz, dz):
+          expected.append(dz)
+      assert actual['hongluan'] == set(expected)
 
-        with self.subTest('Tianxi / 天喜'):
-          expected = []
-          for dz in transit_dz:
-            if shensha_utils.tianxi(y_dz, dz):
-              expected.append(dz)
-          self.assertSetEqual(actual['tianxi'], set(expected))
+      # Tianxi / 天喜
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.tianxi(y_dz, dz):
+          expected.append(dz)
+      assert actual['tianxi'] == set(expected)
 
-        with self.subTest('Yima / 驿马'):
-          expected = []
-          for dz in transit_dz:
-            if shensha_utils.yima(y_dz, dz):
-              expected.append(dz)
-            if shensha_utils.yima(d_dz, dz):
-              expected.append(dz)
-          self.assertSetEqual(actual['yima'], set(expected))
+      # Yima / 驿马
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.yima(y_dz, dz):
+          expected.append(dz)
+        if shensha_utils.yima(d_dz, dz):
+          expected.append(dz)
+      assert actual['yima'] == set(expected)
 
-  @pytest.mark.slow
-  def test_day_master_relations(self) -> None:
-    for _ in range(32):
-      chart = BaziChart.random()
-      db = TransitDatabase(chart)
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+@pytest.mark.slow
+def test_transit_day_master_relations() -> None:
+  for _ in range(32):
+    chart = BaziChart.random()
+    db = TransitDatabase(chart)
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
 
-      for __ in range(128):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        if not transits_analysis.support(randon_year, random_options):
-          continue
-        
-        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
-        expected = tiangan_utils.discover_mutual([chart.bazi.day_master], transit_tg)
-        actual = transits_analysis.day_master_relations(randon_year, random_options)
+    for __ in range(128):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      if not transits_analysis.support(randon_year, random_options):
+        continue
 
-        self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
+      transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+      expected = tiangan_utils.discover_mutual([chart.bazi.day_master], transit_tg)
+      actual = transits_analysis.day_master_relations(randon_year, random_options)
 
-  @pytest.mark.slow
-  def test_house_relations(self) -> None:
-    for _ in range(32):
-      chart = BaziChart.random()
-      house = chart.house_of_relationship
-      bazi = chart.bazi
-      db = TransitDatabase(chart)
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+      assert _equal(expected, actual)
 
-      for __ in range(128):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        if not transits_analysis.support(randon_year, random_options):
-          continue
+@pytest.mark.slow
+def test_transit_house_relations() -> None:
+  for _ in range(32):
+    chart = BaziChart.random()
+    house = chart.house_of_relationship
+    bazi = chart.bazi
+    db = TransitDatabase(chart)
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
 
-        transit_dz = [gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options)]
+    for __ in range(128):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      if not transits_analysis.support(randon_year, random_options):
+        continue
 
-        actual = transits_analysis.house_relations(randon_year, random_options)
-        for combos in actual.values():
-          for combo in combos:
-            self.assertTrue(house in combo)
-            self.assertFalse(set(transit_dz).isdisjoint(combo))
+      transit_dz = [gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options)]
 
-        def __expected_filter(dz_rel: DizhiRelation, combo: dizhi_utils.DizhiCombo):
-          # `house` must appear in the combo.
-          if house not in combo:
-            return False
+      actual = transits_analysis.house_relations(randon_year, random_options)
+      for combos in actual.values():
+        for combo in combos:
+          assert house in combo
+          assert not set(transit_dz).isdisjoint(combo)
 
-          # Special handling for 自刑 cases.
-          if len(combo) == 1:
-            assert dz_rel is DizhiRelation.刑
-            return house in transit_dz
+      def __expected_filter(dz_rel: DizhiRelation, combo: dizhi_utils.DizhiCombo):
+        # `house` must appear in the combo.
+        if house not in combo:
+          return False
 
-          return not (combo - {house}).isdisjoint(transit_dz)
- 
-        expected = dizhi_utils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
-        
-        self.assertTrue(TestTransitAnalysis.__equal(expected, actual))
+        # Special handling for 自刑 cases.
+        if len(combo) == 1:
+          assert dz_rel is DizhiRelation.刑
+          return house in transit_dz
 
-  @pytest.mark.slow
-  def test_star_relations(self) -> None:
-    for _ in range(32):
-      chart = BaziChart.random()
-      stars = chart.relationship_stars
+        return not (combo - {house}).isdisjoint(transit_dz)
 
-      db = TransitDatabase(chart)
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+      expected = dizhi_utils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
 
-      for __ in range(64):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        random_level = random.choice([
-          TransitAnalysis.Level.TRANSITS_ONLY, 
-          TransitAnalysis.Level.MUTUAL, 
-          TransitAnalysis.Level.ALL
-        ]) # mypy with Python 3.12 is problematic here on type checking... Explicitly list all enum values.
-        if not transits_analysis.support(randon_year, random_options):
-          continue
-        
-        transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
-        transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+      assert _equal(expected, actual)
 
-        tg_discovery = tiangan_utils.TianganRelationDiscovery({})
-        dz_discovery = dizhi_utils.DizhiRelationDiscovery({})
-        if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
-          tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
-          dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz))
-        if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
-          tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
-          dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
+@pytest.mark.slow
+def test_transit_star_relations() -> None:
+  for _ in range(32):
+    chart = BaziChart.random()
+    stars = chart.relationship_stars
 
-        actual = transits_analysis.star_relations(randon_year, random_options, level=random_level)
+    db = TransitDatabase(chart)
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
 
-        with self.subTest('Tiangan'):
-          for tg_rel, tg_combos in actual.tiangan.items():
-            self.assertIn(tg_rel, tg_discovery)
-            for tg_combo in tg_combos:
-              self.assertIn(tg_combo, tg_discovery[tg_rel])
-          
-          for tg_rel, tg_combos in tg_discovery.items():
-            for tg_combo in tg_combos:
-              if stars.tiangan in tg_combo:
-                self.assertIn(tg_combo, actual.tiangan[tg_rel])
+    for __ in range(64):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      random_level = random.choice([
+        TransitAnalysis.Level.TRANSITS_ONLY,
+        TransitAnalysis.Level.MUTUAL,
+        TransitAnalysis.Level.ALL
+      ]) # mypy with Python 3.12 is problematic here on type checking... Explicitly list all enum values.
+      if not transits_analysis.support(randon_year, random_options):
+        continue
 
-          self.assertTrue(TestTransitAnalysis.__equal(actual.tiangan, tg_discovery.filter(
-            lambda _, combo : stars.tiangan in combo
-          )))
+      transit_tg = tuple(gz.tiangan for gz in db.ganzhis(TransitMoment(randon_year), random_options))
+      transit_dz = tuple(gz.dizhi for gz in db.ganzhis(TransitMoment(randon_year), random_options))
 
-        with self.subTest('Dizhi'):
-          for dz_rel, dz_combos in actual.dizhi.items():
-            self.assertIn(dz_rel, dz_discovery)
-            for dz_combo in dz_combos:
-              self.assertIn(dz_combo, dz_discovery[dz_rel])
-          
-          for dz_rel, dz_combos in dz_discovery.items():
-            for dz_combo in dz_combos:
-              if len(dz_combo & set(stars.dizhi)) > 0:
-                self.assertIn(dz_combo, actual.dizhi[dz_rel])
+      tg_discovery = tiangan_utils.TianganRelationDiscovery({})
+      dz_discovery = dizhi_utils.DizhiRelationDiscovery({})
+      if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
+        tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz))
+      if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
+        tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
 
-          self.assertTrue(TestTransitAnalysis.__equal(actual.dizhi, dz_discovery.filter(
-            lambda _, combo : len(combo & set(stars.dizhi)) > 0
-          )))
+      actual = transits_analysis.star_relations(randon_year, random_options, level=random_level)
 
-  @pytest.mark.slow
-  def test_zhengyin(self) -> None:
-    for _ in range(32):
-      chart = BaziChart.random()
-      db = TransitDatabase(chart)
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+      # Tiangan
+      for tg_rel, tg_combos in actual.tiangan.items():
+        assert tg_rel in tg_discovery
+        for tg_combo in tg_combos:
+          assert tg_combo in tg_discovery[tg_rel]
 
-      for __ in range(128):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        if not transits_analysis.support(randon_year, random_options):
-          continue
+      for tg_rel, tg_combos in tg_discovery.items():
+        for tg_combo in tg_combos:
+          if stars.tiangan in tg_combo:
+            assert tg_combo in actual.tiangan[tg_rel]
 
-        expected_tg: bool = False
-        expected_dz: bool = False
-        for gz in db.ganzhis(TransitMoment(randon_year), random_options):
-          if bazi_utils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
-            expected_tg = True
-          if bazi_utils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
-            expected_dz = True
+      assert _equal(actual.tiangan, tg_discovery.filter(
+        lambda _, combo : stars.tiangan in combo
+      ))
 
-        actual = transits_analysis.zhengyin(randon_year, random_options)
-        self.assertEqual(expected_tg, actual.tiangan)
-        self.assertEqual(expected_dz, actual.dizhi)
+      # Dizhi
+      for dz_rel, dz_combos in actual.dizhi.items():
+        assert dz_rel in dz_discovery
+        for dz_combo in dz_combos:
+          assert dz_combo in dz_discovery[dz_rel]
 
-  @pytest.mark.slow
-  def test_star(self) -> None:
-    for _ in range(16):
-      chart = BaziChart.random()
-      db = TransitDatabase(chart)
-      analyzer = RelationshipAnalyzer(chart)
-      transits_analysis = analyzer.transits
+      for dz_rel, dz_combos in dz_discovery.items():
+        for dz_combo in dz_combos:
+          if len(dz_combo & set(stars.dizhi)) > 0:
+            assert dz_combo in actual.dizhi[dz_rel]
 
-      for __ in range(64):
-        randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
-        random_options = TransitOptions.random()
-        if not transits_analysis.support(randon_year, random_options):
-          continue
+      assert _equal(actual.dizhi, dz_discovery.filter(
+        lambda _, combo : len(combo & set(stars.dizhi)) > 0
+      ))
 
-        expected_tg: bool = False
-        expected_dz: bool = False
-        for gz in db.ganzhis(TransitMoment(randon_year), random_options):
-          if gz.tiangan == chart.relationship_stars.tiangan:
-            expected_tg = True
-          if gz.dizhi in chart.relationship_stars.dizhi:
-            expected_dz = True
+@pytest.mark.slow
+def test_zhengyin() -> None:
+  for _ in range(32):
+    chart = BaziChart.random()
+    db = TransitDatabase(chart)
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
 
-        actual = transits_analysis.star(randon_year, random_options)
-        self.assertEqual(expected_tg, actual.tiangan)
-        self.assertEqual(expected_dz, actual.dizhi)
+    for __ in range(128):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      if not transits_analysis.support(randon_year, random_options):
+        continue
+
+      expected_tg: bool = False
+      expected_dz: bool = False
+      for gz in db.ganzhis(TransitMoment(randon_year), random_options):
+        if bazi_utils.shishen(chart.bazi.day_master, gz.tiangan) == Shishen.正印:
+          expected_tg = True
+        if bazi_utils.shishen(chart.bazi.day_master, gz.dizhi) == Shishen.正印:
+          expected_dz = True
+
+      actual = transits_analysis.zhengyin(randon_year, random_options)
+      assert expected_tg == actual.tiangan
+      assert expected_dz == actual.dizhi
+
+@pytest.mark.slow
+def test_star() -> None:
+  for _ in range(16):
+    chart = BaziChart.random()
+    db = TransitDatabase(chart)
+    analyzer = RelationshipAnalyzer(chart)
+    transits_analysis = analyzer.transits
+
+    for __ in range(64):
+      randon_year = chart.bazi.ganzhi_date.year + random.randint(0, 100)
+      random_options = TransitOptions.random()
+      if not transits_analysis.support(randon_year, random_options):
+        continue
+
+      expected_tg: bool = False
+      expected_dz: bool = False
+      for gz in db.ganzhis(TransitMoment(randon_year), random_options):
+        if gz.tiangan == chart.relationship_stars.tiangan:
+          expected_tg = True
+        if gz.dizhi in chart.relationship_stars.dizhi:
+          expected_dz = True
+
+      actual = transits_analysis.star(randon_year, random_options)
+      assert expected_tg == actual.tiangan
+      assert expected_dz == actual.dizhi
 
 
-class TestShenshaRegistry(unittest.TestCase):
-  def test_registry_matches_shensha_analysis_keys(self) -> None:
-    '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
-    self.assertSetEqual(set(_REGISTRY.keys()),
-                        set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__))
+def test_registry_matches_shensha_analysis_keys() -> None:
+  '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
+  assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
