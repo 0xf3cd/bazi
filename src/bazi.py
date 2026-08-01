@@ -184,19 +184,23 @@ class Bazi:
     - backend: (CalendarBackend) The calendar backend used for all calendar conversions.
     '''
 
-    assert isinstance(birth_time, datetime)
-    assert isinstance(gender, BaziGender)
-    assert isinstance(precision, BaziPrecision)
-    assert isinstance(backend, CalendarBackend)
+    if not isinstance(birth_time, datetime):
+      raise TypeError(f'Expected datetime, got {type(birth_time)}')
+    if not isinstance(gender, BaziGender):
+      raise TypeError(f'Expected BaziGender, got {type(gender)}')
+    if not isinstance(precision, BaziPrecision):
+      raise TypeError(f'Expected BaziPrecision, got {type(precision)}')
+    if not isinstance(backend, CalendarBackend):
+      raise TypeError(f'Expected CalendarBackend, got {type(backend)}')
 
     self._backend: Final[CalendarBackend] = backend
     utils: Final[CalendarUtilsProtocol] = calendar_utils_of(backend)
 
     self._birth_time: Final[datetime] = birth_time
-    assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
+    if self._birth_time.tzinfo is not None:
+      raise ValueError('Timezone should be well-processed outside of this class.')
 
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
-    assert utils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
 
     self._gender: Final[BaziGender] = gender
     self._precision: Final[BaziPrecision] = precision
@@ -274,7 +278,8 @@ class Bazi:
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
 
-    assert _birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
+    if _birth_time.tzinfo is not None:
+      raise ValueError('Timezone should be well-processed outside of this class.')
 
     _gender: BaziGender
     if isinstance(gender, BaziGender):
@@ -339,10 +344,14 @@ class Bazi:
         - Supported values: the member names and values of `CalendarBackend` (e.g. "HKO"/"hko", case insensitive).
     '''
 
-    assert isinstance(birth_time, (datetime, str))
-    assert isinstance(gender, (BaziGender, str))
-    assert isinstance(precision, (BaziPrecision, str))
-    assert isinstance(backend, (CalendarBackend, str))
+    if not isinstance(birth_time, (datetime, str)):
+      raise TypeError(f'Expected datetime or str, got {type(birth_time)}')
+    if not isinstance(gender, (BaziGender, str)):
+      raise TypeError(f'Expected BaziGender or str, got {type(gender)}')
+    if not isinstance(precision, (BaziPrecision, str)):
+      raise TypeError(f'Expected BaziPrecision or str, got {type(precision)}')
+    if not isinstance(backend, (CalendarBackend, str)):
+      raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
 
     _birth_time, _gender, _precision, _backend = Bazi.__parse_bazi_args(birth_time, gender, precision, backend)
     bazi: Bazi = Bazi(

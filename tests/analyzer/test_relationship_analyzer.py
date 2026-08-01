@@ -408,6 +408,33 @@ def test_star() -> None:
       assert expected_dz == actual.dizhi
 
 
+def test_transit_analysis_negative() -> None:
+  chart = BaziChart.random()
+  transits_analysis = RelationshipAnalyzer(chart).transits
+
+  # The year before the chart's own Ganzhi year precedes every transit -- never supported.
+  # 原局干支年之前的年份先于一切流运——必然不受支持。
+  bad_year = chart.bazi.ganzhi_year - 1
+  assert not transits_analysis.support(bad_year, TransitOptions.LIUNIAN)
+
+  with pytest.raises(ValueError):
+    transits_analysis.shensha(bad_year, TransitOptions.LIUNIAN)
+  with pytest.raises(ValueError):
+    transits_analysis.day_master_relations(bad_year, TransitOptions.LIUNIAN)
+  with pytest.raises(ValueError):
+    transits_analysis.house_relations(bad_year, TransitOptions.LIUNIAN)
+  with pytest.raises(ValueError):
+    transits_analysis.star_relations(bad_year, TransitOptions.LIUNIAN)
+  with pytest.raises(ValueError):
+    transits_analysis.zhengyin(bad_year, TransitOptions.LIUNIAN)
+  with pytest.raises(ValueError):
+    transits_analysis.star(bad_year, TransitOptions.LIUNIAN)
+
+  # A plain int with an unknown bit is not a `Level` member (the year is supported; the level gate fires first anyway).
+  with pytest.raises(ValueError):
+    transits_analysis.star_relations(chart.bazi.ganzhi_year, TransitOptions.LIUNIAN, level=0x8) # type: ignore
+
+
 def test_registry_matches_shensha_analysis_keys() -> None:
   '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)

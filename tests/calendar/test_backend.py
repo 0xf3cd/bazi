@@ -70,7 +70,7 @@ def test_create_with_backend() -> None:
   with pytest.raises(ValueError):
     Bazi.create('1984-04-02 04:02', 'male', 'day', backend='lunar')
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi.create('1984-04-02 04:02', 'male', 'day', backend=42) # type: ignore[arg-type]
 
 
@@ -85,7 +85,7 @@ def test_consistent_with_hko_utils() -> None:
 def test_init_rejects_str_backend() -> None:
   # `__init__` only takes the enum; strings go through `Bazi.create` (same
   # contract split as `gender` / `precision`).
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
          backend='hko') # type: ignore[arg-type]
 
