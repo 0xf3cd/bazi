@@ -1,47 +1,48 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_yinyang.py
 
-import unittest
+import pytest
 
 from src.defines import (
   Yinyang, 阴阳,
 )
 
 
-class TestYinyang(unittest.TestCase):
-  def test_basic(self) -> None:
-    self.assertEqual(len(Yinyang), 2)
-    self.assertIs(Yinyang.阴, Yinyang.YIN)
-    self.assertIs(Yinyang.阳, Yinyang.YANG)
+def test_basic() -> None:
+  assert len(Yinyang) == 2
+  assert Yinyang.阴 is Yinyang.YIN
+  assert Yinyang.阳 is Yinyang.YANG
 
-    self.assertEqual(Yinyang.阴.value, '阴')
-    self.assertNotEqual(Yinyang.阴, Yinyang.阳)
-    self.assertNotEqual(Yinyang.阴.value, Yinyang.阳.value)
+  assert Yinyang.阴.value == '阴'
+  assert Yinyang.阴 != Yinyang.阳
+  assert Yinyang.阴.value != Yinyang.阳.value
 
-    self.assertEqual(len(Yinyang.as_list()), 2)
-    self.assertEqual(Yinyang.as_list()[0], Yinyang.阳)
-    self.assertEqual(Yinyang.as_list()[1], Yinyang.阴)
+  assert len(Yinyang.as_list()) == 2
+  assert Yinyang.as_list()[0] == Yinyang.阳
+  assert Yinyang.as_list()[1] == Yinyang.阴
 
-    self.assertIs(阴阳, Yinyang)
+  assert 阴阳 is Yinyang
 
-  def test_str(self) -> None:
-    self.assertEqual(str(Yinyang.阴), '阴')
-    self.assertEqual(str(Yinyang.阳), '阳')
-    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
-    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
-    self.assertEqual(Yinyang('阴'), Yinyang.阴)
-    self.assertEqual(Yinyang('阳'), Yinyang.阳)
 
-    self.assertEqual(''.join([str(e) for e in Yinyang.as_list()]), '阳阴')
+def test_str() -> None:
+  assert str(Yinyang.阴) == '阴'
+  assert str(Yinyang.阳) == '阳'
+  assert Yinyang.from_str('阴') == Yinyang.阴
+  assert Yinyang.from_str('阳') == Yinyang.阳
+  assert Yinyang('阴') == Yinyang.阴
+  assert Yinyang('阳') == Yinyang.阳
 
-    self.assertEqual(Yinyang.from_str('阴'), Yinyang.阴)
-    self.assertEqual(Yinyang.from_str('阳'), Yinyang.阳)
+  assert ''.join([str(e) for e in Yinyang.as_list()]) == '阳阴'
 
-    with self.assertRaises(ValueError):
-      Yinyang.from_str('甲')
-    with self.assertRaises(ValueError):
-      Yinyang.from_str('辰')
+  assert Yinyang.from_str('阴') == Yinyang.阴
+  assert Yinyang.from_str('阳') == Yinyang.阳
 
-  def test_opposite(self) -> None:
-    self.assertEqual(Yinyang.阴.opposite, Yinyang.阳)
-    self.assertEqual(Yinyang.阳.opposite, Yinyang.阴)
+  with pytest.raises(ValueError):
+    Yinyang.from_str('甲')
+  with pytest.raises(ValueError):
+    Yinyang.from_str('辰')
+
+
+def test_opposite() -> None:
+  assert Yinyang.阴.opposite == Yinyang.阳
+  assert Yinyang.阳.opposite == Yinyang.阴

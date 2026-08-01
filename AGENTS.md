@@ -126,7 +126,8 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 
 ## Tests
 - Mirror src layout (`src/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).
-- `unittest.TestCase` subclasses, `self.assertEqual/assertTrue`; pytest runs them.
+- Plain pytest style: module-level `test_*` functions, bare `assert`, `pytest.raises`;
+  `pytest.mark.parametrize` for literal case tables, plain loops for derived ones.
 - Data-driven: inline expected combos as literal sets. Integration → `tests/integration/`.
 
 ## AI do / don't
