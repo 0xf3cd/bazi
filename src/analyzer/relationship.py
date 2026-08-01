@@ -377,10 +377,10 @@ class RelationshipAnalyzer:
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = chart
 
-  @property
+  @functools.cached_property
   def at_birth(self) -> AtBirthAnalysis:
     return AtBirthAnalysis(self._chart)
 
-  @property
+  @functools.cached_property
   def transits(self) -> TransitAnalysis:
     return TransitAnalysis(self._chart)
