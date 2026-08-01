@@ -198,12 +198,6 @@ class Bazi:
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
     assert utils.is_valid_solar_date(self._solar_date) # Here we are also checking if the date falls into the supported range.
 
-    self._hour: Final[int] = self._birth_time.hour
-    assert self._hour >= 0 and self._hour < 24
-
-    self._minute: Final[int] = self._birth_time.minute
-    assert self._minute >= 0 and self._minute < 60
-
     self._gender: Final[BaziGender] = gender
     self._precision: Final[BaziPrecision] = precision
 
@@ -267,7 +261,7 @@ class Bazi:
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
-    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._hour + 1) // 2 % 12)
+    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._birth_time.hour + 1) // 2 % 12)
 
   @staticmethod
   def __parse_bazi_args(
@@ -426,16 +420,20 @@ class Bazi:
 
   @property
   def hour(self) -> int:
-    return self._hour
-  
+    return self._birth_time.hour
+
   @property
   def minute(self) -> int:
-    return self._minute
-  
+    return self._birth_time.minute
+
   @property
   def solar_datetime(self) -> datetime:
-    '''The exact birth time (in solar/gregorian calendar) / 出生时刻（公历）'''
-    return datetime.combine(self.solar_date, time(self.hour, self.minute))
+    '''The birth time (in solar/gregorian calendar), truncated to the minute.
+    Sub-minute parts are deliberately dropped: MINUTE is the finest `BaziPrecision`, so
+    ganzhi attribution never reads below it, and `__eq__`/`__hash__` build on this value.
+    出生时刻（公历），显式截断到分钟——秒以下刻意丢弃：MINUTE 已是最细的排盘精度，
+    干支归属不读秒，`__eq__`/`__hash__` 也建立在截断值上。'''
+    return self._birth_time.replace(second=0, microsecond=0)
   
   @property
   def gender(self) -> BaziGender:

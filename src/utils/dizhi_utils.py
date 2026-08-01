@@ -419,6 +419,26 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
+# The subset-style relations `search` supports, mapped to their combo tables. 暗合
+# pre-resolves `AnheDef.NORMAL_EXTENDED` (the widest definition) at build time. The
+# remaining relations deviate from the subset shape and are special-cased in `search`:
+# 刑 is multiset-sensitive, 生/克 hold directed pairs.
+# `search` 支持的子集型关系与其组合表。暗合在建表时预解最宽的 `NORMAL_EXTENDED` 定义；
+# 其余关系不符合子集形状，在 `search` 内单列：刑是多重集语义，生/克存有向对。
+_SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, frozenset[DizhiCombo]]] = frozendict({
+  DizhiRelation.三会:  frozenset(DizhiRules.DIZHI_SANHUI),
+  DizhiRelation.六合:  frozenset(DizhiRules.DIZHI_LIUHE),
+  DizhiRelation.暗合:  DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED],
+  DizhiRelation.通合:  DizhiRules.DIZHI_TONGHE,
+  DizhiRelation.通禄合: DizhiRules.DIZHI_TONGLUHE,
+  DizhiRelation.三合:  frozenset(DizhiRules.DIZHI_SANHE),
+  DizhiRelation.半合:  frozenset(DizhiRules.DIZHI_BANHE),
+  DizhiRelation.冲:   DizhiRules.DIZHI_CHONG,
+  DizhiRelation.破:   DizhiRules.DIZHI_PO,
+  DizhiRelation.害:   DizhiRules.DIZHI_HAI,
+})
+
+
 def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCombos:
   '''
   Find all possible Dizhi combos in the given `dizhis` that satisfy the `relation`.
@@ -482,56 +502,30 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation) -> DizhiRelationCom
   assert isinstance(dizhis, Sequence), "Non-sequence input loses the info of Dizhis' frequency."
   assert all(isinstance(dz, Dizhi) for dz in dizhis)
 
-  if relation is DizhiRelation.三会:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHUI if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.六合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_LIUHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.暗合:
-    anhe_table: frozenset[DizhiCombo] = DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL_EXTENDED] # Use `NORMAL_EXTENDED` here, which has the widest definition.
-    return DizhiRelationCombos(combo for combo in anhe_table if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.通合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.通禄合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_TONGLUHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.三合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_SANHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.半合:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_BANHE if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.刑:
+  if relation is DizhiRelation.刑:
+    # Multiset-sensitive, so plain subset tests don't apply: 自刑 needs the same Dizhi twice.
+    # 多重集语义（自刑要求同一地支出现两次），普通子集判定不适用。
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
     ret: set[DizhiCombo] = set()
     for xing_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]:
-      # Sadly direct comparisons not implemented on `Counter` with Python 3.9.
-      # Otherwise we can use `dz_counter >= Counter(xing_tuple)` here.
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
       if dz_counter & xing_dz_counter == xing_dz_counter:
         ret.add(DizhiCombo(xing_tuple))
 
     return DizhiRelationCombos(ret)
-  
-  elif relation is DizhiRelation.冲:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_CHONG if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.破:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_PO if combo.issubset(dizhis))
-  
-  elif relation is DizhiRelation.害:
-    return DizhiRelationCombos(combo for combo in DizhiRules.DIZHI_HAI if combo.issubset(dizhis))
 
-  # Else, `relation` must be `生` or `克`.
-  assert relation is DizhiRelation.生 or relation is DizhiRelation.克
-  rules: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
-  frozen_rules: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, rules))
-  dz_set: set[Dizhi] = set(dizhis)
-  return DizhiRelationCombos(combo for combo in frozen_rules if all(dz in dz_set for dz in combo))
+  if relation is DizhiRelation.生 or relation is DizhiRelation.克:
+    # The rule tables hold directed (subject, object) pairs -- fold them into direction-less
+    # combos first. 生克规则表存的是有向对，先折叠成无向组合。
+    pairs: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
+    pair_combos: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, pairs))
+    dz_set: set[Dizhi] = set(dizhis)
+    return DizhiRelationCombos(combo for combo in pair_combos if combo.issubset(dz_set))
+
+  # Every other relation shares one shape: keep the table combos fully present in the input.
+  # 其余关系同构：保留完整出现在输入中的组合。
+  return DizhiRelationCombos(combo for combo in _SUBSET_SEARCH_COMBOS[relation] if combo.issubset(dizhis))
 
 
 def discover(dizhis: Sequence[Dizhi]) -> DizhiRelationDiscovery:

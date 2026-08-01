@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from enum import Enum
+from typing import Final
 
 
 class Wuxing(Enum):
@@ -49,18 +50,8 @@ class Wuxing(Enum):
     - Wuxing.木.generates(Wuxing.火) -> True  # Wood feeds Fire / 木生火
     - Wuxing.火.generates(Wuxing.木) -> False # Fire does not generate Wood / 火不生木
     '''
-    if self is Wuxing.木:
-      return wx is Wuxing.火
-    elif self is Wuxing.火:
-      return wx is Wuxing.土
-    elif self is Wuxing.土:
-      return wx is Wuxing.金
-    elif self is Wuxing.金:
-      return wx is Wuxing.水
-    else:
-      assert self is Wuxing.水
-      return wx is Wuxing.木
-    
+    return _GENERATES[self] is wx
+
   def destructs(self, wx: 'Wuxing') -> bool:
     '''
     Check if the input wuxing can be destroyed by the current.
@@ -79,16 +70,13 @@ class Wuxing(Enum):
     - Wuxing.土.destructs(Wuxing.水) -> True  # Earth destroys Water / 土克水
     - Wuxing.水.destructs(Wuxing.土) -> False # Water does not destroy Earth / 水不克土
     '''
-    if self is Wuxing.木:
-      return wx is Wuxing.土
-    elif self is Wuxing.火:
-      return wx is Wuxing.金
-    elif self is Wuxing.土:
-      return wx is Wuxing.水
-    elif self is Wuxing.金:
-      return wx is Wuxing.木
-    else:
-      assert self is Wuxing.水
-      return wx is Wuxing.火
+    return _DESTRUCTS[self] is wx
 
 五行 = Wuxing # Alias
+
+
+# Both relations are walks along the generation cycle (相生环: 木→火→土→金→水→木):
+# generation is one step, destruction two steps (隔位相克).
+_CYCLE: Final[list[Wuxing]] = [Wuxing.木, Wuxing.火, Wuxing.土, Wuxing.金, Wuxing.水]
+_GENERATES: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 1) % 5] for i, wx in enumerate(_CYCLE) }
+_DESTRUCTS: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 2) % 5] for i, wx in enumerate(_CYCLE) }

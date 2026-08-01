@@ -4,7 +4,7 @@ import functools
 
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
-from itertools import starmap, product, compress, chain
+from itertools import product
 from typing import Final, TypedDict
 from collections.abc import Callable, Iterable
 
@@ -31,10 +31,9 @@ def find_shensha(
   f: Callable[..., bool],
   *args: _ArgsType,
 ) -> Iterable[Dizhi]:
-  '''An fp-styled helper private/internal function for finding Shensha (神煞).'''
-  producted_args = list(chain(*(product(*a) for a in args)))
-  results = starmap(f, producted_args)
-  return (x[1] for x in compress(producted_args, results))
+  '''A private/internal helper for finding Shensha (神煞): yield the Dizhi of every
+  (key, dizhi) pair that the predicate `f` accepts.'''
+  return (dz for first, second in args for key, dz in product(first, second) if f(key, dz))
 
 
 @unique
