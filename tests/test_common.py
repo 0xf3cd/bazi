@@ -292,9 +292,9 @@ class TestCommon(unittest.TestCase):
     self.assertNotEqual(combo5, (None, Shishen.七杀))
 
   def test_bazidata(self) -> None:
-    bd1: BaziData[int] = BaziData(int, [1, 2, 3, 4])
-    bd2: BaziData[int] = BaziData(int, [1, 2, 3, 4])
-    bd3: BaziData[int] = BaziData(int, [1, 2, 3, 5])
+    bd1: BaziData[int] = BaziData(1, 2, 3, 4)
+    bd2: BaziData[int] = BaziData(1, 2, 3, 4)
+    bd3: BaziData[int] = BaziData(1, 2, 3, 5)
     self.assertEqual(bd1, bd2)
     self.assertNotEqual(bd1, bd3)
     self.assertNotEqual(bd1, [1, 2, 3, 4])
@@ -305,50 +305,50 @@ class TestCommon(unittest.TestCase):
     self.assertEqual(bd1.hour, 4)
     self.assertEqual(bd3.hour, 5)
 
-    with self.assertRaises(AssertionError):
-      BaziData(GanzhiData[None, Shishen], [])
+    with self.assertRaises(TypeError):
+      BaziData(1, 2, 3) # type: ignore # arity is enforced by the dataclass signature now
 
-    bd5: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd5: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
-    ])
+    )
 
-    bd6: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd6: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
-    ])
+    )
 
-    bd7: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd7: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(Shishen.比肩, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
-    ])
+    )
 
-    bd8: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd8: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.伤官),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
-    ])
+    )
 
-    bd9: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd9: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(None, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.正官),
-    ])
+    )
 
-    bd10: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(GanzhiData[Shishen | None, Shishen], [
+    bd10: BaziData[GanzhiData[Shishen | None, Shishen]] = BaziData(
       GanzhiData(None, Shishen.七杀),
       GanzhiData(Shishen.伤官, Shishen.偏印),
       GanzhiData(Shishen.正官, Shishen.食神),
       GanzhiData(Shishen.七杀, Shishen.伤官),
-    ])
+    )
 
     self.assertEqual(bd5, bd6)
     self.assertNotEqual(bd5, bd7)

@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from dataclasses import dataclass
 from enum import Enum
-from typing import Final
 
 class CalendarType(Enum):
   '''
@@ -39,109 +39,54 @@ class CalendarType(Enum):
   干支历 = GANZHI
 
 
+@dataclass(frozen=True)
 class CalendarDate:
   '''
   CalendarDate is a thin wrapper of the date.
   ATTENTION: No validity check when instantiating.
+
+  Cross-type comparison semantics follow Python's own convention: `==`/`!=` against a
+  non-`CalendarDate` is `False`/`True` (dataclass-generated `__eq__`), while ordering
+  against one raises `TypeError`. Ordering across different `CalendarType`s also raises --
+  dates on different calendars are incomparable.
   '''
+  year: int
+  month: int
+  day: int
+  date_type: CalendarType
 
-  def __init__(self, year: int, month: int, day: int, date_type: CalendarType) -> None:
+  def __post_init__(self) -> None:
     # Type check at runtime.
-    assert isinstance(year, int)
-    assert isinstance(month, int)
-    assert isinstance(day, int)
-    assert isinstance(date_type, CalendarType)
+    assert isinstance(self.year, int)
+    assert isinstance(self.month, int)
+    assert isinstance(self.day, int)
+    assert isinstance(self.date_type, CalendarType)
 
-    self._year: Final[int] = year
-    self._month: Final[int] = month
-    self._day: Final[int] = day
-    self._date_type: Final[CalendarType] = date_type
-
-  @property
-  def year(self) -> int:
-    return self._year
-
-  @property
-  def month(self) -> int:
-    return self._month
-
-  @property
-  def day(self) -> int:
-    return self._day
-
-  @property
-  def date_type(self) -> CalendarType:
-    return self._date_type
-  
   def __str__(self) -> str:
     return f'({self.year}-{self.month}-{self.day}, {self.date_type.name})'
-  
+
   def __repr__(self) -> str:
     return f'CalendarDate({self.year}, {self.month}, {self.day}, {self.date_type.name})'
-  
-  def __eq__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      return False
-    return self.year == other.year and self.month == other.month and self.day == other.day
-  
-  def __ne__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    return not self.__eq__(other)
-  
-  def __lt__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
-    if self.year != other.year:
-      return self.year < other.year
-    if self.month != other.month:
-      return self.month < other.month
-    if self.day != other.day:
-      return self.day < other.day
-    return False
-  
-  def __le__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
-    if self.year != other.year:
-      return self.year < other.year
-    if self.month != other.month:
-      return self.month < other.month
-    if self.day != other.day:
-      return self.day < other.day
-    return True
-  
-  def __gt__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
-    if self.year != other.year:
-      return self.year > other.year
-    if self.month != other.month:
-      return self.month > other.month
-    if self.day != other.day:
-      return self.day > other.day
-    return False
-  
-  def __ge__(self, other: object) -> bool:
-    if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
-    if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalenderType.')
-    if self.year != other.year:
-      return self.year > other.year
-    if self.month != other.month:
-      return self.month > other.month
-    if self.day != other.day:
-      return self.day > other.day
-    return True
 
-  def __hash__(self) -> int:
-    return hash((self.year, self.month, self.day, self.date_type))
+  def __ymd(self, other: object) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    if not isinstance(other, CalendarDate):
+      raise TypeError('Not a CalendarDate object.')
+    if self.date_type != other.date_type:
+      raise TypeError('objects not of the same CalenderType.')
+    return (self.year, self.month, self.day), (other.year, other.month, other.day)
+
+  def __lt__(self, other: object) -> bool:
+    lhs, rhs = self.__ymd(other)
+    return lhs < rhs
+
+  def __le__(self, other: object) -> bool:
+    lhs, rhs = self.__ymd(other)
+    return lhs <= rhs
+
+  def __gt__(self, other: object) -> bool:
+    lhs, rhs = self.__ymd(other)
+    return lhs > rhs
+
+  def __ge__(self, other: object) -> bool:
+    lhs, rhs = self.__ymd(other)
+    return lhs >= rhs

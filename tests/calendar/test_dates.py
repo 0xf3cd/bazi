@@ -36,10 +36,8 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(sd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
     self.assertNotEqual(sd, CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(sd, date(2024, 1, 1))
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(sd, '2024-01-01')
+    self.assertNotEqual(sd, date(2024, 1, 1))
+    self.assertNotEqual(sd, '2024-01-01')
 
     with self.assertRaises(AssertionError):
       CalendarDate('2024', 1, 1, CalendarType.SOLAR) # type: ignore
@@ -75,10 +73,8 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(ld, CalendarDate(2024, 1, 1, CalendarType.SOLAR))
     self.assertNotEqual(ld, CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(ld, date(2024, 1, 1))
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(ld, '2024-01-01')
+    self.assertNotEqual(ld, date(2024, 1, 1))
+    self.assertNotEqual(ld, '2024-01-01')
 
     with self.assertRaises(AssertionError):
       CalendarDate('2024', 1, 1, CalendarType.LUNAR) # type: ignore
@@ -113,10 +109,8 @@ class TestCalendarDate(unittest.TestCase):
     self.assertNotEqual(gzd, CalendarDate(2024, 1, 1, CalendarType.LUNAR))
     self.assertNotEqual(gzd, CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(gzd, date(2024, 1, 1))
-    with self.assertRaises(TypeError):
-      self.assertNotEqual(gzd, '2024-01-01')
+    self.assertNotEqual(gzd, date(2024, 1, 1))
+    self.assertNotEqual(gzd, '2024-01-01')
 
     with self.assertRaises(AssertionError):
       CalendarDate('2024', 1, 1, CalendarType.GANZHI) # type: ignore
@@ -213,15 +207,18 @@ class TestCalendarDate(unittest.TestCase):
       self.assertRaises(TypeError, lambda : d1 >= d2)
 
     for d1, dt in zip(calendar_dates, [date(2024, 1, 1)] * 3):
-      self.assertRaises(TypeError, lambda : d1 == dt)
-      self.assertRaises(TypeError, lambda : d1 != dt)
+      # `==`/`!=` against a foreign type follow Python's convention (False/True, both
+      # directions, no raise); ordering against one still raises.
+      self.assertFalse(d1 == dt)
+      self.assertTrue(d1 != dt)
+      self.assertFalse(dt == d1)
+      self.assertTrue(dt != d1)
+
       self.assertRaises(TypeError, lambda : d1 < dt)
       self.assertRaises(TypeError, lambda : d1 <= dt)
       self.assertRaises(TypeError, lambda : d1 > dt)
       self.assertRaises(TypeError, lambda : d1 >= dt)
 
-      self.assertRaises(TypeError, lambda : dt == d1)
-      self.assertRaises(TypeError, lambda : dt != d1)
       self.assertRaises(TypeError, lambda : dt < d1)
       self.assertRaises(TypeError, lambda : dt <= d1)
       self.assertRaises(TypeError, lambda : dt > d1)
@@ -266,47 +263,19 @@ class TestCalendarDate(unittest.TestCase):
         d.date_type = CalendarType.LUNAR # type: ignore
 
     with self.subTest('Write to underlying instance variables'):
-      # Not really expect users to really write to the underlying instance variables though.
+      # A frozen dataclass rejects writes to any attribute -- even brand-new private names.
       d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
-      d._year = 1999 # type: ignore
-      d._month = 2 # type: ignore
-      d._day = 10 # type: ignore
-      d._date_type = CalendarType.LUNAR # type: ignore
-      self.assertEqual(d, CalendarDate(1999, 2, 10, CalendarType.LUNAR))
+      with self.assertRaises(AttributeError):
+        d._year = 1999 # type: ignore
     
   def test_copy(self) -> None:
-    with self.subTest('Test shallow copy'):
-      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
-      d_copy = copy.copy(d)
-      self.assertEqual(d, d_copy)
-      self.assertIsNot(d, d_copy)
-
-      d_copy._year += 1 # type: ignore
-      self.assertNotEqual(d, d_copy)
-      self.assertNotEqual(d_copy, d)
-
-      d_copy._year -= 1 # type: ignore
-      self.assertEqual(d, d_copy)
-      self.assertEqual(d_copy, d)
-
-      d_copy._date_type = CalendarType.LUNAR # type: ignore
-      self.assertNotEqual(d, d_copy)
-      self.assertNotEqual(d_copy, d)
-
-    with self.subTest('Test deep copy'):
-      d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
-      d_copy = copy.deepcopy(d)
-      self.assertEqual(d, d_copy)
-      self.assertIsNot(d, d_copy)
-
-      d_copy._year += 1 # type: ignore
-      self.assertNotEqual(d, d_copy)
-      self.assertNotEqual(d_copy, d)
-
-      d_copy._year -= 1 # type: ignore
-      self.assertEqual(d, d_copy)
-      self.assertEqual(d_copy, d)
-
-      d_copy._date_type = CalendarType.LUNAR # type: ignore
-      self.assertNotEqual(d, d_copy)
-      self.assertNotEqual(d_copy, d)
+    d = CalendarDate(2000, 1, 1, CalendarType.SOLAR)
+    for method, d_copy in [('shallow', copy.copy(d)), ('deep', copy.deepcopy(d))]:
+      with self.subTest(f'Test {method} copy'):
+        self.assertEqual(d, d_copy)
+        self.assertEqual(d_copy, d)
+        self.assertIsNot(d, d_copy)
+        # Copies can no longer be mutated into inequality (frozen dataclass), so
+        # distinctness is shown against freshly constructed different dates instead.
+        self.assertNotEqual(d_copy, CalendarDate(2001, 1, 1, CalendarType.SOLAR))
+        self.assertNotEqual(d_copy, CalendarDate(2000, 1, 1, CalendarType.LUNAR))

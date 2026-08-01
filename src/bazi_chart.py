@@ -108,7 +108,7 @@ class BaziChart:
     tiangan_traits: list[TraitTuple] = [traits(tg) for tg in self._bazi.four_tiangans]
     dizhi_traits: list[TraitTuple] = [traits(dz) for dz in self._bazi.four_dizhis]
     pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
-    return BaziData(BaziChart.PillarTraits, pillar_data)
+    return BaziData(*pillar_data)
   
   @property
   def hidden_tiangan(self) -> BaziData[HiddenTianganDict]:
@@ -130,7 +130,7 @@ class BaziChart:
     ```
     '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
-    return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
+    return BaziData(*dizhi_hidden_tiangans)
   
   PillarShishens = GanzhiData[Shishen | None, Shishen]
   @property
@@ -170,7 +170,7 @@ class BaziChart:
       shishen_list.append(BaziChart.PillarShishens(tg_shishen, dz_shishen))
 
     assert len(shishen_list) == 4
-    return BaziData(self.PillarShishens, shishen_list)
+    return BaziData(*shishen_list)
   
   @property
   def nayin(self) -> BaziData[str]:
@@ -190,7 +190,7 @@ class BaziChart:
     '''
 
     nayin_list: list[str] = [nayin_str(gz) for gz in self._bazi.pillars]
-    return BaziData(str, nayin_list)
+    return BaziData(*nayin_list)
   
   @property
   def shier_zhangsheng(self) -> BaziData[ShierZhangsheng]:
@@ -212,7 +212,7 @@ class BaziChart:
     day_master: Tiangan = self._bazi.day_master
 
     zhangsheng_list: list[ShierZhangsheng] = [shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
-    return BaziData(ShierZhangsheng, zhangsheng_list)
+    return BaziData(*zhangsheng_list)
   
   @property
   def dayun_order(self) -> bool:

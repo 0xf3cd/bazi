@@ -3,6 +3,7 @@
 import copy
 import inspect
 
+from dataclasses import dataclass
 from datetime import datetime
 
 from typing import (
@@ -212,82 +213,31 @@ class HiddenTianganDict(frozendict[Tiangan, int]):
 
 
 PillarDataType = TypeVar('PillarDataType')
+@dataclass(frozen=True)
 class BaziData(Generic[PillarDataType]):
   '''
   A generic class for storing Bazi data.
   A `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
   '''
-  def __init__(self, generic_type: type[PillarDataType], data: Sequence[PillarDataType]) -> None:
-    self._type: Final[type[PillarDataType]] = generic_type
-    
-    assert len(data) == 4
-    self._year: Final[PillarDataType] = copy.deepcopy(data[0])
-    self._month: Final[PillarDataType] = copy.deepcopy(data[1])
-    self._day: Final[PillarDataType] = copy.deepcopy(data[2])
-    self._hour: Final[PillarDataType] = copy.deepcopy(data[3])
+  year: PillarDataType
+  month: PillarDataType
+  day: PillarDataType
+  hour: PillarDataType
 
-  @property
-  def year(self) -> PillarDataType:
-    return copy.deepcopy(self._year)
-
-  @property
-  def month(self) -> PillarDataType:
-    return copy.deepcopy(self._month)
-
-  @property
-  def day(self) -> PillarDataType:
-    return copy.deepcopy(self._day)
-
-  @property
-  def hour(self) -> PillarDataType:
-    return copy.deepcopy(self._hour)
-  
   def __iter__(self) -> Iterator[PillarDataType]:
-    return iter((self._year, self._month, self._day, self._hour))
-  
-  def __eq__(self, other: object) -> bool:
-    if not isinstance(other, BaziData):
-      return False
-    if self.year != other.year:
-      return False
-    if self.month != other.month:
-      return False
-    if self.day != other.day:
-      return False
-    return bool(self.hour == other.hour) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
-  
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
+    return iter((self.year, self.month, self.day, self.hour))
 
 
 TianganDataType_co = TypeVar('TianganDataType_co', covariant=True)
 DizhiDataType_co = TypeVar('DizhiDataType_co', covariant=True)
+@dataclass(frozen=True)
 class GanzhiData(Generic[TianganDataType_co, DizhiDataType_co]):
   '''
   A helper class for storing the data of a Pillar/Ganzhi.
   Can be used with `BaziData` class.
   '''
-  def __init__(self, tg: TianganDataType_co, dz: DizhiDataType_co) -> None:
-    self._tg: Final[TianganDataType_co] = copy.deepcopy(tg)
-    self._dz: Final[DizhiDataType_co] = copy.deepcopy(dz)
-
-  @property
-  def tiangan(self) -> TianganDataType_co:
-    return copy.deepcopy(self._tg)
-  
-  @property
-  def dizhi(self) -> DizhiDataType_co:
-    return copy.deepcopy(self._dz)
-  
-  def __eq__(self, other: object) -> bool:
-    if not isinstance(other, GanzhiData):
-      return False
-    if self.tiangan != other.tiangan:
-      return False
-    return bool(self.dizhi == other.dizhi) # bool(): `==` on a TypeVar-typed member is Any (--warn-return-any)
-  
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
+  tiangan: TianganDataType_co
+  dizhi: DizhiDataType_co
 
 #endregion
 
