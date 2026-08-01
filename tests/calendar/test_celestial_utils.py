@@ -58,6 +58,13 @@ def test_the_three_bounds_are_one_physical_day() -> None:
     assert ALGO1.to_date(bound(CalendarType.GANZHI)) == day
 
 
+def test_get_min_max_supported_dates_negative() -> None:
+  with pytest.raises(ValueError):
+    ALGO1.get_min_supported_date(42) # Not a CalendarType.
+  with pytest.raises(ValueError):
+    ALGO1.get_max_supported_date(42) # Not a CalendarType.
+
+
 def test_solar() -> None:
   assert ALGO1.is_valid_solar_date(solar(2024, 2, 4))
   assert not ALGO1.is_valid_solar_date(lunar(2024, 2, 4)) # Wrong date type.
@@ -119,6 +126,13 @@ def test_ganzhi_month_lengths_cannot_poison_the_cache() -> None:
   assert ALGO1.is_valid_ganzhi_date(ganzhi(2000, 1, 29))
 
 
+def test_days_counts_in_ganzhi_year_negative() -> None:
+  with pytest.raises(ValueError):
+    ALGO1.days_counts_in_ganzhi_year(1900) # Before the first jieqi-table year.
+  with pytest.raises(ValueError):
+    ALGO1.days_counts_in_ganzhi_year(2100) # The last jieqi-table year: no 立春 of 2101 to close it.
+
+
 def test_round_trips() -> None:
   # Every day of a leap lunar year and of a plain one, both ways round.
   for year in (2023, 2024):
@@ -140,6 +154,38 @@ def test_dates_before_the_year_boundaries() -> None:
   assert ALGO1.solar_to_ganzhi(solar(2024, 2, 5)).year == 2024
 
 
+def test_date_conversions_negative() -> None:
+  with pytest.raises(ValueError):
+    ALGO1.ganzhi_to_lunar(ganzhi(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.ganzhi_to_lunar(solar(2024, 1, 1)) # Wrong date type.
+
+  with pytest.raises(ValueError):
+    ALGO1.lunar_to_ganzhi(lunar(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.lunar_to_ganzhi(solar(2024, 1, 1)) # Wrong date type.
+
+  with pytest.raises(ValueError):
+    ALGO1.solar_to_lunar(solar(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.solar_to_lunar(ganzhi(2024, 1, 1)) # Wrong date type.
+
+  with pytest.raises(ValueError):
+    ALGO1.lunar_to_solar(lunar(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.lunar_to_solar(ganzhi(2024, 1, 1)) # Wrong date type.
+
+  with pytest.raises(ValueError):
+    ALGO1.solar_to_ganzhi(solar(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.solar_to_ganzhi(ganzhi(2024, 1, 1)) # Wrong date type.
+
+  with pytest.raises(ValueError):
+    ALGO1.ganzhi_to_solar(ganzhi(1, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.ganzhi_to_solar(solar(2024, 1, 1)) # Wrong date type.
+
+
 def test_to_family() -> None:
   day: date = date(2024, 2, 4)
   assert ALGO1.to_solar(day) == solar(2024, 2, 4)
@@ -153,6 +199,22 @@ def test_to_family() -> None:
     assert ALGO1.to_lunar(d).date_type == CalendarType.LUNAR
     assert ALGO1.to_ganzhi(d).date_type == CalendarType.GANZHI
     assert ALGO1.to_date(d) == date(2024, 2, 4)
+
+
+def test_to_family_negative() -> None:
+  # Both checks live in the shared funnel, so every `to_*` carries the same contract.
+  with pytest.raises(ValueError):
+    ALGO1.to_solar(date(1901, 1, 1)) # An in-window year, yet before the first supported day (#63).
+  with pytest.raises(ValueError):
+    ALGO1.to_lunar(lunar(9999, 1, 1)) # Out of the supported range.
+  with pytest.raises(ValueError):
+    ALGO1.to_ganzhi(solar(1901, 1, 1)) # Before the first supported day.
+  with pytest.raises(TypeError):
+    ALGO1.to_solar('2024-01-01') # Not a date or CalendarDate.
+  with pytest.raises(TypeError):
+    ALGO1.to_lunar('2024-01-01') # Not a date or CalendarDate.
+  with pytest.raises(TypeError):
+    ALGO1.to_ganzhi('2024-01-01') # Not a date or CalendarDate.
 
 
 def test_real_moments_not_placeholders() -> None:
@@ -169,13 +231,13 @@ def test_date_is_the_moment_truncated() -> None:
 
 
 def test_out_of_range_year() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     ALGO1.jieqi_moment(2101, Jieqi.立春)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     ALGO1.jieqi_moment(1900, Jieqi.立春)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     ALGO1.jieqi_moment('2024', Jieqi.立春)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     ALGO1.jieqi_moment(2024, '立春')
 
 
@@ -192,7 +254,7 @@ def test_jie_range_is_enforced() -> None:
       fn(first - timedelta(seconds=1))
     with pytest.raises(ValueError):
       fn(last) # The upper bound is exclusive.
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       fn(date(2024, 2, 4)) # A date is not a datetime.
 
 

@@ -73,7 +73,8 @@ class DecodedJieqiDates:
 
   def __getitem__(self, year: int) -> JieqiDates:
     '''Note: `year` means Gregorian/Solar year / 公历年'''
-    assert year in self.supported_year_range()
+    if year not in self.supported_year_range():
+      raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
 
     # Extract the bytes for the input `year`.
     year_bytes: bytes = self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len : (year - self.start_year + 1) * 24 * DecodedJieqiDates.date_bytes_len]
@@ -89,7 +90,8 @@ class DecodedJieqiDates:
 
     Note: `year` means Gregorian/Solar year / 公历年
     '''
-    assert year in self.supported_year_range()
+    if year not in self.supported_year_range():
+      raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
     return self[year][jieqi]
   
   def supported_year_range(self) -> range:
@@ -149,8 +151,10 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
-    assert isinstance(lunar_year, int)
-    assert lunar_year in self.supported_year_range()
+    if not isinstance(lunar_year, int):
+      raise TypeError(f'Expected int, got {type(lunar_year)}')
+    if lunar_year not in self.supported_year_range():
+      raise ValueError(f'Year {lunar_year} is out of the supported range {self.supported_year_range()}')
 
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
@@ -188,8 +192,10 @@ class DecodedLunarYears:
     The returned record is rebuilt per call (with a fresh `days_counts` list), so mutating
     it cannot poison the cache. The other values are immutable and safe to share.
     '''
-    assert isinstance(lunar_year, int)
-    assert lunar_year in self.supported_year_range()
+    if not isinstance(lunar_year, int):
+      raise TypeError(f'Expected int, got {type(lunar_year)}')
+    if lunar_year not in self.supported_year_range():
+      raise ValueError(f'Year {lunar_year} is out of the supported range {self.supported_year_range()}')
     info: LunarYearInfo = self.__cached_info(lunar_year)
     return LunarYearInfo(
       first_solar_day=info['first_solar_day'],

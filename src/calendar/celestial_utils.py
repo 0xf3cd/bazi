@@ -64,9 +64,10 @@ class CelestialCalendarUtils:
       return CalendarDate(first.year, first.month, first.day, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
       return self.solar_to_lunar(self.get_min_supported_date(CalendarType.SOLAR))
-    else:
-      assert date_type == CalendarType.GANZHI
+    elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_min_supported_date(CalendarType.SOLAR))
+    else:
+      raise ValueError(f'Unsupported date_type: {date_type}')
 
   @functools.lru_cache(maxsize=512)
   def get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
@@ -78,9 +79,10 @@ class CelestialCalendarUtils:
       return CalendarDate(last_year, 12, 31, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
       return self.solar_to_lunar(self.get_max_supported_date(CalendarType.SOLAR))
-    else:
-      assert date_type == CalendarType.GANZHI
+    elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_max_supported_date(CalendarType.SOLAR))
+    else:
+      raise ValueError(f'Unsupported date_type: {date_type}')
 
   # -- Validity --------------------------------------------------------------------
 
@@ -180,8 +182,11 @@ class CelestialCalendarUtils:
   @functools.lru_cache(maxsize=512)
   def __days_counts_in_ganzhi_year(self, ganzhi_year: int) -> tuple[int, ...]:
     # A ganzhi year needs the 立春 of the next solar year to close its last month.
-    assert ganzhi_year in self._jieqi_table.supported_year_range()
-    assert ganzhi_year + 1 in self._jieqi_table.supported_year_range()
+    if ganzhi_year not in self._jieqi_table.supported_year_range():
+      raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
+    if ganzhi_year + 1 not in self._jieqi_table.supported_year_range():
+      raise ValueError(f'Ganzhi year {ganzhi_year} needs jieqi data of year {ganzhi_year + 1}, '
+                       f'which is out of the supported range {self._jieqi_table.supported_year_range()}')
 
     jies: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
     assert jies[0] is Jieqi.立春
@@ -201,8 +206,11 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def lunar_to_solar(self, lunar_date: CalendarDate) -> CalendarDate:
-    assert lunar_date.date_type == CalendarType.LUNAR
-    assert self.is_valid(lunar_date)
+    if lunar_date.date_type != CalendarType.LUNAR:
+      raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
+    if not self.is_valid(lunar_date):
+      raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(lunar_date.date_type)}, {self.get_max_supported_date(lunar_date.date_type)}]')
 
     info: LunarYearInfo = self._lunar_table.get(lunar_date.year)
     passed_days: int = sum(info['days_counts'][:lunar_date.month - 1]) + lunar_date.day - 1
@@ -211,8 +219,11 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def solar_to_lunar(self, solar_date: CalendarDate) -> CalendarDate:
-    assert solar_date.date_type == CalendarType.SOLAR
-    assert self.is_valid(solar_date)
+    if solar_date.date_type != CalendarType.SOLAR:
+      raise ValueError(f'Expected a SOLAR date, got {solar_date}')
+    if not self.is_valid(solar_date):
+      raise ValueError(f'"{solar_date}" is not a valid {solar_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(solar_date.date_type)}, {self.get_max_supported_date(solar_date.date_type)}]')
     solar: date = date(solar_date.year, solar_date.month, solar_date.day)
 
     # A solar date early in the year still belongs to the previous lunar year.
@@ -227,8 +238,11 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def ganzhi_to_solar(self, ganzhi_date: CalendarDate) -> CalendarDate:
-    assert ganzhi_date.date_type == CalendarType.GANZHI
-    assert self.is_valid(ganzhi_date)
+    if ganzhi_date.date_type != CalendarType.GANZHI:
+      raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
+    if not self.is_valid(ganzhi_date):
+      raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(ganzhi_date.date_type)}, {self.get_max_supported_date(ganzhi_date.date_type)}]')
 
     days_counts: list[int] = self.days_counts_in_ganzhi_year(ganzhi_date.year)
     passed_days: int = sum(days_counts[:ganzhi_date.month - 1]) + ganzhi_date.day - 1
@@ -237,8 +251,11 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def solar_to_ganzhi(self, solar_date: CalendarDate) -> CalendarDate:
-    assert solar_date.date_type == CalendarType.SOLAR
-    assert self.is_valid(solar_date)
+    if solar_date.date_type != CalendarType.SOLAR:
+      raise ValueError(f'Expected a SOLAR date, got {solar_date}')
+    if not self.is_valid(solar_date):
+      raise ValueError(f'"{solar_date}" is not a valid {solar_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(solar_date.date_type)}, {self.get_max_supported_date(solar_date.date_type)}]')
     solar: date = date(solar_date.year, solar_date.month, solar_date.day)
 
     # A solar date before 立春 still belongs to the previous ganzhi year.
@@ -252,14 +269,20 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def lunar_to_ganzhi(self, lunar_date: CalendarDate) -> CalendarDate:
-    assert lunar_date.date_type == CalendarType.LUNAR
-    assert self.is_valid(lunar_date)
+    if lunar_date.date_type != CalendarType.LUNAR:
+      raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
+    if not self.is_valid(lunar_date):
+      raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(lunar_date.date_type)}, {self.get_max_supported_date(lunar_date.date_type)}]')
     return self.solar_to_ganzhi(self.lunar_to_solar(lunar_date))
 
   @functools.lru_cache(maxsize=512)
   def ganzhi_to_lunar(self, ganzhi_date: CalendarDate) -> CalendarDate:
-    assert ganzhi_date.date_type == CalendarType.GANZHI
-    assert self.is_valid(ganzhi_date)
+    if ganzhi_date.date_type != CalendarType.GANZHI:
+      raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
+    if not self.is_valid(ganzhi_date):
+      raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(ganzhi_date.date_type)}, {self.get_max_supported_date(ganzhi_date.date_type)}]')
     return self.solar_to_lunar(self.ganzhi_to_solar(ganzhi_date))
 
   @staticmethod
@@ -277,11 +300,14 @@ class CelestialCalendarUtils:
   def __to_calendardate(self, d: date | CalendarDate) -> CalendarDate:
     if isinstance(d, date):
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
-    else:
-      assert isinstance(d, CalendarDate)
+    elif isinstance(d, CalendarDate):
       ret = d
+    else:
+      raise TypeError(f'Expected date or CalendarDate, got {type(d)}')
 
-    assert self.is_valid(ret)
+    if not self.is_valid(ret):
+      raise ValueError(f'"{ret}" is not a valid {ret.date_type.name} date in the supported range '
+                       f'[{self.get_min_supported_date(ret.date_type)}, {self.get_max_supported_date(ret.date_type)}]')
     return ret
 
   @functools.lru_cache(maxsize=512)
@@ -408,9 +434,12 @@ class CelestialCalendarUtils:
     Return: (datetime) The accurate moment of the Jieqi in the given solar year.
     '''
 
-    assert isinstance(solar_year, int)
-    assert isinstance(jieqi, Jieqi)
-    assert solar_year in self._jieqi_table.supported_year_range()
+    if not isinstance(solar_year, int):
+      raise TypeError(f'Expected int, got {type(solar_year)}')
+    if not isinstance(jieqi, Jieqi):
+      raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
+    if solar_year not in self._jieqi_table.supported_year_range():
+      raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
     return self._jieqi_table.get(solar_year, jieqi)
 
   # maxsize=2, not 1: the cache is class-level, so `ALGO1` and `ALGO2` are two distinct
@@ -450,7 +479,8 @@ class CelestialCalendarUtils:
     Return: (JieqiTime) The previous Jie (节), and its solar datetime.
     '''
 
-    assert isinstance(dt, datetime)
+    if not isinstance(dt, datetime):
+      raise TypeError(f'Expected datetime, got {type(dt)}')
     self.__check_jie_range(dt)
 
     # Walk the year's 节 backwards; `dt` sits in the last interval whose start is <= it.
@@ -480,7 +510,8 @@ class CelestialCalendarUtils:
     Return: (JieqiTime) The next Jie (节), and its solar datetime.
     '''
 
-    assert isinstance(dt, datetime)
+    if not isinstance(dt, datetime):
+      raise TypeError(f'Expected datetime, got {type(dt)}')
     self.__check_jie_range(dt)
 
     for jie in Jieqi.as_list(ganzhi_year=False)[::2]:

@@ -372,7 +372,7 @@ def test_invalid_arguments() -> None:
     Bazi(birth_time='2024-03-03', gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore # Currently doesn't take string as input
   with pytest.raises(AssertionError):
     Bazi(birth_time=date(9999, 1, 1), gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     dt: datetime = datetime(
       year=9999, # Out of supported range.
       month=random.randint(1, 12),

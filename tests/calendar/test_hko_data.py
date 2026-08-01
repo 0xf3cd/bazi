@@ -111,19 +111,19 @@ def test_decode_jieqi() -> None:
 
 def test_decode_jieqi_getitem_negative() -> None:
   decoded_jieqi: hko_data.DecodedJieqiDates = hko_data.DecodedJieqiDates()
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[1000]
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[min(decoded_jieqi.supported_year_range()) - 1]
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[max(decoded_jieqi.supported_year_range()) + 1]
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi['2024'] # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[Jieqi.芒种] # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[:] # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi[date(2024, 1, 1)] # type: ignore
 
   data1 = decoded_jieqi[2024]
@@ -144,13 +144,13 @@ def test_decode_jieqi_get_negative() -> None:
     decoded_jieqi.get(2024)
   with pytest.raises(TypeError):
     decoded_jieqi.get(Jieqi.春分)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi.get('1000', Jieqi.寒露)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi.get(1000, Jieqi.寒露)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi.get(min(decoded_jieqi.supported_year_range()) - 1, Jieqi.寒露)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_jieqi.get(max(decoded_jieqi.supported_year_range()) + 1, Jieqi.寒露)
 
   assert decoded_jieqi.get(2024, Jieqi.立春) == decoded_jieqi.get(2024, Jieqi.立春)
@@ -245,19 +245,21 @@ def test_decode_lunar_year_get_returns_a_copy() -> None:
 
 def test_decode_lunar_year_negative() -> None:
   decoded_lunardate: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_lunardate.get(min(decoded_lunardate.supported_year_range()) - 1)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_lunardate[min(decoded_lunardate.supported_year_range()) - 1]
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_lunardate.get(max(decoded_lunardate.supported_year_range()) + 1)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     decoded_lunardate[max(decoded_lunardate.supported_year_range()) + 1]
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     decoded_lunardate.get('a') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
+    decoded_lunardate['a'] # type: ignore
+  with pytest.raises(TypeError):
     decoded_lunardate.get('1984') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     decoded_lunardate.get(date(year=1984, month=1, day=1)) # type: ignore
 
   temp = decoded_lunardate[2024]

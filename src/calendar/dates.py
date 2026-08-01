@@ -61,10 +61,14 @@ class CalendarDate:
 
   def __post_init__(self) -> None:
     # Type check at runtime.
-    assert isinstance(self.year, int)
-    assert isinstance(self.month, int)
-    assert isinstance(self.day, int)
-    assert isinstance(self.date_type, CalendarType)
+    if not isinstance(self.year, int):
+      raise TypeError(f'Expected int, got {type(self.year)}')
+    if not isinstance(self.month, int):
+      raise TypeError(f'Expected int, got {type(self.month)}')
+    if not isinstance(self.day, int):
+      raise TypeError(f'Expected int, got {type(self.day)}')
+    if not isinstance(self.date_type, CalendarType):
+      raise TypeError(f'Expected CalendarType, got {type(self.date_type)}')
 
   def __str__(self) -> str:
     return f'({self.year}-{self.month}-{self.day}, {self.date_type.name})'

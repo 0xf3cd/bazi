@@ -39,13 +39,13 @@ def test_solar_date() -> None:
   assert sd != date(2024, 1, 1)
   assert sd != '2024-01-01'
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate('2024', 1, 1, CalendarType.SOLAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, '1', 1, CalendarType.SOLAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, '1', CalendarType.SOLAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1, 'SOLAR') # type: ignore
   with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1) # type: ignore # Missing argument.
@@ -77,13 +77,13 @@ def test_lunar_date() -> None:
   assert ld != date(2024, 1, 1)
   assert ld != '2024-01-01'
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate('2024', 1, 1, CalendarType.LUNAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, '1', 1, CalendarType.LUNAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, '1', CalendarType.LUNAR) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1, 'LUNAR') # type: ignore
   with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1) # type: ignore # Missing argument.
@@ -114,13 +114,13 @@ def test_ganzhi_date() -> None:
   assert gzd != date(2024, 1, 1)
   assert gzd != '2024-01-01'
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate('2024', 1, 1, CalendarType.GANZHI) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, '1', 1, CalendarType.GANZHI) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, '1', CalendarType.GANZHI) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1, 'GANZHI') # type: ignore
   with pytest.raises(TypeError):
     CalendarDate(2024, 1, 1) # type: ignore # Missing argument.

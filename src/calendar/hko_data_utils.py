@@ -24,9 +24,10 @@ def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
     return CalendarDate(1901, 2, 19, CalendarType.SOLAR)
   elif date_type == CalendarType.LUNAR:
     return CalendarDate(1901, 1, 1, CalendarType.LUNAR)
-  else:
-    assert date_type == CalendarType.GANZHI
+  elif date_type == CalendarType.GANZHI:
     return CalendarDate(1901, 1, 16, CalendarType.GANZHI)
+  else:
+    raise ValueError(f'Unsupported date_type: {date_type}')
   
 
 @functools.lru_cache(maxsize=512)
@@ -36,9 +37,10 @@ def get_max_supported_date(date_type: CalendarType) -> CalendarDate:
     return CalendarDate(2099, 12, 31, CalendarType.SOLAR)
   elif date_type == CalendarType.LUNAR:
     return CalendarDate(2099, 12, 20, CalendarType.LUNAR) # 2099 is a leap year on lunar calendar.
-  else:
-    assert date_type == CalendarType.GANZHI
+  elif date_type == CalendarType.GANZHI:
     return CalendarDate(2099, 11, 25, CalendarType.GANZHI)
+  else:
+    raise ValueError(f'Unsupported date_type: {date_type}')
 
 
 @functools.lru_cache(maxsize=512)
@@ -167,7 +169,8 @@ def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
 
 @functools.lru_cache(maxsize=512)
 def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
-  assert ganzhi_year <= get_max_supported_date(CalendarType.GANZHI).year
+  if ganzhi_year > get_max_supported_date(CalendarType.GANZHI).year:
+    raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range (last supported: {get_max_supported_date(CalendarType.GANZHI).year})')
 
   jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
   assert jieqi_list[0] == Jieqi.立春 # The first jieqi in every year should be 立春.
@@ -188,8 +191,11 @@ def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
 
 @functools.lru_cache(maxsize=512)
 def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
-  assert lunar_date.date_type == CalendarType.LUNAR
-  assert is_valid(lunar_date)
+  if lunar_date.date_type != CalendarType.LUNAR:
+    raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
+  if not is_valid(lunar_date):
+    raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(lunar_date.date_type)}, {get_max_supported_date(lunar_date.date_type)}]')
   info: LunarYearInfo = lunar_years_db.get(lunar_date.year)
 
   passed_days_count: int = -1
@@ -204,8 +210,11 @@ def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
-  assert solar_date.date_type == CalendarType.SOLAR
-  assert is_valid(solar_date)
+  if solar_date.date_type != CalendarType.SOLAR:
+    raise ValueError(f'Expected a SOLAR date, got {solar_date}')
+  if not is_valid(solar_date):
+    raise ValueError(f'"{solar_date}" is not a valid {solar_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(solar_date.date_type)}, {get_max_supported_date(solar_date.date_type)}]')
 
   # First, figure out the solar date falls into which lunar year.
   lunar_year: int = solar_date.year
@@ -232,8 +241,11 @@ def solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def ganzhi_to_solar(ganzhi_date: CalendarDate) -> CalendarDate:
-  assert ganzhi_date.date_type == CalendarType.GANZHI
-  assert is_valid(ganzhi_date)
+  if ganzhi_date.date_type != CalendarType.GANZHI:
+    raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
+  if not is_valid(ganzhi_date):
+    raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(ganzhi_date.date_type)}, {get_max_supported_date(ganzhi_date.date_type)}]')
 
   # Figure out how many days have passed in the ganzhi year.
   days_counts: list[int] = days_counts_in_ganzhi_year(ganzhi_date.year)
@@ -250,8 +262,11 @@ def ganzhi_to_solar(ganzhi_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
-  assert solar_date.date_type == CalendarType.SOLAR
-  assert is_valid(solar_date)
+  if solar_date.date_type != CalendarType.SOLAR:
+    raise ValueError(f'Expected a SOLAR date, got {solar_date}')
+  if not is_valid(solar_date):
+    raise ValueError(f'"{solar_date}" is not a valid {solar_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(solar_date.date_type)}, {get_max_supported_date(solar_date.date_type)}]')
 
   # Figure out the ganzhi date falls into which ganzhi year.
   ganzhi_year: int = solar_date.year
@@ -276,8 +291,11 @@ def solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
-  assert lunar_date.date_type == CalendarType.LUNAR
-  assert is_valid(lunar_date)
+  if lunar_date.date_type != CalendarType.LUNAR:
+    raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
+  if not is_valid(lunar_date):
+    raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(lunar_date.date_type)}, {get_max_supported_date(lunar_date.date_type)}]')
 
   solar_date: CalendarDate = lunar_to_solar(lunar_date)
   return solar_to_ganzhi(solar_date)
@@ -285,8 +303,11 @@ def lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
-  assert ganzhi_date.date_type == CalendarType.GANZHI
-  assert is_valid(ganzhi_date)
+  if ganzhi_date.date_type != CalendarType.GANZHI:
+    raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
+  if not is_valid(ganzhi_date):
+    raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(ganzhi_date.date_type)}, {get_max_supported_date(ganzhi_date.date_type)}]')
 
   solar_date: CalendarDate = ganzhi_to_solar(ganzhi_date)
   return solar_to_lunar(solar_date)
@@ -296,11 +317,14 @@ def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
 def __to_calendardate(d: date | CalendarDate) -> CalendarDate:
   if isinstance(d, date):
     ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
-  else:
-    assert isinstance(d, CalendarDate)
+  elif isinstance(d, CalendarDate):
     ret = d
+  else:
+    raise TypeError(f'Expected date or CalendarDate, got {type(d)}')
 
-  assert is_valid(ret)
+  if not is_valid(ret):
+    raise ValueError(f'"{ret}" is not a valid {ret.date_type.name} date in the supported range '
+                     f'[{get_min_supported_date(ret.date_type)}, {get_max_supported_date(ret.date_type)}]')
   return ret
 
 
@@ -403,10 +427,13 @@ def jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
   Return: (date) The date of the Jieqi in the given solar/gregorian year.
   '''
 
-  assert isinstance(solar_year, int)
-  assert isinstance(jieqi, Jieqi)
+  if not isinstance(solar_year, int):
+    raise TypeError(f'Expected int, got {type(solar_year)}')
+  if not isinstance(jieqi, Jieqi):
+    raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
 
-  assert solar_year in jieqi_dates_db.supported_year_range()
+  if solar_year not in jieqi_dates_db.supported_year_range():
+    raise ValueError(f'Year {solar_year} is out of the supported range {jieqi_dates_db.supported_year_range()}')
   return jieqi_dates_db.get(solar_year, jieqi)
 
 
@@ -428,10 +455,13 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
   Return: (datetime) The accurate moment of the Jieqi in the given solar/gregorian year.
   '''
 
-  assert isinstance(solar_year, int)
-  assert isinstance(jieqi, Jieqi)
+  if not isinstance(solar_year, int):
+    raise TypeError(f'Expected int, got {type(solar_year)}')
+  if not isinstance(jieqi, Jieqi):
+    raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
 
-  assert solar_year in jieqi_dates_db.supported_year_range()
+  if solar_year not in jieqi_dates_db.supported_year_range():
+    raise ValueError(f'Year {solar_year} is out of the supported range {jieqi_dates_db.supported_year_range()}')
   dt: date = jieqi_dates_db.get(solar_year, jieqi)
   return datetime.combine(dt, time(0, 0, 0))
 
@@ -471,7 +501,8 @@ def prev_jie(dt: datetime) -> JieqiTime:
     - return: (Jieqi.大雪, jieqi_moment(2023, Jieqi.大雪))
   '''
 
-  assert isinstance(dt, datetime)
+  if not isinstance(dt, datetime):
+    raise TypeError(f'Expected datetime, got {type(dt)}')
 
   supported_jie_range: tuple[datetime, datetime] = supported_jie_boundaries()
   if dt < supported_jie_range[0]:
@@ -515,7 +546,8 @@ def next_jie(dt: datetime) -> JieqiTime:
     - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
   '''
 
-  assert isinstance(dt, datetime)
+  if not isinstance(dt, datetime):
+    raise TypeError(f'Expected datetime, got {type(dt)}')
 
   supported_jie_range: tuple[datetime, datetime] = supported_jie_boundaries()
   if dt < supported_jie_range[0]:

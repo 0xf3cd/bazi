@@ -35,7 +35,7 @@ def test_from_str() -> None:
   with pytest.raises(ValueError):
     CalendarBackend.from_str('lunar') # Not a supported backend.
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     CalendarBackend.from_str(42) # type: ignore[arg-type]
 
 
@@ -57,7 +57,7 @@ def test_calendar_utils_of() -> None:
   with pytest.raises(ValueError):
     calendar_utils_of('lunar')
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     calendar_utils_of(42) # type: ignore[arg-type]
 
 

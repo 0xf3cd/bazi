@@ -13,6 +13,16 @@ from src.calendar.hko_data import DecodedLunarYears, DecodedJieqiDates
 from src.defines import Jieqi
 
 
+def test_get_min_supported_date_negative() -> None:
+  with pytest.raises(ValueError):
+    hko_data_utils.get_min_supported_date(42)
+
+
+def test_get_max_supported_date_negative() -> None:
+  with pytest.raises(ValueError):
+    hko_data_utils.get_max_supported_date(42)
+
+
 @pytest.mark.slow
 def test_is_valid_solar_date() -> None:
   d: date = date(1902, 1, 1)
@@ -92,11 +102,11 @@ def test_days_counts_in_ganzhi_year() -> None:
   max_year: int = hko_data_utils.get_max_supported_date(CalendarType.GANZHI).year
 
   # Test negative cases first.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.days_counts_in_ganzhi_year(-1)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.days_counts_in_ganzhi_year(min_year - 1)
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.days_counts_in_ganzhi_year(max_year + 1)
 
   # Test edge cases.
@@ -368,34 +378,34 @@ def test_complex_date_conversions() -> None:
 
 
 def test_date_conversions_negative() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.ganzhi_to_lunar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.ganzhi_to_lunar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.lunar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.LUNAR))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.lunar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.solar_to_lunar(CalendarDate(1, 1, 1, CalendarType.SOLAR))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.solar_to_lunar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.lunar_to_solar(CalendarDate(1, 1, 1, CalendarType.LUNAR))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.lunar_to_solar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.solar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.SOLAR))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.solar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.ganzhi_to_solar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.ganzhi_to_solar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
 
@@ -410,9 +420,11 @@ def test_to_solar() -> None:
   assert solar_date == hko_data_utils.to_solar(hko_data_utils.solar_to_ganzhi(solar_date))
 
   # Negative cases.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.to_solar(CalendarDate(9999, 1, 1, CalendarType.SOLAR)) # Invalid date
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
+    hko_data_utils.to_solar(CalendarDate(1901, 1, 1, CalendarType.SOLAR)) # Below the supported range
+  with pytest.raises(TypeError):
     hko_data_utils.to_solar('2024-01-01') # Invalid type
 
 
@@ -427,9 +439,11 @@ def test_to_lunar() -> None:
   assert lunar_date == hko_data_utils.to_lunar(hko_data_utils.lunar_to_ganzhi(lunar_date))
 
   # Negative cases.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.to_lunar(CalendarDate(9999, 1, 1, CalendarType.LUNAR)) # Invalid date
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
+    hko_data_utils.to_lunar(date(1901, 1, 1)) # Below the supported range
+  with pytest.raises(TypeError):
     hko_data_utils.to_lunar('2024-01-01') # Invalid type
 
 
@@ -444,9 +458,11 @@ def test_to_ganzhi() -> None:
   assert ganzhi_date == hko_data_utils.to_ganzhi(hko_data_utils.ganzhi_to_lunar(ganzhi_date))
 
   # Negative cases.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.to_ganzhi(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
+    hko_data_utils.to_ganzhi(CalendarDate(1901, 1, 1, CalendarType.SOLAR)) # Below the supported range
+  with pytest.raises(TypeError):
     hko_data_utils.to_ganzhi('2024-01-01') # Invalid type
 
 
@@ -464,24 +480,24 @@ def test_to_date() -> None:
   assert hko_data_utils.to_date(cd) == date(1901, 2, 19)
 
   # Negative cases.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.to_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.to_date('2024-01-01') # Invalid type
 
 
 def test_get_jieqi_date() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.jieqi_date('2024', Jieqi.大寒)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.jieqi_date(2024, '大寒')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_date(9999, Jieqi.大寒) # Out of supported solar year range.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_date(2101, Jieqi.小寒) # Out of supported solar year range.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_date(0, Jieqi.大寒) # Out of supported solar year range.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_date(1900, Jieqi.冬至) # Out of supported solar year range.
 
   assert hko_data_utils.jieqi_date(1901, Jieqi.小寒) == date(1901, 1, 6)
@@ -501,16 +517,18 @@ def test_get_jieqi_date() -> None:
 
 
 def test_get_jieqi_moment() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.jieqi_moment('2024', Jieqi.大寒)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.jieqi_moment(2024, '大寒')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_moment(9999, Jieqi.大寒) # Out of supported solar year range.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_moment(2101, Jieqi.小寒) # Out of supported solar year range.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     hko_data_utils.jieqi_moment(0, Jieqi.大寒) # Out of supported solar year range.
+  with pytest.raises(ValueError):
+    hko_data_utils.jieqi_moment(1900, Jieqi.冬至) # Out of supported solar year range.
 
   # HKO data only supported day-level precision.
   # So all returned moments are always at the beginning of the day.
@@ -533,7 +551,7 @@ def test_get_jieqi_moment() -> None:
 def test_prev_jie() -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.prev_jie('2024-06-15')
   with pytest.raises(ValueError):
     hko_data_utils.prev_jie(datetime(1899, 12, 31))
@@ -593,7 +611,7 @@ def test_prev_jie() -> None:
 def test_next_jie() -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     hko_data_utils.next_jie('2024-06-15')
   with pytest.raises(ValueError):
     hko_data_utils.next_jie(datetime(1899, 12, 31))
