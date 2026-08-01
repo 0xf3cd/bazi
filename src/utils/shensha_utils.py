@@ -28,8 +28,10 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  assert isinstance(year_or_day_dizhi, Dizhi)
-  assert isinstance(other_dizhi, Dizhi)
+  if not isinstance(year_or_day_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.TAOHUA[year_or_day_dizhi] is other_dizhi
 
 
@@ -51,8 +53,10 @@ def hongyan(day_master: Tiangan, dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  assert isinstance(day_master, Tiangan)
-  assert isinstance(dizhi, Dizhi)
+  if not isinstance(day_master, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
   return ShenshaRules.HONGYAN[day_master] is dizhi
 
 
@@ -74,8 +78,10 @@ def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  assert isinstance(year_dizhi, Dizhi)
-  assert isinstance(other_dizhi, Dizhi)
+  if not isinstance(year_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.HONGLUAN[year_dizhi] is other_dizhi
 
 
@@ -97,8 +103,10 @@ def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  assert isinstance(year_dizhi, Dizhi)
-  assert isinstance(other_dizhi, Dizhi)
+  if not isinstance(year_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.TIANXI[year_dizhi] is other_dizhi
 
 
@@ -120,6 +128,8 @@ def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  assert isinstance(year_or_day_dizhi, Dizhi)
-  assert isinstance(other_dizhi, Dizhi)
+  if not isinstance(year_or_day_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.YIMA[year_or_day_dizhi] is other_dizhi

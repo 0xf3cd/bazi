@@ -60,11 +60,11 @@ def test_from_str() -> None:
     Dizhi.from_str('Zi')
   with pytest.raises(ValueError):
     Dizhi.from_str('甲')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Dizhi.from_str(Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Dizhi.from_str(0) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Dizhi.from_str(Tiangan.丁) # type: ignore
 
   assert Dizhi.from_str('寅') == Dizhi.寅

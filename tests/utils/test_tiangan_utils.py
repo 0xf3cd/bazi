@@ -102,23 +102,23 @@ def test_search_negative() -> None:
     tiangan_utils.search(Tiangan.辛, TianganRelation.合) # type: ignore
   with pytest.raises(TypeError):
     tiangan_utils.search((Tiangan.甲, Dizhi.子)) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.search((Tiangan.甲, Dizhi.子), TianganRelation.合) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.search(('甲', '丙', '辛'), TianganRelation.合) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, '辛'), TianganRelation.合) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), '合') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), 'HE') # type: ignore
 
   for dz_relation in DizhiRelation:
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), dz_relation) # type: ignore
 
   for relation in TianganRelation:
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), str(relation)) # type: ignore
 
   # No need to mutate the result: the returned tuple is immutable.
@@ -240,11 +240,11 @@ def test_search_correctness() -> None:
 
 
 def test_he() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.he(Tiangan.甲, Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.he(Dizhi.子, Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.he('甲', '己') # type: ignore
 
   expected: dict[TianganCombo, Wuxing] = {
@@ -266,11 +266,11 @@ def test_he() -> None:
 
 
 def test_chong() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.chong(Tiangan.甲, Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.chong(Dizhi.子, Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.chong('甲', '庚') # type: ignore
 
   for tg1, tg2 in itertools.product(Tiangan, Tiangan):
@@ -285,11 +285,11 @@ def test_chong() -> None:
 
 
 def test_sheng() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.sheng(Tiangan.甲, Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.sheng(Dizhi.子, Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.sheng('甲', '庚') # type: ignore
 
   for tg1, tg2 in itertools.product(Tiangan, Tiangan):
@@ -302,11 +302,11 @@ def test_sheng() -> None:
 
 
 def test_ke() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.ke(Tiangan.甲, Dizhi.子) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.ke(Dizhi.子, Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     tiangan_utils.ke('甲', '庚') # type: ignore
 
   for tg1, tg2 in itertools.product(Tiangan, Tiangan):
@@ -335,6 +335,11 @@ def test_discover() -> None:
     # consistency
     discovery2: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
     assert discovery == discovery2
+
+
+def test_discover_negative() -> None:
+  with pytest.raises(TypeError):
+    tiangan_utils.discover((Tiangan.甲, Dizhi.子)) # type: ignore
 
 
 @pytest.mark.slow
@@ -389,6 +394,13 @@ def test_discover_mutual() -> None:
           assert combo in expected_combos
       else:
         assert len(expected_combos) == 0
+
+
+def test_discover_mutual_negative() -> None:
+  with pytest.raises(TypeError):
+    tiangan_utils.discover_mutual((Tiangan.甲, Dizhi.子), (Tiangan.己,)) # type: ignore
+  with pytest.raises(TypeError):
+    tiangan_utils.discover_mutual((Tiangan.甲,), (Tiangan.己, Dizhi.子)) # type: ignore
 
 
 @pytest.mark.slow

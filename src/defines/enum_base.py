@@ -35,10 +35,11 @@ class BaziEnum(Enum):
 
   @classmethod
   def from_str(cls, s: str) -> Self:
-    assert isinstance(s, str)
+    if not isinstance(s, str):
+      raise TypeError(f'Expected str, got {type(s)}')
     expected_len = cls._str_len()
-    if expected_len is not None:
-      assert len(s) == expected_len
+    if expected_len is not None and len(s) != expected_len:
+      raise ValueError(f'Unsupported {cls.__name__} string: {s}')
     return cls(s)
 
   @classmethod

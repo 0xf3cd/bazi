@@ -69,7 +69,7 @@ def test_sanhui() -> None:
     dizhi_utils.sanhui({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sanhui([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.sanhui('亥', '子', '丑') # type: ignore
 
   dizhi_tuples: list[tuple[Dizhi, Dizhi, Dizhi]] = [
@@ -89,7 +89,7 @@ def test_sanhui() -> None:
         assert dizhi_utils.sanhui(*combo) == expected[fs]
     else:
       for combo in itertools.permutations(dizhis):
-        assert dizhi_utils.sanhui(*dizhis) is None
+        assert dizhi_utils.sanhui(*combo) is None
 
 
 def test_search_liuhe() -> None:
@@ -124,7 +124,7 @@ def test_liuhe() -> None:
     dizhi_utils.liuhe({Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.liuhe([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.liuhe('亥', '子') # type: ignore
 
   liuhe_combos: list[DizhiCombo] = [
@@ -190,11 +190,11 @@ def test_anhe() -> None:
     dizhi_utils.anhe({Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.anhe([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.anhe('亥', '子') # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.anhe(Dizhi.子, Dizhi.辰, DizhiRules.AnheDef.NORMAL + 100) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.anhe(Dizhi.子, Dizhi.辰, definition='DizhiRules.AnheDef.NORMAL') # type: ignore
 
   normal_combos: list[DizhiCombo] = [
@@ -266,7 +266,7 @@ def test_tonghe() -> None:
     dizhi_utils.tonghe({Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.tonghe([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.tonghe('亥', '子') # type: ignore
 
   tonghe_combos: set[DizhiCombo] = set()
@@ -316,7 +316,7 @@ def test_tongluhe() -> None:
     dizhi_utils.tongluhe({Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.tongluhe([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.tongluhe('亥', '子') # type: ignore
 
   tongluhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支禄身。
@@ -372,7 +372,7 @@ def test_sanhe() -> None:
     dizhi_utils.sanhe({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sanhe([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.sanhe('亥', '子', '丑') # type: ignore
 
   sanhe_table: dict[DizhiCombo, Wuxing] = _gen_sanhe_table()
@@ -384,7 +384,7 @@ def test_sanhe() -> None:
         assert dizhi_utils.sanhe(*combo) == sanhe_table[fs]
     else:
       for combo in itertools.permutations(dizhis):
-        assert dizhi_utils.sanhe(*dizhis) is None
+        assert dizhi_utils.sanhe(*combo) is None
 
 
 def _gen_banhe_table() -> dict[DizhiCombo, Wuxing]:
@@ -429,7 +429,7 @@ def test_banhe() -> None:
     dizhi_utils.banhe({Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.banhe([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.banhe('亥', '子') # type: ignore
 
   banhe_table: dict[DizhiCombo, Wuxing] = _gen_banhe_table()
@@ -500,19 +500,19 @@ def test_search_xing() -> None:
 
 
 def test_xing_negative() -> None:
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     dizhi_utils.xing(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰)
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing([Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing('亥', '子') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing(Dizhi.子, Dizhi.辰, DizhiRules.XingDef.LOOSE) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.xing(Dizhi.子, Dizhi.辰, definition='DizhiRules.X.NORMAL') # type: ignore
 
   for dz in Dizhi:
@@ -522,12 +522,12 @@ def test_xing_negative() -> None:
 
   for _ in range(500):
     random_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(4, len(Dizhi)))
-    with pytest.raises(AssertionError):
-      assert dizhi_utils.xing(*random_dizhis) is None
-    with pytest.raises(AssertionError):
-      assert dizhi_utils.xing(*random_dizhis, definition=DizhiRules.XingDef.STRICT) is None
-    with pytest.raises(AssertionError):
-      assert dizhi_utils.xing(*random_dizhis, definition=DizhiRules.XingDef.LOOSE) is None
+    with pytest.raises(ValueError):
+      dizhi_utils.xing(*random_dizhis)
+    with pytest.raises(ValueError):
+      dizhi_utils.xing(*random_dizhis, definition=DizhiRules.XingDef.STRICT)
+    with pytest.raises(ValueError):
+      dizhi_utils.xing(*random_dizhis, definition=DizhiRules.XingDef.LOOSE)
 
 
 @pytest.mark.slow
@@ -668,9 +668,9 @@ def test_chong() -> None:
     dizhi_utils.chong({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.chong([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.chong('亥', '子') # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.chong(Tiangan.甲, '子') # type: ignore
 
   chong_table: list[set[Dizhi]] = [set(dz_tuple) for dz_tuple in zip(Dizhi.as_list()[:6], Dizhi.as_list()[6:])]
@@ -718,9 +718,9 @@ def test_po() -> None:
     dizhi_utils.po({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.po([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.po([Dizhi.亥, Dizhi.子], [Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.po('亥', '子') # type: ignore
 
   po_table: list[set[Dizhi]] = _gen_po_table()
@@ -773,9 +773,9 @@ def test_hai() -> None:
     dizhi_utils.hai((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.hai({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.hai([Dizhi.亥], [Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.hai('亥', '丑') # type: ignore
 
   hai_set: set[DizhiCombo] = _gen_hai_table()
@@ -815,9 +815,9 @@ def test_sheng() -> None:
     dizhi_utils.sheng((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sheng({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.sheng([Dizhi.亥], [Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.sheng('亥', '丑') # type: ignore
 
   for dz1, dz2 in itertools.product(Dizhi, repeat=2):
@@ -838,9 +838,9 @@ def test_ke() -> None:
     dizhi_utils.ke((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.ke({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.ke([Dizhi.亥], [Dizhi.丑]) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     dizhi_utils.ke('亥', '丑') # type: ignore
 
   for dz1, dz2 in itertools.product(Dizhi, repeat=2):
@@ -857,17 +857,17 @@ def test_search_negative() -> None:
     dizhi_utils.search([Dizhi.子, Dizhi.午]) # type: ignore
 
   for tg_relation in TianganRelation:
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       dizhi_utils.search([Dizhi.子, Dizhi.午], tg_relation) # type: ignore
 
   for relation in DizhiRelation:
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       dizhi_utils.search(Dizhi.子, relation) # type: ignore
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       dizhi_utils.search(['甲', '己'], relation) # type: ignore
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       dizhi_utils.search([Dizhi.子, Dizhi.午], str(relation)) # type: ignore
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
       dizhi_utils.search({Dizhi.子, Dizhi.午}, relation) # type: ignore
 
 
@@ -964,6 +964,11 @@ def test_discover() -> None:
     assert discovery == discovery2
 
 
+def test_discover_negative() -> None:
+  with pytest.raises(TypeError):
+    dizhi_utils.discover([Dizhi.子, '午']) # type: ignore
+
+
 @pytest.mark.slow
 def test_discover_mutual() -> None:
   def __random_dz_lists() -> tuple[list[Dizhi], list[Dizhi]]:
@@ -1024,6 +1029,13 @@ def test_discover_mutual() -> None:
           assert combo in expected_combos
       else:
         assert len(expected_combos) == 0
+
+
+def test_discover_mutual_negative() -> None:
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_mutual([Dizhi.亥, '子'], [Dizhi.丑]) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_mutual([Dizhi.亥], [Dizhi.子, '丑']) # type: ignore
 
 
 def test_edge_cases() -> None:

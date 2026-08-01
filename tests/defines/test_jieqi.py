@@ -60,17 +60,17 @@ def test_from_str() -> None:
     Jieqi.from_str('甲甲')
   with pytest.raises(ValueError):
     Jieqi.from_str('處暑') # Not supporting traditional Chinese.
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Jieqi.from_str('立秋 ')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Jieqi.from_str('SHUNFEN')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Jieqi.from_str('Xiazhi')
-  with pytest.raises(AssertionError):
+  with pytest.raises(ValueError):
     Jieqi.from_str('春')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Jieqi.from_str(Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Jieqi.from_str(0) # type: ignore
 
   for jq in Jieqi:

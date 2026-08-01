@@ -63,9 +63,9 @@ def test_from_str() -> None:
     Tiangan.from_str('Jia')
   with pytest.raises(ValueError):
     Tiangan.from_str('子')
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Tiangan.from_str(Tiangan.甲) # type: ignore
-  with pytest.raises(AssertionError):
+  with pytest.raises(TypeError):
     Tiangan.from_str(0) # type: ignore
 
   assert Tiangan.from_str('甲') == Tiangan.甲
