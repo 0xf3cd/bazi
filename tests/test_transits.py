@@ -7,7 +7,7 @@ import random
 import itertools
 from datetime import date, datetime
 
-from src.common import DayunTuple
+from src.data_types import DayunTuple
 from src.defines import Ganzhi, Dizhi
 from src.utils import bazi_utils
 

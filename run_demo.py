@@ -10,7 +10,7 @@ from collections.abc import Iterable, Generator
 from src.bazi import Bazi
 from src.bazi_chart import BaziChart
 from src.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
-from src.common import HiddenTianganDict
+from src.data_types import HiddenTianganDict
 from src.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
 from src.calendar.backend import calendar_utils_of
 

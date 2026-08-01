@@ -5,12 +5,12 @@ import functools
 import itertools
 
 from datetime import datetime, timedelta
-from typing import Final
-from collections.abc import Generator
+from typing import Final, TypedDict
+from collections.abc import Generator, Sequence
 
-from .common import (
+from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
-  HiddenTianganDict, BaziData, GanzhiData, BaziJson,
+  HiddenTianganDict, BaziData, GanzhiData,
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
@@ -19,6 +19,52 @@ from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year
 )
+
+
+class BaziJson:
+  '''
+  The class that represents bazi-related charts in JSON format.
+  '''
+
+  class FourPillars(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    year:  str
+    month: str
+    day:   str
+    hour:  str
+
+  @staticmethod
+  def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
+    assert len(data) == 4
+    return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+
+  class Transits(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
+    dayun_start_time: str
+
+    # key: xusui / 虚岁
+    # value: xiaoyun at this xusui age / 对应虚岁的小运
+    xiaoyun: dict[str, str]
+
+    # key: ganzhi year that current dayun starts/ 该步大运开始的干支年
+    # value: dayun in str / 该步大运
+    dayun: dict[str, str]
+
+  class BaziChartJsonDict(TypedDict):
+    birth_time: str
+    gender: str
+    precision: str
+    backend: str
+    pillars: 'BaziJson.FourPillars'
+    nayin: 'BaziJson.FourPillars'
+    shier_zhangsheng: 'BaziJson.FourPillars'
+    tiangan_traits: 'BaziJson.FourPillars'
+    dizhi_traits: 'BaziJson.FourPillars'
+    tiangan_shishen: 'BaziJson.FourPillars'
+    dizhi_shishen: 'BaziJson.FourPillars'
+    hidden_tiangan: 'BaziJson.FourPillars'
+    transits: 'BaziJson.Transits'
 
 
 class BaziChart:

@@ -1,7 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import NamedTuple
+
+from ..defines import Jieqi
 
 class CalendarType(Enum):
   '''
@@ -90,3 +94,9 @@ class CalendarDate:
   def __ge__(self, other: object) -> bool:
     lhs, rhs = self.__ymd(other)
     return lhs >= rhs
+
+
+class JieqiTime(NamedTuple):
+  '''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
+  jieqi:  Jieqi
+  moment: datetime

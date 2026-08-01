@@ -8,11 +8,11 @@ import itertools
 from datetime import date, time, datetime, timedelta
 from typing import Final
 
-from .dates import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 from .hko_data import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 from ..defines import Jieqi
-from ..common import Const, JieqiTime
+from ..common import Const
 
 
 # `HkoDB` are Databases.

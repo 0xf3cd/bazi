@@ -5,7 +5,7 @@ import copy
 from datetime import date, datetime
 
 from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
-from ..common import TraitTuple, HiddenTianganDict
+from ..data_types import TraitTuple, HiddenTianganDict
 from ..rules import BaziRules
 
 

@@ -15,12 +15,12 @@ from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZ
 from src.bazi import BaziGender, BaziPrecision, Bazi
 from src.utils import bazi_utils
 
-from src.common import (
+from src.data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple,
-  HiddenTianganDict, BaziData, BaziJson
+  HiddenTianganDict, BaziData,
 )
 
-from src.bazi_chart import BaziChart, 命盘
+from src.bazi_chart import BaziChart, BaziJson, 命盘
 
 
 class TestBaziChart(unittest.TestCase):

@@ -12,7 +12,7 @@ from datetime import date, time, datetime, timedelta
 from typing import ClassVar
 from zoneinfo import ZoneInfo
 
-from src.common import JieqiTime
+from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
 from src.calendar import hko_data_utils, CalendarBackend, calendar_utils_of

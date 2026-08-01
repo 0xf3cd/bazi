@@ -10,7 +10,8 @@ from itertools import combinations
 from typing import Final
 from collections.abc import Generator
 
-from .common import DayunTuple, frozendict
+from .common import frozendict
+from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
 from .utils.bazi_utils import ganzhi_of_year
 from .bazi_chart import BaziChart

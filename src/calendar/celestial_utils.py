@@ -26,13 +26,12 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Final
 
-from .dates import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 from .celestial_data.loader import (
   DATA_DIR, JieqiMomentTable, LunarYearTable, LunarYearInfo,
 )
 
 from ..defines import Jieqi
-from ..common import JieqiTime
 
 
 _JIEQI_TABLE: Final[JieqiMomentTable] = JieqiMomentTable()

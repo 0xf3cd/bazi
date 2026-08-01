@@ -4,8 +4,7 @@ from datetime import date, datetime
 from typing import Protocol, runtime_checkable
 
 from ..defines import Jieqi
-from ..common import JieqiTime
-from .dates import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 
 
 @runtime_checkable

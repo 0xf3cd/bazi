@@ -7,7 +7,7 @@ import itertools
 from datetime import date, datetime, timedelta
 
 from src.defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.common import TraitTuple, HiddenTianganDict
+from src.data_types import TraitTuple, HiddenTianganDict
 from src.utils import bazi_utils
 
 

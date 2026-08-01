@@ -7,9 +7,10 @@ import unittest
 
 from src.defines import Shishen
 from src.common import (
-  classproperty, frozendict, GanzhiData, BaziData,
+  classproperty, frozendict,
   ConstMetaClass, Const, ImmutableMetaClass, Immutable
 )
+from src.data_types import GanzhiData, BaziData
 
 
 

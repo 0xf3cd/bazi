@@ -2,13 +2,13 @@ from importlib import import_module
 from typing import Any
 
 from . import hko_data
-from .dates import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 from .utils_protocol import CalendarUtilsProtocol
 from .backend import CalendarBackend, calendar_utils_of
 
 __all__ = [
   'hko_data',
-  'CalendarType', 'CalendarDate', 'CalendarUtilsProtocol',
+  'CalendarType', 'CalendarDate', 'JieqiTime', 'CalendarUtilsProtocol',
   'hko_data_utils', 'celestial_utils',
   'CalendarBackend', 'calendar_utils_of',
 ]

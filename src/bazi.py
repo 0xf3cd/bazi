@@ -7,10 +7,9 @@ from enum import Enum
 from datetime import date, time, datetime, timedelta
 from typing import Final
 
-from .common import JieqiTime
 from .defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from .calendar import (
-  CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of,
+  CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
 
 from .utils.bazi_utils import (

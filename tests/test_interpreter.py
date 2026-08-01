@@ -3,7 +3,7 @@
 
 import unittest
 
-from src.common import ShishenDescription, TianganDescription
+from src.descriptions import ShishenDescription, TianganDescription
 from src.defines import Tiangan, Shishen
 from src.descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
 from src.interpreter import Interpreter

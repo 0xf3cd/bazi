@@ -4,7 +4,8 @@ import itertools
 import functools
 from enum import Enum
 
-from .common import classproperty, frozendict, TraitTuple, HiddenTianganDict, Const, ConstMetaClass
+from .common import classproperty, frozendict, Const, ConstMetaClass
+from .data_types import TraitTuple, HiddenTianganDict
 from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
