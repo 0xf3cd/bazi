@@ -20,15 +20,19 @@ class TestCommon(unittest.TestCase):
     with self.assertRaises(TypeError):
       fd[1] = 100 # type: ignore
 
-    fd2: frozendict[int, list[int]] = frozendict({1: [2, 3]})
-    self.assertEqual(fd2[1], [2, 3])
+    # The mapping itself is detached from the source dict...
+    src_dict: dict[int, list[int]] = {1: [2, 3]}
+    fd2: frozendict[int, list[int]] = frozendict(src_dict)
+    src_dict[9] = [9]
+    self.assertNotIn(9, fd2)
     with self.assertRaises(TypeError):
       fd2[1] = [4, 5] # type: ignore
     with self.assertRaises(KeyError):
       fd2[2]
-    
-    fd2[1].append(6)
-    self.assertEqual(fd2[1], [2, 3])
+
+    # ...but the frozendict is shallow-frozen: values are returned as-is, not copied.
+    self.assertIs(fd2[1], fd2[1])
+    self.assertIs(fd2[1], src_dict[1])
 
   def test_pillardata(self) -> None:
     combo1: GanzhiData[str, int] = GanzhiData('a', 1)

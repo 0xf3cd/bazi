@@ -34,9 +34,11 @@ class TianganDescription(TypedDict):
 
 
 # This table stores the descriptions of each Shishen.
-# The corpus tables are frozen: access via `frozendict` returns a deep copy,
-# so the corpus can never be mutated from outside.
-# 语料表是冻结的：通过 `frozendict` 访问返回深拷贝，外部无法篡改语料。
+# The corpus tables are frozen mappings, but entries are returned as-is — anyone
+# reading them directly must not mutate the results. `Interpreter.interpret_*` is
+# the mutation-safe boundary: it deep-copies entries before returning.
+# 语料表是冻结映射，但取条目原样返回——直接读表者不得修改结果。
+# `Interpreter.interpret_*` 是可安全修改的边界：返回前深拷贝条目。
 SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
   Shishen.比肩 : {
     'general': [

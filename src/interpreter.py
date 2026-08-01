@@ -1,5 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import copy
+
 from .defines import Shishen, Tiangan
 from .descriptions import (
   ShishenDescription, TianganDescription, SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS,
@@ -9,12 +11,12 @@ from .descriptions import (
 class Interpreter:
   '''
   `Interpreter` statically looks up the curated description corpus (语料库) of
-  Shishen and Tiangan. The corpus tables are frozen, and the returned descriptions
-  are deep copies (see `frozendict` in `common`), so callers may freely modify them
+  Shishen and Tiangan. The corpus tables are frozen, and the `interpret_*` methods
+  deep-copy the entries before returning, so callers may freely modify the results
   without corrupting the corpus.
 
-  `Interpreter` 以静态方法查询十神和天干的语料库。语料表是冻结的，且返回的描述是
-  深拷贝（见 `common` 中的 `frozendict`），调用方可随意修改，不会污染语料库。
+  `Interpreter` 以静态方法查询十神和天干的语料库。语料表是冻结的，且 `interpret_*`
+  返回前对条目做深拷贝，调用方可随意修改结果，不会污染语料库。
 
   Note:
   - Combining the descriptions against a specific chart (i.e. producing a whole-chart
@@ -35,7 +37,7 @@ class Interpreter:
     - (ShishenDescription) A deep copy of the corpus entry. / 语料库对应条目的深拷贝。
     '''
     assert isinstance(shishen, Shishen)
-    return SHISHEN_DESCRIPTIONS[shishen]
+    return copy.deepcopy(SHISHEN_DESCRIPTIONS[shishen])
 
   @staticmethod
   def interpret_tiangan(tg: Tiangan) -> TianganDescription:
@@ -50,4 +52,4 @@ class Interpreter:
     - (TianganDescription) A deep copy of the corpus entry. / 语料库对应条目的深拷贝。
     '''
     assert isinstance(tg, Tiangan)
-    return TIANGAN_DESCRIPTIONS[tg]
+    return copy.deepcopy(TIANGAN_DESCRIPTIONS[tg])
