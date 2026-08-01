@@ -44,5 +44,6 @@ class RelationDiscovery(
   def mutual_only(self, items1: AbstractSet[RelationItemType], items2: AbstractSet[RelationItemType]) -> Self:
     '''Keep only the combos that draw from both sides (a combo disjoint from either side
     comes from one side only). 只保留同时取材于两侧的组合（与任一侧不相交即单侧组合）。'''
-    assert isinstance(items1, AbstractSet) and isinstance(items2, AbstractSet)
+    assert isinstance(items1, AbstractSet)
+    assert isinstance(items2, AbstractSet)
     return self.filter(lambda rel, combo: not combo.isdisjoint(items1) and not combo.isdisjoint(items2))

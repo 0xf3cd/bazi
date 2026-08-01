@@ -62,7 +62,8 @@ class IndexedBaziEnum(BaziEnum):
     '''Definition-order lookup with `list`-style indexing: negative indexes wrap,
     out-of-range raises IndexError. 定义序取成员，下标语义同 `list`：负数回绕，越界 IndexError。'''
     member = _members(cls)[i]
-    # `functools.cache` erases the helper's generic type; this narrows it back for mypy
-    # and doubles as a runtime guard. cache 包装抹平泛型，此断言兼作 mypy 窄化与运行时防线。
+    # The helper can't be generic (`functools.cache` erases typevars), so narrow the
+    # member back here; doubles as a runtime guard. helper 写不成泛型（cache 会抹平
+    # typevar），故在此窄回，兼作运行时防线。
     assert isinstance(member, cls)
     return member

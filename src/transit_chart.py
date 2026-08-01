@@ -33,8 +33,8 @@ class TransitChart:
   @property
   def bazi_chart(self) -> BaziChart:
     '''The underlying `BaziChart` (原盘). Shared, not copied -- `BaziChart` is read-only
-    (its mutable `Bazi` is isolated inside the chart). 直接共享——`BaziChart` 只读，
-    可变的 `Bazi` 已由命盘自身隔离。'''
+    (its non-frozen `Bazi` is isolated inside the chart). 直接共享——`BaziChart` 只读，
+    非 frozen 的 `Bazi` 已由命盘自身隔离。'''
     return self._bazi_chart
 
   def support(self, moment: TransitMoment, options: TransitOptions) -> bool:

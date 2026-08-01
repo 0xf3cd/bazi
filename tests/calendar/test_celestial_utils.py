@@ -149,6 +149,7 @@ class TestConversions(unittest.TestCase):
       self.assertEqual(ALGO1.to_ganzhi(d).date_type, CalendarType.GANZHI)
       self.assertEqual(ALGO1.to_date(d), date(2024, 2, 4))
 
+
 class TestJieqi(unittest.TestCase):
   def test_real_moments_not_placeholders(self) -> None:
     # The whole point of this backend: HKO can only say 00:00:00.
