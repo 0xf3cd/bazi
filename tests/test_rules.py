@@ -49,8 +49,8 @@ class TestRules(unittest.TestCase):
       _ = DizhiRules.DIZHI_XING['not a XingDef'] # type: ignore
 
   def test_all_rules(self) -> None:
-    # I just want Rule classes to be immutable...
-    # Actually maybe this is an overkill because no one is going to change their attributes...
+    # Every table on every Rule class reads stably: equal and identical across accesses.
+    # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)
 
     def list_all_rules(rule_class: type) -> list[str]:
       # Assume that all rules' names are consist of '_' and upper letters.
@@ -66,6 +66,4 @@ class TestRules(unittest.TestCase):
 
       for attr in table_names:
         self.assertEqual(getattr(klass, attr), getattr(klass, attr))
-        self.assertIs(getattr(klass, attr), getattr(klass, attr)) # Ensure cached
-        with self.assertRaises(AttributeError):
-          setattr(klass, attr, '') # Error raised!
+        self.assertIs(getattr(klass, attr), getattr(klass, attr)) # Same object on every access.

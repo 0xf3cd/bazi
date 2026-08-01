@@ -14,7 +14,7 @@ from typing import TypedDict, Final
 from ...defines import Jieqi, Ganzhi
 
 from .common import (
-  HkoYearLimits, date_to_bytes, bytes_to_date, bytes_to_int,
+  START_YEAR, END_YEAR, date_to_bytes, bytes_to_date, bytes_to_int,
   get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
 )
 
@@ -35,8 +35,8 @@ class DecodedJieqiDates:
     if not encoded_data_ready():
       raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.calendar.hko_data.encoder` from the repo root to regenerate them.')
 
-    self._start_year: Final[int] = HkoYearLimits.START_YEAR
-    self._end_year: Final[int] = HkoYearLimits.END_YEAR
+    self._start_year: Final[int] = START_YEAR
+    self._end_year: Final[int] = END_YEAR
 
     jieqi_encoded_path: Path = get_jieqi_encoded_data_path()
     assert jieqi_encoded_path.exists() and jieqi_encoded_path.is_file()
@@ -120,8 +120,8 @@ class DecodedLunarYears:
     if not encoded_data_ready():
       raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.calendar.hko_data.encoder` from the repo root to regenerate them.')
 
-    self._start_year: Final[int] = HkoYearLimits.START_YEAR
-    self._end_year: Final[int] = HkoYearLimits.END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.
+    self._start_year: Final[int] = START_YEAR
+    self._end_year: Final[int] = END_YEAR - 1 # hkodata.END_YEAR not included, since the data for it is incomplete.
 
     lunardate_encoded_path: Path = get_lunardate_encoded_data_path()
     assert lunardate_encoded_path.exists() and lunardate_encoded_path.is_file()

@@ -121,7 +121,8 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 - Expose computed results as `@property` (use `functools.cached_property` for
   expensive immutable results).
 - Deliberate vertical alignment of `=` / dict `:` — preserve when editing nearby.
-- Reuse `Const`/metaclass + `#region` patterns from `common.py`; don't reinvent.
+- Constants are plain `Final` class attributes or module-level names (mypy is the
+  guard); reuse `frozendict` + `#region` from `common.py`; don't reinvent machinery.
 
 ## Tests
 - Mirror src layout (`src/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).

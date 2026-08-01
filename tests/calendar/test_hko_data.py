@@ -77,8 +77,8 @@ class TestHkoData(unittest.TestCase):
     for year in decoded_jieqi.supported_year_range():
       self.assertEqual(len(decoded_jieqi[year]), 24)
 
-    self.assertEqual(min(decoded_jieqi.supported_year_range()), hko_data.HkoYearLimits.START_YEAR)
-    self.assertEqual(max(decoded_jieqi.supported_year_range()), hko_data.HkoYearLimits.END_YEAR)
+    self.assertEqual(min(decoded_jieqi.supported_year_range()), hko_data.START_YEAR)
+    self.assertEqual(max(decoded_jieqi.supported_year_range()), hko_data.END_YEAR)
 
     for year in decoded_jieqi.supported_year_range():
       jieqi_dates_dict: hko_data.JieqiDates = decoded_jieqi[year]

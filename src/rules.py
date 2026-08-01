@@ -4,13 +4,13 @@ import itertools
 from enum import Enum
 from typing import Final
 
-from .common import frozendict, Const
+from .common import frozendict
 from .data_types import TraitTuple, HiddenTianganDict
 from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
 
 
 # All rule tables are plain `Final` class attributes, built once at import time.
-# The Rule classes subclass `Const`, which blocks class-attribute reassignment.
+# `Final` is the reassignment guard, enforced by mypy; there is no runtime guard.
 
 
 # Computed tables are built by module-level `_lower_snake` builders (named after their
@@ -30,7 +30,7 @@ def _nayin() -> frozendict[Ganzhi, str]:
   return frozendict(nayin_mapping_table)
 
 
-class BaziRules(Const):
+class BaziRules:
   '''Rules for `Bazi` and `BaziChart`.'''
 
   # The mappings are used to figure out the first month's Tiangan in a ganzhi year, i.e. 年上起月表.
@@ -166,7 +166,7 @@ def _tiangan_ke(traits: frozendict[Tiangan, TraitTuple]) -> frozenset[tuple[Tian
   return frozenset(ret)
 
 
-class TianganRules(Const):
+class TianganRules:
   '''Rules for Tiangan relations / 天干关系'''
 
   # The table is used to query the HE (合) relation across all Tiangans.
@@ -250,7 +250,7 @@ def _dizhi_ke(dizhi_traits: frozendict[Dizhi, TraitTuple]) -> frozenset[tuple[Di
   return frozenset(ret)
 
 
-class DizhiRules(Const):
+class DizhiRules:
   '''Rules for Dizhi relations / 地支关系'''
 
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
@@ -437,7 +437,7 @@ class DizhiRules(Const):
 
 
 
-class ShenshaRules(Const):
+class ShenshaRules:
   '''Rules for Shensha / 神煞'''
 
   # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
