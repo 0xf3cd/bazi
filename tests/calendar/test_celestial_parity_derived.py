@@ -25,9 +25,9 @@ import unittest
 
 from datetime import date, datetime, time, timedelta
 
-from src.calendar import hko_data_calendar_utils as HKO
-from src.calendar.calendar_defines import CalendarType, CalendarDate
-from src.calendar.celestial_calendar_utils import ALGO1 as CEL
+from src.calendar import hko_data_utils as HKO
+from src.calendar.dates import CalendarType, CalendarDate
+from src.calendar.celestial_utils import ALGO1 as CEL
 from src.calendar.celestial_data.loader import JIEQI_BY_INDEX
 from src.defines import Jieqi
 

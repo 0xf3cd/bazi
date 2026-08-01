@@ -8,7 +8,7 @@ import itertools
 from datetime import date, time, datetime, timedelta
 from typing import Final
 
-from .calendar_defines import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate
 from .hko_data import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 from ..defines import Jieqi

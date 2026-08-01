@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable
 
 from ..defines import Jieqi
 from ..common import JieqiTime
-from .calendar_defines import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate
 
 
 @runtime_checkable
@@ -21,7 +21,7 @@ class CalendarUtilsProtocol(Protocol):
 
   Implementations may differ only in the *precision* of `jieqi_moment`: a data source that
   publishes jieqi dates but not their moments can answer no better than midnight of that
-  date (`hko_data_calendar_utils`), while one carrying the real moments answers to the second
+  date (`hko_data_utils`), while one carrying the real moments answers to the second
   (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
   what makes conforming implementations substitutable for one another.
 

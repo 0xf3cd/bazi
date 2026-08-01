@@ -11,7 +11,7 @@ from src.common import DayunTuple
 from src.defines import Ganzhi, Dizhi
 from src.utils import bazi_utils
 
-from src.calendar.hko_data_calendar_utils import to_ganzhi
+from src.calendar.hko_data_utils import to_ganzhi
 from src.bazi import Bazi, BaziGender, BaziPrecision
 from src.bazi_chart import BaziChart
 from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
