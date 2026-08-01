@@ -269,7 +269,7 @@ class Bazi:
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
-    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index(int((self._hour + 1) / 2) % 12)
+    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._hour + 1) // 2 % 12)
 
   @staticmethod
   def __parse_bazi_args(
@@ -330,18 +330,18 @@ class Bazi:
     Staticmethod that creates a `Bazi` object from the inputs.
 
     Args:
-    - birth_time: (Union[datetime, str]) The birth date. Note that no timezone should be set.
+    - birth_time: (datetime | str) The birth date. Note that no timezone should be set.
       - if `datetime` type: it will be interpreted as a solar date to feed to `Bazi`.
       - if `str` type: it will be converted by `datetime.fromisoformat`.
-    - gender: (Union[BaziGender, str]) The gender of the person.
+    - gender: (BaziGender | str) The gender of the person.
       - if `BaziGender` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `BaziGender`. 
         - Supported values: "男"/"女"/"male"/"female" (case insensitive).
-    - precision: (Union[BaziPrecision, str]) The precision of the birth time.
+    - precision: (BaziPrecision | str) The precision of the birth time.
       - if `BaziPrecision` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `BaziPrecision`. 
         - Supported values: "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day" (case insensitive).
-    - backend: (Union[CalendarBackend, str]) The calendar backend used for all calendar conversions.
+    - backend: (CalendarBackend | str) The calendar backend used for all calendar conversions.
       - if `CalendarBackend` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `CalendarBackend.from_str`.
         - Supported values: the member names and values of `CalendarBackend` (e.g. "HKO"/"hko", case insensitive).

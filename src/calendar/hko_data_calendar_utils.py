@@ -314,7 +314,7 @@ def to_solar(d: date | CalendarDate) -> CalendarDate:
   Convert the input date to a `CalendarDate` with `SOLAR` type.
   
   Args:
-  - d: (Union[date, CalendarDate]) The input date.
+  - d: (date | CalendarDate) The input date.
     - If `d` is of `date` type, it will be interpreted as a solar date.
 
   Return: (CalendarDate) a converted date with `SOLAR` type.
@@ -337,7 +337,7 @@ def to_lunar(d: date | CalendarDate) -> CalendarDate:
   Convert the input date to a `CalendarDate` with `LUNAR` type.
 
   Args:
-  - d: (Union[date, CalendarDate]) The input date.
+  - d: (date | CalendarDate) The input date.
     - If `d` is of `date` type, it will be interpreted as a solar date.
 
   Return: (CalendarDate) a converted date with `LUNAR` type.
@@ -360,7 +360,7 @@ def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
   Convert the input date to a `CalendarDate` with `GANZHI` type.
 
   Args:
-  - d: (Union[date, CalendarDate]) The input date.
+  - d: (date | CalendarDate) The input date.
     - If `d` is of `date` type, it will be interpreted as a solar date.
 
   Return: (CalendarDate) a converted date with `GANZHI` type.
@@ -383,7 +383,7 @@ def to_date(d: date | CalendarDate) -> date:
   Convert the input date to a `date` type.
 
   Args:
-  - d: (Union[date, CalendarDate]) The input date.
+  - d: (date | CalendarDate) The input date.
     - If `d` is of `datetime` type, it will be casted to `date`.
 
   Return: (date) a converted date with `date` type.

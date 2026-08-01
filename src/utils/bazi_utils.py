@@ -159,7 +159,7 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
 
   Args:
   - day_master: (Tiangan) The Tiangan of the Day Master.
-  - other: (Union[Tiangan, Dizhi]) The Tiangan or Dizhi of the other.
+  - other: (Tiangan | Dizhi) The Tiangan or Dizhi of the other.
 
   Return: (Shishen) The Shishen of the given Tiangan or Dizhi.
 

@@ -67,7 +67,7 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   - dz2: (Dizhi) The second Dizhi.
   - dz3: (Dizhi) The third Dizhi.
 
-  Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in SANHUI (三会) relation.
+  Return: (Wuxing | None) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in SANHUI (三会) relation.
 
   Examples:
   - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰)
@@ -92,7 +92,7 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   - dz1: (Dizhi) The first Dizhi.
   - dz2: (Dizhi) The second Dizhi.
 
-  Return: (Optional[Wuxing]) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in LIUHE (六合) relation.
+  Return: (Wuxing | None) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in LIUHE (六合) relation.
 
   Examples:
   - liuhe(Dizhi.寅, Dizhi.亥)
@@ -195,7 +195,7 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   - dz2: (Dizhi) The second Dizhi.
   - dz3: (Dizhi) The third Dizhi.
 
-  Return: (Optional[Wuxing]) The corresponding Wuxing if the Dizhis form in SANHE (三合) relation. Otherwise, return `None`.
+  Return: (Wuxing | None) The corresponding Wuxing if the Dizhis form in SANHE (三合) relation. Otherwise, return `None`.
 
   Examples:
   - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未)
@@ -218,7 +218,7 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   - dz1: (Dizhi) The first Dizhi.
   - dz2: (Dizhi) The second Dizhi.
 
-  Return: (Optional[Wuxing]) The corresponding Wuxing if the Dizhis form in BANHE (半合) relation. Otherwise, return `None`.
+  Return: (Wuxing | None) The corresponding Wuxing if the Dizhis form in BANHE (半合) relation. Otherwise, return `None`.
 
   Examples:
   - banhe(Dizhi.亥, Dizhi.卯)
@@ -254,20 +254,20 @@ def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOO
   - *dizhis: (Dizhi) The Dizhis to check.
   - definition: (DizhiRules.XingDef) The definition for 刑.
 
-  Return: (Optional[DizhiRules.XingSubType]) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
+  Return: (DizhiRules.XingSubType | None) The type of the XING relation if the Dizhis form in XING (刑) relation. Otherwise, return `None`.
 
   Examples:
   - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申])
     - return: XingSubType.SANXING
-  - xing(*[Dizhi.寅, Dizhi.巳], DizhiRules.XingDef.STRICT)
+  - xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.STRICT)
     - return: None
-  - xing(*[Dizhi.寅, Dizhi.巳], DizhiRules.XingDef.LOOSE)
+  - xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.LOOSE)
     - return: XingSubType.SANXING
   - xing(Dizhi.午)
     - return: None
   - xing(Dizhi.午, Dizhi.午)
     - return: XingSubType.ZIXING
-  - xing(Dizhi.午, DizhiRules.XingDef.LOOSE)
+  - xing(Dizhi.午, definition=DizhiRules.XingDef.LOOSE)
     - return: None
   - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午]) # Not a exact match.
     - return: None

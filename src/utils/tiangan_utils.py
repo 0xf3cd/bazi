@@ -67,7 +67,7 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   - tg1: (Tiangan) The first Tiangan.
   - tg2: (Tiangan) The second Tiangan.
 
-  Return: (Optional[Wuxing]) The Wuxing that the two Tiangans form, or `None` if the two Tiangans are not in HE relation.
+  Return: (Wuxing | None) The Wuxing that the two Tiangans form, or `None` if the two Tiangans are not in HE relation.
 
   Examples:
   - he(Tiangan.甲, Tiangan.丙):
