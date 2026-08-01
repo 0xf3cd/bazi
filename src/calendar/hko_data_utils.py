@@ -1,6 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 import calendar  # the stdlib module -- NOT the `src.calendar` package this file lives in
 import functools
 import itertools
@@ -299,7 +298,7 @@ def __to_calendardate(d: date | CalendarDate) -> CalendarDate:
     ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
   else:
     assert isinstance(d, CalendarDate)
-    ret = copy.deepcopy(d)
+    ret = d
 
   assert is_valid(ret)
   return ret
@@ -320,7 +319,7 @@ def to_solar(d: date | CalendarDate) -> CalendarDate:
   calendardate: CalendarDate = __to_calendardate(d) # `calendardate` is already validated.
 
   if calendardate.date_type == CalendarType.SOLAR:
-    return copy.deepcopy(calendardate)
+    return calendardate
   elif calendardate.date_type == CalendarType.LUNAR:
     return lunar_to_solar(calendardate)
   else:
@@ -343,7 +342,7 @@ def to_lunar(d: date | CalendarDate) -> CalendarDate:
   calendardate: CalendarDate = __to_calendardate(d) # `calendardate` is already validated.
 
   if calendardate.date_type == CalendarType.LUNAR:
-    return copy.deepcopy(calendardate)
+    return calendardate
   elif calendardate.date_type == CalendarType.SOLAR:
     return solar_to_lunar(calendardate)
   else:
@@ -366,7 +365,7 @@ def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
   calendardate: CalendarDate = __to_calendardate(d) # `calendardate` is already validated.
 
   if calendardate.date_type == CalendarType.GANZHI:
-    return copy.deepcopy(calendardate)
+    return calendardate
   elif calendardate.date_type == CalendarType.SOLAR:
     return solar_to_ganzhi(calendardate)
   else:

@@ -1,6 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 import random
 
 from enum import Enum
@@ -193,7 +192,7 @@ class Bazi:
     self._backend: Final[CalendarBackend] = backend
     utils: Final[CalendarUtilsProtocol] = calendar_utils_of(backend)
 
-    self._birth_time: Final[datetime] = copy.deepcopy(birth_time)
+    self._birth_time: Final[datetime] = birth_time
     assert self._birth_time.tzinfo is None, 'Timezone should be well-processed outside of this class.'
 
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)

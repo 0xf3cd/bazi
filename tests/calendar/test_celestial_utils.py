@@ -149,13 +149,12 @@ class TestConversions(unittest.TestCase):
       self.assertEqual(ALGO1.to_ganzhi(d).date_type, CalendarType.GANZHI)
       self.assertEqual(ALGO1.to_date(d), date(2024, 2, 4))
 
-  def test_to_family_returns_copies(self) -> None:
-    # The identity paths must not hand the caller its own object back.  Two calls with the
-    # same argument *do* share one object (the cache holds it), which is harmless because
-    # `CalendarDate` exposes only getters over `Final` fields -- and it matches HKO.
+  def test_to_family_may_share(self) -> None:
+    # `CalendarDate` is a frozen dataclass, so the `to_*` family and its caches share
+    # objects freely: the identity path may hand the caller's own object back.
     d: CalendarDate = solar(2024, 2, 4)
-    self.assertIsNot(ALGO1.to_solar(d), d)
-    self.assertIsNot(ALGO1.to_lunar(ALGO1.to_lunar(d)), ALGO1.to_lunar(d))
+    self.assertEqual(ALGO1.to_solar(d), d)
+    self.assertEqual(ALGO1.to_lunar(ALGO1.to_lunar(d)), ALGO1.to_lunar(d))
 
 
 class TestJieqi(unittest.TestCase):

@@ -1,7 +1,5 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
-
 from typing import Final
 
 from .defines import Ganzhi
@@ -29,13 +27,15 @@ class TransitChart:
     '''
 
     assert isinstance(bazi_chart, BaziChart)
-    self._bazi_chart: Final[BaziChart] = copy.deepcopy(bazi_chart)
+    self._bazi_chart: Final[BaziChart] = bazi_chart
     self._transit_db: Final[TransitDatabase] = TransitDatabase(self._bazi_chart)
 
   @property
   def bazi_chart(self) -> BaziChart:
-    '''The underlying `BaziChart` (原盘). A defensive copy is returned. 返回防御性拷贝。'''
-    return copy.deepcopy(self._bazi_chart)
+    '''The underlying `BaziChart` (原盘). Shared, not copied -- `BaziChart` is read-only
+    (its mutable `Bazi` is isolated inside the chart). 直接共享——`BaziChart` 只读，
+    可变的 `Bazi` 已由命盘自身隔离。'''
+    return self._bazi_chart
 
   def support(self, moment: TransitMoment, options: TransitOptions) -> bool:
     '''

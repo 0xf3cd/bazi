@@ -19,7 +19,6 @@ switch silently return results computed under the previous algorithm.  Two insta
 the choice part of the identity of the utils object instead.
 '''
 
-import copy
 import functools
 
 from datetime import date, datetime, timedelta
@@ -280,7 +279,7 @@ class CelestialCalendarUtils:
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
     else:
       assert isinstance(d, CalendarDate)
-      ret = copy.deepcopy(d)
+      ret = d
 
     assert self.is_valid(ret)
     return ret
@@ -300,7 +299,7 @@ class CelestialCalendarUtils:
     calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
 
     if calendardate.date_type == CalendarType.SOLAR:
-      return copy.deepcopy(calendardate)
+      return calendardate
     elif calendardate.date_type == CalendarType.LUNAR:
       return self.lunar_to_solar(calendardate)
     else:
@@ -322,7 +321,7 @@ class CelestialCalendarUtils:
     calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
 
     if calendardate.date_type == CalendarType.LUNAR:
-      return copy.deepcopy(calendardate)
+      return calendardate
     elif calendardate.date_type == CalendarType.SOLAR:
       return self.solar_to_lunar(calendardate)
     else:
@@ -349,7 +348,7 @@ class CelestialCalendarUtils:
     calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
 
     if calendardate.date_type == CalendarType.GANZHI:
-      return copy.deepcopy(calendardate)
+      return calendardate
     elif calendardate.date_type == CalendarType.SOLAR:
       return self.solar_to_ganzhi(calendardate)
     else:

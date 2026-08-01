@@ -77,6 +77,9 @@ class BaziChart:
 
   def __init__(self, bazi: Bazi) -> None:
     assert isinstance(bazi, Bazi)
+    # `Bazi` is the one mutable domain object; the chart is its isolation boundary,
+    # so take a private copy here (and hand out copies in the `bazi` property below).
+    # `Bazi` 是唯一可变的领域对象，命盘是它的隔离边界：进出各深拷一次。
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
@@ -86,6 +89,9 @@ class BaziChart:
 
   @property
   def bazi(self) -> Bazi:
+    # A fresh copy per access, and deliberately NOT a `cached_property`: a cached shared
+    # `Bazi` could be mutated through the returned handle, breaking the chart's isolation.
+    # 每次访问深拷一份，故意不用 `cached_property`：缓存共享件会经返回句柄被改，破坏隔离。
     return copy.deepcopy(self._bazi)
 
   @property

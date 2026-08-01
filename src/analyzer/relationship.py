@@ -1,6 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
 import functools
 
 from dataclasses import dataclass
@@ -125,7 +124,7 @@ class ShenshaAnalysis(TypedDict):
 class AtBirthAnalysis:
   '''Analysis of Relationship at Birth / 出生时的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
 
   @property
   def shensha(self) -> ShenshaAnalysis:
@@ -169,7 +168,7 @@ class AtBirthAnalysis:
 class TransitAnalysis:
   '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
     self._transit_chart: Final[TransitChart] = TransitChart(self._chart)
 
   def support(self, gz_year: int, options: TransitOptions) -> bool:
@@ -376,7 +375,7 @@ class TransitAnalysis:
 class RelationshipAnalyzer:
   '''A thin wrapper of `AtBirthAnalysis` and `TransitAnalysis`.'''
   def __init__(self, chart: BaziChart) -> None:
-    self._chart: Final[BaziChart] = copy.deepcopy(chart)
+    self._chart: Final[BaziChart] = chart
 
   @property
   def at_birth(self) -> AtBirthAnalysis:
