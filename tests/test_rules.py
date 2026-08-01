@@ -24,47 +24,33 @@ class TestRules(unittest.TestCase):
     self.assertIs(DizhiRules.DIZHI_PO, DizhiRules.DIZHI_PO)
     self.assertIs(ShenshaRules.TAOHUA, ShenshaRules.TAOHUA)
 
-  def test_anhetable(self) -> None:
-    # I just want `DizhiRules.AnheTable` to be a immutable Class...
-    # Actually maybe this is an overkill because no one is going to change `DizhiRules.AnheTable`'s attributes...
+  def test_dizhi_anhe(self) -> None:
+    # `DIZHI_ANHE` is a frozendict keyed by `AnheDef` - one sub-table per definition.
+    self.assertSetEqual(set(DizhiRules.DIZHI_ANHE), set(DizhiRules.AnheDef))
 
-    for member in inspect.getmembers(DizhiRules.AnheTable):
-      with self.assertRaises(AttributeError):
-        setattr(DizhiRules.AnheTable, member[0], '')
-
-    at = DizhiRules.AnheTable()
-    for attr in ['normal', 'normal_extended', 'mangpai']:
-      with self.assertRaises(AttributeError):
-        setattr(at, attr, '')
+    for anhe_def in DizhiRules.AnheDef:
+      self.assertEqual(DizhiRules.DIZHI_ANHE[anhe_def], DizhiRules.DIZHI_ANHE[anhe_def])
 
     with self.assertRaises(TypeError):
-      at[DizhiRules.AnheDef.NORMAL] = '' # type: ignore
-    with self.assertRaises(TypeError):
-      at[DizhiRules.AnheDef.NORMAL_EXTENDED] = '' # type: ignore
-    with self.assertRaises(TypeError):
-      at[DizhiRules.AnheDef.MANGPAI] = '' # type: ignore
+      DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL] = '' # type: ignore
+    with self.assertRaises(KeyError):
+      _ = DizhiRules.DIZHI_ANHE['not an AnheDef'] # type: ignore
 
-  def test_xingtable(self) -> None:
-    # I just want `DizhiRules.XingTable` to be a immutable Class...
-    # Actually maybe this is an overkill because no one is going to change `DizhiRules.XingTable`'s attributes...
+  def test_dizhi_xing(self) -> None:
+    # `DIZHI_XING` is a frozendict keyed by `XingDef` - one sub-table per definition.
+    self.assertSetEqual(set(DizhiRules.DIZHI_XING), set(DizhiRules.XingDef))
 
-    for member in inspect.getmembers(DizhiRules.XingTable):
-      with self.assertRaises(AttributeError):
-        setattr(DizhiRules.XingTable, member[0], '')
+    for xing_def in DizhiRules.XingDef:
+      self.assertEqual(DizhiRules.DIZHI_XING[xing_def], DizhiRules.DIZHI_XING[xing_def])
 
-    xt = DizhiRules.XingTable()
-    for attr in ['strict', 'loose']:
-      with self.assertRaises(AttributeError):
-        setattr(xt, attr, '')
-    
     with self.assertRaises(TypeError):
-      xt[DizhiRules.XingDef.STRICT] = '' # type: ignore
-    with self.assertRaises(TypeError):
-      xt[DizhiRules.XingDef.LOOSE] = '' # type: ignore
+      DizhiRules.DIZHI_XING[DizhiRules.XingDef.STRICT] = '' # type: ignore
+    with self.assertRaises(KeyError):
+      _ = DizhiRules.DIZHI_XING['not a XingDef'] # type: ignore
 
   def test_all_rules(self) -> None:
-    # I just want Rule classes to be immutable...
-    # Actually maybe this is an overkill because no one is going to change their attributes...
+    # Every table on every Rule class reads stably: equal and identical across accesses.
+    # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)
 
     def list_all_rules(rule_class: type) -> list[str]:
       # Assume that all rules' names are consist of '_' and upper letters.
@@ -80,6 +66,4 @@ class TestRules(unittest.TestCase):
 
       for attr in table_names:
         self.assertEqual(getattr(klass, attr), getattr(klass, attr))
-        self.assertIs(getattr(klass, attr), getattr(klass, attr)) # Ensure cached
-        with self.assertRaises(AttributeError):
-          setattr(klass, attr, '') # Error raised!
+        self.assertIs(getattr(klass, attr), getattr(klass, attr)) # Same object on every access.

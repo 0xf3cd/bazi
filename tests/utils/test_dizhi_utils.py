@@ -1028,7 +1028,7 @@ class TestDizhiUtils(unittest.TestCase):
       self.assertEqual(dizhi_utils.discover_mutual(part1, part2), 
                        dizhi_utils.discover_mutual(part2, part1))
     
-    for combo_tuple in DizhiRules.DIZHI_XING.loose:
+    for combo_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]:
       part1 = [random.choice(combo_tuple)]
       part2 = list(combo_tuple)
       part2.remove(part1[0])

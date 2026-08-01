@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import cast
 
-from .calendar_utils_protocol import CalendarUtilsProtocol
+from .utils_protocol import CalendarUtilsProtocol
 
 
 class CalendarBackend(Enum):
@@ -27,8 +27,8 @@ class CalendarBackend(Enum):
     CELESTIAL 不同；CELESTIAL 贴合香港天文台官方历书，应优先选用。
 
   The lunar algorithm is part of the backend's identity rather than a switch on it; see
-  `celestial_calendar_utils` for why.
-  阴历算法是后端身份的一部分，而非其上的开关；原因见 `celestial_calendar_utils`。
+  `celestial_utils` for why.
+  阴历算法是后端身份的一部分，而非其上的开关；原因见 `celestial_utils`。
 
   See https://github.com/0xf3cd/bazi/issues/2 and
       https://github.com/0xf3cd/bazi/issues/6
@@ -68,21 +68,21 @@ def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
   _backend: CalendarBackend = backend if isinstance(backend, CalendarBackend) else CalendarBackend.from_str(backend)
 
   if _backend is CalendarBackend.HKO:
-    # `hko_data_calendar_utils` instantiates the decoder databases at import time.
+    # `hko_data_utils` instantiates the decoder databases at import time.
     # Import it lazily so that users of other backends never pay that cost.
-    from . import hko_data_calendar_utils
+    from . import hko_data_utils
     # A module structurally conforms to `CalendarUtilsProtocol` at runtime (calls on it hit
     # module-level functions with the same signatures, minus `self`), but mypy cannot see a
     # module as an instance, hence the `cast`.  The `cast` silences the static member-and-
-    # signature check; the runtime nets only partially pay that back: `test_calendar_backend`'s
+    # signature check; the runtime nets only partially pay that back: `test_backend`'s
     # isinstance asserts member existence (nothing more -- `runtime_checkable` ignores
-    # signatures), and `test_hko_data_calendar_utils` exercises the real signatures by
+    # signatures), and `test_hko_data_utils` exercises the real signatures by
     # direct calls.
-    return cast(CalendarUtilsProtocol, hko_data_calendar_utils)
+    return cast(CalendarUtilsProtocol, hko_data_utils)
 
   if _backend in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2):
     # Likewise lazy: reading the tables costs the same as the HKO decoder.
-    from .celestial_calendar_utils import ALGO1, ALGO2
+    from .celestial_utils import ALGO1, ALGO2
     # An instance satisfies the instance-shaped protocol directly (issue #86), so this
     # branch is fully type-checked -- no `cast`.
     return ALGO1 if _backend is CalendarBackend.CELESTIAL else ALGO2

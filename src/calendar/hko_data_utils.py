@@ -8,18 +8,15 @@ import itertools
 from datetime import date, time, datetime, timedelta
 from typing import Final
 
-from .calendar_defines import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 from .hko_data import DecodedJieqiDates, DecodedLunarYears, LunarYearInfo
 
 from ..defines import Jieqi
-from ..common import Const, JieqiTime
 
 
-# `HkoDB` are Databases.
-class HkoDB(Const):
-  # Create two databases as class variables, where we can query the Jieqi and Lunar year info.
-  jieqi_dates_db: Final[DecodedJieqiDates] = DecodedJieqiDates()
-  lunar_years_db: Final[DecodedLunarYears] = DecodedLunarYears()
+# Two databases as module-level constants, where we can query the Jieqi and Lunar year info.
+jieqi_dates_db: Final[DecodedJieqiDates] = DecodedJieqiDates()
+lunar_years_db: Final[DecodedLunarYears] = DecodedLunarYears()
 
 @functools.lru_cache(maxsize=512)
 def get_min_supported_date(date_type: CalendarType) -> CalendarDate:
@@ -106,7 +103,7 @@ def is_valid_lunar_date(d: CalendarDate) -> bool:
   if d > get_max_supported_date(CalendarType.LUNAR):
     return False
   
-  info: LunarYearInfo = HkoDB.lunar_years_db.get(d.year)
+  info: LunarYearInfo = lunar_years_db.get(d.year)
   
   if d.year <= 0:
     return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
@@ -179,11 +176,11 @@ def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
 
   start_dates: list[date] = []
   for jq in jieqi_list[:11]: # First 11 jieqis are in solar year `ganzhi_year`.
-    start_dates.append(HkoDB.jieqi_dates_db.get(ganzhi_year, jq))
+    start_dates.append(jieqi_dates_db.get(ganzhi_year, jq))
   for jq in jieqi_list[11:]: # Last 1 jieqis are in solar year `ganzhi_year + 1`.
-    start_dates.append(HkoDB.jieqi_dates_db.get(ganzhi_year + 1, jq))
+    start_dates.append(jieqi_dates_db.get(ganzhi_year + 1, jq))
   
-  end_dates: list[date] = start_dates[1:] + [HkoDB.jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
+  end_dates: list[date] = start_dates[1:] + [jieqi_dates_db.get(ganzhi_year + 1, Jieqi.立春)]
   days_counts: tuple[int, ...] = tuple((end - start).days for start, end in zip(start_dates, end_dates))
   assert len(days_counts) == 12
 
@@ -194,7 +191,7 @@ def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
 def lunar_to_solar(lunar_date: CalendarDate) -> CalendarDate:
   assert lunar_date.date_type == CalendarType.LUNAR
   assert is_valid(lunar_date)
-  info: LunarYearInfo = HkoDB.lunar_years_db.get(lunar_date.year)
+  info: LunarYearInfo = lunar_years_db.get(lunar_date.year)
 
   passed_days_count: int = -1
   for month_idx in range(lunar_date.month - 1):
@@ -213,11 +210,11 @@ def solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
 
   # First, figure out the solar date falls into which lunar year.
   lunar_year: int = solar_date.year
-  info: LunarYearInfo = HkoDB.lunar_years_db.get(lunar_year)
+  info: LunarYearInfo = lunar_years_db.get(lunar_year)
   first_solar_day: date = info['first_solar_day']
   if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day):
     lunar_year -= 1
-    info = HkoDB.lunar_years_db.get(lunar_year)
+    info = lunar_years_db.get(lunar_year)
     first_solar_day = info['first_solar_day']
 
   # Compute how many days have passed since `first_solar_day`.
@@ -247,7 +244,7 @@ def ganzhi_to_solar(ganzhi_date: CalendarDate) -> CalendarDate:
   passed_days_count += ganzhi_date.day - 1
 
   # Figure out the solar date.
-  first_solar_date: date = HkoDB.jieqi_dates_db.get(ganzhi_date.year, Jieqi.立春)
+  first_solar_date: date = jieqi_dates_db.get(ganzhi_date.year, Jieqi.立春)
   cur_solar_date: date = first_solar_date + timedelta(days=passed_days_count)
   return CalendarDate(cur_solar_date.year, cur_solar_date.month, cur_solar_date.day, CalendarType.SOLAR)
 
@@ -259,10 +256,10 @@ def solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
 
   # Figure out the ganzhi date falls into which ganzhi year.
   ganzhi_year: int = solar_date.year
-  first_solar_day: date = HkoDB.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+  first_solar_day: date = jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
   if first_solar_day > date(solar_date.year, solar_date.month, solar_date.day): # Falls into the previous ganzhi year.
     ganzhi_year -= 1
-    first_solar_day = HkoDB.jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
+    first_solar_day = jieqi_dates_db.get(ganzhi_year, Jieqi.立春)
 
   # Compute how many days have passed in the ganzhi year.
   passed_days_count: int = (date(solar_date.year, solar_date.month, solar_date.day) - first_solar_day).days
@@ -410,8 +407,8 @@ def jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
   assert isinstance(solar_year, int)
   assert isinstance(jieqi, Jieqi)
 
-  assert solar_year in HkoDB.jieqi_dates_db.supported_year_range()
-  return HkoDB.jieqi_dates_db.get(solar_year, jieqi)
+  assert solar_year in jieqi_dates_db.supported_year_range()
+  return jieqi_dates_db.get(solar_year, jieqi)
 
 
 @functools.lru_cache(maxsize=512)
@@ -435,8 +432,8 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
   assert isinstance(solar_year, int)
   assert isinstance(jieqi, Jieqi)
 
-  assert solar_year in HkoDB.jieqi_dates_db.supported_year_range()
-  dt: date = HkoDB.jieqi_dates_db.get(solar_year, jieqi)
+  assert solar_year in jieqi_dates_db.supported_year_range()
+  dt: date = jieqi_dates_db.get(solar_year, jieqi)
   return datetime.combine(dt, time(0, 0, 0))
 
 
@@ -447,8 +444,8 @@ def supported_jie_boundaries() -> tuple[datetime, datetime]:
   When using methods `prev_jie` and `next_jie`, the input datetime should be in: 
   `[returned_tuple[0], returned_tuple[1])` (`returned_tuple[0]` included, `returned_tuple[1]` not).
   '''
-  supported_first_year: int = HkoDB.jieqi_dates_db.start_year
-  supported_last_year: int = HkoDB.jieqi_dates_db.end_year
+  supported_first_year: int = jieqi_dates_db.start_year
+  supported_last_year: int = jieqi_dates_db.end_year
   return (
     jieqi_moment(supported_first_year, Jieqi.小寒), # 小寒 is the first Jie of any solar year.
     jieqi_moment(supported_last_year, Jieqi.大雪), # 大雪 is the last Jie of any solar year.

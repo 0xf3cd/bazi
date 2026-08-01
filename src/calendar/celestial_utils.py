@@ -3,7 +3,7 @@
 '''
 Calendar utils backed by the pre-generated celestial-calendar tables (see
 `celestial_data/SCHEMA.md`).  Conforms to `CalendarUtilsProtocol`, with no dependency on
-`hko_data_calendar_utils` -- the two backends are independent implementations, and their
+`hko_data_utils` -- the two backends are independent implementations, and their
 agreement is a test result rather than a shared code path.
 
 What this backend adds over HKO is `jieqi_moment`: real second-level moments instead of
@@ -26,13 +26,12 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Final
 
-from .calendar_defines import CalendarType, CalendarDate
+from .dates import CalendarType, CalendarDate, JieqiTime
 from .celestial_data.loader import (
   DATA_DIR, JieqiMomentTable, LunarYearTable, LunarYearInfo,
 )
 
 from ..defines import Jieqi
-from ..common import JieqiTime
 
 
 _JIEQI_TABLE: Final[JieqiMomentTable] = JieqiMomentTable()

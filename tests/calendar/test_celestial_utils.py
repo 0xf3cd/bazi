@@ -6,8 +6,8 @@ import unittest
 from datetime import date, datetime, timedelta
 
 from src.calendar import CalendarUtilsProtocol
-from src.calendar.calendar_defines import CalendarType, CalendarDate
-from src.calendar.celestial_calendar_utils import ALGO1, ALGO2
+from src.calendar.dates import CalendarType, CalendarDate
+from src.calendar.celestial_utils import ALGO1, ALGO2
 from src.defines import Jieqi
 
 # The whitelist's single source of truth.  Bare sibling import -- see the NOTE in

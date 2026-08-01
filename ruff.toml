@@ -10,9 +10,11 @@ ignore = [
   # and timezone handling is deliberately out of scope (true-solar-time preprocessing
   # is a separate layer, see issue #2). tzinfo-aware datetimes would be wrong here.
   "DTZ",
-  # Caching instance/class methods is a deliberate design: rules.py table properties,
-  # calendar backend singletons, and enum member helpers (Ganzhi.next/prev) all cache
-  # on purpose, and every holder is bounded (singletons / fixed 60-member enums).
+  # Caching instance methods is a deliberate design: calendar backend singletons
+  # (`lru_cache`s in calendar/celestial_utils.py), enum member helpers (Ganzhi.next/prev
+  # in defines/ganzhi.py), and the `functools.cache` decoders in calendar/hko_data/
+  # decoder.py all cache on purpose, and every holder is bounded (singletons /
+  # fixed 60-member enums / one decoder instance per backend).
   "B019",
   # Imports are hand-ordered by dependency layer and hand-grouped with aligned
   # multi-name lines; alphabetical resorting destroys both. Same stance as the

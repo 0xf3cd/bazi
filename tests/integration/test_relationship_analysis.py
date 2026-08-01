@@ -552,7 +552,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if house in [Dizhi.午, Dizhi.亥, Dizhi.辰] and house in transits_dz_set: # 自刑 cases
         assert frozenset({house}) in dz_relations[DizhiRelation.刑]
 
-      for dz_tuple in DizhiRules.DIZHI_XING.loose: # 三刑 cases
+      for dz_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]: # 三刑 cases
         if len(dz_tuple) == 3 and house in dz_tuple:
           other_dz = frozenset(dz_tuple) - {house}
           assert len(other_dz) == 2

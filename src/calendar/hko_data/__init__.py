@@ -1,5 +1,5 @@
 from .common import (
-  HkoYearLimits,
+  START_YEAR, END_YEAR,
   get_data_base_path, get_raw_txt_file_paths, raw_data_ready,
   get_jieqi_encoded_data_path, get_lunardate_encoded_data_path, encoded_data_ready,
   jieqi_list_in_traditional_chinese, twelve_months_in_traditional_chinese,
@@ -11,7 +11,7 @@ from .decoder import (
 )
 
 __all__ = [
-  'HkoYearLimits',
+  'START_YEAR', 'END_YEAR',
   'get_data_base_path', 'get_raw_txt_file_paths', 'raw_data_ready',
   'get_jieqi_encoded_data_path', 'get_lunardate_encoded_data_path', 'encoded_data_ready',
   'jieqi_list_in_traditional_chinese', 'twelve_months_in_traditional_chinese', 

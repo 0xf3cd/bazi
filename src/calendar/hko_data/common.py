@@ -5,12 +5,11 @@
 
 from pathlib import Path
 from datetime import date
+from typing import Final
 
-from ...common import Immutable
-
-class HkoYearLimits(Immutable):
-  START_YEAR: int = 1901
-  END_YEAR: int = 2100
+# The year range covered by the HKO raw data (both edges included).
+START_YEAR: Final[int] = 1901
+END_YEAR:   Final[int] = 2100
 
 def get_data_base_path() -> Path:
   return Path(__file__).parent / 'data'
@@ -18,7 +17,7 @@ def get_data_base_path() -> Path:
 def get_raw_txt_file_paths() -> dict[int, Path]:
   data_dir = get_data_base_path()
   data_txt_file_paths: dict[int, Path] = {}
-  for year in range(HkoYearLimits.START_YEAR, HkoYearLimits.END_YEAR + 1):
+  for year in range(START_YEAR, END_YEAR + 1):
     data_txt_file_paths[year] = data_dir / f'{year}.txt'
   return data_txt_file_paths
 

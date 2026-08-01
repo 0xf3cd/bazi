@@ -9,7 +9,8 @@ from itertools import starmap, product, compress, chain
 from typing import Final, TypedDict
 from collections.abc import Callable, Iterable
 
-from ..common import GanzhiData, frozendict
+from ..common import frozendict
+from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart

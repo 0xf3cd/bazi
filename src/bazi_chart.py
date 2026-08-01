@@ -5,12 +5,12 @@ import functools
 import itertools
 
 from datetime import datetime, timedelta
-from typing import Final
-from collections.abc import Generator
+from typing import Final, TypedDict
+from collections.abc import Generator, Sequence
 
-from .common import (
+from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
-  HiddenTianganDict, BaziData, GanzhiData, BaziJson,
+  HiddenTianganDict, BaziData, GanzhiData,
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
@@ -19,6 +19,52 @@ from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year
 )
+
+
+class BaziJson:
+  '''
+  The class that represents bazi-related charts in JSON format.
+  '''
+
+  class FourPillars(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    year:  str
+    month: str
+    day:   str
+    hour:  str
+
+  @staticmethod
+  def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
+    assert len(data) == 4
+    return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
+
+  class Transits(TypedDict):
+    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
+    dayun_start_time: str
+
+    # key: xusui / 虚岁
+    # value: xiaoyun at this xusui age / 对应虚岁的小运
+    xiaoyun: dict[str, str]
+
+    # key: ganzhi year that current dayun starts/ 该步大运开始的干支年
+    # value: dayun in str / 该步大运
+    dayun: dict[str, str]
+
+  class BaziChartJsonDict(TypedDict):
+    birth_time: str
+    gender: str
+    precision: str
+    backend: str
+    pillars: 'BaziJson.FourPillars'
+    nayin: 'BaziJson.FourPillars'
+    shier_zhangsheng: 'BaziJson.FourPillars'
+    tiangan_traits: 'BaziJson.FourPillars'
+    dizhi_traits: 'BaziJson.FourPillars'
+    tiangan_shishen: 'BaziJson.FourPillars'
+    dizhi_shishen: 'BaziJson.FourPillars'
+    hidden_tiangan: 'BaziJson.FourPillars'
+    transits: 'BaziJson.Transits'
 
 
 class BaziChart:
@@ -108,7 +154,7 @@ class BaziChart:
     tiangan_traits: list[TraitTuple] = [traits(tg) for tg in self._bazi.four_tiangans]
     dizhi_traits: list[TraitTuple] = [traits(dz) for dz in self._bazi.four_dizhis]
     pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
-    return BaziData(BaziChart.PillarTraits, pillar_data)
+    return BaziData(*pillar_data)
   
   @property
   def hidden_tiangan(self) -> BaziData[HiddenTianganDict]:
@@ -130,7 +176,7 @@ class BaziChart:
     ```
     '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
-    return BaziData[HiddenTianganDict](HiddenTianganDict, dizhi_hidden_tiangans)
+    return BaziData(*dizhi_hidden_tiangans)
   
   PillarShishens = GanzhiData[Shishen | None, Shishen]
   @property
@@ -170,7 +216,7 @@ class BaziChart:
       shishen_list.append(BaziChart.PillarShishens(tg_shishen, dz_shishen))
 
     assert len(shishen_list) == 4
-    return BaziData(self.PillarShishens, shishen_list)
+    return BaziData(*shishen_list)
   
   @property
   def nayin(self) -> BaziData[str]:
@@ -190,7 +236,7 @@ class BaziChart:
     '''
 
     nayin_list: list[str] = [nayin_str(gz) for gz in self._bazi.pillars]
-    return BaziData(str, nayin_list)
+    return BaziData(*nayin_list)
   
   @property
   def shier_zhangsheng(self) -> BaziData[ShierZhangsheng]:
@@ -212,7 +258,7 @@ class BaziChart:
     day_master: Tiangan = self._bazi.day_master
 
     zhangsheng_list: list[ShierZhangsheng] = [shier_zhangsheng(day_master, gz.dizhi) for gz in self._bazi.pillars]
-    return BaziData(ShierZhangsheng, zhangsheng_list)
+    return BaziData(*zhangsheng_list)
   
   @property
   def dayun_order(self) -> bool:

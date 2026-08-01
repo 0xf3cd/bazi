@@ -1,8 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from .defines import Shishen, Tiangan
-from .common import ShishenDescription, TianganDescription
-from .descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
+from .descriptions import (
+  ShishenDescription, TianganDescription, SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS,
+)
 
 
 class Interpreter:

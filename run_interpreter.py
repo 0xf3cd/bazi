@@ -6,7 +6,8 @@ from pathlib import Path
 from run_demo import get_basic_info
 from src.bazi import Bazi
 from src.bazi_chart import BaziChart
-from src.common import ShishenDescription, TianganDescription, BaziJson
+from src.descriptions import ShishenDescription, TianganDescription
+from src.bazi_chart import BaziJson
 from src.defines import Tiangan, Shishen
 from src.interpreter import Interpreter
 
