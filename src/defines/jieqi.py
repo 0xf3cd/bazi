@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from .enum_base import BaziEnum
 
 
-class Jieqi(Enum):
+class Jieqi(BaziEnum):
   '''Jieqi / 节气'''
   LICHUN      = '立春'
   YUSHUI      = '雨水'
@@ -57,11 +57,9 @@ class Jieqi(Enum):
   大寒 = DAHAN
 
   @classmethod
-  def from_str(cls, s: str) -> 'Jieqi':
-    assert isinstance(s, str)
-    assert len(s) == 2
-    return cls(s)
-  
+  def _str_len(cls) -> int | None:
+    return 2
+
   @classmethod
   def as_list(cls, ganzhi_year: bool = True) -> list['Jieqi']:
     '''
@@ -75,8 +73,5 @@ class Jieqi(Enum):
       return list(cls)
     else: # Return in the order that Jieqis appear in a solar year.
       return list(cls)[-2:] + list(cls)[:-2]
-
-  def __str__(self) -> str:
-    return str(self.value)
 
 节气 = Jieqi # Alias

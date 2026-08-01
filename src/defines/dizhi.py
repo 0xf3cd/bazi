@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
+from .enum_base import IndexedBaziEnum
 
 
-class Dizhi(Enum):
+class Dizhi(IndexedBaziEnum):
   '''Dizhi / Branch / 地支'''
   ZI   = '子'
   CHOU = '丑'
@@ -31,25 +31,5 @@ class Dizhi(Enum):
   酉   =  YOU
   戌   =   XU
   亥   =  HAI
-
-  @classmethod
-  def from_str(cls, s: str) -> 'Dizhi':
-    assert isinstance(s, str)
-    return cls(s)
-  
-  @classmethod
-  def as_list(cls) -> list['Dizhi']:
-    return list(cls)
-  
-  def __str__(self) -> str:
-    return str(self.value)
-  
-  @property
-  def index(self) -> int:
-    return Dizhi.as_list().index(self)
-  
-  @staticmethod
-  def from_index(i: int) -> 'Dizhi':
-    return Dizhi.as_list()[i]
 
 地支 = Dizhi # Alias

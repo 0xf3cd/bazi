@@ -6,6 +6,7 @@ from typing import Final
 from collections.abc import Sequence, Callable
 
 from ..common import frozendict
+from ..data_types import RelationDiscovery
 from ..defines import Dizhi, Wuxing, DizhiRelation
 from ..rules import DizhiRules
 
@@ -23,32 +24,8 @@ DizhiCombo = frozenset[Dizhi]
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 '''A frozendict that stores the Dizhi combos that satisfy every `DizhiRelation`.'''
-class DizhiRelationDiscovery(frozendict[DizhiRelation, DizhiRelationCombos]):
-  def filter(self, f: 'DizhiRelationDiscoveryFilter') -> 'DizhiRelationDiscovery':
-    '''Filter out Dizhi combos based on the given filter function `f`.'''
-    assert callable(f)
-    return DizhiRelationDiscovery({
-      rel : filtered
-      for rel, combos in self.items()
-      if len(
-        filtered := DizhiRelationCombos(filter(
-          lambda c : f(rel, c), 
-          combos,
-        ))
-      ) > 0
-    })
-  
-  def merge(self, other: 'DizhiRelationDiscovery') -> 'DizhiRelationDiscovery':
-    '''Merge two `DizhiRelationDiscovery` together.'''
-    assert isinstance(other, DizhiRelationDiscovery)
-    d: dict[DizhiRelation, set[DizhiCombo]] = {}
-
-    for rel, combos in self.items():
-      d[rel] = set(combos)
-    for rel, combos in other.items():
-      d[rel] = d.get(rel, set()) | set(combos)
-
-    return DizhiRelationDiscovery({ rel : DizhiRelationCombos(combos) for rel, combos in d.items() })
+class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
+  '''`filter` / `merge` / `mutual_only` come from the generic `RelationDiscovery` base.'''
 
 
 '''A function that filters Dizhi combos based on the given `DizhiRelation` and `DizhiCombo`.'''
@@ -593,18 +570,10 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> Dizhi
 
   assert all(isinstance(dz, Dizhi) for dz in dizhis1)
   assert all(isinstance(dz, Dizhi) for dz in dizhis2)
-  
-  dz1_set: Final[set[Dizhi]] = set(dizhis1)
-  dz2_set: Final[set[Dizhi]] = set(dizhis2)
 
-  def __is_valid(combo: DizhiCombo) -> bool:
-    # Disjoint from either set means all Dizhis in `combo` come from the other side only.
-    return not combo.isdisjoint(dz1_set) and not combo.isdisjoint(dz2_set)
-  
-  # Discover all possible combos with `dz1_set` and `dz2_set` combined.
-  # Check each combo's validity and only keep valid ones.
-  return DizhiRelationDiscovery({
-    rel : result
-    for rel, combos in discover(list(dizhis1) + list(dizhis2)).items()
-    if len(result := DizhiRelationCombos(filter(__is_valid, combos))) > 0
-  })
+  # 自刑 depends on multiplicity (the same Dizhi appearing once on each side forms 自刑),
+  # so the two sides CONCATENATE -- a set union would silently break it. Deliberately
+  # different from `tiangan_utils.discover_mutual`.
+  # 自刑依赖重数（同一地支两侧各现一次也构成自刑），故两侧拼接——集合并会静默破坏
+  # 自刑。与天干侧的集合并是刻意分歧。
+  return discover(list(dizhis1) + list(dizhis2)).mutual_only(set(dizhis1), set(dizhis2))

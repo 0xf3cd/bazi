@@ -1,10 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from enum import Enum
 from typing import Final
 
+from .enum_base import BaziEnum
 
-class Wuxing(Enum):
+
+class Wuxing(BaziEnum):
   '''Wuxing / 五行'''
   WOOD  = '木'
   FIRE  = '火'
@@ -20,18 +21,9 @@ class Wuxing(Enum):
   水 = WATER
 
   @classmethod
-  def from_str(cls, s: str) -> 'Wuxing':
-    assert isinstance(s, str)
-    assert len(s) == 1
-    return cls(s)
+  def _str_len(cls) -> int | None:
+    return 1
 
-  @classmethod
-  def as_list(cls) -> list['Wuxing']:
-    return list(cls)
-
-  def __str__(self) -> str:
-    return str(self.value)
-  
   def generates(self, wx: 'Wuxing') -> bool:
     '''
     Check if the input wuxing can be generated from the current.
