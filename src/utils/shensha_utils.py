@@ -5,8 +5,8 @@ from ..rules import ShenshaRules
 
 
 '''
-Functions in this file are used to find all possible Dizhi combos that satisfy different `DizhiRelation`s.
-All methods' returns are expected to be immutable.
+Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马.
+Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or the Day Master).
 '''
 
 

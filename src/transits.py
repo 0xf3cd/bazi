@@ -5,6 +5,7 @@ import random
 from dataclasses import dataclass
 from datetime import date
 from enum import unique, IntFlag
+from functools import reduce
 from itertools import combinations
 from typing import Final
 from collections.abc import Generator
@@ -102,9 +103,9 @@ def _all_options() -> list[TransitOptions]:
   '''
   # `list(TransitOptions)` only yields single-bit members on Python 3.11+,
   # silently dropping the composite options. Filter defensively anyway.
-  singles: list[TransitOptions] = [opt for opt in TransitOptions if opt.value > 0 and opt.value & (opt.value - 1) == 0]
+  singles: list[TransitOptions] = [opt for opt in TransitOptions if opt.value.bit_count() == 1]
   return [
-    TransitOptions(sum(opt.value for opt in combo))
+    reduce(lambda acc, opt: acc | opt, combo)
     for r in range(1, len(singles) + 1)
     for combo in combinations(singles, r)
   ]
@@ -152,11 +153,11 @@ class TransitDatabase:
     _ensure_year_moment(moment)
 
     gz_year: Final[int] = moment.gz_year
-    if options.value & TransitOptions.XIAOYUN.value and gz_year not in self._xiaoyun_ganzhis:
+    if options & TransitOptions.XIAOYUN and gz_year not in self._xiaoyun_ganzhis:
       return False
-    if options.value & TransitOptions.DAYUN.value and gz_year < self._first_dayun_start_gz_year:
+    if options & TransitOptions.DAYUN and gz_year < self._first_dayun_start_gz_year:
       return False
-    if options.value & TransitOptions.LIUNIAN.value and gz_year < self._birth_ganzhi_year: # noqa: SIM103 # symmetric guard clauses, one per option
+    if options & TransitOptions.LIUNIAN and gz_year < self._birth_ganzhi_year: # noqa: SIM103 # symmetric guard clauses, one per option
       return False
 
     return True
@@ -186,13 +187,13 @@ class TransitDatabase:
 
     gz_year: Final[int] = moment.gz_year
     transit_ganzhis: list[Ganzhi] = []
-    if options.value & TransitOptions.XIAOYUN.value:
+    if options & TransitOptions.XIAOYUN:
       assert gz_year in self._xiaoyun_ganzhis
       transit_ganzhis.append(self._xiaoyun_ganzhis[gz_year])
-    if options.value & TransitOptions.DAYUN.value:
+    if options & TransitOptions.DAYUN:
       assert gz_year >= self._first_dayun_start_gz_year
       transit_ganzhis.append(self._dayun_db[gz_year].ganzhi)
-    if options.value & TransitOptions.LIUNIAN.value:
+    if options & TransitOptions.LIUNIAN:
       assert gz_year >= self._birth_ganzhi_year
       transit_ganzhis.append(ganzhi_of_year(gz_year))
 

@@ -292,7 +292,7 @@ class CelestialCalendarUtils:
     Convert the input date to a `CalendarDate` with `SOLAR` type.
 
     Args:
-    - d: (Union[date, CalendarDate]) The input date.
+    - d: (date | CalendarDate) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `SOLAR` type.
@@ -314,7 +314,7 @@ class CelestialCalendarUtils:
     Convert the input date to a `CalendarDate` with `LUNAR` type.
 
     Args:
-    - d: (Union[date, CalendarDate]) The input date.
+    - d: (date | CalendarDate) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `LUNAR` type.
@@ -336,7 +336,7 @@ class CelestialCalendarUtils:
     Convert the input date to a `CalendarDate` with `GANZHI` type.
 
     Args:
-    - d: (Union[date, CalendarDate]) The input date.
+    - d: (date | CalendarDate) The input date.
       - If `d` is of `date` type, it will be interpreted as a solar date.
 
     Return: (CalendarDate) a converted date with `GANZHI` type.
@@ -363,7 +363,7 @@ class CelestialCalendarUtils:
     Convert the input date to a `date` type.
 
     Args:
-    - d: (Union[date, CalendarDate]) The input date.
+    - d: (date | CalendarDate) The input date.
       - If `d` is of `datetime` type, it will be casted to `date` (the time of day is
         discarded -- `datetime` is accepted because it is a `date` subclass).
 
