@@ -12,7 +12,9 @@ from src.utils import bazi_utils, tiangan_utils
 from src.utils.tiangan_utils import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
 
 
+'''Operand type of `_tg_equal`: tiangan combos as a list of sets or an iterable of `TianganCombo`s.'''
 TgCmpType = list[set[Tiangan]] | Iterable[TianganCombo]
+
 
 def _tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
   _l1 = list(l1)
@@ -94,6 +96,7 @@ def test_search_basic() -> None:
     ]
   )
 
+
 def test_search_negative() -> None:
   with pytest.raises(TypeError):
     tiangan_utils.search(Tiangan.辛, TianganRelation.合) # type: ignore
@@ -118,14 +121,7 @@ def test_search_negative() -> None:
     with pytest.raises(AssertionError):
       tiangan_utils.search((Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚), str(relation)) # type: ignore
 
-  # Invoke the method and do bad things on the result.
-  # tiangan_utils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.合).clear()
-  # tiangan_utils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.冲).append(TianganCombo({Tiangan.壬, Tiangan.丁}))
-  # sheng_result = tiangan_utils.search((Tiangan.壬, Tiangan.戊, Tiangan.丁, Tiangan.辛), TianganRelation.生)
-  # sheng_result[0] = TianganCombo((Tiangan.丁,))
-  # sheng_result[1] = TianganCombo((Tiangan.壬, Tiangan.戊))
-  #
-  # No need to do bad things again since the return type `tuple` is immutable.
+  # No need to mutate the result: the returned tuple is immutable.
 
   # Make sure the method still returns the correct result.
   assert _tg_equal(
@@ -157,6 +153,7 @@ def test_search_negative() -> None:
       {Tiangan.丁, Tiangan.辛},
     ]
   )
+
 
 @pytest.mark.slow
 def test_search_correctness() -> None:
@@ -241,6 +238,7 @@ def test_search_correctness() -> None:
       for combo_fs in combos:
         assert combo_fs in expected_combos
 
+
 def test_he() -> None:
   with pytest.raises(AssertionError):
     tiangan_utils.he(Tiangan.甲, Dizhi.子) # type: ignore
@@ -266,6 +264,7 @@ def test_he() -> None:
       assert tiangan_utils.he(tg1, tg2) is None
       assert tiangan_utils.he(tg2, tg1) is None
 
+
 def test_chong() -> None:
   with pytest.raises(AssertionError):
     tiangan_utils.chong(Tiangan.甲, Dizhi.子) # type: ignore
@@ -284,6 +283,7 @@ def test_chong() -> None:
     assert not tiangan_utils.chong(tg1, tg2)
     assert not tiangan_utils.chong(tg2, tg1)
 
+
 def test_sheng() -> None:
   with pytest.raises(AssertionError):
     tiangan_utils.sheng(Tiangan.甲, Dizhi.子) # type: ignore
@@ -300,6 +300,7 @@ def test_sheng() -> None:
     else:
       assert not tiangan_utils.sheng(tg1, tg2)
 
+
 def test_ke() -> None:
   with pytest.raises(AssertionError):
     tiangan_utils.ke(Tiangan.甲, Dizhi.子) # type: ignore
@@ -315,6 +316,7 @@ def test_ke() -> None:
       assert not tiangan_utils.ke(tg2, tg1)
     else:
       assert not tiangan_utils.ke(tg1, tg2)
+
 
 @pytest.mark.slow
 def test_discover() -> None:
@@ -333,6 +335,7 @@ def test_discover() -> None:
     # consistency
     discovery2: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
     assert discovery == discovery2
+
 
 @pytest.mark.slow
 def test_discover_mutual() -> None:
@@ -387,6 +390,7 @@ def test_discover_mutual() -> None:
       else:
         assert len(expected_combos) == 0
 
+
 @pytest.mark.slow
 def test_results_matched() -> None:
   '''Test that the results of different methods are the same.'''
@@ -395,19 +399,19 @@ def test_results_matched() -> None:
                               random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
     discovery: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
 
-    # HE / 合 — Non-directional relation
+    # HE / 合 -- Non-directional relation
     if TianganRelation.合 in discovery:
       for combo in discovery[TianganRelation.合]:
         assert len(combo) == 2
         assert tiangan_utils.he(*combo)
 
-    # CHONG / 冲 — Non-directional relation
+    # CHONG / 冲 -- Non-directional relation
     if TianganRelation.冲 in discovery:
       for combo in discovery[TianganRelation.冲]:
         assert len(combo) == 2
         assert tiangan_utils.chong(*combo)
 
-    # SHENG / 生 — Directional relation
+    # SHENG / 生 -- Directional relation
     if TianganRelation.生 in discovery:
       for combo in discovery[TianganRelation.生]:
         assert len(combo) == 2
@@ -416,7 +420,7 @@ def test_results_matched() -> None:
         assert r1 or r2
         assert not (r1 and r2)
 
-    # KE / 克 — Directional relation
+    # KE / 克 -- Directional relation
     if TianganRelation.克 in discovery:
       for combo in discovery[TianganRelation.克]:
         assert len(combo) == 2
@@ -453,6 +457,7 @@ def test_results_matched() -> None:
       else:
         assert len(actual) == 0
 
+
 def test_discovery_filter() -> None:
   for _ in range(5):
     tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
@@ -477,6 +482,7 @@ def test_discovery_filter() -> None:
       for combo in combos:
         assert all(tg not in combo for tg in forbidden_tiangans)
         assert combo in discovery[rel]
+
 
 def test_discovery_merge() -> None:
   for _ in range(3):

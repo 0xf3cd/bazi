@@ -3,6 +3,7 @@
 
 import random
 import copy
+import operator
 
 import pytest
 
@@ -200,18 +201,13 @@ def test_date_cmp_operators_negative() -> None:
     assert (d1 == d2) == (d2 == d1)
     assert (d1 != d2) == (d2 != d1)
 
-    # Following subtests need `d1` to be of the same `CalendarType` as `d2`.
+    # Comparing dates of different `CalendarType`s must raise.
     if d1.date_type == d2.date_type:
       continue
 
-    with pytest.raises(TypeError):
-      d1 < d2 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 <= d2 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 > d2 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 >= d2 # noqa: B015 # the raising comparison is the behavior under test
+    for op in (operator.lt, operator.le, operator.gt, operator.ge):
+      with pytest.raises(TypeError):
+        op(d1, d2)
 
   for d1, dt in zip(calendar_dates, [date(2024, 1, 1)] * 3):
     # `==`/`!=` against a foreign type follow Python's convention (False/True, both
@@ -221,23 +217,13 @@ def test_date_cmp_operators_negative() -> None:
     assert not dt == d1 # noqa: SIM201 # `==` itself is the operator under test
     assert dt != d1
 
-    with pytest.raises(TypeError):
-      d1 < dt # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 <= dt # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 > dt # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      d1 >= dt # noqa: B015 # the raising comparison is the behavior under test
+    for op in (operator.lt, operator.le, operator.gt, operator.ge):
+      with pytest.raises(TypeError):
+        op(d1, dt)
 
-    with pytest.raises(TypeError):
-      dt < d1 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      dt <= d1 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      dt > d1 # noqa: B015 # the raising comparison is the behavior under test
-    with pytest.raises(TypeError):
-      dt >= d1 # noqa: B015 # the raising comparison is the behavior under test
+    for op in (operator.lt, operator.le, operator.gt, operator.ge):
+      with pytest.raises(TypeError):
+        op(dt, d1)
 
 
 def test_str_repr() -> None:

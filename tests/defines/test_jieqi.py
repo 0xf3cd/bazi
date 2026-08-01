@@ -115,5 +115,4 @@ def test_str() -> None:
     assert str(jq) == jq.value
     assert Jieqi.from_str(str(jq)) == jq
 
-  assert ''.join([str(jq) for jq in Jieqi.as_list()]) == \
-         '立春雨水惊蛰春分清明谷雨立夏小满芒种夏至小暑大暑立秋处暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒'
+  assert ''.join([str(jq) for jq in Jieqi.as_list()]) == '立春雨水惊蛰春分清明谷雨立夏小满芒种夏至小暑大暑立秋处暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒'

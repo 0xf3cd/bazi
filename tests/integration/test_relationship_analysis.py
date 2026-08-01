@@ -17,6 +17,9 @@ from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, Tra
 from src.rules import DizhiRules
 
 
+pytestmark = pytest.mark.integration
+
+
 DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
 def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
   assert type(d1) is type(d2)
@@ -27,6 +30,7 @@ def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
       return False
   return True
 
+
 def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
@@ -35,6 +39,7 @@ def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCom
       if combo not in actual[rel]:
         return False
   return True
+
 
 def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], actual: dizhi_utils.DizhiRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
@@ -45,7 +50,7 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
         return False
   return True
 
-@pytest.mark.integration
+
 def test_case1() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
@@ -230,7 +235,7 @@ def test_case1() -> None:
   assert not transits.star(2031, TransitOptions.DAYUN_LIUNIAN).tiangan
   assert not transits.star(2031, TransitOptions.DAYUN_LIUNIAN).dizhi
 
-@pytest.mark.integration
+
 def test_case2() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
@@ -471,7 +476,6 @@ def test_case2() -> None:
       assert star_result.dizhi == any(is_star(dz) for dz in transits_dz)
 
 
-@pytest.mark.integration
 @pytest.mark.parametrize('bazi', [Bazi.random() for _ in range(5)])
 def test_random_cases(bazi: Bazi) -> None:
   chart = BaziChart(bazi)
@@ -501,7 +505,7 @@ def test_random_cases(bazi: Bazi) -> None:
 
       def __taohua(dz: Dizhi) -> bool:
         return shensha_utils.taohua(y_dz, dz) or shensha_utils.taohua(d_dz, dz)
-      
+
       def __yima(dz: Dizhi) -> bool:
         return shensha_utils.yima(y_dz, dz) or shensha_utils.yima(d_dz, dz)
 
@@ -554,7 +558,7 @@ def test_random_cases(bazi: Bazi) -> None:
             count = sum(1 if dz in [y_dz, m_dz, h_dz] or dz in transits_dz_set else 0 for dz in other_dz)
             if count == 2:
               assert frozenset(dz_tuple) in dz_relations[DizhiRelation.刑]
-        
+
       for dz_fs in DizhiRules.DIZHI_SANHE: # 三合 cases
         if house in dz_fs:
           other_dz = dz_fs - {house}

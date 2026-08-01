@@ -38,6 +38,7 @@ def test_ganzhi_of_day_basic() -> None:
     d = date(2024, 3, 1) + timedelta(days=offset)
     assert bazi_utils.ganzhi_of_day(d) == Ganzhi.list_sexagenary_cycle()[offset % 60]
 
+
 def test_ganzhi_of_year() -> None:
   with pytest.raises(AssertionError):
     bazi_utils.ganzhi_of_year('2024') # type: ignore
@@ -58,11 +59,13 @@ def test_ganzhi_of_year() -> None:
     assert (bazi_utils.ganzhi_of_year(another_random_ganzhi_year) ==
             bazi_utils.ganzhi_of_year(random_ganzhi_year))
 
+
 def test_month_tiangan() -> None:
   assert bazi_utils.month_tiangan(Tiangan.甲, Dizhi.寅) == Tiangan.丙
   assert bazi_utils.month_tiangan(Tiangan.壬, Dizhi.子) == Tiangan.壬
   assert bazi_utils.month_tiangan(Tiangan.丁, Dizhi.丑) == Tiangan.癸
   assert bazi_utils.month_tiangan(Tiangan.戊, Dizhi.巳) == Tiangan.丁
+
 
 def test_hour_tiangan() -> None:
   assert bazi_utils.hour_tiangan(Tiangan.甲, Dizhi.寅) == Tiangan.丙
@@ -71,12 +74,14 @@ def test_hour_tiangan() -> None:
   assert bazi_utils.hour_tiangan(Tiangan.戊, Dizhi.巳) == Tiangan.丁
   assert bazi_utils.hour_tiangan(Tiangan.丙, Dizhi.卯) == Tiangan.辛
 
+
 def test_tiangan_traits() -> None:
   for idx, tg in enumerate(Tiangan):
     expected_wuxing: Wuxing = Wuxing.as_list()[idx // 2]
     expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
     assert bazi_utils.tiangan_traits(tg) == TraitTuple(expected_wuxing, expected_yinyang)
     assert str(bazi_utils.tiangan_traits(tg)) == str(expected_yinyang) + str(expected_wuxing)
+
 
 def test_dizhi_traits() -> None:
   assert bazi_utils.dizhi_traits(Dizhi('子')) == TraitTuple(Wuxing('水'), Yinyang('阳'))
@@ -101,6 +106,7 @@ def test_dizhi_traits() -> None:
     expected_yinyang: Yinyang = Yinyang.as_list()[idx % 2]
     assert bazi_utils.dizhi_traits(dz) == TraitTuple(expected_wuxing, expected_yinyang)
 
+
 def test_hidden_tiangans() -> None:
   for dz in Dizhi:
     percentages: HiddenTianganDict = bazi_utils.hidden_tiangans(dz)
@@ -109,6 +115,7 @@ def test_hidden_tiangans() -> None:
     assert sum(percentages.values()) == 100
     for tg in percentages:
       assert tg in Tiangan
+
 
 def test_shishen() -> None:
   assert bazi_utils.shishen(Tiangan.甲, Tiangan.甲) == Shishen.比肩
@@ -127,6 +134,7 @@ def test_shishen() -> None:
 
   assert bazi_utils.shishen(Tiangan.甲, Tiangan.壬) == Shishen.偏印
   assert bazi_utils.shishen(Tiangan.甲, Dizhi.子) == Shishen.正印
+
 
 def test_nayin_str() -> None:
   assert bazi_utils.nayin_str(Ganzhi.from_str('甲子')) == '海中金'
@@ -151,6 +159,7 @@ def test_nayin_str() -> None:
       else:
         with pytest.raises(AssertionError):
           bazi_utils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
+
 
 def test_shier_zhangsheng() -> None:
   assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('甲子')) == ShierZhangsheng.沐浴
@@ -181,6 +190,7 @@ def test_shier_zhangsheng() -> None:
     assert (bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('丁', str(dz))) ==
             bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('己', str(dz))))
 
+
 def test_from_shier_zhangsheng() -> None:
   assert bazi_utils.from_shier_zhangsheng(Tiangan('甲'), ShierZhangsheng.沐浴) == Dizhi('子')
   assert bazi_utils.from_shier_zhangsheng(Tiangan('甲'), ShierZhangsheng.长生) == Dizhi('亥')
@@ -210,6 +220,7 @@ def test_from_shier_zhangsheng() -> None:
     assert (bazi_utils.from_shier_zhangsheng(Tiangan('丁'), place) ==
             bazi_utils.from_shier_zhangsheng(Tiangan('己'), place))
 
+
 def test_shier_zhangsheng_consistency() -> None:
   for tg, dz in itertools.product(Tiangan, Dizhi):
     zs: ShierZhangsheng = bazi_utils.shier_zhangsheng(tg, dz)
@@ -217,6 +228,7 @@ def test_shier_zhangsheng_consistency() -> None:
   for tg, zs in itertools.product(Tiangan, ShierZhangsheng):
     dz: Dizhi = bazi_utils.from_shier_zhangsheng(tg, zs) # type: ignore
     assert bazi_utils.shier_zhangsheng(tg, dz) == zs
+
 
 def test_lu() -> None:
   for tg in Tiangan:

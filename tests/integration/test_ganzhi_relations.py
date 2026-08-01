@@ -12,6 +12,9 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.utils import tiangan_utils, dizhi_utils
 
 
+pytestmark = pytest.mark.integration
+
+
 # Integration tests are mainly aiming to test the correctness of `tiangan_utils` and `dizhi_utils` in transit context.
 # The Bazi cases are collected from "测测" app / "问真八字" web site.
 #
@@ -24,6 +27,7 @@ from src.utils import tiangan_utils, dizhi_utils
 # are in `tiangan_utils`'s and `dizhi_utils`'s returns.
 # There can be some combos in the returns but not in 测测/问真八字's results.
 
+
 def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
@@ -32,6 +36,7 @@ def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCom
       if combo not in actual[rel]:
         return False
   return True
+
 
 def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], actual: dizhi_utils.DizhiRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
@@ -42,7 +47,7 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
         return False
   return True
 
-@pytest.mark.integration
+
 def test_case1() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
@@ -127,7 +132,7 @@ def test_case1() -> None:
     DizhiRelation.害 : [frozenset({Dizhi.未, Dizhi.子})],
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
-@pytest.mark.integration
+
 def test_case2() -> None:
   '''From 测测 and 问真八字'''
   bazi: Bazi = Bazi(

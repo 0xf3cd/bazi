@@ -8,6 +8,7 @@ import pytest
 
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
+
 def test_basic() -> None:
   assert BaziRules.HIDDEN_TIANGANS == BaziRules.HIDDEN_TIANGANS
   assert BaziRules.TIANGAN_ZHANGSHENG == BaziRules.TIANGAN_ZHANGSHENG
@@ -16,6 +17,7 @@ def test_basic() -> None:
   assert DizhiRules.DIZHI_PO == DizhiRules.DIZHI_PO
   assert ShenshaRules.TAOHUA == ShenshaRules.TAOHUA
 
+
 def test_cache() -> None:
   assert BaziRules.HIDDEN_TIANGANS is BaziRules.HIDDEN_TIANGANS
   assert BaziRules.TIANGAN_ZHANGSHENG is BaziRules.TIANGAN_ZHANGSHENG
@@ -23,6 +25,7 @@ def test_cache() -> None:
   assert TianganRules.TIANGAN_HE is TianganRules.TIANGAN_HE
   assert DizhiRules.DIZHI_PO is DizhiRules.DIZHI_PO
   assert ShenshaRules.TAOHUA is ShenshaRules.TAOHUA
+
 
 def test_dizhi_anhe() -> None:
   # `DIZHI_ANHE` is a frozendict keyed by `AnheDef` - one sub-table per definition.
@@ -36,6 +39,7 @@ def test_dizhi_anhe() -> None:
   with pytest.raises(KeyError):
     _ = DizhiRules.DIZHI_ANHE['not an AnheDef'] # type: ignore
 
+
 def test_dizhi_xing() -> None:
   # `DIZHI_XING` is a frozendict keyed by `XingDef` - one sub-table per definition.
   assert set(DizhiRules.DIZHI_XING) == set(DizhiRules.XingDef)
@@ -47,6 +51,7 @@ def test_dizhi_xing() -> None:
     DizhiRules.DIZHI_XING[DizhiRules.XingDef.STRICT] = '' # type: ignore
   with pytest.raises(KeyError):
     _ = DizhiRules.DIZHI_XING['not a XingDef'] # type: ignore
+
 
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.

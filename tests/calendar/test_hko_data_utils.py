@@ -368,37 +368,31 @@ def test_complex_date_conversions() -> None:
 
 
 def test_date_conversions_negative() -> None:
-  # ganzhi_to_lunar negative
   with pytest.raises(AssertionError):
     hko_data_utils.ganzhi_to_lunar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
   with pytest.raises(AssertionError):
     hko_data_utils.ganzhi_to_lunar(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-  # lunar_to_ganzhi negative
   with pytest.raises(AssertionError):
     hko_data_utils.lunar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.LUNAR))
   with pytest.raises(AssertionError):
     hko_data_utils.lunar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.SOLAR))
 
-  # solar_to_lunar negative
   with pytest.raises(AssertionError):
     hko_data_utils.solar_to_lunar(CalendarDate(1, 1, 1, CalendarType.SOLAR))
   with pytest.raises(AssertionError):
     hko_data_utils.solar_to_lunar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  # lunar_to_solar negative
   with pytest.raises(AssertionError):
     hko_data_utils.lunar_to_solar(CalendarDate(1, 1, 1, CalendarType.LUNAR))
   with pytest.raises(AssertionError):
     hko_data_utils.lunar_to_solar(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  # solar_to_ganzhi negative
   with pytest.raises(AssertionError):
     hko_data_utils.solar_to_ganzhi(CalendarDate(1, 1, 1, CalendarType.SOLAR))
   with pytest.raises(AssertionError):
     hko_data_utils.solar_to_ganzhi(CalendarDate(2024, 1, 1, CalendarType.GANZHI))
 
-  # ganzhi_to_solar negative
   with pytest.raises(AssertionError):
     hko_data_utils.ganzhi_to_solar(CalendarDate(1, 1, 1, CalendarType.GANZHI))
   with pytest.raises(AssertionError):

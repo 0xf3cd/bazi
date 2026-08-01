@@ -30,6 +30,7 @@ def test_simple() -> None:
   for year in range(first_dayun.ganzhi_year + 20, first_dayun.ganzhi_year + 30):
     assert db[year] == DayunTuple(first_dayun.ganzhi_year + 20, Ganzhi.from_str('辛巳'))
 
+
 def test_dayun_database() -> None:
   chart: BaziChart = BaziChart.random()
 
@@ -74,12 +75,12 @@ def test_support() -> None:
     with pytest.raises(AssertionError):
       db.support(TransitMoment(1999), TransitOptions(0x8))
 
-    # Test ganzhi years before the birth year. Expect not to support.
+    # Ganzhi years before the birth year are not supported.
     for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
       for option in TransitOptions:
         assert not db.support(TransitMoment(gz_year), option)
 
-    # Test Xiaoyun / 小运.
+    # Xiaoyun / 小运.
     first_dayun_gz_year: int = next(chart.dayun).ganzhi_year
     for gz_year in range(chart.bazi.ganzhi_date.year, chart.bazi.ganzhi_date.year + len(chart.xiaoyun)):
       assert db.support(TransitMoment(gz_year), TransitOptions.XIAOYUN)
@@ -92,12 +93,13 @@ def test_support() -> None:
       else:
         assert gz_year < first_dayun_gz_year
 
-    # Test Dayun / 大运.
+    # Dayun / 大运.
     for start_gz_year, _ in itertools.islice(chart.dayun, 10): # Expect the first 10 dayuns to be supported anyways...
       for gz_year in range(start_gz_year, start_gz_year + 10):
         assert db.support(TransitMoment(gz_year), TransitOptions.DAYUN)
         assert db.support(TransitMoment(gz_year), TransitOptions.LIUNIAN)
         assert db.support(TransitMoment(gz_year), TransitOptions.DAYUN_LIUNIAN)
+
 
 def test_ganzhis() -> None:
   for _ in range(4):
@@ -158,12 +160,14 @@ def test_valid_shapes() -> None:
   assert day_moment.gz_month is None
   assert day_moment.solar_date == date(1990, 5, 20)
 
+
 def test_value_semantics() -> None:
   '''Equality and hash -- the contract that the exact-type check defends / 相等性与 hash——精确类型检查所捍卫的契约。'''
   assert TransitMoment(1990) == TransitMoment(1990)
   assert hash(TransitMoment(1990)) == hash(TransitMoment(1990))
   assert TransitMoment(1990) != TransitMoment(1990, gz_month=Dizhi.寅)
   assert 1 == len({TransitMoment(1990), TransitMoment(1990)})
+
 
 def test_invalid() -> None:
   with pytest.raises(AssertionError):
@@ -178,6 +182,7 @@ def test_invalid() -> None:
   # The month and day granularities are mutually exclusive / 月粒度与日粒度互斥。
   with pytest.raises(AssertionError):
     TransitMoment(1990, gz_month=Dizhi.寅, solar_date=date(1990, 5, 20))
+
 
 def test_granularity_rejection() -> None:
   '''Month/day granularities are explicitly rejected before #48 lands / #48 落地前，月/日粒度显式拒绝。'''
@@ -215,13 +220,14 @@ def test_enumeration() -> None:
 # HOUR / MINUTE charts (issue #6): the database's birth-side year must be the chart's own
 # precision-attributed `Bazi.ganzhi_year`, not the day-level `ganzhi_date.year`.
 
+
 def test_birth_year_is_precision_attributed() -> None:
   '''
   Cross-midnight tie chart (2009-02-03 23:30 female, HOUR): the chart's year pillar is
   己丑 2009, its liunian generator starts at 2009, and its dayun starts in 2018 (虚岁 10).
-  Before the fix the day-level 2008 leaked in: `ganzhis(2008, LIUNIAN)` returned 戊子 --
-  a ganzhi this chart's liunian never produces -- and 虚岁 10 mapped to 2017, so the true
-  dayun-start year 2018 answered `support == False` for xiaoyun.
+  The day-level 2008 must stay out of the database: 戊子 is a ganzhi this chart's liunian
+  never produces, and 虚岁 must count from 2009 so that the dayun-start year 2018 supports
+  xiaoyun.
   '''
   chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'hour'))
   assert chart.bazi.ganzhi_year == 2009
@@ -237,8 +243,9 @@ def test_birth_year_is_precision_attributed() -> None:
     chart.bazi.year_pillar, # The first liunian IS the year pillar.
   )
 
+
 def test_day_precision_unchanged() -> None:
-  '''At DAY the two year channels agree, so the database is unaffected by the migration.'''
+  '''At DAY the two year channels agree.'''
   chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'day'))
   assert chart.bazi.ganzhi_year == chart.bazi.ganzhi_date.year
   db: TransitDatabase = TransitDatabase(chart)

@@ -33,7 +33,7 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.taohua(dz1, dz2):
         expected_taohua.append(dz2)
     assert at_birth.shensha['taohua'] == set(expected_taohua)
-    assert at_birth.shensha['taohua'] == at_birth.shensha['taohua'], 'Constancy'
+    assert at_birth.shensha['taohua'] == at_birth.shensha['taohua'] # Repeated lookup must answer the same.
 
     # Hongyan / 红艳
     expected_hongyan: list[Dizhi] = []
@@ -41,7 +41,7 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.hongyan(tg, dz):
         expected_hongyan.append(dz)
     assert at_birth.shensha['hongyan'] == set(expected_hongyan)
-    assert at_birth.shensha['hongyan'] == at_birth.shensha['hongyan'], 'Constancy'
+    assert at_birth.shensha['hongyan'] == at_birth.shensha['hongyan'] # Repeated lookup must answer the same.
 
     # Hongluan / 红鸾
     expected_hongluan: list[Dizhi] = []
@@ -49,7 +49,7 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.hongluan(dz1, dz2):
         expected_hongluan.append(dz2)
     assert at_birth.shensha['hongluan'] == set(expected_hongluan)
-    assert at_birth.shensha['hongluan'] == at_birth.shensha['hongluan'], 'Constancy'
+    assert at_birth.shensha['hongluan'] == at_birth.shensha['hongluan'] # Repeated lookup must answer the same.
 
     # Tianxi / 天喜
     expected_tianxi: list[Dizhi] = []
@@ -57,7 +57,7 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.tianxi(dz1, dz2):
         expected_tianxi.append(dz2)
     assert at_birth.shensha['tianxi'] == set(expected_tianxi)
-    assert at_birth.shensha['tianxi'] == at_birth.shensha['tianxi'], 'Constancy'
+    assert at_birth.shensha['tianxi'] == at_birth.shensha['tianxi'] # Repeated lookup must answer the same.
 
     # Yima / 驿马
     expected_yima: list[Dizhi] = []
@@ -68,7 +68,8 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.yima(dz1, dz2):
         expected_yima.append(dz2)
     assert at_birth.shensha['yima'] == set(expected_yima)
-    assert at_birth.shensha['yima'] == at_birth.shensha['yima'], 'Constancy'
+    assert at_birth.shensha['yima'] == at_birth.shensha['yima'] # Repeated lookup must answer the same.
+
 
 @pytest.mark.slow
 def test_at_birth_day_master_relations() -> None:
@@ -84,7 +85,8 @@ def test_at_birth_day_master_relations() -> None:
       chart.bazi.month_pillar.tiangan,
       chart.bazi.hour_pillar.tiangan
     ], [dm])
-    assert at_birth.day_master_relations == at_birth.day_master_relations, 'Constancy'
+    assert at_birth.day_master_relations == at_birth.day_master_relations # Repeated lookup must answer the same.
+
 
 @pytest.mark.slow
 def test_at_birth_house_relations() -> None:
@@ -101,7 +103,8 @@ def test_at_birth_house_relations() -> None:
     )
     assert at_birth.house_relations == dizhi_utils.discover_mutual([y, m, h], [d])
 
-    assert at_birth.house_relations == at_birth.house_relations, 'Constancy'
+    assert at_birth.house_relations == at_birth.house_relations # Repeated lookup must answer the same.
+
 
 @pytest.mark.slow
 def test_at_birth_star_relations() -> None:
@@ -119,8 +122,9 @@ def test_at_birth_star_relations() -> None:
       for dz_combo in dz_combos:
         assert any(dz in dz_combo for dz in stars.dizhi)
 
-    assert at_birth.star_relations.tiangan == at_birth.star_relations.tiangan, 'Constancy'
-    assert at_birth.star_relations.dizhi == at_birth.star_relations.dizhi, 'Constancy'
+    assert at_birth.star_relations.tiangan == at_birth.star_relations.tiangan # Repeated lookup must answer the same.
+    assert at_birth.star_relations.dizhi == at_birth.star_relations.dizhi # Repeated lookup must answer the same.
+
 
 @pytest.mark.slow
 def test_filtered() -> None:
@@ -147,15 +151,17 @@ def test_filtered() -> None:
           assert any(dz in dz_combo for dz in stars.dizhi) == (dz_combo in at_birth.star_relations.dizhi[dz_rel])
 
 
-def _equal(discovery1, discovery2) -> bool:
+DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
+def _equal(discovery1: DiscoveryType, discovery2: DiscoveryType) -> bool:
   if type(discovery1) is not type(discovery2):
     return False
   if set(discovery1.keys()) != set(discovery2.keys()):
     return False
   for key in discovery1:
-    if set(discovery1[key]) != set(discovery2[key]):
+    if set(discovery1[key]) != set(discovery2[key]):  # type: ignore
       return False
   return True
+
 
 @pytest.mark.slow
 def test_transit_shensha() -> None:
@@ -218,6 +224,7 @@ def test_transit_shensha() -> None:
           expected.append(dz)
       assert actual['yima'] == set(expected)
 
+
 @pytest.mark.slow
 def test_transit_day_master_relations() -> None:
   for _ in range(32):
@@ -237,6 +244,7 @@ def test_transit_day_master_relations() -> None:
       actual = transits_analysis.day_master_relations(randon_year, random_options)
 
       assert _equal(expected, actual)
+
 
 @pytest.mark.slow
 def test_transit_house_relations() -> None:
@@ -277,6 +285,7 @@ def test_transit_house_relations() -> None:
       expected = dizhi_utils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
 
       assert _equal(expected, actual)
+
 
 @pytest.mark.slow
 def test_transit_star_relations() -> None:
@@ -343,6 +352,7 @@ def test_transit_star_relations() -> None:
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       ))
 
+
 @pytest.mark.slow
 def test_zhengyin() -> None:
   for _ in range(32):
@@ -368,6 +378,7 @@ def test_zhengyin() -> None:
       actual = transits_analysis.zhengyin(randon_year, random_options)
       assert expected_tg == actual.tiangan
       assert expected_dz == actual.dizhi
+
 
 @pytest.mark.slow
 def test_star() -> None:

@@ -20,6 +20,7 @@ def test_basic() -> None:
     transits: TransitChart = TransitChart(bazi_chart)
     assert bazi_chart.json == transits.bazi_chart.json
 
+
 def test_basic_negative() -> None:
   with pytest.raises(AssertionError):
     TransitChart(BaziChart.random().bazi) # type: ignore
@@ -28,6 +29,7 @@ def test_basic_negative() -> None:
 
   with pytest.raises(AttributeError):
     TransitChart(BaziChart.random()).bazi_chart = BaziChart.random() # type: ignore
+
 
 def test_delegation() -> None:
   bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
@@ -41,6 +43,7 @@ def test_delegation() -> None:
       assert transits.support(TransitMoment(gz_year), option) == db.support(TransitMoment(gz_year), option)
       if transits.support(TransitMoment(gz_year), option):
         assert transits.ganzhis(TransitMoment(gz_year), option) == db.ganzhis(TransitMoment(gz_year), option)
+
 
 def test_delegation_negative() -> None:
   bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)

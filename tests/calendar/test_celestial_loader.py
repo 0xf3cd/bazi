@@ -2,6 +2,7 @@
 # test_celestial_loader.py
 
 import hashlib
+
 import pytest
 
 from datetime import date, datetime
@@ -23,6 +24,7 @@ def data_lines(path: Path) -> list[str]:
 
 
 # The shipped tables: the tables that actually ship, loaded with the strict contiguity check.
+
 
 def test_they_cover_the_whole_window() -> None:
   assert JieqiMomentTable().supported_year_range() == range(1901, 2101)
@@ -82,6 +84,7 @@ def test_fixture_rows_appear_verbatim_in_the_shipped_tables() -> None:
 # The fixture tables: a 5-year slice in the shipped format, frozen when the schema was.  Being a
 # sparse slice, they are loaded with `contiguous_years=False`; the shipped tables use the strict
 # default.
+
 
 def test_jieqi_fixture() -> None:
   table = JieqiMomentTable(FIXTURES / 'jieqi_moments.txt', contiguous_years=False)
@@ -159,6 +162,7 @@ def test_index_matches_the_jieqi_enum() -> None:
 
 # Corrupt tables: every rejection path, exercised by mutating a fixture.  A stale or hand-edited
 # table is the one failure mode that would otherwise silently produce wrong charts everywhere.
+
 
 @pytest.fixture
 def jieqi_lines() -> list[str]:

@@ -17,7 +17,8 @@ def test_taohua() -> None:
   for _ in range(16):
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2), 'Result consistency'
+    assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
 
 def test_hongyan() -> None:
   expected_table: dict[Dizhi, list[Tiangan]] = {
@@ -35,7 +36,8 @@ def test_hongyan() -> None:
     tg, dz = random.choice(Tiangan.as_list()), random.choice(Dizhi.as_list())
     expected_result: bool = dz in expected_table and tg in expected_table[dz]
     assert shensha_utils.hongyan(tg, dz) == expected_result
-    assert shensha_utils.hongyan(tg, dz) == expected_result, 'Result consistency'
+    assert shensha_utils.hongyan(tg, dz) == expected_result # Second call must answer the same (determinism across calls).
+
 
 def test_hongluan() -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
@@ -53,7 +55,8 @@ def test_hongluan() -> None:
   for _ in range(16):
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2), 'Result consistency'
+    assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
 
 def test_tianxi() -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
@@ -71,7 +74,8 @@ def test_tianxi() -> None:
   for _ in range(16):
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2), 'Result consistency'
+    assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+
 
 def test_yima() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
@@ -83,4 +87,4 @@ def test_yima() -> None:
   for _ in range(16):
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2), 'Result consistency'
+    assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).

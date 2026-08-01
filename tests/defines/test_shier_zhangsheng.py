@@ -34,5 +34,4 @@ def test_str() -> None:
     assert ShierZhangsheng.from_str(str(zs)) == zs
     assert ShierZhangsheng(str(zs)) == zs
 
-    assert ''.join([str(zs) for zs in ShierZhangsheng.as_list()]) == \
-           '长生沐浴冠带临官帝旺衰病死墓绝胎养'
+    assert ''.join([str(zs) for zs in ShierZhangsheng.as_list()]) == '长生沐浴冠带临官帝旺衰病死墓绝胎养'

@@ -31,14 +31,18 @@ from celestial_parity_data import (
 
 DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'src' / 'calendar' / 'celestial_data' / 'data'
 
+
 JIEQI_TABLE_PATH: Final[Path] = DATA_DIR / 'jieqi_moments.txt'
 ALGO1_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo1.txt'
 ALGO2_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo2.txt'
 
+
 FIXTURE_DIR: Final[Path] = Path(__file__).parent / 'celestial_fixtures'
+
 
 JIEQI_LIST: Final[list[Jieqi]] = list(Jieqi)
 SEXAGENARY_CYCLE: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
+
 
 # SCHEMA.md's closed provenance namespace, restated here as the assertable form of it.
 _COMMON_HEADER_KEYS: Final[frozenset[str]] = frozenset({
@@ -51,6 +55,7 @@ LUNAR_HEADER_KEYS: Final[frozenset[str]] = _COMMON_HEADER_KEYS | {'algo'}
 
 # ---------------------------------------------------------------------------
 # Minimal independent table reader (SCHEMA.md; header continuation lines are folded away)
+
 
 def _read_table(path: Path) -> tuple[dict[str, str], list[list[str]]]:
   header: dict[str, str] = {}
@@ -78,6 +83,7 @@ class _JieqiRow(NamedTuple):
   name:   str
   moment: datetime
 
+
 def _parse_jieqi_rows(raw_rows: list[list[str]]) -> list[_JieqiRow]:
   return [
     _JieqiRow(
@@ -98,6 +104,7 @@ class _LunarRow(NamedTuple):
   days_counts:      tuple[int, ...]
   ganzhi:           str
 
+
 def _parse_lunar_rows(raw_rows: list[list[str]]) -> list[_LunarRow]:
   return [
     _LunarRow(
@@ -116,6 +123,7 @@ def _load_jieqi_table() -> tuple[dict[str, str], list[list[str]], list[_JieqiRow
   header, raw_rows = _read_table(JIEQI_TABLE_PATH)
   return header, raw_rows, _parse_jieqi_rows(raw_rows)
 
+
 def _load_lunar_table(path: Path) -> tuple[dict[str, str], list[_LunarRow]]:
   header, raw_rows = _read_table(path)
   return header, _parse_lunar_rows(raw_rows)
@@ -130,6 +138,7 @@ def _load_lunar_table(path: Path) -> tuple[dict[str, str], list[_LunarRow]]:
 #
 # The contract is stated in three independent places -- this file, the generator, and the
 # loader's regex -- so nothing but a test can keep them from drifting apart.
+
 
 def test_shipped_tables() -> None:
   for path, expected in ((JIEQI_TABLE_PATH, JIEQI_HEADER_KEYS),
@@ -150,6 +159,7 @@ def test_fixtures() -> None:
 
 
 # The jieqi table itself: row count, ordering, jq_idx <-> name, the 小寒/大寒 January note.
+
 
 def test_header_and_row_count() -> None:
   header, raw_rows, _ = _load_jieqi_table()
@@ -180,6 +190,7 @@ def test_row_sequence_and_names() -> None:
 # The divergences must be exactly the frozen whitelist in `celestial_parity_data.py`
 # -- the entry count itself is asserted, so a new unexplained divergence turns this red.
 
+
 def test_whitelist_self_consistency() -> None:
   assert len(JIEQI_DATE_DIVERGENCES) == 7
   assert len({ (d.year, d.jq_idx) for d in JIEQI_DATE_DIVERGENCES }) == 7 # No duplicate keys.
@@ -191,8 +202,7 @@ def test_whitelist_self_consistency() -> None:
     assert abs((divergence.celestial_moment.date() - divergence.hko_date).days) == 1
   # The only two 节 (month boundaries) are 1917 大雪 and 1927 白露 -- the entries that
   # propagate into the ganzhi-calendar methods.
-  assert { (d.year, d.name) for d in JIEQI_DATE_DIVERGENCES if d.is_jie } == \
-         { (1917, '大雪'), (1927, '白露') }
+  assert { (d.year, d.name) for d in JIEQI_DATE_DIVERGENCES if d.is_jie } == { (1917, '大雪'), (1927, '白露') }
 
 
 def test_dates_vs_hko() -> None:
@@ -217,6 +227,7 @@ def test_dates_vs_hko() -> None:
 
 # ---------------------------------------------------------------------------
 # The lunar tables themselves: row count, bitmask <-> days_counts round-trip, ganzhi formula.
+
 
 def _check_shape(path: Path) -> list[_LunarRow]:
   header, rows = _load_lunar_table(path)
@@ -259,6 +270,7 @@ def test_algo2_shape() -> None:
 # (`first_solar_date` / `leap_month` / `days_counts` / `ganzhi`).
 # algo1 is HKO-lineage and must match 199/199; algo2 diverges on exactly the six
 # whitelisted years (`ALGO2_DIVERGENT_YEARS`).
+
 
 def _hko_differences(rows: list[_LunarRow]) -> dict[int, list[str]]:
   '''Field-level differences against hko_data, keyed by lunar year (empty means a match).'''
@@ -311,6 +323,7 @@ def test_ganzhi_matches_hko() -> None:
 # The documentary algo1 x algo2 diff: since algo1 matches HKO 199/199, algo2's
 # differences from HKO are exactly its differences from algo1 -- the same six years
 # as celestial `src/test/lunar/diff_test.cpp`.
+
 
 def test_divergent_years() -> None:
   _, algo1_rows = _load_lunar_table(ALGO1_TABLE_PATH)

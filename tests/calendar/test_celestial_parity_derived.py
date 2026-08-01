@@ -92,8 +92,9 @@ def test_whitelist_is_exact_through_the_backend() -> None:
       if cel != hko:
         measured.append((year, jq_idx, cel))
   # Sorted: the signal is the key set, not the scan order (layer (b) compares as a set too).
-  assert sorted(measured) == \
-         sorted((row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES)
+  assert sorted(measured) == sorted(
+    (row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES
+  )
 
 
 def test_moments_match_the_whitelist() -> None:
@@ -178,6 +179,7 @@ def test_the_derivations_preconditions_hold() -> None:
 
 # Layer (a): celestial's algo1 is the same HKO almanac data, so this is strict.
 
+
 def test_no_disagreement_anywhere() -> None:
   day: date = HKO.to_date(HKO.get_min_supported_date(CalendarType.SOLAR))
   last: date = HKO.to_date(HKO.get_max_supported_date(CalendarType.SOLAR))
@@ -205,6 +207,7 @@ def test_bounds() -> None:
 
 
 # Layer (c): every expectation below is computed from the whitelist.
+
 
 def test_solar_side_disagreements_are_exactly_derived() -> None:
   expected: set[date] = affected_solar_days()
@@ -234,8 +237,7 @@ def test_days_counts_disagrees_on_exactly_the_derived_years() -> None:
   assert measured == expected
   # A moved 节 makes one month longer and its neighbour shorter, so the year still adds up.
   for year in expected:
-    assert sum(CEL.days_counts_in_ganzhi_year(year)) == \
-           sum(HKO.days_counts_in_ganzhi_year(year))
+    assert sum(CEL.days_counts_in_ganzhi_year(year)) == sum(HKO.days_counts_in_ganzhi_year(year))
 
 
 def test_ganzhi_side_disagreements_stay_in_the_derived_months() -> None:

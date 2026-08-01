@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_bazichart.py
+# test_bazi_chart.py
 
 import json
 import copy
@@ -40,8 +40,9 @@ def test_basic() -> None:
   with pytest.raises(AssertionError):
     BaziChart(date(2024, 1, 1))  # type: ignore
 
+
 def test_malicious() -> None:
-  # Modification attemp
+  # Modification attempt
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 2, 4, 2),
     gender=BaziGender.男,
@@ -62,11 +63,13 @@ def test_malicious() -> None:
   with pytest.raises(TypeError):
     BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore
 
+
 def test_house_of_relationship() -> None:
   for _ in range(5):
     bazi = Bazi.random()
     chart = BaziChart(bazi)
     assert chart.house_of_relationship == bazi.four_dizhis[2]
+
 
 def test_relationship_stars() -> None:
   for _ in range(5):
@@ -82,6 +85,7 @@ def test_relationship_stars() -> None:
     if len(stars.dizhi) != 1:
       assert 2 == len(stars.dizhi)
       assert all(bazi_utils.traits(dz).wuxing is Wuxing.土 for dz in stars.dizhi)
+
 
 def test_traits() -> None:
   bazi: Bazi = Bazi(
@@ -110,6 +114,7 @@ def test_traits() -> None:
     assert bazi_utils.tiangan_traits(pillar.tiangan) == pillar_traits.tiangan
     assert bazi_utils.dizhi_traits(pillar.dizhi) == pillar_traits.dizhi
 
+
 def test_hidden_tiangans() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 2, 4, 2),
@@ -133,6 +138,7 @@ def test_hidden_tiangans() -> None:
   assert dict(hidden_tiangans.hour) == {  # 寅
     Tiangan.甲 : 60, Tiangan.丙 : 30, Tiangan.戊 : 10,
   }
+
 
 def test_shishens() -> None:
   chart: BaziChart = BaziChart(Bazi.create(
@@ -160,6 +166,7 @@ def test_shishens() -> None:
   assert shishens.hour.tiangan == Shishen.偏财
   assert shishens.hour.dizhi == Shishen.偏印
 
+
 def test_nayin() -> None:
   chart: BaziChart = BaziChart(Bazi.create(
     birth_time=datetime(1984, 4, 2, 4, 2),
@@ -179,6 +186,7 @@ def test_nayin() -> None:
   assert nayin.day == '炉中火'
   assert nayin.hour == '松柏木'
 
+
 def test_shier_zhangsheng() -> None:
   chart: BaziChart = BaziChart(Bazi.create(
     birth_time=datetime(1984, 4, 2, 4, 2),
@@ -197,6 +205,7 @@ def test_shier_zhangsheng() -> None:
   assert zhangshengs.month == ShierZhangsheng.沐浴
   assert zhangshengs.day == ShierZhangsheng.长生
   assert zhangshengs.hour == ShierZhangsheng.长生
+
 
 @pytest.mark.slow
 def test_basic_info_correctness() -> None:
@@ -237,6 +246,7 @@ def test_basic_info_correctness() -> None:
       assert tg_shishen == bazi_utils.shishen(day_master, pillar.tiangan)
       assert tg_traits == bazi_utils.tiangan_traits(pillar.tiangan)
 
+
 def test_dayun_sexagenary_cycle() -> None:
   for _ in range(10):
     random_bazi: Bazi = Bazi.random()
@@ -248,6 +258,7 @@ def test_dayun_sexagenary_cycle() -> None:
 
     assert first_60_dayuns == next_60_dayuns
     assert set(first_60_dayuns) == set(Ganzhi.list_sexagenary_cycle())
+
 
 def test_dayun_order() -> None:
   for _ in range(10):
@@ -272,6 +283,7 @@ def test_dayun_order() -> None:
 
     assert first_dayun.ganzhi == expected_first_dayun_gz
     assert chart.dayun_order == expected_order
+
 
 def test_dayun_start_moment() -> None:
   # Golden values from 测测, kept as provenance: 2009-12-30 / 1985-03-05 / 1993-05-25.
@@ -298,6 +310,7 @@ def test_dayun_start_moment() -> None:
     abs=delta,
   )
 
+
 def test_dayun_ganzhi() -> None:
   bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
   bazi1_dayun_gen = BaziChart(bazi1).dayun
@@ -316,6 +329,7 @@ def test_dayun_ganzhi() -> None:
   assert next(bazi3_dayun_gen).ganzhi == Ganzhi.from_str('丙寅')
   assert next(bazi3_dayun_gen).ganzhi == Ganzhi.from_str('乙丑')
   assert next(bazi3_dayun_gen).ganzhi == Ganzhi.from_str('甲子')
+
 
 def test_dayun_ganzhi_year() -> None:
   bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
@@ -337,8 +351,9 @@ def test_dayun_ganzhi_year() -> None:
     for dayun1, dayun2 in itertools.pairwise(dayun_start_times):
       assert dayun2.ganzhi_year - dayun1.ganzhi_year == 10
 
+
 def test_xiaoyun() -> None:
-  def __subtest(bazi: Bazi, expected_xiaoyun_str: str) -> None:
+  def __check(bazi: Bazi, expected_xiaoyun_str: str) -> None:
     xiaoyuns: tuple[XiaoyunTuple, ...] = BaziChart(bazi).xiaoyun
     expected: list[Ganzhi] = [Ganzhi.from_str(s) for s in expected_xiaoyun_str.split()]
     assert len(xiaoyuns) == len(expected)
@@ -347,19 +362,20 @@ def test_xiaoyun() -> None:
       assert xiaoyuns[age-1].ganzhi == gz
 
   # Data collected from https://p.china95.net/paipan/bazi/
-  __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
+  __check(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
             '戊子 丁亥 丙戌 乙酉')
-  __subtest(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
+  __check(Bazi.create(datetime(2017, 8, 17, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
             '庚寅 辛卯 壬辰 癸巳 甲午 乙未 丙申 丁酉')
-  __subtest(Bazi.create(datetime(2017, 8, 16, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
+  __check(Bazi.create(datetime(2017, 8, 16, 2, 23), BaziGender.MALE, BaziPrecision.DAY),
             '丙子 乙亥 甲戌 癸酉')
-  __subtest(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
+  __check(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE, BaziPrecision.DAY),
             '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
 
   # Directed: celestial moves this man's dayun start past 立春 1985, so xiaoyun gains a year
   # (HKO gives '辛卯' alone); china95 lists exactly '辛卯 壬辰' for the same birth.
-  __subtest(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY),
+  __check(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY),
             '辛卯 壬辰')
+
 
 def test_liunian() -> None:
   cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
@@ -372,6 +388,7 @@ def test_liunian() -> None:
 
     # The first liunian is also the birth ganzhi year.
     assert next(chart.liunian).ganzhi_year == random_bazi.ganzhi_date.year
+
 
 @pytest.mark.slow
 def test_consistency() -> None:
@@ -398,6 +415,7 @@ def test_consistency() -> None:
       assert list(itertools.islice(chart.dayun, 100)) == list(itertools.islice(expected.dayun, 100))
 
       assert chart.json == expected.json
+
 
 @pytest.mark.slow
 def test_json() -> None:
@@ -452,6 +470,7 @@ def test_json() -> None:
     )
 
     assert j == __chart.json
+
 
 def test_json_correctness() -> None:
   chart: BaziChart = BaziChart(Bazi.create(
@@ -526,6 +545,7 @@ def test_json_correctness() -> None:
     'hour': '长生',
   }
 
+
 def test_deepcopy() -> None:
   chart: BaziChart = BaziChart(Bazi.random())
 
@@ -545,6 +565,7 @@ def test_deepcopy() -> None:
 # same attribution source as the pillars (`Bazi.bracketing_jies` / `Bazi.ganzhi_year`), so
 # a chart cannot contradict itself about which jie owns the birth month.
 
+
 def test_backward_dayun_counts_from_the_month_owning_jie() -> None:
   '''
   立春 2009 = 02-04 00:49:48. A HOUR birth at 02-04 00:30 ties into the new year (己丑, 阴),
@@ -558,6 +579,7 @@ def test_backward_dayun_counts_from_the_month_owning_jie() -> None:
   assert not chart.dayun_order
   assert chart.dayun_start_moment == chart.bazi.solar_datetime
 
+
 def test_forward_dayun_skips_the_tie_jie() -> None:
   '''
   Same tie birth, female -> forward. The "next" jie must be the one AFTER the owning 立春,
@@ -569,6 +591,7 @@ def test_forward_dayun_skips_the_tie_jie() -> None:
   birth: datetime = chart.bazi.solar_datetime
   gap: timedelta = datetime(2009, 3, 5, 18, 47, 32) - birth
   assert chart.dayun_start_moment == birth + (gap / timedelta(days=3)) * timedelta(days=365)
+
 
 def test_minute_precision_counts_to_the_true_moment() -> None:
   '''
@@ -582,14 +605,15 @@ def test_minute_precision_counts_to_the_true_moment() -> None:
   gap: timedelta = datetime(2009, 2, 4, 0, 49, 48) - birth
   assert chart.dayun_start_moment == birth + (gap / timedelta(days=3)) * timedelta(days=365)
 
+
 def test_backward_clamp_across_midnight_matches_the_same_shichen() -> None:
   '''
-  R1 convergence find (grok / fable / kimi independently): the cross-midnight tie birth
-  (2009-02-03 23:30, male -> backward, clamp) must produce the SAME xiaoyun and dayun-year
-  face as its same-子时 sibling on the jieqi's own day (02-04 00:30) -- the four pillars
-  are identical, so the charts must be too. Before the fix, the day-level relabel of the
-  clamped start (= the birth itself, whose civil day still carries the OLD year) emptied
-  the xiaoyun and put the first dayun in 2008, contradicting the 己丑 2009 year pillar.
+  The cross-midnight tie birth (2009-02-03 23:30, male -> backward, clamp) must produce
+  the SAME xiaoyun and dayun-year face as its same-子时 sibling on the jieqi's own day
+  (02-04 00:30) -- the four pillars are identical, so the charts must be too. The clamped
+  start (= the birth itself, whose civil day still carries the OLD year) must keep its
+  year-level attribution: the xiaoyun stays populated and the first dayun lands in 2009,
+  agreeing with the 己丑 year pillar.
   '''
   across: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', 'hour'))
   same_day: BaziChart = BaziChart(Bazi.create('2009-02-04 00:30', 'male', 'hour'))
@@ -602,6 +626,7 @@ def test_backward_clamp_across_midnight_matches_the_same_shichen() -> None:
   assert len(across.xiaoyun) == 1
   assert next(across.dayun).ganzhi_year == 2009   # == the year pillar's year,
   assert next(same_day.dayun).ganzhi_year == 2009 # on both sides of midnight.
+
 
 @pytest.mark.parametrize('precision, first_year, year_pillar, xiaoyun_len', [
   ('hour', 2009, '己丑', 10),

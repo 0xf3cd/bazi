@@ -35,8 +35,7 @@ def test_str() -> None:
     assert Shishen.from_str(str(s)) == s
     assert Shishen(str(s)) == s
 
-  assert ''.join([str(s) for s in Shishen.as_list()]) == \
-         '比肩劫财食神伤官正财偏财正官七杀正印偏印'
+  assert ''.join([str(s) for s in Shishen.as_list()]) == '比肩劫财食神伤官正财偏财正官七杀正印偏印'
 
   # One character - abbreviation.
   assert len(Shishen.str_mapping_table()) == 10

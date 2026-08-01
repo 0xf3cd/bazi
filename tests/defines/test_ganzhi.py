@@ -1,8 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_ganzhi.py
 
-import pytest
 import random
+
+import pytest
 
 from src.defines import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支,
@@ -158,10 +159,8 @@ def test_ganzhi_next_prev() -> None:
     assert random_gz1 == random_gz1.prev(60)
 
     random_int: int = random.randint(-1000, 1000)
-    assert random_gz1.next(random_int) == \
-           cycle[(cycle.index(random_gz1) + random_int) % 60]
-    assert random_gz1.prev(random_int) == \
-           cycle[(cycle.index(random_gz1) - random_int) % 60]
+    assert random_gz1.next(random_int) == cycle[(cycle.index(random_gz1) + random_int) % 60]
+    assert random_gz1.prev(random_int) == cycle[(cycle.index(random_gz1) - random_int) % 60]
 
   # Immutability.
   gz: Ganzhi = Ganzhi(Tiangan.甲, Dizhi.子)
@@ -173,9 +172,7 @@ def test_ganzhi_next_prev() -> None:
     random_gz2: Ganzhi = __random_gz()
     for __ in range(16):
       x: int = random.randint(-1000, 1000)
-      assert random_gz2 == \
-             random_gz2.next(x).prev(x)
-      assert random_gz2 == \
-             random_gz2.prev(x).next(x)
+      assert random_gz2 == random_gz2.next(x).prev(x)
+      assert random_gz2 == random_gz2.prev(x).next(x)
       assert random_gz2.next(x) == random_gz2.prev(-x)
       assert random_gz2.prev(x) == random_gz2.next(-x)

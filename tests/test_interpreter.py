@@ -8,6 +8,7 @@ from src.defines import Tiangan, Shishen
 from src.descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
 from src.interpreter import Interpreter
 
+
 def test_interpret_shishen() -> None:
   for shishen in Shishen:
     result: ShishenDescription = Interpreter.interpret_shishen(shishen)
@@ -26,6 +27,7 @@ def test_interpret_shishen() -> None:
 
     assert result == Interpreter.interpret_shishen(shishen)
 
+
 def test_interpret_tiangan() -> None:
   for tg in Tiangan:
     result: TianganDescription = Interpreter.interpret_tiangan(tg)
@@ -43,6 +45,7 @@ def test_interpret_tiangan() -> None:
         assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
 
     assert result == Interpreter.interpret_tiangan(tg)
+
 
 def test_corpus_is_frozen() -> None:
   # The corpus tables are frozen: reassigning an entry must fail, and mutating a

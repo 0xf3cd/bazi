@@ -9,11 +9,13 @@ import pytest
 from itertools import product
 from datetime import date, time, datetime, timedelta
 from zoneinfo import ZoneInfo
+from typing import Final
 
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
 from src.calendar import hko_data_utils, CalendarBackend, calendar_utils_of
+
 
 def test_bazi_gender_basic() -> None:
   assert len(BaziGender) == 2
@@ -28,6 +30,7 @@ def test_bazi_gender_basic() -> None:
   assert BaziGender.YIN is BaziGender.阴
   assert BaziGender.YIN is BaziGender.坤
 
+
 def test_str() -> None:
   assert str(BaziGender.YANG) == 'male'
   assert str(BaziGender.YIN) == 'female'
@@ -41,6 +44,7 @@ def test_bazi_precision_basic() -> None:
   assert str(BaziPrecision.DAY) == 'day'
   assert str(BaziPrecision.HOUR) == 'hour'
   assert str(BaziPrecision.MINUTE) == 'minute'
+
 
 @pytest.mark.parametrize('backend', ('hko', 'celestial'))
 @pytest.mark.parametrize('moment, year_pillar, month_dizhi', [
@@ -66,6 +70,7 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   assert str(bazi.year_pillar) == year_pillar
   assert bazi.month_commander == month_dizhi
 
+
 @pytest.mark.parametrize('moment, year, month, day', [
   # 1984-02-04 is the 立春 date, so the year/month pillars turn over between these rows while
   # the day pillar turns over an hour earlier, at 23:00.
@@ -90,14 +95,16 @@ def test_the_23_oclock_rollover_moves_only_the_day_pillar(moment: str, year: str
 # HOUR / MINUTE precisions (issue #6): `birth >= jieqi` compared at the known granularity,
 # ties go new. The reference rule text is the `BaziPrecision` docstring.
 
+
 # The jie owning a birth month opens it: 立春 opens 寅月, and so on. Written out as data
 # (not derived from enum order) so the tests share no derivation with `src.Bazi`.
-JIE_MONTH_DIZHI: dict[Jieqi, Dizhi] = {
+JIE_MONTH_DIZHI: Final[dict[Jieqi, Dizhi]] = {
   Jieqi.立春 : Dizhi.寅,  Jieqi.惊蛰 : Dizhi.卯,  Jieqi.清明 : Dizhi.辰,
   Jieqi.立夏 : Dizhi.巳,  Jieqi.芒种 : Dizhi.午,  Jieqi.小暑 : Dizhi.未,
   Jieqi.立秋 : Dizhi.申,  Jieqi.白露 : Dizhi.酉,  Jieqi.寒露 : Dizhi.戌,
   Jieqi.立冬 : Dizhi.亥,  Jieqi.大雪 : Dizhi.子,  Jieqi.小寒 : Dizhi.丑,
 }
+
 
 def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   '''
@@ -112,6 +119,7 @@ def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   boundaries: list[datetime] = [datetime.combine(dt.date() - timedelta(days=1), time(23))]
   boundaries += [datetime.combine(dt.date(), time(h)) for h in range(1, 24, 2)]
   return max(b for b in boundaries if b <= dt)
+
 
 @pytest.mark.parametrize('moment, precision, year_pillar, month_dizhi', [
   ('2000-02-04 19:30', 'hour',   '庚辰', Dizhi.寅), # 戌时 [19:00, 21:00) holds the jieqi: tie -> new.
@@ -149,6 +157,7 @@ def test_goldens_from_the_docstring(moment: str, precision: str, year_pillar: st
   assert str(bazi.year_pillar) == year_pillar
   assert bazi.month_commander == month_dizhi
 
+
 def test_day_and_hour_pillars_ignore_precision() -> None:
   '''Precision only moves the year/month attribution; the day/hour pillars must not move.'''
   moments: list[str] = ['2009-02-03 23:30', '2017-02-03 23:10', '2000-02-04 20:39', '1984-02-04 12:30']
@@ -159,12 +168,14 @@ def test_day_and_hour_pillars_ignore_precision() -> None:
       assert bazi.day_pillar == day_bazi.day_pillar
       assert bazi.hour_pillar == day_bazi.hour_pillar
 
+
 def test_hko_backend_rejected() -> None:
   '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
   for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
     with pytest.raises(ValueError):
       Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, precision, CalendarBackend.HKO)
   assert str(Bazi.create('2000-02-04 19:30', 'male', 'day', backend='hko').year_pillar) == '庚辰'
+
 
 def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
   '''`ganzhi_year` / `bracketing_jies` expose exactly what the pillars were derived from.'''
@@ -182,6 +193,7 @@ def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
   advance: Bazi = Bazi.create('2009-02-03 23:30', 'male', 'hour')
   assert advance.ganzhi_year == 2009
   assert advance.ganzhi_date.year == 2008
+
 
 @pytest.mark.slow
 def test_attribution_matches_scan_oracle() -> None:
@@ -259,6 +271,7 @@ def test_attribution_matches_scan_oracle() -> None:
   # The biased sampling must actually have exercised the divergence windows.
   assert divergent > 100
 
+
 def test_minute_vs_moment_level_prev_jie() -> None:
   '''
   MINUTE attribution vs the moment-level `prev_jie`: the two may disagree ONLY at a
@@ -314,6 +327,7 @@ def test_init() -> None:
     assert bazi.gender == BaziGender.男
     assert bazi.precision == BaziPrecision.DAY
 
+
 def test_chinese() -> None:
   assert Bazi is 八字
 
@@ -338,6 +352,7 @@ def test_chinese() -> None:
     assert bazi.minute == random_dt.minute
     assert bazi.gender == BaziGender.男
     assert bazi.precision == BaziPrecision.DAY
+
 
 def test_invalid_arguments() -> None:
   random_dt: datetime = datetime(
@@ -382,6 +397,7 @@ def test_invalid_arguments() -> None:
       precision=BaziPrecision.DAY,
     )
 
+
 def _create_bazi(dt: datetime) -> Bazi:
   return Bazi(
     birth_time=dt,
@@ -389,12 +405,13 @@ def _create_bazi(dt: datetime) -> Bazi:
     precision=BaziPrecision.DAY,
   )
 
+
 def test_four_dizhis_correctness() -> None:
   '''
   Test the correctness of `Bazi` on the given test cases.
   Precision is at `DAY` level.
   '''
-  def __subtest(dt: datetime, dizhi_strs: list[str]) -> None:
+  def __check(dt: datetime, dizhi_strs: list[str]) -> None:
     assert len(dizhi_strs) == 4
 
     bazi = _create_bazi(dt)
@@ -406,37 +423,29 @@ def test_four_dizhis_correctness() -> None:
     )
 
   # Basic cases
-  # Data was collected from "测测" app on my iPhone 15 Pro Max.
-  __subtest(datetime(2024, 2, 6, 11, 55), ['辰', '寅', '子', '午'])
-  __subtest(datetime(1984, 4, 2, 4, 2), ['子', '卯', '寅', '寅'])
+  # Data was collected from the "测测" app.
+  __check(datetime(2024, 2, 6, 11, 55), ['辰', '寅', '子', '午'])
+  __check(datetime(1984, 4, 2, 4, 2), ['子', '卯', '寅', '寅'])
 
-  __subtest(datetime(1998, 3, 17, 13, 0), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 13, 59), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 14, 0), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 14, 59), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 15, 0), ['寅', '卯', '亥', '申'])
-  __subtest(datetime(1998, 3, 17, 23, 0), ['寅', '卯', '子', '子'])
-  __subtest(datetime(1998, 3, 18, 0, 59), ['寅', '卯', '子', '子'])
-  __subtest(datetime(1998, 3, 18, 1, 0), ['寅', '卯', '子', '丑'])
+  __check(datetime(1998, 3, 17, 13, 0), ['寅', '卯', '亥', '未'])
+  __check(datetime(1998, 3, 17, 13, 59), ['寅', '卯', '亥', '未'])
+  __check(datetime(1998, 3, 17, 14, 0), ['寅', '卯', '亥', '未'])
+  __check(datetime(1998, 3, 17, 14, 59), ['寅', '卯', '亥', '未'])
+  __check(datetime(1998, 3, 17, 15, 0), ['寅', '卯', '亥', '申'])
+  __check(datetime(1998, 3, 17, 23, 0), ['寅', '卯', '子', '子'])
+  __check(datetime(1998, 3, 18, 0, 59), ['寅', '卯', '子', '子'])
+  __check(datetime(1998, 3, 18, 1, 0), ['寅', '卯', '子', '丑'])
 
   # Edge cases
-  __subtest(datetime(1998, 3, 17, 13, 0), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 13, 59), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 14, 0), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 14, 59), ['寅', '卯', '亥', '未'])
-  __subtest(datetime(1998, 3, 17, 15, 0), ['寅', '卯', '亥', '申'])
-  __subtest(datetime(1998, 3, 17, 23, 0), ['寅', '卯', '子', '子'])
-  __subtest(datetime(1998, 3, 18, 0, 59), ['寅', '卯', '子', '子'])
-  __subtest(datetime(1998, 3, 18, 1, 0), ['寅', '卯', '子', '丑'])
+  __check(datetime(2000, 2, 3, 0, 0), ['卯', '丑', '卯', '子'])
+  __check(datetime(2000, 2, 3, 22, 59), ['卯', '丑', '卯', '亥'])
+  __check(datetime(2000, 2, 3, 23, 0), ['卯', '丑', '辰', '子'])
+  __check(datetime(2000, 2, 4, 0, 0), ['辰', '寅', '辰', '子'])
+  __check(datetime(2000, 2, 4, 1, 0), ['辰', '寅', '辰', '丑'])
 
-  __subtest(datetime(2000, 2, 3, 0, 0), ['卯', '丑', '卯', '子'])
-  __subtest(datetime(2000, 2, 3, 22, 59), ['卯', '丑', '卯', '亥'])
-  __subtest(datetime(2000, 2, 3, 23, 0), ['卯', '丑', '辰', '子'])
-  __subtest(datetime(2000, 2, 4, 0, 0), ['辰', '寅', '辰', '子'])
-  __subtest(datetime(2000, 2, 4, 1, 0), ['辰', '寅', '辰', '丑'])
 
 def test_four_tiangans_correctness() -> None:
-  def __subtest(dt: datetime, tiangan_strs: list[str]) -> None:
+  def __check(dt: datetime, tiangan_strs: list[str]) -> None:
     assert len(tiangan_strs) == 4
 
     bazi = _create_bazi(dt)
@@ -447,9 +456,10 @@ def test_four_tiangans_correctness() -> None:
       Tiangan.from_str(tiangan_strs[3]),
     )
 
-  __subtest(datetime(1984, 4, 2, 4, 2), ['甲', '丁', '丙', '庚'])
-  __subtest(datetime(2000, 2, 4, 22, 1), ['庚', '戊', '壬', '辛'])
-  __subtest(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
+  __check(datetime(1984, 4, 2, 4, 2), ['甲', '丁', '丙', '庚'])
+  __check(datetime(2000, 2, 4, 22, 1), ['庚', '戊', '壬', '辛'])
+  __check(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
+
 
 def test_ganzhi_date() -> None:
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
@@ -458,6 +468,7 @@ def test_ganzhi_date() -> None:
   for _ in range(10):
     bazi = Bazi.random()
     assert bazi.ganzhi_date == hko_data_utils.to_ganzhi(bazi.solar_date)
+
 
 def test_date_time() -> None:
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
@@ -476,23 +487,25 @@ def test_date_time() -> None:
   with pytest.raises(AttributeError):
     random_bazi.solar_datetime = datetime(1984, 4, 3, 9, 8) # type: ignore
 
+
 def test_pillars() -> None:
-  def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
+  def __check(dt: datetime, ganzhi_strs: list[str]) -> None:
     assert len(ganzhi_strs) == 4
 
     bazi = _create_bazi(dt)
     pillars: list[Ganzhi] = list(bazi.pillars)
-    assert pillars[0] == Ganzhi.from_str(ganzhi_strs[0]), 'Year Pillar'
-    assert pillars[1] == Ganzhi.from_str(ganzhi_strs[1]), 'Month Pillar'
-    assert pillars[2] == Ganzhi.from_str(ganzhi_strs[2]), 'Day Pillar'
-    assert pillars[3] == Ganzhi.from_str(ganzhi_strs[3]), 'Hour Pillar'
+    assert pillars[0] == Ganzhi.from_str(ganzhi_strs[0])
+    assert pillars[1] == Ganzhi.from_str(ganzhi_strs[1])
+    assert pillars[2] == Ganzhi.from_str(ganzhi_strs[2])
+    assert pillars[3] == Ganzhi.from_str(ganzhi_strs[3])
 
-  __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
-  __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
-  __subtest(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+  __check(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
+  __check(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
+  __check(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+
 
 def test_consistency() -> None:
-  def __subtest(dt: datetime, ganzhi_strs: list[str]) -> None:
+  def __check(dt: datetime, ganzhi_strs: list[str]) -> None:
     assert len(ganzhi_strs) == 4
 
     bazi = _create_bazi(dt)
@@ -509,9 +522,10 @@ def test_consistency() -> None:
     assert bazi.four_tiangans == tuple([tg for tg, _ in pillars])
     assert bazi.four_dizhis == tuple([dz for _, dz in pillars])
 
-  __subtest(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
-  __subtest(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
-  __subtest(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+  __check(datetime(1984, 4, 2, 4, 2), ['甲子', '丁卯', '丙寅', '庚寅'])
+  __check(datetime(2000, 2, 4, 22, 1), ['庚辰', '戊寅', '壬辰', '辛亥'])
+  __check(datetime(2001, 10, 20, 19, 0), ['辛巳', '戊戌', '丙辰', '戊戌'])
+
 
 def test_deepcopy() -> None:
   bazi: Bazi = Bazi(
@@ -531,6 +545,7 @@ def test_deepcopy() -> None:
   next_day_pillar: Ganzhi = cycle[(cycle.index(bazi._day_pillar) + 1) % len(cycle)]
   bazi._day_pillar = next_day_pillar # type: ignore
   assert bazi._day_pillar != bazi2._day_pillar
+
 
 def test_create() -> None:
   with pytest.raises(ValueError):
@@ -581,6 +596,7 @@ def test_create() -> None:
     with pytest.raises(ValueError):
       Bazi.create(dt, g, p, backend='hko') # HKO has no real jieqi moments.
 
+
 def test_eq_ne() -> None:
   def __random_info() -> tuple[datetime, BaziGender, BaziPrecision]:
     return (datetime(
@@ -612,6 +628,7 @@ def test_eq_ne() -> None:
     bazi_hacked._precision = BaziPrecision.HOUR # type: ignore # Intended for testing only.
     assert bazi != bazi_hacked
 
+
 def test_hash() -> None:
   dt: datetime = datetime(2000, 2, 4, 22, 1)
   bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
@@ -621,6 +638,7 @@ def test_hash() -> None:
 
   other: Bazi = Bazi.create(dt, BaziGender.FEMALE, BaziPrecision.DAY)
   assert len({bazi, same, other}) == 2
+
 
 def test_sub_minute_truncation() -> None:
   # Two births in the same minute are the same Bazi -- `Bazi.solar_datetime` is the

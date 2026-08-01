@@ -217,11 +217,9 @@ def test_exactly_on_a_jie_belongs_to_it() -> None:
 
 def test_jie_across_year_boundaries() -> None:
   # Before 小寒 of its own year, the previous Jie is last year's 大雪.
-  assert ALGO1.prev_jie(datetime(2024, 1, 1)) == \
-         (Jieqi.大雪, ALGO1.jieqi_moment(2023, Jieqi.大雪))
+  assert ALGO1.prev_jie(datetime(2024, 1, 1)) == (Jieqi.大雪, ALGO1.jieqi_moment(2023, Jieqi.大雪))
   # On or after 大雪, the next Jie is next year's 小寒.
-  assert ALGO1.next_jie(datetime(2024, 12, 20)) == \
-         (Jieqi.小寒, ALGO1.jieqi_moment(2025, Jieqi.小寒))
+  assert ALGO1.next_jie(datetime(2024, 12, 20)) == (Jieqi.小寒, ALGO1.jieqi_moment(2025, Jieqi.小寒))
 
 
 def test_prev_and_next_bracket_every_jie() -> None:

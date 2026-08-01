@@ -3,12 +3,9 @@
 
 import pytest
 
-
-
 from src.defines import Shishen, Tiangan
 from src.common import frozendict
 from src.data_types import GanzhiData, BaziData, HiddenTianganDict
-
 
 
 def test_frozendict() -> None:
@@ -32,6 +29,7 @@ def test_frozendict() -> None:
   assert fd2[1] is fd2[1]
   assert fd2[1] is src_dict[1]
 
+
 def test_frozendict_hash() -> None:
   # Tuple semantics: equal contents hash equal, regardless of insertion order.
   fd1: frozendict[int, int] = frozendict({1: 2, 3: 4})
@@ -51,6 +49,7 @@ def test_frozendict_hash() -> None:
   bd: BaziData[HiddenTianganDict] = BaziData(htd, htd, htd, htd)
   assert hash(bd) == hash(BaziData(htd, htd, htd, htd))
   assert bd in {bd}
+
 
 def test_pillardata() -> None:
   combo1: GanzhiData[str, int] = GanzhiData('a', 1)
@@ -72,6 +71,7 @@ def test_pillardata() -> None:
 
   assert combo5 != Shishen.正官
   assert combo5 != (None, Shishen.七杀)
+
 
 def test_bazidata() -> None:
   bd1: BaziData[int] = BaziData(1, 2, 3, 4)
