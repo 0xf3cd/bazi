@@ -77,14 +77,22 @@ def test_support() -> None:
     with pytest.raises(ValueError):
       db.support(TransitMoment(1999), TransitOptions(0x8))
 
-    # Ganzhi years before the birth year are not supported.
-    for gz_year in range(chart.bazi.ganzhi_date.year - 10, chart.bazi.ganzhi_date.year):
+    # Ganzhi years before the birth year are not supported. The birth-side channel is the
+    # precision-attributed `ganzhi_year` -- the field `TransitDatabase` actually reads --
+    # not the day-level `ganzhi_date.year` (they agree at DAY but diverge on HOUR ties).
+    for gz_year in range(chart.bazi.ganzhi_year - 10, chart.bazi.ganzhi_year):
       for option in TransitOptions:
         assert not db.support(TransitMoment(gz_year), option)
 
     # Xiaoyun / 小运.
-    first_dayun_gz_year: int = next(chart.dayun).ganzhi_year
-    for gz_year in range(chart.bazi.ganzhi_date.year, chart.bazi.ganzhi_date.year + len(chart.xiaoyun)):
+    # Independent recomputation, not a mirror of `next(chart.dayun).ganzhi_year` -- the very
+    # expression `TransitDatabase` consumes: the day-level label of `dayun_start_moment`
+    # through the chart's own backend, floored at `Bazi.ganzhi_year`.
+    first_dayun_gz_year: int = max(
+      calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
+      chart.bazi.ganzhi_year,
+    )
+    for gz_year in range(chart.bazi.ganzhi_year, chart.bazi.ganzhi_year + len(chart.xiaoyun)):
       assert db.support(TransitMoment(gz_year), TransitOptions.XIAOYUN)
       assert db.support(TransitMoment(gz_year), TransitOptions.LIUNIAN)
       assert db.support(TransitMoment(gz_year), TransitOptions.XIAOYUN_LIUNIAN)
@@ -95,8 +103,9 @@ def test_support() -> None:
       else:
         assert gz_year < first_dayun_gz_year
 
-    # Dayun / 大运.
-    for start_gz_year, _ in itertools.islice(chart.dayun, 10): # Expect the first 10 dayuns to be supported anyways...
+    # Dayun / 大运. Each dayun lasts 10 years, stepping from the independently recomputed
+    # first dayun year above -- not from `chart.dayun`, which is what the database reads.
+    for start_gz_year in range(first_dayun_gz_year, first_dayun_gz_year + 100, 10): # Expect the first 10 dayuns to be supported anyways...
       for gz_year in range(start_gz_year, start_gz_year + 10):
         assert db.support(TransitMoment(gz_year), TransitOptions.DAYUN)
         assert db.support(TransitMoment(gz_year), TransitOptions.LIUNIAN)

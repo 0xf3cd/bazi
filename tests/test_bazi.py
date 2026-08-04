@@ -14,7 +14,7 @@ from typing import Final
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
-from src.calendar import hko_data_utils, CalendarBackend, calendar_utils_of
+from src.calendar import CalendarBackend, calendar_utils_of
 
 
 def test_bazi_gender_basic() -> None:
@@ -487,12 +487,16 @@ def test_four_tiangans_correctness() -> None:
 
 
 def test_ganzhi_date() -> None:
+  # The oracle must follow the chart's own backend: `ganzhi_date` is the day-level label
+  # through `Bazi`'s resolved calendar utils. The two backends legitimately diverge inside
+  # the 1917/1927 jieqi-shift windows (pinned by the parity whitelist), so an oracle bound
+  # to the wrong backend false-reds there -- the #114 CI failure was exactly that.
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
-  assert bazi.ganzhi_date == hko_data_utils.to_ganzhi(date(1984, 4, 2))
+  assert bazi.ganzhi_date == calendar_utils_of(bazi.backend).to_ganzhi(date(1984, 4, 2))
 
   for _ in range(10):
     bazi = Bazi.random()
-    assert bazi.ganzhi_date == hko_data_utils.to_ganzhi(bazi.solar_date)
+    assert bazi.ganzhi_date == calendar_utils_of(bazi.backend).to_ganzhi(bazi.solar_date)
 
 
 def test_date_time() -> None:
