@@ -11,7 +11,6 @@ from src.data_types import DayunTuple
 from src.defines import Ganzhi, Dizhi
 from src.utils import bazi_utils
 
-from src.calendar.hko_data_utils import to_ganzhi
 from src.bazi import Bazi, BaziGender, BaziPrecision
 from src.bazi_chart import BaziChart
 from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
@@ -120,7 +119,8 @@ def test_ganzhis() -> None:
       for age, xy in chart.xiaoyun
     }
 
-    dayun_start_gz_year: int = to_ganzhi(chart.dayun_start_moment).year
+    # The same source `TransitDatabase` consumes (floor at `Bazi.ganzhi_year` included).
+    dayun_start_gz_year: int = next(chart.dayun).ganzhi_year
     dayun_ganzhis: list[Ganzhi] = [dy.ganzhi for dy in itertools.islice(chart.dayun, 50)]
 
     # Randomly select 20 ganzhi years to test...
@@ -131,7 +131,9 @@ def test_ganzhis() -> None:
       db.ganzhis(TransitMoment(dayun_start_gz_year - 1), TransitOptions.DAYUN)
 
     for gz_year, _ in random_liunians:
-      for option in TransitOptions:
+      # `_ALL_OPTIONS`, not `TransitOptions`: on Python 3.11+ the enum iterates single-bit
+      # members only, and single-bit queries can never observe the append order.
+      for option in _ALL_OPTIONS:
         if not db.support(TransitMoment(gz_year), option):
           with pytest.raises(ValueError):
             db.ganzhis(TransitMoment(gz_year), option)
@@ -146,10 +148,9 @@ def test_ganzhis() -> None:
         if option.value & TransitOptions.LIUNIAN.value:
           transit_ganzhis.append(bazi_utils.ganzhi_of_year(gz_year))
 
+        # Exact tuple equality pins the order too: 小运 -> 大运 -> 流年.
         actual = db.ganzhis(TransitMoment(gz_year), option)
-        assert len(actual) == len(transit_ganzhis)
-        for gz in actual:
-          assert gz in transit_ganzhis
+        assert actual == tuple(transit_ganzhis)
 
 
 def test_valid_shapes() -> None:
@@ -260,3 +261,38 @@ def test_day_precision_unchanged() -> None:
   db: TransitDatabase = TransitDatabase(chart)
   assert db.support(TransitMoment(2008), TransitOptions.LIUNIAN)  # 戊子 2008 IS this chart's first liunian.
   assert not db.support(TransitMoment(2007), TransitOptions.LIUNIAN)
+
+
+def test_dayun_year_floored_at_ganzhi_year() -> None:
+  '''
+  Cross-midnight tie chart (2009-02-03 23:30 male, HOUR): the backward-counted dayun
+  start clamps to the birth moment itself, whose day-level label is still the OLD year
+  2008 (戊子). The first dayun year must be floored up to the chart's own precision-
+  attributed `Bazi.ganzhi_year` 2009 (己丑) -- otherwise 2008 would wrongly support
+  dayun, and every later year would resolve one dayun step off (2018: 甲子 instead of
+  乙丑).
+  '''
+  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', 'hour'))
+  assert chart.dayun_start_moment == chart.bazi.solar_datetime # The clamp: the start IS the birth.
+  assert chart.bazi.ganzhi_date.year == 2008 # The bare day-level label of the clamped start.
+  assert chart.bazi.ganzhi_year == 2009
+
+  # 逆排: the first dayun steps one ganzhi back from the month pillar 丙寅 -> 乙丑.
+  first_dayun: DayunTuple = next(chart.dayun)
+  assert first_dayun == DayunTuple(2009, Ganzhi.from_str('乙丑'))
+
+  db: TransitDatabase = TransitDatabase(chart)
+  with pytest.raises(ValueError):
+    db.ganzhis(TransitMoment(2008), TransitOptions.DAYUN) # 戊子 2008 is below the floored start.
+  assert db.ganzhis(TransitMoment(2009), TransitOptions.DAYUN) == (
+    Ganzhi.from_str('乙丑'),
+  )
+  # 2018 is the last year of the first dayun (2009-2018); the unfloored start 2008 would
+  # put it one step further back (甲子). 2019 opens the second dayun.
+  assert db.ganzhis(TransitMoment(2018), TransitOptions.DAYUN_LIUNIAN) == (
+    Ganzhi.from_str('乙丑'),
+    Ganzhi.from_str('戊戌'), # The 2018 liunian.
+  )
+  assert db.ganzhis(TransitMoment(2019), TransitOptions.DAYUN) == (
+    Ganzhi.from_str('甲子'),
+  )
