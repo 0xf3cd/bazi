@@ -89,6 +89,13 @@ def test_lunar() -> None:
   assert not ALGO1.is_valid_lunar_date(lunar(2024, 1, 31))
 
 
+def test_lunar_leap_month_boundary() -> None:
+  # 2023's leap month is 闰二月, slot 3 in this numbering (it shifts the later months:
+  # slot 13 is 腊月, not the leap month).  It runs 29 days, 2023-03-22 to 2023-04-19.
+  assert ALGO1.is_valid_lunar_date(lunar(2023, 3, 29)) # Last day of the leap month.
+  assert not ALGO1.is_valid_lunar_date(lunar(2023, 3, 30)) # One past the leap month's end.
+
+
 def test_ganzhi() -> None:
   assert ALGO1.is_valid_ganzhi_date(ganzhi(2024, 1, 1))
   assert not ALGO1.is_valid_ganzhi_date(solar(2024, 1, 1)) # Wrong date type.
@@ -147,6 +154,15 @@ def test_round_trips() -> None:
       assert ALGO1.ganzhi_to_lunar(ALGO1.solar_to_ganzhi(d)) == ALGO1.solar_to_lunar(d)
       assert ALGO1.lunar_to_ganzhi(ALGO1.solar_to_lunar(d)) == ALGO1.solar_to_ganzhi(d)
       day += timedelta(days=1)
+
+
+def test_lunar_leap_month_round_trips() -> None:
+  # Lunar-anchored: `test_round_trips` reaches the leap month only via solar dates, so
+  # pin the leap month from the lunar side.  The solar values agree with the HKO backend.
+  for d, expected in ((1, solar(2023, 3, 22)), (15, solar(2023, 4, 5)), (29, solar(2023, 4, 19))):
+    leap: CalendarDate = lunar(2023, 3, d)
+    assert ALGO1.lunar_to_solar(leap) == expected
+    assert ALGO1.solar_to_lunar(ALGO1.lunar_to_solar(leap)) == leap
 
 
 def test_dates_before_the_year_boundaries() -> None:
