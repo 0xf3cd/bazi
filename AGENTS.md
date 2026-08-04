@@ -108,6 +108,13 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 `descriptions` — rules, tables, 命理 semantics). Infrastructure layers (`common`,
 `calendar`, `transits` — mechanism code) may be English-only.
 
+## Comment language
+Narrative in English; domain terms and quotations keep their original language
+(立春, 小运, 口诀 citations) — translating an entity loses it. So tests read as
+English sentences with Chinese terms inline; full-Chinese lines are for quoted
+material only, not for explanation. Punctuation follows the neighbouring
+comments (tests/ is overwhelmingly half-width).
+
 ## Typing & immutability (non-negotiable)
 - Fully typed; `mypy .` must pass. Lean on `Final`, `X | None` unions (PEP 604, not `Optional`), `Callable`, `TypedDict`, `NamedTuple`.
 - Returns immutable: `frozenset`, `frozendict` (from `..common`), `tuple`,
