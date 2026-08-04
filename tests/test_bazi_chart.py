@@ -316,8 +316,9 @@ def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
   The dayun consequence of the DAY trade-off pinned in `test_bazi`: a 00:00 birth on the
   jieqi's civil day still sits in 小寒 at moment level, so the forward count walks the
   whole way to 立春 and the first dayun starts in 2000.  The 22:01 golden in
-  `test_dayun_start_moment` is the same-day sibling past the true moment -- same pillars,
-  but its bracketing starts at 立春 itself and the count walks on to 惊蛰, landing in 2009.
+  `test_dayun_start_moment` is the same-day sibling past the true moment -- same
+  year/month/day pillars, but its bracketing starts at 立春 itself and the count walks on
+  to 惊蛰, landing in 2009.
   '''
   delta: timedelta = timedelta(seconds=1)
 

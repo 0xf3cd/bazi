@@ -67,7 +67,7 @@ def test_ganzhi_of_year() -> None:
 
 def test_month_tiangan() -> None:
   # 五虎遁口诀(年上起月):甲己之年丙作首,乙庚之年戊为头,丙辛之年寻庚起,丁壬壬位顺行流,戊癸之年甲寅求。
-  # 下表为口诀的手工转录（oracle 独立于此仓的任何表）：每个年干一行，12 个字依次是寅月到丑月的月干。
+  # 下表为口诀的手工转录(oracle 独立于此仓的任何表):每个年干一行,12 个字依次是寅月到丑月的月干。
   wuhudun: dict[Tiangan, str] = {
     Tiangan.甲 : '丙丁戊己庚辛壬癸甲乙丙丁', # 甲己之年丙作首(丙寅起)
     Tiangan.己 : '丙丁戊己庚辛壬癸甲乙丙丁',
@@ -97,7 +97,7 @@ def test_month_tiangan_negative() -> None:
 
 def test_hour_tiangan() -> None:
   # 五鼠遁口诀(日上起时):甲己还加甲,乙庚丙作初,丙辛从戊起,丁壬庚子居,戊癸壬子求。
-  # 下表为口诀的手工转录（oracle 独立于此仓的任何表）：每个日干一行，12 个字依次是子时到亥时的时干。
+  # 下表为口诀的手工转录(oracle 独立于此仓的任何表):每个日干一行,12 个字依次是子时到亥时的时干。
   wushudun: dict[Tiangan, str] = {
     Tiangan.甲 : '甲乙丙丁戊己庚辛壬癸甲乙', # 甲己还加甲(甲子起)
     Tiangan.己 : '甲乙丙丁戊己庚辛壬癸甲乙',
