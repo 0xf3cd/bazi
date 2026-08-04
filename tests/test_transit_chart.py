@@ -5,7 +5,7 @@ import pytest
 
 from datetime import datetime
 
-from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.defines import Dizhi
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
@@ -32,7 +32,7 @@ def test_basic_negative() -> None:
 
 
 def test_delegation() -> None:
-  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE)
   transits: TransitChart = TransitChart(BaziChart(bazi))
   db: TransitDatabase = TransitDatabase(transits.bazi_chart)
 
@@ -46,7 +46,7 @@ def test_delegation() -> None:
 
 
 def test_delegation_negative() -> None:
-  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE)
   transits: TransitChart = TransitChart(BaziChart(bazi))
 
   with pytest.raises(TypeError):

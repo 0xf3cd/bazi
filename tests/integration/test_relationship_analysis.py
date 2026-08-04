@@ -10,7 +10,7 @@ from typing import cast
 
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
-from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
@@ -57,7 +57,6 @@ def test_case1() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 1, 11, 8),
     gender=BaziGender.MALE,
-    precision=BaziPrecision.DAY,
   )
   chart: BaziChart = BaziChart(bazi)
   db: TransitDatabase = TransitDatabase(chart)
@@ -242,7 +241,6 @@ def test_case2() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(2020, 7, 2, 19, 8),
     gender=BaziGender.FEMALE,
-    precision=BaziPrecision.DAY,
   )
   chart: BaziChart = BaziChart(bazi)
   birth_gz_year: int = bazi.ganzhi_date.year

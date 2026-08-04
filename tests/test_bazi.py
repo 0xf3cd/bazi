@@ -14,6 +14,7 @@ from typing import Final
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
+from src.school import BaziConfig
 from src.calendar import CalendarBackend, calendar_utils_of
 
 
@@ -66,7 +67,7 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   stayed open long enough to become issue #72. Changing the rule should mean deleting this
   test on purpose.
   '''
-  bazi: Bazi = Bazi.create(moment, 'male', 'day', backend=backend)
+  bazi: Bazi = Bazi.create(moment, 'male', BaziConfig.from_values(backend=backend))
   assert str(bazi.year_pillar) == year_pillar
   assert bazi.month_commander == month_dizhi
 
@@ -81,7 +82,7 @@ def test_day_precision_bracketing_jies_stay_moment_level() -> None:
   `Bazi.bracketing_jies`' docstring points at.
   '''
   # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
-  bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male', 'day')
+  bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male')
   # ...yet the pillars already read the new year and month (day-level attribution).
   assert str(bazi.year_pillar) == '庚辰'
   assert str(bazi.month_pillar) == '戊寅'
@@ -107,7 +108,7 @@ def test_the_23_oclock_rollover_moves_only_the_day_pillar(moment: str, year: str
   which answer is today's default, so that making it configurable is a deliberate carry-over
   rather than whatever the code happened to do.
   '''
-  bazi: Bazi = Bazi.create(moment, 'male', 'day')
+  bazi: Bazi = Bazi.create(moment, 'male')
   assert str(bazi.year_pillar) == year
   assert str(bazi.month_pillar) == month
   assert str(bazi.day_pillar) == day
@@ -174,7 +175,7 @@ def test_goldens_from_the_docstring(moment: str, precision: str, year_pillar: st
     attributes a 02-03 23:30 birth to the new year on a day DAY assigns to the old side.
     The granularities are three readings of one rule, not nested refinements.
   '''
-  bazi: Bazi = Bazi.create(moment, 'male', precision)
+  bazi: Bazi = Bazi.create(moment, 'male', BaziConfig.from_values(precision=precision))
   assert str(bazi.year_pillar) == year_pillar
   assert bazi.month_commander == month_dizhi
 
@@ -183,9 +184,9 @@ def test_day_and_hour_pillars_ignore_precision() -> None:
   '''Precision only moves the year/month attribution; the day/hour pillars must not move.'''
   moments: list[str] = ['2009-02-03 23:30', '2017-02-03 23:10', '2000-02-04 20:39', '1984-02-04 12:30']
   for moment in moments:
-    day_bazi: Bazi = Bazi.create(moment, 'female', 'day')
+    day_bazi: Bazi = Bazi.create(moment, 'female')
     for precision in ('hour', 'minute'):
-      bazi: Bazi = Bazi.create(moment, 'female', precision)
+      bazi: Bazi = Bazi.create(moment, 'female', BaziConfig.from_values(precision=precision))
       assert bazi.day_pillar == day_bazi.day_pillar
       assert bazi.hour_pillar == day_bazi.hour_pillar
 
@@ -194,13 +195,13 @@ def test_hko_backend_rejected() -> None:
   '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
   for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
     with pytest.raises(ValueError):
-      Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, precision, CalendarBackend.HKO)
-  assert str(Bazi.create('2000-02-04 19:30', 'male', 'day', backend='hko').year_pillar) == '庚辰'
+      Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, BaziConfig(precision=precision, backend=CalendarBackend.HKO))
+  assert str(Bazi.create('2000-02-04 19:30', 'male', BaziConfig.from_values(backend='hko')).year_pillar) == '庚辰'
 
 
 def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
   '''`ganzhi_year` / `bracketing_jies` expose exactly what the pillars were derived from.'''
-  bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', 'hour')
+  bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', BaziConfig.from_values(precision='hour'))
   assert bazi.ganzhi_year == 2009
   owning, following = bazi.bracketing_jies
   assert owning == JieqiTime(Jieqi.立春, datetime(2009, 2, 4, 0, 49, 48))
@@ -211,7 +212,7 @@ def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
   # (DAY gives the whole day to the new side), but for the cross-midnight tie birth on the
   # PREVIOUS day they legitimately disagree.
   assert bazi.ganzhi_date.year == 2009
-  advance: Bazi = Bazi.create('2009-02-03 23:30', 'male', 'hour')
+  advance: Bazi = Bazi.create('2009-02-03 23:30', 'male', BaziConfig.from_values(precision='hour'))
   assert advance.ganzhi_year == 2009
   assert advance.ganzhi_date.year == 2008
 
@@ -252,7 +253,7 @@ def test_attribution_matches_scan_oracle() -> None:
   divergent: int = 0
   for _ in range(total):
     birth: datetime = __random_moment()
-    day_bazi: Bazi = Bazi(birth, BaziGender.女, BaziPrecision.DAY)
+    day_bazi: Bazi = Bazi(birth, BaziGender.女)
 
     candidates: list[JieqiTime] = sorted(
       (JieqiTime(jie, utils.jieqi_moment(year, jie))
@@ -261,7 +262,7 @@ def test_attribution_matches_scan_oracle() -> None:
     )
 
     for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
-      bazi: Bazi = Bazi(birth, BaziGender.女, precision)
+      bazi: Bazi = Bazi(birth, BaziGender.女, BaziConfig(precision=precision))
 
       trunc_birth: datetime = _truncated(birth, precision)
       lichun: datetime = utils.jieqi_moment(birth.year, Jieqi.立春)
@@ -310,7 +311,7 @@ def test_minute_vs_moment_level_prev_jie() -> None:
     jie_moment: datetime = utils.jieqi_moment(rng.randint(1902, 2080), rng.choice(all_jies))
     birth: datetime = (jie_moment + timedelta(seconds=rng.randint(-90, 90))).replace(second=0, microsecond=0)
 
-    bazi: Bazi = Bazi(birth, BaziGender.男, BaziPrecision.MINUTE)
+    bazi: Bazi = Bazi(birth, BaziGender.男, BaziConfig(precision=BaziPrecision.MINUTE))
     moment_owning: JieqiTime = utils.prev_jie(birth)
     attribution_owning: JieqiTime = bazi.bracketing_jies[0]
 
@@ -339,14 +340,13 @@ def test_init() -> None:
     bazi: Bazi = Bazi(
       birth_time=random_dt,
       gender=BaziGender.男,
-      precision=BaziPrecision.DAY,
     )
 
     assert bazi.solar_date == date(random_dt.year, random_dt.month, random_dt.day)
     assert bazi.hour == random_dt.hour
     assert bazi.minute == random_dt.minute
     assert bazi.gender == BaziGender.男
-    assert bazi.precision == BaziPrecision.DAY
+    assert bazi.config.precision == BaziPrecision.DAY
 
 
 def test_chinese() -> None:
@@ -365,14 +365,13 @@ def test_chinese() -> None:
     bazi: 八字 = 八字(
       birth_time=random_dt,
       gender=BaziGender.男,
-      precision=BaziPrecision.DAY,
     )
 
     assert bazi.solar_date == date(random_dt.year, random_dt.month, random_dt.day)
     assert bazi.hour == random_dt.hour
     assert bazi.minute == random_dt.minute
     assert bazi.gender == BaziGender.男
-    assert bazi.precision == BaziPrecision.DAY
+    assert bazi.config.precision == BaziPrecision.DAY
 
 
 def test_invalid_arguments() -> None:
@@ -386,17 +385,17 @@ def test_invalid_arguments() -> None:
   )
 
   with pytest.raises(TypeError):
-    Bazi(birth_time=random_dt, gender=BaziGender.男) # type: ignore # Missing `precision`
+    Bazi(birth_time=random_dt, gender=BaziGender.男, config='day') # type: ignore # `__init__` only takes `BaziConfig`, not str.
   with pytest.raises(TypeError):
-    Bazi(birth_time=random_dt, precision=BaziPrecision.DAY) # type: ignore # Missing `gender`
+    Bazi(birth_time=random_dt) # type: ignore # Missing `gender`
   with pytest.raises(TypeError):
-    Bazi(birth_time='2024-03-03', gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore # Currently doesn't take string as input
+    Bazi(birth_time='2024-03-03', gender=BaziGender.男) # type: ignore # Currently doesn't take string as input
   with pytest.raises(TypeError):
-    Bazi(birth_time=date(9999, 1, 1), gender=BaziGender.男, precision=BaziPrecision.DAY) # type: ignore
+    Bazi(birth_time=date(9999, 1, 1), gender=BaziGender.男) # type: ignore
   with pytest.raises(TypeError):
-    Bazi(birth_time=random_dt, gender='男', precision=BaziPrecision.DAY) # type: ignore # `__init__` only takes the enum.
+    Bazi(birth_time=random_dt, gender='男') # type: ignore # `__init__` only takes the enum.
   with pytest.raises(TypeError):
-    Bazi(birth_time=random_dt, gender=BaziGender.男, precision='day') # type: ignore # `__init__` only takes the enum.
+    Bazi(birth_time=random_dt, gender=BaziGender.男, config=BaziPrecision.DAY) # type: ignore # `__init__` only takes `BaziConfig`.
   with pytest.raises(ValueError):
     dt: datetime = datetime(
       year=9999, # Out of supported range.
@@ -406,7 +405,7 @@ def test_invalid_arguments() -> None:
       minute=random.randint(0, 59),
       second=random.randint(0, 59)
     )
-    Bazi(birth_time=dt, gender=BaziGender.男, precision=BaziPrecision.DAY)
+    Bazi(birth_time=dt, gender=BaziGender.男)
   with pytest.raises(ValueError):
     Bazi(
       birth_time=datetime(
@@ -419,7 +418,6 @@ def test_invalid_arguments() -> None:
         tzinfo=ZoneInfo('Asia/Shanghai') # Doesn't support timezone.
       ),
       gender=BaziGender.男,
-      precision=BaziPrecision.DAY,
     )
 
 
@@ -427,7 +425,6 @@ def _create_bazi(dt: datetime) -> Bazi:
   return Bazi(
     birth_time=dt,
     gender=BaziGender.男,
-    precision=BaziPrecision.DAY,
   )
 
 
@@ -492,11 +489,11 @@ def test_ganzhi_date() -> None:
   # the 1917/1927 jieqi-shift windows (pinned by the parity whitelist), so an oracle bound
   # to the wrong backend false-reds there -- the #114 CI failure was exactly that.
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
-  assert bazi.ganzhi_date == calendar_utils_of(bazi.backend).to_ganzhi(date(1984, 4, 2))
+  assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(date(1984, 4, 2))
 
   for _ in range(10):
     bazi = Bazi.random()
-    assert bazi.ganzhi_date == calendar_utils_of(bazi.backend).to_ganzhi(bazi.solar_date)
+    assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(bazi.solar_date)
 
 
 def test_date_time() -> None:
@@ -560,7 +557,6 @@ def test_deepcopy() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 2, 4, 2),
     gender=BaziGender.男,
-    precision=BaziPrecision.DAY,
   )
   bazi2: Bazi = copy.deepcopy(bazi)
 
@@ -578,26 +574,28 @@ def test_deepcopy() -> None:
 
 def test_create() -> None:
   with pytest.raises(ValueError):
-    Bazi.create('WrongDatetimeFormat', BaziGender.FEMALE, BaziPrecision.DAY)
+    Bazi.create('WrongDatetimeFormat', BaziGender.FEMALE)
   with pytest.raises(ValueError):
-    Bazi.create(datetime.now(), 'femal', BaziPrecision.DAY)
+    Bazi.create(datetime.now(), 'femal')
   with pytest.raises(ValueError):
-    Bazi.create(datetime.now(), BaziGender.FEMALE, 'dya')
+    Bazi.create(datetime.now(), BaziGender.FEMALE, BaziConfig.from_values(precision='dya'))
 
   with pytest.raises(TypeError):
-    Bazi.create(19840402, BaziGender.FEMALE, BaziPrecision.DAY) # type: ignore
+    Bazi.create(19840402, BaziGender.FEMALE) # type: ignore
   with pytest.raises(TypeError):
-    Bazi.create(datetime.now(), 1984, BaziPrecision.DAY) # type: ignore
+    Bazi.create(datetime.now(), 1984) # type: ignore
   with pytest.raises(TypeError):
-    Bazi.create(datetime.now(), BaziGender.FEMALE, 1984) # type: ignore
+    Bazi.create(datetime.now(), BaziGender.FEMALE, BaziConfig.from_values(precision=1984)) # type: ignore
+  with pytest.raises(TypeError):
+    Bazi.create(datetime.now(), BaziGender.FEMALE, 'day') # type: ignore # `create` takes `BaziConfig`, not str.
 
   # Create a datetime and set its timezone to Asia/Shanghai.
   _dt: datetime = datetime.now()
   _dt = _dt.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
   with pytest.raises(ValueError):
-    Bazi.create(_dt, BaziGender.FEMALE, BaziPrecision.DAY)
+    Bazi.create(_dt, BaziGender.FEMALE)
   with pytest.raises(ValueError):
-    Bazi.create(_dt.isoformat(), BaziGender.FEMALE, BaziPrecision.DAY)
+    Bazi.create(_dt.isoformat(), BaziGender.FEMALE)
 
   now: datetime = datetime.now()
   dt_options: list[str | datetime] = [now, now.isoformat()]
@@ -605,32 +603,32 @@ def test_create() -> None:
   female_options: list[str | BaziGender] = [BaziGender.YIN, BaziGender.FEMALE, '女', 'FEMALE', 'female']
   day_precision_options: list[str | BaziPrecision] = [BaziPrecision.DAY, 'day', 'DAY', 'Day', '日', '天', 'd', 'D']
 
-  expected_bazi: Bazi = Bazi.create(now, BaziGender.FEMALE, BaziPrecision.DAY)
+  expected_bazi: Bazi = Bazi.create(now, BaziGender.FEMALE)
   for dt, g, p in product(dt_options, female_options, day_precision_options):
-    bazi = Bazi.create(dt, g, p)
+    bazi = Bazi.create(dt, g, BaziConfig.from_values(precision=p))
     assert list(bazi.pillars) == list(expected_bazi.pillars)
     assert bazi.gender == expected_bazi.gender
-    assert bazi.precision == expected_bazi.precision
+    assert bazi.config.precision == expected_bazi.config.precision
     assert bazi.solar_date == expected_bazi.solar_date
     assert bazi.hour == expected_bazi.hour
     assert bazi.minute == expected_bazi.minute
 
-  expected_bazi = Bazi.create(now, BaziGender.MALE, BaziPrecision.DAY)
+  expected_bazi = Bazi.create(now, BaziGender.MALE)
   for dt, g, p in product(dt_options, male_options, day_precision_options):
-    bazi = Bazi.create(dt, g, p)
+    bazi = Bazi.create(dt, g, BaziConfig.from_values(precision=p))
     assert list(bazi.pillars) == list(expected_bazi.pillars)
     assert bazi.gender == expected_bazi.gender
-    assert bazi.precision == expected_bazi.precision
+    assert bazi.config.precision == expected_bazi.config.precision
     assert bazi.solar_date == expected_bazi.solar_date
     assert bazi.hour == expected_bazi.hour
     assert bazi.minute == expected_bazi.minute
 
   finer_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']
   for dt, g, p in product(dt_options, male_options + female_options, finer_precision_options):
-    bazi = Bazi.create(dt, g, p) # Supported since issue #6 -- on the celestial backend only.
-    assert bazi.precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
+    bazi = Bazi.create(dt, g, BaziConfig.from_values(precision=p)) # Supported since issue #6 -- on the celestial backend only.
+    assert bazi.config.precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
     with pytest.raises(ValueError):
-      Bazi.create(dt, g, p, backend='hko') # HKO has no real jieqi moments.
+      Bazi.create(dt, g, BaziConfig.from_values(precision=p, backend='hko')) # HKO has no real jieqi moments.
 
 
 def test_supported_date_window_edges() -> None:
@@ -640,15 +638,15 @@ def test_supported_date_window_edges() -> None:
   construct. The window itself is the celestial backend's, pinned in its own tests.
   '''
   with pytest.raises(ValueError):
-    Bazi.create(datetime(1901, 2, 18, 12), 'male', 'day')
+    Bazi.create(datetime(1901, 2, 18, 12), 'male')
   with pytest.raises(ValueError):
-    Bazi.create(datetime(2100, 1, 1, 12), 'male', 'day')
-  assert Bazi.create(datetime(1901, 2, 19, 12), 'male', 'day').solar_date == date(1901, 2, 19)
-  assert Bazi.create(datetime(2099, 12, 31, 12), 'male', 'day').solar_date == date(2099, 12, 31)
+    Bazi.create(datetime(2100, 1, 1, 12), 'male')
+  assert Bazi.create(datetime(1901, 2, 19, 12), 'male').solar_date == date(1901, 2, 19)
+  assert Bazi.create(datetime(2099, 12, 31, 12), 'male').solar_date == date(2099, 12, 31)
 
 
 def test_eq_ne() -> None:
-  def __random_info() -> tuple[datetime, BaziGender, BaziPrecision]:
+  def __random_info() -> tuple[datetime, BaziGender]:
     return (datetime(
       year=random.randint(1950, 2000),
       month=random.randint(1, 12),
@@ -656,7 +654,7 @@ def test_eq_ne() -> None:
       hour=random.randint(0, 23),
       minute=random.randint(0, 59),
       second=random.randint(0, 59)
-    ), random.choice(list(BaziGender)), BaziPrecision.DAY)
+    ), random.choice(list(BaziGender)))
 
   def __toggle_gender(g: BaziGender) -> BaziGender:
     return BaziGender.MALE if g is BaziGender.FEMALE else BaziGender.FEMALE
@@ -665,28 +663,28 @@ def test_eq_ne() -> None:
     return dt + timedelta(days=1)
 
   for _ in range(64):
-    dt, gender, precision = __random_info()
+    dt, gender = __random_info()
 
-    bazi: Bazi = Bazi.create(dt, gender, precision)
-    assert bazi == Bazi.create(dt, gender, precision)
-    assert bazi != Bazi.create(dt, __toggle_gender(gender), precision)
-    assert bazi != Bazi.create(__inc_datetime(dt), gender, precision)
+    bazi: Bazi = Bazi.create(dt, gender)
+    assert bazi == Bazi.create(dt, gender)
+    assert bazi != Bazi.create(dt, __toggle_gender(gender))
+    assert bazi != Bazi.create(__inc_datetime(dt), gender)
 
     assert bazi != 0
 
-    bazi_hacked: Bazi = Bazi.create(dt, gender, precision)
-    bazi_hacked._precision = BaziPrecision.HOUR # type: ignore # Intended for testing only.
+    bazi_hacked: Bazi = Bazi.create(dt, gender)
+    bazi_hacked._config = BaziConfig(precision=BaziPrecision.HOUR) # type: ignore # Intended for testing only.
     assert bazi != bazi_hacked
 
 
 def test_hash() -> None:
   dt: datetime = datetime(2000, 2, 4, 22, 1)
-  bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
-  same: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+  bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
+  same: Bazi = Bazi.create(dt, BaziGender.MALE)
   assert hash(bazi) == hash(same)
   assert len({bazi, same}) == 1 # In sync with `__eq__`: usable for set dedup.
 
-  other: Bazi = Bazi.create(dt, BaziGender.FEMALE, BaziPrecision.DAY)
+  other: Bazi = Bazi.create(dt, BaziGender.FEMALE)
   assert len({bazi, same, other}) == 2
 
 
@@ -694,9 +692,9 @@ def test_sub_minute_truncation() -> None:
   # Two births in the same minute are the same Bazi -- `Bazi.solar_datetime` is the
   # SSOT on why sub-minute parts are dropped.
   dt: datetime = datetime(2000, 2, 4, 22, 1)
-  bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziPrecision.DAY)
+  bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
   sub_minute: Bazi = Bazi.create(dt.replace(second=37, microsecond=999999),
-                                 BaziGender.MALE, BaziPrecision.DAY)
+                                 BaziGender.MALE)
   assert sub_minute.solar_datetime == dt
   assert sub_minute.hour == 22
   assert sub_minute.minute == 1

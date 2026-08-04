@@ -12,7 +12,8 @@ from src.calendar import (
   CalendarBackend, CalendarUtilsProtocol, hko_data_utils, calendar_utils_of,
 )
 from src.calendar.celestial_utils import ALGO1, ALGO2
-from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi import Bazi, BaziGender
+from src.school import BaziConfig
 from src.bazi_chart import BaziChart
 
 
@@ -62,49 +63,48 @@ def test_calendar_utils_of() -> None:
 
 
 def test_create_with_backend() -> None:
-  bazi_enum: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day', backend=CalendarBackend.HKO)
-  bazi_str: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day', backend='hko')
+  bazi_enum: Bazi = Bazi.create('1984-04-02 04:02', 'male', BaziConfig(backend=CalendarBackend.HKO))
+  bazi_str: Bazi = Bazi.create('1984-04-02 04:02', 'male', BaziConfig.from_values(backend='hko'))
 
   assert bazi_enum == bazi_str # enum and string spellings resolve the same way
 
   with pytest.raises(ValueError):
-    Bazi.create('1984-04-02 04:02', 'male', 'day', backend='lunar')
+    Bazi.create('1984-04-02 04:02', 'male', BaziConfig.from_values(backend='lunar'))
 
   with pytest.raises(TypeError):
-    Bazi.create('1984-04-02 04:02', 'male', 'day', backend=42) # type: ignore[arg-type]
+    Bazi.create('1984-04-02 04:02', 'male', BaziConfig.from_values(backend=42)) # type: ignore[arg-type]
 
 
 def test_consistent_with_hko_utils() -> None:
   # The backend-resolved utils should produce results identical to direct HKO calls.
-  bazi: Bazi = Bazi(datetime(2000, 2, 4, 20, 35), BaziGender.FEMALE, BaziPrecision.DAY,
-                    backend=CalendarBackend.HKO)
+  bazi: Bazi = Bazi(datetime(2000, 2, 4, 20, 35), BaziGender.FEMALE,
+                    BaziConfig(backend=CalendarBackend.HKO))
   assert bazi.solar_date == hko_data_utils.to_date(datetime(2000, 2, 4))
   assert bazi.ganzhi_date == hko_data_utils.to_ganzhi(bazi.solar_date)
 
 
-def test_init_rejects_str_backend() -> None:
-  # `__init__` only takes the enum; strings go through `Bazi.create` (same
-  # contract split as `gender` / `precision`).
+def test_init_rejects_str_config() -> None:
+  # `__init__` only takes `BaziConfig`; strings go through `BaziConfig.from_values`
+  # (same contract split as `gender`, whose strings go through `Bazi.create`).
   with pytest.raises(TypeError):
-    Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
-         backend='hko') # type: ignore[arg-type]
+    Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, 'hko') # type: ignore[arg-type]
 
 
 def test_default_backend_is_celestial() -> None:
   '''
-  #93 flipped the default from HKO to CELESTIAL.  The switch is two quiet keyword
-  defaults, so pin every construction path that can pick it up implicitly.
+  #93 flipped the default from HKO to CELESTIAL.  The default now lives in
+  `DEFAULT_CONFIG`, so pin every construction path that can pick it up implicitly.
   '''
-  assert Bazi(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY).backend is CalendarBackend.CELESTIAL
-  assert Bazi.create('2000-02-04 22:01', 'male', 'day').backend is CalendarBackend.CELESTIAL
-  assert Bazi.random().backend is CalendarBackend.CELESTIAL
+  assert Bazi(datetime(2000, 2, 4, 22, 1), BaziGender.MALE).config.backend is CalendarBackend.CELESTIAL
+  assert Bazi.create('2000-02-04 22:01', 'male').config.backend is CalendarBackend.CELESTIAL
+  assert Bazi.random().config.backend is CalendarBackend.CELESTIAL
 
 
 def test_json_contains_backend() -> None:
-  chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY))
+  chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   assert chart.json['backend'] == 'celestial' # the default
-  hko_chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
-                                        backend=CalendarBackend.HKO))
+  hko_chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
+                                        BaziConfig(backend=CalendarBackend.HKO)))
   assert hko_chart.json['backend'] == 'hko'
 
 
@@ -118,9 +118,9 @@ def test_celestial_backend_end_to_end() -> None:
   '''
   for spelling, backend in (('celestial', CalendarBackend.CELESTIAL),
                             ('celestial-algo2', CalendarBackend.CELESTIAL_ALGO2)):
-    bazi: Bazi = Bazi.create('1984-04-02 04:02', 'male', 'day', backend=spelling)
-    assert bazi.backend is backend
-    assert bazi == Bazi.create('1984-04-02 04:02', 'male', 'day', backend=backend)
+    bazi: Bazi = Bazi.create('1984-04-02 04:02', 'male', BaziConfig.from_values(backend=spelling))
+    assert bazi.config.backend is backend
+    assert bazi == Bazi.create('1984-04-02 04:02', 'male', BaziConfig(backend=backend))
     # The bare-`datetime` call shape, which is what `Bazi.__init__` actually uses.
     assert bazi.solar_date == calendar_utils_of(backend).to_date(datetime(1984, 4, 2))
     assert BaziChart(bazi).json['backend'] == spelling
@@ -134,8 +134,8 @@ def test_celestial_differs_from_hko_exactly_where_the_whitelist_says() -> None:
   layer-c derivation predicts from that whitelist row -- so this pins the propagation
   end to end, not just inside the calendar layer.
   '''
-  hko: Bazi = Bazi.create('1917-12-07 12:00', 'male', 'day', backend='hko')
-  cel: Bazi = Bazi.create('1917-12-07 12:00', 'male', 'day', backend='celestial')
+  hko: Bazi = Bazi.create('1917-12-07 12:00', 'male', BaziConfig.from_values(backend='hko'))
+  cel: Bazi = Bazi.create('1917-12-07 12:00', 'male', BaziConfig.from_values(backend='celestial'))
 
   assert str(hko.month_pillar) == '壬子'
   assert str(cel.month_pillar) == '辛亥'
@@ -154,17 +154,16 @@ def test_deepcopy() -> None:
   forbidden: tuple[object, ...] = tuple(calendar_utils_of(b) for b in CalendarBackend)
 
   for backend in CalendarBackend:
-    bazi: Bazi = Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziPrecision.DAY,
-                      backend=backend)
+    bazi: Bazi = Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, BaziConfig(backend=backend))
     chart: BaziChart = BaziChart(bazi) # `BaziChart` deepcopies the bazi internally.
 
     # Trigger the utils-resolving paths before copying.
     _ = bazi.solar_date, bazi.ganzhi_date
     _ = chart.dayun_start_moment
 
-    # Only the `CalendarBackend` enum may be stored on the instances (deepcopy-safe).
-    # `_utils` must stay a plain property: no resolved utils object may ever land in
-    # the instance dicts.
+    # Only the config (frozen, holding the `CalendarBackend` enum) may be stored on the
+    # instances (deepcopy-safe). `_utils` must stay a plain property: no resolved utils
+    # object may ever land in the instance dicts.
     for obj in (bazi, chart):
       for value in vars(obj).values():
         assert not isinstance(value, types.ModuleType)
@@ -173,10 +172,10 @@ def test_deepcopy() -> None:
 
     bazi2: Bazi = copy.deepcopy(bazi)
     assert bazi == bazi2
-    assert bazi2.backend is backend
+    assert bazi2.config.backend is backend
     # The copy still resolves the calendar utils on demand.
     assert bazi2.ganzhi_date == bazi.ganzhi_date
 
     chart2: BaziChart = copy.deepcopy(chart)
-    assert chart2.bazi.backend is backend
+    assert chart2.bazi.config.backend is backend
     assert chart2.dayun_start_moment == chart.dayun_start_moment

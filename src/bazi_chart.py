@@ -66,11 +66,19 @@ class BaziJson:
     # value: dayun in str / 该步大运
     dayun: dict[str, str]
 
+  class School(TypedDict):
+    '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
+    profile (流派档案), serialized as the member names of the two variant enums.
+    流派档案：两个分歧枚举各存其成员名。'''
+    day_rollover: str
+    hongyan_key: str
+
   class BaziChartJsonDict(TypedDict):
     birth_time: str
     gender: str
     precision: str
     backend: str
+    school: 'BaziJson.School'
     pillars: 'BaziJson.FourPillars'
     nayin: 'BaziJson.FourPillars'
     shier_zhangsheng: 'BaziJson.FourPillars'
@@ -126,7 +134,7 @@ class BaziChart:
     the instance dict, where the module breaks `deepcopy` loudly and a singleton would be
     silently duplicated, forking its caches.
     '''
-    return calendar_utils_of(self._bazi.backend)
+    return calendar_utils_of(self._bazi.config.backend)
   
   @property
   def house_of_relationship(self) -> Dizhi:
@@ -438,8 +446,12 @@ class BaziChart:
     return {
       'birth_time': self._bazi.solar_datetime.isoformat(),
       'gender': str(self._bazi.gender),
-      'precision': str(self._bazi.precision),
-      'backend': str(self._bazi.backend),
+      'precision': str(self._bazi.config.precision),
+      'backend': str(self._bazi.config.backend),
+      'school': {
+        'day_rollover': self._bazi.config.school.day_rollover.name,
+        'hongyan_key': self._bazi.config.school.hongyan_key.name,
+      },
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),

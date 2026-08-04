@@ -5,7 +5,7 @@ import pytest
 
 from datetime import datetime
 
-from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
@@ -53,7 +53,6 @@ def test_case1() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 1, 11, 8),
     gender=BaziGender.MALE,
-    precision=BaziPrecision.DAY,
   )
   chart: BaziChart = BaziChart(bazi)
   db: TransitDatabase = TransitDatabase(chart)
@@ -138,7 +137,6 @@ def test_case2() -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(2024, 5, 19, 18, 59),
     gender=BaziGender.FEMALE,
-    precision=BaziPrecision.DAY,
   )
   chart: BaziChart = BaziChart(bazi)
   db: TransitDatabase = TransitDatabase(chart)
