@@ -17,6 +17,16 @@ from src.calendar import calendar_utils_of
 from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
 
 
+def _dayun_start_gz_year(chart: BaziChart) -> int:
+  # Independent recomputation, not a mirror of `next(chart.dayun).ganzhi_year` -- the very
+  # expression `TransitDatabase` consumes: the day-level label of `dayun_start_moment`
+  # through the chart's own backend, floored at `Bazi.ganzhi_year`.
+  return max(
+    calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
+    chart.bazi.ganzhi_year,
+  )
+
+
 def test_simple() -> None:
   bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
   chart: BaziChart = BaziChart(bazi)
@@ -85,13 +95,7 @@ def test_support() -> None:
         assert not db.support(TransitMoment(gz_year), option)
 
     # Xiaoyun / 小运.
-    # Independent recomputation, not a mirror of `next(chart.dayun).ganzhi_year` -- the very
-    # expression `TransitDatabase` consumes: the day-level label of `dayun_start_moment`
-    # through the chart's own backend, floored at `Bazi.ganzhi_year`.
-    first_dayun_gz_year: int = max(
-      calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
-      chart.bazi.ganzhi_year,
-    )
+    first_dayun_gz_year: int = _dayun_start_gz_year(chart)
     for gz_year in range(chart.bazi.ganzhi_year, chart.bazi.ganzhi_year + len(chart.xiaoyun)):
       assert db.support(TransitMoment(gz_year), TransitOptions.XIAOYUN)
       assert db.support(TransitMoment(gz_year), TransitOptions.LIUNIAN)
@@ -129,13 +133,7 @@ def test_ganzhis() -> None:
       for age, xy in chart.xiaoyun
     }
 
-    # Independent recomputation, not a mirror of the source `TransitDatabase` consumes:
-    # the day-level label of `dayun_start_moment` through the chart's own backend,
-    # floored at `Bazi.ganzhi_year`.
-    dayun_start_gz_year: int = max(
-      calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
-      chart.bazi.ganzhi_year,
-    )
+    dayun_start_gz_year: int = _dayun_start_gz_year(chart)
     dayun_ganzhis: list[Ganzhi] = [dy.ganzhi for dy in itertools.islice(chart.dayun, 50)]
 
     # Randomly select 20 ganzhi years to test...
