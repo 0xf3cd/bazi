@@ -14,7 +14,7 @@ from typing import Final
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
-from src.school import BaziConfig
+from src.school import DayRollover, BaziSchool, BaziConfig
 from src.calendar import CalendarBackend, calendar_utils_of
 
 
@@ -112,6 +112,50 @@ def test_the_23_oclock_rollover_moves_only_the_day_pillar(moment: str, year: str
   assert str(bazi.year_pillar) == year
   assert str(bazi.month_pillar) == month
   assert str(bazi.day_pillar) == day
+
+
+# 换日点 variants (issue #69): `DayRollover` mounted on `BaziSchool.day_rollover`.
+@pytest.mark.parametrize('rollover, day_pillar, hour_pillar', [
+  (DayRollover.WAN_ZISHI, '己未', '甲子'), # 晚子时 (the default): rolled at 23:00; 己日 -> 甲子时.
+  (DayRollover.ZIZHENG,   '戊午', '壬子'), # 子正: the civil day's pillar; 戊日 -> 壬子时.
+])
+def test_day_rollover_variant_at_23_oclock(rollover: DayRollover, day_pillar: str, hour_pillar: str) -> None:
+  '''
+  A 23:30 birth at DAY precision: WAN_ZISHI (晚子时, the default) moves the day pillar to
+  the next day, ZIZHENG (子正) keeps the civil day's. The hour dizhi is 子 either way, but
+  the hour tiangan follows the day tiangan via 五鼠遁 (己日 -> 甲子, 戊日 -> 壬子), so the
+  full hour pillar splits with the variant too. The year and month pillars do NOT follow
+  this knob -- they are `BaziPrecision`'s attribution (see `DayRollover`'s docstring).
+  '''
+  config: BaziConfig = BaziConfig(school=BaziSchool(day_rollover=rollover))
+  bazi: Bazi = Bazi.create('2000-01-01 23:30', 'male', config)
+  assert str(bazi.year_pillar) == '己卯'
+  assert str(bazi.month_pillar) == '丙子'
+  assert str(bazi.day_pillar) == day_pillar
+  assert str(bazi.hour_pillar) == hour_pillar
+
+  # The default school is WAN_ZISHI -- the long-pinned behavior carries over unchanged.
+  if rollover is DayRollover.WAN_ZISHI:
+    assert Bazi.create('2000-01-01 23:30', 'male').day_pillar == bazi.day_pillar
+
+
+# Brief-v2 P2-5 golden: 换日点 variant inside a jieqi tie window (cross-midnight 子时).
+@pytest.mark.parametrize('rollover, pillars', [
+  (DayRollover.WAN_ZISHI, ('己丑', '丙寅', '庚辰', '丙子')), # 晚子时: day rolled; 庚日 -> 丙子时.
+  (DayRollover.ZIZHENG,   ('己丑', '丙寅', '己卯', '甲子')), # 子正: civil day kept; 己日 -> 甲子时.
+])
+def test_day_rollover_variant_inside_a_jieqi_tie_window(rollover: DayRollover, pillars: tuple[str, str, str, str]) -> None:
+  '''
+  立春 2009 = 02-04 00:49:48, inside the 子时 that began at 02-03 23:00, so a HOUR birth at
+  2009-02-03 23:30 ties and the year/month pillars already read the new side -- under BOTH
+  variants. 换日点 only splits the day pillar (and with it the hour tiangan via 五鼠遁);
+  it never moves the year/month attribution, which is `BaziPrecision`'s own rule. This pins
+  that 子正 does NOT mean "the whole 子时 keeps the old year and month too".
+  '''
+  config: BaziConfig = BaziConfig(precision=BaziPrecision.HOUR, school=BaziSchool(day_rollover=rollover))
+  bazi: Bazi = Bazi.create('2009-02-03 23:30', 'male', config)
+  assert (str(bazi.year_pillar), str(bazi.month_pillar),
+          str(bazi.day_pillar), str(bazi.hour_pillar)) == pillars
 
 
 # HOUR / MINUTE precisions (issue #6): `birth >= jieqi` compared at the known granularity,

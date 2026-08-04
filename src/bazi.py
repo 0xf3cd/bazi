@@ -10,7 +10,7 @@ from .defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from .calendar import (
   CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
-from .school import BaziPrecision, BaziConfig, DEFAULT_CONFIG
+from .school import BaziPrecision, DayRollover, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
   month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
@@ -190,13 +190,14 @@ class Bazi:
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     #
-    # 晚子时换日: the day pillar rolls at 23:00 (when 子时 begins), which the year and month
-    # pillars above deliberately do NOT do -- they follow `BaziPrecision`'s attribution
-    # (dates at DAY, truncated moments at HOUR/MINUTE). So a 23:30 birth takes the *next*
-    # day's day pillar while its year/month attribution stays put, except inside a tie
-    # window. Both halves of that are variants tracked in issue #69, and a 子正换日
-    # variant has to say which pillars it moves; `test_bazi` pins today's answer meanwhile.
-    day_offset: int = 0 if self._birth_time.hour < 23 else 1
+    # 换日点 is the `DayRollover` variant (issue #69), mounted on
+    # `BaziSchool.day_rollover`: WAN_ZISHI (晚子时) rolls the day pillar at 23:00 when
+    # 子时 begins, ZIZHENG (子正) keeps the civil day's pillar until 00:00. The default
+    # WAN_ZISHI is the behavior `test_bazi` has long pinned. The year and month pillars
+    # above deliberately do NOT follow this knob -- they follow `BaziPrecision`'s
+    # attribution (two independent mechanisms; see `DayRollover`'s docstring).
+    rolls_at_23: bool = self._config.school.day_rollover is DayRollover.WAN_ZISHI
+    day_offset: int = 0 if self._birth_time.hour < 23 or not rolls_at_23 else 1
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
