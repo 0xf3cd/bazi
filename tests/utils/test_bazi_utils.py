@@ -66,10 +66,27 @@ def test_ganzhi_of_year() -> None:
 
 
 def test_month_tiangan() -> None:
-  assert bazi_utils.month_tiangan(Tiangan.甲, Dizhi.寅) == Tiangan.丙
-  assert bazi_utils.month_tiangan(Tiangan.壬, Dizhi.子) == Tiangan.壬
-  assert bazi_utils.month_tiangan(Tiangan.丁, Dizhi.丑) == Tiangan.癸
-  assert bazi_utils.month_tiangan(Tiangan.戊, Dizhi.巳) == Tiangan.丁
+  # 五虎遁口诀(年上起月):甲己之年丙作首,乙庚之年戊为头,丙辛之年寻庚起,丁壬壬位顺行流,戊癸之年甲寅求。
+  # Hand transcription of the mnemonic (an oracle independent of any table in this repo):
+  # one row per year stem, 12 chars for the month stems from 寅 to 丑.
+  wuhudun: dict[Tiangan, str] = {
+    Tiangan.甲 : '丙丁戊己庚辛壬癸甲乙丙丁', # 甲己之年丙作首(丙寅起)
+    Tiangan.己 : '丙丁戊己庚辛壬癸甲乙丙丁',
+    Tiangan.乙 : '戊己庚辛壬癸甲乙丙丁戊己', # 乙庚之年戊为头(戊寅起)
+    Tiangan.庚 : '戊己庚辛壬癸甲乙丙丁戊己',
+    Tiangan.丙 : '庚辛壬癸甲乙丙丁戊己庚辛', # 丙辛之年寻庚起(庚寅起)
+    Tiangan.辛 : '庚辛壬癸甲乙丙丁戊己庚辛',
+    Tiangan.丁 : '壬癸甲乙丙丁戊己庚辛壬癸', # 丁壬壬位顺行流(壬寅起)
+    Tiangan.壬 : '壬癸甲乙丙丁戊己庚辛壬癸',
+    Tiangan.戊 : '甲乙丙丁戊己庚辛壬癸甲乙', # 戊癸之年甲寅求(甲寅起)
+    Tiangan.癸 : '甲乙丙丁戊己庚辛壬癸甲乙',
+  }
+
+  for year_tg, month_row in wuhudun.items():
+    assert len(month_row) == 12
+    for idx, expected_tg in enumerate(month_row):
+      month_dz: Dizhi = Dizhi.from_index((idx + 2) % 12) # First month is "寅".
+      assert bazi_utils.month_tiangan(year_tg, month_dz) == Tiangan(expected_tg)
 
 
 def test_month_tiangan_negative() -> None:
@@ -80,11 +97,27 @@ def test_month_tiangan_negative() -> None:
 
 
 def test_hour_tiangan() -> None:
-  assert bazi_utils.hour_tiangan(Tiangan.甲, Dizhi.寅) == Tiangan.丙
-  assert bazi_utils.hour_tiangan(Tiangan.壬, Dizhi.子) == Tiangan.庚
-  assert bazi_utils.hour_tiangan(Tiangan.丁, Dizhi.丑) == Tiangan.辛
-  assert bazi_utils.hour_tiangan(Tiangan.戊, Dizhi.巳) == Tiangan.丁
-  assert bazi_utils.hour_tiangan(Tiangan.丙, Dizhi.卯) == Tiangan.辛
+  # 五鼠遁口诀(日上起时):甲己还加甲,乙庚丙作初,丙辛从戊起,丁壬庚子居,戊癸壬子求。
+  # Hand transcription of the mnemonic (an oracle independent of any table in this repo):
+  # one row per day stem, 12 chars for the hour stems from 子 to 亥.
+  wushudun: dict[Tiangan, str] = {
+    Tiangan.甲 : '甲乙丙丁戊己庚辛壬癸甲乙', # 甲己还加甲(甲子起)
+    Tiangan.己 : '甲乙丙丁戊己庚辛壬癸甲乙',
+    Tiangan.乙 : '丙丁戊己庚辛壬癸甲乙丙丁', # 乙庚丙作初(丙子起)
+    Tiangan.庚 : '丙丁戊己庚辛壬癸甲乙丙丁',
+    Tiangan.丙 : '戊己庚辛壬癸甲乙丙丁戊己', # 丙辛从戊起(戊子起)
+    Tiangan.辛 : '戊己庚辛壬癸甲乙丙丁戊己',
+    Tiangan.丁 : '庚辛壬癸甲乙丙丁戊己庚辛', # 丁壬庚子居(庚子起)
+    Tiangan.壬 : '庚辛壬癸甲乙丙丁戊己庚辛',
+    Tiangan.戊 : '壬癸甲乙丙丁戊己庚辛壬癸', # 戊癸壬子求(壬子起)
+    Tiangan.癸 : '壬癸甲乙丙丁戊己庚辛壬癸',
+  }
+
+  for day_tg, hour_row in wushudun.items():
+    assert len(hour_row) == 12
+    for idx, expected_tg in enumerate(hour_row):
+      hour_dz: Dizhi = Dizhi.from_index(idx) # First hour is "子".
+      assert bazi_utils.hour_tiangan(day_tg, hour_dz) == Tiangan(expected_tg)
 
 
 def test_hour_tiangan_negative() -> None:

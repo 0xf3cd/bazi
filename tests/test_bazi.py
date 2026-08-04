@@ -71,6 +71,27 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   assert bazi.month_commander == month_dizhi
 
 
+def test_day_precision_bracketing_jies_stay_moment_level() -> None:
+  '''
+  The bracketing half of the DAY trade-off (`Bazi.bracketing_jies` docstring): on a jieqi's
+  day the pillars compare dates -- the whole day falls on the new side -- while
+  `bracketing_jies` keeps the moment-level `prev_jie` / `next_jie`, so before the jie's true
+  moment the birth is still owned by the OLD jie. `BaziChart`'s dayun counting consumes
+  `bracketing_jies`, so the two readings legitimately disagree -- this is the pin
+  `Bazi.bracketing_jies`' docstring points at.
+  '''
+  # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
+  bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male', 'day')
+  # ...yet the pillars already read the new year and month (day-level attribution).
+  assert str(bazi.year_pillar) == '庚辰'
+  assert str(bazi.month_pillar) == '戊寅'
+  # The bracketing jies stay moment-level: the old 小寒 still owns the birth.
+  owning, following = bazi.bracketing_jies
+  assert owning == JieqiTime(Jieqi.小寒, datetime(2000, 1, 6, 9, 0, 41))
+  assert following == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
+  assert following.moment > bazi.solar_datetime
+
+
 @pytest.mark.parametrize('moment, year, month, day', [
   # 1984-02-04 is the 立春 date, so the year/month pillars turn over between these rows while
   # the day pillar turns over an hour earlier, at 23:00.
