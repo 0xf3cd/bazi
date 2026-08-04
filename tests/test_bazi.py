@@ -13,8 +13,8 @@ from typing import Final
 
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
-from src.bazi import BaziGender, BaziPrecision, Bazi, 八字
-from src.school import DayRollover, BaziSchool, BaziConfig
+from src.bazi import BaziGender, Bazi, 八字
+from src.school import BaziPrecision, DayRollover, BaziSchool, BaziConfig
 from src.calendar import CalendarBackend, calendar_utils_of
 
 
@@ -37,14 +37,6 @@ def test_str() -> None:
   assert str(BaziGender.YIN) == 'female'
   assert BaziGender.YANG is BaziGender('男')
   assert BaziGender.YIN is BaziGender('女')
-
-
-def test_bazi_precision_basic() -> None:
-  assert len(BaziPrecision) == 3
-
-  assert str(BaziPrecision.DAY) == 'day'
-  assert str(BaziPrecision.HOUR) == 'hour'
-  assert str(BaziPrecision.MINUTE) == 'minute'
 
 
 @pytest.mark.parametrize('backend', ('hko', 'celestial'))
@@ -139,7 +131,8 @@ def test_day_rollover_variant_at_23_oclock(rollover: DayRollover, day_pillar: st
     assert Bazi.create('2000-01-01 23:30', 'male').day_pillar == bazi.day_pillar
 
 
-# Brief-v2 P2-5 golden: 换日点 variant inside a jieqi tie window (cross-midnight 子时).
+# Golden pair pinned for issue #69: the 换日点 variant inside a jieqi tie window
+# (cross-midnight 子时).
 @pytest.mark.parametrize('rollover, pillars', [
   (DayRollover.WAN_ZISHI, ('己丑', '丙寅', '庚辰', '丙子')), # 晚子时: day rolled; 庚日 -> 丙子时.
   (DayRollover.ZIZHENG,   ('己丑', '丙寅', '己卯', '甲子')), # 子正: civil day kept; 己日 -> 甲子时.

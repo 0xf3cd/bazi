@@ -15,6 +15,14 @@ from src.school import (
 )
 
 
+def test_bazi_precision_basic() -> None:
+  assert len(BaziPrecision) == 3
+
+  assert str(BaziPrecision.DAY) == 'day'
+  assert str(BaziPrecision.HOUR) == 'hour'
+  assert str(BaziPrecision.MINUTE) == 'minute'
+
+
 def test_school_enums_basic() -> None:
   assert len(DayRollover) == 2
   assert DayRollover.WAN_ZISHI.value == 0 # 晚子时, the default.
@@ -55,8 +63,8 @@ def test_config_and_school_are_frozen() -> None:
     DEFAULT_SCHOOL.hongyan_key = KeyStem.YEAR_MASTER # type: ignore
 
 
-# The same acceptance face `Bazi.create` historically parsed: every alias below must
-# resolve, case insensitively -- written out as data so the test shares no table with src.
+# Every alias below must resolve, case insensitively -- written out as data so the test
+# shares no table with src.
 @pytest.mark.parametrize('spelling, expected', [
   ('分', BaziPrecision.MINUTE), ('分钟', BaziPrecision.MINUTE),
   ('m', BaziPrecision.MINUTE), ('M', BaziPrecision.MINUTE),
@@ -119,7 +127,7 @@ def test_from_values_school_passthrough() -> None:
 
 
 def test_defaults_are_defined_once() -> None:
-  # D-7: the defaults live in the field defaults only; the constants pick them up.
+  # The defaults live in the field defaults only; the constants pick them up.
   assert BaziConfig() == DEFAULT_CONFIG
   assert BaziConfig() is not DEFAULT_CONFIG
   assert BaziConfig().school is DEFAULT_SCHOOL
@@ -177,7 +185,7 @@ def test_json_roundtrip_default_school() -> None:
 
 
 def test_json_roundtrip_non_default_school() -> None:
-  # A non-default school must survive the JSON roundtrip losslessly (D-5): rebuilding
+  # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
   school: BaziSchool = BaziSchool(day_rollover=DayRollover.ZIZHENG, hongyan_key=KeyStem.YEAR_MASTER)
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,

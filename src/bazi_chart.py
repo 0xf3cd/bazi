@@ -68,8 +68,8 @@ class BaziJson:
 
   class School(TypedDict):
     '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
-    profile (流派档案), serialized as the member names of the two variant enums.
-    流派档案：两个分歧枚举各存其成员名。'''
+    profile (流派档案), serialized as the member name of each variant knob.
+    流派档案：每个分歧旋钮各存其枚举成员名。'''
     day_rollover: str
     hongyan_key: str
 

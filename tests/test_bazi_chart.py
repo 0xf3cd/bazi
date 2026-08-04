@@ -11,8 +11,8 @@ import pytest
 from datetime import datetime, date, timedelta
 
 from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.bazi import BaziGender, BaziPrecision, Bazi
-from src.school import BaziConfig, BaziSchool, DayRollover, KeyStem
+from src.bazi import BaziGender, Bazi
+from src.school import BaziPrecision, BaziConfig, BaziSchool, DayRollover, KeyStem
 from src.utils import bazi_utils
 
 from src.data_types import (

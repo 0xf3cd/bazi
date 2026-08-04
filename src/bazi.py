@@ -196,8 +196,18 @@ class Bazi:
     # WAN_ZISHI is the behavior `test_bazi` has long pinned. The year and month pillars
     # above deliberately do NOT follow this knob -- they follow `BaziPrecision`'s
     # attribution (two independent mechanisms; see `DayRollover`'s docstring).
-    rolls_at_23: bool = self._config.school.day_rollover is DayRollover.WAN_ZISHI
-    day_offset: int = 0 if self._birth_time.hour < 23 or not rolls_at_23 else 1
+    day_offset: int
+    if self._config.school.day_rollover is DayRollover.WAN_ZISHI:
+      # 晚子时: a birth at/after 23:00 already carries the next day's day pillar.
+      day_offset = 1 if self._birth_time.hour >= 23 else 0
+    elif self._config.school.day_rollover is DayRollover.ZIZHENG:
+      # 子正: the whole 子时 keeps the civil day's day pillar.
+      day_offset = 0
+    else:
+      # Invariant: every enum member must be wired up above. Reaching here means we
+      # added a member but forgot to wire it -- not something users can trigger.
+      # `raise` instead of `assert` so the guard survives `python -O`.
+      raise AssertionError(f'DayRollover not wired up in `Bazi.__init__`: {self._config.school.day_rollover}') # pragma: no cover # Unreachable invariant guard.
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
@@ -211,9 +221,6 @@ class Bazi:
 
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
-
-    if _birth_time.tzinfo is not None:
-      raise ValueError('Timezone should be well-processed outside of this class.')
 
     _gender: BaziGender
     if isinstance(gender, BaziGender):
@@ -247,8 +254,8 @@ class Bazi:
       - if `str` type: it will be converted by `BaziGender`. 
         - Supported values: "男"/"女"/"male"/"female" (case insensitive).
     - config: (BaziConfig) The chart-level configuration (precision / backend / school).
-      Use `BaziConfig.from_values` to build one from string spellings -- it shares the
-      acceptance face this method historically parsed for `precision` / `backend`.
+      Use `BaziConfig.from_values` to build one from string spellings -- the same
+      acceptance face this method parsed here before #69.
     '''
 
     if not isinstance(birth_time, (datetime, str)):

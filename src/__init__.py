@@ -2,6 +2,7 @@ from importlib import import_module
 from typing import Any, Final
 
 from . import calendar
+from . import school
 
 from . import common
 from . import defines
@@ -10,7 +11,7 @@ from . import utils
 from . import descriptions
 
 __all__ = [
-  'common', 'defines', 'calendar', 'bazi', 'bazi_chart', 'rules', 'utils',
+  'common', 'defines', 'calendar', 'school', 'bazi', 'bazi_chart', 'rules', 'utils',
   'analyzer', 'descriptions', 'interpreter', 'transits', 'transit_chart',
 ]
 

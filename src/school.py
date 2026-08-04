@@ -1,5 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''The home of the chart-level configuration: `BaziConfig` (every knob steering chart
+computation), the school-divergence knobs (`BaziSchool` / `DayRollover` / `KeyStem`), and `BaziPrecision`.'''
+
 from enum import Enum
 from dataclasses import dataclass
 from typing import Final
@@ -79,7 +82,7 @@ class DayRollover(Enum):
     [23:00, 24:00) already carries the next day's day pillar. This is the default, matching
     the majority school and the behaviour `test_bazi` has long pinned.
     晚子时：23:00 子时一开始即换日柱。默认，多数派口径，即现状行为。
-  - ZIZHENG (子正): the day pillar rolls at 00:00 (子正, midnight) -- the whole 子时 keeps
+  - ZIZHENG (子正): the day pillar rolls at 00:00 (midnight) -- the whole 子时 keeps
     the civil day's day pillar.
     子正：0:00 才换日柱，整个子时不提前换。
 
@@ -107,6 +110,9 @@ class KeyStem(Enum):
   - YEAR_MASTER: key on the Year Tiangan (年干).
     以年干为锚。
 
+  Note: the 查法 consumption lands in #69 PR-2 -- until then this knob feeds eq / JSON
+  only, not the computed chart. 查法消费在 #69 PR-2 落地；此前本旋钮只影响相等性 / JSON，不影响盘面。
+
   No change should be made to the existing definitions. Only add new definitions.
   '''
   DAY_MASTER  = 0
@@ -128,6 +134,9 @@ class BaziSchool:
   `DEFAULT_SCHOOL` picks them up, and `BaziConfig.school` points at that same instance --
   the defaults are written down exactly once.
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
+
+  `hongyan_key` does not steer the chart yet -- its 查法 consumption lands in #69 PR-2;
+  until then it feeds eq / JSON only. `hongyan_key` 的查法消费在 #69 PR-2 落地，此前不进盘面。
   '''
   day_rollover: DayRollover = DayRollover.WAN_ZISHI
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
@@ -155,16 +164,15 @@ class BaziConfig:
 
   - precision: (BaziPrecision) The precision of the birth time / 出生时间精度。
   - backend: (CalendarBackend) The calendar backend for all calendar conversions / 历法后端。
-  - school: (BaziSchool) The school profile (流派档案); defaults to `DEFAULT_SCHOOL`.
+  - school: (BaziSchool) The school profile; defaults to `DEFAULT_SCHOOL`. / 流派档案，默认 `DEFAULT_SCHOOL`。
 
   Gender is deliberately NOT here: it does not affect the four pillars' computation
   channel this config aggregates, and stays a `Bazi.create` argument (its string coercion
   lives there too, as before).
   性别刻意不在此：它不进本配置聚合的排盘算路，仍是 `Bazi.create` 的参数（字符串解析也留在那里）。
 
-  The constructor takes the strict types only; string coercion lives in `from_values`,
-  which shares one alias table with `Bazi.create`'s historical parsing face.
-  构造只收严格枚举类型；字符串解析收在 `from_values`，与 `Bazi.create` 既有解析面同一张别名表。
+  The constructor takes the strict types only; string coercion lives in `from_values`.
+  构造只收严格枚举类型；字符串解析收在 `from_values`。
   '''
   precision: BaziPrecision    = BaziPrecision.DAY
   backend:   CalendarBackend  = CalendarBackend.CELESTIAL
@@ -232,5 +240,8 @@ class BaziConfig:
 
 
 '''The default config: DAY precision, the celestial backend, and `DEFAULT_SCHOOL` -- the
-constructor defaults are its single definition. / 默认配置：日级精度、celestial 后端、默认流派——构造即默认，无双写。'''
+constructor defaults are the canonical definition; `from_values`'s signature defaults are a
+second spelling of the same, pinned equivalent by `test_defaults_are_defined_once`.
+默认配置：日级精度、celestial 后端、默认流派——构造默认值是正典；`from_values` 的签名默认值是
+第二处拼写，由 `test_defaults_are_defined_once` 钉住等价。'''
 DEFAULT_CONFIG: Final[BaziConfig] = BaziConfig()
