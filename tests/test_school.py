@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_school.py
 
-import pytest
-
 from dataclasses import FrozenInstanceError
 from datetime import datetime
+
+import pytest
 
 from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
@@ -149,16 +149,22 @@ def test_eq_hash_include_school() -> None:
   # Same birth, same gender, different school: not equal, different hash, no set dedup.
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   default_bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
-  zi_bazi: Bazi = Bazi.create(dt, BaziGender.MALE,
-                              BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)))
+  zi_bazi: Bazi = Bazi.create(
+    dt,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+  )
 
   assert default_bazi != zi_bazi
   assert hash(default_bazi) != hash(zi_bazi)
   assert len({default_bazi, zi_bazi}) == 2
 
   # Same school (by value, not identity): equal, same hash, set dedups.
-  same_school: Bazi = Bazi.create(dt, BaziGender.MALE,
-                                  BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)))
+  same_school: Bazi = Bazi.create(
+    dt,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+  )
   assert zi_bazi == same_school
   assert hash(zi_bazi) == hash(same_school)
   assert len({zi_bazi, same_school}) == 1
