@@ -37,5 +37,5 @@ def test_pytest_runs_from_any_cwd(tmp_path: Path) -> None:
     check=False,
   )
   output: str = result.stdout + result.stderr
-  assert 'ModuleNotFoundError' not in output
+  assert 'ModuleNotFoundError' not in output, f'`from src` unresolved from a foreign cwd:\n{output}'
   assert result.returncode == 0, f'pytest from a foreign cwd failed:\n{output}'
