@@ -438,8 +438,10 @@ def test_liunian() -> None:
       expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
       assert ganzhi == expected_ganzhi
 
-    # The first liunian is also the birth ganzhi year.
-    assert next(chart.liunian).ganzhi_year == random_bazi.ganzhi_date.year
+    # The first liunian is also the birth ganzhi year. The liunian generator starts from the
+    # precision-attributed `ganzhi_year`, not the day-level `ganzhi_date.year` (the two agree
+    # at DAY but diverge on HOUR tie charts).
+    assert next(chart.liunian).ganzhi_year == random_bazi.ganzhi_year
 
 
 @pytest.mark.slow
