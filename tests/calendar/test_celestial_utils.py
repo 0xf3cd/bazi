@@ -90,8 +90,11 @@ def test_lunar() -> None:
 
 
 def test_lunar_leap_month_boundary() -> None:
-  # 2023's leap month is 闰二月, slot 3 in this numbering (it shifts the later months:
-  # slot 13 is 腊月, not the leap month).  It runs 29 days, 2023-03-22 to 2023-04-19.
+  # A readable sample of the slot-3 numbering convention, plus the boundary: 2023's leap
+  # month is 闰二月, slot 3 in this numbering (it shifts the later months -- slot 13 is
+  # 腊月, not the leap month), running 29 days from 2023-03-22 to 2023-04-19.  The data
+  # itself is regression-pinned by `test_data_sections_are_frozen` (table hash) and
+  # `test_algo1_matches_hko_strictly`; this test does not guard that class alone.
   assert ALGO1.is_valid_lunar_date(lunar(2023, 3, 29)) # Last day of the leap month.
   assert not ALGO1.is_valid_lunar_date(lunar(2023, 3, 30)) # One past the leap month's end.
 
@@ -158,7 +161,9 @@ def test_round_trips() -> None:
 
 def test_lunar_leap_month_round_trips() -> None:
   # Lunar-anchored: `test_round_trips` reaches the leap month only via solar dates, so
-  # pin the leap month from the lunar side.  The solar values agree with the HKO backend.
+  # walk the leap month from the lunar side.  Like the boundary test above, this is a
+  # readable sample of the slot-3 convention; the data-side regression belongs to
+  # `test_data_sections_are_frozen` (table hash) and `test_algo1_matches_hko_strictly`.
   for d, expected in ((1, solar(2023, 3, 22)), (15, solar(2023, 4, 5)), (29, solar(2023, 4, 19))):
     leap: CalendarDate = lunar(2023, 3, d)
     assert ALGO1.lunar_to_solar(leap) == expected

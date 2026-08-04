@@ -13,6 +13,7 @@ from src.utils import bazi_utils
 
 from src.bazi import Bazi, BaziGender, BaziPrecision
 from src.bazi_chart import BaziChart
+from src.calendar import calendar_utils_of
 from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
 
 
@@ -115,12 +116,17 @@ def test_ganzhis() -> None:
       db.ganzhis(TransitMoment(1999), TransitOptions(0))
 
     xiaoyun_ganzhis: dict[int, Ganzhi] = {
-      chart.bazi.ganzhi_date.year + age - 1 : xy
+      chart.bazi.ganzhi_year + age - 1 : xy
       for age, xy in chart.xiaoyun
     }
 
-    # The same source `TransitDatabase` consumes (floor at `Bazi.ganzhi_year` included).
-    dayun_start_gz_year: int = next(chart.dayun).ganzhi_year
+    # Independent recomputation, not a mirror of the source `TransitDatabase` consumes:
+    # the day-level label of `dayun_start_moment` through the chart's own backend,
+    # floored at `Bazi.ganzhi_year`.
+    dayun_start_gz_year: int = max(
+      calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
+      chart.bazi.ganzhi_year,
+    )
     dayun_ganzhis: list[Ganzhi] = [dy.ganzhi for dy in itertools.islice(chart.dayun, 50)]
 
     # Randomly select 20 ganzhi years to test...
@@ -286,6 +292,10 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
     db.ganzhis(TransitMoment(2008), TransitOptions.DAYUN) # 戊子 2008 is below the floored start.
   assert db.ganzhis(TransitMoment(2009), TransitOptions.DAYUN) == (
     Ganzhi.from_str('乙丑'),
+  )
+  # Xiaoyun, too, is keyed by the precision-attributed 2009, not the day-level 2008.
+  assert db.ganzhis(TransitMoment(2009), TransitOptions.XIAOYUN) == (
+    Ganzhi.from_str('乙亥'),
   )
   # 2018 is the last year of the first dayun (2009-2018); the unfloored start 2008 would
   # put it one step further back (甲子). 2019 opens the second dayun.

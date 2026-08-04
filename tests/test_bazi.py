@@ -77,8 +77,8 @@ def test_day_precision_bracketing_jies_stay_moment_level() -> None:
   day the pillars compare dates -- the whole day falls on the new side -- while
   `bracketing_jies` keeps the moment-level `prev_jie` / `next_jie`, so before the jie's true
   moment the birth is still owned by the OLD jie. `BaziChart`'s dayun counting consumes
-  `bracketing_jies`, so the two readings legitimately disagree; this pin is what makes the
-  docstring's "pinned by `test_bazi`" true.
+  `bracketing_jies`, so the two readings legitimately disagree -- this is the pin
+  `Bazi.bracketing_jies`' docstring points at.
   '''
   # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
   bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male', 'day')

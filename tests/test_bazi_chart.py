@@ -9,7 +9,6 @@ import itertools
 import pytest
 
 from datetime import datetime, date, timedelta
-from typing import Final
 
 from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, BaziPrecision, Bazi
@@ -312,27 +311,19 @@ def test_dayun_start_moment() -> None:
   )
 
 
-# The HKO backend's dayun start for the 2000-02-04 10:00 male DAY chart -- one value, shared
-# by the backend-divergence pin and the HKO golden below, so the two can never drift apart.
-HKO_DAYUN_START_2000_02_04_10AM: Final[datetime] = datetime(2009, 12, 12, 17, 20)
-
-
 def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
   '''
-  立春 2000's true moment is 02-04 20:40:23. A DAY-precision birth at 00:00 on that civil day
-  already belongs to the NEW year and month at pillar level (day-level attribution), but the
-  dayun counting consumes `bracketing_jies`, which is moment-level: the birth still sits in
-  小寒, so the forward count walks the whole way to 立春 and the first dayun starts in 2000.
-  The 22:01 golden in `test_dayun_start_moment` is the same-day sibling past the true moment
-  -- same year/month/day pillars, yet its count starts from 立春 itself and lands in 2009.
-  This pins the shipped contract (day-level pillars vs. moment-level bracketing "legitimately
-  disagree", see `Bazi.bracketing_jies`), not a preferred 命理 semantics.
+  The dayun consequence of the DAY trade-off pinned in `test_bazi`: a 00:00 birth on the
+  jieqi's civil day still sits in 小寒 at moment level, so the forward count walks the
+  whole way to 立春 and the first dayun starts in 2000.  The 22:01 golden in
+  `test_dayun_start_moment` is the same-day sibling past the true moment -- same pillars,
+  but its bracketing starts at 立春 itself and the count walks on to 惊蛰, landing in 2009.
   '''
   delta: timedelta = timedelta(seconds=1)
 
   chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 0, 0), BaziGender.MALE, BaziPrecision.DAY))
   assert chart.dayun_start_moment == pytest.approx(
-    datetime(2000, 5, 18, 19, 13, 18), # Float tail .333333 stays under the 1s tolerance.
+    datetime(2000, 5, 18, 19, 13, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
     abs=delta,
   )
   assert next(chart.dayun).ganzhi_year == 2000
@@ -340,12 +331,13 @@ def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
 
 def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
   '''
-  Same birth, same four pillars, different dayun start. celestial keeps moment-level jieqi:
-  the 10:00 birth precedes 立春's true moment (20:40:23), so it sits in 小寒 and the count
-  walks to 立春 -- the dayun starts in 2000. HKO places every jieqi at midnight, so the same
-  birth falls right after 立春@00:00 and the count walks to 惊蛰 -- the dayun starts in
-  2009, ~9.7 years later. The divergence is the HKO table's documented midnight-window
-  behavior, pinned as-is.
+  Same birth, same four pillars, different dayun start. celestial keeps moment-level jieqi
+  (the DAY trade-off pinned in `test_bazi`): the 10:00 birth still sits in 小寒, the count
+  walks to 立春, and the dayun starts in 2000. HKO places every jieqi at midnight, so the
+  same birth falls right after 立春@00:00 and the count walks to 惊蛰 -- the dayun starts
+  in 2009, ~9.7 years later. The divergence is the HKO table's documented midnight-window
+  behavior, pinned as-is; the HKO assertion doubles as the first absolute-moment golden
+  on the HKO side.
   '''
   delta: timedelta = timedelta(seconds=1)
 
@@ -359,25 +351,15 @@ def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
   assert list(hko.bazi.pillars) == list(cel.bazi.pillars)
 
   assert cel.dayun_start_moment == pytest.approx(
-    datetime(2000, 3, 29, 12, 33, 18), # Float tail .333333 stays under the 1s tolerance.
+    datetime(2000, 3, 29, 12, 33, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
     abs=delta,
   )
-  assert hko.dayun_start_moment == pytest.approx(HKO_DAYUN_START_2000_02_04_10AM, abs=delta)
+  assert hko.dayun_start_moment == pytest.approx(
+    datetime(2009, 12, 12, 17, 20),
+    abs=delta,
+  )
   assert next(cel.dayun).ganzhi_year == 2000
   assert next(hko.dayun).ganzhi_year == 2009
-
-
-def test_dayun_start_moment_hko_golden() -> None:
-  '''
-  First absolute-moment golden on the HKO side -- `test_dayun_start_moment` and the pins
-  above only cover the celestial default. HKO's midnight jieqi moments make the arithmetic
-  exact (no float tail); the shared constant keeps this pin and the divergence pin on one
-  value.
-  '''
-  chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE, BaziPrecision.DAY,
-                                           backend='hko'))
-  assert chart.dayun_start_moment == pytest.approx(HKO_DAYUN_START_2000_02_04_10AM,
-                                                   abs=timedelta(seconds=1))
 
 
 def test_dayun_ganzhi() -> None:
