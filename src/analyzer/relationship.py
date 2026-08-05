@@ -11,6 +11,7 @@ from collections.abc import Callable, Iterable
 from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
+from ..school import KeyStem
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitMoment, TransitOptions
@@ -41,7 +42,7 @@ class _KeySource(Enum):
   '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
   YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
-  DAY_MASTER        = auto() # By the day master (看日主).
+  DAY_MASTER        = auto() # By a key Tiangan (查法锚干): the day master by default, or the year tiangan when the school says so (see `_hongyan_anchor`).
 
 
 @dataclass(frozen=True)
@@ -67,9 +68,26 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
 })
 
 
+def _hongyan_anchor(bazi: Bazi) -> Tiangan:
+  '''The anchor Tiangan a HONGYAN (红艳) lookup keys on (查法锚干, issue #69): the registry
+  records the static default (`_KeySource.DAY_MASTER`, the 《三命通会》 reading), and the
+  chart's school profile overrides it at evaluation time -- `KeyStem.YEAR_MASTER` keys on
+  the year tiangan instead. 红艳查法的锚干：注册表记静态默认（查日干），评估期由盘的
+  `BaziSchool.hongyan_key` 覆盖（可查年干）。'''
+  key_stem: Final[KeyStem] = bazi.config.school.hongyan_key
+  if key_stem is KeyStem.DAY_MASTER:
+    return bazi.day_master
+  elif key_stem is KeyStem.YEAR_MASTER:
+    return bazi.year_pillar.tiangan
+  else:
+    # Invariant: every `KeyStem` member must be wired up above. Reaching here means we
+    # added a member but forgot to wire it -- not something users can trigger.
+    # `raise` instead of `assert` so the guard survives `python -O`.
+    raise AssertionError(f'`KeyStem` not wired up in `_hongyan_anchor`: {key_stem}') # pragma: no cover # Unreachable invariant guard.
+
+
 def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。'''
-  dm = bazi.day_master
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
 
   args: tuple[_ArgsType, ...]
@@ -78,7 +96,7 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     args = (([y_dz], [m_dz, d_dz, h_dz]), ([d_dz], [y_dz, m_dz, h_dz]))
   elif spec.key is _KeySource.DAY_MASTER:
-    args = (([dm], [y_dz, m_dz, d_dz, h_dz]),)
+    args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
     # added a member but forgot to update this evaluator -- not something users can trigger.
@@ -96,7 +114,7 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     first_args = [bazi.year_pillar.dizhi, bazi.day_pillar.dizhi]
   elif spec.key is _KeySource.DAY_MASTER:
-    first_args = [bazi.day_master]
+    first_args = [_hongyan_anchor(bazi)]
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
     # added a member but forgot to update this evaluator -- not something users can trigger.

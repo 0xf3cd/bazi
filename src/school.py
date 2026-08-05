@@ -110,8 +110,10 @@ class KeyStem(Enum):
   - YEAR_MASTER: key on the Year Tiangan (年干).
     以年干为锚。
 
-  Note: the 查法 consumption lands in #69 PR-2 -- until then this knob feeds eq / JSON
-  only, not the computed chart. 查法消费在 #69 PR-2 落地；此前本旋钮只影响相等性 / JSON，不影响盘面。
+  Note: this knob is consumed at evaluation time by the 红艳 lookup in relationship analysis
+  (`analyzer/relationship.py`); the four pillars never follow it. It also feeds eq / JSON as
+  part of `BaziSchool`. 本旋钮由红艳查法在评估期消费；四柱不随它动。它也随 `BaziSchool`
+  进相等性 / JSON。
 
   No change should be made to the existing definitions. Only add new definitions.
   '''
@@ -135,8 +137,8 @@ class BaziSchool:
   the defaults are written down exactly once.
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
 
-  `hongyan_key` does not steer the chart yet -- its 查法 consumption lands in #69 PR-2;
-  until then it feeds eq / JSON only. `hongyan_key` 的查法消费在 #69 PR-2 落地，此前不进盘面。
+  `hongyan_key` steers the 红艳 lookup in relationship analysis (read at evaluation time);
+  it does not move the four pillars. `hongyan_key` 决定红艳查法的锚干（评估期读取）；四柱不随它动。
   '''
   day_rollover: DayRollover = DayRollover.WAN_ZISHI
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER

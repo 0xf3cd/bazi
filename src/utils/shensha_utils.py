@@ -6,7 +6,7 @@ from ..rules import ShenshaRules
 
 '''
 Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马.
-Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or the Day Master).
+Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
 
 
@@ -35,16 +35,18 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return ShenshaRules.TAOHUA[year_or_day_dizhi] is other_dizhi
 
 
-def hongyan(day_master: Tiangan, dizhi: Dizhi) -> bool:
+def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  Check if the input `dizhi` is the HONGYAN (红艳) of `day_master`. If so, return `True`. If not, return `False`.
-  检查输入的地支是否是日主的红艳星。如果是，返回 `True`。如果不是，返回 `False`。
+  Check if the input `dizhi` is the HONGYAN (红艳) of `key_tiangan`. If so, return `True`. If not, return `False`.
+  检查输入的地支是否是 `key_tiangan` 的红艳星。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - day_master: (Tiangan) The Tiangan of day pillar.
+  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干) -- the day master under
+    the 《三命通会》 reading, or the year tiangan; the caller decides (see `BaziSchool.hongyan_key`, issue #69).
+    查法所锚的天干——《三命通会》口径查日干，也可查年干；锚哪个干由调用方决定。
   - dizhi: (Dizhi) The Dizhi.
 
-  Returns: (bool) Whether the `dizhi` is the HONGYAN (红艳) of `day_master`.
+  Returns: (bool) Whether the `dizhi` is the HONGYAN (红艳) of `key_tiangan`.
 
   Examples:
   - hongyan(Tiangan.癸, Dizhi.申)
@@ -53,11 +55,11 @@ def hongyan(day_master: Tiangan, dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(day_master, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
+  if not isinstance(key_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
   if not isinstance(dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  return ShenshaRules.HONGYAN[day_master] is dizhi
+  return ShenshaRules.HONGYAN[key_tiangan] is dizhi
 
 
 def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:

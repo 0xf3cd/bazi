@@ -12,6 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
+from src.school import KeyStem
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.rules import DizhiRules
@@ -489,6 +490,9 @@ def test_random_cases(bazi: Bazi) -> None:
   dm: Tiangan = bazi.day_master
   star: Shishen = Shishen.正财 if bazi.gender is BaziGender.MALE else Shishen.正官
 
+  # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
+  hongyan_anchor: Tiangan = dm if bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else bazi.year_pillar.tiangan
+
   assert star is bazi_utils.shishen(dm, chart.relationship_stars.tiangan)
   for star_dz in chart.relationship_stars.dizhi:
     assert star is bazi_utils.shishen(dm, star_dz)
@@ -509,7 +513,7 @@ def test_random_cases(bazi: Bazi) -> None:
         return shensha_utils.yima(y_dz, dz) or shensha_utils.yima(d_dz, dz)
 
       expected_taohua:   set[Dizhi] = set(filter(__taohua, transits_dz_set))
-      expected_hongyan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(dm, dz), transits_dz_set))
+      expected_hongyan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(hongyan_anchor, dz), transits_dz_set))
       expected_hongluan: set[Dizhi] = set(filter(lambda dz : shensha_utils.hongluan(y_dz, dz), transits_dz_set))
       expected_tianxi:   set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
       expected_yima:     set[Dizhi] = set(filter(__yima, transits_dz_set))
