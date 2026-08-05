@@ -13,6 +13,7 @@ from datetime import datetime, date, timedelta
 from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, Bazi
 from src.school import BaziPrecision, BaziConfig, BaziSchool, DayRollover, KeyStem
+from src.rules import DizhiRules
 from src.utils import bazi_utils
 
 from src.data_types import (
@@ -520,6 +521,8 @@ def test_json() -> None:
                     school=BaziSchool(
                       day_rollover=DayRollover[j['school']['day_rollover']],
                       hongyan_key=KeyStem[j['school']['hongyan_key']],
+                      anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
+                      xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                     ),
                   ))
     )
