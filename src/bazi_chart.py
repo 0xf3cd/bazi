@@ -301,6 +301,12 @@ class BaziChart:
     `False` if the Ganzhis of Dayuns are in a backward order.
 
     `True` 代表大运是顺排的，`False` 代表大运是逆排的。
+
+    Note: the traditional phrasing keys on the year Tiangan's yinyang (阳男阴女顺排，阴男阳女逆排);
+    this implementation reads the year Dizhi's yinyang instead -- mathematically identical, since
+    within the 60 Jiazi a Ganzhi's Tiangan and Dizhi always share the same yinyang.
+    传统表述以年干阴阳论「阳男阴女顺、阴男阳女逆」；本实现读年支阴阳，二者数学恒等价——
+    六十甲子内干支的阴阳恒一致。
     '''
     is_male: bool = (self._bazi.gender is BaziGender.男)
     is_year_dz_yang: bool = (traits(self._bazi.year_pillar.dizhi).yinyang is Yinyang.阳)

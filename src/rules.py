@@ -369,7 +369,9 @@ class DizhiRules:
     不同的地支相刑的看法。主要区别在于丑未戌、寅巳申之间相刑的定义。
     '''
     STRICT = 0 # For 丑未戌 and 寅巳申, a XING relation is formed only when all three Dizhis appear.
-    LOOSE  = 1 # For 丑未戌 and 寅巳申, a XING relation is formed if any two of the three Dizhis appear.
+    LOOSE  = 1 # For 丑未戌 and 寅巳申, a XING relation is formed if any two of the three Dizhis appear --
+               # directionally, following the cycle 丑->戌->未->丑 / 寅->巳->申->寅: (丑,戌) forms XING
+               # while (戌,丑) does not. The direction is locked in by the implementation and `test_dizhi_utils`.
 
   class XingSubType(Enum):
     SANXING   = 0 # 丑未戌、寅巳申三刑
@@ -453,8 +455,13 @@ class ShenshaRules:
     for k_str in k_strs
   })
 
-  # The table is used to find out HONGYAN (红艳).
-  # 该表格用于查询红艳星。
+  # The table is used to find out HONGYAN (红艳). From 《三命通会》: "甲乙逢午、丙寅、丁未、
+  # 戊辰、己辰、庚戌、辛酉、壬子、癸申，为红艳煞".
+  # 该表格用于查询红艳星。出自《三命通会》。
+  # A variant table reading 庚申/癸戌 (instead of 庚戌/癸申) also circulates, but it is
+  # attested only in a single aggregator-site text lineage, so it is not adopted here
+  # (research of 2026-08-04, see issue #69).
+  # 另有庚申/癸戌异表流传，但仅见聚合站单一文本谱系，未采（2026-08-04 考证，详见 #69）。
   HONGYAN: Final[frozendict[Tiangan, Dizhi]] = frozendict({
     Tiangan.甲 : Dizhi.午,
     Tiangan.乙 : Dizhi.申,
