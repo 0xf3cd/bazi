@@ -2,6 +2,7 @@
 # test_school.py
 
 import dataclasses
+import inspect
 from dataclasses import FrozenInstanceError
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.rules import DizhiRules
+from src.utils import dizhi_utils
 from src.school import (
   BaziPrecision, DayRollover, KeyStem, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG,
@@ -155,6 +157,19 @@ def test_defaults_are_defined_once() -> None:
   assert BaziConfig.from_values() == DEFAULT_CONFIG
   assert BaziConfig.from_values().school is DEFAULT_SCHOOL
   assert DEFAULT_CONFIG.school is DEFAULT_SCHOOL
+
+
+def test_school_defaults_match_utils_signature_defaults() -> None:
+  # The majority reading is spelled twice by design -- the school field defaults (chart
+  # level) and the utils signature defaults (per-query override, same shape as
+  # `anhe` / `xing`). Pin the two spellings identical so they can't drift apart;
+  # do NOT "fix" this by making utils import school (issue #69).
+  # 「多数派口径」刻意两写——school 字段默认（盘级）与 utils 签名默认（单次覆盖，同
+  # `anhe` / `xing` 先例）；钉住两处等价防漂移，但别让 utils 反过来 import school（issue #69）。
+  for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual):
+    params = inspect.signature(fn).parameters
+    assert BaziSchool().anhe_def is params['anhe_def'].default
+    assert BaziSchool().xing_def is params['xing_def'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:

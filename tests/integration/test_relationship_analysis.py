@@ -12,7 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.school import KeyStem
+from src.school import KeyStem, BaziSchool, BaziConfig
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.rules import DizhiRules
@@ -396,6 +396,9 @@ def test_case2() -> None:
   assert chart.relationship_stars.tiangan == Tiangan.癸
   assert set(chart.relationship_stars.dizhi) == {Dizhi.子}
 
+  # The oracle mirrors the analyzer by reading the chart's school profile (issue #69).
+  school: BaziSchool = chart.bazi.config.school
+
   db = TransitDatabase(chart)
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
     for option in TransitOptions:
@@ -411,7 +414,9 @@ def test_case2() -> None:
       expected_transits_only_tg_star_relations = tiangan_utils.discover(list(transits_tg)).filter(
         lambda _, combo : Tiangan.癸 in combo
       )
-      expected_transits_only_dz_star_relations = dizhi_utils.discover(list(transits_dz)).filter(
+      expected_transits_only_dz_star_relations = dizhi_utils.discover(
+        list(transits_dz), anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : Dizhi.子 in combo
       )
 
@@ -423,7 +428,9 @@ def test_case2() -> None:
       expected_mutual_tg_star_relations = tiangan_utils.discover_mutual(chart.bazi.four_tiangans, list(transits_tg)).filter(
         lambda _, combo : Tiangan.癸 in combo
       )
-      expected_mutual_dz_star_relations = dizhi_utils.discover_mutual(chart.bazi.four_dizhis, list(transits_dz)).filter(
+      expected_mutual_dz_star_relations = dizhi_utils.discover_mutual(
+        chart.bazi.four_dizhis, list(transits_dz), anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : Dizhi.子 in combo
       )
 
@@ -441,7 +448,9 @@ def test_case2() -> None:
       assert _equal(all_star_relations.tiangan, tiangan_utils.discover(list(transits_tg) + list(bazi.four_tiangans)).filter(
         lambda _, combo : Tiangan.癸 in combo and not combo.isdisjoint(transits_tg)
       ))
-      assert _equal(all_star_relations.dizhi, dizhi_utils.discover(list(transits_dz) + list(bazi.four_dizhis)).filter(
+      assert _equal(all_star_relations.dizhi, dizhi_utils.discover(
+        list(transits_dz) + list(bazi.four_dizhis), anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : Dizhi.子 in combo and not combo.isdisjoint(transits_dz)
       ))
 
@@ -493,6 +502,11 @@ def test_random_cases(bazi: Bazi) -> None:
   # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
   hongyan_anchor: Tiangan = dm if bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else bazi.year_pillar.tiangan
 
+  # The Dizhi-relation oracles below mirror the analyzer by reading the same school profile
+  # (issue #69) -- they don't assume the default 暗合/刑 definitions either.
+  # 地支关系 oracle 同样从流派档案读暗合/刑口径，不假设默认定义（issue #69）。
+  school: BaziSchool = bazi.config.school
+
   assert star is bazi_utils.shishen(dm, chart.relationship_stars.tiangan)
   for star_dz in chart.relationship_stars.dizhi:
     assert star is bazi_utils.shishen(dm, star_dz)
@@ -536,8 +550,12 @@ def test_random_cases(bazi: Bazi) -> None:
       transits_dz_set = {gz.dizhi for gz in transits_gz}
 
       expected_tg_relations = tiangan_utils.discover_mutual([chart.bazi.day_master], list(transits_tg_set))
-      expected_dz_relations = dizhi_utils.discover_mutual([house], list(transits_dz_set)).merge(
-        dizhi_utils.discover_mutual([house], list(transits_dz_set) + [y_dz, m_dz, h_dz]).filter(
+      expected_dz_relations = dizhi_utils.discover_mutual(
+        [house], list(transits_dz_set), anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).merge(
+        dizhi_utils.discover_mutual(
+          [house], list(transits_dz_set) + [y_dz, m_dz, h_dz], anhe_def=school.anhe_def, xing_def=school.xing_def,
+        ).filter(
           lambda _, combo : len(combo) == 3
         ).filter(
           lambda _, combo : not combo.isdisjoint(filter(lambda dz : dz is not house, transits_dz_set))
@@ -553,7 +571,7 @@ def test_random_cases(bazi: Bazi) -> None:
       if house in [Dizhi.午, Dizhi.亥, Dizhi.辰] and house in transits_dz_set: # 自刑 cases
         assert frozenset({house}) in dz_relations[DizhiRelation.刑]
 
-      for dz_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]: # 三刑 cases
+      for dz_tuple in DizhiRules.DIZHI_XING[school.xing_def]: # 三刑 cases (len-3 combos coincide across defs / 三组合在各定义下相同)
         if len(dz_tuple) == 3 and house in dz_tuple:
           other_dz = frozenset(dz_tuple) - {house}
           assert len(other_dz) == 2
@@ -595,7 +613,9 @@ def test_random_cases(bazi: Bazi) -> None:
         tg_list.remove(stars.tiangan)
         expected_transits_only_tg = tiangan_utils.discover_mutual([stars.tiangan], tg_list)
 
-      expected_transits_only_dz = dizhi_utils.discover(transits_dz_list).filter(
+      expected_transits_only_dz = dizhi_utils.discover(
+        transits_dz_list, anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : not combo.isdisjoint(stars.dizhi)
       )
 
@@ -609,7 +629,9 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda _, combo : stars.tiangan in combo
       )
 
-      expected_mutual_dz = dizhi_utils.discover_mutual(bazi.four_dizhis, transits_dz_list).filter(
+      expected_mutual_dz = dizhi_utils.discover_mutual(
+        bazi.four_dizhis, transits_dz_list, anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       )
 
@@ -628,7 +650,9 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda _, combo : not combo.isdisjoint(transits_tg_list)
       ))
 
-      assert _equal(all_star_relations.dizhi, dizhi_utils.discover(transits_dz_list + list(bazi.four_dizhis)).filter(
+      assert _equal(all_star_relations.dizhi, dizhi_utils.discover(
+        transits_dz_list + list(bazi.four_dizhis), anhe_def=school.anhe_def, xing_def=school.xing_def,
+      ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       ).filter(
         lambda _, combo : not combo.isdisjoint(transits_dz_list)
@@ -652,3 +676,59 @@ def test_random_cases(bazi: Bazi) -> None:
       star_results = transits.star(year, option)
       assert star_results.tiangan == (stars.tiangan in transits_tg_set)
       assert star_results.dizhi != set(transits_dz_set).isdisjoint(stars.dizhi)
+
+
+def test_school_variants_reach_relationship_analysis() -> None:
+  # End-to-end pins that the chart's school steers relation discovery (issue #69). Assertions
+  # pin exact combo sets, not "fewer results" -- MANGPAI ⊂ NORMAL_EXTENDED and STRICT ⊂ LOOSE,
+  # so a "differs" assertion would also pass on a wrong or empty table.
+  # 端到端钉住流派档案确实驱动关系查法（issue #69）。断言钉精确集合而非「有差异」——
+  # MANGPAI/STRICT 都是默认定义的子集，「变少」在错传空表/错表时同样成立。
+
+  # Chart A: 戊寅 day with 午 in the month pillar -- 寅午 forms ANHE only under
+  # NORMAL_EXTENDED (MANGPAI drops it). Covers the AtBirth `discover` path.
+  # 盘 A：戊寅日、月支午——寅午暗合仅 NORMAL_EXTENDED 有（MANGPAI 无）。覆盖 AtBirth `discover` 路径。
+  dt_a: datetime = datetime(1984, 6, 13) # 甲子 / 庚午 / 戊寅 / 壬子
+  anhe_default: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_a, BaziGender.MALE))).at_birth
+  anhe_mangpai: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_a, BaziGender.MALE, BaziConfig(school=BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI)),
+  ))).at_birth
+
+  default_rels_a = anhe_default.house_relations
+  mangpai_rels_a = anhe_mangpai.house_relations
+  assert set(map(frozenset, default_rels_a[DizhiRelation.暗合])) == {frozenset((Dizhi.寅, Dizhi.午))}
+  assert DizhiRelation.暗合 not in mangpai_rels_a
+  # Only the 暗合 key may differ between the two charts (其余关系两盘一致).
+  assert {r: c for r, c in default_rels_a.items() if r is not DizhiRelation.暗合} == dict(mangpai_rels_a.items())
+
+  # Chart B: 癸丑 day with 未 in the month pillar -- 丑未 forms XING only under LOOSE
+  # (STRICT requires all three of 丑未戌). Same path, the other knob.
+  # 盘 B：癸丑日、月支未——丑未刑仅 LOOSE 成立（STRICT 要求三支齐现）。同路径，另一个旋钮。
+  dt_b: datetime = datetime(1984, 7, 18) # 甲子 / 辛未 / 癸丑 / 壬子
+  xing_default: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_b, BaziGender.MALE))).at_birth
+  xing_strict: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_b, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
+  ))).at_birth
+
+  default_rels_b = xing_default.house_relations
+  strict_rels_b = xing_strict.house_relations
+  assert set(map(frozenset, default_rels_b[DizhiRelation.刑])) == {frozenset((Dizhi.丑, Dizhi.未))}
+  assert DizhiRelation.刑 not in strict_rels_b
+  assert {r: c for r, c in default_rels_b.items() if r is not DizhiRelation.刑} == dict(strict_rels_b.items())
+
+  # Chart C: 辛丑 day with no 未 at birth; the 1991 辛未 流年 brings 未 -- covers the
+  # transit-side `discover_mutual` path in `TransitAnalysis.house_relations`.
+  # 盘 C：辛丑日、原局无未；1991 辛未流年带来未——覆盖流运侧 `discover_mutual` 路径。
+  dt_c: datetime = datetime(1984, 1, 8) # 癸亥 / 乙丑 / 辛丑 / 戊子
+  transit_default: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_c, BaziGender.MALE))).transits
+  transit_strict: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_c, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
+  ))).transits
+
+  assert transit_default.support(1991, TransitOptions.LIUNIAN)
+  assert transit_strict.support(1991, TransitOptions.LIUNIAN)
+  default_rels_c = transit_default.house_relations(1991, TransitOptions.LIUNIAN)
+  strict_rels_c = transit_strict.house_relations(1991, TransitOptions.LIUNIAN)
+  assert set(map(frozenset, default_rels_c[DizhiRelation.刑])) == {frozenset((Dizhi.丑, Dizhi.未))}
+  assert DizhiRelation.刑 not in strict_rels_c
+  assert {r: c for r, c in default_rels_c.items() if r is not DizhiRelation.刑} == dict(strict_rels_c.items())

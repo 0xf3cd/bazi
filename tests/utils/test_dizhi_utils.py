@@ -156,27 +156,46 @@ def test_liuhe() -> None:
 
 
 def test_search_anhe() -> None:
-  anhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支暗合，5组。
+  normal_combos: list[DizhiCombo] = [ # 天干五合对应的地支暗合，5组。
     DizhiCombo((bazi_utils.lu(tg1), bazi_utils.lu(tg2)))
     for tg1, tg2 in itertools.combinations(Tiangan, 2) if tiangan_utils.he(tg1, tg2) is not None
-  ] + [ # `NORMAL_EXTENDED` 中额外的1组。
-    DizhiCombo((Dizhi.寅, Dizhi.丑)),
   ]
 
-  assert _dz_equal(
-    dizhi_utils.search([], DizhiRelation.暗合),
-    [],
-  )
+  expected: dict[DizhiRules.AnheDef, list[DizhiCombo]] = {
+    DizhiRules.AnheDef.NORMAL: normal_combos,
+    DizhiRules.AnheDef.NORMAL_EXTENDED: normal_combos + [ # `NORMAL_EXTENDED` 中额外的1组。
+      DizhiCombo((Dizhi.寅, Dizhi.丑)),
+    ],
+    DizhiRules.AnheDef.MANGPAI: [ # 盲派三对。
+      DizhiCombo((Dizhi.寅, Dizhi.丑)),
+      DizhiCombo((Dizhi.午, Dizhi.亥)),
+      DizhiCombo((Dizhi.卯, Dizhi.申)),
+    ],
+  }
+
+  for anhe_def in DizhiRules.AnheDef:
+    anhe_combos: list[DizhiCombo] = expected[anhe_def]
+
+    assert _dz_equal(
+      dizhi_utils.search([], DizhiRelation.暗合, anhe_def=anhe_def),
+      [],
+    )
+    assert _dz_equal(
+      dizhi_utils.search(list(Dizhi), DizhiRelation.暗合, anhe_def=anhe_def),
+      anhe_combos,
+    )
+
+    for _ in range(200):
+      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.暗合, anhe_def=anhe_def)
+      expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
+      assert _dz_equal(result, expected_result)
+
+  # The default stays `NORMAL_EXTENDED` (默认仍是最宽定义).
   assert _dz_equal(
     dizhi_utils.search(list(Dizhi), DizhiRelation.暗合),
-    anhe_combos,
+    expected[DizhiRules.AnheDef.NORMAL_EXTENDED],
   )
-
-  for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-    result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.暗合)
-    expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
-    assert _dz_equal(result, expected_result)
 
 
 def test_anhe() -> None:
@@ -223,7 +242,7 @@ def test_anhe() -> None:
       assert dizhi_utils.anhe(dz1, dz2, definition=anhe_def) == (DizhiCombo((dz1, dz2)) in expected[anhe_def])
       assert dizhi_utils.anhe(dz1, dz2, definition=anhe_def) == dizhi_utils.anhe(dz2, dz1, definition=anhe_def)
 
-  # Ensure the default definition is `NORMAL`.
+  # Ensure the default definition is `NORMAL_EXTENDED`.
   for dz1, dz2 in itertools.product(Dizhi, Dizhi):
     assert dizhi_utils.anhe(dz1, dz2) == (DizhiCombo((dz1, dz2)) in normal_extended_combos)
     assert dizhi_utils.anhe(dz1, dz2) == dizhi_utils.anhe(dz2, dz1)
@@ -440,15 +459,16 @@ def test_banhe() -> None:
 
 
 def test_search_xing() -> None:
-  xing_expected: list[dict[Dizhi, int]] = [ # 辰午酉亥自刑
+  base_expected: list[dict[Dizhi, int]] = [ # 辰午酉亥自刑
     {
       dz : 2,
     } for dz in [Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥]
-  ] + [ # 其他相刑
+  ] + [ # 其他相刑（两定义共有 / shared by both definitions）。
     { Dizhi.子 : 1, Dizhi.卯 : 1, },
     { Dizhi.寅 : 1, Dizhi.巳 : 1, Dizhi.申 : 1, },
     { Dizhi.丑 : 1, Dizhi.未 : 1, Dizhi.戌 : 1, },
-  ] + [ # LOOSE def.
+  ]
+  loose_only: list[dict[Dizhi, int]] = [ # LOOSE only: any two of the three suffice / 仅 LOOSE：三取二。
     { Dizhi.寅 : 1, Dizhi.巳 : 1, },
     { Dizhi.巳 : 1, Dizhi.申 : 1, },
     { Dizhi.寅 : 1, Dizhi.申 : 1, },
@@ -456,8 +476,12 @@ def test_search_xing() -> None:
     { Dizhi.未 : 1, Dizhi.戌 : 1, },
     { Dizhi.丑 : 1, Dizhi.戌 : 1, },
   ]
+  expected_by_def: dict[DizhiRules.XingDef, list[dict[Dizhi, int]]] = {
+    DizhiRules.XingDef.STRICT: base_expected,
+    DizhiRules.XingDef.LOOSE:  base_expected + loose_only,
+  }
 
-  def __find_qualified(dizhis: list[Dizhi]) -> list[set[Dizhi]]:
+  def __find_qualified(xing_expected: list[dict[Dizhi, int]], dizhis: list[Dizhi]) -> list[set[Dizhi]]:
     ret: list[set[Dizhi]] = []
     for required in xing_expected:
       if all(
@@ -467,6 +491,7 @@ def test_search_xing() -> None:
         ret.append(set(required.keys()))
     return ret
 
+  # The fixed pins below run on the default definition (`LOOSE`).
   assert _dz_equal(
     dizhi_utils.search([], DizhiRelation.刑),
     [],
@@ -487,16 +512,67 @@ def test_search_xing() -> None:
   )
   assert _dz_equal(
     dizhi_utils.search(list(Dizhi) + [Dizhi.辰, Dizhi.午, Dizhi.酉, Dizhi.亥], DizhiRelation.刑),
-    [set(d.keys()) for d in xing_expected]
+    [set(d.keys()) for d in expected_by_def[DizhiRules.XingDef.LOOSE]]
   )
 
-  for _ in range(500):
-    dizhis: list[Dizhi] = []
-    for _ in range(random.randint(1, 4)):
-      dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-    result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.刑)
-    expected_result: list[set[Dizhi]] = __find_qualified(dizhis)
-    assert _dz_equal(result, expected_result)
+  # Every definition gets the full-combo and random-subset treatment (每个定义都过一遍全组合与随机子集).
+  for xing_def in DizhiRules.XingDef:
+    xing_expected: list[dict[Dizhi, int]] = expected_by_def[xing_def]
+
+    assert _dz_equal(
+      dizhi_utils.search(list(Dizhi), DizhiRelation.刑, xing_def=xing_def),
+      __find_qualified(xing_expected, list(Dizhi)),
+    )
+
+    for _ in range(200):
+      dizhis: list[Dizhi] = []
+      for _ in range(random.randint(1, 4)):
+        dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.刑, xing_def=xing_def)
+      expected_result: list[set[Dizhi]] = __find_qualified(xing_expected, dizhis)
+      assert _dz_equal(result, expected_result)
+
+
+def test_search_def_type_gates() -> None:
+  # Every batch entry gates both def params at runtime (每个批量入口都查两个定义参数的类型).
+  with pytest.raises(TypeError):
+    dizhi_utils.search([Dizhi.子], DizhiRelation.暗合, anhe_def='NORMAL_EXTENDED') # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search([Dizhi.子], DizhiRelation.刑, xing_def='LOOSE') # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover([Dizhi.子], anhe_def=0) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover([Dizhi.子], xing_def=DizhiRules.AnheDef.NORMAL) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_mutual([Dizhi.子], [Dizhi.丑], anhe_def='NORMAL') # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_mutual([Dizhi.子], [Dizhi.丑], xing_def=1) # type: ignore
+
+
+def test_discover_def_passthrough() -> None:
+  # The def params reach `search` through both batch entries (参数经两个批量入口透传到 search)。
+  # 寅午 forms ANHE only under EXTENDED (MANGPAI drops it); 寅巳 forms XING only under LOOSE.
+  dizhis: list[Dizhi] = [Dizhi.寅, Dizhi.午, Dizhi.巳, Dizhi.子]
+
+  default_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis)
+  mangpai_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, anhe_def=DizhiRules.AnheDef.MANGPAI)
+  strict_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, xing_def=DizhiRules.XingDef.STRICT)
+
+  # Pin the exact combos, not just "fewer results" (钉精确集合,不钉「变少」).
+  assert _dz_equal(default_d[DizhiRelation.暗合], [{Dizhi.寅, Dizhi.午}, {Dizhi.子, Dizhi.巳}])
+  assert DizhiRelation.暗合 not in mangpai_d
+  assert _dz_equal(default_d[DizhiRelation.刑], [{Dizhi.寅, Dizhi.巳}])
+  assert DizhiRelation.刑 not in strict_d
+
+  mutual_default: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.午])
+  mutual_mangpai: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.午], anhe_def=DizhiRules.AnheDef.MANGPAI)
+  assert _dz_equal(mutual_default[DizhiRelation.暗合], [{Dizhi.寅, Dizhi.午}])
+  assert DizhiRelation.暗合 not in mutual_mangpai
+
+  mutual_loose: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.巳])
+  mutual_strict: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.巳], xing_def=DizhiRules.XingDef.STRICT)
+  assert _dz_equal(mutual_loose[DizhiRelation.刑], [{Dizhi.寅, Dizhi.巳}])
+  assert DizhiRelation.刑 not in mutual_strict
 
 
 def test_xing_negative() -> None:

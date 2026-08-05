@@ -102,11 +102,18 @@ def test_at_birth_house_relations() -> None:
     y, m, d, h = chart.bazi.four_dizhis
     at_birth = analyzer.at_birth
 
+    # The oracle mirrors the analyzer by reading the chart's school profile (issue #69).
+    school: BaziSchool = chart.bazi.config.school
+
     # For AtBirth analysis, the following two algorithms are equivalent.
-    assert at_birth.house_relations == dizhi_utils.discover([y, m, d, h]).filter(
+    assert at_birth.house_relations == dizhi_utils.discover(
+      [y, m, d, h], anhe_def=school.anhe_def, xing_def=school.xing_def,
+    ).filter(
       lambda _, combo : d in combo
     )
-    assert at_birth.house_relations == dizhi_utils.discover_mutual([y, m, h], [d])
+    assert at_birth.house_relations == dizhi_utils.discover_mutual(
+      [y, m, h], [d], anhe_def=school.anhe_def, xing_def=school.xing_def,
+    )
 
     assert at_birth.house_relations == at_birth.house_relations # Repeated lookup must answer the same.
 
@@ -148,7 +155,11 @@ def test_filtered() -> None:
         for tg_combo in tg_combos:
           assert (stars.tiangan in tg_combo) == (tg_combo in at_birth.star_relations.tiangan[tg_rel])
 
-    for dz_rel, dz_combos in dizhi_utils.discover(chart.bazi.four_dizhis).items():
+    for dz_rel, dz_combos in dizhi_utils.discover(
+      chart.bazi.four_dizhis,
+      anhe_def=chart.bazi.config.school.anhe_def, # The oracle mirrors the chart's school (issue #69).
+      xing_def=chart.bazi.config.school.xing_def,
+    ).items():
       if dz_rel not in at_birth.star_relations.dizhi:
         assert all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi)
       else:
@@ -323,7 +334,11 @@ def test_transit_house_relations() -> None:
 
         return not (combo - {house}).isdisjoint(transit_dz)
 
-      expected = dizhi_utils.discover_mutual(bazi.four_dizhis, transit_dz).filter(__expected_filter)
+      expected = dizhi_utils.discover_mutual(
+        bazi.four_dizhis, transit_dz,
+        anhe_def=bazi.config.school.anhe_def, # The oracle mirrors the chart's school (issue #69).
+        xing_def=bazi.config.school.xing_def,
+      ).filter(__expected_filter)
 
       assert _equal(expected, actual)
 
@@ -354,12 +369,14 @@ def test_transit_star_relations() -> None:
 
       tg_discovery = tiangan_utils.TianganRelationDiscovery({})
       dz_discovery = dizhi_utils.DizhiRelationDiscovery({})
+      # The oracle mirrors the analyzer by reading the chart's school profile (issue #69).
+      school: BaziSchool = chart.bazi.config.school
       if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
-        dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
       if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
-        dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
 
       actual = transits_analysis.star_relations(randon_year, random_options, level=random_level)
 
