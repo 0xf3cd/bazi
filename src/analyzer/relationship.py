@@ -42,7 +42,7 @@ class _KeySource(Enum):
   '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
   YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
-  DAY_MASTER        = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
+  KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
 
 
 @dataclass(frozen=True)
@@ -51,7 +51,7 @@ class _ShenshaSpec:
   The spec of a Shensha: the predicate and the key source (神煞的规格：判断函数和查询 key).
 
   Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `DAY_MASTER`). This contract is guarded by the runtime asserts in `shensha_utils`
+  pairs with `KEY_TIANGAN`). This contract is guarded by the runtime asserts in `shensha_utils`
   and the registry tests, not by the type system.
   '''
   predicate: Callable[..., bool]
@@ -61,7 +61,7 @@ class _ShenshaSpec:
 '''The registry of the Shenshas that relationship analysis currently supports (亲密关系分析目前支持的神煞注册表).'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'taohua'  : _ShenshaSpec(shensha_utils.taohua,   _KeySource.YEAR_OR_DAY_DIZHI),
-  'hongyan' : _ShenshaSpec(shensha_utils.hongyan,  _KeySource.DAY_MASTER),
+  'hongyan' : _ShenshaSpec(shensha_utils.hongyan,  _KeySource.KEY_TIANGAN),
   'hongluan': _ShenshaSpec(shensha_utils.hongluan, _KeySource.YEAR_DIZHI),
   'tianxi'  : _ShenshaSpec(shensha_utils.tianxi,   _KeySource.YEAR_DIZHI),
   'yima'    : _ShenshaSpec(shensha_utils.yima,     _KeySource.YEAR_OR_DAY_DIZHI),
@@ -70,7 +70,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
 
 def _hongyan_anchor(bazi: Bazi) -> Tiangan:
   '''The anchor Tiangan a HONGYAN (红艳) lookup keys on (查法锚干, issue #69): the registry
-  records the static default (`_KeySource.DAY_MASTER`, the 《三命通会》 reading), and the
+  records the static default (`_KeySource.KEY_TIANGAN`, the 《三命通会》 reading), and the
   chart's school profile overrides it at evaluation time -- `KeyStem.YEAR_MASTER` keys on
   the year tiangan instead. 红艳查法的锚干：注册表记静态默认（查日干），评估期由盘的
   `BaziSchool.hongyan_key` 覆盖（可查年干）。'''
@@ -95,7 +95,7 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
     args = (([y_dz], [m_dz, d_dz, h_dz]),)
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     args = (([y_dz], [m_dz, d_dz, h_dz]), ([d_dz], [y_dz, m_dz, h_dz]))
-  elif spec.key is _KeySource.DAY_MASTER:
+  elif spec.key is _KeySource.KEY_TIANGAN:
     args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
@@ -113,7 +113,7 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
     first_args = [bazi.year_pillar.dizhi]
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     first_args = [bazi.year_pillar.dizhi, bazi.day_pillar.dizhi]
-  elif spec.key is _KeySource.DAY_MASTER:
+  elif spec.key is _KeySource.KEY_TIANGAN:
     first_args = [_hongyan_anchor(bazi)]
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
