@@ -42,7 +42,7 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
 
   Args:
   - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干) -- the day master under
-    the 《三命通会》 reading, or the year tiangan; the caller decides (see `BaziSchool.hongyan_key`, issue #69).
+    the 《三命通会》 reading, or the year tiangan; the caller decides which.
     查法所锚的天干——《三命通会》口径查日干，也可查年干；锚哪个干由调用方决定。
   - dizhi: (Dizhi) The Dizhi.
 

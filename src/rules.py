@@ -458,6 +458,9 @@ class ShenshaRules:
   # The table is used to find out HONGYAN (红艳). From 《三命通会》: "甲乙逢午、丙寅、丁未、
   # 戊辰、己辰、庚戌、辛酉、壬子、癸申，为红艳煞".
   # 该表格用于查询红艳星。出自《三命通会》。
+  # One cell diverges across text lineages: the prose above reads 乙→午 (问真八字 follows it), while
+  # this table takes the verse lineage 「甲乙午申庚见戌」 → 乙→申 (both pinned in #69's research).
+  # 乙 一格两谱系分叉:散文本作乙午(问真等从之),本表从歌诀本作乙申。
   # A variant table reading 庚申/癸戌 (instead of 庚戌/癸申) also circulates, but it is
   # attested only in a single aggregator-site text lineage, so it is not adopted here
   # (research of 2026-08-04, see issue #69).
