@@ -551,7 +551,8 @@ def test_search_def_type_gates() -> None:
 
 def test_discover_def_passthrough() -> None:
   # The def params reach `search` through both batch entries (参数经两个批量入口透传到 search)。
-  # 寅午 forms ANHE only under EXTENDED (MANGPAI drops it); 寅巳 forms XING only under LOOSE.
+  # 寅午 forms ANHE under NORMAL / NORMAL_EXTENDED but not MANGPAI; 寅巳 forms XING only under LOOSE.
+  # 寅午暗合 NORMAL / NORMAL_EXTENDED 皆有、MANGPAI 无；寅巳刑仅 LOOSE 成立。
   dizhis: list[Dizhi] = [Dizhi.寅, Dizhi.午, Dizhi.巳, Dizhi.子]
 
   default_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis)

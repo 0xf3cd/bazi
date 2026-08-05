@@ -1,7 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''The home of the chart-level configuration: `BaziConfig` (every knob steering chart
-computation), the school-divergence knobs (`BaziSchool` / `DayRollover` / `KeyStem`), and `BaziPrecision`.'''
+'''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
+school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem`),
+and `BaziPrecision`.'''
 
 from enum import Enum
 from dataclasses import dataclass
@@ -127,16 +128,16 @@ class BaziSchool:
   '''
   The school (流派) profile of a chart: the value each variant knob takes where schools
   disagree. The profile only declares -- it computes nothing. Whoever needs a knob reads
-  it at its own time: `day_rollover` steers the day pillar when the chart is computed,
+  it at its own stage: `day_rollover` steers the day pillar when the chart is computed,
   the rest are read at evaluation time (神煞 lookups, relation discovery). Every field
   feeds `__eq__` / `__hash__` / JSON, so two charts differing only in a knob are two charts.
-  命盘的流派档案：本盘在各流派分歧处所取的看法。档案只声明、不演算——谁要哪个口径，谁在自己的时机
+  命盘的流派档案：本盘在各流派分歧处所取的看法。档案只声明、不演算——谁要哪个口径，谁在自己的阶段
   读它：`day_rollover` 在排盘期决定日柱，其余在评估期读（神煞查法、关系查法）。每个字段
   都进相等性 / 哈希 / JSON，只差一个旋钮的两张盘就是两张盘。
 
-  Out of scope: `precision` / `backend` (chart computation knobs, not school divergences)
+  Not here: `precision` / `backend` (chart computation knobs, not school divergences)
   and gender -- see `BaziConfig`.
-  不管的：`precision` / `backend`（算路，不是流派）与性别——见 `BaziConfig`。
+  不在此：`precision` / `backend`（算路，不是流派）与性别——见 `BaziConfig`。
 
   Fields must stay immutable types (enums / frozen value types) -- no `dict` / `list`
   defaults, so a shared default instance can never be mutated through.

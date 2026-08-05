@@ -133,16 +133,18 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
 # `discover_mutual` 调用一律走这三个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
 # 某个调用点忘传参会静默回落到硬编码默认（issue #69）。
 def _dz_search(school: BaziSchool, dizhis: Sequence[Dizhi], relation: DizhiRelation) -> dizhi_utils.DizhiRelationCombos:
+  '''`dizhi_utils.search` under the chart's school profile / 按盘的流派档案查地支关系组合。'''
   return dizhi_utils.search(dizhis, relation, anhe_def=school.anhe_def, xing_def=school.xing_def)
 
 
 def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
+  '''`dizhi_utils.discover` under the chart's school profile / 按盘的流派档案发现地支关系。'''
   return dizhi_utils.discover(dizhis, anhe_def=school.anhe_def, xing_def=school.xing_def)
 
 
 def _dz_discover_mutual(school: BaziSchool, dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
+  '''`dizhi_utils.discover_mutual` under the chart's school profile / 按盘的流派档案发现两组地支间的关系。'''
   return dizhi_utils.discover_mutual(dizhis1, dizhis2, anhe_def=school.anhe_def, xing_def=school.xing_def)
-
 
 
 class ShenshaAnalysis(TypedDict):
@@ -282,8 +284,9 @@ class TransitAnalysis:
 
     house = self._chart.house_of_relationship
     bazi = self._chart.bazi
+    school: Final[BaziSchool] = bazi.config.school
 
-    result = _dz_discover_mutual(bazi.config.school, [house], transit_dizhis)
+    result = _dz_discover_mutual(school, [house], transit_dizhis)
 
     # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
     # So `discover_mutual([house], transit_dizhis)` may contain incomplete results.
@@ -306,7 +309,7 @@ class TransitAnalysis:
       # 流派参数照传以保持一致；`xing_def` 在此其实是惰性参数——`__filter` 只留三组合，
       # 而 STRICT 与 LOOSE 之差全在二组合上，`len == 3` 的结果两定义等价（issue #69）。
       return dizhi_utils.DizhiRelationDiscovery({
-        rel : _dz_search(bazi.config.school, list(bazi.four_dizhis) + transit_dizhis, rel)
+        rel : _dz_search(school, list(bazi.four_dizhis) + transit_dizhis, rel)
       }).filter(__filter)
 
     result = result.merge(__discover(DizhiRelation.三合))

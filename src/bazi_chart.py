@@ -68,7 +68,7 @@ class BaziJson:
 
   class School(TypedDict):
     '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
-    profile (流派档案), serialized as the member name of each variant knob.
+    profile (流派档案), serialized as the member name of each school reading.
     流派档案：每项流派看法各存其枚举成员名。'''
     day_rollover: str
     hongyan_key: str

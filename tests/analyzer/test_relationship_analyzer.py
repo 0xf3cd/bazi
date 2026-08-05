@@ -3,6 +3,8 @@
 
 import pytest
 
+import ast
+import inspect
 import random
 import itertools
 
@@ -12,6 +14,7 @@ from src.bazi import Bazi
 from src.bazi_chart import BaziChart
 from src.school import BaziConfig, BaziSchool, KeyStem
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.analyzer import relationship as relationship_module
 from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
 
@@ -493,3 +496,36 @@ def test_transit_analysis_negative() -> None:
 def test_registry_matches_shensha_analysis_keys() -> None:
   '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
+
+
+def test_no_bare_dizhi_discovery_calls() -> None:
+  # The "no bare calls" invariant declared by the `_dz_*` wrappers in relationship.py needs
+  # an executor: every `dizhi_utils.search` / `discover` / `discover_mutual` call in that
+  # file must sit inside one of the three wrappers -- a call anywhere else silently falls
+  # back to the hardcoded defaults (issue #69).
+  # 「无裸调」不变量得有执行者：relationship.py 里的三入口调用必须都在三薄包装体内——
+  # 别处的调用会静默回落到硬编码默认（issue #69）。
+  wrappers = {'_dz_search', '_dz_discover', '_dz_discover_mutual'}
+  gated = {'search', 'discover', 'discover_mutual'}
+
+  bare: list[int] = []
+
+  class _Visitor(ast.NodeVisitor):
+    def __init__(self) -> None:
+      self._scope: list[str] = []
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+      self._scope.append(node.name)
+      self.generic_visit(node)
+      self._scope.pop()
+
+    def visit_Call(self, node: ast.Call) -> None:
+      f = node.func
+      if (isinstance(f, ast.Attribute) and f.attr in gated
+          and isinstance(f.value, ast.Name) and f.value.id == 'dizhi_utils'
+          and (not self._scope or self._scope[-1] not in wrappers)):
+        bare.append(node.lineno)
+      self.generic_visit(node)
+
+  _Visitor().visit(ast.parse(inspect.getsource(relationship_module)))
+  assert bare == []

@@ -442,7 +442,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
   - For XING relation, it's a bit more complicated.
     - Some definitions require all the Dizhis to appear in order to qualify the SANXING (三刑) relation (a subset of XING).
     - Some definitions consider only two Dizhis appearing a valid XING relation (e.g. only 丑 and 未 can form a XING relation).
-    - In this method, for 丑未戌 and 寅巳申 SANXING, it is required that any two of the three to present in order to qualify the XING relation.
+    - Which definition applies is chosen by `xing_def`; under the default `XingDef.LOOSE`, any two of 丑未戌 / 寅巳申 suffice (see the `xing_def` Note below).
     - Use `xing` to do more fine-grained checking.
   - 返回的 combos 中没有体现关系作用的方向。
   - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
@@ -452,7 +452,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
     - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
     - 对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。
-    - 本方法的实现中，对于丑未戌、寅巳申三刑，只需要同时出现两个地支就算相刑。
+    - 用哪个定义由 `xing_def` 决定；默认 `XingDef.LOOSE` 下，丑未戌、寅巳申三取二即算（见下方 `xing_def` 注）。
     - 请使用 `xing` 来进行更细粒度的检查。
 
   Note:
@@ -487,7 +487,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     - return: ({Dizhi.寅, Dizhi.卯, Dizhi.辰})
   - search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
     - return: ({ Dizhi.卯, Dizhi.申}, { Dizhi.寅, Dizhi.午}, { Dizhi.寅, Dizhi.丑})
-    - `DizhiRules.AnheDef.NORMAL_EXTENDED` is used.
+    - The default `DizhiRules.AnheDef.NORMAL_EXTENDED` is used.
   - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
     - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })
     - Only one 辰 appears in the input - not forming a XING relation.
@@ -496,7 +496,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     - 辰 appear twice in the input - forming a XING relation.
   - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
     - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳 })
-    - `DizhiRules.XingDef.LOOSE` is used.
+    - The default `DizhiRules.XingDef.LOOSE` is used.
   '''
 
   if not isinstance(relation, DizhiRelation):
@@ -555,13 +555,9 @@ def discover(dizhis: Sequence[Dizhi], *,
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
 
   Note:
-  - For XING relation, the `xing_def` parameter picks the table (default `XingDef.LOOSE`);
-    for ANHE relation, the `anhe_def` parameter (default `AnheDef.NORMAL_EXTENDED`).
-    Charts declare these school readings via `BaziSchool` -- see `search` for what the
-    parameters mean at this batch entry (direction is unobservable here).
-  - 刑表由 `xing_def` 选择（默认 `XingDef.LOOSE`），暗合表由 `anhe_def` 选择
-    （默认 `AnheDef.NORMAL_EXTENDED`）。盘级流派口径经 `BaziSchool` 声明；
-    参数在批量入口下的含义见 `search`（方向在此不可观测）。
+  - `anhe_def` / `xing_def` are forwarded to `search` -- defaults, table picking, and
+    batch-entry semantics (direction unobservable): see `search`.
+  - 参数原样转给 `search`——默认值、选表、批量入口语义（方向不可观测）：见 `search`。
 
   Args:
   - dizhis: (Sequence[Dizhi]) The Dizhis to check.
@@ -600,13 +596,9 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
 
   Note:
-  - For XING relation, the `xing_def` parameter picks the table (default `XingDef.LOOSE`);
-    for ANHE relation, the `anhe_def` parameter (default `AnheDef.NORMAL_EXTENDED`).
-    Charts declare these school readings via `BaziSchool` -- see `search` for what the
-    parameters mean at this batch entry (direction is unobservable here).
-  - 刑表由 `xing_def` 选择（默认 `XingDef.LOOSE`），暗合表由 `anhe_def` 选择
-    （默认 `AnheDef.NORMAL_EXTENDED`）。盘级流派口径经 `BaziSchool` 声明；
-    参数在批量入口下的含义见 `search`（方向在此不可观测）。
+  - `anhe_def` / `xing_def` are forwarded to `search` -- defaults, table picking, and
+    batch-entry semantics (direction unobservable): see `search`.
+  - 参数原样转给 `search`——默认值、选表、批量入口语义（方向不可观测）：见 `search`。
 
   Args:
   - dizhis1: (Sequence[Dizhi]) The first set of Dizhis to check.

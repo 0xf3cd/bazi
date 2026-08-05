@@ -53,16 +53,12 @@ def test_config_type_gates() -> None:
     BaziConfig(backend='hko') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
-  with pytest.raises(TypeError):
-    BaziSchool(day_rollover='wan_zishi') # type: ignore
-  with pytest.raises(TypeError):
-    BaziSchool(hongyan_key=0) # type: ignore
 
 
 def test_every_school_field_has_a_type_gate() -> None:
   # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
   # adding a knob without a gate fails here, no per-field test needed (issue #69).
-  # 机械绑定:每个字段都要有构造期类型闸,加字段不加闸会在这里响。
+  # 机械绑定：每个字段都要有构造期类型闸，加字段不加闸会在这里响。
   for f in dataclasses.fields(BaziSchool):
     with pytest.raises(TypeError):
       BaziSchool(**{f.name: object()}) # type: ignore
@@ -71,7 +67,7 @@ def test_every_school_field_has_a_type_gate() -> None:
 def test_every_school_field_reaches_json() -> None:
   # Mechanical binding: every `BaziSchool` field must land in JSON under its own name --
   # adding a knob without serializing it fails here (issue #69).
-  # 机械绑定:每个字段都要以同名键进 JSON,加字段不序列化会在这里响。
+  # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   assert {f.name for f in dataclasses.fields(BaziSchool)} == set(chart.json['school'])
 

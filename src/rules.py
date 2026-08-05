@@ -290,14 +290,14 @@ class DizhiRules:
     This knob is declared per chart via `BaziSchool.anhe_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
     本旋钮由 `BaziSchool.anhe_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
+
+    No change should be made to the existing definitions. Only add new definitions.
     '''
     NORMAL           = 0 # 卯申、巳酉、亥午、子巳、寅午 - 这也是所谓的“通禄合”/“通禄暗合”，与天干五合一一对应。
                          # 选 NORMAL 时 `DIZHI_ANHE[NORMAL]` 与 `DIZHI_TONGLUHE` 逐项相同——discovery 会在
                          # 暗合与通禄合两个键下给出相同组合，那是同一证据，不是两条独立证据。
     NORMAL_EXTENDED  = 1 # 卯申、巳酉、亥午、子巳、寅午 + 寅丑。这六组的藏干没有明显的冲突，而且有藏干相合的关系。
     MANGPAI          = 2 # 卯申、寅丑、午亥。盲派最认可这三对暗合。
-    # No change should be made to the existing definitions.
-    # Only add new definitions.
 
   # The tables are used to query the ANHE (暗合) relation across all Dizhis.
   # ANHE relation is a non-directional/mutual relation.

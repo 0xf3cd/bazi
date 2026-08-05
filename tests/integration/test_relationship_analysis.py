@@ -685,9 +685,9 @@ def test_school_variants_reach_relationship_analysis() -> None:
   # 端到端钉住流派档案确实驱动关系查法（issue #69）。断言钉精确集合而非「有差异」——
   # MANGPAI/STRICT 都是默认定义的子集，「变少」在错传空表/错表时同样成立。
 
-  # Chart A: 戊寅 day with 午 in the month pillar -- 寅午 forms ANHE only under
-  # NORMAL_EXTENDED (MANGPAI drops it). Covers the AtBirth `discover` path.
-  # 盘 A：戊寅日、月支午——寅午暗合仅 NORMAL_EXTENDED 有（MANGPAI 无）。覆盖 AtBirth `discover` 路径。
+  # Chart A: 戊寅 day with 午 in the month pillar -- 寅午 forms ANHE under NORMAL /
+  # NORMAL_EXTENDED but not MANGPAI. Covers the AtBirth `discover` path.
+  # 盘 A：戊寅日、月支午——寅午暗合 NORMAL / NORMAL_EXTENDED 皆有、MANGPAI 无。覆盖 AtBirth `discover` 路径。
   dt_a: datetime = datetime(1984, 6, 13) # 甲子 / 庚午 / 戊寅 / 壬子
   anhe_default: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_a, BaziGender.MALE))).at_birth
   anhe_mangpai: AtBirthAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
@@ -732,3 +732,37 @@ def test_school_variants_reach_relationship_analysis() -> None:
   assert set(map(frozenset, default_rels_c[DizhiRelation.刑])) == {frozenset((Dizhi.丑, Dizhi.未))}
   assert DizhiRelation.刑 not in strict_rels_c
   assert {r: c for r, c in default_rels_c.items() if r is not DizhiRelation.刑} == dict(strict_rels_c.items())
+
+  # Chart D: 辛巳 day with 寅 in the month pillar -- the relationship star is 寅 (辛's
+  # 正财甲 lives in 寅), and 寅巳 forms XING only under LOOSE. Covers the AtBirth
+  # `star_relations` path.
+  # 盘 D：辛巳日、月支寅——配偶星为寅（辛之正财甲藏于寅），寅巳刑仅 LOOSE 成立。
+  # 覆盖 AtBirth `star_relations` 路径。
+  dt_d: datetime = datetime(1984, 2, 17) # 甲子 / 丙寅 / 辛巳 / 戊子
+  star_default_d = RelationshipAnalyzer(BaziChart(Bazi.create(dt_d, BaziGender.MALE))).at_birth.star_relations.dizhi
+  star_strict_d = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_d, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
+  ))).at_birth.star_relations.dizhi
+
+  assert set(map(frozenset, star_default_d[DizhiRelation.刑])) == {frozenset((Dizhi.寅, Dizhi.巳))}
+  assert DizhiRelation.刑 not in star_strict_d
+  assert {r: c for r, c in star_default_d.items() if r is not DizhiRelation.刑} == dict(star_strict_d.items())
+
+  # Chart E: 辛未 day, the star 寅 present (month), no 巳/申 at birth; the 1992 壬申 流年
+  # brings 申 -- 寅申 forms XING only under LOOSE. Covers the transit-side `star_relations`
+  # MUTUAL path (the TRANSITS_ONLY path shares `_dz_discover` with the AtBirth cases above).
+  # 盘 E：辛未日、月支寅（配偶星）、原局无巳申；1992 壬申流年带来申——寅申刑仅 LOOSE 成立。
+  # 覆盖流运侧 `star_relations` MUTUAL 路径（TRANSITS_ONLY 路径与上面 AtBirth 案例共用 `_dz_discover`）。
+  dt_e: datetime = datetime(1984, 2, 7) # 甲子 / 丙寅 / 辛未 / 戊子
+  transit_default_e: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_e, BaziGender.MALE))).transits
+  transit_strict_e: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_e, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
+  ))).transits
+
+  assert transit_default_e.support(1992, TransitOptions.LIUNIAN)
+  assert transit_strict_e.support(1992, TransitOptions.LIUNIAN)
+  default_star_e = transit_default_e.star_relations(1992, TransitOptions.LIUNIAN, level=TransitAnalysis.Level.MUTUAL).dizhi
+  strict_star_e = transit_strict_e.star_relations(1992, TransitOptions.LIUNIAN, level=TransitAnalysis.Level.MUTUAL).dizhi
+  assert set(map(frozenset, default_star_e[DizhiRelation.刑])) == {frozenset((Dizhi.寅, Dizhi.申))}
+  assert DizhiRelation.刑 not in strict_star_e
+  assert {r: c for r, c in default_star_e.items() if r is not DizhiRelation.刑} == dict(strict_star_e.items())
