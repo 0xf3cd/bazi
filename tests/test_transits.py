@@ -11,7 +11,8 @@ from src.data_types import DayunTuple
 from src.defines import Ganzhi, Dizhi
 from src.utils import bazi_utils
 
-from src.bazi import Bazi, BaziGender, BaziPrecision
+from src.bazi import Bazi, BaziGender
+from src.school import BaziConfig
 from src.bazi_chart import BaziChart
 from src.calendar import calendar_utils_of
 from src.transits import DayunDatabase, TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
@@ -22,13 +23,13 @@ def _dayun_start_gz_year(chart: BaziChart) -> int:
   # expression `TransitDatabase` consumes: the day-level label of `dayun_start_moment`
   # through the chart's own backend, floored at `Bazi.ganzhi_year`.
   return max(
-    calendar_utils_of(chart.bazi.backend).to_ganzhi(chart.dayun_start_moment).year,
+    calendar_utils_of(chart.bazi.config.backend).to_ganzhi(chart.dayun_start_moment).year,
     chart.bazi.ganzhi_year,
   )
 
 
 def test_simple() -> None:
-  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE, BaziPrecision.DAY)
+  bazi: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE)
   chart: BaziChart = BaziChart(bazi)
   db = DayunDatabase(chart)
 
@@ -252,7 +253,7 @@ def test_birth_year_is_precision_attributed() -> None:
   never produces, and 虚岁 must count from 2009 so that the dayun-start year 2018 supports
   xiaoyun.
   '''
-  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'hour'))
+  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', BaziConfig.from_values(precision='hour')))
   assert chart.bazi.ganzhi_year == 2009
   db: TransitDatabase = TransitDatabase(chart)
 
@@ -269,7 +270,7 @@ def test_birth_year_is_precision_attributed() -> None:
 
 def test_day_precision_unchanged() -> None:
   '''At DAY the two year channels agree.'''
-  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', 'day'))
+  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'female'))
   assert chart.bazi.ganzhi_year == chart.bazi.ganzhi_date.year
   db: TransitDatabase = TransitDatabase(chart)
   assert db.support(TransitMoment(2008), TransitOptions.LIUNIAN)  # 戊子 2008 IS this chart's first liunian.
@@ -285,7 +286,7 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
   dayun, and every later year would resolve one dayun step off (2018: 甲子 instead of
   乙丑).
   '''
-  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', 'hour'))
+  chart: BaziChart = BaziChart(Bazi.create('2009-02-03 23:30', 'male', BaziConfig.from_values(precision='hour')))
   assert chart.dayun_start_moment == chart.bazi.solar_datetime # The clamp: the start IS the birth.
   assert chart.bazi.ganzhi_date.year == 2008 # The bare day-level label of the clamped start.
   assert chart.bazi.ganzhi_year == 2009

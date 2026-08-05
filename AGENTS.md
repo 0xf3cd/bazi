@@ -90,7 +90,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   bazi = Bazi.create(
     birth_time,
     gender,
-    precision,
+    config,
   )
   ```
 

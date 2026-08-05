@@ -86,7 +86,7 @@ def get_transit_info(chart: BaziChart) -> str:
   day_master: Tiangan = chart.bazi.day_master
   s: str = '\n' # The output string.
 
-  utils = calendar_utils_of(chart.bazi.backend)
+  utils = calendar_utils_of(chart.bazi.config.backend)
   jie_before = utils.prev_jie(chart.bazi.solar_datetime)
   jie_after = utils.next_jie(chart.bazi.solar_datetime)
 

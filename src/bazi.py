@@ -10,6 +10,7 @@ from .defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from .calendar import (
   CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
+from .school import BaziPrecision, DayRollover, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
   month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
@@ -43,69 +44,6 @@ class BaziGender(Enum):
       assert self is self.FEMALE
       return 'female'
 
-
-
-class BaziPrecision(Enum):
-  '''
-  BaziPrecision is used to specify the precision when generating the Bazi chart.
-
-  As per the rules of Bazi system, new years start on the days of Start of Spring (LICHUN / 立春), and new months start
-  on the days of 12 Jieqis (LICHUN, JINGZHE, QINGMING, LIXIA... / 立春, 惊蛰, 清明, 立夏...).
-
-  So, even born on the same day, two persons can have different Year Ganzhi (年柱) and Month Ganzhi (月柱).
-
-  The 3 levels -- DAY, HOUR, MINUTE -- are three granularities of ONE rule, not three
-  approximations of a single truth. A birth belongs to the new year / month when
-  `birth >= jieqi`, compared at the granularity the birth is known to; a tie resolves to the
-  NEW pillar. That tie-break is the same one the calendar layer freezes -- see
-  `calendar/celestial_data/SCHEMA.md`, "Boundary convention".
-  三档是同一条规则的三个粒度，不是对同一真值的三种逼近：出生按「已知的粒度」与节气时刻比较，
-  `birth >= jieqi` 归新年 / 新月，相等归新。
-
-  - DAY    -- the birth is known to the day, so dates are compared.    只知道日期，比到日。
-  - HOUR   -- known to the 时辰, so (date, 时辰) is compared.           知道时辰，比到时辰。
-  - MINUTE -- known to the minute, so (date, hour, minute) is compared. 知道到分，比到分。
-
-  `HOUR` means a 时辰 (a traditional double-hour, 子时 starting at 23:00), not a clock hour:
-  birth records come at day, 时辰, or minute granularity -- never "hour but not minute".
-
-  For example, LICHUN / 立春 of 2000 falls at 2000-02-04 20:40:23 (per the celestial backend;
-  the HKO backend publishes the date only). Then:
-  - DAY:    everyone born on 2000-02-04 gets "庚辰" and Month Dizhi "寅", including those born
-            before 20:40:23 -- at day granularity, 02-04 >= 02-04 is a tie, and ties go new.
-            Those born on 2000-02-03 get "己卯" and "丑".
-  - HOUR:   born in 戌时 [19:00, 21:00), the 时辰 holding the jieqi, gets "庚辰" and "寅" (a tie
-            again); born in 酉时 [17:00, 19:00) or earlier that day gets "己卯" and "丑".
-  - MINUTE: born at or after 20:40 gets "庚辰" and "寅"; before it, "己卯" and "丑".
-
-  This is a rule, not an estimate, and the difference is visible at the extremes: LICHUN of
-  2017 falls at 2017-02-03 23:34:03, so DAY assigns all of 02-03 to the new year even though
-  98% of that day precedes the jieqi. That is what the rule says, not a defect in it -- an
-  estimator would have to flip its answer based on a clock time the DAY caller is not claiming
-  to know, which would also make ganzhi month lengths depend on it.
-
-  Because 子时 spans midnight, the tie 时辰 can start on the previous civil day: LICHUN of
-  2009 falls at 2009-02-04 00:49:48, in the 子时 that began at 02-03 23:00, so a HOUR birth
-  at 2009-02-03 23:30 ties and belongs to the new year -- on a day that DAY assigns to the
-  old side. The granularities are three readings of one rule, not nested refinements.
-  子时跨午夜，tie 时辰可始于节气前一公历日——三档是同一规则的三种读法，不是嵌套细化。
-
-  HOUR and MINUTE need real jieqi moments, so they require the celestial backend --
-  `Bazi.__init__` rejects the HKO backend for them (its `jieqi_moment` is a midnight
-  placeholder, see `CalendarUtilsProtocol`).
-  '''
-  DAY    = 0
-  HOUR   = 1
-  MINUTE = 2
-
-  def __str__(self) -> str:
-    if self is self.DAY:
-      return 'day'
-    elif self is self.HOUR:
-      return 'hour'
-    else:
-      assert self is self.MINUTE
-      return 'minute'
 
 
 '''Maps each Jie (节) to the ganzhi month it opens: 立春 -> 1 (寅月), ..., 小寒 -> 12 (丑月). / 每个节到其所开干支月的映射：立春开寅月，……，小寒开丑月。'''
@@ -164,8 +102,7 @@ class Bazi:
   - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
 
-  def __init__(self, birth_time: datetime, gender: BaziGender, precision: BaziPrecision,
-               backend: CalendarBackend = CalendarBackend.CELESTIAL) -> None:
+  def __init__(self, birth_time: datetime, gender: BaziGender, config: BaziConfig = DEFAULT_CONFIG) -> None:
     '''
     `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birth time and gender as input, 
     and figures out the pillars of year, month, day, and hour.
@@ -180,21 +117,19 @@ class Bazi:
     Args:
     - birth_time: (datetime) The birth date (in Gregorian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
-    - precision: (BaziPrecision) The precision of the birth time.
-    - backend: (CalendarBackend) The calendar backend used for all calendar conversions.
+    - config: (BaziConfig) The chart-level configuration: the precision of the birth time, the calendar
+      backend used for all calendar conversions, and the school profile (流派档案).
     '''
 
     if not isinstance(birth_time, datetime):
       raise TypeError(f'Expected datetime, got {type(birth_time)}')
     if not isinstance(gender, BaziGender):
       raise TypeError(f'Expected BaziGender, got {type(gender)}')
-    if not isinstance(precision, BaziPrecision):
-      raise TypeError(f'Expected BaziPrecision, got {type(precision)}')
-    if not isinstance(backend, CalendarBackend):
-      raise TypeError(f'Expected CalendarBackend, got {type(backend)}')
+    if not isinstance(config, BaziConfig):
+      raise TypeError(f'Expected BaziConfig, got {type(config)}')
 
-    self._backend: Final[CalendarBackend] = backend
-    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(backend)
+    self._config: Final[BaziConfig] = config
+    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
 
     self._birth_time: Final[datetime] = birth_time
     if self._birth_time.tzinfo is not None:
@@ -204,23 +139,22 @@ class Bazi:
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
 
     self._gender: Final[BaziGender] = gender
-    self._precision: Final[BaziPrecision] = precision
 
     # Which ganzhi year / month owns the birth, compared per `BaziPrecision`
     # (`birth >= jieqi` at the known granularity, ties go new).
     ganzhi_year: int
     ganzhi_month: int
     bracketing_jies: tuple[JieqiTime, JieqiTime] | None = None
-    if self._precision is BaziPrecision.DAY:
+    if self._config.precision is BaziPrecision.DAY:
       # DAY compares dates: the `to_ganzhi` channel drops the time, so a jieqi's whole day
       # falls on its new side. `bracketing_jies` stays moment-level for DAY (see the property).
       ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
       ganzhi_year = ganzhi_calendardate.year
       ganzhi_month = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
     else:
-      if self._backend is CalendarBackend.HKO:
+      if self._config.backend is CalendarBackend.HKO:
         raise ValueError(
-          f'{self._precision} needs real jieqi moments, which the HKO backend cannot provide '
+          f'{self._config.precision} needs real jieqi moments, which the HKO backend cannot provide '
           '(its `jieqi_moment` is a midnight placeholder). Use `CalendarBackend.CELESTIAL`.'
         )
 
@@ -231,7 +165,7 @@ class Bazi:
       birth_moment: Final[datetime] = self.solar_datetime
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
-      if _truncated(birth_moment, self._precision) >= _truncated(next_j.moment, self._precision):
+      if _truncated(birth_moment, self._config.precision) >= _truncated(next_j.moment, self._config.precision):
         bracketing_jies = (next_j, utils.next_jie(next_j.moment))
       else:
         bracketing_jies = (prev_j, next_j)
@@ -256,13 +190,24 @@ class Bazi:
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     #
-    # 晚子时换日: the day pillar rolls at 23:00 (when 子时 begins), which the year and month
-    # pillars above deliberately do NOT do -- they follow `BaziPrecision`'s attribution
-    # (dates at DAY, truncated moments at HOUR/MINUTE). So a 23:30 birth takes the *next*
-    # day's day pillar while its year/month attribution stays put, except inside a tie
-    # window. Both halves of that are variants tracked in issue #69, and a 子正换日
-    # variant has to say which pillars it moves; `test_bazi` pins today's answer meanwhile.
-    day_offset: int = 0 if self._birth_time.hour < 23 else 1
+    # 换日点 is the `DayRollover` variant (issue #69), mounted on
+    # `BaziSchool.day_rollover`: WAN_ZISHI (晚子时) rolls the day pillar at 23:00 when
+    # 子时 begins, ZIZHENG (子正) keeps the civil day's pillar until 00:00. The default
+    # WAN_ZISHI is the behavior `test_bazi` has long pinned. The year and month pillars
+    # above deliberately do NOT follow this knob -- they follow `BaziPrecision`'s
+    # attribution (two independent mechanisms; see `DayRollover`'s docstring).
+    day_offset: int
+    if self._config.school.day_rollover is DayRollover.WAN_ZISHI:
+      # 晚子时: a birth at/after 23:00 already carries the next day's day pillar.
+      day_offset = 1 if self._birth_time.hour >= 23 else 0
+    elif self._config.school.day_rollover is DayRollover.ZIZHENG:
+      # 子正: the whole 子时 keeps the civil day's day pillar.
+      day_offset = 0
+    else:
+      # Invariant: every enum member must be wired up above. Reaching here means we
+      # added a member but forgot to wire it -- not something users can trigger.
+      # `raise` instead of `assert` so the guard survives `python -O`.
+      raise AssertionError(f'DayRollover not wired up in `Bazi.__init__`: {self._config.school.day_rollover}') # pragma: no cover # Unreachable invariant guard.
     self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
 
     # Finally, find out the Hour Dizhi (时柱地支).
@@ -271,16 +216,11 @@ class Bazi:
   @staticmethod
   def __parse_bazi_args(
     birth_time: datetime | str,
-    gender: BaziGender | str, 
-    precision: BaziPrecision | str,
-    backend: CalendarBackend | str
-  ) -> tuple[datetime, BaziGender, BaziPrecision, CalendarBackend]:
-    
+    gender: BaziGender | str,
+  ) -> tuple[datetime, BaziGender]:
+
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
-
-    if _birth_time.tzinfo is not None:
-      raise ValueError('Timezone should be well-processed outside of this class.')
 
     _gender: BaziGender
     if isinstance(gender, BaziGender):
@@ -294,35 +234,13 @@ class Bazi:
       else:
         raise ValueError(f'Currently not support gender: {gender}')
 
-    _precision: BaziPrecision
-    if isinstance(precision, BaziPrecision):
-      _precision = precision
-    else:
-      assert isinstance(precision, str)
-      if precision.lower() in ['分', '分钟', 'm', 'min', 'minute']:
-        _precision = BaziPrecision.MINUTE
-      elif precision.lower() in ['时', '小时', 'h', 'hour']:
-        _precision = BaziPrecision.HOUR
-      elif precision.lower() in ['天', '日', 'd', 'day']:
-        _precision = BaziPrecision.DAY
-      else:
-        raise ValueError(f'Unsupported precision: {precision}')
-
-    _backend: CalendarBackend
-    if isinstance(backend, CalendarBackend):
-      _backend = backend
-    else:
-      assert isinstance(backend, str)
-      _backend = CalendarBackend.from_str(backend)
-
-    return _birth_time, _gender, _precision, _backend
+    return _birth_time, _gender
 
   @staticmethod
   def create(
     birth_time: datetime | str,
-    gender: BaziGender | str, 
-    precision: BaziPrecision | str,
-    backend: CalendarBackend | str = CalendarBackend.CELESTIAL
+    gender: BaziGender | str,
+    config: BaziConfig = DEFAULT_CONFIG
   ) -> 'Bazi':
     '''
     Staticmethod that creates a `Bazi` object from the inputs.
@@ -335,31 +253,23 @@ class Bazi:
       - if `BaziGender` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `BaziGender`. 
         - Supported values: "男"/"女"/"male"/"female" (case insensitive).
-    - precision: (BaziPrecision | str) The precision of the birth time.
-      - if `BaziPrecision` type: it will be directly fed to `Bazi`.
-      - if `str` type: it will be converted by `BaziPrecision`. 
-        - Supported values: "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day" (case insensitive).
-    - backend: (CalendarBackend | str) The calendar backend used for all calendar conversions.
-      - if `CalendarBackend` type: it will be directly fed to `Bazi`.
-      - if `str` type: it will be converted by `CalendarBackend.from_str`.
-        - Supported values: the member names and values of `CalendarBackend` (e.g. "HKO"/"hko", case insensitive).
+    - config: (BaziConfig) The chart-level configuration (precision / backend / school).
+      Use `BaziConfig.from_values` to build one from string spellings -- the same
+      acceptance face this method parsed here before #69.
     '''
 
     if not isinstance(birth_time, (datetime, str)):
       raise TypeError(f'Expected datetime or str, got {type(birth_time)}')
     if not isinstance(gender, (BaziGender, str)):
       raise TypeError(f'Expected BaziGender or str, got {type(gender)}')
-    if not isinstance(precision, (BaziPrecision, str)):
-      raise TypeError(f'Expected BaziPrecision or str, got {type(precision)}')
-    if not isinstance(backend, (CalendarBackend, str)):
-      raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
+    if not isinstance(config, BaziConfig):
+      raise TypeError(f'Expected BaziConfig, got {type(config)}')
 
-    _birth_time, _gender, _precision, _backend = Bazi.__parse_bazi_args(birth_time, gender, precision, backend)
+    _birth_time, _gender = Bazi.__parse_bazi_args(birth_time, gender)
     bazi: Bazi = Bazi(
       birth_time=_birth_time,
       gender=_gender,
-      precision=_precision,
-      backend=_backend,
+      config=config,
     )
     return bazi
   
@@ -368,7 +278,7 @@ class Bazi:
     '''
     Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
 
-    Note that the precision is currently set to `BaziPrecision.DAY`.
+    Note that the config is `DEFAULT_CONFIG` (DAY precision, the celestial backend, the default school).
     Note that the year is in [1902, 2080], and day is in [1, 28].
     '''
     return Bazi.create(
@@ -380,7 +290,7 @@ class Bazi:
         minute=random.randint(0, 59),
       ),
       gender=random.choice(list(BaziGender)),
-      precision=BaziPrecision.DAY,
+      config=DEFAULT_CONFIG,
     )
 
   @property
@@ -402,18 +312,18 @@ class Bazi:
   @property
   def ganzhi_year(self) -> int:
     '''
-    The ganzhi year the birth belongs to, attributed at `self.precision` -- the year pillar is
-    `ganzhi_of_year` of exactly this. 按 `self.precision` 粒度归属的出生干支年，年柱即由它推出。
+    The ganzhi year the birth belongs to, attributed at `self.config.precision` -- the year
+    pillar is `ganzhi_of_year` of exactly this. 按 `self.config.precision` 粒度归属的出生干支年，年柱即由它推出。
     '''
     return self._ganzhi_year
 
   @property
   def bracketing_jies(self) -> tuple[JieqiTime, JieqiTime]:
     '''
-    The two Jies (节) bracketing the birth, per `self.precision`. This is the single source
+    The two Jies (节) bracketing the birth, per `self.config.precision`. This is the single source
     that the year/month attribution and `BaziChart`'s dayun counting share, so a chart cannot
     contradict itself about which jie owns the birth month.
-    按 `self.precision` 归属的出生前后两节。年/月柱归属与大运数节共用此单一来源，保证盘面自洽。
+    按 `self.config.precision` 归属的出生前后两节。年/月柱归属与大运数节共用此单一来源，保证盘面自洽。
 
     Note:
     - HOUR / MINUTE: `[0]` is the jie owning the birth month (granularity-aware, ties go new --
@@ -450,18 +360,15 @@ class Bazi:
     return self._gender
   
   @property
-  def precision(self) -> BaziPrecision:
-    return self._precision
-
-  @property
-  def backend(self) -> CalendarBackend:
-    '''The calendar backend that this `Bazi` uses / 此命盘使用的历法后端'''
-    return self._backend
+  def config(self) -> BaziConfig:
+    '''The chart-level configuration of this `Bazi` (precision / backend / school).
+    此命盘的配置（出生时间精度 / 历法后端 / 流派档案）。'''
+    return self._config
 
   @property
   def _utils(self) -> CalendarUtilsProtocol:
     '''
-    The resolved calendar utils of `self.backend`. Resolved on each access, so the resolved
+    The resolved calendar utils of `self.config.backend`. Resolved on each access, so the resolved
     utils -- the HKO module or a celestial singleton -- is never stored on the instance.
     当前历法后端对应的实际工具。每次访问时现解析，实例上不存解析结果，保证 `Bazi` 可安全 deepcopy。
 
@@ -469,7 +376,7 @@ class Bazi:
     the instance dict, where the module breaks `deepcopy` loudly and a singleton would be
     silently duplicated, forking its caches.
     '''
-    return calendar_utils_of(self._backend)
+    return calendar_utils_of(self._config.backend)
   
   @property
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
@@ -554,17 +461,16 @@ class Bazi:
     return (
       self.solar_datetime == other.solar_datetime
       and self.gender == other.gender
-      and self.precision == other.precision
-      and self.backend == other.backend
+      and self.config == other.config
     )
   
   def __ne__(self, other: object) -> bool:
     return not self.__eq__(other)
 
   def __hash__(self) -> int:
-    # Same four inputs as `__eq__`, all derived from `Final` state: stable under the
+    # Same three inputs as `__eq__`, all derived from `Final` state: stable under the
     # public API (private reassignment is not defended against, as everywhere else).
-    # 与 `__eq__` 同源四元组，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
-    return hash((self.solar_datetime, self.gender, self.precision, self.backend))
+    # 与 `__eq__` 同源三元组，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
+    return hash((self.solar_datetime, self.gender, self.config))
 
 八字 = Bazi

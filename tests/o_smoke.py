@@ -40,11 +40,11 @@ def main() -> int:
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
-     lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male', 'day')),
+     lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
     ('Bazi.create above window (2100-06-01)', ValueError,
-     lambda: Bazi.create(datetime(2100, 6, 1, 12), 'male', 'day')),
+     lambda: Bazi.create(datetime(2100, 6, 1, 12), 'male')),
     ('Bazi.create tz-aware birth time', ValueError,
-     lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male', 'day')),
+     lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male')),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
@@ -54,7 +54,7 @@ def main() -> int:
     ('TransitMoment mutually exclusive fields', ValueError,
      lambda: TransitMoment(2024, Dizhi.子, date(2024, 6, 1))),
     ('dayun past supported window', ValueError,
-     lambda: next(BaziChart(Bazi.create(datetime(2091, 6, 1, 12), 'male', 'day')).dayun)),
+     lambda: next(BaziChart(Bazi.create(datetime(2091, 6, 1, 12), 'male')).dayun)),
     ('hko get_min_supported_date garbage date_type', ValueError,
      lambda: hko_data_utils.get_min_supported_date(42)),
     ('celestial get_max_supported_date garbage date_type', ValueError,
