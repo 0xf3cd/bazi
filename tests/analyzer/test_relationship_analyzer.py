@@ -8,7 +8,9 @@ import itertools
 
 from src.defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
+from src.bazi import Bazi
 from src.bazi_chart import BaziChart
+from src.school import BaziConfig, BaziSchool, KeyStem
 from src.transits import TransitMoment, TransitOptions, TransitDatabase
 from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
@@ -21,6 +23,9 @@ def test_at_birth_shensha() -> None:
 
     dm: Tiangan = chart.bazi.day_master
     y, m, d, h = chart.bazi.four_dizhis
+
+    # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
+    anchor: Tiangan = dm if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else chart.bazi.year_pillar.tiangan
 
     at_birth = analyzer.at_birth
 
@@ -37,7 +42,7 @@ def test_at_birth_shensha() -> None:
 
     # Hongyan / 红艳
     expected_hongyan: list[Dizhi] = []
-    for tg, dz in itertools.product([dm], [y, m, d, h]):
+    for tg, dz in itertools.product([anchor], [y, m, d, h]):
       if shensha_utils.hongyan(tg, dz):
         expected_hongyan.append(dz)
     assert at_birth.shensha['hongyan'] == set(expected_hongyan)
@@ -170,9 +175,12 @@ def test_transit_shensha() -> None:
     chart = BaziChart.random()
     db = TransitDatabase(chart)
 
-    dm = chart.bazi.day_master
     y_dz = chart.bazi.year_pillar.dizhi
     d_dz = chart.bazi.day_pillar.dizhi
+
+    # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
+    anchor: Tiangan = (chart.bazi.day_master if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER
+                       else chart.bazi.year_pillar.tiangan)
 
     analyzer = RelationshipAnalyzer(chart)
     transits_analysis = analyzer.transits
@@ -198,7 +206,7 @@ def test_transit_shensha() -> None:
       # Hongyan / 红艳
       expected = []
       for dz in transit_dz:
-        if shensha_utils.hongyan(dm, dz):
+        if shensha_utils.hongyan(anchor, dz):
           expected.append(dz)
       assert actual['hongyan'] == set(expected)
 
@@ -224,6 +232,38 @@ def test_transit_shensha() -> None:
         if shensha_utils.yima(d_dz, dz):
           expected.append(dz)
       assert actual['yima'] == set(expected)
+
+
+# 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
+# re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
+# is the golden chart of `test_relationship_analysis.test_case1` (1984-04-01 11:08, male:
+# 甲子/丁卯/乙丑/壬午) -- the day master 乙 keys on 申 (absent from the chart), while the year
+# tiangan 甲 keys on 午 (the hour Dizhi), so the two 查法 answer differently on this chart.
+@pytest.mark.parametrize('key_stem, expected', [
+  (KeyStem.DAY_MASTER,  frozenset()),           # 日干乙 -> 申 (《三命通会》, the default): 申 not in 子卯丑午.
+  (KeyStem.YEAR_MASTER, frozenset({Dizhi.午})), # 年干甲 -> 午: the hour Dizhi matches.
+])
+def test_hongyan_key_variant_at_birth(key_stem: KeyStem, expected: frozenset[Dizhi]) -> None:
+  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
+  chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
+  assert RelationshipAnalyzer(chart).at_birth.shensha['hongyan'] == expected
+
+  # The default school is DAY_MASTER -- the long-pinned behavior carries over unchanged.
+  if key_stem is KeyStem.DAY_MASTER:
+    default_chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['hongyan'] == expected
+
+
+@pytest.mark.parametrize('key_stem, expected', [
+  (KeyStem.DAY_MASTER,  frozenset()),           # 日干乙 -> 申: not among the 1990 transit Dizhis 辰/午.
+  (KeyStem.YEAR_MASTER, frozenset({Dizhi.午})), # 年干甲 -> 午: the 1990 流年 is 庚午.
+])
+def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[Dizhi]) -> None:
+  '''Same chart; the 1990 transits under DAYUN_LIUNIAN are 戊辰/庚午 (pinned in `test_case1`).'''
+  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
+  chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
+  transits: TransitAnalysis = RelationshipAnalyzer(chart).transits
+  assert transits.shensha(1990, TransitOptions.DAYUN_LIUNIAN)['hongyan'] == expected
 
 
 @pytest.mark.slow
