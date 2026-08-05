@@ -1,13 +1,15 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''The home of the chart-level configuration: `BaziConfig` (every knob steering chart
-computation), the school-divergence knobs (`BaziSchool` / `DayRollover` / `KeyStem`), and `BaziPrecision`.'''
+'''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
+school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem`),
+and `BaziPrecision`.'''
 
 from enum import Enum
 from dataclasses import dataclass
 from typing import Final
 
 from .calendar import CalendarBackend
+from .rules import DizhiRules
 
 
 class BaziPrecision(Enum):
@@ -124,9 +126,18 @@ class KeyStem(Enum):
 @dataclass(frozen=True)
 class BaziSchool:
   '''
-  The school (流派) profile of a chart: the variant knobs where schools disagree.
-  Immutable; a chart carries one profile end to end.
-  命盘的流派档案：各流派分歧旋钮的取值。不可变；一张盘从头到尾持有一份。
+  The school (流派) profile of a chart: the value each variant knob takes where schools
+  disagree. The profile only declares -- it computes nothing. Whoever needs a knob reads
+  it at its own stage: `day_rollover` steers the day pillar when the chart is computed,
+  the rest are read at evaluation time (神煞 lookups, relation discovery). Every field
+  feeds `__eq__` / `__hash__` / JSON, so two charts differing only in a knob are two charts.
+  命盘的流派档案：本盘在各流派分歧处所取的看法。档案只声明、不演算——谁要哪个口径，谁在自己的阶段
+  读它：`day_rollover` 在排盘期决定日柱，其余在评估期读（神煞查法、关系查法）。每个字段
+  都进相等性 / 哈希 / JSON，只差一个旋钮的两张盘就是两张盘。
+
+  Not here: `precision` / `backend` (chart computation knobs, not school divergences)
+  and gender -- see `BaziConfig`.
+  不在此：`precision` / `backend`（算路，不是流派）与性别——见 `BaziConfig`。
 
   Fields must stay immutable types (enums / frozen value types) -- no `dict` / `list`
   defaults, so a shared default instance can never be mutated through.
@@ -136,12 +147,13 @@ class BaziSchool:
   `DEFAULT_SCHOOL` picks them up, and `BaziConfig.school` points at that same instance --
   the defaults are written down exactly once.
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
-
-  `hongyan_key` steers the 红艳 lookup in relationship analysis (read at evaluation time);
-  it does not move the four pillars. `hongyan_key` 决定红艳查法的锚干（评估期读取）；四柱不随它动。
   '''
   day_rollover: DayRollover = DayRollover.WAN_ZISHI
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
+  # The 暗合/刑 definition enums live with their tables in `DizhiRules`; only referenced here.
+  # 暗合/刑的定义枚举与它们的表同住 `DizhiRules`，这里只引用。
+  anhe_def:     DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
+  xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -149,20 +161,26 @@ class BaziSchool:
       raise TypeError(f'Expected DayRollover, got {type(self.day_rollover)}')
     if not isinstance(self.hongyan_key, KeyStem):
       raise TypeError(f'Expected KeyStem, got {type(self.hongyan_key)}')
+    if not isinstance(self.anhe_def, DizhiRules.AnheDef):
+      raise TypeError(f'Expected AnheDef, got {type(self.anhe_def)}')
+    if not isinstance(self.xing_def, DizhiRules.XingDef):
+      raise TypeError(f'Expected XingDef, got {type(self.xing_def)}')
 
 
-'''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》). / 默认流派档案：晚子时换日、红艳查日干。'''
+'''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 暗合 NORMAL_EXTENDED
++ 刑 LOOSE (现状多数派口径). / 默认流派档案：晚子时换日、红艳查日干、暗合最宽表、刑三取二。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 
 @dataclass(frozen=True)
 class BaziConfig:
   '''
-  The chart-level configuration of a `Bazi`: every knob that affects what the chart
-  computes, carried as one immutable value. A `Bazi` stores its `BaziConfig`, and the
+  The chart-level configuration of a `Bazi`: the knobs steering chart computation
+  (`precision` / `backend`) plus the school profile (流派档案, which evaluation-time
+  lookups read), carried as one immutable value. A `Bazi` stores its `BaziConfig`, and the
   config feeds `__eq__` / `__hash__` / JSON as a unit (same precedent as `backend`).
-  命盘级配置：凡影响盘面演算的旋钮聚合为一个不可变值。`Bazi` 持有它，
-  相等性 / 哈希 / JSON 都以它为单位进出（同 `backend` 先例）。
+  命盘级配置：排盘算路旋钮（`precision` / `backend`）加流派档案（评估期查法读取），
+  聚合为一个不可变值。`Bazi` 持有它，相等性 / 哈希 / JSON 都以它为单位进出（同 `backend` 先例）。
 
   - precision: (BaziPrecision) The precision of the birth time / 出生时间精度。
   - backend: (CalendarBackend) The calendar backend for all calendar conversions / 历法后端。

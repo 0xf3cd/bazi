@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
 from itertools import product
 from typing import Final, TypedDict
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
-from ..school import KeyStem
+from ..school import KeyStem, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitMoment, TransitOptions
@@ -124,6 +124,28 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
   return frozenset(find_shensha(spec.predicate, (first_args, transit_dizhis)))
 
 
+# The ONLY place this file reads the school profile for Dizhi relation discovery:
+# every `dizhi_utils.search` / `discover` / `discover_mutual` call below goes through one
+# of these three wrappers, so "no bare calls in this file" is a grep-checkable invariant --
+# a forgotten `anhe_def=` / `xing_def=` at some call site would silently fall back to the
+# hardcoded defaults (issue #69).
+# 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.search` / `discover` /
+# `discover_mutual` 调用一律走这三个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
+# 某个调用点忘传参会静默回落到硬编码默认（issue #69）。
+def _dz_search(school: BaziSchool, dizhis: Sequence[Dizhi], relation: DizhiRelation) -> dizhi_utils.DizhiRelationCombos:
+  '''`dizhi_utils.search` under the chart's school profile / 按盘的流派档案查地支关系组合。'''
+  return dizhi_utils.search(dizhis, relation, anhe_def=school.anhe_def, xing_def=school.xing_def)
+
+
+def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
+  '''`dizhi_utils.discover` under the chart's school profile / 按盘的流派档案发现地支关系。'''
+  return dizhi_utils.discover(dizhis, anhe_def=school.anhe_def, xing_def=school.xing_def)
+
+
+def _dz_discover_mutual(school: BaziSchool, dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
+  '''`dizhi_utils.discover_mutual` under the chart's school profile / 按盘的流派档案发现两组地支间的关系。'''
+  return dizhi_utils.discover_mutual(dizhis1, dizhis2, anhe_def=school.anhe_def, xing_def=school.xing_def)
+
 
 class ShenshaAnalysis(TypedDict):
   # The Taohua Dizhis   (桃花星所在地支)
@@ -167,7 +189,7 @@ class AtBirthAnalysis:
     #
     # With that being said, for AtBirth analysis, this problem doesn't exist.
     # Still use `discover` with `filter` though - it is expected to be equivalent to `discover_mutual([d_dz], [*other_three_dz])`
-    return dizhi_utils.discover(self._chart.bazi.four_dizhis).filter(
+    return _dz_discover(self._chart.bazi.config.school, self._chart.bazi.four_dizhis).filter(
       lambda _, combo : self._chart.house_of_relationship in combo
     )
   
@@ -177,7 +199,7 @@ class AtBirthAnalysis:
     stars = self._chart.relationship_stars
 
     tg = tiangan_utils.discover(self._chart.bazi.four_tiangans).filter(lambda _, combo : stars.tiangan in combo)
-    dz = dizhi_utils.discover(self._chart.bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
+    dz = _dz_discover(self._chart.bazi.config.school, self._chart.bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
     return GanzhiData(tg, dz)
 
 
@@ -262,8 +284,9 @@ class TransitAnalysis:
 
     house = self._chart.house_of_relationship
     bazi = self._chart.bazi
+    school: Final[BaziSchool] = bazi.config.school
 
-    result = dizhi_utils.discover_mutual([house], transit_dizhis)
+    result = _dz_discover_mutual(school, [house], transit_dizhis)
 
     # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
     # So `discover_mutual([house], transit_dizhis)` may contain incomplete results.
@@ -280,8 +303,13 @@ class TransitAnalysis:
               return True
         return False
 
+      # The school params pass through for consistency, though `xing_def` is inert here:
+      # `__filter` keeps only 3-Dizhi combos, and STRICT vs LOOSE differ only in 2-Dizhi
+      # combos -- the two definitions coincide on `len == 3` results (issue #69).
+      # 流派参数照传以保持一致；`xing_def` 在此其实是惰性参数——`__filter` 只留三组合，
+      # 而 STRICT 与 LOOSE 之差全在二组合上，`len == 3` 的结果两定义等价（issue #69）。
       return dizhi_utils.DizhiRelationDiscovery({
-        rel : dizhi_utils.search(list(bazi.four_dizhis) + transit_dizhis, rel)
+        rel : _dz_search(school, list(bazi.four_dizhis) + transit_dizhis, rel)
       }).filter(__filter)
 
     result = result.merge(__discover(DizhiRelation.三合))
@@ -335,15 +363,16 @@ class TransitAnalysis:
 
     at_birth_tg = self._chart.bazi.four_tiangans
     at_birth_dz = self._chart.bazi.four_dizhis
+    school: Final[BaziSchool] = self._chart.bazi.config.school
 
     tg = tiangan_utils.TianganRelationDiscovery({})
     dz = dizhi_utils.DizhiRelationDiscovery({})
     if level & TransitAnalysis.Level.TRANSITS_ONLY:
       tg = tg.merge(tiangan_utils.discover(transit_tg))
-      dz = dz.merge(dizhi_utils.discover(transit_dz))
+      dz = dz.merge(_dz_discover(school, transit_dz))
     if level & TransitAnalysis.Level.MUTUAL:
       tg = tg.merge(tiangan_utils.discover_mutual(at_birth_tg, transit_tg))
-      dz = dz.merge(dizhi_utils.discover_mutual(at_birth_dz, transit_dz))
+      dz = dz.merge(_dz_discover_mutual(school, at_birth_dz, transit_dz))
 
     stars = self._chart.relationship_stars
     return GanzhiData(

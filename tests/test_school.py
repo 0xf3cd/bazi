@@ -1,6 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_school.py
 
+import dataclasses
+import inspect
 from dataclasses import FrozenInstanceError
 from datetime import datetime
 
@@ -9,6 +11,8 @@ import pytest
 from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
+from src.rules import DizhiRules
+from src.utils import dizhi_utils
 from src.school import (
   BaziPrecision, DayRollover, KeyStem, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG,
@@ -36,6 +40,8 @@ def test_school_enums_basic() -> None:
 def test_school_defaults() -> None:
   assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
   assert BaziSchool().hongyan_key is KeyStem.DAY_MASTER
+  assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
+  assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
@@ -47,10 +53,23 @@ def test_config_type_gates() -> None:
     BaziConfig(backend='hko') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
-  with pytest.raises(TypeError):
-    BaziSchool(day_rollover='wan_zishi') # type: ignore
-  with pytest.raises(TypeError):
-    BaziSchool(hongyan_key=0) # type: ignore
+
+
+def test_every_school_field_has_a_type_gate() -> None:
+  # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
+  # adding a knob without a gate fails here, no per-field test needed (issue #69).
+  # 机械绑定：每个字段都要有构造期类型闸，加字段不加闸会在这里响。
+  for f in dataclasses.fields(BaziSchool):
+    with pytest.raises(TypeError):
+      BaziSchool(**{f.name: object()}) # type: ignore
+
+
+def test_every_school_field_reaches_json() -> None:
+  # Mechanical binding: every `BaziSchool` field must land in JSON under its own name --
+  # adding a knob without serializing it fails here (issue #69).
+  # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  assert {f.name for f in dataclasses.fields(BaziSchool)} == set(chart.json['school'])
 
 
 def test_config_and_school_are_frozen() -> None:
@@ -136,6 +155,19 @@ def test_defaults_are_defined_once() -> None:
   assert DEFAULT_CONFIG.school is DEFAULT_SCHOOL
 
 
+def test_school_defaults_match_utils_signature_defaults() -> None:
+  # The majority reading is spelled twice by design -- the school field defaults (chart
+  # level) and the utils signature defaults (per-query override, same shape as
+  # `anhe` / `xing`). Pin the two spellings identical so they can't drift apart;
+  # do NOT "fix" this by making utils import school (issue #69).
+  # 「多数派口径」刻意两写——school 字段默认（盘级）与 utils 签名默认（单次覆盖，同
+  # `anhe` / `xing` 先例）；钉住两处等价防漂移，但别让 utils 反过来 import school（issue #69）。
+  for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual):
+    params = inspect.signature(fn).parameters
+    assert BaziSchool().anhe_def is params['anhe_def'].default
+    assert BaziSchool().xing_def is params['xing_def'].default
+
+
 def test_bazi_default_config_is_the_shared_default() -> None:
   # Every construction path picks up `DEFAULT_CONFIG` implicitly (默认零变化).
   dt: datetime = datetime(1984, 4, 2, 4, 2)
@@ -169,11 +201,25 @@ def test_eq_hash_include_school() -> None:
   assert hash(zi_bazi) == hash(same_school)
   assert len({zi_bazi, same_school}) == 1
 
+  # The evaluation-time knobs distinguish charts the same way (评估期旋钮同样区分两盘).
+  for variant_school in (
+    BaziSchool(hongyan_key=KeyStem.YEAR_MASTER),
+    BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
+    BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
+  ):
+    variant_bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
+    assert default_bazi != variant_bazi
+    assert hash(default_bazi) != hash(variant_bazi)
+    assert len({default_bazi, variant_bazi}) == 2
+
 
 def test_json_roundtrip_default_school() -> None:
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   j = chart.json
-  assert j['school'] == { 'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER' }
+  assert j['school'] == {
+    'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER',
+    'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE',
+  }
 
   rebuilt: BaziChart = BaziChart(
     Bazi.create(datetime.fromisoformat(j['birth_time']), j['gender'],
@@ -183,6 +229,8 @@ def test_json_roundtrip_default_school() -> None:
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
+                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
+                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                   ),
                 ))
   )
@@ -193,11 +241,21 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  school: BaziSchool = BaziSchool(day_rollover=DayRollover.ZIZHENG, hongyan_key=KeyStem.YEAR_MASTER)
+  # All four knobs flipped, so each field proves it roundtrips (issue #69).
+  # 四旋钮全部取非默认值——每个字段各自证明它能往返。
+  school: BaziSchool = BaziSchool(
+    day_rollover=DayRollover.ZIZHENG,
+    hongyan_key=KeyStem.YEAR_MASTER,
+    anhe_def=DizhiRules.AnheDef.MANGPAI,
+    xing_def=DizhiRules.XingDef.STRICT,
+  )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
   j = chart.json
-  assert j['school'] == { 'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER' }
+  assert j['school'] == {
+    'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER',
+    'anhe_def': 'MANGPAI', 'xing_def': 'STRICT',
+  }
 
   rebuilt: BaziChart = BaziChart(
     Bazi.create(datetime.fromisoformat(j['birth_time']), j['gender'],
@@ -207,6 +265,8 @@ def test_json_roundtrip_non_default_school() -> None:
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
+                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
+                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                   ),
                 ))
   )
