@@ -382,12 +382,10 @@ class DizhiRules:
     - Definition layer (holds at every query entry): STRICT requires all three Dizhis of
       丑未戌 / 寅巳申 to appear; LOOSE requires any two of the three.
       定义层（各查法入口共有）：STRICT 要求丑未戌 / 寅巳申三支齐现；LOOSE 三取二即成立。
-    - Entry layer: direction (谁刑谁, following the cycles 丑->戌->未->丑 / 寅->巳->申->寅)
-      is only observable in order-exact lookups like `dizhi_utils.xing`; the batch entries
-      `search` / `discover` compare as multisets, where direction is unobservable and LOOSE
-      means exactly "any two of the three".
-      入口层：方向（谁刑谁）只在 `dizhi_utils.xing` 这类按序精确匹配的查法里可观测；
-      批量入口 `search` / `discover` 按多重集比对，方向不可观测，LOOSE 在那里就等于「三取二」。
+    - Entry layer: only order-exact lookups (`dizhi_utils.xing`) see the direction (谁刑谁);
+      the batch entries `search` / `discover` compare as multisets and cannot.
+      入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；
+      批量入口（`search` / `discover`）按多重集比对，看不出方向。
 
     This knob is declared per chart via `BaziSchool.xing_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.

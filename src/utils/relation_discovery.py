@@ -47,11 +47,12 @@ class RelationDiscovery(
     '''Keep only the combos that draw from both sides (a combo disjoint from either side
     comes from one side only). 只保留同时取材于两侧的组合（与任一侧不相交即单侧组合）。
 
-    Note: the test is by VALUE, not by provenance -- combos don't track which copy of an
-    item was used. If the two sides share a value, a combo whose members all come from
-    one side can still touch both value-sets and be kept.
-    按值判定，非按出处——组合不追踪用的是哪一份。两侧有共同值时，成员全来自单侧的
-    组合也可能因触及两侧值集而被保留。'''
+    Note: the test is by VALUE, not by provenance -- a combo built entirely from one side
+    can still be kept if the other side happens to share the value:
+    `discover_mutual([子, 丑], [子])` keeps 六合{子,丑} (子 appears in both value-sets,
+    though side 1 alone completes the combo).
+    按值判定，非按出处：组合全由单侧凑成，只要另一侧碰巧也有这个值，就会被保留——
+    `discover_mutual([子, 丑], [子])` 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。'''
     if not isinstance(items1, AbstractSet):
       raise TypeError(f'Expected AbstractSet, got {type(items1)}')
     if not isinstance(items2, AbstractSet):
