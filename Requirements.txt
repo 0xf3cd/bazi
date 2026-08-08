@@ -3,6 +3,6 @@ psutil==7.2.2
 tzdata==2026.3
 pytest==9.1.1
 ruff==0.16.1
-coverage==7.15.2
+coverage==7.15.3
 mypy==2.3.0
 emoji==2.15.0
