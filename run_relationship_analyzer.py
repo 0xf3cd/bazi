@@ -3,7 +3,8 @@
 from run_demo import get_basic_info, colored_str
 
 from src.bazi_chart import BaziChart
-from src.transits import TransitOptions
+from src.transit_chart import TransitChart
+from src.transits import TransitKind, TransitYear
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
 
 
@@ -44,14 +45,17 @@ if __name__ == '__main__':
 
   print('\n' + '-' * 60 + '\n')
 
-  # The birth-side anchor is `ganzhi_year` (precision-attributed), the same source
-  # `TransitDatabase.support` bounds liunian by -- a relative range can never fall
-  # below it, which an absolute range would for charts born after its first year.
+  # Start from the chart's precision-attributed Ganzhi year so every query lies on
+  # its supported life timeline, including charts born after an absolute demo range.
   transits_analysis = analyzer.transits
+  transit_chart = TransitChart(chart)
   start_gz_year = chart.bazi.ganzhi_year + 20
   print(f'流年神煞（{start_gz_year} 起十年）：')
   for gz_year in range(start_gz_year, start_gz_year + 10):
-    year_strs = shensha_strs(transits_analysis.shensha(gz_year, TransitOptions.LIUNIAN))
+    year_transits = transit_chart.at(TransitYear(gz_year))
+    year_strs = shensha_strs(transits_analysis.shensha(
+      year_transits.select(TransitKind.LIUNIAN)
+    ))
     if len(year_strs) == 0:
       print(f'{gz_year}：无')
     else:

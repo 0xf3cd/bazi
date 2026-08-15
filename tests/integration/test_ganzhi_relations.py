@@ -7,7 +7,8 @@ from datetime import datetime
 
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.transit_chart import TransitChart
+from src.transits import TransitKind, TransitYear
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.utils import tiangan_utils, dizhi_utils
 
@@ -55,7 +56,7 @@ def test_case1() -> None:
     gender=BaziGender.MALE,
   )
   chart: BaziChart = BaziChart(bazi)
-  db: TransitDatabase = TransitDatabase(chart)
+  transit_chart = TransitChart(chart)
 
   # pillar correctness
   assert bazi.year_pillar == Ganzhi.from_str('甲子')
@@ -80,7 +81,10 @@ def test_case1() -> None:
   }, dizhi_utils.discover(chart.bazi.four_dizhis))
 
   # 1993 dayun and liunian - transits only
-  ganzhis = db.ganzhis(TransitMoment(1993), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(1993)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.戊, Tiangan.癸})],
@@ -91,7 +95,10 @@ def test_case1() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2024 dayun and liunian - between transits and at-birth
-  ganzhis = db.ganzhis(TransitMoment(2024), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2024)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -107,7 +114,10 @@ def test_case1() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2051 dayun and liunian - transits only
-  ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2051)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_dizhi({
     DizhiRelation.破 : [frozenset({Dizhi.戌, Dizhi.未})],
@@ -115,7 +125,10 @@ def test_case1() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2051 dayun and liunian - between transits and at-birth
-  ganzhis = db.ganzhis(TransitMoment(2051), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2051)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.丁, Tiangan.辛}), frozenset({Tiangan.辛, Tiangan.乙})],
@@ -139,7 +152,7 @@ def test_case2() -> None:
     gender=BaziGender.FEMALE,
   )
   chart: BaziChart = BaziChart(bazi)
-  db: TransitDatabase = TransitDatabase(chart)
+  transit_chart = TransitChart(chart)
 
   # pillar correctness
   assert bazi.year_pillar == Ganzhi.from_str('甲辰')
@@ -163,7 +176,10 @@ def test_case2() -> None:
 
   # 2024 xiaoyun and liunian - between transits and at-birth
   # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
-  ganzhis = db.ganzhis(TransitMoment(2024), TransitOptions.XIAOYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2024)).select(
+    TransitKind.XIAOYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.甲, Tiangan.己})],
@@ -177,7 +193,10 @@ def test_case2() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2052 dayun and liunian - transits only
-  ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2052)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.冲 : [frozenset({Tiangan.丙, Tiangan.壬})],
@@ -189,7 +208,10 @@ def test_case2() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2052 dayun and liunian - between transits and at-birth
-  ganzhis = db.ganzhis(TransitMoment(2052), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2052)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.丙, Tiangan.辛})],
@@ -204,14 +226,20 @@ def test_case2() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2062 dayun and liunian - transits only
-  ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2062)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_dizhi({
     DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2062 dayun and liunian - between transits and at-birth
-  ganzhis = db.ganzhis(TransitMoment(2062), TransitOptions.DAYUN_LIUNIAN)
+  ganzhis = transit_chart.at(TransitYear(2062)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  ).ganzhis
 
   assert _check_tiangan({
     TianganRelation.冲 : [frozenset({Tiangan.乙, Tiangan.辛})],

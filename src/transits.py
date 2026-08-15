@@ -1,18 +1,14 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import random
-
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
-from enum import unique, IntFlag
-from functools import reduce
-from itertools import combinations
+from enum import Enum, unique
 from typing import Final
 
 from .common import frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
-from .utils.bazi_utils import ganzhi_of_year
 from .bazi_chart import BaziChart
 
 
@@ -37,87 +33,125 @@ class DayunDatabase:
 
 
 @dataclass(frozen=True)
-class TransitMoment:
-  '''
-  The moment that a transit refers to (运作用的时刻).
-
-  Only the year granularity is supported for now -- pass `gz_year` only.
-  `gz_month` (for 流月) and `solar_date` (for 流日) are reserved for #48.
-  目前仅支持年粒度——只传 `gz_year` 即可。`gz_month`（流月用）和 `solar_date`（流日用）为 #48 预留。
-
-  Invariant (unchecked here): `gz_year` is always the Ganzhi year (立春分界), and when
-  `solar_date` is set, `gz_year` must be the Ganzhi year that `solar_date` falls in.
-  The caller is responsible for now; `TransitDatabase` will enforce this when #48 lands
-  (it has calendar access; this value type must not).
-  不变量（此处不校验）：`gz_year` 始终是干支年（立春分界）；传入 `solar_date` 时，`gz_year`
-  必须是 `solar_date` 所属的干支年。暂时由调用方负责；#48 落地时由 `TransitDatabase` 强制
-  （它能访问历法，而本值类型不应绑定历法后端）。
-  '''
-  gz_year:    int
-  gz_month:   Dizhi | None = None # The month's Dizhi (月支; 节气月, 正月建寅), for 流月.
-  solar_date: date | None = None  # The solar date (公历日期), for 流日.
+class TransitYear:
+  '''A year-granularity transit query. 年粒度流运查询。'''
+  gz_year: int
 
   def __post_init__(self) -> None:
-    # Type check at runtime. Note `datetime` is a subclass of `date` but breaks the value
-    # semantics (a `datetime` never equals a `date`, and their hashes differ), so require
-    # the exact type here. 运行时类型检查。datetime 是 date 的子类但破坏值语义（不相等、
-    # hash 不同），故此处要求精确类型。
     if not isinstance(self.gz_year, int):
       raise TypeError(f'Expected int, got {type(self.gz_year)}')
-    if self.gz_month is not None and not isinstance(self.gz_month, Dizhi):
+
+
+@dataclass(frozen=True)
+class TransitMonth:
+  '''A month-granularity transit query. 月粒度流运查询。'''
+  gz_year: int
+  gz_month: Dizhi
+
+  def __post_init__(self) -> None:
+    if not isinstance(self.gz_year, int):
+      raise TypeError(f'Expected int, got {type(self.gz_year)}')
+    if not isinstance(self.gz_month, Dizhi):
       raise TypeError(f'Expected Dizhi, got {type(self.gz_month)}')
-    if self.solar_date is not None and type(self.solar_date) is not date:
+
+
+@dataclass(frozen=True)
+class TransitDate:
+  '''A date-granularity transit query. 日粒度流运查询。'''
+  solar_date: date
+
+  def __post_init__(self) -> None:
+    # `datetime` is a `date` subclass but has different equality/hash semantics.
+    if type(self.solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(self.solar_date)}')
-    # The month and day granularities are mutually exclusive: a day's Ganzhi is fully
-    # determined by `solar_date`, no `gz_month` needed. 月粒度与日粒度互斥（日柱由 solar_date 唯一确定）。
-    if self.gz_month is not None and self.solar_date is not None:
-      raise ValueError(f'gz_month and solar_date are mutually exclusive: {self}')
 
 
-def _ensure_year_moment(moment: TransitMoment) -> None:
-  '''Only the year granularity is supported before #48 lands; reject the other granularities explicitly. / #48 落地前仅支持年粒度，其余粒度显式拒绝。'''
-  if moment.gz_month is not None or moment.solar_date is not None:
-    raise NotImplementedError(f'Only year-granularity transits are supported for now (目前仅支持年粒度的运): {moment}')
+'''A year-, month-, or date-granularity transit query. 年、月或日粒度的流运查询。'''
+TransitQuery = TransitYear | TransitMonth | TransitDate
 
 
 @unique
-class TransitOptions(IntFlag):
-  '''Specifies whether Dayun / Xiaoyun / Liunian transits should be considered. 用于指定是否考虑大运流年、小运、流年等。'''
-  XIAOYUN         = 0x1
-  DAYUN           = 0x2
-  LIUNIAN         = 0x4
-  XIAOYUN_LIUNIAN = XIAOYUN | LIUNIAN
-  DAYUN_LIUNIAN   = DAYUN   | LIUNIAN
-
-  @staticmethod
-  def random() -> 'TransitOptions':
-    '''Mainly for testing purpose.'''
-    return random.choice(_ALL_OPTIONS)
+class TransitKind(Enum):
+  '''A named kind of transit. 流运种类。'''
+  XIAOYUN = 'xiaoyun'
+  DAYUN   = 'dayun'
+  LIUNIAN = 'liunian'
+  LIUYUE  = 'liuyue'
+  LIURI   = 'liuri'
 
 
-def _all_options() -> list[TransitOptions]:
-  '''
-  All non-empty combinations of the single-bit `TransitOptions` members.
-  The enumeration follows new transit kinds (e.g. 流月/流日 in #48) automatically --
-  but wiring up their semantics in `support`/`ganzhis` is still required separately.
-  单 bit 成员的全部非空组合——枚举随新增运种类（如 #48 的流月/流日）自动跟随，但语义接线仍需同步修改 `support`/`ganzhis`。
-  '''
-  # `list(TransitOptions)` only yields single-bit members on Python 3.11+,
-  # silently dropping the composite options. Filter defensively anyway.
-  singles: list[TransitOptions] = [opt for opt in TransitOptions if opt.value.bit_count() == 1]
-  return [
-    reduce(lambda acc, opt: acc | opt, combo)
-    for r in range(1, len(singles) + 1)
-    for combo in combinations(singles, r)
-  ]
+@dataclass(frozen=True)
+class TransitSet:
+  '''An immutable, canonically ordered set of named transit Ganzhis. 一组不可变且顺序固定的具名流运干支。'''
+  xiaoyun: Ganzhi | None = None
+  dayun:   Ganzhi | None = None
+  liunian: Ganzhi | None = None
+  liuyue:  Ganzhi | None = None
+  liuri:   Ganzhi | None = None
 
+  def __post_init__(self) -> None:
+    values = (self.xiaoyun, self.dayun, self.liunian, self.liuyue, self.liuri)
+    if not any(gz is not None for gz in values):
+      raise ValueError('A TransitSet cannot be empty')
+    for gz in values:
+      if gz is not None and not isinstance(gz, Ganzhi):
+        raise TypeError(f'Expected Ganzhi, got {type(gz)}')
 
-'''The constant option space for `TransitOptions.random()` / `random()` 的常量选项空间。'''
-_ALL_OPTIONS: Final[tuple[TransitOptions, ...]] = tuple(_all_options())
+  @property
+  def items(self) -> tuple[tuple[TransitKind, Ganzhi], ...]:
+    '''The present transits in Xiaoyun, Dayun, Liunian, Liuyue, Liuri order.'''
+    pairs = (
+      (TransitKind.XIAOYUN, self.xiaoyun),
+      (TransitKind.DAYUN,   self.dayun),
+      (TransitKind.LIUNIAN, self.liunian),
+      (TransitKind.LIUYUE,  self.liuyue),
+      (TransitKind.LIURI,   self.liuri),
+    )
+    return tuple((kind, gz) for kind, gz in pairs if gz is not None)
+
+  def __iter__(self) -> Iterator[TransitKind]:
+    return (kind for kind, _ in self.items)
+
+  def __contains__(self, kind: object) -> bool:
+    return any(current is kind for current, _ in self.items)
+
+  @property
+  def ganzhis(self) -> tuple[Ganzhi, ...]:
+    '''The present Ganzhis in canonical transit order. 按固定流运顺序返回现有干支。'''
+    return tuple(gz for _, gz in self.items)
+
+  @property
+  def json(self) -> dict[str, str]:
+    '''A JSON-safe named representation. JSON 可序列化的具名表示。'''
+    return {kind.value: str(gz) for kind, gz in self.items}
+
+  def select(self, *kinds: TransitKind) -> 'TransitSet':
+    '''Return the requested present kinds in canonical order. 按固定顺序返回指定且现有的流运。'''
+    if len(kinds) == 0:
+      raise ValueError('Expected at least one TransitKind')
+    for kind in kinds:
+      if not isinstance(kind, TransitKind):
+        raise TypeError(f'Expected TransitKind, got {type(kind)}')
+    if len(set(kinds)) != len(kinds):
+      raise ValueError(f'Duplicate transit kinds: {kinds}')
+
+    available = frozenset(iter(self))
+    missing = tuple(kind for kind in kinds if kind not in available)
+    if len(missing) > 0:
+      raise ValueError(f'Transit kinds not available: {missing}')
+
+    selected = frozenset(kinds)
+    return TransitSet(
+      xiaoyun=self.xiaoyun if TransitKind.XIAOYUN in selected else None,
+      dayun=self.dayun     if TransitKind.DAYUN   in selected else None,
+      liunian=self.liunian if TransitKind.LIUNIAN in selected else None,
+      liuyue=self.liuyue   if TransitKind.LIUYUE  in selected else None,
+      liuri=self.liuri     if TransitKind.LIURI   in selected else None,
+    )
 
 
 class TransitDatabase:
-  '''A database that figures out the Ganzhis of transits.'''
+  '''The chart-derived Xiaoyun and Dayun lookups for a `BaziChart`.'''
   def __init__(self, chart: BaziChart) -> None:
     # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
     # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
@@ -133,75 +167,16 @@ class TransitDatabase:
     self._first_dayun_start_gz_year: Final[int] = next(chart.dayun).ganzhi_year
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
 
-  def support(self, moment: TransitMoment, options: TransitOptions) -> bool:
-    '''
-    Return whether the given `moment` and `option` are supported by this `TransitDatabase`.
+  def xiaoyun(self, gz_year: int) -> Ganzhi | None:
+    '''Return the Xiaoyun for `gz_year`, or `None` when Xiaoyun is unavailable.'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    return self._xiaoyun_ganzhis.get(gz_year)
 
-    Args:
-    - `moment`: The moment in Ganzhi calendar, mainly used to compute the transit pillars. 干支历法中的时刻，主要用于计算运（小运/大运/流年）的天干地支。Only the year granularity is supported for now (目前仅支持年粒度)。
-    - `options`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
-
-    Return: (bool) Whether the given `moment` and `options` are supported by this `TransitDatabase`.
-
-    Note: raises `NotImplementedError` for month/day-granularity moments until #48. / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`。
-    '''
-
-    if not isinstance(moment, TransitMoment):
-      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
-    if not isinstance(options, TransitOptions):
-      raise TypeError(f'Expected TransitOptions, got {type(options)}')
-    # `options in TransitOptions` rejects unnamed composites (e.g. XIAOYUN|DAYUN) on
-    # Python 3.11 (EnumType.__contains__ semantics), so check the enumerated space instead.
-    if options not in _ALL_OPTIONS:
-      raise ValueError(f'Unsupported options: {options}')
-    _ensure_year_moment(moment)
-
-    gz_year: Final[int] = moment.gz_year
-    if options & TransitOptions.XIAOYUN and gz_year not in self._xiaoyun_ganzhis:
-      return False
-    if options & TransitOptions.DAYUN and gz_year < self._first_dayun_start_gz_year:
-      return False
-    if options & TransitOptions.LIUNIAN and gz_year < self._birth_ganzhi_year: # noqa: SIM103 # symmetric guard clauses, one per option
-      return False
-
-    return True
-
-  def ganzhis(self, moment: TransitMoment, options: TransitOptions) -> tuple[Ganzhi, ...]:
-    '''
-    Return the Ganzhis of the selected transits for the given `moment` and `option`.
-
-    返回所选中的小运、大运或流年等对应的干支。
-
-    Args:
-    - `moment`: The moment in Ganzhi calendar, mainly used to compute the transit pillars. 干支历法中的时刻，主要用于计算运（小运/大运/流年）的天干地支。Only the year granularity is supported for now (目前仅支持年粒度)。
-    - `options`: Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
-
-    Return: (tuple[Ganzhi, ...]) The Ganzhis of the selected transits for the given `moment` and `options`.
-
-    Note: raises `NotImplementedError` for month/day-granularity moments until #48 (via `support`). / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`（经 `support` 冒出）。
-    '''
-
-    if not isinstance(moment, TransitMoment):
-      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
-    if not isinstance(options, TransitOptions):
-      raise TypeError(f'Expected TransitOptions, got {type(options)}')
-    # See `support` for why `_ALL_OPTIONS` instead of `options in TransitOptions` (3.11 semantics).
-    if options not in _ALL_OPTIONS:
-      raise ValueError(f'Unsupported options: {options}')
-
-    if not self.support(moment, options):
-      raise ValueError(f'Inputs not supported. Moment: {moment}, options: {options}')
-
-    gz_year: Final[int] = moment.gz_year
-    transit_ganzhis: list[Ganzhi] = []
-    if options & TransitOptions.XIAOYUN:
-      assert gz_year in self._xiaoyun_ganzhis
-      transit_ganzhis.append(self._xiaoyun_ganzhis[gz_year])
-    if options & TransitOptions.DAYUN:
-      assert gz_year >= self._first_dayun_start_gz_year
-      transit_ganzhis.append(self._dayun_db[gz_year].ganzhi)
-    if options & TransitOptions.LIUNIAN:
-      assert gz_year >= self._birth_ganzhi_year
-      transit_ganzhis.append(ganzhi_of_year(gz_year))
-
-    return tuple(transit_ganzhis)
+  def dayun(self, gz_year: int) -> Ganzhi | None:
+    '''Return the Dayun for `gz_year`, or `None` before the first Dayun.'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if gz_year < self._first_dayun_start_gz_year:
+      return None
+    return self._dayun_db[gz_year].ganzhi

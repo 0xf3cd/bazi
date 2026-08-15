@@ -1,10 +1,23 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from datetime import date
 from typing import Final
 
-from .defines import Ganzhi
+from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
-from .transits import TransitMoment, TransitOptions, TransitDatabase, _ALL_OPTIONS
+from .calendar import calendar_utils_of
+from .calendar.utils_protocol import CalendarUtilsProtocol
+from .utils.bazi_utils import ganzhi_of_day, ganzhi_of_year, month_tiangan
+from .transits import TransitDate, TransitMonth, TransitQuery, TransitSet, TransitYear, TransitDatabase
+
+
+def _month_index(month_dizhi: Dizhi) -> int:
+  return (month_dizhi.index - Dizhi.寅.index) % 12
+
+
+def _month_dizhi(month: int) -> Dizhi:
+  assert 1 <= month <= 12
+  return Dizhi.from_index((Dizhi.寅.index + month - 1) % 12)
 
 
 class TransitChart:
@@ -30,6 +43,7 @@ class TransitChart:
       raise TypeError(f'Expected BaziChart, got {type(bazi_chart)}')
     self._bazi_chart: Final[BaziChart] = bazi_chart
     self._transit_db: Final[TransitDatabase] = TransitDatabase(self._bazi_chart)
+    self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(self._bazi_chart.bazi.config.backend)
 
   @property
   def bazi_chart(self) -> BaziChart:
@@ -38,51 +52,63 @@ class TransitChart:
     非 frozen 的 `Bazi` 已由命盘自身隔离。'''
     return self._bazi_chart
 
-  def support(self, moment: TransitMoment, options: TransitOptions) -> bool:
+  def _resolved(self, query: TransitQuery) -> tuple[int, Dizhi | None, date | None] | None:
+    bazi = self._bazi_chart.bazi
+    if isinstance(query, TransitYear):
+      return (query.gz_year, None, None) if query.gz_year >= bazi.ganzhi_year else None
+
+    if isinstance(query, TransitMonth):
+      query_key = (query.gz_year, _month_index(query.gz_month))
+      birth_key = (bazi.ganzhi_year, _month_index(bazi.month_commander))
+      return (query.gz_year, query.gz_month, None) if query_key >= birth_key else None
+
+    assert isinstance(query, TransitDate)
+    if query.solar_date < bazi.solar_date:
+      return None
+    try:
+      ganzhi_date = self._utils.to_ganzhi(query.solar_date)
+    except ValueError:
+      return None
+    month_dizhi = _month_dizhi(ganzhi_date.month)
+    return ganzhi_date.year, month_dizhi, query.solar_date
+
+  @staticmethod
+  def _check_query(query: object) -> None:
+    if not isinstance(query, (TransitYear, TransitMonth, TransitDate)):
+      raise TypeError(f'Expected TransitQuery, got {type(query)}')
+
+  def support(self, query: TransitQuery) -> bool:
     '''
-    Return whether the given `moment` and `options` are supported by this `TransitChart`.
-    返回当前 `TransitChart` 是否支持给定的时刻和选项。
+    Return whether the query is within this chart's life and calendar range.
+    返回查询是否处于此命盘的人生时间线与历法支持范围内。
 
-    Args:
-    - `moment`: (TransitMoment) The moment in Ganzhi calendar. 干支历法中的时刻。Only the year granularity is supported for now (目前仅支持年粒度)。
-    - `options`: (TransitOptions) Specifies the transits to be picked. 用于指定是否考虑流年、小运、大运等。
-
-    Return: (bool) Whether the given `moment` and `options` are supported by this `TransitChart`.
-
-    Note: raises `NotImplementedError` for month/day-granularity moments until #48. / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`。
+    Return: (bool) Whether the given query is supported.
     '''
+    self._check_query(query)
+    return self._resolved(query) is not None
 
-    if not isinstance(moment, TransitMoment):
-      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
-    if not isinstance(options, TransitOptions):
-      raise TypeError(f'Expected TransitOptions, got {type(options)}')
-    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
-    if options not in _ALL_OPTIONS:
-      raise ValueError(f'Unsupported options: {options}')
-    return self._transit_db.support(moment, options)
-
-  def ganzhis(self, moment: TransitMoment, options: TransitOptions) -> tuple[Ganzhi, ...]:
+  def at(self, query: TransitQuery) -> TransitSet:
     '''
-    Return the Ganzhis of the selected transits for the given `moment` and `options`.
-    返回所选中的小运、大运或流年等对应的干支。
-
-    Args:
-    - `moment`: (TransitMoment) The moment in Ganzhi calendar, mainly used to compute the transit pillars. 干支历法中的时刻，主要用于计算运（小运/大运/流年）的天干地支。Only the year granularity is supported for now (目前仅支持年粒度)。
-    - `options`: (TransitOptions) Specifies the pillars to be picked from transits. 用于指定是否考虑流年、小运、大运等。
-
-    Return: (tuple[Ganzhi, ...]) The Ganzhis of the selected transits for the given `moment` and `options`.
-
-    Note: raises `NotImplementedError` for month/day-granularity moments until #48 (via `TransitDatabase`). / 注意：#48 落地前，月/日粒度的 moment 会抛 `NotImplementedError`（经 `TransitDatabase` 冒出）。
+    Return all transits available at the requested precision. 返回查询精度下的全部可用流运。
     '''
+    self._check_query(query)
+    resolved = self._resolved(query)
+    if resolved is None:
+      raise ValueError(f'Query not supported: {query}')
 
-    if not isinstance(moment, TransitMoment):
-      raise TypeError(f'Expected TransitMoment, got {type(moment)}')
-    if not isinstance(options, TransitOptions):
-      raise TypeError(f'Expected TransitOptions, got {type(options)}')
-    # `options in TransitOptions` rejects unnamed composites on Python 3.11; check the enumerated space instead.
-    if options not in _ALL_OPTIONS:
-      raise ValueError(f'Unsupported options: {options}')
-    return self._transit_db.ganzhis(moment, options)
+    gz_year, gz_month, solar_date = resolved
+    year_ganzhi: Final[Ganzhi] = ganzhi_of_year(gz_year)
+    liuyue: Ganzhi | None = None
+    if gz_month is not None:
+      liuyue = Ganzhi(month_tiangan(year_ganzhi.tiangan, gz_month), gz_month)
+
+    return TransitSet(
+      xiaoyun=self._transit_db.xiaoyun(gz_year),
+      dayun=self._transit_db.dayun(gz_year),
+      liunian=year_ganzhi,
+      liuyue=liuyue,
+      liuri=ganzhi_of_day(solar_date) if solar_date is not None else None,
+    )
 
 
 流年大运 = TransitChart

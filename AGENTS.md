@@ -64,12 +64,10 @@ those, don't restate them here. Two rules the README doesn't spell out:
   fixes → R2 re-verify; don't touch the worktree while reviewers read. Reviewers
   are independent AI models invoked as plain CLI (`claude -p …` / `kimi -p` /
   `grok -p`), with task briefs written to disk for the callee to read. The detailed
-  playbook is the author's `review-rounds` skill
-  (`~/ai_memory/skills/review-rounds/SKILL.md` — author-machine tooling, not
-  tracked in this repo); contributors without it follow the summary in this bullet.
-- Commits must be signed; the author signs with a hardware security key, which
-  agents can't operate. Agents commit via GraphQL `createCommitOnBranch` (GitHub
-  signs the commit), or write a commit script for the author to run.
+  playbook is author tooling outside this repo; contributors without it follow the
+  summary in this bullet.
+- Commits must be signed. Agents follow the author's approved commit workflow rather
+  than invoking local signing.
 
 ## File conventions
 - Every source file opens with the copyright header, verbatim except the year:
@@ -97,7 +95,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
 ## Ubiquitous language = Pinyin
 Domain terms keep Pinyin names, never translated (`Tiangan`, `Shensha`, `he`, `chong`).
 Domain enums carry Latin + Chinese members as aliases (`甲 = JIA`; `天干 = Tiangan`).
-Option-style enums (`BaziPrecision`, `TransitOptions`, …) are exempt from Chinese aliases.
+Option-style enums (`BaziPrecision`, `TransitKind`, …) are exempt from Chinese aliases.
 Prefer Chinese aliases in tests/examples (`Tiangan.甲`, `TianganRelation.合`).
 JSON output keeps domain values in Chinese (pillars, gender, …) — its consumers are
 the author and AI assistants downstream.
