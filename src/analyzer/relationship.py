@@ -132,6 +132,9 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
 # 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.discover` /
 # `discover_mutual` 调用一律走这两个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
 # 某个调用点忘传参会静默回落到硬编码默认（issue #69）。
+# `search` currently has no caller here; a future caller must first gain the same school-aware
+# wrapper rather than call it directly. `search` 目前在本文件没有调用方；将来调用前须先接入
+# 同样的流派薄包装，不得裸调。
 def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
   '''`dizhi_utils.discover` under the chart's school profile / 按盘的流派档案发现地支关系。'''
   return dizhi_utils.discover(dizhis, anhe_def=school.anhe_def, xing_def=school.xing_def)
