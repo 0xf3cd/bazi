@@ -76,8 +76,8 @@ def main() -> int:
      lambda: liunian.select('liunian')), # type: ignore
     ('TransitSet.select duplicate kind', ValueError,
      lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.LIUNIAN)),
-    ('TransitSet.select absent kind', ValueError,
-     lambda: liunian.select(TransitKind.DAYUN)),
+    ('TransitSet.select present and absent kinds', ValueError,
+     lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.DAYUN)),
     ('TransitChart.support wrong query type', TypeError,
      lambda: transit_chart.support(2024)), # type: ignore
     ('TransitChart.at wrong query type', TypeError,

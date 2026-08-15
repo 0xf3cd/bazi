@@ -279,7 +279,7 @@ def test_hongyan_key_variant_at_birth(key_stem: KeyStem, expected: frozenset[Diz
   (KeyStem.YEAR_MASTER, frozenset({Dizhi.午})), # 年干甲 -> 午: the 1990 流年 is 庚午.
 ])
 def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[Dizhi]) -> None:
-  '''Same chart; the 1990 transits under DAYUN_LIUNIAN are 戊辰/庚午 (pinned in `test_case1`).'''
+  '''Same chart; the selected 1990 Dayun and Liunian are 戊辰/庚午 (pinned in `test_case1`).'''
   config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   transits: TransitAnalysis = RelationshipAnalyzer(chart).transits

@@ -22,12 +22,11 @@ def _month_dizhi(month: int) -> Dizhi:
 
 class TransitChart:
   '''
-  `TransitChart` reveals the transit information (i.e. Dayun / Xiaoyun / Liunian) of a given `BaziChart`.
-  `TransitChart` 基于原盘（`BaziChart`）提供大运、小运、流年等运的信息。
+  The unified entry for querying chart-derived and calendar transits.
+  查询命盘流运与历法流运的统一入口。
 
-  Note: `TransitChart` is a facade / the unified entry for querying transits.
-  The actual computations are delegated to `TransitDatabase`.
-  `TransitChart` 是一个门面类，作为查询运的统一入口，实际计算委托给 `TransitDatabase`。
+  Xiaoyun and Dayun come from `TransitDatabase`; Liunian, Liuyue, and Liuri are
+  calendar-derived. 小运、大运来自 `TransitDatabase`；流年、流月、流日由历法推导。
   '''
 
   def __init__(self, bazi_chart: BaziChart) -> None:

@@ -99,7 +99,7 @@ class TransitSet:
 
   @property
   def items(self) -> tuple[tuple[TransitKind, Ganzhi], ...]:
-    '''The present transits in Xiaoyun, Dayun, Liunian, Liuyue, Liuri order.'''
+    '''The present transits in canonical order. 按固定顺序返回现有流运。'''
     pairs = (
       (TransitKind.XIAOYUN, self.xiaoyun),
       (TransitKind.DAYUN,   self.dayun),
@@ -155,8 +155,7 @@ class TransitDatabase:
   def __init__(self, chart: BaziChart) -> None:
     # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
     # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
-    # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one and admit
-    # liunian years the chart's own generator never produces.
+    # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one.
     self._birth_ganzhi_year: Final[int] = chart.bazi.ganzhi_year
 
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({

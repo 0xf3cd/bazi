@@ -137,7 +137,7 @@ def test_transit_set_negative() -> None:
   with pytest.raises(ValueError):
     transits.select(TransitKind.LIUNIAN, TransitKind.LIUNIAN)
   with pytest.raises(ValueError):
-    transits.select(TransitKind.DAYUN)
+    transits.select(TransitKind.LIUNIAN, TransitKind.DAYUN)
 
 
 def test_transit_database() -> None:
