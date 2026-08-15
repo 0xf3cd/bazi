@@ -20,9 +20,9 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-      id-token: write
+      id-token: write # exchanged for the action's scoped GitHub App token
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -30,6 +30,10 @@ jobs:
       - uses: anthropics/claude-code-action@c038e4dcdedfbbca18dfb17df35a17e40ded4ddc # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            contents: read
+            pull_requests: write
+            issues: write
           include_comments_by_actor: "0xf3cd, claude"
           prompt: |
             Execute only the repository owner's explicit @claude request.

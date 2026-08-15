@@ -1,7 +1,7 @@
 name: Claude Review (manual)
 
-# No automatic trigger: Claude is an on-demand review seat. A missing API balance must
-# not leave unrelated pull requests with a standing failed check.
+# No automatic trigger: Claude is an on-demand review seat, so a failed optional review
+# cannot block unrelated pull requests.
 on:
   workflow_dispatch:
     inputs:
@@ -16,9 +16,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-      id-token: write
+      id-token: write # exchanged for the action's scoped GitHub App token
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -31,6 +31,10 @@ jobs:
       - uses: anthropics/claude-code-action@c038e4dcdedfbbca18dfb17df35a17e40ded4ddc # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            contents: read
+            pull_requests: write
+            issues: write
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ inputs.pr_number }}
