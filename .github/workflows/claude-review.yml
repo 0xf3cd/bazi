@@ -1,28 +1,43 @@
-name: Claude Auto Review
+name: Claude Review (manual)
 
+# No automatic trigger: Claude is an on-demand review seat, so a failed optional review
+# cannot block unrelated pull requests.
 on:
-  pull_request:
-    types: [opened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to review"
+        required: true
+        type: number
 
 jobs:
   review:
-    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      id-token: write
+      pull-requests: read
+      id-token: write # exchanged for the action's scoped GitHub App token
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
+          persist-credentials: false
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Check out the PR branch
+        run: gh pr checkout --detach "${{ inputs.pr_number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: anthropics/claude-code-action@c038e4dcdedfbbca18dfb17df35a17e40ded4ddc # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            contents: read
+            pull_requests: write
+            issues: write
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR NUMBER: ${{ inputs.pr_number }}
 
             Please review this pull request with a focus on:
             - Code quality and best practices
@@ -32,11 +47,9 @@ jobs:
 
             Note: The PR branch is already checked out in the current working directory.
 
-            Use `gh pr comment` for top-level feedback.
-            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
-            Only post GitHub comments - don't submit review text as messages.
+            Use `gh pr comment` for top-level feedback only. Do not modify repository files, branches, commits, pull requests, or issues.
 
           claude_args: |
             --model claude-sonnet-5
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "Bash(gh pr comment ${{ inputs.pr_number }}:*),Bash(gh pr diff ${{ inputs.pr_number }}:*),Bash(gh pr view ${{ inputs.pr_number }}:*)"
 
