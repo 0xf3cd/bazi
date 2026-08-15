@@ -500,12 +500,12 @@ def test_registry_matches_shensha_analysis_keys() -> None:
 
 def test_no_bare_dizhi_discovery_calls() -> None:
   # The "no bare calls" invariant declared by the `_dz_*` wrappers in relationship.py needs
-  # an executor: every `dizhi_utils.search` / `discover` / `discover_mutual` call in that
-  # file must sit inside one of the three wrappers -- a call anywhere else silently falls
+  # an executor: every `dizhi_utils.search` / `discover` / `discover_mutual` call in that file
+  # must sit inside one of the two wrappers -- a call anywhere else silently falls
   # back to the hardcoded defaults (issue #69).
-  # 「无裸调」不变量得有执行者：relationship.py 里的三入口调用必须都在三薄包装体内——
+  # 「无裸调」不变量得有执行者：relationship.py 里的三个入口调用必须都在两薄包装体内——
   # 别处的调用会静默回落到硬编码默认（issue #69）。
-  wrappers = {'_dz_search', '_dz_discover', '_dz_discover_mutual'}
+  wrappers = {'_dz_discover', '_dz_discover_mutual'}
   gated = {'search', 'discover', 'discover_mutual'}
 
   bare: list[int] = []

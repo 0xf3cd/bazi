@@ -125,18 +125,16 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
 
 
 # The ONLY place this file reads the school profile for Dizhi relation discovery:
-# every `dizhi_utils.search` / `discover` / `discover_mutual` call below goes through one
-# of these three wrappers, so "no bare calls in this file" is a grep-checkable invariant --
+# every `dizhi_utils.discover` / `discover_mutual` call below goes through one of these two
+# wrappers, so "no bare calls in this file" is a grep-checkable invariant --
 # a forgotten `anhe_def=` / `xing_def=` at some call site would silently fall back to the
 # hardcoded defaults (issue #69).
-# 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.search` / `discover` /
-# `discover_mutual` 调用一律走这三个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
+# 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.discover` /
+# `discover_mutual` 调用一律走这两个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
 # 某个调用点忘传参会静默回落到硬编码默认（issue #69）。
-def _dz_search(school: BaziSchool, dizhis: Sequence[Dizhi], relation: DizhiRelation) -> dizhi_utils.DizhiRelationCombos:
-  '''`dizhi_utils.search` under the chart's school profile / 按盘的流派档案查地支关系组合。'''
-  return dizhi_utils.search(dizhis, relation, anhe_def=school.anhe_def, xing_def=school.xing_def)
-
-
+# `search` currently has no caller here; a future caller must first gain the same school-aware
+# wrapper rather than call it directly. `search` 目前在本文件没有调用方；将来调用前须先接入
+# 同样的流派薄包装，不得裸调。
 def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
   '''`dizhi_utils.discover` under the chart's school profile / 按盘的流派档案发现地支关系。'''
   return dizhi_utils.discover(dizhis, anhe_def=school.anhe_def, xing_def=school.xing_def)
@@ -286,36 +284,18 @@ class TransitAnalysis:
     bazi = self._chart.bazi
     school: Final[BaziSchool] = bazi.config.school
 
-    result = _dz_discover_mutual(school, [house], transit_dizhis)
-
-    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
-    # So `discover_mutual([house], transit_dizhis)` may contain incomplete results.
-    #
-    # Combos that contain 3 Dizhis are missing. So adding them manually.
-
-    def __discover(rel: DizhiRelation) -> dizhi_utils.DizhiRelationDiscovery:
-      def __filter(rel: DizhiRelation, combo: frozenset[Dizhi]) -> bool:
-        if len(combo) != 3:
-          return False
-        for dz1 in transit_dizhis:
-          for dz2 in [bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi]:
-            if combo == frozenset([dz1, dz2, house]):
-              return True
+    # A three-Dizhi combo can span the house, another natal Dizhi, and a transit Dizhi.
+    # Discover across the complete natal side first, then retain house combos with a transit
+    # witness. `discover_mutual` is value-based, so a repeated house value alone does not
+    # witness a multi-Dizhi combo; a singleton self-刑 does.
+    def __is_house_transit_relation(_: DizhiRelation, combo: frozenset[Dizhi]) -> bool:
+      if house not in combo:
         return False
+      if len(combo) == 1:
+        return house in transit_dizhis
+      return not (combo - {house}).isdisjoint(transit_dizhis)
 
-      # The school params pass through for consistency, though `xing_def` is inert here:
-      # `__filter` keeps only 3-Dizhi combos, and STRICT vs LOOSE differ only in 2-Dizhi
-      # combos -- the two definitions coincide on `len == 3` results (issue #69).
-      # 流派参数照传以保持一致；`xing_def` 在此其实是惰性参数——`__filter` 只留三组合，
-      # 而 STRICT 与 LOOSE 之差全在二组合上，`len == 3` 的结果两定义等价（issue #69）。
-      return dizhi_utils.DizhiRelationDiscovery({
-        rel : _dz_search(school, list(bazi.four_dizhis) + transit_dizhis, rel)
-      }).filter(__filter)
-
-    result = result.merge(__discover(DizhiRelation.三合))
-    result = result.merge(__discover(DizhiRelation.三会))
-    result = result.merge(__discover(DizhiRelation.刑))
-    return result
+    return _dz_discover_mutual(school, bazi.four_dizhis, transit_dizhis).filter(__is_house_transit_relation)
   
   @unique
   class Level(IntFlag):
