@@ -11,10 +11,10 @@
 #   Normally only affects births within +/-0.9s of a jieqi moment -- but when the moment
 #   itself sits near midnight, 0.9s flips the whole *date* attribution.
 #   Measured worst case in window: 1979 大寒 is 4s from midnight.
-#   Years 2101..2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation:
-#   the series is continuous, but has no precision guarantee or independent HKO comparison.
 # rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)
 # year_range: 1901..2200 inclusive
+#   Years 2101..2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation:
+#   the series is continuous, but has no precision guarantee or independent HKO comparison.
 # columns: year jq_idx name date time
 #   jq_idx is 0..23, identical to the bazi `list(Jieqi)` index (0=立春 .. 23=大寒), and
 #   `name` is cross-checked against get_jieqi_name at generation.

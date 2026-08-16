@@ -117,11 +117,12 @@ def test_dispatch() -> None:
 
 
 def test_ganzhi_month_lengths() -> None:
-  counts: list[int] = ALGO1.days_counts_in_ganzhi_year(2024)
-  assert len(counts) == 12
-  # A ganzhi year runs 立春 to 立春, so the months must add up to exactly that span.
-  span: int = (ALGO1.jieqi_date(2025, Jieqi.立春) - ALGO1.jieqi_date(2024, Jieqi.立春)).days
-  assert sum(counts) == span
+  for year in (2024, 2100):
+    counts: list[int] = ALGO1.days_counts_in_ganzhi_year(year)
+    assert len(counts) == 12
+    # A ganzhi year runs 立春 to 立春, so the months must add up to exactly that span.
+    span: int = (ALGO1.jieqi_date(year + 1, Jieqi.立春) - ALGO1.jieqi_date(year, Jieqi.立春)).days
+    assert sum(counts) == span
 
 
 def test_ganzhi_month_lengths_cannot_poison_the_cache() -> None:
