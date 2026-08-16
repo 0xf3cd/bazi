@@ -164,8 +164,8 @@ def test_fixtures() -> None:
 def test_header_and_row_count() -> None:
   header, raw_rows, _ = _load_jieqi_table()
   assert header['columns'] == 'year jq_idx name date time'
-  assert header['rows'] == '4800' # 200 years x 24 jieqis, exact.
-  assert len(raw_rows) == 4800
+  assert header['rows'] == '7200' # 300 years x 24 jieqis, exact.
+  assert len(raw_rows) == 7200
   assert header['schema_version'] == '1'
   assert header['celestial_version'] == '0.4.0'
   assert header['timescale'].split(',')[0] == 'UTC+08:00'
@@ -186,7 +186,7 @@ def test_row_sequence_and_names() -> None:
       assert row.moment.year == row.year
 
 
-# Layer b: the table's jieqi DATES vs hko_data, over the whole window (200 x 24 = 4800).
+# Layer b: the table's jieqi DATES vs hko_data, over their shared 1901..2100 window.
 # The divergences must be exactly the frozen whitelist in `celestial_parity_data.py`
 # -- the entry count itself is asserted, so a new unexplained divergence turns this red.
 
@@ -208,9 +208,12 @@ def test_whitelist_self_consistency() -> None:
 def test_dates_vs_hko() -> None:
   hko_jieqi: hko_data.DecodedJieqiDates = hko_data.DecodedJieqiDates()
   _, _, rows = _load_jieqi_table()
+  hko_rows: list[_JieqiRow] = [row for row in rows if row.year <= 2100]
+
+  assert len(hko_rows) == 4800 # HKO has no data for the table's extrapolated 2101..2200 segment.
 
   divergences: dict[tuple[int, int], tuple[datetime, date]] = {}
-  for row in rows:
+  for row in hko_rows:
     hko_date: date = hko_jieqi.get(row.year, JIEQI_LIST[row.jq_idx])
     if row.moment.date() != hko_date:
       divergences[(row.year, row.jq_idx)] = (row.moment, hko_date)

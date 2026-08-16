@@ -27,7 +27,7 @@ def data_lines(path: Path) -> list[str]:
 
 
 def test_they_cover_the_whole_window() -> None:
-  assert JieqiMomentTable().supported_year_range() == range(1901, 2101)
+  assert JieqiMomentTable().supported_year_range() == range(1901, 2201)
   for algo in (1, 2):
     table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
     assert table.supported_year_range() == range(1901, 2100)
@@ -35,14 +35,14 @@ def test_they_cover_the_whole_window() -> None:
 
 def test_data_sections_are_frozen() -> None:
   '''
-  The real moments are the reason this backend exists, yet only a handful of the 4,800 are
+  The real moments are the reason this backend exists, yet only a handful of the 7,200 are
   pinned by value anywhere else in the suite -- the parity whitelist plus a few directed
   cases.  So the data sections are hashed: a re-bake stays possible, but it has to come
   with a deliberate update to this expectation instead of slipping through.  `#` lines are
   excluded, so re-generating on another day does not trip it.
   '''
   digests: dict[str, str] = {
-    'jieqi_moments.txt':     '93475d53800b683dedd4b23c03232e992212cf6369938120e829e1cd0c686c9d',
+    'jieqi_moments.txt':     'da0ab657f3c89cbdcc1354cacdf1949f5964cd630256cff288db603b7ba90e50',
     'lunar_years_algo1.txt': '3e238a2e0494b5af8a53f24e2cae150406972e7ecaa3ce673ceba785bbf3b51d',
     'lunar_years_algo2.txt': '787229f4d253280f5fc0fc5b47adeb9292228ca503aab7032307d6dbde83bb53',
   }

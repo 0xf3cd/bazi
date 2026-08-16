@@ -45,7 +45,7 @@ DEFAULT_DYLIB_PATH: Final[Path] = (
 
 # Table windows (SCHEMA.md): jieqi rows are keyed by Gregorian year, lunar rows by lunar year.
 JIEQI_START_YEAR: Final[int] = 1901
-JIEQI_END_YEAR:   Final[int] = 2100
+JIEQI_END_YEAR:   Final[int] = 2200
 LUNAR_START_YEAR: Final[int] = 1901
 LUNAR_END_YEAR:   Final[int] = 2099 # BOTH algos clamp to this window; algo2 natively
                                     # reports [410, 5000], a placeholder sentinel.
@@ -291,6 +291,8 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date, dylib_sha256: 
     '#   Normally only affects births within +/-0.9s of a jieqi moment -- but when the moment',
     '#   itself sits near midnight, 0.9s flips the whole *date* attribution.',
     '#   Measured worst case in window: 1979 大寒 is 4s from midnight.',
+    '#   Years 2101..2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation:',
+    '#   the series is continuous, but has no precision guarantee or independent HKO comparison.',
     '# rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)',
     f'# year_range: {JIEQI_START_YEAR}..{JIEQI_END_YEAR} inclusive',
     '# columns: year jq_idx name date time',

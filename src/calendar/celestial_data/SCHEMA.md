@@ -13,7 +13,7 @@ tables are regenerated. Same shape as `hko_data/encoder.py` (offline) vs `decode
 
 | Path | Rows | Source API |
 |---|---|---|
-| `data/jieqi_moments.txt` | 4800 | `query_jieqi_moment(int32_t year, uint8_t jq_idx)` |
+| `data/jieqi_moments.txt` | 7200 | `query_jieqi_moment(int32_t year, uint8_t jq_idx)` |
 | `data/lunar_years_algo1.txt` | 199 | `get_lunar_year_info(1, int32_t year)` |
 | `data/lunar_years_algo2.txt` | 199 | `get_lunar_year_info(2, int32_t year)` |
 
@@ -60,7 +60,7 @@ columns: year jq_idx name date time
 1901 00 立春 1901-02-04 19:39:57
 ```
 
-- `year` — Gregorian year, `1901..2100` inclusive.
+- `year` — Gregorian year, `1901..2200` inclusive.
 - `jq_idx` — `0..23`, zero-padded. **Identical to bazi's `list(Jieqi)` index**
   (`0 = 立春 … 23 = 大寒`); verified at generation against `get_jieqi_name`, which must
   equal `list(Jieqi)[jq_idx].value`. Even indices are 节 (month boundaries), odd are 气.
@@ -83,6 +83,8 @@ columns: year jq_idx name date time
   Normally this only matters for births within ±0.9s of a jieqi moment — but when the
   moment itself sits near midnight, 0.9s flips the whole **date**. Measured worst case in
   the window: 1979 大寒 is 4s from midnight.
+- Years 2101–2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation.
+  The series is continuous, but has no precision guarantee or independent HKO comparison.
 
 ## `lunar_years_algo{1,2}.txt`
 
@@ -129,7 +131,7 @@ Fail loudly at generation time; a bad table is only discoverable afterwards othe
    the JD exports). Assert `valid` on every row. This gate has already earned its keep: a
    wrong `ctypes` struct layout (see below) makes every call silently return
    `valid = false` rather than crashing.
-3. **Row-count gate** — exactly 4800 / 199 / 199, and the emitted `rows:` header must
+3. **Row-count gate** — exactly 7200 / 199 / 199, and the emitted `rows:` header must
    match the lines written.
 4. **Cross-check gate** — `get_jieqi_name(idx) == list(Jieqi)[idx].value` for all 24;
    `days_counts` decoded from the bitmask must round-trip.
