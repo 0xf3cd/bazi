@@ -26,17 +26,25 @@ def main() -> int:
     return 2
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
-  from datetime import date, datetime
+  from datetime import datetime
   from collections.abc import Callable
   from zoneinfo import ZoneInfo
 
   from src.defines import Dizhi, Jieqi
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
-  from src.transits import TransitMoment
+  from src.transit_chart import TransitChart
+  from src.transits import TransitDatabase, TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
+  from src.analyzer.relationship import RelationshipAnalyzer
   from src.utils import tiangan_utils
   from src.calendar import hko_data, hko_data_utils
   from src.calendar.backend import CalendarBackend, calendar_utils_of
+
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+  transit_chart = TransitChart(chart)
+  transit_db = TransitDatabase(chart)
+  liunian = transit_chart.at(TransitYear(2024)).select(TransitKind.LIUNIAN)
+  transit_analysis = RelationshipAnalyzer(chart).transits
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
@@ -51,8 +59,48 @@ def main() -> int:
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,
      lambda: hko_data_utils.jieqi_moment(1900, Jieqi.冬至)),
-    ('TransitMoment mutually exclusive fields', ValueError,
-     lambda: TransitMoment(2024, Dizhi.子, date(2024, 6, 1))),
+    ('TransitYear wrong year type', TypeError,
+     lambda: TransitYear('2024')), # type: ignore
+    ('TransitMonth wrong year type', TypeError,
+     lambda: TransitMonth('2024', Dizhi.寅)), # type: ignore
+    ('TransitMonth wrong month type', TypeError,
+     lambda: TransitMonth(2024, 1)), # type: ignore
+    ('TransitDate rejects datetime', TypeError,
+     lambda: TransitDate(datetime(2024, 6, 1))),
+    ('TransitSet empty', ValueError,
+     lambda: TransitSet()),
+    ('TransitSet wrong Ganzhi type', TypeError,
+     lambda: TransitSet(liunian='甲辰')), # type: ignore
+    ('TransitSet.select empty', ValueError,
+     lambda: liunian.select()),
+    ('TransitSet.select wrong kind type', TypeError,
+     lambda: liunian.select('liunian')), # type: ignore
+    ('TransitSet.select duplicate kind', ValueError,
+     lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.LIUNIAN)),
+    ('TransitSet.select absent kind', ValueError,
+     lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.DAYUN)),
+    ('TransitDatabase.xiaoyun wrong year type', TypeError,
+     lambda: transit_db.xiaoyun('2024')), # type: ignore
+    ('TransitDatabase.dayun wrong year type', TypeError,
+     lambda: transit_db.dayun('2024')), # type: ignore
+    ('TransitChart.support wrong query type', TypeError,
+     lambda: transit_chart.support(2024)), # type: ignore
+    ('TransitChart.at wrong query type', TypeError,
+     lambda: transit_chart.at(2024)), # type: ignore
+    ('TransitChart.at unsupported query', ValueError,
+     lambda: transit_chart.at(TransitYear(chart.bazi.ganzhi_year - 1))),
+    ('TransitAnalysis.shensha wrong transits type', TypeError,
+     lambda: transit_analysis.shensha(object())), # type: ignore
+    ('TransitAnalysis.day_master_relations wrong transits type', TypeError,
+     lambda: transit_analysis.day_master_relations(object())), # type: ignore
+    ('TransitAnalysis.house_relations wrong transits type', TypeError,
+     lambda: transit_analysis.house_relations(object())), # type: ignore
+    ('TransitAnalysis.star_relations wrong transits type', TypeError,
+     lambda: transit_analysis.star_relations(object())), # type: ignore
+    ('TransitAnalysis.zhengyin wrong transits type', TypeError,
+     lambda: transit_analysis.zhengyin(object())), # type: ignore
+    ('TransitAnalysis.star wrong transits type', TypeError,
+     lambda: transit_analysis.star(object())), # type: ignore
     ('dayun past supported window', ValueError,
      lambda: next(BaziChart(Bazi.create(datetime(2091, 6, 1, 12), 'male')).dayun)),
     ('hko get_min_supported_date garbage date_type', ValueError,

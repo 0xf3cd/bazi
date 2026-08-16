@@ -14,8 +14,7 @@ from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
 from ..school import KeyStem, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
-from ..transits import TransitMoment, TransitOptions
-from ..transit_chart import TransitChart
+from ..transits import TransitSet
 from ..utils import bazi_utils, shensha_utils, tiangan_utils, dizhi_utils
 
 
@@ -203,34 +202,30 @@ class AtBirthAnalysis:
 
 
 class TransitAnalysis:
-  '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
+  '''Analysis of Relationship at Transits / 流运的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = chart
-    self._transit_chart: Final[TransitChart] = TransitChart(self._chart)
 
-  def support(self, gz_year: int, options: TransitOptions) -> bool:
-    '''
-    Returns `True` if the given `gz_year` and `options` are both supported.
-    '''
-    return self._transit_chart.support(TransitMoment(gz_year), options)
+  @staticmethod
+  def _check_transits(transits: object) -> None:
+    if not isinstance(transits, TransitSet):
+      raise TypeError(f'Expected TransitSet, got {type(transits)}')
 
-  def shensha(self, gz_year: int, options: TransitOptions) -> ShenshaAnalysis:
+  def shensha(self, transits: TransitSet) -> ShenshaAnalysis:
     '''
     Return the relationship-related Shenshas of the given transits.
 
-    返回给定流年大运等的亲密关系相关的神煞（桃花、红艳、红鸾、天喜、驿马）。
+    返回给定流运的亲密关系相关神煞（桃花、红艳、红鸾、天喜、驿马）。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns:
     - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
     '''
 
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    self._check_transits(transits)
+    transit_ganzhis = transits.ganzhis
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
     bazi = self._chart.bazi
@@ -242,42 +237,38 @@ class TransitAnalysis:
       'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
     }
   
-  def day_master_relations(self, gz_year: int, options: TransitOptions) -> tiangan_utils.TianganRelationDiscovery:
+  def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
     '''
     Return the Tiangan relations that the day master and other transit Tiangans form.
     
     返回日主和其他流运的天干之间的关系。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (tiangan_utils.TianganRelationDiscovery) The Tiangan relations that the day master and other transit Tiangans form.
     '''
 
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    self._check_transits(transits)
+    transit_ganzhis = transits.ganzhis
     transit_tiangans = tuple(gz.tiangan for gz in transit_ganzhis)
 
     return tiangan_utils.discover_mutual([self._chart.bazi.day_master], transit_tiangans)
 
-  def house_relations(self, gz_year: int, options: TransitOptions) -> dizhi_utils.DizhiRelationDiscovery:
+  def house_relations(self, transits: TransitSet) -> dizhi_utils.DizhiRelationDiscovery:
     '''
     Return the Dizhi relations that the House of Relationship and other transit Dizhis form.
 
     返回配偶宫/婚姻宫和其他流运的地支之间的关系。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (dizhi_utils.DizhiRelationDiscovery) The Dizhi relations that the House of Relationship and other transit Dizhis form.
     '''
 
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    self._check_transits(transits)
+    transit_ganzhis = transits.ganzhis
     transit_dizhis = [gz.dizhi for gz in transit_ganzhis]
 
     house = self._chart.house_of_relationship
@@ -312,9 +303,8 @@ class TransitAnalysis:
   _ALL_LEVELS: Final[tuple[Level, ...]] = (Level.TRANSITS_ONLY, Level.MUTUAL, Level.ALL)
 
   def star_relations(
-    self, 
-    gz_year: int, 
-    options: TransitOptions, 
+    self,
+    transits: TransitSet,
     *, level: Level = Level.ALL,
   ) -> GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]:
     '''
@@ -323,8 +313,7 @@ class TransitAnalysis:
     返回配偶星/婚姻星和其他流运的干支之间的关系。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
     - level: (Level) The level of the analysis. 返回分析的级别。
 
     Returns: (GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
@@ -334,10 +323,9 @@ class TransitAnalysis:
       raise TypeError(f'Expected Level, got {type(level)}')
     if level not in TransitAnalysis._ALL_LEVELS:
       raise ValueError(f'Unsupported level: {level}')
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
+    self._check_transits(transits)
 
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    transit_ganzhis = transits.ganzhis
     transit_tg = tuple(gz.tiangan for gz in transit_ganzhis)
     transit_dz = tuple(gz.dizhi for gz in transit_ganzhis)
 
@@ -360,48 +348,44 @@ class TransitAnalysis:
       dz.filter(lambda _, combo : any(dz in combo for dz in stars.dizhi)),
     )
   
-  def zhengyin(self, gz_year: int, options: TransitOptions) -> GanzhiData[bool, bool]:
+  def zhengyin(self, transits: TransitSet) -> GanzhiData[bool, bool]:
     '''
     Check if the transits' Tiangans and Dizhis contain Zhengyin (正印).
 
     检查流运的天干地支是否包含正印，即是否在走正印运。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain Zhengyin (正印).
     '''
 
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
-  
+    self._check_transits(transits)
+
     f = functools.partial(bazi_utils.shishen, self._chart.bazi.day_master)
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    transit_ganzhis = transits.ganzhis
 
     return GanzhiData(
       any(f(gz.tiangan) is Shishen.正印 for gz in transit_ganzhis),
       any(f(gz.dizhi)   is Shishen.正印 for gz in transit_ganzhis),
     )
   
-  def star(self, gz_year: int, options: TransitOptions) -> GanzhiData[bool, bool]:
+  def star(self, transits: TransitSet) -> GanzhiData[bool, bool]:
     '''
     Check if the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
 
     检查流运的天干地支是否包含夫妻星/婚姻星。
 
     Args:
-    - gz_year: (int) The year of the transits. 流年/小运/大运等的年份。
-    - options: (TransitOptions) Specifying which transits to pick. 指定参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
     '''
 
-    if not self.support(gz_year, options):
-      raise ValueError(f'Inputs not supported. Year: {gz_year}, options: {options}')
+    self._check_transits(transits)
 
     stars = self._chart.relationship_stars
-    transit_ganzhis = self._transit_chart.ganzhis(TransitMoment(gz_year), options)
+    transit_ganzhis = transits.ganzhis
 
     return GanzhiData(
       any(gz.tiangan is stars.tiangan for gz in transit_ganzhis),

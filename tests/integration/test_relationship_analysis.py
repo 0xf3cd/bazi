@@ -5,7 +5,7 @@ import pytest
 
 import random
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import cast
 
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
@@ -13,7 +13,8 @@ from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.school import KeyStem, BaziSchool, BaziConfig
-from src.transits import TransitMoment, TransitOptions, TransitDatabase
+from src.transit_chart import TransitChart
+from src.transits import TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.rules import DizhiRules
 
@@ -31,6 +32,13 @@ def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
     if set(combos) != set(d2[rel]):  # type: ignore
       return False
   return True
+
+
+def _random_year_transits(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+  full_transits = transit_chart.at(TransitYear(gz_year))
+  available = tuple(full_transits)
+  selected = random.sample(available, random.randint(1, len(available)))
+  return full_transits.select(*selected)
 
 
 def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
@@ -53,6 +61,25 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
   return True
 
 
+@pytest.mark.parametrize(('query', 'kind'), [
+  (TransitMonth(2024, Dizhi.寅), TransitKind.LIUYUE),
+  (TransitDate(date(2024, 2, 4)), TransitKind.LIURI),
+])
+def test_month_and_date_transits_reach_relationship_analysis(
+  query: TransitMonth | TransitDate,
+  kind: TransitKind,
+) -> None:
+  chart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
+  transits = TransitChart(chart).at(query).select(kind)
+
+  expected = tiangan_utils.discover_mutual(
+    [chart.bazi.day_master],
+    tuple(gz.tiangan for gz in transits.ganzhis),
+  )
+  actual = RelationshipAnalyzer(chart).transits.day_master_relations(transits)
+  assert _equal(expected, actual)
+
+
 def test_case1() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
@@ -60,7 +87,7 @@ def test_case1() -> None:
     gender=BaziGender.MALE,
   )
   chart: BaziChart = BaziChart(bazi)
-  db: TransitDatabase = TransitDatabase(chart)
+  transit_chart = TransitChart(chart)
   analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
   transits: TransitAnalysis = analyzer.transits
 
@@ -107,9 +134,13 @@ def test_case1() -> None:
   assert len(at_birth.star_relations.dizhi) == 0
 
   # 1990
-  assert set(db.ganzhis(TransitMoment(1990), TransitOptions.DAYUN_LIUNIAN)) == {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')}
+  transits_1990 = transit_chart.at(TransitYear(1990)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  )
+  assert set(transits_1990.ganzhis) == {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')}
 
-  shensha = transits.shensha(1990, TransitOptions.DAYUN_LIUNIAN)
+  shensha = transits.shensha(transits_1990)
   assert shensha['taohua']   == {Dizhi.午}
   assert shensha['hongluan'] == set()
   assert shensha['hongyan']  == set()
@@ -120,15 +151,15 @@ def test_case1() -> None:
     TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
     TianganRelation.克 : [frozenset({Tiangan.庚, Tiangan.乙}),
                          frozenset({Tiangan.乙, Tiangan.戊})],
-  }, transits.day_master_relations(1990, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.day_master_relations(transits_1990))
 
   assert _check_dizhi({
     DizhiRelation.害 : [frozenset({Dizhi.丑, Dizhi.午})],
     DizhiRelation.破 : [frozenset({Dizhi.辰, Dizhi.丑})],
     DizhiRelation.生 : [frozenset({Dizhi.午, Dizhi.丑})],
-  }, transits.house_relations(1990, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.house_relations(transits_1990))
 
-  star_relations_all = transits.star_relations(1990, TransitOptions.DAYUN_LIUNIAN) # level is `ALL` by default.
+  star_relations_all = transits.star_relations(transits_1990) # level is `ALL` by default.
 
   assert _check_tiangan({
     TianganRelation.生 : [frozenset({Tiangan.戊, Tiangan.庚}),
@@ -147,20 +178,24 @@ def test_case1() -> None:
     DizhiRelation.半合 : [frozenset({Dizhi.子, Dizhi.辰})],
   }, star_relations_all.dizhi)
 
-  assert not transits.zhengyin(1990, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert not transits.zhengyin(1990, TransitOptions.DAYUN_LIUNIAN).dizhi
+  assert not transits.zhengyin(transits_1990).tiangan
+  assert not transits.zhengyin(transits_1990).dizhi
 
-  assert transits.star(1990, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert transits.star(1990, TransitOptions.DAYUN_LIUNIAN).dizhi
-  assert transits.star(1990, TransitOptions.DAYUN).tiangan
-  assert transits.star(1990, TransitOptions.DAYUN).dizhi
-  assert not transits.star(1990, TransitOptions.LIUNIAN).tiangan
-  assert not transits.star(1990, TransitOptions.LIUNIAN).dizhi
+  assert transits.star(transits_1990).tiangan
+  assert transits.star(transits_1990).dizhi
+  assert transits.star(transits_1990.select(TransitKind.DAYUN)).tiangan
+  assert transits.star(transits_1990.select(TransitKind.DAYUN)).dizhi
+  assert not transits.star(transits_1990.select(TransitKind.LIUNIAN)).tiangan
+  assert not transits.star(transits_1990.select(TransitKind.LIUNIAN)).dizhi
 
   # 2018
-  assert set(db.ganzhis(TransitMoment(2018), TransitOptions.DAYUN_LIUNIAN)) == {Ganzhi.from_str('辛未'), Ganzhi.from_str('戊戌')}
+  transits_2018 = transit_chart.at(TransitYear(2018)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  )
+  assert set(transits_2018.ganzhis) == {Ganzhi.from_str('辛未'), Ganzhi.from_str('戊戌')}
 
-  shensha = transits.shensha(2018, TransitOptions.DAYUN_LIUNIAN)
+  shensha = transits.shensha(transits_2018)
   assert shensha['taohua']   == set()
   assert shensha['hongluan'] == set()
   assert shensha['hongyan']  == set()
@@ -170,15 +205,15 @@ def test_case1() -> None:
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
                          frozenset({Tiangan.乙, Tiangan.戊})],
-  }, transits.day_master_relations(2018, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.day_master_relations(transits_2018))
 
   assert _check_dizhi({
     DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌}),
                        frozenset({Dizhi.丑, Dizhi.未})],
     DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
-  }, transits.house_relations(2018, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.house_relations(transits_2018))
 
-  star_relations_all = transits.star_relations(2018, TransitOptions.DAYUN_LIUNIAN) # level is `ALL` by default.
+  star_relations_all = transits.star_relations(transits_2018) # level is `ALL` by default.
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.甲, Tiangan.戊}),
@@ -195,20 +230,24 @@ def test_case1() -> None:
                        frozenset({Dizhi.戌, Dizhi.子})],
   }, star_relations_all.dizhi)
 
-  assert not transits.zhengyin(2018, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert not transits.zhengyin(2018, TransitOptions.DAYUN_LIUNIAN).dizhi
+  assert not transits.zhengyin(transits_2018).tiangan
+  assert not transits.zhengyin(transits_2018).dizhi
 
-  assert transits.star(2018, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert transits.star(2018, TransitOptions.DAYUN_LIUNIAN).dizhi
-  assert transits.star(2018, TransitOptions.LIUNIAN).tiangan
-  assert transits.star(2018, TransitOptions.LIUNIAN).dizhi
-  assert not transits.star(2018, TransitOptions.DAYUN).tiangan
-  assert not transits.star(2018, TransitOptions.DAYUN).dizhi
+  assert transits.star(transits_2018).tiangan
+  assert transits.star(transits_2018).dizhi
+  assert transits.star(transits_2018.select(TransitKind.LIUNIAN)).tiangan
+  assert transits.star(transits_2018.select(TransitKind.LIUNIAN)).dizhi
+  assert not transits.star(transits_2018.select(TransitKind.DAYUN)).tiangan
+  assert not transits.star(transits_2018.select(TransitKind.DAYUN)).dizhi
 
   # 2031
-  assert set(db.ganzhis(TransitMoment(2031), TransitOptions.DAYUN_LIUNIAN)) == {Ganzhi.from_str('辛亥'), Ganzhi.from_str('壬申')}
+  transits_2031 = transit_chart.at(TransitYear(2031)).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  )
+  assert set(transits_2031.ganzhis) == {Ganzhi.from_str('辛亥'), Ganzhi.from_str('壬申')}
 
-  shensha = transits.shensha(2031, TransitOptions.DAYUN_LIUNIAN)
+  shensha = transits.shensha(transits_2031)
   assert shensha['taohua']   == set()
   assert shensha['hongluan'] == set()
   assert shensha['hongyan']  == {Dizhi.申}
@@ -218,23 +257,23 @@ def test_case1() -> None:
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛})],
     TianganRelation.生 : [frozenset({Tiangan.乙, Tiangan.壬})],
-  }, transits.day_master_relations(2031, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.day_master_relations(transits_2031))
 
   assert _check_dizhi({
     DizhiRelation.生 : [frozenset({Dizhi.申, Dizhi.丑})],
     DizhiRelation.克 : [frozenset({Dizhi.丑, Dizhi.亥})],
     DizhiRelation.三会 : [frozenset({Dizhi.亥, Dizhi.子, Dizhi.丑})],
-  }, transits.house_relations(2031, TransitOptions.DAYUN_LIUNIAN))
+  }, transits.house_relations(transits_2031))
 
-  star_relations_all = transits.star_relations(2031, TransitOptions.DAYUN_LIUNIAN) # level is `ALL` by default.
+  star_relations_all = transits.star_relations(transits_2031) # level is `ALL` by default.
   assert 0 == len(star_relations_all.tiangan)
   assert 0 == len(star_relations_all.dizhi)
 
-  assert transits.zhengyin(2031, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert transits.zhengyin(2031, TransitOptions.DAYUN_LIUNIAN).dizhi
+  assert transits.zhengyin(transits_2031).tiangan
+  assert transits.zhengyin(transits_2031).dizhi
 
-  assert not transits.star(2031, TransitOptions.DAYUN_LIUNIAN).tiangan
-  assert not transits.star(2031, TransitOptions.DAYUN_LIUNIAN).dizhi
+  assert not transits.star(transits_2031).tiangan
+  assert not transits.star(transits_2031).dizhi
 
 
 def test_case2() -> None:
@@ -244,6 +283,7 @@ def test_case2() -> None:
     gender=BaziGender.FEMALE,
   )
   chart: BaziChart = BaziChart(bazi)
+  transit_chart = TransitChart(chart)
   birth_gz_year: int = bazi.ganzhi_date.year
   analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
   transits: TransitAnalysis = analyzer.transits
@@ -300,17 +340,13 @@ def test_case2() -> None:
     'yima'     : frozenset([Dizhi.寅, Dizhi.申]),
   }
 
-  db = TransitDatabase(chart)
   for _ in range(50):
     random_year = random.randint(birth_gz_year, birth_gz_year + 200)
-    random_option = TransitOptions.random()
-    if not transits.support(random_year, random_option):
-      continue
-
-    transits_gz = db.ganzhis(TransitMoment(random_year), random_option)
+    selected_transits = _random_year_transits(transit_chart, random_year)
+    transits_gz = selected_transits.ganzhis
     transits_dz = {gz.dizhi for gz in transits_gz}
 
-    assert transits.shensha(random_year, random_option) == {
+    assert transits.shensha(selected_transits) == {
       name : cast(frozenset[Dizhi], fs) & transits_dz
       for name, fs in shensha_expected_dz.items()
     }
@@ -323,16 +359,14 @@ def test_case2() -> None:
     TianganRelation.冲 : {Tiangan.壬},
   }
 
-  db = TransitDatabase(chart)
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg = {gz.tiangan for gz in transits_gz}
 
-      for tg_rel, tg_combos in transits.day_master_relations(year, option).items():
+      for tg_rel, tg_combos in transits.day_master_relations(selected_transits).items():
         expected_tg_combos = {
           frozenset([tg, bazi.day_master])
           for tg in (dm_relation_expected[tg_rel] & transits_tg)
@@ -356,18 +390,16 @@ def test_case2() -> None:
     DizhiRelation.克 : [{Dizhi.子}, {Dizhi.亥}, {Dizhi.申}, {Dizhi.酉}],
   }
 
-  db = TransitDatabase(chart)
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_dz = {gz.dizhi for gz in transits_gz}
 
       house_dz = chart.house_of_relationship
       other_dz = {bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi}
-      house_relations = transits.house_relations(year, option)
+      house_relations = transits.house_relations(selected_transits)
 
       for dz_rel, dz_expected_list in house_relation_expected.items():
         expected_dz_combos: set[frozenset[Dizhi]] = set()
@@ -399,18 +431,19 @@ def test_case2() -> None:
   # The oracle mirrors the analyzer by reading the chart's school profile (issue #69).
   school: BaziSchool = chart.bazi.config.school
 
-  db = TransitDatabase(chart)
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg = {gz.tiangan for gz in transits_gz}
       transits_dz = {gz.dizhi for gz in transits_gz}
 
       # Test TRANSITS_ONLY
-      transits_only_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.TRANSITS_ONLY)
+      transits_only_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.TRANSITS_ONLY,
+      )
       expected_transits_only_tg_star_relations = tiangan_utils.discover(list(transits_tg)).filter(
         lambda _, combo : Tiangan.癸 in combo
       )
@@ -424,7 +457,10 @@ def test_case2() -> None:
       assert _equal(transits_only_star_relations.dizhi, expected_transits_only_dz_star_relations)
 
       # Test MUTUAL
-      mutual_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.MUTUAL)
+      mutual_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.MUTUAL,
+      )
       expected_mutual_tg_star_relations = tiangan_utils.discover_mutual(chart.bazi.four_tiangans, list(transits_tg)).filter(
         lambda _, combo : Tiangan.癸 in combo
       )
@@ -438,7 +474,10 @@ def test_case2() -> None:
       assert _equal(mutual_star_relations.dizhi, expected_mutual_dz_star_relations)
 
       # Test ALL
-      all_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.ALL)
+      all_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.ALL,
+      )
       expected_all_tg_star_relations = expected_transits_only_tg_star_relations.merge(expected_mutual_tg_star_relations)
       expected_all_dz_star_relations = expected_transits_only_dz_star_relations.merge(expected_mutual_dz_star_relations)
 
@@ -466,21 +505,19 @@ def test_case2() -> None:
   assert is_zhengyin(Tiangan.乙)
   assert is_zhengyin(Dizhi.卯)
 
-  db = TransitDatabase(chart)
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg = {gz.tiangan for gz in transits_gz}
       transits_dz = {gz.dizhi for gz in transits_gz}
 
-      zhengyin_result = transits.zhengyin(year, option)
+      zhengyin_result = transits.zhengyin(selected_transits)
       assert zhengyin_result.tiangan == any(is_zhengyin(tg) for tg in transits_tg)
       assert zhengyin_result.dizhi == any(is_zhengyin(dz) for dz in transits_dz)
 
-      star_result = transits.star(year, option)
+      star_result = transits.star(selected_transits)
       assert star_result.tiangan == any(is_star(tg) for tg in transits_tg)
       assert star_result.dizhi == any(is_star(dz) for dz in transits_dz)
 
@@ -491,7 +528,7 @@ def test_random_cases(bazi: Bazi) -> None:
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
   house = chart.house_of_relationship
 
-  db = TransitDatabase(chart)
+  transit_chart = TransitChart(chart)
   analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
   transits: TransitAnalysis = analyzer.transits
 
@@ -513,11 +550,10 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # shensha
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_dz_set = {gz.dizhi for gz in transits_gz}
 
       def __taohua(dz: Dizhi) -> bool:
@@ -532,7 +568,7 @@ def test_random_cases(bazi: Bazi) -> None:
       expected_tianxi:   set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
       expected_yima:     set[Dizhi] = set(filter(__yima, transits_dz_set))
 
-      shensha = transits.shensha(year, option)
+      shensha = transits.shensha(selected_transits)
       assert expected_taohua == shensha['taohua']
       assert expected_hongyan == shensha['hongyan']
       assert expected_hongluan == shensha['hongluan']
@@ -541,11 +577,10 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # day master and house relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg_set = {gz.tiangan for gz in transits_gz}
       transits_dz_set = {gz.dizhi for gz in transits_gz}
 
@@ -562,8 +597,8 @@ def test_random_cases(bazi: Bazi) -> None:
         )
       )
 
-      tg_relations = transits.day_master_relations(year, option)
-      dz_relations = transits.house_relations(year, option)
+      tg_relations = transits.day_master_relations(selected_transits)
+      dz_relations = transits.house_relations(selected_transits)
 
       assert _equal(expected_tg_relations, tg_relations)
       assert _equal(expected_dz_relations, dz_relations)
@@ -594,18 +629,20 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # star relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg_list = [gz.tiangan for gz in transits_gz]
       transits_dz_list = [gz.dizhi for gz in transits_gz]
 
       stars = chart.relationship_stars
 
       # TRANSITS_ONLY
-      transits_only_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.TRANSITS_ONLY)
+      transits_only_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.TRANSITS_ONLY,
+      )
 
       expected_transits_only_tg = tiangan_utils.TianganRelationDiscovery({})
       if stars.tiangan in transits_tg_list:
@@ -623,7 +660,10 @@ def test_random_cases(bazi: Bazi) -> None:
       assert _equal(transits_only_star_relations.dizhi, expected_transits_only_dz)
 
       # MUTUAL
-      mutual_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.MUTUAL)
+      mutual_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.MUTUAL,
+      )
 
       expected_mutual_tg = tiangan_utils.discover_mutual(bazi.four_tiangans, transits_tg_list).filter(
         lambda _, combo : stars.tiangan in combo
@@ -639,7 +679,10 @@ def test_random_cases(bazi: Bazi) -> None:
       assert _equal(mutual_star_relations.dizhi, expected_mutual_dz)
 
       # ALL
-      all_star_relations = transits.star_relations(year, option, level=TransitAnalysis.Level.ALL)
+      all_star_relations = transits.star_relations(
+        selected_transits,
+        level=TransitAnalysis.Level.ALL,
+      )
 
       assert _equal(all_star_relations.tiangan, expected_transits_only_tg.merge(expected_mutual_tg))
       assert _equal(all_star_relations.dizhi, expected_transits_only_dz.merge(expected_mutual_dz))
@@ -660,20 +703,19 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # zhengyin and star methods
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    for option in TransitOptions:
-      if not transits.support(year, option):
-        continue
-
-      transits_gz = db.ganzhis(TransitMoment(year), option)
+    year_transits = transit_chart.at(TransitYear(year))
+    for kind in year_transits:
+      selected_transits = year_transits.select(kind)
+      transits_gz = selected_transits.ganzhis
       transits_tg_set = {gz.tiangan for gz in transits_gz}
       transits_dz_set = {gz.dizhi for gz in transits_gz}
 
-      zhengyin_results = transits.zhengyin(year, option)
+      zhengyin_results = transits.zhengyin(selected_transits)
       assert zhengyin_results.tiangan == any(bazi_utils.shishen(dm, tg) is Shishen.正印 for tg in transits_tg_set)
       assert zhengyin_results.dizhi == any(bazi_utils.shishen(dm, dz) is Shishen.正印 for dz in transits_dz_set)
 
       stars = chart.relationship_stars
-      star_results = transits.star(year, option)
+      star_results = transits.star(selected_transits)
       assert star_results.tiangan == (stars.tiangan in transits_tg_set)
       assert star_results.dizhi != set(transits_dz_set).isdisjoint(stars.dizhi)
 
@@ -720,15 +762,17 @@ def test_school_variants_reach_relationship_analysis() -> None:
   # transit-side `discover_mutual` path in `TransitAnalysis.house_relations`.
   # 盘 C：辛丑日、原局无未；1991 辛未流年带来未——覆盖流运侧 `discover_mutual` 路径。
   dt_c: datetime = datetime(1984, 1, 8) # 癸亥 / 乙丑 / 辛丑 / 戊子
-  transit_default: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_c, BaziGender.MALE))).transits
-  transit_strict: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+  chart_default_c = BaziChart(Bazi.create(dt_c, BaziGender.MALE))
+  chart_strict_c = BaziChart(Bazi.create(
     dt_c, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
-  ))).transits
+  ))
+  transit_default: TransitAnalysis = RelationshipAnalyzer(chart_default_c).transits
+  transit_strict: TransitAnalysis = RelationshipAnalyzer(chart_strict_c).transits
 
-  assert transit_default.support(1991, TransitOptions.LIUNIAN)
-  assert transit_strict.support(1991, TransitOptions.LIUNIAN)
-  default_rels_c = transit_default.house_relations(1991, TransitOptions.LIUNIAN)
-  strict_rels_c = transit_strict.house_relations(1991, TransitOptions.LIUNIAN)
+  default_1991 = TransitChart(chart_default_c).at(TransitYear(1991)).select(TransitKind.LIUNIAN)
+  strict_1991 = TransitChart(chart_strict_c).at(TransitYear(1991)).select(TransitKind.LIUNIAN)
+  default_rels_c = transit_default.house_relations(default_1991)
+  strict_rels_c = transit_strict.house_relations(strict_1991)
   assert set(map(frozenset, default_rels_c[DizhiRelation.刑])) == {frozenset((Dizhi.丑, Dizhi.未))}
   assert DizhiRelation.刑 not in strict_rels_c
   assert {r: c for r, c in default_rels_c.items() if r is not DizhiRelation.刑} == dict(strict_rels_c.items())
@@ -754,15 +798,23 @@ def test_school_variants_reach_relationship_analysis() -> None:
   # 盘 E：辛未日、月支寅（配偶星）、原局无巳申；1992 壬申流年带来申——寅申刑仅 LOOSE 成立。
   # 覆盖流运侧 `star_relations` MUTUAL 路径（TRANSITS_ONLY 路径与上面 AtBirth 案例共用 `_dz_discover`）。
   dt_e: datetime = datetime(1984, 2, 7) # 甲子 / 丙寅 / 辛未 / 戊子
-  transit_default_e: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(dt_e, BaziGender.MALE))).transits
-  transit_strict_e: TransitAnalysis = RelationshipAnalyzer(BaziChart(Bazi.create(
+  chart_default_e = BaziChart(Bazi.create(dt_e, BaziGender.MALE))
+  chart_strict_e = BaziChart(Bazi.create(
     dt_e, BaziGender.MALE, BaziConfig(school=BaziSchool(xing_def=DizhiRules.XingDef.STRICT)),
-  ))).transits
+  ))
+  transit_default_e: TransitAnalysis = RelationshipAnalyzer(chart_default_e).transits
+  transit_strict_e: TransitAnalysis = RelationshipAnalyzer(chart_strict_e).transits
 
-  assert transit_default_e.support(1992, TransitOptions.LIUNIAN)
-  assert transit_strict_e.support(1992, TransitOptions.LIUNIAN)
-  default_star_e = transit_default_e.star_relations(1992, TransitOptions.LIUNIAN, level=TransitAnalysis.Level.MUTUAL).dizhi
-  strict_star_e = transit_strict_e.star_relations(1992, TransitOptions.LIUNIAN, level=TransitAnalysis.Level.MUTUAL).dizhi
+  default_1992 = TransitChart(chart_default_e).at(TransitYear(1992)).select(TransitKind.LIUNIAN)
+  strict_1992 = TransitChart(chart_strict_e).at(TransitYear(1992)).select(TransitKind.LIUNIAN)
+  default_star_e = transit_default_e.star_relations(
+    default_1992,
+    level=TransitAnalysis.Level.MUTUAL,
+  ).dizhi
+  strict_star_e = transit_strict_e.star_relations(
+    strict_1992,
+    level=TransitAnalysis.Level.MUTUAL,
+  ).dizhi
   assert set(map(frozenset, default_star_e[DizhiRelation.刑])) == {frozenset((Dizhi.寅, Dizhi.申))}
   assert DizhiRelation.刑 not in strict_star_e
   assert {r: c for r, c in default_star_e.items() if r is not DizhiRelation.刑} == dict(strict_star_e.items())
