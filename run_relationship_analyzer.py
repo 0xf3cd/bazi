@@ -45,10 +45,9 @@ if __name__ == '__main__':
 
   print('\n' + '-' * 60 + '\n')
 
-  # Start from the chart's precision-attributed Ganzhi year so every query lies on
-  # its supported life timeline, including charts born after an absolute demo range.
   transits_analysis = analyzer.transits
   transit_chart = TransitChart(chart)
+  # Anchor the demo window on the chart's Ganzhi year; a fixed range could precede birth.
   start_gz_year = chart.bazi.ganzhi_year + 20
   print(f'流年神煞（{start_gz_year} 起十年）：')
   for gz_year in range(start_gz_year, start_gz_year + 10):

@@ -126,7 +126,8 @@ class TransitSet:
     return {kind.value: str(gz) for kind, gz in self.items}
 
   def select(self, *kinds: TransitKind) -> 'TransitSet':
-    '''Return the requested present kinds in canonical order. 按固定顺序返回指定且现有的流运。'''
+    '''Return requested kinds in canonical order; every requested kind must be present.
+    按固定顺序返回指定的流运；指定的种类必须全部存在。'''
     if len(kinds) == 0:
       raise ValueError('Expected at least one TransitKind')
     for kind in kinds:
@@ -167,7 +168,7 @@ class TransitDatabase:
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
 
   def xiaoyun(self, gz_year: int) -> Ganzhi | None:
-    '''Return the Xiaoyun for `gz_year`, or `None` when Xiaoyun is unavailable.'''
+    '''Return the Xiaoyun for `gz_year`, or `None` outside the Xiaoyun year range.'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     return self._xiaoyun_ganzhis.get(gz_year)

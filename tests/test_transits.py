@@ -73,8 +73,10 @@ def test_query_shapes() -> None:
 
   assert year.gz_year == 1990
   assert month == TransitMonth(1990, Dizhi.寅)
-  assert day.solar_date == date(1990, 5, 20)
+  assert day == TransitDate(date(1990, 5, 20))
   assert len({year, TransitYear(1990)}) == 1
+  assert len({month, TransitMonth(1990, Dizhi.寅)}) == 1
+  assert len({day, TransitDate(date(1990, 5, 20))}) == 1
 
 
 def test_query_shapes_negative() -> None:
@@ -198,5 +200,6 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
   assert db.dayun(2008) is None
   assert db.dayun(2009) == Ganzhi.from_str('乙丑')
   assert db.xiaoyun(2009) == Ganzhi.from_str('乙亥')
+  # Without the 2009 floor, 2018 would resolve to the next Dayun, 甲子.
   assert db.dayun(2018) == Ganzhi.from_str('乙丑')
   assert db.dayun(2019) == Ganzhi.from_str('甲子')

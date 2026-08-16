@@ -473,8 +473,8 @@ def test_transit_analysis_negative() -> None:
   transits_analysis = RelationshipAnalyzer(chart).transits
 
   for analysis in (transits_analysis.shensha, transits_analysis.day_master_relations,
-                    transits_analysis.house_relations, transits_analysis.star_relations,
-                    transits_analysis.zhengyin, transits_analysis.star):
+                   transits_analysis.house_relations, transits_analysis.star_relations,
+                   transits_analysis.zhengyin, transits_analysis.star):
     with pytest.raises(TypeError):
       analysis(object()) # type: ignore
 

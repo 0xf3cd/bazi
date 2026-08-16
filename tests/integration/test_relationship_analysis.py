@@ -150,7 +150,7 @@ def test_case1() -> None:
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
     TianganRelation.克 : [frozenset({Tiangan.庚, Tiangan.乙}),
-                          frozenset({Tiangan.乙, Tiangan.戊})],
+                         frozenset({Tiangan.乙, Tiangan.戊})],
   }, transits.day_master_relations(transits_1990))
 
   assert _check_dizhi({
@@ -204,12 +204,12 @@ def test_case1() -> None:
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
-                          frozenset({Tiangan.乙, Tiangan.戊})],
+                         frozenset({Tiangan.乙, Tiangan.戊})],
   }, transits.day_master_relations(transits_2018))
 
   assert _check_dizhi({
     DizhiRelation.刑 : [frozenset({Dizhi.丑, Dizhi.未, Dizhi.戌}),
-                        frozenset({Dizhi.丑, Dizhi.未})],
+                       frozenset({Dizhi.丑, Dizhi.未})],
     DizhiRelation.冲 : [frozenset({Dizhi.丑, Dizhi.未})],
   }, transits.house_relations(transits_2018))
 

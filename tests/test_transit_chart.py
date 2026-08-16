@@ -43,8 +43,21 @@ def test_support_boundaries() -> None:
 
   assert not chart.support(TransitDate(date(1984, 3, 31)))
   assert chart.support(TransitDate(date(1984, 4, 1)))
+  # The lower date is also pre-birth; the upper date is one day past the solar range.
   assert not chart.support(TransitDate(date(1901, 2, 18)))
   assert not chart.support(TransitDate(date(2100, 1, 1)))
+
+
+def test_support_uses_precision_attributed_birth_boundary() -> None:
+  config = BaziConfig.from_values(precision='hour')
+  chart = TransitChart(BaziChart(Bazi.create('2009-02-03 23:30', 'female', config)))
+  assert chart.bazi_chart.bazi.ganzhi_date.year == 2008
+  assert chart.bazi_chart.bazi.ganzhi_year == 2009
+
+  assert not chart.support(TransitYear(2008))
+  assert chart.support(TransitYear(2009))
+  assert not chart.support(TransitMonth(2008, Dizhi.丑))
+  assert chart.support(TransitMonth(2009, Dizhi.寅))
 
 
 def test_support_negative() -> None:
@@ -83,12 +96,19 @@ def test_year_transits() -> None:
 
 def test_month_transits() -> None:
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
-  transits = chart.at(TransitMonth(2024, Dizhi.寅))
+  assert chart.at(TransitMonth(1984, Dizhi.卯)) == TransitSet(
+    xiaoyun=Ganzhi.from_str('癸未'),
+    liunian=Ganzhi.from_str('甲子'),
+    liuyue=Ganzhi.from_str('丁卯'),
+  )
 
-  assert transits.liunian == Ganzhi.from_str('甲辰')
-  assert transits.liuyue == Ganzhi.from_str('丙寅')
-  assert transits.liuri is None
-  assert tuple(transits)[-2:] == (TransitKind.LIUNIAN, TransitKind.LIUYUE)
+  transits = chart.at(TransitMonth(2024, Dizhi.寅))
+  assert transits == TransitSet(
+    dayun=Ganzhi.from_str('辛未'),
+    liunian=Ganzhi.from_str('甲辰'),
+    liuyue=Ganzhi.from_str('丙寅'),
+  )
+  assert tuple(transits) == (TransitKind.DAYUN, TransitKind.LIUNIAN, TransitKind.LIUYUE)
 
 
 @pytest.mark.parametrize('backend', ['hko', 'celestial', 'celestial-algo2'])
@@ -98,10 +118,14 @@ def test_date_transits(backend: str) -> None:
   solar_date = date(2024, 2, 4)
   transits = chart.at(TransitDate(solar_date))
 
-  assert transits.liunian == Ganzhi.from_str('甲辰')
-  assert transits.liuyue == Ganzhi.from_str('丙寅')
-  assert transits.liuri == ganzhi_of_day(solar_date)
-  assert tuple(transits)[-3:] == (
+  assert transits == TransitSet(
+    dayun=Ganzhi.from_str('辛未'),
+    liunian=Ganzhi.from_str('甲辰'),
+    liuyue=Ganzhi.from_str('丙寅'),
+    liuri=ganzhi_of_day(solar_date),
+  )
+  assert tuple(transits) == (
+    TransitKind.DAYUN,
     TransitKind.LIUNIAN,
     TransitKind.LIUYUE,
     TransitKind.LIURI,

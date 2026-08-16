@@ -202,7 +202,7 @@ class AtBirthAnalysis:
 
 
 class TransitAnalysis:
-  '''Analysis of Relationship at Transits / 流年大运等的亲密关系分析'''
+  '''Analysis of Relationship at Transits / 流运的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = chart
 
@@ -215,10 +215,10 @@ class TransitAnalysis:
     '''
     Return the relationship-related Shenshas of the given transits.
 
-    返回给定流年大运等的亲密关系相关的神煞（桃花、红艳、红鸾、天喜、驿马）。
+    返回给定流运的亲密关系相关神煞（桃花、红艳、红鸾、天喜、驿马）。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns:
     - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
@@ -244,7 +244,7 @@ class TransitAnalysis:
     返回日主和其他流运的天干之间的关系。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (tiangan_utils.TianganRelationDiscovery) The Tiangan relations that the day master and other transit Tiangans form.
     '''
@@ -262,7 +262,7 @@ class TransitAnalysis:
     返回配偶宫/婚姻宫和其他流运的地支之间的关系。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (dizhi_utils.DizhiRelationDiscovery) The Dizhi relations that the House of Relationship and other transit Dizhis form.
     '''
@@ -313,7 +313,7 @@ class TransitAnalysis:
     返回配偶星/婚姻星和其他流运的干支之间的关系。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
     - level: (Level) The level of the analysis. 返回分析的级别。
 
     Returns: (GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
@@ -355,7 +355,7 @@ class TransitAnalysis:
     检查流运的天干地支是否包含正印，即是否在走正印运。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain Zhengyin (正印).
     '''
@@ -377,7 +377,7 @@ class TransitAnalysis:
     检查流运的天干地支是否包含夫妻星/婚姻星。
 
     Args:
-    - transits: (TransitSet) The selected transits to analyze. 参与分析的流年/小运/大运等。
+    - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (GanzhiData[bool, bool]) Whether the transits' Tiangans and Dizhis contain the Star(s) of Relationship.
     '''

@@ -34,7 +34,7 @@ def main() -> int:
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
   from src.transit_chart import TransitChart
-  from src.transits import TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
+  from src.transits import TransitDatabase, TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
   from src.analyzer.relationship import RelationshipAnalyzer
   from src.utils import tiangan_utils
   from src.calendar import hko_data, hko_data_utils
@@ -42,6 +42,7 @@ def main() -> int:
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)
+  transit_db = TransitDatabase(chart)
   liunian = transit_chart.at(TransitYear(2024)).select(TransitKind.LIUNIAN)
   transit_analysis = RelationshipAnalyzer(chart).transits
 
@@ -76,8 +77,12 @@ def main() -> int:
      lambda: liunian.select('liunian')), # type: ignore
     ('TransitSet.select duplicate kind', ValueError,
      lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.LIUNIAN)),
-    ('TransitSet.select present and absent kinds', ValueError,
+    ('TransitSet.select absent kind', ValueError,
      lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.DAYUN)),
+    ('TransitDatabase.xiaoyun wrong year type', TypeError,
+     lambda: transit_db.xiaoyun('2024')), # type: ignore
+    ('TransitDatabase.dayun wrong year type', TypeError,
+     lambda: transit_db.dayun('2024')), # type: ignore
     ('TransitChart.support wrong query type', TypeError,
      lambda: transit_chart.support(2024)), # type: ignore
     ('TransitChart.at wrong query type', TypeError,

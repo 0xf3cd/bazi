@@ -11,11 +11,11 @@ from .utils.bazi_utils import ganzhi_of_day, ganzhi_of_year, month_tiangan
 from .transits import TransitDate, TransitMonth, TransitQuery, TransitSet, TransitYear, TransitDatabase
 
 
-def _month_index(month_dizhi: Dizhi) -> int:
+def _zero_based_month_index(month_dizhi: Dizhi) -> int:
   return (month_dizhi.index - Dizhi.寅.index) % 12
 
 
-def _month_dizhi(month: int) -> Dizhi:
+def _one_based_month_to_dizhi(month: int) -> Dizhi:
   assert 1 <= month <= 12
   return Dizhi.from_index((Dizhi.寅.index + month - 1) % 12)
 
@@ -57,8 +57,8 @@ class TransitChart:
       return (query.gz_year, None, None) if query.gz_year >= bazi.ganzhi_year else None
 
     if isinstance(query, TransitMonth):
-      query_key = (query.gz_year, _month_index(query.gz_month))
-      birth_key = (bazi.ganzhi_year, _month_index(bazi.month_commander))
+      query_key = (query.gz_year, _zero_based_month_index(query.gz_month))
+      birth_key = (bazi.ganzhi_year, _zero_based_month_index(bazi.month_commander))
       return (query.gz_year, query.gz_month, None) if query_key >= birth_key else None
 
     assert isinstance(query, TransitDate)
@@ -68,7 +68,7 @@ class TransitChart:
       ganzhi_date = self._utils.to_ganzhi(query.solar_date)
     except ValueError:
       return None
-    month_dizhi = _month_dizhi(ganzhi_date.month)
+    month_dizhi = _one_based_month_to_dizhi(ganzhi_date.month)
     return ganzhi_date.year, month_dizhi, query.solar_date
 
   @staticmethod
@@ -80,8 +80,6 @@ class TransitChart:
     '''
     Return whether the query is within this chart's life and calendar range.
     返回查询是否处于此命盘的人生时间线与历法支持范围内。
-
-    Return: (bool) Whether the given query is supported.
     '''
     self._check_query(query)
     return self._resolved(query) is not None
