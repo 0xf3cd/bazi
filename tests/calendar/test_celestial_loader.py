@@ -52,18 +52,21 @@ def test_data_sections_are_frozen() -> None:
     assert hashlib.sha256(payload.encode('utf-8')).hexdigest() == digest, name
 
 
-def test_dylib_provenance_value_is_pinned() -> None:
+def test_package_provenance_value_is_pinned() -> None:
   '''
   The closed header namespace (test_celestial_tables.py) pins key *names* only, and the data
-  digests above exclude `#` lines -- so without this test the recorded dylib identity could
-  be swapped for any 64-hex string unnoticed.  Re-baking with a new dylib is legitimate, but
-  it has to update this expectation deliberately in the same commit.
+  digests above exclude `#` lines -- so without this test the recorded package identity could
+  drift unnoticed. Re-baking with a new package is legitimate, but it has to update this
+  expectation deliberately in the same commit.
   '''
-  expected: str = '4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5'
-  assert JieqiMomentTable().provenance['dylib_sha256'] == expected
+  expected: dict[str, str] = {
+    'celestial_version': '0.6.1',
+    'release_asset': 'celestial-calendar==0.6.1 / PyPI wheel',
+  }
+  assert {key: JieqiMomentTable().provenance[key] for key in expected} == expected
   for algo in (1, 2):
     table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
-    assert table.provenance['dylib_sha256'] == expected
+    assert {key: table.provenance[key] for key in expected} == expected
 
 
 def test_fixture_rows_appear_verbatim_in_the_shipped_tables() -> None:
@@ -104,12 +107,11 @@ def test_jieqi_provenance() -> None:
   table = JieqiMomentTable(FIXTURES / 'jieqi_moments.txt', contiguous_years=False)
   provenance = table.provenance
   assert provenance['schema_version'] == SCHEMA_VERSION
-  assert provenance['celestial_version'] == '0.4.0'
+  assert provenance['celestial_version'] == '0.6.1'
   assert provenance['columns'] == JIEQI_COLUMNS
-  assert len(provenance['dylib_sha256']) == 64
   # A copy, so a caller cannot mutate the table's own record.
   provenance['celestial_version'] = 'tampered'
-  assert table.provenance['celestial_version'] == '0.4.0'
+  assert table.provenance['celestial_version'] == '0.6.1'
 
 
 def test_lunar_fixture() -> None:

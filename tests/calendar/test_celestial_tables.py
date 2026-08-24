@@ -46,7 +46,7 @@ SEXAGENARY_CYCLE: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
 
 # SCHEMA.md's closed provenance namespace, restated here as the assertable form of it.
 _COMMON_HEADER_KEYS: Final[frozenset[str]] = frozenset({
-  'schema_version', 'celestial_version', 'release_asset', 'dylib_sha256', 'generated_by',
+  'schema_version', 'celestial_version', 'release_asset', 'generated_by',
   'generated_on', 'source_api', 'timescale', 'year_range', 'columns', 'rows',
 })
 JIEQI_HEADER_KEYS: Final[frozenset[str]] = _COMMON_HEADER_KEYS | {'rounding', 'timescale_caveat'}
@@ -166,8 +166,8 @@ def test_header_and_row_count() -> None:
   assert header['columns'] == 'year jq_idx name date time'
   assert header['rows'] == '7200' # 300 years x 24 jieqis, exact.
   assert len(raw_rows) == 7200
-  assert header['schema_version'] == '1'
-  assert header['celestial_version'] == '0.4.0'
+  assert header['schema_version'] == '2'
+  assert header['celestial_version'] == '0.6.1'
   assert header['timescale'].split(',')[0] == 'UTC+08:00'
   assert header['rounding'].split(' ')[0] == 'truncate'
 

@@ -1,21 +1,20 @@
-# celestial_data table schema (schema_version 1)
+# celestial_data table schema (schema_version 2)
 
 Frozen data contract between the **generator** (`generator.py`, offline, needs the
-celestial-calendar dynamic library) and the **loader** (`loader.py`, runtime, pure Python).
+celestial-calendar Python package) and the **loader** (`loader.py`, runtime, pure Python).
 Both sides implement this file independently; disagreement is a bug in whichever side
 deviates from the text below.
 
-Runtime must stay pure Python: CI runs the matrix on CPython 3.11 / 3.14 **and PyPy 3.11**,
-and `ctypes` + a macOS dylib exist on neither. The library is consumed only when the
+Runtime must stay independent of celestial-calendar: the package is consumed only when the
 tables are regenerated. Same shape as `hko_data/encoder.py` (offline) vs `decoder.py` (runtime).
 
 ## Files
 
 | Path | Rows | Source API |
 |---|---|---|
-| `data/jieqi_moments.txt` | 7200 | `query_jieqi_moment(int32_t year, uint8_t jq_idx)` |
-| `data/lunar_years_algo1.txt` | 199 | `get_lunar_year_info(1, int32_t year)` |
-| `data/lunar_years_algo2.txt` | 199 | `get_lunar_year_info(2, int32_t year)` |
+| `data/jieqi_moments.txt` | 7200 | `celestial_calendar.jieqi_moment(year, jieqi)` |
+| `data/lunar_years_algo1.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO1, year)` |
+| `data/lunar_years_algo2.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO2, year)` |
 
 Test fixtures in `tests/calendar/celestial_fixtures/` use identical basenames and format,
 carry `fixture: true`, and hold a 5-year slice (`1901, 1914, 1917, 1979, 2024`).
@@ -31,13 +30,12 @@ Header lines of the form `# key: value` are the machine-readable provenance. Con
 lines (`#` + two spaces) are prose attached to the preceding key. Required keys:
 
 ```
-schema_version      1
-celestial_version   0.4.0                     # pinned; see the version gate below
-release_asset       which release artifact the dylib came from
-dylib_sha256        sha256 of the dylib actually loaded -- without it the table is not auditable
+schema_version      2
+celestial_version   0.6.1                     # pinned; see the version gate below
+release_asset       celestial-calendar==0.6.1 / PyPI wheel
 generated_by        path of the generating script
 generated_on        YYYY-MM-DD
-source_api          the C-ABI signature the rows came from
+source_api          the public Python call the rows came from
 timescale           per-table, see below -- the three tables are three different conventions
 rounding            jieqi table only
 year_range          inclusive
@@ -62,7 +60,7 @@ columns: year jq_idx name date time
 
 - `year` — Gregorian year, `1901..2200` inclusive.
 - `jq_idx` — `0..23`, zero-padded. **Identical to bazi's `list(Jieqi)` index**
-  (`0 = 立春 … 23 = 大寒`); verified at generation against `get_jieqi_name`, which must
+  (`0 = 立春 … 23 = 大寒`); verified at generation against `celestial_calendar.jieqi_name`, which must
   equal `list(Jieqi)[jq_idx].value`. Even indices are 节 (month boundaries), odd are 气.
   Note HKO's own on-disk order is the 小寒-first `Jieqi.as_list(ganzhi_year=False)` — do
   not confuse the two.
@@ -83,8 +81,9 @@ columns: year jq_idx name date time
   Normally this only matters for births within ±0.9s of a jieqi moment — but when the
   moment itself sits near midnight, 0.9s flips the whole **date**. Measured worst case in
   the window: 1979 大寒 is 4s from midnight.
-- Years 2101–2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation.
-  The series is continuous, but has no precision guarantee or independent HKO comparison.
+- The TT jieqi moments are still computed from solar-longitude roots. Their conversion to
+  UT1 in years 2101–2200 uses the Stephenson-Morrison-Hohenkerk integrated-lod ΔT
+  extrapolation: it is continuous, but has no precision guarantee or independent HKO comparison.
 
 ## `lunar_years_algo{1,2}.txt`
 
@@ -94,13 +93,13 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 ```
 
 - `lunar_year` — `1901..2099` inclusive, **both algos clamped to this window**. algo2
-  natively reports `[410, 5000]`, which is a placeholder sentinel (`algo2.hpp:443-446`,
-  "actually has no limit, simply use"). Clamping keeps a single range contract for both
-  algos instead of four range semantics; widening is a follow-up issue.
+  natively reports `[410, 2500]`. Clamping keeps a single range contract for both algos
+  instead of four range semantics; widening is a follow-up issue.
 - `first_solar_date` — Gregorian date of lunar 1/1.
 - `leap_month` — `1..12`, or **`0` for no leap month**. HkoData spells the same thing as
   `None`; the loader normalises when comparing.
-- `month_len_bits` — the raw `uint16` from the ABI, hex. **LSB-first**: bit *i* is the
+- `month_len_bits` — encoded as hex from the package's public `month_lengths` tuple.
+  **LSB-first**: bit *i* is the
   *(i+1)*-th lunar month in sequence (a leap month occupies its own slot), `1` = 30 days,
   `0` = 29 days. Agrees with HkoData `days_counts` 199/199 for algo1 — checked by
   `tests/calendar/test_celestial_tables.py`, not at generation.
@@ -109,7 +108,7 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 - `ganzhi` — `(lunar_year - 4) mod 60` over `Ganzhi.list_sexagenary_cycle()`. Not consumed
   at runtime (HKO's `LunarYearInfo` carries it, so parity needs the column to exist); its
   199/199 agreement with HkoData is a test, not a generation gate. The generator imports
-  nothing from `hko_data` — the four gates it does enforce are listed below.
+  nothing from `hko_data` — the three gates it does enforce are listed below.
 - **algo1 is the default.** It is the HKO official-almanac lineage — the lunar surface is a
   display concern and should track the official almanac; the four pillars are jieqi-based
   and never consume the lunar calendar. algo2 (leap-second aware UTC+8 via `jde_to_utc8`,
@@ -123,31 +122,12 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 
 Fail loudly at generation time; a bad table is only discoverable afterwards otherwise.
 
-1. **Version gate** — the loaded library's version must equal the pinned `0.4.0`; raise
-   otherwise. A ΔT refresh or celestial #70 changes the numbers, and the provenance header
-   alone would only reveal it after the fact.
-2. **Per-row valid gate** — `query_jieqi_moment` / `get_lunar_year_info` use the
-   `valid == false` contract (they are *not* in the `last_error` pilot, which covers only
-   the JD exports). Assert `valid` on every row. This gate has already earned its keep: a
-   wrong `ctypes` struct layout (see below) makes every call silently return
-   `valid = false` rather than crashing.
-3. **Row-count gate** — exactly 7200 / 199 / 199, and the emitted `rows:` header must
+1. **Version gate** — the imported package's public `__version__` must equal the pinned
+   `0.6.1`; raise otherwise. A ΔT refresh or celestial update can change every moment.
+2. **Row-count gate** — exactly 7200 / 199 / 199, and the emitted `rows:` header must
    match the lines written.
-4. **Cross-check gate** — `get_jieqi_name(idx) == list(Jieqi)[idx].value` for all 24;
-   `days_counts` decoded from the bitmask must round-trip.
-
-### ctypes landmine
-
-`LunarYearInfo.month_len` is a **scalar `uint16`**, not an array. Declaring it as
-`c_uint16 * 13` inflates the struct past the register-return threshold, breaks the
-struct-by-value ABI, and every field reads as garbage — `valid` included, so the failure is
-silent. Verified layouts:
-
-```c
-JieqiMomentQuery { bool valid; uint8_t jq_idx; int32_t y; uint32_t m; uint32_t d; double frac; }
-LunarYearInfo    { bool valid; int32_t year; uint8_t month; uint8_t day;
-                   uint8_t leap_month; uint16_t month_len; }   /* sizeof == 16 */
-```
+3. **Cross-check gate** — `jieqi_name(Jieqi(idx)) == list(Jieqi)[idx].value` for all 24;
+   the public `month_lengths` tuple must round-trip through the on-disk bitmask encoding.
 
 ## Boundary convention (consumer side, recorded here as shared semantics)
 

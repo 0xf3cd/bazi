@@ -1,11 +1,10 @@
 # celestial-calendar jieqi moment table
-# schema_version: 1
-# celestial_version: 0.4.0
-# release_asset: celestial-calendar v0.4.0 / macos_arm64.zip
-# dylib_sha256: 4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5
+# schema_version: 2
+# celestial_version: 0.6.1
+# release_asset: celestial-calendar==0.6.1 / PyPI wheel
 # generated_by: src/calendar/celestial_data/generator.py
-# generated_on: 2026-08-15
-# source_api: query_jieqi_moment(int32_t year, uint8_t jq_idx)
+# generated_on: 2026-08-24
+# source_api: celestial_calendar.jieqi_moment(year, jieqi)
 # timescale: UTC+08:00, derived from celestial UT1 moments by adding exactly 8h
 # timescale_caveat: UT1-UTC <= 0.9s (1972+); pre-1972 UT1 is a proxy (celestial Phase C).
 #   Normally only affects births within +/-0.9s of a jieqi moment -- but when the moment
@@ -13,11 +12,12 @@
 #   Measured worst case in window: 1979 大寒 is 4s from midnight.
 # rounding: truncate to whole seconds (sub-second discarded; never carries into the next date)
 # year_range: 1901..2200 inclusive
-#   Years 2101..2200 use the Stephenson-Morrison-Hohenkerk integrated-lod extrapolation:
-#   the series is continuous, but has no precision guarantee or independent HKO comparison.
+#   TT moments still come from solar-longitude roots; their conversion to UT1 in
+#   2101..2200 uses the Stephenson-Morrison-Hohenkerk integrated-lod Delta T extrapolation:
+#   it is continuous, but has no precision guarantee or independent HKO comparison.
 # columns: year jq_idx name date time
 #   jq_idx is 0..23, identical to the bazi `list(Jieqi)` index (0=立春 .. 23=大寒), and
-#   `name` is cross-checked against get_jieqi_name at generation.
+#   `name` is cross-checked against celestial_calendar.jieqi_name at generation.
 #   Rows ascend by (year, jq_idx), which is not date order: 小寒/大寒 (idx 22/23) of
 #   year Y fall in January of Y.
 # rows: 7200
