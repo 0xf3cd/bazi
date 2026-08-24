@@ -117,11 +117,12 @@ def test_dispatch() -> None:
 
 
 def test_ganzhi_month_lengths() -> None:
-  counts: list[int] = ALGO1.days_counts_in_ganzhi_year(2024)
-  assert len(counts) == 12
-  # A ganzhi year runs 立春 to 立春, so the months must add up to exactly that span.
-  span: int = (ALGO1.jieqi_date(2025, Jieqi.立春) - ALGO1.jieqi_date(2024, Jieqi.立春)).days
-  assert sum(counts) == span
+  for year in (2024, 2100):
+    counts: list[int] = ALGO1.days_counts_in_ganzhi_year(year)
+    assert len(counts) == 12
+    # A ganzhi year runs 立春 to 立春, so the months must add up to exactly that span.
+    span: int = (ALGO1.jieqi_date(year + 1, Jieqi.立春) - ALGO1.jieqi_date(year, Jieqi.立春)).days
+    assert sum(counts) == span
 
 
 def test_ganzhi_month_lengths_cannot_poison_the_cache() -> None:
@@ -143,7 +144,7 @@ def test_days_counts_in_ganzhi_year_negative() -> None:
   with pytest.raises(ValueError):
     ALGO1.days_counts_in_ganzhi_year(1900) # Before the first jieqi-table year.
   with pytest.raises(ValueError):
-    ALGO1.days_counts_in_ganzhi_year(2100) # The last jieqi-table year: no 立春 of 2101 to close it.
+    ALGO1.days_counts_in_ganzhi_year(2200) # The last jieqi-table year: no 立春 of 2201 to close it.
 
 
 def test_round_trips() -> None:
@@ -256,7 +257,7 @@ def test_date_is_the_moment_truncated() -> None:
 
 def test_out_of_range_year() -> None:
   with pytest.raises(ValueError):
-    ALGO1.jieqi_moment(2101, Jieqi.立春)
+    ALGO1.jieqi_moment(2201, Jieqi.立春)
   with pytest.raises(ValueError):
     ALGO1.jieqi_moment(1900, Jieqi.立春)
   with pytest.raises(TypeError):
@@ -268,7 +269,7 @@ def test_out_of_range_year() -> None:
 def test_supported_jie_boundaries() -> None:
   first, last = ALGO1.supported_jie_boundaries()
   assert first == ALGO1.jieqi_moment(1901, Jieqi.小寒)
-  assert last == ALGO1.jieqi_moment(2100, Jieqi.大雪)
+  assert last == ALGO1.jieqi_moment(2200, Jieqi.大雪)
 
 
 def test_jie_range_is_enforced() -> None:
@@ -320,8 +321,8 @@ def test_prev_and_next_bracket_every_jie() -> None:
     assert ALGO1.prev_jie(nxt.moment - timedelta(seconds=1)).moment == moment
     moment = nxt.moment
     seen += 1
-  # 12 节 per year over 1901..2100, minus 大雪 2100 itself (the bound is exclusive).
-  assert seen == len(range(1901, 2101)) * 12 - 1
+  # 12 节 per year over 1901..2200, minus 大雪 2200 itself (the bound is exclusive).
+  assert seen == len(range(1901, 2201)) * 12 - 1
 
 
 def test_divergence_is_exactly_the_known_years() -> None:
