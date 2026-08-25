@@ -13,28 +13,38 @@ from .bazi_chart import BaziChart
 
 
 class DayunDatabase:
-  '''Locates the Dayun (大运) that a given Ganzhi year falls into, by closed-form
-  arithmetic from the first Dayun. 由首运闭式定位任一干支年所属的大运。'''
+  '''Locates the Dayun (大运) whose configured start-year label range contains a year.
+  Adjacent labels delimit each range; the final range is always ten label years and can
+  therefore differ from the physical `end_moment`.
+  按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
+  物理 `end_moment` 不一致。'''
   def __init__(self, chart: BaziChart) -> None:
-    self._first_dayun: Final[DayunTuple] = next(chart.dayun)
-    self._step: Final[int] = 1 if chart.dayun_order else -1
+    self._dayuns: Final[tuple[DayunTuple, ...]] = tuple(chart.dayun)
+    self._empty_timeline_error: Final[str] = chart._dayun_empty_timeline_message
 
   def __getitem__(self, gz_year: int) -> DayunTuple:
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
-    if gz_year < self._first_dayun.ganzhi_year:
-      raise ValueError(f'Year {gz_year} is before the first dayun year {self._first_dayun.ganzhi_year}')
+    if len(self._dayuns) == 0:
+      raise ValueError(self._empty_timeline_error)
+    if gz_year < self._dayuns[0].ganzhi_year:
+      raise ValueError(f'Year {gz_year} is before the first Dayun year {self._dayuns[0].ganzhi_year}')
 
-    # Dayuns are arithmetic: each lasts 10 years and steps the sexagenary cycle by one.
-    # 大运是等差序列：每运十年，六十甲子进（退）一位，直接按下标闭式计算。
-    dayun_idx: int = (gz_year - self._first_dayun.ganzhi_year) // 10
-    return DayunTuple(self._first_dayun.ganzhi_year + 10 * dayun_idx,
-                      self._first_dayun.ganzhi.next(self._step * dayun_idx))
+    end_ganzhi_year: Final[int] = self._dayuns[-1].ganzhi_year + 10
+    if gz_year >= end_ganzhi_year:
+      raise ValueError(f'Year {gz_year} is on or after the end of the Dayun label range {end_ganzhi_year}')
+
+    for dayun in reversed(self._dayuns):
+      if gz_year >= dayun.ganzhi_year:
+        return dayun
+    raise AssertionError('Unreachable Dayun lookup state') # pragma: no cover # Lower bound checked above.
 
 
 @dataclass(frozen=True)
 class TransitYear:
-  '''A year-granularity transit query. 年粒度流运查询。'''
+  '''A Ganzhi-year coordinate for a year-granularity transit query. Dayun lookup applies
+  the chart's configured year-label view to this coordinate. 年粒度流运查询的干支年坐标；大运按
+  命盘所选年份标签视图解释该坐标。'''
   gz_year: int
 
   def __post_init__(self) -> None:
@@ -164,7 +174,6 @@ class TransitDatabase:
       for age, gz in chart.xiaoyun
     })
 
-    self._first_dayun_start_gz_year: Final[int] = next(chart.dayun).ganzhi_year
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
 
   def xiaoyun(self, gz_year: int) -> Ganzhi | None:
@@ -174,9 +183,12 @@ class TransitDatabase:
     return self._xiaoyun_ganzhis.get(gz_year)
 
   def dayun(self, gz_year: int) -> Ganzhi | None:
-    '''Return the Dayun for `gz_year`, or `None` before the first Dayun.'''
+    '''Return the Dayun selected for the Ganzhi-year coordinate `gz_year` by the chart's
+    configured year labels. The finite year view extends the final label by ten years and
+    can differ from the physical final interval; return `None` outside that label view.'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
-    if gz_year < self._first_dayun_start_gz_year:
+    try:
+      return self._dayun_db[gz_year].ganzhi
+    except ValueError:
       return None
-    return self._dayun_db[gz_year].ganzhi

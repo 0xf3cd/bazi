@@ -13,7 +13,7 @@ from .calendar import (
 from .school import BaziPrecision, DayRollover, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
-  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
+  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year, _ganzhi_year_of_jie,
 )
 
 
@@ -117,8 +117,8 @@ class Bazi:
     Args:
     - birth_time: (datetime) The birth date (in Gregorian calendar) and time. Note that no timezone should be set.
     - gender: (BaziGender) The gender of the person.
-    - config: (BaziConfig) The chart-level configuration: the precision of the birth time, the calendar
-      backend used for all calendar conversions, and the school profile (流派档案).
+    - config: (BaziConfig) The chart-level configuration: birth-time precision, calendar
+      backend, school profile (流派档案), and default Dayun year projection.
     '''
 
     if not isinstance(birth_time, datetime):
@@ -174,7 +174,7 @@ class Bazi:
       # consumes via `bracketing_jies`, so the chart cannot contradict itself. 小寒 opens the
       # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
       owning: Final[JieqiTime] = bracketing_jies[0]
-      ganzhi_year = owning.moment.year - (1 if owning.jieqi is Jieqi.小寒 else 0)
+      ganzhi_year = _ganzhi_year_of_jie(owning)
       ganzhi_month = _GANZHI_MONTH_OF_JIE[owning.jieqi]
 
     self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime] | None] = bracketing_jies
@@ -253,7 +253,8 @@ class Bazi:
       - if `BaziGender` type: it will be directly fed to `Bazi`.
       - if `str` type: it will be converted by `BaziGender`. 
         - Supported values: "男"/"女"/"male"/"female" (case insensitive).
-    - config: (BaziConfig) The chart-level configuration (precision / backend / school).
+    - config: (BaziConfig) The chart-level configuration
+      (precision / backend / school / Dayun year projection).
       Use `BaziConfig.from_values` to build one from string spellings -- the same
       acceptance face this method parsed here before #69.
     '''
@@ -278,7 +279,8 @@ class Bazi:
     '''
     Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
 
-    Note that the config is `DEFAULT_CONFIG` (DAY precision, the celestial backend, the default school).
+    Note that the config is `DEFAULT_CONFIG` (DAY precision, the celestial backend, the default
+    school, and JIE_PROJECTED Dayun years).
     Note that the year is in [1902, 2080], and day is in [1, 28].
     '''
     return Bazi.create(
@@ -361,8 +363,9 @@ class Bazi:
   
   @property
   def config(self) -> BaziConfig:
-    '''The chart-level configuration of this `Bazi` (precision / backend / school).
-    此命盘的配置（出生时间精度 / 历法后端 / 流派档案）。'''
+    '''The chart-level configuration of this `Bazi`
+    (precision / backend / school / Dayun year projection).
+    此命盘的配置（出生时间精度 / 历法后端 / 流派档案 / 默认大运年份投影）。'''
     return self._config
 
   @property

@@ -2,7 +2,8 @@
 
 from datetime import date, datetime
 
-from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
+from ..defines import Ganzhi, Tiangan, Dizhi, Jieqi, Shishen, Wuxing, Yinyang, ShierZhangsheng
+from ..calendar import JieqiTime
 from ..data_types import TraitTuple, HiddenTianganDict
 from ..rules import BaziRules
 
@@ -44,6 +45,13 @@ def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
   if not isinstance(ganzhi_year, int):
     raise TypeError(f'Expected int, got {type(ganzhi_year)}')
   return Ganzhi(Tiangan.甲, Dizhi.子).next(ganzhi_year - 1984) # 1984 is the year of "甲子".
+
+
+def _ganzhi_year_of_jie(owning_jie: JieqiTime) -> int:
+  '''Return the Ganzhi year containing the month opened by `owning_jie`; 小寒 opens the
+  last month of the previous Ganzhi year. 返回所属节所开月所在的干支年；小寒开上一干支年丑月。'''
+  assert isinstance(owning_jie, JieqiTime)
+  return owning_jie.moment.year - (1 if owning_jie.jieqi is Jieqi.小寒 else 0)
 
 
 def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:

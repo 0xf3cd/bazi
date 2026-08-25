@@ -143,3 +143,16 @@ def test_date_uses_day_level_calendar_coordinates() -> None:
   assert transits.liunian == Ganzhi.from_str('戊子')
   assert transits.liuyue == Ganzhi.from_str('乙丑')
   assert transits.liuri == ganzhi_of_day(date(2009, 2, 3))
+
+
+def test_date_dayun_follows_the_configured_year_labels() -> None:
+  projected = TransitChart(BaziChart(Bazi.create('1910-04-07 06:01', 'male')))
+  fixed = TransitChart(BaziChart(Bazi.create(
+    '1910-04-07 06:01',
+    'male',
+    BaziConfig.from_values(dayun_year_rule='fixed_decade'),
+  )))
+
+  query = TransitDate(date(1929, 6, 1))
+  assert projected.at(query).dayun == Ganzhi.from_str('辛巳')
+  assert fixed.at(query).dayun == Ganzhi.from_str('壬午')

@@ -14,7 +14,7 @@ from src.bazi_chart import BaziChart
 from src.rules import DizhiRules
 from src.utils import dizhi_utils
 from src.school import (
-  BaziPrecision, DayRollover, KeyStem, BaziSchool, BaziConfig,
+  BaziPrecision, DayunYearRule, DayRollover, KeyStem, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG,
 )
 
@@ -25,6 +25,12 @@ def test_bazi_precision_basic() -> None:
   assert str(BaziPrecision.DAY) == 'day'
   assert str(BaziPrecision.HOUR) == 'hour'
   assert str(BaziPrecision.MINUTE) == 'minute'
+
+
+def test_dayun_year_rule_basic() -> None:
+  assert len(DayunYearRule) == 2
+  assert str(DayunYearRule.JIE_PROJECTED) == 'jie_projected'
+  assert str(DayunYearRule.FIXED_DECADE) == 'fixed_decade'
 
 
 def test_school_enums_basic() -> None:
@@ -51,6 +57,8 @@ def test_config_type_gates() -> None:
     BaziConfig(precision='day') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(backend='hko') # type: ignore
+  with pytest.raises(TypeError):
+    BaziConfig(dayun_year_rule='fixed_decade') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
 
@@ -114,10 +122,28 @@ def test_from_values_backend_spellings(spelling: str, expected: CalendarBackend)
   assert BaziConfig.from_values(backend=spelling).backend is expected
 
 
+@pytest.mark.parametrize('spelling, expected', [
+  ('jie_projected', DayunYearRule.JIE_PROJECTED),
+  ('JIE_PROJECTED', DayunYearRule.JIE_PROJECTED),
+  ('Jie_Projected', DayunYearRule.JIE_PROJECTED),
+  ('fixed_decade', DayunYearRule.FIXED_DECADE),
+  ('FIXED_DECADE', DayunYearRule.FIXED_DECADE),
+  ('Fixed_Decade', DayunYearRule.FIXED_DECADE),
+])
+def test_from_values_dayun_year_rule_spellings(spelling: str, expected: DayunYearRule) -> None:
+  assert DayunYearRule.from_str(spelling) is expected
+  assert BaziConfig.from_values(dayun_year_rule=spelling).dayun_year_rule is expected
+
+
 def test_from_values_enum_passthrough() -> None:
-  config: BaziConfig = BaziConfig.from_values(precision=BaziPrecision.HOUR, backend=CalendarBackend.HKO)
+  config: BaziConfig = BaziConfig.from_values(
+    precision=BaziPrecision.HOUR,
+    backend=CalendarBackend.HKO,
+    dayun_year_rule=DayunYearRule.FIXED_DECADE,
+  )
   assert config.precision is BaziPrecision.HOUR
   assert config.backend is CalendarBackend.HKO
+  assert config.dayun_year_rule is DayunYearRule.FIXED_DECADE
 
 
 @pytest.mark.parametrize('bad', ['sec', '秒', 'hr', 'days', ''])
@@ -133,6 +159,12 @@ def test_from_values_rejection_face() -> None:
     BaziConfig.from_values(precision=1984) # type: ignore
   with pytest.raises(TypeError):
     BaziConfig.from_values(backend=42) # type: ignore
+  with pytest.raises(ValueError):
+    BaziConfig.from_values(dayun_year_rule='rolling_decade')
+  with pytest.raises(TypeError):
+    BaziConfig.from_values(dayun_year_rule=10) # type: ignore
+  with pytest.raises(TypeError):
+    DayunYearRule.from_str(10) # type: ignore
   with pytest.raises(TypeError):
     BaziConfig.from_values(school='default') # type: ignore # No string spelling for school.
 
@@ -143,6 +175,7 @@ def test_from_values_school_passthrough() -> None:
   assert config.school is school
   assert config.precision is BaziPrecision.DAY # Untouched knobs keep their defaults.
   assert config.backend is CalendarBackend.CELESTIAL
+  assert config.dayun_year_rule is DayunYearRule.JIE_PROJECTED
 
 
 def test_defaults_are_defined_once() -> None:
@@ -150,8 +183,10 @@ def test_defaults_are_defined_once() -> None:
   assert BaziConfig() == DEFAULT_CONFIG
   assert BaziConfig() is not DEFAULT_CONFIG
   assert BaziConfig().school is DEFAULT_SCHOOL
+  assert BaziConfig().dayun_year_rule is DayunYearRule.JIE_PROJECTED
   assert BaziConfig.from_values() == DEFAULT_CONFIG
   assert BaziConfig.from_values().school is DEFAULT_SCHOOL
+  assert BaziConfig.from_values().dayun_year_rule is DayunYearRule.JIE_PROJECTED
   assert DEFAULT_CONFIG.school is DEFAULT_SCHOOL
 
 
@@ -213,6 +248,20 @@ def test_eq_hash_include_school() -> None:
     assert len({default_bazi, variant_bazi}) == 2
 
 
+def test_eq_hash_include_dayun_year_rule() -> None:
+  dt: datetime = datetime(1910, 4, 7, 6, 1)
+  projected: Bazi = Bazi.create(dt, BaziGender.MALE)
+  fixed: Bazi = Bazi.create(
+    dt,
+    BaziGender.MALE,
+    BaziConfig(dayun_year_rule=DayunYearRule.FIXED_DECADE),
+  )
+
+  assert projected != fixed
+  assert hash(projected) != hash(fixed)
+  assert len({projected, fixed}) == 2
+
+
 def test_json_roundtrip_default_school() -> None:
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   j = chart.json
@@ -226,6 +275,7 @@ def test_json_roundtrip_default_school() -> None:
                 BaziConfig.from_values(
                   precision=j['precision'],
                   backend=j['backend'],
+                  dayun_year_rule=j['dayun_year_rule'],
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
@@ -262,6 +312,7 @@ def test_json_roundtrip_non_default_school() -> None:
                 BaziConfig.from_values(
                   precision=j['precision'],
                   backend=j['backend'],
+                  dayun_year_rule=j['dayun_year_rule'],
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
