@@ -2,13 +2,12 @@
 
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import date
 from enum import Enum, unique
 from typing import Final
 
 from .common import frozendict
 from .data_types import DayunTuple
-from .defines import Ganzhi, Dizhi
+from .defines import Ganzhi
 from .bazi_chart import BaziChart
 
 
@@ -38,46 +37,6 @@ class DayunDatabase:
       if gz_year >= dayun.ganzhi_year:
         return dayun
     raise AssertionError('Unreachable Dayun lookup state') # pragma: no cover # Lower bound checked above.
-
-
-@dataclass(frozen=True)
-class TransitYear:
-  '''A Ganzhi-year coordinate for a year-granularity transit query. Dayun lookup applies
-  the chart's configured year-label view to this coordinate. 年粒度流运查询的干支年坐标；大运按
-  命盘所选年份标签视图解释该坐标。'''
-  gz_year: int
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.gz_year, int):
-      raise TypeError(f'Expected int, got {type(self.gz_year)}')
-
-
-@dataclass(frozen=True)
-class TransitMonth:
-  '''A month-granularity transit query. 月粒度流运查询。'''
-  gz_year: int
-  gz_month: Dizhi
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.gz_year, int):
-      raise TypeError(f'Expected int, got {type(self.gz_year)}')
-    if not isinstance(self.gz_month, Dizhi):
-      raise TypeError(f'Expected Dizhi, got {type(self.gz_month)}')
-
-
-@dataclass(frozen=True)
-class TransitDate:
-  '''A date-granularity transit query. 日粒度流运查询。'''
-  solar_date: date
-
-  def __post_init__(self) -> None:
-    # `datetime` is a `date` subclass but has different equality/hash semantics.
-    if type(self.solar_date) is not date:
-      raise TypeError(f'Expected date (not datetime), got {type(self.solar_date)}')
-
-
-'''A year-, month-, or date-granularity transit query. 年、月或日粒度的流运查询。'''
-TransitQuery = TransitYear | TransitMonth | TransitDate
 
 
 @unique

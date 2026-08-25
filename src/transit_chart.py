@@ -11,7 +11,7 @@ from .utils.bazi_utils import (
   ganzhi_of_day, ganzhi_of_year, month_tiangan,
   _ganzhi_month_dizhi, _ganzhi_month_offset,
 )
-from .transits import TransitDate, TransitMonth, TransitQuery, TransitSet, TransitYear, TransitDatabase
+from .transits import TransitSet, TransitDatabase
 
 
 class TransitChart:
@@ -45,49 +45,12 @@ class TransitChart:
     非 frozen 的 `Bazi` 已由命盘自身隔离。'''
     return self._bazi_chart
 
-  def _resolved(self, query: TransitQuery) -> tuple[int, Dizhi | None, date | None] | None:
-    bazi = self._bazi_chart.bazi
-    if isinstance(query, TransitYear):
-      return (query.gz_year, None, None) if query.gz_year >= bazi.ganzhi_year else None
-
-    if isinstance(query, TransitMonth):
-      query_key = (query.gz_year, _ganzhi_month_offset(query.gz_month))
-      birth_key = (bazi.ganzhi_year, _ganzhi_month_offset(bazi.month_commander))
-      return (query.gz_year, query.gz_month, None) if query_key >= birth_key else None
-
-    assert isinstance(query, TransitDate)
-    if query.solar_date < bazi.solar_date:
-      return None
-    try:
-      ganzhi_date = self._utils.to_ganzhi(query.solar_date)
-    except ValueError:
-      return None
-    month_dizhi = _ganzhi_month_dizhi(ganzhi_date.month)
-    return ganzhi_date.year, month_dizhi, query.solar_date
-
-  @staticmethod
-  def _check_query(query: object) -> None:
-    if not isinstance(query, (TransitYear, TransitMonth, TransitDate)):
-      raise TypeError(f'Expected TransitQuery, got {type(query)}')
-
-  def support(self, query: TransitQuery) -> bool:
-    '''
-    Return whether the query is within this chart's life and calendar range.
-    返回查询是否处于此命盘的人生时间线与历法支持范围内。
-    '''
-    self._check_query(query)
-    return self._resolved(query) is not None
-
-  def at(self, query: TransitQuery) -> TransitSet:
-    '''
-    Return all transits available at the requested precision. 返回查询精度下的全部可用流运。
-    '''
-    self._check_query(query)
-    resolved = self._resolved(query)
-    if resolved is None:
-      raise ValueError(f'Query not supported: {query}')
-
-    gz_year, gz_month, solar_date = resolved
+  def _transits(
+    self,
+    gz_year: int,
+    gz_month: Dizhi | None = None,
+    solar_date: date | None = None,
+  ) -> TransitSet:
     year_ganzhi: Final[Ganzhi] = ganzhi_of_year(gz_year)
     liuyue: Ganzhi | None = None
     if gz_month is not None:
@@ -100,6 +63,45 @@ class TransitChart:
       liuyue=liuyue,
       liuri=ganzhi_of_day(solar_date) if solar_date is not None else None,
     )
+
+  def at_year(self, gz_year: int) -> TransitSet | None:
+    '''Return transits for a Ganzhi-year coordinate, or `None` before birth. Dayun
+    lookup follows the chart's configured year-label view.
+    返回干支年坐标下的流运，出生前返回 `None`；大运按命盘所选年份标签视图解释。'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if gz_year < self._bazi_chart.bazi.ganzhi_year:
+      return None
+    return self._transits(gz_year)
+
+  def at_month(self, gz_year: int, gz_month: Dizhi) -> TransitSet | None:
+    '''Return transits for a Ganzhi-month coordinate, or `None` before birth.
+    返回干支月坐标下的流运，出生前返回 `None`。'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if not isinstance(gz_month, Dizhi):
+      raise TypeError(f'Expected Dizhi, got {type(gz_month)}')
+
+    bazi = self._bazi_chart.bazi
+    query_key = (gz_year, _ganzhi_month_offset(gz_month))
+    birth_key = (bazi.ganzhi_year, _ganzhi_month_offset(bazi.month_commander))
+    if query_key < birth_key:
+      return None
+    return self._transits(gz_year, gz_month)
+
+  def at_date(self, solar_date: date) -> TransitSet | None:
+    '''Return transits for a solar date, or `None` before birth or outside the calendar
+    range. 返回公历日期下的流运，出生前或历法范围外返回 `None`。'''
+    if type(solar_date) is not date:
+      raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
+    if solar_date < self._bazi_chart.bazi.solar_date:
+      return None
+    try:
+      ganzhi_date = self._utils.to_ganzhi(solar_date)
+    except ValueError:
+      return None
+    month_dizhi = _ganzhi_month_dizhi(ganzhi_date.month)
+    return self._transits(ganzhi_date.year, month_dizhi, solar_date)
 
 
 流年大运 = TransitChart

@@ -10,7 +10,7 @@ from src.bazi_chart import BaziChart
 from src.defines import Ganzhi, Dizhi
 from src.school import BaziConfig
 from src.transit_chart import TransitChart, 流年大运
-from src.transits import TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
+from src.transits import TransitKind, TransitSet
 from src.utils.bazi_utils import ganzhi_of_day
 
 
@@ -31,64 +31,67 @@ def test_basic_negative() -> None:
     TransitChart(BaziChart.random()).bazi_chart = BaziChart.random() # type: ignore
 
 
-def test_support_boundaries() -> None:
+def test_query_boundaries() -> None:
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
 
-  assert not chart.support(TransitYear(1983))
-  assert chart.support(TransitYear(1984))
+  assert chart.at_year(1983) is None
+  assert chart.at_year(1984) is not None
 
-  assert not chart.support(TransitMonth(1984, Dizhi.寅))
-  assert chart.support(TransitMonth(1984, Dizhi.卯))
-  assert chart.support(TransitMonth(1985, Dizhi.寅))
+  assert chart.at_month(1984, Dizhi.寅) is None
+  assert chart.at_month(1984, Dizhi.卯) is not None
+  assert chart.at_month(1985, Dizhi.寅) is not None
 
-  assert not chart.support(TransitDate(date(1984, 3, 31)))
-  assert chart.support(TransitDate(date(1984, 4, 1)))
+  assert chart.at_date(date(1984, 3, 31)) is None
+  assert chart.at_date(date(1984, 4, 1)) is not None
   # The lower date is also pre-birth; the upper date is one day past the solar range.
-  assert not chart.support(TransitDate(date(1901, 2, 18)))
-  assert not chart.support(TransitDate(date(2100, 1, 1)))
+  assert chart.at_date(date(1901, 2, 18)) is None
+  assert chart.at_date(date(2100, 1, 1)) is None
 
 
-def test_support_uses_precision_attributed_birth_boundary() -> None:
+def test_queries_use_precision_attributed_birth_boundary() -> None:
   config = BaziConfig.from_values(precision='hour')
   chart = TransitChart(BaziChart(Bazi.create('2009-02-03 23:30', 'female', config)))
   assert chart.bazi_chart.bazi.ganzhi_date.year == 2008
   assert chart.bazi_chart.bazi.ganzhi_year == 2009
 
-  assert not chart.support(TransitYear(2008))
-  assert chart.support(TransitYear(2009))
-  assert not chart.support(TransitMonth(2008, Dizhi.丑))
-  assert chart.support(TransitMonth(2009, Dizhi.寅))
+  assert chart.at_year(2008) is None
+  assert chart.at_year(2009) is not None
+  assert chart.at_month(2008, Dizhi.丑) is None
+  assert chart.at_month(2009, Dizhi.寅) is not None
 
 
-def test_support_negative() -> None:
+def test_query_types() -> None:
   chart = TransitChart(BaziChart.random())
   with pytest.raises(TypeError):
-    chart.support(2024) # type: ignore
+    chart.at_year('2024') # type: ignore
   with pytest.raises(TypeError):
-    chart.at(date(2024, 1, 1)) # type: ignore
-
-  unsupported = TransitYear(chart.bazi_chart.bazi.ganzhi_year - 1)
-  with pytest.raises(ValueError):
-    chart.at(unsupported)
+    chart.at_month('2024', Dizhi.寅) # type: ignore
+  with pytest.raises(TypeError):
+    chart.at_month(2024, '寅') # type: ignore
+  with pytest.raises(TypeError):
+    chart.at_date('2024-01-01') # type: ignore
+  with pytest.raises(TypeError):
+    chart.at_date(datetime(2024, 1, 1))
 
 
 def test_year_transits() -> None:
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
 
-  birth_year = chart.at(TransitYear(1984))
+  birth_year = chart.at_year(1984)
   assert birth_year == TransitSet(
     xiaoyun=Ganzhi.from_str('癸未'),
     liunian=Ganzhi.from_str('甲子'),
   )
 
-  first_dayun_year = chart.at(TransitYear(1985))
+  first_dayun_year = chart.at_year(1985)
   assert first_dayun_year == TransitSet(
     xiaoyun=Ganzhi.from_str('甲申'),
     dayun=Ganzhi.from_str('戊辰'),
     liunian=Ganzhi.from_str('乙丑'),
   )
 
-  later = chart.at(TransitYear(2024))
+  later = chart.at_year(2024)
+  assert later is not None
   assert TransitKind.XIAOYUN not in later
   assert later.dayun == Ganzhi.from_str('辛未')
   assert later.liunian == Ganzhi.from_str('甲辰')
@@ -96,13 +99,14 @@ def test_year_transits() -> None:
 
 def test_month_transits() -> None:
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
-  assert chart.at(TransitMonth(1984, Dizhi.卯)) == TransitSet(
+  assert chart.at_month(1984, Dizhi.卯) == TransitSet(
     xiaoyun=Ganzhi.from_str('癸未'),
     liunian=Ganzhi.from_str('甲子'),
     liuyue=Ganzhi.from_str('丁卯'),
   )
 
-  transits = chart.at(TransitMonth(2024, Dizhi.寅))
+  transits = chart.at_month(2024, Dizhi.寅)
+  assert transits is not None
   assert transits == TransitSet(
     dayun=Ganzhi.from_str('辛未'),
     liunian=Ganzhi.from_str('甲辰'),
@@ -116,7 +120,8 @@ def test_date_transits(backend: str) -> None:
   config = BaziConfig.from_values(backend=backend)
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male', config)))
   solar_date = date(2024, 2, 4)
-  transits = chart.at(TransitDate(solar_date))
+  transits = chart.at_date(solar_date)
+  assert transits is not None
 
   assert transits == TransitSet(
     dayun=Ganzhi.from_str('辛未'),
@@ -139,7 +144,8 @@ def test_date_uses_day_level_calendar_coordinates() -> None:
 
   # The date query has no time-of-day. On the birth date it therefore uses the old,
   # day-level Ganzhi year/month even though the HOUR natal chart has crossed 立春.
-  transits = chart.at(TransitDate(date(2009, 2, 3)))
+  transits = chart.at_date(date(2009, 2, 3))
+  assert transits is not None
   assert transits.liunian == Ganzhi.from_str('戊子')
   assert transits.liuyue == Ganzhi.from_str('乙丑')
   assert transits.liuri == ganzhi_of_day(date(2009, 2, 3))
@@ -153,6 +159,9 @@ def test_date_dayun_follows_the_configured_year_labels() -> None:
     BaziConfig.from_values(dayun_year_rule='fixed_decade'),
   )))
 
-  query = TransitDate(date(1929, 6, 1))
-  assert projected.at(query).dayun == Ganzhi.from_str('辛巳')
-  assert fixed.at(query).dayun == Ganzhi.from_str('壬午')
+  projected_transits = projected.at_date(date(1929, 6, 1))
+  fixed_transits = fixed.at_date(date(1929, 6, 1))
+  assert projected_transits is not None
+  assert fixed_transits is not None
+  assert projected_transits.dayun == Ganzhi.from_str('辛巳')
+  assert fixed_transits.dayun == Ganzhi.from_str('壬午')

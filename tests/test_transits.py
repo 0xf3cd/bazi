@@ -3,12 +3,12 @@
 
 import itertools
 import random
-from datetime import date, datetime
+from datetime import datetime
 
 import pytest
 
 from src.data_types import DayunTuple
-from src.defines import Ganzhi, Dizhi
+from src.defines import Ganzhi
 
 from src.bazi import Bazi
 from src.bazi_chart import BaziChart
@@ -16,11 +16,8 @@ from src.school import BaziConfig
 from src.transits import (
   DayunDatabase,
   TransitDatabase,
-  TransitDate,
   TransitKind,
-  TransitMonth,
   TransitSet,
-  TransitYear,
 )
 
 
@@ -56,32 +53,6 @@ def test_dayun_database() -> None:
   years = list(expected.keys())
   for year in random.sample(years, 100):
     assert db[year] == expected[year]
-
-
-def test_query_shapes() -> None:
-  year = TransitYear(1990)
-  month = TransitMonth(1990, Dizhi.寅)
-  day = TransitDate(date(1990, 5, 20))
-
-  assert year.gz_year == 1990
-  assert month == TransitMonth(1990, Dizhi.寅)
-  assert day == TransitDate(date(1990, 5, 20))
-  assert len({year, TransitYear(1990)}) == 1
-  assert len({month, TransitMonth(1990, Dizhi.寅)}) == 1
-  assert len({day, TransitDate(date(1990, 5, 20))}) == 1
-
-
-def test_query_shapes_negative() -> None:
-  with pytest.raises(TypeError):
-    TransitYear('1990') # type: ignore
-  with pytest.raises(TypeError):
-    TransitMonth('1990', Dizhi.寅) # type: ignore
-  with pytest.raises(TypeError):
-    TransitMonth(1990, 3) # type: ignore
-  with pytest.raises(TypeError):
-    TransitDate('1990-05-20') # type: ignore
-  with pytest.raises(TypeError):
-    TransitDate(datetime(1990, 5, 20, 12, 0))
 
 
 def test_transit_set() -> None:
