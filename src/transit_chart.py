@@ -92,7 +92,6 @@ class TransitChart:
   def at_date(self, solar_date: date) -> TransitSet | None:
     '''Return transits for a solar date, or `None` before birth or outside the calendar
     range. 返回公历日期下的流运，出生前或历法范围外返回 `None`。'''
-    # `datetime` is a `date` subclass but belongs to the moment-granularity API.
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
     if solar_date < self._bazi_chart.bazi.solar_date:
