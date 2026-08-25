@@ -150,4 +150,7 @@ comments (tests/ is overwhelmingly half-width).
   house style. DON'T run `ruff format` or re-indent (2-space indent is charter).
 - DON'T add deps casually; keep Requirements.txt lean.
 - Anonymise any real chart in examples (化名, birthplace → province).
+- DON'T quote paths, hostnames, or tooling from outside this repository in anything public
+  (comments, reviews, commit messages, PR text) — a path appearing in a file here does not
+  make it publishable, and that includes files you were handed rather than wrote.
 - Match the neighbouring file's texture; internal consistency > external "best practice".
