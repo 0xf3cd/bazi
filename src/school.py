@@ -2,7 +2,7 @@
 
 '''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
 school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem`),
-and `BaziPrecision`.'''
+and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
 from dataclasses import dataclass
@@ -73,6 +73,42 @@ class BaziPrecision(Enum):
     else:
       assert self is self.MINUTE
       return 'minute'
+
+
+class DayunYearRule(Enum):
+  '''
+  The rule projecting each precise Dayun (大运) boundary to a year label.
+  把每个精确大运边界投影为年份标签的规则。
+
+  - JIE_PROJECTED: label each boundary by the Ganzhi year containing it, as determined by
+    its owning Jie;
+    the first label is floored at the chart's precision-attributed birth year.
+    逐个边界按所属节投影干支年；首步标签不早于命盘按精度归属的出生年。
+  - FIXED_DECADE: keep a traditional ten-year table from the shared first label. Later
+    labels name table positions, not necessarily the Ganzhi years containing the boundaries.
+    从共享首标签起按固定十年排表；后续标签表示年表位次，不保证是边界所在干支年。
+  '''
+  JIE_PROJECTED = 'jie_projected'
+  FIXED_DECADE  = 'fixed_decade'
+
+  def __str__(self) -> str:
+    return self.value
+
+  @staticmethod
+  def from_str(s: str) -> 'DayunYearRule':
+    '''
+    Parse a `DayunYearRule` from its member name or value (case insensitive).
+    从成员名或值解析 `DayunYearRule`（大小写不敏感）。
+
+    Args:
+    - s: (str) The string to parse. Raises `ValueError` if it matches no rule.
+    '''
+    if not isinstance(s, str):
+      raise TypeError(f'Expected str, got {type(s)}')
+    for member in DayunYearRule:
+      if s.lower() in (member.name.lower(), member.value.lower()):
+        return member
+    raise ValueError(f'Unsupported Dayun year rule: {s}')
 
 
 class DayRollover(Enum):
@@ -176,15 +212,19 @@ DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 class BaziConfig:
   '''
   The chart-level configuration of a `Bazi`: the knobs steering chart computation
-  (`precision` / `backend`) plus the school profile (流派档案, which evaluation-time
-  lookups read), carried as one immutable value. A `Bazi` stores its `BaziConfig`, and the
-  config feeds `__eq__` / `__hash__` / JSON as a unit (same precedent as `backend`).
-  命盘级配置：排盘算路旋钮（`precision` / `backend`）加流派档案（评估期查法读取），
-  聚合为一个不可变值。`Bazi` 持有它，相等性 / 哈希 / JSON 都以它为单位进出（同 `backend` 先例）。
+  (`precision` / `backend`), the default Dayun year projection, and the school profile
+  (流派档案, which evaluation-time lookups read), carried as one immutable value. A `Bazi`
+  stores its `BaziConfig`, and the config feeds `__eq__` / `__hash__` / JSON as a unit
+  (same precedent as `backend`). Transit projection is therefore part of chart identity
+  even though it does not change the four pillars or the physical Dayun timeline.
+  命盘级配置：排盘算路旋钮（`precision` / `backend`）、默认大运年份投影与流派档案（评估期查法
+  读取），聚合为一个不可变值。`Bazi` 持有它，相等性 / 哈希 / JSON 都以它为单位进出；流运
+  投影因此属于命盘身份，即使它不改变四柱与大运物理时刻线。
 
   - precision: (BaziPrecision) The precision of the birth time / 出生时间精度。
   - backend: (CalendarBackend) The calendar backend for all calendar conversions / 历法后端。
   - school: (BaziSchool) The school profile; defaults to `DEFAULT_SCHOOL`. / 流派档案，默认 `DEFAULT_SCHOOL`。
+  - dayun_year_rule: (DayunYearRule) The default Dayun year projection. / 默认大运年份投影。
 
   Gender is deliberately NOT here: it does not affect the four pillars' computation
   channel this config aggregates, and stays a `Bazi.create` argument (its string coercion
@@ -194,9 +234,10 @@ class BaziConfig:
   The constructor takes the strict types only; string coercion lives in `from_values`.
   构造只收严格枚举类型；字符串解析收在 `from_values`。
   '''
-  precision: BaziPrecision    = BaziPrecision.DAY
-  backend:   CalendarBackend  = CalendarBackend.CELESTIAL
-  school:    BaziSchool       = DEFAULT_SCHOOL
+  precision:        BaziPrecision   = BaziPrecision.DAY
+  backend:          CalendarBackend = CalendarBackend.CELESTIAL
+  school:           BaziSchool      = DEFAULT_SCHOOL
+  dayun_year_rule:  DayunYearRule   = DayunYearRule.JIE_PROJECTED
 
   def __post_init__(self) -> None:
     # Type check at runtime; no coercion here (same shape as `CalendarDate`).
@@ -206,11 +247,14 @@ class BaziConfig:
       raise TypeError(f'Expected CalendarBackend, got {type(self.backend)}')
     if not isinstance(self.school, BaziSchool):
       raise TypeError(f'Expected BaziSchool, got {type(self.school)}')
+    if not isinstance(self.dayun_year_rule, DayunYearRule):
+      raise TypeError(f'Expected DayunYearRule, got {type(self.dayun_year_rule)}')
 
   @classmethod
   def from_values(cls, precision: BaziPrecision | str = BaziPrecision.DAY,
                   backend: CalendarBackend | str = CalendarBackend.CELESTIAL,
-                  school: BaziSchool = DEFAULT_SCHOOL) -> 'BaziConfig':
+                  school: BaziSchool = DEFAULT_SCHOOL,
+                  dayun_year_rule: DayunYearRule | str = DayunYearRule.JIE_PROJECTED) -> 'BaziConfig':
     '''
     Build a `BaziConfig`, coercing string spellings to the enums -- the same acceptance
     face `Bazi.create` historically parsed (one alias table, one rejection face).
@@ -226,6 +270,10 @@ class BaziConfig:
         Anything else raises `ValueError`.
     - school: (BaziSchool) The school profile; no string spelling. A wrong type raises
       `TypeError` from the constructor's runtime gate.
+    - dayun_year_rule: (DayunYearRule | str) The Dayun year projection.
+      - Supported string values: the member names and values of `DayunYearRule`
+        (e.g. "FIXED_DECADE"/"fixed_decade", case insensitive), resolved by
+        `DayunYearRule.from_str`. Anything else raises `ValueError`.
 
     Return: (BaziConfig) The coerced, frozen config.
     '''
@@ -234,6 +282,8 @@ class BaziConfig:
       raise TypeError(f'Expected BaziPrecision or str, got {type(precision)}')
     if not isinstance(backend, (CalendarBackend, str)):
       raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
+    if not isinstance(dayun_year_rule, (DayunYearRule, str)):
+      raise TypeError(f'Expected DayunYearRule or str, got {type(dayun_year_rule)}')
 
     _precision: BaziPrecision
     if isinstance(precision, BaziPrecision):
@@ -256,12 +306,25 @@ class BaziConfig:
       assert isinstance(backend, str)
       _backend = CalendarBackend.from_str(backend)
 
-    return cls(precision=_precision, backend=_backend, school=school)
+    _dayun_year_rule: DayunYearRule
+    if isinstance(dayun_year_rule, DayunYearRule):
+      _dayun_year_rule = dayun_year_rule
+    else:
+      assert isinstance(dayun_year_rule, str)
+      _dayun_year_rule = DayunYearRule.from_str(dayun_year_rule)
+
+    return cls(
+      precision=_precision,
+      backend=_backend,
+      school=school,
+      dayun_year_rule=_dayun_year_rule,
+    )
 
 
-'''The default config: DAY precision, the celestial backend, and `DEFAULT_SCHOOL` -- the
-constructor defaults are the canonical definition; `from_values`'s signature defaults are a
-second spelling of the same, pinned equivalent by `test_defaults_are_defined_once`.
-默认配置：日级精度、celestial 后端、默认流派——构造默认值是正典；`from_values` 的签名默认值是
-第二处拼写，由 `test_defaults_are_defined_once` 钉住等价。'''
+'''The default config: DAY precision, the celestial backend, `DEFAULT_SCHOOL`, and
+JIE_PROJECTED Dayun years -- the constructor defaults are the canonical definition;
+`from_values`'s signature defaults are a second spelling of the same, pinned equivalent by
+`test_defaults_are_defined_once`.
+默认配置：日级精度、celestial 后端、默认流派、逐节投影大运年份——构造默认值是正典；
+`from_values` 的签名默认值是第二处拼写，由 `test_defaults_are_defined_once` 钉住等价。'''
 DEFAULT_CONFIG: Final[BaziConfig] = BaziConfig()

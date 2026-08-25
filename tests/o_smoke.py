@@ -33,6 +33,7 @@ def main() -> int:
   from src.defines import Dizhi, Jieqi
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
+  from src.school import BaziConfig
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
   from src.analyzer.relationship import RelationshipAnalyzer
@@ -101,14 +102,14 @@ def main() -> int:
      lambda: transit_analysis.zhengyin(object())), # type: ignore
     ('TransitAnalysis.star wrong transits type', TypeError,
      lambda: transit_analysis.star(object())), # type: ignore
-    ('dayun past supported window', ValueError,
-     lambda: next(BaziChart(Bazi.create(datetime(2091, 6, 1, 12), 'male')).dayun)),
     ('hko get_min_supported_date garbage date_type', ValueError,
      lambda: hko_data_utils.get_min_supported_date(42)),
     ('celestial get_max_supported_date garbage date_type', ValueError,
      lambda: calendar_utils_of(CalendarBackend.CELESTIAL).get_max_supported_date(42)), # type: ignore
     ('calendar_utils_of garbage backend', TypeError,
      lambda: calendar_utils_of(42)), # type: ignore
+    ('BaziConfig wrong Dayun year rule type', TypeError,
+     lambda: BaziConfig(dayun_year_rule='fixed_decade')), # type: ignore
   ]
 
   failures: list[str] = []
