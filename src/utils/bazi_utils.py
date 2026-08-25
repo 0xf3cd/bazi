@@ -10,7 +10,8 @@ from ..rules import BaziRules
 from ..school import DayRollover
 
 
-'''The 1-based Ganzhi month opened by each Jie: 立春 -> 1 (寅), ..., 小寒 -> 12 (丑).'''
+'''The 1-based Ganzhi month opened by each Jie: 立春 -> 1 (寅), ..., 小寒 -> 12 (丑). /
+每个节到其所开干支月的映射：立春 -> 1 (寅)，……，小寒 -> 12 (丑)。'''
 _GANZHI_MONTH_OF_JIE: Final[dict[Jieqi, int]] = {
   jie : month
   for month, jie in enumerate(Jieqi.as_list(ganzhi_year=True)[::2], start=1)

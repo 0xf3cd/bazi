@@ -93,10 +93,12 @@ class TransitChart:
     bazi = self._bazi_chart.bazi
     query_key = (gz_year, _ganzhi_month_offset(gz_month))
     birth_key = (bazi.ganzhi_year, _ganzhi_month_offset(bazi.month_commander))
+
     first, last = self._utils.supported_jie_boundaries()
     first_year, first_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(first))
+    last_supported = last - timedelta(microseconds=1)
     last_year, last_month = _ganzhi_year_month_of_jie(
-      self._utils.next_jie(last - timedelta(microseconds=1))
+      self._utils.next_jie(last_supported)
     )
     supported_first_key = (first_year, first_month - 1)
     supported_last_key = (last_year, last_month - 1)

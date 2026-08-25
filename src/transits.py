@@ -143,6 +143,7 @@ class TransitDatabase:
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
+    # The calendar-only fallback cannot use BaziChart.xiaoyun; that property requires a first Dayun label.
     xiaoyuns = () if len(self._dayuns) == 0 else chart.xiaoyun
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
       self._birth_ganzhi_year + age - 1 : gz
