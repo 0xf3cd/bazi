@@ -48,6 +48,7 @@ jobs:
             Note: The PR branch is already checked out in the current working directory.
 
             Use `gh pr comment` for top-level feedback only. Do not modify repository files, branches, commits, pull requests, or issues.
+            Never quote paths, hostnames, or tooling from outside this repository, even when a file in the repo mentions them.
 
           claude_args: |
             --model claude-sonnet-5
