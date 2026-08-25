@@ -13,7 +13,8 @@ from .calendar import (
 from .school import BaziPrecision, DayRollover, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
-  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year, _ganzhi_year_of_jie,
+  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
+  _ganzhi_year_of_jie, _ganzhi_month_dizhi,
 )
 
 
@@ -186,7 +187,7 @@ class Bazi:
     # The ganzhi month and the Month Dizhi (月令).
     self._ganzhi_month: Final[int] = ganzhi_month
     assert 1 <= self._ganzhi_month <= 12
-    self._month_dizhi: Final[Dizhi] = Dizhi.from_index((2 + self._ganzhi_month - 1) % 12)
+    self._month_dizhi: Final[Dizhi] = _ganzhi_month_dizhi(self._ganzhi_month)
 
     # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
     #

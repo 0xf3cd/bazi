@@ -54,6 +54,19 @@ def _ganzhi_year_of_jie(owning_jie: JieqiTime) -> int:
   return owning_jie.moment.year - (1 if owning_jie.jieqi is Jieqi.小寒 else 0)
 
 
+def _ganzhi_month_dizhi(ganzhi_month: int) -> Dizhi:
+  '''Return the Dizhi of a 1-based Ganzhi month. 返回 1-based 干支月序号对应的月支。'''
+  assert isinstance(ganzhi_month, int)
+  assert 1 <= ganzhi_month <= 12
+  return Dizhi.from_index((Dizhi.寅.index + ganzhi_month - 1) % 12)
+
+
+def _ganzhi_month_offset(month_dizhi: Dizhi) -> int:
+  '''Return the zero-based Ganzhi month offset starting at 寅. 返回从寅月起算的 0-based 干支月偏移。'''
+  assert isinstance(month_dizhi, Dizhi)
+  return (month_dizhi.index - Dizhi.寅.index) % 12
+
+
 def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
   '''
   Find out the Tiangan of the given month in the given year.
@@ -71,7 +84,7 @@ def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
   if not isinstance(month_dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(month_dizhi)}')
 
-  month_index: int = (month_dizhi.index - 2) % 12 # First month is "寅".
+  month_index: int = _ganzhi_month_offset(month_dizhi)
   first_month_tiangan: Tiangan = BaziRules.YEAR_TO_MONTH_TABLE[year_tiangan]
   month_tiangan_index: int = (first_month_tiangan.index + month_index) % 10
   return Tiangan.from_index(month_tiangan_index)
