@@ -12,6 +12,12 @@ from src.data_types import TraitTuple, HiddenTianganDict
 from src.utils import bazi_utils
 
 
+_GANZHI_MONTH_DIZHIS = (
+  Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.巳, Dizhi.午, Dizhi.未,
+  Dizhi.申, Dizhi.酉, Dizhi.戌, Dizhi.亥, Dizhi.子, Dizhi.丑,
+)
+
+
 def test_ganzhi_of_day_basic() -> None:
   # Basic
   d: date = date(2024, 3, 1)
@@ -65,6 +71,15 @@ def test_ganzhi_of_year() -> None:
             bazi_utils.ganzhi_of_year(random_ganzhi_year))
 
 
+def test_ganzhi_month_conversions() -> None:
+  for month, expected_dizhi in enumerate(_GANZHI_MONTH_DIZHIS, start=1):
+    assert bazi_utils._ganzhi_month_dizhi(month) is expected_dizhi
+    assert bazi_utils._ganzhi_month_offset(expected_dizhi) == month - 1
+    assert bazi_utils._ganzhi_month_dizhi(
+      bazi_utils._ganzhi_month_offset(expected_dizhi) + 1
+    ) is expected_dizhi
+
+
 def test_month_tiangan() -> None:
   # 五虎遁口诀(年上起月):甲己之年丙作首,乙庚之年戊为头,丙辛之年寻庚起,丁壬壬位顺行流,戊癸之年甲寅求。
   # Hand transcription of the mnemonic (an oracle independent of any table in this repo):
@@ -84,8 +99,7 @@ def test_month_tiangan() -> None:
 
   for year_tg, month_row in wuhudun.items():
     assert len(month_row) == 12
-    for idx, expected_tg in enumerate(month_row):
-      month_dz: Dizhi = Dizhi.from_index((idx + 2) % 12) # First month is "寅".
+    for month_dz, expected_tg in zip(_GANZHI_MONTH_DIZHIS, month_row, strict=True):
       assert bazi_utils.month_tiangan(year_tg, month_dz) == Tiangan(expected_tg)
 
 

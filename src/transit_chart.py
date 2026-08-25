@@ -7,17 +7,11 @@ from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
 from .calendar import calendar_utils_of
 from .calendar.utils_protocol import CalendarUtilsProtocol
-from .utils.bazi_utils import ganzhi_of_day, ganzhi_of_year, month_tiangan
+from .utils.bazi_utils import (
+  ganzhi_of_day, ganzhi_of_year, month_tiangan,
+  _ganzhi_month_dizhi, _ganzhi_month_offset,
+)
 from .transits import TransitDate, TransitMonth, TransitQuery, TransitSet, TransitYear, TransitDatabase
-
-
-def _zero_based_month_index(month_dizhi: Dizhi) -> int:
-  return (month_dizhi.index - Dizhi.寅.index) % 12
-
-
-def _one_based_month_to_dizhi(month: int) -> Dizhi:
-  assert 1 <= month <= 12
-  return Dizhi.from_index((Dizhi.寅.index + month - 1) % 12)
 
 
 class TransitChart:
@@ -57,8 +51,8 @@ class TransitChart:
       return (query.gz_year, None, None) if query.gz_year >= bazi.ganzhi_year else None
 
     if isinstance(query, TransitMonth):
-      query_key = (query.gz_year, _zero_based_month_index(query.gz_month))
-      birth_key = (bazi.ganzhi_year, _zero_based_month_index(bazi.month_commander))
+      query_key = (query.gz_year, _ganzhi_month_offset(query.gz_month))
+      birth_key = (bazi.ganzhi_year, _ganzhi_month_offset(bazi.month_commander))
       return (query.gz_year, query.gz_month, None) if query_key >= birth_key else None
 
     assert isinstance(query, TransitDate)
@@ -68,7 +62,7 @@ class TransitChart:
       ganzhi_date = self._utils.to_ganzhi(query.solar_date)
     except ValueError:
       return None
-    month_dizhi = _one_based_month_to_dizhi(ganzhi_date.month)
+    month_dizhi = _ganzhi_month_dizhi(ganzhi_date.month)
     return ganzhi_date.year, month_dizhi, query.solar_date
 
   @staticmethod
