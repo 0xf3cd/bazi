@@ -8,12 +8,18 @@ from datetime import datetime
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitYear
+from src.transits import TransitKind, TransitSet
 from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
 from src.utils import tiangan_utils, dizhi_utils
 
 
 pytestmark = pytest.mark.integration
+
+
+def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+  transits = transit_chart.at_year(gz_year)
+  assert transits is not None
+  return transits
 
 
 # Integration tests are mainly aiming to test the correctness of `tiangan_utils` and `dizhi_utils` in transit context.
@@ -81,7 +87,7 @@ def test_case1() -> None:
   }, dizhi_utils.discover(chart.bazi.four_dizhis))
 
   # 1993 dayun and liunian - transits only
-  ganzhis = transit_chart.at(TransitYear(1993)).select(
+  ganzhis = _at_year(transit_chart, 1993).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -95,7 +101,7 @@ def test_case1() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2024 dayun and liunian - between transits and at-birth
-  ganzhis = transit_chart.at(TransitYear(2024)).select(
+  ganzhis = _at_year(transit_chart, 2024).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -114,7 +120,7 @@ def test_case1() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2051 dayun and liunian - transits only
-  ganzhis = transit_chart.at(TransitYear(2051)).select(
+  ganzhis = _at_year(transit_chart, 2051).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -125,7 +131,7 @@ def test_case1() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2051 dayun and liunian - between transits and at-birth
-  ganzhis = transit_chart.at(TransitYear(2051)).select(
+  ganzhis = _at_year(transit_chart, 2051).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -176,7 +182,7 @@ def test_case2() -> None:
 
   # 2024 xiaoyun and liunian - between transits and at-birth
   # 测测's Xiaoyun result is kinda buggy. So use 问真八字's Xiaoyun result here.
-  ganzhis = transit_chart.at(TransitYear(2024)).select(
+  ganzhis = _at_year(transit_chart, 2024).select(
     TransitKind.XIAOYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -193,7 +199,7 @@ def test_case2() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2052 dayun and liunian - transits only
-  ganzhis = transit_chart.at(TransitYear(2052)).select(
+  ganzhis = _at_year(transit_chart, 2052).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -208,7 +214,7 @@ def test_case2() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2052 dayun and liunian - between transits and at-birth
-  ganzhis = transit_chart.at(TransitYear(2052)).select(
+  ganzhis = _at_year(transit_chart, 2052).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -226,7 +232,7 @@ def test_case2() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
   # 2062 dayun and liunian - transits only
-  ganzhis = transit_chart.at(TransitYear(2062)).select(
+  ganzhis = _at_year(transit_chart, 2062).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis
@@ -236,7 +242,7 @@ def test_case2() -> None:
   }, dizhi_utils.discover(tuple(gz.dizhi for gz in ganzhis)))
 
   # 2062 dayun and liunian - between transits and at-birth
-  ganzhis = transit_chart.at(TransitYear(2062)).select(
+  ganzhis = _at_year(transit_chart, 2062).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   ).ganzhis

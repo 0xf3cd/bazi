@@ -4,7 +4,7 @@ from run_demo import get_basic_info, colored_str
 
 from src.bazi_chart import BaziChart
 from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitYear
+from src.transits import TransitKind
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
 
 
@@ -51,7 +51,8 @@ if __name__ == '__main__':
   start_gz_year = chart.bazi.ganzhi_year + 20
   print(f'流年神煞（{start_gz_year} 起十年）：')
   for gz_year in range(start_gz_year, start_gz_year + 10):
-    year_transits = transit_chart.at(TransitYear(gz_year))
+    year_transits = transit_chart.at_year(gz_year)
+    assert year_transits is not None
     year_strs = shensha_strs(transits_analysis.shensha(
       year_transits.select(TransitKind.LIUNIAN)
     ))
