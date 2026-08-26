@@ -42,12 +42,16 @@ def test_school_enums_basic() -> None:
   assert KeyStem.DAY_MASTER.value == 0  # 日干, the 《三命通会》 reading, the default.
   assert KeyStem.YEAR_MASTER.value == 1 # 年干.
 
+  assert len(DizhiRules.GongheDef) == 2
+  assert len(DizhiRules.GongDef) == 4
+
 
 def test_school_defaults() -> None:
   assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
   assert BaziSchool().hongyan_key is KeyStem.DAY_MASTER
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
+  assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
@@ -201,6 +205,12 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     params = inspect.signature(fn).parameters
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
+  for positioned_fn in (dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,
+                        dizhi_utils.discover_mutual_ganzhis):
+    params = inspect.signature(positioned_fn).parameters
+    assert BaziSchool().anhe_def is params['anhe_def'].default
+    assert BaziSchool().xing_def is params['xing_def'].default
+    assert BaziSchool().gong_def is params['gong_def'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -241,6 +251,7 @@ def test_eq_hash_include_school() -> None:
     BaziSchool(hongyan_key=KeyStem.YEAR_MASTER),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
+    BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
   ):
     variant_bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
     assert default_bazi != variant_bazi
@@ -267,7 +278,7 @@ def test_json_roundtrip_default_school() -> None:
   j = chart.json
   assert j['school'] == {
     'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER',
-    'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE',
+    'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -281,6 +292,7 @@ def test_json_roundtrip_default_school() -> None:
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
+                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                   ),
                 ))
   )
@@ -291,20 +303,21 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  # All four knobs flipped, so each field proves it roundtrips (issue #69).
-  # 四旋钮全部取非默认值——每个字段各自证明它能往返。
+  # All five knobs flipped, so each field proves it roundtrips (issue #69).
+  # 五个旋钮全部取非默认值——每个字段各自证明它能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_key=KeyStem.YEAR_MASTER,
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
   j = chart.json
   assert j['school'] == {
     'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER',
-    'anhe_def': 'MANGPAI', 'xing_def': 'STRICT',
+    'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -318,6 +331,7 @@ def test_json_roundtrip_non_default_school() -> None:
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
+                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                   ),
                 ))
   )

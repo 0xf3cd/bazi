@@ -101,6 +101,7 @@ class BaziJson:
     hongyan_key: str
     anhe_def: str
     xing_def: str
+    gong_def: str
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str
@@ -539,6 +540,7 @@ class BaziChart:
         'hongyan_key': self._bazi.config.school.hongyan_key.name,
         'anhe_def': self._bazi.config.school.anhe_def.name,
         'xing_def': self._bazi.config.school.xing_def.name,
+        'gong_def': self._bazi.config.school.gong_def.name,
       },
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),

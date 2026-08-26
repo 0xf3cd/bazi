@@ -253,6 +253,43 @@ def _dizhi_ke(dizhi_traits: frozendict[Dizhi, TraitTuple]) -> frozenset[tuple[Di
 class DizhiRules:
   '''Rules for Dizhi relations / 地支关系'''
 
+  class GongheDef(Enum):
+    '''The structural scope of 拱合. `NARROW` only accepts a 三合 pair missing its
+    middle branch; `WIDE` accepts any two branches and returns the third. 狭义拱合只收
+    三合缺中神；广义拱合收三合任意两支并拱出第三支。
+
+    Sources / 出处:
+    - Narrow: https://services.shen88.cn/bazisuanming/pc-74297.html
+    - Wide: https://www.sohu.com/a/471337600_310486
+    '''
+    NARROW = 0
+    WIDE   = 1
+
+  class GongDef(Enum):
+    '''Source-backed profiles for the contextual conditions of 拱合 / 拱会.
+    拱合、拱会成立条件的来源档案；只列有出处的组合，不把分歧轴任意拼接。
+
+    - SAME_STEM_NARROW: adjacent participants share one Tiangan; narrow 拱合 plus 拱会.
+      相邻两柱同干；狭义拱合并收拱会。默认，独立来源最多。
+    - SAME_STEM_WIDE: the same Tiangan condition with wide 拱合 plus 拱会.
+      两柱同干；广义拱合并收拱会。
+    - TRANSFORMING_NARROW: the query scope exposes a Tiangan of the formed Wuxing;
+      narrow 拱合 plus 拱会. 查询范围透出化神；狭义拱合并收拱会。
+    - LU_NARROW: the query scope exposes 乙 / 丁 / 辛 / 癸 for the formed Wuxing;
+      narrow 拱合 only. Its source does not extend the rule to 拱会.
+      查询范围见所拱五行的乙、丁、辛、癸禄字；只收狭义拱合，来源未把本条扩到拱会。
+
+    Sources / 出处:
+    - Same stem, wide scope: https://www.sohu.com/a/471337600_310486
+    - Transforming Tiangan: https://www.suanzhun.net/article/2395.html
+    - Lu Tiangan: https://services.shen88.cn/bazisuanming/pc-74297.html
+    - 拱会 / 夹 terminology: https://www.sohu.com/a/805277582_120167645
+    '''
+    SAME_STEM_NARROW    = 0
+    SAME_STEM_WIDE      = 1
+    TRANSFORMING_NARROW = 2
+    LU_NARROW           = 3
+
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
@@ -262,6 +299,15 @@ class DizhiRules:
     frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)) : Wuxing.火,
     frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)) : Wuxing.金,
     frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
+  })
+
+  # 三会缺中神。部分现代来源称「拱会」，盲派、梁湘润系称「夹」；机械结构相同，
+  # 本库按 `DizhiRelation.拱会` 这一已选公开名称报告，术语分歧留在知识层。
+  DIZHI_GONGHUI: Final[frozendict[frozenset[Dizhi], Dizhi]] = frozendict({
+    frozenset((Dizhi.寅, Dizhi.辰)) : Dizhi.卯,
+    frozenset((Dizhi.巳, Dizhi.未)) : Dizhi.午,
+    frozenset((Dizhi.申, Dizhi.戌)) : Dizhi.酉,
+    frozenset((Dizhi.亥, Dizhi.丑)) : Dizhi.子,
   })
 
   # The table is used to query the LIUHE (六合) relation across all Dizhis.
@@ -372,6 +418,39 @@ class DizhiRules:
     frozenset((Dizhi.子, Dizhi.辰)) : Wuxing.水,
     frozenset((Dizhi.寅, Dizhi.午)) : Wuxing.火,
     frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
+  })
+
+  # 拱合返回所拱之支，而不是化五行。狭义只收缺中神；广义收三合任意两支。
+  DIZHI_GONGHE: Final[frozendict[GongheDef, frozendict[frozenset[Dizhi], Dizhi]]] = frozendict({
+    GongheDef.NARROW : frozendict({
+      frozenset((Dizhi.巳, Dizhi.丑)) : Dizhi.酉,
+      frozenset((Dizhi.亥, Dizhi.未)) : Dizhi.卯,
+      frozenset((Dizhi.申, Dizhi.辰)) : Dizhi.子,
+      frozenset((Dizhi.寅, Dizhi.戌)) : Dizhi.午,
+    }),
+    GongheDef.WIDE : frozendict({
+      frozenset((Dizhi.巳, Dizhi.丑)) : Dizhi.酉,
+      frozenset((Dizhi.巳, Dizhi.酉)) : Dizhi.丑,
+      frozenset((Dizhi.酉, Dizhi.丑)) : Dizhi.巳,
+      frozenset((Dizhi.亥, Dizhi.未)) : Dizhi.卯,
+      frozenset((Dizhi.亥, Dizhi.卯)) : Dizhi.未,
+      frozenset((Dizhi.卯, Dizhi.未)) : Dizhi.亥,
+      frozenset((Dizhi.申, Dizhi.辰)) : Dizhi.子,
+      frozenset((Dizhi.申, Dizhi.子)) : Dizhi.辰,
+      frozenset((Dizhi.子, Dizhi.辰)) : Dizhi.申,
+      frozenset((Dizhi.寅, Dizhi.戌)) : Dizhi.午,
+      frozenset((Dizhi.寅, Dizhi.午)) : Dizhi.戌,
+      frozenset((Dizhi.午, Dizhi.戌)) : Dizhi.寅,
+    }),
+  })
+
+  # The Yin Tiangan used by the 见禄字 profile for each non-earth formation.
+  # 见禄字口径按所拱木火金水分别取乙丁辛癸；三合、三会无土局。
+  DIZHI_GONG_LU_TIANGAN: Final[frozendict[Wuxing, Tiangan]] = frozendict({
+    Wuxing.木 : Tiangan.乙,
+    Wuxing.火 : Tiangan.丁,
+    Wuxing.金 : Tiangan.辛,
+    Wuxing.水 : Tiangan.癸,
   })
 
   class XingDef(Enum):

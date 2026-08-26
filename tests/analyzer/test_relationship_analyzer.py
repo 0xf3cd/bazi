@@ -7,16 +7,36 @@ import ast
 import inspect
 import random
 import itertools
+from datetime import datetime
+from collections.abc import Callable
 
-from src.defines import Tiangan, Dizhi, Shishen, DizhiRelation
+from src.defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
-from src.bazi import Bazi
+from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
+from src.rules import DizhiRules
 from src.school import BaziConfig, BaziSchool, KeyStem
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
 from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
+
+
+_GONG_RELATIONS = (DizhiRelation.拱合, DizhiRelation.拱会)
+
+
+def _four_ganzhis(bazi: Bazi) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
+  return (bazi.year_pillar, bazi.month_pillar, bazi.day_pillar, bazi.hour_pillar)
+
+
+def _project_gong(
+  discovery: dizhi_utils.GanzhiRelationDiscovery,
+  predicate: Callable[[dizhi_utils.GanzhiRelationCombo], bool],
+) -> dizhi_utils.DizhiRelationDiscovery:
+  return dizhi_utils.GanzhiRelationDiscovery({
+    relation : tuple(combo for combo in discovery.get(relation, ()) if predicate(combo))
+    for relation in _GONG_RELATIONS
+  }).to_dizhi_discovery()
 
 
 @pytest.mark.slow
@@ -110,14 +130,26 @@ def test_at_birth_house_relations() -> None:
     school: BaziSchool = chart.bazi.config.school
 
     # For AtBirth analysis, the following two algorithms are equivalent.
-    assert at_birth.house_relations == dizhi_utils.discover(
+    existing = dizhi_utils.discover(
       [y, m, d, h], anhe_def=school.anhe_def, xing_def=school.xing_def,
     ).filter(
       lambda _, combo : d in combo
     )
-    assert at_birth.house_relations == dizhi_utils.discover_mutual(
+    gong = _project_gong(
+      dizhi_utils.discover_ganzhis(_four_ganzhis(chart.bazi), gong_def=school.gong_def),
+      lambda combo : any(occurrence.index == 2 for occurrence in combo),
+    )
+    assert _equal(at_birth.house_relations, existing.merge(gong))
+
+    existing_mutual = dizhi_utils.discover_mutual(
       [y, m, h], [d], anhe_def=school.anhe_def, xing_def=school.xing_def,
     )
+    actual_without_gong = dizhi_utils.DizhiRelationDiscovery({
+      relation : combos
+      for relation, combos in at_birth.house_relations.items()
+      if relation not in _GONG_RELATIONS
+    })
+    assert actual_without_gong == existing_mutual
 
     assert at_birth.house_relations == at_birth.house_relations # Repeated lookup must answer the same.
 
@@ -140,6 +172,33 @@ def test_at_birth_star_relations() -> None:
 
     assert at_birth.star_relations.tiangan == at_birth.star_relations.tiangan # Repeated lookup must answer the same.
     assert at_birth.star_relations.dizhi == at_birth.star_relations.dizhi # Repeated lookup must answer the same.
+
+
+def test_at_birth_gong_relations_use_concrete_participants() -> None:
+  positive = BaziChart(Bazi.create(datetime(1980, 1, 12, 20), BaziGender.MALE))
+  assert dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.戌)) in (
+    RelationshipAnalyzer(positive).at_birth.house_relations[DizhiRelation.拱会]
+  )
+
+  # The day branch repeats the year branch, but only the year/month occurrences form 拱会.
+  # A value-only house filter would incorrectly retain it for the day pillar.
+  repeated_house = BaziChart(Bazi.create(datetime(1912, 1, 12, 2), BaziGender.MALE))
+  assert repeated_house.bazi.year_pillar.dizhi is repeated_house.bazi.day_pillar.dizhi
+  assert DizhiRelation.拱会 not in RelationshipAnalyzer(repeated_house).at_birth.house_relations
+
+
+def test_at_birth_gong_relations_reach_stars_and_read_school() -> None:
+  birth_time = datetime(1980, 1, 21, 2)
+  default_chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  combo = dizhi_utils.DizhiCombo((Dizhi.巳, Dizhi.丑))
+  assert combo in RelationshipAnalyzer(default_chart).at_birth.star_relations.dizhi[DizhiRelation.拱合]
+
+  lu_chart = BaziChart(Bazi.create(
+    birth_time,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.LU_NARROW)),
+  ))
+  assert DizhiRelation.拱合 not in RelationshipAnalyzer(lu_chart).at_birth.star_relations.dizhi
 
 
 @pytest.mark.slow
@@ -355,7 +414,46 @@ def test_transit_house_relations() -> None:
         xing_def=bazi.config.school.xing_def,
       ).filter(__expected_filter)
 
+      gong = _project_gong(
+        dizhi_utils.discover_mutual_ganzhis(
+          _four_ganzhis(bazi),
+          transits.ganzhis,
+          gong_def=bazi.config.school.gong_def,
+        ),
+        lambda combo : any(occurrence.index == 2 for occurrence in combo),
+      )
+      expected = expected.merge(gong)
+
       assert _equal(expected, actual)
+
+
+def test_transit_gong_relations_use_mutual_scope_and_fill() -> None:
+  chart = BaziChart(Bazi.create(datetime(1980, 1, 12, 20), BaziGender.MALE))
+  analysis = RelationshipAnalyzer(chart).transits
+  combo = dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.辰))
+
+  transits = TransitSet(liunian=Ganzhi.from_str('甲辰'))
+  assert combo in analysis.house_relations(transits)[DizhiRelation.拱合]
+
+  filled = TransitSet(
+    dayun=Ganzhi.from_str('甲辰'),
+    liunian=Ganzhi.from_str('甲子'),
+  )
+  assert combo not in analysis.house_relations(filled).get(DizhiRelation.拱合, ())
+
+
+def test_transit_gong_relations_reach_stars() -> None:
+  chart = BaziChart(Bazi.create(datetime(1980, 1, 21, 2), BaziGender.MALE))
+  analysis = RelationshipAnalyzer(chart).transits
+  transits = TransitSet(liunian=Ganzhi.from_str('癸丑'))
+  combo = dizhi_utils.DizhiCombo((Dizhi.巳, Dizhi.丑))
+
+  mutual = analysis.star_relations(transits, level=TransitAnalysis.Level.MUTUAL)
+  assert combo in mutual.dizhi[DizhiRelation.拱合]
+  assert DizhiRelation.拱合 not in analysis.star_relations(
+    transits,
+    level=TransitAnalysis.Level.TRANSITS_ONLY,
+  ).dizhi
 
 
 @pytest.mark.slow
@@ -387,9 +485,21 @@ def test_transit_star_relations() -> None:
       if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
         dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
+        dz_discovery = dz_discovery.merge(_project_gong(
+          dizhi_utils.discover_ganzhis(transits.ganzhis, gong_def=school.gong_def),
+          lambda _: True,
+        ))
       if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
         dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
+        dz_discovery = dz_discovery.merge(_project_gong(
+          dizhi_utils.discover_mutual_ganzhis(
+            _four_ganzhis(chart.bazi),
+            transits.ganzhis,
+            gong_def=school.gong_def,
+          ),
+          lambda _: True,
+        ))
 
       actual = transits_analysis.star_relations(transits, level=random_level)
 
@@ -501,13 +611,19 @@ def test_registry_matches_shensha_analysis_keys() -> None:
 
 def test_no_bare_dizhi_discovery_calls() -> None:
   # The "no bare calls" invariant declared by the `_dz_*` wrappers in relationship.py needs
-  # an executor: every `dizhi_utils.search` / `discover` / `discover_mutual` call in that file
-  # must sit inside one of the two wrappers -- a call anywhere else silently falls
+  # an executor: every `dizhi_utils` batch query in that file must sit inside one of the
+  # school-aware wrappers -- a call anywhere else silently falls
   # back to the hardcoded defaults (issue #69).
-  # 「无裸调」不变量得有执行者：relationship.py 里的三个入口调用必须都在两薄包装体内——
+  # 「无裸调」不变量得有执行者：relationship.py 里的批量入口调用必须都在流派薄包装体内——
   # 别处的调用会静默回落到硬编码默认（issue #69）。
-  wrappers = {'_dz_discover', '_dz_discover_mutual'}
-  gated = {'search', 'discover', 'discover_mutual'}
+  wrappers = {
+    '_dz_discover', '_dz_discover_mutual',
+    '_dz_discover_ganzhis', '_dz_discover_mutual_ganzhis',
+  }
+  gated = {
+    'search', 'discover', 'discover_mutual',
+    'search_ganzhis', 'discover_ganzhis', 'discover_mutual_ganzhis',
+  }
 
   bare: list[int] = []
 

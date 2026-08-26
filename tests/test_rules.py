@@ -53,6 +53,20 @@ def test_dizhi_xing() -> None:
     _ = DizhiRules.DIZHI_XING['not a XingDef'] # type: ignore
 
 
+def test_dizhi_gong() -> None:
+  assert set(DizhiRules.DIZHI_GONGHE) == set(DizhiRules.GongheDef)
+  assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]) == 4
+  assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]) == 12
+  assert set(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]).issubset(
+    DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]
+  )
+  assert len(DizhiRules.DIZHI_GONGHUI) == 4
+  assert len(DizhiRules.DIZHI_GONG_LU_TIANGAN) == 4
+
+  with pytest.raises(TypeError):
+    DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW] = {} # type: ignore
+
+
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.
   # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)

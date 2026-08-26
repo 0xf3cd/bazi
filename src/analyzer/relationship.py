@@ -10,7 +10,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
 from ..data_types import GanzhiData
-from ..defines import Tiangan, Dizhi, Shishen, DizhiRelation
+from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..school import KeyStem, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
@@ -124,9 +124,9 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
 
 
 # The ONLY place this file reads the school profile for Dizhi relation discovery:
-# every `dizhi_utils.discover` / `discover_mutual` call below goes through one of these two
-# wrappers, so "no bare calls in this file" is a grep-checkable invariant --
-# a forgotten `anhe_def=` / `xing_def=` at some call site would silently fall back to the
+# every `dizhi_utils.discover*` call below goes through one of these wrappers,
+# so "no bare calls in this file" is a grep-checkable invariant --
+# a forgotten relation-definition argument at some call site would silently fall back to the
 # hardcoded defaults (issue #69).
 # 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.discover` /
 # `discover_mutual` 调用一律走这两个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
@@ -142,6 +142,61 @@ def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.Diz
 def _dz_discover_mutual(school: BaziSchool, dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
   '''`dizhi_utils.discover_mutual` under the chart's school profile / 按盘的流派档案发现两组地支间的关系。'''
   return dizhi_utils.discover_mutual(dizhis1, dizhis2, anhe_def=school.anhe_def, xing_def=school.xing_def)
+
+
+def _dz_discover_ganzhis(school: BaziSchool, ganzhis: Sequence[Ganzhi]) -> dizhi_utils.GanzhiRelationDiscovery:
+  '''Position-preserving discovery under the chart's school / 按盘的流派档案保留柱位发现关系。'''
+  return dizhi_utils.discover_ganzhis(
+    ganzhis,
+    anhe_def=school.anhe_def,
+    xing_def=school.xing_def,
+    gong_def=school.gong_def,
+  )
+
+
+def _dz_discover_mutual_ganzhis(
+  school: BaziSchool,
+  ganzhis1: Sequence[Ganzhi],
+  ganzhis2: Sequence[Ganzhi],
+) -> dizhi_utils.GanzhiRelationDiscovery:
+  '''Position-preserving mutual discovery under the chart's school / 按盘的流派档案保留柱位发现两组关系。'''
+  return dizhi_utils.discover_mutual_ganzhis(
+    ganzhis1,
+    ganzhis2,
+    anhe_def=school.anhe_def,
+    xing_def=school.xing_def,
+    gong_def=school.gong_def,
+  )
+
+
+'''The position-dependent relations projected into the analyzer's established Dizhi result shape.'''
+_GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
+
+
+def _project_gong(
+  discovery: dizhi_utils.GanzhiRelationDiscovery,
+  predicate: Callable[[dizhi_utils.GanzhiRelationCombo], bool],
+) -> dizhi_utils.DizhiRelationDiscovery:
+  '''Filter concrete Gong participants before discarding their positions / 先按具体参与柱过滤拱局，再投影地支。'''
+  return dizhi_utils.GanzhiRelationDiscovery({
+    relation : filtered
+    for relation in _GONG_RELATIONS
+    if len(filtered := tuple(combo for combo in discovery.get(relation, ()) if predicate(combo))) > 0
+  }).to_dizhi_discovery()
+
+
+def _with_gong(
+  existing: dizhi_utils.DizhiRelationDiscovery,
+  gong: dizhi_utils.DizhiRelationDiscovery,
+) -> dizhi_utils.DizhiRelationDiscovery:
+  '''Add disjoint Gong keys without reordering existing relation combos / 加入拱局键且不重排既有组合。'''
+  assert set(existing).isdisjoint(gong)
+  return dizhi_utils.DizhiRelationDiscovery({**existing, **gong})
+
+
+def _four_ganzhis(bazi: Bazi) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
+  '''Return the four pillars in canonical order / 按年月日时返回四柱。'''
+  return (bazi.year_pillar, bazi.month_pillar, bazi.day_pillar, bazi.hour_pillar)
 
 
 class ShenshaAnalysis(TypedDict):
@@ -181,23 +236,33 @@ class AtBirthAnalysis:
   @property
   def house_relations(self) -> dizhi_utils.DizhiRelationDiscovery:
     '''Relations that the House of Relationship / 婚姻宫 has.'''
-    # Unlike Tiangan relations, Dizhi relation combos can contain up to 3 Dizhis.
-    # So use `discover` here instead of `discover_mutual`, otherwise some combos will be missed.
-    #
-    # With that being said, for AtBirth analysis, this problem doesn't exist.
-    # Still use `discover` with `filter` though - it is expected to be equivalent to `discover_mutual([d_dz], [*other_three_dz])`
-    return _dz_discover(self._chart.bazi.config.school, self._chart.bazi.four_dizhis).filter(
+    # Existing context-free relations use full discovery followed by the established value
+    # filter. Gong is filtered separately by the concrete day-pillar occurrence below.
+    bazi: Final[Bazi] = self._chart.bazi
+    school: Final[BaziSchool] = bazi.config.school
+    existing = _dz_discover(school, bazi.four_dizhis).filter(
       lambda _, combo : self._chart.house_of_relationship in combo
     )
+    gong = _project_gong(
+      _dz_discover_ganzhis(school, _four_ganzhis(bazi)),
+      lambda combo : any(occurrence.index == 2 for occurrence in combo),
+    )
+    return _with_gong(existing, gong)
   
   @property
   def star_relations(self) -> GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]:
     '''Relations that the Star(s) of Relationship / 配偶星 / 婚姻星 has.'''
     stars = self._chart.relationship_stars
+    bazi: Final[Bazi] = self._chart.bazi
+    school: Final[BaziSchool] = bazi.config.school
 
-    tg = tiangan_utils.discover(self._chart.bazi.four_tiangans).filter(lambda _, combo : stars.tiangan in combo)
-    dz = _dz_discover(self._chart.bazi.config.school, self._chart.bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
-    return GanzhiData(tg, dz)
+    tg = tiangan_utils.discover(bazi.four_tiangans).filter(lambda _, combo : stars.tiangan in combo)
+    existing = _dz_discover(school, bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
+    gong = _project_gong(
+      _dz_discover_ganzhis(school, _four_ganzhis(bazi)),
+      lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
+    )
+    return GanzhiData(tg, _with_gong(existing, gong))
 
 
 
@@ -286,7 +351,12 @@ class TransitAnalysis:
         return house in transit_dizhis
       return not (combo - {house}).isdisjoint(transit_dizhis)
 
-    return _dz_discover_mutual(school, bazi.four_dizhis, transit_dizhis).filter(__is_house_transit_relation)
+    existing = _dz_discover_mutual(school, bazi.four_dizhis, transit_dizhis).filter(__is_house_transit_relation)
+    gong = _project_gong(
+      _dz_discover_mutual_ganzhis(school, _four_ganzhis(bazi), transit_ganzhis),
+      lambda combo : any(occurrence.index == 2 for occurrence in combo),
+    )
+    return _with_gong(existing, gong)
   
   @unique
   class Level(IntFlag):
@@ -331,18 +401,29 @@ class TransitAnalysis:
 
     at_birth_tg = self._chart.bazi.four_tiangans
     at_birth_dz = self._chart.bazi.four_dizhis
+    at_birth_ganzhis = _four_ganzhis(self._chart.bazi)
     school: Final[BaziSchool] = self._chart.bazi.config.school
+    stars = self._chart.relationship_stars
 
     tg = tiangan_utils.TianganRelationDiscovery({})
     dz = dizhi_utils.DizhiRelationDiscovery({})
+    gong_dz = dizhi_utils.DizhiRelationDiscovery({})
     if level & TransitAnalysis.Level.TRANSITS_ONLY:
       tg = tg.merge(tiangan_utils.discover(transit_tg))
       dz = dz.merge(_dz_discover(school, transit_dz))
+      gong_dz = gong_dz.merge(_project_gong(
+        _dz_discover_ganzhis(school, transit_ganzhis),
+        lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
+      ))
     if level & TransitAnalysis.Level.MUTUAL:
       tg = tg.merge(tiangan_utils.discover_mutual(at_birth_tg, transit_tg))
       dz = dz.merge(_dz_discover_mutual(school, at_birth_dz, transit_dz))
+      gong_dz = gong_dz.merge(_project_gong(
+        _dz_discover_mutual_ganzhis(school, at_birth_ganzhis, transit_ganzhis),
+        lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
+      ))
+    dz = _with_gong(dz, gong_dz)
 
-    stars = self._chart.relationship_stars
     return GanzhiData(
       tg.filter(lambda _, combo : stars.tiangan in combo),
       dz.filter(lambda _, combo : any(dz in combo for dz in stars.dizhi)),
