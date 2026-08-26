@@ -63,6 +63,8 @@ def main() -> int:
      lambda: dizhi_utils.GanzhiOccurrence(-1, Ganzhi.from_str('甲子'))),
     ('dizhi_utils.search_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.search_ganzhis([Dizhi.子, Dizhi.丑], DizhiRelation.六合)), # type: ignore
+    ('dizhi_utils.discover_ganzhis on raw Dizhis', TypeError,
+     lambda: dizhi_utils.discover_ganzhis([Dizhi.子, Dizhi.丑])), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

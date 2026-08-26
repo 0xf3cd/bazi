@@ -640,10 +640,9 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   The zero-based index in the input sequence is the occurrence identity. Equal Ganzhis or
   equal Dizhis at different indices therefore remain distinguishable. For the existing
   position-independent relations, projecting every result to Dizhis and deduplicating yields
-  exactly `search`; position-dependent relations can additionally inspect order and Tiangans here.
+  exactly `search`.
   输入序列中的零基序号就是具体出现的身份，因此不同位置的相同干支或地支不会混同。
-  对现有不依赖位置的关系，逐项投影到地支并去重后与 `search` 完全等价；依赖位置的关系
-  还可在此读取顺序与天干。
+  对现有不依赖位置的关系，逐项投影到地支并去重后与 `search` 完全等价。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
@@ -653,6 +652,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
 
   Return: (GanzhiRelationCombos) All matching concrete occurrence combos.
   '''
+
   if not isinstance(ganzhis, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(ganzhis)}')
   if not all(isinstance(gz, Ganzhi) for gz in ganzhis):
@@ -670,7 +670,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   ret: list[GanzhiRelationCombo] = []
   for combo in search(dizhis, relation, anhe_def=anhe_def, xing_def=xing_def):
     # A self-刑 pair projects to a singleton DizhiCombo; occurrence identity restores
-    # its two concrete participants. All other current combos contain distinct Dizhis.
+    # its two concrete participants.
     participant_count: int = 2 if relation is DizhiRelation.刑 and len(combo) == 1 else len(combo)
     ret.extend(
       GanzhiRelationCombo(candidate)
@@ -688,8 +688,10 @@ def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
 
   Note:
   - Relations with no matching combo are absent from the returned mapping.
-  - Returned combos do not reveal the direction of directional relations.
   - 没有匹配组合的关系不会出现在返回映射中。
+
+  Note:
+  - Returned combos do not reveal the direction of directional relations.
   - 返回的组合不体现有向关系的方向。
 
   Args:
@@ -699,6 +701,7 @@ def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
 
   Return: (GanzhiRelationDiscovery) The position-preserving discovery result.
   '''
+
   if not isinstance(ganzhis, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(ganzhis)}')
   if not all(isinstance(gz, Ganzhi) for gz in ganzhis):

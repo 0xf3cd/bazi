@@ -988,6 +988,35 @@ def test_search_ganzhis_occurrence_identity() -> None:
   }
   assert _project_ganzhi_combos(result) == {DizhiCombo((Dizhi.申, Dizhi.巳))}
 
+  repeated_ganzhi = (
+    Ganzhi.from_str('甲子'),
+    Ganzhi.from_str('甲子'),
+    Ganzhi.from_str('乙丑'),
+  )
+  assert set(dizhi_utils.search_ganzhis(repeated_ganzhi, DizhiRelation.六合)) == {
+    GanzhiRelationCombo((GanzhiOccurrence(0, repeated_ganzhi[0]), GanzhiOccurrence(2, repeated_ganzhi[2]))),
+    GanzhiRelationCombo((GanzhiOccurrence(1, repeated_ganzhi[1]), GanzhiOccurrence(2, repeated_ganzhi[2]))),
+  }
+
+  repeated_yin = (
+    Ganzhi.from_str('甲寅'),
+    Ganzhi.from_str('壬午'),
+    Ganzhi.from_str('甲戌'),
+    Ganzhi.from_str('丙寅'),
+  )
+  assert set(dizhi_utils.search_ganzhis(repeated_yin, DizhiRelation.三合)) == {
+    GanzhiRelationCombo((
+      GanzhiOccurrence(0, repeated_yin[0]),
+      GanzhiOccurrence(1, repeated_yin[1]),
+      GanzhiOccurrence(2, repeated_yin[2]),
+    )),
+    GanzhiRelationCombo((
+      GanzhiOccurrence(1, repeated_yin[1]),
+      GanzhiOccurrence(2, repeated_yin[2]),
+      GanzhiOccurrence(3, repeated_yin[3]),
+    )),
+  }
+
   repeated_chen = (
     Ganzhi.from_str('戊辰'),
     Ganzhi.from_str('庚辰'),
@@ -1012,6 +1041,9 @@ def test_search_ganzhis_occurrence_identity() -> None:
 
 
 def test_search_ganzhis_projection() -> None:
+  assert dizhi_utils.search_ganzhis((), DizhiRelation.六合) == ()
+  assert dizhi_utils.search_ganzhis((Ganzhi.from_str('甲子'),), DizhiRelation.六合) == ()
+
   ganzhis = tuple(Ganzhi.list_sexagenary_cycle()[:24])
   dizhis = tuple(gz.dizhi for gz in ganzhis)
 
@@ -1042,6 +1074,9 @@ def test_search_ganzhis_negative() -> None:
 
 
 def test_discover_ganzhis_projection() -> None:
+  assert dizhi_utils.discover_ganzhis(()) == GanzhiRelationDiscovery({})
+  assert dizhi_utils.discover_ganzhis((Ganzhi.from_str('甲子'),)) == GanzhiRelationDiscovery({})
+
   ganzhis = tuple(Ganzhi.list_sexagenary_cycle()[:24])
   dizhis = tuple(gz.dizhi for gz in ganzhis)
 
