@@ -7,9 +7,17 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from src.defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from src.defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from src.calendar import JieqiTime
 from src.data_types import TraitTuple, HiddenTianganDict
+from src.school import DayRollover
 from src.utils import bazi_utils
+
+
+_GANZHI_MONTH_DIZHIS = (
+  Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.巳, Dizhi.午, Dizhi.未,
+  Dizhi.申, Dizhi.酉, Dizhi.戌, Dizhi.亥, Dizhi.子, Dizhi.丑,
+)
 
 
 def test_ganzhi_of_day_basic() -> None:
@@ -44,6 +52,25 @@ def test_ganzhi_of_day_negative() -> None:
     bazi_utils.ganzhi_of_day('2024-03-01') # type: ignore
 
 
+def test_ganzhi_of_day_at_moment() -> None:
+  assert bazi_utils._ganzhi_of_day_at_moment(
+    datetime(1985, 5, 28, 22, 59),
+    DayRollover.WAN_ZISHI,
+  ) == Ganzhi.from_str('丁卯')
+  assert bazi_utils._ganzhi_of_day_at_moment(
+    datetime(1985, 5, 28, 23, 0),
+    DayRollover.WAN_ZISHI,
+  ) == Ganzhi.from_str('戊辰')
+  assert bazi_utils._ganzhi_of_day_at_moment(
+    datetime(1985, 5, 28, 23, 59),
+    DayRollover.ZIZHENG,
+  ) == Ganzhi.from_str('丁卯')
+  assert bazi_utils._ganzhi_of_day_at_moment(
+    datetime(1985, 5, 29, 0, 0),
+    DayRollover.ZIZHENG,
+  ) == Ganzhi.from_str('戊辰')
+
+
 def test_ganzhi_of_year() -> None:
   with pytest.raises(TypeError):
     bazi_utils.ganzhi_of_year('2024') # type: ignore
@@ -65,6 +92,31 @@ def test_ganzhi_of_year() -> None:
             bazi_utils.ganzhi_of_year(random_ganzhi_year))
 
 
+def test_ganzhi_month_conversions() -> None:
+  for month, expected_dizhi in enumerate(_GANZHI_MONTH_DIZHIS, start=1):
+    assert bazi_utils._ganzhi_month_dizhi(month) is expected_dizhi
+    assert bazi_utils._ganzhi_month_offset(expected_dizhi) == month - 1
+    assert bazi_utils._ganzhi_month_dizhi(
+      bazi_utils._ganzhi_month_offset(expected_dizhi) + 1
+    ) is expected_dizhi
+
+
+def test_ganzhi_year_month_of_jie() -> None:
+  jies = (
+    Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种, Jieqi.小暑,
+    Jieqi.立秋, Jieqi.白露, Jieqi.寒露, Jieqi.立冬, Jieqi.大雪, Jieqi.小寒,
+  )
+  for month, jie in enumerate(jies, start=1):
+    solar_year = 2025 if jie is Jieqi.小寒 else 2024
+    assert bazi_utils._ganzhi_year_month_of_jie(
+      JieqiTime(jie, datetime(solar_year, 1, 1))
+    ) == (2024, month)
+  with pytest.raises(AssertionError):
+    bazi_utils._ganzhi_year_month_of_jie(
+      JieqiTime(Jieqi.雨水, datetime(2024, 2, 19))
+    )
+
+
 def test_month_tiangan() -> None:
   # 五虎遁口诀(年上起月):甲己之年丙作首,乙庚之年戊为头,丙辛之年寻庚起,丁壬壬位顺行流,戊癸之年甲寅求。
   # Hand transcription of the mnemonic (an oracle independent of any table in this repo):
@@ -84,8 +136,7 @@ def test_month_tiangan() -> None:
 
   for year_tg, month_row in wuhudun.items():
     assert len(month_row) == 12
-    for idx, expected_tg in enumerate(month_row):
-      month_dz: Dizhi = Dizhi.from_index((idx + 2) % 12) # First month is "寅".
+    for month_dz, expected_tg in zip(_GANZHI_MONTH_DIZHIS, month_row, strict=True):
       assert bazi_utils.month_tiangan(year_tg, month_dz) == Tiangan(expected_tg)
 
 

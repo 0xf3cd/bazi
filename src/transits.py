@@ -1,8 +1,8 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import Enum, unique
 from typing import Final
 
@@ -10,64 +10,40 @@ from .common import frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
+from .calendar import CalendarUtilsProtocol, calendar_utils_of
+from .utils.bazi_utils import _ganzhi_month_offset, _ganzhi_year_month_of_jie
+
+
+'''An orderable projection shared by a query and its physical Dayun boundaries.'''
+_DayunKey = tuple[int, ...]
 
 
 class DayunDatabase:
-  '''Locates the Dayun (大运) that a given Ganzhi year falls into, by closed-form
-  arithmetic from the first Dayun. 由首运闭式定位任一干支年所属的大运。'''
+  '''Locates the Dayun (大运) whose configured start-year label range contains a year.
+  Adjacent labels delimit each range; the final range is always ten label years and can
+  therefore differ from the physical `end_moment`.
+  按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
+  物理 `end_moment` 不一致。'''
   def __init__(self, chart: BaziChart) -> None:
-    self._first_dayun: Final[DayunTuple] = next(chart.dayun)
-    self._step: Final[int] = 1 if chart.dayun_order else -1
+    self._dayuns: Final[tuple[DayunTuple, ...]] = tuple(chart.dayun)
+    self._empty_timeline_error: Final[str] = chart._dayun_empty_timeline_message
 
   def __getitem__(self, gz_year: int) -> DayunTuple:
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
-    if gz_year < self._first_dayun.ganzhi_year:
-      raise ValueError(f'Year {gz_year} is before the first dayun year {self._first_dayun.ganzhi_year}')
+    if len(self._dayuns) == 0:
+      raise ValueError(self._empty_timeline_error)
+    if gz_year < self._dayuns[0].ganzhi_year:
+      raise ValueError(f'Year {gz_year} is before the first Dayun year {self._dayuns[0].ganzhi_year}')
 
-    # Dayuns are arithmetic: each lasts 10 years and steps the sexagenary cycle by one.
-    # 大运是等差序列：每运十年，六十甲子进（退）一位，直接按下标闭式计算。
-    dayun_idx: int = (gz_year - self._first_dayun.ganzhi_year) // 10
-    return DayunTuple(self._first_dayun.ganzhi_year + 10 * dayun_idx,
-                      self._first_dayun.ganzhi.next(self._step * dayun_idx))
+    end_ganzhi_year: Final[int] = self._dayuns[-1].ganzhi_year + 10
+    if gz_year >= end_ganzhi_year:
+      raise ValueError(f'Year {gz_year} is on or after the end of the Dayun label range {end_ganzhi_year}')
 
-
-@dataclass(frozen=True)
-class TransitYear:
-  '''A year-granularity transit query. 年粒度流运查询。'''
-  gz_year: int
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.gz_year, int):
-      raise TypeError(f'Expected int, got {type(self.gz_year)}')
-
-
-@dataclass(frozen=True)
-class TransitMonth:
-  '''A month-granularity transit query. 月粒度流运查询。'''
-  gz_year: int
-  gz_month: Dizhi
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.gz_year, int):
-      raise TypeError(f'Expected int, got {type(self.gz_year)}')
-    if not isinstance(self.gz_month, Dizhi):
-      raise TypeError(f'Expected Dizhi, got {type(self.gz_month)}')
-
-
-@dataclass(frozen=True)
-class TransitDate:
-  '''A date-granularity transit query. 日粒度流运查询。'''
-  solar_date: date
-
-  def __post_init__(self) -> None:
-    # `datetime` is a `date` subclass but has different equality/hash semantics.
-    if type(self.solar_date) is not date:
-      raise TypeError(f'Expected date (not datetime), got {type(self.solar_date)}')
-
-
-'''A year-, month-, or date-granularity transit query. 年、月或日粒度的流运查询。'''
-TransitQuery = TransitYear | TransitMonth | TransitDate
+    for dayun in reversed(self._dayuns):
+      if gz_year >= dayun.ganzhi_year:
+        return dayun
+    raise AssertionError('Unreachable Dayun lookup state') # pragma: no cover # Lower bound checked above.
 
 
 @unique
@@ -152,20 +128,27 @@ class TransitSet:
 
 
 class TransitDatabase:
-  '''The chart-derived Xiaoyun and Dayun lookups for a `BaziChart`.'''
+  '''The chart-derived Xiaoyun, year-label Dayun, and physical Dayun lookups for a `BaziChart`.'''
   def __init__(self, chart: BaziChart) -> None:
+    bazi = chart.bazi
     # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
     # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
     # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one.
-    self._birth_ganzhi_year: Final[int] = chart.bazi.ganzhi_year
+    self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
+    self._birth_month_key: Final[tuple[int, int]] = (
+      bazi.ganzhi_year,
+      _ganzhi_month_offset(bazi.month_commander),
+    )
+    self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
+    self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
+    self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
+    # The calendar-only fallback cannot use BaziChart.xiaoyun; that property requires a first Dayun label.
+    xiaoyuns = () if len(self._dayuns) == 0 else chart.xiaoyun
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
       self._birth_ganzhi_year + age - 1 : gz
-      for age, gz in chart.xiaoyun
+      for age, gz in xiaoyuns
     })
-
-    self._first_dayun_start_gz_year: Final[int] = next(chart.dayun).ganzhi_year
-    self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
 
   def xiaoyun(self, gz_year: int) -> Ganzhi | None:
     '''Return the Xiaoyun for `gz_year`, or `None` outside the Xiaoyun year range.'''
@@ -174,9 +157,68 @@ class TransitDatabase:
     return self._xiaoyun_ganzhis.get(gz_year)
 
   def dayun(self, gz_year: int) -> Ganzhi | None:
-    '''Return the Dayun for `gz_year`, or `None` before the first Dayun.'''
+    '''Return the Dayun selected for the Ganzhi-year coordinate `gz_year` by the chart's
+    configured year labels. The finite year view extends the final label by ten years and
+    can differ from the physical final interval; return `None` outside that label view.'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
-    if gz_year < self._first_dayun_start_gz_year:
+    try:
+      return self._dayun_db[gz_year].ganzhi
+    except ValueError:
       return None
-    return self._dayun_db[gz_year].ganzhi
+
+  def _physical_dayun(
+    self,
+    query_key: _DayunKey,
+    start_key: Callable[[int, DayunTuple], _DayunKey],
+  ) -> Ganzhi | None:
+    assert isinstance(query_key, tuple)
+    assert callable(start_key)
+
+    for index in reversed(range(len(self._dayuns))):
+      dayun = self._dayuns[index]
+      if start_key(index, dayun) <= query_key:
+        return dayun.ganzhi
+    return None
+
+  def _dayun_at_month(self, gz_year: int, gz_month: Dizhi) -> Ganzhi | None:
+    assert isinstance(gz_year, int)
+    assert isinstance(gz_month, Dizhi)
+
+    def __start_key(index: int, dayun: DayunTuple) -> _DayunKey:
+      year, month = _ganzhi_year_month_of_jie(self._utils.prev_jie(dayun.start_moment))
+      key = (year, month - 1)
+      return max(key, self._birth_month_key) if index == 0 else key
+
+    return self._physical_dayun(
+      (gz_year, _ganzhi_month_offset(gz_month)),
+      __start_key,
+    )
+
+  def _dayun_at_date(self, solar_date: date) -> Ganzhi | None:
+    assert type(solar_date) is date
+
+    def __start_key(_index: int, dayun: DayunTuple) -> _DayunKey:
+      start = dayun.start_moment.date()
+      return start.year, start.month, start.day
+
+    return self._physical_dayun(
+      (solar_date.year, solar_date.month, solar_date.day),
+      __start_key,
+    )
+
+  def _dayun_at_moment(self, solar_moment: datetime) -> Ganzhi | None:
+    assert isinstance(solar_moment, datetime)
+    assert solar_moment.tzinfo is None
+
+    def __key(moment: datetime) -> _DayunKey:
+      whole_second = moment.replace(microsecond=0)
+      return (
+        whole_second.year, whole_second.month, whole_second.day,
+        whole_second.hour, whole_second.minute, whole_second.second,
+      )
+
+    return self._physical_dayun(
+      __key(solar_moment),
+      lambda _index, dayun: __key(dayun.start_moment),
+    )

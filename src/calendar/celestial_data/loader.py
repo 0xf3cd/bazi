@@ -9,8 +9,8 @@ it parses a table file, validates it against the schema, and answers point queri
 that swapping the data source (issue #2 wants live FFI for true solar time) only
 replaces this file.
 
-Pure Python on purpose -- the CI matrix includes PyPy, where the dynamic library the
-generator uses does not exist.
+Pure Python on purpose -- runtime reads the committed tables and does not import the
+celestial-calendar package used by the offline generator.
 '''
 
 import re
@@ -22,7 +22,7 @@ from typing import Final, TypedDict
 from ...defines import Ganzhi, Jieqi
 
 
-SCHEMA_VERSION: Final[str] = '1'
+SCHEMA_VERSION: Final[str] = '2'
 
 DATA_DIR: Final[Path] = Path(__file__).parent / 'data'
 
@@ -30,7 +30,7 @@ JIEQI_COLUMNS: Final[str] = 'year jq_idx name date time'
 LUNAR_COLUMNS: Final[str] = 'lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi'
 
 # Table `jq_idx` is defined to be this index.  Asserted at generation time against the
-# library's own `get_jieqi_name`, and re-checked per row by `JieqiMomentTable`.
+# library's own `jieqi_name`, and re-checked per row by `JieqiMomentTable`.
 JIEQI_BY_INDEX: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=True)
 assert len(JIEQI_BY_INDEX) == 24
 assert JIEQI_BY_INDEX[0] is Jieqi.立春

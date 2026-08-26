@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TypeVar, Generic, NamedTuple
 from collections.abc import Iterator
 
@@ -25,9 +26,24 @@ class TraitTuple(NamedTuple):
 
 
 class DayunTuple(NamedTuple):
-  '''Representing the Dayun of a bazi chart. 八字命盘的某步大运。'''
-  ganzhi_year: int
-  ganzhi:      Ganzhi
+  '''
+  A Dayun (大运) with its projected year label and complete physical interval.
+  带年份投影标签与完整物理区间的一步大运。
+
+  Note:
+  `ganzhi_year` is the start-year label under the selected `DayunYearRule`. Under
+  `JIE_PROJECTED`, except for the first-label floor, it is also the Ganzhi year containing
+  `start_moment`; under `FIXED_DECADE`, it is a table position instead. The physical interval
+  is always `[start_moment, end_moment)` and never changes with the rule. A start-year label
+  does not mean that the Dayun occupies that entire label year.
+  `ganzhi_year` 是所选规则下的起运年份标签。除首步下限外，`JIE_PROJECTED` 下它也是
+  `start_moment` 所属干支年；`FIXED_DECADE` 下它只是年表位次。物理区间始终为
+  `[start_moment, end_moment)`，不随规则改变；起运年份标签不表示该步大运占据整个标签年。
+  '''
+  ganzhi_year:  int
+  ganzhi:       Ganzhi
+  start_moment: datetime
+  end_moment:   datetime
 
 
 class XiaoyunTuple(NamedTuple):

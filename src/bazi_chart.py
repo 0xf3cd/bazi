@@ -4,6 +4,7 @@ import copy
 import functools
 import itertools
 
+from calendar import monthrange
 from datetime import datetime, timedelta
 from typing import Final, TypedDict
 from collections.abc import Generator, Sequence
@@ -14,11 +15,29 @@ from .data_types import (
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
+from .school import DayunYearRule
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
-  traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year
+  traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year,
+  _ganzhi_year_month_of_jie,
 )
+
+
+def _dayun_year_label(raw_year: int, first_year_label: int,
+                      index: int, rule: DayunYearRule) -> int:
+  '''Project a physical Dayun boundary to the selected year-label view.
+  把物理大运边界投影到所选年份标签视图。'''
+  assert isinstance(raw_year, int)
+  assert isinstance(first_year_label, int)
+  assert isinstance(index, int)
+  assert index >= 0
+  assert isinstance(rule, DayunYearRule)
+
+  if rule is DayunYearRule.JIE_PROJECTED:
+    return first_year_label if index == 0 else raw_year
+  assert rule is DayunYearRule.FIXED_DECADE
+  return first_year_label + 10 * index
 
 
 class BaziJson:
@@ -53,6 +72,13 @@ class BaziJson:
     strs: list[str | None] = [None if s is None else str(s) for s in data]
     return { 'year': strs[0], 'month': strs[1], 'day': strs[2], 'hour': strs[3] }
 
+  class Dayun(TypedDict):
+    '''Not expected to be accessed directly. Used in `Transits`.'''
+    ganzhi: str
+    # ISO 8601 boundaries of the physical interval / 物理区间边界的 ISO 8601 字符串
+    start_time: str
+    end_time: str
+
   class Transits(TypedDict):
     '''Not expected to be accessed directly. Used in `JsonDict`.'''
     # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
@@ -62,9 +88,10 @@ class BaziJson:
     # value: xiaoyun at this xusui age / 对应虚岁的小运
     xiaoyun: dict[str, str]
 
-    # key: ganzhi year that current dayun starts/ 该步大运开始的干支年
-    # value: dayun in str / 该步大运
-    dayun: dict[str, str]
+    # key: start-year label under `dayun_year_rule`; it does not mean that the Dayun
+    # occupies the entire label year / 所选规则下的起运年份标签，不表示该步大运占据整个标签年
+    # value: Dayun Ganzhi and its physical interval / 大运干支与物理区间
+    dayun: dict[str, 'BaziJson.Dayun']
 
   class School(TypedDict):
     '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
@@ -80,6 +107,7 @@ class BaziJson:
     gender: str
     precision: str
     backend: str
+    dayun_year_rule: str
     school: 'BaziJson.School'
     pillars: 'BaziJson.FourPillars'
     nayin: 'BaziJson.FourPillars'
@@ -341,48 +369,89 @@ class BaziChart:
     
     return birthtime + __diff()
 
+  def _dayun_owning_ganzhi_year(self, moment: datetime) -> int:
+    '''Return the Ganzhi year containing `moment`, as determined by its owning Jie.
+    按所属节返回 `moment` 所在的干支年。'''
+    assert isinstance(moment, datetime)
+    return _ganzhi_year_month_of_jie(self._utils.prev_jie(moment))[0]
+
+  @property
+  def _dayun_empty_timeline_message(self) -> str:
+    '''Return the shared error message for a Dayun timeline with no supported start.
+    返回大运时刻线无受支持起点时的共享报错消息。'''
+    first, last = self._utils.supported_jie_boundaries()
+    return f'No Dayun starts within the supported Jie range [{first}, {last})'
+
   @functools.cached_property
-  def _dayun_start_ganzhi_year(self) -> int:
+  def _dayun_first_year_label(self) -> int:
     '''
-    The ganzhi year the first dayun starts in: the day-level label of `dayun_start_moment`,
-    floored at `Bazi.ganzhi_year`. The start never precedes the birth, so its year can never
-    precede the birth's attributed year -- but a clamped start IS the birth itself, and on a
-    cross-midnight tie chart (HOUR) its civil day still carries the OLD day-level year;
-    without the floor that would mislabel the first dayun and empty the xiaoyun. The floor
-    is inert for DAY, whose attribution is day-level and monotone in time.
-    交运干支年：交运时刻的日级年份标注，下限为 `Bazi.ganzhi_year`（交运不早于出生，其年份在
-    盘面自身的归属体系里也不得早于出生年）。
+    The shared first Dayun year label, independent of the later-year projection rule.
+    A HOUR chart can assign a cross-midnight 立春 tie to the new birth year while its
+    clamped start moment still lies on a civil date carrying the old day-level year. The
+    floor keeps that first Dayun aligned with the chart and leaves later labels untouched.
+    与后续年份投影规则无关的共享首步大运年份标签。HOUR 盘在跨午夜立春 tie 中可已归新出生年，
+    而压在出生时刻的首运仍落在日级旧年；首步下限使二者一致，且不向后续标签传播。
     '''
-    return max(self._utils.to_ganzhi(self.dayun_start_moment).year, self._bazi.ganzhi_year)
+    first, last = self._utils.supported_jie_boundaries()
+    first_start_moment: Final[datetime] = self._dayun_start_moment_at(0)
+    if not first <= first_start_moment < last:
+      raise ValueError(self._dayun_empty_timeline_message)
+    return max(self._dayun_owning_ganzhi_year(first_start_moment), self._bazi.ganzhi_year)
+
+  def _dayun_start_moment_at(self, index: int) -> datetime:
+    '''Return the `index`-th Dayun boundary, recomputed from the first; clamp Feb 29 to
+    Feb 28 in non-leap target years. 从首运边界重算第 `index` 个边界；目标平年把 2 月 29 日压到 2 月 28 日。'''
+    assert isinstance(index, int)
+    assert index >= 0
+
+    start: Final[datetime] = self.dayun_start_moment
+    year: Final[int] = start.year + 10 * index
+    day: Final[int] = min(start.day, monthrange(year, start.month)[1])
+    return start.replace(year=year, day=day)
 
   @property
   def dayun(self) -> Generator[DayunTuple, None, None]:
     '''
-    A generator that produces the Ganzhis for Dayuns (大运). Each dayun lasts for 10 years.
-    用于排大运的生成器。
+    A finite generator that produces Dayuns (大运) from their Gregorian start-moment
+    timeline. Each Dayun covers `[start_moment, end_moment)`; only starts in the selected
+    calendar backend's half-open Jie window are generated, so the result can be empty.
+    从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`，只生成落在所选历法
+    后端半开节气窗口内的起点，因此结果可以为空。
 
     Usage: 
     ```
     chart: BaziChart = BaziChart(bazi)
 
     gen = chart.dayun
-    first_ten_dayuns: list[DayunTuple] = [next(gen) for _ in range(10)]
+    first_ten_dayuns: list[DayunTuple] = list(itertools.islice(gen, 10))
 
     next_ten_dayuns: list[DayunTuple] = list(itertools.islice(gen, 10))
 
-    for start_time, gz in chart.dayun: # Infinite loop...
-      print(start_time, gz) # Print the start time and Ganzhi of the dayun
+    for dayun in chart.dayun:
+      print(dayun.start_moment, dayun.ganzhi)
     ``` 
     '''
 
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
-      ganzhi_year: int = self._dayun_start_ganzhi_year
       gz: Ganzhi = self._bazi.month_pillar.next(step)
+      first, last = self._utils.supported_jie_boundaries()
+      index: int = 0
+      start_moment: datetime = self._dayun_start_moment_at(index)
 
-      while True:
-        yield DayunTuple(ganzhi_year, gz)
-        ganzhi_year += 10
+      while first <= start_moment < last:
+        first_year_label: int = self._dayun_first_year_label
+        raw_year: int = self._dayun_owning_ganzhi_year(start_moment)
+        ganzhi_year: int = _dayun_year_label(
+          raw_year,
+          first_year_label,
+          index,
+          self._bazi.config.dayun_year_rule,
+        )
+        end_moment: datetime = self._dayun_start_moment_at(index + 1)
+        yield DayunTuple(ganzhi_year, gz, start_moment, end_moment)
+        index += 1
+        start_moment = end_moment
         gz = gz.next(step)
 
     return __dayun_generator()
@@ -404,9 +473,9 @@ class BaziChart:
 
     step: Final[int] = 1 if self.dayun_order else -1
     # Xiaoyun covers the xusui ages before the first dayun starts. Both ends of the
-    # subtraction live in the chart's own attribution (see `_dayun_start_ganzhi_year`),
+    # subtraction live in the chart's own attribution (see `_dayun_first_year_label`),
     # so the count can never go below one.
-    until_xusui_age: Final[int] = 1 + self._dayun_start_ganzhi_year - self._bazi.ganzhi_year
+    until_xusui_age: Final[int] = 1 + self._dayun_first_year_label - self._bazi.ganzhi_year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
       return XiaoyunTuple(age, self._bazi.hour_pillar.next(age * step))
@@ -444,10 +513,18 @@ class BaziChart:
     代表此 `BaziChart` 的 json 字典。
     '''
 
+    dayuns: tuple[DayunTuple, ...] = tuple(itertools.islice(self.dayun, 10))
     transits: BaziJson.Transits = {
       'dayun_start_time': self.dayun_start_moment.isoformat(),
       'xiaoyun': { str(age) : str(xiaoyun) for age, xiaoyun in self.xiaoyun },
-      'dayun': { str(year) : str(dayun) for year, dayun in itertools.islice(self.dayun, 10) },
+      'dayun': {
+        str(dayun.ganzhi_year): {
+          'ganzhi': str(dayun.ganzhi),
+          'start_time': dayun.start_moment.isoformat(),
+          'end_time': dayun.end_moment.isoformat(),
+        }
+        for dayun in dayuns
+      },
     }
 
     f = BaziJson.gen_fourpillars
@@ -456,6 +533,7 @@ class BaziChart:
       'gender': str(self._bazi.gender),
       'precision': str(self._bazi.config.precision),
       'backend': str(self._bazi.config.backend),
+      'dayun_year_rule': str(self._bazi.config.dayun_year_rule),
       'school': {
         'day_rollover': self._bazi.config.school.day_rollover.name,
         'hongyan_key': self._bazi.config.school.hongyan_key.name,
