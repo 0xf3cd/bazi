@@ -14,7 +14,7 @@ from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import _ganzhi_month_offset, _ganzhi_year_month_of_jie
 
 
-'''An orderable projection of a physical Dayun boundary.'''
+'''An orderable projection shared by a query and its physical Dayun boundaries.'''
 _DayunKey = tuple[int, ...]
 
 

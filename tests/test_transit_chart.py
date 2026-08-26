@@ -192,8 +192,12 @@ def test_physical_dayun_boundaries_at_three_granularities() -> None:
     assert transits is not None
     assert transits.dayun == expected
 
+  before_first = chart.at_moment(datetime(1985, 5, 28, 10, 33, 54))
+  assert before_first is not None
+  assert before_first.xiaoyun == Ganzhi.from_str('甲申')
+  assert before_first.dayun is None
+
   moment_cases = (
-    (datetime(1985, 5, 28, 10, 33, 54), None),
     (datetime(1985, 5, 28, 10, 33, 55), first),
     (datetime(1985, 5, 28, 10, 33, 56), first),
     (datetime(1995, 5, 28, 10, 33, 54), first),

@@ -90,9 +90,7 @@ class TransitChart:
     if not isinstance(gz_month, Dizhi):
       raise TypeError(f'Expected Dizhi, got {type(gz_month)}')
 
-    bazi = self._bazi_chart.bazi
     query_key = (gz_year, _ganzhi_month_offset(gz_month))
-    birth_key = (bazi.ganzhi_year, _ganzhi_month_offset(bazi.month_commander))
 
     first, last = self._utils.supported_jie_boundaries()
     first_year, first_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(first))
@@ -102,7 +100,7 @@ class TransitChart:
     )
     supported_first_key = (first_year, first_month - 1)
     supported_last_key = (last_year, last_month - 1)
-    if query_key < max(birth_key, supported_first_key) or query_key >= supported_last_key:
+    if query_key < max(self._transit_db._birth_month_key, supported_first_key) or query_key >= supported_last_key:
       return None
     return self._transits(
       gz_year,
@@ -141,7 +139,7 @@ class TransitChart:
     - Year/month coordinates follow the moment's owning Jie; Liuri follows the configured
       `DayRollover`. `at_date()` can therefore give a different reading on the same civil day.
     - HOUR natal attribution and this second-level reading are distinct granularities; inside
-      a tie Shichen, the natal pillars and moment transits can legitimately name different years.
+      a tie 时辰, the natal pillars and moment transits can legitimately name different years.
     - 年/月按时刻所属节归属，流日按所选换日点解释；同一公历日可与 `at_date()` 结果不同。
     - HOUR 原盘归属与秒级时刻流运是两种粒度；tie 时辰内可合法地落在不同干支年。'''
     if not isinstance(solar_moment, datetime):
