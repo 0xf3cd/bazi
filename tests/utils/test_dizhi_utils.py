@@ -11,10 +11,13 @@ from collections import Counter
 from typing import Any
 from collections.abc import Iterable, Callable
 
-from src.defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
+from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, TianganRelation, DizhiRelation
 from src.rules import DizhiRules
 from src.utils import bazi_utils, tiangan_utils, dizhi_utils
-from src.utils.dizhi_utils import DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery
+from src.utils.dizhi_utils import (
+  DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery,
+  GanzhiOccurrence, GanzhiRelationCombo, GanzhiRelationCombos,
+)
 
 
 '''Operand type of `_dz_equal`: dizhi combos as a list of sets or an iterable of `DizhiCombo`s.'''
@@ -30,6 +33,13 @@ def _dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
     if s not in _l2:
       return False
   return True
+
+
+def _project_ganzhi_combos(combos: GanzhiRelationCombos) -> set[DizhiCombo]:
+  return {
+    DizhiCombo(occurrence.ganzhi.dizhi for occurrence in combo)
+    for combo in combos
+  }
 
 
 def test_search_sanhui() -> None:
@@ -946,6 +956,105 @@ def test_search_negative() -> None:
       dizhi_utils.search([Dizhi.子, Dizhi.午], str(relation)) # type: ignore
     with pytest.raises(TypeError):
       dizhi_utils.search({Dizhi.子, Dizhi.午}, relation) # type: ignore
+
+
+def test_ganzhi_occurrence() -> None:
+  occurrence = GanzhiOccurrence(2, Ganzhi.from_str('庚申'))
+  assert occurrence.index == 2
+  assert occurrence.ganzhi == Ganzhi.from_str('庚申')
+  assert occurrence == GanzhiOccurrence(2, Ganzhi.from_str('庚申'))
+  assert occurrence != GanzhiOccurrence(0, Ganzhi.from_str('庚申'))
+  assert hash(occurrence) == hash(GanzhiOccurrence(2, Ganzhi.from_str('庚申')))
+
+  with pytest.raises(TypeError):
+    GanzhiOccurrence('2', Ganzhi.from_str('庚申')) # type: ignore
+  with pytest.raises(ValueError):
+    GanzhiOccurrence(-1, Ganzhi.from_str('庚申'))
+  with pytest.raises(TypeError):
+    GanzhiOccurrence(2, Dizhi.申) # type: ignore
+
+
+def test_search_ganzhis_occurrence_identity() -> None:
+  repeated_shen = (
+    Ganzhi.from_str('庚申'),
+    Ganzhi.from_str('甲子'),
+    Ganzhi.from_str('壬申'),
+    Ganzhi.from_str('癸巳'),
+  )
+  result: GanzhiRelationCombos = dizhi_utils.search_ganzhis(repeated_shen, DizhiRelation.六合)
+  assert set(result) == {
+    GanzhiRelationCombo((GanzhiOccurrence(0, repeated_shen[0]), GanzhiOccurrence(3, repeated_shen[3]))),
+    GanzhiRelationCombo((GanzhiOccurrence(2, repeated_shen[2]), GanzhiOccurrence(3, repeated_shen[3]))),
+  }
+  assert _project_ganzhi_combos(result) == {DizhiCombo((Dizhi.申, Dizhi.巳))}
+
+  repeated_chen = (
+    Ganzhi.from_str('戊辰'),
+    Ganzhi.from_str('庚辰'),
+    Ganzhi.from_str('壬辰'),
+  )
+  self_xing: GanzhiRelationCombos = dizhi_utils.search_ganzhis(repeated_chen, DizhiRelation.刑)
+  assert set(self_xing) == {
+    GanzhiRelationCombo((GanzhiOccurrence(i, repeated_chen[i]), GanzhiOccurrence(j, repeated_chen[j])))
+    for i, j in itertools.combinations(range(3), 2)
+  }
+  assert _project_ganzhi_combos(self_xing) == {DizhiCombo((Dizhi.辰,))}
+
+
+@pytest.mark.slow
+def test_search_ganzhis_projection() -> None:
+  ganzhis = tuple(Ganzhi(tg, dz) for tg, dz in zip(Tiangan.as_list() * 2, Dizhi.as_list() * 2))
+  dizhis = tuple(gz.dizhi for gz in ganzhis)
+
+  for anhe_def, xing_def, relation in itertools.product(
+    DizhiRules.AnheDef,
+    DizhiRules.XingDef,
+    DizhiRelation,
+  ):
+    original = dizhi_utils.search(dizhis, relation, anhe_def=anhe_def, xing_def=xing_def)
+    positioned = dizhi_utils.search_ganzhis(ganzhis, relation, anhe_def=anhe_def, xing_def=xing_def)
+    assert _project_ganzhi_combos(positioned) == set(original)
+
+
+def test_search_ganzhis_negative() -> None:
+  relation = DizhiRelation.六合
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis(Ganzhi.from_str('甲子'), relation) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子'), Dizhi.丑], relation) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis({Ganzhi.from_str('甲子'), Ganzhi.from_str('乙丑')}, relation) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], TianganRelation.合) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, anhe_def='NORMAL') # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, xing_def='LOOSE') # type: ignore
+
+
+@pytest.mark.slow
+def test_discover_ganzhis_projection() -> None:
+  ganzhis = tuple(Ganzhi(tg, dz) for tg, dz in zip(Tiangan.as_list() * 2, Dizhi.as_list() * 2))
+  dizhis = tuple(gz.dizhi for gz in ganzhis)
+
+  for anhe_def, xing_def in itertools.product(DizhiRules.AnheDef, DizhiRules.XingDef):
+    original = dizhi_utils.discover(dizhis, anhe_def=anhe_def, xing_def=xing_def)
+    positioned = dizhi_utils.discover_ganzhis(ganzhis, anhe_def=anhe_def, xing_def=xing_def)
+    assert positioned.to_dizhi_discovery() == original
+
+
+def test_discover_ganzhis_negative() -> None:
+  ganzhis = [Ganzhi.from_str('甲子')]
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_ganzhis(Ganzhi.from_str('甲子')) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_ganzhis([Ganzhi.from_str('甲子'), Dizhi.丑]) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_ganzhis(set(ganzhis)) # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_ganzhis(ganzhis, anhe_def='NORMAL') # type: ignore
+  with pytest.raises(TypeError):
+    dizhi_utils.discover_ganzhis(ganzhis, xing_def='LOOSE') # type: ignore
 
 
 @pytest.mark.slow
