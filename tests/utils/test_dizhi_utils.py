@@ -1000,6 +1000,16 @@ def test_search_ganzhis_occurrence_identity() -> None:
   }
   assert _project_ganzhi_combos(self_xing) == {DizhiCombo((Dizhi.辰,))}
 
+  for pair in (
+    (Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚辰')),
+    (Ganzhi.from_str('庚午'), Ganzhi.from_str('壬午')),
+    (Ganzhi.from_str('癸酉'), Ganzhi.from_str('乙酉')),
+    (Ganzhi.from_str('乙亥'), Ganzhi.from_str('丁亥')),
+  ):
+    assert dizhi_utils.search_ganzhis(pair, DizhiRelation.刑) == (
+      GanzhiRelationCombo((GanzhiOccurrence(0, pair[0]), GanzhiOccurrence(1, pair[1]))),
+    )
+
 
 def test_search_ganzhis_projection() -> None:
   ganzhis = tuple(Ganzhi.list_sexagenary_cycle()[:24])

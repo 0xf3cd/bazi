@@ -32,9 +32,10 @@ class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
 
 @dataclass(frozen=True)
 class GanzhiOccurrence:
-  '''A concrete Ganzhi occurrence in a relation query, identified by its zero-based
-  index in the input sequence. 关系查询中干支的一次具体出现，以其在输入序列中的零基
-  序号标识。
+  '''A concrete Ganzhi value at a zero-based index in one relation query. Equality and
+  hashing use both fields; indices are local to that query's input sequence.
+  一次关系查询中位于某个零基序号的具体干支值。相等与哈希使用两个字段；序号只属于
+  该次查询的输入序列。
 
   Args:
   - index: (int) The occurrence's zero-based index in the query sequence.
@@ -60,9 +61,9 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''A frozen mapping from `DizhiRelation` to concrete Ganzhi-occurrence combos.
-  All occurrence indices belong to the one input sequence passed to `discover_ganzhis`.
-  地支关系到满足它的具体干支位置组合的冻结映射；所有位置序号均属于传给
-  `discover_ganzhis` 的同一个输入序列。'''
+  Instances returned by `discover_ganzhis` contain only occurrences from that call's
+  input sequence. 地支关系到满足它的具体干支位置组合的冻结映射；`discover_ganzhis`
+  返回的实例只包含来自该次调用输入序列的具体出现。'''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
@@ -645,7 +646,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   还可在此读取顺序与天干。
 
   Args:
-  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. Frequency matters.
+  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
   - relation: (DizhiRelation) The relation to check.
   - anhe_def: (DizhiRules.AnheDef) The ANHE definition; only consulted for 暗合 queries.
   - xing_def: (DizhiRules.XingDef) The XING definition; only consulted for 刑 queries.
