@@ -6,6 +6,7 @@ import inspect
 
 import pytest
 
+from src.defines import DizhiRelation
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
@@ -54,6 +55,7 @@ def test_dizhi_xing() -> None:
 
 
 def test_dizhi_gong() -> None:
+  assert DizhiRules.GONG_RELATIONS == (DizhiRelation.拱合, DizhiRelation.拱会)
   assert set(DizhiRules.DIZHI_GONGHE) == set(DizhiRules.GongheDef)
   assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]) == 4
   assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]) == 12

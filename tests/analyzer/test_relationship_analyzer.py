@@ -25,10 +25,6 @@ from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, She
 _GONG_RELATIONS = (DizhiRelation.拱合, DizhiRelation.拱会)
 
 
-def _four_ganzhis(bazi: Bazi) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
-  return (bazi.year_pillar, bazi.month_pillar, bazi.day_pillar, bazi.hour_pillar)
-
-
 def _project_gong(
   discovery: dizhi_utils.GanzhiRelationDiscovery,
   predicate: Callable[[dizhi_utils.GanzhiRelationCombo], bool],
@@ -136,7 +132,7 @@ def test_at_birth_house_relations() -> None:
       lambda _, combo : d in combo
     )
     gong = _project_gong(
-      dizhi_utils.discover_ganzhis(_four_ganzhis(chart.bazi), gong_def=school.gong_def),
+      dizhi_utils.discover_ganzhis(chart.bazi.pillars, gong_def=school.gong_def),
       lambda combo : any(occurrence.index == 2 for occurrence in combo),
     )
     assert _equal(at_birth.house_relations, existing.merge(gong))
@@ -416,7 +412,7 @@ def test_transit_house_relations() -> None:
 
       gong = _project_gong(
         dizhi_utils.discover_mutual_ganzhis(
-          _four_ganzhis(bazi),
+          bazi.pillars,
           transits.ganzhis,
           gong_def=bazi.config.school.gong_def,
         ),
@@ -494,7 +490,7 @@ def test_transit_star_relations() -> None:
         dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
         dz_discovery = dz_discovery.merge(_project_gong(
           dizhi_utils.discover_mutual_ganzhis(
-            _four_ganzhis(chart.bazi),
+            chart.bazi.pillars,
             transits.ganzhis,
             gong_def=school.gong_def,
           ),

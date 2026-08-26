@@ -6,7 +6,7 @@ from typing import Final
 
 from .common import frozendict
 from .data_types import TraitTuple, HiddenTianganDict
-from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
+from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation
 
 
 # All rule tables are plain `Final` class attributes, built once at import time.
@@ -255,8 +255,8 @@ class DizhiRules:
 
   class GongheDef(Enum):
     '''The structural scope of 拱合. `NARROW` only accepts a 三合 pair missing its
-    middle branch; `WIDE` accepts any two branches and returns the third. 狭义拱合只收
-    三合缺中神；广义拱合收三合任意两支并拱出第三支。
+    middle branch; `WIDE` accepts any two members of one 三合 group and returns the
+    third. 狭义拱合只收三合缺中神；广义拱合收三合任意两支并拱出第三支。
 
     Sources / 出处:
     - Narrow: https://services.shen88.cn/bazisuanming/pc-74297.html
@@ -269,8 +269,8 @@ class DizhiRules:
     '''Source-backed profiles for the contextual conditions of 拱合 / 拱会.
     拱合、拱会成立条件的来源档案；只列有出处的组合，不把分歧轴任意拼接。
 
-    - SAME_STEM_NARROW: adjacent participants share one Tiangan; narrow 拱合 plus 拱会.
-      相邻两柱同干；狭义拱合并收拱会。默认，独立来源最多。
+    - SAME_STEM_NARROW: participants share one Tiangan; narrow 拱合 plus 拱会.
+      两柱同干；狭义拱合并收拱会。默认，独立来源最多。
     - SAME_STEM_WIDE: the same Tiangan condition with wide 拱合 plus 拱会.
       两柱同干；广义拱合并收拱会。
     - TRANSFORMING_NARROW: the query scope exposes a Tiangan of the formed Wuxing;
@@ -284,11 +284,21 @@ class DizhiRules:
     - Transforming Tiangan: https://www.suanzhun.net/article/2395.html
     - Lu Tiangan: https://services.shen88.cn/bazisuanming/pc-74297.html
     - 拱会 / 夹 terminology: https://www.sohu.com/a/805277582_120167645
+
+    The profile sets the structural scope and Tiangan condition. Candidate positions are
+    entry-specific: `search_ganzhis` uses adjacent occurrences, while
+    `discover_mutual_ganzhis` uses pairs spanning its two input scopes.
+    profile 只决定结构口径与天干条件。候选柱位由入口决定：`search_ganzhis` 只查相邻
+    occurrence，`discover_mutual_ganzhis` 查横跨两组输入的柱位对。
     '''
     SAME_STEM_NARROW    = 0
     SAME_STEM_WIDE      = 1
     TRANSFORMING_NARROW = 2
     LU_NARROW           = 3
+
+  # Gong relations require position and Tiangan context in batch queries.
+  # 拱局批量查询需要柱位与天干上下文。
+  GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
 
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.
@@ -301,6 +311,9 @@ class DizhiRules:
     frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
   })
 
+  # A 三会 group missing its middle branch. Some modern sources call it 拱会; 盲派 and
+  # 梁湘润系 call it 夹. The structure is the same, and this library reports the selected
+  # public name `DizhiRelation.拱会` while preserving the terminology split here.
   # 三会缺中神。部分现代来源称「拱会」，盲派、梁湘润系称「夹」；机械结构相同，
   # 本库按 `DizhiRelation.拱会` 这一已选公开名称报告，术语分歧留在知识层。
   DIZHI_GONGHUI: Final[frozendict[frozenset[Dizhi], Dizhi]] = frozendict({
@@ -420,6 +433,8 @@ class DizhiRules:
     frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
   })
 
+  # Gonghe returns the arched branch, not the formed Wuxing. Narrow scope accepts only a
+  # missing middle branch; wide scope accepts any two members of one 三合 group.
   # 拱合返回所拱之支，而不是化五行。狭义只收缺中神；广义收三合任意两支。
   DIZHI_GONGHE: Final[frozendict[GongheDef, frozendict[frozenset[Dizhi], Dizhi]]] = frozendict({
     GongheDef.NARROW : frozendict({

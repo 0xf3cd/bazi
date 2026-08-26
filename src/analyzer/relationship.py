@@ -11,6 +11,7 @@ from collections.abc import Callable, Iterable, Sequence
 from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
+from ..rules import DizhiRules
 from ..school import KeyStem, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
@@ -169,8 +170,7 @@ def _dz_discover_mutual_ganzhis(
   )
 
 
-'''The position-dependent relations projected into the analyzer's established Dizhi result shape.'''
-_GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
+_DAY_PILLAR_INDEX: Final[int] = 2
 
 
 def _project_gong(
@@ -180,7 +180,7 @@ def _project_gong(
   '''Filter concrete Gong participants before discarding their positions / 先按具体参与柱过滤拱局，再投影地支。'''
   return dizhi_utils.GanzhiRelationDiscovery({
     relation : filtered
-    for relation in _GONG_RELATIONS
+    for relation in DizhiRules.GONG_RELATIONS
     if len(filtered := tuple(combo for combo in discovery.get(relation, ()) if predicate(combo))) > 0
   }).to_dizhi_discovery()
 
@@ -192,11 +192,6 @@ def _with_gong(
   '''Add disjoint Gong keys without reordering existing relation combos / 加入拱局键且不重排既有组合。'''
   assert set(existing).isdisjoint(gong)
   return dizhi_utils.DizhiRelationDiscovery({**existing, **gong})
-
-
-def _four_ganzhis(bazi: Bazi) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
-  '''Return the four pillars in canonical order / 按年月日时返回四柱。'''
-  return (bazi.year_pillar, bazi.month_pillar, bazi.day_pillar, bazi.hour_pillar)
 
 
 class ShenshaAnalysis(TypedDict):
@@ -235,23 +230,27 @@ class AtBirthAnalysis:
   
   @property
   def house_relations(self) -> dizhi_utils.DizhiRelationDiscovery:
-    '''Relations that the House of Relationship / 婚姻宫 has.'''
-    # Existing context-free relations use full discovery followed by the established value
-    # filter. Gong is filtered separately by the concrete day-pillar occurrence below.
+    '''Relations that the House of Relationship / 婚姻宫 has. Gong is evaluated under the
+    chart's school and retained only when the concrete day-pillar occurrence participates.
+    拱局按本盘流派判断，并只保留日柱这一具体 occurrence 真正参与的组合。'''
+    # A value-only filter would retain a Gong pair formed by another occurrence when that
+    # pillar repeats the day branch, so filter concrete participants before projection.
     bazi: Final[Bazi] = self._chart.bazi
     school: Final[BaziSchool] = bazi.config.school
     existing = _dz_discover(school, bazi.four_dizhis).filter(
       lambda _, combo : self._chart.house_of_relationship in combo
     )
     gong = _project_gong(
-      _dz_discover_ganzhis(school, _four_ganzhis(bazi)),
-      lambda combo : any(occurrence.index == 2 for occurrence in combo),
+      _dz_discover_ganzhis(school, bazi.pillars),
+      lambda combo : any(occurrence.index == _DAY_PILLAR_INDEX for occurrence in combo),
     )
     return _with_gong(existing, gong)
   
   @property
   def star_relations(self) -> GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]:
-    '''Relations that the Star(s) of Relationship / 配偶星 / 婚姻星 has.'''
+    '''Relations that the Star(s) of Relationship / 配偶星 / 婚姻星 has. Gong is evaluated
+    under the chart's school and retained only when a real participant is a relationship-star
+    branch. 拱局按本盘流派判断，并只保留实支参与者含配偶星地支的组合。'''
     stars = self._chart.relationship_stars
     bazi: Final[Bazi] = self._chart.bazi
     school: Final[BaziSchool] = bazi.config.school
@@ -259,7 +258,7 @@ class AtBirthAnalysis:
     tg = tiangan_utils.discover(bazi.four_tiangans).filter(lambda _, combo : stars.tiangan in combo)
     existing = _dz_discover(school, bazi.four_dizhis).filter(lambda _, combo : any(dz in combo for dz in stars.dizhi))
     gong = _project_gong(
-      _dz_discover_ganzhis(school, _four_ganzhis(bazi)),
+      _dz_discover_ganzhis(school, bazi.pillars),
       lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
     )
     return GanzhiData(tg, _with_gong(existing, gong))
@@ -330,6 +329,10 @@ class TransitAnalysis:
     - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns: (dizhi_utils.DizhiRelationDiscovery) The Dizhi relations that the House of Relationship and other transit Dizhis form.
+
+    Note:
+    - Gong is evaluated under the chart's school and retained only when the concrete day-pillar
+      occurrence participates. 拱局按本盘流派判断，并只保留日柱这一具体 occurrence 参与的组合。
     '''
 
     self._check_transits(transits)
@@ -353,8 +356,8 @@ class TransitAnalysis:
 
     existing = _dz_discover_mutual(school, bazi.four_dizhis, transit_dizhis).filter(__is_house_transit_relation)
     gong = _project_gong(
-      _dz_discover_mutual_ganzhis(school, _four_ganzhis(bazi), transit_ganzhis),
-      lambda combo : any(occurrence.index == 2 for occurrence in combo),
+      _dz_discover_mutual_ganzhis(school, bazi.pillars, transit_ganzhis),
+      lambda combo : any(occurrence.index == _DAY_PILLAR_INDEX for occurrence in combo),
     )
     return _with_gong(existing, gong)
   
@@ -387,6 +390,13 @@ class TransitAnalysis:
     - level: (Level) The level of the analysis. 返回分析的级别。
 
     Returns: (GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]) The Tiangan and Dizhi relations that the Star(s) of Relationship and other transit Ganzhis form.
+
+    Note:
+    - Gong is evaluated under the chart's school and retained only when a real participant is a
+      relationship-star branch. With `TRANSITS_ONLY`, adjacency follows the present entries in
+      `transits.ganzhis`; narrowing a `TransitSet` can therefore change Gong adjacency.
+    - 拱局按本盘流派判断，并只保留实支参与者含配偶星地支的组合。`TRANSITS_ONLY` 的相邻关系
+      按 `transits.ganzhis` 中实际存在的流运计算；缩小 `TransitSet` 可能因此改变拱局相邻关系。
     '''
 
     if not isinstance(level, TransitAnalysis.Level):
@@ -401,7 +411,7 @@ class TransitAnalysis:
 
     at_birth_tg = self._chart.bazi.four_tiangans
     at_birth_dz = self._chart.bazi.four_dizhis
-    at_birth_ganzhis = _four_ganzhis(self._chart.bazi)
+    at_birth_ganzhis = self._chart.bazi.pillars
     school: Final[BaziSchool] = self._chart.bazi.config.school
     stars = self._chart.relationship_stars
 
@@ -413,14 +423,14 @@ class TransitAnalysis:
       dz = dz.merge(_dz_discover(school, transit_dz))
       gong_dz = gong_dz.merge(_project_gong(
         _dz_discover_ganzhis(school, transit_ganzhis),
-        lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
+        lambda _: True,
       ))
     if level & TransitAnalysis.Level.MUTUAL:
       tg = tg.merge(tiangan_utils.discover_mutual(at_birth_tg, transit_tg))
       dz = dz.merge(_dz_discover_mutual(school, at_birth_dz, transit_dz))
       gong_dz = gong_dz.merge(_project_gong(
         _dz_discover_mutual_ganzhis(school, at_birth_ganzhis, transit_ganzhis),
-        lambda combo : any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo),
+        lambda _: True,
       ))
     dz = _with_gong(dz, gong_dz)
 

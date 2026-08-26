@@ -610,14 +610,8 @@ def test_random_cases(bazi: Bazi) -> None:
           lambda _, combo : not combo.isdisjoint(filter(lambda dz : dz is not house, transits_dz_set))
         )
       )
-      at_birth_ganzhis = (
-        bazi.year_pillar,
-        bazi.month_pillar,
-        bazi.day_pillar,
-        bazi.hour_pillar,
-      )
       positioned_gong = dizhi_utils.discover_mutual_ganzhis(
-        at_birth_ganzhis,
+        bazi.pillars,
         transits_gz,
         anhe_def=school.anhe_def,
         xing_def=school.xing_def,
@@ -725,7 +719,7 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       )
       mutual_gong = dizhi_utils.discover_mutual_ganzhis(
-        (bazi.year_pillar, bazi.month_pillar, bazi.day_pillar, bazi.hour_pillar),
+        bazi.pillars,
         transits_gz,
         anhe_def=school.anhe_def,
         xing_def=school.xing_def,

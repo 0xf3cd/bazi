@@ -61,17 +61,19 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''A frozen mapping from `DizhiRelation` to concrete Ganzhi-occurrence combos.
-  Instances returned by `discover_ganzhis` contain only occurrences from that call's
-  input sequence. 地支关系到满足它的具体干支位置组合的冻结映射；`discover_ganzhis`
-  返回的实例只包含来自该次调用输入序列的具体出现。'''
+  Occurrence indices follow the query sequence defined by the producing entry; see each
+  entry's docstring. 地支关系到满足它的具体干支位置组合的冻结映射；occurrence 序号按
+  生产该结果的入口所定义的查询序列解释，详见各入口说明。'''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
     occurrence combos that collapse to the same Dizhi combo are deduplicated.
     Gong combos project their two real participants; recover the virtual branch with
-    `gonghe` / `gonghui` under the same structural scope.
+    `gonghe` / `gonghui` under the same structural scope. For 拱合, pass `WIDE` when the
+    originating profile was `SAME_STEM_WIDE`, and `NARROW` for the other profiles.
     把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
-    两个实支，所拱虚支按同一结构口径用 `gonghe` / `gonghui` 查询。'''
+    两个实支，所拱虚支按同一结构口径用 `gonghe` / `gonghui` 查询；拱合来源 profile 为
+    `SAME_STEM_WIDE` 时传 `WIDE`，其余 profile 传 `NARROW`。'''
     projected: dict[DizhiRelation, tuple[DizhiCombo, ...]] = {}
     for relation, combos in self.items():
       unique: dict[DizhiCombo, None] = {}
@@ -80,10 +82,6 @@ class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
       if len(unique) > 0:
         projected[relation] = tuple(unique)
     return DizhiRelationDiscovery(projected)
-
-
-'''Relations that require position and Tiangan context and are unavailable to Dizhi-only batch queries.'''
-_GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
@@ -290,6 +288,14 @@ def gonghe(dz1: Dizhi, dz2: Dizhi, *,
   - definition: (DizhiRules.GongheDef) Narrow (missing middle) or wide (any two) scope.
 
   Return: (Dizhi | None) The arched branch, or `None` if the pair is outside the definition.
+
+  Examples:
+  - gonghe(Dizhi.申, Dizhi.辰)
+    - return: Dizhi.子
+  - gonghe(Dizhi.申, Dizhi.子)
+    - return: None
+  - gonghe(Dizhi.申, Dizhi.子, definition=DizhiRules.GongheDef.WIDE)
+    - return: Dizhi.辰
   '''
   if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
@@ -310,6 +316,12 @@ def gonghui(dz1: Dizhi, dz2: Dizhi) -> Dizhi | None:
   - dz2: (Dizhi) The second participating Dizhi.
 
   Return: (Dizhi | None) The arched middle branch, or `None`.
+
+  Examples:
+  - gonghui(Dizhi.寅, Dizhi.辰)
+    - return: Dizhi.卯
+  - gonghui(Dizhi.寅, Dizhi.卯)
+    - return: None
   '''
   if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
@@ -616,7 +628,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
   if not isinstance(xing_def, DizhiRules.XingDef):
     raise TypeError(f'Expected XingDef, got {type(xing_def)}')
 
-  if relation in _GONG_RELATIONS:
+  if relation in DizhiRules.GONG_RELATIONS:
     raise ValueError(f'{relation} requires Ganzhi positions; use search_ganzhis')
 
   if relation is DizhiRelation.刑:
@@ -690,7 +702,7 @@ def discover(dizhis: Sequence[Dizhi], *,
   return DizhiRelationDiscovery({
     rel : result
     for rel in DizhiRelation
-    if rel not in _GONG_RELATIONS
+    if rel not in DizhiRules.GONG_RELATIONS
     if len(result := search(dizhis, rel, anhe_def=anhe_def, xing_def=xing_def)) > 0
   })
 
@@ -719,7 +731,7 @@ def _search_gong(
   gong_def: DizhiRules.GongDef,
 ) -> GanzhiRelationCombos:
   '''Search contextual Gong candidates over caller-selected position pairs / 在调用方选定的柱位对中查拱局。'''
-  assert relation in _GONG_RELATIONS
+  assert relation in DizhiRules.GONG_RELATIONS
   assert isinstance(gong_def, DizhiRules.GongDef)
 
   if relation is DizhiRelation.拱会 and gong_def is DizhiRules.GongDef.LU_NARROW:
@@ -727,9 +739,6 @@ def _search_gong(
 
   tiangans: tuple[Tiangan, ...] = tuple(gz.tiangan for gz in ganzhis)
   dizhis: frozenset[Dizhi] = frozenset(gz.dizhi for gz in ganzhis)
-  occurrences: tuple[GanzhiOccurrence, ...] = tuple(
-    GanzhiOccurrence(index, gz) for index, gz in enumerate(ganzhis)
-  )
   gonghe_def: DizhiRules.GongheDef = (
     DizhiRules.GongheDef.WIDE
     if gong_def is DizhiRules.GongDef.SAME_STEM_WIDE
@@ -754,7 +763,7 @@ def _search_gong(
       else DizhiRules.DIZHI_SANHUI[complete]
     )
     if _gong_tiangan_qualified(gz1, gz2, tiangans, formation, gong_def):
-      ret.append(GanzhiRelationCombo((occurrences[index1], occurrences[index2])))
+      ret.append(GanzhiRelationCombo((GanzhiOccurrence(index1, gz1), GanzhiOccurrence(index2, gz2))))
   return GanzhiRelationCombos(ret)
 
 
@@ -775,8 +784,11 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   For 拱合 / 拱会, this entry applies the selected source profile, requires adjacent
   occurrences, and rejects a candidate when its virtual branch is already present anywhere
   in the input. Returned combos contain the two real participants; `gonghe` / `gonghui`
-  return the virtual branch. 拱合、拱会在本入口应用来源 profile，只查相邻 occurrence；
-  所拱之支已在输入中出现时不再论暗拱。返回组合只含两个实支，虚支由直接查询返回。
+  return the virtual branch. Recover a 拱合 target with `GongheDef.WIDE` only for
+  `SAME_STEM_WIDE`; use `NARROW` for the other profiles.
+  拱合、拱会在本入口应用来源 profile，只查相邻 occurrence；所拱之支已在输入中出现时
+  不再论暗拱。返回组合只含两个实支，虚支由直接查询返回；恢复拱合虚支时只有
+  `SAME_STEM_WIDE` 使用 `GongheDef.WIDE`，其余 profile 使用 `NARROW`。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
@@ -803,7 +815,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
     raise TypeError(f'Expected GongDef, got {type(gong_def)}')
 
   concrete_ganzhis: tuple[Ganzhi, ...] = tuple(ganzhis)
-  if relation in _GONG_RELATIONS:
+  if relation in DizhiRules.GONG_RELATIONS:
     adjacent_pairs = zip(range(len(concrete_ganzhis) - 1), range(1, len(concrete_ganzhis)))
     return _search_gong(concrete_ganzhis, relation, adjacent_pairs, gong_def)
 
@@ -839,6 +851,11 @@ def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
   Note:
   - Returned combos do not reveal the direction of directional relations.
   - 返回的组合不体现有向关系的方向。
+
+  Note:
+  - Gong matching, adjacency, fill, and result-shape semantics are those of
+    `search_ganzhis`.
+  - 拱局的 profile、相邻、填实与结果形状语义同 `search_ganzhis`。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check.
@@ -917,7 +934,7 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
   split: int = len(first)
 
   def __search(relation: DizhiRelation) -> GanzhiRelationCombos:
-    if relation in _GONG_RELATIONS:
+    if relation in DizhiRules.GONG_RELATIONS:
       return _search_gong(
         combined,
         relation,
@@ -930,7 +947,6 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
       relation,
       anhe_def=anhe_def,
       xing_def=xing_def,
-      gong_def=gong_def,
     )
     return GanzhiRelationCombos(
       combo for combo in combos

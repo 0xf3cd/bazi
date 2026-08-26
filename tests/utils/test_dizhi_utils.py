@@ -1110,7 +1110,10 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   )
   assert dizhi_utils.search_ganzhis(same, DizhiRelation.拱合) == expected_same
   assert dizhi_utils.gonghe(*(occurrence.ganzhi.dizhi for occurrence in expected_same[0])) is Dizhi.子
-  assert dizhi_utils.search_ganzhis(tuple(reversed(same)), DizhiRelation.拱合) != ()
+  reversed_same = tuple(reversed(same))
+  assert dizhi_utils.search_ganzhis(reversed_same, DizhiRelation.拱合) == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, reversed_same[0]), GanzhiOccurrence(1, reversed_same[1]))),
+  )
 
   nonadjacent = (same[0], Ganzhi.from_str('乙卯'), same[1])
   assert dizhi_utils.search_ganzhis(nonadjacent, DizhiRelation.拱合) == ()
@@ -1150,19 +1153,45 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
     lu,
     DizhiRelation.拱合,
     gong_def=DizhiRules.GongDef.LU_NARROW,
-  ) != ()
+  ) == (
+    GanzhiRelationCombo((GanzhiOccurrence(1, lu[1]), GanzhiOccurrence(2, lu[2]))),
+  )
 
   gonghui = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲辰'))
-  assert dizhi_utils.search_ganzhis(gonghui, DizhiRelation.拱会) != ()
+  assert dizhi_utils.search_ganzhis(gonghui, DizhiRelation.拱会) == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, gonghui[0]), GanzhiOccurrence(1, gonghui[1]))),
+  )
   transforming_gonghui = (Ganzhi.from_str('乙丑'), Ganzhi.from_str('甲寅'), Ganzhi.from_str('戊辰'))
   assert dizhi_utils.search_ganzhis(
     transforming_gonghui,
     DizhiRelation.拱会,
     gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW,
-  ) != ()
+  ) == (
+    GanzhiRelationCombo((
+      GanzhiOccurrence(1, transforming_gonghui[1]),
+      GanzhiOccurrence(2, transforming_gonghui[2]),
+    )),
+  )
   assert dizhi_utils.search_ganzhis(
     transforming_gonghui,
     DizhiRelation.拱会,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+  ) == ()
+
+
+@pytest.mark.parametrize('ganzhi_strs', [
+  ('甲子', '庚亥', '戊未'),
+  ('丙丑', '庚寅', '戊戌'),
+  ('庚亥', '甲巳', '戊丑'),
+  ('壬午', '庚申', '戊辰'),
+])
+def test_search_ganzhis_lu_profile_rejects_yang_tiangan(
+  ganzhi_strs: tuple[str, str, str],
+) -> None:
+  ganzhis = tuple(Ganzhi.from_str(s) for s in ganzhi_strs)
+  assert dizhi_utils.search_ganzhis(
+    ganzhis,
+    DizhiRelation.拱合,
     gong_def=DizhiRules.GongDef.LU_NARROW,
   ) == ()
 

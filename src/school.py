@@ -207,8 +207,8 @@ class BaziSchool:
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 暗合 NORMAL_EXTENDED
-+ 刑 LOOSE + 拱局 SAME_STEM_NARROW (现状多数派口径). / 默认流派档案：晚子时换日、红艳查日干、
-暗合最宽表、刑三取二、拱局同干狭义。'''
++ 刑 LOOSE + 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、红艳查日干、暗合最宽表、
+刑三取二、拱局同干狭义。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 
