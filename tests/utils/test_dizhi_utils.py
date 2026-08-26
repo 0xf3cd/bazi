@@ -16,7 +16,7 @@ from src.rules import DizhiRules
 from src.utils import bazi_utils, tiangan_utils, dizhi_utils
 from src.utils.dizhi_utils import (
   DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery,
-  GanzhiOccurrence, GanzhiRelationCombo, GanzhiRelationCombos,
+  GanzhiOccurrence, GanzhiRelationCombo, GanzhiRelationCombos, GanzhiRelationDiscovery,
 )
 
 
@@ -1001,9 +1001,8 @@ def test_search_ganzhis_occurrence_identity() -> None:
   assert _project_ganzhi_combos(self_xing) == {DizhiCombo((Dizhi.辰,))}
 
 
-@pytest.mark.slow
 def test_search_ganzhis_projection() -> None:
-  ganzhis = tuple(Ganzhi(tg, dz) for tg, dz in zip(Tiangan.as_list() * 2, Dizhi.as_list() * 2))
+  ganzhis = tuple(Ganzhi.list_sexagenary_cycle()[:24])
   dizhis = tuple(gz.dizhi for gz in ganzhis)
 
   for anhe_def, xing_def, relation in itertools.product(
@@ -1032,15 +1031,18 @@ def test_search_ganzhis_negative() -> None:
     dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, xing_def='LOOSE') # type: ignore
 
 
-@pytest.mark.slow
 def test_discover_ganzhis_projection() -> None:
-  ganzhis = tuple(Ganzhi(tg, dz) for tg, dz in zip(Tiangan.as_list() * 2, Dizhi.as_list() * 2))
+  ganzhis = tuple(Ganzhi.list_sexagenary_cycle()[:24])
   dizhis = tuple(gz.dizhi for gz in ganzhis)
 
   for anhe_def, xing_def in itertools.product(DizhiRules.AnheDef, DizhiRules.XingDef):
     original = dizhi_utils.discover(dizhis, anhe_def=anhe_def, xing_def=xing_def)
     positioned = dizhi_utils.discover_ganzhis(ganzhis, anhe_def=anhe_def, xing_def=xing_def)
     assert positioned.to_dizhi_discovery() == original
+
+  empty = GanzhiRelationDiscovery({DizhiRelation.六合: ()})
+  assert empty.to_dizhi_discovery() == DizhiRelationDiscovery({})
+  assert not hasattr(empty, 'merge')
 
 
 def test_discover_ganzhis_negative() -> None:
