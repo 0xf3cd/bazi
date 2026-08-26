@@ -285,11 +285,10 @@ class DizhiRules:
     - Lu Tiangan: https://services.shen88.cn/bazisuanming/pc-74297.html
     - 拱会 / 夹 terminology: https://www.sohu.com/a/805277582_120167645
 
-    The profile sets the structural scope and Tiangan condition. Candidate positions are
-    entry-specific: `search_ganzhis` uses adjacent occurrences, while
+    Candidate positions are entry-specific: `search_ganzhis` uses adjacent occurrences, while
     `discover_mutual_ganzhis` uses pairs spanning its two input scopes.
-    profile 只决定结构口径与天干条件。候选柱位由入口决定：`search_ganzhis` 只查相邻
-    occurrence，`discover_mutual_ganzhis` 查横跨两组输入的柱位对。
+    候选柱位由入口决定：`search_ganzhis` 只查相邻 occurrence，`discover_mutual_ganzhis`
+    查横跨两组输入的柱位对。
     '''
     SAME_STEM_NARROW    = 0
     SAME_STEM_WIDE      = 1
@@ -299,6 +298,13 @@ class DizhiRules:
   # Gong relations require position and Tiangan context in batch queries.
   # 拱局批量查询需要柱位与天干上下文。
   GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
+
+  GONG_GONGHE_SCOPE: Final[frozendict[GongDef, GongheDef]] = frozendict({
+    GongDef.SAME_STEM_NARROW    : GongheDef.NARROW,
+    GongDef.SAME_STEM_WIDE      : GongheDef.WIDE,
+    GongDef.TRANSFORMING_NARROW : GongheDef.NARROW,
+    GongDef.LU_NARROW           : GongheDef.NARROW,
+  })
 
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.

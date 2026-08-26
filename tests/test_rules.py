@@ -56,6 +56,13 @@ def test_dizhi_xing() -> None:
 
 def test_dizhi_gong() -> None:
   assert DizhiRules.GONG_RELATIONS == (DizhiRelation.拱合, DizhiRelation.拱会)
+  assert set(DizhiRules.GONG_GONGHE_SCOPE) == set(DizhiRules.GongDef)
+  assert DizhiRules.GONG_GONGHE_SCOPE == {
+    DizhiRules.GongDef.SAME_STEM_NARROW    : DizhiRules.GongheDef.NARROW,
+    DizhiRules.GongDef.SAME_STEM_WIDE      : DizhiRules.GongheDef.WIDE,
+    DizhiRules.GongDef.TRANSFORMING_NARROW : DizhiRules.GongheDef.NARROW,
+    DizhiRules.GongDef.LU_NARROW           : DizhiRules.GongheDef.NARROW,
+  }
   assert set(DizhiRules.DIZHI_GONGHE) == set(DizhiRules.GongheDef)
   assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]) == 4
   assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]) == 12

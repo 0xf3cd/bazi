@@ -27,7 +27,13 @@ DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
-  地支关系到满足它的地支组合的冻结映射。'''
+  Gong combos contain only their two real participants, not the virtual branch; recover it
+  with `gonghe` / `gonghui` under the originating profile's structural scope. For analyzer
+  results, map the chart's `school.gong_def` through `DizhiRules.GONG_GONGHE_SCOPE` when
+  calling `gonghe`.
+  地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；按来源
+  profile 的结构口径用 `gonghe` / `gonghui` 恢复虚支。analyzer 结果调用 `gonghe` 时，
+  用 `DizhiRules.GONG_GONGHE_SCOPE` 把本盘 `school.gong_def` 映射成查询口径。'''
 
 
 @dataclass(frozen=True)
@@ -69,11 +75,11 @@ class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
     '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
     occurrence combos that collapse to the same Dizhi combo are deduplicated.
     Gong combos project their two real participants; recover the virtual branch with
-    `gonghe` / `gonghui` under the same structural scope. For 拱合, pass `WIDE` when the
-    originating profile was `SAME_STEM_WIDE`, and `NARROW` for the other profiles.
+    `gonghe` / `gonghui` under the same structural scope. For 拱合, use
+    `DizhiRules.GONG_GONGHE_SCOPE[profile]`.
     把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
-    两个实支，所拱虚支按同一结构口径用 `gonghe` / `gonghui` 查询；拱合来源 profile 为
-    `SAME_STEM_WIDE` 时传 `WIDE`，其余 profile 传 `NARROW`。'''
+    两个实支，所拱虚支按同一结构口径用 `gonghe` / `gonghui` 查询；拱合使用
+    `DizhiRules.GONG_GONGHE_SCOPE[profile]` 所列口径。'''
     projected: dict[DizhiRelation, tuple[DizhiCombo, ...]] = {}
     for relation, combos in self.items():
       unique: dict[DizhiCombo, None] = {}
@@ -739,11 +745,7 @@ def _search_gong(
 
   tiangans: tuple[Tiangan, ...] = tuple(gz.tiangan for gz in ganzhis)
   dizhis: frozenset[Dizhi] = frozenset(gz.dizhi for gz in ganzhis)
-  gonghe_def: DizhiRules.GongheDef = (
-    DizhiRules.GongheDef.WIDE
-    if gong_def is DizhiRules.GongDef.SAME_STEM_WIDE
-    else DizhiRules.GongheDef.NARROW
-  )
+  gonghe_def: DizhiRules.GongheDef = DizhiRules.GONG_GONGHE_SCOPE[gong_def]
 
   ret: list[GanzhiRelationCombo] = []
   for index1, index2 in index_pairs:
@@ -784,11 +786,10 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   For 拱合 / 拱会, this entry applies the selected source profile, requires adjacent
   occurrences, and rejects a candidate when its virtual branch is already present anywhere
   in the input. Returned combos contain the two real participants; `gonghe` / `gonghui`
-  return the virtual branch. Recover a 拱合 target with `GongheDef.WIDE` only for
-  `SAME_STEM_WIDE`; use `NARROW` for the other profiles.
+  return the virtual branch. For 拱合, use `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`.
   拱合、拱会在本入口应用来源 profile，只查相邻 occurrence；所拱之支已在输入中出现时
-  不再论暗拱。返回组合只含两个实支，虚支由直接查询返回；恢复拱合虚支时只有
-  `SAME_STEM_WIDE` 使用 `GongheDef.WIDE`，其余 profile 使用 `NARROW`。
+  不再论暗拱。返回组合只含两个实支，虚支由直接查询返回；拱合使用
+  `DizhiRules.GONG_GONGHE_SCOPE[gong_def]` 所列口径。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
