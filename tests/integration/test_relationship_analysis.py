@@ -14,7 +14,7 @@ from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.school import KeyStem, BaziSchool, BaziConfig
 from src.transit_chart import TransitChart
-from src.transits import TransitDate, TransitKind, TransitMonth, TransitSet, TransitYear
+from src.transits import TransitKind, TransitSet
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
 from src.rules import DizhiRules
 
@@ -34,8 +34,14 @@ def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
   return True
 
 
+def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+  transits = transit_chart.at_year(gz_year)
+  assert transits is not None
+  return transits
+
+
 def _random_year_transits(transit_chart: TransitChart, gz_year: int) -> TransitSet:
-  full_transits = transit_chart.at(TransitYear(gz_year))
+  full_transits = _at_year(transit_chart, gz_year)
   available = tuple(full_transits)
   selected = random.sample(available, random.randint(1, len(available)))
   return full_transits.select(*selected)
@@ -61,23 +67,31 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
   return True
 
 
-@pytest.mark.parametrize(('query', 'kind'), [
-  (TransitMonth(2024, Dizhi.寅), TransitKind.LIUYUE),
-  (TransitDate(date(2024, 2, 4)), TransitKind.LIURI),
-])
-def test_month_and_date_transits_reach_relationship_analysis(
-  query: TransitMonth | TransitDate,
-  kind: TransitKind,
-) -> None:
-  chart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
-  transits = TransitChart(chart).at(query).select(kind)
+def test_month_date_and_moment_transits_reach_relationship_analysis() -> None:
+  chart = BaziChart(Bazi.create(
+    '1984-04-01 11:08',
+    'male',
+    BaziConfig.from_values(precision='minute'),
+  ))
+  transit_chart = TransitChart(chart)
+  month_transits = transit_chart.at_month(2024, Dizhi.寅)
+  date_transits = transit_chart.at_date(date(2024, 2, 4))
+  moment_transits = transit_chart.at_moment(datetime(2024, 2, 4, 18, 0))
+  assert month_transits is not None
+  assert date_transits is not None
+  assert moment_transits is not None
 
-  expected = tiangan_utils.discover_mutual(
-    [chart.bazi.day_master],
-    tuple(gz.tiangan for gz in transits.ganzhis),
-  )
-  actual = RelationshipAnalyzer(chart).transits.day_master_relations(transits)
-  assert _equal(expected, actual)
+  analysis = RelationshipAnalyzer(chart).transits
+  for transits in (
+    month_transits.select(TransitKind.LIUYUE),
+    date_transits.select(TransitKind.LIURI),
+    moment_transits.select(TransitKind.LIURI),
+  ):
+    expected = tiangan_utils.discover_mutual(
+      [chart.bazi.day_master],
+      tuple(gz.tiangan for gz in transits.ganzhis),
+    )
+    assert _equal(expected, analysis.day_master_relations(transits))
 
 
 def test_case1() -> None:
@@ -134,7 +148,7 @@ def test_case1() -> None:
   assert len(at_birth.star_relations.dizhi) == 0
 
   # 1990
-  transits_1990 = transit_chart.at(TransitYear(1990)).select(
+  transits_1990 = _at_year(transit_chart, 1990).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   )
@@ -189,7 +203,7 @@ def test_case1() -> None:
   assert not transits.star(transits_1990.select(TransitKind.LIUNIAN)).dizhi
 
   # 2018
-  transits_2018 = transit_chart.at(TransitYear(2018)).select(
+  transits_2018 = _at_year(transit_chart, 2018).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   )
@@ -241,7 +255,7 @@ def test_case1() -> None:
   assert not transits.star(transits_2018.select(TransitKind.DAYUN)).dizhi
 
   # 2031
-  transits_2031 = transit_chart.at(TransitYear(2031)).select(
+  transits_2031 = _at_year(transit_chart, 2031).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   )
@@ -360,7 +374,7 @@ def test_case2() -> None:
   }
 
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -391,7 +405,7 @@ def test_case2() -> None:
   }
 
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -432,7 +446,7 @@ def test_case2() -> None:
   school: BaziSchool = chart.bazi.config.school
 
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -506,7 +520,7 @@ def test_case2() -> None:
   assert is_zhengyin(Dizhi.卯)
 
   for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -550,7 +564,7 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # shensha
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -577,7 +591,7 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # day master and house relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -629,7 +643,7 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # star relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -703,7 +717,7 @@ def test_random_cases(bazi: Bazi) -> None:
 
   # zhengyin and star methods
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):
-    year_transits = transit_chart.at(TransitYear(year))
+    year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
       transits_gz = selected_transits.ganzhis
@@ -769,8 +783,8 @@ def test_school_variants_reach_relationship_analysis() -> None:
   transit_default: TransitAnalysis = RelationshipAnalyzer(chart_default_c).transits
   transit_strict: TransitAnalysis = RelationshipAnalyzer(chart_strict_c).transits
 
-  default_1991 = TransitChart(chart_default_c).at(TransitYear(1991)).select(TransitKind.LIUNIAN)
-  strict_1991 = TransitChart(chart_strict_c).at(TransitYear(1991)).select(TransitKind.LIUNIAN)
+  default_1991 = _at_year(TransitChart(chart_default_c), 1991).select(TransitKind.LIUNIAN)
+  strict_1991 = _at_year(TransitChart(chart_strict_c), 1991).select(TransitKind.LIUNIAN)
   default_rels_c = transit_default.house_relations(default_1991)
   strict_rels_c = transit_strict.house_relations(strict_1991)
   assert set(map(frozenset, default_rels_c[DizhiRelation.刑])) == {frozenset((Dizhi.丑, Dizhi.未))}
@@ -805,8 +819,8 @@ def test_school_variants_reach_relationship_analysis() -> None:
   transit_default_e: TransitAnalysis = RelationshipAnalyzer(chart_default_e).transits
   transit_strict_e: TransitAnalysis = RelationshipAnalyzer(chart_strict_e).transits
 
-  default_1992 = TransitChart(chart_default_e).at(TransitYear(1992)).select(TransitKind.LIUNIAN)
-  strict_1992 = TransitChart(chart_strict_e).at(TransitYear(1992)).select(TransitKind.LIUNIAN)
+  default_1992 = _at_year(TransitChart(chart_default_e), 1992).select(TransitKind.LIUNIAN)
+  strict_1992 = _at_year(TransitChart(chart_strict_e), 1992).select(TransitKind.LIUNIAN)
   default_star_e = transit_default_e.star_relations(
     default_1992,
     level=TransitAnalysis.Level.MUTUAL,

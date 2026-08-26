@@ -1,23 +1,19 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Final
 
 from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
-from .calendar import calendar_utils_of
+from .calendar import CalendarBackend, calendar_utils_of
 from .calendar.utils_protocol import CalendarUtilsProtocol
-from .utils.bazi_utils import ganzhi_of_day, ganzhi_of_year, month_tiangan
-from .transits import TransitDate, TransitMonth, TransitQuery, TransitSet, TransitYear, TransitDatabase
-
-
-def _zero_based_month_index(month_dizhi: Dizhi) -> int:
-  return (month_dizhi.index - Dizhi.寅.index) % 12
-
-
-def _one_based_month_to_dizhi(month: int) -> Dizhi:
-  assert 1 <= month <= 12
-  return Dizhi.from_index((Dizhi.寅.index + month - 1) % 12)
+from .school import BaziPrecision
+from .utils.bazi_utils import (
+  ganzhi_of_day, ganzhi_of_year, month_tiangan,
+  _ganzhi_of_day_at_moment, _ganzhi_month_dizhi, _ganzhi_month_offset,
+  _ganzhi_year_month_of_jie,
+)
+from .transits import TransitSet, TransitDatabase
 
 
 class TransitChart:
@@ -51,49 +47,14 @@ class TransitChart:
     非 frozen 的 `Bazi` 已由命盘自身隔离。'''
     return self._bazi_chart
 
-  def _resolved(self, query: TransitQuery) -> tuple[int, Dizhi | None, date | None] | None:
-    bazi = self._bazi_chart.bazi
-    if isinstance(query, TransitYear):
-      return (query.gz_year, None, None) if query.gz_year >= bazi.ganzhi_year else None
-
-    if isinstance(query, TransitMonth):
-      query_key = (query.gz_year, _zero_based_month_index(query.gz_month))
-      birth_key = (bazi.ganzhi_year, _zero_based_month_index(bazi.month_commander))
-      return (query.gz_year, query.gz_month, None) if query_key >= birth_key else None
-
-    assert isinstance(query, TransitDate)
-    if query.solar_date < bazi.solar_date:
-      return None
-    try:
-      ganzhi_date = self._utils.to_ganzhi(query.solar_date)
-    except ValueError:
-      return None
-    month_dizhi = _one_based_month_to_dizhi(ganzhi_date.month)
-    return ganzhi_date.year, month_dizhi, query.solar_date
-
-  @staticmethod
-  def _check_query(query: object) -> None:
-    if not isinstance(query, (TransitYear, TransitMonth, TransitDate)):
-      raise TypeError(f'Expected TransitQuery, got {type(query)}')
-
-  def support(self, query: TransitQuery) -> bool:
-    '''
-    Return whether the query is within this chart's life and calendar range.
-    返回查询是否处于此命盘的人生时间线与历法支持范围内。
-    '''
-    self._check_query(query)
-    return self._resolved(query) is not None
-
-  def at(self, query: TransitQuery) -> TransitSet:
-    '''
-    Return all transits available at the requested precision. 返回查询精度下的全部可用流运。
-    '''
-    self._check_query(query)
-    resolved = self._resolved(query)
-    if resolved is None:
-      raise ValueError(f'Query not supported: {query}')
-
-    gz_year, gz_month, solar_date = resolved
+  def _transits(
+    self,
+    gz_year: int,
+    *,
+    dayun: Ganzhi | None,
+    gz_month: Dizhi | None = None,
+    liuri: Ganzhi | None = None,
+  ) -> TransitSet:
     year_ganzhi: Final[Ganzhi] = ganzhi_of_year(gz_year)
     liuyue: Ganzhi | None = None
     if gz_month is not None:
@@ -101,10 +62,112 @@ class TransitChart:
 
     return TransitSet(
       xiaoyun=self._transit_db.xiaoyun(gz_year),
-      dayun=self._transit_db.dayun(gz_year),
+      dayun=dayun,
       liunian=year_ganzhi,
       liuyue=liuyue,
-      liuri=ganzhi_of_day(solar_date) if solar_date is not None else None,
+      liuri=liuri,
+    )
+
+  def at_year(self, gz_year: int) -> TransitSet | None:
+    '''Return transits for a Ganzhi-year coordinate, or `None` before birth. Dayun
+    lookup follows the chart's configured year-label view.
+    返回干支年坐标下的流运，出生前返回 `None`；大运按命盘所选年份标签视图解释。'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if gz_year < self._bazi_chart.bazi.ganzhi_year:
+      return None
+    return self._transits(
+      gz_year,
+      dayun=self._transit_db.dayun(gz_year),
+    )
+
+  def at_month(self, gz_year: int, gz_month: Dizhi) -> TransitSet | None:
+    '''Return transits for a Ganzhi-month coordinate, or `None` before birth or outside
+    the Jie table. Dayun follows its physical month boundary. 返回干支月坐标下的流运，
+    出生前或节令表范围外返回 `None`；大运按物理交运月边界解释。'''
+    if not isinstance(gz_year, int):
+      raise TypeError(f'Expected int, got {type(gz_year)}')
+    if not isinstance(gz_month, Dizhi):
+      raise TypeError(f'Expected Dizhi, got {type(gz_month)}')
+
+    query_key = (gz_year, _ganzhi_month_offset(gz_month))
+
+    first, last = self._utils.supported_jie_boundaries()
+    first_year, first_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(first))
+    last_supported = last - timedelta(microseconds=1)
+    last_year, last_month = _ganzhi_year_month_of_jie(
+      self._utils.next_jie(last_supported)
+    )
+    supported_first_key = (first_year, first_month - 1)
+    supported_last_key = (last_year, last_month - 1)
+    if query_key < max(self._transit_db._birth_month_key, supported_first_key) or query_key >= supported_last_key:
+      return None
+    return self._transits(
+      gz_year,
+      dayun=self._transit_db._dayun_at_month(gz_year, gz_month),
+      gz_month=gz_month,
+    )
+
+  def at_date(self, solar_date: date) -> TransitSet | None:
+    '''Return transits for a solar date, or `None` before birth or outside the calendar
+    range. Dayun follows its physical date boundary. 返回公历日期下的流运，出生前或历法
+    范围外返回 `None`；大运按物理交运日边界解释。'''
+    if type(solar_date) is not date:
+      raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
+    if solar_date < self._bazi_chart.bazi.solar_date:
+      return None
+    try:
+      ganzhi_date = self._utils.to_ganzhi(solar_date)
+    except ValueError:
+      return None
+    month_dizhi = _ganzhi_month_dizhi(ganzhi_date.month)
+    return self._transits(
+      ganzhi_date.year,
+      dayun=self._transit_db._dayun_at_date(solar_date),
+      gz_month=month_dizhi,
+      liuri=ganzhi_of_day(solar_date),
+    )
+
+  def at_moment(self, solar_moment: datetime) -> TransitSet | None:
+    '''Return transits for a naïve solar moment, or `None` when exact-moment querying is
+    unsupported, before birth, or outside the Jie table. Query, birth, and Dayun boundaries
+    compare at whole-second granularity, with ties on the new side.
+    返回无时区公历时刻下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
+    查询、出生与大运边界均截到秒比较，相等归新。
+
+    Note:
+    - Year/month coordinates follow the moment's owning Jie; Liuri follows the configured
+      `DayRollover`. `at_date()` can therefore give a different reading on the same civil day.
+    - HOUR natal attribution and this second-level reading are distinct granularities; inside
+      a tie 时辰, the natal pillars and moment transits can legitimately name different years.
+    - 年/月按时刻所属节归属，流日按所选换日点解释；同一公历日可与 `at_date()` 结果不同。
+    - HOUR 原盘归属与秒级时刻流运是两种粒度；tie 时辰内可合法地落在不同干支年。'''
+    if not isinstance(solar_moment, datetime):
+      raise TypeError(f'Expected datetime, got {type(solar_moment)}')
+    if solar_moment.tzinfo is not None:
+      raise ValueError('Timezone should be well-processed outside of this class.')
+
+    bazi = self._bazi_chart.bazi
+    config = bazi.config
+    if (
+      config.backend not in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2)
+      or config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
+    ):
+      return None
+
+    moment = solar_moment.replace(microsecond=0)
+    birth_moment = bazi.solar_datetime.replace(microsecond=0)
+    first, last = self._utils.supported_jie_boundaries()
+    if moment < birth_moment or not first <= moment < last:
+      return None
+
+    gz_year, gz_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(moment))
+    month_dizhi = _ganzhi_month_dizhi(gz_month)
+    return self._transits(
+      gz_year,
+      dayun=self._transit_db._dayun_at_moment(moment),
+      gz_month=month_dizhi,
+      liuri=_ganzhi_of_day_at_moment(moment, config.school.day_rollover),
     )
 
 

@@ -1,25 +1,24 @@
 # celestial-calendar lunar year table (algo2)
-# schema_version: 1
+# schema_version: 2
 # fixture: true
 #   A sparse slice for Loader unit tests, not the shipped table.
-# celestial_version: 0.4.0
-# release_asset: celestial-calendar v0.4.0 / macos_arm64.zip
-# dylib_sha256: 4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5
+# celestial_version: 0.6.1
+# release_asset: celestial-calendar==0.6.1 / PyPI wheel
 # generated_by: scratchpad/gen_fixtures.py (a throwaway, not a maintained tool)
-# generated_on: 2026-07-29
-# source_api: get_lunar_year_info(uint8_t algo, int32_t year)
+# generated_on: 2026-08-24
+# source_api: celestial_calendar.lunar_year_info(algorithm, lunar_year)
 # algo: 2
 #   Leap-second aware UTC+8 via jde_to_utc8, celestial #84.
 # timescale: leap-second aware UTC+08:00
 # year_range: 1901..2099 inclusive -- BOTH algos clamped to this window.
-#   algo2 natively reports [410, 5000], which is a placeholder sentinel
-#   (algo2.hpp:443-446 "actually has no limit, simply use").  Clamping keeps one
-#   range contract for both algos.  Widening is a follow-up issue.
+#   algo2 natively reports [410, 2500].  Clamping keeps one range contract for both
+#   algos.  Widening is a follow-up issue.
 # columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi
 #   leap_month -- 1..12, or 0 when the year has no leap month.  HkoData spells the same
 #   thing as `None`; the Loader normalizes.
-#   month_len_bits -- raw uint16 from the ABI, LSB-first (bit i = the (i+1)-th lunar
-#   month in sequence, leap month occupying its own slot; 1 = 30 days, 0 = 29 days).
+#   month_len_bits -- encoded from the public `month_lengths` tuple, LSB-first
+#   (bit i = the (i+1)-th lunar month in sequence; a leap month occupies its own
+#   slot; 1 = 30 days, 0 = 29 days).
 #   days_counts -- decoded from month_len_bits, 12 or 13 entries; redundant on purpose,
 #   so a hand-edit of either column is caught by the Loader cross-check.
 #   ganzhi -- (lunar_year - 4) mod 60 over Ganzhi.list_sexagenary_cycle(); not consumed

@@ -14,7 +14,7 @@ from src.bazi import Bazi
 from src.bazi_chart import BaziChart
 from src.school import BaziConfig, BaziSchool, KeyStem
 from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitSet, TransitYear
+from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
 from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
 
@@ -184,8 +184,14 @@ def _equal(discovery1: DiscoveryType, discovery2: DiscoveryType) -> bool:
   return True
 
 
+def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+  transits = transit_chart.at_year(gz_year)
+  assert transits is not None
+  return transits
+
+
 def _random_year_transits(transit_chart: TransitChart, gz_year: int) -> TransitSet:
-  full_transits = transit_chart.at(TransitYear(gz_year))
+  full_transits = _at_year(transit_chart, gz_year)
   available = tuple(full_transits)
   selected = random.sample(available, random.randint(1, len(available)))
   return full_transits.select(*selected)
@@ -283,7 +289,7 @@ def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[
   config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   transits: TransitAnalysis = RelationshipAnalyzer(chart).transits
-  selected = TransitChart(chart).at(TransitYear(1990)).select(
+  selected = _at_year(TransitChart(chart), 1990).select(
     TransitKind.DAYUN,
     TransitKind.LIUNIAN,
   )
@@ -478,7 +484,7 @@ def test_transit_analysis_negative() -> None:
     with pytest.raises(TypeError):
       analysis(object()) # type: ignore
 
-  transits = TransitChart(chart).at(TransitYear(chart.bazi.ganzhi_year)).select(TransitKind.LIUNIAN)
+  transits = _at_year(TransitChart(chart), chart.bazi.ganzhi_year).select(TransitKind.LIUNIAN)
   with pytest.raises(TypeError):
     transits_analysis.star_relations(transits, level=0x8) # type: ignore
   # IntFlag happily constructs pseudo-members (undefined bit / empty flag); the gate rejects them by value.

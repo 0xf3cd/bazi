@@ -5,6 +5,7 @@
 * Python version should be >= 3.11
 * Install requirements by `python -m pip install -r Requirements.txt`
 * The encoded HKO data under `src/calendar/hko_data/data/` is committed to the repo; the library only reads it at runtime. To regenerate the data, `pip install requests` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.hko_data.encoder` from the repo root.
+* The celestial tables under `src/calendar/celestial_data/data/` are also committed runtime data. To regenerate them, `pip install celestial-calendar==0.6.1` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.celestial_data.generator` from the repo root.
 * Run linter: `ruff check .`
 * Run static type checker: `mypy .`
 * Run tests: `./run_tests.py`

@@ -27,7 +27,7 @@ def data_lines(path: Path) -> list[str]:
 
 
 def test_they_cover_the_whole_window() -> None:
-  assert JieqiMomentTable().supported_year_range() == range(1901, 2101)
+  assert JieqiMomentTable().supported_year_range() == range(1901, 2201)
   for algo in (1, 2):
     table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
     assert table.supported_year_range() == range(1901, 2100)
@@ -35,14 +35,14 @@ def test_they_cover_the_whole_window() -> None:
 
 def test_data_sections_are_frozen() -> None:
   '''
-  The real moments are the reason this backend exists, yet only a handful of the 4,800 are
+  The real moments are the reason this backend exists, yet only a handful of the 7,200 are
   pinned by value anywhere else in the suite -- the parity whitelist plus a few directed
   cases.  So the data sections are hashed: a re-bake stays possible, but it has to come
   with a deliberate update to this expectation instead of slipping through.  `#` lines are
   excluded, so re-generating on another day does not trip it.
   '''
   digests: dict[str, str] = {
-    'jieqi_moments.txt':     '93475d53800b683dedd4b23c03232e992212cf6369938120e829e1cd0c686c9d',
+    'jieqi_moments.txt':     'da0ab657f3c89cbdcc1354cacdf1949f5964cd630256cff288db603b7ba90e50',
     'lunar_years_algo1.txt': '3e238a2e0494b5af8a53f24e2cae150406972e7ecaa3ce673ceba785bbf3b51d',
     'lunar_years_algo2.txt': '787229f4d253280f5fc0fc5b47adeb9292228ca503aab7032307d6dbde83bb53',
   }
@@ -52,18 +52,21 @@ def test_data_sections_are_frozen() -> None:
     assert hashlib.sha256(payload.encode('utf-8')).hexdigest() == digest, name
 
 
-def test_dylib_provenance_value_is_pinned() -> None:
+def test_package_provenance_value_is_pinned() -> None:
   '''
   The closed header namespace (test_celestial_tables.py) pins key *names* only, and the data
-  digests above exclude `#` lines -- so without this test the recorded dylib identity could
-  be swapped for any 64-hex string unnoticed.  Re-baking with a new dylib is legitimate, but
-  it has to update this expectation deliberately in the same commit.
+  digests above exclude `#` lines -- so without this test the recorded package identity could
+  drift unnoticed. Re-baking with a new package is legitimate, but it has to update this
+  expectation deliberately in the same commit.
   '''
-  expected: str = '4e102e614e392607720ea24e6b9979bec11cc09338e071ca3f335c0f9914e2d5'
-  assert JieqiMomentTable().provenance['dylib_sha256'] == expected
+  expected: dict[str, str] = {
+    'celestial_version': '0.6.1',
+    'release_asset': 'celestial-calendar==0.6.1 / PyPI wheel',
+  }
+  assert {key: JieqiMomentTable().provenance[key] for key in expected} == expected
   for algo in (1, 2):
     table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
-    assert table.provenance['dylib_sha256'] == expected
+    assert {key: table.provenance[key] for key in expected} == expected
 
 
 def test_fixture_rows_appear_verbatim_in_the_shipped_tables() -> None:
@@ -104,12 +107,11 @@ def test_jieqi_provenance() -> None:
   table = JieqiMomentTable(FIXTURES / 'jieqi_moments.txt', contiguous_years=False)
   provenance = table.provenance
   assert provenance['schema_version'] == SCHEMA_VERSION
-  assert provenance['celestial_version'] == '0.4.0'
+  assert provenance['celestial_version'] == '0.6.1'
   assert provenance['columns'] == JIEQI_COLUMNS
-  assert len(provenance['dylib_sha256']) == 64
   # A copy, so a caller cannot mutate the table's own record.
   provenance['celestial_version'] = 'tampered'
-  assert table.provenance['celestial_version'] == '0.4.0'
+  assert table.provenance['celestial_version'] == '0.6.1'
 
 
 def test_lunar_fixture() -> None:

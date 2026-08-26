@@ -95,15 +95,16 @@ def get_transit_info(chart: BaziChart) -> str:
   s += f'交运时间： {chart.dayun_start_moment.isoformat()}\n\n'
 
   s += '大运：            天干                 地支                 地支藏干\n'
-  for start_gz_year, dayun in itertools.islice(chart.dayun, 10):
-    tg, dz = dayun
+  for dayun in itertools.islice(chart.dayun, 10):
+    tg, dz = dayun.ganzhi
 
     tg_str: str = f'{colored_str(tg)} [{traits_str(tg)}] <{shishen(day_master, tg)}>'
     dz_str: str = f'{colored_str(dz)} [{traits_str(dz)}] <{shishen(day_master, dz)}>'
     hd_str: str = hidden_tg_str(hidden_tiangans(dz), day_master)
 
-    s += f'{start_gz_year}年 ～ {start_gz_year + 9}年： {tg_str}     {dz_str}    {hd_str}\n'
-    s += f'               -- 纳音：{nayin_str(dayun)}  -- 十二长生：{shier_zhangsheng(day_master, dz)}\n\n'
+    s += f'{dayun.ganzhi_year}年标签：       {tg_str}     {dz_str}    {hd_str}\n'
+    s += f'               -- 公历区间：{dayun.start_moment:%Y-%m-%d %H:%M} ～ {dayun.end_moment:%Y-%m-%d %H:%M}\n'
+    s += f'               -- 纳音：{nayin_str(dayun.ganzhi)}  -- 十二长生：{shier_zhangsheng(day_master, dz)}\n\n'
 
   s += '小运：\n'
   for xy_batch in batched(chart.xiaoyun, 10):
