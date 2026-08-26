@@ -30,14 +30,14 @@ def main() -> int:
   from collections.abc import Callable
   from zoneinfo import ZoneInfo
 
-  from src.defines import Dizhi, Jieqi
+  from src.defines import Dizhi, Ganzhi, Jieqi, DizhiRelation
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
   from src.school import BaziConfig
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitKind, TransitSet
   from src.analyzer.relationship import RelationshipAnalyzer
-  from src.utils import tiangan_utils
+  from src.utils import tiangan_utils, dizhi_utils
   from src.calendar import hko_data, hko_data_utils
   from src.calendar.backend import CalendarBackend, calendar_utils_of
 
@@ -59,6 +59,12 @@ def main() -> int:
      lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male')),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
+    ('GanzhiOccurrence negative index', ValueError,
+     lambda: dizhi_utils.GanzhiOccurrence(-1, Ganzhi.from_str('甲子'))),
+    ('dizhi_utils.search_ganzhis on raw Dizhis', TypeError,
+     lambda: dizhi_utils.search_ganzhis([Dizhi.子, Dizhi.丑], DizhiRelation.六合)), # type: ignore
+    ('dizhi_utils.discover_ganzhis on raw Dizhis', TypeError,
+     lambda: dizhi_utils.discover_ganzhis([Dizhi.子, Dizhi.丑])), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

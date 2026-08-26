@@ -2,11 +2,13 @@
 
 
 from collections import Counter
+from dataclasses import dataclass
+from itertools import combinations
 from typing import Final
 from collections.abc import Sequence, Collection
 
 from ..common import frozendict
-from ..defines import Dizhi, Wuxing, DizhiRelation
+from ..defines import Dizhi, Ganzhi, Wuxing, DizhiRelation
 from ..rules import DizhiRules
 from .relation_discovery import RelationDiscovery
 
@@ -26,6 +28,55 @@ DizhiRelationCombos = tuple[DizhiCombo, ...]
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
   地支关系到满足它的地支组合的冻结映射。'''
+
+
+@dataclass(frozen=True)
+class GanzhiOccurrence:
+  '''A concrete Ganzhi value at a zero-based index in one relation query. Equality and
+  hashing use both fields; indices are local to that query's input sequence.
+  一次关系查询中位于某个零基序号的具体干支值。相等与哈希使用两个字段；序号只属于
+  该次查询的输入序列。
+
+  Args:
+  - index: (int) The occurrence's zero-based index in the query sequence.
+  - ganzhi: (Ganzhi) The complete stem-branch value at that index.
+  '''
+  index:  int
+  ganzhi: Ganzhi
+
+  def __post_init__(self) -> None:
+    if not isinstance(self.index, int):
+      raise TypeError(f'Expected int, got {type(self.index)}')
+    if self.index < 0:
+      raise ValueError(f'Expected a non-negative index, got {self.index}')
+    if not isinstance(self.ganzhi, Ganzhi):
+      raise TypeError(f'Expected Ganzhi, got {type(self.ganzhi)}')
+
+
+'''A concrete combo of Ganzhi occurrences whose Dizhis satisfy a `DizhiRelation`.'''
+GanzhiRelationCombo = frozenset[GanzhiOccurrence]
+
+'''All concrete Ganzhi-occurrence combos that satisfy a `DizhiRelation`.'''
+GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
+
+class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
+  '''A frozen mapping from `DizhiRelation` to concrete Ganzhi-occurrence combos.
+  Instances returned by `discover_ganzhis` contain only occurrences from that call's
+  input sequence. 地支关系到满足它的具体干支位置组合的冻结映射；`discover_ganzhis`
+  返回的实例只包含来自该次调用输入序列的具体出现。'''
+
+  def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
+    '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
+    occurrence combos that collapse to the same Dizhi combo are deduplicated.
+    把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。'''
+    projected: dict[DizhiRelation, tuple[DizhiCombo, ...]] = {}
+    for relation, combos in self.items():
+      unique: dict[DizhiCombo, None] = {}
+      for combo in combos:
+        unique[DizhiCombo(occurrence.ganzhi.dizhi for occurrence in combo)] = None
+      if len(unique) > 0:
+        projected[relation] = tuple(unique)
+    return DizhiRelationDiscovery(projected)
 
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
@@ -580,9 +631,96 @@ def discover(dizhis: Sequence[Dizhi], *,
   })
 
 
-def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
+def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
                     anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-                    xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRelationDiscovery:
+                    xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> GanzhiRelationCombos:
+  '''Find the concrete Ganzhi occurrences whose Dizhis satisfy `relation`.
+  找出地支满足 `relation` 的具体干支位置组合。
+
+  The zero-based index in the input sequence is the occurrence identity. Equal Ganzhis or
+  equal Dizhis at different indices therefore remain distinguishable. For the existing
+  position-independent relations, projecting every result to Dizhis and deduplicating yields
+  exactly `search`.
+  输入序列中的零基序号就是具体出现的身份，因此不同位置的相同干支或地支不会混同。
+  对现有不依赖位置的关系，逐项投影到地支并去重后与 `search` 完全等价。
+
+  Args:
+  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
+  - relation: (DizhiRelation) The relation to check.
+  - anhe_def: (DizhiRules.AnheDef) The ANHE definition; only consulted for 暗合 queries.
+  - xing_def: (DizhiRules.XingDef) The XING definition; only consulted for 刑 queries.
+
+  Return: (GanzhiRelationCombos) All matching concrete occurrence combos.
+  '''
+
+  if not isinstance(ganzhis, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(ganzhis)}')
+  if not all(isinstance(gz, Ganzhi) for gz in ganzhis):
+    raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis]}')
+  if not isinstance(anhe_def, DizhiRules.AnheDef):
+    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
+  if not isinstance(xing_def, DizhiRules.XingDef):
+    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
+
+  dizhis: tuple[Dizhi, ...] = tuple(gz.dizhi for gz in ganzhis)
+  occurrences: tuple[GanzhiOccurrence, ...] = tuple(
+    GanzhiOccurrence(index, gz) for index, gz in enumerate(ganzhis)
+  )
+
+  ret: list[GanzhiRelationCombo] = []
+  for combo in search(dizhis, relation, anhe_def=anhe_def, xing_def=xing_def):
+    # A self-刑 pair projects to a singleton DizhiCombo; occurrence identity restores
+    # its two concrete participants.
+    participant_count: int = 2 if relation is DizhiRelation.刑 and len(combo) == 1 else len(combo)
+    ret.extend(
+      GanzhiRelationCombo(candidate)
+      for candidate in combinations(occurrences, participant_count)
+      if DizhiCombo(occurrence.ganzhi.dizhi for occurrence in candidate) == combo
+    )
+  return GanzhiRelationCombos(ret)
+
+
+def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
+                      anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
+                      xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> GanzhiRelationDiscovery:
+  '''Discover every `DizhiRelation` among concrete Ganzhi occurrences while retaining
+  their input positions and Tiangans. 保留输入位置与天干，发现具体干支之间的全部地支关系。
+
+  Note:
+  - Relations with no matching combo are absent from the returned mapping.
+  - 没有匹配组合的关系不会出现在返回映射中。
+
+  Note:
+  - Returned combos do not reveal the direction of directional relations.
+  - 返回的组合不体现有向关系的方向。
+
+  Args:
+  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check.
+  - anhe_def: (DizhiRules.AnheDef) The ANHE definition, forwarded to `search_ganzhis`.
+  - xing_def: (DizhiRules.XingDef) The XING definition, forwarded to `search_ganzhis`.
+
+  Return: (GanzhiRelationDiscovery) The position-preserving discovery result.
+  '''
+
+  if not isinstance(ganzhis, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(ganzhis)}')
+  if not all(isinstance(gz, Ganzhi) for gz in ganzhis):
+    raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis]}')
+  if not isinstance(anhe_def, DizhiRules.AnheDef):
+    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
+  if not isinstance(xing_def, DizhiRules.XingDef):
+    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
+
+  return GanzhiRelationDiscovery({
+    rel : result
+    for rel in DizhiRelation
+    if len(result := search_ganzhis(ganzhis, rel, anhe_def=anhe_def, xing_def=xing_def)) > 0
+  })
+
+
+def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
+                     anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
+                     xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRelationDiscovery:
   '''
   Discover all possible Dizhi combos of all `DizhiRelation`s (SANHUI, LIUHE, XING...) among the given `dizhis1` and `dizhis2`.
   Note that it is required that the Dizhis in a returned combo come from both `dizhis1` and `dizhis2`, which means
