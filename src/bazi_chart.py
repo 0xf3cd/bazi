@@ -20,7 +20,7 @@ from .school import DayunYearRule
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year,
-  _ganzhi_year_of_jie,
+  _ganzhi_year_month_of_jie,
 )
 
 
@@ -373,7 +373,7 @@ class BaziChart:
     '''Return the Ganzhi year containing `moment`, as determined by its owning Jie.
     按所属节返回 `moment` 所在的干支年。'''
     assert isinstance(moment, datetime)
-    return _ganzhi_year_of_jie(self._utils.prev_jie(moment))
+    return _ganzhi_year_month_of_jie(self._utils.prev_jie(moment))[0]
 
   @property
   def _dayun_empty_timeline_message(self) -> str:

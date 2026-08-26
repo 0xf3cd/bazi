@@ -6,15 +6,15 @@ from enum import Enum
 from datetime import date, time, datetime, timedelta
 from typing import Final
 
-from .defines import Tiangan, Dizhi, Ganzhi, Jieqi
+from .defines import Tiangan, Dizhi, Ganzhi
 from .calendar import (
   CalendarDate, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
-from .school import BaziPrecision, DayRollover, BaziConfig, DEFAULT_CONFIG
+from .school import BaziPrecision, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
-  month_tiangan, hour_tiangan, ganzhi_of_day, ganzhi_of_year,
-  _ganzhi_year_of_jie, _ganzhi_month_dizhi,
+  month_tiangan, hour_tiangan, ganzhi_of_year,
+  _ganzhi_of_day_at_moment, _ganzhi_year_month_of_jie, _ganzhi_month_dizhi,
 )
 
 
@@ -45,13 +45,6 @@ class BaziGender(Enum):
       assert self is self.FEMALE
       return 'female'
 
-
-
-'''Maps each Jie (节) to the ganzhi month it opens: 立春 -> 1 (寅月), ..., 小寒 -> 12 (丑月). / 每个节到其所开干支月的映射：立春开寅月，……，小寒开丑月。'''
-_GANZHI_MONTH_OF_JIE: Final[dict[Jieqi, int]] = {
-  jie : month
-  for month, jie in enumerate(Jieqi.as_list(ganzhi_year=True)[::2], start=1)
-}
 
 
 def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
@@ -175,8 +168,7 @@ class Bazi:
       # consumes via `bracketing_jies`, so the chart cannot contradict itself. 小寒 opens the
       # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
       owning: Final[JieqiTime] = bracketing_jies[0]
-      ganzhi_year = _ganzhi_year_of_jie(owning)
-      ganzhi_month = _GANZHI_MONTH_OF_JIE[owning.jieqi]
+      ganzhi_year, ganzhi_month = _ganzhi_year_month_of_jie(owning)
 
     self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime] | None] = bracketing_jies
 
@@ -189,27 +181,12 @@ class Bazi:
     assert 1 <= self._ganzhi_month <= 12
     self._month_dizhi: Final[Dizhi] = _ganzhi_month_dizhi(self._ganzhi_month)
 
-    # Figure out the ganzhi day, as well as the Day Ganzhi / Day Pillar (日柱).
-    #
-    # 换日点 is the `DayRollover` variant (issue #69), mounted on
-    # `BaziSchool.day_rollover`: WAN_ZISHI (晚子时) rolls the day pillar at 23:00 when
-    # 子时 begins, ZIZHENG (子正) keeps the civil day's pillar until 00:00. The default
-    # WAN_ZISHI is the behavior `test_bazi` has long pinned. The year and month pillars
-    # above deliberately do NOT follow this knob -- they follow `BaziPrecision`'s
-    # attribution (two independent mechanisms; see `DayRollover`'s docstring).
-    day_offset: int
-    if self._config.school.day_rollover is DayRollover.WAN_ZISHI:
-      # 晚子时: a birth at/after 23:00 already carries the next day's day pillar.
-      day_offset = 1 if self._birth_time.hour >= 23 else 0
-    elif self._config.school.day_rollover is DayRollover.ZIZHENG:
-      # 子正: the whole 子时 keeps the civil day's day pillar.
-      day_offset = 0
-    else:
-      # Invariant: every enum member must be wired up above. Reaching here means we
-      # added a member but forgot to wire it -- not something users can trigger.
-      # `raise` instead of `assert` so the guard survives `python -O`.
-      raise AssertionError(f'DayRollover not wired up in `Bazi.__init__`: {self._config.school.day_rollover}') # pragma: no cover # Unreachable invariant guard.
-    self._day_pillar: Final[Ganzhi] = ganzhi_of_day(timedelta(days=day_offset) + self._birth_time)
+    # The day pillar follows the configured 换日点; year/month attribution above remains
+    # independent and follows `BaziPrecision`.
+    self._day_pillar: Final[Ganzhi] = _ganzhi_of_day_at_moment(
+      self._birth_time,
+      self._config.school.day_rollover,
+    )
 
     # Finally, find out the Hour Dizhi (时柱地支).
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._birth_time.hour + 1) // 2 % 12)

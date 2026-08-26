@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 
 from src.data_types import DayunTuple
-from src.defines import Ganzhi
+from src.defines import Ganzhi, Dizhi
 
 from src.bazi import Bazi
 from src.bazi_chart import BaziChart
@@ -176,6 +176,8 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
   db = TransitDatabase(chart)
   assert db.dayun(2008) is None
   assert db.dayun(2009) == Ganzhi.from_str('乙丑')
+  assert db._dayun_at_month(2008, Dizhi.丑) is None
+  assert db._dayun_at_month(2009, Dizhi.寅) == Ganzhi.from_str('乙丑')
   assert db.xiaoyun(2009) == Ganzhi.from_str('乙亥')
   # The first-label floor does not propagate: the second Dayun boundary belongs to 2018.
   assert db.dayun(2018) == Ganzhi.from_str('甲子')
@@ -233,3 +235,15 @@ def test_empty_dayun_database() -> None:
 
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
     db[2100]
+
+
+def test_empty_transit_database() -> None:
+  chart = BaziChart(Bazi.create(
+    '2099-12-20 12:00',
+    'male',
+    BaziConfig.from_values(backend='hko'),
+  ))
+  db = TransitDatabase(chart)
+
+  assert db.xiaoyun(2099) is None
+  assert db.dayun(2099) is None

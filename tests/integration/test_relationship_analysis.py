@@ -67,18 +67,25 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
   return True
 
 
-def test_month_and_date_transits_reach_relationship_analysis() -> None:
-  chart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
+def test_month_date_and_moment_transits_reach_relationship_analysis() -> None:
+  chart = BaziChart(Bazi.create(
+    '1984-04-01 11:08',
+    'male',
+    BaziConfig.from_values(precision='minute'),
+  ))
   transit_chart = TransitChart(chart)
   month_transits = transit_chart.at_month(2024, Dizhi.寅)
   date_transits = transit_chart.at_date(date(2024, 2, 4))
+  moment_transits = transit_chart.at_moment(datetime(2024, 2, 4, 18, 0))
   assert month_transits is not None
   assert date_transits is not None
+  assert moment_transits is not None
 
   analysis = RelationshipAnalyzer(chart).transits
   for transits in (
     month_transits.select(TransitKind.LIUYUE),
     date_transits.select(TransitKind.LIURI),
+    moment_transits.select(TransitKind.LIURI),
   ):
     expected = tiangan_utils.discover_mutual(
       [chart.bazi.day_master],

@@ -1,11 +1,21 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from typing import Final
 
 from ..defines import Ganzhi, Tiangan, Dizhi, Jieqi, Shishen, Wuxing, Yinyang, ShierZhangsheng
 from ..calendar import JieqiTime
 from ..data_types import TraitTuple, HiddenTianganDict
 from ..rules import BaziRules
+from ..school import DayRollover
+
+
+'''The 1-based Ganzhi month opened by each Jie: 立春 -> 1 (寅), ..., 小寒 -> 12 (丑). /
+每个节到其所开干支月的映射：立春 -> 1 (寅)，……，小寒 -> 12 (丑)。'''
+_GANZHI_MONTH_OF_JIE: Final[dict[Jieqi, int]] = {
+  jie : month
+  for month, jie in enumerate(Jieqi.as_list(ganzhi_year=True)[::2], start=1)
+}
 
 
 
@@ -31,6 +41,21 @@ def ganzhi_of_day(dt: date) -> Ganzhi:
   return Ganzhi(Tiangan.甲, Dizhi.子).next(offset)
 
 
+def _ganzhi_of_day_at_moment(moment: datetime, day_rollover: DayRollover) -> Ganzhi:
+  '''Return the day Ganzhi at `moment` under the selected DayRollover (换日点).
+  按所选换日点返回 `moment` 时刻的日柱。'''
+  assert isinstance(moment, datetime)
+  assert isinstance(day_rollover, DayRollover)
+
+  if day_rollover is DayRollover.WAN_ZISHI:
+    day_offset = 1 if moment.hour >= 23 else 0
+  elif day_rollover is DayRollover.ZIZHENG:
+    day_offset = 0
+  else:
+    raise AssertionError(f'DayRollover not wired up: {day_rollover}') # pragma: no cover # Unreachable enum exhaustiveness guard.
+  return ganzhi_of_day(moment + timedelta(days=day_offset))
+
+
 def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
   '''
   Find out the Ganzhi of the given ganzhi year in the sexagenary cycle.
@@ -47,11 +72,15 @@ def ganzhi_of_year(ganzhi_year: int) -> Ganzhi:
   return Ganzhi(Tiangan.甲, Dizhi.子).next(ganzhi_year - 1984) # 1984 is the year of "甲子".
 
 
-def _ganzhi_year_of_jie(owning_jie: JieqiTime) -> int:
-  '''Return the Ganzhi year containing the month opened by `owning_jie`; 小寒 opens the
-  last month of the previous Ganzhi year. 返回所属节所开月所在的干支年；小寒开上一干支年丑月。'''
+def _ganzhi_year_month_of_jie(owning_jie: JieqiTime) -> tuple[int, int]:
+  '''Return the Ganzhi year and 1-based month opened by `owning_jie`; 小寒 opens the
+  previous Ganzhi year's last month. 返回所属节所开月的干支年与 1-based 月序；小寒开上一干支年丑月。'''
   assert isinstance(owning_jie, JieqiTime)
-  return owning_jie.moment.year - (1 if owning_jie.jieqi is Jieqi.小寒 else 0)
+  assert owning_jie.jieqi in _GANZHI_MONTH_OF_JIE
+  return (
+    owning_jie.moment.year - (1 if owning_jie.jieqi is Jieqi.小寒 else 0),
+    _GANZHI_MONTH_OF_JIE[owning_jie.jieqi],
+  )
 
 
 def _ganzhi_month_dizhi(ganzhi_month: int) -> Dizhi:

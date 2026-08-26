@@ -71,6 +71,10 @@ def main() -> int:
      lambda: transit_chart.at_month(2024, 1)), # type: ignore
     ('TransitChart.at_date rejects datetime', TypeError,
      lambda: transit_chart.at_date(datetime(2024, 6, 1))),
+    ('TransitChart.at_moment wrong type', TypeError,
+     lambda: transit_chart.at_moment(object())), # type: ignore
+    ('TransitChart.at_moment rejects timezone', ValueError,
+     lambda: transit_chart.at_moment(datetime(2024, 6, 1, tzinfo=ZoneInfo('Asia/Shanghai')))),
     ('TransitSet empty', ValueError,
      lambda: TransitSet()),
     ('TransitSet wrong Ganzhi type', TypeError,

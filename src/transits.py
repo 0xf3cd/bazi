@@ -1,14 +1,21 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from datetime import date, datetime
 from enum import Enum, unique
 from typing import Final
 
 from .common import frozendict
 from .data_types import DayunTuple
-from .defines import Ganzhi
+from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
+from .calendar import CalendarUtilsProtocol, calendar_utils_of
+from .utils.bazi_utils import _ganzhi_month_offset, _ganzhi_year_month_of_jie
+
+
+'''An orderable projection shared by a query and its physical Dayun boundaries.'''
+_DayunKey = tuple[int, ...]
 
 
 class DayunDatabase:
@@ -121,19 +128,27 @@ class TransitSet:
 
 
 class TransitDatabase:
-  '''The chart-derived Xiaoyun and Dayun lookups for a `BaziChart`.'''
+  '''The chart-derived Xiaoyun, year-label Dayun, and physical Dayun lookups for a `BaziChart`.'''
   def __init__(self, chart: BaziChart) -> None:
+    bazi = chart.bazi
     # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
     # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
     # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one.
-    self._birth_ganzhi_year: Final[int] = chart.bazi.ganzhi_year
+    self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
+    self._birth_month_key: Final[tuple[int, int]] = (
+      bazi.ganzhi_year,
+      _ganzhi_month_offset(bazi.month_commander),
+    )
+    self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
+    self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
+    self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
+    # The calendar-only fallback cannot use BaziChart.xiaoyun; that property requires a first Dayun label.
+    xiaoyuns = () if len(self._dayuns) == 0 else chart.xiaoyun
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
       self._birth_ganzhi_year + age - 1 : gz
-      for age, gz in chart.xiaoyun
+      for age, gz in xiaoyuns
     })
-
-    self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
 
   def xiaoyun(self, gz_year: int) -> Ganzhi | None:
     '''Return the Xiaoyun for `gz_year`, or `None` outside the Xiaoyun year range.'''
@@ -151,3 +166,59 @@ class TransitDatabase:
       return self._dayun_db[gz_year].ganzhi
     except ValueError:
       return None
+
+  def _physical_dayun(
+    self,
+    query_key: _DayunKey,
+    start_key: Callable[[int, DayunTuple], _DayunKey],
+  ) -> Ganzhi | None:
+    assert isinstance(query_key, tuple)
+    assert callable(start_key)
+
+    for index in reversed(range(len(self._dayuns))):
+      dayun = self._dayuns[index]
+      if start_key(index, dayun) <= query_key:
+        return dayun.ganzhi
+    return None
+
+  def _dayun_at_month(self, gz_year: int, gz_month: Dizhi) -> Ganzhi | None:
+    assert isinstance(gz_year, int)
+    assert isinstance(gz_month, Dizhi)
+
+    def __start_key(index: int, dayun: DayunTuple) -> _DayunKey:
+      year, month = _ganzhi_year_month_of_jie(self._utils.prev_jie(dayun.start_moment))
+      key = (year, month - 1)
+      return max(key, self._birth_month_key) if index == 0 else key
+
+    return self._physical_dayun(
+      (gz_year, _ganzhi_month_offset(gz_month)),
+      __start_key,
+    )
+
+  def _dayun_at_date(self, solar_date: date) -> Ganzhi | None:
+    assert type(solar_date) is date
+
+    def __start_key(_index: int, dayun: DayunTuple) -> _DayunKey:
+      start = dayun.start_moment.date()
+      return start.year, start.month, start.day
+
+    return self._physical_dayun(
+      (solar_date.year, solar_date.month, solar_date.day),
+      __start_key,
+    )
+
+  def _dayun_at_moment(self, solar_moment: datetime) -> Ganzhi | None:
+    assert isinstance(solar_moment, datetime)
+    assert solar_moment.tzinfo is None
+
+    def __key(moment: datetime) -> _DayunKey:
+      whole_second = moment.replace(microsecond=0)
+      return (
+        whole_second.year, whole_second.month, whole_second.day,
+        whole_second.hour, whole_second.minute, whole_second.second,
+      )
+
+    return self._physical_dayun(
+      __key(solar_moment),
+      lambda _index, dayun: __key(dayun.start_moment),
+    )
