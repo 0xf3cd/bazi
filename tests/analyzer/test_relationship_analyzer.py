@@ -95,6 +95,17 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['yima'] == set(expected_yima)
     assert at_birth.shensha['yima'] == at_birth.shensha['yima'] # Repeated lookup must answer the same.
 
+    # Huagai / 华盖
+    expected_huagai: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.huagai(dz1, dz2):
+        expected_huagai.append(dz2)
+    for dz1, dz2 in itertools.product([d], [y, m, h]):
+      if shensha_utils.huagai(dz1, dz2):
+        expected_huagai.append(dz2)
+    assert at_birth.shensha['huagai'] == set(expected_huagai)
+    assert at_birth.shensha['huagai'] == at_birth.shensha['huagai'] # Repeated lookup must answer the same.
+
 
 @pytest.mark.slow
 def test_at_birth_day_master_relations() -> None:
@@ -325,6 +336,15 @@ def test_transit_shensha() -> None:
         if shensha_utils.yima(d_dz, dz):
           expected.append(dz)
       assert actual['yima'] == set(expected)
+
+      # Huagai / 华盖
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.huagai(y_dz, dz):
+          expected.append(dz)
+        if shensha_utils.huagai(d_dz, dz):
+          expected.append(dz)
+      assert actual['huagai'] == set(expected)
 
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer

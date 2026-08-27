@@ -51,8 +51,8 @@ class _ShenshaSpec:
   The spec of a Shensha: the predicate and the key source (神煞的规格：判断函数和查询 key).
 
   Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `KEY_TIANGAN`). This contract is guarded by the runtime asserts in `shensha_utils`
-  and the registry tests, not by the type system.
+  pairs with `KEY_TIANGAN`). Each predicate checks this contract at runtime; the registry's type
+  does not express it.
   '''
   predicate: Callable[..., bool]
   key:       _KeySource
@@ -65,6 +65,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'hongluan': _ShenshaSpec(shensha_utils.hongluan, _KeySource.YEAR_DIZHI),
   'tianxi'  : _ShenshaSpec(shensha_utils.tianxi,   _KeySource.YEAR_DIZHI),
   'yima'    : _ShenshaSpec(shensha_utils.yima,     _KeySource.YEAR_OR_DAY_DIZHI),
+  'huagai'  : _ShenshaSpec(shensha_utils.huagai,   _KeySource.YEAR_OR_DAY_DIZHI),
 })
 
 
@@ -202,6 +203,8 @@ class ShenshaAnalysis(TypedDict):
   tianxi:   frozenset[Dizhi]
   # The Yima Dizhis     (驿马星所在地支)
   yima:     frozenset[Dizhi]
+  # The Huagai Dizhis   (华盖星所在地支)
+  huagai:   frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -218,6 +221,7 @@ class AtBirthAnalysis:
       'hongluan': _eval_at_birth(_REGISTRY['hongluan'], bazi),
       'tianxi':   _eval_at_birth(_REGISTRY['tianxi'],   bazi),
       'yima'   :  _eval_at_birth(_REGISTRY['yima'],     bazi),
+      'huagai' :  _eval_at_birth(_REGISTRY['huagai'],   bazi),
     }
 
   @property
@@ -276,15 +280,15 @@ class TransitAnalysis:
 
   def shensha(self, transits: TransitSet) -> ShenshaAnalysis:
     '''
-    Return the relationship-related Shenshas of the given transits.
+    Return the Shenshas exposed by relationship analysis for the given transits.
 
-    返回给定流运的亲密关系相关神煞（桃花、红艳、红鸾、天喜、驿马）。
+    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖）。
 
     Args:
     - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
 
     Returns:
-    - (ShenshaAnalysis) The analysis of the relationship-related Shenshas of the given transits.
+    - (ShenshaAnalysis) The Shensha analysis of the given transits.
     '''
 
     self._check_transits(transits)
@@ -298,6 +302,7 @@ class TransitAnalysis:
       'hongluan': _eval_transits(_REGISTRY['hongluan'], bazi, transit_dizhis),
       'tianxi':   _eval_transits(_REGISTRY['tianxi'],   bazi, transit_dizhis),
       'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
+      'huagai' :  _eval_transits(_REGISTRY['huagai'],   bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:

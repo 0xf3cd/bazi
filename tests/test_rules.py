@@ -6,7 +6,7 @@ import inspect
 
 import pytest
 
-from src.defines import Tiangan, Wuxing, DizhiRelation
+from src.defines import Tiangan, Dizhi, Wuxing, DizhiRelation
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
@@ -84,6 +84,16 @@ def test_dizhi_gong() -> None:
 
   with pytest.raises(TypeError):
     DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW] = {} # type: ignore
+
+
+def test_huagai() -> None:
+  tombs = frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未))
+
+  assert set(ShenshaRules.HUAGAI) == set(Dizhi)
+  for sanhe in DizhiRules.DIZHI_SANHE:
+    tomb = sanhe & tombs
+    assert len(tomb) == 1
+    assert {ShenshaRules.HUAGAI[dz] for dz in sanhe} == tomb
 
 
 def test_all_rules() -> None:
