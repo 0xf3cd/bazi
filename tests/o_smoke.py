@@ -30,7 +30,7 @@ def main() -> int:
   from collections.abc import Callable
   from zoneinfo import ZoneInfo
 
-  from src.defines import Dizhi, Ganzhi, Jieqi, DizhiRelation
+  from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, DizhiRelation
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
   from src.rules import DizhiRules
@@ -80,6 +80,8 @@ def main() -> int:
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
     ('shensha_utils.huagai on raw strings', TypeError,
      lambda: shensha_utils.huagai('申', '辰')), # type: ignore
+    ('shensha_utils.yangren wrong definition', TypeError,
+     lambda: shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object())), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Final
 
 from .calendar import CalendarBackend
-from .rules import DizhiRules
+from .rules import DizhiRules, ShenshaRules
 
 
 class BaziPrecision(Enum):
@@ -179,15 +179,16 @@ class BaziSchool:
   defaults, so a shared default instance can never be mutated through.
   字段只许不可变类型（枚举 / frozen 值类型），共享默认实例不可能被改脏。
 
-  The field defaults below are the single definition of the default school (多数派口径);
+  The field defaults below are the single definition of the default school (默认口径);
   `DEFAULT_SCHOOL` picks them up, and `BaziConfig.school` points at that same instance --
   the defaults are written down exactly once.
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover: DayRollover = DayRollover.WAN_ZISHI
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
-  # The relation definition enums live with their tables in `DizhiRules`; only referenced here.
-  # 关系定义枚举与规则表同住 `DizhiRules`，这里只引用。
+  # Rule-definition enums live with their tables; only referenced here.
+  # 规则定义枚举与各自规则表同住，这里只引用。
+  yangren_def:  ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   anhe_def:     DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
   xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
   gong_def:     DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
@@ -198,6 +199,8 @@ class BaziSchool:
       raise TypeError(f'Expected DayRollover, got {type(self.day_rollover)}')
     if not isinstance(self.hongyan_key, KeyStem):
       raise TypeError(f'Expected KeyStem, got {type(self.hongyan_key)}')
+    if not isinstance(self.yangren_def, ShenshaRules.YangrenDef):
+      raise TypeError(f'Expected YangrenDef, got {type(self.yangren_def)}')
     if not isinstance(self.anhe_def, DizhiRules.AnheDef):
       raise TypeError(f'Expected AnheDef, got {type(self.anhe_def)}')
     if not isinstance(self.xing_def, DizhiRules.XingDef):
@@ -206,9 +209,9 @@ class BaziSchool:
       raise TypeError(f'Expected GongDef, got {type(self.gong_def)}')
 
 
-'''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 暗合 NORMAL_EXTENDED
-+ 刑 LOOSE + 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、红艳查日干、暗合最宽表、
-刑三取二、拱局同干狭义。'''
+'''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
++ 暗合 NORMAL_EXTENDED + 刑 LOOSE + 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、
+红艳查日干、羊刃子平五阳干、暗合最宽表、刑三取二、拱局同干狭义。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

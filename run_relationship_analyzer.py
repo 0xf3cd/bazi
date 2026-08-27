@@ -18,6 +18,7 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
     ('天喜', shensha['tianxi']),
     ('驿马', shensha['yima']),
     ('华盖', shensha['huagai']),
+    ('羊刃', shensha['yangren']),
   ]
   return [f'{label}：{", ".join(map(colored_str, dz_fs))}' for label, dz_fs in named if dz_fs]
 
@@ -39,7 +40,7 @@ if __name__ == '__main__':
 
   shensha_str_list = shensha_strs(analyzer.at_birth.shensha)
   if len(shensha_str_list) == 0:
-    print('原局无桃花、红艳、红鸾、天喜、驿马、华盖星')
+    print('原局无桃花、红艳、红鸾、天喜、驿马、华盖、羊刃星')
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))

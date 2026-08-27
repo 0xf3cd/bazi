@@ -28,6 +28,9 @@ _SecondArgType = Iterable[Dizhi]
 '''The type of the argument tuple that `find_shensha` accepts.'''
 _ArgsType = tuple[_FirstArgType, _SecondArgType]
 
+'''A resolver for a Shensha predicate's optional `definition` from the chart's school.'''
+_DefinitionResolver = Callable[[BaziSchool], object]
+
 def find_shensha(
   f: Callable[..., bool],
   *args: _ArgsType,
@@ -42,20 +45,24 @@ class _KeySource(Enum):
   '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
   YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
+  DAY_MASTER        = auto() # By the fixed Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
 
 
 @dataclass(frozen=True)
 class _ShenshaSpec:
   '''
-  The spec of a Shensha: the predicate and the key source (神煞的规格：判断函数和查询 key).
+  The spec of a Shensha: the predicate, key source, and optional school-derived definition.
+  神煞的规格：判断函数、查询 key，以及可选的流派定义参数。
 
   Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `KEY_TIANGAN`). Each predicate checks this contract at runtime; the registry's type
-  does not express it.
+  pairs with `DAY_MASTER` or `KEY_TIANGAN`). When `definition` is present, the predicate must
+  accept its result through a keyword-only `definition` argument. Each predicate checks this
+  contract at runtime; the registry's type does not express it.
   '''
-  predicate: Callable[..., bool]
-  key:       _KeySource
+  predicate:  Callable[..., bool]
+  key:        _KeySource
+  definition: _DefinitionResolver | None = None
 
 
 '''The registry of the Shenshas that relationship analysis currently supports (亲密关系分析目前支持的神煞注册表).'''
@@ -66,6 +73,11 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'tianxi'  : _ShenshaSpec(shensha_utils.tianxi,   _KeySource.YEAR_DIZHI),
   'yima'    : _ShenshaSpec(shensha_utils.yima,     _KeySource.YEAR_OR_DAY_DIZHI),
   'huagai'  : _ShenshaSpec(shensha_utils.huagai,   _KeySource.YEAR_OR_DAY_DIZHI),
+  'yangren' : _ShenshaSpec(
+    shensha_utils.yangren,
+    _KeySource.DAY_MASTER,
+    lambda school: school.yangren_def,
+  ),
 })
 
 
@@ -87,6 +99,14 @@ def _hongyan_anchor(bazi: Bazi) -> Tiangan:
     raise AssertionError(f'`KeyStem` not wired up in `_hongyan_anchor`: {key_stem}') # pragma: no cover # Unreachable invariant guard.
 
 
+def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., bool]:
+  '''Bind a Shensha predicate's school definition when it has one / 按盘绑定神煞定义参数。'''
+  if spec.definition is None:
+    return spec.predicate
+  definition = spec.definition(school)
+  return functools.partial(spec.predicate, definition=definition)
+
+
 def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。'''
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
@@ -96,6 +116,8 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
     args = (([y_dz], [m_dz, d_dz, h_dz]),)
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     args = (([y_dz], [m_dz, d_dz, h_dz]), ([d_dz], [y_dz, m_dz, h_dz]))
+  elif spec.key is _KeySource.DAY_MASTER:
+    args = (([bazi.day_master], [y_dz, m_dz, d_dz, h_dz]),)
   elif spec.key is _KeySource.KEY_TIANGAN:
     args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
   else:
@@ -104,7 +126,7 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
     # `raise` instead of `assert` so the guard survives `python -O`.
     raise AssertionError(f'`_KeySource` not wired up in `_eval_at_birth`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
 
-  return frozenset(find_shensha(spec.predicate, *args))
+  return frozenset(find_shensha(_shensha_predicate(spec, bazi.config.school), *args))
 
 
 def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizhi]) -> frozenset[Dizhi]:
@@ -114,6 +136,8 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
     first_args = [bazi.year_pillar.dizhi]
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     first_args = [bazi.year_pillar.dizhi, bazi.day_pillar.dizhi]
+  elif spec.key is _KeySource.DAY_MASTER:
+    first_args = [bazi.day_master]
   elif spec.key is _KeySource.KEY_TIANGAN:
     first_args = [_hongyan_anchor(bazi)]
   else:
@@ -122,7 +146,10 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
     # `raise` instead of `assert` so the guard survives `python -O`.
     raise AssertionError(f'`_KeySource` not wired up in `_eval_transits`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
 
-  return frozenset(find_shensha(spec.predicate, (first_args, transit_dizhis)))
+  return frozenset(find_shensha(
+    _shensha_predicate(spec, bazi.config.school),
+    (first_args, transit_dizhis),
+  ))
 
 
 # The ONLY place this file reads the school profile for Dizhi relation discovery:
@@ -205,6 +232,8 @@ class ShenshaAnalysis(TypedDict):
   yima:     frozenset[Dizhi]
   # The Huagai Dizhis   (华盖星所在地支)
   huagai:   frozenset[Dizhi]
+  # The Yangren Dizhis  (羊刃所在地支)
+  yangren:  frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -222,6 +251,7 @@ class AtBirthAnalysis:
       'tianxi':   _eval_at_birth(_REGISTRY['tianxi'],   bazi),
       'yima'   :  _eval_at_birth(_REGISTRY['yima'],     bazi),
       'huagai' :  _eval_at_birth(_REGISTRY['huagai'],   bazi),
+      'yangren':  _eval_at_birth(_REGISTRY['yangren'],  bazi),
     }
 
   @property
@@ -282,7 +312,7 @@ class TransitAnalysis:
     '''
     Return the Shenshas exposed by relationship analysis for the given transits.
 
-    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖）。
+    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖、羊刃）。
 
     Args:
     - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
@@ -303,6 +333,7 @@ class TransitAnalysis:
       'tianxi':   _eval_transits(_REGISTRY['tianxi'],   bazi, transit_dizhis),
       'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
       'huagai' :  _eval_transits(_REGISTRY['huagai'],   bazi, transit_dizhis),
+      'yangren':  _eval_transits(_REGISTRY['yangren'],  bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:

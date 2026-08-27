@@ -5,7 +5,7 @@ from ..rules import ShenshaRules
 
 
 '''
-Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖.
+Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖 / 羊刃.
 Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
 
@@ -160,3 +160,39 @@ def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   if not isinstance(other_dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.HUAGAI[year_or_day_dizhi] is other_dizhi
+
+
+def yangren(
+  day_master: Tiangan,
+  dizhi: Dizhi,
+  *,
+  definition: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING,
+) -> bool:
+  '''
+  Check whether `dizhi` is the YANGREN (羊刃 / 阳刃) of `day_master` under the
+  selected definition. 按所选定义检查地支是否为日干的羊刃（阳刃）。
+
+  Args:
+  - day_master: (Tiangan) The Day Master used as the lookup key. 查法所锚的日干。
+  - dizhi: (Dizhi) The branch to inspect. 待查地支。
+  - definition: (ShenshaRules.YangrenDef) The definition to use; defaults to
+    ZIPING, where only Yang Tiangans have 阳刃. 所用定义；默认子平五阳干专有口径。
+
+  Returns: (bool) Whether `dizhi` is the Yangren of `day_master` under `definition`.
+
+  Examples:
+  - yangren(Tiangan.甲, Dizhi.卯)
+    - return: True
+  - yangren(Tiangan.乙, Dizhi.寅)
+    - return: False
+  - yangren(Tiangan.乙, Dizhi.寅, definition=ShenshaRules.YangrenDef.DIWANG)
+    - return: True
+  '''
+
+  if not isinstance(day_master, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, ShenshaRules.YangrenDef):
+    raise TypeError(f'Expected YangrenDef, got {type(definition)}')
+  return ShenshaRules.YANGREN[definition][day_master] is dizhi

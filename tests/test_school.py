@@ -11,8 +11,8 @@ import pytest
 from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.rules import DizhiRules
-from src.utils import dizhi_utils
+from src.rules import DizhiRules, ShenshaRules
+from src.utils import dizhi_utils, shensha_utils
 from src.school import (
   BaziPrecision, DayunYearRule, DayRollover, KeyStem, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG,
@@ -44,11 +44,13 @@ def test_school_enums_basic() -> None:
 
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
+  assert len(ShenshaRules.YangrenDef) == 3
 
 
 def test_school_defaults() -> None:
   assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
   assert BaziSchool().hongyan_key is KeyStem.DAY_MASTER
+  assert BaziSchool().yangren_def is ShenshaRules.YangrenDef.ZIPING
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
@@ -195,7 +197,7 @@ def test_defaults_are_defined_once() -> None:
 
 
 def test_school_defaults_match_utils_signature_defaults() -> None:
-  # The majority reading is spelled twice by design -- the school field defaults (chart
+  # The default reading is spelled twice by design -- the school field defaults (chart
   # level) and the utils signature defaults (per-query override, same shape as
   # `anhe` / `xing`). Pin the two spellings identical so they can't drift apart;
   # do NOT "fix" this by making utils import school (issue #69).
@@ -206,11 +208,12 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
   for positioned_fn in (dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,
-                        dizhi_utils.discover_mutual_ganzhis):
+                         dizhi_utils.discover_mutual_ganzhis):
     params = inspect.signature(positioned_fn).parameters
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
     assert BaziSchool().gong_def is params['gong_def'].default
+  assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -249,6 +252,7 @@ def test_eq_hash_include_school() -> None:
   # The evaluation-time knobs distinguish charts the same way (评估期旋钮同样区分两盘).
   for variant_school in (
     BaziSchool(hongyan_key=KeyStem.YEAR_MASTER),
+    BaziSchool(yangren_def=ShenshaRules.YangrenDef.DIWANG),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
     BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
@@ -278,6 +282,7 @@ def test_json_roundtrip_default_school() -> None:
   j = chart.json
   assert j['school'] == {
     'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER',
+    'yangren_def': 'ZIPING',
     'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
   }
 
@@ -290,6 +295,7 @@ def test_json_roundtrip_default_school() -> None:
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
+                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],
@@ -303,11 +309,12 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  # All five knobs flipped, so each field proves it roundtrips (issue #69).
-  # 五个旋钮全部取非默认值——每个字段各自证明它能往返。
+  # All six knobs flipped, so each field proves it roundtrips (issue #69).
+  # 六个旋钮全部取非默认值——每个字段各自证明它能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_key=KeyStem.YEAR_MASTER,
+    yangren_def=ShenshaRules.YangrenDef.DIWANG,
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
@@ -317,6 +324,7 @@ def test_json_roundtrip_non_default_school() -> None:
   j = chart.json
   assert j['school'] == {
     'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER',
+    'yangren_def': 'DIWANG',
     'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
   }
 
@@ -329,6 +337,7 @@ def test_json_roundtrip_non_default_school() -> None:
                   school=BaziSchool(
                     day_rollover=DayRollover[j['school']['day_rollover']],
                     hongyan_key=KeyStem[j['school']['hongyan_key']],
+                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],

@@ -14,7 +14,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.rules import DizhiRules
+from src.rules import DizhiRules, ShenshaRules
 from src.school import BaziConfig, BaziSchool, KeyStem
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
@@ -105,6 +105,18 @@ def test_at_birth_shensha() -> None:
         expected_huagai.append(dz2)
     assert at_birth.shensha['huagai'] == set(expected_huagai)
     assert at_birth.shensha['huagai'] == at_birth.shensha['huagai'] # Repeated lookup must answer the same.
+
+    # Yangren / 羊刃
+    expected_yangren: list[Dizhi] = []
+    for dz in [y, m, d, h]:
+      if shensha_utils.yangren(
+        dm,
+        dz,
+        definition=chart.bazi.config.school.yangren_def,
+      ):
+        expected_yangren.append(dz)
+    assert at_birth.shensha['yangren'] == set(expected_yangren)
+    assert at_birth.shensha['yangren'] == at_birth.shensha['yangren'] # Repeated lookup must answer the same.
 
 
 @pytest.mark.slow
@@ -346,6 +358,17 @@ def test_transit_shensha() -> None:
           expected.append(dz)
       assert actual['huagai'] == set(expected)
 
+      # Yangren / 羊刃
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.yangren(
+          chart.bazi.day_master,
+          dz,
+          definition=chart.bazi.config.school.yangren_def,
+        ):
+          expected.append(dz)
+      assert actual['yangren'] == set(expected)
+
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
 # re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
@@ -381,6 +404,36 @@ def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[
     TransitKind.LIUNIAN,
   )
   assert transits.shensha(selected)['hongyan'] == expected
+
+
+@pytest.mark.parametrize('yangren_def, transit_ganzhi, expected', [
+  (ShenshaRules.YangrenDef.ZIPING, Ganzhi.from_str('壬戌'), frozenset()),
+  (ShenshaRules.YangrenDef.LUMING, Ganzhi.from_str('壬戌'), frozenset({Dizhi.戌})),
+  (ShenshaRules.YangrenDef.DIWANG, Ganzhi.from_str('庚申'), frozenset({Dizhi.申})),
+])
+def test_yangren_definition_at_transits(
+  yangren_def: ShenshaRules.YangrenDef,
+  transit_ganzhi: Ganzhi,
+  expected: frozenset[Dizhi],
+) -> None:
+  # This chart is 辛日 and 庚年. YEAR_MASTER deliberately differs, proving 羊刃 keeps
+  # its fixed day-master anchor instead of inheriting 红艳's configurable anchor.
+  school: BaziSchool = BaziSchool(
+    hongyan_key=KeyStem.YEAR_MASTER,
+    yangren_def=yangren_def,
+  )
+  chart: BaziChart = BaziChart(Bazi.create(
+    '1980-10-15 12:00',
+    'male',
+    BaziConfig(school=school),
+  ))
+  assert chart.bazi.day_master is Tiangan.辛
+  transits: TransitSet = TransitSet(liunian=transit_ganzhi)
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['yangren'] == expected
+
+  if yangren_def is ShenshaRules.YangrenDef.ZIPING:
+    default_chart: BaziChart = BaziChart(Bazi.create('1980-10-15 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).transits.shensha(transits)['yangren'] == expected
 
 
 @pytest.mark.slow
