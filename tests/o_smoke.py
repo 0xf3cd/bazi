@@ -38,7 +38,7 @@ def main() -> int:
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitKind, TransitSet
   from src.analyzer.relationship import RelationshipAnalyzer
-  from src.utils import tiangan_utils, dizhi_utils
+  from src.utils import tiangan_utils, dizhi_utils, shensha_utils
   from src.calendar import hko_data, hko_data_utils
   from src.calendar.backend import CalendarBackend, calendar_utils_of
 
@@ -78,6 +78,8 @@ def main() -> int:
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
+    ('shensha_utils.huagai on raw strings', TypeError,
+     lambda: shensha_utils.huagai('申', '辰')), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

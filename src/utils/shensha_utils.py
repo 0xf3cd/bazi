@@ -5,7 +5,7 @@ from ..rules import ShenshaRules
 
 
 '''
-Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马.
+Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖.
 Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
 
@@ -135,3 +135,28 @@ def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   if not isinstance(other_dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
   return ShenshaRules.YIMA[year_or_day_dizhi] is other_dizhi
+
+
+def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the HUAGAI (华盖) of `year_or_day_dizhi`.
+  检查输入的地支是否是年支或日支的华盖星。
+
+  Args:
+  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the HUAGAI (华盖) of `year_or_day_dizhi`.
+
+  Examples:
+  - huagai(Dizhi.申, Dizhi.辰)
+    - return: True
+  - huagai(Dizhi.申, Dizhi.子)
+    - return: False
+  '''
+
+  if not isinstance(year_or_day_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
+  return ShenshaRules.HUAGAI[year_or_day_dizhi] is other_dizhi

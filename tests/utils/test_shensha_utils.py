@@ -125,3 +125,28 @@ def test_yima_negative() -> None:
     shensha_utils.yima('申', Dizhi.寅) # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.yima(Dizhi.申, '寅') # type: ignore
+
+
+def test_huagai() -> None:
+  expected_table: dict[Dizhi, Dizhi] = {
+    Dizhi(k_str) : Dizhi(v_str)
+    for k_strs, v_str in {
+      '寅午戌' : '戌',
+      '亥卯未' : '未',
+      '申子辰' : '辰',
+      '巳酉丑' : '丑',
+    }.items()
+    for k_str in k_strs
+  }
+
+  for dz1 in Dizhi:
+    for dz2 in Dizhi:
+      assert shensha_utils.huagai(dz1, dz2) == (expected_table[dz1] is dz2)
+      assert shensha_utils.huagai(dz1, dz2) == (expected_table[dz1] is dz2)
+
+
+def test_huagai_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.huagai('申', Dizhi.辰) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.huagai(Dizhi.申, '辰') # type: ignore
