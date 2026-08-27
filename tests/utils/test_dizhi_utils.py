@@ -1183,6 +1183,28 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   )
 
 
+def test_search_ganzhis_covers_gong_rule_tables() -> None:
+  for relation, table in (
+    (DizhiRelation.拱合, DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]),
+    (DizhiRelation.拱会, DizhiRules.DIZHI_GONGHUI),
+  ):
+    for pair, target in table.items():
+      tiangan = Tiangan.甲 if next(iter(pair)).index % 2 == 0 else Tiangan.乙
+      ganzhis = tuple(Ganzhi(tiangan, dizhi) for dizhi in pair)
+      assert dizhi_utils.search_ganzhis(
+        ganzhis,
+        relation,
+        gong_def=DizhiRules.GongDef.SAME_STEM_WIDE,
+      ) == (
+        GanzhiRelationCombo(GanzhiOccurrence(index, gz) for index, gz in enumerate(ganzhis)),
+      )
+      if relation is DizhiRelation.拱合:
+        assert dizhi_utils.gonghe(*pair, definition=DizhiRules.GongheDef.WIDE) is target
+      else:
+        assert relation is DizhiRelation.拱会
+        assert dizhi_utils.gonghui(*pair) is target
+
+
 @pytest.mark.parametrize('ganzhi_strs', [
   ('乙丑', '癸亥', '己未'),
   ('丁丑', '癸寅', '己戌'),

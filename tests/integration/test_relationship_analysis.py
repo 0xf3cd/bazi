@@ -254,6 +254,15 @@ def test_case1() -> None:
   assert not transits.star(transits_2018.select(TransitKind.DAYUN)).tiangan
   assert not transits.star(transits_2018.select(TransitKind.DAYUN)).dizhi
 
+  transits_2025 = _at_year(transit_chart, 2025).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  )
+  assert set(transits_2025.ganzhis) == {Ganzhi.from_str('壬申'), Ganzhi.from_str('乙巳')}
+  assert set(transits.house_relations(transits_2025)[DizhiRelation.拱合]) == {
+    dizhi_utils.DizhiCombo((Dizhi.丑, Dizhi.巳)),
+  }
+
   # 2031
   transits_2031 = _at_year(transit_chart, 2031).select(
     TransitKind.DAYUN,
@@ -414,6 +423,7 @@ def test_case2() -> None:
       house_dz = chart.house_of_relationship
       other_dz = {bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi}
       house_relations = transits.house_relations(selected_transits)
+      assert set(house_relations).issubset(house_relation_expected)
 
       for dz_rel, dz_expected_list in house_relation_expected.items():
         expected_dz_combos: set[frozenset[Dizhi]] = set()
@@ -883,3 +893,23 @@ def test_school_variants_reach_relationship_analysis() -> None:
   assert set(map(frozenset, default_star_e[DizhiRelation.刑])) == {frozenset((Dizhi.寅, Dizhi.申))}
   assert DizhiRelation.刑 not in strict_star_e
   assert {r: c for r, c in default_star_e.items() if r is not DizhiRelation.刑} == dict(strict_star_e.items())
+
+  dt_f = datetime(1980, 1, 6, 12)
+  gong_default_f = RelationshipAnalyzer(BaziChart(Bazi.create(dt_f, BaziGender.MALE))).at_birth.house_relations
+  gong_wide_f = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_f,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
+  ))).at_birth.house_relations
+
+  assert DizhiRelation.拱合 not in gong_default_f
+  assert set(gong_wide_f[DizhiRelation.拱合]) == {dizhi_utils.DizhiCombo((Dizhi.寅, Dizhi.午))}
+  assert {
+    relation : combos
+    for relation, combos in gong_default_f.items()
+    if relation not in DizhiRules.GONG_RELATIONS
+  } == {
+    relation : combos
+    for relation, combos in gong_wide_f.items()
+    if relation not in DizhiRules.GONG_RELATIONS
+  }

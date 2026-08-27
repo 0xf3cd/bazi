@@ -70,6 +70,11 @@ def test_dizhi_gong() -> None:
     DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]
   )
   assert len(DizhiRules.DIZHI_GONGHUI) == 4
+  for table in DizhiRules.DIZHI_GONGHE.values():
+    for pair, target in table.items():
+      assert frozenset((*pair, target)) in DizhiRules.DIZHI_SANHE
+  for pair, target in DizhiRules.DIZHI_GONGHUI.items():
+    assert frozenset((*pair, target)) in DizhiRules.DIZHI_SANHUI
   assert DizhiRules.DIZHI_GONG_LU_TIANGAN == {
     Wuxing.木 : Tiangan.乙,
     Wuxing.火 : Tiangan.丁,
