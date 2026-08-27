@@ -661,6 +661,7 @@ class ShenshaRules:
   # in Yuan Shushan's 《命理探源》:「华盖者，形象之称也……故以三合本库为华盖也。如寅午戌
   # 见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
   # 华盖取各三合局的墓库；上引《三命通会》原文转引自袁树珊《命理探源》。
+  # Source / 出处: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #16).
   # Mainstream modern references use the year or day branch as the anchor and inspect the other
   # pillars' branches (百度百科「神煞」; also 问真、高人).
   # 当代通行查法以年支或日支为锚，查其他柱的地支（百度百科「神煞」；问真、高人）。
