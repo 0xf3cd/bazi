@@ -233,8 +233,8 @@ class AtBirthAnalysis:
     '''Relations that the House of Relationship / 婚姻宫 has. Gong is evaluated under the
     chart's school and retained only when the concrete day-pillar occurrence participates.
     拱局按本盘流派判断，并只保留日柱这一具体出现真正参与的组合。'''
-    # Keep the complete-discovery path used for three-Dizhi combos; at birth it is equivalent
-    # to mutual discovery between the day branch and the other three branches.
+    # For non-Gong relations, keep the complete-discovery path used for three-Dizhi combos;
+    # at birth it is equivalent to mutual discovery between the day branch and the other three.
     # A value-only filter would retain a Gong pair formed by another occurrence when that
     # pillar repeats the day branch, so filter concrete participants before projection.
     bazi: Final[Bazi] = self._chart.bazi

@@ -182,6 +182,18 @@ def test_at_birth_gong_relations_use_concrete_participants() -> None:
   assert repeated_house.bazi.year_pillar.dizhi is repeated_house.bazi.day_pillar.dizhi
   assert DizhiRelation.拱会 not in RelationshipAnalyzer(repeated_house).at_birth.house_relations
 
+  wide_birth_time = datetime(1980, 1, 6, 12)
+  default_wide = BaziChart(Bazi.create(wide_birth_time, BaziGender.MALE))
+  assert DizhiRelation.拱合 not in RelationshipAnalyzer(default_wide).at_birth.house_relations
+  wide = BaziChart(Bazi.create(
+    wide_birth_time,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
+  ))
+  assert dizhi_utils.DizhiCombo((Dizhi.寅, Dizhi.午)) in (
+    RelationshipAnalyzer(wide).at_birth.house_relations[DizhiRelation.拱合]
+  )
+
 
 def test_at_birth_gong_relations_reach_stars_and_read_school() -> None:
   birth_time = datetime(1980, 1, 21, 2)
@@ -494,7 +506,7 @@ def test_transit_gong_relations_reach_stars() -> None:
 
   full = TransitSet(
     dayun=Ganzhi.from_str('甲寅'),
-    liunian=Ganzhi.from_str('乙卯'),
+    liunian=Ganzhi.from_str('甲午'),
     liuyue=Ganzhi.from_str('甲辰'),
   )
   narrow = full.select(TransitKind.DAYUN, TransitKind.LIUYUE)
