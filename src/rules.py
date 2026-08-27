@@ -684,9 +684,9 @@ class ShenshaRules:
       子平法：仅五阳干有阳刃。本库默认。
     - LUMING: all ten Tiangans follow the 古禄命 table, including Yin blades at 辰戌丑未.
       古禄命法：十干皆有羊刃，取禄前一辰。
-    - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; modern charting
-      software such as 问真 and 高人 uses this table.
-      十干各取帝旺位；问真、高人等现代排盘软件采用此表。
+    - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; the 问真 and 高人
+      charting programs use this table.
+      十干各取帝旺位；问真与高人排盘软件采用此表。
 
     The lookup always keys on the Day Master and inspects all four branches; the
     chart declares the definition via `BaziSchool.yangren_def`, and member names
@@ -697,7 +697,7 @@ class ShenshaRules:
     - 《三命通会·卷三·论羊刃》 records both the ZIPING and LUMING readings:
       https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
     - Modern DIWANG table: https://book.taiyi.me/命/神煞大全 and
-      https://github.com/gaorenyes/gaorenyes.github.io (verified against 问真 in #16).
+      https://github.com/gaorenyes/gaorenyes.github.io
 
     No change should be made to the existing definitions. Only add new definitions.
     '''
