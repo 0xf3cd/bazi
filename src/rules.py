@@ -659,7 +659,10 @@ class ShenshaRules:
 
   # HUAGAI (华盖) is the tomb/storage branch of each 三合 group. 《三命通会》:「华盖者，
   # 形象之称也……故以三合本库为华盖也。如寅午戌见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
-  # 华盖取各三合局的墓库；以年支或日支查其余地支。
+  # 华盖取各三合局的墓库，出自《三命通会》。
+  # Mainstream modern references use the year or day branch as the anchor and inspect the other
+  # pillars' branches (百度百科「神煞」; also 问真、高人).
+  # 当代通行查法以年支或日支为锚，查其他柱的地支（百度百科「神煞」；问真、高人）。
   HUAGAI: Final[frozendict[Dizhi, Dizhi]] = frozendict({
     Dizhi(k_str) : Dizhi(v_str)
     for k_strs, v_str in {

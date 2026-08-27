@@ -51,8 +51,8 @@ class _ShenshaSpec:
   The spec of a Shensha: the predicate and the key source (神煞的规格：判断函数和查询 key).
 
   Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `KEY_TIANGAN`). This contract is guarded by the runtime asserts in `shensha_utils`
-  and the registry tests, not by the type system.
+  pairs with `KEY_TIANGAN`). Each predicate checks this contract at runtime; the registry's type
+  does not express it.
   '''
   predicate: Callable[..., bool]
   key:       _KeySource
