@@ -642,6 +642,7 @@ def test_json() -> None:
                       hongyan_key=KeyStem[j['school']['hongyan_key']],
                       anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                       xing_def=DizhiRules.XingDef[j['school']['xing_def']],
+                      gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                     ),
                   ))
     )

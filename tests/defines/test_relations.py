@@ -32,7 +32,7 @@ def test_tiangan_relation_str() -> None:
 
 def test_dizhi_relation_basic() -> None:
   assert DizhiRelation is 地支关系
-  assert len(DizhiRelation) == 13 # 三会、六合、暗合、通合、通禄合、三合、半合、刑、冲、破、害、生、克
+  assert len(DizhiRelation) == 15 # 三会、拱会、六合、暗合、通合、通禄合、三合、半合、拱合、刑、冲、破、害、生、克
 
 
 def test_dizhi_relation_str() -> None:
@@ -49,4 +49,4 @@ def test_dizhi_relation_str() -> None:
   with pytest.raises(ValueError):
     DizhiRelation.from_str('冲 ')
 
-  assert ''.join([str(relation) for relation in DizhiRelation]) == '三会六合暗合通合通禄合三合半合刑冲破害生克'
+  assert ''.join([str(relation) for relation in DizhiRelation]) == '三会拱会六合暗合通合通禄合三合半合拱合刑冲破害生克'

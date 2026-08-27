@@ -22,12 +22,14 @@ class TianganRelation(BaziEnum):
 class DizhiRelation(BaziEnum):
   '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
   SANHUI   = '三会'
+  GONGHUI  = '拱会'
   LIUHE    = '六合'
   ANHE     = '暗合'
   TONGHE   = '通合'
   TONGLUHE = '通禄合'
   SANHE    = '三合'
   BANHE    = '半合'
+  GONGHE   = '拱合'
   XING     = '刑'
   CHONG    = '冲'
   PO       = '破'
@@ -37,12 +39,14 @@ class DizhiRelation(BaziEnum):
 
   # Aliases
   三会   = SANHUI
+  拱会   = GONGHUI
   六合   = LIUHE
   暗合   = ANHE
   通合   = TONGHE
   通禄合 = TONGLUHE
   三合   = SANHE
   半合   = BANHE
+  拱合   = GONGHE
   刑    = XING
   冲    = CHONG
   破    = PO

@@ -254,6 +254,15 @@ def test_case1() -> None:
   assert not transits.star(transits_2018.select(TransitKind.DAYUN)).tiangan
   assert not transits.star(transits_2018.select(TransitKind.DAYUN)).dizhi
 
+  transits_2025 = _at_year(transit_chart, 2025).select(
+    TransitKind.DAYUN,
+    TransitKind.LIUNIAN,
+  )
+  assert set(transits_2025.ganzhis) == {Ganzhi.from_str('壬申'), Ganzhi.from_str('乙巳')}
+  assert set(transits.house_relations(transits_2025)[DizhiRelation.拱合]) == {
+    dizhi_utils.DizhiCombo((Dizhi.丑, Dizhi.巳)),
+  }
+
   # 2031
   transits_2031 = _at_year(transit_chart, 2031).select(
     TransitKind.DAYUN,
@@ -414,6 +423,7 @@ def test_case2() -> None:
       house_dz = chart.house_of_relationship
       other_dz = {bazi.year_pillar.dizhi, bazi.month_pillar.dizhi, bazi.hour_pillar.dizhi}
       house_relations = transits.house_relations(selected_transits)
+      assert set(house_relations).issubset(house_relation_expected)
 
       for dz_rel, dz_expected_list in house_relation_expected.items():
         expected_dz_combos: set[frozenset[Dizhi]] = set()
@@ -610,6 +620,21 @@ def test_random_cases(bazi: Bazi) -> None:
           lambda _, combo : not combo.isdisjoint(filter(lambda dz : dz is not house, transits_dz_set))
         )
       )
+      positioned_gong = dizhi_utils.discover_mutual_ganzhis(
+        bazi.pillars,
+        transits_gz,
+        anhe_def=school.anhe_def,
+        xing_def=school.xing_def,
+        gong_def=school.gong_def,
+      )
+      expected_gong = dizhi_utils.GanzhiRelationDiscovery({
+        relation : tuple(
+          combo for combo in positioned_gong.get(relation, ())
+          if any(occurrence.index == 2 for occurrence in combo)
+        )
+        for relation in (DizhiRelation.拱合, DizhiRelation.拱会)
+      }).to_dizhi_discovery()
+      expected_dz_relations = expected_dz_relations.merge(expected_gong)
 
       tg_relations = transits.day_master_relations(selected_transits)
       dz_relations = transits.house_relations(selected_transits)
@@ -669,6 +694,21 @@ def test_random_cases(bazi: Bazi) -> None:
       ).filter(
         lambda _, combo : not combo.isdisjoint(stars.dizhi)
       )
+      transits_only_gong = dizhi_utils.discover_ganzhis(
+        transits_gz,
+        anhe_def=school.anhe_def,
+        xing_def=school.xing_def,
+        gong_def=school.gong_def,
+      )
+      expected_transits_only_dz = expected_transits_only_dz.merge(
+        dizhi_utils.GanzhiRelationDiscovery({
+          relation : tuple(
+            combo for combo in transits_only_gong.get(relation, ())
+            if any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo)
+          )
+          for relation in (DizhiRelation.拱合, DizhiRelation.拱会)
+        }).to_dizhi_discovery()
+      )
 
       assert _equal(transits_only_star_relations.tiangan, expected_transits_only_tg)
       assert _equal(transits_only_star_relations.dizhi, expected_transits_only_dz)
@@ -687,6 +727,22 @@ def test_random_cases(bazi: Bazi) -> None:
         bazi.four_dizhis, transits_dz_list, anhe_def=school.anhe_def, xing_def=school.xing_def,
       ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
+      )
+      mutual_gong = dizhi_utils.discover_mutual_ganzhis(
+        bazi.pillars,
+        transits_gz,
+        anhe_def=school.anhe_def,
+        xing_def=school.xing_def,
+        gong_def=school.gong_def,
+      )
+      expected_mutual_dz = expected_mutual_dz.merge(
+        dizhi_utils.GanzhiRelationDiscovery({
+          relation : tuple(
+            combo for combo in mutual_gong.get(relation, ())
+            if any(occurrence.ganzhi.dizhi in stars.dizhi for occurrence in combo)
+          )
+          for relation in (DizhiRelation.拱合, DizhiRelation.拱会)
+        }).to_dizhi_discovery()
       )
 
       assert _equal(mutual_star_relations.tiangan, expected_mutual_tg)
@@ -707,7 +763,12 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda _, combo : not combo.isdisjoint(transits_tg_list)
       ))
 
-      assert _equal(all_star_relations.dizhi, dizhi_utils.discover(
+      all_dizhi_without_gong = dizhi_utils.DizhiRelationDiscovery({
+        relation : combos
+        for relation, combos in all_star_relations.dizhi.items()
+        if relation not in (DizhiRelation.拱合, DizhiRelation.拱会)
+      })
+      assert _equal(all_dizhi_without_gong, dizhi_utils.discover(
         transits_dz_list + list(bazi.four_dizhis), anhe_def=school.anhe_def, xing_def=school.xing_def,
       ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
@@ -832,3 +893,23 @@ def test_school_variants_reach_relationship_analysis() -> None:
   assert set(map(frozenset, default_star_e[DizhiRelation.刑])) == {frozenset((Dizhi.寅, Dizhi.申))}
   assert DizhiRelation.刑 not in strict_star_e
   assert {r: c for r, c in default_star_e.items() if r is not DizhiRelation.刑} == dict(strict_star_e.items())
+
+  dt_f = datetime(1980, 1, 6, 12)
+  gong_default_f = RelationshipAnalyzer(BaziChart(Bazi.create(dt_f, BaziGender.MALE))).at_birth.house_relations
+  gong_wide_f = RelationshipAnalyzer(BaziChart(Bazi.create(
+    dt_f,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
+  ))).at_birth.house_relations
+
+  assert DizhiRelation.拱合 not in gong_default_f
+  assert set(gong_wide_f[DizhiRelation.拱合]) == {dizhi_utils.DizhiCombo((Dizhi.寅, Dizhi.午))}
+  assert {
+    relation : combos
+    for relation, combos in gong_default_f.items()
+    if relation not in DizhiRules.GONG_RELATIONS
+  } == {
+    relation : combos
+    for relation, combos in gong_wide_f.items()
+    if relation not in DizhiRules.GONG_RELATIONS
+  }

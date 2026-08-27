@@ -6,6 +6,7 @@ import inspect
 
 import pytest
 
+from src.defines import Tiangan, Wuxing, DizhiRelation
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
@@ -51,6 +52,38 @@ def test_dizhi_xing() -> None:
     DizhiRules.DIZHI_XING[DizhiRules.XingDef.STRICT] = '' # type: ignore
   with pytest.raises(KeyError):
     _ = DizhiRules.DIZHI_XING['not a XingDef'] # type: ignore
+
+
+def test_dizhi_gong() -> None:
+  assert DizhiRules.GONG_RELATIONS == (DizhiRelation.拱合, DizhiRelation.拱会)
+  assert set(DizhiRules.GONG_GONGHE_SCOPE) == set(DizhiRules.GongDef)
+  assert DizhiRules.GONG_GONGHE_SCOPE == {
+    DizhiRules.GongDef.SAME_STEM_NARROW    : DizhiRules.GongheDef.NARROW,
+    DizhiRules.GongDef.SAME_STEM_WIDE      : DizhiRules.GongheDef.WIDE,
+    DizhiRules.GongDef.TRANSFORMING_NARROW : DizhiRules.GongheDef.NARROW,
+    DizhiRules.GongDef.LU_NARROW           : DizhiRules.GongheDef.NARROW,
+  }
+  assert set(DizhiRules.DIZHI_GONGHE) == set(DizhiRules.GongheDef)
+  assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]) == 4
+  assert len(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]) == 12
+  assert set(DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW]).issubset(
+    DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]
+  )
+  assert len(DizhiRules.DIZHI_GONGHUI) == 4
+  for table in DizhiRules.DIZHI_GONGHE.values():
+    for pair, target in table.items():
+      assert frozenset((*pair, target)) in DizhiRules.DIZHI_SANHE
+  for pair, target in DizhiRules.DIZHI_GONGHUI.items():
+    assert frozenset((*pair, target)) in DizhiRules.DIZHI_SANHUI
+  assert DizhiRules.DIZHI_GONG_LU_TIANGAN == {
+    Wuxing.木 : Tiangan.乙,
+    Wuxing.火 : Tiangan.丁,
+    Wuxing.金 : Tiangan.辛,
+    Wuxing.水 : Tiangan.癸,
+  }
+
+  with pytest.raises(TypeError):
+    DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW] = {} # type: ignore
 
 
 def test_all_rules() -> None:

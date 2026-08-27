@@ -33,6 +33,7 @@ def main() -> int:
   from src.defines import Dizhi, Ganzhi, Jieqi, DizhiRelation
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
+  from src.rules import DizhiRules
   from src.school import BaziConfig
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitKind, TransitSet
@@ -65,6 +66,18 @@ def main() -> int:
      lambda: dizhi_utils.search_ganzhis([Dizhi.子, Dizhi.丑], DizhiRelation.六合)), # type: ignore
     ('dizhi_utils.discover_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_ganzhis([Dizhi.子, Dizhi.丑])), # type: ignore
+    ('dizhi_utils.gonghe on raw strings', TypeError,
+     lambda: dizhi_utils.gonghe('申', '辰')), # type: ignore
+    ('dizhi_utils.search Gong without Ganzhi context', ValueError,
+     lambda: dizhi_utils.search([Dizhi.申, Dizhi.辰], DizhiRelation.拱合)),
+    ('dizhi_utils.search_ganzhis wrong Gong profile', TypeError,
+     lambda: dizhi_utils.search_ganzhis(
+       [Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰')],
+       DizhiRelation.拱合,
+       gong_def=DizhiRules.GongheDef.NARROW, # type: ignore
+     )),
+    ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
+     lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

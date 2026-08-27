@@ -6,7 +6,7 @@ from typing import Final
 
 from .common import frozendict
 from .data_types import TraitTuple, HiddenTianganDict
-from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang
+from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation
 
 
 # All rule tables are plain `Final` class attributes, built once at import time.
@@ -253,6 +253,66 @@ def _dizhi_ke(dizhi_traits: frozendict[Dizhi, TraitTuple]) -> frozenset[tuple[Di
 class DizhiRules:
   '''Rules for Dizhi relations / 地支关系'''
 
+  class GongheDef(Enum):
+    '''The structural scope of 拱合. `NARROW` only accepts a 三合 pair missing its
+    middle branch; `WIDE` accepts any two members of one 三合 group and returns the
+    third. 狭义拱合只收三合缺中神；广义拱合收三合任意两支并拱出第三支。
+
+    Sources / 出处:
+    - Narrow: https://services.shen88.cn/bazisuanming/pc-74297.html
+    - Wide: https://www.sohu.com/a/471337600_310486
+    '''
+    NARROW = 0
+    WIDE   = 1
+
+  class GongDef(Enum):
+    '''Source-backed profiles for the contextual conditions of 拱合 / 拱会.
+    拱合、拱会成立条件的来源档案；只列有出处的组合，不把分歧轴任意拼接。
+
+    - SAME_STEM_NARROW: participants share one Tiangan; narrow 拱合 plus 拱会.
+      两柱同干；狭义拱合并收拱会。
+    - SAME_STEM_WIDE: the same Tiangan condition with wide 拱合 plus 拱会.
+      两柱同干；广义拱合并收拱会。
+    - TRANSFORMING_NARROW: the query scope exposes a Tiangan of the formed Wuxing;
+      narrow 拱合 plus 拱会. 查询范围透出化神；狭义拱合并收拱会。
+    - LU_NARROW: the query scope exposes 乙 / 丁 / 辛 / 癸 for the formed Wuxing;
+      narrow 拱合 only. Its source does not extend the rule to 拱会.
+      查询范围见所拱五行的乙、丁、辛、癸禄字；只收狭义拱合，来源未把本条扩到拱会。
+
+    Candidate positions are entry-specific: `search_ganzhis` uses adjacent occurrences, while
+    `discover_mutual_ganzhis` uses pairs spanning its two input scopes.
+    候选柱位由入口决定：`search_ganzhis` 只查相邻具体出现，`discover_mutual_ganzhis`
+    查横跨两组输入的柱位对。
+
+    This knob is declared per chart via `BaziSchool.gong_def` and read at evaluation time
+    by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
+    本旋钮由 `BaziSchool.gong_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
+
+    No change should be made to the existing definitions. Only add new definitions.
+
+    Sources / 出处:
+    - Same stem, wide scope: https://www.sohu.com/a/471337600_310486
+    - Transforming Tiangan: https://www.suanzhun.net/article/2395.html
+    - Lu Tiangan: https://services.shen88.cn/bazisuanming/pc-74297.html
+    - 拱会 / 夹 terminology: https://www.sohu.com/a/805277582_120167645
+    '''
+    SAME_STEM_NARROW    = 0
+    SAME_STEM_WIDE      = 1
+    TRANSFORMING_NARROW = 2
+    LU_NARROW           = 3
+
+  # Gong relations require position and Tiangan context in batch queries.
+  # 拱局批量查询需要柱位与天干上下文。
+  GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
+
+  # The structural 拱合 scope selected by each Gong profile / 各拱局来源档案所用的拱合结构口径。
+  GONG_GONGHE_SCOPE: Final[frozendict[GongDef, GongheDef]] = frozendict({
+    GongDef.SAME_STEM_NARROW    : GongheDef.NARROW,
+    GongDef.SAME_STEM_WIDE      : GongheDef.WIDE,
+    GongDef.TRANSFORMING_NARROW : GongheDef.NARROW,
+    GongDef.LU_NARROW           : GongheDef.NARROW,
+  })
+
   # The table is used to query the SANHUI (三会) relation across all Dizhis.
   # SANHUI relation is a non-directional/mutual relation.
   # 该表格用于查询地支之间的三会局。
@@ -262,6 +322,18 @@ class DizhiRules:
     frozenset((Dizhi.巳, Dizhi.午, Dizhi.未)) : Wuxing.火,
     frozenset((Dizhi.申, Dizhi.酉, Dizhi.戌)) : Wuxing.金,
     frozenset((Dizhi.亥, Dizhi.子, Dizhi.丑)) : Wuxing.水,
+  })
+
+  # A 三会 group missing its middle branch. Some modern sources call it 拱会; 盲派 and
+  # 梁湘润系 call it 夹. The structure is the same, and this library reports the selected
+  # public name `DizhiRelation.拱会` while preserving the terminology split here.
+  # 三会缺中神。部分现代来源称「拱会」，盲派、梁湘润系称「夹」；机械结构相同，
+  # 本库按 `DizhiRelation.拱会` 这一已选公开名称报告，术语分歧留在知识层。
+  DIZHI_GONGHUI: Final[frozendict[frozenset[Dizhi], Dizhi]] = frozendict({
+    frozenset((Dizhi.寅, Dizhi.辰)) : Dizhi.卯,
+    frozenset((Dizhi.巳, Dizhi.未)) : Dizhi.午,
+    frozenset((Dizhi.申, Dizhi.戌)) : Dizhi.酉,
+    frozenset((Dizhi.亥, Dizhi.丑)) : Dizhi.子,
   })
 
   # The table is used to query the LIUHE (六合) relation across all Dizhis.
@@ -282,10 +354,9 @@ class DizhiRules:
     The definitions of ANHE relation. Different definitions mean different query tables.
     不同的地支暗合关系看法。
 
-    ANHE is non-directional, so every query entry (`anhe` / `search` / `discover`) sees the
-    same table per definition -- there is no entry-layer divergence like `XingDef`'s.
-    暗合无方向，各查法入口（`anhe` / `search` / `discover`）看到的表一致——无 `XingDef`
-    那种入口层分歧。
+    ANHE is non-directional, so every direct or batch query entry sees the same table per
+    definition -- there is no entry-layer divergence like `XingDef`'s.
+    暗合无方向，每个直接或批量查法入口看到的表一致——无 `XingDef` 那种入口层分歧。
 
     This knob is declared per chart via `BaziSchool.anhe_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
@@ -374,6 +445,41 @@ class DizhiRules:
     frozenset((Dizhi.午, Dizhi.戌)) : Wuxing.火,
   })
 
+  # Gonghe returns the arched branch, not the formed Wuxing. Narrow scope accepts only a
+  # missing middle branch; wide scope accepts any two members of one 三合 group.
+  # 拱合返回所拱之支，而不是化五行。狭义只收缺中神；广义收三合任意两支。
+  DIZHI_GONGHE: Final[frozendict[GongheDef, frozendict[frozenset[Dizhi], Dizhi]]] = frozendict({
+    GongheDef.NARROW : frozendict({
+      frozenset((Dizhi.巳, Dizhi.丑)) : Dizhi.酉,
+      frozenset((Dizhi.亥, Dizhi.未)) : Dizhi.卯,
+      frozenset((Dizhi.申, Dizhi.辰)) : Dizhi.子,
+      frozenset((Dizhi.寅, Dizhi.戌)) : Dizhi.午,
+    }),
+    GongheDef.WIDE : frozendict({
+      frozenset((Dizhi.巳, Dizhi.丑)) : Dizhi.酉,
+      frozenset((Dizhi.巳, Dizhi.酉)) : Dizhi.丑,
+      frozenset((Dizhi.酉, Dizhi.丑)) : Dizhi.巳,
+      frozenset((Dizhi.亥, Dizhi.未)) : Dizhi.卯,
+      frozenset((Dizhi.亥, Dizhi.卯)) : Dizhi.未,
+      frozenset((Dizhi.卯, Dizhi.未)) : Dizhi.亥,
+      frozenset((Dizhi.申, Dizhi.辰)) : Dizhi.子,
+      frozenset((Dizhi.申, Dizhi.子)) : Dizhi.辰,
+      frozenset((Dizhi.子, Dizhi.辰)) : Dizhi.申,
+      frozenset((Dizhi.寅, Dizhi.戌)) : Dizhi.午,
+      frozenset((Dizhi.寅, Dizhi.午)) : Dizhi.戌,
+      frozenset((Dizhi.午, Dizhi.戌)) : Dizhi.寅,
+    }),
+  })
+
+  # The Yin Tiangan used by the 见禄字 profile for each non-earth formation.
+  # 见禄字口径按所拱木火金水分别取乙丁辛癸；三合、三会无土局。
+  DIZHI_GONG_LU_TIANGAN: Final[frozendict[Wuxing, Tiangan]] = frozendict({
+    Wuxing.木 : Tiangan.乙,
+    Wuxing.火 : Tiangan.丁,
+    Wuxing.金 : Tiangan.辛,
+    Wuxing.水 : Tiangan.癸,
+  })
+
   class XingDef(Enum):
     '''
     The definitions of XING relation. This makes a difference on two combos - 丑未戌、寅巳申。
@@ -383,9 +489,9 @@ class DizhiRules:
       丑未戌 / 寅巳申 to appear; LOOSE requires any two of the three.
       定义层（各查法入口共有）：STRICT 要求丑未戌 / 寅巳申三支齐现；LOOSE 三取二即成立。
     - Entry layer: only order-exact lookups (`dizhi_utils.xing`) see the direction (谁刑谁);
-      the batch entries `search` / `discover` compare as multisets and cannot.
-      入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；
-      批量入口（`search` / `discover`）按多重集比对，看不出方向。
+      batch query entries compare as multisets and cannot.
+      入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；批量查法入口按多重集
+      比对，看不出方向。
 
     This knob is declared per chart via `BaziSchool.xing_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.

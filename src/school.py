@@ -186,10 +186,11 @@ class BaziSchool:
   '''
   day_rollover: DayRollover = DayRollover.WAN_ZISHI
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
-  # The 暗合/刑 definition enums live with their tables in `DizhiRules`; only referenced here.
-  # 暗合/刑的定义枚举与它们的表同住 `DizhiRules`，这里只引用。
+  # The relation definition enums live with their tables in `DizhiRules`; only referenced here.
+  # 关系定义枚举与规则表同住 `DizhiRules`，这里只引用。
   anhe_def:     DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
   xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
+  gong_def:     DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -201,10 +202,13 @@ class BaziSchool:
       raise TypeError(f'Expected AnheDef, got {type(self.anhe_def)}')
     if not isinstance(self.xing_def, DizhiRules.XingDef):
       raise TypeError(f'Expected XingDef, got {type(self.xing_def)}')
+    if not isinstance(self.gong_def, DizhiRules.GongDef):
+      raise TypeError(f'Expected GongDef, got {type(self.gong_def)}')
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 暗合 NORMAL_EXTENDED
-+ 刑 LOOSE (现状多数派口径). / 默认流派档案：晚子时换日、红艳查日干、暗合最宽表、刑三取二。'''
++ 刑 LOOSE + 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、红艳查日干、暗合最宽表、
+刑三取二、拱局同干狭义。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 
