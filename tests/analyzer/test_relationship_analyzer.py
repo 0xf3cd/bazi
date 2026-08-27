@@ -437,6 +437,22 @@ def test_transit_gong_relations_use_mutual_scope_and_fill() -> None:
   )
   assert combo not in analysis.house_relations(filled).get(DizhiRelation.拱合, ())
 
+  wide_only = TransitSet(liunian=Ganzhi.from_str('甲子'))
+  assert DizhiRelation.拱合 not in analysis.house_relations(wide_only)
+  wide_chart = BaziChart(Bazi.create(
+    datetime(1980, 1, 12, 20),
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
+  ))
+  assert dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.子)) in (
+    RelationshipAnalyzer(wide_chart).transits.house_relations(wide_only)[DizhiRelation.拱合]
+  )
+
+  gonghui = TransitSet(liunian=Ganzhi.from_str('甲戌'))
+  assert dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.戌)) in (
+    analysis.house_relations(gonghui)[DizhiRelation.拱会]
+  )
+
 
 def test_transit_gong_relations_reach_stars() -> None:
   chart = BaziChart(Bazi.create(datetime(1980, 1, 21, 2), BaziGender.MALE))
@@ -450,6 +466,46 @@ def test_transit_gong_relations_reach_stars() -> None:
     transits,
     level=TransitAnalysis.Level.TRANSITS_ONLY,
   ).dizhi
+
+  star_birth_time = datetime(1984, 2, 17)
+  star_chart = BaziChart(Bazi.create(star_birth_time, BaziGender.MALE))
+  star_analysis = RelationshipAnalyzer(star_chart).transits
+  wide_transits = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('甲午'),
+  )
+  assert DizhiRelation.拱合 not in star_analysis.star_relations(
+    wide_transits,
+    level=TransitAnalysis.Level.TRANSITS_ONLY,
+  ).dizhi
+
+  wide_star_chart = BaziChart(Bazi.create(
+    star_birth_time,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
+  ))
+  wide_star_relations = RelationshipAnalyzer(wide_star_chart).transits.star_relations(
+    wide_transits,
+    level=TransitAnalysis.Level.TRANSITS_ONLY,
+  )
+  assert dizhi_utils.DizhiCombo((Dizhi.寅, Dizhi.午)) in (
+    wide_star_relations.dizhi[DizhiRelation.拱合]
+  )
+
+  full = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('乙卯'),
+    liuyue=Ganzhi.from_str('甲辰'),
+  )
+  narrow = full.select(TransitKind.DAYUN, TransitKind.LIUYUE)
+  assert DizhiRelation.拱会 not in star_analysis.star_relations(
+    full,
+    level=TransitAnalysis.Level.TRANSITS_ONLY,
+  ).dizhi
+  assert dizhi_utils.DizhiCombo((Dizhi.寅, Dizhi.辰)) in star_analysis.star_relations(
+    narrow,
+    level=TransitAnalysis.Level.TRANSITS_ONLY,
+  ).dizhi[DizhiRelation.拱会]
 
 
 @pytest.mark.slow

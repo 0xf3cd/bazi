@@ -1126,13 +1126,20 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
 
   wide = (Ganzhi.from_str('庚申'), Ganzhi.from_str('庚子'))
   assert dizhi_utils.search_ganzhis(wide, DizhiRelation.拱合) == ()
-  assert dizhi_utils.search_ganzhis(
+  wide_result = dizhi_utils.search_ganzhis(
     wide,
     DizhiRelation.拱合,
     gong_def=DizhiRules.GongDef.SAME_STEM_WIDE,
-  ) == (
+  )
+  assert wide_result == (
     GanzhiRelationCombo((GanzhiOccurrence(0, wide[0]), GanzhiOccurrence(1, wide[1]))),
   )
+  wide_dizhis = tuple(occurrence.ganzhi.dizhi for occurrence in wide_result[0])
+  assert dizhi_utils.gonghe(*wide_dizhis) is None
+  assert dizhi_utils.gonghe(
+    *wide_dizhis,
+    definition=DizhiRules.GONG_GONGHE_SCOPE[DizhiRules.GongDef.SAME_STEM_WIDE],
+  ) is Dizhi.辰
 
   transforming = (Ganzhi.from_str('壬午'), Ganzhi.from_str('庚申'), Ganzhi.from_str('戊辰'))
   assert dizhi_utils.search_ganzhis(
@@ -1147,15 +1154,6 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
     DizhiRelation.拱合,
     gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW,
   ) == ()
-
-  lu = (Ganzhi.from_str('癸亥'), Ganzhi.from_str('庚申'), Ganzhi.from_str('戊辰'))
-  assert dizhi_utils.search_ganzhis(
-    lu,
-    DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.LU_NARROW,
-  ) == (
-    GanzhiRelationCombo((GanzhiOccurrence(1, lu[1]), GanzhiOccurrence(2, lu[2]))),
-  )
 
   gonghui = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲辰'))
   assert dizhi_utils.search_ganzhis(gonghui, DizhiRelation.拱会) == (
@@ -1178,12 +1176,37 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
     gong_def=DizhiRules.GongDef.LU_NARROW,
   ) == ()
 
+  multiple = tuple(Ganzhi.from_str(s) for s in ('庚申', '庚辰', '甲寅', '甲戌'))
+  assert dizhi_utils.search_ganzhis(multiple, DizhiRelation.拱合) == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, multiple[0]), GanzhiOccurrence(1, multiple[1]))),
+    GanzhiRelationCombo((GanzhiOccurrence(2, multiple[2]), GanzhiOccurrence(3, multiple[3]))),
+  )
+
 
 @pytest.mark.parametrize('ganzhi_strs', [
-  ('甲子', '庚亥', '戊未'),
-  ('丙丑', '庚寅', '戊戌'),
-  ('庚亥', '甲巳', '戊丑'),
-  ('壬午', '庚申', '戊辰'),
+  ('乙丑', '癸亥', '己未'),
+  ('丁丑', '癸寅', '己戌'),
+  ('辛卯', '癸巳', '己丑'),
+  ('癸亥', '庚申', '戊辰'),
+])
+def test_search_ganzhis_lu_profile_accepts_yin_tiangan(
+  ganzhi_strs: tuple[str, str, str],
+) -> None:
+  ganzhis = tuple(Ganzhi.from_str(s) for s in ganzhi_strs)
+  assert dizhi_utils.search_ganzhis(
+    ganzhis,
+    DizhiRelation.拱合,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+  ) == (
+    GanzhiRelationCombo((GanzhiOccurrence(1, ganzhis[1]), GanzhiOccurrence(2, ganzhis[2]))),
+  )
+
+
+@pytest.mark.parametrize('ganzhi_strs', [
+  ('甲子', '丙寅', '甲戌'),
+  ('甲子', '辛未', '丁亥'),
+  ('乙丑', '戊辰', '壬申'),
+  ('乙丑', '己巳', '庚午'),
 ])
 def test_search_ganzhis_lu_profile_rejects_yang_tiangan(
   ganzhi_strs: tuple[str, str, str],
@@ -1207,6 +1230,21 @@ def test_discover_mutual_ganzhis_scope_and_identity() -> None:
   filled_second = (*second, Ganzhi.from_str('甲子'))
   assert DizhiRelation.拱合 not in dizhi_utils.discover_mutual_ganzhis(first, filled_second)
   assert dizhi_utils.discover_mutual_ganzhis((), second) == GanzhiRelationDiscovery({})
+
+  within_first = (Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰'))
+  assert dizhi_utils.search_ganzhis(within_first, DizhiRelation.拱合) == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, within_first[0]), GanzhiOccurrence(1, within_first[1]))),
+  )
+  assert DizhiRelation.拱合 not in dizhi_utils.discover_mutual_ganzhis(
+    within_first,
+    (Ganzhi.from_str('乙丑'),),
+  )
+
+  gonghui_first = (Ganzhi.from_str('丙寅'),)
+  gonghui_second = (Ganzhi.from_str('丙辰'),)
+  assert dizhi_utils.discover_mutual_ganzhis(gonghui_first, gonghui_second)[DizhiRelation.拱会] == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, gonghui_first[0]), GanzhiOccurrence(1, gonghui_second[0]))),
+  )
 
   repeated = dizhi_utils.discover_mutual_ganzhis(
     (Ganzhi.from_str('甲子'),),
@@ -1285,6 +1323,17 @@ def test_discover_ganzhis_projection() -> None:
   empty = GanzhiRelationDiscovery({DizhiRelation.六合: ()})
   assert empty.to_dizhi_discovery() == DizhiRelationDiscovery({})
   assert not hasattr(empty, 'merge')
+
+  repeated_gong = tuple(Ganzhi.from_str(s) for s in ('庚申', '庚辰', '庚申', '庚辰'))
+  gong_discovery = dizhi_utils.discover_ganzhis(repeated_gong)
+  assert gong_discovery[DizhiRelation.拱合] == (
+    GanzhiRelationCombo((GanzhiOccurrence(0, repeated_gong[0]), GanzhiOccurrence(1, repeated_gong[1]))),
+    GanzhiRelationCombo((GanzhiOccurrence(1, repeated_gong[1]), GanzhiOccurrence(2, repeated_gong[2]))),
+    GanzhiRelationCombo((GanzhiOccurrence(2, repeated_gong[2]), GanzhiOccurrence(3, repeated_gong[3]))),
+  )
+  assert gong_discovery.to_dizhi_discovery()[DizhiRelation.拱合] == (
+    DizhiCombo((Dizhi.申, Dizhi.辰)),
+  )
 
 
 def test_discover_ganzhis_negative() -> None:

@@ -6,7 +6,7 @@ import inspect
 
 import pytest
 
-from src.defines import DizhiRelation
+from src.defines import Tiangan, Wuxing, DizhiRelation
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
@@ -70,7 +70,12 @@ def test_dizhi_gong() -> None:
     DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.WIDE]
   )
   assert len(DizhiRules.DIZHI_GONGHUI) == 4
-  assert len(DizhiRules.DIZHI_GONG_LU_TIANGAN) == 4
+  assert DizhiRules.DIZHI_GONG_LU_TIANGAN == {
+    Wuxing.木 : Tiangan.乙,
+    Wuxing.火 : Tiangan.丁,
+    Wuxing.金 : Tiangan.辛,
+    Wuxing.水 : Tiangan.癸,
+  }
 
   with pytest.raises(TypeError):
     DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW] = {} # type: ignore

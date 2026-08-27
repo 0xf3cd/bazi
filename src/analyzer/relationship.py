@@ -125,16 +125,16 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
 
 
 # The ONLY place this file reads the school profile for Dizhi relation discovery:
-# every `dizhi_utils.discover*` call below goes through one of these wrappers,
+# every `dizhi_utils` batch query below goes through one of these wrappers,
 # so "no bare calls in this file" is a grep-checkable invariant --
 # a forgotten relation-definition argument at some call site would silently fall back to the
 # hardcoded defaults (issue #69).
-# 本文件唯一为地支关系查法读流派档案的地方：下面的 `dizhi_utils.discover` /
-# `discover_mutual` 调用一律走这两个薄包装——「本文件无裸调」是一条 grep 可验的不变量，
+# 本文件唯一为地支关系查法读流派档案的地方：下文所有 `dizhi_utils` 批量查法一律走这些
+# 薄包装——「本文件无裸调」是一条 grep 可验的不变量，
 # 某个调用点忘传参会静默回落到硬编码默认（issue #69）。
-# `search` currently has no caller here; a future caller must first gain the same school-aware
-# wrapper rather than call it directly. `search` 目前在本文件没有调用方；将来调用前须先接入
-# 同样的流派薄包装，不得裸调。
+# `search` and `search_ganzhis` currently have no caller here; future callers must first gain
+# school-aware wrappers rather than call them directly. `search` 与 `search_ganzhis` 目前在
+# 本文件没有调用方；将来调用前须先接入流派薄包装，不得裸调。
 def _dz_discover(school: BaziSchool, dizhis: Sequence[Dizhi]) -> dizhi_utils.DizhiRelationDiscovery:
   '''`dizhi_utils.discover` under the chart's school profile / 按盘的流派档案发现地支关系。'''
   return dizhi_utils.discover(dizhis, anhe_def=school.anhe_def, xing_def=school.xing_def)
@@ -232,7 +232,9 @@ class AtBirthAnalysis:
   def house_relations(self) -> dizhi_utils.DizhiRelationDiscovery:
     '''Relations that the House of Relationship / 婚姻宫 has. Gong is evaluated under the
     chart's school and retained only when the concrete day-pillar occurrence participates.
-    拱局按本盘流派判断，并只保留日柱这一具体 occurrence 真正参与的组合。'''
+    拱局按本盘流派判断，并只保留日柱这一具体出现真正参与的组合。'''
+    # Keep the complete-discovery path used for three-Dizhi combos; at birth it is equivalent
+    # to mutual discovery between the day branch and the other three branches.
     # A value-only filter would retain a Gong pair formed by another occurrence when that
     # pillar repeats the day branch, so filter concrete participants before projection.
     bazi: Final[Bazi] = self._chart.bazi
@@ -332,7 +334,7 @@ class TransitAnalysis:
 
     Note:
     - Gong is evaluated under the chart's school and retained only when the concrete day-pillar
-      occurrence participates. 拱局按本盘流派判断，并只保留日柱这一具体 occurrence 参与的组合。
+      occurrence participates. 拱局按本盘流派判断，并只保留日柱这一具体出现参与的组合。
     '''
 
     self._check_transits(transits)

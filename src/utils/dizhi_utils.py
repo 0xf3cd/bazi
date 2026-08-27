@@ -28,12 +28,11 @@ DizhiRelationCombos = tuple[DizhiCombo, ...]
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
   Gong combos contain only their two real participants, not the virtual branch; recover it
-  with `gonghe` / `gonghui` under the originating profile's structural scope. For analyzer
-  results, map the chart's `school.gong_def` through `DizhiRules.GONG_GONGHE_SCOPE` when
-  calling `gonghe`.
-  地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；按来源
-  profile 的结构口径用 `gonghe` / `gonghui` 恢复虚支。analyzer 结果调用 `gonghe` 时，
-  用 `DizhiRules.GONG_GONGHE_SCOPE` 把本盘 `school.gong_def` 映射成查询口径。'''
+  with `gonghe` / `gonghui`. When the producing Ganzhi query used a `gong_def`, pass
+  `DizhiRules.GONG_GONGHE_SCOPE[gong_def]` to `gonghe`.
+  地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
+  `gonghe` / `gonghui` 恢复虚支。若生产该结果的干支查法使用了
+  `gong_def`，调用 `gonghe` 时传 `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`。'''
 
 
 @dataclass(frozen=True)
@@ -68,18 +67,15 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''A frozen mapping from `DizhiRelation` to concrete Ganzhi-occurrence combos.
   Occurrence indices follow the query sequence defined by the producing entry; see each
-  entry's docstring. 地支关系到满足它的具体干支位置组合的冻结映射；occurrence 序号按
+  entry's docstring. 地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
   生产该结果的入口所定义的查询序列解释，详见各入口说明。'''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
     occurrence combos that collapse to the same Dizhi combo are deduplicated.
-    Gong combos project their two real participants; recover the virtual branch with
-    `gonghe` / `gonghui` under the same structural scope. For 拱合, use
-    `DizhiRules.GONG_GONGHE_SCOPE[profile]`.
+    Gong-key shape and virtual-branch recovery follow `DizhiRelationDiscovery`.
     把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
-    两个实支，所拱虚支按同一结构口径用 `gonghe` / `gonghui` 查询；拱合使用
-    `DizhiRules.GONG_GONGHE_SCOPE[profile]` 所列口径。'''
+    两个实支；拱局键的结果形状与虚支恢复契约见 `DizhiRelationDiscovery`。'''
     projected: dict[DizhiRelation, tuple[DizhiCombo, ...]] = {}
     for relation, combos in self.items():
       unique: dict[DizhiCombo, None] = {}
@@ -284,9 +280,11 @@ def gonghe(dz1: Dizhi, dz2: Dizhi, *,
 
   This direct query answers only the structural question and therefore takes Dizhis. It
   does not know whether pillars are adjacent, whether a profile's Tiangan condition holds,
-  or whether the target is already present. Use `search_ganzhis` for those contextual rules.
+  or whether the target is already present. Use `search_ganzhis` / `discover_ganzhis` for
+  one sequence, or `discover_mutual_ganzhis` across two scopes, for those contextual rules.
   本直接查询只回答地支结构，不判断柱位相邻、流派天干条件或所拱之支是否已经填实；
-  需要完整成立条件时使用 `search_ganzhis`。
+  查单一序列的完整成立条件时使用 `search_ganzhis` / `discover_ganzhis`，查两组输入时使用
+  `discover_mutual_ganzhis`。
 
   Args:
   - dz1: (Dizhi) The first participating Dizhi.
@@ -315,7 +313,9 @@ def gonghui(dz1: Dizhi, dz2: Dizhi) -> Dizhi | None:
   返回两支三会端点拱出的中神；结构不成立时返回 `None`。
 
   This direct query checks structure only. Position, Tiangan, and fill conditions belong
-  to `search_ganzhis`. 本直接查询只查地支结构；柱位、天干与填实条件由 `search_ganzhis` 判断。
+  to `search_ganzhis` / `discover_ganzhis` for one sequence and `discover_mutual_ganzhis`
+  across two scopes. 本直接查询只查地支结构；单一序列的柱位、天干与填实条件由
+  `search_ganzhis` / `discover_ganzhis` 判断，两组输入由 `discover_mutual_ganzhis` 判断。
 
   Args:
   - dz1: (Dizhi) The first participating Dizhi.
@@ -785,11 +785,10 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
 
   For 拱合 / 拱会, this entry applies the selected source profile, requires adjacent
   occurrences, and rejects a candidate when its virtual branch is already present anywhere
-  in the input. Returned combos contain the two real participants; `gonghe` / `gonghui`
-  return the virtual branch. For 拱合, use `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`.
-  拱合、拱会在本入口应用来源 profile，只查相邻 occurrence；所拱之支已在输入中出现时
-  不再论暗拱。返回组合只含两个实支，虚支由直接查询返回；拱合使用
-  `DizhiRules.GONG_GONGHE_SCOPE[gong_def]` 所列口径。
+  in the input. Returned combos contain the two real participants; virtual-branch recovery
+  follows `DizhiRelationDiscovery`.
+  拱合、拱会在本入口应用来源档案，只查相邻具体出现；所拱之支已在输入中出现时不再论暗拱。
+  返回组合只含两个实支；虚支恢复契约见 `DizhiRelationDiscovery`。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
@@ -854,15 +853,15 @@ def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
   - 返回的组合不体现有向关系的方向。
 
   Note:
-  - Gong matching, adjacency, fill, and result-shape semantics are those of
+  - Gong profile, adjacency, virtual-branch presence, and result-shape semantics are those of
     `search_ganzhis`.
-  - 拱局的 profile、相邻、填实与结果形状语义同 `search_ganzhis`。
+  - 拱局的来源档案、相邻、填实与结果形状语义同 `search_ganzhis`。
 
   Args:
   - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check.
   - anhe_def: (DizhiRules.AnheDef) The ANHE definition, forwarded to `search_ganzhis`.
   - xing_def: (DizhiRules.XingDef) The XING definition, forwarded to `search_ganzhis`.
-  - gong_def: (DizhiRules.GongDef) The Gong profile, forwarded to `search_ganzhis`.
+  - gong_def: (DizhiRules.GongDef) The source-backed Gong profile, forwarded to `search_ganzhis`.
 
   Return: (GanzhiRelationDiscovery) The position-preserving discovery result.
   '''
@@ -900,10 +899,10 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
 
   Occurrence indices belong to the conceptual concatenation `ganzhis1 + ganzhis2`; the
   second sequence therefore starts at `len(ganzhis1)`. Gong pairs spanning the two scopes
-  are direct candidates under the 岁运作用口径 and are not described as adjacent. Gong
-  pairs within either side are outside this mutual result.
-  occurrence 序号属于概念上的 `ganzhis1 + ganzhis2`；第二组从 `len(ganzhis1)` 起算。
-  跨组拱局按岁运作用口径直接成为候选，不把两组柱称为相邻；单侧内部的拱局不进 mutual 结果。
+  are direct candidates under the 岁运作用口径; pairs within either side are outside this
+  mutual result.
+  具体出现序号属于概念上的 `ganzhis1 + ganzhis2`；第二组从 `len(ganzhis1)` 起算。
+  跨组拱局按岁运作用口径直接成为候选；单侧内部的拱局不进跨组结果。
 
   Args:
   - ganzhis1: (Sequence[Ganzhi]) The first ordered scope.
@@ -980,7 +979,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   Note:
   - This Dizhi-only mutual entry excludes 拱合 / 拱会. Their mutual scope needs concrete
     Ganzhis and is available through `discover_mutual_ganzhis`.
-  - 本纯地支 mutual 入口不含拱合、拱会；其跨作用域查法见 `discover_mutual_ganzhis`。
+  - 本纯地支跨组入口不含拱合、拱会；其跨作用域查法见 `discover_mutual_ganzhis`。
 
   Note:
   - `anhe_def` / `xing_def` are forwarded to `search` -- defaults, table picking, and

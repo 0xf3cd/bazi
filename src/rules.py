@@ -270,7 +270,7 @@ class DizhiRules:
     拱合、拱会成立条件的来源档案；只列有出处的组合，不把分歧轴任意拼接。
 
     - SAME_STEM_NARROW: participants share one Tiangan; narrow 拱合 plus 拱会.
-      两柱同干；狭义拱合并收拱会。默认，独立来源最多。
+      两柱同干；狭义拱合并收拱会。
     - SAME_STEM_WIDE: the same Tiangan condition with wide 拱合 plus 拱会.
       两柱同干；广义拱合并收拱会。
     - TRANSFORMING_NARROW: the query scope exposes a Tiangan of the formed Wuxing;
@@ -279,16 +279,22 @@ class DizhiRules:
       narrow 拱合 only. Its source does not extend the rule to 拱会.
       查询范围见所拱五行的乙、丁、辛、癸禄字；只收狭义拱合，来源未把本条扩到拱会。
 
+    Candidate positions are entry-specific: `search_ganzhis` uses adjacent occurrences, while
+    `discover_mutual_ganzhis` uses pairs spanning its two input scopes.
+    候选柱位由入口决定：`search_ganzhis` 只查相邻具体出现，`discover_mutual_ganzhis`
+    查横跨两组输入的柱位对。
+
+    This knob is declared per chart via `BaziSchool.gong_def` and read at evaluation time
+    by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
+    本旋钮由 `BaziSchool.gong_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
+
+    No change should be made to the existing definitions. Only add new definitions.
+
     Sources / 出处:
     - Same stem, wide scope: https://www.sohu.com/a/471337600_310486
     - Transforming Tiangan: https://www.suanzhun.net/article/2395.html
     - Lu Tiangan: https://services.shen88.cn/bazisuanming/pc-74297.html
     - 拱会 / 夹 terminology: https://www.sohu.com/a/805277582_120167645
-
-    Candidate positions are entry-specific: `search_ganzhis` uses adjacent occurrences, while
-    `discover_mutual_ganzhis` uses pairs spanning its two input scopes.
-    候选柱位由入口决定：`search_ganzhis` 只查相邻 occurrence，`discover_mutual_ganzhis`
-    查横跨两组输入的柱位对。
     '''
     SAME_STEM_NARROW    = 0
     SAME_STEM_WIDE      = 1
@@ -299,6 +305,7 @@ class DizhiRules:
   # 拱局批量查询需要柱位与天干上下文。
   GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = (DizhiRelation.拱合, DizhiRelation.拱会)
 
+  # The structural 拱合 scope selected by each Gong profile / 各拱局来源档案所用的拱合结构口径。
   GONG_GONGHE_SCOPE: Final[frozendict[GongDef, GongheDef]] = frozendict({
     GongDef.SAME_STEM_NARROW    : GongheDef.NARROW,
     GongDef.SAME_STEM_WIDE      : GongheDef.WIDE,
@@ -347,10 +354,9 @@ class DizhiRules:
     The definitions of ANHE relation. Different definitions mean different query tables.
     不同的地支暗合关系看法。
 
-    ANHE is non-directional, so every query entry (`anhe` / `search` / `discover`) sees the
-    same table per definition -- there is no entry-layer divergence like `XingDef`'s.
-    暗合无方向，各查法入口（`anhe` / `search` / `discover`）看到的表一致——无 `XingDef`
-    那种入口层分歧。
+    ANHE is non-directional, so every direct or batch query entry sees the same table per
+    definition -- there is no entry-layer divergence like `XingDef`'s.
+    暗合无方向，每个直接或批量查法入口看到的表一致——无 `XingDef` 那种入口层分歧。
 
     This knob is declared per chart via `BaziSchool.anhe_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
@@ -483,9 +489,9 @@ class DizhiRules:
       丑未戌 / 寅巳申 to appear; LOOSE requires any two of the three.
       定义层（各查法入口共有）：STRICT 要求丑未戌 / 寅巳申三支齐现；LOOSE 三取二即成立。
     - Entry layer: only order-exact lookups (`dizhi_utils.xing`) see the direction (谁刑谁);
-      the batch entries `search` / `discover` compare as multisets and cannot.
-      入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；
-      批量入口（`search` / `discover`）按多重集比对，看不出方向。
+      batch query entries compare as multisets and cannot.
+      入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；批量查法入口按多重集
+      比对，看不出方向。
 
     This knob is declared per chart via `BaziSchool.xing_def` and read at evaluation time
     by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
