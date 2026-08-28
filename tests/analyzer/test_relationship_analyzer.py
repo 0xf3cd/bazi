@@ -15,7 +15,7 @@ from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
-from src.school import BaziConfig, BaziSchool, KeyStem
+from src.school import BaziConfig, BaziSchool, KeyStem, TianyiAnchor
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
@@ -117,6 +117,18 @@ def test_at_birth_shensha() -> None:
         expected_yangren.append(dz)
     assert at_birth.shensha['yangren'] == set(expected_yangren)
     assert at_birth.shensha['yangren'] == at_birth.shensha['yangren'] # Repeated lookup must answer the same.
+
+    # Tianyi Guiren / 天乙贵人
+    expected_tianyi: list[Dizhi] = []
+    for tg, dz in itertools.product([chart.bazi.year_pillar.tiangan, dm], [y, m, d, h]):
+      if shensha_utils.tianyi(
+        tg,
+        dz,
+        definition=chart.bazi.config.school.tianyi_def,
+      ):
+        expected_tianyi.append(dz)
+    assert at_birth.shensha['tianyi'] == set(expected_tianyi)
+    assert at_birth.shensha['tianyi'] == at_birth.shensha['tianyi'] # Repeated lookup must answer the same.
 
 
 @pytest.mark.parametrize('birth_time, pillars, yangren_index', [
@@ -386,6 +398,20 @@ def test_transit_shensha() -> None:
           expected.append(dz)
       assert actual['yangren'] == set(expected)
 
+      # Tianyi Guiren / 天乙贵人
+      expected = []
+      for tg, dz in itertools.product(
+        [chart.bazi.year_pillar.tiangan, chart.bazi.day_master],
+        transit_dz,
+      ):
+        if shensha_utils.tianyi(
+          tg,
+          dz,
+          definition=chart.bazi.config.school.tianyi_def,
+        ):
+          expected.append(dz)
+      assert actual['tianyi'] == set(expected)
+
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
 # re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
@@ -466,6 +492,64 @@ def test_yangren_checks_every_selected_transit_branch() -> None:
     liunian=Ganzhi.from_str('壬戌'),
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['yangren'] == {Dizhi.申}
+
+
+@pytest.mark.parametrize('anchor, expected', [
+  (TianyiAnchor.DAY_MASTER, frozenset({Dizhi.子})),
+  (TianyiAnchor.YEAR_MASTER, frozenset({Dizhi.丑})),
+  (TianyiAnchor.YEAR_AND_DAY, frozenset({Dizhi.子, Dizhi.丑})),
+])
+def test_tianyi_anchor_at_birth_and_transits(
+  anchor: TianyiAnchor,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 甲年、乙日, with 子 and 丑 both present: each anchor has one distinct Tianyi branch.
+  chart: BaziChart = BaziChart(Bazi.create(
+    '1984-04-01 11:08',
+    'male',
+    BaziConfig(school=BaziSchool(tianyi_anchor=anchor)),
+  ))
+  assert chart.bazi.year_pillar.tiangan is Tiangan.甲
+  assert chart.bazi.day_master is Tiangan.乙
+  assert RelationshipAnalyzer(chart).at_birth.shensha['tianyi'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲子'),
+    liunian=Ganzhi.from_str('乙丑'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == expected
+
+  if anchor is TianyiAnchor.YEAR_AND_DAY:
+    default_chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['tianyi'] == expected
+
+
+@pytest.mark.parametrize('tianyi_def, expected', [
+  (ShenshaRules.TianyiDef.GENG_WITH_JIA_WU, frozenset({Dizhi.丑, Dizhi.未})),
+  (ShenshaRules.TianyiDef.GENG_WITH_XIN, frozenset({Dizhi.午, Dizhi.寅})),
+  (ShenshaRules.TianyiDef.YANGGUI, frozenset({Dizhi.丑})),
+  (ShenshaRules.TianyiDef.YINGUI, frozenset({Dizhi.未})),
+])
+def test_tianyi_definition_at_transits(
+  tianyi_def: ShenshaRules.TianyiDef,
+  expected: frozenset[Dizhi],
+) -> None:
+  chart: BaziChart = BaziChart(Bazi.create(
+    '2020-07-02 19:08',
+    'female',
+    BaziConfig(school=BaziSchool(
+      tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+      tianyi_def=tianyi_def,
+    )),
+  ))
+  assert chart.bazi.year_pillar.tiangan is Tiangan.庚
+  transits = TransitSet(
+    xiaoyun=Ganzhi.from_str('乙丑'),
+    dayun=Ganzhi.from_str('癸未'),
+    liunian=Ganzhi.from_str('庚午'),
+    liuyue=Ganzhi.from_str('丙寅'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == expected
 
 
 @pytest.mark.slow

@@ -203,3 +203,72 @@ def test_yangren_negative() -> None:
     shensha_utils.yangren(Tiangan.甲, '卯') # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object()) # type: ignore
+
+
+def test_tianyi() -> None:
+  expected: dict[ShenshaRules.TianyiDef, dict[Tiangan, frozenset[Dizhi]]] = {
+    ShenshaRules.TianyiDef.GENG_WITH_JIA_WU : {
+      Tiangan.甲 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.丙 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.庚 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.辛 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.壬 : frozenset((Dizhi.卯, Dizhi.巳)),
+      Tiangan.癸 : frozenset((Dizhi.卯, Dizhi.巳)),
+    },
+    ShenshaRules.TianyiDef.GENG_WITH_XIN : {
+      Tiangan.甲 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.丙 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.庚 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.辛 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.壬 : frozenset((Dizhi.卯, Dizhi.巳)),
+      Tiangan.癸 : frozenset((Dizhi.卯, Dizhi.巳)),
+    },
+    ShenshaRules.TianyiDef.YANGGUI : {
+      Tiangan.甲 : frozenset((Dizhi.未,)), Tiangan.乙 : frozenset((Dizhi.申,)),
+      Tiangan.丙 : frozenset((Dizhi.酉,)), Tiangan.丁 : frozenset((Dizhi.亥,)),
+      Tiangan.戊 : frozenset((Dizhi.丑,)), Tiangan.己 : frozenset((Dizhi.子,)),
+      Tiangan.庚 : frozenset((Dizhi.丑,)), Tiangan.辛 : frozenset((Dizhi.寅,)),
+      Tiangan.壬 : frozenset((Dizhi.卯,)), Tiangan.癸 : frozenset((Dizhi.巳,)),
+    },
+    ShenshaRules.TianyiDef.YINGUI : {
+      Tiangan.甲 : frozenset((Dizhi.丑,)), Tiangan.乙 : frozenset((Dizhi.子,)),
+      Tiangan.丙 : frozenset((Dizhi.亥,)), Tiangan.丁 : frozenset((Dizhi.酉,)),
+      Tiangan.戊 : frozenset((Dizhi.未,)), Tiangan.己 : frozenset((Dizhi.申,)),
+      Tiangan.庚 : frozenset((Dizhi.未,)), Tiangan.辛 : frozenset((Dizhi.午,)),
+      Tiangan.壬 : frozenset((Dizhi.巳,)), Tiangan.癸 : frozenset((Dizhi.卯,)),
+    },
+  }
+
+  for tianyi_def in ShenshaRules.TianyiDef:
+    for tg in Tiangan:
+      for dz in Dizhi:
+        assert shensha_utils.tianyi(
+          tg,
+          dz,
+          definition=tianyi_def,
+        ) == (dz in expected[tianyi_def][tg])
+
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.tianyi(tg, dz) == shensha_utils.tianyi(
+        tg,
+        dz,
+        definition=ShenshaRules.TianyiDef.GENG_WITH_JIA_WU,
+      )
+
+
+def test_tianyi_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.tianyi('甲', Dizhi.丑) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.tianyi(Tiangan.甲, '丑') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object()) # type: ignore

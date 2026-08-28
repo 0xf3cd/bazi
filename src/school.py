@@ -159,6 +159,32 @@ class KeyStem(Enum):
   YEAR_MASTER = 1
 
 
+class TianyiAnchor(Enum):
+  '''The anchor stem(s) used to look up TIANYI GUIREN (天乙贵人).
+  查询天乙贵人所用的锚干。
+
+  - DAY_MASTER: use the Day Master only; 袁树珊《命理探源》 says「以日为主」.
+    只查日干。
+  - YEAR_MASTER: use the year Tiangan only, as in the year-based reading.
+    只查年干。
+  - YEAR_AND_DAY: inspect both year and day Tiangans, the modern mainstream reading
+    used by 问真 and 高人. This is the default. 年干、日干兼查；现代通行默认口径。
+
+  The profile is consumed at evaluation time; it never changes the four pillars.
+  本配置仅在神煞评估期消费，不改变四柱。
+
+  Sources / 出处:
+  - 《命理探源》: https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
+  - 问真: https://book.taiyi.me/命/神煞大全
+  - 高人: https://github.com/gaorenyes/gaorenyes.github.io
+
+  No change should be made to the existing definitions. Only add new definitions.
+  '''
+  DAY_MASTER   = 0
+  YEAR_MASTER  = 1
+  YEAR_AND_DAY = 2
+
+
 @dataclass(frozen=True)
 class BaziSchool:
   '''
@@ -192,6 +218,8 @@ class BaziSchool:
   xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
   gong_def:     DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
   yangren_def:  ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
+  tianyi_anchor: TianyiAnchor = TianyiAnchor.YEAR_AND_DAY
+  tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -207,11 +235,16 @@ class BaziSchool:
       raise TypeError(f'Expected GongDef, got {type(self.gong_def)}')
     if not isinstance(self.yangren_def, ShenshaRules.YangrenDef):
       raise TypeError(f'Expected YangrenDef, got {type(self.yangren_def)}')
+    if not isinstance(self.tianyi_anchor, TianyiAnchor):
+      raise TypeError(f'Expected TianyiAnchor, got {type(self.tianyi_anchor)}')
+    if not isinstance(self.tianyi_def, ShenshaRules.TianyiDef):
+      raise TypeError(f'Expected TianyiDef, got {type(self.tianyi_def)}')
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
-+ 暗合 NORMAL_EXTENDED + 刑 LOOSE + 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、
-红艳查日干、羊刃子平五阳干、暗合最宽表、刑三取二、拱局同干狭义。'''
++ 天乙年日兼查、庚随甲戊的传统合并表 + 暗合 NORMAL_EXTENDED + 刑 LOOSE
++ 拱局 SAME_STEM_NARROW. / 默认流派档案：晚子时换日、红艳查日干、羊刃子平五阳干、
+天乙年日兼查并取传统合并表、暗合最宽表、刑三取二、拱局同干狭义。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

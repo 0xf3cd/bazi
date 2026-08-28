@@ -12,7 +12,7 @@ from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..rules import DizhiRules
-from ..school import KeyStem, BaziSchool
+from ..school import KeyStem, TianyiAnchor, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitSet
@@ -47,6 +47,7 @@ class _KeySource(Enum):
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
+  TIANYI            = auto() # By the Tianyi anchor profile (按天乙贵人锚干配置).
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,11 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     _KeySource.DAY_MASTER,
     lambda school: school.yangren_def,
   ),
+  'tianyi'  : _ShenshaSpec(
+    shensha_utils.tianyi,
+    _KeySource.TIANYI,
+    lambda school: school.tianyi_def,
+  ),
 })
 
 
@@ -97,6 +103,19 @@ def _hongyan_anchor(bazi: Bazi) -> Tiangan:
     # added a member but forgot to wire it -- not something users can trigger.
     # `raise` instead of `assert` so the guard survives `python -O`.
     raise AssertionError(f'`KeyStem` not wired up in `_hongyan_anchor`: {key_stem}') # pragma: no cover # Unreachable invariant guard.
+
+
+def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
+  '''The anchor Tiangan(s) for TIANYI GUIREN (天乙贵人) under the chart's school.'''
+  anchor: Final[TianyiAnchor] = bazi.config.school.tianyi_anchor
+  if anchor is TianyiAnchor.DAY_MASTER:
+    return (bazi.day_master,)
+  elif anchor is TianyiAnchor.YEAR_MASTER:
+    return (bazi.year_pillar.tiangan,)
+  elif anchor is TianyiAnchor.YEAR_AND_DAY:
+    return (bazi.year_pillar.tiangan, bazi.day_master)
+  else:
+    raise AssertionError(f'`TianyiAnchor` not wired up in `_tianyi_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
 
 
 def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., bool]:
@@ -120,6 +139,8 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
     args = (([bazi.day_master], [y_dz, m_dz, d_dz, h_dz]),)
   elif spec.key is _KeySource.KEY_TIANGAN:
     args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
+  elif spec.key is _KeySource.TIANYI:
+    args = ((_tianyi_anchors(bazi), [y_dz, m_dz, d_dz, h_dz]),)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
     # added a member but forgot to update this evaluator -- not something users can trigger.
@@ -140,6 +161,8 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
     first_args = [bazi.day_master]
   elif spec.key is _KeySource.KEY_TIANGAN:
     first_args = [_hongyan_anchor(bazi)]
+  elif spec.key is _KeySource.TIANYI:
+    first_args = _tianyi_anchors(bazi)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
     # added a member but forgot to update this evaluator -- not something users can trigger.
@@ -234,6 +257,8 @@ class ShenshaAnalysis(TypedDict):
   huagai:   frozenset[Dizhi]
   # The Yangren Dizhis  (羊刃所在地支)
   yangren:  frozenset[Dizhi]
+  # The Tianyi Guiren Dizhis  (天乙贵人所在地支)
+  tianyi:   frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -252,6 +277,7 @@ class AtBirthAnalysis:
       'yima'   :  _eval_at_birth(_REGISTRY['yima'],     bazi),
       'huagai' :  _eval_at_birth(_REGISTRY['huagai'],   bazi),
       'yangren':  _eval_at_birth(_REGISTRY['yangren'],  bazi),
+      'tianyi' :  _eval_at_birth(_REGISTRY['tianyi'],   bazi),
     }
 
   @property
@@ -312,7 +338,7 @@ class TransitAnalysis:
     '''
     Return the Shenshas exposed by relationship analysis for the given transits.
 
-    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖、羊刃）。
+    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖、羊刃、天乙贵人）。
 
     Args:
     - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。
@@ -334,6 +360,7 @@ class TransitAnalysis:
       'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
       'huagai' :  _eval_transits(_REGISTRY['huagai'],   bazi, transit_dizhis),
       'yangren':  _eval_transits(_REGISTRY['yangren'],  bazi, transit_dizhis),
+      'tianyi' :  _eval_transits(_REGISTRY['tianyi'],   bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
