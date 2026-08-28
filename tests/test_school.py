@@ -208,7 +208,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
   for positioned_fn in (dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,
-                         dizhi_utils.discover_mutual_ganzhis):
+                        dizhi_utils.discover_mutual_ganzhis):
     params = inspect.signature(positioned_fn).parameters
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
