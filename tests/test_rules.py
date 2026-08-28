@@ -96,6 +96,24 @@ def test_huagai() -> None:
     assert {ShenshaRules.HUAGAI[dz] for dz in sanhe} == tomb
 
 
+def test_yangren() -> None:
+  assert set(ShenshaRules.YANGREN) == set(ShenshaRules.YangrenDef)
+  assert all(set(table) == set(Tiangan) for table in ShenshaRules.YANGREN.values())
+
+  yang_tiangans = (Tiangan.甲, Tiangan.丙, Tiangan.戊, Tiangan.庚, Tiangan.壬)
+  expected_yang = (Dizhi.卯, Dizhi.午, Dizhi.午, Dizhi.酉, Dizhi.子)
+  for table in ShenshaRules.YANGREN.values():
+    assert tuple(table[tg] for tg in yang_tiangans) == expected_yang
+
+  yin_tiangans = (Tiangan.乙, Tiangan.丁, Tiangan.己, Tiangan.辛, Tiangan.癸)
+  assert tuple(ShenshaRules.YANGREN[ShenshaRules.YangrenDef.ZIPING][tg]
+               for tg in yin_tiangans) == (None, None, None, None, None)
+  assert tuple(ShenshaRules.YANGREN[ShenshaRules.YangrenDef.LUMING][tg]
+               for tg in yin_tiangans) == (Dizhi.辰, Dizhi.未, Dizhi.未, Dizhi.戌, Dizhi.丑)
+  assert tuple(ShenshaRules.YANGREN[ShenshaRules.YangrenDef.DIWANG][tg]
+               for tg in yin_tiangans) == (Dizhi.寅, Dizhi.巳, Dizhi.巳, Dizhi.申, Dizhi.亥)
+
+
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.
   # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)

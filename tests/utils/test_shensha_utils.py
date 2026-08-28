@@ -6,6 +6,7 @@ import random
 import pytest
 
 from src.defines import Tiangan, Dizhi
+from src.rules import ShenshaRules
 from src.utils import shensha_utils
 
 
@@ -150,3 +151,55 @@ def test_huagai_negative() -> None:
     shensha_utils.huagai('申', Dizhi.辰) # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.huagai(Dizhi.申, '辰') # type: ignore
+
+
+def test_yangren() -> None:
+  expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
+    ShenshaRules.YangrenDef.ZIPING : {
+      Tiangan.甲 : Dizhi.卯, Tiangan.乙 : None,
+      Tiangan.丙 : Dizhi.午, Tiangan.丁 : None,
+      Tiangan.戊 : Dizhi.午, Tiangan.己 : None,
+      Tiangan.庚 : Dizhi.酉, Tiangan.辛 : None,
+      Tiangan.壬 : Dizhi.子, Tiangan.癸 : None,
+    },
+    ShenshaRules.YangrenDef.LUMING : {
+      Tiangan.甲 : Dizhi.卯, Tiangan.乙 : Dizhi.辰,
+      Tiangan.丙 : Dizhi.午, Tiangan.丁 : Dizhi.未,
+      Tiangan.戊 : Dizhi.午, Tiangan.己 : Dizhi.未,
+      Tiangan.庚 : Dizhi.酉, Tiangan.辛 : Dizhi.戌,
+      Tiangan.壬 : Dizhi.子, Tiangan.癸 : Dizhi.丑,
+    },
+    ShenshaRules.YangrenDef.DIWANG : {
+      Tiangan.甲 : Dizhi.卯, Tiangan.乙 : Dizhi.寅,
+      Tiangan.丙 : Dizhi.午, Tiangan.丁 : Dizhi.巳,
+      Tiangan.戊 : Dizhi.午, Tiangan.己 : Dizhi.巳,
+      Tiangan.庚 : Dizhi.酉, Tiangan.辛 : Dizhi.申,
+      Tiangan.壬 : Dizhi.子, Tiangan.癸 : Dizhi.亥,
+    },
+  }
+
+  for yangren_def in ShenshaRules.YangrenDef:
+    for tg in Tiangan:
+      for dz in Dizhi:
+        assert shensha_utils.yangren(
+          tg,
+          dz,
+          definition=yangren_def,
+        ) == (expected[yangren_def][tg] is dz)
+
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.yangren(tg, dz) == shensha_utils.yangren(
+        tg,
+        dz,
+        definition=ShenshaRules.YangrenDef.ZIPING,
+      )
+
+
+def test_yangren_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.yangren('甲', Dizhi.卯) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.yangren(Tiangan.甲, '卯') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object()) # type: ignore

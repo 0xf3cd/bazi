@@ -675,3 +675,71 @@ class ShenshaRules:
     }.items()
     for k_str in k_strs
   })
+
+  class YangrenDef(Enum):
+    '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
+    Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。
+
+    - ZIPING: only the five Yang Tiangans have 阳刃.
+      子平法：仅五阳干有阳刃。
+    - LUMING: all ten Tiangans have Yangren on the branch immediately after their Lu (禄).
+      古禄命法：十干皆有羊刃，取禄前一辰。
+    - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; the 问真 and 高人
+      charting programs use this table.
+      十干各取帝旺位；问真与高人排盘软件采用此表。
+
+    The lookup always keys on the Day Master and inspects all four branches; the
+    chart declares the definition via `BaziSchool.yangren_def`, and member names
+    are serialized into JSON. 查法固定以日干查四支；定义由 `BaziSchool.yangren_def`
+    按盘声明，成员名进 JSON。
+
+    Sources / 出处:
+    - 《三命通会·卷三·论羊刃》 records both the ZIPING and LUMING readings:
+      https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
+    - Modern DIWANG table: https://book.taiyi.me/命/神煞大全 and
+      https://github.com/gaorenyes/gaorenyes.github.io
+
+    No change should be made to the existing definitions. Only add new definitions.
+    '''
+    ZIPING = 0
+    LUMING = 1
+    DIWANG = 2
+
+  YANGREN: Final[frozendict[YangrenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
+    YangrenDef.ZIPING : frozendict({
+      Tiangan.甲 : Dizhi.卯,
+      Tiangan.乙 : None,
+      Tiangan.丙 : Dizhi.午,
+      Tiangan.丁 : None,
+      Tiangan.戊 : Dizhi.午,
+      Tiangan.己 : None,
+      Tiangan.庚 : Dizhi.酉,
+      Tiangan.辛 : None,
+      Tiangan.壬 : Dizhi.子,
+      Tiangan.癸 : None,
+    }),
+    YangrenDef.LUMING : frozendict({
+      Tiangan.甲 : Dizhi.卯,
+      Tiangan.乙 : Dizhi.辰,
+      Tiangan.丙 : Dizhi.午,
+      Tiangan.丁 : Dizhi.未,
+      Tiangan.戊 : Dizhi.午,
+      Tiangan.己 : Dizhi.未,
+      Tiangan.庚 : Dizhi.酉,
+      Tiangan.辛 : Dizhi.戌,
+      Tiangan.壬 : Dizhi.子,
+      Tiangan.癸 : Dizhi.丑,
+    }),
+    YangrenDef.DIWANG : frozendict({
+      Tiangan.甲 : Dizhi.卯,
+      Tiangan.乙 : Dizhi.寅,
+      Tiangan.丙 : Dizhi.午,
+      Tiangan.丁 : Dizhi.巳,
+      Tiangan.戊 : Dizhi.午,
+      Tiangan.己 : Dizhi.巳,
+      Tiangan.庚 : Dizhi.酉,
+      Tiangan.辛 : Dizhi.申,
+      Tiangan.壬 : Dizhi.子,
+      Tiangan.癸 : Dizhi.亥,
+    }),
+  })

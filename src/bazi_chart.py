@@ -99,6 +99,7 @@ class BaziJson:
     流派档案：每项流派看法各存其枚举成员名。'''
     day_rollover: str
     hongyan_key: str
+    yangren_def: str
     anhe_def: str
     xing_def: str
     gong_def: str
@@ -538,6 +539,7 @@ class BaziChart:
       'school': {
         'day_rollover': self._bazi.config.school.day_rollover.name,
         'hongyan_key': self._bazi.config.school.hongyan_key.name,
+        'yangren_def': self._bazi.config.school.yangren_def.name,
         'anhe_def': self._bazi.config.school.anhe_def.name,
         'xing_def': self._bazi.config.school.xing_def.name,
         'gong_def': self._bazi.config.school.gong_def.name,
