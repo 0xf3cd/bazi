@@ -47,7 +47,7 @@ class _KeySource(Enum):
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
-  TIANYI            = auto() # By the Tianyi anchor profile (按天乙贵人锚干配置).
+  ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
 
 
 @dataclass(frozen=True)
@@ -57,9 +57,9 @@ class _ShenshaSpec:
   神煞的规格：判断函数、查询 key，以及可选的流派定义参数。
 
   Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `DAY_MASTER` or `KEY_TIANGAN`). When `definition` is present, the predicate must
-  accept its result through a keyword-only `definition` argument. Each predicate checks this
-  contract at runtime; the registry's type does not express it.
+  pairs with `DAY_MASTER`, `KEY_TIANGAN`, or `ANCHOR_TIANGANS`). When `definition` is present,
+  the predicate must accept its result through a keyword-only `definition` argument. Each
+  predicate checks this contract at runtime; the registry's type does not express it.
   '''
   predicate:  Callable[..., bool]
   key:        _KeySource
@@ -81,7 +81,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   ),
   'tianyi'  : _ShenshaSpec(
     shensha_utils.tianyi,
-    _KeySource.TIANYI,
+    _KeySource.ANCHOR_TIANGANS,
     lambda school: school.tianyi_def,
   ),
 })
@@ -106,7 +106,9 @@ def _hongyan_anchor(bazi: Bazi) -> Tiangan:
 
 
 def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
-  '''The anchor Tiangan(s) for TIANYI GUIREN (天乙贵人) under the chart's school.'''
+  '''Resolve the TIANYI GUIREN (天乙贵人) anchors selected by
+  `BaziSchool.tianyi_anchor`; `YEAR_AND_DAY` returns both stems.
+  按 `BaziSchool.tianyi_anchor` 解析天乙贵人锚干；年日兼查时同时返回两干。'''
   anchor: Final[TianyiAnchor] = bazi.config.school.tianyi_anchor
   if anchor is TianyiAnchor.DAY_MASTER:
     return (bazi.day_master,)
@@ -139,7 +141,7 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
     args = (([bazi.day_master], [y_dz, m_dz, d_dz, h_dz]),)
   elif spec.key is _KeySource.KEY_TIANGAN:
     args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
-  elif spec.key is _KeySource.TIANYI:
+  elif spec.key is _KeySource.ANCHOR_TIANGANS:
     args = ((_tianyi_anchors(bazi), [y_dz, m_dz, d_dz, h_dz]),)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
@@ -161,7 +163,7 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
     first_args = [bazi.day_master]
   elif spec.key is _KeySource.KEY_TIANGAN:
     first_args = [_hongyan_anchor(bazi)]
-  elif spec.key is _KeySource.TIANYI:
+  elif spec.key is _KeySource.ANCHOR_TIANGANS:
     first_args = _tianyi_anchors(bazi)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
@@ -257,7 +259,7 @@ class ShenshaAnalysis(TypedDict):
   huagai:   frozenset[Dizhi]
   # The Yangren Dizhis  (羊刃所在地支)
   yangren:  frozenset[Dizhi]
-  # The Tianyi Guiren Dizhis  (天乙贵人所在地支)
+  # The Tianyi Dizhis   (天乙贵人所在地支)
   tianyi:   frozenset[Dizhi]
 
 

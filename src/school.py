@@ -1,7 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 '''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
-school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem`),
+school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem` /
+`TianyiAnchor`),
 and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
@@ -168,10 +169,17 @@ class TianyiAnchor(Enum):
   - YEAR_MASTER: use the year Tiangan only, as in the year-based reading.
     只查年干。
   - YEAR_AND_DAY: inspect both year and day Tiangans, the modern mainstream reading
-    used by 问真 and 高人. This is the default. 年干、日干兼查；现代通行默认口径。
+    used by 问真 and 高人. This is the default.
+    年干、日干兼查；现代通行默认口径。
+
+  This enum is separate from `KeyStem` because 红艳 has no year-and-day reading.
+  本枚举不复用 `KeyStem`，因为红艳没有年日兼查口径。
 
   The profile is consumed at evaluation time; it never changes the four pillars.
-  本配置仅在神煞评估期消费，不改变四柱。
+  The chart declares it via `BaziSchool.tianyi_anchor`; it feeds equality, hashing,
+  and JSON as part of the school profile.
+  本配置仅在神煞评估期消费，不改变四柱；由
+  `BaziSchool.tianyi_anchor` 按盘声明，并随流派档案进相等性、哈希与 JSON。
 
   Sources / 出处:
   - 《命理探源》: https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
@@ -210,14 +218,14 @@ class BaziSchool:
   the defaults are written down exactly once.
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
-  day_rollover: DayRollover = DayRollover.WAN_ZISHI
-  hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
+  day_rollover:  DayRollover = DayRollover.WAN_ZISHI
+  hongyan_key:   KeyStem     = KeyStem.DAY_MASTER
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
-  anhe_def:     DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
-  xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
-  gong_def:     DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
-  yangren_def:  ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
+  anhe_def:      DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
+  xing_def:      DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
+  gong_def:      DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
+  yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   tianyi_anchor: TianyiAnchor = TianyiAnchor.YEAR_AND_DAY
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
 

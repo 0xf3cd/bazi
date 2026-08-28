@@ -754,15 +754,19 @@ class ShenshaRules:
       传统合并表：庚与甲戊同组，辛取午寅。
     - GENG_WITH_XIN: the modified merged formula「甲戊兼牛羊……庚辛逢马虎」.
       改口诀合并表：庚改与辛同组。
-    - YANGGUI: the daytime / Yang Guiren table (昼贵 / 阳贵).
-    - YINGUI: the nighttime / Yin Guiren table (夜贵 / 阴贵); the source that reads
+    - YANGGUI: the daytime / Yang Guiren half of the `GENG_WITH_JIA_WU` lineage.
+      阳贵表：与阴贵表合并即为庚随甲戊的传统合并表。
+    - YINGUI: the nighttime / Yin Guiren half of that lineage; the source that reads
       「六辛逢午马」by 分承 gives this same ten-stem table.
-      「六辛逢午马」按分承所得十干表与阴贵表相同。
+      阴贵表：与阳贵表合并即为传统合并表；「六辛逢午马」按分承所得十干表与本表相同。
 
-    The default is `GENG_WITH_JIA_WU`: it has the thicker classical lineage and is also
-    the merged table used by 问真. Day/night boundary selection is deliberately outside
-    these tables; callers that distinguish them select `YANGGUI` or `YINGUI` explicitly.
-    默认取古籍谱系较厚、问真亦采用的传统合并表；本表不代选昼夜界线。
+    `GENG_WITH_JIA_WU` has the thicker classical lineage and is also the merged table
+    used by 问真. The chart declares a profile via `BaziSchool.tianyi_def`, independently
+    of `BaziSchool.tianyi_anchor`; member names are serialized into JSON. Day/night boundary
+    selection is deliberately outside these tables.
+    传统合并表的古籍谱系较厚，问真亦采用；
+    查法 profile 由 `BaziSchool.tianyi_def` 按盘声明，与锚干配置相互独立，成员名进 JSON；
+    本表不代选昼夜界线。
 
     Sources / 出处:
     - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」:

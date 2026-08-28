@@ -43,9 +43,9 @@ def test_school_enums_basic() -> None:
   assert KeyStem.YEAR_MASTER.value == 1 # 年干.
 
   assert len(TianyiAnchor) == 3
-  assert TianyiAnchor.DAY_MASTER.value == 0
-  assert TianyiAnchor.YEAR_MASTER.value == 1
-  assert TianyiAnchor.YEAR_AND_DAY.value == 2
+  assert TianyiAnchor.DAY_MASTER.value == 0  # 日干.
+  assert TianyiAnchor.YEAR_MASTER.value == 1 # 年干.
+  assert TianyiAnchor.YEAR_AND_DAY.value == 2 # 年日兼查, the default.
 
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
@@ -73,6 +73,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     DizhiRules.XingDef.STRICT,
     DizhiRules.GongDef.LU_NARROW,
     ShenshaRules.YangrenDef.DIWANG,
+    TianyiAnchor.YEAR_MASTER,
+    ShenshaRules.TianyiDef.YINGUI,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -81,6 +83,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
     yangren_def=ShenshaRules.YangrenDef.DIWANG,
+    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_def=ShenshaRules.TianyiDef.YINGUI,
   )
 
 
