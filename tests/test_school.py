@@ -14,7 +14,7 @@ from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import dizhi_utils, shensha_utils
 from src.school import (
-  BaziPrecision, DayunYearRule, DayRollover, KeyStem, BaziSchool, BaziConfig,
+  BaziPrecision, DayunYearRule, DayRollover, KeyStem, TianyiAnchor, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG,
 )
 
@@ -42,15 +42,23 @@ def test_school_enums_basic() -> None:
   assert KeyStem.DAY_MASTER.value == 0  # 日干, the 《三命通会》 reading, the default.
   assert KeyStem.YEAR_MASTER.value == 1 # 年干.
 
+  assert len(TianyiAnchor) == 3
+  assert TianyiAnchor.DAY_MASTER.value == 0  # 日干.
+  assert TianyiAnchor.YEAR_MASTER.value == 1 # 年干.
+  assert TianyiAnchor.YEAR_AND_DAY.value == 2 # 年日兼查, the default.
+
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
   assert len(ShenshaRules.YangrenDef) == 3
+  assert len(ShenshaRules.TianyiDef) == 4
 
 
 def test_school_defaults() -> None:
   assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
   assert BaziSchool().hongyan_key is KeyStem.DAY_MASTER
   assert BaziSchool().yangren_def is ShenshaRules.YangrenDef.ZIPING
+  assert BaziSchool().tianyi_anchor is TianyiAnchor.YEAR_AND_DAY
+  assert BaziSchool().tianyi_def is ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
@@ -64,6 +72,9 @@ def test_school_positional_arguments_remain_stable() -> None:
     DizhiRules.AnheDef.MANGPAI,
     DizhiRules.XingDef.STRICT,
     DizhiRules.GongDef.LU_NARROW,
+    ShenshaRules.YangrenDef.DIWANG,
+    TianyiAnchor.YEAR_MASTER,
+    ShenshaRules.TianyiDef.YINGUI,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -71,6 +82,9 @@ def test_school_positional_arguments_remain_stable() -> None:
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
+    yangren_def=ShenshaRules.YangrenDef.DIWANG,
+    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_def=ShenshaRules.TianyiDef.YINGUI,
   )
 
 
@@ -231,6 +245,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().xing_def is params['xing_def'].default
     assert BaziSchool().gong_def is params['gong_def'].default
   assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
+  assert BaziSchool().tianyi_def is inspect.signature(shensha_utils.tianyi).parameters['definition'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -270,6 +285,8 @@ def test_eq_hash_include_school() -> None:
   for variant_school in (
     BaziSchool(hongyan_key=KeyStem.YEAR_MASTER),
     BaziSchool(yangren_def=ShenshaRules.YangrenDef.DIWANG),
+    BaziSchool(tianyi_anchor=TianyiAnchor.DAY_MASTER),
+    BaziSchool(tianyi_def=ShenshaRules.TianyiDef.YINGUI),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
     BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
@@ -301,6 +318,7 @@ def test_json_roundtrip_default_school() -> None:
     'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER',
     'yangren_def': 'ZIPING',
     'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
+    'tianyi_anchor': 'YEAR_AND_DAY', 'tianyi_def': 'GENG_WITH_JIA_WU',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -316,6 +334,8 @@ def test_json_roundtrip_default_school() -> None:
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],
+                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
+                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
                   ),
                 ))
   )
@@ -326,8 +346,8 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  # All six knobs flipped, so each field proves it roundtrips (issue #69).
-  # 六个旋钮全部取非默认值——每个字段各自证明它能往返。
+  # All eight knobs flipped, so each field proves it roundtrips (issue #69).
+  # 八个旋钮全部取非默认值——每个字段各自证明它能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_key=KeyStem.YEAR_MASTER,
@@ -335,6 +355,8 @@ def test_json_roundtrip_non_default_school() -> None:
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
+    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_def=ShenshaRules.TianyiDef.YINGUI,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -343,6 +365,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER',
     'yangren_def': 'DIWANG',
     'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
+    'tianyi_anchor': 'YEAR_MASTER', 'tianyi_def': 'YINGUI',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -358,6 +381,8 @@ def test_json_roundtrip_non_default_school() -> None:
                     anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
                     xing_def=DizhiRules.XingDef[j['school']['xing_def']],
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],
+                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
+                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
                   ),
                 ))
   )

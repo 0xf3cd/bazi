@@ -82,6 +82,8 @@ def main() -> int:
      lambda: shensha_utils.huagai('申', '辰')), # type: ignore
     ('shensha_utils.yangren wrong definition', TypeError,
      lambda: shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object())), # type: ignore
+    ('shensha_utils.tianyi wrong definition', TypeError,
+     lambda: shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object())), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

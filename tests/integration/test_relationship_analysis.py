@@ -164,6 +164,7 @@ def test_case1() -> None:
   assert at_birth.shensha['yima']     == set()
   assert at_birth.shensha['huagai']   == set()
   assert at_birth.shensha['yangren']  == set()
+  assert at_birth.shensha['tianyi']   == {Dizhi.子, Dizhi.丑}
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心相生关系，但在这里还是检查一下。
@@ -199,6 +200,7 @@ def test_case1() -> None:
   assert shensha['yima']     == set()
   assert shensha['huagai']   == {Dizhi.辰}
   assert shensha['yangren']  == set()
+  assert shensha['tianyi']   == set()
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
@@ -256,6 +258,7 @@ def test_case1() -> None:
   assert shensha['yima']     == set()
   assert shensha['huagai']   == set()
   assert shensha['yangren']  == set()
+  assert shensha['tianyi']   == {Dizhi.未}
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
@@ -319,6 +322,7 @@ def test_case1() -> None:
   assert shensha['yima']     == {Dizhi.亥}
   assert shensha['huagai']   == set()
   assert shensha['yangren']  == set()
+  assert shensha['tianyi']   == {Dizhi.申}
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛})],
@@ -374,6 +378,7 @@ def test_case2() -> None:
   assert at_birth.shensha['yima']     == set()
   assert at_birth.shensha['huagai']   == {Dizhi.戌}
   assert at_birth.shensha['yangren']  == {Dizhi.午}
+  assert at_birth.shensha['tianyi']   == set()
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心其他关系，但在这里还是检查一下。
@@ -408,6 +413,7 @@ def test_case2() -> None:
     'yima'     : frozenset([Dizhi.寅, Dizhi.申]),
     'huagai'   : frozenset([Dizhi.辰, Dizhi.戌]),
     'yangren'  : frozenset([Dizhi.午]),
+    'tianyi'   : frozenset([Dizhi.丑, Dizhi.未, Dizhi.亥, Dizhi.酉]),
   }
 
   for _ in range(50):
@@ -646,6 +652,11 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda dz: shensha_utils.yangren(dm, dz, definition=school.yangren_def),
         transits_dz_set,
       ))
+      expected_tianyi:   set[Dizhi] = set(filter(
+        lambda dz: any(shensha_utils.tianyi(tg, dz, definition=school.tianyi_def)
+                       for tg in (bazi.year_pillar.tiangan, dm)),
+        transits_dz_set,
+      ))
 
       shensha = transits.shensha(selected_transits)
       assert expected_taohua == shensha['taohua']
@@ -655,6 +666,7 @@ def test_random_cases(bazi: Bazi) -> None:
       assert expected_yima == shensha['yima']
       assert expected_huagai == shensha['huagai']
       assert expected_yangren == shensha['yangren']
+      assert expected_tianyi == shensha['tianyi']
 
   # day master and house relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):

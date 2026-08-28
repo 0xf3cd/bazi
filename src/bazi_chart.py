@@ -103,6 +103,8 @@ class BaziJson:
     anhe_def: str
     xing_def: str
     gong_def: str
+    tianyi_anchor: str
+    tianyi_def: str
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str
@@ -543,6 +545,8 @@ class BaziChart:
         'anhe_def': self._bazi.config.school.anhe_def.name,
         'xing_def': self._bazi.config.school.xing_def.name,
         'gong_def': self._bazi.config.school.gong_def.name,
+        'tianyi_anchor': self._bazi.config.school.tianyi_anchor.name,
+        'tianyi_def': self._bazi.config.school.tianyi_def.name,
       },
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),

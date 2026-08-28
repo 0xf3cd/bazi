@@ -5,7 +5,7 @@ from ..rules import ShenshaRules
 
 
 '''
-Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖 / 羊刃.
+Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖 / 羊刃 / 天乙贵人.
 Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
 
@@ -196,3 +196,41 @@ def yangren(
   if not isinstance(definition, ShenshaRules.YangrenDef):
     raise TypeError(f'Expected YangrenDef, got {type(definition)}')
   return ShenshaRules.YANGREN[definition][day_master] is dizhi
+
+
+def tianyi(
+  key_tiangan: Tiangan,
+  dizhi: Dizhi,
+  *,
+  definition: ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU,
+) -> bool:
+  '''
+  Check whether `dizhi` is a TIANYI GUIREN (天乙贵人) branch of `key_tiangan`
+  under the selected source profile. 按所选出处 profile 检查地支是否为锚干的天乙贵人。
+
+  Args:
+  - key_tiangan: (Tiangan) The year or day stem used as the lookup key. The caller
+    decides which anchor(s) to inspect. 查法锚干；查年干、日干或兼查由调用方决定。
+  - dizhi: (Dizhi) The branch to inspect.
+  - definition: (ShenshaRules.TianyiDef) The source profile to use; defaults to the
+    traditional merged「甲戊庚牛羊……六辛逢马虎」table.
+    所用出处 profile；默认传统牛羊/马虎合并表。
+
+  Returns: (bool) Whether `dizhi` is Tianyi of `key_tiangan` under `definition`.
+
+  Examples:
+  - tianyi(Tiangan.甲, Dizhi.丑)
+    - return: True
+  - tianyi(Tiangan.庚, Dizhi.午)
+    - return: False
+  - tianyi(Tiangan.庚, Dizhi.午, definition=ShenshaRules.TianyiDef.GENG_WITH_XIN)
+    - return: True
+  '''
+
+  if not isinstance(key_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, ShenshaRules.TianyiDef):
+    raise TypeError(f'Expected TianyiDef, got {type(definition)}')
+  return dizhi in ShenshaRules.TIANYI[definition][key_tiangan]

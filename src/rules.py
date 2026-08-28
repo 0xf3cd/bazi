@@ -743,3 +743,94 @@ class ShenshaRules:
       Tiangan.癸 : Dizhi.亥,
     }),
   })
+
+  class TianyiDef(Enum):
+    '''The definitions of TIANYI GUIREN (天乙贵人), kept as complete source-backed
+    profiles because the formula, Geng/Xin grouping, and daytime/nighttime tables are
+    not independent axes. 天乙贵人的查法定义；口诀分组与昼夜表彼此牵连，因此按出处保留
+    完整 profile，不作无出处的自由组合。
+
+    - GENG_WITH_JIA_WU: the traditional merged formula「甲戊庚牛羊……六辛逢马虎」.
+      传统合并表：庚与甲戊同组，辛取午寅。
+    - GENG_WITH_XIN: the modified merged formula「甲戊兼牛羊……庚辛逢马虎」.
+      改口诀合并表：庚改与辛同组。
+    - YANGGUI: the daytime / Yang Guiren half of the `GENG_WITH_JIA_WU` lineage.
+      阳贵表：与阴贵表合并即为庚随甲戊的传统合并表。
+    - YINGUI: the nighttime / Yin Guiren half of that lineage; the source that reads
+      「六辛逢午马」by 分承 gives this same ten-stem table.
+      阴贵表：与阳贵表合并即为传统合并表；「六辛逢午马」按分承所得十干表与本表相同。
+
+    `GENG_WITH_JIA_WU` has the thicker classical lineage and is also the merged table
+    used by 问真. The chart declares a profile via `BaziSchool.tianyi_def`, independently
+    of `BaziSchool.tianyi_anchor`; member names are serialized into JSON. Day/night boundary
+    selection is deliberately outside these tables.
+    传统合并表的古籍谱系较厚，问真亦采用；
+    查法 profile 由 `BaziSchool.tianyi_def` 按盘声明，与锚干配置相互独立，成员名进 JSON；
+    本表不代选昼夜界线。
+
+    Sources / 出处:
+    - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」:
+      https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
+    - The two merged formulas / 两版合并口诀:
+      https://www.click2macao.com/2024/04/10/tygrkjdz/
+    - The Yang/Yin tables and the 分承 reading of「午马」/ 阳贵、阴贵表与「午马」分承:
+      https://www.usece.com/3858/
+    - 问真 profile / 问真口径: https://book.taiyi.me/命/神煞大全
+
+    No change should be made to the existing definitions. Only add new definitions.
+    '''
+    GENG_WITH_JIA_WU = 0
+    GENG_WITH_XIN = 1
+    YANGGUI = 2
+    YINGUI = 3
+
+  TIANYI: Final[frozendict[TianyiDef, frozendict[Tiangan, frozenset[Dizhi]]]] = frozendict({
+    TianyiDef.GENG_WITH_JIA_WU : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.丙 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.庚 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.辛 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.壬 : frozenset((Dizhi.卯, Dizhi.巳)),
+      Tiangan.癸 : frozenset((Dizhi.卯, Dizhi.巳)),
+    }),
+    TianyiDef.GENG_WITH_XIN : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.丙 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.亥, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.子, Dizhi.申)),
+      Tiangan.庚 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.辛 : frozenset((Dizhi.午, Dizhi.寅)),
+      Tiangan.壬 : frozenset((Dizhi.卯, Dizhi.巳)),
+      Tiangan.癸 : frozenset((Dizhi.卯, Dizhi.巳)),
+    }),
+    TianyiDef.YANGGUI : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.未,)),
+      Tiangan.乙 : frozenset((Dizhi.申,)),
+      Tiangan.丙 : frozenset((Dizhi.酉,)),
+      Tiangan.丁 : frozenset((Dizhi.亥,)),
+      Tiangan.戊 : frozenset((Dizhi.丑,)),
+      Tiangan.己 : frozenset((Dizhi.子,)),
+      Tiangan.庚 : frozenset((Dizhi.丑,)),
+      Tiangan.辛 : frozenset((Dizhi.寅,)),
+      Tiangan.壬 : frozenset((Dizhi.卯,)),
+      Tiangan.癸 : frozenset((Dizhi.巳,)),
+    }),
+    TianyiDef.YINGUI : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.丑,)),
+      Tiangan.乙 : frozenset((Dizhi.子,)),
+      Tiangan.丙 : frozenset((Dizhi.亥,)),
+      Tiangan.丁 : frozenset((Dizhi.酉,)),
+      Tiangan.戊 : frozenset((Dizhi.未,)),
+      Tiangan.己 : frozenset((Dizhi.申,)),
+      Tiangan.庚 : frozenset((Dizhi.未,)),
+      Tiangan.辛 : frozenset((Dizhi.午,)),
+      Tiangan.壬 : frozenset((Dizhi.巳,)),
+      Tiangan.癸 : frozenset((Dizhi.卯,)),
+    }),
+  })

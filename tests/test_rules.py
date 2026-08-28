@@ -114,6 +114,23 @@ def test_yangren() -> None:
                for tg in yin_tiangans) == (Dizhi.寅, Dizhi.巳, Dizhi.巳, Dizhi.申, Dizhi.亥)
 
 
+def test_tianyi() -> None:
+  assert set(ShenshaRules.TIANYI) == set(ShenshaRules.TianyiDef)
+  assert all(set(table) == set(Tiangan) for table in ShenshaRules.TIANYI.values())
+
+  yanggui = ShenshaRules.TIANYI[ShenshaRules.TianyiDef.YANGGUI]
+  yingui = ShenshaRules.TIANYI[ShenshaRules.TianyiDef.YINGUI]
+  merged = ShenshaRules.TIANYI[ShenshaRules.TianyiDef.GENG_WITH_JIA_WU]
+  for tg in Tiangan:
+    assert len(yanggui[tg]) == 1
+    assert len(yingui[tg]) == 1
+    assert merged[tg] == yanggui[tg] | yingui[tg]
+
+  modified = ShenshaRules.TIANYI[ShenshaRules.TianyiDef.GENG_WITH_XIN]
+  assert modified[Tiangan.庚] == merged[Tiangan.辛]
+  assert all(modified[tg] == merged[tg] for tg in Tiangan if tg is not Tiangan.庚)
+
+
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.
   # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)
