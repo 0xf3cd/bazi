@@ -56,10 +56,9 @@ class _ShenshaSpec:
   The spec of a Shensha: the predicate, key source, and optional school-derived definition.
   神煞的规格：判断函数、查询 key，以及可选的流派定义参数。
 
-  Note: the predicate's first-parameter type must match `key` (e.g. a `Tiangan`-keyed predicate
-  pairs with `DAY_MASTER`, `KEY_TIANGAN`, or `ANCHOR_TIANGANS`). When `definition` is present,
-  the predicate must accept its result through a keyword-only `definition` argument. Each
-  predicate checks this contract at runtime; the registry's type does not express it.
+  Note: the predicate's first-parameter type must match `key`. When `definition` is present, the
+  predicate must accept its result through a keyword-only `definition` argument. Each predicate
+  checks this contract at runtime; the registry's type does not express it.
   '''
   predicate:  Callable[..., bool]
   key:        _KeySource
@@ -120,6 +119,25 @@ def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
     raise AssertionError(f'`TianyiAnchor` not wired up in `_tianyi_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
 
 
+def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, ...]:
+  '''Resolve a Shensha's lookup keys / 解析神煞查询 key。'''
+  if key_source is _KeySource.YEAR_DIZHI:
+    return (bazi.year_pillar.dizhi,)
+  elif key_source is _KeySource.YEAR_OR_DAY_DIZHI:
+    return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
+  elif key_source is _KeySource.DAY_MASTER:
+    return (bazi.day_master,)
+  elif key_source is _KeySource.KEY_TIANGAN:
+    return (_hongyan_anchor(bazi),)
+  elif key_source is _KeySource.ANCHOR_TIANGANS:
+    return _tianyi_anchors(bazi)
+  else:
+    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
+    # added a member but forgot to wire it -- not something users can trigger.
+    # `raise` instead of `assert` so the guard survives `python -O`.
+    raise AssertionError(f'`_KeySource` not wired up in `_shensha_keys`: {key_source}') # pragma: no cover # Unreachable invariant guard.
+
+
 def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., bool]:
   '''Bind a Shensha predicate's school definition when it has one / 按盘绑定神煞定义参数。'''
   if spec.definition is None:
@@ -131,49 +149,25 @@ def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., 
 def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。'''
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
+  keys = _shensha_keys(spec.key, bazi)
 
   args: tuple[_ArgsType, ...]
   if spec.key is _KeySource.YEAR_DIZHI:
-    args = (([y_dz], [m_dz, d_dz, h_dz]),)
+    args = ((keys, (m_dz, d_dz, h_dz)),)
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
-    args = (([y_dz], [m_dz, d_dz, h_dz]), ([d_dz], [y_dz, m_dz, h_dz]))
-  elif spec.key is _KeySource.DAY_MASTER:
-    args = (([bazi.day_master], [y_dz, m_dz, d_dz, h_dz]),)
-  elif spec.key is _KeySource.KEY_TIANGAN:
-    args = (([_hongyan_anchor(bazi)], [y_dz, m_dz, d_dz, h_dz]),)
-  elif spec.key is _KeySource.ANCHOR_TIANGANS:
-    args = ((_tianyi_anchors(bazi), [y_dz, m_dz, d_dz, h_dz]),)
+    year_key, day_key = keys
+    args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
   else:
-    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
-    # added a member but forgot to update this evaluator -- not something users can trigger.
-    # `raise` instead of `assert` so the guard survives `python -O`.
-    raise AssertionError(f'`_KeySource` not wired up in `_eval_at_birth`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
+    args = ((keys, (y_dz, m_dz, d_dz, h_dz)),)
 
   return frozenset(find_shensha(_shensha_predicate(spec, bazi.config.school), *args))
 
 
 def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizhi]) -> frozenset[Dizhi]:
   '''Evaluate a Shensha against the transit Dizhis / 在流运地支上评估某个神煞。'''
-  first_args: _FirstArgType
-  if spec.key is _KeySource.YEAR_DIZHI:
-    first_args = [bazi.year_pillar.dizhi]
-  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
-    first_args = [bazi.year_pillar.dizhi, bazi.day_pillar.dizhi]
-  elif spec.key is _KeySource.DAY_MASTER:
-    first_args = [bazi.day_master]
-  elif spec.key is _KeySource.KEY_TIANGAN:
-    first_args = [_hongyan_anchor(bazi)]
-  elif spec.key is _KeySource.ANCHOR_TIANGANS:
-    first_args = _tianyi_anchors(bazi)
-  else:
-    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
-    # added a member but forgot to update this evaluator -- not something users can trigger.
-    # `raise` instead of `assert` so the guard survives `python -O`.
-    raise AssertionError(f'`_KeySource` not wired up in `_eval_transits`: {spec.key}') # pragma: no cover # Unreachable invariant guard.
-
   return frozenset(find_shensha(
     _shensha_predicate(spec, bazi.config.school),
-    (first_args, transit_dizhis),
+    (_shensha_keys(spec.key, bazi), transit_dizhis),
   ))
 
 
