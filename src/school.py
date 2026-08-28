@@ -188,10 +188,10 @@ class BaziSchool:
   hongyan_key:  KeyStem     = KeyStem.DAY_MASTER
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
-  yangren_def:  ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   anhe_def:     DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
   xing_def:     DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
   gong_def:     DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
+  yangren_def:  ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -199,14 +199,14 @@ class BaziSchool:
       raise TypeError(f'Expected DayRollover, got {type(self.day_rollover)}')
     if not isinstance(self.hongyan_key, KeyStem):
       raise TypeError(f'Expected KeyStem, got {type(self.hongyan_key)}')
-    if not isinstance(self.yangren_def, ShenshaRules.YangrenDef):
-      raise TypeError(f'Expected YangrenDef, got {type(self.yangren_def)}')
     if not isinstance(self.anhe_def, DizhiRules.AnheDef):
       raise TypeError(f'Expected AnheDef, got {type(self.anhe_def)}')
     if not isinstance(self.xing_def, DizhiRules.XingDef):
       raise TypeError(f'Expected XingDef, got {type(self.xing_def)}')
     if not isinstance(self.gong_def, DizhiRules.GongDef):
       raise TypeError(f'Expected GongDef, got {type(self.gong_def)}')
+    if not isinstance(self.yangren_def, ShenshaRules.YangrenDef):
+      raise TypeError(f'Expected YangrenDef, got {type(self.yangren_def)}')
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING

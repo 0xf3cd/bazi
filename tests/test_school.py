@@ -57,6 +57,23 @@ def test_school_defaults() -> None:
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
+def test_school_positional_arguments_remain_stable() -> None:
+  school: BaziSchool = BaziSchool(
+    DayRollover.ZIZHENG,
+    KeyStem.YEAR_MASTER,
+    DizhiRules.AnheDef.MANGPAI,
+    DizhiRules.XingDef.STRICT,
+    DizhiRules.GongDef.LU_NARROW,
+  )
+  assert school == BaziSchool(
+    day_rollover=DayRollover.ZIZHENG,
+    hongyan_key=KeyStem.YEAR_MASTER,
+    anhe_def=DizhiRules.AnheDef.MANGPAI,
+    xing_def=DizhiRules.XingDef.STRICT,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+  )
+
+
 def test_config_type_gates() -> None:
   # The constructor takes the strict types only; coercion lives in `from_values`.
   with pytest.raises(TypeError):
