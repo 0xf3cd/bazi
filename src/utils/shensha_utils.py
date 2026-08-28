@@ -173,8 +173,8 @@ def yangren(
   selected definition. 按所选定义检查地支是否为日干的羊刃（阳刃）。
 
   Args:
-  - day_master: (Tiangan) The Day Master used as the lookup key. 查法所锚的日干。
-  - dizhi: (Dizhi) The branch to inspect. 待查地支。
+  - day_master: (Tiangan) The Day Master used as the lookup key.
+  - dizhi: (Dizhi) The branch to inspect.
   - definition: (ShenshaRules.YangrenDef) The definition to use; defaults to
     ZIPING, where only Yang Tiangans have 阳刃. 所用定义；默认子平五阳干专有口径。
 

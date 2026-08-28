@@ -680,9 +680,9 @@ class ShenshaRules:
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。
 
-    - ZIPING: only the five Yang Tiangans have 阳刃. This is the default.
-      子平法：仅五阳干有阳刃。本库默认。
-    - LUMING: all ten Tiangans follow the 古禄命 table, including Yin blades at 辰戌丑未.
+    - ZIPING: only the five Yang Tiangans have 阳刃.
+      子平法：仅五阳干有阳刃。
+    - LUMING: all ten Tiangans have Yangren on the branch immediately after their Lu (禄).
       古禄命法：十干皆有羊刃，取禄前一辰。
     - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; the 问真 and 高人
       charting programs use this table.

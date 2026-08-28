@@ -107,8 +107,9 @@ def test_wenzhen_yangren_definitions(
   luming: Dizhi,
   diwang: Dizhi,
 ) -> None:
-  '''Five Yin-Day charts measured on 问真 on 2026-08-27. Each chart contains both
-  disputed branches, so one observation distinguishes all three definitions.'''
+  '''Five charts with a Yin Day Master, read from 问真 on 2026-08-27:
+  https://pcbz.iwzwh.com/#/paipan/index. 问真 reports the DIWANG branch; each chart
+  also contains its distinct LUMING branch, so it distinguishes all three definitions.'''
   expected_by_definition = {
     ShenshaRules.YangrenDef.ZIPING : frozenset(),
     ShenshaRules.YangrenDef.LUMING : frozenset({luming}),

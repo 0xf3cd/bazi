@@ -201,7 +201,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
   # level) and the utils signature defaults (per-query override, same shape as
   # `anhe` / `xing`). Pin the two spellings identical so they can't drift apart;
   # do NOT "fix" this by making utils import school (issue #69).
-  # 「多数派口径」刻意两写——school 字段默认（盘级）与 utils 签名默认（单次覆盖，同
+  # 「默认口径」刻意两写——school 字段默认（盘级）与 utils 签名默认（单次覆盖，同
   # `anhe` / `xing` 先例）；钉住两处等价防漂移，但别让 utils 反过来 import school（issue #69）。
   for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual):
     params = inspect.signature(fn).parameters

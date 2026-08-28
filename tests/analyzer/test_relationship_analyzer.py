@@ -119,20 +119,20 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['yangren'] == at_birth.shensha['yangren'] # Repeated lookup must answer the same.
 
 
-@pytest.mark.parametrize('birth_time, pillars, blade_index', [
+@pytest.mark.parametrize('birth_time, pillars, yangren_index', [
   ('1950-01-11 00:00', ('己丑', '丁丑', '丙午', '戊子'), 2),
   ('1950-01-01 12:00', ('己丑', '丙子', '丙申', '甲午'), 3),
 ])
 def test_yangren_at_birth_checks_day_and_hour_branches(
   birth_time: str,
   pillars: tuple[str, str, str, str],
-  blade_index: int,
+  yangren_index: int,
 ) -> None:
   chart: BaziChart = BaziChart(Bazi.create(birth_time, 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == pillars
-  assert chart.bazi.four_dizhis[blade_index] is Dizhi.午
+  assert chart.bazi.four_dizhis[yangren_index] is Dizhi.午
   assert all(dz is not Dizhi.午 for i, dz in enumerate(chart.bazi.four_dizhis)
-             if i != blade_index)
+             if i != yangren_index)
   assert RelationshipAnalyzer(chart).at_birth.shensha['yangren'] == {Dizhi.午}
 
 
@@ -428,7 +428,7 @@ def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[
   (ShenshaRules.YangrenDef.LUMING, Ganzhi.from_str('壬戌'), frozenset({Dizhi.戌})),
   (ShenshaRules.YangrenDef.DIWANG, Ganzhi.from_str('庚申'), frozenset({Dizhi.申})),
 ])
-def test_yangren_definition_at_transits(
+def test_yangren_definition_at_birth_and_transits(
   yangren_def: ShenshaRules.YangrenDef,
   transit_ganzhi: Ganzhi,
   expected: frozenset[Dizhi],
@@ -445,6 +445,7 @@ def test_yangren_definition_at_transits(
     BaziConfig(school=school),
   ))
   assert chart.bazi.day_master is Tiangan.辛
+  assert RelationshipAnalyzer(chart).at_birth.shensha['yangren'] == expected
   transits: TransitSet = TransitSet(liunian=transit_ganzhi)
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['yangren'] == expected
 

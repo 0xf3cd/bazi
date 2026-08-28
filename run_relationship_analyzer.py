@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
   shensha_str_list = shensha_strs(analyzer.at_birth.shensha)
   if len(shensha_str_list) == 0:
-    print('原局无桃花、红艳、红鸾、天喜、驿马、华盖、羊刃星')
+    print('原局无桃花、红艳、红鸾、天喜、驿马、华盖、羊刃')
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))

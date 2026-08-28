@@ -45,7 +45,7 @@ class _KeySource(Enum):
   '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
   YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
-  DAY_MASTER        = auto() # By the fixed Day Master (固定以日干为锚).
+  DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
 
 
