@@ -78,6 +78,16 @@ def main() -> int:
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
+    ('shensha_utils.taohua on raw string', TypeError,
+     lambda: shensha_utils.taohua('申', Dizhi.酉)), # type: ignore
+    ('shensha_utils.hongyan on raw string', TypeError,
+     lambda: shensha_utils.hongyan(Tiangan.癸, '申')), # type: ignore
+    ('shensha_utils.hongluan on raw string', TypeError,
+     lambda: shensha_utils.hongluan('申', Dizhi.未)), # type: ignore
+    ('shensha_utils.tianxi on raw string', TypeError,
+     lambda: shensha_utils.tianxi(Dizhi.寅, '未')), # type: ignore
+    ('shensha_utils.yima on raw string', TypeError,
+     lambda: shensha_utils.yima('申', Dizhi.寅)), # type: ignore
     ('shensha_utils.huagai on raw strings', TypeError,
      lambda: shensha_utils.huagai('申', '辰')), # type: ignore
     ('shensha_utils.yangren wrong definition', TypeError,

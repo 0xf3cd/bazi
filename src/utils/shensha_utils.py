@@ -5,7 +5,7 @@ from ..rules import ShenshaRules
 
 
 '''
-Predicates for Shensha (神煞) detection: 桃花 / 红艳 / 红鸾 / 天喜 / 驿马 / 华盖 / 羊刃 / 天乙贵人.
+Predicates for Shensha (神煞) detection.
 Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
 

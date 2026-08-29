@@ -275,6 +275,8 @@ def run_coverage(test_f: Callable[[], int]) -> int:
     omit=[
       '*/__init__.py',
       '*/run_tests.py',
+      '*/run_demo.py',
+      '*/run_relationship_analyzer.py',
       '*/tests/*',
       'src/calendar/hko_data/encoder.py', # The raw data already downloaded. No much need to fully test the encoder.
       'src/calendar/celestial_data/generator.py', # Offline tool, same as the hko_data encoder above.
@@ -337,13 +339,16 @@ def run_mypy() -> int:
 
 
 def run_demo() -> int:
-  '''Run demo by executing `run_demo.py`'''
+  '''Run the executable demo scripts.'''
   print('\n' + devider())
   bold_print('>> Running demo...')
 
-  ret: int = run_proc_and_print([
-    sys.executable, str(Path(__file__).parent / 'run_demo.py')
-  ], print_details=verbose)
+  ret: int = 0
+  for script in ('run_demo.py', 'run_relationship_analyzer.py'):
+    if run_proc_and_print([
+      sys.executable, str(Path(__file__).parent / script)
+    ], print_details=verbose) != 0:
+      ret = 1
 
   if ret == 0:
     green_print(f'>> {next(emoji_pair)} Demo passed!')

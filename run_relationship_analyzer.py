@@ -3,15 +3,16 @@
 from run_demo import get_basic_info, colored_str
 
 from src.bazi_chart import BaziChart
+from src.defines import Dizhi
 from src.transit_chart import TransitChart
 from src.transits import TransitKind
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
 
 
-def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
+def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
   # TypedDict access needs literal keys under mypy, so the table pairs labels
   # with already-fetched fields instead of looping over key strings.
-  named = [
+  return (
     ('桃花', shensha['taohua']),
     ('红鸾', shensha['hongluan']),
     ('红艳', shensha['hongyan']),
@@ -20,8 +21,15 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
     ('华盖', shensha['huagai']),
     ('羊刃', shensha['yangren']),
     ('天乙贵人', shensha['tianyi']),
+  )
+
+
+def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
+  return [
+    f'{label}：{", ".join(map(colored_str, dz_fs))}'
+    for label, dz_fs in _named_shensha(shensha)
+    if dz_fs
   ]
-  return [f'{label}：{", ".join(map(colored_str, dz_fs))}' for label, dz_fs in named if dz_fs]
 
 
 if __name__ == '__main__':
@@ -39,9 +47,11 @@ if __name__ == '__main__':
 
   print('\n' + '-' * 60 + '\n')
 
-  shensha_str_list = shensha_strs(analyzer.at_birth.shensha)
+  at_birth_shensha = analyzer.at_birth.shensha
+  shensha_str_list = shensha_strs(at_birth_shensha)
   if len(shensha_str_list) == 0:
-    print('原局无桃花、红艳、红鸾、天喜、驿马、华盖、羊刃、天乙贵人')
+    labels = '、'.join(label for label, _ in _named_shensha(at_birth_shensha))
+    print(f'原局无{labels}')
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))
