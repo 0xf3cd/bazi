@@ -92,6 +92,8 @@ def main() -> int:
      lambda: shensha_utils.huagai('申', '辰')), # type: ignore
     ('shensha_utils.jiangxing on raw string', TypeError,
      lambda: shensha_utils.jiangxing('申', Dizhi.子)), # type: ignore
+    ('shensha_utils.jiesha on raw string', TypeError,
+     lambda: shensha_utils.jiesha('申', Dizhi.巳)), # type: ignore
     ('shensha_utils.yangren wrong definition', TypeError,
      lambda: shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object())), # type: ignore
     ('shensha_utils.tianyi wrong definition', TypeError,

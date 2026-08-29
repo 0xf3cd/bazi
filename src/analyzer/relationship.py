@@ -84,6 +84,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     lambda school: school.tianyi_def,
   ),
   'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.YEAR_OR_DAY_DIZHI),
+  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.YEAR_OR_DAY_DIZHI),
 })
 
 
@@ -258,6 +259,8 @@ class ShenshaAnalysis(TypedDict):
   tianyi:    frozenset[Dizhi]
   # The Jiangxing Dizhis (将星所在地支)
   jiangxing: frozenset[Dizhi]
+  # The Jiesha Dizhis    (劫煞所在地支)
+  jiesha:    frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -278,6 +281,7 @@ class AtBirthAnalysis:
       'yangren'  : _eval_at_birth(_REGISTRY['yangren'],   bazi),
       'tianyi'   : _eval_at_birth(_REGISTRY['tianyi'],    bazi),
       'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
+      'jiesha'   : _eval_at_birth(_REGISTRY['jiesha'],    bazi),
     }
 
   @property
@@ -362,6 +366,7 @@ class TransitAnalysis:
       'yangren'  : _eval_transits(_REGISTRY['yangren'],   bazi, transit_dizhis),
       'tianyi'   : _eval_transits(_REGISTRY['tianyi'],    bazi, transit_dizhis),
       'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
+      'jiesha'   : _eval_transits(_REGISTRY['jiesha'],    bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:

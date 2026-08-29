@@ -686,6 +686,20 @@ class ShenshaRules:
     '巳酉丑' : '酉',
   })
 
+  # JIESHA (劫煞) is the Jue (绝) branch of each 三合 group's Wuxing,
+  # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
+  # 劫煞取各三合局五行的绝位；《三命通会·卷三·论劫煞亡神》逐组明列。
+  # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #153).
+  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
+  # 问真以年支或日支为锚，查余支。
+  # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#劫煞 (issue #153).
+  JIESHA: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '申子辰' : '巳',
+    '寅午戌' : '亥',
+    '亥卯未' : '申',
+    '巳酉丑' : '寅',
+  })
+
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。
