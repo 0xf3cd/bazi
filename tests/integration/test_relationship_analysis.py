@@ -676,7 +676,7 @@ def test_random_cases(bazi: Bazi) -> None:
         transits_dz_set,
       ))
       expected_jiangxing: set[Dizhi] = set(filter(__jiangxing, transits_dz_set))
-      expected_jiesha:     set[Dizhi] = set(filter(__jiesha, transits_dz_set))
+      expected_jiesha:    set[Dizhi] = set(filter(__jiesha, transits_dz_set))
 
       shensha = transits.shensha(selected_transits)
       assert expected_taohua == shensha['taohua']

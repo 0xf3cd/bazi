@@ -137,7 +137,7 @@ def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
     (ShenshaRules.YIMA,      ShierZhangsheng.病),
     (ShenshaRules.HUAGAI,    ShierZhangsheng.墓),
     (ShenshaRules.JIANGXING, ShierZhangsheng.帝旺),
-    (ShenshaRules.JIESHA,     ShierZhangsheng.绝),
+    (ShenshaRules.JIESHA,    ShierZhangsheng.绝),
   )
 
   assert set(group_tiangans) == set(DizhiRules.DIZHI_SANHE)
