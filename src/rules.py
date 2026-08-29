@@ -676,11 +676,6 @@ class ShenshaRules:
   # JIANGXING (将星) is the middle / Diwang (帝旺) branch of each 三合 group.
   # 《三命通会·卷三·论灾煞》逐组明列：申子辰在子、寅午戌在午、巳酉丑在酉、亥卯未在卯。
   # Table values / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
-  # 《命理探源》 records both views in one section: its 《神逢通考》 quote says
-  # 「巳酉丑见丑」, while its 《三命通会》 quote identifies 酉 as the middle branch.
-  # This table follows 《三命通会》 and does not treat 丑 as a variant.
-  # 《命理探源》同节并录两说：转引《神逢通考》一格作「巳酉丑见丑」，转引《三命通会》
-  # 则以酉为中位。本表从《三命通会》，不另立丑异表。
   # Cross-check / 校核: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #152).
   # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
   # 问真以年支或日支为锚，查余支；古籍在此仅承担表值，不承担年支兼查口径。
