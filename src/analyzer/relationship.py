@@ -334,7 +334,7 @@ class TransitAnalysis:
     '''
     Return the Shenshas exposed by relationship analysis for the given transits.
 
-    返回给定流运的亲密关系分析所含神煞（桃花、红艳、红鸾、天喜、驿马、华盖、羊刃、天乙贵人）。
+    返回给定流运的亲密关系神煞分析。
 
     Args:
     - transits: (TransitSet) The selected transits to analyze. 参与分析的流运。

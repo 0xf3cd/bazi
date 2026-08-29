@@ -50,7 +50,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
-  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_demo.py,*/run_relationship_analyzer.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing` — must stay at **100%**
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
   - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
