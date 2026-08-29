@@ -1,5 +1,8 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from typing import TypeVar
+
+from ..common import frozendict
 from ..defines import Tiangan, Dizhi
 from ..rules import ShenshaRules
 
@@ -8,6 +11,22 @@ from ..rules import ShenshaRules
 Predicates for Shensha (神煞) detection.
 Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
 '''
+
+
+_TableKey = TypeVar('_TableKey', Tiangan, Dizhi)
+
+
+def _table_shensha(
+  table: frozendict[_TableKey, Dizhi],
+  key: _TableKey,
+  dizhi: Dizhi,
+  key_type: type[_TableKey],
+) -> bool:
+  if not isinstance(key, key_type):
+    raise TypeError(f'Expected {key_type.__name__}, got {type(key)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  return table[key] is dizhi
 
 
 def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -28,11 +47,7 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_or_day_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.TAOHUA[year_or_day_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.TAOHUA, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
 def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
@@ -55,11 +70,7 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(key_tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  return ShenshaRules.HONGYAN[key_tiangan] is dizhi
+  return _table_shensha(ShenshaRules.HONGYAN, key_tiangan, dizhi, Tiangan)
 
 
 def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -80,11 +91,7 @@ def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.HONGLUAN[year_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.HONGLUAN, year_dizhi, other_dizhi, Dizhi)
 
 
 def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -105,11 +112,7 @@ def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.TIANXI[year_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.TIANXI, year_dizhi, other_dizhi, Dizhi)
 
 
 def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -130,11 +133,7 @@ def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_or_day_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.YIMA[year_or_day_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.YIMA, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
 def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -155,11 +154,7 @@ def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_or_day_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.HUAGAI[year_or_day_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.HUAGAI, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
 def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -180,11 +175,7 @@ def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_or_day_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.JIANGXING[year_or_day_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.JIANGXING, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
 def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -205,11 +196,7 @@ def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
     - return: False
   '''
 
-  if not isinstance(year_or_day_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
-  if not isinstance(other_dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
-  return ShenshaRules.JIESHA[year_or_day_dizhi] is other_dizhi
+  return _table_shensha(ShenshaRules.JIESHA, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
 def yangren(
