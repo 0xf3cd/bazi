@@ -174,6 +174,27 @@ def test_jiangxing_negative() -> None:
     shensha_utils.jiangxing(Dizhi.申, '子') # type: ignore
 
 
+def test_jiesha() -> None:
+  expected_table: dict[Dizhi, Dizhi] = {
+    Dizhi.申 : Dizhi.巳, Dizhi.子 : Dizhi.巳, Dizhi.辰 : Dizhi.巳,
+    Dizhi.寅 : Dizhi.亥, Dizhi.午 : Dizhi.亥, Dizhi.戌 : Dizhi.亥,
+    Dizhi.亥 : Dizhi.申, Dizhi.卯 : Dizhi.申, Dizhi.未 : Dizhi.申,
+    Dizhi.巳 : Dizhi.寅, Dizhi.酉 : Dizhi.寅, Dizhi.丑 : Dizhi.寅,
+  }
+
+  for dz1 in Dizhi:
+    for dz2 in Dizhi:
+      assert shensha_utils.jiesha(dz1, dz2) == (expected_table[dz1] is dz2)
+      assert shensha_utils.jiesha(dz1, dz2) == (expected_table[dz1] is dz2)
+
+
+def test_jiesha_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.jiesha('申', Dizhi.巳) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.jiesha(Dizhi.申, '巳') # type: ignore
+
+
 def test_yangren() -> None:
   expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
     ShenshaRules.YangrenDef.ZIPING : {

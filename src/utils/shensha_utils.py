@@ -187,6 +187,31 @@ def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return ShenshaRules.JIANGXING[year_or_day_dizhi] is other_dizhi
 
 
+def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the JIESHA (劫煞) of `year_or_day_dizhi`.
+  检查输入的地支是否是年支或日支的劫煞。
+
+  Args:
+  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the JIESHA (劫煞) of `year_or_day_dizhi`.
+
+  Examples:
+  - jiesha(Dizhi.申, Dizhi.巳)
+    - return: True
+  - jiesha(Dizhi.申, Dizhi.亥)
+    - return: False
+  '''
+
+  if not isinstance(year_or_day_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
+  return ShenshaRules.JIESHA[year_or_day_dizhi] is other_dizhi
+
+
 def yangren(
   day_master: Tiangan,
   dizhi: Dizhi,
