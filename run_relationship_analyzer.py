@@ -32,6 +32,11 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
   ]
 
 
+def _no_shensha_str(shensha: ShenshaAnalysis) -> str:
+  labels = '、'.join(label for label, _ in _named_shensha(shensha))
+  return f'原局无{labels}'
+
+
 if __name__ == '__main__':
   chart = BaziChart.random()
   analyzer = RelationshipAnalyzer(chart)
@@ -50,8 +55,7 @@ if __name__ == '__main__':
   at_birth_shensha = analyzer.at_birth.shensha
   shensha_str_list = shensha_strs(at_birth_shensha)
   if len(shensha_str_list) == 0:
-    labels = '、'.join(label for label, _ in _named_shensha(at_birth_shensha))
-    print(f'原局无{labels}')
+    print(_no_shensha_str(at_birth_shensha))
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))
