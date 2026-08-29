@@ -119,6 +119,12 @@ def test_sanhe_shensha_tables() -> None:
       Dizhi.亥 : Dizhi.申, Dizhi.卯 : Dizhi.申, Dizhi.未 : Dizhi.申,
       Dizhi.巳 : Dizhi.寅, Dizhi.酉 : Dizhi.寅, Dizhi.丑 : Dizhi.寅,
     }),
+    (ShenshaRules.WANGSHEN, {
+      Dizhi.申 : Dizhi.亥, Dizhi.子 : Dizhi.亥, Dizhi.辰 : Dizhi.亥,
+      Dizhi.寅 : Dizhi.巳, Dizhi.午 : Dizhi.巳, Dizhi.戌 : Dizhi.巳,
+      Dizhi.亥 : Dizhi.寅, Dizhi.卯 : Dizhi.寅, Dizhi.未 : Dizhi.寅,
+      Dizhi.巳 : Dizhi.申, Dizhi.酉 : Dizhi.申, Dizhi.丑 : Dizhi.申,
+    }),
   )
 
   for table, expected in expected_tables:
@@ -138,6 +144,7 @@ def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
     (ShenshaRules.HUAGAI,    ShierZhangsheng.墓),
     (ShenshaRules.JIANGXING, ShierZhangsheng.帝旺),
     (ShenshaRules.JIESHA,    ShierZhangsheng.绝),
+    (ShenshaRules.WANGSHEN,  ShierZhangsheng.临官),
   )
 
   assert set(group_tiangans) == set(DizhiRules.DIZHI_SANHE)
