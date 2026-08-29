@@ -139,7 +139,7 @@ def test_at_birth_shensha() -> None:
       if shensha_utils.jiangxing(dz1, dz2):
         expected_jiangxing.append(dz2)
     assert at_birth.shensha['jiangxing'] == set(expected_jiangxing)
-    assert at_birth.shensha['jiangxing'] == at_birth.shensha['jiangxing']
+    assert at_birth.shensha['jiangxing'] == at_birth.shensha['jiangxing'] # Repeated lookup must answer the same.
 
 
 @pytest.mark.parametrize('birth_time, pillars, expected', [
@@ -149,9 +149,9 @@ def test_at_birth_shensha() -> None:
   ('1948-10-03 14:22', ('戊子', '辛酉', '辛酉', '乙未'), frozenset((Dizhi.酉,))),
   # The two anchors contribute distinct branches.
   ('2070-06-05 18:46', ('庚寅', '壬午', '辛丑', '丁酉'), frozenset((Dizhi.午, Dizhi.酉))),
-  # A middle year branch does not inspect itself.
+  # The year branch is its own 将星, but the year anchor does not inspect itself.
   ('2077-05-20 10:47', ('丁酉', '乙巳', '壬戌', '乙巳'), frozenset()),
-  # A middle day branch does not inspect itself.
+  # The day branch is its own 将星, but the day anchor does not inspect itself.
   ('1967-12-08 01:58', ('丁未', '壬子', '丙午', '己丑'), frozenset()),
 ])
 def test_jiangxing_at_birth(

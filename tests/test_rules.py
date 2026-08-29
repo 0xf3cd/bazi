@@ -127,9 +127,9 @@ def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
     frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Tiangan.庚,
   }
   table_places = (
-    (ShenshaRules.TAOHUA,   ShierZhangsheng.沐浴),
-    (ShenshaRules.YIMA,     ShierZhangsheng.病),
-    (ShenshaRules.HUAGAI,   ShierZhangsheng.墓),
+    (ShenshaRules.TAOHUA,    ShierZhangsheng.沐浴),
+    (ShenshaRules.YIMA,      ShierZhangsheng.病),
+    (ShenshaRules.HUAGAI,    ShierZhangsheng.墓),
     (ShenshaRules.JIANGXING, ShierZhangsheng.帝旺),
   )
 

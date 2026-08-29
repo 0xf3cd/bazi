@@ -240,22 +240,22 @@ def _with_gong(
 
 
 class ShenshaAnalysis(TypedDict):
-  # The Taohua Dizhis   (桃花星所在地支)
-  taohua:   frozenset[Dizhi]
-  # The Hongyan Dizhis  (红艳星所在地支)
-  hongyan:  frozenset[Dizhi]
-  # The Hongluan Dizhis (红鸾星所在地支)
-  hongluan: frozenset[Dizhi]
-  # The Tianxi Dizhis   (天喜星所在地支)
-  tianxi:   frozenset[Dizhi]
-  # The Yima Dizhis     (驿马星所在地支)
-  yima:     frozenset[Dizhi]
-  # The Huagai Dizhis   (华盖星所在地支)
-  huagai:   frozenset[Dizhi]
-  # The Yangren Dizhis  (羊刃所在地支)
-  yangren:  frozenset[Dizhi]
-  # The Tianyi Dizhis   (天乙贵人所在地支)
-  tianyi:   frozenset[Dizhi]
+  # The Taohua Dizhis    (桃花星所在地支)
+  taohua:    frozenset[Dizhi]
+  # The Hongyan Dizhis   (红艳星所在地支)
+  hongyan:   frozenset[Dizhi]
+  # The Hongluan Dizhis  (红鸾星所在地支)
+  hongluan:  frozenset[Dizhi]
+  # The Tianxi Dizhis    (天喜星所在地支)
+  tianxi:    frozenset[Dizhi]
+  # The Yima Dizhis      (驿马星所在地支)
+  yima:      frozenset[Dizhi]
+  # The Huagai Dizhis    (华盖星所在地支)
+  huagai:    frozenset[Dizhi]
+  # The Yangren Dizhis   (羊刃所在地支)
+  yangren:   frozenset[Dizhi]
+  # The Tianyi Dizhis    (天乙贵人所在地支)
+  tianyi:    frozenset[Dizhi]
   # The Jiangxing Dizhis (将星所在地支)
   jiangxing: frozenset[Dizhi]
 

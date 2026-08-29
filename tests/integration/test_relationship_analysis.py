@@ -651,17 +651,17 @@ def test_random_cases(bazi: Bazi) -> None:
       def __jiangxing(dz: Dizhi) -> bool:
         return shensha_utils.jiangxing(y_dz, dz) or shensha_utils.jiangxing(d_dz, dz)
 
-      expected_taohua:   set[Dizhi] = set(filter(__taohua, transits_dz_set))
-      expected_hongyan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(hongyan_anchor, dz), transits_dz_set))
-      expected_hongluan: set[Dizhi] = set(filter(lambda dz : shensha_utils.hongluan(y_dz, dz), transits_dz_set))
-      expected_tianxi:   set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
-      expected_yima:     set[Dizhi] = set(filter(__yima, transits_dz_set))
-      expected_huagai:   set[Dizhi] = set(filter(__huagai, transits_dz_set))
-      expected_yangren:  set[Dizhi] = set(filter(
+      expected_taohua:    set[Dizhi] = set(filter(__taohua, transits_dz_set))
+      expected_hongyan:   set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(hongyan_anchor, dz), transits_dz_set))
+      expected_hongluan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongluan(y_dz, dz), transits_dz_set))
+      expected_tianxi:    set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
+      expected_yima:      set[Dizhi] = set(filter(__yima, transits_dz_set))
+      expected_huagai:    set[Dizhi] = set(filter(__huagai, transits_dz_set))
+      expected_yangren:   set[Dizhi] = set(filter(
         lambda dz: shensha_utils.yangren(dm, dz, definition=school.yangren_def),
         transits_dz_set,
       ))
-      expected_tianyi:   set[Dizhi] = set(filter(
+      expected_tianyi:    set[Dizhi] = set(filter(
         lambda dz: any(shensha_utils.tianyi(tg, dz, definition=school.tianyi_def)
                        for tg in (bazi.year_pillar.tiangan, dm)),
         transits_dz_set,
