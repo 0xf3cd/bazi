@@ -618,8 +618,8 @@ def test_case2() -> None:
 
 
 def test_wangshen_external_chart() -> None:
-  # This anonymous public chart lists 亡神 under both [年支] and [日支]:
-  # https://zhidao.baidu.com/question/1931734428742934547.html
+  '''This anonymous public chart lists 亡神 under both [年支] and [日支]:
+  https://zhidao.baidu.com/question/1931734428742934547.html'''
   bazi = Bazi(
     birth_time=datetime(1990, 5, 9, 2, 0),
     gender=BaziGender.MALE,
