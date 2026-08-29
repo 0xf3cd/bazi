@@ -676,13 +676,15 @@ class ShenshaRules:
   # JIANGXING (将星) is the middle / Diwang (帝旺) branch of each 三合 group.
   # 《三命通会·卷三·论灾煞》逐组明列：申子辰在子、寅午戌在午、巳酉丑在酉、亥卯未在卯。
   # Table values / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
-  # One 《命理探源》 verse cell reads「巳酉丑见丑」, but its explanation identifies 酉 as the
-  # middle branch; this table follows that explanation and 《三命通会》 rather than treating 丑 as a variant.
-  # 《命理探源》口诀一格作「巳酉丑见丑」，紧接解释却以酉为中位；本表从解释与《三命通会》，不另立丑异表。
+  # 《命理探源》 records both views in one section: its 《神逢通考》 quote says
+  # 「巳酉丑见丑」, while its 《三命通会》 quote identifies 酉 as the middle branch.
+  # This table follows 《三命通会》 and does not treat 丑 as a variant.
+  # 《命理探源》同节并录两说：转引《神逢通考》一格作「巳酉丑见丑」，转引《三命通会》
+  # 则以酉为中位。本表从《三命通会》，不另立丑异表。
   # Cross-check / 校核: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #152).
-  # The modern lookup anchors on the year or day branch and inspects the other branches.
-  # 当代查法以年支或日支为锚，查其他柱地支；古籍在此仅承担表值，不承担年支兼查口径。
-  # Anchor semantics / 查法锚出处: https://book.taiyi.me/命/神煞大全 (issue #152).
+  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
+  # 问真以年支或日支为锚，查余支；古籍在此仅承担表值，不承担年支兼查口径。
+  # Anchor semantics / 查法锚出处: https://book.taiyi.me/命/神煞大全#将星 (issue #152).
   JIANGXING: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
     '申子辰' : '子',
     '寅午戌' : '午',

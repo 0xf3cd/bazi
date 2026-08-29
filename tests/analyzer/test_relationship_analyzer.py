@@ -177,7 +177,7 @@ def test_jiangxing_at_transits() -> None:
     dayun=Ganzhi.from_str('甲午'),
     liunian=Ganzhi.from_str('乙酉'),
   ))['jiangxing'] == {Dizhi.午, Dizhi.酉}
-  assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('丙亥')))['jiangxing'] == set()
+  assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('乙亥')))['jiangxing'] == set()
 
 
 @pytest.mark.parametrize('birth_time, pillars, yangren_index', [
