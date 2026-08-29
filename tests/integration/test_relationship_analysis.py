@@ -156,15 +156,16 @@ def test_case1() -> None:
   # at birth
   at_birth: AtBirthAnalysis = analyzer.at_birth
 
-  assert at_birth.shensha['taohua']   == {Dizhi.午}
-  assert at_birth.shensha['hongluan'] == {Dizhi.卯}
+  assert at_birth.shensha['taohua']    == {Dizhi.午}
+  assert at_birth.shensha['hongluan']  == {Dizhi.卯}
   # 问真八字以乙日主见午为红艳，但 `ShenshaRules.HONGYAN` 中以乙日主见申为红艳，所以这里为空。
-  assert at_birth.shensha['hongyan']  == set()
-  assert at_birth.shensha['tianxi']   == set()
-  assert at_birth.shensha['yima']     == set()
-  assert at_birth.shensha['huagai']   == set()
-  assert at_birth.shensha['yangren']  == set()
-  assert at_birth.shensha['tianyi']   == {Dizhi.子, Dizhi.丑}
+  assert at_birth.shensha['hongyan']   == set()
+  assert at_birth.shensha['tianxi']    == set()
+  assert at_birth.shensha['yima']      == set()
+  assert at_birth.shensha['huagai']    == set()
+  assert at_birth.shensha['yangren']   == set()
+  assert at_birth.shensha['tianyi']    == {Dizhi.子, Dizhi.丑}
+  assert at_birth.shensha['jiangxing'] == set()
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心相生关系，但在这里还是检查一下。
@@ -193,14 +194,15 @@ def test_case1() -> None:
   assert set(transits_1990.ganzhis) == {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')}
 
   shensha = transits.shensha(transits_1990)
-  assert shensha['taohua']   == {Dizhi.午}
-  assert shensha['hongluan'] == set()
-  assert shensha['hongyan']  == set()
-  assert shensha['tianxi']   == set()
-  assert shensha['yima']     == set()
-  assert shensha['huagai']   == {Dizhi.辰}
-  assert shensha['yangren']  == set()
-  assert shensha['tianyi']   == set()
+  assert shensha['taohua']    == {Dizhi.午}
+  assert shensha['hongluan']  == set()
+  assert shensha['hongyan']   == set()
+  assert shensha['tianxi']    == set()
+  assert shensha['yima']      == set()
+  assert shensha['huagai']    == {Dizhi.辰}
+  assert shensha['yangren']   == set()
+  assert shensha['tianyi']    == set()
+  assert shensha['jiangxing'] == set()
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
@@ -251,14 +253,15 @@ def test_case1() -> None:
   assert set(transits_2018.ganzhis) == {Ganzhi.from_str('辛未'), Ganzhi.from_str('戊戌')}
 
   shensha = transits.shensha(transits_2018)
-  assert shensha['taohua']   == set()
-  assert shensha['hongluan'] == set()
-  assert shensha['hongyan']  == set()
-  assert shensha['tianxi']   == set()
-  assert shensha['yima']     == set()
-  assert shensha['huagai']   == set()
-  assert shensha['yangren']  == set()
-  assert shensha['tianyi']   == {Dizhi.未}
+  assert shensha['taohua']    == set()
+  assert shensha['hongluan']  == set()
+  assert shensha['hongyan']   == set()
+  assert shensha['tianxi']    == set()
+  assert shensha['yima']      == set()
+  assert shensha['huagai']    == set()
+  assert shensha['yangren']   == set()
+  assert shensha['tianyi']    == {Dizhi.未}
+  assert shensha['jiangxing'] == set()
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛}),
@@ -315,14 +318,15 @@ def test_case1() -> None:
   assert set(transits_2031.ganzhis) == {Ganzhi.from_str('辛亥'), Ganzhi.from_str('壬申')}
 
   shensha = transits.shensha(transits_2031)
-  assert shensha['taohua']   == set()
-  assert shensha['hongluan'] == set()
-  assert shensha['hongyan']  == {Dizhi.申}
-  assert shensha['tianxi']   == set()
-  assert shensha['yima']     == {Dizhi.亥}
-  assert shensha['huagai']   == set()
-  assert shensha['yangren']  == set()
-  assert shensha['tianyi']   == {Dizhi.申}
+  assert shensha['taohua']    == set()
+  assert shensha['hongluan']  == set()
+  assert shensha['hongyan']   == {Dizhi.申}
+  assert shensha['tianxi']    == set()
+  assert shensha['yima']      == {Dizhi.亥}
+  assert shensha['huagai']    == set()
+  assert shensha['yangren']   == set()
+  assert shensha['tianyi']    == {Dizhi.申}
+  assert shensha['jiangxing'] == set()
 
   assert _check_tiangan({
     TianganRelation.克 : [frozenset({Tiangan.乙, Tiangan.辛})],
@@ -371,14 +375,15 @@ def test_case2() -> None:
   # at birth
   at_birth: AtBirthAnalysis = analyzer.at_birth
 
-  assert at_birth.shensha['taohua']   == set()
-  assert at_birth.shensha['hongluan'] == set()
-  assert at_birth.shensha['hongyan']  == set()
-  assert at_birth.shensha['tianxi']   == set()
-  assert at_birth.shensha['yima']     == set()
-  assert at_birth.shensha['huagai']   == {Dizhi.戌}
-  assert at_birth.shensha['yangren']  == {Dizhi.午}
-  assert at_birth.shensha['tianyi']   == set()
+  assert at_birth.shensha['taohua']    == set()
+  assert at_birth.shensha['hongluan']  == set()
+  assert at_birth.shensha['hongyan']   == set()
+  assert at_birth.shensha['tianxi']    == set()
+  assert at_birth.shensha['yima']      == set()
+  assert at_birth.shensha['huagai']    == {Dizhi.戌}
+  assert at_birth.shensha['yangren']   == {Dizhi.午}
+  assert at_birth.shensha['tianyi']    == set()
+  assert at_birth.shensha['jiangxing'] == {Dizhi.午}
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心其他关系，但在这里还是检查一下。
@@ -414,6 +419,7 @@ def test_case2() -> None:
     'huagai'   : frozenset([Dizhi.辰, Dizhi.戌]),
     'yangren'  : frozenset([Dizhi.午]),
     'tianyi'   : frozenset([Dizhi.丑, Dizhi.未, Dizhi.亥, Dizhi.酉]),
+    'jiangxing': frozenset([Dizhi.子, Dizhi.午]),
   }
 
   for _ in range(50):
@@ -642,21 +648,25 @@ def test_random_cases(bazi: Bazi) -> None:
       def __huagai(dz: Dizhi) -> bool:
         return shensha_utils.huagai(y_dz, dz) or shensha_utils.huagai(d_dz, dz)
 
-      expected_taohua:   set[Dizhi] = set(filter(__taohua, transits_dz_set))
-      expected_hongyan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(hongyan_anchor, dz), transits_dz_set))
-      expected_hongluan: set[Dizhi] = set(filter(lambda dz : shensha_utils.hongluan(y_dz, dz), transits_dz_set))
-      expected_tianxi:   set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
-      expected_yima:     set[Dizhi] = set(filter(__yima, transits_dz_set))
-      expected_huagai:   set[Dizhi] = set(filter(__huagai, transits_dz_set))
-      expected_yangren:  set[Dizhi] = set(filter(
+      def __jiangxing(dz: Dizhi) -> bool:
+        return shensha_utils.jiangxing(y_dz, dz) or shensha_utils.jiangxing(d_dz, dz)
+
+      expected_taohua:    set[Dizhi] = set(filter(__taohua, transits_dz_set))
+      expected_hongyan:   set[Dizhi] = set(filter(lambda dz : shensha_utils.hongyan(hongyan_anchor, dz), transits_dz_set))
+      expected_hongluan:  set[Dizhi] = set(filter(lambda dz : shensha_utils.hongluan(y_dz, dz), transits_dz_set))
+      expected_tianxi:    set[Dizhi] = set(filter(lambda dz : shensha_utils.tianxi(y_dz, dz), transits_dz_set))
+      expected_yima:      set[Dizhi] = set(filter(__yima, transits_dz_set))
+      expected_huagai:    set[Dizhi] = set(filter(__huagai, transits_dz_set))
+      expected_yangren:   set[Dizhi] = set(filter(
         lambda dz: shensha_utils.yangren(dm, dz, definition=school.yangren_def),
         transits_dz_set,
       ))
-      expected_tianyi:   set[Dizhi] = set(filter(
+      expected_tianyi:    set[Dizhi] = set(filter(
         lambda dz: any(shensha_utils.tianyi(tg, dz, definition=school.tianyi_def)
                        for tg in (bazi.year_pillar.tiangan, dm)),
         transits_dz_set,
       ))
+      expected_jiangxing: set[Dizhi] = set(filter(__jiangxing, transits_dz_set))
 
       shensha = transits.shensha(selected_transits)
       assert expected_taohua == shensha['taohua']
@@ -667,6 +677,7 @@ def test_random_cases(bazi: Bazi) -> None:
       assert expected_huagai == shensha['huagai']
       assert expected_yangren == shensha['yangren']
       assert expected_tianyi == shensha['tianyi']
+      assert expected_jiangxing == shensha['jiangxing']
 
   # day master and house relations
   for year in range(bazi.ganzhi_date.year, bazi.ganzhi_date.year + 100):

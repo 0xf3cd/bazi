@@ -130,6 +130,55 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['tianyi'] == set(expected_tianyi)
     assert at_birth.shensha['tianyi'] == at_birth.shensha['tianyi'] # Repeated lookup must answer the same.
 
+    # Jiangxing / 将星
+    expected_jiangxing: list[Dizhi] = []
+    for dz1, dz2 in itertools.product([y], [m, d, h]):
+      if shensha_utils.jiangxing(dz1, dz2):
+        expected_jiangxing.append(dz2)
+    for dz1, dz2 in itertools.product([d], [y, m, h]):
+      if shensha_utils.jiangxing(dz1, dz2):
+        expected_jiangxing.append(dz2)
+    assert at_birth.shensha['jiangxing'] == set(expected_jiangxing)
+    assert at_birth.shensha['jiangxing'] == at_birth.shensha['jiangxing'] # Repeated lookup must answer the same.
+
+
+@pytest.mark.parametrize('birth_time, pillars, expected', [
+  # The year anchor contributes 午; the day anchor contributes nothing.
+  ('1918-11-18 11:58', ('戊午', '癸亥', '己巳', '庚午'), frozenset((Dizhi.午,))),
+  # The day anchor contributes 酉; the year anchor contributes nothing.
+  ('1948-10-03 14:22', ('戊子', '辛酉', '辛酉', '乙未'), frozenset((Dizhi.酉,))),
+  # The two anchors contribute distinct branches.
+  ('2070-06-05 18:46', ('庚寅', '壬午', '辛丑', '丁酉'), frozenset((Dizhi.午, Dizhi.酉))),
+  # The year branch is its own 将星, but the year anchor does not inspect itself.
+  ('2077-05-20 10:47', ('丁酉', '乙巳', '壬戌', '乙巳'), frozenset()),
+  # The day branch is its own 将星, but the day anchor does not inspect itself.
+  ('1967-12-08 01:58', ('丁未', '壬子', '丙午', '己丑'), frozenset()),
+])
+def test_jiangxing_at_birth(
+  birth_time: str,
+  pillars: tuple[str, str, str, str],
+  expected: frozenset[Dizhi],
+) -> None:
+  chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  assert tuple(map(str, chart.bazi.pillars)) == pillars
+  assert RelationshipAnalyzer(chart).at_birth.shensha['jiangxing'] == expected
+
+
+def test_jiangxing_at_transits() -> None:
+  chart = BaziChart(Bazi.create('2070-06-05 18:46', BaziGender.MALE))
+  assert tuple(map(str, chart.bazi.pillars)) == ('庚寅', '壬午', '辛丑', '丁酉')
+  analysis = RelationshipAnalyzer(chart).transits
+
+  year_anchor = TransitSet(dayun=Ganzhi.from_str('甲午'))
+  day_anchor = TransitSet(liunian=Ganzhi.from_str('乙酉'))
+  assert analysis.shensha(year_anchor)['jiangxing'] == {Dizhi.午}
+  assert analysis.shensha(day_anchor)['jiangxing'] == {Dizhi.酉}
+  assert analysis.shensha(TransitSet(
+    dayun=Ganzhi.from_str('甲午'),
+    liunian=Ganzhi.from_str('乙酉'),
+  ))['jiangxing'] == {Dizhi.午, Dizhi.酉}
+  assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('乙亥')))['jiangxing'] == set()
+
 
 @pytest.mark.parametrize('birth_time, pillars, yangren_index', [
   ('1950-01-11 00:00', ('己丑', '丁丑', '丙午', '戊子'), 2),
@@ -411,6 +460,15 @@ def test_transit_shensha() -> None:
         ):
           expected.append(dz)
       assert actual['tianyi'] == set(expected)
+
+      # Jiangxing / 将星
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.jiangxing(y_dz, dz):
+          expected.append(dz)
+        if shensha_utils.jiangxing(d_dz, dz):
+          expected.append(dz)
+      assert actual['jiangxing'] == set(expected)
 
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer

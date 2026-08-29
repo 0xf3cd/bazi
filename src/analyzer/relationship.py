@@ -67,22 +67,23 @@ class _ShenshaSpec:
 
 '''The registry of the Shenshas that relationship analysis currently supports (亲密关系分析目前支持的神煞注册表).'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
-  'taohua'  : _ShenshaSpec(shensha_utils.taohua,   _KeySource.YEAR_OR_DAY_DIZHI),
-  'hongyan' : _ShenshaSpec(shensha_utils.hongyan,  _KeySource.KEY_TIANGAN),
-  'hongluan': _ShenshaSpec(shensha_utils.hongluan, _KeySource.YEAR_DIZHI),
-  'tianxi'  : _ShenshaSpec(shensha_utils.tianxi,   _KeySource.YEAR_DIZHI),
-  'yima'    : _ShenshaSpec(shensha_utils.yima,     _KeySource.YEAR_OR_DAY_DIZHI),
-  'huagai'  : _ShenshaSpec(shensha_utils.huagai,   _KeySource.YEAR_OR_DAY_DIZHI),
-  'yangren' : _ShenshaSpec(
+  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _KeySource.YEAR_OR_DAY_DIZHI),
+  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN),
+  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _KeySource.YEAR_DIZHI),
+  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _KeySource.YEAR_DIZHI),
+  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.YEAR_OR_DAY_DIZHI),
+  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.YEAR_OR_DAY_DIZHI),
+  'yangren'  : _ShenshaSpec(
     shensha_utils.yangren,
     _KeySource.DAY_MASTER,
     lambda school: school.yangren_def,
   ),
-  'tianyi'  : _ShenshaSpec(
+  'tianyi'   : _ShenshaSpec(
     shensha_utils.tianyi,
     _KeySource.ANCHOR_TIANGANS,
     lambda school: school.tianyi_def,
   ),
+  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.YEAR_OR_DAY_DIZHI),
 })
 
 
@@ -239,22 +240,24 @@ def _with_gong(
 
 
 class ShenshaAnalysis(TypedDict):
-  # The Taohua Dizhis   (桃花星所在地支)
-  taohua:   frozenset[Dizhi]
-  # The Hongyan Dizhis  (红艳星所在地支)
-  hongyan:  frozenset[Dizhi]
-  # The Hongluan Dizhis (红鸾星所在地支)
-  hongluan: frozenset[Dizhi]
-  # The Tianxi Dizhis   (天喜星所在地支)
-  tianxi:   frozenset[Dizhi]
-  # The Yima Dizhis     (驿马星所在地支)
-  yima:     frozenset[Dizhi]
-  # The Huagai Dizhis   (华盖星所在地支)
-  huagai:   frozenset[Dizhi]
-  # The Yangren Dizhis  (羊刃所在地支)
-  yangren:  frozenset[Dizhi]
-  # The Tianyi Dizhis   (天乙贵人所在地支)
-  tianyi:   frozenset[Dizhi]
+  # The Taohua Dizhis    (桃花星所在地支)
+  taohua:    frozenset[Dizhi]
+  # The Hongyan Dizhis   (红艳星所在地支)
+  hongyan:   frozenset[Dizhi]
+  # The Hongluan Dizhis  (红鸾星所在地支)
+  hongluan:  frozenset[Dizhi]
+  # The Tianxi Dizhis    (天喜星所在地支)
+  tianxi:    frozenset[Dizhi]
+  # The Yima Dizhis      (驿马星所在地支)
+  yima:      frozenset[Dizhi]
+  # The Huagai Dizhis    (华盖星所在地支)
+  huagai:    frozenset[Dizhi]
+  # The Yangren Dizhis   (羊刃所在地支)
+  yangren:   frozenset[Dizhi]
+  # The Tianyi Dizhis    (天乙贵人所在地支)
+  tianyi:    frozenset[Dizhi]
+  # The Jiangxing Dizhis (将星所在地支)
+  jiangxing: frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -266,14 +269,15 @@ class AtBirthAnalysis:
   def shensha(self) -> ShenshaAnalysis:
     bazi = self._chart.bazi
     return {
-      'taohua' :  _eval_at_birth(_REGISTRY['taohua'],   bazi),
-      'hongyan':  _eval_at_birth(_REGISTRY['hongyan'],  bazi),
-      'hongluan': _eval_at_birth(_REGISTRY['hongluan'], bazi),
-      'tianxi':   _eval_at_birth(_REGISTRY['tianxi'],   bazi),
-      'yima'   :  _eval_at_birth(_REGISTRY['yima'],     bazi),
-      'huagai' :  _eval_at_birth(_REGISTRY['huagai'],   bazi),
-      'yangren':  _eval_at_birth(_REGISTRY['yangren'],  bazi),
-      'tianyi' :  _eval_at_birth(_REGISTRY['tianyi'],   bazi),
+      'taohua'   : _eval_at_birth(_REGISTRY['taohua'],    bazi),
+      'hongyan'  : _eval_at_birth(_REGISTRY['hongyan'],   bazi),
+      'hongluan' : _eval_at_birth(_REGISTRY['hongluan'],  bazi),
+      'tianxi'   : _eval_at_birth(_REGISTRY['tianxi'],    bazi),
+      'yima'     : _eval_at_birth(_REGISTRY['yima'],      bazi),
+      'huagai'   : _eval_at_birth(_REGISTRY['huagai'],    bazi),
+      'yangren'  : _eval_at_birth(_REGISTRY['yangren'],   bazi),
+      'tianyi'   : _eval_at_birth(_REGISTRY['tianyi'],    bazi),
+      'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
     }
 
   @property
@@ -349,14 +353,15 @@ class TransitAnalysis:
 
     bazi = self._chart.bazi
     return {
-      'taohua' :  _eval_transits(_REGISTRY['taohua'],   bazi, transit_dizhis),
-      'hongyan':  _eval_transits(_REGISTRY['hongyan'],  bazi, transit_dizhis),
-      'hongluan': _eval_transits(_REGISTRY['hongluan'], bazi, transit_dizhis),
-      'tianxi':   _eval_transits(_REGISTRY['tianxi'],   bazi, transit_dizhis),
-      'yima'   :  _eval_transits(_REGISTRY['yima'],     bazi, transit_dizhis),
-      'huagai' :  _eval_transits(_REGISTRY['huagai'],   bazi, transit_dizhis),
-      'yangren':  _eval_transits(_REGISTRY['yangren'],  bazi, transit_dizhis),
-      'tianyi' :  _eval_transits(_REGISTRY['tianyi'],   bazi, transit_dizhis),
+      'taohua'   : _eval_transits(_REGISTRY['taohua'],    bazi, transit_dizhis),
+      'hongyan'  : _eval_transits(_REGISTRY['hongyan'],   bazi, transit_dizhis),
+      'hongluan' : _eval_transits(_REGISTRY['hongluan'],  bazi, transit_dizhis),
+      'tianxi'   : _eval_transits(_REGISTRY['tianxi'],    bazi, transit_dizhis),
+      'yima'     : _eval_transits(_REGISTRY['yima'],      bazi, transit_dizhis),
+      'huagai'   : _eval_transits(_REGISTRY['huagai'],    bazi, transit_dizhis),
+      'yangren'  : _eval_transits(_REGISTRY['yangren'],   bazi, transit_dizhis),
+      'tianyi'   : _eval_transits(_REGISTRY['tianyi'],    bazi, transit_dizhis),
+      'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:

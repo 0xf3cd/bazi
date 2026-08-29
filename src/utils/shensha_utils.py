@@ -162,6 +162,31 @@ def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return ShenshaRules.HUAGAI[year_or_day_dizhi] is other_dizhi
 
 
+def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the JIANGXING (将星) of `year_or_day_dizhi`.
+  检查输入的地支是否是年支或日支的将星。
+
+  Args:
+  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the JIANGXING (将星) of `year_or_day_dizhi`.
+
+  Examples:
+  - jiangxing(Dizhi.申, Dizhi.子)
+    - return: True
+  - jiangxing(Dizhi.申, Dizhi.酉)
+    - return: False
+  '''
+
+  if not isinstance(year_or_day_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(year_or_day_dizhi)}')
+  if not isinstance(other_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(other_dizhi)}')
+  return ShenshaRules.JIANGXING[year_or_day_dizhi] is other_dizhi
+
+
 def yangren(
   day_master: Tiangan,
   dizhi: Dizhi,

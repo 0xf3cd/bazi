@@ -8,14 +8,15 @@ from src.analyzer.relationship import ShenshaAnalysis
 
 def test_shensha_labels() -> None:
   shensha: ShenshaAnalysis = {
-    'taohua'  : frozenset((Dizhi.子,)),
-    'hongyan' : frozenset((Dizhi.丑,)),
-    'hongluan': frozenset((Dizhi.寅,)),
-    'tianxi'  : frozenset((Dizhi.卯,)),
-    'yima'    : frozenset((Dizhi.辰,)),
-    'huagai'  : frozenset((Dizhi.巳,)),
-    'yangren' : frozenset((Dizhi.午,)),
-    'tianyi'  : frozenset((Dizhi.未,)),
+    'taohua'   : frozenset((Dizhi.子,)),
+    'hongyan'  : frozenset((Dizhi.丑,)),
+    'hongluan' : frozenset((Dizhi.寅,)),
+    'tianxi'   : frozenset((Dizhi.卯,)),
+    'yima'     : frozenset((Dizhi.辰,)),
+    'huagai'   : frozenset((Dizhi.巳,)),
+    'yangren'  : frozenset((Dizhi.午,)),
+    'tianyi'   : frozenset((Dizhi.未,)),
+    'jiangxing': frozenset((Dizhi.申,)),
   }
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
@@ -26,6 +27,7 @@ def test_shensha_labels() -> None:
     ('华盖', frozenset((Dizhi.巳,))),
     ('羊刃', frozenset((Dizhi.午,))),
     ('天乙贵人', frozenset((Dizhi.未,))),
+    ('将星', frozenset((Dizhi.申,))),
   )
 
   assert _named_shensha(shensha) == expected
@@ -35,14 +37,15 @@ def test_shensha_labels() -> None:
   ]
 
   empty_shensha: ShenshaAnalysis = {
-    'taohua'  : frozenset(),
-    'hongyan' : frozenset(),
-    'hongluan': frozenset(),
-    'tianxi'  : frozenset(),
-    'yima'    : frozenset(),
-    'huagai'  : frozenset(),
-    'yangren' : frozenset(),
-    'tianyi'  : frozenset(),
+    'taohua'   : frozenset(),
+    'hongyan'  : frozenset(),
+    'hongluan' : frozenset(),
+    'tianxi'   : frozenset(),
+    'yima'     : frozenset(),
+    'huagai'   : frozenset(),
+    'yangren'  : frozenset(),
+    'tianyi'   : frozenset(),
+    'jiangxing': frozenset(),
   }
   assert shensha_strs(empty_shensha) == []
-  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、天乙贵人'
+  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、天乙贵人、将星'
