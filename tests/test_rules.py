@@ -6,8 +6,9 @@ import inspect
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Wuxing, DizhiRelation
+from src.defines import Tiangan, Dizhi, Wuxing, DizhiRelation, ShierZhangsheng
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
+from src.utils import bazi_utils
 
 
 def test_basic() -> None:
@@ -86,14 +87,57 @@ def test_dizhi_gong() -> None:
     DizhiRules.DIZHI_GONGHE[DizhiRules.GongheDef.NARROW] = {} # type: ignore
 
 
-def test_huagai() -> None:
-  tombs = frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未))
+def test_sanhe_shensha_tables() -> None:
+  expected_tables = (
+    (ShenshaRules.TAOHUA, {
+      Dizhi.申 : Dizhi.酉, Dizhi.子 : Dizhi.酉, Dizhi.辰 : Dizhi.酉,
+      Dizhi.寅 : Dizhi.卯, Dizhi.午 : Dizhi.卯, Dizhi.戌 : Dizhi.卯,
+      Dizhi.亥 : Dizhi.子, Dizhi.卯 : Dizhi.子, Dizhi.未 : Dizhi.子,
+      Dizhi.巳 : Dizhi.午, Dizhi.酉 : Dizhi.午, Dizhi.丑 : Dizhi.午,
+    }),
+    (ShenshaRules.YIMA, {
+      Dizhi.申 : Dizhi.寅, Dizhi.子 : Dizhi.寅, Dizhi.辰 : Dizhi.寅,
+      Dizhi.寅 : Dizhi.申, Dizhi.午 : Dizhi.申, Dizhi.戌 : Dizhi.申,
+      Dizhi.亥 : Dizhi.巳, Dizhi.卯 : Dizhi.巳, Dizhi.未 : Dizhi.巳,
+      Dizhi.巳 : Dizhi.亥, Dizhi.酉 : Dizhi.亥, Dizhi.丑 : Dizhi.亥,
+    }),
+    (ShenshaRules.HUAGAI, {
+      Dizhi.寅 : Dizhi.戌, Dizhi.午 : Dizhi.戌, Dizhi.戌 : Dizhi.戌,
+      Dizhi.亥 : Dizhi.未, Dizhi.卯 : Dizhi.未, Dizhi.未 : Dizhi.未,
+      Dizhi.申 : Dizhi.辰, Dizhi.子 : Dizhi.辰, Dizhi.辰 : Dizhi.辰,
+      Dizhi.巳 : Dizhi.丑, Dizhi.酉 : Dizhi.丑, Dizhi.丑 : Dizhi.丑,
+    }),
+    (ShenshaRules.JIANGXING, {
+      Dizhi.申 : Dizhi.子, Dizhi.子 : Dizhi.子, Dizhi.辰 : Dizhi.子,
+      Dizhi.寅 : Dizhi.午, Dizhi.午 : Dizhi.午, Dizhi.戌 : Dizhi.午,
+      Dizhi.亥 : Dizhi.卯, Dizhi.卯 : Dizhi.卯, Dizhi.未 : Dizhi.卯,
+      Dizhi.巳 : Dizhi.酉, Dizhi.酉 : Dizhi.酉, Dizhi.丑 : Dizhi.酉,
+    }),
+  )
 
-  assert set(ShenshaRules.HUAGAI) == set(Dizhi)
-  for sanhe in DizhiRules.DIZHI_SANHE:
-    tomb = sanhe & tombs
-    assert len(tomb) == 1
-    assert {ShenshaRules.HUAGAI[dz] for dz in sanhe} == tomb
+  for table, expected in expected_tables:
+    assert tuple(table.items()) == tuple(expected.items())
+
+
+def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
+  group_tiangans = {
+    frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Tiangan.壬,
+    frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Tiangan.丙,
+    frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Tiangan.甲,
+    frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Tiangan.庚,
+  }
+  table_places = (
+    (ShenshaRules.TAOHUA,   ShierZhangsheng.沐浴),
+    (ShenshaRules.YIMA,     ShierZhangsheng.病),
+    (ShenshaRules.HUAGAI,   ShierZhangsheng.墓),
+    (ShenshaRules.JIANGXING, ShierZhangsheng.帝旺),
+  )
+
+  assert set(group_tiangans) == set(DizhiRules.DIZHI_SANHE)
+  for sanhe, tiangan in group_tiangans.items():
+    for table, place in table_places:
+      expected = bazi_utils.from_shier_zhangsheng(tiangan, place)
+      assert {table[dizhi] for dizhi in sanhe} == {expected}
 
 
 def test_yangren() -> None:

@@ -13,8 +13,8 @@ from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation
 # `Final` is the reassignment guard, enforced by mypy; there is no runtime guard.
 
 
-# Computed tables are built by module-level `_lower_snake` builders (named after their
-# tables), because loops/comprehensions in a class body cannot see class-level names.
+# Computed tables are built by module-level `_lower_snake` builders because
+# loops/comprehensions in a class body cannot see class-level names.
 def _nayin() -> frozendict[Ganzhi, str]:
   NAYIN_STR_LIST: list[str] = [
     '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火',
@@ -570,21 +570,26 @@ class DizhiRules:
   DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _dizhi_ke(BaziRules.DIZHI_TRAITS)
 
 
+def _expand_sanhe_groups(groups: dict[str, str]) -> frozendict[Dizhi, Dizhi]:
+  '''Expand 三合 group literals into a branch lookup table.
+  将三合局字面定义展开为逐支查询表。'''
+  return frozendict({
+    Dizhi(key) : Dizhi(target)
+    for keys, target in groups.items()
+    for key in keys
+  })
+
 
 class ShenshaRules:
   '''Rules for Shensha / 神煞'''
 
   # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
   # 该表格用于查询桃花星。桃花即咸池桃花。
-  TAOHUA: Final[frozendict[Dizhi, Dizhi]] = frozendict({
-    Dizhi(k_str) : Dizhi(v_str)
-    for k_strs, v_str in {
-      '申子辰' : '酉',
-      '寅午戌' : '卯',
-      '亥卯未' : '子',
-      '巳酉丑' : '午',
-    }.items()
-    for k_str in k_strs
+  TAOHUA: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '申子辰' : '酉',
+    '寅午戌' : '卯',
+    '亥卯未' : '子',
+    '巳酉丑' : '午',
   })
 
   # The table is used to find out HONGYAN (红艳). From 《三命通会》: "甲乙逢午、丙寅、丁未、
@@ -646,15 +651,11 @@ class ShenshaRules:
 
   # The table is used to find out YIMA (驿马).
   # 该表格用于查询驿马星。
-  YIMA: Final[frozendict[Dizhi, Dizhi]] = frozendict({
-    Dizhi(k_str) : Dizhi(v_str)
-    for k_strs, v_str in {
-      '申子辰' : '寅',
-      '寅午戌' : '申',
-      '亥卯未' : '巳',
-      '巳酉丑' : '亥',
-    }.items()
-    for k_str in k_strs
+  YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '申子辰' : '寅',
+    '寅午戌' : '申',
+    '亥卯未' : '巳',
+    '巳酉丑' : '亥',
   })
 
   # HUAGAI (华盖) is the tomb/storage branch of each 三合 group. From 《三命通会》, as quoted
@@ -665,15 +666,28 @@ class ShenshaRules:
   # Mainstream modern references use the year or day branch as the anchor and inspect the other
   # pillars' branches (百度百科「神煞」; also 问真、高人).
   # 当代通行查法以年支或日支为锚，查其他柱的地支（百度百科「神煞」；问真、高人）。
-  HUAGAI: Final[frozendict[Dizhi, Dizhi]] = frozendict({
-    Dizhi(k_str) : Dizhi(v_str)
-    for k_strs, v_str in {
-      '寅午戌' : '戌',
-      '亥卯未' : '未',
-      '申子辰' : '辰',
-      '巳酉丑' : '丑',
-    }.items()
-    for k_str in k_strs
+  HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '寅午戌' : '戌',
+    '亥卯未' : '未',
+    '申子辰' : '辰',
+    '巳酉丑' : '丑',
+  })
+
+  # JIANGXING (将星) is the middle / Diwang (帝旺) branch of each 三合 group.
+  # 《三命通会·卷三·论灾煞》逐组明列：申子辰在子、寅午戌在午、巳酉丑在酉、亥卯未在卯。
+  # Table values / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
+  # One 《命理探源》 verse cell reads「巳酉丑见丑」, but its explanation identifies 酉 as the
+  # middle branch; this table follows that explanation and 《三命通会》 rather than treating 丑 as a variant.
+  # 《命理探源》口诀一格作「巳酉丑见丑」，紧接解释却以酉为中位；本表从解释与《三命通会》，不另立丑异表。
+  # Cross-check / 校核: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #152).
+  # The modern lookup anchors on the year or day branch and inspects the other branches.
+  # 当代查法以年支或日支为锚，查其他柱地支；古籍在此仅承担表值，不承担年支兼查口径。
+  # Anchor semantics / 查法锚出处: https://book.taiyi.me/命/神煞大全 (issue #152).
+  JIANGXING: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '申子辰' : '子',
+    '寅午戌' : '午',
+    '亥卯未' : '卯',
+    '巳酉丑' : '酉',
   })
 
   class YangrenDef(Enum):

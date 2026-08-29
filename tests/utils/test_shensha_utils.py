@@ -17,10 +17,10 @@ def test_taohua() -> None:
     for k_str in k_strs
   }
 
-  for _ in range(16):
-    dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-    assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+  for dz1 in Dizhi:
+    for dz2 in Dizhi:
+      assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
+      assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
 
 
 def test_taohua_negative() -> None:
@@ -115,10 +115,10 @@ def test_yima() -> None:
     for k_str in k_strs
   }
 
-  for _ in range(16):
-    dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
-    assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
-    assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
+  for dz1 in Dizhi:
+    for dz2 in Dizhi:
+      assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
+      assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
 
 
 def test_yima_negative() -> None:
@@ -151,6 +151,27 @@ def test_huagai_negative() -> None:
     shensha_utils.huagai('申', Dizhi.辰) # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.huagai(Dizhi.申, '辰') # type: ignore
+
+
+def test_jiangxing() -> None:
+  expected_table: dict[Dizhi, Dizhi] = {
+    Dizhi.申 : Dizhi.子, Dizhi.子 : Dizhi.子, Dizhi.辰 : Dizhi.子,
+    Dizhi.寅 : Dizhi.午, Dizhi.午 : Dizhi.午, Dizhi.戌 : Dizhi.午,
+    Dizhi.亥 : Dizhi.卯, Dizhi.卯 : Dizhi.卯, Dizhi.未 : Dizhi.卯,
+    Dizhi.巳 : Dizhi.酉, Dizhi.酉 : Dizhi.酉, Dizhi.丑 : Dizhi.酉,
+  }
+
+  for dz1 in Dizhi:
+    for dz2 in Dizhi:
+      assert shensha_utils.jiangxing(dz1, dz2) == (expected_table[dz1] is dz2)
+      assert shensha_utils.jiangxing(dz1, dz2) == (expected_table[dz1] is dz2)
+
+
+def test_jiangxing_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.jiangxing('申', Dizhi.子) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.jiangxing(Dizhi.申, '子') # type: ignore
 
 
 def test_yangren() -> None:
