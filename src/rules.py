@@ -674,7 +674,7 @@ class ShenshaRules:
   # JIANGXING (将星) is the middle / Diwang (帝旺) branch of each 三合 group,
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
   # 将星取各三合局的帝旺位；《三命通会·卷三·论灾煞》逐组明列。
-  # Source / 出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
+  # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
   # Cross-check / 校核: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #152).
   # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
   # 问真以年支或日支为锚，查余支。
