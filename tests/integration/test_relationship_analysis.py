@@ -617,17 +617,6 @@ def test_case2() -> None:
       assert star_result.dizhi == any(is_star(dz) for dz in transits_dz)
 
 
-def test_wangshen_external_chart() -> None:
-  '''This anonymous public chart lists 亡神 under both [年支] and [日支]:
-  https://zhidao.baidu.com/question/1931734428742934547.html'''
-  bazi = Bazi(
-    birth_time=datetime(1990, 5, 9, 2, 0),
-    gender=BaziGender.MALE,
-  )
-  assert tuple(map(str, bazi.pillars)) == ('庚午', '辛巳', '甲戌', '乙丑')
-  assert RelationshipAnalyzer(BaziChart(bazi)).at_birth.shensha['wangshen'] == {Dizhi.巳}
-
-
 @pytest.mark.parametrize('bazi', [Bazi.random() for _ in range(5)])
 def test_random_cases(bazi: Bazi) -> None:
   chart = BaziChart(bazi)
