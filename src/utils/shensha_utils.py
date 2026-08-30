@@ -220,6 +220,48 @@ def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return _table_shensha(ShenshaRules.WANGSHEN, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
+def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the GUCHEN (孤辰) of `year_dizhi`. If so, return `True`. If not, return `False`.
+  检查输入的地支是否是年支的孤辰。如果是，返回 `True`。如果不是，返回 `False`。
+
+  Args:
+  - year_dizhi: (Dizhi) The Dizhi of year pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the GUCHEN (孤辰) of `year_dizhi`.
+
+  Examples:
+  - guchen(Dizhi.子, Dizhi.寅)
+    - return: True
+  - guchen(Dizhi.子, Dizhi.戌)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.GUCHEN, year_dizhi, other_dizhi, Dizhi)
+
+
+def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the GUASU (寡宿) of `year_dizhi`. If so, return `True`. If not, return `False`.
+  检查输入的地支是否是年支的寡宿。如果是，返回 `True`。如果不是，返回 `False`。
+
+  Args:
+  - year_dizhi: (Dizhi) The Dizhi of year pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the GUASU (寡宿) of `year_dizhi`.
+
+  Examples:
+  - guasu(Dizhi.子, Dizhi.戌)
+    - return: True
+  - guasu(Dizhi.子, Dizhi.寅)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.GUASU, year_dizhi, other_dizhi, Dizhi)
+
+
 def yangren(
   day_master: Tiangan,
   dizhi: Dizhi,

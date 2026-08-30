@@ -24,6 +24,8 @@ def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi
     ('将星', shensha['jiangxing']),
     ('劫煞', shensha['jiesha']),
     ('亡神', shensha['wangshen']),
+    ('孤辰', shensha['guchen']),
+    ('寡宿', shensha['guasu']),
   )
 
 

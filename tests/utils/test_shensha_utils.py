@@ -2,6 +2,7 @@
 # test_shensha_utils.py
 
 import random
+from collections.abc import Callable
 
 import pytest
 
@@ -214,6 +215,41 @@ def test_wangshen_negative() -> None:
     shensha_utils.wangshen('申', Dizhi.亥) # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.wangshen(Dizhi.申, '亥') # type: ignore
+
+
+@pytest.mark.parametrize('predicate, targets', [
+  (shensha_utils.guchen, '寅巳申亥'),
+  (shensha_utils.guasu,  '戌丑辰未'),
+])
+def test_guchen_guasu(
+  predicate: Callable[[Dizhi, Dizhi], bool],
+  targets: str,
+) -> None:
+  direction_groups = ('亥子丑', '寅卯辰', '巳午未', '申酉戌')
+  expected_table: dict[Dizhi, Dizhi] = {
+    Dizhi(key) : Dizhi(target)
+    for keys, target in zip(direction_groups, targets)
+    for key in keys
+  }
+  for year_dizhi in Dizhi:
+    for other_dizhi in Dizhi:
+      expected = expected_table[year_dizhi] is other_dizhi
+      assert predicate(year_dizhi, other_dizhi) == expected
+      assert predicate(year_dizhi, other_dizhi) == expected # Repeated lookup must answer the same.
+
+
+@pytest.mark.parametrize('predicate, target', [
+  (shensha_utils.guchen, Dizhi.寅),
+  (shensha_utils.guasu,  Dizhi.戌),
+])
+def test_guchen_guasu_negative(
+  predicate: Callable[[Dizhi, Dizhi], bool],
+  target: Dizhi,
+) -> None:
+  with pytest.raises(TypeError):
+    predicate('子', target) # type: ignore
+  with pytest.raises(TypeError):
+    predicate(Dizhi.子, str(target)) # type: ignore
 
 
 def test_yangren() -> None:

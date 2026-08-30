@@ -169,6 +169,16 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['wangshen'] == set(expected_wangshen)
     assert at_birth.shensha['wangshen'] == at_birth.shensha['wangshen'] # Repeated lookup must answer the same.
 
+    # Guchen / 孤辰
+    expected_guchen = {dz for dz in (m, d, h) if shensha_utils.guchen(y, dz)}
+    assert at_birth.shensha['guchen'] == expected_guchen
+    assert at_birth.shensha['guchen'] == at_birth.shensha['guchen'] # Repeated lookup must answer the same.
+
+    # Guasu / 寡宿
+    expected_guasu = {dz for dz in (m, d, h) if shensha_utils.guasu(y, dz)}
+    assert at_birth.shensha['guasu'] == expected_guasu
+    assert at_birth.shensha['guasu'] == at_birth.shensha['guasu'] # Repeated lookup must answer the same.
+
 
 @pytest.mark.parametrize('birth_time, pillars, expected', [
   # The year anchor contributes 午; the day anchor contributes nothing.
@@ -278,6 +288,61 @@ def test_wangshen_at_transits() -> None:
     liunian=Ganzhi.from_str('丙寅'),
   ))['wangshen'] == {Dizhi.巳, Dizhi.寅}
   assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))['wangshen'] == set()
+
+
+@pytest.mark.parametrize('birth_time, pillars, expected_guchen, expected_guasu', [
+  ('2034-04-18 05:14', ('甲寅', '戊辰', '甲辰', '丁卯'), frozenset(), frozenset()),
+  ('1910-12-24 15:31', ('庚戌', '戊子', '癸亥', '庚申'), frozenset((Dizhi.亥,)), frozenset()),
+  ('1913-10-27 15:35', ('癸丑', '壬戌', '辛巳', '丙申'), frozenset(), frozenset((Dizhi.戌,))),
+  # Raw detection reports Guchen and Guasu separately when both occur (「连属」).
+  ('2032-02-10 07:45', ('壬子', '壬寅', '丙戌', '壬辰'),
+   frozenset((Dizhi.寅,)), frozenset((Dizhi.戌,))),
+  # The repeated 巳 target collapses to one Guchen result.
+  ('2023-06-04 05:39', ('癸卯', '丁巳', '癸巳', '乙卯'), frozenset((Dizhi.巳,)), frozenset()),
+])
+def test_guchen_guasu_at_birth(
+  birth_time: str,
+  pillars: tuple[str, str, str, str],
+  expected_guchen: frozenset[Dizhi],
+  expected_guasu: frozenset[Dizhi],
+) -> None:
+  chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  assert tuple(map(str, chart.bazi.pillars)) == pillars
+  shensha = RelationshipAnalyzer(chart).at_birth.shensha
+  assert shensha['guchen'] == expected_guchen
+  assert shensha['guasu'] == expected_guasu
+
+
+def test_guchen_guasu_at_transits() -> None:
+  chart = BaziChart(Bazi.create('2032-02-10 07:45', BaziGender.MALE))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬子', '壬寅', '丙戌', '壬辰')
+  analysis = RelationshipAnalyzer(chart).transits
+
+  guchen_dayun = analysis.shensha(TransitSet(dayun=Ganzhi.from_str('甲寅')))
+  assert guchen_dayun['guchen'] == {Dizhi.寅}
+  assert guchen_dayun['guasu'] == set()
+
+  guasu_liunian = analysis.shensha(TransitSet(liunian=Ganzhi.from_str('丙戌')))
+  assert guasu_liunian['guchen'] == set()
+  assert guasu_liunian['guasu'] == {Dizhi.戌}
+
+  combined = analysis.shensha(TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('丙戌'),
+  ))
+  assert combined['guchen'] == {Dizhi.寅}
+  assert combined['guasu'] == {Dizhi.戌}
+
+  duplicate_guchen = analysis.shensha(TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('丙寅'),
+  ))
+  assert duplicate_guchen['guchen'] == {Dizhi.寅}
+  assert duplicate_guchen['guasu'] == set()
+
+  no_hits = analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))
+  assert no_hits['guchen'] == set()
+  assert no_hits['guasu'] == set()
 
 
 '''Getter type for one field of a Shensha analysis result.'''
@@ -656,6 +721,14 @@ def test_transit_shensha() -> None:
         if shensha_utils.wangshen(d_dz, dz):
           expected.append(dz)
       assert actual['wangshen'] == set(expected)
+
+      # Guchen / 孤辰
+      expected = [dz for dz in transit_dz if shensha_utils.guchen(y_dz, dz)]
+      assert actual['guchen'] == set(expected)
+
+      # Guasu / 寡宿
+      expected = [dz for dz in transit_dz if shensha_utils.guasu(y_dz, dz)]
+      assert actual['guasu'] == set(expected)
 
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
@@ -1116,6 +1189,10 @@ def test_shensha_anchor_profile_has_exact_consumers() -> None:
     if spec.key is relationship_module._KeySource.PROFILED_DIZHI
   } == expected
   assert _REGISTRY['taohua'].key is relationship_module._KeySource.YEAR_OR_DAY_DIZHI
+  assert {
+    name for name, spec in _REGISTRY.items()
+    if spec.key is relationship_module._KeySource.YEAR_DIZHI
+  } == {'hongluan', 'tianxi', 'guchen', 'guasu'}
 
 
 def test_no_bare_dizhi_discovery_calls() -> None:
