@@ -714,14 +714,14 @@ class ShenshaRules:
     '巳酉丑' : '申',
   })
 
-  # 《三命通会·卷三·论孤辰寡宿》 groups year branches by direction: the branch one step
-  # forward from each group is GUCHEN (孤辰), and the branch one step back is GUASU (寡宿).
-  # 《三命通会·卷三·论孤辰寡宿》按出生年支所属方位组三支取法：进前一辰为孤辰，退后一辰为寡宿。
+  # GUCHEN (孤辰) and GUASU (寡宿) are the branches one step forward and one step back
+  # from the birth-year branch's direction group in 《三命通会·卷三·论孤辰寡宿》.
+  # 孤辰、寡宿分别取出生年支所属方位组的进前一辰、退后一辰。
   # Rule source / 规则出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #161).
-  # Table, anchor, and scope sources / 表值、查法锚与范围出处:
-  # https://book.taiyi.me/命/神煞大全#孤辰 and https://book.taiyi.me/命/神煞大全#寡宿.
-  # The same 《三命通会》 section quotes interpretation-level exclusions for connected
-  # Guchen/Guasu and for protection by Guiren. They do not erase the raw locations here.
+  # Table source / 表值出处: https://book.taiyi.me/命/神煞大全#孤辰 and https://book.taiyi.me/命/神煞大全#寡宿 (issue #161).
+  # Anchor source / 查法锚出处: the same entries / 同上两条 (issue #161).
+  # The same section quotes the interpretation-level exclusions 「连属不言孤寡」 and
+  # 「支干朝会包裹贵人」. They do not erase the raw locations here.
   # 同节所引「连属不言孤寡」及贵人包裹条款属解释层豁免，不抹去本表给出的原始命中位置。
   GUCHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
     '亥子丑' : '寅',
@@ -729,6 +729,7 @@ class ShenshaRules:
     '巳午未' : '申',
     '申酉戌' : '亥',
   })
+
   GUASU: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
     '亥子丑' : '戌',
     '寅卯辰' : '丑',

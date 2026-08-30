@@ -291,13 +291,10 @@ def test_wangshen_at_transits() -> None:
 
 
 @pytest.mark.parametrize('birth_time, pillars, expected_guchen, expected_guasu', [
-  # The year group contributes neither branch.
   ('2034-04-18 05:14', ('甲寅', '戊辰', '甲辰', '丁卯'), frozenset(), frozenset()),
-  # One Guchen hit.
   ('1910-12-24 15:31', ('庚戌', '戊子', '癸亥', '庚申'), frozenset((Dizhi.亥,)), frozenset()),
-  # One Guasu hit.
   ('1913-10-27 15:35', ('癸丑', '壬戌', '辛巳', '丙申'), frozenset(), frozenset((Dizhi.戌,))),
-  # Guchen and Guasu both occur.
+  # Raw detection reports Guchen and Guasu separately when both occur (「连属」).
   ('2032-02-10 07:45', ('壬子', '壬寅', '丙戌', '壬辰'),
    frozenset((Dizhi.寅,)), frozenset((Dizhi.戌,))),
   # The repeated 巳 target collapses to one Guchen result.
@@ -321,31 +318,31 @@ def test_guchen_guasu_at_transits() -> None:
   assert tuple(map(str, chart.bazi.pillars)) == ('壬子', '壬寅', '丙戌', '壬辰')
   analysis = RelationshipAnalyzer(chart).transits
 
-  guchen = analysis.shensha(TransitSet(dayun=Ganzhi.from_str('甲寅')))
-  assert guchen['guchen'] == {Dizhi.寅}
-  assert guchen['guasu'] == set()
+  guchen_dayun = analysis.shensha(TransitSet(dayun=Ganzhi.from_str('甲寅')))
+  assert guchen_dayun['guchen'] == {Dizhi.寅}
+  assert guchen_dayun['guasu'] == set()
 
-  guasu = analysis.shensha(TransitSet(liunian=Ganzhi.from_str('丙戌')))
-  assert guasu['guchen'] == set()
-  assert guasu['guasu'] == {Dizhi.戌}
+  guasu_liunian = analysis.shensha(TransitSet(liunian=Ganzhi.from_str('丙戌')))
+  assert guasu_liunian['guchen'] == set()
+  assert guasu_liunian['guasu'] == {Dizhi.戌}
 
-  both = analysis.shensha(TransitSet(
+  combined = analysis.shensha(TransitSet(
     dayun=Ganzhi.from_str('甲寅'),
     liunian=Ganzhi.from_str('丙戌'),
   ))
-  assert both['guchen'] == {Dizhi.寅}
-  assert both['guasu'] == {Dizhi.戌}
+  assert combined['guchen'] == {Dizhi.寅}
+  assert combined['guasu'] == {Dizhi.戌}
 
-  duplicate = analysis.shensha(TransitSet(
+  duplicate_guchen = analysis.shensha(TransitSet(
     dayun=Ganzhi.from_str('甲寅'),
     liunian=Ganzhi.from_str('丙寅'),
   ))
-  assert duplicate['guchen'] == {Dizhi.寅}
-  assert duplicate['guasu'] == set()
+  assert duplicate_guchen['guchen'] == {Dizhi.寅}
+  assert duplicate_guchen['guasu'] == set()
 
-  empty = analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))
-  assert empty['guchen'] == set()
-  assert empty['guasu'] == set()
+  no_hits = analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))
+  assert no_hits['guchen'] == set()
+  assert no_hits['guasu'] == set()
 
 
 '''Getter type for one field of a Shensha analysis result.'''

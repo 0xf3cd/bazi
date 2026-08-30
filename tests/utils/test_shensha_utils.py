@@ -225,19 +225,22 @@ def test_guchen_guasu(
   predicate: Callable[[Dizhi, Dizhi], bool],
   targets: str,
 ) -> None:
+  direction_groups = ('亥子丑', '寅卯辰', '巳午未', '申酉戌')
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi(key) : Dizhi(target)
-    for keys, target in zip(('亥子丑', '寅卯辰', '巳午未', '申酉戌'), targets)
+    for keys, target in zip(direction_groups, targets)
     for key in keys
   }
   for year_dizhi in Dizhi:
     for other_dizhi in Dizhi:
-      assert predicate(year_dizhi, other_dizhi) == (expected_table[year_dizhi] is other_dizhi)
+      expected = expected_table[year_dizhi] is other_dizhi
+      assert predicate(year_dizhi, other_dizhi) == expected
+      assert predicate(year_dizhi, other_dizhi) == expected # Repeated lookup must answer the same.
 
 
 @pytest.mark.parametrize('predicate, target', [
   (shensha_utils.guchen, Dizhi.寅),
-  (shensha_utils.guasu, Dizhi.戌),
+  (shensha_utils.guasu,  Dizhi.戌),
 ])
 def test_guchen_guasu_negative(
   predicate: Callable[[Dizhi, Dizhi], bool],

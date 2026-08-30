@@ -38,6 +38,7 @@ def test_shensha_labels() -> None:
     ('寡宿', frozenset((Dizhi.亥,))),
   )
 
+  # Keep display labels exhaustive as ShenshaAnalysis grows.
   assert len(expected) == len(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
   assert _named_shensha(shensha) == expected
   assert shensha_strs(shensha) == [

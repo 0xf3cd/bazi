@@ -167,6 +167,14 @@ def test_guchen_guasu_tables() -> None:
     Dizhi.申 : Dizhi.未, Dizhi.酉 : Dizhi.未, Dizhi.戌 : Dizhi.未,
   }
 
+  for table in (ShenshaRules.GUCHEN, ShenshaRules.GUASU):
+    # The tables have no fixed points and retain the four source direction groups.
+    assert all(key is not target for key, target in table.items())
+    assert {
+      frozenset(key for key, value in table.items() if value is target)
+      for target in table.values()
+    } == set(DizhiRules.DIZHI_SANHUI)
+
 
 def test_yangren() -> None:
   assert set(ShenshaRules.YANGREN) == set(ShenshaRules.YangrenDef)
