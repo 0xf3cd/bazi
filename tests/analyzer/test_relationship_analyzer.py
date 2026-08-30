@@ -280,10 +280,11 @@ def test_wangshen_at_transits() -> None:
   assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))['wangshen'] == set()
 
 
-'''A projection from the complete Shensha result to one profiled result field.'''
+'''Getter type for one field of a Shensha analysis result.'''
 ShenshaGetter = Callable[[ShenshaAnalysis], frozenset[Dizhi]]
 
 
+# Each case isolates a year-anchor contribution; 亡神 also retains one day-anchor hit.
 @pytest.mark.parametrize('getter, birth_time, pillars, default_expected, day_expected', [
   (lambda result: result['yima'], '1972-07-26 03:14', ('壬子', '丁未', '戊午', '甲寅'),
    frozenset((Dizhi.寅,)), frozenset()),
@@ -318,6 +319,7 @@ def test_shensha_anchor_profile_at_birth(
   assert default_shensha['taohua'] == day_shensha['taohua']
 
 
+# Each pair supplies one year-anchor-only hit and one day-anchor hit.
 @pytest.mark.parametrize('getter, year_ganzhi, day_ganzhi', [
   (lambda result: result['yima'], Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
   (lambda result: result['huagai'], Ganzhi.from_str('甲戌'), Ganzhi.from_str('乙未')),

@@ -48,7 +48,7 @@ class _KeySource(Enum):
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
   ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
-  PROFILED_DIZHI    = auto() # By the day Dizhi, or year and day Dizhis, selected as one source profile for 驿马、华盖、将星、劫煞、亡神.
+  PROFILED_DIZHI    = auto() # By the day Dizhi alone, or both year and day Dizhis, as selected by the source profile for 驿马、华盖、将星、劫煞、亡神 (see `_profiled_shensha_anchors`).
 
 
 @dataclass(frozen=True)
@@ -124,15 +124,16 @@ def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
 
 
 def _profiled_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
-  '''Resolve the anchors selected for the five source-profiled Shenshas.
-  解析驿马、华盖、将星、劫煞、亡神所选出处 profile 的锚支。'''
+  '''Resolve the YIMA, HUAGAI, JIANGXING, JIESHA, and WANGSHEN anchors selected by
+  `BaziSchool.shensha_anchor_profile`.
+  按 `BaziSchool.shensha_anchor_profile` 解析驿马、华盖、将星、劫煞、亡神锚支。'''
   profile: Final[ShenshaAnchorProfile] = bazi.config.school.shensha_anchor_profile
   if profile is ShenshaAnchorProfile.WENZHEN:
     return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
   elif profile is ShenshaAnchorProfile.MINGLI_TANYUAN:
     return (bazi.day_pillar.dizhi,)
   else:
-    raise AssertionError(f'`ShenshaAnchorProfile` not wired up: {profile}') # pragma: no cover # Unreachable invariant guard.
+    raise AssertionError(f'`ShenshaAnchorProfile` not wired up in `_profiled_shensha_anchors`: {profile}') # pragma: no cover # Unreachable invariant guard.
 
 
 def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, ...]:

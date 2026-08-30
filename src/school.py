@@ -197,10 +197,10 @@ class ShenshaAnchorProfile(Enum):
   '''The source profile governing the anchor branches of YIMA, HUAGAI, JIANGXING,
   JIESHA, and WANGSHEN. 驿马、华盖、将星、劫煞、亡神共用的锚支出处 profile。
 
-  - WENZHEN: inspect the remaining branches from both the year and day branches;
+  - WENZHEN: anchor on both the year and day branches and inspect the remaining branches;
     the modern 问真 reading and the default this library has always used.
     年支、日支分别查余支；问真现代口径，也是本库既有默认。
-  - MINGLI_TANYUAN: key on the day branch only, following Yuan Shushan's
+  - MINGLI_TANYUAN: anchor on the day branch only, following Yuan Shushan's
     《命理探源》 for all five. At birth, inspect the year, month, and hour branches.
     五项均从袁树珊《命理探源》取日支为锚；原局查年、月、时支。
 
@@ -209,12 +209,12 @@ class ShenshaAnchorProfile(Enum):
   Changing only its anchor would create a rule the source does not state.
   桃花不随本配置：《命理探源》的日支桃花另有纳音条件，且只查月、时；不能只切锚而沿用现表。
 
-  The profile is consumed only during Shensha evaluation. It never changes the four
+  The profile affects only Shensha evaluation. It never changes the four
   pillars and must not be inherited by future Shenshas without their own source audit.
   本配置仅在神煞评估期消费，不改变四柱；未来神煞须另行核对出处，不自动继承。
 
   Sources / 出处:
-  - 《命理探源·卷三强弱》, pp. 64-71 / 第 64–71 页:
+  - 《命理探源·卷三强弱》, pp. 64–71 / 第 64–71 页:
     https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
   - Searchable reference / 可检索参考:
     https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
@@ -287,9 +287,9 @@ class BaziSchool:
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
 + 天乙年日兼查、庚随甲戊的传统合并表 + 暗合 NORMAL_EXTENDED + 刑 LOOSE
-+ 拱局 SAME_STEM_NARROW + the WENZHEN Shensha anchor profile. /
++ 拱局 SAME_STEM_NARROW + 五项神煞 WENZHEN. /
 默认流派档案：晚子时换日、红艳查日干、羊刃子平五阳干、天乙年日兼查并取传统合并表、
-暗合最宽表、刑三取二、拱局同干狭义、五项神煞采用问真年日兼查。'''
+暗合最宽表、刑三取二、拱局同干狭义、五项神煞问真年日兼查。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 
