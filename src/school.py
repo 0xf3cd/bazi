@@ -201,10 +201,8 @@ class ShenshaAnchorProfile(Enum):
     the modern 问真 reading and the default this library has always used.
     年支、日支分别查余支；问真现代口径，也是本库既有默认。
   - MINGLI_TANYUAN: key on the day branch only, following Yuan Shushan's
-    《命理探源》 for all five. At birth, inspect the year, month, and hour branches;
-    that target scope is explicit for four entries and follows their shared chapter
-    convention for YIMA. 五项均从袁树珊《命理探源》取日支为锚；原局查年、月、时支，
-    其中四项由原文直载，驿马沿用同章同形查法。
+    《命理探源》 for all five. At birth, inspect the year, month, and hour branches.
+    五项均从袁树珊《命理探源》取日支为锚；原局查年、月、时支。
 
   Taohua (桃花) deliberately does not follow this profile: its day-only reading in
   《命理探源》 also requires a matching Nayin and limits targets to the month and hour.
@@ -216,9 +214,9 @@ class ShenshaAnchorProfile(Enum):
   本配置仅在神煞评估期消费，不改变四柱；未来神煞须另行核对出处，不自动继承。
 
   Sources / 出处:
-  - 《命理探源·卷三强弱》, pp. 64-70 / 第 64–70 页:
+  - 《命理探源·卷三强弱》, pp. 64-71 / 第 64–71 页:
     https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-  - Searchable transcription / 可检索转录:
+  - Searchable reference / 可检索参考:
     https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   - Wenzhen / 问真: https://book.taiyi.me/命/神煞大全
 
