@@ -8,7 +8,6 @@ import pytest
 
 from src.defines import Tiangan, Dizhi, Wuxing, DizhiRelation, ShierZhangsheng
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
-from src.utils import bazi_utils
 
 
 def test_basic() -> None:
@@ -119,6 +118,12 @@ def test_sanhe_shensha_tables() -> None:
       Dizhi.亥 : Dizhi.申, Dizhi.卯 : Dizhi.申, Dizhi.未 : Dizhi.申,
       Dizhi.巳 : Dizhi.寅, Dizhi.酉 : Dizhi.寅, Dizhi.丑 : Dizhi.寅,
     }),
+    (ShenshaRules.WANGSHEN, {
+      Dizhi.申 : Dizhi.亥, Dizhi.子 : Dizhi.亥, Dizhi.辰 : Dizhi.亥,
+      Dizhi.寅 : Dizhi.巳, Dizhi.午 : Dizhi.巳, Dizhi.戌 : Dizhi.巳,
+      Dizhi.亥 : Dizhi.寅, Dizhi.卯 : Dizhi.寅, Dizhi.未 : Dizhi.寅,
+      Dizhi.巳 : Dizhi.申, Dizhi.酉 : Dizhi.申, Dizhi.丑 : Dizhi.申,
+    }),
   )
 
   for table, expected in expected_tables:
@@ -126,11 +131,11 @@ def test_sanhe_shensha_tables() -> None:
 
 
 def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
-  group_tiangans = {
-    frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Tiangan.壬,
-    frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Tiangan.丙,
-    frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Tiangan.甲,
-    frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Tiangan.庚,
+  group_zhangsheng = {
+    frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Dizhi.申,
+    frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Dizhi.寅,
+    frozenset((Dizhi.亥, Dizhi.卯, Dizhi.未)) : Dizhi.亥,
+    frozenset((Dizhi.巳, Dizhi.酉, Dizhi.丑)) : Dizhi.巳,
   }
   table_places = (
     (ShenshaRules.TAOHUA,    ShierZhangsheng.沐浴),
@@ -138,12 +143,13 @@ def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
     (ShenshaRules.HUAGAI,    ShierZhangsheng.墓),
     (ShenshaRules.JIANGXING, ShierZhangsheng.帝旺),
     (ShenshaRules.JIESHA,    ShierZhangsheng.绝),
+    (ShenshaRules.WANGSHEN,  ShierZhangsheng.临官),
   )
 
-  assert set(group_tiangans) == set(DizhiRules.DIZHI_SANHE)
-  for sanhe, tiangan in group_tiangans.items():
+  assert set(group_zhangsheng) == set(DizhiRules.DIZHI_SANHE)
+  for sanhe, zhangsheng in group_zhangsheng.items():
     for table, place in table_places:
-      expected = bazi_utils.from_shier_zhangsheng(tiangan, place)
+      expected = Dizhi.from_index((zhangsheng.index + place.index) % len(Dizhi))
       assert {table[dizhi] for dizhi in sanhe} == {expected}
 
 

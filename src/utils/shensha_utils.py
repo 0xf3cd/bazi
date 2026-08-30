@@ -199,6 +199,27 @@ def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return _table_shensha(ShenshaRules.JIESHA, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
+def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check if the input `other_dizhi` is the WANGSHEN (亡神) of `year_or_day_dizhi`.
+  检查输入的地支是否是年支或日支的亡神。
+
+  Args:
+  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
+  - other_dizhi: (Dizhi) The other Dizhi.
+
+  Returns: (bool) Whether the `other_dizhi` is the WANGSHEN (亡神) of `year_or_day_dizhi`.
+
+  Examples:
+  - wangshen(Dizhi.申, Dizhi.亥)
+    - return: True
+  - wangshen(Dizhi.申, Dizhi.巳)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.WANGSHEN, year_or_day_dizhi, other_dizhi, Dizhi)
+
+
 def yangren(
   day_master: Tiangan,
   dizhi: Dizhi,

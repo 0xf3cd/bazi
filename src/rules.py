@@ -700,6 +700,20 @@ class ShenshaRules:
     '巳酉丑' : '寅',
   })
 
+  # WANGSHEN (亡神) is the Linguan (临官) branch of each 三合 group's Wuxing,
+  # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
+  # 亡神取各三合局五行的临官位；《三命通会·卷三·论劫煞亡神》逐组明列。
+  # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #154).
+  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
+  # 问真以年支或日支为锚，查余支。
+  # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#亡神 (issue #154).
+  WANGSHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_sanhe_groups({
+    '申子辰' : '亥',
+    '寅午戌' : '巳',
+    '亥卯未' : '寅',
+    '巳酉丑' : '申',
+  })
+
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。
