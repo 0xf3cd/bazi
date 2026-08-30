@@ -12,7 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.school import KeyStem, SanheShenshaAnchor, BaziSchool, BaziConfig
+from src.school import KeyStem, ShenshaAnchorProfile, BaziSchool, BaziConfig
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
@@ -655,23 +655,23 @@ def test_random_cases(bazi: Bazi) -> None:
         return shensha_utils.taohua(y_dz, dz) or shensha_utils.taohua(d_dz, dz)
 
       def __yima(dz: Dizhi) -> bool:
-        return ((school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
+        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.yima(y_dz, dz)) or shensha_utils.yima(d_dz, dz))
 
       def __huagai(dz: Dizhi) -> bool:
-        return ((school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
+        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.huagai(y_dz, dz)) or shensha_utils.huagai(d_dz, dz))
 
       def __jiangxing(dz: Dizhi) -> bool:
-        return ((school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
+        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.jiangxing(y_dz, dz)) or shensha_utils.jiangxing(d_dz, dz))
 
       def __jiesha(dz: Dizhi) -> bool:
-        return ((school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
+        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.jiesha(y_dz, dz)) or shensha_utils.jiesha(d_dz, dz))
 
       def __wangshen(dz: Dizhi) -> bool:
-        return ((school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
+        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.wangshen(y_dz, dz)) or shensha_utils.wangshen(d_dz, dz))
 
       expected_taohua:    set[Dizhi] = set(filter(__taohua, transits_dz_set))

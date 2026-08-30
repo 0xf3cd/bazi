@@ -2,7 +2,7 @@
 
 '''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
 school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem` /
-`TianyiAnchor` / `SanheShenshaAnchor`),
+`TianyiAnchor` / `ShenshaAnchorProfile`),
 and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
@@ -193,34 +193,39 @@ class TianyiAnchor(Enum):
   YEAR_AND_DAY = 2
 
 
-class SanheShenshaAnchor(Enum):
-  '''The anchor branch profile used by YIMA, HUAGAI, JIANGXING, JIESHA, and WANGSHEN.
-  驿马、华盖、将星、劫煞、亡神共用的锚支口径。
+class ShenshaAnchorProfile(Enum):
+  '''The source profile governing the anchor branches of YIMA, HUAGAI, JIANGXING,
+  JIESHA, and WANGSHEN. 驿马、华盖、将星、劫煞、亡神共用的锚支出处 profile。
 
-  - YEAR_AND_DAY: inspect the remaining branches from both the year and day branches;
-    the modern Wenzhen (问真) reading and the default this library has always used.
+  - WENZHEN: inspect the remaining branches from both the year and day branches;
+    the modern 问真 reading and the default this library has always used.
     年支、日支分别查余支；问真现代口径，也是本库既有默认。
-  - DAY_ONLY: inspect the other branches from the day branch only, following Yuan
-    Shushan's 《命理探源》 for these five Shenshas.
-    仅以日支查其余支；五项均从袁树珊《命理探源》口径。
+  - MINGLI_TANYUAN: key on the day branch only, following Yuan Shushan's
+    《命理探源》 for all five. At birth, inspect the year, month, and hour branches;
+    that target scope is explicit for four entries and follows their shared chapter
+    convention for YIMA. 五项均从袁树珊《命理探源》取日支为锚；原局查年、月、时支，
+    其中四项由原文直载，驿马沿用同章同形查法。
 
   Taohua (桃花) deliberately does not follow this profile: its day-only reading in
-  《命理探源》 also requires a matching Nayin, so changing only its anchor would create
-  a rule the source does not state. 桃花不随本配置：《命理探源》的日支桃花另有纳音条件，
-  不能只切锚而沿用现表。
+  《命理探源》 also requires a matching Nayin and limits targets to the month and hour.
+  Changing only its anchor would create a rule the source does not state.
+  桃花不随本配置：《命理探源》的日支桃花另有纳音条件，且只查月、时；不能只切锚而沿用现表。
 
   The profile is consumed only during Shensha evaluation. It never changes the four
   pillars and must not be inherited by future Shenshas without their own source audit.
   本配置仅在神煞评估期消费，不改变四柱；未来神煞须另行核对出处，不自动继承。
 
   Sources / 出处:
-  - 《命理探源》: https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
+  - 《命理探源·卷三强弱》, pp. 64-70 / 第 64–70 页:
+    https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
+  - Searchable transcription / 可检索转录:
+    https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   - Wenzhen / 问真: https://book.taiyi.me/命/神煞大全
 
   No change should be made to the existing definitions. Only add new definitions.
   '''
-  YEAR_AND_DAY = 0
-  DAY_ONLY     = 1
+  WENZHEN        = 0
+  MINGLI_TANYUAN = 1
 
 
 @dataclass(frozen=True)
@@ -258,7 +263,7 @@ class BaziSchool:
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   tianyi_anchor: TianyiAnchor = TianyiAnchor.YEAR_AND_DAY
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  sanhe_shensha_anchor: SanheShenshaAnchor = SanheShenshaAnchor.YEAR_AND_DAY
+  shensha_anchor_profile: ShenshaAnchorProfile = ShenshaAnchorProfile.WENZHEN
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -278,15 +283,15 @@ class BaziSchool:
       raise TypeError(f'Expected TianyiAnchor, got {type(self.tianyi_anchor)}')
     if not isinstance(self.tianyi_def, ShenshaRules.TianyiDef):
       raise TypeError(f'Expected TianyiDef, got {type(self.tianyi_def)}')
-    if not isinstance(self.sanhe_shensha_anchor, SanheShenshaAnchor):
-      raise TypeError(f'Expected SanheShenshaAnchor, got {type(self.sanhe_shensha_anchor)}')
+    if not isinstance(self.shensha_anchor_profile, ShenshaAnchorProfile):
+      raise TypeError(f'Expected ShenshaAnchorProfile, got {type(self.shensha_anchor_profile)}')
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
 + 天乙年日兼查、庚随甲戊的传统合并表 + 暗合 NORMAL_EXTENDED + 刑 LOOSE
-+ 拱局 SAME_STEM_NARROW + five 三合 Shenshas keyed by year and day. /
++ 拱局 SAME_STEM_NARROW + the WENZHEN Shensha anchor profile. /
 默认流派档案：晚子时换日、红艳查日干、羊刃子平五阳干、天乙年日兼查并取传统合并表、
-暗合最宽表、刑三取二、拱局同干狭义、五项三合神煞年日兼查。'''
+暗合最宽表、刑三取二、拱局同干狭义、五项神煞采用问真年日兼查。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

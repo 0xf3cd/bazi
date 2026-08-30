@@ -12,7 +12,7 @@ from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..rules import DizhiRules
-from ..school import KeyStem, TianyiAnchor, SanheShenshaAnchor, BaziSchool
+from ..school import KeyStem, TianyiAnchor, ShenshaAnchorProfile, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitSet
@@ -48,7 +48,7 @@ class _KeySource(Enum):
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
   ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
-  SANHE_DIZHI       = auto() # By the day Dizhi, or year and day Dizhis, selected as one source profile for 驿马、华盖、将星、劫煞、亡神.
+  PROFILED_DIZHI    = auto() # By the day Dizhi, or year and day Dizhis, selected as one source profile for 驿马、华盖、将星、劫煞、亡神.
 
 
 @dataclass(frozen=True)
@@ -72,8 +72,8 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN),
   'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _KeySource.YEAR_DIZHI),
   'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _KeySource.YEAR_DIZHI),
-  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.SANHE_DIZHI),
-  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.SANHE_DIZHI),
+  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.PROFILED_DIZHI),
+  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.PROFILED_DIZHI),
   'yangren'  : _ShenshaSpec(
     shensha_utils.yangren,
     _KeySource.DAY_MASTER,
@@ -84,9 +84,9 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     _KeySource.ANCHOR_TIANGANS,
     lambda school: school.tianyi_def,
   ),
-  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.SANHE_DIZHI),
-  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.SANHE_DIZHI),
-  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.SANHE_DIZHI),
+  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI),
+  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI),
+  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI),
 })
 
 
@@ -123,16 +123,16 @@ def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
     raise AssertionError(f'`TianyiAnchor` not wired up in `_tianyi_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
 
 
-def _sanhe_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
-  '''Resolve the anchors selected for the five source-profiled 三合 Shenshas.
+def _profiled_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
+  '''Resolve the anchors selected for the five source-profiled Shenshas.
   解析驿马、华盖、将星、劫煞、亡神所选出处 profile 的锚支。'''
-  anchor: Final[SanheShenshaAnchor] = bazi.config.school.sanhe_shensha_anchor
-  if anchor is SanheShenshaAnchor.YEAR_AND_DAY:
+  profile: Final[ShenshaAnchorProfile] = bazi.config.school.shensha_anchor_profile
+  if profile is ShenshaAnchorProfile.WENZHEN:
     return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
-  elif anchor is SanheShenshaAnchor.DAY_ONLY:
+  elif profile is ShenshaAnchorProfile.MINGLI_TANYUAN:
     return (bazi.day_pillar.dizhi,)
   else:
-    raise AssertionError(f'`SanheShenshaAnchor` not wired up: {anchor}') # pragma: no cover # Unreachable invariant guard.
+    raise AssertionError(f'`ShenshaAnchorProfile` not wired up: {profile}') # pragma: no cover # Unreachable invariant guard.
 
 
 def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, ...]:
@@ -147,8 +147,8 @@ def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, 
     return (_hongyan_anchor(bazi),)
   elif key_source is _KeySource.ANCHOR_TIANGANS:
     return _tianyi_anchors(bazi)
-  elif key_source is _KeySource.SANHE_DIZHI:
-    return _sanhe_shensha_anchors(bazi)
+  elif key_source is _KeySource.PROFILED_DIZHI:
+    return _profiled_shensha_anchors(bazi)
   else:
     # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
     # added a member but forgot to wire it -- not something users can trigger.
@@ -175,12 +175,12 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
     year_key, day_key = keys
     args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
-  elif spec.key is _KeySource.SANHE_DIZHI:
-    if bazi.config.school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY:
+  elif spec.key is _KeySource.PROFILED_DIZHI:
+    if bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN:
       year_key, day_key = keys
       args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
     else:
-      assert bazi.config.school.sanhe_shensha_anchor is SanheShenshaAnchor.DAY_ONLY
+      assert bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.MINGLI_TANYUAN
       day_key, = keys
       args = (((day_key,), (y_dz, m_dz, h_dz)),)
   else:
