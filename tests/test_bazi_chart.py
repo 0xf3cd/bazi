@@ -12,7 +12,10 @@ import pytest
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, Bazi
 from src.calendar import calendar_utils_of
-from src.school import BaziPrecision, DayunYearRule, BaziConfig, BaziSchool, DayRollover, KeyStem, TianyiAnchor
+from src.school import (
+  BaziPrecision, DayunYearRule, BaziConfig, BaziSchool, DayRollover, KeyStem, TianyiAnchor,
+  ShenshaAnchorProfile,
+)
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import bazi_utils
 
@@ -646,6 +649,7 @@ def test_json() -> None:
                       gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                       tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
                       tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
+                      shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                     ),
                   ))
     )

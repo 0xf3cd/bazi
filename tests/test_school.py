@@ -14,8 +14,8 @@ from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import dizhi_utils, shensha_utils
 from src.school import (
-  BaziPrecision, DayunYearRule, DayRollover, KeyStem, TianyiAnchor, BaziSchool, BaziConfig,
-  DEFAULT_SCHOOL, DEFAULT_CONFIG,
+  BaziPrecision, DayunYearRule, DayRollover, KeyStem, TianyiAnchor, ShenshaAnchorProfile,
+  BaziSchool, BaziConfig, DEFAULT_SCHOOL, DEFAULT_CONFIG,
 )
 
 
@@ -47,6 +47,10 @@ def test_school_enums_basic() -> None:
   assert TianyiAnchor.YEAR_MASTER.value == 1 # 年干.
   assert TianyiAnchor.YEAR_AND_DAY.value == 2 # 年日兼查, the default.
 
+  assert len(ShenshaAnchorProfile) == 2
+  assert ShenshaAnchorProfile.WENZHEN.value == 0        # 问真年日兼查, the default.
+  assert ShenshaAnchorProfile.MINGLI_TANYUAN.value == 1 # 《命理探源》日支单锚.
+
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
   assert len(ShenshaRules.YangrenDef) == 3
@@ -59,6 +63,7 @@ def test_school_defaults() -> None:
   assert BaziSchool().yangren_def is ShenshaRules.YangrenDef.ZIPING
   assert BaziSchool().tianyi_anchor is TianyiAnchor.YEAR_AND_DAY
   assert BaziSchool().tianyi_def is ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
+  assert BaziSchool().shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
@@ -287,6 +292,7 @@ def test_eq_hash_include_school() -> None:
     BaziSchool(yangren_def=ShenshaRules.YangrenDef.DIWANG),
     BaziSchool(tianyi_anchor=TianyiAnchor.DAY_MASTER),
     BaziSchool(tianyi_def=ShenshaRules.TianyiDef.YINGUI),
+    BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
     BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
@@ -319,6 +325,7 @@ def test_json_roundtrip_default_school() -> None:
     'yangren_def': 'ZIPING',
     'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
     'tianyi_anchor': 'YEAR_AND_DAY', 'tianyi_def': 'GENG_WITH_JIA_WU',
+    'shensha_anchor_profile': 'WENZHEN',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -336,6 +343,7 @@ def test_json_roundtrip_default_school() -> None:
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                     tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
                     tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
+                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                   ),
                 ))
   )
@@ -346,8 +354,8 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  # All eight knobs flipped, so each field proves it roundtrips (issue #69).
-  # 八个旋钮全部取非默认值——每个字段各自证明它能往返。
+  # All nine knobs flipped, so each field proves it roundtrips (issue #69).
+  # 九个旋钮全部取非默认值——每个字段各自证明它能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_key=KeyStem.YEAR_MASTER,
@@ -357,6 +365,7 @@ def test_json_roundtrip_non_default_school() -> None:
     gong_def=DizhiRules.GongDef.LU_NARROW,
     tianyi_anchor=TianyiAnchor.YEAR_MASTER,
     tianyi_def=ShenshaRules.TianyiDef.YINGUI,
+    shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -366,6 +375,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'yangren_def': 'DIWANG',
     'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
     'tianyi_anchor': 'YEAR_MASTER', 'tianyi_def': 'YINGUI',
+    'shensha_anchor_profile': 'MINGLI_TANYUAN',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -383,6 +393,7 @@ def test_json_roundtrip_non_default_school() -> None:
                     gong_def=DizhiRules.GongDef[j['school']['gong_def']],
                     tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
                     tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
+                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                   ),
                 ))
   )
