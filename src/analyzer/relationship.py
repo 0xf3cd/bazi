@@ -87,6 +87,8 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI),
   'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI),
   'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI),
+  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI),
+  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _KeySource.YEAR_DIZHI),
 })
 
 
@@ -288,6 +290,10 @@ class ShenshaAnalysis(TypedDict):
   jiesha:    frozenset[Dizhi]
   # The Wangshen Dizhis  (亡神所在地支)
   wangshen:  frozenset[Dizhi]
+  # The Guchen Dizhis    (孤辰所在地支)
+  guchen:    frozenset[Dizhi]
+  # The Guasu Dizhis     (寡宿所在地支)
+  guasu:     frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -310,6 +316,8 @@ class AtBirthAnalysis:
       'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
       'jiesha'   : _eval_at_birth(_REGISTRY['jiesha'],    bazi),
       'wangshen' : _eval_at_birth(_REGISTRY['wangshen'],  bazi),
+      'guchen'   : _eval_at_birth(_REGISTRY['guchen'],    bazi),
+      'guasu'    : _eval_at_birth(_REGISTRY['guasu'],     bazi),
     }
 
   @property
@@ -396,6 +404,8 @@ class TransitAnalysis:
       'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
       'jiesha'   : _eval_transits(_REGISTRY['jiesha'],    bazi, transit_dizhis),
       'wangshen' : _eval_transits(_REGISTRY['wangshen'],  bazi, transit_dizhis),
+      'guchen'   : _eval_transits(_REGISTRY['guchen'],    bazi, transit_dizhis),
+      'guasu'    : _eval_transits(_REGISTRY['guasu'],     bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:

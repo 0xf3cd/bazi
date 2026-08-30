@@ -153,6 +153,21 @@ def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
       assert {table[dizhi] for dizhi in sanhe} == {expected}
 
 
+def test_guchen_guasu_tables() -> None:
+  assert ShenshaRules.GUCHEN == {
+    Dizhi.亥 : Dizhi.寅, Dizhi.子 : Dizhi.寅, Dizhi.丑 : Dizhi.寅,
+    Dizhi.寅 : Dizhi.巳, Dizhi.卯 : Dizhi.巳, Dizhi.辰 : Dizhi.巳,
+    Dizhi.巳 : Dizhi.申, Dizhi.午 : Dizhi.申, Dizhi.未 : Dizhi.申,
+    Dizhi.申 : Dizhi.亥, Dizhi.酉 : Dizhi.亥, Dizhi.戌 : Dizhi.亥,
+  }
+  assert ShenshaRules.GUASU == {
+    Dizhi.亥 : Dizhi.戌, Dizhi.子 : Dizhi.戌, Dizhi.丑 : Dizhi.戌,
+    Dizhi.寅 : Dizhi.丑, Dizhi.卯 : Dizhi.丑, Dizhi.辰 : Dizhi.丑,
+    Dizhi.巳 : Dizhi.辰, Dizhi.午 : Dizhi.辰, Dizhi.未 : Dizhi.辰,
+    Dizhi.申 : Dizhi.未, Dizhi.酉 : Dizhi.未, Dizhi.戌 : Dizhi.未,
+  }
+
+
 def test_yangren() -> None:
   assert set(ShenshaRules.YANGREN) == set(ShenshaRules.YangrenDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.YANGREN.values())
