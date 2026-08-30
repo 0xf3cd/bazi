@@ -15,7 +15,7 @@ from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
-from src.school import BaziConfig, BaziSchool, KeyStem, TianyiAnchor
+from src.school import BaziConfig, BaziSchool, KeyStem, TianyiAnchor, SanheShenshaAnchor
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
@@ -43,6 +43,7 @@ def test_at_birth_shensha() -> None:
 
     dm: Tiangan = chart.bazi.day_master
     y, m, d, h = chart.bazi.four_dizhis
+    sanhe_year_anchor = chart.bazi.config.school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
 
     # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
     anchor: Tiangan = dm if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else chart.bazi.year_pillar.tiangan
@@ -86,9 +87,10 @@ def test_at_birth_shensha() -> None:
 
     # Yima / 驿马
     expected_yima: list[Dizhi] = []
-    for dz1, dz2 in itertools.product([y], [m, d, h]):
-      if shensha_utils.yima(dz1, dz2):
-        expected_yima.append(dz2)
+    if sanhe_year_anchor:
+      for dz1, dz2 in itertools.product([y], [m, d, h]):
+        if shensha_utils.yima(dz1, dz2):
+          expected_yima.append(dz2)
     for dz1, dz2 in itertools.product([d], [y, m, h]):
       if shensha_utils.yima(dz1, dz2):
         expected_yima.append(dz2)
@@ -97,9 +99,10 @@ def test_at_birth_shensha() -> None:
 
     # Huagai / 华盖
     expected_huagai: list[Dizhi] = []
-    for dz1, dz2 in itertools.product([y], [m, d, h]):
-      if shensha_utils.huagai(dz1, dz2):
-        expected_huagai.append(dz2)
+    if sanhe_year_anchor:
+      for dz1, dz2 in itertools.product([y], [m, d, h]):
+        if shensha_utils.huagai(dz1, dz2):
+          expected_huagai.append(dz2)
     for dz1, dz2 in itertools.product([d], [y, m, h]):
       if shensha_utils.huagai(dz1, dz2):
         expected_huagai.append(dz2)
@@ -132,9 +135,10 @@ def test_at_birth_shensha() -> None:
 
     # Jiangxing / 将星
     expected_jiangxing: list[Dizhi] = []
-    for dz1, dz2 in itertools.product([y], [m, d, h]):
-      if shensha_utils.jiangxing(dz1, dz2):
-        expected_jiangxing.append(dz2)
+    if sanhe_year_anchor:
+      for dz1, dz2 in itertools.product([y], [m, d, h]):
+        if shensha_utils.jiangxing(dz1, dz2):
+          expected_jiangxing.append(dz2)
     for dz1, dz2 in itertools.product([d], [y, m, h]):
       if shensha_utils.jiangxing(dz1, dz2):
         expected_jiangxing.append(dz2)
@@ -143,9 +147,10 @@ def test_at_birth_shensha() -> None:
 
     # Jiesha / 劫煞
     expected_jiesha: list[Dizhi] = []
-    for dz1, dz2 in itertools.product([y], [m, d, h]):
-      if shensha_utils.jiesha(dz1, dz2):
-        expected_jiesha.append(dz2)
+    if sanhe_year_anchor:
+      for dz1, dz2 in itertools.product([y], [m, d, h]):
+        if shensha_utils.jiesha(dz1, dz2):
+          expected_jiesha.append(dz2)
     for dz1, dz2 in itertools.product([d], [y, m, h]):
       if shensha_utils.jiesha(dz1, dz2):
         expected_jiesha.append(dz2)
@@ -154,9 +159,10 @@ def test_at_birth_shensha() -> None:
 
     # Wangshen / 亡神
     expected_wangshen: list[Dizhi] = []
-    for dz1, dz2 in itertools.product([y], [m, d, h]):
-      if shensha_utils.wangshen(dz1, dz2):
-        expected_wangshen.append(dz2)
+    if sanhe_year_anchor:
+      for dz1, dz2 in itertools.product([y], [m, d, h]):
+        if shensha_utils.wangshen(dz1, dz2):
+          expected_wangshen.append(dz2)
     for dz1, dz2 in itertools.product([d], [y, m, h]):
       if shensha_utils.wangshen(dz1, dz2):
         expected_wangshen.append(dz2)
@@ -272,6 +278,71 @@ def test_wangshen_at_transits() -> None:
     liunian=Ganzhi.from_str('丙寅'),
   ))['wangshen'] == {Dizhi.巳, Dizhi.寅}
   assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))['wangshen'] == set()
+
+
+ShenshaGetter = Callable[[ShenshaAnalysis], frozenset[Dizhi]]
+
+
+@pytest.mark.parametrize('getter, birth_time, pillars, default_expected, day_expected', [
+  (lambda result: result['yima'], '1972-07-26 03:14', ('壬子', '丁未', '戊午', '甲寅'),
+   frozenset((Dizhi.寅,)), frozenset()),
+  (lambda result: result['huagai'], '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
+   frozenset((Dizhi.辰,)), frozenset()),
+  (lambda result: result['jiangxing'], '2025-09-19 14:00', ('乙巳', '乙酉', '辛卯', '乙未'),
+   frozenset((Dizhi.酉,)), frozenset()),
+  (lambda result: result['jiesha'], '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
+   frozenset((Dizhi.巳,)), frozenset()),
+  (lambda result: result['wangshen'], '2061-08-20 12:04', ('辛巳', '丙申', '庚午', '壬午'),
+   frozenset((Dizhi.巳, Dizhi.申)), frozenset((Dizhi.巳,))),
+])
+def test_sanhe_shensha_anchor_at_birth(
+  getter: ShenshaGetter,
+  birth_time: str,
+  pillars: tuple[str, str, str, str],
+  default_expected: frozenset[Dizhi],
+  day_expected: frozenset[Dizhi],
+) -> None:
+  default_chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  day_chart = BaziChart(Bazi.create(
+    birth_time,
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(sanhe_shensha_anchor=SanheShenshaAnchor.DAY_ONLY)),
+  ))
+  assert tuple(map(str, default_chart.bazi.pillars)) == pillars
+
+  default_shensha = RelationshipAnalyzer(default_chart).at_birth.shensha
+  day_shensha = RelationshipAnalyzer(day_chart).at_birth.shensha
+  assert getter(default_shensha) == default_expected
+  assert getter(day_shensha) == day_expected
+  assert default_shensha['taohua'] == day_shensha['taohua']
+
+
+@pytest.mark.parametrize('getter, year_ganzhi, day_ganzhi', [
+  (lambda result: result['yima'], Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
+  (lambda result: result['huagai'], Ganzhi.from_str('甲戌'), Ganzhi.from_str('乙未')),
+  (lambda result: result['jiangxing'], Ganzhi.from_str('甲午'), Ganzhi.from_str('乙卯')),
+  (lambda result: result['jiesha'], Ganzhi.from_str('乙亥'), Ganzhi.from_str('甲申')),
+  (lambda result: result['wangshen'], Ganzhi.from_str('乙巳'), Ganzhi.from_str('甲寅')),
+])
+def test_sanhe_shensha_anchor_at_transits(
+  getter: ShenshaGetter,
+  year_ganzhi: Ganzhi,
+  day_ganzhi: Ganzhi,
+) -> None:
+  default_chart = BaziChart(Bazi.create('2023-01-17 15:42', BaziGender.MALE))
+  day_chart = BaziChart(Bazi.create(
+    '2023-01-17 15:42',
+    BaziGender.MALE,
+    BaziConfig(school=BaziSchool(sanhe_shensha_anchor=SanheShenshaAnchor.DAY_ONLY)),
+  ))
+  assert tuple(map(str, default_chart.bazi.pillars)) == ('壬寅', '癸丑', '乙亥', '甲申')
+  transits = TransitSet(dayun=year_ganzhi, liunian=day_ganzhi)
+
+  default_shensha = RelationshipAnalyzer(default_chart).transits.shensha(transits)
+  day_shensha = RelationshipAnalyzer(day_chart).transits.shensha(transits)
+  assert getter(default_shensha) == {year_ganzhi.dizhi, day_ganzhi.dizhi}
+  assert getter(day_shensha) == {day_ganzhi.dizhi}
+  assert default_shensha['taohua'] == day_shensha['taohua']
 
 
 @pytest.mark.parametrize('birth_time, pillars, yangren_index', [
@@ -467,6 +538,7 @@ def test_transit_shensha() -> None:
 
     y_dz = chart.bazi.year_pillar.dizhi
     d_dz = chart.bazi.day_pillar.dizhi
+    sanhe_year_anchor = chart.bazi.config.school.sanhe_shensha_anchor is SanheShenshaAnchor.YEAR_AND_DAY
 
     # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
     anchor: Tiangan = (chart.bazi.day_master if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER
@@ -515,7 +587,7 @@ def test_transit_shensha() -> None:
       # Yima / 驿马
       expected = []
       for dz in transit_dz:
-        if shensha_utils.yima(y_dz, dz):
+        if sanhe_year_anchor and shensha_utils.yima(y_dz, dz):
           expected.append(dz)
         if shensha_utils.yima(d_dz, dz):
           expected.append(dz)
@@ -524,7 +596,7 @@ def test_transit_shensha() -> None:
       # Huagai / 华盖
       expected = []
       for dz in transit_dz:
-        if shensha_utils.huagai(y_dz, dz):
+        if sanhe_year_anchor and shensha_utils.huagai(y_dz, dz):
           expected.append(dz)
         if shensha_utils.huagai(d_dz, dz):
           expected.append(dz)
@@ -558,7 +630,7 @@ def test_transit_shensha() -> None:
       # Jiangxing / 将星
       expected = []
       for dz in transit_dz:
-        if shensha_utils.jiangxing(y_dz, dz):
+        if sanhe_year_anchor and shensha_utils.jiangxing(y_dz, dz):
           expected.append(dz)
         if shensha_utils.jiangxing(d_dz, dz):
           expected.append(dz)
@@ -567,7 +639,7 @@ def test_transit_shensha() -> None:
       # Jiesha / 劫煞
       expected = []
       for dz in transit_dz:
-        if shensha_utils.jiesha(y_dz, dz):
+        if sanhe_year_anchor and shensha_utils.jiesha(y_dz, dz):
           expected.append(dz)
         if shensha_utils.jiesha(d_dz, dz):
           expected.append(dz)
@@ -576,7 +648,7 @@ def test_transit_shensha() -> None:
       # Wangshen / 亡神
       expected = []
       for dz in transit_dz:
-        if shensha_utils.wangshen(y_dz, dz):
+        if sanhe_year_anchor and shensha_utils.wangshen(y_dz, dz):
           expected.append(dz)
         if shensha_utils.wangshen(d_dz, dz):
           expected.append(dz)
@@ -1032,6 +1104,15 @@ def test_transit_analysis_negative() -> None:
 def test_registry_matches_shensha_analysis_keys() -> None:
   '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
+
+
+def test_sanhe_shensha_anchor_profile_has_exact_consumers() -> None:
+  expected = {'yima', 'huagai', 'jiangxing', 'jiesha', 'wangshen'}
+  assert {
+    name for name, spec in _REGISTRY.items()
+    if spec.key is relationship_module._KeySource.SANHE_DIZHI
+  } == expected
+  assert _REGISTRY['taohua'].key is relationship_module._KeySource.YEAR_OR_DAY_DIZHI
 
 
 def test_no_bare_dizhi_discovery_calls() -> None:
