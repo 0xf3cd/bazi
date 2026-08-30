@@ -717,8 +717,12 @@ class ShenshaRules:
   # 《三命通会·卷三·论孤辰寡宿》 groups year branches by direction: the branch one step
   # forward from each group is GUCHEN (孤辰), and the branch one step back is GUASU (寡宿).
   # 《三命通会·卷三·论孤辰寡宿》按出生年支所属方位组三支取法：进前一辰为孤辰，退后一辰为寡宿。
-  # Source / 出处: https://book.taiyi.me/命/三命通会/三命通会(卷三)#论孤辰寡宿 (issue #161).
-  # Cross-check / 校核: https://book.taiyi.me/命/神煞大全#孤辰 (issue #161).
+  # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #161).
+  # Anchor and scope sources / 查法锚与范围出处:
+  # https://book.taiyi.me/命/神煞大全#孤辰 and https://book.taiyi.me/命/神煞大全#寡宿.
+  # The same 《三命通会》 section quotes interpretation-level exclusions for connected
+  # Guchen/Guasu and for protection by Guiren. They do not erase the raw locations here.
+  # 同节所引「连属不言孤寡」及贵人包裹条款属解释层豁免，不抹去本表给出的原始命中位置。
   GUCHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
     '亥子丑' : '寅',
     '寅卯辰' : '巳',

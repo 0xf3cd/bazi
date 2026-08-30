@@ -38,6 +38,7 @@ def test_shensha_labels() -> None:
     ('寡宿', frozenset((Dizhi.亥,))),
   )
 
+  assert len(expected) == len(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
   assert _named_shensha(shensha) == expected
   assert shensha_strs(shensha) == [
     f'{label}：{colored_str(next(iter(dizhis)))}'
