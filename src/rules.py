@@ -839,6 +839,12 @@ class ShenshaRules:
     - DIWANG: all ten Tiangans take the branch opposite their Diwang (帝旺) branch.
       十干各取帝旺位的对冲支。
 
+    The lookup always keys on the Day Master. At birth it inspects all four branches;
+    transit analysis inspects the selected transit branches. The chart declares the
+    definition via `BaziSchool.feiren_def`, independently of `yangren_def`, and member
+    names are serialized into JSON. 查法固定以日干为锚；原局查四支，流运查所选流运支；定义由
+    `BaziSchool.feiren_def` 按盘声明，与 `yangren_def` 彼此独立，成员名进 JSON。
+
     Sources / 出处:
     - 《三命通会·卷三·论羊刃》:
       https://book.taiyi.me/命/三命通会/三命通会(卷三)
