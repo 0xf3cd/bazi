@@ -12,7 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.school import KeyStem, ShenshaAnchorProfile, BaziSchool, BaziConfig
+from src.school import KeyStem, ZaishaAnchor, ShenshaAnchorProfile, BaziSchool, BaziConfig
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
@@ -413,6 +413,7 @@ def test_case2() -> None:
   assert at_birth.shensha['feiren']    == {Dizhi.子}
   assert at_birth.shensha['tianyi']    == set()
   assert at_birth.shensha['jiangxing'] == {Dizhi.午}
+  assert at_birth.shensha['zaisha']    == {Dizhi.午}
   assert at_birth.shensha['jiesha']    == set()
   assert at_birth.shensha['wangshen']  == set()
   assert at_birth.shensha['guchen']    == set()
@@ -456,6 +457,7 @@ def test_case2() -> None:
     'feiren'   : frozenset([Dizhi.子]),
     'tianyi'   : frozenset([Dizhi.丑, Dizhi.未, Dizhi.亥, Dizhi.酉]),
     'jiangxing': frozenset([Dizhi.子, Dizhi.午]),
+    'zaisha'   : frozenset([Dizhi.午]),
     'jiesha'   : frozenset([Dizhi.巳, Dizhi.亥]),
     'wangshen' : frozenset([Dizhi.亥, Dizhi.巳]),
     'guchen'   : frozenset([Dizhi.寅]),
@@ -696,6 +698,10 @@ def test_random_cases(bazi: Bazi) -> None:
         return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.jiangxing(y_dz, dz)) or shensha_utils.jiangxing(d_dz, dz))
 
+      def __zaisha(dz: Dizhi) -> bool:
+        return (shensha_utils.zaisha(y_dz, dz) or
+                (school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY and shensha_utils.zaisha(d_dz, dz)))
+
       def __jiesha(dz: Dizhi) -> bool:
         return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
                  and shensha_utils.jiesha(y_dz, dz)) or shensha_utils.jiesha(d_dz, dz))
@@ -724,6 +730,7 @@ def test_random_cases(bazi: Bazi) -> None:
         transits_dz_set,
       ))
       expected_jiangxing: set[Dizhi] = set(filter(__jiangxing, transits_dz_set))
+      expected_zaisha:    set[Dizhi] = set(filter(__zaisha, transits_dz_set))
       expected_jiesha:    set[Dizhi] = set(filter(__jiesha, transits_dz_set))
       expected_wangshen:  set[Dizhi] = set(filter(__wangshen, transits_dz_set))
       expected_guchen:    set[Dizhi] = set(filter(lambda dz: shensha_utils.guchen(y_dz, dz), transits_dz_set))
@@ -742,6 +749,7 @@ def test_random_cases(bazi: Bazi) -> None:
       assert expected_feiren == shensha['feiren']
       assert expected_tianyi == shensha['tianyi']
       assert expected_jiangxing == shensha['jiangxing']
+      assert expected_zaisha == shensha['zaisha']
       assert expected_jiesha == shensha['jiesha']
       assert expected_wangshen == shensha['wangshen']
       assert expected_guchen == shensha['guchen']

@@ -686,6 +686,23 @@ class ShenshaRules:
     '巳酉丑' : '酉',
   })
 
+  # ZAISHA (灾煞) is the branch opposing each 三合 group's Jiangxing (将星),
+  # enumerated group by group in 《三命通会·卷三·论灾煞》.
+  # 灾煞取各三合局将星的对冲支；《三命通会·卷三·论灾煞》逐组明列。
+  # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #174).
+  # Anchor sources / 查法锚出处: 问真 uses the year branch; 高人 uses both year and day
+  # branches. These alternatives are selected by `BaziSchool.zaisha_anchor` (issue #174).
+  # 问真查年支，高人查年支与日支；由 `BaziSchool.zaisha_anchor` 选择。
+  # Modern compilations also call this 白虎煞; the public rule and display retain the
+  # classical name 灾煞 because other distinct 白虎 tables circulate.
+  # 现代汇编亦称白虎煞；另有不同白虎表流传，故公开规则与显示仍用古名灾煞。
+  ZAISHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
+    '申子辰' : '午',
+    '寅午戌' : '子',
+    '巳酉丑' : '卯',
+    '亥卯未' : '酉',
+  })
+
   # JIESHA (劫煞) is the Jue (绝) branch of each 三合 group's Wuxing,
   # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
   # 劫煞取各三合局五行的绝位；《三命通会·卷三·论劫煞亡神》逐组明列。

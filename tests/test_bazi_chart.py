@@ -14,7 +14,7 @@ from src.bazi import BaziGender, Bazi
 from src.calendar import calendar_utils_of
 from src.school import (
   BaziPrecision, DayunYearRule, BaziConfig, BaziSchool, DayRollover, KeyStem, TianyiAnchor,
-  JinyuAnchor, ShenshaAnchorProfile,
+  JinyuAnchor, ZaishaAnchor, ShenshaAnchorProfile,
 )
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import bazi_utils
@@ -652,6 +652,7 @@ def test_json() -> None:
                       shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                       jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
                       feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
+                      zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
                     ),
                   ))
     )

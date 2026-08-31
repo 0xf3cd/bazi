@@ -112,6 +112,12 @@ def test_sanhe_shensha_tables() -> None:
       Dizhi.亥 : Dizhi.卯, Dizhi.卯 : Dizhi.卯, Dizhi.未 : Dizhi.卯,
       Dizhi.巳 : Dizhi.酉, Dizhi.酉 : Dizhi.酉, Dizhi.丑 : Dizhi.酉,
     }),
+    (ShenshaRules.ZAISHA, {
+      Dizhi.申 : Dizhi.午, Dizhi.子 : Dizhi.午, Dizhi.辰 : Dizhi.午,
+      Dizhi.寅 : Dizhi.子, Dizhi.午 : Dizhi.子, Dizhi.戌 : Dizhi.子,
+      Dizhi.巳 : Dizhi.卯, Dizhi.酉 : Dizhi.卯, Dizhi.丑 : Dizhi.卯,
+      Dizhi.亥 : Dizhi.酉, Dizhi.卯 : Dizhi.酉, Dizhi.未 : Dizhi.酉,
+    }),
     (ShenshaRules.JIESHA, {
       Dizhi.申 : Dizhi.巳, Dizhi.子 : Dizhi.巳, Dizhi.辰 : Dizhi.巳,
       Dizhi.寅 : Dizhi.亥, Dizhi.午 : Dizhi.亥, Dizhi.戌 : Dizhi.亥,
@@ -128,6 +134,15 @@ def test_sanhe_shensha_tables() -> None:
 
   for table, expected in expected_tables:
     assert tuple(table.items()) == tuple(expected.items())
+
+
+def test_zaisha_table_is_jiangxing_chong() -> None:
+  assert set(ShenshaRules.ZAISHA) == set(ShenshaRules.JIANGXING) == set(Dizhi)
+  for anchor in Dizhi:
+    assert frozenset((
+      ShenshaRules.JIANGXING[anchor],
+      ShenshaRules.ZAISHA[anchor],
+    )) in DizhiRules.DIZHI_CHONG
 
 
 def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:

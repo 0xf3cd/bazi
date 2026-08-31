@@ -12,7 +12,7 @@ from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..rules import DizhiRules
-from ..school import KeyStem, TianyiAnchor, JinyuAnchor, ShenshaAnchorProfile, BaziSchool
+from ..school import KeyStem, TianyiAnchor, JinyuAnchor, ZaishaAnchor, ShenshaAnchorProfile, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitSet
@@ -54,6 +54,7 @@ class _KeySource(Enum):
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
   ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
   JINYU_ANCHOR_TIANGANS = auto() # By the Day Master alone, or both year/day Tiangans, as selected for 金舆 (see `_jinyu_anchors`).
+  ZAISHA_ANCHOR_DIZHIS = auto() # By the year Dizhi alone, or both year/day Dizhis, as selected for 灾煞 (see `_zaisha_anchors`).
   PROFILED_DIZHI    = auto() # By the day Dizhi alone, or both year and day Dizhis, as selected by the source profile for 驿马、华盖、将星、劫煞、亡神 (see `_profiled_shensha_anchors`).
 
 
@@ -96,6 +97,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     lambda school: school.tianyi_def,
   ),
   'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI),
+  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _KeySource.ZAISHA_ANCHOR_DIZHIS),
   'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI),
   'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI),
   'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI),
@@ -150,6 +152,18 @@ def _jinyu_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
     raise AssertionError(f'`JinyuAnchor` not wired up in `_jinyu_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
 
 
+def _zaisha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
+  '''Resolve the ZAISHA (灾煞) anchors selected by `BaziSchool.zaisha_anchor`.
+  按 `BaziSchool.zaisha_anchor` 解析灾煞锚支。'''
+  anchor: Final[ZaishaAnchor] = bazi.config.school.zaisha_anchor
+  if anchor is ZaishaAnchor.YEAR:
+    return (bazi.year_pillar.dizhi,)
+  elif anchor is ZaishaAnchor.YEAR_AND_DAY:
+    return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
+  else:
+    raise AssertionError(f'`ZaishaAnchor` not wired up in `_zaisha_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
+
+
 def _profiled_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
   '''Resolve the YIMA, HUAGAI, JIANGXING, JIESHA, and WANGSHEN anchors selected by
   `BaziSchool.shensha_anchor_profile`.
@@ -177,6 +191,8 @@ def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, 
     return _tianyi_anchors(bazi)
   elif key_source is _KeySource.JINYU_ANCHOR_TIANGANS:
     return _jinyu_anchors(bazi)
+  elif key_source is _KeySource.ZAISHA_ANCHOR_DIZHIS:
+    return _zaisha_anchors(bazi)
   elif key_source is _KeySource.PROFILED_DIZHI:
     return _profiled_shensha_anchors(bazi)
   else:
@@ -202,6 +218,14 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   args: tuple[_ArgsType, ...]
   if spec.key is _KeySource.YEAR_DIZHI:
     args = ((keys, (m_dz, d_dz, h_dz)),)
+  elif spec.key is _KeySource.ZAISHA_ANCHOR_DIZHIS:
+    if bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR:
+      year_key, = keys
+      args = (((year_key,), (m_dz, d_dz, h_dz)),)
+    else:
+      assert bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY
+      year_key, day_key = keys
+      args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
   elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI or (
     spec.key is _KeySource.PROFILED_DIZHI
     and bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
@@ -314,6 +338,8 @@ class ShenshaAnalysis(TypedDict):
   tianyi:    frozenset[Dizhi]
   # The Jiangxing Dizhis (将星所在地支)
   jiangxing: frozenset[Dizhi]
+  # The Zaisha Dizhis    (灾煞所在地支)
+  zaisha:    frozenset[Dizhi]
   # The Jiesha Dizhis    (劫煞所在地支)
   jiesha:    frozenset[Dizhi]
   # The Wangshen Dizhis  (亡神所在地支)
@@ -347,6 +373,7 @@ class AtBirthAnalysis:
       'feiren'   : _eval_at_birth(_REGISTRY['feiren'],    bazi),
       'tianyi'   : _eval_at_birth(_REGISTRY['tianyi'],    bazi),
       'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
+      'zaisha'   : _eval_at_birth(_REGISTRY['zaisha'],    bazi),
       'jiesha'   : _eval_at_birth(_REGISTRY['jiesha'],    bazi),
       'wangshen' : _eval_at_birth(_REGISTRY['wangshen'],  bazi),
       'guchen'   : _eval_at_birth(_REGISTRY['guchen'],    bazi),
@@ -438,6 +465,7 @@ class TransitAnalysis:
       'feiren'   : _eval_transits(_REGISTRY['feiren'],    bazi, transit_dizhis),
       'tianyi'   : _eval_transits(_REGISTRY['tianyi'],    bazi, transit_dizhis),
       'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
+      'zaisha'   : _eval_transits(_REGISTRY['zaisha'],    bazi, transit_dizhis),
       'jiesha'   : _eval_transits(_REGISTRY['jiesha'],    bazi, transit_dizhis),
       'wangshen' : _eval_transits(_REGISTRY['wangshen'],  bazi, transit_dizhis),
       'guchen'   : _eval_transits(_REGISTRY['guchen'],    bazi, transit_dizhis),

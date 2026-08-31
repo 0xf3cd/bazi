@@ -92,6 +92,8 @@ def main() -> int:
      lambda: shensha_utils.huagai('申', '辰')), # type: ignore
     ('shensha_utils.jiangxing on raw string', TypeError,
      lambda: shensha_utils.jiangxing('申', Dizhi.子)), # type: ignore
+    ('shensha_utils.zaisha on raw string', TypeError,
+     lambda: shensha_utils.zaisha('申', Dizhi.午)), # type: ignore
     ('shensha_utils.jiesha on raw string', TypeError,
      lambda: shensha_utils.jiesha('申', Dizhi.巳)), # type: ignore
     ('shensha_utils.wangshen on raw string', TypeError,
@@ -118,6 +120,8 @@ def main() -> int:
      lambda: BaziSchool(jinyu_anchor=object())), # type: ignore
     ('BaziSchool wrong Feiren definition', TypeError,
      lambda: BaziSchool(feiren_def=object())), # type: ignore
+    ('BaziSchool wrong Zaisha anchor', TypeError,
+     lambda: BaziSchool(zaisha_anchor=object())), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

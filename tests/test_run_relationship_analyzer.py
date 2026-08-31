@@ -18,6 +18,7 @@ def test_shensha_labels() -> None:
     'feiren'   : frozenset((Dizhi.未,)),
     'tianyi'   : frozenset((Dizhi.未,)),
     'jiangxing': frozenset((Dizhi.申,)),
+    'zaisha'   : frozenset((Dizhi.午,)),
     'jiesha'   : frozenset((Dizhi.亥,)),
     'wangshen' : frozenset((Dizhi.酉,)),
     'guchen'   : frozenset((Dizhi.戌,)),
@@ -36,6 +37,7 @@ def test_shensha_labels() -> None:
     ('飞刃', frozenset((Dizhi.未,))),
     ('天乙贵人', frozenset((Dizhi.未,))),
     ('将星', frozenset((Dizhi.申,))),
+    ('灾煞', frozenset((Dizhi.午,))),
     ('劫煞', frozenset((Dizhi.亥,))),
     ('亡神', frozenset((Dizhi.酉,))),
     ('孤辰', frozenset((Dizhi.戌,))),
@@ -63,6 +65,7 @@ def test_shensha_labels() -> None:
     'feiren'   : frozenset(),
     'tianyi'   : frozenset(),
     'jiangxing': frozenset(),
+    'zaisha'   : frozenset(),
     'jiesha'   : frozenset(),
     'wangshen' : frozenset(),
     'guchen'   : frozenset(),
@@ -71,4 +74,4 @@ def test_shensha_labels() -> None:
     'jinyu'    : frozenset(),
   }
   assert shensha_strs(empty_shensha) == []
-  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、劫煞、亡神、孤辰、寡宿、禄神、金舆'
+  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆'

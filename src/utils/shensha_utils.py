@@ -178,6 +178,29 @@ def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return _table_shensha(ShenshaRules.JIANGXING, year_or_day_dizhi, other_dizhi, Dizhi)
 
 
+def zaisha(key_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
+  '''
+  Check whether `other_dizhi` is the ZAISHA (灾煞) of `key_dizhi`.
+  检查输入地支是否为锚支的灾煞。
+
+  Args:
+  - key_dizhi: (Dizhi) The year or day branch used as the lookup key. The caller
+    decides whether to inspect the year branch alone or both branches.
+    查法锚支；只查年支或年日兼查由调用方决定。
+  - other_dizhi: (Dizhi) The branch to inspect.
+
+  Returns: (bool) Whether `other_dizhi` is the Zaisha of `key_dizhi`.
+
+  Examples:
+  - zaisha(Dizhi.申, Dizhi.午)
+    - return: True
+  - zaisha(Dizhi.申, Dizhi.子)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.ZAISHA, key_dizhi, other_dizhi, Dizhi)
+
+
 def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
   Check if the input `other_dizhi` is the JIESHA (劫煞) of `year_or_day_dizhi`.
