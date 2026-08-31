@@ -203,9 +203,8 @@ class JinyuAnchor(Enum):
   - YEAR_AND_DAY: inspect both year and day Tiangans, following 问真.
     年干、日干兼查；从问真。
 
-  The profile affects only Jinyu evaluation. It never changes the four pillars and is
-  independent of other Shensha anchor settings. 本配置仅在金舆评估期消费，不改变四柱，
-  也不与其他神煞共用锚干配置。
+  This profile is independent of other Shensha anchor settings.
+  本配置不与其他神煞共用锚干配置。
 
   Sources / 出处:
   - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
@@ -311,11 +310,6 @@ class BaziSchool:
       raise TypeError(f'Expected JinyuAnchor, got {type(self.jinyu_anchor)}')
 
 
-'''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
-+ 天乙年日兼查、庚随甲戊的传统合并表 + 暗合 NORMAL_EXTENDED + 刑 LOOSE
-+ 拱局 SAME_STEM_NARROW + 五项神煞 WENZHEN + 金舆日干单锚. /
-默认流派档案：晚子时换日、红艳查日干、羊刃子平五阳干、天乙年日兼查并取传统合并表、
-暗合最宽表、刑三取二、拱局同干狭义、五项神煞问真年日兼查、金舆只查日干。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

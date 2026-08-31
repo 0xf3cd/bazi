@@ -738,8 +738,7 @@ class ShenshaRules:
   })
 
   # LUSHEN (禄神) uses the same ten-stem Lu locations as `BaziRules.TIANGAN_LU`.
-  # At analysis time it is keyed by the Day Master and checked against all four branches.
-  # 禄神与十干禄位共用一张表；分析时固定以日干查四支。
+  # 禄神与十干禄位共用一张表。
   # Source / 出处: 《三命通会·卷三·论十干禄》 and https://book.taiyi.me/命/神煞大全#禄神 (issue #162).
   LUSHEN: Final[frozendict[Tiangan, Dizhi]] = BaziRules.TIANGAN_LU
 

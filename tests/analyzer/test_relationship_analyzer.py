@@ -185,9 +185,7 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['lushen'] == at_birth.shensha['lushen'] # Repeated lookup must answer the same.
 
     # Jinyu / 金舆
-    expected_jinyu = {
-      dz for dz in (y, m, d, h) if shensha_utils.jinyu(dm, dz)
-    }
+    expected_jinyu = {dz for dz in (y, m, d, h) if shensha_utils.jinyu(dm, dz)}
     assert at_birth.shensha['jinyu'] == expected_jinyu
     assert at_birth.shensha['jinyu'] == at_birth.shensha['jinyu'] # Repeated lookup must answer the same.
 
@@ -747,9 +745,7 @@ def test_transit_shensha() -> None:
       assert actual['lushen'] == set(expected)
 
       # Jinyu / 金舆
-      expected = [
-        dz for dz in transit_dz if shensha_utils.jinyu(chart.bazi.day_master, dz)
-      ]
+      expected = [dz for dz in transit_dz if shensha_utils.jinyu(chart.bazi.day_master, dz)]
       assert actual['jinyu'] == set(expected)
 
 
