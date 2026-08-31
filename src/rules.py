@@ -737,6 +737,30 @@ class ShenshaRules:
     '申酉戌' : '未',
   })
 
+  # LUSHEN (禄神) uses the same ten-stem Lu locations as `BaziRules.TIANGAN_LU`.
+  # At analysis time it is keyed by the Day Master and checked against all four branches.
+  # 禄神与十干禄位共用一张表；分析时固定以日干查四支。
+  # Source / 出处: 《三命通会·卷三·论十干禄》 and https://book.taiyi.me/命/神煞大全 (issue #162).
+  LUSHEN: Final[frozendict[Tiangan, Dizhi]] = BaziRules.TIANGAN_LU
+
+  # JINYU (金舆) falls two branches after each Tiangan's Lu (禄前二辰).
+  # 金舆取各天干禄位前二辰。
+  # Table sources / 表值出处 (issue #163):
+  # - 《三命通会·卷三·论金舆》: https://book.taiyi.me/命/三命通会/三命通会(卷三).md
+  # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  JINYU: Final[frozendict[Tiangan, Dizhi]] = frozendict({
+    Tiangan.甲 : Dizhi.辰,
+    Tiangan.乙 : Dizhi.巳,
+    Tiangan.丙 : Dizhi.未,
+    Tiangan.丁 : Dizhi.申,
+    Tiangan.戊 : Dizhi.未,
+    Tiangan.己 : Dizhi.申,
+    Tiangan.庚 : Dizhi.戌,
+    Tiangan.辛 : Dizhi.亥,
+    Tiangan.壬 : Dizhi.丑,
+    Tiangan.癸 : Dizhi.寅,
+  })
+
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。

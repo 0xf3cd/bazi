@@ -2,7 +2,7 @@
 
 '''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
 school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem` /
-`TianyiAnchor` / `ShenshaAnchorProfile`),
+`TianyiAnchor` / `JinyuAnchor` / `ShenshaAnchorProfile`),
 and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
@@ -193,6 +193,30 @@ class TianyiAnchor(Enum):
   YEAR_AND_DAY = 2
 
 
+class JinyuAnchor(Enum):
+  '''The anchor stem(s) used to look up JINYU (金舆).
+  查询金舆所用的锚干。
+
+  - DAY_MASTER: use the Day Master only, following Yuan Shushan's 《命理探源》. This is
+    the default.
+    只查日干；从袁树珊《命理探源》。这是默认口径。
+  - YEAR_AND_DAY: inspect both year and day Tiangans, following 问真.
+    年干、日干兼查；从问真。
+
+  The profile affects only Jinyu evaluation. It never changes the four pillars and is
+  independent of other Shensha anchor settings. 本配置仅在金舆评估期消费，不改变四柱，
+  也不与其他神煞共用锚干配置。
+
+  Sources / 出处:
+  - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  - 问真: https://book.taiyi.me/命/神煞大全
+
+  No change should be made to the existing definitions. Only add new definitions.
+  '''
+  DAY_MASTER   = 0
+  YEAR_AND_DAY = 1
+
+
 class ShenshaAnchorProfile(Enum):
   '''The source profile governing the anchor branches of YIMA, HUAGAI, JIANGXING,
   JIESHA, and WANGSHEN. 驿马、华盖、将星、劫煞、亡神共用的锚支出处 profile。
@@ -261,6 +285,7 @@ class BaziSchool:
   tianyi_anchor: TianyiAnchor = TianyiAnchor.YEAR_AND_DAY
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
   shensha_anchor_profile: ShenshaAnchorProfile = ShenshaAnchorProfile.WENZHEN
+  jinyu_anchor: JinyuAnchor = JinyuAnchor.DAY_MASTER
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -282,13 +307,15 @@ class BaziSchool:
       raise TypeError(f'Expected TianyiDef, got {type(self.tianyi_def)}')
     if not isinstance(self.shensha_anchor_profile, ShenshaAnchorProfile):
       raise TypeError(f'Expected ShenshaAnchorProfile, got {type(self.shensha_anchor_profile)}')
+    if not isinstance(self.jinyu_anchor, JinyuAnchor):
+      raise TypeError(f'Expected JinyuAnchor, got {type(self.jinyu_anchor)}')
 
 
 '''The default school profile: 晚子时换日 + 红艳以日干为锚 (《三命通会》) + 羊刃 ZIPING
 + 天乙年日兼查、庚随甲戊的传统合并表 + 暗合 NORMAL_EXTENDED + 刑 LOOSE
-+ 拱局 SAME_STEM_NARROW + 五项神煞 WENZHEN. /
++ 拱局 SAME_STEM_NARROW + 五项神煞 WENZHEN + 金舆日干单锚. /
 默认流派档案：晚子时换日、红艳查日干、羊刃子平五阳干、天乙年日兼查并取传统合并表、
-暗合最宽表、刑三取二、拱局同干狭义、五项神煞问真年日兼查。'''
+暗合最宽表、刑三取二、拱局同干狭义、五项神煞问真年日兼查、金舆只查日干。'''
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

@@ -12,7 +12,7 @@ from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..rules import DizhiRules
-from ..school import KeyStem, TianyiAnchor, ShenshaAnchorProfile, BaziSchool
+from ..school import KeyStem, TianyiAnchor, JinyuAnchor, ShenshaAnchorProfile, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitSet
@@ -53,6 +53,7 @@ class _KeySource(Enum):
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
   KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
   ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
+  JINYU_ANCHOR_TIANGANS = auto() # By the Day Master alone, or both year/day Tiangans, as selected for 金舆 (see `_jinyu_anchors`).
   PROFILED_DIZHI    = auto() # By the day Dizhi alone, or both year and day Dizhis, as selected by the source profile for 驿马、华盖、将星、劫煞、亡神 (see `_profiled_shensha_anchors`).
 
 
@@ -94,6 +95,8 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI),
   'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI),
   'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _KeySource.YEAR_DIZHI),
+  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _KeySource.DAY_MASTER),
+  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _KeySource.JINYU_ANCHOR_TIANGANS),
 })
 
 
@@ -130,6 +133,18 @@ def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
     raise AssertionError(f'`TianyiAnchor` not wired up in `_tianyi_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
 
 
+def _jinyu_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
+  '''Resolve the JINYU (金舆) anchors selected by `BaziSchool.jinyu_anchor`.
+  按 `BaziSchool.jinyu_anchor` 解析金舆锚干。'''
+  anchor: Final[JinyuAnchor] = bazi.config.school.jinyu_anchor
+  if anchor is JinyuAnchor.DAY_MASTER:
+    return (bazi.day_master,)
+  elif anchor is JinyuAnchor.YEAR_AND_DAY:
+    return (bazi.year_pillar.tiangan, bazi.day_master)
+  else:
+    raise AssertionError(f'`JinyuAnchor` not wired up in `_jinyu_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
+
+
 def _profiled_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
   '''Resolve the YIMA, HUAGAI, JIANGXING, JIESHA, and WANGSHEN anchors selected by
   `BaziSchool.shensha_anchor_profile`.
@@ -155,6 +170,8 @@ def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, 
     return (_hongyan_anchor(bazi),)
   elif key_source is _KeySource.ANCHOR_TIANGANS:
     return _tianyi_anchors(bazi)
+  elif key_source is _KeySource.JINYU_ANCHOR_TIANGANS:
+    return _jinyu_anchors(bazi)
   elif key_source is _KeySource.PROFILED_DIZHI:
     return _profiled_shensha_anchors(bazi)
   else:
@@ -180,17 +197,16 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   args: tuple[_ArgsType, ...]
   if spec.key is _KeySource.YEAR_DIZHI:
     args = ((keys, (m_dz, d_dz, h_dz)),)
-  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI:
+  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI or (
+    spec.key is _KeySource.PROFILED_DIZHI
+    and bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+  ):
     year_key, day_key = keys
     args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
   elif spec.key is _KeySource.PROFILED_DIZHI:
-    if bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN:
-      year_key, day_key = keys
-      args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
-    else:
-      assert bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.MINGLI_TANYUAN
-      day_key, = keys
-      args = (((day_key,), (y_dz, m_dz, h_dz)),)
+    assert bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.MINGLI_TANYUAN
+    day_key, = keys
+    args = (((day_key,), (y_dz, m_dz, h_dz)),)
   else:
     args = ((keys, (y_dz, m_dz, d_dz, h_dz)),)
 
@@ -299,6 +315,10 @@ class ShenshaAnalysis(TypedDict):
   guchen:    frozenset[Dizhi]
   # The Guasu Dizhis     (寡宿所在地支)
   guasu:     frozenset[Dizhi]
+  # The Lushen Dizhis    (禄神所在地支)
+  lushen:    frozenset[Dizhi]
+  # The Jinyu Dizhis     (金舆所在地支)
+  jinyu:     frozenset[Dizhi]
 
 
 class AtBirthAnalysis:
@@ -323,6 +343,8 @@ class AtBirthAnalysis:
       'wangshen' : _eval_at_birth(_REGISTRY['wangshen'],  bazi),
       'guchen'   : _eval_at_birth(_REGISTRY['guchen'],    bazi),
       'guasu'    : _eval_at_birth(_REGISTRY['guasu'],     bazi),
+      'lushen'   : _eval_at_birth(_REGISTRY['lushen'],    bazi),
+      'jinyu'    : _eval_at_birth(_REGISTRY['jinyu'],     bazi),
     }
 
   @property
@@ -411,6 +433,8 @@ class TransitAnalysis:
       'wangshen' : _eval_transits(_REGISTRY['wangshen'],  bazi, transit_dizhis),
       'guchen'   : _eval_transits(_REGISTRY['guchen'],    bazi, transit_dizhis),
       'guasu'    : _eval_transits(_REGISTRY['guasu'],     bazi, transit_dizhis),
+      'lushen'   : _eval_transits(_REGISTRY['lushen'],    bazi, transit_dizhis),
+      'jinyu'    : _eval_transits(_REGISTRY['jinyu'],     bazi, transit_dizhis),
     }
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
