@@ -842,9 +842,10 @@ class ShenshaRules:
     Sources / 出处:
     - 《三命通会·卷三·论羊刃》:
       https://book.taiyi.me/命/三命通会/三命通会(卷三)
-    - 《渊海子平·论阳刃》:
+    - 《渊海子平·论阳刃》 supplies the ZIPING yang-stems-only basis:
       https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
-    - Modern DIWANG table: https://github.com/gaorenyes/gaorenyes.github.io
+    - Modern DIWANG table:
+      https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/b/index.html#L748
 
     No change should be made to the existing definitions. Only add new definitions.
     '''

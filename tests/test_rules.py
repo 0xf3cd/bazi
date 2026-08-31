@@ -247,11 +247,8 @@ def test_feiren() -> None:
   assert set(ShenshaRules.FEIREN) == set(ShenshaRules.FeirenDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.FEIREN.values())
 
-  for feiren_def, yangren_def in zip(
-    ShenshaRules.FeirenDef,
-    ShenshaRules.YangrenDef,
-    strict=True,
-  ):
+  for feiren_def in ShenshaRules.FeirenDef:
+    yangren_def = ShenshaRules.YangrenDef[feiren_def.name]
     for tiangan in Tiangan:
       yangren = ShenshaRules.YANGREN[yangren_def][tiangan]
       feiren = ShenshaRules.FEIREN[feiren_def][tiangan]

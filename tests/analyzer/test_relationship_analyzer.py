@@ -905,7 +905,7 @@ def test_feiren_deduplicates_repeated_target_and_empty_result() -> None:
   analysis = RelationshipAnalyzer(chart)
   assert analysis.at_birth.shensha['feiren'] == {Dizhi.酉}
   assert analysis.transits.shensha(TransitSet(
-    dayun=Ganzhi.from_str('甲酉'),
+    dayun=Ganzhi.from_str('癸酉'),
     liunian=Ganzhi.from_str('乙酉'),
   ))['feiren'] == {Dizhi.酉}
   assert analysis.transits.shensha(
