@@ -42,7 +42,12 @@ def find_shensha(
 
 @unique
 class _KeySource(Enum):
-  '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).'''
+  '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).
+
+  Each registry entry must derive its key source and inspected pillars from that Shensha's
+  own provenance; existing entries are not defaults for future Shenshas.
+  每个注册项的查询 key 与被查柱都须来自该神煞自身出处；既有条目不构成后续神煞的默认口径。
+  '''
   YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
   YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
   DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).

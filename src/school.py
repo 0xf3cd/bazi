@@ -209,9 +209,8 @@ class ShenshaAnchorProfile(Enum):
   Changing only its anchor would create a rule the source does not state.
   桃花不随本配置：《命理探源》的日支桃花另有纳音条件，且只查月、时；不能只切锚而沿用现表。
 
-  The profile affects only Shensha evaluation. It never changes the four
-  pillars and must not be inherited by future Shenshas without their own source audit.
-  本配置仅在神煞评估期消费，不改变四柱；未来神煞须另行核对出处，不自动继承。
+  The profile affects only Shensha evaluation. It never changes the four pillars.
+  本配置仅在神煞评估期消费，不改变四柱。
 
   Sources / 出处:
   - 《命理探源·卷三强弱》, pp. 64–71 / 第 64–71 页:
