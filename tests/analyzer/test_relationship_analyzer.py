@@ -185,11 +185,8 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['lushen'] == at_birth.shensha['lushen'] # Repeated lookup must answer the same.
 
     # Jinyu / 金舆
-    jinyu_anchors = ((dm,) if chart.bazi.config.school.jinyu_anchor is JinyuAnchor.DAY_MASTER
-                     else (chart.bazi.year_pillar.tiangan, dm))
     expected_jinyu = {
-      dz for tg, dz in itertools.product(jinyu_anchors, (y, m, d, h))
-      if shensha_utils.jinyu(tg, dz)
+      dz for dz in (y, m, d, h) if shensha_utils.jinyu(dm, dz)
     }
     assert at_birth.shensha['jinyu'] == expected_jinyu
     assert at_birth.shensha['jinyu'] == at_birth.shensha['jinyu'] # Repeated lookup must answer the same.
@@ -750,12 +747,8 @@ def test_transit_shensha() -> None:
       assert actual['lushen'] == set(expected)
 
       # Jinyu / 金舆
-      jinyu_anchors = ((chart.bazi.day_master,)
-                       if chart.bazi.config.school.jinyu_anchor is JinyuAnchor.DAY_MASTER
-                       else (chart.bazi.year_pillar.tiangan, chart.bazi.day_master))
       expected = [
-        dz for tg, dz in itertools.product(jinyu_anchors, transit_dz)
-        if shensha_utils.jinyu(tg, dz)
+        dz for dz in transit_dz if shensha_utils.jinyu(chart.bazi.day_master, dz)
       ]
       assert actual['jinyu'] == set(expected)
 

@@ -12,7 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.school import KeyStem, JinyuAnchor, ShenshaAnchorProfile, BaziSchool, BaziConfig
+from src.school import KeyStem, ShenshaAnchorProfile, BaziSchool, BaziConfig
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
@@ -719,12 +719,7 @@ def test_random_cases(bazi: Bazi) -> None:
       expected_guchen:    set[Dizhi] = set(filter(lambda dz: shensha_utils.guchen(y_dz, dz), transits_dz_set))
       expected_guasu:     set[Dizhi] = set(filter(lambda dz: shensha_utils.guasu(y_dz, dz), transits_dz_set))
       expected_lushen:    set[Dizhi] = set(filter(lambda dz: shensha_utils.lushen(dm, dz), transits_dz_set))
-      jinyu_anchors = ((dm,) if school.jinyu_anchor is JinyuAnchor.DAY_MASTER
-                       else (bazi.year_pillar.tiangan, dm))
-      expected_jinyu:     set[Dizhi] = set(filter(
-        lambda dz: any(shensha_utils.jinyu(tg, dz) for tg in jinyu_anchors),
-        transits_dz_set,
-      ))
+      expected_jinyu:     set[Dizhi] = set(filter(lambda dz: shensha_utils.jinyu(dm, dz), transits_dz_set))
 
       shensha = transits.shensha(selected_transits)
       assert expected_taohua == shensha['taohua']

@@ -362,8 +362,8 @@ def test_json_roundtrip_default_school() -> None:
 def test_json_roundtrip_non_default_school() -> None:
   # A non-default school must survive the JSON roundtrip losslessly: rebuilding
   # from the json alone reproduces the same chart, not a silent default-school one.
-  # All ten knobs flipped, so each field proves it roundtrips (issue #69).
-  # 十个旋钮全部取非默认值——每个字段各自证明它能往返。
+  # Every field takes a non-default value, so each one proves it roundtrips (issue #69).
+  # 每个字段都取非默认值，逐项证明能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_key=KeyStem.YEAR_MASTER,

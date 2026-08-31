@@ -740,13 +740,13 @@ class ShenshaRules:
   # LUSHEN (禄神) uses the same ten-stem Lu locations as `BaziRules.TIANGAN_LU`.
   # At analysis time it is keyed by the Day Master and checked against all four branches.
   # 禄神与十干禄位共用一张表；分析时固定以日干查四支。
-  # Source / 出处: 《三命通会·卷三·论十干禄》 and https://book.taiyi.me/命/神煞大全 (issue #162).
+  # Source / 出处: 《三命通会·卷三·论十干禄》 and https://book.taiyi.me/命/神煞大全#禄神 (issue #162).
   LUSHEN: Final[frozendict[Tiangan, Dizhi]] = BaziRules.TIANGAN_LU
 
   # JINYU (金舆) falls two branches after each Tiangan's Lu (禄前二辰).
   # 金舆取各天干禄位前二辰。
   # Table sources / 表值出处 (issue #163):
-  # - 《三命通会·卷三·论金舆》: https://book.taiyi.me/命/三命通会/三命通会(卷三).md
+  # - 《三命通会·卷三·论金舆》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
   # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   JINYU: Final[frozendict[Tiangan, Dizhi]] = frozendict({
     Tiangan.甲 : Dizhi.辰,
