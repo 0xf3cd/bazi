@@ -690,8 +690,6 @@ class ShenshaRules:
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
   # 灾煞取各三合局将星的对冲支；《三命通会·卷三·论灾煞》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #174).
-  # 《星学大成·定驿马十二位》 independently corroborates the same cycle.
-  # 《星学大成·定驿马十二位》以十二位次序独立校核同表。
   # Anchor sources / 查法锚出处: 问真 uses the year branch; 高人 uses both year and day
   # branches. These alternatives are selected by `BaziSchool.zaisha_anchor` (issue #174).
   # 问真查年支，高人查年支与日支；由 `BaziSchool.zaisha_anchor` 选择。

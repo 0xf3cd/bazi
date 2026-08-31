@@ -183,11 +183,11 @@ def test_zaisha() -> None:
     Dizhi.亥 : Dizhi.酉, Dizhi.卯 : Dizhi.酉, Dizhi.未 : Dizhi.酉,
   }
 
-  for anchor_dizhi in Dizhi:
+  for key_dizhi in Dizhi:
     for other_dizhi in Dizhi:
-      expected = expected_table[anchor_dizhi] is other_dizhi
-      assert shensha_utils.zaisha(anchor_dizhi, other_dizhi) == expected
-      assert shensha_utils.zaisha(anchor_dizhi, other_dizhi) == expected
+      expected = expected_table[key_dizhi] is other_dizhi
+      assert shensha_utils.zaisha(key_dizhi, other_dizhi) == expected
+      assert shensha_utils.zaisha(key_dizhi, other_dizhi) == expected
 
 
 def test_zaisha_negative() -> None:
