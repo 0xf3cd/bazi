@@ -213,6 +213,27 @@ class JinyuAnchor(Enum):
   YEAR_AND_DAY = 1
 
 
+class ZaishaAnchor(Enum):
+  '''The anchor branch(es) used to look up ZAISHA (灾煞).
+  查询灾煞所用的锚支。
+
+  - YEAR: use the birth-year branch and inspect the month, day, and hour branches,
+    following 问真. This is the default.
+    以出生年支查月、日、时支；从问真。这是默认口径。
+  - YEAR_AND_DAY: use both the year and day branches; each inspects the remaining three
+    branches, following 高人.
+    年支、日支分别查其余三支；从高人。
+
+  Sources / 出处:
+  - 问真: https://book.taiyi.me/命/神煞大全#灾煞
+  - 高人: https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439
+
+  No change should be made to the existing definitions. Only add new definitions.
+  '''
+  YEAR         = 0
+  YEAR_AND_DAY = 1
+
+
 class ShenshaAnchorProfile(Enum):
   '''The source profile governing the anchor branches of YIMA, HUAGAI, JIANGXING,
   JIESHA, and WANGSHEN. 驿马、华盖、将星、劫煞、亡神共用的锚支出处 profile。
@@ -283,6 +304,7 @@ class BaziSchool:
   shensha_anchor_profile: ShenshaAnchorProfile = ShenshaAnchorProfile.WENZHEN
   jinyu_anchor: JinyuAnchor = JinyuAnchor.DAY_MASTER
   feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
+  zaisha_anchor: ZaishaAnchor = ZaishaAnchor.YEAR
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -308,6 +330,8 @@ class BaziSchool:
       raise TypeError(f'Expected JinyuAnchor, got {type(self.jinyu_anchor)}')
     if not isinstance(self.feiren_def, ShenshaRules.FeirenDef):
       raise TypeError(f'Expected FeirenDef, got {type(self.feiren_def)}')
+    if not isinstance(self.zaisha_anchor, ZaishaAnchor):
+      raise TypeError(f'Expected ZaishaAnchor, got {type(self.zaisha_anchor)}')
 
 
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()

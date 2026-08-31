@@ -175,6 +175,28 @@ def test_jiangxing_negative() -> None:
     shensha_utils.jiangxing(Dizhi.申, '子') # type: ignore
 
 
+def test_zaisha() -> None:
+  expected_table: dict[Dizhi, Dizhi] = {
+    Dizhi.申 : Dizhi.午, Dizhi.子 : Dizhi.午, Dizhi.辰 : Dizhi.午,
+    Dizhi.寅 : Dizhi.子, Dizhi.午 : Dizhi.子, Dizhi.戌 : Dizhi.子,
+    Dizhi.巳 : Dizhi.卯, Dizhi.酉 : Dizhi.卯, Dizhi.丑 : Dizhi.卯,
+    Dizhi.亥 : Dizhi.酉, Dizhi.卯 : Dizhi.酉, Dizhi.未 : Dizhi.酉,
+  }
+
+  for anchor_dizhi in Dizhi:
+    for other_dizhi in Dizhi:
+      expected = expected_table[anchor_dizhi] is other_dizhi
+      assert shensha_utils.zaisha(anchor_dizhi, other_dizhi) == expected
+      assert shensha_utils.zaisha(anchor_dizhi, other_dizhi) == expected
+
+
+def test_zaisha_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.zaisha('申', Dizhi.午) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.zaisha(Dizhi.申, '午') # type: ignore
+
+
 def test_jiesha() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi.申 : Dizhi.巳, Dizhi.子 : Dizhi.巳, Dizhi.辰 : Dizhi.巳,
