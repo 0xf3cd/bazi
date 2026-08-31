@@ -203,9 +203,6 @@ class JinyuAnchor(Enum):
   - YEAR_AND_DAY: inspect both year and day Tiangans, following 问真.
     年干、日干兼查；从问真。
 
-  This profile is independent of other Shensha anchor settings.
-  本配置不与其他神煞共用锚干配置。
-
   Sources / 出处:
   - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   - 问真: https://book.taiyi.me/命/神煞大全
