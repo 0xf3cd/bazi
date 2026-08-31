@@ -107,6 +107,7 @@ class BaziJson:
     tianyi_def: str
     shensha_anchor_profile: str
     jinyu_anchor: str
+    feiren_def: str
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str
@@ -551,6 +552,7 @@ class BaziChart:
         'tianyi_def': self._bazi.config.school.tianyi_def.name,
         'shensha_anchor_profile': self._bazi.config.school.shensha_anchor_profile.name,
         'jinyu_anchor': self._bazi.config.school.jinyu_anchor.name,
+        'feiren_def': self._bazi.config.school.feiren_def.name,
       },
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),

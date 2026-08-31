@@ -121,6 +121,18 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['yangren'] == set(expected_yangren)
     assert at_birth.shensha['yangren'] == at_birth.shensha['yangren'] # Repeated lookup must answer the same.
 
+    # Feiren / 飞刃
+    expected_feiren: list[Dizhi] = []
+    for dz in [y, m, d, h]:
+      if shensha_utils.feiren(
+        dm,
+        dz,
+        definition=chart.bazi.config.school.feiren_def,
+      ):
+        expected_feiren.append(dz)
+    assert at_birth.shensha['feiren'] == set(expected_feiren)
+    assert at_birth.shensha['feiren'] == at_birth.shensha['feiren'] # Repeated lookup must answer the same.
+
     # Tianyi Guiren / 天乙贵人
     expected_tianyi: list[Dizhi] = []
     for tg, dz in itertools.product([chart.bazi.year_pillar.tiangan, dm], [y, m, d, h]):
@@ -691,6 +703,17 @@ def test_transit_shensha() -> None:
           expected.append(dz)
       assert actual['yangren'] == set(expected)
 
+      # Feiren / 飞刃
+      expected = []
+      for dz in transit_dz:
+        if shensha_utils.feiren(
+          chart.bazi.day_master,
+          dz,
+          definition=chart.bazi.config.school.feiren_def,
+        ):
+          expected.append(dz)
+      assert actual['feiren'] == set(expected)
+
       # Tianyi Guiren / 天乙贵人
       expected = []
       for tg, dz in itertools.product(
@@ -828,6 +851,66 @@ def test_yangren_checks_every_selected_transit_branch() -> None:
     liunian=Ganzhi.from_str('壬戌'),
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['yangren'] == {Dizhi.申}
+
+
+@pytest.mark.parametrize('feiren_def, expected', [
+  (ShenshaRules.FeirenDef.ZIPING, frozenset()),
+  (ShenshaRules.FeirenDef.LUMING, frozenset({Dizhi.戌})),
+  (ShenshaRules.FeirenDef.DIWANG, frozenset({Dizhi.申})),
+])
+def test_feiren_definition_at_birth_and_transits(
+  feiren_def: ShenshaRules.FeirenDef,
+  expected: frozenset[Dizhi],
+) -> None:
+  chart: BaziChart = BaziChart(Bazi.create(
+    '1908-10-17 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(feiren_def=feiren_def)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('戊申', '壬戌', '乙巳', '壬午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['feiren'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲戌'),
+    liunian=Ganzhi.from_str('庚申'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['feiren'] == expected
+
+  if feiren_def is ShenshaRules.FeirenDef.ZIPING:
+    default_chart = BaziChart(Bazi.create('1908-10-17 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['feiren'] == expected
+
+
+def test_yangren_and_feiren_definitions_are_independent() -> None:
+  chart = BaziChart(Bazi.create(
+    '1908-10-17 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(
+      yangren_def=ShenshaRules.YangrenDef.DIWANG,
+      feiren_def=ShenshaRules.FeirenDef.LUMING,
+    )),
+  ))
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('甲戌'),
+  )
+  shensha = RelationshipAnalyzer(chart).transits.shensha(transits)
+  assert shensha['yangren'] == {Dizhi.寅}
+  assert shensha['feiren'] == {Dizhi.戌}
+
+
+def test_feiren_deduplicates_repeated_target_and_empty_result() -> None:
+  chart = BaziChart(Bazi.create('1902-09-08 18:00', 'male'))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '己酉', '甲午', '癸酉')
+  analysis = RelationshipAnalyzer(chart)
+  assert analysis.at_birth.shensha['feiren'] == {Dizhi.酉}
+  assert analysis.transits.shensha(TransitSet(
+    dayun=Ganzhi.from_str('甲酉'),
+    liunian=Ganzhi.from_str('乙酉'),
+  ))['feiren'] == {Dizhi.酉}
+  assert analysis.transits.shensha(
+    TransitSet(liunian=Ganzhi.from_str('甲子'))
+  )['feiren'] == set()
 
 
 @pytest.mark.parametrize('anchor, expected', [
@@ -1346,7 +1429,7 @@ def test_shensha_anchor_profile_has_exact_consumers() -> None:
   assert {
     name for name, spec in _REGISTRY.items()
     if spec.key is relationship_module._KeySource.DAY_MASTER
-  } == {'yangren', 'lushen'}
+  } == {'yangren', 'feiren', 'lushen'}
   assert {
     name for name, spec in _REGISTRY.items()
     if spec.key is relationship_module._KeySource.JINYU_ANCHOR_TIANGANS

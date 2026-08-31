@@ -828,6 +828,69 @@ class ShenshaRules:
     }),
   })
 
+  class FeirenDef(Enum):
+    '''The definitions of FEIREN (飞刃). Each profile takes the branch opposite the
+    corresponding Yangren definition. 飞刃的三种定义；每套均取对应羊刃定义的对冲支。
+
+    - ZIPING: only the five Yang Tiangans have Feiren, opposite their 阳刃.
+      子平法：仅五阳干有飞刃，取阳刃对冲支。
+    - LUMING: all ten Tiangans take the branch opposite their LUMING Yangren.
+      古禄命法：十干皆有飞刃，取古禄命羊刃对冲支。
+    - DIWANG: all ten Tiangans take the branch opposite their Diwang (帝旺) branch.
+      十干各取帝旺位的对冲支。
+
+    Sources / 出处:
+    - 《三命通会·卷三·论羊刃》:
+      https://book.taiyi.me/命/三命通会/三命通会(卷三)
+    - 《渊海子平·论阳刃》:
+      https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
+    - Modern DIWANG table: https://github.com/gaorenyes/gaorenyes.github.io
+
+    No change should be made to the existing definitions. Only add new definitions.
+    '''
+    ZIPING = 0
+    LUMING = 1
+    DIWANG = 2
+
+  FEIREN: Final[frozendict[FeirenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
+    FeirenDef.ZIPING : frozendict({
+      Tiangan.甲 : Dizhi.酉,
+      Tiangan.乙 : None,
+      Tiangan.丙 : Dizhi.子,
+      Tiangan.丁 : None,
+      Tiangan.戊 : Dizhi.子,
+      Tiangan.己 : None,
+      Tiangan.庚 : Dizhi.卯,
+      Tiangan.辛 : None,
+      Tiangan.壬 : Dizhi.午,
+      Tiangan.癸 : None,
+    }),
+    FeirenDef.LUMING : frozendict({
+      Tiangan.甲 : Dizhi.酉,
+      Tiangan.乙 : Dizhi.戌,
+      Tiangan.丙 : Dizhi.子,
+      Tiangan.丁 : Dizhi.丑,
+      Tiangan.戊 : Dizhi.子,
+      Tiangan.己 : Dizhi.丑,
+      Tiangan.庚 : Dizhi.卯,
+      Tiangan.辛 : Dizhi.辰,
+      Tiangan.壬 : Dizhi.午,
+      Tiangan.癸 : Dizhi.未,
+    }),
+    FeirenDef.DIWANG : frozendict({
+      Tiangan.甲 : Dizhi.酉,
+      Tiangan.乙 : Dizhi.申,
+      Tiangan.丙 : Dizhi.子,
+      Tiangan.丁 : Dizhi.亥,
+      Tiangan.戊 : Dizhi.子,
+      Tiangan.己 : Dizhi.亥,
+      Tiangan.庚 : Dizhi.卯,
+      Tiangan.辛 : Dizhi.寅,
+      Tiangan.壬 : Dizhi.午,
+      Tiangan.癸 : Dizhi.巳,
+    }),
+  })
+
   class TianyiDef(Enum):
     '''The definitions of TIANYI GUIREN (天乙贵人), kept as complete source-backed
     profiles because the formula, Geng/Xin grouping, and daytime/nighttime tables are

@@ -651,6 +651,7 @@ def test_json() -> None:
                       tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
                       shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                       jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
+                      feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
                     ),
                   ))
     )
