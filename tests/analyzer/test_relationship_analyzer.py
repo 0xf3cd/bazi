@@ -15,7 +15,7 @@ from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
-from src.school import BaziConfig, BaziSchool, KeyStem, TianyiAnchor, ShenshaAnchorProfile
+from src.school import BaziConfig, BaziSchool, KeyStem, TianyiAnchor, JinyuAnchor, ShenshaAnchorProfile
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
@@ -178,6 +178,16 @@ def test_at_birth_shensha() -> None:
     expected_guasu = {dz for dz in (m, d, h) if shensha_utils.guasu(y, dz)}
     assert at_birth.shensha['guasu'] == expected_guasu
     assert at_birth.shensha['guasu'] == at_birth.shensha['guasu'] # Repeated lookup must answer the same.
+
+    # Lushen / 禄神
+    expected_lushen = {dz for dz in (y, m, d, h) if shensha_utils.lushen(dm, dz)}
+    assert at_birth.shensha['lushen'] == expected_lushen
+    assert at_birth.shensha['lushen'] == at_birth.shensha['lushen'] # Repeated lookup must answer the same.
+
+    # Jinyu / 金舆
+    expected_jinyu = {dz for dz in (y, m, d, h) if shensha_utils.jinyu(dm, dz)}
+    assert at_birth.shensha['jinyu'] == expected_jinyu
+    assert at_birth.shensha['jinyu'] == at_birth.shensha['jinyu'] # Repeated lookup must answer the same.
 
 
 @pytest.mark.parametrize('birth_time, pillars, expected', [
@@ -730,6 +740,14 @@ def test_transit_shensha() -> None:
       expected = [dz for dz in transit_dz if shensha_utils.guasu(y_dz, dz)]
       assert actual['guasu'] == set(expected)
 
+      # Lushen / 禄神
+      expected = [dz for dz in transit_dz if shensha_utils.lushen(chart.bazi.day_master, dz)]
+      assert actual['lushen'] == set(expected)
+
+      # Jinyu / 金舆
+      expected = [dz for dz in transit_dz if shensha_utils.jinyu(chart.bazi.day_master, dz)]
+      assert actual['jinyu'] == set(expected)
+
 
 # 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
 # re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
@@ -870,6 +888,93 @@ def test_tianyi_definition_at_birth_and_transits(
     liuyue=Ganzhi.from_str('丙寅'),
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == transits_expected
+
+
+@pytest.mark.parametrize('birth_time, expected', [
+  ('1902-02-10 12:00', frozenset({Dizhi.寅})), # 甲日，年、月两支均为寅，结果按支值去重。
+  ('2020-07-02 19:08', frozenset()),          # 丙日禄在巳，原局四支不见巳。
+])
+def test_lushen_at_birth(birth_time: str, expected: frozenset[Dizhi]) -> None:
+  chart = BaziChart(Bazi.create(birth_time, 'male'))
+  assert RelationshipAnalyzer(chart).at_birth.shensha['lushen'] == expected
+
+
+def test_lushen_at_transits() -> None:
+  chart = BaziChart(Bazi.create('1902-02-10 12:00', 'male'))
+  analysis = RelationshipAnalyzer(chart).transits
+  assert chart.bazi.day_master is Tiangan.甲
+
+  assert analysis.shensha(TransitSet(dayun=Ganzhi.from_str('甲寅')))['lushen'] == {Dizhi.寅}
+  assert analysis.shensha(TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('丙寅'),
+  ))['lushen'] == {Dizhi.寅}
+  assert analysis.shensha(TransitSet(liuyue=Ganzhi.from_str('甲子')))['lushen'] == set()
+
+
+@pytest.mark.parametrize('anchor, expected', [
+  (JinyuAnchor.DAY_MASTER, frozenset({Dizhi.寅})),
+  (JinyuAnchor.YEAR_AND_DAY, frozenset({Dizhi.丑, Dizhi.寅})),
+])
+def test_jinyu_anchor_at_birth_and_transits(
+  anchor: JinyuAnchor,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 壬年、癸日，金舆分别在丑、寅；两支都在原局与所选流运中。
+  chart = BaziChart(Bazi.create(
+    '1902-03-31 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(jinyu_anchor=anchor)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '癸卯', '癸丑', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['jinyu'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('乙丑'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['jinyu'] == expected
+
+  if anchor is JinyuAnchor.DAY_MASTER:
+    default_chart = BaziChart(Bazi.create('1902-03-31 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['jinyu'] == expected
+
+
+def test_jinyu_year_anchor_can_be_the_only_hit() -> None:
+  # 庚年金舆在戌，丙日金舆在未；原局只见戌。
+  default_chart = BaziChart(Bazi.create('2020-07-02 19:08', 'female'))
+  year_and_day_chart = BaziChart(Bazi.create(
+    '2020-07-02 19:08',
+    'female',
+    BaziConfig(school=BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY)),
+  ))
+  assert tuple(map(str, default_chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
+
+  default_analysis = RelationshipAnalyzer(default_chart)
+  year_and_day_analysis = RelationshipAnalyzer(year_and_day_chart)
+  assert default_analysis.at_birth.shensha['jinyu'] == set()
+  assert year_and_day_analysis.at_birth.shensha['jinyu'] == {Dizhi.戌}
+
+  transit = TransitSet(liunian=Ganzhi.from_str('甲戌'))
+  assert default_analysis.transits.shensha(transit)['jinyu'] == set()
+  assert year_and_day_analysis.transits.shensha(transit)['jinyu'] == {Dizhi.戌}
+
+
+def test_jinyu_deduplicates_shared_target_and_empty_result() -> None:
+  # 丙年、戊日的金舆均在未；两锚命中同一支时只返回一个位置值。
+  chart = BaziChart(Bazi.create(
+    '1906-07-13 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('丙午', '乙未', '戊午', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['jinyu'] == {Dizhi.未}
+  assert RelationshipAnalyzer(chart).transits.shensha(
+    TransitSet(liunian=Ganzhi.from_str('乙未'))
+  )['jinyu'] == {Dizhi.未}
+  assert RelationshipAnalyzer(chart).transits.shensha(
+    TransitSet(liunian=Ganzhi.from_str('甲子'))
+  )['jinyu'] == set()
 
 
 @pytest.mark.slow
@@ -1182,6 +1287,51 @@ def test_registry_matches_shensha_analysis_keys() -> None:
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
 
 
+def test_at_birth_key_sources_preserve_anchor_and_pillar_scope() -> None:
+  '''Pin each key source's anchor x inspected-pillar calls, including repeated branch values.'''
+  YD, DD = Dizhi.丑, Dizhi.丑
+  MD, HD = Dizhi.丑, Dizhi.午
+  YT, DT = Tiangan.辛, Tiangan.己
+  all_dizhis = (YD, MD, DD, HD)
+  year_calls = ((YD, MD), (YD, DD), (YD, HD))
+  year_and_day_calls = (*year_calls, (DD, YD), (DD, MD), (DD, HD))
+  day_tiangan_calls = tuple((DT, dizhi) for dizhi in all_dizhis)
+  year_tiangan_calls = tuple((YT, dizhi) for dizhi in all_dizhis)
+  year_and_day_tiangan_calls = (*year_tiangan_calls, *day_tiangan_calls)
+  cases = (
+    (relationship_module._KeySource.YEAR_DIZHI, BaziSchool(), year_calls),
+    (relationship_module._KeySource.YEAR_OR_DAY_DIZHI, BaziSchool(), year_and_day_calls),
+    (relationship_module._KeySource.PROFILED_DIZHI, BaziSchool(), year_and_day_calls),
+    (relationship_module._KeySource.PROFILED_DIZHI,
+     BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN),
+     ((DD, YD), (DD, MD), (DD, HD))),
+    (relationship_module._KeySource.DAY_MASTER, BaziSchool(), day_tiangan_calls),
+    (relationship_module._KeySource.KEY_TIANGAN, BaziSchool(), day_tiangan_calls),
+    (relationship_module._KeySource.ANCHOR_TIANGANS, BaziSchool(), year_and_day_tiangan_calls),
+    (relationship_module._KeySource.JINYU_ANCHOR_TIANGANS, BaziSchool(), day_tiangan_calls),
+    (relationship_module._KeySource.JINYU_ANCHOR_TIANGANS,
+     BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY),
+     year_and_day_tiangan_calls),
+  )
+
+  for key_source, school, expected_calls in cases:
+    chart = BaziChart(Bazi.create(
+      '1902-01-06 12:00',
+      'male',
+      BaziConfig(school=school),
+    ))
+    assert tuple(map(str, chart.bazi.pillars)) == ('辛丑', '辛丑', '己丑', '庚午')
+    calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+
+    def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+      calls.append((key, dizhi))
+      return False
+
+    spec = relationship_module._ShenshaSpec(record, key_source)
+    assert relationship_module._eval_at_birth(spec, chart.bazi) == frozenset()
+    assert tuple(calls) == expected_calls
+
+
 def test_shensha_anchor_profile_has_exact_consumers() -> None:
   expected = {'yima', 'huagai', 'jiangxing', 'jiesha', 'wangshen'}
   assert {
@@ -1193,6 +1343,14 @@ def test_shensha_anchor_profile_has_exact_consumers() -> None:
     name for name, spec in _REGISTRY.items()
     if spec.key is relationship_module._KeySource.YEAR_DIZHI
   } == {'hongluan', 'tianxi', 'guchen', 'guasu'}
+  assert {
+    name for name, spec in _REGISTRY.items()
+    if spec.key is relationship_module._KeySource.DAY_MASTER
+  } == {'yangren', 'lushen'}
+  assert {
+    name for name, spec in _REGISTRY.items()
+    if spec.key is relationship_module._KeySource.JINYU_ANCHOR_TIANGANS
+  } == {'jinyu'}
 
 
 def test_no_bare_dizhi_discovery_calls() -> None:

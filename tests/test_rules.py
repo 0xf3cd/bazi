@@ -176,6 +176,31 @@ def test_guchen_guasu_tables() -> None:
     } == set(DizhiRules.DIZHI_SANHUI)
 
 
+def test_lushen_jinyu_tables() -> None:
+  expected_lushen = {
+    Tiangan.甲 : Dizhi.寅, Tiangan.乙 : Dizhi.卯,
+    Tiangan.丙 : Dizhi.巳, Tiangan.丁 : Dizhi.午,
+    Tiangan.戊 : Dizhi.巳, Tiangan.己 : Dizhi.午,
+    Tiangan.庚 : Dizhi.申, Tiangan.辛 : Dizhi.酉,
+    Tiangan.壬 : Dizhi.亥, Tiangan.癸 : Dizhi.子,
+  }
+  expected_jinyu = {
+    Tiangan.甲 : Dizhi.辰, Tiangan.乙 : Dizhi.巳,
+    Tiangan.丙 : Dizhi.未, Tiangan.丁 : Dizhi.申,
+    Tiangan.戊 : Dizhi.未, Tiangan.己 : Dizhi.申,
+    Tiangan.庚 : Dizhi.戌, Tiangan.辛 : Dizhi.亥,
+    Tiangan.壬 : Dizhi.丑, Tiangan.癸 : Dizhi.寅,
+  }
+
+  assert ShenshaRules.LUSHEN is BaziRules.TIANGAN_LU
+  assert ShenshaRules.LUSHEN == expected_lushen
+  assert ShenshaRules.JINYU == expected_jinyu
+  for tiangan in Tiangan:
+    assert ShenshaRules.JINYU[tiangan] is Dizhi.from_index(
+      (expected_lushen[tiangan].index + 2) % len(Dizhi)
+    )
+
+
 def test_yangren() -> None:
   assert set(ShenshaRules.YANGREN) == set(ShenshaRules.YangrenDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.YANGREN.values())

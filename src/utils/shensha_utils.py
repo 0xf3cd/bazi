@@ -262,6 +262,50 @@ def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   return _table_shensha(ShenshaRules.GUASU, year_dizhi, other_dizhi, Dizhi)
 
 
+def lushen(day_master: Tiangan, dizhi: Dizhi) -> bool:
+  '''
+  Check whether `dizhi` is the LUSHEN (禄神) of `day_master`.
+  检查地支是否为日干的禄神。
+
+  Args:
+  - day_master: (Tiangan) The Day Master used as the lookup key.
+  - dizhi: (Dizhi) The branch to inspect.
+
+  Returns: (bool) Whether `dizhi` is the Lushen of `day_master`.
+
+  Examples:
+  - lushen(Tiangan.甲, Dizhi.寅)
+    - return: True
+  - lushen(Tiangan.甲, Dizhi.卯)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.LUSHEN, day_master, dizhi, Tiangan)
+
+
+def jinyu(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
+  '''
+  Check whether `dizhi` is the JINYU (金舆) of `key_tiangan`.
+  检查地支是否为锚干的金舆。
+
+  Args:
+  - key_tiangan: (Tiangan) The year or day stem used as the lookup key. The caller
+    decides whether to inspect the Day Master alone or both stems.
+    查法锚干；只查日干或年日兼查由调用方决定。
+  - dizhi: (Dizhi) The branch to inspect.
+
+  Returns: (bool) Whether `dizhi` is the Jinyu of `key_tiangan`.
+
+  Examples:
+  - jinyu(Tiangan.甲, Dizhi.辰)
+    - return: True
+  - jinyu(Tiangan.甲, Dizhi.巳)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.JINYU, key_tiangan, dizhi, Tiangan)
+
+
 def yangren(
   day_master: Tiangan,
   dizhi: Dizhi,

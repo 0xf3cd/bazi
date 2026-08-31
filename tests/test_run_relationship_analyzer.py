@@ -21,6 +21,8 @@ def test_shensha_labels() -> None:
     'wangshen' : frozenset((Dizhi.酉,)),
     'guchen'   : frozenset((Dizhi.戌,)),
     'guasu'    : frozenset((Dizhi.亥,)),
+    'lushen'   : frozenset((Dizhi.子,)),
+    'jinyu'    : frozenset((Dizhi.丑,)),
   }
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
@@ -36,6 +38,8 @@ def test_shensha_labels() -> None:
     ('亡神', frozenset((Dizhi.酉,))),
     ('孤辰', frozenset((Dizhi.戌,))),
     ('寡宿', frozenset((Dizhi.亥,))),
+    ('禄神', frozenset((Dizhi.子,))),
+    ('金舆', frozenset((Dizhi.丑,))),
   )
 
   # Keep display labels exhaustive as ShenshaAnalysis grows.
@@ -60,6 +64,8 @@ def test_shensha_labels() -> None:
     'wangshen' : frozenset(),
     'guchen'   : frozenset(),
     'guasu'    : frozenset(),
+    'lushen'   : frozenset(),
+    'jinyu'    : frozenset(),
   }
   assert shensha_strs(empty_shensha) == []
-  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、天乙贵人、将星、劫煞、亡神、孤辰、寡宿'
+  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、天乙贵人、将星、劫煞、亡神、孤辰、寡宿、禄神、金舆'

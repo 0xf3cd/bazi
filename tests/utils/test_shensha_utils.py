@@ -252,6 +252,47 @@ def test_guchen_guasu_negative(
     predicate(Dizhi.子, str(target)) # type: ignore
 
 
+@pytest.mark.parametrize('predicate, expected_table', [
+  (shensha_utils.lushen, {
+    Tiangan.甲 : Dizhi.寅, Tiangan.乙 : Dizhi.卯,
+    Tiangan.丙 : Dizhi.巳, Tiangan.丁 : Dizhi.午,
+    Tiangan.戊 : Dizhi.巳, Tiangan.己 : Dizhi.午,
+    Tiangan.庚 : Dizhi.申, Tiangan.辛 : Dizhi.酉,
+    Tiangan.壬 : Dizhi.亥, Tiangan.癸 : Dizhi.子,
+  }),
+  (shensha_utils.jinyu, {
+    Tiangan.甲 : Dizhi.辰, Tiangan.乙 : Dizhi.巳,
+    Tiangan.丙 : Dizhi.未, Tiangan.丁 : Dizhi.申,
+    Tiangan.戊 : Dizhi.未, Tiangan.己 : Dizhi.申,
+    Tiangan.庚 : Dizhi.戌, Tiangan.辛 : Dizhi.亥,
+    Tiangan.壬 : Dizhi.丑, Tiangan.癸 : Dizhi.寅,
+  }),
+])
+def test_lushen_jinyu(
+  predicate: Callable[[Tiangan, Dizhi], bool],
+  expected_table: dict[Tiangan, Dizhi],
+) -> None:
+  for tiangan in Tiangan:
+    for dizhi in Dizhi:
+      expected = expected_table[tiangan] is dizhi
+      assert predicate(tiangan, dizhi) == expected
+      assert predicate(tiangan, dizhi) == expected # Repeated lookup must answer the same.
+
+
+@pytest.mark.parametrize('predicate, target', [
+  (shensha_utils.lushen, Dizhi.寅),
+  (shensha_utils.jinyu, Dizhi.辰),
+])
+def test_lushen_jinyu_negative(
+  predicate: Callable[[Tiangan, Dizhi], bool],
+  target: Dizhi,
+) -> None:
+  with pytest.raises(TypeError):
+    predicate('甲', target) # type: ignore
+  with pytest.raises(TypeError):
+    predicate(Tiangan.甲, str(target)) # type: ignore
+
+
 def test_yangren() -> None:
   expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
     ShenshaRules.YangrenDef.ZIPING : {
