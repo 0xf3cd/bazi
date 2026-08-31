@@ -282,6 +282,7 @@ class BaziSchool:
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
   shensha_anchor_profile: ShenshaAnchorProfile = ShenshaAnchorProfile.WENZHEN
   jinyu_anchor: JinyuAnchor = JinyuAnchor.DAY_MASTER
+  feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
 
   def __post_init__(self) -> None:
     # Type check at runtime (same shape as `CalendarDate`).
@@ -305,6 +306,8 @@ class BaziSchool:
       raise TypeError(f'Expected ShenshaAnchorProfile, got {type(self.shensha_anchor_profile)}')
     if not isinstance(self.jinyu_anchor, JinyuAnchor):
       raise TypeError(f'Expected JinyuAnchor, got {type(self.jinyu_anchor)}')
+    if not isinstance(self.feiren_def, ShenshaRules.FeirenDef):
+      raise TypeError(f'Expected FeirenDef, got {type(self.feiren_def)}')
 
 
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()

@@ -106,12 +106,18 @@ def main() -> int:
      lambda: shensha_utils.jinyu(Tiangan.甲, '辰')), # type: ignore
     ('shensha_utils.yangren wrong definition', TypeError,
      lambda: shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object())), # type: ignore
+    ('shensha_utils.feiren on raw string', TypeError,
+     lambda: shensha_utils.feiren('甲', Dizhi.酉)), # type: ignore
+    ('shensha_utils.feiren wrong definition', TypeError,
+     lambda: shensha_utils.feiren(Tiangan.甲, Dizhi.酉, definition=object())), # type: ignore
     ('shensha_utils.tianyi wrong definition', TypeError,
      lambda: shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object())), # type: ignore
     ('BaziSchool wrong Shensha anchor profile', TypeError,
      lambda: BaziSchool(shensha_anchor_profile=object())), # type: ignore
     ('BaziSchool wrong Jinyu anchor', TypeError,
      lambda: BaziSchool(jinyu_anchor=object())), # type: ignore
+    ('BaziSchool wrong Feiren definition', TypeError,
+     lambda: BaziSchool(feiren_def=object())), # type: ignore
     ('DecodedLunarYears.get out of range', ValueError,
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,

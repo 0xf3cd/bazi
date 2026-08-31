@@ -85,6 +85,11 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     _KeySource.DAY_MASTER,
     lambda school: school.yangren_def,
   ),
+  'feiren'   : _ShenshaSpec(
+    shensha_utils.feiren,
+    _KeySource.DAY_MASTER,
+    lambda school: school.feiren_def,
+  ),
   'tianyi'   : _ShenshaSpec(
     shensha_utils.tianyi,
     _KeySource.ANCHOR_TIANGANS,
@@ -303,6 +308,8 @@ class ShenshaAnalysis(TypedDict):
   huagai:    frozenset[Dizhi]
   # The Yangren Dizhis   (羊刃所在地支)
   yangren:   frozenset[Dizhi]
+  # The Feiren Dizhis    (飞刃所在地支)
+  feiren:    frozenset[Dizhi]
   # The Tianyi Dizhis    (天乙贵人所在地支)
   tianyi:    frozenset[Dizhi]
   # The Jiangxing Dizhis (将星所在地支)
@@ -337,6 +344,7 @@ class AtBirthAnalysis:
       'yima'     : _eval_at_birth(_REGISTRY['yima'],      bazi),
       'huagai'   : _eval_at_birth(_REGISTRY['huagai'],    bazi),
       'yangren'  : _eval_at_birth(_REGISTRY['yangren'],   bazi),
+      'feiren'   : _eval_at_birth(_REGISTRY['feiren'],    bazi),
       'tianyi'   : _eval_at_birth(_REGISTRY['tianyi'],    bazi),
       'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
       'jiesha'   : _eval_at_birth(_REGISTRY['jiesha'],    bazi),
@@ -427,6 +435,7 @@ class TransitAnalysis:
       'yima'     : _eval_transits(_REGISTRY['yima'],      bazi, transit_dizhis),
       'huagai'   : _eval_transits(_REGISTRY['huagai'],    bazi, transit_dizhis),
       'yangren'  : _eval_transits(_REGISTRY['yangren'],   bazi, transit_dizhis),
+      'feiren'   : _eval_transits(_REGISTRY['feiren'],    bazi, transit_dizhis),
       'tianyi'   : _eval_transits(_REGISTRY['tianyi'],    bazi, transit_dizhis),
       'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
       'jiesha'   : _eval_transits(_REGISTRY['jiesha'],    bazi, transit_dizhis),

@@ -164,6 +164,7 @@ def test_case1() -> None:
   assert at_birth.shensha['yima']      == set()
   assert at_birth.shensha['huagai']    == set()
   assert at_birth.shensha['yangren']   == set()
+  assert at_birth.shensha['feiren']    == set()
   assert at_birth.shensha['tianyi']    == {Dizhi.子, Dizhi.丑}
   assert at_birth.shensha['jiangxing'] == set()
   assert at_birth.shensha['jiesha']    == set()
@@ -207,6 +208,7 @@ def test_case1() -> None:
   assert shensha['yima']      == set()
   assert shensha['huagai']    == {Dizhi.辰}
   assert shensha['yangren']   == set()
+  assert shensha['feiren']    == set()
   assert shensha['tianyi']    == set()
   assert shensha['jiangxing'] == set()
   assert shensha['jiesha']    == set()
@@ -272,6 +274,7 @@ def test_case1() -> None:
   assert shensha['yima']      == set()
   assert shensha['huagai']    == set()
   assert shensha['yangren']   == set()
+  assert shensha['feiren']    == set()
   assert shensha['tianyi']    == {Dizhi.未}
   assert shensha['jiangxing'] == set()
   assert shensha['jiesha']    == set()
@@ -343,6 +346,7 @@ def test_case1() -> None:
   assert shensha['yima']      == {Dizhi.亥}
   assert shensha['huagai']    == set()
   assert shensha['yangren']   == set()
+  assert shensha['feiren']    == set()
   assert shensha['tianyi']    == {Dizhi.申}
   assert shensha['jiangxing'] == set()
   assert shensha['jiesha']    == set()
@@ -406,6 +410,7 @@ def test_case2() -> None:
   assert at_birth.shensha['yima']      == set()
   assert at_birth.shensha['huagai']    == {Dizhi.戌}
   assert at_birth.shensha['yangren']   == {Dizhi.午}
+  assert at_birth.shensha['feiren']    == {Dizhi.子}
   assert at_birth.shensha['tianyi']    == set()
   assert at_birth.shensha['jiangxing'] == {Dizhi.午}
   assert at_birth.shensha['jiesha']    == set()
@@ -448,6 +453,7 @@ def test_case2() -> None:
     'yima'     : frozenset([Dizhi.寅, Dizhi.申]),
     'huagai'   : frozenset([Dizhi.辰, Dizhi.戌]),
     'yangren'  : frozenset([Dizhi.午]),
+    'feiren'   : frozenset([Dizhi.子]),
     'tianyi'   : frozenset([Dizhi.丑, Dizhi.未, Dizhi.亥, Dizhi.酉]),
     'jiangxing': frozenset([Dizhi.子, Dizhi.午]),
     'jiesha'   : frozenset([Dizhi.巳, Dizhi.亥]),
@@ -708,6 +714,10 @@ def test_random_cases(bazi: Bazi) -> None:
         lambda dz: shensha_utils.yangren(dm, dz, definition=school.yangren_def),
         transits_dz_set,
       ))
+      expected_feiren:    set[Dizhi] = set(filter(
+        lambda dz: shensha_utils.feiren(dm, dz, definition=school.feiren_def),
+        transits_dz_set,
+      ))
       expected_tianyi:    set[Dizhi] = set(filter(
         lambda dz: any(shensha_utils.tianyi(tg, dz, definition=school.tianyi_def)
                        for tg in (bazi.year_pillar.tiangan, dm)),
@@ -729,6 +739,7 @@ def test_random_cases(bazi: Bazi) -> None:
       assert expected_yima == shensha['yima']
       assert expected_huagai == shensha['huagai']
       assert expected_yangren == shensha['yangren']
+      assert expected_feiren == shensha['feiren']
       assert expected_tianyi == shensha['tianyi']
       assert expected_jiangxing == shensha['jiangxing']
       assert expected_jiesha == shensha['jiesha']

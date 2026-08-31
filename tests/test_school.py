@@ -58,6 +58,7 @@ def test_school_enums_basic() -> None:
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
   assert len(ShenshaRules.YangrenDef) == 3
+  assert len(ShenshaRules.FeirenDef) == 3
   assert len(ShenshaRules.TianyiDef) == 4
 
 
@@ -69,6 +70,7 @@ def test_school_defaults() -> None:
   assert BaziSchool().tianyi_def is ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
   assert BaziSchool().shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
   assert BaziSchool().jinyu_anchor is JinyuAnchor.DAY_MASTER
+  assert BaziSchool().feiren_def is ShenshaRules.FeirenDef.ZIPING
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
@@ -256,6 +258,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().gong_def is params['gong_def'].default
   assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
   assert BaziSchool().tianyi_def is inspect.signature(shensha_utils.tianyi).parameters['definition'].default
+  assert BaziSchool().feiren_def is inspect.signature(shensha_utils.feiren).parameters['definition'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -299,6 +302,7 @@ def test_eq_hash_include_school() -> None:
     BaziSchool(tianyi_def=ShenshaRules.TianyiDef.YINGUI),
     BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN),
     BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY),
+    BaziSchool(feiren_def=ShenshaRules.FeirenDef.DIWANG),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
     BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
@@ -333,6 +337,7 @@ def test_json_roundtrip_default_school() -> None:
     'tianyi_anchor': 'YEAR_AND_DAY', 'tianyi_def': 'GENG_WITH_JIA_WU',
     'shensha_anchor_profile': 'WENZHEN',
     'jinyu_anchor': 'DAY_MASTER',
+    'feiren_def': 'ZIPING',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -352,6 +357,7 @@ def test_json_roundtrip_default_school() -> None:
                     tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
                     shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                     jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
+                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
                   ),
                 ))
   )
@@ -375,6 +381,7 @@ def test_json_roundtrip_non_default_school() -> None:
     tianyi_def=ShenshaRules.TianyiDef.YINGUI,
     shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
     jinyu_anchor=JinyuAnchor.YEAR_AND_DAY,
+    feiren_def=ShenshaRules.FeirenDef.DIWANG,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -386,6 +393,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'tianyi_anchor': 'YEAR_MASTER', 'tianyi_def': 'YINGUI',
     'shensha_anchor_profile': 'MINGLI_TANYUAN',
     'jinyu_anchor': 'YEAR_AND_DAY',
+    'feiren_def': 'DIWANG',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -405,6 +413,7 @@ def test_json_roundtrip_non_default_school() -> None:
                     tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
                     shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
                     jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
+                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
                   ),
                 ))
   )

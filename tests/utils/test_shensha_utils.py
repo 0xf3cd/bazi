@@ -345,6 +345,58 @@ def test_yangren_negative() -> None:
     shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object()) # type: ignore
 
 
+def test_feiren() -> None:
+  expected: dict[ShenshaRules.FeirenDef, dict[Tiangan, Dizhi | None]] = {
+    ShenshaRules.FeirenDef.ZIPING : {
+      Tiangan.甲 : Dizhi.酉, Tiangan.乙 : None,
+      Tiangan.丙 : Dizhi.子, Tiangan.丁 : None,
+      Tiangan.戊 : Dizhi.子, Tiangan.己 : None,
+      Tiangan.庚 : Dizhi.卯, Tiangan.辛 : None,
+      Tiangan.壬 : Dizhi.午, Tiangan.癸 : None,
+    },
+    ShenshaRules.FeirenDef.LUMING : {
+      Tiangan.甲 : Dizhi.酉, Tiangan.乙 : Dizhi.戌,
+      Tiangan.丙 : Dizhi.子, Tiangan.丁 : Dizhi.丑,
+      Tiangan.戊 : Dizhi.子, Tiangan.己 : Dizhi.丑,
+      Tiangan.庚 : Dizhi.卯, Tiangan.辛 : Dizhi.辰,
+      Tiangan.壬 : Dizhi.午, Tiangan.癸 : Dizhi.未,
+    },
+    ShenshaRules.FeirenDef.DIWANG : {
+      Tiangan.甲 : Dizhi.酉, Tiangan.乙 : Dizhi.申,
+      Tiangan.丙 : Dizhi.子, Tiangan.丁 : Dizhi.亥,
+      Tiangan.戊 : Dizhi.子, Tiangan.己 : Dizhi.亥,
+      Tiangan.庚 : Dizhi.卯, Tiangan.辛 : Dizhi.寅,
+      Tiangan.壬 : Dizhi.午, Tiangan.癸 : Dizhi.巳,
+    },
+  }
+
+  for feiren_def in ShenshaRules.FeirenDef:
+    for tiangan in Tiangan:
+      for dizhi in Dizhi:
+        assert shensha_utils.feiren(
+          tiangan,
+          dizhi,
+          definition=feiren_def,
+        ) == (expected[feiren_def][tiangan] is dizhi)
+
+  for tiangan in Tiangan:
+    for dizhi in Dizhi:
+      assert shensha_utils.feiren(tiangan, dizhi) == shensha_utils.feiren(
+        tiangan,
+        dizhi,
+        definition=ShenshaRules.FeirenDef.ZIPING,
+      )
+
+
+def test_feiren_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.feiren('甲', Dizhi.酉) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.feiren(Tiangan.甲, '酉') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.feiren(Tiangan.甲, Dizhi.酉, definition=object()) # type: ignore
+
+
 def test_tianyi() -> None:
   expected: dict[ShenshaRules.TianyiDef, dict[Tiangan, frozenset[Dizhi]]] = {
     ShenshaRules.TianyiDef.GENG_WITH_JIA_WU : {
