@@ -6,7 +6,7 @@ from src.bazi_chart import BaziChart
 from src.defines import Dizhi
 from src.transit_chart import TransitChart
 from src.transits import TransitKind
-from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
+from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis
 
 
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
@@ -41,9 +41,16 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
   ]
 
 
-def _no_shensha_str(shensha: ShenshaAnalysis) -> str:
+def at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
+  result = shensha_strs(shensha)
+  if (kuigang := shensha['kuigang']) is not None:
+    result.append(f'魁罡：{colored_str(kuigang)}')
+  return result
+
+
+def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
   labels = '、'.join(label for label, _ in _named_shensha(shensha))
-  return f'原局无{labels}'
+  return f'原局无{labels}、魁罡'
 
 
 if __name__ == '__main__':
@@ -62,7 +69,7 @@ if __name__ == '__main__':
   print('\n' + '-' * 60 + '\n')
 
   at_birth_shensha = analyzer.at_birth.shensha
-  shensha_str_list = shensha_strs(at_birth_shensha)
+  shensha_str_list = at_birth_shensha_strs(at_birth_shensha)
   if len(shensha_str_list) == 0:
     print(_no_shensha_str(at_birth_shensha))
   else:

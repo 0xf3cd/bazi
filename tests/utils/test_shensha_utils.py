@@ -6,7 +6,7 @@ from collections.abc import Callable
 
 import pytest
 
-from src.defines import Tiangan, Dizhi
+from src.defines import Tiangan, Dizhi, Ganzhi
 from src.rules import ShenshaRules
 from src.utils import shensha_utils
 
@@ -313,6 +313,25 @@ def test_lushen_jinyu_negative(
     predicate('甲', target) # type: ignore
   with pytest.raises(TypeError):
     predicate(Tiangan.甲, str(target)) # type: ignore
+
+
+def test_kuigang() -> None:
+  cycle = Ganzhi.list_sexagenary_cycle()
+  expected = {
+    Ganzhi.from_str('庚辰'),
+    Ganzhi.from_str('壬辰'),
+    Ganzhi.from_str('戊戌'),
+    Ganzhi.from_str('庚戌'),
+  }
+  assert len(cycle) == 60
+  assert {ganzhi for ganzhi in cycle if shensha_utils.kuigang(ganzhi)} == expected
+  assert all(shensha_utils.kuigang(ganzhi) == (ganzhi in expected) for ganzhi in cycle)
+  assert not shensha_utils.kuigang(Ganzhi.from_str('甲辰'))
+
+
+def test_kuigang_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.kuigang('庚辰') # type: ignore
 
 
 def test_yangren() -> None:

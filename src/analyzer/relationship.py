@@ -354,13 +354,18 @@ class ShenshaAnalysis(TypedDict):
   jinyu:     frozenset[Dizhi]
 
 
+class AtBirthShenshaAnalysis(ShenshaAnalysis):
+  # The Kuigang day pillar, if present (魁罡日柱；未命中时为 None)
+  kuigang: Ganzhi | None
+
+
 class AtBirthAnalysis:
   '''Analysis of Relationship at Birth / 出生时的亲密关系分析'''
   def __init__(self, chart: BaziChart) -> None:
     self._chart: Final[BaziChart] = chart
 
   @property
-  def shensha(self) -> ShenshaAnalysis:
+  def shensha(self) -> AtBirthShenshaAnalysis:
     bazi = self._chart.bazi
     return {
       'taohua'   : _eval_at_birth(_REGISTRY['taohua'],    bazi),
@@ -380,6 +385,7 @@ class AtBirthAnalysis:
       'guasu'    : _eval_at_birth(_REGISTRY['guasu'],     bazi),
       'lushen'   : _eval_at_birth(_REGISTRY['lushen'],    bazi),
       'jinyu'    : _eval_at_birth(_REGISTRY['jinyu'],     bazi),
+      'kuigang'  : bazi.day_pillar if shensha_utils.kuigang(bazi.day_pillar) else None,
     }
 
   @property

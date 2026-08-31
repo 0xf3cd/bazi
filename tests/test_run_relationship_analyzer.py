@@ -1,9 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from run_demo import colored_str
-from run_relationship_analyzer import _named_shensha, _no_shensha_str, shensha_strs
-from src.defines import Dizhi
-from src.analyzer.relationship import ShenshaAnalysis
+from run_relationship_analyzer import (
+  _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
+)
+from src.defines import Dizhi, Ganzhi
+from src.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis
 
 
 def test_shensha_labels() -> None:
@@ -54,6 +56,16 @@ def test_shensha_labels() -> None:
     for label, dizhis in expected
   ]
 
+  kuigang = Ganzhi.from_str('庚辰')
+  at_birth_shensha: AtBirthShenshaAnalysis = {
+    **shensha,
+    'kuigang': kuigang,
+  }
+  assert at_birth_shensha_strs(at_birth_shensha) == [
+    *shensha_strs(shensha),
+    f'魁罡：{colored_str(kuigang)}',
+  ]
+
   empty_shensha: ShenshaAnalysis = {
     'taohua'   : frozenset(),
     'hongyan'  : frozenset(),
@@ -73,5 +85,10 @@ def test_shensha_labels() -> None:
     'lushen'   : frozenset(),
     'jinyu'    : frozenset(),
   }
+  empty_at_birth_shensha: AtBirthShenshaAnalysis = {
+    **empty_shensha,
+    'kuigang': None,
+  }
   assert shensha_strs(empty_shensha) == []
-  assert _no_shensha_str(empty_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆'
+  assert at_birth_shensha_strs(empty_at_birth_shensha) == []
+  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、魁罡'
