@@ -793,9 +793,11 @@ class ShenshaRules:
   # TIANSHE (天赦) matches the day pillar to the season of the Month Commander:
   # spring 戊寅, summer 甲午, autumn 戊申, and winter 甲子.
   # 天赦按月令所属四时查日柱：春戊寅、夏甲午、秋戊申、冬甲子。
-  # Sources / 出处 (issue #176):
+  # Table sources / 表值出处 (issue #176):
   # - 《三命通会·卷三·论天月德》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
-  # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  # - 《渊海子平》, as quoted in Yuan Shushan's 《命理探源》:
+  #   https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#天赦日 (issue #176).
   TIANSHE: Final[frozendict[Dizhi, Ganzhi]] = frozendict({
     Dizhi(month) : Ganzhi.from_str(day)
     for months, day in {
