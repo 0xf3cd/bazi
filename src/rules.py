@@ -1,8 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import itertools
+from collections.abc import Callable
 from enum import Enum
-from typing import Final
+from typing import Final, TypeVar
 
 from .common import frozendict
 from .data_types import TraitTuple, HiddenTianganDict
@@ -570,9 +571,15 @@ class DizhiRules:
   DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _dizhi_ke(BaziRules.DIZHI_TRAITS)
 
 
-def _expand_dizhi_groups(groups: dict[str, str]) -> frozendict[Dizhi, Dizhi]:
+_GroupValue = TypeVar('_GroupValue')
+
+
+def _expand_dizhi_groups(
+  groups: dict[str, str],
+  value_from_str: Callable[[str], _GroupValue],
+) -> frozendict[Dizhi, _GroupValue]:
   return frozendict({
-    Dizhi(key) : Dizhi(target)
+    Dizhi(key) : value_from_str(target)
     for keys, target in groups.items()
     for key in keys
   })
@@ -583,12 +590,15 @@ class ShenshaRules:
 
   # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
   # 该表格用于查询桃花星。桃花即咸池桃花。
-  TAOHUA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '酉',
-    '寅午戌' : '卯',
-    '亥卯未' : '子',
-    '巳酉丑' : '午',
-  })
+  TAOHUA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '酉',
+      '寅午戌' : '卯',
+      '亥卯未' : '子',
+      '巳酉丑' : '午',
+    },
+    Dizhi,
+  )
 
   # The table is used to find out HONGYAN (红艳). From 《三命通会》: "甲乙逢午、丙寅、丁未、
   # 戊辰、己辰、庚戌、辛酉、壬子、癸申，为红艳煞".
@@ -649,12 +659,15 @@ class ShenshaRules:
 
   # The table is used to find out YIMA (驿马).
   # 该表格用于查询驿马星。
-  YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '寅',
-    '寅午戌' : '申',
-    '亥卯未' : '巳',
-    '巳酉丑' : '亥',
-  })
+  YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '寅',
+      '寅午戌' : '申',
+      '亥卯未' : '巳',
+      '巳酉丑' : '亥',
+    },
+    Dizhi,
+  )
 
   # HUAGAI (华盖) is the tomb/storage branch of each 三合 group. From 《三命通会》, as quoted
   # in Yuan Shushan's 《命理探源》:「华盖者，形象之称也……故以三合本库为华盖也。如寅午戌
@@ -664,12 +677,15 @@ class ShenshaRules:
   # Mainstream modern references use the year or day branch as the anchor and inspect the other
   # pillars' branches (百度百科「神煞」; also 问真、高人).
   # 当代通行查法以年支或日支为锚，查其他柱的地支（百度百科「神煞」；问真、高人）。
-  HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '寅午戌' : '戌',
-    '亥卯未' : '未',
-    '申子辰' : '辰',
-    '巳酉丑' : '丑',
-  })
+  HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '寅午戌' : '戌',
+      '亥卯未' : '未',
+      '申子辰' : '辰',
+      '巳酉丑' : '丑',
+    },
+    Dizhi,
+  )
 
   # JIANGXING (将星) is the middle / Diwang (帝旺) branch of each 三合 group,
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
@@ -679,12 +695,15 @@ class ShenshaRules:
   # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
   # 问真以年支或日支为锚，查余支。
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#将星 (issue #152).
-  JIANGXING: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '子',
-    '寅午戌' : '午',
-    '亥卯未' : '卯',
-    '巳酉丑' : '酉',
-  })
+  JIANGXING: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '子',
+      '寅午戌' : '午',
+      '亥卯未' : '卯',
+      '巳酉丑' : '酉',
+    },
+    Dizhi,
+  )
 
   # ZAISHA (灾煞) is the branch opposing each 三合 group's Jiangxing (将星),
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
@@ -696,12 +715,15 @@ class ShenshaRules:
   # Modern compilations also call this 白虎煞; the public rule and display retain the
   # classical name 灾煞 because other distinct 白虎 tables circulate.
   # 现代汇编亦称白虎煞；另有不同白虎表流传，故公开规则与显示仍用古名灾煞。
-  ZAISHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '午',
-    '寅午戌' : '子',
-    '巳酉丑' : '卯',
-    '亥卯未' : '酉',
-  })
+  ZAISHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '午',
+      '寅午戌' : '子',
+      '巳酉丑' : '卯',
+      '亥卯未' : '酉',
+    },
+    Dizhi,
+  )
 
   # JIESHA (劫煞) is the Jue (绝) branch of each 三合 group's Wuxing,
   # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
@@ -710,12 +732,15 @@ class ShenshaRules:
   # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
   # 问真以年支或日支为锚，查余支。
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#劫煞 (issue #153).
-  JIESHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '巳',
-    '寅午戌' : '亥',
-    '亥卯未' : '申',
-    '巳酉丑' : '寅',
-  })
+  JIESHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '巳',
+      '寅午戌' : '亥',
+      '亥卯未' : '申',
+      '巳酉丑' : '寅',
+    },
+    Dizhi,
+  )
 
   # WANGSHEN (亡神) is the Linguan (临官) branch of each 三合 group's Wuxing,
   # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
@@ -724,12 +749,15 @@ class ShenshaRules:
   # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
   # 问真以年支或日支为锚，查余支。
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#亡神 (issue #154).
-  WANGSHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '申子辰' : '亥',
-    '寅午戌' : '巳',
-    '亥卯未' : '寅',
-    '巳酉丑' : '申',
-  })
+  WANGSHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '申子辰' : '亥',
+      '寅午戌' : '巳',
+      '亥卯未' : '寅',
+      '巳酉丑' : '申',
+    },
+    Dizhi,
+  )
 
   # GUCHEN (孤辰) and GUASU (寡宿) are the branches one step forward and one step back
   # from the birth-year branch's direction group in 《三命通会·卷三·论孤辰寡宿》.
@@ -740,19 +768,25 @@ class ShenshaRules:
   # The same section quotes the interpretation-level exclusions 「连属不言孤寡」 and
   # 「支干朝会包裹贵人」. They do not erase the raw locations here.
   # 同节所引「连属不言孤寡」及贵人包裹条款属解释层豁免，不抹去本表给出的原始命中位置。
-  GUCHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '亥子丑' : '寅',
-    '寅卯辰' : '巳',
-    '巳午未' : '申',
-    '申酉戌' : '亥',
-  })
+  GUCHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '亥子丑' : '寅',
+      '寅卯辰' : '巳',
+      '巳午未' : '申',
+      '申酉戌' : '亥',
+    },
+    Dizhi,
+  )
 
-  GUASU: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups({
-    '亥子丑' : '戌',
-    '寅卯辰' : '丑',
-    '巳午未' : '辰',
-    '申酉戌' : '未',
-  })
+  GUASU: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
+    {
+      '亥子丑' : '戌',
+      '寅卯辰' : '丑',
+      '巳午未' : '辰',
+      '申酉戌' : '未',
+    },
+    Dizhi,
+  )
 
   # LUSHEN (禄神) uses the same ten-stem Lu locations as `BaziRules.TIANGAN_LU`.
   # 禄神与十干禄位共用一张表。
@@ -798,16 +832,15 @@ class ShenshaRules:
   # - 《渊海子平》, as quoted in Yuan Shushan's 《命理探源》:
   #   https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#天赦日 (issue #176).
-  TIANSHE: Final[frozendict[Dizhi, Ganzhi]] = frozendict({
-    Dizhi(month) : Ganzhi.from_str(day)
-    for months, day in {
+  TIANSHE: Final[frozendict[Dizhi, Ganzhi]] = _expand_dizhi_groups(
+    {
       '寅卯辰' : '戊寅',
       '巳午未' : '甲午',
       '申酉戌' : '戊申',
       '亥子丑' : '甲子',
-    }.items()
-    for month in months
-  })
+    },
+    Ganzhi.from_str,
+  )
 
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin

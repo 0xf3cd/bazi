@@ -68,6 +68,22 @@ def test_shensha_labels() -> None:
     f'魁罡：{colored_str(kuigang)}',
     f'天赦：{colored_str(tianshe)}',
   ]
+  assert at_birth_shensha_strs({
+    **shensha,
+    'kuigang': kuigang,
+    'tianshe': None,
+  }) == [
+    *shensha_strs(shensha),
+    f'魁罡：{colored_str(kuigang)}',
+  ]
+  assert at_birth_shensha_strs({
+    **shensha,
+    'kuigang': None,
+    'tianshe': tianshe,
+  }) == [
+    *shensha_strs(shensha),
+    f'天赦：{colored_str(tianshe)}',
+  ]
 
   empty_shensha: ShenshaAnalysis = {
     'taohua'   : frozenset(),
@@ -95,4 +111,9 @@ def test_shensha_labels() -> None:
   }
   assert shensha_strs(empty_shensha) == []
   assert at_birth_shensha_strs(empty_at_birth_shensha) == []
+  assert at_birth_shensha_strs({
+    **empty_shensha,
+    'kuigang': None,
+    'tianshe': tianshe,
+  }) == [f'天赦：{colored_str(tianshe)}']
   assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、魁罡、天赦'
