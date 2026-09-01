@@ -3,13 +3,14 @@
 from typing import TypeVar
 
 from ..common import frozendict
-from ..defines import Tiangan, Dizhi
+from ..defines import Tiangan, Dizhi, Ganzhi
 from ..rules import ShenshaRules
 
 
 '''
 Predicates for Shensha (神煞) detection.
-Each function checks whether a Dizhi forms the Shensha against its anchor (the year/day Dizhi, or a key Tiangan).
+Most functions check whether a Dizhi forms the Shensha against its anchor; whole-pillar
+rules accept a Ganzhi directly. 多数函数按锚查地支神煞；整柱规则直接接收干支。
 '''
 
 
@@ -327,6 +328,28 @@ def jinyu(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
 
   return _table_shensha(ShenshaRules.JINYU, key_tiangan, dizhi, Tiangan)
+
+
+def kuigang(day_ganzhi: Ganzhi) -> bool:
+  '''
+  Check whether `day_ganzhi` is one of the four KUIGANG (魁罡) day pillars.
+  检查日柱是否为四个魁罡日之一。
+
+  Args:
+  - day_ganzhi: (Ganzhi) The birth-chart day pillar. 原局日柱。
+
+  Returns: (bool) Whether `day_ganzhi` is a Kuigang day pillar.
+
+  Examples:
+  - kuigang(Ganzhi.from_str('庚辰'))
+    - return: True
+  - kuigang(Ganzhi.from_str('甲辰'))
+    - return: False
+  '''
+
+  if not isinstance(day_ganzhi, Ganzhi):
+    raise TypeError(f'Expected Ganzhi, got {type(day_ganzhi)}')
+  return day_ganzhi in ShenshaRules.KUIGANG
 
 
 def yangren(

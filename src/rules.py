@@ -777,6 +777,19 @@ class ShenshaRules:
     Tiangan.癸 : Dizhi.寅,
   })
 
+  # KUIGANG (魁罡) is fixed to four day pillars in both 《渊海子平·论魁罡》
+  # and 《三命通会·卷六·魁罡》.
+  # 魁罡固定取四个日柱，两书所载相同。
+  # Sources / 出处 (issue #175):
+  # - https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
+  # - https://book.taiyi.me/命/三命通会/三命通会(卷六)
+  KUIGANG: Final[frozenset[Ganzhi]] = frozenset((
+    Ganzhi.from_str('庚辰'),
+    Ganzhi.from_str('壬辰'),
+    Ganzhi.from_str('戊戌'),
+    Ganzhi.from_str('庚戌'),
+  ))
+
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。

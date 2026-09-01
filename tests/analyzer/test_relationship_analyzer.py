@@ -22,7 +22,9 @@ from src.school import (
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
-from src.analyzer.relationship import RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, _REGISTRY
+from src.analyzer.relationship import (
+  RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, AtBirthShenshaAnalysis, _REGISTRY,
+)
 
 
 _GONG_RELATIONS = (DizhiRelation.拱合, DizhiRelation.拱会)
@@ -211,6 +213,30 @@ def test_at_birth_shensha() -> None:
     expected_jinyu = {dz for dz in (y, m, d, h) if shensha_utils.jinyu(dm, dz)}
     assert at_birth.shensha['jinyu'] == expected_jinyu
     assert at_birth.shensha['jinyu'] == at_birth.shensha['jinyu'] # Repeated lookup must answer the same.
+
+    # Kuigang / 魁罡
+    expected_kuigang = chart.bazi.day_pillar if shensha_utils.kuigang(chart.bazi.day_pillar) else None
+    assert at_birth.shensha['kuigang'] == expected_kuigang
+    assert at_birth.shensha['kuigang'] == at_birth.shensha['kuigang'] # Repeated lookup must answer the same.
+
+
+@pytest.mark.parametrize('birth_time, day_pillar, expected_hit', [
+  ('2000-01-23 12:00', '庚辰', True),
+  ('2000-02-04 12:00', '壬辰', True),
+  ('2000-02-10 12:00', '戊戌', True),
+  ('2000-02-22 12:00', '庚戌', True),
+  ('2000-02-16 12:00', '甲辰', False),
+])
+def test_kuigang_at_birth(
+  birth_time: str,
+  day_pillar: str,
+  expected_hit: bool,
+) -> None:
+  chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  assert str(chart.bazi.day_pillar) == day_pillar
+  assert RelationshipAnalyzer(chart).at_birth.shensha['kuigang'] == (
+    chart.bazi.day_pillar if expected_hit else None
+  )
 
 
 @pytest.mark.parametrize('birth_time, pillars, expected', [
@@ -1447,6 +1473,13 @@ def test_transit_analysis_negative() -> None:
 def test_registry_matches_shensha_analysis_keys() -> None:
   '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
+
+
+def test_at_birth_shensha_analysis_has_only_kuigang_extra() -> None:
+  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
+  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
+  assert at_birth_keys == common_keys | {'kuigang'}
+  assert 'kuigang' not in _REGISTRY
 
 
 def test_at_birth_key_sources_preserve_anchor_and_pillar_scope() -> None:

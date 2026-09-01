@@ -6,7 +6,7 @@ import inspect
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Wuxing, DizhiRelation, ShierZhangsheng
+from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation, ShierZhangsheng
 from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
@@ -214,6 +214,15 @@ def test_lushen_jinyu_tables() -> None:
     assert ShenshaRules.JINYU[tiangan] is Dizhi.from_index(
       (expected_lushen[tiangan].index + 2) % len(Dizhi)
     )
+
+
+def test_kuigang_rule() -> None:
+  assert ShenshaRules.KUIGANG == frozenset((
+    Ganzhi.from_str('庚辰'),
+    Ganzhi.from_str('壬辰'),
+    Ganzhi.from_str('戊戌'),
+    Ganzhi.from_str('庚戌'),
+  ))
 
 
 def test_yangren() -> None:
