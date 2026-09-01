@@ -57,13 +57,16 @@ def test_shensha_labels() -> None:
   ]
 
   kuigang = Ganzhi.from_str('庚辰')
+  tianshe = Ganzhi.from_str('戊寅')
   at_birth_shensha: AtBirthShenshaAnalysis = {
     **shensha,
     'kuigang': kuigang,
+    'tianshe': tianshe,
   }
   assert at_birth_shensha_strs(at_birth_shensha) == [
     *shensha_strs(shensha),
     f'魁罡：{colored_str(kuigang)}',
+    f'天赦：{colored_str(tianshe)}',
   ]
 
   empty_shensha: ShenshaAnalysis = {
@@ -88,7 +91,8 @@ def test_shensha_labels() -> None:
   empty_at_birth_shensha: AtBirthShenshaAnalysis = {
     **empty_shensha,
     'kuigang': None,
+    'tianshe': None,
   }
   assert shensha_strs(empty_shensha) == []
   assert at_birth_shensha_strs(empty_at_birth_shensha) == []
-  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、魁罡'
+  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、魁罡、天赦'

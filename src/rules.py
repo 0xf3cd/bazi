@@ -790,6 +790,23 @@ class ShenshaRules:
     Ganzhi.from_str('庚戌'),
   ))
 
+  # TIANSHE (天赦) matches the day pillar to the season of the Month Commander:
+  # spring 戊寅, summer 甲午, autumn 戊申, and winter 甲子.
+  # 天赦按月令所属四时查日柱：春戊寅、夏甲午、秋戊申、冬甲子。
+  # Sources / 出处 (issue #176):
+  # - 《三命通会·卷三·论天月德》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
+  # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  TIANSHE: Final[frozendict[Dizhi, Ganzhi]] = frozendict({
+    Dizhi(month) : Ganzhi.from_str(day)
+    for months, day in {
+      '寅卯辰' : '戊寅',
+      '巳午未' : '甲午',
+      '申酉戌' : '戊申',
+      '亥子丑' : '甲子',
+    }.items()
+    for month in months
+  })
+
   class YangrenDef(Enum):
     '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
     Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。

@@ -334,6 +334,38 @@ def test_kuigang_negative() -> None:
     shensha_utils.kuigang('庚辰') # type: ignore
 
 
+def test_tianshe() -> None:
+  cycle = Ganzhi.list_sexagenary_cycle()
+  expected = {
+    Dizhi.寅 : Ganzhi.from_str('戊寅'),
+    Dizhi.卯 : Ganzhi.from_str('戊寅'),
+    Dizhi.辰 : Ganzhi.from_str('戊寅'),
+    Dizhi.巳 : Ganzhi.from_str('甲午'),
+    Dizhi.午 : Ganzhi.from_str('甲午'),
+    Dizhi.未 : Ganzhi.from_str('甲午'),
+    Dizhi.申 : Ganzhi.from_str('戊申'),
+    Dizhi.酉 : Ganzhi.from_str('戊申'),
+    Dizhi.戌 : Ganzhi.from_str('戊申'),
+    Dizhi.亥 : Ganzhi.from_str('甲子'),
+    Dizhi.子 : Ganzhi.from_str('甲子'),
+    Dizhi.丑 : Ganzhi.from_str('甲子'),
+  }
+  assert len(cycle) == 60
+  assert set(expected) == set(Dizhi)
+  for month_dizhi in Dizhi:
+    for day_ganzhi in cycle:
+      assert shensha_utils.tianshe(month_dizhi, day_ganzhi) == (
+        expected[month_dizhi] == day_ganzhi
+      )
+
+
+def test_tianshe_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.tianshe('寅', Ganzhi.from_str('戊寅')) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.tianshe(Dizhi.寅, '戊寅') # type: ignore
+
+
 def test_yangren() -> None:
   expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
     ShenshaRules.YangrenDef.ZIPING : {

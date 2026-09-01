@@ -45,12 +45,14 @@ def at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
   result = shensha_strs(shensha)
   if (kuigang := shensha['kuigang']) is not None:
     result.append(f'魁罡：{colored_str(kuigang)}')
+  if (tianshe := shensha['tianshe']) is not None:
+    result.append(f'天赦：{colored_str(tianshe)}')
   return result
 
 
 def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
   labels = '、'.join(label for label, _ in _named_shensha(shensha))
-  return f'原局无{labels}、魁罡'
+  return f'原局无{labels}、魁罡、天赦'
 
 
 if __name__ == '__main__':

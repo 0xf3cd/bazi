@@ -96,6 +96,10 @@ def main() -> int:
      lambda: shensha_utils.zaisha('申', Dizhi.午)), # type: ignore
     ('shensha_utils.kuigang on raw string', TypeError,
      lambda: shensha_utils.kuigang('庚辰')), # type: ignore
+    ('shensha_utils.tianshe on raw month string', TypeError,
+     lambda: shensha_utils.tianshe('寅', Ganzhi.from_str('戊寅'))), # type: ignore
+    ('shensha_utils.tianshe on raw day string', TypeError,
+     lambda: shensha_utils.tianshe(Dizhi.寅, '戊寅')), # type: ignore
     ('shensha_utils.jiesha on raw string', TypeError,
      lambda: shensha_utils.jiesha('申', Dizhi.巳)), # type: ignore
     ('shensha_utils.wangshen on raw string', TypeError,

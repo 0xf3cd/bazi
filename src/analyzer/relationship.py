@@ -358,6 +358,8 @@ class ShenshaAnalysis(TypedDict):
 class AtBirthShenshaAnalysis(ShenshaAnalysis):
   # The Kuigang day pillar (魁罡日柱)
   kuigang: Ganzhi | None
+  # The Tianshe day pillar (天赦日柱)
+  tianshe: Ganzhi | None
 
 
 class AtBirthAnalysis:
@@ -387,6 +389,7 @@ class AtBirthAnalysis:
       'lushen'   : _eval_at_birth(_REGISTRY['lushen'],    bazi),
       'jinyu'    : _eval_at_birth(_REGISTRY['jinyu'],     bazi),
       'kuigang'  : bazi.day_pillar if shensha_utils.kuigang(bazi.day_pillar) else None,
+      'tianshe'  : bazi.day_pillar if shensha_utils.tianshe(bazi.month_commander, bazi.day_pillar) else None,
     }
 
   @property
