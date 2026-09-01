@@ -214,6 +214,7 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['jinyu'] == expected_jinyu
     assert at_birth.shensha['jinyu'] == at_birth.shensha['jinyu'] # Repeated lookup must answer the same.
 
+    # Kuigang / 魁罡
     expected_kuigang = chart.bazi.day_pillar if shensha_utils.kuigang(chart.bazi.day_pillar) else None
     assert at_birth.shensha['kuigang'] == expected_kuigang
     assert at_birth.shensha['kuigang'] == at_birth.shensha['kuigang'] # Repeated lookup must answer the same.

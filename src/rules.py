@@ -778,7 +778,8 @@ class ShenshaRules:
   })
 
   # KUIGANG (魁罡) is fixed to four day pillars in both 《渊海子平·论魁罡》
-  # and 《三命通会·卷六·魁罡》. 魁罡固定取庚辰、壬辰、戊戌、庚戌四个日柱。
+  # and 《三命通会·卷六·魁罡》.
+  # 魁罡固定取四个日柱，两书所载相同。
   # Sources / 出处 (issue #175):
   # - https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
   # - https://book.taiyi.me/命/三命通会/三命通会(卷六)

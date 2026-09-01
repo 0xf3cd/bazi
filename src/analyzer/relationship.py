@@ -73,7 +73,8 @@ class _ShenshaSpec:
   definition: _DefinitionResolver | None = None
 
 
-'''The registry of the Shenshas that relationship analysis currently supports (亲密关系分析目前支持的神煞注册表).'''
+'''The registry of the Dizhi-valued Shenshas supported by relationship analysis
+(亲密关系分析支持的地支结果神煞注册表).'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _KeySource.YEAR_OR_DAY_DIZHI),
   'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN),
@@ -355,7 +356,7 @@ class ShenshaAnalysis(TypedDict):
 
 
 class AtBirthShenshaAnalysis(ShenshaAnalysis):
-  # The Kuigang day pillar, if present (魁罡日柱；未命中时为 None)
+  # The Kuigang day pillar (魁罡日柱)
   kuigang: Ganzhi | None
 
 
