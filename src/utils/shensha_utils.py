@@ -10,7 +10,8 @@ from ..rules import ShenshaRules
 '''
 Predicates for Shensha (神煞) detection.
 Most functions check whether a Dizhi forms the Shensha against its anchor; whole-pillar
-rules accept a Ganzhi directly. 多数函数按锚查地支神煞；整柱规则直接接收干支。
+rules inspect a Ganzhi directly, with any required anchor supplied separately.
+多数函数按锚查地支神煞；整柱规则直接检查干支，所需锚另行传入。
 '''
 
 
@@ -350,6 +351,31 @@ def kuigang(day_ganzhi: Ganzhi) -> bool:
   if not isinstance(day_ganzhi, Ganzhi):
     raise TypeError(f'Expected Ganzhi, got {type(day_ganzhi)}')
   return day_ganzhi in ShenshaRules.KUIGANG
+
+
+def tianshe(month_dizhi: Dizhi, day_ganzhi: Ganzhi) -> bool:
+  '''
+  Check whether `day_ganzhi` is the TIANSHE (天赦) day for the season of `month_dizhi`.
+  检查日柱是否为月令所属四时的天赦日。
+
+  Args:
+  - month_dizhi: (Dizhi) The birth chart's Month Commander (月令).
+  - day_ganzhi: (Ganzhi) The birth chart's day pillar (原局日柱).
+
+  Returns: (bool) Whether `day_ganzhi` is the Tianshe day selected by `month_dizhi`.
+
+  Examples:
+  - tianshe(Dizhi.寅, Ganzhi.from_str('戊寅'))
+    - return: True
+  - tianshe(Dizhi.申, Ganzhi.from_str('戊寅'))
+    - return: False
+  '''
+
+  if not isinstance(month_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(month_dizhi)}')
+  if not isinstance(day_ganzhi, Ganzhi):
+    raise TypeError(f'Expected Ganzhi, got {type(day_ganzhi)}')
+  return ShenshaRules.TIANSHE[month_dizhi] == day_ganzhi
 
 
 def yangren(

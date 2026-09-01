@@ -225,6 +225,23 @@ def test_kuigang_rule() -> None:
   ))
 
 
+def test_tianshe_rule() -> None:
+  assert ShenshaRules.TIANSHE == {
+    Dizhi.寅 : Ganzhi.from_str('戊寅'),
+    Dizhi.卯 : Ganzhi.from_str('戊寅'),
+    Dizhi.辰 : Ganzhi.from_str('戊寅'),
+    Dizhi.巳 : Ganzhi.from_str('甲午'),
+    Dizhi.午 : Ganzhi.from_str('甲午'),
+    Dizhi.未 : Ganzhi.from_str('甲午'),
+    Dizhi.申 : Ganzhi.from_str('戊申'),
+    Dizhi.酉 : Ganzhi.from_str('戊申'),
+    Dizhi.戌 : Ganzhi.from_str('戊申'),
+    Dizhi.亥 : Ganzhi.from_str('甲子'),
+    Dizhi.子 : Ganzhi.from_str('甲子'),
+    Dizhi.丑 : Ganzhi.from_str('甲子'),
+  }
+
+
 def test_yangren() -> None:
   assert set(ShenshaRules.YANGREN) == set(ShenshaRules.YangrenDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.YANGREN.values())

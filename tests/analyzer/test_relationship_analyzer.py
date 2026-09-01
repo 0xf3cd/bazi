@@ -219,6 +219,15 @@ def test_at_birth_shensha() -> None:
     assert at_birth.shensha['kuigang'] == expected_kuigang
     assert at_birth.shensha['kuigang'] == at_birth.shensha['kuigang'] # Repeated lookup must answer the same.
 
+    # Tianshe / 天赦
+    expected_tianshe = (
+      chart.bazi.day_pillar
+      if shensha_utils.tianshe(chart.bazi.month_commander, chart.bazi.day_pillar)
+      else None
+    )
+    assert at_birth.shensha['tianshe'] == expected_tianshe
+    assert at_birth.shensha['tianshe'] == at_birth.shensha['tianshe'] # Repeated lookup must answer the same.
+
 
 @pytest.mark.parametrize('birth_time, day_pillar, expected_hit', [
   ('2000-01-23 12:00', '庚辰', True),
@@ -235,6 +244,29 @@ def test_kuigang_at_birth(
   chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
   assert str(chart.bazi.day_pillar) == day_pillar
   assert RelationshipAnalyzer(chart).at_birth.shensha['kuigang'] == (
+    chart.bazi.day_pillar if expected_hit else None
+  )
+
+
+@pytest.mark.parametrize('birth_time, pillars, expected_hit', [
+  ('1999-03-27 12:00', ('己卯', '丁卯', '戊寅', '戊午'), True),
+  ('1999-06-11 12:00', ('己卯', '庚午', '甲午', '庚午'), True),
+  ('1999-08-24 12:00', ('己卯', '壬申', '戊申', '戊午'), True),
+  ('1999-11-08 12:00', ('己卯', '乙亥', '甲子', '庚午'), True),
+  # Each Tianshe day pillar misses outside its own season.
+  ('1999-01-26 12:00', ('戊寅', '乙丑', '戊寅', '戊午'), False),
+  ('1999-02-11 12:00', ('己卯', '丙寅', '甲午', '庚午'), False),
+  ('1999-02-25 12:00', ('己卯', '丙寅', '戊申', '戊午'), False),
+  ('1999-03-13 12:00', ('己卯', '丁卯', '甲子', '庚午'), False),
+])
+def test_tianshe_at_birth(
+  birth_time: str,
+  pillars: tuple[str, str, str, str],
+  expected_hit: bool,
+) -> None:
+  chart = BaziChart(Bazi.create(birth_time, BaziGender.MALE))
+  assert tuple(map(str, chart.bazi.pillars)) == pillars
+  assert RelationshipAnalyzer(chart).at_birth.shensha['tianshe'] == (
     chart.bazi.day_pillar if expected_hit else None
   )
 
@@ -1475,11 +1507,11 @@ def test_registry_matches_shensha_analysis_keys() -> None:
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
 
 
-def test_at_birth_shensha_analysis_has_only_kuigang_extra() -> None:
+def test_at_birth_shensha_analysis_has_only_whole_pillar_extras() -> None:
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
-  assert at_birth_keys == common_keys | {'kuigang'}
-  assert 'kuigang' not in _REGISTRY
+  assert at_birth_keys == common_keys | {'kuigang', 'tianshe'}
+  assert {'kuigang', 'tianshe'}.isdisjoint(_REGISTRY)
 
 
 def test_at_birth_key_sources_preserve_anchor_and_pillar_scope() -> None:

@@ -174,6 +174,7 @@ def test_case1() -> None:
   assert at_birth.shensha['lushen']    == {Dizhi.卯}
   assert at_birth.shensha['jinyu']     == set()
   assert at_birth.shensha['kuigang']   is None
+  assert at_birth.shensha['tianshe']   is None
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心相生关系，但在这里还是检查一下。
@@ -422,6 +423,7 @@ def test_case2() -> None:
   assert at_birth.shensha['lushen']    == set()
   assert at_birth.shensha['jinyu']     == set()
   assert at_birth.shensha['kuigang']   is None
+  assert at_birth.shensha['tianshe']   is None
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心其他关系，但在这里还是检查一下。
