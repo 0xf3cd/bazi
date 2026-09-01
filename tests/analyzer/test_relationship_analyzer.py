@@ -216,6 +216,7 @@ def test_at_birth_shensha() -> None:
 
     expected_kuigang = chart.bazi.day_pillar if shensha_utils.kuigang(chart.bazi.day_pillar) else None
     assert at_birth.shensha['kuigang'] == expected_kuigang
+    assert at_birth.shensha['kuigang'] == at_birth.shensha['kuigang'] # Repeated lookup must answer the same.
 
 
 @pytest.mark.parametrize('birth_time, day_pillar, expected_hit', [

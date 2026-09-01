@@ -777,11 +777,11 @@ class ShenshaRules:
     Tiangan.癸 : Dizhi.寅,
   })
 
-  # KUIGANG (魁罡) is fixed to four day pillars in both 《渊海子平·神煞篇·魁罡》
-  # and 《三命通会·卷六》. 魁罡固定取庚辰、壬辰、戊戌、庚戌四个日柱。
+  # KUIGANG (魁罡) is fixed to four day pillars in both 《渊海子平·论魁罡》
+  # and 《三命通会·卷六·魁罡》. 魁罡固定取庚辰、壬辰、戊戌、庚戌四个日柱。
   # Sources / 出处 (issue #175):
-  # - https://book.taiyi.me/命/子平推命/渊海子平(神煞篇).md
-  # - https://book.taiyi.me/命/三命通会/三命通会(卷六).md
+  # - https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
+  # - https://book.taiyi.me/命/三命通会/三命通会(卷六)
   KUIGANG: Final[frozenset[Ganzhi]] = frozenset((
     Ganzhi.from_str('庚辰'),
     Ganzhi.from_str('壬辰'),
