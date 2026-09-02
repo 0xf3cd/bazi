@@ -61,11 +61,11 @@ def check_declared_types(instance: 'DataclassInstance') -> None:
   - Callers are `__post_init__`s. Value checks (ranges, membership, cross-field rules) stay
     at the call site -- this answers only "is it the declared type".
     调用者是各处 `__post_init__`；值域检查（范围、成员、跨字段规则）留在调用处，本函数只管类型。
-  - Every field's annotation must be a real class at runtime -- no deferred annotations, no
-    union or generic field types. A dataclass that does not satisfy that keeps its own
-    hand-written gate.
-    每个字段的注解在运行时必须是真类——不能延迟注解，也不能是联合或泛型。不满足的 dataclass
-    自己写闸。
+  - Every field's annotation must be a runtime class, or a union of them -- no deferred
+    annotations, no parameterized generics. A dataclass that does not satisfy that keeps its
+    own hand-written gate.
+    每个字段的注解在运行时必须是真类，或真类的联合——不能延迟注解，也不能是参数化泛型。
+    不满足的 dataclass 自己写闸。
 
   Args:
   - instance: (DataclassInstance) The dataclass instance to check, normally `self`.
@@ -76,7 +76,9 @@ def check_declared_types(instance: 'DataclassInstance') -> None:
     declared = cast(type, f.type)
     value = getattr(instance, f.name)
     if not isinstance(value, declared):
-      raise TypeError(f'Expected {declared.__name__}, got {type(value)}')
+      # A union has no `__name__` but formats as `Ganzhi | None`, so read the name off it.
+      name = getattr(declared, '__name__', declared)
+      raise TypeError(f'Expected {name}, got {type(value)}')
 
 #endregion
 
