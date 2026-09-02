@@ -62,10 +62,10 @@ def check_declared_types(instance: 'DataclassInstance') -> None:
     at the call site -- this answers only "is it the declared type".
     调用者是各处 `__post_init__`；值域检查（范围、成员、跨字段规则）留在调用处，本函数只管类型。
   - Every field's annotation must be a real class at runtime -- no deferred annotations, no
-    union or generic field types. Every caller today satisfies that; a dataclass that does not
-    keeps its own hand-written gate.
-    每个字段的注解在运行时必须是真类——不能延迟注解，也不能是联合或泛型。今天所有调用者都满足；
-    不满足的 dataclass 自己写闸。
+    union or generic field types. A dataclass that does not satisfy that keeps its own
+    hand-written gate.
+    每个字段的注解在运行时必须是真类——不能延迟注解，也不能是联合或泛型。不满足的 dataclass
+    自己写闸。
 
   Args:
   - instance: (DataclassInstance) The dataclass instance to check, normally `self`.
