@@ -12,11 +12,7 @@ import pytest
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, Bazi
 from src.calendar import calendar_utils_of
-from src.school import (
-  BaziPrecision, DayunYearRule, BaziConfig, BaziSchool, DayRollover, KeyStem, TianyiAnchor,
-  JinyuAnchor, ZaishaAnchor, ShenshaAnchorProfile,
-)
-from src.rules import DizhiRules, ShenshaRules
+from src.school import BaziPrecision, DayunYearRule, BaziConfig, BaziSchool
 from src.utils import bazi_utils
 
 from src.data_types import (
@@ -640,20 +636,7 @@ def test_json() -> None:
                     precision=j['precision'],
                     backend=j['backend'],
                     dayun_year_rule=j['dayun_year_rule'],
-                    school=BaziSchool(
-                      day_rollover=DayRollover[j['school']['day_rollover']],
-                      hongyan_key=KeyStem[j['school']['hongyan_key']],
-                      yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
-                      anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
-                      xing_def=DizhiRules.XingDef[j['school']['xing_def']],
-                      gong_def=DizhiRules.GongDef[j['school']['gong_def']],
-                      tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
-                      tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
-                      shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
-                      jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
-                      feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
-                      zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
-                    ),
+                    school=BaziSchool.from_json(j['school']),
                   ))
     )
 

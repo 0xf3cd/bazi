@@ -10,7 +10,7 @@ import pytest
 
 from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart
+from src.bazi_chart import BaziChart, BaziJson
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import dizhi_utils, shensha_utils
 from src.school import (
@@ -125,6 +125,14 @@ def test_config_type_gates() -> None:
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
 
 
+def test_every_config_field_has_a_type_gate() -> None:
+  # Mechanical binding, the same one `BaziSchool` has: adding a knob without a gate fails here.
+  # 机械绑定，与 `BaziSchool` 同款：加字段不加闸会在这里响。
+  for f in dataclasses.fields(BaziConfig):
+    with pytest.raises(TypeError):
+      BaziConfig(**{f.name: object()}) # type: ignore
+
+
 def test_every_school_field_has_a_type_gate() -> None:
   # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
   # adding a knob without a gate fails here, no per-field test needed (issue #69).
@@ -139,7 +147,15 @@ def test_every_school_field_reaches_json() -> None:
   # adding a knob without serializing it fails here (issue #69).
   # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  assert {f.name for f in dataclasses.fields(BaziSchool)} == set(chart.json['school'])
+  declared: list[str] = [f.name for f in dataclasses.fields(BaziSchool)]
+  assert list(chart.json['school']) == declared
+  # The declared contract must track the fields too -- keys, order, and value type. Both the
+  # serialization and `BaziSchool.from_json` derive from `fields()` behind a `cast`, so nothing
+  # static binds either of them to `BaziJson.School` any more (issue #172).
+  # 声明的契约也要跟着字段走：键、顺序、值类型。序列化与 `from_json` 都经 `cast` 推导，
+  # 静态检查不再把任何一侧钉在 `BaziJson.School` 上。
+  assert list(BaziJson.School.__annotations__) == declared
+  assert set(BaziJson.School.__annotations__.values()) == {str}
 
 
 def test_config_and_school_are_frozen() -> None:
@@ -361,20 +377,7 @@ def test_json_roundtrip_default_school() -> None:
                   precision=j['precision'],
                   backend=j['backend'],
                   dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool(
-                    day_rollover=DayRollover[j['school']['day_rollover']],
-                    hongyan_key=KeyStem[j['school']['hongyan_key']],
-                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
-                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
-                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
-                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
-                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
-                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
-                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
-                    jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
-                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
-                    zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
-                  ),
+                  school=BaziSchool.from_json(j['school']),
                 ))
   )
   assert rebuilt.json == j
@@ -420,22 +423,52 @@ def test_json_roundtrip_non_default_school() -> None:
                   precision=j['precision'],
                   backend=j['backend'],
                   dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool(
-                    day_rollover=DayRollover[j['school']['day_rollover']],
-                    hongyan_key=KeyStem[j['school']['hongyan_key']],
-                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
-                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
-                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
-                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
-                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
-                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
-                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
-                    jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
-                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
-                    zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
-                  ),
+                  school=BaziSchool.from_json(j['school']),
                 ))
   )
   assert rebuilt.json == j
   assert rebuilt.bazi == chart.bazi
   assert rebuilt.bazi.config.school == school
+
+
+def test_from_json_ignores_keys_that_name_no_field() -> None:
+  # The reader takes the fields it declares; a key naming none of them is not an error.
+  # The roundtrip itself is pinned by `test_json_roundtrip_default_school` and
+  # `test_json_roundtrip_non_default_school`, which both rebuild through `from_json`.
+  # 读法只取自己声明的字段，不对应字段的键不算错；往返本身由两条 roundtrip 测试钉住。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  serialized: dict[str, object] = dict(chart.json['school'])
+  serialized['not_a_school_field'] = 'WHATEVER'
+  assert BaziSchool.from_json(serialized) == chart.bazi.config.school
+
+
+def test_from_json_takes_the_profile_whole() -> None:
+  # Mechanical binding: dropping any one field, or spelling any one member wrong, is
+  # rejected -- a partial profile never silently falls back to defaults (issue #172).
+  # 机械绑定：少任何一个字段、写错任何一个成员名都要被拒，残缺档案不许静默取默认。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  serialized: dict[str, object] = dict(chart.json['school'])
+
+  for f in dataclasses.fields(BaziSchool):
+    with pytest.raises(ValueError):
+      BaziSchool.from_json({k: v for k, v in serialized.items() if k != f.name})
+    with pytest.raises(ValueError):
+      BaziSchool.from_json({**serialized, f.name: 'NOT_A_MEMBER'})
+    with pytest.raises(TypeError):
+      BaziSchool.from_json({**serialized, f.name: 0})
+
+
+class _DuckMapping:
+  '''Looks up like a mapping without being one / 长得像映射但不是 `Mapping`。'''
+  def __contains__(self, key: object) -> bool:
+    return True
+  def __getitem__(self, key: str) -> str:
+    return 'WAN_ZISHI'
+
+
+def test_from_json_rejects_a_non_mapping() -> None:
+  # A duck-typed lookalike, not a list: with the gate gone a list still raises `TypeError`
+  # from its own indexing, so that input cannot tell the gate apart from its absence.
+  # 用鸭子冒牌货而非 list：删掉闸之后 list 照样因下标类型抛 `TypeError`，分不出闸在不在。
+  with pytest.raises(TypeError):
+    BaziSchool.from_json(_DuckMapping()) # type: ignore

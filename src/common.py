@@ -1,7 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import TypeVar, Final
+from dataclasses import fields
+from typing import TYPE_CHECKING, TypeVar, Final, cast
 from collections.abc import Iterator, Mapping
+
+if TYPE_CHECKING:
+  from _typeshed import DataclassInstance
 
 
 ######################################################
@@ -37,6 +41,44 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
     if self._hash is None:
       self._hash = hash(frozenset(self._data.items()))
     return self._hash
+
+#endregion
+
+
+######################################################
+#region Runtime type gates
+
+def check_declared_types(instance: 'DataclassInstance') -> None:
+  '''
+  Raise `TypeError` for the first field whose value is not of the type the field declares.
+  This is the runtime half of the typing contract, for the frozen value types whose
+  constructor is a public boundary: a field's gate is its own annotation, so a new field
+  cannot arrive without one.
+  逐字段核对运行时类型，第一个不合的抛 `TypeError`。这是「全量标注」的运行时那一半，
+  给构造入口即公开边界的 frozen 值类型用：字段的闸就是它自己的注解，新增字段不会漏闸。
+
+  Note:
+  - Callers are `__post_init__`s. Value checks (ranges, membership, cross-field rules) stay
+    at the call site -- this answers only "is it the declared type".
+    调用者是各处 `__post_init__`；值域检查（范围、成员、跨字段规则）留在调用处，本函数只管类型。
+  - Every field's annotation must be a runtime class, or a union of them -- no deferred
+    annotations, no parameterized generics. A dataclass that does not satisfy that keeps its
+    own hand-written gate.
+    每个字段的注解在运行时必须是真类，或真类的联合——不能延迟注解，也不能是参数化泛型。
+    不满足的 dataclass 自己写闸。
+
+  Args:
+  - instance: (DataclassInstance) The dataclass instance to check, normally `self`.
+  '''
+  for f in fields(instance):
+    # `f.type` is the annotated class itself; typeshed spells the attribute as a union
+    # with `str`, hence the cast.
+    declared = cast(type, f.type)
+    value = getattr(instance, f.name)
+    if not isinstance(value, declared):
+      # A union has no `__name__` but formats as `Ganzhi | None`, so read the name off it.
+      name = getattr(declared, '__name__', declared)
+      raise TypeError(f'Expected {name}, got {type(value)}')
 
 #endregion
 

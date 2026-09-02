@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum
 from typing import NamedTuple
 
+from ..common import check_declared_types
 from ..defines import Jieqi
 
 class CalendarType(Enum):
@@ -60,15 +61,7 @@ class CalendarDate:
   date_type: CalendarType
 
   def __post_init__(self) -> None:
-    # Type check at runtime.
-    if not isinstance(self.year, int):
-      raise TypeError(f'Expected int, got {type(self.year)}')
-    if not isinstance(self.month, int):
-      raise TypeError(f'Expected int, got {type(self.month)}')
-    if not isinstance(self.day, int):
-      raise TypeError(f'Expected int, got {type(self.day)}')
-    if not isinstance(self.date_type, CalendarType):
-      raise TypeError(f'Expected CalendarType, got {type(self.date_type)}')
+    check_declared_types(self)
 
   def __str__(self) -> str:
     return f'({self.year}-{self.month}-{self.day}, {self.date_type.name})'

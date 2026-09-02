@@ -1507,6 +1507,22 @@ def test_registry_matches_shensha_analysis_keys() -> None:
   assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
 
 
+def test_analyses_are_built_from_the_registry() -> None:
+  # Both analyses build their dicts by iterating the registry behind a `cast`, so mypy no
+  # longer checks the key set -- this is the executor. A registry entry that never lands in
+  # the result, or a declared key with no entry, fails here (issue #172).
+  # 两处分析都在 `cast` 之后按注册表推导，键集不再由 mypy 检查——这条测试就是执行者。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  analyzer = RelationshipAnalyzer(chart)
+
+  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
+  assert set(analyzer.at_birth.shensha) == set(at_birth_keys)
+
+  transits = _at_year(TransitChart(chart), chart.bazi.ganzhi_year).select(TransitKind.LIUNIAN)
+  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
+  assert set(analyzer.transits.shensha(transits)) == set(common_keys)
+
+
 def test_at_birth_shensha_analysis_has_only_whole_pillar_extras() -> None:
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
@@ -1558,7 +1574,7 @@ def test_at_birth_key_sources_preserve_anchor_and_pillar_scope() -> None:
       calls.append((key, dizhi))
       return False
 
-    spec = relationship_module._ShenshaSpec(record, key_source)
+    spec = relationship_module._ShenshaSpec(record, key_source, 'probe')
     assert relationship_module._eval_at_birth(spec, chart.bazi) == frozenset()
     assert tuple(calls) == expected_calls
 
