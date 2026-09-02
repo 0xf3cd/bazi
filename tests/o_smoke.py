@@ -52,7 +52,8 @@ def main() -> int:
   transit_analysis = RelationshipAnalyzer(chart).transits
   school_json: dict[str, object] = dict(chart.json['school'])
 
-  class _DuckMapping: # Looks up like a mapping without being one; a list would raise TypeError on its own.
+  # Looks up like a mapping without being one; a list would raise TypeError on its own.
+  class _DuckMapping:
     def __contains__(self, key: object) -> bool:
       return True
     def __getitem__(self, key: str) -> str:

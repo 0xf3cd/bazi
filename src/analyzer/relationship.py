@@ -68,7 +68,7 @@ class _ShenshaSpec:
   Note: the predicate's first-parameter type must match `key`. When `definition` is present, the
   predicate must accept its result through a keyword-only `definition` argument. Each predicate
   checks this contract at runtime; the registry's type does not express it.
-  `label` is the Shensha's display name, published as `SHENSHA_LABELS` for the callers that
+  `label` is the Shensha's display name, published in `SHENSHA_LABELS` for the callers that
   render results; it is not part of the lookup.
   `label` 是该神煞的展示名，经 `SHENSHA_LABELS` 供渲染方使用，不参与查法。
   '''

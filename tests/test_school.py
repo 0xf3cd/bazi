@@ -139,13 +139,15 @@ def test_every_school_field_reaches_json() -> None:
   # adding a knob without serializing it fails here (issue #69).
   # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  assert {f.name for f in dataclasses.fields(BaziSchool)} == set(chart.json['school'])
-  # The declared contract must track the fields too, order included: serialization derives
-  # from `fields()` behind a `cast`, so mypy no longer binds the emitted keys to
-  # `BaziJson.School` the way it did while that dict was written out literally (issue #172).
-  # 声明的契约也要跟着字段走，连顺序一起：序列化经 `cast` 推导之后，mypy 不再像字面量时代
-  # 那样把发出的键钉在 `BaziJson.School` 上。
-  assert [f.name for f in dataclasses.fields(BaziSchool)] == list(BaziJson.School.__annotations__)
+  declared: list[str] = [f.name for f in dataclasses.fields(BaziSchool)]
+  assert list(chart.json['school']) == declared
+  # The declared contract must track the fields too -- keys, order, and value type. Both the
+  # serialization and `BaziSchool.from_json` derive from `fields()` behind a `cast`, so nothing
+  # static binds either of them to `BaziJson.School` any more (issue #172).
+  # 声明的契约也要跟着字段走：键、顺序、值类型。序列化与 `from_json` 都经 `cast` 推导，
+  # 静态检查不再把任何一侧钉在 `BaziJson.School` 上。
+  assert list(BaziJson.School.__annotations__) == declared
+  assert set(BaziJson.School.__annotations__.values()) == {str}
 
 
 def test_config_and_school_are_frozen() -> None:

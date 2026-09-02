@@ -16,7 +16,7 @@ from src.analyzer.relationship import (
 
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
   # TypedDict access needs literal keys under mypy, so the analysis is read as a plain
-  # mapping and each label picks up its own key -- `SHENSHA_LABELS` is the roster, in the
+  # mapping and each label fetches its own entry -- `SHENSHA_LABELS` is the roster, in the
   # order the registry declares. (An `AtBirthShenshaAnalysis` also carries the two
   # whole-pillar entries; they are not in the roster, so they are never read here.)
   dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)

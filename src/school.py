@@ -11,6 +11,7 @@ from typing import Any, Final, cast
 from collections.abc import Mapping
 
 from .calendar import CalendarBackend
+from .common import check_declared_types
 from .rules import DizhiRules, ShenshaRules
 
 
@@ -308,16 +309,7 @@ class BaziSchool:
   zaisha_anchor: ZaishaAnchor = ZaishaAnchor.YEAR
 
   def __post_init__(self) -> None:
-    # Type check at runtime (same shape as `CalendarDate`), read off the field declarations:
-    # a knob's gate is its own annotation, so no field can arrive without one.
-    # 运行时类型闸直接读字段声明：旋钮的闸就是它自己的注解，新增字段不可能漏闸。
-    for f in fields(self):
-      # `f.type` is the annotated enum class itself -- this module defers no annotations.
-      # typeshed spells the attribute as a union with `str`, hence the cast.
-      declared = cast(type, f.type)
-      value = getattr(self, f.name)
-      if not isinstance(value, declared):
-        raise TypeError(f'Expected {declared.__name__}, got {type(value)}')
+    check_declared_types(self)
 
   @classmethod
   def from_json(cls, d: Mapping[str, object]) -> 'BaziSchool':
@@ -403,15 +395,8 @@ class BaziConfig:
   dayun_year_rule:  DayunYearRule   = DayunYearRule.JIE_PROJECTED
 
   def __post_init__(self) -> None:
-    # Type check at runtime; no coercion here (same shape as `CalendarDate`).
-    if not isinstance(self.precision, BaziPrecision):
-      raise TypeError(f'Expected BaziPrecision, got {type(self.precision)}')
-    if not isinstance(self.backend, CalendarBackend):
-      raise TypeError(f'Expected CalendarBackend, got {type(self.backend)}')
-    if not isinstance(self.school, BaziSchool):
-      raise TypeError(f'Expected BaziSchool, got {type(self.school)}')
-    if not isinstance(self.dayun_year_rule, DayunYearRule):
-      raise TypeError(f'Expected DayunYearRule, got {type(self.dayun_year_rule)}')
+    # No coercion here; string spellings are `from_values`'s job.
+    check_declared_types(self)
 
   @classmethod
   def from_values(cls, precision: BaziPrecision | str = BaziPrecision.DAY,

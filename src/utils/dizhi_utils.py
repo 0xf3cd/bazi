@@ -7,7 +7,7 @@ from itertools import combinations, product
 from typing import Final
 from collections.abc import Sequence, Collection, Iterable
 
-from ..common import frozendict
+from ..common import frozendict, check_declared_types
 from ..defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation
 from ..rules import BaziRules, DizhiRules
 from .relation_discovery import RelationDiscovery
@@ -50,12 +50,9 @@ class GanzhiOccurrence:
   ganzhi: Ganzhi
 
   def __post_init__(self) -> None:
-    if not isinstance(self.index, int):
-      raise TypeError(f'Expected int, got {type(self.index)}')
+    check_declared_types(self)
     if self.index < 0:
       raise ValueError(f'Expected a non-negative index, got {self.index}')
-    if not isinstance(self.ganzhi, Ganzhi):
-      raise TypeError(f'Expected Ganzhi, got {type(self.ganzhi)}')
 
 
 '''A concrete combo of Ganzhi occurrences whose Dizhis satisfy a `DizhiRelation`.'''
