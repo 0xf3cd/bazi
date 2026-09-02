@@ -10,7 +10,7 @@ import pytest
 
 from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart
+from src.bazi_chart import BaziChart, BaziJson
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import dizhi_utils, shensha_utils
 from src.school import (
@@ -140,6 +140,12 @@ def test_every_school_field_reaches_json() -> None:
   # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   assert {f.name for f in dataclasses.fields(BaziSchool)} == set(chart.json['school'])
+  # The declared contract must track the fields too, order included: serialization derives
+  # from `fields()` behind a `cast`, so mypy no longer binds the emitted keys to
+  # `BaziJson.School` the way it did while that dict was written out literally (issue #172).
+  # 声明的契约也要跟着字段走，连顺序一起：序列化经 `cast` 推导之后，mypy 不再像字面量时代
+  # 那样把发出的键钉在 `BaziJson.School` 上。
+  assert [f.name for f in dataclasses.fields(BaziSchool)] == list(BaziJson.School.__annotations__)
 
 
 def test_config_and_school_are_frozen() -> None:
@@ -415,36 +421,15 @@ def test_json_roundtrip_non_default_school() -> None:
   assert rebuilt.bazi.config.school == school
 
 
-def test_from_json_roundtrips_a_non_default_profile() -> None:
-  # `from_json` is the inverse of the JSON the chart writes: a profile whose every field
-  # takes a non-default value must come back identical, so no field can be dropped or
-  # silently defaulted (issue #172).
-  # 每个字段都取非默认值：往返必须逐项还原，不许漏读或静默取默认。
-  school: BaziSchool = BaziSchool(
-    day_rollover=DayRollover.ZIZHENG,
-    hongyan_key=KeyStem.YEAR_MASTER,
-    yangren_def=ShenshaRules.YangrenDef.DIWANG,
-    anhe_def=DizhiRules.AnheDef.MANGPAI,
-    xing_def=DizhiRules.XingDef.STRICT,
-    gong_def=DizhiRules.GongDef.LU_NARROW,
-    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
-    tianyi_def=ShenshaRules.TianyiDef.YINGUI,
-    shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
-    jinyu_anchor=JinyuAnchor.YEAR_AND_DAY,
-    feiren_def=ShenshaRules.FeirenDef.DIWANG,
-    zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY,
-  )
-  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
-                                           BaziConfig(school=school)))
-  assert BaziSchool.from_json(chart.json['school']) == school
-
-  default_chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  assert BaziSchool.from_json(default_chart.json['school']) == DEFAULT_SCHOOL
-
-  # Keys naming no field are ignored -- the reader takes the fields it declares.
-  extra: dict[str, object] = dict(chart.json['school'])
-  extra['not_a_school_field'] = 'WHATEVER'
-  assert BaziSchool.from_json(extra) == school
+def test_from_json_ignores_keys_that_name_no_field() -> None:
+  # The reader takes the fields it declares; a key naming none of them is not an error.
+  # The roundtrip itself is pinned by `test_json_roundtrip_default_school` and
+  # `test_json_roundtrip_non_default_school`, which both rebuild through `from_json`.
+  # 读法只取自己声明的字段，不对应字段的键不算错；往返本身由两条 roundtrip 测试钉住。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  serialized: dict[str, object] = dict(chart.json['school'])
+  serialized['not_a_school_field'] = 'WHATEVER'
+  assert BaziSchool.from_json(serialized) == chart.bazi.config.school
 
 
 def test_from_json_takes_the_profile_whole() -> None:
@@ -463,6 +448,17 @@ def test_from_json_takes_the_profile_whole() -> None:
       BaziSchool.from_json({**serialized, f.name: 0})
 
 
+class _DuckMapping:
+  '''Looks up like a mapping without being one / 长得像映射但不是 `Mapping`。'''
+  def __contains__(self, key: object) -> bool:
+    return True
+  def __getitem__(self, key: str) -> str:
+    return 'WAN_ZISHI'
+
+
 def test_from_json_rejects_a_non_mapping() -> None:
+  # A duck-typed lookalike, not a list: with the gate gone a list still raises `TypeError`
+  # from its own indexing, so that input cannot tell the gate apart from its absence.
+  # 用鸭子冒牌货而非 list：删掉闸之后 list 照样因下标类型抛 `TypeError`，分不出闸在不在。
   with pytest.raises(TypeError):
-    BaziSchool.from_json(['day_rollover']) # type: ignore
+    BaziSchool.from_json(_DuckMapping()) # type: ignore

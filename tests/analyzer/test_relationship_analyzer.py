@@ -23,8 +23,7 @@ from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
 from src.analyzer.relationship import (
-  RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, AtBirthShenshaAnalysis,
-  SHENSHA_LABELS, _REGISTRY,
+  RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, AtBirthShenshaAnalysis, _REGISTRY,
 )
 
 
@@ -1522,13 +1521,6 @@ def test_analyses_are_built_from_the_registry() -> None:
   transits = _at_year(TransitChart(chart), chart.bazi.ganzhi_year).select(TransitKind.LIUNIAN)
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   assert set(analyzer.transits.shensha(transits)) == set(common_keys)
-
-
-def test_shensha_labels_follow_the_registry() -> None:
-  # The display roster is derived, in registry order -- the order itself is pinned by
-  # `test_shensha_labels` in `tests/test_run_relationship_analyzer.py`.
-  # 展示名册按注册序推导；顺序本身由 demo 测试钉住。
-  assert tuple(SHENSHA_LABELS.items()) == tuple((name, spec.label) for name, spec in _REGISTRY.items())
 
 
 def test_at_birth_shensha_analysis_has_only_whole_pillar_extras() -> None:

@@ -324,10 +324,10 @@ class BaziSchool:
     '''
     Rebuild a profile from the `school` object of `BaziChart.json` -- the inverse of that
     serialization, resolving each stored member name through the field's own declared enum.
-    One reader for every knob: a new field needs no new line here, and none can be
-    forgotten either.
+    One reader for every enum-valued knob: a new field needs no new line here, and none
+    can be forgotten either.
     从 `BaziChart.json` 的 `school` 对象还原流派档案——序列化的逆运算：每个成员名按字段自己
-    声明的枚举解析。所有旋钮共用一个读法，新增字段不必在此加行，也不可能漏读。
+    声明的枚举解析。所有枚举旋钮共用一个读法，新增字段不必在此加行，也不可能漏读。
 
     Args:
     - d: (Mapping[str, object]) The serialized profile: every `BaziSchool` field name
@@ -335,12 +335,14 @@ class BaziSchool:
       Keys that name no field are ignored. 不对应字段的键被忽略。
 
     Note:
-    - The profile is taken whole or rejected: a missing field raises `ValueError`, a
-      non-`str` value raises `TypeError`, and a name that is no member of the field's enum
-      raises `ValueError`. A partial dict never silently falls back to defaults -- a chart
-      rebuilt from JSON is the chart the JSON describes.
-      档案要么整份收下、要么被拒：缺字段抛 `ValueError`，值非 `str` 抛 `TypeError`，成员名
-      不存在抛 `ValueError`。残缺字典绝不静默回落默认值——从 JSON 重建的盘就是 JSON 所述的盘。
+    - The profile is taken whole or rejected: `d` that is no `Mapping` raises `TypeError`,
+      a missing field raises `ValueError`, a non-`str` value raises `TypeError`, and a name
+      that is no member of the field's enum raises `ValueError`. A partial dict never
+      silently falls back to defaults -- a chart rebuilt from JSON is the chart the JSON
+      describes.
+      档案要么整份收下、要么被拒：入参不是 `Mapping` 抛 `TypeError`，缺字段抛 `ValueError`，
+      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`。残缺字典绝不静默回落默认值——
+      从 JSON 重建的盘就是 JSON 所述的盘。
 
     Return: (BaziSchool) The rebuilt, frozen profile.
 

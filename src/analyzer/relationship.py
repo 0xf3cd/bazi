@@ -390,7 +390,7 @@ class AtBirthAnalysis:
     # The registry is the roster: every entry lands under its own key, followed by the two
     # whole-pillar Shenshas that are not in it (they answer with a Ganzhi, not a Dizhi set).
     # A comprehension cannot type-check as a `TypedDict`, so the key set is pinned by
-    # `test_at_birth_shensha_covers_the_registry` instead of by mypy.
+    # `test_analyses_are_built_from_the_registry` instead of by mypy.
     # 注册表就是名册：每个条目落在自己的键下，其后是不在表内的两个整柱神煞（它们的答案是干支，
     # 不是地支集合）。推导式无法按 `TypedDict` 类型检查，键集改由测试钉住。
     return cast(AtBirthShenshaAnalysis, {

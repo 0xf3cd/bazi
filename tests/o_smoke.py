@@ -52,6 +52,12 @@ def main() -> int:
   transit_analysis = RelationshipAnalyzer(chart).transits
   school_json: dict[str, object] = dict(chart.json['school'])
 
+  class _DuckMapping: # Looks up like a mapping without being one; a list would raise TypeError on its own.
+    def __contains__(self, key: object) -> bool:
+      return True
+    def __getitem__(self, key: str) -> str:
+      return 'WAN_ZISHI'
+
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
@@ -122,7 +128,7 @@ def main() -> int:
     ('shensha_utils.tianyi wrong definition', TypeError,
      lambda: shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object())), # type: ignore
     ('BaziSchool.from_json non-mapping', TypeError,
-     lambda: BaziSchool.from_json(['day_rollover'])), # type: ignore
+     lambda: BaziSchool.from_json(_DuckMapping())), # type: ignore
     ('BaziSchool.from_json missing field', ValueError,
      lambda: BaziSchool.from_json({})),
     ('BaziSchool.from_json non-str value', TypeError,

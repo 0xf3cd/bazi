@@ -543,7 +543,8 @@ class BaziChart:
     # The school profile serializes by field: each knob stores its member name under its
     # own field name, which is exactly what `BaziSchool.from_json` reads back -- one roster,
     # written in the dataclass. `BaziJson.School` stays the declared contract, and
-    # `test_every_school_field_reaches_json` keeps its keys equal to the fields.
+    # `test_every_school_field_reaches_json` keeps both the emitted keys and that
+    # declaration equal to the fields.
     # 流派档案按字段序列化：每个旋钮以字段名存成员名，正是 `BaziSchool.from_json` 的读法——
     # 名册只有一份，写在 dataclass 里。
     school: BaziJson.School = cast(BaziJson.School, {
