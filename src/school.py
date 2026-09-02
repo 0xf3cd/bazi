@@ -158,11 +158,11 @@ class Anchor(Enum):
   一种旋钮形状管全部带锚神煞：成员只说 key 出自哪一柱；key 取该柱天干还是地支属于神煞自身，
   由分析层注册表声明。干锚查四支，支锚查其余三支——地支不自查。
 
-  Which members a knob may take is not free: `_ANCHOR_CHOICES` pins the sourced subset per
-  field and `BaziSchool` rejects anything outside it. Each subset's provenance is written
-  on its line there.
-  旋钮能取哪些成员并不自由：`_ANCHOR_CHOICES` 按字段钉死有出处的子集，越界即拒；各子集的
-  出处逐行注在那张表上。
+  Which members a knob may take is not free: `_ANCHOR_CHOICES` pins the supported values
+  per field, and records each value's provenance or known provenance gap on that line.
+  `BaziSchool` rejects anything outside the table.
+  旋钮能取哪些成员并不自由：`_ANCHOR_CHOICES` 按字段钉死本库支持的取值，并逐行记录出处或
+  已知出处缺口；`BaziSchool` 拒收表外取值。
 
   Anchors are consumed at evaluation time and never change the four pillars. They feed
   equality / hashing / JSON as part of `BaziSchool`.
@@ -175,23 +175,23 @@ class Anchor(Enum):
   YEAR_AND_DAY = 2
 
 
-'''The sourced anchor choices of each anchor knob: the `Anchor` members some school is
-actually recorded as reading that Shensha by. Anything outside the subset is no school's
-reading, so `BaziSchool` rejects it. This table is where an anchor's 出处 lives, one line
-each; a new anchor field is registered here together with its own.
-每个锚旋钮有出处的取值：确有流派如此读该神煞的 `Anchor` 成员。子集之外的取值不是任何流派的
-看法，`BaziSchool` 拒收。锚的出处就住在这张表里，逐行一条；新增锚字段连同出处一并登记。'''
+'''The supported anchor values of each knob, with their provenance or known provenance gap
+written on the corresponding line. An unlisted value is unsupported, not necessarily absent
+from every school (see 驿马 below). Adding one is a knowledge change and requires a source.
+各锚旋钮支持的取值，连同出处或已知出处缺口逐行记录。表外取值只表示本库不支持，不表示没有
+流派如此读（见驿马）；新增取值属于知识变更，须有出处。'''
 _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
-  # 红艳: 《三命通会》 keys on the Day Master, and both 问真 and 高人 record day-only
-  # (https://book.taiyi.me/命/神煞大全 ; the 高人 README's 「日干查地支」 section).
-  # YEAR has been a member since issue #69 but its 出处 is still missing -- no primary
-  # reading was found for it, only aggregator copy. YEAR_AND_DAY is absent on purpose:
-  # no source reads 红艳 by both stems.
+  # 红艳: DAY follows 问真 (https://book.taiyi.me/命/神煞大全, 「以日干查四地支」) and 高人,
+  # which lists 红艳 under its 「日干查地支」 section. 《三命通会·桃花紅艷煞》 supplies the
+  # 干 -> 支 table but does not identify the anchor pillar. YEAR has been supported since
+  # issue #69 but its 出处 is still missing; no YEAR_AND_DAY reading was found either.
   'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
-  # 天乙贵人: DAY is 子平法 -- 袁树珊《命理探源》 「以日为主」. YEAR is the Tang-Song 禄命法
-  # reading, which keys the 贵神 on the year pillar's Tiangan (《五行精纪》, annotated at
-  # https://www.suanzhun.net/book/2728.html). YEAR_AND_DAY is the modern mainstream of
-  # 问真 and 高人, and this library's default.
+  # 天乙贵人: DAY is 子平法 -- 袁树珊《命理探源》 「以日爲主。如甲日見丑見未」. YEAR is the
+  # 禄命法 reading, which keys the 貴神 on the year pillar: 《五行精纪》 卷十四 引陈希烈疏
+  # 「假如丑未生人，月日時得甲戊庚，是遇正天乙也。甲子人十二月生，是遇貴神」
+  # (https://www.suanzhun.net/book/2742.html); the same edition's annotator states the split
+  # outright at https://www.suanzhun.net/book/2728.html. YEAR_AND_DAY is the modern mainstream
+  # of 问真 and 高人, and this library's default.
   'tianyi_anchor':    frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
   # 金舆: DAY follows 袁树珊《命理探源》
   # (https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb); YEAR_AND_DAY follows 问真
@@ -204,6 +204,8 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # reading (https://book.taiyi.me/命/神煞大全) and this library's default, DAY is
   # 袁树珊《命理探源》 for all five -- see `BaziSchool.mingli_tanyuan`, the profile that
   # writes that book's readings out.
+  # 《命理探源·卷上强弱》印页六五 also records a YEAR reading for 驿马:「申子辰年馬在寅。
+  # 以年爲主。亦是一法」. Issue #181 excludes adding new readings, so it remains unsupported.
   'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'huagai_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiangxing_anchor': frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
@@ -238,7 +240,7 @@ class BaziSchool:
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
-  # Anchor knobs: each field's sourced subset and its 出处 live in `_ANCHOR_CHOICES`.
+  # Anchor knobs: each field's supported values and provenance status live in `_ANCHOR_CHOICES`.
   hongyan_anchor: Anchor = Anchor.DAY
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
@@ -262,8 +264,7 @@ class BaziSchool:
     for name, allowed in _ANCHOR_CHOICES.items():
       anchor = getattr(self, name)
       if anchor not in allowed:
-        # An unsourced anchor is not a school reading; see `_ANCHOR_CHOICES`.
-        raise ValueError(f'No source reads {name} as {anchor}; sourced: {sorted(a.name for a in allowed)}')
+        raise ValueError(f'Unsupported anchor for {name}: {anchor}; supported: {sorted(a.name for a in allowed)}')
 
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':
@@ -286,10 +287,13 @@ class BaziSchool:
       预设声明的是一份出处的读法，不是一整套世界观。
 
     Sources / 出处:
-    - 《命理探源·卷三强弱》, pp. 64-71 / 第 64-71 页:
+    - 《命理探原·卷上强弱》, 印页 62-71 (NLC scan, PDF pages 93-102):
       https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-    - Searchable reference / 可检索参考:
+      天乙见 62-63，五项地支锚神煞见 64-71。
+    - 《命理探源》 ctext edition / ctext 版（金輿祿「以日主為主，如甲日見辰」）:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+      The editions differ: the NLC print has no 金舆 entry and writes 「以日爲主」 where
+      ctext writes 「以日主為主」. 两版文字不同：NLC 刊本无金舆条，且相应措辞有别。
 
     Return: (BaziSchool) The frozen profile.
     '''
@@ -323,11 +327,11 @@ class BaziSchool:
     - The profile is taken whole or rejected: `d` that is no `Mapping` raises `TypeError`,
       a missing field raises `ValueError`, a non-`str` value raises `TypeError`, a name
       that is no member of the field's enum raises `ValueError`, and an anchor outside its
-      sourced subset raises `ValueError` from the constructor. A partial dict never
+      supported set raises `ValueError` from the constructor. A partial dict never
       silently falls back to defaults -- a chart rebuilt from JSON is the chart the JSON
       describes.
       档案要么整份收下、要么被拒：入参不是 `Mapping` 抛 `TypeError`，缺字段抛 `ValueError`，
-      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`，锚超出有出处的子集则由构造函数
+      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`，锚超出支持范围则由构造函数
       抛 `ValueError`。残缺字典绝不静默回落默认值——
       从 JSON 重建的盘就是 JSON 所述的盘。
 

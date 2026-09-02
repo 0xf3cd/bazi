@@ -139,11 +139,11 @@ def test_every_school_field_has_a_type_gate() -> None:
 
 
 def test_anchor_choices_bind_to_every_anchor_field() -> None:
-  # Mechanical binding: the sourced-subset table and the `Anchor`-typed fields are one set.
-  # A new anchor knob with no entry -- or an entry naming no field -- fails here, which is
-  # what keeps 出处 attached to every anchor.
-  # 机械绑定：有出处的取值表与 `Anchor` 类型字段是同一个集合；加旋钮不登记（或登记了不存在
-  # 的字段）都会在这里响——这条绑定就是「每个锚都驮着出处」的执行者。
+  # Mechanical binding: the supported-values table and the `Anchor`-typed fields are one
+  # set. A new anchor knob with no entry -- or an entry naming no field -- fails here, which
+  # is what keeps each anchor's provenance status explicit.
+  # 机械绑定：支持值表与 `Anchor` 类型字段是同一个集合；加旋钮不登记（或登记了不存在
+  # 的字段）都会在这里响——每个锚的出处状态必须显式记录。
   anchor_fields = {f.name for f in dataclasses.fields(BaziSchool) if f.type is Anchor}
   assert anchor_fields == set(_ANCHOR_CHOICES)
   assert len(anchor_fields) == 9
@@ -154,10 +154,9 @@ def test_anchor_choices_bind_to_every_anchor_field() -> None:
 
 
 def test_anchor_choices_are_the_only_accepted_values() -> None:
-  # Both directions: a sourced value constructs, an unsourced one raises. Without the
-  # second half a table that allowed everything would still pass (issue #69 的「未经出处
-  # 的组合拒绝」).
-  # 两个方向都测：有出处的能构造，没出处的要抛；只测前者的话，一张放行一切的表也会全绿。
+  # Both directions: a supported value constructs, one outside the table raises. Without
+  # the second half a table that allowed everything would still pass.
+  # 两个方向都测：支持值能构造，表外值要抛；只测前者的话，一张放行一切的表也会全绿。
   for name, allowed in _ANCHOR_CHOICES.items():
     for anchor in Anchor:
       if anchor in allowed:
@@ -167,10 +166,10 @@ def test_anchor_choices_are_the_only_accepted_values() -> None:
           BaziSchool(**{name: anchor}) # type: ignore # Field name is data here.
 
 
-def test_anchor_choices_match_the_readings_they_cite() -> None:
-  # The subsets are knowledge, not defaults -- pin them as data so a silent widening
+def test_anchor_choices_match_the_supported_readings() -> None:
+  # The subsets are supported knowledge, not defaults -- pin them as data so a silent widening
   # (or a lost reading) shows up as a failed assertion, not as a new legal school.
-  # 子集是知识不是默认值，按数据钉死：悄悄放宽或丢掉一个读法都会在这里响。
+  # 支持集不是默认值，按数据钉死：悄悄放宽或丢掉一个读法都会在这里响。
   assert _ANCHOR_CHOICES['hongyan_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR})
   assert _ANCHOR_CHOICES['tianyi_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['jinyu_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
