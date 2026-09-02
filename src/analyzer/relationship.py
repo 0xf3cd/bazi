@@ -168,11 +168,17 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   一条规则管所有锚：干锚查四支，支锚查其余三支（地支不自查），两柱锚就按柱各跑一遍。
   '''
   dizhis = bazi.four_dizhis
-  args: tuple[_ArgsType, ...] = tuple(
-    ((key,), dizhis if spec.kind is _AnchorKind.TIANGAN
-             else tuple(dz for i, dz in enumerate(dizhis) if i != index))
-    for index, key in _anchor_keys(spec, bazi)
-  )
+  keys = _anchor_keys(spec, bazi)
+
+  args: tuple[_ArgsType, ...]
+  if spec.kind is _AnchorKind.TIANGAN:
+    args = tuple(((key,), dizhis) for _, key in keys)
+  else:
+    args = tuple(
+      ((key,), tuple(dz for i, dz in enumerate(dizhis) if i != index))
+      for index, key in keys
+    )
+
   return frozenset(find_shensha(_shensha_predicate(spec, bazi.config.school), *args))
 
 

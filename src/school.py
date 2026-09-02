@@ -268,20 +268,22 @@ class BaziSchool:
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':
     '''
-    The profile of 袁树珊《命理探源》: every anchor this library has a 《命理探源》 reading
-    for, set to that reading. 驿马、华盖、将星、劫煞、亡神 key on the day branch alone
-    (at birth they inspect the year, month, and hour branches), and 天乙贵人 keys on the
-    Day Master (「以日为主」); 金舆's day-only reading is already the default.
-    《命理探源》 口径档案：本库有该书读法的锚一律取该书读法。驿马、华盖、将星、劫煞、亡神
-    以日支为锚（原局查年、月、时支），天乙贵人以日干为锚（「以日为主」）；金舆的日干读法
-    本就是默认。
+    The profile of 袁树珊《命理探源》: the seven anchors that book has a reading for, each
+    set to that reading. 驿马、华盖、将星、劫煞、亡神 key on the day branch alone (at birth
+    they then inspect the year, month, and hour branches); 天乙贵人 and 金舆 key on the Day
+    Master (「以日为主」). 金舆's is also the current default, and the preset still names it
+    -- the profile declares the book's reading, so a change of default cannot silently
+    rewrite it.
+    《命理探源》 口径档案：该书有读法的七个锚各取其读法。驿马、华盖、将星、劫煞、亡神以日支
+    为锚（原局随之查年、月、时支）；天乙贵人与金舆以日干为锚（「以日为主」）。金舆恰好也是
+    当前默认，预设仍把它写出来——档案声明的是该书的读法，默认值日后改动不该悄悄改写它。
 
     Note:
-    - Knobs the book does not speak to keep their defaults -- 红艳、灾煞, the
-      rule-definition enums, and 日柱分界 are untouched. The preset declares one source's
-      readings, not a whole worldview.
-      该书未言及的旋钮保持默认——红艳、灾煞、各规则定义枚举与日柱分界都不动。预设声明的是
-      一份出处的读法，不是一整套世界观。
+    - Knobs the book does not speak to keep the default profile's values -- 红艳 and 灾煞,
+      the rule-definition enums, and 日柱分界 are left alone. The preset declares one
+      source's readings, not a whole worldview.
+      该书未言及的旋钮保持默认档案的取值——红艳、灾煞、各规则定义枚举与日柱分界都不动。
+      预设声明的是一份出处的读法，不是一整套世界观。
 
     Sources / 出处:
     - 《命理探源·卷三强弱》, pp. 64-71 / 第 64-71 页:
@@ -293,7 +295,6 @@ class BaziSchool:
     '''
 
     return cls(
-      hongyan_anchor=Anchor.DAY,
       tianyi_anchor=Anchor.DAY,
       yima_anchor=Anchor.DAY,
       huagai_anchor=Anchor.DAY,

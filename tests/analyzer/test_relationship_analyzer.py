@@ -1682,6 +1682,21 @@ def test_transit_anchors_reuse_the_keys_without_pillar_exclusion() -> None:
     ), (kind, anchor)
 
 
+def test_every_anchor_member_is_wired_to_pillars() -> None:
+  # Mechanical binding: the five deleted enums each carried an "unwired member" guard; one
+  # table replaces them all, so one gate has to execute that invariant. A new `Anchor` member
+  # with no entry would otherwise surface as a bare `KeyError` at lookup time.
+  # 机械绑定:被删的五个枚举各带一条「成员未接线」守卫,合并成一张表后要有一道闸执行这条
+  # 不变量——新成员漏登记否则只会在查法时抛裸 `KeyError`。
+  pillars = relationship_module._ANCHOR_PILLARS
+  assert set(pillars) == set(Anchor)
+  for anchor, indices in pillars.items():
+    assert indices, anchor
+    assert all(0 <= i < 4 for i in indices), anchor          # Four pillars, 年月日时.
+    assert list(indices) == sorted(set(indices)), anchor     # Ascending and distinct: the
+                                                             # call order follows pillar order.
+
+
 def test_registry_anchors_are_the_declared_table() -> None:
   # The full roster of (kind, anchor) per Shensha, written out as data. A silently
   # re-anchored Shensha fails here, and so does one that quietly stops (or starts)
