@@ -138,9 +138,9 @@ def main() -> int:
      lambda: BaziSchool.from_json({**school_json, 'day_rollover': 'NOT_A_MEMBER'})),
     ('BaziSchool wrong Yima anchor', TypeError,
      lambda: BaziSchool(yima_anchor=object())), # type: ignore
-    ('BaziSchool unsourced Hongyan anchor', ValueError,
+    ('BaziSchool unsupported Hongyan anchor', ValueError,
      lambda: BaziSchool(hongyan_anchor=Anchor.YEAR_AND_DAY)),
-    ('BaziSchool.from_json unsourced anchor', ValueError,
+    ('BaziSchool.from_json unsupported anchor', ValueError,
      lambda: BaziSchool.from_json({**school_json, 'hongyan_anchor': 'YEAR_AND_DAY'})),
     ('BaziSchool wrong Jinyu anchor', TypeError,
      lambda: BaziSchool(jinyu_anchor=object())), # type: ignore

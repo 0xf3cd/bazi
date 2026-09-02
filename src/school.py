@@ -186,7 +186,7 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # 干 -> 支 table but does not identify the anchor pillar. YEAR has been supported since
   # issue #69 but its 出处 is still missing; no YEAR_AND_DAY reading was found either.
   'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
-  # 天乙贵人: DAY is 子平法 -- 袁树珊《命理探源》 「以日爲主。如甲日見丑見未」. YEAR is the
+  # 天乙贵人: DAY is 子平法 -- 袁树珊《命理探原》NLC 刊本「以日爲主。如甲日見丑見未」. YEAR is the
   # 禄命法 reading, which keys the 貴神 on the year pillar: 《五行精纪》 卷十四 引陈希烈疏
   # 「假如丑未生人，月日時得甲戊庚，是遇正天乙也。甲子人十二月生，是遇貴神」
   # (https://www.suanzhun.net/book/2742.html); the same edition's annotator states the split
@@ -204,7 +204,7 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # reading (https://book.taiyi.me/命/神煞大全) and this library's default, DAY is
   # 袁树珊《命理探源》 for all five -- see `BaziSchool.mingli_tanyuan`, the profile that
   # writes that book's readings out.
-  # 《命理探源·卷上强弱》印页六五 also records a YEAR reading for 驿马:「申子辰年馬在寅。
+  # 《命理探原·卷上强弱》印页六五 also records a YEAR reading for 驿马:「申子辰年馬在寅。
   # 以年爲主。亦是一法」. Issue #181 excludes adding new readings, so it remains unsupported.
   'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'huagai_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
@@ -240,24 +240,23 @@ class BaziSchool:
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
-  # Anchor knobs: each field's supported values and provenance status live in `_ANCHOR_CHOICES`.
-  hongyan_anchor: Anchor = Anchor.DAY
+  hongyan_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
   anhe_def:      DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
   xing_def:      DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
   gong_def:      DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
-  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY
+  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  yima_anchor:      Anchor = Anchor.YEAR_AND_DAY
-  huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY
-  jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY
-  jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY
-  wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY
-  jinyu_anchor: Anchor = Anchor.DAY
+  yima_anchor:      Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  jinyu_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
-  zaisha_anchor: Anchor = Anchor.YEAR
+  zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
 
   def __post_init__(self) -> None:
     check_declared_types(self)
@@ -287,9 +286,8 @@ class BaziSchool:
       预设声明的是一份出处的读法，不是一整套世界观。
 
     Sources / 出处:
-    - 《命理探原·卷上强弱》, 印页 62-71 (NLC scan, PDF pages 93-102):
+    - 《命理探原·卷上强弱》(NLC scan):
       https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-      天乙见 62-63，五项地支锚神煞见 64-71。
     - 《命理探源》 ctext edition / ctext 版（金輿祿「以日主為主，如甲日見辰」）:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
       The editions differ: the NLC print has no 金舆 entry and writes 「以日爲主」 where

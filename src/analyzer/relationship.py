@@ -42,8 +42,8 @@ def find_shensha(
 
 @unique
 class _AnchorKind(Enum):
-  """Whether a Shensha keys on its anchor pillar's Tiangan or on its Dizhi
-  (神煞以锚柱的天干还是地支为 key)."""
+  '''Whether a Shensha keys on its anchor pillar's Tiangan or on its Dizhi
+  (神煞以锚柱的天干还是地支为 key).'''
   TIANGAN = auto()
   DIZHI   = auto()
 

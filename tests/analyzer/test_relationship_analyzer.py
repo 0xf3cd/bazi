@@ -945,7 +945,7 @@ def test_transit_shensha() -> None:
 # 甲子/丁卯/乙丑/壬午) -- the day master 乙 keys on 申 (absent from the chart), while the year
 # tiangan 甲 keys on 午 (the hour Dizhi), so the two 查法 answer differently on this chart.
 @pytest.mark.parametrize('anchor, expected', [
-  (Anchor.DAY,  frozenset()),           # 日干乙 -> 申 (《三命通会》, the default): 申 not in 子卯丑午.
+  (Anchor.DAY,  frozenset()),           # 日干乙 -> 申 (the default): 申 not in 子卯丑午.
   (Anchor.YEAR, frozenset({Dizhi.午})), # 年干甲 -> 午: the hour Dizhi matches.
 ])
 def test_hongyan_anchor_variant_at_birth(anchor: Anchor, expected: frozenset[Dizhi]) -> None:
@@ -953,7 +953,7 @@ def test_hongyan_anchor_variant_at_birth(anchor: Anchor, expected: frozenset[Diz
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   assert RelationshipAnalyzer(chart).at_birth.shensha['hongyan'] == expected
 
-  # The default school is DAY_MASTER -- the long-pinned behavior carries over unchanged.
+  # The default school uses Anchor.DAY -- the long-pinned behavior carries over unchanged.
   if anchor is Anchor.DAY:
     default_chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['hongyan'] == expected
@@ -985,7 +985,7 @@ def test_yangren_definition_at_birth_and_transits(
   transit_ganzhi: Ganzhi,
   expected: frozenset[Dizhi],
 ) -> None:
-  # This chart is 辛日 and 庚年. YEAR_MASTER deliberately differs, proving 羊刃 keeps
+  # This chart is 辛日 and 庚年. Anchor.YEAR deliberately differs, proving 羊刃 keeps
   # its fixed day-master anchor instead of inheriting 红艳's configurable anchor.
   school: BaziSchool = BaziSchool(
     hongyan_anchor=Anchor.YEAR,
