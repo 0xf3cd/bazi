@@ -179,20 +179,20 @@ def test_anchor_choices_match_the_supported_readings() -> None:
 
 
 def test_mingli_tanyuan_is_the_book_profile() -> None:
-  # The preset writes out 袁树珊《命理探源》's readings: the five 支锚 Shenshas and 天乙 on
-  # the day pillar, 金舆 already there by default. Knobs the book does not speak to keep
-  # the default profile's values.
-  # 预设写出的是《命理探源》的读法：五项支锚神煞与天乙取日柱，金舆本就是默认；该书未言及的
-  # 旋钮保持默认档案的取值。
+  # The preset writes out the readings in 袁树珊's two editions: the five 支锚 Shenshas
+  # and 天乙 on the day pillar, 金舆 already there by default. Knobs those sources do not
+  # speak to keep the default profile's values.
+  # 预设写出两版所载读法：五项支锚神煞与天乙取日柱，金舆本就是默认；两版未言及的旋钮保持
+  # 默认档案的取值。
   preset: BaziSchool = BaziSchool.mingli_tanyuan()
   book_anchors = ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor',
                   'wangshen_anchor', 'tianyi_anchor', 'jinyu_anchor')
   for name in book_anchors:
     assert getattr(preset, name) is Anchor.DAY, name
-  # Everything else is the default profile untouched -- 红艳 in particular, which that book
-  # has no reading for. Written as one `replace` so a knob quietly joining the preset fails
+  # Everything else is the default profile untouched -- 红艳 in particular, which those sources
+  # have no reading for. Written as one `replace` so a knob quietly joining the preset fails
   # here rather than riding along under a default value.
-  # 其余一律是默认档案原样——尤其红艳，该书没有它的读法。写成一次 `replace`，多塞一个旋钮
+  # 其余一律是默认档案原样——尤其红艳，两版没有它的读法。写成一次 `replace`，多塞一个旋钮
   # 会在这里响，而不是搭着默认值混过去。
   assert preset == dataclasses.replace(
     DEFAULT_SCHOOL,

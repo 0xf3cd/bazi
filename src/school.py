@@ -202,8 +202,8 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
   # 驿马、华盖、将星、劫煞、亡神 share one pair of readings: YEAR_AND_DAY is 问真's modern
   # reading (https://book.taiyi.me/命/神煞大全) and this library's default, DAY is
-  # 袁树珊《命理探源》 for all five -- see `BaziSchool.mingli_tanyuan`, the profile that
-  # writes that book's readings out.
+  # 袁树珊《命理探原》 NLC print for all five -- see `BaziSchool.mingli_tanyuan`, the
+  # profile that writes those readings out.
   # 《命理探原·卷上强弱》印页六五 also records a YEAR reading for 驿马:「申子辰年馬在寅。
   # 以年爲主。亦是一法」. Issue #181 excludes adding new readings, so it remains unsupported.
   'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
@@ -268,22 +268,23 @@ class BaziSchool:
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':
     '''
-    The profile of 袁树珊《命理探源》: the seven anchors that book has a reading for, each
-    set to that reading. 驿马、华盖、将星、劫煞、亡神 key on the day branch alone (at birth
-    they then inspect the year, month, and hour branches); 天乙贵人 and 金舆 key on the Day
-    Master (「以日为主」). 金舆's is also the current default, and the preset still names it
-    -- the profile declares the book's reading, so a change of default cannot silently
-    rewrite it.
-    《命理探源》 口径档案：该书有读法的七个锚各取其读法。驿马、华盖、将星、劫煞、亡神以日支
-    为锚（原局随之查年、月、时支）；天乙贵人与金舆以日干为锚（「以日为主」）。金舆恰好也是
-    当前默认，预设仍把它写出来——档案声明的是该书的读法，默认值日后改动不该悄悄改写它。
+    The profile assembled from 袁树珊's 《命理探原》 NLC print and 《命理探源》 ctext
+    edition: the seven anchors recorded across them, each set to its documented reading.
+    驿马、华盖、将星、劫煞、亡神 key on the day branch alone (at birth they then inspect
+    the year, month, and hour branches); 天乙贵人 and 金舆 key on the Day Master. 金舆's is
+    also the current default, and the preset still names it -- the profile declares the
+    sources' readings, so a change of default cannot silently rewrite them.
+    据袁树珊《命理探原》NLC 刊本与《命理探源》ctext 版整理的口径档案：两版所载的七个锚各取
+    其读法。驿马、华盖、将星、劫煞、亡神以日支为锚（原局随之查年、月、时支）；天乙贵人与
+    金舆以日干为锚。金舆恰好也是当前默认，预设仍把它写出来——档案声明的是两版所载读法，
+    默认值日后改动不该悄悄改写它。
 
     Note:
-    - Knobs the book does not speak to keep the default profile's values -- 红艳 and 灾煞,
+    - Knobs these sources do not speak to keep the default profile's values -- 红艳 and 灾煞,
       the rule-definition enums, and 日柱分界 are left alone. The preset declares one
-      source's readings, not a whole worldview.
-      该书未言及的旋钮保持默认档案的取值——红艳、灾煞、各规则定义枚举与日柱分界都不动。
-      预设声明的是一份出处的读法，不是一整套世界观。
+      work's readings, not a whole worldview.
+      两版未言及的旋钮保持默认档案的取值——红艳、灾煞、各规则定义枚举与日柱分界都不动。
+      预设声明的是这部著作的读法，不是一整套世界观。
 
     Sources / 出处:
     - 《命理探原·卷上强弱》(NLC scan):
