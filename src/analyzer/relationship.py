@@ -5,7 +5,7 @@ import functools
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
 from itertools import product
-from typing import Final, TypedDict
+from typing import Final, TypedDict, cast
 from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
@@ -61,50 +61,67 @@ class _KeySource(Enum):
 @dataclass(frozen=True)
 class _ShenshaSpec:
   '''
-  The spec of a Shensha: the predicate, key source, and optional school-derived definition.
-  神煞的规格：判断函数、查询 key，以及可选的流派定义参数。
+  The spec of a Shensha: the predicate, key source, display label, and optional
+  school-derived definition.
+  神煞的规格：判断函数、查询 key、展示标签，以及可选的流派定义参数。
 
   Note: the predicate's first-parameter type must match `key`. When `definition` is present, the
   predicate must accept its result through a keyword-only `definition` argument. Each predicate
   checks this contract at runtime; the registry's type does not express it.
+  `label` is the Shensha's display name, published as `SHENSHA_LABELS` for the callers that
+  render results; it is not part of the lookup.
+  `label` 是该神煞的展示名，经 `SHENSHA_LABELS` 供渲染方使用，不参与查法。
   '''
   predicate:  Callable[..., bool]
   key:        _KeySource
+  label:      str
   definition: _DefinitionResolver | None = None
 
 
 '''The registry of the Dizhi-valued Shenshas supported by relationship analysis
 (亲密关系分析支持的地支结果神煞注册表).'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
-  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _KeySource.YEAR_OR_DAY_DIZHI),
-  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN),
-  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _KeySource.YEAR_DIZHI),
-  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _KeySource.YEAR_DIZHI),
-  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.PROFILED_DIZHI),
-  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.PROFILED_DIZHI),
+  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _KeySource.YEAR_OR_DAY_DIZHI,     '桃花'),
+  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _KeySource.YEAR_DIZHI,            '红鸾'),
+  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN,           '红艳'),
+  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _KeySource.YEAR_DIZHI,            '天喜'),
+  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.PROFILED_DIZHI,        '驿马'),
+  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.PROFILED_DIZHI,        '华盖'),
   'yangren'  : _ShenshaSpec(
     shensha_utils.yangren,
     _KeySource.DAY_MASTER,
+    '羊刃',
     lambda school: school.yangren_def,
   ),
   'feiren'   : _ShenshaSpec(
     shensha_utils.feiren,
     _KeySource.DAY_MASTER,
+    '飞刃',
     lambda school: school.feiren_def,
   ),
   'tianyi'   : _ShenshaSpec(
     shensha_utils.tianyi,
     _KeySource.ANCHOR_TIANGANS,
+    '天乙贵人',
     lambda school: school.tianyi_def,
   ),
-  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI),
-  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _KeySource.ZAISHA_ANCHOR_DIZHIS),
-  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI),
-  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI),
-  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI),
-  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _KeySource.YEAR_DIZHI),
-  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _KeySource.DAY_MASTER),
-  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _KeySource.JINYU_ANCHOR_TIANGANS),
+  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI,        '将星'),
+  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _KeySource.ZAISHA_ANCHOR_DIZHIS,  '灾煞'),
+  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI,        '劫煞'),
+  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI,        '亡神'),
+  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI,            '孤辰'),
+  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _KeySource.YEAR_DIZHI,            '寡宿'),
+  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _KeySource.DAY_MASTER,            '禄神'),
+  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _KeySource.JINYU_ANCHOR_TIANGANS, '金舆'),
+})
+
+
+'''The display label of every registered Shensha, in registry order -- the single roster
+for callers that render Shensha results (`run_relationship_analyzer.py`), derived from the
+registry so a new entry never needs a second list.
+每个注册神煞的展示标签（按注册序）：渲染方的唯一名册，由注册表推导，新增条目不必再列一遍。'''
+SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
+  name: spec.label for name, spec in _REGISTRY.items()
 })
 
 
@@ -370,27 +387,17 @@ class AtBirthAnalysis:
   @property
   def shensha(self) -> AtBirthShenshaAnalysis:
     bazi = self._chart.bazi
-    return {
-      'taohua'   : _eval_at_birth(_REGISTRY['taohua'],    bazi),
-      'hongyan'  : _eval_at_birth(_REGISTRY['hongyan'],   bazi),
-      'hongluan' : _eval_at_birth(_REGISTRY['hongluan'],  bazi),
-      'tianxi'   : _eval_at_birth(_REGISTRY['tianxi'],    bazi),
-      'yima'     : _eval_at_birth(_REGISTRY['yima'],      bazi),
-      'huagai'   : _eval_at_birth(_REGISTRY['huagai'],    bazi),
-      'yangren'  : _eval_at_birth(_REGISTRY['yangren'],   bazi),
-      'feiren'   : _eval_at_birth(_REGISTRY['feiren'],    bazi),
-      'tianyi'   : _eval_at_birth(_REGISTRY['tianyi'],    bazi),
-      'jiangxing': _eval_at_birth(_REGISTRY['jiangxing'], bazi),
-      'zaisha'   : _eval_at_birth(_REGISTRY['zaisha'],    bazi),
-      'jiesha'   : _eval_at_birth(_REGISTRY['jiesha'],    bazi),
-      'wangshen' : _eval_at_birth(_REGISTRY['wangshen'],  bazi),
-      'guchen'   : _eval_at_birth(_REGISTRY['guchen'],    bazi),
-      'guasu'    : _eval_at_birth(_REGISTRY['guasu'],     bazi),
-      'lushen'   : _eval_at_birth(_REGISTRY['lushen'],    bazi),
-      'jinyu'    : _eval_at_birth(_REGISTRY['jinyu'],     bazi),
+    # The registry is the roster: every entry lands under its own key, followed by the two
+    # whole-pillar Shenshas that are not in it (they answer with a Ganzhi, not a Dizhi set).
+    # A comprehension cannot type-check as a `TypedDict`, so the key set is pinned by
+    # `test_at_birth_shensha_covers_the_registry` instead of by mypy.
+    # 注册表就是名册：每个条目落在自己的键下，其后是不在表内的两个整柱神煞（它们的答案是干支，
+    # 不是地支集合）。推导式无法按 `TypedDict` 类型检查，键集改由测试钉住。
+    return cast(AtBirthShenshaAnalysis, {
+      **{name: _eval_at_birth(spec, bazi) for name, spec in _REGISTRY.items()},
       'kuigang'  : bazi.day_pillar if shensha_utils.kuigang(bazi.day_pillar) else None,
       'tianshe'  : bazi.day_pillar if shensha_utils.tianshe(bazi.month_commander, bazi.day_pillar) else None,
-    }
+    })
 
   @property
   def day_master_relations(self) -> tiangan_utils.TianganRelationDiscovery:
@@ -464,25 +471,11 @@ class TransitAnalysis:
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
     bazi = self._chart.bazi
-    return {
-      'taohua'   : _eval_transits(_REGISTRY['taohua'],    bazi, transit_dizhis),
-      'hongyan'  : _eval_transits(_REGISTRY['hongyan'],   bazi, transit_dizhis),
-      'hongluan' : _eval_transits(_REGISTRY['hongluan'],  bazi, transit_dizhis),
-      'tianxi'   : _eval_transits(_REGISTRY['tianxi'],    bazi, transit_dizhis),
-      'yima'     : _eval_transits(_REGISTRY['yima'],      bazi, transit_dizhis),
-      'huagai'   : _eval_transits(_REGISTRY['huagai'],    bazi, transit_dizhis),
-      'yangren'  : _eval_transits(_REGISTRY['yangren'],   bazi, transit_dizhis),
-      'feiren'   : _eval_transits(_REGISTRY['feiren'],    bazi, transit_dizhis),
-      'tianyi'   : _eval_transits(_REGISTRY['tianyi'],    bazi, transit_dizhis),
-      'jiangxing': _eval_transits(_REGISTRY['jiangxing'], bazi, transit_dizhis),
-      'zaisha'   : _eval_transits(_REGISTRY['zaisha'],    bazi, transit_dizhis),
-      'jiesha'   : _eval_transits(_REGISTRY['jiesha'],    bazi, transit_dizhis),
-      'wangshen' : _eval_transits(_REGISTRY['wangshen'],  bazi, transit_dizhis),
-      'guchen'   : _eval_transits(_REGISTRY['guchen'],    bazi, transit_dizhis),
-      'guasu'    : _eval_transits(_REGISTRY['guasu'],     bazi, transit_dizhis),
-      'lushen'   : _eval_transits(_REGISTRY['lushen'],    bazi, transit_dizhis),
-      'jinyu'    : _eval_transits(_REGISTRY['jinyu'],     bazi, transit_dizhis),
-    }
+    # Same roster as at birth, evaluated against the transit branches; see the note there.
+    # 与原局同一份名册，只是查在流运地支上；说明见原局那处。
+    return cast(ShenshaAnalysis, {
+      name: _eval_transits(spec, bazi, transit_dizhis) for name, spec in _REGISTRY.items()
+    })
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
     '''

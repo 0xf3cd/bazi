@@ -6,8 +6,9 @@ school profile), the school-divergence declarations (`BaziSchool` / `DayRollover
 and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
-from dataclasses import dataclass
-from typing import Final
+from dataclasses import dataclass, fields
+from typing import Any, Final, cast
+from collections.abc import Mapping
 
 from .calendar import CalendarBackend
 from .rules import DizhiRules, ShenshaRules
@@ -307,31 +308,62 @@ class BaziSchool:
   zaisha_anchor: ZaishaAnchor = ZaishaAnchor.YEAR
 
   def __post_init__(self) -> None:
-    # Type check at runtime (same shape as `CalendarDate`).
-    if not isinstance(self.day_rollover, DayRollover):
-      raise TypeError(f'Expected DayRollover, got {type(self.day_rollover)}')
-    if not isinstance(self.hongyan_key, KeyStem):
-      raise TypeError(f'Expected KeyStem, got {type(self.hongyan_key)}')
-    if not isinstance(self.anhe_def, DizhiRules.AnheDef):
-      raise TypeError(f'Expected AnheDef, got {type(self.anhe_def)}')
-    if not isinstance(self.xing_def, DizhiRules.XingDef):
-      raise TypeError(f'Expected XingDef, got {type(self.xing_def)}')
-    if not isinstance(self.gong_def, DizhiRules.GongDef):
-      raise TypeError(f'Expected GongDef, got {type(self.gong_def)}')
-    if not isinstance(self.yangren_def, ShenshaRules.YangrenDef):
-      raise TypeError(f'Expected YangrenDef, got {type(self.yangren_def)}')
-    if not isinstance(self.tianyi_anchor, TianyiAnchor):
-      raise TypeError(f'Expected TianyiAnchor, got {type(self.tianyi_anchor)}')
-    if not isinstance(self.tianyi_def, ShenshaRules.TianyiDef):
-      raise TypeError(f'Expected TianyiDef, got {type(self.tianyi_def)}')
-    if not isinstance(self.shensha_anchor_profile, ShenshaAnchorProfile):
-      raise TypeError(f'Expected ShenshaAnchorProfile, got {type(self.shensha_anchor_profile)}')
-    if not isinstance(self.jinyu_anchor, JinyuAnchor):
-      raise TypeError(f'Expected JinyuAnchor, got {type(self.jinyu_anchor)}')
-    if not isinstance(self.feiren_def, ShenshaRules.FeirenDef):
-      raise TypeError(f'Expected FeirenDef, got {type(self.feiren_def)}')
-    if not isinstance(self.zaisha_anchor, ZaishaAnchor):
-      raise TypeError(f'Expected ZaishaAnchor, got {type(self.zaisha_anchor)}')
+    # Type check at runtime (same shape as `CalendarDate`), read off the field declarations:
+    # a knob's gate is its own annotation, so no field can arrive without one.
+    # 运行时类型闸直接读字段声明：旋钮的闸就是它自己的注解，新增字段不可能漏闸。
+    for f in fields(self):
+      # `f.type` is the annotated enum class itself -- this module defers no annotations.
+      # typeshed spells the attribute as a union with `str`, hence the cast.
+      declared = cast(type, f.type)
+      value = getattr(self, f.name)
+      if not isinstance(value, declared):
+        raise TypeError(f'Expected {declared.__name__}, got {type(value)}')
+
+  @classmethod
+  def from_json(cls, d: Mapping[str, object]) -> 'BaziSchool':
+    '''
+    Rebuild a profile from the `school` object of `BaziChart.json` -- the inverse of that
+    serialization, resolving each stored member name through the field's own declared enum.
+    One reader for every knob: a new field needs no new line here, and none can be
+    forgotten either.
+    从 `BaziChart.json` 的 `school` 对象还原流派档案——序列化的逆运算：每个成员名按字段自己
+    声明的枚举解析。所有旋钮共用一个读法，新增字段不必在此加行，也不可能漏读。
+
+    Args:
+    - d: (Mapping[str, object]) The serialized profile: every `BaziSchool` field name
+      mapped to a member name of that field's enum, e.g. `{'day_rollover': 'WAN_ZISHI', ...}`.
+      Keys that name no field are ignored. 不对应字段的键被忽略。
+
+    Note:
+    - The profile is taken whole or rejected: a missing field raises `ValueError`, a
+      non-`str` value raises `TypeError`, and a name that is no member of the field's enum
+      raises `ValueError`. A partial dict never silently falls back to defaults -- a chart
+      rebuilt from JSON is the chart the JSON describes.
+      档案要么整份收下、要么被拒：缺字段抛 `ValueError`，值非 `str` 抛 `TypeError`，成员名
+      不存在抛 `ValueError`。残缺字典绝不静默回落默认值——从 JSON 重建的盘就是 JSON 所述的盘。
+
+    Return: (BaziSchool) The rebuilt, frozen profile.
+
+    Examples:
+    - `BaziSchool.from_json(chart.json['school']) == chart.bazi.config.school`
+    '''
+
+    if not isinstance(d, Mapping):
+      raise TypeError(f'Expected Mapping, got {type(d)}')
+
+    kwargs: dict[str, Any] = {}
+    for f in fields(cls):
+      if f.name not in d:
+        raise ValueError(f'Missing school field: {f.name}')
+      name = d[f.name]
+      if not isinstance(name, str):
+        raise TypeError(f'Expected str, got {type(name)}')
+      declared = cast(type[Enum], f.type)
+      if name not in declared.__members__:
+        raise ValueError(f'Unsupported {declared.__name__}: {name}')
+      kwargs[f.name] = declared[name]
+
+    return cls(**kwargs)
 
 
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()

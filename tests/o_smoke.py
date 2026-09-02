@@ -50,6 +50,7 @@ def main() -> int:
     raise RuntimeError('Expected year 2024 to be supported')
   liunian = year_transits.select(TransitKind.LIUNIAN)
   transit_analysis = RelationshipAnalyzer(chart).transits
+  school_json: dict[str, object] = dict(chart.json['school'])
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
@@ -120,6 +121,14 @@ def main() -> int:
      lambda: shensha_utils.feiren(Tiangan.甲, Dizhi.酉, definition=object())), # type: ignore
     ('shensha_utils.tianyi wrong definition', TypeError,
      lambda: shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object())), # type: ignore
+    ('BaziSchool.from_json non-mapping', TypeError,
+     lambda: BaziSchool.from_json(['day_rollover'])), # type: ignore
+    ('BaziSchool.from_json missing field', ValueError,
+     lambda: BaziSchool.from_json({})),
+    ('BaziSchool.from_json non-str value', TypeError,
+     lambda: BaziSchool.from_json({**school_json, 'day_rollover': 0})),
+    ('BaziSchool.from_json unknown member name', ValueError,
+     lambda: BaziSchool.from_json({**school_json, 'day_rollover': 'NOT_A_MEMBER'})),
     ('BaziSchool wrong Shensha anchor profile', TypeError,
      lambda: BaziSchool(shensha_anchor_profile=object())), # type: ignore
     ('BaziSchool wrong Jinyu anchor', TypeError,

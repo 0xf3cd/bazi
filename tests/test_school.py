@@ -361,20 +361,7 @@ def test_json_roundtrip_default_school() -> None:
                   precision=j['precision'],
                   backend=j['backend'],
                   dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool(
-                    day_rollover=DayRollover[j['school']['day_rollover']],
-                    hongyan_key=KeyStem[j['school']['hongyan_key']],
-                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
-                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
-                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
-                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
-                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
-                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
-                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
-                    jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
-                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
-                    zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
-                  ),
+                  school=BaziSchool.from_json(j['school']),
                 ))
   )
   assert rebuilt.json == j
@@ -420,22 +407,62 @@ def test_json_roundtrip_non_default_school() -> None:
                   precision=j['precision'],
                   backend=j['backend'],
                   dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool(
-                    day_rollover=DayRollover[j['school']['day_rollover']],
-                    hongyan_key=KeyStem[j['school']['hongyan_key']],
-                    yangren_def=ShenshaRules.YangrenDef[j['school']['yangren_def']],
-                    anhe_def=DizhiRules.AnheDef[j['school']['anhe_def']],
-                    xing_def=DizhiRules.XingDef[j['school']['xing_def']],
-                    gong_def=DizhiRules.GongDef[j['school']['gong_def']],
-                    tianyi_anchor=TianyiAnchor[j['school']['tianyi_anchor']],
-                    tianyi_def=ShenshaRules.TianyiDef[j['school']['tianyi_def']],
-                    shensha_anchor_profile=ShenshaAnchorProfile[j['school']['shensha_anchor_profile']],
-                    jinyu_anchor=JinyuAnchor[j['school']['jinyu_anchor']],
-                    feiren_def=ShenshaRules.FeirenDef[j['school']['feiren_def']],
-                    zaisha_anchor=ZaishaAnchor[j['school']['zaisha_anchor']],
-                  ),
+                  school=BaziSchool.from_json(j['school']),
                 ))
   )
   assert rebuilt.json == j
   assert rebuilt.bazi == chart.bazi
   assert rebuilt.bazi.config.school == school
+
+
+def test_from_json_roundtrips_a_non_default_profile() -> None:
+  # `from_json` is the inverse of the JSON the chart writes: a profile whose every field
+  # takes a non-default value must come back identical, so no field can be dropped or
+  # silently defaulted (issue #172).
+  # 每个字段都取非默认值：往返必须逐项还原，不许漏读或静默取默认。
+  school: BaziSchool = BaziSchool(
+    day_rollover=DayRollover.ZIZHENG,
+    hongyan_key=KeyStem.YEAR_MASTER,
+    yangren_def=ShenshaRules.YangrenDef.DIWANG,
+    anhe_def=DizhiRules.AnheDef.MANGPAI,
+    xing_def=DizhiRules.XingDef.STRICT,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_def=ShenshaRules.TianyiDef.YINGUI,
+    shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
+    jinyu_anchor=JinyuAnchor.YEAR_AND_DAY,
+    feiren_def=ShenshaRules.FeirenDef.DIWANG,
+    zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY,
+  )
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
+                                           BaziConfig(school=school)))
+  assert BaziSchool.from_json(chart.json['school']) == school
+
+  default_chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  assert BaziSchool.from_json(default_chart.json['school']) == DEFAULT_SCHOOL
+
+  # Keys naming no field are ignored -- the reader takes the fields it declares.
+  extra: dict[str, object] = dict(chart.json['school'])
+  extra['not_a_school_field'] = 'WHATEVER'
+  assert BaziSchool.from_json(extra) == school
+
+
+def test_from_json_takes_the_profile_whole() -> None:
+  # Mechanical binding: dropping any one field, or spelling any one member wrong, is
+  # rejected -- a partial profile never silently falls back to defaults (issue #172).
+  # 机械绑定：少任何一个字段、写错任何一个成员名都要被拒，残缺档案不许静默取默认。
+  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
+  serialized: dict[str, object] = dict(chart.json['school'])
+
+  for f in dataclasses.fields(BaziSchool):
+    with pytest.raises(ValueError):
+      BaziSchool.from_json({k: v for k, v in serialized.items() if k != f.name})
+    with pytest.raises(ValueError):
+      BaziSchool.from_json({**serialized, f.name: 'NOT_A_MEMBER'})
+    with pytest.raises(TypeError):
+      BaziSchool.from_json({**serialized, f.name: 0})
+
+
+def test_from_json_rejects_a_non_mapping() -> None:
+  with pytest.raises(TypeError):
+    BaziSchool.from_json(['day_rollover']) # type: ignore

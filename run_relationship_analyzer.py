@@ -1,36 +1,26 @@
 #!/usr/bin/env python3
 
+from typing import cast
+from collections.abc import Mapping
+
 from run_demo import get_basic_info, colored_str
 
 from src.bazi_chart import BaziChart
 from src.defines import Dizhi
 from src.transit_chart import TransitChart
 from src.transits import TransitKind
-from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis
+from src.analyzer.relationship import (
+  RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
+)
 
 
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
-  # TypedDict access needs literal keys under mypy, so the table pairs labels
-  # with already-fetched fields instead of looping over key strings.
-  return (
-    ('桃花', shensha['taohua']),
-    ('红鸾', shensha['hongluan']),
-    ('红艳', shensha['hongyan']),
-    ('天喜', shensha['tianxi']),
-    ('驿马', shensha['yima']),
-    ('华盖', shensha['huagai']),
-    ('羊刃', shensha['yangren']),
-    ('飞刃', shensha['feiren']),
-    ('天乙贵人', shensha['tianyi']),
-    ('将星', shensha['jiangxing']),
-    ('灾煞', shensha['zaisha']),
-    ('劫煞', shensha['jiesha']),
-    ('亡神', shensha['wangshen']),
-    ('孤辰', shensha['guchen']),
-    ('寡宿', shensha['guasu']),
-    ('禄神', shensha['lushen']),
-    ('金舆', shensha['jinyu']),
-  )
+  # TypedDict access needs literal keys under mypy, so the analysis is read as a plain
+  # mapping and each label picks up its own key -- `SHENSHA_LABELS` is the roster, in the
+  # order the registry declares. (An `AtBirthShenshaAnalysis` also carries the two
+  # whole-pillar entries; they are not in the roster, so they are never read here.)
+  dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)
+  return tuple((label, dizhis[name]) for name, label in SHENSHA_LABELS.items())
 
 
 def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:

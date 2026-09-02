@@ -5,8 +5,9 @@ import functools
 import itertools
 
 from calendar import monthrange
+from dataclasses import fields
 from datetime import datetime, timedelta
-from typing import Final, TypedDict
+from typing import Final, TypedDict, cast
 from collections.abc import Generator, Sequence
 
 from .data_types import (
@@ -95,14 +96,18 @@ class BaziJson:
 
   class School(TypedDict):
     '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
-    profile (流派档案), serialized as the member name of each school reading.
-    流派档案：每项流派看法各存其枚举成员名。'''
+    profile (流派档案), serialized as the member name of each school reading. The keys are
+    `BaziSchool`'s fields, listed in the order the dataclass declares them -- that is where
+    both the serialization and `BaziSchool.from_json` derive from; this declaration is the
+    contract they must satisfy.
+    流派档案：每项流派看法各存其枚举成员名。键即 `BaziSchool` 的字段，按 dataclass 的声明序
+    排列——序列化与 `BaziSchool.from_json` 都由那里推导，本声明是它们要满足的契约。'''
     day_rollover: str
     hongyan_key: str
-    yangren_def: str
     anhe_def: str
     xing_def: str
     gong_def: str
+    yangren_def: str
     tianyi_anchor: str
     tianyi_def: str
     shensha_anchor_profile: str
@@ -535,6 +540,17 @@ class BaziChart:
       },
     }
 
+    # The school profile serializes by field: each knob stores its member name under its
+    # own field name, which is exactly what `BaziSchool.from_json` reads back -- one roster,
+    # written in the dataclass. `BaziJson.School` stays the declared contract, and
+    # `test_every_school_field_reaches_json` keeps its keys equal to the fields.
+    # 流派档案按字段序列化：每个旋钮以字段名存成员名，正是 `BaziSchool.from_json` 的读法——
+    # 名册只有一份，写在 dataclass 里。
+    school: BaziJson.School = cast(BaziJson.School, {
+      knob.name: getattr(self._bazi.config.school, knob.name).name
+      for knob in fields(self._bazi.config.school)
+    })
+
     f = BaziJson.gen_fourpillars
     return {
       'birth_time': self._bazi.solar_datetime.isoformat(),
@@ -542,20 +558,7 @@ class BaziChart:
       'precision': str(self._bazi.config.precision),
       'backend': str(self._bazi.config.backend),
       'dayun_year_rule': str(self._bazi.config.dayun_year_rule),
-      'school': {
-        'day_rollover': self._bazi.config.school.day_rollover.name,
-        'hongyan_key': self._bazi.config.school.hongyan_key.name,
-        'yangren_def': self._bazi.config.school.yangren_def.name,
-        'anhe_def': self._bazi.config.school.anhe_def.name,
-        'xing_def': self._bazi.config.school.xing_def.name,
-        'gong_def': self._bazi.config.school.gong_def.name,
-        'tianyi_anchor': self._bazi.config.school.tianyi_anchor.name,
-        'tianyi_def': self._bazi.config.school.tianyi_def.name,
-        'shensha_anchor_profile': self._bazi.config.school.shensha_anchor_profile.name,
-        'jinyu_anchor': self._bazi.config.school.jinyu_anchor.name,
-        'feiren_def': self._bazi.config.school.feiren_def.name,
-        'zaisha_anchor': self._bazi.config.school.zaisha_anchor.name,
-      },
+      'school': school,
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
