@@ -1,9 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 '''The home of the chart-level configuration: `BaziConfig` (computation knobs plus the
-school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` / `KeyStem` /
-`TianyiAnchor` / `JinyuAnchor` / `ShenshaAnchorProfile`),
-and option enums (`BaziPrecision` / `DayunYearRule`).'''
+school profile), the school-divergence declarations (`BaziSchool` / `DayRollover` /
+`Anchor`), and option enums (`BaziPrecision` / `DayunYearRule`).'''
 
 from enum import Enum
 from dataclasses import dataclass, fields
@@ -11,7 +10,7 @@ from typing import Any, Final, cast
 from collections.abc import Mapping
 
 from .calendar import CalendarBackend
-from .common import check_declared_types
+from .common import check_declared_types, frozendict
 from .rules import DizhiRules, ShenshaRules
 
 
@@ -140,132 +139,77 @@ class DayRollover(Enum):
   ZIZHENG   = 1
 
 
-class KeyStem(Enum):
+class Anchor(Enum):
   '''
-  The Tiangan a 神煞 lookup keys on, where schools disagree (查法锚干).
-  神煞查法所锚的天干（流派分歧处）。
+  The pillar(s) a Shensha lookup keys on, where schools disagree (查法锚柱).
+  神煞查法所锚的柱位（流派分歧处）。
 
-  - DAY_MASTER: key on the Day Master (日干 / 日主) -- the 《三命通会》 reading, and the
-    default this library has always used for 红艳.
-    以日干为锚——《三命通会》口径，本库红艳查法的既有默认。
-  - YEAR_MASTER: key on the Year Tiangan (年干).
-    以年干为锚。
+  - YEAR: key on the year pillar.
+    以年柱为锚。
+  - DAY: key on the day pillar.
+    以日柱为锚。
+  - YEAR_AND_DAY: key on both, each pillar supplying its own lookup.
+    年、日两柱分别为锚，各查一遍。
 
-  Note: this knob is consumed at evaluation time by the 红艳 lookup in relationship analysis
-  (`analyzer/relationship.py`); the four pillars never follow it. It also feeds eq / JSON as
-  part of `BaziSchool`. 本旋钮由红艳查法在评估期消费；四柱不随它动。它也随 `BaziSchool`
-  进相等性 / JSON。
+  One knob shape serves every anchored Shensha. A member says only WHICH pillar supplies
+  the key; whether the key is that pillar's Tiangan or its Dizhi belongs to the Shensha
+  itself and is declared in the analyzer's registry. A Tiangan key inspects all four
+  branches; a Dizhi key inspects the other three, so a branch never matches itself.
+  一种旋钮形状管全部带锚神煞：成员只说 key 出自哪一柱；key 取该柱天干还是地支属于神煞自身，
+  由分析层注册表声明。干锚查四支，支锚查其余三支——地支不自查。
 
-  No change should be made to the existing definitions. Only add new definitions.
-  '''
-  DAY_MASTER  = 0
-  YEAR_MASTER = 1
+  Which members a knob may take is not free: `_ANCHOR_CHOICES` pins the sourced subset per
+  field and `BaziSchool` rejects anything outside it. Each subset's provenance is written
+  on its line there.
+  旋钮能取哪些成员并不自由：`_ANCHOR_CHOICES` 按字段钉死有出处的子集，越界即拒；各子集的
+  出处逐行注在那张表上。
 
-
-class TianyiAnchor(Enum):
-  '''The anchor stem(s) used to look up TIANYI GUIREN (天乙贵人).
-  查询天乙贵人所用的锚干。
-
-  - DAY_MASTER: use the Day Master only; 袁树珊《命理探源》 says「以日为主」.
-    只查日干。
-  - YEAR_MASTER: use the year Tiangan only, as in the year-based reading.
-    只查年干。
-  - YEAR_AND_DAY: inspect both year and day Tiangans, the modern mainstream reading
-    used by 问真 and 高人. This is the default.
-    年干、日干兼查；现代通行默认口径。
-
-  This enum is separate from `KeyStem` because 红艳 has no year-and-day reading.
-  本枚举不复用 `KeyStem`，因为红艳没有年日兼查口径。
-
-  The profile is consumed at evaluation time; it never changes the four pillars.
-  The chart declares it via `BaziSchool.tianyi_anchor`; it feeds equality, hashing,
-  and JSON as part of the school profile.
-  本配置仅在神煞评估期消费，不改变四柱；由
-  `BaziSchool.tianyi_anchor` 按盘声明，并随流派档案进相等性、哈希与 JSON。
-
-  Sources / 出处:
-  - 《命理探源》: https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
-  - 问真: https://book.taiyi.me/命/神煞大全
-  - 高人: https://github.com/gaorenyes/gaorenyes.github.io
-
-  No change should be made to the existing definitions. Only add new definitions.
-  '''
-  DAY_MASTER   = 0
-  YEAR_MASTER  = 1
-  YEAR_AND_DAY = 2
-
-
-class JinyuAnchor(Enum):
-  '''The anchor stem(s) used to look up JINYU (金舆).
-  查询金舆所用的锚干。
-
-  - DAY_MASTER: use the Day Master only, following Yuan Shushan's 《命理探源》. This is
-    the default.
-    只查日干；从袁树珊《命理探源》。这是默认口径。
-  - YEAR_AND_DAY: inspect both year and day Tiangans, following 问真.
-    年干、日干兼查；从问真。
-
-  Sources / 出处:
-  - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
-  - 问真: https://book.taiyi.me/命/神煞大全
-
-  No change should be made to the existing definitions. Only add new definitions.
-  '''
-  DAY_MASTER   = 0
-  YEAR_AND_DAY = 1
-
-
-class ZaishaAnchor(Enum):
-  '''The anchor branch(es) used to look up ZAISHA (灾煞).
-  查询灾煞所用的锚支。
-
-  - YEAR: use the birth-year branch and inspect the month, day, and hour branches,
-    following 问真. This is the default.
-    以出生年支查月、日、时支；从问真。这是默认口径。
-  - YEAR_AND_DAY: use both the year and day branches; each inspects the remaining three
-    branches, following 高人.
-    年支、日支分别查其余三支；从高人。
-
-  Sources / 出处:
-  - 问真: https://book.taiyi.me/命/神煞大全#灾煞
-  - 高人: https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439
+  Anchors are consumed at evaluation time and never change the four pillars. They feed
+  equality / hashing / JSON as part of `BaziSchool`.
+  锚只在神煞评估期消费，不改变四柱；随 `BaziSchool` 进相等性、哈希与 JSON。
 
   No change should be made to the existing definitions. Only add new definitions.
   '''
   YEAR         = 0
-  YEAR_AND_DAY = 1
+  DAY          = 1
+  YEAR_AND_DAY = 2
 
 
-class ShenshaAnchorProfile(Enum):
-  '''The source profile governing the anchor branches of YIMA, HUAGAI, JIANGXING,
-  JIESHA, and WANGSHEN. 驿马、华盖、将星、劫煞、亡神共用的锚支出处 profile。
-
-  - WENZHEN: anchor on both the year and day branches and inspect the remaining branches;
-    the modern 问真 reading and the default this library has always used.
-    年支、日支分别查余支；问真现代口径，也是本库既有默认。
-  - MINGLI_TANYUAN: anchor on the day branch only, following Yuan Shushan's
-    《命理探源》 for all five. At birth, inspect the year, month, and hour branches.
-    五项均从袁树珊《命理探源》取日支为锚；原局查年、月、时支。
-
-  Taohua (桃花) deliberately does not follow this profile: its day-only reading in
-  《命理探源》 also requires a matching Nayin and limits targets to the month and hour.
-  Changing only its anchor would create a rule the source does not state.
-  桃花不随本配置：《命理探源》的日支桃花另有纳音条件，且只查月、时；不能只切锚而沿用现表。
-
-  The profile affects only Shensha evaluation. It never changes the four pillars.
-  本配置仅在神煞评估期消费，不改变四柱。
-
-  Sources / 出处:
-  - 《命理探源·卷三强弱》, pp. 64–71 / 第 64–71 页:
-    https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-  - Searchable reference / 可检索参考:
-    https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
-  - Wenzhen / 问真: https://book.taiyi.me/命/神煞大全
-
-  No change should be made to the existing definitions. Only add new definitions.
-  '''
-  WENZHEN        = 0
-  MINGLI_TANYUAN = 1
+'''The sourced anchor choices of each anchor knob: the `Anchor` members some school is
+actually recorded as reading that Shensha by. Anything outside the subset is no school's
+reading, so `BaziSchool` rejects it. This table is where an anchor's 出处 lives, one line
+each; a new anchor field is registered here together with its own.
+每个锚旋钮有出处的取值：确有流派如此读该神煞的 `Anchor` 成员。子集之外的取值不是任何流派的
+看法，`BaziSchool` 拒收。锚的出处就住在这张表里，逐行一条；新增锚字段连同出处一并登记。'''
+_ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
+  # 红艳: 《三命通会》 keys on the Day Master, and both 问真 and 高人 record day-only
+  # (https://book.taiyi.me/命/神煞大全 ; the 高人 README's 「日干查地支」 section).
+  # YEAR has been a member since issue #69 but its 出处 is still missing -- no primary
+  # reading was found for it, only aggregator copy. YEAR_AND_DAY is absent on purpose:
+  # no source reads 红艳 by both stems.
+  'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
+  # 天乙贵人: DAY is 子平法 -- 袁树珊《命理探源》 「以日为主」. YEAR is the Tang-Song 禄命法
+  # reading, which keys the 贵神 on the year pillar's Tiangan (《五行精纪》, annotated at
+  # https://www.suanzhun.net/book/2728.html). YEAR_AND_DAY is the modern mainstream of
+  # 问真 and 高人, and this library's default.
+  'tianyi_anchor':    frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
+  # 金舆: DAY follows 袁树珊《命理探源》
+  # (https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb); YEAR_AND_DAY follows 问真
+  # (https://book.taiyi.me/命/神煞大全).
+  'jinyu_anchor':     frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  # 灾煞: YEAR follows 问真 (https://book.taiyi.me/命/神煞大全#灾煞); YEAR_AND_DAY follows 高人
+  # (https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439).
+  'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
+  # 驿马、华盖、将星、劫煞、亡神 share one pair of readings: YEAR_AND_DAY is 问真's modern
+  # reading (https://book.taiyi.me/命/神煞大全) and this library's default, DAY is
+  # 袁树珊《命理探源》 for all five -- see `BaziSchool.mingli_tanyuan`, the profile that
+  # writes that book's readings out.
+  'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  'huagai_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  'jiangxing_anchor': frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  'jiesha_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  'wangshen_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+})
 
 
 @dataclass(frozen=True)
@@ -294,22 +238,70 @@ class BaziSchool:
   默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
-  hongyan_key:   KeyStem     = KeyStem.DAY_MASTER
+  # Anchor knobs: each field's sourced subset and its 出处 live in `_ANCHOR_CHOICES`.
+  hongyan_anchor: Anchor = Anchor.DAY
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
   anhe_def:      DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
   xing_def:      DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
   gong_def:      DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
-  tianyi_anchor: TianyiAnchor = TianyiAnchor.YEAR_AND_DAY
+  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  shensha_anchor_profile: ShenshaAnchorProfile = ShenshaAnchorProfile.WENZHEN
-  jinyu_anchor: JinyuAnchor = JinyuAnchor.DAY_MASTER
+  yima_anchor:      Anchor = Anchor.YEAR_AND_DAY
+  huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY
+  jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY
+  jinyu_anchor: Anchor = Anchor.DAY
   feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
-  zaisha_anchor: ZaishaAnchor = ZaishaAnchor.YEAR
+  zaisha_anchor: Anchor = Anchor.YEAR
 
   def __post_init__(self) -> None:
     check_declared_types(self)
+    for name, allowed in _ANCHOR_CHOICES.items():
+      anchor = getattr(self, name)
+      if anchor not in allowed:
+        # An unsourced anchor is not a school reading; see `_ANCHOR_CHOICES`.
+        raise ValueError(f'No source reads {name} as {anchor}; sourced: {sorted(a.name for a in allowed)}')
+
+  @classmethod
+  def mingli_tanyuan(cls) -> 'BaziSchool':
+    '''
+    The profile of 袁树珊《命理探源》: every anchor this library has a 《命理探源》 reading
+    for, set to that reading. 驿马、华盖、将星、劫煞、亡神 key on the day branch alone
+    (at birth they inspect the year, month, and hour branches), and 天乙贵人 keys on the
+    Day Master (「以日为主」); 金舆's day-only reading is already the default.
+    《命理探源》 口径档案：本库有该书读法的锚一律取该书读法。驿马、华盖、将星、劫煞、亡神
+    以日支为锚（原局查年、月、时支），天乙贵人以日干为锚（「以日为主」）；金舆的日干读法
+    本就是默认。
+
+    Note:
+    - Knobs the book does not speak to keep their defaults -- 红艳、灾煞, the
+      rule-definition enums, and 日柱分界 are untouched. The preset declares one source's
+      readings, not a whole worldview.
+      该书未言及的旋钮保持默认——红艳、灾煞、各规则定义枚举与日柱分界都不动。预设声明的是
+      一份出处的读法，不是一整套世界观。
+
+    Sources / 出处:
+    - 《命理探源·卷三强弱》, pp. 64-71 / 第 64-71 页:
+      https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
+    - Searchable reference / 可检索参考:
+      https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+
+    Return: (BaziSchool) The frozen profile.
+    '''
+
+    return cls(
+      hongyan_anchor=Anchor.DAY,
+      tianyi_anchor=Anchor.DAY,
+      yima_anchor=Anchor.DAY,
+      huagai_anchor=Anchor.DAY,
+      jiangxing_anchor=Anchor.DAY,
+      jiesha_anchor=Anchor.DAY,
+      wangshen_anchor=Anchor.DAY,
+      jinyu_anchor=Anchor.DAY,
+    )
 
   @classmethod
   def from_json(cls, d: Mapping[str, object]) -> 'BaziSchool':
@@ -328,12 +320,14 @@ class BaziSchool:
 
     Note:
     - The profile is taken whole or rejected: `d` that is no `Mapping` raises `TypeError`,
-      a missing field raises `ValueError`, a non-`str` value raises `TypeError`, and a name
-      that is no member of the field's enum raises `ValueError`. A partial dict never
+      a missing field raises `ValueError`, a non-`str` value raises `TypeError`, a name
+      that is no member of the field's enum raises `ValueError`, and an anchor outside its
+      sourced subset raises `ValueError` from the constructor. A partial dict never
       silently falls back to defaults -- a chart rebuilt from JSON is the chart the JSON
       describes.
       档案要么整份收下、要么被拒：入参不是 `Mapping` 抛 `TypeError`，缺字段抛 `ValueError`，
-      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`。残缺字典绝不静默回落默认值——
+      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`，锚超出有出处的子集则由构造函数
+      抛 `ValueError`。残缺字典绝不静默回落默认值——
       从 JSON 重建的盘就是 JSON 所述的盘。
 
     Return: (BaziSchool) The rebuilt, frozen profile.

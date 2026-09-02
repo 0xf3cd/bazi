@@ -12,7 +12,7 @@ from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from ..rules import DizhiRules
-from ..school import KeyStem, TianyiAnchor, JinyuAnchor, ZaishaAnchor, ShenshaAnchorProfile, BaziSchool
+from ..school import Anchor, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
 from ..transits import TransitSet
@@ -41,31 +41,39 @@ def find_shensha(
 
 
 @unique
-class _KeySource(Enum):
-  '''The key(s) that a Shensha is looked up by (查询神煞时所用的 key).
+class _AnchorKind(Enum):
+  """Whether a Shensha keys on its anchor pillar's Tiangan or on its Dizhi
+  (神煞以锚柱的天干还是地支为 key)."""
+  TIANGAN = auto()
+  DIZHI   = auto()
 
-  Each registry entry must derive its key source and inspected pillars from that Shensha's
-  own provenance; existing entries are not defaults for future Shenshas.
-  每个注册项的查询 key 与被查柱都须来自该神煞自身出处；既有条目不构成后续神煞的默认口径。
-  '''
-  YEAR_DIZHI        = auto() # By the year pillar's Dizhi only (只看年支).
-  YEAR_OR_DAY_DIZHI = auto() # By the year or day pillar's Dizhi (看年支或日支).
-  DAY_MASTER        = auto() # Always by the Day Master (固定以日干为锚).
-  KEY_TIANGAN       = auto() # By a key Tiangan (查法锚干): day master by default, year tiangan per school. Sole consumer today: 红艳 (see `_hongyan_anchor`).
-  ANCHOR_TIANGANS   = auto() # By one or both year/day Tiangans selected per school (see `_tianyi_anchors`).
-  JINYU_ANCHOR_TIANGANS = auto() # By the Day Master alone, or both year/day Tiangans, as selected for 金舆 (see `_jinyu_anchors`).
-  ZAISHA_ANCHOR_DIZHIS = auto() # By the year Dizhi alone, or both year/day Dizhis, as selected for 灾煞 (see `_zaisha_anchors`).
-  PROFILED_DIZHI    = auto() # By the day Dizhi alone, or both year and day Dizhis, as selected by the source profile for 驿马、华盖、将星、劫煞、亡神 (see `_profiled_shensha_anchors`).
+
+'''The pillar indices each `Anchor` selects, in four-pillar order (年、月、日、时).'''
+_ANCHOR_PILLARS: Final[frozendict[Anchor, tuple[int, ...]]] = frozendict({
+  Anchor.YEAR:         (0,),
+  Anchor.DAY:          (2,),
+  Anchor.YEAR_AND_DAY: (0, 2),
+})
+
+'''A resolver for a Shensha's `Anchor` from the chart's school, for the knobs schools disagree on.'''
+_AnchorResolver = Callable[[BaziSchool], Anchor]
 
 
 @dataclass(frozen=True)
 class _ShenshaSpec:
   '''
-  The spec of a Shensha: the predicate, key source, display label, and optional
-  school-derived definition.
-  神煞的规格：判断函数、查询 key、展示标签，以及可选的流派定义参数。
+  The spec of a Shensha: the predicate, the anchor it is looked up by, the display label,
+  and an optional school-derived definition.
+  神煞的规格：判断函数、查法锚、展示标签，以及可选的流派定义参数。
 
-  Note: the predicate's first-parameter type must match `key`. When `definition` is present, the
+  `kind` says whether the key is the anchor pillar's Tiangan or its Dizhi; `anchor` says
+  which pillar(s) supply it -- a fixed `Anchor` when no school disagrees, or a resolver
+  reading the knob the school declares. Each entry must take both from that Shensha's own
+  provenance; existing entries are not defaults for future ones (issue #167).
+  `kind` 说 key 取锚柱的天干还是地支，`anchor` 说锚出自哪一柱——无流派分歧时是固定 `Anchor`，
+  有分歧时是读盘上旋钮的解析函数。两者都须来自该神煞自身出处；既有条目不构成后续神煞的默认口径。
+
+  Note: the predicate's first-parameter type must match `kind`. When `definition` is present, the
   predicate must accept its result through a keyword-only `definition` argument. Each predicate
   checks this contract at runtime; the registry's type does not express it.
   `label` is the Shensha's display name, published in `SHENSHA_LABELS` for the callers that
@@ -73,7 +81,8 @@ class _ShenshaSpec:
   `label` 是该神煞的展示名，经 `SHENSHA_LABELS` 供渲染方使用，不参与查法。
   '''
   predicate:  Callable[..., bool]
-  key:        _KeySource
+  kind:       _AnchorKind
+  anchor:     Anchor | _AnchorResolver
   label:      str
   definition: _DefinitionResolver | None = None
 
@@ -81,38 +90,45 @@ class _ShenshaSpec:
 '''The registry of the Dizhi-valued Shenshas supported by relationship analysis
 (亲密关系分析支持的地支结果神煞注册表).'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
-  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _KeySource.YEAR_OR_DAY_DIZHI,     '桃花'),
-  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _KeySource.YEAR_DIZHI,            '红鸾'),
-  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _KeySource.KEY_TIANGAN,           '红艳'),
-  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _KeySource.YEAR_DIZHI,            '天喜'),
-  'yima'     : _ShenshaSpec(shensha_utils.yima,      _KeySource.PROFILED_DIZHI,        '驿马'),
-  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _KeySource.PROFILED_DIZHI,        '华盖'),
+  # 桃花 deliberately keeps a fixed anchor while 驿马、华盖、将星、劫煞、亡神 take a knob:
+  # its day-branch reading in 《命理探源》 also requires a matching 纳音 and inspects only
+  # the 月 and 时 branches, so offering a day anchor alone would state a rule no source does.
+  # 桃花不设旋钮：《命理探源》的日支桃花另有纳音条件且只查月、时，只切锚会造出出处未言的规则。
+  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _AnchorKind.DIZHI,   Anchor.YEAR_AND_DAY, '桃花'),
+  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _AnchorKind.DIZHI,   Anchor.YEAR, '红鸾'),
+  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _AnchorKind.TIANGAN, lambda school: school.hongyan_anchor, '红艳'),
+  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _AnchorKind.DIZHI,   Anchor.YEAR, '天喜'),
+  'yima'     : _ShenshaSpec(shensha_utils.yima,      _AnchorKind.DIZHI,   lambda school: school.yima_anchor, '驿马'),
+  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _AnchorKind.DIZHI,   lambda school: school.huagai_anchor, '华盖'),
   'yangren'  : _ShenshaSpec(
     shensha_utils.yangren,
-    _KeySource.DAY_MASTER,
+    _AnchorKind.TIANGAN,
+    Anchor.DAY,
     '羊刃',
     lambda school: school.yangren_def,
   ),
   'feiren'   : _ShenshaSpec(
     shensha_utils.feiren,
-    _KeySource.DAY_MASTER,
+    _AnchorKind.TIANGAN,
+    Anchor.DAY,
     '飞刃',
     lambda school: school.feiren_def,
   ),
   'tianyi'   : _ShenshaSpec(
     shensha_utils.tianyi,
-    _KeySource.ANCHOR_TIANGANS,
+    _AnchorKind.TIANGAN,
+    lambda school: school.tianyi_anchor,
     '天乙贵人',
     lambda school: school.tianyi_def,
   ),
-  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _KeySource.PROFILED_DIZHI,        '将星'),
-  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _KeySource.ZAISHA_ANCHOR_DIZHIS,  '灾煞'),
-  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _KeySource.PROFILED_DIZHI,        '劫煞'),
-  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _KeySource.PROFILED_DIZHI,        '亡神'),
-  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _KeySource.YEAR_DIZHI,            '孤辰'),
-  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _KeySource.YEAR_DIZHI,            '寡宿'),
-  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _KeySource.DAY_MASTER,            '禄神'),
-  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _KeySource.JINYU_ANCHOR_TIANGANS, '金舆'),
+  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _AnchorKind.DIZHI,   lambda school: school.jiangxing_anchor, '将星'),
+  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _AnchorKind.DIZHI,   lambda school: school.zaisha_anchor, '灾煞'),
+  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _AnchorKind.DIZHI,   lambda school: school.jiesha_anchor, '劫煞'),
+  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _AnchorKind.DIZHI,   lambda school: school.wangshen_anchor, '亡神'),
+  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _AnchorKind.DIZHI,   Anchor.YEAR, '孤辰'),
+  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _AnchorKind.DIZHI,   Anchor.YEAR, '寡宿'),
+  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _AnchorKind.TIANGAN, Anchor.DAY, '禄神'),
+  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _AnchorKind.TIANGAN, lambda school: school.jinyu_anchor, '金舆'),
 })
 
 
@@ -125,99 +141,14 @@ SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
 })
 
 
-def _hongyan_anchor(bazi: Bazi) -> Tiangan:
-  '''The anchor Tiangan a HONGYAN (红艳) lookup keys on (查法锚干, issue #69): the registry
-  records the static default (`_KeySource.KEY_TIANGAN`, the 《三命通会》 reading), and the
-  chart's school profile overrides it at evaluation time -- `KeyStem.YEAR_MASTER` keys on
-  the year tiangan instead. 红艳查法的锚干：注册表记静态默认（查日干），评估期由盘的
-  `BaziSchool.hongyan_key` 覆盖（可查年干）。'''
-  key_stem: Final[KeyStem] = bazi.config.school.hongyan_key
-  if key_stem is KeyStem.DAY_MASTER:
-    return bazi.day_master
-  elif key_stem is KeyStem.YEAR_MASTER:
-    return bazi.year_pillar.tiangan
-  else:
-    # Invariant: every `KeyStem` member must be wired up above. Reaching here means we
-    # added a member but forgot to wire it -- not something users can trigger.
-    # `raise` instead of `assert` so the guard survives `python -O`.
-    raise AssertionError(f'`KeyStem` not wired up in `_hongyan_anchor`: {key_stem}') # pragma: no cover # Unreachable invariant guard.
-
-
-def _tianyi_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
-  '''Resolve the TIANYI GUIREN (天乙贵人) anchors selected by
-  `BaziSchool.tianyi_anchor`; `YEAR_AND_DAY` returns both stems.
-  按 `BaziSchool.tianyi_anchor` 解析天乙贵人锚干；年日兼查时同时返回两干。'''
-  anchor: Final[TianyiAnchor] = bazi.config.school.tianyi_anchor
-  if anchor is TianyiAnchor.DAY_MASTER:
-    return (bazi.day_master,)
-  elif anchor is TianyiAnchor.YEAR_MASTER:
-    return (bazi.year_pillar.tiangan,)
-  elif anchor is TianyiAnchor.YEAR_AND_DAY:
-    return (bazi.year_pillar.tiangan, bazi.day_master)
-  else:
-    raise AssertionError(f'`TianyiAnchor` not wired up in `_tianyi_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
-
-
-def _jinyu_anchors(bazi: Bazi) -> tuple[Tiangan, ...]:
-  '''Resolve the JINYU (金舆) anchors selected by `BaziSchool.jinyu_anchor`.
-  按 `BaziSchool.jinyu_anchor` 解析金舆锚干。'''
-  anchor: Final[JinyuAnchor] = bazi.config.school.jinyu_anchor
-  if anchor is JinyuAnchor.DAY_MASTER:
-    return (bazi.day_master,)
-  elif anchor is JinyuAnchor.YEAR_AND_DAY:
-    return (bazi.year_pillar.tiangan, bazi.day_master)
-  else:
-    raise AssertionError(f'`JinyuAnchor` not wired up in `_jinyu_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
-
-
-def _zaisha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
-  '''Resolve the ZAISHA (灾煞) anchors selected by `BaziSchool.zaisha_anchor`.
-  按 `BaziSchool.zaisha_anchor` 解析灾煞锚支。'''
-  anchor: Final[ZaishaAnchor] = bazi.config.school.zaisha_anchor
-  if anchor is ZaishaAnchor.YEAR:
-    return (bazi.year_pillar.dizhi,)
-  elif anchor is ZaishaAnchor.YEAR_AND_DAY:
-    return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
-  else:
-    raise AssertionError(f'`ZaishaAnchor` not wired up in `_zaisha_anchors`: {anchor}') # pragma: no cover # Unreachable invariant guard.
-
-
-def _profiled_shensha_anchors(bazi: Bazi) -> tuple[Dizhi, ...]:
-  '''Resolve the YIMA, HUAGAI, JIANGXING, JIESHA, and WANGSHEN anchors selected by
-  `BaziSchool.shensha_anchor_profile`.
-  按 `BaziSchool.shensha_anchor_profile` 解析驿马、华盖、将星、劫煞、亡神锚支。'''
-  profile: Final[ShenshaAnchorProfile] = bazi.config.school.shensha_anchor_profile
-  if profile is ShenshaAnchorProfile.WENZHEN:
-    return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
-  elif profile is ShenshaAnchorProfile.MINGLI_TANYUAN:
-    return (bazi.day_pillar.dizhi,)
-  else:
-    raise AssertionError(f'`ShenshaAnchorProfile` not wired up in `_profiled_shensha_anchors`: {profile}') # pragma: no cover # Unreachable invariant guard.
-
-
-def _shensha_keys(key_source: _KeySource, bazi: Bazi) -> tuple[Tiangan | Dizhi, ...]:
-  '''Resolve a Shensha's lookup keys / 解析神煞查询 key。'''
-  if key_source is _KeySource.YEAR_DIZHI:
-    return (bazi.year_pillar.dizhi,)
-  elif key_source is _KeySource.YEAR_OR_DAY_DIZHI:
-    return (bazi.year_pillar.dizhi, bazi.day_pillar.dizhi)
-  elif key_source is _KeySource.DAY_MASTER:
-    return (bazi.day_master,)
-  elif key_source is _KeySource.KEY_TIANGAN:
-    return (_hongyan_anchor(bazi),)
-  elif key_source is _KeySource.ANCHOR_TIANGANS:
-    return _tianyi_anchors(bazi)
-  elif key_source is _KeySource.JINYU_ANCHOR_TIANGANS:
-    return _jinyu_anchors(bazi)
-  elif key_source is _KeySource.ZAISHA_ANCHOR_DIZHIS:
-    return _zaisha_anchors(bazi)
-  elif key_source is _KeySource.PROFILED_DIZHI:
-    return _profiled_shensha_anchors(bazi)
-  else:
-    # Invariant: every `_KeySource` member must be wired up above. Reaching here means we
-    # added a member but forgot to wire it -- not something users can trigger.
-    # `raise` instead of `assert` so the guard survives `python -O`.
-    raise AssertionError(f'`_KeySource` not wired up in `_shensha_keys`: {key_source}') # pragma: no cover # Unreachable invariant guard.
+def _anchor_keys(spec: _ShenshaSpec, bazi: Bazi) -> tuple[tuple[int, Tiangan | Dizhi], ...]:
+  '''The (pillar index, key) pairs a Shensha is looked up by on this chart, in
+  four-pillar order. 该神煞在本盘上的查询 key 及其所属柱位（按年、月、日、时序）。'''
+  anchor = spec.anchor if isinstance(spec.anchor, Anchor) else spec.anchor(bazi.config.school)
+  pillars = bazi.pillars
+  if spec.kind is _AnchorKind.TIANGAN:
+    return tuple((index, pillars[index].tiangan) for index in _ANCHOR_PILLARS[anchor])
+  return tuple((index, pillars[index].dizhi) for index in _ANCHOR_PILLARS[anchor])
 
 
 def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., bool]:
@@ -229,42 +160,31 @@ def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., 
 
 
 def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
-  '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。'''
-  y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
-  keys = _shensha_keys(spec.key, bazi)
+  '''Evaluate a Shensha against the at-birth Bazi / 在原局上评估某个神煞。
 
-  args: tuple[_ArgsType, ...]
-  if spec.key is _KeySource.YEAR_DIZHI:
-    args = ((keys, (m_dz, d_dz, h_dz)),)
-  elif spec.key is _KeySource.ZAISHA_ANCHOR_DIZHIS:
-    if bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR:
-      year_key, = keys
-      args = (((year_key,), (m_dz, d_dz, h_dz)),)
-    else:
-      assert bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY
-      year_key, day_key = keys
-      args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
-  elif spec.key is _KeySource.YEAR_OR_DAY_DIZHI or (
-    spec.key is _KeySource.PROFILED_DIZHI
-    and bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
-  ):
-    year_key, day_key = keys
-    args = (((year_key,), (m_dz, d_dz, h_dz)), ((day_key,), (y_dz, m_dz, h_dz)))
-  elif spec.key is _KeySource.PROFILED_DIZHI:
-    assert bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.MINGLI_TANYUAN
-    day_key, = keys
-    args = (((day_key,), (y_dz, m_dz, h_dz)),)
-  else:
-    args = ((keys, (y_dz, m_dz, d_dz, h_dz)),)
-
+  One rule serves every anchor: a Tiangan key inspects all four branches, a Dizhi key
+  inspects the other three -- a branch never matches itself -- and a two-pillar anchor
+  runs that rule once per anchored pillar.
+  一条规则管所有锚：干锚查四支，支锚查其余三支（地支不自查），两柱锚就按柱各跑一遍。
+  '''
+  dizhis = bazi.four_dizhis
+  args: tuple[_ArgsType, ...] = tuple(
+    ((key,), dizhis if spec.kind is _AnchorKind.TIANGAN
+             else tuple(dz for i, dz in enumerate(dizhis) if i != index))
+    for index, key in _anchor_keys(spec, bazi)
+  )
   return frozenset(find_shensha(_shensha_predicate(spec, bazi.config.school), *args))
 
 
 def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizhi]) -> frozenset[Dizhi]:
-  '''Evaluate a Shensha against the transit Dizhis / 在流运地支上评估某个神煞。'''
+  '''Evaluate a Shensha against the transit Dizhis / 在流运地支上评估某个神煞。
+
+  Transit branches are never the anchor's own pillar, so every key inspects all of them.
+  流运地支不可能是锚柱自身，故每个 key 都查全部流运支。
+  '''
   return frozenset(find_shensha(
     _shensha_predicate(spec, bazi.config.school),
-    (_shensha_keys(spec.key, bazi), transit_dizhis),
+    (tuple(key for _, key in _anchor_keys(spec, bazi)), transit_dizhis),
   ))
 
 

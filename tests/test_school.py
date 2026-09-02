@@ -14,8 +14,8 @@ from src.bazi_chart import BaziChart, BaziJson
 from src.rules import DizhiRules, ShenshaRules
 from src.utils import dizhi_utils, shensha_utils
 from src.school import (
-  BaziPrecision, DayunYearRule, DayRollover, KeyStem, TianyiAnchor, JinyuAnchor, ZaishaAnchor,
-  ShenshaAnchorProfile, BaziSchool, BaziConfig, DEFAULT_SCHOOL, DEFAULT_CONFIG,
+  BaziPrecision, DayunYearRule, DayRollover, Anchor, BaziSchool, BaziConfig,
+  DEFAULT_SCHOOL, DEFAULT_CONFIG, _ANCHOR_CHOICES,
 )
 
 
@@ -38,26 +38,10 @@ def test_school_enums_basic() -> None:
   assert DayRollover.WAN_ZISHI.value == 0 # 晚子时, the default.
   assert DayRollover.ZIZHENG.value == 1   # 子正.
 
-  assert len(KeyStem) == 2
-  assert KeyStem.DAY_MASTER.value == 0  # 日干, the 《三命通会》 reading, the default.
-  assert KeyStem.YEAR_MASTER.value == 1 # 年干.
-
-  assert len(TianyiAnchor) == 3
-  assert TianyiAnchor.DAY_MASTER.value == 0  # 日干.
-  assert TianyiAnchor.YEAR_MASTER.value == 1 # 年干.
-  assert TianyiAnchor.YEAR_AND_DAY.value == 2 # 年日兼查, the default.
-
-  assert len(JinyuAnchor) == 2
-  assert JinyuAnchor.DAY_MASTER.value == 0  # 日干, the default.
-  assert JinyuAnchor.YEAR_AND_DAY.value == 1 # 年日兼查.
-
-  assert len(ZaishaAnchor) == 2
-  assert ZaishaAnchor.YEAR.value == 0         # 年支, the default.
-  assert ZaishaAnchor.YEAR_AND_DAY.value == 1 # 年日兼查.
-
-  assert len(ShenshaAnchorProfile) == 2
-  assert ShenshaAnchorProfile.WENZHEN.value == 0        # 问真年日兼查, the default.
-  assert ShenshaAnchorProfile.MINGLI_TANYUAN.value == 1 # 《命理探源》日支单锚.
+  assert len(Anchor) == 3
+  assert Anchor.YEAR.value == 0         # 年柱.
+  assert Anchor.DAY.value == 1          # 日柱.
+  assert Anchor.YEAR_AND_DAY.value == 2 # 年、日两柱各自为锚.
 
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
@@ -68,14 +52,18 @@ def test_school_enums_basic() -> None:
 
 def test_school_defaults() -> None:
   assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
-  assert BaziSchool().hongyan_key is KeyStem.DAY_MASTER
+  assert BaziSchool().hongyan_anchor is Anchor.DAY
   assert BaziSchool().yangren_def is ShenshaRules.YangrenDef.ZIPING
-  assert BaziSchool().tianyi_anchor is TianyiAnchor.YEAR_AND_DAY
+  assert BaziSchool().tianyi_anchor is Anchor.YEAR_AND_DAY
   assert BaziSchool().tianyi_def is ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  assert BaziSchool().shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
-  assert BaziSchool().jinyu_anchor is JinyuAnchor.DAY_MASTER
+  assert BaziSchool().yima_anchor is Anchor.YEAR_AND_DAY
+  assert BaziSchool().huagai_anchor is Anchor.YEAR_AND_DAY
+  assert BaziSchool().jiangxing_anchor is Anchor.YEAR_AND_DAY
+  assert BaziSchool().jiesha_anchor is Anchor.YEAR_AND_DAY
+  assert BaziSchool().wangshen_anchor is Anchor.YEAR_AND_DAY
+  assert BaziSchool().jinyu_anchor is Anchor.DAY
   assert BaziSchool().feiren_def is ShenshaRules.FeirenDef.ZIPING
-  assert BaziSchool().zaisha_anchor is ZaishaAnchor.YEAR
+  assert BaziSchool().zaisha_anchor is Anchor.YEAR
   assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
   assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
   assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
@@ -85,31 +73,39 @@ def test_school_defaults() -> None:
 def test_school_positional_arguments_remain_stable() -> None:
   school: BaziSchool = BaziSchool(
     DayRollover.ZIZHENG,
-    KeyStem.YEAR_MASTER,
+    Anchor.YEAR,
     DizhiRules.AnheDef.MANGPAI,
     DizhiRules.XingDef.STRICT,
     DizhiRules.GongDef.LU_NARROW,
     ShenshaRules.YangrenDef.DIWANG,
-    TianyiAnchor.YEAR_MASTER,
+    Anchor.YEAR,
     ShenshaRules.TianyiDef.YINGUI,
-    ShenshaAnchorProfile.MINGLI_TANYUAN,
-    JinyuAnchor.YEAR_AND_DAY,
+    Anchor.DAY,
+    Anchor.DAY,
+    Anchor.DAY,
+    Anchor.DAY,
+    Anchor.DAY,
+    Anchor.YEAR_AND_DAY,
     ShenshaRules.FeirenDef.DIWANG,
-    ZaishaAnchor.YEAR_AND_DAY,
+    Anchor.YEAR_AND_DAY,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
-    hongyan_key=KeyStem.YEAR_MASTER,
+    hongyan_anchor=Anchor.YEAR,
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
     yangren_def=ShenshaRules.YangrenDef.DIWANG,
-    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_anchor=Anchor.YEAR,
     tianyi_def=ShenshaRules.TianyiDef.YINGUI,
-    shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
-    jinyu_anchor=JinyuAnchor.YEAR_AND_DAY,
+    yima_anchor=Anchor.DAY,
+    huagai_anchor=Anchor.DAY,
+    jiangxing_anchor=Anchor.DAY,
+    jiesha_anchor=Anchor.DAY,
+    wangshen_anchor=Anchor.DAY,
+    jinyu_anchor=Anchor.YEAR_AND_DAY,
     feiren_def=ShenshaRules.FeirenDef.DIWANG,
-    zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY,
+    zaisha_anchor=Anchor.YEAR_AND_DAY,
   )
 
 
@@ -142,6 +138,66 @@ def test_every_school_field_has_a_type_gate() -> None:
       BaziSchool(**{f.name: object()}) # type: ignore
 
 
+def test_anchor_choices_bind_to_every_anchor_field() -> None:
+  # Mechanical binding: the sourced-subset table and the `Anchor`-typed fields are one set.
+  # A new anchor knob with no entry -- or an entry naming no field -- fails here, which is
+  # what keeps 出处 attached to every anchor.
+  # 机械绑定：有出处的取值表与 `Anchor` 类型字段是同一个集合；加旋钮不登记（或登记了不存在
+  # 的字段）都会在这里响——这条绑定就是「每个锚都驮着出处」的执行者。
+  anchor_fields = {f.name for f in dataclasses.fields(BaziSchool) if f.type is Anchor}
+  assert anchor_fields == set(_ANCHOR_CHOICES)
+  assert len(anchor_fields) == 9
+  # Every subset is non-empty and every member of it is a real `Anchor`.
+  for name, allowed in _ANCHOR_CHOICES.items():
+    assert allowed, name
+    assert all(isinstance(a, Anchor) for a in allowed), name
+
+
+def test_anchor_choices_are_the_only_accepted_values() -> None:
+  # Both directions: a sourced value constructs, an unsourced one raises. Without the
+  # second half a table that allowed everything would still pass (issue #69 的「未经出处
+  # 的组合拒绝」).
+  # 两个方向都测：有出处的能构造，没出处的要抛；只测前者的话，一张放行一切的表也会全绿。
+  for name, allowed in _ANCHOR_CHOICES.items():
+    for anchor in Anchor:
+      if anchor in allowed:
+        assert getattr(BaziSchool(**{name: anchor}), name) is anchor # type: ignore # Field name is data here.
+      else:
+        with pytest.raises(ValueError):
+          BaziSchool(**{name: anchor}) # type: ignore # Field name is data here.
+
+
+def test_anchor_choices_match_the_readings_they_cite() -> None:
+  # The subsets are knowledge, not defaults -- pin them as data so a silent widening
+  # (or a lost reading) shows up as a failed assertion, not as a new legal school.
+  # 子集是知识不是默认值，按数据钉死：悄悄放宽或丢掉一个读法都会在这里响。
+  assert _ANCHOR_CHOICES['hongyan_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR})
+  assert _ANCHOR_CHOICES['tianyi_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['jinyu_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['zaisha_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
+  for name in ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor'):
+    assert _ANCHOR_CHOICES[name] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}), name
+
+
+def test_mingli_tanyuan_is_the_book_profile() -> None:
+  # The preset writes out 袁树珊《命理探源》's readings: the five 支锚 Shenshas and 天乙 on
+  # the day pillar, 金舆 already there by default. Knobs the book does not speak to keep
+  # the default profile's values.
+  # 预设写出的是《命理探源》的读法：五项支锚神煞与天乙取日柱，金舆本就是默认；该书未言及的
+  # 旋钮保持默认档案的取值。
+  preset: BaziSchool = BaziSchool.mingli_tanyuan()
+  for name in ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor',
+               'wangshen_anchor', 'tianyi_anchor', 'jinyu_anchor', 'hongyan_anchor'):
+    assert getattr(preset, name) is Anchor.DAY, name
+  assert preset.zaisha_anchor is DEFAULT_SCHOOL.zaisha_anchor
+  assert preset.day_rollover is DEFAULT_SCHOOL.day_rollover
+  assert preset.yangren_def is DEFAULT_SCHOOL.yangren_def
+  assert preset.tianyi_def is DEFAULT_SCHOOL.tianyi_def
+  assert preset.feiren_def is DEFAULT_SCHOOL.feiren_def
+  assert preset != DEFAULT_SCHOOL
+  assert BaziSchool.mingli_tanyuan() == preset
+
+
 def test_every_school_field_reaches_json() -> None:
   # Mechanical binding: every `BaziSchool` field must land in JSON under its own name --
   # adding a knob without serializing it fails here (issue #69).
@@ -165,7 +221,7 @@ def test_config_and_school_are_frozen() -> None:
   with pytest.raises(FrozenInstanceError):
     config.school = BaziSchool(day_rollover=DayRollover.ZIZHENG) # type: ignore
   with pytest.raises(FrozenInstanceError):
-    DEFAULT_SCHOOL.hongyan_key = KeyStem.YEAR_MASTER # type: ignore
+    DEFAULT_SCHOOL.hongyan_anchor = Anchor.YEAR # type: ignore
 
 
 # Every alias below must resolve, case insensitively -- written out as data so the test
@@ -248,7 +304,7 @@ def test_from_values_rejection_face() -> None:
 
 
 def test_from_values_school_passthrough() -> None:
-  school: BaziSchool = BaziSchool(day_rollover=DayRollover.ZIZHENG, hongyan_key=KeyStem.YEAR_MASTER)
+  school: BaziSchool = BaziSchool(day_rollover=DayRollover.ZIZHENG, hongyan_anchor=Anchor.YEAR)
   config: BaziConfig = BaziConfig.from_values(school=school)
   assert config.school is school
   assert config.precision is BaziPrecision.DAY # Untouched knobs keep their defaults.
@@ -325,14 +381,18 @@ def test_eq_hash_include_school() -> None:
 
   # The evaluation-time knobs distinguish charts the same way (评估期旋钮同样区分两盘).
   for variant_school in (
-    BaziSchool(hongyan_key=KeyStem.YEAR_MASTER),
+    BaziSchool(hongyan_anchor=Anchor.YEAR),
     BaziSchool(yangren_def=ShenshaRules.YangrenDef.DIWANG),
-    BaziSchool(tianyi_anchor=TianyiAnchor.DAY_MASTER),
+    BaziSchool(tianyi_anchor=Anchor.DAY),
     BaziSchool(tianyi_def=ShenshaRules.TianyiDef.YINGUI),
-    BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN),
-    BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY),
+    BaziSchool(yima_anchor=Anchor.DAY),
+    BaziSchool(huagai_anchor=Anchor.DAY),
+    BaziSchool(jiangxing_anchor=Anchor.DAY),
+    BaziSchool(jiesha_anchor=Anchor.DAY),
+    BaziSchool(wangshen_anchor=Anchor.DAY),
+    BaziSchool(jinyu_anchor=Anchor.YEAR_AND_DAY),
     BaziSchool(feiren_def=ShenshaRules.FeirenDef.DIWANG),
-    BaziSchool(zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY),
+    BaziSchool(zaisha_anchor=Anchor.YEAR_AND_DAY),
     BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
     BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
     BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
@@ -361,12 +421,14 @@ def test_json_roundtrip_default_school() -> None:
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   j = chart.json
   assert j['school'] == {
-    'day_rollover': 'WAN_ZISHI', 'hongyan_key': 'DAY_MASTER',
+    'day_rollover': 'WAN_ZISHI', 'hongyan_anchor': 'DAY',
     'yangren_def': 'ZIPING',
     'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
     'tianyi_anchor': 'YEAR_AND_DAY', 'tianyi_def': 'GENG_WITH_JIA_WU',
-    'shensha_anchor_profile': 'WENZHEN',
-    'jinyu_anchor': 'DAY_MASTER',
+    'yima_anchor': 'YEAR_AND_DAY', 'huagai_anchor': 'YEAR_AND_DAY',
+    'jiangxing_anchor': 'YEAR_AND_DAY', 'jiesha_anchor': 'YEAR_AND_DAY',
+    'wangshen_anchor': 'YEAR_AND_DAY',
+    'jinyu_anchor': 'DAY',
     'feiren_def': 'ZIPING',
     'zaisha_anchor': 'YEAR',
   }
@@ -391,27 +453,33 @@ def test_json_roundtrip_non_default_school() -> None:
   # 每个字段都取非默认值，逐项证明能往返。
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
-    hongyan_key=KeyStem.YEAR_MASTER,
+    hongyan_anchor=Anchor.YEAR,
     yangren_def=ShenshaRules.YangrenDef.DIWANG,
     anhe_def=DizhiRules.AnheDef.MANGPAI,
     xing_def=DizhiRules.XingDef.STRICT,
     gong_def=DizhiRules.GongDef.LU_NARROW,
-    tianyi_anchor=TianyiAnchor.YEAR_MASTER,
+    tianyi_anchor=Anchor.YEAR,
     tianyi_def=ShenshaRules.TianyiDef.YINGUI,
-    shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
-    jinyu_anchor=JinyuAnchor.YEAR_AND_DAY,
+    yima_anchor=Anchor.DAY,
+    huagai_anchor=Anchor.DAY,
+    jiangxing_anchor=Anchor.DAY,
+    jiesha_anchor=Anchor.DAY,
+    wangshen_anchor=Anchor.DAY,
+    jinyu_anchor=Anchor.YEAR_AND_DAY,
     feiren_def=ShenshaRules.FeirenDef.DIWANG,
-    zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY,
+    zaisha_anchor=Anchor.YEAR_AND_DAY,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
   j = chart.json
   assert j['school'] == {
-    'day_rollover': 'ZIZHENG', 'hongyan_key': 'YEAR_MASTER',
+    'day_rollover': 'ZIZHENG', 'hongyan_anchor': 'YEAR',
     'yangren_def': 'DIWANG',
     'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
-    'tianyi_anchor': 'YEAR_MASTER', 'tianyi_def': 'YINGUI',
-    'shensha_anchor_profile': 'MINGLI_TANYUAN',
+    'tianyi_anchor': 'YEAR', 'tianyi_def': 'YINGUI',
+    'yima_anchor': 'DAY', 'huagai_anchor': 'DAY',
+    'jiangxing_anchor': 'DAY', 'jiesha_anchor': 'DAY',
+    'wangshen_anchor': 'DAY',
     'jinyu_anchor': 'YEAR_AND_DAY',
     'feiren_def': 'DIWANG',
     'zaisha_anchor': 'YEAR_AND_DAY',

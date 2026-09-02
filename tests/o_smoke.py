@@ -34,7 +34,7 @@ def main() -> int:
   from src.bazi import Bazi
   from src.bazi_chart import BaziChart
   from src.rules import DizhiRules
-  from src.school import BaziConfig, BaziSchool
+  from src.school import Anchor, BaziConfig, BaziSchool
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitKind, TransitSet
   from src.analyzer.relationship import RelationshipAnalyzer
@@ -136,8 +136,12 @@ def main() -> int:
      lambda: BaziSchool.from_json({**school_json, 'day_rollover': 0})),
     ('BaziSchool.from_json unknown member name', ValueError,
      lambda: BaziSchool.from_json({**school_json, 'day_rollover': 'NOT_A_MEMBER'})),
-    ('BaziSchool wrong Shensha anchor profile', TypeError,
-     lambda: BaziSchool(shensha_anchor_profile=object())), # type: ignore
+    ('BaziSchool wrong Yima anchor', TypeError,
+     lambda: BaziSchool(yima_anchor=object())), # type: ignore
+    ('BaziSchool unsourced Hongyan anchor', ValueError,
+     lambda: BaziSchool(hongyan_anchor=Anchor.YEAR_AND_DAY)),
+    ('BaziSchool.from_json unsourced anchor', ValueError,
+     lambda: BaziSchool.from_json({**school_json, 'hongyan_anchor': 'YEAR_AND_DAY'})),
     ('BaziSchool wrong Jinyu anchor', TypeError,
      lambda: BaziSchool(jinyu_anchor=object())), # type: ignore
     ('BaziSchool wrong Feiren definition', TypeError,
