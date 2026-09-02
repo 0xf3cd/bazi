@@ -3,6 +3,7 @@
 
 import random
 import copy
+import dataclasses
 import operator
 
 import pytest
@@ -130,6 +131,16 @@ def test_ganzhi_date() -> None:
   CalendarDate(2024, 0, 1, CalendarType.GANZHI) # Invalid month.
   CalendarDate(2024, 1, 32, CalendarType.GANZHI) # Invalid day.
   CalendarDate(2024, 1, 0, CalendarType.GANZHI) # Invalid day.
+
+
+def test_every_calendar_date_field_has_a_type_gate() -> None:
+  # Mechanical binding: adding a field without a gate fails here, and so does an annotation
+  # the shared gate cannot read.
+  # 机械绑定：加字段不加闸会在这里响，共享闸读不了的注解同样会响。
+  valid: dict[str, object] = {'year': 2024, 'month': 1, 'day': 1, 'date_type': CalendarType.SOLAR}
+  for f in dataclasses.fields(CalendarDate):
+    with pytest.raises(TypeError):
+      CalendarDate(**{**valid, f.name: object()}) # type: ignore
 
 
 def test_date_cmp_operators() -> None:

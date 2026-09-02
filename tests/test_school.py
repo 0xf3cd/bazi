@@ -125,6 +125,15 @@ def test_config_type_gates() -> None:
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
 
 
+def test_every_config_field_has_a_type_gate() -> None:
+  # Mechanical binding, the same one `BaziSchool` has: adding a knob without a gate fails
+  # here, and so does an annotation the shared gate cannot read.
+  # 机械绑定，与 `BaziSchool` 同款：加字段不加闸会在这里响，共享闸读不了的注解同样会响。
+  for f in dataclasses.fields(BaziConfig):
+    with pytest.raises(TypeError):
+      BaziConfig(**{f.name: object()}) # type: ignore
+
+
 def test_every_school_field_has_a_type_gate() -> None:
   # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
   # adding a knob without a gate fails here, no per-field test needed (issue #69).
