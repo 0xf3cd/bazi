@@ -662,8 +662,8 @@ class ShenshaRules:
   # 见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
   # 华盖取各三合局的墓库；上引《三命通会》原文转引自袁树珊《命理探源》。
   # Source / 出处: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #16).
-  # Additional anchor references / 其他查法锚参考: 百度百科「神煞」、高人。
-  # Supported readings and provenance / 支持口径及出处: `_ANCHOR_CHOICES['huagai_anchor']`.
+  # Additional YEAR_AND_DAY anchor sources / YEAR_AND_DAY 查法锚补充出处: 百度百科「神煞」、高人。
+  # Supported readings / 支持口径: `_ANCHOR_CHOICES['huagai_anchor']`.
   HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '寅午戌' : '戌',
@@ -695,7 +695,7 @@ class ShenshaRules:
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
   # 灾煞取各三合局将星的对冲支；《三命通会·卷三·论灾煞》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #174).
-  # Supported readings and sources / 支持口径及出处: `_ANCHOR_CHOICES['zaisha_anchor']`.
+  # Supported readings / 支持口径: `_ANCHOR_CHOICES['zaisha_anchor']`.
   # Modern compilations also call this 白虎煞; the public rule and display retain the
   # classical name 灾煞 because other distinct 白虎 tables circulate.
   # 现代汇编亦称白虎煞；另有不同白虎表流传，故公开规则与显示仍用古名灾煞。
@@ -856,7 +856,7 @@ class ShenshaRules:
       https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
     - Modern DIWANG table: https://book.taiyi.me/命/神煞大全 and
       https://github.com/gaorenyes/gaorenyes.github.io
-    - 《三命通会·卷三·论羊刃》 Feiren entry / 飞刃条:
+    - 《三命通会·卷三·论羊刃》:
       https://book.taiyi.me/命/三命通会/三命通会(卷三)
     - 《渊海子平·论阳刃》 supplies the ZIPING Feiren yang-stems-only basis:
       https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
@@ -964,10 +964,10 @@ class ShenshaRules:
       阴贵表：与阳贵表合并即为传统合并表；「六辛逢午马」按分承所得十干表与本表相同。
 
     `GENG_WITH_JIA_WU` has the thicker classical lineage and is also the merged table
-    used by 问真. `TianyiDef` is independent of `BaziSchool.tianyi_anchor`; day/night
-    boundary selection is deliberately outside these tables.
-    传统合并表的古籍谱系较厚，问真亦采用；`TianyiDef` 与 `BaziSchool.tianyi_anchor` 相互独立，
-    本表不代选昼夜界线。
+    used by 问真. `BaziSchool.tianyi_def` is independent of
+    `BaziSchool.tianyi_anchor`; day/night boundary selection is deliberately outside these tables.
+    传统合并表的古籍谱系较厚，问真亦采用；`BaziSchool.tianyi_def` 与
+    `BaziSchool.tianyi_anchor` 相互独立，本表不代选昼夜界线。
 
     Sources / 出处:
     - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」:
