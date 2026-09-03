@@ -15,10 +15,7 @@ from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
 from src.rules import DizhiRules, ShenshaRules
-from src.school import (
-  BaziConfig, BaziSchool, KeyStem, TianyiAnchor, JinyuAnchor, ZaishaAnchor,
-  ShenshaAnchorProfile,
-)
+from src.school import BaziConfig, BaziSchool, Anchor, _ANCHOR_CHOICES
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer import relationship as relationship_module
@@ -28,6 +25,19 @@ from src.analyzer.relationship import (
 
 
 _GONG_RELATIONS = (DizhiRelation.拱合, DizhiRelation.拱会)
+
+
+def _five_anchor_school(anchor: Anchor) -> BaziSchool:
+  '''The five Dizhi-anchored Shenshas (驿马、华盖、将星、劫煞、亡神) all on one anchor.
+  Each carries its own knob; these tests move the five together on purpose, because their
+  readings come from one source (see `_ANCHOR_CHOICES`).'''
+  return BaziSchool(
+    yima_anchor=anchor,
+    huagai_anchor=anchor,
+    jiangxing_anchor=anchor,
+    jiesha_anchor=anchor,
+    wangshen_anchor=anchor,
+  )
 
 
 def _project_gong(
@@ -48,11 +58,19 @@ def test_at_birth_shensha() -> None:
 
     dm: Tiangan = chart.bazi.day_master
     y, m, d, h = chart.bazi.four_dizhis
-    use_year_anchor = chart.bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
-    use_day_zaisha_anchor = chart.bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY
+    school = chart.bazi.config.school
+    # The five Dizhi-anchored Shenshas each carry their own knob -- read each one, never a shared flag.
+    year_anchored = {
+      'yima':      school.yima_anchor is Anchor.YEAR_AND_DAY,
+      'huagai':    school.huagai_anchor is Anchor.YEAR_AND_DAY,
+      'jiangxing': school.jiangxing_anchor is Anchor.YEAR_AND_DAY,
+      'jiesha':    school.jiesha_anchor is Anchor.YEAR_AND_DAY,
+      'wangshen':  school.wangshen_anchor is Anchor.YEAR_AND_DAY,
+    }
+    use_day_zaisha_anchor = school.zaisha_anchor is Anchor.YEAR_AND_DAY
 
-    # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
-    anchor: Tiangan = dm if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else chart.bazi.year_pillar.tiangan
+    # The 红艳 anchor stem follows the chart's school (查法锚, issue #69) -- don't assume the day master.
+    anchor: Tiangan = dm if school.hongyan_anchor is Anchor.DAY else chart.bazi.year_pillar.tiangan
 
     at_birth = analyzer.at_birth
 
@@ -93,7 +111,7 @@ def test_at_birth_shensha() -> None:
 
     # Yima / 驿马
     expected_yima: list[Dizhi] = []
-    if use_year_anchor:
+    if year_anchored['yima']:
       for dz1, dz2 in itertools.product([y], [m, d, h]):
         if shensha_utils.yima(dz1, dz2):
           expected_yima.append(dz2)
@@ -105,7 +123,7 @@ def test_at_birth_shensha() -> None:
 
     # Huagai / 华盖
     expected_huagai: list[Dizhi] = []
-    if use_year_anchor:
+    if year_anchored['huagai']:
       for dz1, dz2 in itertools.product([y], [m, d, h]):
         if shensha_utils.huagai(dz1, dz2):
           expected_huagai.append(dz2)
@@ -153,7 +171,7 @@ def test_at_birth_shensha() -> None:
 
     # Jiangxing / 将星
     expected_jiangxing: list[Dizhi] = []
-    if use_year_anchor:
+    if year_anchored['jiangxing']:
       for dz1, dz2 in itertools.product([y], [m, d, h]):
         if shensha_utils.jiangxing(dz1, dz2):
           expected_jiangxing.append(dz2)
@@ -172,7 +190,7 @@ def test_at_birth_shensha() -> None:
 
     # Jiesha / 劫煞
     expected_jiesha: list[Dizhi] = []
-    if use_year_anchor:
+    if year_anchored['jiesha']:
       for dz1, dz2 in itertools.product([y], [m, d, h]):
         if shensha_utils.jiesha(dz1, dz2):
           expected_jiesha.append(dz2)
@@ -184,7 +202,7 @@ def test_at_birth_shensha() -> None:
 
     # Wangshen / 亡神
     expected_wangshen: list[Dizhi] = []
-    if use_year_anchor:
+    if year_anchored['wangshen']:
       for dz1, dz2 in itertools.product([y], [m, d, h]):
         if shensha_utils.wangshen(dz1, dz2):
           expected_wangshen.append(dz2)
@@ -310,11 +328,11 @@ def test_jiangxing_at_transits() -> None:
 
 
 @pytest.mark.parametrize('anchor, expected', [
-  (ZaishaAnchor.YEAR, frozenset({Dizhi.午})),
-  (ZaishaAnchor.YEAR_AND_DAY, frozenset({Dizhi.午, Dizhi.子})),
+  (Anchor.YEAR, frozenset({Dizhi.午})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.午, Dizhi.子})),
 ])
 def test_zaisha_anchor_at_birth_and_transits(
-  anchor: ZaishaAnchor,
+  anchor: Anchor,
   expected: frozenset[Dizhi],
 ) -> None:
   # 子年灾煞在午，午日灾煞在子；原局与所选流运都包含两个目标。
@@ -332,7 +350,7 @@ def test_zaisha_anchor_at_birth_and_transits(
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['zaisha'] == expected
 
-  if anchor is ZaishaAnchor.YEAR:
+  if anchor is Anchor.YEAR:
     default_chart = BaziChart(Bazi.create('2020-07-02 19:08', 'female'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['zaisha'] == expected
 
@@ -342,7 +360,7 @@ def test_zaisha_deduplicates_repeated_target_and_empty_result() -> None:
   chart = BaziChart(Bazi.create(
     '1902-01-06 12:00',
     'male',
-    BaziConfig(school=BaziSchool(zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY)),
+    BaziConfig(school=BaziSchool(zaisha_anchor=Anchor.YEAR_AND_DAY)),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('辛丑', '辛丑', '己丑', '庚午')
   assert RelationshipAnalyzer(chart).at_birth.shensha['zaisha'] == set()
@@ -360,8 +378,12 @@ def test_zaisha_anchor_is_independent_from_other_shensha_axes() -> None:
     '2020-07-02 19:08',
     'female',
     BaziConfig(school=BaziSchool(
-      hongyan_key=KeyStem.YEAR_MASTER,
-      shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN,
+      hongyan_anchor=Anchor.YEAR,
+      yima_anchor=Anchor.DAY,
+      huagai_anchor=Anchor.DAY,
+      jiangxing_anchor=Anchor.DAY,
+      jiesha_anchor=Anchor.DAY,
+      wangshen_anchor=Anchor.DAY,
     )),
   ))
   assert RelationshipAnalyzer(chart).at_birth.shensha['zaisha'] == {Dizhi.午}
@@ -511,7 +533,7 @@ ShenshaGetter = Callable[[ShenshaAnalysis], frozenset[Dizhi]]
   (lambda result: result['wangshen'], '2061-08-20 12:04', ('辛巳', '丙申', '庚午', '壬午'),
    frozenset((Dizhi.巳, Dizhi.申)), frozenset((Dizhi.巳,))),
 ])
-def test_shensha_anchor_profile_at_birth(
+def test_five_dizhi_anchors_at_birth(
   getter: ShenshaGetter,
   birth_time: str,
   pillars: tuple[str, str, str, str],
@@ -522,7 +544,7 @@ def test_shensha_anchor_profile_at_birth(
   day_chart = BaziChart(Bazi.create(
     birth_time,
     BaziGender.MALE,
-    BaziConfig(school=BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN)),
+    BaziConfig(school=_five_anchor_school(Anchor.DAY)),
   ))
   assert tuple(map(str, default_chart.bazi.pillars)) == pillars
 
@@ -533,6 +555,20 @@ def test_shensha_anchor_profile_at_birth(
   assert default_shensha['taohua'] == day_shensha['taohua']
 
 
+def test_five_dizhi_anchors_move_independently() -> None:
+  school = BaziSchool(yima_anchor=Anchor.DAY, huagai_anchor=Anchor.YEAR_AND_DAY)
+  chart = BaziChart(Bazi.create(
+    '1955-07-19 09:00',
+    BaziGender.MALE,
+    BaziConfig(school=school),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('乙未', '癸未', '辛巳', '癸巳')
+
+  shensha = RelationshipAnalyzer(chart).at_birth.shensha
+  assert shensha['yima'] == frozenset()
+  assert shensha['huagai'] == frozenset({Dizhi.未})
+
+
 # Each pair supplies one year-anchor-only hit and one day-anchor hit.
 @pytest.mark.parametrize('getter, year_ganzhi, day_ganzhi', [
   (lambda result: result['yima'], Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
@@ -541,7 +577,7 @@ def test_shensha_anchor_profile_at_birth(
   (lambda result: result['jiesha'], Ganzhi.from_str('乙亥'), Ganzhi.from_str('甲申')),
   (lambda result: result['wangshen'], Ganzhi.from_str('乙巳'), Ganzhi.from_str('甲寅')),
 ])
-def test_shensha_anchor_profile_at_transits(
+def test_five_dizhi_anchors_at_transits(
   getter: ShenshaGetter,
   year_ganzhi: Ganzhi,
   day_ganzhi: Ganzhi,
@@ -550,7 +586,7 @@ def test_shensha_anchor_profile_at_transits(
   day_chart = BaziChart(Bazi.create(
     '2023-01-17 15:42',
     BaziGender.MALE,
-    BaziConfig(school=BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN)),
+    BaziConfig(school=_five_anchor_school(Anchor.DAY)),
   ))
   assert tuple(map(str, default_chart.bazi.pillars)) == ('壬寅', '癸丑', '乙亥', '甲申')
   transits = TransitSet(dayun=year_ganzhi, liunian=day_ganzhi)
@@ -755,11 +791,19 @@ def test_transit_shensha() -> None:
 
     y_dz = chart.bazi.year_pillar.dizhi
     d_dz = chart.bazi.day_pillar.dizhi
-    use_year_anchor = chart.bazi.config.school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
-    use_day_zaisha_anchor = chart.bazi.config.school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY
+    school = chart.bazi.config.school
+    # The five Dizhi-anchored Shenshas each carry their own knob -- read each one, never a shared flag.
+    year_anchored = {
+      'yima':      school.yima_anchor is Anchor.YEAR_AND_DAY,
+      'huagai':    school.huagai_anchor is Anchor.YEAR_AND_DAY,
+      'jiangxing': school.jiangxing_anchor is Anchor.YEAR_AND_DAY,
+      'jiesha':    school.jiesha_anchor is Anchor.YEAR_AND_DAY,
+      'wangshen':  school.wangshen_anchor is Anchor.YEAR_AND_DAY,
+    }
+    use_day_zaisha_anchor = school.zaisha_anchor is Anchor.YEAR_AND_DAY
 
-    # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
-    anchor: Tiangan = (chart.bazi.day_master if chart.bazi.config.school.hongyan_key is KeyStem.DAY_MASTER
+    # The 红艳 anchor stem follows the chart's school (查法锚, issue #69) -- don't assume the day master.
+    anchor: Tiangan = (chart.bazi.day_master if school.hongyan_anchor is Anchor.DAY
                        else chart.bazi.year_pillar.tiangan)
 
     analyzer = RelationshipAnalyzer(chart)
@@ -805,7 +849,7 @@ def test_transit_shensha() -> None:
       # Yima / 驿马
       expected = []
       for dz in transit_dz:
-        if use_year_anchor and shensha_utils.yima(y_dz, dz):
+        if year_anchored['yima'] and shensha_utils.yima(y_dz, dz):
           expected.append(dz)
         if shensha_utils.yima(d_dz, dz):
           expected.append(dz)
@@ -814,7 +858,7 @@ def test_transit_shensha() -> None:
       # Huagai / 华盖
       expected = []
       for dz in transit_dz:
-        if use_year_anchor and shensha_utils.huagai(y_dz, dz):
+        if year_anchored['huagai'] and shensha_utils.huagai(y_dz, dz):
           expected.append(dz)
         if shensha_utils.huagai(d_dz, dz):
           expected.append(dz)
@@ -859,7 +903,7 @@ def test_transit_shensha() -> None:
       # Jiangxing / 将星
       expected = []
       for dz in transit_dz:
-        if use_year_anchor and shensha_utils.jiangxing(y_dz, dz):
+        if year_anchored['jiangxing'] and shensha_utils.jiangxing(y_dz, dz):
           expected.append(dz)
         if shensha_utils.jiangxing(d_dz, dz):
           expected.append(dz)
@@ -877,7 +921,7 @@ def test_transit_shensha() -> None:
       # Jiesha / 劫煞
       expected = []
       for dz in transit_dz:
-        if use_year_anchor and shensha_utils.jiesha(y_dz, dz):
+        if year_anchored['jiesha'] and shensha_utils.jiesha(y_dz, dz):
           expected.append(dz)
         if shensha_utils.jiesha(d_dz, dz):
           expected.append(dz)
@@ -886,7 +930,7 @@ def test_transit_shensha() -> None:
       # Wangshen / 亡神
       expected = []
       for dz in transit_dz:
-        if use_year_anchor and shensha_utils.wangshen(y_dz, dz):
+        if year_anchored['wangshen'] and shensha_utils.wangshen(y_dz, dz):
           expected.append(dz)
         if shensha_utils.wangshen(d_dz, dz):
           expected.append(dz)
@@ -909,33 +953,33 @@ def test_transit_shensha() -> None:
       assert actual['jinyu'] == set(expected)
 
 
-# 红艳查法 variants (issue #69): `KeyStem` mounted on `BaziSchool.hongyan_key`; the analyzer
+# 红艳查法 variants (issue #69): `Anchor` mounted on `BaziSchool.hongyan_anchor`; the analyzer
 # re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
 # is the golden chart of `test_relationship_analysis.test_case1` (1984-04-01 11:08, male:
 # 甲子/丁卯/乙丑/壬午) -- the day master 乙 keys on 申 (absent from the chart), while the year
 # tiangan 甲 keys on 午 (the hour Dizhi), so the two 查法 answer differently on this chart.
-@pytest.mark.parametrize('key_stem, expected', [
-  (KeyStem.DAY_MASTER,  frozenset()),           # 日干乙 -> 申 (《三命通会》, the default): 申 not in 子卯丑午.
-  (KeyStem.YEAR_MASTER, frozenset({Dizhi.午})), # 年干甲 -> 午: the hour Dizhi matches.
+@pytest.mark.parametrize('anchor, expected', [
+  (Anchor.DAY,  frozenset()),           # 日干乙 -> 申 (the default): 申 not in 子卯丑午.
+  (Anchor.YEAR, frozenset({Dizhi.午})), # 年干甲 -> 午: the hour Dizhi matches.
 ])
-def test_hongyan_key_variant_at_birth(key_stem: KeyStem, expected: frozenset[Dizhi]) -> None:
-  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
+def test_hongyan_anchor_variant_at_birth(anchor: Anchor, expected: frozenset[Dizhi]) -> None:
+  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_anchor=anchor))
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   assert RelationshipAnalyzer(chart).at_birth.shensha['hongyan'] == expected
 
-  # The default school is DAY_MASTER -- the long-pinned behavior carries over unchanged.
-  if key_stem is KeyStem.DAY_MASTER:
+  # The default school uses Anchor.DAY -- the long-pinned behavior carries over unchanged.
+  if anchor is Anchor.DAY:
     default_chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['hongyan'] == expected
 
 
-@pytest.mark.parametrize('key_stem, expected', [
-  (KeyStem.DAY_MASTER,  frozenset()),           # 日干乙 -> 申: not among the 1990 transit Dizhis 辰/午.
-  (KeyStem.YEAR_MASTER, frozenset({Dizhi.午})), # 年干甲 -> 午: the 1990 流年 is 庚午.
+@pytest.mark.parametrize('anchor, expected', [
+  (Anchor.DAY,  frozenset()),           # 日干乙 -> 申: not among the 1990 transit Dizhis 辰/午.
+  (Anchor.YEAR, frozenset({Dizhi.午})), # 年干甲 -> 午: the 1990 流年 is 庚午.
 ])
-def test_hongyan_key_variant_at_transits(key_stem: KeyStem, expected: frozenset[Dizhi]) -> None:
+def test_hongyan_anchor_variant_at_transits(anchor: Anchor, expected: frozenset[Dizhi]) -> None:
   '''Same chart; the selected 1990 Dayun and Liunian are 戊辰/庚午 (pinned in `test_case1`).'''
-  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_key=key_stem))
+  config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_anchor=anchor))
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   transits: TransitAnalysis = RelationshipAnalyzer(chart).transits
   selected = _at_year(TransitChart(chart), 1990).select(
@@ -955,10 +999,10 @@ def test_yangren_definition_at_birth_and_transits(
   transit_ganzhi: Ganzhi,
   expected: frozenset[Dizhi],
 ) -> None:
-  # This chart is 辛日 and 庚年. YEAR_MASTER deliberately differs, proving 羊刃 keeps
+  # This chart is 辛日 and 庚年. Anchor.YEAR deliberately differs, proving 羊刃 keeps
   # its fixed day-master anchor instead of inheriting 红艳's configurable anchor.
   school: BaziSchool = BaziSchool(
-    hongyan_key=KeyStem.YEAR_MASTER,
+    hongyan_anchor=Anchor.YEAR,
     yangren_def=yangren_def,
   )
   chart: BaziChart = BaziChart(Bazi.create(
@@ -1051,12 +1095,12 @@ def test_feiren_deduplicates_repeated_target_and_empty_result() -> None:
 
 
 @pytest.mark.parametrize('anchor, expected', [
-  (TianyiAnchor.DAY_MASTER, frozenset({Dizhi.子})),
-  (TianyiAnchor.YEAR_MASTER, frozenset({Dizhi.丑})),
-  (TianyiAnchor.YEAR_AND_DAY, frozenset({Dizhi.子, Dizhi.丑})),
+  (Anchor.DAY, frozenset({Dizhi.子})),
+  (Anchor.YEAR, frozenset({Dizhi.丑})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.子, Dizhi.丑})),
 ])
 def test_tianyi_anchor_at_birth_and_transits(
-  anchor: TianyiAnchor,
+  anchor: Anchor,
   expected: frozenset[Dizhi],
 ) -> None:
   # 甲年、乙日, with 子 and 丑 both present: each anchor has one distinct Tianyi branch.
@@ -1075,7 +1119,7 @@ def test_tianyi_anchor_at_birth_and_transits(
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == expected
 
-  if anchor is TianyiAnchor.YEAR_AND_DAY:
+  if anchor is Anchor.YEAR_AND_DAY:
     default_chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['tianyi'] == expected
 
@@ -1095,7 +1139,7 @@ def test_tianyi_definition_at_birth_and_transits(
     '1985-03-02 11:08',
     'male',
     BaziConfig(school=BaziSchool(
-      tianyi_anchor=TianyiAnchor.YEAR_AND_DAY,
+      tianyi_anchor=Anchor.YEAR_AND_DAY,
       tianyi_def=tianyi_def,
     )),
   ))
@@ -1133,11 +1177,11 @@ def test_lushen_at_transits() -> None:
 
 
 @pytest.mark.parametrize('anchor, expected', [
-  (JinyuAnchor.DAY_MASTER, frozenset({Dizhi.寅})),
-  (JinyuAnchor.YEAR_AND_DAY, frozenset({Dizhi.丑, Dizhi.寅})),
+  (Anchor.DAY, frozenset({Dizhi.寅})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.丑, Dizhi.寅})),
 ])
 def test_jinyu_anchor_at_birth_and_transits(
-  anchor: JinyuAnchor,
+  anchor: Anchor,
   expected: frozenset[Dizhi],
 ) -> None:
   # 壬年、癸日，金舆分别在丑、寅；两支都在原局与所选流运中。
@@ -1155,7 +1199,7 @@ def test_jinyu_anchor_at_birth_and_transits(
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['jinyu'] == expected
 
-  if anchor is JinyuAnchor.DAY_MASTER:
+  if anchor is Anchor.DAY:
     default_chart = BaziChart(Bazi.create('1902-03-31 12:00', 'male'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['jinyu'] == expected
 
@@ -1166,7 +1210,7 @@ def test_jinyu_year_anchor_can_be_the_only_hit() -> None:
   year_and_day_chart = BaziChart(Bazi.create(
     '2020-07-02 19:08',
     'female',
-    BaziConfig(school=BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY)),
+    BaziConfig(school=BaziSchool(jinyu_anchor=Anchor.YEAR_AND_DAY)),
   ))
   assert tuple(map(str, default_chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
 
@@ -1185,7 +1229,7 @@ def test_jinyu_deduplicates_shared_target_and_empty_result() -> None:
   chart = BaziChart(Bazi.create(
     '1906-07-13 12:00',
     'male',
-    BaziConfig(school=BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY)),
+    BaziConfig(school=BaziSchool(jinyu_anchor=Anchor.YEAR_AND_DAY)),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('丙午', '乙未', '戊午', '戊午')
   assert RelationshipAnalyzer(chart).at_birth.shensha['jinyu'] == {Dizhi.未}
@@ -1530,78 +1574,195 @@ def test_at_birth_shensha_analysis_has_only_whole_pillar_extras() -> None:
   assert {'kuigang', 'tianshe'}.isdisjoint(_REGISTRY)
 
 
-def test_at_birth_key_sources_preserve_anchor_and_pillar_scope() -> None:
-  '''Pin each key source's anchor x inspected-pillar calls, including repeated branch values.'''
-  YD, DD = Dizhi.丑, Dizhi.丑
-  MD, HD = Dizhi.丑, Dizhi.午
-  YT, DT = Tiangan.辛, Tiangan.己
+def test_at_birth_anchors_preserve_kind_and_pillar_scope() -> None:
+  '''Pin every (kind, anchor) pair's key x inspected-pillar calls, repeated branch values
+  included. This is the executor for the one at-birth rule: a Tiangan key inspects all four
+  branches, a Dizhi key skips its own pillar, and a two-pillar anchor runs once per pillar.
+  一条原局规则的执行者：干锚查四支，支锚跳过自身柱，两柱锚按柱各跑一遍。'''
+  YD, MD, DD, HD = Dizhi.子, Dizhi.午, Dizhi.午, Dizhi.戌
+  YT, DT = Tiangan.庚, Tiangan.丙
   all_dizhis = (YD, MD, DD, HD)
-  year_calls = ((YD, MD), (YD, DD), (YD, HD))
-  year_and_day_calls = (*year_calls, (DD, YD), (DD, MD), (DD, HD))
-  day_tiangan_calls = tuple((DT, dizhi) for dizhi in all_dizhis)
+  year_dizhi_calls = ((YD, MD), (YD, DD), (YD, HD))
+  day_dizhi_calls = ((DD, YD), (DD, MD), (DD, HD))
   year_tiangan_calls = tuple((YT, dizhi) for dizhi in all_dizhis)
-  year_and_day_tiangan_calls = (*year_tiangan_calls, *day_tiangan_calls)
-  cases = (
-    (relationship_module._KeySource.YEAR_DIZHI, BaziSchool(), year_calls),
-    (relationship_module._KeySource.YEAR_OR_DAY_DIZHI, BaziSchool(), year_and_day_calls),
-    (relationship_module._KeySource.PROFILED_DIZHI, BaziSchool(), year_and_day_calls),
-    (relationship_module._KeySource.PROFILED_DIZHI,
-     BaziSchool(shensha_anchor_profile=ShenshaAnchorProfile.MINGLI_TANYUAN),
-     ((DD, YD), (DD, MD), (DD, HD))),
-    (relationship_module._KeySource.DAY_MASTER, BaziSchool(), day_tiangan_calls),
-    (relationship_module._KeySource.KEY_TIANGAN, BaziSchool(), day_tiangan_calls),
-    (relationship_module._KeySource.ANCHOR_TIANGANS, BaziSchool(), year_and_day_tiangan_calls),
-    (relationship_module._KeySource.JINYU_ANCHOR_TIANGANS, BaziSchool(), day_tiangan_calls),
-    (relationship_module._KeySource.JINYU_ANCHOR_TIANGANS,
-     BaziSchool(jinyu_anchor=JinyuAnchor.YEAR_AND_DAY),
-     year_and_day_tiangan_calls),
-    (relationship_module._KeySource.ZAISHA_ANCHOR_DIZHIS, BaziSchool(), year_calls),
-    (relationship_module._KeySource.ZAISHA_ANCHOR_DIZHIS,
-     BaziSchool(zaisha_anchor=ZaishaAnchor.YEAR_AND_DAY),
-     year_and_day_calls),
-  )
+  day_tiangan_calls = tuple((DT, dizhi) for dizhi in all_dizhis)
 
-  for key_source, school, expected_calls in cases:
-    chart = BaziChart(Bazi.create(
-      '1902-01-06 12:00',
-      'male',
-      BaziConfig(school=school),
-    ))
-    assert tuple(map(str, chart.bazi.pillars)) == ('辛丑', '辛丑', '己丑', '庚午')
+  DIZHI = relationship_module._AnchorKind.DIZHI
+  TIANGAN = relationship_module._AnchorKind.TIANGAN
+  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[tuple[Tiangan | Dizhi, Dizhi], ...]], ...] = (
+    (DIZHI, Anchor.YEAR, year_dizhi_calls),
+    (DIZHI, Anchor.DAY, day_dizhi_calls),
+    (DIZHI, Anchor.YEAR_AND_DAY, (*year_dizhi_calls, *day_dizhi_calls)),
+    (TIANGAN, Anchor.YEAR, year_tiangan_calls),
+    (TIANGAN, Anchor.DAY, day_tiangan_calls),
+    (TIANGAN, Anchor.YEAR_AND_DAY, (*year_tiangan_calls, *day_tiangan_calls)),
+  )
+  assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
+    relationship_module._AnchorKind,
+    Anchor,
+  ))
+
+  chart = BaziChart(Bazi.create('2020-07-02 19:08', 'female'))
+  assert tuple(map(str, chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
+
+  for kind, anchor, expected_calls in cases:
     calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
 
     def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
       calls.append((key, dizhi))
       return False
 
-    spec = relationship_module._ShenshaSpec(record, key_source, 'probe')
+    spec = relationship_module._ShenshaSpec(record, kind, anchor, 'probe')
     assert relationship_module._eval_at_birth(spec, chart.bazi) == frozenset()
-    assert tuple(calls) == expected_calls
+    assert tuple(calls) == expected_calls, (kind, anchor)
 
 
-def test_shensha_anchor_profile_has_exact_consumers() -> None:
-  expected = {'yima', 'huagai', 'jiangxing', 'jiesha', 'wangshen'}
-  assert {
-    name for name, spec in _REGISTRY.items()
-    if spec.key is relationship_module._KeySource.PROFILED_DIZHI
-  } == expected
-  assert _REGISTRY['taohua'].key is relationship_module._KeySource.YEAR_OR_DAY_DIZHI
-  assert {
-    name for name, spec in _REGISTRY.items()
-    if spec.key is relationship_module._KeySource.YEAR_DIZHI
-  } == {'hongluan', 'tianxi', 'guchen', 'guasu'}
-  assert {
-    name for name, spec in _REGISTRY.items()
-    if spec.key is relationship_module._KeySource.DAY_MASTER
-  } == {'yangren', 'feiren', 'lushen'}
-  assert {
-    name for name, spec in _REGISTRY.items()
-    if spec.key is relationship_module._KeySource.JINYU_ANCHOR_TIANGANS
-  } == {'jinyu'}
-  assert {
-    name for name, spec in _REGISTRY.items()
-    if spec.key is relationship_module._KeySource.ZAISHA_ANCHOR_DIZHIS
-  } == {'zaisha'}
+def test_at_birth_anchor_resolver_reads_the_chart_school() -> None:
+  # A spec whose anchor is a resolver takes the knob from the chart, not from the spec --
+  # the same rule then applies. 锚是解析函数时，取值来自盘上的旋钮，规则不变。
+  YD, MD, DD, HD = Dizhi.子, Dizhi.午, Dizhi.午, Dizhi.戌
+  expected = {
+    Anchor.YEAR: ((YD, MD), (YD, DD), (YD, HD)),
+    Anchor.YEAR_AND_DAY: ((YD, MD), (YD, DD), (YD, HD), (DD, YD), (DD, MD), (DD, HD)),
+  }
+
+  for anchor, expected_calls in expected.items():
+    chart = BaziChart(Bazi.create(
+      '2020-07-02 19:08',
+      'female',
+      BaziConfig(school=BaziSchool(zaisha_anchor=anchor)),
+    ))
+    calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+
+    def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+      calls.append((key, dizhi))
+      return False
+
+    spec = relationship_module._ShenshaSpec(
+      record,
+      relationship_module._AnchorKind.DIZHI,
+      lambda school: school.zaisha_anchor,
+      'probe',
+    )
+    assert relationship_module._eval_at_birth(spec, chart.bazi) == frozenset()
+    assert tuple(calls) == expected_calls, anchor
+
+
+def test_at_birth_repeated_branch_values_are_all_inspected() -> None:
+  # Every branch equals 丑 but the hour: a Dizhi anchor still skips only its OWN pillar,
+  # so equal values never collapse the call list. 支值全同也只跳自身柱，不按值去重。
+  chart = BaziChart(Bazi.create('1902-01-06 12:00', 'male'))
+  assert tuple(map(str, chart.bazi.pillars)) == ('辛丑', '辛丑', '己丑', '庚午')
+  calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+
+  def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+    calls.append((key, dizhi))
+    return False
+
+  spec = relationship_module._ShenshaSpec(
+    record, relationship_module._AnchorKind.DIZHI, Anchor.YEAR_AND_DAY, 'probe')
+  assert relationship_module._eval_at_birth(spec, chart.bazi) == frozenset()
+  assert tuple(calls) == (
+    (Dizhi.丑, Dizhi.丑), (Dizhi.丑, Dizhi.丑), (Dizhi.丑, Dizhi.午),
+    (Dizhi.丑, Dizhi.丑), (Dizhi.丑, Dizhi.丑), (Dizhi.丑, Dizhi.午),
+  )
+
+
+def test_transit_anchors_reuse_the_keys_without_pillar_exclusion() -> None:
+  # Transits share the at-birth key path, but no transit branch is the anchor's own pillar,
+  # so every key inspects every transit branch -- including one equal to a natal branch.
+  # 流运与原局共用取 key 路径；流运支不可能是锚柱自身，故每个 key 查全部流运支。
+  chart = BaziChart(Bazi.create('2020-07-02 19:08', 'female'))
+  assert tuple(map(str, chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
+  transit_dizhis = (Dizhi.卯, Dizhi.子)
+  DIZHI = relationship_module._AnchorKind.DIZHI
+  TIANGAN = relationship_module._AnchorKind.TIANGAN
+  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[Tiangan | Dizhi, ...]], ...] = (
+    (DIZHI, Anchor.YEAR, (Dizhi.子,)),
+    (DIZHI, Anchor.DAY, (Dizhi.午,)),
+    (DIZHI, Anchor.YEAR_AND_DAY, (Dizhi.子, Dizhi.午)),
+    (TIANGAN, Anchor.YEAR, (Tiangan.庚,)),
+    (TIANGAN, Anchor.DAY, (Tiangan.丙,)),
+    (TIANGAN, Anchor.YEAR_AND_DAY, (Tiangan.庚, Tiangan.丙)),
+  )
+  assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
+    relationship_module._AnchorKind,
+    Anchor,
+  ))
+
+  for kind, anchor, keys in cases:
+    calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+
+    def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+      calls.append((key, dizhi))
+      return False
+
+    spec = relationship_module._ShenshaSpec(record, kind, anchor, 'probe')
+    assert relationship_module._eval_transits(spec, chart.bazi, transit_dizhis) == frozenset()
+    assert tuple(calls) == tuple(
+      (key, dizhi) for key in keys for dizhi in transit_dizhis
+    ), (kind, anchor)
+
+
+def test_every_anchor_member_is_wired_to_pillars() -> None:
+  # Mechanical binding: the five deleted enums each carried an "unwired member" guard; one
+  # table replaces them all, so one gate has to execute that invariant. A new `Anchor` member
+  # with no entry would otherwise surface as a bare `KeyError` at lookup time.
+  # 机械绑定:被删的五个枚举各带一条「成员未接线」守卫,合并成一张表后要有一道闸执行这条
+  # 不变量——新成员漏登记的话，只会在查法时抛裸 `KeyError`。
+  pillars = relationship_module._ANCHOR_PILLARS
+  assert set(pillars) == set(Anchor)
+  for anchor, indices in pillars.items():
+    assert indices, anchor
+    assert all(0 <= i < 4 for i in indices), anchor          # Four pillars, 年月日时.
+    assert list(indices) == sorted(set(indices)), anchor     # Ascending and distinct: the
+                                                             # call order follows pillar order.
+
+
+def test_registry_anchors_are_the_declared_table() -> None:
+  # The full roster of (kind, anchor) per Shensha, written out as data. A silently
+  # re-anchored Shensha fails here, and so does one that quietly stops (or starts)
+  # reading a school knob.
+  # 每个神煞的（key 类型，锚）全表按数据钉死：偷偷换锚、或偷偷改成/不再读流派旋钮都会响。
+  DIZHI = relationship_module._AnchorKind.DIZHI
+  TIANGAN = relationship_module._AnchorKind.TIANGAN
+  fixed = {
+    name: (spec.kind, spec.anchor)
+    for name, spec in _REGISTRY.items() if isinstance(spec.anchor, Anchor)
+  }
+  assert fixed == {
+    'taohua':   (DIZHI, Anchor.YEAR_AND_DAY),
+    'hongluan': (DIZHI, Anchor.YEAR),
+    'tianxi':   (DIZHI, Anchor.YEAR),
+    'guchen':   (DIZHI, Anchor.YEAR),
+    'guasu':    (DIZHI, Anchor.YEAR),
+    'yangren':  (TIANGAN, Anchor.DAY),
+    'feiren':   (TIANGAN, Anchor.DAY),
+    'lushen':   (TIANGAN, Anchor.DAY),
+  }
+
+  # The rest read one school knob each. Vary exactly that field and require the resolver to
+  # follow it -- reading a neighbour's knob leaves the default behind and fails here.
+  # 其余各读一个旋钮：每次只改那一个字段，读错邻居的旋钮就会拿回默认值而在这里响。
+  knobs = {
+    'hongyan':   (TIANGAN, 'hongyan_anchor'),
+    'tianyi':    (TIANGAN, 'tianyi_anchor'),
+    'jinyu':     (TIANGAN, 'jinyu_anchor'),
+    'zaisha':    (DIZHI, 'zaisha_anchor'),
+    'yima':      (DIZHI, 'yima_anchor'),
+    'huagai':    (DIZHI, 'huagai_anchor'),
+    'jiangxing': (DIZHI, 'jiangxing_anchor'),
+    'jiesha':    (DIZHI, 'jiesha_anchor'),
+    'wangshen':  (DIZHI, 'wangshen_anchor'),
+  }
+  assert set(knobs) | set(fixed) == set(_REGISTRY)
+  for name, (kind, field) in knobs.items():
+    spec = _REGISTRY[name]
+    assert spec.kind is kind, name
+    assert not isinstance(spec.anchor, Anchor), name
+    for anchor in _ANCHOR_CHOICES[field]:
+      school = BaziSchool(**{field: anchor}) # type: ignore # Field name is data here.
+      assert spec.anchor(school) is anchor, (name, anchor)
 
 
 def test_no_bare_dizhi_discovery_calls() -> None:

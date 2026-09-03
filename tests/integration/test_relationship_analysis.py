@@ -12,7 +12,7 @@ from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, 
 from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart
-from src.school import KeyStem, ZaishaAnchor, ShenshaAnchorProfile, BaziSchool, BaziConfig
+from src.school import Anchor, BaziSchool, BaziConfig
 from src.transit_chart import TransitChart
 from src.transits import TransitKind, TransitSet
 from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
@@ -667,8 +667,8 @@ def test_random_cases(bazi: Bazi) -> None:
   dm: Tiangan = bazi.day_master
   star: Shishen = Shishen.正财 if bazi.gender is BaziGender.MALE else Shishen.正官
 
-  # The 红艳 anchor stem follows the chart's school (查法锚干, issue #69) -- don't assume the day master.
-  hongyan_anchor: Tiangan = dm if bazi.config.school.hongyan_key is KeyStem.DAY_MASTER else bazi.year_pillar.tiangan
+  # The 红艳 anchor stem follows the chart's school (查法锚, issue #69) -- don't assume the day master.
+  hongyan_anchor: Tiangan = dm if bazi.config.school.hongyan_anchor is Anchor.DAY else bazi.year_pillar.tiangan
 
   # The Dizhi-relation oracles below mirror the analyzer by reading the same school profile
   # (issue #69) -- they don't assume the default 暗合/刑 definitions either.
@@ -691,27 +691,27 @@ def test_random_cases(bazi: Bazi) -> None:
         return shensha_utils.taohua(y_dz, dz) or shensha_utils.taohua(d_dz, dz)
 
       def __yima(dz: Dizhi) -> bool:
-        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+        return ((school.yima_anchor is Anchor.YEAR_AND_DAY
                  and shensha_utils.yima(y_dz, dz)) or shensha_utils.yima(d_dz, dz))
 
       def __huagai(dz: Dizhi) -> bool:
-        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+        return ((school.huagai_anchor is Anchor.YEAR_AND_DAY
                  and shensha_utils.huagai(y_dz, dz)) or shensha_utils.huagai(d_dz, dz))
 
       def __jiangxing(dz: Dizhi) -> bool:
-        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+        return ((school.jiangxing_anchor is Anchor.YEAR_AND_DAY
                  and shensha_utils.jiangxing(y_dz, dz)) or shensha_utils.jiangxing(d_dz, dz))
 
       def __zaisha(dz: Dizhi) -> bool:
         return (shensha_utils.zaisha(y_dz, dz) or
-                (school.zaisha_anchor is ZaishaAnchor.YEAR_AND_DAY and shensha_utils.zaisha(d_dz, dz)))
+                (school.zaisha_anchor is Anchor.YEAR_AND_DAY and shensha_utils.zaisha(d_dz, dz)))
 
       def __jiesha(dz: Dizhi) -> bool:
-        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+        return ((school.jiesha_anchor is Anchor.YEAR_AND_DAY
                  and shensha_utils.jiesha(y_dz, dz)) or shensha_utils.jiesha(d_dz, dz))
 
       def __wangshen(dz: Dizhi) -> bool:
-        return ((school.shensha_anchor_profile is ShenshaAnchorProfile.WENZHEN
+        return ((school.wangshen_anchor is Anchor.YEAR_AND_DAY
                  and shensha_utils.wangshen(y_dz, dz)) or shensha_utils.wangshen(d_dz, dz))
 
       expected_taohua:    set[Dizhi] = set(filter(__taohua, transits_dz_set))

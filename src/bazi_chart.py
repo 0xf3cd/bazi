@@ -103,14 +103,18 @@ class BaziJson:
     流派档案：每项流派看法各存其枚举成员名。键即 `BaziSchool` 的字段，按 dataclass 的声明序
     排列——序列化与 `BaziSchool.from_json` 都由那里推导，本声明是它们要满足的契约。'''
     day_rollover: str
-    hongyan_key: str
+    hongyan_anchor: str
     anhe_def: str
     xing_def: str
     gong_def: str
     yangren_def: str
     tianyi_anchor: str
     tianyi_def: str
-    shensha_anchor_profile: str
+    yima_anchor: str
+    huagai_anchor: str
+    jiangxing_anchor: str
+    jiesha_anchor: str
+    wangshen_anchor: str
     jinyu_anchor: str
     feiren_def: str
     zaisha_anchor: str
