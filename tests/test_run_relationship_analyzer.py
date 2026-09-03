@@ -2,6 +2,7 @@
 
 from run_demo import colored_str
 from run_relationship_analyzer import (
+  _WHOLE_PILLAR_SHENSHA_LABELS,
   _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
 )
 from src.defines import Dizhi, Ganzhi
@@ -55,6 +56,12 @@ def test_shensha_labels() -> None:
     f'{label}：{colored_str(next(iter(dizhis)))}'
     for label, dizhis in expected
   ]
+
+  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
+  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
+  assert tuple(_WHOLE_PILLAR_SHENSHA_LABELS) == ('kuigang', 'tianshe')
+  assert set(_WHOLE_PILLAR_SHENSHA_LABELS) == at_birth_keys - common_keys
+  assert tuple(_WHOLE_PILLAR_SHENSHA_LABELS.values()) == ('魁罡', '天赦')
 
   kuigang = Ganzhi.from_str('庚辰')
   tianshe = Ganzhi.from_str('戊寅')

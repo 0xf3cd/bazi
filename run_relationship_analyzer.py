@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 
-from typing import cast
+from typing import Final, cast
 from collections.abc import Mapping
 
 from run_demo import get_basic_info, colored_str
 
 from src.bazi_chart import BaziChart
-from src.defines import Dizhi
+from src.common import frozendict
+from src.defines import Dizhi, Ganzhi
 from src.transit_chart import TransitChart
 from src.transits import TransitKind
 from src.analyzer.relationship import (
   RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
 )
+
+
+_WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
+  'kuigang': '魁罡',
+  'tianshe': '天赦',
+})
 
 
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
@@ -33,16 +40,16 @@ def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
 
 def at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
   result = shensha_strs(shensha)
-  if (kuigang := shensha['kuigang']) is not None:
-    result.append(f'魁罡：{colored_str(kuigang)}')
-  if (tianshe := shensha['tianshe']) is not None:
-    result.append(f'天赦：{colored_str(tianshe)}')
+  whole_pillars = cast(Mapping[str, Ganzhi | None], shensha)
+  for name, label in _WHOLE_PILLAR_SHENSHA_LABELS.items():
+    if (ganzhi := whole_pillars[name]) is not None:
+      result.append(f'{label}：{colored_str(ganzhi)}')
   return result
 
 
 def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
-  labels = '、'.join(label for label, _ in _named_shensha(shensha))
-  return f'原局无{labels}、魁罡、天赦'
+  labels = tuple(label for label, _ in _named_shensha(shensha))
+  return f'原局无{"、".join(labels + tuple(_WHOLE_PILLAR_SHENSHA_LABELS.values()))}'
 
 
 if __name__ == '__main__':
