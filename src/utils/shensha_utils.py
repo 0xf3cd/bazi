@@ -59,9 +59,8 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
 
   Args:
   - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
-    decides which pillar supplies it. 《三命通会》 supplies the Tiangan-to-Dizhi table,
-    but does not identify the anchor pillar.
-    查法所锚的天干，由调用方决定取哪一柱；《三命通会》给出干到支的表，但未指定锚柱。
+    decides which pillar supplies it.
+    查法所锚的天干，由调用方决定取哪一柱。
   - dizhi: (Dizhi) The Dizhi.
 
   Returns: (bool) Whether the `dizhi` is the HONGYAN (红艳) of `key_tiangan`.

@@ -555,6 +555,20 @@ def test_five_dizhi_anchors_at_birth(
   assert default_shensha['taohua'] == day_shensha['taohua']
 
 
+def test_five_dizhi_anchors_move_independently() -> None:
+  school = BaziSchool(yima_anchor=Anchor.DAY, huagai_anchor=Anchor.YEAR_AND_DAY)
+  chart = BaziChart(Bazi.create(
+    '1955-07-19 09:00',
+    BaziGender.MALE,
+    BaziConfig(school=school),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('乙未', '癸未', '辛巳', '癸巳')
+
+  shensha = RelationshipAnalyzer(chart).at_birth.shensha
+  assert shensha['yima'] == frozenset()
+  assert shensha['huagai'] == frozenset({Dizhi.未})
+
+
 # Each pair supplies one year-anchor-only hit and one day-anchor hit.
 @pytest.mark.parametrize('getter, year_ganzhi, day_ganzhi', [
   (lambda result: result['yima'], Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
@@ -1583,6 +1597,10 @@ def test_at_birth_anchors_preserve_kind_and_pillar_scope() -> None:
     (TIANGAN, Anchor.DAY, day_tiangan_calls),
     (TIANGAN, Anchor.YEAR_AND_DAY, (*year_tiangan_calls, *day_tiangan_calls)),
   )
+  assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
+    relationship_module._AnchorKind,
+    Anchor,
+  ))
 
   chart = BaziChart(Bazi.create('2020-07-02 19:08', 'female'))
   assert tuple(map(str, chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
@@ -1667,6 +1685,10 @@ def test_transit_anchors_reuse_the_keys_without_pillar_exclusion() -> None:
     (TIANGAN, Anchor.DAY, (Tiangan.丙,)),
     (TIANGAN, Anchor.YEAR_AND_DAY, (Tiangan.庚, Tiangan.丙)),
   )
+  assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
+    relationship_module._AnchorKind,
+    Anchor,
+  ))
 
   for kind, anchor, keys in cases:
     calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
@@ -1687,7 +1709,7 @@ def test_every_anchor_member_is_wired_to_pillars() -> None:
   # table replaces them all, so one gate has to execute that invariant. A new `Anchor` member
   # with no entry would otherwise surface as a bare `KeyError` at lookup time.
   # 机械绑定:被删的五个枚举各带一条「成员未接线」守卫,合并成一张表后要有一道闸执行这条
-  # 不变量——新成员漏登记否则只会在查法时抛裸 `KeyError`。
+  # 不变量——新成员漏登记的话，只会在查法时抛裸 `KeyError`。
   pillars = relationship_module._ANCHOR_PILLARS
   assert set(pillars) == set(Anchor)
   for anchor, indices in pillars.items():

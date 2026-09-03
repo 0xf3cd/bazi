@@ -151,12 +151,11 @@ class Anchor(Enum):
   - YEAR_AND_DAY: key on both, each pillar supplying its own lookup.
     年、日两柱分别为锚，各查一遍。
 
-  One knob shape serves every anchored Shensha. A member says only WHICH pillar supplies
+  One knob shape serves every anchored Shensha. A member says only which pillar supplies
   the key; whether the key is that pillar's Tiangan or its Dizhi belongs to the Shensha
-  itself and is declared in the analyzer's registry. A Tiangan key inspects all four
-  branches; a Dizhi key inspects the other three, so a branch never matches itself.
+  itself and is declared in the analyzer's registry.
   一种旋钮形状管全部带锚神煞：成员只说 key 出自哪一柱；key 取该柱天干还是地支属于神煞自身，
-  由分析层注册表声明。干锚查四支，支锚查其余三支——地支不自查。
+  由分析层注册表声明。
 
   Which members a knob may take is not free: `_ANCHOR_CHOICES` pins the supported values
   per field, and records each value's provenance or known provenance gap on that line.
