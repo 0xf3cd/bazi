@@ -46,6 +46,7 @@ def test_school_enums_basic() -> None:
   assert len(DizhiRules.GongheDef) == 2
   assert len(DizhiRules.GongDef) == 4
   assert len(ShenshaRules.YangrenDef) == 3
+  assert not hasattr(ShenshaRules, 'FeirenDef')
   assert len(ShenshaRules.TianyiDef) == 4
 
 
