@@ -257,8 +257,7 @@ class Bazi:
     '''
     Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
 
-    Note that the config is `DEFAULT_CONFIG` (DAY precision, the celestial backend, the default
-    school, and JIE_PROJECTED Dayun years).
+    Note that the config is `DEFAULT_CONFIG`.
     Note that the year is in [1902, 2080], and day is in [1, 28].
     '''
     return Bazi.create(

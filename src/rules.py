@@ -285,10 +285,6 @@ class DizhiRules:
     候选柱位由入口决定：`search_ganzhis` 只查相邻具体出现，`discover_mutual_ganzhis`
     查横跨两组输入的柱位对。
 
-    This knob is declared per chart via `BaziSchool.gong_def` and read at evaluation time
-    by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
-    本旋钮由 `BaziSchool.gong_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
-
     No change should be made to the existing definitions. Only add new definitions.
 
     Sources / 出处:
@@ -358,10 +354,6 @@ class DizhiRules:
     ANHE is non-directional, so every direct or batch query entry sees the same table per
     definition -- there is no entry-layer divergence like `XingDef`'s.
     暗合无方向，每个直接或批量查法入口看到的表一致——无 `XingDef` 那种入口层分歧。
-
-    This knob is declared per chart via `BaziSchool.anhe_def` and read at evaluation time
-    by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
-    本旋钮由 `BaziSchool.anhe_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
 
     No change should be made to the existing definitions. Only add new definitions.
     '''
@@ -493,10 +485,6 @@ class DizhiRules:
       batch query entries compare as multisets and cannot.
       入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；批量查法入口按多重集
       比对，看不出方向。
-
-    This knob is declared per chart via `BaziSchool.xing_def` and read at evaluation time
-    by relation discovery (`analyzer/relationship.py`); member names are serialized into JSON.
-    本旋钮由 `BaziSchool.xing_def` 按盘声明，关系查法在评估期读取；成员名进 JSON。
 
     No change should be made to the existing definitions. Only add new definitions.
     '''
@@ -674,9 +662,8 @@ class ShenshaRules:
   # 见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
   # 华盖取各三合局的墓库；上引《三命通会》原文转引自袁树珊《命理探源》。
   # Source / 出处: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #16).
-  # Mainstream modern references use the year or day branch as the anchor and inspect the other
-  # pillars' branches (百度百科「神煞」; also 问真、高人).
-  # 当代通行查法以年支或日支为锚，查其他柱的地支（百度百科「神煞」；问真、高人）。
+  # Additional anchor references / 其他查法锚参考: 百度百科「神煞」、高人。
+  # Supported readings and provenance / 支持口径及出处: `_ANCHOR_CHOICES['huagai_anchor']`.
   HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '寅午戌' : '戌',
@@ -692,8 +679,7 @@ class ShenshaRules:
   # 将星取各三合局的帝旺位；《三命通会·卷三·论灾煞》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #152).
   # Cross-check / 校核: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb (issue #152).
-  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
-  # 问真以年支或日支为锚，查余支。
+  # Supported readings / 支持口径: `_ANCHOR_CHOICES['jiangxing_anchor']`.
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#将星 (issue #152).
   JIANGXING: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
@@ -709,9 +695,7 @@ class ShenshaRules:
   # enumerated group by group in 《三命通会·卷三·论灾煞》.
   # 灾煞取各三合局将星的对冲支；《三命通会·卷三·论灾煞》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #174).
-  # Anchor sources / 查法锚出处: 问真 uses the year branch; 高人 uses both year and day
-  # branches. These alternatives are selected by `BaziSchool.zaisha_anchor` (issue #174).
-  # 问真查年支，高人查年支与日支；由 `BaziSchool.zaisha_anchor` 选择。
+  # Supported readings and sources / 支持口径及出处: `_ANCHOR_CHOICES['zaisha_anchor']`.
   # Modern compilations also call this 白虎煞; the public rule and display retain the
   # classical name 灾煞 because other distinct 白虎 tables circulate.
   # 现代汇编亦称白虎煞；另有不同白虎表流传，故公开规则与显示仍用古名灾煞。
@@ -729,8 +713,7 @@ class ShenshaRules:
   # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
   # 劫煞取各三合局五行的绝位；《三命通会·卷三·论劫煞亡神》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #153).
-  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
-  # 问真以年支或日支为锚，查余支。
+  # Supported readings / 支持口径: `_ANCHOR_CHOICES['jiesha_anchor']`.
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#劫煞 (issue #153).
   JIESHA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
@@ -746,8 +729,7 @@ class ShenshaRules:
   # enumerated group by group in 《三命通会·卷三·论劫煞亡神》.
   # 亡神取各三合局五行的临官位；《三命通会·卷三·论劫煞亡神》逐组明列。
   # Table source / 表值出处: https://book.taiyi.me/命/三命通会/三命通会(卷三) (issue #154).
-  # Wenzhen (问真) anchors on the year or day branch and inspects the remaining branches.
-  # 问真以年支或日支为锚，查余支。
+  # Supported readings / 支持口径: `_ANCHOR_CHOICES['wangshen_anchor']`.
   # Anchor source / 查法锚出处: https://book.taiyi.me/命/神煞大全#亡神 (issue #154).
   WANGSHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
@@ -865,11 +847,9 @@ class ShenshaRules:
     - DIWANG: all ten Tiangans take the branch opposite their Diwang (帝旺) branch.
       十干各取帝旺位的对冲支。
 
-    The lookup always keys on the Day Master and inspects all four branches. The chart
-    selects the Yangren and Feiren profiles independently through `BaziSchool.yangren_def`
-    and `BaziSchool.feiren_def`; member names are serialized into JSON.
-    查法固定以日干查四支；命盘通过 `BaziSchool.yangren_def` 与 `BaziSchool.feiren_def` 分别选择
-    羊刃和飞刃口径，成员名进 JSON。
+    `BaziSchool.yangren_def` and `BaziSchool.feiren_def` are independent: a chart may
+    combine any Yangren profile with any Feiren profile.
+    `BaziSchool.yangren_def` 与 `BaziSchool.feiren_def` 两个旋钮彼此独立，可任意组合羊刃与飞刃口径。
 
     Sources / 出处:
     - 《三命通会·卷三·论羊刃》 records both the ZIPING and LUMING readings:
@@ -984,11 +964,9 @@ class ShenshaRules:
       阴贵表：与阳贵表合并即为传统合并表；「六辛逢午马」按分承所得十干表与本表相同。
 
     `GENG_WITH_JIA_WU` has the thicker classical lineage and is also the merged table
-    used by 问真. The chart declares a profile via `BaziSchool.tianyi_def`, independently
-    of `BaziSchool.tianyi_anchor`; member names are serialized into JSON. Day/night boundary
-    selection is deliberately outside these tables.
-    传统合并表的古籍谱系较厚，问真亦采用；
-    查法 profile 由 `BaziSchool.tianyi_def` 按盘声明，与锚干配置相互独立，成员名进 JSON；
+    used by 问真. `TianyiDef` is independent of `BaziSchool.tianyi_anchor`; day/night
+    boundary selection is deliberately outside these tables.
+    传统合并表的古籍谱系较厚，问真亦采用；`TianyiDef` 与 `BaziSchool.tianyi_anchor` 相互独立，
     本表不代选昼夜界线。
 
     Sources / 出处:
