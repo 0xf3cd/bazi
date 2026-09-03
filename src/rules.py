@@ -843,8 +843,11 @@ class ShenshaRules:
   )
 
   class YangrenDef(Enum):
-    '''The definitions of YANGREN (羊刃 / 阳刃), which disagree on whether Yin
-    Tiangans have Yangren and where it falls. 羊刃（阳刃）的三种定义，分歧在阴干有无刃及刃位。
+    '''The definitions shared by YANGREN (羊刃 / 阳刃) and FEIREN (飞刃).
+    Yangren readings disagree on whether Yin Tiangans have Yangren and where it falls;
+    each Feiren profile takes the branch opposite the corresponding Yangren profile.
+    羊刃（阳刃）与飞刃共用的三种定义。羊刃口径分歧在阴干有无刃及刃位；每套飞刃均取
+    对应羊刃定义的对冲支。
 
     - ZIPING: only the five Yang Tiangans have 阳刃.
       子平法：仅五阳干有阳刃。
@@ -854,16 +857,31 @@ class ShenshaRules:
       charting programs use this table.
       十干各取帝旺位；问真与高人排盘软件采用此表。
 
-    The lookup always keys on the Day Master and inspects all four branches; the
-    chart declares the definition via `BaziSchool.yangren_def`, and member names
-    are serialized into JSON. 查法固定以日干查四支；定义由 `BaziSchool.yangren_def`
-    按盘声明，成员名进 JSON。
+    For Feiren / 飞刃:
+    - ZIPING: only the five Yang Tiangans have Feiren, opposite their 阳刃.
+      子平法：仅五阳干有飞刃，取阳刃对冲支。
+    - LUMING: all ten Tiangans take the branch opposite their LUMING Yangren.
+      古禄命法：十干皆有飞刃，取古禄命羊刃对冲支。
+    - DIWANG: all ten Tiangans take the branch opposite their Diwang (帝旺) branch.
+      十干各取帝旺位的对冲支。
+
+    The lookup always keys on the Day Master and inspects all four branches. The chart
+    selects the Yangren and Feiren profiles independently through `BaziSchool.yangren_def`
+    and `BaziSchool.feiren_def`; member names are serialized into JSON.
+    查法固定以日干查四支；命盘通过 `BaziSchool.yangren_def` 与 `BaziSchool.feiren_def` 分别选择
+    羊刃和飞刃口径，成员名进 JSON。
 
     Sources / 出处:
     - 《三命通会·卷三·论羊刃》 records both the ZIPING and LUMING readings:
       https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
     - Modern DIWANG table: https://book.taiyi.me/命/神煞大全 and
       https://github.com/gaorenyes/gaorenyes.github.io
+    - 《三命通会·卷三·论羊刃》 Feiren entry / 飞刃条:
+      https://book.taiyi.me/命/三命通会/三命通会(卷三)
+    - 《渊海子平·论阳刃》 supplies the ZIPING Feiren yang-stems-only basis:
+      https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
+    - Modern Feiren DIWANG table:
+      https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/b/index.html#L748
 
     No change should be made to the existing definitions. Only add new definitions.
     '''
@@ -910,39 +928,8 @@ class ShenshaRules:
     }),
   })
 
-  class FeirenDef(Enum):
-    '''The definitions of FEIREN (飞刃). Each profile takes the branch opposite the
-    corresponding Yangren definition. 飞刃的三种定义；每套均取对应羊刃定义的对冲支。
-
-    - ZIPING: only the five Yang Tiangans have Feiren, opposite their 阳刃.
-      子平法：仅五阳干有飞刃，取阳刃对冲支。
-    - LUMING: all ten Tiangans take the branch opposite their LUMING Yangren.
-      古禄命法：十干皆有飞刃，取古禄命羊刃对冲支。
-    - DIWANG: all ten Tiangans take the branch opposite their Diwang (帝旺) branch.
-      十干各取帝旺位的对冲支。
-
-    The lookup always keys on the Day Master. At birth it inspects all four branches;
-    transit analysis inspects the selected transit branches. The chart declares the
-    definition via `BaziSchool.feiren_def`, independently of `yangren_def`, and member
-    names are serialized into JSON. 查法固定以日干为锚；原局查四支，流运查所选流运支；定义由
-    `BaziSchool.feiren_def` 按盘声明，与 `yangren_def` 彼此独立，成员名进 JSON。
-
-    Sources / 出处:
-    - 《三命通会·卷三·论羊刃》:
-      https://book.taiyi.me/命/三命通会/三命通会(卷三)
-    - 《渊海子平·论阳刃》 supplies the ZIPING yang-stems-only basis:
-      https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
-    - Modern DIWANG table:
-      https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/b/index.html#L748
-
-    No change should be made to the existing definitions. Only add new definitions.
-    '''
-    ZIPING = 0
-    LUMING = 1
-    DIWANG = 2
-
-  FEIREN: Final[frozendict[FeirenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
-    FeirenDef.ZIPING : frozendict({
+  FEIREN: Final[frozendict[YangrenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
+    YangrenDef.ZIPING : frozendict({
       Tiangan.甲 : Dizhi.酉,
       Tiangan.乙 : None,
       Tiangan.丙 : Dizhi.子,
@@ -954,7 +941,7 @@ class ShenshaRules:
       Tiangan.壬 : Dizhi.午,
       Tiangan.癸 : None,
     }),
-    FeirenDef.LUMING : frozendict({
+    YangrenDef.LUMING : frozendict({
       Tiangan.甲 : Dizhi.酉,
       Tiangan.乙 : Dizhi.戌,
       Tiangan.丙 : Dizhi.子,
@@ -966,7 +953,7 @@ class ShenshaRules:
       Tiangan.壬 : Dizhi.午,
       Tiangan.癸 : Dizhi.未,
     }),
-    FeirenDef.DIWANG : frozendict({
+    YangrenDef.DIWANG : frozendict({
       Tiangan.甲 : Dizhi.酉,
       Tiangan.乙 : Dizhi.申,
       Tiangan.丙 : Dizhi.子,

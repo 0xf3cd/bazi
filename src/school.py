@@ -254,7 +254,7 @@ class BaziSchool:
   jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   jinyu_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
+  feiren_def: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
 
   def __post_init__(self) -> None:

@@ -418,7 +418,7 @@ def feiren(
   day_master: Tiangan,
   dizhi: Dizhi,
   *,
-  definition: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING,
+  definition: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING,
 ) -> bool:
   '''
   Check whether `dizhi` is the FEIREN (飞刃) of `day_master` under the selected
@@ -427,7 +427,7 @@ def feiren(
   Args:
   - day_master: (Tiangan) The Day Master used as the lookup key.
   - dizhi: (Dizhi) The branch to inspect.
-  - definition: (ShenshaRules.FeirenDef) The definition to use; defaults to
+  - definition: (ShenshaRules.YangrenDef) The definition to use; defaults to
     ZIPING, where only Yang Tiangans have 飞刃. 所用定义；默认子平五阳干专有口径。
 
   Returns: (bool) Whether `dizhi` is the Feiren of `day_master` under `definition`.
@@ -437,7 +437,7 @@ def feiren(
     - return: True
   - feiren(Tiangan.乙, Dizhi.申)
     - return: False
-  - feiren(Tiangan.乙, Dizhi.申, definition=ShenshaRules.FeirenDef.DIWANG)
+  - feiren(Tiangan.乙, Dizhi.申, definition=ShenshaRules.YangrenDef.DIWANG)
     - return: True
   '''
 
@@ -445,8 +445,8 @@ def feiren(
     raise TypeError(f'Expected Tiangan, got {type(day_master)}')
   if not isinstance(dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.FeirenDef):
-    raise TypeError(f'Expected FeirenDef, got {type(definition)}')
+  if not isinstance(definition, ShenshaRules.YangrenDef):
+    raise TypeError(f'Expected YangrenDef, got {type(definition)}')
   return ShenshaRules.FEIREN[definition][day_master] is dizhi
 
 

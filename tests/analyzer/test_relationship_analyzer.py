@@ -1035,12 +1035,12 @@ def test_yangren_checks_every_selected_transit_branch() -> None:
 
 
 @pytest.mark.parametrize('feiren_def, expected', [
-  (ShenshaRules.FeirenDef.ZIPING, frozenset()),
-  (ShenshaRules.FeirenDef.LUMING, frozenset({Dizhi.戌})),
-  (ShenshaRules.FeirenDef.DIWANG, frozenset({Dizhi.申})),
+  (ShenshaRules.YangrenDef.ZIPING, frozenset()),
+  (ShenshaRules.YangrenDef.LUMING, frozenset({Dizhi.戌})),
+  (ShenshaRules.YangrenDef.DIWANG, frozenset({Dizhi.申})),
 ])
 def test_feiren_definition_at_birth_and_transits(
-  feiren_def: ShenshaRules.FeirenDef,
+  feiren_def: ShenshaRules.YangrenDef,
   expected: frozenset[Dizhi],
 ) -> None:
   chart: BaziChart = BaziChart(Bazi.create(
@@ -1057,7 +1057,7 @@ def test_feiren_definition_at_birth_and_transits(
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['feiren'] == expected
 
-  if feiren_def is ShenshaRules.FeirenDef.ZIPING:
+  if feiren_def is ShenshaRules.YangrenDef.ZIPING:
     default_chart = BaziChart(Bazi.create('1908-10-17 12:00', 'male'))
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['feiren'] == expected
 
@@ -1068,7 +1068,7 @@ def test_yangren_and_feiren_definitions_are_independent() -> None:
     'male',
     BaziConfig(school=BaziSchool(
       yangren_def=ShenshaRules.YangrenDef.DIWANG,
-      feiren_def=ShenshaRules.FeirenDef.LUMING,
+      feiren_def=ShenshaRules.YangrenDef.LUMING,
     )),
   ))
   transits = TransitSet(

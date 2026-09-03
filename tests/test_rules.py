@@ -261,22 +261,22 @@ def test_yangren() -> None:
 
 
 def test_feiren() -> None:
-  expected: dict[ShenshaRules.FeirenDef, dict[Tiangan, Dizhi | None]] = {
-    ShenshaRules.FeirenDef.ZIPING : {
+  expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
+    ShenshaRules.YangrenDef.ZIPING : {
       Tiangan.甲 : Dizhi.酉, Tiangan.乙 : None,
       Tiangan.丙 : Dizhi.子, Tiangan.丁 : None,
       Tiangan.戊 : Dizhi.子, Tiangan.己 : None,
       Tiangan.庚 : Dizhi.卯, Tiangan.辛 : None,
       Tiangan.壬 : Dizhi.午, Tiangan.癸 : None,
     },
-    ShenshaRules.FeirenDef.LUMING : {
+    ShenshaRules.YangrenDef.LUMING : {
       Tiangan.甲 : Dizhi.酉, Tiangan.乙 : Dizhi.戌,
       Tiangan.丙 : Dizhi.子, Tiangan.丁 : Dizhi.丑,
       Tiangan.戊 : Dizhi.子, Tiangan.己 : Dizhi.丑,
       Tiangan.庚 : Dizhi.卯, Tiangan.辛 : Dizhi.辰,
       Tiangan.壬 : Dizhi.午, Tiangan.癸 : Dizhi.未,
     },
-    ShenshaRules.FeirenDef.DIWANG : {
+    ShenshaRules.YangrenDef.DIWANG : {
       Tiangan.甲 : Dizhi.酉, Tiangan.乙 : Dizhi.申,
       Tiangan.丙 : Dizhi.子, Tiangan.丁 : Dizhi.亥,
       Tiangan.戊 : Dizhi.子, Tiangan.己 : Dizhi.亥,
@@ -285,14 +285,13 @@ def test_feiren() -> None:
     },
   }
   assert ShenshaRules.FEIREN == expected
-  assert set(ShenshaRules.FEIREN) == set(ShenshaRules.FeirenDef)
+  assert set(ShenshaRules.FEIREN) == set(ShenshaRules.YangrenDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.FEIREN.values())
 
-  for feiren_def in ShenshaRules.FeirenDef:
-    yangren_def = ShenshaRules.YangrenDef[feiren_def.name]
+  for definition in ShenshaRules.YangrenDef:
     for tiangan in Tiangan:
-      yangren = ShenshaRules.YANGREN[yangren_def][tiangan]
-      feiren = ShenshaRules.FEIREN[feiren_def][tiangan]
+      yangren = ShenshaRules.YANGREN[definition][tiangan]
+      feiren = ShenshaRules.FEIREN[definition][tiangan]
       if yangren is None:
         assert feiren is None
       else:
