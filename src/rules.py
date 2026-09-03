@@ -851,16 +851,18 @@ class ShenshaRules:
     combine any Yangren profile with any Feiren profile.
     `BaziSchool.yangren_def` 与 `BaziSchool.feiren_def` 两个旋钮彼此独立，可任意组合羊刃与飞刃口径。
 
-    Sources / 出处:
+    Yangren sources / 羊刃出处:
     - 《三命通会·卷三·论羊刃》 records both the ZIPING and LUMING readings:
       https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
     - Modern DIWANG table: https://book.taiyi.me/命/神煞大全 and
       https://github.com/gaorenyes/gaorenyes.github.io
+
+    Feiren sources / 飞刃出处:
     - 《三命通会·卷三·论羊刃》:
       https://book.taiyi.me/命/三命通会/三命通会(卷三)
-    - 《渊海子平·论阳刃》 supplies the ZIPING Feiren yang-stems-only basis:
+    - 《渊海子平·论阳刃》 supplies the ZIPING yang-stems-only basis:
       https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
-    - Modern Feiren DIWANG table:
+    - Modern DIWANG table:
       https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/b/index.html#L748
 
     No change should be made to the existing definitions. Only add new definitions.
