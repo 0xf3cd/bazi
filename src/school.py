@@ -163,10 +163,6 @@ class Anchor(Enum):
   旋钮能取哪些成员并不自由：`_ANCHOR_CHOICES` 按字段钉死本库支持的取值，并逐行记录出处或
   已知出处缺口；`BaziSchool` 拒收表外取值。
 
-  Anchors are consumed at evaluation time and never change the four pillars. They feed
-  equality / hashing / JSON as part of `BaziSchool`.
-  锚只在神煞评估期消费，不改变四柱；随 `BaziSchool` 进相等性、哈希与 JSON。
-
   No change should be made to the existing definitions. Only add new definitions.
   '''
   YEAR         = 0
@@ -254,7 +250,7 @@ class BaziSchool:
   jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   jinyu_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  feiren_def: ShenshaRules.FeirenDef = ShenshaRules.FeirenDef.ZIPING
+  feiren_def: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
 
   def __post_init__(self) -> None:
@@ -466,10 +462,4 @@ class BaziConfig:
     )
 
 
-'''The default config: DAY precision, the celestial backend, `DEFAULT_SCHOOL`, and
-JIE_PROJECTED Dayun years -- the constructor defaults are the canonical definition;
-`from_values`'s signature defaults are a second spelling of the same, pinned equivalent by
-`test_defaults_are_defined_once`.
-默认配置：日级精度、celestial 后端、默认流派、逐节投影大运年份——构造默认值是正典；
-`from_values` 的签名默认值是第二处拼写，由 `test_defaults_are_defined_once` 钉住等价。'''
 DEFAULT_CONFIG: Final[BaziConfig] = BaziConfig()

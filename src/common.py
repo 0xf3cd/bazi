@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from dataclasses import fields
-from typing import TYPE_CHECKING, TypeVar, Final, cast
+from typing import TYPE_CHECKING, TypeVar, Final, cast, get_args
 from collections.abc import Iterator, Mapping
 
 if TYPE_CHECKING:
@@ -76,9 +76,11 @@ def check_declared_types(instance: 'DataclassInstance') -> None:
     declared = cast(type, f.type)
     value = getattr(instance, f.name)
     if not isinstance(value, declared):
-      # A union has no `__name__` but formats as `Ganzhi | None`, so read the name off it.
-      name = getattr(declared, '__name__', declared)
+      members = get_args(declared)
+      name = ' | '.join(
+        'None' if member is type(None) else member.__name__
+        for member in members
+      ) if members else declared.__name__
       raise TypeError(f'Expected {name}, got {type(value)}')
 
 #endregion
-

@@ -1,10 +1,12 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_common.py
 
+from dataclasses import dataclass
+
 import pytest
 
 from src.defines import Shishen, Tiangan
-from src.common import frozendict
+from src.common import check_declared_types, frozendict
 from src.data_types import GanzhiData, BaziData, HiddenTianganDict
 
 
@@ -49,6 +51,21 @@ def test_frozendict_hash() -> None:
   bd: BaziData[HiddenTianganDict] = BaziData(htd, htd, htd, htd)
   assert hash(bd) == hash(BaziData(htd, htd, htd, htd))
   assert bd in {bd}
+
+
+def test_check_declared_types_names_plain_and_union() -> None:
+  @dataclass(frozen=True)
+  class Sample:
+    plain: int
+    union: str | None
+
+    def __post_init__(self) -> None:
+      check_declared_types(self)
+
+  with pytest.raises(TypeError, match=r"^Expected int, got <class 'str'>$"):
+    Sample('1', None) # type: ignore[arg-type]
+  with pytest.raises(TypeError, match=r"^Expected str \| None, got <class 'int'>$"):
+    Sample(1, 1) # type: ignore[arg-type]
 
 
 def test_pillardata() -> None:

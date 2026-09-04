@@ -6,7 +6,7 @@ from datetime import date, datetime
 from enum import Enum, unique
 from typing import Final
 
-from .common import frozendict
+from .common import check_declared_types, frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
@@ -66,12 +66,10 @@ class TransitSet:
   liuri:   Ganzhi | None = None
 
   def __post_init__(self) -> None:
+    check_declared_types(self)
     values = (self.xiaoyun, self.dayun, self.liunian, self.liuyue, self.liuri)
     if not any(gz is not None for gz in values):
       raise ValueError('A TransitSet cannot be empty')
-    for gz in values:
-      if gz is not None and not isinstance(gz, Ganzhi):
-        raise TypeError(f'Expected Ganzhi, got {type(gz)}')
 
   @property
   def items(self) -> tuple[tuple[TransitKind, Ganzhi], ...]:

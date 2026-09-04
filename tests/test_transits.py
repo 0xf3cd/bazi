@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_transits.py
 
+import dataclasses
 import itertools
 import random
 from datetime import datetime
@@ -89,10 +90,15 @@ def test_transit_set() -> None:
 
 
 def test_transit_set_negative() -> None:
-  with pytest.raises(ValueError):
+  with pytest.raises(ValueError, match='^A TransitSet cannot be empty$'):
     TransitSet()
-  with pytest.raises(TypeError):
-    TransitSet(liunian='甲辰') # type: ignore
+
+  transit_fields = dataclasses.fields(TransitSet)
+  for index, _ in enumerate(transit_fields):
+    values: list[object | None] = [None] * len(transit_fields)
+    values[index] = '甲辰'
+    with pytest.raises(TypeError, match=r"^Expected Ganzhi \| None, got <class 'str'>$"):
+      TransitSet(*values) # type: ignore[arg-type]
 
   transits = TransitSet(liunian=Ganzhi.from_str('甲辰'))
   with pytest.raises(ValueError):
