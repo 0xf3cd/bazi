@@ -46,15 +46,25 @@ those, don't restate them here. Two rules the README doesn't spell out:
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
   workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke`.
-  Quick local equivalent (run all four, they are all hard gates):
+  That full invocation is the gate. The four commands below are a **faster inner loop,
+  not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`)
+  and the `-i` leg (`run_interpreter.py`). Run the full invocation before opening a PR.
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
   - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_demo.py,*/run_relationship_analyzer.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
-    then `python -m coverage report --show-missing` — must stay at **100%**
+    then `python -m coverage report --show-missing --fail-under=100` — coverage is a hard
+    gate at **100%**, and `--fail-under` is what makes it one; without the flag the report
+    prints and exits 0 no matter what
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
   - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
     (see Idioms below; the script refuses to run without `-O`).
+- ⚠️ A bare `./run_tests.py` silently deselects tests — it defaults to
+  `-m 'not slow and not hkodata'`, and the `slow` face holds the Shensha suites
+  (`test_at_birth_shensha`, `test_transit_shensha`) among others. Its green says nothing
+  about them. Pass `-s -hko` (or the full invocation above) whenever a green run is meant
+  to mean anything; `pytest tests/ --collect-only -q` with and without the marker prints
+  the gap for the tree in front of you.
 
 ## PR workflow
 - Branch from `main`; PR body in Chinese, four sections (内容 / 测试 / 验证 / 范围说明);
