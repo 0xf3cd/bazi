@@ -94,41 +94,53 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   # its day-branch reading in 《命理探源》 also requires a matching 纳音 and inspects only
   # the 月 and 时 branches, so offering a day anchor alone would state a rule no source does.
   # 桃花不设旋钮：《命理探源》的日支桃花另有纳音条件且只查月、时，只切锚会造出出处未言的规则。
-  'taohua'   : _ShenshaSpec(shensha_utils.taohua,    _AnchorKind.DIZHI,   Anchor.YEAR_AND_DAY, '桃花'),
-  'hongluan' : _ShenshaSpec(shensha_utils.hongluan,  _AnchorKind.DIZHI,   Anchor.YEAR, '红鸾'),
-  'hongyan'  : _ShenshaSpec(shensha_utils.hongyan,   _AnchorKind.TIANGAN, lambda school: school.hongyan_anchor, '红艳'),
-  'tianxi'   : _ShenshaSpec(shensha_utils.tianxi,    _AnchorKind.DIZHI,   Anchor.YEAR, '天喜'),
-  'yima'     : _ShenshaSpec(shensha_utils.yima,      _AnchorKind.DIZHI,   lambda school: school.yima_anchor, '驿马'),
-  'huagai'   : _ShenshaSpec(shensha_utils.huagai,    _AnchorKind.DIZHI,   lambda school: school.huagai_anchor, '华盖'),
-  'yangren'  : _ShenshaSpec(
+  'taohua'     : _ShenshaSpec(shensha_utils.taohua,      _AnchorKind.DIZHI,   Anchor.YEAR_AND_DAY, '桃花'),
+  'hongluan'   : _ShenshaSpec(shensha_utils.hongluan,    _AnchorKind.DIZHI,   Anchor.YEAR, '红鸾'),
+  'hongyan'    : _ShenshaSpec(shensha_utils.hongyan,     _AnchorKind.TIANGAN, lambda school: school.hongyan_anchor, '红艳'),
+  'tianxi'     : _ShenshaSpec(shensha_utils.tianxi,      _AnchorKind.DIZHI,   Anchor.YEAR, '天喜'),
+  'yima'       : _ShenshaSpec(shensha_utils.yima,        _AnchorKind.DIZHI,   lambda school: school.yima_anchor, '驿马'),
+  'huagai'     : _ShenshaSpec(shensha_utils.huagai,      _AnchorKind.DIZHI,   lambda school: school.huagai_anchor, '华盖'),
+  'yangren'    : _ShenshaSpec(
     shensha_utils.yangren,
     _AnchorKind.TIANGAN,
     Anchor.DAY,
     '羊刃',
     lambda school: school.yangren_def,
   ),
-  'feiren'   : _ShenshaSpec(
+  'feiren'     : _ShenshaSpec(
     shensha_utils.feiren,
     _AnchorKind.TIANGAN,
     Anchor.DAY,
     '飞刃',
     lambda school: school.feiren_def,
   ),
-  'tianyi'   : _ShenshaSpec(
+  'tianyi'     : _ShenshaSpec(
     shensha_utils.tianyi,
     _AnchorKind.TIANGAN,
     lambda school: school.tianyi_anchor,
     '天乙贵人',
     lambda school: school.tianyi_def,
   ),
-  'jiangxing': _ShenshaSpec(shensha_utils.jiangxing, _AnchorKind.DIZHI,   lambda school: school.jiangxing_anchor, '将星'),
-  'zaisha'   : _ShenshaSpec(shensha_utils.zaisha,    _AnchorKind.DIZHI,   lambda school: school.zaisha_anchor, '灾煞'),
-  'jiesha'   : _ShenshaSpec(shensha_utils.jiesha,    _AnchorKind.DIZHI,   lambda school: school.jiesha_anchor, '劫煞'),
-  'wangshen' : _ShenshaSpec(shensha_utils.wangshen,  _AnchorKind.DIZHI,   lambda school: school.wangshen_anchor, '亡神'),
-  'guchen'   : _ShenshaSpec(shensha_utils.guchen,    _AnchorKind.DIZHI,   Anchor.YEAR, '孤辰'),
-  'guasu'    : _ShenshaSpec(shensha_utils.guasu,     _AnchorKind.DIZHI,   Anchor.YEAR, '寡宿'),
-  'lushen'   : _ShenshaSpec(shensha_utils.lushen,    _AnchorKind.TIANGAN, Anchor.DAY, '禄神'),
-  'jinyu'    : _ShenshaSpec(shensha_utils.jinyu,     _AnchorKind.TIANGAN, lambda school: school.jinyu_anchor, '金舆'),
+  'jiangxing'  : _ShenshaSpec(shensha_utils.jiangxing,   _AnchorKind.DIZHI,   lambda school: school.jiangxing_anchor, '将星'),
+  'zaisha'     : _ShenshaSpec(shensha_utils.zaisha,      _AnchorKind.DIZHI,   lambda school: school.zaisha_anchor, '灾煞'),
+  'jiesha'     : _ShenshaSpec(shensha_utils.jiesha,      _AnchorKind.DIZHI,   lambda school: school.jiesha_anchor, '劫煞'),
+  'wangshen'   : _ShenshaSpec(shensha_utils.wangshen,    _AnchorKind.DIZHI,   lambda school: school.wangshen_anchor, '亡神'),
+  'guchen'     : _ShenshaSpec(shensha_utils.guchen,      _AnchorKind.DIZHI,   Anchor.YEAR, '孤辰'),
+  'guasu'      : _ShenshaSpec(shensha_utils.guasu,       _AnchorKind.DIZHI,   Anchor.YEAR, '寡宿'),
+  'lushen'     : _ShenshaSpec(shensha_utils.lushen,      _AnchorKind.TIANGAN, Anchor.DAY, '禄神'),
+  'jinyu'      : _ShenshaSpec(shensha_utils.jinyu,       _AnchorKind.TIANGAN, lambda school: school.jinyu_anchor, '金舆'),
+  # 文昌 and 文昌贵 are two stars, not two readings of one: their tables agree on 甲 and 戊
+  # and differ on the other eight stems. Keeping them apart is the point of carrying both.
+  # 文昌与文昌贵是两颗星，不是一颗星的两种读法：两表只在甲、戊两格相同，其余八干皆异，
+  # 分列正是收录它们的用意。
+  'wenchang'   : _ShenshaSpec(
+    shensha_utils.wenchang,
+    _AnchorKind.TIANGAN,
+    lambda school: school.wenchang_anchor,
+    '文昌',
+    lambda school: school.wenchang_def,
+  ),
+  'wenchanggui': _ShenshaSpec(shensha_utils.wenchanggui, _AnchorKind.TIANGAN, Anchor.YEAR, '文昌贵'),
 })
 
 
@@ -262,40 +274,44 @@ def _with_gong(
 
 
 class ShenshaAnalysis(TypedDict):
-  # The Taohua Dizhis    (桃花星所在地支)
-  taohua:    frozenset[Dizhi]
-  # The Hongyan Dizhis   (红艳星所在地支)
-  hongyan:   frozenset[Dizhi]
-  # The Hongluan Dizhis  (红鸾星所在地支)
-  hongluan:  frozenset[Dizhi]
-  # The Tianxi Dizhis    (天喜星所在地支)
-  tianxi:    frozenset[Dizhi]
-  # The Yima Dizhis      (驿马星所在地支)
-  yima:      frozenset[Dizhi]
-  # The Huagai Dizhis    (华盖星所在地支)
-  huagai:    frozenset[Dizhi]
-  # The Yangren Dizhis   (羊刃所在地支)
-  yangren:   frozenset[Dizhi]
-  # The Feiren Dizhis    (飞刃所在地支)
-  feiren:    frozenset[Dizhi]
-  # The Tianyi Dizhis    (天乙贵人所在地支)
-  tianyi:    frozenset[Dizhi]
-  # The Jiangxing Dizhis (将星所在地支)
-  jiangxing: frozenset[Dizhi]
-  # The Zaisha Dizhis    (灾煞所在地支)
-  zaisha:    frozenset[Dizhi]
-  # The Jiesha Dizhis    (劫煞所在地支)
-  jiesha:    frozenset[Dizhi]
-  # The Wangshen Dizhis  (亡神所在地支)
-  wangshen:  frozenset[Dizhi]
-  # The Guchen Dizhis    (孤辰所在地支)
-  guchen:    frozenset[Dizhi]
-  # The Guasu Dizhis     (寡宿所在地支)
-  guasu:     frozenset[Dizhi]
-  # The Lushen Dizhis    (禄神所在地支)
-  lushen:    frozenset[Dizhi]
-  # The Jinyu Dizhis     (金舆所在地支)
-  jinyu:     frozenset[Dizhi]
+  # The Taohua Dizhis      (桃花星所在地支)
+  taohua:      frozenset[Dizhi]
+  # The Hongyan Dizhis     (红艳星所在地支)
+  hongyan:     frozenset[Dizhi]
+  # The Hongluan Dizhis    (红鸾星所在地支)
+  hongluan:    frozenset[Dizhi]
+  # The Tianxi Dizhis      (天喜星所在地支)
+  tianxi:      frozenset[Dizhi]
+  # The Yima Dizhis        (驿马星所在地支)
+  yima:        frozenset[Dizhi]
+  # The Huagai Dizhis      (华盖星所在地支)
+  huagai:      frozenset[Dizhi]
+  # The Yangren Dizhis     (羊刃所在地支)
+  yangren:     frozenset[Dizhi]
+  # The Feiren Dizhis      (飞刃所在地支)
+  feiren:      frozenset[Dizhi]
+  # The Tianyi Dizhis      (天乙贵人所在地支)
+  tianyi:      frozenset[Dizhi]
+  # The Jiangxing Dizhis   (将星所在地支)
+  jiangxing:   frozenset[Dizhi]
+  # The Zaisha Dizhis      (灾煞所在地支)
+  zaisha:      frozenset[Dizhi]
+  # The Jiesha Dizhis      (劫煞所在地支)
+  jiesha:      frozenset[Dizhi]
+  # The Wangshen Dizhis    (亡神所在地支)
+  wangshen:    frozenset[Dizhi]
+  # The Guchen Dizhis      (孤辰所在地支)
+  guchen:      frozenset[Dizhi]
+  # The Guasu Dizhis       (寡宿所在地支)
+  guasu:       frozenset[Dizhi]
+  # The Lushen Dizhis      (禄神所在地支)
+  lushen:      frozenset[Dizhi]
+  # The Jinyu Dizhis       (金舆所在地支)
+  jinyu:       frozenset[Dizhi]
+  # The Wenchang Dizhis    (文昌所在地支)
+  wenchang:    frozenset[Dizhi]
+  # The Wenchanggui Dizhis (文昌贵所在地支)
+  wenchanggui: frozenset[Dizhi]
 
 
 class AtBirthShenshaAnalysis(ShenshaAnalysis):

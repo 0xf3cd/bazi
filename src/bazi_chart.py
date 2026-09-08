@@ -118,6 +118,8 @@ class BaziJson:
     jinyu_anchor: str
     feiren_def: str
     zaisha_anchor: str
+    wenchang_anchor: str
+    wenchang_def: str
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str
