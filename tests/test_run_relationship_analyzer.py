@@ -31,6 +31,7 @@ def test_shensha_labels() -> None:
     'wenchang'   : frozenset((Dizhi.寅,)),
     'wenchanggui': frozenset((Dizhi.卯,)),
     'taiji'      : frozenset((Dizhi.辰,)),
+    'guoyin'     : frozenset((Dizhi.巳,)),
   }
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
@@ -53,6 +54,7 @@ def test_shensha_labels() -> None:
     ('文昌', frozenset((Dizhi.寅,))),
     ('文昌贵', frozenset((Dizhi.卯,))),
     ('太极贵人', frozenset((Dizhi.辰,))),
+    ('国印贵人', frozenset((Dizhi.巳,))),
   )
 
   # Keep display labels exhaustive as ShenshaAnalysis grows.
@@ -119,6 +121,7 @@ def test_shensha_labels() -> None:
     'wenchang'   : frozenset(),
     'wenchanggui': frozenset(),
     'taiji'      : frozenset(),
+    'guoyin'     : frozenset(),
   }
   empty_at_birth_shensha: AtBirthShenshaAnalysis = {
     **empty_shensha,
@@ -132,4 +135,4 @@ def test_shensha_labels() -> None:
     'kuigang': None,
     'tianshe': tianshe,
   }) == [f'天赦：{colored_str(tianshe)}']
-  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、魁罡、天赦'
+  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、魁罡、天赦'

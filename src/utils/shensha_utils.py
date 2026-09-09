@@ -596,3 +596,42 @@ def taiji(
   if not isinstance(definition, ShenshaRules.TaijiDef):
     raise TypeError(f'Expected TaijiDef, got {type(definition)}')
   return dizhi in ShenshaRules.TAIJI[definition][key_tiangan]
+
+
+def guoyin(
+  key_tiangan: Tiangan,
+  dizhi: Dizhi,
+  *,
+  definition: ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN,
+) -> bool:
+  '''
+  Check whether `dizhi` is the GUOYIN GUIREN (国印贵人) of `key_tiangan` under the selected
+  definition. 按所选定义检查地支是否为该天干的国印贵人。
+
+  Args:
+  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
+    decides which pillar supplies it.
+    查法所锚的天干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) The Dizhi.
+  - definition: (ShenshaRules.GuoyinDef) The definition to use; defaults to MODERN.
+    所用定义；默认现代通行表。
+
+  Returns: (bool) Whether `dizhi` is the GUOYIN GUIREN (国印贵人) of `key_tiangan` under
+  `definition`.
+
+  Examples:
+  - guoyin(Tiangan.甲, Dizhi.戌)
+    - return: True
+  - guoyin(Tiangan.甲, Dizhi.酉)
+    - return: False
+  - guoyin(Tiangan.甲, Dizhi.酉, definition=ShenshaRules.GuoyinDef.WUXING_JINGJI)
+    - return: True
+  '''
+
+  if not isinstance(key_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, ShenshaRules.GuoyinDef):
+    raise TypeError(f'Expected GuoyinDef, got {type(definition)}')
+  return ShenshaRules.GUOYIN[definition][key_tiangan] is dizhi

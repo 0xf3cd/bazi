@@ -152,6 +152,15 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     '太极贵人',
     lambda school: school.taiji_def,
   ),
+  # 国印贵人 carries three readings, all fixed offsets from the stem's 禄 and sharing no cell.
+  # 国印贵人三读并列，皆为禄位的固定偏移，且无一格重合。
+  'guoyin'     : _ShenshaSpec(
+    shensha_utils.guoyin,
+    _AnchorKind.TIANGAN,
+    lambda school: school.guoyin_anchor,
+    '国印贵人',
+    lambda school: school.guoyin_def,
+  ),
 })
 
 
@@ -325,6 +334,8 @@ class ShenshaAnalysis(TypedDict):
   wenchanggui: frozenset[Dizhi]
   # The Taiji Dizhis       (太极贵人所在地支)
   taiji:       frozenset[Dizhi]
+  # The Guoyin Dizhis      (国印贵人所在地支)
+  guoyin:      frozenset[Dizhi]
 
 
 class AtBirthShenshaAnalysis(ShenshaAnalysis):

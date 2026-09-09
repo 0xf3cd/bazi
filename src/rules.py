@@ -1228,3 +1228,113 @@ class ShenshaRules:
       Tiangan.癸 : frozenset((Dizhi.申,)),
     }),
   })
+
+  class GuoyinDef(Enum):
+    '''The definitions of GUOYIN GUIREN (国印贵人). All three readings place the star at a
+    fixed offset from the stem's 禄; they differ only in the offset and in whether 禄 itself
+    counts as the first position.
+    国印贵人的查法定义。三读都把星定在该干禄位的固定偏移处，分歧只在偏移量、
+    以及禄本身算不算第一位。
+
+    - WUXING_JINGJI: 禄前第八位, counting 禄 as the first — i.e. 禄 + 7.
+      《五行精纪》禄前第八位（含禄起算）。
+    - MODERN: the table current in modern practice — 禄 + 8.
+      现代通行表。
+    - XINGXUE_DACHENG: 禄前九位, counting from the position after 禄 — i.e. 禄 + 9.
+      《星学大成》禄前九位（不含禄起算）。
+
+    `MODERN` is the default: it is what both modern sources give and what current 排盘
+    software shows. 默认取现代通行表。
+
+    **The three readings share no cell** -- every stem gets a different branch under each,
+    so a chart is never ambiguous about which reading produced a hit.
+    三读无一格重合：每个天干在三读下各得不同地支，故命中结果不会含混。
+
+    What each source does and does not settle:
+    各来源定了什么、没定什么：
+
+    - 《五行精纪》 states both the offset and the anchor, and works an example:
+      「国印星,禄前第八位是,如甲申生人,至癸酉是」 with 「甲禄在寅」 — 寅 counted first,
+      酉 is the eighth. That fixes `WUXING_JINGJI` and gives the year stem as the anchor.
+      《五行精纪》给了偏移、锚与例子（甲禄在寅，数至酉为第八），`WUXING_JINGJI` 与年干锚由此确定。
+    - 《星学大成》 says only 「国印禄前九位是」. **Whether 禄 counts as the first position is
+      not stated.** Counting it would make this reading identical to `MODERN`; not counting
+      it gives `XINGXUE_DACHENG`. No source settles this, so both possibilities are carried
+      as separate readings rather than merged — the equivalence under one convention is
+      arithmetic, not something that source says.
+      《星学大成》只说「禄前九位」，**含不含禄原文未载**。含则与 `MODERN` 等值，不含则为
+      `XINGXUE_DACHENG`；无来源可裁，故并列保留。「按某种约定二者等值」是推算，不是该书的断言。
+    - `MODERN` has no first-hand source of its own: 问真 gives the table without provenance,
+      高人 attributes it to 《周易述补》 which was not obtainable. It is carried because it is
+      what current practice uses, not because a text was found for it.
+      现代通行表**自身没有一手出处**：问真无出处，高人转引《周易述补》而该书未获。
+      收它是因为它是当下实践,不是因为找到了文本。
+    - 《星学大成》 and 《神峰通考》 use 国印 as a 果老星命 star that 「守照身命」 — the 命宫 and
+      身宫, not the four branches. Reading it against 四柱地支 is the modern sources' move and
+      has no classical backing.
+      《星学大成》《神峰通考》的国印是果老星命的星，查的是身命宫而非四柱；
+      按四柱地支查是现代两家的做法，无古籍背书。
+
+    Sources / 出处:
+    - 《五行精纪注释》卷十三（底本完整，白文两处转录把建节星与国印星并成一条残句）:
+      https://www.suanzhun.net/book/2731.html
+    - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:
+      https://book.taiyi.me/命/星学大成
+    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
+      https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
+    - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
+
+    No change should be made to the existing definitions. Only add new definitions.
+    '''
+    WUXING_JINGJI   = 0
+    MODERN          = 1
+    XINGXUE_DACHENG = 2
+
+  # The tables are used to find out GUOYIN GUIREN (国印贵人).
+  # 这些表格用于查询国印贵人。
+  # Every cell is a fixed offset from `BaziRules.TIANGAN_LU`; `test_rules.py` derives all
+  # thirty from that table rather than re-reading the literals here, so a typo below cannot
+  # agree with itself.
+  # 每一格都是 `BaziRules.TIANGAN_LU` 的固定偏移；`test_rules.py` 由禄表推导全部三十格，
+  # 不重读下面的字面值——写错一格不会自圆其说。
+  # Anchor and search range: see `_ANCHOR_CHOICES`; both modern sources read 四柱地支,
+  # while the classical ones point at 身命宫 (see `GuoyinDef`).
+  # 锚与被查位置见 `_ANCHOR_CHOICES`；现代两家作四柱地支，古籍侧指身命宫，见 `GuoyinDef`。
+  GUOYIN: Final[frozendict[GuoyinDef, frozendict[Tiangan, Dizhi]]] = frozendict({
+    GuoyinDef.WUXING_JINGJI : frozendict({
+      Tiangan.甲 : Dizhi.酉,
+      Tiangan.乙 : Dizhi.戌,
+      Tiangan.丙 : Dizhi.子,
+      Tiangan.丁 : Dizhi.丑,
+      Tiangan.戊 : Dizhi.子,
+      Tiangan.己 : Dizhi.丑,
+      Tiangan.庚 : Dizhi.卯,
+      Tiangan.辛 : Dizhi.辰,
+      Tiangan.壬 : Dizhi.午,
+      Tiangan.癸 : Dizhi.未,
+    }),
+    GuoyinDef.MODERN : frozendict({
+      Tiangan.甲 : Dizhi.戌,
+      Tiangan.乙 : Dizhi.亥,
+      Tiangan.丙 : Dizhi.丑,
+      Tiangan.丁 : Dizhi.寅,
+      Tiangan.戊 : Dizhi.丑,
+      Tiangan.己 : Dizhi.寅,
+      Tiangan.庚 : Dizhi.辰,
+      Tiangan.辛 : Dizhi.巳,
+      Tiangan.壬 : Dizhi.未,
+      Tiangan.癸 : Dizhi.申,
+    }),
+    GuoyinDef.XINGXUE_DACHENG : frozendict({
+      Tiangan.甲 : Dizhi.亥,
+      Tiangan.乙 : Dizhi.子,
+      Tiangan.丙 : Dizhi.寅,
+      Tiangan.丁 : Dizhi.卯,
+      Tiangan.戊 : Dizhi.寅,
+      Tiangan.己 : Dizhi.卯,
+      Tiangan.庚 : Dizhi.巳,
+      Tiangan.辛 : Dizhi.午,
+      Tiangan.壬 : Dizhi.申,
+      Tiangan.癸 : Dizhi.酉,
+    }),
+  })
