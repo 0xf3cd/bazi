@@ -212,7 +212,6 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # (https://book.taiyi.me/命/神煞大全,「以日/年干查四地支」) and 高人, and this library's
   # default. The year-stem half rests on those modern sources alone -- no classical text
   # was found that keys 文昌 on the year stem.
-  # 年干那一半只有现代来源，古籍侧未见以年干为锚的文昌。
   'wenchang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
 })
 

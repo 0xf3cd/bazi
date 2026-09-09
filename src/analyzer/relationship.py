@@ -129,10 +129,9 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
   'guasu'      : _ShenshaSpec(shensha_utils.guasu,       _AnchorKind.DIZHI,   Anchor.YEAR, '寡宿'),
   'lushen'     : _ShenshaSpec(shensha_utils.lushen,      _AnchorKind.TIANGAN, Anchor.DAY, '禄神'),
   'jinyu'      : _ShenshaSpec(shensha_utils.jinyu,       _AnchorKind.TIANGAN, lambda school: school.jinyu_anchor, '金舆'),
-  # 文昌 and 文昌贵 are two stars, not two readings of one: their tables agree on 甲 and 戊
-  # and differ on the other eight stems. Keeping them apart is the point of carrying both.
-  # 文昌与文昌贵是两颗星，不是一颗星的两种读法：两表只在甲、戊两格相同，其余八干皆异，
-  # 分列正是收录它们的用意。
+  # 文昌 and 文昌贵 are two stars, not two readings of one -- which cells the two tables
+  # share is written on `ShenshaRules.WENCHANGGUI`.
+  # 文昌与文昌贵是两颗星，不是一颗星的两种读法；两表的重合面写在 `ShenshaRules.WENCHANGGUI`。
   'wenchang'   : _ShenshaSpec(
     shensha_utils.wenchang,
     _AnchorKind.TIANGAN,

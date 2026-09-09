@@ -552,7 +552,7 @@ def test_tianyi_negative() -> None:
 def test_wenchang() -> None:
   # The two readings differ in 辛 only; every other stem is written out so a table-wide
   # edit cannot hide behind the one cell everybody looks at.
-  # 两读只在辛分歧；其余九干逐格写出，免得改动躲在唯一受注目的那一格背后。
+  # 两读只在辛分歧；其余九干逐格写出，免得改动躲在唯一有人盯着的那一格背后。
   expected: dict[ShenshaRules.WenchangDef, dict[Tiangan, Dizhi]] = {
     ShenshaRules.WenchangDef.XIN_ZI : {
       Tiangan.甲 : Dizhi.巳,

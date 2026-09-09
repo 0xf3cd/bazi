@@ -360,6 +360,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
   assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
   assert BaziSchool().tianyi_def is inspect.signature(shensha_utils.tianyi).parameters['definition'].default
   assert BaziSchool().feiren_def is inspect.signature(shensha_utils.feiren).parameters['definition'].default
+  assert BaziSchool().wenchang_def is inspect.signature(shensha_utils.wenchang).parameters['definition'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:

@@ -48,7 +48,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke`.
   That full invocation is the gate. The four commands below are a **faster inner loop,
   not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`)
-  and the `-i` leg (`run_interpreter.py`). Run the full invocation before opening a PR.
+  and the `-i` leg (`run_interpreter.py`).
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)

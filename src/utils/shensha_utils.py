@@ -534,9 +534,8 @@ def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   Check whether `dizhi` is the WENCHANGGUI (文昌贵) of `year_tiangan`.
   检查地支是否为该年干的文昌贵。
 
-  This is the 禄命 star. Its table agrees with `wenchang` on 甲 → 巳 and 戊 → 申, and
-  differs on the other eight stems.
-  本函数查禄命法的文昌贵。它与文昌的表在甲（巳）、戊（申）两格相同，其余八干皆异。
+  This is the 禄命 star. For the 子平 star of the same name family, see `wenchang`.
+  本函数查禄命法的文昌贵；同名近亲中的子平法一颗见 `wenchang`。
 
   Args:
   - year_tiangan: (Tiangan) The Tiangan of the year pillar, which the lookup keys on.
