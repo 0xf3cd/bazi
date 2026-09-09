@@ -1253,10 +1253,16 @@ class ShenshaRules:
     What each source does and does not settle:
     各来源定了什么、没定什么：
 
-    - 《五行精纪》 states both the offset and the anchor, and works an example:
-      「国印星,禄前第八位是,如甲申生人,至癸酉是」 with 「甲禄在寅」 — 寅 counted first,
-      酉 is the eighth. That fixes `WUXING_JINGJI` and gives the year stem as the anchor.
-      《五行精纪》给了偏移、锚与例子（甲禄在寅，数至酉为第八），`WUXING_JINGJI` 与年干锚由此确定。
+    - The 白文 of 《五行精纪》 gives the offset and an example, nothing more:
+      「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」. The anchor and the
+      counting convention are spelled out by the modern annotator on the same page, not by
+      the 白文:「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」.
+      So `WUXING_JINGJI` rests on the 白文, while "year stem" and "禄 counts as the first"
+      rest on 《五行精纪注释》 — a distinction worth keeping, since 「甲申生人」 alone would
+      also read as a year-branch anchor.
+      《五行精纪》白文只给偏移与例子；年干锚与含禄起算的明文出自同页今人注释，不在白文。
+      故 `WUXING_JINGJI` 依白文，而「年干」与「禄算第一位」依注释本——两者要分开记，
+      因为单看「甲申生人」也可以读成年支锚。
     - 《星学大成》 says only 「国印禄前九位是」. **Whether 禄 counts as the first position is
       not stated.** Counting it would make this reading identical to `MODERN`; not counting
       it gives `XINGXUE_DACHENG`. No source settles this, so both possibilities are carried
