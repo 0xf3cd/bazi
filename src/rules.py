@@ -1275,15 +1275,19 @@ class ShenshaRules:
       《五行精纪》白文只给偏移与例子；年干锚与含禄起算的明文出自同页今人注释，不在白文。
       故 `WUXING_JINGJI` 依白文，而「年干」与「禄算第一位」依注释本——两者要分开记，
       因为单看「甲申生人」也可以读成年支锚。
-    - Recorded and left open: `WUXING_JINGJI` lands on exactly the branches 《张果星宗》
-      calls 飞刃／唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」). The two texts agree on the
-      phrase 「禄前八位」, on counting 禄 as the first, and on 酉 for 甲 -- they disagree only
-      on which star's name belongs there. Whether the 子平 line genuinely places 国印 one
+    - Recorded and left open (tracking: issue #194): `WUXING_JINGJI` lands on exactly the
+      branches 《张果星宗》 calls 飞刃／唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」), which
+      are also this repo's own `FEIREN[YangrenDef.LUMING]` -- reached by a different route
+      (the 古禄命 羊刃 sits at 禄 + 1, and 飞刃 is its 对冲). The texts agree on the phrase
+      「禄前八位」, on counting 禄 as the first, and on 酉 for 甲 -- they disagree only on
+      which star's name belongs there. Whether the 子平 line genuinely places 国印 one
       position earlier, or 唐符 and 国印 slipped in transmission (they share a couplet), is
       settled by nothing read here, so both readings stand.
-      如实记下而不裁：`WUXING_JINGJI` 的十格恰好是《张果星宗》的飞刃／唐符表。两书都说
-      「禄前八位」，都含禄起算，甲都落在酉——只有星名不同。子平一脉是真把国印定得早一位，
-      还是唐符与国印在同一副对联里串了位，此处所查来源无一裁定，故两读并存。
+      如实记下而不裁（跟踪 issue #194）：`WUXING_JINGJI` 的十格恰好是《张果星宗》的飞刃／
+      唐符表，也正是本仓 `FEIREN[YangrenDef.LUMING]`——那一张由另一条路推出（古禄命羊刃在
+      禄 + 1，飞刃取其对冲）。诸书都说「禄前八位」，都含禄起算，甲都落在酉——只有星名不同。
+      子平一脉是真把国印定得早一位，还是唐符与国印在同一副对联里串了位，此处所查来源
+      无一裁定，故两读并存。
     - Where to look is a separate question from which table to use. 《星学大成》 says the
       star 「守照身命」 -- the 命宫 and 身宫, not the four branches -- and 《张果星宗》 agrees
       (「唐符、国印守命为奇」). 《神峰通考》 does not say. Reading the star against 四柱地支
