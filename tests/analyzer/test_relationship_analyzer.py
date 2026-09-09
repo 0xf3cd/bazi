@@ -1739,6 +1739,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
     'yangren':  (TIANGAN, Anchor.DAY),
     'feiren':   (TIANGAN, Anchor.DAY),
     'lushen':   (TIANGAN, Anchor.DAY),
+    'wenchanggui': (TIANGAN, Anchor.YEAR),
   }
 
   # The rest read one school knob each. Vary exactly that field and require the resolver to
@@ -1754,6 +1755,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
     'jiangxing': (DIZHI, 'jiangxing_anchor'),
     'jiesha':    (DIZHI, 'jiesha_anchor'),
     'wangshen':  (DIZHI, 'wangshen_anchor'),
+    'wenchang':  (TIANGAN, 'wenchang_anchor'),
   }
   assert set(knobs) | set(fixed) == set(_REGISTRY)
   for name, (kind, field) in knobs.items():
@@ -1802,3 +1804,74 @@ def test_no_bare_dizhi_discovery_calls() -> None:
 
   _Visitor().visit(ast.parse(inspect.getsource(relationship_module)))
   assert bare == []
+
+
+@pytest.mark.parametrize('anchor, expected', [
+  (Anchor.DAY, frozenset({Dizhi.卯})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.寅, Dizhi.卯})),
+])
+def test_wenchang_anchor_at_birth_and_transits(
+  anchor: Anchor,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 壬年、癸日，文昌分别在寅、卯；两支都在原局与所选流运中。
+  chart = BaziChart(Bazi.create(
+    '1902-03-31 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(wenchang_anchor=anchor)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '癸卯', '癸丑', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['wenchang'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('乙卯'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['wenchang'] == expected
+
+  if anchor is Anchor.YEAR_AND_DAY:
+    default_chart = BaziChart(Bazi.create('1902-03-31 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['wenchang'] == expected
+
+
+@pytest.mark.parametrize('wenchang_def, expected', [
+  (ShenshaRules.WenchangDef.XIN_ZI, frozenset({Dizhi.子})),
+  (ShenshaRules.WenchangDef.XIN_XU, frozenset({Dizhi.戌})),
+])
+def test_wenchang_definition_at_birth_and_transits(
+  wenchang_def: ShenshaRules.WenchangDef,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 辛日：两读的分歧就在这一个干上。原局同时有子与戌，所以切定义会把结果从一支换成另一支，
+  # 而不是从「有」变成「无」——后者与「旋钮没接上」不可区分。
+  # 年干壬的文昌在寅，本盘与所选流运都没有寅，故年干那一半不参与。
+  chart = BaziChart(Bazi.create(
+    '1982-12-14 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(wenchang_def=wenchang_def)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬戌', '壬子', '辛未', '甲午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['wenchang'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲子'),
+    liunian=Ganzhi.from_str('丙戌'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['wenchang'] == expected
+
+
+def test_wenchanggui_keys_on_the_year_stem_only() -> None:
+  # 文昌贵固定以年干为锚，不读任何旋钮：切别的神煞的锚旋钮不影响它，而年干换了就换答案。
+  # 壬年文昌贵在卯，癸日若也参与则会带出丑——本盘有丑，所以「日干没参与」是可证伪的。
+  chart = BaziChart(Bazi.create('1902-03-31 12:00', 'male'))
+  assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '癸卯', '癸丑', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['wenchanggui'] == {Dizhi.卯}
+
+  # 把每个锚旋钮都拨到另一端，文昌贵纹丝不动。
+  for field, anchor in ((f, a) for f, allowed in _ANCHOR_CHOICES.items() for a in allowed):
+    other = BaziChart(Bazi.create(
+      '1902-03-31 12:00',
+      'male',
+      BaziConfig(school=BaziSchool(**{field: anchor})), # type: ignore # Field name is data here.
+    ))
+    assert RelationshipAnalyzer(other).at_birth.shensha['wenchanggui'] == {Dizhi.卯}, (field, anchor)

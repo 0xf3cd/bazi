@@ -11,23 +11,25 @@ from src.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis
 
 def test_shensha_labels() -> None:
   shensha: ShenshaAnalysis = {
-    'taohua'   : frozenset((Dizhi.子,)),
-    'hongyan'  : frozenset((Dizhi.丑,)),
-    'hongluan' : frozenset((Dizhi.寅,)),
-    'tianxi'   : frozenset((Dizhi.卯,)),
-    'yima'     : frozenset((Dizhi.辰,)),
-    'huagai'   : frozenset((Dizhi.巳,)),
-    'yangren'  : frozenset((Dizhi.午,)),
-    'feiren'   : frozenset((Dizhi.未,)),
-    'tianyi'   : frozenset((Dizhi.未,)),
-    'jiangxing': frozenset((Dizhi.申,)),
-    'zaisha'   : frozenset((Dizhi.午,)),
-    'jiesha'   : frozenset((Dizhi.亥,)),
-    'wangshen' : frozenset((Dizhi.酉,)),
-    'guchen'   : frozenset((Dizhi.戌,)),
-    'guasu'    : frozenset((Dizhi.亥,)),
-    'lushen'   : frozenset((Dizhi.子,)),
-    'jinyu'    : frozenset((Dizhi.丑,)),
+    'taohua'     : frozenset((Dizhi.子,)),
+    'hongyan'    : frozenset((Dizhi.丑,)),
+    'hongluan'   : frozenset((Dizhi.寅,)),
+    'tianxi'     : frozenset((Dizhi.卯,)),
+    'yima'       : frozenset((Dizhi.辰,)),
+    'huagai'     : frozenset((Dizhi.巳,)),
+    'yangren'    : frozenset((Dizhi.午,)),
+    'feiren'     : frozenset((Dizhi.未,)),
+    'tianyi'     : frozenset((Dizhi.未,)),
+    'jiangxing'  : frozenset((Dizhi.申,)),
+    'zaisha'     : frozenset((Dizhi.午,)),
+    'jiesha'     : frozenset((Dizhi.亥,)),
+    'wangshen'   : frozenset((Dizhi.酉,)),
+    'guchen'     : frozenset((Dizhi.戌,)),
+    'guasu'      : frozenset((Dizhi.亥,)),
+    'lushen'     : frozenset((Dizhi.子,)),
+    'jinyu'      : frozenset((Dizhi.丑,)),
+    'wenchang'   : frozenset((Dizhi.寅,)),
+    'wenchanggui': frozenset((Dizhi.卯,)),
   }
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
@@ -47,6 +49,8 @@ def test_shensha_labels() -> None:
     ('寡宿', frozenset((Dizhi.亥,))),
     ('禄神', frozenset((Dizhi.子,))),
     ('金舆', frozenset((Dizhi.丑,))),
+    ('文昌', frozenset((Dizhi.寅,))),
+    ('文昌贵', frozenset((Dizhi.卯,))),
   )
 
   # Keep display labels exhaustive as ShenshaAnalysis grows.
@@ -93,23 +97,25 @@ def test_shensha_labels() -> None:
   ]
 
   empty_shensha: ShenshaAnalysis = {
-    'taohua'   : frozenset(),
-    'hongyan'  : frozenset(),
-    'hongluan' : frozenset(),
-    'tianxi'   : frozenset(),
-    'yima'     : frozenset(),
-    'huagai'   : frozenset(),
-    'yangren'  : frozenset(),
-    'feiren'   : frozenset(),
-    'tianyi'   : frozenset(),
-    'jiangxing': frozenset(),
-    'zaisha'   : frozenset(),
-    'jiesha'   : frozenset(),
-    'wangshen' : frozenset(),
-    'guchen'   : frozenset(),
-    'guasu'    : frozenset(),
-    'lushen'   : frozenset(),
-    'jinyu'    : frozenset(),
+    'taohua'     : frozenset(),
+    'hongyan'    : frozenset(),
+    'hongluan'   : frozenset(),
+    'tianxi'     : frozenset(),
+    'yima'       : frozenset(),
+    'huagai'     : frozenset(),
+    'yangren'    : frozenset(),
+    'feiren'     : frozenset(),
+    'tianyi'     : frozenset(),
+    'jiangxing'  : frozenset(),
+    'zaisha'     : frozenset(),
+    'jiesha'     : frozenset(),
+    'wangshen'   : frozenset(),
+    'guchen'     : frozenset(),
+    'guasu'      : frozenset(),
+    'lushen'     : frozenset(),
+    'jinyu'      : frozenset(),
+    'wenchang'   : frozenset(),
+    'wenchanggui': frozenset(),
   }
   empty_at_birth_shensha: AtBirthShenshaAnalysis = {
     **empty_shensha,
@@ -123,4 +129,4 @@ def test_shensha_labels() -> None:
     'kuigang': None,
     'tianshe': tianshe,
   }) == [f'天赦：{colored_str(tianshe)}']
-  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、魁罡、天赦'
+  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、魁罡、天赦'
