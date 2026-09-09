@@ -1708,7 +1708,7 @@ def test_every_anchor_member_is_wired_to_pillars() -> None:
   # Mechanical binding: the five deleted enums each carried an "unwired member" guard; one
   # table replaces them all, so one gate has to execute that invariant. A new `Anchor` member
   # with no entry would otherwise surface as a bare `KeyError` at lookup time.
-  # 机械绑定:被删的五个枚举各带一条「成员未接线」守卫,合并成一张表后要有一道闸执行这条
+  # 机械绑定：被删的五个枚举各带一条「成员未接线」守卫，合并成一张表后要有一道闸执行这条
   # 不变量——新成员漏登记的话，只会在查法时抛裸 `KeyError`。
   pillars = relationship_module._ANCHOR_PILLARS
   assert set(pillars) == set(Anchor)
@@ -1886,8 +1886,8 @@ def test_taiji_anchor_at_birth_and_transits(
   anchor: Anchor,
   expected: frozenset[Dizhi],
 ) -> None:
-  # 己年、甲日:己的太极是四库(盘中见未、戌),甲的太极是子午(盘中见子、午)。
-  # 两锚各带来一组不同的支,所以切锚是「多一组」而不是「有变无」。
+  # 己年、甲日：己的太极是四库（盘中见未、戌），甲的太极是子午（盘中见子、午）。
+  # 两锚各带来一组不同的支，所以切锚是「多一组」而不是「有变无」。
   chart = BaziChart(Bazi.create(
     '1980-01-02 12:00',
     'male',
@@ -1916,10 +1916,10 @@ def test_taiji_definition_at_birth_and_transits(
   taiji_def: ShenshaRules.TaijiDef,
   expected: frozenset[Dizhi],
 ) -> None:
-  # 癸日:两读的分歧就在壬癸。原局同时有巳与申,所以切定义是巳这一支进出,而不是整体清空
-  # ——后者与「旋钮没接上」不可区分。两读本身是单向的(分读法只去支不添支),
-  # 所以做不出「换一支」的对照,这里退而求其次钉「少一支」。
-  # 年干庚的太极在寅亥,本盘与所选流运都没有,故年干那一半不参与。
+  # 癸日：两读的分歧就在壬癸。原局同时有巳与申，所以切定义是巳这一支进出，而不是整体清空
+  # ——后者与「旋钮没接上」不可区分。两读本身是单向的（分读法只去支不添支），
+  # 所以做不出「换一支」的对照，这里退而求其次钉「少一支」。
+  # 年干庚的太极在寅亥，本盘与所选流运都没有，故年干那一半不参与。
   chart = BaziChart(Bazi.create(
     '1980-03-21 12:00',
     'male',
