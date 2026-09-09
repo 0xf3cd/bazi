@@ -1144,3 +1144,83 @@ class ShenshaRules:
     Tiangan.壬 : Dizhi.卯,
     Tiangan.癸 : Dizhi.丑,
   })
+
+  class TaijiDef(Enum):
+    '''The definitions of TAIJI GUIREN (太极贵人). The two readings differ in 壬癸 only.
+    太极贵人的查法定义。两读只在壬癸分歧。
+
+    - REN_GUI_BOTH: 壬 and 癸 each take both 巳 and 申.
+    - REN_SI_GUI_SHEN: 壬 takes 巳, 癸 takes 申.
+
+    This is not a dispute between two sources -- 《五行精纪》 carries both readings in one
+    line, marking the second with 「一作」:
+    这不是两家表之争 ——《五行精纪》一句之内并存两读，第二读由「一作」引出：
+
+        壬巳癸申一作壬癸巳申偏喜美，封侯万户即三公
+
+    `REN_GUI_BOTH` is the default: it is the reading the verse's 「一作」 points to, and the
+    one both modern sources take.
+    默认取 REN_GUI_BOTH：它既是歌诀「一作」所指的那读，也是现代两家所取。
+
+    Two flaws in the received text are recorded here rather than silently repaired:
+    两处原文硬伤记在这里，不悄悄修补：
+
+    - 《三命通会》 reads 「壬癸水先得**则**生，后得巳而纳」, dropping a character where the
+      section's own parallel phrasing requires 申. The taiyi and 算准网 transcriptions carry
+      the same corruption verbatim, so they cannot check each other, and no third
+      transcription was found.
+      「先得则生」脱一字，按同节句式当作「先得申而生」；两处转录同讹，互校不了。
+    - The same section reads 「戊己，土也，喜生乎申，得辰戌丑未为正库」. By that phrasing 申
+      would belong in the 戊己 cell, yet 问真, 高人 and 《五行精纪》 all give 戊己 the four
+      storage branches without 申. No source resolves this, so the tables here follow the
+      three that agree and the discrepancy stays on the record.
+      「喜生乎申」按句式应把申列入戊己，但三家成表皆无申；无来源可裁，表从三家，矛盾如实留档。
+
+    Sources / 出处:
+    - 宋·廖中《五行精纪》卷十三（含「一作」异文）:
+      https://book.taiyi.me/命/五行精纪/五行精纪(下)
+    - 《五行精纪注释》卷十三「太极贵人，从年干取，甲乙人见子午，丙丁人见卯酉，
+      戊己人见辰戌丑未，庚辛人见寅亥，壬癸人见巳申」，该书亦记锚为年干:
+      https://www.suanzhun.net/book/2728.html
+    - 《三命通会》卷三·论太极贵: https://book.taiyi.me/命/三命通会/三命通会(卷三)
+    - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
+
+    No change should be made to the existing definitions. Only add new definitions.
+    '''
+    REN_GUI_BOTH    = 0
+    REN_SI_GUI_SHEN = 1
+
+  # The tables are used to find out TAIJI GUIREN (太极贵人).
+  # 这些表格用于查询太极贵人。
+  # Unlike every other stem-anchored Shensha here, a stem can answer with more than one
+  # branch -- 戊己 take all four storage branches. Which pillar supplies the anchor stem is a
+  # school knob; see `_ANCHOR_CHOICES`. The search range is 四柱地支 in both modern sources,
+  # and none of the classical sources consulted for this star states one.
+  # 与本文件其余干锚神煞不同，一个天干可对多支——戊己占四库。锚取哪一柱属流派旋钮，
+  # 见 `_ANCHOR_CHOICES`；被查位置两家现代查法均作四柱地支，而为本星查过的古籍都不交代。
+  TAIJI: Final[frozendict[TaijiDef, frozendict[Tiangan, frozenset[Dizhi]]]] = frozendict({
+    TaijiDef.REN_GUI_BOTH : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.丙 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未)),
+      Tiangan.庚 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.辛 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.壬 : frozenset((Dizhi.巳, Dizhi.申)),
+      Tiangan.癸 : frozenset((Dizhi.巳, Dizhi.申)),
+    }),
+    TaijiDef.REN_SI_GUI_SHEN : frozendict({
+      Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.丙 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.戊 : frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未)),
+      Tiangan.己 : frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未)),
+      Tiangan.庚 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.辛 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.壬 : frozenset((Dizhi.巳,)),
+      Tiangan.癸 : frozenset((Dizhi.申,)),
+    }),
+  })

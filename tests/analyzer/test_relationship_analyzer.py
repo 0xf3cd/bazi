@@ -1756,6 +1756,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
     'jiesha':    (DIZHI, 'jiesha_anchor'),
     'wangshen':  (DIZHI, 'wangshen_anchor'),
     'wenchang':  (TIANGAN, 'wenchang_anchor'),
+    'taiji':     (TIANGAN, 'taiji_anchor'),
   }
   assert set(knobs) | set(fixed) == set(_REGISTRY)
   for name, (kind, field) in knobs.items():
@@ -1875,3 +1876,60 @@ def test_wenchanggui_keys_on_the_year_stem_only() -> None:
       BaziConfig(school=BaziSchool(**{field: anchor})), # type: ignore # Field name is data here.
     ))
     assert RelationshipAnalyzer(other).at_birth.shensha['wenchanggui'] == {Dizhi.卯}, (field, anchor)
+
+
+@pytest.mark.parametrize('anchor, expected', [
+  (Anchor.YEAR, frozenset({Dizhi.未, Dizhi.戌})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.未, Dizhi.戌, Dizhi.子, Dizhi.午})),
+])
+def test_taiji_anchor_at_birth_and_transits(
+  anchor: Anchor,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 己年、甲日:己的太极是四库(盘中见未、戌),甲的太极是子午(盘中见子、午)。
+  # 两锚各带来一组不同的支,所以切锚是「多一组」而不是「有变无」。
+  chart = BaziChart(Bazi.create(
+    '1980-01-02 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(taiji_anchor=anchor)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('己未', '丙子', '甲戌', '庚午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['taiji'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('己未'),
+    liunian=Ganzhi.from_str('甲子'),
+  )
+  transit_expected = expected & {Dizhi.未, Dizhi.子}
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['taiji'] == transit_expected
+
+  if anchor is Anchor.YEAR_AND_DAY:
+    default_chart = BaziChart(Bazi.create('1980-01-02 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['taiji'] == expected
+
+
+@pytest.mark.parametrize('taiji_def, expected', [
+  (ShenshaRules.TaijiDef.REN_GUI_BOTH, frozenset({Dizhi.巳, Dizhi.申})),
+  (ShenshaRules.TaijiDef.REN_SI_GUI_SHEN, frozenset({Dizhi.申})),
+])
+def test_taiji_definition_at_birth_and_transits(
+  taiji_def: ShenshaRules.TaijiDef,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 癸日:两读的分歧就在壬癸。原局同时有巳与申,所以切定义是巳这一支进出,而不是整体清空
+  # —— 后者与「旋钮没接上」不可区分。两读本身是单向的(分读法只去支不添支),
+  # 所以做不出「换一支」的对照,这里退而求其次钉「少一支」。
+  # 年干庚的太极在寅亥,本盘与所选流运都没有,故年干那一半不参与。
+  chart = BaziChart(Bazi.create(
+    '1980-03-21 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(taiji_def=taiji_def)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('庚申', '己卯', '癸巳', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['taiji'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('丁巳'),
+    liunian=Ganzhi.from_str('甲申'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['taiji'] == expected

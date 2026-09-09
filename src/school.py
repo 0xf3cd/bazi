@@ -214,6 +214,11 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # default. The year-stem half rests on those modern sources alone -- no classical text
   # was found that keys 文昌 on the year stem.
   'wenchang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  # 太极贵人: YEAR is 《五行精纪注释》卷十三「太极贵人，从年干取」
+  # (https://www.suanzhun.net/book/2728.html). YEAR_AND_DAY is the modern reading of 问真
+  # (https://book.taiyi.me/命/神煞大全,「以日/年干查四地支」) and 高人, and this library's
+  # default. As with 文昌, the day-stem half rests on the modern sources alone.
+  'taiji_anchor':     frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 
 
@@ -262,6 +267,8 @@ class BaziSchool:
   zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
   wenchang_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   wenchang_def:    ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI
+  taiji_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  taiji_def:       ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH
 
   def __post_init__(self) -> None:
     check_declared_types(self)

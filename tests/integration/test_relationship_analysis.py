@@ -477,6 +477,7 @@ def test_case2() -> None:
     'jinyu'      : frozenset([Dizhi.未]),
     'wenchang'   : frozenset([Dizhi.亥, Dizhi.申]),
     'wenchanggui': frozenset([Dizhi.寅]),
+    'taiji'      : frozenset([Dizhi.寅, Dizhi.亥, Dizhi.卯, Dizhi.酉]),
   }
 
   for _ in range(50):
