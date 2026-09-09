@@ -1075,7 +1075,8 @@ class ShenshaRules:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
     - 明·万民英《星学大成》「论文昌」: https://book.taiyi.me/命/星学大成
-    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
+    - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
+      作正文连排——该半句是万民英本文还是注,两本的呈现不同（底本关系亦未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
 
     No change should be made to the existing definitions. Only add new definitions.
@@ -1265,28 +1266,35 @@ class ShenshaRules:
       因为单看「甲申生人」也可以读成年支锚。
     - 《星学大成》 says only 「国印禄前九位是」. **Whether 禄 counts as the first position is
       not stated.** Counting it would make this reading identical to `MODERN`; not counting
-      it gives `XINGXUE_DACHENG`. No source settles this, so both possibilities are carried
-      as separate readings rather than merged — the equivalence under one convention is
-      arithmetic, not something that source says.
+      it gives `XINGXUE_DACHENG`. None of the sources consulted here settles it, so both
+      possibilities are carried as separate readings rather than merged — the equivalence
+      under one convention is arithmetic, not something that source says. The 果老 tradition
+      this star belongs to may well settle it; that has not been checked (see below).
       《星学大成》只说「禄前九位」，**含不含禄原文未载**。含则与 `MODERN` 等值，不含则为
       `XINGXUE_DACHENG`；无来源可裁，故并列保留。「按某种约定二者等值」是推算，不是该书的断言。
-    - `MODERN` has no first-hand source of its own: 问真 gives the table without provenance,
-      高人 attributes it to 《周易述补》 which was not obtainable. It is carried because it is
-      what current practice uses, not because a text was found for it.
-      现代通行表**自身没有一手出处**：问真无出处，高人转引《周易述补》而该书未获。
-      收它是因为它是当下实践,不是因为找到了文本。
-    - 《星学大成》 and 《神峰通考》 use 国印 as a 果老星命 star that 「守照身命」 — the 命宫 and
-      身宫, not the four branches. Reading it against 四柱地支 is the modern sources' move and
-      has no classical backing.
-      《星学大成》《神峰通考》的国印是果老星命的星，查的是身命宫而非四柱；
-      按四柱地支查是现代两家的做法，无古籍背书。
+    - No first-hand source for `MODERN` was found among the ones consulted here: 问真 gives
+      the table without provenance, and 高人 attributes it to 《周易述补》, which was not read
+      through. It is carried because it is what current practice uses, not because a text was
+      found for it. A lead worth chasing: 《张果星宗》 is reported to carry this table with a
+      worked example under 「禄勋阳刃唐符国印」 — three fetch routes failed to reach that text
+      here, so it is recorded as unverified rather than used.
+      本批所查来源中未见 `MODERN` 的一手出处：问真无出处，高人转引《周易述补》而该书未逐页核。
+      收它是因为它是当下实践，不是因为找到了文本。待核线索:《张果星宗》「禄勋阳刃唐符国印」条
+      据称载此表并带例解——本批三条抓取路径均未取到正文，故记为未核，不作依据。
+    - 《星学大成》 says the star 「守照身命」 — the 命宫 and 身宫, not the four branches.
+      《神峰通考》 does not say where to look; it only places 国印 in the 果老 tradition
+      (「惟张果老通玄先生命理，专用此二星取贵」). Either way, reading the star against
+      四柱地支 is the modern sources' move and has no classical backing.
+      《星学大成》明言「守照身命」，即命宫身宫而非四柱;《神峰通考》未言查何处，
+      只说它属果老一脉。无论如何，按四柱地支查是现代两家的做法，无古籍背书。
 
     Sources / 出处:
     - 《五行精纪注释》卷十三（底本完整，白文两处转录把建节星与国印星并成一条残句）:
       https://www.suanzhun.net/book/2731.html
     - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:
       https://book.taiyi.me/命/星学大成
-    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
+    - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
+      作正文连排——该半句是万民英本文还是注,两本的呈现不同（底本关系亦未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
 
