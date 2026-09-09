@@ -129,8 +129,15 @@ Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` 
 Narrative in English; domain terms and quotations keep their original language
 (立春, 小运, 口诀 citations) — translating an entity loses it. So tests read as
 English sentences with Chinese terms inline; full-Chinese lines are for quoted
-material only, not for explanation. Punctuation follows the neighbouring
-comments (tests/ is overwhelmingly half-width).
+material only, not for explanation.
+Punctuation: a Chinese narrative sentence takes full-width `，：；（）`; an English
+sentence keeps half-width even where Chinese terms sit inside it; **quoted material keeps
+whatever punctuation the source has** — a 口诀 or a 古籍 citation is someone else's text,
+not ours to normalise. (This line used to read "tests/ is overwhelmingly half-width",
+which was true when written in 2026-08. Sampled at `1f0f43c`, counting punctuation *marks*
+— not lines — in `#` comments that are Chinese narrative (English sentences, quotation lines
+and URLs excluded, matching the rule above): tests/ 144 full-width to 14 half-width, src/
+120 to 0. Those numbers are a dated sample, not the rule; the rule is the sentence above it.)
 
 ## Typing & immutability (non-negotiable)
 - Fully typed; `mypy .` must pass. Lean on `Final`, `X | None` unions (PEP 604, not `Optional`), `Callable`, `TypedDict`, `NamedTuple`.

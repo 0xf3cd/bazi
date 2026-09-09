@@ -552,3 +552,47 @@ def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
 
   return _table_shensha(ShenshaRules.WENCHANGGUI, year_tiangan, dizhi, Tiangan)
+
+
+def taiji(
+  key_tiangan: Tiangan,
+  dizhi: Dizhi,
+  *,
+  definition: ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH,
+) -> bool:
+  '''
+  Check whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan` under the selected
+  definition. 按所选定义检查地支是否为该天干的太极贵人。
+
+  Note: a stem can answer with more than one branch here (戊己 take all four storage
+  branches), so this reads membership rather than equality.
+  一个天干可对多支（戊己占四库），故本函数判成员关系而非相等。
+
+  Args:
+  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
+    decides which pillar supplies it.
+    查法所锚的天干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) The Dizhi.
+  - definition: (ShenshaRules.TaijiDef) The definition to use; defaults to REN_GUI_BOTH,
+    where 壬 and 癸 each take both 巳 and 申. 所用定义；默认壬癸各兼巳申。
+
+  Returns: (bool) Whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan` under `definition`.
+
+  Examples:
+  - taiji(Tiangan.甲, Dizhi.子)
+    - return: True
+  - taiji(Tiangan.戊, Dizhi.未)
+    - return: True
+  - taiji(Tiangan.壬, Dizhi.申)
+    - return: True
+  - taiji(Tiangan.壬, Dizhi.申, definition=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN)
+    - return: False
+  '''
+
+  if not isinstance(key_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, ShenshaRules.TaijiDef):
+    raise TypeError(f'Expected TaijiDef, got {type(definition)}')
+  return dizhi in ShenshaRules.TAIJI[definition][key_tiangan]

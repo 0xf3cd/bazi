@@ -12,11 +12,12 @@ from src.calendar import CalendarBackend
 from src.bazi import Bazi, BaziGender
 from src.bazi_chart import BaziChart, BaziJson
 from src.rules import DizhiRules, ShenshaRules
-from src.utils import dizhi_utils, shensha_utils
+from src.utils import dizhi_utils
 from src.school import (
   BaziPrecision, DayunYearRule, DayRollover, Anchor, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG, _ANCHOR_CHOICES,
 )
+from src.analyzer.relationship import _REGISTRY
 
 
 def test_bazi_precision_basic() -> None:
@@ -90,6 +91,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     Anchor.YEAR_AND_DAY,
     Anchor.DAY,
     ShenshaRules.WenchangDef.XIN_XU,
+    Anchor.YEAR,
+    ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -110,6 +113,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     zaisha_anchor=Anchor.YEAR_AND_DAY,
     wenchang_anchor=Anchor.DAY,
     wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
+    taiji_anchor=Anchor.YEAR,
+    taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
   )
 
 
@@ -150,7 +155,6 @@ def test_anchor_choices_bind_to_every_anchor_field() -> None:
   # 的字段）都会在这里响——每个锚的出处状态必须显式记录。
   anchor_fields = {f.name for f in dataclasses.fields(BaziSchool) if f.type is Anchor}
   assert anchor_fields == set(_ANCHOR_CHOICES)
-  assert len(anchor_fields) == 10
   # Every subset is non-empty and every member of it is a real `Anchor`.
   for name, allowed in _ANCHOR_CHOICES.items():
     assert allowed, name
@@ -178,8 +182,25 @@ def test_anchor_choices_match_the_supported_readings() -> None:
   assert _ANCHOR_CHOICES['tianyi_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['jinyu_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['zaisha_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['wenchang_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['taiji_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
   for name in ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor'):
     assert _ANCHOR_CHOICES[name] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}), name
+
+  # The expectations above are a second, independent spelling of the table -- that is the whole
+  # point, so they must not be rewritten as a loop over `_ANCHOR_CHOICES` itself (that would
+  # prove the table equals the table). What a hand-written list cannot do is notice a key it
+  # never mentions, so an executor pins the coverage instead: a new knob lands here as a
+  # failure until someone writes its reading out.
+  # 上面的期望值是该表的第二份独立抄写——这正是它的用处，所以不能改写成对
+  # `_ANCHOR_CHOICES` 自身的遍历（那只证明表等于表）。手写清单唯一做不到的是发现自己
+  # 从没提过的键，于是覆盖面交给执行者钉住：新增旋钮会在这里红，直到有人把它的读法写出来。
+  asserted = {
+    'hongyan_anchor', 'tianyi_anchor', 'jinyu_anchor', 'zaisha_anchor', 'wenchang_anchor',
+    'taiji_anchor',
+    'yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor',
+  }
+  assert asserted == set(_ANCHOR_CHOICES), sorted(asserted ^ set(_ANCHOR_CHOICES))
 
 
 def test_mingli_tanyuan_is_the_book_profile() -> None:
@@ -357,10 +378,28 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
     assert BaziSchool().gong_def is params['gong_def'].default
-  assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
-  assert BaziSchool().tianyi_def is inspect.signature(shensha_utils.tianyi).parameters['definition'].default
-  assert BaziSchool().feiren_def is inspect.signature(shensha_utils.feiren).parameters['definition'].default
-  assert BaziSchool().wenchang_def is inspect.signature(shensha_utils.wenchang).parameters['definition'].default
+  # The Shensha half iterates the registry instead of naming each entry, so a new Shensha
+  # joins this check without anyone adding a line -- provided its registry spec actually
+  # carries the resolver. An entry that declares a `definition` parameter on the predicate but
+  # forgets `definition=` in the spec is skipped here silently; that gap is tracked in #189.
+  # 神煞半边遍历注册表而不逐条点名，新增神煞无须补行即可进入本检查——前提是它的注册表
+  # 条目真的挂了 resolver。predicate 带了 definition 参数却漏挂 `definition=` 的条目会被
+  # 静默跳过，该缺口记在 #189。
+  # The two sides stay independent -- the school field default on one, the predicate's own
+  # signature default on the other -- so this is still two spellings compared, not self-proof.
+  # 两侧来源仍各自独立（盘级字段默认 vs predicate 签名默认），不是自证。
+  checked = 0
+  for name, spec in _REGISTRY.items():
+    resolver = spec.definition
+    if resolver is None:
+      continue
+    checked += 1
+    school_side = resolver(BaziSchool())
+    signature_side = inspect.signature(spec.predicate).parameters['definition'].default
+    assert school_side is signature_side, name
+  # A loop that iterates nothing passes silently -- count what it saw and say so out loud.
+  # 空转的循环会静默通过：数一下它到底看了几个，并把这件事说出来。
+  assert checked, 'no Shensha carries a definition knob -- the loop above would be vacuous'
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -449,6 +488,7 @@ def test_json_roundtrip_default_school() -> None:
     'feiren_def': 'ZIPING',
     'zaisha_anchor': 'YEAR',
     'wenchang_anchor': 'YEAR_AND_DAY', 'wenchang_def': 'XIN_ZI',
+    'taiji_anchor': 'YEAR_AND_DAY', 'taiji_def': 'REN_GUI_BOTH',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -488,6 +528,8 @@ def test_json_roundtrip_non_default_school() -> None:
     zaisha_anchor=Anchor.YEAR_AND_DAY,
     wenchang_anchor=Anchor.DAY,
     wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
+    taiji_anchor=Anchor.YEAR,
+    taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -504,6 +546,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'feiren_def': 'LUMING',
     'zaisha_anchor': 'YEAR_AND_DAY',
     'wenchang_anchor': 'DAY', 'wenchang_def': 'XIN_XU',
+    'taiji_anchor': 'YEAR', 'taiji_def': 'REN_SI_GUI_SHEN',
   }
 
   rebuilt: BaziChart = BaziChart(

@@ -315,6 +315,53 @@ def test_tianyi() -> None:
   assert all(modified[tg] == merged[tg] for tg in Tiangan if tg is not Tiangan.庚)
 
 
+def test_wenchang() -> None:
+  # Structure and the cross-reading relation. The per-cell values and the predicate's own
+  # behaviour are pinned in `tests/utils/test_shensha_utils.py`; this layer asks a different
+  # question -- do the tables hold together as a set of readings.
+  # 结构与跨读法关系。逐格值与 predicate 行为钉在 utils 层，这一层问的是另一个问题：
+  # 几张表作为一组读法是否自洽。
+  assert set(ShenshaRules.WENCHANG) == set(ShenshaRules.WenchangDef)
+  assert all(set(table) == set(Tiangan) for table in ShenshaRules.WENCHANG.values())
+
+  xin_zi = ShenshaRules.WENCHANG[ShenshaRules.WenchangDef.XIN_ZI]
+  xin_xu = ShenshaRules.WENCHANG[ShenshaRules.WenchangDef.XIN_XU]
+  # The whole divergence is 辛 -- written as a difference set so a second diverging cell
+  # cannot slip in unnoticed. 分歧全在辛：写成差集，第二处分歧混不进来。
+  assert {tg for tg in Tiangan if xin_zi[tg] is not xin_xu[tg]} == {Tiangan.辛}
+  assert xin_zi[Tiangan.辛] is Dizhi.子
+  assert xin_xu[Tiangan.辛] is Dizhi.戌
+
+  assert set(ShenshaRules.WENCHANGGUI) == set(Tiangan)
+
+
+def test_taiji() -> None:
+  assert set(ShenshaRules.TAIJI) == set(ShenshaRules.TaijiDef)
+  assert all(set(table) == set(Tiangan) for table in ShenshaRules.TAIJI.values())
+
+  both = ShenshaRules.TAIJI[ShenshaRules.TaijiDef.REN_GUI_BOTH]
+  split = ShenshaRules.TAIJI[ShenshaRules.TaijiDef.REN_SI_GUI_SHEN]
+  # 《五行精纪》 carries both readings in one line and they differ in 壬癸 only.
+  # 《五行精纪》一句之内并存两读，分歧只在壬癸。
+  assert {tg for tg in Tiangan if both[tg] != split[tg]} == {Tiangan.壬, Tiangan.癸}
+  assert both[Tiangan.壬] == both[Tiangan.癸] == frozenset((Dizhi.巳, Dizhi.申))
+  assert split[Tiangan.壬] == frozenset((Dizhi.巳,))
+  assert split[Tiangan.癸] == frozenset((Dizhi.申,))
+
+  # Unlike every other stem-anchored table, cardinality varies inside one reading -- 戊己 take
+  # all four storage branches while the split reading gives 壬癸 one each. Pin the whole
+  # distribution, not just that it is non-empty: a table that quietly loses 戌 from 戊 would
+  # still look fine to a "every stem has at least one branch" check.
+  # 与其余干锚表不同，同一读法内部势数不齐：戊己占四库，而分读法的壬癸各一支。
+  # 钉整个分布而不只是「非空」——戊悄悄少掉一个戌，「每干至少一支」是看不出来的。
+  storage = frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未))
+  for table in ShenshaRules.TAIJI.values():
+    assert table[Tiangan.戊] == storage
+    assert table[Tiangan.己] == storage
+  assert {len(v) for v in both.values()} == {2, 4}
+  assert {len(v) for v in split.values()} == {1, 2, 4}
+
+
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.
   # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)

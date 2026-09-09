@@ -657,3 +657,74 @@ def test_wenchang_and_wenchanggui_are_two_stars() -> None:
     )
   }
   assert agreeing == {Tiangan.甲, Tiangan.戊}
+
+
+def test_taiji() -> None:
+  # Both readings written out in full. 甲乙 / 丙丁 / 戊己 / 庚辛 pair up, but they are spelled
+  # per stem rather than as pairs -- a table that quietly breaks a pair would still satisfy
+  # any check written in terms of the pairs.
+  # 两读逐格写全。甲乙 / 丙丁 / 戊己 / 庚辛 虽然成对，但逐干写出：表里悄悄拆散一对，
+  # 按「对」写的检查是发现不了的。
+  storage = frozenset((Dizhi.辰, Dizhi.戌, Dizhi.丑, Dizhi.未))
+  expected: dict[ShenshaRules.TaijiDef, dict[Tiangan, frozenset[Dizhi]]] = {
+    ShenshaRules.TaijiDef.REN_GUI_BOTH : {
+      Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.丙 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.戊 : storage,
+      Tiangan.己 : storage,
+      Tiangan.庚 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.辛 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.壬 : frozenset((Dizhi.巳, Dizhi.申)),
+      Tiangan.癸 : frozenset((Dizhi.巳, Dizhi.申)),
+    },
+    ShenshaRules.TaijiDef.REN_SI_GUI_SHEN : {
+      Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.乙 : frozenset((Dizhi.子, Dizhi.午)),
+      Tiangan.丙 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.丁 : frozenset((Dizhi.卯, Dizhi.酉)),
+      Tiangan.戊 : storage,
+      Tiangan.己 : storage,
+      Tiangan.庚 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.辛 : frozenset((Dizhi.寅, Dizhi.亥)),
+      Tiangan.壬 : frozenset((Dizhi.巳,)),
+      Tiangan.癸 : frozenset((Dizhi.申,)),
+    },
+  }
+
+  for taiji_def in ShenshaRules.TaijiDef:
+    for tg in Tiangan:
+      for dz in Dizhi:
+        assert shensha_utils.taiji(tg, dz, definition=taiji_def) == (dz in expected[taiji_def][tg])
+
+  # The default is the reading 《五行精纪》's 「一作」 points to.
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.taiji(tg, dz) == shensha_utils.taiji(
+        tg,
+        dz,
+        definition=ShenshaRules.TaijiDef.REN_GUI_BOTH,
+      )
+
+  # 壬癸 is the whole of the divergence, and it is one-way: the split reading drops a branch
+  # from each, never adds one. 分歧全在壬癸，且是单向的：分读法各去一支，不会多出一支。
+  differing = {
+    tg for tg in Tiangan for dz in Dizhi
+    if shensha_utils.taiji(tg, dz, definition=ShenshaRules.TaijiDef.REN_GUI_BOTH)
+    != shensha_utils.taiji(tg, dz, definition=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN)
+  }
+  assert differing == {Tiangan.壬, Tiangan.癸}
+  for tg in Tiangan:
+    for dz in Dizhi:
+      if shensha_utils.taiji(tg, dz, definition=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN):
+        assert shensha_utils.taiji(tg, dz, definition=ShenshaRules.TaijiDef.REN_GUI_BOTH)
+
+
+def test_taiji_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.taiji('甲', Dizhi.子) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.taiji(Tiangan.甲, '子') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.taiji(Tiangan.甲, Dizhi.子, definition=object()) # type: ignore
