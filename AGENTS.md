@@ -53,9 +53,10 @@ those, don't restate them here. Two rules the README doesn't spell out:
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
   - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_demo.py,*/run_relationship_analyzer.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
-    then `python -m coverage report --show-missing --fail-under=100` — coverage is a hard
-    gate at **100%**, and `--fail-under` is what makes it one; without the flag the report
-    prints and exits 0 no matter what
+    then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
+    at **100%**. Without the flag the report prints the number and still exits 0, so this
+    local loop would not notice a drop; CI never runs this path, it gates inside
+    `run_tests.py -c -cr 100`
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
   - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
     (see Idioms below; the script refuses to run without `-O`).

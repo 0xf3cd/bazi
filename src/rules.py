@@ -1075,7 +1075,7 @@ class ShenshaRules:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
     - 明·万民英《星学大成》「论文昌」: https://book.taiyi.me/命/星学大成
-    - 同书四库全书本，与上一条互为独立转录:
+    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
 
     No change should be made to the existing definitions. Only add new definitions.
@@ -1086,11 +1086,11 @@ class ShenshaRules:
   # The tables are used to find out WENCHANG (文昌).
   # 这些表格用于查询文昌星。
   # Which pillar supplies the anchor stem is a school knob -- see `_ANCHOR_CHOICES`.
-  # Where the star is then looked for is 四柱地支 in both modern sources; the classical
-  # texts never state a search range for stem-anchored Shenshas, so that part rests on
+  # Where the star is then looked for is 四柱地支 in both modern sources; none of the
+  # classical sources consulted for this star states a search range, so that part rests on
   # 问真 and 高人 alone.
   # 锚取哪一柱属流派旋钮，见 `_ANCHOR_CHOICES`；被查位置两家现代查法均作四柱地支，
-  # 而古籍对干锚神煞一律不交代查哪几柱，故此处出处只有现代两家。
+  # 而为本星查过的古籍都不交代查哪几柱，故此处出处只有现代两家。
   WENCHANG: Final[frozendict[WenchangDef, frozendict[Tiangan, Dizhi]]] = frozendict({
     WenchangDef.XIN_ZI : frozendict({
       Tiangan.甲 : Dizhi.巳,
@@ -1123,10 +1123,12 @@ class ShenshaRules:
   # stems, so the two are kept apart rather than merged into one entry.
   # 该表格用于查询文昌贵，禄命法中的同名近亲。它与文昌在甲（巳）、戊（申）两格相同，
   # 其余八干皆异，因此两者分列，不并成一条。
-  # Anchor: 年干 (《五行精纪注释》「从年干取」). No school divergence is attested, so this
-  # table takes no knob.
+  # Anchor: 年干. No school divergence is attested, so this table takes no knob.
   # 锚为年干；未见流派分歧，故本表不设旋钮。
   # Sources / 出处:
+  # - 《五行精纪注释》卷十三「以年干查：甲见巳，乙见亥，丙见戌，丁见辰，戊见申，己见午，
+  #   庚见寅，辛见未，壬见卯，癸见丑」-- states the anchor and spells the whole table out:
+  #   https://www.suanzhun.net/book/2728.html
   # - 宋·廖中《五行精纪》: https://book.taiyi.me/命/五行精纪/五行精纪(下)
   # - 《三命通会》卷三，附于「论太极贵」节内:
   #   https://book.taiyi.me/命/三命通会/三命通会(卷三)

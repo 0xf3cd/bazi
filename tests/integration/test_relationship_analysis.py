@@ -156,25 +156,29 @@ def test_case1() -> None:
   # at birth
   at_birth: AtBirthAnalysis = analyzer.at_birth
 
-  assert at_birth.shensha['taohua']    == {Dizhi.午}
-  assert at_birth.shensha['hongluan']  == {Dizhi.卯}
+  assert at_birth.shensha['taohua']      == {Dizhi.午}
+  assert at_birth.shensha['hongluan']    == {Dizhi.卯}
   # 问真八字以乙日主见午为红艳，但 `ShenshaRules.HONGYAN` 中以乙日主见申为红艳，所以这里为空。
-  assert at_birth.shensha['hongyan']   == set()
-  assert at_birth.shensha['tianxi']    == set()
-  assert at_birth.shensha['yima']      == set()
-  assert at_birth.shensha['huagai']    == set()
-  assert at_birth.shensha['yangren']   == set()
-  assert at_birth.shensha['feiren']    == set()
-  assert at_birth.shensha['tianyi']    == {Dizhi.子, Dizhi.丑}
-  assert at_birth.shensha['jiangxing'] == set()
-  assert at_birth.shensha['jiesha']    == set()
-  assert at_birth.shensha['wangshen']  == set()
-  assert at_birth.shensha['guchen']    == set()
-  assert at_birth.shensha['guasu']     == set()
-  assert at_birth.shensha['lushen']    == {Dizhi.卯}
-  assert at_birth.shensha['jinyu']     == set()
-  assert at_birth.shensha['kuigang']   is None
-  assert at_birth.shensha['tianshe']   is None
+  assert at_birth.shensha['hongyan']     == set()
+  assert at_birth.shensha['tianxi']      == set()
+  assert at_birth.shensha['yima']        == set()
+  assert at_birth.shensha['huagai']      == set()
+  assert at_birth.shensha['yangren']     == set()
+  assert at_birth.shensha['feiren']      == set()
+  assert at_birth.shensha['tianyi']      == {Dizhi.子, Dizhi.丑}
+  assert at_birth.shensha['jiangxing']   == set()
+  assert at_birth.shensha['jiesha']      == set()
+  assert at_birth.shensha['wangshen']    == set()
+  assert at_birth.shensha['guchen']      == set()
+  assert at_birth.shensha['guasu']       == set()
+  assert at_birth.shensha['lushen']      == {Dizhi.卯}
+  assert at_birth.shensha['jinyu']       == set()
+  # 文昌与文昌贵这两行的期望不来自问真排盘，是按已核过的规则表推演：年干甲的文昌在巳、
+  # 日干乙的在午，四支只见午；文昌贵锚年干，甲的在巳，本盘无巳。
+  assert at_birth.shensha['wenchang']    == {Dizhi.午}
+  assert at_birth.shensha['wenchanggui'] == set()
+  assert at_birth.shensha['kuigang']     is None
+  assert at_birth.shensha['tianshe']     is None
 
   # 感情分析主要关心日主被合的情况，但原局日主没有被合。
   # 虽然我们不关心相生关系，但在这里还是检查一下。
@@ -203,22 +207,25 @@ def test_case1() -> None:
   assert set(transits_1990.ganzhis) == {Ganzhi.from_str('戊辰'), Ganzhi.from_str('庚午')}
 
   shensha = transits.shensha(transits_1990)
-  assert shensha['taohua']    == {Dizhi.午}
-  assert shensha['hongluan']  == set()
-  assert shensha['hongyan']   == set()
-  assert shensha['tianxi']    == set()
-  assert shensha['yima']      == set()
-  assert shensha['huagai']    == {Dizhi.辰}
-  assert shensha['yangren']   == set()
-  assert shensha['feiren']    == set()
-  assert shensha['tianyi']    == set()
-  assert shensha['jiangxing'] == set()
-  assert shensha['jiesha']    == set()
-  assert shensha['wangshen']  == set()
-  assert shensha['guchen']    == set()
-  assert shensha['guasu']     == set()
-  assert shensha['lushen']    == set()
-  assert shensha['jinyu']     == set()
+  assert shensha['taohua']      == {Dizhi.午}
+  assert shensha['hongluan']    == set()
+  assert shensha['hongyan']     == set()
+  assert shensha['tianxi']      == set()
+  assert shensha['yima']        == set()
+  assert shensha['huagai']      == {Dizhi.辰}
+  assert shensha['yangren']     == set()
+  assert shensha['feiren']      == set()
+  assert shensha['tianyi']      == set()
+  assert shensha['jiangxing']   == set()
+  assert shensha['jiesha']      == set()
+  assert shensha['wangshen']    == set()
+  assert shensha['guchen']      == set()
+  assert shensha['guasu']       == set()
+  assert shensha['lushen']      == set()
+  assert shensha['jinyu']       == set()
+  # 同上：两行按规则表推演。流运支为辰、午，文昌命中午；文昌贵的巳不在其中。
+  assert shensha['wenchang']    == {Dizhi.午}
+  assert shensha['wenchanggui'] == set()
 
   assert _check_tiangan({
     TianganRelation.合 : [frozenset({Tiangan.乙, Tiangan.庚})],
