@@ -1075,8 +1075,7 @@ class ShenshaRules:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
     - 明·万民英《星学大成》「论文昌」: https://book.taiyi.me/命/星学大成
-    - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
-      作正文连排——该半句是万民英本文还是注，两本的呈现不同（底本关系亦未见声明）:
+    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
 
     No change should be made to the existing definitions. Only add new definitions.
