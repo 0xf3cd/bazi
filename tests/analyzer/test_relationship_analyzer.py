@@ -1966,26 +1966,25 @@ def test_guoyin_anchor_at_birth_and_transits(
 
 @pytest.mark.parametrize('guoyin_def, expected', [
   (ShenshaRules.GuoyinDef.WUXING_JINGJI, frozenset({Dizhi.未})),
-  (ShenshaRules.GuoyinDef.MODERN, frozenset()),
-  (ShenshaRules.GuoyinDef.XINGXUE_DACHENG, frozenset({Dizhi.酉})),
+  (ShenshaRules.GuoyinDef.MODERN, frozenset({Dizhi.申})),
 ])
 def test_guoyin_definition_at_birth_and_transits(
   guoyin_def: ShenshaRules.GuoyinDef,
   expected: frozenset[Dizhi],
 ) -> None:
-  # 癸日：三读分别指向未、申、酉，而原局同时有未与酉。切定义时命中在两支之间**移动**，
-  # 中间那读落在盘上没有的申——三种结果两两不同，任何一个旋钮没接上都区分得出来。
-  # 年干己的国印在寅，本盘与所选流运都没有，故年干那一半不参与。
+  # 癸日：两读分别指向未与申，而原局同时有这两支。切定义时命中在两支之间移动，
+  # 两侧都是非空且互不相同——旋钮接反、没接上或被忽略，三种情形都区分得出来。
+  # 年干己的国印在丑（《五行精纪》）或寅（现代），本盘与所选流运都没有，故年干那一半不参与。
   chart = BaziChart(Bazi.create(
-    '1980-01-01 12:00',
+    '1979-09-03 12:00',
     'male',
     BaziConfig(school=BaziSchool(guoyin_def=guoyin_def)),
   ))
-  assert tuple(map(str, chart.bazi.pillars)) == ('己未', '丙子', '癸酉', '戊午')
+  assert tuple(map(str, chart.bazi.pillars)) == ('己未', '壬申', '癸酉', '戊午')
   assert RelationshipAnalyzer(chart).at_birth.shensha['guoyin'] == expected
 
   transits = TransitSet(
     dayun=Ganzhi.from_str('辛未'),
-    liunian=Ganzhi.from_str('癸酉'),
+    liunian=Ganzhi.from_str('庚申'),
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['guoyin'] == expected

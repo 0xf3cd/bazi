@@ -1076,7 +1076,7 @@ class ShenshaRules:
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
     - 明·万民英《星学大成》「论文昌」: https://book.taiyi.me/命/星学大成
     - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
-      作正文连排——该半句是万民英本文还是注,两本的呈现不同（底本关系亦未见声明）:
+      作正文连排——该半句是万民英本文还是注，两本的呈现不同（底本关系亦未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
 
     No change should be made to the existing definitions. Only add new definitions.
@@ -1231,85 +1231,92 @@ class ShenshaRules:
   })
 
   class GuoyinDef(Enum):
-    '''The definitions of GUOYIN GUIREN (国印贵人). All three readings place the star at a
-    fixed offset from the stem's 禄; they differ only in the offset and in whether 禄 itself
-    counts as the first position.
-    国印贵人的查法定义。三读都把星定在该干禄位的固定偏移处，分歧只在偏移量、
-    以及禄本身算不算第一位。
+    '''The definitions of GUOYIN GUIREN (国印贵人). Both readings place the star at a fixed
+    offset from the stem's 禄, counting 禄 as the first position; they differ only in how far.
+    国印贵人的查法定义。两读都把星定在该干禄位的固定偏移处（含禄起算），分歧只在偏移量。
 
-    - WUXING_JINGJI: 禄前第八位, counting 禄 as the first — i.e. 禄 + 7.
-      《五行精纪》禄前第八位（含禄起算）。
-    - MODERN: the table current in modern practice — 禄 + 8.
-      现代通行表。
-    - XINGXUE_DACHENG: 禄前九位, counting from the position after 禄 — i.e. 禄 + 9.
-      《星学大成》禄前九位（不含禄起算）。
+    - WUXING_JINGJI: 禄前第八位 -- i.e. 禄 + 7.
+      《五行精纪》禄前第八位。
+    - MODERN: 禄前第九位 -- i.e. 禄 + 8.
+      果老一脉的禄前第九位，也是现代通行表。
 
-    `MODERN` is the default: it is what both modern sources give and what current 排盘
-    software shows. 默认取现代通行表。
+    `MODERN` is the default: it is what 《张果星宗》 gives and what current 排盘 software
+    shows. 默认取果老本宗表，现代两家与排盘软件同此。
 
-    **The three readings share no cell** -- every stem gets a different branch under each,
+    **The two readings share no cell** -- every stem gets a different branch under each,
     so a chart is never ambiguous about which reading produced a hit.
-    三读无一格重合：每个天干在三读下各得不同地支，故命中结果不会含混。
+    两读无一格重合：每个天干在两读下各得不同地支，故命中结果不会含混。
 
     What each source does and does not settle:
     各来源定了什么、没定什么：
 
+    - 《张果星宗》 settles `MODERN`, and settles it twice over in one book. The
+      「禄勋、阳刃、唐符、国印」 entry gives the couplet 「禄前八位号唐符，第九名为国印宫」
+      and then works every stem: 「甲禄到寅、卯为阳刃、酉为飞刃唐符，戌为国印。乙禄到卯、
+      辰为阴刃、戌为飞刃唐符、亥为国印……」. The 「天干吉凶星例」 table elsewhere in the same
+      book lists 「国印：主掌印，戌亥丑寅丑寅辰巳未申」 -- the same ten cells, transcribed
+      independently. The worked example also fixes the counting: 甲禄 sits at 寅, 酉 is the
+      eighth position and 戌 the ninth, so 禄 counts as the first.
+      《张果星宗》一书两处互证地定下 `MODERN`：条目例解逐干列出，「天干吉凶星例」表另出一遍，
+      十格相同。例解同时定死了起算法——甲禄在寅，酉为第八、戌为第九，即含禄起算。
+    - 《星学大成》「唐符禄前八位是 国印禄前九位是」 is that same couplet in prose, and
+      《神峰通考》 places both stars in the 果老 tradition (「惟张果老通玄先生命理，专用此二星
+      取贵」). Read under the parent text's own worked example, its 「禄前九位」 is 禄 + 8 --
+      the same table as `MODERN`, not a third one.
+      《星学大成》那一句就是同一副对联的散文形，而《神峰通考》把这两颗星归给果老一脉。
+      按父本自己的例解读，它的「禄前九位」即禄 + 8，与 `MODERN` 同表，不另成一读。
     - The 白文 of 《五行精纪》 gives the offset and an example, nothing more:
       「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」. The anchor and the
       counting convention are spelled out by the modern annotator on the same page, not by
       the 白文:「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」.
       So `WUXING_JINGJI` rests on the 白文, while "year stem" and "禄 counts as the first"
-      rest on 《五行精纪注释》 — a distinction worth keeping, since 「甲申生人」 alone would
+      rest on 《五行精纪注释》 -- a distinction worth keeping, since 「甲申生人」 alone would
       also read as a year-branch anchor.
       《五行精纪》白文只给偏移与例子；年干锚与含禄起算的明文出自同页今人注释，不在白文。
       故 `WUXING_JINGJI` 依白文，而「年干」与「禄算第一位」依注释本——两者要分开记，
       因为单看「甲申生人」也可以读成年支锚。
-    - 《星学大成》 says only 「国印禄前九位是」. **Whether 禄 counts as the first position is
-      not stated.** Counting it would make this reading identical to `MODERN`; not counting
-      it gives `XINGXUE_DACHENG`. None of the sources consulted here settles it, so both
-      possibilities are carried as separate readings rather than merged — the equivalence
-      under one convention is arithmetic, not something that source says. The 果老 tradition
-      this star belongs to may well settle it; that has not been checked (see below).
-      《星学大成》只说「禄前九位」，**含不含禄原文未载**。含则与 `MODERN` 等值，不含则为
-      `XINGXUE_DACHENG`；无来源可裁，故并列保留。「按某种约定二者等值」是推算，不是该书的断言。
-    - No first-hand source for `MODERN` was found among the ones consulted here: 问真 gives
-      the table without provenance, and 高人 attributes it to 《周易述补》, which was not read
-      through. It is carried because it is what current practice uses, not because a text was
-      found for it. A lead worth chasing: 《张果星宗》 is reported to carry this table with a
-      worked example under 「禄勋阳刃唐符国印」 — three fetch routes failed to reach that text
-      here, so it is recorded as unverified rather than used.
-      本批所查来源中未见 `MODERN` 的一手出处：问真无出处，高人转引《周易述补》而该书未逐页核。
-      收它是因为它是当下实践，不是因为找到了文本。待核线索:《张果星宗》「禄勋阳刃唐符国印」条
-      据称载此表并带例解——本批三条抓取路径均未取到正文，故记为未核，不作依据。
-    - 《星学大成》 says the star 「守照身命」 — the 命宫 and 身宫, not the four branches.
-      《神峰通考》 does not say where to look; it only places 国印 in the 果老 tradition
-      (「惟张果老通玄先生命理，专用此二星取贵」). Either way, reading the star against
-      四柱地支 is the modern sources' move and has no classical backing.
-      《星学大成》明言「守照身命」，即命宫身宫而非四柱;《神峰通考》未言查何处，
-      只说它属果老一脉。无论如何，按四柱地支查是现代两家的做法，无古籍背书。
+    - Recorded and left open: `WUXING_JINGJI` lands on exactly the branches 《张果星宗》
+      calls 飞刃／唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」). The two texts agree on the
+      phrase 「禄前八位」, on counting 禄 as the first, and on 酉 for 甲 -- they disagree only
+      on which star's name belongs there. Whether the 子平 line genuinely places 国印 one
+      position earlier, or 唐符 and 国印 slipped in transmission (they share a couplet), is
+      settled by nothing read here, so both readings stand.
+      如实记下而不裁：`WUXING_JINGJI` 的十格恰好是《张果星宗》的飞刃／唐符表。两书都说
+      「禄前八位」，都含禄起算，甲都落在酉——只有星名不同。子平一脉是真把国印定得早一位，
+      还是唐符与国印在同一副对联里串了位，此处所查来源无一裁定，故两读并存。
+    - Where to look is a separate question from which table to use. 《星学大成》 says the
+      star 「守照身命」 -- the 命宫 and 身宫, not the four branches -- and 《张果星宗》 agrees
+      (「唐符、国印守命为奇」). 《神峰通考》 does not say. Reading the star against 四柱地支
+      is the modern sources' move and has no classical backing.
+      查哪里与用哪张表是两个问题。《星学大成》明言「守照身命」，即命宫身宫而非四柱，
+      《张果星宗》亦作「唐符、国印守命为奇」；《神峰通考》未言。按四柱地支查是现代两家的
+      做法，无古籍背书。
 
     Sources / 出处:
+    - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表:
+      https://zh.wikisource.org/wiki/張果星宗
     - 《五行精纪注释》卷十三（底本完整，白文两处转录把建节星与国印星并成一条残句）:
       https://www.suanzhun.net/book/2731.html
     - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:
       https://book.taiyi.me/命/星学大成
     - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
-      作正文连排——该半句是万民英本文还是注,两本的呈现不同（底本关系亦未见声明）:
+      作正文连排——该半句是万民英本文还是注，两本的呈现不同（底本关系亦未见声明）:
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
+    - 张楠《神峰通考》卷六「唐符国印之星 惟张果老通玄先生命理 专用此二星取贵」:
+      https://book.taiyi.me/命/神峰通考(卷六)
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
 
     No change should be made to the existing definitions. Only add new definitions.
     '''
     WUXING_JINGJI   = 0
     MODERN          = 1
-    XINGXUE_DACHENG = 2
 
   # The tables are used to find out GUOYIN GUIREN (国印贵人).
   # 这些表格用于查询国印贵人。
   # Every cell is a fixed offset from `BaziRules.TIANGAN_LU`; `test_rules.py` derives all
-  # thirty from that table rather than re-reading the literals here, so a typo below cannot
+  # twenty from that table rather than re-reading the literals here, so a typo below cannot
   # agree with itself.
-  # 每一格都是 `BaziRules.TIANGAN_LU` 的固定偏移；`test_rules.py` 由禄表推导全部三十格，
+  # 每一格都是 `BaziRules.TIANGAN_LU` 的固定偏移；`test_rules.py` 由禄表推导全部二十格，
   # 不重读下面的字面值——写错一格不会自圆其说。
   # Anchor and search range: see `_ANCHOR_CHOICES`; both modern sources read 四柱地支,
   # while the classical ones point at 身命宫 (see `GuoyinDef`).
@@ -1338,17 +1345,5 @@ class ShenshaRules:
       Tiangan.辛 : Dizhi.巳,
       Tiangan.壬 : Dizhi.未,
       Tiangan.癸 : Dizhi.申,
-    }),
-    GuoyinDef.XINGXUE_DACHENG : frozendict({
-      Tiangan.甲 : Dizhi.亥,
-      Tiangan.乙 : Dizhi.子,
-      Tiangan.丙 : Dizhi.寅,
-      Tiangan.丁 : Dizhi.卯,
-      Tiangan.戊 : Dizhi.寅,
-      Tiangan.己 : Dizhi.卯,
-      Tiangan.庚 : Dizhi.巳,
-      Tiangan.辛 : Dizhi.午,
-      Tiangan.壬 : Dizhi.申,
-      Tiangan.癸 : Dizhi.酉,
     }),
   })

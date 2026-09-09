@@ -152,8 +152,8 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     '太极贵人',
     lambda school: school.taiji_def,
   ),
-  # 国印贵人 carries three readings, all fixed offsets from the stem's 禄 and sharing no cell.
-  # 国印贵人三读并列，皆为禄位的固定偏移，且无一格重合。
+  # 国印贵人 carries two readings behind one knob, sharing no cell -- see `ShenshaRules.GuoyinDef`.
+  # 国印贵人两读共用一个旋钮，无一格重合，详见 `ShenshaRules.GuoyinDef`。
   'guoyin'     : _ShenshaSpec(
     shensha_utils.guoyin,
     _AnchorKind.TIANGAN,

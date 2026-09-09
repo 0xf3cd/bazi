@@ -731,10 +731,10 @@ def test_taiji_negative() -> None:
 
 
 def test_guoyin() -> None:
-  # Three readings, thirty cells, written out per stem. The derivation from 禄 is pinned in
+  # Two readings, twenty cells, written out per stem. The derivation from 禄 is pinned in
   # `tests/test_rules.py`; here the literals are spelled independently so that a change to
   # the offset story and a change to the table cannot cancel each other out.
-  # 三读三十格逐干写出。由禄推导那一层钉在 `test_rules.py`；此处独立写字面值，
+  # 两读二十格逐干写出。由禄推导那一层钉在 `test_rules.py`；此处独立写字面值，
   # 使「偏移说法」与「表」两处改动无法互相抵消。
   expected: dict[ShenshaRules.GuoyinDef, dict[Tiangan, Dizhi]] = {
     ShenshaRules.GuoyinDef.WUXING_JINGJI : {
@@ -746,11 +746,6 @@ def test_guoyin() -> None:
       Tiangan.甲 : Dizhi.戌, Tiangan.乙 : Dizhi.亥, Tiangan.丙 : Dizhi.丑, Tiangan.丁 : Dizhi.寅,
       Tiangan.戊 : Dizhi.丑, Tiangan.己 : Dizhi.寅, Tiangan.庚 : Dizhi.辰, Tiangan.辛 : Dizhi.巳,
       Tiangan.壬 : Dizhi.未, Tiangan.癸 : Dizhi.申,
-    },
-    ShenshaRules.GuoyinDef.XINGXUE_DACHENG : {
-      Tiangan.甲 : Dizhi.亥, Tiangan.乙 : Dizhi.子, Tiangan.丙 : Dizhi.寅, Tiangan.丁 : Dizhi.卯,
-      Tiangan.戊 : Dizhi.寅, Tiangan.己 : Dizhi.卯, Tiangan.庚 : Dizhi.巳, Tiangan.辛 : Dizhi.午,
-      Tiangan.壬 : Dizhi.申, Tiangan.癸 : Dizhi.酉,
     },
   }
 
@@ -773,7 +768,9 @@ def test_guoyin() -> None:
   # branch. 无一干在两读下答同一支，故切旋钮总是「换一支」而非「少一支」——
   # 与太极不同，太极的分读法只去支。
   for tg in Tiangan:
-    assert len({expected[d][tg] for d in ShenshaRules.GuoyinDef}) == 3, tg
+    assert len({expected[d][tg] for d in ShenshaRules.GuoyinDef}) == len(
+      ShenshaRules.GuoyinDef
+    ), tg
 
 
 def test_guoyin_negative() -> None:
