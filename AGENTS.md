@@ -79,6 +79,14 @@ those, don't restate them here. Two rules the README doesn't spell out:
   summary in this bullet.
 - Commits must be signed. Agents follow the author's approved commit workflow rather
   than invoking local signing.
+- Attribution goes at the **end of the PR body**, one line naming the tools that did the
+  work — `Built by @0xf3cd with Claude Code (claude-opus-5).`, listing several with `and`
+  when more than one drove it. No session links: they resolve for nobody but the author.
+  Commits carry **no `Co-Authored-By:` trailer** — squash-merge takes the PR body as the
+  merge commit message (`squash_merge_commit_message=PR_BODY`), so the PR body is the part
+  that lands in `main` and a commit trailer would only ever live in branch history.
+  This paragraph exists because the convention used to live only in past PRs, where an
+  agent had to go read the history to find it — and one did not.
 
 ## File conventions
 - Every source file opens with the copyright header, verbatim except the year:
