@@ -134,9 +134,10 @@ Punctuation: a Chinese narrative sentence takes full-width `，：；（）`; an
 sentence keeps half-width even where Chinese terms sit inside it; **quoted material keeps
 whatever punctuation the source has** — a 口诀 or a 古籍 citation is someone else's text,
 not ours to normalise. (This line used to read "tests/ is overwhelmingly half-width",
-which was true when it was written in 2026-08; measured on the current tree the narrative
-comments run 163:14 full-width in tests/ and 151:2 in src/, so the rule now states the
-practice instead of pointing at it.)
+which was true when written in 2026-08. Sampled at `1f0f43c`, counting punctuation *marks*
+— not lines — in `#` comments that are Chinese narrative (English sentences, quotation lines
+and URLs excluded, matching the rule above): tests/ 144 full-width to 14 half-width, src/
+120 to 0. Those numbers are a dated sample, not the rule; the rule is the sentence above it.)
 
 ## Typing & immutability (non-negotiable)
 - Fully typed; `mypy .` must pass. Lean on `Final`, `X | None` unions (PEP 604, not `Optional`), `Callable`, `TypedDict`, `NamedTuple`.
