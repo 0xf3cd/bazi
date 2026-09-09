@@ -1165,13 +1165,13 @@ class ShenshaRules:
     Two flaws in the received text are recorded here rather than silently repaired:
     两处原文硬伤记在这里，不悄悄修补：
 
-    - 《三命通会》 as transcribed by taiyi and 算准网 reads 「壬癸水先得**则**生，后得巳而纳」,
-      dropping a character. That is a defect of those two digital transcriptions, not of the
-      work: the 四庫全書 edition on Wikisource reads 「壬癸水先得申而生後得巳而納」, and 高人's
-      quotation of this passage likewise has 申. The reading is therefore settled, and the
-      section's own parallel phrasing agrees with it.
-      taiyi 与算准网两处转录作「先得则生」，是数字谱系的讹，不是这部书的通行原文：
-      四库全书本作「先得申而生」，高人转述亦有申。字已可定，与同节句式一致。
+    - Two digital transcriptions of 《三命通会》 (taiyi, 算准网) read 「壬癸水先得则生，
+      后得巳而纳」, where the 四庫全書 edition on Wikisource reads 「壬癸水先得申而生後得巳而納」.
+      高人's quotation of the passage also has 申, as does the section's own parallel phrasing.
+      The character is therefore 申; 则 is a defect of those two transcriptions, not a
+      variant reading of the work.
+      《三命通会》有两处数字转录作「先得则生」，而四库全书本作「先得申而生」；高人转述
+      与同节句式亦皆作申。故该字为申，「则」是那两处转录的讹，不是这部书的异文。
     - The same section reads 「戊己，土也，喜生乎申，得辰戌丑未为正库」. By that phrasing 申
       would belong in the 戊己 cell, yet 问真, 高人 and 《五行精纪》 all give 戊己 the four
       storage branches without 申. No source resolves this, so the tables here follow the
