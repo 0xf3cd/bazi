@@ -217,7 +217,9 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # 太极贵人: YEAR is 《五行精纪注释》卷十三「太极贵人，从年干取」
   # (https://www.suanzhun.net/book/2728.html). YEAR_AND_DAY is the modern reading of 问真
   # (https://book.taiyi.me/命/神煞大全,「以日/年干查四地支」) and 高人, and this library's
-  # default. As with 文昌, the day-stem half rests on the modern sources alone.
+  # default. The provenance gap mirrors 文昌's rather than repeating it: there the classical
+  # anchor is the day stem and only the modern sources add the year; here the classical anchor
+  # is the year stem and only they add the day.
   'taiji_anchor':     frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 

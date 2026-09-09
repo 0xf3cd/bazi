@@ -140,10 +140,10 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     lambda school: school.wenchang_def,
   ),
   'wenchanggui': _ShenshaSpec(shensha_utils.wenchanggui, _AnchorKind.TIANGAN, Anchor.YEAR, '文昌贵'),
-  # 太极贵人 is the first entry whose table answers with more than one branch per stem
-  # (戊己 take all four storage branches). That stays inside the predicate; the registry and
-  # the analysis dicts are unaffected.
-  # 太极贵人是首个「一干对多支」的条目（戊己占四库）。多支是 predicate 内部的事，
+  # 太极贵人's table answers with a varying number of branches per stem (戊己 take all four
+  # storage branches). That stays inside the predicate; the registry and the analysis dicts
+  # are unaffected.
+  # 太极贵人一干所对地支数不一（戊己占四库）。多支是 predicate 内部的事，
   # 注册表与分析结果的形状不变。
   'taiji'      : _ShenshaSpec(
     shensha_utils.taiji,

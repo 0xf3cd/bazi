@@ -1165,11 +1165,13 @@ class ShenshaRules:
     Two flaws in the received text are recorded here rather than silently repaired:
     两处原文硬伤记在这里，不悄悄修补：
 
-    - 《三命通会》 reads 「壬癸水先得**则**生，后得巳而纳」, dropping a character where the
-      section's own parallel phrasing requires 申. The taiyi and 算准网 transcriptions carry
-      the same corruption verbatim, so they cannot check each other, and no third
-      transcription was found.
-      「先得则生」脱一字，按同节句式当作「先得申而生」；两处转录同讹，互校不了。
+    - 《三命通会》 as transcribed by taiyi and 算准网 reads 「壬癸水先得**则**生，后得巳而纳」,
+      dropping a character. That is a defect of those two digital transcriptions, not of the
+      work: the 四庫全書 edition on Wikisource reads 「壬癸水先得申而生後得巳而納」, and 高人's
+      quotation of this passage likewise has 申. The reading is therefore settled, and the
+      section's own parallel phrasing agrees with it.
+      taiyi 与算准网两处转录作「先得则生」，是数字谱系的讹，不是这部书的通行原文：
+      四库全书本作「先得申而生」，高人转述亦有申。字已可定，与同节句式一致。
     - The same section reads 「戊己，土也，喜生乎申，得辰戌丑未为正库」. By that phrasing 申
       would belong in the 戊己 cell, yet 问真, 高人 and 《五行精纪》 all give 戊己 the four
       storage branches without 申. No source resolves this, so the tables here follow the
@@ -1192,12 +1194,14 @@ class ShenshaRules:
 
   # The tables are used to find out TAIJI GUIREN (太极贵人).
   # 这些表格用于查询太极贵人。
-  # Unlike every other stem-anchored Shensha here, a stem can answer with more than one
-  # branch -- 戊己 take all four storage branches. Which pillar supplies the anchor stem is a
-  # school knob; see `_ANCHOR_CHOICES`. The search range is 四柱地支 in both modern sources,
-  # and none of the classical sources consulted for this star states one.
-  # 与本文件其余干锚神煞不同，一个天干可对多支——戊己占四库。锚取哪一柱属流派旋钮，
-  # 见 `_ANCHOR_CHOICES`；被查位置两家现代查法均作四柱地支，而为本星查过的古籍都不交代。
+  # A stem can answer with more than one branch, as in `TIANYI`. What has no precedent here
+  # is that the cardinality varies inside a single reading: 戊己 take all four storage
+  # branches while the split reading gives 壬癸 one each. Which pillar supplies the anchor
+  # stem is a school knob; see `_ANCHOR_CHOICES`. The search range is 四柱地支 in both modern
+  # sources, and none of the classical sources consulted for this star states one.
+  # 一个天干可对多支，`TIANYI` 已然如此；本表无先例的是同一读法内部势数不齐——戊己占四库，
+  # 而分读法的壬癸各一支。锚取哪一柱属流派旋钮，见 `_ANCHOR_CHOICES`；
+  # 被查位置两家现代查法均作四柱地支，而为本星查过的古籍都不交代。
   TAIJI: Final[frozendict[TaijiDef, frozendict[Tiangan, frozenset[Dizhi]]]] = frozendict({
     TaijiDef.REN_GUI_BOTH : frozendict({
       Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),

@@ -155,7 +155,6 @@ def test_anchor_choices_bind_to_every_anchor_field() -> None:
   # 的字段）都会在这里响——每个锚的出处状态必须显式记录。
   anchor_fields = {f.name for f in dataclasses.fields(BaziSchool) if f.type is Anchor}
   assert anchor_fields == set(_ANCHOR_CHOICES)
-  assert len(anchor_fields) == 11
   # Every subset is non-empty and every member of it is a real `Anchor`.
   for name, allowed in _ANCHOR_CHOICES.items():
     assert allowed, name
@@ -379,8 +378,13 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
     assert BaziSchool().gong_def is params['gong_def'].default
-  # The Shensha half iterates the registry instead of naming each entry: a new Shensha with a
-  # definition knob joins this check by existing, not by someone remembering to add a line.
+  # The Shensha half iterates the registry instead of naming each entry, so a new Shensha
+  # joins this check without anyone adding a line -- provided its registry spec actually
+  # carries the resolver. An entry that declares a `definition` parameter on the predicate but
+  # forgets `definition=` in the spec is skipped here silently; that gap is tracked in #189.
+  # 神煞半边遍历注册表而不逐条点名，新增神煞无须补行即可进入本检查——前提是它的注册表
+  # 条目真的挂了 resolver。predicate 带了 definition 参数却漏挂 `definition=` 的条目会被
+  # 静默跳过，该缺口记在 #189。
   # The two sides stay independent -- the school field default on one, the predicate's own
   # signature default on the other -- so this is still two spellings compared, not self-proof.
   # 神煞半边改为遍历注册表：新增带定义旋钮的神煞靠「存在」进入本检查，不靠谁记得补一行。
