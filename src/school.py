@@ -206,6 +206,14 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   'jiangxing_anchor': frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiesha_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'wangshen_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
+  # 文昌: DAY is 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」
+  # (https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb; that edition writes 己 where
+  # its own 按 commentary -- 「故甲以巳为文昌也」 -- requires 巳). YEAR_AND_DAY is the
+  # modern reading of 问真
+  # (https://book.taiyi.me/命/神煞大全,「以日/年干查四地支」) and 高人, and this library's
+  # default. The year-stem half rests on those modern sources alone -- no classical text
+  # was found that keys 文昌 on the year stem.
+  'wenchang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
 })
 
 
@@ -252,6 +260,8 @@ class BaziSchool:
   jinyu_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   feiren_def: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
+  wenchang_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  wenchang_def:    ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI
 
   def __post_init__(self) -> None:
     check_declared_types(self)
@@ -264,15 +274,15 @@ class BaziSchool:
   def mingli_tanyuan(cls) -> 'BaziSchool':
     '''
     The profile assembled from 袁树珊's 《命理探原》 NLC print and 《命理探源》 ctext
-    edition: the seven anchors recorded across them, each set to its documented reading.
+    edition: the eight anchors recorded across them, each set to its documented reading.
     驿马、华盖、将星、劫煞、亡神 key on the day branch alone (at birth they then inspect
-    the year, month, and hour branches); 天乙贵人 and 金舆 key on the Day Master. 金舆's is
-    also the current default, and the preset still names it -- the profile declares the
-    sources' readings, so a change of default cannot silently rewrite them.
-    据袁树珊《命理探原》NLC 刊本与《命理探源》ctext 版整理的口径档案：两版所载的七个锚各取
-    其读法。驿马、华盖、将星、劫煞、亡神以日支为锚（原局随之查年、月、时支）；天乙贵人与
-    金舆以日干为锚。金舆恰好也是当前默认，预设仍把它写出来——档案声明的是两版所载读法，
-    默认值日后改动不该悄悄改写它。
+    the year, month, and hour branches); 天乙贵人、金舆 and 文昌 key on the Day Master.
+    金舆's is also the current default, and the preset still names it -- the profile
+    declares the sources' readings, so a change of default cannot silently rewrite them.
+    据袁树珊《命理探原》NLC 刊本与《命理探源》ctext 版整理的口径档案：两版所载的八个锚各取
+    其读法。驿马、华盖、将星、劫煞、亡神以日支为锚（原局随之查年、月、时支）；天乙贵人、
+    金舆与文昌以日干为锚。金舆恰好也是当前默认，预设仍把它写出来——档案声明的是两版所载
+    读法，默认值日后改动不该悄悄改写它。
 
     Note:
     - Knobs these sources do not speak to keep the default profile's values -- 红艳 and 灾煞,
@@ -300,6 +310,7 @@ class BaziSchool:
       jiesha_anchor=Anchor.DAY,
       wangshen_anchor=Anchor.DAY,
       jinyu_anchor=Anchor.DAY,
+      wenchang_anchor=Anchor.DAY,
     )
 
   @classmethod

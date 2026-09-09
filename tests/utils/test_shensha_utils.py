@@ -547,3 +547,113 @@ def test_tianyi_negative() -> None:
     shensha_utils.tianyi(Tiangan.甲, '丑') # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object()) # type: ignore
+
+
+def test_wenchang() -> None:
+  # The two readings differ in 辛 only; every other stem is written out so a table-wide
+  # edit cannot hide behind the one cell everybody looks at.
+  # 两读只在辛分歧；其余九干逐格写出，免得改动躲在唯一有人盯着的那一格背后。
+  expected: dict[ShenshaRules.WenchangDef, dict[Tiangan, Dizhi]] = {
+    ShenshaRules.WenchangDef.XIN_ZI : {
+      Tiangan.甲 : Dizhi.巳,
+      Tiangan.乙 : Dizhi.午,
+      Tiangan.丙 : Dizhi.申,
+      Tiangan.丁 : Dizhi.酉,
+      Tiangan.戊 : Dizhi.申,
+      Tiangan.己 : Dizhi.酉,
+      Tiangan.庚 : Dizhi.亥,
+      Tiangan.辛 : Dizhi.子,
+      Tiangan.壬 : Dizhi.寅,
+      Tiangan.癸 : Dizhi.卯,
+    },
+    ShenshaRules.WenchangDef.XIN_XU : {
+      Tiangan.甲 : Dizhi.巳,
+      Tiangan.乙 : Dizhi.午,
+      Tiangan.丙 : Dizhi.申,
+      Tiangan.丁 : Dizhi.酉,
+      Tiangan.戊 : Dizhi.申,
+      Tiangan.己 : Dizhi.酉,
+      Tiangan.庚 : Dizhi.亥,
+      Tiangan.辛 : Dizhi.戌,
+      Tiangan.壬 : Dizhi.寅,
+      Tiangan.癸 : Dizhi.卯,
+    },
+  }
+
+  for wenchang_def in ShenshaRules.WenchangDef:
+    for tg in Tiangan:
+      for dz in Dizhi:
+        assert shensha_utils.wenchang(tg, dz, definition=wenchang_def) == (
+          expected[wenchang_def][tg] is dz
+        )
+
+  # The default is the 辛=子 reading.
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.wenchang(tg, dz) == shensha_utils.wenchang(
+        tg,
+        dz,
+        definition=ShenshaRules.WenchangDef.XIN_ZI,
+      )
+
+  # 辛 is the whole of the divergence: the two readings agree on the other nine stems and
+  # disagree on that one. Written as an executor so a second diverging cell cannot be
+  # introduced quietly.
+  # 分歧全在辛：两读在其余九干一致、在辛不一致。写成执行者，免得第二处分歧被悄悄塞进来。
+  differing = {
+    tg for tg in Tiangan for dz in Dizhi
+    if shensha_utils.wenchang(tg, dz, definition=ShenshaRules.WenchangDef.XIN_ZI)
+    != shensha_utils.wenchang(tg, dz, definition=ShenshaRules.WenchangDef.XIN_XU)
+  }
+  assert differing == {Tiangan.辛}
+
+
+def test_wenchang_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.wenchang('甲', Dizhi.巳) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.wenchang(Tiangan.甲, '巳') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.wenchang(Tiangan.甲, Dizhi.巳, definition=object()) # type: ignore
+
+
+def test_wenchanggui() -> None:
+  expected: dict[Tiangan, Dizhi] = {
+    Tiangan.甲 : Dizhi.巳,
+    Tiangan.乙 : Dizhi.亥,
+    Tiangan.丙 : Dizhi.戌,
+    Tiangan.丁 : Dizhi.辰,
+    Tiangan.戊 : Dizhi.申,
+    Tiangan.己 : Dizhi.午,
+    Tiangan.庚 : Dizhi.寅,
+    Tiangan.辛 : Dizhi.未,
+    Tiangan.壬 : Dizhi.卯,
+    Tiangan.癸 : Dizhi.丑,
+  }
+
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.wenchanggui(tg, dz) == (expected[tg] is dz)
+
+
+def test_wenchanggui_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.wenchanggui('甲', Dizhi.巳) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.wenchanggui(Tiangan.甲, '巳') # type: ignore
+
+
+def test_wenchang_and_wenchanggui_are_two_stars() -> None:
+  # They are separate entries because they are separate stars: the tables agree on 甲 → 巳
+  # and 戊 → 申, and differ on the other eight stems. If a later change collapses them into
+  # one, this fails.
+  # 两者分列是因为本就是两颗星：两表在甲→巳、戊→申两格相同，其余八干皆异。
+  # 将来谁把它们并成一条，这里会响。
+  agreeing = {
+    tg for tg in Tiangan
+    if all(
+      shensha_utils.wenchang(tg, dz) == shensha_utils.wenchanggui(tg, dz)
+      for dz in Dizhi
+    )
+  }
+  assert agreeing == {Tiangan.甲, Tiangan.戊}

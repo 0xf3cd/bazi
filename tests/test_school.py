@@ -88,6 +88,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     Anchor.YEAR_AND_DAY,
     ShenshaRules.YangrenDef.LUMING,
     Anchor.YEAR_AND_DAY,
+    Anchor.DAY,
+    ShenshaRules.WenchangDef.XIN_XU,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -106,6 +108,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     jinyu_anchor=Anchor.YEAR_AND_DAY,
     feiren_def=ShenshaRules.YangrenDef.LUMING,
     zaisha_anchor=Anchor.YEAR_AND_DAY,
+    wenchang_anchor=Anchor.DAY,
+    wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
   )
 
 
@@ -146,7 +150,7 @@ def test_anchor_choices_bind_to_every_anchor_field() -> None:
   # 的字段）都会在这里响——每个锚的出处状态必须显式记录。
   anchor_fields = {f.name for f in dataclasses.fields(BaziSchool) if f.type is Anchor}
   assert anchor_fields == set(_ANCHOR_CHOICES)
-  assert len(anchor_fields) == 9
+  assert len(anchor_fields) == 10
   # Every subset is non-empty and every member of it is a real `Anchor`.
   for name, allowed in _ANCHOR_CHOICES.items():
     assert allowed, name
@@ -186,7 +190,7 @@ def test_mingli_tanyuan_is_the_book_profile() -> None:
   # 默认档案的取值。
   preset: BaziSchool = BaziSchool.mingli_tanyuan()
   book_anchors = ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor',
-                  'wangshen_anchor', 'tianyi_anchor', 'jinyu_anchor')
+                  'wangshen_anchor', 'tianyi_anchor', 'jinyu_anchor', 'wenchang_anchor')
   for name in book_anchors:
     assert getattr(preset, name) is Anchor.DAY, name
   # Everything else is the default profile untouched -- 红艳 in particular, which those sources
@@ -203,6 +207,7 @@ def test_mingli_tanyuan_is_the_book_profile() -> None:
     wangshen_anchor=Anchor.DAY,
     tianyi_anchor=Anchor.DAY,
     jinyu_anchor=Anchor.DAY,
+    wenchang_anchor=Anchor.DAY,
   )
   assert preset.hongyan_anchor is DEFAULT_SCHOOL.hongyan_anchor
   assert preset != DEFAULT_SCHOOL
@@ -355,6 +360,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
   assert BaziSchool().yangren_def is inspect.signature(shensha_utils.yangren).parameters['definition'].default
   assert BaziSchool().tianyi_def is inspect.signature(shensha_utils.tianyi).parameters['definition'].default
   assert BaziSchool().feiren_def is inspect.signature(shensha_utils.feiren).parameters['definition'].default
+  assert BaziSchool().wenchang_def is inspect.signature(shensha_utils.wenchang).parameters['definition'].default
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -442,6 +448,7 @@ def test_json_roundtrip_default_school() -> None:
     'jinyu_anchor': 'DAY',
     'feiren_def': 'ZIPING',
     'zaisha_anchor': 'YEAR',
+    'wenchang_anchor': 'YEAR_AND_DAY', 'wenchang_def': 'XIN_ZI',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -479,6 +486,8 @@ def test_json_roundtrip_non_default_school() -> None:
     jinyu_anchor=Anchor.YEAR_AND_DAY,
     feiren_def=ShenshaRules.YangrenDef.LUMING,
     zaisha_anchor=Anchor.YEAR_AND_DAY,
+    wenchang_anchor=Anchor.DAY,
+    wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -494,6 +503,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'jinyu_anchor': 'YEAR_AND_DAY',
     'feiren_def': 'LUMING',
     'zaisha_anchor': 'YEAR_AND_DAY',
+    'wenchang_anchor': 'DAY', 'wenchang_def': 'XIN_XU',
   }
 
   rebuilt: BaziChart = BaziChart(

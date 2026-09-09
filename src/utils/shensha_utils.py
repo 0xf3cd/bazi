@@ -486,3 +486,69 @@ def tianyi(
   if not isinstance(definition, ShenshaRules.TianyiDef):
     raise TypeError(f'Expected TianyiDef, got {type(definition)}')
   return dizhi in ShenshaRules.TIANYI[definition][key_tiangan]
+
+
+def wenchang(
+  key_tiangan: Tiangan,
+  dizhi: Dizhi,
+  *,
+  definition: ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI,
+) -> bool:
+  '''
+  Check whether `dizhi` is the WENCHANG (文昌) of `key_tiangan` under the selected
+  definition. 按所选定义检查地支是否为该天干的文昌。
+
+  This is the 子平 star. For the 禄命 star of the same name family, see `wenchanggui`.
+  本函数查子平法的文昌；禄命法的同名近亲见 `wenchanggui`。
+
+  Args:
+  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
+    decides which pillar supplies it.
+    查法所锚的天干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) The Dizhi.
+  - definition: (ShenshaRules.WenchangDef) The definition to use; defaults to XIN_ZI,
+    where 辛 takes 子. 所用定义；默认辛取子。
+
+  Returns: (bool) Whether `dizhi` is the WENCHANG (文昌) of `key_tiangan` under `definition`.
+
+  Examples:
+  - wenchang(Tiangan.甲, Dizhi.巳)
+    - return: True
+  - wenchang(Tiangan.辛, Dizhi.子)
+    - return: True
+  - wenchang(Tiangan.辛, Dizhi.子, definition=ShenshaRules.WenchangDef.XIN_XU)
+    - return: False
+  '''
+
+  if not isinstance(key_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, ShenshaRules.WenchangDef):
+    raise TypeError(f'Expected WenchangDef, got {type(definition)}')
+  return ShenshaRules.WENCHANG[definition][key_tiangan] is dizhi
+
+
+def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
+  '''
+  Check whether `dizhi` is the WENCHANGGUI (文昌贵) of `year_tiangan`.
+  检查地支是否为该年干的文昌贵。
+
+  This is the 禄命 star. For the 子平 star of the same name family, see `wenchang`.
+  本函数查禄命法的文昌贵；同名近亲中的子平法一颗见 `wenchang`。
+
+  Args:
+  - year_tiangan: (Tiangan) The Tiangan of the year pillar, which the lookup keys on.
+    查法所锚的年干。
+  - dizhi: (Dizhi) The Dizhi.
+
+  Returns: (bool) Whether `dizhi` is the WENCHANGGUI (文昌贵) of `year_tiangan`.
+
+  Examples:
+  - wenchanggui(Tiangan.乙, Dizhi.亥)
+    - return: True
+  - wenchanggui(Tiangan.乙, Dizhi.午)
+    - return: False
+  '''
+
+  return _table_shensha(ShenshaRules.WENCHANGGUI, year_tiangan, dizhi, Tiangan)
