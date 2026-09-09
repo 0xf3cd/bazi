@@ -208,7 +208,8 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   'wangshen_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   # 文昌: DAY is 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」
   # (https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb; that edition writes 己 where
-  # its own 按 language requires 巳). YEAR_AND_DAY is the modern reading of 问真
+  # its own 按 commentary -- 「故甲以巳为文昌也」 -- requires 巳). YEAR_AND_DAY is the
+  # modern reading of 问真
   # (https://book.taiyi.me/命/神煞大全,「以日/年干查四地支」) and 高人, and this library's
   # default. The year-stem half rests on those modern sources alone -- no classical text
   # was found that keys 文昌 on the year stem.
