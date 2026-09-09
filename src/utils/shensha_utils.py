@@ -576,7 +576,7 @@ def taiji(
   - definition: (ShenshaRules.TaijiDef) The definition to use; defaults to REN_GUI_BOTH,
     where 壬 and 癸 each take both 巳 and 申. 所用定义；默认壬癸各兼巳申。
 
-  Returns: (bool) Whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan`.
+  Returns: (bool) Whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan` under `definition`.
 
   Examples:
   - taiji(Tiangan.甲, Dizhi.子)

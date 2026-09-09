@@ -342,7 +342,7 @@ def test_taiji() -> None:
   both = ShenshaRules.TAIJI[ShenshaRules.TaijiDef.REN_GUI_BOTH]
   split = ShenshaRules.TAIJI[ShenshaRules.TaijiDef.REN_SI_GUI_SHEN]
   # 《五行精纪》 carries both readings in one line and they differ in 壬癸 only.
-  #《五行精纪》一句之内并存两读，分歧只在壬癸。
+  # 《五行精纪》一句之内并存两读，分歧只在壬癸。
   assert {tg for tg in Tiangan if both[tg] != split[tg]} == {Tiangan.壬, Tiangan.癸}
   assert both[Tiangan.壬] == both[Tiangan.癸] == frozenset((Dizhi.巳, Dizhi.申))
   assert split[Tiangan.壬] == frozenset((Dizhi.巳,))

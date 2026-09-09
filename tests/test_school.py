@@ -387,7 +387,6 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
   # 静默跳过，该缺口记在 #189。
   # The two sides stay independent -- the school field default on one, the predicate's own
   # signature default on the other -- so this is still two spellings compared, not self-proof.
-  # 神煞半边改为遍历注册表：新增带定义旋钮的神煞靠「存在」进入本检查，不靠谁记得补一行。
   # 两侧来源仍各自独立（盘级字段默认 vs predicate 签名默认），不是自证。
   checked = 0
   for name, spec in _REGISTRY.items():
@@ -399,7 +398,7 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     signature_side = inspect.signature(spec.predicate).parameters['definition'].default
     assert school_side is signature_side, name
   # A loop that iterates nothing passes silently -- count what it saw and say so out loud.
-  # 空转的循环会静默通过：数一下它到底看了几个,并把这件事说出来。
+  # 空转的循环会静默通过：数一下它到底看了几个，并把这件事说出来。
   assert checked, 'no Shensha carries a definition knob -- the loop above would be vacuous'
 
 
