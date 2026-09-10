@@ -93,6 +93,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     ShenshaRules.WenchangDef.XIN_XU,
     Anchor.YEAR,
     ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
+    Anchor.YEAR,
+    ShenshaRules.GuoyinDef.WUXING_JINGJI,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -115,6 +117,8 @@ def test_school_positional_arguments_remain_stable() -> None:
     wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
     taiji_anchor=Anchor.YEAR,
     taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
+    guoyin_anchor=Anchor.YEAR,
+    guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
   )
 
 
@@ -184,6 +188,7 @@ def test_anchor_choices_match_the_supported_readings() -> None:
   assert _ANCHOR_CHOICES['zaisha_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['wenchang_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['taiji_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['guoyin_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
   for name in ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor'):
     assert _ANCHOR_CHOICES[name] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}), name
 
@@ -197,7 +202,7 @@ def test_anchor_choices_match_the_supported_readings() -> None:
   # 从没提过的键，于是覆盖面交给执行者钉住：新增旋钮会在这里红，直到有人把它的读法写出来。
   asserted = {
     'hongyan_anchor', 'tianyi_anchor', 'jinyu_anchor', 'zaisha_anchor', 'wenchang_anchor',
-    'taiji_anchor',
+    'taiji_anchor', 'guoyin_anchor',
     'yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor',
   }
   assert asserted == set(_ANCHOR_CHOICES), sorted(asserted ^ set(_ANCHOR_CHOICES))
@@ -489,6 +494,7 @@ def test_json_roundtrip_default_school() -> None:
     'zaisha_anchor': 'YEAR',
     'wenchang_anchor': 'YEAR_AND_DAY', 'wenchang_def': 'XIN_ZI',
     'taiji_anchor': 'YEAR_AND_DAY', 'taiji_def': 'REN_GUI_BOTH',
+    'guoyin_anchor': 'YEAR_AND_DAY', 'guoyin_def': 'MODERN',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -530,6 +536,8 @@ def test_json_roundtrip_non_default_school() -> None:
     wenchang_def=ShenshaRules.WenchangDef.XIN_XU,
     taiji_anchor=Anchor.YEAR,
     taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
+    guoyin_anchor=Anchor.YEAR,
+    guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -547,6 +555,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'zaisha_anchor': 'YEAR_AND_DAY',
     'wenchang_anchor': 'DAY', 'wenchang_def': 'XIN_XU',
     'taiji_anchor': 'YEAR', 'taiji_def': 'REN_SI_GUI_SHEN',
+    'guoyin_anchor': 'YEAR', 'guoyin_def': 'WUXING_JINGJI',
   }
 
   rebuilt: BaziChart = BaziChart(

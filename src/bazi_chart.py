@@ -122,6 +122,8 @@ class BaziJson:
     wenchang_def: str
     taiji_anchor: str
     taiji_def: str
+    guoyin_anchor: str
+    guoyin_def: str
 
   class BaziChartJsonDict(TypedDict):
     birth_time: str

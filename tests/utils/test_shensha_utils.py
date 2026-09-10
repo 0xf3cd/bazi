@@ -728,3 +728,55 @@ def test_taiji_negative() -> None:
     shensha_utils.taiji(Tiangan.甲, '子') # type: ignore
   with pytest.raises(TypeError):
     shensha_utils.taiji(Tiangan.甲, Dizhi.子, definition=object()) # type: ignore
+
+
+def test_guoyin() -> None:
+  # Two readings, twenty cells, written out per stem. The derivation from 禄 is pinned in
+  # `tests/test_rules.py`; here the literals are spelled independently so that a change to
+  # the offset story and a change to the table cannot cancel each other out.
+  # 两读二十格逐干写出。由禄推导那一层钉在 `test_rules.py`；此处独立写字面值，
+  # 使「偏移说法」与「表」两处改动无法互相抵消。
+  expected: dict[ShenshaRules.GuoyinDef, dict[Tiangan, Dizhi]] = {
+    ShenshaRules.GuoyinDef.WUXING_JINGJI : {
+      Tiangan.甲 : Dizhi.酉, Tiangan.乙 : Dizhi.戌, Tiangan.丙 : Dizhi.子, Tiangan.丁 : Dizhi.丑,
+      Tiangan.戊 : Dizhi.子, Tiangan.己 : Dizhi.丑, Tiangan.庚 : Dizhi.卯, Tiangan.辛 : Dizhi.辰,
+      Tiangan.壬 : Dizhi.午, Tiangan.癸 : Dizhi.未,
+    },
+    ShenshaRules.GuoyinDef.MODERN : {
+      Tiangan.甲 : Dizhi.戌, Tiangan.乙 : Dizhi.亥, Tiangan.丙 : Dizhi.丑, Tiangan.丁 : Dizhi.寅,
+      Tiangan.戊 : Dizhi.丑, Tiangan.己 : Dizhi.寅, Tiangan.庚 : Dizhi.辰, Tiangan.辛 : Dizhi.巳,
+      Tiangan.壬 : Dizhi.未, Tiangan.癸 : Dizhi.申,
+    },
+  }
+
+  for guoyin_def in ShenshaRules.GuoyinDef:
+    for tg in Tiangan:
+      for dz in Dizhi:
+        assert shensha_utils.guoyin(tg, dz, definition=guoyin_def) == (expected[guoyin_def][tg] is dz)
+
+  # The default is the modern table.
+  for tg in Tiangan:
+    for dz in Dizhi:
+      assert shensha_utils.guoyin(tg, dz) == shensha_utils.guoyin(
+        tg,
+        dz,
+        definition=ShenshaRules.GuoyinDef.MODERN,
+      )
+
+  # No stem answers the same branch under two readings, so switching the knob always moves
+  # the hit rather than dropping it -- unlike 太极, where the split reading only removes a
+  # branch. 无一干在两读下答同一支，故切旋钮总是「换一支」而非「少一支」——
+  # 与太极不同，太极的分读法只去支。
+  for tg in Tiangan:
+    assert len({expected[d][tg] for d in ShenshaRules.GuoyinDef}) == len(
+      ShenshaRules.GuoyinDef
+    ), tg
+
+
+def test_guoyin_negative() -> None:
+  with pytest.raises(TypeError):
+    shensha_utils.guoyin('甲', Dizhi.戌) # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.guoyin(Tiangan.甲, '戌') # type: ignore
+  with pytest.raises(TypeError):
+    shensha_utils.guoyin(Tiangan.甲, Dizhi.戌, definition=object()) # type: ignore

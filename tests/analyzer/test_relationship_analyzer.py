@@ -1757,6 +1757,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
     'wangshen':  (DIZHI, 'wangshen_anchor'),
     'wenchang':  (TIANGAN, 'wenchang_anchor'),
     'taiji':     (TIANGAN, 'taiji_anchor'),
+    'guoyin':    (TIANGAN, 'guoyin_anchor'),
   }
   assert set(knobs) | set(fixed) == set(_REGISTRY)
   for name, (kind, field) in knobs.items():
@@ -1933,3 +1934,57 @@ def test_taiji_definition_at_birth_and_transits(
     liunian=Ganzhi.from_str('甲申'),
   )
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['taiji'] == expected
+
+
+@pytest.mark.parametrize('anchor, expected', [
+  (Anchor.YEAR, frozenset({Dizhi.寅})),
+  (Anchor.YEAR_AND_DAY, frozenset({Dizhi.寅, Dizhi.丑})),
+])
+def test_guoyin_anchor_at_birth_and_transits(
+  anchor: Anchor,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 己年、戊日：现代读法下己的国印在寅、戊的在丑，两支都在原局。切锚是「多一支」。
+  chart = BaziChart(Bazi.create(
+    '1980-01-06 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(guoyin_anchor=anchor)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('己未', '丁丑', '戊寅', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['guoyin'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('丙寅'),
+    liunian=Ganzhi.from_str('丁丑'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['guoyin'] == expected
+
+  if anchor is Anchor.YEAR_AND_DAY:
+    default_chart = BaziChart(Bazi.create('1980-01-06 12:00', 'male'))
+    assert RelationshipAnalyzer(default_chart).at_birth.shensha['guoyin'] == expected
+
+
+@pytest.mark.parametrize('guoyin_def, expected', [
+  (ShenshaRules.GuoyinDef.WUXING_JINGJI, frozenset({Dizhi.未})),
+  (ShenshaRules.GuoyinDef.MODERN, frozenset({Dizhi.申})),
+])
+def test_guoyin_definition_at_birth_and_transits(
+  guoyin_def: ShenshaRules.GuoyinDef,
+  expected: frozenset[Dizhi],
+) -> None:
+  # 癸日：两读分别指向未与申，而原局同时有这两支。切定义时命中在两支之间移动，
+  # 两侧都是非空且互不相同——旋钮接反、没接上或被忽略，三种情形都区分得出来。
+  # 年干己的国印在丑（《五行精纪》）或寅（现代），本盘与所选流运都没有，故年干那一半不参与。
+  chart = BaziChart(Bazi.create(
+    '1979-09-03 12:00',
+    'male',
+    BaziConfig(school=BaziSchool(guoyin_def=guoyin_def)),
+  ))
+  assert tuple(map(str, chart.bazi.pillars)) == ('己未', '壬申', '癸酉', '戊午')
+  assert RelationshipAnalyzer(chart).at_birth.shensha['guoyin'] == expected
+
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('辛未'),
+    liunian=Ganzhi.from_str('庚申'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['guoyin'] == expected

@@ -152,6 +152,15 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     '太极贵人',
     lambda school: school.taiji_def,
   ),
+  # 国印贵人 carries two readings behind one knob, sharing no cell -- see `ShenshaRules.GuoyinDef`.
+  # 国印贵人两读共用一个旋钮，无一格重合，详见 `ShenshaRules.GuoyinDef`。
+  'guoyin'     : _ShenshaSpec(
+    shensha_utils.guoyin,
+    _AnchorKind.TIANGAN,
+    lambda school: school.guoyin_anchor,
+    '国印贵人',
+    lambda school: school.guoyin_def,
+  ),
 })
 
 
@@ -325,6 +334,8 @@ class ShenshaAnalysis(TypedDict):
   wenchanggui: frozenset[Dizhi]
   # The Taiji Dizhis       (太极贵人所在地支)
   taiji:       frozenset[Dizhi]
+  # The Guoyin Dizhis      (国印贵人所在地支)
+  guoyin:      frozenset[Dizhi]
 
 
 class AtBirthShenshaAnalysis(ShenshaAnalysis):

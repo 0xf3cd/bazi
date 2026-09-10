@@ -362,6 +362,37 @@ def test_taiji() -> None:
   assert {len(v) for v in split.values()} == {1, 2, 4}
 
 
+def test_guoyin() -> None:
+  assert set(ShenshaRules.GUOYIN) == set(ShenshaRules.GuoyinDef)
+  assert all(set(table) == set(Tiangan) for table in ShenshaRules.GUOYIN.values())
+
+  # Both readings are fixed offsets from 禄, so derive every cell from `TIANGAN_LU`
+  # instead of re-reading the literals -- a typo in the table cannot agree with a table it
+  # was not copied from. Same shape as the JINYU「禄前二辰」check above.
+  # 两读都是禄位的固定偏移，故由 `TIANGAN_LU` 推导每一格，而不重读表里的字面值——
+  # 表里写错一格，不会与一份并非抄自它的表相符。形状同上面 JINYU 的「禄前二辰」核。
+  offsets = {
+    ShenshaRules.GuoyinDef.WUXING_JINGJI : 7,
+    ShenshaRules.GuoyinDef.MODERN        : 8,
+  }
+  assert set(offsets) == set(ShenshaRules.GuoyinDef)
+  for guoyin_def, offset in offsets.items():
+    for tg in Tiangan:
+      assert ShenshaRules.GUOYIN[guoyin_def][tg] is Dizhi.from_index(
+        (BaziRules.TIANGAN_LU[tg].index + offset) % len(Dizhi)
+      ), (guoyin_def, tg)
+
+  # The readings share no cell: distinct offsets on a twelve-branch cycle cannot collide, so
+  # a hit is never ambiguous about which reading produced it. Pinning this makes a later
+  # "merge two readings" change fail here rather than silently narrow the knob.
+  # 两读无一格重合：十二支上不同偏移不会相撞，故命中不会含混。钉住它，
+  # 日后若有人把两读并成一读，会在这里响而不是悄悄把旋钮变窄。
+  for tg in Tiangan:
+    assert len({ShenshaRules.GUOYIN[d][tg] for d in ShenshaRules.GuoyinDef}) == len(
+      ShenshaRules.GuoyinDef
+    ), tg
+
+
 def test_all_rules() -> None:
   # Every table on every Rule class reads stably: equal and identical across accesses.
   # (Runtime reassignment protection was deliberately retired; `Final` + mypy is the guard now.)
