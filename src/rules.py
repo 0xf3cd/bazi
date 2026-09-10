@@ -579,9 +579,12 @@ class ShenshaRules:
   How to count the sources cited below / 下面的出处怎么计数:
 
   Two modern compilations recur throughout this class -- 问真《神煞大全》 and 高人 -- and
-  **they do not count as two independent sources.** Where they overlap it is the 口诀 that
-  overlaps -- and 口诀 are common property, quoted alike by everyone. Where each house writes
-  its own prose, the two diverge, and on two rules they disagree outright: 天乙, where each
+  **they do not count as two independent sources.** Their 口诀 are quoted alike down to the
+  characters (the two punctuate differently), which on its own proves little: 口诀 are common
+  property. But some of their 断语 -- each house's own
+  interpretive prose, where nothing forces agreement -- also run identical for long stretches,
+  and that does point at shared text. Pulling the other way, most 断语 have nothing in common
+  beyond a few characters, and on two rules the houses disagree outright: 天乙, where each
   picks a different 歌诀 version (高人 names which one it uses), and 红艳, where 问真 reads
   乙 -> 午 against 高人's 乙 -> 申 -- the same split `HONGYAN` below already traces to
   散文本 vs 歌诀本.
@@ -595,9 +598,11 @@ class ShenshaRules:
   read it as one modern reading attested twice, not as two independent readings that agree.
 
   下面反复出现的现代两家(问真《神煞大全》与高人)**不作两个独立来源计数**。
-  两家重合之处重合的是**口诀**——而口诀是公共财产,人人引得一样。各家自撰的散文则彼此分开,
-  并且在两条规则上正面分歧:天乙各择一个歌诀版本(高人并自述用的是哪一个),
-  红艳问真作乙午而高人作乙申——即下面 `HONGYAN` 已记的散文本／歌诀本之分。
+  两家的口诀引得一样,汉字序列全同、只是标点习惯不同;这本身说明不了什么——口诀是公共财产。但**有几处断语**(各家自撰的
+  评断文字,本无必须一致的理由)**也长段逐字相同**,那确实指向共享文本。反方向的事实同时存在:
+  多数断语除了三五个字外毫无共同处,而且两家在两条规则上正面分歧——天乙各择一个歌诀版本
+  (高人并自述用的是哪一个),红艳问真作乙午而高人作乙申,即下面 `HONGYAN` 已记的
+  散文本／歌诀本之分。
 
   故「一方是另一方的拷贝」不成立,「两家共享上游材料(口诀与古籍白文)再各自编写」与事实相容;
   **哪一份是上游、是否互相读过,所查材料无一裁定。**
