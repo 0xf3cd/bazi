@@ -579,18 +579,12 @@ class ShenshaRules:
   How to count the sources cited below / 下面的出处怎么计数:
 
   Two modern compilations recur throughout this class -- 问真《神煞大全》 and 高人 -- and
-  **they do not count as two independent sources.** What a survey of the eleven Shensha
-  named below found on both sides:
-
-  - Four 口诀 run character-for-character identical (天医, 金舆, 灾煞, 文昌) once punctuation
-    is set aside -- the two houses punctuate differently. What is *not* shared is each
-    house's own prose: the 查法 sentences proper ("以月支查其他三支" and the like) have no
-    verbatim counterpart on the other side. Three 断语 do share runs of 45-62 characters.
-  - Yet they disagree on actual rules. 天乙: each picks a different 歌诀 version, and 高人
-    names which one it uses. 红艳: 问真 reads 乙 -> 午 where 高人 reads 乙 -> 申 -- the same
-    split `HONGYAN` below already traces to 散文本 vs 歌诀本.
-  - Five 断语 (驿马 华盖 将星 劫煞 亡神) share no run longer than five characters, and 高人
-    carries first-person source discussion that has no counterpart in 问真.
+  **they do not count as two independent sources.** Where they overlap it is the 口诀 that
+  overlaps -- and 口诀 are common property, quoted alike by everyone. Where each house writes
+  its own prose, the two diverge, and on two rules they disagree outright: 天乙, where each
+  picks a different 歌诀 version (高人 names which one it uses), and 红艳, where 问真 reads
+  乙 -> 午 against 高人's 乙 -> 申 -- the same split `HONGYAN` below already traces to
+  散文本 vs 歌诀本.
 
   So "one is a copy of the other" is ruled out; "both draw on shared upstream material --
   the 口诀 and the classical 白文 -- and then write their own" fits. **Which one is upstream,
@@ -601,13 +595,9 @@ class ShenshaRules:
   read it as one modern reading attested twice, not as two independent readings that agree.
 
   下面反复出现的现代两家(问真《神煞大全》与高人)**不作两个独立来源计数**。
-  对十一个神煞逐条比对的结果:四首口诀撇开标点后汉字序列全同(天医、金舆、灾煞、文昌)——
-  两家标点习惯不同;而各家自己写的部分并不共享,问真那类「以月支查其他三支」的查法句
-  在高人侧没有逐字对应。另有三处断语存在 45-62 字的逐字相同段。
-  两家在实际规则上也有分歧——天乙各择一个歌诀版本
-  (高人并自述用的是哪一个),红艳问真作乙午而高人作乙申(即下面 `HONGYAN` 已记的
-  散文本／歌诀本之分);另有五处断语(驿马、华盖、将星、劫煞、亡神)最长公共串不过五字,
-  且高人通篇有第一人称考据语而问真无。
+  两家重合之处重合的是**口诀**——而口诀是公共财产,人人引得一样。各家自撰的散文则彼此分开,
+  并且在两条规则上正面分歧:天乙各择一个歌诀版本(高人并自述用的是哪一个),
+  红艳问真作乙午而高人作乙申——即下面 `HONGYAN` 已记的散文本／歌诀本之分。
 
   故「一方是另一方的拷贝」不成立,「两家共享上游材料(口诀与古籍白文)再各自编写」与事实相容;
   **哪一份是上游、是否互相读过,所查材料无一裁定。**
@@ -1350,16 +1340,18 @@ class ShenshaRules:
       lands on the same branch. Among the texts that do use the phrase 「禄前八位」, they agree
       on it, on counting 禄 as the first, and on 酉 for 甲; they differ only in which name
       they put there. **The word 唐符 itself does not occur in 《五行精纪》** -- zero
-      hits in the wikisource transcription of all thirty-four 卷, and none in the 算准网
-      pages either (its 白文 covers 卷一~廿四 and its 注释本 only reaches 卷十六, so the
-      thirty-four-卷 transcription is what carries the coverage); ctext was not searched,
-      so this is "not found in what was covered", not a claim about every edition.
+      hits in the electronic full texts of that book consulted here, positive controls
+      included; **ctext was not searched**, so this is "not found in what was covered", not a
+      claim about every edition. (Which transcriptions those were, and how far each reaches,
+      belongs to one search rather than to the star, and is recorded in the commit instead.)
       同一格在别书里保留着另一个名字：《张果星宗》称之飞刃／唐符（「唐符即飞刃也」是该书自述），
       而本仓的 `FEIREN[YangrenDef.LUMING]` 早已是同样十格，那一张又是从《三命通会》另一条路
-      推出的。诸书都说「禄前八位」、都含禄起算、甲都落在酉，只有安在那里的星名不同。
-      **「唐符」二字在《五行精纪》中未见**——所查两份全文（算准网白文与注释本、维基文库全卅四卷）
-      零命中——维基文库那份覆盖全卅四卷,算准网侧白文只到卷廿四、注释本只到卷十六,
-      故覆盖面由前者承担；ctext 未纳入检索面,故这是「已覆盖范围内未见」，不是对所有本子的断言。
+      推出的——那一条根本不用「禄前八位」这个说法，它作「羊刃在禄 + 1、飞刃取其对冲」，
+      只是落在同一支。在使用「禄前八位」这一措辞的诸书之间，说法一致、都含禄起算、
+      甲都落在酉，只有安在那里的星名不同。
+      **「唐符」二字在《五行精纪》中未见**——所查的该书电子全文中零命中，阴性对照同批做过；
+      **ctext 未纳入检索面**，故这是「已覆盖范围内未见」，不是对所有本子的断言。
+      （用了哪几份转录、各自到哪一卷，属于某一次检索而非这颗星，改记在提交里。）
     - Where to look is a separate question from which table to use. 《星学大成》 says the
       star 「守照身命」 -- the 命宫 and 身宫, not the four branches -- and 《张果星宗》 agrees
       (「唐符、国印守命为奇」). 《神峰通考》 does not say. Reading the star against 四柱地支
