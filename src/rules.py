@@ -574,7 +574,43 @@ def _expand_dizhi_groups(
 
 
 class ShenshaRules:
-  '''Rules for Shensha / 神煞'''
+  '''Rules for Shensha / 神煞.
+
+  How to count the sources cited below / 下面的出处怎么计数:
+
+  Two modern compilations recur throughout this class -- 问真《神煞大全》 and 高人 -- and
+  **they do not count as two independent sources.** What a 2026-09-10 survey of twelve
+  Shensha found on both sides:
+
+  - Four 查法 sentences are verbatim identical (天医, 金舆, 灾煞, and 文昌's verse), and
+    three 断语 share runs of 45-62 characters word for word.
+  - Yet they disagree on actual rules. 天乙: each picks a different 歌诀 version, and 高人
+    names which one it uses. 红艳: 问真 reads 乙 -> 午 where 高人 reads 乙 -> 申 -- the same
+    split `HONGYAN` below already traces to 散文本 vs 歌诀本.
+  - Five 断语 (驿马 华盖 将星 劫煞 亡神) share no run longer than five characters, and 高人
+    carries first-person source discussion that has no counterpart in 问真.
+
+  So "one is a copy of the other" is ruled out; "both draw on shared upstream material --
+  the 口诀 and the classical 白文 -- and then write their own" fits. **Which one is upstream,
+  and whether either read the other, nothing consulted settles.**
+
+  The practical rule this yields: **a 口诀 quoted identically by two houses is one piece of
+  evidence, not two** -- 口诀 are common property. Where both are named on one line below,
+  read it as one modern reading attested twice, not as two independent readings that agree.
+
+  下面反复出现的现代两家(问真《神煞大全》与高人)**不作两个独立来源计数**。
+  2026-09-10 对十二个神煞逐条比对的结果:四处查法句逐字相同(天医、金舆、灾煞、文昌口诀),
+  三处断语有 45-62 字逐字相同;但两家在实际规则上也有分歧——天乙各择一个歌诀版本
+  (高人并自述用的是哪一个),红艳问真作乙午而高人作乙申(即下面 `HONGYAN` 已记的
+  散文本／歌诀本之分);另有五处断语(驿马、华盖、将星、劫煞、亡神)最长公共串不过五字,
+  且高人通篇有第一人称考据语而问真无。
+
+  故「一方是另一方的拷贝」不成立,「两家共享上游材料(口诀与古籍白文)再各自编写」与事实相容;
+  **哪一份是上游、是否互相读过,所查材料无一裁定。**
+
+  由此得到的记账规则:**两家引同一首口诀,是一份证据不是两份**——口诀本是公共财产。
+  下文某一行同时点名两家时,读作「同一个现代读法被记录了两次」,不是「两个独立读法互相印证」。
+  '''
 
   # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
   # 该表格用于查询桃花星。桃花即咸池桃花。
@@ -835,9 +871,11 @@ class ShenshaRules:
       子平法：仅五阳干有阳刃。
     - LUMING: all ten Tiangans have Yangren on the branch immediately after their Lu (禄).
       古禄命法：十干皆有羊刃，取禄前一辰。
-    - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; the 问真 and 高人
-      charting programs use this table.
-      十干各取帝旺位；问真与高人排盘软件采用此表。
+    - DIWANG: all ten Tiangans take their Diwang (帝旺) branch; the modern charting side
+      uses this table -- 问真 and 高人 both, which is one source here, not two
+      (see this class's docstring).
+      十干各取帝旺位；现代排盘一侧采用此表——问真与高人皆然，而这两家算一份不算两份，
+      见本类 docstring。
 
     For Feiren / 飞刃:
     - ZIPING: only the five Yang Tiangans have Feiren, opposite their 阳刃.
@@ -1088,9 +1126,11 @@ class ShenshaRules:
   # Which pillar supplies the anchor stem is a school knob -- see `_ANCHOR_CHOICES`.
   # Where the star is then looked for is 四柱地支 in both modern sources; none of the
   # classical sources consulted for this star states a search range, so that part rests on
-  # 问真 and 高人 alone.
+  # the modern side alone -- and the two houses there count as one source, not two
+  # (see this class's docstring).
   # 锚取哪一柱属流派旋钮，见 `_ANCHOR_CHOICES`；被查位置两家现代查法均作四柱地支，
-  # 而为本星查过的古籍都不交代查哪几柱，故此处出处只有现代两家。
+  # 而为本星查过的古籍都不交代查哪几柱，故此处只有现代一侧的出处——
+  # 而那一侧的两家算一份不算两份，见本类 docstring。
   WENCHANG: Final[frozendict[WenchangDef, frozendict[Tiangan, Dizhi]]] = frozendict({
     WenchangDef.XIN_ZI : frozendict({
       Tiangan.甲 : Dizhi.巳,
@@ -1198,10 +1238,12 @@ class ShenshaRules:
   # is that the cardinality varies inside a single reading: 戊己 take all four storage
   # branches while the split reading gives 壬癸 one each. Which pillar supplies the anchor
   # stem is a school knob; see `_ANCHOR_CHOICES`. The search range is 四柱地支 in both modern
-  # sources, and none of the classical sources consulted for this star states one.
+  # sources, and none of the classical sources consulted for this star states one; the two
+  # modern houses count as one source there, not two (see this class's docstring).
   # 一个天干可对多支，`TIANYI` 已然如此；本表无先例的是同一读法内部势数不齐——戊己占四库，
   # 而分读法的壬癸各一支。锚取哪一柱属流派旋钮，见 `_ANCHOR_CHOICES`；
-  # 被查位置两家现代查法均作四柱地支，而为本星查过的古籍都不交代。
+  # 被查位置两家现代查法均作四柱地支，而为本星查过的古籍都不交代——
+  # 且那两家算一份不算两份，见本类 docstring。
   TAIJI: Final[frozendict[TaijiDef, frozendict[Tiangan, frozenset[Dizhi]]]] = frozendict({
     TaijiDef.REN_GUI_BOTH : frozendict({
       Tiangan.甲 : frozenset((Dizhi.子, Dizhi.午)),
@@ -1321,9 +1363,11 @@ class ShenshaRules:
   # agree with itself.
   # 每一格都是 `BaziRules.TIANGAN_LU` 的固定偏移；`test_rules.py` 由禄表推导全部二十格，
   # 不重读下面的字面值——写错一格不会自圆其说。
-  # Anchor and search range: see `_ANCHOR_CHOICES`; both modern sources read 四柱地支,
-  # while the classical ones point at 身命宫 (see `GuoyinDef`).
-  # 锚与被查位置见 `_ANCHOR_CHOICES`；现代两家作四柱地支，古籍侧指身命宫，见 `GuoyinDef`。
+  # Anchor and search range: see `_ANCHOR_CHOICES`; the modern side reads 四柱地支 (its two
+  # houses counting as one source -- see this class's docstring), while the classical ones
+  # point at 身命宫 (see `GuoyinDef`).
+  # 锚与被查位置见 `_ANCHOR_CHOICES`；现代一侧作四柱地支（那两家算一份，见本类 docstring），
+  # 古籍侧指身命宫，见 `GuoyinDef`。
   GUOYIN: Final[frozendict[GuoyinDef, frozendict[Tiangan, Dizhi]]] = frozendict({
     GuoyinDef.WUXING_JINGJI : frozendict({
       Tiangan.甲 : Dizhi.酉,
