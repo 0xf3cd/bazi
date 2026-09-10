@@ -1316,19 +1316,31 @@ class ShenshaRules:
       《五行精纪》白文只给偏移与例子；年干锚与含禄起算的明文出自同页今人注释，不在白文。
       故 `WUXING_JINGJI` 依白文，而「年干」与「禄算第一位」依注释本——两者要分开记，
       因为单看「甲申生人」也可以读成年支锚。
-    - Recorded and left open (tracking: issue #194): `WUXING_JINGJI` lands on exactly the
-      branches 《张果星宗》 calls 飞刃／唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」), which
-      are also this repo's own `FEIREN[YangrenDef.LUMING]` -- reached by a different route
-      (the 古禄命 羊刃 sits at 禄 + 1, and 飞刃 is its 对冲). The texts agree on the phrase
-      「禄前八位」, on counting 禄 as the first, and on 酉 for 甲 -- they disagree only on
-      which star's name belongs there. Whether the 子平 line genuinely places 国印 one
-      position earlier, or 唐符 and 国印 slipped in transmission (they share a couplet), is
-      settled by nothing read here, so both readings stand.
-      如实记下而不裁（跟踪 issue #194）：`WUXING_JINGJI` 的十格恰好是《张果星宗》的飞刃／
-      唐符表，也正是本仓 `FEIREN[YangrenDef.LUMING]`——那一张由另一条路推出（古禄命羊刃在
-      禄 + 1，飞刃取其对冲）。诸书都说「禄前八位」，都含禄起算，甲都落在酉——只有星名不同。
-      子平一脉是真把国印定得早一位，还是唐符与国印在同一副对联里串了位，此处所查来源
-      无一裁定，故两读并存。
+    - `WUXING_JINGJI` shares its ten branches with a star of another name, and 《五行精纪》
+      itself is where that is easiest to see. The same book's 卷廿四 gives 飞刃 as
+      「禄前一辰为羊刃，对处是飞刃」 -- 羊刃 at 禄 + 1, 飞刃 opposite it, hence 禄 + 7, 酉 for
+      甲: **the very cell that book's own 国印 occupies.** So 《五行精纪》 is content to seat
+      两星 on one branch; its 国印 placement is therefore not obviously a slip from the
+      adjacent couplet. That reading was the earlier worry, and it is now the weaker one.
+      This argument stays inside one book and does not need any cross-text identification.
+      《五行精纪》自己就把两颗星放在同一格：同书卷廿四的飞刃条作「禄前一辰为羊刃，对处是飞刃」，
+      即羊刃在禄 + 1、飞刃取其对冲，得禄 + 7，甲落酉——**正是该书国印所在的那一格**。
+      既然该书不认为这一格容不下两星，它的国印定位就不像是从相邻对联串下来的抄误。
+      **此论证全在一书之内完成，不借道任何跨书等同。**
+    - Beyond that one book the same cell keeps its other name: 《张果星宗》 calls it 飞刃／
+      唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」 and 「唐符即飞刃也」 -- that identification is
+      that book's own), and this repo already holds the same ten cells as
+      `FEIREN[YangrenDef.LUMING]`, reached from 《三命通会》 by yet another route. The texts
+      agree on 「禄前八位」, on counting 禄 as the first, and on 酉 for 甲; they differ only in
+      which name they put there. **The word 唐符 itself does not occur in 《五行精纪》** -- zero
+      hits across the two full texts checked (算准网's 白文 and 注释本, and the wikisource
+      transcription of all thirty-four 卷); ctext was not searched, so this is "not found in
+      what was covered", not a claim about every edition.
+      同一格在别书里保留着另一个名字：《张果星宗》称之飞刃／唐符（「唐符即飞刃也」是该书自述），
+      而本仓的 `FEIREN[YangrenDef.LUMING]` 早已是同样十格，那一张又是从《三命通会》另一条路
+      推出的。诸书都说「禄前八位」、都含禄起算、甲都落在酉，只有安在那里的星名不同。
+      **「唐符」二字在《五行精纪》中未见**——所查两份全文（算准网白文与注释本、维基文库全卅四卷）
+      零命中；ctext 未纳入检索面，故这是「已覆盖范围内未见」，不是对所有本子的断言。
     - Where to look is a separate question from which table to use. 《星学大成》 says the
       star 「守照身命」 -- the 命宫 and 身宫, not the four branches -- and 《张果星宗》 agrees
       (「唐符、国印守命为奇」). 《神峰通考》 does not say. Reading the star against 四柱地支
