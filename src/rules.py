@@ -579,12 +579,13 @@ class ShenshaRules:
   How to count the sources cited below / 下面的出处怎么计数:
 
   Two modern compilations recur throughout this class -- 问真《神煞大全》 and 高人 -- and
-  **they do not count as two independent sources.** Their 口诀 are quoted alike down to the
-  characters (the two punctuate differently), which on its own proves little: 口诀 are common
-  property. But some of their 断语 -- each house's own
-  interpretive prose, where nothing forces agreement -- also run identical for long stretches,
-  and that does point at shared text. Pulling the other way, most 断语 have nothing in common
-  beyond a few characters, and on two rules the houses disagree outright: 天乙, where each
+  **they do not count as two independent sources.** Where they quote the same 口诀 they quote
+  it alike down to the characters (they punctuate differently), which on its own proves
+  little: 口诀 are common property, and the two do not always pick the same one -- see 天乙
+  below. But some of their 断语 -- each house's own interpretive prose, where nothing forces
+  agreement -- also run identical for long stretches, and that does point at shared text.
+  Pulling the other way, most 断语 have nothing in common beyond a few characters, and on two
+  rules the houses disagree outright: 天乙, where each
   picks a different 歌诀 version (高人 names which one it uses), and 红艳, where 问真 reads
   乙 -> 午 against 高人's 乙 -> 申 -- the same split `HONGYAN` below already traces to
   散文本 vs 歌诀本.
@@ -598,8 +599,9 @@ class ShenshaRules:
   read it as one modern reading attested twice, not as two independent readings that agree.
 
   下面反复出现的现代两家（问真《神煞大全》与高人）**不作两个独立来源计数**。
-  两家的口诀引得一样，汉字序列全同，只是标点习惯不同；这本身说明不了什么——
-  口诀是公共财产。但**有几处断语也长段逐字相同**——断语是各家自撰的评断文字，
+  两家引同一首口诀时引得一样，汉字序列全同，只是标点习惯不同；这本身说明不了什么——
+  口诀是公共财产，况且两家并不总挑同一首（见下文天乙）。
+  但**有几处断语也长段逐字相同**——断语是各家自撰的评断文字，
   本无必须一致的理由，那确实指向共享文本。反方向的事实同时存在：多数断语除了
   三五个字外毫无共同处，而且两家在两条规则上正面分歧——天乙各择一个歌诀版本
   （高人并自述用的是哪一个），红艳问真作乙午而高人作乙申，即下面 `HONGYAN`
@@ -1307,37 +1309,41 @@ class ShenshaRules:
       the same table as `MODERN`, not a third one.
       《星学大成》那一句就是同一副对联的散文形，而《神峰通考》把这两颗星归给果老一脉。
       按父本自己的例解读，它的「禄前九位」即禄 + 8，与 `MODERN` 同表，不另成一读。
-    - The 白文 of 《五行精纪》 gives the offset and an example, nothing more:
-      「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」. The anchor and the
-      counting convention are spelled out by the modern annotator on the same page, not by
-      the 白文:「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」.
-      So `WUXING_JINGJI` rests on the 白文, while "year stem" and "禄 counts as the first"
-      rest on 《五行精纪注释》 -- a distinction worth keeping, since 「甲申生人」 alone would
-      also read as a year-branch anchor.
-      《五行精纪》白文只给偏移与例子；年干锚与含禄起算的明文出自同页今人注释，不在白文。
-      故 `WUXING_JINGJI` 依白文，而「年干」与「禄算第一位」依注释本——两者要分开记，
-      因为单看「甲申生人」也可以读成年支锚。
-    - `WUXING_JINGJI` shares its ten branches with a star of another name, and 《五行精纪》
-      is where that is easiest to see -- but the two halves sit in different layers of the
-      book, so state them separately. **白文, 卷廿四** gives 飞刃 as 「禄前一辰为羊刃，对处是
-      飞刃」: 羊刃 at 禄 + 1, 飞刃 opposite it, hence 禄 + 7, 酉 for 甲. **注释本, 卷十三**
-      is where 国印 sits at 禄前第八位, 甲 -> 酉 -- the 白文 there is the corrupt line noted in
-      Sources below, which folds the 国印 head into 【建节星】 and reads 「建节星，禄前第六位是也，如甲申生人，
-      至癸酉是也」 -- 禄前第六位 and 癸酉 (the eighth) cannot both be right. So it is the annotator's reconstruction, not the 白文, that puts
-      国印 on 酉.
-      Even so the observation holds and cuts the same way: working on this book, the
-      annotator seated 国印 on the branch the book's own 卷廿四 already calls 飞刃, and flagged
-      no conflict. A cell that carries two stars in one book is a poor candidate for
-      "the name slipped from the adjacent couplet" -- which remains the weaker reading. **Whether the annotator noticed the overlap at all is not recorded.**
-      《五行精纪》里最容易看出这件事，但两半分属该书的不同文本层，故分开陈述：
-      **白文卷廿四**的飞刃条作「禄前一辰为羊刃，对处是飞刃」，即羊刃在禄 + 1、飞刃取其对冲，
-      得禄 + 7，甲落酉；而**国印在禄前第八位、甲落酉这一条出自注释本卷十三**——该处白文
-      正是下面出处栏所记的那句残文，把国印的头句并进了【建节星】，作
-      「建节星，禄前第六位是也，如甲申生人，至癸酉是也」——禄前第六位与癸酉（第八位）
-      不可能同时为真。**所以把国印定在酉的是注释者的复原，不是白文。**
-      即便如此，这个观察仍成立且指向同一边：注释者在这本书上作注，把国印安在该书卷廿四
-      自己称作飞刃的那一支上，并未提示冲突。一格在同一本书里同时容下两颗星，
-      就不像是「星名从相邻对联串下来」——那始终是较弱的那一读。
+    - Which transcription of 《五行精纪》 one reads decides whether 国印 is in it at all, so
+      name the transcription first. 《五行精纪注释》 reproduces the 白文 with the entry intact
+      -- 【原文】「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」 -- and that
+      白文 gives the offset and an example, nothing more. The two standalone 白文
+      transcriptions consulted here **have no 国印 entry**: both fold its opening into the
+      preceding 【建节星】, yielding 「建节星，禄前第六位是也，如甲申生人，至癸酉是也」, where
+      禄前第六位 and 癸酉 (the eighth) cannot both be right. **So `WUXING_JINGJI` rests on the
+      白文 as the 注释本 carries it**, and the corruption is a fact about the other
+      transcriptions, not about the book.
+      The anchor and the counting convention are a further step out: they are spelled out by
+      the modern annotator on the same page, not by the 白文 -- 【注释】「国印星，命局见年干禄
+      前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」 -- worth keeping distinct, since
+      「甲申生人」 alone would also read as a year-branch anchor.
+      读哪一份转录，决定《五行精纪》里有没有国印这一条，所以先点名转录。
+      《五行精纪注释》所载白文是完整的——【原文】「国印星禄前第八位是，如甲申生人，至癸酉是。
+      并《三命纂局》」——该白文只给偏移与例子。而此处所查的两份独立白文转录**没有国印条**：
+      两者都把它的头句并进上一条【建节星】，作「建节星，禄前第六位是也，如甲申生人，至癸酉是也」，
+      而禄前第六位与癸酉（第八位）不可能同时为真。**故 `WUXING_JINGJI` 依注释本所载的那份白文**，
+      残句是那两份转录的事实，不是这本书的事实。
+      年干锚与含禄起算又退一步：那出自同页今人注释而非白文——【注释】「国印星，命局见年干禄前
+      第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」——两者要分开记，因为单看「甲申生人」
+      也可以读成年支锚。
+    - Within 《五行精纪》 the same branch carries a second star. 白文 卷廿四 gives 飞刃 as
+      「禄前一辰为羊刃，对处是飞刃」: 羊刃 at 禄 + 1, 飞刃 opposite it, hence 禄 + 7, 酉 for 甲 --
+      the branch 国印 occupies in the entry above. The two sit in different parts of the book
+      and one of them reaches us through the annotator, but they are the same book, and the
+      annotator working on it seated 国印 where that book's own 卷廿四 puts 飞刃 without
+      flagging a conflict. A branch that carries two stars in one book is a poor candidate for
+      "the name slipped from the adjacent couplet" -- which remains the weaker reading.
+      **Whether the annotator noticed the overlap at all is not recorded.**
+      《五行精纪》内部，同一支上还坐着第二颗星。白文卷廿四的飞刃条作「禄前一辰为羊刃，
+      对处是飞刃」，即羊刃在禄 + 1、飞刃取其对冲，得禄 + 7，甲落酉——正是上一条里国印
+      所在的那一支。两者分处该书不同部分，其中国印那一条还经由注释者之手，但它们同属一书，
+      而注释者在这本书上作注，把国印安在该书卷廿四自己称作飞刃的那一支上，并未提示冲突。
+      一支在同一本书里同时容下两颗星，就不像是「星名从相邻对联串下来」——那始终是较弱的那一读。
       **注释者是否注意到这一重合，无从查考。**
     - Beyond that one book the same cell keeps its other name: 《张果星宗》 calls it 飞刃／
       唐符 (「飞刃：同前断，酉戌子丑子丑卯辰午未」 and 「唐符即飞刃也」 -- the identification is
@@ -1369,8 +1375,10 @@ class ShenshaRules:
     Sources / 出处:
     - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表:
       https://zh.wikisource.org/wiki/張果星宗
-    - 《五行精纪注释》卷十三（底本完整，白文两处转录把建节星与国印星并成一条残句）:
-      https://www.suanzhun.net/book/2731.html
+    - 《五行精纪注释》卷十三（所载白文完整；此处另查的两份独立白文转录把建节星与国印星
+      并成一条残句）: https://www.suanzhun.net/book/2731.html
+    - 《五行精纪》白文卷廿四「论劫杀羊刃」，飞刃条所在（本条是上文「同一支上还坐着第二颗星」
+      的依据）: https://zh.wikisource.org/wiki/五行精紀
     - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:
       https://book.taiyi.me/命/星学大成
     - 同书四库全书本，字符与上一条逐字相同，但把「二星守照身命为奇」排作小字夹注而 taiyi 本
