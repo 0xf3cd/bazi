@@ -26,8 +26,10 @@ def main() -> int:
     return 2
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
+  import inspect
   from datetime import datetime
   from collections.abc import Callable
+  from functools import partial
   from zoneinfo import ZoneInfo
 
   from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, DizhiRelation
@@ -37,7 +39,7 @@ def main() -> int:
   from src.school import Anchor, BaziConfig, BaziSchool
   from src.transit_chart import TransitChart
   from src.transits import TransitDatabase, TransitKind, TransitSet
-  from src.analyzer.relationship import RelationshipAnalyzer
+  from src.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
   from src.utils import tiangan_utils, dizhi_utils, shensha_utils
   from src.calendar import hko_data, hko_data_utils
   from src.calendar.backend import CalendarBackend, calendar_utils_of
@@ -86,48 +88,12 @@ def main() -> int:
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
-    ('shensha_utils.taohua on raw string', TypeError,
-     lambda: shensha_utils.taohua('申', Dizhi.酉)), # type: ignore
-    ('shensha_utils.hongyan on raw string', TypeError,
-     lambda: shensha_utils.hongyan(Tiangan.癸, '申')), # type: ignore
-    ('shensha_utils.hongluan on raw string', TypeError,
-     lambda: shensha_utils.hongluan('申', Dizhi.未)), # type: ignore
-    ('shensha_utils.tianxi on raw string', TypeError,
-     lambda: shensha_utils.tianxi(Dizhi.寅, '未')), # type: ignore
-    ('shensha_utils.yima on raw string', TypeError,
-     lambda: shensha_utils.yima('申', Dizhi.寅)), # type: ignore
-    ('shensha_utils.huagai on raw strings', TypeError,
-     lambda: shensha_utils.huagai('申', '辰')), # type: ignore
-    ('shensha_utils.jiangxing on raw string', TypeError,
-     lambda: shensha_utils.jiangxing('申', Dizhi.子)), # type: ignore
-    ('shensha_utils.zaisha on raw string', TypeError,
-     lambda: shensha_utils.zaisha('申', Dizhi.午)), # type: ignore
     ('shensha_utils.kuigang on raw string', TypeError,
      lambda: shensha_utils.kuigang('庚辰')), # type: ignore
     ('shensha_utils.tianshe on raw month string', TypeError,
      lambda: shensha_utils.tianshe('寅', Ganzhi.from_str('戊寅'))), # type: ignore
     ('shensha_utils.tianshe on raw day string', TypeError,
      lambda: shensha_utils.tianshe(Dizhi.寅, '戊寅')), # type: ignore
-    ('shensha_utils.jiesha on raw string', TypeError,
-     lambda: shensha_utils.jiesha('申', Dizhi.巳)), # type: ignore
-    ('shensha_utils.wangshen on raw string', TypeError,
-     lambda: shensha_utils.wangshen('申', Dizhi.亥)), # type: ignore
-    ('shensha_utils.guchen on raw string', TypeError,
-     lambda: shensha_utils.guchen('子', Dizhi.寅)), # type: ignore
-    ('shensha_utils.guasu on raw string', TypeError,
-     lambda: shensha_utils.guasu(Dizhi.子, '戌')), # type: ignore
-    ('shensha_utils.lushen on raw string', TypeError,
-     lambda: shensha_utils.lushen('甲', Dizhi.寅)), # type: ignore
-    ('shensha_utils.jinyu on raw string', TypeError,
-     lambda: shensha_utils.jinyu(Tiangan.甲, '辰')), # type: ignore
-    ('shensha_utils.yangren wrong definition', TypeError,
-     lambda: shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object())), # type: ignore
-    ('shensha_utils.feiren on raw string', TypeError,
-     lambda: shensha_utils.feiren('甲', Dizhi.酉)), # type: ignore
-    ('shensha_utils.feiren wrong definition', TypeError,
-     lambda: shensha_utils.feiren(Tiangan.甲, Dizhi.酉, definition=object())), # type: ignore
-    ('shensha_utils.tianyi wrong definition', TypeError,
-     lambda: shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object())), # type: ignore
     ('BaziSchool.from_json non-mapping', TypeError,
      lambda: BaziSchool.from_json(_DuckMapping())), # type: ignore
     ('BaziSchool.from_json missing field', ValueError,
@@ -201,6 +167,21 @@ def main() -> int:
     ('BaziConfig wrong Dayun year rule type', TypeError,
      lambda: BaziConfig(dayun_year_rule='fixed_decade')), # type: ignore
   ]
+
+  # The registry covers branch results; the whole-pillar predicates stay explicit above.
+  for name, spec in _REGISTRY.items():
+    key = Tiangan.甲 if spec.kind is _AnchorKind.TIANGAN else Dizhi.子
+    checks.extend([
+      (f'shensha_utils.{name} wrong key', TypeError, partial(spec.predicate, str(key), Dizhi.子)),
+      (f'shensha_utils.{name} wrong dizhi', TypeError, partial(spec.predicate, key, '子')),
+    ])
+    if 'definition' in inspect.signature(spec.predicate).parameters:
+      checks.extend([
+        (f'shensha_utils.{name} wrong definition', TypeError,
+         partial(spec.predicate, key, Dizhi.子, definition=object())),
+        (f'shensha_utils.{name} wrong definition enum', TypeError,
+         partial(spec.predicate, key, Dizhi.子, definition=DizhiRules.AnheDef.NORMAL)),
+      ])
 
   failures: list[str] = []
   for label, expected, thunk in checks:

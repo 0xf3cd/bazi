@@ -2,6 +2,7 @@
 # test_shensha_utils.py
 
 import random
+import inspect
 from collections.abc import Callable
 
 import pytest
@@ -9,6 +10,28 @@ import pytest
 from src.defines import Tiangan, Dizhi, Ganzhi
 from src.rules import ShenshaRules
 from src.utils import shensha_utils
+
+
+def test_definition_predicate_type_error_order() -> None:
+  for name, predicate in inspect.getmembers(shensha_utils, inspect.isfunction):
+    parameters = inspect.signature(predicate).parameters
+    if name.startswith('_') or 'definition' not in parameters:
+      continue
+    default = parameters['definition'].default
+    key_error = "Expected Tiangan, got <class 'str'>"
+    dizhi_error = "Expected Dizhi, got <class 'str'>"
+    definition_error = f"Expected {type(default).__name__}, got <class 'object'>"
+    for key, dizhi, definition, message in (
+      ('甲', Dizhi.子, default, key_error),
+      (Tiangan.甲, '子', default, dizhi_error),
+      (Tiangan.甲, Dizhi.子, object(), definition_error),
+      ('甲', '子', default, key_error),
+      ('甲', Dizhi.子, object(), key_error),
+      (Tiangan.甲, '子', object(), dizhi_error),
+      ('甲', '子', object(), key_error),
+    ):
+      with pytest.raises(TypeError, match=f'^{message}$'):
+        predicate(key, dizhi, definition=definition)
 
 
 def test_taohua() -> None:
