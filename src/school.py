@@ -196,16 +196,6 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   'jinyu_anchor':     frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   # 灾煞: YEAR follows 问真 (https://book.taiyi.me/命/神煞大全#灾煞); YEAR_AND_DAY follows 高人
   # (https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439).
-  # This is the only row in this table where the two modern houses carry different readings
-  # rather than the same one, so it is the only place where the question in `ShenshaRules`'s
-  # docstring -- are they one source or two? -- changes what this row means. If they turn out
-  # to share an ancestor, the "split" recorded here may be an artefact of transmission rather
-  # than a real 流派 disagreement. Nothing consulted settles the ancestry, so both readings
-  # stand and this note records the exposure instead of resolving it.
-  # 本表中唯一一行两家给出的是**不同**读法而非同一读法，因此也是唯一一处
-  # 「两家算一份还是两份」会改变这一行含义的地方（见 `ShenshaRules` docstring）。
-  # 若两家实为同源，这里记的「分歧」就可能是传抄产物而非真的流派之争。
-  # 祖本关系所查材料无一裁定，故两读并存，此注只记录这个暴露面，不代为裁决。
   'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
   # 驿马、华盖、将星、劫煞、亡神 share one pair of readings: YEAR_AND_DAY is 问真's modern
   # reading (https://book.taiyi.me/命/神煞大全) and this library's default, DAY is
