@@ -595,7 +595,7 @@ class ShenshaRules:
   and whether either read the other, nothing consulted settles.**
 
   The practical rule this yields: **a 口诀 quoted identically by two houses is one piece of
-  evidence, not two.** Where both are named on one line below,
+  evidence, not two.** Where both attest the same reading on one line below,
   read it as one modern reading attested twice, not as two independent readings that agree.
 
   下面反复出现的现代两家（问真《神煞大全》与高人）**不作两个独立来源计数**。
@@ -612,7 +612,11 @@ class ShenshaRules:
   **哪一份是上游、是否互相读过，所查材料无一裁定。**
 
   由此得到的记账规则：**两家引同一首口诀，是一份证据不是两份。**
-  下文某一行同时点名两家时，读作「同一个现代读法被记录了两次」，不是「两个独立读法互相印证」。
+  下文某一行两家给出同一读法时，读作「同一个现代读法被记录了两次」，不是「两个独立读法互相印证」。
+
+  Sources / 出处（天乙贵人、红艳、金舆、国印贵人等条）:
+  - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
+  - 高人: https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md
   '''
 
   # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
@@ -1375,8 +1379,11 @@ class ShenshaRules:
     Sources / 出处:
     - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表:
       https://zh.wikisource.org/wiki/張果星宗
-    - 《五行精纪注释》卷十三（所载白文完整；此处另查的两份独立白文转录把建节星与国印星
-      并成一条残句）: https://www.suanzhun.net/book/2731.html
+    - 《五行精纪注释》卷十三，分别列出建节星与国印星:
+      https://www.suanzhun.net/book/2731.html
+    - 《五行精纪》白文卷十三【建节星】，两份转录均为上文所列残句:
+      算准网: https://www.suanzhun.net/book/1003.html
+      维基文库（全文页内第十三卷）: https://zh.wikisource.org/wiki/五行精紀
     - 《五行精纪》白文卷廿四「论劫杀羊刃」，飞刃条所在（本条是上文「同一支上还坐着第二颗星」
       的依据）: https://zh.wikisource.org/wiki/五行精紀
     - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:

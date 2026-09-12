@@ -173,12 +173,10 @@ class Anchor(Enum):
 '''The supported anchor values of each knob, with their provenance or known provenance gap
 written on the corresponding line. An unlisted value is unsupported, not necessarily absent
 from every school (see 驿马 below). Adding one is a knowledge change and requires a source.
-How to count the modern sources named below -- in particular why 问真 and 高人 appearing on
-one line is one source and not two -- is written once in `ShenshaRules`'s docstring.
+For the source-counting rule, see `ShenshaRules`'s docstring.
 各锚旋钮支持的取值，连同出处或已知出处缺口逐行记录。表外取值只表示本库不支持，不表示没有
 流派如此读（见驿马）；新增取值属于知识变更，须有出处。
-下面点名的现代来源怎么计数——尤其是同一行上同时出现问真与高人为什么算一份而不是两份——
-只在 `ShenshaRules` 的 docstring 里写一次。'''
+出处计数规则见 `ShenshaRules` 的 docstring。'''
 _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # 红艳: DAY follows 问真 (https://book.taiyi.me/命/神煞大全, 「以日干查四地支」) and 高人,
   # which lists 红艳 under its 「日干查地支」 section. 《三命通会·桃花紅艷煞》 supplies the
