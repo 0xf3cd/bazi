@@ -584,15 +584,13 @@ class ShenshaRules:
   little: 口诀 are common property, and the two do not always pick the same one -- see 天乙
   below. But some of their 断语 -- each house's own interpretive prose, where nothing forces
   agreement -- also run identical for long stretches, and that does point at shared text.
-  Pulling the other way, most 断语 have nothing in common beyond a few characters, and on two
-  rules the houses disagree outright: 天乙, where each
+  Pulling the other way, most 断语 have nothing in common beyond a few characters, and the
+  houses disagree outright on 天乙, where each
   picks a different 歌诀 version (高人 names which one it uses), and 红艳, where 问真 reads
   乙 -> 午 against 高人's 乙 -> 申 -- the same split `HONGYAN` below already traces to
   散文本 vs 歌诀本.
 
-  So "one is a copy of the other" is ruled out; "both draw on shared upstream material --
-  the 口诀 and the classical 白文 -- and then write their own" fits. **Which one is upstream,
-  and whether either read the other, nothing consulted settles.**
+  **Which one is upstream, and whether either read the other, nothing consulted settles.**
 
   The practical rule this yields: **a 口诀 quoted identically by two houses is one piece of
   evidence, not two.** Where both attest the same reading on one line below,
@@ -603,12 +601,10 @@ class ShenshaRules:
   口诀是公共财产，况且两家并不总挑同一首（见下文天乙）。
   但**有几处断语也长段逐字相同**——断语是各家自撰的评断文字，
   本无必须一致的理由，那确实指向共享文本。反方向的事实同时存在：多数断语除了
-  三五个字外毫无共同处，而且两家在两条规则上正面分歧——天乙各择一个歌诀版本
+  三五个字外毫无共同处，而且两家读法有分歧——天乙各择一个歌诀版本
   （高人并自述用的是哪一个），红艳问真作乙午而高人作乙申，即下面 `HONGYAN`
   已记的散文本／歌诀本之分。
 
-  故「一方是另一方的拷贝」不成立，「两家共享上游材料（口诀与古籍白文）再各自编写」
-  与事实相容；
   **哪一份是上游、是否互相读过，所查材料无一裁定。**
 
   由此得到的记账规则：**两家引同一首口诀，是一份证据不是两份。**
@@ -1317,11 +1313,10 @@ class ShenshaRules:
       name the transcription first. 《五行精纪注释》 reproduces the 白文 with the entry intact
       -- 【原文】「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」 -- and that
       白文 gives the offset and an example, nothing more. The two standalone 白文
-      transcriptions consulted here **have no 国印 entry**: both fold its opening into the
-      preceding 【建节星】, yielding 「建节星，禄前第六位是也，如甲申生人，至癸酉是也」, where
+      transcriptions consulted here **have no 国印 entry**: both give
+      「禄前第六位是也，如甲申生人，至癸酉是也」 under 【建节星】, where
       禄前第六位 and 癸酉 (the eighth) cannot both be right. **So `WUXING_JINGJI` rests on the
-      白文 as the 注释本 carries it**, and the corruption is a fact about the other
-      transcriptions, not about the book.
+      白文 as the 注释本 carries it**.
       The anchor and the counting convention are a further step out: they are spelled out by
       the modern annotator on the same page, not by the 白文 -- 【注释】「国印星，命局见年干禄
       前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」 -- worth keeping distinct, since
@@ -1329,9 +1324,8 @@ class ShenshaRules:
       读哪一份转录，决定《五行精纪》里有没有国印这一条，所以先点名转录。
       《五行精纪注释》所载白文是完整的——【原文】「国印星禄前第八位是，如甲申生人，至癸酉是。
       并《三命纂局》」——该白文只给偏移与例子。而此处所查的两份独立白文转录**没有国印条**：
-      两者都把它的头句并进上一条【建节星】，作「建节星，禄前第六位是也，如甲申生人，至癸酉是也」，
+      两者【建节星】下均作「禄前第六位是也，如甲申生人，至癸酉是也」，
       而禄前第六位与癸酉（第八位）不可能同时为真。**故 `WUXING_JINGJI` 依注释本所载的那份白文**，
-      残句是那两份转录的事实，不是这本书的事实。
       年干锚与含禄起算又退一步：那出自同页今人注释而非白文——【注释】「国印星，命局见年干禄前
       第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」——两者要分开记，因为单看「甲申生人」
       也可以读成年支锚。
@@ -1381,7 +1375,7 @@ class ShenshaRules:
       https://zh.wikisource.org/wiki/張果星宗
     - 《五行精纪注释》卷十三，分别列出建节星与国印星:
       https://www.suanzhun.net/book/2731.html
-    - 《五行精纪》白文卷十三【建节星】，两份转录均为上文所列残句:
+    - 《五行精纪》白文卷十三【建节星】，两份转录均载上文所引文字:
       算准网: https://www.suanzhun.net/book/1003.html
       维基文库（全文页内第十三卷）: https://zh.wikisource.org/wiki/五行精紀
     - 《五行精纪》白文卷廿四「论劫杀羊刃」，飞刃条所在（本条是上文「同一支上还坐着第二颗星」
