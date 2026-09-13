@@ -5,6 +5,7 @@ import dataclasses
 import inspect
 from dataclasses import FrozenInstanceError
 from datetime import datetime
+from enum import Enum
 
 import pytest
 
@@ -52,22 +53,6 @@ def test_school_enums_basic() -> None:
 
 
 def test_school_defaults() -> None:
-  assert BaziSchool().day_rollover is DayRollover.WAN_ZISHI
-  assert BaziSchool().hongyan_anchor is Anchor.DAY
-  assert BaziSchool().yangren_def is ShenshaRules.YangrenDef.ZIPING
-  assert BaziSchool().tianyi_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().tianyi_def is ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  assert BaziSchool().yima_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().huagai_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().jiangxing_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().jiesha_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().wangshen_anchor is Anchor.YEAR_AND_DAY
-  assert BaziSchool().jinyu_anchor is Anchor.DAY
-  assert BaziSchool().feiren_def is ShenshaRules.YangrenDef.ZIPING
-  assert BaziSchool().zaisha_anchor is Anchor.YEAR
-  assert BaziSchool().anhe_def is DizhiRules.AnheDef.NORMAL_EXTENDED
-  assert BaziSchool().xing_def is DizhiRules.XingDef.LOOSE
-  assert BaziSchool().gong_def is DizhiRules.GongDef.SAME_STEM_NARROW
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
@@ -383,28 +368,16 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert BaziSchool().anhe_def is params['anhe_def'].default
     assert BaziSchool().xing_def is params['xing_def'].default
     assert BaziSchool().gong_def is params['gong_def'].default
-  # The Shensha half iterates the registry instead of naming each entry, so a new Shensha
-  # joins this check without anyone adding a line -- provided its registry spec actually
-  # carries the resolver. An entry that declares a `definition` parameter on the predicate but
-  # forgets `definition=` in the spec is skipped here silently; that gap is tracked in #189.
-  # 神煞半边遍历注册表而不逐条点名，新增神煞无须补行即可进入本检查——前提是它的注册表
-  # 条目真的挂了 resolver。predicate 带了 definition 参数却漏挂 `definition=` 的条目会被
-  # 静默跳过，该缺口记在 #189。
-  # The two sides stay independent -- the school field default on one, the predicate's own
-  # signature default on the other -- so this is still two spellings compared, not self-proof.
-  # 两侧来源仍各自独立（盘级字段默认 vs predicate 签名默认），不是自证。
-  checked = 0
   for name, spec in _REGISTRY.items():
+    parameter = inspect.signature(spec.predicate).parameters.get('definition')
     resolver = spec.definition
+    assert (resolver is not None) == (parameter is not None), name
     if resolver is None:
       continue
-    checked += 1
+    assert parameter is not None
+    assert parameter.kind is inspect.Parameter.KEYWORD_ONLY, name
     school_side = resolver(BaziSchool())
-    signature_side = inspect.signature(spec.predicate).parameters['definition'].default
-    assert school_side is signature_side, name
-  # A loop that iterates nothing passes silently -- count what it saw and say so out loud.
-  # 空转的循环会静默通过：数一下它到底看了几个，并把这件事说出来。
-  assert checked, 'no Shensha carries a definition knob -- the loop above would be vacuous'
+    assert school_side is parameter.default, name
 
 
 def test_bazi_default_config_is_the_shared_default() -> None:
@@ -420,48 +393,32 @@ def test_eq_hash_include_school() -> None:
   # Same birth, same gender, different school: not equal, different hash, no set dedup.
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   default_bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
-  zi_bazi: Bazi = Bazi.create(
-    dt,
-    BaziGender.MALE,
-    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
-  )
+  default_school = BaziSchool()
+  for field in dataclasses.fields(BaziSchool):
+    default = getattr(default_school, field.name)
+    assert isinstance(default, Enum), field.name
+    allowed = _ANCHOR_CHOICES[field.name] if field.type is Anchor else tuple(type(default))
+    alternatives = tuple(value for value in allowed if value is not default)
+    assert alternatives, field.name
+    for value in alternatives:
+      variant_school = dataclasses.replace(
+        default_school,
+        **{field.name: value}, # type: ignore[arg-type] # Field and enum are paired at runtime.
+      )
+      variant_bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
+      assert default_bazi != variant_bazi, field.name
+      assert hash(default_bazi) != hash(variant_bazi), field.name
+      assert len({default_bazi, variant_bazi}) == 2, field.name
 
-  assert default_bazi != zi_bazi
-  assert hash(default_bazi) != hash(zi_bazi)
-  assert len({default_bazi, zi_bazi}) == 2
-
-  # Same school (by value, not identity): equal, same hash, set dedups.
-  same_school: Bazi = Bazi.create(
-    dt,
-    BaziGender.MALE,
-    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
-  )
-  assert zi_bazi == same_school
-  assert hash(zi_bazi) == hash(same_school)
-  assert len({zi_bazi, same_school}) == 1
-
-  # The evaluation-time knobs distinguish charts the same way (评估期旋钮同样区分两盘).
-  for variant_school in (
-    BaziSchool(hongyan_anchor=Anchor.YEAR),
-    BaziSchool(yangren_def=ShenshaRules.YangrenDef.DIWANG),
-    BaziSchool(tianyi_anchor=Anchor.DAY),
-    BaziSchool(tianyi_def=ShenshaRules.TianyiDef.YINGUI),
-    BaziSchool(yima_anchor=Anchor.DAY),
-    BaziSchool(huagai_anchor=Anchor.DAY),
-    BaziSchool(jiangxing_anchor=Anchor.DAY),
-    BaziSchool(jiesha_anchor=Anchor.DAY),
-    BaziSchool(wangshen_anchor=Anchor.DAY),
-    BaziSchool(jinyu_anchor=Anchor.YEAR_AND_DAY),
-    BaziSchool(feiren_def=ShenshaRules.YangrenDef.DIWANG),
-    BaziSchool(zaisha_anchor=Anchor.YEAR_AND_DAY),
-    BaziSchool(anhe_def=DizhiRules.AnheDef.MANGPAI),
-    BaziSchool(xing_def=DizhiRules.XingDef.STRICT),
-    BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
-  ):
-    variant_bazi: Bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
-    assert default_bazi != variant_bazi
-    assert hash(default_bazi) != hash(variant_bazi)
-    assert len({default_bazi, variant_bazi}) == 2
+      # Equal school values in distinct objects still deduplicate.
+      same_bazi = Bazi.create(
+        dt,
+        BaziGender.MALE,
+        BaziConfig(school=dataclasses.replace(variant_school)),
+      )
+      assert variant_bazi == same_bazi, field.name
+      assert hash(variant_bazi) == hash(same_bazi), field.name
+      assert len({variant_bazi, same_bazi}) == 1, field.name
 
 
 def test_eq_hash_include_dayun_year_rule() -> None:

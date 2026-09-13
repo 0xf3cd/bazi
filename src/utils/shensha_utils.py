@@ -1,5 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from enum import Enum
 from typing import TypeVar
 
 from ..common import frozendict
@@ -16,6 +17,8 @@ rules inspect a Ganzhi directly, with any required anchor supplied separately.
 
 
 _TableKey = TypeVar('_TableKey', Tiangan, Dizhi)
+_Definition = TypeVar('_Definition', bound=Enum)
+_TableValue = TypeVar('_TableValue', bound=Dizhi | frozenset[Dizhi] | None)
 
 
 def _table_shensha(
@@ -29,6 +32,26 @@ def _table_shensha(
   if not isinstance(dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
   return table[key] is dizhi
+
+
+def _defined_shensha(
+  tables: frozendict[_Definition, frozendict[Tiangan, _TableValue]],
+  key: Tiangan,
+  dizhi: Dizhi,
+  definition: _Definition,
+  definition_type: type[_Definition],
+) -> bool:
+  '''Validate inputs before looking up the selected definition's table.
+  先校验输入，再查所选定义的表。
+  '''
+  if not isinstance(key, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(key)}')
+  if not isinstance(dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+  if not isinstance(definition, definition_type):
+    raise TypeError(f'Expected {definition_type.__name__}, got {type(definition)}')
+  target = tables[definition][key]
+  return dizhi in target if isinstance(target, frozenset) else target is dizhi
 
 
 def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
@@ -405,13 +428,13 @@ def yangren(
     - return: True
   '''
 
-  if not isinstance(day_master, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.YangrenDef):
-    raise TypeError(f'Expected YangrenDef, got {type(definition)}')
-  return ShenshaRules.YANGREN[definition][day_master] is dizhi
+  return _defined_shensha(
+    ShenshaRules.YANGREN,
+    day_master,
+    dizhi,
+    definition,
+    ShenshaRules.YangrenDef,
+  )
 
 
 def feiren(
@@ -441,13 +464,13 @@ def feiren(
     - return: True
   '''
 
-  if not isinstance(day_master, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(day_master)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.YangrenDef):
-    raise TypeError(f'Expected YangrenDef, got {type(definition)}')
-  return ShenshaRules.FEIREN[definition][day_master] is dizhi
+  return _defined_shensha(
+    ShenshaRules.FEIREN,
+    day_master,
+    dizhi,
+    definition,
+    ShenshaRules.YangrenDef,
+  )
 
 
 def tianyi(
@@ -479,13 +502,13 @@ def tianyi(
     - return: True
   '''
 
-  if not isinstance(key_tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.TianyiDef):
-    raise TypeError(f'Expected TianyiDef, got {type(definition)}')
-  return dizhi in ShenshaRules.TIANYI[definition][key_tiangan]
+  return _defined_shensha(
+    ShenshaRules.TIANYI,
+    key_tiangan,
+    dizhi,
+    definition,
+    ShenshaRules.TianyiDef,
+  )
 
 
 def wenchang(
@@ -520,13 +543,13 @@ def wenchang(
     - return: False
   '''
 
-  if not isinstance(key_tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.WenchangDef):
-    raise TypeError(f'Expected WenchangDef, got {type(definition)}')
-  return ShenshaRules.WENCHANG[definition][key_tiangan] is dizhi
+  return _defined_shensha(
+    ShenshaRules.WENCHANG,
+    key_tiangan,
+    dizhi,
+    definition,
+    ShenshaRules.WenchangDef,
+  )
 
 
 def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
@@ -589,13 +612,13 @@ def taiji(
     - return: False
   '''
 
-  if not isinstance(key_tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.TaijiDef):
-    raise TypeError(f'Expected TaijiDef, got {type(definition)}')
-  return dizhi in ShenshaRules.TAIJI[definition][key_tiangan]
+  return _defined_shensha(
+    ShenshaRules.TAIJI,
+    key_tiangan,
+    dizhi,
+    definition,
+    ShenshaRules.TaijiDef,
+  )
 
 
 def guoyin(
@@ -628,10 +651,10 @@ def guoyin(
     - return: True
   '''
 
-  if not isinstance(key_tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(key_tiangan)}')
-  if not isinstance(dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
-  if not isinstance(definition, ShenshaRules.GuoyinDef):
-    raise TypeError(f'Expected GuoyinDef, got {type(definition)}')
-  return ShenshaRules.GUOYIN[definition][key_tiangan] is dizhi
+  return _defined_shensha(
+    ShenshaRules.GUOYIN,
+    key_tiangan,
+    dizhi,
+    definition,
+    ShenshaRules.GuoyinDef,
+  )
