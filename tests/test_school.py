@@ -401,7 +401,10 @@ def test_eq_hash_include_school() -> None:
     alternatives = tuple(value for value in allowed if value is not default)
     assert alternatives, field.name
     for value in alternatives:
-      variant_school = dataclasses.replace(default_school, **{field.name: value}) # type: ignore[arg-type] # Field and enum are paired at runtime.
+      variant_school = dataclasses.replace(
+        default_school,
+        **{field.name: value}, # type: ignore[arg-type] # Field and enum are paired at runtime.
+      )
       variant_bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
       assert default_bazi != variant_bazi, field.name
       assert hash(default_bazi) != hash(variant_bazi), field.name
