@@ -2,6 +2,7 @@
 # test_shensha_utils.py
 
 import random
+import inspect
 from collections.abc import Callable
 
 import pytest
@@ -9,6 +10,28 @@ import pytest
 from src.defines import Tiangan, Dizhi, Ganzhi
 from src.rules import ShenshaRules
 from src.utils import shensha_utils
+
+
+def test_definition_predicate_type_error_order() -> None:
+  for name, predicate in inspect.getmembers(shensha_utils, inspect.isfunction):
+    parameters = inspect.signature(predicate).parameters
+    if name.startswith('_') or 'definition' not in parameters:
+      continue
+    default = parameters['definition'].default
+    key_error = "Expected Tiangan, got <class 'str'>"
+    dizhi_error = "Expected Dizhi, got <class 'str'>"
+    definition_error = f"Expected {type(default).__name__}, got <class 'object'>"
+    for key, dizhi, definition, message in (
+      ('甲', Dizhi.子, default, key_error),
+      (Tiangan.甲, '子', default, dizhi_error),
+      (Tiangan.甲, Dizhi.子, object(), definition_error),
+      ('甲', '子', default, key_error),
+      ('甲', Dizhi.子, object(), key_error),
+      (Tiangan.甲, '子', object(), dizhi_error),
+      ('甲', '子', object(), key_error),
+    ):
+      with pytest.raises(TypeError, match=f'^{message}$'):
+        predicate(key, dizhi, definition=definition)
 
 
 def test_taohua() -> None:
@@ -409,15 +432,6 @@ def test_yangren() -> None:
       )
 
 
-def test_yangren_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.yangren('甲', Dizhi.卯) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.yangren(Tiangan.甲, '卯') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.yangren(Tiangan.甲, Dizhi.卯, definition=object()) # type: ignore
-
-
 def test_feiren() -> None:
   expected: dict[ShenshaRules.YangrenDef, dict[Tiangan, Dizhi | None]] = {
     ShenshaRules.YangrenDef.ZIPING : {
@@ -459,15 +473,6 @@ def test_feiren() -> None:
         dizhi,
         definition=ShenshaRules.YangrenDef.ZIPING,
       )
-
-
-def test_feiren_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.feiren('甲', Dizhi.酉) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.feiren(Tiangan.甲, '酉') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.feiren(Tiangan.甲, Dizhi.酉, definition=object()) # type: ignore
 
 
 def test_tianyi() -> None:
@@ -540,15 +545,6 @@ def test_tianyi() -> None:
       )
 
 
-def test_tianyi_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.tianyi('甲', Dizhi.丑) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.tianyi(Tiangan.甲, '丑') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.tianyi(Tiangan.甲, Dizhi.丑, definition=object()) # type: ignore
-
-
 def test_wenchang() -> None:
   # The two readings differ in 辛 only; every other stem is written out so a table-wide
   # edit cannot hide behind the one cell everybody looks at.
@@ -606,15 +602,6 @@ def test_wenchang() -> None:
     != shensha_utils.wenchang(tg, dz, definition=ShenshaRules.WenchangDef.XIN_XU)
   }
   assert differing == {Tiangan.辛}
-
-
-def test_wenchang_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.wenchang('甲', Dizhi.巳) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.wenchang(Tiangan.甲, '巳') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.wenchang(Tiangan.甲, Dizhi.巳, definition=object()) # type: ignore
 
 
 def test_wenchanggui() -> None:
@@ -721,15 +708,6 @@ def test_taiji() -> None:
         assert shensha_utils.taiji(tg, dz, definition=ShenshaRules.TaijiDef.REN_GUI_BOTH)
 
 
-def test_taiji_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.taiji('甲', Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.taiji(Tiangan.甲, '子') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.taiji(Tiangan.甲, Dizhi.子, definition=object()) # type: ignore
-
-
 def test_guoyin() -> None:
   # Two readings, twenty cells, written out per stem. The derivation from 禄 is pinned in
   # `tests/test_rules.py`; here the literals are spelled independently so that a change to
@@ -771,12 +749,3 @@ def test_guoyin() -> None:
     assert len({expected[d][tg] for d in ShenshaRules.GuoyinDef}) == len(
       ShenshaRules.GuoyinDef
     ), tg
-
-
-def test_guoyin_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.guoyin('甲', Dizhi.戌) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.guoyin(Tiangan.甲, '戌') # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.guoyin(Tiangan.甲, Dizhi.戌, definition=object()) # type: ignore

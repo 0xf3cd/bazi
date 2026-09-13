@@ -4,6 +4,7 @@
 import pytest
 
 import ast
+import dataclasses
 import inspect
 import random
 import itertools
@@ -1767,6 +1768,26 @@ def test_registry_anchors_are_the_declared_table() -> None:
     for anchor in _ANCHOR_CHOICES[field]:
       school = BaziSchool(**{field: anchor}) # type: ignore # Field name is data here.
       assert spec.anchor(school) is anchor, (name, anchor)
+
+
+def test_registry_definitions_are_the_declared_fields() -> None:
+  knobs = {
+    'yangren': 'yangren_def',
+    'feiren': 'feiren_def',
+    'tianyi': 'tianyi_def',
+    'wenchang': 'wenchang_def',
+    'taiji': 'taiji_def',
+    'guoyin': 'guoyin_def',
+  }
+  assert set(knobs) == {name for name, spec in _REGISTRY.items() if spec.definition is not None}
+  default = BaziSchool()
+  for name, field in knobs.items():
+    resolver = _REGISTRY[name].definition
+    assert resolver is not None
+    # Vary only the named field: 羊刃 and 飞刃 share an enum and default, not a knob.
+    for definition in type(getattr(default, field)):
+      school = dataclasses.replace(default, **{field: definition})
+      assert resolver(school) is definition, (name, definition)
 
 
 def test_no_bare_dizhi_discovery_calls() -> None:
