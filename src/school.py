@@ -239,10 +239,11 @@ class BaziSchool:
   disagree. The profile only declares -- it computes nothing. Whoever needs a knob reads
   it at its own stage: `day_rollover` steers the day pillar when the chart is computed,
   the rest are read at evaluation time (神煞 lookups, relation discovery). Every field
-  feeds `__eq__` / `__hash__` / JSON, so two charts differing only in a knob are two charts.
+  feeds equality and JSON, so two charts differing only in a knob are two charts.
+  Equal profiles have equal hashes.
   命盘的流派档案：本盘在各流派分歧处所取的看法。档案只声明、不演算——谁要哪个口径，谁在自己的阶段
   读它：`day_rollover` 在排盘期决定日柱，其余在评估期读（神煞查法、关系查法）。每个字段
-  都进相等性 / 哈希 / JSON，只差一个旋钮的两张盘就是两张盘。
+  都进相等性 / JSON，只差一个旋钮的两张盘就是两张盘。相等的流派档案具有相同的哈希值。
 
   Not here: `precision` / `backend` (chart computation knobs, not school divergences)
   and gender -- see `BaziConfig`.
@@ -392,12 +393,12 @@ class BaziConfig:
   The chart-level configuration of a `Bazi`: the knobs steering chart computation
   (`precision` / `backend`), the default Dayun year projection, and the school profile
   (流派档案, which evaluation-time lookups read), carried as one immutable value. A `Bazi`
-  stores its `BaziConfig`, and the config feeds `__eq__` / `__hash__` / JSON as a unit
-  (same precedent as `backend`). Transit projection is therefore part of chart identity
-  even though it does not change the four pillars or the physical Dayun timeline.
+  stores its `BaziConfig`, and the config feeds equality and JSON as a unit.
+  Transit projection is therefore part of chart identity even though it does not change
+  the four pillars or the physical Dayun timeline. Equal configurations have equal hashes.
   命盘级配置：排盘算路旋钮（`precision` / `backend`）、默认大运年份投影与流派档案（评估期查法
-  读取），聚合为一个不可变值。`Bazi` 持有它，相等性 / 哈希 / JSON 都以它为单位进出；流运
-  投影因此属于命盘身份，即使它不改变四柱与大运物理时刻线。
+  读取），聚合为一个不可变值。`Bazi` 持有它，相等性 / JSON 都以它为单位进出；流运
+  投影因此属于命盘身份，即使它不改变四柱与大运物理时刻线。相等的配置具有相同的哈希值。
 
   - precision: (BaziPrecision) The precision of the birth time / 出生时间精度。
   - backend: (CalendarBackend) The calendar backend for all calendar conversions / 历法后端。

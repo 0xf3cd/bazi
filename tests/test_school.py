@@ -389,8 +389,32 @@ def test_bazi_default_config_is_the_shared_default() -> None:
   assert Bazi.create(dt, BaziGender.男) == Bazi(dt, BaziGender.男)
 
 
-def test_eq_hash_include_school() -> None:
-  # Same birth, same gender, different school: not equal, different hash, no set dedup.
+@pytest.mark.parametrize('config', [
+  BaziConfig(precision=BaziPrecision.HOUR),
+  BaziConfig(precision=BaziPrecision.MINUTE),
+  BaziConfig(backend=CalendarBackend.HKO),
+  BaziConfig(backend=CalendarBackend.CELESTIAL_ALGO2),
+])
+def test_identity_includes_precision_and_backend(config: BaziConfig) -> None:
+  dt: datetime = datetime(1984, 4, 2, 4, 2)
+  default_bazi = Bazi.create(dt, BaziGender.男)
+  variant_bazi = Bazi.create(dt, BaziGender.男, config)
+  same_bazi = Bazi.create(
+    dt,
+    BaziGender.男,
+    dataclasses.replace(config),
+  )
+
+  assert default_bazi.solar_datetime == variant_bazi.solar_datetime
+  assert default_bazi.pillars == variant_bazi.pillars
+  assert default_bazi != variant_bazi
+  assert variant_bazi == same_bazi
+  assert hash(variant_bazi) == hash(same_bazi)
+  assert len({default_bazi, variant_bazi, same_bazi}) == 2
+
+
+def test_identity_includes_school() -> None:
+  # Same birth, same gender, different school: distinct identities in a set.
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   default_bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
   default_school = BaziSchool()
@@ -407,7 +431,6 @@ def test_eq_hash_include_school() -> None:
       )
       variant_bazi = Bazi.create(dt, BaziGender.MALE, BaziConfig(school=variant_school))
       assert default_bazi != variant_bazi, field.name
-      assert hash(default_bazi) != hash(variant_bazi), field.name
       assert len({default_bazi, variant_bazi}) == 2, field.name
 
       # Equal school values in distinct objects still deduplicate.
@@ -421,7 +444,7 @@ def test_eq_hash_include_school() -> None:
       assert len({variant_bazi, same_bazi}) == 1, field.name
 
 
-def test_eq_hash_include_dayun_year_rule() -> None:
+def test_identity_includes_dayun_year_rule() -> None:
   dt: datetime = datetime(1910, 4, 7, 6, 1)
   projected: Bazi = Bazi.create(dt, BaziGender.MALE)
   fixed: Bazi = Bazi.create(
@@ -431,7 +454,6 @@ def test_eq_hash_include_dayun_year_rule() -> None:
   )
 
   assert projected != fixed
-  assert hash(projected) != hash(fixed)
   assert len({projected, fixed}) == 2
 
 

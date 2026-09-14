@@ -709,10 +709,6 @@ def test_eq_ne() -> None:
 
     assert bazi != 0
 
-    bazi_hacked: Bazi = Bazi.create(dt, gender)
-    bazi_hacked._config = BaziConfig(precision=BaziPrecision.HOUR) # type: ignore # Intended for testing only.
-    assert bazi != bazi_hacked
-
 
 def test_hash() -> None:
   dt: datetime = datetime(2000, 2, 4, 22, 1)
