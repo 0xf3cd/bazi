@@ -8,6 +8,7 @@
 * The celestial tables under `src/calendar/celestial_data/data/` are also committed runtime data. To regenerate them, `pip install celestial-calendar==0.6.1` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.celestial_data.generator` from the repo root.
 * Run linter: `ruff check .`
 * Run static type checker: `mypy .`
+* Run full verification: `./run_tests.py -a -v`
 * Run tests: `./run_tests.py`
   * By default:
     * hkodata tests and slow tests won't run;
@@ -21,7 +22,7 @@
     * Add `-v` to show verbose info during testing.
     * Add `-k <expression>` to specify the test(s) to run, this argument will be passed to `pytest`. Mutually exclusive with `-s` and `-hko`: when `-k` is set, `-s`/`-hko` are ignored.
     * Add `-c` to collect coverage data during testing. This also produces a coverage report in `./covhtml`.
-    * Add `-cr <rate>`/`--coverage-rate <rate>` to set the minimum coverage rate (default: 80.0); only takes effect when coverage runs (`-c` or `-a`).
+    * Add `-cr <rate>`/`--coverage-rate <rate>` to set the minimum coverage rate (default: 100.0); only takes effect when coverage runs (`-c` or `-a`).
     * Add `-r`/`--ruff` to run the linter after tests.
     * Add `-m`/`-mypy`/`--mypy` to run mypy static type checker after tests.
     * Add `-d` to run `./run_demo.py` and `./run_relationship_analyzer.py` after tests.

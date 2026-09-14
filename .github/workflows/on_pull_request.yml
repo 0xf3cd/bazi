@@ -22,12 +22,10 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
           python -m pip install celestial-calendar==0.6.1
-          mypy --disable-error-code=import-untyped .
-          mypy --install-types --non-interactive
       - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke
+          ./run_tests.py -a -v
 
   test-on-macos:
     runs-on: macos-latest
@@ -46,12 +44,10 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
           python -m pip install celestial-calendar==0.6.1
-          mypy --disable-error-code=import-untyped .
-          mypy --install-types --non-interactive
       - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke
+          ./run_tests.py -a -v
 
   test-on-windows:
     runs-on: windows-latest
@@ -70,10 +66,8 @@ jobs:
           python -m pip install --upgrade pip
           if (Test-Path "Requirements.txt") { python -m pip install -r "Requirements.txt" }
           python -m pip install celestial-calendar==0.6.1
-          mypy --disable-error-code=import-untyped .
-          mypy --install-types --non-interactive
       - name: Testing, linting, and statc type checking
         run: |
           chcp.com 65001
           $env:PYTHONIOENCODING = "utf-8"
-          python ./run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke
+          python ./run_tests.py -a -v
