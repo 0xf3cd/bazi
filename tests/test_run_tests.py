@@ -15,6 +15,7 @@ import pytest
   (['-a', '-nt', '-k', 'ignored'], True, False, None, 100.0, False),
   (['-a', '-cr', '90'], True, False, None, 90.0, False),
   (['-nt', '-k', 'selected'], False, True, 'selected', 100.0, False),
+  # Explicit flags enable every task without -a.
   (['-v', '-s', '-hko', '-c', '-cr', '100', '-ruff', '-mypy', '-d', '-i', '-osmoke'],
    True, False, None, 100.0, True),
 ])
