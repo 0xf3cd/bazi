@@ -45,7 +45,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   (`per-file-ignores`, rationale included) where a family only fights one tree.
 - Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
-  workflow invokes `run_tests.py -v -s -hko -c -cr 100 -ruff -mypy -d -i -osmoke`.
+  workflow invokes `run_tests.py -a -v`.
   That full invocation is the gate. The four commands below are a **faster inner loop,
   not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`)
   and the `-i` leg (`run_interpreter.py`).
@@ -56,7 +56,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
     then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
     at **100%**. Without the flag the report prints the number and still exits 0, so this
     local loop would not notice a drop; CI never runs this path, it gates inside
-    `run_tests.py -c -cr 100`
+    `run_tests.py -a -v`
     (intentionally unreachable lines carry `# pragma: no cover` + a reason).
   - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
     (see Idioms below; the script refuses to run without `-O`).
