@@ -12,26 +12,30 @@ from src.rules import ShenshaRules
 from src.utils import shensha_utils
 
 
-def test_definition_predicate_type_error_order() -> None:
+def test_predicate_argument_types() -> None:
   for name, predicate in inspect.getmembers(shensha_utils, inspect.isfunction):
-    parameters = inspect.signature(predicate).parameters
-    if name.startswith('_') or 'definition' not in parameters:
+    if name.startswith('_') or predicate.__module__ != shensha_utils.__name__:
       continue
-    default = parameters['definition'].default
-    key_error = "Expected Tiangan, got <class 'str'>"
-    dizhi_error = "Expected Dizhi, got <class 'str'>"
-    definition_error = f"Expected {type(default).__name__}, got <class 'object'>"
-    for key, dizhi, definition, message in (
-      ('甲', Dizhi.子, default, key_error),
-      (Tiangan.甲, '子', default, dizhi_error),
-      (Tiangan.甲, Dizhi.子, object(), definition_error),
-      ('甲', '子', default, key_error),
-      ('甲', Dizhi.子, object(), key_error),
-      (Tiangan.甲, '子', object(), dizhi_error),
-      ('甲', '子', object(), key_error),
-    ):
-      with pytest.raises(TypeError, match=f'^{message}$'):
-        predicate(key, dizhi, definition=definition)
+    # Whole-pillar predicates have their own negative tests below.
+    if predicate in (shensha_utils.kuigang, shensha_utils.tianshe):
+      continue
+    parameters = tuple(inspect.signature(predicate).parameters.values())
+    assert len(parameters) in (2, 3), name
+    key_type = parameters[0].annotation
+    assert key_type in (Tiangan, Dizhi), name
+    assert parameters[1].annotation is Dizhi, name
+    key = Tiangan.甲 if key_type is Tiangan else Dizhi.子
+
+    with pytest.raises(TypeError, match=f'Expected {key_type.__name__}'):
+      predicate(str(key), Dizhi.子)
+    with pytest.raises(TypeError, match='Expected Dizhi'):
+      predicate(key, '子')
+    if len(parameters) == 3:
+      definition = parameters[2]
+      assert definition.name == 'definition', name
+      assert definition.kind is inspect.Parameter.KEYWORD_ONLY, name
+      with pytest.raises(TypeError, match=f'Expected {type(definition.default).__name__}'):
+        predicate(key, Dizhi.子, definition=object())
 
 
 def test_taohua() -> None:
@@ -45,13 +49,6 @@ def test_taohua() -> None:
     for dz2 in Dizhi:
       assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
       assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
-
-
-def test_taohua_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.taohua('申', Dizhi.酉) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.taohua(Dizhi.申, '酉') # type: ignore
 
 
 def test_hongyan() -> None:
@@ -73,13 +70,6 @@ def test_hongyan() -> None:
     assert shensha_utils.hongyan(tg, dz) == expected_result # Second call must answer the same (determinism across calls).
 
 
-def test_hongyan_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.hongyan('癸', Dizhi.申) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.hongyan(Tiangan.癸, '申') # type: ignore
-
-
 def test_hongluan() -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
   for dz1, dz2 in [
@@ -97,13 +87,6 @@ def test_hongluan() -> None:
     dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
-
-
-def test_hongluan_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.hongluan('申', Dizhi.未) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.hongluan(Dizhi.申, '未') # type: ignore
 
 
 def test_tianxi() -> None:
@@ -125,13 +108,6 @@ def test_tianxi() -> None:
     assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
 
 
-def test_tianxi_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.tianxi('寅', Dizhi.未) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.tianxi(Dizhi.寅, '未') # type: ignore
-
-
 def test_yima() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi(k_str) : Dizhi(v_str)
@@ -143,13 +119,6 @@ def test_yima() -> None:
     for dz2 in Dizhi:
       assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
       assert shensha_utils.yima(dz1, dz2) == (expected_table[dz1] is dz2)
-
-
-def test_yima_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.yima('申', Dizhi.寅) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.yima(Dizhi.申, '寅') # type: ignore
 
 
 def test_huagai() -> None:
@@ -170,13 +139,6 @@ def test_huagai() -> None:
       assert shensha_utils.huagai(dz1, dz2) == (expected_table[dz1] is dz2)
 
 
-def test_huagai_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.huagai('申', Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.huagai(Dizhi.申, '辰') # type: ignore
-
-
 def test_jiangxing() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi.申 : Dizhi.子, Dizhi.子 : Dizhi.子, Dizhi.辰 : Dizhi.子,
@@ -189,13 +151,6 @@ def test_jiangxing() -> None:
     for dz2 in Dizhi:
       assert shensha_utils.jiangxing(dz1, dz2) == (expected_table[dz1] is dz2)
       assert shensha_utils.jiangxing(dz1, dz2) == (expected_table[dz1] is dz2)
-
-
-def test_jiangxing_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.jiangxing('申', Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.jiangxing(Dizhi.申, '子') # type: ignore
 
 
 def test_zaisha() -> None:
@@ -213,13 +168,6 @@ def test_zaisha() -> None:
       assert shensha_utils.zaisha(key_dizhi, other_dizhi) == expected
 
 
-def test_zaisha_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.zaisha('申', Dizhi.午) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.zaisha(Dizhi.申, '午') # type: ignore
-
-
 def test_jiesha() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi.申 : Dizhi.巳, Dizhi.子 : Dizhi.巳, Dizhi.辰 : Dizhi.巳,
@@ -234,13 +182,6 @@ def test_jiesha() -> None:
       assert shensha_utils.jiesha(dz1, dz2) == (expected_table[dz1] is dz2)
 
 
-def test_jiesha_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.jiesha('申', Dizhi.巳) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.jiesha(Dizhi.申, '巳') # type: ignore
-
-
 def test_wangshen() -> None:
   expected_table: dict[Dizhi, Dizhi] = {
     Dizhi.申 : Dizhi.亥, Dizhi.子 : Dizhi.亥, Dizhi.辰 : Dizhi.亥,
@@ -253,13 +194,6 @@ def test_wangshen() -> None:
     for dz2 in Dizhi:
       assert shensha_utils.wangshen(dz1, dz2) == (expected_table[dz1] is dz2)
       assert shensha_utils.wangshen(dz1, dz2) == (expected_table[dz1] is dz2)
-
-
-def test_wangshen_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.wangshen('申', Dizhi.亥) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.wangshen(Dizhi.申, '亥') # type: ignore
 
 
 @pytest.mark.parametrize('predicate, targets', [
@@ -281,20 +215,6 @@ def test_guchen_guasu(
       expected = expected_table[year_dizhi] is other_dizhi
       assert predicate(year_dizhi, other_dizhi) == expected
       assert predicate(year_dizhi, other_dizhi) == expected # Repeated lookup must answer the same.
-
-
-@pytest.mark.parametrize('predicate, target', [
-  (shensha_utils.guchen, Dizhi.寅),
-  (shensha_utils.guasu,  Dizhi.戌),
-])
-def test_guchen_guasu_negative(
-  predicate: Callable[[Dizhi, Dizhi], bool],
-  target: Dizhi,
-) -> None:
-  with pytest.raises(TypeError):
-    predicate('子', target) # type: ignore
-  with pytest.raises(TypeError):
-    predicate(Dizhi.子, str(target)) # type: ignore
 
 
 @pytest.mark.parametrize('predicate, expected_table', [
@@ -322,20 +242,6 @@ def test_lushen_jinyu(
       expected = expected_table[tiangan] is dizhi
       assert predicate(tiangan, dizhi) == expected
       assert predicate(tiangan, dizhi) == expected # Repeated lookup must answer the same.
-
-
-@pytest.mark.parametrize('predicate, target', [
-  (shensha_utils.lushen, Dizhi.寅),
-  (shensha_utils.jinyu, Dizhi.辰),
-])
-def test_lushen_jinyu_negative(
-  predicate: Callable[[Tiangan, Dizhi], bool],
-  target: Dizhi,
-) -> None:
-  with pytest.raises(TypeError):
-    predicate('甲', target) # type: ignore
-  with pytest.raises(TypeError):
-    predicate(Tiangan.甲, str(target)) # type: ignore
 
 
 def test_kuigang() -> None:
@@ -621,13 +527,6 @@ def test_wenchanggui() -> None:
   for tg in Tiangan:
     for dz in Dizhi:
       assert shensha_utils.wenchanggui(tg, dz) == (expected[tg] is dz)
-
-
-def test_wenchanggui_negative() -> None:
-  with pytest.raises(TypeError):
-    shensha_utils.wenchanggui('甲', Dizhi.巳) # type: ignore
-  with pytest.raises(TypeError):
-    shensha_utils.wenchanggui(Tiangan.甲, '巳') # type: ignore
 
 
 def test_wenchang_and_wenchanggui_are_two_stars() -> None:

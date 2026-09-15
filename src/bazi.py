@@ -444,9 +444,6 @@ class Bazi:
       and self.config == other.config
     )
   
-  def __ne__(self, other: object) -> bool:
-    return not self.__eq__(other)
-
   def __hash__(self) -> int:
     # Same three inputs as `__eq__`, all derived from `Final` state: stable under the
     # public API (private reassignment is not defended against, as everywhere else).
