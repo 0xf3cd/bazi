@@ -4,15 +4,20 @@
 import pytest
 
 from datetime import date, datetime, timedelta
+from collections.abc import Callable
 
 from src.calendar import CalendarUtilsProtocol
 from src.calendar.dates import CalendarType, CalendarDate
-from src.calendar.celestial_utils import ALGO1, ALGO2
+from src.calendar.celestial_utils import ALGO1, ALGO2, CelestialCalendarUtils
 from src.defines import Jieqi
 
 # The whitelist's single source of truth.  Bare sibling import -- see the NOTE in
 # `test_celestial_tables.py` for why `from tests.calendar...` is not used.
 from celestial_parity_data import ALGO2_DIVERGENT_YEARS
+
+
+class Year(int):
+  pass
 
 
 def solar(year: int, month: int, day: int) -> CalendarDate:
@@ -147,6 +152,26 @@ def test_days_counts_in_ganzhi_year_negative() -> None:
     ALGO1.days_counts_in_ganzhi_year(2200) # The last jieqi-table year: no 立春 of 2201 to close it.
 
 
+@pytest.mark.parametrize('utils', [ALGO1, ALGO2], ids=['ALGO1', 'ALGO2'])
+@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
+def test_days_counts_validate_before_cache(utils: CelestialCalendarUtils, year: int) -> None:
+  counts = utils.days_counts_in_ganzhi_year(year)
+  assert len(counts) == 12
+  assert counts == utils.days_counts_in_ganzhi_year(2024)
+  assert counts is not utils.days_counts_in_ganzhi_year(year)
+  bad_year: object
+  for bad_year in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int') as exc:
+      utils.days_counts_in_ganzhi_year(bad_year) # type: ignore
+    assert str(type(bad_year)) in str(exc.value)
+
+  for supported_year in (1901, 2100, 2199):
+    assert len(utils.days_counts_in_ganzhi_year(Year(supported_year))) == 12
+  for bad_value in (1900, 2200, 2201, True, False):
+    with pytest.raises(ValueError):
+      utils.days_counts_in_ganzhi_year(bad_value)
+
+
 def test_round_trips() -> None:
   # Every day of a leap lunar year and of a plain one, both ways round.
   for year in (2023, 2024):
@@ -261,9 +286,36 @@ def test_out_of_range_year() -> None:
   with pytest.raises(ValueError):
     ALGO1.jieqi_moment(1900, Jieqi.立春)
   with pytest.raises(TypeError):
-    ALGO1.jieqi_moment('2024', Jieqi.立春)
+    ALGO1.jieqi_moment('2024', Jieqi.立春) # type: ignore
   with pytest.raises(TypeError):
-    ALGO1.jieqi_moment(2024, '立春')
+    ALGO1.jieqi_moment(2024, '立春') # type: ignore
+
+
+@pytest.mark.parametrize('query', [ALGO1.jieqi_date, ALGO1.jieqi_moment, ALGO2.jieqi_date, ALGO2.jieqi_moment],
+                         ids=['ALGO1-date', 'ALGO1-moment', 'ALGO2-date', 'ALGO2-moment'])
+@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
+def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date], year: int) -> None:
+  result = query(year, Jieqi.立春)
+  assert result is query(year, Jieqi.LICHUN)
+  assert result == query(2024, Jieqi.立春)
+  bad_year: object
+  for bad_year in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int') as exc:
+      query(bad_year, Jieqi.立春) # type: ignore
+    assert str(type(bad_year)) in str(exc.value)
+  bad_jieqi: object
+  for bad_jieqi in ('立春', 0, None, []):
+    with pytest.raises(TypeError, match='Expected Jieqi') as exc:
+      query(2024, bad_jieqi) # type: ignore
+    assert str(type(bad_jieqi)) in str(exc.value)
+  for supported_year in (1901, 2200):
+    assert query(Year(supported_year), Jieqi.小寒) == query(supported_year, Jieqi.小寒)
+  for bad_value in (1900, 2201, True, False):
+    with pytest.raises(ValueError):
+      query(bad_value, Jieqi.立春)
+
+  assert ALGO1.jieqi_date(2024, Jieqi.立春) == ALGO2.jieqi_date(2024, Jieqi.立春)
+  assert ALGO1.jieqi_date(2024, Jieqi.立春) is not ALGO2.jieqi_date(2024, Jieqi.立春)
 
 
 def test_supported_jie_boundaries() -> None:
