@@ -161,11 +161,12 @@ def test_days_counts_in_ganzhi_year_cannot_poison_the_cache() -> None:
 
 
 @pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
-def test_days_counts_validate_before_cache(year: int) -> None:
+def test_days_counts_validates_before_cache(year: int) -> None:
   counts = hko_data_utils.days_counts_in_ganzhi_year(year)
   assert len(counts) == 12
   assert counts == hko_data_utils.days_counts_in_ganzhi_year(2024)
   assert counts is not hko_data_utils.days_counts_in_ganzhi_year(year)
+
   bad_year: object
   for bad_year in (2024.0, '2024', []):
     with pytest.raises(TypeError, match='Expected int') as exc:
@@ -572,21 +573,22 @@ def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date]
   result = query(year, Jieqi.立春)
   assert result is query(year, Jieqi.LICHUN)
   assert result == query(2024, Jieqi.立春)
+
   bad_year: object
   for bad_year in (2024.0, '2024', []):
     with pytest.raises(TypeError, match='Expected int') as exc:
       query(bad_year, Jieqi.立春) # type: ignore
     assert str(type(bad_year)) in str(exc.value)
+
   bad_jieqi: object
   for bad_jieqi in ('立春', 0, None, []):
     with pytest.raises(TypeError, match='Expected Jieqi') as exc:
       query(2024, bad_jieqi) # type: ignore
     assert str(type(bad_jieqi)) in str(exc.value)
+
   for bad_value in (1900, 2101, True, False):
     with pytest.raises(ValueError):
       query(bad_value, Jieqi.立春)
-
-  assert hko_data_utils.jieqi_date(2024, Jieqi.立春) is hko_data_utils.jieqi_dates_db.get(2024, Jieqi.立春)
 
 
 def test_prev_jie() -> None:

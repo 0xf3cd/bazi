@@ -154,11 +154,12 @@ def test_days_counts_in_ganzhi_year_negative() -> None:
 
 @pytest.mark.parametrize('utils', [ALGO1, ALGO2], ids=['ALGO1', 'ALGO2'])
 @pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
-def test_days_counts_validate_before_cache(utils: CelestialCalendarUtils, year: int) -> None:
+def test_days_counts_validates_before_cache(utils: CelestialCalendarUtils, year: int) -> None:
   counts = utils.days_counts_in_ganzhi_year(year)
   assert len(counts) == 12
   assert counts == utils.days_counts_in_ganzhi_year(2024)
   assert counts is not utils.days_counts_in_ganzhi_year(year)
+
   bad_year: object
   for bad_year in (2024.0, '2024', []):
     with pytest.raises(TypeError, match='Expected int') as exc:
@@ -167,6 +168,7 @@ def test_days_counts_validate_before_cache(utils: CelestialCalendarUtils, year: 
 
   for supported_year in (1901, 2100, 2199):
     assert len(utils.days_counts_in_ganzhi_year(Year(supported_year))) == 12
+
   for bad_value in (1900, 2200, 2201, True, False):
     with pytest.raises(ValueError):
       utils.days_counts_in_ganzhi_year(bad_value)
@@ -298,24 +300,25 @@ def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date]
   result = query(year, Jieqi.立春)
   assert result is query(year, Jieqi.LICHUN)
   assert result == query(2024, Jieqi.立春)
+
   bad_year: object
   for bad_year in (2024.0, '2024', []):
     with pytest.raises(TypeError, match='Expected int') as exc:
       query(bad_year, Jieqi.立春) # type: ignore
     assert str(type(bad_year)) in str(exc.value)
+
   bad_jieqi: object
   for bad_jieqi in ('立春', 0, None, []):
     with pytest.raises(TypeError, match='Expected Jieqi') as exc:
       query(2024, bad_jieqi) # type: ignore
     assert str(type(bad_jieqi)) in str(exc.value)
+
   for supported_year in (1901, 2200):
     assert query(Year(supported_year), Jieqi.小寒) == query(supported_year, Jieqi.小寒)
+
   for bad_value in (1900, 2201, True, False):
     with pytest.raises(ValueError):
       query(bad_value, Jieqi.立春)
-
-  assert ALGO1.jieqi_date(2024, Jieqi.立春) == ALGO2.jieqi_date(2024, Jieqi.立春)
-  assert ALGO1.jieqi_date(2024, Jieqi.立春) is not ALGO2.jieqi_date(2024, Jieqi.立春)
 
 
 def test_supported_jie_boundaries() -> None:

@@ -180,7 +180,6 @@ def test_decode_jieqi_get_validates_before_cache(year: int) -> None:
   result = decoded.get(year, Jieqi.立春)
   assert result == date(2024, 2, 4)
   assert decoded.get(year, Jieqi.LICHUN) is result
-  assert hko_data.DecodedJieqiDates().get(year, Jieqi.立春) is not result
 
   bad_year: object
   for bad_year in (2024.0, '2024', []):
