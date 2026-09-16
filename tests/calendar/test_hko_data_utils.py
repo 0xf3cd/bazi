@@ -7,10 +7,15 @@ import pytest
 
 from datetime import date, datetime, timedelta
 from typing import Any
+from collections.abc import Callable
 
 from src.calendar import CalendarType, CalendarDate, hko_data_utils
 from src.calendar.hko_data import DecodedLunarYears, DecodedJieqiDates
 from src.defines import Jieqi
+
+
+class Year(int):
+  pass
 
 
 def test_get_min_supported_date_negative() -> None:
@@ -153,6 +158,20 @@ def test_days_counts_in_ganzhi_year_cannot_poison_the_cache() -> None:
   counts[0] = 999
   assert hko_data_utils.days_counts_in_ganzhi_year(2000)[0] == 30
   assert not hko_data_utils.is_valid_ganzhi_date(CalendarDate(2000, 1, 31, CalendarType.GANZHI))
+
+
+@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
+def test_days_counts_validates_before_cache(year: int) -> None:
+  counts = hko_data_utils.days_counts_in_ganzhi_year(year)
+  assert len(counts) == 12
+  assert counts == hko_data_utils.days_counts_in_ganzhi_year(2024)
+  assert counts is not hko_data_utils.days_counts_in_ganzhi_year(year)
+
+  bad_year: object
+  for bad_year in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int') as exc:
+      hko_data_utils.days_counts_in_ganzhi_year(bad_year) # type: ignore
+    assert str(type(bad_year)) in str(exc.value)
 
 
 def test_is_valid() -> None:
@@ -488,9 +507,9 @@ def test_to_date() -> None:
 
 def test_get_jieqi_date() -> None:
   with pytest.raises(TypeError):
-    hko_data_utils.jieqi_date('2024', Jieqi.大寒)
+    hko_data_utils.jieqi_date('2024', Jieqi.大寒) # type: ignore
   with pytest.raises(TypeError):
-    hko_data_utils.jieqi_date(2024, '大寒')
+    hko_data_utils.jieqi_date(2024, '大寒') # type: ignore
   with pytest.raises(ValueError):
     hko_data_utils.jieqi_date(9999, Jieqi.大寒) # Out of supported solar year range.
   with pytest.raises(ValueError):
@@ -518,9 +537,9 @@ def test_get_jieqi_date() -> None:
 
 def test_get_jieqi_moment() -> None:
   with pytest.raises(TypeError):
-    hko_data_utils.jieqi_moment('2024', Jieqi.大寒)
+    hko_data_utils.jieqi_moment('2024', Jieqi.大寒) # type: ignore
   with pytest.raises(TypeError):
-    hko_data_utils.jieqi_moment(2024, '大寒')
+    hko_data_utils.jieqi_moment(2024, '大寒') # type: ignore
   with pytest.raises(ValueError):
     hko_data_utils.jieqi_moment(9999, Jieqi.大寒) # Out of supported solar year range.
   with pytest.raises(ValueError):
@@ -546,6 +565,30 @@ def test_get_jieqi_moment() -> None:
     datetimes.append(hko_data_utils.jieqi_moment(random_solar_year, jieqi))
   for d1, d2 in itertools.pairwise(datetimes):
     assert d1 < d2
+
+
+@pytest.mark.parametrize('query', [hko_data_utils.jieqi_date, hko_data_utils.jieqi_moment])
+@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
+def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date], year: int) -> None:
+  result = query(year, Jieqi.立春)
+  assert result is query(year, Jieqi.LICHUN)
+  assert result == query(2024, Jieqi.立春)
+
+  bad_year: object
+  for bad_year in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int') as exc:
+      query(bad_year, Jieqi.立春) # type: ignore
+    assert str(type(bad_year)) in str(exc.value)
+
+  bad_jieqi: object
+  for bad_jieqi in ('立春', 0, None, []):
+    with pytest.raises(TypeError, match='Expected Jieqi') as exc:
+      query(2024, bad_jieqi) # type: ignore
+    assert str(type(bad_jieqi)) in str(exc.value)
+
+  for bad_value in (1900, 2101, True, False):
+    with pytest.raises(ValueError):
+      query(bad_value, Jieqi.立春)
 
 
 def test_prev_jie() -> None:

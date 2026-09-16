@@ -19,6 +19,10 @@ from src.defines import Jieqi, Ganzhi
 pytestmark = pytest.mark.hkodata
 
 
+class Year(int):
+  pass
+
+
 def test_traditional_chinese_jieqi() -> None:
   assert len(hko_data.jieqi_list_in_traditional_chinese) == 24
 
@@ -141,11 +145,11 @@ def test_decode_jieqi_getitem_negative() -> None:
 def test_decode_jieqi_get_negative() -> None:
   decoded_jieqi: hko_data.DecodedJieqiDates = hko_data.DecodedJieqiDates()
   with pytest.raises(TypeError):
-    decoded_jieqi.get(2024)
+    decoded_jieqi.get(2024) # type: ignore
   with pytest.raises(TypeError):
-    decoded_jieqi.get(Jieqi.春分)
+    decoded_jieqi.get(Jieqi.春分) # type: ignore
   with pytest.raises(TypeError):
-    decoded_jieqi.get('1000', Jieqi.寒露)
+    decoded_jieqi.get('1000', Jieqi.寒露) # type: ignore
   with pytest.raises(ValueError):
     decoded_jieqi.get(1000, Jieqi.寒露)
   with pytest.raises(ValueError):
@@ -168,6 +172,29 @@ def test_decode_jieqi_get_negative() -> None:
   jieqi_dates_in_2024[Jieqi.立春] = date(1996, 2, 4)
   assert jieqi_dates_in_2024[Jieqi.立春] != lichun_2024_date
   assert decoded_jieqi.get(2024, Jieqi.立春) == lichun_2024_date
+
+
+@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
+def test_decode_jieqi_get_validates_before_cache(year: int) -> None:
+  decoded = hko_data.DecodedJieqiDates()
+  result = decoded.get(year, Jieqi.立春)
+  assert result == date(2024, 2, 4)
+  assert decoded.get(year, Jieqi.LICHUN) is result
+
+  bad_year: object
+  for bad_year in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int') as exc:
+      decoded.get(bad_year, Jieqi.立春) # type: ignore
+    assert str(type(bad_year)) in str(exc.value)
+
+
+@pytest.mark.parametrize('jieqi', ['立春', 0, None, []])
+def test_decode_jieqi_get_rejects_wrong_jieqi(jieqi: object) -> None:
+  decoded = hko_data.DecodedJieqiDates()
+  decoded.get(2024, Jieqi.立春)
+  with pytest.raises(TypeError, match='Expected Jieqi') as exc:
+    decoded.get(2024, jieqi) # type: ignore
+  assert str(type(jieqi)) in str(exc.value)
 
 
 def test_decode_lunar_year() -> None:

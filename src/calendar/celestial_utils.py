@@ -175,6 +175,8 @@ class CelestialCalendarUtils:
     The length in days of each of the 12 ganzhi months of `ganzhi_year`, measured between
     consecutive 节 *dates* (the ganzhi calendar is date-level, see the module docstring).
     '''
+    if not isinstance(ganzhi_year, int):
+      raise TypeError(f'Expected int, got {type(ganzhi_year)}')
     # A fresh list per call, from a cache that holds a tuple: returning the cached list
     # itself would let a caller's in-place edit poison every later answer.
     return list(self.__days_counts_in_ganzhi_year(ganzhi_year))
@@ -400,6 +402,9 @@ class CelestialCalendarUtils:
   # -- Jieqi -----------------------------------------------------------------------
 
   @functools.lru_cache(maxsize=512)
+  def __jieqi_date(self, solar_year: int, jieqi: Jieqi) -> date:
+    return self.jieqi_moment(solar_year, jieqi).date()
+
   def jieqi_date(self, solar_year: int, jieqi: Jieqi) -> date:
     '''
     Find out the date of the given Jieqi in the given solar/gregorian year.
@@ -412,9 +417,18 @@ class CelestialCalendarUtils:
     Return: (date) The date of the Jieqi in the given solar/gregorian year.
     '''
 
-    return self.jieqi_moment(solar_year, jieqi).date()
+    if not isinstance(solar_year, int):
+      raise TypeError(f'Expected int, got {type(solar_year)}')
+    if not isinstance(jieqi, Jieqi):
+      raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
+    if solar_year not in self._jieqi_table.supported_year_range():
+      raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
+    return self.__jieqi_date(solar_year, jieqi)
 
   @functools.lru_cache(maxsize=512)
+  def __jieqi_moment(self, solar_year: int, jieqi: Jieqi) -> datetime:
+    return self._jieqi_table.get(solar_year, jieqi)
+
   def jieqi_moment(self, solar_year: int, jieqi: Jieqi) -> datetime:
     '''
     Find out the accurate moment (datetime) of the given Jieqi in the given solar year.
@@ -440,7 +454,7 @@ class CelestialCalendarUtils:
       raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
     if solar_year not in self._jieqi_table.supported_year_range():
       raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
-    return self._jieqi_table.get(solar_year, jieqi)
+    return self.__jieqi_moment(solar_year, jieqi)
 
   # maxsize=2, not 1: the cache is class-level, so `ALGO1` and `ALGO2` are two distinct
   # keys and a size of 1 would make the two singletons evict each other on every call.
