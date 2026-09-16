@@ -216,8 +216,10 @@ def test_date_cmp_operators_negative() -> None:
       continue
 
     for op in (operator.lt, operator.le, operator.gt, operator.ge):
-      with pytest.raises(TypeError):
+      with pytest.raises(TypeError) as exc:
         op(d1, d2)
+      assert str(d1.date_type) in str(exc.value)
+      assert str(d2.date_type) in str(exc.value)
 
   for d1, dt in zip(calendar_dates, [date(2024, 1, 1)] * 3):
     # `==`/`!=` against a foreign type follow Python's convention (False/True, both
@@ -228,12 +230,16 @@ def test_date_cmp_operators_negative() -> None:
     assert dt != d1
 
     for op in (operator.lt, operator.le, operator.gt, operator.ge):
-      with pytest.raises(TypeError):
+      with pytest.raises(TypeError) as exc:
         op(d1, dt)
+      assert 'CalendarDate' in str(exc.value)
+      assert str(type(dt)) in str(exc.value)
 
     for op in (operator.lt, operator.le, operator.gt, operator.ge):
-      with pytest.raises(TypeError):
+      with pytest.raises(TypeError) as exc:
         op(dt, d1)
+      assert 'CalendarDate' in str(exc.value)
+      assert str(type(dt)) in str(exc.value)
 
 
 def test_str_repr() -> None:

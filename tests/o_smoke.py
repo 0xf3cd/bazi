@@ -27,7 +27,7 @@ def main() -> int:
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   import inspect
-  from datetime import datetime
+  from datetime import date, datetime
   from collections.abc import Callable
   from functools import partial
   from zoneinfo import ZoneInfo
@@ -41,7 +41,8 @@ def main() -> int:
   from src.transits import TransitDatabase, TransitKind, TransitSet
   from src.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
   from src.utils import tiangan_utils, dizhi_utils, shensha_utils
-  from src.calendar import hko_data, hko_data_utils
+  from src.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
+  from src.calendar.celestial_utils import ALGO1, ALGO2
   from src.calendar.backend import CalendarBackend, calendar_utils_of
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
@@ -53,6 +54,11 @@ def main() -> int:
   liunian = year_transits.select(TransitKind.LIUNIAN)
   transit_analysis = RelationshipAnalyzer(chart).transits
   school_json: dict[str, object] = dict(chart.json['school'])
+  decoded_jieqi = hko_data.DecodedJieqiDates()
+  solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
+
+  class Year(int):
+    pass
 
   # Looks up like a mapping without being one; a list would raise TypeError on its own.
   class _DuckMapping:
@@ -118,6 +124,35 @@ def main() -> int:
      lambda: hko_data.DecodedLunarYears().get(1800)),
     ('jieqi_moment out of range', ValueError,
      lambda: hko_data_utils.jieqi_moment(1900, Jieqi.冬至)),
+    # Warm and reject in one thunk on the same receiver: cold misses cannot expose a cache bypass.
+    ('DecodedJieqiDates.get warm cache wrong year', TypeError,
+     lambda: (decoded_jieqi.get(2024, Jieqi.立春), decoded_jieqi.get(2024.0, Jieqi.立春))), # type: ignore
+    ('DecodedJieqiDates.get wrong Jieqi', TypeError,
+     lambda: decoded_jieqi.get(2024, '立春')), # type: ignore
+    ('HKO jieqi_date warm cache wrong year', TypeError,
+     lambda: (hko_data_utils.jieqi_date(2024, Jieqi.立春), hko_data_utils.jieqi_date(2024.0, Jieqi.立春))), # type: ignore
+    ('HKO jieqi_moment warm cache wrong year', TypeError,
+     lambda: (hko_data_utils.jieqi_moment(2024, Jieqi.立春), hko_data_utils.jieqi_moment(2024.0, Jieqi.立春))), # type: ignore
+    ('ALGO1 jieqi_date warm cache wrong year', TypeError,
+     lambda: (ALGO1.jieqi_date(2024, Jieqi.立春), ALGO1.jieqi_date(2024.0, Jieqi.立春))), # type: ignore
+    ('ALGO1 jieqi_moment warm cache wrong year', TypeError,
+     lambda: (ALGO1.jieqi_moment(2024, Jieqi.立春), ALGO1.jieqi_moment(2024.0, Jieqi.立春))), # type: ignore
+    ('ALGO2 jieqi_date warm cache wrong year', TypeError,
+     lambda: (ALGO2.jieqi_date(2024, Jieqi.立春), ALGO2.jieqi_date(2024.0, Jieqi.立春))), # type: ignore
+    ('ALGO2 jieqi_moment warm cache wrong year', TypeError,
+     lambda: (ALGO2.jieqi_moment(2024, Jieqi.立春), ALGO2.jieqi_moment(2024.0, Jieqi.立春))), # type: ignore
+    ('HKO month lengths int-subclass warm cache wrong year', TypeError,
+     lambda: (hko_data_utils.days_counts_in_ganzhi_year(Year(2024)), hko_data_utils.days_counts_in_ganzhi_year(2024.0))), # type: ignore
+    ('ALGO1 month lengths int-subclass warm cache wrong year', TypeError,
+     lambda: (ALGO1.days_counts_in_ganzhi_year(Year(2024)), ALGO1.days_counts_in_ganzhi_year(2024.0))), # type: ignore
+    ('ALGO2 month lengths int-subclass warm cache wrong year', TypeError,
+     lambda: (ALGO2.days_counts_in_ganzhi_year(Year(2024)), ALGO2.days_counts_in_ganzhi_year(2024.0))), # type: ignore
+    ('CalendarDate ordering foreign rhs', TypeError,
+     lambda: solar_date < date(2024, 1, 1)),
+    ('CalendarDate ordering foreign lhs', TypeError,
+     lambda: date(2024, 1, 1) < solar_date),
+    ('CalendarDate ordering different calendars', TypeError,
+     lambda: solar_date >= CalendarDate(2024, 1, 1, CalendarType.农历)),
     ('TransitChart.at_year wrong year type', TypeError,
      lambda: transit_chart.at_year('2024')), # type: ignore
     ('TransitChart.at_month wrong year type', TypeError,

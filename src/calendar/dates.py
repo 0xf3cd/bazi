@@ -71,9 +71,9 @@ class CalendarDate:
 
   def __ymd(self, other: object) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     if not isinstance(other, CalendarDate):
-      raise TypeError('Not a CalendarDate object.')
+      raise TypeError(f'Expected CalendarDate, got {type(other)}')
     if self.date_type != other.date_type:
-      raise TypeError('objects not of the same CalendarType.')
+      raise TypeError(f'Expected {self.date_type}, got {other.date_type}')
     return (self.year, self.month, self.day), (other.year, other.month, other.day)
 
   def __lt__(self, other: object) -> bool:

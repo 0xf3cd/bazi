@@ -162,6 +162,8 @@ def is_valid(d: CalendarDate) -> bool:
 
 
 def days_counts_in_ganzhi_year(ganzhi_year: int) -> list[int]:
+  if not isinstance(ganzhi_year, int):
+    raise TypeError(f'Expected int, got {type(ganzhi_year)}')
   # A fresh list per call, from a cache that holds a tuple: returning the cached list
   # itself would let a caller's in-place edit poison every later answer.
   return list(__days_counts_in_ganzhi_year(ganzhi_year))
@@ -416,6 +418,10 @@ def to_date(d: date | CalendarDate) -> date:
 
 
 @functools.lru_cache(maxsize=512)
+def __jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
+  return jieqi_dates_db.get(solar_year, jieqi)
+
+
 def jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
   '''
   Find out the date of the given Jieqi in the given solar/gregorian year.
@@ -435,10 +441,15 @@ def jieqi_date(solar_year: int, jieqi: Jieqi) -> date:
 
   if solar_year not in jieqi_dates_db.supported_year_range():
     raise ValueError(f'Year {solar_year} is out of the supported range {jieqi_dates_db.supported_year_range()}')
-  return jieqi_dates_db.get(solar_year, jieqi)
+  return __jieqi_date(solar_year, jieqi)
 
 
 @functools.lru_cache(maxsize=512)
+def __jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
+  dt: date = jieqi_dates_db.get(solar_year, jieqi)
+  return datetime.combine(dt, time(0, 0, 0))
+
+
 def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
   '''
   Find out the accurate moment (datetime) of the given Jieqi in the given solar/gregorian year.
@@ -463,8 +474,7 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
 
   if solar_year not in jieqi_dates_db.supported_year_range():
     raise ValueError(f'Year {solar_year} is out of the supported range {jieqi_dates_db.supported_year_range()}')
-  dt: date = jieqi_dates_db.get(solar_year, jieqi)
-  return datetime.combine(dt, time(0, 0, 0))
+  return __jieqi_moment(solar_year, jieqi)
 
 
 @functools.cache

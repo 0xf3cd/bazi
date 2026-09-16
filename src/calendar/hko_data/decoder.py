@@ -86,6 +86,9 @@ class DecodedJieqiDates:
     return { jq : bytes_to_date(self.__read_bytes_for_jieqi(year, jq)) for jq in self._actual_jieqi_order }
 
   @functools.cache
+  def __cached_date(self, year: int, jieqi: Jieqi) -> date:
+    return self[year][jieqi]
+
   def get(self, year: int, jieqi: Jieqi) -> date:
     '''
     This method is encouraged to be used over `__getitem__`, since it leverages the cache.
@@ -96,7 +99,9 @@ class DecodedJieqiDates:
       raise TypeError(f'Expected int, got {type(year)}')
     if year not in self.supported_year_range():
       raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
-    return self[year][jieqi]
+    if not isinstance(jieqi, Jieqi):
+      raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
+    return self.__cached_date(year, jieqi)
   
   def supported_year_range(self) -> range:
     '''Note: Gregorian/Solar year / 公历年'''
