@@ -615,8 +615,17 @@ class ShenshaRules:
   - 高人: https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md
   '''
 
-  # The table is used to find out TAOHUA (桃花). A.k.a. XIANCHI TAOHUA (咸池桃花).
-  # 该表格用于查询桃花星。桃花即咸池桃花。
+  # The natal-lookup sources for TAOHUA, HONGLUAN, TIANXI and YIMA below do not
+  # separately establish the analyzer's uniform use of these tables for every transit kind.
+  # 下列桃花、红鸾、天喜、驿马的原局查法出处，不等于分析器对各类流运统一用表的逐项依据。
+
+  # TAOHUA (咸池): the four mappings occur in 《三命通会》卷二〈论咸池〉. The note in
+  # the 四库本 transcription also requires a matching 纳音; that condition is not in this table.
+  # The analyzer's YEAR_AND_DAY lookup of the other natal pillars follows the modern
+  # 问真《神煞大全》〈桃花/咸池〉 instead (class sources above).
+  # 桃花表值见《三命通会》卷二〈论咸池〉；四库本转录的夹注另有纳音条件，本表不含该条件。
+  # 分析器以年、日支分别查其余原局柱的读法，依现代问真《神煞大全》〈桃花/咸池〉，不混同夹注。
+  # Table source / 表值出处: https://zh.wikisource.org/w/index.php?oldid=761691
   TAOHUA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '申子辰' : '酉',
@@ -650,8 +659,13 @@ class ShenshaRules:
     Tiangan.癸 : Dizhi.申,
   })
 
-  # The table is used to find out HONGLUAN (红鸾).
-  # 该表格用于查询红鸾星。
+  # HONGLUAN and TIANXI share the table source 《星学大成》卷一〈论红鸾天喜〉:
+  # for 子年 they start at 卯 and 酉 respectively, then count backwards by year branch.
+  # That passage concerns 宫限, not the other natal pillars. The analyzer's YEAR lookup
+  # follows the modern 问真《神煞大全》〈红鸾〉 (class sources above).
+  # 红鸾、天喜表值同见《星学大成》卷一〈论红鸾天喜〉：子年分别起卯、酉，随年支逆数。
+  # 该条论宫限，不是查其余原局柱；分析器以年支查月、日、时支，依现代问真《神煞大全》〈红鸾〉。
+  # Table source / 表值出处: https://zh.wikisource.org/w/index.php?oldid=626726
   HONGLUAN: Final[frozendict[Dizhi, Dizhi]] = frozendict({
     Dizhi.子 : Dizhi.卯,
     Dizhi.丑 : Dizhi.寅,
@@ -667,8 +681,9 @@ class ShenshaRules:
     Dizhi.亥 : Dizhi.辰,
   })
 
-  # The table is used to find out TIANXI (天喜).
-  # 该表格用于查询天喜星。
+  # TIANXI uses the paired 宫限 table cited at HONGLUAN above. Its YEAR lookup of
+  # the other natal pillars follows 问真《神煞大全》〈天喜〉, not the classical target positions.
+  # 天喜的宫限表值出处见上方红鸾；以年支查其余原局柱，依问真《神煞大全》〈天喜〉，不沿用古籍目标位置。
   TIANXI: Final[frozendict[Dizhi, Dizhi]] = frozendict({
     Dizhi.子 : Dizhi.酉,
     Dizhi.丑 : Dizhi.申,
@@ -684,8 +699,15 @@ class ShenshaRules:
     Dizhi.亥 : Dizhi.戌,
   })
 
-  # The table is used to find out YIMA (驿马).
-  # 该表格用于查询驿马星。
+  # YIMA: the four mappings occur in 《三命通会》卷三〈论驿马〉. The default
+  # YEAR_AND_DAY lookup of the other natal pillars follows 问真《神煞大全》〈驿马〉.
+  # The DAY reading is 袁树珊《命理探原》卷上〈强弱·驿马〉, printed p. 六五:
+  # it inspects 年、月、时. See BaziSchool.mingli_tanyuan for the NLC scan and
+  # _ANCHOR_CHOICES['yima_anchor'] for the supported readings, not a merger of 袁氏's alternatives.
+  # 驿马表值见《三命通会》卷三〈论驿马〉；默认以年、日支分别查其余原局柱，依问真《神煞大全》〈驿马〉。
+  # 日支查年、月、时的读法见袁树珊《命理探原》卷上〈强弱·驿马〉印页六五；扫描链接见 BaziSchool.mingli_tanyuan。
+  # 支持口径见 _ANCHOR_CHOICES['yima_anchor']，默认双锚不是将袁氏所列两法合并。
+  # Table source / 表值出处: https://zh.wikisource.org/w/index.php?oldid=2184219
   YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '申子辰' : '寅',
