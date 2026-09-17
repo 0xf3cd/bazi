@@ -702,11 +702,12 @@ class ShenshaRules:
   # YIMA: the four mappings occur in 《三命通会》卷三〈论驿马〉. The default
   # YEAR_AND_DAY lookup of the other natal pillars follows 问真《神煞大全》〈驿马〉.
   # The DAY reading is 袁树珊《命理探原》卷上〈强弱·驿马〉, printed p. 六五:
-  # it inspects 年、月、时. See BaziSchool.mingli_tanyuan for the NLC scan and
-  # _ANCHOR_CHOICES['yima_anchor'] for the supported readings, not a merger of 袁氏's alternatives.
+  # it inspects 年、月、时. See `BaziSchool.mingli_tanyuan` for the NLC scan and
+  # `_ANCHOR_CHOICES['yima_anchor']` for the supported readings. The default dual anchor
+  # is not a merger of 袁氏's alternatives.
   # 驿马表值见《三命通会》卷三〈论驿马〉；默认以年、日支分别查其余原局柱，依问真《神煞大全》〈驿马〉。
-  # 日支查年、月、时的读法见袁树珊《命理探原》卷上〈强弱·驿马〉印页六五；扫描链接见 BaziSchool.mingli_tanyuan。
-  # 支持口径见 _ANCHOR_CHOICES['yima_anchor']，默认双锚不是将袁氏所列两法合并。
+  # 日支查年、月、时的读法见袁树珊《命理探原》卷上〈强弱·驿马〉印页六五；扫描链接见 `BaziSchool.mingli_tanyuan`。
+  # 支持口径见 `_ANCHOR_CHOICES['yima_anchor']`，默认双锚不是将袁氏所列两法合并。
   # Table source / 表值出处: https://zh.wikisource.org/w/index.php?oldid=2184219
   YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
