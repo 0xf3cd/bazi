@@ -682,8 +682,8 @@ class ShenshaRules:
   })
 
   # TIANXI uses the paired 宫限 table cited at HONGLUAN above. Its YEAR lookup of
-  # the other natal pillars follows 问真《神煞大全》〈天喜〉, not the classical target positions.
-  # 天喜的宫限表值出处见上方红鸾；以年支查其余原局柱，依问真《神煞大全》〈天喜〉，不沿用古籍目标位置。
+  # the other natal pillars follows 问真《神煞大全》〈天喜〉.
+  # 天喜的宫限表值出处见上方红鸾；以年支查其余原局柱，依问真《神煞大全》〈天喜〉。
   TIANXI: Final[frozendict[Dizhi, Dizhi]] = frozendict({
     Dizhi.子 : Dizhi.酉,
     Dizhi.丑 : Dizhi.申,
