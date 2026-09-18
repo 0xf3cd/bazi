@@ -5,14 +5,19 @@ import json
 import copy
 import random
 import itertools
+from collections import UserDict
+from collections.abc import Iterator, Mapping
+from dataclasses import replace
 from datetime import datetime, date, timedelta
+from types import MappingProxyType
+from typing import Any, Self
 
 import pytest
 
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from src.bazi import BaziGender, Bazi
-from src.calendar import calendar_utils_of
-from src.school import BaziPrecision, DayunYearRule, BaziConfig, BaziSchool
+from src.calendar import CalendarBackend, calendar_utils_of
+from src.school import BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
 from src.utils import bazi_utils
 
 from src.data_types import (
@@ -576,31 +581,13 @@ def test_consistency() -> None:
 
 @pytest.mark.slow
 def test_json() -> None:
-  def __random_chart() -> BaziChart:
-    # `Bazi.random()` is DAY-only; HOUR / MINUTE roundtrips are covered here too (issue #6).
-    precision: BaziPrecision = random.choice(list(BaziPrecision))
-    dayun_year_rule: DayunYearRule = random.choice(list(DayunYearRule))
-    if precision is BaziPrecision.DAY:
-      bazi: Bazi = Bazi.random()
-      return BaziChart(Bazi.create(
-        bazi.solar_datetime,
-        bazi.gender,
-        BaziConfig(dayun_year_rule=dayun_year_rule),
-      ))
-    return BaziChart(Bazi.create(
-      birth_time=datetime(
-        year=random.randint(1902, 2080),
-        month=random.randint(1, 12),
-        day=random.randint(1, 28),
-        hour=random.randint(0, 23),
-        minute=random.randint(0, 59),
-      ),
-      gender=random.choice(list(BaziGender)),
-      config=BaziConfig(precision=precision, dayun_year_rule=dayun_year_rule),
-    ))
-
   for _ in range(32):
-    chart: BaziChart = __random_chart()
+    chart: BaziChart = BaziChart.random(
+      BaziConfig(
+        precision=random.choice(list(BaziPrecision)),
+        dayun_year_rule=random.choice(list(DayunYearRule)),
+      ),
+    )
     dt: datetime = chart.bazi.solar_datetime
 
     j: BaziJson.BaziChartJsonDict = chart.json
@@ -629,18 +616,333 @@ def test_json() -> None:
       j_gender = BaziGender.FEMALE
     assert j_gender == chart.bazi.gender
 
-    # The rebuild parses everything -- precision, backend, school included -- from the json itself.
-    __chart: BaziChart = BaziChart(
-      Bazi.create(datetime.fromisoformat(j['birth_time']), j_gender,
-                  BaziConfig.from_values(
-                    precision=j['precision'],
-                    backend=j['backend'],
-                    dayun_year_rule=j['dayun_year_rule'],
-                    school=BaziSchool.from_json(j['school']),
-                  ))
-    )
-
+    __chart: BaziChart = BaziChart.from_json(j)
+    assert __chart.bazi == chart.bazi
     assert j == __chart.json
+
+
+@pytest.fixture
+def chart_json() -> dict[str, Any]:
+  return dict(BaziChart(Bazi.create('1984-04-02T04:02:00', 'male')).json)
+
+
+class _ChartSubclass(BaziChart):
+  pass
+
+
+class _EqualToAnything:
+  def __eq__(self, other: object) -> bool:
+    return True
+
+  def __ne__(self, other: object) -> bool:
+    return False
+
+
+class _EqualKey:
+  def __init__(self, value: str) -> None:
+    self.value = value
+
+  def __hash__(self) -> int:
+    return hash(self.value)
+
+  def __eq__(self, other: object) -> bool:
+    return self.value == other
+
+
+class _EqualStringKey(str):
+  value: str
+
+  def __new__(cls, value: str) -> Self:
+    result = super().__new__(cls, 'not-' + value)
+    result.value = value
+    return result
+
+  def __hash__(self) -> int:
+    return hash(self.value)
+
+  def __eq__(self, other: object) -> bool:
+    return self.value == other
+
+
+def _json_nodes(d: dict[str, Any], path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], object]]:
+  yield path, d
+  for key, value in d.items():
+    if isinstance(value, dict):
+      yield from _json_nodes(value, (*path, key))
+    else:
+      yield (*path, key), value
+
+
+@pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
+@pytest.mark.parametrize('dayun_year_rule', list(DayunYearRule))
+def test_from_json_roundtrip(gender: BaziGender, dayun_year_rule: DayunYearRule) -> None:
+  for backend, precision in itertools.product(CalendarBackend, BaziPrecision):
+    if backend is CalendarBackend.HKO and precision is not BaziPrecision.DAY:
+      continue
+    config = BaziConfig(
+      precision=precision,
+      backend=backend,
+      school=replace(BaziSchool.mingli_tanyuan(), day_rollover=DayRollover.ZIZHENG),
+      dayun_year_rule=dayun_year_rule,
+    )
+    chart = BaziChart(Bazi.create('2009-02-03T23:30:00', gender, config))
+    data = json.loads(json.dumps(chart.json))
+    restored = BaziChart.from_json(data)
+    assert restored.bazi == chart.bazi
+    assert restored.json == chart.json
+
+
+@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
+def test_from_json_mapping_order_and_isolation(chart_json: dict[str, Any], wrapper: type) -> None:
+  expected = copy.deepcopy(chart_json)
+
+  def __wrap(value: object) -> object:
+    if isinstance(value, Mapping):
+      return wrapper({key: __wrap(value[key]) for key in reversed(list(value))})
+    return value
+
+  data = __wrap(chart_json)
+  assert isinstance(data, Mapping)
+  restored = _ChartSubclass.from_json(data)
+  assert isinstance(restored, _ChartSubclass)
+  assert restored.json == expected
+  assert data == expected
+
+  restored = BaziChart.from_json(chart_json)
+  assert chart_json == expected
+  chart_json['birth_time'] = '2000-01-01T12:00:00'
+  chart_json['school']['day_rollover'] = 'ZIZHENG'
+  chart_json['pillars']['year'] = '甲午'
+  chart_json['transits']['dayun'].clear()
+  assert restored.json == expected
+  assert restored.bazi == Bazi.create(expected['birth_time'], expected['gender'])
+
+
+def test_from_json_keys_at_every_mapping(chart_json: dict[str, Any]) -> None:
+  for path, value in _json_nodes(chart_json):
+    if not isinstance(value, dict):
+      continue
+    for key in (*value, 'unknown'):
+      data = copy.deepcopy(chart_json)
+      node = data
+      for part in path:
+        node = node[part]
+      if key == 'unknown':
+        node[key] = 'extra'
+      else:
+        del node[key]
+      with pytest.raises(ValueError):
+        BaziChart.from_json(data)
+
+  school = {**chart_json['school'], 'unknown': 'extra'}
+  assert BaziSchool.from_json(school) == DEFAULT_CONFIG.school
+
+
+@pytest.mark.parametrize('key_type', [_EqualKey, _EqualStringKey])
+@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
+def test_from_json_plain_keys_at_every_mapping(
+  chart_json: dict[str, Any], key_type: type[_EqualKey] | type[_EqualStringKey], wrapper: type,
+) -> None:
+  for path, value in _json_nodes(chart_json):
+    if not isinstance(value, dict):
+      continue
+    for key in value:
+      data = copy.deepcopy(chart_json)
+      node = data
+      for part in path:
+        node = node[part]
+      fake = key_type(key)
+      assert fake == key and hash(fake) == hash(key)
+      if isinstance(fake, str):
+        assert str(fake) == 'not-' + key
+      node[fake] = node.pop(key) # type: ignore[index] # Deliberately replace a canonical key.
+      assert any(stored is fake for stored in node)
+      wrapped = wrapper(node)
+      if path:
+        parent = data
+        for part in path[:-1]:
+          parent = parent[part]
+        parent[path[-1]] = wrapped
+      else:
+        data = wrapped
+      with pytest.raises(TypeError) as exc:
+        BaziChart.from_json(data)
+      assert '.'.join(('chart', *path)) in str(exc.value)
+      assert str(type(fake)) in str(exc.value)
+
+
+def test_from_json_types_at_every_node(chart_json: dict[str, Any]) -> None:
+  fake = _EqualToAnything()
+  assert {'value': fake} == {'value': 'male'}
+  assert {'value': fake} == {'value': None}
+  for path, value in _json_nodes(chart_json):
+    bad_values: list[object] = [42, False, [], fake]
+    bad_values += ['None', ''] if value is None else [None]
+    if isinstance(value, dict):
+      bad_values.append('{}')
+    for bad in bad_values:
+      data = copy.deepcopy(chart_json)
+      if path:
+        node = data
+        for part in path[:-1]:
+          node = node[part]
+        node[path[-1]] = bad
+      else:
+        data = bad # type: ignore # Deliberately exercise the public root type gate.
+      with pytest.raises(TypeError) as exc:
+        BaziChart.from_json(data)
+      assert str(type(bad)) in str(exc.value)
+
+
+def test_from_json_derived_values(chart_json: dict[str, Any]) -> None:
+  for path, value in _json_nodes(chart_json):
+    if not isinstance(value, str) or path[0] in (
+      'birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school',
+    ):
+      continue
+    data = copy.deepcopy(chart_json)
+    node = data
+    for part in path[:-1]:
+      node = node[part]
+    node[path[-1]] = value + '?'
+    with pytest.raises(ValueError) as exc:
+      BaziChart.from_json(data)
+    assert '.'.join(path) in str(exc.value)
+
+
+@pytest.mark.parametrize('key, value', [
+  ('birth_time', datetime(1984, 4, 2, 4, 2)),
+  ('gender', BaziGender.男),
+  ('precision', BaziPrecision.DAY),
+  ('backend', CalendarBackend.CELESTIAL),
+  ('dayun_year_rule', DayunYearRule.JIE_PROJECTED),
+])
+def test_from_json_raw_input_types(chart_json: dict[str, Any], key: str, value: object) -> None:
+  chart_json[key] = value
+  with pytest.raises(TypeError, match=key):
+    BaziChart.from_json(chart_json)
+
+
+@pytest.mark.parametrize('key, value', [
+  ('birth_time', '1984-04-02 04:02:00'),
+  ('birth_time', '1984-04-02T04:02'),
+  ('birth_time', '1984-04-02T04:02:01.123456'),
+  ('gender', '男'),
+  ('gender', 'MALE'),
+  ('precision', 'DAY'),
+  ('precision', '天'),
+  ('backend', 'CELESTIAL'),
+  ('dayun_year_rule', 'JIE_PROJECTED'),
+])
+def test_from_json_rejects_aliases(chart_json: dict[str, Any], key: str, value: str) -> None:
+  expected = BaziChart.from_json(chart_json)
+  chart_json[key] = value
+  flexible = Bazi.create(
+    chart_json['birth_time'],
+    chart_json['gender'],
+    BaziConfig.from_values(
+      precision=chart_json['precision'],
+      backend=chart_json['backend'],
+      dayun_year_rule=chart_json['dayun_year_rule'],
+      school=BaziSchool.from_json(chart_json['school']),
+    ),
+  )
+  assert flexible == expected.bazi
+  with pytest.raises(ValueError, match=key):
+    BaziChart.from_json(chart_json)
+
+
+@pytest.mark.parametrize('key, value', [
+  ('birth_time', 'not-a-time'),
+  ('birth_time', '1800-01-01T00:00:00'),
+  ('birth_time', '1984-04-02T04:02:00+08:00'),
+  ('gender', 'unknown'),
+  ('precision', 'second'),
+  ('backend', 'unknown'),
+  ('dayun_year_rule', 'unknown'),
+])
+def test_from_json_unsupported_inputs(chart_json: dict[str, Any], key: str, value: str) -> None:
+  chart_json[key] = value
+  with pytest.raises(ValueError):
+    BaziChart.from_json(chart_json)
+
+
+@pytest.mark.parametrize('value', ['wan_zishi', 'UNKNOWN'])
+def test_from_json_school_member_names(chart_json: dict[str, Any], value: str) -> None:
+  chart_json['school']['day_rollover'] = value
+  with pytest.raises(ValueError):
+    BaziChart.from_json(chart_json)
+
+
+@pytest.mark.parametrize('precision', ['hour', 'minute'])
+def test_from_json_unsupported_config(chart_json: dict[str, Any], precision: str) -> None:
+  chart_json.update(backend='hko', precision=precision)
+  with pytest.raises(ValueError, match='HKO'):
+    BaziChart.from_json(chart_json)
+
+
+def test_from_json_dayun_boundaries() -> None:
+  short = BaziChart(Bazi.create(
+    '2090-06-01T12:00:00',
+    'male',
+    BaziConfig.from_values(backend='hko'),
+  ))
+  data = short.json
+  assert set(data['transits']['dayun']) == {'2091'}
+  assert BaziChart.from_json(data).json == data
+
+  fractional = BaziChart(Bazi.create('1984-04-02T04:02:00', 'female')).json
+  first = next(iter(fractional['transits']['dayun'].values()))
+  assert datetime.fromisoformat(first['start_time']).microsecond != 0
+  assert BaziChart.from_json(fractional).json == fractional
+  first['start_time'] = datetime.fromisoformat(first['start_time']).isoformat(timespec='seconds')
+  with pytest.raises(ValueError, match='start_time'):
+    BaziChart.from_json(fractional)
+
+  # A complete shape still cannot serialize a rebuilt chart with no supported Dayun.
+  data['birth_time'] = '2099-12-20T12:00:00'
+  with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
+    BaziChart.from_json(data)
+
+
+@pytest.mark.parametrize('upper, birth_time', [
+  (False, datetime(1902, 1, 1, 0, 0)),
+  (True, datetime(2080, 12, 28, 23, 59)),
+])
+@pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
+def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time: datetime, gender: BaziGender) -> None:
+  monkeypatch.setattr(random, 'randint', lambda low, high: high if upper else low)
+  monkeypatch.setattr(random, 'choice', lambda choices: gender)
+  for cls in (BaziChart, _ChartSubclass):
+    chart = cls.random()
+    assert isinstance(chart, cls)
+    assert chart.bazi == Bazi.create(birth_time, gender, DEFAULT_CONFIG)
+    for config in (
+      BaziConfig(backend=CalendarBackend.HKO),
+      BaziConfig(
+        precision=BaziPrecision.MINUTE,
+        backend=CalendarBackend.CELESTIAL_ALGO2,
+        school=BaziSchool(day_rollover=DayRollover.ZIZHENG),
+        dayun_year_rule=DayunYearRule.FIXED_DECADE,
+      ),
+    ):
+      chart = cls.random(config)
+      expected = BaziChart(Bazi.create(birth_time, gender, config))
+      assert isinstance(chart, cls)
+      assert chart.bazi == expected.bazi
+      assert chart.json == expected.json
+
+
+@pytest.mark.parametrize('config', [None, False, 'day', {}])
+def test_random_rejects_wrong_config(config: object) -> None:
+  with pytest.raises(TypeError, match='BaziConfig'):
+    BaziChart.random(config) # type: ignore
+
+
+@pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
+def test_random_rejects_unsupported_config(precision: BaziPrecision) -> None:
+  with pytest.raises(ValueError, match='HKO'):
+    BaziChart.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO))
 
 
 def test_json_correctness() -> None:

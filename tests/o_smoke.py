@@ -53,11 +53,15 @@ def main() -> int:
     raise RuntimeError('Expected year 2024 to be supported')
   liunian = year_transits.select(TransitKind.LIUNIAN)
   transit_analysis = RelationshipAnalyzer(chart).transits
-  school_json: dict[str, object] = dict(chart.json['school'])
+  chart_json = chart.json
+  school_json: dict[str, object] = dict(chart_json['school'])
   decoded_jieqi = hko_data.DecodedJieqiDates()
   solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
 
   class Year(int):
+    pass
+
+  class StringKey(str):
     pass
 
   # Looks up like a mapping without being one; a list would raise TypeError on its own.
@@ -67,6 +71,12 @@ def main() -> int:
     def __getitem__(self, key: str) -> str:
       return 'WAN_ZISHI'
 
+  class _EqualToAnything:
+    def __eq__(self, other: object) -> bool:
+      return True
+    def __ne__(self, other: object) -> bool:
+      return False
+
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
@@ -74,6 +84,65 @@ def main() -> int:
      lambda: Bazi.create(datetime(2100, 6, 1, 12), 'male')),
     ('Bazi.create tz-aware birth time', ValueError,
      lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male')),
+    ('BaziChart.from_json non-mapping', TypeError,
+     lambda: BaziChart.from_json(_DuckMapping())), # type: ignore
+    ('BaziChart.from_json str-subclass root keys', TypeError,
+     lambda: BaziChart.from_json({StringKey(key): value for key, value in chart_json.items()})),
+    ('BaziChart.from_json str-subclass school keys', TypeError,
+     lambda: BaziChart.from_json({
+       **chart_json, 'school': {StringKey(key): value for key, value in school_json.items()},
+     })),
+    ('BaziChart.from_json str-subclass transit keys', TypeError,
+     lambda: BaziChart.from_json({
+       **chart_json, 'transits': {StringKey(key): value for key, value in chart_json['transits'].items()},
+     })),
+    ('BaziChart.from_json raw datetime', TypeError,
+     lambda: BaziChart.from_json({**chart_json, 'birth_time': datetime(2000, 1, 1, 12)})),
+    ('BaziChart.from_json partial chart', ValueError,
+     lambda: BaziChart.from_json({key: value for key, value in chart_json.items() if key != 'backend'})),
+    ('BaziChart.from_json extra field', ValueError,
+     lambda: BaziChart.from_json({**chart_json, 'unknown': 'extra'})),
+    ('BaziChart.from_json partial school', ValueError,
+     lambda: BaziChart.from_json({
+       **chart_json, 'school': {key: value for key, value in school_json.items() if key != 'day_rollover'},
+     })),
+    ('BaziChart.from_json extra school field', ValueError,
+     lambda: BaziChart.from_json({**chart_json, 'school': {**school_json, 'unknown': 'extra'}})),
+    ('BaziChart.from_json canonical gender', ValueError,
+     lambda: BaziChart.from_json({**chart_json, 'gender': '男'})),
+    ('BaziChart.from_json canonical time', ValueError,
+     lambda: BaziChart.from_json({**chart_json, 'birth_time': '2000-01-01 12:00:00'})),
+    ('BaziChart.from_json derived value', ValueError,
+     lambda: BaziChart.from_json({**chart_json, 'pillars': {**chart_json['pillars'], 'day': '甲子'}})),
+    ('BaziChart.from_json fake equal leaf', TypeError,
+     lambda: BaziChart.from_json({**chart_json, 'pillars': {**chart_json['pillars'], 'day': _EqualToAnything()}})),
+    ('BaziChart.from_json fake equal mapping', TypeError,
+     lambda: BaziChart.from_json({**chart_json, 'pillars': _EqualToAnything()})),
+    ('BaziChart.from_json null type', TypeError,
+     lambda: BaziChart.from_json({**chart_json, 'tiangan_shishen': {**chart_json['tiangan_shishen'], 'day': 'None'}})),
+    ('BaziChart.from_json extra xiaoyun key', ValueError,
+     lambda: BaziChart.from_json({
+       **chart_json, 'transits': {
+         **chart_json['transits'], 'xiaoyun': {**chart_json['transits']['xiaoyun'], '999': '甲子'},
+       },
+     })),
+    ('BaziChart.from_json derived dayun time', ValueError,
+     lambda: BaziChart.from_json({
+       **chart_json, 'transits': {
+         **chart_json['transits'], 'dayun': {
+           year: {**dayun, 'start_time': '2000-01-01T00:00:00'}
+           for year, dayun in chart_json['transits']['dayun'].items()
+         },
+       },
+     })),
+    ('Bazi.random wrong config', TypeError,
+     lambda: Bazi.random(None)), # type: ignore
+    ('BaziChart.random wrong config', TypeError,
+     lambda: BaziChart.random(False)), # type: ignore
+    ('Bazi.random unsupported config', ValueError,
+     lambda: Bazi.random(BaziConfig.from_values(backend='hko', precision='hour'))),
+    ('BaziChart.random unsupported config', ValueError,
+     lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,
