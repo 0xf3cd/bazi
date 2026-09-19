@@ -8,7 +8,7 @@ from calendar import monthrange
 from dataclasses import fields
 from datetime import datetime, timedelta
 from typing import Final, TypedDict, cast
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Mapping, Sequence
 
 from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
@@ -16,7 +16,7 @@ from .data_types import (
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
-from .school import DayunYearRule
+from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
@@ -164,9 +164,92 @@ class BaziChart:
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
-  def random(cls) -> 'BaziChart':
-    '''Mainly for testing purpose.'''
-    return cls(Bazi.random())
+  def random(cls, config: BaziConfig = DEFAULT_CONFIG) -> 'BaziChart':
+    '''
+    Create a random chart using `Bazi.random`, mainly for testing.
+    用 `Bazi.random` 随机生成命盘，主要用于测试。
+
+    Args:
+    - config: (BaziConfig) The chart-level configuration / 命盘级配置。
+
+    Return: (BaziChart) The generated chart / 随机命盘。
+    '''
+    return cls(Bazi.random(config))
+
+  @classmethod
+  def from_json(cls, d: Mapping[str, object]) -> 'BaziChart':
+    '''
+    Rebuild a chart and validate the complete record against its current `json` output.
+    从完整记录重建命盘，并与当前 `json` 输出逐项核对。
+
+    Args:
+    - d: (Mapping[str, object]) A parsed `BaziChart.json` record, not JSON text.
+      已解析的 `BaziChart.json` 记录，不是 JSON 文本。
+
+    Note:
+    - Every field is required; unknown keys at any depth and noncanonical spellings are
+      rejected. Mapping order does not matter. Derived values are checked, never stored.
+      所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，派生值只核对、不存储。
+    - Keys and string values must be plain `str`, not subclasses; null values are `None`.
+      键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
+    - Wrong types raise `TypeError`; missing/extra keys, unsupported values and mismatches
+      raise `ValueError`. Consistency is with the installed library, not across versions.
+      Error precedence is unspecified when several constraints fail.
+      类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
+      同时违反多个约束时，不保证先报告哪项错误。
+    - Caller mappings are neither modified nor retained. The existing empty-Dayun `json`
+      failure propagates unchanged.
+      不修改或持有调用方映射；大运为空时，沿用 `json` 既有的失败行为。
+
+    Return: (BaziChart) The rebuilt chart / 重建的命盘。
+    '''
+    if not isinstance(d, Mapping):
+      raise TypeError(f'Expected Mapping at chart, got {type(d)}')
+    for key in d:
+      if type(key) is not str:
+        raise TypeError(f'Expected str key at chart, got {type(key)}')
+    keys = BaziJson.BaziChartJsonDict.__required_keys__
+    if d.keys() != keys:
+      raise ValueError(f'Unexpected fields at chart: {d.keys() ^ keys}')
+    for key in ('birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule'):
+      if not isinstance(d[key], str):
+        raise TypeError(f'Expected str at {key}, got {type(d[key])}')
+    school = d['school']
+    if not isinstance(school, Mapping):
+      raise TypeError(f'Expected Mapping at school, got {type(school)}')
+
+    chart = cls(
+      Bazi.create(
+        cast(str, d['birth_time']),
+        cast(str, d['gender']),
+        BaziConfig.from_values(
+          precision=cast(str, d['precision']),
+          backend=cast(str, d['backend']),
+          dayun_year_rule=cast(str, d['dayun_year_rule']),
+          school=BaziSchool.from_json(school),
+        ),
+      ),
+    )
+
+    def __compare(actual: object, expected: object, path: str) -> None:
+      if isinstance(expected, Mapping):
+        if not isinstance(actual, Mapping):
+          raise TypeError(f'Expected Mapping at {path}, got {type(actual)}')
+        for key in actual:
+          if type(key) is not str:
+            raise TypeError(f'Expected str key at {path}, got {type(key)}')
+        if actual.keys() != expected.keys():
+          raise ValueError(f'Unexpected fields at {path}: {actual.keys() ^ expected.keys()}')
+        for key, value in expected.items():
+          __compare(actual[key], value, f'{path}.{key}')
+      else:
+        if type(actual) is not type(expected):
+          raise TypeError(f'Expected {type(expected).__name__} at {path}, got {type(actual)}')
+        if actual != expected:
+          raise ValueError(f'Inconsistent value at {path}: {actual!r}; expected {expected!r}')
+
+    __compare(d, chart.json, 'chart')
+    return chart
 
   @property
   def bazi(self) -> Bazi:

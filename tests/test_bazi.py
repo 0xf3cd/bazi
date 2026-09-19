@@ -14,7 +14,7 @@ from typing import Final
 from src.calendar import JieqiTime
 from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from src.bazi import BaziGender, Bazi, 八字
-from src.school import BaziPrecision, DayRollover, BaziSchool, BaziConfig
+from src.school import BaziPrecision, DayRollover, DayunYearRule, BaziSchool, BaziConfig, DEFAULT_CONFIG
 from src.calendar import CalendarBackend, calendar_utils_of
 
 
@@ -37,6 +37,40 @@ def test_str() -> None:
   assert str(BaziGender.YIN) == 'female'
   assert BaziGender.YANG is BaziGender('男')
   assert BaziGender.YIN is BaziGender('女')
+
+
+@pytest.mark.parametrize('upper, birth_time', [
+  (False, datetime(1902, 1, 1, 0, 0)),
+  (True, datetime(2080, 12, 28, 23, 59)),
+])
+@pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
+def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time: datetime, gender: BaziGender) -> None:
+  monkeypatch.setattr(random, 'randint', lambda low, high: high if upper else low)
+  monkeypatch.setattr(random, 'choice', lambda choices: gender)
+  assert Bazi.random() == Bazi.create(birth_time, gender, DEFAULT_CONFIG)
+
+  for backend, precision in product(CalendarBackend, BaziPrecision):
+    if backend is CalendarBackend.HKO and precision is not BaziPrecision.DAY:
+      continue
+    config = BaziConfig(
+      precision=precision,
+      backend=backend,
+      school=BaziSchool(day_rollover=DayRollover.ZIZHENG),
+      dayun_year_rule=DayunYearRule.FIXED_DECADE,
+    )
+    assert Bazi.random(config) == Bazi.create(birth_time, gender, config)
+
+
+@pytest.mark.parametrize('config', [None, False, 'day', {}])
+def test_random_rejects_wrong_config(config: object) -> None:
+  with pytest.raises(TypeError, match='BaziConfig'):
+    Bazi.random(config) # type: ignore
+
+
+@pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
+def test_random_rejects_unsupported_config(precision: BaziPrecision) -> None:
+  with pytest.raises(ValueError, match='HKO'):
+    Bazi.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO))
 
 
 @pytest.mark.parametrize('backend', ('hko', 'celestial'))

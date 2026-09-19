@@ -253,12 +253,20 @@ class Bazi:
     return bazi
   
   @staticmethod
-  def random() -> 'Bazi':
+  def random(config: BaziConfig = DEFAULT_CONFIG) -> 'Bazi':
     '''
     Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
+    随机生成一个 `Bazi`，主要用于测试。
 
-    Note that the config is `DEFAULT_CONFIG`.
-    Note that the year is in [1902, 2080], and day is in [1, 28].
+    Note:
+    - The year is in [1902, 2080], and day is in [1, 28].
+      年份范围为 [1902, 2080]，日期范围为 [1, 28]。
+
+    Args:
+    - config: (BaziConfig) The chart-level configuration, passed to `Bazi.create`.
+      命盘级配置，传给 `Bazi.create`。
+
+    Return: (Bazi) The generated Bazi / 随机八字。
     '''
     return Bazi.create(
       birth_time=datetime(
@@ -269,7 +277,7 @@ class Bazi:
         minute=random.randint(0, 59),
       ),
       gender=random.choice(list(BaziGender)),
-      config=DEFAULT_CONFIG,
+      config=config,
     )
 
   @property
