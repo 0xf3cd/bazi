@@ -74,8 +74,6 @@ def main() -> int:
   class _EqualToAnything:
     def __eq__(self, other: object) -> bool:
       return True
-    def __ne__(self, other: object) -> bool:
-      return False
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,

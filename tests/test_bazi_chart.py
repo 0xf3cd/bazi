@@ -634,9 +634,6 @@ class _EqualToAnything:
   def __eq__(self, other: object) -> bool:
     return True
 
-  def __ne__(self, other: object) -> bool:
-    return False
-
 
 class _EqualKey:
   def __init__(self, value: str) -> None:

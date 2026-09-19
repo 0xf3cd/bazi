@@ -194,7 +194,9 @@ class BaziChart:
       键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
     - Wrong types raise `TypeError`; missing/extra keys, unsupported values and mismatches
       raise `ValueError`. Consistency is with the installed library, not across versions.
+      Error precedence is unspecified when several constraints fail.
       类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
+      同时违反多个约束时，不保证先报告哪项错误。
     - Caller mappings are neither modified nor retained. The existing empty-Dayun `json`
       failure propagates unchanged.
       不修改或持有调用方映射；大运为空时，沿用 `json` 既有的失败行为。
