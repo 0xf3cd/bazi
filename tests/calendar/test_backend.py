@@ -8,13 +8,13 @@ import pytest
 
 from datetime import datetime
 
-from src.calendar import (
+from bazi.calendar import (
   CalendarBackend, CalendarUtilsProtocol, hko_data_utils, calendar_utils_of,
 )
-from src.calendar.celestial_utils import ALGO1, ALGO2
-from src.bazi import Bazi, BaziGender
-from src.school import BaziConfig
-from src.bazi_chart import BaziChart
+from bazi.calendar.celestial_utils import ALGO1, ALGO2
+from bazi.bazi import Bazi, BaziGender
+from bazi.school import BaziConfig
+from bazi.bazi_chart import BaziChart
 
 
 def test_basic() -> None:

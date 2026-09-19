@@ -1,30 +1,122 @@
-# Bazi Projects
+# Bazi
 > 排盘、五行、十神、纳音、刑冲破害、合会
 
+A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
+only the standard library and five bundled calendar tables; no network access or
+data generation is needed.
+
+## Installation
+
+To build and validate the current checkout and retain an installable pair:
+
+```sh
+python -m pip install -r Requirements.txt
+python run_package_checks.py --output-dir ../bazi-tested
+python -m pip install ../bazi-tested/bazi-1.0.0-py3-none-any.whl
+```
+
+The output directory must be empty and outside the checkout. For a published
+version, install from the registry with `python -m pip install bazi==1.0.0`.
+There is no installed CLI, `src` compatibility package or root-class facade.
+
+```python
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.school import BaziConfig
+from bazi.transit_chart import TransitChart
+from bazi.analyzer.relationship import RelationshipAnalyzer
+
+config = BaziConfig.from_values(backend='celestial', precision='day')
+chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', config))
+restored = BaziChart.from_json(chart.json)
+assert restored.json == chart.json
+print(chart.json['pillars'])
+print(TransitChart(chart).at_year(2024))
+print(RelationshipAnalyzer(chart).at_birth.shensha)
+```
+
+Birth times are naive local civil times; timezone-aware inputs are rejected.
+Defaults remain `CELESTIAL` with day precision. `hko` provides date-level calendar
+data; `celestial` and `celestial-algo2` use the bundled astronomical tables.
+Backend differences and supported date ranges are documented in the calendar
+modules; selecting a backend does not install its offline generator.
+
+## Interfaces
+
+Use the defining modules rather than expecting classes at the package root:
+
+| Module | Principal interfaces |
+| --- | --- |
+| `bazi.bazi` | `Bazi`, `BaziGender` |
+| `bazi.bazi_chart` | `BaziChart`, `BaziJson`, JSON restoration with `from_json` |
+| `bazi.school` | `BaziConfig`, `BaziSchool`, precision and school options |
+| `bazi.calendar` | `CalendarBackend`, `CalendarDate`, `CalendarType`, `calendar_utils_of` |
+| `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
+| `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
+| `bazi.interpreter` | `Interpreter.interpret_tiangan`, `Interpreter.interpret_shishen` |
+| `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
+
+Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
+domain values and records configuration. `py.typed` exposes the inline type hints.
+Private names, offline generation tools and undocumented internals are not a
+promise of a stable public interface.
+
 ## Instructions
-* Python version should be >= 3.11
-* Install requirements by `python -m pip install -r Requirements.txt`
-* The encoded HKO data under `src/calendar/hko_data/data/` is committed to the repo; the library only reads it at runtime. To regenerate the data, `pip install requests` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.hko_data.encoder` from the repo root.
-* The celestial tables under `src/calendar/celestial_data/data/` are also committed runtime data. To regenerate them, `pip install celestial-calendar==0.6.1` manually (deliberately not in Requirements.txt) and run `python -m src.calendar.celestial_data.generator` from the repo root.
-* Run linter: `ruff check .`
-* Run static type checker: `mypy .`
-* Run full verification: `./run_tests.py -a -v`
-* Run tests: `./run_tests.py`
-  * By default:
-    * hkodata tests and slow tests won't run;
-    * `ruff` and `mypy` won't run;
-    * demo and interpreter won't run.
-  * Arguments:
-    * Add `-a`/`--all` to run everything: all tests (including hkodata and slow tests), coverage, linter, static type check, demo, interpreter, and the `python -O` contract smoke. This takes precedence over `-nt` and `-k`.
-    * Add `-nt`/`--no-test` to skip tests and coverage.
-    * Add `-hko` to also run hkodata tests, like: `./run_tests.py -hko`.
-    * Add `-s` to also run slow tests, like: `./run_tests.py -s`.
-    * Add `-v` to show verbose info during testing.
-    * Add `-k <expression>` to specify the test(s) to run, this argument will be passed to `pytest`. Mutually exclusive with `-s` and `-hko`: when `-k` is set, `-s`/`-hko` are ignored.
-    * Add `-c` to collect coverage data during testing. This also produces a coverage report in `./covhtml`.
-    * Add `-cr <rate>`/`--coverage-rate <rate>` to set the minimum coverage rate (default: 100.0); only takes effect when coverage runs (`-c` or `-a`).
-    * Add `-r`/`--ruff` to run the linter after tests.
-    * Add `-m`/`-mypy`/`--mypy` to run mypy static type checker after tests.
-    * Add `-d` to run `./run_demo.py` and `./run_relationship_analyzer.py` after tests.
-    * Add `-i` to run `./run_interpreter.py` after tests.
-    * Add `-osmoke`/`--o-smoke` to run the `python -O` public-contract smoke script (`tests/o_smoke.py`) after tests.
+
+`Requirements.txt` is the development setup, not the installed library's dependency
+list. It includes test, lint, typing and distribution-verification tools.
+Source-tree mypy also needs `celestial-calendar==0.6.1`, as installed by CPython CI.
+
+```sh
+python -m pip install -r Requirements.txt
+python -m pip install celestial-calendar==0.6.1
+python run_tests.py -a -v
+```
+
+The full gate runs every test (including slow and HKO-data tests), requires 100%
+coverage, runs ruff and strict source mypy, demos, Interpreter, optimized input
+checks, and isolated wheel/sdist-derived-wheel checks. The artifact checks use two
+fresh dependency-free consumers and a separate installed mypy environment.
+Builds and consumers live in external temporary directories. Root demo scripts may
+write to `output_data/`; the installed library's read-only behavior is checked separately.
+
+| Flag | Effect |
+| --- | --- |
+| `-a`, `--all` | Full gate; overrides `-nt` and `-k` |
+| `-nt`, `--no-test` | Skip tests and coverage |
+| `-s`, `-hko` | Include slow tests or HKO-data tests |
+| `-k <expression>` | Select pytest tests; ignores `-s` and `-hko` |
+| `-v` | Verbose output |
+| `-c` | Coverage report, also written to `covhtml/` |
+| `-cr <rate>`, `--coverage-rate <rate>` | Minimum coverage (default 100) |
+| `-r`, `--ruff` | Run `ruff check` |
+| `-m`, `-mypy`, `--mypy` | Run source mypy with the runner's strict flags |
+| `-d` | Run both demo scripts |
+| `-i` | Run Interpreter examples |
+| `-osmoke`, `--o-smoke` | Run source public-contract smoke with `python -O` |
+| `-pkg`, `--package` | Run isolated distribution checks |
+| `--package-output-dir <path>` | With `-pkg` or `-a`, retain only the verified sdist and its rebuilt wheel |
+
+A bare `python run_tests.py` omits slow/HKO tests and all optional tasks. It is not
+the full verification gate. Do not run autoformatters; use `ruff check .`.
+
+## Offline Generation
+
+The committed data is read, not regenerated, during packaging or installed use.
+Only a source checkout contains the raw HKO inputs. Maintainers can regenerate
+there with `python -m bazi.calendar.hko_data.encoder` (`requests` is needed only
+if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
+with `celestial-calendar==0.6.1`. These optional tools are not runtime dependencies.
+If an installed table is missing, reinstall the distribution instead.
+
+## License
+
+Author-owned material is available under the standard [MIT License](LICENSE).
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) describes the separate scope of
+calendar data, quotations and other third-party material. Those materials are not
+relicensed by the author's MIT grant. Both notices are included in built artifacts.
+
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for version changes and
+[RELEASING.md](RELEASING.md) for the manual release procedure.

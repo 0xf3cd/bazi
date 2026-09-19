@@ -7,12 +7,12 @@ from pprint import pprint
 from typing import TypeVar
 from collections.abc import Iterable, Generator
 
-from src.bazi import Bazi
-from src.bazi_chart import BaziChart
-from src.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
-from src.data_types import HiddenTianganDict
-from src.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
-from src.calendar.backend import calendar_utils_of
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
+from bazi.data_types import HiddenTianganDict
+from bazi.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
+from bazi.calendar.backend import calendar_utils_of
 
 
 T = TypeVar('T')

@@ -23,11 +23,11 @@ HKO x DE441 dual-axis golden tests (0.525 min agreement over 2022-2028).
 
 from datetime import date, datetime, time, timedelta
 
-from src.calendar import hko_data_utils as HKO
-from src.calendar.dates import CalendarType, CalendarDate
-from src.calendar.celestial_utils import ALGO1 as CEL
-from src.calendar.celestial_data.loader import JIEQI_BY_INDEX
-from src.defines import Jieqi
+from bazi.calendar import hko_data_utils as HKO
+from bazi.calendar.dates import CalendarType, CalendarDate
+from bazi.calendar.celestial_utils import ALGO1 as CEL
+from bazi.calendar.celestial_data.loader import JIEQI_BY_INDEX
+from bazi.defines import Jieqi
 
 # The whitelist's single source of truth, shared with parity layers a/b.  Imported as a
 # bare sibling module: the test suite has no `__init__.py`, so pytest puts this directory

@@ -3,7 +3,7 @@
 
 import pytest
 
-from src.defines import (
+from bazi.defines import (
   Tiangan, Jieqi, 节气,
 )
 

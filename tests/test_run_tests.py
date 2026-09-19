@@ -16,7 +16,7 @@ import pytest
   (['-a', '-cr', '90'], True, False, None, 90.0, False),
   (['-nt', '-k', 'selected'], False, True, 'selected', 100.0, False),
   # Explicit flags enable every task without -a.
-  (['-v', '-s', '-hko', '-c', '-cr', '100', '-ruff', '-mypy', '-d', '-i', '-osmoke'],
+  (['-v', '-s', '-hko', '-c', '-cr', '100', '-ruff', '-mypy', '-d', '-i', '-osmoke', '-pkg'],
    True, False, None, 100.0, True),
 ])
 def test_arguments(
@@ -35,7 +35,7 @@ def test_arguments(
   assert runner['expression'] == expression
   assert runner['minimum_cov_rate'] == rate
   assert runner['verbose'] is verbose
-  for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_demo', 'do_interpreter', 'do_osmoke'):
+  for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_demo', 'do_interpreter', 'do_osmoke', 'do_package'):
     assert runner[flag] is all_tasks, flag
 
 
@@ -67,3 +67,24 @@ def test_coverage_result(
 
   assert (run_coverage(lambda: test_result) == 0) is success
   cov.report.assert_called_once()
+  omissions = run_coverage.__globals__['coverage'].Coverage.call_args.kwargs['omit']
+  for tool in ('hko_data/encoder.py', 'celestial_data/generator.py'):
+    assert str(Path(__file__).parents[1] / 'bazi/calendar' / tool) in omissions
+
+
+@pytest.mark.parametrize('args, result', [(['-nt'], 0), (['-nt', '-pkg'], 7), (['-nt', '--package'], 7)])
+def test_package_registration(monkeypatch: pytest.MonkeyPatch, args: list[str], result: int) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', *args])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  main = runner['main']
+  proc = Mock(return_value=7)
+  monkeypatch.setitem(main.__globals__, 'run_proc_and_print', proc)
+  with pytest.raises(SystemExit) as caught:
+    main()
+  assert caught.value.code == result
+  if result:
+    proc.assert_called_once_with([
+      sys.executable, str(Path(__file__).parents[1] / 'run_package_checks.py'),
+    ], print_details=True)
+  else:
+    proc.assert_not_called()

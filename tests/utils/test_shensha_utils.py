@@ -7,9 +7,9 @@ from collections.abc import Callable
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Ganzhi
-from src.rules import ShenshaRules
-from src.utils import shensha_utils
+from bazi.defines import Tiangan, Dizhi, Ganzhi
+from bazi.rules import ShenshaRules
+from bazi.utils import shensha_utils
 
 
 def test_predicate_argument_types() -> None:

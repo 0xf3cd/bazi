@@ -1,0 +1,16 @@
+include pyproject.toml MANIFEST.in LICENSE THIRD_PARTY_NOTICES.md
+include README.md RELEASE_NOTES.md RELEASING.md Requirements.txt ruff.toml
+include run_tests.py run_package_checks.py run_demo.py run_interpreter.py run_relationship_analyzer.py
+recursive-include bazi *.py py.typed
+include bazi/calendar/hko_data/data/jieqi_encoded.bin
+include bazi/calendar/hko_data/data/lunardate_encoded.bin
+include bazi/calendar/hko_data/data/19[0-9][0-9].txt
+include bazi/calendar/hko_data/data/20[0-9][0-9].txt
+include bazi/calendar/hko_data/data/2100.txt
+include bazi/calendar/celestial_data/data/jieqi_moments.txt
+include bazi/calendar/celestial_data/data/lunar_years_algo1.txt
+include bazi/calendar/celestial_data/data/lunar_years_algo2.txt
+include bazi/calendar/celestial_data/SCHEMA.md
+recursive-include tests *.py *.ini *.txt *.json
+include .github/workflows/release.yml
+global-exclude *.py[cod]

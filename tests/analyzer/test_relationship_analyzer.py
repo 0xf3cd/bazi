@@ -11,16 +11,16 @@ import itertools
 from datetime import datetime
 from collections.abc import Callable
 
-from src.defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
-from src.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
-from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart
-from src.rules import DizhiRules, ShenshaRules
-from src.school import BaziConfig, BaziSchool, Anchor, _ANCHOR_CHOICES
-from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitSet
-from src.analyzer import relationship as relationship_module
-from src.analyzer.relationship import (
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
+from bazi.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
+from bazi.bazi import Bazi, BaziGender
+from bazi.bazi_chart import BaziChart
+from bazi.rules import DizhiRules, ShenshaRules
+from bazi.school import BaziConfig, BaziSchool, Anchor, _ANCHOR_CHOICES
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind, TransitSet
+from bazi.analyzer import relationship as relationship_module
+from bazi.analyzer.relationship import (
   RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, AtBirthShenshaAnalysis, _REGISTRY,
 )
 

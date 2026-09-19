@@ -12,16 +12,16 @@ from pathlib import Path
 pytestmark = pytest.mark.integration
 
 
-# The repo root is the level holding `src/`; this file lives at tests/integration/.
+# The repo root is the level holding `bazi/`; this file lives at tests/integration/.
 REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
 
 def test_pytest_runs_from_any_cwd(tmp_path: Path) -> None:
   '''Issue #90 item 2: the suite must not depend on being launched from the repo root.
 
-  Tests import `from src...`, which used to resolve only via `sys.path[0]` — i.e. only
+  Tests import `from bazi...`, which used to resolve only via `sys.path[0]` — i.e. only
   when pytest was launched with the repo root as cwd/script dir; from any other cwd
-  collection died with `ModuleNotFoundError: No module named 'src'`. The fix is
+  collection died with `ModuleNotFoundError: No module named 'bazi'`. The fix is
   `pythonpath = ..` in tests/pytest.ini (rootdir is tests/, so `..` is the repo root).
   This test is what keeps that one-liner falsifiable: delete it and this goes red.
 

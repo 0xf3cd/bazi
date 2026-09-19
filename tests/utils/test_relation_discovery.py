@@ -8,9 +8,9 @@ Contract negatives for `RelationDiscovery`. Positive behaviors are covered by th
 
 import pytest
 
-from src.defines import Tiangan, Dizhi
-from src.utils import tiangan_utils, dizhi_utils
-from src.utils.tiangan_utils import TianganRelationDiscovery
+from bazi.defines import Tiangan, Dizhi
+from bazi.utils import tiangan_utils, dizhi_utils
+from bazi.utils.tiangan_utils import TianganRelationDiscovery
 
 
 def test_filter_negative() -> None:

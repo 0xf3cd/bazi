@@ -4,7 +4,7 @@
 import pytest
 
 from itertools import product
-from src.defines import (
+from bazi.defines import (
   Wuxing, 五行,
 )
 

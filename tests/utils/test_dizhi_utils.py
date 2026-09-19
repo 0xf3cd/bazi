@@ -12,10 +12,10 @@ from collections import Counter
 from typing import Any
 from collections.abc import Iterable, Callable
 
-from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, TianganRelation, DizhiRelation
-from src.rules import DizhiRules
-from src.utils import bazi_utils, tiangan_utils, dizhi_utils
-from src.utils.dizhi_utils import (
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing, TianganRelation, DizhiRelation
+from bazi.rules import DizhiRules
+from bazi.utils import bazi_utils, tiangan_utils, dizhi_utils
+from bazi.utils.dizhi_utils import (
   DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery,
   GanzhiOccurrence, GanzhiRelationCombo, GanzhiRelationCombos, GanzhiRelationDiscovery,
 )

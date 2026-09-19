@@ -7,11 +7,11 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from src.defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.calendar import JieqiTime
-from src.data_types import TraitTuple, HiddenTianganDict
-from src.school import DayRollover
-from src.utils import bazi_utils
+from bazi.defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from bazi.calendar import JieqiTime
+from bazi.data_types import TraitTuple, HiddenTianganDict
+from bazi.school import DayRollover
+from bazi.utils import bazi_utils
 
 
 _GANZHI_MONTH_DIZHIS = (

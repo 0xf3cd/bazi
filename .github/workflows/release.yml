@@ -1,0 +1,256 @@
+name: Prepare or Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Rehearse only, or explicitly publish the tested release
+        type: choice
+        options: [rehearsal, release]
+        default: rehearsal
+        required: true
+
+permissions: {}
+concurrency:
+  group: bazi-release
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    if: inputs.mode == 'release'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require an existing protected release environment
+        env:
+          MODE: ${{ inputs.mode }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        shell: python
+        run: |
+          import json, os, re, urllib.request
+          if (os.environ['MODE'] != 'release' or os.environ['REPOSITORY'] != '0xf3cd/bazi'
+              or os.environ['REF'] != 'refs/heads/main' or not re.fullmatch(r'[0-9a-f]{40}', os.environ['SHA'])):
+            raise SystemExit('Real release requires the main dispatch SHA of 0xf3cd/bazi')
+          def get(path):
+            request = urllib.request.Request('https://api.github.com/repos/0xf3cd/bazi/' + path,
+              headers={'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'})
+            with urllib.request.urlopen(request, timeout=30) as response:
+              return json.load(response)
+          environment = get('environments/release')
+          policies = get('environments/release/deployment-branch-policies?per_page=100')
+          reviewers = [rule for rule in environment.get('protection_rules', [])
+            if rule.get('type') == 'required_reviewers' and any(
+              reviewer.get('type') in ('User', 'Team') and isinstance(reviewer.get('reviewer', {}).get('id'), int)
+              and reviewer['reviewer']['id'] > 0 for reviewer in rule.get('reviewers', []))]
+          if (environment.get('name') != 'release' or not reviewers
+              or environment.get('deployment_branch_policy') != {'protected_branches': False, 'custom_branch_policies': True}
+              or policies.get('total_count') != 1
+              or [(p.get('name'), p.get('type')) for p in policies.get('branch_policies', [])] != [('main', 'branch')]):
+            raise SystemExit('release must have required reviewers and exactly the main branch policy')
+
+  build:
+    needs: [preflight]
+    if: ${{ !cancelled() && (inputs.mode == 'rehearsal' || (inputs.mode == 'release' && needs.preflight.result == 'success')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      manifest-sha: ${{ steps.bundle.outputs.manifest-sha }}
+      version: ${{ steps.bundle.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify source identity
+        env:
+          SHA: ${{ github.sha }}
+          MODE: ${{ inputs.mode }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        shell: python
+        run: |
+          import os, re, subprocess
+          mode, sha = os.environ['MODE'], os.environ['SHA']
+          if mode not in ('rehearsal', 'release') or not re.fullmatch(r'[0-9a-f]{40}', sha):
+            raise SystemExit('Invalid release mode or SHA')
+          if mode == 'release' and (os.environ['REPOSITORY'], os.environ['REF']) != ('0xf3cd/bazi', 'refs/heads/main'):
+            raise SystemExit('Real release is main-only')
+          if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != sha:
+            raise SystemExit('Checkout SHA differs from dispatch SHA')
+      - name: Install development requirements
+        run: |
+          python -m pip install -r Requirements.txt
+          python -m pip install celestial-calendar==0.6.1
+      - name: Run full gate and retain its tested pair
+        run: python run_tests.py -a -v --package-output-dir "$RUNNER_TEMP/bundle/dist"
+      - name: Seal release bundle
+        id: bundle
+        env:
+          SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          MODE: ${{ inputs.mode }}
+        shell: python
+        run: |
+          import hashlib, json, os, re, shutil, tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
+            raise SystemExit('Use a stable three-part release version')
+          bundle = Path(os.environ['RUNNER_TEMP']) / 'bundle'
+          names = {f'bazi-{version}.tar.gz', f'bazi-{version}-py3-none-any.whl'}
+          if {p.name for p in (bundle / 'dist').iterdir()} != names:
+            raise SystemExit('Expected exactly the tested sdist and rebuilt wheel')
+          shutil.copyfile('RELEASE_NOTES.md', bundle / 'RELEASE_NOTES.md')
+          metadata = {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'],
+            'repository': os.environ['REPOSITORY'], 'run_id': os.environ['RUN_ID'], 'mode': os.environ['MODE']}
+          (bundle / 'release.json').write_text(json.dumps(metadata, sort_keys=True) + '\n')
+          files = sorted([*(bundle / 'dist').iterdir(), bundle / 'RELEASE_NOTES.md', bundle / 'release.json'])
+          checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(bundle).as_posix()}\n' for p in files)
+          (bundle / 'SHA256SUMS').write_text(checksums)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write(f'version={version}\nmanifest-sha={hashlib.sha256(checksums.encode()).hexdigest()}\n')
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: upload
+        with:
+          name: tested-release
+          path: ${{ runner.temp }}/bundle/
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 30
+
+  pypi:
+    needs: [preflight, build]
+    if: inputs.mode == 'release' && needs.preflight.result == 'success' && needs.build.result == 'success' && github.repository == '0xf3cd/bazi' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: &download
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: artifact
+          merge-multiple: true
+          digest-mismatch: error
+      - &verify
+        name: Verify exact same-run bundle
+        env:
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
+          MANIFEST_SHA: ${{ needs.build.outputs.manifest-sha }}
+          VERSION: ${{ needs.build.outputs.version }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          MODE: ${{ inputs.mode }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        shell: python
+        run: |
+          import hashlib, json, os, re
+          from pathlib import Path
+          version = os.environ['VERSION']
+          if (os.environ['MODE'] != 'release' or os.environ['REPOSITORY'] != '0xf3cd/bazi'
+              or os.environ['REF'] != 'refs/heads/main' or not re.fullmatch(r'[0-9a-f]{40}', os.environ['SHA'])
+              or not re.fullmatch(r'[1-9][0-9]*', os.environ['ARTIFACT_ID'])
+              or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version)):
+            raise SystemExit('Invalid publication identity')
+          root = Path('artifact')
+          expected = {f'dist/bazi-{version}.tar.gz', f'dist/bazi-{version}-py3-none-any.whl', 'release.json', 'RELEASE_NOTES.md'}
+          if ({p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()} != expected | {'SHA256SUMS'}
+              or any(p.is_symlink() for p in root.rglob('*'))):
+            raise SystemExit('Unexpected release bundle files')
+          checksums = (root / 'SHA256SUMS').read_bytes()
+          if hashlib.sha256(checksums).hexdigest() != os.environ['MANIFEST_SHA']:
+            raise SystemExit('Manifest differs from tested build')
+          wanted = ''.join(f'{hashlib.sha256((root / name).read_bytes()).hexdigest()}  {name}\n' for name in sorted(expected))
+          if checksums.decode() != wanted:
+            raise SystemExit('Release bundle checksum mismatch')
+          metadata = json.loads((root / 'release.json').read_text())
+          if metadata != {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'], 'repository': '0xf3cd/bazi', 'run_id': os.environ['RUN_ID'], 'mode': 'release'}:
+            raise SystemExit('Release metadata identity mismatch')
+      - name: Reject existing version, tag or release
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        shell: python
+        run: |
+          import os, urllib.error, urllib.request
+          version = os.environ['VERSION']
+          urls = [f'https://pypi.org/pypi/bazi/{version}/json',
+            f'https://api.github.com/repos/0xf3cd/bazi/git/ref/tags/v{version}',
+            f'https://api.github.com/repos/0xf3cd/bazi/releases/tags/v{version}']
+          for url in urls:
+            try:
+              with urllib.request.urlopen(url, timeout=30):
+                pass
+            except urllib.error.HTTPError as error:
+              if error.code == 404:
+                continue
+              raise
+            raise SystemExit('Version, tag or release already exists; deliberate recovery required')
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: artifact/dist/
+          skip-existing: false
+
+  github-release:
+    needs: [preflight, build, pypi]
+    if: inputs.mode == 'release' && needs.preflight.result == 'success' && needs.pypi.result == 'success' && github.repository == '0xf3cd/bazi' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with: *download
+      - *verify
+      - name: Verify PyPI bytes and create the tag and release without overwriting
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import hashlib, json, os, urllib.error, urllib.request
+          from pathlib import Path
+          version, sha = os.environ['VERSION'], os.environ['SHA']
+          with urllib.request.urlopen(f'https://pypi.org/pypi/bazi/{version}/json', timeout=30) as response:
+            published = json.load(response)
+          actual = {entry['filename']: entry['digests']['sha256'] for entry in published['urls']}
+          expected = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in Path('artifact/dist').iterdir()}
+          if actual != expected:
+            raise SystemExit('PyPI bytes differ from tested pair')
+          base = 'https://api.github.com/repos/0xf3cd/bazi'
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
+          for path in (f'/git/ref/tags/v{version}', f'/releases/tags/v{version}'):
+            try:
+              with urllib.request.urlopen(urllib.request.Request(base + path, headers=headers), timeout=30):
+                pass
+            except urllib.error.HTTPError as error:
+              if error.code == 404:
+                continue
+              raise
+            raise SystemExit('Existing tag/release; deliberate recovery required')
+          def post(path, data):
+            request = urllib.request.Request(base + path, data=json.dumps(data).encode(), headers={**headers, 'Content-Type': 'application/json'}, method='POST')
+            with urllib.request.urlopen(request, timeout=30) as response:
+              return json.load(response)
+          post('/git/refs', {'ref': f'refs/tags/v{version}', 'sha': sha})
+          release = post('/releases', {'tag_name': f'v{version}', 'target_commitish': sha,
+            'name': f'bazi {version}', 'body': Path('artifact/RELEASE_NOTES.md').read_text(), 'draft': True})
+          for path in sorted(p for p in Path('artifact').rglob('*') if p.is_file()):
+            url = f'https://uploads.github.com/repos/0xf3cd/bazi/releases/{release["id"]}/assets?name={path.name}'
+            request = urllib.request.Request(url, data=path.read_bytes(), headers={**headers, 'Content-Type': 'application/octet-stream'}, method='POST')
+            with urllib.request.urlopen(request, timeout=60) as response:
+              asset = json.load(response)
+            if asset.get('digest') != 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest():
+              raise SystemExit('Uploaded GitHub asset digest mismatch; release remains draft')
+          request = urllib.request.Request(base + f'/releases/{release["id"]}', data=b'{"draft":false}', headers={**headers, 'Content-Type': 'application/json'}, method='PATCH')
+          with urllib.request.urlopen(request, timeout=30):
+            pass

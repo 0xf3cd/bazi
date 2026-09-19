@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_celestial_tables.py
 #
-# Parity layers a/b for the committed celestial_data tables (`src/calendar/celestial_data/data/`):
+# Parity layers a/b for the committed celestial_data tables (`bazi/calendar/celestial_data/data/`):
 # the tables are checked against hko_data DIRECTLY, not through any protocol implementation
 # -- so the tables are verified before any consumer exists, and a bad table cannot silently
 # poison the charts downstream. The table parser below is deliberately a minimal independent
@@ -17,8 +17,8 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Final, NamedTuple
 
-from src.defines import Jieqi, Ganzhi
-from src.calendar import hko_data
+from bazi.defines import Jieqi, Ganzhi
+from bazi.calendar import hko_data
 
 # NOTE on the import form: the test suite has no `__init__.py`, so pytest (prepend mode)
 # puts this directory itself on sys.path -- the parity data module is imported as a bare
@@ -29,7 +29,7 @@ from celestial_parity_data import (
 )
 
 
-DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'src' / 'calendar' / 'celestial_data' / 'data'
+DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'bazi' / 'calendar' / 'celestial_data' / 'data'
 
 
 JIEQI_TABLE_PATH: Final[Path] = DATA_DIR / 'jieqi_moments.txt'

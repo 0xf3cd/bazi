@@ -11,11 +11,11 @@ from datetime import date, time, datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Final
 
-from src.calendar import JieqiTime
-from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi
-from src.bazi import BaziGender, Bazi, 八字
-from src.school import BaziPrecision, DayRollover, DayunYearRule, BaziSchool, BaziConfig, DEFAULT_CONFIG
-from src.calendar import CalendarBackend, calendar_utils_of
+from bazi.calendar import JieqiTime
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi
+from bazi.bazi import BaziGender, Bazi, 八字
+from bazi.school import BaziPrecision, DayRollover, DayunYearRule, BaziSchool, BaziConfig, DEFAULT_CONFIG
+from bazi.calendar import CalendarBackend, calendar_utils_of
 
 
 def test_bazi_gender_basic() -> None:
@@ -190,7 +190,7 @@ def test_day_rollover_variant_inside_a_jieqi_tie_window(rollover: DayRollover, p
 
 
 # The jie owning a birth month opens it: 立春 opens 寅月, and so on. Written out as data
-# (not derived from enum order) so the tests share no derivation with `src.Bazi`.
+# (not derived from enum order) so the tests share no derivation with `Bazi`.
 JIE_MONTH_DIZHI: Final[dict[Jieqi, Dizhi]] = {
   Jieqi.立春 : Dizhi.寅,  Jieqi.惊蛰 : Dizhi.卯,  Jieqi.清明 : Dizhi.辰,
   Jieqi.立夏 : Dizhi.巳,  Jieqi.芒种 : Dizhi.午,  Jieqi.小暑 : Dizhi.未,
@@ -203,7 +203,7 @@ def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   '''
   Independent re-statement of the granularity truncation, for oracle use. HOUR scans the
   时辰 boundaries (the odd clock hours, plus the previous day's 23:00) and takes the latest
-  one at or before `dt` -- deliberately NOT the shift-floor-shift formula `src.Bazi` uses,
+  one at or before `dt` -- deliberately NOT the shift-floor-shift formula `Bazi` uses,
   so the oracle and the implementation cannot share a truncation error.
   '''
   if precision is BaziPrecision.MINUTE:

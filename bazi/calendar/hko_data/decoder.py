@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/src/calendar/hko_data/decoder.py
+# bazi/bazi/calendar/hko_data/decoder.py
 #
 # Decode the encoded data produced by encoder.py.
 # The decoder only reads the committed binary data files under `hko_data/data/`;
@@ -33,7 +33,7 @@ class DecodedJieqiDates:
     # Explicit raise (not assert): this is the public fail-fast contract for library
     # consumers, and it must survive `python -O`.
     if not encoded_data_ready():
-      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.calendar.hko_data.encoder` from the repo root to regenerate them.')
+      raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
 
     self._start_year: Final[int] = START_YEAR
     self._end_year: Final[int] = END_YEAR
@@ -129,7 +129,7 @@ class DecodedLunarYears:
     # Explicit raise (not assert): this is the public fail-fast contract for library
     # consumers, and it must survive `python -O`.
     if not encoded_data_ready():
-      raise RuntimeError('Encoded HKO data files are missing. Run `python -m src.calendar.hko_data.encoder` from the repo root to regenerate them.')
+      raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
 
     self._start_year: Final[int] = START_YEAR
     self._end_year: Final[int] = END_YEAR - 1 # END_YEAR not included, since the data for it is incomplete.

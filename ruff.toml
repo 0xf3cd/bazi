@@ -27,5 +27,5 @@ ignore = [
 
 [lint.per-file-ignores]
 # Test loops routinely define small lambdas/functions that are consumed within the
-# same iteration, where late binding cannot bite. In src/ the rule stays active.
+# same iteration, where late binding cannot bite. In bazi/ the rule stays active.
 "tests/**" = ["B023"]

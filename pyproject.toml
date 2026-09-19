@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bazi"
+version = "1.0.0"
+description = "Four Pillars charts, calendar backends and Bazi relations"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Ningqi Wang (0xf3cd)"}]
+dependencies = []
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+
+[project.urls]
+Repository = "https://github.com/0xf3cd/bazi"
+Issues = "https://github.com/0xf3cd/bazi/issues"
+
+[tool.setuptools]
+include-package-data = false
+py-modules = []
+
+[tool.setuptools.packages.find]
+include = ["bazi", "bazi.*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+bazi = ["py.typed"]
+"bazi.calendar.hko_data" = ["data/jieqi_encoded.bin", "data/lunardate_encoded.bin"]
+"bazi.calendar.celestial_data" = ["data/jieqi_moments.txt", "data/lunar_years_algo1.txt", "data/lunar_years_algo2.txt"]

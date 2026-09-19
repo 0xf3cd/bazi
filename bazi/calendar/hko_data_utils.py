@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import calendar  # the stdlib module -- NOT the `src.calendar` package this file lives in
+import calendar  # the stdlib module -- NOT the `bazi.calendar` package this file lives in
 import functools
 import itertools
 

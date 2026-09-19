@@ -5,12 +5,12 @@ import pytest
 
 from datetime import datetime
 
-from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart
-from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitSet
-from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
-from src.utils import tiangan_utils, dizhi_utils
+from bazi.bazi import Bazi, BaziGender
+from bazi.bazi_chart import BaziChart
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind, TransitSet
+from bazi.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation
+from bazi.utils import tiangan_utils, dizhi_utils
 
 
 pytestmark = pytest.mark.integration

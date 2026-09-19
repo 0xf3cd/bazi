@@ -8,15 +8,15 @@ import random
 from datetime import date, datetime
 from typing import cast
 
-from src.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
-from src.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
-from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart
-from src.school import Anchor, BaziSchool, BaziConfig
-from src.transit_chart import TransitChart
-from src.transits import TransitKind, TransitSet
-from src.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
-from src.rules import DizhiRules, ShenshaRules
+from bazi.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
+from bazi.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
+from bazi.bazi import Bazi, BaziGender
+from bazi.bazi_chart import BaziChart
+from bazi.school import Anchor, BaziSchool, BaziConfig
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind, TransitSet
+from bazi.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis, TransitAnalysis, AtBirthAnalysis
+from bazi.rules import DizhiRules, ShenshaRules
 
 
 pytestmark = pytest.mark.integration

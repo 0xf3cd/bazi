@@ -7,9 +7,9 @@ from collections.abc import Iterable
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
-from src.utils import bazi_utils, tiangan_utils
-from src.utils.tiangan_utils import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
+from bazi.defines import Tiangan, Dizhi, Wuxing, TianganRelation, DizhiRelation
+from bazi.utils import bazi_utils, tiangan_utils
+from bazi.utils.tiangan_utils import TianganCombo, TianganRelationCombos, TianganRelationDiscovery
 
 
 '''Operand type of `_tg_equal`: tiangan combos as a list of sets or an iterable of `TianganCombo`s.'''

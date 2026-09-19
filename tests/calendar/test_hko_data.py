@@ -11,9 +11,9 @@ import pytest
 from pathlib import Path
 from datetime import date, timedelta
 
-from src.calendar import hko_data
-from src.calendar.hko_data import encoder
-from src.defines import Jieqi, Ganzhi
+from bazi.calendar import hko_data
+from bazi.calendar.hko_data import encoder
+from bazi.defines import Jieqi, Ganzhi
 
 
 pytestmark = pytest.mark.hkodata

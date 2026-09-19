@@ -3,7 +3,7 @@
 
 import pytest
 
-from src.defines import (
+from bazi.defines import (
   TianganRelation, 天干关系, DizhiRelation, 地支关系,
 )
 
