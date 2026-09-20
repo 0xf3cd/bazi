@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/bazi/calendar/hko_data/decoder.py
+# bazi/calendar/hko_data/decoder.py
 #
 # Decode the encoded data produced by encoder.py.
 # The decoder only reads the committed binary data files under `hko_data/data/`;

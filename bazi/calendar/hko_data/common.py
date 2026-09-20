@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/bazi/calendar/hko_data/common.py
+# bazi/calendar/hko_data/common.py
 #
 # Define variables and functions used in other .py files in hkodata directory.
 

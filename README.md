@@ -79,6 +79,9 @@ The full gate runs every test (including slow and HKO-data tests), requires 100%
 coverage, runs ruff and strict source mypy, demos, Interpreter, optimized input
 checks, and isolated wheel/sdist-derived-wheel checks. The artifact checks use two
 fresh dependency-free consumers and a separate installed mypy environment.
+The artifact checks (`run_package_checks.py`, `-pkg` and `-a`) may download tools
+and their dependencies from the package index to seed isolated build and typing
+environments, even after the development requirements are installed.
 Builds and consumers live in external temporary directories. Root demo scripts may
 write to `output_data/`; the installed library's read-only behavior is checked separately.
 
@@ -105,9 +108,9 @@ the full verification gate. Do not run autoformatters; use `ruff check .`.
 ## Offline Generation
 
 The committed data is read, not regenerated, during packaging or installed use.
-Only a source checkout contains the raw HKO inputs. Maintainers can regenerate
-there with `python -m bazi.calendar.hko_data.encoder` (`requests` is needed only
-if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
+The source tree and sdist contain the raw HKO inputs; the wheel does not.
+Maintainers can regenerate from those sources with `python -m bazi.calendar.hko_data.encoder`
+(`requests` is needed only if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
 with `celestial-calendar==0.6.1`. These optional tools are not runtime dependencies.
 If an installed table is missing, reinstall the distribution instead.
 

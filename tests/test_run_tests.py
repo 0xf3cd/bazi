@@ -88,3 +88,17 @@ def test_package_registration(monkeypatch: pytest.MonkeyPatch, args: list[str], 
     ], print_details=True)
   else:
     proc.assert_not_called()
+
+
+def test_package_output_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  output = tmp_path / 'tested pair'
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-pkg', '--package-output-dir', str(output)])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  run_package_checks = runner['run_package_checks']
+  proc = Mock(return_value=0)
+  monkeypatch.setitem(run_package_checks.__globals__, 'run_proc_and_print', proc)
+  assert run_package_checks() == 0
+  proc.assert_called_once_with([
+    sys.executable, str(Path(__file__).parents[1] / 'run_package_checks.py'),
+    '--output-dir', str(output),
+  ], print_details=True)

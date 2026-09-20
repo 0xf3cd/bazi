@@ -24,6 +24,7 @@ def test_source_selection() -> None:
 @pytest.mark.parametrize('change, rejected', [
   ('none', False), ('zip-comment', False), ('missing-data', True),
   ('missing-typing', True), ('extra-source', True), ('changed-bytes', True),
+  ('duplicate', True),
 ])
 def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
   content = {'bazi/__init__.py': b'', 'bazi/py.typed': b'', RUNTIME_DATA[0]: b'calendar'}
@@ -46,8 +47,12 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
     archive.writestr('bazi-1.0.0.dist-info/licenses/LICENSE', b'license')
     if change == 'zip-comment':
       archive.comment = b'Harmless archive comment'
+    elif change == 'duplicate':
+      with pytest.warns(UserWarning, match='Duplicate name'):
+        archive.writestr('bazi/__init__.py', b'')
   if rejected:
-    with pytest.raises(ValueError, match='Wheel (file roster mismatch|bytes differ)'):
+    message = r'Duplicate wheel members: .*bazi/__init__\.py' if change == 'duplicate' else 'Wheel (file roster mismatch|bytes differ)'
+    with pytest.raises(ValueError, match=message):
       check_wheel(wheel, expected, licenses)
   else:
     check_wheel(wheel, expected, licenses)

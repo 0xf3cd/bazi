@@ -1,12 +1,13 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/bazi/calendar/hko_data/encoder.py
+# bazi/calendar/hko_data/encoder.py
 #
 # Download the raw data from Hong Kong Observatory (hko) and encode the downloaded hko data.
 #
 # This module is an offline tool, only used when the data under `hko_data/data/`
 # needs to be regenerated. It is not needed at runtime: the decoder only reads
 # the committed data files. `requests` is deliberately not in Requirements.txt --
-# install it manually (`pip install requests`) and run this tool from the repo root:
+# install it manually (`pip install requests`). Run only from a source checkout,
+# not an installed package:
 #   python -m bazi.calendar.hko_data.encoder
 
 import re

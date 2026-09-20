@@ -9,7 +9,9 @@ relicense third-party data, quotations or reference material included in this pr
   Consult the Observatory's terms: https://www.hko.gov.hk/en/readme/readme.htm.
 - The tables in `bazi/calendar/celestial_data/data/` were generated with
   [celestial-calendar](https://github.com/0xf3cd/celestial-calendar). Their original
-  generation headers and `SCHEMA.md` record the version, algorithms and provenance.
+  generation headers record the version, algorithms and provenance. The schema
+  documentation, `bazi/calendar/celestial_data/SCHEMA.md`, is in the source archive,
+  not the wheel.
 - The MIT grant for original code does not grant rights in third-party quotations,
   reference material or interpretive corpus content. Citations are retained where
   present; they identify sources, not grants of permission.

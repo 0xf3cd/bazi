@@ -16,9 +16,11 @@ import zipfile
 
 from pathlib import Path
 from typing import Final
+from collections import Counter
 
 
 ROOT: Final[Path] = Path(__file__).resolve().parent
+# Independent resource oracle for the declarations in pyproject.toml and MANIFEST.in.
 RUNTIME_DATA: Final[tuple[str, ...]] = (
   'bazi/calendar/hko_data/data/jieqi_encoded.bin',
   'bazi/calendar/hko_data/data/lunardate_encoded.bin',
@@ -59,7 +61,9 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str])
     metadata_dir = wheel.name.split('-')[0] + '-' + wheel.name.split('-')[1] + '.dist-info/'
     metadata_files = {metadata_dir + name for name in ('METADATA', 'WHEEL', 'top_level.txt', 'RECORD')}
     license_files = {metadata_dir + 'licenses/' + name for name in licenses}
-    if len(names) != len(set(names)) or set(names) != set(expected) | metadata_files | license_files:
+    if duplicates := sorted(name for name, count in Counter(names).items() if count > 1):
+      raise ValueError(f'Duplicate wheel members: {wheel.name}: {duplicates}')
+    if set(names) != set(expected) | metadata_files | license_files:
       raise ValueError(f'Wheel file roster mismatch: {wheel.name}: {set(names) ^ (set(expected) | metadata_files | license_files)}')
     for name, digest in expected.items():
       if hashlib.sha256(archive.read(name)).hexdigest() != digest:

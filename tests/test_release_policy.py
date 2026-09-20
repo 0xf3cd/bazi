@@ -4,11 +4,14 @@ import hashlib
 import io
 import json
 import re
+import shutil
+import subprocess
 import urllib.error
 import urllib.request
 
 from pathlib import Path
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 import yaml
@@ -20,6 +23,11 @@ SHA = 'a' * 40
 
 def run_policy(code: str) -> None:
   exec(compile(code, '<release-policy>', 'exec'), {})  # noqa: S102 # Execute the actual checked-in policy with fixture-backed I/O.
+
+
+def workflow_code(job: str, name: str) -> str:
+  code: str = next(step['run'] for step in WORKFLOW['jobs'][job]['steps'] if step.get('name') == name)
+  return code
 
 
 def test_workflow_structure() -> None:
@@ -75,7 +83,7 @@ def test_workflow_structure() -> None:
   assert checkout['with']['ref'] == '${{ github.sha }}'
   assert checkout['with']['persist-credentials'] is False
   assert jobs['build']['outputs']['artifact-id'] == '${{ steps.upload.outputs.artifact-id }}'
-  assert '--package-output-dir' in jobs['build']['steps'][4]['run']
+  assert '--package-output-dir' in workflow_code('build', 'Run full gate and retain its tested pair')
 
 
 @pytest.fixture
@@ -115,7 +123,7 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
     value = policies if 'deployment-branch-policies?' in request.full_url else environment
     return io.BytesIO(json.dumps(value).encode())
   monkeypatch.setattr(urllib.request, 'urlopen', get)
-  code = WORKFLOW['jobs']['preflight']['steps'][0]['run']
+  code = workflow_code('preflight', 'Require an existing protected release environment')
   if change == 'none':
     run_policy(code)
     assert len(calls) == 2
@@ -138,7 +146,7 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
   (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
   files = sorted(p for p in root.rglob('*') if p.is_file())
   checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root).as_posix()}\n' for p in files)
-  (root / 'SHA256SUMS').write_text(checksums, encoding='utf-8')
+  (root / 'SHA256SUMS').write_bytes(checksums.encode('utf-8'))
   monkeypatch.setenv('MANIFEST_SHA', hashlib.sha256(checksums.encode()).hexdigest())
   if change == 'checksum':
     (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'untested sdist')
@@ -154,8 +162,8 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     (root / 'unexpected.py').write_bytes(b'')
   elif change == 'version':
     monkeypatch.setenv('VERSION', '2.0.0')
-  code = WORKFLOW['jobs']['pypi']['steps'][1]['run']
-  assert code == WORKFLOW['jobs']['github-release']['steps'][1]['run']
+  code = workflow_code('pypi', 'Verify exact same-run bundle')
+  assert code == workflow_code('github-release', 'Verify exact same-run bundle')
   if change == 'none':
     run_policy(code)
   else:
@@ -172,7 +180,7 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
       return io.BytesIO(b'{}')
     raise urllib.error.HTTPError(url, 503 if existing == 'network-error' else 404, 'Fixture', {}, None)  # type: ignore[arg-type] # No headers needed.
   monkeypatch.setattr(urllib.request, 'urlopen', get)
-  code = WORKFLOW['jobs']['pypi']['steps'][2]['run']
+  code = workflow_code('pypi', 'Reject existing version, tag or release')
   if existing is None:
     run_policy(code)
     assert len(calls) == 3
@@ -221,7 +229,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
       writes.append((method, address))
     return io.BytesIO(json.dumps(value).encode())
   monkeypatch.setattr(urllib.request, 'urlopen', request)
-  code = WORKFLOW['jobs']['github-release']['steps'][2]['run']
+  code = workflow_code('github-release', 'Verify PyPI bytes and create the tag and release without overwriting')
   if change == 'none':
     run_policy(code)
     assert [method for method, _ in writes] == ['POST'] * 5 + ['PATCH']
@@ -231,3 +239,77 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     assert not any(method == 'PATCH' for method, _ in writes)
     if change != 'asset-bytes':
       assert writes == []
+
+
+@pytest.mark.parametrize('crlf', [False, True])
+@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'extra', 'misnamed', 'missing'])
+def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, crlf: bool, change: str) -> None:
+  monkeypatch.chdir(tmp_path)
+  runner_temp = tmp_path / 'runner temp'
+  bundle = runner_temp / 'bundle'
+  (bundle / 'dist').mkdir(parents=True)
+  wheel = bundle / 'dist/bazi-1.0.0-py3-none-any.whl'
+  wheel.write_bytes(b'fixture wheel')
+  (bundle / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'fixture sdist')
+  (tmp_path / 'pyproject.toml').write_text('[project]\nversion = "1.0.0"\n', encoding='utf-8')
+  (tmp_path / 'RELEASE_NOTES.md').write_bytes(b'Updated notes\n' if change == 'harmless-notes' else b'Notes\n')
+  output = tmp_path / 'outputs'
+  monkeypatch.setenv('RUNNER_TEMP', str(runner_temp))
+  monkeypatch.setenv('GITHUB_OUTPUT', str(output))
+  if change == 'extra':
+    (bundle / 'dist/extra.whl').write_bytes(b'extra')
+  elif change == 'misnamed':
+    wheel.rename(bundle / 'dist/bazi-2.0.0-py3-none-any.whl')
+  elif change == 'missing':
+    wheel.unlink()
+
+  write_text = Path.write_text
+  def platform_write(path: Path, data: str, encoding: str | None = None, errors: str | None = None, newline: str | None = None) -> int:
+    # Simulate Windows translation without modifying the producer or its output afterward.
+    if crlf and path.name == 'SHA256SUMS' and newline is None:
+      newline = '\r\n'
+    return write_text(path, data, encoding=encoding, errors=errors, newline=newline)
+  monkeypatch.setattr(Path, 'write_text', platform_write)
+  seal = workflow_code('build', 'Seal release bundle')
+  if change in ('extra', 'misnamed', 'missing'):
+    with pytest.raises(SystemExit, match='Expected exactly the tested sdist and rebuilt wheel'):
+      run_policy(seal)
+    assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
+    return
+
+  run_policy(seal)
+  outputs = dict(line.split('=', 1) for line in output.read_text(encoding='utf-8').splitlines())
+  monkeypatch.setenv('VERSION', outputs['version'])
+  monkeypatch.setenv('MANIFEST_SHA', outputs['manifest-sha'])
+  shutil.copytree(bundle, tmp_path / 'artifact')
+  run_policy(workflow_code('pypi', 'Verify exact same-run bundle'))
+  manifest = (bundle / 'SHA256SUMS').read_bytes()
+  assert hashlib.sha256(manifest).hexdigest() == outputs['manifest-sha']
+  assert b'\r\n' not in manifest
+
+
+@pytest.mark.parametrize('change, message', [
+  ('none', None), ('rehearsal', None),
+  ('mode', 'Invalid release mode or SHA'), ('sha', 'Invalid release mode or SHA'),
+  ('ref', 'Real release is main-only'), ('repository', 'Real release is main-only'),
+  ('checkout', 'Checkout SHA differs from dispatch SHA'),
+])
+def test_source_identity(monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, message: str | None) -> None:
+  if change == 'rehearsal':
+    monkeypatch.setenv('MODE', 'rehearsal')
+    monkeypatch.setenv('REPOSITORY', 'example/bazi')
+    monkeypatch.setenv('REF', 'refs/heads/feature')
+  elif change in ('mode', 'sha', 'ref', 'repository'):
+    monkeypatch.setenv(change.upper(), 'invalid')
+  checkout = Mock(return_value=('b' * 40 if change == 'checkout' else SHA) + '\n')
+  monkeypatch.setattr(subprocess, 'check_output', checkout)
+  code = workflow_code('build', 'Verify source identity')
+  if message is None:
+    run_policy(code)
+  else:
+    with pytest.raises(SystemExit, match=message):
+      run_policy(code)
+  if change in ('none', 'rehearsal', 'checkout'):
+    checkout.assert_called_once_with(['git', 'rev-parse', 'HEAD'], text=True)
+  else:
+    checkout.assert_not_called()
