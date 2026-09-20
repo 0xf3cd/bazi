@@ -28,7 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: anthropics/claude-code-action@19dda84776b3518d98b8798e591daee763049ed3 # v1
+      - uses: anthropics/claude-code-action@2261fcfc88e7de1b55f179edd588805e12de71f2 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           additional_permissions: |
