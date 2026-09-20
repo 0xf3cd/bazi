@@ -8,13 +8,13 @@ from datetime import datetime
 
 import pytest
 
-from src.data_types import DayunTuple
-from src.defines import Ganzhi, Dizhi
+from bazi.data_types import DayunTuple
+from bazi.defines import Ganzhi, Dizhi
 
-from src.bazi import Bazi
-from src.bazi_chart import BaziChart
-from src.school import BaziConfig
-from src.transits import (
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.school import BaziConfig
+from bazi.transits import (
   DayunDatabase,
   TransitDatabase,
   TransitKind,

@@ -63,7 +63,8 @@ def _parse(path: Path, expected_columns: str) -> tuple[dict[str, str], list[list
   if not path.is_file():
     raise RuntimeError(
       f'Celestial data table is missing: {path}. '
-      'Run `python -m src.calendar.celestial_data.generator` from the repo root to regenerate it.'
+      'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
+      'with the optional generation tools.'
     )
 
   header: dict[str, str] = {}

@@ -34,7 +34,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
 - `ruff` runs on its default rule face minus the few family-level carve-outs in
   `ruff.toml`. That file declares the **rule face only** (ignores with a written
   rationale each); formatting/style parameters must NEVER appear in it. `mypy`
-  runs config-less (flags live in `run_tests.py`) — do NOT add mypy.ini/pyproject.
+  runs config-less (flags live in `run_tests.py`) — do NOT add mypy settings; pyproject.toml is packaging-only.
 - NEVER run `ruff format` (or any auto-formatter) — it destroys the deliberate
   vertical alignment (see Idioms). `ruff check` is the only ruff gate.
 - `ruff` is version-pinned in Requirements.txt; bumping it is a deliberate,
@@ -43,16 +43,16 @@ those, don't restate them here. Two rules the README doesn't spell out:
   single site is deliberate; a `ruff.toml` ignore (with rationale) is reserved
   for whole families that fight the domain or the house style; scoped carve-outs
   (`per-file-ignores`, rationale included) where a family only fights one tree.
-- Not a pip package — code runs with `src.` on path via the `run_*.py` scripts.
+- The installable package is `bazi`, with modular imports and no installed CLI or root-class facade.
 - Before opening a PR, verify locally with the **same gates CI runs** — the PR
   workflow invokes `run_tests.py -a -v`.
   That full invocation is the gate. The four commands below are a **faster inner loop,
-  not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`)
-  and the `-i` leg (`run_interpreter.py`).
+  not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`),
+  the `-i` leg (`run_interpreter.py`) and the `-pkg` installed-artifact checks.
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
-  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_demo.py,*/run_relationship_analyzer.py,*/tests/*,src/calendar/hko_data/encoder.py,src/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_package_checks.py,*/run_demo.py,*/run_relationship_analyzer.py,*/tests/*,bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
     at **100%**. Without the flag the report prints the number and still exits 0, so this
     local loop would not notice a drop; CI never runs this path, it gates inside
@@ -150,7 +150,7 @@ and URLs excluded, matching the rule above): tests/ 144 full-width to 14 half-wi
 
 ## Idioms to keep
 - Defensive `assert isinstance(...)` / `assert callable(...)` at function entry —
-  for **internal helpers only** (callers inside `src/` already validated the values).
+  for **internal helpers only** (callers inside `bazi/` already validated the values).
   Public-boundary input checks are explicit `raise TypeError/ValueError` —
   `isinstance`/`callable` failures are `TypeError`; bad values, ranges and members
   are `ValueError` (the type follows the check as written: an exhausted `else` over
@@ -165,7 +165,7 @@ and URLs excluded, matching the rule above): tests/ 144 full-width to 14 half-wi
   guard); reuse `frozendict` + `#region` from `common.py`; don't reinvent machinery.
 
 ## Tests
-- Mirror src layout (`src/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).
+- Mirror package layout (`bazi/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).
 - Plain pytest style: module-level `test_*` functions, bare `assert`, `pytest.raises`;
   `pytest.mark.parametrize` for literal case tables, plain loops for derived ones.
 - Data-driven: inline expected combos as literal sets. Integration → `tests/integration/`.

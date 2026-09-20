@@ -5,8 +5,8 @@ from run_relationship_analyzer import (
   _WHOLE_PILLAR_SHENSHA_LABELS,
   _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
 )
-from src.defines import Dizhi, Ganzhi
-from src.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis
+from bazi.defines import Dizhi, Ganzhi
+from bazi.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis
 
 
 def test_shensha_labels() -> None:

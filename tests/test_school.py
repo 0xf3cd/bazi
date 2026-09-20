@@ -9,16 +9,16 @@ from enum import Enum
 
 import pytest
 
-from src.calendar import CalendarBackend
-from src.bazi import Bazi, BaziGender
-from src.bazi_chart import BaziChart, BaziJson
-from src.rules import DizhiRules, ShenshaRules
-from src.utils import dizhi_utils
-from src.school import (
+from bazi.calendar import CalendarBackend
+from bazi.bazi import Bazi, BaziGender
+from bazi.bazi_chart import BaziChart, BaziJson
+from bazi.rules import DizhiRules, ShenshaRules
+from bazi.utils import dizhi_utils
+from bazi.school import (
   BaziPrecision, DayunYearRule, DayRollover, Anchor, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG, _ANCHOR_CHOICES,
 )
-from src.analyzer.relationship import _REGISTRY
+from bazi.analyzer.relationship import _REGISTRY
 
 
 def test_bazi_precision_basic() -> None:
@@ -252,7 +252,7 @@ def test_config_and_school_are_frozen() -> None:
 
 
 # Every alias below must resolve, case insensitively -- written out as data so the test
-# shares no table with src.
+# shares no table with bazi.
 @pytest.mark.parametrize('spelling, expected', [
   ('分', BaziPrecision.MINUTE), ('分钟', BaziPrecision.MINUTE),
   ('m', BaziPrecision.MINUTE), ('M', BaziPrecision.MINUTE),

@@ -5,12 +5,12 @@ from collections.abc import Mapping
 
 from run_demo import get_basic_info, colored_str
 
-from src.bazi_chart import BaziChart
-from src.common import frozendict
-from src.defines import Dizhi, Ganzhi
-from src.transit_chart import TransitChart
-from src.transits import TransitKind
-from src.analyzer.relationship import (
+from bazi.bazi_chart import BaziChart
+from bazi.common import frozendict
+from bazi.defines import Dizhi, Ganzhi
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind
+from bazi.analyzer.relationship import (
   RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
 )
 

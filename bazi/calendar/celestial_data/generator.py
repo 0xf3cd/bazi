@@ -1,5 +1,5 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/src/calendar/celestial_data/generator.py
+# bazi/calendar/celestial_data/generator.py
 #
 # Regenerate the committed tables under `celestial_data/data/` from the
 # celestial-calendar Python package, following the frozen contract in `SCHEMA.md`.
@@ -9,8 +9,8 @@
 # reads the committed tables. `celestial_calendar` must never leak into any runtime module.
 # Same split as `hko_data/encoder.py` (offline) vs `hko_data/decoder.py` (runtime).
 #
-# Run from the repo root:
-#   python -m src.calendar.celestial_data.generator
+# Run only from a source checkout, not an installed package:
+#   python -m bazi.calendar.celestial_data.generator
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -184,7 +184,7 @@ def _common_header(generated_on: date, source_api: str) -> list[str]:
     '# schema_version: 2',
     f'# celestial_version: {CELESTIAL_VERSION}',
     f'# release_asset: {RELEASE_ASSET}',
-    '# generated_by: src/calendar/celestial_data/generator.py',
+    '# generated_by: bazi/calendar/celestial_data/generator.py',
     f'# generated_on: {generated_on.isoformat()}',
     f'# source_api: {source_api}',
   ]

@@ -6,10 +6,10 @@ import pytest
 from datetime import date, datetime, timedelta
 from collections.abc import Callable
 
-from src.calendar import CalendarUtilsProtocol
-from src.calendar.dates import CalendarType, CalendarDate
-from src.calendar.celestial_utils import ALGO1, ALGO2, CelestialCalendarUtils
-from src.defines import Jieqi
+from bazi.calendar import CalendarUtilsProtocol
+from bazi.calendar.dates import CalendarType, CalendarDate
+from bazi.calendar.celestial_utils import ALGO1, ALGO2, CelestialCalendarUtils
+from bazi.defines import Jieqi
 
 # The whitelist's single source of truth.  Bare sibling import -- see the NOTE in
 # `test_celestial_tables.py` for why `from tests.calendar...` is not used.

@@ -5,9 +5,9 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.defines import Shishen, Tiangan
-from src.common import check_declared_types, frozendict
-from src.data_types import GanzhiData, BaziData, HiddenTianganDict
+from bazi.defines import Shishen, Tiangan
+from bazi.common import check_declared_types, frozendict
+from bazi.data_types import GanzhiData, BaziData, HiddenTianganDict
 
 
 def test_frozendict() -> None:

@@ -2,7 +2,7 @@
 # tests/calendar/celestial_parity_data.py
 #
 # The frozen whitelist of known divergences between the committed celestial_data tables
-# (`src/calendar/celestial_data/data/`) and hko_data -- the single source of truth
+# (`bazi/calendar/celestial_data/data/`) and hko_data -- the single source of truth
 # (唯一真源). `test_celestial_tables.py` (parity layers a/b) verifies the tables against
 # hko_data with exactly this whitelist, and layer c (`test_celestial_parity_derived.py`) derives its expectations
 # from these entries mechanically. No formulaic exemption: every entry carries its own

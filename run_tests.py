@@ -37,7 +37,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='Run all tests; run coverage, lint and static type check; run demo and interpreter; and run the `python -O` contract smoke.')
+                       help='Run all tests, coverage, lint, static type check, demos, interpreter, optimized smoke and package checks.')
 
 # Test related.
 argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
@@ -62,6 +62,9 @@ argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether
 argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
                        help='Whether or not to run the `python -O` public-contract smoke script (tests/o_smoke.py).')
 
+argparser.add_argument('-pkg', '--package', action='store_true', help='Build and check isolated wheel and sdist installations.')
+argparser.add_argument('--package-output-dir', type=Path, help='With -pkg or -a, retain the tested pair in this external directory.')
+
 args = argparser.parse_args()
 
 all_the_way: Final[bool] = args.all
@@ -81,6 +84,7 @@ do_demo: Final[bool] = args.demo or all_the_way
 do_interpreter: Final[bool] = args.interpreter or all_the_way
 
 do_osmoke: Final[bool] = args.o_smoke or all_the_way
+do_package: Final[bool] = args.package or all_the_way
 
 # Root demo behavior is exercised by `-d` rather than library coverage.
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')
@@ -190,6 +194,7 @@ def print_args() -> None:
   print(f'-- do_interpreter:   {colored(do_interpreter)}')
 
   print(f'-- do_osmoke:        {colored(do_osmoke)}')
+  print(f'-- do_package:       {colored(do_package)}')
 
 
 def print_sysinfo() -> None:
@@ -278,10 +283,11 @@ def run_coverage(test_f: Callable[[], int]) -> int:
     omit=[
       '*/__init__.py',
       '*/run_tests.py',
+      '*/run_package_checks.py', # Exercised in isolated subprocesses by -pkg, like the demo runners.
       *(f'*/{script}' for script in DEMO_SCRIPTS),
       '*/tests/*',
-      'src/calendar/hko_data/encoder.py', # The raw data already downloaded. No much need to fully test the encoder.
-      'src/calendar/celestial_data/generator.py', # Offline tool, same as the hko_data encoder above.
+      str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # Offline generation tool.
+      str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # Offline generation tool.
     ]
   )
   cov.start()
@@ -391,6 +397,14 @@ def run_o_smoke() -> int:
   return ret
 
 
+def run_package_checks() -> int:
+  '''Build and verify installed artifacts outside the checkout.'''
+  return run_proc_and_print([
+    sys.executable, str(Path(__file__).parent / 'run_package_checks.py'),
+    *(['--output-dir', str(args.package_output_dir)] if args.package_output_dir is not None else []),
+  ], print_details=True)
+
+
 class SubTaskStatuses:
   def __init__(self) -> None:
     self._retcodes: Final[dict[str, int]] = {}
@@ -443,6 +457,9 @@ def run_subtasks() -> SubTaskStatuses:
 
   if do_mypy:
     run_subtask('mypy', run_mypy)
+
+  if do_package:
+    run_subtask('package', run_package_checks)
 
   return s
 

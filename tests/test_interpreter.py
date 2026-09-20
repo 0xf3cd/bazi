@@ -3,10 +3,10 @@
 
 import pytest
 
-from src.descriptions import ShishenDescription, TianganDescription
-from src.defines import Tiangan, Shishen
-from src.descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
-from src.interpreter import Interpreter
+from bazi.descriptions import ShishenDescription, TianganDescription
+from bazi.defines import Tiangan, Shishen
+from bazi.descriptions import SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS
+from bazi.interpreter import Interpreter
 
 
 def test_interpret_shishen() -> None:

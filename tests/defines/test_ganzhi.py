@@ -5,7 +5,7 @@ import random
 
 import pytest
 
-from src.defines import (
+from bazi.defines import (
   Tiangan, 天干, Dizhi, 地支, Ganzhi, 干支,
 )
 

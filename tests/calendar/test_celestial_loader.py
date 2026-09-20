@@ -8,11 +8,11 @@ import pytest
 from datetime import date, datetime
 from pathlib import Path
 
-from src.calendar.celestial_data.loader import (
+from bazi.calendar.celestial_data.loader import (
   DATA_DIR, JIEQI_BY_INDEX, JIEQI_COLUMNS, LUNAR_COLUMNS, SCHEMA_VERSION,
   JieqiMomentTable, LunarYearTable,
 )
-from src.defines import Ganzhi, Jieqi
+from bazi.defines import Ganzhi, Jieqi
 
 
 FIXTURES: Path = Path(__file__).parent / 'celestial_fixtures'

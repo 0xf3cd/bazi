@@ -6,14 +6,14 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.bazi import Bazi
-from src.bazi_chart import BaziChart
-from src.defines import Ganzhi, Dizhi
-from src.calendar import calendar_utils_of
-from src.school import BaziConfig, BaziSchool, DayRollover
-from src.transit_chart import TransitChart, 流年大运
-from src.transits import TransitKind, TransitSet
-from src.utils.bazi_utils import ganzhi_of_day
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Ganzhi, Dizhi
+from bazi.calendar import calendar_utils_of
+from bazi.school import BaziConfig, BaziSchool, DayRollover
+from bazi.transit_chart import TransitChart, 流年大运
+from bazi.transits import TransitKind, TransitSet
+from bazi.utils.bazi_utils import ganzhi_of_day
 
 
 def test_basic() -> None:

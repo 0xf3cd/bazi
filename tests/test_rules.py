@@ -6,8 +6,8 @@ import inspect
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation, ShierZhangsheng
-from src.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation, ShierZhangsheng
+from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
 
 
 def test_basic() -> None:

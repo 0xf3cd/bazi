@@ -32,18 +32,18 @@ def main() -> int:
   from functools import partial
   from zoneinfo import ZoneInfo
 
-  from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, DizhiRelation
-  from src.bazi import Bazi
-  from src.bazi_chart import BaziChart
-  from src.rules import DizhiRules
-  from src.school import Anchor, BaziConfig, BaziSchool
-  from src.transit_chart import TransitChart
-  from src.transits import TransitDatabase, TransitKind, TransitSet
-  from src.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
-  from src.utils import tiangan_utils, dizhi_utils, shensha_utils
-  from src.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
-  from src.calendar.celestial_utils import ALGO1, ALGO2
-  from src.calendar.backend import CalendarBackend, calendar_utils_of
+  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, DizhiRelation
+  from bazi.bazi import Bazi
+  from bazi.bazi_chart import BaziChart
+  from bazi.rules import DizhiRules
+  from bazi.school import Anchor, BaziConfig, BaziSchool
+  from bazi.transit_chart import TransitChart
+  from bazi.transits import TransitDatabase, TransitKind, TransitSet
+  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
+  from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils
+  from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
+  from bazi.calendar.celestial_utils import ALGO1, ALGO2
+  from bazi.calendar.backend import CalendarBackend, calendar_utils_of
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)

@@ -11,7 +11,7 @@ import pytest
 from datetime import date, timedelta
 from itertools import product
 
-from src.calendar import CalendarType, CalendarDate
+from bazi.calendar import CalendarType, CalendarDate
 
 
 def test_calendar_type() -> None:

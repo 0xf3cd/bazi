@@ -14,18 +14,18 @@ from typing import Any, Self
 
 import pytest
 
-from src.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from src.bazi import BaziGender, Bazi
-from src.calendar import CalendarBackend, calendar_utils_of
-from src.school import BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
-from src.utils import bazi_utils
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
+from bazi.bazi import BaziGender, Bazi
+from bazi.calendar import CalendarBackend, calendar_utils_of
+from bazi.school import BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
+from bazi.utils import bazi_utils
 
-from src.data_types import (
+from bazi.data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple,
   HiddenTianganDict, BaziData,
 )
 
-from src.bazi_chart import BaziChart, BaziJson, 命盘
+from bazi.bazi_chart import BaziChart, BaziJson, 命盘
 
 
 def test_basic() -> None:
