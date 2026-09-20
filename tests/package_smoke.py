@@ -45,7 +45,7 @@ def main() -> None:
   check(dist.metadata['Requires-Python'] == '>=3.11', 'Python requirement mismatch')
   check(not dist.requires, 'Unexpected runtime dependencies')
   check(not dist.entry_points, 'Unexpected installed entrypoints')
-  check(not dist.metadata.get('License-Expression') and not dist.metadata.get('License'), 'Blanket license claim')
+  check(not dist.metadata.get_all('License-Expression', []) and not dist.metadata.get_all('License', []), 'Blanket license claim')
   check(not any('License ::' in value for value in dist.metadata.get_all('Classifier', [])), 'Blanket license classifier')
   check(set(dist.metadata.get_all('License-File', [])) == {'LICENSE', 'THIRD_PARTY_NOTICES.md'}, 'License file metadata mismatch')
   check({d.metadata['Name'].lower() for d in importlib.metadata.distributions()} == {'bazi', 'pip'}, 'Functional consumer contains development dependencies')

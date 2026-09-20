@@ -112,7 +112,7 @@ jobs:
           metadata = {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'],
             'repository': os.environ['REPOSITORY'], 'run_id': os.environ['RUN_ID'], 'mode': os.environ['MODE']}
           (bundle / 'release.json').write_text(json.dumps(metadata, sort_keys=True) + '\n')
-          files = sorted([*(bundle / 'dist').iterdir(), bundle / 'RELEASE_NOTES.md', bundle / 'release.json'])
+          files = sorted([*(bundle / 'dist').iterdir(), bundle / 'RELEASE_NOTES.md', bundle / 'release.json'], key=lambda p: p.relative_to(bundle).as_posix())
           checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(bundle).as_posix()}\n' for p in files)
           (bundle / 'SHA256SUMS').write_bytes(checksums.encode('utf-8'))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:

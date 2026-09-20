@@ -9,7 +9,7 @@ import subprocess
 import urllib.error
 import urllib.request
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 from unittest.mock import Mock
 
@@ -93,6 +93,12 @@ def release_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(key, value)
 
 
+@pytest.fixture(params=[False, True])
+def windows_path_order(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
+  if request.param:
+    monkeypatch.setattr(Path, '__lt__', lambda left, right: PureWindowsPath(left) < PureWindowsPath(right))
+
+
 @pytest.mark.parametrize('change', ['none', 'missing', 'no-reviewer', 'empty-reviewer', 'wildcard', 'tag-policy', 'extra-branch', 'protected-only', 'ref', 'repo', 'sha', 'mode'])
 def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
   environment = {'name': 'release', 'protection_rules': [{'type': 'required_reviewers',
@@ -133,7 +139,7 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
 
 
 @pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version'])
-def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
+def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   root = tmp_path / 'artifact'
   (root / 'dist').mkdir(parents=True)
@@ -144,7 +150,10 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
   if change == 'run':
     metadata['run_id'] = '999'
   (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
-  files = sorted(p for p in root.rglob('*') if p.is_file())
+  files = sorted(
+    (p for p in root.rglob('*') if p.is_file()),
+    key=lambda p: p.relative_to(root).as_posix(),
+  )
   checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root).as_posix()}\n' for p in files)
   (root / 'SHA256SUMS').write_bytes(checksums.encode('utf-8'))
   monkeypatch.setenv('MANIFEST_SHA', hashlib.sha256(checksums.encode()).hexdigest())
@@ -243,7 +252,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 
 @pytest.mark.parametrize('crlf', [False, True])
 @pytest.mark.parametrize('change', ['none', 'harmless-notes', 'extra', 'misnamed', 'missing'])
-def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, crlf: bool, change: str) -> None:
+def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
   bundle = runner_temp / 'bundle'
