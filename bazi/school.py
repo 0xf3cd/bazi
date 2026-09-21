@@ -223,11 +223,13 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # anchor is the day stem and only the modern sources add the year; here the classical anchor
   # is the year stem and only they add the day.
   'taiji_anchor':     frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 国印贵人: YEAR is 《五行精纪注释》卷十三「国印星，命局见年干禄前第八位的地支」
+  # 国印贵人: YEAR follows the modern 【注释】 in 《五行精纪注释》卷十三:
+  # 「国印星，命局见年干禄前第八位的地支」
   # (https://www.suanzhun.net/book/2731.html), which also works the example 「甲禄在寅，
   # 寅前八位是酉」. YEAR_AND_DAY is the modern reading of 问真 and 高人, and this library's
-  # default. As with 太极, the classical anchor is the year stem and only the modern sources
-  # add the day.
+  # default. The manuscript witness in GuoyinDef does not establish this annotator's anchor.
+  # 年干锚的明文出自今人【注释】，不混作古正文；年日并查依问真、高人，仍为本库默认。
+  # GuoyinDef 所引抄本见证不证明该注释者的锚点解释。
   'guoyin_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 
