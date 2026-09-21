@@ -1327,7 +1327,7 @@ class ShenshaRules:
       《张果星宗》一书两处互证地定下 `MODERN`：条目例解逐干列出，「天干吉凶星例」表另出一遍，
       十格相同。例解同时定死了起算法——甲禄在寅，酉为第八、戌为第九，即含禄起算。
     - 《星学大成》「唐符禄前八位是 国印禄前九位是」 is that same couplet in prose, and
-      《神峰通考》 places both stars in the 果老 tradition (「惟张果老通玄先生命理，专用此二星
+      《神峰通考》 places both stars in the 果老 tradition (「惟张果老通玄先生命理 专用此二星
       取贵」). With the inclusive counting illustrated in 《张果星宗》, 「禄前九位」 is
       禄 + 8 -- the same table as `MODERN`. This does not establish textual descent.
       《星学大成》那一句就是同一副对联的散文形，而《神峰通考》把这两颗星归给果老一脉。
