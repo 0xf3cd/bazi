@@ -9,7 +9,7 @@ import json
 import os
 import sys
 
-from datetime import date, datetime, UTC
+from datetime import date, datetime, timedelta, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +20,17 @@ WRITE_ATTEMPTS: list[str] = []
 def check(condition: bool, message: str) -> None:
   if not condition:
     raise RuntimeError(message)
+
+
+class EqualKey:
+  def __init__(self, value: object) -> None:
+    self.value = value
+
+  def __eq__(self, other: object) -> bool:
+    return self.value == other
+
+  def __hash__(self) -> int:
+    return hash(self.value)
 
 
 def deny_writes(event: str, args: tuple[Any, ...]) -> None:
@@ -81,8 +92,8 @@ def main() -> None:
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart
   from bazi.school import BaziConfig
-  from bazi.calendar import CalendarBackend, calendar_utils_of
-  from bazi.defines import Jieqi, Tiangan, Shishen
+  from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
+  from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
@@ -93,6 +104,37 @@ def main() -> None:
     utils = calendar_utils_of(backend)
     check(utils.to_date(utils.to_lunar(date(2024, 2, 10))) == date(2024, 2, 10), 'Calendar roundtrip mismatch')
     check(utils.jieqi_date(2024, Jieqi.LICHUN) == date(2024, 2, 4), 'Calendar absolute date mismatch')
+    date_calls: list[tuple[str, object]] = [
+      ('get_min_supported_date', CalendarType.SOLAR),
+      ('get_max_supported_date', CalendarType.SOLAR),
+      ('is_valid', CalendarDate(2024, 1, 1, CalendarType.SOLAR)),
+      *[(f'is_valid_{kind}_date', CalendarDate(2024, 1, 1, CalendarType[kind.upper()]))
+        for kind in ('solar', 'lunar', 'ganzhi')],
+      *[(f'{source}_to_{target}', CalendarDate(2024, 1, 1, CalendarType[source.upper()]))
+        for source in ('solar', 'lunar', 'ganzhi') for target in ('solar', 'lunar', 'ganzhi') if source != target],
+      *[(name, datetime(2024, 3, 1)) for name in ('to_solar', 'to_lunar', 'to_ganzhi', 'to_date', 'prev_jie', 'next_jie')],
+    ]
+    for name, good in date_calls:
+      method = getattr(utils, name)
+      method(good)
+      bad = EqualKey(good)
+      check(bad == good and good == bad and hash(bad) == hash(good), 'Cache collision control failed')
+      try:
+        method(bad)
+      except TypeError as error:
+        check(str(error).startswith('Expected '), f'{name}: wrong rejection boundary')
+      else:
+        raise RuntimeError(f'{name}: warm cache bypassed input validation')
+      for attribute in ('cache_clear', 'cache_info', 'cache_parameters', '__wrapped__'):
+        check(not hasattr(method, attribute), f'{name}: public cache attribute {attribute}')
+    a = datetime(2024, 3, 1, 0, 30, tzinfo=UTC)
+    b = datetime(2024, 2, 29, 19, 30, tzinfo=timezone(timedelta(hours=-5)))
+    check(a == b and hash(a) == hash(b), 'Datetime collision control failed')
+    for name in ('to_solar', 'to_lunar', 'to_ganzhi', 'to_date'):
+      project = getattr(utils, name)
+      check(utils.to_date(project(a)) == date(2024, 3, 1), 'First civil projection mismatch')
+      check(utils.to_date(project(b)) == date(2024, 2, 29), 'Warm civil projection mismatch')
+    print(f'PASS backend={backend.value} cache boundaries/civil projection')
     chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', BaziConfig.from_values(backend=backend, precision='day')))
     check(BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json, 'JSON restoration mismatch')
     transits = TransitChart(chart).at_year(2024)
@@ -115,6 +157,14 @@ def main() -> None:
     else:
       raise RuntimeError('JSON input rejection failed')
     print(f'PASS backend={backend.value} JSON/transits/analysis/input rejection')
+  for step in (Ganzhi.from_str('甲子').next, Ganzhi.from_str('甲子').prev):
+    step(1)
+    try:
+      step(1.0) # type: ignore[arg-type] # Must reject even when 1 has warmed the cache.
+    except TypeError as error:
+      check(str(error).startswith('Expected int'), 'Wrong step rejection boundary')
+    else:
+      raise RuntimeError('Ganzhi warm cache bypassed step validation')
   for value in Tiangan:
     check(bool(Interpreter.interpret_tiangan(value)['general']), 'Missing Tiangan description')
   for shishen in Shishen:

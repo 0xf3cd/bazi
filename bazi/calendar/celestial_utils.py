@@ -54,8 +54,13 @@ class CelestialCalendarUtils:
   # other four are conversions of them -- which is also why they compare equal to HKO's
   # own constants (asserted by the parity suite).
 
-  @functools.lru_cache(maxsize=512)
   def get_min_supported_date(self, date_type: CalendarType) -> CalendarDate:
+    if not isinstance(date_type, CalendarType):
+      raise TypeError(f'Expected CalendarType, got {type(date_type)}')
+    return self.__get_min_supported_date(date_type)
+
+  @functools.lru_cache(maxsize=512)
+  def __get_min_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if date_type == CalendarType.SOLAR:
       # Anchored on the lunar table for the same reason as `get_max_supported_date` below:
       # `solar_to_lunar` looks the lunar year up by the solar year, so a supported solar date
@@ -67,10 +72,15 @@ class CelestialCalendarUtils:
     elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_min_supported_date(CalendarType.SOLAR))
     else:
-      raise ValueError(f'Unsupported date_type: {date_type}')
+      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # All CalendarType members handled above.
+
+  def get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
+    if not isinstance(date_type, CalendarType):
+      raise TypeError(f'Expected CalendarType, got {type(date_type)}')
+    return self.__get_max_supported_date(date_type)
 
   @functools.lru_cache(maxsize=512)
-  def get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
+  def __get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if date_type == CalendarType.SOLAR:
       # `solar_to_lunar` looks the lunar year up by the solar year first, so a solar date
       # may not outlive the lunar table's last year -- even though that lunar year runs
@@ -82,11 +92,10 @@ class CelestialCalendarUtils:
     elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_max_supported_date(CalendarType.SOLAR))
     else:
-      raise ValueError(f'Unsupported date_type: {date_type}')
+      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # All CalendarType members handled above.
 
   # -- Validity --------------------------------------------------------------------
 
-  @functools.lru_cache(maxsize=512)
   def is_valid_solar_date(self, d: CalendarDate) -> bool:
     '''
     Check if the input date is valid, including whether it is in the supported range.
@@ -97,6 +106,12 @@ class CelestialCalendarUtils:
     Return: True if valid, False otherwise.
     '''
 
+    if not isinstance(d, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(d)}')
+    return self.__is_valid_solar_date(d)
+
+  @functools.lru_cache(maxsize=512)
+  def __is_valid_solar_date(self, d: CalendarDate) -> bool:
     if d.date_type != CalendarType.SOLAR:
       return False
     if d < self.get_min_supported_date(CalendarType.SOLAR):
@@ -111,7 +126,6 @@ class CelestialCalendarUtils:
       return False
     return True
 
-  @functools.lru_cache(maxsize=512)
   def is_valid_lunar_date(self, d: CalendarDate) -> bool:
     '''
     Check if the input date is valid, including whether it is in the supported range.
@@ -122,6 +136,12 @@ class CelestialCalendarUtils:
     Return: True if valid, False otherwise.
     '''
 
+    if not isinstance(d, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(d)}')
+    return self.__is_valid_lunar_date(d)
+
+  @functools.lru_cache(maxsize=512)
+  def __is_valid_lunar_date(self, d: CalendarDate) -> bool:
     if d.date_type != CalendarType.LUNAR:
       return False
     if d < self.get_min_supported_date(CalendarType.LUNAR):
@@ -134,7 +154,6 @@ class CelestialCalendarUtils:
       return False
     return 1 <= d.day <= days_counts[d.month - 1]
 
-  @functools.lru_cache(maxsize=512)
   def is_valid_ganzhi_date(self, d: CalendarDate) -> bool:
     '''
     Check if the input date is valid, including whether it is in the supported range.
@@ -145,6 +164,12 @@ class CelestialCalendarUtils:
     Return: True if valid, False otherwise.
     '''
 
+    if not isinstance(d, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(d)}')
+    return self.__is_valid_ganzhi_date(d)
+
+  @functools.lru_cache(maxsize=512)
+  def __is_valid_ganzhi_date(self, d: CalendarDate) -> bool:
     if d.date_type != CalendarType.GANZHI:
       return False
     if d < self.get_min_supported_date(CalendarType.GANZHI):
@@ -158,8 +183,13 @@ class CelestialCalendarUtils:
     days_counts: list[int] = self.days_counts_in_ganzhi_year(d.year)
     return 1 <= d.day <= days_counts[d.month - 1]
 
-  @functools.lru_cache(maxsize=512)
   def is_valid(self, d: CalendarDate) -> bool:
+    if not isinstance(d, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(d)}')
+    return self.__is_valid(d)
+
+  @functools.lru_cache(maxsize=512)
+  def __is_valid(self, d: CalendarDate) -> bool:
     if d.date_type == CalendarType.SOLAR:
       return self.is_valid_solar_date(d)
     elif d.date_type == CalendarType.LUNAR:
@@ -206,8 +236,13 @@ class CelestialCalendarUtils:
 
   # -- Conversions -----------------------------------------------------------------
 
-  @functools.lru_cache(maxsize=512)
   def lunar_to_solar(self, lunar_date: CalendarDate) -> CalendarDate:
+    if not isinstance(lunar_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(lunar_date)}')
+    return self.__lunar_to_solar(lunar_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __lunar_to_solar(self, lunar_date: CalendarDate) -> CalendarDate:
     if lunar_date.date_type != CalendarType.LUNAR:
       raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
     if not self.is_valid(lunar_date):
@@ -219,8 +254,13 @@ class CelestialCalendarUtils:
     solar: date = info['first_solar_day'] + timedelta(days=passed_days)
     return CalendarDate(solar.year, solar.month, solar.day, CalendarType.SOLAR)
 
-  @functools.lru_cache(maxsize=512)
   def solar_to_lunar(self, solar_date: CalendarDate) -> CalendarDate:
+    if not isinstance(solar_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(solar_date)}')
+    return self.__solar_to_lunar(solar_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __solar_to_lunar(self, solar_date: CalendarDate) -> CalendarDate:
     if solar_date.date_type != CalendarType.SOLAR:
       raise ValueError(f'Expected a SOLAR date, got {solar_date}')
     if not self.is_valid(solar_date):
@@ -238,8 +278,13 @@ class CelestialCalendarUtils:
     month_idx, day_idx = self.__walk_months((solar - info['first_solar_day']).days, info['days_counts'])
     return CalendarDate(lunar_year, month_idx + 1, day_idx + 1, CalendarType.LUNAR)
 
-  @functools.lru_cache(maxsize=512)
   def ganzhi_to_solar(self, ganzhi_date: CalendarDate) -> CalendarDate:
+    if not isinstance(ganzhi_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(ganzhi_date)}')
+    return self.__ganzhi_to_solar(ganzhi_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __ganzhi_to_solar(self, ganzhi_date: CalendarDate) -> CalendarDate:
     if ganzhi_date.date_type != CalendarType.GANZHI:
       raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
     if not self.is_valid(ganzhi_date):
@@ -251,8 +296,13 @@ class CelestialCalendarUtils:
     solar: date = self.jieqi_date(ganzhi_date.year, Jieqi.立春) + timedelta(days=passed_days)
     return CalendarDate(solar.year, solar.month, solar.day, CalendarType.SOLAR)
 
-  @functools.lru_cache(maxsize=512)
   def solar_to_ganzhi(self, solar_date: CalendarDate) -> CalendarDate:
+    if not isinstance(solar_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(solar_date)}')
+    return self.__solar_to_ganzhi(solar_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __solar_to_ganzhi(self, solar_date: CalendarDate) -> CalendarDate:
     if solar_date.date_type != CalendarType.SOLAR:
       raise ValueError(f'Expected a SOLAR date, got {solar_date}')
     if not self.is_valid(solar_date):
@@ -269,8 +319,13 @@ class CelestialCalendarUtils:
     month_idx, day_idx = self.__walk_months(passed_days, self.days_counts_in_ganzhi_year(ganzhi_year))
     return CalendarDate(ganzhi_year, month_idx + 1, day_idx + 1, CalendarType.GANZHI)
 
-  @functools.lru_cache(maxsize=512)
   def lunar_to_ganzhi(self, lunar_date: CalendarDate) -> CalendarDate:
+    if not isinstance(lunar_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(lunar_date)}')
+    return self.__lunar_to_ganzhi(lunar_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __lunar_to_ganzhi(self, lunar_date: CalendarDate) -> CalendarDate:
     if lunar_date.date_type != CalendarType.LUNAR:
       raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
     if not self.is_valid(lunar_date):
@@ -278,8 +333,13 @@ class CelestialCalendarUtils:
                        f'[{self.get_min_supported_date(lunar_date.date_type)}, {self.get_max_supported_date(lunar_date.date_type)}]')
     return self.solar_to_ganzhi(self.lunar_to_solar(lunar_date))
 
-  @functools.lru_cache(maxsize=512)
   def ganzhi_to_lunar(self, ganzhi_date: CalendarDate) -> CalendarDate:
+    if not isinstance(ganzhi_date, CalendarDate):
+      raise TypeError(f'Expected CalendarDate, got {type(ganzhi_date)}')
+    return self.__ganzhi_to_lunar(ganzhi_date)
+
+  @functools.lru_cache(maxsize=512)
+  def __ganzhi_to_lunar(self, ganzhi_date: CalendarDate) -> CalendarDate:
     if ganzhi_date.date_type != CalendarType.GANZHI:
       raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
     if not self.is_valid(ganzhi_date):
@@ -298,8 +358,8 @@ class CelestialCalendarUtils:
 
   # -- `to_*` family ---------------------------------------------------------------
 
-  @functools.lru_cache(maxsize=512)
   def __to_calendardate(self, d: date | CalendarDate) -> CalendarDate:
+    # Project civil Y/M/D before caching: equal aware datetimes can have different dates.
     if isinstance(d, date):
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
     elif isinstance(d, CalendarDate):
@@ -312,7 +372,6 @@ class CelestialCalendarUtils:
                        f'[{self.get_min_supported_date(ret.date_type)}, {self.get_max_supported_date(ret.date_type)}]')
     return ret
 
-  @functools.lru_cache(maxsize=512)
   def to_solar(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `SOLAR` type.
@@ -324,8 +383,12 @@ class CelestialCalendarUtils:
     Return: (CalendarDate) a converted date with `SOLAR` type.
     '''
 
-    calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
+    return self.__to_solar(
+      self.__to_calendardate(d),
+    )
 
+  @functools.lru_cache(maxsize=512)
+  def __to_solar(self, calendardate: CalendarDate) -> CalendarDate:
     if calendardate.date_type == CalendarType.SOLAR:
       return calendardate
     elif calendardate.date_type == CalendarType.LUNAR:
@@ -334,7 +397,6 @@ class CelestialCalendarUtils:
       assert calendardate.date_type == CalendarType.GANZHI
       return self.ganzhi_to_solar(calendardate)
 
-  @functools.lru_cache(maxsize=512)
   def to_lunar(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `LUNAR` type.
@@ -346,8 +408,12 @@ class CelestialCalendarUtils:
     Return: (CalendarDate) a converted date with `LUNAR` type.
     '''
 
-    calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
+    return self.__to_lunar(
+      self.__to_calendardate(d),
+    )
 
+  @functools.lru_cache(maxsize=512)
+  def __to_lunar(self, calendardate: CalendarDate) -> CalendarDate:
     if calendardate.date_type == CalendarType.LUNAR:
       return calendardate
     elif calendardate.date_type == CalendarType.SOLAR:
@@ -356,7 +422,6 @@ class CelestialCalendarUtils:
       assert calendardate.date_type == CalendarType.GANZHI
       return self.ganzhi_to_lunar(calendardate)
 
-  @functools.lru_cache(maxsize=512)
   def to_ganzhi(self, d: date | CalendarDate) -> CalendarDate:
     '''
     Convert the input date to a `CalendarDate` with `GANZHI` type.
@@ -373,8 +438,12 @@ class CelestialCalendarUtils:
     which granularity a chart compares at is `BaziPrecision`'s decision, not this method's.
     '''
 
-    calendardate: CalendarDate = self.__to_calendardate(d) # Already validated.
+    return self.__to_ganzhi(
+      self.__to_calendardate(d),
+    )
 
+  @functools.lru_cache(maxsize=512)
+  def __to_ganzhi(self, calendardate: CalendarDate) -> CalendarDate:
     if calendardate.date_type == CalendarType.GANZHI:
       return calendardate
     elif calendardate.date_type == CalendarType.SOLAR:
@@ -383,7 +452,6 @@ class CelestialCalendarUtils:
       assert calendardate.date_type == CalendarType.LUNAR
       return self.lunar_to_ganzhi(calendardate)
 
-  @functools.lru_cache(maxsize=512)
   def to_date(self, d: date | CalendarDate) -> date:
     '''
     Convert the input date to a `date` type.
@@ -396,7 +464,13 @@ class CelestialCalendarUtils:
     Return: (date) a converted date with `date` type.
     '''
 
-    solar: CalendarDate = self.to_solar(self.__to_calendardate(d))
+    return self.__to_date(
+      self.__to_calendardate(d),
+    )
+
+  @functools.lru_cache(maxsize=512)
+  def __to_date(self, calendardate: CalendarDate) -> date:
+    solar: CalendarDate = self.to_solar(calendardate)
     return date(solar.year, solar.month, solar.day)
 
   # -- Jieqi -----------------------------------------------------------------------
@@ -478,7 +552,6 @@ class CelestialCalendarUtils:
     if dt >= last:
       raise ValueError(f'"{dt}" is out of the supported range. The last available Jie is "{last}"')
 
-  @functools.lru_cache(maxsize=512)
   def prev_jie(self, dt: datetime) -> JieqiTime:
     '''
     Find out the previous Jie (节), not Jieqi, for the given solar datetime.
@@ -495,6 +568,10 @@ class CelestialCalendarUtils:
 
     if not isinstance(dt, datetime):
       raise TypeError(f'Expected datetime, got {type(dt)}')
+    return self.__prev_jie(dt)
+
+  @functools.lru_cache(maxsize=512)
+  def __prev_jie(self, dt: datetime) -> JieqiTime:
     self.__check_jie_range(dt)
 
     # Walk the year's 节 backwards; `dt` sits in the last interval whose start is <= it.
@@ -508,7 +585,6 @@ class CelestialCalendarUtils:
     assert last_daxue <= dt
     return JieqiTime(Jieqi.大雪, last_daxue)
 
-  @functools.lru_cache(maxsize=512)
   def next_jie(self, dt: datetime) -> JieqiTime:
     '''
     Find out the next Jie (节), not Jieqi, for the given solar datetime.
@@ -526,6 +602,10 @@ class CelestialCalendarUtils:
 
     if not isinstance(dt, datetime):
       raise TypeError(f'Expected datetime, got {type(dt)}')
+    return self.__next_jie(dt)
+
+  @functools.lru_cache(maxsize=512)
+  def __next_jie(self, dt: datetime) -> JieqiTime:
     self.__check_jie_range(dt)
 
     for jie in Jieqi.as_list(ganzhi_year=False)[::2]:

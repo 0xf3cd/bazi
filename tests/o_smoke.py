@@ -75,6 +75,16 @@ def main() -> int:
     def __eq__(self, other: object) -> bool:
       return True
 
+  class EqualKey:
+    def __init__(self, value: object) -> None:
+      self.value = value
+
+    def __eq__(self, other: object) -> bool:
+      return self.value == other
+
+    def __hash__(self) -> int:
+      return hash(self.value)
+
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
@@ -260,15 +270,39 @@ def main() -> int:
      lambda: transit_analysis.zhengyin(object())), # type: ignore
     ('TransitAnalysis.star wrong transits type', TypeError,
      lambda: transit_analysis.star(object())), # type: ignore
-    ('hko get_min_supported_date garbage date_type', ValueError,
-     lambda: hko_data_utils.get_min_supported_date(42)),
-    ('celestial get_max_supported_date garbage date_type', ValueError,
+    ('hko get_min_supported_date garbage date_type', TypeError,
+     lambda: hko_data_utils.get_min_supported_date(42)), # type: ignore[arg-type] # Deliberately invalid input.
+    ('celestial get_max_supported_date garbage date_type', TypeError,
      lambda: calendar_utils_of(CalendarBackend.CELESTIAL).get_max_supported_date(42)), # type: ignore
     ('calendar_utils_of garbage backend', TypeError,
      lambda: calendar_utils_of(42)), # type: ignore
     ('BaziConfig wrong Dayun year rule type', TypeError,
      lambda: BaziConfig(dayun_year_rule='fixed_decade')), # type: ignore
   ]
+
+  for backend in CalendarBackend:
+    utils = calendar_utils_of(backend)
+    date_calls: list[tuple[str, object]] = [
+      ('get_min_supported_date', CalendarType.SOLAR),
+      ('get_max_supported_date', CalendarType.SOLAR),
+      ('is_valid', solar_date),
+      *[(f'is_valid_{kind}_date', CalendarDate(2024, 1, 1, CalendarType[kind.upper()]))
+        for kind in ('solar', 'lunar', 'ganzhi')],
+      *[(f'{source}_to_{target}', CalendarDate(2024, 1, 1, CalendarType[source.upper()]))
+        for source in ('solar', 'lunar', 'ganzhi') for target in ('solar', 'lunar', 'ganzhi') if source != target],
+      *[(name, datetime(2024, 3, 1)) for name in ('to_solar', 'to_lunar', 'to_ganzhi', 'to_date', 'prev_jie', 'next_jie')],
+    ]
+    for name, good in date_calls:
+      method = getattr(utils, name)
+      method(good)
+      bad = EqualKey(good)
+      if not (bad == good and good == bad and hash(bad) == hash(good)):
+        raise RuntimeError('Cache collision control failed')
+      checks.append((f'{backend}.{name} warm cache wrong type', TypeError, partial(method, bad)))
+
+  for step in (Ganzhi.from_str('甲子').next, Ganzhi.from_str('甲子').prev):
+    step(1)
+    checks.append((f'Ganzhi.{step.__name__} warm cache wrong type', TypeError, partial(step, 1.0))) # type: ignore[arg-type]
 
   # The registry covers branch results; the whole-pillar predicates stay explicit above.
   for name, spec in _REGISTRY.items():
