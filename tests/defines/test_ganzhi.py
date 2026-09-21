@@ -129,13 +129,13 @@ def test_list_sexagenary_cycle_strs() -> None:
 def test_ganzhi_next_prev() -> None:
   # Negative.
   with pytest.raises(TypeError):
-    Ganzhi(Tiangan.甲, Dizhi.子).next('1')
+    Ganzhi(Tiangan.甲, Dizhi.子).next('1') # type: ignore[arg-type] # Deliberately invalid input.
   with pytest.raises(TypeError):
-    Ganzhi(Tiangan.甲, Dizhi.子).prev('1')
+    Ganzhi(Tiangan.甲, Dizhi.子).prev('1') # type: ignore[arg-type] # Deliberately invalid input.
   with pytest.raises(TypeError):
-    Ganzhi(Tiangan.甲, Dizhi.子).next(3.5)
+    Ganzhi(Tiangan.甲, Dizhi.子).next(3.5) # type: ignore[arg-type] # Deliberately invalid input.
   with pytest.raises(TypeError):
-    Ganzhi(Tiangan.甲, Dizhi.子).prev(3.5)
+    Ganzhi(Tiangan.甲, Dizhi.子).prev(3.5) # type: ignore[arg-type] # Deliberately invalid input.
 
   def __random_gz() -> Ganzhi:
     while True:
@@ -176,3 +176,49 @@ def test_ganzhi_next_prev() -> None:
       assert random_gz2 == random_gz2.prev(x).next(x)
       assert random_gz2.next(x) == random_gz2.prev(-x)
       assert random_gz2.prev(x) == random_gz2.next(-x)
+
+
+@pytest.mark.parametrize('name', ['next', 'prev'])
+@pytest.mark.parametrize('form', ['positional', 'keyword', 'default'])
+@pytest.mark.parametrize('warm', [False, True], ids=['cold', 'warm'])
+def test_step_type_before_cache(name: str, form: str, warm: bool) -> None:
+  class Step(int):
+    pass
+
+  class EqualStep:
+    def __eq__(self, other: object) -> bool:
+      return other == 1
+
+    def __hash__(self) -> int:
+      return hash(1)
+
+  class HashTrap:
+    def __hash__(self) -> int:
+      raise AssertionError('Wrong-type step reached hashing')
+
+  for value in vars(Ganzhi).values():
+    if hasattr(value, 'cache_clear'):
+      value.cache_clear()
+  gz = Ganzhi.from_str('甲子')
+  method = getattr(gz, name)
+  bad = EqualStep()
+  assert bad == 1 and 1 == bad and hash(bad) == hash(1)
+  if warm:
+    if form == 'default':
+      method()
+    elif form == 'keyword':
+      method(step=1)
+    else:
+      method(1)
+  invalid: object
+  for invalid in (bad, 1.0, [], HashTrap()):
+    with pytest.raises(TypeError, match='Expected int'):
+      if form == 'keyword':
+        method(step=invalid)
+      else:
+        method(invalid)
+  expected = Ganzhi.from_str('乙丑' if name == 'next' else '癸亥')
+  assert method() == method(1) == method(step=1) == method(True) == method(Step(1)) == expected
+  assert method(False) == method(Step(0)) == gz
+  for attribute in ('cache_clear', 'cache_info', 'cache_parameters', '__wrapped__'):
+    assert not hasattr(method, attribute)

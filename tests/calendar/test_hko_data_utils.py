@@ -19,13 +19,13 @@ class Year(int):
 
 
 def test_get_min_supported_date_negative() -> None:
-  with pytest.raises(ValueError):
-    hko_data_utils.get_min_supported_date(42)
+  with pytest.raises(TypeError):
+    hko_data_utils.get_min_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
 
 
 def test_get_max_supported_date_negative() -> None:
-  with pytest.raises(ValueError):
-    hko_data_utils.get_max_supported_date(42)
+  with pytest.raises(TypeError):
+    hko_data_utils.get_max_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
 
 
 @pytest.mark.slow
@@ -153,7 +153,7 @@ def test_days_counts_in_ganzhi_year_cannot_poison_the_cache() -> None:
 
   # Poison, then FIRST-query a verdict computed from the lengths: month 1 of ganzhi
   # year 2000 has 30 days, so day 31 must stay invalid even while the edit is live.
-  hko_data_utils.is_valid_ganzhi_date.cache_clear()
+  hko_data_utils.__is_valid_ganzhi_date.cache_clear()
   assert counts[0] == 30
   counts[0] = 999
   assert hko_data_utils.days_counts_in_ganzhi_year(2000)[0] == 30
@@ -187,7 +187,8 @@ def test_is_valid() -> None:
   class __DuckTypeClass:
     def __init__(self, anything: Any) -> None:
       self.date_type = anything
-  assert not hko_data_utils.is_valid(__DuckTypeClass(0)) # Test duck type.
+  with pytest.raises(TypeError, match='Expected CalendarDate'):
+    hko_data_utils.is_valid(__DuckTypeClass(0)) # type: ignore[arg-type] # Declared types, not duck types.
 
 
 def _solar_date_gen(d: CalendarDate):
@@ -444,7 +445,7 @@ def test_to_solar() -> None:
   with pytest.raises(ValueError):
     hko_data_utils.to_solar(CalendarDate(1901, 1, 1, CalendarType.SOLAR)) # Below the supported range
   with pytest.raises(TypeError):
-    hko_data_utils.to_solar('2024-01-01') # Invalid type
+    hko_data_utils.to_solar('2024-01-01') # type: ignore[arg-type] # Invalid type.
 
 
 def test_to_lunar() -> None:
@@ -463,7 +464,7 @@ def test_to_lunar() -> None:
   with pytest.raises(ValueError):
     hko_data_utils.to_lunar(date(1901, 1, 1)) # Below the supported range
   with pytest.raises(TypeError):
-    hko_data_utils.to_lunar('2024-01-01') # Invalid type
+    hko_data_utils.to_lunar('2024-01-01') # type: ignore[arg-type] # Invalid type.
 
 
 def test_to_ganzhi() -> None:
@@ -482,7 +483,7 @@ def test_to_ganzhi() -> None:
   with pytest.raises(ValueError):
     hko_data_utils.to_ganzhi(CalendarDate(1901, 1, 1, CalendarType.SOLAR)) # Below the supported range
   with pytest.raises(TypeError):
-    hko_data_utils.to_ganzhi('2024-01-01') # Invalid type
+    hko_data_utils.to_ganzhi('2024-01-01') # type: ignore[arg-type] # Invalid type.
 
 
 def test_to_date() -> None:
@@ -502,7 +503,7 @@ def test_to_date() -> None:
   with pytest.raises(ValueError):
     hko_data_utils.to_date(CalendarDate(9999, 1, 1, CalendarType.GANZHI)) # Invalid date
   with pytest.raises(TypeError):
-    hko_data_utils.to_date('2024-01-01') # Invalid type
+    hko_data_utils.to_date('2024-01-01') # type: ignore[arg-type] # Invalid type.
 
 
 def test_get_jieqi_date() -> None:
@@ -595,7 +596,7 @@ def test_prev_jie() -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
   with pytest.raises(TypeError):
-    hko_data_utils.prev_jie('2024-06-15')
+    hko_data_utils.prev_jie('2024-06-15') # type: ignore[arg-type] # Invalid type.
   with pytest.raises(ValueError):
     hko_data_utils.prev_jie(datetime(1899, 12, 31))
   with pytest.raises(ValueError):
@@ -655,7 +656,7 @@ def test_next_jie() -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
   with pytest.raises(TypeError):
-    hko_data_utils.next_jie('2024-06-15')
+    hko_data_utils.next_jie('2024-06-15') # type: ignore[arg-type] # Invalid type.
   with pytest.raises(ValueError):
     hko_data_utils.next_jie(datetime(1899, 12, 31))
   with pytest.raises(ValueError):

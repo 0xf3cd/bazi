@@ -64,13 +64,13 @@ def test_the_three_bounds_are_one_physical_day() -> None:
 
 
 def test_get_min_supported_date_negative() -> None:
-  with pytest.raises(ValueError):
-    ALGO1.get_min_supported_date(42)
+  with pytest.raises(TypeError):
+    ALGO1.get_min_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
 
 
 def test_get_max_supported_date_negative() -> None:
-  with pytest.raises(ValueError):
-    ALGO1.get_max_supported_date(42)
+  with pytest.raises(TypeError):
+    ALGO1.get_max_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
 
 
 def test_solar() -> None:
@@ -262,11 +262,11 @@ def test_to_family_negative() -> None:
   with pytest.raises(ValueError):
     ALGO1.to_ganzhi(solar(1901, 1, 1)) # Before the first supported day.
   with pytest.raises(TypeError):
-    ALGO1.to_solar('2024-01-01') # Not a date or CalendarDate.
+    ALGO1.to_solar('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
   with pytest.raises(TypeError):
-    ALGO1.to_lunar('2024-01-01') # Not a date or CalendarDate.
+    ALGO1.to_lunar('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
   with pytest.raises(TypeError):
-    ALGO1.to_ganzhi('2024-01-01') # Not a date or CalendarDate.
+    ALGO1.to_ganzhi('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
 
 
 def test_real_moments_not_placeholders() -> None:
@@ -335,7 +335,7 @@ def test_jie_range_is_enforced() -> None:
     with pytest.raises(ValueError):
       fn(last) # The upper bound is exclusive.
     with pytest.raises(TypeError):
-      fn(date(2024, 2, 4)) # A date is not a datetime.
+      fn(date(2024, 2, 4)) # type: ignore[arg-type] # A date is not a datetime.
 
 
 def test_exactly_on_a_jie_belongs_to_it() -> None:

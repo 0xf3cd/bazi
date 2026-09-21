@@ -50,17 +50,23 @@ class Ganzhi(NamedTuple):
     '''
     return [str(gz) for gz in Ganzhi.list_sexagenary_cycle()]
 
-  @functools.lru_cache(maxsize=1024)
   def next(self, step: int = 1) -> 'Ganzhi':
     if not isinstance(step, int):
       raise TypeError(f'Expected int, got {type(step)}')
+    return self.__next(step)
+
+  @functools.lru_cache(maxsize=1024)
+  def __next(self, step: int) -> 'Ganzhi':
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
     return cycle[(cycle.index(self) + step) % 60]
 
-  @functools.lru_cache(maxsize=1024)
   def prev(self, step: int = 1) -> 'Ganzhi':
     if not isinstance(step, int):
       raise TypeError(f'Expected int, got {type(step)}')
+    return self.__prev(step)
+
+  @functools.lru_cache(maxsize=1024)
+  def __prev(self, step: int) -> 'Ganzhi':
     cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
     return cycle[(cycle.index(self) - step) % 60]
 
