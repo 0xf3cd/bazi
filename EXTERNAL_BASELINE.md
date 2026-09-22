@@ -58,7 +58,7 @@ A match of these fields is not a claim that the calculators are interchangeable.
 
 | Case | Contrast preserved in the fixture |
 | --- | --- |
-| C09/C10 | At 2000-02-04 20:40, bazi ties the entire minute to the new year/month. lunar-python still has 己卯/丁丑 at the supplied 20:40:00, before its 20:40:24 boundary |
+| C10 | At 2000-02-04 20:40, bazi ties the entire minute to the new year/month. lunar-python still has 己卯/丁丑 at the supplied 20:40:00, before its 20:40:24 boundary |
 | C16 | At 2017-02-03 23:10, bazi HOUR assigns the 立春-containing 子时 to the new year; MINUTE still assigns the old year. Iwzwh returns the new-year pillars in this observation |
 | C18 | At 2017-02-03 23:34, the minute tie and sect-2 day convention act together: lunar-python sect 2 differs from bazi MINUTE/WAN_ZISHI in year, month and day pillars |
 | C23 | At 2009-02-03 23:30, bazi HOUR reaches the next day's 00:xx 立春 through the spanning 子时; DAY and MINUTE retain the old year |
@@ -93,8 +93,8 @@ The fixture keeps the following fields separate:
 - external `year_labels` and `age_labels`: source-specific values. lunar-python
   returns Gregorian inclusive year ranges. Iwzwh year and 虚岁 start labels are
   reconstructed from its captured frontend formula and returned 起运 age; end
-  bounds are not supplied. China95 supplies unclassified age displays and no year
-  row in the captured 大运 block. `field_status` distinguishes observed,
+  bounds are not supplied. China95 supplies unclassified age displays.
+  `field_status` distinguishes observed,
   reconstructed and not-provided fields. They are not converted to bazi's
   Ganzhi-year labels.
 - `reported_forward`: an explicit library result, or null when the web observation
