@@ -13,7 +13,7 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.defines import Ganzhi
-from bazi.school import BaziConfig, BaziSchool
+from bazi.school import BaziConfig, BaziSchool, DayRollover
 
 
 pytestmark = pytest.mark.integration
@@ -95,7 +95,7 @@ def test_baseline_inventory() -> None:
     precision, rollover, year_rule = profile.split('/')
     assert values['backend'] == 'celestial'
     assert values['precision'] == precision
-    assert values['school']['day_rollover'] == rollover
+    assert BaziSchool.from_json(values['school']) == BaziSchool(day_rollover=DayRollover[rollover])
     assert values['dayun_year_rule'] == year_rule
   for case in cases:
     assert set(case['reference']) == set(BASELINE['profiles'])

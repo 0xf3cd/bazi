@@ -63,7 +63,7 @@ domain values and records configuration. `py.typed` exposes the inline type hint
 Private names, offline generation tools and undocumented internals are not a
 promise of a stable public interface.
 
-[External chart comparisons](EXTERNAL_BASELINE.md) document a synthetic boundary
+[External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
 baseline with configuration-specific results and an offline regression test.
 
 ## Instructions
