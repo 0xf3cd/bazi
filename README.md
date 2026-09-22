@@ -63,6 +63,9 @@ domain values and records configuration. `py.typed` exposes the inline type hint
 Private names, offline generation tools and undocumented internals are not a
 promise of a stable public interface.
 
+[External chart comparisons](EXTERNAL_BASELINE.md) document a synthetic boundary
+baseline with configuration-specific results and an offline regression test.
+
 ## Instructions
 
 `Requirements.txt` is the development setup, not the installed library's dependency
