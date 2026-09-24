@@ -15,6 +15,9 @@ relicense third-party data, quotations or reference material included in this pr
 - The MIT grant for original code does not grant rights in third-party quotations,
   reference material or interpretive corpus content. Citations are retained where
   present; they identify sources, not grants of permission.
+- External calculator observations in `tests/integration/external_baseline.json`
+  identify their source, configuration and capture date. They are reference
+  observations, separate from the author-owned comparison tests and bazi snapshots.
 
 Inclusion in a wheel or source archive does not settle rights in third-party
 material. No blanket license expression is asserted for the combined distribution.
