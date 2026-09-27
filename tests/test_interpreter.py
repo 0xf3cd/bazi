@@ -342,9 +342,7 @@ def test_provenance_integrity() -> None:
     _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
   ):
     assert _DESCRIPTION_SOURCES[source].work == '《命理探源》'
-    assert _DESCRIPTION_SOURCES[source].edition == (
-      '民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行'
-    )
+    assert _DESCRIPTION_SOURCES[source].edition == '版心题《命理探原》'
 
   for source, record in _DESCRIPTION_SOURCES.items():
     assert all((

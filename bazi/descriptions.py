@@ -157,7 +157,7 @@ _DESCRIPTION_SOURCES: Final[
   _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: _DescriptionSourceRecord(
     work='《命理探源》',
     attribution='袁树珊著',
-    edition='民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行',
+    edition='版心题《命理探原》',
     locator='PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
     text_layer=_DescriptionTextLayer.BAIWEN,
@@ -169,7 +169,7 @@ _DESCRIPTION_SOURCES: Final[
   _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: _DescriptionSourceRecord(
     work='《命理探源》',
     attribution='袁树珊著',
-    edition='民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行',
+    edition='版心题《命理探原》',
     locator='PDF pp. 66-70, “十干生克定名”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
     text_layer=_DescriptionTextLayer.BAIWEN,
