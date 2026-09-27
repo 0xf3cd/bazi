@@ -176,7 +176,7 @@ _DESCRIPTION_SOURCES: Final[
     lineage=_DescriptionLineage.MINGLI_TANYUAN,
     excerpt='陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
     supports='The five relations, polarity distinctions, and this witness\'s Shishen nomenclature.',
-    limitations='Separates 劫財 and 敗財 by day-stem polarity; it does not support collapsing both into 劫財 or support personality, kinship, fortune, or unconditional chart judgments.',
+    limitations='Does not support collapsing both into 劫財 or support personality, kinship, fortune, or unconditional chart judgments.',
   ),
 })
 
