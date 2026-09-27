@@ -167,6 +167,11 @@ def main() -> None:
       raise RuntimeError('Ganzhi warm cache bypassed step validation')
   for value in Tiangan:
     check(bool(Interpreter.interpret_tiangan(value)['general']), 'Missing Tiangan description')
+  check(
+    len(Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=True)['general'])
+    > len(Interpreter.interpret_tiangan(Tiangan.甲)['general']),
+    'Reference-only Tiangan descriptions are not opt-in',
+  )
   for shishen in Shishen:
     check(bool(Interpreter.interpret_shishen(shishen)['general']), 'Missing Shishen description')
   try:

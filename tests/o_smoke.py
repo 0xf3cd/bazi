@@ -32,9 +32,10 @@ def main() -> int:
   from functools import partial
   from zoneinfo import ZoneInfo
 
-  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, DizhiRelation
+  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart
+  from bazi.interpreter import Interpreter
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -151,6 +152,10 @@ def main() -> int:
      lambda: Bazi.random(BaziConfig.from_values(backend='hko', precision='hour'))),
     ('BaziChart.random unsupported config', ValueError,
      lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
+    ('Interpreter.interpret_shishen wrong reference flag', TypeError,
+     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=1)), # type: ignore
+    ('Interpreter.interpret_tiangan wrong reference flag', TypeError,
+     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1)), # type: ignore
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,
