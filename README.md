@@ -58,6 +58,10 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.interpreter` | `Interpreter.interpret_tiangan`, `Interpreter.interpret_shishen` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
+`bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
+default-output descriptions. `Interpreter` methods use the same default; pass
+`include_reference_only=True` to also include editorial reference-only claims.
+
 Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
 domain values and records configuration. `py.typed` exposes the inline type hints.
 Private names, offline generation tools and undocumented internals are not a

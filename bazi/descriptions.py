@@ -1,6 +1,8 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import Final, TypedDict
+from dataclasses import dataclass
+from enum import Enum
+from typing import Final, TypeAlias, TypedDict
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
@@ -33,13 +35,57 @@ class TianganDescription(TypedDict):
   personality: list[str]
 
 
-# This table stores the descriptions of each Shishen.
-# The corpus tables are frozen mappings, but entries are returned as-is -- anyone
-# reading them directly must not mutate the results. `Interpreter.interpret_*` is
-# the mutation-safe boundary: it deep-copies entries before returning.
-# 语料表是冻结映射，但取条目原样返回——直接读表者不得修改结果。
-# `Interpreter.interpret_*` 是可安全修改的边界：返回前深拷贝条目。
-SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
+class _DescriptionSource(Enum):
+  '''The provenance layer of a description claim. / 语料断言的来源层。'''
+
+  EDITORIAL = 'editorial'
+
+
+class _DescriptionOutput(Enum):
+  '''The output policy of a description claim. / 语料断言的输出策略。'''
+
+  REFERENCE_ONLY = 'reference_only'
+
+
+@dataclass(frozen=True)
+class _DescriptionClaim:
+  '''A description with an explicit source and output policy. / 带明确来源和输出策略的语料断言。'''
+
+  text:   str
+  source: _DescriptionSource
+  output: _DescriptionOutput
+
+
+'''A bare default-output string with unclassified source, or an explicit claim.
+来源未分类的默认输出裸字符串，或显式语料断言。'''
+_DescriptionItem: TypeAlias = str | _DescriptionClaim
+
+
+class _ShishenCorpusDescription(TypedDict):
+  general:        list[_DescriptionItem]
+  in_good_status: list[_DescriptionItem]
+  in_bad_status:  list[_DescriptionItem]
+  relationship:   list[_DescriptionItem]
+
+
+class _TianganCorpusDescription(TypedDict):
+  general:     list[_DescriptionItem]
+  personality: list[_DescriptionItem]
+
+
+def _editorial_reference(text: str) -> _DescriptionClaim:
+  assert isinstance(text, str)
+  return _DescriptionClaim(
+    text=text,
+    source=_DescriptionSource.EDITORIAL,
+    output=_DescriptionOutput.REFERENCE_ONLY,
+  )
+
+
+# The private corpus is the single source of description text. / 私有语料表是描述文字的单一来源。
+_SHISHEN_DESCRIPTION_CORPUS: Final[
+  frozendict[Shishen, _ShishenCorpusDescription]
+] = frozendict({
   Shishen.比肩 : {
     'general': [
       '代表同辈、竞争、合作。',
@@ -130,7 +176,9 @@ SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendic
     ],
     'in_bad_status': [
       '食神过旺，好幻想，易钻牛角尖；也容易流于虚伪，缺乏是非，显得迂腐懦弱。',
-      '食神之人头脑活动非常旺盛，想东想西，因此食神过旺的人，易焦虑失眠。',
+      _editorial_reference(
+        '食神之人头脑活动非常旺盛，想东想西，因此食神过旺的人，易焦虑失眠。',
+      ),
       '逢枭印夺食，求谋不顺利，处处阻逆，连谋温饱都很费力。可用比劫来化。',
     ],
     'relationship': [
@@ -239,8 +287,12 @@ SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendic
       '代表的亲戚：对男命来说代表女儿；对女命来说代表老公、男友。',
       '代表的正面性格：稳重、正直、讲信用、有责任感、讲规矩。',
       '代表的负面性格：过于保守、迂腐、优柔寡断、积极性差。',
-      '如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
-      '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
+      _editorial_reference(
+        '如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
+      ),
+      _editorial_reference(
+        '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
+      ),
       '正官是护身卫财之本，表示保护人身及财产的安全，正官象征官方权力，多受法理的约束。',
       '代表约束和管教的力量，如法律，纪律，长辈，上司，政府，学制，职业，目标，计划等合理的规则规范和管理，或者是国家公共机关的制度。',
     ],
@@ -265,12 +317,18 @@ SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendic
       '代表激情和冒险，象征挑战现状、突破极限的勇气。',
       '夸张一点说，代表通过被外界“毒打”从而历经磨练成才。',
       '七杀的管制大刀阔斧、雷厉风行，所以也是一种霸道的象征。',
-      '官司、法院、牢狱、军队、公检法、忌恨、小人、恶人、凶祸、外伤、疾病。',
+      _editorial_reference(
+        '官司、法院、牢狱、军队、公检法、忌恨、小人、恶人、凶祸、外伤、疾病。',
+      ),
       '代表的亲戚：在男命中代表儿子；在女命中代表男朋友、情人、丈夫。',
       '代表的正面性格：有进取心、有冲劲、做事果断、见义勇为、勇于创新。',
       '代表的负面性格：偏激、凶暴、好胜心强、猜忌心重、阴沉。',
-      '如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
-      '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
+      _editorial_reference(
+        '如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
+      ),
+      _editorial_reference(
+        '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
+      ),
       '与日柱同性之克，无情之克，其含义为打击，压制，暴力，权其性刚雄，具有叛逆，称霸之性，需制化方可驾驭。',
       '代表非正当的管理和约束，或强制性的压迫和管制。这种管理和压迫容易让其他人产生反感和排斥。',
     ],
@@ -281,7 +339,9 @@ SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendic
     'in_bad_status': [
       '专制，暴力、独断、霸气，匪气，好胜，冲动，凶残。',
       '容易偏激，叛逆和过于霸道，容易走极端。',
-      '七杀代表突如其来的打击、攻击、意外灾害等外在环境的变故。',
+      _editorial_reference(
+        '七杀代表突如其来的打击、攻击、意外灾害等外在环境的变故。',
+      ),
     ],
     'relationship': [
       '他们在恋爱中追求强烈的情感体验和各种成长机会。',
@@ -353,13 +413,19 @@ SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendic
 })
 
 
-# The dictionary for descriptions of the Tiangan. Frozen as above. / 天干语料表，同上冻结。
-TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendict({
+# The private Tiangan corpus has the same form as above. / 私有天干语料表采用与上文相同的形式。
+_TIANGAN_DESCRIPTION_CORPUS: Final[
+  frozendict[Tiangan, _TianganCorpusDescription]
+] = frozendict({
   Tiangan.甲: {
     'general': [
       '甲为阳木，比作参天大树，栋梁之才。',
-      '容易疲劳，须注意肝胆。',
-      '请注意可能会有（胆、头）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '容易疲劳，须注意肝胆。',
+      ),
+      _editorial_reference(
+        '请注意可能会有（胆、头）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '仁慈富同情心，个性积极，精力旺盛，外文雅内好强，刚直正气，重感情，具开拓精神，固执独断，善于表现自己，待人大方，精明能干。',
@@ -372,7 +438,9 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.乙: {
     'general': [
       '乙为阴木，蔓藤花草。',
-      '请注意可能会有（肝、颈）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '请注意可能会有（肝、颈）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '仁慈富同情心，干劲十足，外文雅内好强，温柔含蓄，坚忍礼让，消极善妒，优柔寡断，感情脆弱，做事心思细腻。',
@@ -383,8 +451,12 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.丙: {
     'general': [
       '丙为阳火像太阳，既不怕寒霜也不忌冷雪。',
-      '须注意心、血压、小肠、眼睛及肩的问题。',
-      '请注意可能会有（小肠、肩膀、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '须注意心、血压、小肠、眼睛及肩的问题。',
+      ),
+      _editorial_reference(
+        '请注意可能会有（小肠、肩膀、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '性格不拘小节大而化之，为朋友的忠实听众，但听后常不当一回事，且易这耳进那耳出，易发脾气，却也收得快。',
@@ -395,8 +467,12 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.丁: {
     'general': [
       '丁火为阴火，如灯火、萤火，虽没丙火强烈，但却易让人接受。',
-      '须注意心、血压、小肠、眼睛等问题。',
-      '请注意可能会有（心脏、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '须注意心、血压、小肠、眼睛等问题。',
+      ),
+      _editorial_reference(
+        '请注意可能会有（心脏、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '温文尔雅，敦厚纯朴，重信守义，沉静友善，保守勤奋，易任性逞强，热情谦恭，有时又流于虚伪叛逆。',
@@ -408,7 +484,9 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
     'general': [
       '戊土阳土，为大地，为长城，取坚固厚实的意思。',
       '戊土为阳土，其特性为高山之土，因近太阳故为燥土。',
-      '请注意可能会有（脾胃、腹部、胸背部、身体上半身两侧）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '请注意可能会有（脾胃、腹部、胸背部、身体上半身两侧）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '敦厚朴实，重信讲义，忠实至诚，宽大包容，乐于助人，反应迟钝，不懂变通，做事细心，胆小怕事。',
@@ -418,8 +496,12 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.己: {
     'general': [
       '己为阴土，性阴柔。',
-      '须注意脾胃、腹部。',
-      '请注意可能会（脾、腹）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '须注意脾胃、腹部。',
+      ),
+      _editorial_reference(
+        '请注意可能会（脾、腹）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '个性谨慎，温和重义，外随和内坚忍。',
@@ -430,7 +512,9 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.庚: {
     'general': [
       '庚金为阳金，如刚铁，无坚不摧，个性刚烈，豪侠仗义。',
-      '请注意可能会有（大肠、脐轮）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '请注意可能会有（大肠、脐轮）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '表情严肃，坚持原则，积极进取，自尊心强，好胜，不讲情面，刚毅重义气，易怒，果断，善权谋，好结交朋友，宁折不弯。',
@@ -440,7 +524,9 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.辛: {
     'general': [
       '辛金为阴金，如珠宝金银，高贵且艳丽。',
-      '请注意可能会有（肺、屁股）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '请注意可能会有（肺、屁股）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '为人好面子，注重衣着，易有异性缘，处事刚柔并济，粗中有细。',
@@ -450,8 +536,12 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.壬: {
     'general': [
       '壬水为阳水，如江洋大川。',
-      '应注意膀胱和肾（泌尿系统）。',
-      '请注意可能会有(膀胱、胫)方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '应注意膀胱和肾（泌尿系统）。',
+      ),
+      _editorial_reference(
+        '请注意可能会有(膀胱、胫)方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '富心机，深藏不露，外表冷淡，机智灵敏，多才多艺，冲动易怒。',
@@ -464,7 +554,9 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
   Tiangan.癸: {
     'general': [
       '癸为阴水，如涓涓细流，如雨水。',
-      '请注意可能会有（肾脏、足）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      _editorial_reference(
+        '请注意可能会有（肾脏、足）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
+      ),
     ],
     'personality': [
       '聪明，看似平静，其实内心澎湃汹涌，巧于临机应变，有远见，细水长流，个性内向保守，节俭，有洁癖，正直而踏实，相对而言，也显得感情脆弱，有点神经质，喜欢幻想，拥有浪漫情怀。',
@@ -473,4 +565,72 @@ TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendic
       '若癸水日主身旺癸为忌神，为人表面心如止水，内心想入非非，好幻想，不切实际，喜钻牛角尖。',
     ],
   },
+})
+
+
+def _project_texts(
+  items: list[_DescriptionItem],
+  include_reference_only: bool,
+) -> list[str]:
+  assert isinstance(include_reference_only, bool)
+  assert all(
+    item.output is _DescriptionOutput.REFERENCE_ONLY
+    for item in items
+    if isinstance(item, _DescriptionClaim)
+  )
+  return [
+    item.text if isinstance(item, _DescriptionClaim) else item
+    for item in items
+    if (
+      include_reference_only
+      or not isinstance(item, _DescriptionClaim)
+    )
+  ]
+
+
+def _project_shishen_description(
+  description: _ShishenCorpusDescription,
+  include_reference_only: bool,
+) -> ShishenDescription:
+  return {
+    'general':        _project_texts(description['general'], include_reference_only),
+    'in_good_status': _project_texts(description['in_good_status'], include_reference_only),
+    'in_bad_status':  _project_texts(description['in_bad_status'], include_reference_only),
+    'relationship':   _project_texts(description['relationship'], include_reference_only),
+  }
+
+
+def _project_tiangan_description(
+  description: _TianganCorpusDescription,
+  include_reference_only: bool,
+) -> TianganDescription:
+  return {
+    'general':     _project_texts(description['general'], include_reference_only),
+    'personality': _project_texts(description['personality'], include_reference_only),
+  }
+
+
+def _complete_shishen_description(shishen: Shishen) -> ShishenDescription:
+  assert isinstance(shishen, Shishen)
+  return _project_shishen_description(_SHISHEN_DESCRIPTION_CORPUS[shishen], include_reference_only=True)
+
+
+def _complete_tiangan_description(tg: Tiangan) -> TianganDescription:
+  assert isinstance(tg, Tiangan)
+  return _project_tiangan_description(_TIANGAN_DESCRIPTION_CORPUS[tg], include_reference_only=True)
+
+
+# Public tables contain only descriptions eligible for default output. The mappings are
+# frozen, but their entry dictionaries and lists are mutable; direct readers must not
+# mutate either. `Interpreter.interpret_*` returns deep copies that callers can modify.
+# 公开表只含可默认输出的语料。映射冻结，但条目字典和列表仍可变；直接读取者不得修改。
+# `Interpreter.interpret_*` 返回深拷贝，调用方可放心修改。
+SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
+  shishen: _project_shishen_description(description, include_reference_only=False)
+  for shishen, description in _SHISHEN_DESCRIPTION_CORPUS.items()
+})
+
+TIANGAN_DESCRIPTIONS: Final[frozendict[Tiangan, TianganDescription]] = frozendict({
+  tg: _project_tiangan_description(description, include_reference_only=False)
+  for tg, description in _TIANGAN_DESCRIPTION_CORPUS.items()
 })
