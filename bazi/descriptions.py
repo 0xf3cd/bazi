@@ -150,7 +150,7 @@ _DESCRIPTION_SOURCES: Final[
     url='https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
-    excerpt='丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
+    excerpt='丁火其形一燭燈戊土城牆堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋並百川癸水應非雨露麼',
     supports='The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.',
     limitations='Does not make the images cross-school definitions or personality premises.',
   ),

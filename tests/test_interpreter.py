@@ -94,7 +94,7 @@ _SOURCE_EXCERPTS: Final[frozendict[_DescriptionSource, str]] = frozendict({
   _DescriptionSource.YUANHAI_ZIPING_RELATIONS: '生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
   _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: '天干五陽通變天干五陰通變',
   _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: '甲木天干作首排乙木根荄種得深丙火明明一太陽',
-  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: '丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
+  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: '丁火其形一燭燈戊土城牆堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋並百川癸水應非雨露麼',
   _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: '甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
   _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: '陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
 })
