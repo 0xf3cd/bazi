@@ -11,10 +11,14 @@ from bazi.descriptions import (
   ShishenDescription,
   TianganDescription,
   _DescriptionClaim,
+  _DescriptionCondition,
   _DescriptionOutput,
   _DescriptionSource,
+  _DescriptionTextLayer,
+  _DESCRIPTION_SOURCES,
   _SHISHEN_DESCRIPTION_CORPUS,
   _TIANGAN_DESCRIPTION_CORPUS,
+  _project_texts,
   SHISHEN_DESCRIPTIONS,
   TIANGAN_DESCRIPTIONS,
 )
@@ -22,7 +26,7 @@ from bazi.defines import Tiangan, Shishen
 from bazi.interpreter import Interpreter
 
 
-_REFERENCE_ONLY_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
+_EDITORIAL_REFERENCE_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
   (Shishen.食神, 'in_bad_status', '食神之人头脑活动非常旺盛，想东想西，因此食神过旺的人，易焦虑失眠。'),
   (Shishen.正官, 'general', '如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。'),
   (Shishen.正官, 'general', '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。'),
@@ -47,6 +51,49 @@ _REFERENCE_ONLY_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
   (Tiangan.癸, 'general', '请注意可能会有（肾脏、足）方面的疾病，假如真的有，建议您每年要定期做健康检查。'),
 )
 
+_SHISHEN_DEFINITIONS: Final[tuple[tuple[Shishen, str, str], ...]] = (
+  (Shishen.比肩, 'shishen.bijian.definition', '比肩为与日主五行、阴阳皆相同者。'),
+  (Shishen.劫财, 'shishen.jiecai.definition', '劫财为与日主五行相同而阴阳相异者。'),
+  (Shishen.食神, 'shishen.shishen.definition', '食神为日主所生且阴阳相同者。'),
+  (Shishen.伤官, 'shishen.shangguan.definition', '伤官为日主所生且阴阳相异者。'),
+  (Shishen.正财, 'shishen.zhengcai.definition', '正财为日主所克且阴阳相异者。'),
+  (Shishen.偏财, 'shishen.piancai.definition', '偏财为日主所克且阴阳相同者。'),
+  (Shishen.正官, 'shishen.zhengguan.definition', '正官为克制日主且阴阳相异者。'),
+  (Shishen.七杀, 'shishen.qisha.definition', '七杀为克制日主且阴阳相同者。'),
+  (Shishen.正印, 'shishen.zhengyin.definition', '正印为生助日主且阴阳相异者。'),
+  (Shishen.偏印, 'shishen.pianyin.definition', '偏印为生助日主且阴阳相同者。'),
+)
+
+_TIANGAN_DEFINITIONS: Final[
+  tuple[tuple[Tiangan, str, str, _DescriptionSource], ...]
+] = (
+  (Tiangan.甲, 'tiangan.jia.definition', '甲为阳木。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.乙, 'tiangan.yi.definition', '乙为阴木。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丙, 'tiangan.bing.definition', '丙为阳火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丁, 'tiangan.ding.definition', '丁为阴火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.戊, 'tiangan.wu.definition', '戊为阳土。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.己, 'tiangan.ji.definition', '己为阴土。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.庚, 'tiangan.geng.definition', '庚为阳金。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.辛, 'tiangan.xin.definition', '辛为阴金。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.壬, 'tiangan.ren.definition', '壬为阳水。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.癸, 'tiangan.gui.definition', '癸为阴水。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+)
+
+_HISTORICAL_SYMBOL_CASES: Final[
+  tuple[tuple[Tiangan, str, str, _DescriptionSource], ...]
+] = (
+  (Tiangan.丙, 'tiangan.bing.sun_symbol', '丙火像太阳。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丁, 'tiangan.ding.lamp_symbol', '丁火如灯火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.戊, 'tiangan.wu.wall_symbol', '戊土有城墙之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.辛, 'tiangan.xin.jewel_symbol', '辛金有珠玉之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有江洋大川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+)
+
+_REFERENCE_ONLY_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
+  _EDITORIAL_REFERENCE_CASES
+  + tuple((tg, 'general', text) for tg, _, text, _ in _HISTORICAL_SYMBOL_CASES)
+)
+
 
 def _as_mapping(description: ShishenDescription | TianganDescription) -> dict[str, list[str]]:
   return cast(dict[str, list[str]], description)
@@ -54,6 +101,25 @@ def _as_mapping(description: ShishenDescription | TianganDescription) -> dict[st
 
 def _description_count(descriptions: Sequence[ShishenDescription | TianganDescription]) -> int:
   return sum(len(texts) for description in descriptions for texts in _as_mapping(description).values())
+
+
+def _all_claims() -> list[tuple[Shishen | Tiangan, str, _DescriptionClaim]]:
+  claims: list[tuple[Shishen | Tiangan, str, _DescriptionClaim]] = []
+  for shishen, shishen_description in _SHISHEN_DESCRIPTION_CORPUS.items():
+    for shishen_field in ('general', 'in_good_status', 'in_bad_status', 'relationship'):
+      claims.extend(
+        (shishen, shishen_field, item)
+        for item in shishen_description[shishen_field]
+        if isinstance(item, _DescriptionClaim)
+      )
+  for tg, tg_description in _TIANGAN_DESCRIPTION_CORPUS.items():
+    for tg_field in ('general', 'personality'):
+      claims.extend(
+        (tg, tg_field, item)
+        for item in tg_description[tg_field]
+        if isinstance(item, _DescriptionClaim)
+      )
+  return claims
 
 
 def _complete_corpus_fingerprint() -> str:
@@ -150,10 +216,10 @@ def test_reference_only_descriptions_are_opt_in() -> None:
     default_tiangan.append(tg_default)
     complete_tiangan.append(tg_complete)
 
-  assert _description_count(default_shishen) == 203
-  assert _description_count(complete_shishen) == 210
-  assert _description_count(default_tiangan) == 43
-  assert _description_count(complete_tiangan) == 58
+  assert _description_count(default_shishen) == 213
+  assert _description_count(complete_shishen) == 220
+  assert _description_count(default_tiangan) == 52
+  assert _description_count(complete_tiangan) == 72
 
 
 def test_reference_only_is_keyword_only() -> None:
@@ -164,33 +230,172 @@ def test_reference_only_is_keyword_only() -> None:
 
 
 def test_reference_only_claims() -> None:
-  claims: list[tuple[Shishen | Tiangan, str, _DescriptionClaim]] = []
-  for shishen, description in _SHISHEN_DESCRIPTION_CORPUS.items():
-    for field in ('general', 'in_good_status', 'in_bad_status', 'relationship'):
-      claims.extend(
-        (shishen, field, item)
-        for item in description[field]
-        if isinstance(item, _DescriptionClaim)
-      )
-  for tg, tg_description in _TIANGAN_DESCRIPTION_CORPUS.items():
-    for tg_field in ('general', 'personality'):
-      claims.extend(
-        (tg, tg_field, item)
-        for item in tg_description[tg_field]
-        if isinstance(item, _DescriptionClaim)
-      )
+  claims = [
+    (subject, field, claim)
+    for subject, field, claim in _all_claims()
+    if claim.output is _DescriptionOutput.REFERENCE_ONLY
+  ]
 
+  assert {
+    (subject, field, claim.text)
+    for subject, field, claim in claims
+  } == set(_REFERENCE_ONLY_CASES)
   assert [
     (subject, field, claim.text)
     for subject, field, claim in claims
-  ] == list(_REFERENCE_ONLY_CASES)
-  assert all(claim.source is _DescriptionSource.EDITORIAL for _, _, claim in claims)
-  assert all(claim.output is _DescriptionOutput.REFERENCE_ONLY for _, _, claim in claims)
+    if claim.sources == (_DescriptionSource.EDITORIAL,)
+  ] == list(_EDITORIAL_REFERENCE_CASES)
+
+
+def test_provenance_pilot_claims() -> None:
+  shishen_definition_sources = (
+    _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
+    _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
+    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+  )
+  for shishen, claim_id, text in _SHISHEN_DEFINITIONS:
+    claim = _SHISHEN_DESCRIPTION_CORPUS[shishen]['general'][0]
+    assert isinstance(claim, _DescriptionClaim)
+    assert claim.claim_id == claim_id
+    assert claim.text == text
+    assert claim.sources == shishen_definition_sources
+    assert claim.output is _DescriptionOutput.DEFAULT
+    assert Interpreter.interpret_shishen(shishen)['general'][0] == text
+    assert Interpreter.interpret_shishen(
+      shishen,
+      include_reference_only=True,
+    )['general'][0] == text
+
+  for tg, claim_id, text, yuan_hai_source in _TIANGAN_DEFINITIONS:
+    claim = _TIANGAN_DESCRIPTION_CORPUS[tg]['general'][0]
+    assert isinstance(claim, _DescriptionClaim)
+    assert claim.claim_id == claim_id
+    assert claim.text == text
+    assert claim.sources == (
+      _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
+      yuan_hai_source,
+      _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+    )
+    assert claim.output is _DescriptionOutput.DEFAULT
+    assert Interpreter.interpret_tiangan(tg)['general'][0] == text
+    assert Interpreter.interpret_tiangan(
+      tg,
+      include_reference_only=True,
+    )['general'][0] == text
+
+  claims_by_id = {claim.claim_id: claim for _, _, claim in _all_claims()}
+  for tg, claim_id, text, source in _HISTORICAL_SYMBOL_CASES:
+    claim = claims_by_id[claim_id]
+    assert claim.text == text
+    assert claim.sources == (source,)
+    assert claim.attribution == '《渊海子平·十干体象》'
+    assert claim.output is _DescriptionOutput.REFERENCE_ONLY
+    assert text not in Interpreter.interpret_tiangan(tg)['general']
+    assert text in Interpreter.interpret_tiangan(
+      tg,
+      include_reference_only=True,
+    )['general']
+
+
+def test_provenance_integrity() -> None:
+  assert set(_DESCRIPTION_SOURCES) == set(_DescriptionSource)
+  assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_RELATIONS].locator == (
+    'PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”'
+  )
+  assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_STEM_TABLE].locator == (
+    'PDF p. 8, “天干五阳通变” and “天干五阴通变” tables'
+  )
+  assert _DESCRIPTION_SOURCES[
+    _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69
+  ].locator == 'PDF p. 69, left leaf, “十干体象”'
+  assert _DESCRIPTION_SOURCES[
+    _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70
+  ].locator == 'PDF p. 70, both leaves, “十干体象”'
+  assert _DESCRIPTION_SOURCES[_DescriptionSource.MINGLI_TANYUAN_STEM_BASICS].locator == (
+    'PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”'
+  )
+  assert _DESCRIPTION_SOURCES[
+    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS
+  ].locator == (
+    'PDF pp. 66-70, “十干生克定名”'
+  )
+
+  for source, record in _DESCRIPTION_SOURCES.items():
+    assert all((
+      record.work,
+      record.attribution,
+      record.edition,
+      record.locator,
+      record.url,
+      record.excerpt,
+      record.supports,
+      record.limitations,
+    ))
+    assert record.text_layer is (
+      _DescriptionTextLayer.EDITORIAL
+      if source is _DescriptionSource.EDITORIAL
+      else _DescriptionTextLayer.BAIWEN
+    )
+
+  claims = [claim for _, _, claim in _all_claims()]
+  claim_ids = [claim.claim_id for claim in claims]
+  assert len(claim_ids) == len(set(claim_ids))
+  for claim in claims:
+    assert claim.claim_id
+    assert claim.text
+    assert claim.attribution
+    assert claim.sources
+    assert all(source in _DESCRIPTION_SOURCES for source in claim.sources)
+    if claim.output is _DescriptionOutput.DEFAULT:
+      assert not claim.conditions
+      assert len({
+        _DESCRIPTION_SOURCES[source].lineage
+        for source in claim.sources
+      }) >= 2
+
+
+def test_projection_rejects_unmet_conditions_and_reference_only_claims() -> None:
+  default = _DescriptionClaim(
+    claim_id='test.default',
+    text='Default claim.',
+    sources=(_DescriptionSource.EDITORIAL,),
+    attribution='Test',
+    conditions=(),
+    output=_DescriptionOutput.DEFAULT,
+  )
+  conditional = _DescriptionClaim(
+    claim_id='test.conditional',
+    text='Conditional claim.',
+    sources=(_DescriptionSource.EDITORIAL,),
+    attribution='Test',
+    conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    output=_DescriptionOutput.DEFAULT,
+  )
+  reference = _DescriptionClaim(
+    claim_id='test.reference',
+    text='Reference-only claim.',
+    sources=(_DescriptionSource.EDITORIAL,),
+    attribution='Test',
+    conditions=(),
+    output=_DescriptionOutput.REFERENCE_ONLY,
+  )
+
+  items: list[str | _DescriptionClaim] = ['Legacy claim.', default, conditional, reference]
+  assert _project_texts(items, include_reference_only=False) == [
+    'Legacy claim.',
+    'Default claim.',
+  ]
+  assert _project_texts(items, include_reference_only=True) == [
+    'Legacy claim.',
+    'Default claim.',
+    'Conditional claim.',
+    'Reference-only claim.',
+  ]
 
 
 def test_complete_corpus_is_conserved() -> None:
   # Pin the complete corpus text and order; update the hash only for intentional edits.
-  assert _complete_corpus_fingerprint() == '4c9e9bf192951aeb23fa23a6ea14bbe5e8fc63e7ce82653d0c584ed97f94f947'
+  assert _complete_corpus_fingerprint() == '598cb41ce81f276fc658be9598a3b53836667a685f63472f1e040d8e1ffe7d89'
 
 
 def test_reference_only_deepcopy() -> None:
