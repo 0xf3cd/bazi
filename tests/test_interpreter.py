@@ -190,7 +190,6 @@ def test_reference_only_claims() -> None:
 
 def test_complete_corpus_is_conserved() -> None:
   # Pin the complete corpus text and order; update the hash only for intentional edits.
-  # 钉住完整语料的文字与顺序；有意修改文字时同步更新。
   assert _complete_corpus_fingerprint() == '4c9e9bf192951aeb23fa23a6ea14bbe5e8fc63e7ce82653d0c584ed97f94f947'
 
 
