@@ -7,6 +7,7 @@ from typing import Final, cast
 
 import pytest
 
+from bazi.common import frozendict
 from bazi.descriptions import (
   ShishenDescription,
   TianganDescription,
@@ -53,7 +54,6 @@ _EDITORIAL_REFERENCE_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]
 
 _SHISHEN_DEFINITIONS: Final[tuple[tuple[Shishen, str, str], ...]] = (
   (Shishen.比肩, 'shishen.bijian.definition', '比肩为与日主五行、阴阳皆相同者。'),
-  (Shishen.劫财, 'shishen.jiecai.definition', '劫财为与日主五行相同而阴阳相异者。'),
   (Shishen.食神, 'shishen.shishen.definition', '食神为日主所生且阴阳相同者。'),
   (Shishen.伤官, 'shishen.shangguan.definition', '伤官为日主所生且阴阳相异者。'),
   (Shishen.正财, 'shishen.zhengcai.definition', '正财为日主所克且阴阳相异者。'),
@@ -83,11 +83,21 @@ _HISTORICAL_SYMBOL_CASES: Final[
   tuple[tuple[Tiangan, str, str, _DescriptionSource], ...]
 ] = (
   (Tiangan.丙, 'tiangan.bing.sun_symbol', '丙火像太阳。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
-  (Tiangan.丁, 'tiangan.ding.lamp_symbol', '丁火如灯火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.丁, 'tiangan.ding.lamp_symbol', '丁火有烛灯之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
   (Tiangan.戊, 'tiangan.wu.wall_symbol', '戊土有城墙之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
   (Tiangan.辛, 'tiangan.xin.jewel_symbol', '辛金有珠玉之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有江洋大川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有汪洋百川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
 )
+
+_SOURCE_EXCERPTS: Final[frozendict[_DescriptionSource, str]] = frozendict({
+  _DescriptionSource.EDITORIAL: 'Repository-original editorial prose.',
+  _DescriptionSource.YUANHAI_ZIPING_RELATIONS: '生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
+  _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: '天干五陽通變天干五陰通變',
+  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: '甲木天干作首排乙木根荄種得深丙火明明一太陽',
+  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: '丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
+  _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: '甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
+  _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: '陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
+})
 
 _REFERENCE_ONLY_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
   _EDITORIAL_REFERENCE_CASES
@@ -216,8 +226,8 @@ def test_reference_only_descriptions_are_opt_in() -> None:
     default_tiangan.append(tg_default)
     complete_tiangan.append(tg_complete)
 
-  assert _description_count(default_shishen) == 213
-  assert _description_count(complete_shishen) == 220
+  assert _description_count(default_shishen) == 212
+  assert _description_count(complete_shishen) == 219
   assert _description_count(default_tiangan) == 52
   assert _description_count(complete_tiangan) == 72
 
@@ -266,6 +276,10 @@ def test_provenance_pilot_claims() -> None:
       include_reference_only=True,
     )['general'][0] == text
 
+  assert 'shishen.jiecai.definition' not in {
+    claim.claim_id for _, _, claim in _all_claims()
+  }
+
   for tg, claim_id, text, yuan_hai_source in _TIANGAN_DEFINITIONS:
     claim = _TIANGAN_DESCRIPTION_CORPUS[tg]['general'][0]
     assert isinstance(claim, _DescriptionClaim)
@@ -299,6 +313,10 @@ def test_provenance_pilot_claims() -> None:
 
 def test_provenance_integrity() -> None:
   assert set(_DESCRIPTION_SOURCES) == set(_DescriptionSource)
+  assert frozendict({
+    source: record.excerpt
+    for source, record in _DESCRIPTION_SOURCES.items()
+  }) == _SOURCE_EXCERPTS
   assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_RELATIONS].locator == (
     'PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”'
   )
@@ -319,6 +337,14 @@ def test_provenance_integrity() -> None:
   ].locator == (
     'PDF pp. 66-70, “十干生克定名”'
   )
+  for source in (
+    _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+  ):
+    assert _DESCRIPTION_SOURCES[source].work == '《命理探源》'
+    assert _DESCRIPTION_SOURCES[source].edition == (
+      '民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行'
+    )
 
   for source, record in _DESCRIPTION_SOURCES.items():
     assert all((
@@ -395,7 +421,7 @@ def test_projection_rejects_unmet_conditions_and_reference_only_claims() -> None
 
 def test_complete_corpus_is_conserved() -> None:
   # Pin the complete corpus text and order; update the hash only for intentional edits.
-  assert _complete_corpus_fingerprint() == '598cb41ce81f276fc658be9598a3b53836667a685f63472f1e040d8e1ffe7d89'
+  assert _complete_corpus_fingerprint() == '78603ba30dcd8f4240897ae0b45e9d5d9fcc535641cb1463b68feff6ae06d89d'
 
 
 def test_reference_only_deepcopy() -> None:

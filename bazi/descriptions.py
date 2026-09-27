@@ -38,8 +38,8 @@ class TianganDescription(TypedDict):
 class _DescriptionSource(Enum):
   '''A stable source-witness identifier. / 稳定的来源见证标识。'''
 
-  EDITORIAL                               = 'editorial'
-  YUANHAI_ZIPING_RELATIONS                = 'yuanhai_ziping_relations'
+  EDITORIAL                                = 'editorial'
+  YUANHAI_ZIPING_RELATIONS                 = 'yuanhai_ziping_relations'
   YUANHAI_ZIPING_STEM_TABLE                = 'yuanhai_ziping_stem_table'
   YUANHAI_ZIPING_STEM_SYMBOLS_P69          = 'yuanhai_ziping_stem_symbols_p69'
   YUANHAI_ZIPING_STEM_SYMBOLS_P70          = 'yuanhai_ziping_stem_symbols_p70'
@@ -114,9 +114,9 @@ _DESCRIPTION_SOURCES: Final[
     url='https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
-    excerpt='生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財',
-    supports='The five relations and their paired Shishen names.',
-    limitations='Does not support personality, kinship, fortune, or unconditional chart judgments.',
+    excerpt='生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
+    supports='The five relations, paired Shishen names, and the 正/偏 polarity rule.',
+    limitations='Uses both 劫財 and 敗財; it does not support collapsing both into one name or support personality, kinship, fortune, or unconditional chart judgments.',
   ),
   _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: _DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
@@ -128,7 +128,7 @@ _DESCRIPTION_SOURCES: Final[
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
     excerpt='天干五陽通變天干五陰通變',
     supports='The Yang/Yin stem groups and the ten stem-to-Shishen mappings.',
-    limitations='Does not make the attached kinship glosses unconditional across schools.',
+    limitations='Uses separate 劫財 and 敗財 labels; it does not make their nomenclature or the attached kinship glosses unconditional across schools.',
   ),
   _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: _DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
@@ -150,33 +150,33 @@ _DESCRIPTION_SOURCES: Final[
     url='https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
-    excerpt='丁火其形一燭燈戊土城牆堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋并百川癸水應非雨露麼',
+    excerpt='丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
     supports='The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.',
     limitations='Does not make the images cross-school definitions or personality premises.',
   ),
   _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: _DescriptionSourceRecord(
-    work='《增订命理探原》',
+    work='《命理探源》',
     attribution='袁树珊著',
-    edition='民国二十六年（1937）星相研究社发行本',
+    edition='民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行',
     locator='PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.MINGLI_TANYUAN,
-    excerpt='甲丙戊庚壬為陽乙丁己辛癸為陰甲乙屬木為東方丙丁屬火為南方戊己屬土為中央庚辛屬金為西方壬癸屬水為北方',
+    excerpt='甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
     supports='The ten stems grouped directly by polarity and element.',
     limitations='Does not support personality, fortune, fixed imagery, or health prose.',
   ),
   _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: _DescriptionSourceRecord(
-    work='《增订命理探原》',
+    work='《命理探源》',
     attribution='袁树珊著',
-    edition='民国二十六年（1937）星相研究社发行本',
+    edition='民国二十六年（1937）订正版，版心题《命理探原》，星相研究社发行',
     locator='PDF pp. 66-70, “十干生克定名”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.MINGLI_TANYUAN,
-    excerpt='陽見陰陰見陽則為正陽見陽陰見陰則為偏與我比者為比肩為劫財為敗財我生者為傷官食神我尅者為正財偏財尅我者為正官偏官生我者為正印偏印',
-    supports='The five relations, polarity distinctions, and all ten Shishen names.',
-    limitations='Does not support personality, kinship, fortune, or unconditional chart judgments.',
+    excerpt='陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
+    supports='The five relations, polarity distinctions, and this witness\'s Shishen nomenclature.',
+    limitations='Separates 劫財 and 敗財 by day-stem polarity; it does not support collapsing both into 劫財 or support personality, kinship, fortune, or unconditional chart judgments.',
   ),
 })
 
@@ -253,7 +253,7 @@ def _shishen_definition(claim_id: str, text: str) -> _DescriptionClaim:
       _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
       _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
     ),
-    attribution='《渊海子平》与《增订命理探原》十神定义',
+    attribution='《渊海子平》与《命理探源》十神定义',
     output=_DescriptionOutput.DEFAULT,
   )
 
@@ -271,7 +271,7 @@ def _tiangan_definition(
       yuan_hai_source,
       _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
     ),
-    attribution='《渊海子平》与《增订命理探原》天干定义',
+    attribution='《渊海子平》与《命理探源》天干定义',
     output=_DescriptionOutput.DEFAULT,
   )
 
@@ -334,10 +334,6 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.劫财: {
     'general': [
-      _shishen_definition(
-        'shishen.jiecai.definition',
-        '劫财为与日主五行相同而阴阳相异者。',
-      ),
       '代表冒险、挑战、财富、资源。',
       '代表兄弟姐妹、同事、朋友等身边的人，也代表争斗、小人、同行、同事、竞争者。',
       '劫财，顾名思义，代表“掠夺”，是一种激进的象征。',
@@ -753,7 +749,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
       _historical_symbol(
         'tiangan.ding.lamp_symbol',
-        '丁火如灯火。',
+        '丁火有烛灯之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       '丁火也如萤火，虽没丙火强烈，但却易让人接受。',
@@ -869,7 +865,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
       _historical_symbol(
         'tiangan.ren.river_symbol',
-        '壬水有江洋大川之象。',
+        '壬水有汪洋百川之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _editorial_reference(

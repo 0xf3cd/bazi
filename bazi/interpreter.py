@@ -16,8 +16,9 @@ class Interpreter:
   `Interpreter` 以静态方法查询十神和天干描述；返回条目是深拷贝，可随意修改。
 
   Note:
-  - Reference-only claims are excluded unless `include_reference_only=True` is
-    passed. / 仅在传入 `include_reference_only=True` 时返回 reference-only 断言。
+  - Claims that are not eligible for default output are excluded unless
+    `include_reference_only=True` is passed. / 仅在传入 `include_reference_only=True`
+    时返回不参与默认输出的断言。
   - Combining the descriptions against a specific chart (i.e. producing a whole-chart
     reading) is currently done in the `run_interpreter` entry script, not in this class.
   - 针对具体命盘组合这些描述（即整盘解读）目前在 `run_interpreter` 入口脚本中完成，不在本类中。
