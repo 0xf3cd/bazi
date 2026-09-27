@@ -82,9 +82,7 @@ def _editorial_reference(text: str) -> _DescriptionClaim:
   )
 
 
-# The private corpus is the single text source. Claims carry the provenance and
-# output policy that legacy strings do not yet model.
-# 私有语料表是文字的单一来源；已迁移断言承载旧字符串尚未建模的来源与输出策略。
+# The private corpus is the single text source. / 私有语料表是文字的单一来源。
 _SHISHEN_DESCRIPTION_CORPUS: Final[
   frozendict[Shishen, _ShishenCorpusDescription]
 ] = frozendict({
@@ -575,6 +573,11 @@ def _project_texts(
   include_reference_only: bool,
 ) -> list[str]:
   assert isinstance(include_reference_only, bool)
+  assert all(
+    item.output is _DescriptionOutput.REFERENCE_ONLY
+    for item in items
+    if isinstance(item, _DescriptionClaim)
+  )
   return [
     item.text if isinstance(item, _DescriptionClaim) else item
     for item in items

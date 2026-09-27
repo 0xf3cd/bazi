@@ -5,8 +5,7 @@ import copy
 from .defines import Shishen, Tiangan
 from .descriptions import (
   ShishenDescription, TianganDescription, SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS,
-  _complete_shishen_description,
-  _complete_tiangan_description,
+  _complete_shishen_description, _complete_tiangan_description,
 )
 
 
@@ -18,7 +17,7 @@ class Interpreter:
 
   Note:
   - Editorial reference-only claims are excluded unless `include_reference_only=True`
-    is passed. / 仅在显式传入该参数时返回 editorial reference-only 断言。
+    is passed. / 仅在传入 `include_reference_only=True` 时返回 editorial reference-only 断言。
   - Combining the descriptions against a specific chart (i.e. producing a whole-chart
     reading) is currently done in the `run_interpreter` entry script, not in this class.
   - 针对具体命盘组合这些描述（即整盘解读）目前在 `run_interpreter` 入口脚本中完成，不在本类中。
