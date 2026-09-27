@@ -82,7 +82,7 @@ def _editorial_reference(text: str) -> _DescriptionClaim:
   )
 
 
-# The private corpus is the single text source. / 私有语料表是文字的单一来源。
+# The private corpus is the single source of description text. / 私有语料表是描述文字的单一来源。
 _SHISHEN_DESCRIPTION_CORPUS: Final[
   frozendict[Shishen, _ShishenCorpusDescription]
 ] = frozendict({
@@ -413,7 +413,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
 })
 
 
-# The private Tiangan corpus follows the same canonical form. / 私有天干语料表同上。
+# The private Tiangan corpus has the same form as above. / 私有天干语料表采用与上文相同的形式。
 _TIANGAN_DESCRIPTION_CORPUS: Final[
   frozendict[Tiangan, _TianganCorpusDescription]
 ] = frozendict({
@@ -622,9 +622,9 @@ def _complete_tiangan_description(tg: Tiangan) -> TianganDescription:
 
 # Public tables contain only descriptions eligible for default output. The mappings are
 # frozen, but their entry dictionaries and lists are mutable; direct readers must not
-# mutate either. `Interpreter.interpret_*` is the mutation-safe boundary.
+# mutate either. `Interpreter.interpret_*` returns deep copies that callers can modify.
 # 公开表只含可默认输出的语料。映射冻结，但条目字典和列表仍可变；直接读取者不得修改。
-# `Interpreter.interpret_*` 是可安全修改的边界。
+# `Interpreter.interpret_*` 返回深拷贝，调用方可放心修改。
 SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
   shishen: _project_shishen_description(description, include_reference_only=False)
   for shishen, description in _SHISHEN_DESCRIPTION_CORPUS.items()

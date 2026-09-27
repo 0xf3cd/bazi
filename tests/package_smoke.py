@@ -174,6 +174,11 @@ def main() -> None:
   )
   for shishen in Shishen:
     check(bool(Interpreter.interpret_shishen(shishen)['general']), 'Missing Shishen description')
+  check(
+    len(Interpreter.interpret_shishen(Shishen.七杀, include_reference_only=True)['general'])
+    > len(Interpreter.interpret_shishen(Shishen.七杀)['general']),
+    'Reference-only Shishen descriptions are not opt-in',
+  )
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

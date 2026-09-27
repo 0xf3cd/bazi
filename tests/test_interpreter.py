@@ -156,6 +156,13 @@ def test_reference_only_descriptions_are_opt_in() -> None:
   assert _description_count(complete_tiangan) == 58
 
 
+def test_reference_only_is_keyword_only() -> None:
+  with pytest.raises(TypeError):
+    Interpreter.interpret_shishen(Shishen.食神, True) # type: ignore
+  with pytest.raises(TypeError):
+    Interpreter.interpret_tiangan(Tiangan.甲, True) # type: ignore
+
+
 def test_reference_only_claims() -> None:
   claims: list[tuple[Shishen | Tiangan, str, _DescriptionClaim]] = []
   for shishen, description in _SHISHEN_DESCRIPTION_CORPUS.items():
@@ -182,7 +189,7 @@ def test_reference_only_claims() -> None:
 
 
 def test_complete_corpus_is_conserved() -> None:
-  # Pin the complete corpus text and order; update deliberately when the text changes.
+  # Pin the complete corpus text and order; update the hash only for intentional edits.
   # 钉住完整语料的文字与顺序；有意修改文字时同步更新。
   assert _complete_corpus_fingerprint() == '4c9e9bf192951aeb23fa23a6ea14bbe5e8fc63e7ce82653d0c584ed97f94f947'
 
@@ -210,7 +217,7 @@ def test_reference_only_negative() -> None:
     Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1) # type: ignore
 
 
-def test_corpus_is_frozen() -> None:
+def test_public_tables_are_frozen() -> None:
   # The public description tables are frozen: reassigning an entry must fail, and
   # mutating a returned description must not corrupt them.
   # 公开描述表是冻结的：覆盖条目必须报错；修改返回的描述不能污染它们。
