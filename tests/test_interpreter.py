@@ -260,7 +260,6 @@ def test_reference_only_claims() -> None:
 def test_provenance_pilot_claims() -> None:
   shishen_definition_sources = (
     _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
-    _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
     _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
   )
   for shishen, claim_id, text in _SHISHEN_DEFINITIONS:
@@ -269,6 +268,7 @@ def test_provenance_pilot_claims() -> None:
     assert claim.claim_id == claim_id
     assert claim.text == text
     assert claim.sources == shishen_definition_sources
+    assert claim.attribution == '《渊海子平》与《命理探源》十神定义'
     assert claim.output is _DescriptionOutput.DEFAULT
     assert Interpreter.interpret_shishen(shishen)['general'][0] == text
     assert Interpreter.interpret_shishen(
@@ -286,10 +286,10 @@ def test_provenance_pilot_claims() -> None:
     assert claim.claim_id == claim_id
     assert claim.text == text
     assert claim.sources == (
-      _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
       yuan_hai_source,
       _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
     )
+    assert claim.attribution == '《渊海子平》与《命理探源》天干定义'
     assert claim.output is _DescriptionOutput.DEFAULT
     assert Interpreter.interpret_tiangan(tg)['general'][0] == text
     assert Interpreter.interpret_tiangan(
@@ -313,10 +313,10 @@ def test_provenance_pilot_claims() -> None:
 
 def test_provenance_integrity() -> None:
   assert set(_DESCRIPTION_SOURCES) == set(_DescriptionSource)
-  assert frozendict({
+  assert {
     source: record.excerpt
     for source, record in _DESCRIPTION_SOURCES.items()
-  }) == _SOURCE_EXCERPTS
+  } == dict(_SOURCE_EXCERPTS)
   assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_RELATIONS].locator == (
     'PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”'
   )

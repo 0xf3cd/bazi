@@ -127,7 +127,7 @@ _DESCRIPTION_SOURCES: Final[
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
     excerpt='天干五陽通變天干五陰通變',
-    supports='The Yang/Yin stem groups and the ten stem-to-Shishen mappings.',
+    supports='The Yang/Yin stem groups.',
     limitations='Uses separate 劫財 and 敗財 labels; it does not make their nomenclature or the attached kinship glosses unconditional across schools.',
   ),
   _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: _DescriptionSourceRecord(
@@ -250,7 +250,6 @@ def _shishen_definition(claim_id: str, text: str) -> _DescriptionClaim:
     text=text,
     sources=(
       _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
-      _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
       _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
     ),
     attribution='《渊海子平》与《命理探源》十神定义',
@@ -267,7 +266,6 @@ def _tiangan_definition(
     claim_id=claim_id,
     text=text,
     sources=(
-      _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE,
       yuan_hai_source,
       _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
     ),
