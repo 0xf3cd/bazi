@@ -150,7 +150,7 @@ _DESCRIPTION_SOURCES: Final[
     url='https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up',
     text_layer=_DescriptionTextLayer.BAIWEN,
     lineage=_DescriptionLineage.YUANHAI_ZIPING,
-    excerpt='丁火其形一燭燈戊土城牆堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋並百川癸水應非雨露麼',
+    excerpt='丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋並百川癸水應非雨露麼',
     supports='The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.',
     limitations='Does not make the images cross-school definitions or personality premises.',
   ),
@@ -176,7 +176,7 @@ _DESCRIPTION_SOURCES: Final[
     lineage=_DescriptionLineage.MINGLI_TANYUAN,
     excerpt='陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
     supports='The five relations, polarity distinctions, and this witness\'s Shishen nomenclature.',
-    limitations='Does not support collapsing both into 劫財 or support personality, kinship, fortune, or unconditional chart judgments.',
+    limitations='Does not support collapsing both into 劫財.',
   ),
 })
 
