@@ -36,24 +36,161 @@ class TianganDescription(TypedDict):
 
 
 class _DescriptionSource(Enum):
-  '''The provenance layer of a description claim. / 语料断言的来源层。'''
+  '''A stable source-witness identifier. / 稳定的来源见证标识。'''
 
-  EDITORIAL = 'editorial'
+  EDITORIAL                                = 'editorial'
+  YUANHAI_ZIPING_RELATIONS                 = 'yuanhai_ziping_relations'
+  YUANHAI_ZIPING_STEM_TABLE                = 'yuanhai_ziping_stem_table'
+  YUANHAI_ZIPING_STEM_SYMBOLS_P69          = 'yuanhai_ziping_stem_symbols_p69'
+  YUANHAI_ZIPING_STEM_SYMBOLS_P70          = 'yuanhai_ziping_stem_symbols_p70'
+  MINGLI_TANYUAN_STEM_BASICS               = 'mingli_tanyuan_stem_basics'
+  MINGLI_TANYUAN_SHISHEN_DEFINITIONS       = 'mingli_tanyuan_shishen_definitions'
+
+
+class _DescriptionLineage(Enum):
+  '''An independent textual lineage. / 独立的文本谱系。'''
+
+  EDITORIAL        = 'editorial'
+  YUANHAI_ZIPING   = 'yuanhai_ziping'
+  MINGLI_TANYUAN   = 'mingli_tanyuan'
+
+
+class _DescriptionTextLayer(Enum):
+  '''The textual layer represented by a source witness. / 来源见证对应的文本层。'''
+
+  EDITORIAL  = 'editorial'
+  BAIWEN     = 'baiwen'
 
 
 class _DescriptionOutput(Enum):
   '''The output policy of a description claim. / 语料断言的输出策略。'''
 
+  DEFAULT        = 'default'
   REFERENCE_ONLY = 'reference_only'
+
+
+class _DescriptionCondition(Enum):
+  '''A prerequisite that enum lookup cannot evaluate. / 枚举查表无法判断的适用条件。'''
+
+  CHART_CONTEXT_REQUIRED = 'chart_context_required'
+
+
+@dataclass(frozen=True)
+class _DescriptionSourceRecord:
+  '''A fixed witness and its evidentiary boundary. / 固定底本见证及其证据边界。'''
+
+  work:         str
+  attribution:  str
+  edition:      str
+  locator:      str
+  url:          str
+  text_layer:   _DescriptionTextLayer
+  lineage:      _DescriptionLineage
+  excerpt:      str
+  supports:     str
+  limitations:  str
+
+
+_DESCRIPTION_SOURCES: Final[
+  frozendict[_DescriptionSource, _DescriptionSourceRecord]
+] = frozendict({
+  _DescriptionSource.EDITORIAL: _DescriptionSourceRecord(
+    work='Bazi description corpus',
+    attribution='Ningqi Wang',
+    edition='Repository editorial confirmed for issue #24',
+    locator='PR #222',
+    url='https://github.com/0xf3cd/bazi/pull/222',
+    text_layer=_DescriptionTextLayer.EDITORIAL,
+    lineage=_DescriptionLineage.EDITORIAL,
+    excerpt='Repository-original editorial prose.',
+    supports='Authorship and the reference-only product classification.',
+    limitations='Does not establish a classical rule or real-world prediction.',
+  ),
+  _DescriptionSource.YUANHAI_ZIPING_RELATIONS: _DescriptionSourceRecord(
+    work='《刻京台增补渊海子平大全》',
+    attribution='李钦增补',
+    edition='明万历二十八年闽书林刘龙田乔山堂刊本',
+    locator='PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”',
+    url='https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    excerpt='生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
+    supports='The five relations, paired Shishen names, and the 正/偏 polarity rule.',
+    limitations='Uses both 劫財 and 敗財; it does not support collapsing both into one name or support personality, kinship, fortune, or unconditional chart judgments.',
+  ),
+  _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: _DescriptionSourceRecord(
+    work='《刻京台增补渊海子平大全》',
+    attribution='李钦增补',
+    edition='明万历二十八年闽书林刘龙田乔山堂刊本',
+    locator='PDF p. 8, “天干五阳通变” and “天干五阴通变” tables',
+    url='https://archive.org/details/20260506_20260506_1149/page/n7/mode/2up',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    excerpt='天干五陽通變天干五陰通變',
+    supports='The Yang/Yin stem groups.',
+    limitations='Uses separate 劫財 and 敗財 labels; it does not make their nomenclature or the attached kinship glosses unconditional across schools.',
+  ),
+  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: _DescriptionSourceRecord(
+    work='《刻京台增补渊海子平大全》',
+    attribution='李钦增补',
+    edition='明万历二十八年闽书林刘龙田乔山堂刊本',
+    locator='PDF p. 69, left leaf, “十干体象”',
+    url='https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    excerpt='甲木天干作首排乙木根荄種得深丙火明明一太陽',
+    supports='The element names for 甲、乙、丙 and a named historical image for 丙.',
+    limitations='Does not make the image a cross-school definition or a personality premise.',
+  ),
+  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: _DescriptionSourceRecord(
+    work='《刻京台增补渊海子平大全》',
+    attribution='李钦增补',
+    edition='明万历二十八年闽书林刘龙田乔山堂刊本',
+    locator='PDF p. 70, both leaves, “十干体象”',
+    url='https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    excerpt='丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
+    supports='The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.',
+    limitations='Does not make the images cross-school definitions or personality premises.',
+  ),
+  _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: _DescriptionSourceRecord(
+    work='《命理探源》',
+    attribution='袁树珊著',
+    edition='版心题《命理探原》',
+    locator='PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”',
+    url='https://commons.wikimedia.org/w/index.php?curid=132876481',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.MINGLI_TANYUAN,
+    excerpt='甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
+    supports='The ten stems grouped directly by polarity and element.',
+    limitations='Does not support personality, fortune, fixed imagery, or health prose.',
+  ),
+  _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: _DescriptionSourceRecord(
+    work='《命理探源》',
+    attribution='袁树珊著',
+    edition='版心题《命理探原》',
+    locator='PDF pp. 66-70, “十干生克定名”',
+    url='https://commons.wikimedia.org/w/index.php?curid=132876481',
+    text_layer=_DescriptionTextLayer.BAIWEN,
+    lineage=_DescriptionLineage.MINGLI_TANYUAN,
+    excerpt='陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
+    supports='The five relations, polarity distinctions, and this witness\'s Shishen nomenclature.',
+    limitations='Does not support collapsing both into 劫財.',
+  ),
+})
 
 
 @dataclass(frozen=True)
 class _DescriptionClaim:
-  '''A description with an explicit source and output policy. / 带明确来源和输出策略的语料断言。'''
+  '''An atomic description with provenance and output policy. / 带来源与输出策略的原子语料断言。'''
 
-  text:   str
-  source: _DescriptionSource
-  output: _DescriptionOutput
+  claim_id:    str
+  text:        str
+  sources:     tuple[_DescriptionSource, ...]
+  attribution: str
+  conditions:  tuple[_DescriptionCondition, ...]
+  output:      _DescriptionOutput
 
 
 '''A bare default-output string with unclassified source, or an explicit claim.
@@ -73,11 +210,80 @@ class _TianganCorpusDescription(TypedDict):
   personality: list[_DescriptionItem]
 
 
-def _editorial_reference(text: str) -> _DescriptionClaim:
+def _claim(
+  claim_id: str,
+  text: str,
+  sources: tuple[_DescriptionSource, ...],
+  attribution: str,
+  output: _DescriptionOutput,
+  conditions: tuple[_DescriptionCondition, ...] = (),
+) -> _DescriptionClaim:
+  assert isinstance(claim_id, str)
   assert isinstance(text, str)
+  assert all(isinstance(source, _DescriptionSource) for source in sources)
+  assert isinstance(attribution, str)
+  assert isinstance(output, _DescriptionOutput)
+  assert all(isinstance(condition, _DescriptionCondition) for condition in conditions)
   return _DescriptionClaim(
+    claim_id=claim_id,
     text=text,
-    source=_DescriptionSource.EDITORIAL,
+    sources=sources,
+    attribution=attribution,
+    conditions=conditions,
+    output=output,
+  )
+
+
+def _editorial_reference(claim_id: str, text: str) -> _DescriptionClaim:
+  return _claim(
+    claim_id=claim_id,
+    text=text,
+    sources=(_DescriptionSource.EDITORIAL,),
+    attribution='Repository editorial',
+    output=_DescriptionOutput.REFERENCE_ONLY,
+  )
+
+
+def _shishen_definition(claim_id: str, text: str) -> _DescriptionClaim:
+  return _claim(
+    claim_id=claim_id,
+    text=text,
+    sources=(
+      _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
+      _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+    ),
+    attribution='《渊海子平》与《命理探源》十神定义',
+    output=_DescriptionOutput.DEFAULT,
+  )
+
+
+def _tiangan_definition(
+  claim_id: str,
+  text: str,
+  yuan_hai_source: _DescriptionSource,
+) -> _DescriptionClaim:
+  return _claim(
+    claim_id=claim_id,
+    text=text,
+    sources=(
+      yuan_hai_source,
+      _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+    ),
+    attribution='《渊海子平》与《命理探源》天干定义',
+    output=_DescriptionOutput.DEFAULT,
+  )
+
+
+def _historical_symbol(
+  claim_id: str,
+  text: str,
+  source: _DescriptionSource,
+) -> _DescriptionClaim:
+  return _claim(
+    claim_id=claim_id,
+    text=text,
+    sources=(source,),
+    attribution='《渊海子平·十干体象》',
     output=_DescriptionOutput.REFERENCE_ONLY,
   )
 
@@ -88,6 +294,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
 ] = frozendict({
   Shishen.比肩 : {
     'general': [
+      _shishen_definition(
+        'shishen.bijian.definition',
+        '比肩为与日主五行、阴阳皆相同者。',
+      ),
       '代表同辈、竞争、合作。',
       '代表自己、兄弟姐妹、朋友、同事、团体党派、合伙人、同行者。',
       '代表的亲戚：对男、女命主来说都代表自己。但实际运用时，不管男、女，也会把比肩当成兄弟姐妹来看。',
@@ -155,6 +365,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.食神: {
     'general': [
+      _shishen_definition(
+        'shishen.shishen.definition',
+        '食神为日主所生且阴阳相同者。',
+      ),
       '代表享受、满足、乐趣、美食、艺术。',
       '食神是命主所生，与命主阴阳相同，代表了口欲和口福，爱好美食，喜欢享乐。',
       '由于食神和命主阴阳相同，其力不尽泄（留有内涵，有所保留），是有节制之泄。',
@@ -177,6 +391,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
     'in_bad_status': [
       '食神过旺，好幻想，易钻牛角尖；也容易流于虚伪，缺乏是非，显得迂腐懦弱。',
       _editorial_reference(
+        'editorial.shishen.shishen.anxiety_insomnia',
         '食神之人头脑活动非常旺盛，想东想西，因此食神过旺的人，易焦虑失眠。',
       ),
       '逢枭印夺食，求谋不顺利，处处阻逆，连谋温饱都很费力。可用比劫来化。',
@@ -189,6 +404,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.伤官: {
     'general': [
+      _shishen_definition(
+        'shishen.shangguan.definition',
+        '伤官为日主所生且阴阳相异者。',
+      ),
       '代表批判、变革。',
       '伤官和食神代表的个性不同，伤官不如食神那样和和气气，反而有点“又狂又傲娇”和恃才傲物的感觉。',
       '伤官也由命主所生，但与命主阴阳相反，所以伤官为异性之泄，其力必尽泄，是无节制之泄。',
@@ -221,6 +440,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.正财: {
     'general': [
+      _shishen_definition(
+        'shishen.zhengcai.definition',
+        '正财为日主所克且阴阳相异者。',
+      ),
       '代表稳定的经济来源/金库。象征稳定和资源/财富的积累。',
       '代表工资、薪水、工作、资产、不动产。',
       '代表的亲戚：对男命来说代表父亲、老婆；对女命来说代表父亲。',
@@ -250,6 +473,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.偏财: {
     'general': [
+      _shishen_definition(
+        'shishen.piancai.definition',
+        '偏财为日主所克且阴阳相同者。',
+      ),
       '代表意外之财，非传统的收入来源。也代表惊喜（如彩票）和非凡的体验。',
       '代表不稳定的财、不固定的收入，如副业收入、意外收入、浮动资金、投资、彩票，也代表众人之财（可取象为基金、投资等，所以偏财状态好的人可以从事金融相关工作，如交易员）。',
       '偏财也有从流通中取财之象，如通过交易、转让、投机、借贷、中介、提供咨询服务等方式获得财富。',
@@ -279,6 +506,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.正官: {
     'general': [
+      _shishen_definition(
+        'shishen.zhengguan.definition',
+        '正官为克制日主且阴阳相异者。',
+      ),
       '代表规则、传统、权威，也代表纪律和责任感。',
       '代表克制自己、自我约束，从而成才。',
       '正官的管制温文尔雅。七杀的管制大刀阔斧，更加无情。',
@@ -288,9 +519,11 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       '代表的正面性格：稳重、正直、讲信用、有责任感、讲规矩。',
       '代表的负面性格：过于保守、迂腐、优柔寡断、积极性差。',
       _editorial_reference(
+        'editorial.shishen.zhengguan.legal_trouble',
         '如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
       ),
       _editorial_reference(
+        'editorial.shishen.zhengguan.infidelity',
         '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
       ),
       '正官是护身卫财之本，表示保护人身及财产的安全，正官象征官方权力，多受法理的约束。',
@@ -314,19 +547,26 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.七杀: {
     'general': [
+      _shishen_definition(
+        'shishen.qisha.definition',
+        '七杀为克制日主且阴阳相同者。',
+      ),
       '代表激情和冒险，象征挑战现状、突破极限的勇气。',
       '夸张一点说，代表通过被外界“毒打”从而历经磨练成才。',
       '七杀的管制大刀阔斧、雷厉风行，所以也是一种霸道的象征。',
       _editorial_reference(
+        'editorial.shishen.qisha.crime_disaster',
         '官司、法院、牢狱、军队、公检法、忌恨、小人、恶人、凶祸、外伤、疾病。',
       ),
       '代表的亲戚：在男命中代表儿子；在女命中代表男朋友、情人、丈夫。',
       '代表的正面性格：有进取心、有冲劲、做事果断、见义勇为、勇于创新。',
       '代表的负面性格：偏激、凶暴、好胜心强、猜忌心重、阴沉。',
       _editorial_reference(
+        'editorial.shishen.qisha.legal_trouble',
         '如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。',
       ),
       _editorial_reference(
+        'editorial.shishen.qisha.infidelity',
         '对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表在感情上纠结，或是在感情上可能会出轨。',
       ),
       '与日柱同性之克，无情之克，其含义为打击，压制，暴力，权其性刚雄，具有叛逆，称霸之性，需制化方可驾驭。',
@@ -340,6 +580,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       '专制，暴力、独断、霸气，匪气，好胜，冲动，凶残。',
       '容易偏激，叛逆和过于霸道，容易走极端。',
       _editorial_reference(
+        'editorial.shishen.qisha.external_disaster',
         '七杀代表突如其来的打击、攻击、意外灾害等外在环境的变故。',
       ),
     ],
@@ -353,6 +594,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.正印: {
     'general': [
+      _shishen_definition(
+        'shishen.zhengyin.definition',
+        '正印为生助日主且阴阳相异者。',
+      ),
       '代表智慧、教化，也代表关怀和指导。',
       '正印也代表学习、智慧。和食神不同，正印代表的是论文、学术研究、学校考试相关的学习。',
       '代表印章（这也是正印的本意）、授权、权力、学业、学历、才识、智慧、庇护、祖产，也代表生扶、帮助你的事物。',
@@ -381,6 +626,10 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
   },
   Shishen.偏印: {
     'general': [
+      _shishen_definition(
+        'shishen.pianyin.definition',
+        '偏印为生助日主且阴阳相同者。',
+      ),
       '代表非传统的智慧和创造力，象征艺术、想象。',
       '相比正印，偏印生助日主更加“拧巴”，不像正印那样尽心尽力。',
       '代表宗教、艺术、文化、玄学、医学、技艺、创作、副业，也代表生扶、帮助你的事物。',
@@ -419,11 +668,18 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
 ] = frozendict({
   Tiangan.甲: {
     'general': [
-      '甲为阳木，比作参天大树，栋梁之才。',
+      _tiangan_definition(
+        'tiangan.jia.definition',
+        '甲为阳木。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+      ),
+      '甲比作参天大树，有栋梁之才。',
       _editorial_reference(
+        'editorial.tiangan.jia.fatigue',
         '容易疲劳，须注意肝胆。',
       ),
       _editorial_reference(
+        'editorial.tiangan.jia.annual_checkup',
         '请注意可能会有（胆、头）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -437,8 +693,14 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.乙: {
     'general': [
-      '乙为阴木，蔓藤花草。',
+      _tiangan_definition(
+        'tiangan.yi.definition',
+        '乙为阴木。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+      ),
+      '乙如蔓藤花草。',
       _editorial_reference(
+        'editorial.tiangan.yi.annual_checkup',
         '请注意可能会有（肝、颈）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -450,11 +712,23 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.丙: {
     'general': [
-      '丙为阳火像太阳，既不怕寒霜也不忌冷雪。',
+      _tiangan_definition(
+        'tiangan.bing.definition',
+        '丙为阳火。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+      ),
+      _historical_symbol(
+        'tiangan.bing.sun_symbol',
+        '丙火像太阳。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+      ),
+      '丙火既不怕寒霜也不忌冷雪。',
       _editorial_reference(
+        'editorial.tiangan.bing.heart_attention',
         '须注意心、血压、小肠、眼睛及肩的问题。',
       ),
       _editorial_reference(
+        'editorial.tiangan.bing.annual_checkup',
         '请注意可能会有（小肠、肩膀、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -466,11 +740,23 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.丁: {
     'general': [
-      '丁火为阴火，如灯火、萤火，虽没丙火强烈，但却易让人接受。',
+      _tiangan_definition(
+        'tiangan.ding.definition',
+        '丁为阴火。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      _historical_symbol(
+        'tiangan.ding.lamp_symbol',
+        '丁火有烛灯之象。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '丁火如萤火，虽没丙火强烈，但却易让人接受。',
       _editorial_reference(
+        'editorial.tiangan.ding.heart_attention',
         '须注意心、血压、小肠、眼睛等问题。',
       ),
       _editorial_reference(
+        'editorial.tiangan.ding.annual_checkup',
         '请注意可能会有（心脏、血压）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -482,9 +768,20 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.戊: {
     'general': [
-      '戊土阳土，为大地，为长城，取坚固厚实的意思。',
+      _tiangan_definition(
+        'tiangan.wu.definition',
+        '戊为阳土。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      _historical_symbol(
+        'tiangan.wu.wall_symbol',
+        '戊土有城墙之象。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '戊土为大地，取坚固厚实的意思。',
       '戊土为阳土，其特性为高山之土，因近太阳故为燥土。',
       _editorial_reference(
+        'editorial.tiangan.wu.annual_checkup',
         '请注意可能会有（脾胃、腹部、胸背部、身体上半身两侧）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -495,11 +792,18 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.己: {
     'general': [
-      '己为阴土，性阴柔。',
+      _tiangan_definition(
+        'tiangan.ji.definition',
+        '己为阴土。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '己性阴柔。',
       _editorial_reference(
+        'editorial.tiangan.ji.digestive_attention',
         '须注意脾胃、腹部。',
       ),
       _editorial_reference(
+        'editorial.tiangan.ji.annual_checkup',
         '请注意可能会（脾、腹）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -511,8 +815,14 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.庚: {
     'general': [
-      '庚金为阳金，如刚铁，无坚不摧，个性刚烈，豪侠仗义。',
+      _tiangan_definition(
+        'tiangan.geng.definition',
+        '庚为阳金。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '庚金如刚铁，无坚不摧，个性刚烈，豪侠仗义。',
       _editorial_reference(
+        'editorial.tiangan.geng.annual_checkup',
         '请注意可能会有（大肠、脐轮）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -523,8 +833,19 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.辛: {
     'general': [
-      '辛金为阴金，如珠宝金银，高贵且艳丽。',
+      _tiangan_definition(
+        'tiangan.xin.definition',
+        '辛为阴金。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      _historical_symbol(
+        'tiangan.xin.jewel_symbol',
+        '辛金有珠玉之象。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '辛金高贵且艳丽。',
       _editorial_reference(
+        'editorial.tiangan.xin.annual_checkup',
         '请注意可能会有（肺、屁股）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -535,11 +856,22 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.壬: {
     'general': [
-      '壬水为阳水，如江洋大川。',
+      _tiangan_definition(
+        'tiangan.ren.definition',
+        '壬为阳水。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      _historical_symbol(
+        'tiangan.ren.river_symbol',
+        '壬水有汪洋百川之象。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
       _editorial_reference(
+        'editorial.tiangan.ren.urinary_attention',
         '应注意膀胱和肾（泌尿系统）。',
       ),
       _editorial_reference(
+        'editorial.tiangan.ren.annual_checkup',
         '请注意可能会有(膀胱、胫)方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -553,8 +885,14 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
   },
   Tiangan.癸: {
     'general': [
-      '癸为阴水，如涓涓细流，如雨水。',
+      _tiangan_definition(
+        'tiangan.gui.definition',
+        '癸为阴水。',
+        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+      ),
+      '癸水如涓涓细流，如雨水。',
       _editorial_reference(
+        'editorial.tiangan.gui.annual_checkup',
         '请注意可能会有（肾脏、足）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
@@ -573,17 +911,16 @@ def _project_texts(
   include_reference_only: bool,
 ) -> list[str]:
   assert isinstance(include_reference_only, bool)
-  assert all(
-    item.output is _DescriptionOutput.REFERENCE_ONLY
-    for item in items
-    if isinstance(item, _DescriptionClaim)
-  )
   return [
     item.text if isinstance(item, _DescriptionClaim) else item
     for item in items
     if (
       include_reference_only
       or not isinstance(item, _DescriptionClaim)
+      or (
+        item.output is _DescriptionOutput.DEFAULT
+        and not item.conditions
+      )
     )
   ]
 
