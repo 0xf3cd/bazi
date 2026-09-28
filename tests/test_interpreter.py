@@ -142,6 +142,35 @@ def _complete_corpus_fingerprint() -> str:
     tg_description = Interpreter.interpret_tiangan(tg, include_reference_only=True)
     for field, texts in _as_mapping(tg_description).items():
       rows.extend(f'T:{tg}:{field}:{text}' for text in texts)
+  for subject, field, claim in _all_claims():
+    rows.append('\0'.join((
+      'C', str(subject), field, claim.claim_id, claim.text,
+      ','.join(source.value for source in claim.sources),
+      claim.attribution,
+      ','.join(condition.value for condition in claim.conditions),
+      claim.output.value,
+    )))
+  return sha256('\n'.join(rows).encode()).hexdigest()
+
+
+def _source_registry_fingerprint() -> str:
+  rows: list[str] = []
+  for source in _DescriptionSource:
+    record = _DESCRIPTION_SOURCES[source]
+    values = (
+      source.value,
+      record.work,
+      record.attribution,
+      record.edition,
+      record.locator,
+      record.url,
+      record.text_layer.value,
+      record.lineage.value,
+      record.excerpt,
+      record.supports,
+      record.limitations,
+    )
+    rows.append('\0'.join(values))
   return sha256('\n'.join(rows).encode()).hexdigest()
 
 
@@ -250,14 +279,22 @@ def test_reference_only_claims() -> None:
     (subject, field, claim.text)
     for subject, field, claim in claims
   } == set(_REFERENCE_ONLY_CASES)
-  assert [
-    (subject, field, claim.text)
+  editorial_claims = [
+    (subject, field, claim)
     for subject, field, claim in claims
     if claim.sources == (_DescriptionSource.EDITORIAL,)
+  ]
+  assert [
+    (subject, field, claim.text)
+    for subject, field, claim in editorial_claims
   ] == list(_EDITORIAL_REFERENCE_CASES)
+  assert all(
+    claim.attribution == 'Repository editorial'
+    for _, _, claim in editorial_claims
+  )
 
 
-def test_provenance_pilot_claims() -> None:
+def test_sourced_claims() -> None:
   shishen_definition_sources = (
     _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
     _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
@@ -360,6 +397,7 @@ def test_provenance_integrity() -> None:
       if source is _DescriptionSource.EDITORIAL
       else _DescriptionTextLayer.BAIWEN
     )
+  assert _source_registry_fingerprint() == '7ccb163266026302dfe340108e28c9018cccfec48001f696c2f5056893c06a3e'
 
   claims = [claim for _, _, claim in _all_claims()]
   claim_ids = [claim.claim_id for claim in claims]
@@ -378,7 +416,7 @@ def test_provenance_integrity() -> None:
       }) >= 2
 
 
-def test_projection_rejects_unmet_conditions_and_reference_only_claims() -> None:
+def test_default_projection_drops_conditional_and_reference_only_claims() -> None:
   default = _DescriptionClaim(
     claim_id='test.default',
     text='Default claim.',
@@ -403,8 +441,18 @@ def test_projection_rejects_unmet_conditions_and_reference_only_claims() -> None
     conditions=(),
     output=_DescriptionOutput.REFERENCE_ONLY,
   )
+  conditional_reference = _DescriptionClaim(
+    claim_id='test.conditional_reference',
+    text='Conditional reference-only claim.',
+    sources=(_DescriptionSource.EDITORIAL,),
+    attribution='Test',
+    conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    output=_DescriptionOutput.REFERENCE_ONLY,
+  )
 
-  items: list[str | _DescriptionClaim] = ['Legacy claim.', default, conditional, reference]
+  items: list[str | _DescriptionClaim] = [
+    'Legacy claim.', default, conditional, reference, conditional_reference,
+  ]
   assert _project_texts(items, include_reference_only=False) == [
     'Legacy claim.',
     'Default claim.',
@@ -414,12 +462,13 @@ def test_projection_rejects_unmet_conditions_and_reference_only_claims() -> None
     'Default claim.',
     'Conditional claim.',
     'Reference-only claim.',
+    'Conditional reference-only claim.',
   ]
 
 
 def test_complete_corpus_is_conserved() -> None:
-  # Pin the complete corpus text and order; update the hash only for intentional edits.
-  assert _complete_corpus_fingerprint() == '78603ba30dcd8f4240897ae0b45e9d5d9fcc535641cb1463b68feff6ae06d89d'
+  # Pin the complete corpus text, order, and claim carriers; update only for intentional edits.
+  assert _complete_corpus_fingerprint() == '4e13e5b77c6f5a1b58d44928ff02f06891d74faf86321aff2fce1f604239cf31'
 
 
 def test_reference_only_deepcopy() -> None:
@@ -438,11 +487,12 @@ def test_reference_only_deepcopy() -> None:
   )['general']
 
 
-def test_reference_only_negative() -> None:
+@pytest.mark.parametrize('bad_flag', [1, 0, None])
+def test_reference_only_negative(bad_flag: object) -> None:
   with pytest.raises(TypeError):
-    Interpreter.interpret_shishen(Shishen.食神, include_reference_only=1) # type: ignore
+    Interpreter.interpret_shishen(Shishen.食神, include_reference_only=bad_flag) # type: ignore
   with pytest.raises(TypeError):
-    Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1) # type: ignore
+    Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=bad_flag) # type: ignore
 
 
 def test_public_tables_are_frozen() -> None:

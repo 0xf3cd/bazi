@@ -154,8 +154,16 @@ def main() -> int:
      lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
     ('Interpreter.interpret_shishen wrong reference flag', TypeError,
      lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=1)), # type: ignore
+    ('Interpreter.interpret_shishen falsy reference flag', TypeError,
+     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=0)), # type: ignore
+    ('Interpreter.interpret_shishen null reference flag', TypeError,
+     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=None)), # type: ignore
     ('Interpreter.interpret_tiangan wrong reference flag', TypeError,
      lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1)), # type: ignore
+    ('Interpreter.interpret_tiangan falsy reference flag', TypeError,
+     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore
+    ('Interpreter.interpret_tiangan null reference flag', TypeError,
+     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=None)), # type: ignore
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,

@@ -48,7 +48,7 @@ class _DescriptionSource(Enum):
 
 
 class _DescriptionLineage(Enum):
-  '''An independently reviewed textual lineage. / 独立核验的文本谱系。'''
+  '''An independent textual lineage. / 独立的文本谱系。'''
 
   EDITORIAL        = 'editorial'
   YUANHAI_ZIPING   = 'yuanhai_ziping'
@@ -183,7 +183,7 @@ _DESCRIPTION_SOURCES: Final[
 
 @dataclass(frozen=True)
 class _DescriptionClaim:
-  '''An atomic description with provenance and projection policy. / 带来源与投影策略的原子语料断言。'''
+  '''An atomic description with provenance and output policy. / 带来源与输出策略的原子语料断言。'''
 
   claim_id:    str
   text:        str
@@ -750,7 +750,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '丁火有烛灯之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '丁火也如萤火，虽没丙火强烈，但却易让人接受。',
+      '丁火如萤火，虽没丙火强烈，但却易让人接受。',
       _editorial_reference(
         'editorial.tiangan.ding.heart_attention',
         '须注意心、血压、小肠、眼睛等问题。',
