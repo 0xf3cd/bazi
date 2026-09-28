@@ -467,7 +467,7 @@ def test_default_projection_drops_conditional_and_reference_only_claims() -> Non
 
 
 def test_complete_corpus_is_conserved() -> None:
-  # Pin the complete corpus text, order, and claim carriers; update only for intentional edits.
+  # Pin the complete corpus text, order, and claim fields; update only for intentional edits.
   assert _complete_corpus_fingerprint() == '4e13e5b77c6f5a1b58d44928ff02f06891d74faf86321aff2fce1f604239cf31'
 
 
