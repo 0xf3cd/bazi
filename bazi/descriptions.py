@@ -183,7 +183,7 @@ _DESCRIPTION_SOURCES: Final[
 
 @dataclass(frozen=True)
 class _DescriptionClaim:
-  '''An atomic description with provenance and output policy. / 带来源与输出策略的原子语料断言。'''
+  '''A description claim with source state and output policy. / 带来源状态与输出策略的语料断言。'''
 
   claim_id:    str
   text:        str
@@ -240,6 +240,21 @@ def _editorial_reference(claim_id: str, text: str) -> _DescriptionClaim:
     text=text,
     sources=(_DescriptionSource.EDITORIAL,),
     attribution='Repository editorial',
+    output=_DescriptionOutput.REFERENCE_ONLY,
+  )
+
+
+def _unverified_reference(
+  claim_id: str,
+  text: str,
+  conditions: tuple[_DescriptionCondition, ...] = (),
+) -> _DescriptionClaim:
+  return _claim(
+    claim_id=claim_id,
+    text=text,
+    sources=(),
+    attribution='Legacy corpus; source unverified',
+    conditions=conditions,
     output=_DescriptionOutput.REFERENCE_ONLY,
   )
 
@@ -673,7 +688,10 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '甲为阳木。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
-      '甲比作参天大树，有栋梁之才。',
+      _unverified_reference(
+        'legacy.tiangan.jia.tree_image',
+        '甲比作参天大树，有栋梁之才。',
+      ),
       _editorial_reference(
         'editorial.tiangan.jia.fatigue',
         '容易疲劳，须注意肝胆。',
@@ -684,11 +702,29 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
     ],
     'personality': [
-      '仁慈富同情心，个性积极，精力旺盛，外文雅内好强，刚直正气，重感情，具开拓精神，固执独断，善于表现自己，待人大方，精明能干。',
-      '甲木之人，有上进心，有志气，有骨气，心地善良，占有欲强。',
-      '如果甲木偏弱（如局中无印、比来生助，日主反而被官、杀克制的），说明这个人胆小怕事、独善其身、性格也较忧郁，常常是哑巴吃黄连，敢怒不敢言。',
-      '如果甲木偏旺，说明这人长得高大，骨骼也粗大，但瘦而不胖，平常不苟言笑，做事一板一眼、心直口快、不善变通、容易吃亏。',
-      '如果日干甲木中和，生泄适度，说明此人性格较中庸，刚柔并济，容易成功。',
+      _unverified_reference(
+        'legacy.tiangan.jia.personality',
+        '仁慈富同情心，个性积极，精力旺盛，外文雅内好强，刚直正气，重感情，具开拓精神，固执独断，善于表现自己，待人大方，精明能干。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.jia.ambition',
+        '甲木之人，有上进心，有志气，有骨气，心地善良，占有欲强。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.jia.weak_state',
+        '如果甲木偏弱（如局中无印、比来生助，日主反而被官、杀克制的），说明这个人胆小怕事、独善其身、性格也较忧郁，常常是哑巴吃黄连，敢怒不敢言。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
+      _unverified_reference(
+        'legacy.tiangan.jia.strong_state',
+        '如果甲木偏旺，说明这人长得高大，骨骼也粗大，但瘦而不胖，平常不苟言笑，做事一板一眼、心直口快、不善变通、容易吃亏。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
+      _unverified_reference(
+        'legacy.tiangan.jia.balanced_state',
+        '如果日干甲木中和，生泄适度，说明此人性格较中庸，刚柔并济，容易成功。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
     ],
   },
   Tiangan.乙: {
@@ -698,16 +734,28 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '乙为阴木。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
-      '乙如蔓藤花草。',
+      _unverified_reference(
+        'legacy.tiangan.yi.vine_grass_image',
+        '乙如蔓藤花草。',
+      ),
       _editorial_reference(
         'editorial.tiangan.yi.annual_checkup',
         '请注意可能会有（肝、颈）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
     'personality': [
-      '仁慈富同情心，干劲十足，外文雅内好强，温柔含蓄，坚忍礼让，消极善妒，优柔寡断，感情脆弱，做事心思细腻。',
-      '对环境的适应能力很强，像草一样春风吹又生。乙木不像甲木硬碰硬的来，甲木容易被摧折，乙木更具柔韧性/适应性。',
-      '乙木之人秀丽柔弱，（可能）不禁风雨，但善于利用环境、适应环境、把握机遇、因势利导等。',
+      _unverified_reference(
+        'legacy.tiangan.yi.personality',
+        '仁慈富同情心，干劲十足，外文雅内好强，温柔含蓄，坚忍礼让，消极善妒，优柔寡断，感情脆弱，做事心思细腻。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.yi.adaptability',
+        '对环境的适应能力很强，像草一样春风吹又生。乙木不像甲木硬碰硬的来，甲木容易被摧折，乙木更具柔韧性/适应性。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.yi.opportunity',
+        '乙木之人秀丽柔弱，（可能）不禁风雨，但善于利用环境、适应环境、把握机遇、因势利导等。',
+      ),
     ],
   },
   Tiangan.丙: {
@@ -722,7 +770,10 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '丙火像太阳。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
-      '丙火既不怕寒霜也不忌冷雪。',
+      _unverified_reference(
+        'legacy.tiangan.bing.frost_snow_image',
+        '丙火既不怕寒霜也不忌冷雪。',
+      ),
       _editorial_reference(
         'editorial.tiangan.bing.heart_attention',
         '须注意心、血压、小肠、眼睛及肩的问题。',
@@ -733,9 +784,18 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
     ],
     'personality': [
-      '性格不拘小节大而化之，为朋友的忠实听众，但听后常不当一回事，且易这耳进那耳出，易发脾气，却也收得快。',
-      '热情有礼，豪爽，乐观进取，好胜心强，急躁易冲动，缺乏耐性，待人耿直，善交朋友，光明磊落不喜掩饰。',
-      '丙火之人性格急躁，喜欢争上风，对人热情大方，有礼貌，好打抱不平。',
+      _unverified_reference(
+        'legacy.tiangan.bing.temper',
+        '性格不拘小节大而化之，为朋友的忠实听众，但听后常不当一回事，且易这耳进那耳出，易发脾气，却也收得快。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.bing.sociability',
+        '热情有礼，豪爽，乐观进取，好胜心强，急躁易冲动，缺乏耐性，待人耿直，善交朋友，光明磊落不喜掩饰。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.bing.impatience',
+        '丙火之人性格急躁，喜欢争上风，对人热情大方，有礼貌，好打抱不平。',
+      ),
     ],
   },
   Tiangan.丁: {
@@ -750,7 +810,10 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '丁火有烛灯之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '丁火如萤火，虽没丙火强烈，但却易让人接受。',
+      _unverified_reference(
+        'legacy.tiangan.ding.firefly_image',
+        '丁火如萤火，虽没丙火强烈，但却易让人接受。',
+      ),
       _editorial_reference(
         'editorial.tiangan.ding.heart_attention',
         '须注意心、血压、小肠、眼睛等问题。',
@@ -761,9 +824,19 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
     ],
     'personality': [
-      '温文尔雅，敦厚纯朴，重信守义，沉静友善，保守勤奋，易任性逞强，热情谦恭，有时又流于虚伪叛逆。',
-      '丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多，则会变成胆小，多愁多虑。',
-      '内心感情丰富且不善表达于言词，善忌妒，人称闷骚型。',
+      _unverified_reference(
+        'legacy.tiangan.ding.personality',
+        '温文尔雅，敦厚纯朴，重信守义，沉静友善，保守勤奋，易任性逞强，热情谦恭，有时又流于虚伪叛逆。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ding.weak_state',
+        '丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多，则会变成胆小，多愁多虑。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ding.emotional_expression',
+        '内心感情丰富且不善表达于言词，善忌妒，人称闷骚型。',
+      ),
     ],
   },
   Tiangan.戊: {
@@ -778,16 +851,28 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '戊土有城墙之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '戊土为大地，取坚固厚实的意思。',
-      '戊土为阳土，其特性为高山之土，因近太阳故为燥土。',
+      _unverified_reference(
+        'legacy.tiangan.wu.earth_image',
+        '戊土为大地，取坚固厚实的意思。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.wu.mountain_dryness',
+        '戊土为阳土，其特性为高山之土，因近太阳故为燥土。',
+      ),
       _editorial_reference(
         'editorial.tiangan.wu.annual_checkup',
         '请注意可能会有（脾胃、腹部、胸背部、身体上半身两侧）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
     'personality': [
-      '敦厚朴实，重信讲义，忠实至诚，宽大包容，乐于助人，反应迟钝，不懂变通，做事细心，胆小怕事。',
-      '喜欢旧事物，也不喜欢搬迁。承诺别人则会守信到底，决不拖拉。',
+      _unverified_reference(
+        'legacy.tiangan.wu.personality',
+        '敦厚朴实，重信讲义，忠实至诚，宽大包容，乐于助人，反应迟钝，不懂变通，做事细心，胆小怕事。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.wu.steadfastness',
+        '喜欢旧事物，也不喜欢搬迁。承诺别人则会守信到底，决不拖拉。',
+      ),
     ],
   },
   Tiangan.己: {
@@ -797,7 +882,10 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '己为阴土。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '己性阴柔。',
+      _unverified_reference(
+        'legacy.tiangan.ji.yin_softness',
+        '己性阴柔。',
+      ),
       _editorial_reference(
         'editorial.tiangan.ji.digestive_attention',
         '须注意脾胃、腹部。',
@@ -808,9 +896,19 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
     ],
     'personality': [
-      '个性谨慎，温和重义，外随和内坚忍。',
-      '己土状态不好时，容易猜疑妒忌，懒怠固执，欠果断。',
-      '举止较淡定，寡言，不重修饰，慢慢相处方能发现TA的优点。',
+      _unverified_reference(
+        'legacy.tiangan.ji.personality',
+        '个性谨慎，温和重义，外随和内坚忍。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ji.adverse_state',
+        '己土状态不好时，容易猜疑妒忌，懒怠固执，欠果断。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ji.reserve',
+        '举止较淡定，寡言，不重修饰，慢慢相处方能发现TA的优点。',
+      ),
     ],
   },
   Tiangan.庚: {
@@ -820,15 +918,25 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '庚为阳金。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '庚金如刚铁，无坚不摧，个性刚烈，豪侠仗义。',
+      _unverified_reference(
+        'legacy.tiangan.geng.iron_image',
+        '庚金如刚铁，无坚不摧，个性刚烈，豪侠仗义。',
+      ),
       _editorial_reference(
         'editorial.tiangan.geng.annual_checkup',
         '请注意可能会有（大肠、脐轮）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
     'personality': [
-      '表情严肃，坚持原则，积极进取，自尊心强，好胜，不讲情面，刚毅重义气，易怒，果断，善权谋，好结交朋友，宁折不弯。',
-      '如果庚金日主盘中的庚金行运有制有化，后天有教养，性虽刚但不逼人，有义气但不鲁莽惹祸。',
+      _unverified_reference(
+        'legacy.tiangan.geng.personality',
+        '表情严肃，坚持原则，积极进取，自尊心强，好胜，不讲情面，刚毅重义气，易怒，果断，善权谋，好结交朋友，宁折不弯。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.geng.regulated_transit',
+        '如果庚金日主盘中的庚金行运有制有化，后天有教养，性虽刚但不逼人，有义气但不鲁莽惹祸。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
     ],
   },
   Tiangan.辛: {
@@ -843,15 +951,24 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '辛金有珠玉之象。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '辛金高贵且艳丽。',
+      _unverified_reference(
+        'legacy.tiangan.xin.noble_beauty',
+        '辛金高贵且艳丽。',
+      ),
       _editorial_reference(
         'editorial.tiangan.xin.annual_checkup',
         '请注意可能会有（肺、屁股）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
     'personality': [
-      '为人好面子，注重衣着，易有异性缘，处事刚柔并济，粗中有细。',
-      '坦直无私，脚踏实地，恒心毅力，稳重，刻薄寡情，易生不平。做事细腻认真，精明能干。',
+      _unverified_reference(
+        'legacy.tiangan.xin.appearance',
+        '为人好面子，注重衣着，易有异性缘，处事刚柔并济，粗中有细。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.xin.personality',
+        '坦直无私，脚踏实地，恒心毅力，稳重，刻薄寡情，易生不平。做事细腻认真，精明能干。',
+      ),
     ],
   },
   Tiangan.壬: {
@@ -876,11 +993,28 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       ),
     ],
     'personality': [
-      '富心机，深藏不露，外表冷淡，机智灵敏，多才多艺，冲动易怒。',
-      '才智高，理性佳，重责任，交际广，人缘佳，能见风转舵，反应灵敏，善算计，外表平静，胆大心细，事业容易有成就，好求变，易激动，定性差，个性不服输，做事大而化之。',
-      '为人热情澎湃，足智多谋，多才多艺，善钻营。',
-      '若壬水日主身弱又克太过，乖巧聪明，胆小怕事，魄力不足成大事。',
-      '若壬水日主身旺，水太过，就如脱缰之马，又喜走捷径，易失足。水性太过的，聪明狡诈，任性风流。',
+      _unverified_reference(
+        'legacy.tiangan.ren.personality',
+        '富心机，深藏不露，外表冷淡，机智灵敏，多才多艺，冲动易怒。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ren.achievement',
+        '才智高，理性佳，重责任，交际广，人缘佳，能见风转舵，反应灵敏，善算计，外表平静，胆大心细，事业容易有成就，好求变，易激动，定性差，个性不服输，做事大而化之。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ren.resourcefulness',
+        '为人热情澎湃，足智多谋，多才多艺，善钻营。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ren.weak_state',
+        '若壬水日主身弱又克太过，乖巧聪明，胆小怕事，魄力不足成大事。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
+      _unverified_reference(
+        'legacy.tiangan.ren.strong_state',
+        '若壬水日主身旺，水太过，就如脱缰之马，又喜走捷径，易失足。水性太过的，聪明狡诈，任性风流。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
     ],
   },
   Tiangan.癸: {
@@ -890,17 +1024,33 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
         '癸为阴水。',
         _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
-      '癸水如涓涓细流，如雨水。',
+      _unverified_reference(
+        'legacy.tiangan.gui.stream_rain_image',
+        '癸水如涓涓细流，如雨水。',
+      ),
       _editorial_reference(
         'editorial.tiangan.gui.annual_checkup',
         '请注意可能会有（肾脏、足）方面的疾病，假如真的有，建议您每年要定期做健康检查。',
       ),
     ],
     'personality': [
-      '聪明，看似平静，其实内心澎湃汹涌，巧于临机应变，有远见，细水长流，个性内向保守，节俭，有洁癖，正直而踏实，相对而言，也显得感情脆弱，有点神经质，喜欢幻想，拥有浪漫情怀。',
-      '聪颖智巧，隐忍含蓄，内向斯文，巧于心机，深思多虑，沉静节约，贪小便宜，好胜逞强，有耐力恒心，做事认真，学识多广。',
-      '阴柔，宁静，不冲动，有耐心，处事手法好，以柔至刚，深思熟虑，以进为退，喜后发制人。',
-      '若癸水日主身旺癸为忌神，为人表面心如止水，内心想入非非，好幻想，不切实际，喜钻牛角尖。',
+      _unverified_reference(
+        'legacy.tiangan.gui.personality',
+        '聪明，看似平静，其实内心澎湃汹涌，巧于临机应变，有远见，细水长流，个性内向保守，节俭，有洁癖，正直而踏实，相对而言，也显得感情脆弱，有点神经质，喜欢幻想，拥有浪漫情怀。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.gui.resourcefulness',
+        '聪颖智巧，隐忍含蓄，内向斯文，巧于心机，深思多虑，沉静节约，贪小便宜，好胜逞强，有耐力恒心，做事认真，学识多广。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.gui.restraint',
+        '阴柔，宁静，不冲动，有耐心，处事手法好，以柔至刚，深思熟虑，以进为退，喜后发制人。',
+      ),
+      _unverified_reference(
+        'legacy.tiangan.gui.strong_unfavorable_state',
+        '若癸水日主身旺癸为忌神，为人表面心如止水，内心想入非非，好幻想，不切实际，喜钻牛角尖。',
+        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+      ),
     ],
   },
 })

@@ -89,6 +89,64 @@ _HISTORICAL_SYMBOL_CASES: Final[
   (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有汪洋百川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
 )
 
+_UNVERIFIED_TIANGAN_CLAIM_IDS: Final[tuple[tuple[Tiangan, str, str], ...]] = (
+  (Tiangan.甲, 'general', 'legacy.tiangan.jia.tree_image'),
+  (Tiangan.甲, 'personality', 'legacy.tiangan.jia.personality'),
+  (Tiangan.甲, 'personality', 'legacy.tiangan.jia.ambition'),
+  (Tiangan.甲, 'personality', 'legacy.tiangan.jia.weak_state'),
+  (Tiangan.甲, 'personality', 'legacy.tiangan.jia.strong_state'),
+  (Tiangan.甲, 'personality', 'legacy.tiangan.jia.balanced_state'),
+  (Tiangan.乙, 'general', 'legacy.tiangan.yi.vine_grass_image'),
+  (Tiangan.乙, 'personality', 'legacy.tiangan.yi.personality'),
+  (Tiangan.乙, 'personality', 'legacy.tiangan.yi.adaptability'),
+  (Tiangan.乙, 'personality', 'legacy.tiangan.yi.opportunity'),
+  (Tiangan.丙, 'general', 'legacy.tiangan.bing.frost_snow_image'),
+  (Tiangan.丙, 'personality', 'legacy.tiangan.bing.temper'),
+  (Tiangan.丙, 'personality', 'legacy.tiangan.bing.sociability'),
+  (Tiangan.丙, 'personality', 'legacy.tiangan.bing.impatience'),
+  (Tiangan.丁, 'general', 'legacy.tiangan.ding.firefly_image'),
+  (Tiangan.丁, 'personality', 'legacy.tiangan.ding.personality'),
+  (Tiangan.丁, 'personality', 'legacy.tiangan.ding.weak_state'),
+  (Tiangan.丁, 'personality', 'legacy.tiangan.ding.emotional_expression'),
+  (Tiangan.戊, 'general', 'legacy.tiangan.wu.earth_image'),
+  (Tiangan.戊, 'general', 'legacy.tiangan.wu.mountain_dryness'),
+  (Tiangan.戊, 'personality', 'legacy.tiangan.wu.personality'),
+  (Tiangan.戊, 'personality', 'legacy.tiangan.wu.steadfastness'),
+  (Tiangan.己, 'general', 'legacy.tiangan.ji.yin_softness'),
+  (Tiangan.己, 'personality', 'legacy.tiangan.ji.personality'),
+  (Tiangan.己, 'personality', 'legacy.tiangan.ji.adverse_state'),
+  (Tiangan.己, 'personality', 'legacy.tiangan.ji.reserve'),
+  (Tiangan.庚, 'general', 'legacy.tiangan.geng.iron_image'),
+  (Tiangan.庚, 'personality', 'legacy.tiangan.geng.personality'),
+  (Tiangan.庚, 'personality', 'legacy.tiangan.geng.regulated_transit'),
+  (Tiangan.辛, 'general', 'legacy.tiangan.xin.noble_beauty'),
+  (Tiangan.辛, 'personality', 'legacy.tiangan.xin.appearance'),
+  (Tiangan.辛, 'personality', 'legacy.tiangan.xin.personality'),
+  (Tiangan.壬, 'personality', 'legacy.tiangan.ren.personality'),
+  (Tiangan.壬, 'personality', 'legacy.tiangan.ren.achievement'),
+  (Tiangan.壬, 'personality', 'legacy.tiangan.ren.resourcefulness'),
+  (Tiangan.壬, 'personality', 'legacy.tiangan.ren.weak_state'),
+  (Tiangan.壬, 'personality', 'legacy.tiangan.ren.strong_state'),
+  (Tiangan.癸, 'general', 'legacy.tiangan.gui.stream_rain_image'),
+  (Tiangan.癸, 'personality', 'legacy.tiangan.gui.personality'),
+  (Tiangan.癸, 'personality', 'legacy.tiangan.gui.resourcefulness'),
+  (Tiangan.癸, 'personality', 'legacy.tiangan.gui.restraint'),
+  (Tiangan.癸, 'personality', 'legacy.tiangan.gui.strong_unfavorable_state'),
+)
+
+_CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS: Final[frozenset[str]] = frozenset({
+  'legacy.tiangan.jia.weak_state',
+  'legacy.tiangan.jia.strong_state',
+  'legacy.tiangan.jia.balanced_state',
+  'legacy.tiangan.ding.weak_state',
+  'legacy.tiangan.ji.adverse_state',
+  'legacy.tiangan.geng.regulated_transit',
+  'legacy.tiangan.ren.weak_state',
+  'legacy.tiangan.ren.strong_state',
+  'legacy.tiangan.gui.strong_unfavorable_state',
+})
+
+
 _SOURCE_EXCERPTS: Final[frozendict[_DescriptionSource, str]] = frozendict({
   _DescriptionSource.EDITORIAL: 'Repository-original editorial prose.',
   _DescriptionSource.YUANHAI_ZIPING_RELATIONS: '生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
@@ -99,7 +157,7 @@ _SOURCE_EXCERPTS: Final[frozendict[_DescriptionSource, str]] = frozendict({
   _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: '陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
 })
 
-_REFERENCE_ONLY_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
+_ATTRIBUTED_REFERENCE_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
   _EDITORIAL_REFERENCE_CASES
   + tuple((tg, 'general', text) for tg, _, text, _ in _HISTORICAL_SYMBOL_CASES)
 )
@@ -132,16 +190,25 @@ def _all_claims() -> list[tuple[Shishen | Tiangan, str, _DescriptionClaim]]:
   return claims
 
 
-def _complete_corpus_fingerprint() -> str:
-  rows: list[str] = []
+def _complete_text_rows() -> tuple[list[str], list[str]]:
+  shishen_rows: list[str] = []
   for shishen in Shishen:
     description = Interpreter.interpret_shishen(shishen, include_reference_only=True)
     for field, texts in _as_mapping(description).items():
-      rows.extend(f'S:{shishen}:{field}:{text}' for text in texts)
+      shishen_rows.extend(f'S:{shishen}:{field}:{text}' for text in texts)
+
+  tiangan_rows: list[str] = []
   for tg in Tiangan:
     tg_description = Interpreter.interpret_tiangan(tg, include_reference_only=True)
     for field, texts in _as_mapping(tg_description).items():
-      rows.extend(f'T:{tg}:{field}:{text}' for text in texts)
+      tiangan_rows.extend(f'T:{tg}:{field}:{text}' for text in texts)
+
+  return shishen_rows, tiangan_rows
+
+
+def _complete_corpus_fingerprint() -> str:
+  shishen_rows, tiangan_rows = _complete_text_rows()
+  rows = shishen_rows + tiangan_rows
   for subject, field, claim in _all_claims():
     rows.append('\0'.join((
       'C', str(subject), field, claim.claim_id, claim.text,
@@ -201,7 +268,6 @@ def test_interpret_tiangan() -> None:
     for k in keys:
       assert k in result
       assert isinstance(result[k], list) # type: ignore # mypy complains.
-      assert len(result[k]) >= 1 # type: ignore # mypy complains.
       for d in result[k]: # type: ignore # mypy complains.
         assert isinstance(d, str)
         assert len(d) >= 1
@@ -209,6 +275,8 @@ def test_interpret_tiangan() -> None:
         assert d == d.strip(), f'"{d}" not stripped' # No space at the beginning or end.
         assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
 
+    assert len(result['general']) == 1
+    assert result['personality'] == []
     assert result == Interpreter.interpret_tiangan(tg)
 
 
@@ -224,7 +292,7 @@ def test_interpret_tiangan_negative() -> None:
 
 def test_reference_only_descriptions_are_opt_in() -> None:
   reference_only: dict[tuple[Shishen | Tiangan, str], list[str]] = {}
-  for subject, field, text in _REFERENCE_ONLY_CASES:
+  for subject, field, text in _ATTRIBUTED_REFERENCE_CASES:
     reference_only.setdefault((subject, field), []).append(text)
 
   default_shishen: list[ShishenDescription] = []
@@ -243,21 +311,23 @@ def test_reference_only_descriptions_are_opt_in() -> None:
 
   default_tiangan: list[TianganDescription] = []
   complete_tiangan: list[TianganDescription] = []
+  definitions = {
+    tg: text for tg, _, text, _ in _TIANGAN_DEFINITIONS
+  }
   for tg in Tiangan:
     tg_default = Interpreter.interpret_tiangan(tg)
     tg_complete = Interpreter.interpret_tiangan(tg, include_reference_only=True)
     assert tg_default == TIANGAN_DESCRIPTIONS[tg]
-    for tg_field in ('general', 'personality'):
-      excluded = reference_only.get((tg, tg_field), [])
-      assert _as_mapping(tg_default)[tg_field] == [
-        text for text in _as_mapping(tg_complete)[tg_field] if text not in excluded
-      ]
+    assert tg_default == {
+      'general': [definitions[tg]],
+      'personality': [],
+    }
     default_tiangan.append(tg_default)
     complete_tiangan.append(tg_complete)
 
   assert _description_count(default_shishen) == 212
   assert _description_count(complete_shishen) == 219
-  assert _description_count(default_tiangan) == 52
+  assert _description_count(default_tiangan) == 10
   assert _description_count(complete_tiangan) == 72
 
 
@@ -275,10 +345,15 @@ def test_reference_only_claims() -> None:
     if claim.output is _DescriptionOutput.REFERENCE_ONLY
   ]
 
+  attributed_claims = [
+    (subject, field, claim)
+    for subject, field, claim in claims
+    if claim.sources
+  ]
   assert {
     (subject, field, claim.text)
-    for subject, field, claim in claims
-  } == set(_REFERENCE_ONLY_CASES)
+    for subject, field, claim in attributed_claims
+  } == set(_ATTRIBUTED_REFERENCE_CASES)
   editorial_claims = [
     (subject, field, claim)
     for subject, field, claim in claims
@@ -292,6 +367,53 @@ def test_reference_only_claims() -> None:
     claim.attribution == 'Repository editorial'
     for _, _, claim in editorial_claims
   )
+
+  unverified_claims = [
+    (subject, field, claim)
+    for subject, field, claim in claims
+    if not claim.sources
+  ]
+  assert [
+    (subject, field, claim.claim_id)
+    for subject, field, claim in unverified_claims
+  ] == list(_UNVERIFIED_TIANGAN_CLAIM_IDS)
+  assert all(
+    claim.attribution == 'Legacy corpus; source unverified'
+    for _, _, claim in unverified_claims
+  )
+  assert {
+    claim.claim_id
+    for _, _, claim in unverified_claims
+    if claim.conditions
+  } == set(_CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS)
+  for tg, field, claim in unverified_claims:
+    assert isinstance(tg, Tiangan)
+    expected_conditions = (
+      (_DescriptionCondition.CHART_CONTEXT_REQUIRED,)
+      if claim.claim_id in _CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS
+      else ()
+    )
+    assert claim.conditions == expected_conditions
+    assert claim.text not in _as_mapping(Interpreter.interpret_tiangan(tg))[field]
+    assert claim.text in _as_mapping(Interpreter.interpret_tiangan(
+      tg,
+      include_reference_only=True,
+    ))[field]
+
+
+def test_tiangan_corpus_is_fully_classified() -> None:
+  assert all(
+    isinstance(item, _DescriptionClaim)
+    for description in _TIANGAN_DESCRIPTION_CORPUS.values()
+    for field in ('general', 'personality')
+    for item in description[field]
+  )
+  assert sum(
+    isinstance(item, str)
+    for description in _SHISHEN_DESCRIPTION_CORPUS.values()
+    for field in ('general', 'in_good_status', 'in_bad_status', 'relationship')
+    for item in description[field]
+  ) == 203
 
 
 def test_sourced_claims() -> None:
@@ -406,14 +528,16 @@ def test_provenance_integrity() -> None:
     assert claim.claim_id
     assert claim.text
     assert claim.attribution
-    assert claim.sources
     assert all(source in _DESCRIPTION_SOURCES for source in claim.sources)
     if claim.output is _DescriptionOutput.DEFAULT:
+      assert claim.sources
       assert not claim.conditions
       assert len({
         _DESCRIPTION_SOURCES[source].lineage
         for source in claim.sources
       }) >= 2
+    elif not claim.sources:
+      assert claim.attribution == 'Legacy corpus; source unverified'
 
 
 def test_default_projection_drops_conditional_and_reference_only_claims() -> None:
@@ -467,8 +591,15 @@ def test_default_projection_drops_conditional_and_reference_only_claims() -> Non
 
 
 def test_complete_corpus_is_conserved() -> None:
-  # Pin the complete corpus text, order, and claim fields; update only for intentional edits.
-  assert _complete_corpus_fingerprint() == '4e13e5b77c6f5a1b58d44928ff02f06891d74faf86321aff2fce1f604239cf31'
+  # Text/order fingerprints stay fixed when claim metadata changes intentionally.
+  shishen_rows, tiangan_rows = _complete_text_rows()
+  assert sha256('\n'.join(tiangan_rows).encode()).hexdigest() == (
+    'cbd11b02806a73ff5f062823d913b4d2343504e38a94ddb344a1d6caccf6133c'
+  )
+  assert sha256('\n'.join(shishen_rows + tiangan_rows).encode()).hexdigest() == (
+    'c606a5e21efaea3b7cc0e49d8647debbba450d3eb40dcaa02fa0ed436e7547e8'
+  )
+  assert _complete_corpus_fingerprint() == '75d29a66e8da10cfe6f973a495a793f88a759624ccd603f6abf86efdebae6ef8'
 
 
 def test_reference_only_deepcopy() -> None:
