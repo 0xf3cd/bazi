@@ -68,6 +68,8 @@ def test_coverage_result(
   assert (run_coverage(lambda: test_result) == 0) is success
   cov.report.assert_called_once()
   omissions = run_coverage.__globals__['coverage'].Coverage.call_args.kwargs['omit']
+  for script in ('run_package_checks.py', *run_coverage.__globals__['DEMO_SCRIPTS'], 'run_interpreter.py'):
+    assert f'*/{script}' in omissions
   for tool in ('hko_data/encoder.py', 'celestial_data/generator.py'):
     assert str(Path(__file__).parents[1] / 'bazi/calendar' / tool) in omissions
 

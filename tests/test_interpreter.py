@@ -3,6 +3,7 @@
 
 from collections.abc import Sequence
 from hashlib import sha256
+from inspect import Parameter, signature
 from typing import Final, cast
 
 import pytest
@@ -87,6 +88,86 @@ _HISTORICAL_SYMBOL_CASES: Final[
   (Tiangan.戊, 'tiangan.wu.wall_symbol', '戊土有城墙之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
   (Tiangan.辛, 'tiangan.xin.jewel_symbol', '辛金有珠玉之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
   (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有汪洋百川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+)
+
+_PROOFREADING_CASES: Final[
+  tuple[tuple[str, str, Shishen, str, tuple[_DescriptionCondition, ...]], ...]
+] = (
+  (
+    'legacy.shishen.SH-068',
+    '在关系中，他们更看重对方的审美和品味，希望在生活中找到共鸣的精神体验。他们在关系中注重情绪感受的表达。',
+    Shishen.食神,
+    'relationship',
+    (),
+  ),
+  (
+    'legacy.shishen.SH-189',
+    '他们欣赏能和他们共同寻找生活中的“深意”的另一半，精神共鸣让关系更持久和稳固。',
+    Shishen.正印,
+    'relationship',
+    (),
+  ),
+  (
+    'legacy.shishen.SH-204',
+    '过于沉浸在自己的世界里；有心计，精于算计；妄想，疑心重，冷漠，自私，思想行为怪异，自我封闭；学而不精，不通人情，胆怯心虚，心狠手辣。',
+    Shishen.偏印,
+    'in_bad_status',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+)
+
+_AMBIGUOUS_RETAINED_CASES: Final[
+  tuple[tuple[str, str, Shishen, str, tuple[_DescriptionCondition, ...]], ...]
+] = (
+  (
+    'legacy.shishen.SH-006',
+    '对于日主而言。身强时比肩可以帮助日主，身弱时比肩可以排斥我，所以比肩星象征着协助（身弱时）和竞争（身强时）。',
+    Shishen.比肩,
+    'general',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+  (
+    'legacy.shishen.SH-023',
+    '不喜欢束缚。他们需要能够理解他们的朋友/伴侣。被约束和被控制是他们的雷区。',
+    Shishen.比肩,
+    'relationship',
+    (),
+  ),
+  (
+    'legacy.shishen.SH-117',
+    '男性风流多情，女性爱打扮。主人好交际、会社交。',
+    Shishen.偏财,
+    'general',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+  (
+    'legacy.shishen.SH-142',
+    '为人厚道，做事稳重，办事认真，只求平安，不喜反抗，为人清廉洁公正，自尊心强，重视名利，品性端庄，心地善良，光明磊落，讲德礼节。',
+    Shishen.正官,
+    'in_good_status',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+  (
+    'legacy.shishen.SH-160',
+    '与日柱同性之克，无情之克，其含义为打击，压制，暴力，权其性刚雄，具有叛逆，称霸之性，需制化方可驾驭。',
+    Shishen.七杀,
+    'general',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+  (
+    'legacy.shishen.SH-199',
+    '偏印为喜用或状态良好（不过旺、不受刑克冲害）：善于观察，心思细致，喜欢传统文化和周易，具有神秘，先知先觉的能力，常有独特的内心世界，能看透人情世故，超凡脱俗，不重视名利。',
+    Shishen.偏印,
+    'in_good_status',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
+  (
+    'legacy.shishen.SH-203',
+    '需读理解与人交往的人情世故，并保持幽默诙谐的生活态度，否则容易曲高和寡。',
+    Shishen.偏印,
+    'in_bad_status',
+    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+  ),
 )
 
 _UNVERIFIED_TIANGAN_CLAIM_IDS: Final[tuple[tuple[Tiangan, str, str], ...]] = (
@@ -352,6 +433,72 @@ def test_interpret_tiangan() -> None:
     assert len(default['general']) == 1
     assert default['personality'] == []
     assert default == Interpreter.interpret_tiangan(tg)
+
+
+def test_proofreading_dispositions_and_metadata() -> None:
+  claims_by_id = {
+    claim.claim_id: (subject, field, claim)
+    for subject, field, claim in _all_claims()
+  }
+  cases = _PROOFREADING_CASES + _AMBIGUOUS_RETAINED_CASES
+  assert len(cases) == 10
+  for claim_id, text, expected_subject, expected_field, expected_conditions in cases:
+    subject, field, claim = claims_by_id[claim_id]
+    assert subject is expected_subject
+    assert field == expected_field
+    assert claim.text == text
+    assert claim.sources == ()
+    assert claim.attribution == 'Legacy corpus; source unverified'
+    assert claim.conditions == expected_conditions
+    assert claim.output is _DescriptionOutput.REFERENCE_ONLY
+
+
+def test_public_description_surface_is_unchanged() -> None:
+  assert ShishenDescription.__required_keys__ == frozenset({
+    'general', 'in_good_status', 'in_bad_status', 'relationship',
+  })
+  assert ShishenDescription.__optional_keys__ == frozenset()
+  assert TianganDescription.__required_keys__ == frozenset({'general', 'personality'})
+  assert TianganDescription.__optional_keys__ == frozenset()
+
+  shishen_signature = signature(Interpreter.interpret_shishen)
+  shishen_parameters = tuple(shishen_signature.parameters.values())
+  assert tuple(parameter.name for parameter in shishen_parameters) == (
+    'shishen', 'include_reference_only',
+  )
+  assert shishen_parameters[0].kind is Parameter.POSITIONAL_OR_KEYWORD
+  assert shishen_parameters[0].annotation is Shishen
+  assert shishen_parameters[1].kind is Parameter.KEYWORD_ONLY
+  assert shishen_parameters[1].annotation is bool
+  assert shishen_parameters[1].default is False
+  assert shishen_signature.return_annotation is ShishenDescription
+
+  tiangan_signature = signature(Interpreter.interpret_tiangan)
+  tiangan_parameters = tuple(tiangan_signature.parameters.values())
+  assert tuple(parameter.name for parameter in tiangan_parameters) == (
+    'tg', 'include_reference_only',
+  )
+  assert tiangan_parameters[0].kind is Parameter.POSITIONAL_OR_KEYWORD
+  assert tiangan_parameters[0].annotation is Tiangan
+  assert tiangan_parameters[1].kind is Parameter.KEYWORD_ONLY
+  assert tiangan_parameters[1].annotation is bool
+  assert tiangan_parameters[1].default is False
+  assert tiangan_signature.return_annotation is TianganDescription
+
+  default_shishen = [Interpreter.interpret_shishen(shishen) for shishen in Shishen]
+  complete_shishen = [
+    Interpreter.interpret_shishen(shishen, include_reference_only=True)
+    for shishen in Shishen
+  ]
+  default_tiangan = [Interpreter.interpret_tiangan(tg) for tg in Tiangan]
+  complete_tiangan = [
+    Interpreter.interpret_tiangan(tg, include_reference_only=True)
+    for tg in Tiangan
+  ]
+  assert _description_count(default_shishen) == 9
+  assert _description_count(default_tiangan) == 10
+  assert _description_count(complete_shishen) == 219
+  assert _description_count(complete_tiangan) == 72
 
 
 def test_interpret_shishen_negative() -> None:
@@ -707,15 +854,15 @@ def test_complete_corpus_is_conserved() -> None:
   # Text/order fingerprints stay fixed when claim metadata changes intentionally.
   shishen_rows, tiangan_rows = _complete_text_rows()
   assert sha256('\n'.join(shishen_rows).encode()).hexdigest() == (
-    '269edce269377eea3b53e4bc560097ad414058008894c45906931da0fbae500d'
+    '5d46532e1f6800a368225bd5d1457c05d8906d14c06af156a623730f23e0ae5e'
   )
   assert sha256('\n'.join(tiangan_rows).encode()).hexdigest() == (
     'cbd11b02806a73ff5f062823d913b4d2343504e38a94ddb344a1d6caccf6133c'
   )
   assert sha256('\n'.join(shishen_rows + tiangan_rows).encode()).hexdigest() == (
-    'c606a5e21efaea3b7cc0e49d8647debbba450d3eb40dcaa02fa0ed436e7547e8'
+    'a83bd9e440aff6a83a8c8fb9ad687525291cb80c9926be55664c7e90f6ba7b48'
   )
-  assert _complete_corpus_fingerprint() == 'db85e28b955eb0160e7d41f925f127482b81ba3c3aaa0845c084117e41a298f2'
+  assert _complete_corpus_fingerprint() == '42daeca42c35c59f30bbc5fa4a259f94edfec8e5e0b46f2ad113c7f4a5d6272d'
 
 
 def test_reference_only_deepcopy() -> None:

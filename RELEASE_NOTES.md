@@ -10,6 +10,9 @@
   the separate scope of embedded data and quotations.
 - The manual release workflow defaults to rehearsal. Publication requires protected
   environment approval and publishes only the tested sdist and its rebuilt wheel.
+- A finite description-corpus pass corrected three mechanical defects, retained seven
+  source-unverified semantic ambiguities, and suppressed empty Interpreter headings;
+  it added no public description fields.
 
 No `src` shim, root-class facade or installed command-line entrypoint is provided.
 See `README.md` for principal module interfaces and `RELEASING.md` for release

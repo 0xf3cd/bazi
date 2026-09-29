@@ -643,7 +643,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       ),
       _unverified_reference(
         'legacy.shishen.SH-068',
-        '在关系中，他们更看重对方的审美和品味，希望在生活中找到共鸣的精神体验。他们在关系中注重情绪的感受的表达。',
+        '在关系中，他们更看重对方的审美和品味，希望在生活中找到共鸣的精神体验。他们在关系中注重情绪感受的表达。',
       ),
       _unverified_reference(
         'legacy.shishen.SH-069',
@@ -1252,7 +1252,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       ),
       _unverified_reference(
         'legacy.shishen.SH-189',
-        '他们欣赏生活中和他们共同寻找生活中的“深意”中的另一半，精神共鸣让关系更持久和稳固。',
+        '他们欣赏能和他们共同寻找生活中的“深意”的另一半，精神共鸣让关系更持久和稳固。',
       ),
     ],
   },
@@ -1330,7 +1330,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       ),
       _unverified_reference(
         'legacy.shishen.SH-204',
-        '过于沉浸在自己的世界里；有心计，精于算计；妄想，疑心重，冷漠，自私思想行为怪异，自我封闭；学而不精，不通人情，胆怯心虚，心狠手辣。',
+        '过于沉浸在自己的世界里；有心计，精于算计；妄想，疑心重，冷漠，自私，思想行为怪异，自我封闭；学而不精，不通人情，胆怯心虚，心狠手辣。',
         conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
