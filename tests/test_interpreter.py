@@ -134,6 +134,77 @@ _UNVERIFIED_TIANGAN_CLAIM_IDS: Final[tuple[tuple[Tiangan, str, str], ...]] = (
   (Tiangan.癸, 'personality', 'legacy.tiangan.gui.strong_unfavorable_state'),
 )
 
+_UNVERIFIED_SHISHEN_CLAIM_RANGES: Final[
+  tuple[tuple[Shishen, str, tuple[range, ...]], ...]
+] = (
+  (Shishen.比肩, 'general',        (range(1, 10),)),
+  (Shishen.比肩, 'in_good_status', (range(10, 15),)),
+  (Shishen.比肩, 'in_bad_status',  (range(15, 22),)),
+  (Shishen.比肩, 'relationship',   (range(22, 25),)),
+  (Shishen.劫财, 'general',        (range(25, 35),)),
+  (Shishen.劫财, 'in_good_status', (range(35, 37),)),
+  (Shishen.劫财, 'in_bad_status',  (range(37, 43),)),
+  (Shishen.劫财, 'relationship',   (range(43, 48),)),
+  (Shishen.食神, 'general',        (range(48, 63),)),
+  (Shishen.食神, 'in_good_status', (range(63, 64),)),
+  (Shishen.食神, 'in_bad_status',  (range(64, 65), range(66, 67))),
+  (Shishen.食神, 'relationship',   (range(67, 70),)),
+  (Shishen.伤官, 'general',        (range(70, 80),)),
+  (Shishen.伤官, 'in_good_status', (range(80, 83),)),
+  (Shishen.伤官, 'in_bad_status',  (range(83, 86),)),
+  (Shishen.伤官, 'relationship',   (range(86, 92),)),
+  (Shishen.正财, 'general',        (range(92, 100),)),
+  (Shishen.正财, 'in_good_status', (range(100, 103),)),
+  (Shishen.正财, 'in_bad_status',  (range(103, 105),)),
+  (Shishen.正财, 'relationship',   (range(105, 111),)),
+  (Shishen.偏财, 'general',        (range(111, 120),)),
+  (Shishen.偏财, 'in_good_status', (range(120, 123),)),
+  (Shishen.偏财, 'in_bad_status',  (range(123, 127),)),
+  (Shishen.偏财, 'relationship',   (range(127, 130),)),
+  (Shishen.正官, 'general',        (range(130, 138), range(140, 142))),
+  (Shishen.正官, 'in_good_status', (range(142, 144),)),
+  (Shishen.正官, 'in_bad_status',  (range(144, 146),)),
+  (Shishen.正官, 'relationship',   (range(146, 151),)),
+  (Shishen.七杀, 'general',        (range(151, 154), range(155, 158), range(160, 162))),
+  (Shishen.七杀, 'in_good_status', (range(162, 164),)),
+  (Shishen.七杀, 'in_bad_status',  (range(164, 166),)),
+  (Shishen.七杀, 'relationship',   (range(167, 172),)),
+  (Shishen.正印, 'general',        (range(172, 180),)),
+  (Shishen.正印, 'in_good_status', (range(180, 183),)),
+  (Shishen.正印, 'in_bad_status',  (range(183, 186),)),
+  (Shishen.正印, 'relationship',   (range(186, 190),)),
+  (Shishen.偏印, 'general',        (range(190, 198),)),
+  (Shishen.偏印, 'in_good_status', (range(198, 202),)),
+  (Shishen.偏印, 'in_bad_status',  (range(202, 206),)),
+  (Shishen.偏印, 'relationship',   (range(206, 211),)),
+)
+
+_UNVERIFIED_SHISHEN_CLAIM_IDS: Final[tuple[tuple[Shishen, str, str], ...]] = tuple(
+  (shishen, field, f'legacy.shishen.SH-{ordinal:03d}')
+  for shishen, field, ranges in _UNVERIFIED_SHISHEN_CLAIM_RANGES
+  for ordinals in ranges
+  for ordinal in ordinals
+)
+
+_CONDITIONAL_UNVERIFIED_SHISHEN_GENERAL_CLAIM_IDS: Final[frozenset[str]] = frozenset({
+  'legacy.shishen.SH-006',
+  'legacy.shishen.SH-007',
+  'legacy.shishen.SH-009',
+  'legacy.shishen.SH-028',
+  'legacy.shishen.SH-032',
+  'legacy.shishen.SH-033',
+  'legacy.shishen.SH-057',
+  'legacy.shishen.SH-074',
+  'legacy.shishen.SH-094',
+  'legacy.shishen.SH-112',
+  'legacy.shishen.SH-114',
+  'legacy.shishen.SH-117',
+  'legacy.shishen.SH-118',
+  'legacy.shishen.SH-135',
+  'legacy.shishen.SH-155',
+  'legacy.shishen.SH-160',
+})
+
 _CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS: Final[frozenset[str]] = frozenset({
   'legacy.tiangan.jia.weak_state',
   'legacy.tiangan.jia.strong_state',
@@ -243,41 +314,44 @@ def _source_registry_fingerprint() -> str:
 
 def test_interpret_shishen() -> None:
   for shishen in Shishen:
-    result: ShishenDescription = Interpreter.interpret_shishen(shishen)
+    default: ShishenDescription = Interpreter.interpret_shishen(shishen)
+    complete = Interpreter.interpret_shishen(shishen, include_reference_only=True)
 
     keys: list[str] = ['general', 'in_good_status', 'in_bad_status', 'relationship']
-    for k in keys:
-      assert k in result
-      assert isinstance(result[k], list) # type: ignore # mypy complains.
-      assert len(result[k]) >= 1 # type: ignore # mypy complains.
-      for d in result[k]: # type: ignore # mypy complains.
-        assert isinstance(d, str)
-        assert len(d) >= 1
+    for result in (default, complete):
+      for k in keys:
+        assert k in result
+        assert isinstance(result[k], list) # type: ignore # mypy complains.
+        for d in result[k]: # type: ignore # mypy complains.
+          assert isinstance(d, str)
+          assert len(d) >= 1
 
-        assert d == d.strip(), f'"{d}" not stripped' # No space at the beginning or end.
-        assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
+          assert d == d.strip(), f'"{d}" not stripped' # No space at the beginning or end.
+          assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
 
-    assert result == Interpreter.interpret_shishen(shishen)
+    assert default == Interpreter.interpret_shishen(shishen)
 
 
 def test_interpret_tiangan() -> None:
   for tg in Tiangan:
-    result: TianganDescription = Interpreter.interpret_tiangan(tg)
+    default: TianganDescription = Interpreter.interpret_tiangan(tg)
+    complete = Interpreter.interpret_tiangan(tg, include_reference_only=True)
 
     keys: list[str] = ['general', 'personality']
-    for k in keys:
-      assert k in result
-      assert isinstance(result[k], list) # type: ignore # mypy complains.
-      for d in result[k]: # type: ignore # mypy complains.
-        assert isinstance(d, str)
-        assert len(d) >= 1
+    for result in (default, complete):
+      for k in keys:
+        assert k in result
+        assert isinstance(result[k], list) # type: ignore # mypy complains.
+        for d in result[k]: # type: ignore # mypy complains.
+          assert isinstance(d, str)
+          assert len(d) >= 1
 
-        assert d == d.strip(), f'"{d}" not stripped' # No space at the beginning or end.
-        assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
+          assert d == d.strip(), f'"{d}" not stripped' # No space at the beginning or end.
+          assert d[-1] == '。', f'"{d}" not ending with "。"' # End with '。'.
 
-    assert len(result['general']) == 1
-    assert result['personality'] == []
-    assert result == Interpreter.interpret_tiangan(tg)
+    assert len(default['general']) == 1
+    assert default['personality'] == []
+    assert default == Interpreter.interpret_tiangan(tg)
 
 
 def test_interpret_shishen_negative() -> None:
@@ -291,23 +365,30 @@ def test_interpret_tiangan_negative() -> None:
 
 
 def test_reference_only_descriptions_are_opt_in() -> None:
-  reference_only: dict[tuple[Shishen | Tiangan, str], list[str]] = {}
-  for subject, field, text in _ATTRIBUTED_REFERENCE_CASES:
-    reference_only.setdefault((subject, field), []).append(text)
-
   default_shishen: list[ShishenDescription] = []
   complete_shishen: list[ShishenDescription] = []
+  shishen_definitions = {
+    shishen: text for shishen, _, text in _SHISHEN_DEFINITIONS
+  }
   for shishen in Shishen:
     default = Interpreter.interpret_shishen(shishen)
     complete = Interpreter.interpret_shishen(shishen, include_reference_only=True)
     assert default == SHISHEN_DESCRIPTIONS[shishen]
-    for field in ('general', 'in_good_status', 'in_bad_status', 'relationship'):
-      excluded = reference_only.get((shishen, field), [])
-      assert _as_mapping(default)[field] == [
-        text for text in _as_mapping(complete)[field] if text not in excluded
-      ]
+    assert default == {
+      'general': [shishen_definitions[shishen]] if shishen in shishen_definitions else [],
+      'in_good_status': [],
+      'in_bad_status': [],
+      'relationship': [],
+    }
     default_shishen.append(default)
     complete_shishen.append(complete)
+
+  assert tuple(_description_count([description]) for description in default_shishen) == (
+    1, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+  )
+  assert tuple(_description_count([description]) for description in complete_shishen) == (
+    25, 23, 23, 23, 20, 20, 22, 22, 19, 22,
+  )
 
   default_tiangan: list[TianganDescription] = []
   complete_tiangan: list[TianganDescription] = []
@@ -325,7 +406,7 @@ def test_reference_only_descriptions_are_opt_in() -> None:
     default_tiangan.append(tg_default)
     complete_tiangan.append(tg_complete)
 
-  assert _description_count(default_shishen) == 212
+  assert _description_count(default_shishen) == 9
   assert _description_count(complete_shishen) == 219
   assert _description_count(default_tiangan) == 10
   assert _description_count(complete_tiangan) == 72
@@ -368,26 +449,58 @@ def test_reference_only_claims() -> None:
     for _, _, claim in editorial_claims
   )
 
-  unverified_claims = [
+  unverified_shishen_claims = [
     (subject, field, claim)
     for subject, field, claim in claims
-    if not claim.sources
+    if isinstance(subject, Shishen) and not claim.sources
   ]
   assert [
     (subject, field, claim.claim_id)
-    for subject, field, claim in unverified_claims
+    for subject, field, claim in unverified_shishen_claims
+  ] == list(_UNVERIFIED_SHISHEN_CLAIM_IDS)
+  assert all(
+    claim.attribution == 'Legacy corpus; source unverified'
+    for _, _, claim in unverified_shishen_claims
+  )
+  conditional_shishen_claim_ids = {
+    claim.claim_id
+    for _, _, claim in unverified_shishen_claims
+    if claim.conditions
+  }
+  assert len(conditional_shishen_claim_ids) == 79
+  for shishen, field, claim in unverified_shishen_claims:
+    expected_conditions = (
+      (_DescriptionCondition.CHART_CONTEXT_REQUIRED,)
+      if field in ('in_good_status', 'in_bad_status')
+      or claim.claim_id in _CONDITIONAL_UNVERIFIED_SHISHEN_GENERAL_CLAIM_IDS
+      else ()
+    )
+    assert claim.conditions == expected_conditions
+    assert claim.text not in _as_mapping(Interpreter.interpret_shishen(shishen))[field]
+    assert claim.text in _as_mapping(Interpreter.interpret_shishen(
+      shishen,
+      include_reference_only=True,
+    ))[field]
+
+  unverified_tiangan_claims = [
+    (subject, field, claim)
+    for subject, field, claim in claims
+    if isinstance(subject, Tiangan) and not claim.sources
+  ]
+  assert [
+    (subject, field, claim.claim_id)
+    for subject, field, claim in unverified_tiangan_claims
   ] == list(_UNVERIFIED_TIANGAN_CLAIM_IDS)
   assert all(
     claim.attribution == 'Legacy corpus; source unverified'
-    for _, _, claim in unverified_claims
+    for _, _, claim in unverified_tiangan_claims
   )
   assert {
     claim.claim_id
-    for _, _, claim in unverified_claims
+    for _, _, claim in unverified_tiangan_claims
     if claim.conditions
   } == set(_CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS)
-  for tg, field, claim in unverified_claims:
-    assert isinstance(tg, Tiangan)
+  for tg, field, claim in unverified_tiangan_claims:
     expected_conditions = (
       (_DescriptionCondition.CHART_CONTEXT_REQUIRED,)
       if claim.claim_id in _CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS
@@ -401,19 +514,19 @@ def test_reference_only_claims() -> None:
     ))[field]
 
 
-def test_tiangan_corpus_is_fully_classified() -> None:
+def test_description_corpora_are_fully_classified() -> None:
+  assert all(
+    isinstance(item, _DescriptionClaim)
+    for description in _SHISHEN_DESCRIPTION_CORPUS.values()
+    for field in ('general', 'in_good_status', 'in_bad_status', 'relationship')
+    for item in description[field]
+  )
   assert all(
     isinstance(item, _DescriptionClaim)
     for description in _TIANGAN_DESCRIPTION_CORPUS.values()
     for field in ('general', 'personality')
     for item in description[field]
   )
-  assert sum(
-    isinstance(item, str)
-    for description in _SHISHEN_DESCRIPTION_CORPUS.values()
-    for field in ('general', 'in_good_status', 'in_bad_status', 'relationship')
-    for item in description[field]
-  ) == 203
 
 
 def test_sourced_claims() -> None:
@@ -593,13 +706,16 @@ def test_default_projection_drops_conditional_and_reference_only_claims() -> Non
 def test_complete_corpus_is_conserved() -> None:
   # Text/order fingerprints stay fixed when claim metadata changes intentionally.
   shishen_rows, tiangan_rows = _complete_text_rows()
+  assert sha256('\n'.join(shishen_rows).encode()).hexdigest() == (
+    '269edce269377eea3b53e4bc560097ad414058008894c45906931da0fbae500d'
+  )
   assert sha256('\n'.join(tiangan_rows).encode()).hexdigest() == (
     'cbd11b02806a73ff5f062823d913b4d2343504e38a94ddb344a1d6caccf6133c'
   )
   assert sha256('\n'.join(shishen_rows + tiangan_rows).encode()).hexdigest() == (
     'c606a5e21efaea3b7cc0e49d8647debbba450d3eb40dcaa02fa0ed436e7547e8'
   )
-  assert _complete_corpus_fingerprint() == '75d29a66e8da10cfe6f973a495a793f88a759624ccd603f6abf86efdebae6ef8'
+  assert _complete_corpus_fingerprint() == 'db85e28b955eb0160e7d41f925f127482b81ba3c3aaa0845c084117e41a298f2'
 
 
 def test_reference_only_deepcopy() -> None:
