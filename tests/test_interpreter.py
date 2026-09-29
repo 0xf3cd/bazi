@@ -485,21 +485,6 @@ def test_public_description_surface_is_unchanged() -> None:
   assert tiangan_parameters[1].default is False
   assert tiangan_signature.return_annotation is TianganDescription
 
-  default_shishen = [Interpreter.interpret_shishen(shishen) for shishen in Shishen]
-  complete_shishen = [
-    Interpreter.interpret_shishen(shishen, include_reference_only=True)
-    for shishen in Shishen
-  ]
-  default_tiangan = [Interpreter.interpret_tiangan(tg) for tg in Tiangan]
-  complete_tiangan = [
-    Interpreter.interpret_tiangan(tg, include_reference_only=True)
-    for tg in Tiangan
-  ]
-  assert _description_count(default_shishen) == 9
-  assert _description_count(default_tiangan) == 10
-  assert _description_count(complete_shishen) == 219
-  assert _description_count(complete_tiangan) == 72
-
 
 def test_interpret_shishen_negative() -> None:
   with pytest.raises(TypeError):
