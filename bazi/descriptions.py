@@ -183,7 +183,7 @@ _DESCRIPTION_SOURCES: Final[
 
 @dataclass(frozen=True)
 class _DescriptionClaim:
-  '''A description item with source state and output policy. / 带来源状态与输出策略的语料项。'''
+  '''A description claim with source state and output policy. / 带来源状态与输出策略的语料断言。'''
 
   claim_id:    str
   text:        str
