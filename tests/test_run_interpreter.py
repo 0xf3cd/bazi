@@ -76,12 +76,21 @@ def test_interpret_description_headings_follow_content(
   assert len(sections) > 3
   _, _, day_master_section, *shishen_sections = sections
 
+  def assert_headings(
+    section: str,
+    headings: tuple[tuple[str, list[str]], ...],
+  ) -> None:
+    for heading, descriptions in headings:
+      assert (heading + ''.join(descriptions) in section) is bool(descriptions)
+    present_headings = tuple(heading for heading, descriptions in headings if descriptions)
+    positions = tuple(section.index(heading) for heading in present_headings)
+    assert positions == tuple(sorted(positions))
+
   day_master_headings = (
     ('解读：', tiangan_fields['general']),
     ('日主的个性：', tiangan_fields['personality']),
   )
-  for heading, descriptions in day_master_headings:
-    assert (heading + ''.join(descriptions) in day_master_section) is bool(descriptions)
+  assert_headings(day_master_section, day_master_headings)
 
   shishen_headings = (
     ('解读：', shishen_fields['general']),
@@ -89,9 +98,5 @@ def test_interpret_description_headings_follow_content(
     ('状态不好时，可能会有以下特点：', shishen_fields['in_bad_status']),
     ('的恋爱/交友观：', shishen_fields['relationship']),
   )
-  present_headings = tuple(heading for heading, descriptions in shishen_headings if descriptions)
   for section in shishen_sections:
-    for heading, descriptions in shishen_headings:
-      assert (heading + ''.join(descriptions) in section) is bool(descriptions)
-    positions = tuple(section.index(heading) for heading in present_headings)
-    assert positions == tuple(sorted(positions))
+    assert_headings(section, shishen_headings)
