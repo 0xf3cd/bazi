@@ -172,13 +172,31 @@ def main() -> None:
     > len(Interpreter.interpret_tiangan(Tiangan.甲)['general']),
     'Reference-only Tiangan descriptions are not opt-in',
   )
-  for shishen in Shishen:
-    check(bool(Interpreter.interpret_shishen(shishen)['general']), 'Missing Shishen description')
-  check(
-    len(Interpreter.interpret_shishen(Shishen.七杀, include_reference_only=True)['general'])
-    > len(Interpreter.interpret_shishen(Shishen.七杀)['general']),
-    'Reference-only Shishen descriptions are not opt-in',
-  )
+  complete_shishen_counts = (25, 23, 23, 23, 20, 20, 22, 22, 19, 22)
+  for shishen, complete_count in zip(Shishen, complete_shishen_counts, strict=True):
+    default = Interpreter.interpret_shishen(shishen)
+    complete = Interpreter.interpret_shishen(shishen, include_reference_only=True)
+    expected_default_count = 0 if shishen is Shishen.劫财 else 1
+    default_count = (
+      len(default['general'])
+      + len(default['in_good_status'])
+      + len(default['in_bad_status'])
+      + len(default['relationship'])
+    )
+    actual_complete_count = (
+      len(complete['general'])
+      + len(complete['in_good_status'])
+      + len(complete['in_bad_status'])
+      + len(complete['relationship'])
+    )
+    check(
+      default_count == expected_default_count,
+      f'Wrong default Shishen projection: {shishen}',
+    )
+    check(
+      actual_complete_count == complete_count,
+      f'Wrong complete Shishen projection: {shishen}',
+    )
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:
