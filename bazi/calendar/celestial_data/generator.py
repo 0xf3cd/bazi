@@ -12,10 +12,15 @@
 # Run only from a source checkout, not an installed package:
 #   python -m bazi.calendar.celestial_data.generator
 
+import argparse
+import hashlib
+import struct
+
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Final
+from collections.abc import Sequence
 
 import celestial_calendar as celestial
 
@@ -37,6 +42,13 @@ LUNAR_END_YEAR:   Final[int] = 2099 # BOTH algos clamp to this window; algo2 nat
 
 EXPECTED_JIEQI_ROWS: Final[int] = (JIEQI_END_YEAR - JIEQI_START_YEAR + 1) * 24
 EXPECTED_LUNAR_ROWS: Final[int] = LUNAR_END_YEAR - LUNAR_START_YEAR + 1
+
+EOT_MAGIC: Final[bytes] = b'BAZIEOT1'
+EOT_START_DATE: Final[date] = date(1901, 2, 18)
+EOT_SENTINEL_DATE: Final[date] = date(2100, 1, 2)
+EOT_CADENCE_SECONDS: Final[int] = 86_400
+EOT_SCALE: Final[int] = 10
+EOT_HEADER: Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
 
 # ---------------------------------------------------------------------------
@@ -176,6 +188,43 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
   return rows
 
 
+def _equation_of_time_seconds(utc_day: date) -> float:
+  '''Return apparent-minus-mean seconds at UTC midnight and longitude zero.'''
+  apparent = celestial.apparent_solar_time(
+    celestial.CivilDateTime(utc_day.year, utc_day.month, utc_day.day, 0.0),
+    0.0,
+  )
+  day_offset = (date(apparent.year, apparent.month, apparent.day) - utc_day).days
+  return (day_offset + apparent.fraction) * EOT_CADENCE_SECONDS
+
+
+def _gen_eot_samples() -> tuple[int, ...]:
+  samples: list[int] = []
+  day = EOT_START_DATE
+  while day <= EOT_SENTINEL_DATE:
+    encoded = round(_equation_of_time_seconds(day) * EOT_SCALE)
+    if not -(2 ** 15) <= encoded < 2 ** 15:
+      raise RuntimeError(f'Equation of time on {day} does not fit signed int16: {encoded}')
+    samples.append(encoded)
+    day += timedelta(days=1)
+  expected = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
+  if len(samples) != expected:
+    raise RuntimeError(f'Row-count gate failed: {len(samples)} EOT samples, expected {expected}.')
+  return tuple(samples)
+
+
+def _render_eot_table(samples: tuple[int, ...]) -> bytes:
+  payload = struct.pack(f'>{len(samples)}h', *samples)
+  return EOT_HEADER.pack(
+    EOT_MAGIC,
+    EOT_START_DATE.toordinal(),
+    len(samples),
+    EOT_CADENCE_SECONDS,
+    EOT_SCALE,
+    hashlib.sha256(payload).digest(),
+  ) + payload
+
+
 # ---------------------------------------------------------------------------
 # Rendering (header keys are the machine-readable provenance required by SCHEMA.md)
 
@@ -272,15 +321,39 @@ def _write_table(path: Path, text: str, expected_rows: int) -> None:
   print(f'> Wrote {path} ({expected_rows} rows)')
 
 
+def _write_eot_table(path: Path, encoded: bytes, expected_samples: int) -> None:
+  path.write_bytes(encoded)
+  expected_bytes = EOT_HEADER.size + expected_samples * 2
+  if path.stat().st_size != expected_bytes:
+    raise RuntimeError(
+      f'Byte-count gate failed: {path} holds {path.stat().st_size} bytes, expected {expected_bytes}.'
+    )
+  print(f'> Wrote {path} ({expected_samples} samples)')
+
+
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def main(argv: Sequence[str] | None = None) -> None:
+  parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument('--eot-only', action='store_true', help='Generate only equation_of_time.bin')
+  parser.add_argument('--output-dir', type=Path, help='Write tables to this directory')
+  args = parser.parse_args(argv)
+
+  data_dir: Path = args.output_dir or Path(__file__).parent / 'data'
+  data_dir.mkdir(parents=True, exist_ok=True)
+
+  eot_samples = _gen_eot_samples()
+  _write_eot_table(
+    data_dir / 'equation_of_time.bin',
+    _render_eot_table(eot_samples),
+    len(eot_samples),
+  )
+  if args.eot_only:
+    return
+
   jieqi_rows: list[JieqiRow] = _gen_jieqi_rows()
   algo1_rows: list[LunarRow] = _gen_lunar_rows(algo=1)
   algo2_rows: list[LunarRow] = _gen_lunar_rows(algo=2)
-
-  data_dir: Path = Path(__file__).parent / 'data'
-  data_dir.mkdir(parents=True, exist_ok=True)
 
   generated_on: date = date.today()
   _write_table(

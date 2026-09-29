@@ -10,6 +10,7 @@ include bazi/calendar/hko_data/data/2100.txt
 include bazi/calendar/celestial_data/data/jieqi_moments.txt
 include bazi/calendar/celestial_data/data/lunar_years_algo1.txt
 include bazi/calendar/celestial_data/data/lunar_years_algo2.txt
+include bazi/calendar/celestial_data/data/equation_of_time.bin
 include bazi/calendar/celestial_data/SCHEMA.md
 recursive-include tests *.py *.ini *.txt *.json
 include .github/workflows/release.yml

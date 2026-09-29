@@ -27,13 +27,13 @@ def main() -> int:
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   import inspect
-  from datetime import date, datetime
+  from datetime import UTC, date, datetime
   from collections.abc import Callable
   from functools import partial
   from zoneinfo import ZoneInfo
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
-  from bazi.bazi import Bazi
+  from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
   from bazi.rules import DizhiRules
@@ -58,6 +58,8 @@ def main() -> int:
   school_json: dict[str, object] = dict(chart_json['school'])
   decoded_jieqi = hko_data.DecodedJieqiDates()
   solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
+  aware_birth = datetime(2000, 1, 1, 12, tzinfo=UTC)
+  location_config = BaziConfig.from_values(precision='minute')
 
   class Year(int):
     pass
@@ -93,6 +95,51 @@ def main() -> int:
      lambda: Bazi.create(datetime(2100, 6, 1, 12), 'male')),
     ('Bazi.create tz-aware birth time', ValueError,
      lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male')),
+    ('Bazi.create naive birth with longitude', ValueError,
+     lambda: Bazi.create(datetime(2000, 1, 1, 12), 'male', location_config, longitude=120.0)),
+    ('Bazi.create bool longitude', TypeError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=True)),
+    ('Bazi.create non-real longitude', TypeError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude='120')), # type: ignore[arg-type]
+    ('Bazi.create non-finite longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=float('nan'))),
+    ('Bazi.create out-of-range longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=180.1)),
+    ('Bazi.create DAY with longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', BaziConfig(), longitude=120.0)),
+    ('Bazi.create HKO with longitude', ValueError,
+     lambda: Bazi.create(
+       aware_birth, 'male', BaziConfig.from_values(precision='minute', backend='hko'), longitude=120.0,
+     )),
+    ('Bazi.create CELESTIAL_ALGO2 with longitude', ValueError,
+     lambda: Bazi.create(
+       aware_birth, 'male',
+       BaziConfig.from_values(precision='minute', backend='celestial-algo2'), longitude=120.0,
+     )),
+    ('Bazi constructor aware without longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config)),
+    ('Bazi constructor naive birth with longitude', ValueError,
+     lambda: Bazi(datetime(2000, 1, 1, 12), BaziGender.男, location_config, longitude=120.0)),
+    ('Bazi constructor bool longitude', TypeError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=True)),
+    ('Bazi constructor non-real longitude', TypeError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude='120')), # type: ignore[arg-type]
+    ('Bazi constructor non-finite longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=float('inf'))),
+    ('Bazi constructor out-of-range longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=-180.1)),
+    ('Bazi constructor DAY with longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, BaziConfig(), longitude=120.0)),
+    ('Bazi constructor HKO with longitude', ValueError,
+     lambda: Bazi(
+       aware_birth, BaziGender.男,
+       BaziConfig.from_values(precision='minute', backend='hko'), longitude=120.0,
+     )),
+    ('Bazi constructor CELESTIAL_ALGO2 with longitude', ValueError,
+     lambda: Bazi(
+       aware_birth, BaziGender.男,
+       BaziConfig.from_values(precision='minute', backend='celestial-algo2'), longitude=120.0,
+     )),
     ('BaziChart.from_json non-mapping', TypeError,
      lambda: BaziChart.from_json(_DuckMapping())), # type: ignore
     ('BaziChart.from_json str-subclass root keys', TypeError,

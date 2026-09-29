@@ -3,11 +3,12 @@
 import copy
 import functools
 import itertools
+import math
 
 from calendar import monthrange
 from dataclasses import fields
 from datetime import datetime, timedelta
-from typing import Final, TypedDict, cast
+from typing import Final, NotRequired, TypedDict, cast
 from collections.abc import Generator, Mapping, Sequence
 
 from .data_types import (
@@ -125,8 +126,7 @@ class BaziJson:
     guoyin_anchor: str
     guoyin_def: str
 
-  class BaziChartJsonDict(TypedDict):
-    birth_time: str
+  class _CommonChartJsonDict(TypedDict):
     gender: str
     precision: str
     backend: str
@@ -141,6 +141,23 @@ class BaziJson:
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
+
+  class LegacyBaziChartJsonDict(_CommonChartJsonDict):
+    birth_time: str
+
+  class LocationBaziChartJsonDict(_CommonChartJsonDict):
+    time_basis: str
+    canonical_instant: str
+    longitude: float
+    apparent_time: str
+
+  class BaziChartJsonDict(_CommonChartJsonDict):
+    '''The typed union surface; runtime accepts exactly one of the two complete rosters.'''
+    birth_time: NotRequired[str]
+    time_basis: NotRequired[str]
+    canonical_instant: NotRequired[str]
+    longitude: NotRequired[float]
+    apparent_time: NotRequired[str]
 
 
 class BaziChart:
@@ -187,9 +204,14 @@ class BaziChart:
       已解析的 `BaziChart.json` 记录，不是 JSON 文本。
 
     Note:
-    - Every field is required; unknown keys at any depth and noncanonical spellings are
-      rejected. Mapping order does not matter. Derived values are checked, never stored.
-      所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，派生值只核对、不存储。
+    - The root must match exactly either the legacy roster (`birth_time`) or the
+      location-aware roster (`time_basis`, canonical UTC instant, longitude and exact
+      apparent time). The two cannot be mixed. Every field is required; unknown keys at
+      any depth and noncanonical spellings are rejected. Mapping order does not matter.
+      Derived values are checked, never stored.
+      根对象须严格匹配旧名册（`birth_time`）或地点盘名册（时间基准、规范 UTC 时刻、经度与精确
+      真太阳时），两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
+      派生值只核对、不存储。
     - Keys and string values must be plain `str`, not subclasses; null values are `None`.
       键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
     - Wrong types raise `TypeError`; missing/extra keys, unsupported values and mismatches
@@ -208,28 +230,50 @@ class BaziChart:
     for key in d:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
-    keys = BaziJson.BaziChartJsonDict.__required_keys__
-    if d.keys() != keys:
-      raise ValueError(f'Unexpected fields at chart: {d.keys() ^ keys}')
-    for key in ('birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule'):
+    legacy_keys = BaziJson.LegacyBaziChartJsonDict.__required_keys__
+    location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
+    location_aware: bool
+    if d.keys() == legacy_keys:
+      location_aware = False
+    elif d.keys() == location_keys:
+      location_aware = True
+    else:
+      raise ValueError(
+        f'Unexpected fields at chart: expected the legacy or location-aware roster, got {d.keys()}'
+      )
+
+    string_keys = ['gender', 'precision', 'backend', 'dayun_year_rule']
+    string_keys += ['time_basis', 'canonical_instant', 'apparent_time'] if location_aware else ['birth_time']
+    for key in string_keys:
       if not isinstance(d[key], str):
         raise TypeError(f'Expected str at {key}, got {type(d[key])}')
+    if location_aware and type(d['longitude']) is not float:
+      raise TypeError(f'Expected float at longitude, got {type(d["longitude"])}')
+    if location_aware and d['longitude'] == 0.0 and math.copysign(1.0, d['longitude']) < 0:
+      raise ValueError('Expected canonical longitude 0.0, got -0.0')
     school = d['school']
     if not isinstance(school, Mapping):
       raise TypeError(f'Expected Mapping at school, got {type(school)}')
 
-    chart = cls(
-      Bazi.create(
+    config = BaziConfig.from_values(
+      precision=cast(str, d['precision']),
+      backend=cast(str, d['backend']),
+      dayun_year_rule=cast(str, d['dayun_year_rule']),
+      school=BaziSchool.from_json(school),
+    )
+    if location_aware:
+      chart = cls(Bazi.create(
+        cast(str, d['canonical_instant']),
+        cast(str, d['gender']),
+        config,
+        longitude=cast(float, d['longitude']),
+      ))
+    else:
+      chart = cls(Bazi.create(
         cast(str, d['birth_time']),
         cast(str, d['gender']),
-        BaziConfig.from_values(
-          precision=cast(str, d['precision']),
-          backend=cast(str, d['backend']),
-          dayun_year_rule=cast(str, d['dayun_year_rule']),
-          school=BaziSchool.from_json(school),
-        ),
-      ),
-    )
+        config,
+      ))
 
     def __compare(actual: object, expected: object, path: str) -> None:
       if isinstance(expected, Mapping):
@@ -454,7 +498,7 @@ class BaziChart:
     The moment when first Dayun (大运) starts (solar/gregorian calendar).
     大运开始的时间 / 交运时间（公历）。
     '''
-    birthtime: Final[datetime] = self._bazi.solar_datetime
+    birthtime: Final[datetime] = self._bazi._absolute_solar_datetime
 
     def __gap() -> timedelta:
       # Count from `Bazi.bracketing_jies`: under HOUR/MINUTE that is exactly the jie owning
@@ -646,8 +690,7 @@ class BaziChart:
     })
 
     f = BaziJson.gen_fourpillars
-    return {
-      'birth_time': self._bazi.solar_datetime.isoformat(),
+    common: BaziJson._CommonChartJsonDict = {
       'gender': str(self._bazi.gender),
       'precision': str(self._bazi.config.precision),
       'backend': str(self._bazi.config.backend),
@@ -662,6 +705,18 @@ class BaziChart:
       'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
       'transits': transits,
+    }
+    if self._bazi.longitude is None:
+      return {
+        'birth_time': self._bazi.solar_datetime.isoformat(),
+        **common,
+      }
+    return {
+      'time_basis': 'apparent_solar',
+      'canonical_instant': self._bazi._canonical_instant.isoformat(timespec='minutes'),
+      'longitude': self._bazi.longitude,
+      'apparent_time': self._bazi._birth_time.isoformat(),
+      **common,
     }
 
 命盘 = BaziChart

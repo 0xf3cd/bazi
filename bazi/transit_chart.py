@@ -110,11 +110,13 @@ class TransitChart:
 
   def at_date(self, solar_date: date) -> TransitSet | None:
     '''Return transits for a solar date, or `None` before birth or outside the calendar
-    range. Dayun follows its physical date boundary. 返回公历日期下的流运，出生前或历法
-    范围外返回 `None`；大运按物理交运日边界解释。'''
+    range. Dates are naive UTC+08:00 labels; a location-aware natal lower bound uses its
+    normalized absolute date, never its apparent date. Dayun follows its physical date
+    boundary. 返回东八区无时区公历日期下的流运，出生前或历法范围外返回 `None`；地点盘出生
+    下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。'''
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
-    if solar_date < self._bazi_chart.bazi.solar_date:
+    if solar_date < self._bazi_chart.bazi._absolute_solar_datetime.date():
       return None
     try:
       ganzhi_date = self._utils.to_ganzhi(solar_date)
@@ -129,10 +131,12 @@ class TransitChart:
     )
 
   def at_moment(self, solar_moment: datetime) -> TransitSet | None:
-    '''Return transits for a naïve solar moment, or `None` when exact-moment querying is
+    '''Return transits for a naive UTC+08:00 solar label, or `None` when exact-moment querying is
     unsupported, before birth, or outside the Jie table. Query, birth, and Dayun boundaries
-    compare at whole-second granularity, with ties on the new side.
-    返回无时区公历时刻下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
+    compare at whole-second granularity, with ties on the new side. Location-aware charts
+    use their normalized absolute natal lower bound; query moments receive no location correction.
+    返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
+    地点盘出生下界取规范绝对时刻；查询时刻不做地点修正。
     查询、出生与大运边界均截到秒比较，相等归新。
 
     Note:
@@ -156,7 +160,7 @@ class TransitChart:
       return None
 
     moment = solar_moment.replace(microsecond=0)
-    birth_moment = bazi.solar_datetime.replace(microsecond=0)
+    birth_moment = bazi._absolute_solar_datetime.replace(microsecond=0)
     first, last = self._utils.supported_jie_boundaries()
     if moment < birth_moment or not first <= moment < last:
       return None

@@ -93,11 +93,26 @@ def main() -> None:
   from bazi.bazi_chart import BaziChart
   from bazi.school import BaziConfig
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
+  from bazi.calendar.solar_time import apparent_solar_datetime
   from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.interpreter import Interpreter
+
+  apparent = apparent_solar_datetime(datetime(2000, 11, 3, 0, 50, tzinfo=UTC), 0.0)
+  check(apparent == datetime(2000, 11, 3, 1, 6, 26, 82639), 'Installed apparent-solar primitive mismatch')
+  location_chart = BaziChart(Bazi.create(
+    datetime(2000, 11, 3, 0, 50, tzinfo=UTC),
+    'male',
+    BaziConfig.from_values(precision='hour'),
+    longitude=0.0,
+  ))
+  check(location_chart.bazi.hour == 1, 'Installed apparent-solar chart mismatch')
+  check(
+    BaziChart.from_json(json.loads(json.dumps(location_chart.json))).json == location_chart.json,
+    'Installed apparent-solar JSON restoration mismatch',
+  )
 
   check(Path(bazi.__file__).resolve().is_relative_to(prefix), 'Root import source leakage')
   for backend in CalendarBackend:

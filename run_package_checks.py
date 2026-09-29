@@ -27,6 +27,7 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
   'bazi/calendar/celestial_data/data/jieqi_moments.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo1.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo2.txt',
+  'bazi/calendar/celestial_data/data/equation_of_time.bin',
 )
 SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',

@@ -2,7 +2,7 @@
 > 排盘、五行、十神、纳音、刑冲破害、合会
 
 A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
-only the standard library and five bundled calendar tables; no network access or
+only the standard library and six bundled calendar tables; no network access or
 data generation is needed.
 
 ## Installation
@@ -37,11 +37,38 @@ print(TransitChart(chart).at_year(2024))
 print(RelationshipAnalyzer(chart).at_birth.shensha)
 ```
 
-Birth times are naive local civil times; timezone-aware inputs are rejected.
-Defaults remain `CELESTIAL` with day precision. `hko` provides date-level calendar
-data; `celestial` and `celestial-algo2` use the bundled astronomical tables.
-Backend differences and supported date ranges are documented in the calendar
-modules; selecting a backend does not install its offline generator.
+Without a longitude, birth times are naive local civil times and timezone-aware
+inputs remain rejected. This is the unchanged default path. To opt into apparent
+solar time, pass an aware datetime and an east-positive `longitude` in `[-180, 180]`
+to `Bazi` or `Bazi.create`; latitude is not consumed by this correction. The caller
+owns the datetime's timezone, DST fold and historical offset. The library does not
+infer a historical timezone.
+
+The location-aware path supports only `CELESTIAL` with `HOUR` or `MINUTE` precision.
+Its public clock, solar date, lunar/ganzhi date, day rollover and hour pillar use
+local apparent solar time. Jie attribution, Dayun intervals and transit ordering use
+the normalized absolute instant. Existing transit query moments remain naive
+UTC+08:00 labels and receive no moving-location correction. Historical pre-1929
+time-basis choices remain outside this API and are tracked by issue #118. Defaults
+remain `CELESTIAL` with day precision. `hko` provides date-level calendar data;
+`celestial` and `celestial-algo2` use the bundled astronomical tables. Backend
+differences and supported date ranges are documented in the calendar modules;
+selecting a backend does not install its offline generator.
+
+```python
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.school import BaziConfig
+
+located = Bazi.create(
+  datetime.fromisoformat('2000-01-01T07:00:00-05:00'),
+  'male',
+  BaziConfig.from_values(precision='minute'),
+  longitude=116.4,
+)
+print(located.solar_datetime)  # local apparent-solar clock
+```
 
 ## Interfaces
 
@@ -118,7 +145,9 @@ The committed data is read, not regenerated, during packaging or installed use.
 The source tree and sdist contain the raw HKO inputs; the wheel does not.
 Maintainers can regenerate from those sources with `python -m bazi.calendar.hko_data.encoder`
 (`requests` is needed only if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
-with `celestial-calendar==0.6.1`. These optional tools are not runtime dependencies.
+with `celestial-calendar==0.6.1`. The latter also writes the daily equation-of-time
+table; `--eot-only` limits regeneration to that byte-stable file. These optional tools
+are not runtime dependencies.
 If an installed table is missing, reinstall the distribution instead.
 
 ## License

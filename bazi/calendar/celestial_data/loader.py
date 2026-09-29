@@ -6,16 +6,17 @@ Reader for the pre-generated celestial-calendar tables described in `SCHEMA.md`.
 This is the **loading layer**, deliberately kept free of any bazi calendar semantics:
 it parses a table file, validates it against the schema, and answers point queries.
 `CelestialCalendarUtils` sits on top as the query layer.  Keeping the two apart means
-that swapping the data source (issue #2 wants live FFI for true solar time) only
-replaces this file.
+that changing a table schema or its source does not alter calendar semantics.
 
 Pure Python on purpose -- runtime reads the committed tables and does not import the
 celestial-calendar package used by the offline generator.
 '''
 
+import hashlib
 import re
+import struct
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Final, TypedDict
 
@@ -28,6 +29,14 @@ DATA_DIR: Final[Path] = Path(__file__).parent / 'data'
 
 JIEQI_COLUMNS: Final[str] = 'year jq_idx name date time'
 LUNAR_COLUMNS: Final[str] = 'lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi'
+
+EOT_MAGIC: Final[bytes] = b'BAZIEOT1'
+EOT_START_DATE: Final[date] = date(1901, 2, 18)
+EOT_SENTINEL_DATE: Final[date] = date(2100, 1, 2)
+EOT_SAMPLE_COUNT: Final[int] = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
+EOT_CADENCE_SECONDS: Final[int] = 86_400
+EOT_SCALE: Final[int] = 10
+EOT_HEADER: Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
 # Table `jq_idx` is defined to be this index.  Asserted at generation time against the
 # library's own `jieqi_name`, and re-checked per row by `JieqiMomentTable`.
@@ -50,6 +59,71 @@ class LunarYearInfo(TypedDict):
   leap_month: int | None
   days_counts: list[int]
   ganzhi: Ganzhi
+
+
+class EquationOfTimeTable:
+  '''
+  Daily equation-of-time samples at UTC midnight, stored as signed big-endian
+  deciseconds. Logical values are apparent solar time minus mean solar time.
+  '''
+
+  def __init__(self, path: Path = DATA_DIR / 'equation_of_time.bin') -> None:
+    if not path.is_file():
+      raise RuntimeError(
+        f'Celestial data table is missing: {path}. '
+        'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
+        'with the optional generation tools.'
+      )
+
+    encoded = path.read_bytes()
+    if len(encoded) < EOT_HEADER.size:
+      raise ValueError(f'{path}: equation-of-time header is truncated')
+    magic, start_ordinal, count, cadence, scale, expected_digest = EOT_HEADER.unpack_from(encoded)
+    payload = encoded[EOT_HEADER.size:]
+
+    expected = (
+      EOT_MAGIC,
+      EOT_START_DATE.toordinal(),
+      EOT_SAMPLE_COUNT,
+      EOT_CADENCE_SECONDS,
+      EOT_SCALE,
+    )
+    if (magic, start_ordinal, count, cadence, scale) != expected:
+      raise ValueError(f'{path}: equation-of-time schema metadata mismatch')
+    if len(payload) != count * 2:
+      raise ValueError(f'{path}: expected {count * 2} payload bytes, got {len(payload)}')
+    if hashlib.sha256(payload).digest() != expected_digest:
+      raise ValueError(f'{path}: equation-of-time payload checksum mismatch')
+
+    self._samples: Final[tuple[int, ...]] = struct.unpack(f'>{count}h', payload)
+
+  @property
+  def samples(self) -> tuple[int, ...]:
+    '''Return all immutable fixed-point samples, primarily for schema validation.'''
+    return self._samples
+
+  def seconds_at(self, utc_moment: datetime) -> float:
+    '''Linearly interpolate apparent-minus-mean seconds by UTC day fraction.'''
+    if not isinstance(utc_moment, datetime):
+      raise TypeError(f'Expected datetime, got {type(utc_moment)}')
+    if utc_moment.tzinfo is None or utc_moment.utcoffset() is None:
+      raise ValueError('Expected a timezone-aware datetime.')
+
+    utc = utc_moment.astimezone(UTC)
+    start = datetime.combine(EOT_START_DATE, datetime.min.time(), UTC)
+    offset = utc - start
+    supported = timedelta(seconds=EOT_CADENCE_SECONDS * (len(self._samples) - 1))
+    if offset < timedelta(0) or offset >= supported:
+      raise ValueError(
+        f'"{utc_moment}" is out of the equation-of-time range '
+        f'[{start}, {start + supported})'
+      )
+
+    index, remainder = divmod(offset.total_seconds(), EOT_CADENCE_SECONDS)
+    lower = self._samples[int(index)] / EOT_SCALE
+    upper = self._samples[int(index) + 1] / EOT_SCALE
+    fraction = remainder / EOT_CADENCE_SECONDS
+    return lower + (upper - lower) * fraction
 
 
 def _parse(path: Path, expected_columns: str) -> tuple[dict[str, str], list[list[str]]]:
