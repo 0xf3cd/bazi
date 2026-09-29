@@ -29,7 +29,25 @@ from bazi.interpreter import Interpreter
       'relationship': [],
     },
   ),
-])
+  (
+    {'general': ['日主解读。'], 'personality': ['日主个性。']},
+    {
+      'general': ['十神解读。'],
+      'in_good_status': ['状态良好。'],
+      'in_bad_status': ['状态不好。'],
+      'relationship': ['关系描述。'],
+    },
+  ),
+  (
+    {'general': [], 'personality': []},
+    {
+      'general': ['十神解读。'],
+      'in_good_status': ['状态良好。'],
+      'in_bad_status': [],
+      'relationship': [],
+    },
+  ),
+], ids=['alternating-a', 'alternating-b', 'all-content', 'leading-content'])
 def test_interpret_description_headings_follow_content(
   tiangan_fields: TianganDescription,
   shishen_fields: ShishenDescription,
