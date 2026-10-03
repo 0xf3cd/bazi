@@ -30,13 +30,13 @@ DATA_DIR: Final[Path] = Path(__file__).parent / 'data'
 JIEQI_COLUMNS: Final[str] = 'year jq_idx name date time'
 LUNAR_COLUMNS: Final[str] = 'lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi'
 
-EOT_MAGIC: Final[bytes] = b'BAZIEOT1'
-EOT_START_DATE: Final[date] = date(1901, 2, 18)
-EOT_SENTINEL_DATE: Final[date] = date(2100, 1, 2)
-EOT_SAMPLE_COUNT: Final[int] = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
+EOT_MAGIC:           Final[bytes] = b'BAZIEOT1'
+EOT_START_DATE:      Final[date] = date(1901, 2, 18)
+EOT_SENTINEL_DATE:   Final[date] = date(2100, 1, 6)
+EOT_SAMPLE_COUNT:    Final[int] = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
 EOT_CADENCE_SECONDS: Final[int] = 86_400
-EOT_SCALE: Final[int] = 10
-EOT_HEADER: Final[struct.Struct] = struct.Struct('>8sIIII32s')
+EOT_SCALE:           Final[int] = 10
+EOT_HEADER:          Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
 # Table `jq_idx` is defined to be this index.  Asserted at generation time against the
 # library's own `jieqi_name`, and re-checked per row by `JieqiMomentTable`.

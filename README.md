@@ -45,10 +45,21 @@ owns the datetime's timezone, DST fold and historical offset. The library does n
 infer a historical timezone.
 
 The location-aware path supports only `CELESTIAL` with `HOUR` or `MINUTE` precision.
+It preserves the input's seconds and microseconds before applying longitude and EOT.
 Its public clock, solar date, lunar/ganzhi date, day rollover and hour pillar use
-local apparent solar time. Jie attribution, Dayun intervals and transit ordering use
-the normalized absolute instant. Existing transit query moments remain naive
-UTC+08:00 labels and receive no moving-location correction. Historical pre-1929
+local apparent solar time. Previous/next Jie lookup uses the absolute instant;
+year/month attribution compares the birth and Jie in apparent-solar precision buckets
+at the same longitude, with ties on the new side.
+
+Location identity and JSON preserve the exact UTC instant, longitude, gender and config,
+so different offset spellings of the same instant are equivalent, while different
+seconds remain distinct even when the displayed `solar_datetime` minute agrees.
+The supported birth-date window applies to the apparent date (`1901-02-19` through
+`2099-12-31`), so its accepted UTC instants depend on longitude.
+
+Dayun intervals and transit ordering use the absolute coordinate. Dayun boundaries
+and existing transit query moments are naive UTC+08:00 labels, not apparent clocks,
+and receive no moving-location correction. Historical pre-1929
 time-basis choices remain outside this API and are tracked by issue #118. Defaults
 remain `CELESTIAL` with day precision. `hko` provides date-level calendar data;
 `celestial` and `celestial-algo2` use the bundled astronomical tables. Backend

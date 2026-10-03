@@ -43,12 +43,12 @@ LUNAR_END_YEAR:   Final[int] = 2099 # BOTH algos clamp to this window; algo2 nat
 EXPECTED_JIEQI_ROWS: Final[int] = (JIEQI_END_YEAR - JIEQI_START_YEAR + 1) * 24
 EXPECTED_LUNAR_ROWS: Final[int] = LUNAR_END_YEAR - LUNAR_START_YEAR + 1
 
-EOT_MAGIC: Final[bytes] = b'BAZIEOT1'
-EOT_START_DATE: Final[date] = date(1901, 2, 18)
-EOT_SENTINEL_DATE: Final[date] = date(2100, 1, 2)
+EOT_MAGIC:           Final[bytes] = b'BAZIEOT1'
+EOT_START_DATE:      Final[date] = date(1901, 2, 18)
+EOT_SENTINEL_DATE:   Final[date] = date(2100, 1, 6)
 EOT_CADENCE_SECONDS: Final[int] = 86_400
-EOT_SCALE: Final[int] = 10
-EOT_HEADER: Final[struct.Struct] = struct.Struct('>8sIIII32s')
+EOT_SCALE:           Final[int] = 10
+EOT_HEADER:          Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
 
 # ---------------------------------------------------------------------------
@@ -190,31 +190,31 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
 
 def _equation_of_time_seconds(utc_day: date) -> float:
   '''Return apparent-minus-mean seconds at UTC midnight and longitude zero.'''
-  apparent = celestial.apparent_solar_time(
+  apparent: celestial.CivilDateTime = celestial.apparent_solar_time(
     celestial.CivilDateTime(utc_day.year, utc_day.month, utc_day.day, 0.0),
     0.0,
   )
-  day_offset = (date(apparent.year, apparent.month, apparent.day) - utc_day).days
+  day_offset: int = (date(apparent.year, apparent.month, apparent.day) - utc_day).days
   return (day_offset + apparent.fraction) * EOT_CADENCE_SECONDS
 
 
 def _gen_eot_samples() -> tuple[int, ...]:
   samples: list[int] = []
-  day = EOT_START_DATE
+  day: date = EOT_START_DATE
   while day <= EOT_SENTINEL_DATE:
-    encoded = round(_equation_of_time_seconds(day) * EOT_SCALE)
+    encoded: int = round(_equation_of_time_seconds(day) * EOT_SCALE)
     if not -(2 ** 15) <= encoded < 2 ** 15:
       raise RuntimeError(f'Equation of time on {day} does not fit signed int16: {encoded}')
     samples.append(encoded)
     day += timedelta(days=1)
-  expected = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
+  expected: int = (EOT_SENTINEL_DATE - EOT_START_DATE).days + 1
   if len(samples) != expected:
     raise RuntimeError(f'Row-count gate failed: {len(samples)} EOT samples, expected {expected}.')
   return tuple(samples)
 
 
 def _render_eot_table(samples: tuple[int, ...]) -> bytes:
-  payload = struct.pack(f'>{len(samples)}h', *samples)
+  payload: bytes = struct.pack(f'>{len(samples)}h', *samples)
   return EOT_HEADER.pack(
     EOT_MAGIC,
     EOT_START_DATE.toordinal(),
@@ -334,7 +334,7 @@ def _write_eot_table(path: Path, encoded: bytes, expected_samples: int) -> None:
 # ---------------------------------------------------------------------------
 
 def main(argv: Sequence[str] | None = None) -> None:
-  parser = argparse.ArgumentParser(description=__doc__)
+  parser = argparse.ArgumentParser(description='Generate bundled celestial-calendar tables')
   parser.add_argument('--eot-only', action='store_true', help='Generate only equation_of_time.bin')
   parser.add_argument('--output-dir', type=Path, help='Write tables to this directory')
   args = parser.parse_args(argv)
@@ -342,7 +342,7 @@ def main(argv: Sequence[str] | None = None) -> None:
   data_dir: Path = args.output_dir or Path(__file__).parent / 'data'
   data_dir.mkdir(parents=True, exist_ok=True)
 
-  eot_samples = _gen_eot_samples()
+  eot_samples: tuple[int, ...] = _gen_eot_samples()
   _write_eot_table(
     data_dir / 'equation_of_time.bin',
     _render_eot_table(eot_samples),

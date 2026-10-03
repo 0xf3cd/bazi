@@ -1,15 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import functools
+'''Apparent-solar conversion using the bundled equation-of-time table.'''
 
 from datetime import UTC, datetime, timedelta
+from typing import Final
 
 from .celestial_data.loader import EquationOfTimeTable
 
 
-@functools.cache
-def _equation_of_time_table() -> EquationOfTimeTable:
-  return EquationOfTimeTable()
+_EOT_TABLE: Final[EquationOfTimeTable] = EquationOfTimeTable()
 
 
 def apparent_solar_datetime(utc_instant: datetime, longitude: float) -> datetime:
@@ -24,7 +23,7 @@ def apparent_solar_datetime(utc_instant: datetime, longitude: float) -> datetime
   assert isinstance(longitude, float)
 
   utc = utc_instant.astimezone(UTC)
-  equation_of_time = _equation_of_time_table().seconds_at(utc)
+  equation_of_time = _EOT_TABLE.seconds_at(utc)
   return utc.replace(tzinfo=None) + timedelta(
     hours=longitude / 15,
     seconds=equation_of_time,

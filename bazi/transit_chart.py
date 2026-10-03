@@ -116,7 +116,7 @@ class TransitChart:
     下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。'''
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
-    if solar_date < self._bazi_chart.bazi._absolute_solar_datetime.date():
+    if solar_date < self._bazi_chart.bazi._reference_datetime.date():
       return None
     try:
       ganzhi_date = self._utils.to_ganzhi(solar_date)
@@ -160,7 +160,7 @@ class TransitChart:
       return None
 
     moment = solar_moment.replace(microsecond=0)
-    birth_moment = bazi._absolute_solar_datetime.replace(microsecond=0)
+    birth_moment = bazi._reference_datetime.replace(microsecond=0)
     first, last = self._utils.supported_jie_boundaries()
     if moment < birth_moment or not first <= moment < last:
       return None

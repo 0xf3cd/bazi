@@ -7,8 +7,10 @@
 - Existing calendar backends, rules, school defaults, JSON restoration, transits,
   relationship analysis and Interpreter remain available without data regeneration.
 - `Bazi` and `Bazi.create` accept an opt-in, keyword-only east-positive longitude
-  with an aware datetime for apparent-solar charts. Legacy construction and JSON
-  remain unchanged; location-aware records use a separate canonical-instant roster.
+  with an aware datetime for apparent-solar charts. Location-aware charts preserve
+  the exact instant and use local apparent-solar precision buckets for Jie attribution;
+  their JSON uses a separate canonical-instant roster. Legacy construction and JSON
+  remain unchanged.
 - Standard MIT permission covers author-owned material; third-party notices state
   the separate scope of embedded data and quotations.
 - The manual release workflow defaults to rehearsal. Publication requires protected

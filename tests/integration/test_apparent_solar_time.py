@@ -2,6 +2,7 @@
 
 import copy
 import json
+import math
 
 from datetime import UTC, date, datetime, timedelta, timezone
 from typing import cast
@@ -84,7 +85,7 @@ def test_create_accepts_offset_iso_but_not_latitude() -> None:
     MINUTE_CONFIG,
     longitude=30,
   )
-  assert bazi._absolute_solar_datetime == datetime(2000, 1, 1, 20)
+  assert bazi._reference_datetime == datetime(2000, 1, 1, 20)
   assert bazi.longitude == 30.0
   with pytest.raises(TypeError, match='latitude'):
     Bazi.create( # type: ignore[call-arg]
@@ -110,25 +111,25 @@ def test_eot_alone_crosses_a_shichen_boundary() -> None:
   assert bazi.hour_pillar.dizhi is Dizhi.丑
 
 
-@pytest.mark.parametrize('birth_time, longitude, absolute_side, apparent_side, pillars', [
+@pytest.mark.parametrize('birth_time, longitude, absolute_after, apparent_after, pillars', [
   # 立春 2000 = 2000-02-04 20:40:23 UTC+08:00. Absolute is after it while
   # apparent time and the caller's UTC-05:00 civil label are before it.
-  ('2000-02-04T07:50:00-05:00', 0.0, 'after', 'before', ('庚辰', '戊寅')),
+  ('2000-02-04T07:50:00-05:00', 0.0, True, False, ('庚辰', '戊寅')),
   # Absolute is before 立春 while +150° apparent time and the caller's UTC+14:00
   # civil label are after it.
-  ('2000-02-05T02:30:00+14:00', 150.0, 'before', 'after', ('己卯', '丁丑')),
+  ('2000-02-05T02:30:00+14:00', 150.0, False, True, ('己卯', '丁丑')),
 ])
 def test_jie_attribution_uses_absolute_not_apparent_or_caller_civil(
   birth_time: str,
   longitude: float,
-  absolute_side: str,
-  apparent_side: str,
+  absolute_after: bool,
+  apparent_after: bool,
   pillars: tuple[str, str],
 ) -> None:
   bazi = Bazi.create(birth_time, 'male', MINUTE_CONFIG, longitude=longitude)
   jie = datetime(2000, 2, 4, 20, 40, 23)
-  assert (bazi._absolute_solar_datetime > jie) == (absolute_side == 'after')
-  assert (bazi.solar_datetime > jie) == (apparent_side == 'after')
+  assert (bazi._reference_datetime > jie) is absolute_after
+  assert (bazi.solar_datetime > jie) is apparent_after
   assert (str(bazi.year_pillar), str(bazi.month_pillar)) == pillars
 
 
@@ -173,7 +174,7 @@ def test_same_instant_offset_identity_and_canonical_json() -> None:
     longitude=116.4,
   )
   offset = Bazi.create(
-    '2000-01-01T07:34:01-05:00',
+    '2000-01-01T07:34:56-05:00',
     'female',
     MINUTE_CONFIG,
     longitude=116.4,
@@ -210,8 +211,8 @@ def test_dst_fold_is_an_absolute_instant_distinction() -> None:
   assert first != second
   first_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(first).json)
   second_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(second).json)
-  assert first_json['canonical_instant'] == '2024-11-03T05:30+00:00'
-  assert second_json['canonical_instant'] == '2024-11-03T06:30+00:00'
+  assert first_json['canonical_instant'] == '2024-11-03T05:30:00+00:00'
+  assert second_json['canonical_instant'] == '2024-11-03T06:30:00+00:00'
 
 
 def test_location_json_roster_roundtrip_and_tampering() -> None:
@@ -283,3 +284,94 @@ def test_location_path_covers_apparent_calendar_edges() -> None:
   )
   assert first.solar_date == date(1901, 2, 19)
   assert last.solar_date == date(2099, 12, 31)
+
+
+@pytest.mark.parametrize('birth_time, pillars, hour_dizhi', [
+  # The birth is 戌时, before 惊蛰's apparent 亥时, despite sharing its UTC+08:00 巳时.
+  ('2024-03-05T01:52:45+00:00', ('甲辰', '丙寅'), Dizhi.戌),
+  # Both are apparent 丑时, though the UTC+08:00 labels straddle 15:00 at 清明.
+  ('2024-04-04T06:32:16+00:00', ('甲辰', '戊辰'), Dizhi.丑),
+  # 立春 also controls the year: apparent 丑时 is old, apparent 寅时 is new.
+  ('2024-02-04T07:27:06+00:00', ('癸卯', '乙丑'), Dizhi.丑),
+  ('2024-02-04T08:22:06+00:00', ('甲辰', '丙寅'), Dizhi.寅),
+])
+def test_hour_jie_ties_use_apparent_shichen(
+  birth_time: str,
+  pillars: tuple[str, str],
+  hour_dizhi: Dizhi,
+) -> None:
+  bazi = Bazi.create(birth_time, 'male', HOUR_CONFIG, longitude=-74.0)
+  assert (str(bazi.year_pillar), str(bazi.month_pillar)) == pillars
+  assert bazi.hour_pillar.dizhi is hour_dizhi
+
+
+@pytest.mark.parametrize('birth_time, pillars', [
+  # Different UTC minutes, same apparent 03:17 minute as 立春.
+  ('2024-02-04T08:26:59+00:00', ('甲辰', '丙寅')),
+  # Same UTC minute, apparent 21:14 before 惊蛰's 21:15 minute.
+  ('2024-03-05T02:22:25+00:00', ('甲辰', '丙寅')),
+])
+def test_minute_jie_ties_use_apparent_minutes(birth_time: str, pillars: tuple[str, str]) -> None:
+  bazi = Bazi.create(birth_time, 'male', MINUTE_CONFIG, longitude=-74.0)
+  assert (str(bazi.year_pillar), str(bazi.month_pillar)) == pillars
+
+
+@pytest.mark.parametrize('config', [HOUR_CONFIG, MINUTE_CONFIG])
+def test_seconds_are_preserved_before_apparent_conversion(config: BaziConfig) -> None:
+  chart = BaziChart(Bazi.create(
+    '2000-11-03T00:43:59+00:00',
+    'male',
+    config,
+    longitude=0.0,
+  ))
+  floored = Bazi.create('2000-11-03T00:43:00+00:00', 'male', config, longitude=0.0)
+  assert chart.bazi.solar_datetime == datetime(2000, 11, 3, 1, 0)
+  assert chart.bazi.hour_pillar.dizhi is Dizhi.丑
+  assert floored.hour_pillar.dizhi is Dizhi.子
+  assert chart.bazi != floored
+  assert chart.json['canonical_instant'] == '2000-11-03T00:43:59+00:00'
+  assert chart.json['apparent_time'] == '2000-11-03T01:00:25.084728'
+  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
+
+
+def test_exact_instant_identity_and_microsecond_roundtrip() -> None:
+  chart = BaziChart(Bazi.create(
+    '2000-01-01T12:34:56.123456+00:00',
+    'female',
+    MINUTE_CONFIG,
+    longitude=116.4,
+  ))
+  offset = Bazi.create(
+    '2000-01-01T07:34:56.123456-05:00',
+    'female',
+    MINUTE_CONFIG,
+    longitude=116.4,
+  )
+  other_second = Bazi.create(
+    '2000-01-01T12:34:57.123456+00:00',
+    'female',
+    MINUTE_CONFIG,
+    longitude=116.4,
+  )
+  assert chart.bazi == offset
+  assert hash(chart.bazi) == hash(offset)
+  assert chart.bazi.solar_datetime == other_second.solar_datetime
+  assert chart.bazi != other_second
+  assert chart.json['canonical_instant'] == '2000-01-01T12:34:56.123456+00:00'
+  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
+
+
+@pytest.mark.parametrize('direct', [False, True])
+def test_negative_zero_longitude_emits_canonical_roundtrippable_json(direct: bool) -> None:
+  chart = BaziChart(_construct(
+    direct,
+    datetime(2000, 1, 1, 12, tzinfo=UTC),
+    MINUTE_CONFIG,
+    -0.0,
+  ))
+  longitude = chart.bazi.longitude
+  assert longitude is not None
+  assert math.copysign(1.0, longitude) == 1.0
+  assert chart.json['longitude'] == 0.0
+  assert math.copysign(1.0, chart.json['longitude']) == 1.0
+  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json

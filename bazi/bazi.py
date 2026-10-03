@@ -5,7 +5,7 @@ import random
 
 from enum import Enum
 from numbers import Real
-from datetime import UTC, date, time, datetime, timedelta
+from datetime import UTC, date, time, datetime, timedelta, timezone
 from typing import Final
 
 from .defines import Tiangan, Dizhi, Ganzhi
@@ -18,6 +18,9 @@ from .utils.bazi_utils import (
   month_tiangan, hour_tiangan, ganzhi_of_year,
   _ganzhi_of_day_at_moment, _ganzhi_year_month_of_jie, _ganzhi_month_dizhi,
 )
+
+
+_UTC8: Final[timezone] = timezone(timedelta(hours=8))
 
 
 class BaziGender(Enum):
@@ -113,10 +116,11 @@ class Bazi:
     Note:
     - Without `longitude`, `birth_time` must be naive and follows the legacy path.
     - With `longitude`, `birth_time` must be aware. Its timezone, DST fold and historical
-      offset are caller-owned; the represented instant is normalized before calculation.
+      offset are caller-owned. Seconds and microseconds are retained for conversion,
+      identity and JSON; HOUR/MINUTE attribution compares apparent-solar buckets.
     - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，并沿用原有路径。
     - 传入 `longitude` 时，`birth_time` 必须带时区；时区、夏令时折叠与历史偏移由调用方负责，
-      本类只对其表示的绝对时刻做规范化。
+      换算、身份与 JSON 保留秒及微秒，HOUR/MINUTE 归属按真太阳时精度桶比较。
     
     Args:
     - birth_time: (datetime) A naive legacy civil time, or an aware absolute instant when
@@ -146,19 +150,19 @@ class Bazi:
       if not -180 <= longitude_value <= 180:
         raise ValueError(f'Longitude is outside [-180, 180]: {longitude}')
       if longitude_value == 0:
+        # JSON has one zero spelling, including when the input is -0.0.
         longitude_value = 0.0
 
     self._config: Final[BaziConfig] = config
     utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
 
     self._longitude: Final[float | None] = longitude_value
-    apparent_birth_time: datetime
-    absolute_datetime: datetime
+    clock_datetime: datetime
+    canonical_utc: datetime | None = None
     if longitude_value is None:
       if birth_time.tzinfo is not None:
         raise ValueError('Timezone should be well-processed outside of this class.')
-      apparent_birth_time = birth_time
-      absolute_datetime = birth_time
+      clock_datetime = birth_time
     else:
       if birth_time.tzinfo is None or birth_time.utcoffset() is None:
         raise ValueError('Longitude requires a timezone-aware birth_time.')
@@ -167,17 +171,15 @@ class Bazi:
       if config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
         raise ValueError('Longitude requires BaziPrecision.HOUR or BaziPrecision.MINUTE.')
 
-      canonical_utc = birth_time.astimezone(UTC).replace(second=0, microsecond=0)
-      absolute_datetime = (
-        canonical_utc + timedelta(hours=8)
-      ).replace(tzinfo=None)
+      canonical_utc = birth_time.astimezone(UTC)
+      # Load the EOT table only for the location-aware path.
       from .calendar.solar_time import apparent_solar_datetime
-      apparent_birth_time = apparent_solar_datetime(canonical_utc, longitude_value)
-    self._birth_time: Final[datetime] = apparent_birth_time
-    self._absolute_datetime: Final[datetime] = absolute_datetime
+      clock_datetime = apparent_solar_datetime(canonical_utc, longitude_value)
+    self._clock_datetime: Final[datetime] = clock_datetime
+    self._utc_instant: Final[datetime | None] = canonical_utc
 
     # `to_solar` is also the window gate: an out-of-window birth time raises ValueError here.
-    self._solar_date: Final[CalendarDate] = utils.to_solar(self._birth_time)
+    self._solar_date: Final[CalendarDate] = utils.to_solar(self._clock_datetime)
 
     self._gender: Final[BaziGender] = gender
 
@@ -203,10 +205,18 @@ class Bazi:
       # so `>=` can only hit as a tie -- in which case the next jie owns the birth month, and
       # its true moment may be up to one granularity unit after the birth (子时 spans midnight,
       # so for HOUR the tie window may even start on the previous civil day).
-      birth_moment: Final[datetime] = self._absolute_solar_datetime
+      birth_moment: Final[datetime] = self._reference_datetime
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
-      if _truncated(birth_moment, self._config.precision) >= _truncated(next_j.moment, self._config.precision):
+      attribution_birth: datetime = birth_moment
+      attribution_jie: datetime = next_j.moment
+      if longitude_value is not None:
+        attribution_birth = self._clock_datetime
+        attribution_jie = apparent_solar_datetime(
+          next_j.moment.replace(tzinfo=_UTC8).astimezone(UTC),
+          longitude_value,
+        )
+      if _truncated(attribution_birth, self._config.precision) >= _truncated(attribution_jie, self._config.precision):
         bracketing_jies = (next_j, utils.next_jie(next_j.moment))
       else:
         bracketing_jies = (prev_j, next_j)
@@ -231,12 +241,12 @@ class Bazi:
     # The day pillar follows the configured 换日点; year/month attribution above remains
     # independent and follows `BaziPrecision`.
     self._day_pillar: Final[Ganzhi] = _ganzhi_of_day_at_moment(
-      self._birth_time,
+      self._clock_datetime,
       self._config.school.day_rollover,
     )
 
     # Finally, find out the Hour Dizhi (时柱地支).
-    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._birth_time.hour + 1) // 2 % 12)
+    self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._clock_datetime.hour + 1) // 2 % 12)
 
   @staticmethod
   def __parse_bazi_args(
@@ -381,11 +391,11 @@ class Bazi:
 
   @property
   def hour(self) -> int:
-    return self._birth_time.hour
+    return self._clock_datetime.hour
 
   @property
   def minute(self) -> int:
-    return self._birth_time.minute
+    return self._clock_datetime.minute
 
   @property
   def longitude(self) -> float | None:
@@ -396,23 +406,25 @@ class Bazi:
   @property
   def solar_datetime(self) -> datetime:
     '''The apparent-solar birth time for a location-aware chart, otherwise the legacy
-    civil time, truncated to the minute.
-    Sub-minute parts are deliberately dropped: MINUTE is the finest `BaziPrecision`, so
-    ganzhi attribution never reads below it, and `__eq__`/`__hash__` build on this value.
-    地点盘返回真太阳时，默认路径返回原民用时刻；均显式截断到分钟——秒以下刻意丢弃：MINUTE 已是最细的排盘精度，
-    干支归属不读秒，`__eq__`/`__hash__` 也建立在截断值上。'''
-    return self._birth_time.replace(second=0, microsecond=0)
+    civil time, truncated to the minute for display. Legacy identity uses this value;
+    location-aware identity uses the exact canonical instant, longitude, gender and config.
+    地点盘返回真太阳时，默认路径返回原民用时刻，均截断到分钟显示。默认路径以此值参与身份判断；
+    地点盘身份使用精确规范绝对时刻、经度、性别及配置。'''
+    return self._clock_datetime.replace(second=0, microsecond=0)
 
   @property
-  def _absolute_solar_datetime(self) -> datetime:
-    '''The canonical absolute instant as a naive UTC+08:00 label, truncated to the minute.'''
-    return self._absolute_datetime.replace(second=0, microsecond=0)
+  def _reference_datetime(self) -> datetime:
+    '''The Jie/Dayun/transit coordinate: exact naive UTC+08:00 for location-aware
+    charts, otherwise the legacy minute-truncated civil label.'''
+    if self._utc_instant is None:
+      return self.solar_datetime
+    return self._utc_instant.astimezone(_UTC8).replace(tzinfo=None)
 
   @property
   def _canonical_instant(self) -> datetime:
     '''The canonical aware UTC instant of a location-aware chart.'''
-    assert self._longitude is not None
-    return (self._absolute_solar_datetime - timedelta(hours=8)).replace(tzinfo=UTC)
+    assert self._utc_instant is not None
+    return self._utc_instant
   
   @property
   def gender(self) -> BaziGender:
@@ -519,7 +531,7 @@ class Bazi:
     if not isinstance(other, Bazi):
       return False
     return (
-      self._absolute_solar_datetime == other._absolute_solar_datetime
+      self._reference_datetime == other._reference_datetime
       and self.longitude == other.longitude
       and self.gender == other.gender
       and self.config == other.config
@@ -529,6 +541,6 @@ class Bazi:
     # Same inputs as `__eq__`, all derived from `Final` state: stable under the
     # public API (private reassignment is not defended against, as everywhere else).
     # 与 `__eq__` 同源，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
-    return hash((self._absolute_solar_datetime, self.longitude, self.gender, self.config))
+    return hash((self._reference_datetime, self.longitude, self.gender, self.config))
 
 八字 = Bazi

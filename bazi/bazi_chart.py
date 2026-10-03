@@ -77,13 +77,14 @@ class BaziJson:
   class Dayun(TypedDict):
     '''Not expected to be accessed directly. Used in `Transits`.'''
     ganzhi: str
-    # ISO 8601 boundaries of the physical interval / 物理区间边界的 ISO 8601 字符串
+    # Naive UTC+08:00 physical boundaries for location-aware charts; legacy civil labels otherwise.
+    # 地点盘采用东八区无时区物理区间边界；默认路径沿用原民用标签。
     start_time: str
     end_time: str
 
   class Transits(TypedDict):
     '''Not expected to be accessed directly. Used in `JsonDict`.'''
-    # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
+    # Same coordinate as Dayun.start_time. / 与 Dayun.start_time 使用相同时间坐标。
     dayun_start_time: str
 
     # key: xusui / 虚岁
@@ -127,6 +128,8 @@ class BaziJson:
     guoyin_def: str
 
   class _CommonChartJsonDict(TypedDict):
+    '''Fields shared by the legacy and location-aware chart rosters.
+    默认盘与地点盘 JSON 名册的共同字段。'''
     gender: str
     precision: str
     backend: str
@@ -143,16 +146,25 @@ class BaziJson:
     transits: 'BaziJson.Transits'
 
   class LegacyBaziChartJsonDict(_CommonChartJsonDict):
+    '''The unchanged legacy roster with a minute-truncated civil birth time.
+    原有默认盘名册，出生时刻为截断到分钟的民用标签。'''
     birth_time: str
 
   class LocationBaziChartJsonDict(_CommonChartJsonDict):
+    '''The location-aware roster. Strings use the emitter's exact ISO 8601 spelling.
+    地点盘名册；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
+    # The sole accepted basis is 'apparent_solar'. / 唯一接受的基准是 'apparent_solar'。
     time_basis: str
+    # Exact UTC instant, with seconds, optional microseconds and +00:00. / 精确 UTC 时刻，保留秒、按需保留微秒，并带 +00:00。
     canonical_instant: str
+    # A JSON float; zero is 0.0, never -0.0. / JSON 浮点数；零统一为 0.0，不接受 -0.0。
     longitude: float
+    # Exact naive apparent clock, including derived sub-minute parts. / 精确无时区真太阳时，包含派生的秒以下部分。
     apparent_time: str
 
   class BaziChartJsonDict(_CommonChartJsonDict):
-    '''The typed union surface; runtime accepts exactly one of the two complete rosters.'''
+    '''Combined typing surface; runtime requires one complete, unmixed roster.
+    合并的静态类型界面；运行时只接受一份完整且不混用的名册。'''
     birth_time: NotRequired[str]
     time_basis: NotRequired[str]
     canonical_instant: NotRequired[str]
@@ -242,8 +254,9 @@ class BaziChart:
         f'Unexpected fields at chart: expected the legacy or location-aware roster, got {d.keys()}'
       )
 
-    string_keys = ['gender', 'precision', 'backend', 'dayun_year_rule']
-    string_keys += ['time_basis', 'canonical_instant', 'apparent_time'] if location_aware else ['birth_time']
+    string_keys = ('gender', 'precision', 'backend', 'dayun_year_rule') + (
+      ('time_basis', 'canonical_instant', 'apparent_time') if location_aware else ('birth_time',)
+    )
     for key in string_keys:
       if not isinstance(d[key], str):
         raise TypeError(f'Expected str at {key}, got {type(d[key])}')
@@ -261,19 +274,14 @@ class BaziChart:
       dayun_year_rule=cast(str, d['dayun_year_rule']),
       school=BaziSchool.from_json(school),
     )
-    if location_aware:
-      chart = cls(Bazi.create(
-        cast(str, d['canonical_instant']),
+    chart = cls(
+      Bazi.create(
+        cast(str, d['canonical_instant'] if location_aware else d['birth_time']),
         cast(str, d['gender']),
         config,
-        longitude=cast(float, d['longitude']),
-      ))
-    else:
-      chart = cls(Bazi.create(
-        cast(str, d['birth_time']),
-        cast(str, d['gender']),
-        config,
-      ))
+        longitude=cast(float, d['longitude']) if location_aware else None,
+      ),
+    )
 
     def __compare(actual: object, expected: object, path: str) -> None:
       if isinstance(expected, Mapping):
@@ -497,8 +505,11 @@ class BaziChart:
     '''
     The moment when first Dayun (大运) starts (solar/gregorian calendar).
     大运开始的时间 / 交运时间（公历）。
+
+    Location-aware charts return a naive UTC+08:00 label, not apparent solar time.
+    地点盘返回东八区无时区标签，不是真太阳时。
     '''
-    birthtime: Final[datetime] = self._bazi._absolute_solar_datetime
+    birthtime: Final[datetime] = self._bazi._reference_datetime
 
     def __gap() -> timedelta:
       # Count from `Bazi.bracketing_jies`: under HOUR/MINUTE that is exactly the jie owning
@@ -713,9 +724,9 @@ class BaziChart:
       }
     return {
       'time_basis': 'apparent_solar',
-      'canonical_instant': self._bazi._canonical_instant.isoformat(timespec='minutes'),
+      'canonical_instant': self._bazi._canonical_instant.isoformat(),
       'longitude': self._bazi.longitude,
-      'apparent_time': self._bazi._birth_time.isoformat(),
+      'apparent_time': self._bazi._clock_datetime.isoformat(),
       **common,
     }
 
