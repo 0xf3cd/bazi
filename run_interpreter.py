@@ -39,8 +39,10 @@ def interpret(chart: BaziChart) -> str:
 
   s += '\n' + '-' * 60 + '\n'
   s += f"日主：{j['pillars']['day'][0]}，为{j['tiangan_traits']['day']}。\n\n"
-  s += '解读：' + ''.join(day_master_desc['general']) + '\n\n'
-  s += '日主的个性：' + ''.join(day_master_desc['personality']) + '\n\n'
+  if day_master_desc['general']:
+    s += '解读：' + ''.join(day_master_desc['general']) + '\n\n'
+  if day_master_desc['personality']:
+    s += '日主的个性：' + ''.join(day_master_desc['personality']) + '\n\n'
 
   shishens: dict[Shishen, int] = { ss : 0 for ss in Shishen }
   for pillar_shishens in chart.shishen:
@@ -57,10 +59,14 @@ def interpret(chart: BaziChart) -> str:
 
     s += '\n' + '-' * 60 + '\n'
     s += f'原局中，{ss}有{count}个，占比{ratio:.2%}。\n\n'
-    s += '解读：' + ''.join(desc['general']) + '\n\n'
-    s += f'{ss}代表的特点：' + ''.join(desc['in_good_status']) + '\n\n'
-    s += f'当{ss}状态不好时，可能会有以下特点：' + ''.join(desc['in_bad_status']) + '\n\n'
-    s += f'{ss}的恋爱/交友观：' + ''.join(desc['relationship']) + '\n\n'
+    if desc['general']:
+      s += '解读：' + ''.join(desc['general']) + '\n\n'
+    if desc['in_good_status']:
+      s += f'{ss}代表的特点：' + ''.join(desc['in_good_status']) + '\n\n'
+    if desc['in_bad_status']:
+      s += f'当{ss}状态不好时，可能会有以下特点：' + ''.join(desc['in_bad_status']) + '\n\n'
+    if desc['relationship']:
+      s += f'{ss}的恋爱/交友观：' + ''.join(desc['relationship']) + '\n\n'
 
   return s
 

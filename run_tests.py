@@ -285,6 +285,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
       '*/run_tests.py',
       '*/run_package_checks.py', # Exercised in isolated subprocesses by -pkg, like the demo runners.
       *(f'*/{script}' for script in DEMO_SCRIPTS),
+      '*/run_interpreter.py', # Exercised in a separate subprocess by -i.
       '*/tests/*',
       str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # Offline generation tool.
       str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # Offline generation tool.

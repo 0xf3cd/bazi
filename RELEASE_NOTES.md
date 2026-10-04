@@ -10,6 +10,10 @@
   the separate scope of embedded data and quotations.
 - The manual release workflow defaults to rehearsal. Publication requires protected
   environment approval and publishes only the tested sdist and its rebuilt wheel.
+- Among reference-only claims, a finite description-corpus pass corrected three wording
+  defects and retained seven source-unverified semantic ambiguities; default description
+  output is unchanged. The chart renderer in `run_interpreter.py` now omits headings
+  whose selected description list is empty. No public description fields were added.
 
 No `src` shim, root-class facade or installed command-line entrypoint is provided.
 See `README.md` for principal module interfaces and `RELEASING.md` for release
