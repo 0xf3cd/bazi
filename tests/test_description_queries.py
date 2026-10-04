@@ -9,6 +9,7 @@ from bazi.defines import Shishen, Tiangan
 from bazi.descriptions import (
   DescriptionClaim, DescriptionClaims, DescriptionCondition, DescriptionOutput,
   DescriptionSource, ShishenDescription, TianganDescription,
+  DescriptionSourceRecord, DescriptionLineage,
 )
 from bazi.interpreter import Interpreter
 
@@ -110,6 +111,8 @@ def test_claim_constructor_rejects_invalid_types(field: str, value: object) -> N
 def test_source_constructor_checks_every_declared_field() -> None:
   for source_id in DescriptionSource:
     record = Interpreter.query_source(source_id)
+    assert isinstance(record, DescriptionSourceRecord)
+    assert isinstance(record.lineage, DescriptionLineage)
     for field in fields(record):
       with pytest.raises(TypeError):
         replace(record, **{field.name: object()}) # type: ignore[arg-type] # Probe every declared type gate.

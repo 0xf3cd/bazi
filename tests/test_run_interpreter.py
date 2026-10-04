@@ -221,6 +221,7 @@ def test_cli_source_display_does_not_expand_reference_selection(tmp_path: Path) 
   assert '来源：' in result.stdout
   assert '支持范围：' in result.stdout
   assert '局限：' in result.stdout
+  assert '条目：tiangan.wu.definition；署名：《渊海子平》与《命理探源》天干定义' in result.stdout
   assert '仅供参考' not in result.stdout
   assert 'legacy.' not in result.stdout
 
@@ -336,9 +337,13 @@ def test_exports_retain_other_existing_files(tmp_path: Path) -> None:
   assert first.returncode == 0
   output = tmp_path / 'interpretation_examples'
   earlier = (output / '1.txt').read_bytes()
+  (output / '0.txt').write_text('sentinel', encoding='utf-8')
   (output / 'notes.txt').write_text('personal notes', encoding='utf-8')
   second = _run_cli(tmp_path, '--seed', '42', '--output-dir', str(tmp_path))
   assert second.returncode == 0
+  assert (output / '0.txt').read_text(encoding='utf-8') == re.sub(
+    r'\x1b\[[0-9;]*m', '', second.stdout,
+  ).removesuffix('\n')
   assert (output / '1.txt').read_bytes() == earlier
   assert (output / 'notes.txt').read_text(encoding='utf-8') == 'personal notes'
 
@@ -394,3 +399,49 @@ def test_export_io_failures_use_error_exit(
     ])
   assert caught.value.code == 2
   assert 'error: Export I/O failure' in capsys.readouterr().err
+
+
+def test_cli_reference_only_without_source_display(tmp_path: Path) -> None:
+  result = _run_cli(
+    tmp_path,
+    '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--include-reference-only',
+  )
+  assert result.returncode == 0
+  assert result.stdout.count('出生时间：') == 1
+  assert '性别：female' in result.stdout
+  assert '仅供参考' in result.stdout
+  assert '适用条件需整盘判断，尚未判断' in result.stdout
+  assert '来源尚未核实' in result.stdout
+  assert '来源：' not in result.stdout
+  assert '条目：' not in result.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_knowledge_export_defaults_are_isolated(
+  tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  monkeypatch.setitem(main.__globals__, '_DEFAULT_OUTPUT_DIR', tmp_path)
+  assert main([
+    '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--export-knowledge-base',
+  ]) == 0
+  assert not (tmp_path / 'interpretation_examples').exists()
+  assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
+  assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
+  ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
+  assert '丁为阴火。' in ding
+  assert '丁火有烛灯之象' not in ding
+  assert '仅供参考' not in ding
+  assert '来源：' not in ding
+
+
+def test_print_errors_propagate(monkeypatch: pytest.MonkeyPatch) -> None:
+  error = BrokenPipeError('Print failure')
+
+  def fail(*args: object, **kwargs: object) -> None:
+    raise error
+
+  monkeypatch.setitem(main.__globals__, 'print', fail)
+  with pytest.raises(BrokenPipeError) as caught:
+    main(['--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+  assert caught.value is error

@@ -5,10 +5,10 @@ A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
 only the standard library and five bundled calendar tables; no network access or
 data generation is needed.
 
-## Features
-
 This README describes the current checkout. For a published package, consult the
 README at its matching release tag.
+
+## Features
 
 - Charts: four pillars, 阴阳五行, 十神, 藏干, 纳音 and 十二长生, with calendar
   backend, birth-time precision and school configuration recorded in JSON.
@@ -70,12 +70,20 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
 | `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
-| `bazi.descriptions` | `DescriptionClaim`, `DescriptionSource`, `DescriptionSourceRecord`, output and condition enums |
+| `bazi.descriptions` | `DescriptionClaim`, `DescriptionClaims`, `DescriptionSourceRecord`; `DescriptionSource`, `DescriptionLineage`, `DescriptionTextLayer`, `DescriptionOutput`, `DescriptionCondition` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
 `bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
 default-output descriptions. `Interpreter` methods use the same default; pass
 `include_reference_only=True` to also include claims not eligible for default output.
+
+Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
+domain values and records configuration. `py.typed` exposes the inline type hints.
+Private names, offline generation tools and undocumented internals are not a
+promise of a stable public interface.
+
+[External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
+baseline with configuration-specific results and an offline regression test.
 
 ### Structured description queries
 
@@ -100,7 +108,7 @@ evidentiary boundaries. Text-returning methods retain their existing field/list 
 The corpus contains 291 claims: 19 default definitions and 272 reference-only
 claims. Default queries select only default-output claims without conditions.
 Complete queries also include named historical imagery, repository editorial text
-and legacy text whose sources this audit has not verified. An empty `sources`
+and legacy text marked source-unverified. An empty `sources`
 tuple and `Legacy corpus; source unverified` attribution preserve that last state;
 they do not establish that no source exists or that the claim is false.
 
@@ -158,22 +166,17 @@ python run_interpreter.py \
 | `--export-knowledge-base` | Write all 天干 / 十神 descriptions under `knowledge_base/`; default root `output_data/` |
 | `-h`, `--help` | Show help |
 
-Fixed birth inputs accept one chart and cannot be combined with a seed. Exported
-TXT files have terminal color codes removed. Reference-only text is labelled,
-including unverified attribution and conditions that have not been evaluated.
+Fixed birth inputs accept one chart and cannot be combined with a seed.
+
+Reference-only text is labelled, including unverified attribution and conditions
+that have not been evaluated.
+
+Exported TXT files have terminal color codes removed.
 Repeated exports overwrite the numbered files written by that run; other existing
 files, including higher indices from earlier runs, are retained.
-The runner assembles enum lookups and counts three non-day-master stems plus four
-branch 主气 positions; its percentages describe those seven positions. Paragraph
-selection does not evaluate 旺衰, 喜忌 or 格局.
 
-Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
-domain values and records configuration. `py.typed` exposes the inline type hints.
-Private names, offline generation tools and undocumented internals are not a
-promise of a stable public interface.
-
-[External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
-baseline with configuration-specific results and an offline regression test.
+The 十神 percentages count three non-day-master stems plus four branch 主气
+positions. Descriptions do not evaluate 旺衰, 喜忌 or 格局.
 
 ## Instructions
 
