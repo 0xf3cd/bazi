@@ -5,6 +5,17 @@ A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
 only the standard library and five bundled calendar tables; no network access or
 data generation is needed.
 
+## Features
+
+- Charts: four pillars, 阴阳五行, 十神, 藏干, 纳音 and 十二长生, with calendar
+  backend, birth-time precision and school configuration recorded in JSON.
+- Transits: precise 大运 intervals, 小运 and 流年, with year/month/date/moment queries.
+- Relations and 神煞: at-birth and transit analysis, including configurable rule variants.
+- Descriptions: static 天干 and 十神 lookup, either as text or immutable claims with
+  source witnesses, attribution, output policy and applicability conditions.
+- Source-checkout demos: random charts, transit tables, relationship analysis and
+  description display/export. The Interpreter runner also accepts fixed birth inputs.
+
 ## Installation
 
 To build and validate the current checkout and retain an installable pair:
@@ -55,12 +66,101 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.calendar` | `CalendarBackend`, `CalendarDate`, `CalendarType`, `calendar_utils_of` |
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
-| `bazi.interpreter` | `Interpreter.interpret_tiangan`, `Interpreter.interpret_shishen` |
+| `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_*` structured lookup, `source` witness lookup |
+| `bazi.descriptions` | `DescriptionClaim`, `DescriptionSource`, `DescriptionSourceRecord`, output and condition enums |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
 `bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
 default-output descriptions. `Interpreter` methods use the same default; pass
 `include_reference_only=True` to also include claims not eligible for default output.
+
+### Structured description queries
+
+```python
+from bazi.defines import Tiangan
+from bazi.interpreter import Interpreter
+
+fields = Interpreter.query_tiangan(Tiangan.丁, include_reference_only=True)
+for claim in fields['general']:
+  print(claim.claim_id, claim.text, claim.output.value, claim.conditions)
+  for source_id in claim.sources:
+    witness = Interpreter.source(source_id)
+    print(witness.work, witness.edition, witness.locator, witness.url)
+    print(witness.supports, witness.limitations)
+```
+
+`query_tiangan` and `query_shishen` return a `frozendict` of field names to tuples
+of frozen `DescriptionClaim` objects. Source lookup returns a frozen record with
+the work, attribution, edition, locator, URL, text layer, lineage, excerpt and
+evidentiary boundaries. Text-returning methods retain their existing field/list shape.
+
+The corpus contains 291 claims: 19 default definitions and 272 reference-only
+claims. Default queries select only default-output claims without conditions.
+Complete queries also include named historical imagery, repository editorial text
+and legacy text whose sources this audit has not verified. An empty `sources`
+tuple and `Legacy corpus; source unverified` attribution preserve that last state;
+they do not establish that no source exists or that the claim is false.
+
+`CHART_CONTEXT_REQUIRED` records a prerequisite, not an evaluated result. Reference
+queries include these claims without determining whether they apply to a chart.
+Witness records establish textual attribution and its boundaries. Description
+selection is independent of the calculation variants in `BaziSchool`.
+More specific good/bad-state conditions are tracked in [#228](https://github.com/0xf3cd/bazi/issues/228).
+
+### Run a chart locally
+
+The following commands run from a source checkout with the development environment
+installed. Each runner creates a random chart:
+
+| Command | Output |
+| --- | --- |
+| `python run_demo.py` | Chart, 大运 / 小运 / 流年 and chart JSON |
+| `python run_relationship_analyzer.py` | 夫妻宫, 配偶星, at-birth 神煞 and ten years of 流年神煞 |
+| `python run_interpreter.py` | One chart with static descriptions; no file export by default |
+
+For a repeatable random example with source records:
+
+```sh
+python run_interpreter.py --seed 42 --show-sources
+```
+
+For a fixed birth and complete reference text:
+
+```sh
+python run_interpreter.py \
+  --birth-time "2000-01-01 12:00" \
+  --gender male \
+  --include-reference-only \
+  --show-sources
+```
+
+For explicit chart and description exports:
+
+```sh
+python run_interpreter.py \
+  --seed 42 \
+  --count 5 \
+  --output-dir output_data \
+  --export-knowledge-base
+```
+
+| Interpreter flag | Effect |
+| --- | --- |
+| `--birth-time <time>`, `--gender male\|female` | Fixed local civil birth; supply both together |
+| `--seed <integer>` | Reproducible random charts |
+| `--count <positive integer>` | Random chart count; default 1 |
+| `--include-reference-only` | Include reference text and label unevaluated conditions |
+| `--show-sources` | Show IDs, attribution, witnesses and evidentiary boundaries; does not expand text selection |
+| `--output-dir <path>` | Save the displayed charts as `interpretation_examples/0.txt`, etc. below this path |
+| `--export-knowledge-base` | Write all 天干 / 十神 descriptions under `knowledge_base/`; default root `output_data/` |
+| `-h`, `--help` | Show help |
+
+Fixed birth inputs accept one chart and cannot be combined with a seed. Exported
+TXT files have terminal color codes removed. Reference-only text is labelled,
+including unverified attribution and conditions that have not been evaluated.
+The runner assembles enum lookups and counts three non-day-master stems plus four
+branch 主气 positions; its percentages describe those seven positions. Paragraph
+selection does not evaluate 旺衰, 喜忌 or 格局.
 
 Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
 domain values and records configuration. `py.typed` exposes the inline type hints.

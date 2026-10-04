@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Final, TypeAlias, TypedDict
 
-from .common import frozendict
+from .common import check_declared_types, frozendict
 from .defines import Shishen, Tiangan
 
 
@@ -35,7 +35,7 @@ class TianganDescription(TypedDict):
   personality: list[str]
 
 
-class _DescriptionSource(Enum):
+class DescriptionSource(Enum):
   '''A stable source-witness identifier. / 稳定的来源见证标识。'''
 
   EDITORIAL                                = 'editorial'
@@ -47,7 +47,10 @@ class _DescriptionSource(Enum):
   MINGLI_TANYUAN_SHISHEN_DEFINITIONS       = 'mingli_tanyuan_shishen_definitions'
 
 
-class _DescriptionLineage(Enum):
+_DescriptionSource = DescriptionSource
+
+
+class DescriptionLineage(Enum):
   '''An independent textual lineage. / 独立的文本谱系。'''
 
   EDITORIAL        = 'editorial'
@@ -55,28 +58,40 @@ class _DescriptionLineage(Enum):
   MINGLI_TANYUAN   = 'mingli_tanyuan'
 
 
-class _DescriptionTextLayer(Enum):
+_DescriptionLineage = DescriptionLineage
+
+
+class DescriptionTextLayer(Enum):
   '''The textual layer represented by a source witness. / 来源见证对应的文本层。'''
 
   EDITORIAL  = 'editorial'
   BAIWEN     = 'baiwen'
 
 
-class _DescriptionOutput(Enum):
+_DescriptionTextLayer = DescriptionTextLayer
+
+
+class DescriptionOutput(Enum):
   '''The output policy of a description claim. / 语料断言的输出策略。'''
 
   DEFAULT        = 'default'
   REFERENCE_ONLY = 'reference_only'
 
 
-class _DescriptionCondition(Enum):
+_DescriptionOutput = DescriptionOutput
+
+
+class DescriptionCondition(Enum):
   '''A prerequisite that enum lookup cannot evaluate. / 枚举查表无法判断的适用条件。'''
 
   CHART_CONTEXT_REQUIRED = 'chart_context_required'
 
 
+_DescriptionCondition = DescriptionCondition
+
+
 @dataclass(frozen=True)
-class _DescriptionSourceRecord:
+class DescriptionSourceRecord:
   '''A fixed witness and its evidentiary boundary. / 固定底本见证及其证据边界。'''
 
   work:         str
@@ -89,6 +104,12 @@ class _DescriptionSourceRecord:
   excerpt:      str
   supports:     str
   limitations:  str
+
+  def __post_init__(self) -> None:
+    check_declared_types(self)
+
+
+_DescriptionSourceRecord = DescriptionSourceRecord
 
 
 _DESCRIPTION_SOURCES: Final[
@@ -182,7 +203,7 @@ _DESCRIPTION_SOURCES: Final[
 
 
 @dataclass(frozen=True)
-class _DescriptionClaim:
+class DescriptionClaim:
   '''A description claim with source state and output policy. / 带来源状态与输出策略的语料断言。'''
 
   claim_id:    str
@@ -191,6 +212,30 @@ class _DescriptionClaim:
   attribution: str
   conditions:  tuple[_DescriptionCondition, ...]
   output:      _DescriptionOutput
+
+  def __post_init__(self) -> None:
+    for value in (self.claim_id, self.text, self.attribution):
+      if not isinstance(value, str):
+        raise TypeError(f'Expected str, got {type(value)}')
+    if not isinstance(self.output, DescriptionOutput):
+      raise TypeError(f'Expected DescriptionOutput, got {type(self.output)}')
+    for values, member_type in (
+      (self.sources, DescriptionSource),
+      (self.conditions, DescriptionCondition),
+    ):
+      if not isinstance(values, tuple):
+        raise TypeError(f'Expected tuple, got {type(values)}')
+      for member in values:
+        if not isinstance(member, member_type):
+          raise TypeError(f'Expected {member_type.__name__}, got {type(member)}')
+
+
+_DescriptionClaim = DescriptionClaim
+
+
+'''Description fields mapped to immutable selected claims.
+描述字段与所选不可变语料条目的映射。'''
+DescriptionClaims: TypeAlias = frozendict[str, tuple[DescriptionClaim, ...]]
 
 
 '''A bare default-output string with unclassified source, or an explicit claim.
@@ -1744,13 +1789,13 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
 })
 
 
-def _project_texts(
+def _selected_items(
   items: list[_DescriptionItem],
   include_reference_only: bool,
-) -> list[str]:
+) -> list[_DescriptionItem]:
   assert isinstance(include_reference_only, bool)
   return [
-    item.text if isinstance(item, _DescriptionClaim) else item
+    item
     for item in items
     if (
       include_reference_only
@@ -1760,6 +1805,16 @@ def _project_texts(
         and not item.conditions
       )
     )
+  ]
+
+
+def _project_texts(
+  items: list[_DescriptionItem],
+  include_reference_only: bool,
+) -> list[str]:
+  return [
+    item.text if isinstance(item, DescriptionClaim) else item
+    for item in _selected_items(items, include_reference_only)
   ]
 
 

@@ -1,8 +1,13 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import re
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 
-from run_interpreter import interpret
+from run_interpreter import interpret, save_chart_examples
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.defines import Shishen, Tiangan
@@ -155,3 +160,105 @@ def test_interpret_real_descriptions_follow_content() -> None:
     'in_bad_status': [],
     'relationship': [],
   }
+
+
+def _run_cli(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+  return subprocess.run(
+    [sys.executable, str(Path(__file__).parents[1] / 'run_interpreter.py'), *args],
+    cwd=cwd,
+    capture_output=True,
+    text=True,
+    encoding='utf-8',
+    timeout=45,
+    check=False,
+  )
+
+
+def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path) -> None:
+  help_result = _run_cli(tmp_path, '--help')
+  assert help_result.returncode == 0
+  assert '--show-sources' in help_result.stdout
+  first = _run_cli(tmp_path, '--seed', '42')
+  second = _run_cli(tmp_path, '--seed', '42')
+  assert first.returncode == second.returncode == 0
+  assert first.stdout == second.stdout
+  assert first.stdout.count('出生时间：') == 1
+  assert '来源：' not in first.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_cli_source_display_does_not_expand_reference_selection(tmp_path: Path) -> None:
+  result = _run_cli(
+    tmp_path, '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--show-sources',
+  )
+  assert result.returncode == 0
+  assert '出生时间：2000-01-01, 12:0' in result.stdout
+  assert '来源：' in result.stdout
+  assert '支持范围：' in result.stdout
+  assert '局限：' in result.stdout
+  assert '仅供参考' not in result.stdout
+  assert 'legacy.' not in result.stdout
+
+
+def test_cli_reference_export_retains_unverified_and_unevaluated_states(tmp_path: Path) -> None:
+  result = _run_cli(
+    tmp_path,
+    '--birth-time', '2000-01-01 12:00', '--gender', 'male',
+    '--include-reference-only', '--show-sources',
+    '--output-dir', str(tmp_path), '--export-knowledge-base',
+  )
+  assert result.returncode == 0
+  assert '来源尚未核实' in result.stdout
+  assert '适用条件需整盘判断，尚未判断' in result.stdout
+  assert '仅供参考' in result.stdout
+  saved = tmp_path / 'interpretation_examples' / '0.txt'
+  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
+  assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
+  assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
+  ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
+  assert '丁火有烛灯之象' in ding
+  assert '《刻京台增补渊海子平大全》' in ding
+
+
+def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
+  result = _run_cli(tmp_path, '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
+  assert result.returncode == 0
+  assert result.stdout.count('出生时间：') == 2
+  assert {p.name for p in (tmp_path / 'interpretation_examples').iterdir()} == {'0.txt', '1.txt'}
+  assert not (tmp_path / 'knowledge_base').exists()
+
+
+@pytest.mark.parametrize('args', [
+  ('--birth-time', '2000-01-01 12:00'),
+  ('--gender', 'male'),
+  ('--gender', 'other'),
+  ('--count', '0'),
+  ('--count', '-1'),
+  ('--count', 'invalid'),
+  ('--birth-time', 'invalid', '--gender', 'male'),
+  ('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--seed', '42'),
+  ('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--count', '2'),
+  ('--unknown',),
+])
+def test_cli_rejects_invalid_inputs_without_exports(tmp_path: Path, args: tuple[str, ...]) -> None:
+  result = _run_cli(tmp_path, *args)
+  assert result.returncode == 2
+  assert 'error:' in result.stderr
+  assert not result.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_source_and_reference_rendering_are_independent() -> None:
+  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  text = interpret(chart, include_reference_only=True)
+  assert '仅供参考' in text
+  assert '适用条件需整盘判断，尚未判断' in text
+  assert '来源尚未核实' in text
+  assert '来源：' not in text
+
+
+def test_example_helper_accepts_export_selection(tmp_path: Path) -> None:
+  save_chart_examples(1, tmp_path, include_reference_only=True, show_sources=True)
+  example = (tmp_path / 'interpretation_examples' / '0.txt').read_text(encoding='utf-8')
+  assert '仅供参考' in example
+  assert '\x1b' not in example
