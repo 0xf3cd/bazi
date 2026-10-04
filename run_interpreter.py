@@ -3,6 +3,7 @@
 import argparse
 import random
 import re
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Final
 
@@ -224,14 +225,14 @@ def main(argv: list[str] | None = None) -> int:
   if args.seed is not None:
     random.seed(args.seed)
 
-  try:
-    charts = (
-      [BaziChart(Bazi.create(args.birth_time, args.gender))]
-      if args.birth_time is not None
-      else [BaziChart(Bazi.random()) for _ in range(args.count)]
-    )
-  except (TypeError, ValueError) as error:
-    parser.error(str(error))
+  charts: Iterable[BaziChart]
+  if args.birth_time is not None:
+    try:
+      charts = (BaziChart(Bazi.create(args.birth_time, args.gender)),)
+    except (TypeError, ValueError) as error:
+      parser.error(str(error))
+  else:
+    charts = (BaziChart(Bazi.random()) for _ in range(args.count))
 
   output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   if output is not None:

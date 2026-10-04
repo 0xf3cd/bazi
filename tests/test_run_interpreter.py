@@ -283,8 +283,17 @@ def test_source_and_reference_rendering_are_independent() -> None:
   assert '来源：' not in text
 
 
-@pytest.mark.parametrize('args', [(), ('--seed', '42')])
-def test_default_cli_rejects_all_filesystem_writes(tmp_path: Path, args: tuple[str, ...]) -> None:
+@pytest.mark.parametrize(('args', 'writes'), [
+  ((), False),
+  (('--seed', '42'), False),
+  (('--output-dir', 'exported'), True),
+  (('--export-knowledge-base',), True),
+])
+def test_default_cli_rejects_all_filesystem_writes(
+  tmp_path: Path,
+  args: tuple[str, ...],
+  writes: bool,
+) -> None:
   script = Path(__file__).parents[1] / 'run_interpreter.py'
   guard = '''
 import os
@@ -299,7 +308,13 @@ sys.argv = sys.argv[1:]
 def deny_writes(event, args):
   if event == 'open':
     _, mode, flags = args
-    if (mode and any(char in mode for char in 'wax+')) or flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC):
+    # PyPy FileIO reports closefd rather than OS flags when a mode is present.
+    writable = (
+      any(char in mode for char in 'wax+')
+      if mode is not None
+      else bool(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC))
+    )
+    if writable:
       raise PermissionError('Unexpected default file export')
   if event in ('os.mkdir', 'os.remove', 'os.rename', 'os.rmdir', 'os.truncate'):
     raise PermissionError('Unexpected default filesystem change')
@@ -316,9 +331,14 @@ runpy.run_path(script, run_name='__main__')
     timeout=45,
     check=False,
   )
-  assert result.returncode == 0, result.stderr
-  assert result.stdout.count('出生时间：') == 1
-  assert list(tmp_path.iterdir()) == []
+  if writes:
+    assert result.returncode == 2
+    assert 'Unexpected default' in result.stderr
+    assert not any(path.is_file() for path in tmp_path.rglob('*'))
+  else:
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.count('出生时间：') == 1
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_reference_claims_have_distinct_lines_without_source_blocks() -> None:
@@ -445,3 +465,25 @@ def test_print_errors_propagate(monkeypatch: pytest.MonkeyPatch) -> None:
   with pytest.raises(BrokenPipeError) as caught:
     main(['--birth-time', '2000-01-01 12:00', '--gender', 'male'])
   assert caught.value is error
+
+
+def test_batch_generation_is_interleaved_with_rendering(
+  monkeypatch: pytest.MonkeyPatch,
+  capsys: pytest.CaptureFixture[str],
+) -> None:
+  events: list[str] = []
+  bazi = Bazi.create('2000-01-01 12:00', 'male')
+
+  def generate() -> Bazi:
+    events.append('generate')
+    return bazi
+
+  def render(chart: BaziChart, **kwargs: object) -> str:
+    events.append('render')
+    return 'chart'
+
+  monkeypatch.setattr(Bazi, 'random', staticmethod(generate))
+  monkeypatch.setitem(main.__globals__, '_chart_text', render)
+  assert main(['--count', '3']) == 0
+  assert events == ['generate', 'render', 'generate', 'render', 'generate', 'render']
+  assert capsys.readouterr().out == 'chart\nchart\nchart\n'
