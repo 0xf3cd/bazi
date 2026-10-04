@@ -27,6 +27,7 @@ def main() -> int:
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   import inspect
+  from dataclasses import replace
   from datetime import date, datetime
   from collections.abc import Callable
   from functools import partial
@@ -36,6 +37,7 @@ def main() -> int:
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
+  from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -164,6 +166,30 @@ def main() -> int:
      lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore
     ('Interpreter.interpret_tiangan null reference flag', TypeError,
      lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=None)), # type: ignore
+    ('Interpreter.query_shishen wrong subject', TypeError,
+     lambda: Interpreter.query_shishen('食神')), # type: ignore[arg-type]
+    ('Interpreter.query_tiangan wrong subject', TypeError,
+     lambda: Interpreter.query_tiangan('甲')), # type: ignore[arg-type]
+    ('Interpreter.query_shishen wrong reference flag', TypeError,
+     lambda: Interpreter.query_shishen(Shishen.食神, include_reference_only=1)), # type: ignore[arg-type]
+    ('Interpreter.query_tiangan wrong reference flag', TypeError,
+     lambda: Interpreter.query_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore[arg-type]
+    ('Interpreter.query_source wrong identifier', TypeError,
+     lambda: Interpreter.query_source('editorial')), # type: ignore[arg-type]
+    ('DescriptionClaim mutable sources', TypeError,
+     lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+    ('DescriptionClaim wrong condition member', TypeError,
+     lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+    ('DescriptionSourceRecord wrong text layer', TypeError,
+     lambda: replace(
+       Interpreter.query_source(DescriptionSource.EDITORIAL),
+       text_layer='editorial', # type: ignore[arg-type]
+     )),
+    ('DescriptionSourceRecord wrong lineage', TypeError,
+     lambda: replace(
+       Interpreter.query_source(DescriptionSource.EDITORIAL),
+       lineage='editorial', # type: ignore[arg-type]
+     )),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,

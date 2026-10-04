@@ -167,6 +167,14 @@ def main() -> None:
       raise RuntimeError('Ganzhi warm cache bypassed step validation')
   for value in Tiangan:
     check(bool(Interpreter.interpret_tiangan(value)['general']), 'Missing Tiangan description')
+    structured = Interpreter.query_tiangan(value)
+    claim = structured['general'][0]
+    check(claim.text == Interpreter.interpret_tiangan(value)['general'][0], 'Structured text differs')
+    check(bool(claim.sources) and not claim.conditions, 'Default claim eligibility differs')
+    for source_id in claim.sources:
+      witness = Interpreter.query_source(source_id)
+      check(bool(witness.work and witness.locator and witness.limitations), 'Incomplete witness')
+    check(hash(structured) == hash(Interpreter.query_tiangan(value)), 'Unhashable structured results')
   check(
     len(Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=True)['general'])
     > len(Interpreter.interpret_tiangan(Tiangan.甲)['general']),

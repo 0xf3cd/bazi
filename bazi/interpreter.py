@@ -6,14 +6,16 @@ from .defines import Shishen, Tiangan
 from .descriptions import (
   ShishenDescription, TianganDescription, SHISHEN_DESCRIPTIONS, TIANGAN_DESCRIPTIONS,
   _complete_shishen_description, _complete_tiangan_description,
+  DescriptionClaims, DescriptionSource, DescriptionSourceRecord,
+  _shishen_claims, _tiangan_claims, _source_record,
 )
 
 
 class Interpreter:
   '''
-  `Interpreter` statically looks up Shishen and Tiangan descriptions; the returned
-  entries are deep copies, safe to modify.
-  `Interpreter` 以静态方法查询十神和天干描述；返回条目是深拷贝，可随意修改。
+  `Interpreter` statically looks up Shishen and Tiangan descriptions. Text-returning
+  methods provide deep copies; structured queries return immutable claims.
+  `Interpreter` 以静态方法查询十神和天干描述。文字查询返回深拷贝；结构化查询返回不可变条目。
 
   Note:
   - Claims that are not eligible for default output are excluded unless
@@ -22,6 +24,8 @@ class Interpreter:
   - Combining the descriptions against a specific chart (i.e. producing a whole-chart
     reading) is currently done in the `run_interpreter` entry script, not in this class.
   - 针对具体命盘组合这些描述（即整盘解读）目前在 `run_interpreter` 入口脚本中完成，不在本类中。
+  - Structured queries expose immutable claims and source witnesses.
+  - 结构化查询返回不可变条目和来源见证。
   '''
 
   @staticmethod
@@ -81,3 +85,73 @@ class Interpreter:
       else TIANGAN_DESCRIPTIONS[tg]
     )
     return copy.deepcopy(description)
+
+  @staticmethod
+  def query_shishen(
+    shishen: Shishen,
+    *,
+    include_reference_only: bool = False,
+  ) -> DescriptionClaims:
+    '''
+    Query immutable Shishen claims grouped by description field.
+    按描述字段查询不可变十神条目。
+
+    Note:
+    - Reference selection includes conditional claims without evaluating conditions.
+    - 参考查询包含带条件的条目，不判断条件是否成立。
+
+    Args:
+    - shishen: (Shishen) The Shishen to query. / 要查询的十神。
+    - include_reference_only: (bool) Include reference claims. / 是否包含参考条目。
+
+    Returns:
+    - (DescriptionClaims) Immutable fields and claims. / 不可变字段映射与条目。
+    '''
+    if not isinstance(shishen, Shishen):
+      raise TypeError(f'Expected Shishen, got {type(shishen)}')
+    if not isinstance(include_reference_only, bool):
+      raise TypeError(f'Expected bool, got {type(include_reference_only)}')
+    return _shishen_claims(shishen, include_reference_only)
+
+  @staticmethod
+  def query_tiangan(
+    tg: Tiangan,
+    *,
+    include_reference_only: bool = False,
+  ) -> DescriptionClaims:
+    '''
+    Query immutable Tiangan claims grouped by description field.
+    按描述字段查询不可变天干条目。
+
+    Note:
+    - Reference selection includes conditional claims without evaluating conditions.
+    - 参考查询包含带条件的条目，不判断条件是否成立。
+
+    Args:
+    - tg: (Tiangan) The Tiangan to query. / 要查询的天干。
+    - include_reference_only: (bool) Include reference claims. / 是否包含参考条目。
+
+    Returns:
+    - (DescriptionClaims) Immutable fields and claims. / 不可变字段映射与条目。
+    '''
+    if not isinstance(tg, Tiangan):
+      raise TypeError(f'Expected Tiangan, got {type(tg)}')
+    if not isinstance(include_reference_only, bool):
+      raise TypeError(f'Expected bool, got {type(include_reference_only)}')
+    return _tiangan_claims(tg, include_reference_only)
+
+  @staticmethod
+  def query_source(source: DescriptionSource) -> DescriptionSourceRecord:
+    '''
+    Resolve a source witness, including its evidentiary boundaries.
+    查询来源见证及其支持范围和局限。
+
+    Args:
+    - source: (DescriptionSource) The source identifier. / 来源标识。
+
+    Returns:
+    - (DescriptionSourceRecord) The immutable source record. / 不可变来源记录。
+    '''
+    if not isinstance(source, DescriptionSource):
+      raise TypeError(f'Expected DescriptionSource, got {type(source)}')
+    return _source_record(source)

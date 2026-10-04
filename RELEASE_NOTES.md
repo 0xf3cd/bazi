@@ -14,6 +14,10 @@
   defects and retained seven source-unverified semantic ambiguities; default description
   output is unchanged. The chart renderer in `run_interpreter.py` now omits headings
   whose selected description list is empty. No public description fields were added.
+- Structured description queries expose immutable claims and source witnesses alongside
+  the existing text lookups. The source-checkout Interpreter runner supports fixed
+  births, seeded random charts, reference text, source display and explicit exports;
+  its default invocation now displays one chart without exporting files.
 
 No `src` shim, root-class facade or installed command-line entrypoint is provided.
 See `README.md` for principal module interfaces and `RELEASING.md` for release
