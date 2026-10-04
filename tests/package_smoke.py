@@ -172,7 +172,7 @@ def main() -> None:
     check(claim.text == Interpreter.interpret_tiangan(value)['general'][0], 'Structured text differs')
     check(bool(claim.sources) and not claim.conditions, 'Default claim eligibility differs')
     for source_id in claim.sources:
-      witness = Interpreter.source(source_id)
+      witness = Interpreter.query_source(source_id)
       check(bool(witness.work and witness.locator and witness.limitations), 'Incomplete witness')
     check(hash(structured) == hash(Interpreter.query_tiangan(value)), 'Unhashable structured results')
   check(

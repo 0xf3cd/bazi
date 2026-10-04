@@ -7,6 +7,9 @@ data generation is needed.
 
 ## Features
 
+This README describes the current checkout. For a published package, consult the
+README at its matching release tag.
+
 - Charts: four pillars, 阴阳五行, 十神, 藏干, 纳音 and 十二长生, with calendar
   backend, birth-time precision and school configuration recorded in JSON.
 - Transits: precise 大运 intervals, 小运 and 流年, with year/month/date/moment queries.
@@ -66,7 +69,7 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.calendar` | `CalendarBackend`, `CalendarDate`, `CalendarType`, `calendar_utils_of` |
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
-| `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_*` structured lookup, `source` witness lookup |
+| `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
 | `bazi.descriptions` | `DescriptionClaim`, `DescriptionSource`, `DescriptionSourceRecord`, output and condition enums |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
@@ -84,7 +87,7 @@ fields = Interpreter.query_tiangan(Tiangan.丁, include_reference_only=True)
 for claim in fields['general']:
   print(claim.claim_id, claim.text, claim.output.value, claim.conditions)
   for source_id in claim.sources:
-    witness = Interpreter.source(source_id)
+    witness = Interpreter.query_source(source_id)
     print(witness.work, witness.edition, witness.locator, witness.url)
     print(witness.supports, witness.limitations)
 ```
@@ -158,6 +161,8 @@ python run_interpreter.py \
 Fixed birth inputs accept one chart and cannot be combined with a seed. Exported
 TXT files have terminal color codes removed. Reference-only text is labelled,
 including unverified attribution and conditions that have not been evaluated.
+Repeated exports overwrite the numbered files written by that run; other existing
+files, including higher indices from earlier runs, are retained.
 The runner assembles enum lookups and counts three non-day-master stems plus four
 branch 主气 positions; its percentages describe those seven positions. Paragraph
 selection does not evaluate 旺衰, 喜忌 or 格局.

@@ -47,18 +47,12 @@ class DescriptionSource(Enum):
   MINGLI_TANYUAN_SHISHEN_DEFINITIONS       = 'mingli_tanyuan_shishen_definitions'
 
 
-_DescriptionSource = DescriptionSource
-
-
 class DescriptionLineage(Enum):
   '''An independent textual lineage. / 独立的文本谱系。'''
 
   EDITORIAL        = 'editorial'
   YUANHAI_ZIPING   = 'yuanhai_ziping'
   MINGLI_TANYUAN   = 'mingli_tanyuan'
-
-
-_DescriptionLineage = DescriptionLineage
 
 
 class DescriptionTextLayer(Enum):
@@ -68,9 +62,6 @@ class DescriptionTextLayer(Enum):
   BAIWEN     = 'baiwen'
 
 
-_DescriptionTextLayer = DescriptionTextLayer
-
-
 class DescriptionOutput(Enum):
   '''The output policy of a description claim. / 语料断言的输出策略。'''
 
@@ -78,16 +69,10 @@ class DescriptionOutput(Enum):
   REFERENCE_ONLY = 'reference_only'
 
 
-_DescriptionOutput = DescriptionOutput
-
-
 class DescriptionCondition(Enum):
   '''A prerequisite that enum lookup cannot evaluate. / 枚举查表无法判断的适用条件。'''
 
   CHART_CONTEXT_REQUIRED = 'chart_context_required'
-
-
-_DescriptionCondition = DescriptionCondition
 
 
 @dataclass(frozen=True)
@@ -99,8 +84,8 @@ class DescriptionSourceRecord:
   edition:      str
   locator:      str
   url:          str
-  text_layer:   _DescriptionTextLayer
-  lineage:      _DescriptionLineage
+  text_layer:   DescriptionTextLayer
+  lineage:      DescriptionLineage
   excerpt:      str
   supports:     str
   limitations:  str
@@ -109,92 +94,89 @@ class DescriptionSourceRecord:
     check_declared_types(self)
 
 
-_DescriptionSourceRecord = DescriptionSourceRecord
-
-
 _DESCRIPTION_SOURCES: Final[
-  frozendict[_DescriptionSource, _DescriptionSourceRecord]
+  frozendict[DescriptionSource, DescriptionSourceRecord]
 ] = frozendict({
-  _DescriptionSource.EDITORIAL: _DescriptionSourceRecord(
+  DescriptionSource.EDITORIAL: DescriptionSourceRecord(
     work='Bazi description corpus',
     attribution='Ningqi Wang',
     edition='Repository editorial confirmed for issue #24',
     locator='PR #222',
     url='https://github.com/0xf3cd/bazi/pull/222',
-    text_layer=_DescriptionTextLayer.EDITORIAL,
-    lineage=_DescriptionLineage.EDITORIAL,
+    text_layer=DescriptionTextLayer.EDITORIAL,
+    lineage=DescriptionLineage.EDITORIAL,
     excerpt='Repository-original editorial prose.',
     supports='Authorship and the reference-only product classification.',
     limitations='Does not establish a classical rule or real-world prediction.',
   ),
-  _DescriptionSource.YUANHAI_ZIPING_RELATIONS: _DescriptionSourceRecord(
+  DescriptionSource.YUANHAI_ZIPING_RELATIONS: DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
     attribution='李钦增补',
     edition='明万历二十八年闽书林刘龙田乔山堂刊本',
     locator='PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”',
     url='https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.YUANHAI_ZIPING,
     excerpt='生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
     supports='The five relations, paired Shishen names, and the 正/偏 polarity rule.',
     limitations='Uses both 劫財 and 敗財; it does not support collapsing both into one name or support personality, kinship, fortune, or unconditional chart judgments.',
   ),
-  _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: _DescriptionSourceRecord(
+  DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
     attribution='李钦增补',
     edition='明万历二十八年闽书林刘龙田乔山堂刊本',
     locator='PDF p. 8, “天干五阳通变” and “天干五阴通变” tables',
     url='https://archive.org/details/20260506_20260506_1149/page/n7/mode/2up',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.YUANHAI_ZIPING,
     excerpt='天干五陽通變天干五陰通變',
     supports='The Yang/Yin stem groups.',
     limitations='Uses separate 劫財 and 敗財 labels; it does not make their nomenclature or the attached kinship glosses unconditional across schools.',
   ),
-  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: _DescriptionSourceRecord(
+  DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
     attribution='李钦增补',
     edition='明万历二十八年闽书林刘龙田乔山堂刊本',
     locator='PDF p. 69, left leaf, “十干体象”',
     url='https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.YUANHAI_ZIPING,
     excerpt='甲木天干作首排乙木根荄種得深丙火明明一太陽',
     supports='The element names for 甲、乙、丙 and a named historical image for 丙.',
     limitations='Does not make the image a cross-school definition or a personality premise.',
   ),
-  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: _DescriptionSourceRecord(
+  DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: DescriptionSourceRecord(
     work='《刻京台增补渊海子平大全》',
     attribution='李钦增补',
     edition='明万历二十八年闽书林刘龙田乔山堂刊本',
     locator='PDF p. 70, both leaves, “十干体象”',
     url='https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.YUANHAI_ZIPING,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.YUANHAI_ZIPING,
     excerpt='丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
     supports='The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.',
     limitations='Does not make the images cross-school definitions or personality premises.',
   ),
-  _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: _DescriptionSourceRecord(
+  DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: DescriptionSourceRecord(
     work='《命理探源》',
     attribution='袁树珊著',
     edition='版心题《命理探原》',
     locator='PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.MINGLI_TANYUAN,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.MINGLI_TANYUAN,
     excerpt='甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
     supports='The ten stems grouped directly by polarity and element.',
     limitations='Does not support personality, fortune, fixed imagery, or health prose.',
   ),
-  _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: _DescriptionSourceRecord(
+  DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: DescriptionSourceRecord(
     work='《命理探源》',
     attribution='袁树珊著',
     edition='版心题《命理探原》',
     locator='PDF pp. 66-70, “十干生克定名”',
     url='https://commons.wikimedia.org/w/index.php?curid=132876481',
-    text_layer=_DescriptionTextLayer.BAIWEN,
-    lineage=_DescriptionLineage.MINGLI_TANYUAN,
+    text_layer=DescriptionTextLayer.BAIWEN,
+    lineage=DescriptionLineage.MINGLI_TANYUAN,
     excerpt='陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
     supports='The five relations, polarity distinctions, and this witness\'s Shishen nomenclature.',
     limitations='Does not support collapsing both into 劫財.',
@@ -208,10 +190,10 @@ class DescriptionClaim:
 
   claim_id:    str
   text:        str
-  sources:     tuple[_DescriptionSource, ...]
+  sources:     tuple[DescriptionSource, ...]
   attribution: str
-  conditions:  tuple[_DescriptionCondition, ...]
-  output:      _DescriptionOutput
+  conditions:  tuple[DescriptionCondition, ...]
+  output:      DescriptionOutput
 
   def __post_init__(self) -> None:
     for value in (self.claim_id, self.text, self.attribution):
@@ -230,9 +212,6 @@ class DescriptionClaim:
           raise TypeError(f'Expected {member_type.__name__}, got {type(member)}')
 
 
-_DescriptionClaim = DescriptionClaim
-
-
 '''Description fields mapped to immutable selected claims.
 描述字段与所选不可变语料条目的映射。'''
 DescriptionClaims: TypeAlias = frozendict[str, tuple[DescriptionClaim, ...]]
@@ -240,7 +219,7 @@ DescriptionClaims: TypeAlias = frozendict[str, tuple[DescriptionClaim, ...]]
 
 '''A bare default-output string with unclassified source, or an explicit claim.
 来源未分类的默认输出裸字符串，或显式语料断言。'''
-_DescriptionItem: TypeAlias = str | _DescriptionClaim
+_DescriptionItem: TypeAlias = str | DescriptionClaim
 
 
 class _ShishenCorpusDescription(TypedDict):
@@ -258,18 +237,12 @@ class _TianganCorpusDescription(TypedDict):
 def _claim(
   claim_id: str,
   text: str,
-  sources: tuple[_DescriptionSource, ...],
+  sources: tuple[DescriptionSource, ...],
   attribution: str,
-  output: _DescriptionOutput,
-  conditions: tuple[_DescriptionCondition, ...] = (),
-) -> _DescriptionClaim:
-  assert isinstance(claim_id, str)
-  assert isinstance(text, str)
-  assert all(isinstance(source, _DescriptionSource) for source in sources)
-  assert isinstance(attribution, str)
-  assert isinstance(output, _DescriptionOutput)
-  assert all(isinstance(condition, _DescriptionCondition) for condition in conditions)
-  return _DescriptionClaim(
+  output: DescriptionOutput,
+  conditions: tuple[DescriptionCondition, ...] = (),
+) -> DescriptionClaim:
+  return DescriptionClaim(
     claim_id=claim_id,
     text=text,
     sources=sources,
@@ -279,72 +252,72 @@ def _claim(
   )
 
 
-def _editorial_reference(claim_id: str, text: str) -> _DescriptionClaim:
+def _editorial_reference(claim_id: str, text: str) -> DescriptionClaim:
   return _claim(
     claim_id=claim_id,
     text=text,
-    sources=(_DescriptionSource.EDITORIAL,),
+    sources=(DescriptionSource.EDITORIAL,),
     attribution='Repository editorial',
-    output=_DescriptionOutput.REFERENCE_ONLY,
+    output=DescriptionOutput.REFERENCE_ONLY,
   )
 
 
 def _unverified_reference(
   claim_id: str,
   text: str,
-  conditions: tuple[_DescriptionCondition, ...] = (),
-) -> _DescriptionClaim:
+  conditions: tuple[DescriptionCondition, ...] = (),
+) -> DescriptionClaim:
   return _claim(
     claim_id=claim_id,
     text=text,
     sources=(),
     attribution='Legacy corpus; source unverified',
     conditions=conditions,
-    output=_DescriptionOutput.REFERENCE_ONLY,
+    output=DescriptionOutput.REFERENCE_ONLY,
   )
 
 
-def _shishen_definition(claim_id: str, text: str) -> _DescriptionClaim:
+def _shishen_definition(claim_id: str, text: str) -> DescriptionClaim:
   return _claim(
     claim_id=claim_id,
     text=text,
     sources=(
-      _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
-      _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+      DescriptionSource.YUANHAI_ZIPING_RELATIONS,
+      DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
     ),
     attribution='《渊海子平》与《命理探源》十神定义',
-    output=_DescriptionOutput.DEFAULT,
+    output=DescriptionOutput.DEFAULT,
   )
 
 
 def _tiangan_definition(
   claim_id: str,
   text: str,
-  yuan_hai_source: _DescriptionSource,
-) -> _DescriptionClaim:
+  yuan_hai_source: DescriptionSource,
+) -> DescriptionClaim:
   return _claim(
     claim_id=claim_id,
     text=text,
     sources=(
       yuan_hai_source,
-      _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+      DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
     ),
     attribution='《渊海子平》与《命理探源》天干定义',
-    output=_DescriptionOutput.DEFAULT,
+    output=DescriptionOutput.DEFAULT,
   )
 
 
 def _historical_symbol(
   claim_id: str,
   text: str,
-  source: _DescriptionSource,
-) -> _DescriptionClaim:
+  source: DescriptionSource,
+) -> DescriptionClaim:
   return _claim(
     claim_id=claim_id,
     text=text,
     sources=(source,),
     attribution='《渊海子平·十干体象》',
-    output=_DescriptionOutput.REFERENCE_ONLY,
+    output=DescriptionOutput.REFERENCE_ONLY,
   )
 
 
@@ -381,12 +354,12 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-006',
         '对于日主而言。身强时比肩可以帮助日主，身弱时比肩可以排斥我，所以比肩星象征着协助（身弱时）和竞争（身强时）。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-007',
         '比肩是与日主同类同气的星，在地支也叫“禄”，其意为自尊，自信，自我意识，自主能力。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-008',
@@ -395,71 +368,71 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-009',
         '比肩过重，喜见官杀来制，也可用食伤泄秀。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_good_status': [
       _unverified_reference(
         'legacy.shishen.SH-010',
         '命带比肩的人（特别是透出天干者），在外人眼里印象通常不错，嘻嘻哈哈、大大咧咧的。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-011',
         '能结交到朋友，在朋友/兄弟姐妹需要帮助时倾囊相助。为人乐观开朗，善良，不记仇。实实在在地帮助别人，讲义气。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-012',
         '个性果断，有自己的想法。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-013',
         '命中比肩为用：可从事的职业有运动员，演员，生意人，司机，体力劳动者，中介等。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-014',
         '比肩的心性稳健刚毅，勇于冒险，上进进取。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-015',
         '比劫（比肩、劫财）过多，象征着命主易有同类相争的体验，如在学校中和同学争考试排名，在工作中和同事竞争等。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-016',
         '比劫（比肩、劫财）过多，也象征着克财。比肩克财是一点点克，今天花一点，明天花一点。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-017',
         '比肩过多者，不懂得拒绝他人，兄弟间缺乏相助，或好友相聚不会长久，有时善意的提醒却导致和朋友的相处中发生不愉快。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-018',
         '八字中比肩过重的人：平时须注意对待他人莫过于慷慨；谨言慎行，避免口舌是非；也需要了解持之以恒的重要性。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-019',
         '容易不把钱当一回事，花钱大手大脚。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-020',
         '背信弃义，愿意沾别人的小便宜。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-021',
         '容易流于孤僻，不合群，缺乏团队和合作精神，反为孤立寡合。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -494,7 +467,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-028',
         '命带劫财（特别是劫财透天或过重者），谦虚之中带有傲气。这类人重视细节，通常先着眼于细节而后全局，不善抽象性思维，但在做人做事上通常能坚持到底。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-029',
@@ -511,12 +484,12 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-032',
         '若八字中带有官杀、食伤（尤喜七杀、食神），可帮助平衡过强的劫财。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-033',
         '劫财在地支叫羊刃，羊刃是五行之极地，为极刚之物。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-034',
@@ -527,44 +500,44 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-035',
         '命中劫财为用：命主可以当运动员，军人，武职等。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-036',
         '心性坦率真诚，热情诚恳，坚强志旺，努力不懈。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-037',
         '比劫（比肩、劫财）过多，象征着命主易有同类相争的体验，如在学校中和同学争考试排名，在工作中和同事竞争等。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-038',
         '比劫（比肩、劫财）过多，也象征着克财。劫财克财是一下子花很多钱。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-039',
         '劫财过多，则对人对事容易产生怀疑态度。需要重视与人之协调性。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-040',
         '劫财过重，说明命主性格要强，是良好的管理人才。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-041',
         '心性狭隘，胆大妄为，强悍，有攻击性，不通融，投机，冒险，强好胜，急切，冲动，嫉妒，侵害。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-042',
         '容易盲目行事，冲动行事，蛮横而不够谨慎。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -635,7 +608,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-057',
         '代表的亲戚：对男命来说代表女婿、孙子；对女命来说代表女儿。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-058',
@@ -662,14 +635,14 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-063',
         '心性温和随性，待人宽厚，善解人意，体贴别人。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-064',
         '食神过旺，好幻想，易钻牛角尖；也容易流于虚伪，缺乏是非，显得迂腐懦弱。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _editorial_reference(
         'editorial.shishen.shishen.anxiety_insomnia',
@@ -678,7 +651,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-066',
         '逢枭印夺食，求谋不顺利，处处阻逆，连谋温饱都很费力。可用比劫来化。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -721,7 +694,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-074',
         '代表的亲戚：对男命来说代表祖母、孙女；对女命来说代表儿子。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-075',
@@ -748,34 +721,34 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-080',
         '伤官状态好（如处于十二长生旺点，或得其他元素生扶而不受克、刑、冲等），容貌易出众，有自己独特的审美和品味。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-081',
         '有才学和能力；有独立性，不依赖他人。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-082',
         '心性聪明灵活，活跃好胜，才华横溢。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-083',
         '伤官过多，容易自视甚高、任性盲目，喜见正偏财以泄伤官之盛气，也喜见印枭以制伤官之傲气。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-084',
         '气量狭小，有怨必报，叛逆，难以管束。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-085',
         '容易流于任性，缺乏约束，反为桀骜不驯。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -822,7 +795,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-094',
         '代表的亲戚：对男命来说代表父亲、老婆；对女命来说代表父亲。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-095',
@@ -849,29 +822,29 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-100',
         '其人性格温和、深谋远虑，为人处事审慎。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-101',
         '做事脚踏实地，不虚伪，不狡诈，善于顾家守财，一生勤劳节俭。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-102',
         '勤勉节俭，稳重踏实，保守勤恳，任劳任怨。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-103',
         '为人处事过于胆小怕事。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-104',
         '容易流于苟且，缺乏进取心，得过且过，懦弱无能。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -914,7 +887,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-112',
         '代表不稳定的财、不固定的收入，如副业收入、意外收入、浮动资金、投资、彩票，也代表众人之财（可取象为基金、投资等，所以偏财状态好的人可以从事金融相关工作，如交易员）。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-113',
@@ -923,7 +896,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-114',
         '代表的亲戚：对男命来说代表父亲、女朋友、情人；对女命来说代表父亲。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-115',
@@ -936,12 +909,12 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-117',
         '男性风流多情，女性爱打扮。主人好交际、会社交。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-118',
         '命带偏财的人生活比较自由开放，心直口快，乐于助人，不拘小节，易有异性缘。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-119',
@@ -952,39 +925,39 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-120',
         '偏财型人做事注重全局，迅速敏捷。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-121',
         '善于发现机会，把握局势而生财。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-122',
         '心性慷慨重义，聪明灵活，乐观开朗。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-123',
         '偏财过多的人行事敏捷却缺乏持久性。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-124',
         '偏财过重，容易过于乐观，在别人眼中不够稳重，做事草率，生活容易晨昏颠倒。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-125',
         '容易不把钱当一回事，花钱大手大脚。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-126',
         '容易流于虚浮，缺乏节制，浮华风流。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -1031,7 +1004,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-135',
         '代表的亲戚：对男命来说代表女儿；对女命来说代表老公、男友。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-136',
@@ -1062,24 +1035,24 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-142',
         '为人厚道，做事稳重，办事认真，只求平安，不喜反抗，为人清廉洁公正，自尊心强，重视名利，品性端庄，心地善良，光明磊落，讲德礼节。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-143',
         '心性正直有责任感，端庄严肃，为人诚实守信。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-144',
         '胆小怕事，墨守成规，唯唯诺诺，容易有自卑感。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-145',
         '容易循规蹈矩、流于形式；刻板保守，墨守成规。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -1130,7 +1103,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-155',
         '代表的亲戚：在男命中代表儿子；在女命中代表男朋友、情人、丈夫。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-156',
@@ -1151,7 +1124,7 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-160',
         '与日柱同性之克，无情之克，其含义为打击，压制，暴力，权其性刚雄，具有叛逆，称霸之性，需制化方可驾驭。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-161',
@@ -1162,24 +1135,24 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-162',
         '有野心和志气，能够通过努力达到自己的目的。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-163',
         '心性豪爽侠义，上进积极，威严机智。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-164',
         '专制，暴力、独断、霸气，匪气，好胜，冲动，凶残。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-165',
         '容易偏激，叛逆和过于霸道，容易走极端。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _editorial_reference(
         'editorial.shishen.qisha.external_disaster',
@@ -1252,34 +1225,34 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-180',
         '主为人儒雅，做事聪明而有计谋，善于观察、隐藏自我。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-181',
         '正印型人如果遇到不利处境，也能审时度势，顺应外界情况进行调整。他们也是善解人意的智慧型人士。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-182',
         '心性聪明仁慈，淡泊名利。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-183',
         '正印过多，且八字中不见官杀，不能化杀为权，则表示为人本分、保守，不轻易改变初衷，比较厚道，遇事只求自保。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-184',
         '正印受克或过旺，利己心强，不顾他人，厚己薄他，喜欢空想而缺乏付之行动，对过去的东西耿耿于怀，记忆力强，依赖心强，死要面子活受罪。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-185',
         '容易流于庸碌，缺乏进取心，迟钝消极。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -1344,44 +1317,44 @@ _SHISHEN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.shishen.SH-198',
         '有艺术、文学、哲理、玄学之天赋，对非现实领域悟性甚高。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-199',
         '偏印为喜用或状态良好（不过旺、不受刑克冲害）：善于观察，心思细致，喜欢传统文化和周易，具有神秘，先知先觉的能力，常有独特的内心世界，能看透人情世故，超凡脱俗，不重视名利。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-200',
         '爱恨分明，领悟能力强，机智而精明，知道自己想要什么，做事有目的性。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-201',
         '心性精明干练，反应迅速，多才多艺。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'in_bad_status': [
       _unverified_reference(
         'legacy.shishen.SH-202',
         '偏印过重，通常喜欢独来独往，表达过于含蓄，凡事不喜欢直言，不擅长争名夺利。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-203',
         '需读理解与人交往的人情世故，并保持幽默诙谐的生活态度，否则容易曲高和寡。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-204',
         '过于沉浸在自己的世界里；有心计，精于算计；妄想，疑心重，冷漠，自私，思想行为怪异，自我封闭；学而不精，不通人情，胆怯心虚，心狠手辣。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.shishen.SH-205',
         '容易流于孤独，缺乏人情，反为自私冷漠。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
     'relationship': [
@@ -1419,7 +1392,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.jia.definition',
         '甲为阳木。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
       _unverified_reference(
         'legacy.tiangan.jia.tree_image',
@@ -1446,17 +1419,17 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.jia.weak_state',
         '如果甲木偏弱（如局中无印、比来生助，日主反而被官、杀克制的），说明这个人胆小怕事、独善其身、性格也较忧郁，常常是哑巴吃黄连，敢怒不敢言。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.tiangan.jia.strong_state',
         '如果甲木偏旺，说明这人长得高大，骨骼也粗大，但瘦而不胖，平常不苟言笑，做事一板一眼、心直口快、不善变通、容易吃亏。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.tiangan.jia.balanced_state',
         '如果日干甲木中和，生泄适度，说明此人性格较中庸，刚柔并济，容易成功。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
   },
@@ -1465,7 +1438,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.yi.definition',
         '乙为阴木。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
       _unverified_reference(
         'legacy.tiangan.yi.vine_grass_image',
@@ -1496,12 +1469,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.bing.definition',
         '丙为阳火。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
       _historical_symbol(
         'tiangan.bing.sun_symbol',
         '丙火像太阳。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69,
       ),
       _unverified_reference(
         'legacy.tiangan.bing.frost_snow_image',
@@ -1536,12 +1509,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.ding.definition',
         '丁为阴火。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _historical_symbol(
         'tiangan.ding.lamp_symbol',
         '丁火有烛灯之象。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.ding.firefly_image',
@@ -1564,7 +1537,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.ding.weak_state',
         '丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多，则会变成胆小，多愁多虑。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.tiangan.ding.emotional_expression',
@@ -1577,12 +1550,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.wu.definition',
         '戊为阳土。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _historical_symbol(
         'tiangan.wu.wall_symbol',
         '戊土有城墙之象。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.wu.earth_image',
@@ -1613,7 +1586,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.ji.definition',
         '己为阴土。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.ji.yin_softness',
@@ -1636,7 +1609,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.ji.adverse_state',
         '己土状态不好时，容易猜疑妒忌，懒怠固执，欠果断。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.tiangan.ji.reserve',
@@ -1649,7 +1622,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.geng.definition',
         '庚为阳金。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.geng.iron_image',
@@ -1668,7 +1641,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.geng.regulated_transit',
         '如果庚金日主盘中的庚金行运有制有化，后天有教养，性虽刚但不逼人，有义气但不鲁莽惹祸。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
   },
@@ -1677,12 +1650,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.xin.definition',
         '辛为阴金。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _historical_symbol(
         'tiangan.xin.jewel_symbol',
         '辛金有珠玉之象。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.xin.noble_beauty',
@@ -1709,12 +1682,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.ren.definition',
         '壬为阳水。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _historical_symbol(
         'tiangan.ren.river_symbol',
         '壬水有汪洋百川之象。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _editorial_reference(
         'editorial.tiangan.ren.urinary_attention',
@@ -1741,12 +1714,12 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.ren.weak_state',
         '若壬水日主身弱又克太过，乖巧聪明，胆小怕事，魄力不足成大事。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
       _unverified_reference(
         'legacy.tiangan.ren.strong_state',
         '若壬水日主身旺，水太过，就如脱缰之马，又喜走捷径，易失足。水性太过的，聪明狡诈，任性风流。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
   },
@@ -1755,7 +1728,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _tiangan_definition(
         'tiangan.gui.definition',
         '癸为阴水。',
-        _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
+        DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70,
       ),
       _unverified_reference(
         'legacy.tiangan.gui.stream_rain_image',
@@ -1782,7 +1755,7 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[
       _unverified_reference(
         'legacy.tiangan.gui.strong_unfavorable_state',
         '若癸水日主身旺癸为忌神，为人表面心如止水，内心想入非非，好幻想，不切实际，喜钻牛角尖。',
-        conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+        conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
       ),
     ],
   },
@@ -1799,9 +1772,9 @@ def _selected_items(
     for item in items
     if (
       include_reference_only
-      or not isinstance(item, _DescriptionClaim)
+      or not isinstance(item, DescriptionClaim)
       or (
-        item.output is _DescriptionOutput.DEFAULT
+        item.output is DescriptionOutput.DEFAULT
         and not item.conditions
       )
     )
@@ -1816,6 +1789,43 @@ def _project_texts(
     item.text if isinstance(item, DescriptionClaim) else item
     for item in _selected_items(items, include_reference_only)
   ]
+
+
+def _selected_claims(
+  items: list[_DescriptionItem],
+  include_reference_only: bool,
+) -> tuple[DescriptionClaim, ...]:
+  assert isinstance(items, list)
+  claims: list[DescriptionClaim] = []
+  for item in _selected_items(items, include_reference_only):
+    assert isinstance(item, DescriptionClaim)
+    claims.append(item)
+  return tuple(claims)
+
+
+def _shishen_claims(shishen: Shishen, include_reference_only: bool) -> DescriptionClaims:
+  assert isinstance(shishen, Shishen)
+  description = _SHISHEN_DESCRIPTION_CORPUS[shishen]
+  return frozendict({
+    'general':        _selected_claims(description['general'], include_reference_only),
+    'in_good_status': _selected_claims(description['in_good_status'], include_reference_only),
+    'in_bad_status':  _selected_claims(description['in_bad_status'], include_reference_only),
+    'relationship':   _selected_claims(description['relationship'], include_reference_only),
+  })
+
+
+def _tiangan_claims(tg: Tiangan, include_reference_only: bool) -> DescriptionClaims:
+  assert isinstance(tg, Tiangan)
+  description = _TIANGAN_DESCRIPTION_CORPUS[tg]
+  return frozendict({
+    'general':     _selected_claims(description['general'], include_reference_only),
+    'personality': _selected_claims(description['personality'], include_reference_only),
+  })
+
+
+def _source_record(source: DescriptionSource) -> DescriptionSourceRecord:
+  assert isinstance(source, DescriptionSource)
+  return _DESCRIPTION_SOURCES[source]
 
 
 def _project_shishen_description(

@@ -4,18 +4,22 @@ import argparse
 import random
 import re
 from pathlib import Path
+from typing import Final
 
 from run_demo import get_basic_info
 from bazi.common import frozendict
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.descriptions import (
-  ShishenDescription, TianganDescription, DescriptionClaim, DescriptionClaims,
-  DescriptionOutput,
+  DescriptionClaim, DescriptionClaims, DescriptionOutput,
 )
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
 from bazi.interpreter import Interpreter
+
+
+_DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
+_ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r'\x1b\[[0-9;]*m')
 
 
 def _claim_text(claim: DescriptionClaim, show_sources: bool) -> str:
@@ -28,25 +32,27 @@ def _claim_text(claim: DescriptionClaim, show_sources: bool) -> str:
     notes.append('适用条件需整盘判断，尚未判断')
   if not claim.sources:
     notes.append('来源尚未核实')
+
   s = claim.text
   if notes:
     s += '【' + '；'.join(notes) + '】'
+
   if show_sources:
     s += f'\n条目：{claim.claim_id}；署名：{claim.attribution}\n'
     for source_id in claim.sources:
-      source = Interpreter.source(source_id)
+      source = Interpreter.query_source(source_id)
       s += f'来源：{source.work}；{source.attribution}；{source.edition}；{source.locator}\n'
       s += f'{source.url}\n支持范围：{source.supports}\n局限：{source.limitations}\n'
   return s
 
 
-def _claim_fields(claims: DescriptionClaims, show_sources: bool) -> dict[str, list[str]]:
+def _claim_fields(claims: DescriptionClaims, show_sources: bool) -> frozendict[str, tuple[str, ...]]:
   assert isinstance(claims, frozendict)
   assert isinstance(show_sources, bool)
-  return {
-    field: [_claim_text(claim, show_sources) for claim in items]
+  return frozendict({
+    field: tuple(_claim_text(claim, show_sources) for claim in items)
     for field, items in claims.items()
-  }
+  })
 
 
 def interpret(
@@ -77,21 +83,17 @@ def interpret(
   s += '时柱：' + __gen_pillar_str('hour') + '\n'
 
   day_master: Tiangan = chart.bazi.day_master
-  day_master_desc: TianganDescription | dict[str, list[str]] = (
-    _claim_fields(
-      Interpreter.query_tiangan(day_master, include_reference_only=include_reference_only),
-      show_sources,
-    )
-    if include_reference_only or show_sources
-    else Interpreter.interpret_tiangan(day_master)
+  day_master_desc = _claim_fields(
+    Interpreter.query_tiangan(day_master, include_reference_only=include_reference_only),
+    show_sources,
   )
 
   s += '\n' + '-' * 60 + '\n'
   s += f"日主：{j['pillars']['day'][0]}，为{j['tiangan_traits']['day']}。\n\n"
   if day_master_desc['general']:
-    s += '解读：' + ''.join(day_master_desc['general']) + '\n\n'
+    s += '解读：' + '\n'.join(day_master_desc['general']) + '\n\n'
   if day_master_desc['personality']:
-    s += '日主的个性：' + ''.join(day_master_desc['personality']) + '\n\n'
+    s += '日主的个性：' + '\n'.join(day_master_desc['personality']) + '\n\n'
 
   shishens: dict[Shishen, int] = { ss : 0 for ss in Shishen }
   for pillar_shishens in chart.shishen:
@@ -104,31 +106,27 @@ def interpret(
       continue
     
     ratio: float = count / sum(shishens.values())
-    desc: ShishenDescription | dict[str, list[str]] = (
-      _claim_fields(
-        Interpreter.query_shishen(ss, include_reference_only=include_reference_only),
-        show_sources,
-      )
-      if include_reference_only or show_sources
-      else Interpreter.interpret_shishen(ss)
+    desc = _claim_fields(
+      Interpreter.query_shishen(ss, include_reference_only=include_reference_only),
+      show_sources,
     )
 
     s += '\n' + '-' * 60 + '\n'
     s += f'原局中，{ss}有{count}个，占比{ratio:.2%}。\n\n'
     if desc['general']:
-      s += '解读：' + ''.join(desc['general']) + '\n\n'
+      s += '解读：' + '\n'.join(desc['general']) + '\n\n'
     if desc['in_good_status']:
-      s += f'{ss}代表的特点：' + ''.join(desc['in_good_status']) + '\n\n'
+      s += f'{ss}代表的特点：' + '\n'.join(desc['in_good_status']) + '\n\n'
     if desc['in_bad_status']:
-      s += f'当{ss}状态不好时，可能会有以下特点：' + ''.join(desc['in_bad_status']) + '\n\n'
+      s += f'当{ss}状态不好时，可能会有以下特点：' + '\n'.join(desc['in_bad_status']) + '\n\n'
     if desc['relationship']:
-      s += f'{ss}的恋爱/交友观：' + ''.join(desc['relationship']) + '\n\n'
+      s += f'{ss}的恋爱/交友观：' + '\n'.join(desc['relationship']) + '\n\n'
 
   return s
 
 
 def save_knowledge_base(
-  output_dir: Path = Path(__file__).parent / 'output_data',
+  output_dir: Path = _DEFAULT_OUTPUT_DIR,
   *,
   include_reference_only: bool = False,
   show_sources: bool = False,
@@ -178,34 +176,31 @@ def save_knowledge_base(
       f.write('\n\n')
 
 
-def save_chart_examples(
-  count: int = 50,
-  output_dir: Path = Path(__file__).parent / 'output_data',
+def _chart_text(
+  chart: BaziChart,
   *,
   include_reference_only: bool = False,
   show_sources: bool = False,
-) -> None:
-  dir_path: Path = output_dir / 'interpretation_examples'
-  if not dir_path.exists():
-    dir_path.mkdir(parents=True)
+) -> str:
+  return get_basic_info(chart) + '\n' + '=' * 60 + '\n' + interpret(
+    chart,
+    include_reference_only=include_reference_only,
+    show_sources=show_sources,
+  )
 
+
+def _write_chart(text: str, output: Path, index: int) -> None:
+  assert isinstance(text, str)
+  assert isinstance(output, Path)
+  assert isinstance(index, int)
+  (output / f'{index}.txt').write_text(_ANSI_ESCAPE.sub('', text), encoding='utf-8')
+
+
+def save_chart_examples(count: int = 50) -> None:
+  output = _DEFAULT_OUTPUT_DIR / 'interpretation_examples'
+  output.mkdir(parents=True, exist_ok=True)
   for i in range(count):
-    chart: BaziChart = BaziChart(Bazi.random())
-    info: str = get_basic_info(chart)
-    interpretation: str = interpret(
-      chart,
-      include_reference_only=include_reference_only,
-      show_sources=show_sources,
-    )
-
-    # `info` is a colored text. Remove its color control ascii codes.
-    info = re.sub(r'\x1b\[[0-9;]*m', '', info)
-
-    with open(dir_path / f'{i}.txt', 'w', encoding='utf-8') as f:
-      f.write(info)
-      f.write('\n\n')
-      f.write('=' * 60 + '\n\n')
-      f.write(interpretation)
+    _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -222,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:
 
   if args.count < 1:
     parser.error('--count must be positive')
-  if bool(args.birth_time) != bool(args.gender):
+  if (args.birth_time is None) != (args.gender is None):
     parser.error('--birth-time and --gender must be supplied together')
   if args.birth_time is not None and (args.seed is not None or args.count != 1):
     parser.error('--seed and multiple charts require random input')
@@ -235,26 +230,29 @@ def main(argv: list[str] | None = None) -> int:
       if args.birth_time is not None
       else [BaziChart(Bazi.random()) for _ in range(args.count)]
     )
-  except (TypeError, ValueError) as error:
+    output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
+    if output is not None:
+      output.mkdir(parents=True, exist_ok=True)
+
+    for i, chart in enumerate(charts):
+      text = _chart_text(
+        chart,
+        include_reference_only=args.include_reference_only,
+        show_sources=args.show_sources,
+      )
+      print(text)
+      if output is not None:
+        _write_chart(text, output, i)
+
+    if args.export_knowledge_base:
+      save_knowledge_base(
+        args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR,
+        include_reference_only=args.include_reference_only,
+        show_sources=args.show_sources,
+      )
+  except (TypeError, ValueError, OSError) as error:
     parser.error(str(error))
 
-  for i, chart in enumerate(charts):
-    text = get_basic_info(chart) + '\n' + '=' * 60 + '\n' + interpret(
-      chart,
-      include_reference_only=args.include_reference_only,
-      show_sources=args.show_sources,
-    )
-    print(text)
-    if args.output_dir is not None:
-      output = args.output_dir / 'interpretation_examples'
-      output.mkdir(parents=True, exist_ok=True)
-      (output / f'{i}.txt').write_text(re.sub(r'\x1b\[[0-9;]*m', '', text), encoding='utf-8')
-  if args.export_knowledge_base:
-    save_knowledge_base(
-      args.output_dir if args.output_dir is not None else Path(__file__).parent / 'output_data',
-      include_reference_only=args.include_reference_only,
-      show_sources=args.show_sources,
-    )
   return 0
 
 

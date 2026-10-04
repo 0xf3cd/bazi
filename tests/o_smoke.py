@@ -173,8 +173,8 @@ def main() -> int:
      lambda: Interpreter.query_shishen(Shishen.食神, include_reference_only=1)), # type: ignore[arg-type]
     ('Interpreter.query_tiangan wrong reference flag', TypeError,
      lambda: Interpreter.query_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore[arg-type]
-    ('Interpreter.source wrong identifier', TypeError,
-     lambda: Interpreter.source('editorial')), # type: ignore[arg-type]
+    ('Interpreter.query_source wrong identifier', TypeError,
+     lambda: Interpreter.query_source('editorial')), # type: ignore[arg-type]
     ('DescriptionClaim mutable sources', TypeError,
      lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
     ('DescriptionClaim wrong condition member', TypeError,

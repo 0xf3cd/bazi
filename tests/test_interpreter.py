@@ -12,11 +12,11 @@ from bazi.common import frozendict
 from bazi.descriptions import (
   ShishenDescription,
   TianganDescription,
-  _DescriptionClaim,
-  _DescriptionCondition,
-  _DescriptionOutput,
-  _DescriptionSource,
-  _DescriptionTextLayer,
+  DescriptionClaim,
+  DescriptionCondition,
+  DescriptionOutput,
+  DescriptionSource,
+  DescriptionTextLayer,
   _DESCRIPTION_SOURCES,
   _SHISHEN_DESCRIPTION_CORPUS,
   _TIANGAN_DESCRIPTION_CORPUS,
@@ -66,32 +66,32 @@ _SHISHEN_DEFINITIONS: Final[tuple[tuple[Shishen, str, str], ...]] = (
 )
 
 _TIANGAN_DEFINITIONS: Final[
-  tuple[tuple[Tiangan, str, str, _DescriptionSource], ...]
+  tuple[tuple[Tiangan, str, str, DescriptionSource], ...]
 ] = (
-  (Tiangan.甲, 'tiangan.jia.definition', '甲为阳木。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
-  (Tiangan.乙, 'tiangan.yi.definition', '乙为阴木。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
-  (Tiangan.丙, 'tiangan.bing.definition', '丙为阳火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
-  (Tiangan.丁, 'tiangan.ding.definition', '丁为阴火。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.戊, 'tiangan.wu.definition', '戊为阳土。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.己, 'tiangan.ji.definition', '己为阴土。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.庚, 'tiangan.geng.definition', '庚为阳金。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.辛, 'tiangan.xin.definition', '辛为阴金。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.壬, 'tiangan.ren.definition', '壬为阳水。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.癸, 'tiangan.gui.definition', '癸为阴水。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.甲, 'tiangan.jia.definition', '甲为阳木。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.乙, 'tiangan.yi.definition', '乙为阴木。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丙, 'tiangan.bing.definition', '丙为阳火。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丁, 'tiangan.ding.definition', '丁为阴火。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.戊, 'tiangan.wu.definition', '戊为阳土。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.己, 'tiangan.ji.definition', '己为阴土。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.庚, 'tiangan.geng.definition', '庚为阳金。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.辛, 'tiangan.xin.definition', '辛为阴金。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.壬, 'tiangan.ren.definition', '壬为阳水。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.癸, 'tiangan.gui.definition', '癸为阴水。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
 )
 
 _HISTORICAL_SYMBOL_CASES: Final[
-  tuple[tuple[Tiangan, str, str, _DescriptionSource], ...]
+  tuple[tuple[Tiangan, str, str, DescriptionSource], ...]
 ] = (
-  (Tiangan.丙, 'tiangan.bing.sun_symbol', '丙火像太阳。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
-  (Tiangan.丁, 'tiangan.ding.lamp_symbol', '丁火有烛灯之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.戊, 'tiangan.wu.wall_symbol', '戊土有城墙之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.辛, 'tiangan.xin.jewel_symbol', '辛金有珠玉之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
-  (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有汪洋百川之象。', _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.丙, 'tiangan.bing.sun_symbol', '丙火像太阳。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69),
+  (Tiangan.丁, 'tiangan.ding.lamp_symbol', '丁火有烛灯之象。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.戊, 'tiangan.wu.wall_symbol', '戊土有城墙之象。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.辛, 'tiangan.xin.jewel_symbol', '辛金有珠玉之象。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
+  (Tiangan.壬, 'tiangan.ren.river_symbol', '壬水有汪洋百川之象。', DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70),
 )
 
 _PROOFREADING_CASES: Final[
-  tuple[tuple[str, str, Shishen, str, tuple[_DescriptionCondition, ...]], ...]
+  tuple[tuple[str, str, Shishen, str, tuple[DescriptionCondition, ...]], ...]
 ] = (
   (
     'legacy.shishen.SH-068',
@@ -112,19 +112,19 @@ _PROOFREADING_CASES: Final[
     '过于沉浸在自己的世界里；有心计，精于算计；妄想，疑心重，冷漠，自私，思想行为怪异，自我封闭；学而不精，不通人情，胆怯心虚，心狠手辣。',
     Shishen.偏印,
     'in_bad_status',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
 )
 
 _AMBIGUOUS_RETAINED_CASES: Final[
-  tuple[tuple[str, str, Shishen, str, tuple[_DescriptionCondition, ...]], ...]
+  tuple[tuple[str, str, Shishen, str, tuple[DescriptionCondition, ...]], ...]
 ] = (
   (
     'legacy.shishen.SH-006',
     '对于日主而言。身强时比肩可以帮助日主，身弱时比肩可以排斥我，所以比肩星象征着协助（身弱时）和竞争（身强时）。',
     Shishen.比肩,
     'general',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
   (
     'legacy.shishen.SH-023',
@@ -138,35 +138,35 @@ _AMBIGUOUS_RETAINED_CASES: Final[
     '男性风流多情，女性爱打扮。主人好交际、会社交。',
     Shishen.偏财,
     'general',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
   (
     'legacy.shishen.SH-142',
     '为人厚道，做事稳重，办事认真，只求平安，不喜反抗，为人清廉洁公正，自尊心强，重视名利，品性端庄，心地善良，光明磊落，讲德礼节。',
     Shishen.正官,
     'in_good_status',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
   (
     'legacy.shishen.SH-160',
     '与日柱同性之克，无情之克，其含义为打击，压制，暴力，权其性刚雄，具有叛逆，称霸之性，需制化方可驾驭。',
     Shishen.七杀,
     'general',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
   (
     'legacy.shishen.SH-199',
     '偏印为喜用或状态良好（不过旺、不受刑克冲害）：善于观察，心思细致，喜欢传统文化和周易，具有神秘，先知先觉的能力，常有独特的内心世界，能看透人情世故，超凡脱俗，不重视名利。',
     Shishen.偏印,
     'in_good_status',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
   (
     'legacy.shishen.SH-203',
     '需读理解与人交往的人情世故，并保持幽默诙谐的生活态度，否则容易曲高和寡。',
     Shishen.偏印,
     'in_bad_status',
-    (_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    (DescriptionCondition.CHART_CONTEXT_REQUIRED,),
   ),
 )
 
@@ -299,14 +299,14 @@ _CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS: Final[frozenset[str]] = frozenset({
 })
 
 
-_SOURCE_EXCERPTS: Final[frozendict[_DescriptionSource, str]] = frozendict({
-  _DescriptionSource.EDITORIAL: 'Repository-original editorial prose.',
-  _DescriptionSource.YUANHAI_ZIPING_RELATIONS: '生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
-  _DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: '天干五陽通變天干五陰通變',
-  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: '甲木天干作首排乙木根荄種得深丙火明明一太陽',
-  _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: '丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
-  _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: '甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
-  _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: '陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
+_SOURCE_EXCERPTS: Final[frozendict[DescriptionSource, str]] = frozendict({
+  DescriptionSource.EDITORIAL: 'Repository-original editorial prose.',
+  DescriptionSource.YUANHAI_ZIPING_RELATIONS: '生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也',
+  DescriptionSource.YUANHAI_ZIPING_STEM_TABLE: '天干五陽通變天干五陰通變',
+  DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69: '甲木天干作首排乙木根荄種得深丙火明明一太陽',
+  DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70: '丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼',
+  DescriptionSource.MINGLI_TANYUAN_STEM_BASICS: '甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方',
+  DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS: '陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印',
 })
 
 _ATTRIBUTED_REFERENCE_CASES: Final[tuple[tuple[Shishen | Tiangan, str, str], ...]] = (
@@ -323,21 +323,21 @@ def _description_count(descriptions: Sequence[ShishenDescription | TianganDescri
   return sum(len(texts) for description in descriptions for texts in _as_mapping(description).values())
 
 
-def _all_claims() -> list[tuple[Shishen | Tiangan, str, _DescriptionClaim]]:
-  claims: list[tuple[Shishen | Tiangan, str, _DescriptionClaim]] = []
+def _all_claims() -> list[tuple[Shishen | Tiangan, str, DescriptionClaim]]:
+  claims: list[tuple[Shishen | Tiangan, str, DescriptionClaim]] = []
   for shishen, shishen_description in _SHISHEN_DESCRIPTION_CORPUS.items():
     for shishen_field in ('general', 'in_good_status', 'in_bad_status', 'relationship'):
       claims.extend(
         (shishen, shishen_field, item)
         for item in shishen_description[shishen_field]
-        if isinstance(item, _DescriptionClaim)
+        if isinstance(item, DescriptionClaim)
       )
   for tg, tg_description in _TIANGAN_DESCRIPTION_CORPUS.items():
     for tg_field in ('general', 'personality'):
       claims.extend(
         (tg, tg_field, item)
         for item in tg_description[tg_field]
-        if isinstance(item, _DescriptionClaim)
+        if isinstance(item, DescriptionClaim)
       )
   return claims
 
@@ -374,7 +374,7 @@ def _complete_corpus_fingerprint() -> str:
 
 def _source_registry_fingerprint() -> str:
   rows: list[str] = []
-  for source in _DescriptionSource:
+  for source in DescriptionSource:
     record = _DESCRIPTION_SOURCES[source]
     values = (
       source.value,
@@ -450,7 +450,7 @@ def test_proofreading_dispositions_and_metadata() -> None:
     assert claim.sources == ()
     assert claim.attribution == 'Legacy corpus; source unverified'
     assert claim.conditions == expected_conditions
-    assert claim.output is _DescriptionOutput.REFERENCE_ONLY
+    assert claim.output is DescriptionOutput.REFERENCE_ONLY
 
 
 def test_public_description_surface_is_unchanged() -> None:
@@ -555,7 +555,7 @@ def test_reference_only_claims() -> None:
   claims = [
     (subject, field, claim)
     for subject, field, claim in _all_claims()
-    if claim.output is _DescriptionOutput.REFERENCE_ONLY
+    if claim.output is DescriptionOutput.REFERENCE_ONLY
   ]
 
   attributed_claims = [
@@ -570,7 +570,7 @@ def test_reference_only_claims() -> None:
   editorial_claims = [
     (subject, field, claim)
     for subject, field, claim in claims
-    if claim.sources == (_DescriptionSource.EDITORIAL,)
+    if claim.sources == (DescriptionSource.EDITORIAL,)
   ]
   assert [
     (subject, field, claim.text)
@@ -602,7 +602,7 @@ def test_reference_only_claims() -> None:
   assert len(conditional_shishen_claim_ids) == 79
   for shishen, field, claim in unverified_shishen_claims:
     expected_conditions = (
-      (_DescriptionCondition.CHART_CONTEXT_REQUIRED,)
+      (DescriptionCondition.CHART_CONTEXT_REQUIRED,)
       if field in ('in_good_status', 'in_bad_status')
       or claim.claim_id in _CONDITIONAL_UNVERIFIED_SHISHEN_GENERAL_CLAIM_IDS
       else ()
@@ -634,7 +634,7 @@ def test_reference_only_claims() -> None:
   } == set(_CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS)
   for tg, field, claim in unverified_tiangan_claims:
     expected_conditions = (
-      (_DescriptionCondition.CHART_CONTEXT_REQUIRED,)
+      (DescriptionCondition.CHART_CONTEXT_REQUIRED,)
       if claim.claim_id in _CONDITIONAL_UNVERIFIED_TIANGAN_CLAIM_IDS
       else ()
     )
@@ -648,13 +648,13 @@ def test_reference_only_claims() -> None:
 
 def test_description_corpora_are_fully_classified() -> None:
   assert all(
-    isinstance(item, _DescriptionClaim)
+    isinstance(item, DescriptionClaim)
     for description in _SHISHEN_DESCRIPTION_CORPUS.values()
     for field in ('general', 'in_good_status', 'in_bad_status', 'relationship')
     for item in description[field]
   )
   assert all(
-    isinstance(item, _DescriptionClaim)
+    isinstance(item, DescriptionClaim)
     for description in _TIANGAN_DESCRIPTION_CORPUS.values()
     for field in ('general', 'personality')
     for item in description[field]
@@ -663,17 +663,17 @@ def test_description_corpora_are_fully_classified() -> None:
 
 def test_sourced_claims() -> None:
   shishen_definition_sources = (
-    _DescriptionSource.YUANHAI_ZIPING_RELATIONS,
-    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+    DescriptionSource.YUANHAI_ZIPING_RELATIONS,
+    DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
   )
   for shishen, claim_id, text in _SHISHEN_DEFINITIONS:
     claim = _SHISHEN_DESCRIPTION_CORPUS[shishen]['general'][0]
-    assert isinstance(claim, _DescriptionClaim)
+    assert isinstance(claim, DescriptionClaim)
     assert claim.claim_id == claim_id
     assert claim.text == text
     assert claim.sources == shishen_definition_sources
     assert claim.attribution == '《渊海子平》与《命理探源》十神定义'
-    assert claim.output is _DescriptionOutput.DEFAULT
+    assert claim.output is DescriptionOutput.DEFAULT
     assert Interpreter.interpret_shishen(shishen)['general'][0] == text
     assert Interpreter.interpret_shishen(
       shishen,
@@ -686,15 +686,15 @@ def test_sourced_claims() -> None:
 
   for tg, claim_id, text, yuan_hai_source in _TIANGAN_DEFINITIONS:
     claim = _TIANGAN_DESCRIPTION_CORPUS[tg]['general'][0]
-    assert isinstance(claim, _DescriptionClaim)
+    assert isinstance(claim, DescriptionClaim)
     assert claim.claim_id == claim_id
     assert claim.text == text
     assert claim.sources == (
       yuan_hai_source,
-      _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+      DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
     )
     assert claim.attribution == '《渊海子平》与《命理探源》天干定义'
-    assert claim.output is _DescriptionOutput.DEFAULT
+    assert claim.output is DescriptionOutput.DEFAULT
     assert Interpreter.interpret_tiangan(tg)['general'][0] == text
     assert Interpreter.interpret_tiangan(
       tg,
@@ -707,7 +707,7 @@ def test_sourced_claims() -> None:
     assert claim.text == text
     assert claim.sources == (source,)
     assert claim.attribution == '《渊海子平·十干体象》'
-    assert claim.output is _DescriptionOutput.REFERENCE_ONLY
+    assert claim.output is DescriptionOutput.REFERENCE_ONLY
     assert text not in Interpreter.interpret_tiangan(tg)['general']
     assert text in Interpreter.interpret_tiangan(
       tg,
@@ -716,34 +716,34 @@ def test_sourced_claims() -> None:
 
 
 def test_provenance_integrity() -> None:
-  assert set(_DESCRIPTION_SOURCES) == set(_DescriptionSource)
+  assert set(_DESCRIPTION_SOURCES) == set(DescriptionSource)
   assert {
     source: record.excerpt
     for source, record in _DESCRIPTION_SOURCES.items()
   } == dict(_SOURCE_EXCERPTS)
-  assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_RELATIONS].locator == (
+  assert _DESCRIPTION_SOURCES[DescriptionSource.YUANHAI_ZIPING_RELATIONS].locator == (
     'PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”'
   )
-  assert _DESCRIPTION_SOURCES[_DescriptionSource.YUANHAI_ZIPING_STEM_TABLE].locator == (
+  assert _DESCRIPTION_SOURCES[DescriptionSource.YUANHAI_ZIPING_STEM_TABLE].locator == (
     'PDF p. 8, “天干五阳通变” and “天干五阴通变” tables'
   )
   assert _DESCRIPTION_SOURCES[
-    _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69
+    DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P69
   ].locator == 'PDF p. 69, left leaf, “十干体象”'
   assert _DESCRIPTION_SOURCES[
-    _DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70
+    DescriptionSource.YUANHAI_ZIPING_STEM_SYMBOLS_P70
   ].locator == 'PDF p. 70, both leaves, “十干体象”'
-  assert _DESCRIPTION_SOURCES[_DescriptionSource.MINGLI_TANYUAN_STEM_BASICS].locator == (
+  assert _DESCRIPTION_SOURCES[DescriptionSource.MINGLI_TANYUAN_STEM_BASICS].locator == (
     'PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”'
   )
   assert _DESCRIPTION_SOURCES[
-    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS
+    DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS
   ].locator == (
     'PDF pp. 66-70, “十干生克定名”'
   )
   for source in (
-    _DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
-    _DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
+    DescriptionSource.MINGLI_TANYUAN_STEM_BASICS,
+    DescriptionSource.MINGLI_TANYUAN_SHISHEN_DEFINITIONS,
   ):
     assert _DESCRIPTION_SOURCES[source].work == '《命理探源》'
     assert _DESCRIPTION_SOURCES[source].edition == '版心题《命理探原》'
@@ -760,9 +760,9 @@ def test_provenance_integrity() -> None:
       record.limitations,
     ))
     assert record.text_layer is (
-      _DescriptionTextLayer.EDITORIAL
-      if source is _DescriptionSource.EDITORIAL
-      else _DescriptionTextLayer.BAIWEN
+      DescriptionTextLayer.EDITORIAL
+      if source is DescriptionSource.EDITORIAL
+      else DescriptionTextLayer.BAIWEN
     )
   assert _source_registry_fingerprint() == '7ccb163266026302dfe340108e28c9018cccfec48001f696c2f5056893c06a3e'
 
@@ -774,7 +774,7 @@ def test_provenance_integrity() -> None:
     assert claim.text
     assert claim.attribution
     assert all(source in _DESCRIPTION_SOURCES for source in claim.sources)
-    if claim.output is _DescriptionOutput.DEFAULT:
+    if claim.output is DescriptionOutput.DEFAULT:
       assert claim.sources
       assert not claim.conditions
       assert len({
@@ -786,40 +786,40 @@ def test_provenance_integrity() -> None:
 
 
 def test_default_projection_drops_conditional_and_reference_only_claims() -> None:
-  default = _DescriptionClaim(
+  default = DescriptionClaim(
     claim_id='test.default',
     text='Default claim.',
-    sources=(_DescriptionSource.EDITORIAL,),
+    sources=(DescriptionSource.EDITORIAL,),
     attribution='Test',
     conditions=(),
-    output=_DescriptionOutput.DEFAULT,
+    output=DescriptionOutput.DEFAULT,
   )
-  conditional = _DescriptionClaim(
+  conditional = DescriptionClaim(
     claim_id='test.conditional',
     text='Conditional claim.',
-    sources=(_DescriptionSource.EDITORIAL,),
+    sources=(DescriptionSource.EDITORIAL,),
     attribution='Test',
-    conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
-    output=_DescriptionOutput.DEFAULT,
+    conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    output=DescriptionOutput.DEFAULT,
   )
-  reference = _DescriptionClaim(
+  reference = DescriptionClaim(
     claim_id='test.reference',
     text='Reference-only claim.',
-    sources=(_DescriptionSource.EDITORIAL,),
+    sources=(DescriptionSource.EDITORIAL,),
     attribution='Test',
     conditions=(),
-    output=_DescriptionOutput.REFERENCE_ONLY,
+    output=DescriptionOutput.REFERENCE_ONLY,
   )
-  conditional_reference = _DescriptionClaim(
+  conditional_reference = DescriptionClaim(
     claim_id='test.conditional_reference',
     text='Conditional reference-only claim.',
-    sources=(_DescriptionSource.EDITORIAL,),
+    sources=(DescriptionSource.EDITORIAL,),
     attribution='Test',
-    conditions=(_DescriptionCondition.CHART_CONTEXT_REQUIRED,),
-    output=_DescriptionOutput.REFERENCE_ONLY,
+    conditions=(DescriptionCondition.CHART_CONTEXT_REQUIRED,),
+    output=DescriptionOutput.REFERENCE_ONLY,
   )
 
-  items: list[str | _DescriptionClaim] = [
+  items: list[str | DescriptionClaim] = [
     'Legacy claim.', default, conditional, reference, conditional_reference,
   ]
   assert _project_texts(items, include_reference_only=False) == [
