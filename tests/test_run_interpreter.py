@@ -283,18 +283,11 @@ def test_source_and_reference_rendering_are_independent() -> None:
   assert '来源：' not in text
 
 
-@pytest.mark.parametrize(('args', 'writes'), [
-  ((), False),
-  (('--seed', '42'), False),
-  (('--output-dir', 'exported'), True),
-  (('--export-knowledge-base',), True),
-])
-def test_default_cli_rejects_all_filesystem_writes(
-  tmp_path: Path,
+def _run_guarded_script(
+  script: Path,
+  cwd: Path,
   args: tuple[str, ...],
-  writes: bool,
-) -> None:
-  script = Path(__file__).parents[1] / 'run_interpreter.py'
+) -> subprocess.CompletedProcess[str]:
   guard = '''
 import os
 import runpy
@@ -322,14 +315,32 @@ def deny_writes(event, args):
 sys.addaudithook(deny_writes)
 runpy.run_path(script, run_name='__main__')
 '''
-  result = subprocess.run(
+  return subprocess.run(
     [sys.executable, '-B', '-c', guard, str(script), *args],
-    cwd=tmp_path,
+    cwd=cwd,
     capture_output=True,
     text=True,
     encoding='utf-8',
     timeout=45,
     check=False,
+  )
+
+
+@pytest.mark.parametrize(('args', 'writes'), [
+  ((), False),
+  (('--seed', '42'), False),
+  (('--output-dir', 'exported'), True),
+  (('--export-knowledge-base',), True),
+])
+def test_default_cli_rejects_all_filesystem_writes(
+  tmp_path: Path,
+  args: tuple[str, ...],
+  writes: bool,
+) -> None:
+  result = _run_guarded_script(
+    Path(__file__).parents[1] / 'run_interpreter.py',
+    tmp_path,
+    args,
   )
   if writes:
     assert result.returncode == 2
@@ -339,6 +350,24 @@ runpy.run_path(script, run_name='__main__')
     assert result.returncode == 0, result.stderr
     assert result.stdout.count('出生时间：') == 1
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('mode', ['w', 'a', 'x', 'r+'])
+def test_write_guard_checks_high_level_modes_without_directory_operations(
+  mode: str,
+  tmp_path: Path,
+) -> None:
+  target = tmp_path / 'target.txt'
+  target.write_text('existing data', encoding='utf-8')
+  script = tmp_path / 'probe.py'
+  script.write_text(
+    f"open('target.txt', {mode!r}, encoding='utf-8')\n",
+    encoding='utf-8',
+  )
+  result = _run_guarded_script(script, tmp_path, ())
+  assert result.returncode != 0
+  assert 'Unexpected default file export' in result.stderr
+  assert target.read_text(encoding='utf-8') == 'existing data'
 
 
 def test_reference_claims_have_distinct_lines_without_source_blocks() -> None:
