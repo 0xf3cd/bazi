@@ -83,7 +83,7 @@ def interpret(
   s += '时柱：' + __gen_pillar_str('hour') + '\n'
 
   day_master: Tiangan = chart.bazi.day_master
-  day_master_desc = _claim_fields(
+  day_master_desc: frozendict[str, tuple[str, ...]] = _claim_fields(
     Interpreter.query_tiangan(day_master, include_reference_only=include_reference_only),
     show_sources,
   )
@@ -106,7 +106,7 @@ def interpret(
       continue
     
     ratio: float = count / sum(shishens.values())
-    desc = _claim_fields(
+    desc: frozendict[str, tuple[str, ...]] = _claim_fields(
       Interpreter.query_shishen(ss, include_reference_only=include_reference_only),
       show_sources,
     )
@@ -230,28 +230,38 @@ def main(argv: list[str] | None = None) -> int:
       if args.birth_time is not None
       else [BaziChart(Bazi.random()) for _ in range(args.count)]
     )
-    output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
-    if output is not None:
+  except (TypeError, ValueError) as error:
+    parser.error(str(error))
+
+  output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
+  if output is not None:
+    try:
       output.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+      parser.error(str(error))
 
-    for i, chart in enumerate(charts):
-      text = _chart_text(
-        chart,
-        include_reference_only=args.include_reference_only,
-        show_sources=args.show_sources,
-      )
-      print(text)
-      if output is not None:
+  for i, chart in enumerate(charts):
+    text = _chart_text(
+      chart,
+      include_reference_only=args.include_reference_only,
+      show_sources=args.show_sources,
+    )
+    print(text)
+    if output is not None:
+      try:
         _write_chart(text, output, i)
+      except OSError as error:
+        parser.error(str(error))
 
-    if args.export_knowledge_base:
+  if args.export_knowledge_base:
+    try:
       save_knowledge_base(
         args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR,
         include_reference_only=args.include_reference_only,
         show_sources=args.show_sources,
       )
-  except (TypeError, ValueError, OSError) as error:
-    parser.error(str(error))
+    except OSError as error:
+      parser.error(str(error))
 
   return 0
 

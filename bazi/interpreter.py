@@ -111,10 +111,7 @@ class Interpreter:
       raise TypeError(f'Expected Shishen, got {type(shishen)}')
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')
-    return _shishen_claims(
-      shishen,
-      include_reference_only,
-    )
+    return _shishen_claims(shishen, include_reference_only)
 
   @staticmethod
   def query_tiangan(
@@ -141,10 +138,7 @@ class Interpreter:
       raise TypeError(f'Expected Tiangan, got {type(tg)}')
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')
-    return _tiangan_claims(
-      tg,
-      include_reference_only,
-    )
+    return _tiangan_claims(tg, include_reference_only)
 
   @staticmethod
   def query_source(source: DescriptionSource) -> DescriptionSourceRecord:

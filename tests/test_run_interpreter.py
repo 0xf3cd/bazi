@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import interpret
+from run_interpreter import interpret, main
 from bazi.common import frozendict
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
@@ -352,3 +352,45 @@ def test_bad_export_path_uses_cli_error_exit(tmp_path: Path) -> None:
   assert 'error:' in result.stderr
   assert 'Traceback' not in result.stderr
   assert output.read_text(encoding='utf-8') == 'existing data'
+
+
+@pytest.mark.parametrize('error_type', [TypeError, ValueError, OSError])
+def test_internal_rendering_errors_propagate(
+  error_type: type[Exception],
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  error = error_type('Internal rendering failure')
+
+  def broken_render(*args: object, **kwargs: object) -> str:
+    raise error
+
+  monkeypatch.setitem(main.__globals__, '_chart_text', broken_render)
+  with pytest.raises(error_type, match='Internal rendering failure') as caught:
+    main(['--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+  assert caught.value is error
+
+
+@pytest.mark.parametrize('stage', ['directory', 'chart', 'knowledge'])
+def test_export_io_failures_use_error_exit(
+  stage: str,
+  tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch,
+  capsys: pytest.CaptureFixture[str],
+) -> None:
+  def fail(*args: object, **kwargs: object) -> None:
+    raise OSError('Export I/O failure')
+
+  if stage == 'directory':
+    monkeypatch.setattr(Path, 'mkdir', fail)
+  elif stage == 'chart':
+    monkeypatch.setitem(main.__globals__, '_write_chart', fail)
+  else:
+    monkeypatch.setitem(main.__globals__, 'save_knowledge_base', fail)
+
+  with pytest.raises(SystemExit) as caught:
+    main([
+      '--birth-time', '2000-01-01 12:00', '--gender', 'male',
+      '--output-dir', str(tmp_path), '--export-knowledge-base',
+    ])
+  assert caught.value.code == 2
+  assert 'error: Export I/O failure' in capsys.readouterr().err

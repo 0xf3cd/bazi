@@ -1791,6 +1791,38 @@ def _project_texts(
   ]
 
 
+def _project_shishen_description(
+  description: _ShishenCorpusDescription,
+  include_reference_only: bool,
+) -> ShishenDescription:
+  return {
+    'general':        _project_texts(description['general'], include_reference_only),
+    'in_good_status': _project_texts(description['in_good_status'], include_reference_only),
+    'in_bad_status':  _project_texts(description['in_bad_status'], include_reference_only),
+    'relationship':   _project_texts(description['relationship'], include_reference_only),
+  }
+
+
+def _project_tiangan_description(
+  description: _TianganCorpusDescription,
+  include_reference_only: bool,
+) -> TianganDescription:
+  return {
+    'general':     _project_texts(description['general'], include_reference_only),
+    'personality': _project_texts(description['personality'], include_reference_only),
+  }
+
+
+def _complete_shishen_description(shishen: Shishen) -> ShishenDescription:
+  assert isinstance(shishen, Shishen)
+  return _project_shishen_description(_SHISHEN_DESCRIPTION_CORPUS[shishen], include_reference_only=True)
+
+
+def _complete_tiangan_description(tg: Tiangan) -> TianganDescription:
+  assert isinstance(tg, Tiangan)
+  return _project_tiangan_description(_TIANGAN_DESCRIPTION_CORPUS[tg], include_reference_only=True)
+
+
 def _selected_claims(
   items: list[_DescriptionItem],
   include_reference_only: bool,
@@ -1826,38 +1858,6 @@ def _tiangan_claims(tg: Tiangan, include_reference_only: bool) -> DescriptionCla
 def _source_record(source: DescriptionSource) -> DescriptionSourceRecord:
   assert isinstance(source, DescriptionSource)
   return _DESCRIPTION_SOURCES[source]
-
-
-def _project_shishen_description(
-  description: _ShishenCorpusDescription,
-  include_reference_only: bool,
-) -> ShishenDescription:
-  return {
-    'general':        _project_texts(description['general'], include_reference_only),
-    'in_good_status': _project_texts(description['in_good_status'], include_reference_only),
-    'in_bad_status':  _project_texts(description['in_bad_status'], include_reference_only),
-    'relationship':   _project_texts(description['relationship'], include_reference_only),
-  }
-
-
-def _project_tiangan_description(
-  description: _TianganCorpusDescription,
-  include_reference_only: bool,
-) -> TianganDescription:
-  return {
-    'general':     _project_texts(description['general'], include_reference_only),
-    'personality': _project_texts(description['personality'], include_reference_only),
-  }
-
-
-def _complete_shishen_description(shishen: Shishen) -> ShishenDescription:
-  assert isinstance(shishen, Shishen)
-  return _project_shishen_description(_SHISHEN_DESCRIPTION_CORPUS[shishen], include_reference_only=True)
-
-
-def _complete_tiangan_description(tg: Tiangan) -> TianganDescription:
-  assert isinstance(tg, Tiangan)
-  return _project_tiangan_description(_TIANGAN_DESCRIPTION_CORPUS[tg], include_reference_only=True)
 
 
 # Public tables contain only descriptions eligible for default output. The mappings are
