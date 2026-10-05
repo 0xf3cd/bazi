@@ -98,6 +98,7 @@ def main() -> None:
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.interpreter import Interpreter
+  from bazi.knowledge import KnowledgeBase
 
   check(Path(bazi.__file__).resolve().is_relative_to(prefix), 'Root import source leakage')
   for backend in CalendarBackend:
@@ -205,6 +206,21 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
+  knowledge = KnowledgeBase.load()
+  check(len(knowledge.entries) == 295 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  selected = knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)
+  check(tuple(entry.claim_id for entry in selected) == ('tiangan.ding.lamp_symbol',), 'Installed knowledge lookup mismatch')
+  restored_knowledge = KnowledgeBase.from_json(knowledge.export_json(selected))
+  check(restored_knowledge.entries == {entry.claim_id: entry for entry in selected}, 'Knowledge export/reload lost entries')
+  check(restored_knowledge.sources == knowledge.sources, 'Knowledge export/reload lost witnesses')
+  check('p. 70' in restored_knowledge.render(selected[0]), 'Knowledge display lost source locator')
+  try:
+    knowledge.query(object_id='typo')
+  except ValueError:
+    pass
+  else:
+    raise RuntimeError('Optimized knowledge input rejection failed')
+  print('PASS installed knowledge query/display/export/reload')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

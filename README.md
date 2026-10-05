@@ -2,7 +2,7 @@
 > 排盘、五行、十神、纳音、刑冲破害、合会
 
 A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
-only the standard library and five bundled calendar tables; no network access or
+only the standard library, five bundled calendar tables and a knowledge corpus; no network access or
 data generation is needed.
 
 This README describes the current checkout. For a published package, consult the
@@ -14,8 +14,8 @@ README at its matching release tag.
   backend, birth-time precision and school configuration recorded in JSON.
 - Transits: precise 大运 intervals, 小运 and 流年, with year/month/date/moment queries.
 - Relations and 神煞: at-birth and transit analysis, including configurable rule variants.
-- Descriptions: static 天干 and 十神 lookup, either as text or immutable claims with
-  source witnesses, attribution, output policy and applicability conditions.
+- Interpretation knowledge: editable JSON, validated references, object/context/topic/source
+  queries, premise and source display, and reloadable exports. Legacy 天干 / 十神 lookups remain available.
 - Source-checkout demos: random charts, transit tables, relationship analysis and
   description display/export. The Interpreter runner also accepts fixed birth inputs.
 
@@ -71,6 +71,7 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
 | `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
 | `bazi.descriptions` | `DescriptionClaim`, `DescriptionClaims`, `DescriptionSourceRecord`; `DescriptionSource`, `DescriptionLineage`, `DescriptionTextLayer`, `DescriptionOutput`, `DescriptionCondition` |
+| `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
 `bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
@@ -105,8 +106,8 @@ of frozen `DescriptionClaim` objects. Source lookup returns a frozen record with
 the work, attribution, edition, locator, URL, text layer, lineage, excerpt and
 evidentiary boundaries. Text-returning methods retain their existing field/list shape.
 
-The corpus contains 291 claims: 19 default definitions and 272 reference-only
-claims. Default queries select only default-output claims without conditions.
+The legacy projections contain 291 claims: 19 default definitions and 272 reference-only
+claims. Their default queries select only default-output claims without legacy conditions.
 Complete queries also include named historical imagery, repository editorial text
 and legacy text marked source-unverified. An empty `sources`
 tuple and `Legacy corpus; source unverified` attribution preserve that last state;
@@ -116,7 +117,99 @@ they do not establish that no source exists or that the claim is false.
 queries include these claims without determining whether they apply to a chart.
 Witness records establish textual attribution and its boundaries. Description
 selection is independent of the calculation variants in `BaziSchool`.
-More specific good/bad-state conditions are tracked in [#228](https://github.com/0xf3cd/bazi/issues/228).
+The `in_good_status` / `in_bad_status` fields are compatibility placements, not core
+knowledge categories. The new API exposes premise organization without assigning chart states.
+
+### Maintain and query interpretation knowledge
+
+`bazi/knowledge_data.json` is the unique editing source. Loading validates its schema,
+IDs, role bindings, references and output policies, then builds in-memory indexes.
+The same file is bundled in wheels and source archives; exports and legacy projections
+are derived from it. No database service or runtime dependency is required.
+
+```python
+from pathlib import Path
+
+from bazi.knowledge import KnowledgeBase
+
+knowledge = KnowledgeBase.load()
+entries = knowledge.query(
+  object_id='tiangan.geng',
+  context_id='tiangan.geng_regulated_transit',
+  topic='性格',
+  include_reference_only=True,
+)
+for entry in entries:
+  print(knowledge.render(entry, manual_context=True))
+
+exported = knowledge.export_json(entries)
+restored = KnowledgeBase.from_json(exported)
+assert tuple(restored.entries.values()) == entries
+
+# Load an edited source without changing the bundled corpus.
+edited = KnowledgeBase.load(Path('edited-knowledge.json'))
+```
+
+The knowledge corpus contains the 291 migrated claims and four reference-only 五行 /
+国印 examples. The original 19 default definitions retain their eligibility. New
+examples preserve existing rule documentation and its limits; repository attribution
+is not a newly verified classical witness.
+
+| Entry information | Meaning |
+| --- | --- |
+| `roles`, `relations` | Named discussion objects and directed **textual** relationships; not computed or effective chart interactions |
+| `topics`, `viewpoint` | Lookup topics and the interpretation's adopted viewpoint |
+| `applicability='unconditional'` | The knowledge statement has no chart prerequisite, such as a definition or historical image |
+| `applicability='described'` | Premise text is recorded; its terms can still lack computational definitions |
+| `applicability='unresolved'` | Applicability premises remain to be reconstructed; an empty old condition tuple did not settle them |
+| `premise`, `contexts`, `limits`, `exceptions` | Full premise text, named lookup contexts with time scopes, unresolved terms and boundaries |
+| `sources`, `source_state`, `attribution` | Witness references and witnessed / editorial / unverified / repository-attributed status |
+| `output`, `legacy` | Presentation eligibility and traceable old field/order/condition metadata |
+
+Manual context selection only retrieves knowledge. It does not decide whether a chart
+meets that context. Multiple context tags do not imply an AND/OR expression. For example,
+the 庚金 transit entry retains both 行运有制有化 and 后天有教养; the first is undefined
+here and the second is a premise outside the chart. Basic 生克 does not establish either.
+
+Queries intersect `object_id`, `context_id`, `topic`, `source_id`, `viewpoint`,
+`applicability` and `time_scope`. Object lookup includes every bound role. Results retain
+source order and are transitively immutable. Unknown filter values raise `ValueError`;
+a valid filter with no matches returns an empty tuple. Reference entries require
+`include_reference_only=True`. `entry(claim_id)` resolves a stable ID directly.
+
+`export_json()` exports the whole corpus, including reference records and their policies;
+`export_json(entries)` exports a selection. Both preserve the object, context and source
+registries for reload and evidence display. Exporting a reference record does not change
+its presentation eligibility. The frozen legacy test fixture is a migration oracle,
+not another editing source.
+
+From a source checkout, edit the JSON and validate it:
+
+```sh
+python run_interpreter.py --validate-knowledge
+python run_interpreter.py \
+  --query-knowledge \
+  --object tiangan.ding \
+  --topic 历史象 \
+  --source yuanhai_ziping_stem_symbols_p70 \
+  --include-reference-only
+python run_interpreter.py \
+  --export-knowledge-json output_data/knowledge.json
+```
+
+| Knowledge flag | Effect |
+| --- | --- |
+| `--query-knowledge` | Query and display entries without creating a chart; includes source details |
+| `--validate-knowledge` | Validate the full editing source |
+| `--knowledge-source <path>` | Read an edited or exported JSON instead of the bundled source |
+| `--object`, `--context`, `--topic`, `--source`, `--viewpoint`, `--applicability`, `--time-scope` | Query filters; `--context` is explicitly manual |
+| `--export-knowledge-json <path>` | Export all records, or the selected records with `--query-knowledge` |
+| `--include-reference-only` | Also select reference records in a query |
+
+Knowledge modes accept no chart-input, `--output-dir` or legacy TXT-export flags.
+Without a knowledge-mode flag, chart runner behavior and the existing parameter
+combinations remain available. JSON export refuses to overwrite the editing source,
+including through a filesystem alias.
 
 ### Run a chart locally
 
@@ -168,8 +261,9 @@ python run_interpreter.py \
 
 Fixed birth inputs accept one chart and cannot be combined with a seed.
 
-Reference-only text is labelled, including unverified attribution and conditions
-that have not been evaluated.
+Reference-only text is labelled with source and premise states. Chart display and TXT
+export now use knowledge topics rather than good/bad headings, and include the recorded
+premises and limits. They do not select a chart's strength or fortune status.
 
 Exported TXT files have terminal color codes removed.
 Repeated exports overwrite the numbered files written by that run; other existing

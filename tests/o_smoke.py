@@ -38,6 +38,7 @@ def main() -> int:
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
   from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
+  from bazi.knowledge import KnowledgeBase, KnowledgeRole
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -59,6 +60,7 @@ def main() -> int:
   chart_json = chart.json
   school_json: dict[str, object] = dict(chart_json['school'])
   decoded_jieqi = hko_data.DecodedJieqiDates()
+  knowledge = KnowledgeBase.load()
   solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
 
   class Year(int):
@@ -177,7 +179,21 @@ def main() -> int:
     ('Interpreter.query_source wrong identifier', TypeError,
      lambda: Interpreter.query_source('editorial')), # type: ignore[arg-type]
     ('DescriptionClaim mutable sources', TypeError,
-     lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+      lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+    ('KnowledgeBase unknown filter', ValueError,
+     lambda: knowledge.query(object_id='unknown')),
+    ('KnowledgeBase wrong filter type', TypeError,
+     lambda: knowledge.query(object_id=42)), # type: ignore[arg-type]
+    ('KnowledgeBase truthy reference flag', TypeError,
+     lambda: knowledge.query(include_reference_only=1)), # type: ignore[arg-type]
+    ('KnowledgeBase wrong JSON type', TypeError,
+     lambda: KnowledgeBase.from_json([])), # type: ignore[arg-type]
+    ('KnowledgeBase duplicate JSON keys', ValueError,
+     lambda: KnowledgeBase.from_json('{"schema_version":1,"schema_version":1}')),
+    ('KnowledgeRole wrong object type', TypeError,
+     lambda: KnowledgeRole('role', 1)), # type: ignore[arg-type]
+    ('KnowledgeEntry ineligible default', ValueError,
+     lambda: replace(knowledge.entry('legacy.shishen.SH-199'), output='default')),
     ('DescriptionClaim wrong condition member', TypeError,
      lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
     ('DescriptionSourceRecord wrong text layer', TypeError,
