@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Editable interpretation knowledge, independent of chart applicability.
-可编辑的解释知识；人工情境用于查阅，不判断命盘是否满足前提。'''
+'''Editable interpretation knowledge.
+可编辑的解释知识。'''
 
 import json
 from dataclasses import asdict, dataclass, fields, is_dataclass
@@ -17,13 +17,13 @@ Applicability = Literal['unconditional', 'described', 'unresolved']
 '''A claim's source state. / 条目的来源状态。'''
 SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attributed']
 
-'''Presentation eligibility, independent of source and premise state. / 与来源及前提状态独立的输出资格。'''
+'''Presentation eligibility. / 输出资格。'''
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
-_APPLICABILITY: Final = ('unconditional', 'described', 'unresolved')
-_SOURCE_STATES: Final = ('witnessed', 'editorial', 'unverified', 'repository_attributed')
-_OUTPUTS: Final = ('default', 'reference_only')
+_APPLICABILITY: Final = get_args(Applicability)
+_SOURCE_STATES: Final = get_args(SourceState)
+_OUTPUTS: Final = get_args(OutputPolicy)
 
 
 def _text(value: object, *, empty: bool = False) -> None:
@@ -51,8 +51,8 @@ def _tuple(value: object, member_type: type[_T]) -> None:
 
 @dataclass(frozen=True)
 class KnowledgeObject:
-  '''A named discussion object, without shared strength attributes.
-  具名讨论对象，不要求各类对象共享强弱属性。'''
+  '''A named discussion object.
+  具名讨论对象。'''
 
   object_id: str
   kind:      str
@@ -79,7 +79,7 @@ class KnowledgeRole:
 @dataclass(frozen=True)
 class KnowledgeRelation:
   '''A directed textual claim between roles, not a computed relation.
-  角色之间有方向的文字陈述，不表示已计算或已有效成立的命盘关系。'''
+  角色之间有方向的文字陈述，不表示已计算的命盘关系。'''
 
   from_role: str
   to_role:   str
@@ -93,7 +93,7 @@ class KnowledgeRelation:
 @dataclass(frozen=True)
 class KnowledgeContext:
   '''A named lookup context with time scope and limits.
-  带时间语境与限度的具名查阅情境，不是可执行的判别式。'''
+  带时间语境与限度的具名查阅情境。'''
 
   context_id: str
   label:      str
@@ -109,7 +109,7 @@ class KnowledgeContext:
 @dataclass(frozen=True)
 class KnowledgeSource:
   '''A source witness with attribution and evidentiary boundaries.
-  带署名与证据边界的来源见证；仓内转述不升级为已核古籍见证。'''
+  带署名与证据边界的来源见证。'''
 
   source_id:   str
   work:        str
@@ -137,7 +137,7 @@ class KnowledgeSource:
 @dataclass(frozen=True)
 class LegacyDescription:
   '''The exact placement and condition metadata of an old description.
-  旧描述的字段、顺序及条件元数据，仅用于兼容与迁移追溯。'''
+  旧描述的字段、顺序及条件元数据。'''
 
   object_id:     str
   field:         str
@@ -161,7 +161,7 @@ class LegacyDescription:
 @dataclass(frozen=True)
 class KnowledgeEntry:
   '''An interpretation with independently recorded source, premise and output states.
-  分别记录来源、前提及输出状态的解释条目；多情境标签不隐含 AND/OR。'''
+  分别记录来源、前提及输出状态的解释条目。'''
 
   claim_id:      str
   text:          str
@@ -269,13 +269,11 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 class KnowledgeBase:
   '''Validate, index, query and export immutable interpretation records.
-  校验、索引、查询并导出不可变解释条目，不计算命盘适用性。
+  校验、索引、查询并导出不可变解释条目。
 
   Note:
   - JSON is the editing source; indexes and exports are derived.
   - JSON 为编辑来源；索引与导出由它生成。
-  - Source state, applicability organization and chart verdicts are independent.
-  - 来源状态、前提整理状态与命盘判别相互独立。
   '''
 
   def __init__(
@@ -407,7 +405,7 @@ class KnowledgeBase:
     include_reference_only: bool = False,
   ) -> tuple[KnowledgeEntry, ...]:
     '''Intersect lookup filters, preserving corpus order and output eligibility.
-    按查阅条件取交集，保留语料顺序及输出资格；人工情境不构成命盘判别。
+    按查阅条件取交集，保留语料顺序及输出资格。
 
     Note:
     - Object lookup includes every bound role. Unknown filters fail explicitly.
@@ -470,7 +468,7 @@ class KnowledgeBase:
     manual_context: bool = False,
   ) -> str:
     '''Display text, premises and limits; source details are optional.
-    展示原文、前提与限度；可选择显示来源详情，始终不判断命盘适用性。
+    展示原文、前提与限度；可选择显示来源详情。
     '''
     if not isinstance(entry, KnowledgeEntry):
       raise TypeError(f'Expected KnowledgeEntry, got {type(entry)}')
@@ -512,7 +510,7 @@ class KnowledgeBase:
         source = self.sources[source_id]
         lines.extend((
           f'来源：{source.source_id}；{source.work}；{source.attribution}；{source.edition}；{source.locator}',
-          f'{source.url}',
+          source.url,
           f'文本层：{source.text_layer}；谱系：{source.lineage}；见证状态：{source.state}',
           f'引文／记录：{source.excerpt}',
           f'支持范围：{source.supports}',

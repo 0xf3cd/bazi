@@ -819,15 +819,13 @@ def test_default_projection_drops_conditional_and_reference_only_claims() -> Non
     output=DescriptionOutput.REFERENCE_ONLY,
   )
 
-  items: list[str | DescriptionClaim] = [
-    'Legacy claim.', default, conditional, reference, conditional_reference,
+  items: list[DescriptionClaim] = [
+    default, conditional, reference, conditional_reference,
   ]
   assert _project_texts(items, include_reference_only=False) == [
-    'Legacy claim.',
     'Default claim.',
   ]
   assert _project_texts(items, include_reference_only=True) == [
-    'Legacy claim.',
     'Default claim.',
     'Conditional claim.',
     'Reference-only claim.',

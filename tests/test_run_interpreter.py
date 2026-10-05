@@ -442,6 +442,7 @@ def test_knowledge_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize('args', [
   ('--query-knowledge', '--birth-time', '2000-01-01 12:00', '--gender', 'male'),
+  ('--validate-knowledge', '--birth-time', ''),
   ('--query-knowledge', '--seed', '42'), ('--query-knowledge', '--count', '1'),
   ('--validate-knowledge', '--export-knowledge-base'), ('--query-knowledge', '--output-dir', 'output'),
   ('--object', 'tiangan.ding'), ('--knowledge-source', 'source.json'),

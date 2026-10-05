@@ -5,14 +5,14 @@ import random
 import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Final
+from typing import Final, get_args
 
 from run_demo import get_basic_info
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import Applicability, KnowledgeBase
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
@@ -137,7 +137,7 @@ def save_chart_examples(count: int = 50) -> None:
 
 
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if any((args.birth_time, args.gender, args.seed is not None, args.count is not None,
+  if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
           args.output_dir, args.export_knowledge_base)):
     parser.error('Knowledge mode cannot be combined with chart input or TXT export flags')
   filters = {
@@ -199,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--topic', help='Knowledge topic.')
   parser.add_argument('--source', dest='source_id', help='Source-witness ID.')
   parser.add_argument('--viewpoint', help='Interpretation viewpoint.')
-  parser.add_argument('--applicability', choices=('unconditional', 'described', 'unresolved'), help='Premise organization state.')
+  parser.add_argument('--applicability', choices=get_args(Applicability), help='Premise organization state.')
   parser.add_argument('--time-scope', help='Time scope recorded by a lookup context.')
   args = parser.parse_args(argv)
 

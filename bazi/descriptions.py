@@ -119,20 +119,16 @@ class DescriptionClaim:
 DescriptionClaims: TypeAlias = frozendict[str, tuple[DescriptionClaim, ...]]
 
 
-'''A bare string or an explicit legacy claim. / 裸字符串或显式旧语料条目。'''
-_DescriptionItem: TypeAlias = str | DescriptionClaim
-
-
 class _ShishenCorpusDescription(TypedDict):
-  general:        list[_DescriptionItem]
-  in_good_status: list[_DescriptionItem]
-  in_bad_status:  list[_DescriptionItem]
-  relationship:   list[_DescriptionItem]
+  general:        list[DescriptionClaim]
+  in_good_status: list[DescriptionClaim]
+  in_bad_status:  list[DescriptionClaim]
+  relationship:   list[DescriptionClaim]
 
 
 class _TianganCorpusDescription(TypedDict):
-  general:     list[_DescriptionItem]
-  personality: list[_DescriptionItem]
+  general:     list[DescriptionClaim]
+  personality: list[DescriptionClaim]
 
 
 def _legacy_claim(entry: KnowledgeEntry, legacy: LegacyDescription) -> DescriptionClaim:
@@ -146,7 +142,7 @@ def _legacy_claim(entry: KnowledgeEntry, legacy: LegacyDescription) -> Descripti
   )
 
 
-def _legacy_items(object_id: str, field: str) -> list[_DescriptionItem]:
+def _legacy_items(object_id: str, field: str) -> list[DescriptionClaim]:
   positioned = [
     (legacy.ordinal, _legacy_claim(entry, legacy))
     for entry in _KNOWLEDGE_BASE.entries.values()
@@ -191,20 +187,26 @@ _TIANGAN_DESCRIPTION_CORPUS: Final[frozendict[Tiangan, _TianganCorpusDescription
 })
 
 
-def _selected_items(items: list[_DescriptionItem], include_reference_only: bool) -> list[_DescriptionItem]:
+def _selected_items(
+  items: list[DescriptionClaim],
+  include_reference_only: bool,
+) -> list[DescriptionClaim]:
   assert isinstance(include_reference_only, bool)
   return [
     item for item in items
     if (
-      include_reference_only or not isinstance(item, DescriptionClaim)
+      include_reference_only
       or (item.output is DescriptionOutput.DEFAULT and not item.conditions)
     )
   ]
 
 
-def _project_texts(items: list[_DescriptionItem], include_reference_only: bool) -> list[str]:
+def _project_texts(
+  items: list[DescriptionClaim],
+  include_reference_only: bool,
+) -> list[str]:
   return [
-    item.text if isinstance(item, DescriptionClaim) else item
+    item.text
     for item in _selected_items(items, include_reference_only)
   ]
 
@@ -241,13 +243,11 @@ def _complete_tiangan_description(tg: Tiangan) -> TianganDescription:
   return _project_tiangan_description(_TIANGAN_DESCRIPTION_CORPUS[tg], include_reference_only=True)
 
 
-def _selected_claims(items: list[_DescriptionItem], include_reference_only: bool) -> tuple[DescriptionClaim, ...]:
-  assert isinstance(items, list)
-  claims: list[DescriptionClaim] = []
-  for item in _selected_items(items, include_reference_only):
-    assert isinstance(item, DescriptionClaim)
-    claims.append(item)
-  return tuple(claims)
+def _selected_claims(
+  items: list[DescriptionClaim],
+  include_reference_only: bool,
+) -> tuple[DescriptionClaim, ...]:
+  return tuple(_selected_items(items, include_reference_only))
 
 
 def _shishen_claims(shishen: Shishen, include_reference_only: bool) -> DescriptionClaims:

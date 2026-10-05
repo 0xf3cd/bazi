@@ -108,6 +108,17 @@ def test_premises_are_organized_without_inventing_rules() -> None:
   assert '#194' in ' '.join(k.entry('shensha.guoyin.wuxing_jingji').limits)
 
 
+def test_migrated_legacy_field_premises_are_conserved() -> None:
+  # Column wording from the pre-migration descriptions module, not chart predicates.
+  premises = {
+    'in_good_status': '当十神处于力量不过强，状态良好的时候（如不被冲、克，也不过旺/为命主喜用时），这个十神代表的特征。',
+    'in_bad_status': '当十神过旺（如在天干和地支藏干中出现3次）或被其他元素冲克（如处于“绝”一柱/受刑、穿、克...）的时候，这个十神代表的特征。',
+  }
+  for entry in KNOWLEDGE_BASE.entries.values():
+    if entry.legacy is not None:
+      assert entry.legacy.field_premise == premises.get(entry.legacy.field, ''), entry.claim_id
+
+
 def test_edit_validate_query_render_export_reload(tmp_path: Path) -> None:
   data = json.loads(KNOWLEDGE_BASE.export_json())
   entry = next(value for value in data['entries'] if value['claim_id'] == 'legacy.tiangan.geng.regulated_transit')

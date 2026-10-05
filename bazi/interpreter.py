@@ -22,8 +22,8 @@ class Interpreter:
     `include_reference_only=True` is passed. / 仅在传入 `include_reference_only=True`
     时返回不参与默认输出的断言。
   - `bazi.knowledge` exposes roles, topics, premises and contexts; these legacy queries
-    retain their field shapes and do not decide chart applicability.
-  - `bazi.knowledge` 提供角色、主题、前提及情境；旧查询保留字段形状，不判断命盘适用性。
+    retain their field shapes.
+  - `bazi.knowledge` 提供角色、主题、前提及情境；旧查询保留字段形状。
   - Structured queries expose immutable claims and source witnesses.
   - 结构化查询返回不可变条目和来源见证。
   '''
