@@ -208,6 +208,8 @@ class KnowledgeEntry:
       raise ValueError(f'Unconditional entry has a premise: {self.claim_id}')
     if self.applicability == 'described' and not self.premise.strip():
       raise ValueError(f'Described entry needs premise text: {self.claim_id}')
+    if self.legacy is not None and self.legacy.conditions and self.applicability == 'unconditional':
+      raise ValueError(f'Unconditional entry has legacy conditions: {self.claim_id}')
     if (self.source_state == 'unverified') != (not self.sources):
       raise ValueError(f'Source state and witnesses disagree: {self.claim_id}')
     if self.output == 'default' and (
@@ -497,6 +499,8 @@ class KnowledgeBase:
       lines.extend('情境限度：' + limit for limit in context.limits)
     lines.extend('例外：' + exception for exception in entry.exceptions)
     lines.extend('限度：' + limit for limit in entry.limits)
+    if entry.legacy is not None and entry.legacy.field_premise:
+      lines.append(f'旧栏目前提（待梳理；未作为判据）：{entry.legacy.field_premise}')
     if show_sources:
       lines.extend((
         f'条目：{entry.claim_id}；署名：{entry.attribution}',
@@ -504,8 +508,6 @@ class KnowledgeBase:
         f'主题：{"／".join(entry.topics)}；口径：{entry.viewpoint}；来源状态：{entry.source_state}',
       ))
       lines.extend(f'文字关系：{relation.from_role}→{relation.to_role}；{relation.text}' for relation in entry.relations)
-      if entry.legacy is not None and entry.legacy.field_premise:
-        lines.append(f'旧栏目前提（待梳理；未作为判据）：{entry.legacy.field_premise}')
       for source_id in entry.sources:
         source = self.sources[source_id]
         lines.extend((

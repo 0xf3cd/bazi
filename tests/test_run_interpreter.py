@@ -2,15 +2,17 @@
 
 import re
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from run_interpreter import interpret, main
+from run_interpreter import interpret, main, _object_text
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
+from bazi.defines import Shishen
 from bazi.interpreter import Interpreter
 from bazi.knowledge import KnowledgeBase
 
@@ -38,9 +40,9 @@ def test_empty_knowledge_projection_keeps_chart_counts(monkeypatch: pytest.Monke
   assert '定义：' not in text and '仅供参考' not in text
 
 
-def _run_cli(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def _run_cli(cwd: Path, *args: str, script: Path | None = None) -> subprocess.CompletedProcess[str]:
   return subprocess.run(
-    [sys.executable, str(Path(__file__).parents[1] / 'run_interpreter.py'), *args],
+    [sys.executable, str(Path(__file__).parents[1] / 'run_interpreter.py' if script is None else script), *args],
     cwd=cwd,
     capture_output=True,
     text=True,
@@ -462,19 +464,94 @@ def test_knowledge_validation_rejects_corrupt_source_before_export(tmp_path: Pat
   assert not (tmp_path / 'out.json').exists()
 
 
-def test_validation_reads_the_edited_bundled_source_at_call_time(
-  tmp_path: Path,
-  monkeypatch: pytest.MonkeyPatch,
-  capsys: pytest.CaptureFixture[str],
-) -> None:
-  import bazi.knowledge as module
+@pytest.fixture
+def knowledge_checkout(tmp_path: Path) -> Path:
+  root = Path(__file__).parents[1]
+  shutil.copytree(root / 'bazi', tmp_path / 'bazi', ignore=shutil.ignore_patterns('__pycache__'))
+  for name in ('run_interpreter.py', 'run_demo.py'):
+    shutil.copyfile(root / name, tmp_path / name)
+  return tmp_path
 
-  (tmp_path / 'knowledge_data.json').write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  monkeypatch.setattr(module, '__file__', str(tmp_path / 'knowledge.py'))
-  with pytest.raises(SystemExit) as caught:
-    main(['--validate-knowledge'])
-  assert caught.value.code == 2
-  assert 'Duplicate JSON key' in capsys.readouterr().err
+
+def test_validation_reads_corrupt_bundled_source_in_a_fresh_process(knowledge_checkout: Path) -> None:
+  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
+  custom = knowledge_checkout / 'custom.json'
+  custom.write_bytes(corpus.read_bytes())
+  corpus.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
+  script = knowledge_checkout / 'run_interpreter.py'
+  invalid = _run_cli(knowledge_checkout, '--validate-knowledge', script=script)
+  assert invalid.returncode == 2
+  assert 'Duplicate JSON key' in invalid.stderr and 'Traceback' not in invalid.stderr
+  valid = _run_cli(knowledge_checkout, '--validate-knowledge', '--knowledge-source', str(custom), script=script)
+  assert valid.returncode == 0 and '校验通过：' in valid.stdout
+  corpus.unlink()
+  exported = knowledge_checkout / 'output.json'
+  exported.write_text('old output', encoding='utf-8')
+  independent = _run_cli(
+    knowledge_checkout, '--knowledge-source', str(custom), '--export-knowledge-json', str(exported), script=script,
+  )
+  assert independent.returncode == 0, independent.stderr
+  assert KnowledgeBase.load(exported).entries == KNOWLEDGE_BASE.entries
+
+
+@pytest.mark.parametrize('mutation', ['new-source', 'zhushi', 'removed-unused-source'])
+def test_modern_knowledge_loading_is_independent_of_legacy_projection(
+  knowledge_checkout: Path,
+  mutation: str,
+) -> None:
+  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
+  data = json.loads(corpus.read_text(encoding='utf-8'))
+  if mutation == 'new-source':
+    witness = dict(data['sources'][1])
+    witness.update(source_id='independent_probe', lineage='independent_probe')
+    data['sources'].append(witness)
+    next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')['sources'].append('independent_probe')
+  elif mutation == 'zhushi':
+    data['sources'][1]['text_layer'] = 'zhushi'
+  else:
+    data['sources'] = [source for source in data['sources'] if source['source_id'] != 'yuanhai_ziping_stem_table']
+  corpus.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  result = _run_cli(knowledge_checkout, '--validate-knowledge', script=knowledge_checkout / 'run_interpreter.py')
+  assert result.returncode == 0 and '校验通过：' in result.stdout
+  imported = subprocess.run(
+    [sys.executable, '-B', '-c', 'import bazi, sys; assert "bazi.descriptions" not in sys.modules; from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
+    cwd=knowledge_checkout, capture_output=True, text=True, encoding='utf-8', check=False,
+  )
+  assert imported.returncode == 0, imported.stderr
+
+
+@pytest.mark.parametrize('alias', ['direct', 'hardlink', 'symlink'])
+def test_custom_knowledge_export_cannot_overwrite_bundled_source(
+  knowledge_checkout: Path,
+  alias: str,
+) -> None:
+  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
+  custom = knowledge_checkout / 'custom.json'
+  custom.write_bytes(corpus.read_bytes())
+  target = corpus
+  if alias != 'direct':
+    target = knowledge_checkout / 'alias.json'
+    if alias == 'hardlink':
+      target.hardlink_to(corpus)
+    else:
+      try:
+        target.symlink_to(corpus)
+      except OSError:
+        pytest.skip('Symbolic links unavailable')
+  before = corpus.read_bytes()
+  result = _run_cli(
+    knowledge_checkout, '--knowledge-source', str(custom), '--export-knowledge-json', str(target),
+    script=knowledge_checkout / 'run_interpreter.py',
+  )
+  assert result.returncode == 2 and 'overwrite the editing source' in result.stderr
+  assert corpus.read_bytes() == before
+
+
+def test_object_text_keeps_legacy_subject_while_queries_include_other_roles() -> None:
+  relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
+  assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
+  assert relation.text not in _object_text(KNOWLEDGE_BASE, Shishen.七杀, True, False)
+  assert relation.text in _object_text(KNOWLEDGE_BASE, Shishen.食神, True, False)
 
 
 def test_knowledge_export_cannot_truncate_its_editing_source(tmp_path: Path) -> None:

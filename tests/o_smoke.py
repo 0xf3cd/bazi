@@ -38,7 +38,7 @@ def main() -> int:
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
   from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
-  from bazi.knowledge import KnowledgeBase, KnowledgeRole
+  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -194,6 +194,11 @@ def main() -> int:
      lambda: KnowledgeRole('role', 1)), # type: ignore[arg-type]
     ('KnowledgeEntry ineligible default', ValueError,
      lambda: replace(knowledge.entry('legacy.shishen.SH-199'), output='default')),
+    ('KnowledgeEntry unconditional legacy condition', ValueError,
+     lambda: replace(
+       knowledge.entry('tiangan.ding.definition'),
+       legacy=LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), ''),
+     )),
     ('DescriptionClaim wrong condition member', TypeError,
      lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
     ('DescriptionSourceRecord wrong text layer', TypeError,

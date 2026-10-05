@@ -24,6 +24,7 @@ def _object_text(knowledge: KnowledgeBase, subject: Tiangan | Shishen, include_r
   return '\n\n'.join(
     '／'.join(entry.topics) + '：' + knowledge.render(entry, show_sources=show_sources)
     for entry in knowledge.query(object_id=object_id, include_reference_only=include_reference_only)
+    if entry.legacy is None or entry.legacy.object_id == object_id
   )
 
 
@@ -160,9 +161,14 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -
     if not selection:
       print('无匹配条目。')
   if args.export_knowledge_json is not None:
-    editing_source = Path(__file__).parent / 'bazi/knowledge_data.json' if args.knowledge_source is None else args.knowledge_source
-    if args.export_knowledge_json.resolve() == editing_source.resolve() or (
-      args.export_knowledge_json.exists() and args.export_knowledge_json.samefile(editing_source)
+    editing_sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
+    if args.knowledge_source is not None:
+      editing_sources += (args.knowledge_source,)
+    if any(
+      args.export_knowledge_json.resolve() == source.resolve() or (
+        args.export_knowledge_json.exists() and source.exists() and args.export_knowledge_json.samefile(source)
+      )
+      for source in editing_sources
     ):
       parser.error('Export must not overwrite the editing source')
     try:

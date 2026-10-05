@@ -12,6 +12,7 @@ from bazi.descriptions import DescriptionSource
 from bazi.interpreter import Interpreter
 from bazi.knowledge import (
   KnowledgeBase, KnowledgeObject, KnowledgeRole, KnowledgeRelation, KnowledgeEntry,
+  LegacyDescription,
 )
 
 
@@ -150,11 +151,15 @@ def test_render_metadata_selection_and_limits() -> None:
   assert '来源尚未核实' not in k.render(historical)
   text = k.render(k.entry('legacy.shishen.SH-011'), show_sources=False)
   assert '前提待梳理' in text and '命盘适用性未判断' in text
+  assert '旧栏目前提（待梳理；未作为判据）：当十神处于力量不过强' in text
   assert '条目：' not in text and '来源：' not in text
   legacy_detail = k.render(k.entry('legacy.shishen.SH-011'))
   assert '旧栏目前提（待梳理；未作为判据）：当十神处于力量不过强' in legacy_detail
   assert '如不被冲、克，也不过旺/为命主喜用时' in legacy_detail
   assert '来源状态：repository_attributed' in k.render(k.entry('shensha.guoyin.modern'))
+  for entry in k.entries.values():
+    if entry.legacy is not None and entry.legacy.field_premise:
+      assert entry.legacy.field_premise in k.render(entry, show_sources=False)
 
 
 def test_registries_and_results_are_transitively_immutable() -> None:
@@ -255,6 +260,7 @@ def test_public_value_constructors_validate_all_declared_fields() -> None:
   {'source_state': 'unverified'}, {'sources': ()},
   {'output': 'default', 'applicability': 'unresolved'},
   {'source_state': 'editorial'}, {'applicability': 'typo'}, {'source_state': 'typo'}, {'output': 'typo'},
+  {'legacy': LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), '')},
 ])
 def test_entry_cross_field_invariants(changes: dict[str, Any]) -> None:
   with pytest.raises(ValueError):

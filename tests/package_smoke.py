@@ -89,6 +89,7 @@ def main() -> None:
 
   import bazi
   check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
+  check('bazi.descriptions' not in sys.modules and 'bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart
   from bazi.school import BaziConfig
