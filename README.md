@@ -106,8 +106,7 @@ of frozen `DescriptionClaim` objects. Source lookup returns a frozen record with
 the work, attribution, edition, locator, URL, text layer, lineage, excerpt and
 evidentiary boundaries. Text-returning methods retain their existing field/list shape.
 
-The legacy projections contain 291 claims: 19 default definitions and 272 reference-only
-claims. Their default queries select only default-output claims without legacy conditions.
+Default queries select only default-output claims without legacy conditions.
 Complete queries also include named historical imagery, repository editorial text
 and legacy text marked source-unverified. An empty `sources`
 tuple and `Legacy corpus; source unverified` attribution preserve that last state;
@@ -150,9 +149,7 @@ assert tuple(restored.entries.values()) == entries
 edited = KnowledgeBase.load(Path('edited-knowledge.json'))
 ```
 
-The knowledge corpus contains the 291 migrated claims and four reference-only 五行 /
-国印 examples. The original 19 default definitions retain their eligibility. New
-examples preserve existing rule documentation and its limits; repository attribution
+Examples preserve existing rule documentation and its limits; repository attribution
 is not a newly verified classical witness.
 
 | Entry information | Meaning |
@@ -262,7 +259,7 @@ python run_interpreter.py \
 Fixed birth inputs accept one chart and cannot be combined with a seed.
 
 Reference-only text is labelled with source and premise states. Chart display and TXT
-export now use knowledge topics rather than good/bad headings, and include the recorded
+export use knowledge topics and include the recorded
 premises and limits. They do not select a chart's strength or fortune status.
 
 Exported TXT files have terminal color codes removed.
