@@ -210,6 +210,8 @@ class KnowledgeEntry:
       raise ValueError(f'Described entry needs premise text: {self.claim_id}')
     if self.legacy is not None and self.legacy.conditions and self.applicability == 'unconditional':
       raise ValueError(f'Unconditional entry has legacy conditions: {self.claim_id}')
+    if self.legacy is not None and self.legacy.field_premise and self.applicability == 'unconditional':
+      raise ValueError(f'Unconditional entry has a legacy field premise: {self.claim_id}')
     if (self.source_state == 'unverified') != (not self.sources):
       raise ValueError(f'Source state and witnesses disagree: {self.claim_id}')
     if self.output == 'default' and (

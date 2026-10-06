@@ -199,6 +199,11 @@ def main() -> int:
        knowledge.entry('tiangan.ding.definition'),
        legacy=LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), ''),
      )),
+    ('KnowledgeEntry unconditional legacy field premise', ValueError,
+     lambda: replace(
+       knowledge.entry('tiangan.ding.definition'),
+       legacy=LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise'),
+     )),
     ('DescriptionClaim wrong condition member', TypeError,
      lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
     ('DescriptionSourceRecord wrong text layer', TypeError,

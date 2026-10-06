@@ -109,7 +109,7 @@ def test_premises_are_organized_without_inventing_rules() -> None:
 
 
 def test_migrated_legacy_field_premises_are_conserved() -> None:
-  # Column wording from the pre-migration descriptions module, not chart predicates.
+  # Column wording from the pre-migration descriptions module.
   premises = {
     'in_good_status': '当十神处于力量不过强，状态良好的时候（如不被冲、克，也不过旺/为命主喜用时），这个十神代表的特征。',
     'in_bad_status': '当十神过旺（如在天干和地支藏干中出现3次）或被其他元素冲克（如处于“绝”一柱/受刑、穿、克...）的时候，这个十神代表的特征。',
@@ -272,6 +272,7 @@ def test_public_value_constructors_validate_all_declared_fields() -> None:
   {'output': 'default', 'applicability': 'unresolved'},
   {'source_state': 'editorial'}, {'applicability': 'typo'}, {'source_state': 'typo'}, {'output': 'typo'},
   {'legacy': LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), '')},
+  {'legacy': LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise')},
 ])
 def test_entry_cross_field_invariants(changes: dict[str, Any]) -> None:
   with pytest.raises(ValueError):
