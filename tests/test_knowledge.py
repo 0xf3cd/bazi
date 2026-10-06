@@ -65,7 +65,9 @@ def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
     'legacy.shishen.SH-052', 'legacy.shishen.SH-066',
   )
   assert _ids(k.query(object_id='shishen.pianyin', context_id='shishen.pianyin_favorable_or_balanced', topic='性格', include_reference_only=True)) == ('legacy.shishen.SH-199',)
-  assert 'legacy.shishen.SH-011' in _ids(k.query(object_id='shishen.bijian', applicability='unresolved', include_reference_only=True))
+  bijian = _ids(k.query(object_id='shishen.bijian', applicability='unresolved', include_reference_only=True))
+  assert 'legacy.shishen.SH-011' in bijian
+  assert 'shishen.bijian.definition' not in bijian
   assert _ids(k.query(object_id='tiangan.geng', topic='性格', time_scope='行运', applicability='described', include_reference_only=True)) == ('legacy.tiangan.geng.regulated_transit',)
   assert _ids(k.query(object_id='shensha.guoyin', viewpoint='MODERN', include_reference_only=True)) == ('shensha.guoyin.modern',)
   assert _ids(k.query(object_id='shensha.guoyin', viewpoint='WUXING_JINGJI', include_reference_only=True)) == ('shensha.guoyin.wuxing_jingji',)
@@ -110,28 +112,57 @@ def test_premises_are_organized_without_inventing_rules() -> None:
     if entry.legacy is None:
       assert entry.output == 'reference_only' and entry.source_state == 'repository_attributed'
       assert all(k.sources[source].text_layer == 'editorial' for source in entry.sources)
-  assert '#194' in ' '.join(k.entry('shensha.guoyin.wuxing_jingji').limits)
 
 
-def test_reference_samples_preserve_relation_and_lookup_boundaries() -> None:
+def test_reference_samples_preserve_text_and_complete_limits() -> None:
   k = KNOWLEDGE_BASE
-  for claim_id, text in (('wuxing.mu_sheng_huo', '木生火。'), ('wuxing.jin_ke_mu', '金克木。')):
+  samples: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ('wuxing.mu_sheng_huo', '木生火。', ('仅说明基础关系方向，不证明命盘中的有效生克或流转。',)),
+    ('wuxing.jin_ke_mu', '金克木。', ('仅说明基础关系方向，不证明命盘中的有效生克或流转。',)),
+    ('shensha.guoyin.modern', '国印的 MODERN 表按禄前第九位（含禄，偏移 +8）取值。', (
+      '表值与四柱查法的支持来源分开；古籍的守照身命表述不等于查四柱地支。',
+      '本条转述仓内来源边界，未新增已核古籍见证。',
+    )),
+    ('shensha.guoyin.wuxing_jingji', '国印的 WUXING_JINGJI 表按禄前第八位（含禄，偏移 +7）取值。', (
+      '年干锚与含禄起算的明文出自《五行精纪注释》的今人【注释】，不混作【原文】的断言。',
+      '白文、清抄本与注释本的传抄关系未定（#194）。',
+    )),
+  )
+  for claim_id, text, limits in samples:
     entry = k.entry(claim_id)
     assert entry.text == text
-    assert '不证明命盘中的有效生克或流转' in k.render(entry, show_sources=False)
-  modern = k.entry('shensha.guoyin.modern')
-  assert '含禄，偏移 +8' in modern.text
-  assert '表值与四柱查法的支持来源分开' in k.render(modern, show_sources=False)
-  assert '守照身命表述不等于查四柱地支' in k.render(modern, show_sources=False)
-  alternative = k.entry('shensha.guoyin.wuxing_jingji')
-  assert '含禄，偏移 +7' in alternative.text
-  assert '今人【注释】，不混作【原文】的断言' in k.render(alternative, show_sources=False)
-  assert '#194' in k.render(alternative, show_sources=False)
-  assert '不等同于偏印与食神共现' in k.render(k.entry('legacy.shishen.SH-066'), show_sources=False)
-  assert '身弱与克太多的判据尚未定义' in k.render(k.entry('legacy.tiangan.ding.weak_state'), show_sources=False)
-  relation = k.render(k.entry('legacy.shishen.SH-052'), show_sources=False)
-  assert '财未具体分为正财或偏财' in relation
-  assert '不表示有效制杀已成立' in relation
+    assert entry.limits == limits
+    rendered = k.render(entry, show_sources=False)
+    for limit in limits:
+      assert limit in rendered
+
+  contexts: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ('legacy.shishen.SH-066', 'shishen.xiaoyin_duoshi', (
+      '枭印夺食的判据及适用范围尚未定义，不等同于偏印与食神共现。',
+    )),
+    ('legacy.shishen.SH-199', 'shishen.pianyin_favorable_or_balanced', (
+      '喜用、不过旺及不受刑克冲害的具体判据尚未确认。',
+    )),
+    ('legacy.tiangan.ding.weak_state', 'tiangan.ding_weak_and_overcontrolled', (
+      '身弱与克太多的判据尚未定义。',
+    )),
+  )
+  for claim_id, context_id, limits in contexts:
+    entry = k.entry(claim_id)
+    assert entry.contexts == (context_id,)
+    assert k.contexts[context_id].limits == limits
+    rendered = k.render(entry, show_sources=False)
+    for limit in limits:
+      assert limit in rendered
+
+  relation = k.entry('legacy.shishen.SH-052')
+  assert relation.limits == (
+    '财未具体分为正财或偏财。',
+    '克制与避祸等解释的适用前提尚未还原，不表示有效制杀已成立。',
+  )
+  rendered = k.render(relation, show_sources=False)
+  for limit in relation.limits:
+    assert limit in rendered
 
 
 def test_migrated_legacy_field_premises_are_conserved() -> None:
