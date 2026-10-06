@@ -27,6 +27,7 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
   'bazi/calendar/celestial_data/data/jieqi_moments.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo1.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo2.txt',
+  'bazi/knowledge_data.json',
 )
 SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
@@ -149,9 +150,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
   python = consumer(work / 'typing-venv', rebuilt)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = 'from datetime import datetime\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart\nchart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
+  good = ('from datetime import datetime\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart\n'
+          'from bazi.knowledge import KnowledgeBase, KnowledgeEntry\n'
+          'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
+          'knowledge = KnowledgeBase.load()\n'
+          'entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")\n'
+          'text: str = knowledge.export_json(entries)\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
-  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\n', encoding='utf-8')
+  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\nknowledge.query(object_id=42)\n', encoding='utf-8')
   command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
   run([*command, 'good.py'], foreign)
   result = subprocess.run(

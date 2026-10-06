@@ -13,17 +13,17 @@ from .descriptions import (
 
 class Interpreter:
   '''
-  `Interpreter` statically looks up Shishen and Tiangan descriptions. Text-returning
-  methods provide deep copies; structured queries return immutable claims.
-  `Interpreter` 以静态方法查询十神和天干描述。文字查询返回深拷贝；结构化查询返回不可变条目。
+  `Interpreter` provides the legacy Shishen and Tiangan projections of the knowledge corpus.
+  Text-returning methods provide deep copies; structured queries return immutable claims.
+  `Interpreter` 提供知识语料的旧十神和天干投影。文字查询返回深拷贝；结构化查询返回不可变条目。
 
   Note:
   - Claims that are not eligible for default output are excluded unless
     `include_reference_only=True` is passed. / 仅在传入 `include_reference_only=True`
     时返回不参与默认输出的断言。
-  - Combining the descriptions against a specific chart (i.e. producing a whole-chart
-    reading) is currently done in the `run_interpreter` entry script, not in this class.
-  - 针对具体命盘组合这些描述（即整盘解读）目前在 `run_interpreter` 入口脚本中完成，不在本类中。
+  - `bazi.knowledge` exposes roles, topics, premises and contexts; these legacy queries
+    retain their field shapes.
+  - `bazi.knowledge` 提供角色、主题、前提及情境；旧查询保留字段形状。
   - Structured queries expose immutable claims and source witnesses.
   - 结构化查询返回不可变条目和来源见证。
   '''

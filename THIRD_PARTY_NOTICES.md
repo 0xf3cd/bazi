@@ -13,7 +13,8 @@ relicense third-party data, quotations or reference material included in this pr
   documentation, `bazi/calendar/celestial_data/SCHEMA.md`, is in the source archive,
   not the wheel.
 - The MIT grant for original code does not grant rights in third-party quotations,
-  reference material or interpretive corpus content. Citations are retained where
+  reference material or interpretive corpus content, including `bazi/knowledge_data.json`.
+  Citations are retained where
   present; they identify sources, not grants of permission.
 - External calculator observations in `tests/integration/external_baseline.json`
   identify their source, configuration and capture date. They are reference
