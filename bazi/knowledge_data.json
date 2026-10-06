@@ -8467,7 +8467,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [
-        "嵌套前提与中间结果尚未拆分，现有前提片段保留原句。"
+        "嵌套前提与中间结果尚未拆分。"
       ],
       "output": "reference_only",
       "legacy": {
