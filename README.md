@@ -149,7 +149,7 @@ assert tuple(restored.entries.values()) == entries
 edited = KnowledgeBase.load(Path('edited-knowledge.json'))
 ```
 
-Examples preserve existing rule documentation and its limits; repository attribution
+The 五行 / 国印 reference examples preserve existing rule documentation and its limits; repository attribution
 is not a newly verified classical witness.
 
 | Entry information | Meaning |
@@ -259,7 +259,7 @@ python run_interpreter.py \
 Fixed birth inputs accept one chart and cannot be combined with a seed.
 
 Reference-only text is labelled with source and premise states. Chart display and TXT
-export use knowledge topics and include the recorded
+export prefix entries with knowledge topics and include the recorded
 premises and limits. They do not select a chart's strength or fortune status.
 
 Exported TXT files have terminal color codes removed.
