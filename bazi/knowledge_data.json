@@ -175,7 +175,7 @@
     {
       "context_id": "tiangan.ding_weak_and_overcontrolled",
       "label": "丁火日主身弱条目情境",
-      "time_scope": "原局",
+      "time_scope": "未限定",
       "limits": [
         "身弱与克太多的判据尚未定义。"
       ]
@@ -8456,7 +8456,7 @@
       "topics": [
         "性格"
       ],
-      "applicability": "described",
+      "applicability": "unresolved",
       "premise": "丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多",
       "contexts": [
         "tiangan.ding_weak_and_overcontrolled"
@@ -8466,7 +8466,9 @@
       "attribution": "Legacy corpus; source unverified",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "嵌套前提与中间结果尚未拆分，现有前提片段保留原句。"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "tiangan.ding",

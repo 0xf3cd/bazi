@@ -165,6 +165,40 @@ def test_reference_samples_preserve_text_and_complete_limits() -> None:
     assert limit in rendered
 
 
+def test_ding_nested_premises_remain_unresolved_and_time_unspecified() -> None:
+  k = KNOWLEDGE_BASE
+  entry = k.entry('legacy.tiangan.ding.weak_state')
+  context_id = 'tiangan.ding_weak_and_overcontrolled'
+  assert entry.text == '丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多，则会变成胆小，多愁多虑。'
+  assert entry.premise == '丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多'
+  assert entry.applicability == 'unresolved'
+  assert entry.contexts == (context_id,)
+  assert k.contexts[context_id].time_scope == '未限定'
+  assert entry.limits == ('嵌套前提与中间结果尚未拆分，现有前提片段保留原句。',)
+  selected = k.query(
+    object_id='tiangan.ding', context_id=context_id, topic='性格',
+    applicability='unresolved', time_scope='未限定', include_reference_only=True,
+  )
+  assert selected == (entry,)
+  assert k.query(context_id=context_id, applicability='described', include_reference_only=True) == ()
+  assert k.query(context_id=context_id) == ()
+  with pytest.raises(ValueError, match='Unknown time_scope: 原局'):
+    k.query(context_id=context_id, time_scope='原局', include_reference_only=True)
+  for show_sources in (False, True):
+    rendered = k.render(entry, manual_context=True, show_sources=show_sources)
+    for text in (
+      entry.text, '前提：' + entry.premise, '前提待梳理', '来源尚未核实',
+      '人工给定情境；命盘适用性未判断',
+      '情境：tiangan.ding_weak_and_overcontrolled；未限定；丁火日主身弱条目情境',
+      '情境限度：身弱与克太多的判据尚未定义。',
+      '限度：嵌套前提与中间结果尚未拆分，现有前提片段保留原句。',
+    ):
+      assert text in rendered
+  restored = KnowledgeBase.from_json(k.export_json(selected))
+  assert restored.query(context_id=context_id, applicability='unresolved', time_scope='未限定', include_reference_only=True) == selected
+  assert restored.render(entry, manual_context=True) == k.render(entry, manual_context=True)
+
+
 def test_migrated_legacy_field_premises_are_conserved() -> None:
   # Column wording from the pre-migration descriptions module.
   premises = {
