@@ -275,8 +275,9 @@ def _source_record(source: DescriptionSource) -> DescriptionSourceRecord:
   return _DESCRIPTION_SOURCES[source]
 
 
-# The legacy tables keep mutable inner lists; Interpreter returns defensive copies.
-# 旧表保留可变的内层列表；Interpreter 返回防御性副本。
+# The legacy tables' entry dictionaries and lists are mutable; direct readers must not mutate either.
+# Interpreter.interpret_* returns deep copies.
+# 旧表的条目字典与列表可变，直接读取者不得修改；Interpreter.interpret_* 返回深拷贝。
 SHISHEN_DESCRIPTIONS: Final[frozendict[Shishen, ShishenDescription]] = frozendict({
   shishen: _project_shishen_description(description, include_reference_only=False)
   for shishen, description in _SHISHEN_DESCRIPTION_CORPUS.items()

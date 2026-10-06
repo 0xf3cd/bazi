@@ -52,6 +52,10 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
 def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
   k = KNOWLEDGE_BASE
   assert _ids(k.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)) == ('tiangan.ding.lamp_symbol',)
+  assert _ids(k.query(object_id='tiangan.ding', topic='定义', include_reference_only=True)) == ('tiangan.ding.definition',)
+  assert _ids(k.query(object_id='tiangan.ding', topic='性格', include_reference_only=True)) == (
+    'legacy.tiangan.ding.personality', 'legacy.tiangan.ding.weak_state', 'legacy.tiangan.ding.emotional_expression',
+  )
   assert _ids(k.query(topic='历史象', source_id='yuanhai_ziping_stem_symbols_p70', include_reference_only=True)) == (
     'tiangan.ding.lamp_symbol', 'tiangan.wu.wall_symbol', 'tiangan.xin.jewel_symbol', 'tiangan.ren.river_symbol',
   )
@@ -61,6 +65,7 @@ def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
     'legacy.shishen.SH-052', 'legacy.shishen.SH-066',
   )
   assert _ids(k.query(object_id='shishen.pianyin', context_id='shishen.pianyin_favorable_or_balanced', topic='性格', include_reference_only=True)) == ('legacy.shishen.SH-199',)
+  assert 'legacy.shishen.SH-011' in _ids(k.query(object_id='shishen.bijian', applicability='unresolved', include_reference_only=True))
   assert _ids(k.query(object_id='tiangan.geng', topic='性格', time_scope='行运', applicability='described', include_reference_only=True)) == ('legacy.tiangan.geng.regulated_transit',)
   assert _ids(k.query(object_id='shensha.guoyin', viewpoint='MODERN', include_reference_only=True)) == ('shensha.guoyin.modern',)
   assert _ids(k.query(object_id='shensha.guoyin', viewpoint='WUXING_JINGJI', include_reference_only=True)) == ('shensha.guoyin.wuxing_jingji',)
@@ -106,6 +111,27 @@ def test_premises_are_organized_without_inventing_rules() -> None:
       assert entry.output == 'reference_only' and entry.source_state == 'repository_attributed'
       assert all(k.sources[source].text_layer == 'editorial' for source in entry.sources)
   assert '#194' in ' '.join(k.entry('shensha.guoyin.wuxing_jingji').limits)
+
+
+def test_reference_samples_preserve_relation_and_lookup_boundaries() -> None:
+  k = KNOWLEDGE_BASE
+  for claim_id, text in (('wuxing.mu_sheng_huo', '木生火。'), ('wuxing.jin_ke_mu', '金克木。')):
+    entry = k.entry(claim_id)
+    assert entry.text == text
+    assert '不证明命盘中的有效生克或流转' in k.render(entry, show_sources=False)
+  modern = k.entry('shensha.guoyin.modern')
+  assert '含禄，偏移 +8' in modern.text
+  assert '表值与四柱查法的支持来源分开' in k.render(modern, show_sources=False)
+  assert '守照身命表述不等于查四柱地支' in k.render(modern, show_sources=False)
+  alternative = k.entry('shensha.guoyin.wuxing_jingji')
+  assert '含禄，偏移 +7' in alternative.text
+  assert '今人【注释】，不混作【原文】的断言' in k.render(alternative, show_sources=False)
+  assert '#194' in k.render(alternative, show_sources=False)
+  assert '不等同于偏印与食神共现' in k.render(k.entry('legacy.shishen.SH-066'), show_sources=False)
+  assert '身弱与克太多的判据尚未定义' in k.render(k.entry('legacy.tiangan.ding.weak_state'), show_sources=False)
+  relation = k.render(k.entry('legacy.shishen.SH-052'), show_sources=False)
+  assert '财未具体分为正财或偏财' in relation
+  assert '不表示有效制杀已成立' in relation
 
 
 def test_migrated_legacy_field_premises_are_conserved() -> None:

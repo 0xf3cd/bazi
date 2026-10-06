@@ -79,10 +79,14 @@ def test_cli_source_display_does_not_expand_reference_selection(tmp_path: Path) 
   assert 'legacy.' not in result.stdout
 
 
-def test_cli_reference_export_retains_unverified_and_unevaluated_states(tmp_path: Path) -> None:
+@pytest.mark.parametrize('chart_args', [
+  ('--birth-time', '2000-01-01 12:00', '--gender', 'male'),
+  ('--seed', '42'),
+])
+def test_cli_reference_export_retains_unverified_and_unevaluated_states(tmp_path: Path, chart_args: tuple[str, ...]) -> None:
   result = _run_cli(
     tmp_path,
-    '--birth-time', '2000-01-01 12:00', '--gender', 'male',
+    *chart_args,
     '--include-reference-only', '--show-sources',
     '--output-dir', str(tmp_path), '--export-knowledge-base',
   )
@@ -97,6 +101,11 @@ def test_cli_reference_export_retains_unverified_and_unevaluated_states(tmp_path
   ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
   assert '丁火有烛灯之象' in ding
   assert '《刻京台增补渊海子平大全》' in ding
+  for path in (tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'):
+    text = path.read_text(encoding='utf-8')
+    assert text.startswith(f'{path.stem}知识条目：\n')
+    assert '能量状态佳时所代表的特点' not in text
+    assert '能量状态不佳时所代表的特点' not in text
 
 
 def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
