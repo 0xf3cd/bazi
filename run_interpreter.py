@@ -13,6 +13,7 @@ from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
 from bazi.knowledge import Applicability, KnowledgeBase
+from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
@@ -180,6 +181,45 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -
   return 0
 
 
+def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+  if args.birth_time is None or args.gender is None or args.observation_scope is None:
+    parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
+  if any((args.seed is not None, args.count is not None, args.output_dir is not None, args.export_knowledge_base,
+          args.query_knowledge, args.validate_knowledge, args.export_knowledge_json is not None)) or any(
+    value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
+                                    args.viewpoint, args.applicability, args.time_scope)
+  ):
+    parser.error('Matching cannot be combined with random input, TXT export or knowledge modes/filters')
+  try:
+    result = evaluate_context(
+      BaziChart(Bazi.create(args.birth_time, args.gender)),
+      criterion_id=args.match_context,
+      profile=ContextProfile(args.observation_scope, args.ganzhi_year),
+      knowledge=KnowledgeBase.load(args.knowledge_source),
+      include_reference_only=args.include_reference_only,
+    )
+  except (OSError, TypeError, ValueError) as error:
+    parser.error(str(error))
+  print(result.render())
+  if args.export_context_json is not None:
+    sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
+    if args.knowledge_source is not None:
+      sources += (args.knowledge_source,)
+    if any(
+      args.export_context_json.resolve() == source.resolve() or (
+        args.export_context_json.exists() and source.exists() and args.export_context_json.samefile(source)
+      ) for source in sources
+    ):
+      parser.error('Export must not overwrite the editing source')
+    try:
+      args.export_context_json.parent.mkdir(parents=True, exist_ok=True)
+      args.export_context_json.write_text(result.export_json(), encoding='utf-8')
+    except OSError as error:
+      parser.error(str(error))
+    print(f'已导出前提判别记录：{args.export_context_json}')
+  return 0
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description='Display charts or query, validate and export interpretation knowledge.')
   parser.add_argument('--birth-time', help='Local civil time, e.g. "2000-01-01 12:00".')
@@ -201,8 +241,16 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--viewpoint', help='Interpretation viewpoint.')
   parser.add_argument('--applicability', choices=get_args(Applicability), help='Premise organization state.')
   parser.add_argument('--time-scope', help='Time scope recorded by a lookup context.')
+  parser.add_argument('--match-context', help='Registered premise ID; evaluate an explicitly scoped fixed chart.')
+  parser.add_argument('--observation-scope', choices=get_args(ObservationScope), help='Explicit natal or natal-plus-one-LIUNIAN scope; all hidden stems are included.')
+  parser.add_argument('--ganzhi-year', type=int, help='Ganzhi-year query coordinate for LIUNIAN, not a Gregorian timestamp.')
+  parser.add_argument('--export-context-json', type=Path, help='Export the matching record, evidence and complete knowledge snapshot.')
   args = parser.parse_args(argv)
 
+  if args.match_context is not None:
+    return _matching_main(parser, args)
+  if args.observation_scope is not None or args.ganzhi_year is not None or args.export_context_json is not None:
+    parser.error('Matching inputs require --match-context')
   if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
     return _knowledge_main(parser, args)
   if args.knowledge_source is not None or any(

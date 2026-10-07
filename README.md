@@ -72,6 +72,7 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
 | `bazi.descriptions` | `DescriptionClaim`, `DescriptionClaims`, `DescriptionSourceRecord`; `DescriptionSource`, `DescriptionLineage`, `DescriptionTextLayer`, `DescriptionOutput`, `DescriptionCondition` |
 | `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription` |
+| `bazi.context_matching` | `ContextProfile`, `ChartOccurrence`, `CriterionResult`, `EntryMatch`, `ContextResult`, `evaluate_context` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
 `bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
@@ -207,6 +208,87 @@ Knowledge modes accept no chart-input, `--output-dir` or legacy TXT-export flags
 Without a knowledge-mode flag, chart runner behavior and the existing parameter
 combinations remain available. JSON export refuses to overwrite the editing source,
 including through a filesystem alias.
+
+### Evaluate an explicitly scoped editorial premise
+
+The context matcher evaluates two registered repository-editorial premises:
+
+- `editorial.guansha_coexistence.v1`: 正官 and 七杀 each occur at least once.
+- `editorial.guansha_coexistence_female.v1`: the same coexistence AND female input.
+
+These bind respectively to the two `legal_trouble` and two `infidelity` editorial
+entries. They remain **reference-only**, with their original “也许” / “可能” text,
+editorial attribution and full source limits. Satisfying a premise is not evidence
+that a workplace, legal or relationship event happens.
+
+```python
+from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+
+result = evaluate_context(
+  chart,
+  criterion_id='editorial.guansha_coexistence.v1',
+  profile=ContextProfile('natal_and_liunian', ganzhi_year=2024),
+  include_reference_only=True,
+)
+print(result.render())
+restored_record = ContextResult.from_json(result.export_json())
+assert restored_record == result
+```
+
+The stem inventory is fixed: year/month/hour visible stems, every actual hidden
+stem in all four natal branches, and the selected LIUNIAN's visible and hidden
+stems when requested. The day-master visible stem is deliberately excluded;
+a hidden stem equal to the day master is still classified 比肩. Percentages are
+not weights, and repetitions are retained with pillar, query-local index, Ganzhi,
+origin, layer, stem and 十神. No strength/count threshold, adjacency, 去留 or
+effective 制化 condition is added.
+
+`ContextProfile` requires `observation_scope='natal'` or `'natal_and_liunian'`.
+The latter requires a Ganzhi-year coordinate for a complete verdict; this is a
+year label, not a Gregorian timestamp. Only LIUNIAN is included. A missing year,
+unavailable query or missing required kind yields `UNKNOWN`, even if partial
+natal observations already contain both classifications. Wrong types, unknown
+IDs and illegal combinations raise `TypeError` / `ValueError`; years accept only
+exact `int`, excluding `bool` and int subclasses. Natal scope rejects a year.
+
+`SATISFIED` and `NOT_SATISFIED` describe a complete, explicitly selected premise.
+`UNKNOWN` preserves known partial observations without claiming a complete
+verdict. Four registered controls (`tiangan.ding_weak_and_overcontrolled`,
+`tiangan.geng_regulated_transit`, `shishen.pianyin_favorable_or_balanced`,
+`shishen.xiaoyin_duoshi`) remain `predicate_undefined`, with their original
+premises and limits. `described` / `unresolved` are still knowledge organization,
+not computed truth values.
+
+Structural evaluation and entry matching are separate. A custom knowledge base
+with the same ID but a different entry, object, premise, context, source or output
+binding yields `binding_unrecognized` for that entry, rather than authenticating
+meaning by ID or keywords. Equal exported/reloaded bindings remain usable.
+Reference selection is opt-in; satisfying a criterion never grants default
+output eligibility. Independent `KnowledgeBase.render` still performs no evaluation.
+
+Results are immutable. JSON is derived from that record and preserves criterion
+definition/revision, profile, complete birth/gender/config identity, year/kind,
+all occurrences and the complete supplied knowledge snapshot. Restoration is
+record recovery, **not recalculation or authentication of a stored verdict**.
+
+From a source checkout:
+
+```sh
+python run_interpreter.py \
+  --match-context editorial.guansha_coexistence.v1 \
+  --birth-time "2000-01-01 12:00" \
+  --gender female \
+  --observation-scope natal_and_liunian \
+  --ganzhi-year 2024 \
+  --include-reference-only \
+  --export-context-json output_data/context.json
+```
+
+Matching requires fixed birth/gender and explicit observation scope. It rejects
+random/count, legacy TXT export and knowledge-mode/filter flags. An optional
+`--knowledge-source` supplies edited knowledge; `--export-context-json` refuses
+to overwrite either that source or the bundled corpus, including filesystem
+aliases. Matching always displays full source boundaries for selected entries.
 
 ### Run a chart locally
 

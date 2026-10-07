@@ -106,7 +106,7 @@ def test_premises_are_organized_without_inventing_rules() -> None:
   assert relation.applicability == 'unresolved'
   assert relation.relations[1].text == '食神又能克制七杀'
   assert k.entry('editorial.shishen.shishen.anxiety_insomnia').applicability == 'unresolved'
-  assert k.entry('editorial.shishen.zhengguan.legal_trouble').applicability == 'unresolved'
+  assert k.entry('editorial.shishen.zhengguan.legal_trouble').applicability == 'described'
   for entry in k.entries.values():
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:

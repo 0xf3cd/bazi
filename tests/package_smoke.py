@@ -90,6 +90,9 @@ def main() -> None:
   import bazi
   check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
   check('bazi.descriptions' not in sys.modules and 'bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
+  check('bazi.context_matching' not in sys.modules, 'Root import eagerly loaded context matcher')
+  matching_module = bazi.context_matching
+  check('context_matching' in bazi.__all__ and matching_module is bazi.context_matching, 'Matching ordinary module attribute registration mismatch')
   knowledge_module = bazi.knowledge
   check('knowledge' in bazi.__all__ and knowledge_module is bazi.knowledge, 'Knowledge module registration mismatch')
   check('bazi.descriptions' not in sys.modules, 'Knowledge module loaded legacy descriptions')
@@ -103,6 +106,7 @@ def main() -> None:
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.interpreter import Interpreter
   from bazi.knowledge import KnowledgeBase
+  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 
   check(Path(bazi.__file__).resolve().is_relative_to(prefix), 'Root import source leakage')
   for backend in CalendarBackend:
@@ -225,6 +229,26 @@ def main() -> None:
   else:
     raise RuntimeError('Optimized knowledge input rejection failed')
   print('PASS installed knowledge query/display/export/reload')
+  criterion = 'editorial.guansha_coexistence.v1'
+  positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
+  matched = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal'), include_reference_only=True)
+  check(matched.criterion.status == 'SATISFIED' and len(matched.entries) == 2, 'Installed context positive mismatch')
+  check(any(o.pillar == 'hour' and o.layer == 'hidden' and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.occurrences), 'Installed context lost hidden witness')
+  check('也许' in matched.render() and 'Does not establish a classical rule or real-world prediction.' in matched.render(), 'Installed context lost modal/source limit')
+  check(ContextResult.from_json(matched.export_json()) == matched, 'Installed context restoration lost evidence/knowledge')
+  check(evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal')).entries == (), 'Installed context promoted reference output')
+  missing = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian'))
+  check(missing.criterion.status == 'UNKNOWN', 'Installed context missing year became false')
+  first, second = (evaluate_context(chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian', year)) for year in (2024, 2084))
+  check(first != second and all(o.ganzhi_year == 2024 and o.kind is TransitKind.LIUNIAN for o in first.occurrences if o.origin == 'transit'), 'Installed context lost transit coordinate/kind')
+  for invalid_year in (True, type('Year', (int,), {})(2024)):
+    try:
+      ContextProfile('natal_and_liunian', invalid_year)
+    except TypeError:
+      pass
+    else:
+      raise RuntimeError('Installed exact-int year rejection failed')
+  print('PASS installed context matching/lazy/readonly/evidence/record restoration')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:
