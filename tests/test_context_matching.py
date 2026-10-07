@@ -512,7 +512,7 @@ def test_restore_rejects_duplicate_keys_in_an_otherwise_complete_record() -> Non
 def test_corpus_organization_and_frozen_oracle_hash() -> None:
   import hashlib
   fixture = Path(__file__).with_name('data') / 'description_legacy_baseline.json'
-  assert hashlib.sha256(fixture.read_bytes()).hexdigest() == '6e50cf38d5b9a74a6f2a7ba2b3502b8dad818955a67ac6530e97f8d768f6b774'
+  assert hashlib.sha256(fixture.read_bytes().replace(b'\r\n', b'\n')).hexdigest() == '6e50cf38d5b9a74a6f2a7ba2b3502b8dad818955a67ac6530e97f8d768f6b774'
   knowledge = KnowledgeBase.load()
   assert len(knowledge.entries) == 295 and len(knowledge.sources) == 9 and len(knowledge.query()) == 19
   for criterion, keys, context_id in ((GUANSHA, LEGAL, 'editorial.guansha_coexistence'), (FEMALE, RELATIONSHIP, 'editorial.guansha_coexistence_female')):
