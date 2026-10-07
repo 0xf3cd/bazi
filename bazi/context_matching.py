@@ -183,8 +183,8 @@ class CriterionResult:
   - `observed_coexistence` and `female` serve the editorial predicates. `day_master_is_ding`,
     `day_master_is_geng`, `observed_pianyin` and `observed_shishen` (食神, not 十神)
     are partial facts for undefined criteria, not complete predicates.
-  - `observed_coexistence` 与 `female` 用于原作前提；其余键记录丁／庚日主及偏印／食神
-    的局部事实，不构成未定义情境的完整判据。`observed_shishen` 指食神，不是十神总类。
+  - `observed_coexistence` 与 `female` 用于原作判据；其余键记录丁／庚日主及偏印／食神
+    的局部事实，不构成未定义判据的完整条件。`observed_shishen` 指食神，不是十神总类。
   '''
 
   criterion_id:   str
@@ -334,7 +334,7 @@ class ContextResult:
     )
 
   def render(self) -> str:
-    '''Display verdict, evidence and full reference/source boundaries; a premise verdict predicts no event.
+    '''Display verdict, evidence, full reference text and source boundaries; a premise verdict is not an event prediction.
     展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     lines = [
@@ -373,7 +373,7 @@ def evaluate_context(
   include_reference_only: bool = False,
 ) -> ContextResult:
   '''Evaluate a registered criterion in an explicit scope, then bind reference entries.
-  在显式范围内求值已注册判据，再联接参考条目；缺失范围与未定义判据为 UNKNOWN。
+  在显式范围内求值已注册判据，再联接参考条目。
 
   Note:
   - Only two editorial Guansha predicates are defined; missing scope or undefined predicates yield UNKNOWN.

@@ -272,13 +272,13 @@ Structural evaluation and entry matching are separate. For the four editorial
 entries, a custom knowledge base with the same ID but a different entry, object,
 premise, context, source or output binding yields `binding_unrecognized` for that
 entry, rather than authenticating meaning by ID or keywords. Equal exported/reloaded bindings are usable.
-Reference selection is opt-in; satisfying a criterion never grants default
+Reference selection is opt-in; satisfying a premise never grants default
 output eligibility. Independent `KnowledgeBase.render` performs no evaluation.
 Missing bound entries produce no `EntryMatch` or display line. The four criteria with
 undefined predicates display supplied same-ID entries under `predicate_undefined`.
 
-Results are immutable. JSON preserves criterion
-definition/revision, profile, complete birth/gender/config identity, year/kind,
+Results are immutable. JSON preserves criterion definition/revision, profile,
+complete birth/gender/config identity, year/kind,
 all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.
 It does not cross-check verdict, evidence, input and entry bindings against each other.
