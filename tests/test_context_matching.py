@@ -383,6 +383,19 @@ def test_each_reason_has_one_admissible_status() -> None:
           EntryMatch(LEGAL[0], other, reason)
 
 
+@pytest.mark.parametrize('value', [None, True, 1, 1.0, [], {}])
+def test_public_verdict_status_types_raise_type_error(value: Any) -> None:
+  result = match()
+  for factory in (
+    lambda: EntryMatch(LEGAL[0], value, 'premise_satisfied'),
+    lambda: replace(result.criterion, status=value),
+  ):
+    with pytest.raises((TypeError, ValueError)) as error:
+      factory()
+    assert type(error.value) is TypeError
+    assert str(error.value).startswith('Expected str, got ')
+
+
 @pytest.mark.parametrize('dimension,value,error', [
   ('record_version', True, ValueError), ('record_version', 2, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
