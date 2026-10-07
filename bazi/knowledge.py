@@ -472,6 +472,19 @@ class KnowledgeBase:
     '''Display text, premises and limits; source details are optional.
     展示原文、前提与限度；可选择显示来源详情。
     '''
+    return self._render(entry, show_sources=show_sources, manual_context=manual_context)
+
+  def _render(
+    self,
+    entry: KnowledgeEntry,
+    *,
+    show_sources: bool = True,
+    manual_context: bool = False,
+    premise_verdict: str | None = None,
+  ) -> str:
+    '''Render an entry, optionally annotating a verdict supplied by the caller.
+    展示条目，可附调用方提供的前提判别；本方法不求值前提。'''
+    assert premise_verdict is None or isinstance(premise_verdict, str)
     if not isinstance(entry, KnowledgeEntry):
       raise TypeError(f'Expected KnowledgeEntry, got {type(entry)}')
     for flag in (show_sources, manual_context):
@@ -486,7 +499,9 @@ class KnowledgeBase:
       notes.append('来源尚未核实')
     if entry.applicability == 'unresolved':
       notes.append('前提待梳理')
-    if manual_context:
+    if premise_verdict is not None:
+      notes.extend((f'输出资格：{entry.output}', f'前提判别：{premise_verdict}'))
+    elif manual_context:
       notes.append('人工给定情境；命盘适用性未判断')
     elif entry.applicability != 'unconditional':
       notes.append('命盘适用性未判断')

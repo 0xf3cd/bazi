@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
-from dataclasses import FrozenInstanceError, asdict, replace
+from dataclasses import FrozenInstanceError, asdict, fields, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
@@ -12,11 +12,11 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  ContextProfile, ContextResult, EntryMatch, evaluate_context,
+  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen
 from bazi.knowledge import KnowledgeBase
-from bazi.school import BaziConfig, BaziSchool, DayRollover
+from bazi.school import BaziConfig, BaziSchool, DayRollover, _config_json
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
 
@@ -213,6 +213,34 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   assert restored == result and restored.render() == rendered and restored.export_json() == result.export_json()
 
 
+@pytest.mark.parametrize('claim_id,criterion_id', [
+  (LEGAL[0], GUANSHA),
+  ('legacy.tiangan.ding.weak_state', 'tiangan.ding_weak_and_overcontrolled'),
+])
+@pytest.mark.parametrize('separator', ['\n', '\r\n', '\r', '\u2028'])
+def test_multiline_custom_text_keeps_one_copy_and_source_cautions(claim_id: str, criterion_id: str, separator: str) -> None:
+  data = json.loads(KnowledgeBase.load().export_json())
+  entry = next(e for e in data['entries'] if e['claim_id'] == claim_id)
+  text = 'FIRST-TEXT-LINE' + separator + 'SECOND-TEXT-LINE'
+  entry['text'] = text
+  knowledge = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  result = match(criterion_id=criterion_id, knowledge=knowledge)
+  rendered = result.render()
+  assert rendered.count(text) == 1 and rendered.count('SECOND-TEXT-LINE') == 1
+  assert '命盘适用性未判断' not in rendered
+  assert knowledge.render(knowledge.entry(claim_id)).count(text) == 1
+  assert '命盘适用性未判断' in knowledge.render(knowledge.entry(claim_id))
+  if criterion_id == GUANSHA:
+    assert result.entries[0].reason == 'binding_unrecognized'
+    assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
+  else:
+    assert result.entries[0].reason == 'predicate_undefined'
+    assert '来源尚未核实' in rendered and '前提待梳理' in rendered
+    assert '来源状态：unverified' in rendered
+  restored = ContextResult.from_json(result.export_json())
+  assert restored == result and restored.render() == rendered
+
+
 @pytest.mark.parametrize('dimension', ['text', 'premise', 'contexts', 'roles', 'viewpoint', 'source', 'context', 'object', 'qualification'])
 def test_same_id_custom_binding_is_not_semantic_authentication(dimension: str) -> None:
   data = json.loads(KnowledgeBase.load().export_json())
@@ -265,6 +293,16 @@ def test_full_input_identity_and_immutability() -> None:
   with pytest.raises(TypeError):
     result.criterion.observations['female'] = False # type: ignore[index]
   assert hash(result) == hash(ContextResult.from_json(result.export_json()))
+
+
+def test_configuration_wire_roster_and_chart_input_agree() -> None:
+  c = chart()
+  wire = _config_json(c.bazi.config)
+  assert set(wire) == {field.name for field in fields(BaziConfig)}
+  assert set(wire['school']) == {field.name for field in fields(BaziSchool)}
+  chart_json: dict[str, Any] = dict(c.json)
+  assert {key: chart_json[key] for key in wire} == wire
+  assert json.loads(match().input_json)['config'] == wire
 
 
 class Year(int):
@@ -326,6 +364,25 @@ def test_public_record_value_boundaries() -> None:
     replace(result, entries=(EntryMatch('unknown', 'UNKNOWN', 'predicate_undefined'),))
 
 
+def test_each_reason_has_one_admissible_status() -> None:
+  expected: dict[MatchReason, MatchStatus] = {
+    'premise_satisfied': 'SATISFIED',
+    'required_classification_absent': 'NOT_SATISFIED',
+    'female_gate_false': 'NOT_SATISFIED',
+    'missing_transit_coordinate': 'UNKNOWN',
+    'transit_unavailable': 'UNKNOWN',
+    'predicate_undefined': 'UNKNOWN',
+    'binding_unrecognized': 'UNKNOWN',
+  }
+  assert set(expected) == set(get_args(MatchReason))
+  for reason, status in expected.items():
+    assert EntryMatch(LEGAL[0], status, reason).status == status
+    for other in get_args(MatchStatus):
+      if other != status:
+        with pytest.raises(ValueError, match='Status and reason disagree'):
+          EntryMatch(LEGAL[0], other, reason)
+
+
 @pytest.mark.parametrize('dimension,value,error', [
   ('record_version', True, ValueError), ('record_version', 2, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
@@ -363,6 +420,19 @@ def test_restore_rejects_corrupt_nested_records() -> None:
     ContextResult.from_json('{"record_version":1,"record_version":1}')
   with pytest.raises(TypeError):
     ContextResult.from_json('[]')
+
+
+def test_restore_rejects_duplicate_keys_in_an_otherwise_complete_record() -> None:
+  text = match().export_json()
+  for needle, duplicate in (
+    ('"record_version": 1', '"record_version": 1'),
+    ('"gender": "female"', '"gender": "male"'),
+    ('"scope_complete": true', '"scope_complete": false'),
+  ):
+    assert text.count(needle) == 1
+    corrupted = text.replace(needle, needle + ', ' + duplicate)
+    with pytest.raises(ValueError, match='Duplicate JSON key'):
+      ContextResult.from_json(corrupted)
 
 
 def test_corpus_organization_and_frozen_oracle_hash() -> None:

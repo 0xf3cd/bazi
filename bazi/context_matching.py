@@ -14,7 +14,7 @@ from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
 from .knowledge import KnowledgeBase, KnowledgeEntry
-from .school import BaziConfig, BaziSchool
+from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind
 from .utils.bazi_utils import hidden_tiangans, shishen
@@ -22,21 +22,25 @@ from .utils.bazi_utils import hidden_tiangans, shishen
 
 '''Complete-premise verdict, independent of knowledge organization. / 完整前提判别，独立于知识整理状态。'''
 MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
+
 '''Why the complete premise has this verdict. / 完整前提的判别理由。'''
 MatchReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable', 'predicate_undefined', 'binding_unrecognized',
 ]
+
 '''The observation range; no implicit default. / 观察范围，无隐式默认值。'''
 ObservationScope = Literal['natal', 'natal_and_liunian']
+
 '''Position within the ordered observation query. / 有序观察查询中的位置。'''
 Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
+
 _GUANSHA: Final = 'editorial.guansha_coexistence.v1'
 _FEMALE: Final = 'editorial.guansha_coexistence_female.v1'
-_CRITERIA: Final = frozendict({
+_CRITERIA: Final[frozendict[str, tuple[str, tuple[str, ...]]]] = frozendict({
   _GUANSHA: ('选定范围内正官与七杀各至少出现一次。', (
     'editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble',
   )),
@@ -48,19 +52,31 @@ _CRITERIA: Final = frozendict({
   'shishen.pianyin_favorable_or_balanced': ('偏印喜用或状态良好；完整判据未定义。', ('legacy.shishen.SH-199',)),
   'shishen.xiaoyin_duoshi': ('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',)),
 })
+
 # Fingerprints include the entire entry and its bound object/context/source records.
 # They identify the editorial meaning, not merely its ID or display words.
-_BINDINGS: Final = frozendict({
+_BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.zhengguan.legal_trouble': '0cc47687bf24c6f5ffde1eda9d38ac5532838f765562aea57bf8e7f2cc6a582a',
   'editorial.shishen.qisha.legal_trouble': 'f5ec75f1814c3409f0bda3d65d380d45c781201a78a259316e8e17eb59096434',
   'editorial.shishen.zhengguan.infidelity': '02215c0a516e55e0d14b4da4f585685d954f692b9268857a3416aaff78487896',
   'editorial.shishen.qisha.infidelity': '6c687b90559b0b56cfc51a39e165025aad94811c9948bebe5c51bae9fd4f2801',
 })
 
+_STATUS_BY_REASON: Final[frozendict[MatchReason, MatchStatus]] = frozendict({
+  'premise_satisfied':              'SATISFIED',
+  'required_classification_absent': 'NOT_SATISFIED',
+  'female_gate_false':              'NOT_SATISFIED',
+  'missing_transit_coordinate':     'UNKNOWN',
+  'transit_unavailable':            'UNKNOWN',
+  'predicate_undefined':            'UNKNOWN',
+  'binding_unrecognized':           'UNKNOWN',
+})
 
-def _typed(value: object, expected: type[_T]) -> None:
+
+def _typed(value: object, expected: type[_T]) -> _T:
   if not isinstance(value, expected):
     raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
+  return value
 
 
 def _choice(value: object, choices: tuple[str, ...]) -> None:
@@ -75,8 +91,7 @@ def _year(value: object) -> None:
 
 
 def _tuple(values: object, expected: type[_T]) -> None:
-  _typed(values, tuple)
-  assert isinstance(values, tuple)
+  values = _typed(values, tuple)
   for value in values:
     _typed(value, expected)
 
@@ -84,11 +99,7 @@ def _tuple(values: object, expected: type[_T]) -> None:
 def _verdict(status: MatchStatus, reason: MatchReason) -> None:
   _choice(status, get_args(MatchStatus))
   _choice(reason, get_args(MatchReason))
-  expected = (
-    'SATISFIED' if reason == 'premise_satisfied' else
-    'NOT_SATISFIED' if reason in ('required_classification_absent', 'female_gate_false') else 'UNKNOWN'
-  )
-  if status != expected:
+  if status != _STATUS_BY_REASON[reason]:
     raise ValueError('Status and reason disagree')
 
 
@@ -103,7 +114,7 @@ class ContextProfile:
   '''
 
   observation_scope: ObservationScope
-  ganzhi_year: int | None = None
+  ganzhi_year:        int | None = None
 
   def __post_init__(self) -> None:
     _choice(self.observation_scope, get_args(ObservationScope))
@@ -121,14 +132,14 @@ class ChartOccurrence:
   '''One classified stem, preserving its position, layer and time identity.
   一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
 
-  origin: Literal['natal', 'transit']
-  pillar: Pillar
-  index: int
-  ganzhi: Ganzhi
-  layer: Literal['visible', 'hidden']
-  stem: Tiangan
-  shishen: Shishen
-  kind: TransitKind | None = None
+  origin:      Literal['natal', 'transit']
+  pillar:      Pillar
+  index:       int
+  ganzhi:      Ganzhi
+  layer:       Literal['visible', 'hidden']
+  stem:        Tiangan
+  shishen:     Shishen
+  kind:        TransitKind | None = None
   ganzhi_year: int | None = None
 
   def __post_init__(self) -> None:
@@ -158,15 +169,23 @@ class ChartOccurrence:
 @dataclass(frozen=True)
 class CriterionResult:
   '''Complete verdict with separately known observations, including partial scopes.
-  完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。'''
+  完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
 
-  criterion_id: str
-  revision: int
-  definition: str
-  status: MatchStatus
-  reason: MatchReason
+  Note:
+  - `observed_coexistence` and `female` serve the editorial predicates. `day_master_is_ding`,
+    `day_master_is_geng`, `observed_pianyin` and `observed_shishen` (食神, not 十神)
+    are partial facts for undefined controls, not complete predicates.
+  - `observed_coexistence` 与 `female` 用于原作前提；其余键记录丁／庚日主及偏印／食神
+    的局部事实，不构成未定义情境的完整判据。`observed_shishen` 指食神，不是十神总类。
+  '''
+
+  criterion_id:   str
+  revision:       int
+  definition:     str
+  status:         MatchStatus
+  reason:         MatchReason
   scope_complete: bool
-  observations: frozendict[str, bool]
+  observations:   frozendict[str, bool]
 
   def __post_init__(self) -> None:
     _choice(self.criterion_id, tuple(_CRITERIA))
@@ -191,8 +210,8 @@ class EntryMatch:
   语义绑定后的条目前提判别，独立于结构 criterion。'''
 
   claim_id: str
-  status: MatchStatus
-  reason: MatchReason
+  status:   MatchStatus
+  reason:   MatchReason
 
   def __post_init__(self) -> None:
     _typed(self.claim_id, str)
@@ -211,29 +230,31 @@ def _pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
-  _typed(value, dict)
-  assert isinstance(value, dict)
+  value = _typed(value, dict)
   if set(value) != set(keys):
     raise ValueError('Record fields differ')
   return dict(value)
 
 
 def _array(value: object) -> list[Any]:
-  _typed(value, list)
-  assert isinstance(value, list)
-  return value
+  return _typed(value, list)
 
 
 def _validate_input(text: str) -> None:
-  data = _mapping(json.loads(text, object_pairs_hook=_pairs), ('birth_time', 'gender', 'config', 'pillars'))
+  data = _mapping(
+    json.loads(text, object_pairs_hook=_pairs),
+    ('birth_time', 'gender', 'config', 'pillars'),
+  )
   _typed(data['birth_time'], str)
   birth = datetime.fromisoformat(data['birth_time'])
   if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
     raise ValueError('Expected canonical naive minute birth time')
   _choice(data['gender'], ('male', 'female'))
-  config = _mapping(data['config'], ('backend', 'precision', 'dayun_year_rule', 'school'))
+  config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
   BaziConfig.from_values(
-    backend=config['backend'], precision=config['precision'], dayun_year_rule=config['dayun_year_rule'],
+    backend=config['backend'],
+    precision=config['precision'],
+    dayun_year_rule=config['dayun_year_rule'],
     school=BaziSchool.from_json(config['school']),
   )
   pillars = _array(data['pillars'])
@@ -249,11 +270,11 @@ class ContextResult:
   '''Immutable observation record with full input and knowledge snapshots.
   不可变观察记录，附完整输入及知识快照；恢复只恢复记录，不重新计算。'''
 
-  profile: ContextProfile
-  criterion: CriterionResult
-  occurrences: tuple[ChartOccurrence, ...]
-  entries: tuple[EntryMatch, ...]
-  input_json: str
+  profile:        ContextProfile
+  criterion:      CriterionResult
+  occurrences:    tuple[ChartOccurrence, ...]
+  entries:        tuple[EntryMatch, ...]
+  input_json:     str
   knowledge_json: str
 
   def __post_init__(self) -> None:
@@ -263,7 +284,6 @@ class ContextResult:
     _tuple(self.entries, EntryMatch)
     _typed(self.input_json, str)
     _validate_input(self.input_json)
-    _typed(self.knowledge_json, str)
     knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       knowledge.entry(match.claim_id)
@@ -288,8 +308,8 @@ class ContextResult:
 
   @classmethod
   def from_json(cls, text: str) -> 'ContextResult':
-    '''Restore a strict exported record without re-evaluating its chart or premises.
-    严格恢复导出记录，不重新排盘或求值前提。'''
+    '''Restore an exported record without recalculation or cross-record authentication.
+    恢复导出记录，不重算或认证判别、证据、输入与条目绑定间的一致性。'''
     _typed(text, str)
     data = _mapping(
       json.loads(text, object_pairs_hook=_pairs),
@@ -313,6 +333,7 @@ class ContextResult:
         value['kind'] = TransitKind.LIUNIAN
       occurrences.append(ChartOccurrence(**value))
     entries = tuple(EntryMatch(**_mapping(item, ('claim_id', 'status', 'reason'))) for item in _array(data['entries']))
+
     return cls(
       ContextProfile(**profile),
       CriterionResult(**criterion),
@@ -339,10 +360,7 @@ class ContextResult:
     knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-      entry = knowledge.entry(match.claim_id)
-      qualification = '仅供参考' if entry.output == 'reference_only' else '默认输出资格'
-      lines.append(f'{entry.text}【{qualification}；输出资格：{entry.output}；前提判别：{match.status}】')
-      lines.extend(knowledge.render(entry).splitlines()[1:])
+      lines.append(knowledge._render(knowledge.entry(match.claim_id), premise_verdict=match.status))
     return '\n'.join(lines)
 
 
@@ -379,49 +397,45 @@ def evaluate_context(
     _typed(knowledge, KnowledgeBase)
   knowledge = KnowledgeBase.load() if knowledge is None else knowledge
   bazi = chart.bazi
-  occurrences: list[ChartOccurrence] = []
 
-  def observe(ganzhi: Ganzhi, pillar: Pillar, index: int, kind: TransitKind | None = None) -> None:
+  def __occurrences(ganzhi: Ganzhi, pillar: Pillar, index: int, kind: TransitKind | None = None) -> tuple[ChartOccurrence, ...]:
     origin: Literal['natal', 'transit'] = 'natal' if kind is None else 'transit'
     year = None if kind is None else profile.ganzhi_year
-    if pillar != 'day':
-      occurrences.append(ChartOccurrence(
+    stems: tuple[tuple[Literal['visible', 'hidden'], Tiangan], ...] = (
+      (() if pillar == 'day' else (('visible', ganzhi.tiangan),)) +
+      tuple(('hidden', stem) for stem in hidden_tiangans(ganzhi.dizhi))
+    )
+
+    return tuple(
+      ChartOccurrence(
         origin,
         pillar,
         index,
         ganzhi,
-        'visible',
-        ganzhi.tiangan,
-        shishen(bazi.day_master, ganzhi.tiangan),
-        kind,
-        year,
-      ))
-    for stem in hidden_tiangans(ganzhi.dizhi):
-      occurrences.append(ChartOccurrence(
-        origin,
-        pillar,
-        index,
-        ganzhi,
-        'hidden',
+        layer,
         stem,
         shishen(bazi.day_master, stem),
         kind,
         year,
-      ))
+      ) for layer, stem in stems
+    )
 
-  for index, (pillar, ganzhi) in enumerate(zip(_PILLARS, bazi.pillars, strict=True)):
-    observe(ganzhi, pillar, index)
+  occurrences = [
+    occurrence
+    for index, (pillar, ganzhi) in enumerate(zip(_PILLARS, bazi.pillars, strict=True))
+    for occurrence in __occurrences(ganzhi, pillar, index)
+  ]
   unavailable: MatchReason | None = None
   if profile.observation_scope == 'natal_and_liunian':
     if profile.ganzhi_year is None:
       unavailable = 'missing_transit_coordinate'
     else:
       transits = TransitChart(chart).at_year(profile.ganzhi_year)
-      if transits is None or not any(kind is TransitKind.LIUNIAN for kind, _ in transits.items):
+      if transits is None or transits.liunian is None:
         unavailable = 'transit_unavailable'
       else:
-        for kind, ganzhi in transits.select(TransitKind.LIUNIAN).items:
-          observe(ganzhi, 'liunian', 4, kind)
+        occurrences.extend(__occurrences(transits.liunian, 'liunian', 4, TransitKind.LIUNIAN))
+
   classes = {value.shishen for value in occurrences}
   coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
   female = bazi.gender is BaziGender.FEMALE
@@ -431,30 +445,32 @@ def evaluate_context(
     'day_master_is_geng': bazi.day_master is Tiangan.庚,
     'observed_pianyin': Shishen.偏印 in classes, 'observed_shishen': Shishen.食神 in classes,
   })
-  status: MatchStatus
+
   reason: MatchReason
   if criterion_id not in (_GUANSHA, _FEMALE):
-    status, reason = 'UNKNOWN', 'predicate_undefined'
+    reason = 'predicate_undefined'
   elif unavailable is not None:
-    status, reason = 'UNKNOWN', unavailable
+    reason = unavailable
   elif criterion_id == _FEMALE and not female:
-    status, reason = 'NOT_SATISFIED', 'female_gate_false'
+    reason = 'female_gate_false'
   elif not coexistence:
-    status, reason = 'NOT_SATISFIED', 'required_classification_absent'
+    reason = 'required_classification_absent'
   else:
-    status, reason = 'SATISFIED', 'premise_satisfied'
+    reason = 'premise_satisfied'
+  status = _STATUS_BY_REASON[reason]
+
   matches = []
   for claim_id in _CRITERIA[criterion_id][1]:
     entry = knowledge.entries.get(claim_id)
     if entry is None or (not include_reference_only and entry.output != 'default'):
       continue
     recognized = criterion_id not in (_GUANSHA, _FEMALE) or _binding_digest(knowledge, entry) == _BINDINGS[claim_id]
-    matches.append(EntryMatch(claim_id, status if recognized else 'UNKNOWN', reason if recognized else 'binding_unrecognized'))
+    entry_reason = reason if recognized else 'binding_unrecognized'
+    matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
+
   identity = {
     'birth_time': bazi.solar_datetime.isoformat(), 'gender': str(bazi.gender),
-    'config': {'backend': bazi.config.backend.value, 'precision': bazi.config.precision.name.lower(),
-               'dayun_year_rule': bazi.config.dayun_year_rule.value,
-               'school': {field.name: getattr(bazi.config.school, field.name).name for field in fields(BaziSchool)}},
+    'config': _config_json(bazi.config),
     'pillars': [str(value) for value in bazi.pillars],
   }
   return ContextResult(
@@ -468,5 +484,8 @@ def evaluate_context(
       unavailable is None,
       observations,
     ),
-    tuple(occurrences), tuple(matches), json.dumps(identity, ensure_ascii=False), knowledge.export_json(),
+    tuple(occurrences),
+    tuple(matches),
+    json.dumps(identity, ensure_ascii=False),
+    knowledge.export_json(),
   )

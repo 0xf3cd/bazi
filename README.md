@@ -250,6 +250,9 @@ unavailable query or missing required kind yields `UNKNOWN`, even if partial
 natal observations already contain both classifications. Wrong types, unknown
 IDs and illegal combinations raise `TypeError` / `ValueError`; years accept only
 exact `int`, excluding `bool` and int subclasses. Natal scope rejects a year.
+`TransitChart.at_year(N)` uses the year label `N` (2024 → 甲辰). Labels before
+the birth's Ganzhi year, including zero and negative values, are unavailable;
+later labels have no upper bound.
 
 `SATISFIED` and `NOT_SATISFIED` describe a complete, explicitly selected premise.
 `UNKNOWN` preserves known partial observations without claiming a complete
@@ -259,17 +262,22 @@ verdict. Four registered controls (`tiangan.ding_weak_and_overcontrolled`,
 premises and limits. `described` / `unresolved` are still knowledge organization,
 not computed truth values.
 
-Structural evaluation and entry matching are separate. A custom knowledge base
+Structural evaluation and entry matching are separate. For the four editorial
+entries, a custom knowledge base
 with the same ID but a different entry, object, premise, context, source or output
 binding yields `binding_unrecognized` for that entry, rather than authenticating
 meaning by ID or keywords. Equal exported/reloaded bindings remain usable.
 Reference selection is opt-in; satisfying a criterion never grants default
 output eligibility. Independent `KnowledgeBase.render` still performs no evaluation.
+Missing bound entries produce no `EntryMatch` or display line. The four undefined
+controls display supplied same-ID entries under `predicate_undefined` without fingerprint checks.
 
 Results are immutable. JSON is derived from that record and preserves criterion
 definition/revision, profile, complete birth/gender/config identity, year/kind,
 all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.
+It validates record shape, domain values and individual occurrence coordinates;
+it does not cross-check verdict, evidence, input and entry bindings against each other.
 
 From a source checkout:
 

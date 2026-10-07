@@ -221,19 +221,19 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description='Display charts or query, validate and export interpretation knowledge.')
+  parser = argparse.ArgumentParser(description='Display charts, match scoped premises, or query, validate and export interpretation knowledge.')
   parser.add_argument('--birth-time', help='Local civil time, e.g. "2000-01-01 12:00".')
   parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
   parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
   parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
-  parser.add_argument('--include-reference-only', action='store_true', help='Include unevaluated reference text.')
-  parser.add_argument('--show-sources', action='store_true', help='Show claim IDs, attribution and source witnesses.')
+  parser.add_argument('--include-reference-only', action='store_true', help='Include reference text; matching mode also displays its premise verdict.')
+  parser.add_argument('--show-sources', action='store_true', help='Show claim IDs, attribution and source witnesses (always included in knowledge queries and matching).')
   parser.add_argument('--output-dir', type=Path, help='Export the displayed charts below this directory.')
   parser.add_argument('--export-knowledge-base', action='store_true', help='Export descriptions for every Tiangan and Shishen.')
   parser.add_argument('--query-knowledge', action='store_true', help='Query knowledge without creating a chart.')
   parser.add_argument('--validate-knowledge', action='store_true', help='Validate the whole knowledge source.')
   parser.add_argument('--export-knowledge-json', type=Path, help='Export reloadable knowledge JSON; with a query, export its selection.')
-  parser.add_argument('--knowledge-source', type=Path, help='Use an edited JSON source in knowledge mode.')
+  parser.add_argument('--knowledge-source', type=Path, help='Use an edited JSON source for knowledge queries, validation, export or context matching.')
   parser.add_argument('--object', dest='object_id', help='Discussion object ID, including any bound role.')
   parser.add_argument('--context', dest='context_id', help='Manually supplied lookup context ID, not a chart verdict.')
   parser.add_argument('--topic', help='Knowledge topic.')

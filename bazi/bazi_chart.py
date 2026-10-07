@@ -5,7 +5,6 @@ import functools
 import itertools
 
 from calendar import monthrange
-from dataclasses import fields
 from datetime import datetime, timedelta
 from typing import Final, TypedDict, cast
 from collections.abc import Generator, Mapping, Sequence
@@ -16,7 +15,7 @@ from .data_types import (
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
-from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
+from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG, _config_json
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .utils.bazi_utils import (
@@ -633,26 +632,15 @@ class BaziChart:
       },
     }
 
-    # The school profile serializes by field: each knob stores its member name under its
-    # own field name, which is exactly what `BaziSchool.from_json` reads back -- one roster,
-    # written in the dataclass. `BaziJson.School` stays the declared contract, and
-    # `test_every_school_field_reaches_json` keeps both the emitted keys and that
-    # declaration equal to the fields.
-    # 流派档案按字段序列化：每个旋钮以字段名存成员名，正是 `BaziSchool.from_json` 的读法——
-    # 名册只有一份，写在 dataclass 里。
-    school: BaziJson.School = cast(BaziJson.School, {
-      knob.name: getattr(self._bazi.config.school, knob.name).name
-      for knob in fields(self._bazi.config.school)
-    })
-
+    config = _config_json(self._bazi.config)
     f = BaziJson.gen_fourpillars
     return {
       'birth_time': self._bazi.solar_datetime.isoformat(),
       'gender': str(self._bazi.gender),
-      'precision': str(self._bazi.config.precision),
-      'backend': str(self._bazi.config.backend),
-      'dayun_year_rule': str(self._bazi.config.dayun_year_rule),
-      'school': school,
+      'precision': config['precision'],
+      'backend': config['backend'],
+      'dayun_year_rule': config['dayun_year_rule'],
+      'school': cast(BaziJson.School, config['school']),
       'pillars': f([str(p) for p in self._bazi.pillars]),
       'nayin': f([str(ny) for ny in self.nayin]),
       'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
