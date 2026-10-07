@@ -492,6 +492,7 @@ class KnowledgeBase:
         raise TypeError(f'Expected bool, got {type(flag)}')
     if self.entries.get(entry.claim_id) != entry:
       raise ValueError(f'Foreign entry: {entry.claim_id}')
+
     notes: list[str] = []
     if entry.output == 'reference_only':
       notes.append('仅供参考')
@@ -516,6 +517,7 @@ class KnowledgeBase:
     lines.extend('限度：' + limit for limit in entry.limits)
     if entry.legacy is not None and entry.legacy.field_premise:
       lines.append(f'旧栏目前提（待梳理；未作为判据）：{entry.legacy.field_premise}')
+
     if show_sources:
       lines.extend((
         f'条目：{entry.claim_id}；署名：{entry.attribution}',

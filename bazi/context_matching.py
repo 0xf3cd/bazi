@@ -7,7 +7,7 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
-from typing import Any, Final, Literal, TypeVar, get_args
+from typing import Any, Final, Literal, NamedTuple, TypeVar, get_args
 
 from .bazi import BaziGender
 from .bazi_chart import BaziChart
@@ -38,19 +38,26 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
 
+
+class _Criterion(NamedTuple):
+  definition: str
+  claims:     tuple[str, ...]
+
+
 _GUANSHA: Final = 'editorial.guansha_coexistence.v1'
 _FEMALE: Final = 'editorial.guansha_coexistence_female.v1'
-_CRITERIA: Final[frozendict[str, tuple[str, tuple[str, ...]]]] = frozendict({
-  _GUANSHA: ('选定范围内正官与七杀各至少出现一次。', (
+_DEFINED_CRITERIA: Final[frozenset[str]] = frozenset((_GUANSHA, _FEMALE))
+_CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
+  _GUANSHA: _Criterion('选定范围内正官与七杀各至少出现一次。', (
     'editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble',
   )),
-  _FEMALE: ('选定范围内正官与七杀各至少出现一次，且输入为女命。', (
+  _FEMALE: _Criterion('选定范围内正官与七杀各至少出现一次，且输入为女命。', (
     'editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity',
   )),
-  'tiangan.ding_weak_and_overcontrolled': ('丁火日主身弱及克太多；完整判据未定义。', ('legacy.tiangan.ding.weak_state',)),
-  'tiangan.geng_regulated_transit': ('庚金日主有制有化及后天有教养；完整判据未定义。', ('legacy.tiangan.geng.regulated_transit',)),
-  'shishen.pianyin_favorable_or_balanced': ('偏印喜用或状态良好；完整判据未定义。', ('legacy.shishen.SH-199',)),
-  'shishen.xiaoyin_duoshi': ('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',)),
+  'tiangan.ding_weak_and_overcontrolled': _Criterion('丁火日主身弱及克太多；完整判据未定义。', ('legacy.tiangan.ding.weak_state',)),
+  'tiangan.geng_regulated_transit': _Criterion('庚金日主有制有化及后天有教养；完整判据未定义。', ('legacy.tiangan.geng.regulated_transit',)),
+  'shishen.pianyin_favorable_or_balanced': _Criterion('偏印喜用或状态良好；完整判据未定义。', ('legacy.shishen.SH-199',)),
+  'shishen.xiaoyin_duoshi': _Criterion('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',)),
 })
 
 # Fingerprints include the entire entry and its bound object/context/source records.
@@ -192,7 +199,7 @@ class CriterionResult:
     if type(self.revision) is not int:
       raise TypeError(f'Expected int, got {type(self.revision)}')
     _typed(self.definition, str)
-    if self.revision != 1 or self.definition != _CRITERIA[self.criterion_id][0]:
+    if self.revision != 1 or self.definition != _CRITERIA[self.criterion_id].definition:
       raise ValueError('Unsupported criterion definition or revision')
     _verdict(self.status, self.reason)
     _typed(self.scope_complete, bool)
@@ -236,10 +243,6 @@ def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
   return dict(value)
 
 
-def _array(value: object) -> list[Any]:
-  return _typed(value, list)
-
-
 def _validate_input(text: str) -> None:
   data = _mapping(
     json.loads(text, object_pairs_hook=_pairs),
@@ -257,7 +260,7 @@ def _validate_input(text: str) -> None:
     dayun_year_rule=config['dayun_year_rule'],
     school=BaziSchool.from_json(config['school']),
   )
-  pillars = _array(data['pillars'])
+  pillars = _typed(data['pillars'], list)
   if len(pillars) != 4:
     raise ValueError('Expected four ordered natal pillars')
   for value in pillars:
@@ -323,7 +326,7 @@ class ContextResult:
     _typed(criterion['observations'], dict)
     criterion['observations'] = frozendict(criterion['observations'])
     occurrences = []
-    for item in _array(data['occurrences']):
+    for item in _typed(data['occurrences'], list):
       value = _mapping(item, tuple(field.name for field in fields(ChartOccurrence)))
       for name, domain in (('ganzhi', Ganzhi), ('stem', Tiangan), ('shishen', Shishen)):
         _typed(value[name], str)
@@ -332,7 +335,7 @@ class ContextResult:
         _choice(value['kind'], ('liunian',))
         value['kind'] = TransitKind.LIUNIAN
       occurrences.append(ChartOccurrence(**value))
-    entries = tuple(EntryMatch(**_mapping(item, ('claim_id', 'status', 'reason'))) for item in _array(data['entries']))
+    entries = tuple(EntryMatch(**_mapping(item, ('claim_id', 'status', 'reason'))) for item in _typed(data['entries'], list))
 
     return cls(
       ContextProfile(**profile),
@@ -417,7 +420,8 @@ def evaluate_context(
         shishen(bazi.day_master, stem),
         kind,
         year,
-      ) for layer, stem in stems
+      )
+      for layer, stem in stems
     )
 
   occurrences = [
@@ -447,7 +451,7 @@ def evaluate_context(
   })
 
   reason: MatchReason
-  if criterion_id not in (_GUANSHA, _FEMALE):
+  if criterion_id not in _DEFINED_CRITERIA:
     reason = 'predicate_undefined'
   elif unavailable is not None:
     reason = unavailable
@@ -460,11 +464,11 @@ def evaluate_context(
   status = _STATUS_BY_REASON[reason]
 
   matches = []
-  for claim_id in _CRITERIA[criterion_id][1]:
+  for claim_id in _CRITERIA[criterion_id].claims:
     entry = knowledge.entries.get(claim_id)
     if entry is None or (not include_reference_only and entry.output != 'default'):
       continue
-    recognized = criterion_id not in (_GUANSHA, _FEMALE) or _binding_digest(knowledge, entry) == _BINDINGS[claim_id]
+    recognized = criterion_id not in _DEFINED_CRITERIA or _binding_digest(knowledge, entry) == _BINDINGS[claim_id]
     entry_reason = reason if recognized else 'binding_unrecognized'
     matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
 
@@ -478,7 +482,7 @@ def evaluate_context(
     CriterionResult(
       criterion_id,
       1,
-      _CRITERIA[criterion_id][0],
+      _CRITERIA[criterion_id].definition,
       status,
       reason,
       unavailable is None,
