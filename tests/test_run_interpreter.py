@@ -35,7 +35,11 @@ def test_matching_cli_text_export_reload_and_library_agree(tmp_path: Path) -> No
   assert 'Does not establish a classical rule or real-world prediction.' in result.stdout
 
 
-@pytest.mark.parametrize('scope,year,status', [('natal', None, 'NOT_SATISFIED'), ('natal_and_liunian', None, 'UNKNOWN'), ('natal_and_liunian', '1998', 'UNKNOWN'), ('natal_and_liunian', '2024', 'SATISFIED')])
+@pytest.mark.parametrize('scope,year,status', [
+  ('natal', None, 'NOT_SATISFIED'), ('natal_and_liunian', None, 'UNKNOWN'),
+  ('natal_and_liunian', '1998', 'UNKNOWN'), ('natal_and_liunian', '0', 'UNKNOWN'),
+  ('natal_and_liunian', '-1', 'UNKNOWN'), ('natal_and_liunian', '2024', 'SATISFIED'),
+])
 def test_matching_cli_verdicts_and_reference_opt_in(tmp_path: Path, scope: str, year: str | None, status: str) -> None:
   args = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--observation-scope', scope)
   result = _run_cli(tmp_path, *args, *(('--ganzhi-year', year) if year else ()))
@@ -69,6 +73,15 @@ def test_matching_cli_missing_and_bad_requests_fail(tmp_path: Path, args: tuple[
   result = _run_cli(tmp_path, *args)
   assert result.returncode == 2 and 'error:' in result.stderr
   assert list(tmp_path.iterdir()) == []
+
+
+def test_matching_missing_knowledge_source_is_an_argparse_error(tmp_path: Path) -> None:
+  output = tmp_path / 'match.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--knowledge-source', str(tmp_path / 'missing.json'), '--export-context-json', str(output))
+  assert result.returncode == 2 and 'error:' in result.stderr
+  assert 'Traceback' not in result.stderr
+  assert 'No such file or directory' in result.stderr
+  assert not output.exists()
 
 
 def test_matching_custom_source_unknown_binding_and_alias_guards(tmp_path: Path) -> None:

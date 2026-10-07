@@ -131,7 +131,10 @@ def test_export_preserves_literal_evidence_year_kind_and_input() -> None:
   ]
 
 
-@pytest.mark.parametrize('day,year,reason', [(1, None, 'missing_transit_coordinate'), (3, None, 'missing_transit_coordinate'), (1, 1998, 'transit_unavailable')])
+@pytest.mark.parametrize('day,year,reason', [
+  (1, None, 'missing_transit_coordinate'), (3, None, 'missing_transit_coordinate'),
+  (1, 1998, 'transit_unavailable'), (1, 0, 'transit_unavailable'), (1, -1, 'transit_unavailable'),
+])
 def test_incomplete_scope_is_unknown_even_when_partial_natal_is_true(day: int, year: int | None, reason: str) -> None:
   result = match(day, profile=ContextProfile('natal_and_liunian', year))
   assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == reason
@@ -151,6 +154,23 @@ def test_required_kind_unavailable_is_unknown_and_errors_are_not_swallowed(monke
   monkeypatch.setattr(TransitChart, 'at_year', broken)
   with pytest.raises(ValueError, match='programming error'):
     match(profile=ContextProfile('natal_and_liunian', 2024))
+
+
+@pytest.mark.parametrize('criterion_id,gender,year,reason', [
+  (FEMALE, 'female', None, 'missing_transit_coordinate'),
+  (FEMALE, 'male', None, 'missing_transit_coordinate'),
+  (FEMALE, 'female', 1998, 'transit_unavailable'),
+  (FEMALE, 'male', 1998, 'transit_unavailable'),
+  ('tiangan.geng_regulated_transit', 'female', None, 'predicate_undefined'),
+  ('tiangan.geng_regulated_transit', 'male', 1998, 'predicate_undefined'),
+])
+def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year: int | None, reason: str) -> None:
+  result = match(gender=gender, criterion_id=criterion_id, profile=ContextProfile('natal_and_liunian', year))
+  assert result.criterion.status == 'UNKNOWN'
+  assert result.criterion.reason == reason and result.criterion.scope_complete is False
+  assert all(entry.status == 'UNKNOWN' and entry.reason == reason for entry in result.entries)
+  assert all(o.origin == 'natal' for o in result.occurrences)
+  assert ContextResult.from_json(result.export_json()) == result
 
 
 @pytest.mark.parametrize('criterion_id,claim_id', [
@@ -182,6 +202,7 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   knowledge = KnowledgeBase.load()
   default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'))
   assert default.criterion.status == 'SATISFIED' and default.entries == ()
+  assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
   assert result.criterion.revision == 1 and result.profile.stem_scope == 'visible_and_hidden'
@@ -211,6 +232,22 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   monkeypatch.setattr(TransitChart, 'at_year', forbidden)
   restored = ContextResult.from_json(result.export_json())
   assert restored == result and restored.render() == rendered and restored.export_json() == result.export_json()
+
+
+@pytest.mark.parametrize('day,criterion_id,status', [
+  (3, GUANSHA, 'SATISFIED'), (1, GUANSHA, 'NOT_SATISFIED'),
+  (3, 'tiangan.geng_regulated_transit', 'UNKNOWN'),
+])
+def test_render_premise_annotations_are_evaluation_only(day: int, criterion_id: str, status: str) -> None:
+  result = match(day, criterion_id=criterion_id)
+  knowledge = KnowledgeBase.from_json(result.knowledge_json)
+  text = result.render()
+  for entry_match in result.entries:
+    block = text.split(f'原作参考前提：{entry_match.claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
+    entry = knowledge.entry(entry_match.claim_id)
+    assert f'输出资格：{entry.output}' in block and f'前提判别：{status}' in block
+    assert '前提判别：' not in knowledge.render(entry)
+    assert '输出资格：' not in knowledge.render(entry)
 
 
 @pytest.mark.parametrize('claim_id,criterion_id', [
@@ -268,6 +305,7 @@ def test_same_id_custom_binding_is_not_semantic_authentication(dimension: str) -
   if dimension == 'qualification':
     default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'), knowledge=custom)
     assert default.entries == (EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized'),)
+    assert '输出资格：default' in default.render() and '前提判别：UNKNOWN' in default.render()
 
 
 def test_equal_custom_export_bindings_and_missing_entries() -> None:
@@ -284,8 +322,15 @@ def test_full_input_identity_and_immutability() -> None:
   assert identity['birth_time'] == '2000-01-03T12:00:00' and identity['gender'] == 'female'
   assert identity['config']['backend'] == 'celestial' and identity['config']['precision'] == 'day'
   assert len(identity['config']['school']) == 22
-  changed = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female', BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG))))
-  assert evaluate_context(changed, criterion_id=GUANSHA, profile=ContextProfile('natal')).input_json != result.input_json
+  for config in (
+    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+    BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
+    BaziConfig.from_values(dayun_year_rule='fixed_decade'),
+  ):
+    changed = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female', config))
+    changed_result = evaluate_context(changed, criterion_id=GUANSHA, profile=ContextProfile('natal'))
+    assert changed_result.input_json != result.input_json
+    assert ContextResult.from_json(changed_result.export_json()) == changed_result
   with pytest.raises(FrozenInstanceError):
     result.profile.ganzhi_year = 2024 # type: ignore[misc]
   with pytest.raises(FrozenInstanceError):
@@ -303,6 +348,17 @@ def test_configuration_wire_roster_and_chart_input_agree() -> None:
   chart_json: dict[str, Any] = dict(c.json)
   assert {key: chart_json[key] for key in wire} == wire
   assert json.loads(match().input_json)['config'] == wire
+
+
+def test_ding_day_master_partial_observation_and_roster() -> None:
+  result = match(10, criterion_id='tiangan.ding_weak_and_overcontrolled')
+  assert chart(10).bazi.day_master is Tiangan.丁
+  assert set(result.criterion.observations) == {
+    'observed_coexistence', 'female', 'day_master_is_ding', 'day_master_is_geng', 'observed_pianyin', 'observed_shishen',
+  }
+  assert result.criterion.observations['day_master_is_ding'] is True
+  assert result.criterion.observations['day_master_is_geng'] is False
+  assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
 
 
 class Year(int):
@@ -426,6 +482,11 @@ def test_restore_rejects_corrupt_nested_records() -> None:
     data = json.loads(json.dumps(original))
     data['occurrences'][-1][key] = value
     with pytest.raises((TypeError, ValueError)):
+      ContextResult.from_json(json.dumps(data))
+  for key, value in (('backend', 'nope'), ('precision', 'bogus'), ('dayun_year_rule', 'bogus'), ('school', {})):
+    data = json.loads(json.dumps(original))
+    data['input']['config'][key] = value
+    with pytest.raises(ValueError):
       ContextResult.from_json(json.dumps(data))
   with pytest.raises(TypeError):
     ContextResult.from_json(42) # type: ignore[arg-type]

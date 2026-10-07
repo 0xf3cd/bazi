@@ -211,19 +211,24 @@ including through a filesystem alias.
 
 ### Evaluate an explicitly scoped editorial premise
 
-The context matcher evaluates two registered repository-editorial premises:
+Two registered criteria evaluate repository-editorial premises:
 
 - `editorial.guansha_coexistence.v1`: 正官 and 七杀 each occur at least once.
 - `editorial.guansha_coexistence_female.v1`: the same coexistence AND female input.
 
 These bind respectively to the two `legal_trouble` and two `infidelity` editorial
-entries. They remain **reference-only**, with their original “也许” / “可能” text,
-editorial attribution and full source limits. Satisfying a premise is not evidence
+entries. The four entries are **reference-only**, with their original “也许” / “可能” text,
+editorial attribution and full source boundaries. Satisfying a premise is not evidence
 that a workplace, legal or relationship event happens.
 
 ```python
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 
+chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
 result = evaluate_context(
   chart,
   criterion_id='editorial.guansha_coexistence.v1',
@@ -238,41 +243,41 @@ assert restored_record == result
 The stem inventory is fixed: year/month/hour visible stems, every actual hidden
 stem in all four natal branches, and the selected LIUNIAN's visible and hidden
 stems when requested. The day-master visible stem is deliberately excluded;
-a hidden stem equal to the day master is still classified 比肩. Percentages are
-not weights, and repetitions are retained with pillar, query-local index, Ganzhi,
+a hidden stem equal to the day master is still classified 比肩. Hidden-stem percentages
+are not weights. Repetitions are retained with pillar, query-local index, Ganzhi,
 origin, layer, stem and 十神. No strength/count threshold, adjacency, 去留 or
 effective 制化 condition is added.
 
 `ContextProfile` requires `observation_scope='natal'` or `'natal_and_liunian'`.
-The latter requires a Ganzhi-year coordinate for a complete verdict; this is a
-year label, not a Gregorian timestamp. Only LIUNIAN is included. A missing year,
-unavailable query or missing required kind yields `UNKNOWN`, even if partial
+The latter includes only LIUNIAN and requires a Ganzhi-year coordinate for a complete verdict.
+
+This coordinate is a year label, not a Gregorian timestamp. `TransitChart.at_year(N)`
+uses the year label `N` (2024 → 甲辰). Labels before the birth's Ganzhi year, including
+zero and negative values, are unavailable; later labels have no upper bound.
+Years accept only exact `int`, excluding `bool` and int subclasses. Natal scope rejects a year.
+
+A missing year, unavailable query or missing required kind yields `UNKNOWN`, even if partial
 natal observations already contain both classifications. Wrong types, unknown
-IDs and illegal combinations raise `TypeError` / `ValueError`; years accept only
-exact `int`, excluding `bool` and int subclasses. Natal scope rejects a year.
-`TransitChart.at_year(N)` uses the year label `N` (2024 → 甲辰). Labels before
-the birth's Ganzhi year, including zero and negative values, are unavailable;
-later labels have no upper bound.
+IDs and illegal combinations raise `TypeError` / `ValueError`.
 
 `SATISFIED` and `NOT_SATISFIED` describe a complete, explicitly selected premise.
 `UNKNOWN` preserves known partial observations without claiming a complete
-verdict. Four registered controls (`tiangan.ding_weak_and_overcontrolled`,
+verdict. Four registered criteria (`tiangan.ding_weak_and_overcontrolled`,
 `tiangan.geng_regulated_transit`, `shishen.pianyin_favorable_or_balanced`,
-`shishen.xiaoyin_duoshi`) remain `predicate_undefined`, with their original
-premises and limits. `described` / `unresolved` are still knowledge organization,
+`shishen.xiaoyin_duoshi`) have undefined predicates, with their recorded
+premises and limits. `described` / `unresolved` are knowledge organization,
 not computed truth values.
 
 Structural evaluation and entry matching are separate. For the four editorial
 entries, a custom knowledge base with the same ID but a different entry, object,
-premise, context, source or output
-binding yields `binding_unrecognized` for that entry, rather than authenticating
-meaning by ID or keywords. Equal exported/reloaded bindings remain usable.
+premise, context, source or output binding yields `binding_unrecognized` for that
+entry, rather than authenticating meaning by ID or keywords. Equal exported/reloaded bindings are usable.
 Reference selection is opt-in; satisfying a criterion never grants default
-output eligibility. Independent `KnowledgeBase.render` still performs no evaluation.
-Missing bound entries produce no `EntryMatch` or display line. The four undefined
-controls display supplied same-ID entries under `predicate_undefined`.
+output eligibility. Independent `KnowledgeBase.render` performs no evaluation.
+Missing bound entries produce no `EntryMatch` or display line. The four criteria with
+undefined predicates display supplied same-ID entries under `predicate_undefined`.
 
-Results are immutable. JSON is derived from that record and preserves criterion
+Results are immutable. JSON preserves criterion
 definition/revision, profile, complete birth/gender/config identity, year/kind,
 all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.

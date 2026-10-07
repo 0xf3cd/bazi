@@ -1,6 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Explicitly scoped premises for repository-editorial reference text.
+'''Scoped editorial premises; no assessment of events, strength or effective 制化.
 仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
 import hashlib
@@ -13,7 +13,7 @@ from .bazi import BaziGender
 from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
-from .knowledge import KnowledgeBase, KnowledgeEntry
+from .knowledge import KnowledgeBase, KnowledgeEntry, _pairs
 from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind
@@ -23,7 +23,7 @@ from .utils.bazi_utils import hidden_tiangans, shishen
 '''Complete-premise verdict, independent of knowledge organization. / 完整前提判别，独立于知识整理状态。'''
 MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
-'''Why the complete premise has this verdict. / 完整前提的判别理由。'''
+'''Reason for a criterion or entry verdict. / 判据或条目判别的理由。'''
 MatchReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable', 'predicate_undefined', 'binding_unrecognized',
@@ -47,6 +47,7 @@ class _Criterion(NamedTuple):
 _GUANSHA: Final = 'editorial.guansha_coexistence.v1'
 _FEMALE: Final = 'editorial.guansha_coexistence_female.v1'
 _DEFINED_CRITERIA: Final[frozenset[str]] = frozenset((_GUANSHA, _FEMALE))
+
 _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   _GUANSHA: _Criterion('选定范围内正官与七杀各至少出现一次。', (
     'editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble',
@@ -112,7 +113,7 @@ def _verdict(status: MatchStatus, reason: MatchReason) -> None:
 
 @dataclass(frozen=True)
 class ContextProfile:
-  '''Select natal or natal plus one LIUNIAN; all actual hidden stems are fixed.
+  '''Select natal or natal plus one LIUNIAN, including all hidden stems without percentage weights.
   显式选择原局或原局加单流年；固定包含全部实际藏干，不以百分比计力量。
 
   Note:
@@ -136,7 +137,7 @@ class ContextProfile:
 
 @dataclass(frozen=True)
 class ChartOccurrence:
-  '''One classified stem, preserving its position, layer and time identity.
+  '''One classified stem with position, layer and time identity; duplicate positions stay separate.
   一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
 
   origin:      Literal['natal', 'transit']
@@ -175,13 +176,13 @@ class ChartOccurrence:
 
 @dataclass(frozen=True)
 class CriterionResult:
-  '''Complete verdict with separately known observations, including partial scopes.
+  '''Complete verdict with known partial facts; partial facts do not complete a missing scope.
   完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
 
   Note:
   - `observed_coexistence` and `female` serve the editorial predicates. `day_master_is_ding`,
     `day_master_is_geng`, `observed_pianyin` and `observed_shishen` (食神, not 十神)
-    are partial facts for undefined controls, not complete predicates.
+    are partial facts for undefined criteria, not complete predicates.
   - `observed_coexistence` 与 `female` 用于原作前提；其余键记录丁／庚日主及偏印／食神
     的局部事实，不构成未定义情境的完整判据。`observed_shishen` 指食神，不是十神总类。
   '''
@@ -214,7 +215,7 @@ class CriterionResult:
 @dataclass(frozen=True)
 class EntryMatch:
   '''Entry verdict after semantic binding, separate from the structural criterion.
-  语义绑定后的条目前提判别，独立于结构 criterion。'''
+  语义绑定后的条目前提判别，独立于结构判据。'''
 
   claim_id: str
   status:   MatchStatus
@@ -225,15 +226,6 @@ class EntryMatch:
     if not self.claim_id.strip():
       raise ValueError('Expected non-empty claim ID')
     _verdict(self.status, self.reason)
-
-
-def _pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-  result: dict[str, Any] = {}
-  for key, value in pairs:
-    if key in result:
-      raise ValueError(f'Duplicate JSON key: {key}')
-    result[key] = value
-  return result
 
 
 def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
@@ -254,12 +246,7 @@ def _validate_input(text: str) -> None:
     raise ValueError('Expected canonical naive minute birth time')
   _choice(data['gender'], ('male', 'female'))
   config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
-  BaziConfig.from_values(
-    backend=config['backend'],
-    precision=config['precision'],
-    dayun_year_rule=config['dayun_year_rule'],
-    school=BaziSchool.from_json(config['school']),
-  )
+  BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})
   pillars = _typed(data['pillars'], list)
   if len(pillars) != 4:
     raise ValueError('Expected four ordered natal pillars')
@@ -271,7 +258,7 @@ def _validate_input(text: str) -> None:
 @dataclass(frozen=True)
 class ContextResult:
   '''Immutable observation record with full input and knowledge snapshots.
-  不可变观察记录，附完整输入及知识快照；恢复只恢复记录，不重新计算。'''
+  不可变观察记录，附完整输入及知识快照。'''
 
   profile:        ContextProfile
   criterion:      CriterionResult
@@ -292,7 +279,7 @@ class ContextResult:
       knowledge.entry(match.claim_id)
 
   def export_json(self) -> str:
-    '''Export this record, including evidence and all knowledge registries.
+    '''Export the record, evidence and knowledge registries without changing reference eligibility.
     导出本记录、全部证据及知识注册表，不改变参考输出资格。'''
     data = {
       'record_version': 1,
@@ -347,7 +334,7 @@ class ContextResult:
     )
 
   def render(self) -> str:
-    '''Display verdict, evidence and complete reference text with source limits.
+    '''Display verdict, evidence and full reference/source boundaries; a premise verdict predicts no event.
     展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     lines = [
@@ -385,12 +372,13 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''Evaluate a registered premise in an explicit scope, then bind reference entries.
-  在显式范围内求值已注册前提，再联接参考条目；缺失上下文与未定义判据为 UNKNOWN。
+  '''Evaluate a registered criterion in an explicit scope, then bind reference entries.
+  在显式范围内求值已注册判据，再联接参考条目；缺失范围与未定义判据为 UNKNOWN。
 
   Note:
-  - Only two editorial Guansha predicates are defined. Registered legacy controls remain UNKNOWN.
-  - 仅定义两个原作官杀判据；已注册旧情境保留 UNKNOWN，不从文本推导新判据。
+  - Only two editorial Guansha predicates are defined; missing scope or undefined predicates yield UNKNOWN.
+    No predicate is inferred from text.
+  - 仅定义两个原作官杀判据；缺失范围或未定义判据返回 UNKNOWN，不从文本推导新判据。
   '''
   _typed(chart, BaziChart)
   _typed(profile, ContextProfile)

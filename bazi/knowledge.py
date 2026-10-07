@@ -482,7 +482,7 @@ class KnowledgeBase:
     manual_context: bool = False,
     premise_verdict: str | None = None,
   ) -> str:
-    '''Render an entry, optionally annotating a verdict supplied by the caller.
+    '''Render an entry with an optional caller-supplied verdict; this method evaluates no premises.
     展示条目，可附调用方提供的前提判别；本方法不求值前提。'''
     assert premise_verdict is None or isinstance(premise_verdict, str)
     if not isinstance(entry, KnowledgeEntry):

@@ -174,7 +174,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   print(result.stderr, end='')
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('ContextProfile', 'evaluate_context', 'from_json'):
+  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
 
