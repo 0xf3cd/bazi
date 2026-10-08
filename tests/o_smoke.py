@@ -39,6 +39,7 @@ def main() -> int:
   from bazi.interpreter import Interpreter
   from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
   from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription
+  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -91,6 +92,24 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('ContextProfile rejects bool year', TypeError,
+     lambda: ContextProfile('natal_and_liunian', True)),
+    ('ContextProfile rejects int subclass year', TypeError,
+     lambda: ContextProfile('natal_and_liunian', Year(2024))),
+    ('ContextProfile rejects wrong scope type', TypeError,
+     lambda: ContextProfile(42)), # type: ignore[arg-type]
+    ('ContextProfile rejects unsupported scope', ValueError,
+     lambda: ContextProfile('dayun')), # type: ignore[arg-type]
+    ('ContextProfile rejects natal coordinate', ValueError,
+     lambda: ContextProfile('natal', 2024)),
+    ('evaluate_context rejects unknown criterion', ValueError,
+     lambda: evaluate_context(chart, criterion_id='typo', profile=ContextProfile('natal'))),
+    ('evaluate_context rejects wrong profile', TypeError,
+     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile='natal')), # type: ignore[arg-type]
+    ('evaluate_context rejects truthy reference flag', TypeError,
+     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=1)), # type: ignore[arg-type]
+    ('ContextResult restoration rejects wrong input', TypeError,
+     lambda: ContextResult.from_json(42)), # type: ignore[arg-type]
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
     ('Bazi.create above window (2100-06-01)', ValueError,
@@ -385,6 +404,12 @@ def main() -> int:
       ])
 
   failures: list[str] = []
+  missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian'))
+  if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
+    failures.append('Missing year became a false verdict')
+  positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian', 2024), include_reference_only=True)
+  if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or ContextResult.from_json(positive.export_json()) != positive:
+    failures.append('Optimized context evaluation/export/restoration failed')
   for label, expected, thunk in checks:
     try:
       thunk()

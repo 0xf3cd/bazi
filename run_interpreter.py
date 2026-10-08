@@ -3,7 +3,7 @@
 import argparse
 import random
 import re
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Final, get_args
 
@@ -13,6 +13,7 @@ from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
 from bazi.knowledge import Applicability, KnowledgeBase
+from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
@@ -136,6 +137,30 @@ def save_chart_examples(count: int = 50) -> None:
     _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
 
 
+def _export_json(
+  parser: argparse.ArgumentParser,
+  target: Path,
+  knowledge_source: Path | None,
+  export: Callable[[], str],
+  label: str,
+) -> None:
+  sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
+  if knowledge_source is not None:
+    sources += (knowledge_source,)
+  if any(
+    target.resolve() == source.resolve() or (
+      target.exists() and source.exists() and target.samefile(source)
+    ) for source in sources
+  ):
+    parser.error('Export must not overwrite the editing source')
+  try:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(export(), encoding='utf-8')
+  except OSError as error:
+    parser.error(str(error))
+  print(f'{label}{target}')
+
+
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
           args.output_dir, args.export_knowledge_base)):
@@ -161,39 +186,61 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -
     if not selection:
       print('无匹配条目。')
   if args.export_knowledge_json is not None:
-    editing_sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
-    if args.knowledge_source is not None:
-      editing_sources += (args.knowledge_source,)
-    if any(
-      args.export_knowledge_json.resolve() == source.resolve() or (
-        args.export_knowledge_json.exists() and source.exists() and args.export_knowledge_json.samefile(source)
-      )
-      for source in editing_sources
-    ):
-      parser.error('Export must not overwrite the editing source')
-    try:
-      args.export_knowledge_json.parent.mkdir(parents=True, exist_ok=True)
-      args.export_knowledge_json.write_text(knowledge.export_json(selection), encoding='utf-8')
-    except OSError as error:
-      parser.error(str(error))
-    print(f'已导出知识：{args.export_knowledge_json}')
+    _export_json(
+      parser,
+      args.export_knowledge_json,
+      args.knowledge_source,
+      lambda: knowledge.export_json(selection),
+      '已导出知识：',
+    )
+  return 0
+
+
+def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+  if args.birth_time is None or args.gender is None or args.observation_scope is None:
+    parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
+  if any((args.seed is not None, args.count is not None, args.output_dir is not None, args.export_knowledge_base,
+          args.query_knowledge, args.validate_knowledge, args.export_knowledge_json is not None)) or any(
+    value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
+                                    args.viewpoint, args.applicability, args.time_scope)
+  ):
+    parser.error('Matching cannot be combined with random input, TXT export or knowledge modes/filters')
+  try:
+    result = evaluate_context(
+      BaziChart(Bazi.create(args.birth_time, args.gender)),
+      criterion_id=args.match_context,
+      profile=ContextProfile(args.observation_scope, args.ganzhi_year),
+      knowledge=KnowledgeBase.load(args.knowledge_source),
+      include_reference_only=args.include_reference_only,
+    )
+  except (OSError, TypeError, ValueError) as error:
+    parser.error(str(error))
+  print(result.render())
+  if args.export_context_json is not None:
+    _export_json(
+      parser,
+      args.export_context_json,
+      args.knowledge_source,
+      result.export_json,
+      '已导出前提判别记录：',
+    )
   return 0
 
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description='Display charts or query, validate and export interpretation knowledge.')
+  parser = argparse.ArgumentParser(description='Display charts, match scoped premises, or query, validate and export interpretation knowledge.')
   parser.add_argument('--birth-time', help='Local civil time, e.g. "2000-01-01 12:00".')
   parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
   parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
   parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
-  parser.add_argument('--include-reference-only', action='store_true', help='Include unevaluated reference text.')
-  parser.add_argument('--show-sources', action='store_true', help='Show claim IDs, attribution and source witnesses.')
+  parser.add_argument('--include-reference-only', action='store_true', help='Include reference text; matching mode also displays its premise verdict.')
+  parser.add_argument('--show-sources', action='store_true', help='Show claim IDs, attribution and source witnesses (always included in knowledge queries and matching).')
   parser.add_argument('--output-dir', type=Path, help='Export the displayed charts below this directory.')
   parser.add_argument('--export-knowledge-base', action='store_true', help='Export descriptions for every Tiangan and Shishen.')
   parser.add_argument('--query-knowledge', action='store_true', help='Query knowledge without creating a chart.')
   parser.add_argument('--validate-knowledge', action='store_true', help='Validate the whole knowledge source.')
   parser.add_argument('--export-knowledge-json', type=Path, help='Export reloadable knowledge JSON; with a query, export its selection.')
-  parser.add_argument('--knowledge-source', type=Path, help='Use an edited JSON source in knowledge mode.')
+  parser.add_argument('--knowledge-source', type=Path, help='Use an edited JSON source for knowledge queries, validation, export or context matching.')
   parser.add_argument('--object', dest='object_id', help='Discussion object ID, including any bound role.')
   parser.add_argument('--context', dest='context_id', help='Manually supplied lookup context ID, not a chart verdict.')
   parser.add_argument('--topic', help='Knowledge topic.')
@@ -201,8 +248,16 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--viewpoint', help='Interpretation viewpoint.')
   parser.add_argument('--applicability', choices=get_args(Applicability), help='Premise organization state.')
   parser.add_argument('--time-scope', help='Time scope recorded by a lookup context.')
+  parser.add_argument('--match-context', help='Registered criterion ID; evaluate an explicitly scoped fixed chart.')
+  parser.add_argument('--observation-scope', choices=get_args(ObservationScope), help='Explicit natal or natal-plus-one-LIUNIAN scope; all hidden stems are included.')
+  parser.add_argument('--ganzhi-year', type=int, help='Ganzhi-year query coordinate for LIUNIAN, not a Gregorian timestamp.')
+  parser.add_argument('--export-context-json', type=Path, help='Export the matching record, evidence and complete knowledge snapshot.')
   args = parser.parse_args(argv)
 
+  if args.match_context is not None:
+    return _matching_main(parser, args)
+  if args.observation_scope is not None or args.ganzhi_year is not None or args.export_context_json is not None:
+    parser.error('Matching inputs require --match-context')
   if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
     return _knowledge_main(parser, args)
   if args.knowledge_source is not None or any(

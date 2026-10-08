@@ -188,6 +188,24 @@
         "有制有化尚未定义，不据基础生克关系认定成立。",
         "后天有教养是盘外前提，不能从命盘查表还原。"
       ]
+    },
+    {
+      "context_id": "editorial.guansha_coexistence",
+      "label": "官杀共现原作条目前提",
+      "time_scope": "显式选择原局或原局加单流年",
+      "limits": [
+        "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+        "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+      ]
+    },
+    {
+      "context_id": "editorial.guansha_coexistence_female",
+      "label": "官杀共现且女命原作条目前提",
+      "time_scope": "显式选择原局或原局加单流年",
+      "limits": [
+        "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，且输入为女命；不计力量、次数阈值、相邻、去留或有效制化。",
+        "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+      ]
     }
   ],
   "sources": [
@@ -5042,9 +5060,11 @@
       "topics": [
         "取象"
       ],
-      "applicability": "unresolved",
-      "premise": "",
-      "contexts": [],
+      "applicability": "described",
+      "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+      "contexts": [
+        "editorial.guansha_coexistence"
+      ],
       "sources": [
         "editorial"
       ],
@@ -5075,9 +5095,11 @@
       "topics": [
         "取象"
       ],
-      "applicability": "unresolved",
-      "premise": "",
-      "contexts": [],
+      "applicability": "described",
+      "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次，且输入为女命。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+      "contexts": [
+        "editorial.guansha_coexistence_female"
+      ],
       "sources": [
         "editorial"
       ],
@@ -5722,9 +5744,11 @@
       "topics": [
         "取象"
       ],
-      "applicability": "unresolved",
-      "premise": "",
-      "contexts": [],
+      "applicability": "described",
+      "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+      "contexts": [
+        "editorial.guansha_coexistence"
+      ],
       "sources": [
         "editorial"
       ],
@@ -5755,9 +5779,11 @@
       "topics": [
         "取象"
       ],
-      "applicability": "unresolved",
-      "premise": "",
-      "contexts": [],
+      "applicability": "described",
+      "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次，且输入为女命。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+      "contexts": [
+        "editorial.guansha_coexistence_female"
+      ],
       "sources": [
         "editorial"
       ],

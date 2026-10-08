@@ -152,12 +152,16 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
   good = ('from datetime import datetime\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart\n'
           'from bazi.knowledge import KnowledgeBase, KnowledgeEntry\n'
+          'from bazi.context_matching import ContextProfile, ContextResult, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
           'knowledge = KnowledgeBase.load()\n'
           'entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")\n'
-          'text: str = knowledge.export_json(entries)\n')
+          'text: str = knowledge.export_json(entries)\n'
+          'matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
+          'record: str = matched.export_json()\n'
+          'restored: ContextResult = ContextResult.from_json(record)\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
-  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\nknowledge.query(object_id=42)\n', encoding='utf-8')
+  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\nknowledge.query(object_id=42)\nContextProfile("dayun")\nevaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n', encoding='utf-8')
   command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
   run([*command, 'good.py'], foreign)
   result = subprocess.run(
@@ -170,6 +174,9 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   print(result.stderr, end='')
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
+  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json'):
+    if f'to "{interface}"' not in result.stdout:
+      raise ValueError(f'Installed typing negative control missed {interface}')
 
   for path, digest in pair.items():
     if sha256(path) != digest:

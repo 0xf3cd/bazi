@@ -6,7 +6,7 @@ school profile), the school-divergence declarations (`BaziSchool` / `DayRollover
 
 from enum import Enum
 from dataclasses import dataclass, fields
-from typing import Any, Final, cast
+from typing import Any, Final, TypedDict, cast
 from collections.abc import Mapping
 
 from .calendar import CalendarBackend
@@ -494,3 +494,22 @@ class BaziConfig:
 
 
 DEFAULT_CONFIG: Final[BaziConfig] = BaziConfig()
+
+
+class _ConfigJson(TypedDict):
+  backend:         str
+  precision:       str
+  dayun_year_rule: str
+  school:          dict[str, str]
+
+
+def _config_json(config: BaziConfig) -> _ConfigJson:
+  '''Serialize configuration values; school fields store enum member names.
+  序列化配置值；流派旋钮以字段名存枚举成员名。'''
+  assert isinstance(config, BaziConfig)
+  return {
+    'backend':         str(config.backend),
+    'precision':       str(config.precision),
+    'dayun_year_rule': str(config.dayun_year_rule),
+    'school':          {knob.name: getattr(config.school, knob.name).name for knob in fields(config.school)},
+  }

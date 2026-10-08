@@ -15,9 +15,108 @@ from bazi.bazi_chart import BaziChart
 from bazi.defines import Shishen
 from bazi.interpreter import Interpreter
 from bazi.knowledge import KnowledgeBase
+from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
+
+MATCH_ARGS = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--observation-scope', 'natal')
+
+
+def test_matching_cli_text_export_reload_and_library_agree(tmp_path: Path) -> None:
+  output = tmp_path / 'match.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--include-reference-only', '--export-context-json', str(output))
+  assert result.returncode == 0, result.stderr
+  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=True)
+  assert output.read_text(encoding='utf-8') == expected.export_json()
+  assert result.stdout == expected.render() + '\n' + f'已导出前提判别记录：{output}\n'
+  assert ContextResult.from_json(output.read_text(encoding='utf-8')) == expected
+  assert '也许' in result.stdout and '仅供参考' in result.stdout
+  assert 'Does not establish a classical rule or real-world prediction.' in result.stdout
+
+
+@pytest.mark.parametrize('scope,year,status', [
+  ('natal', None, 'NOT_SATISFIED'), ('natal_and_liunian', None, 'UNKNOWN'),
+  ('natal_and_liunian', '1998', 'UNKNOWN'), ('natal_and_liunian', '0', 'UNKNOWN'),
+  ('natal_and_liunian', '-1', 'UNKNOWN'), ('natal_and_liunian', '2024', 'SATISFIED'),
+])
+def test_matching_cli_verdicts_and_reference_opt_in(tmp_path: Path, scope: str, year: str | None, status: str) -> None:
+  args = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--observation-scope', scope)
+  result = _run_cli(tmp_path, *args, *(('--ganzhi-year', year) if year else ()))
+  assert result.returncode == 0 and f'结构前提：{status}' in result.stdout
+  assert '原作参考前提：' not in result.stdout and '也许' not in result.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('extra', [
+  ('--seed', '42'), ('--count', '1'), ('--output-dir', 'out'), ('--export-knowledge-base',),
+  ('--query-knowledge',), ('--validate-knowledge',), ('--export-knowledge-json', 'k.json'),
+  ('--object', 'tiangan.ding'), ('--context', 'legacy.chart_context'), ('--topic', '取象'),
+  ('--source', 'editorial'), ('--viewpoint', '仓内原作'), ('--applicability', 'described'), ('--time-scope', '行运'),
+  ('--ganzhi-year', '2024'), ('--ganzhi-year', 'bad'),
+])
+def test_matching_cli_invalid_combinations_do_not_export(tmp_path: Path, extra: tuple[str, ...]) -> None:
+  output = tmp_path / 'match.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, *extra, '--export-context-json', str(output))
+  assert result.returncode == 2 and 'error:' in result.stderr
+  assert not output.exists()
+
+
+@pytest.mark.parametrize('args', [
+  ('--match-context', 'editorial.guansha_coexistence.v1'),
+  ('--match-context', 'typo', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--observation-scope', 'natal'),
+  ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', 'bad', '--gender', 'female', '--observation-scope', 'natal'),
+  ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-03 12:00', '--gender', 'female'),
+  ('--observation-scope', 'natal'), ('--ganzhi-year', '2024'), ('--export-context-json', 'out.json'),
+])
+def test_matching_cli_missing_and_bad_requests_fail(tmp_path: Path, args: tuple[str, ...]) -> None:
+  result = _run_cli(tmp_path, *args)
+  assert result.returncode == 2 and 'error:' in result.stderr
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_matching_missing_knowledge_source_is_an_argparse_error(tmp_path: Path) -> None:
+  output = tmp_path / 'match.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--knowledge-source', str(tmp_path / 'missing.json'), '--export-context-json', str(output))
+  assert result.returncode == 2 and 'error:' in result.stderr
+  assert 'Traceback' not in result.stderr
+  assert 'No such file or directory' in result.stderr
+  assert not output.exists()
+
+
+def test_matching_custom_source_unknown_binding_and_alias_guards(tmp_path: Path) -> None:
+  data = json.loads(KNOWLEDGE_BASE.export_json())
+  next(e for e in data['entries'] if e['claim_id'] == 'editorial.shishen.zhengguan.legal_trouble')['premise'] = '不同前提'
+  source = tmp_path / 'edited.json'
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  output = tmp_path / 'result.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--include-reference-only', '--knowledge-source', str(source), '--export-context-json', str(output))
+  assert result.returncode == 0 and 'binding_unrecognized' in result.stdout
+  assert '不同前提' in result.stdout
+  restored = ContextResult.from_json(output.read_text(encoding='utf-8'))
+  assert restored.entries[0].status == 'UNKNOWN'
+  aliases = [source, tmp_path / 'symlink.json', tmp_path / 'hardlink.json']
+  aliases[1].symlink_to(source)
+  aliases[2].hardlink_to(source)
+  before = source.read_bytes()
+  for alias in aliases:
+    result = _run_cli(tmp_path, *MATCH_ARGS, '--knowledge-source', str(source), '--export-context-json', str(alias))
+    assert result.returncode == 2 and 'overwrite' in result.stderr
+    assert source.read_bytes() == before
+  bundled = Path(__file__).parents[1] / 'bazi/knowledge_data.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--export-context-json', str(bundled))
+  assert result.returncode == 2 and 'overwrite' in result.stderr
+
+
+def test_matching_export_io_error_and_undefined_text(tmp_path: Path) -> None:
+  output = tmp_path / 'directory'
+  output.mkdir()
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--export-context-json', str(output))
+  assert result.returncode == 2 and 'error:' in result.stderr
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--match-context', 'tiangan.geng_regulated_transit', '--include-reference-only')
+  assert result.returncode == 0 and 'UNKNOWN' in result.stdout
+  for text in ('有制有化尚未定义，不据基础生克关系认定成立。', '后天有教养是盘外前提，不能从命盘查表还原。'):
+    assert text in result.stdout
 
 
 @pytest.mark.parametrize('include_reference_only', [False, True])
@@ -437,7 +536,7 @@ def test_knowledge_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
     '--export-knowledge-json', str(exported),
   )
   assert query.returncode == 0, query.stderr
-  assert '校验通过：295 条目，9 来源见证，5 情境。' in query.stdout
+  assert '校验通过：295 条目，9 来源见证，7 情境。' in query.stdout
   assert '本次编辑的限度。' in query.stdout
   restored = KnowledgeBase.load(exported)
   assert tuple(restored.entries) == ('tiangan.ding.lamp_symbol',)
