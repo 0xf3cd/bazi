@@ -7,13 +7,13 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
-from typing import Any, Final, Literal, NamedTuple, TypeVar, get_args
+from typing import Final, Literal, NamedTuple, TypeVar, get_args
 
 from .bazi import BaziGender
 from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
-from .knowledge import KnowledgeBase, KnowledgeEntry, _pairs
+from .knowledge import KnowledgeBase, KnowledgeEntry, _choice, _mapping, _pairs, _tuple
 from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind
@@ -87,21 +87,9 @@ def _typed(value: object, expected: type[_T]) -> _T:
   return value
 
 
-def _choice(value: object, choices: tuple[str, ...]) -> None:
-  _typed(value, str)
-  if value not in choices:
-    raise ValueError(f'Unsupported value: {value}')
-
-
 def _year(value: object) -> None:
   if value is not None and type(value) is not int:
     raise TypeError(f'Expected int | None, got {type(value)}')
-
-
-def _tuple(values: object, expected: type[_T]) -> None:
-  values = _typed(values, tuple)
-  for value in values:
-    _typed(value, expected)
 
 
 def _verdict(status: MatchStatus, reason: MatchReason) -> None:
@@ -180,15 +168,11 @@ class CriterionResult:
   完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
 
   Note:
-  - `observed_coexistence` and `female` serve the editorial predicates. `day_master_is_ding`,
-    `day_master_is_geng`, `observed_pianyin` and `observed_shishen` (食神, not 十神)
-    are partial facts for undefined criteria, not complete predicates.
-  - `observed_coexistence` 与 `female` 用于原作判据；其余键记录丁／庚日主及偏印／食神
-    的局部事实，不构成未定义判据的完整条件。`observed_shishen` 指食神，不是十神总类。
+  - `observed_coexistence` and `female` serve the editorial predicates.
+  - `observed_coexistence` 与 `female` 用于原作判据。
   '''
 
   criterion_id:   str
-  revision:       int
   definition:     str
   status:         MatchStatus
   reason:         MatchReason
@@ -197,11 +181,9 @@ class CriterionResult:
 
   def __post_init__(self) -> None:
     _choice(self.criterion_id, tuple(_CRITERIA))
-    if type(self.revision) is not int:
-      raise TypeError(f'Expected int, got {type(self.revision)}')
     _typed(self.definition, str)
-    if self.revision != 1 or self.definition != _CRITERIA[self.criterion_id].definition:
-      raise ValueError('Unsupported criterion definition or revision')
+    if self.definition != _CRITERIA[self.criterion_id].definition:
+      raise ValueError('Unsupported criterion definition')
     _verdict(self.status, self.reason)
     _typed(self.scope_complete, bool)
     if not self.scope_complete and self.status != 'UNKNOWN':
@@ -226,13 +208,6 @@ class EntryMatch:
     if not self.claim_id.strip():
       raise ValueError('Expected non-empty claim ID')
     _verdict(self.status, self.reason)
-
-
-def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
-  value = _typed(value, dict)
-  if set(value) != set(keys):
-    raise ValueError('Record fields differ')
-  return dict(value)
 
 
 def _validate_input(text: str) -> None:
@@ -338,7 +313,7 @@ class ContextResult:
     展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     lines = [
-      f'判据：{criterion.criterion_id}；revision={criterion.revision}；{criterion.definition}',
+      f'判据：{criterion.criterion_id}；{criterion.definition}',
       f'范围：{self.profile.stem_scope}；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
       f'结构前提：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
@@ -346,7 +321,11 @@ class ContextResult:
       '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。',
     ]
     for value in self.occurrences:
-      lines.append(f'证据：{value.origin}.{value.pillar}[{value.index}]；{value.ganzhi}；{value.layer}；{value.stem}={value.shishen}；kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}')
+      lines.append(
+        f'证据：{value.origin}.{value.pillar}[{value.index}]；{value.ganzhi}；'
+        f'{value.layer}；{value.stem}={value.shishen}；'
+        f'kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}'
+      )
     knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
@@ -433,9 +412,6 @@ def evaluate_context(
   female = bazi.gender is BaziGender.FEMALE
   observations = frozendict({
     'observed_coexistence': coexistence, 'female': female,
-    'day_master_is_ding': bazi.day_master is Tiangan.丁,
-    'day_master_is_geng': bazi.day_master is Tiangan.庚,
-    'observed_pianyin': Shishen.偏印 in classes, 'observed_shishen': Shishen.食神 in classes,
   })
 
   reason: MatchReason
@@ -469,7 +445,6 @@ def evaluate_context(
     profile,
     CriterionResult(
       criterion_id,
-      1,
       _CRITERIA[criterion_id].definition,
       status,
       reason,

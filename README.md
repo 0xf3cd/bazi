@@ -257,8 +257,10 @@ zero and negative values, are unavailable; later labels have no upper bound.
 Years accept only exact `int`, excluding `bool` and int subclasses. Natal scope rejects a year.
 
 A missing year, unavailable query or missing required kind yields `UNKNOWN`, even if partial
-natal observations already contain both classifications. Wrong types, unknown
-IDs and illegal combinations raise `TypeError` / `ValueError`.
+natal observations already contain both classifications. Scope completeness takes precedence
+over the female gate: a male input with a missing required year also yields `UNKNOWN`
+with `missing_transit_coordinate`. Wrong types, unknown IDs and illegal combinations
+raise `TypeError` / `ValueError`.
 
 `SATISFIED` and `NOT_SATISFIED` describe a complete, explicitly selected premise.
 `UNKNOWN` preserves known partial observations without claiming a complete
@@ -277,7 +279,7 @@ output eligibility. Independent `KnowledgeBase.render` performs no evaluation.
 Missing bound entries produce no `EntryMatch` or display line. The four criteria with
 undefined predicates display supplied same-ID entries under `predicate_undefined`.
 
-Results are immutable. JSON preserves criterion definition/revision, profile,
+Results are immutable. JSON preserves criterion definition, profile,
 complete birth/gender/config identity, year/kind,
 all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.

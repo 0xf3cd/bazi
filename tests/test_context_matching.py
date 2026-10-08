@@ -12,7 +12,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, evaluate_context,
+  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, _BINDINGS, _binding_digest, evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen
 from bazi.knowledge import KnowledgeBase
@@ -34,6 +34,16 @@ def chart(day: int = 3, gender: str = 'female', hour: int = 12) -> BaziChart:
 def match(day: int = 3, gender: str = 'female', **kwargs: Any) -> ContextResult:
   options = {'criterion_id': GUANSHA, 'profile': ContextProfile('natal'), 'include_reference_only': True, **kwargs}
   return evaluate_context(chart(day, gender), **options)
+
+
+@pytest.mark.parametrize('claim_id', LEGAL + RELATIONSHIP)
+def test_builtin_editorial_binding_fingerprint(claim_id: str) -> None:
+  knowledge = KnowledgeBase.load()
+  computed = _binding_digest(knowledge, knowledge.entry(claim_id))
+  assert computed == _BINDINGS.get(claim_id), (
+    f'Binding fingerprint mismatch for {claim_id}: computed {computed}. '
+    'Re-pin _BINDINGS in bazi/context_matching.py.'
+  )
 
 
 def test_literal_natal_witnesses_and_visible_negative_control() -> None:
@@ -183,8 +193,7 @@ def test_registered_undefined_controls_preserve_every_premise_and_limit(criterio
   knowledge = KnowledgeBase.load()
   result = match(criterion_id=criterion_id)
   assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
-  assert result.criterion.observations['day_master_is_geng']
-  assert result.criterion.observations['observed_pianyin'] and result.criterion.observations['observed_shishen']
+  assert result.criterion.observations == {'observed_coexistence': True, 'female': True}
   assert result.entries == (EntryMatch(claim_id, 'UNKNOWN', 'predicate_undefined'),)
   restored = KnowledgeBase.from_json(result.knowledge_json)
   assert restored.entries == knowledge.entries and restored.contexts == knowledge.contexts
@@ -205,8 +214,9 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
-  assert result.criterion.revision == 1 and result.profile.stem_scope == 'visible_and_hidden'
+  assert result.profile.stem_scope == 'visible_and_hidden'
   data = json.loads(result.export_json())
+  assert 'revision' not in data['criterion']
   assert data['knowledge'] == json.loads(knowledge.export_json())
   assert len(data['knowledge']['entries']) == 295
   assert data['criterion']['observations']['observed_coexistence'] is True
@@ -350,14 +360,11 @@ def test_configuration_wire_roster_and_chart_input_agree() -> None:
   assert json.loads(match().input_json)['config'] == wire
 
 
-def test_ding_day_master_partial_observation_and_roster() -> None:
+def test_undefined_criterion_observations_use_the_editorial_roster() -> None:
   result = match(10, criterion_id='tiangan.ding_weak_and_overcontrolled')
   assert chart(10).bazi.day_master is Tiangan.丁
-  assert set(result.criterion.observations) == {
-    'observed_coexistence', 'female', 'day_master_is_ding', 'day_master_is_geng', 'observed_pianyin', 'observed_shishen',
-  }
-  assert result.criterion.observations['day_master_is_ding'] is True
-  assert result.criterion.observations['day_master_is_geng'] is False
+  assert set(result.criterion.observations) == {'observed_coexistence', 'female'}
+  assert result.criterion.observations['female'] is True
   assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
 
 
@@ -403,10 +410,10 @@ def test_public_record_value_boundaries() -> None:
     replace(result.occurrences[1], stem=Tiangan.丁)
   with pytest.raises(ValueError):
     replace(o, origin='transit')
-  for change in ({'revision': 2}, {'definition': 'other'}, {'status': 'UNKNOWN'}, {'reason': 'bad'}, {'scope_complete': False}):
+  for change in ({'definition': 'other'}, {'status': 'UNKNOWN'}, {'reason': 'bad'}, {'scope_complete': False}):
     with pytest.raises(ValueError):
       replace(result.criterion, **change)
-  for change in ({'revision': True}, {'observations': {}}, {'observations': frozendict({1: True})}, {'observations': frozendict({'a': 1})}, {'scope_complete': 1}):
+  for change in ({'observations': {}}, {'observations': frozendict({1: True})}, {'observations': frozendict({'a': 1})}, {'scope_complete': 1}):
     with pytest.raises(TypeError):
       replace(result.criterion, **change)
   with pytest.raises(TypeError):
