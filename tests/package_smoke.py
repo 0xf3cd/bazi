@@ -100,13 +100,69 @@ def main() -> None:
   from bazi.bazi_chart import BaziChart
   from bazi.school import BaziConfig
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
-  from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen
+  from bazi.calendar.solar_time import apparent_solar_datetime
+  from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen, Dizhi
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.interpreter import Interpreter
   from bazi.knowledge import KnowledgeBase
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+
+  apparent = apparent_solar_datetime(datetime(2000, 11, 3, 0, 50, tzinfo=UTC), 0.0)
+  check(apparent == datetime(2000, 11, 3, 1, 6, 26, 82639), 'Installed apparent-solar primitive mismatch')
+  location_chart = BaziChart(Bazi.create(
+    datetime(2000, 11, 3, 0, 50, tzinfo=UTC),
+    'male',
+    BaziConfig.from_values(precision='hour'),
+    longitude=0.0,
+  ))
+  check(location_chart.bazi.hour == 1, 'Installed apparent-solar chart mismatch')
+  check(
+    BaziChart.from_json(json.loads(json.dumps(location_chart.json))).json == location_chart.json,
+    'Installed apparent-solar JSON restoration mismatch',
+  )
+
+  precise_chart = BaziChart(Bazi.create(
+    datetime(2000, 11, 3, 0, 43, 59, 123456, tzinfo=UTC),
+    'male',
+    BaziConfig.from_values(precision='hour'),
+    longitude=-0.0,
+  ))
+  check(precise_chart.bazi.hour_pillar.dizhi is Dizhi.丑, 'Installed conversion discarded seconds')
+  check(precise_chart.json['canonical_instant'] == '2000-11-03T00:43:59.123456+00:00', 'Installed exact instant mismatch')
+  check(str(precise_chart.json['longitude']) == '0.0', 'Installed negative-zero emission mismatch')
+  check(
+    BaziChart.from_json(json.loads(json.dumps(precise_chart.json))).json == precise_chart.json,
+    'Installed precise-instant JSON restoration mismatch',
+  )
+  hour_tie = Bazi.create(
+    datetime(2024, 3, 5, 1, 52, 45, tzinfo=UTC),
+    'male',
+    BaziConfig.from_values(precision='hour'),
+    longitude=-74.0,
+  )
+  check(str(hour_tie.month_pillar) == '丙寅', 'Installed apparent-shichen Jie attribution mismatch')
+  kiritimati = BaziChart(Bazi.create(
+    '2024-01-01T12:00:00+14:00', 'female', BaziConfig.from_values(precision='minute'), longitude=-157.4,
+  ))
+  check(kiritimati.bazi.solar_datetime == datetime(2024, 1, 1, 11, 27), 'Installed civil date anchoring mismatch')
+  alternate = BaziChart(Bazi.create(
+    '2023-12-31T22:00:00+00:00', 'female', BaziConfig.from_values(precision='minute'), longitude=-157.4,
+    civil_timezone=datetime.fromisoformat('2024-01-01T12:00:00+14:00').tzinfo,
+  ))
+  check(alternate.bazi == kiritimati.bazi and hash(alternate.bazi) == hash(kiritimati.bazi), 'Installed explicit civil identity mismatch')
+  check(alternate.json == kiritimati.json and BaziChart.from_json(kiritimati.json).json == kiritimati.json, 'Installed civil JSON mismatch')
+  location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
+  check(json.loads(location_match.input_json)['civil_time'] == '2024-01-01T12:00:00+14:00', 'Installed context dropped civil basis')
+  check(ContextResult.from_json(location_match.export_json()) == location_match, 'Installed location context restore mismatch')
+  for kwargs, expected_error in (({'civil_timezone': UTC}, ValueError), ({'longitude': 0.0, 'civil_timezone': 'UTC'}, TypeError)):
+    try:
+      Bazi.create(datetime(2000, 1, 1, tzinfo=UTC), 'male', BaziConfig.from_values(precision='minute'), **kwargs)
+    except expected_error:
+      pass
+    else:
+      raise RuntimeError('Installed civil timezone validation failed')
 
   check(Path(bazi.__file__).resolve().is_relative_to(prefix), 'Root import source leakage')
   for backend in CalendarBackend:

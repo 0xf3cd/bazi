@@ -56,6 +56,10 @@ def get_basic_info(chart: BaziChart) -> str:
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = traits(bazi.day_master).wuxing
   s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_date}\n\n'
+  if bazi.longitude is not None:
+    s += f'民用出生时刻（固定出生地偏移）：{bazi._canonical_civil.isoformat()}；经度={bazi.longitude}\n'
+    s += f'真太阳出生时刻：{bazi._clock_datetime.isoformat()}\n'
+    s += f'物理出生时刻（UTC+08:00）：{bazi._reference_datetime.isoformat()}\n\n'
 
   pillars: list[Ganzhi] = list(bazi.pillars)
   shishens: list[BaziChart.PillarShishens] = list(chart.shishen)
@@ -87,8 +91,11 @@ def get_transit_info(chart: BaziChart) -> str:
   s: str = '\n' # The output string.
 
   utils = calendar_utils_of(chart.bazi.config.backend)
-  jie_before = utils.prev_jie(chart.bazi.solar_datetime)
-  jie_after = utils.next_jie(chart.bazi.solar_datetime)
+  jie_before = utils.prev_jie(chart.bazi._reference_datetime)
+  jie_after = utils.next_jie(chart.bazi._reference_datetime)
+
+  if chart.bazi.longitude is not None:
+    s += '节与大运区间采用物理时刻（UTC+08:00），不采用真太阳时。\n'
 
   s += f'出生时刻前一节：{jie_before.jieqi} - {jie_before.moment.isoformat()}\n'
   s += f'出生时刻后一节：{jie_after.jieqi} - {jie_after.moment.isoformat()}\n'

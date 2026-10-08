@@ -211,14 +211,23 @@ class EntryMatch:
 
 
 def _validate_input(text: str) -> None:
+  from ._time_input import _LocationTimeJson, _parse_location
+
+  parsed = json.loads(text, object_pairs_hook=_pairs)
+  _typed(parsed, dict)
+  location_aware = 'time_basis' in parsed
   data = _mapping(
-    json.loads(text, object_pairs_hook=_pairs),
-    ('birth_time', 'gender', 'config', 'pillars'),
+    parsed,
+    tuple(_LocationTimeJson.__required_keys__) + ('gender', 'config', 'pillars') if location_aware
+    else ('birth_time', 'gender', 'config', 'pillars'),
   )
-  _typed(data['birth_time'], str)
-  birth = datetime.fromisoformat(data['birth_time'])
-  if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
-    raise ValueError('Expected canonical naive minute birth time')
+  if location_aware:
+    _parse_location(data)
+  else:
+    _typed(data['birth_time'], str)
+    birth = datetime.fromisoformat(data['birth_time'])
+    if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
+      raise ValueError('Expected canonical naive minute birth time')
   _choice(data['gender'], ('male', 'female'))
   config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
   BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})
@@ -436,8 +445,10 @@ def evaluate_context(
     entry_reason = reason if recognized else 'binding_unrecognized'
     matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
 
+  from ._time_input import _location_json
   identity = {
-    'birth_time': bazi.solar_datetime.isoformat(), 'gender': str(bazi.gender),
+    **({'birth_time': bazi.solar_datetime.isoformat()} if bazi.longitude is None else _location_json(bazi)),
+    'gender': str(bazi.gender),
     'config': _config_json(bazi.config),
     'pillars': [str(value) for value in bazi.pillars],
   }

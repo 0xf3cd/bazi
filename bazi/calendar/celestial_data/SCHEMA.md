@@ -15,12 +15,13 @@ tables are regenerated. Same shape as `hko_data/encoder.py` (offline) vs `decode
 | `data/jieqi_moments.txt` | 7200 | `celestial_calendar.jieqi_moment(year, jieqi)` |
 | `data/lunar_years_algo1.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO1, year)` |
 | `data/lunar_years_algo2.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO2, year)` |
+| `data/equation_of_time.bin` | 72,643 samples | `celestial_calendar.apparent_solar_time(utc_midnight, 0)` |
 
-Test fixtures in `tests/calendar/celestial_fixtures/` use identical basenames and format,
+Text-table fixtures in `tests/calendar/celestial_fixtures/` use identical basenames and format,
 carry `fixture: true`, and hold a 5-year slice (`1901, 1914, 1917, 1979, 2024`).
 The loader is path-parameterised so the same code reads either.
 
-## File format
+## Text file format
 
 UTF-8 text, trailing newline. LF is the on-disk convention; readers normalise line endings (`splitlines()`), so a CRLF file loads — and hashes — identically. Every line starting with `#` is header;
 data lines follow, one record per line, fields separated by single spaces.
@@ -36,7 +37,7 @@ release_asset       celestial-calendar==0.6.1 / PyPI wheel
 generated_by        path of the generating script
 generated_on        YYYY-MM-DD
 source_api          the public Python call the rows came from
-timescale           per-table, see below -- the three tables are three different conventions
+timescale           per-text-table, see below -- the three text tables use different conventions
 rounding            jieqi table only
 year_range          inclusive
 rows                exact row count; the loader asserts it against the lines it parsed
@@ -115,8 +116,32 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
   celestial #84) is opt-in.
 - The two algos are known to disagree on exactly **6 years in this window**:
   `1914, 1915, 1916, 1920, 2057, 2097` (celestial `src/test/lunar/diff_test.cpp`;
-  independently reproduced against HkoData by the test suite — algo1 matches HKO 199/199,
-  so algo2's differences from HKO are exactly its differences from algo1).
+   independently reproduced against HkoData by the test suite — algo1 matches HKO 199/199,
+   so algo2's differences from HKO are exactly its differences from algo1).
+
+## `equation_of_time.bin`
+
+The binary table stores daily nodes at UTC midnight. Logical values are **apparent
+solar time minus mean solar time**, in seconds; positive values mean a sundial runs
+ahead of local mean time. Generation asks `apparent_solar_time` at longitude zero,
+so the returned displacement is EOT alone.
+
+- Nodes run from `1901-02-17T00:00:00Z` through the trailing interpolation sentinel
+  `2100-01-06T00:00:00Z`, inclusive. Runtime queries use the half-open range ending at
+  the sentinel. This covers every UTC instant that can map into the supported apparent
+  calendar window (`1901-02-19` through `2099-12-31`) at any allowed longitude and civil offset, plus
+  its next Jie for apparent-solar precision attribution (2100 小寒).
+- Cadence is exactly 86,400 UTC seconds. Runtime linearly interpolates by UTC day
+  fraction; it never clamps an out-of-range query.
+- Samples are signed 16-bit big-endian integers in **deciseconds**. Generation rounds
+  to the nearest decisecond with Python's ties-to-even `round`; quantization error is
+  therefore at most 0.05 seconds. Interpolation adds a separate approximation error;
+  the source anchors in `tests/calendar/test_celestial_loader.py` check the encoded values.
+- The fixed 56-byte big-endian header is `>8sIIII32s`: magic `BAZIEOT1`, Gregorian
+  start-date ordinal, sample count, cadence seconds, units per second (`10`), then the
+  SHA-256 digest of the payload. The payload contains exactly `sample_count` int16 values.
+  The runtime reader validates every header field, byte count and digest under normal
+  and optimized Python.
 
 ## Generator hard gates
 
@@ -124,10 +149,12 @@ Fail loudly at generation time; a bad table is only discoverable afterwards othe
 
 1. **Version gate** — the imported package's public `__version__` must equal the pinned
    `0.6.1`; raise otherwise. A ΔT refresh or celestial update can change every moment.
-2. **Row-count gate** — exactly 7200 / 199 / 199, and the emitted `rows:` header must
-   match the lines written.
+2. **Row-count gate** — exactly 7200 / 199 / 199 rows and 72,643 EOT samples. Text
+   `rows:` headers and the EOT byte count must match what was written.
 3. **Cross-check gate** — `jieqi_name(Jieqi(idx)) == list(Jieqi)[idx].value` for all 24;
    the public `month_lengths` tuple must round-trip through the on-disk bitmask encoding.
+4. **EOT integrity gate** — every source value must fit signed int16 after decisecond
+   encoding; the payload digest is written into the fixed schema header.
 
 ## Boundary convention (consumer side, recorded here as shared semantics)
 

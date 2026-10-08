@@ -139,9 +139,9 @@ def test_empty_knowledge_projection_keeps_chart_counts(monkeypatch: pytest.Monke
   assert '定义：' not in text and '仅供参考' not in text
 
 
-def _run_cli(cwd: Path, *args: str, script: Path | None = None) -> subprocess.CompletedProcess[str]:
+def _run_cli(cwd: Path, *args: str, script: Path | None = None, optimized: bool = False) -> subprocess.CompletedProcess[str]:
   return subprocess.run(
-    [sys.executable, str(Path(__file__).parents[1] / 'run_interpreter.py' if script is None else script), *args],
+    [sys.executable, *(['-O'] if optimized else []), str(Path(__file__).parents[1] / 'run_interpreter.py' if script is None else script), *args],
     cwd=cwd,
     capture_output=True,
     text=True,
@@ -149,6 +149,61 @@ def _run_cli(cwd: Path, *args: str, script: Path | None = None) -> subprocess.Co
     timeout=45,
     check=False,
   )
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('precision', ['hour', 'minute'])
+@pytest.mark.parametrize('basis', ['+14:00', 'Pacific/Kiritimati'])
+def test_location_chart_and_matching_cli_export_restore(tmp_path: Path, optimized: bool, precision: str, basis: str) -> None:
+  output = tmp_path / 'chart.json'
+  args = ('--birth-time', '2023-12-31T22:00:00+00:00', '--gender', 'female',
+          '--longitude', '-157.4', '--precision', precision, '--civil-timezone', basis)
+  result = _run_cli(tmp_path, *args, '--export-chart-json', str(output), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
+  assert chart.json['civil_time'] == '2024-01-01T12:00:00+14:00'
+  assert chart.json['apparent_time'] == '2024-01-01T11:27:21.883333'
+  assert '民用出生时刻' in result.stdout and '真太阳出生时刻' in result.stdout
+  matched = tmp_path / 'matching.json'
+  result = _run_cli(tmp_path, *args, '--match-context', 'editorial.guansha_coexistence.v1',
+                    '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
+  assert json.loads(restored.input_json)['civil_time'] == chart.json['civil_time']
+  assert json.loads(restored.input_json)['apparent_time'] == chart.json['apparent_time']
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('args', [
+  ('--longitude', '0'), ('--precision', 'hour'), ('--civil-timezone', '+14:00'), ('--export-chart-json', 'out.json'),
+  ('--query-knowledge', '--longitude', '0'), ('--validate-knowledge', '--precision', 'minute'),
+  ('--export-knowledge-json', 'out.json', '--civil-timezone', '+14:00'),
+  ('--query-knowledge', '--export-chart-json', 'out.json'),
+  ('--birth-time', '2024-01-01T12:00:00', '--gender', 'male', '--longitude', '0', '--precision', 'hour'),
+  ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male', '--longitude', '-157.4'),
+  ('--birth-time', '2024-01-01T12:00:00', '--gender', 'male', '--civil-timezone', '+14:00'),
+  ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male', '--longitude', '-157.4', '--precision', 'minute', '--civil-timezone', 'Unknown/Region'),
+  ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male', '--longitude', '-157.4', '--precision', 'minute', '--civil-timezone', '+99:00'),
+  (*MATCH_ARGS, '--longitude', '0'),
+  (*MATCH_ARGS, '--civil-timezone', 'Unknown/Region'),
+  (*MATCH_ARGS, '--export-chart-json', 'out.json'),
+])
+def test_location_cli_invalid_modes_fail_before_export(tmp_path: Path, optimized: bool, args: tuple[str, ...]) -> None:
+  result = _run_cli(tmp_path, *args, optimized=optimized)
+  assert result.returncode == 2 and 'error:' in result.stderr
+  assert 'Traceback' not in result.stderr
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_location_chart_export_cannot_overwrite_knowledge(tmp_path: Path) -> None:
+  source = Path(__file__).parents[1] / 'bazi/knowledge_data.json'
+  alias = tmp_path / 'alias.json'
+  alias.symlink_to(source)
+  before = source.read_bytes()
+  result = _run_cli(tmp_path, '--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male',
+                    '--longitude', '-157.4', '--precision', 'minute', '--export-chart-json', str(alias))
+  assert result.returncode == 2 and 'overwrite' in result.stderr
+  assert source.read_bytes() == before
 
 
 def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path) -> None:

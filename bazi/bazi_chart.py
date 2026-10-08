@@ -6,7 +6,7 @@ import itertools
 
 from calendar import monthrange
 from datetime import datetime, timedelta
-from typing import Final, TypedDict, cast
+from typing import Final, NotRequired, TypedDict, cast
 from collections.abc import Generator, Mapping, Sequence
 
 from .data_types import (
@@ -15,6 +15,7 @@ from .data_types import (
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender
+from ._time_input import _LocationTimeJson, _location_json, _parse_location
 from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG, _config_json
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
@@ -75,13 +76,14 @@ class BaziJson:
   class Dayun(TypedDict):
     '''Not expected to be accessed directly. Used in `Transits`.'''
     ganzhi: str
-    # ISO 8601 boundaries of the physical interval / 物理区间边界的 ISO 8601 字符串
+    # Naive UTC+08:00 physical boundaries for location-aware charts; legacy civil labels otherwise.
+    # 地点盘采用东八区无时区物理区间边界；默认路径沿用原民用标签。
     start_time: str
     end_time: str
 
   class Transits(TypedDict):
     '''Not expected to be accessed directly. Used in `JsonDict`.'''
-    # start time of the dayun (isoformat string) / 大运的开始时间 (isoformat 格式的字符串)
+    # Same coordinate as Dayun.start_time. / 与 Dayun.start_time 使用相同时间坐标。
     dayun_start_time: str
 
     # key: xusui / 虚岁
@@ -124,8 +126,9 @@ class BaziJson:
     guoyin_anchor: str
     guoyin_def: str
 
-  class BaziChartJsonDict(TypedDict):
-    birth_time: str
+  class _CommonChartJsonDict(TypedDict):
+    '''Fields shared by the legacy and location-aware chart rosters.
+    默认盘与地点盘 JSON 名册的共同字段。'''
     gender: str
     precision: str
     backend: str
@@ -140,6 +143,25 @@ class BaziJson:
     dizhi_shishen: 'BaziJson.FourPillars'
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
+
+  class LegacyBaziChartJsonDict(_CommonChartJsonDict):
+    '''The unchanged legacy roster with a minute-truncated civil birth time.
+    原有默认盘名册，出生时刻为截断到分钟的民用标签。'''
+    birth_time: str
+
+  class LocationBaziChartJsonDict(_CommonChartJsonDict, _LocationTimeJson):
+    '''The location-aware roster. Strings use the emitter's exact ISO 8601 spelling.
+    地点盘名册；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
+
+  class BaziChartJsonDict(_CommonChartJsonDict):
+    '''Combined typing surface; runtime requires one complete, unmixed roster.
+    合并的静态类型界面；运行时只接受一份完整且不混用的名册。'''
+    birth_time: NotRequired[str]
+    time_basis: NotRequired[str]
+    civil_time: NotRequired[str]
+    canonical_instant: NotRequired[str]
+    longitude: NotRequired[float]
+    apparent_time: NotRequired[str]
 
 
 class BaziChart:
@@ -186,9 +208,14 @@ class BaziChart:
       已解析的 `BaziChart.json` 记录，不是 JSON 文本。
 
     Note:
-    - Every field is required; unknown keys at any depth and noncanonical spellings are
-      rejected. Mapping order does not matter. Derived values are checked, never stored.
-      所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，派生值只核对、不存储。
+    - The root must match exactly either the legacy roster (`birth_time`) or the
+      location-aware roster (`time_basis`, fixed-offset civil time, canonical UTC instant, longitude and exact
+      apparent time). The two cannot be mixed. Every field is required; unknown keys at
+      any depth and noncanonical spellings are rejected. Mapping order does not matter.
+      Derived values are checked, never stored.
+      根对象须严格匹配旧名册（`birth_time`）或地点盘名册（时间基准、固定偏移民用时刻、规范 UTC 时刻、经度与精确
+      真太阳时），两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
+      派生值只核对、不存储。
     - Keys and string values must be plain `str`, not subclasses; null values are `None`.
       键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
     - Wrong types raise `TypeError`; missing/extra keys, unsupported values and mismatches
@@ -207,26 +234,46 @@ class BaziChart:
     for key in d:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
-    keys = BaziJson.BaziChartJsonDict.__required_keys__
-    if d.keys() != keys:
-      raise ValueError(f'Unexpected fields at chart: {d.keys() ^ keys}')
-    for key in ('birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule'):
+    legacy_keys = BaziJson.LegacyBaziChartJsonDict.__required_keys__
+    location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
+    location_aware: bool
+    if d.keys() == legacy_keys:
+      location_aware = False
+    elif d.keys() == location_keys:
+      location_aware = True
+    else:
+      raise ValueError(
+        f'Unexpected fields at chart: expected the legacy or location-aware roster, got {d.keys()}'
+      )
+
+    string_keys = ('gender', 'precision', 'backend', 'dayun_year_rule') + (
+      ('time_basis', 'civil_time', 'canonical_instant', 'apparent_time') if location_aware else ('birth_time',)
+    )
+    for key in string_keys:
       if not isinstance(d[key], str):
         raise TypeError(f'Expected str at {key}, got {type(d[key])}')
+    birth: datetime | str
+    longitude: float | None = None
+    if location_aware:
+      birth, longitude = _parse_location(d)
+    else:
+      birth = cast(str, d['birth_time'])
     school = d['school']
     if not isinstance(school, Mapping):
       raise TypeError(f'Expected Mapping at school, got {type(school)}')
 
+    config = BaziConfig.from_values(
+      precision=cast(str, d['precision']),
+      backend=cast(str, d['backend']),
+      dayun_year_rule=cast(str, d['dayun_year_rule']),
+      school=BaziSchool.from_json(school),
+    )
     chart = cls(
       Bazi.create(
-        cast(str, d['birth_time']),
+        birth,
         cast(str, d['gender']),
-        BaziConfig.from_values(
-          precision=cast(str, d['precision']),
-          backend=cast(str, d['backend']),
-          dayun_year_rule=cast(str, d['dayun_year_rule']),
-          school=BaziSchool.from_json(school),
-        ),
+        config,
+        longitude=longitude,
       ),
     )
 
@@ -452,8 +499,11 @@ class BaziChart:
     '''
     The moment when first Dayun (大运) starts (solar/gregorian calendar).
     大运开始的时间 / 交运时间（公历）。
+
+    Location-aware charts return a naive UTC+08:00 label, not apparent solar time.
+    地点盘返回东八区无时区标签，不是真太阳时。
     '''
-    birthtime: Final[datetime] = self._bazi.solar_datetime
+    birthtime: Final[datetime] = self._bazi._reference_datetime
 
     def __gap() -> timedelta:
       # Count from `Bazi.bracketing_jies`: under HOUR/MINUTE that is exactly the jie owning
@@ -634,8 +684,7 @@ class BaziChart:
 
     config = _config_json(self._bazi.config)
     f = BaziJson.gen_fourpillars
-    return {
-      'birth_time': self._bazi.solar_datetime.isoformat(),
+    common: BaziJson._CommonChartJsonDict = {
       'gender': str(self._bazi.gender),
       'precision': config['precision'],
       'backend': config['backend'],
@@ -650,6 +699,15 @@ class BaziChart:
       'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
       'transits': transits,
+    }
+    if self._bazi.longitude is None:
+      return {
+        'birth_time': self._bazi.solar_datetime.isoformat(),
+        **common,
+      }
+    return {
+      **_location_json(self._bazi),
+      **common,
     }
 
 命盘 = BaziChart

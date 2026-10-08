@@ -27,6 +27,7 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
   'bazi/calendar/celestial_data/data/jieqi_moments.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo1.txt',
   'bazi/calendar/celestial_data/data/lunar_years_algo2.txt',
+  'bazi/calendar/celestial_data/data/equation_of_time.bin',
   'bazi/knowledge_data.json',
 )
 SOURCE_FILES: Final[tuple[str, ...]] = (
@@ -150,7 +151,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
   python = consumer(work / 'typing-venv', rebuilt)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import datetime\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart\n'
+          'from bazi.school import BaziConfig\n'
           'from bazi.knowledge import KnowledgeBase, KnowledgeEntry\n'
           'from bazi.context_matching import ContextProfile, ContextResult, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
@@ -160,8 +162,12 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
           'matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
           'record: str = matched.export_json()\n'
           'restored: ContextResult = ContextResult.from_json(record)\n')
+  good += ('local: Bazi = Bazi.create(datetime(2023, 12, 31, 22, tzinfo=UTC), "female", '
+           'BaziConfig.from_values(precision="minute"), longitude=-157.4, civil_timezone=timezone(timedelta(hours=14)))\n'
+           'local_chart: BaziChart = BaziChart.from_json(BaziChart(local).json)\n'
+           'local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
-  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\nknowledge.query(object_id=42)\nContextProfile("dayun")\nevaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n', encoding='utf-8')
+  (foreign / 'bad.py').write_text(good + 'wrong: int = chart\nBazi.create(42, "male")\nBazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\nknowledge.query(object_id=42)\nContextProfile("dayun")\nevaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n', encoding='utf-8')
   command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
   run([*command, 'good.py'], foreign)
   result = subprocess.run(
