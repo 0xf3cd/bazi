@@ -14,8 +14,7 @@ from .data_types import (
   HiddenTianganDict, BaziData, GanzhiData,
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
-from .bazi import Bazi, BaziGender
-from ._time_input import _LocationTimeJson, _location_json, _parse_location
+from .bazi import Bazi, BaziGender, _LocationTimeJson, _location_json, _parse_location
 from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG, _config_json
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
@@ -209,12 +208,13 @@ class BaziChart:
 
     Note:
     - The root must match exactly either the legacy roster (`birth_time`) or the
-      location-aware roster (`time_basis`, fixed-offset civil time, canonical UTC instant, longitude and exact
-      apparent time). The two cannot be mixed. Every field is required; unknown keys at
-      any depth and noncanonical spellings are rejected. Mapping order does not matter.
+      location-aware roster (`time_basis`, fixed-offset civil time, canonical UTC instant,
+      longitude and untruncated computed apparent time). The two cannot be mixed. Every
+      field is required; unknown keys at any depth and noncanonical spellings are rejected.
+      Mapping order does not matter.
       Derived values are checked, never stored.
-      根对象须严格匹配旧名册（`birth_time`）或地点盘名册（时间基准、固定偏移民用时刻、规范 UTC 时刻、经度与精确
-      真太阳时），两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
+      根对象须严格匹配旧名册（`birth_time`）或地点盘名册（时间基准、固定偏移民用时刻、规范 UTC 时刻、经度与未截断的
+      计算真太阳时），两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
       派生值只核对、不存储。
     - Keys and string values must be plain `str`, not subclasses; null values are `None`.
       键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
@@ -247,20 +247,21 @@ class BaziChart:
       )
 
     string_keys = ('gender', 'precision', 'backend', 'dayun_year_rule') + (
-      ('time_basis', 'civil_time', 'canonical_instant', 'apparent_time') if location_aware else ('birth_time',)
+      () if location_aware else ('birth_time',)
     )
     for key in string_keys:
       if not isinstance(d[key], str):
         raise TypeError(f'Expected str at {key}, got {type(d[key])}')
+    school = d['school']
+    if not isinstance(school, Mapping):
+      raise TypeError(f'Expected Mapping at school, got {type(school)}')
+
     birth: datetime | str
     longitude: float | None = None
     if location_aware:
       birth, longitude = _parse_location(d)
     else:
       birth = cast(str, d['birth_time'])
-    school = d['school']
-    if not isinstance(school, Mapping):
-      raise TypeError(f'Expected Mapping at school, got {type(school)}')
 
     config = BaziConfig.from_values(
       precision=cast(str, d['precision']),

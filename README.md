@@ -76,7 +76,9 @@ gender and config. With the same explicit `civil_timezone`, alternate display of
 of the same instant are equal, hash-equal and JSON-equal. Different civil bases remain
 distinct; seconds remain distinct even when the displayed `solar_datetime` minute agrees.
 Location JSON contains `time_basis='apparent_solar'`, `civil_time` (fixed-offset aware),
-`canonical_instant` (UTC), `longitude` and `apparent_time` (exact naive clock).
+`canonical_instant` (UTC), `longitude` and `apparent_time` (untruncated computed naive clock).
+EOT uses daily decisecond samples with linear interpolation; retaining microsecond
+digits does not imply microsecond astronomical accuracy.
 Restoring a chart reconstructs and checks all derived values; legacy JSON is unchanged.
 The supported birth-date window applies to the apparent date (`1901-02-19` through
 `2099-12-31`), so its accepted UTC instants depend on longitude and civil basis.
@@ -336,7 +338,7 @@ all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.
 It does not cross-check verdict, evidence, input and entry bindings against each other.
 Location input snapshots retain the same five time fields as chart JSON, including
-the fixed civil basis and exact apparent clock. Their restoration validates the
+the fixed civil basis and untruncated computed apparent clock. Their restoration validates the
 roster and each field's spelling without recalculating the chart or recorded observations.
 
 From a source checkout:
@@ -399,7 +401,7 @@ python run_interpreter.py \
 | --- | --- |
 | `--birth-time <time>`, `--gender male\|female` | Fixed birth; supply both together; aware input requires longitude |
 | `--longitude <degrees>`, `--precision day\|hour\|minute` | Fixed chart calculation; longitude requires aware input and hour/minute precision |
-| `--civil-timezone <zone>` | Explicit birth-region IANA zone or fixed offset; requires longitude |
+| `--civil-timezone <zone>` | Explicit birth-region IANA zone or fixed offset; use `--civil-timezone=-05:00` for negative offsets; requires longitude |
 | `--export-chart-json <path>` | Export the fixed chart as reloadable JSON |
 | `--seed <integer>` | Reproducible random charts |
 | `--count <positive integer>` | Random chart count; default 1 |
@@ -426,7 +428,9 @@ Matching accepts the same longitude, precision and civil-timezone flags. Locatio
 flags require fixed birth input and are rejected in random and knowledge-only modes.
 An aware input without longitude is still rejected; longitude requires an explicit
 `hour` or `minute` precision. `--civil-timezone` accepts an IANA name or fixed offset
-such as `+14:00`, and requires longitude. Chart JSON export, like context export,
+such as `+14:00`, and requires longitude. Negative offsets use equals syntax:
+`--civil-timezone=-05:00`. The same spelling works in chart and matching modes.
+Chart JSON export, like context export,
 refuses to overwrite the bundled knowledge source or its filesystem aliases.
 
 Reference-only text is labelled with source and premise states. Chart display and TXT
@@ -491,6 +495,17 @@ Maintainers can regenerate from those sources with `python -m bazi.calendar.hko_
 with `celestial-calendar==0.6.1`. The latter also writes the daily equation-of-time
 table; `--eot-only` limits regeneration to that byte-stable file. These optional tools
 are not runtime dependencies.
+To regenerate and compare EOT without replacing the bundled table, write a candidate
+into a directory outside the checkout:
+
+```sh
+python -m bazi.calendar.celestial_data.generator \
+  --eot-only \
+  --output-dir ../bazi-calendar-check
+cmp ../bazi-calendar-check/equation_of_time.bin \
+  bazi/calendar/celestial_data/data/equation_of_time.bin
+```
+
 If an installed table is missing, reinstall the distribution instead.
 
 ## License

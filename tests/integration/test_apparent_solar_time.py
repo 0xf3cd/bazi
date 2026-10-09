@@ -5,6 +5,7 @@ import json
 import math
 
 from datetime import UTC, date, datetime, timedelta, timezone
+from fractions import Fraction
 from typing import cast
 from zoneinfo import ZoneInfo
 
@@ -73,6 +74,30 @@ def test_location_input_matrix(direct: bool) -> None:
       _construct(direct, aware, config, 120.0)
 
 
+@pytest.mark.parametrize('direct', [False, True])
+@pytest.mark.parametrize('kind', ['integer', 'fraction'])
+@pytest.mark.parametrize('sign', [-1, 1])
+def test_overflowing_real_longitude_is_a_bounded_value_error(direct: bool, kind: str, sign: int) -> None:
+  integer = sign * 10 ** 10_000
+  longitude = integer if kind == 'integer' else Fraction(integer, 3)
+  with pytest.raises(ValueError) as error:
+    _construct(direct, datetime(2000, 1, 1, 12, tzinfo=UTC), MINUTE_CONFIG, longitude)
+  assert str(error.value) == 'Longitude is outside [-180, 180].'
+
+
+@pytest.mark.parametrize('direct', [False, True])
+def test_location_validation_precedence(direct: bool) -> None:
+  unsupported = BaziConfig(precision=BaziPrecision.DAY, backend=CalendarBackend.HKO)
+  with pytest.raises(TypeError, match='real longitude'):
+    _construct(direct, datetime(2000, 1, 1), unsupported, False)
+  with pytest.raises(ValueError, match='finite'):
+    _construct(direct, datetime(2000, 1, 1), unsupported, float('nan'))
+  with pytest.raises(ValueError, match='timezone-aware'):
+    _construct(direct, datetime(2000, 1, 1), unsupported, 0.0)
+  with pytest.raises(ValueError, match='CalendarBackend.CELESTIAL'):
+    _construct(direct, datetime(2000, 1, 1, tzinfo=UTC), unsupported, 0.0)
+
+
 def test_create_accepts_offset_iso_but_not_latitude() -> None:
   with pytest.raises(ValueError, match='Timezone'):
     Bazi.create('2000-01-01T12:00:00+00:00', 'male', MINUTE_CONFIG)
@@ -113,13 +138,13 @@ def test_eot_alone_crosses_a_shichen_boundary() -> None:
 
 @pytest.mark.parametrize('birth_time, longitude, absolute_after, apparent_after, pillars', [
   # 立春 2000 = 2000-02-04 20:40:23 UTC+08:00. Absolute is after it while
-  # apparent time and the caller's UTC-05:00 civil label are before it.
+  # apparent time and the caller's UTC-05:00 civil label precede the unprojected UTC+08:00 label.
   ('2000-02-04T07:50:00-05:00', 0.0, True, False, ('庚辰', '戊寅')),
   # Absolute is before 立春 while +150° apparent time and the caller's UTC+14:00
-  # civil label are after it.
+  # civil label follow the unprojected UTC+08:00 label.
   ('2000-02-05T02:30:00+14:00', 150.0, False, True, ('己卯', '丁丑')),
 ])
-def test_jie_attribution_uses_absolute_not_apparent_or_caller_civil(
+def test_jie_attribution_does_not_mix_apparent_and_physical_frames(
   birth_time: str,
   longitude: float,
   absolute_after: bool,

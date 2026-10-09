@@ -32,6 +32,7 @@ def main() -> int:
   from datetime import UTC, date, datetime, timedelta, timezone
   from collections.abc import Callable
   from functools import partial
+  from fractions import Fraction
   from zoneinfo import ZoneInfo
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
@@ -462,6 +463,15 @@ def main() -> int:
          partial(spec.predicate, key, Dizhi.子, definition=DizhiRules.AnheDef.NORMAL)),
       ])
 
+  for name, longitude_value in (('integer', 10 ** 10_000), ('fraction', Fraction(10 ** 10_000, 3))):
+    for sign in (-1, 1):
+      checks.extend([
+        (f'Bazi.create overflowing {name} sign={sign}', ValueError,
+         partial(Bazi.create, aware_birth, 'male', location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
+        (f'Bazi constructor overflowing {name} sign={sign}', ValueError,
+         partial(Bazi, aware_birth, BaziGender.男, location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
+      ])
+
   failures: list[str] = []
   for field_name, value, expected_error in (
     ('civil_time', 42, TypeError), ('civil_time', '2024-01-01T12:00:00', ValueError),
@@ -469,6 +479,7 @@ def main() -> int:
     ('longitude', 180.0, ValueError), ('longitude', -0.0, ValueError),
     ('longitude', 180, TypeError), ('apparent_time', '2024-01-01T11:27:00+00:00', ValueError),
     ('time_basis', 'mean_solar', ValueError),
+    ('time_basis', 42, TypeError),
   ):
     bad_chart: dict[str, object] = {**local_chart.json, field_name: value}
     bad_result = json.loads(local_result.export_json())

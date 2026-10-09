@@ -6,9 +6,9 @@
 
 [lint]
 ignore = [
-  # Naive local time IS the domain model: a bazi chart is cast from local birth time,
-  # and timezone handling is deliberately out of scope (true-solar-time preprocessing
-  # is a separate layer, see issue #2). tzinfo-aware datetimes would be wrong here.
+  # Legacy inputs and calendar/query labels are deliberately naive. Location charts
+  # require explicit aware input and freeze the selected civil offset before computing
+  # a naive apparent clock; making every datetime aware would mix these coordinates.
   "DTZ",
   # Caching instance methods is a deliberate design: calendar backend singletons
   # (`lru_cache`s in calendar/celestial_utils.py), enum member helpers (Ganzhi.next/prev

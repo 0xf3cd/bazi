@@ -5,8 +5,10 @@ import random
 
 from enum import Enum
 from numbers import Real
+from dataclasses import dataclass
+from collections.abc import Mapping
 from datetime import UTC, date, time, datetime, timedelta, timezone, tzinfo
-from typing import Final
+from typing import Final, TypedDict
 
 from .defines import Tiangan, Dizhi, Ganzhi
 from .calendar import (
@@ -21,6 +23,21 @@ from .utils.bazi_utils import (
 
 
 _UTC8: Final[timezone] = timezone(timedelta(hours=8))
+
+
+@dataclass(frozen=True)
+class _Location:
+  '''Frozen absolute birth instant, civil offset and longitude.
+  冻结的绝对出生时刻、民用偏移及经度。'''
+  instant: datetime
+  civil_offset: timedelta
+  longitude: float
+
+
+def _apparent_datetime(civil_instant: datetime, longitude: float) -> datetime:
+  '''Load EOT only for location-aware projections. / 仅在地点盘投影时加载 EOT。'''
+  from .calendar.solar_time import apparent_solar_datetime
+  return apparent_solar_datetime(civil_instant, longitude)
 
 
 class BaziGender(Enum):
@@ -153,7 +170,10 @@ class Bazi:
       longitude_input: object = longitude
       if isinstance(longitude_input, bool) or not isinstance(longitude_input, Real):
         raise TypeError(f'Expected real longitude, got {type(longitude)}')
-      longitude_value = float(longitude_input)
+      try:
+        longitude_value = float(longitude_input)
+      except OverflowError as error:
+        raise ValueError('Longitude is outside [-180, 180].') from error
       if not math.isfinite(longitude_value):
         raise ValueError(f'Longitude must be finite, got {longitude}')
       if not -180 <= longitude_value <= 180:
@@ -164,17 +184,9 @@ class Bazi:
       if longitude_value == 180:
         longitude_value = -180.0
 
-    self._config: Final[BaziConfig] = config
-    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
-
-    self._longitude: Final[float | None] = longitude_value
-    clock_datetime: datetime
-    canonical_utc: datetime | None = None
-    civil_datetime: datetime | None = None
     if longitude_value is None:
       if birth_time.tzinfo is not None:
         raise ValueError('Timezone should be well-processed outside of this class.')
-      clock_datetime = birth_time
     else:
       if birth_time.tzinfo is None or birth_time.utcoffset() is None:
         raise ValueError('Longitude requires a timezone-aware birth_time.')
@@ -183,19 +195,23 @@ class Bazi:
       if config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
         raise ValueError('Longitude requires BaziPrecision.HOUR or BaziPrecision.MINUTE.')
 
+    location: _Location | None = None
+    clock_datetime = birth_time
+    if longitude_value is not None:
       canonical_utc = birth_time.astimezone(UTC)
       selected = canonical_utc.astimezone(birth_time.tzinfo if civil_timezone is None else civil_timezone)
       offset = selected.utcoffset()
       if offset is None:
         raise ValueError('civil_timezone requires a UTC offset at birth.')
-      civil_datetime = selected.replace(tzinfo=timezone(offset), fold=0)
-      # Load the EOT table only for the location-aware path.
-      from .calendar.solar_time import apparent_solar_datetime
-      clock_datetime = apparent_solar_datetime(civil_datetime, longitude_value)
-    self._clock_datetime: Final[datetime] = clock_datetime
-    self._utc_instant: Final[datetime | None] = canonical_utc
-    self._civil_datetime: Final[datetime | None] = civil_datetime
+      location = _Location(canonical_utc, offset, longitude_value)
+      civil_datetime = canonical_utc.astimezone(timezone(offset))
+      clock_datetime = _apparent_datetime(civil_datetime, longitude_value)
 
+    self._config: Final[BaziConfig] = config
+    self._location: Final[_Location | None] = location
+    self._clock_datetime: Final[datetime] = clock_datetime
+
+    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
     # `to_solar` is also the window gate: an out-of-window birth time raises ValueError here.
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._clock_datetime)
 
@@ -226,14 +242,16 @@ class Bazi:
       birth_moment: Final[datetime] = self._reference_datetime
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
+
       attribution_birth: datetime = birth_moment
       attribution_jie: datetime = next_j.moment
-      if longitude_value is not None:
+      if location is not None:
         attribution_birth = self._clock_datetime
-        attribution_jie = apparent_solar_datetime(
+        attribution_jie = _apparent_datetime(
           next_j.moment.replace(tzinfo=_UTC8).astimezone(self._canonical_civil.tzinfo),
-          longitude_value,
+          location.longitude,
         )
+
       if _truncated(attribution_birth, self._config.precision) >= _truncated(attribution_jie, self._config.precision):
         bracketing_jies = (next_j, utils.next_jie(next_j.moment))
       else:
@@ -409,7 +427,7 @@ class Bazi:
     '''
     if self._bracketing_jies is not None:
       return self._bracketing_jies
-    return (self._utils.prev_jie(self.solar_datetime), self._utils.next_jie(self.solar_datetime))
+    return (self._utils.prev_jie(self._reference_datetime), self._utils.next_jie(self._reference_datetime))
 
   @property
   def hour(self) -> int:
@@ -423,7 +441,7 @@ class Bazi:
   def longitude(self) -> float | None:
     '''The east-positive longitude of a location-aware chart, otherwise `None`.
     地点盘采用的东经为正经度；默认路径返回 `None`。'''
-    return self._longitude
+    return None if self._location is None else self._location.longitude
 
   @property
   def solar_datetime(self) -> datetime:
@@ -438,21 +456,21 @@ class Bazi:
   def _reference_datetime(self) -> datetime:
     '''The Jie/Dayun/transit coordinate: exact naive UTC+08:00 for location-aware
     charts, otherwise the legacy minute-truncated civil label.'''
-    if self._utc_instant is None:
+    if self._location is None:
       return self.solar_datetime
-    return self._utc_instant.astimezone(_UTC8).replace(tzinfo=None)
+    return self._location.instant.astimezone(_UTC8).replace(tzinfo=None)
 
   @property
   def _canonical_instant(self) -> datetime:
     '''The canonical aware UTC instant of a location-aware chart.'''
-    assert self._utc_instant is not None
-    return self._utc_instant
+    assert self._location is not None
+    return self._location.instant
 
   @property
   def _canonical_civil(self) -> datetime:
     '''Exact birth-region civil datetime with its fixed offset resolved at birth.'''
-    assert self._civil_datetime is not None
-    return self._civil_datetime
+    assert self._location is not None
+    return self._location.instant.astimezone(timezone(self._location.civil_offset))
   
   @property
   def gender(self) -> BaziGender:
@@ -555,26 +573,79 @@ class Bazi:
       Ganzhi(tgs[3], dzs[3]),
     )
   
+  @property
+  def _identity(self) -> tuple[datetime, BaziGender, BaziConfig] | tuple[datetime, timedelta, float, BaziGender, BaziConfig]:
+    if self._location is None:
+      return (self.solar_datetime, self.gender, self.config)
+    return (self._reference_datetime, self._location.civil_offset, self._location.longitude, self.gender, self.config)
+
   def __eq__(self, other: object) -> bool:
-    if not isinstance(other, Bazi):
-      return False
-    return (
-      self._reference_datetime == other._reference_datetime
-      and self._civil_datetime == other._civil_datetime
-      and (None if self._civil_datetime is None else self._civil_datetime.utcoffset())
-          == (None if other._civil_datetime is None else other._civil_datetime.utcoffset())
-      and self.longitude == other.longitude
-      and self.gender == other.gender
-      and self.config == other.config
-    )
-  
+    return isinstance(other, Bazi) and self._identity == other._identity
+
   def __hash__(self) -> int:
-    # Same inputs as `__eq__`, all derived from `Final` state: stable under the
-    # public API (private reassignment is not defended against, as everywhere else).
-    # 与 `__eq__` 同源，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
-    if self.longitude is None:
-      return hash((self.solar_datetime, self.gender, self.config))
-    civil_offset = None if self._civil_datetime is None else self._civil_datetime.utcoffset()
-    return hash((self._reference_datetime, civil_offset, self.longitude, self.gender, self.config))
+    return hash(self._identity)
+
+
+class _LocationTimeJson(TypedDict):
+  '''Canonical location inputs and the untruncated computed apparent clock.
+  规范地点输入及未截断的计算真太阳时。'''
+  time_basis: str
+  civil_time: str
+  canonical_instant: str
+  longitude: float
+  apparent_time: str
+
+
+def _location_json(bazi: Bazi) -> _LocationTimeJson:
+  assert bazi.longitude is not None
+  return {
+    'time_basis': 'apparent_solar',
+    'civil_time': bazi._canonical_civil.isoformat(),
+    'canonical_instant': bazi._canonical_instant.isoformat(),
+    'longitude': bazi.longitude,
+    'apparent_time': bazi._clock_datetime.isoformat(),
+  }
+
+
+def _parse_location(data: Mapping[str, object]) -> tuple[datetime, float]:
+  '''Validate canonical fields independently; the caller validates the complete roster.
+  逐项验证规范字段；完整名册由调用方验证。
+
+  Charts reconstruct and compare; observation records do not recalculate.
+  命盘会重建及核对，观察记录不重算。
+  '''
+  basis = data['time_basis']
+  if type(basis) is not str:
+    raise TypeError(f'Expected str at time_basis, got {type(basis)}')
+  if basis != 'apparent_solar':
+    raise ValueError(f'Unsupported time_basis: {basis}')
+
+  moments: dict[str, datetime] = {}
+  for key in ('civil_time', 'canonical_instant', 'apparent_time'):
+    value = data[key]
+    if type(value) is not str:
+      raise TypeError(f'Expected str at {key}, got {type(value)}')
+    moment = datetime.fromisoformat(value)
+    if moment.isoformat() != value:
+      raise ValueError(f'Expected canonical datetime at {key}')
+    moments[key] = moment
+
+  civil = moments['civil_time']
+  if civil.utcoffset() is None:
+    raise ValueError('Expected fixed-offset aware civil_time')
+  instant = moments['canonical_instant']
+  if instant.utcoffset() is None or instant.utcoffset() != UTC.utcoffset(instant):
+    raise ValueError('Expected canonical UTC instant')
+  if moments['apparent_time'].tzinfo is not None:
+    raise ValueError('Expected naive apparent_time')
+
+  longitude = data['longitude']
+  if type(longitude) is not float:
+    raise TypeError(f'Expected float at longitude, got {type(longitude)}')
+  if (not math.isfinite(longitude) or not -180 <= longitude < 180
+      or (longitude == 0 and math.copysign(1.0, longitude) < 0)):
+    raise ValueError(f'Expected canonical longitude in [-180, 180), got {longitude}')
+
+  return civil, longitude
 
 八字 = Bazi

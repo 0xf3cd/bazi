@@ -44,7 +44,10 @@ def interpret(
   j: BaziJson.BaziChartJsonDict = chart.json
 
   bazi: Bazi = chart.bazi
-  s += f'出生时间：{bazi.solar_date}, {bazi.hour}:{bazi.minute}\n'
+  if bazi.longitude is None:
+    s += f'出生时间：{bazi.solar_date}, {bazi.hour}:{bazi.minute}\n'
+  else:
+    s += f'真太阳时（分钟显示）：{bazi.solar_datetime.isoformat()}\n'
   s += f'性别：{bazi.gender}\n'
 
   def __gen_pillar_str(key: str) -> str:
@@ -201,6 +204,28 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -
   return 0
 
 
+def _civil_timezone(value: str) -> tzinfo:
+  try:
+    if value.startswith(('+', '-')):
+      zone = datetime.fromisoformat('2000-01-01T00:00:00' + value).tzinfo
+      if zone is None:
+        raise ValueError('Expected fixed UTC offset')
+      return zone
+    return ZoneInfo(value)
+  except (ValueError, ZoneInfoNotFoundError, OSError) as error:
+    raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def _fixed_chart(args: argparse.Namespace) -> BaziChart:
+  return BaziChart(Bazi.create(
+    args.birth_time,
+    args.gender,
+    BaziConfig.from_values(precision=args.precision or 'day'),
+    longitude=args.longitude,
+    civil_timezone=args.civil_timezone,
+  ))
+
+
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   if args.birth_time is None or args.gender is None or args.observation_scope is None:
     parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
@@ -219,7 +244,7 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
       knowledge=KnowledgeBase.load(args.knowledge_source),
       include_reference_only=args.include_reference_only,
     )
-  except (OSError, TypeError, ValueError, ZoneInfoNotFoundError) as error:
+  except (OSError, TypeError, ValueError) as error:
     parser.error(str(error))
   print(result.render())
   if args.export_context_json is not None:
@@ -233,29 +258,13 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
   return 0
 
 
-def _fixed_chart(args: argparse.Namespace) -> BaziChart:
-  civil_timezone: tzinfo | None = None
-  if args.civil_timezone is not None:
-    if args.civil_timezone.startswith(('+', '-')):
-      civil_timezone = datetime.fromisoformat('2000-01-01T00:00:00' + args.civil_timezone).tzinfo
-    else:
-      civil_timezone = ZoneInfo(args.civil_timezone)
-  return BaziChart(Bazi.create(
-    args.birth_time,
-    args.gender,
-    BaziConfig.from_values(precision=args.precision or 'day'),
-    longitude=args.longitude,
-    civil_timezone=civil_timezone,
-  ))
-
-
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description='Display charts, match scoped premises, or query, validate and export interpretation knowledge.')
-  parser.add_argument('--birth-time', help='Local civil time, e.g. "2000-01-01 12:00".')
+  parser.add_argument('--birth-time', help='Fixed civil time; aware input requires longitude, e.g. "2024-01-01T12:00:00-05:00".')
   parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
   parser.add_argument('--longitude', type=float, help='East-positive degrees; requires aware fixed input and hour/minute precision.')
   parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='Birth precision (default: day).')
-  parser.add_argument('--civil-timezone', help='Explicit birth-region IANA zone or fixed offset, e.g. Pacific/Kiritimati or +14:00; requires longitude.')
+  parser.add_argument('--civil-timezone', type=_civil_timezone, help='Use --civil-timezone=-05:00 for negative offsets. Accepts an IANA zone (Pacific/Kiritimati) or fixed offset (+14:00); requires longitude.')
   parser.add_argument('--export-chart-json', type=Path, help='Export the fixed chart as reloadable JSON.')
   parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
   parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
@@ -309,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
   if args.birth_time is not None:
     try:
       charts = (_fixed_chart(args),)
-    except (TypeError, ValueError, ZoneInfoNotFoundError) as error:
+    except (TypeError, ValueError) as error:
       parser.error(str(error))
   else:
     charts = (BaziChart(Bazi.random()) for _ in range(count))

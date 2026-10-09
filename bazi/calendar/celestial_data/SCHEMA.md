@@ -109,15 +109,15 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 - `ganzhi` — `(lunar_year - 4) mod 60` over `Ganzhi.list_sexagenary_cycle()`. Not consumed
   at runtime (HKO's `LunarYearInfo` carries it, so parity needs the column to exist); its
   199/199 agreement with HkoData is a test, not a generation gate. The generator imports
-  nothing from `hko_data` — the three gates it does enforce are listed below.
+  nothing from `hko_data` — the gates it does enforce are listed below.
 - **algo1 is the default.** It is the HKO official-almanac lineage — the lunar surface is a
   display concern and should track the official almanac; the four pillars are jieqi-based
   and never consume the lunar calendar. algo2 (leap-second aware UTC+8 via `jde_to_utc8`,
   celestial #84) is opt-in.
 - The two algos are known to disagree on exactly **6 years in this window**:
   `1914, 1915, 1916, 1920, 2057, 2097` (celestial `src/test/lunar/diff_test.cpp`;
-   independently reproduced against HkoData by the test suite — algo1 matches HKO 199/199,
-   so algo2's differences from HKO are exactly its differences from algo1).
+  independently reproduced against HkoData by the test suite — algo1 matches HKO 199/199,
+  so algo2's differences from HKO are exactly its differences from algo1).
 
 ## `equation_of_time.bin`
 

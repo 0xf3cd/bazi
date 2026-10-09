@@ -178,6 +178,7 @@ def test_location_context_snapshot_is_observational() -> None:
 
 @pytest.mark.parametrize('key,value,error', [
   ('civil_time', 42, TypeError),
+  ('time_basis', 42, TypeError),
   ('civil_time', '2024-01-01T12:00:00', ValueError),
   ('civil_time', '2024-01-01T12:00+14:00', ValueError),
   ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),

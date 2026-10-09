@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from typing import Final, Literal, NamedTuple, TypeVar, get_args
 
-from .bazi import BaziGender
+from .bazi import BaziGender, _LocationTimeJson, _location_json, _parse_location
 from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
@@ -211,16 +211,18 @@ class EntryMatch:
 
 
 def _validate_input(text: str) -> None:
-  from ._time_input import _LocationTimeJson, _parse_location
-
   parsed = json.loads(text, object_pairs_hook=_pairs)
   _typed(parsed, dict)
-  location_aware = 'time_basis' in parsed
-  data = _mapping(
-    parsed,
-    tuple(_LocationTimeJson.__required_keys__) + ('gender', 'config', 'pillars') if location_aware
-    else ('birth_time', 'gender', 'config', 'pillars'),
-  )
+  legacy_keys = ('birth_time', 'gender', 'config', 'pillars')
+  location_keys = tuple(_LocationTimeJson.__required_keys__) + ('gender', 'config', 'pillars')
+  if parsed.keys() == set(legacy_keys):
+    data = _mapping(parsed, legacy_keys)
+    location_aware = False
+  elif parsed.keys() == set(location_keys):
+    data = _mapping(parsed, location_keys)
+    location_aware = True
+  else:
+    raise ValueError('Expected complete legacy or location-aware input roster')
   if location_aware:
     _parse_location(data)
   else:
@@ -445,7 +447,6 @@ def evaluate_context(
     entry_reason = reason if recognized else 'binding_unrecognized'
     matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
 
-  from ._time_input import _location_json
   identity = {
     **({'birth_time': bazi.solar_datetime.isoformat()} if bazi.longitude is None else _location_json(bazi)),
     'gender': str(bazi.gender),

@@ -16,6 +16,7 @@ from bazi.defines import Shishen
 from bazi.interpreter import Interpreter
 from bazi.knowledge import KnowledgeBase
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+from bazi.school import BaziConfig
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -174,6 +175,63 @@ def test_location_chart_and_matching_cli_export_restore(tmp_path: Path, optimize
 
 
 @pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('precision', ['hour', 'minute'])
+def test_negative_fixed_offset_equals_syntax_in_chart_and_matching(tmp_path: Path, optimized: bool, precision: str) -> None:
+  args = ('--birth-time', '2024-01-02T01:00:00+00:00', '--gender', 'female',
+          '--longitude', '-74', '--precision', precision, '--civil-timezone=-05:00')
+  output = tmp_path / 'chart.json'
+  result = _run_cli(tmp_path, *args, '--export-chart-json', str(output), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
+  assert chart.json['civil_time'] == '2024-01-01T20:00:00-05:00'
+  assert chart.json['apparent_time'] == '2024-01-01T20:00:25.933333'
+  matched = tmp_path / 'matching.json'
+  result = _run_cli(tmp_path, *args, '--match-context', 'editorial.guansha_coexistence.v1',
+                    '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
+  assert json.loads(restored.input_json)['civil_time'] == chart.json['civil_time']
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('matching', [False, True])
+@pytest.mark.parametrize('zone', ['America', 'Asia', 'Etc', 'Unknown/Region', '+99:00'])
+def test_bad_civil_zone_is_an_argument_error_without_exports(tmp_path: Path, optimized: bool, matching: bool, zone: str) -> None:
+  args = ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'female', '--longitude', '-157.4',
+          '--precision', 'minute', '--civil-timezone', zone)
+  export = tmp_path / 'record.json'
+  extra = ('--match-context', 'editorial.guansha_coexistence.v1', '--observation-scope', 'natal',
+           '--export-context-json', str(export)) if matching else ('--export-chart-json', str(export))
+  result = _run_cli(tmp_path, *args, *extra, optimized=optimized)
+  assert result.returncode == 2
+  assert 'error: argument --civil-timezone:' in result.stderr
+  assert 'Traceback' not in result.stderr
+  assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+def test_location_midnight_labels_in_display_and_txt(tmp_path: Path, optimized: bool) -> None:
+  result = _run_cli(tmp_path, '--birth-time', '2024-06-01T23:50:00+08:00', '--gender', 'male',
+                    '--longitude', '125', '--precision', 'minute', '--output-dir', str(tmp_path), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  assert '真太阳时日期：2024-06-02' in result.stdout
+  assert '真太阳时（分钟显示）：2024-06-02T00:12:00' in result.stdout
+  assert '民用出生时刻（固定出生地偏移）：2024-06-01T23:50:00+08:00' in result.stdout
+  assert '生于 2024-06-02' not in result.stdout and '出生时间：2024-06-02' not in result.stdout
+  saved = tmp_path / 'interpretation_examples/0.txt'
+  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
+
+
+def test_legacy_renderer_keeps_generic_birth_labels() -> None:
+  from run_demo import get_basic_info
+  chart = BaziChart(Bazi.create('2024-06-01T23:50:00', 'male', BaziConfig.from_values(precision='minute')))
+  assert '生于 2024-06-01' in get_basic_info(chart)
+  text = interpret(chart)
+  assert text.startswith('出生时间：2024-06-01, 23:50\n')
+  assert '真太阳时' not in text and '民用出生时刻' not in get_basic_info(chart)
+
+
+@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('args', [
   ('--longitude', '0'), ('--precision', 'hour'), ('--civil-timezone', '+14:00'), ('--export-chart-json', 'out.json'),
   ('--query-knowledge', '--longitude', '0'), ('--validate-knowledge', '--precision', 'minute'),
@@ -210,6 +268,7 @@ def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path) -> None:
   help_result = _run_cli(tmp_path, '--help')
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
+  assert '--civil-timezone=-05:00' in help_result.stdout
   first = _run_cli(tmp_path, '--seed', '42')
   second = _run_cli(tmp_path, '--seed', '42')
   assert first.returncode == second.returncode == 0
