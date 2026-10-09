@@ -574,10 +574,8 @@ class Bazi:
     )
   
   @property
-  def _identity(self) -> tuple[datetime, BaziGender, BaziConfig] | tuple[datetime, timedelta, float, BaziGender, BaziConfig]:
-    if self._location is None:
-      return (self.solar_datetime, self.gender, self.config)
-    return (self._reference_datetime, self._location.civil_offset, self._location.longitude, self.gender, self.config)
+  def _identity(self) -> tuple[datetime | _Location, BaziGender, BaziConfig]:
+    return (self.solar_datetime if self._location is None else self._location, self.gender, self.config)
 
   def __eq__(self, other: object) -> bool:
     return isinstance(other, Bazi) and self._identity == other._identity

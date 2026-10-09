@@ -264,13 +264,16 @@ def test_location_chart_export_cannot_overwrite_knowledge(tmp_path: Path) -> Non
   assert source.read_bytes() == before
 
 
-def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path) -> None:
-  help_result = _run_cli(tmp_path, '--help')
+@pytest.mark.parametrize('columns', ['50', '80'])
+@pytest.mark.parametrize('optimized', [False, True])
+def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, columns: str, optimized: bool) -> None:
+  monkeypatch.setenv('COLUMNS', columns)
+  help_result = _run_cli(tmp_path, '--help', optimized=optimized)
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
-  assert '--civil-timezone=-05:00' in help_result.stdout
-  first = _run_cli(tmp_path, '--seed', '42')
-  second = _run_cli(tmp_path, '--seed', '42')
+  assert '--civil-timezone=-05:00' in re.sub(r'\s+', '', help_result.stdout)
+  first = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
+  second = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
   assert first.returncode == second.returncode == 0
   assert first.stdout == second.stdout
   assert first.stdout.count('出生时间：') == 1

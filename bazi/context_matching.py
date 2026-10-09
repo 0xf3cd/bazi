@@ -211,25 +211,18 @@ class EntryMatch:
 
 
 def _validate_input(text: str) -> None:
-  parsed = json.loads(text, object_pairs_hook=_pairs)
-  _typed(parsed, dict)
+  data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
   legacy_keys = ('birth_time', 'gender', 'config', 'pillars')
   location_keys = tuple(_LocationTimeJson.__required_keys__) + ('gender', 'config', 'pillars')
-  if parsed.keys() == set(legacy_keys):
-    data = _mapping(parsed, legacy_keys)
-    location_aware = False
-  elif parsed.keys() == set(location_keys):
-    data = _mapping(parsed, location_keys)
-    location_aware = True
-  else:
-    raise ValueError('Expected complete legacy or location-aware input roster')
-  if location_aware:
+  if data.keys() == set(location_keys):
     _parse_location(data)
-  else:
+  elif data.keys() == set(legacy_keys):
     _typed(data['birth_time'], str)
     birth = datetime.fromisoformat(data['birth_time'])
     if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
       raise ValueError('Expected canonical naive minute birth time')
+  else:
+    raise ValueError('Expected complete legacy or location-aware input roster')
   _choice(data['gender'], ('male', 'female'))
   config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
   BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})

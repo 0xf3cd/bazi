@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Final
-from collections.abc import Sequence
 
 import celestial_calendar as celestial
 
@@ -333,11 +332,11 @@ def _write_eot_table(path: Path, encoded: bytes, expected_samples: int) -> None:
 
 # ---------------------------------------------------------------------------
 
-def main(argv: Sequence[str] | None = None) -> None:
+def main() -> None:
   parser = argparse.ArgumentParser(description='Generate bundled celestial-calendar tables')
   parser.add_argument('--eot-only', action='store_true', help='Generate only equation_of_time.bin')
   parser.add_argument('--output-dir', type=Path, help='Write tables to this directory')
-  args = parser.parse_args(argv)
+  args = parser.parse_args()
 
   data_dir: Path = args.output_dir or Path(__file__).parent / 'data'
   data_dir.mkdir(parents=True, exist_ok=True)

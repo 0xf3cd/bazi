@@ -748,6 +748,7 @@ def test_hash() -> None:
   dt: datetime = datetime(2000, 2, 4, 22, 1)
   bazi: Bazi = Bazi.create(dt, BaziGender.MALE)
   same: Bazi = Bazi.create(dt, BaziGender.MALE)
+  assert hash(bazi) == hash((bazi.solar_datetime, bazi.gender, bazi.config))
   assert hash(bazi) == hash(same)
   assert len({bazi, same}) == 1 # In sync with `__eq__`: usable for set dedup.
 
