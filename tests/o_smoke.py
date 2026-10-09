@@ -51,6 +51,7 @@ def main() -> int:
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
+  from bazi.calendar.solar_time import apparent_solar_datetime
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)
@@ -488,6 +489,22 @@ def main() -> int:
      partial(Bazi.create, no_offset_birth, 'male', location_config, longitude=0.0)),
     ('Bazi constructor birth with None UTC offset', ValueError,
      partial(Bazi, no_offset_birth, BaziGender.男, location_config, longitude=0.0)),
+    ('Solar time wrong datetime type', TypeError,
+     partial(apparent_solar_datetime, 42, 0.0)), # type: ignore[arg-type]
+    ('Solar time naive civil datetime', ValueError,
+     partial(apparent_solar_datetime, datetime(2000, 1, 1), 0.0)),
+    ('Solar time birth with None UTC offset', ValueError,
+     partial(apparent_solar_datetime, no_offset_birth, 0.0)),
+    ('Solar time bool longitude', TypeError,
+     partial(apparent_solar_datetime, aware_birth, True)),
+    ('Solar time string longitude', TypeError,
+     partial(apparent_solar_datetime, aware_birth, '0')), # type: ignore[arg-type]
+    ('Solar time non-finite longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, float('nan'))),
+    ('Solar time out-of-range longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, 180.01)),
+    ('Solar time overflowing longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
   ])
 
   failures: list[str] = []
