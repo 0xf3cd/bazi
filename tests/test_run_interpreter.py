@@ -271,7 +271,7 @@ def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: 
   help_result = _run_cli(tmp_path, '--help', optimized=optimized)
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
-  assert '--civil-timezone=-05:00' in re.sub(r'\s+', '', help_result.stdout)
+  assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)
   first = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
   second = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
   assert first.returncode == second.returncode == 0
