@@ -29,7 +29,7 @@ def main() -> int:
   import inspect
   import json
   from dataclasses import replace
-  from datetime import UTC, date, datetime, timedelta, timezone
+  from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
   from collections.abc import Callable
   from functools import partial
   from fractions import Fraction
@@ -73,6 +73,16 @@ def main() -> int:
 
   class Year(int):
     pass
+
+  class MissingOffset(tzinfo):
+    def utcoffset(self, dt: datetime | None) -> None:
+      return None
+    def dst(self, dt: datetime | None) -> None:
+      return None
+    def tzname(self, dt: datetime | None) -> None:
+      return None
+    def fromutc(self, dt: datetime) -> datetime:
+      return dt
 
   class StringKey(str):
     pass
@@ -472,9 +482,21 @@ def main() -> int:
          partial(Bazi, aware_birth, BaziGender.男, location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
       ])
 
+  no_offset_birth = datetime(2000, 1, 1, tzinfo=MissingOffset())
+  checks.extend([
+    ('Bazi.create birth with None UTC offset', ValueError,
+     partial(Bazi.create, no_offset_birth, 'male', location_config, longitude=0.0)),
+    ('Bazi constructor birth with None UTC offset', ValueError,
+     partial(Bazi, no_offset_birth, BaziGender.男, location_config, longitude=0.0)),
+  ])
+
   failures: list[str] = []
   for field_name, value, expected_error in (
     ('civil_time', 42, TypeError), ('civil_time', '2024-01-01T12:00:00', ValueError),
+    ('canonical_instant', 42, TypeError), ('apparent_time', 42, TypeError),
+    ('civil_time', 'not-a-datetime', ValueError),
+    ('canonical_instant', 'not-a-datetime', ValueError),
+    ('apparent_time', 'not-a-datetime', ValueError),
     ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
     ('longitude', 180.0, ValueError), ('longitude', -0.0, ValueError),
     ('longitude', 180, TypeError), ('apparent_time', '2024-01-01T11:27:00+00:00', ValueError),
@@ -490,6 +512,11 @@ def main() -> int:
     failures.append('Optimized Kiritimati civil date lost')
   if BaziChart.from_json(local_chart.json).json != local_chart.json or ContextResult.from_json(local_result.export_json()) != local_result:
     failures.append('Optimized location restoration failed')
+  location_bazi = local_chart.bazi
+  for moment in (location_bazi._reference_datetime, location_bazi.solar_datetime):
+    legacy_bazi = Bazi.create(moment, 'female', location_config)
+    if not (legacy_bazi != location_bazi and location_bazi != legacy_bazi and len({legacy_bazi, location_bazi}) == 2):
+      failures.append('Optimized legacy/location identity partition failed')
   missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian'))
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')

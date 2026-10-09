@@ -78,6 +78,21 @@ def test_civil_basis_identity_and_meridian_aliases() -> None:
     assert east.longitude == -180.0
 
 
+@pytest.mark.parametrize('coordinate', ['reference', 'display'])
+@pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
+def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrecision) -> None:
+  config = BaziConfig(precision=precision)
+  location = Bazi.create('2000-01-01T12:34:00+00:00', 'female', config, longitude=0.0)
+  moment = location._reference_datetime if coordinate == 'reference' else location.solar_datetime
+  legacy = Bazi.create(moment, 'female', config)
+  if coordinate == 'reference':
+    assert legacy._reference_datetime == location._reference_datetime
+  else:
+    assert legacy.solar_datetime == location.solar_datetime
+  assert legacy != location and location != legacy
+  assert len({legacy, location}) == len({location, legacy}) == 2
+
+
 def test_leading_corner_and_apparent_birth_window() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   first = Bazi.create('1901-02-18T12:24:00+23:54', 'male', config, longitude=177.0)
@@ -140,6 +155,8 @@ def test_civil_timezone_invalid_inputs(direct: bool) -> None:
 
   with pytest.raises(ValueError, match='UTC offset'):
     create(datetime(2000, 1, 1, tzinfo=UTC), gender, config, longitude=0.0, civil_timezone=MissingOffset())
+  with pytest.raises(ValueError, match='timezone-aware birth_time'):
+    create(datetime(2000, 1, 1, tzinfo=MissingOffset()), gender, config, longitude=0.0)
 
 
 def test_demo_uses_physical_jies_and_distinguishes_clocks() -> None:
@@ -179,6 +196,11 @@ def test_location_context_snapshot_is_observational() -> None:
 @pytest.mark.parametrize('key,value,error', [
   ('civil_time', 42, TypeError),
   ('time_basis', 42, TypeError),
+  ('canonical_instant', 42, TypeError),
+  ('apparent_time', 42, TypeError),
+  ('civil_time', 'not-a-datetime', ValueError),
+  ('canonical_instant', 'not-a-datetime', ValueError),
+  ('apparent_time', 'not-a-datetime', ValueError),
   ('civil_time', '2024-01-01T12:00:00', ValueError),
   ('civil_time', '2024-01-01T12:00+14:00', ValueError),
   ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),

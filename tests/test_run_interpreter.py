@@ -153,6 +153,45 @@ def _run_cli(cwd: Path, *args: str, script: Path | None = None, optimized: bool 
 
 
 @pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('precision,pillars', [
+  ('hour', ('庚辰', '戊寅')), ('minute', ('己卯', '丁丑')),
+])
+def test_legacy_naive_cli_precision_and_exports(tmp_path: Path, optimized: bool, precision: str, pillars: tuple[str, str]) -> None:
+  birth = '2000-02-04T20:39:59.123456'
+  config = BaziConfig.from_values(precision=precision)
+  expected = BaziChart(Bazi.create(birth, 'female', config))
+  output = tmp_path / 'legacy-chart.json'
+  args = ('--birth-time', birth, '--gender', 'female', '--precision', precision)
+  result = _run_cli(tmp_path, *args, '--export-chart-json', str(output), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  assert output.is_file()
+  data = json.loads(output.read_text(encoding='utf-8'))
+  assert set(data) == {
+    'birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school', 'pillars', 'nayin',
+    'shier_zhangsheng', 'tiangan_traits', 'dizhi_traits', 'tiangan_shishen', 'dizhi_shishen', 'hidden_tiangan', 'transits',
+  }
+  assert data['birth_time'] == '2000-02-04T20:39:00' and data['precision'] == precision
+  assert (data['pillars']['year'], data['pillars']['month']) == pillars
+  restored = BaziChart.from_json(data)
+  assert restored.bazi.config == config and restored.json == data == expected.json
+
+  matched = tmp_path / 'legacy-context.json'
+  result = _run_cli(tmp_path, *args, '--match-context', 'editorial.guansha_coexistence.v1',
+                    '--observation-scope', 'natal', '--include-reference-only', '--export-context-json', str(matched), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  assert matched.is_file()
+  record = ContextResult.from_json(matched.read_text(encoding='utf-8'))
+  identity = json.loads(record.input_json)
+  assert set(identity) == {'birth_time', 'gender', 'config', 'pillars'}
+  assert identity['birth_time'] == '2000-02-04T20:39:00' and identity['config']['precision'] == precision
+  assert tuple(identity['pillars'][:2]) == pillars
+  expected_record = evaluate_context(expected, criterion_id='editorial.guansha_coexistence.v1',
+                                     profile=ContextProfile('natal'), include_reference_only=True)
+  assert record == expected_record
+  assert record.export_json() == matched.read_text(encoding='utf-8') == expected_record.export_json()
+
+
+@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('precision', ['hour', 'minute'])
 @pytest.mark.parametrize('basis', ['+14:00', 'Pacific/Kiritimati'])
 def test_location_chart_and_matching_cli_export_restore(tmp_path: Path, optimized: bool, precision: str, basis: str) -> None:

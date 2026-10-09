@@ -15,7 +15,7 @@ tables are regenerated. Same shape as `hko_data/encoder.py` (offline) vs `decode
 | `data/jieqi_moments.txt` | 7200 | `celestial_calendar.jieqi_moment(year, jieqi)` |
 | `data/lunar_years_algo1.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO1, year)` |
 | `data/lunar_years_algo2.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO2, year)` |
-| `data/equation_of_time.bin` | 72,643 samples | `celestial_calendar.apparent_solar_time(utc_midnight, 0)` |
+| `data/equation_of_time.bin` | 72643 | `celestial_calendar.apparent_solar_time(utc_midnight, 0)` |
 
 Text-table fixtures in `tests/calendar/celestial_fixtures/` use identical basenames and format,
 carry `fixture: true`, and hold a 5-year slice (`1901, 1914, 1917, 1979, 2024`).

@@ -78,20 +78,20 @@ distinct; seconds remain distinct even when the displayed `solar_datetime` minut
 Location JSON contains `time_basis='apparent_solar'`, `civil_time` (fixed-offset aware),
 `canonical_instant` (UTC), `longitude` and `apparent_time` (untruncated computed naive clock).
 EOT uses daily decisecond samples with linear interpolation; retaining microsecond
-digits does not imply microsecond astronomical accuracy.
-Restoring a chart reconstructs and checks all derived values; legacy JSON is unchanged.
-The supported birth-date window applies to the apparent date (`1901-02-19` through
-`2099-12-31`), so its accepted UTC instants depend on longitude and civil basis.
+digits does not imply microsecond astronomical accuracy. Restoring a chart reconstructs
+and checks all derived values; legacy JSON is unchanged. The supported birth-date window
+applies to the apparent date (`1901-02-19` through `2099-12-31`), so its accepted UTC
+instants depend on longitude and civil basis.
 The larger Jie table does not expand that birth window.
 
 Dayun intervals and transit ordering use the absolute coordinate. Dayun boundaries
 and existing transit query moments are naive UTC+08:00 labels, not apparent clocks,
-and receive no moving-location correction. Historical pre-1929
-time-basis choices remain outside this API and are tracked by issue #118. Defaults
-remain `CELESTIAL` with day precision. `hko` provides date-level calendar data;
-`celestial` and `celestial-algo2` use the bundled astronomical tables. Backend
-differences and supported date ranges are documented in the calendar modules;
-selecting a backend does not install its offline generator.
+and receive no moving-location correction. Historical pre-1929 time-basis choices
+remain outside this API and are tracked by issue #118. Defaults remain `CELESTIAL`
+with day precision. `hko` provides date-level calendar data; `celestial` and
+`celestial-algo2` use the bundled astronomical tables. Backend differences and
+supported date ranges are documented in the calendar modules; selecting a backend
+does not install its offline generator.
 
 ```python
 from datetime import UTC, datetime
@@ -494,9 +494,8 @@ Maintainers can regenerate from those sources with `python -m bazi.calendar.hko_
 (`requests` is needed only if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
 with `celestial-calendar==0.6.1`. The latter also writes the daily equation-of-time
 table; `--eot-only` limits regeneration to that byte-stable file. These optional tools
-are not runtime dependencies.
-To regenerate and compare EOT without replacing the bundled table, write a candidate
-into a directory outside the checkout:
+are not runtime dependencies. To regenerate and compare EOT without replacing the
+bundled table, write a candidate into a directory outside the checkout:
 
 ```sh
 python -m bazi.calendar.celestial_data.generator \

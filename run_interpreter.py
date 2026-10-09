@@ -264,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
   parser.add_argument('--longitude', type=float, help='East-positive degrees; requires aware fixed input and hour/minute precision.')
   parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='Birth precision (default: day).')
-  parser.add_argument('--civil-timezone', type=_civil_timezone, help='Use --civil-timezone=-05:00 for negative offsets. Accepts an IANA zone (Pacific/Kiritimati) or fixed offset (+14:00); requires longitude.')
+  parser.add_argument('--civil-timezone', type=_civil_timezone, help='Explicit birth-region IANA zone (Pacific/Kiritimati) or fixed offset (+14:00); use --civil-timezone=-05:00 for negative offsets; requires longitude.')
   parser.add_argument('--export-chart-json', type=Path, help='Export the fixed chart as reloadable JSON.')
   parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
   parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
