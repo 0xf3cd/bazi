@@ -185,16 +185,16 @@ class Bazi:
     location: _Location | None = None
     clock_datetime = birth_time
     if longitude_value is not None:
-      canonical_utc = birth_time.astimezone(UTC)
-      selected = canonical_utc.astimezone(birth_time.tzinfo if civil_timezone is None else civil_timezone)
-      offset = selected.utcoffset()
-      if offset is None:
-        raise ValueError('civil_timezone requires a UTC offset at birth.')
-      location = _Location(canonical_utc, offset, longitude_value)
-
       try:
+        canonical_utc = birth_time.astimezone(UTC)
+        selected = canonical_utc.astimezone(birth_time.tzinfo if civil_timezone is None else civil_timezone)
+        offset = selected.utcoffset()
+        if offset is None:
+          raise ValueError('civil_timezone requires a UTC offset at birth.')
+        location = _Location(canonical_utc, offset, longitude_value)
+
         clock_datetime = location.apparent(canonical_utc)
-      except _EquationOfTimeRangeError as error:
+      except (_EquationOfTimeRangeError, OverflowError) as error:
         window_utils = calendar_utils_of(config.backend)
         first = window_utils.to_date(window_utils.get_min_supported_date(CalendarType.SOLAR))
         last = window_utils.to_date(window_utils.get_max_supported_date(CalendarType.SOLAR))
@@ -376,7 +376,7 @@ class Bazi:
   @property
   def solar_date(self) -> date:
     '''The apparent-solar birth date for a location-aware chart; otherwise the default
-    civil date. 地点盘返回真太阳时公历出生日期；默认路径仍返回原民用日期。'''
+    civil date. 地点盘返回真太阳时公历出生日期；默认路径返回民用日期。'''
     return self._utils.to_date(self._solar_date)
   
   @property

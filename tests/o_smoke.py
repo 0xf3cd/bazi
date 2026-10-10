@@ -512,6 +512,27 @@ def main() -> int:
   ])
 
   failures: list[str] = []
+  for label, birth, basis in (
+    ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
+    ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
+    ('civil underflow', datetime.min.replace(tzinfo=UTC), timezone(timedelta(hours=-12))),
+    ('civil overflow', datetime.max.replace(tzinfo=UTC), timezone(timedelta(hours=14))),
+  ):
+    checks.extend([
+      (f'Bazi.create {label}', ValueError,
+       partial(Bazi.create, birth, 'male', location_config, longitude=0.0, civil_timezone=basis)),
+      (f'Bazi constructor {label}', ValueError,
+       partial(Bazi, birth, BaziGender.男, location_config, longitude=0.0, civil_timezone=basis)),
+    ])
+  from bazi.calendar.celestial_data.loader import EquationOfTimeTable
+  for birth in (
+    datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
+    datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),
+  ):
+    checks.extend([
+      ('Solar primitive UTC conversion overflow', ValueError, partial(apparent_solar_datetime, birth, 0.0)),
+      ('EOT reader UTC conversion overflow', ValueError, partial(EquationOfTimeTable().seconds_at, birth)),
+    ])
   for field_name, value, expected_error in (
     ('civil_time', 42, TypeError), ('civil_time', '2024-01-01T12:00:00', ValueError),
     ('canonical_instant', 42, TypeError), ('apparent_time', 42, TypeError),

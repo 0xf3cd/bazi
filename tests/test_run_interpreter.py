@@ -359,6 +359,20 @@ def test_chart_json_rejects_knowledge_txt_collision(tmp_path: Path, optimized: b
 
 
 @pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('family,member', [('tiangan', '甲'), ('shishen', '比肩')])
+def test_default_knowledge_txt_collision_uses_a_disposable_checkout(
+  knowledge_checkout: Path, optimized: bool, family: str, member: str,
+) -> None:
+  output = knowledge_checkout / 'output_data'
+  target = output / 'knowledge_base' / family / f'{member}.txt'
+  result = _run_cli(knowledge_checkout, '--birth-time', '2024-01-01T12:00:00', '--gender', 'female',
+                    '--export-knowledge-base', '--export-chart-json', str(target),
+                    optimized=optimized, script=knowledge_checkout / 'run_interpreter.py')
+  assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
+  assert not output.exists() and '已导出命盘' not in result.stdout
+
+
+@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('located', [False, True])
 def test_distinct_chart_json_and_txt_outputs_are_both_retained(tmp_path: Path, optimized: bool, located: bool) -> None:
   output = tmp_path / 'output'

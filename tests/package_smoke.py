@@ -87,7 +87,6 @@ def main() -> None:
 
   # Audit hooks enforce read-only use even under root and on Windows.
   sys.addaudithook(deny_writes)
-  sys.addaudithook(record_eot_reads)
   try:
     (package_root / 'write-control').write_bytes(b'must not be written')
   except PermissionError as error:
@@ -95,6 +94,8 @@ def main() -> None:
   else:
     raise RuntimeError('Write guard failed its positive control')
   print('PASS executable runtime write-attempt control')
+
+  sys.addaudithook(record_eot_reads)
 
   import bazi
   check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
@@ -177,6 +178,26 @@ def main() -> None:
   location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
   check(json.loads(location_match.input_json)['civil_time'] == '2024-01-01T12:00:00+14:00', 'Installed context dropped civil basis')
   check(ContextResult.from_json(location_match.export_json()) == location_match, 'Installed location context restore mismatch')
+  for birth, basis in (
+    (datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
+    (datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
+    (datetime.min.replace(tzinfo=UTC), timezone(timedelta(hours=-12))),
+    (datetime.max.replace(tzinfo=UTC), timezone(timedelta(hours=14))),
+  ):
+    try:
+      Bazi.create(birth, 'male', BaziConfig.from_values(precision='minute'), longitude=0.0, civil_timezone=basis)
+    except ValueError:
+      pass
+    else:
+      raise RuntimeError('Installed extreme date did not raise ValueError')
+  for birth in (datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
+                datetime.max.replace(tzinfo=timezone(timedelta(hours=-12)))):
+    try:
+      apparent_solar_datetime(birth, 0.0)
+    except ValueError:
+      pass
+    else:
+      raise RuntimeError('Installed solar primitive leaked an extreme instant')
   for field, spelling in (('canonical_instant', '2030-01-01T00:00:00+00:00'),
                        ('civil_time', '2024-01-01T12:00:00+13:00')):
     inconsistent = json.loads(location_match.export_json())

@@ -1,11 +1,12 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from datetime import UTC, datetime, tzinfo
+from datetime import UTC, datetime, timedelta, timezone, tzinfo
 from typing import Any
 
 import pytest
 
 from bazi.calendar.solar_time import apparent_solar_datetime
+from bazi.calendar.celestial_data.loader import EquationOfTimeTable
 
 
 @pytest.mark.parametrize('civil,longitude,error', [
@@ -45,3 +46,16 @@ def test_solar_time_none_offset_and_real_longitude() -> None:
 def test_solar_clock_meridian_and_zero_aliases(longitude: float, canonical: float) -> None:
   instant = datetime(2024, 1, 1, 12, tzinfo=UTC)
   assert apparent_solar_datetime(instant, longitude) == apparent_solar_datetime(instant, canonical)
+
+
+@pytest.mark.parametrize('moment', [
+  datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
+  datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),
+])
+@pytest.mark.parametrize('table_reader', [False, True])
+def test_extreme_aware_conversion_is_a_value_error(moment: datetime, table_reader: bool) -> None:
+  with pytest.raises(ValueError, match='Unsupported UTC instant'):
+    if table_reader:
+      EquationOfTimeTable().seconds_at(moment)
+    else:
+      apparent_solar_datetime(moment, 0.0)

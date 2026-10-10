@@ -125,6 +125,20 @@ def test_out_of_table_birth_reports_the_apparent_birth_window(year: int) -> None
                 BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
 
 
+@pytest.mark.parametrize('direct', [False, True])
+@pytest.mark.parametrize('birth,basis', [
+  pytest.param(datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None, id='utc-underflow'),
+  pytest.param(datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None, id='utc-overflow'),
+  pytest.param(datetime.min.replace(tzinfo=UTC), timezone(timedelta(hours=-12)), id='civil-underflow'),
+  pytest.param(datetime.max.replace(tzinfo=UTC), timezone(timedelta(hours=14)), id='civil-overflow'),
+])
+def test_extreme_aware_birth_reports_value_error(direct: bool, birth: datetime, basis: tzinfo | None) -> None:
+  create: Any = Bazi if direct else Bazi.create
+  gender = BaziGender.男 if direct else 'male'
+  with pytest.raises(ValueError, match=r'apparent-solar birth date.*1901-02-19.*2099-12-31'):
+    create(birth, gender, BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0, civil_timezone=basis)
+
+
 def test_birth_window_error_does_not_hide_table_failure(monkeypatch: pytest.MonkeyPatch) -> None:
   from bazi.calendar.celestial_data.loader import EquationOfTimeTable
 

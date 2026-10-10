@@ -4,11 +4,11 @@
 
 import math
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from functools import cache
 from numbers import Real
 
-from .celestial_data.loader import EquationOfTimeTable
+from .celestial_data.loader import EquationOfTimeTable, _utc_instant
 
 
 def _canonical_longitude(longitude: float) -> float:
@@ -51,7 +51,7 @@ def apparent_solar_datetime(civil_instant: datetime, longitude: float) -> dateti
     raise ValueError('Expected a timezone-aware civil datetime.')
   longitude_value = _canonical_longitude(longitude)
 
-  utc = civil_instant.astimezone(UTC)
+  utc = _utc_instant(civil_instant)
   equation_of_time = _equation_of_time_table().seconds_at(utc)
   half_day = timedelta(hours=12)
   correction = (timedelta(hours=longitude_value / 15) - offset + half_day) % timedelta(days=1) - half_day

@@ -65,6 +65,13 @@ class _EquationOfTimeRangeError(ValueError):
   '''The UTC instant is outside the equation-of-time interpolation domain.'''
 
 
+def _utc_instant(moment: datetime) -> datetime:
+  try:
+    return moment.astimezone(UTC)
+  except OverflowError as error:
+    raise _EquationOfTimeRangeError('Unsupported UTC instant: timezone conversion exceeds datetime range.') from error
+
+
 def _require_table(path: Path) -> None:
   if not path.is_file():
     raise RuntimeError(
@@ -117,7 +124,7 @@ class EquationOfTimeTable:
     if utc_moment.tzinfo is None or utc_moment.utcoffset() is None:
       raise ValueError('Expected a timezone-aware datetime.')
 
-    utc = utc_moment.astimezone(UTC)
+    utc = _utc_instant(utc_moment)
     start = datetime.combine(EOT_START_DATE, datetime.min.time(), UTC)
     offset = utc - start
     supported = timedelta(seconds=EOT_CADENCE_SECONDS * (len(self._samples) - 1))
