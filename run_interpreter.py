@@ -144,6 +144,12 @@ def save_chart_examples(count: int = 50) -> None:
     _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
 
 
+def _same_export_path(left: Path, right: Path) -> bool:
+  return left.resolve() == right.resolve() or (
+    left.exists() and right.exists() and left.samefile(right)
+  )
+
+
 def _export_json(
   parser: argparse.ArgumentParser,
   target: Path,
@@ -154,11 +160,7 @@ def _export_json(
   sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
   if knowledge_source is not None:
     sources += (knowledge_source,)
-  if any(
-    target.resolve() == source.resolve() or (
-      target.exists() and source.exists() and target.samefile(source)
-    ) for source in sources
-  ):
+  if any(_same_export_path(target, source) for source in sources):
     parser.error('Export must not overwrite the editing source')
   try:
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -311,6 +313,18 @@ def main(argv: list[str] | None = None) -> int:
     args.longitude, args.precision, args.civil_timezone, args.export_chart_json,
   )):
     parser.error('Location, precision and chart JSON flags require fixed birth input')
+
+  if args.export_chart_json is not None:
+    text_paths: list[Path] = []
+    if args.output_dir is not None:
+      text_paths.append(args.output_dir / 'interpretation_examples' / '0.txt')
+    if args.export_knowledge_base:
+      base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
+      text_paths.extend(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan)
+      text_paths.extend(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen)
+    if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
+      parser.error('--export-chart-json must not overlap generated TXT outputs')
+
   if args.seed is not None:
     random.seed(args.seed)
 
