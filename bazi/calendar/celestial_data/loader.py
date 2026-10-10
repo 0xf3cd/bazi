@@ -61,6 +61,19 @@ class LunarYearInfo(TypedDict):
   ganzhi: Ganzhi
 
 
+class _EquationOfTimeRangeError(ValueError):
+  '''The UTC instant is outside the equation-of-time interpolation domain.'''
+
+
+def _require_table(path: Path) -> None:
+  if not path.is_file():
+    raise RuntimeError(
+      f'Celestial data table is missing: {path}. '
+      'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
+      'with the optional generation tools.'
+    )
+
+
 class EquationOfTimeTable:
   '''
   Daily equation-of-time samples at UTC midnight, stored as signed big-endian
@@ -68,12 +81,7 @@ class EquationOfTimeTable:
   '''
 
   def __init__(self, path: Path = DATA_DIR / 'equation_of_time.bin') -> None:
-    if not path.is_file():
-      raise RuntimeError(
-        f'Celestial data table is missing: {path}. '
-        'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
-        'with the optional generation tools.'
-      )
+    _require_table(path)
 
     encoded = path.read_bytes()
     if len(encoded) < EOT_HEADER.size:
@@ -99,7 +107,7 @@ class EquationOfTimeTable:
 
   @property
   def samples(self) -> tuple[int, ...]:
-    '''Return all immutable fixed-point samples, primarily for schema validation.'''
+    '''Return all immutable fixed-point decisecond samples.'''
     return self._samples
 
   def seconds_at(self, utc_moment: datetime) -> float:
@@ -114,7 +122,7 @@ class EquationOfTimeTable:
     offset = utc - start
     supported = timedelta(seconds=EOT_CADENCE_SECONDS * (len(self._samples) - 1))
     if offset < timedelta(0) or offset >= supported:
-      raise ValueError(
+      raise _EquationOfTimeRangeError(
         f'"{utc_moment}" is out of the equation-of-time range '
         f'[{start}, {start + supported})'
       )
@@ -134,12 +142,7 @@ def _parse(path: Path, expected_columns: str) -> tuple[dict[str, str], list[list
   Explicit raises (not asserts) throughout: a corrupt or stale data file is a fail-fast
   contract for library consumers, and it must survive `python -O`.
   '''
-  if not path.is_file():
-    raise RuntimeError(
-      f'Celestial data table is missing: {path}. '
-      'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
-      'with the optional generation tools.'
-    )
+  _require_table(path)
 
   header: dict[str, str] = {}
   rows: list[list[str]] = []

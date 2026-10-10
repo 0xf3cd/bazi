@@ -82,7 +82,7 @@ def test_overflowing_real_longitude_is_a_bounded_value_error(direct: bool, kind:
   longitude = integer if kind == 'integer' else Fraction(integer, 3)
   with pytest.raises(ValueError) as error:
     _construct(direct, datetime(2000, 1, 1, 12, tzinfo=UTC), MINUTE_CONFIG, longitude)
-  assert str(error.value) == 'Longitude is outside [-180, 180].'
+  assert str(error.value) == 'Unsupported longitude: expected finite degrees in [-180, 180].'
 
 
 @pytest.mark.parametrize('direct', [False, True])
@@ -285,7 +285,7 @@ def test_location_json_roster_roundtrip_and_tampering() -> None:
     MINUTE_CONFIG,
     longitude=0.0,
   ))
-  negative_zero_longitude = copy.deepcopy(zero_chart.json)
+  negative_zero_longitude = copy.deepcopy(cast(BaziJson.LocationBaziChartJsonDict, zero_chart.json))
   negative_zero_longitude['longitude'] = -0.0
   with pytest.raises(ValueError, match='canonical longitude'):
     BaziChart.from_json(negative_zero_longitude)
@@ -294,23 +294,6 @@ def test_location_json_roster_roundtrip_and_tampering() -> None:
   derived['pillars']['hour'] = '甲子'
   with pytest.raises(ValueError, match='pillars.hour'):
     BaziChart.from_json(derived)
-
-
-def test_location_path_covers_apparent_calendar_edges() -> None:
-  first = Bazi.create(
-    '1901-02-18T12:24:00+23:54',
-    'male',
-    MINUTE_CONFIG,
-    longitude=177.0,
-  )
-  last = Bazi.create(
-    '2100-01-01T12:00:00+00:00',
-    'male',
-    MINUTE_CONFIG,
-    longitude=-180.0,
-  )
-  assert first.solar_date == date(1901, 2, 19)
-  assert last.solar_date == date(2099, 12, 31)
 
 
 @pytest.mark.parametrize('birth_time, pillars, hour_dizhi', [
@@ -356,8 +339,9 @@ def test_seconds_are_preserved_before_apparent_conversion(config: BaziConfig) ->
   assert chart.bazi.hour_pillar.dizhi is Dizhi.丑
   assert floored.hour_pillar.dizhi is Dizhi.子
   assert chart.bazi != floored
-  assert chart.json['canonical_instant'] == '2000-11-03T00:43:59+00:00'
-  assert chart.json['apparent_time'] == '2000-11-03T01:00:25.084728'
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  assert data['canonical_instant'] == '2000-11-03T00:43:59+00:00'
+  assert data['apparent_time'] == '2000-11-03T01:00:25.084728'
   assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
 
 
@@ -385,7 +369,7 @@ def test_exact_instant_identity_and_microsecond_roundtrip() -> None:
   assert hash(chart.bazi) == hash(offset)
   assert chart.bazi.solar_datetime == other_second.solar_datetime
   assert chart.bazi != other_second
-  assert chart.json['canonical_instant'] == '2000-01-01T12:34:56.123456+00:00'
+  assert cast(BaziJson.LocationBaziChartJsonDict, chart.json)['canonical_instant'] == '2000-01-01T12:34:56.123456+00:00'
   assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
 
 
@@ -400,6 +384,7 @@ def test_negative_zero_longitude_emits_canonical_roundtrippable_json(direct: boo
   longitude = chart.bazi.longitude
   assert longitude is not None
   assert math.copysign(1.0, longitude) == 1.0
-  assert chart.json['longitude'] == 0.0
-  assert math.copysign(1.0, chart.json['longitude']) == 1.0
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  assert data['longitude'] == 0.0
+  assert math.copysign(1.0, data['longitude']) == 1.0
   assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json

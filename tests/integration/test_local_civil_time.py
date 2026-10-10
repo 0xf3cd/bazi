@@ -4,49 +4,17 @@ import json
 
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 import pytest
 
 from bazi.bazi import Bazi, BaziGender
-from bazi.bazi_chart import BaziChart
+from bazi.bazi_chart import BaziChart, BaziJson
 from bazi.calendar import CalendarDate, CalendarType
-from bazi.calendar.solar_time import apparent_solar_datetime
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
 from run_demo import get_basic_info, get_transit_info
-
-
-@pytest.mark.parametrize('civil,longitude,error', [
-  (42, 0.0, TypeError),
-  (datetime(2000, 1, 1), 0.0, ValueError),
-  (datetime(2000, 1, 1, tzinfo=UTC), True, TypeError),
-  (datetime(2000, 1, 1, tzinfo=UTC), '0', TypeError),
-  (datetime(2000, 1, 1, tzinfo=UTC), float('nan'), ValueError),
-  (datetime(2000, 1, 1, tzinfo=UTC), float('inf'), ValueError),
-  (datetime(2000, 1, 1, tzinfo=UTC), -180.01, ValueError),
-  (datetime(2000, 1, 1, tzinfo=UTC), 180.01, ValueError),
-  (datetime(2000, 1, 1, tzinfo=UTC), 10 ** 400, ValueError),
-])
-def test_solar_time_public_boundary(civil: Any, longitude: Any, error: type[Exception]) -> None:
-  with pytest.raises(error):
-    apparent_solar_datetime(civil, longitude)
-
-
-def test_solar_time_none_offset_and_real_longitude() -> None:
-  class MissingOffset(tzinfo):
-    def utcoffset(self, dt: datetime | None) -> None:
-      return None
-    def dst(self, dt: datetime | None) -> None:
-      return None
-    def tzname(self, dt: datetime | None) -> None:
-      return None
-  with pytest.raises(ValueError, match='timezone-aware'):
-    apparent_solar_datetime(datetime(2000, 1, 1, tzinfo=MissingOffset()), 0.0)
-  instant = datetime(2000, 11, 3, 0, 50, tzinfo=UTC)
-  assert apparent_solar_datetime(instant, 0) == apparent_solar_datetime(instant, 0.0)
-  assert apparent_solar_datetime(instant, 0) == datetime(2000, 11, 3, 1, 6, 26, 82639)
 
 
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
@@ -65,10 +33,11 @@ def test_solar_time_none_offset_and_real_longitude() -> None:
 def test_named_civil_clocks(precision: BaziPrecision, civil: str, longitude: float, apparent: str) -> None:
   chart = BaziChart(Bazi.create(civil, 'male', BaziConfig(precision=precision), longitude=longitude))
   expected = datetime.fromisoformat(apparent)
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
   assert chart.bazi._clock_datetime == expected
   assert chart.bazi.solar_date == expected.date()
-  assert chart.bazi._canonical_civil.isoformat() == civil
-  assert chart.json['apparent_time'] == expected.isoformat()
+  assert data['civil_time'] == civil
+  assert data['apparent_time'] == expected.isoformat()
   assert BaziChart.from_json(chart.json).json == chart.json
 
 
@@ -128,7 +97,8 @@ def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrec
 def test_leading_corner_and_apparent_birth_window() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   first = Bazi.create('1901-02-18T12:24:00+23:54', 'male', config, longitude=177.0)
-  assert first._canonical_instant == datetime(1901, 2, 17, 12, 30, tzinfo=UTC)
+  first_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(first).json)
+  assert first_json['canonical_instant'] == '1901-02-17T12:30:00+00:00'
   assert first._clock_datetime == datetime(1901, 2, 19, 0, 3, 45, 35417)
   # Pinned source at the exact instant; the daily interpolant is an approximation.
   source_apparent = datetime(1901, 2, 19, 0, 3, 44, 914798)
@@ -146,6 +116,25 @@ def test_leading_corner_and_apparent_birth_window() -> None:
   ):
     with pytest.raises(ValueError):
       Bazi.create(civil, 'male', config, longitude=longitude)
+
+
+@pytest.mark.parametrize('year', [1850, 2200])
+def test_out_of_table_birth_reports_the_apparent_birth_window(year: int) -> None:
+  with pytest.raises(ValueError, match=r'apparent-solar birth date.*1901-02-19.*2099-12-31'):
+    Bazi.create(datetime(year, 1, 1, 12, tzinfo=UTC), 'male',
+                BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
+
+
+def test_birth_window_error_does_not_hide_table_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+  from bazi.calendar.celestial_data.loader import EquationOfTimeTable
+
+  def corrupt(table: EquationOfTimeTable, moment: datetime) -> float:
+    raise ValueError('equation-of-time payload checksum mismatch')
+
+  monkeypatch.setattr(EquationOfTimeTable, 'seconds_at', corrupt)
+  with pytest.raises(ValueError, match='payload checksum mismatch'):
+    Bazi.create('2024-01-01T12:00:00+00:00', 'male',
+                BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
 
 
 def test_next_jie_uses_frozen_birth_basis_across_dst(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -198,7 +187,7 @@ def test_demo_uses_physical_jies_and_distinguishes_clocks() -> None:
   assert '出生时刻前一节：立春 - 2000-02-04T20:40:23' in text
   assert '出生时刻后一节：惊蛰' in text
   assert 'UTC+08:00' in text
-  for label in ('民用出生时刻', '真太阳出生时刻', '物理出生时刻'):
+  for label in ('民用出生时刻', '真太阳出生时刻', '节气表出生时刻'):
     assert label in get_basic_info(chart)
 
 
@@ -216,6 +205,12 @@ def test_location_context_snapshot_is_observational() -> None:
   restored = ContextResult.from_json(json.dumps(data))
   assert restored.criterion == result.criterion and restored.occurrences == result.occurrences
   assert json.loads(restored.input_json)['apparent_time'] == '2000-01-01T12:00:00'
+  # Input self-consistency is not a birth-window gate or certification of the stored observations.
+  data['input']['civil_time'] = '1850-01-01T12:00:00+14:00'
+  data['input']['canonical_instant'] = '1849-12-31T22:00:00+00:00'
+  historical = ContextResult.from_json(json.dumps(data))
+  assert historical.criterion == result.criterion and historical.occurrences == result.occurrences
+  assert json.loads(historical.input_json)['apparent_time'] == '2000-01-01T12:00:00'
   for identity in (
     {**data['input'], 'birth_time': '2024-01-01T12:00:00'},
     {key: value for key, value in data['input'].items() if key != 'civil_time'},
@@ -237,6 +232,9 @@ def test_location_context_snapshot_is_observational() -> None:
   ('civil_time', '2024-01-01T12:00+14:00', ValueError),
   ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
   ('canonical_instant', '2023-12-31T22:00:00', ValueError),
+  ('canonical_instant', '2030-01-01T00:00:00+00:00', ValueError),
+  ('canonical_instant', '2023-12-31T22:00:00.000001+00:00', ValueError),
+  ('civil_time', '2024-01-01T12:00:00+13:00', ValueError),
   ('apparent_time', '2024-01-01T11:27:21.883333+00:00', ValueError),
   ('longitude', 180.0, ValueError),
   ('longitude', float('nan'), ValueError),

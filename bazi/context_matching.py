@@ -213,8 +213,8 @@ class EntryMatch:
 def _validate_input(text: str) -> None:
   data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
   legacy_keys = ('birth_time', 'gender', 'config', 'pillars')
-  location_keys = tuple(_LocationTimeJson.__required_keys__) + ('gender', 'config', 'pillars')
-  if data.keys() == set(location_keys):
+  location_keys = _LocationTimeJson.__required_keys__ | {'gender', 'config', 'pillars'}
+  if data.keys() == location_keys:
     _parse_location(data)
   elif data.keys() == set(legacy_keys):
     _typed(data['birth_time'], str)

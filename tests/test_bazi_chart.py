@@ -10,7 +10,7 @@ from collections.abc import Iterator, Mapping
 from dataclasses import replace
 from datetime import datetime, date, timedelta
 from types import MappingProxyType
-from typing import Any, Self
+from typing import Any, Self, cast
 
 import pytest
 
@@ -590,7 +590,7 @@ def test_json() -> None:
     )
     dt: datetime = chart.bazi.solar_datetime
 
-    j: BaziJson.BaziChartJsonDict = chart.json
+    j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
     j_str: str = json.dumps(j)
     __j: dict = json.loads(j_str)
 
@@ -712,7 +712,8 @@ def test_from_json_mapping_order_and_isolation(chart_json: dict[str, Any], wrapp
   chart_json['pillars']['year'] = '甲午'
   chart_json['transits']['dayun'].clear()
   assert restored.json == expected
-  assert restored.bazi == Bazi.create(expected['birth_time'], expected['gender'])
+  default_expected = cast(BaziJson.DefaultBaziChartJsonDict, expected)
+  assert restored.bazi == Bazi.create(default_expected['birth_time'], default_expected['gender'])
 
 
 def test_from_json_keys_at_every_mapping(chart_json: dict[str, Any]) -> None:
@@ -884,7 +885,7 @@ def test_from_json_dayun_boundaries() -> None:
     'male',
     BaziConfig.from_values(backend='hko'),
   ))
-  data = short.json
+  data = cast(BaziJson.DefaultBaziChartJsonDict, short.json)
   assert set(data['transits']['dayun']) == {'2091'}
   assert BaziChart.from_json(data).json == data
 

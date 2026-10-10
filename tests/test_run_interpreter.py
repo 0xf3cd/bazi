@@ -6,12 +6,13 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from run_interpreter import interpret, main, _object_text
 from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi_chart import BaziChart, BaziJson
 from bazi.defines import Shishen
 from bazi.interpreter import Interpreter
 from bazi.knowledge import KnowledgeBase
@@ -201,16 +202,17 @@ def test_location_chart_and_matching_cli_export_restore(tmp_path: Path, optimize
   result = _run_cli(tmp_path, *args, '--export-chart-json', str(output), optimized=optimized)
   assert result.returncode == 0, result.stderr
   chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
-  assert chart.json['civil_time'] == '2024-01-01T12:00:00+14:00'
-  assert chart.json['apparent_time'] == '2024-01-01T11:27:21.883333'
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  assert data['civil_time'] == '2024-01-01T12:00:00+14:00'
+  assert data['apparent_time'] == '2024-01-01T11:27:21.883333'
   assert '民用出生时刻' in result.stdout and '真太阳出生时刻' in result.stdout
   matched = tmp_path / 'matching.json'
   result = _run_cli(tmp_path, *args, '--match-context', 'editorial.guansha_coexistence.v1',
                     '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
   assert result.returncode == 0, result.stderr
   restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
-  assert json.loads(restored.input_json)['civil_time'] == chart.json['civil_time']
-  assert json.loads(restored.input_json)['apparent_time'] == chart.json['apparent_time']
+  assert json.loads(restored.input_json)['civil_time'] == data['civil_time']
+  assert json.loads(restored.input_json)['apparent_time'] == data['apparent_time']
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -222,14 +224,15 @@ def test_negative_fixed_offset_equals_syntax_in_chart_and_matching(tmp_path: Pat
   result = _run_cli(tmp_path, *args, '--export-chart-json', str(output), optimized=optimized)
   assert result.returncode == 0, result.stderr
   chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
-  assert chart.json['civil_time'] == '2024-01-01T20:00:00-05:00'
-  assert chart.json['apparent_time'] == '2024-01-01T20:00:25.933333'
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  assert data['civil_time'] == '2024-01-01T20:00:00-05:00'
+  assert data['apparent_time'] == '2024-01-01T20:00:25.933333'
   matched = tmp_path / 'matching.json'
   result = _run_cli(tmp_path, *args, '--match-context', 'editorial.guansha_coexistence.v1',
                     '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
   assert result.returncode == 0, result.stderr
   restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
-  assert json.loads(restored.input_json)['civil_time'] == chart.json['civil_time']
+  assert json.loads(restored.input_json)['civil_time'] == data['civil_time']
 
 
 @pytest.mark.parametrize('optimized', [False, True])

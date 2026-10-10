@@ -6,7 +6,7 @@ import itertools
 
 from calendar import monthrange
 from datetime import datetime, timedelta
-from typing import Final, NotRequired, TypedDict, cast
+from typing import Final, TypeAlias, TypedDict, cast
 from collections.abc import Generator, Mapping, Sequence
 
 from .data_types import (
@@ -126,7 +126,7 @@ class BaziJson:
     guoyin_def: str
 
   class _CommonChartJsonDict(TypedDict):
-    '''Fields shared by the legacy and location-aware chart rosters.
+    '''Fields shared by the default and location-aware chart rosters.
     默认盘与地点盘 JSON 名册的共同字段。'''
     gender: str
     precision: str
@@ -143,24 +143,18 @@ class BaziJson:
     hidden_tiangan: 'BaziJson.FourPillars'
     transits: 'BaziJson.Transits'
 
-  class LegacyBaziChartJsonDict(_CommonChartJsonDict):
-    '''The unchanged legacy roster with a minute-truncated civil birth time.
-    原有默认盘名册，出生时刻为截断到分钟的民用标签。'''
+  class DefaultBaziChartJsonDict(_CommonChartJsonDict):
+    '''The default roster with a minute-truncated civil birth time.
+    默认盘名册，出生时刻为截断到分钟的民用标签。'''
     birth_time: str
 
   class LocationBaziChartJsonDict(_CommonChartJsonDict, _LocationTimeJson):
     '''The location-aware roster. Strings use the emitter's exact ISO 8601 spelling.
     地点盘名册；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
 
-  class BaziChartJsonDict(_CommonChartJsonDict):
-    '''Combined typing surface; runtime requires one complete, unmixed roster.
-    合并的静态类型界面；运行时只接受一份完整且不混用的名册。'''
-    birth_time: NotRequired[str]
-    time_basis: NotRequired[str]
-    civil_time: NotRequired[str]
-    canonical_instant: NotRequired[str]
-    longitude: NotRequired[float]
-    apparent_time: NotRequired[str]
+  '''Either the default or the location-aware chart roster.
+  默认盘或地点盘 JSON 名册。'''
+  BaziChartJsonDict: TypeAlias = DefaultBaziChartJsonDict | LocationBaziChartJsonDict
 
 
 class BaziChart:
@@ -207,14 +201,12 @@ class BaziChart:
       已解析的 `BaziChart.json` 记录，不是 JSON 文本。
 
     Note:
-    - The root must match exactly either the legacy roster (`birth_time`) or the
-      location-aware roster (`time_basis`, fixed-offset civil time, canonical UTC instant,
-      longitude and untruncated computed apparent time). The two cannot be mixed. Every
+    - The root must match exactly `BaziJson.DefaultBaziChartJsonDict` or
+      `BaziJson.LocationBaziChartJsonDict`. The two cannot be mixed. Every
       field is required; unknown keys at any depth and noncanonical spellings are rejected.
       Mapping order does not matter.
       Derived values are checked, never stored.
-      根对象须严格匹配旧名册（`birth_time`）或地点盘名册（时间基准、固定偏移民用时刻、规范 UTC 时刻、经度与未截断的
-      计算真太阳时），两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
+      根对象须严格匹配默认盘或地点盘名册类型，两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
       派生值只核对、不存储。
     - Keys and string values must be plain `str`, not subclasses; null values are `None`.
       键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
@@ -234,16 +226,16 @@ class BaziChart:
     for key in d:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
-    legacy_keys = BaziJson.LegacyBaziChartJsonDict.__required_keys__
+    default_keys = BaziJson.DefaultBaziChartJsonDict.__required_keys__
     location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
     location_aware: bool
-    if d.keys() == legacy_keys:
+    if d.keys() == default_keys:
       location_aware = False
     elif d.keys() == location_keys:
       location_aware = True
     else:
       raise ValueError(
-        f'Unexpected fields at chart: expected the legacy or location-aware roster, got {d.keys()}'
+        f'Unexpected fields at chart: expected the default or location-aware roster, got {d.keys()}'
       )
 
     string_keys = ('gender', 'precision', 'backend', 'dayun_year_rule') + (

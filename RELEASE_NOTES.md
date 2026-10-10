@@ -6,15 +6,9 @@
   source archive also includes raw HKO inputs and source-verification tests.
 - Existing calendar backends, rules, school defaults, JSON restoration, transits,
   relationship analysis and Interpreter remain available without data regeneration.
-- `Bazi` and `Bazi.create` accept an opt-in, keyword-only east-positive longitude
-  with an aware datetime for apparent-solar charts. Location-aware charts preserve
-  the exact instant and frozen birth-region civil offset. Optional `civil_timezone`
-  selects that basis explicitly; circular longitude correction preserves its date
-  branch with natural midnight carry. Jie attribution projects both clocks in the
-  same basis, while Dayun and transit ordering stay absolute. Location chart and
-  context JSON retain civil, UTC and apparent coordinates. The Interpreter runner
-  accepts fixed location inputs and reloadable chart exports. Legacy construction,
-  JSON and knowledge content remain unchanged.
+- Apparent-solar charts accept an aware birth time, longitude and optional birth-region
+  `civil_timezone`, with civil, UTC and apparent times retained in JSON. Dayun and transit
+  queries use UTC+08:00 labels. The Interpreter runner supports fixed location charts and exports.
 - Standard MIT permission covers author-owned material; third-party notices state
   the separate scope of embedded data and quotations.
 - The manual release workflow defaults to rehearsal. Publication requires protected

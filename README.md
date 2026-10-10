@@ -52,7 +52,7 @@ print(RelationshipAnalyzer(chart).at_birth.shensha)
 ```
 
 Without a longitude, birth times are naive local civil times and timezone-aware
-inputs remain rejected. This is the unchanged default path. To opt into apparent
+inputs are rejected. To opt into apparent
 solar time, pass an aware datetime and an east-positive `longitude` in `[-180, 180]`
 to `Bazi` or `Bazi.create`; latitude is not consumed by this correction. The caller
 owns the datetime's timezone, DST fold and historical offset. The birth-region civil
@@ -63,13 +63,12 @@ fixed-offset civil datetime. The library does not infer a geographic or historic
 The location-aware path supports only `CELESTIAL` with `HOUR` or `MINUTE` precision.
 It preserves the input's seconds and microseconds. The apparent clock is the local
 civil clock plus `longitude / 15 - civil UTC offset`, wrapped to `[-12h, 12h)`, plus
-EOT evaluated at the exact UTC instant. Thus Kiritimati's January 1 noon at UTC+14
-and longitude -157.4 stays on January 1 around 11:27. Ordinary midnight carry still
-changes the apparent date. Longitudes +180 and -180 identify the same meridian.
+EOT evaluated at the exact UTC instant. Crossing midnight changes the apparent date.
+Longitudes +180 and -180 identify the same meridian.
 Its public clock, solar date, lunar/ganzhi date, day rollover and hour pillar use
 local apparent solar time. Previous/next Jie lookup uses the absolute instant;
-year/month attribution compares the birth and Jie in apparent-solar precision buckets
-at the same longitude and frozen birth-region offset, with ties on the new side.
+year/month attribution truncates both apparent clocks to the selected precision and
+compares them at the same longitude and frozen birth-region offset, with ties on the new side.
 
 Location identity and JSON preserve the exact UTC instant, civil basis, longitude,
 gender and config. With the same explicit `civil_timezone`, alternate display offsets
@@ -77,17 +76,21 @@ of the same instant are equal, hash-equal and JSON-equal. Different civil bases 
 distinct; seconds remain distinct even when the displayed `solar_datetime` minute agrees.
 Location JSON contains `time_basis='apparent_solar'`, `civil_time` (fixed-offset aware),
 `canonical_instant` (UTC), `longitude` and `apparent_time` (untruncated computed naive clock).
+The civil and UTC representations must denote the same instant.
 EOT uses daily decisecond samples with linear interpolation; retaining microsecond
 digits does not imply microsecond astronomical accuracy. Restoring a chart reconstructs
-and checks all derived values; legacy JSON is unchanged. The supported birth-date window
+and checks all derived values. The supported birth-date window
 applies to the apparent date (`1901-02-19` through `2099-12-31`), so its accepted UTC
 instants depend on longitude and civil basis.
-The larger Jie table does not expand that birth window.
 
-Dayun intervals and transit ordering use the absolute coordinate. Dayun boundaries
+Dayun intervals and transit ordering use the absolute instant. Dayun boundaries
 and existing transit query moments are naive UTC+08:00 labels, not apparent clocks,
-and receive no moving-location correction. Historical pre-1929 time-basis choices
-remain outside this API and are tracked by issue #118. Defaults remain `CELESTIAL`
+and receive no moving-location correction. A New York birth at January 1, 20:00 UTC-05:00
+can have an apparent birth date of January 1 but a UTC+08:00 date of January 2;
+`TransitChart.at_date` uses the latter coordinate. Historical pre-1929 time-basis choices
+remain outside this API and are tracked by issue #118.
+
+Defaults remain `CELESTIAL`
 with day precision. `hko` provides date-level calendar data; `celestial` and
 `celestial-algo2` use the bundled astronomical tables. Backend differences and
 supported date ranges are documented in the calendar modules; selecting a backend
@@ -339,7 +342,8 @@ record recovery, **not recalculation or authentication of a stored verdict**.
 It does not cross-check verdict, evidence, input and entry bindings against each other.
 Location input snapshots retain the same five time fields as chart JSON, including
 the fixed civil basis and untruncated computed apparent clock. Their restoration validates the
-roster and each field's spelling without recalculating the chart or recorded observations.
+roster, canonical spellings and civil/UTC instant equivalence without recalculating the
+chart or recorded observations.
 
 From a source checkout:
 
@@ -401,7 +405,7 @@ python run_interpreter.py \
 | --- | --- |
 | `--birth-time <time>`, `--gender male\|female` | Fixed birth; supply both together; aware input requires longitude |
 | `--longitude <degrees>`, `--precision day\|hour\|minute` | Fixed chart calculation; longitude requires aware input and hour/minute precision |
-| `--civil-timezone <zone>` | Explicit birth-region IANA zone or fixed offset; use `--civil-timezone=-05:00` for negative offsets; requires longitude |
+| `--civil-timezone <zone>` | Explicit birth-region IANA zone or fixed offset; requires longitude |
 | `--export-chart-json <path>` | Export the fixed chart as reloadable JSON |
 | `--seed <integer>` | Reproducible random charts |
 | `--count <positive integer>` | Random chart count; default 1 |
@@ -429,7 +433,7 @@ flags require fixed birth input and are rejected in random and knowledge-only mo
 An aware input without longitude is still rejected; longitude requires an explicit
 `hour` or `minute` precision. `--civil-timezone` accepts an IANA name or fixed offset
 such as `+14:00`, and requires longitude. Negative offsets use equals syntax:
-`--civil-timezone=-05:00`. The same spelling works in chart and matching modes.
+`--civil-timezone=-05:00`.
 Chart JSON export, like context export,
 refuses to overwrite the bundled knowledge source or its filesystem aliases.
 

@@ -504,7 +504,11 @@ def main() -> int:
     ('Solar time out-of-range longitude', ValueError,
      partial(apparent_solar_datetime, aware_birth, 180.01)),
     ('Solar time overflowing longitude', ValueError,
-     partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
+      partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
+    ('Bazi.create birth outside EOT and birth windows', ValueError,
+     partial(Bazi.create, datetime(1850, 1, 1, tzinfo=UTC), 'male', location_config, longitude=0.0)),
+    ('Bazi constructor birth outside EOT and birth windows', ValueError,
+     partial(Bazi, datetime(2200, 1, 1, tzinfo=UTC), BaziGender.男, location_config, longitude=0.0)),
   ])
 
   failures: list[str] = []
@@ -515,6 +519,9 @@ def main() -> int:
     ('canonical_instant', 'not-a-datetime', ValueError),
     ('apparent_time', 'not-a-datetime', ValueError),
     ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
+    ('canonical_instant', '2030-01-01T00:00:00+00:00', ValueError),
+    ('canonical_instant', '2023-12-31T22:00:00.000001+00:00', ValueError),
+    ('civil_time', '2024-01-01T12:00:00+13:00', ValueError),
     ('longitude', 180.0, ValueError), ('longitude', -0.0, ValueError),
     ('longitude', 180, TypeError), ('apparent_time', '2024-01-01T11:27:00+00:00', ValueError),
     ('time_basis', 'mean_solar', ValueError),
@@ -529,6 +536,11 @@ def main() -> int:
     failures.append('Optimized Kiritimati civil date lost')
   if BaziChart.from_json(local_chart.json).json != local_chart.json or ContextResult.from_json(local_result.export_json()) != local_result:
     failures.append('Optimized location restoration failed')
+  historical = json.loads(local_result.export_json())
+  historical['input'].update(civil_time='1850-01-01T12:00:00+14:00', canonical_instant='1849-12-31T22:00:00+00:00', apparent_time='2000-01-01T12:00:00')
+  recovered = ContextResult.from_json(json.dumps(historical))
+  if recovered.criterion != local_result.criterion or recovered.occurrences != local_result.occurrences:
+    failures.append('Optimized observation recovery recalculated stored observations')
   location_bazi = local_chart.bazi
   for moment in (location_bazi._reference_datetime, location_bazi.solar_datetime):
     legacy_bazi = Bazi.create(moment, 'female', location_config)
