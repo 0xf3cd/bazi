@@ -14,7 +14,7 @@ from .calendar import (
   CalendarDate, CalendarType, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
 from .calendar.celestial_data.loader import _EquationOfTimeRangeError
-from .calendar.solar_time import _canonical_longitude
+from .calendar import solar_time
 from .school import BaziPrecision, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
@@ -41,8 +41,7 @@ class _Location:
   def apparent(self, instant: datetime) -> datetime:
     '''Project an aware instant onto the same longitude and frozen birth-region offset.
     把带时区瞬间投到同一经度及冻结的出生地区偏移。'''
-    from .calendar.solar_time import apparent_solar_datetime
-    return apparent_solar_datetime(instant.astimezone(timezone(self.civil_offset)), self.longitude)
+    return solar_time.apparent_solar_datetime(instant.astimezone(timezone(self.civil_offset)), self.longitude)
 
 
 class BaziGender(Enum):
@@ -115,10 +114,10 @@ class Bazi:
   对于其他信息（流年大运 / 十神等），请参阅 `bazi/bazi_chart.py`（例如 `BaziChart`）。
 
   Note:
-  - The default path takes a naive civil time exactly as before. Passing `longitude`
+  - The default path takes a naive civil time. Passing `longitude`
     opts into apparent-solar conversion from a caller-supplied aware instant.
   - The year pillar turns at 立春, not at 正月初一 (this library follows the 立春 school).
-  - 默认路径仍直接采用无时区民用时刻；传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
+  - 默认路径直接采用无时区民用时刻；传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
   - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
 
@@ -141,7 +140,7 @@ class Bazi:
     - With `longitude`, `birth_time` must be aware. Its timezone, DST fold and historical
       offset are caller-owned. Seconds and microseconds are retained for conversion,
       identity and JSON; HOUR/MINUTE attribution compares truncated apparent clocks.
-    - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，并沿用原有路径。
+    - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，采用默认路径。
     - 传入 `longitude` 时，`birth_time` 必须带时区；时区、夏令时折叠与历史偏移由调用方负责，
       换算、身份与 JSON 保留秒及微秒，HOUR/MINUTE 归属按截断后的真太阳时比较。
     
@@ -170,7 +169,7 @@ class Bazi:
       if longitude is None:
         raise ValueError('civil_timezone requires longitude.')
 
-    longitude_value = None if longitude is None else _canonical_longitude(longitude)
+    longitude_value = None if longitude is None else solar_time._canonical_longitude(longitude)
 
     if longitude_value is None:
       if birth_time.tzinfo is not None:
@@ -192,6 +191,7 @@ class Bazi:
       if offset is None:
         raise ValueError('civil_timezone requires a UTC offset at birth.')
       location = _Location(canonical_utc, offset, longitude_value)
+
       try:
         clock_datetime = location.apparent(canonical_utc)
       except _EquationOfTimeRangeError as error:
@@ -375,7 +375,7 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    '''The apparent-solar birth date for a location-aware chart; otherwise the legacy
+    '''The apparent-solar birth date for a location-aware chart; otherwise the default
     civil date. 地点盘返回真太阳时公历出生日期；默认路径仍返回原民用日期。'''
     return self._utils.to_date(self._solar_date)
   
@@ -435,15 +435,17 @@ class Bazi:
 
   @property
   def solar_datetime(self) -> datetime:
-    '''The apparent-solar birth clock for a location-aware chart, otherwise its civil clock.
-    Display stops at the minute, the finest `BaziPrecision`; conversion keeps full input precision.
-    地点盘返回真太阳出生时刻，默认路径返回民用时刻。显示截断到最细排盘精度（分钟），换算仍保留输入精度。'''
+    '''The birth clock truncated to the minute, the finest `BaziPrecision`.
+    Default charts use this civil label for identity, JSON and calendar coordinates.
+    Location charts display apparent solar time, converted using full input precision.
+    出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON及历法坐标；
+    地点盘显示由完整输入精度换算得到的真太阳时。'''
     return self._clock_datetime.replace(second=0, microsecond=0)
 
   @property
   def _reference_datetime(self) -> datetime:
     '''The Jie/Dayun/transit coordinate: exact naive UTC+08:00 for location-aware
-    charts, otherwise the legacy minute-truncated civil label.'''
+    charts, otherwise the default minute-truncated civil label.'''
     if self._location is None:
       return self.solar_datetime
     return self._location.instant.astimezone(_UTC8).replace(tzinfo=None)
@@ -551,7 +553,8 @@ class Bazi:
   
   @property
   def _identity(self) -> tuple[datetime | _Location, BaziGender, BaziConfig]:
-    '''Default identity uses the minute clock; location identity retains exact inputs.
+    '''Default identity uses the minute clock; location identity uses the exact instant,
+    frozen civil offset and canonical longitude. Both include gender and config.
     默认盘身份采用分钟时刻；地点盘身份保留精确瞬间、民用偏移及经度，均结合性别与配置。'''
     return (self.solar_datetime if self._location is None else self._location, self.gender, self.config)
 
@@ -559,9 +562,8 @@ class Bazi:
     return isinstance(other, Bazi) and self._identity == other._identity
 
   def __hash__(self) -> int:
-    # Same three inputs as `__eq__`, all derived from `Final` state: stable under the
-    # public API (private reassignment is not defended against, as everywhere else).
-    # 与 `__eq__` 同源三元组，皆派生自 `Final` 状态：公开 API 下稳定（私有改写不设防，全类同此）。
+    # Identity derived from `Final` state is stable under the public API.
+    # 身份派生自 `Final` 状态，在公开 API 下稳定。
     return hash(self._identity)
 
 

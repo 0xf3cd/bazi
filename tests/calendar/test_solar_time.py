@@ -32,8 +32,10 @@ def test_solar_time_none_offset_and_real_longitude() -> None:
       return None
     def tzname(self, dt: datetime | None) -> None:
       return None
+
   with pytest.raises(ValueError, match='timezone-aware'):
     apparent_solar_datetime(datetime(2000, 1, 1, tzinfo=MissingOffset()), 0.0)
+
   instant = datetime(2000, 11, 3, 0, 50, tzinfo=UTC)
   assert apparent_solar_datetime(instant, 0) == apparent_solar_datetime(instant, 0.0)
   assert apparent_solar_datetime(instant, 0) == datetime(2000, 11, 3, 1, 6, 26, 82639)

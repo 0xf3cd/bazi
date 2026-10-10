@@ -22,8 +22,8 @@ def _canonical_longitude(longitude: float) -> float:
     raise ValueError('Unsupported longitude: expected finite degrees in [-180, 180].') from error
   if not math.isfinite(value) or not -180 <= value <= 180:
     raise ValueError(f'Unsupported longitude: {value}; expected finite degrees in [-180, 180].')
+
   if value == 0:
-    # JSON has one zero spelling, including when the input is -0.0.
     return 0.0
   # +180 and -180 identify the same meridian.
   return -180.0 if value == 180 else value
@@ -31,7 +31,7 @@ def _canonical_longitude(longitude: float) -> float:
 
 @cache
 def _equation_of_time_table() -> EquationOfTimeTable:
-  '''Read the immutable table on first lookup, not during import or input validation.'''
+  '''Read the immutable table on first lookup, not during import.'''
   return EquationOfTimeTable()
 
 

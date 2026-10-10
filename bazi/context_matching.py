@@ -212,20 +212,23 @@ class EntryMatch:
 
 def _validate_input(text: str) -> None:
   data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
-  legacy_keys = ('birth_time', 'gender', 'config', 'pillars')
-  location_keys = _LocationTimeJson.__required_keys__ | {'gender', 'config', 'pillars'}
+  common_keys = {'gender', 'config', 'pillars'}
+  default_keys = common_keys | {'birth_time'}
+  location_keys = common_keys | _LocationTimeJson.__required_keys__
   if data.keys() == location_keys:
     _parse_location(data)
-  elif data.keys() == set(legacy_keys):
+  elif data.keys() == default_keys:
     _typed(data['birth_time'], str)
     birth = datetime.fromisoformat(data['birth_time'])
     if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
       raise ValueError('Expected canonical naive minute birth time')
   else:
-    raise ValueError('Expected complete legacy or location-aware input roster')
+    raise ValueError('Expected complete default or location-aware input roster')
+
   _choice(data['gender'], ('male', 'female'))
   config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
   BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})
+
   pillars = _typed(data['pillars'], list)
   if len(pillars) != 4:
     raise ValueError('Expected four ordered natal pillars')

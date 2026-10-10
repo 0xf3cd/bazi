@@ -34,11 +34,16 @@ class EqualKey:
     return hash(self.value)
 
 
-def deny_writes(event: str, args: tuple[Any, ...]) -> None:
+def record_eot_reads(event: str, args: tuple[Any, ...]) -> None:
   if event == 'open':
-    path, mode, flags = args
+    path, _, _ = args
     if isinstance(path, str) and path.replace('\\', '/').endswith('/equation_of_time.bin'):
       EOT_READS.append(event)
+
+
+def deny_writes(event: str, args: tuple[Any, ...]) -> None:
+  if event == 'open':
+    _, mode, flags = args
     if (mode and any(char in mode for char in 'wax+')) or flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND):
       WRITE_ATTEMPTS.append(event)
       raise PermissionError('Runtime write blocked')
@@ -82,6 +87,7 @@ def main() -> None:
 
   # Audit hooks enforce read-only use even under root and on Windows.
   sys.addaudithook(deny_writes)
+  sys.addaudithook(record_eot_reads)
   try:
     (package_root / 'write-control').write_bytes(b'must not be written')
   except PermissionError as error:

@@ -75,7 +75,7 @@ class BaziJson:
   class Dayun(TypedDict):
     '''Not expected to be accessed directly. Used in `Transits`.'''
     ganzhi: str
-    # Naive UTC+08:00 physical boundaries for location-aware charts; legacy civil labels otherwise.
+    # Naive UTC+08:00 physical boundaries for location-aware charts; default civil labels otherwise.
     # 地点盘采用东八区无时区物理区间边界；默认路径沿用原民用标签。
     start_time: str
     end_time: str
@@ -226,6 +226,7 @@ class BaziChart:
     for key in d:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
+
     default_keys = BaziJson.DefaultBaziChartJsonDict.__required_keys__
     location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
     location_aware: bool

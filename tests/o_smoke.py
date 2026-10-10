@@ -504,7 +504,7 @@ def main() -> int:
     ('Solar time out-of-range longitude', ValueError,
      partial(apparent_solar_datetime, aware_birth, 180.01)),
     ('Solar time overflowing longitude', ValueError,
-      partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
+     partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
     ('Bazi.create birth outside EOT and birth windows', ValueError,
      partial(Bazi.create, datetime(1850, 1, 1, tzinfo=UTC), 'male', location_config, longitude=0.0)),
     ('Bazi constructor birth outside EOT and birth windows', ValueError,

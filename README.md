@@ -90,12 +90,6 @@ can have an apparent birth date of January 1 but a UTC+08:00 date of January 2;
 `TransitChart.at_date` uses the latter coordinate. Historical pre-1929 time-basis choices
 remain outside this API and are tracked by issue #118.
 
-Defaults remain `CELESTIAL`
-with day precision. `hko` provides date-level calendar data; `celestial` and
-`celestial-algo2` use the bundled astronomical tables. Backend differences and
-supported date ranges are documented in the calendar modules; selecting a backend
-does not install its offline generator.
-
 ```python
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
@@ -112,6 +106,11 @@ located = Bazi.create(
 )
 assert located.solar_datetime == datetime(2024, 1, 1, 11, 27)
 ```
+
+Defaults are `CELESTIAL` with day precision. `hko` provides date-level calendar data;
+`celestial` and `celestial-algo2` use the bundled astronomical tables. Backend differences
+and supported date ranges are documented in the calendar modules; selecting a backend
+does not install its offline generator.
 
 ## Interfaces
 
