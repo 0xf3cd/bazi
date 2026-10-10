@@ -4,11 +4,12 @@ import colorama
 import itertools
 
 from pprint import pprint
-from typing import TypeVar
+from datetime import datetime, timedelta, timezone
+from typing import TypeVar, cast
 from collections.abc import Iterable, Generator
 
 from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi_chart import BaziChart, BaziJson
 from bazi.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
 from bazi.data_types import HiddenTianganDict
 from bazi.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
@@ -51,11 +52,26 @@ def hidden_tg_str(d: HiddenTianganDict, day_master: Tiangan) -> str:
   return ' '.join(f(tg) for tg in d)
 
 
+def _jie_birth_time(chart: BaziChart) -> datetime:
+  bazi = chart.bazi
+  if bazi.longitude is None:
+    return bazi.solar_datetime
+  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  instant = datetime.fromisoformat(data['canonical_instant'])
+  return instant.astimezone(timezone(timedelta(hours=8))).replace(tzinfo=None)
+
+
 def get_basic_info(chart: BaziChart) -> str:
   s: str = '\n' # The output string.
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = traits(bazi.day_master).wuxing
-  s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，生于 {bazi.solar_date}\n\n'
+  date_label = '生于 ' if bazi.longitude is None else '真太阳时日期：'
+  s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，{date_label}{bazi.solar_date}\n\n'
+  if bazi.longitude is not None:
+    data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+    s += f'民用出生时刻（固定出生地偏移）：{data["civil_time"]}；经度={bazi.longitude}\n'
+    s += f'真太阳出生时刻：{data["apparent_time"]}\n'
+    s += f'节气表出生时刻（UTC+08:00）：{_jie_birth_time(chart).isoformat()}\n\n'
 
   pillars: list[Ganzhi] = list(bazi.pillars)
   shishens: list[BaziChart.PillarShishens] = list(chart.shishen)
@@ -87,8 +103,12 @@ def get_transit_info(chart: BaziChart) -> str:
   s: str = '\n' # The output string.
 
   utils = calendar_utils_of(chart.bazi.config.backend)
-  jie_before = utils.prev_jie(chart.bazi.solar_datetime)
-  jie_after = utils.next_jie(chart.bazi.solar_datetime)
+  birth_time = _jie_birth_time(chart)
+  jie_before = utils.prev_jie(birth_time)
+  jie_after = utils.next_jie(birth_time)
+
+  if chart.bazi.longitude is not None:
+    s += '节与大运区间采用节气表时刻（UTC+08:00），不采用真太阳时。\n'
 
   s += f'出生时刻前一节：{jie_before.jieqi} - {jie_before.moment.isoformat()}\n'
   s += f'出生时刻后一节：{jie_after.jieqi} - {jie_after.moment.isoformat()}\n'

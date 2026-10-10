@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from typing import Final, Literal, NamedTuple, TypeVar, get_args
 
-from .bazi import BaziGender
+from .bazi import BaziGender, _LocationTimeJson, _location_json, _parse_location
 from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
@@ -211,17 +211,24 @@ class EntryMatch:
 
 
 def _validate_input(text: str) -> None:
-  data = _mapping(
-    json.loads(text, object_pairs_hook=_pairs),
-    ('birth_time', 'gender', 'config', 'pillars'),
-  )
-  _typed(data['birth_time'], str)
-  birth = datetime.fromisoformat(data['birth_time'])
-  if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
-    raise ValueError('Expected canonical naive minute birth time')
+  data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
+  common_keys = {'gender', 'config', 'pillars'}
+  default_keys = common_keys | {'birth_time'}
+  location_keys = common_keys | _LocationTimeJson.__required_keys__
+  if data.keys() == location_keys:
+    _parse_location(data)
+  elif data.keys() == default_keys:
+    _typed(data['birth_time'], str)
+    birth = datetime.fromisoformat(data['birth_time'])
+    if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
+      raise ValueError('Expected canonical naive minute birth time')
+  else:
+    raise ValueError('Expected complete default or location-aware input roster')
+
   _choice(data['gender'], ('male', 'female'))
   config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
   BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})
+
   pillars = _typed(data['pillars'], list)
   if len(pillars) != 4:
     raise ValueError('Expected four ordered natal pillars')
@@ -437,7 +444,8 @@ def evaluate_context(
     matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
 
   identity = {
-    'birth_time': bazi.solar_datetime.isoformat(), 'gender': str(bazi.gender),
+    **({'birth_time': bazi.solar_datetime.isoformat()} if bazi.longitude is None else _location_json(bazi)),
+    'gender': str(bazi.gender),
     'config': _config_json(bazi.config),
     'pillars': [str(value) for value in bazi.pillars],
   }

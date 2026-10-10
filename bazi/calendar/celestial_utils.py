@@ -515,9 +515,9 @@ class CelestialCalendarUtils:
     Note:
     - The moment is in UTC+08:00 (China standard time), at second granularity, truncated.
       Times before 1929 are still expressed in UTC+08:00 rather than Beijing local mean
-      time -- see issue #69, which is an input-side policy question, not a table one.
+      time -- see issue #118, which is an input-side policy question, not a table one.
     - 时刻为东八区（北京时间），精度到秒（截断）。1929 年前同样按东八区表达，
-      而非北京地方平时，见 issue #69。
+      而非北京地方平时，见 issue #118。
 
     Return: (datetime) The accurate moment of the Jieqi in the given solar year.
     '''

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import random
 import re
 from collections.abc import Callable, Iterable
+from datetime import datetime, tzinfo
 from pathlib import Path
 from typing import Final, get_args
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from run_demo import get_basic_info
 from bazi.bazi import Bazi
@@ -14,6 +17,7 @@ from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
 from bazi.knowledge import Applicability, KnowledgeBase
 from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
+from bazi.school import BaziConfig
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
@@ -40,7 +44,10 @@ def interpret(
   j: BaziJson.BaziChartJsonDict = chart.json
 
   bazi: Bazi = chart.bazi
-  s += f'出生时间：{bazi.solar_date}, {bazi.hour}:{bazi.minute}\n'
+  if bazi.longitude is None:
+    s += f'出生时间：{bazi.solar_date}, {bazi.hour}:{bazi.minute}\n'
+  else:
+    s += f'真太阳时（分钟显示）：{bazi.solar_datetime.isoformat()}\n'
   s += f'性别：{bazi.gender}\n'
 
   def __gen_pillar_str(key: str) -> str:
@@ -137,6 +144,12 @@ def save_chart_examples(count: int = 50) -> None:
     _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
 
 
+def _same_export_path(left: Path, right: Path) -> bool:
+  return left.resolve() == right.resolve() or (
+    left.exists() and right.exists() and left.samefile(right)
+  )
+
+
 def _export_json(
   parser: argparse.ArgumentParser,
   target: Path,
@@ -147,11 +160,7 @@ def _export_json(
   sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
   if knowledge_source is not None:
     sources += (knowledge_source,)
-  if any(
-    target.resolve() == source.resolve() or (
-      target.exists() and source.exists() and target.samefile(source)
-    ) for source in sources
-  ):
+  if any(_same_export_path(target, source) for source in sources):
     parser.error('Export must not overwrite the editing source')
   try:
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +172,8 @@ def _export_json(
 
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
-          args.output_dir, args.export_knowledge_base)):
+          args.output_dir, args.export_knowledge_base, args.longitude is not None,
+          args.precision is not None, args.civil_timezone is not None, args.export_chart_json is not None)):
     parser.error('Knowledge mode cannot be combined with chart input or TXT export flags')
   filters = {
     'object_id': args.object_id, 'context_id': args.context_id, 'topic': args.topic,
@@ -196,18 +206,41 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -
   return 0
 
 
+def _civil_timezone(value: str) -> tzinfo:
+  try:
+    if value.startswith(('+', '-')):
+      zone = datetime.fromisoformat('2000-01-01T00:00:00' + value).tzinfo
+      if zone is None:
+        raise ValueError('Expected fixed UTC offset')
+      return zone
+    return ZoneInfo(value)
+  except (ValueError, ZoneInfoNotFoundError, OSError) as error:
+    raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def _fixed_chart(args: argparse.Namespace) -> BaziChart:
+  return BaziChart(Bazi.create(
+    args.birth_time,
+    args.gender,
+    BaziConfig.from_values(precision=args.precision or 'day'),
+    longitude=args.longitude,
+    civil_timezone=args.civil_timezone,
+  ))
+
+
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   if args.birth_time is None or args.gender is None or args.observation_scope is None:
     parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
   if any((args.seed is not None, args.count is not None, args.output_dir is not None, args.export_knowledge_base,
-          args.query_knowledge, args.validate_knowledge, args.export_knowledge_json is not None)) or any(
+          args.query_knowledge, args.validate_knowledge, args.export_knowledge_json is not None,
+          args.export_chart_json is not None)) or any(
     value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
                                     args.viewpoint, args.applicability, args.time_scope)
   ):
     parser.error('Matching cannot be combined with random input, TXT export or knowledge modes/filters')
   try:
     result = evaluate_context(
-      BaziChart(Bazi.create(args.birth_time, args.gender)),
+      _fixed_chart(args),
       criterion_id=args.match_context,
       profile=ContextProfile(args.observation_scope, args.ganzhi_year),
       knowledge=KnowledgeBase.load(args.knowledge_source),
@@ -229,8 +262,12 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description='Display charts, match scoped premises, or query, validate and export interpretation knowledge.')
-  parser.add_argument('--birth-time', help='Local civil time, e.g. "2000-01-01 12:00".')
+  parser.add_argument('--birth-time', help='Fixed civil time; aware input requires longitude, e.g. "2024-01-01T12:00:00-05:00".')
   parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
+  parser.add_argument('--longitude', type=float, help='East-positive degrees; requires aware fixed input and hour/minute precision.')
+  parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='Birth precision (default: day).')
+  parser.add_argument('--civil-timezone', type=_civil_timezone, help='Explicit birth-region IANA zone (Pacific/Kiritimati) or fixed offset (+14:00); use --civil-timezone=-05:00 for negative offsets; requires longitude.')
+  parser.add_argument('--export-chart-json', type=Path, help='Export the fixed chart as reloadable JSON.')
   parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
   parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
   parser.add_argument('--include-reference-only', action='store_true', help='Include reference text; matching mode also displays its premise verdict.')
@@ -272,13 +309,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.error('--birth-time and --gender must be supplied together')
   if args.birth_time is not None and (args.seed is not None or count != 1):
     parser.error('--seed and multiple charts require random input')
+  if args.birth_time is None and any(value is not None for value in (
+    args.longitude, args.precision, args.civil_timezone, args.export_chart_json,
+  )):
+    parser.error('Location, precision and chart JSON flags require fixed birth input')
+
+  if args.export_chart_json is not None:
+    text_paths: list[Path] = []
+    if args.output_dir is not None:
+      text_paths.append(args.output_dir / 'interpretation_examples' / '0.txt')
+    if args.export_knowledge_base:
+      base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
+      text_paths.extend(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan)
+      text_paths.extend(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen)
+    if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
+      parser.error('--export-chart-json must not overlap generated TXT outputs')
+
   if args.seed is not None:
     random.seed(args.seed)
 
   charts: Iterable[BaziChart]
   if args.birth_time is not None:
     try:
-      charts = (BaziChart(Bazi.create(args.birth_time, args.gender)),)
+      charts = (_fixed_chart(args),)
     except (TypeError, ValueError) as error:
       parser.error(str(error))
   else:
@@ -298,6 +351,10 @@ def main(argv: list[str] | None = None) -> int:
       show_sources=args.show_sources,
     )
     print(text)
+    if args.export_chart_json is not None:
+      def __export_chart(chart: BaziChart = chart) -> str:
+        return json.dumps(chart.json, ensure_ascii=False, indent=2) + '\n'
+      _export_json(parser, args.export_chart_json, None, __export_chart, '已导出命盘：')
     if output is not None:
       try:
         _write_chart(text, output, i)

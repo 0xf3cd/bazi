@@ -6,6 +6,7 @@ import inspect
 from dataclasses import FrozenInstanceError
 from datetime import datetime
 from enum import Enum
+from typing import cast
 
 import pytest
 
@@ -459,7 +460,7 @@ def test_identity_includes_dayun_year_rule() -> None:
 
 def test_json_roundtrip_default_school() -> None:
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  j = chart.json
+  j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
   assert j['school'] == {
     'day_rollover': 'WAN_ZISHI', 'hongyan_anchor': 'DAY',
     'yangren_def': 'ZIPING',
@@ -520,7 +521,7 @@ def test_json_roundtrip_non_default_school() -> None:
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
-  j = chart.json
+  j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
   assert j['school'] == {
     'day_rollover': 'ZIZHENG', 'hongyan_anchor': 'YEAR',
     'yangren_def': 'DIWANG',

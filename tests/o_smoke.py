@@ -27,14 +27,16 @@ def main() -> int:
 
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   import inspect
+  import json
   from dataclasses import replace
-  from datetime import date, datetime
+  from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
   from collections.abc import Callable
   from functools import partial
+  from fractions import Fraction
   from zoneinfo import ZoneInfo
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
-  from bazi.bazi import Bazi
+  from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
   from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
@@ -49,6 +51,7 @@ def main() -> int:
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
+  from bazi.calendar.solar_time import apparent_solar_datetime
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)
@@ -63,9 +66,24 @@ def main() -> int:
   decoded_jieqi = hko_data.DecodedJieqiDates()
   knowledge = KnowledgeBase.load()
   solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
+  aware_birth = datetime(2000, 1, 1, 12, tzinfo=UTC)
+  location_config = BaziConfig.from_values(precision='minute')
+  civil_zone = timezone(timedelta(hours=14))
+  local_chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female', location_config, longitude=-157.4))
+  local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
 
   class Year(int):
     pass
+
+  class MissingOffset(tzinfo):
+    def utcoffset(self, dt: datetime | None) -> None:
+      return None
+    def dst(self, dt: datetime | None) -> None:
+      return None
+    def tzname(self, dt: datetime | None) -> None:
+      return None
+    def fromutc(self, dt: datetime) -> datetime:
+      return dt
 
   class StringKey(str):
     pass
@@ -92,6 +110,14 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('Bazi.create civil timezone without longitude', ValueError,
+     lambda: Bazi.create(datetime(2000, 1, 1), 'male', civil_timezone=civil_zone)),
+    ('Bazi constructor civil timezone without longitude', ValueError,
+     lambda: Bazi(datetime(2000, 1, 1), BaziGender.男, civil_timezone=civil_zone)),
+    ('Bazi.create civil timezone wrong type', TypeError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=0.0, civil_timezone='+14:00')), # type: ignore[arg-type]
+    ('Bazi constructor civil timezone wrong type', TypeError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=0.0, civil_timezone=14)), # type: ignore[arg-type]
     ('ContextProfile rejects bool year', TypeError,
      lambda: ContextProfile('natal_and_liunian', True)),
     ('ContextProfile rejects int subclass year', TypeError,
@@ -116,6 +142,51 @@ def main() -> int:
      lambda: Bazi.create(datetime(2100, 6, 1, 12), 'male')),
     ('Bazi.create tz-aware birth time', ValueError,
      lambda: Bazi.create(datetime(2000, 1, 1, 7, tzinfo=ZoneInfo('Asia/Shanghai')), 'male')),
+    ('Bazi.create naive birth with longitude', ValueError,
+     lambda: Bazi.create(datetime(2000, 1, 1, 12), 'male', location_config, longitude=120.0)),
+    ('Bazi.create bool longitude', TypeError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=True)),
+    ('Bazi.create non-real longitude', TypeError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude='120')), # type: ignore[arg-type]
+    ('Bazi.create non-finite longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=float('nan'))),
+    ('Bazi.create out-of-range longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', location_config, longitude=180.1)),
+    ('Bazi.create DAY with longitude', ValueError,
+     lambda: Bazi.create(aware_birth, 'male', BaziConfig(), longitude=120.0)),
+    ('Bazi.create HKO with longitude', ValueError,
+     lambda: Bazi.create(
+       aware_birth, 'male', BaziConfig.from_values(precision='minute', backend='hko'), longitude=120.0,
+     )),
+    ('Bazi.create CELESTIAL_ALGO2 with longitude', ValueError,
+     lambda: Bazi.create(
+       aware_birth, 'male',
+       BaziConfig.from_values(precision='minute', backend='celestial-algo2'), longitude=120.0,
+     )),
+    ('Bazi constructor aware without longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config)),
+    ('Bazi constructor naive birth with longitude', ValueError,
+     lambda: Bazi(datetime(2000, 1, 1, 12), BaziGender.男, location_config, longitude=120.0)),
+    ('Bazi constructor bool longitude', TypeError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=True)),
+    ('Bazi constructor non-real longitude', TypeError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude='120')), # type: ignore[arg-type]
+    ('Bazi constructor non-finite longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=float('inf'))),
+    ('Bazi constructor out-of-range longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=-180.1)),
+    ('Bazi constructor DAY with longitude', ValueError,
+     lambda: Bazi(aware_birth, BaziGender.男, BaziConfig(), longitude=120.0)),
+    ('Bazi constructor HKO with longitude', ValueError,
+     lambda: Bazi(
+       aware_birth, BaziGender.男,
+       BaziConfig.from_values(precision='minute', backend='hko'), longitude=120.0,
+     )),
+    ('Bazi constructor CELESTIAL_ALGO2 with longitude', ValueError,
+     lambda: Bazi(
+       aware_birth, BaziGender.男,
+       BaziConfig.from_values(precision='minute', backend='celestial-algo2'), longitude=120.0,
+     )),
     ('BaziChart.from_json non-mapping', TypeError,
      lambda: BaziChart.from_json(_DuckMapping())), # type: ignore
     ('BaziChart.from_json str-subclass root keys', TypeError,
@@ -403,7 +474,99 @@ def main() -> int:
          partial(spec.predicate, key, Dizhi.子, definition=DizhiRules.AnheDef.NORMAL)),
       ])
 
+  for name, longitude_value in (('integer', 10 ** 10_000), ('fraction', Fraction(10 ** 10_000, 3))):
+    for sign in (-1, 1):
+      checks.extend([
+        (f'Bazi.create overflowing {name} sign={sign}', ValueError,
+         partial(Bazi.create, aware_birth, 'male', location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
+        (f'Bazi constructor overflowing {name} sign={sign}', ValueError,
+         partial(Bazi, aware_birth, BaziGender.男, location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
+      ])
+
+  no_offset_birth = datetime(2000, 1, 1, tzinfo=MissingOffset())
+  checks.extend([
+    ('Bazi.create birth with None UTC offset', ValueError,
+     partial(Bazi.create, no_offset_birth, 'male', location_config, longitude=0.0)),
+    ('Bazi constructor birth with None UTC offset', ValueError,
+     partial(Bazi, no_offset_birth, BaziGender.男, location_config, longitude=0.0)),
+    ('Solar time wrong datetime type', TypeError,
+     partial(apparent_solar_datetime, 42, 0.0)), # type: ignore[arg-type]
+    ('Solar time naive civil datetime', ValueError,
+     partial(apparent_solar_datetime, datetime(2000, 1, 1), 0.0)),
+    ('Solar time birth with None UTC offset', ValueError,
+     partial(apparent_solar_datetime, no_offset_birth, 0.0)),
+    ('Solar time bool longitude', TypeError,
+     partial(apparent_solar_datetime, aware_birth, True)),
+    ('Solar time string longitude', TypeError,
+     partial(apparent_solar_datetime, aware_birth, '0')), # type: ignore[arg-type]
+    ('Solar time non-finite longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, float('nan'))),
+    ('Solar time out-of-range longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, 180.01)),
+    ('Solar time overflowing longitude', ValueError,
+     partial(apparent_solar_datetime, aware_birth, 10 ** 400)),
+    ('Bazi.create birth outside EOT and birth windows', ValueError,
+     partial(Bazi.create, datetime(1850, 1, 1, tzinfo=UTC), 'male', location_config, longitude=0.0)),
+    ('Bazi constructor birth outside EOT and birth windows', ValueError,
+     partial(Bazi, datetime(2200, 1, 1, tzinfo=UTC), BaziGender.男, location_config, longitude=0.0)),
+  ])
+
   failures: list[str] = []
+  for label, birth, basis in (
+    ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
+    ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
+    ('civil underflow', datetime.min.replace(tzinfo=UTC), timezone(timedelta(hours=-12))),
+    ('civil overflow', datetime.max.replace(tzinfo=UTC), timezone(timedelta(hours=14))),
+  ):
+    checks.extend([
+      (f'Bazi.create {label}', ValueError,
+       partial(Bazi.create, birth, 'male', location_config, longitude=0.0, civil_timezone=basis)),
+      (f'Bazi constructor {label}', ValueError,
+       partial(Bazi, birth, BaziGender.男, location_config, longitude=0.0, civil_timezone=basis)),
+    ])
+  from bazi.calendar.celestial_data.loader import EquationOfTimeTable
+  for birth in (
+    datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
+    datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),
+  ):
+    checks.extend([
+      ('Solar primitive UTC conversion overflow', ValueError, partial(apparent_solar_datetime, birth, 0.0)),
+      ('EOT reader UTC conversion overflow', ValueError, partial(EquationOfTimeTable().seconds_at, birth)),
+    ])
+  for field_name, value, expected_error in (
+    ('civil_time', 42, TypeError), ('civil_time', '2024-01-01T12:00:00', ValueError),
+    ('canonical_instant', 42, TypeError), ('apparent_time', 42, TypeError),
+    ('civil_time', 'not-a-datetime', ValueError),
+    ('canonical_instant', 'not-a-datetime', ValueError),
+    ('apparent_time', 'not-a-datetime', ValueError),
+    ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
+    ('canonical_instant', '2030-01-01T00:00:00+00:00', ValueError),
+    ('canonical_instant', '2023-12-31T22:00:00.000001+00:00', ValueError),
+    ('civil_time', '2024-01-01T12:00:00+13:00', ValueError),
+    ('longitude', 180.0, ValueError), ('longitude', -0.0, ValueError),
+    ('longitude', 180, TypeError), ('apparent_time', '2024-01-01T11:27:00+00:00', ValueError),
+    ('time_basis', 'mean_solar', ValueError),
+    ('time_basis', 42, TypeError),
+  ):
+    bad_chart: dict[str, object] = {**local_chart.json, field_name: value}
+    bad_result = json.loads(local_result.export_json())
+    bad_result['input'][field_name] = value
+    checks.append((f'Location chart rejects {field_name}={value}', expected_error, partial(BaziChart.from_json, bad_chart)))
+    checks.append((f'Location record rejects {field_name}={value}', expected_error, partial(ContextResult.from_json, json.dumps(bad_result))))
+  if local_chart.bazi.solar_date != date(2024, 1, 1) or local_chart.bazi.solar_datetime != datetime(2024, 1, 1, 11, 27):
+    failures.append('Optimized Kiritimati civil date lost')
+  if BaziChart.from_json(local_chart.json).json != local_chart.json or ContextResult.from_json(local_result.export_json()) != local_result:
+    failures.append('Optimized location restoration failed')
+  historical = json.loads(local_result.export_json())
+  historical['input'].update(civil_time='1850-01-01T12:00:00+14:00', canonical_instant='1849-12-31T22:00:00+00:00', apparent_time='2000-01-01T12:00:00')
+  recovered = ContextResult.from_json(json.dumps(historical))
+  if recovered.criterion != local_result.criterion or recovered.occurrences != local_result.occurrences:
+    failures.append('Optimized observation recovery recalculated stored observations')
+  location_bazi = local_chart.bazi
+  for moment in (location_bazi._reference_datetime, location_bazi.solar_datetime):
+    legacy_bazi = Bazi.create(moment, 'female', location_config)
+    if not (legacy_bazi != location_bazi and location_bazi != legacy_bazi and len({legacy_bazi, location_bazi}) == 2):
+      failures.append('Optimized legacy/location identity partition failed')
   missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian'))
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')

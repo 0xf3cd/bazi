@@ -2,7 +2,7 @@
 > 排盘、五行、十神、纳音、刑冲破害、合会
 
 A Python 3.11+ library for Four Pillars charts and their relations. Runtime uses
-only the standard library, five bundled calendar tables and a knowledge corpus; no network access or
+only the standard library, six bundled calendar tables and a knowledge corpus; no network access or
 data generation is needed.
 
 This README describes the current checkout. For a published package, consult the
@@ -51,11 +51,66 @@ print(TransitChart(chart).at_year(2024))
 print(RelationshipAnalyzer(chart).at_birth.shensha)
 ```
 
-Birth times are naive local civil times; timezone-aware inputs are rejected.
-Defaults remain `CELESTIAL` with day precision. `hko` provides date-level calendar
-data; `celestial` and `celestial-algo2` use the bundled astronomical tables.
-Backend differences and supported date ranges are documented in the calendar
-modules; selecting a backend does not install its offline generator.
+Without a longitude, birth times are naive local civil times and timezone-aware
+inputs are rejected. To opt into apparent
+solar time, pass an aware datetime and an east-positive `longitude` in `[-180, 180]`
+to `Bazi` or `Bazi.create`; latitude is not consumed by this correction. The caller
+owns the datetime's timezone, DST fold and historical offset. The birth-region civil
+basis defaults to that timezone; pass `civil_timezone` (a `tzinfo`) when the input
+expresses the instant in another zone. The actual offset at birth is frozen into a
+fixed-offset civil datetime. The library does not infer a geographic or historical timezone.
+
+The location-aware path supports only `CELESTIAL` with `HOUR` or `MINUTE` precision.
+It preserves the input's seconds and microseconds. The apparent clock is the local
+civil clock plus `longitude / 15 - civil UTC offset`, wrapped to `[-12h, 12h)`, plus
+EOT evaluated at the exact UTC instant. Crossing midnight changes the apparent date.
+Longitudes +180 and -180 identify the same meridian.
+Its public clock, solar date, lunar/ganzhi date, day rollover and hour pillar use
+local apparent solar time. Previous/next Jie lookup uses the absolute instant;
+year/month attribution truncates both apparent clocks to the selected precision and
+compares them at the same longitude and frozen birth-region offset, with ties on the new side.
+
+Location identity and JSON preserve the exact UTC instant, civil basis, longitude,
+gender and config. With the same explicit `civil_timezone`, alternate display offsets
+of the same instant are equal, hash-equal and JSON-equal. Different civil bases remain
+distinct; seconds remain distinct even when the displayed `solar_datetime` minute agrees.
+Location JSON contains `time_basis='apparent_solar'`, `civil_time` (fixed-offset aware),
+`canonical_instant` (UTC), `longitude` and `apparent_time` (untruncated computed naive clock).
+The civil and UTC representations must denote the same instant.
+EOT uses daily decisecond samples with linear interpolation; retaining microsecond
+digits does not imply microsecond astronomical accuracy. Restoring a chart reconstructs
+and checks all derived values. The supported birth-date window
+applies to the apparent date (`1901-02-19` through `2099-12-31`), so its accepted UTC
+instants depend on longitude and civil basis.
+
+Dayun intervals and transit ordering use the absolute instant. Dayun boundaries
+and existing transit query moments are naive UTC+08:00 labels, not apparent clocks,
+and receive no moving-location correction. A New York birth at January 1, 20:00 UTC-05:00
+can have an apparent birth date of January 1 but a UTC+08:00 date of January 2;
+`TransitChart.at_date` uses the latter coordinate. Historical pre-1929 time-basis choices
+remain outside this API and are tracked by issue #118.
+
+```python
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
+from bazi.bazi import Bazi
+from bazi.school import BaziConfig
+
+located = Bazi.create(
+  datetime(2023, 12, 31, 22, tzinfo=UTC),
+  'male',
+  BaziConfig.from_values(precision='minute'),
+  longitude=-157.4,
+  civil_timezone=ZoneInfo('Pacific/Kiritimati'),
+)
+assert located.solar_datetime == datetime(2024, 1, 1, 11, 27)
+```
+
+Defaults are `CELESTIAL` with day precision. `hko` provides date-level calendar data;
+`celestial` and `celestial-algo2` use the bundled astronomical tables. Backend differences
+and supported date ranges are documented in the calendar modules; selecting a backend
+does not install its offline generator.
 
 ## Interfaces
 
@@ -284,6 +339,10 @@ complete birth/gender/config identity, year/kind,
 all occurrences and the complete supplied knowledge snapshot. Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.
 It does not cross-check verdict, evidence, input and entry bindings against each other.
+Location input snapshots retain the same five time fields as chart JSON, including
+the fixed civil basis and untruncated computed apparent clock. Their restoration validates the
+roster, canonical spellings and civil/UTC instant equivalence without recalculating the
+chart or recorded observations.
 
 From a source checkout:
 
@@ -343,7 +402,10 @@ python run_interpreter.py \
 
 | Interpreter flag | Effect |
 | --- | --- |
-| `--birth-time <time>`, `--gender male\|female` | Fixed local civil birth; supply both together |
+| `--birth-time <time>`, `--gender male\|female` | Fixed birth; supply both together; aware input requires longitude |
+| `--longitude <degrees>`, `--precision day\|hour\|minute` | Fixed chart calculation; longitude requires aware input and hour/minute precision |
+| `--civil-timezone <zone>` | Explicit birth-region IANA zone or fixed offset; requires longitude |
+| `--export-chart-json <path>` | Export the fixed chart as reloadable JSON |
 | `--seed <integer>` | Reproducible random charts |
 | `--count <positive integer>` | Random chart count; default 1 |
 | `--include-reference-only` | Include reference text and label unevaluated conditions |
@@ -353,6 +415,28 @@ python run_interpreter.py \
 | `-h`, `--help` | Show help |
 
 Fixed birth inputs accept one chart and cannot be combined with a seed.
+
+For a location chart with reloadable JSON:
+
+```sh
+python run_interpreter.py \
+  --birth-time "2024-01-01T12:00:00+14:00" \
+  --gender female \
+  --longitude -157.4 \
+  --precision minute \
+  --export-chart-json output_data/chart.json
+```
+
+Matching accepts the same longitude, precision and civil-timezone flags. Location
+flags require fixed birth input and are rejected in random and knowledge-only modes.
+An aware input without longitude is still rejected; longitude requires an explicit
+`hour` or `minute` precision. `--civil-timezone` accepts an IANA name or fixed offset
+such as `+14:00`, and requires longitude. Negative offsets use equals syntax:
+`--civil-timezone=-05:00`.
+Chart JSON export, like context export,
+refuses to overwrite the bundled knowledge source or its filesystem aliases.
+Chart JSON paths that overlap TXT outputs generated by the same run are rejected
+before any output is created, including symbolic-link and hard-link aliases.
 
 Reference-only text is labelled with source and premise states. Chart display and TXT
 export prefix entries with knowledge topics and include the recorded
@@ -413,7 +497,19 @@ The committed data is read, not regenerated, during packaging or installed use.
 The source tree and sdist contain the raw HKO inputs; the wheel does not.
 Maintainers can regenerate from those sources with `python -m bazi.calendar.hko_data.encoder`
 (`requests` is needed only if inputs must be downloaded), or `python -m bazi.calendar.celestial_data.generator`
-with `celestial-calendar==0.6.1`. These optional tools are not runtime dependencies.
+with `celestial-calendar==0.6.1`. The latter also writes the daily equation-of-time
+table; `--eot-only` limits regeneration to that byte-stable file. These optional tools
+are not runtime dependencies. To regenerate and compare EOT without replacing the
+bundled table, write a candidate into a directory outside the checkout:
+
+```sh
+python -m bazi.calendar.celestial_data.generator \
+  --eot-only \
+  --output-dir ../bazi-calendar-check
+cmp ../bazi-calendar-check/equation_of_time.bin \
+  bazi/calendar/celestial_data/data/equation_of_time.bin
+```
+
 If an installed table is missing, reinstall the distribution instead.
 
 ## License

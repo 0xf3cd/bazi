@@ -27,4 +27,4 @@ namespaces = false
 [tool.setuptools.package-data]
 bazi = ["py.typed", "knowledge_data.json"]
 "bazi.calendar.hko_data" = ["data/jieqi_encoded.bin", "data/lunardate_encoded.bin"]
-"bazi.calendar.celestial_data" = ["data/jieqi_moments.txt", "data/lunar_years_algo1.txt", "data/lunar_years_algo2.txt"]
+"bazi.calendar.celestial_data" = ["data/jieqi_moments.txt", "data/lunar_years_algo1.txt", "data/lunar_years_algo2.txt", "data/equation_of_time.bin"]
