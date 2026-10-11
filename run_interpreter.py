@@ -15,22 +15,13 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
-from bazi.knowledge import Applicability, KnowledgeBase
+from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
 from bazi.school import BaziConfig
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
 _ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r'\x1b\[[0-9;]*m')
-
-
-def _object_text(knowledge: KnowledgeBase, subject: Tiangan | Shishen, include_reference_only: bool, show_sources: bool) -> str:
-  object_id = type(subject).__name__.lower() + '.' + subject.name.lower()
-  return '\n\n'.join(
-    '／'.join(entry.topics) + '：' + knowledge.render(entry, show_sources=show_sources)
-    for entry in knowledge.query(object_id=object_id, include_reference_only=include_reference_only)
-    if entry.legacy is None or entry.legacy.object_id == object_id
-  )
 
 
 def interpret(
@@ -67,7 +58,11 @@ def interpret(
   day_master: Tiangan = chart.bazi.day_master
   s += '\n' + '-' * 60 + '\n'
   s += f"日主：{j['pillars']['day'][0]}，为{j['tiangan_traits']['day']}。\n\n"
-  if descriptions := _object_text(knowledge, day_master, include_reference_only, show_sources):
+  if descriptions := knowledge.render_subject(
+    object_id(day_master),
+    include_reference_only=include_reference_only,
+    show_sources=show_sources,
+  ):
     s += descriptions + '\n\n'
 
   shishens: dict[Shishen, int] = { ss : 0 for ss in Shishen }
@@ -83,7 +78,11 @@ def interpret(
     ratio: float = count / sum(shishens.values())
     s += '\n' + '-' * 60 + '\n'
     s += f'原局中，{ss}有{count}个，占比{ratio:.2%}。\n\n'
-    if descriptions := _object_text(knowledge, ss, include_reference_only, show_sources):
+    if descriptions := knowledge.render_subject(
+      object_id(ss),
+      include_reference_only=include_reference_only,
+      show_sources=show_sources,
+    ):
       s += descriptions + '\n\n'
 
   return s
@@ -103,7 +102,11 @@ def save_knowledge_base(
   for tg in Tiangan:
     with open(tg_dir_path / f'{tg}.txt', 'w', encoding='utf-8') as f:
       f.write(f'{tg}知识条目：\n')
-      f.write(_object_text(knowledge, tg, include_reference_only, show_sources))
+      f.write(knowledge.render_subject(
+        object_id(tg),
+        include_reference_only=include_reference_only,
+        show_sources=show_sources,
+      ))
       f.write('\n')
 
   ss_dir_path: Path = output_dir / 'knowledge_base' / 'shishen'
@@ -113,7 +116,11 @@ def save_knowledge_base(
   for ss in Shishen:
     with open(ss_dir_path / f'{ss}.txt', 'w', encoding='utf-8') as f:
       f.write(f'{ss}知识条目：\n')
-      f.write(_object_text(knowledge, ss, include_reference_only, show_sources))
+      f.write(knowledge.render_subject(
+        object_id(ss),
+        include_reference_only=include_reference_only,
+        show_sources=show_sources,
+      ))
       f.write('\n')
 
 
@@ -157,7 +164,7 @@ def _export_json(
   export: Callable[[], str],
   label: str,
 ) -> None:
-  sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
+  sources: tuple[Path, ...] = (DEFAULT_SOURCE_PATH,)
   if knowledge_source is not None:
     sources += (knowledge_source,)
   if any(_same_export_path(target, source) for source in sources):

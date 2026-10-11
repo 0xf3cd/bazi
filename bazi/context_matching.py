@@ -336,7 +336,7 @@ class ContextResult:
     knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-      lines.append(knowledge._render(knowledge.entry(match.claim_id), premise_verdict=match.status))
+      lines.append(knowledge.render(knowledge.entry(match.claim_id), premise_verdict=match.status))
     return '\n'.join(lines)
 
 

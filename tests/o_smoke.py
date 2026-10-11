@@ -35,12 +35,10 @@ def main() -> int:
   from fractions import Fraction
   from zoneinfo import ZoneInfo
 
-  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, TianganRelation, DizhiRelation
+  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.interpreter import Interpreter
-  from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
-  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription
+  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
@@ -257,30 +255,26 @@ def main() -> int:
      lambda: Bazi.random(BaziConfig.from_values(backend='hko', precision='hour'))),
     ('BaziChart.random unsupported config', ValueError,
      lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
-    ('Interpreter.interpret_shishen truthy reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=1)), # type: ignore
-    ('Interpreter.interpret_shishen falsy reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=0)), # type: ignore
-    ('Interpreter.interpret_shishen null reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=None)), # type: ignore
-    ('Interpreter.interpret_tiangan truthy reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1)), # type: ignore
-    ('Interpreter.interpret_tiangan falsy reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore
-    ('Interpreter.interpret_tiangan null reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=None)), # type: ignore
-    ('Interpreter.query_shishen wrong subject', TypeError,
-     lambda: Interpreter.query_shishen('食神')), # type: ignore[arg-type]
-    ('Interpreter.query_tiangan wrong subject', TypeError,
-     lambda: Interpreter.query_tiangan('甲')), # type: ignore[arg-type]
-    ('Interpreter.query_shishen wrong reference flag', TypeError,
-     lambda: Interpreter.query_shishen(Shishen.食神, include_reference_only=1)), # type: ignore[arg-type]
-    ('Interpreter.query_tiangan wrong reference flag', TypeError,
-     lambda: Interpreter.query_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore[arg-type]
-    ('Interpreter.query_source wrong identifier', TypeError,
-     lambda: Interpreter.query_source('editorial')), # type: ignore[arg-type]
-    ('DescriptionClaim mutable sources', TypeError,
-      lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+    ('knowledge object_id raw subject', TypeError,
+     lambda: object_id('食神')), # type: ignore[arg-type]
+    ('knowledge object_id unrelated enum', TypeError,
+     lambda: object_id(Dizhi.子)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject wrong identifier', TypeError,
+     lambda: knowledge.render_subject(Tiangan.甲)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject unknown object', ValueError,
+     lambda: knowledge.render_subject('missing')),
+    ('KnowledgeBase.render_subject truthy reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject falsy reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=0)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject null reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=None)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject invalid display flag on empty selection', TypeError,
+     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render wrong verdict type', TypeError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
+    ('KnowledgeEntry mutable sources', TypeError,
+     lambda: replace(knowledge.entry('tiangan.jia.definition'), sources=[])), # type: ignore[arg-type]
     ('KnowledgeBase unknown filter', ValueError,
      lambda: knowledge.query(object_id='unknown')),
     ('KnowledgeBase wrong filter type', TypeError,
@@ -305,18 +299,18 @@ def main() -> int:
        knowledge.entry('tiangan.ding.definition'),
        legacy=LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise'),
      )),
-    ('DescriptionClaim wrong condition member', TypeError,
-     lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
-    ('DescriptionSourceRecord wrong text layer', TypeError,
-     lambda: replace(
-       Interpreter.query_source(DescriptionSource.EDITORIAL),
-       text_layer='editorial', # type: ignore[arg-type]
-     )),
-    ('DescriptionSourceRecord wrong lineage', TypeError,
-     lambda: replace(
-       Interpreter.query_source(DescriptionSource.EDITORIAL),
-       lineage='editorial', # type: ignore[arg-type]
-     )),
+    ('LegacyDescription wrong condition member', ValueError,
+     lambda: LegacyDescription('tiangan.jia', 'general', 0, ('invalid',), '')),
+    ('KnowledgeSource wrong text layer', ValueError,
+      lambda: replace(
+        knowledge.sources['editorial'],
+        text_layer='invalid',
+      )),
+    ('KnowledgeSource wrong lineage type', TypeError,
+      lambda: replace(
+        knowledge.sources['editorial'],
+        lineage=1, # type: ignore[arg-type]
+      )),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,

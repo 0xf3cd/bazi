@@ -106,6 +106,10 @@ def main() -> None:
   knowledge_module = bazi.knowledge
   check('knowledge' in bazi.__all__ and knowledge_module is bazi.knowledge, 'Knowledge module registration mismatch')
   check('bazi.descriptions' not in sys.modules, 'Knowledge module loaded legacy descriptions')
+  for name in ('descriptions', 'interpreter'):
+    check(name not in bazi.__all__, 'Retired module remains registered')
+    check(importlib.util.find_spec('bazi.' + name) is None, 'Retired module remains installed')
+    check(not hasattr(bazi, name), 'Retired root module attribute remains')
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart, BaziJson
   from bazi.school import BaziConfig
@@ -116,8 +120,7 @@ def main() -> None:
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
-  from bazi.interpreter import Interpreter
-  from bazi.knowledge import KnowledgeBase
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 
   check(not EOT_READS, 'Imports eagerly read the EOT table')
@@ -319,38 +322,31 @@ def main() -> None:
       check(str(error).startswith('Expected int'), 'Wrong step rejection boundary')
     else:
       raise RuntimeError('Ganzhi warm cache bypassed step validation')
+  knowledge = KnowledgeBase.load()
+  check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
+  check(not hasattr(knowledge, '_render'), 'Private rendering wrapper remains')
   for value in Tiangan:
-    check(bool(Interpreter.interpret_tiangan(value)['general']), 'Missing Tiangan description')
-    structured = Interpreter.query_tiangan(value)
-    claim = structured['general'][0]
-    check(claim.text == Interpreter.interpret_tiangan(value)['general'][0], 'Structured text differs')
-    check(bool(claim.sources) and not claim.conditions, 'Default claim eligibility differs')
+    structured = knowledge.query(object_id=object_id(value))
+    check(len(structured) == 1, 'Missing Tiangan definition')
+    claim = structured[0]
+    check(claim.text in knowledge.render_subject(object_id(value)), 'Subject text differs')
+    check(bool(claim.sources) and claim.applicability == 'unconditional', 'Default claim eligibility differs')
     for source_id in claim.sources:
-      witness = Interpreter.query_source(source_id)
+      witness = knowledge.sources[source_id]
       check(bool(witness.work and witness.locator and witness.limitations), 'Incomplete witness')
-    check(hash(structured) == hash(Interpreter.query_tiangan(value)), 'Unhashable structured results')
-  check(
-    len(Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=True)['general'])
-    > len(Interpreter.interpret_tiangan(Tiangan.甲)['general']),
-    'Reference-only Tiangan descriptions are not opt-in',
-  )
+    check(hash(structured) == hash(knowledge.query(object_id=object_id(value))), 'Unhashable results')
+  check('仅供参考' not in knowledge.render_subject('tiangan.jia'), 'Reference-only text became default')
+  check('仅供参考' in knowledge.render_subject('tiangan.jia', include_reference_only=True), 'Reference-only text is inaccessible')
   complete_shishen_counts = (25, 23, 23, 23, 20, 20, 22, 22, 19, 22)
   for shishen, complete_count in zip(Shishen, complete_shishen_counts, strict=True):
-    default = Interpreter.interpret_shishen(shishen)
-    complete = Interpreter.interpret_shishen(shishen, include_reference_only=True)
+    default = knowledge.query(object_id=object_id(shishen))
+    complete = tuple(
+      entry for entry in knowledge.query(object_id=object_id(shishen), include_reference_only=True)
+      if entry.legacy is not None and entry.legacy.object_id == object_id(shishen)
+    )
     expected_default_count = 0 if shishen is Shishen.劫财 else 1
-    default_count = (
-      len(default['general'])
-      + len(default['in_good_status'])
-      + len(default['in_bad_status'])
-      + len(default['relationship'])
-    )
-    actual_complete_count = (
-      len(complete['general'])
-      + len(complete['in_good_status'])
-      + len(complete['in_bad_status'])
-      + len(complete['relationship'])
-    )
+    default_count = len(default)
+    actual_complete_count = len(complete)
     check(
       default_count == expected_default_count,
       f'Wrong default Shishen projection: {shishen}',
@@ -359,8 +355,33 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
-  knowledge = KnowledgeBase.load()
   check(len(knowledge.entries) == 295 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  check(len(knowledge.sources) == 9, 'Installed source registry incomplete')
+  for source_id, witness in knowledge.sources.items():
+    check(witness.source_id == source_id, 'Source ID mismatch')
+    check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')
+  from dataclasses import replace
+  future = replace(knowledge.sources['editorial'], source_id='future', lineage='future')
+  expanded = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), (*knowledge.sources.values(), future), tuple(knowledge.entries.values()))
+  check(KnowledgeBase.from_json(expanded.export_json()).sources['future'] == future, 'New source needs a vocabulary mirror')
+  reference_entry = knowledge.entry('editorial.shishen.zhengguan.legal_trouble')
+  display = knowledge.render(reference_entry, premise_verdict='SATISFIED')
+  check('前提判别：SATISFIED' in display and '输出资格：reference_only' in display and '也许' in display, 'Verdict display changed eligibility or original modality')
+  check(reference_entry not in knowledge.query(), 'Verdict display granted default eligibility')
+  relation = knowledge.entry('legacy.shishen.SH-052')
+  check(relation.text not in knowledge.render_subject('shishen.qisha', include_reference_only=True), 'Subject projection became all-role query')
+  check(relation.text in knowledge.render_subject('shishen.shishen', include_reference_only=True), 'Subject projection lost its subject')
+  for knowledge_operation in (
+    lambda: object_id(Dizhi.子), # type: ignore[arg-type]
+    lambda: knowledge.render(reference_entry, premise_verdict=1), # type: ignore[arg-type]
+    lambda: knowledge.render_subject('shishen.jiecai', show_sources=1), # type: ignore[arg-type]
+  ):
+    try:
+      knowledge_operation()
+    except TypeError:
+      pass
+    else:
+      raise RuntimeError('Installed knowledge boundary bypassed validation')
   selected = knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)
   check(tuple(entry.claim_id for entry in selected) == ('tiangan.ding.lamp_symbol',), 'Installed knowledge lookup mismatch')
   restored_knowledge = KnowledgeBase.from_json(knowledge.export_json(selected))

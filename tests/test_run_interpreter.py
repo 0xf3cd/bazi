@@ -12,12 +12,10 @@ from typing import cast
 
 import pytest
 
-from run_interpreter import interpret, main, _object_text
+from run_interpreter import interpret, main
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart, BaziJson
-from bazi.defines import Shishen
-from bazi.interpreter import Interpreter
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import KnowledgeBase, object_id
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
 from bazi.school import BaziConfig
 
@@ -127,7 +125,7 @@ def test_matching_export_io_error_and_undefined_text(tmp_path: Path) -> None:
 def test_chart_display_uses_knowledge_topics_and_retains_selection(include_reference_only: bool) -> None:
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
   text = interpret(chart, include_reference_only=include_reference_only)
-  assert '定义：' + Interpreter.interpret_tiangan(chart.bazi.day_master)['general'][0] in text
+  assert '定义：' + KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master))[0].text in text
   assert '原局中，劫财有' in text
   assert '当劫财状态不好时' not in text
   assert '能量状态佳' not in text and 'in_good_status' not in text
@@ -578,7 +576,10 @@ def test_write_guard_checks_high_level_modes_without_directory_operations(
 def test_reference_claims_have_distinct_lines_without_source_blocks() -> None:
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
   result = interpret(chart, include_reference_only=True)
-  general = Interpreter.query_tiangan(chart.bazi.day_master, include_reference_only=True)['general']
+  general = tuple(
+    entry for entry in KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master), include_reference_only=True)
+    if entry.legacy is not None and entry.legacy.field == 'general'
+  )
   assert len(general) > 1
   lines = result.splitlines()
   assert f'定义：{general[0].text}' in lines
@@ -898,6 +899,22 @@ def test_modern_knowledge_loading_is_independent_of_legacy_projection(
     cwd=knowledge_checkout, capture_output=True, text=True, encoding='utf-8', check=False,
   )
   assert imported.returncode == 0, imported.stderr
+  if mutation == 'new-source':
+    queried = _run_cli(
+      knowledge_checkout, '--query-knowledge', '--source', 'independent_probe',
+      '--include-reference-only', script=knowledge_checkout / 'run_interpreter.py',
+    )
+    assert queried.returncode == 0, queried.stderr
+    assert '条目：tiangan.ding.lamp_symbol' in queried.stdout
+    assert '来源：independent_probe' in queried.stdout
+
+
+@pytest.mark.parametrize('source_id', tuple(KNOWLEDGE_BASE.sources))
+def test_cli_can_query_every_registered_source(tmp_path: Path, source_id: str) -> None:
+  result = _run_cli(tmp_path, '--query-knowledge', '--source', source_id, '--include-reference-only')
+  assert result.returncode == 0, result.stderr
+  selected = KNOWLEDGE_BASE.query(source_id=source_id, include_reference_only=True)
+  assert result.stdout == ''.join(KNOWLEDGE_BASE.render(entry) + '\n\n' for entry in selected) if selected else result.stdout == '无匹配条目。\n'
 
 
 @pytest.mark.parametrize('alias', ['direct', 'hardlink', 'symlink'])
@@ -927,11 +944,17 @@ def test_custom_knowledge_export_cannot_overwrite_bundled_source(
   assert corpus.read_bytes() == before
 
 
-def test_object_text_keeps_legacy_subject_while_queries_include_other_roles() -> None:
+def test_chart_and_txt_share_library_subject_projection(tmp_path: Path) -> None:
   relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
   assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
-  assert relation.text not in _object_text(KNOWLEDGE_BASE, Shishen.七杀, True, False)
-  assert relation.text in _object_text(KNOWLEDGE_BASE, Shishen.食神, True, False)
+  result = _run_cli(tmp_path, '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only', '--show-sources', '--export-knowledge-base', '--output-dir', str(tmp_path))
+  assert result.returncode == 0, result.stderr
+  for subject, kind in (('七杀', 'shishen.qisha'), ('食神', 'shishen.shishen')):
+    text = (tmp_path / 'knowledge_base/shishen' / (subject + '.txt')).read_text(encoding='utf-8')
+    expected = KNOWLEDGE_BASE.render_subject(kind, include_reference_only=True, show_sources=True)
+    assert text == subject + '知识条目：\n' + expected + '\n'
+  assert relation.text not in KNOWLEDGE_BASE.render_subject('shishen.qisha', include_reference_only=True)
+  assert relation.text in KNOWLEDGE_BASE.render_subject('shishen.shishen', include_reference_only=True)
 
 
 def test_knowledge_export_cannot_truncate_its_editing_source(tmp_path: Path) -> None:

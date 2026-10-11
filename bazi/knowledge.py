@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
+from .defines import Shishen, Tiangan
 
 
 '''Knowledge organization state, not a chart verdict. / 知识整理状态，不是命盘判别结果。'''
@@ -24,6 +25,20 @@ _T = TypeVar('_T')
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
 _OUTPUTS: Final = get_args(OutputPolicy)
+DEFAULT_SOURCE_PATH: Final[Path] = Path(__file__).with_name('knowledge_data.json')
+
+
+def object_id(subject: Tiangan | Shishen) -> str:
+  '''返回天干或十神在知识库中的稳定对象标识；中文别名与英文成员共用标识。
+
+  Args:
+  - subject: (Tiangan | Shishen) 讨论对象。
+  Return:
+  - (str) 对象标识；自定义库是否注册该对象由查询时校验。
+  '''
+  if not isinstance(subject, (Tiangan, Shishen)):
+    raise TypeError(f'Expected Tiangan | Shishen, got {type(subject)}')
+  return type(subject).__name__.lower() + '.' + subject.name.lower()
 
 
 def _text(value: object, *, empty: bool = False) -> None:
@@ -379,12 +394,16 @@ class KnowledgeBase:
 
   @classmethod
   def load(cls, path: Path | None = None) -> 'KnowledgeBase':
-    '''Read an editing source, or the bundled corpus when no path is given.
-    读取指定编辑来源；未给路径时读取随库分发的语料。
+    '''读取指定编辑来源；未给路径时读取 DEFAULT_SOURCE_PATH 的随库语料。
+
+    Args:
+    - path: (Path | None) 编辑来源路径；None 使用随库来源。
+    Return:
+    - (KnowledgeBase) 校验后的知识库；每次加载独立读取，不缓存共享实例。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')
-    source = Path(__file__).with_name('knowledge_data.json') if path is None else path
+    source = DEFAULT_SOURCE_PATH if path is None else path
     return cls.from_json(source.read_text(encoding='utf-8'))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
@@ -468,23 +487,22 @@ class KnowledgeBase:
     *,
     show_sources: bool = True,
     manual_context: bool = False,
-  ) -> str:
-    '''Display text, premises and limits; source details are optional.
-    展示原文、前提与限度；可选择显示来源详情。
-    '''
-    return self._render(entry, show_sources=show_sources, manual_context=manual_context)
-
-  def _render(
-    self,
-    entry: KnowledgeEntry,
-    *,
-    show_sources: bool = True,
-    manual_context: bool = False,
     premise_verdict: str | None = None,
   ) -> str:
-    '''Render an entry with an optional caller-supplied verdict; this method evaluates no premises.
-    展示条目，可附调用方提供的前提判别；本方法不求值前提。'''
-    assert premise_verdict is None or isinstance(premise_verdict, str)
+    '''展示原文、前提与限度，可附调用方提供的前提判别。
+
+    Note:
+    - 本方法不选择条目、不求值前提，也不改变输出资格。
+    Args:
+    - entry: (KnowledgeEntry) 本库条目。
+    - show_sources: (bool) 是否展示来源详情；前提与限度始终保留。
+    - manual_context: (bool) 标注人工给定情境，不表示前提满足。
+    - premise_verdict: (str | None) 调用方的展示文字；给定时优先于人工情境标注。
+    Return:
+    - (str) 展示文字。
+    '''
+    if premise_verdict is not None and not isinstance(premise_verdict, str):
+      raise TypeError(f'Expected str | None, got {type(premise_verdict)}')
     if not isinstance(entry, KnowledgeEntry):
       raise TypeError(f'Expected KnowledgeEntry, got {type(entry)}')
     for flag in (show_sources, manual_context):
@@ -536,3 +554,31 @@ class KnowledgeBase:
           f'局限：{source.limitations}',
         ))
     return '\n'.join(lines)
+
+  def render_subject(
+    self,
+    object_id: str,
+    *,
+    include_reference_only: bool = False,
+    show_sources: bool = False,
+  ) -> str:
+    '''按主体展示带主题前缀的知识文字，保留语料顺序、前提及限度。
+
+    Note:
+    - 有旧位置元数据的条目只在其旧主体下展示；其余条目包含所有绑定角色。
+      query 的对象过滤始终包含全部角色，二者范围不同。
+    - 旧字段位置与 ordinal 仍在 entry.legacy 中，不决定此处的语料顺序。
+    Args:
+    - object_id: (str) 注册对象标识。
+    - include_reference_only: (bool) 是否包含仅供参考条目，不求值其前提。
+    - show_sources: (bool) 是否展示来源详情。
+    Return:
+    - (str) 展示文字；合法对象没有所选主体条目时返回空串。
+    '''
+    if not isinstance(show_sources, bool):
+      raise TypeError(f'Expected bool, got {type(show_sources)}')
+    return '\n\n'.join(
+      '／'.join(entry.topics) + '：' + self.render(entry, show_sources=show_sources)
+      for entry in self.query(object_id=object_id, include_reference_only=include_reference_only)
+      if entry.legacy is None or entry.legacy.object_id == object_id
+    )

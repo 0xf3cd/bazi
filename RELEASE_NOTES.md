@@ -6,13 +6,20 @@
 - 新增不可变 `GanzhiYearMonth` 领域坐标，以及 `Bazi.ganzhi_year_month`、
   `reference_datetime`、`location_time` 只读接口。地点时间事实区分 UTC 瞬间、固定出生偏移、
   未截断真太阳钟与分钟显示钟；展示直接格式化模型事实，真实前后节仍查物理时刻。
+- 知识 API 破坏性清理：删除 `bazi.descriptions`、`bazi.interpreter`、`Interpreter`、旧枚举、
+  重复记录与字段表。`KnowledgeBase` 及现有记录是唯一模型；原文、稳定 ID、来源、限度和
+  旧位置元数据保留，语料未扩充。调用方改用 `query`、`entry`、完整不可变 `sources` 注册表。
+  新来源无需同步枚举；`LegacyDescription` 继续承载字段、序号与条件溯源。
+- 新增 `object_id`、`DEFAULT_SOURCE_PATH` 和共用主体文字投影 `render_subject`。
+  主体展示与全角色查询分开，旧位置顺序与语料顺序分开；公开 `render` 接受调用方的
+  `premise_verdict` 展示文字，不求值前提或改变输出资格。前提判别仍由 `evaluate_context` 执行。
 
 - Installable `bazi` package with modular imports, Python 3.11+, inline typing and
   no runtime dependencies. Source imports now use `bazi.*`, not `src.*`.
 - The wheel bundles the two encoded HKO tables and four celestial tables. The
   source archive also includes raw HKO inputs and source-verification tests.
 - Existing calendar backends, rules, school defaults, JSON restoration, transits,
-  relationship analysis and Interpreter remain available without data regeneration.
+  relationship analysis and knowledge queries remain available without data regeneration.
 - Apparent-solar charts accept an aware birth time, longitude and optional birth-region
   `civil_timezone`, with civil, UTC and apparent times retained in JSON. Dayun and transit
   queries use UTC+08:00 labels. The Interpreter runner supports fixed location charts and exports.
@@ -21,11 +28,9 @@
 - The manual release workflow defaults to rehearsal. Publication requires protected
   environment approval and publishes only the tested sdist and its rebuilt wheel.
 - Among reference-only claims, a finite description-corpus pass corrected three wording
-  defects and retained seven source-unverified semantic ambiguities; default description
-  output is unchanged. The chart renderer in `run_interpreter.py` now omits headings
-  whose selected description list is empty. No public description fields were added.
-- Structured description queries expose immutable claims and source witnesses alongside
-  the existing text lookups. The source-checkout Interpreter runner supports fixed
+  defects and retained seven source-unverified semantic ambiguities. The chart renderer
+  in `run_interpreter.py` omits headings whose selected knowledge text is empty.
+- Knowledge queries expose immutable entries and source witnesses. The source-checkout runner supports fixed
   births, seeded random charts, reference text, source display and explicit exports;
   its default invocation now displays one chart without exporting files.
 

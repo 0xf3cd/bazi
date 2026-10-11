@@ -15,7 +15,7 @@ README at its matching release tag.
 - Transits: precise 大运 intervals, 小运 and 流年, with year/month/date/moment queries.
 - Relations and 神煞: at-birth and transit analysis, including configurable rule variants.
 - Interpretation knowledge: editable JSON, validated references, object/context/topic/source
-  queries, premise and source display, and reloadable exports. Legacy 天干 / 十神 lookups remain available.
+  queries, premise and source display, and reloadable exports through `KnowledgeBase`.
 - Source-checkout demos: random charts, transit tables, relationship analysis and
   description display/export. The Interpreter runner also accepts fixed birth inputs.
 
@@ -162,15 +162,12 @@ Use the defining modules rather than expecting classes at the package root:
 | `bazi.calendar.dates` | `GanzhiYearMonth`, `JieqiTime` |
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
-| `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
-| `bazi.descriptions` | `DescriptionClaim`, `DescriptionClaims`, `DescriptionSourceRecord`; `DescriptionSource`, `DescriptionLineage`, `DescriptionTextLayer`, `DescriptionOutput`, `DescriptionCondition` |
-| `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription` |
+| `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription`, `object_id`, `DEFAULT_SOURCE_PATH` |
 | `bazi.context_matching` | `ContextProfile`, `ChartOccurrence`, `CriterionResult`, `EntryMatch`, `ContextResult`, `evaluate_context` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
-`bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
-default-output descriptions. `Interpreter` methods use the same default; pass
-`include_reference_only=True` to also include claims not eligible for default output.
+知识记录以 `KnowledgeBase` 为唯一模型。默认查询仅选 `output='default'` 的条目；
+`include_reference_only=True` 同时查阅不具默认输出资格的参考条目。
 
 Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
 domain values and records configuration. `py.typed` exposes the inline type hints.
@@ -180,44 +177,50 @@ promise of a stable public interface.
 [External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
 baseline with configuration-specific results and an offline regression test.
 
-### Structured description queries
+### 知识接口迁移
+
+`bazi.descriptions`、`bazi.interpreter` 及其枚举、重复记录、字段表和 `Interpreter` 方法已删除，
+这是破坏性 API 变更。调用方改用现代记录，不再返回旧字段字典或可变文字列表。
+源码脚本 `run_interpreter.py` 继续提供命盘展示、知识查询和导出，没有安装 CLI。
 
 ```python
 from bazi.defines import Tiangan
-from bazi.interpreter import Interpreter
+from bazi.knowledge import KnowledgeBase, object_id
 
-fields = Interpreter.query_tiangan(Tiangan.丁, include_reference_only=True)
-for claim in fields['general']:
-  print(claim.claim_id, claim.text, claim.output.value, claim.conditions)
-  for source_id in claim.sources:
-    witness = Interpreter.query_source(source_id)
+knowledge = KnowledgeBase.load()
+identifier = object_id(Tiangan.丁)
+for entry in knowledge.query(object_id=identifier, include_reference_only=True):
+  print(entry.claim_id, entry.text, entry.output, entry.applicability)
+  print(entry.legacy)  # Traceable old field, ordinal, conditions and field premise.
+  for source_id in entry.sources:
+    witness = knowledge.sources[source_id]
     print(witness.work, witness.edition, witness.locator, witness.url)
     print(witness.supports, witness.limitations)
+
+print(knowledge.render_subject(identifier, include_reference_only=True, show_sources=True))
 ```
 
-`query_tiangan` and `query_shishen` return a `frozendict` of field names to tuples
-of frozen `DescriptionClaim` objects. Source lookup returns a frozen record with
-the work, attribution, edition, locator, URL, text layer, lineage, excerpt and
-evidentiary boundaries. Text-returning methods retain their existing field/list shape.
+`sources` 是完整的不可变来源注册表，包含未被条目引用的见证；新增来源无需补枚举。
+来源记录的文本层、谱系、状态和证据限度各自保留。`query(source_id=...)` 选择关联条目，
+与直接读取 `sources[source_id]` 不同。`object_id` 将天干、十神及其中文别名转为稳定 ID；
+其他对象直接使用 `objects` 中注册的字符串标识。
 
-Default queries select only default-output claims without legacy conditions.
-Complete queries also include named historical imagery, repository editorial text
-and legacy text marked source-unverified. An empty `sources`
-tuple and `Legacy corpus; source unverified` attribution preserve that last state;
-they do not establish that no source exists or that the claim is false.
+`render_subject` 为命盘与 TXT 共用的带主题文字投影：有 `legacy` 的条目只在旧主体下展示，
+其余条目包含所有绑定角色。它保留语料顺序；`query(object_id=...)` 则始终包含所有角色。
+例如 SH-052 的主体是食神、关联角色含七杀：对象查询两边都能找到，主体展示只放在食神下。
+旧字段位置与 `ordinal` 在 `LegacyDescription` 中保全，不与语料顺序合并；需要复核旧位置时，
+按 `legacy.object_id`、`legacy.field` 选择并按 `legacy.ordinal` 排序。
 
-`CHART_CONTEXT_REQUIRED` records a prerequisite, not an evaluated result. Reference
-queries include these claims without determining whether they apply to a chart.
-Witness records establish textual attribution and its boundaries. Description
-selection is independent of the calculation variants in `BaziSchool`.
-The `in_good_status` / `in_bad_status` fields are compatibility placements, not core
-knowledge categories. The new API exposes premise organization without assigning chart states.
+参考查阅保留历史象、仓内整理和来源未核实文字，不判断命盘适用性。空 `sources` 和
+`Legacy corpus; source unverified` 署名不表示没有来源或断言为假。旧 `chart_context_required`
+记录前提，不是求值结果；`in_good_status` / `in_bad_status` 是旧位置，不是现代知识分类。
+知识选择与 `BaziSchool` 的计算变体分开。
 
 ### Maintain and query interpretation knowledge
 
 `bazi/knowledge_data.json` is the unique editing source. Loading validates its schema,
 IDs, role bindings, references and output policies, then builds in-memory indexes.
-The same file is bundled in wheels and source archives; exports and legacy projections
+The same file is bundled in wheels and source archives; exports and text projections
 are derived from it. No database service or runtime dependency is required.
 
 ```python
@@ -273,6 +276,12 @@ a valid filter with no matches returns an empty tuple. Reference entries require
 registries for reload and evidence display. Exporting a reference record does not change
 its presentation eligibility. The frozen legacy test fixture is a migration oracle,
 not another editing source.
+
+`DEFAULT_SOURCE_PATH` 是默认加载及源码 CLI 防覆盖共用的随库编辑源路径，指向当前安装或
+检出中的 `knowledge_data.json`。自定义源仍通过 `KnowledgeBase.load(Path(...))` 读取。
+公开 `render(entry, show_sources=..., manual_context=..., premise_verdict=...)` 只展示条目；
+`premise_verdict` 是调用方提供的文字，优先于人工情境标注，不求值前提、不授予默认资格。
+实际前提判别仍由 `evaluate_context` 执行；未定义的判据仍返回 `UNKNOWN`。
 
 From a source checkout, edit the JSON and validate it:
 

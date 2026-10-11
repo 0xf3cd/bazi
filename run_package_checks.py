@@ -151,15 +151,20 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
   python = consumer(work / 'typing-venv', rebuilt)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom bazi.bazi import Bazi, LocationTime, LocationTimeJson\nfrom bazi.bazi_chart import BaziChart, BaziJson\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom bazi.bazi import Bazi, LocationTime, LocationTimeJson\nfrom bazi.bazi_chart import BaziChart, BaziJson\n'
           'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime\n'
-          'from bazi.defines import Dizhi, Jieqi\n'
+          'from bazi.defines import Dizhi, Jieqi, Tiangan\n'
           'from bazi.school import BaziConfig\n'
-          'from bazi.knowledge import KnowledgeBase, KnowledgeEntry\n'
+          'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeSource, object_id\n'
           'from bazi.context_matching import ContextProfile, ContextResult, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
           'knowledge = KnowledgeBase.load()\n'
           'entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")\n'
+          'source_path: Path = DEFAULT_SOURCE_PATH\n'
+          'identifier: str = object_id(Tiangan.丁)\n'
+          'witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]\n'
+          'display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")\n'
+          'subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)\n'
           'text: str = knowledge.export_json(entries)\n'
           'matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
           'record: str = matched.export_json()\n'
@@ -184,6 +189,11 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
                 'knowledge.query(object_id=42)\nContextProfile("dayun")\n'
+                'object_id(Dizhi.子)\n'
+                'knowledge.render(entries[0], premise_verdict=1)\n'
+                'knowledge.render_subject(Tiangan.丁, include_reference_only=1)\n'
+                'knowledge.sources["editorial"] = witness\n'
+                'witness.work = "changed"\n'
                 'evaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n'
                 'def unsafe_birth(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["birth_time"]\n'
                  'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
@@ -203,14 +213,18 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   )
   print(result.stdout, end='')
   print(result.stderr, end='')
+  print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie'):
+  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('read-only', '"None"', 'reference_datetime', 'month'):
     if message not in result.stdout:
       raise ValueError(f'Installed time typing negative control missed {message}')
+  for message in ('"work"', 'Unsupported target for indexed assignment'):
+    if message not in result.stdout:
+      raise ValueError(f'Installed knowledge typing negative control missed {message}')
   for roster, key in (('LocationBaziChartJsonDict', 'birth_time'), ('DefaultBaziChartJsonDict', 'apparent_time')):
     if f'TypedDict "{roster}" has no key "{key}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {roster}.{key}')

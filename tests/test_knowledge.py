@@ -8,11 +8,9 @@ from typing import Any, get_args, get_origin
 import pytest
 
 from bazi.defines import Shishen, Tiangan
-from bazi.descriptions import DescriptionSource
-from bazi.interpreter import Interpreter
 from bazi.knowledge import (
   KnowledgeBase, KnowledgeObject, KnowledgeRole, KnowledgeRelation, KnowledgeEntry,
-  LegacyDescription,
+  LegacyDescription, object_id,
 )
 
 
@@ -29,17 +27,31 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
   actual: list[dict[str, Any]] = []
   for subjects in (Shishen, Tiangan):
     for subject in subjects:
-      selected = (
-        Interpreter.query_shishen(subject, include_reference_only=True) if isinstance(subject, Shishen)
-        else Interpreter.query_tiangan(subject, include_reference_only=True)
-      )
-      for field, claims in selected.items():
-        actual.extend({'subject_kind': subjects.__name__, 'subject': str(subject), 'field': field, 'claim': asdict(claim)} for claim in claims)
-  normalized = json.loads(json.dumps(actual, default=lambda value: value.value))
-  assert normalized == baseline['rows']
+      selected = [
+        entry for entry in KNOWLEDGE_BASE.entries.values()
+        if entry.legacy is not None and entry.legacy.object_id == object_id(subject)
+      ]
+      field_order = ('general', 'in_good_status', 'in_bad_status', 'relationship') if isinstance(subject, Shishen) else ('general', 'personality')
+      for field in field_order:
+        claims = sorted(
+          (entry for entry in selected if entry.legacy is not None and entry.legacy.field == field),
+          key=lambda entry: entry.legacy.ordinal if entry.legacy is not None else -1,
+        )
+        for ordinal, claim in enumerate(claims):
+          assert claim.legacy is not None
+          assert claim.legacy.ordinal == ordinal
+          actual.append({
+            'subject_kind': subjects.__name__, 'subject': str(subject), 'field': field,
+            'claim': {
+              'claim_id': claim.claim_id, 'text': claim.text, 'sources': list(claim.sources),
+              'attribution': claim.attribution, 'conditions': list(claim.legacy.conditions),
+              'output': claim.output,
+            },
+          })
+  assert actual == baseline['rows']
   for source_id, expected in baseline['sources'].items():
-    record = asdict(Interpreter.query_source(DescriptionSource(source_id)))
-    assert json.loads(json.dumps(record, default=lambda value: value.value)) == expected
+    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    assert {key: record[key] for key in expected} == expected
   old_ids = {row['claim']['claim_id'] for row in baseline['rows']}
   assert len(old_ids) == 291
   assert {entry.claim_id for entry in KNOWLEDGE_BASE.entries.values() if entry.legacy is not None} == old_ids

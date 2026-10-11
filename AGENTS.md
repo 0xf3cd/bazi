@@ -122,7 +122,7 @@ the author and AI assistants downstream.
 ## Docstrings are Chinese-first + structured
 自有 API 说明以中文为主，可保留必要英语辅助；沿用 `Note` / `Args` / `Return` /
 `Examples` 结构，类型放在括号中。知识密集层（`rules` / `defines` / `utils` /
-`descriptions`——规则、表、命理语义）须有中文说明。既有说明随相关施工对齐，不为语言单独翻修全文。
+`knowledge` / `context_matching`——规则、表、命理语义）须有中文说明。既有说明随相关施工对齐，不为语言单独翻修全文。
 
 ## Comment language
 Narrative in English; domain terms and quotations keep their original language
