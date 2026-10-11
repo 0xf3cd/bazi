@@ -7,19 +7,20 @@ from enum import Enum
 from dataclasses import dataclass
 from collections.abc import Mapping
 from datetime import UTC, date, time, datetime, timedelta, timezone, tzinfo
-from typing import Final, TypedDict
+from typing import Final, NamedTuple, TypedDict
 
 from .defines import Tiangan, Dizhi, Ganzhi
 from .calendar import (
   CalendarDate, CalendarType, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
 )
 from .calendar.celestial_data.loader import _EquationOfTimeRangeError
+from .calendar.dates import GanzhiYearMonth
 from .calendar import solar_time
 from .school import BaziPrecision, BaziConfig, DEFAULT_CONFIG
 
 from .utils.bazi_utils import (
   month_tiangan, hour_tiangan, ganzhi_of_year,
-  _ganzhi_of_day_at_moment, _ganzhi_year_month_of_jie, _ganzhi_month_dizhi,
+  _ganzhi_of_day_at_moment,
 )
 
 
@@ -212,15 +213,15 @@ class Bazi:
 
     # Which ganzhi year / month owns the birth, compared per `BaziPrecision`
     # (`birth >= jieqi` at the known granularity, ties go new).
-    ganzhi_year: int
-    ganzhi_month: int
-    bracketing_jies: tuple[JieqiTime, JieqiTime] | None = None
+    year_month: GanzhiYearMonth
+    bracketing_jies: tuple[JieqiTime, JieqiTime]
     if self._config.precision is BaziPrecision.DAY:
-      # DAY compares dates: the `to_ganzhi` channel drops the time, so a jieqi's whole day
-      # falls on its new side. `bracketing_jies` stays moment-level for DAY (see the property).
+      # DAY's date-level year/month also selects the Jies used for Dayun counting.
       ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
-      ganzhi_year = ganzhi_calendardate.year
-      ganzhi_month = ganzhi_calendardate.month # `ganzhi_calendardate` is already at `DAY`-level precision.
+      year_month = GanzhiYearMonth(ganzhi_calendardate.year, ganzhi_calendardate.month)
+      solar_year, jie = year_month.opening_jie
+      owning_jie = JieqiTime(jie, utils.jieqi_moment(solar_year, jie))
+      bracketing_jies = (owning_jie, utils.next_jie(owning_jie.moment))
     else:
       if self._config.backend is CalendarBackend.HKO:
         raise ValueError(
@@ -232,7 +233,7 @@ class Bazi:
       # so `>=` can only hit as a tie -- in which case the next jie owns the birth month, and
       # its true moment may be up to one granularity unit after the birth (子时 spans midnight,
       # so for HOUR the tie window may even start on the previous civil day).
-      birth_moment: Final[datetime] = self._reference_datetime
+      birth_moment: Final[datetime] = self.reference_datetime
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
 
@@ -251,18 +252,17 @@ class Bazi:
       # consumes via `bracketing_jies`, so the chart cannot contradict itself. 小寒 opens the
       # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
       owning: Final[JieqiTime] = bracketing_jies[0]
-      ganzhi_year, ganzhi_month = _ganzhi_year_month_of_jie(owning)
+      year_month = GanzhiYearMonth.from_jie(owning)
 
-    self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime] | None] = bracketing_jies
+    self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime]] = bracketing_jies
+    self._ganzhi_year_month: Final[GanzhiYearMonth] = year_month
 
     # The Year Ganzhi / Year Pillar (年柱).
-    self._ganzhi_year: Final[int] = ganzhi_year
+    self._ganzhi_year: Final[int] = year_month.year
     self._year_pillar: Final[Ganzhi] = ganzhi_of_year(self._ganzhi_year)
 
     # The ganzhi month and the Month Dizhi (月令).
-    self._ganzhi_month: Final[int] = ganzhi_month
-    assert 1 <= self._ganzhi_month <= 12
-    self._month_dizhi: Final[Dizhi] = _ganzhi_month_dizhi(self._ganzhi_month)
+    self._month_dizhi: Final[Dizhi] = year_month.dizhi
 
     # The day pillar follows the configured 换日点; year/month attribution above remains
     # independent and follows `BaziPrecision`.
@@ -401,25 +401,22 @@ class Bazi:
     return self._ganzhi_year
 
   @property
+  def ganzhi_year_month(self) -> GanzhiYearMonth:
+    '''按出生精度归属的干支年月；年/月柱与大运数节共同使用此坐标。'''
+    return self._ganzhi_year_month
+
+  @property
   def bracketing_jies(self) -> tuple[JieqiTime, JieqiTime]:
     '''
-    The two Jies (节) bracketing the birth, per `self.config.precision`. This is the single source
-    that the year/month attribution and `BaziChart`'s dayun counting share, so a chart cannot
-    contradict itself about which jie owns the birth month.
-    按 `self.config.precision` 归属的出生前后两节。年/月柱归属与大运数节共用此单一来源，保证盘面自洽。
+    按 `self.config.precision` 归属的开月节与下一节，供年/月柱和大运数节共同使用。
 
     Note:
-    - HOUR / MINUTE: `[0]` is the jie owning the birth month (granularity-aware, ties go new --
-      so its true moment may be up to one granularity unit *after* the birth), `[1]` the jie
-      after it.
-    - DAY: moment-level `prev_jie` / `next_jie` of the birth moment -- unchanged pre-existing
-      behaviour. The DAY month pillar compares dates while these compare moments, so on a
-      jieqi's day they legitimately disagree; that trade-off is pinned by `test_bazi` and
-      documented in `CalendarUtilsProtocol`.
+    - `[0]` 是出生月所属节，`[1]` 是其下一节，均保留后端原始节时刻。
+    - DAY 的整个交节日归新；HOUR/MINUTE 按各自粒度相等归新。提前归属窗口中，
+      所属节的真实时刻可以在出生之后；逆排大运的负间隔钳为零。
+    - 真实出生时刻前后节仍应以 `reference_datetime` 查询历法 `prev_jie` / `next_jie`。
     '''
-    if self._bracketing_jies is not None:
-      return self._bracketing_jies
-    return (self._utils.prev_jie(self._reference_datetime), self._utils.next_jie(self._reference_datetime))
+    return self._bracketing_jies
 
   @property
   def hour(self) -> int:
@@ -445,12 +442,31 @@ class Bazi:
     return self._clock_datetime.replace(second=0, microsecond=0)
 
   @property
-  def _reference_datetime(self) -> datetime:
-    '''The Jie/Dayun/transit coordinate: exact naive UTC+08:00 for location-aware
-    charts, otherwise the default minute-truncated civil label.'''
+  def reference_datetime(self) -> datetime:
+    '''节表、大运及流运查询的出生参考时刻。
+
+    地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的民用标签。
+    此坐标不是真太阳钟，也不改变出生精度的归属规则。
+    '''
     if self._location is None:
       return self.solar_datetime
     return self._location.instant.astimezone(_UTC8).replace(tzinfo=None)
+
+  @property
+  def location_time(self) -> 'LocationTime | None':
+    '''地点盘的只读时间事实；默认盘返回 `None`。
+
+    包含绝对 UTC 瞬间、固定出生偏移的民用钟、经度及未截断真太阳钟；
+    `solar_datetime` 仍只显示分钟，`reference_datetime` 仍用于节表坐标。
+    '''
+    if self._location is None:
+      return None
+    return LocationTime(
+      self._location.instant,
+      self._location.civil,
+      self._location.longitude,
+      self._clock_datetime,
+    )
 
   @property
   def gender(self) -> BaziGender:
@@ -569,7 +585,7 @@ class Bazi:
     return hash(self._identity)
 
 
-class _LocationTimeJson(TypedDict):
+class LocationTimeJson(TypedDict):
   '''Canonical location inputs and the untruncated computed apparent clock.
   规范地点输入及未截断的计算真太阳时。'''
   time_basis: str
@@ -579,16 +595,27 @@ class _LocationTimeJson(TypedDict):
   apparent_time: str
 
 
-def _location_json(bazi: Bazi) -> _LocationTimeJson:
-  location = bazi._location
-  assert location is not None
-  return {
-    'time_basis': 'apparent_solar',
-    'civil_time': location.civil.isoformat(),
-    'canonical_instant': location.instant.isoformat(),
-    'longitude': location.longitude,
-    'apparent_time': bazi._clock_datetime.isoformat(),
-  }
+class LocationTime(NamedTuple):
+  '''模型返回的不可变地点时间事实；时间值不经 JSON 解析或重复换算。
+
+  `canonical_instant` 带 UTC 时区，`civil_time` 带固定出生偏移，
+  `apparent_time` 为未截断的 naive 真太阳钟。直接构造此值不验证排盘输入。
+  '''
+  canonical_instant: datetime
+  civil_time: datetime
+  longitude: float
+  apparent_time: datetime
+
+  @property
+  def json(self) -> LocationTimeJson:
+    '''供命盘与情境记录共用的 JSON 时间字段；每次返回独立字典。'''
+    return {
+      'time_basis': 'apparent_solar',
+      'civil_time': self.civil_time.isoformat(),
+      'canonical_instant': self.canonical_instant.isoformat(),
+      'longitude': self.longitude,
+      'apparent_time': self.apparent_time.isoformat(),
+    }
 
 
 def _parse_location(data: Mapping[str, object]) -> tuple[datetime, float]:

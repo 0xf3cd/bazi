@@ -112,16 +112,54 @@ Defaults are `CELESTIAL` with day precision. `hko` provides date-level calendar 
 and supported date ranges are documented in the calendar modules; selecting a backend
 does not install its offline generator.
 
+### 出生归属与时间读取
+
+年/月柱与大运数节共用出生精度归属：DAY 的整个交节日归新，HOUR 按时辰、MINUTE 按分钟
+相等归新。`Bazi.bracketing_jies` 返回出生月所属开月节及其下一节，保留后端原始时刻。
+提前归属时，开月节可以在出生之后；逆排数节的负间隔钳零，首运年标签不早于出生干支年。
+HKO 仍采用午夜节时刻，地点 DAY、地点 ALGO2 仍不支持。
+
+例如默认盘输入 `2000-02-04 10:00`，年/月柱为庚辰/戊寅，所属节为立春
+`2000-02-04T20:40:23`，下一节为惊蛰 `2000-03-05T14:42:39`。男性顺排起运为
+`2010-02-25T07:09:05`；女性逆排钳在出生时刻 `2000-02-04T10:00:00`。
+旧版 DAY 在真实交节前数向旧节的例外已删除，派生起运、小运及大运 JSON 因此可能改变。
+`BaziChart.from_json` 按当前版本重算并核对完整记录；迁移旧记录时须从原出生输入重新建盘，
+不能把旧派生值视作跨版本兼容记录。
+
+```python
+from bazi.calendar.dates import GanzhiYearMonth
+
+assert chart.bazi.ganzhi_year_month == GanzhiYearMonth(1999, 11)
+reference = located.reference_datetime
+facts = located.location_time
+assert facts is not None
+print(facts.canonical_instant, facts.civil_time, facts.apparent_time)
+print(located.solar_datetime, reference)
+```
+
+`GanzhiYearMonth` 是可排序的不可变干支年月坐标，月序为 1（寅）至 12（丑），不带归属粒度
+或历法支持窗口；`from_dizhi` 接月支，`from_jie` 接真实开月节，拒绝中气。
+出生坐标由 `ganzhi_year_month` 提供，物理大运边界和时刻流运仍按真实节归属；月、日期、
+时刻查询各自保留支持端点，不与出生日期窗口合并。
+
+`reference_datetime` 为节表、大运及流运共用参考时刻：默认盘采用分钟截断民用标签，地点盘
+采用保留秒/微秒的 naive UTC+08 标签。`location_time` 为不可变 `LocationTime`，默认盘返回
+`None`；地点盘提供 UTC 绝对瞬间、固定出生偏移民用钟、经度及未截断真太阳钟，`json` 返回
+独立时间字段字典。分钟显示钟仍为 `solar_datetime`。读取这些事实不生成整盘 JSON。
+真实“出生时刻前一节/后一节”用 `reference_datetime` 查询历法 `prev_jie` / `next_jie`，
+不会用提前归属节替代物理前后节。
+
 ## Interfaces
 
 Use the defining modules rather than expecting classes at the package root:
 
 | Module | Principal interfaces |
 | --- | --- |
-| `bazi.bazi` | `Bazi`, `BaziGender` |
+| `bazi.bazi` | `Bazi`, `BaziGender`, `LocationTime`, `LocationTimeJson` |
 | `bazi.bazi_chart` | `BaziChart`, `BaziJson`, JSON restoration with `from_json` |
 | `bazi.school` | `BaziConfig`, `BaziSchool`, precision and school options |
 | `bazi.calendar` | `CalendarBackend`, `CalendarDate`, `CalendarType`, `calendar_utils_of` |
+| `bazi.calendar.dates` | `GanzhiYearMonth`, `JieqiTime` |
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
 | `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |

@@ -49,6 +49,7 @@ def main() -> int:
   from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
   from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
+  from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
@@ -539,7 +540,42 @@ def main() -> int:
      partial(Bazi, datetime(2200, 1, 1, tzinfo=UTC), BaziGender.男, location_config, longitude=0.0)),
   ])
 
+  checks.extend([
+    ('GanzhiYearMonth wrong year', TypeError, partial(GanzhiYearMonth, '2000', 1)), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong month type', TypeError, partial(GanzhiYearMonth, 2000, '1')), # type: ignore[arg-type]
+    ('GanzhiYearMonth zero-based month', ValueError, partial(GanzhiYearMonth, 2000, 0)),
+    ('GanzhiYearMonth month above range', ValueError, partial(GanzhiYearMonth, 2000, 13)),
+    ('GanzhiYearMonth wrong branch', TypeError, partial(GanzhiYearMonth.from_dizhi, 2000, '寅')), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie container', TypeError, partial(GanzhiYearMonth.from_jie, None)), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie member', TypeError,
+     partial(GanzhiYearMonth.from_jie, JieqiTime('立春', datetime(2000, 2, 4)))), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie moment', TypeError,
+     partial(GanzhiYearMonth.from_jie, JieqiTime(Jieqi.立春, '2000-02-04'))), # type: ignore[arg-type]
+    ('GanzhiYearMonth 中气', ValueError, partial(GanzhiYearMonth.from_jie, JieqiTime(Jieqi.雨水, datetime(2000, 2, 19)))),
+    ('GanzhiYearMonth readonly month', AttributeError, partial(setattr, GanzhiYearMonth(2000, 1), 'month', 12)),
+    ('Bazi readonly reference', AttributeError, partial(setattr, local_chart.bazi, 'reference_datetime', datetime(2000, 1, 1))),
+    ('LocationTime readonly facts', AttributeError, partial(setattr, local_chart.bazi.location_time, 'longitude', 0.0)),
+  ])
   failures: list[str] = []
+  for gender, expected_start, expected_first, expected_xiaoyun in (
+    ('male', datetime(2010, 2, 25, 7, 9, 5), 2010, 11),
+    ('female', datetime(2000, 2, 4, 10), 2000, 1),
+  ):
+    day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))
+    if (day_chart.bazi.ganzhi_year_month != GanzhiYearMonth(2000, 1)
+        or day_chart.bazi.bracketing_jies[0] != JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
+        or day_chart.dayun_start_moment != expected_start
+        or next(day_chart.dayun).ganzhi_year != expected_first or len(day_chart.xiaoyun) != expected_xiaoyun):
+      failures.append(f'Optimized DAY ownership/counting failed: {gender}')
+    old_data = day_chart.json
+    old_data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
+    checks.append((f'Old DAY derived JSON {gender}', ValueError, partial(BaziChart.from_json, old_data)))
+  facts = local_chart.bazi.location_time
+  if (facts is None or facts.canonical_instant != datetime(2023, 12, 31, 22, tzinfo=UTC)
+      or facts.civil_time.isoformat() != '2024-01-01T12:00:00+14:00'
+      or local_chart.bazi.reference_datetime != datetime(2024, 1, 1, 6)
+      or Bazi.create('2000-01-01 12:00', 'male').location_time is not None):
+    failures.append('Optimized time facts mixed coordinates')
   for label, birth, basis in (
     ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
@@ -591,7 +627,7 @@ def main() -> int:
   if recovered.criterion != local_result.criterion or recovered.occurrences != local_result.occurrences:
     failures.append('Optimized observation recovery recalculated stored observations')
   location_bazi = local_chart.bazi
-  for moment in (location_bazi._reference_datetime, location_bazi.solar_datetime):
+  for moment in (location_bazi.reference_datetime, location_bazi.solar_datetime):
     legacy_bazi = Bazi.create(moment, 'female', location_config)
     if not (legacy_bazi != location_bazi and location_bazi != legacy_bazi and len({legacy_bazi, location_bazi}) == 2):
       failures.append('Optimized legacy/location identity partition failed')

@@ -1,5 +1,12 @@
 # bazi 1.0.0
 
+- DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
+  旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。
+  此默认变化会改变起运、小运与大运派生 JSON；旧记录需以原出生输入重新建盘后核验。
+- 新增不可变 `GanzhiYearMonth` 领域坐标，以及 `Bazi.ganzhi_year_month`、
+  `reference_datetime`、`location_time` 只读接口。地点时间事实区分 UTC 瞬间、固定出生偏移、
+  未截断真太阳钟与分钟显示钟；展示直接格式化模型事实，真实前后节仍查物理时刻。
+
 - Installable `bazi` package with modular imports, Python 3.11+, inline typing and
   no runtime dependencies. Source imports now use `bazi.*`, not `src.*`.
 - The wheel bundles the two encoded HKO tables and four celestial tables. The

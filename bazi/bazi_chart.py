@@ -15,13 +15,13 @@ from .data_types import (
   HiddenTianganDict, BaziData, GanzhiData,
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
-from .bazi import Bazi, BaziGender, _LocationTimeJson, _location_json, _parse_location
+from .bazi import Bazi, BaziGender, LocationTimeJson, _parse_location
 from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG, _config_json
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
+from .calendar.dates import GanzhiYearMonth
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year,
-  _ganzhi_year_month_of_jie,
 )
 
 
@@ -149,7 +149,7 @@ class BaziJson:
     默认盘名册，出生时刻为截断到分钟的民用标签。'''
     birth_time: str
 
-  class LocationBaziChartJsonDict(_CommonChartJsonDict, _LocationTimeJson):
+  class LocationBaziChartJsonDict(_CommonChartJsonDict, LocationTimeJson):
     '''The location-aware roster. Strings use the emitter's exact ISO 8601 spelling.
     地点盘名册；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
 
@@ -498,18 +498,15 @@ class BaziChart:
     Location-aware charts return a naive UTC+08:00 label, not apparent solar time.
     地点盘返回东八区无时区标签，不是真太阳时。
     '''
-    birthtime: Final[datetime] = self._bazi._reference_datetime
+    birthtime: Final[datetime] = self._bazi.reference_datetime
 
     def __gap() -> timedelta:
-      # Count from `Bazi.bracketing_jies`: under HOUR/MINUTE that is exactly the jie owning
-      # the month pillar; under DAY it keeps the adjudicated moment-level counting, which on
-      # a jieqi's day can legitimately name a different jie (see `Bazi.bracketing_jies`).
+      # All precisions count from the month pillar's owning/following Jie.
       prev_j, next_j = self._bazi.bracketing_jies
       if self.dayun_order:
         return next_j.moment - birthtime
-      # Ties go new, so under HOUR/MINUTE the owning jie's true moment can fall up to one
-      # granularity unit *after* the birth; the dayun then starts at the birth itself. For
-      # DAY, `prev_jie(birthtime).moment <= birthtime` always holds and the clamp is inert.
+      # Ties go new: the owning Jie's true moment can follow birth under DAY/HOUR/MINUTE.
+      # Reverse counting clamps that negative interval to zero.
       return max(timedelta(0), birthtime - prev_j.moment)
     
     def __diff() -> timedelta:
@@ -523,7 +520,7 @@ class BaziChart:
     '''Return the Ganzhi year containing `moment`, as determined by its owning Jie.
     按所属节返回 `moment` 所在的干支年。'''
     assert isinstance(moment, datetime)
-    return _ganzhi_year_month_of_jie(self._utils.prev_jie(moment))[0]
+    return GanzhiYearMonth.from_jie(self._utils.prev_jie(moment)).year
 
   @property
   def _dayun_empty_timeline_message(self) -> str:
@@ -536,11 +533,8 @@ class BaziChart:
   def _dayun_first_year_label(self) -> int:
     '''
     The shared first Dayun year label, independent of the later-year projection rule.
-    A HOUR chart can assign a cross-midnight 立春 tie to the new birth year while its
-    clamped start moment still lies on a civil date carrying the old day-level year. The
-    floor keeps that first Dayun aligned with the chart and leaves later labels untouched.
-    与后续年份投影规则无关的共享首步大运年份标签。HOUR 盘在跨午夜立春 tie 中可已归新出生年，
-    而压在出生时刻的首运仍落在日级旧年；首步下限使二者一致，且不向后续标签传播。
+    提前归属立春的命盘已归新年，钳在出生时刻的首运却可能仍在物理旧年。
+    首步标签取出生干支年为下限，后续标签仍按真实起点投影，不传播此下限。
     '''
     first, last = self._utils.supported_jie_boundaries()
     first_start_moment: Final[datetime] = self._dayun_start_moment_at(0)
@@ -695,13 +689,14 @@ class BaziChart:
       'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
       'transits': transits,
     }
-    if self._bazi.longitude is None:
+    location_time = self._bazi.location_time
+    if location_time is None:
       return {
         'birth_time': self._bazi.solar_datetime.isoformat(),
         **common,
       }
     return {
-      **_location_json(self._bazi),
+      **location_time.json,
       **common,
     }
 

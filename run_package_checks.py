@@ -151,7 +151,9 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
   python = consumer(work / 'typing-venv', rebuilt)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom bazi.bazi import Bazi\nfrom bazi.bazi_chart import BaziChart, BaziJson\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom bazi.bazi import Bazi, LocationTime, LocationTimeJson\nfrom bazi.bazi_chart import BaziChart, BaziJson\n'
+          'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime\n'
+          'from bazi.defines import Dizhi, Jieqi\n'
           'from bazi.school import BaziConfig\n'
           'from bazi.knowledge import KnowledgeBase, KnowledgeEntry\n'
           'from bazi.context_matching import ContextProfile, ContextResult, evaluate_context\n'
@@ -167,14 +169,29 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
            'local_chart: BaziChart = BaziChart.from_json(BaziChart(local).json)\n'
             'local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
             'roster: BaziJson.BaziChartJsonDict = local_chart.json\n'
-            'pillars: BaziJson.FourPillars = roster["pillars"]\n')
+             'pillars: BaziJson.FourPillars = roster["pillars"]\n'
+             'coordinate: GanzhiYearMonth = local.ganzhi_year_month\n'
+             'from_branch: GanzhiYearMonth = GanzhiYearMonth.from_dizhi(2000, Dizhi.寅)\n'
+             'from_jie: GanzhiYearMonth = GanzhiYearMonth.from_jie(JieqiTime(Jieqi.立春, datetime(2000, 2, 4)))\n'
+             'reference: datetime = local.reference_datetime\n'
+             'facts: LocationTime | None = local.location_time\n'
+             'if facts is not None:\n'
+             '  instant: datetime = facts.canonical_instant\n'
+             '  civil: datetime = facts.civil_time\n'
+             '  apparent: datetime = facts.apparent_time\n'
+             '  location_json: LocationTimeJson = facts.json\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
   bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
                 'knowledge.query(object_id=42)\nContextProfile("dayun")\n'
                 'evaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n'
                 'def unsafe_birth(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["birth_time"]\n'
-                'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n')
+                 'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
+                 'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
+                 'GanzhiYearMonth.from_jie(datetime.now())\n'
+                 'local.reference_datetime = datetime.now()\n'
+                 'coordinate.month = 0\n'
+                 'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
   command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
   run([*command, 'good.py'], foreign)
@@ -188,9 +205,12 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   print(result.stderr, end='')
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json'):
+  for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
+  for message in ('read-only', '"None"', 'reference_datetime', 'month'):
+    if message not in result.stdout:
+      raise ValueError(f'Installed time typing negative control missed {message}')
   for roster, key in (('LocationBaziChartJsonDict', 'birth_time'), ('DefaultBaziChartJsonDict', 'apparent_time')):
     if f'TypedDict "{roster}" has no key "{key}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {roster}.{key}')

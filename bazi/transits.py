@@ -4,18 +4,18 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum, unique
-from typing import Final
+from typing import Final, TypeVar
 
 from .common import check_declared_types, frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
-from .utils.bazi_utils import _ganzhi_month_offset, _ganzhi_year_month_of_jie
+from .calendar.dates import GanzhiYearMonth
 
 
 '''An orderable projection shared by a query and its physical Dayun boundaries.'''
-_DayunKey = tuple[int, ...]
+_DayunKey = TypeVar('_DayunKey', GanzhiYearMonth, tuple[int, ...])
 
 
 class DayunDatabase:
@@ -133,10 +133,7 @@ class TransitDatabase:
     # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
     # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one.
     self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
-    self._birth_month_key: Final[tuple[int, int]] = (
-      bazi.ganzhi_year,
-      _ganzhi_month_offset(bazi.month_commander),
-    )
+    self._birth_month_key: Final[GanzhiYearMonth] = bazi.ganzhi_year_month
     self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
@@ -170,7 +167,7 @@ class TransitDatabase:
     query_key: _DayunKey,
     start_key: Callable[[int, DayunTuple], _DayunKey],
   ) -> Ganzhi | None:
-    assert isinstance(query_key, tuple)
+    assert isinstance(query_key, (GanzhiYearMonth, tuple))
     assert callable(start_key)
 
     for index in reversed(range(len(self._dayuns))):
@@ -183,20 +180,19 @@ class TransitDatabase:
     assert isinstance(gz_year, int)
     assert isinstance(gz_month, Dizhi)
 
-    def __start_key(index: int, dayun: DayunTuple) -> _DayunKey:
-      year, month = _ganzhi_year_month_of_jie(self._utils.prev_jie(dayun.start_moment))
-      key = (year, month - 1)
+    def __start_key(index: int, dayun: DayunTuple) -> GanzhiYearMonth:
+      key = GanzhiYearMonth.from_jie(self._utils.prev_jie(dayun.start_moment))
       return max(key, self._birth_month_key) if index == 0 else key
 
     return self._physical_dayun(
-      (gz_year, _ganzhi_month_offset(gz_month)),
+      GanzhiYearMonth.from_dizhi(gz_year, gz_month),
       __start_key,
     )
 
   def _dayun_at_date(self, solar_date: date) -> Ganzhi | None:
     assert type(solar_date) is date
 
-    def __start_key(_index: int, dayun: DayunTuple) -> _DayunKey:
+    def __start_key(_index: int, dayun: DayunTuple) -> tuple[int, ...]:
       start = dayun.start_moment.date()
       return start.year, start.month, start.day
 
@@ -209,7 +205,7 @@ class TransitDatabase:
     assert isinstance(solar_moment, datetime)
     assert solar_moment.tzinfo is None
 
-    def __key(moment: datetime) -> _DayunKey:
+    def __key(moment: datetime) -> tuple[int, ...]:
       whole_second = moment.replace(microsecond=0)
       return (
         whole_second.year, whole_second.month, whole_second.day,

@@ -111,6 +111,7 @@ def main() -> None:
   from bazi.school import BaziConfig
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
+  from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
   from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen, Dizhi
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
@@ -175,6 +176,37 @@ def main() -> None:
   ))
   check(alternate.bazi == kiritimati.bazi and hash(alternate.bazi) == hash(kiritimati.bazi), 'Installed explicit civil identity mismatch')
   check(alternate.json == kiritimati.json and BaziChart.from_json(kiritimati.json).json == kiritimati.json, 'Installed civil JSON mismatch')
+  facts = kiritimati.bazi.location_time
+  check(facts is not None, 'Installed location facts missing')
+  if facts is None:
+    raise RuntimeError('Installed location facts missing')
+  check(facts.canonical_instant == datetime(2023, 12, 31, 22, tzinfo=UTC), 'Installed UTC time facts mismatch')
+  check(facts.civil_time.isoformat() == '2024-01-01T12:00:00+14:00', 'Installed frozen civil time mismatch')
+  check(facts.apparent_time.isoformat() == '2024-01-01T11:27:21.883333', 'Installed apparent time facts mismatch')
+  check(kiritimati.bazi.reference_datetime == datetime(2024, 1, 1, 6), 'Installed reference coordinate mismatch')
+  for gender, start, first_label in (
+    ('male', datetime(2010, 2, 25, 7, 9, 5), 2010), ('female', datetime(2000, 2, 4, 10), 2000),
+  ):
+    day = BaziChart(Bazi.create('2000-02-04 10:00', gender))
+    check(day.bazi.ganzhi_year_month == GanzhiYearMonth(2000, 1), 'Installed DAY month mismatch')
+    check(day.bazi.bracketing_jies[0] == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23)), 'Installed DAY Jie mismatch')
+    check(day.dayun_start_moment == start and next(day.dayun).ganzhi_year == first_label, 'Installed DAY counting mismatch')
+    check(BaziChart.from_json(day.json).json == day.json, 'Installed DAY restoration mismatch')
+    check(day.bazi.location_time is None, 'Default birth acquired location facts')
+  for operation, expected_time_error in (
+    (lambda: GanzhiYearMonth(2000, 0), ValueError),
+    (lambda: GanzhiYearMonth(2000, '1'), TypeError), # type: ignore[arg-type]
+    (lambda: GanzhiYearMonth.from_dizhi(2000, '寅'), TypeError), # type: ignore[arg-type]
+    (lambda: GanzhiYearMonth.from_jie(JieqiTime(Jieqi.雨水, datetime(2000, 2, 19))), ValueError),
+    (lambda: setattr(facts, 'longitude', 0.0), AttributeError),
+    (lambda: setattr(kiritimati.bazi, 'reference_datetime', datetime(2000, 1, 1)), AttributeError),
+  ):
+    try:
+      operation()
+    except expected_time_error:
+      pass
+    else:
+      raise RuntimeError('Installed time API negative control failed')
   location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
   check(json.loads(location_match.input_json)['civil_time'] == '2024-01-01T12:00:00+14:00', 'Installed context dropped civil basis')
   check(ContextResult.from_json(location_match.export_json()) == location_match, 'Installed location context restore mismatch')

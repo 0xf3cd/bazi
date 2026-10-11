@@ -316,34 +316,23 @@ def test_dayun_start_moment() -> None:
 
 
 def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
-  '''
-  The dayun consequence of the DAY trade-off pinned in `test_bazi`: a 00:00 birth on the
-  jieqi's civil day still sits in 小寒 at moment level, so the forward count walks the
-  whole way to 立春 and the first dayun starts in 2000.  The 22:01 golden in
-  `test_dayun_start_moment` is the same-day sibling past the true moment -- same
-  year/month/day pillars, but its bracketing starts at 立春 itself and the count walks on
-  to 惊蛰, landing in 2009.
-  '''
+  '''DAY 的顺排数至惊蛰；交节前逆排的负间隔钳零。'''
   delta: timedelta = timedelta(seconds=1)
 
   chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 0, 0), BaziGender.MALE))
   assert chart.dayun_start_moment == pytest.approx(
-    datetime(2000, 5, 18, 19, 13, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
+    datetime(2010, 4, 16, 13, 49, 5), # (惊蛰 03-05 14:42:39 - birth) * 365 / 3.
     abs=delta,
   )
-  assert next(chart.dayun).ganzhi_year == 2000
+  assert next(chart.dayun).ganzhi_year == 2010
+  reverse = BaziChart(Bazi.create('2000-02-04 00:00', 'female'))
+  assert reverse.dayun_start_moment == datetime(2000, 2, 4)
+  assert next(reverse.dayun).ganzhi_year == 2000
+  assert len(reverse.xiaoyun) == 1
 
 
 def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
-  '''
-  Same birth, same four pillars, different dayun start. celestial keeps moment-level jieqi
-  (the DAY trade-off pinned in `test_bazi`): the 10:00 birth still sits in 小寒, the count
-  walks to 立春, and the dayun starts in 2000. HKO places every jieqi at midnight, so the
-  same birth falls right after 立春@00:00 and the count walks to 惊蛰 -- the dayun starts
-  in 2009, ~9.7 years later. The divergence is the HKO table's documented midnight-window
-  behavior, pinned as-is; the HKO assertion doubles as the first absolute-moment golden
-  on the HKO side.
-  '''
+  '''三后端同属立春/惊蛰；HKO 的午夜占位仍导致不同起运时刻。'''
   delta: timedelta = timedelta(seconds=1)
 
   cel: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE,
@@ -356,14 +345,14 @@ def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
   assert list(hko.bazi.pillars) == list(cel.bazi.pillars)
 
   assert cel.dayun_start_moment == pytest.approx(
-    datetime(2000, 3, 29, 12, 33, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
+    datetime(2010, 2, 25, 7, 9, 5),
     abs=delta,
   )
   assert hko.dayun_start_moment == pytest.approx(
     datetime(2009, 12, 12, 17, 20),
     abs=delta,
   )
-  assert next(cel.dayun).ganzhi_year == 2000
+  assert next(cel.dayun).ganzhi_year == 2010
   assert next(hko.dayun).ganzhi_year == 2009
 
 

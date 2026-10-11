@@ -84,10 +84,10 @@ def test_civil_basis_identity_and_meridian_aliases() -> None:
 def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrecision) -> None:
   config = BaziConfig(precision=precision)
   location = Bazi.create('2000-01-01T12:34:00+00:00', 'female', config, longitude=0.0)
-  moment = location._reference_datetime if coordinate == 'reference' else location.solar_datetime
+  moment = location.reference_datetime if coordinate == 'reference' else location.solar_datetime
   legacy = Bazi.create(moment, 'female', config)
   if coordinate == 'reference':
-    assert legacy._reference_datetime == location._reference_datetime
+    assert legacy.reference_datetime == location.reference_datetime
   else:
     assert legacy.solar_datetime == location.solar_datetime
   assert legacy != location and location != legacy

@@ -6,7 +6,7 @@ from enum import Enum
 from typing import NamedTuple
 
 from ..common import check_declared_types
-from ..defines import Jieqi
+from ..defines import Dizhi, Jieqi
 
 class CalendarType(Enum):
   '''
@@ -97,3 +97,51 @@ class JieqiTime(NamedTuple):
   '''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
   jieqi:  Jieqi
   moment: datetime
+
+
+@dataclass(frozen=True, order=True)
+class GanzhiYearMonth:
+  '''干支年月坐标，以立春起年，月序为 1（寅）至 12（丑）。
+
+  Note:
+  - 坐标本身不限定历法表范围，也不指定出生、日期或时刻的归属粒度。
+  - 按年、月序排序；不与公历年月或 0-based 月偏移混用。
+  '''
+  year: int
+  month: int
+
+  def __post_init__(self) -> None:
+    check_declared_types(self)
+    if not 1 <= self.month <= 12:
+      raise ValueError(f'Unsupported Ganzhi month: {self.month}')
+
+  @property
+  def dizhi(self) -> Dizhi:
+    '''此干支月的月支。'''
+    return Dizhi.from_index((Dizhi.寅.index + self.month - 1) % 12)
+
+  @property
+  def opening_jie(self) -> tuple[int, Jieqi]:
+    '''开月节的公历年与节名；丑月由下一公历年的小寒开启。'''
+    return self.year + (self.month == 12), Jieqi.as_list(ganzhi_year=True)[2 * (self.month - 1)]
+
+  @classmethod
+  def from_dizhi(cls, year: int, dizhi: Dizhi) -> 'GanzhiYearMonth':
+    '''从干支年与月支构造坐标，不接受公历月份。'''
+    if not isinstance(dizhi, Dizhi):
+      raise TypeError(f'Expected Dizhi, got {type(dizhi)}')
+    return cls(year, (dizhi.index - Dizhi.寅.index) % 12 + 1)
+
+  @classmethod
+  def from_jie(cls, jie: JieqiTime) -> 'GanzhiYearMonth':
+    '''真实节所开启的干支年月；中气不能开启干支月。'''
+    if not isinstance(jie, JieqiTime):
+      raise TypeError(f'Expected JieqiTime, got {type(jie)}')
+    if not isinstance(jie.jieqi, Jieqi):
+      raise TypeError(f'Expected Jieqi, got {type(jie.jieqi)}')
+    if not isinstance(jie.moment, datetime):
+      raise TypeError(f'Expected datetime, got {type(jie.moment)}')
+    jies = Jieqi.as_list(ganzhi_year=True)[::2]
+    if jie.jieqi not in jies:
+      raise ValueError(f'Unsupported opening Jie: {jie.jieqi}')
+    return cls(jie.moment.year - (jie.jieqi is Jieqi.小寒), jies.index(jie.jieqi) + 1)

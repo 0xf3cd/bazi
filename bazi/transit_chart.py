@@ -7,11 +7,11 @@ from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart
 from .calendar import CalendarBackend, calendar_utils_of
 from .calendar.utils_protocol import CalendarUtilsProtocol
+from .calendar.dates import GanzhiYearMonth
 from .school import BaziPrecision
 from .utils.bazi_utils import (
   ganzhi_of_day, ganzhi_of_year, month_tiangan,
-  _ganzhi_of_day_at_moment, _ganzhi_month_dizhi, _ganzhi_month_offset,
-  _ganzhi_year_month_of_jie,
+  _ganzhi_of_day_at_moment,
 )
 from .transits import TransitSet, TransitDatabase
 
@@ -90,17 +90,15 @@ class TransitChart:
     if not isinstance(gz_month, Dizhi):
       raise TypeError(f'Expected Dizhi, got {type(gz_month)}')
 
-    query_key = (gz_year, _ganzhi_month_offset(gz_month))
+    query_key = GanzhiYearMonth.from_dizhi(gz_year, gz_month)
 
     first, last = self._utils.supported_jie_boundaries()
-    first_year, first_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(first))
+    supported_first_key = GanzhiYearMonth.from_jie(self._utils.prev_jie(first))
     last_supported = last - timedelta(microseconds=1)
-    last_year, last_month = _ganzhi_year_month_of_jie(
+    supported_last_key = GanzhiYearMonth.from_jie(
       self._utils.next_jie(last_supported)
     )
-    supported_first_key = (first_year, first_month - 1)
-    supported_last_key = (last_year, last_month - 1)
-    if query_key < max(self._transit_db._birth_month_key, supported_first_key) or query_key >= supported_last_key:
+    if query_key < max(self._bazi_chart.bazi.ganzhi_year_month, supported_first_key) or query_key >= supported_last_key:
       return None
     return self._transits(
       gz_year,
@@ -116,17 +114,17 @@ class TransitChart:
     下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。'''
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
-    if solar_date < self._bazi_chart.bazi._reference_datetime.date():
+    if solar_date < self._bazi_chart.bazi.reference_datetime.date():
       return None
     try:
       ganzhi_date = self._utils.to_ganzhi(solar_date)
     except ValueError:
       return None
-    month_dizhi = _ganzhi_month_dizhi(ganzhi_date.month)
+    year_month = GanzhiYearMonth(ganzhi_date.year, ganzhi_date.month)
     return self._transits(
       ganzhi_date.year,
       dayun=self._transit_db._dayun_at_date(solar_date),
-      gz_month=month_dizhi,
+      gz_month=year_month.dizhi,
       liuri=ganzhi_of_day(solar_date),
     )
 
@@ -160,17 +158,16 @@ class TransitChart:
       return None
 
     moment = solar_moment.replace(microsecond=0)
-    birth_moment = bazi._reference_datetime.replace(microsecond=0)
+    birth_moment = bazi.reference_datetime.replace(microsecond=0)
     first, last = self._utils.supported_jie_boundaries()
     if moment < birth_moment or not first <= moment < last:
       return None
 
-    gz_year, gz_month = _ganzhi_year_month_of_jie(self._utils.prev_jie(moment))
-    month_dizhi = _ganzhi_month_dizhi(gz_month)
+    year_month = GanzhiYearMonth.from_jie(self._utils.prev_jie(moment))
     return self._transits(
-      gz_year,
+      year_month.year,
       dayun=self._transit_db._dayun_at_moment(moment),
-      gz_month=month_dizhi,
+      gz_month=year_month.dizhi,
       liuri=_ganzhi_of_day_at_moment(moment, config.school.day_rollover),
     )
 
