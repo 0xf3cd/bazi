@@ -316,7 +316,7 @@ def test_dayun_start_moment() -> None:
 
 
 def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
-  '''DAY 的顺排数至惊蛰；交节前逆排的负间隔钳零。'''
+  '''DAY forward counting reaches 惊蛰; reverse counting before the true moment clamps to zero.'''
   delta: timedelta = timedelta(seconds=1)
 
   chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 0, 0), BaziGender.MALE))
@@ -332,7 +332,7 @@ def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
 
 
 def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
-  '''三后端同属立春/惊蛰；HKO 的午夜占位仍导致不同起运时刻。'''
+  '''Celestial and HKO share 立春/惊蛰 ownership; HKO's midnight placeholder changes the start.'''
   delta: timedelta = timedelta(seconds=1)
 
   cel: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE,

@@ -15,7 +15,6 @@
 - 新增 `object_id`、`DEFAULT_SOURCE_PATH` 和共用主体文字投影 `render_subject`。
   主体展示与全角色查询分开，旧位置顺序与语料顺序分开；公开 `render` 接受调用方的
   `premise_verdict` 展示文字，不求值前提或改变输出资格。前提判别仍由 `evaluate_context` 执行。
-
 - Apparent-solar charts accept an aware birth time, longitude and optional birth-region
   `civil_timezone`, with civil, UTC and apparent times retained in JSON. The wheel also
   bundles `equation_of_time.bin`. Dayun and transit queries use UTC+08:00 labels.

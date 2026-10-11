@@ -187,3 +187,14 @@ def test_demo_and_interpreter_gate_pass_fixed_seeds(monkeypatch: pytest.MonkeyPa
     [sys.executable, str(Path(__file__).parents[1] / script), '--seed', '236']
     for script in ('run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py')
   ]
+
+
+def test_pytest_arguments_keep_failure_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  run_tests = runner['run_tests']
+  main = Mock(return_value=0)
+  monkeypatch.setitem(run_tests.__globals__, 'pytest', SimpleNamespace(main=main))
+  assert run_tests() == 0
+  arguments = main.call_args.args[0]
+  assert '-x' in arguments and '--showlocals' in arguments

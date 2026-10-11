@@ -130,3 +130,30 @@ def test_runner_binds_every_consumer_to_its_seeded_chart(
     observed.append(chart)
   receivers = {id(chart): chart for chart in observed}
   assert all(chart.json == expected for chart in receivers.values())
+
+
+@pytest.mark.parametrize('script', ['run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py'])
+def test_runner_automatic_seed_is_printed_and_replayable(tmp_path: Path, script: str) -> None:
+  path = Path(__file__).resolve().parents[1] / script
+  command = [sys.executable, str(path)]
+  first = subprocess.run(
+    command,
+    cwd=tmp_path,
+    capture_output=True,
+    text=True,
+    encoding='utf-8',
+    check=True,
+  )
+  seed_line = first.stdout.splitlines()[0]
+  assert seed_line.startswith('random seed: ')
+  seed = int(seed_line.removeprefix('random seed: '))
+  replay = subprocess.run(
+    [*command, '--seed', str(seed)],
+    cwd=tmp_path,
+    capture_output=True,
+    text=True,
+    encoding='utf-8',
+    check=True,
+  )
+  assert replay.stdout == first.stdout
+  assert list(tmp_path.iterdir()) == []

@@ -535,7 +535,7 @@ class BaziChart:
     The shared first Dayun year label, independent of the later-year projection rule.
     提前归属立春的命盘已归新年，钳在出生时刻的首运却可能仍在物理旧年。
     首步标签取出生干支年为下限；JIE_PROJECTED 后续标签独立按真实起点投影，
-    FIXED_DECADE 后续标签为首标签加 10i。
+    FIXED_DECADE 后续标签按首标签每步递增 10 年。
     '''
     first, last = self._utils.supported_jie_boundaries()
     first_start_moment: Final[datetime] = self._dayun_start_moment_at(0)

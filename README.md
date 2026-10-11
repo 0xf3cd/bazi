@@ -180,7 +180,7 @@ baseline with configuration-specific results and an offline regression test.
 ### 知识接口迁移
 
 `bazi.descriptions`、`bazi.interpreter` 及其枚举、重复记录、字段表和 `Interpreter` 方法已删除，
-这是破坏性 API 变更。调用方改用现代记录，不再返回旧字段字典或可变文字列表。
+这是破坏性 API 变更。调用方改用现代记录；新接口不再返回旧字段字典或可变文字列表。
 源码脚本 `run_interpreter.py` 继续提供命盘展示、知识查询和导出，没有安装 CLI。
 
 ```python
