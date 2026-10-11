@@ -56,8 +56,7 @@ the producer commit with `git rev-parse <reference.commit>:bazi`.
 It identifies the recorded producer, not the freshness of the current checkout;
 later code changes that reproduce the same snapshots do not change this identity.
 The offline regression tests compare current results without requiring old Git objects
-in a shallow clone. The retired `runtime_sha256` had no defined preimage and is no
-longer used.
+in a shallow clone. `runtime_tree` replaces the former opaque runtime fingerprint.
 
 ## Reading differences
 
