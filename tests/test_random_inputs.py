@@ -8,7 +8,7 @@ import subprocess
 import sys
 from hashlib import sha256
 from pathlib import Path
-from typing import get_type_hints
+from typing import cast, get_type_hints
 from unittest.mock import Mock
 
 import pytest
@@ -104,8 +104,19 @@ def test_runner_binds_every_consumer_to_its_seeded_chart(
       observed.append(chart)
       transit_init(self, chart)
 
+    def observed_property(name: str) -> property:
+      descriptor = inspect.getattr_static(BaziChart, name)
+
+      def read(chart: BaziChart) -> object:
+        observed.append(chart)
+        return cast(object, descriptor.__get__(chart, BaziChart))
+
+      return property(read)
+
     monkeypatch.setattr(RelationshipAnalyzer, '__init__', observe_analyzer)
     monkeypatch.setattr(TransitChart, '__init__', observe_transit)
+    monkeypatch.setattr(BaziChart, 'house_of_relationship', observed_property('house_of_relationship'))
+    monkeypatch.setattr(BaziChart, 'relationship_stars', observed_property('relationship_stars'))
     monkeypatch.setattr(sys, 'argv', ['run_relationship_analyzer.py', '--seed', str(seed)])
     runpy.run_path(
       str(Path(__file__).resolve().parents[1] / 'run_relationship_analyzer.py'),
@@ -116,4 +127,4 @@ def test_runner_binds_every_consumer_to_its_seeded_chart(
     chart = call.args[0]
     assert isinstance(chart, BaziChart)
     observed.append(chart)
-  assert all(chart.json == expected for chart in observed)
+  assert all(chart.json == expected for chart in tuple(observed))

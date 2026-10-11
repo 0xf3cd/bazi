@@ -221,7 +221,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
-  for message in ('read-only', '"None"'):
+  for message in ('"None"',):
     if message not in result.stdout:
       raise ValueError(f'Installed time typing negative control missed {message}')
   for owner_name, attribute_name in (
@@ -230,8 +230,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     ('GanzhiYearMonth', 'month'),
     ('KnowledgeSource', 'work'),
   ):
-    message = f'Property "{attribute_name}" defined in "{owner_name}" is read-only'
-    if message not in result.stdout:
+    message = f'Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
+    if not any(line.partition(': error: ')[2] == message for line in result.stdout.splitlines()):
       raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
   if 'Unsupported target for indexed assignment' not in result.stdout:
     raise ValueError('Installed knowledge typing negative control missed indexed assignment')
