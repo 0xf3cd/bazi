@@ -279,13 +279,13 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
 
 def nayin_str(gz: Ganzhi) -> str:
   '''
-  Get the Nayin string of the given Ganzhi (i.e. pillar).
-  输入干支，返回干支对应的纳音。
+  返回六十甲子干支对应的纳音；不属于六十甲子的组合抛出 `ValueError`。
+  `Ganzhi` 本身允许全部 120 种天干、地支组合，本入口单独检查纳音的适用性。
 
   Args:
-  - gz: (Ganzhi) The Ganzhi / pillar.
+  - gz: (Ganzhi) 待查纳音的干支。
 
-  Return: (str) The Nayin string of the given Ganzhi.
+  Return: (str) 对应的纳音。
 
   Example:
   - nayin_str(Ganzhi.from_str("甲子")) -> "海中金"
@@ -296,7 +296,8 @@ def nayin_str(gz: Ganzhi) -> str:
   
   tg, dz = gz
   tg_traits, dz_traits = traits(tg), traits(dz)
-  assert tg_traits.yinyang == dz_traits.yinyang # The yinyang of Tiangan and Dizhi should be the same.
+  if tg_traits.yinyang != dz_traits.yinyang:
+    raise ValueError(f'Unsupported Ganzhi for Nayin: {gz}')
 
   return BaziRules.NAYIN[gz]
 

@@ -346,30 +346,32 @@ class Bazi:
     return bazi
   
   @staticmethod
-  def random(config: BaziConfig = DEFAULT_CONFIG) -> 'Bazi':
+  def random(config: BaziConfig = DEFAULT_CONFIG, *, rng: random.Random | None = None) -> 'Bazi':
     '''
-    Staticmethod that creates a random `Bazi` object. Mainly for testing purpose.
     随机生成一个 `Bazi`，主要用于测试。
 
     Note:
-    - The year is in [1902, 2080], and day is in [1, 28].
-      年份范围为 [1902, 2080]，日期范围为 [1, 28]。
+    - 年份范围为 [1902, 2080]，日期范围为 [1, 28]。
+    - 指定局部 `rng` 可重放样本且不改变全局随机状态；省略时沿用 `random` 模块的种子语义。
 
     Args:
-    - config: (BaziConfig) The chart-level configuration, passed to `Bazi.create`.
-      命盘级配置，传给 `Bazi.create`。
+    - config: (BaziConfig) 命盘级配置，传给 `Bazi.create`。
+    - rng: (random.Random | None) 局部随机源；`None` 使用 `random` 模块。
 
-    Return: (Bazi) The generated Bazi / 随机八字。
+    Return: (Bazi) 随机八字。
     '''
+    if rng is not None and not isinstance(rng, random.Random):
+      raise TypeError(f'Expected Random, got {type(rng)}')
+    source = random if rng is None else rng
     return Bazi.create(
       birth_time=datetime(
-        year=random.randint(1902, 2080),
-        month=random.randint(1, 12),
-        day=random.randint(1, 28),
-        hour=random.randint(0, 23),
-        minute=random.randint(0, 59),
+        year=source.randint(1902, 2080),
+        month=source.randint(1, 12),
+        day=source.randint(1, 28),
+        hour=source.randint(0, 23),
+        minute=source.randint(0, 59),
       ),
-      gender=random.choice(list(BaziGender)),
+      gender=source.choice(list(BaziGender)),
       config=config,
     )
 

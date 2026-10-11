@@ -126,7 +126,7 @@ def test_list_sexagenary_cycle_strs() -> None:
     assert gz_str == f'{tg_list[i % 10]}{dz_list[i % 12]}'
 
 
-def test_ganzhi_next_prev() -> None:
+def test_ganzhi_next_prev(rng: random.Random) -> None:
   # Negative.
   with pytest.raises(TypeError):
     Ganzhi(Tiangan.甲, Dizhi.子).next('1') # type: ignore[arg-type] # Deliberately invalid input.
@@ -139,8 +139,8 @@ def test_ganzhi_next_prev() -> None:
 
   def __random_gz() -> Ganzhi:
     while True:
-      tg: Tiangan = random.choice(Tiangan.as_list())
-      dz: Dizhi = random.choice(Dizhi.as_list())
+      tg: Tiangan = rng.choice(Tiangan.as_list())
+      dz: Dizhi = rng.choice(Dizhi.as_list())
       if (tg.index % 2) == (dz.index % 2):
         return Ganzhi(tg, dz)
 
@@ -158,7 +158,7 @@ def test_ganzhi_next_prev() -> None:
     assert random_gz1 == random_gz1.prev(0)
     assert random_gz1 == random_gz1.prev(60)
 
-    random_int: int = random.randint(-1000, 1000)
+    random_int: int = rng.randint(-1000, 1000)
     assert random_gz1.next(random_int) == cycle[(cycle.index(random_gz1) + random_int) % 60]
     assert random_gz1.prev(random_int) == cycle[(cycle.index(random_gz1) - random_int) % 60]
 
@@ -171,7 +171,7 @@ def test_ganzhi_next_prev() -> None:
   for _ in range(16):
     random_gz2: Ganzhi = __random_gz()
     for __ in range(16):
-      x: int = random.randint(-1000, 1000)
+      x: int = rng.randint(-1000, 1000)
       assert random_gz2 == random_gz2.next(x).prev(x)
       assert random_gz2 == random_gz2.prev(x).next(x)
       assert random_gz2.next(x) == random_gz2.prev(-x)

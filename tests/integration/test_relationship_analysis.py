@@ -40,10 +40,10 @@ def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
   return transits
 
 
-def _random_year_transits(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+def _random_year_transits(transit_chart: TransitChart, gz_year: int, rng: random.Random) -> TransitSet:
   full_transits = _at_year(transit_chart, gz_year)
   available = tuple(full_transits)
-  selected = random.sample(available, random.randint(1, len(available)))
+  selected = rng.sample(available, rng.randint(1, len(available)))
   return full_transits.select(*selected)
 
 
@@ -387,7 +387,7 @@ def test_case1() -> None:
   assert not transits.star(transits_2031).dizhi
 
 
-def test_case2() -> None:
+def test_case2(rng: random.Random) -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
     birth_time=datetime(2020, 7, 2, 19, 8),
@@ -482,8 +482,8 @@ def test_case2() -> None:
   }
 
   for _ in range(50):
-    random_year = random.randint(birth_gz_year, birth_gz_year + 200)
-    selected_transits = _random_year_transits(transit_chart, random_year)
+    random_year = rng.randint(birth_gz_year, birth_gz_year + 200)
+    selected_transits = _random_year_transits(transit_chart, random_year, rng)
     transits_gz = selected_transits.ganzhis
     transits_dz = {gz.dizhi for gz in transits_gz}
 
@@ -500,7 +500,7 @@ def test_case2() -> None:
     TianganRelation.冲 : {Tiangan.壬},
   }
 
-  for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
+  for year in rng.sample(range(birth_gz_year, birth_gz_year + 600), 100):
     year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
@@ -531,7 +531,7 @@ def test_case2() -> None:
     DizhiRelation.克 : [{Dizhi.子}, {Dizhi.亥}, {Dizhi.申}, {Dizhi.酉}],
   }
 
-  for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
+  for year in rng.sample(range(birth_gz_year, birth_gz_year + 600), 100):
     year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
@@ -573,7 +573,7 @@ def test_case2() -> None:
   # The oracle mirrors the analyzer by reading the chart's school profile (issue #69).
   school: BaziSchool = chart.bazi.config.school
 
-  for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
+  for year in rng.sample(range(birth_gz_year, birth_gz_year + 600), 100):
     year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
@@ -647,7 +647,7 @@ def test_case2() -> None:
   assert is_zhengyin(Tiangan.乙)
   assert is_zhengyin(Dizhi.卯)
 
-  for year in random.sample(range(birth_gz_year, birth_gz_year + 600), 100):
+  for year in rng.sample(range(birth_gz_year, birth_gz_year + 600), 100):
     year_transits = _at_year(transit_chart, year)
     for kind in year_transits:
       selected_transits = year_transits.select(kind)
@@ -664,8 +664,16 @@ def test_case2() -> None:
       assert star_result.dizhi == any(is_star(dz) for dz in transits_dz)
 
 
-@pytest.mark.parametrize('bazi', [Bazi.random() for _ in range(5)])
-def test_random_cases(bazi: Bazi) -> None:
+@pytest.mark.parametrize('bazi', [
+  pytest.param(
+    bazi,
+    id=f'seed={seed}-birth={bazi.solar_datetime.isoformat()}-gender={bazi.gender}',
+  )
+  for seed in range(236, 241)
+  for bazi in (Bazi.random(rng=random.Random(seed)),)
+])
+def test_random_cases(bazi: Bazi, rng: random.Random) -> None:
+  print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
   chart = BaziChart(bazi)
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
   house = chart.house_of_relationship

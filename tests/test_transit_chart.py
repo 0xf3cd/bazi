@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_transit_chart.py
 
+import random
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -16,21 +17,21 @@ from bazi.transits import TransitKind, TransitSet
 from bazi.utils.bazi_utils import ganzhi_of_day
 
 
-def test_basic() -> None:
+def test_basic(rng: random.Random) -> None:
   assert TransitChart is 流年大运
 
-  bazi_chart = BaziChart.random()
+  bazi_chart = BaziChart.random(rng=rng)
   transits = TransitChart(bazi_chart)
   assert bazi_chart.json == transits.bazi_chart.json
 
 
-def test_basic_negative() -> None:
+def test_basic_negative(rng: random.Random) -> None:
   with pytest.raises(TypeError):
-    TransitChart(BaziChart.random().bazi) # type: ignore
+    TransitChart(BaziChart.random(rng=rng).bazi) # type: ignore
   with pytest.raises(TypeError):
     TransitChart(datetime(2024, 1, 1)) # type: ignore
   with pytest.raises(AttributeError):
-    TransitChart(BaziChart.random()).bazi_chart = BaziChart.random() # type: ignore
+    TransitChart(BaziChart.random(rng=rng)).bazi_chart = BaziChart.random(rng=rng) # type: ignore
 
 
 def test_query_boundaries() -> None:
@@ -62,8 +63,8 @@ def test_queries_use_precision_attributed_birth_boundary() -> None:
   assert chart.at_month(2009, Dizhi.寅) is not None
 
 
-def test_query_types() -> None:
-  chart = TransitChart(BaziChart.random())
+def test_query_types(rng: random.Random) -> None:
+  chart = TransitChart(BaziChart.random(rng=rng))
   with pytest.raises(TypeError):
     chart.at_year('2024') # type: ignore
   with pytest.raises(TypeError):

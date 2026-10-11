@@ -35,7 +35,7 @@ def main() -> int:
   from fractions import Fraction
   from zoneinfo import ZoneInfo
 
-  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
+  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.interpreter import Interpreter
@@ -47,7 +47,7 @@ def main() -> int:
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
   from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
-  from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils
+  from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
@@ -110,6 +110,16 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('nayin_str rejects 甲丑', ValueError,
+     lambda: bazi_utils.nayin_str(Ganzhi.from_str('甲丑'))),
+    ('xing rejects four Dizhis', ValueError,
+     lambda: dizhi_utils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午)),
+    ('xing rejects five Dizhis', ValueError,
+     lambda: dizhi_utils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午)),
+    ('Bazi.random wrong rng', TypeError,
+     lambda: Bazi.random(rng=42)), # type: ignore[arg-type]
+    ('BaziChart.random wrong rng', TypeError,
+     lambda: BaziChart.random(rng=42)), # type: ignore[arg-type]
     ('Bazi.create civil timezone without longitude', ValueError,
      lambda: Bazi.create(datetime(2000, 1, 1), 'male', civil_timezone=civil_zone)),
     ('Bazi constructor civil timezone without longitude', ValueError,
@@ -435,6 +445,24 @@ def main() -> int:
      lambda: BaziConfig(dayun_year_rule='fixed_decade')), # type: ignore
   ]
 
+  sequence_iterators = []
+  for module, member, relation in (
+    (tiangan_utils, Tiangan.甲, TianganRelation.合),
+    (dizhi_utils, Dizhi.辰, DizhiRelation.刑),
+  ):
+    calls = (
+      partial(module.search, relation=relation),
+      module.discover,
+      partial(module.discover_mutual, []),
+      lambda values, module=module: module.discover_mutual(values, []),
+    )
+    for index, call in enumerate(calls):
+      label = f'{module.__name__} Sequence entry {index}'
+      values = iter((member,))
+      sequence_iterators.append((label, values, member))
+      checks.append((label, TypeError, partial(call, values)))
+      checks.append((label + ' empty iterator', TypeError, partial(call, iter(()))))
+
   for backend in CalendarBackend:
     utils = calendar_utils_of(backend)
     date_calls: list[tuple[str, object]] = [
@@ -582,6 +610,9 @@ def main() -> int:
     except Exception as e: # noqa: BLE001 # a smoke harness reports whatever actually leaked
       failures.append(f'{label}: {type(e).__name__} ({e}), expected {expected.__name__}')
 
+  for label, values, member in sequence_iterators:
+    if tuple(values) != (member,):
+      failures.append(f'{label}: rejected iterator was consumed')
   for line in failures:
     print(f'FAIL {line}')
   print(f'o_smoke: {len(checks) - len(failures)}/{len(checks)} public faces hold under -O.')

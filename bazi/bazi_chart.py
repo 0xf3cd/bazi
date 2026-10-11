@@ -3,6 +3,7 @@
 import copy
 import functools
 import itertools
+import random
 
 from calendar import monthrange
 from datetime import datetime, timedelta
@@ -178,17 +179,17 @@ class BaziChart:
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
-  def random(cls, config: BaziConfig = DEFAULT_CONFIG) -> 'BaziChart':
+  def random(cls, config: BaziConfig = DEFAULT_CONFIG, *, rng: random.Random | None = None) -> 'BaziChart':
     '''
-    Create a random chart using `Bazi.random`, mainly for testing.
     用 `Bazi.random` 随机生成命盘，主要用于测试。
 
     Args:
-    - config: (BaziConfig) The chart-level configuration / 命盘级配置。
+    - config: (BaziConfig) 原样传递的命盘配置。
+    - rng: (random.Random | None) 局部随机源；省略时沿用全局种子语义。
 
-    Return: (BaziChart) The generated chart / 随机命盘。
+    Return: (BaziChart) 随机命盘。
     '''
-    return cls(Bazi.random(config))
+    return cls(Bazi.random(config, rng=rng))
 
   @classmethod
   def from_json(cls, d: Mapping[str, object]) -> 'BaziChart':

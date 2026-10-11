@@ -33,8 +33,9 @@ def test_simple() -> None:
       assert db[year] == current
 
 
-def test_dayun_database() -> None:
-  chart = BaziChart.random()
+def test_dayun_database(rng: random.Random) -> None:
+  chart = BaziChart.random(rng=rng)
+  print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
   expected: dict[int, DayunTuple] = {}
   dayuns = tuple(chart.dayun)
   for current, following in itertools.pairwise(dayuns):
@@ -52,7 +53,7 @@ def test_dayun_database() -> None:
     db[dayuns[-1].ganzhi_year + 10]
 
   years = list(expected.keys())
-  for year in random.sample(years, 100):
+  for year in rng.sample(years, 100):
     assert db[year] == expected[year]
 
 
@@ -111,9 +112,10 @@ def test_transit_set_negative() -> None:
     transits.select(TransitKind.LIUNIAN, TransitKind.DAYUN)
 
 
-def test_transit_database() -> None:
+def test_transit_database(rng: random.Random) -> None:
   for _ in range(4):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     db = TransitDatabase(chart)
 
     with pytest.raises(TypeError):

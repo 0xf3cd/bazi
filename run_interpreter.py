@@ -325,9 +325,6 @@ def main(argv: list[str] | None = None) -> int:
     if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
       parser.error('--export-chart-json must not overlap generated TXT outputs')
 
-  if args.seed is not None:
-    random.seed(args.seed)
-
   charts: Iterable[BaziChart]
   if args.birth_time is not None:
     try:
@@ -335,7 +332,8 @@ def main(argv: list[str] | None = None) -> int:
     except (TypeError, ValueError) as error:
       parser.error(str(error))
   else:
-    charts = (BaziChart(Bazi.random()) for _ in range(count))
+    rng = random.Random(args.seed)
+    charts = (BaziChart(Bazi.random(rng=rng)) for _ in range(count))
 
   output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   if output is not None:

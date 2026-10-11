@@ -2,16 +2,18 @@
 
 import re
 import json
+import random
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from datetime import datetime
 from typing import cast
 
 import pytest
 
 from run_interpreter import interpret, main, _object_text
-from bazi.bazi import Bazi
+from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart, BaziJson
 from bazi.defines import Shishen
 from bazi.interpreter import Interpreter
@@ -706,7 +708,7 @@ def test_batch_generation_is_interleaved_with_rendering(
   events: list[str] = []
   bazi = Bazi.create('2000-01-01 12:00', 'male')
 
-  def generate() -> Bazi:
+  def generate(*, rng: object) -> Bazi:
     events.append('generate')
     return bazi
 
@@ -719,6 +721,33 @@ def test_batch_generation_is_interleaved_with_rendering(
   assert main(['--count', '3']) == 0
   assert events == ['generate', 'render', 'generate', 'render', 'generate', 'render']
   assert capsys.readouterr().out == 'chart\nchart\nchart\n'
+
+
+@pytest.mark.parametrize('seed', [0, 42, -17])
+def test_cli_seed_retains_birth_draw_order_without_global_state_changes(monkeypatch: pytest.MonkeyPatch, seed: int) -> None:
+  state = random.getstate()
+  source = random.Random(seed)
+  expected = [
+    Bazi.create(
+      datetime(
+        source.randint(1902, 2080),
+        source.randint(1, 12),
+        source.randint(1, 28),
+        source.randint(0, 23),
+        source.randint(0, 59),
+      ),
+      source.choice(list(BaziGender)),
+    )
+    for _ in range(2)
+  ]
+  actual: list[Bazi] = []
+  def render(chart: BaziChart, **kwargs: object) -> str:
+    actual.append(chart.bazi)
+    return f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}'
+  monkeypatch.setitem(main.__globals__, '_chart_text', render)
+  assert main(['--seed', str(seed), '--count', '2']) == 0
+  assert actual == expected
+  assert random.getstate() == state
 
 
 def test_knowledge_query_runs_without_birth_input_or_filesystem_writes(tmp_path: Path) -> None:

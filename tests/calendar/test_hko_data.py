@@ -31,29 +31,29 @@ def test_traditional_chinese_month() -> None:
   assert len(hko_data.twelve_months_in_traditional_chinese) == 12
 
 
-def test_int_bytes_conversion() -> None:
+def test_int_bytes_conversion(rng: random.Random) -> None:
   assert hko_data.int_to_bytes(0x12345678, 4) == b'\x12\x34\x56\x78'
   assert hko_data.bytes_to_int(b'\x12\x34\x56\x78') == 0x12345678
 
   for _ in range(512):
-    i: int = random.randint(0, 0xffffffff)
+    i: int = rng.randint(0, 0xffffffff)
     i_bytes: bytes = hko_data.int_to_bytes(i, 4)
     assert i == hko_data.bytes_to_int(i_bytes)
 
 
-def test_date_bytes_conversion() -> None:
+def test_date_bytes_conversion(rng: random.Random) -> None:
   assert hko_data.date_to_bytes(date(2000, 1, 1)) == hko_data.date_to_bytes(date(2000, 1, 1))
   assert hko_data.date_to_bytes(date(2000, 1, 1)) != hko_data.date_to_bytes(date(2000, 1, 2))
   assert hko_data.bytes_to_date(b'\x00\x01\x01\x01') == date(1, 1, 1)
   assert hko_data.bytes_to_date(hko_data.date_to_bytes(date(2024, 2, 25))) == date(2024, 2, 25)
 
   dt: date = date(
-    year=random.randint(1600, 2500),
-    month=random.randint(1, 12),
-    day=random.randint(1, 28), # Not using 29, 30, or 31 here, to avoid invalid day (e.g. 2024-2-31)
+    year=rng.randint(1600, 2500),
+    month=rng.randint(1, 12),
+    day=rng.randint(1, 28), # Not using 29, 30, or 31 here, to avoid invalid day (e.g. 2024-2-31)
   )
   for _ in range(512):
-    dt = dt + timedelta(days=random.randint(1, 3))
+    dt = dt + timedelta(days=rng.randint(1, 3))
     dt_bytes: bytes = hko_data.date_to_bytes(dt)
     assert dt == hko_data.bytes_to_date(dt_bytes)
     assert len(dt_bytes) == 4, f'expect the length of dt_bytes to be 4, but got {len(dt_bytes)}'
@@ -320,7 +320,7 @@ def test_file_existence() -> None:
   assert hko_data.common.raw_data_ready()
 
 
-def test_raw_data_ready() -> None:
+def test_raw_data_ready(rng: random.Random) -> None:
   assert hko_data.common.raw_data_ready()
 
   # Do something bad in between.
@@ -351,7 +351,7 @@ def test_raw_data_ready() -> None:
     assert hko_data.common.raw_data_ready()
 
     all_txt_paths: dict[int, Path] = hko_data.common.get_raw_txt_file_paths()
-    random.choice(list(all_txt_paths.values())).unlink()
+    rng.choice(list(all_txt_paths.values())).unlink()
     assert not hko_data.common.raw_data_ready()
 
   finally:

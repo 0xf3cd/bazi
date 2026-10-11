@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_school.py
 
+import random
 import dataclasses
 import inspect
 from dataclasses import FrozenInstanceError
@@ -381,12 +382,12 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert school_side is parameter.default, name
 
 
-def test_bazi_default_config_is_the_shared_default() -> None:
+def test_bazi_default_config_is_the_shared_default(rng: random.Random) -> None:
   # Every construction path picks up `DEFAULT_CONFIG` implicitly (默认零变化).
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   assert Bazi.create(dt, BaziGender.男).config is DEFAULT_CONFIG
   assert Bazi(dt, BaziGender.男).config is DEFAULT_CONFIG
-  assert Bazi.random().config is DEFAULT_CONFIG
+  assert Bazi.random(rng=rng).config is DEFAULT_CONFIG
   assert Bazi.create(dt, BaziGender.男) == Bazi(dt, BaziGender.男)
 
 

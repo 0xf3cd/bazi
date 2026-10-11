@@ -43,7 +43,7 @@ def _project_ganzhi_combos(combos: GanzhiRelationCombos) -> set[DizhiCombo]:
   }
 
 
-def test_search_sanhui() -> None:
+def test_search_sanhui(rng: random.Random) -> None:
   sanhui_combos: list[DizhiCombo] = [
     DizhiCombo((Dizhi.from_index(2), Dizhi.from_index(3), Dizhi.from_index(4))),
     DizhiCombo((Dizhi.from_index(5), Dizhi.from_index(6), Dizhi.from_index(7))),
@@ -61,7 +61,7 @@ def test_search_sanhui() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.三会)
     expected_result: list[set[Dizhi]] = [set(c) for c in sanhui_combos if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -103,7 +103,7 @@ def test_sanhui() -> None:
         assert dizhi_utils.sanhui(*combo) is None
 
 
-def test_search_liuhe() -> None:
+def test_search_liuhe(rng: random.Random) -> None:
   liuhe_combos: list[DizhiCombo] = [
     DizhiCombo((dz1, dz2)) for dz1, dz2 in itertools.combinations(Dizhi, 2) if (dz1.index + dz2.index) % 12 == 1
   ]
@@ -118,7 +118,7 @@ def test_search_liuhe() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.六合)
     expected_result: list[set[Dizhi]] = [set(c) for c in liuhe_combos if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -166,7 +166,7 @@ def test_liuhe() -> None:
       assert liuhe_result is None
 
 
-def test_search_anhe() -> None:
+def test_search_anhe(rng: random.Random) -> None:
   normal_combos: list[DizhiCombo] = [ # 天干五合对应的地支暗合，5组。
     DizhiCombo((bazi_utils.lu(tg1), bazi_utils.lu(tg2)))
     for tg1, tg2 in itertools.combinations(Tiangan, 2) if tiangan_utils.he(tg1, tg2) is not None
@@ -197,7 +197,7 @@ def test_search_anhe() -> None:
     )
 
     for _ in range(200):
-      dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+      dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
       result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.暗合, anhe_def=anhe_def)
       expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
       assert _dz_equal(result, expected_result)
@@ -259,7 +259,7 @@ def test_anhe() -> None:
     assert dizhi_utils.anhe(dz1, dz2) == dizhi_utils.anhe(dz2, dz1)
 
 
-def test_search_tonghe() -> None:
+def test_search_tonghe(rng: random.Random) -> None:
   tonghe_combos: set[DizhiCombo] = set()
   for dz1, dz2 in itertools.product(Dizhi, Dizhi):
     hidden1, hidden2 = bazi_utils.hidden_tiangans(dz1), bazi_utils.hidden_tiangans(dz2)
@@ -279,7 +279,7 @@ def test_search_tonghe() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.通合)
     expected_result: list[set[Dizhi]] = [set(c) for c in tonghe_combos if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -313,7 +313,7 @@ def test_tonghe() -> None:
     assert dizhi_utils.tonghe(dz1, dz2) == dizhi_utils.tonghe(dz2, dz1)
 
 
-def test_search_tongluhe() -> None:
+def test_search_tongluhe(rng: random.Random) -> None:
   tongluhe_combos: list[DizhiCombo] = [ # 天干五合对应的地支禄身。
     DizhiCombo((bazi_utils.lu(tg1), bazi_utils.lu(tg2)))
     for tg1, tg2 in itertools.combinations(Tiangan, 2) if tiangan_utils.he(tg1, tg2) is not None
@@ -329,7 +329,7 @@ def test_search_tongluhe() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.通禄合)
     expected_result: list[set[Dizhi]] = [set(c) for c in tongluhe_combos if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -370,7 +370,7 @@ def _gen_sanhe_table() -> dict[DizhiCombo, Wuxing]:
   }
 
 
-def test_search_sanhe() -> None:
+def test_search_sanhe(rng: random.Random) -> None:
   sanhe_table: dict[DizhiCombo, Wuxing] = _gen_sanhe_table()
 
   assert _dz_equal(
@@ -383,7 +383,7 @@ def test_search_sanhe() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.三合)
     expected_result: list[set[Dizhi]] = [set(c) for c in sanhe_table if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -429,7 +429,7 @@ def _gen_banhe_table() -> dict[DizhiCombo, Wuxing]:
   return d
 
 
-def test_search_banhe() -> None:
+def test_search_banhe(rng: random.Random) -> None:
   banhe_table: dict[DizhiCombo, Wuxing] = _gen_banhe_table()
 
   assert _dz_equal(
@@ -442,7 +442,7 @@ def test_search_banhe() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.半合)
     expected_result: list[set[Dizhi]] = [set(c) for c in banhe_table if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -518,7 +518,7 @@ def test_gonghui() -> None:
     assert dizhi_utils.gonghui(dz1, dz2) is dizhi_utils.gonghui(dz2, dz1)
 
 
-def test_search_xing() -> None:
+def test_search_xing(rng: random.Random) -> None:
   base_expected: list[dict[Dizhi, int]] = [ # 辰午酉亥自刑
     {
       dz : 2,
@@ -586,8 +586,8 @@ def test_search_xing() -> None:
 
     for _ in range(200):
       dizhis: list[Dizhi] = []
-      for _ in range(random.randint(1, 4)):
-        dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      for _ in range(rng.randint(1, 4)):
+        dizhis += rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
       result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.刑, xing_def=xing_def)
       expected_result: list[set[Dizhi]] = __find_qualified(xing_expected, dizhis)
       assert _dz_equal(result, expected_result)
@@ -646,7 +646,7 @@ def test_discover_def_passthrough() -> None:
   assert DizhiRelation.刑 not in mutual_strict
 
 
-def test_xing_negative() -> None:
+def test_xing_negative(rng: random.Random) -> None:
   with pytest.raises(ValueError):
     dizhi_utils.xing(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰)
   with pytest.raises(TypeError):
@@ -668,7 +668,7 @@ def test_xing_negative() -> None:
     assert dizhi_utils.xing(dz, definition=DizhiRules.XingDef.LOOSE) is None
 
   for _ in range(500):
-    random_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(4, len(Dizhi)))
+    random_dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(4, len(Dizhi)))
     with pytest.raises(ValueError):
       dizhi_utils.xing(*random_dizhis)
     with pytest.raises(ValueError):
@@ -783,7 +783,7 @@ def test_xing_loose() -> None:
       assert dz_tuple in sanxing_list
 
 
-def test_search_chong() -> None:
+def test_search_chong(rng: random.Random) -> None:
   chong_table: list[set[Dizhi]] = [set(dz_tuple) for dz_tuple in zip(Dizhi.as_list()[:6], Dizhi.as_list()[6:])]
 
   assert _dz_equal(
@@ -796,7 +796,7 @@ def test_search_chong() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.冲)
     expected_result: list[set[Dizhi]] = [c for c in chong_table if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -833,7 +833,7 @@ def _gen_po_table() -> list[set[Dizhi]]:
   } for dz_idx in range(0, 12, 2)]
 
 
-def test_search_po() -> None:
+def test_search_po(rng: random.Random) -> None:
   po_table: list[set[Dizhi]] = _gen_po_table()
 
   assert _dz_equal(
@@ -846,7 +846,7 @@ def test_search_po() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.破)
     expected_result: list[set[Dizhi]] = [c for c in po_table if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -888,7 +888,7 @@ def _gen_hai_table() -> set[DizhiCombo]:
   return ret
 
 
-def test_search_hai() -> None:
+def test_search_hai(rng: random.Random) -> None:
   hai_set: set[DizhiCombo] = _gen_hai_table()
 
   assert _dz_equal(
@@ -905,7 +905,7 @@ def test_search_hai() -> None:
   )
 
   for _ in range(500):
-    dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
     result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.害)
     expected_result: list[DizhiCombo] = [c for c in hai_set if c.issubset(dizhis)]
     assert _dz_equal(result, expected_result)
@@ -932,9 +932,9 @@ def test_hai() -> None:
     assert dizhi_utils.hai(dz1, dz2) == (DizhiCombo((dz1, dz2)) in hai_set)
 
 
-def test_search_sheng_ke() -> None:
+def test_search_sheng_ke(rng: random.Random) -> None:
   for _ in range(200):
-    dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
     sheng_result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.生)
     ke_result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.克)
 
@@ -1385,19 +1385,19 @@ def test_discover_ganzhis_negative() -> None:
 
 
 @pytest.mark.slow
-def test_search() -> None:
+def test_search(rng: random.Random) -> None:
   for relation in DizhiRelation:
     if relation in (DizhiRelation.拱合, DizhiRelation.拱会):
       continue
     for round in range(300):
-      dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-      for _ in range(random.randint(0, 2)):
-        dizhis += random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+      dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
+      for _ in range(rng.randint(0, 2)):
+        dizhis += rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
 
       dizhi_counter: Counter[Dizhi] = Counter(dizhis)
       result: DizhiRelationCombos = dizhi_utils.search(dizhis, relation)
       for _ in range(2):
-        random.shuffle(dizhis)
+        rng.shuffle(dizhis)
         copied: list[Dizhi] = copy.deepcopy(dizhis)
         assert _dz_equal(result, dizhi_utils.search(dizhis, relation))
         assert copied == dizhis # Ensure `search` has no effect on the input `dizhis`.
@@ -1464,10 +1464,10 @@ def _run_all_relation_methods(dizhis: list[Dizhi]) -> list[Any]:
 
 
 @pytest.mark.slow
-def test_discover() -> None:
+def test_discover(rng: random.Random) -> None:
   for _ in range(512):
-    dizhis: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))) + \
-                          random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi))) + \
+                          rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
     discovery: DizhiRelationDiscovery = dizhi_utils.discover(dizhis)
 
     # correctness
@@ -1491,15 +1491,15 @@ def test_discover_negative() -> None:
 
 
 @pytest.mark.slow
-def test_discover_mutual() -> None:
+def test_discover_mutual(rng: random.Random) -> None:
   def __random_dz_lists() -> tuple[list[Dizhi], list[Dizhi]]:
-    dizhis1: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
-    dizhis2: list[Dizhi] = random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi)))
+    dizhis1: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
+    dizhis2: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
 
-    if random.randint(0, 2) == 0:
-      dizhis1.extend(random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))))
-    if random.randint(0, 2) == 0:
-      dizhis2.extend(random.sample(Dizhi.as_list(), random.randint(0, len(Dizhi))))
+    if rng.randint(0, 2) == 0:
+      dizhis1.extend(rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi))))
+    if rng.randint(0, 2) == 0:
+      dizhis2.extend(rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi))))
 
     return dizhis1, dizhis2
 
@@ -1559,10 +1559,10 @@ def test_discover_mutual_negative() -> None:
     dizhi_utils.discover_mutual([Dizhi.亥], [Dizhi.子, '丑']) # type: ignore
 
 
-def test_edge_cases() -> None:
+def test_edge_cases(rng: random.Random) -> None:
   '''Test `discover_mutual` on 三合、三会、三刑、自刑'''
   for combo_fs in DizhiRules.DIZHI_SANHE:
-    part1 = [random.choice(list(combo_fs))]
+    part1 = [rng.choice(sorted(combo_fs, key=lambda dz: dz.index))]
     part2 = list(combo_fs - set(part1))
 
     assert DizhiRelation.三合 not in dizhi_utils.discover_mutual([], [*combo_fs])
@@ -1572,7 +1572,7 @@ def test_edge_cases() -> None:
             dizhi_utils.discover_mutual(part2, part1))
 
   for combo_fs in DizhiRules.DIZHI_SANHUI:
-    part1 = [random.choice(list(combo_fs))]
+    part1 = [rng.choice(sorted(combo_fs, key=lambda dz: dz.index))]
     part2 = list(combo_fs - set(part1))
 
     assert DizhiRelation.三会 not in dizhi_utils.discover_mutual([], [*combo_fs])
@@ -1582,7 +1582,7 @@ def test_edge_cases() -> None:
             dizhi_utils.discover_mutual(part2, part1))
 
   for combo_tuple in DizhiRules.DIZHI_XING[DizhiRules.XingDef.LOOSE]:
-    part1 = [random.choice(combo_tuple)]
+    part1 = [rng.choice(combo_tuple)]
     part2 = list(combo_tuple)
     part2.remove(part1[0])
 
@@ -1596,12 +1596,12 @@ def test_edge_cases() -> None:
 
 
 @pytest.mark.slow
-def test_consistency() -> None:
+def test_consistency(rng: random.Random) -> None:
   '''Module-level functions in `dizhi_utils` must give consistent results across calls.'''
 
   def __split(dizhis: list[Dizhi]) -> tuple[list[Dizhi], list[Dizhi]]:
     dz_idx_list: list[int] = [idx for idx, _ in enumerate(dizhis)]
-    part1_idx_list: list[int] = random.sample(dz_idx_list, random.randint(0, len(dz_idx_list)))
+    part1_idx_list: list[int] = rng.sample(dz_idx_list, rng.randint(0, len(dz_idx_list)))
     part2_idx_list: list[int] = [idx for idx in dz_idx_list if idx not in part1_idx_list]
     assert len(part1_idx_list) + len(part2_idx_list) == len(dizhis)
     assert len(set(part1_idx_list + part2_idx_list)) == len(dizhis)
@@ -1614,8 +1614,8 @@ def test_consistency() -> None:
 
   for attempt in range(8):
     dizhis: list[Dizhi] = []
-    for _ in range(random.randint(0, 4)):
-      dizhis.extend(random.sample(list(Dizhi), random.randint(0, 5)))
+    for _ in range(rng.randint(0, 4)):
+      dizhis.extend(rng.sample(list(Dizhi), rng.randint(0, 5)))
     copied_dizhis: list[Dizhi] = copy.deepcopy(dizhis)
 
     for relation in DizhiRelation:
@@ -1629,13 +1629,13 @@ def test_consistency() -> None:
       dizhis_p1, dizhis_p2 = __split(dizhis)
 
       for _ in range(5):
-        if random.randint(0, 1) == 0:
+        if rng.randint(0, 1) == 0:
           relation_results.append(_run_all_relation_methods(dizhis))
-        if random.randint(0, 1) == 0:
+        if rng.randint(0, 1) == 0:
           combo_results.append(dizhi_utils.search(dizhis, relation))
-        if random.randint(0, 1) == 0:
+        if rng.randint(0, 1) == 0:
           discover_results.append(dizhi_utils.discover(dizhis))
-        if random.randint(0, 1) == 0:
+        if rng.randint(0, 1) == 0:
           discover_mutual_results.append(dizhi_utils.discover_mutual(dizhis_p1, dizhis_p2))
           discover_mutual_results.append(dizhi_utils.discover_mutual(dizhis_p2, dizhis_p1))
 
@@ -1651,15 +1651,15 @@ def test_consistency() -> None:
     assert dizhis == copied_dizhis # Ensure the order of `dizhis` was not changed.
 
 
-def test_discovery_filter() -> None:
+def test_discovery_filter(rng: random.Random) -> None:
   for _ in range(5):
-    dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
     discovery: DizhiRelationDiscovery = dizhi_utils.discover(dizhis)
 
     assert discovery == discovery.filter(lambda rel, combos : True)
 
-    forbidden_dizhis: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-    forbidden_relations: list[DizhiRelation] = random.sample(list(DizhiRelation), random.randint(0, len(DizhiRelation)))
+    forbidden_dizhis: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
+    forbidden_relations: list[DizhiRelation] = rng.sample(list(DizhiRelation), rng.randint(0, len(DizhiRelation)))
 
     def filter_func(rel: DizhiRelation, combo: DizhiCombo) -> bool:
       if rel in forbidden_relations:
@@ -1678,10 +1678,10 @@ def test_discovery_filter() -> None:
 
 
 @pytest.mark.slow
-def test_discovery_merge() -> None:
+def test_discovery_merge(rng: random.Random) -> None:
   for _ in range(5):
-    dizhis1: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
-    dizhis2: list[Dizhi] = random.sample(list(Dizhi), random.randint(0, len(Dizhi)))
+    dizhis1: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
+    dizhis2: list[Dizhi] = rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
 
     discovery1 = dizhi_utils.discover(dizhis1)
     discovery2 = dizhi_utils.discover(dizhis2)

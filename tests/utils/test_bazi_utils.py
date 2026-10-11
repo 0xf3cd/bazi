@@ -71,7 +71,7 @@ def test_ganzhi_of_day_at_moment() -> None:
   ) == Ganzhi.from_str('戊辰')
 
 
-def test_ganzhi_of_year() -> None:
+def test_ganzhi_of_year(rng: random.Random) -> None:
   with pytest.raises(TypeError):
     bazi_utils.ganzhi_of_year('2024') # type: ignore
   with pytest.raises(TypeError):
@@ -86,8 +86,8 @@ def test_ganzhi_of_year() -> None:
   assert bazi_utils.ganzhi_of_year(2123) == Ganzhi.from_str('癸未')
 
   for _ in range(20):
-    random_ganzhi_year: int = random.randint(1000, 9999)
-    another_random_ganzhi_year: int = random.randint(-20, 20) * 60 + random_ganzhi_year
+    random_ganzhi_year: int = rng.randint(1000, 9999)
+    another_random_ganzhi_year: int = rng.randint(-20, 20) * 60 + random_ganzhi_year
     assert (bazi_utils.ganzhi_of_year(another_random_ganzhi_year) ==
             bazi_utils.ganzhi_of_year(random_ganzhi_year))
 
@@ -287,7 +287,7 @@ def test_nayin_str() -> None:
       if gz in cycle:
         assert len(bazi_utils.nayin_str(gz)) == 3
       else:
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match='Unsupported Ganzhi for Nayin'):
           bazi_utils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
 
 

@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_backend.py
 
+import random
 import copy
 import types
 
@@ -260,14 +261,14 @@ def test_init_rejects_str_config() -> None:
     Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE, 'hko') # type: ignore[arg-type]
 
 
-def test_default_backend_is_celestial() -> None:
+def test_default_backend_is_celestial(rng: random.Random) -> None:
   '''
   #93 flipped the default from HKO to CELESTIAL.  The default now lives in
   `DEFAULT_CONFIG`, so pin every construction path that can pick it up implicitly.
   '''
   assert Bazi(datetime(2000, 2, 4, 22, 1), BaziGender.MALE).config.backend is CalendarBackend.CELESTIAL
   assert Bazi.create('2000-02-04 22:01', 'male').config.backend is CalendarBackend.CELESTIAL
-  assert Bazi.random().config.backend is CalendarBackend.CELESTIAL
+  assert Bazi.random(rng=rng).config.backend is CalendarBackend.CELESTIAL
 
 
 def test_json_contains_backend() -> None:

@@ -51,7 +51,7 @@ def test_taohua() -> None:
       assert shensha_utils.taohua(dz1, dz2) == (expected_table[dz1] is dz2)
 
 
-def test_hongyan() -> None:
+def test_hongyan(rng: random.Random) -> None:
   expected_table: dict[Dizhi, list[Tiangan]] = {
     Dizhi.午 : [Tiangan.甲],
     Dizhi.申 : [Tiangan.乙, Tiangan.癸],
@@ -64,13 +64,13 @@ def test_hongyan() -> None:
   }
 
   for _ in range(16):
-    tg, dz = random.choice(Tiangan.as_list()), random.choice(Dizhi.as_list())
+    tg, dz = rng.choice(Tiangan.as_list()), rng.choice(Dizhi.as_list())
     expected_result: bool = dz in expected_table and tg in expected_table[dz]
     assert shensha_utils.hongyan(tg, dz) == expected_result
     assert shensha_utils.hongyan(tg, dz) == expected_result # Second call must answer the same (determinism across calls).
 
 
-def test_hongluan() -> None:
+def test_hongluan(rng: random.Random) -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
   for dz1, dz2 in [
     (Dizhi.子, Dizhi.卯),
@@ -84,12 +84,12 @@ def test_hongluan() -> None:
     expected_table[dz2] = dz1
 
   for _ in range(16):
-    dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
+    dz1, dz2 = rng.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.hongluan(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
 
 
-def test_tianxi() -> None:
+def test_tianxi(rng: random.Random) -> None:
   expected_table: dict[Dizhi, Dizhi] = {}
   for dz1, dz2 in [
     (Dizhi.子, Dizhi.酉),
@@ -103,7 +103,7 @@ def test_tianxi() -> None:
     expected_table[dz2] = dz1
 
   for _ in range(16):
-    dz1, dz2 = random.choices(Dizhi.as_list(), k=2)
+    dz1, dz2 = rng.choices(Dizhi.as_list(), k=2)
     assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2)
     assert shensha_utils.tianxi(dz1, dz2) == (expected_table[dz1] is dz2) # Second call must answer the same (determinism across calls).
 

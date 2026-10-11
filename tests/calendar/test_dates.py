@@ -142,11 +142,11 @@ def test_every_calendar_date_field_has_a_type_gate() -> None:
       CalendarDate(**{**valid, f.name: object()}) # type: ignore
 
 
-def test_date_cmp_operators() -> None:
+def test_date_cmp_operators(rng: random.Random) -> None:
   # Use solar dates to test date operators.
   random_date_list: list[date] = []
   for _ in range(256):
-    random_date_list.append(date(random.randint(1, 9999), random.randint(1, 12), random.randint(1, 28)))
+    random_date_list.append(date(rng.randint(1, 9999), rng.randint(1, 12), rng.randint(1, 28)))
 
   for date1, date2 in product(random_date_list, random_date_list):
     c_date1: CalendarDate = CalendarDate(date1.year, date1.month, date1.day, CalendarType.SOLAR)
@@ -166,9 +166,9 @@ def test_date_cmp_operators() -> None:
       assert c_date1 != c_date2
 
   cur_date: date = date(
-    random.randint(1, 9999),
-    random.randint(1, 12),
-    random.randint(1, 28)
+    rng.randint(1, 9999),
+    rng.randint(1, 12),
+    rng.randint(1, 28)
   )
   for _ in range(512):
     next_date: date = cur_date + timedelta(days=1)
@@ -242,15 +242,15 @@ def test_date_cmp_operators_negative() -> None:
       assert str(type(dt)) in str(exc.value)
 
 
-def test_str_repr() -> None:
+def test_str_repr(rng: random.Random) -> None:
   random_date_list: list[CalendarDate] = []
   for _ in range(256):
     random_date_list.append(
       CalendarDate(
-        random.randint(1902, 2099),
-        random.randint(1, 12),
-        random.randint(1, 28),
-        random.choice(list(CalendarType))
+        rng.randint(1902, 2099),
+        rng.randint(1, 12),
+        rng.randint(1, 28),
+        rng.choice(list(CalendarType))
       )
     )
 
