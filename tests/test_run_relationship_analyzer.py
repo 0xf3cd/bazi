@@ -1,8 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from itertools import combinations
+from typing import cast
+
 from run_demo import colored_str
 from run_relationship_analyzer import (
-  _WHOLE_PILLAR_SHENSHA_LABELS,
+  _WHOLE_PILLAR_SHENSHA_LABELS, SHENSHA_LABELS,
   _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
 )
 from bazi.defines import Dizhi, Ganzhi
@@ -64,9 +67,6 @@ def test_shensha_labels() -> None:
     f'{label}：{colored_str(next(iter(dizhis)))}'
     for label, dizhis in expected
   ]
-
-  multiple: ShenshaAnalysis = {**shensha, 'taiji': frozenset((Dizhi.午, Dizhi.子, Dizhi.申))}
-  assert f'太极贵人：{colored_str(Dizhi.子)}, {colored_str(Dizhi.午)}, {colored_str(Dizhi.申)}' in shensha_strs(multiple)
 
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
@@ -139,3 +139,12 @@ def test_shensha_labels() -> None:
     'tianshe': tianshe,
   }) == [f'天赦：{colored_str(tianshe)}']
   assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、魁罡、天赦'
+
+  branches = (Dizhi.子, Dizhi.丑, Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.巳,
+              Dizhi.午, Dizhi.未, Dizhi.申, Dizhi.酉, Dizhi.戌, Dizhi.亥)
+  for size in range(len(branches) + 1):
+    for selected in combinations(branches, size):
+      text = ', '.join(map(colored_str, selected))
+      for name, label in SHENSHA_LABELS.items():
+        current = cast(ShenshaAnalysis, {**empty_shensha, name: frozenset(selected)})
+        assert shensha_strs(current) == ([f'{label}：{text}'] if selected else [])

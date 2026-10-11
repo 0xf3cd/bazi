@@ -79,6 +79,8 @@ def test_day_ownership_and_counting_match_date_scan(backend: str, year: int) -> 
           previous_year = expected_year - (owning[3] == 1)
           previous_branch = candidates[owning_index - 1][2]
           assert TransitDatabase(chart)._dayun_at_month(previous_year, previous_branch) is None
+          counting = [line for line in get_transit_info(chart).splitlines() if line.startswith('大运数节依据')]
+          assert counting == [f'大运数节依据（逆排）：{owning[1]} - {owning[0].isoformat()}']
         # Calendar lookups still bracket the physical minute, including DAY's advance window.
         physical_index = max(i for i, row in enumerate(candidates) if row[0] <= reference)
         assert utils.prev_jie(reference) == JieqiTime(candidates[physical_index][1], candidates[physical_index][0])
@@ -186,7 +188,7 @@ def test_demo_reads_time_facts_without_serializing_chart(
   text = get_transit_info(chart)
   assert '出生时刻前一节：小寒' in text
   assert '出生时刻后一节：立春 - 2000-02-04T20:40:23' in text
-  assert counting in text
+  assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
 def test_time_facts_are_readonly_and_json_is_detached() -> None:

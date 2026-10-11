@@ -3,16 +3,21 @@
 import inspect
 import os
 import random
+import runpy
 import subprocess
 import sys
 from hashlib import sha256
 from pathlib import Path
 from typing import get_type_hints
+from unittest.mock import Mock
 
 import pytest
 
 from bazi.bazi import Bazi, 八字
 from bazi.bazi_chart import BaziChart, 命盘
+from bazi.analyzer.relationship import RelationshipAnalyzer
+from bazi.transit_chart import TransitChart
+import run_demo
 
 
 @pytest.mark.parametrize('factory', [Bazi, BaziChart])
@@ -63,3 +68,52 @@ def test_runner_seed_binds_birth_and_gender_across_processes(script: str, seed: 
     assert f'，{expected.gender}，' in result.stdout
     outputs.append(result.stdout)
   assert outputs[0] == outputs[1]
+
+
+@pytest.mark.parametrize('runner', ['demo', 'relationship'])
+@pytest.mark.parametrize('sign', [-1, 1])
+def test_runner_binds_every_consumer_to_its_seeded_chart(
+  monkeypatch: pytest.MonkeyPatch, rng: random.Random, runner: str, sign: int,
+) -> None:
+  seed = sign * rng.getrandbits(64)
+  expected = BaziChart(Bazi.random(rng=random.Random(seed))).json
+  print(f'runner={runner} seed={seed}')
+  basic = Mock(wraps=run_demo.get_basic_info)
+  monkeypatch.setattr(run_demo, 'get_basic_info', basic)
+  observed: list[BaziChart] = []
+  if runner == 'demo':
+    transit = Mock(wraps=run_demo.get_transit_info)
+    printer = Mock(wraps=run_demo.pprint)
+    monkeypatch.setattr(run_demo, 'get_transit_info', transit)
+    monkeypatch.setattr(run_demo, 'pprint', printer)
+    run_demo.demo(seed)
+    for call in transit.call_args_list:
+      chart = call.args[0]
+      assert isinstance(chart, BaziChart)
+      observed.append(chart)
+    printer.assert_called_once_with(expected)
+  else:
+    analyzer_init = RelationshipAnalyzer.__init__
+    transit_init = TransitChart.__init__
+
+    def observe_analyzer(self: RelationshipAnalyzer, chart: BaziChart) -> None:
+      observed.append(chart)
+      analyzer_init(self, chart)
+
+    def observe_transit(self: TransitChart, chart: BaziChart) -> None:
+      observed.append(chart)
+      transit_init(self, chart)
+
+    monkeypatch.setattr(RelationshipAnalyzer, '__init__', observe_analyzer)
+    monkeypatch.setattr(TransitChart, '__init__', observe_transit)
+    monkeypatch.setattr(sys, 'argv', ['run_relationship_analyzer.py', '--seed', str(seed)])
+    runpy.run_path(
+      str(Path(__file__).resolve().parents[1] / 'run_relationship_analyzer.py'),
+      run_name='__main__',
+    )
+  assert observed and basic.call_args_list
+  for call in basic.call_args_list:
+    chart = call.args[0]
+    assert isinstance(chart, BaziChart)
+    observed.append(chart)
+  assert all(chart.json == expected for chart in observed)

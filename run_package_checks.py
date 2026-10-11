@@ -172,20 +172,20 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   good += ('local: Bazi = Bazi.create(datetime(2023, 12, 31, 22, tzinfo=UTC), "female", '
            'BaziConfig.from_values(precision="minute"), longitude=-157.4, civil_timezone=timezone(timedelta(hours=14)))\n'
            'local_chart: BaziChart = BaziChart.from_json(BaziChart(local).json)\n'
-            'local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
-            'roster: BaziJson.BaziChartJsonDict = local_chart.json\n'
-             'pillars: BaziJson.FourPillars = roster["pillars"]\n'
-             'coordinate: GanzhiYearMonth = local.ganzhi_year_month\n'
-             'from_branch: GanzhiYearMonth = GanzhiYearMonth.from_dizhi(2000, Dizhi.寅)\n'
-             'from_jie: GanzhiYearMonth = GanzhiYearMonth.from_jie(JieqiTime(Jieqi.立春, datetime(2000, 2, 4)))\n'
-             'reference: datetime = local.reference_datetime\n'
-             'month_jies: tuple[JieqiTime, JieqiTime] = local.month_jies\n'
-             'facts: LocationTime | None = local.location_time\n'
-             'if facts is not None:\n'
-             '  instant: datetime = facts.canonical_instant\n'
-             '  civil: datetime = facts.civil_time\n'
-             '  apparent: datetime = facts.apparent_time\n'
-             '  location_json: LocationTimeJson = facts.json\n')
+           'local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
+           'roster: BaziJson.BaziChartJsonDict = local_chart.json\n'
+           'pillars: BaziJson.FourPillars = roster["pillars"]\n'
+           'coordinate: GanzhiYearMonth = local.ganzhi_year_month\n'
+           'from_branch: GanzhiYearMonth = GanzhiYearMonth.from_dizhi(2000, Dizhi.寅)\n'
+           'from_jie: GanzhiYearMonth = GanzhiYearMonth.from_jie(JieqiTime(Jieqi.立春, datetime(2000, 2, 4)))\n'
+           'reference: datetime = local.reference_datetime\n'
+           'month_jies: tuple[JieqiTime, JieqiTime] = local.month_jies\n'
+           'facts: LocationTime | None = local.location_time\n'
+           'if facts is not None:\n'
+           '  instant: datetime = facts.canonical_instant\n'
+           '  civil: datetime = facts.civil_time\n'
+           '  apparent: datetime = facts.apparent_time\n'
+           '  location_json: LocationTimeJson = facts.json\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
   bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
@@ -197,13 +197,13 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
                 'witness.work = "changed"\n'
                 'evaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n'
                 'def unsafe_birth(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["birth_time"]\n'
-                 'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
-                 'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
-                 'GanzhiYearMonth.from_jie(datetime.now())\n'
-                 'local.reference_datetime = datetime.now()\n'
-                 'local.month_jies = ()\n'
-                 'coordinate.month = 0\n'
-                 'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
+                'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
+                'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
+                'GanzhiYearMonth.from_jie(datetime.now())\n'
+                'local.reference_datetime = datetime.now()\n'
+                'local.month_jies = ()\n'
+                'coordinate.month = 0\n'
+                'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
   command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
   run([*command, 'good.py'], foreign)
@@ -221,12 +221,20 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
-  for message in ('read-only', '"None"', '"reference_datetime"', '"month_jies"', '"month"'):
+  for message in ('read-only', '"None"'):
     if message not in result.stdout:
       raise ValueError(f'Installed time typing negative control missed {message}')
-  for message in ('"work"', 'Unsupported target for indexed assignment'):
+  for owner_name, attribute_name in (
+    ('Bazi', 'reference_datetime'),
+    ('Bazi', 'month_jies'),
+    ('GanzhiYearMonth', 'month'),
+    ('KnowledgeSource', 'work'),
+  ):
+    message = f'Property "{attribute_name}" defined in "{owner_name}" is read-only'
     if message not in result.stdout:
-      raise ValueError(f'Installed knowledge typing negative control missed {message}')
+      raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
+  if 'Unsupported target for indexed assignment' not in result.stdout:
+    raise ValueError('Installed knowledge typing negative control missed indexed assignment')
   for roster, key in (('LocationBaziChartJsonDict', 'birth_time'), ('DefaultBaziChartJsonDict', 'apparent_time')):
     if f'TypedDict "{roster}" has no key "{key}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {roster}.{key}')
