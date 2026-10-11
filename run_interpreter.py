@@ -2,7 +2,7 @@
 
 import argparse
 import json
-import random
+from random import Random, SystemRandom
 import re
 from collections.abc import Callable, Iterable
 from datetime import datetime, tzinfo
@@ -142,13 +142,6 @@ def _write_chart(text: str, output: Path, index: int) -> None:
   assert isinstance(output, Path)
   assert isinstance(index, int)
   (output / f'{index}.txt').write_text(_ANSI_ESCAPE.sub('', text), encoding='utf-8')
-
-
-def save_chart_examples(count: int = 50) -> None:
-  output = _DEFAULT_OUTPUT_DIR / 'interpretation_examples'
-  output.mkdir(parents=True, exist_ok=True)
-  for i in range(count):
-    _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
 
 
 def _same_export_path(left: Path, right: Path) -> bool:
@@ -339,7 +332,8 @@ def main(argv: list[str] | None = None) -> int:
     except (TypeError, ValueError) as error:
       parser.error(str(error))
   else:
-    rng = random.Random(args.seed)
+    seed = SystemRandom().getrandbits(64) if args.seed is None else args.seed
+    rng = Random(seed)
     charts = (BaziChart(Bazi.random(rng=rng)) for _ in range(count))
 
   output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
@@ -349,6 +343,8 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as error:
       parser.error(str(error))
 
+  if args.birth_time is None:
+    print(f'random seed: {seed}')
   for i, chart in enumerate(charts):
     text = _chart_text(
       chart,

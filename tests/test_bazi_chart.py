@@ -1054,7 +1054,7 @@ def test_deepcopy(rng: random.Random) -> None:
 
 
 # HOUR / MINUTE charts (issue #6): the dayun counting and the birth-side year consume the
-# same attribution source as the pillars (`Bazi.bracketing_jies` / `Bazi.ganzhi_year`), so
+# same attribution source as the pillars (`Bazi.month_jies` / `Bazi.ganzhi_year`), so
 # a chart cannot contradict itself about which jie owns the birth month.
 
 

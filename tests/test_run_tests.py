@@ -12,8 +12,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from bazi.bazi import Bazi
-
 
 @pytest.mark.parametrize('args, all_tasks, skip_test, expression, rate, verbose', [
   ([], False, False, None, 100.0, False),
@@ -77,7 +75,6 @@ def test_coverage_result(
   package = Path(__file__).parents[1] / 'bazi'
   assert options['source'] == [str(package)]
   assert options['omit'] == [
-    '*/__init__.py',
     str(package / 'calendar/hko_data/encoder.py'),
     str(package / 'calendar/celestial_data/generator.py'),
   ]
@@ -91,7 +88,7 @@ def test_coverage_enumerates_unimported_runtime_modules(tmp_path: Path, complete
     directory.mkdir(parents=True, exist_ok=True)
     (directory / '__init__.py').write_text('', encoding='utf-8')
   for relative in ('executed.py', 'unimported.py', 'nested/unimported_runtime.py',
-                   'calendar/hko_data/encoder.py', 'calendar/celestial_data/generator.py'):
+                   'nested/__init__.py', 'calendar/hko_data/encoder.py', 'calendar/celestial_data/generator.py'):
     (package / relative).write_text('VALUE = 1\n', encoding='utf-8')
   script = '''
 import importlib
@@ -122,9 +119,9 @@ sys.exit(runner['run_coverage'](execute))
   )
   print(result.stdout, result.stderr, f'CHILD EXIT: {result.returncode}')
   assert result.returncode == (0 if complete else 0x42), result.stdout + result.stderr
-  for module in ('executed.py', 'unimported.py', 'unimported_runtime.py'):
+  for module in ('executed.py', 'unimported.py', 'unimported_runtime.py', '__init__.py'):
     assert module in result.stdout
-  for omitted in ('__init__.py', 'encoder.py', 'generator.py', 'run_tests.py'):
+  for omitted in ('encoder.py', 'generator.py', 'run_tests.py'):
     assert omitted not in result.stdout
   assert ('100%' in result.stdout.split('TOTAL')[1]) is complete
 
@@ -134,7 +131,6 @@ def test_runner_emojis_leave_regression_inputs_unchanged(monkeypatch: pytest.Mon
   state = random.getstate()
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
-  expected = Bazi.random(rng=random.Random(236))
   pairs = runner['emoji_pair_generator']()
   for _ in range(100):
     runner['random_emoji']()
@@ -146,7 +142,6 @@ def test_runner_emojis_leave_regression_inputs_unchanged(monkeypatch: pytest.Mon
   with pytest.raises(SystemExit) as caught:
     runner['main']()
   assert caught.value.code == result
-  assert Bazi.random(rng=random.Random(236)) == expected
   assert random.getstate() == state
 
 
@@ -180,3 +175,15 @@ def test_package_output_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
     sys.executable, str(Path(__file__).parents[1] / 'run_package_checks.py'),
     '--output-dir', str(output),
   ], print_details=True)
+
+
+def test_demo_and_interpreter_gate_pass_fixed_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  proc = Mock(return_value=0)
+  monkeypatch.setitem(runner['run_demo'].__globals__, 'run_proc_and_print', proc)
+  assert runner['run_demo']() == runner['run_interpreter']() == 0
+  assert [call.args[0] for call in proc.call_args_list] == [
+    [sys.executable, str(Path(__file__).parents[1] / script), '--seed', '236']
+    for script in ('run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py')
+  ]

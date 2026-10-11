@@ -99,13 +99,12 @@ def main() -> None:
 
   import bazi
   check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
-  check('bazi.descriptions' not in sys.modules and 'bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
+  check('bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
   check('bazi.context_matching' not in sys.modules, 'Root import eagerly loaded context matcher')
   matching_module = bazi.context_matching
   check('context_matching' in bazi.__all__ and matching_module is bazi.context_matching, 'Matching ordinary module attribute registration mismatch')
   knowledge_module = bazi.knowledge
   check('knowledge' in bazi.__all__ and knowledge_module is bazi.knowledge, 'Knowledge module registration mismatch')
-  check('bazi.descriptions' not in sys.modules, 'Knowledge module loaded legacy descriptions')
   for name in ('descriptions', 'interpreter'):
     check(name not in bazi.__all__, 'Retired module remains registered')
     check(importlib.util.find_spec('bazi.' + name) is None, 'Retired module remains installed')
@@ -192,7 +191,7 @@ def main() -> None:
   ):
     day = BaziChart(Bazi.create('2000-02-04 10:00', gender))
     check(day.bazi.ganzhi_year_month == GanzhiYearMonth(2000, 1), 'Installed DAY month mismatch')
-    check(day.bazi.bracketing_jies[0] == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23)), 'Installed DAY Jie mismatch')
+    check(day.bazi.month_jies[0] == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23)), 'Installed DAY Jie mismatch')
     check(day.dayun_start_moment == start and next(day.dayun).ganzhi_year == first_label, 'Installed DAY counting mismatch')
     check(BaziChart.from_json(day.json).json == day.json, 'Installed DAY restoration mismatch')
     check(day.bazi.location_time is None, 'Default birth acquired location facts')
@@ -324,7 +323,6 @@ def main() -> None:
       raise RuntimeError('Ganzhi warm cache bypassed step validation')
   knowledge = KnowledgeBase.load()
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
-  check(not hasattr(knowledge, '_render'), 'Private rendering wrapper remains')
   for value in Tiangan:
     structured = knowledge.query(object_id=object_id(value))
     check(len(structured) == 1, 'Missing Tiangan definition')

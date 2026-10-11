@@ -178,7 +178,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
              'coordinate: GanzhiYearMonth = local.ganzhi_year_month\n'
              'from_branch: GanzhiYearMonth = GanzhiYearMonth.from_dizhi(2000, Dizhi.寅)\n'
              'from_jie: GanzhiYearMonth = GanzhiYearMonth.from_jie(JieqiTime(Jieqi.立春, datetime(2000, 2, 4)))\n'
-             'reference: datetime = local.reference_datetime\n'
+              'reference: datetime = local.reference_datetime\n'
+              'month_jies: tuple[JieqiTime, JieqiTime] = local.month_jies\n'
              'facts: LocationTime | None = local.location_time\n'
              'if facts is not None:\n'
              '  instant: datetime = facts.canonical_instant\n'
@@ -199,7 +200,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
                  'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
                  'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
                  'GanzhiYearMonth.from_jie(datetime.now())\n'
-                 'local.reference_datetime = datetime.now()\n'
+                  'local.reference_datetime = datetime.now()\n'
+                  'local.month_jies = ()\n'
                  'coordinate.month = 0\n'
                  'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
@@ -219,7 +221,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   for interface in ('create', 'query', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
-  for message in ('read-only', '"None"', 'reference_datetime', 'month'):
+  for message in ('read-only', '"None"', 'reference_datetime', 'month_jies', 'month'):
     if message not in result.stdout:
       raise ValueError(f'Installed time typing negative control missed {message}')
   for message in ('"work"', 'Unsupported target for indexed assignment'):

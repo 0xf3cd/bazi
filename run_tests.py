@@ -284,7 +284,6 @@ def run_coverage(test_f: Callable[[], int]) -> int:
   cov = coverage.Coverage(
     source=[str(Path(__file__).parent / 'bazi')],
     omit=[
-      '*/__init__.py',
       str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # Offline generation tool.
       str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # Offline generation tool.
     ]
@@ -353,7 +352,7 @@ def run_demo() -> int:
   ret: int = 0
   for script in DEMO_SCRIPTS:
     if run_proc_and_print([
-      sys.executable, str(Path(__file__).parent / script)
+      sys.executable, str(Path(__file__).parent / script), '--seed', '236'
     ], print_details=verbose) != 0:
       ret = 1
 
@@ -370,7 +369,7 @@ def run_interpreter() -> int:
   bold_print('>> Running interpreter...')
 
   ret: int = run_proc_and_print([
-    sys.executable, str(Path(__file__).parent / 'run_interpreter.py')
+    sys.executable, str(Path(__file__).parent / 'run_interpreter.py'), '--seed', '236'
   ], print_details=verbose)
   
   if ret == 0:

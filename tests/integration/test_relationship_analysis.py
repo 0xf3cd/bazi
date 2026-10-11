@@ -664,16 +664,31 @@ def test_case2(rng: random.Random) -> None:
       assert star_result.dizhi == any(is_star(dz) for dz in transits_dz)
 
 
-@pytest.mark.parametrize('bazi', [
-  pytest.param(
-    bazi,
-    id=f'seed={seed}-birth={bazi.solar_datetime.isoformat()}-gender={bazi.gender}',
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+  if metafunc.function.__name__ == 'test_random_cases':
+    base: int = metafunc.config.getoption('--random-seed')
+    metafunc.parametrize('bazi,collection_seed', [
+      pytest.param(
+        bazi, seed,
+        id=f'seed={seed}-birth={bazi.solar_datetime.isoformat()}-gender={bazi.gender}',
+      )
+      for seed in range(base, base + 5)
+      for bazi in (Bazi.random(rng=random.Random(seed)),)
+    ])
+
+
+def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureRequest) -> None:
+  base: int = request.config.getoption('--random-seed')
+  assert base <= collection_seed < base + 5
+  source = random.Random(collection_seed)
+  expected_birth = datetime(
+    source.randint(1902, 2080), source.randint(1, 12), source.randint(1, 28),
+    source.randint(0, 23), source.randint(0, 59),
   )
-  for seed in range(236, 241)
-  for bazi in (Bazi.random(rng=random.Random(seed)),)
-])
-def test_random_cases(bazi: Bazi, rng: random.Random) -> None:
-  print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
+  assert bazi.solar_datetime == expected_birth
+  assert bazi.gender is source.choice(list(BaziGender))
+  assert f'seed={collection_seed}-birth={expected_birth.isoformat()}-gender={bazi.gender}' in request.node.nodeid
+  print(f'collection base={base} effective={collection_seed} birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
   chart = BaziChart(bazi)
   y_dz, m_dz, d_dz, h_dz = bazi.four_dizhis
   house = chart.house_of_relationship

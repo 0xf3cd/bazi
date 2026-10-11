@@ -120,14 +120,14 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   assert bazi.month_commander == month_dizhi
 
 
-def test_day_precision_bracketing_jies_share_month_attribution() -> None:
+def test_day_precision_month_jies_share_month_attribution() -> None:
   # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
   bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male')
   # ...yet the pillars already read the new year and month (day-level attribution).
   assert str(bazi.year_pillar) == '庚辰'
   assert str(bazi.month_pillar) == '戊寅'
   # DAY counting starts at the same 立春 that opened the month pillar.
-  owning, following = bazi.bracketing_jies
+  owning, following = bazi.month_jies
   assert owning == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
   assert following == JieqiTime(Jieqi.惊蛰, datetime(2000, 3, 5, 14, 42, 39))
   assert owning.moment > bazi.solar_datetime
@@ -285,11 +285,11 @@ def test_hko_backend_rejected() -> None:
   assert str(Bazi.create('2000-02-04 19:30', 'male', BaziConfig.from_values(backend='hko')).year_pillar) == '庚辰'
 
 
-def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
-  '''`ganzhi_year` / `bracketing_jies` expose exactly what the pillars were derived from.'''
+def test_ganzhi_year_and_month_jies_are_the_attribution() -> None:
+  '''`ganzhi_year` / `month_jies` expose exactly what the pillars were derived from.'''
   bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', BaziConfig.from_values(precision='hour'))
   assert bazi.ganzhi_year == 2009
-  owning, following = bazi.bracketing_jies
+  owning, following = bazi.month_jies
   assert owning == JieqiTime(Jieqi.立春, datetime(2009, 2, 4, 0, 49, 48))
   assert following.jieqi == Jieqi.惊蛰
   # The owning jie's true moment lies AFTER the birth -- that is what a tie looks like.
@@ -399,7 +399,7 @@ def test_minute_vs_moment_level_prev_jie() -> None:
 
     bazi: Bazi = Bazi(birth, BaziGender.男, BaziConfig(precision=BaziPrecision.MINUTE))
     moment_owning: JieqiTime = utils.prev_jie(birth)
-    attribution_owning: JieqiTime = bazi.bracketing_jies[0]
+    attribution_owning: JieqiTime = bazi.month_jies[0]
 
     if attribution_owning != moment_owning:
       disagree += 1

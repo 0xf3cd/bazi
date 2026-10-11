@@ -3,7 +3,7 @@
 import copy
 import functools
 import itertools
-import random
+from random import Random
 
 from calendar import monthrange
 from datetime import datetime, timedelta
@@ -179,13 +179,13 @@ class BaziChart:
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
-  def random(cls, config: BaziConfig = DEFAULT_CONFIG, *, rng: random.Random | None = None) -> 'BaziChart':
+  def random(cls, config: BaziConfig = DEFAULT_CONFIG, *, rng: Random | None = None) -> 'BaziChart':
     '''
     用 `Bazi.random` 随机生成命盘，主要用于测试。
 
     Args:
     - config: (BaziConfig) 原样传递的命盘配置。
-    - rng: (random.Random | None) 局部随机源；省略时沿用全局种子语义。
+    - rng: (Random | None) 局部随机源；省略时沿用全局种子语义。
 
     Return: (BaziChart) 随机命盘。
     '''
@@ -502,7 +502,7 @@ class BaziChart:
 
     def __gap() -> timedelta:
       # All precisions count from the month pillar's owning/following Jie.
-      prev_j, next_j = self._bazi.bracketing_jies
+      prev_j, next_j = self._bazi.month_jies
       if self.dayun_order:
         return next_j.moment - birthtime
       # Ties go new: the owning Jie's true moment can follow birth under DAY/HOUR/MINUTE.
@@ -534,7 +534,8 @@ class BaziChart:
     '''
     The shared first Dayun year label, independent of the later-year projection rule.
     提前归属立春的命盘已归新年，钳在出生时刻的首运却可能仍在物理旧年。
-    首步标签取出生干支年为下限，后续标签仍按真实起点投影，不传播此下限。
+    首步标签取出生干支年为下限；JIE_PROJECTED 后续标签独立按真实起点投影，
+    FIXED_DECADE 后续标签为首标签加 10i。
     '''
     first, last = self._utils.supported_jie_boundaries()
     first_start_moment: Final[datetime] = self._dayun_start_moment_at(0)

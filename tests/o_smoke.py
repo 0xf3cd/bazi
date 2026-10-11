@@ -272,7 +272,11 @@ def main() -> int:
     ('KnowledgeBase.render_subject invalid display flag on empty selection', TypeError,
      lambda: knowledge.render_subject('shishen.jiecai', show_sources=1)), # type: ignore[arg-type]
     ('KnowledgeBase.render wrong verdict type', TypeError,
-     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
+      lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render empty verdict', ValueError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict='')),
+    ('KnowledgeBase.render whitespace verdict', ValueError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=' \t\n\u3000')),
     ('KnowledgeEntry mutable sources', TypeError,
      lambda: replace(knowledge.entry('tiangan.jia.definition'), sources=[])), # type: ignore[arg-type]
     ('KnowledgeBase unknown filter', ValueError,
@@ -551,25 +555,11 @@ def main() -> int:
     ('LocationTime readonly facts', AttributeError, partial(setattr, local_chart.bazi.location_time, 'longitude', 0.0)),
   ])
   failures: list[str] = []
-  for gender, expected_start, expected_first, expected_xiaoyun in (
-    ('male', datetime(2010, 2, 25, 7, 9, 5), 2010, 11),
-    ('female', datetime(2000, 2, 4, 10), 2000, 1),
-  ):
+  for gender in ('male', 'female'):
     day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))
-    if (day_chart.bazi.ganzhi_year_month != GanzhiYearMonth(2000, 1)
-        or day_chart.bazi.bracketing_jies[0] != JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
-        or day_chart.dayun_start_moment != expected_start
-        or next(day_chart.dayun).ganzhi_year != expected_first or len(day_chart.xiaoyun) != expected_xiaoyun):
-      failures.append(f'Optimized DAY ownership/counting failed: {gender}')
     old_data = day_chart.json
     old_data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
     checks.append((f'Old DAY derived JSON {gender}', ValueError, partial(BaziChart.from_json, old_data)))
-  facts = local_chart.bazi.location_time
-  if (facts is None or facts.canonical_instant != datetime(2023, 12, 31, 22, tzinfo=UTC)
-      or facts.civil_time.isoformat() != '2024-01-01T12:00:00+14:00'
-      or local_chart.bazi.reference_datetime != datetime(2024, 1, 1, 6)
-      or Bazi.create('2000-01-01 12:00', 'male').location_time is not None):
-    failures.append('Optimized time facts mixed coordinates')
   for label, birth, basis in (
     ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),

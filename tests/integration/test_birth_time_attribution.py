@@ -53,7 +53,7 @@ def test_day_ownership_and_counting_match_date_scan(backend: str, year: int) -> 
         assert bazi.ganzhi_year == expected_year
         assert (bazi.ganzhi_year_month.year, bazi.ganzhi_year_month.month) == (expected_year, owning[3])
         assert bazi.month_commander is owning[2]
-        assert bazi.bracketing_jies == (JieqiTime(owning[1], owning[0]), JieqiTime(following[1], following[0]))
+        assert bazi.month_jies == (JieqiTime(owning[1], owning[0]), JieqiTime(following[1], following[0]))
         # Yang years are even (甲子 1984); select direction independently of chart.dayun_order.
         forward = (gender == 'male') == (expected_year % 2 == 0)
         gap = following[0] - reference if forward else max(timedelta(), reference - owning[0])
@@ -91,7 +91,7 @@ def test_birth_and_query_endpoints_remain_distinct(backend: str) -> None:
     for gender in ('male', 'female'):
       chart = BaziChart(Bazi.create(datetime.combine(birth_date, time(12)), gender,
                                    BaziConfig.from_values(backend=backend)))
-      owning, following = chart.bazi.bracketing_jies
+      owning, following = chart.bazi.month_jies
       assert owning.moment.date() <= birth_date < following.moment.date()
       dayuns = tuple(chart.dayun)
       first, last = utils.supported_jie_boundaries()
@@ -112,7 +112,23 @@ def test_birth_and_query_endpoints_remain_distinct(backend: str) -> None:
       Bazi.create(datetime.combine(outside, time.min), 'male', BaziConfig.from_values(backend=backend))
 
 
-def test_day_first_month_floor_does_not_change_physical_queries() -> None:
+@pytest.mark.parametrize('birth,previous_year,previous,current,first_ganzhi', [
+  ('2000-02-04 10:00', 1999, Dizhi.丑, Dizhi.寅, '丁丑'),
+  ('2000-03-05 10:00', 2000, Dizhi.寅, Dizhi.卯, '戊寅'),
+])
+def test_day_first_month_floor_does_not_change_physical_queries(
+  birth: str, previous_year: int, previous: Dizhi, current: Dizhi, first_ganzhi: str,
+) -> None:
+  chart = BaziChart(Bazi.create(birth, 'female'))
+  database = TransitDatabase(chart)
+  assert chart.dayun_start_moment == datetime.fromisoformat(birth)
+  assert chart.bazi.month_jies[0].moment > chart.bazi.reference_datetime
+  assert database._dayun_at_month(previous_year, previous) is None
+  assert str(database._dayun_at_month(2000, current)) == first_ganzhi
+  assert next(chart.dayun).ganzhi_year == 2000
+
+
+def test_day_year_floor_does_not_change_physical_queries() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 10:00', 'female'))
   transits = TransitChart(chart)
   database = TransitDatabase(chart)
@@ -131,29 +147,37 @@ def test_day_first_month_floor_does_not_change_physical_queries() -> None:
   assert physical is not None and str(physical.liunian) == '己卯' and str(physical.liuyue) == '丁丑'
 
 
-def test_demo_reads_time_facts_without_serializing_chart(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize('located', [False, True])
+def test_demo_reads_time_facts_without_serializing_chart(monkeypatch: pytest.MonkeyPatch, located: bool) -> None:
   def fail_json(_chart: BaziChart) -> object:
     raise AssertionError('Display must not generate a complete chart JSON')
   monkeypatch.setattr(BaziChart, 'json', property(fail_json))
-  chart = BaziChart(Bazi.create('2000-02-04T07:40:00-05:00', 'male',
-                               BaziConfig.from_values(precision='minute'), longitude=0.0))
+  chart = BaziChart(Bazi.create(
+    '2000-02-04T07:40:00-05:00' if located else '2000-02-04 10:00',
+    'male',
+    BaziConfig.from_values(precision='minute' if located else 'day'),
+    longitude=0.0 if located else None,
+  ))
   bazi = chart.bazi
   facts = bazi.location_time
-  assert facts is not None
-  assert facts.canonical_instant == datetime(2000, 2, 4, 12, 40, tzinfo=UTC)
-  assert facts.civil_time.isoformat() == '2000-02-04T07:40:00-05:00'
-  # Daily EOT nodes are -828.6s/-834.6s; at 12:40 UTC the fraction is 19/36.
-  assert facts.apparent_time.isoformat() == '2000-02-04T12:26:08.233333'
-  assert bazi.reference_datetime == datetime(2000, 2, 4, 20, 40)
-  assert bazi.solar_datetime == datetime(2000, 2, 4, 12, 26)
-  assert '民用出生时刻（固定出生地偏移）：2000-02-04T07:40:00-05:00' in get_basic_info(chart)
-  # A location HOUR advance can still display the old physical Jie; DAY has the same distinction.
-  default = BaziChart(Bazi.create('2000-02-04 10:00', 'male'))
-  assert default.bazi.bracketing_jies[0].jieqi is Jieqi.立春
-  for value in (chart, default):
-    text = get_transit_info(value)
-    assert '出生时刻前一节：小寒' in text
-    assert '出生时刻后一节：立春 - 2000-02-04T20:40:23' in text
+  basic = get_basic_info(chart)
+  if located:
+    assert facts is not None
+    assert facts.canonical_instant == datetime(2000, 2, 4, 12, 40, tzinfo=UTC)
+    assert facts.civil_time.isoformat() == '2000-02-04T07:40:00-05:00'
+    # Daily EOT nodes are -828.6s/-834.6s; at 12:40 UTC the fraction is 19/36.
+    assert facts.apparent_time.isoformat() == '2000-02-04T12:26:08.233333'
+    assert bazi.reference_datetime == datetime(2000, 2, 4, 20, 40)
+    assert bazi.solar_datetime == datetime(2000, 2, 4, 12, 26)
+    assert '民用出生时刻（固定出生地偏移）：2000-02-04T07:40:00-05:00' in basic
+  else:
+    assert facts is None
+    assert '出生时刻：2000-02-04T10:00:00' in basic
+  assert bazi.month_jies[0].jieqi is Jieqi.立春
+  text = get_transit_info(chart)
+  assert '出生时刻前一节：小寒' in text
+  assert '出生时刻后一节：立春 - 2000-02-04T20:40:23' in text
+  assert '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39' in text
 
 
 def test_time_facts_are_readonly_and_json_is_detached() -> None:
@@ -209,7 +233,7 @@ def test_precise_birth_and_physical_queries_match_scans(backend: str, precision:
         owning, following = candidates[index:index + 2]
         chart = BaziChart(Bazi.create(birth, 'female', BaziConfig.from_values(backend=backend, precision=precision)))
         assert chart.bazi.month_commander is owning[2]
-        assert chart.bazi.bracketing_jies == (JieqiTime(owning[1], owning[0]), JieqiTime(following[1], following[0]))
+        assert chart.bazi.month_jies == (JieqiTime(owning[1], owning[0]), JieqiTime(following[1], following[0]))
         physical_index = max(i for i, row in enumerate(candidates) if row[0] <= chart.bazi.reference_datetime)
         reading = TransitChart(chart).at_moment(chart.bazi.reference_datetime)
         assert reading is not None and reading.liuyue is not None

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-import colorama
+import argparse
 import itertools
+from random import Random, SystemRandom
 
 from pprint import pprint
 from typing import TypeVar
 from collections.abc import Iterable, Generator
+
+import colorama
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
@@ -57,6 +60,8 @@ def get_basic_info(chart: BaziChart) -> str:
   day_master_wx: Wuxing = traits(bazi.day_master).wuxing
   date_label = '生于 ' if bazi.longitude is None else '真太阳时日期：'
   s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，{date_label}{bazi.solar_date}\n\n'
+  if bazi.longitude is None:
+    s += f'出生时刻：{bazi.solar_datetime.isoformat()}\n\n'
   location_time = bazi.location_time
   if location_time is not None:
     s += f'民用出生时刻（固定出生地偏移）：{location_time.civil_time.isoformat()}；经度={location_time.longitude}\n'
@@ -102,6 +107,10 @@ def get_transit_info(chart: BaziChart) -> str:
 
   s += f'出生时刻前一节：{jie_before.jieqi} - {jie_before.moment.isoformat()}\n'
   s += f'出生时刻后一节：{jie_after.jieqi} - {jie_after.moment.isoformat()}\n'
+  owning, following = chart.bazi.month_jies
+  counted = following if chart.dayun_order else owning
+  direction = '顺排' if chart.dayun_order else '逆排'
+  s += f'大运数节依据（{direction}）：{counted.jieqi} - {counted.moment.isoformat()}\n'
   s += f'交运时间： {chart.dayun_start_moment.isoformat()}\n\n'
 
   s += '大运：            天干                 地支                 地支藏干\n'
@@ -129,8 +138,10 @@ def get_transit_info(chart: BaziChart) -> str:
   return s
 
 
-def demo() -> None:
-  chart: BaziChart = BaziChart(Bazi.random())
+def demo(seed: int | None = None) -> None:
+  seed = SystemRandom().getrandbits(64) if seed is None else seed
+  print(f'random seed: {seed}')
+  chart: BaziChart = BaziChart(Bazi.random(rng=Random(seed)))
 
   basic_info: str = get_basic_info(chart)
   print(basic_info)
@@ -143,4 +154,6 @@ def demo() -> None:
 
 
 if __name__ == '__main__':
-  demo()
+  parser = argparse.ArgumentParser(description='Display a random chart and its transits.')
+  parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
+  demo(parser.parse_args().seed)

@@ -71,6 +71,14 @@ def _snapshot(chart: BaziChart) -> dict[str, Any]:
 
 def test_baseline_inventory() -> None:
   assert BASELINE['schema_version'] == 1
+  reference = BASELINE['reference']
+  assert set(reference) == {'backend', 'commit', 'runtime_tree', 'jieqi_table_sha256'}
+  assert reference['backend'] == 'celestial'
+  for name in ('commit', 'runtime_tree'):
+    assert len(reference[name]) == 40
+    assert all(character in '0123456789abcdef' for character in reference[name])
+  table = Path(__file__).parents[2] / 'bazi/calendar/celestial_data/data/jieqi_moments.txt'
+  assert hashlib.sha256(table.read_bytes()).hexdigest() == reference['jieqi_table_sha256']
   assert _external_fingerprint() == '65ece0cdf6e1f580d11efe5dff99e8a8a6eeb3782c2267cc5afaae13506c3f7e'
   cases = BASELINE['cases']
   expected_ids = {

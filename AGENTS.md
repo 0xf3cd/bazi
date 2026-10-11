@@ -52,7 +52,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
-  - `python -m coverage run --source=bazi --omit='*/__init__.py,bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --source=bazi --omit='bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
     at **100%**. Without the flag the report prints the number and still exits 0, so this
     local loop would not notice a drop; CI never runs this path, it gates inside

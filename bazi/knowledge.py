@@ -25,6 +25,7 @@ _T = TypeVar('_T')
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
 _OUTPUTS: Final = get_args(OutputPolicy)
+
 DEFAULT_SOURCE_PATH: Final[Path] = Path(__file__).with_name('knowledge_data.json')
 
 
@@ -503,6 +504,8 @@ class KnowledgeBase:
     '''
     if premise_verdict is not None and not isinstance(premise_verdict, str):
       raise TypeError(f'Expected str | None, got {type(premise_verdict)}')
+    if premise_verdict is not None:
+      _text(premise_verdict)
     if not isinstance(entry, KnowledgeEntry):
       raise TypeError(f'Expected KnowledgeEntry, got {type(entry)}')
     for flag in (show_sources, manual_context):

@@ -108,7 +108,7 @@ def test_leading_corner_and_apparent_birth_window() -> None:
   last = Bazi.create('2100-01-01T12:00:00+00:00', 'male', config, longitude=-180.0)
   assert last.solar_date == date(2099, 12, 31)
   assert last._utils.to_date(last._utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
-  assert str(last.bracketing_jies[1].jieqi) == '小寒'
+  assert str(last.month_jies[1].jieqi) == '小寒'
   for civil, longitude in (
     ('1901-02-18T12:24:00+23:54', 176.0),
     ('2100-01-01T12:10:00+00:00', -180.0),

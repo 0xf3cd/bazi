@@ -2,6 +2,7 @@
 
 import math
 import random
+from random import Random
 
 from enum import Enum
 from dataclasses import dataclass
@@ -214,14 +215,14 @@ class Bazi:
     # Which ganzhi year / month owns the birth, compared per `BaziPrecision`
     # (`birth >= jieqi` at the known granularity, ties go new).
     year_month: GanzhiYearMonth
-    bracketing_jies: tuple[JieqiTime, JieqiTime]
+    month_jies: tuple[JieqiTime, JieqiTime]
     if self._config.precision is BaziPrecision.DAY:
       # DAY's date-level year/month also selects the Jies used for Dayun counting.
       ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
       year_month = GanzhiYearMonth(ganzhi_calendardate.year, ganzhi_calendardate.month)
       solar_year, jie = year_month.opening_jie
       owning_jie = JieqiTime(jie, utils.jieqi_moment(solar_year, jie))
-      bracketing_jies = (owning_jie, utils.next_jie(owning_jie.moment))
+      month_jies = (owning_jie, utils.next_jie(owning_jie.moment))
     else:
       if self._config.backend is CalendarBackend.HKO:
         raise ValueError(
@@ -244,17 +245,17 @@ class Bazi:
         attribution_jie = location.apparent(next_j.moment.replace(tzinfo=_UTC8))
 
       if _truncated(attribution_birth, self._config.precision) >= _truncated(attribution_jie, self._config.precision):
-        bracketing_jies = (next_j, utils.next_jie(next_j.moment))
+        month_jies = (next_j, utils.next_jie(next_j.moment))
       else:
-        bracketing_jies = (prev_j, next_j)
+        month_jies = (prev_j, next_j)
 
       # Derive the ganzhi year / month from the owning jie -- the same source `BaziChart`
-      # consumes via `bracketing_jies`, so the chart cannot contradict itself. 小寒 opens the
+      # consumes via `month_jies`, so the chart cannot contradict itself. 小寒 opens the
       # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
-      owning: Final[JieqiTime] = bracketing_jies[0]
+      owning: Final[JieqiTime] = month_jies[0]
       year_month = GanzhiYearMonth.from_jie(owning)
 
-    self._bracketing_jies: Final[tuple[JieqiTime, JieqiTime]] = bracketing_jies
+    self._month_jies: Final[tuple[JieqiTime, JieqiTime]] = month_jies
     self._ganzhi_year_month: Final[GanzhiYearMonth] = year_month
 
     # The Year Ganzhi / Year Pillar (年柱).
@@ -346,7 +347,7 @@ class Bazi:
     return bazi
   
   @staticmethod
-  def random(config: BaziConfig = DEFAULT_CONFIG, *, rng: random.Random | None = None) -> 'Bazi':
+  def random(config: BaziConfig = DEFAULT_CONFIG, *, rng: Random | None = None) -> 'Bazi':
     '''
     随机生成一个 `Bazi`，主要用于测试。
 
@@ -356,11 +357,11 @@ class Bazi:
 
     Args:
     - config: (BaziConfig) 命盘级配置，传给 `Bazi.create`。
-    - rng: (random.Random | None) 局部随机源；`None` 使用 `random` 模块。
+    - rng: (Random | None) 局部随机源；`None` 使用 `random` 模块。
 
     Return: (Bazi) 随机八字。
     '''
-    if rng is not None and not isinstance(rng, random.Random):
+    if rng is not None and not isinstance(rng, Random):
       raise TypeError(f'Expected Random, got {type(rng)}')
     source = random if rng is None else rng
     return Bazi.create(
@@ -406,7 +407,7 @@ class Bazi:
     return self._ganzhi_year_month
 
   @property
-  def bracketing_jies(self) -> tuple[JieqiTime, JieqiTime]:
+  def month_jies(self) -> tuple[JieqiTime, JieqiTime]:
     '''
     按 `self.config.precision` 归属的开月节与下一节，供年/月柱和大运数节共同使用。
 
@@ -416,7 +417,7 @@ class Bazi:
       所属节的真实时刻可以在出生之后；逆排大运的负间隔钳为零。
     - 真实出生时刻前后节仍应以 `reference_datetime` 查询历法 `prev_jie` / `next_jie`。
     '''
-    return self._bracketing_jies
+    return self._month_jies
 
   @property
   def hour(self) -> int:

@@ -436,7 +436,11 @@ def test_cli_reference_export_retains_unverified_and_unevaluated_states(tmp_path
   assert '命盘适用性未判断' in result.stdout
   assert '仅供参考' in result.stdout
   saved = tmp_path / 'interpretation_examples' / '0.txt'
-  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
+  displayed = result.stdout
+  if chart_args[0] == '--seed':
+    assert displayed.startswith('random seed: 42\n')
+    displayed = displayed.removeprefix('random seed: 42\n')
+  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', displayed).removesuffix('\n')
   assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
   assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
   ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
@@ -597,7 +601,7 @@ def test_exports_retain_other_existing_files(tmp_path: Path) -> None:
   second = _run_cli(tmp_path, '--seed', '42', '--output-dir', str(tmp_path))
   assert second.returncode == 0
   assert (output / '0.txt').read_text(encoding='utf-8') == re.sub(
-    r'\x1b\[[0-9;]*m', '', second.stdout,
+    r'\x1b\[[0-9;]*m', '', second.stdout.removeprefix('random seed: 42\n'),
   ).removesuffix('\n')
   assert (output / '1.txt').read_bytes() == earlier
   assert (output / 'notes.txt').read_text(encoding='utf-8') == 'personal notes'
@@ -719,9 +723,9 @@ def test_batch_generation_is_interleaved_with_rendering(
 
   monkeypatch.setattr(Bazi, 'random', staticmethod(generate))
   monkeypatch.setitem(main.__globals__, '_chart_text', render)
-  assert main(['--count', '3']) == 0
+  assert main(['--seed', '42', '--count', '3']) == 0
   assert events == ['generate', 'render', 'generate', 'render', 'generate', 'render']
-  assert capsys.readouterr().out == 'chart\nchart\nchart\n'
+  assert capsys.readouterr().out == 'random seed: 42\nchart\nchart\nchart\n'
 
 
 @pytest.mark.parametrize('seed', [0, 42, -17])
@@ -895,7 +899,7 @@ def test_modern_knowledge_loading_is_independent_of_legacy_projection(
   result = _run_cli(knowledge_checkout, '--validate-knowledge', script=knowledge_checkout / 'run_interpreter.py')
   assert result.returncode == 0 and '校验通过：' in result.stdout
   imported = subprocess.run(
-    [sys.executable, '-B', '-c', 'import bazi, sys; assert "bazi.descriptions" not in sys.modules; from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
+    [sys.executable, '-B', '-c', 'from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
     cwd=knowledge_checkout, capture_output=True, text=True, encoding='utf-8', check=False,
   )
   assert imported.returncode == 0, imported.stderr
@@ -944,15 +948,32 @@ def test_custom_knowledge_export_cannot_overwrite_bundled_source(
   assert corpus.read_bytes() == before
 
 
-def test_chart_and_txt_share_library_subject_projection(tmp_path: Path) -> None:
+@pytest.mark.parametrize('show_sources', [False, True])
+def test_chart_and_txt_share_library_subject_projection(knowledge_checkout: Path, show_sources: bool) -> None:
+  tmp_path = knowledge_checkout
+  data = json.loads(KNOWLEDGE_BASE.export_json())
+  data['entries'].reverse()
+  corpus = json.dumps(data, ensure_ascii=False)
+  (knowledge_checkout / 'bazi/knowledge_data.json').write_text(corpus, encoding='utf-8')
+  knowledge = KnowledgeBase.from_json(corpus)
   relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
   assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
-  result = _run_cli(tmp_path, '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only', '--show-sources', '--export-knowledge-base', '--output-dir', str(tmp_path))
+  result = _run_cli(
+    tmp_path, '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only',
+    *(['--show-sources'] if show_sources else []),
+    '--export-knowledge-base', '--output-dir', str(tmp_path),
+    script=knowledge_checkout / 'run_interpreter.py',
+  )
   assert result.returncode == 0, result.stderr
   for subject, kind in (('七杀', 'shishen.qisha'), ('食神', 'shishen.shishen')):
     text = (tmp_path / 'knowledge_base/shishen' / (subject + '.txt')).read_text(encoding='utf-8')
-    expected = KNOWLEDGE_BASE.render_subject(kind, include_reference_only=True, show_sources=True)
+    expected = knowledge.render_subject(kind, include_reference_only=True, show_sources=show_sources)
     assert text == subject + '知识条目：\n' + expected + '\n'
+    assert expected in result.stdout
+    selected = tuple(entry for entry in knowledge.query(object_id=kind, include_reference_only=True)
+                     if entry.legacy is None or entry.legacy.object_id == kind)
+    positions = tuple(text.index(entry.text) for entry in selected)
+    assert positions == tuple(sorted(positions))
   assert relation.text not in KNOWLEDGE_BASE.render_subject('shishen.qisha', include_reference_only=True)
   assert relation.text in KNOWLEDGE_BASE.render_subject('shishen.shishen', include_reference_only=True)
 

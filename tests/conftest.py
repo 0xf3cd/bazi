@@ -1,21 +1,22 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from hashlib import sha256
 from random import Random
 
 import pytest
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
-  parser.addoption('--random-seed', type=int, default=236, help='Seed for local random regression inputs.')
+  parser.addoption('--random-seed', type=int, default=236, help='Base seed for local random regression inputs and collection cases.')
 
 
 def pytest_report_header(config: pytest.Config) -> str:
-  return f'random regression seed: {config.getoption("--random-seed")}'
+  return f'random regression base seed: {config.getoption("--random-seed")}'
 
 
 @pytest.fixture
 def rng(request: pytest.FixtureRequest) -> Random:
-  seed: int = request.config.getoption('--random-seed')
-  request.node.user_properties.append(('random_seed', seed))
-  print(f'random regression seed: {seed}')
+  base: int = request.config.getoption('--random-seed')
+  seed = int.from_bytes(sha256(f'{base}:{request.node.nodeid}'.encode()).digest()[:8], 'big')
+  print(f'random regression base={base} effective={seed} nodeid={request.node.nodeid}')
   return Random(seed)

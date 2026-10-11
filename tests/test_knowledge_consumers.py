@@ -3,10 +3,14 @@
 import importlib.util
 from dataclasses import FrozenInstanceError, fields, replace
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
 import bazi
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import ContextProfile, evaluate_context
 from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
@@ -54,8 +58,36 @@ def test_removed_modules_are_absent_from_source_and_registration() -> None:
     assert importlib.util.find_spec('bazi.' + name) is None
     with pytest.raises(AttributeError):
       getattr(bazi, name)
-  assert not hasattr(KnowledgeBase, '_render')
   assert DEFAULT_SOURCE_PATH == Path(bazi.knowledge.__file__).with_name('knowledge_data.json')
+
+
+def test_root_lazily_resolves_a_runtime_module(monkeypatch: pytest.MonkeyPatch) -> None:
+  module = bazi.knowledge
+  monkeypatch.delattr(bazi, 'knowledge')
+  assert bazi.knowledge is module
+
+
+def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) -> None:
+  result = evaluate_context(
+    BaziChart(Bazi.create('2000-01-01 12:00', 'female')),
+    criterion_id='editorial.guansha_coexistence.v1',
+    profile=ContextProfile('natal'),
+    include_reference_only=True,
+  )
+  consumer = Mock(wraps=KnowledgeBase.render)
+  def render(self: KnowledgeBase, *args: object, **kwargs: object) -> str:
+    return str(consumer(self, *args, **kwargs))
+  monkeypatch.setattr(KnowledgeBase, 'render', render)
+  text = result.render()
+  assert result.entries
+  assert consumer.call_count == len(result.entries)
+  for call, match in zip(consumer.call_args_list, result.entries):
+    knowledge, entry = call.args
+    assert isinstance(knowledge, KnowledgeBase)
+    assert entry == knowledge.entry(match.claim_id)
+    assert call.kwargs == {'premise_verdict': match.status}
+    assert entry.text in text
+    assert f'前提判别：{match.status}' in text
 
 
 def test_object_ids_preserve_aliases_and_reject_unrelated_values() -> None:
@@ -71,7 +103,8 @@ def test_object_ids_preserve_aliases_and_reject_unrelated_values() -> None:
       object_id(bad) # type: ignore[arg-type]
 
 
-def test_subject_projection_keeps_subject_roles_order_and_metadata_distinct() -> None:
+@pytest.mark.parametrize('show_sources', [False, True])
+def test_subject_projection_keeps_subject_roles_order_and_metadata_distinct(show_sources: bool) -> None:
   k = KnowledgeBase.load()
   relation = k.entry('legacy.shishen.SH-052')
   assert relation in k.query(object_id='shishen.qisha', include_reference_only=True)
@@ -82,9 +115,10 @@ def test_subject_projection_keeps_subject_roles_order_and_metadata_distinct() ->
     tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()),
     tuple(reversed(tuple(k.entries.values()))),
   )
-  text = reversed_k.render_subject('tiangan.ding', include_reference_only=True, show_sources=True)
+  text = reversed_k.render_subject('tiangan.ding', include_reference_only=True, show_sources=show_sources)
   selected = reversed_k.query(object_id='tiangan.ding', include_reference_only=True)
-  assert tuple(text.index('条目：' + entry.claim_id + '；') for entry in selected) == tuple(sorted(text.index('条目：' + entry.claim_id + '；') for entry in selected))
+  positions = tuple(text.index(entry.text) for entry in selected)
+  assert positions == tuple(sorted(positions))
   assert tuple(entry.legacy for entry in selected) == tuple(reversed(tuple(entry.legacy for entry in k.query(object_id='tiangan.ding', include_reference_only=True))))
   for identifier in ('wuxing.mu', 'wuxing.huo', 'shensha.guoyin'):
     for entry in k.query(object_id=identifier, include_reference_only=True):
@@ -119,8 +153,12 @@ def test_render_verdict_is_display_only_and_does_not_change_eligibility() -> Non
   assert '输出资格：reference_only' in rendered and '仅供参考' in rendered
   assert '也许' in rendered and 'Does not establish a classical rule or real-world prediction.' in rendered
   assert '人工给定情境' not in rendered
+  assert '人工给定情境' in k.render(reference, manual_context=True, premise_verdict=None)
   assert reference not in k.query()
   assert k.export_json() == before
   for value in (1, False, (), object()):
     with pytest.raises(TypeError, match='Expected str | None'):
       k.render(reference, premise_verdict=value) # type: ignore[arg-type]
+  for value in ('', ' ', '\t\n', '\u3000'):
+    with pytest.raises(ValueError, match='non-empty text'):
+      k.render(reference, premise_verdict=value)

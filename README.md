@@ -115,7 +115,7 @@ does not install its offline generator.
 ### 出生归属与时间读取
 
 年/月柱与大运数节共用出生精度归属：DAY 的整个交节日归新，HOUR 按时辰、MINUTE 按分钟
-相等归新。`Bazi.bracketing_jies` 返回出生月所属开月节及其下一节，保留后端原始时刻。
+相等归新。`Bazi.month_jies` 返回出生月所属开月节及其下一节，保留后端原始时刻。
 提前归属时，开月节可以在出生之后；逆排数节的负间隔钳零，首运年标签不早于出生干支年。
 HKO 仍采用午夜节时刻，地点 DAY、地点 ALGO2 仍不支持。
 
@@ -427,6 +427,10 @@ For a repeatable random example with source records:
 python run_interpreter.py --seed 42 --show-sources
 ```
 
+All three runners accept `--seed <integer>`. Without it, they generate and print
+the actual seed; replay by passing that value. Displays include birth time and gender.
+The full gate passes seed 236 to each runner.
+
 For a fixed birth and complete reference text:
 
 ```sh
@@ -537,6 +541,20 @@ write to `output_data/`; the installed library's read-only behavior is checked s
 
 A bare `python run_tests.py` omits slow/HKO tests and all optional tasks. It is not
 the full verification gate. Do not run autoformatters; use `ruff check .`.
+
+Random pytest inputs use `--random-seed` (default base 236). Each `rng` fixture
+prints its node ID, base seed and effective seed. The effective seed is the first
+eight bytes of SHA-256 of UTF-8 `"<base>:<nodeid>"`, interpreted as an unsigned
+big-endian integer. It initializes a real local `Random`, leaving global state alone.
+Replay a single test with the same base and full node ID:
+
+```sh
+python -m pytest tests/test_bazi_chart.py::test_dayun_order --random-seed 236 -s
+```
+
+The collected relationship cases use seeds `base` through `base + 4`; their IDs
+include the actual seed, birth time and gender. Changing the base changes these
+cases too. Copy the complete collected ID (quoted) to rerun one case with the same base.
 
 ## Offline Generation
 
