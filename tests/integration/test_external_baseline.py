@@ -43,6 +43,10 @@ def _external_fingerprint() -> str:
   return hashlib.sha256(encoded).hexdigest()
 
 
+def _table_fingerprint(path: Path) -> str:
+  return hashlib.sha256(path.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+
+
 def _chart(case: dict[str, Any], profile: str) -> BaziChart:
   values = BASELINE['profiles'][profile]
   return BaziChart(Bazi.create(
@@ -69,6 +73,17 @@ def _snapshot(chart: BaziChart) -> dict[str, Any]:
   }
 
 
+@pytest.mark.parametrize('newline', [b'\n', b'\r\n'])
+def test_table_fingerprint_preserves_values_across_checkout_newlines(tmp_path: Path, newline: bytes) -> None:
+  canonical = b'year=2000\nmoment=2000-02-04T20:40:23\n'
+  table = tmp_path / 'jieqi_moments.txt'
+  table.write_bytes(canonical.replace(b'\n', newline))
+  expected = hashlib.sha256(canonical).hexdigest()
+  assert _table_fingerprint(table) == expected
+  table.write_bytes(canonical.replace(b'20:40:23', b'20:40:24').replace(b'\n', newline))
+  assert _table_fingerprint(table) != expected
+
+
 def test_baseline_inventory() -> None:
   assert BASELINE['schema_version'] == 1
   reference = BASELINE['reference']
@@ -78,7 +93,7 @@ def test_baseline_inventory() -> None:
     assert len(reference[name]) == 40
     assert all(character in '0123456789abcdef' for character in reference[name])
   table = Path(__file__).parents[2] / 'bazi/calendar/celestial_data/data/jieqi_moments.txt'
-  assert hashlib.sha256(table.read_bytes()).hexdigest() == reference['jieqi_table_sha256']
+  assert _table_fingerprint(table) == reference['jieqi_table_sha256']
   assert _external_fingerprint() == '65ece0cdf6e1f580d11efe5dff99e8a8a6eeb3782c2267cc5afaae13506c3f7e'
   cases = BASELINE['cases']
   expected_ids = {
