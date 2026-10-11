@@ -498,7 +498,7 @@ class KnowledgeBase:
     - entry: (KnowledgeEntry) 本库条目。
     - show_sources: (bool) 是否展示来源详情；前提与限度始终保留。
     - manual_context: (bool) 标注人工给定情境，不表示前提满足。
-    - premise_verdict: (str | None) 调用方的展示文字；给定时优先于人工情境标注。
+    - premise_verdict: (str | None) 调用方的展示文字，须含非空白字符；给定时优先于人工情境标注。
     Return:
     - (str) 展示文字。
     '''

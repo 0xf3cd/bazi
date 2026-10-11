@@ -554,9 +554,7 @@ python -m pytest tests/test_bazi_chart.py::test_dayun_order --random-seed 236 -s
 
 The collected relationship cases use seeds `base` through `base + 4`; their IDs
 include the actual seed, birth time and gender. Changing the base changes these
-cases too. Pytest prints IDs relative to its `tests/` root. From the repository
-root, prefix the complete collected ID with `tests/`, quote it, and use the same
-base to rerun one case:
+cases too. From the repository root, rerun one case with the same base:
 
 ```sh
 python -m pytest \

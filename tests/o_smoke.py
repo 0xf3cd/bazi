@@ -272,7 +272,7 @@ def main() -> int:
     ('KnowledgeBase.render_subject invalid display flag on empty selection', TypeError,
      lambda: knowledge.render_subject('shishen.jiecai', show_sources=1)), # type: ignore[arg-type]
     ('KnowledgeBase.render wrong verdict type', TypeError,
-      lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
     ('KnowledgeBase.render empty verdict', ValueError,
      lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict='')),
     ('KnowledgeBase.render whitespace verdict', ValueError,

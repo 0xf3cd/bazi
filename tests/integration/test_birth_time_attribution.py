@@ -76,6 +76,9 @@ def test_day_ownership_and_counting_match_date_scan(backend: str, year: int) -> 
           transits = TransitChart(chart)
           current_month = transits.at_month(expected_year, owning[2])
           assert current_month is not None and current_month.dayun == first.ganzhi
+          previous_year = expected_year - (owning[3] == 1)
+          previous_branch = candidates[owning_index - 1][2]
+          assert TransitDatabase(chart)._dayun_at_month(previous_year, previous_branch) is None
         # Calendar lookups still bracket the physical minute, including DAY's advance window.
         physical_index = max(i for i, row in enumerate(candidates) if row[0] <= reference)
         assert utils.prev_jie(reference) == JieqiTime(candidates[physical_index][1], candidates[physical_index][0])
@@ -148,13 +151,19 @@ def test_day_year_floor_does_not_change_physical_queries() -> None:
 
 
 @pytest.mark.parametrize('located', [False, True])
-def test_demo_reads_time_facts_without_serializing_chart(monkeypatch: pytest.MonkeyPatch, located: bool) -> None:
+@pytest.mark.parametrize('gender,counting', [
+  ('male', '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39'),
+  ('female', '大运数节依据（逆排）：立春 - 2000-02-04T20:40:23'),
+])
+def test_demo_reads_time_facts_without_serializing_chart(
+  monkeypatch: pytest.MonkeyPatch, located: bool, gender: str, counting: str,
+) -> None:
   def fail_json(_chart: BaziChart) -> object:
     raise AssertionError('Display must not generate a complete chart JSON')
   monkeypatch.setattr(BaziChart, 'json', property(fail_json))
   chart = BaziChart(Bazi.create(
     '2000-02-04T07:40:00-05:00' if located else '2000-02-04 10:00',
-    'male',
+    gender,
     BaziConfig.from_values(precision='minute' if located else 'day'),
     longitude=0.0 if located else None,
   ))
@@ -177,7 +186,7 @@ def test_demo_reads_time_facts_without_serializing_chart(monkeypatch: pytest.Mon
   text = get_transit_info(chart)
   assert '出生时刻前一节：小寒' in text
   assert '出生时刻后一节：立春 - 2000-02-04T20:40:23' in text
-  assert '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39' in text
+  assert counting in text
 
 
 def test_time_facts_are_readonly_and_json_is_detached() -> None:

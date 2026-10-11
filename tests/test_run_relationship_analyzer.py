@@ -65,6 +65,9 @@ def test_shensha_labels() -> None:
     for label, dizhis in expected
   ]
 
+  multiple: ShenshaAnalysis = {**shensha, 'taiji': frozenset((Dizhi.午, Dizhi.子, Dizhi.申))}
+  assert f'太极贵人：{colored_str(Dizhi.子)}, {colored_str(Dizhi.午)}, {colored_str(Dizhi.申)}' in shensha_strs(multiple)
+
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
   assert tuple(_WHOLE_PILLAR_SHENSHA_LABELS) == ('kuigang', 'tianshe')

@@ -34,7 +34,7 @@ def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi
 
 def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
   return [
-    f'{label}：{", ".join(map(colored_str, dz_fs))}'
+    f'{label}：{", ".join(map(colored_str, sorted(dz_fs, key=lambda dz: dz.index)))}'
     for label, dz_fs in _named_shensha(shensha)
     if dz_fs
   ]
