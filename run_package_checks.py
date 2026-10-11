@@ -224,14 +224,15 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   for message in ('"None"',):
     if message not in result.stdout:
       raise ValueError(f'Installed time typing negative control missed {message}')
-  for owner_name, attribute_name in (
-    ('Bazi', 'reference_datetime'),
-    ('Bazi', 'month_jies'),
-    ('GanzhiYearMonth', 'month'),
-    ('KnowledgeSource', 'work'),
+  for owner_name, attribute_name, trigger in (
+    ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
+    ('Bazi', 'month_jies', 'local.month_jies = ()'),
+    ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
+    ('KnowledgeSource', 'work', 'witness.work = "changed"'),
   ):
-    message = f'Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
-    if not any(line.partition(': error: ')[2] == message for line in result.stdout.splitlines()):
+    line_number = bad.splitlines().index(trigger) + 1
+    message = f'bad.py:{line_number}: error: Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
+    if message not in result.stdout.splitlines():
       raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
   if 'Unsupported target for indexed assignment' not in result.stdout:
     raise ValueError('Installed knowledge typing negative control missed indexed assignment')
