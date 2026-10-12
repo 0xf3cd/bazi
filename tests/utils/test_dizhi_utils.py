@@ -1350,13 +1350,16 @@ def test_discovery_relation_selection(monkeypatch: pytest.MonkeyPatch) -> None:
   assert discovery[DizhiRelation.拱合] == (
     frozenset({GanzhiOccurrence(0, ganzhis[0]), GanzhiOccurrence(1, ganzhis[1])}),
   )
+
   calls.clear()
   assert dizhi_utils.discover_ganzhis(ganzhis, relations=()) == {}
   assert calls == []
+
   mutual = dizhi_utils.discover_mutual_ganzhis(ganzhis[:1], ganzhis[1:], relations=selected)
   assert mutual == discovery
   assert calls == []
   assert dizhi_utils.discover_mutual_ganzhis(ganzhis[:1], ganzhis[1:], relations=()) == {}
+
   non_gong = dizhi_utils.discover_mutual_ganzhis(
     (Ganzhi.from_str('甲子'),),
     (Ganzhi.from_str('乙丑'),),

@@ -36,6 +36,7 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
+_RECORD_VERSION: Final = 2
 
 
 class _Criterion(NamedTuple):
@@ -113,6 +114,7 @@ class ContextProfile:
     _year(self.ganzhi_year)
     if self.observation_scope == 'natal' and self.ganzhi_year is not None:
       raise ValueError('Natal scope cannot include a transit coordinate')
+
 
 @dataclass(frozen=True)
 class ChartOccurrence:
@@ -251,7 +253,7 @@ class ContextResult:
   def export_json(self) -> str:
     '''导出版本2记录、全部证据及知识注册表，不改变参考输出资格。'''
     data = {
-      'record_version': 2,
+      'record_version': _RECORD_VERSION,
       'profile': asdict(self.profile),
       'criterion': {**asdict(self.criterion), 'observations': dict(self.criterion.observations)},
       'occurrences': [
@@ -275,7 +277,7 @@ class ContextResult:
       json.loads(text, object_pairs_hook=_pairs),
       ('record_version', 'profile', 'criterion', 'occurrences', 'entries', 'input', 'knowledge'),
     )
-    if type(data['record_version']) is not int or data['record_version'] != 2:
+    if type(data['record_version']) is not int or data['record_version'] != _RECORD_VERSION:
       raise ValueError('Unsupported record version')
     profile = _mapping(data['profile'], ('observation_scope', 'ganzhi_year'))
     criterion = _mapping(data['criterion'], tuple(field.name for field in fields(CriterionResult)))
@@ -315,7 +317,7 @@ class ContextResult:
     ]
     for value in self.occurrences:
       lines.append(
-        f'证据：{value.origin}.{value.pillar}[{value.index}]；{value.ganzhi}；'
+        f'证据：{value.origin}.{value.pillar}；{value.ganzhi}；'
         f'{value.layer}；{value.stem}={value.shishen}；'
         f'kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}'
       )
@@ -343,10 +345,11 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''在显式范围内求值已注册判据，再联接参考条目。
+  '''在显式范围内求值已注册判据，再联接按输出选项选择的条目。
 
   Note:
   - 仅定义两个原作官杀判据；缺失范围或未定义判据返回 UNKNOWN，不从文本推导新判据。
+  - 参考条目须显式设置 include_reference_only=True；未传 knowledge 时每次独立加载默认语料。
   '''
   _typed(chart, BaziChart)
   _typed(profile, ContextProfile)

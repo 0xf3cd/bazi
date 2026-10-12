@@ -67,7 +67,7 @@ def date_to_bytes(dt: date) -> bytes:
   m: int = dt.month
   d: int = dt.day
   result: bytes = int_to_bytes(y, 2) + int_to_bytes(m, 1) + int_to_bytes(d, 1)
-  assert len(result) == 4 # 固定四字节。
+  assert len(result) == 4
   return result
 
 def bytes_to_date(b: bytes) -> date:

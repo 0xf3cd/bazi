@@ -334,7 +334,7 @@ def main() -> int:
      lambda: dizhi_utils.search_ganzhis(
        [Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰')],
        DizhiRelation.拱合,
-        definitions=DizhiRules.GongheDef.NARROW, # type: ignore
+       definitions=DizhiRules.GongheDef.NARROW, # type: ignore
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
@@ -391,6 +391,10 @@ def main() -> int:
      lambda: (ALGO1.days_counts_in_ganzhi_year(Year(2024)), ALGO1.days_counts_in_ganzhi_year(2024.0))), # type: ignore
     ('ALGO2 month lengths int-subclass warm cache wrong year', TypeError,
      lambda: (ALGO2.days_counts_in_ganzhi_year(Year(2024)), ALGO2.days_counts_in_ganzhi_year(2024.0))), # type: ignore
+    ('HKO rejects lunar day zero inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, 0, CalendarType.LUNAR))),
+    ('HKO rejects Ganzhi day zero inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, 0, CalendarType.GANZHI))),
     ('CalendarDate ordering foreign rhs', TypeError,
      lambda: solar_date < date(2024, 1, 1)),
     ('CalendarDate ordering foreign lhs', TypeError,

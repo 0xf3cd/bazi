@@ -15,7 +15,7 @@ class CalendarUtilsProtocol(Protocol):
   运行时结构满足协议，但 mypy 不识别，解析分支须用 cast，见 `calendar_utils_of`。
 
   `jieqi_moment` 的精度随后端不同：HKO 只发布节气日期，用当日午夜占位；
-  celestial 提供秒级真实时刻。其余日期级接口按相同契约互换，差异受下述白名单约束。
+  celestial 提供秒级真实时刻。其余日期级接口按相同契约互换。
 
   `prev_jie` / `next_jie` 始终查询真实时刻：交节日午夜至真实交节之间，HKO 的午夜占位与
   天文后端可返回不同节。出生精度归属属于 `Bazi`：DAY 从日期级干支年月选择开月节和下一节，

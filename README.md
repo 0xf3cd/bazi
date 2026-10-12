@@ -186,8 +186,10 @@ UTC+08:00 日期却为一月二日；TransitChart.at_date 使用后者。1929 �
   需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
 - Ganzhi 仍能持有十干×十二支的 120 种组合，但 next / prev 只接受六十甲子；
   阴阳不配组合明确抛 ValueError，包括零步。步数仍接受 int、bool 与 int 子类。
-- Jieqi.jies() 返回从立春起的十二节元组，ganzhi_year=False 改为从小寒起的公历年序，
-  不含中气，年序参数只接受 bool。干支年月及两后端月长、前后节共用此入口，日期与时刻算法仍独立。
+- ContextResult 的 knowledge_json 构造字段及属性已删除，改传 knowledge: KnowledgeBase；
+  原完整知识 JSON 可先交给 KnowledgeBase.from_json。ContextProfile.stem_scope 属性已删除。
+  ChartOccurrence 构造不再接受 index，第三个位置参数变为 ganzhi；建议使用具名参数。
+  index 仍为按 pillar 派生的只读属性，不进入 JSON，展示只保留柱位。
 
 ## 运限与关系
 
@@ -268,9 +270,10 @@ search_ganzhis、discover_ganzhis、discover_mutual_ganzhis 保留完整干支�
 填实与流派条件仍适用；投影只含两个实支，不含所拱虚支。
 
 非拱跨组的按值查法与具体出现查法不可互换。合并按左侧、右侧首次出现顺序去重；
-规则映射按定义序，集合表按枚举序，刑按规则表首次组合出现顺序输出。
-亲密关系分析直接使用 analyzer.at_birth / analyzer.transits，四个转发包装已删除。
-神煞锚与定义来自本盘流派；补拱只查拱合、拱会，日柱参与按具体位置判断，不以同值地支替代。
+规则映射按定义序，集合表按组合成员枚举序，刑按规则表首次组合出现顺序输出；
+生克先按施方、受方的枚举序排序，再折为无向组合。
+亲密关系分析使用 analyzer.at_birth / analyzer.transits；神煞锚与定义来自本盘流派，
+日柱参与按具体位置判断，不以同值地支替代。
 
 ## 知识与前提匹配
 
@@ -411,12 +414,15 @@ from datetime import datetime
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+from bazi.knowledge import KnowledgeBase
 
 chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+knowledge = KnowledgeBase.load()
 result = evaluate_context(
   chart,
   criterion_id='editorial.guansha_coexistence.v1',
   profile=ContextProfile('natal_and_liunian', ganzhi_year=2024),
+  knowledge=knowledge,
   include_reference_only=True,
 )
 print(result.render())
@@ -443,12 +449,13 @@ described / unresolved 为知识整理状态，不是计算真值。
 
 结构求值与条目匹配分开。四条原作绑定若在自定义库中改变同 ID 的条目、对象、前提、情境、来源或
 输出政策，该条返回 binding_unrecognized，不能凭 ID 或关键词认证语义；等值导出重载绑定可用。
-前提满足不授予默认输出资格，独立 KnowledgeBase.render 不求值。缺绑定条目时不生成 EntryMatch 或显示行；
+前提满足不授予默认输出资格，独立 KnowledgeBase.render 不求值。参考条目须显式设置 include_reference_only=True；
+未选择参考条目或缺绑定条目时不生成其 EntryMatch 或显示行；
 四个未定义判据对提供的同 ID 条目显示 predicate_undefined。
 
 结果不可变，JSON 保留判据定义、profile、完整出生／性别／配置身份、年份／kind、全部观察及完整输入知识快照。
-内存中复用已验证 KnowledgeBase，求值与渲染不重建整库；导出 record_version=2，拒绝版本 1，
-须以原出生输入及配置重新求值。观察序号由柱位派生，固定 stem_scope 不再存储。
+传入已加载的 KnowledgeBase 时复用该对象；省略 knowledge 时每次独立加载默认语料，渲染不重建知识对象。
+导出 record_version=2，拒绝版本 1；旧记录须以原出生输入及配置重新求值。
 恢复只取回记录，不重算或认证已存判别，不交叉验证判别、证据、输入与条目绑定的一致性。
 地点输入快照保留与命盘 JSON 相同的五个时间字段，包括固定民用基准及未截断真太阳钟；
 恢复校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。

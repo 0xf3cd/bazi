@@ -3,9 +3,10 @@
 from typing import Final
 from collections.abc import Sequence
 
+from ..common import frozendict
 from ..defines import Tiangan, Wuxing, TianganRelation
 from ..rules import TianganRules
-from .relation_discovery import RelationDiscovery
+from .relation_discovery import RelationDiscovery, _ordered_relation_pairs
 
 
 '''
@@ -135,6 +136,14 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
   return (tg1, tg2) in TianganRules.TIANGAN_KE
 
 
+_SEARCH_COMBOS: Final[frozendict[TianganRelation, TianganRelationCombos]] = frozendict({
+  TianganRelation.合: tuple(TianganRules.TIANGAN_HE),
+  TianganRelation.冲: tuple(sorted(TianganRules.TIANGAN_CHONG, key=lambda combo: tuple(sorted(tg.index for tg in combo)))),
+  TianganRelation.生: _ordered_relation_pairs(TianganRules.TIANGAN_SHENG),
+  TianganRelation.克: _ordered_relation_pairs(TianganRules.TIANGAN_KE),
+})
+
+
 def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRelationCombos:
   '''
   返回 `tiangans` 中所有满足该关系的组合。
@@ -157,11 +166,9 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
     - return: ({甲, 庚})
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):
     - return: ({甲, 丙}, {甲, 丁})
-    - 返回组合不包含方向。
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):
-    - return: ({甲, 庚}, {甲, 辛}, {丙, 庚}, {丙, 辛},
-               {丁, 庚}, {丁, 辛})
-    - 返回组合不包含方向。
+    - return: ({丙, 庚}, {丙, 辛}, {丁, 庚}, {丁, 辛},
+               {甲, 庚}, {甲, 辛})
   '''
 
   if not isinstance(tiangans, Sequence):
@@ -171,18 +178,11 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   if not all(isinstance(tg, Tiangan) for tg in tiangans):
     raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
 
-  if relation is TianganRelation.合:
-    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_HE if combo.issubset(tiangans))
-  elif relation is TianganRelation.冲:
-    combos = sorted(TianganRules.TIANGAN_CHONG, key=lambda combo: tuple(sorted(tg.index for tg in combo)))
-    return TianganRelationCombos(combo for combo in combos if combo.issubset(tiangans))
-  
-  # 其余为生或克。
-  tg_set: Final[set[Tiangan]] = set(tiangans)
+  if relation not in _SEARCH_COMBOS:
+    raise ValueError(f'Unsupported TianganRelation: {relation}') # pragma: no cover # 当前全部枚举成员均在表内。
 
-  pairs = TianganRules.TIANGAN_SHENG if relation is TianganRelation.生 else TianganRules.TIANGAN_KE
-  ordered = sorted(pairs, key=lambda pair: tuple(tg.index for tg in pair))
-  return TianganRelationCombos(TianganCombo(pair) for pair in ordered if tg_set.issuperset(pair))
+  tg_set: Final[set[Tiangan]] = set(tiangans)
+  return TianganRelationCombos(combo for combo in _SEARCH_COMBOS[relation] if combo.issubset(tg_set))
 
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:

@@ -174,6 +174,17 @@ def test_days_counts_validates_before_cache(year: int) -> None:
     assert str(type(bad_year)) in str(exc.value)
 
 
+@pytest.mark.parametrize('date_type', [CalendarType.LUNAR, CalendarType.GANZHI])
+def test_nonpositive_day_in_supported_year(date_type: CalendarType) -> None:
+  valid = CalendarDate(2000, 6, 1, date_type)
+  invalid = CalendarDate(2000, 6, 0, date_type)
+  assert hko_data_utils.is_valid(valid)
+  for _ in range(2):
+    assert hko_data_utils.is_valid(invalid) is False
+  with pytest.raises(ValueError, match='is not a valid'):
+    hko_data_utils.to_solar(invalid)
+
+
 def test_is_valid() -> None:
   for date_type in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
     min_date: CalendarDate = hko_data_utils.get_min_supported_date(date_type)

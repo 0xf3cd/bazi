@@ -442,7 +442,7 @@ class KnowledgeBase:
 
     Note:
     - 对象查询包含所有绑定角色；未知标识明确报错。
-    Returns:
+    Return:
     - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     if not isinstance(include_reference_only, bool):

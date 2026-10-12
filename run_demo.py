@@ -55,7 +55,7 @@ def hidden_tg_str(d: HiddenTianganDict, day_master: Tiangan) -> str:
 
 
 def get_basic_info(chart: BaziChart) -> str:
-  s: str = '\n' # 输出字符串。
+  s: str = '\n'
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = traits(bazi.day_master).wuxing
   date_label = '生于 ' if bazi.longitude is None else '真太阳时日期：'
@@ -95,7 +95,7 @@ def get_basic_info(chart: BaziChart) -> str:
 
 def get_transit_info(chart: BaziChart) -> str:
   day_master: Tiangan = chart.bazi.day_master
-  s: str = '\n' # 输出字符串。
+  s: str = '\n'
 
   utils = calendar_utils_of(chart.bazi.config.backend)
   birth_time = chart.bazi.reference_datetime

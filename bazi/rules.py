@@ -8,13 +8,12 @@ from typing import Final, TypeVar
 
 from .common import frozendict, check_declared_types
 from .data_types import TraitTuple, HiddenTianganDict
-from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation
+from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation, ShierZhangsheng
 
 
 # 规则表为普通 Final 类属性，导入时构造一次；mypy 检查重新赋值，运行时不设此检查。
 
 
-# 派生表由模块级 _lower_snake 函数构造，因为类体的循环、推导式不能读取类级名称。
 def _nayin() -> frozendict[Ganzhi, str]:
   NAYIN_STR_LIST: list[str] = [
     '海中金', '炉中火', '大林木', '路旁土', '剑锋金', '山头火',
@@ -224,7 +223,7 @@ class DizhiRules:
   class GongheDef(Enum):
     '''拱合结构定义：NARROW 只收三合缺中神；WIDE 收三合任意两支并拱出第三支。
 
-    Sources / 出处:
+    出处：
     - 狭义：https://services.shen88.cn/bazisuanming/pc-74297.html
     - 广义：https://www.sohu.com/a/471337600_310486
     '''
@@ -244,7 +243,7 @@ class DizhiRules:
 
     不修改既有定义；新读法须另加定义。
 
-    Sources / 出处:
+    出处：
     - 同干、广义：https://www.sohu.com/a/471337600_310486
     - 透化神：https://www.suanzhun.net/article/2395.html
     - 禄字：https://services.shen88.cn/bazisuanming/pc-74297.html
@@ -309,7 +308,6 @@ class DizhiRules:
     NORMAL_EXTENDED  = 1 # 卯申、巳酉、亥午、子巳、寅午 + 寅丑。这六组的藏干没有明显的冲突，而且有藏干相合的关系。
     MANGPAI          = 2 # 卯申、寅丑、午亥。盲派最认可这三对暗合。
 
-  # 不同 AnheDef 的表由字典统一持有。
   # 该表格用于查询地支之间的暗合关系。
   # 暗合关系是无方向的。
   DIZHI_ANHE: Final[frozendict[AnheDef, frozenset[frozenset[Dizhi]]]] = frozendict({
@@ -482,8 +480,7 @@ class DizhiRules:
 class DizhiRelationDefinitions:
   '''地支批量查法共用的暗合、刑与拱局定义。
 
-  构造时检查各字段的枚举类型；单次查询只读取所查关系对应的定义。
-  盘级组合与 JSON 仍由 `BaziSchool` 承载，本对象不含排盘或神煞选项。
+  构造时检查各字段的枚举类型；本对象不含排盘或神煞选项。
 
   Args:
   - anhe_def: (DizhiRules.AnheDef) 暗合定义。
@@ -516,7 +513,7 @@ def _expand_dizhi_groups(
 
 
 def _offset_dizhi(dizhi: Dizhi, step: int) -> Dizhi:
-  '''沿十二支顺序移动，越过亥后回到子。'''
+  '''按十二支循环移动 step 位，可为负。'''
   return Dizhi.from_index((dizhi.index + step) % len(Dizhi))
 
 
@@ -564,8 +561,7 @@ class ShenshaRules:
 
   # 红艳表；《三命通会》原文："甲乙逢午、丙寅、丁未、
   # 戊辰、己辰、庚戌、辛酉、壬子、癸申，为红艳煞"。
-  # 该表格用于查询红艳星。出自《三命通会》。
-  # 歌诀本「甲乙午申庚见戌」取乙申，两谱系见 #69 考证。
+  # 歌诀本作「甲乙午申庚见戌」，两谱系见 #69 考证。
   # 乙 一格两谱系分叉：散文本作乙午（问真等从之），本表从歌诀本作乙申。
   # 另有庚申/癸戌异表流传，但仅见聚合站单一文本谱系，未采（2026-08-04 考证，详见 #69）。
   HONGYAN: Final[frozendict[Tiangan, Dizhi]] = frozendict({
@@ -610,7 +606,6 @@ class ShenshaRules:
   # 华盖取三合墓库；袁树珊《命理探源》转引《三命通会》：
   # 「华盖者，形象之称也……故以三合本库为华盖也。如寅午戌
   # 见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
-  # 华盖取各三合局的墓库；上引《三命通会》原文转引自袁树珊《命理探源》。
   # 出处：https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb（#16）。
   # YEAR_AND_DAY 查法锚补充出处：百度百科「神煞」、高人。
   # 支持读法：_ANCHOR_CHOICES['huagai_anchor']。
@@ -681,12 +676,11 @@ class ShenshaRules:
     Dizhi,
   )
 
-  # 孤辰、寡宿分别取出生年支所属方位组的进前一辰、退后一辰。
+  # 孤辰、寡宿分别取出生年支所属方位组的进前一辰、退后一辰，见《三命通会·卷三·论孤辰寡宿》。
   # 规则出处：https://book.taiyi.me/命/三命通会/三命通会(卷三)（#161）。
   # 表值出处：https://book.taiyi.me/命/神煞大全#孤辰 和 https://book.taiyi.me/命/神煞大全#寡宿（#161）。
   # 查法锚出处：同上两条（#161）。
-  # 同节解释层豁免原文：「连属不言孤寡」及「支干朝会包裹贵人」。不抹去原始位置。
-  # 同节所引「连属不言孤寡」及贵人包裹条款属解释层豁免，不抹去本表给出的原始命中位置。
+  # 同节所引「连属不言孤寡」及「支干朝会包裹贵人」属解释层豁免，不抹去本表给出的原始命中位置。
   GUCHEN: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '亥子丑' : '寅',
@@ -751,7 +745,7 @@ class ShenshaRules:
     - ZIPING：子平法，仅五阳干有阳刃。
     - LUMING：古禄命法，十干皆有羊刃，取禄前一辰。
     - DIWANG：十干各取帝旺位；现代问真与高人皆采用此表，两家按一份来源计，
-      见本类 docstring。
+      见 ShenshaRules 的类说明。
 
     飞刃：
     - ZIPING：仅五阳干有飞刃，取阳刃对冲支。
@@ -787,7 +781,10 @@ class ShenshaRules:
     }),
     YangrenDef.LUMING : frozendict(_lu_offset(1)),
     YangrenDef.DIWANG : frozendict({
-      tg: _offset_dizhi(zhangsheng, 4 if BaziRules.TIANGAN_TRAITS[tg].yinyang is Yinyang.阳 else -4)
+      tg: _offset_dizhi(
+        zhangsheng,
+        ShierZhangsheng.帝旺.index if BaziRules.TIANGAN_TRAITS[tg].yinyang is Yinyang.阳 else -ShierZhangsheng.帝旺.index,
+      )
       for tg, zhangsheng in BaziRules.TIANGAN_ZHANGSHENG.items()
     }),
   })
@@ -804,18 +801,18 @@ class ShenshaRules:
     - GENG_WITH_JIA_WU：传统合并口诀「甲戊庚牛羊……六辛逢马虎」，庚与甲戊同组，辛取午寅。
     - GENG_WITH_XIN：改口诀「甲戊兼牛羊……庚辛逢马虎」，庚改与辛同组。
     - YANGGUI：该传统谱系的昼间阳贵表，与阴贵表合并即为庚随甲戊的传统合并表。
-    - YINGUI：该谱系的夜间阴贵表；来源以分承解释「六辛逢午马」，所得十干表相同。
-      与阳贵表合并即为传统合并表；来源短语为「六辛逢午马」。
+    - YINGUI：该谱系的夜间阴贵表，与阳贵表合并即为传统合并表；所引来源采用「六辛逢午马」版口诀，
+      按干对分承所得十干表与本表相同。
 
     传统合并表有较多古籍谱系依据，问真亦采用；`BaziSchool.tianyi_def` 与
     `BaziSchool.tianyi_anchor` 相互独立，本表不代选昼夜界线。
 
-    Sources / 出处:
+    出处：
     - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」:
       https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
     - 两版合并口诀：
       https://www.click2macao.com/2024/04/10/tygrkjdz/
-    - 阳贵、阴贵表与「午马」查法，含「午马」分承读法：
+    - 阳贵、阴贵表与所用口诀：
       https://www.usece.com/3858/
     - 问真读法：https://book.taiyi.me/命/神煞大全
 
@@ -880,11 +877,11 @@ class ShenshaRules:
   class WenchangDef(Enum):
     '''文昌的查法定义。两读只在辛一格分歧，其余九干在所查各来源中相同。
 
-    - XIN_ZI: 辛 → 子.
-    - XIN_XU: 辛 → 戌.
+    - XIN_ZI：辛 → 子。
+    - XIN_XU：辛 → 戌。
 
     默认取 XIN_ZI：民国刊本与现代主流两条谱系都指向它。XIN_XU 出自《星学大成》，
-    两个转录逐字相同，且散文给了理由，不像抄讹。
+    两个转录逐字相同，且散文给了理由。
 
     本表为子平法文昌（食神之临官、长生），与下方禄命法文昌贵分列；
     第三颗文星贵（「甲马乙蛇丙戊猴」）未纳入本库。
@@ -893,11 +890,10 @@ class ShenshaRules:
 
     - 《命理探源》散文只逐条列甲乙丙丁戊己，末句「庚辛壬癸仿此」。
       后四干见所引口诀（「庚猪辛鼠壬逢虎，癸人见兔入云梯」），辛取子依据口诀而非散文。
-      「庚辛壬癸仿此」须结合上述口诀读取。
     - 《星学大成》口诀作辛戌，散文说明（「独辛不以生而以戌为文昌，戌在辛之方位」），
       因此 XIN_XU 是自成一说，不是抄讹。
 
-    Sources / 出处:
+    出处：
     - 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」:
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
     - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
@@ -944,7 +940,7 @@ class ShenshaRules:
   # 该表格用于查询文昌贵，禄命法中的同名近亲。它与文昌在甲（巳）、戊（申）两格相同，
   # 其余八干皆异，因此两者分列，不并成一条。
   # 锚为年干；未见流派分歧，故本表不设旋钮。
-  # Sources / 出处:
+  # 出处：
   # - 《五行精纪注释》卷十三「以年干查：甲见巳，乙见亥，丙见戌，丁见辰，戊见申，己见午，
   #   庚见寅，辛见未，壬见卯，癸见丑」；明言锚柱及全表：
   #   https://www.suanzhun.net/book/2728.html
@@ -974,20 +970,18 @@ class ShenshaRules:
 
         壬巳癸申一作壬癸巳申偏喜美，封侯万户即三公
 
-    默认 REN_GUI_BOTH 取歌诀「一作」所指读法，也是现代两家所取；此「一作」标记同书异文。
+    默认 REN_GUI_BOTH 取歌诀「一作」所指读法，也是现代两家所取。
 
     两处原文问题保留如下：
 
     - 《三命通会》两处数字转录（taiyi、算准网）作「壬癸水先得则生，
       后得巳而纳」，维基文库四库全书本作「壬癸水先得申而生後得巳而納」。
       高人引文与本节对应句式均有申。
-      《三命通会》有两处数字转录作「先得则生」，而四库全书本作「先得申而生」；高人转述
-      与同节句式亦皆作申。故该字为申，「则」是那两处转录的讹，不是这部书的异文。
+      故该字为申，「则」是那两处转录的讹，不是这部书的异文。
     - 同节作「戊己，土也，喜生乎申，得辰戌丑未为正库」。按句式申应属戊己格，
-      但问真、高人与《五行精纪》均只列四库，无来源可裁。
-      「喜生乎申」按句式应把申列入戊己，但三家成表皆无申；无来源可裁，表从三家，矛盾如实留档。
+      但问真、高人与《五行精纪》均只列四库；无来源可裁，表从三家，矛盾如实留档。
 
-    Sources / 出处:
+    出处：
     - 宋·廖中《五行精纪》卷十三（含「一作」异文）:
       https://book.taiyi.me/命/五行精纪/五行精纪(下)
     - 《五行精纪注释》卷十三「太极贵人，从年干取，甲乙人见子午，丙丁人见卯酉，
@@ -1052,23 +1046,23 @@ class ShenshaRules:
       条目例解与「天干吉凶星例」表共同支持 MODERN。例解明确含禄起算：甲禄在寅，酉为第八、戌为第九。
     - 《星学大成》「唐符禄前八位是 国印禄前九位是」为该对联的散文形；
       《神峰通考》将两星归于果老一脉（「惟张果老通玄先生命理 专用此二星
-      取贵」）。按含禄起算，「禄前九位」为禄 + 8。
+      取贵」）。
       按《张果星宗》例解的含禄起算法，「禄前九位」即禄 + 8，与 `MODERN` 同表；不据此裁定传承关系。
     - WUXING_JINGJI 依《五行精纪注释》卷十三【原文】：
-      「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」。同页今人【注释】明言锚与起算：
+      「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」。同页今人【注释】作：
       「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」。
       年干锚与含禄起算的明文出自今人【注释】，不混作【原文】的断言。
-      恬裕斋清抄本第二册图像 81-82 分列建節星与國印星，后者作「祿前第八位是如甲申生人至癸酉是」。
-      抄本的「祿前第八位是如甲申生人至癸酉是」只及该见证，不证明宋代原貌或今人注释所据底本。
-      两份白文转录的【建节星】则作「禄前第六位是也，如甲申生人，至癸酉是也」，关系未定（#194）。
-      白文的「禄前第六位是也，如甲申生人，至癸酉是也」与抄本及注释本有异，传抄关系未定。
+      目录著录为恬裕斋清抄本的第二册图像 81-82 分列建節星与國印星，后者作「祿前第八位是如甲申生人至癸酉是」。
+      此引文只及该见证，不证明宋代原貌或今人注释所据底本。
+      两份白文转录的【建节星】则作「禄前第六位是也，如甲申生人，至癸酉是也」，与抄本及注释本有异，
+      传抄关系未定（#194）。
     - `WUXING_JINGJI` 与 `FEIREN[YangrenDef.LUMING]` 十格相同；同格不裁定传抄关系。
-    - 查找位置与表值分开：星学查身命宫，原文「守照身命」与「唐符、国印守命为奇」。
+    - 查找位置与表值分开：
       《星学大成》明言「守照身命」，即命宫身宫而非四柱，
       《张果星宗》亦作「唐符、国印守命为奇」；所引《神峰通考》段落未言查找位置。
       本库按四柱地支查的做法依此处所引现代来源，不出自上述段落。
 
-    Sources / 出处:
+    出处：
     - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表:
       https://zh.wikisource.org/wiki/張果星宗
     - 《五行精纪注释》卷十三，分别列出建节星与国印星:

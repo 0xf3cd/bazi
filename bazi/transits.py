@@ -106,12 +106,12 @@ class TransitSet:
     if len(set(kinds)) != len(kinds):
       raise ValueError(f'Duplicate transit kinds: {kinds}')
 
-    selected = {kind.value: getattr(self, kind.value) for kind in kinds}
-    missing = tuple(kind for kind in kinds if selected[kind.value] is None)
+    present = dict(self.items)
+    missing = tuple(kind for kind in kinds if kind not in present)
     if len(missing) > 0:
       raise ValueError(f'Transit kinds not available: {missing}')
 
-    return TransitSet(**selected)
+    return TransitSet(**{kind.value: present[kind] for kind in kinds})
 
 
 class TransitDatabase:

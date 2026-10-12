@@ -112,7 +112,7 @@ def __is_valid_lunar_date(d: CalendarDate) -> bool:
   
   if d.month < 1 or d.month > len(info['days_counts']):
     return False 
-  if d.day < 1 or d.day > 30:
+  if d.day < 1:
     return False
   
   days_in_month: int = info['days_counts'][d.month - 1]
@@ -145,7 +145,7 @@ def __is_valid_ganzhi_date(d: CalendarDate) -> bool:
   
   if d.month < 1 or d.month > 12:
     return False 
-  if d.day < 1 or d.day > 32: # 干支月长最多三十二日。
+  if d.day < 1:
     return False
   
   days_counts: list[int] = days_counts_in_ganzhi_year(d.year)
@@ -254,7 +254,6 @@ def __solar_to_lunar(solar_date: CalendarDate) -> CalendarDate:
   while passed_days_count >= days_counts[month_idx]:
     passed_days_count -= days_counts[month_idx]
     month_idx += 1
-  assert passed_days_count < days_counts[month_idx]
 
   return CalendarDate(lunar_year, month_idx + 1, passed_days_count + 1, CalendarType.LUNAR)
 
@@ -316,7 +315,6 @@ def __solar_to_ganzhi(solar_date: CalendarDate) -> CalendarDate:
   while passed_days_count >= days_counts[month_idx]:
     passed_days_count -= days_counts[month_idx]
     month_idx += 1
-  assert passed_days_count < days_counts[month_idx]
 
   return CalendarDate(ganzhi_year, month_idx + 1, passed_days_count + 1, CalendarType.GANZHI)
 
@@ -329,12 +327,6 @@ def lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def __lunar_to_ganzhi(lunar_date: CalendarDate) -> CalendarDate:
-  if lunar_date.date_type != CalendarType.LUNAR:
-    raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
-  if not is_valid(lunar_date):
-    raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
-                     f'[{get_min_supported_date(lunar_date.date_type)}, {get_max_supported_date(lunar_date.date_type)}]')
-
   solar_date: CalendarDate = lunar_to_solar(lunar_date)
   return solar_to_ganzhi(solar_date)
   
@@ -347,12 +339,6 @@ def ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
 
 @functools.lru_cache(maxsize=512)
 def __ganzhi_to_lunar(ganzhi_date: CalendarDate) -> CalendarDate:
-  if ganzhi_date.date_type != CalendarType.GANZHI:
-    raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
-  if not is_valid(ganzhi_date):
-    raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
-                     f'[{get_min_supported_date(ganzhi_date.date_type)}, {get_max_supported_date(ganzhi_date.date_type)}]')
-
   solar_date: CalendarDate = ganzhi_to_solar(ganzhi_date)
   return solar_to_lunar(solar_date)
 
@@ -512,7 +498,7 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
   - jieqi: (Jieqi) 节气。
 
   Note:
-  - 香港天文台只提供精度到日的数据。所以返回值是节气当日的 00:00:00。
+  - 香港天文台只提供精度到日的数据。
 
   Return: (datetime) 指定公历年节气当日的 00:00:00。
   '''

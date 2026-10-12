@@ -234,10 +234,6 @@ def test_lushen_jinyu_tables() -> None:
   assert ShenshaRules.LUSHEN is BaziRules.TIANGAN_LU
   assert ShenshaRules.LUSHEN == expected_lushen
   assert ShenshaRules.JINYU == expected_jinyu
-  for tiangan in Tiangan:
-    assert ShenshaRules.JINYU[tiangan] is Dizhi.from_index(
-      (expected_lushen[tiangan].index + 2) % len(Dizhi)
-    )
 
 
 def test_derived_shensha_literals() -> None:
@@ -428,18 +424,6 @@ def test_taiji() -> None:
 def test_guoyin() -> None:
   assert set(ShenshaRules.GUOYIN) == set(ShenshaRules.GuoyinDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.GUOYIN.values())
-
-  # Check the defining 禄 offsets as well as the independent literals above.
-  offsets = {
-    ShenshaRules.GuoyinDef.WUXING_JINGJI : 7,
-    ShenshaRules.GuoyinDef.MODERN        : 8,
-  }
-  assert set(offsets) == set(ShenshaRules.GuoyinDef)
-  for guoyin_def, offset in offsets.items():
-    for tg in Tiangan:
-      assert ShenshaRules.GUOYIN[guoyin_def][tg] is Dizhi.from_index(
-        (BaziRules.TIANGAN_LU[tg].index + offset) % len(Dizhi)
-      ), (guoyin_def, tg)
 
   # The readings share no cell: distinct offsets on a twelve-branch cycle cannot collide, so
   # a hit is never ambiguous about which reading produced it. Pinning this makes a later

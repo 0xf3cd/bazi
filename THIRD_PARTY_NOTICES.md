@@ -3,12 +3,12 @@
 LICENSE 的 MIT 授权只及 Ningqi Wang 自有材料，不重新许可本项目中的第三方数据、引文或参考材料。
 
 - `bazi/calendar/hko_data/data/` 的原始历法输入与编码表来自香港天文台公历／农历对照表：
-  https://www.hko.gov.hk/en/gts/time/conversion.htm。
-  使用条款见 https://www.hko.gov.hk/en/readme/readme.htm。
+  <https://www.hko.gov.hk/en/gts/time/conversion.htm>。
+  使用条款见 <https://www.hko.gov.hk/en/readme/readme.htm>。
 - `bazi/calendar/celestial_data/data/` 的表由
   [celestial-calendar](https://github.com/0xf3cd/celestial-calendar) 生成。
   原生成头部记录版本、算法与来源；数据格式说明 `bazi/calendar/celestial_data/SCHEMA.md`
-  随源码包分发，不单独进入 wheel。
+  随源码包分发，不进入 wheel。
 - 自有代码的 MIT 授权不授予第三方引文、参考材料或解释语料的权利，包括 `bazi/knowledge_data.json`。
   已有引用保留，用于识别来源，不表示授权许可。
 - `tests/integration/external_baseline.json` 的外部排盘观测记录来源、配置及采集日期，

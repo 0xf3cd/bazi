@@ -34,26 +34,26 @@ def test_mutual_only_negative() -> None:
     discovery.mutual_only({Tiangan.甲}, [Tiangan.己]) # type: ignore
 
 
-@pytest.mark.parametrize('tiangan', [False, True])
-def test_merge_first_occurrence_order(tiangan: bool) -> None:
-  if tiangan:
-    a, b, c = (frozenset(pair) for pair in ((Tiangan.甲, Tiangan.庚), (Tiangan.乙, Tiangan.辛), (Tiangan.丙, Tiangan.壬)))
-    left = TianganRelationDiscovery({TianganRelation.冲: (b, a, b), TianganRelation.合: ()})
-    right = TianganRelationDiscovery({TianganRelation.冲: (a, c, c), TianganRelation.克: (c,)})
-    merged = left.merge(right)
-    assert tuple(merged) == (TianganRelation.冲, TianganRelation.合, TianganRelation.克)
-    assert merged[TianganRelation.冲] == (b, a, c)
-    assert merged[TianganRelation.合] == ()
-    assert right.merge(left)[TianganRelation.冲] == (a, c, b)
-  else:
-    x, y, z = (frozenset(pair) for pair in ((Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), (Dizhi.寅, Dizhi.申)))
-    dz_left = DizhiRelationDiscovery({DizhiRelation.冲: (y, x, y), DizhiRelation.六合: ()})
-    dz_right = DizhiRelationDiscovery({DizhiRelation.冲: (x, z, z), DizhiRelation.克: (z,)})
-    dz_merged = dz_left.merge(dz_right)
-    assert tuple(dz_merged) == (DizhiRelation.冲, DizhiRelation.六合, DizhiRelation.克)
-    assert dz_merged[DizhiRelation.冲] == (y, x, z)
-    assert dz_merged[DizhiRelation.六合] == ()
-    assert dz_right.merge(dz_left)[DizhiRelation.冲] == (x, z, y)
+def test_merge_tiangan_first_occurrence_order() -> None:
+  a, b, c = (frozenset(pair) for pair in ((Tiangan.甲, Tiangan.庚), (Tiangan.乙, Tiangan.辛), (Tiangan.丙, Tiangan.壬)))
+  left = TianganRelationDiscovery({TianganRelation.冲: (b, a, b), TianganRelation.合: ()})
+  right = TianganRelationDiscovery({TianganRelation.冲: (a, c, c), TianganRelation.克: (c,)})
+  merged = left.merge(right)
+  assert tuple(merged) == (TianganRelation.冲, TianganRelation.合, TianganRelation.克)
+  assert merged[TianganRelation.冲] == (b, a, c)
+  assert merged[TianganRelation.合] == ()
+  assert right.merge(left)[TianganRelation.冲] == (a, c, b)
+
+
+def test_merge_dizhi_first_occurrence_order() -> None:
+  x, y, z = (frozenset(pair) for pair in ((Dizhi.子, Dizhi.午), (Dizhi.丑, Dizhi.未), (Dizhi.寅, Dizhi.申)))
+  left = DizhiRelationDiscovery({DizhiRelation.冲: (y, x, y), DizhiRelation.六合: ()})
+  right = DizhiRelationDiscovery({DizhiRelation.冲: (x, z, z), DizhiRelation.克: (z,)})
+  merged = left.merge(right)
+  assert tuple(merged) == (DizhiRelation.冲, DizhiRelation.六合, DizhiRelation.克)
+  assert merged[DizhiRelation.冲] == (y, x, z)
+  assert merged[DizhiRelation.六合] == ()
+  assert right.merge(left)[DizhiRelation.冲] == (x, z, y)
 
 
 _DISCOVERY_SCRIPT = '''

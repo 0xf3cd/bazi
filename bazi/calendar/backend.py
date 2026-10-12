@@ -26,7 +26,7 @@ class CalendarBackend(Enum):
   CELESTIAL_ALGO2 = 'celestial-algo2'
 
   def __str__(self) -> str:
-  # 枚举值即序列化格式，新增成员无需另列格式映射。
+    # 枚举值即序列化格式，新增成员无需另列格式映射。
     return self.value
 
   @staticmethod
@@ -62,7 +62,7 @@ def calendar_utils_of(backend: CalendarBackend | str) -> CalendarUtilsProtocol:
     return cast(CalendarUtilsProtocol, hko_data_utils)
 
   if _backend in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2):
-    # 同样延迟导入；读取表也有与 HKO 解码器相同的成本。
+    # 同样延迟导入，避免其他后端读取这些表。
     from .celestial_utils import ALGO1, ALGO2
     # 实例直接满足实例方法协议，此分支完整接受类型检查，无需 cast，见 #86。
     return ALGO1 if _backend is CalendarBackend.CELESTIAL else ALGO2

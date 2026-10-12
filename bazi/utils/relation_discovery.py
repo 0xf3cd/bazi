@@ -1,9 +1,21 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from typing import TypeVar, Generic, Self
-from collections.abc import Callable, Set as AbstractSet
+from collections.abc import Callable, Collection, Set as AbstractSet
 
 from ..common import frozendict
+from ..defines.enum_base import IndexedBaziEnum
+
+
+_IndexedItem = TypeVar('_IndexedItem', bound=IndexedBaziEnum)
+
+
+def _ordered_relation_pairs(
+  pairs: Collection[tuple[_IndexedItem, _IndexedItem]],
+) -> tuple[frozenset[_IndexedItem], ...]:
+  '''按施方、受方的枚举序排列有向对，再投影为保序去重的无向组合。'''
+  ordered = sorted(pairs, key=lambda pair: tuple(item.index for item in pair))
+  return tuple(dict.fromkeys(frozenset(pair) for pair in ordered))
 
 
 RelationType = TypeVar('RelationType')

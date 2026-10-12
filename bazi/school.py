@@ -152,7 +152,7 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # （https://book.taiyi.me/命/神煞大全）。
   'jinyu_anchor':     frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   # 灾煞：YEAR 依问真（https://book.taiyi.me/命/神煞大全#灾煞）；YEAR_AND_DAY 依高人
-  # (https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439).
+  # （https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439）。
   'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
   # 驿马、华盖、将星、劫煞、亡神共用两种锚读法：YEAR_AND_DAY 依问真现代查法
   # （https://book.taiyi.me/命/神煞大全），为本库默认；DAY 均依袁树珊《命理探原》NLC 刊本，
@@ -204,23 +204,23 @@ class BaziSchool:
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   feiren_def:    ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
 
-  # 各锚的出处与支持读法见 _ANCHOR_CHOICES 对应行。
-  hongyan_anchor: Anchor = Anchor.DAY
-  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY
-  tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
+  # 神煞锚与各自定义；锚的出处与支持读法见 _ANCHOR_CHOICES 对应行。
+  hongyan_anchor:   Anchor = Anchor.DAY
+  tianyi_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  tianyi_def:       ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
   yima_anchor:      Anchor = Anchor.YEAR_AND_DAY
   huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY
   jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY
   jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY
   wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY
-  jinyu_anchor: Anchor = Anchor.DAY
-  zaisha_anchor: Anchor = Anchor.YEAR
-  wenchang_anchor: Anchor = Anchor.YEAR_AND_DAY
-  wenchang_def:    ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI
-  taiji_anchor:    Anchor = Anchor.YEAR_AND_DAY
-  taiji_def:       ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH
-  guoyin_anchor:   Anchor = Anchor.YEAR_AND_DAY
-  guoyin_def:      ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN
+  jinyu_anchor:     Anchor = Anchor.DAY
+  zaisha_anchor:    Anchor = Anchor.YEAR
+  wenchang_anchor:  Anchor = Anchor.YEAR_AND_DAY
+  wenchang_def:     ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI
+  taiji_anchor:     Anchor = Anchor.YEAR_AND_DAY
+  taiji_def:        ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH
+  guoyin_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  guoyin_def:       ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN
 
   def __post_init__(self) -> None:
     check_declared_types(self)
@@ -231,7 +231,7 @@ class BaziSchool:
 
   @property
   def relation_definitions(self) -> DizhiRelationDefinitions:
-    '''返回本流派的地支关系定义，供单次查询使用；不新增 JSON 字段。'''
+    '''由本流派的暗合、刑与拱局定义构造查询对象。'''
     return DizhiRelationDefinitions(
       anhe_def=self.anhe_def,
       xing_def=self.xing_def,
@@ -247,10 +247,10 @@ class BaziSchool:
     读法，默认值日后改动不该悄悄改写它。
 
     Note:
-    - 两版未言及的选项保持默认：红艳、灾煞、各规则定义枚举与日柱分界。
+    - 其余选项保持默认。
       此预设只声明该著作所载读法。
 
-    Sources / 出处:
+    出处：
     - 《命理探原·卷上强弱》(NLC scan):
       https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
     - 《命理探源》 ctext edition / ctext 版（金輿祿「以日主為主，如甲日見辰」）:

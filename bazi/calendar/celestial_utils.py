@@ -5,7 +5,7 @@
 满足 `CalendarUtilsProtocol`，不依赖 HKO 工具；两后端独立实现，一致性由测试核对。
 
 `jieqi_moment` 提供秒级真实时刻，HKO 则用午夜占位。CalendarDate 仍只表示日期：
-干支历正月初一为立春日。时刻的四柱归属由调用方决定，Bazi 按所选出生精度比较。
+干支历正月初一为立春日。时刻的四柱归属由调用方决定（#72）。
 
 两种阴历算法各有一个模块级单例，缓存不能混用。若用可变模块开关配合 lru_cache，
 切换后可能返回旧算法的缓存结果；独立实例把算法选择纳入工具对象身份。
@@ -307,11 +307,6 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def __lunar_to_ganzhi(self, lunar_date: CalendarDate) -> CalendarDate:
-    if lunar_date.date_type != CalendarType.LUNAR:
-      raise ValueError(f'Expected a LUNAR date, got {lunar_date}')
-    if not self.is_valid(lunar_date):
-      raise ValueError(f'"{lunar_date}" is not a valid {lunar_date.date_type.name} date in the supported range '
-                       f'[{self.get_min_supported_date(lunar_date.date_type)}, {self.get_max_supported_date(lunar_date.date_type)}]')
     return self.solar_to_ganzhi(self.lunar_to_solar(lunar_date))
 
   def ganzhi_to_lunar(self, ganzhi_date: CalendarDate) -> CalendarDate:
@@ -321,11 +316,6 @@ class CelestialCalendarUtils:
 
   @functools.lru_cache(maxsize=512)
   def __ganzhi_to_lunar(self, ganzhi_date: CalendarDate) -> CalendarDate:
-    if ganzhi_date.date_type != CalendarType.GANZHI:
-      raise ValueError(f'Expected a GANZHI date, got {ganzhi_date}')
-    if not self.is_valid(ganzhi_date):
-      raise ValueError(f'"{ganzhi_date}" is not a valid {ganzhi_date.date_type.name} date in the supported range '
-                       f'[{self.get_min_supported_date(ganzhi_date.date_type)}, {self.get_max_supported_date(ganzhi_date.date_type)}]')
     return self.solar_to_lunar(self.ganzhi_to_solar(ganzhi_date))
 
   @staticmethod
@@ -472,10 +462,6 @@ class CelestialCalendarUtils:
       raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
     return self.__jieqi_date(solar_year, jieqi)
 
-  @functools.lru_cache(maxsize=512)
-  def __jieqi_moment(self, solar_year: int, jieqi: Jieqi) -> datetime:
-    return self._jieqi_table.get(solar_year, jieqi)
-
   def jieqi_moment(self, solar_year: int, jieqi: Jieqi) -> datetime:
     '''
     输入公历年份和节气，返回节气的具体时刻。
@@ -497,9 +483,9 @@ class CelestialCalendarUtils:
       raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
     if solar_year not in self._jieqi_table.supported_year_range():
       raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
-    return self.__jieqi_moment(solar_year, jieqi)
+    return self._jieqi_table.get(solar_year, jieqi)
 
-    # 类级缓存有 ALGO1 与 ALGO2 两个实例键；maxsize=2 避免两个单例逐次互相逐出。
+  # 类级缓存有 ALGO1 与 ALGO2 两个实例键；maxsize=2 避免两个单例逐次互相逐出。
   @functools.lru_cache(maxsize=2)
   def supported_jie_boundaries(self) -> tuple[datetime, datetime]:
     '''

@@ -290,6 +290,7 @@ class AtBirthAnalysis:
     # 重复日支值时，按值过滤会误收其他柱形成的拱局，因此先过滤具体参与柱，再投影。
     bazi: Final[Bazi] = self._chart.bazi
     definitions = bazi.config.school.relation_definitions
+
     existing = dizhi_utils.discover(bazi.four_dizhis, definitions=definitions).filter(
       lambda _, combo : self._chart.house_of_relationship in combo
     )
@@ -343,7 +344,7 @@ class TransitAnalysis:
     Args:
     - transits: (TransitSet) 参与分析的流运。
 
-    Returns:
+    Return:
     - (ShenshaAnalysis) 给定流运的神煞结果。
     '''
 
@@ -472,37 +473,38 @@ class TransitAnalysis:
     tg = tiangan_utils.TianganRelationDiscovery({})
     dz = dizhi_utils.DizhiRelationDiscovery({})
     gong_dz = dizhi_utils.DizhiRelationDiscovery({})
+
     if level & TransitAnalysis.Level.TRANSITS_ONLY:
-      tg = tg.merge(tiangan_utils.discover(transit_tg))
+      tg = tg.merge(
+        tiangan_utils.discover(transit_tg),
+      )
       dz = dz.merge(
         dizhi_utils.discover(transit_dz, definitions=definitions),
       )
       gong_dz = gong_dz.merge(
-        _project_gong(
-          dizhi_utils.discover_ganzhis(
-            transit_ganzhis,
-            definitions=definitions,
-            relations=DizhiRules.GONG_RELATIONS,
-          ),
-          lambda _: True,
-        ),
+        dizhi_utils.discover_ganzhis(
+          transit_ganzhis,
+          definitions=definitions,
+          relations=DizhiRules.GONG_RELATIONS,
+        ).to_dizhi_discovery(),
       )
+
     if level & TransitAnalysis.Level.MUTUAL:
-      tg = tg.merge(tiangan_utils.discover_mutual(at_birth_tg, transit_tg))
+      tg = tg.merge(
+        tiangan_utils.discover_mutual(at_birth_tg, transit_tg),
+      )
       dz = dz.merge(
         dizhi_utils.discover_mutual(at_birth_dz, transit_dz, definitions=definitions),
       )
       gong_dz = gong_dz.merge(
-        _project_gong(
-          dizhi_utils.discover_mutual_ganzhis(
-            at_birth_ganzhis,
-            transit_ganzhis,
-            definitions=definitions,
-            relations=DizhiRules.GONG_RELATIONS,
-          ),
-          lambda _: True,
-        ),
+        dizhi_utils.discover_mutual_ganzhis(
+          at_birth_ganzhis,
+          transit_ganzhis,
+          definitions=definitions,
+          relations=DizhiRules.GONG_RELATIONS,
+        ).to_dizhi_discovery(),
       )
+
     dz = _with_gong(dz, gong_dz)
 
     return GanzhiData(

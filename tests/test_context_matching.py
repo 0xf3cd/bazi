@@ -462,7 +462,11 @@ def test_public_verdict_status_types_raise_type_error(value: Any) -> None:
 
 
 @pytest.mark.parametrize('dimension,value,error', [
-  ('record_version', True, ValueError), ('record_version', 1, ValueError),
+  ('record_version', True, ValueError), ('record_version', False, ValueError),
+  ('record_version', -1, ValueError), ('record_version', 0, ValueError),
+  ('record_version', 1, ValueError), ('record_version', 3, ValueError),
+  ('record_version', 2.0, ValueError), ('record_version', '2', ValueError),
+  ('record_version', None, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
   ('entries', {}, TypeError), ('input', {}, ValueError), ('knowledge', {}, ValueError),
 ])
@@ -567,6 +571,7 @@ def test_shared_knowledge_lifecycle_and_independent_record_recovery(monkeypatch:
   changed = json.loads(json.dumps(data))
   next(entry for entry in changed['entries'] if entry['claim_id'] == LEGAL[0])['text'] = 'External source changed.'
   source.write_text(json.dumps(changed, ensure_ascii=False), encoding='utf-8')
+  assert result.render() == rendered and result.export_json() == exported
   source.unlink()
   assert result.render() == rendered and result.export_json() == exported
   restored = ContextResult.from_json(exported)

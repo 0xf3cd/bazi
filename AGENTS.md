@@ -69,6 +69,7 @@
 
   ```python
   from datetime import datetime
+
   from bazi.bazi import Bazi
   from bazi.school import BaziConfig
 
@@ -103,7 +104,6 @@ tests 叙述仍用英文句子夹中文领域实体，不为说明语言翻修�
 
 2026-08 的旧“测试注释大多半角”说法只是当时观察，不是规则。在 `1f0f43c` 抽样统计中文叙述
 注释的标点（排除英文句子、引文与 URL），tests 为 144 全角／14 半角，源码为 120／0。
-现行规则按句子语言判断。
 
 ## 类型与不可变性
 

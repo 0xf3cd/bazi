@@ -30,7 +30,7 @@ def interpret(
   include_reference_only: bool = False,
   show_sources: bool = False,
 ) -> str:
-  s: str = '' # 返回的展示字符串。
+  s: str = ''
   knowledge = KnowledgeBase.load()
   j: BaziJson.BaziChartJsonDict = chart.json
 

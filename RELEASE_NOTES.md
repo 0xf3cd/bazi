@@ -6,25 +6,23 @@
   README 按功能入口组织，每个 Python 示例可独立运行，自定义知识源示例显式准备临时文件。
 - `BaziSchool` 重排位置参数及 JSON 输出键序，将关系定义和独立羊刃／飞刃定义放在前面；
   调用方改用关键字参数。键名、默认值与按键名恢复完整档案的契约保留。
-- 删除 `Shishen.str_mapping_table()`；`from_str` 与 `abbr` 共用不可变简称映射，十神计算
-  直接返回枚举。`Ganzhi.next`／`prev` 直接移动干支，非六十甲子组合明确拒绝，含零步。
-- 新增 `Jieqi.jies()` 十二节元组入口并迁移干支年月及两后端的月长、前后节消费者。
-  `TransitSet.select` 直接按具名字段选取，仍检查空请求、重复与缺项并按固定流运顺序返回。
-  HKO 公历月长采用标准库，前后节共用本后端范围检查；后端算法及公开缓存前校验保留。
+- 删除 `Shishen.str_mapping_table()`；`from_str` 与 `abbr` 共用不可变简称映射。
+  `Ganzhi.next`／`prev` 直接移动干支，非六十甲子组合明确拒绝，含零步。
+- 新增 `Jieqi.jies()` 十二节元组入口。`TransitSet.select` 仍检查空请求、重复与缺项，
+  并按固定流运顺序返回。
 
 - 金舆、三套羊刃与对应飞刃、两套国印按既有定义派生；红鸾、天喜按起支逆数。
   表值、出处和流派选择保留，子平羊刃仍仅五阳干；同值的国印与飞刃仍为独立神煞。
-  天干、地支生克表共用五行派生函数，保留方向与不计阴阳的定义。
 
 - 地支批量查询统一接收规则层的冻结 `DizhiRelationDefinitions`；删除查询入口的独立定义
   参数，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
   `BaziSchool.relation_definitions`。干支发现可用 `relations` 选择求值范围。
-- 亲密关系分析的补拱只查询拱合／拱会，删除四个参数转发包装；神煞直接按锚柱与候选支
-  求值，日柱参与过滤共用具体位置谓词。关系值、流派条件和柱位语义保留。
 - `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
   进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
 
 - `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
+  构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
+  属性删除。`ChartOccurrence` 构造移除 `index` 位置字段，`index` 改为派生属性，展示只保留柱位。
   新记录格式为版本2，版本1明确拒绝；删除柱位派生的 `index` 与固定 `stem_scope` 存储，
   知识内容和顺序仍参与结果值比较与 hash。
 
@@ -49,8 +47,6 @@
   来源展示及显式导出；默认展示一个命盘，不导出文件。
 
 ## bazi 1.0.0
-
-以下为 1.0.0 发布时的历史说明，当前接口及后续破坏性迁移见上方 Unreleased。
 
 - 可安装的 bazi 包从定义模块导入，支持 Python 3.11+，提供内联类型标注，无运行时依赖。
   源码导入改用 `bazi.*`，不再用 `src.*`。

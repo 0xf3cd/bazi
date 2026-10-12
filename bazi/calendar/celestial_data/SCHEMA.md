@@ -65,7 +65,7 @@ columns: year jq_idx name date time
   与 HKO 的 jieqi_date(Y, 小寒) 约定一致，已核 1901 / 2024 / 2099。
 - 1972 年起 UT1−UTC ≤ 0.9s；此前以 UT1 代理，沿 celestial Phase C 约定。
   通常只影响节时刻前后 ±0.9s 的出生，但节本身接近午夜时可改变整日归属。
-  窗口内测得最近午夜案例为 1979 大寒，距午夜四秒。
+  1979 大寒距午夜四秒。
 - TT 节时刻仍由太阳黄经求根。2101–2200 年转 UT1 使用 Stephenson-Morrison-Hohenkerk
   integrated-lod ΔT 外推，连续但无精度保证，也无独立 HKO 对照。
 

@@ -72,7 +72,7 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是 `key_tiangan` 的红艳星。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是 `key_tiangan` 的红艳星。
 
   Args:
   - key_tiangan: (Tiangan) 查法锚干，由调用方决定取哪一柱。
@@ -92,7 +92,7 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
 
 def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是年支的红鸾星。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是年支的红鸾星。
 
   Args:
   - year_dizhi: (Dizhi) 年支。
@@ -112,7 +112,7 @@ def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是年支的天喜星。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是年支的天喜星。
 
   Args:
   - year_dizhi: (Dizhi) 年支。
@@ -132,7 +132,7 @@ def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是年支或日支的驿马星。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是年支或日支的驿马星。
 
   Args:
   - year_or_day_dizhi: (Dizhi) 年支或日支。
@@ -252,7 +252,7 @@ def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是年支的孤辰。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是年支的孤辰。
 
   Args:
   - year_dizhi: (Dizhi) 年支。
@@ -272,7 +272,7 @@ def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  检查输入的地支是否是年支的寡宿。如果是，返回 `True`。如果不是，返回 `False`。
+  检查输入的地支是否是年支的寡宿。
 
   Args:
   - year_dizhi: (Dizhi) 年支。

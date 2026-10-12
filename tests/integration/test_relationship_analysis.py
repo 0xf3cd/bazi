@@ -1059,9 +1059,9 @@ def test_school_variants_reach_relationship_analysis() -> None:
 
   # Chart E: 辛未 day, the star 寅 present (month), no 巳/申 at birth; the 1992 壬申 流年
   # brings 申 -- 寅申 forms XING only under LOOSE. Covers the transit-side `star_relations`
-  # MUTUAL path (the TRANSITS_ONLY path shares `_dz_discover` with the AtBirth cases above).
+  # MUTUAL path.
   # 盘 E：辛未日、月支寅（配偶星）、原局无巳申；1992 壬申流年带来申——寅申刑仅 LOOSE 成立。
-  # 覆盖流运侧 `star_relations` MUTUAL 路径（TRANSITS_ONLY 路径与上面 AtBirth 案例共用 `_dz_discover`）。
+  # 覆盖流运侧 `star_relations` MUTUAL 路径。
   dt_e: datetime = datetime(1984, 2, 7) # 甲子 / 丙寅 / 辛未 / 戊子
   chart_default_e = BaziChart(Bazi.create(dt_e, BaziGender.MALE))
   chart_strict_e = BaziChart(Bazi.create(

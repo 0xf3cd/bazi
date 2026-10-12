@@ -37,7 +37,7 @@ case ID 标识输入，不标识真人；group 为采样类别。
 顶层 reference 标识 bazi 快照生产者。runtime_tree 为该提交 bazi/ 子树的标准 Git tree ID，
 包括文件、权限模式与嵌套树；在含生产提交的克隆中用 `git rev-parse <reference.commit>:bazi` 复算。
 它标识当时生产者，不表示当前检出的新鲜度；后续代码即使重现相同快照，也不改变该身份。
-离线回归核当前结果，不要求浅克隆含旧 Git 对象。runtime_tree 替代旧的不透明运行时指纹。
+离线回归核当前结果，不要求浅克隆含旧 Git 对象。
 jieqi_table_sha256 对表字节将 CRLF 规范为 LF 后求哈希。
 
 ## 读法差异
