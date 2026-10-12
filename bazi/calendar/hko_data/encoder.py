@@ -1,13 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # bazi/calendar/hko_data/encoder.py
 #
-# Download the raw data from Hong Kong Observatory (hko) and encode the downloaded hko data.
+# 下载并编码香港天文台（HKO）原始数据。
 #
-# This module is an offline tool, only used when the data under `hko_data/data/`
-# needs to be regenerated. It is not needed at runtime: the decoder only reads
-# the committed data files. `requests` is deliberately not in Requirements.txt --
-# install it manually (`pip install requests`). Run only from a source checkout,
-# not an installed package:
+# 本模块为重建 hko_data/data/ 的离线工具，运行时解码器只读已提交数据，无需本模块。
+# requests 不在 Requirements.txt 中，需要时手动 pip install requests。
+# 只从源码检出运行，不从安装包运行：
 #   python -m bazi.calendar.hko_data.encoder
 
 import re
@@ -31,13 +29,12 @@ from .common import (
 __sexagenary_cycle__: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
 def download_one_year_data(txt_path: Path, year: int) -> bool:
-  # Lazy-load `requests`: it is only needed when regenerating the data, so importing
-  # this module (and certainly the decoder) never requires `requests` to be installed.
+  # 延迟导入 requests；导入本模块或解码器不要求安装它，重建下载时才需要。
   try:
     requests: Any = import_module('requests')
   except ModuleNotFoundError as e:
     if e.name != 'requests':
-      raise # A transitive dependency of `requests` is missing; don't misreport it.
+      raise # 缺失的是 requests 的间接依赖，不改报为缺 requests。
     raise ModuleNotFoundError('`requests` is not installed. Run `pip install requests` to regenerate the HKO data.', name='requests') from None
 
   url = f'https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T{year}c.txt'
@@ -45,9 +42,9 @@ def download_one_year_data(txt_path: Path, year: int) -> bool:
   if response.status_code == 200:
     response.encoding = 'big5'
     with txt_path.open('w', encoding='utf-8') as f:
-      f.write(response.text) # The file is encoded in utf-8, not big5.
+      f.write(response.text) # 文件保存为 UTF-8，不是 Big5。
     return True
-  return False # Failed to download.
+  return False # 下载失败。
 
 def do_download() -> None:
   if raw_data_ready():
@@ -78,7 +75,7 @@ def do_download() -> None:
 
 def extract_from_raw_txts() -> dict[int, list[str]]:
   '''
-  Open all raw txt files and extract the lines that contain the data that we care about.
+  读取全部原始 TXT 文件，提取所需数据行。
   '''
   assert raw_data_ready()
 
@@ -115,7 +112,7 @@ def encode_jieqi() -> None:
     valid_lines: list[str] = extractions[year]
     jieqi_lines: list[str] = [line for line in valid_lines if len(line.split()) == 4]
     assert len(jieqi_lines) == 24
-    assert jieqi_lines[0].split()[-1] == '小寒' # Starts with 小寒
+    assert jieqi_lines[0].split()[-1] == '小寒' # 公历年从小寒起。
 
     for line in jieqi_lines:
       splitted: list[str] = line.split()
@@ -140,7 +137,7 @@ def parse_lines_in_lunar_years() -> dict[int, list[str]]:
   assert len(zhengyue_line_indices) == END_YEAR - START_YEAR + 1
 
   ret: dict[int, list[str]] = {}
-  for lunar_year in range(START_YEAR, END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
+  for lunar_year in range(START_YEAR, END_YEAR): # 末农历年数据不完整，跳过 END_YEAR。
     line_start_idx: int = zhengyue_line_indices[lunar_year - START_YEAR]
     line_end_idx: int = zhengyue_line_indices[lunar_year - START_YEAR + 1]
     ret[lunar_year] = all_lines[line_start_idx:line_end_idx]
@@ -150,7 +147,7 @@ def parse_lines_in_lunar_years() -> dict[int, list[str]]:
 def parse_ganzhis_in_lunar_years() -> dict[int, Ganzhi]:  
   raw_txt_paths: dict[int, Path] = get_raw_txt_file_paths()
   ret: dict[int, Ganzhi] = {}
-  for lunar_year in range(START_YEAR, END_YEAR): # The data for the last lunar year is incomplete, so skip the `END_YEAR`.
+  for lunar_year in range(START_YEAR, END_YEAR): # 末农历年数据不完整，跳过 END_YEAR。
     with raw_txt_paths[lunar_year].open('r', encoding='utf-8') as f:
       first_line: str = f.readline().strip()
       ganzhi_str: str = first_line.split('(')[-1].split('-')[0].strip()
@@ -159,20 +156,18 @@ def parse_ganzhis_in_lunar_years() -> dict[int, Ganzhi]:
   return ret
 
 def encode_one_lunar_year_lines(lunar_year: int, lines: list[str], ganzhi: Ganzhi) -> bytes:
-  # The data for each lunar year will be encoded into 8 bytes.
+  # 每农历年编码为八字节。
 
-  # First 4 bytes are the solar-calendar date of the frist day in this lunar year.
+  # 前四字节存农历年首日的公历日期。
   first_day_date: datetime = datetime.strptime(lines[0].split()[0], '%Y年%m月%d日')
   first_day_date_bytes: bytes = date_to_bytes(first_day_date)
   assert len(first_day_date_bytes) == 4
 
-  # Then use 1 byte to save the index to the ganzhi of this lunar year.
+  # 一字节存此年干支在六十甲子中的下标。
   ganzhi_index_byte: bytes = int_to_bytes(__sexagenary_cycle__.index(ganzhi), 1)
   assert len(ganzhi_index_byte) == 1
 
-  # Use 1 byte to save the whether the leap month exists in this lunar year.
-  # If exists, save which month is the leap month (e.g. save 7 if the 7th month is leap).
-  # If not, save 0.
+  # 一字节存闰月月份，如闰七月存 7，无闰月存 0。
   concatenated_lines: str = ''.join(lines)
   has_leap_month: bool = '閏' in concatenated_lines
   leap_month: int = 0
@@ -184,8 +179,7 @@ def encode_one_lunar_year_lines(lunar_year: int, lines: list[str], ganzhi: Ganzh
   leap_month_byte: bytes = int_to_bytes(leap_month, 1)
   assert len(leap_month_byte) == 1
 
-  # Last, use 2 bytes to indicate how many days are there in every month.
-  # The least significant 13 bits are indicating whether the 13 months are long or short. If no long month, just use least significant 12 bits.
+  # 末两字节存月长位图，低十三位标识各月大小；无闰月时只用低十二位。
   first_days_indices: list[int] = [idx for idx, line in enumerate(lines) if '月' in line.split()[1]]
   days_count_of_each_month: list[int] = [right - left for left, right in zip(first_days_indices, first_days_indices[1:] + [len(lines)])]
   if has_leap_month:

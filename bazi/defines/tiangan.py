@@ -4,7 +4,7 @@ from .enum_base import IndexedBaziEnum
 
 
 class Tiangan(IndexedBaziEnum):
-  '''Tiangan / Stem / 天干'''
+  '''天干（Tiangan）。'''
   JIA  = '甲'
   YI   = '乙'
   BING = '丙'
@@ -16,7 +16,7 @@ class Tiangan(IndexedBaziEnum):
   REN  = '壬'
   GUI  = '癸'
 
-  # Aliases
+  # 中文别名
   甲  =  JIA
   乙  =   YI
   丙  = BING
@@ -28,4 +28,4 @@ class Tiangan(IndexedBaziEnum):
   壬  =  REN
   癸  =  GUI
 
-天干 = Tiangan # Alias
+天干 = Tiangan # 中文别名

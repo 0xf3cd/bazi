@@ -1,5 +1,4 @@
 '''
-Pre-generated calendar tables sourced from celestial-calendar, plus the loader that reads
-them.  See `SCHEMA.md` for the frozen data contract, and `generator.py` for why the offline
-generator is deliberately not imported from here.
+来自 celestial-calendar 的预生成历法表及加载器。数据契约见 `SCHEMA.md`；
+离线生成器不在此导入，原因见 `generator.py`。
 '''

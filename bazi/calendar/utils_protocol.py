@@ -10,19 +10,12 @@ from .dates import CalendarType, CalendarDate, JieqiTime
 @runtime_checkable
 class CalendarUtilsProtocol(Protocol):
   '''
-  The protocol that all CalendarUtils classes conform to.
+  历法工具共用的协议，成员为实例方法，以支持后端的实例状态，见 #86。
+  `CelestialCalendarUtils` 为每种阴历算法各建一个实例；HKO 则是模块函数，
+  运行时结构满足协议，但 mypy 不识别，解析分支须用 cast，见 `calendar_utils_of`。
 
-  The members are instance methods: the protocol describes "an object that offers these
-  operations", which is what backends with per-instance state need to be (see issue #86;
-  `CelestialCalendarUtils` is one instance per lunar algorithm).  The HKO backend is the one
-  anomaly -- a module whose functions satisfy the protocol structurally at runtime but
-  invisibly to mypy, so its resolver branch carries a `cast` (see `calendar_utils_of`).
-
-  Implementations may differ only in the *precision* of `jieqi_moment`: a data source that
-  publishes jieqi dates but not their moments can answer no better than midnight of that
-  date (`hko_data_utils`), while one carrying the real moments answers to the second
-  (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
-  what makes conforming implementations substitutable for one another.
+  `jieqi_moment` 的精度随后端不同：HKO 只发布节气日期，用当日午夜占位；
+  celestial 提供秒级真实时刻。其余日期级接口按相同契约互换，差异受下述白名单约束。
 
   `prev_jie` / `next_jie` 始终查询真实时刻：交节日午夜至真实交节之间，HKO 的午夜占位与
   天文后端可返回不同节。出生精度归属属于 `Bazi`：DAY 从日期级干支年月选择开月节和下一节，

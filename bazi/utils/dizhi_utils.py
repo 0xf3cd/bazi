@@ -14,37 +14,30 @@ from .relation_discovery import RelationDiscovery
 
 
 '''
-Functions in this file are used to find all possible Dizhi combos that satisfy different `DizhiRelation`s.
-All methods' returns are expected to be immutable.
+查询满足各 DizhiRelation 的地支组合；返回结果不可变。
 '''
 
 
-'''Represents a Dizhi combo that satisfies a certain `DizhiRelation`.'''
+'''满足某地支关系的一个组合。'''
 DizhiCombo = frozenset[Dizhi]
 
-'''A list of all possible Dizhi combos that satisfy a certain `DizhiRelation`.'''
+'''满足某地支关系的全部组合元组。'''
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
-  '''A frozen mapping from `DizhiRelation` to the Dizhi combos that satisfy it.
-  Gong combos contain only their two real participants, not the virtual branch; recover it
-  with `gonghe` / `gonghui`. When the producing Ganzhi query used a `gong_def`, pass
-  `DizhiRules.GONG_GONGHE_SCOPE[gong_def]` to `gonghe`.
-  地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
+  '''地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
   `gonghe` / `gonghui` 恢复虚支。若生产该结果的干支查法使用了
   `gong_def`，调用 `gonghe` 时传 `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`。'''
 
 
 @dataclass(frozen=True)
 class GanzhiOccurrence:
-  '''A concrete Ganzhi value at a zero-based index in one relation query. Equality and
-  hashing use both fields; indices are local to that query's input sequence.
-  一次关系查询中位于某个零基序号的具体干支值。相等与哈希使用两个字段；序号只属于
+  '''一次关系查询中位于某个零基序号的具体干支值。相等与哈希使用两个字段；序号只属于
   该次查询的输入序列。
 
   Args:
-  - index: (int) The occurrence's zero-based index in the query sequence.
-  - ganzhi: (Ganzhi) The complete stem-branch value at that index.
+  - index: (int) 该次查询输入序列中的零基序号。
+  - ganzhi: (Ganzhi) 此位置的完整干支。
   '''
   index:  int
   ganzhi: Ganzhi
@@ -55,23 +48,18 @@ class GanzhiOccurrence:
       raise ValueError(f'Expected a non-negative index, got {self.index}')
 
 
-'''A concrete combo of Ganzhi occurrences whose Dizhis satisfy a `DizhiRelation`.'''
+'''地支满足某关系的具体干支位置组合。'''
 GanzhiRelationCombo = frozenset[GanzhiOccurrence]
 
-'''All concrete Ganzhi-occurrence combos that satisfy a `DizhiRelation`.'''
+'''地支满足某关系的全部具体干支位置组合。'''
 GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
-  '''A frozen mapping from `DizhiRelation` to concrete Ganzhi-occurrence combos.
-  Occurrence indices follow the query sequence defined by the producing entry; see each
-  entry's docstring. 地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
+  '''地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
   生产该结果的入口所定义的查询序列解释，详见各入口说明。'''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
-    '''Project occurrences to their Dizhis, explicitly discarding position and Tiangan;
-    occurrence combos that collapse to the same Dizhi combo are deduplicated.
-    Gong-key shape and virtual-branch recovery follow `DizhiRelationDiscovery`.
-    把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
+    '''把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
     两个实支；拱局键的结果形状与虚支恢复契约见 `DizhiRelationDiscovery`。'''
     projected: dict[DizhiRelation, tuple[DizhiCombo, ...]] = {}
     for relation, combos in self.items():
@@ -85,17 +73,15 @@ class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
 
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   '''
-  Check if the input Dizhis are in SANHUI (三会) relation. If so, return the corresponding Wuxing. If not, return `None`.
-  We don't care the order of the inputs, since SANHUI relation is non-directional/mutual.
   检查输入的地支是否构成三会关系。如果是，返回三会后形成的五行。否则返回 `None`。
   返回结果与输入的地支顺序无关，因为三会关系是无方向的。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
-  - dz3: (Dizhi) The third Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
+  - dz3: (Dizhi) 第三地支。
 
-  Return: (Wuxing | None) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in SANHUI (三会) relation.
+  Return: (Wuxing | None) 三会对应五行；不构成三会时为 None。
 
   Examples:
   - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰)
@@ -112,16 +98,14 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
 
 def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   '''
-  Check if the input Dizhis are in LIUHE (六合) relation. If so, return the corresponding Wuxing. If not, return `None`.
-  We don't care the order of the inputs, since LIUHE relation is non-directional/mutual.
   检查输入的地支是否构成六合关系。如果是，返回六合后形成的五行。否则返回 `None`。
   返回结果与输入的地支顺序无关，因为六合关系是无方向的。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (Wuxing | None) The Wuxing that the Dizhis form, or `None` if the Dizhis are not in LIUHE (六合) relation.
+  Return: (Wuxing | None) 六合对应五行；不构成六合时为 None。
 
   Examples:
   - liuhe(Dizhi.寅, Dizhi.亥)
@@ -138,17 +122,15 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
 
 def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED) -> bool:
   '''
-  Check if the input Dizhis are in ANHE (暗合) relation. If so, return `True`. If not, return `False`.
-  There are multiple definitions for ANHE. The default definition is `DizhiRules.AnheDef.NORMAL_EXTENDED`.
   检查输入的地支是否构成暗合关系。如果是，返回 `True`。否则返回 `False`。
   暗合关系的看法有多种，默认使用 `DizhiRules.AnheDef.NORMAL_EXTENDED`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
-  - definition: (DizhiRules.AnheDef) The definition of the ANHE relation. Default to `DizhiRules.AnheDef.NORMAL_EXTENDED`.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
+  - definition: (DizhiRules.AnheDef) 暗合定义，默认 NORMAL_EXTENDED。
 
-  Return: (bool) Whether the Dizhis form in ANHE (暗合) relation.
+  Return: (bool) 是否构成暗合。
 
   Examples:
   - anhe(Dizhi.寅, Dizhi.午)
@@ -171,15 +153,14 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: DizhiRules.AnheDef = DizhiRules.
 
 def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in TONGHE (通合) relation. If so, return `True`. If not, return `False`.
   检查输入的地支是否构成通合关系。如果是，返回 `True`。否则返回 `False`。
   通合指的是两个地支的所有藏干都两两相合。通合常用于盲派。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (bool) Whether the Dizhis form in TONGHE (通合) relation.
+  Return: (bool) 是否构成通合。
 
   Examples:
   - tonghe(Dizhi.寅, Dizhi.午)
@@ -196,15 +177,14 @@ def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in TONGLUHE (通禄合) relation. If so, return `True`. If not, return `False`.
   检查输入的地支是否构成通禄合关系。如果是，返回 `True`。否则返回 `False`。
   通禄合指的是五合的天干在地支对应的禄身之间的相合。通禄合常用于盲派。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (bool) Whether the Dizhis form in TONGLUHE (通禄合) relation.
+  Return: (bool) 是否构成通禄合。
 
   Examples:
   - tongluhe(Dizhi.寅, Dizhi.午)
@@ -221,15 +201,14 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   '''
-  Check if the input Dizhis are in SANHE (三合) relation. If so, return the corresponding Wuxing. If not, return `None`.
   检查输入的地支是否构成三合关系。如果是，返回对应的五行。如果不是，返回 `None`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
-  - dz3: (Dizhi) The third Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
+  - dz3: (Dizhi) 第三地支。
 
-  Return: (Wuxing | None) The corresponding Wuxing if the Dizhis form in SANHE (三合) relation. Otherwise, return `None`.
+  Return: (Wuxing | None) 三合对应五行；不构成三合时为 None。
 
   Examples:
   - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未)
@@ -246,14 +225,13 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
 
 def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   '''
-  Check if the input Dizhis are in BANHE (半合) relation. If so, return the corresponding Wuxing. If not, return `None`.
   检查输入的地支是否构成半合关系。如果是，返回对应的五行。如果不是，返回 `None`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (Wuxing | None) The corresponding Wuxing if the Dizhis form in BANHE (半合) relation. Otherwise, return `None`.
+  Return: (Wuxing | None) 半合对应五行；不构成半合时为 None。
 
   Examples:
   - banhe(Dizhi.亥, Dizhi.卯)
@@ -272,23 +250,18 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
 
 def gonghe(dz1: Dizhi, dz2: Dizhi, *,
            definition: DizhiRules.GongheDef = DizhiRules.GongheDef.NARROW) -> Dizhi | None:
-  '''Return the branch structurally arched by two 三合 members, or `None`.
-  返回两支按所选拱合口径拱出的第三支；结构不成立时返回 `None`。
+  '''返回两支按所选拱合定义拱出的第三支；结构不成立时返回 `None`。
 
-  This direct query answers only the structural question and therefore takes Dizhis. It
-  does not know whether pillars are adjacent, whether a profile's Tiangan condition holds,
-  or whether the target is already present. Use `search_ganzhis` / `discover_ganzhis` for
-  one sequence, or `discover_mutual_ganzhis` across two scopes, for those contextual rules.
   本直接查询只回答地支结构，不判断柱位相邻、流派天干条件或所拱之支是否已经填实；
   查单一序列的完整成立条件时使用 `search_ganzhis` / `discover_ganzhis`，查两组输入时使用
   `discover_mutual_ganzhis`。
 
   Args:
-  - dz1: (Dizhi) The first participating Dizhi.
-  - dz2: (Dizhi) The second participating Dizhi.
-  - definition: (DizhiRules.GongheDef) Narrow (missing middle) or wide (any two) scope.
+  - dz1: (Dizhi) 第一参与支。
+  - dz2: (Dizhi) 第二参与支。
+  - definition: (DizhiRules.GongheDef) 狭义缺中神，广义收三合任意两支。
 
-  Return: (Dizhi | None) The arched branch, or `None` if the pair is outside the definition.
+  Return: (Dizhi | None) 所拱之支；不符合所选定义时为 None。
 
   Examples:
   - gonghe(Dizhi.申, Dizhi.辰)
@@ -306,19 +279,16 @@ def gonghe(dz1: Dizhi, dz2: Dizhi, *,
 
 
 def gonghui(dz1: Dizhi, dz2: Dizhi) -> Dizhi | None:
-  '''Return the middle branch structurally arched by two 三会 endpoints, or `None`.
-  返回两支三会端点拱出的中神；结构不成立时返回 `None`。
+  '''返回两支三会端点拱出的中神；结构不成立时返回 `None`。
 
-  This direct query checks structure only. Position, Tiangan, and fill conditions belong
-  to `search_ganzhis` / `discover_ganzhis` for one sequence and `discover_mutual_ganzhis`
-  across two scopes. 本直接查询只查地支结构；单一序列的柱位、天干与填实条件由
+  本直接查询只查地支结构；单一序列的柱位、天干与填实条件由
   `search_ganzhis` / `discover_ganzhis` 判断，两组输入由 `discover_mutual_ganzhis` 判断。
 
   Args:
-  - dz1: (Dizhi) The first participating Dizhi.
-  - dz2: (Dizhi) The second participating Dizhi.
+  - dz1: (Dizhi) 第一参与支。
+  - dz2: (Dizhi) 第二参与支。
 
-  Return: (Dizhi | None) The arched middle branch, or `None`.
+  Return: (Dizhi | None) 所拱中神；结构不成立时为 None。
 
   Examples:
   - gonghui(Dizhi.寅, Dizhi.辰)
@@ -379,14 +349,13 @@ def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOO
 
 def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in CHONG (冲) relation. If so, return `True`. If not, return `False`.
   检查输入的地支是否构成冲关系。如果是，返回 `True`。否则返回 `False`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (bool) Whether the Dizhis form in CHONG (冲) relation.
+  Return: (bool) 是否相冲。
 
   Examples:
   - chong(Dizhi.子, Dizhi.午)
@@ -404,14 +373,13 @@ def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def po(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in PO (破) relation. If so, return `True`. If not, return `False`.
   检查输入的地支是否构成破关系。如果是，返回 `True`。否则返回 `False`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (bool) Whether the Dizhis form in PO (破) relation.
+  Return: (bool) 是否相破。
 
   Examples:
   - po(Dizhi.卯, Dizhi.午)
@@ -431,14 +399,13 @@ def po(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in HAI (害) relation. If so, return `True`. If not, return `False`.
   检查输入的地支是否构成相害关系。如果是，返回 `True`。否则返回 `False`。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 第一地支。
+  - dz2: (Dizhi) 第二地支。
 
-  Return: (bool) Whether the Dizhis form in HAI (害) relation.
+  Return: (bool) 是否相害。
 
   Examples:
   - hai(Dizhi.卯, Dizhi.辰)
@@ -458,16 +425,14 @@ def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in SHENG (生) relation. If so, return `True`. If not, return `False`.
-  Yinyang is not checked - only Wuxing is considered.
   检查输入的地支是否构成生关系。如果是，返回 `True`。否则返回 `False`。
   相生关系只关注五行，不区分阴阳。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 生的一方。
+  - dz2: (Dizhi) 被生的一方。
 
-  Return: (bool) Whether the Dizhis form in SHENG (生) relation.
+  Return: (bool) 是否 dz1 生 dz2。
 
   Examples:
   - sheng(Dizhi.卯, Dizhi.亥)
@@ -489,16 +454,14 @@ def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   '''
-  Check if the input Dizhis are in KE (克) relation. If so, return `True`. If not, return `False`.
-  Yinyang is not checked - only Wuxing is considered.
   检查输入的地支是否构成相克关系。如果是，返回 `True`。否则返回 `False`。
   相克关系只关注五行，不区分阴阳。
 
   Args:
-  - dz1: (Dizhi) The first Dizhi.
-  - dz2: (Dizhi) The second Dizhi.
+  - dz1: (Dizhi) 克的一方。
+  - dz2: (Dizhi) 被克的一方。
 
-  Return: (bool) Whether the Dizhis form in KE (克) relation.
+  Return: (bool) 是否 dz1 克 dz2。
 
   Examples:
   - ke(Dizhi.子, Dizhi.巳)
@@ -518,10 +481,6 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
-# The subset-style relations `search` supports, mapped to their combo tables. 暗合 is NOT
-# here: its table is picked by `definitions.anhe_def` at query time. Tables are
-# stored as-is -- wrapping the mapping tables in `frozenset` would trade their stable
-# definition-order iteration for per-process hash order.
 # `search` 支持的子集型关系与其组合表（暗合的表在查询期按 `definitions.anhe_def` 选择）。
 # 表原样存放——若包一层 `frozenset`，映射表稳定的定义序迭代会退化成逐进程哈希序。
 _SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, Collection[DizhiCombo]]] = frozendict({
@@ -544,16 +503,14 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
 
   Note:
   - 只接受 `Sequence`，非序列在遍历前抛出 `TypeError`；空序列合法，重复地支保留自刑重数。
-  - 返回的 combos 中没有体现关系作用的方向。
-  - 比如说，如果检查输入地支的相生关系并返回 ({午, 寅})，那么不能从返回结果中看出是寅生午还是午生寅。
-  - 对于无方向的关系来说（合、会），我们不用关心返回结果中的方向。
-  - 对于有方向的关系来说（生、克等），请使用其他方法来检查（如 `sheng`， `ke` 等）。
+  - 组合不含作用方向，合、会本身无向；生、克的方向用 sheng / ke 单独判断。
+    例如组合 {午, 寅} 本身不表示寅生午或午生寅。
   - 对于刑关系，更复杂一些：
     - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
     - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
     - 对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。
     - 用哪个定义由 `definitions.xing_def` 决定；默认 `XingDef.LOOSE` 下，丑未戌、寅巳申三取二即算。
-    - 请使用 `xing` 来进行更细粒度的检查。
+    - 需要具体刑类型及方向时用 xing。
 
   Note:
   - 拱合、拱会依赖柱位与天干；本纯地支入口对两者抛 `ValueError`，请用 `search_ganzhis`。
@@ -605,7 +562,6 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     raise ValueError(f'{relation} requires Ganzhi positions; use search_ganzhis')
 
   if relation is DizhiRelation.刑:
-    # Multiset-sensitive, so plain subset tests don't apply: 自刑 needs the same Dizhi twice.
     # 多重集语义（自刑要求同一地支出现两次），普通子集判定不适用。
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
@@ -618,16 +574,13 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     return DizhiRelationCombos(ret)
 
   if relation is DizhiRelation.生 or relation is DizhiRelation.克:
-    # The rule tables hold directed (subject, object) pairs -- fold them into direction-less
-    # combos first. 生克规则表存的是有向对，先折叠成无向组合。
+    # 生克规则表存有向对，先折叠成无向组合。
     pairs: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
     ordered = sorted(pairs, key=lambda pair: tuple(dz.index for dz in pair))
     pair_combos = dict.fromkeys(map(DizhiCombo, ordered))
     dz_set: set[Dizhi] = set(dizhis)
     return DizhiRelationCombos(combo for combo in pair_combos if combo.issubset(dz_set))
 
-  # Every other relation shares one shape: keep the table combos fully present in the input.
-  # 暗合's table is picked by `definitions.anhe_def` at query time; the rest resolve statically.
   # 其余关系同构：保留完整出现在输入中的组合。暗合的表按 `definitions.anhe_def` 选，其余静态解析。
   combos: Collection[DizhiCombo] = (
     DizhiRules.DIZHI_ANHE[definitions.anhe_def] if relation is DizhiRelation.暗合 else _SUBSET_SEARCH_COMBOS[relation]
@@ -641,7 +594,7 @@ def discover(dizhis: Sequence[Dizhi], *,
              definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> DizhiRelationDiscovery:
   '''
   返回给定地支中所有可能的地支关系组合（三会、六合、刑等）。
-  这个方法通过调用 `search` 来实现。
+  各关系由 `search` 求值。
 
   Note:
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
@@ -681,7 +634,7 @@ def _gong_tiangan_qualified(
   formation: Wuxing,
   gong_def: DizhiRules.GongDef,
 ) -> bool:
-  '''Apply one source-backed Gong Tiangan profile / 应用一档有来源的拱局天干条件。'''
+  '''应用一档有来源的拱局天干条件。'''
   if gong_def in (DizhiRules.GongDef.SAME_STEM_NARROW, DizhiRules.GongDef.SAME_STEM_WIDE):
     return gz1.tiangan is gz2.tiangan
   elif gong_def is DizhiRules.GongDef.TRANSFORMING_NARROW:
@@ -697,12 +650,12 @@ def _search_gong(
   index_pairs: Iterable[tuple[int, int]],
   gong_def: DizhiRules.GongDef,
 ) -> GanzhiRelationCombos:
-  '''Search contextual Gong candidates over caller-selected position pairs / 在调用方选定的柱位对中查拱局。'''
+  '''在调用方选定的柱位对中查拱局。'''
   assert relation in DizhiRules.GONG_RELATIONS
   assert isinstance(gong_def, DizhiRules.GongDef)
 
   if relation is DizhiRelation.拱会 and gong_def is DizhiRules.GongDef.LU_NARROW:
-    return () # The 见禄字 source only defines narrow 拱合, not 拱会.
+    return () # 见禄字来源只定义狭义拱合，不含拱会。
 
   tiangans: tuple[Tiangan, ...] = tuple(gz.tiangan for gz in ganzhis)
   dizhis: frozenset[Dizhi] = frozenset(gz.dizhi for gz in ganzhis)
@@ -769,8 +722,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
 
   ret: list[GanzhiRelationCombo] = []
   for combo in search(dizhis, relation, definitions=definitions):
-    # A self-刑 pair projects to a singleton DizhiCombo; occurrence identity restores
-    # its two concrete participants.
+    # 自刑对投影为单支集合；具体出现身份保留两个实际参与者。
     participant_count: int = 2 if relation is DizhiRelation.刑 and len(combo) == 1 else len(combo)
     ret.extend(
       GanzhiRelationCombo(candidate)
@@ -896,7 +848,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
                     definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> DizhiRelationDiscovery:
   '''
   找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
-  注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
+  返回组合须与两组地支值集均相交，不追踪具体出现；按值过滤语义见 RelationDiscovery.mutual_only。
 
   Note:
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
@@ -936,9 +888,6 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   if not isinstance(definitions, DizhiRelationDefinitions):
     raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 
-  # 自刑 depends on multiplicity (the same Dizhi appearing once on each side forms 自刑),
-  # so the two sides CONCATENATE -- a set union would silently break it. Deliberately
-  # different from `tiangan_utils.discover_mutual`.
   # 自刑依赖重数（同一地支两侧各现一次也构成自刑），故两侧拼接——集合并会静默破坏
   # 自刑。与天干侧的集合并是刻意分歧。
   return discover(list(dizhis1) + list(dizhis2), definitions=definitions).mutual_only(set(dizhis1), set(dizhis2))

@@ -14,12 +14,8 @@ __all__ = [
   'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart',
 ]
 
-# Since #66, `Bazi` / `BaziChart` resolve their calendar backend lazily (see
-# `calendar/backend.py`), so importing them no longer loads any calendar
-# data -- that now happens on the first `Bazi` construction. Keep these submodules
-# lazy (PEP 562) regardless: `import bazi` stays cheap, and the offline encoder
-# (`python -m bazi.calendar.hko_data.encoder`) can never accidentally pull in the
-# chart layer.
+# Bazi / BaziChart 延迟解析历法后端，首次构造 Bazi 才加载历法数据，见 calendar/backend.py。
+# 子模块仍按 PEP 562 延迟导入，减少 import bazi 的成本，也避免离线 HKO encoder 引入命盘层。
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart',
 })

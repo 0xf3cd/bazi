@@ -1,6 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Apparent-solar conversion using the bundled equation-of-time table.'''
+'''使用随库均时差表换算真太阳时。'''
 
 import math
 
@@ -12,7 +12,7 @@ from .celestial_data.loader import EquationOfTimeTable, _utc_instant
 
 
 def _canonical_longitude(longitude: float) -> float:
-  '''Validate east-positive degrees and canonicalize the meridian and zero aliases.'''
+  '''校验东经为正的角度，并规范同一子午线及正负零的别名。'''
   longitude_input: object = longitude
   if isinstance(longitude_input, bool) or not isinstance(longitude_input, Real):
     raise TypeError(f'Expected real longitude, got {type(longitude)}')
@@ -25,24 +25,23 @@ def _canonical_longitude(longitude: float) -> float:
 
   if value == 0:
     return 0.0
-  # +180 and -180 identify the same meridian.
+  # +180 与 -180 为同一子午线。
   return -180.0 if value == 180 else value
 
 
 @cache
 def _equation_of_time_table() -> EquationOfTimeTable:
-  '''Read the immutable table on first lookup, not during import.'''
+  '''首次查询时读取不可变表，导入时不读取。'''
   return EquationOfTimeTable()
 
 
 def apparent_solar_datetime(civil_instant: datetime, longitude: float) -> datetime:
   '''
-  Correct a fixed-offset civil clock to a naive local apparent-solar clock.
+  把固定偏移的民用钟换算为无时区的当地真太阳钟。
 
-  Wrap longitude-minus-offset to [-12h, 12h) to use the birth region's civil date
-  basis: a UTC+14 clock near 157 degrees west is a civil day ahead of its meridian.
-  The resulting clock can still cross midnight. EOT is apparent minus mean,
-  evaluated at the exact UTC instant.
+  经度与时区偏移之差回绕到 [-12h, 12h)，保留出生地区的民用日期基准；
+  例如西经约 157 度的 UTC+14 民用钟比该子午线提前一日。
+  换算仍可跨午夜；EOT 为真太阳时减平太阳时，在精确 UTC 瞬间求值。
   '''
   if not isinstance(civil_instant, datetime):
     raise TypeError(f'Expected datetime, got {type(civil_instant)}')

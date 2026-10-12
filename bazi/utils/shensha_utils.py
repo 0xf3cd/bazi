@@ -9,10 +9,7 @@ from ..rules import ShenshaRules
 
 
 '''
-Predicates for Shensha (神煞) detection.
-Most functions check whether a Dizhi forms the Shensha against its anchor; whole-pillar
-rules inspect a Ganzhi directly, with any required anchor supplied separately.
-多数函数按锚查地支神煞；整柱规则直接检查干支，所需锚另行传入。
+神煞判断函数。多数函数按锚查地支神煞；整柱规则直接检查干支，所需锚另行传入。
 '''
 
 
@@ -41,8 +38,7 @@ def _defined_shensha(
   definition: _Definition,
   definition_type: type[_Definition],
 ) -> bool:
-  '''Validate inputs before looking up the selected definition's table.
-  先校验输入，再查所选定义的表。
+  '''先校验输入，再查所选定义的表。
   '''
   if not isinstance(key, Tiangan):
     raise TypeError(f'Expected Tiangan, got {type(key)}')
@@ -56,14 +52,13 @@ def _defined_shensha(
 
 def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input Dizhi of year pillar or day pillar and other Dizhi form a TAOHUA (桃花).
   检查某个地支是否是年支或日支的桃花。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year pillar or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is a TAOHUA of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的桃花。
 
   Examples:
   - taohua(Dizhi.申, Dizhi.酉)
@@ -77,16 +72,13 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  Check if the input `dizhi` is the HONGYAN (红艳) of `key_tiangan`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是 `key_tiangan` 的红艳星。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
-    decides which pillar supplies it.
-    查法所锚的天干，由调用方决定取哪一柱。
-  - dizhi: (Dizhi) The Dizhi.
+  - key_tiangan: (Tiangan) 查法锚干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `dizhi` is the HONGYAN (红艳) of `key_tiangan`.
+  Return: (bool) 待查支是否为锚干的红艳。
 
   Examples:
   - hongyan(Tiangan.癸, Dizhi.申)
@@ -100,14 +92,13 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
 
 def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the HONGLUAN (红鸾) of `year_dizhi`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是年支的红鸾星。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - year_dizhi: (Dizhi) The Dizhi of year pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_dizhi: (Dizhi) 年支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the HONGLUAN (红鸾) of `year_dizhi`.
+  Return: (bool) 待查支是否为年支的红鸾。
 
   Examples:
   - hongluan(Dizhi.申, Dizhi.未)
@@ -121,14 +112,13 @@ def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the TIANXI (天喜) of `year_dizhi`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是年支的天喜星。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - year_dizhi: (Dizhi) The Dizhi of year pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_dizhi: (Dizhi) 年支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the TIANXI (天喜) of `year_dizhi`.
+  Return: (bool) 待查支是否为年支的天喜。
 
   Examples:
   - tianxi(Dizhi.寅, Dizhi.未)
@@ -142,14 +132,13 @@ def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the YIMA (驿马) of `year_or_day_dizhi`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是年支或日支的驿马星。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the YIMA (驿马) of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的驿马。
 
   Examples:
   - yima(Dizhi.申, Dizhi.寅)
@@ -163,14 +152,13 @@ def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the HUAGAI (华盖) of `year_or_day_dizhi`.
   检查输入的地支是否是年支或日支的华盖星。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the HUAGAI (华盖) of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的华盖。
 
   Examples:
   - huagai(Dizhi.申, Dizhi.辰)
@@ -184,14 +172,13 @@ def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the JIANGXING (将星) of `year_or_day_dizhi`.
   检查输入的地支是否是年支或日支的将星。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the JIANGXING (将星) of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的将星。
 
   Examples:
   - jiangxing(Dizhi.申, Dizhi.子)
@@ -205,16 +192,13 @@ def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def zaisha(key_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check whether `other_dizhi` is the ZAISHA (灾煞) of `key_dizhi`.
   检查输入地支是否为锚支的灾煞。
 
   Args:
-  - key_dizhi: (Dizhi) The year or day branch used as the lookup key. The caller
-    decides whether to inspect the year branch alone or both branches.
-    查法锚支；只查年支或年日兼查由调用方决定。
-  - other_dizhi: (Dizhi) The branch to inspect.
+  - key_dizhi: (Dizhi) 年支或日支；只查年支或年日兼查由调用方决定。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether `other_dizhi` is the Zaisha of `key_dizhi`.
+  Return: (bool) 待查支是否为锚支的灾煞。
 
   Examples:
   - zaisha(Dizhi.申, Dizhi.午)
@@ -228,14 +212,13 @@ def zaisha(key_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the JIESHA (劫煞) of `year_or_day_dizhi`.
   检查输入的地支是否是年支或日支的劫煞。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the JIESHA (劫煞) of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的劫煞。
 
   Examples:
   - jiesha(Dizhi.申, Dizhi.巳)
@@ -249,14 +232,13 @@ def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the WANGSHEN (亡神) of `year_or_day_dizhi`.
   检查输入的地支是否是年支或日支的亡神。
 
   Args:
-  - year_or_day_dizhi: (Dizhi) The Dizhi of year or day pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_or_day_dizhi: (Dizhi) 年支或日支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the WANGSHEN (亡神) of `year_or_day_dizhi`.
+  Return: (bool) 待查支是否为锚支的亡神。
 
   Examples:
   - wangshen(Dizhi.申, Dizhi.亥)
@@ -270,14 +252,13 @@ def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the GUCHEN (孤辰) of `year_dizhi`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是年支的孤辰。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - year_dizhi: (Dizhi) The Dizhi of year pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_dizhi: (Dizhi) 年支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the GUCHEN (孤辰) of `year_dizhi`.
+  Return: (bool) 待查支是否为年支的孤辰。
 
   Examples:
   - guchen(Dizhi.子, Dizhi.寅)
@@ -291,14 +272,13 @@ def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   '''
-  Check if the input `other_dizhi` is the GUASU (寡宿) of `year_dizhi`. If so, return `True`. If not, return `False`.
   检查输入的地支是否是年支的寡宿。如果是，返回 `True`。如果不是，返回 `False`。
 
   Args:
-  - year_dizhi: (Dizhi) The Dizhi of year pillar.
-  - other_dizhi: (Dizhi) The other Dizhi.
+  - year_dizhi: (Dizhi) 年支。
+  - other_dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether the `other_dizhi` is the GUASU (寡宿) of `year_dizhi`.
+  Return: (bool) 待查支是否为年支的寡宿。
 
   Examples:
   - guasu(Dizhi.子, Dizhi.戌)
@@ -312,14 +292,13 @@ def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
 
 def lushen(day_master: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  Check whether `dizhi` is the LUSHEN (禄神) of `day_master`.
   检查地支是否为日干的禄神。
 
   Args:
-  - day_master: (Tiangan) The Day Master used as the lookup key.
-  - dizhi: (Dizhi) The branch to inspect.
+  - day_master: (Tiangan) 日主天干。
+  - dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether `dizhi` is the Lushen of `day_master`.
+  Return: (bool) 待查支是否为日干的禄神。
 
   Examples:
   - lushen(Tiangan.甲, Dizhi.寅)
@@ -333,16 +312,13 @@ def lushen(day_master: Tiangan, dizhi: Dizhi) -> bool:
 
 def jinyu(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  Check whether `dizhi` is the JINYU (金舆) of `key_tiangan`.
   检查地支是否为锚干的金舆。
 
   Args:
-  - key_tiangan: (Tiangan) The year or day stem used as the lookup key. The caller
-    decides whether to inspect the Day Master alone or both stems.
-    查法锚干；只查日干或年日兼查由调用方决定。
-  - dizhi: (Dizhi) The branch to inspect.
+  - key_tiangan: (Tiangan) 年干或日干；只查日干或年日兼查由调用方决定。
+  - dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether `dizhi` is the Jinyu of `key_tiangan`.
+  Return: (bool) 待查支是否为锚干的金舆。
 
   Examples:
   - jinyu(Tiangan.甲, Dizhi.辰)
@@ -356,13 +332,12 @@ def jinyu(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
 
 def kuigang(day_ganzhi: Ganzhi) -> bool:
   '''
-  Check whether `day_ganzhi` is one of the four KUIGANG (魁罡) day pillars.
   检查日柱是否为四个魁罡日之一。
 
   Args:
-  - day_ganzhi: (Ganzhi) The birth-chart day pillar. 原局日柱。
+  - day_ganzhi: (Ganzhi) 原局日柱。
 
-  Returns: (bool) Whether `day_ganzhi` is a Kuigang day pillar.
+  Return: (bool) 是否为魁罡日柱。
 
   Examples:
   - kuigang(Ganzhi.from_str('庚辰'))
@@ -378,14 +353,13 @@ def kuigang(day_ganzhi: Ganzhi) -> bool:
 
 def tianshe(month_dizhi: Dizhi, day_ganzhi: Ganzhi) -> bool:
   '''
-  Check whether `day_ganzhi` is the TIANSHE (天赦) day for the season of `month_dizhi`.
   检查日柱是否为月令所属四时的天赦日。
 
   Args:
-  - month_dizhi: (Dizhi) The birth chart's Month Commander (月令).
-  - day_ganzhi: (Ganzhi) The birth chart's day pillar (原局日柱).
+  - month_dizhi: (Dizhi) 原局月令。
+  - day_ganzhi: (Ganzhi) 原局日柱。
 
-  Returns: (bool) Whether `day_ganzhi` is the Tianshe day selected by `month_dizhi`.
+  Return: (bool) 日柱是否为月令所属四时的天赦日。
 
   Examples:
   - tianshe(Dizhi.寅, Ganzhi.from_str('戊寅'))
@@ -408,16 +382,14 @@ def yangren(
   definition: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING,
 ) -> bool:
   '''
-  Check whether `dizhi` is the YANGREN (羊刃 / 阳刃) of `day_master` under the
-  selected definition. 按所选定义检查地支是否为日干的羊刃（阳刃）。
+  按所选定义检查地支是否为日干的羊刃（阳刃）。
 
   Args:
-  - day_master: (Tiangan) The Day Master used as the lookup key.
-  - dizhi: (Dizhi) The branch to inspect.
-  - definition: (ShenshaRules.YangrenDef) The definition to use; defaults to
-    ZIPING, where only Yang Tiangans have 阳刃. 所用定义；默认子平五阳干专有口径。
+  - day_master: (Tiangan) 日主天干。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.YangrenDef) 所用定义，默认 ZIPING，仅五阳干有阳刃。
 
-  Returns: (bool) Whether `dizhi` is the Yangren of `day_master` under `definition`.
+  Return: (bool) 所选定义下是否为日干的羊刃。
 
   Examples:
   - yangren(Tiangan.甲, Dizhi.卯)
@@ -444,16 +416,14 @@ def feiren(
   definition: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING,
 ) -> bool:
   '''
-  Check whether `dizhi` is the FEIREN (飞刃) of `day_master` under the selected
-  definition. 按所选定义检查地支是否为日干的飞刃。
+  按所选定义检查地支是否为日干的飞刃。
 
   Args:
-  - day_master: (Tiangan) The Day Master used as the lookup key.
-  - dizhi: (Dizhi) The branch to inspect.
-  - definition: (ShenshaRules.YangrenDef) The definition to use; defaults to
-    ZIPING, where only Yang Tiangans have 飞刃. 所用定义；默认子平五阳干专有口径。
+  - day_master: (Tiangan) 日主天干。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.YangrenDef) 所用定义，默认 ZIPING，仅五阳干有飞刃。
 
-  Returns: (bool) Whether `dizhi` is the Feiren of `day_master` under `definition`.
+  Return: (bool) 所选定义下是否为日干的飞刃。
 
   Examples:
   - feiren(Tiangan.甲, Dizhi.酉)
@@ -480,18 +450,15 @@ def tianyi(
   definition: ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU,
 ) -> bool:
   '''
-  Check whether `dizhi` is a TIANYI GUIREN (天乙贵人) branch of `key_tiangan`
-  under the selected source profile. 按所选出处 profile 检查地支是否为锚干的天乙贵人。
+  按所选来源档案检查地支是否为锚干的天乙贵人。
 
   Args:
-  - key_tiangan: (Tiangan) The year or day stem used as the lookup key. The caller
-    decides which anchor(s) to inspect. 查法锚干；查年干、日干或兼查由调用方决定。
-  - dizhi: (Dizhi) The branch to inspect.
-  - definition: (ShenshaRules.TianyiDef) The source profile to use; defaults to the
-    traditional merged「甲戊庚牛羊……六辛逢马虎」table.
-    所用出处 profile；默认传统牛羊/马虎合并表。
+  - key_tiangan: (Tiangan) 年干或日干；查年干、日干或兼查由调用方决定。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.TianyiDef) 所用来源档案，默认传统
+    「甲戊庚牛羊……六辛逢马虎」合并表。
 
-  Returns: (bool) Whether `dizhi` is Tianyi of `key_tiangan` under `definition`.
+  Return: (bool) 所选定义下是否为锚干的天乙贵人。
 
   Examples:
   - tianyi(Tiangan.甲, Dizhi.丑)
@@ -518,21 +485,16 @@ def wenchang(
   definition: ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI,
 ) -> bool:
   '''
-  Check whether `dizhi` is the WENCHANG (文昌) of `key_tiangan` under the selected
-  definition. 按所选定义检查地支是否为该天干的文昌。
+  按所选定义检查地支是否为该天干的文昌。
 
-  This is the 子平 star. For the 禄命 star of the same name family, see `wenchanggui`.
   本函数查子平法的文昌；禄命法的同名近亲见 `wenchanggui`。
 
   Args:
-  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
-    decides which pillar supplies it.
-    查法所锚的天干，由调用方决定取哪一柱。
-  - dizhi: (Dizhi) The Dizhi.
-  - definition: (ShenshaRules.WenchangDef) The definition to use; defaults to XIN_ZI,
-    where 辛 takes 子. 所用定义；默认辛取子。
+  - key_tiangan: (Tiangan) 查法锚干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.WenchangDef) 所用定义，默认 XIN_ZI，辛取子。
 
-  Returns: (bool) Whether `dizhi` is the WENCHANG (文昌) of `key_tiangan` under `definition`.
+  Return: (bool) 所选定义下是否为锚干的文昌。
 
   Examples:
   - wenchang(Tiangan.甲, Dizhi.巳)
@@ -554,18 +516,15 @@ def wenchang(
 
 def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   '''
-  Check whether `dizhi` is the WENCHANGGUI (文昌贵) of `year_tiangan`.
   检查地支是否为该年干的文昌贵。
 
-  This is the 禄命 star. For the 子平 star of the same name family, see `wenchang`.
   本函数查禄命法的文昌贵；同名近亲中的子平法一颗见 `wenchang`。
 
   Args:
-  - year_tiangan: (Tiangan) The Tiangan of the year pillar, which the lookup keys on.
-    查法所锚的年干。
-  - dizhi: (Dizhi) The Dizhi.
+  - year_tiangan: (Tiangan) 查法锚年干。
+  - dizhi: (Dizhi) 待查地支。
 
-  Returns: (bool) Whether `dizhi` is the WENCHANGGUI (文昌贵) of `year_tiangan`.
+  Return: (bool) 是否为年干的文昌贵。
 
   Examples:
   - wenchanggui(Tiangan.乙, Dizhi.亥)
@@ -584,22 +543,16 @@ def taiji(
   definition: ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH,
 ) -> bool:
   '''
-  Check whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan` under the selected
-  definition. 按所选定义检查地支是否为该天干的太极贵人。
+  按所选定义检查地支是否为该天干的太极贵人。
 
-  Note: a stem can answer with more than one branch here (戊己 take all four storage
-  branches), so this reads membership rather than equality.
-  一个天干可对多支（戊己占四库），故本函数判成员关系而非相等。
+  Note: 一个天干可对多支（戊己占四库），故判成员关系而非相等。
 
   Args:
-  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
-    decides which pillar supplies it.
-    查法所锚的天干，由调用方决定取哪一柱。
-  - dizhi: (Dizhi) The Dizhi.
-  - definition: (ShenshaRules.TaijiDef) The definition to use; defaults to REN_GUI_BOTH,
-    where 壬 and 癸 each take both 巳 and 申. 所用定义；默认壬癸各兼巳申。
+  - key_tiangan: (Tiangan) 查法锚干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.TaijiDef) 所用定义，默认 REN_GUI_BOTH，壬癸各兼巳申。
 
-  Returns: (bool) Whether `dizhi` is a TAIJI GUIREN (太极贵人) of `key_tiangan` under `definition`.
+  Return: (bool) 所选定义下是否为锚干的太极贵人。
 
   Examples:
   - taiji(Tiangan.甲, Dizhi.子)
@@ -628,19 +581,14 @@ def guoyin(
   definition: ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN,
 ) -> bool:
   '''
-  Check whether `dizhi` is the GUOYIN GUIREN (国印贵人) of `key_tiangan` under the selected
-  definition. 按所选定义检查地支是否为该天干的国印贵人。
+  按所选定义检查地支是否为该天干的国印贵人。
 
   Args:
-  - key_tiangan: (Tiangan) The anchor Tiangan the lookup keys on (查法锚干); the caller
-    decides which pillar supplies it.
-    查法所锚的天干，由调用方决定取哪一柱。
-  - dizhi: (Dizhi) The Dizhi.
-  - definition: (ShenshaRules.GuoyinDef) The definition to use; defaults to MODERN.
-    所用定义；默认现代通行表。
+  - key_tiangan: (Tiangan) 查法锚干，由调用方决定取哪一柱。
+  - dizhi: (Dizhi) 待查地支。
+  - definition: (ShenshaRules.GuoyinDef) 所用定义，默认 MODERN 现代通行表。
 
-  Returns: (bool) Whether `dizhi` is the GUOYIN GUIREN (国印贵人) of `key_tiangan` under
-  `definition`.
+  Return: (bool) 所选定义下是否为锚干的国印贵人。
 
   Examples:
   - guoyin(Tiangan.甲, Dizhi.戌)

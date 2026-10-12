@@ -1,15 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 '''
-Reader for the pre-generated celestial-calendar tables described in `SCHEMA.md`.
+读取 `SCHEMA.md` 所述的预生成 celestial-calendar 表。
 
-This is the **loading layer**, deliberately kept free of any bazi calendar semantics:
-it parses a table file, validates it against the schema, and answers point queries.
-`CelestialCalendarUtils` sits on top as the query layer.  Keeping the two apart means
-that changing a table schema or its source does not alter calendar semantics.
-
-Pure Python on purpose -- runtime reads the committed tables and does not import the
-celestial-calendar package used by the offline generator.
+加载层只解析、校验表并按键查询，不解释八字历法语义；上层 `CelestialCalendarUtils`
+负责历法查询，使数据格式或来源变更与历法语义分开。
+运行时只用纯 Python 读取已提交表，不导入离线生成器所用的 celestial-calendar 包。
 '''
 
 import hashlib
@@ -38,21 +34,18 @@ EOT_CADENCE_SECONDS: Final[int] = 86_400
 EOT_SCALE:           Final[int] = 10
 EOT_HEADER:          Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
-# Table `jq_idx` is defined to be this index.  Asserted at generation time against the
-# library's own `jieqi_name`, and re-checked per row by `JieqiMomentTable`.
+# jq_idx 使用此枚举序号；生成时与库的 jieqi_name 对拍，JieqiMomentTable 再逐行核对。
 JIEQI_BY_INDEX: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=True)
 assert len(JIEQI_BY_INDEX) == 24
 assert JIEQI_BY_INDEX[0] is Jieqi.立春
 
-# `# key: value` -- exactly one space after the hash.  Continuation lines in the header
-# are indented further, so they cannot be mistaken for keys.
+# 头部键行采用 `# key: value`，井号后恰有一个空格；续行进一步缩进，不会误作键。
 _HEADER_KEY: Final[re.Pattern[str]] = re.compile(r'^# (\w+): ?(.*)$')
 
 
 class LunarYearInfo(TypedDict):
   '''
-  Mirrors `hko_data.LunarYearInfo` key for key, so that parity tests can compare the two
-  backends' lunar year records as plain dicts.
+  与 `hko_data.LunarYearInfo` 逐键对应，供差异测试直接比较两后端农历年字典。
   '''
   first_solar_day: date
   leap: bool
@@ -62,7 +55,7 @@ class LunarYearInfo(TypedDict):
 
 
 class _EquationOfTimeRangeError(ValueError):
-  '''The UTC instant is outside the equation-of-time interpolation domain.'''
+  '''UTC 瞬间超出均时差插值范围。'''
 
 
 def _utc_instant(moment: datetime) -> datetime:
@@ -83,8 +76,7 @@ def _require_table(path: Path) -> None:
 
 class EquationOfTimeTable:
   '''
-  Daily equation-of-time samples at UTC midnight, stored as signed big-endian
-  deciseconds. Logical values are apparent solar time minus mean solar time.
+  UTC 每日午夜的均时差样本，以大端有符号十分之一秒存储；值为真太阳时减平太阳时。
   '''
 
   def __init__(self, path: Path = DATA_DIR / 'equation_of_time.bin') -> None:
@@ -114,11 +106,11 @@ class EquationOfTimeTable:
 
   @property
   def samples(self) -> tuple[int, ...]:
-    '''Return all immutable fixed-point decisecond samples.'''
+    '''返回全部不可变定点样本，单位为十分之一秒。'''
     return self._samples
 
   def seconds_at(self, utc_moment: datetime) -> float:
-    '''Linearly interpolate apparent-minus-mean seconds by UTC day fraction.'''
+    '''按 UTC 日内比例线性插值，返回真太阳时减平太阳时的秒数。'''
     if not isinstance(utc_moment, datetime):
       raise TypeError(f'Expected datetime, got {type(utc_moment)}')
     if utc_moment.tzinfo is None or utc_moment.utcoffset() is None:
@@ -143,11 +135,8 @@ class EquationOfTimeTable:
 
 def _parse(path: Path, expected_columns: str) -> tuple[dict[str, str], list[list[str]]]:
   '''
-  Split a table file into its provenance header and its data rows, and enforce the
-  schema-level invariants that are common to every table.
-
-  Explicit raises (not asserts) throughout: a corrupt or stale data file is a fail-fast
-  contract for library consumers, and it must survive `python -O`.
+  拆出来源头部与数据行，检查各表共用的数据契约。
+  损坏或过期的数据须显式抛异常，保证 `python -O` 下仍会立即失败。
   '''
   _require_table(path)
 
@@ -173,28 +162,22 @@ def _parse(path: Path, expected_columns: str) -> tuple[dict[str, str], list[list
 
 class JieqiMomentTable:
   '''
-  The 24 jieqi moments of every supported year, in UTC+08:00 at second granularity.
-
-  A moment of year Y is the one whose *date* falls in calendar year Y -- so 小寒/大寒
-  land in January of Y, and rows within a year are not date-sorted.
+  各支持年份的二十四节气时刻，采用 UTC+08:00，精度到秒。
+  年键 Y 指时刻日期落在公历年 Y，因此小寒、大寒在 Y 年一月；年内行不按日期排序。
   '''
 
   def __init__(self, path: Path = DATA_DIR / 'jieqi_moments.txt', contiguous_years: bool = True) -> None:
     '''
     Args:
-    - contiguous_years: whether every year in `[min, max]` must be present, with all 24
-      moments.  True for shipped tables -- a hole would make `supported_year_range()` lie
-      and turn a supposedly supported year into a `KeyError`.  Test fixtures are sparse
-      slices by design and pass False.  Deliberately a constructor argument rather than a
-      header key, so that editing a data file cannot weaken the check.
+    - contiguous_years: (bool) 是否要求 `[min, max]` 内每年均有全部二十四时刻。
+      随库表为 True，避免支持范围内缺行而抛 KeyError；稀疏测试切片用 False。
+      此项是构造参数，不是文件头部键，编辑数据文件不能放宽检查。
     '''
     self._provenance, rows = _parse(path, JIEQI_COLUMNS)
     self._moments: dict[tuple[int, Jieqi], datetime] = {}
 
     for year_str, idx_str, name, date_str, time_str in rows:
-      # Bounds-checked rather than indexed straight in: an out-of-range index would raise a
-      # bare `IndexError` instead of this module's `ValueError` contract, and a *negative*
-      # one would quietly alias from the end of the list (`-1` reads as 大寒).
+      # 先查范围再取下标，保证错误为 ValueError；直接取下标会抛 IndexError，负数还会从末尾取值。
       idx: int = int(idx_str)
       if not 0 <= idx < len(JIEQI_BY_INDEX):
         raise ValueError(f'{path}: jq_idx {idx_str} is outside 0..{len(JIEQI_BY_INDEX) - 1}')
@@ -216,7 +199,7 @@ class JieqiMomentTable:
     return dict(self._provenance)
 
   def supported_year_range(self) -> range:
-    '''Note: Gregorian/Solar year / 公历年'''
+    '''支持的公历年份范围。'''
     return self._year_range
 
   def get(self, solar_year: int, jieqi: Jieqi) -> datetime:
@@ -224,12 +207,12 @@ class JieqiMomentTable:
 
 
 class LunarYearTable:
-  '''The first solar day, leap month and month lengths of every supported lunar year.'''
+  '''各支持农历年的首日公历日期、闰月及月长。'''
 
   def __init__(self, path: Path, contiguous_years: bool = True) -> None:
     '''
     Args:
-    - contiguous_years: see `JieqiMomentTable.__init__`.
+    - contiguous_years: (bool) 连续年份检查，见 `JieqiMomentTable.__init__`。
     '''
     self._provenance, rows = _parse(path, LUNAR_COLUMNS)
     self._years: dict[int, LunarYearInfo] = {}
@@ -252,8 +235,7 @@ class LunarYearTable:
       self._years[year] = LunarYearInfo(
         first_solar_day=date.fromisoformat(first_str),
         leap=leap_month != 0,
-        # The table spells "no leap month" as 0; hko_data spells it as None. Normalise to
-        # hko_data's spelling so the two backends' records compare as plain dicts.
+        # 无闰月在表中为 0，在 HKO 记录中为 None；转为 None，供两后端直接比较字典。
         leap_month=leap_month if leap_month else None,
         days_counts=days_counts,
         ganzhi=Ganzhi.from_str(ganzhi_str),
@@ -268,13 +250,12 @@ class LunarYearTable:
     return dict(self._provenance)
 
   def supported_year_range(self) -> range:
-    '''Note: Lunar year / 农历年'''
+    '''支持的农历年份范围。'''
     return self._year_range
 
   def get(self, lunar_year: int) -> LunarYearInfo:
     info: LunarYearInfo = self._years[lunar_year]
-    # A fresh record per call (with a fresh `days_counts` list), so a caller's in-place
-    # edit cannot corrupt the table's own copy. The other values are immutable.
+    # 每次返回新记录及独立 days_counts 列表，避免调用方修改内部表；其他值不可变，可共享。
     return LunarYearInfo(
       first_solar_day=info['first_solar_day'],
       leap=info['leap'],

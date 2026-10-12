@@ -4,23 +4,23 @@ from .enum_base import BaziEnum
 
 
 class TianganRelation(BaziEnum):
-  '''TianganRelation / Tiangan Relations / 天干之间的关系'''
+  '''天干之间的关系（TianganRelation）。'''
   HE    = '合'
   CHONG = '冲'
   SHENG = '生'
   KE    = '克'
 
-  # Aliases
+  # 中文别名
   合 = HE
   冲 = CHONG
   生 = SHENG
   克 = KE
 
-天干关系 = TianganRelation # Alias
+天干关系 = TianganRelation # 中文别名
 
 
 class DizhiRelation(BaziEnum):
-  '''DizhiRelation / Dizhi Relations / 地支之间的关系'''
+  '''地支之间的关系（DizhiRelation）。'''
   SANHUI   = '三会'
   GONGHUI  = '拱会'
   LIUHE    = '六合'
@@ -37,7 +37,7 @@ class DizhiRelation(BaziEnum):
   SHENG    = '生'
   KE       = '克'
 
-  # Aliases
+  # 中文别名
   三会   = SANHUI
   拱会   = GONGHUI
   六合   = LIUHE
@@ -54,4 +54,4 @@ class DizhiRelation(BaziEnum):
   生    = SHENG
   克    = KE
 
-地支关系 = DizhiRelation # Alias
+地支关系 = DizhiRelation # 中文别名

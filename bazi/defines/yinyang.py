@@ -4,11 +4,11 @@ from .enum_base import BaziEnum
 
 
 class Yinyang(BaziEnum):
-  '''Yinyang / 阴阳'''
+  '''阴阳（Yinyang）。'''
   YANG = '阳'
   YIN  = '阴'
 
-  # Aliases
+  # 中文别名
   阳 = YANG
   阴 = YIN
 
@@ -20,4 +20,4 @@ class Yinyang(BaziEnum):
   def opposite(self) -> 'Yinyang':
     return Yinyang.YIN if self is Yinyang.YANG else Yinyang.YANG
 
-阴阳 = Yinyang # Alias
+阴阳 = Yinyang # 中文别名

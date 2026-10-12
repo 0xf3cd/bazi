@@ -4,7 +4,7 @@ from .enum_base import IndexedBaziEnum
 
 
 class ShierZhangsheng(IndexedBaziEnum):
-  '''ShierZhangsheng / Twelve Stages of Growth / 十二长生'''
+  '''十二长生（ShierZhangsheng）。'''
   ZHANGSHENG = '长生'
   MUYU       = '沐浴'
   GUANDAI    = '冠带'
@@ -18,7 +18,7 @@ class ShierZhangsheng(IndexedBaziEnum):
   TAI        = '胎'
   YANG       = '养'
 
-  # Aliases
+  # 中文别名
   长生 = ZHANGSHENG
   沐浴 = MUYU
   冠带 = GUANDAI
@@ -32,4 +32,4 @@ class ShierZhangsheng(IndexedBaziEnum):
   胎  = TAI
   养  = YANG
 
-十二长生 = ShierZhangsheng # Alias
+十二长生 = ShierZhangsheng # 中文别名

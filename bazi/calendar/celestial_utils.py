@@ -1,22 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 '''
-Calendar utils backed by the pre-generated celestial-calendar tables (see
-`celestial_data/SCHEMA.md`).  Conforms to `CalendarUtilsProtocol`, with no dependency on
-`hko_data_utils` -- the two backends are independent implementations, and their
-agreement is a test result rather than a shared code path.
+读取预生成 celestial-calendar 表的历法工具，数据契约见 `celestial_data/SCHEMA.md`。
+满足 `CalendarUtilsProtocol`，不依赖 HKO 工具；两后端独立实现，一致性由测试核对。
 
-What this backend adds over HKO is `jieqi_moment`: real second-level moments instead of
-day-level placeholders.  Everything that a `CalendarDate` can express stays day-level,
-because the GANZHI calendar itself is a date-level construct (day 1 of ganzhi month 1 is
-the 立春 *date*).  Attributing a *moment* to a pillar is the caller's job (`Bazi` applies
-its selected birth precision).
+`jieqi_moment` 提供秒级真实时刻，HKO 则用午夜占位。CalendarDate 仍只表示日期：
+干支历正月初一为立春日。时刻的四柱归属由调用方决定，Bazi 按所选出生精度比较。
 
-Unlike the HKO backend, this one is a class with module-level singletons rather than a
-module of functions.  The lunar calendar has two algorithms and the caches must not be
-shared between them: a mutable module-level switch plus `functools.lru_cache` would let a
-switch silently return results computed under the previous algorithm.  Two instances make
-the choice part of the identity of the utils object instead.
+两种阴历算法各有一个模块级单例，缓存不能混用。若用可变模块开关配合 lru_cache，
+切换后可能返回旧算法的缓存结果；独立实例把算法选择纳入工具对象身份。
 '''
 
 import functools
@@ -34,25 +26,22 @@ from ..defines import Jieqi
 
 
 _JIEQI_TABLE: Final[JieqiMomentTable] = JieqiMomentTable()
-'''Shared by every algorithm: only the lunar tables differ between them.'''
+'''各算法共用节气表，只有农历表不同。'''
 
 
 class CelestialCalendarUtils:
   '''
-  Calendar utils reading the celestial-calendar tables.  Use the module-level singletons
-  `ALGO1` / `ALGO2` instead of constructing this directly.
+  读取 celestial-calendar 表的历法工具；使用模块级单例 `ALGO1` / `ALGO2`，不直接构造。
   '''
 
   def __init__(self, lunar_table_path: Path) -> None:
     self._jieqi_table: Final[JieqiMomentTable] = _JIEQI_TABLE
     self._lunar_table: Final[LunarYearTable] = LunarYearTable(lunar_table_path)
 
-  # -- Supported range -------------------------------------------------------------
+  # -- 支持范围 ---------------------------------------------------------------------
   #
-  # Derived from the tables rather than hardcoded.  The three date types are three
-  # expressions of the same physical window, so the solar bounds are the anchor and the
-  # other four are conversions of them -- which is also why they compare equal to HKO's
-  # own constants (asserted by the parity suite).
+  # 范围从表推导；三种日期表示同一物理窗口，以公历两端为基准，另四端由转换得到。
+  # 与 HKO 常量的相等关系由差异测试验证。
 
   def get_min_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if not isinstance(date_type, CalendarType):
@@ -62,9 +51,7 @@ class CelestialCalendarUtils:
   @functools.lru_cache(maxsize=512)
   def __get_min_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if date_type == CalendarType.SOLAR:
-      # Anchored on the lunar table for the same reason as `get_max_supported_date` below:
-      # `solar_to_lunar` looks the lunar year up by the solar year, so a supported solar date
-      # must have a lunar year to land in.
+      # solar_to_lunar 先按公历年查农历年，支持的公历日期须有对应农历记录，因此以农历表为基准。
       first: date = self._lunar_table.get(min(self._lunar_table.supported_year_range()))['first_solar_day']
       return CalendarDate(first.year, first.month, first.day, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
@@ -72,7 +59,7 @@ class CelestialCalendarUtils:
     elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_min_supported_date(CalendarType.SOLAR))
     else:
-      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # All CalendarType members handled above.
+      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # 上方已处理全部 CalendarType 成员。
 
   def get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if not isinstance(date_type, CalendarType):
@@ -82,9 +69,7 @@ class CelestialCalendarUtils:
   @functools.lru_cache(maxsize=512)
   def __get_max_supported_date(self, date_type: CalendarType) -> CalendarDate:
     if date_type == CalendarType.SOLAR:
-      # `solar_to_lunar` looks the lunar year up by the solar year first, so a solar date
-      # may not outlive the lunar table's last year -- even though that lunar year runs
-      # into the next Gregorian one.
+      # solar_to_lunar 先按公历年查表，即使末农历年延伸到下一公历年，也不能支持下一公历年。
       last_year: int = max(self._lunar_table.supported_year_range())
       return CalendarDate(last_year, 12, 31, CalendarType.SOLAR)
     elif date_type == CalendarType.LUNAR:
@@ -92,18 +77,18 @@ class CelestialCalendarUtils:
     elif date_type == CalendarType.GANZHI:
       return self.solar_to_ganzhi(self.get_max_supported_date(CalendarType.SOLAR))
     else:
-      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # All CalendarType members handled above.
+      raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # 上方已处理全部 CalendarType 成员。
 
-  # -- Validity --------------------------------------------------------------------
+  # -- 日期有效性 -------------------------------------------------------------------
 
   def is_valid_solar_date(self, d: CalendarDate) -> bool:
     '''
-    Check if the input date is valid, including whether it is in the supported range.
+    检查公历日期是否合法且在支持范围内。
 
     Args:
-    - d: CalendarDate object, expected to be of `CalendarType.SOLAR`.
+    - d: (CalendarDate) 待查公历日期，类型应为 `CalendarType.SOLAR`。
 
-    Return: True if valid, False otherwise.
+    Return: (bool) 合法且受支持时为 True，否则为 False。
     '''
 
     if not isinstance(d, CalendarDate):
@@ -120,7 +105,7 @@ class CelestialCalendarUtils:
       return False
 
     try:
-      # Let the standard library be the authority on Gregorian month lengths and leap years.
+      # 公历月长与闰年由标准库检查。
       date(d.year, d.month, d.day)
     except ValueError:
       return False
@@ -128,12 +113,12 @@ class CelestialCalendarUtils:
 
   def is_valid_lunar_date(self, d: CalendarDate) -> bool:
     '''
-    Check if the input date is valid, including whether it is in the supported range.
+    检查农历日期是否合法且在支持范围内。
 
     Args:
-    - d: CalendarDate object, expected to be of `CalendarType.LUNAR`.
+    - d: (CalendarDate) 待查农历日期，类型应为 `CalendarType.LUNAR`。
 
-    Return: True if valid, False otherwise.
+    Return: (bool) 合法且受支持时为 True，否则为 False。
     '''
 
     if not isinstance(d, CalendarDate):
@@ -156,12 +141,12 @@ class CelestialCalendarUtils:
 
   def is_valid_ganzhi_date(self, d: CalendarDate) -> bool:
     '''
-    Check if the input date is valid, including whether it is in the supported range.
+    检查干支历日期是否合法且在支持范围内。
 
     Args:
-    - d: CalendarDate object, expected to be of `CalendarType.GANZHI`.
+    - d: (CalendarDate) 待查干支历日期，类型应为 `CalendarType.GANZHI`。
 
-    Return: True if valid, False otherwise.
+    Return: (bool) 合法且受支持时为 True，否则为 False。
     '''
 
     if not isinstance(d, CalendarDate):
@@ -198,22 +183,20 @@ class CelestialCalendarUtils:
       assert d.date_type == CalendarType.GANZHI
       return self.is_valid_ganzhi_date(d)
 
-  # -- Ganzhi month lengths --------------------------------------------------------
+  # -- 干支月长 ---------------------------------------------------------------------
 
   def days_counts_in_ganzhi_year(self, ganzhi_year: int) -> list[int]:
     '''
-    The length in days of each of the 12 ganzhi months of `ganzhi_year`, measured between
-    consecutive 节 *dates* (the ganzhi calendar is date-level, see the module docstring).
+    返回 `ganzhi_year` 的十二个干支月长，按连续节日期之差计算，见模块的日期级约定。
     '''
     if not isinstance(ganzhi_year, int):
       raise TypeError(f'Expected int, got {type(ganzhi_year)}')
-    # A fresh list per call, from a cache that holds a tuple: returning the cached list
-    # itself would let a caller's in-place edit poison every later answer.
+    # 缓存持有元组，每次返回独立列表，避免调用方修改后影响后续结果。
     return list(self.__days_counts_in_ganzhi_year(ganzhi_year))
 
   @functools.lru_cache(maxsize=512)
   def __days_counts_in_ganzhi_year(self, ganzhi_year: int) -> tuple[int, ...]:
-    # A ganzhi year needs the 立春 of the next solar year to close its last month.
+    # 末干支月须以下一公历年立春作为终点。
     if ganzhi_year not in self._jieqi_table.supported_year_range():
       raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
     if ganzhi_year + 1 not in self._jieqi_table.supported_year_range():
@@ -222,7 +205,7 @@ class CelestialCalendarUtils:
 
     jies = Jieqi.jies()
 
-    # The first 11 节 are in solar year `ganzhi_year`, the last one (小寒) in the next.
+    # 前十一节在 ganzhi_year 公历年，末节小寒在下一公历年。
     start_dates: list[date] = [self.jieqi_date(ganzhi_year, jq) for jq in jies[:11]]
     start_dates += [self.jieqi_date(ganzhi_year + 1, jq) for jq in jies[11:]]
     end_dates: list[date] = start_dates[1:] + [self.jieqi_date(ganzhi_year + 1, Jieqi.立春)]
@@ -232,7 +215,7 @@ class CelestialCalendarUtils:
     assert len(days_counts) == 12
     return days_counts
 
-  # -- Conversions -----------------------------------------------------------------
+  # -- 历法换算 ---------------------------------------------------------------------
 
   def lunar_to_solar(self, lunar_date: CalendarDate) -> CalendarDate:
     if not isinstance(lunar_date, CalendarDate):
@@ -266,7 +249,7 @@ class CelestialCalendarUtils:
                        f'[{self.get_min_supported_date(solar_date.date_type)}, {self.get_max_supported_date(solar_date.date_type)}]')
     solar: date = date(solar_date.year, solar_date.month, solar_date.day)
 
-    # A solar date early in the year still belongs to the previous lunar year.
+    # 公历年初日期可仍属于上一农历年。
     lunar_year: int = solar_date.year
     info: LunarYearInfo = self._lunar_table.get(lunar_year)
     if info['first_solar_day'] > solar:
@@ -308,7 +291,7 @@ class CelestialCalendarUtils:
                        f'[{self.get_min_supported_date(solar_date.date_type)}, {self.get_max_supported_date(solar_date.date_type)}]')
     solar: date = date(solar_date.year, solar_date.month, solar_date.day)
 
-    # A solar date before 立春 still belongs to the previous ganzhi year.
+    # 立春前的公历日期仍属于上一干支年。
     ganzhi_year: int = solar_date.year
     if self.jieqi_date(ganzhi_year, Jieqi.立春) > solar:
       ganzhi_year -= 1
@@ -347,17 +330,17 @@ class CelestialCalendarUtils:
 
   @staticmethod
   def __walk_months(passed_days: int, days_counts: list[int]) -> tuple[int, int]:
-    '''Split a day offset from the start of a year into a (month index, day index) pair.'''
+    '''把距年初的日偏移拆为月序号与日序号。'''
     month_idx: int = 0
     while passed_days >= days_counts[month_idx]:
       passed_days -= days_counts[month_idx]
       month_idx += 1
     return month_idx, passed_days
 
-  # -- `to_*` family ---------------------------------------------------------------
+  # -- to_* 日期入口 ----------------------------------------------------------------
 
   def __to_calendardate(self, d: date | CalendarDate) -> CalendarDate:
-    # Project civil Y/M/D before caching: equal aware datetimes can have different dates.
+    # 缓存前先投影民用年月日；相等的带时区 datetime 可有不同民用日期。
     if isinstance(d, date):
       ret = CalendarDate(d.year, d.month, d.day, CalendarType.SOLAR)
     elif isinstance(d, CalendarDate):
@@ -372,13 +355,12 @@ class CelestialCalendarUtils:
 
   def to_solar(self, d: date | CalendarDate) -> CalendarDate:
     '''
-    Convert the input date to a `CalendarDate` with `SOLAR` type.
+    把输入转换为公历 CalendarDate。
 
     Args:
-    - d: (date | CalendarDate) The input date.
-      - If `d` is of `date` type, it will be interpreted as a solar date.
+    - d: (date | CalendarDate) 输入日期；date 按公历解释。
 
-    Return: (CalendarDate) a converted date with `SOLAR` type.
+    Return: (CalendarDate) SOLAR 类型日期。
     '''
 
     return self.__to_solar(
@@ -397,13 +379,12 @@ class CelestialCalendarUtils:
 
   def to_lunar(self, d: date | CalendarDate) -> CalendarDate:
     '''
-    Convert the input date to a `CalendarDate` with `LUNAR` type.
+    把输入转换为农历 CalendarDate。
 
     Args:
-    - d: (date | CalendarDate) The input date.
-      - If `d` is of `date` type, it will be interpreted as a solar date.
+    - d: (date | CalendarDate) 输入日期；date 按公历解释。
 
-    Return: (CalendarDate) a converted date with `LUNAR` type.
+    Return: (CalendarDate) LUNAR 类型日期。
     '''
 
     return self.__to_lunar(
@@ -422,18 +403,15 @@ class CelestialCalendarUtils:
 
   def to_ganzhi(self, d: date | CalendarDate) -> CalendarDate:
     '''
-    Convert the input date to a `CalendarDate` with `GANZHI` type.
+    把输入转换为干支历 CalendarDate。
 
     Args:
-    - d: (date | CalendarDate) The input date.
-      - If `d` is of `date` type, it will be interpreted as a solar date.
+    - d: (date | CalendarDate) 输入日期；date 按公历解释。
 
-    Return: (CalendarDate) a converted date with `GANZHI` type.
+    Return: (CalendarDate) GANZHI 类型日期。
 
-    Note: `datetime` is a `date` subclass, so it is accepted here and **its time of day is
-    discarded** -- the answer is the same for every moment of a given day, even though this
-    backend knows the jieqi moment to the second. Ganzhi attribution is date-level by design;
-    which granularity a chart compares at is `BaziPrecision`'s decision, not this method's.
+    Note: datetime 是 date 子类，此处接受但丢弃日内时刻，同日各时刻的结果相同。
+    本后端虽有秒级节时刻，此入口仍只按日期归属；出生比较粒度由 BaziPrecision 决定。
     '''
 
     return self.__to_ganzhi(
@@ -452,14 +430,12 @@ class CelestialCalendarUtils:
 
   def to_date(self, d: date | CalendarDate) -> date:
     '''
-    Convert the input date to a `date` type.
+    把输入转换为公历 date。
 
     Args:
-    - d: (date | CalendarDate) The input date.
-      - If `d` is of `datetime` type, it will be casted to `date` (the time of day is
-        discarded -- `datetime` is accepted because it is a `date` subclass).
+    - d: (date | CalendarDate) 输入日期；datetime 为 date 子类，接受但丢弃日内时刻。
 
-    Return: (date) a converted date with `date` type.
+    Return: (date) 公历日期。
     '''
 
     return self.__to_date(
@@ -471,7 +447,7 @@ class CelestialCalendarUtils:
     solar: CalendarDate = self.to_solar(calendardate)
     return date(solar.year, solar.month, solar.day)
 
-  # -- Jieqi -----------------------------------------------------------------------
+  # -- 节气 -------------------------------------------------------------------------
 
   @functools.lru_cache(maxsize=512)
   def __jieqi_date(self, solar_year: int, jieqi: Jieqi) -> date:
@@ -479,14 +455,13 @@ class CelestialCalendarUtils:
 
   def jieqi_date(self, solar_year: int, jieqi: Jieqi) -> date:
     '''
-    Find out the date of the given Jieqi in the given solar/gregorian year.
     输入公历年份和节气，返回节气日期。
 
     Args:
-    - solar_year: (int) The solar year.
-    - jieqi: (Jieqi) The Jieqi.
+    - solar_year: (int) 公历年。
+    - jieqi: (Jieqi) 节气。
 
-    Return: (date) The date of the Jieqi in the given solar/gregorian year.
+    Return: (date) 指定公历年的节气日期。
     '''
 
     if not isinstance(solar_year, int):
@@ -503,21 +478,17 @@ class CelestialCalendarUtils:
 
   def jieqi_moment(self, solar_year: int, jieqi: Jieqi) -> datetime:
     '''
-    Find out the accurate moment (datetime) of the given Jieqi in the given solar year.
     输入公历年份和节气，返回节气的具体时刻。
 
     Args:
-    - solar_year: (int) The solar year.
-    - jieqi: (Jieqi) The Jieqi.
+    - solar_year: (int) 公历年。
+    - jieqi: (Jieqi) 节气。
 
     Note:
-    - The moment is in UTC+08:00 (China standard time), at second granularity, truncated.
-      Times before 1929 are still expressed in UTC+08:00 rather than Beijing local mean
-      time -- see issue #118, which is an input-side policy question, not a table one.
     - 时刻为东八区（北京时间），精度到秒（截断）。1929 年前同样按东八区表达，
       而非北京地方平时，见 issue #118。
 
-    Return: (datetime) The accurate moment of the Jieqi in the given solar year.
+    Return: (datetime) 指定公历年的节气时刻。
     '''
 
     if not isinstance(solar_year, int):
@@ -528,19 +499,17 @@ class CelestialCalendarUtils:
       raise ValueError(f'Year {solar_year} is out of the supported range {self._jieqi_table.supported_year_range()}')
     return self.__jieqi_moment(solar_year, jieqi)
 
-  # maxsize=2, not 1: the cache is class-level, so `ALGO1` and `ALGO2` are two distinct
-  # keys and a size of 1 would make the two singletons evict each other on every call.
+    # 类级缓存有 ALGO1 与 ALGO2 两个实例键；maxsize=2 避免两个单例逐次互相逐出。
   @functools.lru_cache(maxsize=2)
   def supported_jie_boundaries(self) -> tuple[datetime, datetime]:
     '''
-    Return a tuple of datetimes representing the first and last supported Jie accurate time.
-    When using methods `prev_jie` and `next_jie`, the input datetime should be in:
-    `[returned_tuple[0], returned_tuple[1])` (`returned_tuple[0]` included, `returned_tuple[1]` not).
+    返回首末支持节的时刻。prev_jie / next_jie 的输入须位于半开区间
+    `[returned_tuple[0], returned_tuple[1])`，含首端、不含末端。
     '''
     years: range = self._jieqi_table.supported_year_range()
     return (
-      self.jieqi_moment(min(years), Jieqi.小寒), # 小寒 is the first Jie of any solar year.
-      self.jieqi_moment(max(years), Jieqi.大雪), # 大雪 is the last Jie of any solar year.
+      self.jieqi_moment(min(years), Jieqi.小寒), # 公历年首节。
+      self.jieqi_moment(max(years), Jieqi.大雪), # 公历年末节。
     )
 
   def __check_jie_range(self, dt: datetime) -> None:
@@ -552,16 +521,12 @@ class CelestialCalendarUtils:
 
   def prev_jie(self, dt: datetime) -> JieqiTime:
     '''
-    Find out the previous Jie (节), not Jieqi, for the given solar datetime.
-    输入某时间点，返回这个时间点之前的一个节令（不包含中气），以及对应的时间点。
-
-    A moment exactly on a Jie belongs to that Jie (the comparison is `>=`).
-    恰好落在节令时刻上的时间点，归属该节令。
+    返回不晚于输入公历时刻的最近一节及其时刻，不含中气；恰交节归该节（比较为 >=）。
 
     Args:
-    - dt: (datetime) The datetime.
+    - dt: (datetime) 待查时刻。
 
-    Return: (JieqiTime) The previous Jie (节), and its solar datetime.
+    Return: (JieqiTime) 所属节及其公历时刻。
     '''
 
     if not isinstance(dt, datetime):
@@ -572,30 +537,25 @@ class CelestialCalendarUtils:
   def __prev_jie(self, dt: datetime) -> JieqiTime:
     self.__check_jie_range(dt)
 
-    # Walk the year's 节 backwards; `dt` sits in the last interval whose start is <= it.
+    # 逆序查本年节，取起点不晚于 dt 的最后一个区间。
     for jie in reversed(Jieqi.jies(ganzhi_year=False)):
       moment: datetime = self.jieqi_moment(dt.year, jie)
       if moment <= dt:
         return JieqiTime(jie, moment)
 
-    # `dt` precedes 小寒 of its own year, so the previous Jie is last year's 大雪.
+    # dt 在本年小寒前，前节为上年大雪。
     last_daxue: datetime = self.jieqi_moment(dt.year - 1, Jieqi.大雪)
     assert last_daxue <= dt
     return JieqiTime(Jieqi.大雪, last_daxue)
 
   def next_jie(self, dt: datetime) -> JieqiTime:
     '''
-    Find out the next Jie (节), not Jieqi, for the given solar datetime.
-    输入某时间点，返回这个时间点之后的一个节令（不包含中气），以及对应的时间点。
-
-    A moment exactly on a Jie belongs to that Jie, so the *next* one is the following
-    Jie (the comparison is `>`).
-    恰好落在节令时刻上的时间点归属该节令，故下一个节令是再往后的那一个。
+    返回严格晚于输入公历时刻的最近一节及其时刻，不含中气；恰交节时继续查下一节（比较为 >）。
 
     Args:
-    - dt: (datetime) The datetime.
+    - dt: (datetime) 待查时刻。
 
-    Return: (JieqiTime) The next Jie (节), and its solar datetime.
+    Return: (JieqiTime) 下一节及其公历时刻。
     '''
 
     if not isinstance(dt, datetime):
@@ -611,14 +571,14 @@ class CelestialCalendarUtils:
       if moment > dt:
         return JieqiTime(jie, moment)
 
-    # `dt` is on or after 大雪 of its own year, so the next Jie is next year's 小寒.
+    # dt 不早于本年大雪，下一节为次年小寒。
     next_xiaohan: datetime = self.jieqi_moment(dt.year + 1, Jieqi.小寒)
     assert dt < next_xiaohan
     return JieqiTime(Jieqi.小寒, next_xiaohan)
 
 
 ALGO1: Final[CelestialCalendarUtils] = CelestialCalendarUtils(DATA_DIR / 'lunar_years_algo1.txt')
-'''The default: the lunar surface follows the HKO official almanac lineage.'''
+'''默认阴历算法，沿 HKO 官方历书体系。'''
 
 ALGO2: Final[CelestialCalendarUtils] = CelestialCalendarUtils(DATA_DIR / 'lunar_years_algo2.txt')
-'''Opt-in: leap-second aware UTC+8 lunar months. Differs from ALGO1 on 6 years, see SCHEMA.md.'''
+'''可选阴历算法，按考虑闰秒的 UTC+8 划月；有六年不同于 ALGO1，见 SCHEMA.md。'''

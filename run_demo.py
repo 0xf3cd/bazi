@@ -20,7 +20,7 @@ from bazi.calendar.backend import calendar_utils_of
 
 T = TypeVar('T')
 def batched(it: Iterable[T], n: int) -> Generator[tuple[T, ...], None, None]:
-  '''My simple alternative to `itertools.batched` since it is not available before Python 3.12.'''
+  '''为 Python 3.12 之前的版本提供分批迭代，替代 itertools.batched。'''
   assert n > 0
   it_list: list[T] = list(it)
   for i in range(0, len(it_list), n):
@@ -55,7 +55,7 @@ def hidden_tg_str(d: HiddenTianganDict, day_master: Tiangan) -> str:
 
 
 def get_basic_info(chart: BaziChart) -> str:
-  s: str = '\n' # The output string.
+  s: str = '\n' # 输出字符串。
   bazi: Bazi = chart.bazi
   day_master_wx: Wuxing = traits(bazi.day_master).wuxing
   date_label = '生于 ' if bazi.longitude is None else '真太阳时日期：'
@@ -95,7 +95,7 @@ def get_basic_info(chart: BaziChart) -> str:
 
 def get_transit_info(chart: BaziChart) -> str:
   day_master: Tiangan = chart.bazi.day_master
-  s: str = '\n' # The output string.
+  s: str = '\n' # 输出字符串。
 
   utils = calendar_utils_of(chart.bazi.config.backend)
   birth_time = chart.bazi.reference_datetime
@@ -154,6 +154,6 @@ def demo(seed: int | None = None) -> None:
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Display a random chart and its transits.')
-  parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
+  parser = argparse.ArgumentParser(description='展示随机命盘及其流运。')
+  parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
   demo(parser.parse_args().seed)

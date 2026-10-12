@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Scoped editorial premises; no assessment of events, strength or effective 制化.
-仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
+'''仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
 import hashlib
 import json
@@ -20,19 +19,19 @@ from .transits import TransitKind
 from .utils.bazi_utils import hidden_tiangans, shishen
 
 
-'''Complete-premise verdict, independent of knowledge organization. / 完整前提判别，独立于知识整理状态。'''
+'''完整前提判别，独立于知识整理状态。'''
 MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
-'''Reason for a criterion or entry verdict. / 判据或条目判别的理由。'''
+'''判据或条目判别的理由。'''
 MatchReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable', 'predicate_undefined', 'binding_unrecognized',
 ]
 
-'''The observation range; no implicit default. / 观察范围，无隐式默认值。'''
+'''观察范围，无隐式默认值。'''
 ObservationScope = Literal['natal', 'natal_and_liunian']
 
-'''Position within the ordered observation query. / 有序观察查询中的位置。'''
+'''有序观察查询中的位置。'''
 Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
@@ -61,8 +60,7 @@ _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   'shishen.xiaoyin_duoshi': _Criterion('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',)),
 })
 
-# Fingerprints include the entire entry and its bound object/context/source records.
-# They identify the editorial meaning, not merely its ID or display words.
+# 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.zhengguan.legal_trouble': '0cc47687bf24c6f5ffde1eda9d38ac5532838f765562aea57bf8e7f2cc6a582a',
   'editorial.shishen.qisha.legal_trouble': 'f5ec75f1814c3409f0bda3d65d380d45c781201a78a259316e8e17eb59096434',
@@ -101,11 +99,9 @@ def _verdict(status: MatchStatus, reason: MatchReason) -> None:
 
 @dataclass(frozen=True)
 class ContextProfile:
-  '''Select natal or natal plus one LIUNIAN, including all hidden stems without percentage weights.
-  显式选择原局或原局加单流年；固定包含全部实际藏干，不以百分比计力量。
+  '''显式选择原局或原局加单流年；固定包含全部实际藏干，不以百分比计力量。
 
   Note:
-  - A year is a Ganzhi-year label, not a Gregorian timestamp. Missing year is UNKNOWN.
   - 年份是干支年标签，不是公历时刻；缺失年份返回 UNKNOWN。
   '''
 
@@ -160,11 +156,9 @@ class ChartOccurrence:
 
 @dataclass(frozen=True)
 class CriterionResult:
-  '''Complete verdict with known partial facts; partial facts do not complete a missing scope.
-  完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
+  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
 
   Note:
-  - `observed_coexistence` and `female` serve the editorial predicates.
   - `observed_coexistence` 与 `female` 用于原作判据。
   '''
 
@@ -192,8 +186,7 @@ class CriterionResult:
 
 @dataclass(frozen=True)
 class EntryMatch:
-  '''Entry verdict after semantic binding, separate from the structural criterion.
-  语义绑定后的条目前提判别，独立于结构判据。'''
+  '''语义绑定后的条目前提判别，独立于结构判据。'''
 
   claim_id: str
   status:   MatchStatus
@@ -350,12 +343,9 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''Evaluate a registered criterion in an explicit scope, then bind reference entries.
-  在显式范围内求值已注册判据，再联接参考条目。
+  '''在显式范围内求值已注册判据，再联接参考条目。
 
   Note:
-  - Only two editorial Guansha predicates are defined; missing scope or undefined predicates yield UNKNOWN.
-    No predicate is inferred from text.
   - 仅定义两个原作官杀判据；缺失范围或未定义判据返回 UNKNOWN，不从文本推导新判据。
   '''
   _typed(chart, BaziChart)

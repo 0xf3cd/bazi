@@ -1,15 +1,12 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # bazi/calendar/celestial_data/generator.py
 #
-# Regenerate the committed tables under `celestial_data/data/` from the
-# celestial-calendar Python package, following the frozen contract in `SCHEMA.md`.
+# 按 SCHEMA.md 的冻结契约，用 celestial-calendar Python 包重建 celestial_data/data/ 中的表。
 #
-# This module is an offline tool, only used when the tables need to be regenerated.
-# It is not needed at runtime: the runtime side (`loader.py`) is pure Python and only
-# reads the committed tables. `celestial_calendar` must never leak into any runtime module.
-# Same split as `hko_data/encoder.py` (offline) vs `hko_data/decoder.py` (runtime).
+# 本模块仅供离线重建；运行时 loader.py 只用纯 Python 读取已提交表，不得导入 celestial_calendar。
+# 与 HKO 的离线 encoder.py 和运行时 decoder.py 采用相同分工。
 #
-# Run only from a source checkout, not an installed package:
+# 只从源码检出运行，不从安装包运行：
 #   python -m bazi.calendar.celestial_data.generator
 
 import argparse
@@ -27,17 +24,16 @@ from ...defines import Ganzhi, Jieqi
 
 
 # ---------------------------------------------------------------------------
-# Pinned package (version gate)
+# 固定包版本
 
 CELESTIAL_VERSION: Final[str] = '0.6.1'
 RELEASE_ASSET: Final[str] = 'celestial-calendar==0.6.1 / PyPI wheel'
 
-# Table windows (SCHEMA.md): jieqi rows are keyed by Gregorian year, lunar rows by lunar year.
+# 表窗口见 SCHEMA.md；节气行按公历年索引，农历行按农历年索引。
 JIEQI_START_YEAR: Final[int] = 1901
 JIEQI_END_YEAR:   Final[int] = 2200
 LUNAR_START_YEAR: Final[int] = 1901
-LUNAR_END_YEAR:   Final[int] = 2099 # BOTH algos clamp to this window; algo2 natively
-                                    # reports [410, 2500].
+LUNAR_END_YEAR:   Final[int] = 2099 # 两算法均限制在此窗口；algo2 原生支持 [410, 2500]。
 
 EXPECTED_JIEQI_ROWS: Final[int] = (JIEQI_END_YEAR - JIEQI_START_YEAR + 1) * 24
 EXPECTED_LUNAR_ROWS: Final[int] = LUNAR_END_YEAR - LUNAR_START_YEAR + 1
@@ -51,7 +47,7 @@ EOT_HEADER:          Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
 
 # ---------------------------------------------------------------------------
-# Version gate: a ΔT refresh or celestial update can change every generated moment.
+# 固定版本检查：ΔT 或 celestial 更新可改变全部生成时刻。
 if celestial.__version__ != CELESTIAL_VERSION:
   raise RuntimeError(
     f'Version gate failed: imported celestial-calendar {celestial.__version__}, '
@@ -60,32 +56,29 @@ if celestial.__version__ != CELESTIAL_VERSION:
 
 
 # ---------------------------------------------------------------------------
-# Table rows
+# 表记录
 
 @dataclass(frozen=True)
 class JieqiRow:
   year:   int
-  jq_idx: int      # Identical to bazi's `list(Jieqi)` index (0 = 立春 .. 23 = 大寒).
-  name:   str      # Redundant with `jq_idx` on purpose; the loader cross-checks them.
-  moment: datetime # UTC+08:00, truncated to whole seconds.
+  jq_idx: int      # 与 list(Jieqi) 序号相同，0 为立春、23 为大寒。
+  name:   str      # 与 jq_idx 冗余，加载器会交叉校验。
+  moment: datetime # UTC+08:00，截断到整秒。
 
 @dataclass(frozen=True)
 class LunarRow:
   lunar_year:      int
   first_solar_date: date
-  leap_month:      int             # 1..12, or 0 when the year has no leap month.
-  month_len_bits:  int             # Public month_lengths encoded LSB-first.
-  days_counts:     tuple[int, ...] # Decoded from `month_len_bits`; redundant on purpose.
+  leap_month:      int             # 1..12，无闰月为 0。
+  month_len_bits:  int             # 公共 month_lengths 按低位优先编码。
+  days_counts:     tuple[int, ...] # 从 month_len_bits 解码，保留冗余校验。
   ganzhi:          Ganzhi
 
 
 def _ut1_moment_to_utc8(moment: celestial.CivilDateTime) -> datetime:
   '''
-  UT1 -> UTC+08:00: add exactly 8h to the full moment and re-derive the date
-  (the addition rolls the date near midnight -- it must not be applied to the
-  time-of-day alone). Then truncate to whole seconds: rounding could carry
-  `23:59:59.6` into the next day and silently move a date-level attribution;
-  truncation can never change the date.
+  UT1 转 UTC+08:00：对完整时刻加八小时，重新计算日期，不能只改日内时刻。
+  随后截断到整秒，避免把 23:59:59.6 四舍五入到次日而改变日期归属；截断不改变日期。
   '''
   utc8: datetime = (
     datetime(moment.year, moment.month, moment.day)
@@ -99,7 +92,7 @@ def _gen_jieqi_rows() -> list[JieqiRow]:
   jieqi_list: Final[list[Jieqi]] = list(Jieqi)
   assert len(jieqi_list) == 24
 
-  # Cross-check gate, part 1: celestial's jieqi order must be bazi's `list(Jieqi)` order exactly.
+  # 生成前交叉校验：celestial 节气序须与 list(Jieqi) 完全一致。
   for idx, jq in enumerate(jieqi_list):
     name: str = celestial.jieqi_name(celestial.Jieqi(idx))
     if name != jq.value:
@@ -122,14 +115,14 @@ def _gen_jieqi_rows() -> list[JieqiRow]:
         moment=_ut1_moment_to_utc8(query.moment_ut1),
       ))
 
-  # Row-count gate, part 1.
+  # 生成记录后核对行数。
   if len(rows) != EXPECTED_JIEQI_ROWS:
     raise RuntimeError(f'Row-count gate failed: {len(rows)} jieqi rows, expected {EXPECTED_JIEQI_ROWS}.')
   return rows
 
 
 def _decode_month_len_bits(month_len_bits: int, month_count: int) -> tuple[int, ...]:
-  '''LSB-first: bit i is the (i+1)-th lunar month in sequence; 1 = 30 days, 0 = 29 days.'''
+  '''低位优先：位 i 为序列第 i+1 个农历月，1 为三十日，0 为二十九日。'''
   return tuple(30 if (month_len_bits >> i) & 1 else 29 for i in range(month_count))
 
 def _encode_days_counts(days_counts: tuple[int, ...]) -> int:
@@ -158,14 +151,14 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
   sexagenary_cycle: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
 
   rows: list[LunarRow] = []
-  for lunar_year in range(LUNAR_START_YEAR, LUNAR_END_YEAR + 1): # The clamp; see LUNAR_END_YEAR.
+  for lunar_year in range(LUNAR_START_YEAR, LUNAR_END_YEAR + 1): # 限制为公共窗口，见 LUNAR_END_YEAR。
     info: celestial.LunarYearInfo = celestial.lunar_year_info(algorithm, lunar_year)
     leap_month: int = 0 if info.leap_month is None else info.leap_month
     days_counts: tuple[int, ...] = info.month_lengths
     month_count: int = 12 if leap_month == 0 else 13
     month_len_bits: int = _encode_days_counts(days_counts)
 
-    # Cross-check gate, part 2: the bitmask must round-trip, with no stray high bits.
+    # 位图须可往返解码，且不能有多余高位。
     if len(days_counts) != month_count or _decode_month_len_bits(month_len_bits, month_count) != days_counts:
       raise RuntimeError(
         f'Cross-check gate failed: algo{algo} {lunar_year} bitmask 0x{month_len_bits:04x} '
@@ -181,14 +174,14 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
       ganzhi=sexagenary_cycle[(lunar_year - 4) % 60],
     ))
 
-  # Row-count gate, part 1.
+  # 生成记录后核对行数。
   if len(rows) != EXPECTED_LUNAR_ROWS:
     raise RuntimeError(f'Row-count gate failed: {len(rows)} lunar rows for algo{algo}, expected {EXPECTED_LUNAR_ROWS}.')
   return rows
 
 
 def _equation_of_time_seconds(utc_day: date) -> float:
-  '''Return apparent-minus-mean seconds at UTC midnight and longitude zero.'''
+  '''返回 UTC 午夜、零经度处真太阳时减平太阳时的秒数。'''
   apparent: celestial.CivilDateTime = celestial.apparent_solar_time(
     celestial.CivilDateTime(utc_day.year, utc_day.month, utc_day.day, 0.0),
     0.0,
@@ -225,7 +218,7 @@ def _render_eot_table(samples: tuple[int, ...]) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# Rendering (header keys are the machine-readable provenance required by SCHEMA.md)
+# 渲染，头部键为 SCHEMA.md 要求的机器可读来源信息。
 
 def _common_header(generated_on: date, source_api: str) -> list[str]:
   return [
@@ -267,11 +260,9 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date) -> str:
 
 
 def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date) -> str:
-  # Machine-readable header lines carry the bare value only; prose goes to continuation
-  # lines (`#` + two spaces) -- the convention `SCHEMA.md` states, so the loader never parses
-  # prose as part of a value.  Per-column prose therefore hangs off `columns` rather than
-  # taking a key of its own: a `# leap_month: 1..12, or 0 when ...` line reads to the
-  # loader as a provenance key whose value is a sentence.
+  # 机器可读键行只放值，叙述放在井号加两个空格的续行，避免加载器将说明解析为值。
+  # 各列说明挂在 columns 续行；若另写 `# leap_month: 1..12, or 0 when ...`，
+  # 加载器会把整句作为来源键值，见 SCHEMA.md。
   algo_note: Final[dict[int, str]] = {
     1: 'HKO official almanac lineage -- the default.',
     2: 'Leap-second aware UTC+8 via jde_to_utc8, celestial #84.',
@@ -311,9 +302,9 @@ def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date) -> 
 
 
 def _write_table(path: Path, text: str, expected_rows: int) -> None:
-  path.write_text(text, encoding='utf-8', newline='\n') # LF endings, trailing newline, no blank lines.
+  path.write_text(text, encoding='utf-8', newline='\n') # LF 换行，末尾换行，无空行。
 
-  # Row-count gate, part 2: the emitted `rows:` header must match the data lines written.
+  # 写出后再核对行数，rows 头部须与实际数据行相等。
   written_rows: int = sum(1 for line in path.read_text(encoding='utf-8').splitlines() if not line.startswith('#'))
   if written_rows != expected_rows:
     raise RuntimeError(f'Row-count gate failed: {path} holds {written_rows} data rows, header says {expected_rows}.')
@@ -333,9 +324,9 @@ def _write_eot_table(path: Path, encoded: bytes, expected_samples: int) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-  parser = argparse.ArgumentParser(description='Generate bundled celestial-calendar tables')
-  parser.add_argument('--eot-only', action='store_true', help='Generate only equation_of_time.bin')
-  parser.add_argument('--output-dir', type=Path, help='Write tables to this directory')
+  parser = argparse.ArgumentParser(description='生成随库 celestial-calendar 历法表')
+  parser.add_argument('--eot-only', action='store_true', help='只生成 equation_of_time.bin')
+  parser.add_argument('--output-dir', type=Path, help='将表写入此目录')
   args = parser.parse_args()
 
   data_dir: Path = args.output_dir or Path(__file__).parent / 'data'

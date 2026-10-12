@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Editable interpretation knowledge.
-可编辑的解释知识。'''
+'''可编辑的解释知识。'''
 
 import json
 from dataclasses import asdict, dataclass, fields, is_dataclass
@@ -13,13 +12,13 @@ from .common import frozendict
 from .defines import Shishen, Tiangan
 
 
-'''Knowledge organization state, not a chart verdict. / 知识整理状态，不是命盘判别结果。'''
+'''知识整理状态，不是命盘判别结果。'''
 Applicability = Literal['unconditional', 'described', 'unresolved']
 
-'''A claim's source state. / 条目的来源状态。'''
+'''条目的来源状态。'''
 SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attributed']
 
-'''Presentation eligibility. / 输出资格。'''
+'''输出资格。'''
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
@@ -68,8 +67,7 @@ def _tuple(value: object, member_type: type[_T]) -> None:
 
 @dataclass(frozen=True)
 class KnowledgeObject:
-  '''A named discussion object.
-  具名讨论对象。'''
+  '''具名讨论对象。'''
 
   object_id: str
   kind:      str
@@ -83,7 +81,7 @@ class KnowledgeObject:
 
 @dataclass(frozen=True)
 class KnowledgeRole:
-  '''A named role bound to a discussion object. / 绑定讨论对象的具名角色。'''
+  '''绑定讨论对象的具名角色。'''
 
   name:      str
   object_id: str
@@ -95,8 +93,7 @@ class KnowledgeRole:
 
 @dataclass(frozen=True)
 class KnowledgeRelation:
-  '''A directed textual claim between roles, not a computed relation.
-  角色之间有方向的文字陈述，不表示已计算的命盘关系。'''
+  '''角色之间有方向的文字陈述，不表示已计算的命盘关系。'''
 
   from_role: str
   to_role:   str
@@ -109,8 +106,7 @@ class KnowledgeRelation:
 
 @dataclass(frozen=True)
 class KnowledgeContext:
-  '''A named lookup context with time scope and limits.
-  带时间语境与限度的具名查阅情境。'''
+  '''带时间语境与限度的具名查阅情境。'''
 
   context_id: str
   label:      str
@@ -125,8 +121,7 @@ class KnowledgeContext:
 
 @dataclass(frozen=True)
 class KnowledgeSource:
-  '''A source witness with attribution and evidentiary boundaries.
-  带署名与证据边界的来源见证。'''
+  '''带署名与证据边界的来源见证。'''
 
   source_id:   str
   work:        str
@@ -153,8 +148,7 @@ class KnowledgeSource:
 
 @dataclass(frozen=True)
 class LegacyDescription:
-  '''The exact placement and condition metadata of an old description.
-  旧描述的字段、顺序及条件元数据。'''
+  '''旧描述的确切字段、顺序及条件元数据。'''
 
   object_id:     str
   field:         str
@@ -177,8 +171,7 @@ class LegacyDescription:
 
 @dataclass(frozen=True)
 class KnowledgeEntry:
-  '''An interpretation with independently recorded source, premise and output states.
-  分别记录来源、前提及输出状态的解释条目。'''
+  '''分别记录来源、前提及输出状态的解释条目。'''
 
   claim_id:      str
   text:          str
@@ -261,7 +254,7 @@ def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
 
 
 def _decode(record_type: type[_T], value: object) -> _T:
-  attributes = fields(record_type) # type: ignore[arg-type] # Only the dataclasses above reach this helper.
+  attributes = fields(record_type) # type: ignore[arg-type] # 此辅助函数只接收上方 dataclass 类型。
   data = _mapping(value, tuple(field.name for field in attributes))
   kwargs: dict[str, Any] = dict(data)
   for field in attributes:
@@ -427,7 +420,7 @@ class KnowledgeBase:
     return cls.from_json(source.read_text(encoding='utf-8'))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
-    '''Resolve a stable entry ID. / 按稳定标识查阅条目。'''
+    '''按稳定标识查阅条目。'''
     _text(claim_id)
     if claim_id not in self.entries:
       raise ValueError(f'Unknown claim ID: {claim_id}')
@@ -445,14 +438,12 @@ class KnowledgeBase:
     time_scope: str | None = None,
     include_reference_only: bool = False,
   ) -> tuple[KnowledgeEntry, ...]:
-    '''Intersect lookup filters, preserving corpus order and output eligibility.
-    按查阅条件取交集，保留语料顺序及输出资格。
+    '''按查阅条件取交集，保留语料顺序及输出资格。
 
     Note:
-    - Object lookup includes every bound role. Unknown filters fail explicitly.
     - 对象查询包含所有绑定角色；未知标识明确报错。
     Returns:
-    - (tuple[KnowledgeEntry, ...]) Immutable matching entries. / 命中的不可变条目。
+    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')

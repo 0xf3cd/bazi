@@ -1,4 +1,4 @@
-'''Build and test installed artifacts without using checkout imports.'''
+'''构建并检查安装工件，消费者不从源码检出导入。'''
 
 import argparse
 import hashlib
@@ -20,7 +20,7 @@ from collections import Counter
 
 
 ROOT: Final[Path] = Path(__file__).resolve().parent
-# Independent resource oracle for the declarations in pyproject.toml and MANIFEST.in.
+# 独立资源清单，用于核对 pyproject.toml 与 MANIFEST.in 的声明。
 RUNTIME_DATA: Final[tuple[str, ...]] = (
   'bazi/calendar/hko_data/data/jieqi_encoded.bin',
   'bazi/calendar/hko_data/data/lunardate_encoded.bin',
@@ -85,7 +85,7 @@ def consumer(directory: Path, wheel: Path) -> Path:
   venv.EnvBuilder(with_pip=True).create(directory)
   python = directory / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
   run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--no-deps', '--no-compile', str(wheel)], directory.parent)
-  # Python 3.11's ensurepip also seeds setuptools; consumers need only pip and bazi.
+  # Python 3.11 的 ensurepip 还会安装 setuptools；消费者只需要 pip 与 bazi。
   run([str(python), '-I', '-m', 'pip', 'uninstall', '-y', 'setuptools'], directory.parent)
   return python
 
@@ -128,7 +128,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     for name, digest in before.items():
       if hashlib.sha256(payload[name]).hexdigest() != digest:
         raise ValueError(f'Sdist bytes differ: {name}')
-    # Extract only verified regular members, never archive links or arbitrary paths.
+    # 只提取已核验的普通文件，不提取归档链接或任意路径。
     for name, content in payload.items():
       target = extracted / name
       target.parent.mkdir(parents=True, exist_ok=True)
@@ -259,7 +259,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
 def main() -> None:
   parser = argparse.ArgumentParser(description=__doc__)
-  parser.add_argument('--output-dir', type=Path, help='Retain only the tested sdist and its tested rebuilt wheel in an empty external directory.')
+  parser.add_argument('--output-dir', type=Path, help='在空的仓外目录中只保留已验证 sdist 及其重建 wheel。')
   args = parser.parse_args()
   output_dir = args.output_dir.resolve() if args.output_dir is not None else None
   if output_dir is not None and output_dir.is_relative_to(ROOT):
