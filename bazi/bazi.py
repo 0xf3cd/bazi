@@ -52,7 +52,6 @@ class BaziGender(Enum):
   YANG = '男'
   YIN = '女'
 
-  # 中文别名
   MALE = YANG
   FEMALE = YIN
 

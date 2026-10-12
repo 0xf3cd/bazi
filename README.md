@@ -273,7 +273,7 @@ search_ganzhis、discover_ganzhis、discover_mutual_ganzhis 保留完整干支�
 规则映射按定义序，集合表按组合成员枚举序，刑按规则表首次组合出现顺序输出；
 生克先按施方、受方的枚举序排序，再折为无向组合。
 亲密关系分析使用 analyzer.at_birth / analyzer.transits；神煞锚与定义来自本盘流派，
-日柱参与按具体位置判断，不以同值地支替代。
+拱局的日柱参与按具体位置判断，不以同值地支替代。
 
 ## 知识与前提匹配
 
