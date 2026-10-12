@@ -240,6 +240,45 @@ def test_lushen_jinyu_tables() -> None:
     )
 
 
+def test_derived_shensha_literals() -> None:
+  # Every cell is independent of the production offsets, including absent 阴干 blades.
+  stem_tables = (
+    (ShenshaRules.JINYU, '辰巳未申未申戌亥丑寅'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.ZIPING], '卯-午-午-酉-子-'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.LUMING], '卯辰午未午未酉戌子丑'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.DIWANG], '卯寅午巳午巳酉申子亥'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.ZIPING], '酉-子-子-卯-午-'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.LUMING], '酉戌子丑子丑卯辰午未'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.DIWANG], '酉申子亥子亥卯寅午巳'),
+    (ShenshaRules.GUOYIN[ShenshaRules.GuoyinDef.WUXING_JINGJI], '酉戌子丑子丑卯辰午未'),
+    (ShenshaRules.GUOYIN[ShenshaRules.GuoyinDef.MODERN], '戌亥丑寅丑寅辰巳未申'),
+  )
+  for table, targets in stem_tables:
+    assert tuple(table) == tuple(Tiangan)
+    assert tuple(table.values()) == tuple(None if char == '-' else Dizhi(char) for char in targets)
+
+  for branch_table, targets in (
+    (ShenshaRules.HONGLUAN, '卯寅丑子亥戌酉申未午巳辰'),
+    (ShenshaRules.TIANXI, '酉申未午巳辰卯寅丑子亥戌'),
+  ):
+    assert tuple(branch_table) == tuple(Dizhi)
+    assert tuple(branch_table.values()) == tuple(Dizhi(char) for char in targets)
+
+
+def test_sheng_ke_literal_pairs() -> None:
+  for table, groups in (
+    (TianganRules.TIANGAN_SHENG, (('甲乙', '丙丁'), ('丙丁', '戊己'), ('戊己', '庚辛'), ('庚辛', '壬癸'), ('壬癸', '甲乙'))),
+    (TianganRules.TIANGAN_KE, (('甲乙', '戊己'), ('丙丁', '庚辛'), ('戊己', '壬癸'), ('庚辛', '甲乙'), ('壬癸', '丙丁'))),
+  ):
+    assert table == frozenset((Tiangan(first), Tiangan(second)) for left, right in groups for first in left for second in right)
+
+  for branch_table, groups in (
+    (DizhiRules.DIZHI_SHENG, (('寅卯', '巳午'), ('巳午', '丑辰未戌'), ('丑辰未戌', '申酉'), ('申酉', '子亥'), ('子亥', '寅卯'))),
+    (DizhiRules.DIZHI_KE, (('寅卯', '丑辰未戌'), ('巳午', '申酉'), ('丑辰未戌', '子亥'), ('申酉', '寅卯'), ('子亥', '巳午'))),
+  ):
+    assert branch_table == frozenset((Dizhi(first), Dizhi(second)) for left, right in groups for first in left for second in right)
+
+
 def test_kuigang_rule() -> None:
   assert ShenshaRules.KUIGANG == frozenset((
     Ganzhi.from_str('庚辰'),
@@ -390,11 +429,7 @@ def test_guoyin() -> None:
   assert set(ShenshaRules.GUOYIN) == set(ShenshaRules.GuoyinDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.GUOYIN.values())
 
-  # Both readings are fixed offsets from 禄, so derive every cell from `TIANGAN_LU`
-  # instead of re-reading the literals -- a typo in the table cannot agree with a table it
-  # was not copied from. Same shape as the JINYU「禄前二辰」check above.
-  # 两读都是禄位的固定偏移，故由 `TIANGAN_LU` 推导每一格，而不重读表里的字面值——
-  # 表里写错一格，不会与一份并非抄自它的表相符。形状同上面 JINYU 的「禄前二辰」核。
+  # Check the defining 禄 offsets as well as the independent literals above.
   offsets = {
     ShenshaRules.GuoyinDef.WUXING_JINGJI : 7,
     ShenshaRules.GuoyinDef.MODERN        : 8,

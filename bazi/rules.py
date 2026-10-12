@@ -148,24 +148,20 @@ class BaziRules:
 
 
 
-def _tiangan_sheng(traits: frozendict[Tiangan, TraitTuple]) -> frozenset[tuple[Tiangan, Tiangan]]:
-  ret: list[tuple[Tiangan, Tiangan]] = []
-  for tg1, tg2 in itertools.product(Tiangan, Tiangan):
-    tg1_trait: TraitTuple = traits[tg1]
-    tg2_trait: TraitTuple = traits[tg2]
-    if tg1_trait.wuxing.generates(tg2_trait.wuxing): # Yinyang not considered. 天干相生不考虑阴阳。
-      ret.append((tg1, tg2)) # Direction: tg1 -> tg2
-  return frozenset(ret)
+'''生克表的天干或地支键。'''
+_TraitKey = TypeVar('_TraitKey', Tiangan, Dizhi)
 
 
-def _tiangan_ke(traits: frozendict[Tiangan, TraitTuple]) -> frozenset[tuple[Tiangan, Tiangan]]:
-  ret: list[tuple[Tiangan, Tiangan]] = []
-  for tg1, tg2 in itertools.product(Tiangan, Tiangan):
-    tg1_trait: TraitTuple = traits[tg1]
-    tg2_trait: TraitTuple = traits[tg2]
-    if tg1_trait.wuxing.destructs(tg2_trait.wuxing): # Yinyang not considered. 天干相克不考虑阴阳。
-      ret.append((tg1, tg2)) # Direction: tg1 -> tg2
-  return frozenset(ret)
+def _wuxing_relations(
+  traits: frozendict[_TraitKey, TraitTuple],
+  relates: Callable[[Wuxing, Wuxing], bool],
+) -> frozenset[tuple[_TraitKey, _TraitKey]]:
+  '''仅按五行派生有方向的生克表，不考虑阴阳。'''
+  return frozenset(
+    (first, second)
+    for first, second in itertools.product(traits, repeat=2)
+    if relates(traits[first].wuxing, traits[second].wuxing)
+  )
 
 
 class TianganRules:
@@ -200,7 +196,7 @@ class TianganRules:
   # 该表格用于查询天干之间的相生关系。
   # 相生关系是单向的。如甲丁相生，则是甲木生丁火。
   # 天干相生不考虑阴阳，只考虑五行。
-  TIANGAN_SHENG: Final[frozenset[tuple[Tiangan, Tiangan]]] = _tiangan_sheng(BaziRules.TIANGAN_TRAITS)
+  TIANGAN_SHENG: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(BaziRules.TIANGAN_TRAITS, Wuxing.generates)
 
   # The table is used to query the KE (克) relation across all Tiangans.
   # KE relation is a uni-directional relation.
@@ -208,7 +204,7 @@ class TianganRules:
   # 该表格用于查询天干之间的相克关系。
   # 相克关系是单向的。如壬丙相克，是壬水克丙火。
   # 天干相克不考虑阴阳，只考虑五行。
-  TIANGAN_KE: Final[frozenset[tuple[Tiangan, Tiangan]]] = _tiangan_ke(BaziRules.TIANGAN_TRAITS)
+  TIANGAN_KE: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(BaziRules.TIANGAN_TRAITS, Wuxing.destructs)
 
 
 
@@ -232,24 +228,6 @@ def _dizhi_xing_loose(sub_type: type['DizhiRules.XingSubType']) -> frozendict[tu
   for dz_tuple in ((Dizhi.寅, Dizhi.巳), (Dizhi.巳, Dizhi.申), (Dizhi.申, Dizhi.寅)):
     d[dz_tuple] = sub_type.三刑
   return frozendict(d)
-
-
-def _dizhi_sheng(dizhi_traits: frozendict[Dizhi, TraitTuple]) -> frozenset[tuple[Dizhi, Dizhi]]:
-  ret: list[tuple[Dizhi, Dizhi]] = []
-  for dz1, dz2 in itertools.permutations(Dizhi, 2):
-    trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
-    if trait1.wuxing.generates(trait2.wuxing):
-      ret.append((dz1, dz2))
-  return frozenset(ret)
-
-
-def _dizhi_ke(dizhi_traits: frozendict[Dizhi, TraitTuple]) -> frozenset[tuple[Dizhi, Dizhi]]:
-  ret: list[tuple[Dizhi, Dizhi]] = []
-  for dz1, dz2 in itertools.permutations(Dizhi, 2):
-    trait1, trait2 = dizhi_traits[dz1], dizhi_traits[dz2]
-    if trait1.wuxing.destructs(trait2.wuxing):
-      ret.append((dz1, dz2))
-  return frozenset(ret)
 
 
 class DizhiRules:
@@ -549,7 +527,7 @@ class DizhiRules:
   # 该表格用于查询地支之间的相生关系。
   # 相生关系是单向的。如丙寅相生，则是寅木生丙火。
   # 地支相生不考虑阴阳，只考虑五行。
-  DIZHI_SHENG: Final[frozenset[tuple[Dizhi, Dizhi]]] = _dizhi_sheng(BaziRules.DIZHI_TRAITS)
+  DIZHI_SHENG: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(BaziRules.DIZHI_TRAITS, Wuxing.generates)
 
   # The table is used to query the KE (克) relation across all Dizhis.
   # KE relation is a uni-directional relation.
@@ -557,7 +535,7 @@ class DizhiRules:
   # 该表格用于查询地支之间的相克关系。
   # 相克关系是单向的。如寅丑相克，则是寅木克丑土。
   # 地支相克不考虑阴阳，只考虑五行。
-  DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _dizhi_ke(BaziRules.DIZHI_TRAITS)
+  DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(BaziRules.DIZHI_TRAITS, Wuxing.destructs)
 
 
 @dataclass(frozen=True)
@@ -595,6 +573,16 @@ def _expand_dizhi_groups(
     for keys, target in groups.items()
     for key in keys
   })
+
+
+def _offset_dizhi(dizhi: Dizhi, step: int) -> Dizhi:
+  '''沿十二支顺序移动，越过亥后回到子。'''
+  return Dizhi.from_index((dizhi.index + step) % len(Dizhi))
+
+
+def _lu_offset(step: int) -> frozendict[Tiangan, Dizhi]:
+  '''各天干禄位的固定顺向偏移。'''
+  return frozendict({tg: _offset_dizhi(lu, step) for tg, lu in BaziRules.TIANGAN_LU.items()})
 
 
 class ShenshaRules:
@@ -691,36 +679,14 @@ class ShenshaRules:
   # 该条论宫限，不是查其余原局柱；分析器以年支查月、日、时支，依现代问真《神煞大全》〈红鸾〉。
   # Table source / 表值出处: https://zh.wikisource.org/w/index.php?oldid=626726
   HONGLUAN: Final[frozendict[Dizhi, Dizhi]] = frozendict({
-    Dizhi.子 : Dizhi.卯,
-    Dizhi.丑 : Dizhi.寅,
-    Dizhi.寅 : Dizhi.丑,
-    Dizhi.卯 : Dizhi.子,
-    Dizhi.辰 : Dizhi.亥,
-    Dizhi.巳 : Dizhi.戌,
-    Dizhi.午 : Dizhi.酉,
-    Dizhi.未 : Dizhi.申,
-    Dizhi.申 : Dizhi.未,
-    Dizhi.酉 : Dizhi.午,
-    Dizhi.戌 : Dizhi.巳,
-    Dizhi.亥 : Dizhi.辰,
+    dz: _offset_dizhi(Dizhi.卯, -dz.index) for dz in Dizhi
   })
 
   # TIANXI uses the paired 宫限 table cited at HONGLUAN above. Its YEAR lookup of
   # the other natal pillars follows 问真《神煞大全》〈天喜〉.
   # 天喜的宫限表值出处见上方红鸾；以年支查其余原局柱，依问真《神煞大全》〈天喜〉。
   TIANXI: Final[frozendict[Dizhi, Dizhi]] = frozendict({
-    Dizhi.子 : Dizhi.酉,
-    Dizhi.丑 : Dizhi.申,
-    Dizhi.寅 : Dizhi.未,
-    Dizhi.卯 : Dizhi.午,
-    Dizhi.辰 : Dizhi.巳,
-    Dizhi.巳 : Dizhi.辰,
-    Dizhi.午 : Dizhi.卯,
-    Dizhi.未 : Dizhi.寅,
-    Dizhi.申 : Dizhi.丑,
-    Dizhi.酉 : Dizhi.子,
-    Dizhi.戌 : Dizhi.亥,
-    Dizhi.亥 : Dizhi.戌,
+    dz: _offset_dizhi(Dizhi.酉, -dz.index) for dz in Dizhi
   })
 
   # YIMA: the four mappings occur in 《三命通会》卷三〈论驿马〉. The default
@@ -866,18 +832,7 @@ class ShenshaRules:
   # Table sources / 表值出处 (issue #163):
   # - 《三命通会·卷三·论金舆》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
   # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
-  JINYU: Final[frozendict[Tiangan, Dizhi]] = frozendict({
-    Tiangan.甲 : Dizhi.辰,
-    Tiangan.乙 : Dizhi.巳,
-    Tiangan.丙 : Dizhi.未,
-    Tiangan.丁 : Dizhi.申,
-    Tiangan.戊 : Dizhi.未,
-    Tiangan.己 : Dizhi.申,
-    Tiangan.庚 : Dizhi.戌,
-    Tiangan.辛 : Dizhi.亥,
-    Tiangan.壬 : Dizhi.丑,
-    Tiangan.癸 : Dizhi.寅,
-  })
+  JINYU: Final[frozendict[Tiangan, Dizhi]] = _lu_offset(2)
 
   # KUIGANG (魁罡) is fixed to four day pillars in both 《渊海子平·论魁罡》
   # and 《三命通会·卷六·魁罡》.
@@ -961,80 +916,19 @@ class ShenshaRules:
 
   YANGREN: Final[frozendict[YangrenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
     YangrenDef.ZIPING : frozendict({
-      Tiangan.甲 : Dizhi.卯,
-      Tiangan.乙 : None,
-      Tiangan.丙 : Dizhi.午,
-      Tiangan.丁 : None,
-      Tiangan.戊 : Dizhi.午,
-      Tiangan.己 : None,
-      Tiangan.庚 : Dizhi.酉,
-      Tiangan.辛 : None,
-      Tiangan.壬 : Dizhi.子,
-      Tiangan.癸 : None,
+      tg: _offset_dizhi(lu, 1) if BaziRules.TIANGAN_TRAITS[tg].yinyang is Yinyang.阳 else None
+      for tg, lu in BaziRules.TIANGAN_LU.items()
     }),
-    YangrenDef.LUMING : frozendict({
-      Tiangan.甲 : Dizhi.卯,
-      Tiangan.乙 : Dizhi.辰,
-      Tiangan.丙 : Dizhi.午,
-      Tiangan.丁 : Dizhi.未,
-      Tiangan.戊 : Dizhi.午,
-      Tiangan.己 : Dizhi.未,
-      Tiangan.庚 : Dizhi.酉,
-      Tiangan.辛 : Dizhi.戌,
-      Tiangan.壬 : Dizhi.子,
-      Tiangan.癸 : Dizhi.丑,
-    }),
+    YangrenDef.LUMING : frozendict(_lu_offset(1)),
     YangrenDef.DIWANG : frozendict({
-      Tiangan.甲 : Dizhi.卯,
-      Tiangan.乙 : Dizhi.寅,
-      Tiangan.丙 : Dizhi.午,
-      Tiangan.丁 : Dizhi.巳,
-      Tiangan.戊 : Dizhi.午,
-      Tiangan.己 : Dizhi.巳,
-      Tiangan.庚 : Dizhi.酉,
-      Tiangan.辛 : Dizhi.申,
-      Tiangan.壬 : Dizhi.子,
-      Tiangan.癸 : Dizhi.亥,
+      tg: _offset_dizhi(zhangsheng, 4 if BaziRules.TIANGAN_TRAITS[tg].yinyang is Yinyang.阳 else -4)
+      for tg, zhangsheng in BaziRules.TIANGAN_ZHANGSHENG.items()
     }),
   })
 
   FEIREN: Final[frozendict[YangrenDef, frozendict[Tiangan, Dizhi | None]]] = frozendict({
-    YangrenDef.ZIPING : frozendict({
-      Tiangan.甲 : Dizhi.酉,
-      Tiangan.乙 : None,
-      Tiangan.丙 : Dizhi.子,
-      Tiangan.丁 : None,
-      Tiangan.戊 : Dizhi.子,
-      Tiangan.己 : None,
-      Tiangan.庚 : Dizhi.卯,
-      Tiangan.辛 : None,
-      Tiangan.壬 : Dizhi.午,
-      Tiangan.癸 : None,
-    }),
-    YangrenDef.LUMING : frozendict({
-      Tiangan.甲 : Dizhi.酉,
-      Tiangan.乙 : Dizhi.戌,
-      Tiangan.丙 : Dizhi.子,
-      Tiangan.丁 : Dizhi.丑,
-      Tiangan.戊 : Dizhi.子,
-      Tiangan.己 : Dizhi.丑,
-      Tiangan.庚 : Dizhi.卯,
-      Tiangan.辛 : Dizhi.辰,
-      Tiangan.壬 : Dizhi.午,
-      Tiangan.癸 : Dizhi.未,
-    }),
-    YangrenDef.DIWANG : frozendict({
-      Tiangan.甲 : Dizhi.酉,
-      Tiangan.乙 : Dizhi.申,
-      Tiangan.丙 : Dizhi.子,
-      Tiangan.丁 : Dizhi.亥,
-      Tiangan.戊 : Dizhi.子,
-      Tiangan.己 : Dizhi.亥,
-      Tiangan.庚 : Dizhi.卯,
-      Tiangan.辛 : Dizhi.寅,
-      Tiangan.壬 : Dizhi.午,
-      Tiangan.癸 : Dizhi.巳,
-    }),
+    definition: frozendict({tg: None if dz is None else _offset_dizhi(dz, 6) for tg, dz in table.items()})
+    for definition, table in YANGREN.items()
   })
 
   class TianyiDef(Enum):
@@ -1410,39 +1304,13 @@ class ShenshaRules:
 
   # The tables are used to find out GUOYIN GUIREN (国印贵人).
   # 这些表格用于查询国印贵人。
-  # Every cell is a fixed offset from `BaziRules.TIANGAN_LU`; `test_rules.py` derives all
-  # twenty from that table rather than re-reading the literals here, so a typo below cannot
-  # agree with itself.
-  # 每一格都是 `BaziRules.TIANGAN_LU` 的固定偏移；`test_rules.py` 由禄表推导全部二十格，
-  # 不重读下面的字面值——写错一格不会自圆其说。
+  # Each reading derives its own table from 禄; equal values do not merge star identities.
   # Anchor and search range: see `_ANCHOR_CHOICES`; the modern side reads 四柱地支 (its two
   # houses counting as one source -- see this class's docstring). The cited 星学 passages
   # point at 身命宫 (see `GuoyinDef`).
   # 锚与被查位置见 `_ANCHOR_CHOICES`；现代一侧作四柱地支（那两家算一份，见本类 docstring），
   # 所引星学段落指身命宫，见 `GuoyinDef`。
   GUOYIN: Final[frozendict[GuoyinDef, frozendict[Tiangan, Dizhi]]] = frozendict({
-    GuoyinDef.WUXING_JINGJI : frozendict({
-      Tiangan.甲 : Dizhi.酉,
-      Tiangan.乙 : Dizhi.戌,
-      Tiangan.丙 : Dizhi.子,
-      Tiangan.丁 : Dizhi.丑,
-      Tiangan.戊 : Dizhi.子,
-      Tiangan.己 : Dizhi.丑,
-      Tiangan.庚 : Dizhi.卯,
-      Tiangan.辛 : Dizhi.辰,
-      Tiangan.壬 : Dizhi.午,
-      Tiangan.癸 : Dizhi.未,
-    }),
-    GuoyinDef.MODERN : frozendict({
-      Tiangan.甲 : Dizhi.戌,
-      Tiangan.乙 : Dizhi.亥,
-      Tiangan.丙 : Dizhi.丑,
-      Tiangan.丁 : Dizhi.寅,
-      Tiangan.戊 : Dizhi.丑,
-      Tiangan.己 : Dizhi.寅,
-      Tiangan.庚 : Dizhi.辰,
-      Tiangan.辛 : Dizhi.巳,
-      Tiangan.壬 : Dizhi.未,
-      Tiangan.癸 : Dizhi.申,
-    }),
+    GuoyinDef.WUXING_JINGJI : _lu_offset(7),
+    GuoyinDef.MODERN        : _lu_offset(8),
   })
