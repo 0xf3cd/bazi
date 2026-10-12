@@ -132,11 +132,12 @@ def test_liunian_coordinate_kind_and_repeated_cycle_identity() -> None:
 def test_export_preserves_literal_evidence_year_kind_and_input() -> None:
   result = match(1, profile=ContextProfile('natal_and_liunian', 2024))
   data = json.loads(result.export_json())
-  assert data['profile'] == {'stem_scope': 'visible_and_hidden', 'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
+  assert data['record_version'] == 2
+  assert data['profile'] == {'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
   assert data['input'] == json.loads(result.input_json)
   assert len(data['occurrences']) == 13
   assert data['occurrences'][-3:] == [
-    {'origin': 'transit', 'pillar': 'liunian', 'index': 4, 'ganzhi': '甲辰', 'layer': 'hidden', 'stem': stem, 'shishen': classification, 'kind': 'liunian', 'ganzhi_year': 2024}
+    {'origin': 'transit', 'pillar': 'liunian', 'ganzhi': '甲辰', 'layer': 'hidden', 'stem': stem, 'shishen': classification, 'kind': 'liunian', 'ganzhi_year': 2024}
     for stem, classification in [('戊', '比肩'), ('乙', '正官'), ('癸', '正财')]
   ]
 
@@ -195,7 +196,7 @@ def test_registered_undefined_controls_preserve_every_premise_and_limit(criterio
   assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
   assert result.criterion.observations == {'observed_coexistence': True, 'female': True}
   assert result.entries == (EntryMatch(claim_id, 'UNKNOWN', 'predicate_undefined'),)
-  restored = KnowledgeBase.from_json(result.knowledge_json)
+  restored = result.knowledge
   assert restored.entries == knowledge.entries and restored.contexts == knowledge.contexts
   entry = restored.entry(claim_id)
   rendered = result.render()
@@ -214,8 +215,9 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
-  assert result.profile.stem_scope == 'visible_and_hidden'
   data = json.loads(result.export_json())
+  assert 'stem_scope' not in data['profile']
+  assert all('index' not in value for value in data['occurrences'])
   assert 'revision' not in data['criterion']
   assert data['knowledge'] == json.loads(knowledge.export_json())
   assert len(data['knowledge']['entries']) == 295
@@ -250,7 +252,7 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
 ])
 def test_render_premise_annotations_are_evaluation_only(day: int, criterion_id: str, status: str) -> None:
   result = match(day, criterion_id=criterion_id)
-  knowledge = KnowledgeBase.from_json(result.knowledge_json)
+  knowledge = result.knowledge
   text = result.render()
   for entry_match in result.entries:
     block = text.split(f'原作参考前提：{entry_match.claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
@@ -310,7 +312,7 @@ def test_same_id_custom_binding_is_not_semantic_authentication(dimension: str) -
   result = match(knowledge=custom)
   assert result.criterion.status == 'SATISFIED'
   assert result.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
-  assert json.loads(result.knowledge_json) == data
+  assert json.loads(result.knowledge.export_json()) == data
   assert ContextResult.from_json(result.export_json()) == result
   if dimension == 'qualification':
     default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'), knowledge=custom)
@@ -400,10 +402,10 @@ def test_public_record_value_boundaries() -> None:
   result = match()
   o = result.occurrences[0]
   change: dict[str, Any]
-  for change in ({'origin': 'other'}, {'pillar': 'other'}, {'layer': 'other'}, {'index': -1}, {'kind': TransitKind.DAYUN}, {'ganzhi_year': 2024}, {'pillar': 'day', 'index': 2}, {'stem': Tiangan.甲}):
+  for change in ({'origin': 'other'}, {'pillar': 'other'}, {'layer': 'other'}, {'kind': TransitKind.DAYUN}, {'ganzhi_year': 2024}, {'pillar': 'day'}, {'stem': Tiangan.甲}):
     with pytest.raises(ValueError):
       replace(o, **change)
-  for change in ({'index': True}, {'ganzhi': '己卯'}, {'stem': '己'}, {'shishen': '正印'}, {'kind': 'liunian'}, {'ganzhi_year': True}):
+  for change in ({'index': True}, {'index': -1}, {'ganzhi': '己卯'}, {'stem': '己'}, {'shishen': '正印'}, {'kind': 'liunian'}, {'ganzhi_year': True}):
     with pytest.raises(TypeError):
       replace(o, **change)
   with pytest.raises(ValueError):
@@ -420,7 +422,7 @@ def test_public_record_value_boundaries() -> None:
     EntryMatch(1, 'UNKNOWN', 'predicate_undefined') # type: ignore[arg-type]
   with pytest.raises(ValueError):
     EntryMatch('', 'UNKNOWN', 'predicate_undefined')
-  for change in ({'profile': 'natal'}, {'criterion': {}}, {'occurrences': []}, {'entries': []}, {'input_json': None}, {'knowledge_json': None}, {'occurrences': (None,)}, {'entries': (None,)}):
+  for change in ({'profile': 'natal'}, {'criterion': {}}, {'occurrences': []}, {'entries': []}, {'input_json': None}, {'knowledge': None}, {'occurrences': (None,)}, {'entries': (None,)}):
     with pytest.raises(TypeError):
       replace(result, **change)
   with pytest.raises(ValueError):
@@ -460,7 +462,7 @@ def test_public_verdict_status_types_raise_type_error(value: Any) -> None:
 
 
 @pytest.mark.parametrize('dimension,value,error', [
-  ('record_version', True, ValueError), ('record_version', 2, ValueError),
+  ('record_version', True, ValueError), ('record_version', 1, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
   ('entries', {}, TypeError), ('input', {}, ValueError), ('knowledge', {}, ValueError),
 ])
@@ -498,7 +500,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
   with pytest.raises(TypeError):
     ContextResult.from_json(42) # type: ignore[arg-type]
   with pytest.raises(ValueError):
-    ContextResult.from_json('{"record_version":1,"record_version":1}')
+    ContextResult.from_json('{"record_version":2,"record_version":2}')
   with pytest.raises(TypeError):
     ContextResult.from_json('[]')
 
@@ -506,7 +508,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
 def test_restore_rejects_duplicate_keys_in_an_otherwise_complete_record() -> None:
   text = match().export_json()
   for needle, duplicate in (
-    ('"record_version": 1', '"record_version": 1'),
+    ('"record_version": 2', '"record_version": 2'),
     ('"gender": "female"', '"gender": "male"'),
     ('"scope_complete": true', '"scope_complete": false'),
   ):
@@ -531,3 +533,63 @@ def test_corpus_organization_and_frozen_oracle_hash() -> None:
       assert entry.output == 'reference_only' and entry.viewpoint == '仓内原作'
       assert all(limit in knowledge.render(entry) for limit in knowledge.contexts[context_id].limits)
     assert all(m.status == 'SATISFIED' for m in match(criterion_id=criterion).entries)
+
+
+def test_shared_knowledge_lifecycle_and_independent_record_recovery(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  data = json.loads(KnowledgeBase.load().export_json())
+  source = tmp_path / 'knowledge.json'
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  knowledge = KnowledgeBase.load(source)
+  count = 0
+  original_init = KnowledgeBase.__init__
+
+  def counted(self: KnowledgeBase, *args: Any, **kwargs: Any) -> None:
+    nonlocal count
+    count += 1
+    original_init(self, *args, **kwargs)
+
+  def forbidden(*args: Any, **kwargs: Any) -> Any:
+    raise AssertionError('Unexpected whole-corpus JSON round trip')
+
+  monkeypatch.setattr(KnowledgeBase, '__init__', counted)
+  monkeypatch.setattr(KnowledgeBase, 'from_json', forbidden)
+  monkeypatch.setattr(KnowledgeBase, 'export_json', forbidden)
+  results = tuple(match(day, knowledge=knowledge) for day in (1, 3, 5))
+  for result in results:
+    assert result.knowledge is knowledge
+    rendered = result.render()
+    assert result.render() == rendered
+    assert json.loads(result.export_json())['knowledge'] == data
+  assert count == 0
+
+  result = results[1]
+  rendered, exported = result.render(), result.export_json()
+  changed = json.loads(json.dumps(data))
+  next(entry for entry in changed['entries'] if entry['claim_id'] == LEGAL[0])['text'] = 'External source changed.'
+  source.write_text(json.dumps(changed, ensure_ascii=False), encoding='utf-8')
+  source.unlink()
+  assert result.render() == rendered and result.export_json() == exported
+  restored = ContextResult.from_json(exported)
+  assert count == 1
+  assert restored.knowledge is not knowledge and restored.knowledge == knowledge
+  assert restored == result and hash(restored) == hash(result)
+  assert len({result, restored}) == 1 and {result: 'record'}[restored] == 'record'
+  assert restored.render() == rendered and restored.export_json() == exported and count == 1
+
+
+@pytest.mark.parametrize('registry', ['objects', 'contexts', 'sources', 'entries'])
+def test_record_equality_preserves_full_knowledge_content_and_order(registry: str) -> None:
+  knowledge = KnowledgeBase.load()
+  result = match(knowledge=knowledge)
+  data = json.loads(knowledge.export_json())
+  data[registry].reverse()
+  reordered = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  other = match(knowledge=reordered)
+  assert knowledge != reordered and reordered != knowledge and knowledge != object()
+  assert result != other and len({result, other}) == 2
+  assert json.loads(other.export_json())['knowledge'][registry] == data[registry]
+
+  changed = json.loads(knowledge.export_json())
+  changed['entries'][0]['text'] += ' Extra recorded text.'
+  changed_result = match(knowledge=KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False)))
+  assert changed_result != result and len({result, changed_result}) == 2

@@ -118,19 +118,12 @@ class ContextProfile:
     if self.observation_scope == 'natal' and self.ganzhi_year is not None:
       raise ValueError('Natal scope cannot include a transit coordinate')
 
-  @property
-  def stem_scope(self) -> Literal['visible_and_hidden']:
-    return 'visible_and_hidden'
-
-
 @dataclass(frozen=True)
 class ChartOccurrence:
-  '''One classified stem with position, layer and time identity; duplicate positions stay separate.
-  一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
+  '''一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
 
   origin:      Literal['natal', 'transit']
   pillar:      Pillar
-  index:       int
   ganzhi:      Ganzhi
   layer:       Literal['visible', 'hidden']
   stem:        Tiangan
@@ -142,24 +135,27 @@ class ChartOccurrence:
     _choice(self.origin, ('natal', 'transit'))
     _choice(self.pillar, get_args(Pillar))
     _choice(self.layer, ('visible', 'hidden'))
-    if type(self.index) is not int:
-      raise TypeError(f'Expected int, got {type(self.index)}')
     for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan), (self.shishen, Shishen)):
       _typed(value, expected)
     _year(self.ganzhi_year)
     if self.kind is not None:
       _typed(self.kind, TransitKind)
     if self.origin == 'natal':
-      if self.pillar not in _PILLARS or self.index != _PILLARS.index(self.pillar) or self.kind is not None or self.ganzhi_year is not None:
+      if self.pillar not in _PILLARS or self.kind is not None or self.ganzhi_year is not None:
         raise ValueError('Invalid natal occurrence coordinate')
       if self.pillar == 'day' and self.layer == 'visible':
         raise ValueError('Day-master visible stem is excluded by convention')
-    elif self.pillar != 'liunian' or self.index != 4 or self.kind is not TransitKind.LIUNIAN or self.ganzhi_year is None:
+    elif self.pillar != 'liunian' or self.kind is not TransitKind.LIUNIAN or self.ganzhi_year is None:
       raise ValueError('Invalid LIUNIAN occurrence coordinate')
     if self.layer == 'visible' and self.stem != self.ganzhi.tiangan:
       raise ValueError('Visible stem differs from its Ganzhi')
     if self.layer == 'hidden' and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
       raise ValueError('Hidden stem is absent from its Ganzhi')
+
+  @property
+  def index(self) -> int:
+    '''返回有序观察查询的位置：原局四柱为0–3，流年为4。'''
+    return get_args(Pillar).index(self.pillar)
 
 
 @dataclass(frozen=True)
@@ -239,15 +235,14 @@ def _validate_input(text: str) -> None:
 
 @dataclass(frozen=True)
 class ContextResult:
-  '''Immutable observation record with full input and knowledge snapshots.
-  不可变观察记录，附完整输入及知识快照。'''
+  '''不可变观察记录，复用已验证知识对象；导出时保留完整知识快照。'''
 
   profile:        ContextProfile
   criterion:      CriterionResult
   occurrences:    tuple[ChartOccurrence, ...]
   entries:        tuple[EntryMatch, ...]
   input_json:     str
-  knowledge_json: str
+  knowledge:      KnowledgeBase
 
   def __post_init__(self) -> None:
     _typed(self.profile, ContextProfile)
@@ -256,16 +251,15 @@ class ContextResult:
     _tuple(self.entries, EntryMatch)
     _typed(self.input_json, str)
     _validate_input(self.input_json)
-    knowledge = KnowledgeBase.from_json(self.knowledge_json)
+    _typed(self.knowledge, KnowledgeBase)
     for match in self.entries:
-      knowledge.entry(match.claim_id)
+      self.knowledge.entry(match.claim_id)
 
   def export_json(self) -> str:
-    '''Export the record, evidence and knowledge registries without changing reference eligibility.
-    导出本记录、全部证据及知识注册表，不改变参考输出资格。'''
+    '''导出版本2记录、全部证据及知识注册表，不改变参考输出资格。'''
     data = {
-      'record_version': 1,
-      'profile': {**asdict(self.profile), 'stem_scope': self.profile.stem_scope},
+      'record_version': 2,
+      'profile': asdict(self.profile),
       'criterion': {**asdict(self.criterion), 'observations': dict(self.criterion.observations)},
       'occurrences': [
         {**asdict(value), 'ganzhi': str(value.ganzhi), 'stem': str(value.stem), 'shishen': str(value.shishen),
@@ -274,23 +268,23 @@ class ContextResult:
       ],
       'entries': [asdict(value) for value in self.entries],
       'input': json.loads(self.input_json),
-      'knowledge': json.loads(self.knowledge_json),
+      'knowledge': self.knowledge._export_data(),
     }
     return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
 
   @classmethod
   def from_json(cls, text: str) -> 'ContextResult':
-    '''Restore an exported record without recalculation or cross-record authentication.
-    恢复导出记录，不重算或认证判别、证据、输入与条目绑定间的一致性。'''
+    '''恢复版本2记录，不重算或认证判别、证据、输入与条目绑定间的一致性。
+    版本1记录明确拒绝；需要新格式时应由原输入与配置重新求值。
+    '''
     _typed(text, str)
     data = _mapping(
       json.loads(text, object_pairs_hook=_pairs),
       ('record_version', 'profile', 'criterion', 'occurrences', 'entries', 'input', 'knowledge'),
     )
-    if type(data['record_version']) is not int or data['record_version'] != 1:
+    if type(data['record_version']) is not int or data['record_version'] != 2:
       raise ValueError('Unsupported record version')
-    profile = _mapping(data['profile'], ('observation_scope', 'ganzhi_year', 'stem_scope'))
-    _choice(profile.pop('stem_scope'), ('visible_and_hidden',))
+    profile = _mapping(data['profile'], ('observation_scope', 'ganzhi_year'))
     criterion = _mapping(data['criterion'], tuple(field.name for field in fields(CriterionResult)))
     _typed(criterion['observations'], dict)
     criterion['observations'] = frozendict(criterion['observations'])
@@ -312,16 +306,15 @@ class ContextResult:
       tuple(occurrences),
       entries,
       json.dumps(data['input'], ensure_ascii=False),
-      KnowledgeBase.from_json(json.dumps(data['knowledge'], ensure_ascii=False)).export_json(),
+      KnowledgeBase._from_data(data['knowledge']),
     )
 
   def render(self) -> str:
-    '''Display verdict, evidence, full reference text and source boundaries; a premise verdict is not an event prediction.
-    展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
+    '''展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     lines = [
       f'判据：{criterion.criterion_id}；{criterion.definition}',
-      f'范围：{self.profile.stem_scope}；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
+      f'范围：全部明藏干；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
       f'结构前提：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
@@ -333,10 +326,9 @@ class ContextResult:
         f'{value.layer}；{value.stem}={value.shishen}；'
         f'kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}'
       )
-    knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-      lines.append(knowledge.render(knowledge.entry(match.claim_id), premise_verdict=match.status))
+      lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
     return '\n'.join(lines)
 
 
@@ -375,7 +367,7 @@ def evaluate_context(
   knowledge = KnowledgeBase.load() if knowledge is None else knowledge
   bazi = chart.bazi
 
-  def __occurrences(ganzhi: Ganzhi, pillar: Pillar, index: int, kind: TransitKind | None = None) -> tuple[ChartOccurrence, ...]:
+  def __occurrences(ganzhi: Ganzhi, pillar: Pillar, kind: TransitKind | None = None) -> tuple[ChartOccurrence, ...]:
     origin: Literal['natal', 'transit'] = 'natal' if kind is None else 'transit'
     year = None if kind is None else profile.ganzhi_year
     stems: tuple[tuple[Literal['visible', 'hidden'], Tiangan], ...] = (
@@ -387,7 +379,6 @@ def evaluate_context(
       ChartOccurrence(
         origin,
         pillar,
-        index,
         ganzhi,
         layer,
         stem,
@@ -400,8 +391,8 @@ def evaluate_context(
 
   occurrences = [
     occurrence
-    for index, (pillar, ganzhi) in enumerate(zip(_PILLARS, bazi.pillars, strict=True))
-    for occurrence in __occurrences(ganzhi, pillar, index)
+    for pillar, ganzhi in zip(_PILLARS, bazi.pillars, strict=True)
+    for occurrence in __occurrences(ganzhi, pillar)
   ]
   unavailable: MatchReason | None = None
   if profile.observation_scope == 'natal_and_liunian':
@@ -412,7 +403,7 @@ def evaluate_context(
       if transits is None or transits.liunian is None:
         unavailable = 'transit_unavailable'
       else:
-        occurrences.extend(__occurrences(transits.liunian, 'liunian', 4, TransitKind.LIUNIAN))
+        occurrences.extend(__occurrences(transits.liunian, 'liunian', TransitKind.LIUNIAN))
 
   classes = {value.shishen for value in occurrences}
   coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
@@ -463,5 +454,5 @@ def evaluate_context(
     tuple(occurrences),
     tuple(matches),
     json.dumps(identity, ensure_ascii=False),
-    knowledge.export_json(),
+    knowledge,
   )

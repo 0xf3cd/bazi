@@ -383,7 +383,12 @@ undefined predicates display supplied same-ID entries under `predicate_undefined
 
 Results are immutable. JSON preserves criterion definition, profile,
 complete birth/gender/config identity, year/kind,
-all occurrences and the complete supplied knowledge snapshot. Restoration is
+all occurrences and the complete supplied knowledge snapshot. In memory, results
+share the validated `KnowledgeBase`; evaluation and rendering do not rebuild it.
+Exports use `record_version=2`; version 1 is rejected. Re-evaluate the original
+birth input and configuration to obtain a new record. Occurrence indices are
+derived from pillar positions, and the fixed stem scope is not stored.
+Restoration is
 record recovery, **not recalculation or authentication of a stored verdict**.
 It does not cross-check verdict, evidence, input and entry bindings against each other.
 Location input snapshots retain the same five time fields as chart JSON, including

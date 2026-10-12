@@ -5,6 +5,7 @@
 
 import json
 from dataclasses import asdict, dataclass, fields, is_dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
@@ -286,12 +287,11 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 
 class KnowledgeBase:
-  '''Validate, index, query and export immutable interpretation records.
-  校验、索引、查询并导出不可变解释条目。
+  '''校验、索引、查询并导出不可变解释条目。
 
   Note:
-  - JSON is the editing source; indexes and exports are derived.
   - JSON 为编辑来源；索引与导出由它生成。
+  - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   '''
 
   def __init__(
@@ -353,6 +353,22 @@ class KnowledgeBase:
           index.setdefault((dimension, value), set()).add(entry.claim_id)
     self._index: Final = frozendict({key: frozenset(ids) for key, ids in index.items()})
 
+  @cached_property
+  def _value(self) -> tuple[
+    tuple[KnowledgeObject, ...], tuple[KnowledgeContext, ...],
+    tuple[KnowledgeSource, ...], tuple[KnowledgeEntry, ...],
+  ]:
+    return (
+      tuple(self.objects.values()), tuple(self.contexts.values()),
+      tuple(self.sources.values()), tuple(self.entries.values()),
+    )
+
+  def __eq__(self, other: object) -> bool:
+    return isinstance(other, KnowledgeBase) and self._value == other._value
+
+  def __hash__(self) -> int:
+    return hash(self._value)
+
   @property
   def objects(self) -> frozendict[str, KnowledgeObject]:
     return self._objects
@@ -371,17 +387,20 @@ class KnowledgeBase:
 
   @classmethod
   def from_json(cls, text: str) -> 'KnowledgeBase':
-    '''Load strict JSON, rejecting duplicate keys and dangling references.
-    加载严格 JSON，拒绝重复键、错误字段与断引用。
+    '''加载严格 JSON，拒绝重复键、错误字段与断引用。
 
     Args:
-    - text: (str) UTF-8 JSON text. / UTF-8 JSON 文字。
-    Returns:
-    - (KnowledgeBase) The validated knowledge base. / 校验后的知识库。
+    - text: (str) UTF-8 JSON 文字。
+    Return:
+    - (KnowledgeBase) 校验后的知识库。
     '''
     _text(text)
+    return cls._from_data(json.loads(text, object_pairs_hook=_pairs))
+
+  @classmethod
+  def _from_data(cls, value: Any) -> 'KnowledgeBase':
     data = _mapping(
-      json.loads(text, object_pairs_hook=_pairs),
+      value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
     if type(data['schema_version']) is not int or data['schema_version'] != 1:
@@ -461,9 +480,11 @@ class KnowledgeBase:
     )
 
   def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
-    '''Export a reloadable corpus or selection with all registries preserved.
-    导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
+    '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
     '''
+    return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
+
+  def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
     selected = tuple(self.entries.values()) if entries is None else entries
     _tuple(selected, KnowledgeEntry)
     ids: set[str] = set()
@@ -473,14 +494,13 @@ class KnowledgeBase:
       if entry.claim_id in ids:
         raise ValueError(f'Duplicate selection: {entry.claim_id}')
       ids.add(entry.claim_id)
-    data = {
+    return {
       'schema_version': 1,
       'objects': [asdict(value) for value in self.objects.values()],
       'contexts': [asdict(value) for value in self.contexts.values()],
       'sources': [asdict(value) for value in self.sources.values()],
       'entries': [asdict(value) for value in selected],
     }
-    return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
 
   def render(
     self,

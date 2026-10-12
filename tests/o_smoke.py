@@ -621,6 +621,12 @@ def main() -> int:
   positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian', 2024), include_reference_only=True)
   if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or ContextResult.from_json(positive.export_json()) != positive:
     failures.append('Optimized context evaluation/export/restoration failed')
+  legacy_record = json.loads(positive.export_json())
+  legacy_record['record_version'] = 1
+  checks.extend([
+    ('Legacy context record version', ValueError, partial(ContextResult.from_json, json.dumps(legacy_record))),
+    ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
+  ])
   for label, expected, thunk in checks:
     try:
       thunk()
