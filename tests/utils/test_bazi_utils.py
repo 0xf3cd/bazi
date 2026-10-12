@@ -7,8 +7,7 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from bazi.defines import Ganzhi, Tiangan, Dizhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
-from bazi.calendar import JieqiTime
+from bazi.defines import Ganzhi, Tiangan, Dizhi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from bazi.data_types import TraitTuple, HiddenTianganDict
 from bazi.school import DayRollover
 from bazi.utils import bazi_utils
@@ -71,7 +70,7 @@ def test_ganzhi_of_day_at_moment() -> None:
   ) == Ganzhi.from_str('戊辰')
 
 
-def test_ganzhi_of_year() -> None:
+def test_ganzhi_of_year(rng: random.Random) -> None:
   with pytest.raises(TypeError):
     bazi_utils.ganzhi_of_year('2024') # type: ignore
   with pytest.raises(TypeError):
@@ -86,35 +85,10 @@ def test_ganzhi_of_year() -> None:
   assert bazi_utils.ganzhi_of_year(2123) == Ganzhi.from_str('癸未')
 
   for _ in range(20):
-    random_ganzhi_year: int = random.randint(1000, 9999)
-    another_random_ganzhi_year: int = random.randint(-20, 20) * 60 + random_ganzhi_year
+    random_ganzhi_year: int = rng.randint(1000, 9999)
+    another_random_ganzhi_year: int = rng.randint(-20, 20) * 60 + random_ganzhi_year
     assert (bazi_utils.ganzhi_of_year(another_random_ganzhi_year) ==
             bazi_utils.ganzhi_of_year(random_ganzhi_year))
-
-
-def test_ganzhi_month_conversions() -> None:
-  for month, expected_dizhi in enumerate(_GANZHI_MONTH_DIZHIS, start=1):
-    assert bazi_utils._ganzhi_month_dizhi(month) is expected_dizhi
-    assert bazi_utils._ganzhi_month_offset(expected_dizhi) == month - 1
-    assert bazi_utils._ganzhi_month_dizhi(
-      bazi_utils._ganzhi_month_offset(expected_dizhi) + 1
-    ) is expected_dizhi
-
-
-def test_ganzhi_year_month_of_jie() -> None:
-  jies = (
-    Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种, Jieqi.小暑,
-    Jieqi.立秋, Jieqi.白露, Jieqi.寒露, Jieqi.立冬, Jieqi.大雪, Jieqi.小寒,
-  )
-  for month, jie in enumerate(jies, start=1):
-    solar_year = 2025 if jie is Jieqi.小寒 else 2024
-    assert bazi_utils._ganzhi_year_month_of_jie(
-      JieqiTime(jie, datetime(solar_year, 1, 1))
-    ) == (2024, month)
-  with pytest.raises(AssertionError):
-    bazi_utils._ganzhi_year_month_of_jie(
-      JieqiTime(Jieqi.雨水, datetime(2024, 2, 19))
-    )
 
 
 def test_month_tiangan() -> None:
@@ -287,7 +261,7 @@ def test_nayin_str() -> None:
       if gz in cycle:
         assert len(bazi_utils.nayin_str(gz)) == 3
       else:
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match='Unsupported Ganzhi for Nayin'):
           bazi_utils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
 
 

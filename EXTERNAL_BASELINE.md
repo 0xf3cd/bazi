@@ -34,7 +34,7 @@ geographic coordinates in its ordinary-time mode.
 
 | Source | Recorded configuration | Identity and limits |
 | --- | --- | --- |
-| bazi | CELESTIAL × DAY/HOUR/MINUTE × WAN_ZISHI/ZIZHENG × JIE_PROJECTED/FIXED_DECADE | Commit and table fingerprint are in the fixture; other school fields are explicit |
+| bazi | CELESTIAL × DAY/HOUR/MINUTE × WAN_ZISHI/ZIZHENG × JIE_PROJECTED/FIXED_DECADE | Producer commit, runtime Git tree and table fingerprint are in the fixture; other school fields are explicit |
 | [lunar-python](https://github.com/6tail/lunar-python) | EightChar sect 1/2 × Yun sect 1/2, as separate options | Version 1.4.8; 寿星 lineage |
 | [China95](https://p.china95.net/paipan/bazi/) | Ordinary civil-time calculation, solar correction disabled | Service version and lineage unknown; 交运 displayed to hours |
 | [Iwzwh](https://pcbz.iwzwh.com/) | Captured default with a fixed as-of context | Service version and lineage unknown; absolute 起运 timestamp unavailable |
@@ -48,6 +48,16 @@ dated observations of those configurations, not version-pinned services. The
 acquisition tools, complete forty-input matrix and raw responses are maintained
 separately; this repository contains the admitted subset and its offline tests.
 This report is repository documentation, not an installed package interface.
+
+The top-level `reference` identifies the producer of the bazi snapshots.
+`runtime_tree` is the standard Git tree object ID of that commit's `bazi/` subtree,
+including its files, modes and nested trees. Recompute it in a clone containing
+the producer commit with `git rev-parse <reference.commit>:bazi`.
+It identifies the recorded producer, not the freshness of the current checkout;
+later code changes that reproduce the same snapshots do not change this identity.
+The offline regression tests compare current results without requiring old Git objects
+in a shallow clone. `runtime_tree` replaces the former opaque runtime fingerprint.
+`jieqi_table_sha256` hashes the table bytes with CRLF normalized to LF.
 
 ## Reading differences
 

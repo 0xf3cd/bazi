@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import argparse
+from random import Random, SystemRandom
 from typing import Final, cast
 from collections.abc import Mapping
 
@@ -32,7 +34,7 @@ def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi
 
 def shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
   return [
-    f'{label}：{", ".join(map(colored_str, dz_fs))}'
+    f'{label}：{", ".join(map(colored_str, sorted(dz_fs, key=lambda dz: dz.index)))}'
     for label, dz_fs in _named_shensha(shensha)
     if dz_fs
   ]
@@ -53,7 +55,12 @@ def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
 
 
 if __name__ == '__main__':
-  chart = BaziChart.random()
+  parser = argparse.ArgumentParser(description='Display relationships in a random chart.')
+  parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
+  seed = parser.parse_args().seed
+  seed = SystemRandom().getrandbits(64) if seed is None else seed
+  print(f'random seed: {seed}')
+  chart = BaziChart.random(rng=Random(seed))
   analyzer = RelationshipAnalyzer(chart)
 
   print(get_basic_info(chart))

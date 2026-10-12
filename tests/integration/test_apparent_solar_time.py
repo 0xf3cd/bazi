@@ -110,7 +110,7 @@ def test_create_accepts_offset_iso_but_not_latitude() -> None:
     MINUTE_CONFIG,
     longitude=30,
   )
-  assert bazi._reference_datetime == datetime(2000, 1, 1, 20)
+  assert bazi.reference_datetime == datetime(2000, 1, 1, 20)
   assert bazi.longitude == 30.0
   with pytest.raises(TypeError, match='latitude'):
     Bazi.create( # type: ignore[call-arg]
@@ -153,7 +153,7 @@ def test_jie_attribution_does_not_mix_apparent_and_physical_frames(
 ) -> None:
   bazi = Bazi.create(birth_time, 'male', MINUTE_CONFIG, longitude=longitude)
   jie = datetime(2000, 2, 4, 20, 40, 23)
-  assert (bazi._reference_datetime > jie) is absolute_after
+  assert (bazi.reference_datetime > jie) is absolute_after
   assert (bazi.solar_datetime > jie) is apparent_after
   assert (str(bazi.year_pillar), str(bazi.month_pillar)) == pillars
 

@@ -114,8 +114,8 @@ def test_prev_next_jie_diverge_only_inside_the_moment_window() -> None:
   '''
   `prev_jie`/`next_jie` escape layer (c) by design (see the protocol's carve-out): inside
   the window between the two backends' ideas of when a jie starts, they legitimately name
-  different jie -- and `dayun_start_moment` rides on it.  Both backends answer over the 12
-  节 only, so this pins the shape of that escape for every 节: the window is
+  different jie. DAY birth attribution does not use this physical bracket.
+  Both backends answer over the 12 节 only; for every 节, the window is
   [min(hko_date, true date) midnight, true moment); inside it the backends are exactly one
   节 apart, outside it they agree.  A day-level regression that *narrows* a window turns
   red here; a widening one moves the probes along with it and is caught by the whitelist

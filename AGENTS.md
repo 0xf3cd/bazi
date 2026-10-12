@@ -52,7 +52,7 @@ those, don't restate them here. Two rules the README doesn't spell out:
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
-  - `python -m coverage run --omit='*/__init__.py,*/run_tests.py,*/run_package_checks.py,*/run_demo.py,*/run_relationship_analyzer.py,*/run_interpreter.py,*/tests/*,bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --source=bazi --omit='bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
     then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
     at **100%**. Without the flag the report prints the number and still exits 0, so this
     local loop would not notice a drop; CI never runs this path, it gates inside
@@ -119,11 +119,10 @@ Prefer Chinese aliases in tests/examples (`Tiangan.甲`, `TianganRelation.合`).
 JSON output keeps domain values in Chinese (pillars, gender, …) — its consumers are
 the author and AI assistants downstream.
 
-## Docstrings are bilingual + structured
-English first, then 中文, then `Note` / `Args` / `Return` / `Examples`; types in parens.
-Bilingual is mandatory in knowledge-dense layers (`rules` / `defines` / `utils` /
-`descriptions` — rules, tables, 命理 semantics). Infrastructure layers (`common`,
-`calendar`, `transits` — mechanism code) may be English-only.
+## Docstrings are Chinese-first + structured
+自有 API 说明以中文为主，可保留必要英语辅助；沿用 `Note` / `Args` / `Return` /
+`Examples` 结构，类型放在括号中。知识密集层（`rules` / `defines` / `utils` /
+`knowledge` / `context_matching`——规则、表、命理语义）须有中文说明。既有说明随相关施工对齐，不为语言单独翻修全文。
 
 ## Comment language
 Narrative in English; domain terms and quotations keep their original language

@@ -150,24 +150,20 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
 
 def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRelationCombos:
   '''
-  Find all possible Tiangan combos in the given `tiangans` that satisfy the `relation`.
   返回 `tiangans` 中所有满足该关系的组合。
 
   Note:
-  - The returned combos don't reveal the directions.
-  - For example, if the returned value for SHENG relation is ({甲, 丁},), then we are unable to infer it is 甲 that generates 丁 or 丁 that generates 甲.
-  - For mutual/non-directional relations (e.g. HE and CHONG), that's fine, because we don't care about the direction.
-  - For uni-directional relations, please use other methods in this class to check that (e.g. `.sheng` and `.ke`). 
+  - 只接受 `Sequence`，非序列在遍历前抛出 `TypeError`；空序列合法，重复天干不影响结果。
   - 返回的 combos 中没有体现关系作用的方向。
   - 比如说，如果检查输入天干的相生关系并返回 ({甲, 丁},)，那么不能从返回结果中看出是甲生丁还是丁生甲。
   - 对于无方向的关系来说（合、冲），我们不用关心返回结果中的方向。
   - 对于有方向的关系来说（生、克），请使用其他方法来检查（如 `.sheng` 和 `.ke`）。
 
   Args:
-  - tiangans: (Sequence[Tiangan]) The Tiangans to check.
-  - relation: (TianganRelation) The relation to check.
+  - tiangans: (Sequence[Tiangan]) 待查天干。
+  - relation: (TianganRelation) 待查关系。
 
-  Return: (TianganRelationCombos) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
+  Return: (TianganRelationCombos) 所有匹配组合，不包含作用方向。
 
   Examples:
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.合):
@@ -176,13 +172,15 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
     - return: ({甲, 庚})
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):
     - return: ({甲, 丙}, {甲, 丁})
-    - Note that the returned combos don't contain the direction.
+    - 返回组合不包含方向。
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):
     - return: ({甲, 庚}, {甲, 辛}, {丙, 庚}, {丙, 辛},
                {丁, 庚}, {丁, 辛})
-    - Note that the returned combos don't contain the direction.
+    - 返回组合不包含方向。
   '''
 
+  if not isinstance(tiangans, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(tiangans)}')
   if not isinstance(relation, TianganRelation):
     raise TypeError(f'Expected TianganRelation, got {type(relation)}')
   if not all(isinstance(tg, Tiangan) for tg in tiangans):
@@ -205,22 +203,21 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
-  Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) in the given `tiangans`.
-  This method further invokes `search`.
-
   返回给定天干中所有可能的天干关系组合（合、冲、生、克等）。
   这个方法通过调用 `search` 来实现。
 
   Note:
-  - It is possible that some `TianganRelation`s are not in the returned frozendict as keys.
   - 返回的字典的键中可能不包含所有的 `TianganRelation`。
+  - 只接受 `Sequence`，非序列在遍历前抛出 `TypeError`；空序列合法，重复天干不影响结果。
 
   Args:
-  - tiangans: (Sequence[Tiangan]) The Tiangans to check.
+  - tiangans: (Sequence[Tiangan]) 待查天干。
 
-  Return: (TianganRelationDiscovery) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
+  Return: (TianganRelationDiscovery) 所有匹配组合的冻结映射，不包含作用方向。
   '''
 
+  if not isinstance(tiangans, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(tiangans)}')
   if not all(isinstance(tg, Tiangan) for tg in tiangans):
     raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
   return TianganRelationDiscovery({
@@ -232,22 +229,18 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
 
 def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
-  Discover all possible Tiangan combos (HE, CHONG, SHENG, KE...) among the given `tiangans1` and `tiangans2`.
-  Note that it is required that the Tiangans in a returned combo come from both `tiangans1` and `tiangans2`, which means
-  `tiangans1` and `tiangans2` mutually form the combo.
-
   找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
   注意返回的天干组合中的天干必须同时来自两组 `tiangans1` 和 `tiangans2` 中。
 
   Note:
-  - It is possible that some `TianganRelation`s are not in the returned frozendict as keys.
   - 返回的字典的键中可能不包含所有的 `TianganRelation`。
+  - 两组输入都须为 `Sequence`，在遍历任一组前检查；重复天干不影响结果。
 
   Args:
-  - tiangans1: (Sequence[Tiangan]) The first set of Tiangans to check.
-  - tiangans2: (Sequence[Tiangan]) The second set of Tiangans to check.
+  - tiangans1: (Sequence[Tiangan]) 第一组天干。
+  - tiangans2: (Sequence[Tiangan]) 第二组天干。
 
-  Return: (TianganRelationDiscovery) The result containing all matching Tiangan combos. Note that returned combos don't reveal the directions.
+  Return: (TianganRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。
   
   Examples:
   - discover_mutual([甲], [己])
@@ -256,9 +249,13 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
       TianganRelation.克: TianganRelationCombos({甲, 己},)
     }
   - discover_mutual([甲, 己], [])
-    - return: {} // Empty returned frozendict!
+    - return: {} // 空的冻结映射。
   '''
 
+  if not isinstance(tiangans1, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(tiangans1)}')
+  if not isinstance(tiangans2, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(tiangans2)}')
   if not all(isinstance(tg, Tiangan) for tg in tiangans1):
     raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans1]}')
   if not all(isinstance(tg, Tiangan) for tg in tiangans2):

@@ -52,9 +52,10 @@ def _project_gong(
 
 
 @pytest.mark.slow
-def test_at_birth_shensha() -> None:
+def test_at_birth_shensha(rng: random.Random) -> None:
   for _ in range(100):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     analyzer = RelationshipAnalyzer(chart)
 
     dm: Tiangan = chart.bazi.day_master
@@ -617,9 +618,10 @@ def test_yangren_at_birth_checks_day_and_hour_branches(
 
 
 @pytest.mark.slow
-def test_at_birth_day_master_relations() -> None:
+def test_at_birth_day_master_relations(rng: random.Random) -> None:
   for _ in range(100):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     analyzer = RelationshipAnalyzer(chart)
 
     dm = chart.bazi.day_master
@@ -634,9 +636,10 @@ def test_at_birth_day_master_relations() -> None:
 
 
 @pytest.mark.slow
-def test_at_birth_house_relations() -> None:
+def test_at_birth_house_relations(rng: random.Random) -> None:
   for _ in range(100):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     analyzer = RelationshipAnalyzer(chart)
 
     y, m, d, h = chart.bazi.four_dizhis
@@ -671,9 +674,10 @@ def test_at_birth_house_relations() -> None:
 
 
 @pytest.mark.slow
-def test_at_birth_star_relations() -> None:
+def test_at_birth_star_relations(rng: random.Random) -> None:
   for _ in range(100):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     analyzer = RelationshipAnalyzer(chart)
 
     at_birth = analyzer.at_birth
@@ -730,10 +734,11 @@ def test_at_birth_gong_relations_reach_stars_and_read_school() -> None:
 
 
 @pytest.mark.slow
-def test_filtered() -> None:
+def test_filtered(rng: random.Random) -> None:
   '''Test "star_relations" only contain filtered combos.'''
   for _ in range(16):
-    chart: BaziChart = BaziChart.random()
+    chart: BaziChart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     analyzer: RelationshipAnalyzer = RelationshipAnalyzer(chart)
 
     stars = chart.relationship_stars
@@ -777,17 +782,18 @@ def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
   return transits
 
 
-def _random_year_transits(transit_chart: TransitChart, gz_year: int) -> TransitSet:
+def _random_year_transits(transit_chart: TransitChart, gz_year: int, rng: random.Random) -> TransitSet:
   full_transits = _at_year(transit_chart, gz_year)
   available = tuple(full_transits)
-  selected = random.sample(available, random.randint(1, len(available)))
+  selected = rng.sample(available, rng.randint(1, len(available)))
   return full_transits.select(*selected)
 
 
 @pytest.mark.slow
-def test_transit_shensha() -> None:
+def test_transit_shensha(rng: random.Random) -> None:
   for _ in range(32):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     transit_chart = TransitChart(chart)
 
     y_dz = chart.bazi.year_pillar.dizhi
@@ -811,8 +817,8 @@ def test_transit_shensha() -> None:
     transits_analysis = analyzer.transits
 
     for __ in range(128):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
 
       transit_dz = tuple(gz.dizhi for gz in transits.ganzhis)
       actual = transits_analysis.shensha(transits)
@@ -1243,16 +1249,17 @@ def test_jinyu_deduplicates_shared_target_and_empty_result() -> None:
 
 
 @pytest.mark.slow
-def test_transit_day_master_relations() -> None:
+def test_transit_day_master_relations(rng: random.Random) -> None:
   for _ in range(32):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     transit_chart = TransitChart(chart)
     analyzer = RelationshipAnalyzer(chart)
     transits_analysis = analyzer.transits
 
     for __ in range(128):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
 
       transit_tg = tuple(gz.tiangan for gz in transits.ganzhis)
       expected = tiangan_utils.discover_mutual([chart.bazi.day_master], transit_tg)
@@ -1262,9 +1269,10 @@ def test_transit_day_master_relations() -> None:
 
 
 @pytest.mark.slow
-def test_transit_house_relations() -> None:
+def test_transit_house_relations(rng: random.Random) -> None:
   for _ in range(32):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     house = chart.house_of_relationship
     bazi = chart.bazi
     transit_chart = TransitChart(chart)
@@ -1272,8 +1280,8 @@ def test_transit_house_relations() -> None:
     transits_analysis = analyzer.transits
 
     for __ in range(128):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
 
       transit_dz = [gz.dizhi for gz in transits.ganzhis]
 
@@ -1400,9 +1408,10 @@ def test_transit_gong_relations_reach_stars() -> None:
 
 
 @pytest.mark.slow
-def test_transit_star_relations() -> None:
+def test_transit_star_relations(rng: random.Random) -> None:
   for _ in range(32):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     stars = chart.relationship_stars
 
     transit_chart = TransitChart(chart)
@@ -1410,9 +1419,9 @@ def test_transit_star_relations() -> None:
     transits_analysis = analyzer.transits
 
     for __ in range(64):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
-      random_level = random.choice([
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
+      random_level = rng.choice([
         TransitAnalysis.Level.TRANSITS_ONLY,
         TransitAnalysis.Level.MUTUAL,
         TransitAnalysis.Level.ALL
@@ -1478,16 +1487,17 @@ def test_transit_star_relations() -> None:
 
 
 @pytest.mark.slow
-def test_zhengyin() -> None:
+def test_zhengyin(rng: random.Random) -> None:
   for _ in range(32):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     transit_chart = TransitChart(chart)
     analyzer = RelationshipAnalyzer(chart)
     transits_analysis = analyzer.transits
 
     for __ in range(128):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
 
       expected_tg: bool = False
       expected_dz: bool = False
@@ -1503,16 +1513,17 @@ def test_zhengyin() -> None:
 
 
 @pytest.mark.slow
-def test_star() -> None:
+def test_star(rng: random.Random) -> None:
   for _ in range(16):
-    chart = BaziChart.random()
+    chart = BaziChart.random(rng=rng)
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     transit_chart = TransitChart(chart)
     analyzer = RelationshipAnalyzer(chart)
     transits_analysis = analyzer.transits
 
     for __ in range(64):
-      random_year = chart.bazi.ganzhi_year + random.randint(0, 100)
-      transits = _random_year_transits(transit_chart, random_year)
+      random_year = chart.bazi.ganzhi_year + rng.randint(0, 100)
+      transits = _random_year_transits(transit_chart, random_year, rng)
 
       expected_tg: bool = False
       expected_dz: bool = False
@@ -1527,8 +1538,8 @@ def test_star() -> None:
       assert expected_dz == actual.dizhi
 
 
-def test_transit_analysis_negative() -> None:
-  chart = BaziChart.random()
+def test_transit_analysis_negative(rng: random.Random) -> None:
+  chart = BaziChart.random(rng=rng)
   transits_analysis = RelationshipAnalyzer(chart).transits
 
   for analysis in (transits_analysis.shensha, transits_analysis.day_master_relations,

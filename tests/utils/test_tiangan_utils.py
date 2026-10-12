@@ -156,7 +156,7 @@ def test_search_negative() -> None:
 
 
 @pytest.mark.slow
-def test_search_correctness() -> None:
+def test_search_correctness(rng: random.Random) -> None:
   # Generate the expected relation combos/pairs, which are used later in this test.
   expected_he:    set[TianganCombo] = set()
   expected_chong: set[TianganCombo] = set()
@@ -194,7 +194,7 @@ def test_search_correctness() -> None:
     return result
 
   for _ in range(512):
-    tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+    tiangans: list[Tiangan] = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
 
     for combo_fs in tiangan_utils.search(tiangans, TianganRelation.合):
       assert len(combo_fs) == 2
@@ -224,7 +224,7 @@ def test_search_correctness() -> None:
       assert wx1.destructs(wx2) or wx2.destructs(wx1)
 
   for relation in TianganRelation:
-    tiangans = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+    tiangans = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
     combos1: TianganRelationCombos = tiangan_utils.search(tiangans, relation)
     combos2: TianganRelationCombos = tiangan_utils.search(tiangans + tiangans, relation)
     assert len(combos1) == len(combos2)
@@ -319,10 +319,10 @@ def test_ke() -> None:
 
 
 @pytest.mark.slow
-def test_discover() -> None:
+def test_discover(rng: random.Random) -> None:
   for _ in range(512):
-    tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))) + \
-                              random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+    tiangans: list[Tiangan] = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan))) + \
+                              rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
     discovery: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
 
     # correctness
@@ -343,15 +343,15 @@ def test_discover_negative() -> None:
 
 
 @pytest.mark.slow
-def test_discover_mutual() -> None:
+def test_discover_mutual(rng: random.Random) -> None:
   def __random_tg_lists() -> tuple[list[Tiangan], list[Tiangan]]:
-    tiangans1: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
-    tiangans2: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+    tiangans1: list[Tiangan] = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
+    tiangans2: list[Tiangan] = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
 
-    if random.randint(0, 2) == 0:
-      tiangans1.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
-    if random.randint(0, 2) == 0:
-      tiangans2.extend(random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))))
+    if rng.randint(0, 2) == 0:
+      tiangans1.extend(rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan))))
+    if rng.randint(0, 2) == 0:
+      tiangans2.extend(rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan))))
 
     return tiangans1, tiangans2
 
@@ -404,11 +404,11 @@ def test_discover_mutual_negative() -> None:
 
 
 @pytest.mark.slow
-def test_results_matched() -> None:
+def test_results_matched(rng: random.Random) -> None:
   '''Test that the results of different methods are the same.'''
   for _ in range(512):
-    tiangans: list[Tiangan] = random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan))) + \
-                              random.sample(Tiangan.as_list(), random.randint(0, len(Tiangan)))
+    tiangans: list[Tiangan] = rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan))) + \
+                              rng.sample(Tiangan.as_list(), rng.randint(0, len(Tiangan)))
     discovery: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
 
     # HE / 合 -- Non-directional relation
@@ -441,7 +441,7 @@ def test_results_matched() -> None:
         assert r1 or r2
         assert not (r1 and r2)
 
-    tiangans_part1: set[Tiangan] = set(random.sample(tiangans, random.randint(0, len(tiangans))))
+    tiangans_part1: set[Tiangan] = set(rng.sample(tiangans, rng.randint(0, len(tiangans))))
     tiangans_part2: set[Tiangan] = set(tiangans) - tiangans_part1
     mutual_discovery: TianganRelationDiscovery = tiangan_utils.discover_mutual(list(tiangans_part1), list(tiangans_part2))
 
@@ -470,15 +470,15 @@ def test_results_matched() -> None:
         assert len(actual) == 0
 
 
-def test_discovery_filter() -> None:
+def test_discovery_filter(rng: random.Random) -> None:
   for _ in range(5):
-    tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+    tiangans: list[Tiangan] = rng.sample(list(Tiangan), rng.randint(0, len(Tiangan)))
     discovery: TianganRelationDiscovery = tiangan_utils.discover(tiangans)
 
     assert discovery == discovery.filter(lambda rel, combo : True)
 
-    forbidden_tiangans: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
-    forbidden_relations: list[TianganRelation] = random.sample(list(TianganRelation), random.randint(0, len(TianganRelation)))
+    forbidden_tiangans: list[Tiangan] = rng.sample(list(Tiangan), rng.randint(0, len(Tiangan)))
+    forbidden_relations: list[TianganRelation] = rng.sample(list(TianganRelation), rng.randint(0, len(TianganRelation)))
 
     def filter_func(rel: TianganRelation, combo: TianganCombo) -> bool:
       if rel in forbidden_relations:
@@ -496,12 +496,12 @@ def test_discovery_filter() -> None:
         assert combo in discovery[rel]
 
 
-def test_discovery_merge() -> None:
+def test_discovery_merge(rng: random.Random) -> None:
   for _ in range(3):
-    tiangans1: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+    tiangans1: list[Tiangan] = rng.sample(list(Tiangan), rng.randint(0, len(Tiangan)))
     discovery1: TianganRelationDiscovery = tiangan_utils.discover(tiangans1)
 
-    tiangans2: list[Tiangan] = random.sample(list(Tiangan), random.randint(0, len(Tiangan)))
+    tiangans2: list[Tiangan] = rng.sample(list(Tiangan), rng.randint(0, len(Tiangan)))
     discovery2: TianganRelationDiscovery = tiangan_utils.discover(tiangans2)
 
     merged = discovery1.merge(discovery2)

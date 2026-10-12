@@ -46,7 +46,7 @@ def test_basic() -> None:
     BaziChart(date(2024, 1, 1))  # type: ignore
 
 
-def test_malicious() -> None:
+def test_malicious(rng: random.Random) -> None:
   # Modification attempt
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 2, 4, 2),
@@ -59,7 +59,7 @@ def test_malicious() -> None:
   assert bazi._day_pillar == Ganzhi.from_str('甲子')
 
   with pytest.raises(AttributeError):
-    BaziChart(Bazi.random()).bazi = Bazi.random()  # type: ignore
+    BaziChart(Bazi.random(rng=rng)).bazi = Bazi.random(rng=rng)  # type: ignore
 
   # Invalid __init__ parameters
   with pytest.raises(TypeError):
@@ -68,16 +68,18 @@ def test_malicious() -> None:
     BaziChart(datetime(1984, 4, 2, 4, 2), BaziGender.男, BaziPrecision.DAY) # type: ignore
 
 
-def test_house_of_relationship() -> None:
+def test_house_of_relationship(rng: random.Random) -> None:
   for _ in range(5):
-    bazi = Bazi.random()
+    bazi = Bazi.random(rng=rng)
+    print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
     chart = BaziChart(bazi)
     assert chart.house_of_relationship == bazi.four_dizhis[2]
 
 
-def test_relationship_stars() -> None:
+def test_relationship_stars(rng: random.Random) -> None:
   for _ in range(5):
-    bazi = Bazi.random()
+    bazi = Bazi.random(rng=rng)
+    print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
     chart = BaziChart(bazi)
     stars = chart.relationship_stars
 
@@ -207,12 +209,13 @@ def test_shier_zhangsheng() -> None:
 
 
 @pytest.mark.slow
-def test_basic_info_correctness() -> None:
+def test_basic_info_correctness(rng: random.Random) -> None:
   '''
   Test that the results provided by `traits`, `hidden_tiangans`, and `shishens` are correct.
   '''
   for _ in range(128):
-    chart: BaziChart = BaziChart(Bazi.random())
+    chart: BaziChart = BaziChart(Bazi.random(rng=rng))
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
 
     day_master: Tiangan = chart.bazi.day_master
     pillars: list[Ganzhi] = list(chart.bazi.pillars)
@@ -246,9 +249,10 @@ def test_basic_info_correctness() -> None:
       assert tg_traits == bazi_utils.tiangan_traits(pillar.tiangan)
 
 
-def test_dayun_sexagenary_cycle() -> None:
+def test_dayun_sexagenary_cycle(rng: random.Random) -> None:
   for _ in range(10):
-    random_bazi: Bazi = Bazi.random()
+    random_bazi: Bazi = Bazi.random(rng=rng)
+    print(f'birth={random_bazi.solar_datetime.isoformat()} gender={random_bazi.gender}')
     chart: BaziChart = BaziChart(random_bazi)
 
     dayuns: tuple[DayunTuple, ...] = tuple(chart.dayun)
@@ -259,9 +263,10 @@ def test_dayun_sexagenary_cycle() -> None:
     assert len({dayun.ganzhi for dayun in dayuns}) == len(dayuns)
 
 
-def test_dayun_order() -> None:
+def test_dayun_order(rng: random.Random) -> None:
   for _ in range(10):
-    random_bazi: Bazi = Bazi.random()
+    random_bazi: Bazi = Bazi.random(rng=rng)
+    print(f'birth={random_bazi.solar_datetime.isoformat()} gender={random_bazi.gender}')
 
     month_gz: Ganzhi = random_bazi.month_pillar
     year_dz_yinyaang: Yinyang = bazi_utils.dizhi_traits(random_bazi.year_pillar.dizhi).yinyang
@@ -311,34 +316,23 @@ def test_dayun_start_moment() -> None:
 
 
 def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
-  '''
-  The dayun consequence of the DAY trade-off pinned in `test_bazi`: a 00:00 birth on the
-  jieqi's civil day still sits in 小寒 at moment level, so the forward count walks the
-  whole way to 立春 and the first dayun starts in 2000.  The 22:01 golden in
-  `test_dayun_start_moment` is the same-day sibling past the true moment -- same
-  year/month/day pillars, but its bracketing starts at 立春 itself and the count walks on
-  to 惊蛰, landing in 2009.
-  '''
+  '''DAY forward counting reaches 惊蛰; reverse counting before the true moment clamps to zero.'''
   delta: timedelta = timedelta(seconds=1)
 
   chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 0, 0), BaziGender.MALE))
   assert chart.dayun_start_moment == pytest.approx(
-    datetime(2000, 5, 18, 19, 13, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
+    datetime(2010, 4, 16, 13, 49, 5), # (惊蛰 03-05 14:42:39 - birth) * 365 / 3.
     abs=delta,
   )
-  assert next(chart.dayun).ganzhi_year == 2000
+  assert next(chart.dayun).ganzhi_year == 2010
+  reverse = BaziChart(Bazi.create('2000-02-04 00:00', 'female'))
+  assert reverse.dayun_start_moment == datetime(2000, 2, 4)
+  assert next(reverse.dayun).ganzhi_year == 2000
+  assert len(reverse.xiaoyun) == 1
 
 
 def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
-  '''
-  Same birth, same four pillars, different dayun start. celestial keeps moment-level jieqi
-  (the DAY trade-off pinned in `test_bazi`): the 10:00 birth still sits in 小寒, the count
-  walks to 立春, and the dayun starts in 2000. HKO places every jieqi at midnight, so the
-  same birth falls right after 立春@00:00 and the count walks to 惊蛰 -- the dayun starts
-  in 2009, ~9.7 years later. The divergence is the HKO table's documented midnight-window
-  behavior, pinned as-is; the HKO assertion doubles as the first absolute-moment golden
-  on the HKO side.
-  '''
+  '''Celestial and HKO share 立春/惊蛰 ownership; HKO's midnight placeholder changes the start.'''
   delta: timedelta = timedelta(seconds=1)
 
   cel: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE,
@@ -351,14 +345,14 @@ def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
   assert list(hko.bazi.pillars) == list(cel.bazi.pillars)
 
   assert cel.dayun_start_moment == pytest.approx(
-    datetime(2000, 3, 29, 12, 33, 18, 333333), # Float tail written out; the 1s tolerance is re-bake headroom.
+    datetime(2010, 2, 25, 7, 9, 5),
     abs=delta,
   )
   assert hko.dayun_start_moment == pytest.approx(
     datetime(2009, 12, 12, 17, 20),
     abs=delta,
   )
-  assert next(cel.dayun).ganzhi_year == 2000
+  assert next(cel.dayun).ganzhi_year == 2010
   assert next(hko.dayun).ganzhi_year == 2009
 
 
@@ -382,7 +376,7 @@ def test_dayun_ganzhi() -> None:
   assert next(bazi3_dayun_gen).ganzhi == Ganzhi.from_str('甲子')
 
 
-def test_dayun_ganzhi_year() -> None:
+def test_dayun_ganzhi_year(rng: random.Random) -> None:
   bazi1: Bazi = Bazi.create(datetime(2000, 2, 4, 22, 1), BaziGender.MALE)
   first_dayun1: DayunTuple = next(BaziChart(bazi1).dayun)
   assert first_dayun1.ganzhi_year == 2009
@@ -397,7 +391,8 @@ def test_dayun_ganzhi_year() -> None:
   assert first_dayun3.ganzhi_year == 1993
 
   for _ in range(10):
-    random_bazi: Bazi = Bazi.random()
+    random_bazi: Bazi = Bazi.random(rng=rng)
+    print(f'birth={random_bazi.solar_datetime.isoformat()} gender={random_bazi.gender}')
     dayuns: list[DayunTuple] = list(itertools.islice(BaziChart(random_bazi).dayun, 10))
     for dayun1, dayun2 in itertools.pairwise(dayuns):
       assert dayun2.ganzhi_year - dayun1.ganzhi_year in (9, 10, 11)
@@ -445,25 +440,21 @@ def test_dayun_leap_day_boundaries_are_recomputed_from_the_first() -> None:
 
 
 def test_dayun_year_labels_match_lichun_oracle() -> None:
-  old_random_state = random.getstate()
-  random.seed(132)
-  try:
-    for _ in range(500):
-      chart = BaziChart(Bazi.random())
-      utils = calendar_utils_of(chart.bazi.config.backend)
+  rng = random.Random(132)
+  for _ in range(500):
+    chart = BaziChart(Bazi.random(rng=rng))
+    utils = calendar_utils_of(chart.bazi.config.backend)
 
-      dayuns = list(itertools.islice(chart.dayun, 12))
-      assert len(dayuns) == 12
-      for index, dayun in enumerate(dayuns):
-        expected_year = dayun.start_moment.year
-        if dayun.start_moment < utils.jieqi_moment(expected_year, Jieqi.立春):
-          expected_year -= 1
-        if index == 0:
-          expected_year = max(expected_year, chart.bazi.ganzhi_year)
+    dayuns = list(itertools.islice(chart.dayun, 12))
+    assert len(dayuns) == 12
+    for index, dayun in enumerate(dayuns):
+      expected_year = dayun.start_moment.year
+      if dayun.start_moment < utils.jieqi_moment(expected_year, Jieqi.立春):
+        expected_year -= 1
+      if index == 0:
+        expected_year = max(expected_year, chart.bazi.ganzhi_year)
 
-        assert dayun.ganzhi_year == expected_year
-  finally:
-    random.setstate(old_random_state)
+      assert dayun.ganzhi_year == expected_year, (132, chart.bazi.solar_datetime, chart.bazi.gender)
 
 
 def test_dayun_year_rules_share_one_physical_timeline() -> None:
@@ -537,10 +528,11 @@ def test_xiaoyun() -> None:
             '辛卯 壬辰')
 
 
-def test_liunian() -> None:
+def test_liunian(rng: random.Random) -> None:
   cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
   for _ in range(16):
-    random_bazi: Bazi = Bazi.random()
+    random_bazi: Bazi = Bazi.random(rng=rng)
+    print(f'birth={random_bazi.solar_datetime.isoformat()} gender={random_bazi.gender}')
     chart: BaziChart = BaziChart(random_bazi)
     for year, ganzhi in itertools.islice(chart.liunian, 80):
       expected_ganzhi: Ganzhi = cycle[(year - 1924) % 60] # 1924 is a year of "甲子"
@@ -553,10 +545,11 @@ def test_liunian() -> None:
 
 
 @pytest.mark.slow
-def test_consistency() -> None:
+def test_consistency(rng: random.Random) -> None:
   '''Ensure every run gives the consistent results...'''
   for _ in range(64):
-    random_bazi: Bazi = Bazi.random()
+    random_bazi: Bazi = Bazi.random(rng=rng)
+    print(f'birth={random_bazi.solar_datetime.isoformat()} gender={random_bazi.gender}')
     expected: BaziChart = BaziChart(random_bazi)
 
     for __ in range(5):
@@ -580,14 +573,16 @@ def test_consistency() -> None:
 
 
 @pytest.mark.slow
-def test_json() -> None:
+def test_json(rng: random.Random) -> None:
   for _ in range(32):
     chart: BaziChart = BaziChart.random(
       BaziConfig(
-        precision=random.choice(list(BaziPrecision)),
-        dayun_year_rule=random.choice(list(DayunYearRule)),
+        precision=rng.choice(list(BaziPrecision)),
+        dayun_year_rule=rng.choice(list(DayunYearRule)),
       ),
+      rng=rng,
     )
+    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
     dt: datetime = chart.bazi.solar_datetime
 
     j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
@@ -932,15 +927,37 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
 
 
 @pytest.mark.parametrize('config', [None, False, 'day', {}])
-def test_random_rejects_wrong_config(config: object) -> None:
+def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
-    BaziChart.random(config) # type: ignore
+    BaziChart.random(config, rng=rng) # type: ignore
 
 
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
-def test_random_rejects_unsupported_config(precision: BaziPrecision) -> None:
+def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
   with pytest.raises(ValueError, match='HKO'):
-    BaziChart.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO))
+    BaziChart.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO), rng=rng)
+
+
+@pytest.mark.parametrize('cls', [BaziChart, _ChartSubclass])
+def test_random_local_source_replays_without_changing_global_state(cls: type[BaziChart]) -> None:
+  state = random.getstate()
+  config = BaziConfig.from_values(precision='minute', dayun_year_rule='fixed_decade')
+  first = random.Random(42)
+  second = random.Random(42)
+  for _ in range(3):
+    chart = cls.random(config, rng=first)
+    expected = Bazi.random(config, rng=second)
+    assert isinstance(chart, cls)
+    assert chart.bazi == expected
+    assert chart.bazi.config == config
+  assert random.getstate() == state
+
+
+@pytest.mark.parametrize('bad', [False, 42, 'seed', object()])
+def test_random_rejects_wrong_rng(bad: object) -> None:
+  for factory in (Bazi.random, BaziChart.random):
+    with pytest.raises(TypeError, match='Expected Random'):
+      factory(rng=bad) # type: ignore[arg-type]
 
 
 def test_json_correctness() -> None:
@@ -1021,8 +1038,8 @@ def test_json_correctness() -> None:
   assert datetime.fromisoformat(first_dayun['start_time']) < datetime.fromisoformat(first_dayun['end_time'])
 
 
-def test_deepcopy() -> None:
-  chart: BaziChart = BaziChart(Bazi.random())
+def test_deepcopy(rng: random.Random) -> None:
+  chart: BaziChart = BaziChart(Bazi.random(rng=rng))
 
   chart2: BaziChart = copy.deepcopy(chart)
 
@@ -1030,14 +1047,14 @@ def test_deepcopy() -> None:
   assert chart._bazi is not chart2._bazi
 
   old_bazi: Bazi = chart._bazi
-  chart._bazi = BaziChart(Bazi.random())._bazi # type: ignore
+  chart._bazi = BaziChart(Bazi.random(rng=rng))._bazi # type: ignore
 
   assert chart.bazi is not old_bazi
   assert chart._bazi is not old_bazi
 
 
 # HOUR / MINUTE charts (issue #6): the dayun counting and the birth-side year consume the
-# same attribution source as the pillars (`Bazi.bracketing_jies` / `Bazi.ganzhi_year`), so
+# same attribution source as the pillars (`Bazi.month_jies` / `Bazi.ganzhi_year`), so
 # a chart cannot contradict itself about which jie owns the birth month.
 
 

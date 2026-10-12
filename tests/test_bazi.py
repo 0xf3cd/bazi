@@ -62,15 +62,37 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
 
 
 @pytest.mark.parametrize('config', [None, False, 'day', {}])
-def test_random_rejects_wrong_config(config: object) -> None:
+def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
-    Bazi.random(config) # type: ignore
+    Bazi.random(config, rng=rng) # type: ignore
 
 
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
-def test_random_rejects_unsupported_config(precision: BaziPrecision) -> None:
+def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
   with pytest.raises(ValueError, match='HKO'):
-    Bazi.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO))
+    Bazi.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO), rng=rng)
+
+
+def test_random_default_retains_global_seed_draw_order() -> None:
+  state = random.getstate()
+  try:
+    random.seed(42)
+    source = random.Random(42)
+    for _ in range(3):
+      expected = Bazi.create(
+        datetime(
+          source.randint(1902, 2080),
+          source.randint(1, 12),
+          source.randint(1, 28),
+          source.randint(0, 23),
+          source.randint(0, 59),
+        ),
+        source.choice(list(BaziGender)),
+      )
+      assert Bazi.random() == expected
+      assert random.getstate() == source.getstate()
+  finally:
+    random.setstate(state)
 
 
 @pytest.mark.parametrize('backend', ('hko', 'celestial'))
@@ -98,24 +120,17 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   assert bazi.month_commander == month_dizhi
 
 
-def test_day_precision_bracketing_jies_stay_moment_level() -> None:
-  '''
-  The bracketing half of the DAY trade-off (`Bazi.bracketing_jies` docstring): on a jieqi's
-  day the pillars compare dates -- the whole day falls on the new side -- while
-  `bracketing_jies` keeps the moment-level `prev_jie` / `next_jie`, so before the jie's true
-  moment the birth is still owned by the OLD jie. `BaziChart`'s dayun counting consumes
-  `bracketing_jies`, so the two readings legitimately disagree -- this is the pin
-  `Bazi.bracketing_jies`' docstring points at.
-  '''
+def test_day_precision_month_jies_share_month_attribution() -> None:
   # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
   bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male')
   # ...yet the pillars already read the new year and month (day-level attribution).
   assert str(bazi.year_pillar) == '庚辰'
   assert str(bazi.month_pillar) == '戊寅'
-  # The bracketing jies stay moment-level: the old 小寒 still owns the birth.
-  owning, following = bazi.bracketing_jies
-  assert owning == JieqiTime(Jieqi.小寒, datetime(2000, 1, 6, 9, 0, 41))
-  assert following == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
+  # DAY counting starts at the same 立春 that opened the month pillar.
+  owning, following = bazi.month_jies
+  assert owning == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23))
+  assert following == JieqiTime(Jieqi.惊蛰, datetime(2000, 3, 5, 14, 42, 39))
+  assert owning.moment > bazi.solar_datetime
   assert following.moment > bazi.solar_datetime
 
 
@@ -270,11 +285,11 @@ def test_hko_backend_rejected() -> None:
   assert str(Bazi.create('2000-02-04 19:30', 'male', BaziConfig.from_values(backend='hko')).year_pillar) == '庚辰'
 
 
-def test_ganzhi_year_and_bracketing_jies_are_the_attribution() -> None:
-  '''`ganzhi_year` / `bracketing_jies` expose exactly what the pillars were derived from.'''
+def test_ganzhi_year_and_month_jies_are_the_attribution() -> None:
+  '''`ganzhi_year` / `month_jies` expose exactly what the pillars were derived from.'''
   bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', BaziConfig.from_values(precision='hour'))
   assert bazi.ganzhi_year == 2009
-  owning, following = bazi.bracketing_jies
+  owning, following = bazi.month_jies
   assert owning == JieqiTime(Jieqi.立春, datetime(2009, 2, 4, 0, 49, 48))
   assert following.jieqi == Jieqi.惊蛰
   # The owning jie's true moment lies AFTER the birth -- that is what a tie looks like.
@@ -384,7 +399,7 @@ def test_minute_vs_moment_level_prev_jie() -> None:
 
     bazi: Bazi = Bazi(birth, BaziGender.男, BaziConfig(precision=BaziPrecision.MINUTE))
     moment_owning: JieqiTime = utils.prev_jie(birth)
-    attribution_owning: JieqiTime = bazi.bracketing_jies[0]
+    attribution_owning: JieqiTime = bazi.month_jies[0]
 
     if attribution_owning != moment_owning:
       disagree += 1
@@ -397,15 +412,15 @@ def test_minute_vs_moment_level_prev_jie() -> None:
   assert disagree > 0 # At seed 72 the ties number in the hundreds.
 
 
-def test_init() -> None:
+def test_init(rng: random.Random) -> None:
   for _ in range(128):
     random_dt: datetime = datetime(
-      year=random.randint(1950, 2000),
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59)
+      year=rng.randint(1950, 2000),
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59)
     )
 
     bazi: Bazi = Bazi(
@@ -420,17 +435,17 @@ def test_init() -> None:
     assert bazi.config.precision == BaziPrecision.DAY
 
 
-def test_chinese() -> None:
+def test_chinese(rng: random.Random) -> None:
   assert Bazi is 八字
 
   for _ in range(128):
     random_dt: datetime = datetime(
-      year=random.randint(1950, 2000),
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59)
+      year=rng.randint(1950, 2000),
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59)
     )
 
     bazi: 八字 = 八字(
@@ -445,14 +460,14 @@ def test_chinese() -> None:
     assert bazi.config.precision == BaziPrecision.DAY
 
 
-def test_invalid_arguments() -> None:
+def test_invalid_arguments(rng: random.Random) -> None:
   random_dt: datetime = datetime(
-    year=random.randint(1950, 2000),
-    month=random.randint(1, 12),
-    day=random.randint(1, 28),
-    hour=random.randint(0, 23),
-    minute=random.randint(0, 59),
-    second=random.randint(0, 59)
+    year=rng.randint(1950, 2000),
+    month=rng.randint(1, 12),
+    day=rng.randint(1, 28),
+    hour=rng.randint(0, 23),
+    minute=rng.randint(0, 59),
+    second=rng.randint(0, 59)
   )
 
   with pytest.raises(TypeError):
@@ -470,11 +485,11 @@ def test_invalid_arguments() -> None:
   with pytest.raises(ValueError):
     dt: datetime = datetime(
       year=9999, # Out of supported range.
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59)
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59)
     )
     Bazi(birth_time=dt, gender=BaziGender.男)
   with pytest.raises(ValueError):
@@ -554,7 +569,7 @@ def test_four_tiangans_correctness() -> None:
   __check(datetime(2001, 10, 20, 19, 0), ['辛', '戊', '丙', '戊'])
 
 
-def test_ganzhi_date() -> None:
+def test_ganzhi_date(rng: random.Random) -> None:
   # The oracle must follow the chart's own backend: `ganzhi_date` is the day-level label
   # through `Bazi`'s resolved calendar utils. The two backends legitimately diverge inside
   # the 1917/1927 jieqi-shift windows (pinned by the parity whitelist), so an oracle bound
@@ -563,18 +578,19 @@ def test_ganzhi_date() -> None:
   assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(date(1984, 4, 2))
 
   for _ in range(10):
-    bazi = Bazi.random()
+    bazi = Bazi.random(rng=rng)
+    print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
     assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(bazi.solar_date)
 
 
-def test_date_time() -> None:
+def test_date_time(rng: random.Random) -> None:
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
   assert bazi.solar_date == date(1984, 4, 2)
   assert bazi.hour == 4
   assert bazi.minute == 2
   assert bazi.solar_datetime == datetime(1984, 4, 2, 4, 2)
 
-  random_bazi: Bazi = Bazi.random()
+  random_bazi: Bazi = Bazi.random(rng=rng)
   with pytest.raises(AttributeError):
     random_bazi.solar_date = date(1984, 4, 3) # type: ignore
   with pytest.raises(AttributeError):
@@ -716,16 +732,16 @@ def test_supported_date_window_edges() -> None:
   assert Bazi.create(datetime(2099, 12, 31, 12), 'male').solar_date == date(2099, 12, 31)
 
 
-def test_eq_ne() -> None:
+def test_eq_ne(rng: random.Random) -> None:
   def __random_info() -> tuple[datetime, BaziGender]:
     return (datetime(
-      year=random.randint(1950, 2000),
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59)
-    ), random.choice(list(BaziGender)))
+      year=rng.randint(1950, 2000),
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59)
+    ), rng.choice(list(BaziGender)))
 
   def __toggle_gender(g: BaziGender) -> BaziGender:
     return BaziGender.MALE if g is BaziGender.FEMALE else BaziGender.FEMALE

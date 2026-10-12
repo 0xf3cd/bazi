@@ -15,7 +15,7 @@ README at its matching release tag.
 - Transits: precise 大运 intervals, 小运 and 流年, with year/month/date/moment queries.
 - Relations and 神煞: at-birth and transit analysis, including configurable rule variants.
 - Interpretation knowledge: editable JSON, validated references, object/context/topic/source
-  queries, premise and source display, and reloadable exports. Legacy 天干 / 十神 lookups remain available.
+  queries, premise and source display, and reloadable exports through `KnowledgeBase`.
 - Source-checkout demos: random charts, transit tables, relationship analysis and
   description display/export. The Interpreter runner also accepts fixed birth inputs.
 
@@ -112,27 +112,62 @@ Defaults are `CELESTIAL` with day precision. `hko` provides date-level calendar 
 and supported date ranges are documented in the calendar modules; selecting a backend
 does not install its offline generator.
 
+### 出生归属与时间读取
+
+年/月柱与大运数节共用出生精度归属：DAY 的整个交节日归新，HOUR 按时辰、MINUTE 按分钟
+相等归新。`Bazi.month_jies` 返回出生月所属开月节及其下一节，保留后端原始时刻。
+提前归属时，开月节可以在出生之后；逆排数节的负间隔钳零，首运年标签不早于出生干支年。
+HKO 仍采用午夜节时刻，地点 DAY、地点 ALGO2 仍不支持。
+
+例如默认盘输入 `2000-02-04 10:00`，年/月柱为庚辰/戊寅，所属节为立春
+`2000-02-04T20:40:23`，下一节为惊蛰 `2000-03-05T14:42:39`。男性顺排起运为
+`2010-02-25T07:09:05`；女性逆排钳在出生时刻 `2000-02-04T10:00:00`。
+旧版 DAY 在真实交节前数向旧节的例外已删除，派生起运、小运及大运 JSON 因此可能改变。
+`BaziChart.from_json` 按当前版本重算并核对完整记录；迁移旧记录时须从原出生输入重新建盘，
+不能把旧派生值视作跨版本兼容记录。
+
+```python
+from bazi.calendar.dates import GanzhiYearMonth
+
+assert chart.bazi.ganzhi_year_month == GanzhiYearMonth(1999, 11)
+reference = located.reference_datetime
+facts = located.location_time
+assert facts is not None
+print(facts.canonical_instant, facts.civil_time, facts.apparent_time)
+print(located.solar_datetime, reference)
+```
+
+`GanzhiYearMonth` 是可排序的不可变干支年月坐标，月序为 1（寅）至 12（丑），不带归属粒度
+或历法支持窗口；`from_dizhi` 接月支，`from_jie` 接真实开月节，拒绝中气。
+出生坐标由 `ganzhi_year_month` 提供，物理大运边界和时刻流运仍按真实节归属；月、日期、
+时刻查询各自保留支持端点，不与出生日期窗口合并。
+
+`reference_datetime` 为节表、大运及流运共用参考时刻：默认盘采用分钟截断民用标签，地点盘
+采用保留秒/微秒的 naive UTC+08 标签。`location_time` 为不可变 `LocationTime`，默认盘返回
+`None`；地点盘提供 UTC 绝对瞬间、固定出生偏移民用钟、经度及未截断真太阳钟，`json` 返回
+独立时间字段字典。分钟显示钟仍为 `solar_datetime`。读取这些事实不生成整盘 JSON。
+真实“出生时刻前一节/后一节”用 `reference_datetime` 查询历法 `prev_jie` / `next_jie`，
+不会用提前归属节替代物理前后节。
+
 ## Interfaces
 
 Use the defining modules rather than expecting classes at the package root:
 
 | Module | Principal interfaces |
 | --- | --- |
-| `bazi.bazi` | `Bazi`, `BaziGender` |
+| `bazi.bazi` | `Bazi`, `BaziGender`, `LocationTime`, `LocationTimeJson` |
 | `bazi.bazi_chart` | `BaziChart`, `BaziJson`, JSON restoration with `from_json` |
 | `bazi.school` | `BaziConfig`, `BaziSchool`, precision and school options |
 | `bazi.calendar` | `CalendarBackend`, `CalendarDate`, `CalendarType`, `calendar_utils_of` |
+| `bazi.calendar.dates` | `GanzhiYearMonth`, `JieqiTime` |
 | `bazi.transit_chart`, `bazi.transits` | `TransitChart`, `TransitSet`, `TransitKind` |
 | `bazi.analyzer.relationship` | `RelationshipAnalyzer` |
-| `bazi.interpreter` | `Interpreter.interpret_*` text lookup, `query_tiangan` / `query_shishen` claims, `query_source` witnesses |
-| `bazi.descriptions` | `DescriptionClaim`, `DescriptionClaims`, `DescriptionSourceRecord`; `DescriptionSource`, `DescriptionLineage`, `DescriptionTextLayer`, `DescriptionOutput`, `DescriptionCondition` |
-| `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription` |
+| `bazi.knowledge` | `KnowledgeBase`, `KnowledgeEntry`, `KnowledgeObject`, `KnowledgeRole`, `KnowledgeRelation`, `KnowledgeContext`, `KnowledgeSource`, `LegacyDescription`, `object_id`, `DEFAULT_SOURCE_PATH` |
 | `bazi.context_matching` | `ContextProfile`, `ChartOccurrence`, `CriterionResult`, `EntryMatch`, `ContextResult`, `evaluate_context` |
 | `bazi.defines`, `bazi.utils` | Domain enums and relation utilities, documented in their modules |
 
-`bazi.descriptions.SHISHEN_DESCRIPTIONS` and `TIANGAN_DESCRIPTIONS` contain only
-default-output descriptions. `Interpreter` methods use the same default; pass
-`include_reference_only=True` to also include claims not eligible for default output.
+知识记录以 `KnowledgeBase` 为唯一模型。默认查询仅选 `output='default'` 的条目；
+`include_reference_only=True` 同时查阅不具默认输出资格的参考条目。
 
 Domain names use Pinyin; enums also provide Chinese aliases. JSON retains Chinese
 domain values and records configuration. `py.typed` exposes the inline type hints.
@@ -142,44 +177,50 @@ promise of a stable public interface.
 [External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
 baseline with configuration-specific results and an offline regression test.
 
-### Structured description queries
+### 知识接口迁移
+
+`bazi.descriptions`、`bazi.interpreter` 及其枚举、重复记录、字段表和 `Interpreter` 方法已删除，
+这是破坏性 API 变更。调用方改用现代记录；新接口不再返回旧字段字典或可变文字列表。
+源码脚本 `run_interpreter.py` 继续提供命盘展示、知识查询和导出，没有安装 CLI。
 
 ```python
 from bazi.defines import Tiangan
-from bazi.interpreter import Interpreter
+from bazi.knowledge import KnowledgeBase, object_id
 
-fields = Interpreter.query_tiangan(Tiangan.丁, include_reference_only=True)
-for claim in fields['general']:
-  print(claim.claim_id, claim.text, claim.output.value, claim.conditions)
-  for source_id in claim.sources:
-    witness = Interpreter.query_source(source_id)
+knowledge = KnowledgeBase.load()
+identifier = object_id(Tiangan.丁)
+for entry in knowledge.query(object_id=identifier, include_reference_only=True):
+  print(entry.claim_id, entry.text, entry.output, entry.applicability)
+  print(entry.legacy)  # Traceable old field, ordinal, conditions and field premise.
+  for source_id in entry.sources:
+    witness = knowledge.sources[source_id]
     print(witness.work, witness.edition, witness.locator, witness.url)
     print(witness.supports, witness.limitations)
+
+print(knowledge.render_subject(identifier, include_reference_only=True, show_sources=True))
 ```
 
-`query_tiangan` and `query_shishen` return a `frozendict` of field names to tuples
-of frozen `DescriptionClaim` objects. Source lookup returns a frozen record with
-the work, attribution, edition, locator, URL, text layer, lineage, excerpt and
-evidentiary boundaries. Text-returning methods retain their existing field/list shape.
+`sources` 是完整的不可变来源注册表，包含未被条目引用的见证；新增来源无需补枚举。
+来源记录的文本层、谱系、状态和证据限度各自保留。`query(source_id=...)` 选择关联条目，
+与直接读取 `sources[source_id]` 不同。`object_id` 将天干、十神及其中文别名转为稳定 ID；
+其他对象直接使用 `objects` 中注册的字符串标识。
 
-Default queries select only default-output claims without legacy conditions.
-Complete queries also include named historical imagery, repository editorial text
-and legacy text marked source-unverified. An empty `sources`
-tuple and `Legacy corpus; source unverified` attribution preserve that last state;
-they do not establish that no source exists or that the claim is false.
+`render_subject` 为命盘与 TXT 共用的带主题文字投影：有 `legacy` 的条目只在旧主体下展示，
+其余条目包含所有绑定角色。它保留语料顺序；`query(object_id=...)` 则始终包含所有角色。
+例如 SH-052 的主体是食神、关联角色含七杀：对象查询两边都能找到，主体展示只放在食神下。
+旧字段位置与 `ordinal` 在 `LegacyDescription` 中保全，不与语料顺序合并；需要复核旧位置时，
+按 `legacy.object_id`、`legacy.field` 选择并按 `legacy.ordinal` 排序。
 
-`CHART_CONTEXT_REQUIRED` records a prerequisite, not an evaluated result. Reference
-queries include these claims without determining whether they apply to a chart.
-Witness records establish textual attribution and its boundaries. Description
-selection is independent of the calculation variants in `BaziSchool`.
-The `in_good_status` / `in_bad_status` fields are compatibility placements, not core
-knowledge categories. The new API exposes premise organization without assigning chart states.
+参考查阅保留历史象、仓内整理和来源未核实文字，不判断命盘适用性。空 `sources` 和
+`Legacy corpus; source unverified` 署名不表示没有来源或断言为假。旧 `chart_context_required`
+记录前提，不是求值结果；`in_good_status` / `in_bad_status` 是旧位置，不是现代知识分类。
+知识选择与 `BaziSchool` 的计算变体分开。
 
 ### Maintain and query interpretation knowledge
 
 `bazi/knowledge_data.json` is the unique editing source. Loading validates its schema,
 IDs, role bindings, references and output policies, then builds in-memory indexes.
-The same file is bundled in wheels and source archives; exports and legacy projections
+The same file is bundled in wheels and source archives; exports and text projections
 are derived from it. No database service or runtime dependency is required.
 
 ```python
@@ -235,6 +276,12 @@ a valid filter with no matches returns an empty tuple. Reference entries require
 registries for reload and evidence display. Exporting a reference record does not change
 its presentation eligibility. The frozen legacy test fixture is a migration oracle,
 not another editing source.
+
+`DEFAULT_SOURCE_PATH` 是默认加载及源码 CLI 防覆盖共用的随库编辑源路径，指向当前安装或
+检出中的 `knowledge_data.json`。自定义源仍通过 `KnowledgeBase.load(Path(...))` 读取。
+公开 `render(entry, show_sources=..., manual_context=..., premise_verdict=...)` 只展示条目；
+`premise_verdict` 是调用方提供的文字，优先于人工情境标注，不求值前提、不授予默认资格。
+实际前提判别仍由 `evaluate_context` 执行；未定义的判据仍返回 `UNKNOWN`。
 
 From a source checkout, edit the JSON and validate it:
 
@@ -380,6 +427,10 @@ For a repeatable random example with source records:
 python run_interpreter.py --seed 42 --show-sources
 ```
 
+All three runners accept `--seed <integer>`. Without it, they generate and print
+the actual seed; replay by passing that value. Displays include birth time and gender.
+The full gate passes seed 236 to each runner.
+
 For a fixed birth and complete reference text:
 
 ```sh
@@ -490,6 +541,26 @@ write to `output_data/`; the installed library's read-only behavior is checked s
 
 A bare `python run_tests.py` omits slow/HKO tests and all optional tasks. It is not
 the full verification gate. Do not run autoformatters; use `ruff check .`.
+
+Random pytest inputs use `--random-seed` (default base 236). Each `rng` fixture
+prints its node ID, base seed and effective seed. The effective seed is the first
+eight bytes of SHA-256 of UTF-8 `"<base>:<nodeid>"`, interpreted as an unsigned
+big-endian integer. It initializes a real local `Random`, leaving global state alone.
+Replay a single test with the same base and full node ID:
+
+```sh
+python -m pytest tests/test_bazi_chart.py::test_dayun_order --random-seed 236 -s
+```
+
+The collected relationship cases use seeds `base` through `base + 4`; their IDs
+include the actual seed, birth time and gender. Changing the base changes these
+cases too. From the repository root, rerun one case with the same base:
+
+```sh
+python -m pytest \
+  'tests/integration/test_relationship_analysis.py::test_random_cases[seed=236-birth=2074-06-16T23:22:00-gender=male]' \
+  --random-seed 236
+```
 
 ## Offline Generation
 

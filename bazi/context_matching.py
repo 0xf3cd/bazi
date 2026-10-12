@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from typing import Final, Literal, NamedTuple, TypeVar, get_args
 
-from .bazi import BaziGender, _LocationTimeJson, _location_json, _parse_location
+from .bazi import BaziGender, LocationTimeJson, _parse_location
 from .bazi_chart import BaziChart
 from .common import frozendict
 from .defines import Ganzhi, Tiangan, Shishen
@@ -214,7 +214,7 @@ def _validate_input(text: str) -> None:
   data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
   common_keys = {'gender', 'config', 'pillars'}
   default_keys = common_keys | {'birth_time'}
-  location_keys = common_keys | _LocationTimeJson.__required_keys__
+  location_keys = common_keys | LocationTimeJson.__required_keys__
   if data.keys() == location_keys:
     _parse_location(data)
   elif data.keys() == default_keys:
@@ -336,7 +336,7 @@ class ContextResult:
     knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-      lines.append(knowledge._render(knowledge.entry(match.claim_id), premise_verdict=match.status))
+      lines.append(knowledge.render(knowledge.entry(match.claim_id), premise_verdict=match.status))
     return '\n'.join(lines)
 
 
@@ -443,8 +443,9 @@ def evaluate_context(
     entry_reason = reason if recognized else 'binding_unrecognized'
     matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
 
+  location_time = bazi.location_time
   identity = {
-    **({'birth_time': bazi.solar_datetime.isoformat()} if bazi.longitude is None else _location_json(bazi)),
+    **({'birth_time': bazi.solar_datetime.isoformat()} if location_time is None else location_time.json),
     'gender': str(bazi.gender),
     'config': _config_json(bazi.config),
     'pillars': [str(value) for value in bazi.pillars],

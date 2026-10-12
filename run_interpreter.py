@@ -2,7 +2,7 @@
 
 import argparse
 import json
-import random
+from random import Random, SystemRandom
 import re
 from collections.abc import Callable, Iterable
 from datetime import datetime, tzinfo
@@ -15,22 +15,13 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen
-from bazi.knowledge import Applicability, KnowledgeBase
+from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
 from bazi.school import BaziConfig
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
 _ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r'\x1b\[[0-9;]*m')
-
-
-def _object_text(knowledge: KnowledgeBase, subject: Tiangan | Shishen, include_reference_only: bool, show_sources: bool) -> str:
-  object_id = type(subject).__name__.lower() + '.' + subject.name.lower()
-  return '\n\n'.join(
-    '／'.join(entry.topics) + '：' + knowledge.render(entry, show_sources=show_sources)
-    for entry in knowledge.query(object_id=object_id, include_reference_only=include_reference_only)
-    if entry.legacy is None or entry.legacy.object_id == object_id
-  )
 
 
 def interpret(
@@ -67,7 +58,11 @@ def interpret(
   day_master: Tiangan = chart.bazi.day_master
   s += '\n' + '-' * 60 + '\n'
   s += f"日主：{j['pillars']['day'][0]}，为{j['tiangan_traits']['day']}。\n\n"
-  if descriptions := _object_text(knowledge, day_master, include_reference_only, show_sources):
+  if descriptions := knowledge.render_subject(
+    object_id(day_master),
+    include_reference_only=include_reference_only,
+    show_sources=show_sources,
+  ):
     s += descriptions + '\n\n'
 
   shishens: dict[Shishen, int] = { ss : 0 for ss in Shishen }
@@ -83,7 +78,11 @@ def interpret(
     ratio: float = count / sum(shishens.values())
     s += '\n' + '-' * 60 + '\n'
     s += f'原局中，{ss}有{count}个，占比{ratio:.2%}。\n\n'
-    if descriptions := _object_text(knowledge, ss, include_reference_only, show_sources):
+    if descriptions := knowledge.render_subject(
+      object_id(ss),
+      include_reference_only=include_reference_only,
+      show_sources=show_sources,
+    ):
       s += descriptions + '\n\n'
 
   return s
@@ -103,7 +102,11 @@ def save_knowledge_base(
   for tg in Tiangan:
     with open(tg_dir_path / f'{tg}.txt', 'w', encoding='utf-8') as f:
       f.write(f'{tg}知识条目：\n')
-      f.write(_object_text(knowledge, tg, include_reference_only, show_sources))
+      f.write(knowledge.render_subject(
+        object_id(tg),
+        include_reference_only=include_reference_only,
+        show_sources=show_sources,
+      ))
       f.write('\n')
 
   ss_dir_path: Path = output_dir / 'knowledge_base' / 'shishen'
@@ -113,7 +116,11 @@ def save_knowledge_base(
   for ss in Shishen:
     with open(ss_dir_path / f'{ss}.txt', 'w', encoding='utf-8') as f:
       f.write(f'{ss}知识条目：\n')
-      f.write(_object_text(knowledge, ss, include_reference_only, show_sources))
+      f.write(knowledge.render_subject(
+        object_id(ss),
+        include_reference_only=include_reference_only,
+        show_sources=show_sources,
+      ))
       f.write('\n')
 
 
@@ -137,13 +144,6 @@ def _write_chart(text: str, output: Path, index: int) -> None:
   (output / f'{index}.txt').write_text(_ANSI_ESCAPE.sub('', text), encoding='utf-8')
 
 
-def save_chart_examples(count: int = 50) -> None:
-  output = _DEFAULT_OUTPUT_DIR / 'interpretation_examples'
-  output.mkdir(parents=True, exist_ok=True)
-  for i in range(count):
-    _write_chart(_chart_text(BaziChart(Bazi.random())), output, i)
-
-
 def _same_export_path(left: Path, right: Path) -> bool:
   return left.resolve() == right.resolve() or (
     left.exists() and right.exists() and left.samefile(right)
@@ -157,7 +157,7 @@ def _export_json(
   export: Callable[[], str],
   label: str,
 ) -> None:
-  sources: tuple[Path, ...] = (Path(__file__).parent / 'bazi/knowledge_data.json',)
+  sources: tuple[Path, ...] = (DEFAULT_SOURCE_PATH,)
   if knowledge_source is not None:
     sources += (knowledge_source,)
   if any(_same_export_path(target, source) for source in sources):
@@ -325,9 +325,6 @@ def main(argv: list[str] | None = None) -> int:
     if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
       parser.error('--export-chart-json must not overlap generated TXT outputs')
 
-  if args.seed is not None:
-    random.seed(args.seed)
-
   charts: Iterable[BaziChart]
   if args.birth_time is not None:
     try:
@@ -335,7 +332,9 @@ def main(argv: list[str] | None = None) -> int:
     except (TypeError, ValueError) as error:
       parser.error(str(error))
   else:
-    charts = (BaziChart(Bazi.random()) for _ in range(count))
+    seed = SystemRandom().getrandbits(64) if args.seed is None else args.seed
+    rng = Random(seed)
+    charts = (BaziChart(Bazi.random(rng=rng)) for _ in range(count))
 
   output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   if output is not None:
@@ -344,6 +343,8 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as error:
       parser.error(str(error))
 
+  if args.birth_time is None:
+    print(f'random seed: {seed}')
   for i, chart in enumerate(charts):
     text = _chart_text(
       chart,

@@ -506,7 +506,7 @@ def test_to_date() -> None:
     hko_data_utils.to_date('2024-01-01') # type: ignore[arg-type] # Invalid type.
 
 
-def test_get_jieqi_date() -> None:
+def test_get_jieqi_date(rng: random.Random) -> None:
   with pytest.raises(TypeError):
     hko_data_utils.jieqi_date('2024', Jieqi.大寒) # type: ignore
   with pytest.raises(TypeError):
@@ -528,7 +528,7 @@ def test_get_jieqi_date() -> None:
   assert hko_data_utils.jieqi_date(2000, Jieqi.立春) == date(2000, 2, 4)
   assert hko_data_utils.jieqi_date(2005, Jieqi.雨水) == date(2005, 2, 18)
 
-  random_solar_year: int = random.randint(1901, 2100)
+  random_solar_year: int = rng.randint(1901, 2100)
   dates: list[date] = []
   for jieqi in Jieqi.as_list(ganzhi_year=False):
     dates.append(hko_data_utils.jieqi_date(random_solar_year, jieqi))
@@ -536,7 +536,7 @@ def test_get_jieqi_date() -> None:
     assert d1 < d2
 
 
-def test_get_jieqi_moment() -> None:
+def test_get_jieqi_moment(rng: random.Random) -> None:
   with pytest.raises(TypeError):
     hko_data_utils.jieqi_moment('2024', Jieqi.大寒) # type: ignore
   with pytest.raises(TypeError):
@@ -560,7 +560,7 @@ def test_get_jieqi_moment() -> None:
   assert hko_data_utils.jieqi_moment(2000, Jieqi.立春) == datetime(2000, 2, 4, 0, 0, 0)
   assert hko_data_utils.jieqi_moment(2005, Jieqi.雨水) == datetime(2005, 2, 18, 0, 0, 0)
 
-  random_solar_year: int = random.randint(1901, 2100)
+  random_solar_year: int = rng.randint(1901, 2100)
   datetimes: list[datetime] = []
   for jieqi in Jieqi.as_list(ganzhi_year=False): # The first Jieqi in a solar year is always "小寒".
     datetimes.append(hko_data_utils.jieqi_moment(random_solar_year, jieqi))
@@ -592,7 +592,7 @@ def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date]
       query(bad_value, Jieqi.立春)
 
 
-def test_prev_jie() -> None:
+def test_prev_jie(rng: random.Random) -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
   with pytest.raises(TypeError):
@@ -608,12 +608,12 @@ def test_prev_jie() -> None:
 
   for _ in range(500):
     random_dt: datetime = datetime(
-      year=random.randint(1800, 2200),
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59),
+      year=rng.randint(1800, 2200),
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59),
     )
     if supported_range[0] <= random_dt < supported_range[1]: # In supported range.
       assert isinstance(hko_data_utils.prev_jie(random_dt), tuple)
@@ -652,7 +652,7 @@ def test_prev_jie() -> None:
     )
 
 
-def test_next_jie() -> None:
+def test_next_jie(rng: random.Random) -> None:
   supported_range: tuple[datetime, datetime] = hko_data_utils.supported_jie_boundaries()
 
   with pytest.raises(TypeError):
@@ -668,12 +668,12 @@ def test_next_jie() -> None:
 
   for _ in range(500):
     random_dt: datetime = datetime(
-      year=random.randint(1800, 2200),
-      month=random.randint(1, 12),
-      day=random.randint(1, 28),
-      hour=random.randint(0, 23),
-      minute=random.randint(0, 59),
-      second=random.randint(0, 59),
+      year=rng.randint(1800, 2200),
+      month=rng.randint(1, 12),
+      day=rng.randint(1, 28),
+      hour=rng.randint(0, 23),
+      minute=rng.randint(0, 59),
+      second=rng.randint(0, 59),
     )
     if supported_range[0] <= random_dt < supported_range[1]: # In supported range.
       assert isinstance(hko_data_utils.next_jie(random_dt), tuple)

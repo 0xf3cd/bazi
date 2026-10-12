@@ -35,20 +35,19 @@ def main() -> int:
   from fractions import Fraction
   from zoneinfo import ZoneInfo
 
-  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Shishen, DizhiRelation
+  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.interpreter import Interpreter
-  from bazi.descriptions import DescriptionClaim, DescriptionOutput, DescriptionSource
-  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription
+  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
   from bazi.rules import DizhiRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
   from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
-  from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils
+  from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
+  from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
@@ -110,6 +109,16 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('nayin_str rejects 甲丑', ValueError,
+     lambda: bazi_utils.nayin_str(Ganzhi.from_str('甲丑'))),
+    ('xing rejects four Dizhis', ValueError,
+     lambda: dizhi_utils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午)),
+    ('xing rejects five Dizhis', ValueError,
+     lambda: dizhi_utils.xing(Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午)),
+    ('Bazi.random wrong rng', TypeError,
+     lambda: Bazi.random(rng=42)), # type: ignore[arg-type]
+    ('BaziChart.random wrong rng', TypeError,
+     lambda: BaziChart.random(rng=42)), # type: ignore[arg-type]
     ('Bazi.create civil timezone without longitude', ValueError,
      lambda: Bazi.create(datetime(2000, 1, 1), 'male', civil_timezone=civil_zone)),
     ('Bazi constructor civil timezone without longitude', ValueError,
@@ -246,30 +255,30 @@ def main() -> int:
      lambda: Bazi.random(BaziConfig.from_values(backend='hko', precision='hour'))),
     ('BaziChart.random unsupported config', ValueError,
      lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
-    ('Interpreter.interpret_shishen truthy reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=1)), # type: ignore
-    ('Interpreter.interpret_shishen falsy reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=0)), # type: ignore
-    ('Interpreter.interpret_shishen null reference flag', TypeError,
-     lambda: Interpreter.interpret_shishen(Shishen.食神, include_reference_only=None)), # type: ignore
-    ('Interpreter.interpret_tiangan truthy reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=1)), # type: ignore
-    ('Interpreter.interpret_tiangan falsy reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore
-    ('Interpreter.interpret_tiangan null reference flag', TypeError,
-     lambda: Interpreter.interpret_tiangan(Tiangan.甲, include_reference_only=None)), # type: ignore
-    ('Interpreter.query_shishen wrong subject', TypeError,
-     lambda: Interpreter.query_shishen('食神')), # type: ignore[arg-type]
-    ('Interpreter.query_tiangan wrong subject', TypeError,
-     lambda: Interpreter.query_tiangan('甲')), # type: ignore[arg-type]
-    ('Interpreter.query_shishen wrong reference flag', TypeError,
-     lambda: Interpreter.query_shishen(Shishen.食神, include_reference_only=1)), # type: ignore[arg-type]
-    ('Interpreter.query_tiangan wrong reference flag', TypeError,
-     lambda: Interpreter.query_tiangan(Tiangan.甲, include_reference_only=0)), # type: ignore[arg-type]
-    ('Interpreter.query_source wrong identifier', TypeError,
-     lambda: Interpreter.query_source('editorial')), # type: ignore[arg-type]
-    ('DescriptionClaim mutable sources', TypeError,
-      lambda: DescriptionClaim('test', 'text', [], 'test', (), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
+    ('knowledge object_id raw subject', TypeError,
+     lambda: object_id('食神')), # type: ignore[arg-type]
+    ('knowledge object_id unrelated enum', TypeError,
+     lambda: object_id(Dizhi.子)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject wrong identifier', TypeError,
+     lambda: knowledge.render_subject(Tiangan.甲)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject unknown object', ValueError,
+     lambda: knowledge.render_subject('missing')),
+    ('KnowledgeBase.render_subject truthy reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject falsy reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=0)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject null reference flag', TypeError,
+     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=None)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject invalid display flag on empty selection', TypeError,
+     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render wrong verdict type', TypeError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
+    ('KnowledgeBase.render empty verdict', ValueError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict='')),
+    ('KnowledgeBase.render whitespace verdict', ValueError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=' \t\n\u3000')),
+    ('KnowledgeEntry mutable sources', TypeError,
+     lambda: replace(knowledge.entry('tiangan.jia.definition'), sources=[])), # type: ignore[arg-type]
     ('KnowledgeBase unknown filter', ValueError,
      lambda: knowledge.query(object_id='unknown')),
     ('KnowledgeBase wrong filter type', TypeError,
@@ -294,18 +303,18 @@ def main() -> int:
        knowledge.entry('tiangan.ding.definition'),
        legacy=LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise'),
      )),
-    ('DescriptionClaim wrong condition member', TypeError,
-     lambda: DescriptionClaim('test', 'text', (), 'test', ('invalid',), DescriptionOutput.DEFAULT)), # type: ignore[arg-type]
-    ('DescriptionSourceRecord wrong text layer', TypeError,
-     lambda: replace(
-       Interpreter.query_source(DescriptionSource.EDITORIAL),
-       text_layer='editorial', # type: ignore[arg-type]
-     )),
-    ('DescriptionSourceRecord wrong lineage', TypeError,
-     lambda: replace(
-       Interpreter.query_source(DescriptionSource.EDITORIAL),
-       lineage='editorial', # type: ignore[arg-type]
-     )),
+    ('LegacyDescription wrong condition member', ValueError,
+     lambda: LegacyDescription('tiangan.jia', 'general', 0, ('invalid',), '')),
+    ('KnowledgeSource wrong text layer', ValueError,
+      lambda: replace(
+        knowledge.sources['editorial'],
+        text_layer='invalid',
+      )),
+    ('KnowledgeSource wrong lineage type', TypeError,
+      lambda: replace(
+        knowledge.sources['editorial'],
+        lineage=1, # type: ignore[arg-type]
+      )),
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,
@@ -435,6 +444,24 @@ def main() -> int:
      lambda: BaziConfig(dayun_year_rule='fixed_decade')), # type: ignore
   ]
 
+  sequence_iterators = []
+  for module, member, relation in (
+    (tiangan_utils, Tiangan.甲, TianganRelation.合),
+    (dizhi_utils, Dizhi.辰, DizhiRelation.刑),
+  ):
+    calls = (
+      partial(module.search, relation=relation),
+      module.discover,
+      partial(module.discover_mutual, []),
+      lambda values, module=module: module.discover_mutual(values, []),
+    )
+    for index, call in enumerate(calls):
+      label = f'{module.__name__} Sequence entry {index}'
+      values = iter((member,))
+      sequence_iterators.append((label, values, member))
+      checks.append((label, TypeError, partial(call, values)))
+      checks.append((label + ' empty iterator', TypeError, partial(call, iter(()))))
+
   for backend in CalendarBackend:
     utils = calendar_utils_of(backend)
     date_calls: list[tuple[str, object]] = [
@@ -511,7 +538,28 @@ def main() -> int:
      partial(Bazi, datetime(2200, 1, 1, tzinfo=UTC), BaziGender.男, location_config, longitude=0.0)),
   ])
 
+  checks.extend([
+    ('GanzhiYearMonth wrong year', TypeError, partial(GanzhiYearMonth, '2000', 1)), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong month type', TypeError, partial(GanzhiYearMonth, 2000, '1')), # type: ignore[arg-type]
+    ('GanzhiYearMonth zero-based month', ValueError, partial(GanzhiYearMonth, 2000, 0)),
+    ('GanzhiYearMonth month above range', ValueError, partial(GanzhiYearMonth, 2000, 13)),
+    ('GanzhiYearMonth wrong branch', TypeError, partial(GanzhiYearMonth.from_dizhi, 2000, '寅')), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie container', TypeError, partial(GanzhiYearMonth.from_jie, None)), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie member', TypeError,
+     partial(GanzhiYearMonth.from_jie, JieqiTime('立春', datetime(2000, 2, 4)))), # type: ignore[arg-type]
+    ('GanzhiYearMonth wrong Jie moment', TypeError,
+     partial(GanzhiYearMonth.from_jie, JieqiTime(Jieqi.立春, '2000-02-04'))), # type: ignore[arg-type]
+    ('GanzhiYearMonth 中气', ValueError, partial(GanzhiYearMonth.from_jie, JieqiTime(Jieqi.雨水, datetime(2000, 2, 19)))),
+    ('GanzhiYearMonth readonly month', AttributeError, partial(setattr, GanzhiYearMonth(2000, 1), 'month', 12)),
+    ('Bazi readonly reference', AttributeError, partial(setattr, local_chart.bazi, 'reference_datetime', datetime(2000, 1, 1))),
+    ('LocationTime readonly facts', AttributeError, partial(setattr, local_chart.bazi.location_time, 'longitude', 0.0)),
+  ])
   failures: list[str] = []
+  for gender in ('male', 'female'):
+    day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))
+    old_data = day_chart.json
+    old_data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
+    checks.append((f'Old DAY derived JSON {gender}', ValueError, partial(BaziChart.from_json, old_data)))
   for label, birth, basis in (
     ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
@@ -563,7 +611,7 @@ def main() -> int:
   if recovered.criterion != local_result.criterion or recovered.occurrences != local_result.occurrences:
     failures.append('Optimized observation recovery recalculated stored observations')
   location_bazi = local_chart.bazi
-  for moment in (location_bazi._reference_datetime, location_bazi.solar_datetime):
+  for moment in (location_bazi.reference_datetime, location_bazi.solar_datetime):
     legacy_bazi = Bazi.create(moment, 'female', location_config)
     if not (legacy_bazi != location_bazi and location_bazi != legacy_bazi and len({legacy_bazi, location_bazi}) == 2):
       failures.append('Optimized legacy/location identity partition failed')
@@ -582,6 +630,9 @@ def main() -> int:
     except Exception as e: # noqa: BLE001 # a smoke harness reports whatever actually leaked
       failures.append(f'{label}: {type(e).__name__} ({e}), expected {expected.__name__}')
 
+  for label, values, member in sequence_iterators:
+    if tuple(values) != (member,):
+      failures.append(f'{label}: rejected iterator was consumed')
   for line in failures:
     print(f'FAIL {line}')
   print(f'o_smoke: {len(checks) - len(failures)}/{len(checks)} public faces hold under -O.')

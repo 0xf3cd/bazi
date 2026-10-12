@@ -24,13 +24,10 @@ class CalendarUtilsProtocol(Protocol):
   (`CelestialCalendarUtils`).  Everything else here is date-level and must agree, which is
   what makes conforming implementations substitutable for one another.
 
-  Two methods ride on that precision and escape the "must agree" rule: `prev_jie`/`next_jie`
-  name the jie bracketing a moment, so between midnight and the true moment of a jieqi day the
-  two backends legitimately name different jie.  The divergence is moment-shaped, not noise
-  (~1.6% of random moments, all landing on jieqi days), and it propagates: `BaziChart`'s da-yun
-  start counts jie from birth, so a jieqi-day birth can shift it by a full da-yun step (~10
-  years).  Date-level queries stay within the frozen parity whitelist instead (see
-  `tests/calendar/celestial_parity_data.py`).
+  `prev_jie` / `next_jie` 始终查询真实时刻：交节日午夜至真实交节之间，HKO 的午夜占位与
+  天文后端可返回不同节。出生精度归属属于 `Bazi`：DAY 从日期级干支年月选择开月节和下一节，
+  不改变此物理通道。大运即使使用同一所属节，仍可因后端节时刻不同而得到不同起点。
+  日期级差异继续受冻结白名单约束（见 `tests/calendar/celestial_parity_data.py`）。
   '''
   def get_min_supported_date(self, date_type: CalendarType) -> CalendarDate: ...
   def get_max_supported_date(self, date_type: CalendarType) -> CalendarDate: ...

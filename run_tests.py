@@ -90,6 +90,7 @@ do_package: Final[bool] = args.package or all_the_way
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')
 
 term_width: Final[int] = shutil.get_terminal_size().columns
+_emoji_rng: Final[random.Random] = random.Random()
 
 
 # region: Formats and Prints
@@ -103,14 +104,14 @@ desert_and_tree: Final[str] = '🌵🏜️🌲🏕️🌴🏝️'
 
 def random_emoji() -> str:
   while True:
-    c: str = random.choice(f'{animal1}{animal2}{food}{astrology}{weirdo}{desert_and_tree}')
+    c: str = _emoji_rng.choice(f'{animal1}{animal2}{food}{astrology}{weirdo}{desert_and_tree}')
     if emoji.is_emoji(c):
       return c
 
 def emoji_pair_generator() -> Generator[str, None, None]:
   def random_ep(s: str) -> str:
     filtered: str = ''.join(filter(emoji.is_emoji, s))
-    return ''.join(random.sample(filtered, k=2))
+    return ''.join(_emoji_rng.sample(filtered, k=2))
   
   emoji_pairs: list[str] = [
     '💖💅', '🌙✨', '🌵🏜️', '🔗🌐', '💡🧠',
@@ -124,7 +125,7 @@ def emoji_pair_generator() -> Generator[str, None, None]:
   ]
 
   emoji_pairs = list(set(emoji_pairs))
-  random.shuffle(emoji_pairs)
+  _emoji_rng.shuffle(emoji_pairs)
   for ep in itertools.cycle(emoji_pairs):
     if str_width(ep) != 4:
       continue
@@ -251,6 +252,7 @@ def run_tests() -> int:
   pytest_args: list[str] = [
     str(Path(os.path.realpath(__file__)).parent / 'tests'),
     '-x',
+    '--showlocals',
   ]
 
   if verbose:
@@ -275,18 +277,13 @@ def run_tests() -> int:
 
 
 def run_coverage(test_f: Callable[[], int]) -> int:
-  '''Run tests, and generate coverage report.'''
+  '''执行测试并统计整个运行时 `bazi` 包，未导入模块也计入覆盖率。'''
   print('\n' + devider())
   bold_print(f'>> Running {test_f} with coverage...')
 
   cov = coverage.Coverage(
+    source=[str(Path(__file__).parent / 'bazi')],
     omit=[
-      '*/__init__.py',
-      '*/run_tests.py',
-      '*/run_package_checks.py', # Exercised in isolated subprocesses by -pkg, like the demo runners.
-      *(f'*/{script}' for script in DEMO_SCRIPTS),
-      '*/run_interpreter.py', # Exercised in a separate subprocess by -i.
-      '*/tests/*',
       str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # Offline generation tool.
       str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # Offline generation tool.
     ]
@@ -355,7 +352,7 @@ def run_demo() -> int:
   ret: int = 0
   for script in DEMO_SCRIPTS:
     if run_proc_and_print([
-      sys.executable, str(Path(__file__).parent / script)
+      sys.executable, str(Path(__file__).parent / script), '--seed', '236'
     ], print_details=verbose) != 0:
       ret = 1
 
@@ -372,7 +369,7 @@ def run_interpreter() -> int:
   bold_print('>> Running interpreter...')
 
   ret: int = run_proc_and_print([
-    sys.executable, str(Path(__file__).parent / 'run_interpreter.py')
+    sys.executable, str(Path(__file__).parent / 'run_interpreter.py'), '--seed', '236'
   ], print_details=verbose)
   
   if ret == 0:
@@ -495,10 +492,10 @@ def main() -> None:
   resolved_retcode: int = functools.reduce(operator.or_, retcodes, 0)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 
-                ''.join(random.sample('🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
+                ''.join(_emoji_rng.sample('🌙✨💫⭐🌟💖💞💕💗💓🌈👾🪐', 3)))
   else:
     red_print(f'>> Some tasks failed! Exit with code {resolved_retcode} ' + 
-              ''.join(random.sample('🧯💣💥💅👽🗿🔥', 3)))
+              ''.join(_emoji_rng.sample('🧯💣💥💅👽🗿🔥', 3)))
 
   sys.exit(resolved_retcode)
 
