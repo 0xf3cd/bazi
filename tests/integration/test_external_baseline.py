@@ -82,6 +82,8 @@ def test_table_fingerprint_preserves_values_across_checkout_newlines(tmp_path: P
   assert _table_fingerprint(table) == expected
   table.write_bytes(canonical.replace(b'20:40:23', b'20:40:24').replace(b'\n', newline))
   assert _table_fingerprint(table) != expected
+  table.write_bytes(b'a\rb \n')
+  assert _table_fingerprint(table) == hashlib.sha256(b'a\rb \n').hexdigest()
 
 
 def test_baseline_inventory() -> None:
