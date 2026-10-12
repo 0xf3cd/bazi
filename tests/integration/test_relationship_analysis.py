@@ -590,7 +590,7 @@ def test_case2(rng: random.Random) -> None:
         lambda _, combo : Tiangan.癸 in combo
       )
       expected_transits_only_dz_star_relations = dizhi_utils.discover(
-        list(transits_dz), anhe_def=school.anhe_def, xing_def=school.xing_def,
+        list(transits_dz), definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : Dizhi.子 in combo
       )
@@ -607,7 +607,7 @@ def test_case2(rng: random.Random) -> None:
         lambda _, combo : Tiangan.癸 in combo
       )
       expected_mutual_dz_star_relations = dizhi_utils.discover_mutual(
-        chart.bazi.four_dizhis, list(transits_dz), anhe_def=school.anhe_def, xing_def=school.xing_def,
+        chart.bazi.four_dizhis, list(transits_dz), definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : Dizhi.子 in combo
       )
@@ -630,7 +630,7 @@ def test_case2(rng: random.Random) -> None:
         lambda _, combo : Tiangan.癸 in combo and not combo.isdisjoint(transits_tg)
       ))
       assert _equal(all_star_relations.dizhi, dizhi_utils.discover(
-        list(transits_dz) + list(bazi.four_dizhis), anhe_def=school.anhe_def, xing_def=school.xing_def,
+        list(transits_dz) + list(bazi.four_dizhis), definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : Dizhi.子 in combo and not combo.isdisjoint(transits_dz)
       ))
@@ -806,10 +806,10 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
 
       expected_tg_relations = tiangan_utils.discover_mutual([chart.bazi.day_master], list(transits_tg_set))
       expected_dz_relations = dizhi_utils.discover_mutual(
-        [house], list(transits_dz_set), anhe_def=school.anhe_def, xing_def=school.xing_def,
+        [house], list(transits_dz_set), definitions=school.relation_definitions,
       ).merge(
         dizhi_utils.discover_mutual(
-          [house], list(transits_dz_set) + [y_dz, m_dz, h_dz], anhe_def=school.anhe_def, xing_def=school.xing_def,
+          [house], list(transits_dz_set) + [y_dz, m_dz, h_dz], definitions=school.relation_definitions,
         ).filter(
           lambda _, combo : len(combo) == 3
         ).filter(
@@ -819,9 +819,7 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
       positioned_gong = dizhi_utils.discover_mutual_ganzhis(
         bazi.pillars,
         transits_gz,
-        anhe_def=school.anhe_def,
-        xing_def=school.xing_def,
-        gong_def=school.gong_def,
+        definitions=school.relation_definitions,
       )
       expected_gong = dizhi_utils.GanzhiRelationDiscovery({
         relation : tuple(
@@ -886,15 +884,13 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
         expected_transits_only_tg = tiangan_utils.discover_mutual([stars.tiangan], tg_list)
 
       expected_transits_only_dz = dizhi_utils.discover(
-        transits_dz_list, anhe_def=school.anhe_def, xing_def=school.xing_def,
+        transits_dz_list, definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : not combo.isdisjoint(stars.dizhi)
       )
       transits_only_gong = dizhi_utils.discover_ganzhis(
         transits_gz,
-        anhe_def=school.anhe_def,
-        xing_def=school.xing_def,
-        gong_def=school.gong_def,
+        definitions=school.relation_definitions,
       )
       expected_transits_only_dz = expected_transits_only_dz.merge(
         dizhi_utils.GanzhiRelationDiscovery({
@@ -920,16 +916,14 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
       )
 
       expected_mutual_dz = dizhi_utils.discover_mutual(
-        bazi.four_dizhis, transits_dz_list, anhe_def=school.anhe_def, xing_def=school.xing_def,
+        bazi.four_dizhis, transits_dz_list, definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       )
       mutual_gong = dizhi_utils.discover_mutual_ganzhis(
         bazi.pillars,
         transits_gz,
-        anhe_def=school.anhe_def,
-        xing_def=school.xing_def,
-        gong_def=school.gong_def,
+        definitions=school.relation_definitions,
       )
       expected_mutual_dz = expected_mutual_dz.merge(
         dizhi_utils.GanzhiRelationDiscovery({
@@ -965,7 +959,7 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
         if relation not in (DizhiRelation.拱合, DizhiRelation.拱会)
       })
       assert _equal(all_dizhi_without_gong, dizhi_utils.discover(
-        transits_dz_list + list(bazi.four_dizhis), anhe_def=school.anhe_def, xing_def=school.xing_def,
+        transits_dz_list + list(bazi.four_dizhis), definitions=school.relation_definitions,
       ).filter(
         lambda _, combo : len(combo & set(stars.dizhi)) > 0
       ).filter(

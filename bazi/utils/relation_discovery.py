@@ -30,16 +30,13 @@ class RelationDiscovery(
     })
 
   def merge(self, other: Self) -> Self:
-    '''Merge two discoveries together (set-union of combos per relation).
-    合并两个发现结果（每个关系下的组合做集合并）。'''
+    '''合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。'''
     if not isinstance(other, type(self)):
       raise TypeError(f'Expected {type(self).__name__}, got {type(other)}')
-    d: dict[RelationType, set[frozenset[RelationItemType]]] = {}
-
-    for rel, combos in self.items():
-      d[rel] = set(combos)
-    for rel, combos in other.items():
-      d[rel] = d.get(rel, set()) | set(combos)
+    d: dict[RelationType, dict[frozenset[RelationItemType], None]] = {}
+    for discovery in (self, other):
+      for rel, combos in discovery.items():
+        d.setdefault(rel, {}).update(dict.fromkeys(combos))
 
     return type(self)({ rel : tuple(combos) for rel, combos in d.items() })
 

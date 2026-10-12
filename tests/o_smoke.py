@@ -40,7 +40,7 @@ def main() -> int:
   from bazi.bazi_chart import BaziChart
   from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
-  from bazi.rules import DizhiRules
+  from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
@@ -331,7 +331,7 @@ def main() -> int:
      lambda: dizhi_utils.search_ganzhis(
        [Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰')],
        DizhiRelation.拱合,
-       gong_def=DizhiRules.GongheDef.NARROW, # type: ignore
+        definitions=DizhiRules.GongheDef.NARROW, # type: ignore
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
@@ -554,6 +554,28 @@ def main() -> int:
     ('Bazi readonly reference', AttributeError, partial(setattr, local_chart.bazi, 'reference_datetime', datetime(2000, 1, 1))),
     ('LocationTime readonly facts', AttributeError, partial(setattr, local_chart.bazi.location_time, 'longitude', 0.0)),
   ])
+  for field, invalid_definition in (
+    ('anhe_def', 'NORMAL_EXTENDED'), ('anhe_def', 0), ('anhe_def', DizhiRules.XingDef.LOOSE),
+    ('xing_def', 'LOOSE'), ('xing_def', 1), ('xing_def', DizhiRules.AnheDef.NORMAL),
+    ('gong_def', 'NARROW'), ('gong_def', 0), ('gong_def', DizhiRules.GongheDef.NARROW),
+  ):
+    checks.append((f'Relation definitions wrong {field}: {invalid_definition}', TypeError,
+                   partial(replace, DizhiRelationDefinitions(), **{field: invalid_definition})))
+  for query, args in (
+    (dizhi_utils.search, ([], DizhiRelation.六合)),
+    (dizhi_utils.discover, ([],)),
+    (dizhi_utils.discover_mutual, ([], [])),
+    (dizhi_utils.search_ganzhis, ([], DizhiRelation.拱合)),
+    (dizhi_utils.discover_ganzhis, ([],)),
+    (dizhi_utils.discover_mutual_ganzhis, ([], [])),
+  ):
+    checks.append((f'{query.__name__} wrong definitions', TypeError, partial(query, *args, definitions=None))) # type: ignore[arg-type]
+  for query, args in (
+    (dizhi_utils.discover_ganzhis, ([],)),
+    (dizhi_utils.discover_mutual_ganzhis, ([], [])),
+  ):
+    for relations in (iter(DizhiRelation), [TianganRelation.合]):
+      checks.append((f'{query.__name__} wrong relations', TypeError, partial(query, *args, relations=relations))) # type: ignore[arg-type]
   failures: list[str] = []
   for gender in ('male', 'female'):
     day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))

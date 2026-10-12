@@ -13,7 +13,7 @@ from typing import Any
 from collections.abc import Iterable, Callable
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing, TianganRelation, DizhiRelation
-from bazi.rules import DizhiRules
+from bazi.rules import DizhiRules, DizhiRelationDefinitions
 from bazi.utils import bazi_utils, tiangan_utils, dizhi_utils
 from bazi.utils.dizhi_utils import (
   DizhiCombo, DizhiRelationCombos, DizhiRelationDiscovery,
@@ -186,19 +186,20 @@ def test_search_anhe(rng: random.Random) -> None:
 
   for anhe_def in DizhiRules.AnheDef:
     anhe_combos: list[DizhiCombo] = expected[anhe_def]
+    definitions = DizhiRelationDefinitions(anhe_def=anhe_def)
 
     assert _dz_equal(
-      dizhi_utils.search([], DizhiRelation.暗合, anhe_def=anhe_def),
+      dizhi_utils.search([], DizhiRelation.暗合, definitions=definitions),
       [],
     )
     assert _dz_equal(
-      dizhi_utils.search(list(Dizhi), DizhiRelation.暗合, anhe_def=anhe_def),
+      dizhi_utils.search(list(Dizhi), DizhiRelation.暗合, definitions=definitions),
       anhe_combos,
     )
 
     for _ in range(200):
       dizhis: list[Dizhi] = rng.sample(Dizhi.as_list(), rng.randint(0, len(Dizhi)))
-      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.暗合, anhe_def=anhe_def)
+      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.暗合, definitions=definitions)
       expected_result: list[set[Dizhi]] = [set(c) for c in anhe_combos if c.issubset(dizhis)]
       assert _dz_equal(result, expected_result)
 
@@ -578,9 +579,10 @@ def test_search_xing(rng: random.Random) -> None:
   # Every definition gets the full-combo and random-subset treatment (每个定义都过一遍全组合与随机子集).
   for xing_def in DizhiRules.XingDef:
     xing_expected: list[dict[Dizhi, int]] = expected_by_def[xing_def]
+    definitions = DizhiRelationDefinitions(xing_def=xing_def)
 
     assert _dz_equal(
-      dizhi_utils.search(list(Dizhi), DizhiRelation.刑, xing_def=xing_def),
+      dizhi_utils.search(list(Dizhi), DizhiRelation.刑, definitions=definitions),
       __find_qualified(xing_expected, list(Dizhi)),
     )
 
@@ -588,46 +590,48 @@ def test_search_xing(rng: random.Random) -> None:
       dizhis: list[Dizhi] = []
       for _ in range(rng.randint(1, 4)):
         dizhis += rng.sample(list(Dizhi), rng.randint(0, len(Dizhi)))
-      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.刑, xing_def=xing_def)
+      result: DizhiRelationCombos = dizhi_utils.search(dizhis, DizhiRelation.刑, definitions=definitions)
       expected_result: list[set[Dizhi]] = __find_qualified(xing_expected, dizhis)
       assert _dz_equal(result, expected_result)
 
 
 def test_search_def_type_gates() -> None:
-  # Every batch entry gates both def params at runtime (每个批量入口都查两个定义参数的类型).
+  # Every batch entry requires the validated definition object, including empty queries.
   with pytest.raises(TypeError):
-    dizhi_utils.search([Dizhi.子], DizhiRelation.暗合, anhe_def='NORMAL_EXTENDED') # type: ignore
+    dizhi_utils.search([Dizhi.子], DizhiRelation.暗合, definitions='NORMAL_EXTENDED') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.search([Dizhi.子], DizhiRelation.刑, xing_def='LOOSE') # type: ignore
+    dizhi_utils.search([], DizhiRelation.刑, definitions=DizhiRules.XingDef.LOOSE) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover([Dizhi.子], anhe_def=0) # type: ignore
+    dizhi_utils.discover([Dizhi.子], definitions=0) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover([Dizhi.子], xing_def=DizhiRules.AnheDef.NORMAL) # type: ignore
+    dizhi_utils.discover([], definitions=DizhiRules.AnheDef.NORMAL) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_mutual([Dizhi.子], [Dizhi.丑], anhe_def='NORMAL') # type: ignore
+    dizhi_utils.discover_mutual([Dizhi.子], [Dizhi.丑], definitions='NORMAL') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_mutual([Dizhi.子], [Dizhi.丑], xing_def=1) # type: ignore
+    dizhi_utils.discover_mutual([], [], definitions=1) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], DizhiRelation.拱合, gong_def='NARROW') # type: ignore
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], DizhiRelation.拱合, definitions='NARROW') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_ganzhis([Ganzhi.from_str('甲子')], gong_def=0) # type: ignore
+    dizhi_utils.discover_ganzhis([Ganzhi.from_str('甲子')], definitions=0) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.discover_mutual_ganzhis(
       [Ganzhi.from_str('甲子')],
       [Ganzhi.from_str('乙丑')],
-      gong_def=DizhiRules.GongheDef.NARROW, # type: ignore
+      definitions=DizhiRules.GongheDef.NARROW, # type: ignore
     )
 
 
 def test_discover_def_passthrough() -> None:
-  # The def params reach `search` through both batch entries (参数经两个批量入口透传到 search)。
+  # The definition object reaches `search` through both batch entries.
   # 寅午 forms ANHE under NORMAL / NORMAL_EXTENDED but not MANGPAI; 寅巳 forms XING only under LOOSE.
   # 寅午暗合 NORMAL / NORMAL_EXTENDED 皆有、MANGPAI 无；寅巳刑仅 LOOSE 成立。
   dizhis: list[Dizhi] = [Dizhi.寅, Dizhi.午, Dizhi.巳, Dizhi.子]
+  mangpai = DizhiRelationDefinitions(anhe_def=DizhiRules.AnheDef.MANGPAI)
+  strict = DizhiRelationDefinitions(xing_def=DizhiRules.XingDef.STRICT)
 
   default_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis)
-  mangpai_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, anhe_def=DizhiRules.AnheDef.MANGPAI)
-  strict_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, xing_def=DizhiRules.XingDef.STRICT)
+  mangpai_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, definitions=mangpai)
+  strict_d: DizhiRelationDiscovery = dizhi_utils.discover(dizhis, definitions=strict)
 
   # Pin the exact combos, not just "fewer results" (钉精确集合,不钉「变少」).
   assert _dz_equal(default_d[DizhiRelation.暗合], [{Dizhi.寅, Dizhi.午}, {Dizhi.子, Dizhi.巳}])
@@ -636,12 +640,12 @@ def test_discover_def_passthrough() -> None:
   assert DizhiRelation.刑 not in strict_d
 
   mutual_default: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.午])
-  mutual_mangpai: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.午], anhe_def=DizhiRules.AnheDef.MANGPAI)
+  mutual_mangpai: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.午], definitions=mangpai)
   assert _dz_equal(mutual_default[DizhiRelation.暗合], [{Dizhi.寅, Dizhi.午}])
   assert DizhiRelation.暗合 not in mutual_mangpai
 
   mutual_loose: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.巳])
-  mutual_strict: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.巳], xing_def=DizhiRules.XingDef.STRICT)
+  mutual_strict: DizhiRelationDiscovery = dizhi_utils.discover_mutual([Dizhi.寅], [Dizhi.巳], definitions=strict)
   assert _dz_equal(mutual_loose[DizhiRelation.刑], [{Dizhi.寅, Dizhi.巳}])
   assert DizhiRelation.刑 not in mutual_strict
 
@@ -1139,7 +1143,7 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   wide_result = dizhi_utils.search_ganzhis(
     wide,
     DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.SAME_STEM_WIDE,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
   )
   assert wide_result == (
     GanzhiRelationCombo((GanzhiOccurrence(0, wide[0]), GanzhiOccurrence(1, wide[1]))),
@@ -1155,14 +1159,14 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   assert dizhi_utils.search_ganzhis(
     transforming,
     DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW),
   ) == (
     GanzhiRelationCombo((GanzhiOccurrence(1, transforming[1]), GanzhiOccurrence(2, transforming[2]))),
   )
   assert dizhi_utils.search_ganzhis(
     (Ganzhi.from_str('甲午'), *transforming[1:]),
     DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW),
   ) == ()
 
   gonghui = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲辰'))
@@ -1173,7 +1177,7 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   assert dizhi_utils.search_ganzhis(
     transforming_gonghui,
     DizhiRelation.拱会,
-    gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW),
   ) == (
     GanzhiRelationCombo((
       GanzhiOccurrence(1, transforming_gonghui[1]),
@@ -1183,7 +1187,7 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
   assert dizhi_utils.search_ganzhis(
     transforming_gonghui,
     DizhiRelation.拱会,
-    gong_def=DizhiRules.GongDef.LU_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.LU_NARROW),
   ) == ()
 
   multiple = tuple(Ganzhi.from_str(s) for s in ('庚申', '庚辰', '甲寅', '甲戌'))
@@ -1204,7 +1208,7 @@ def test_search_ganzhis_covers_gong_rule_tables() -> None:
       assert dizhi_utils.search_ganzhis(
         ganzhis,
         relation,
-        gong_def=DizhiRules.GongDef.SAME_STEM_WIDE,
+        definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE),
       ) == (
         GanzhiRelationCombo(GanzhiOccurrence(index, gz) for index, gz in enumerate(ganzhis)),
       )
@@ -1228,7 +1232,7 @@ def test_search_ganzhis_lu_profile_accepts_yin_tiangan(
   assert dizhi_utils.search_ganzhis(
     ganzhis,
     DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.LU_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.LU_NARROW),
   ) == (
     GanzhiRelationCombo((GanzhiOccurrence(1, ganzhis[1]), GanzhiOccurrence(2, ganzhis[2]))),
   )
@@ -1247,7 +1251,7 @@ def test_search_ganzhis_lu_profile_rejects_yang_tiangan(
   assert dizhi_utils.search_ganzhis(
     ganzhis,
     DizhiRelation.拱合,
-    gong_def=DizhiRules.GongDef.LU_NARROW,
+    definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.LU_NARROW),
   ) == ()
 
 
@@ -1298,9 +1302,83 @@ def test_discover_mutual_ganzhis_scope_and_identity() -> None:
   with pytest.raises(TypeError):
     dizhi_utils.discover_mutual_ganzhis(first, [Dizhi.辰]) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_mutual_ganzhis(first, second, anhe_def='NORMAL') # type: ignore
+    dizhi_utils.discover_mutual_ganzhis(first, second, definitions='NORMAL') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_mutual_ganzhis(first, second, xing_def='LOOSE') # type: ignore
+    dizhi_utils.discover_mutual_ganzhis((), (), definitions=DizhiRules.XingDef.LOOSE) # type: ignore
+
+
+@pytest.mark.parametrize('anhe_def, xing_def, gong_def', list(itertools.product(
+  DizhiRules.AnheDef, DizhiRules.XingDef, DizhiRules.GongDef,
+)))
+def test_joint_relation_definitions(
+  anhe_def: DizhiRules.AnheDef,
+  xing_def: DizhiRules.XingDef,
+  gong_def: DizhiRules.GongDef,
+) -> None:
+  definitions = DizhiRelationDefinitions(anhe_def=anhe_def, xing_def=xing_def, gong_def=gong_def)
+  ganzhis = tuple(Ganzhi.from_str(value) for value in ('甲寅', '甲午', '甲巳', '甲子'))
+  anhe_expected = set() if anhe_def is DizhiRules.AnheDef.MANGPAI else {
+    frozenset({Dizhi.寅, Dizhi.午}), frozenset({Dizhi.子, Dizhi.巳}),
+  }
+  xing_expected = {frozenset({Dizhi.寅, Dizhi.巳})} if xing_def is DizhiRules.XingDef.LOOSE else set()
+  gong_expected = {frozenset({Dizhi.寅, Dizhi.午})} if gong_def is DizhiRules.GongDef.SAME_STEM_WIDE else set()
+  for discovery in (
+    dizhi_utils.discover_ganzhis(ganzhis, definitions=definitions),
+    dizhi_utils.discover_mutual_ganzhis((ganzhis[0], ganzhis[3]), ganzhis[1:3], definitions=definitions),
+  ):
+    projected = discovery.to_dizhi_discovery()
+    assert set(projected.get(DizhiRelation.暗合, ())) == anhe_expected
+    assert set(projected.get(DizhiRelation.刑, ())) == xing_expected
+    assert set(projected.get(DizhiRelation.拱合, ())) == gong_expected
+    assert DizhiRelation.拱会 not in discovery
+
+
+def test_discovery_relation_selection(monkeypatch: pytest.MonkeyPatch) -> None:
+  ganzhis = tuple(Ganzhi.from_str(value) for value in ('庚申', '庚辰'))
+  calls: list[DizhiRelation] = []
+  original = dizhi_utils.search_ganzhis
+
+  def counted(*args: Any, **kwargs: Any) -> GanzhiRelationCombos:
+    calls.append(args[1])
+    return original(*args, **kwargs)
+
+  monkeypatch.setattr(dizhi_utils, 'search_ganzhis', counted)
+  selected = (DizhiRelation.拱会, DizhiRelation.拱合, DizhiRelation.拱合)
+  discovery = dizhi_utils.discover_ganzhis(ganzhis, relations=selected)
+  assert calls == [DizhiRelation.拱会, DizhiRelation.拱合]
+  assert tuple(discovery) == (DizhiRelation.拱合,)
+  assert discovery[DizhiRelation.拱合] == (
+    frozenset({GanzhiOccurrence(0, ganzhis[0]), GanzhiOccurrence(1, ganzhis[1])}),
+  )
+  calls.clear()
+  assert dizhi_utils.discover_ganzhis(ganzhis, relations=()) == {}
+  assert calls == []
+  mutual = dizhi_utils.discover_mutual_ganzhis(ganzhis[:1], ganzhis[1:], relations=selected)
+  assert mutual == discovery
+  assert calls == []
+  assert dizhi_utils.discover_mutual_ganzhis(ganzhis[:1], ganzhis[1:], relations=()) == {}
+  non_gong = dizhi_utils.discover_mutual_ganzhis(
+    (Ganzhi.from_str('甲子'),),
+    (Ganzhi.from_str('乙丑'),),
+    relations=(DizhiRelation.六合, DizhiRelation.六合),
+  )
+  assert calls == [DizhiRelation.六合]
+  assert tuple(non_gong) == (DizhiRelation.六合,)
+
+
+@pytest.mark.parametrize('mutual', [False, True])
+def test_discovery_relation_selection_negative(mutual: bool) -> None:
+  query: Callable[..., GanzhiRelationDiscovery] = (
+    dizhi_utils.discover_mutual_ganzhis if mutual else dizhi_utils.discover_ganzhis
+  )
+  args = ((), ()) if mutual else ((),)
+  values = iter((DizhiRelation.拱合,))
+  with pytest.raises(TypeError, match='Expected a Sequence'):
+    query(*args, relations=values)
+  assert tuple(values) == (DizhiRelation.拱合,)
+  for invalid in ({DizhiRelation.拱合}, None, [TianganRelation.合], ['拱合']):
+    with pytest.raises(TypeError):
+      query(*args, relations=invalid)
 
 
 def test_search_ganzhis_projection() -> None:
@@ -1317,8 +1395,9 @@ def test_search_ganzhis_projection() -> None:
   ):
     if relation in (DizhiRelation.拱合, DizhiRelation.拱会):
       continue
-    original = dizhi_utils.search(dizhis, relation, anhe_def=anhe_def, xing_def=xing_def)
-    positioned = dizhi_utils.search_ganzhis(ganzhis, relation, anhe_def=anhe_def, xing_def=xing_def)
+    definitions = DizhiRelationDefinitions(anhe_def=anhe_def, xing_def=xing_def)
+    original = dizhi_utils.search(dizhis, relation, definitions=definitions)
+    positioned = dizhi_utils.search_ganzhis(ganzhis, relation, definitions=definitions)
     assert _project_ganzhi_combos(positioned) == set(original)
 
 
@@ -1333,11 +1412,11 @@ def test_search_ganzhis_negative() -> None:
   with pytest.raises(TypeError):
     dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], TianganRelation.合) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, anhe_def='NORMAL') # type: ignore
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, definitions='NORMAL') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, xing_def='LOOSE') # type: ignore
+    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, definitions=DizhiRules.XingDef.LOOSE) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.search_ganzhis([Ganzhi.from_str('甲子')], relation, gong_def='SAME_STEM_NARROW') # type: ignore
+    dizhi_utils.search_ganzhis([], relation, definitions=DizhiRules.GongDef.SAME_STEM_NARROW) # type: ignore
 
 
 def test_discover_ganzhis_projection() -> None:
@@ -1348,8 +1427,9 @@ def test_discover_ganzhis_projection() -> None:
   dizhis = tuple(gz.dizhi for gz in ganzhis)
 
   for anhe_def, xing_def in itertools.product(DizhiRules.AnheDef, DizhiRules.XingDef):
-    original = dizhi_utils.discover(dizhis, anhe_def=anhe_def, xing_def=xing_def)
-    positioned = dizhi_utils.discover_ganzhis(ganzhis, anhe_def=anhe_def, xing_def=xing_def)
+    definitions = DizhiRelationDefinitions(anhe_def=anhe_def, xing_def=xing_def)
+    original = dizhi_utils.discover(dizhis, definitions=definitions)
+    positioned = dizhi_utils.discover_ganzhis(ganzhis, definitions=definitions)
     assert positioned.to_dizhi_discovery() == original
 
   empty = GanzhiRelationDiscovery({DizhiRelation.六合: ()})
@@ -1377,11 +1457,11 @@ def test_discover_ganzhis_negative() -> None:
   with pytest.raises(TypeError):
     dizhi_utils.discover_ganzhis(set(ganzhis)) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_ganzhis(ganzhis, anhe_def='NORMAL') # type: ignore
+    dizhi_utils.discover_ganzhis(ganzhis, definitions='NORMAL') # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_ganzhis(ganzhis, xing_def='LOOSE') # type: ignore
+    dizhi_utils.discover_ganzhis(ganzhis, definitions=DizhiRules.XingDef.LOOSE) # type: ignore
   with pytest.raises(TypeError):
-    dizhi_utils.discover_ganzhis(ganzhis, gong_def='SAME_STEM_NARROW') # type: ignore
+    dizhi_utils.discover_ganzhis([], definitions=DizhiRules.GongDef.SAME_STEM_NARROW) # type: ignore
 
 
 @pytest.mark.slow

@@ -9,7 +9,7 @@ from collections.abc import Sequence, Collection, Iterable
 
 from ..common import frozendict, check_declared_types
 from ..defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation
-from ..rules import BaziRules, DizhiRules
+from ..rules import BaziRules, DizhiRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from .relation_discovery import RelationDiscovery
 
 
@@ -519,10 +519,10 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
 
 
 # The subset-style relations `search` supports, mapped to their combo tables. 暗合 is NOT
-# here: its table is picked by the `anhe_def` parameter at query time. Tables are
+# here: its table is picked by `definitions.anhe_def` at query time. Tables are
 # stored as-is -- wrapping the mapping tables in `frozenset` would trade their stable
 # definition-order iteration for per-process hash order.
-# `search` 支持的子集型关系与其组合表（暗合不在此列——它的表在查询期按 `anhe_def` 参数选择）。
+# `search` 支持的子集型关系与其组合表（暗合的表在查询期按 `definitions.anhe_def` 选择）。
 # 表原样存放——若包一层 `frozenset`，映射表稳定的定义序迭代会退化成逐进程哈希序。
 _SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, Collection[DizhiCombo]]] = frozendict({
   DizhiRelation.三会:  DizhiRules.DIZHI_SANHUI,
@@ -538,8 +538,7 @@ _SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, Collection[DizhiCombo]]] 
 
 
 def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
-           anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-           xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRelationCombos:
+           definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> DizhiRelationCombos:
   '''
   返回 `dizhis` 中所有满足该关系的组合。
 
@@ -553,18 +552,18 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     - 对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。
     - 对于子卯相刑，只需要子、卯都出现就满足相刑关系。
     - 对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。
-    - 用哪个定义由 `xing_def` 决定；默认 `XingDef.LOOSE` 下，丑未戌、寅巳申三取二即算（见下方 `xing_def` 注）。
+    - 用哪个定义由 `definitions.xing_def` 决定；默认 `XingDef.LOOSE` 下，丑未戌、寅巳申三取二即算。
     - 请使用 `xing` 来进行更细粒度的检查。
 
   Note:
   - 拱合、拱会依赖柱位与天干；本纯地支入口对两者抛 `ValueError`，请用 `search_ganzhis`。
 
   Note:
-  - 暗合查询的表由 `anhe_def` 参数选择，默认 `DizhiRules.AnheDef.NORMAL_EXTENDED`（最宽定义）。
+  - 暗合查询的表由 `definitions.anhe_def` 选择，默认 `DizhiRules.AnheDef.NORMAL_EXTENDED`（最宽定义）。
     盘级流派口径经 `BaziSchool.anhe_def` 声明。
 
   Note:
-  - 刑查询的表由 `xing_def` 参数选择，默认 `DizhiRules.XingDef.LOOSE`。本入口是批量查法：
+  - 刑查询的表由 `definitions.xing_def` 选择，默认 `DizhiRules.XingDef.LOOSE`。本入口是批量查法：
     组合按多重集比对，方向（谁刑谁）不可观测——`LOOSE` 在此就等于「三取二」。
     要看方向请用 `xing`（见 `XingDef` 的 docstring）。
   - 举例来说，即使输入中只有丑、未，也符合相刑关系（缺少戌，但 `LOOSE` 定义只要求三个地支中出现两个）。
@@ -572,8 +571,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
   Args:
   - dizhis: (Sequence[Dizhi]) 待查地支；重数参与自刑判断。
   - relation: (DizhiRelation) 待查关系。
-  - anhe_def: (DizhiRules.AnheDef) 暗合定义，仅用于暗合查询。
-  - xing_def: (DizhiRules.XingDef) 相刑定义，仅用于刑查询。
+  - definitions: (DizhiRelationDefinitions) 已校验的关系定义；本入口只读取暗合与刑定义。
 
   Return: (DizhiRelationCombos) 所有匹配组合，不包含作用方向。
 
@@ -600,10 +598,8 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     raise TypeError(f'Expected a Sequence, got {type(dizhis)}')
   if not all(isinstance(dz, Dizhi) for dz in dizhis):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 
   if relation in DizhiRules.GONG_RELATIONS:
     raise ValueError(f'{relation} requires Ganzhi positions; use search_ganzhis')
@@ -613,11 +609,11 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     # 多重集语义（自刑要求同一地支出现两次），普通子集判定不适用。
     dz_counter: Counter[Dizhi] = Counter(dizhis)
 
-    ret: set[DizhiCombo] = set()
-    for xing_tuple in DizhiRules.DIZHI_XING[xing_def]:
+    ret: dict[DizhiCombo, None] = {}
+    for xing_tuple in DizhiRules.DIZHI_XING[definitions.xing_def]:
       xing_dz_counter: Counter[Dizhi] = Counter(xing_tuple)
       if dz_counter & xing_dz_counter == xing_dz_counter:
-        ret.add(DizhiCombo(xing_tuple))
+        ret[DizhiCombo(xing_tuple)] = None
 
     return DizhiRelationCombos(ret)
 
@@ -625,22 +621,24 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     # The rule tables hold directed (subject, object) pairs -- fold them into direction-less
     # combos first. 生克规则表存的是有向对，先折叠成无向组合。
     pairs: frozenset[tuple[Dizhi, Dizhi]] = DizhiRules.DIZHI_KE if relation is DizhiRelation.克 else DizhiRules.DIZHI_SHENG
-    pair_combos: frozenset[DizhiCombo] = frozenset(map(DizhiCombo, pairs))
+    ordered = sorted(pairs, key=lambda pair: tuple(dz.index for dz in pair))
+    pair_combos = dict.fromkeys(map(DizhiCombo, ordered))
     dz_set: set[Dizhi] = set(dizhis)
     return DizhiRelationCombos(combo for combo in pair_combos if combo.issubset(dz_set))
 
   # Every other relation shares one shape: keep the table combos fully present in the input.
-  # 暗合's table is picked by `anhe_def` at query time; the rest resolve statically.
-  # 其余关系同构：保留完整出现在输入中的组合。暗合的表在查询期按 `anhe_def` 选，其余静态解析。
+  # 暗合's table is picked by `definitions.anhe_def` at query time; the rest resolve statically.
+  # 其余关系同构：保留完整出现在输入中的组合。暗合的表按 `definitions.anhe_def` 选，其余静态解析。
   combos: Collection[DizhiCombo] = (
-    DizhiRules.DIZHI_ANHE[anhe_def] if relation is DizhiRelation.暗合 else _SUBSET_SEARCH_COMBOS[relation]
+    DizhiRules.DIZHI_ANHE[definitions.anhe_def] if relation is DizhiRelation.暗合 else _SUBSET_SEARCH_COMBOS[relation]
   )
+  if isinstance(combos, frozenset):
+    combos = tuple(sorted(combos, key=lambda combo: tuple(sorted(dz.index for dz in combo))))
   return DizhiRelationCombos(combo for combo in combos if combo.issubset(dizhis))
 
 
 def discover(dizhis: Sequence[Dizhi], *,
-             anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-             xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRelationDiscovery:
+             definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> DizhiRelationDiscovery:
   '''
   返回给定地支中所有可能的地支关系组合（三会、六合、刑等）。
   这个方法通过调用 `search` 来实现。
@@ -657,8 +655,7 @@ def discover(dizhis: Sequence[Dizhi], *,
 
   Args:
   - dizhis: (Sequence[Dizhi]) 待查地支。
-  - anhe_def: (DizhiRules.AnheDef) 暗合定义，原样传给 `search`。
-  - xing_def: (DizhiRules.XingDef) 相刑定义，原样传给 `search`。
+  - definitions: (DizhiRelationDefinitions) 关系定义，原样传给 `search`。
 
   Return: (DizhiRelationDiscovery) 所有匹配组合的冻结映射，不包含作用方向。
   '''
@@ -667,15 +664,13 @@ def discover(dizhis: Sequence[Dizhi], *,
     raise TypeError(f'Expected a Sequence, got {type(dizhis)}')
   if not all(isinstance(dz, Dizhi) for dz in dizhis):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
   return DizhiRelationDiscovery({
     rel : result
     for rel in DizhiRelation
     if rel not in DizhiRules.GONG_RELATIONS
-    if len(result := search(dizhis, rel, anhe_def=anhe_def, xing_def=xing_def)) > 0
+    if len(result := search(dizhis, rel, definitions=definitions)) > 0
   })
 
 
@@ -736,35 +731,21 @@ def _search_gong(
 
 
 def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
-                    anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-                    xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE,
-                    gong_def: DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW) -> GanzhiRelationCombos:
-  '''Find the concrete Ganzhi occurrences whose Dizhis satisfy `relation`.
-  找出地支满足 `relation` 的具体干支位置组合。
+                   definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> GanzhiRelationCombos:
+  '''找出地支满足 `relation` 的具体干支位置组合。
 
-  The zero-based index in the input sequence is the occurrence identity. Equal Ganzhis or
-  equal Dizhis at different indices therefore remain distinguishable. For the existing
-  position-independent relations, projecting every result to Dizhis and deduplicating yields
-  exactly `search`.
   输入序列中的零基序号就是具体出现的身份，因此不同位置的相同干支或地支不会混同。
   对现有不依赖位置的关系，逐项投影到地支并去重后与 `search` 完全等价。
 
-  For 拱合 / 拱会, this entry applies the selected source profile, requires adjacent
-  occurrences, and rejects a candidate when its virtual branch is already present anywhere
-  in the input. Returned combos contain the two real participants; virtual-branch recovery
-  follows `DizhiRelationDiscovery`.
   拱合、拱会在本入口应用来源档案，只查相邻具体出现；所拱之支已在输入中出现时不再论暗拱。
   返回组合只含两个实支；虚支恢复契约见 `DizhiRelationDiscovery`。
 
   Args:
-  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check. The frequency of Dizhis matters.
-  - relation: (DizhiRelation) The relation to check.
-  - anhe_def: (DizhiRules.AnheDef) The ANHE definition; only consulted for 暗合 queries.
-  - xing_def: (DizhiRules.XingDef) The XING definition; only consulted for 刑 queries.
-  - gong_def: (DizhiRules.GongDef) The source-backed Gong profile; only consulted for
-    拱合 / 拱会. Within one sequence, only adjacent occurrences are candidates.
+  - ganzhis: (Sequence[Ganzhi]) 有序干支序列；地支重数参与自刑判断。
+  - relation: (DizhiRelation) 待查关系。
+  - definitions: (DizhiRelationDefinitions) 关系定义；拱局读取 `gong_def`，只查相邻具体出现。
 
-  Return: (GanzhiRelationCombos) All matching concrete occurrence combos.
+  Return: (GanzhiRelationCombos) 所有匹配的具体出现组合，不包含作用方向。
   '''
 
   if not isinstance(ganzhis, Sequence):
@@ -773,17 +754,13 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
     raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis]}')
   if not isinstance(relation, DizhiRelation):
     raise TypeError(f'Expected DizhiRelation, got {type(relation)}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
-  if not isinstance(gong_def, DizhiRules.GongDef):
-    raise TypeError(f'Expected GongDef, got {type(gong_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 
   concrete_ganzhis: tuple[Ganzhi, ...] = tuple(ganzhis)
   if relation in DizhiRules.GONG_RELATIONS:
     adjacent_pairs = zip(range(len(concrete_ganzhis) - 1), range(1, len(concrete_ganzhis)))
-    return _search_gong(concrete_ganzhis, relation, adjacent_pairs, gong_def)
+    return _search_gong(concrete_ganzhis, relation, adjacent_pairs, definitions.gong_def)
 
   dizhis: tuple[Dizhi, ...] = tuple(gz.dizhi for gz in concrete_ganzhis)
   occurrences: tuple[GanzhiOccurrence, ...] = tuple(
@@ -791,7 +768,7 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   )
 
   ret: list[GanzhiRelationCombo] = []
-  for combo in search(dizhis, relation, anhe_def=anhe_def, xing_def=xing_def):
+  for combo in search(dizhis, relation, definitions=definitions):
     # A self-刑 pair projects to a singleton DizhiCombo; occurrence identity restores
     # its two concrete participants.
     participant_count: int = 2 if relation is DizhiRelation.刑 and len(combo) == 1 else len(combo)
@@ -804,80 +781,69 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
 
 
 def discover_ganzhis(ganzhis: Sequence[Ganzhi], *,
-                      anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-                      xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE,
-                      gong_def: DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW) -> GanzhiRelationDiscovery:
-  '''Discover every `DizhiRelation` among concrete Ganzhi occurrences while retaining
-  their input positions and Tiangans. 保留输入位置与天干，发现具体干支之间的全部地支关系。
+                     definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS,
+                     relations: Sequence[DizhiRelation] = tuple(DizhiRelation)) -> GanzhiRelationDiscovery:
+  '''保留输入位置与天干，发现具体干支之间的所选地支关系。
 
   Note:
-  - Relations with no matching combo are absent from the returned mapping.
   - 没有匹配组合的关系不会出现在返回映射中。
-
-  Note:
-  - Returned combos do not reveal the direction of directional relations.
   - 返回的组合不体现有向关系的方向。
-
-  Note:
-  - Gong profile, adjacency, virtual-branch presence, and result-shape semantics are those of
-    `search_ganzhis`.
   - 拱局的来源档案、相邻、填实与结果形状语义同 `search_ganzhis`。
+  - 关系按 `relations` 的首次出现顺序求值，重复关系只查一次。
+  - 输入须为 `Sequence`；非序列在遍历前抛出 `TypeError`。
 
   Args:
-  - ganzhis: (Sequence[Ganzhi]) The ordered Ganzhis to check.
-  - anhe_def: (DizhiRules.AnheDef) The ANHE definition, forwarded to `search_ganzhis`.
-  - xing_def: (DizhiRules.XingDef) The XING definition, forwarded to `search_ganzhis`.
-  - gong_def: (DizhiRules.GongDef) The source-backed Gong profile, forwarded to `search_ganzhis`.
+  - ganzhis: (Sequence[Ganzhi]) 有序干支序列。
+  - definitions: (DizhiRelationDefinitions) 关系定义，原样传给 `search_ganzhis`。
+  - relations: (Sequence[DizhiRelation]) 只求值这些关系，默认全部；空序列不求值任何关系。
 
-  Return: (GanzhiRelationDiscovery) The position-preserving discovery result.
+  Return: (GanzhiRelationDiscovery) 保留具体出现位置的冻结关系映射。
   '''
 
   if not isinstance(ganzhis, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(ganzhis)}')
   if not all(isinstance(gz, Ganzhi) for gz in ganzhis):
     raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis]}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
-  if not isinstance(gong_def, DizhiRules.GongDef):
-    raise TypeError(f'Expected GongDef, got {type(gong_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
+  if not isinstance(relations, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(relations)}')
+  if not all(isinstance(rel, DizhiRelation) for rel in relations):
+    raise TypeError(f'Expected all DizhiRelation, got {[type(rel) for rel in relations]}')
 
   return GanzhiRelationDiscovery({
     rel : result
-    for rel in DizhiRelation
+    for rel in dict.fromkeys(relations)
     if len(result := search_ganzhis(
       ganzhis,
       rel,
-      anhe_def=anhe_def,
-      xing_def=xing_def,
-      gong_def=gong_def,
+      definitions=definitions,
     )) > 0
   })
 
 
 def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzhi], *,
-                             anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-                             xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE,
-                             gong_def: DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW) -> GanzhiRelationDiscovery:
-  '''Discover relations whose concrete participants span both Ganzhi sequences.
-  发现参与柱横跨两组输入的干支关系。
+                            definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS,
+                            relations: Sequence[DizhiRelation] = tuple(DizhiRelation)) -> GanzhiRelationDiscovery:
+  '''发现参与柱横跨两组输入的所选干支关系。
 
-  Occurrence indices belong to the conceptual concatenation `ganzhis1 + ganzhis2`; the
-  second sequence therefore starts at `len(ganzhis1)`. Gong pairs spanning the two scopes
-  are direct candidates under the 岁运作用口径; pairs within either side are outside this
-  mutual result.
   具体出现序号属于概念上的 `ganzhis1 + ganzhis2`；第二组从 `len(ganzhis1)` 起算。
   跨组拱局按岁运作用口径直接成为候选；单侧内部的拱局不进跨组结果。
+  所拱之支已在任一组出现时不再论暗拱；组合只含真实参与者，保留完整干支与位置。
+
+  Note:
+  - 两组输入都须为 `Sequence`，在遍历任一组前检查；空序列合法。
+  - 关系按 `relations` 的首次出现顺序求值，重复关系只查一次；没有组合的键不返回。
+  - 非拱关系同样要求具体参与者来自两侧，与 `discover_mutual` 的按值查法不同。
+  - 返回的组合不体现有向关系的方向。
 
   Args:
-  - ganzhis1: (Sequence[Ganzhi]) The first ordered scope.
-  - ganzhis2: (Sequence[Ganzhi]) The second ordered scope.
-  - anhe_def: (DizhiRules.AnheDef) The ANHE definition.
-  - xing_def: (DizhiRules.XingDef) The XING definition.
-  - gong_def: (DizhiRules.GongDef) The source-backed Gong profile.
+  - ganzhis1: (Sequence[Ganzhi]) 第一组有序干支。
+  - ganzhis2: (Sequence[Ganzhi]) 第二组有序干支。
+  - definitions: (DizhiRelationDefinitions) 关系定义。
+  - relations: (Sequence[DizhiRelation]) 只求值这些关系，默认全部；空序列不求值任何关系。
 
-  Return: (GanzhiRelationDiscovery) Position-preserving combos with participants on both sides.
+  Return: (GanzhiRelationDiscovery) 参与者横跨两侧的具体出现组合。
   '''
   if not isinstance(ganzhis1, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(ganzhis1)}')
@@ -887,12 +853,12 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
     raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis1]}')
   if not all(isinstance(gz, Ganzhi) for gz in ganzhis2):
     raise TypeError(f'Expected all Ganzhi, got {[type(gz) for gz in ganzhis2]}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
-  if not isinstance(gong_def, DizhiRules.GongDef):
-    raise TypeError(f'Expected GongDef, got {type(gong_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
+  if not isinstance(relations, Sequence):
+    raise TypeError(f'Expected a Sequence, got {type(relations)}')
+  if not all(isinstance(rel, DizhiRelation) for rel in relations):
+    raise TypeError(f'Expected all DizhiRelation, got {[type(rel) for rel in relations]}')
 
   first: tuple[Ganzhi, ...] = tuple(ganzhis1)
   second: tuple[Ganzhi, ...] = tuple(ganzhis2)
@@ -905,14 +871,13 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
         combined,
         relation,
         product(range(split), range(split, len(combined))),
-        gong_def,
+        definitions.gong_def,
       )
 
     combos = search_ganzhis(
       combined,
       relation,
-      anhe_def=anhe_def,
-      xing_def=xing_def,
+      definitions=definitions,
     )
     return GanzhiRelationCombos(
       combo for combo in combos
@@ -922,14 +887,13 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
 
   return GanzhiRelationDiscovery({
     relation : result
-    for relation in DizhiRelation
+    for relation in dict.fromkeys(relations)
     if len(result := __search(relation)) > 0
   })
 
 
 def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
-                     anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED,
-                     xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE) -> DizhiRelationDiscovery:
+                    definitions: DizhiRelationDefinitions = DEFAULT_DIZHI_RELATION_DEFINITIONS) -> DizhiRelationDiscovery:
   '''
   找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
   注意返回的地支组合中的地支必须同时来自两组 `dizhis1` 和 `dizhis2` 中。
@@ -947,8 +911,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   Args:
   - dizhis1: (Sequence[Dizhi]) 第一组地支。
   - dizhis2: (Sequence[Dizhi]) 第二组地支。
-  - anhe_def: (DizhiRules.AnheDef) 暗合定义，原样传给 `search`。
-  - xing_def: (DizhiRules.XingDef) 相刑定义，原样传给 `search`。
+  - definitions: (DizhiRelationDefinitions) 关系定义，原样传给 `search`。
 
   Return: (DizhiRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。
   
@@ -970,14 +933,12 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis1]}')
   if not all(isinstance(dz, Dizhi) for dz in dizhis2):
     raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis2]}')
-  if not isinstance(anhe_def, DizhiRules.AnheDef):
-    raise TypeError(f'Expected AnheDef, got {type(anhe_def)}')
-  if not isinstance(xing_def, DizhiRules.XingDef):
-    raise TypeError(f'Expected XingDef, got {type(xing_def)}')
+  if not isinstance(definitions, DizhiRelationDefinitions):
+    raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 
   # 自刑 depends on multiplicity (the same Dizhi appearing once on each side forms 自刑),
   # so the two sides CONCATENATE -- a set union would silently break it. Deliberately
   # different from `tiangan_utils.discover_mutual`.
   # 自刑依赖重数（同一地支两侧各现一次也构成自刑），故两侧拼接——集合并会静默破坏
   # 自刑。与天干侧的集合并是刻意分歧。
-  return discover(list(dizhis1) + list(dizhis2), anhe_def=anhe_def, xing_def=xing_def).mutual_only(set(dizhis1), set(dizhis2))
+  return discover(list(dizhis1) + list(dizhis2), definitions=definitions).mutual_only(set(dizhis1), set(dizhis2))

@@ -189,16 +189,15 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   if relation is TianganRelation.合:
     return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_HE if combo.issubset(tiangans))
   elif relation is TianganRelation.冲:
-    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_CHONG if combo.issubset(tiangans))
+    combos = sorted(TianganRules.TIANGAN_CHONG, key=lambda combo: tuple(sorted(tg.index for tg in combo)))
+    return TianganRelationCombos(combo for combo in combos if combo.issubset(tiangans))
   
   # Otherwise, relation is `TianganRelation.生` or `TianganRelation.克`.
   tg_set: Final[set[Tiangan]] = set(tiangans)
 
-  if relation is TianganRelation.生:
-    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_SHENG if tg_set.issuperset(combo))
-  else: 
-    assert relation is TianganRelation.克
-    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_KE if tg_set.issuperset(combo))
+  pairs = TianganRules.TIANGAN_SHENG if relation is TianganRelation.生 else TianganRules.TIANGAN_KE
+  ordered = sorted(pairs, key=lambda pair: tuple(tg.index for tg in pair))
+  return TianganRelationCombos(TianganCombo(pair) for pair in ordered if tg_set.issuperset(pair))
 
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:

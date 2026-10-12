@@ -3,11 +3,35 @@
 
 import re
 import inspect
+from dataclasses import fields, replace, FrozenInstanceError
 
 import pytest
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation, ShierZhangsheng
-from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
+from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules, DizhiRelationDefinitions
+
+
+def test_relation_definitions() -> None:
+  default = DizhiRelationDefinitions()
+  assert tuple(field.name for field in fields(default)) == ('anhe_def', 'xing_def', 'gong_def')
+  assert default == DizhiRelationDefinitions()
+  assert hash(default) == hash(DizhiRelationDefinitions())
+  with pytest.raises(FrozenInstanceError):
+    default.gong_def = DizhiRules.GongDef.LU_NARROW # type: ignore[misc]
+  for field in fields(default):
+    for member in type(getattr(default, field.name)):
+      changed = replace(default, **{field.name: member})
+      assert getattr(changed, field.name) is member
+
+
+@pytest.mark.parametrize('field, invalid', [
+  ('anhe_def', 'NORMAL_EXTENDED'), ('anhe_def', 0), ('anhe_def', DizhiRules.XingDef.LOOSE),
+  ('xing_def', 'LOOSE'), ('xing_def', 1), ('xing_def', DizhiRules.AnheDef.NORMAL),
+  ('gong_def', 'NARROW'), ('gong_def', 0), ('gong_def', DizhiRules.GongheDef.NARROW),
+])
+def test_relation_definitions_negative(field: str, invalid: object) -> None:
+  with pytest.raises(TypeError, match='Expected'):
+    replace(DizhiRelationDefinitions(), **{field: invalid}) # type: ignore[arg-type]
 
 
 def test_basic() -> None:

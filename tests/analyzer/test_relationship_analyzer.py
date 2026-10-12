@@ -8,8 +8,10 @@ import dataclasses
 import inspect
 import random
 import itertools
+import sys
 from datetime import datetime
 from collections.abc import Callable
+from types import FrameType
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
 from bazi.utils import shensha_utils, tiangan_utils, dizhi_utils, bazi_utils
@@ -650,18 +652,18 @@ def test_at_birth_house_relations(rng: random.Random) -> None:
 
     # For AtBirth analysis, the following two algorithms are equivalent.
     existing = dizhi_utils.discover(
-      [y, m, d, h], anhe_def=school.anhe_def, xing_def=school.xing_def,
+      [y, m, d, h], definitions=school.relation_definitions,
     ).filter(
       lambda _, combo : d in combo
     )
     gong = _project_gong(
-      dizhi_utils.discover_ganzhis(chart.bazi.pillars, gong_def=school.gong_def),
+      dizhi_utils.discover_ganzhis(chart.bazi.pillars, definitions=school.relation_definitions),
       lambda combo : any(occurrence.index == 2 for occurrence in combo),
     )
     assert _equal(at_birth.house_relations, existing.merge(gong))
 
     existing_mutual = dizhi_utils.discover_mutual(
-      [y, m, h], [d], anhe_def=school.anhe_def, xing_def=school.xing_def,
+      [y, m, h], [d], definitions=school.relation_definitions,
     )
     actual_without_gong = dizhi_utils.DizhiRelationDiscovery({
       relation : combos
@@ -753,8 +755,7 @@ def test_filtered(rng: random.Random) -> None:
 
     for dz_rel, dz_combos in dizhi_utils.discover(
       chart.bazi.four_dizhis,
-      anhe_def=chart.bazi.config.school.anhe_def, # The oracle mirrors the chart's school (issue #69).
-      xing_def=chart.bazi.config.school.xing_def,
+      definitions=chart.bazi.config.school.relation_definitions, # The oracle mirrors the chart's school (issue #69).
     ).items():
       if dz_rel not in at_birth.star_relations.dizhi:
         assert all(dz not in dz_combo for dz_combo in dz_combos for dz in stars.dizhi)
@@ -1305,15 +1306,14 @@ def test_transit_house_relations(rng: random.Random) -> None:
 
       expected = dizhi_utils.discover_mutual(
         bazi.four_dizhis, transit_dz,
-        anhe_def=bazi.config.school.anhe_def, # The oracle mirrors the chart's school (issue #69).
-        xing_def=bazi.config.school.xing_def,
+        definitions=bazi.config.school.relation_definitions, # The oracle mirrors the chart's school (issue #69).
       ).filter(__expected_filter)
 
       gong = _project_gong(
         dizhi_utils.discover_mutual_ganzhis(
           bazi.pillars,
           transits.ganzhis,
-          gong_def=bazi.config.school.gong_def,
+          definitions=bazi.config.school.relation_definitions,
         ),
         lambda combo : any(occurrence.index == 2 for occurrence in combo),
       )
@@ -1436,19 +1436,19 @@ def test_transit_star_relations(rng: random.Random) -> None:
       school: BaziSchool = chart.bazi.config.school
       if random_level in [TransitAnalysis.Level.TRANSITS_ONLY, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover(transit_tg))
-        dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover(transit_dz, definitions=school.relation_definitions))
         dz_discovery = dz_discovery.merge(_project_gong(
-          dizhi_utils.discover_ganzhis(transits.ganzhis, gong_def=school.gong_def),
+          dizhi_utils.discover_ganzhis(transits.ganzhis, definitions=school.relation_definitions),
           lambda _: True,
         ))
       if random_level in [TransitAnalysis.Level.MUTUAL, TransitAnalysis.Level.ALL]:
         tg_discovery = tg_discovery.merge(tiangan_utils.discover_mutual(chart.bazi.four_tiangans, transit_tg))
-        dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz, anhe_def=school.anhe_def, xing_def=school.xing_def))
+        dz_discovery = dz_discovery.merge(dizhi_utils.discover_mutual(chart.bazi.four_dizhis, transit_dz, definitions=school.relation_definitions))
         dz_discovery = dz_discovery.merge(_project_gong(
           dizhi_utils.discover_mutual_ganzhis(
             chart.bazi.pillars,
             transits.ganzhis,
-            gong_def=school.gong_def,
+            definitions=school.relation_definitions,
           ),
           lambda _: True,
         ))
@@ -1801,43 +1801,80 @@ def test_registry_definitions_are_the_declared_fields() -> None:
       assert resolver(school) is definition, (name, definition)
 
 
-def test_no_bare_dizhi_discovery_calls() -> None:
-  # The "no bare calls" invariant declared by the `_dz_*` wrappers in relationship.py needs
-  # an executor: every `dizhi_utils` batch query in that file must sit inside one of the
-  # school-aware wrappers -- a call anywhere else silently falls
-  # back to the hardcoded defaults (issue #69).
-  # 「无裸调」不变量得有执行者：relationship.py 里的批量入口调用必须都在流派薄包装体内——
-  # 别处的调用会静默回落到硬编码默认（issue #69）。
-  wrappers = {
-    '_dz_discover', '_dz_discover_mutual',
-    '_dz_discover_ganzhis', '_dz_discover_mutual_ganzhis',
+@pytest.mark.parametrize('scope, plain_queries, gong_queries', [
+  ('birth_house', 13, 2), ('birth_star', 13, 2), ('transit_house', 13, 2),
+  ('star_transits', 13, 2), ('star_mutual', 13, 2), ('star_all', 26, 4),
+])
+def test_gong_supplement_skips_non_gong(scope: str, plain_queries: int, gong_queries: int) -> None:
+  analyzer = RelationshipAnalyzer(BaziChart(Bazi.create('1980-01-12 20:00', 'male')))
+  transits = TransitSet(
+    dayun=Ganzhi.from_str('甲寅'),
+    liunian=Ganzhi.from_str('甲午'),
+    liuyue=Ganzhi.from_str('甲辰'),
+  )
+  queries: dict[str, Callable[[], object]] = {
+    'birth_house': lambda: analyzer.at_birth.house_relations,
+    'birth_star': lambda: analyzer.at_birth.star_relations,
+    'transit_house': lambda: analyzer.transits.house_relations(transits),
+    'star_transits': lambda: analyzer.transits.star_relations(transits, level=TransitAnalysis.Level.TRANSITS_ONLY),
+    'star_mutual': lambda: analyzer.transits.star_relations(transits, level=TransitAnalysis.Level.MUTUAL),
+    'star_all': lambda: analyzer.transits.star_relations(transits),
   }
+  counts = {'plain': 0, 'supplement': 0, 'gong': 0}
+
+  def profile(frame: FrameType, event: str, arg: object) -> None:
+    if event != 'call' or frame.f_code.co_filename != dizhi_utils.__file__:
+      return
+    if frame.f_code.co_name == '_search_gong':
+      counts['gong'] += 1
+    elif frame.f_code.co_name == 'search':
+      parent = frame.f_back
+      while parent is not None:
+        if parent.f_code.co_name in ('discover_ganzhis', 'discover_mutual_ganzhis'):
+          counts['supplement'] += 1
+          return
+        parent = parent.f_back
+      counts['plain'] += 1
+
+  previous = sys.getprofile()
+  sys.setprofile(profile)
+  try:
+    queries[scope]()
+  finally:
+    sys.setprofile(previous)
+  assert counts == {'plain': plain_queries, 'supplement': 0, 'gong': gong_queries}
+
+
+def test_dizhi_queries_use_chart_definitions() -> None:
+  # Every query must explicitly receive definitions read from this chart's school (issue #69).
   gated = {
     'search', 'discover', 'discover_mutual',
     'search_ganzhis', 'discover_ganzhis', 'discover_mutual_ganzhis',
   }
 
-  bare: list[int] = []
-
-  class _Visitor(ast.NodeVisitor):
-    def __init__(self) -> None:
-      self._scope: list[str] = []
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-      self._scope.append(node.name)
-      self.generic_visit(node)
-      self._scope.pop()
-
-    def visit_Call(self, node: ast.Call) -> None:
+  tree = ast.parse(inspect.getsource(relationship_module))
+  queries = 0
+  for function in (node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)):
+    bindings = {
+      target.id
+      for node in ast.walk(function) if isinstance(node, ast.Assign)
+      if ast.unparse(node.value) in (
+        'bazi.config.school.relation_definitions',
+        'self._chart.bazi.config.school.relation_definitions',
+      )
+      for target in node.targets if isinstance(target, ast.Name)
+    }
+    for node in ast.walk(function):
+      if not isinstance(node, ast.Call):
+        continue
       f = node.func
-      if (isinstance(f, ast.Attribute) and f.attr in gated
-          and isinstance(f.value, ast.Name) and f.value.id == 'dizhi_utils'
-          and (not self._scope or self._scope[-1] not in wrappers)):
-        bare.append(node.lineno)
-      self.generic_visit(node)
-
-  _Visitor().visit(ast.parse(inspect.getsource(relationship_module)))
-  assert bare == []
+      if not (isinstance(f, ast.Attribute) and f.attr in gated
+              and isinstance(f.value, ast.Name) and f.value.id == 'dizhi_utils'):
+        continue
+      definitions = next((kw.value for kw in node.keywords if kw.arg == 'definitions'), None)
+      assert isinstance(definitions, ast.Name) and definitions.id in bindings, node.lineno
+      queries += 1
+  assert queries > 0
 
 
 @pytest.mark.parametrize('anchor, expected', [

@@ -11,7 +11,7 @@ from collections.abc import Mapping
 
 from .calendar import CalendarBackend
 from .common import check_declared_types, frozendict
-from .rules import DizhiRules, ShenshaRules
+from .rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 
 
 class BaziPrecision(Enum):
@@ -253,18 +253,16 @@ class BaziSchool:
   defaults, so a shared default instance can never be mutated through.
   字段只许不可变类型（枚举 / frozen 值类型），共享默认实例不可能被改脏。
 
-  The field defaults below are the single definition of the default school (默认口径);
-  `DEFAULT_SCHOOL` picks them up, and `BaziConfig.school` points at that same instance --
-  the defaults are written down exactly once.
-  默认流派只在字段默认值处定义一次；`DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
+  默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
+  `DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
   hongyan_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   # Rule-definition enums live with their tables; only referenced here.
   # 规则定义枚举与各自规则表同住，这里只引用。
-  anhe_def:      DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
-  xing_def:      DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
-  gong_def:      DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
+  anhe_def:      DizhiRules.AnheDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.anhe_def
+  xing_def:      DizhiRules.XingDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.xing_def
+  gong_def:      DizhiRules.GongDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.gong_def
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
   tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
@@ -289,6 +287,15 @@ class BaziSchool:
       anchor = getattr(self, name)
       if anchor not in allowed:
         raise ValueError(f'Unsupported anchor for {name}: {anchor}; supported: {sorted(a.name for a in allowed)}')
+
+  @property
+  def relation_definitions(self) -> DizhiRelationDefinitions:
+    '''返回本流派的地支关系定义，供单次查询使用；不新增 JSON 字段。'''
+    return DizhiRelationDefinitions(
+      anhe_def=self.anhe_def,
+      xing_def=self.xing_def,
+      gong_def=self.gong_def,
+    )
 
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':

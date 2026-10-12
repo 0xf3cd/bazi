@@ -177,6 +177,46 @@ promise of a stable public interface.
 [External chart comparisons](https://github.com/0xf3cd/bazi/blob/9c3a473563ce595d675efdc134428fe52243491b/EXTERNAL_BASELINE.md) document a synthetic boundary
 baseline with configuration-specific results and an offline regression test.
 
+### 地支关系查询与迁移
+
+`bazi.utils.dizhi_utils` 的六个批量入口统一使用关键字参数 `definitions`，类型为规则层的
+冻结对象 `DizhiRelationDefinitions`。原来的独立 `anhe_def`、`xing_def`、`gong_def` 查询参数
+已删除；把这些值传给对象构造函数，再传给查询入口。对象只承载暗合、刑、拱局定义，构造时
+检查各字段类型。盘级字段及 JSON 保留，由 `BaziSchool.relation_definitions` 提供查询对象。
+
+```python
+from bazi.defines import Dizhi, DizhiRelation, Ganzhi
+from bazi.rules import DizhiRules, DizhiRelationDefinitions
+from bazi.school import BaziSchool
+from bazi.utils import dizhi_utils
+
+definitions = DizhiRelationDefinitions(
+  anhe_def=DizhiRules.AnheDef.MANGPAI,
+  xing_def=DizhiRules.XingDef.STRICT,
+  gong_def=DizhiRules.GongDef.SAME_STEM_WIDE,
+)
+assert DizhiRelation.暗合 not in dizhi_utils.discover(
+  [Dizhi.寅, Dizhi.午],
+  definitions=definitions,
+)
+school = BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)
+gong = dizhi_utils.discover_ganzhis(
+  [Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲午')],
+  definitions=school.relation_definitions,
+  relations=(DizhiRelation.拱合, DizhiRelation.拱会),
+)
+assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅, Dizhi.午}),)
+```
+
+`search`、`discover`、`discover_mutual` 只接地支；纯地支查拱局仍抛 `ValueError`。
+`search_ganzhis`、`discover_ganzhis`、`discover_mutual_ganzhis` 保留完整干支与输入位置。
+后两个入口可用 `relations` 限定求值范围，默认全部；重复关系只查一次，空序列不求值。
+输入容器须为 `Sequence`，迭代器在消耗前被拒绝。单组拱局要求相邻，跨组拱局直接查两侧
+柱位对；填实与流派条件仍适用。拱局投影只含两个实支，不含所拱虚支。
+
+非拱跨组的按值查法与具体出现查法各自保留，不能互换。关系合并按左侧、右侧的首次出现
+顺序去重；规则映射按定义序，集合表按枚举序，刑按规则表中的首次组合出现顺序输出。
+
 ### 知识接口迁移
 
 `bazi.descriptions`、`bazi.interpreter` 及其枚举、重复记录、字段表和 `Interpreter` 方法已删除，

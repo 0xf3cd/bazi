@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- 地支批量查询统一接收规则层的冻结 `DizhiRelationDefinitions`；删除查询入口的独立定义
+  参数，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
+  `BaziSchool.relation_definitions`。干支发现可用 `relations` 选择求值范围。
+- 亲密关系分析的补拱只查询拱合／拱会，删除四个参数转发包装；神煞直接按锚柱与候选支
+  求值，日柱参与过滤共用具体位置谓词。关系值、流派条件和柱位语义保留。
+- `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
+  进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
+
 - `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
   新记录格式为版本2，版本1明确拒绝；删除柱位派生的 `index` 与固定 `stem_scope` 存储，
   知识内容和顺序仍参与结果值比较与 hash。

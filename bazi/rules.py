@@ -1,11 +1,12 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import itertools
+from dataclasses import dataclass
 from collections.abc import Callable
 from enum import Enum
 from typing import Final, TypeVar
 
-from .common import frozendict
+from .common import frozendict, check_declared_types
 from .data_types import TraitTuple, HiddenTianganDict
 from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation
 
@@ -557,6 +558,29 @@ class DizhiRules:
   # 相克关系是单向的。如寅丑相克，则是寅木克丑土。
   # 地支相克不考虑阴阳，只考虑五行。
   DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _dizhi_ke(BaziRules.DIZHI_TRAITS)
+
+
+@dataclass(frozen=True)
+class DizhiRelationDefinitions:
+  '''地支批量查法共用的暗合、刑与拱局定义。
+
+  构造时检查各字段的枚举类型；单次查询只读取所查关系对应的定义。
+  盘级组合与 JSON 仍由 `BaziSchool` 承载，本对象不含排盘或神煞选项。
+
+  Args:
+  - anhe_def: (DizhiRules.AnheDef) 暗合定义。
+  - xing_def: (DizhiRules.XingDef) 刑定义。
+  - gong_def: (DizhiRules.GongDef) 拱局天干与结构条件。
+  '''
+  anhe_def: DizhiRules.AnheDef = DizhiRules.AnheDef.NORMAL_EXTENDED
+  xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE
+  gong_def: DizhiRules.GongDef = DizhiRules.GongDef.SAME_STEM_NARROW
+
+  def __post_init__(self) -> None:
+    check_declared_types(self)
+
+
+DEFAULT_DIZHI_RELATION_DEFINITIONS: Final[DizhiRelationDefinitions] = DizhiRelationDefinitions()
 
 
 _GroupValue = TypeVar('_GroupValue')
