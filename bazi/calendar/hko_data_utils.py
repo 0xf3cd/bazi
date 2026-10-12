@@ -112,11 +112,7 @@ def __is_valid_lunar_date(d: CalendarDate) -> bool:
   
   if d.month < 1 or d.month > len(info['days_counts']):
     return False 
-  if d.day < 1:
-    return False
-  
-  days_in_month: int = info['days_counts'][d.month - 1]
-  return d.day <= days_in_month
+  return 1 <= d.day <= info['days_counts'][d.month - 1]
 
 
 def is_valid_ganzhi_date(d: CalendarDate) -> bool:
@@ -145,11 +141,7 @@ def __is_valid_ganzhi_date(d: CalendarDate) -> bool:
   
   if d.month < 1 or d.month > 12:
     return False 
-  if d.day < 1:
-    return False
-  
-  days_counts: list[int] = days_counts_in_ganzhi_year(d.year)
-  return d.day <= days_counts[d.month - 1]
+  return 1 <= d.day <= days_counts_in_ganzhi_year(d.year)[d.month - 1]
 
 
 def is_valid(d: CalendarDate) -> bool:

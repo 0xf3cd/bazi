@@ -460,7 +460,7 @@ class DizhiRules:
   )])
 
   # 该表格用于查询地支之间的相生关系。
-  # 相生关系是单向的。如丙寅相生，则是寅木生丙火。
+  # 相生关系是单向的。
   # 地支相生不考虑阴阳，只考虑五行。
   DIZHI_SHENG: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(
     BaziRules.DIZHI_TRAITS,
@@ -540,8 +540,8 @@ class ShenshaRules:
   下文某一行两家给出同一读法时，读作「同一个现代读法被记录了两次」，不是「两个独立读法互相印证」。
 
   出处（天乙贵人、红艳、金舆、国印贵人等条）：
-  - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
-  - 高人: https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md
+  - 问真《神煞大全》：https://book.taiyi.me/命/神煞大全
+  - 高人：https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md
   '''
 
   # 下列桃花、红鸾、天喜、驿马的原局查法出处，不等于分析器对各类流运统一用表的逐项依据。
@@ -707,8 +707,8 @@ class ShenshaRules:
 
   # 金舆取各天干禄位前二辰。
   # 表值出处（#163）：
-  # - 《三命通会·卷三·论金舆》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
-  # - 袁树珊《命理探源》: https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  # - 《三命通会·卷三·论金舆》：https://book.taiyi.me/命/三命通会/三命通会(卷三)
+  # - 袁树珊《命理探源》：https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   JINYU: Final[frozendict[Tiangan, Dizhi]] = _lu_offset(2)
 
   # 魁罡固定取四个日柱，《渊海子平·论魁罡》与《三命通会·卷六·魁罡》所载相同。
@@ -724,7 +724,7 @@ class ShenshaRules:
 
   # 天赦按月令所属四时查日柱：春戊寅、夏甲午、秋戊申、冬甲子。
   # 表值出处（#176）：
-  # - 《三命通会·卷三·论天月德》: https://book.taiyi.me/命/三命通会/三命通会(卷三)
+  # - 《三命通会·卷三·论天月德》：https://book.taiyi.me/命/三命通会/三命通会(卷三)
   # - 袁树珊《命理探源》转引《渊海子平》：
   #   https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
   # 查法锚出处：https://book.taiyi.me/命/神煞大全#天赦日（#176）。
@@ -745,7 +745,7 @@ class ShenshaRules:
     - ZIPING：子平法，仅五阳干有阳刃。
     - LUMING：古禄命法，十干皆有羊刃，取禄前一辰。
     - DIWANG：十干各取帝旺位；现代问真与高人皆采用此表，两家按一份来源计，
-      见 ShenshaRules 的类说明。
+      见 `ShenshaRules` 的 docstring。
 
     飞刃：
     - ZIPING：仅五阳干有飞刃，取阳刃对冲支。
@@ -761,7 +761,7 @@ class ShenshaRules:
       https://github.com/gaorenyes/gaorenyes.github.io
 
     飞刃出处：
-    - 《三命通会·卷三·论羊刃》:
+    - 《三命通会·卷三·论羊刃》：
       https://book.taiyi.me/命/三命通会/三命通会(卷三)
     - 《渊海子平·论阳刃》提供子平法仅五阳干的依据：
       https://book.taiyi.me/命/子平推命/渊海子平(神煞篇)
@@ -808,7 +808,7 @@ class ShenshaRules:
     `BaziSchool.tianyi_anchor` 相互独立，本表不代选昼夜界线。
 
     出处：
-    - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」:
+    - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」：
       https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
     - 两版合并口诀：
       https://www.click2macao.com/2024/04/10/tygrkjdz/
@@ -880,8 +880,7 @@ class ShenshaRules:
     - XIN_ZI：辛 → 子。
     - XIN_XU：辛 → 戌。
 
-    默认取 XIN_ZI：民国刊本与现代主流两条谱系都指向它。XIN_XU 出自《星学大成》，
-    两个转录逐字相同，且散文给了理由。
+    默认取 XIN_ZI：民国刊本与现代主流两条谱系都指向它。XIN_XU 出自《星学大成》。
 
     本表为子平法文昌（食神之临官、长生），与下方禄命法文昌贵分列；
     第三颗文星贵（「甲马乙蛇丙戊猴」）未纳入本库。
@@ -894,11 +893,11 @@ class ShenshaRules:
       因此 XIN_XU 是自成一说，不是抄讹。
 
     出处：
-    - 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」:
+    - 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」：
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
-    - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
-    - 明·万民英《星学大成》「论文昌」: https://book.taiyi.me/命/星学大成
-    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）:
+    - 问真《神煞大全》：https://book.taiyi.me/命/神煞大全
+    - 明·万民英《星学大成》「论文昌」：https://book.taiyi.me/命/星学大成
+    - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）：
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
 
     不修改既有定义；新读法须另加定义。
@@ -944,8 +943,8 @@ class ShenshaRules:
   # - 《五行精纪注释》卷十三「以年干查：甲见巳，乙见亥，丙见戌，丁见辰，戊见申，己见午，
   #   庚见寅，辛见未，壬见卯，癸见丑」；明言锚柱及全表：
   #   https://www.suanzhun.net/book/2728.html
-  # - 宋·廖中《五行精纪》: https://book.taiyi.me/命/五行精纪/五行精纪(下)
-  # - 《三命通会》卷三，附于「论太极贵」节内:
+  # - 宋·廖中《五行精纪》：https://book.taiyi.me/命/五行精纪/五行精纪(下)
+  # - 《三命通会》卷三，附于「论太极贵」节内：
   #   https://book.taiyi.me/命/三命通会/三命通会(卷三)
   WENCHANGGUI: Final[frozendict[Tiangan, Dizhi]] = frozendict({
     Tiangan.甲 : Dizhi.巳,
@@ -982,13 +981,13 @@ class ShenshaRules:
       但问真、高人与《五行精纪》均只列四库；无来源可裁，表从三家，矛盾如实留档。
 
     出处：
-    - 宋·廖中《五行精纪》卷十三（含「一作」异文）:
+    - 宋·廖中《五行精纪》卷十三（含「一作」异文）：
       https://book.taiyi.me/命/五行精纪/五行精纪(下)
     - 《五行精纪注释》卷十三「太极贵人，从年干取，甲乙人见子午，丙丁人见卯酉，
-      戊己人见辰戌丑未，庚辛人见寅亥，壬癸人见巳申」，该书亦记锚为年干:
+      戊己人见辰戌丑未，庚辛人见寅亥，壬癸人见巳申」，该书亦记锚为年干：
       https://www.suanzhun.net/book/2728.html
-    - 《三命通会》卷三·论太极贵: https://book.taiyi.me/命/三命通会/三命通会(卷三)
-    - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
+    - 《三命通会》卷三·论太极贵：https://book.taiyi.me/命/三命通会/三命通会(卷三)
+    - 问真《神煞大全》：https://book.taiyi.me/命/神煞大全
 
     不修改既有定义；新读法须另加定义。
     '''
@@ -1063,23 +1062,23 @@ class ShenshaRules:
       本库按四柱地支查的做法依此处所引现代来源，不出自上述段落。
 
     出处：
-    - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表:
+    - 《张果星宗》「禄勋、阳刃、唐符、国印」条与「天干吉凶星例」表：
       https://zh.wikisource.org/wiki/張果星宗
-    - 《五行精纪注释》卷十三，分别列出建节星与国印星:
+    - 《五行精纪注释》卷十三，分别列出建节星与国印星：
       https://www.suanzhun.net/book/2731.html
     - 国图抄本，目录著录为海虞瞿氏恬裕斋清抄本，第二册图像 81-82（卷十三）：
       https://commons.wikimedia.org/wiki/File:NLC892-411999013122-114407_五行精紀_第2冊.pdf
-    - 《五行精纪》白文卷十三【建节星】，两份转录均载上文所引文字:
-      算准网: https://www.suanzhun.net/book/1003.html
-      维基文库（全文页内第十三卷）: https://zh.wikisource.org/wiki/五行精紀
-    - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」:
+    - 《五行精纪》白文卷十三【建节星】，两份转录均载上文所引文字：
+      算准网：https://www.suanzhun.net/book/1003.html
+      维基文库（全文页内第十三卷）：https://zh.wikisource.org/wiki/五行精紀
+    - 明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是 二星守照身命为奇」：
       https://book.taiyi.me/命/星学大成
     - 维基文库标为四库全书本的电子转录将「二星守照身命为奇」排作 HTML 小字，taiyi 连排。
       对「二星守照身命为奇」核到的是网页呈现，不是该版影像，不能据此裁定本文或注文：
       https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽
-    - 张楠《神峰通考》卷六「唐符国印之星 惟张果老通玄先生命理 专用此二星取贵」:
+    - 张楠《神峰通考》卷六「唐符国印之星 惟张果老通玄先生命理 专用此二星取贵」：
       https://book.taiyi.me/命/神峰通考/神峰通考(卷六).md
-    - 问真《神煞大全》: https://book.taiyi.me/命/神煞大全
+    - 问真《神煞大全》：https://book.taiyi.me/命/神煞大全
 
     不修改既有定义；新读法须另加定义。
     '''

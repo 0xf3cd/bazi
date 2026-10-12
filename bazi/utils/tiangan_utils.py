@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from ..common import frozendict
 from ..defines import Tiangan, Wuxing, TianganRelation
 from ..rules import TianganRules
-from .relation_discovery import RelationDiscovery, _ordered_relation_pairs
+from .relation_discovery import RelationDiscovery, _ordered_combos, _ordered_relation_pairs
 
 
 '''
@@ -137,8 +137,8 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
 
 
 _SEARCH_COMBOS: Final[frozendict[TianganRelation, TianganRelationCombos]] = frozendict({
-  TianganRelation.合: tuple(TianganRules.TIANGAN_HE),
-  TianganRelation.冲: tuple(sorted(TianganRules.TIANGAN_CHONG, key=lambda combo: tuple(sorted(tg.index for tg in combo)))),
+  TianganRelation.合: _ordered_combos(TianganRules.TIANGAN_HE),
+  TianganRelation.冲: _ordered_combos(TianganRules.TIANGAN_CHONG),
   TianganRelation.生: _ordered_relation_pairs(TianganRules.TIANGAN_SHENG),
   TianganRelation.克: _ordered_relation_pairs(TianganRules.TIANGAN_KE),
 })
@@ -179,7 +179,7 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
     raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
 
   if relation not in _SEARCH_COMBOS:
-    raise ValueError(f'Unsupported TianganRelation: {relation}') # pragma: no cover # 当前全部枚举成员均在表内。
+    raise ValueError(f'Unsupported TianganRelation: {relation}') # pragma: no cover # 不可达的枚举穷尽检查。
 
   tg_set: Final[set[Tiangan]] = set(tiangans)
   return TianganRelationCombos(combo for combo in _SEARCH_COMBOS[relation] if combo.issubset(tg_set))

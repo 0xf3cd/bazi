@@ -248,12 +248,11 @@ class BaziSchool:
 
     Note:
     - 其余选项保持默认。
-      此预设只声明该著作所载读法。
 
     出处：
-    - 《命理探原·卷上强弱》(NLC scan):
+    - 《命理探原·卷上强弱》NLC 刊本：
       https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-    - 《命理探源》 ctext edition / ctext 版（金輿祿「以日主為主，如甲日見辰」）:
+    - 《命理探源》ctext 版（金輿祿「以日主為主，如甲日見辰」）：
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
       两版文字不同：NLC 刊本无金舆条，作「以日爲主」；ctext 作「以日主為主」。
 

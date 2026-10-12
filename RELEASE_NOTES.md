@@ -6,10 +6,9 @@
   README 按功能入口组织，每个 Python 示例可独立运行，自定义知识源示例显式准备临时文件。
 - `BaziSchool` 重排位置参数及 JSON 输出键序，将关系定义和独立羊刃／飞刃定义放在前面；
   调用方改用关键字参数。键名、默认值与按键名恢复完整档案的契约保留。
-- 删除 `Shishen.str_mapping_table()`；`from_str` 与 `abbr` 共用不可变简称映射。
-  `Ganzhi.next`／`prev` 直接移动干支，非六十甲子组合明确拒绝，含零步。
-- 新增 `Jieqi.jies()` 十二节元组入口。`TransitSet.select` 仍检查空请求、重复与缺项，
-  并按固定流运顺序返回。
+- 删除 `Shishen.str_mapping_table()`。
+  `Ganzhi.next`／`prev` 非六十甲子组合明确拒绝，含零步。
+- 新增 `Jieqi.jies()` 十二节元组入口。
 
 - 金舆、三套羊刃与对应飞刃、两套国印按既有定义派生；红鸾、天喜按起支逆数。
   表值、出处和流派选择保留，子平羊刃仍仅五阳干；同值的国印与飞刃仍为独立神煞。
@@ -22,9 +21,8 @@
 
 - `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
   构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
-  属性删除。`ChartOccurrence` 构造移除 `index` 位置字段，`index` 改为派生属性，展示只保留柱位。
-  新记录格式为版本2，版本1明确拒绝；删除柱位派生的 `index` 与固定 `stem_scope` 存储，
-  知识内容和顺序仍参与结果值比较与 hash。
+  属性及记录字段删除。`ChartOccurrence` 构造移除 `index` 位置字段；`index` 由柱位派生，
+  不进入记录，展示只保留柱位。新记录格式为版本2，版本1明确拒绝；知识内容和顺序仍参与结果值比较与 hash。
 
 - DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
   旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。

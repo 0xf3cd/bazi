@@ -344,8 +344,7 @@ class TransitAnalysis:
     Args:
     - transits: (TransitSet) 参与分析的流运。
 
-    Return:
-    - (ShenshaAnalysis) 给定流运的神煞结果。
+    Return: (ShenshaAnalysis) 给定流运的神煞结果。
     '''
 
     self._check_transits(transits)

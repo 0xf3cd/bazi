@@ -10,6 +10,15 @@ from ..defines.enum_base import IndexedBaziEnum
 _IndexedItem = TypeVar('_IndexedItem', bound=IndexedBaziEnum)
 
 
+def _ordered_combos(
+  combos: Collection[frozenset[_IndexedItem]],
+) -> tuple[frozenset[_IndexedItem], ...]:
+  '''映射表保留定义序，集合表按组合成员的枚举序排列。'''
+  if isinstance(combos, frozenset):
+    return tuple(sorted(combos, key=lambda combo: tuple(sorted(item.index for item in combo))))
+  return tuple(combos)
+
+
 def _ordered_relation_pairs(
   pairs: Collection[tuple[_IndexedItem, _IndexedItem]],
 ) -> tuple[frozenset[_IndexedItem], ...]:

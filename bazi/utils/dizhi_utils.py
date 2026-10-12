@@ -5,12 +5,12 @@ from collections import Counter
 from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Final
-from collections.abc import Sequence, Collection, Iterable
+from collections.abc import Sequence, Iterable
 
 from ..common import frozendict, check_declared_types
 from ..defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation
 from ..rules import BaziRules, DizhiRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
-from .relation_discovery import RelationDiscovery, _ordered_relation_pairs
+from .relation_discovery import RelationDiscovery, _ordered_combos, _ordered_relation_pairs
 
 
 '''
@@ -481,13 +481,6 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
-def _ordered_combos(combos: Collection[DizhiCombo]) -> DizhiRelationCombos:
-  '''映射表保留定义序，集合表按组合成员的枚举序排列。'''
-  if isinstance(combos, frozenset):
-    return tuple(sorted(combos, key=lambda combo: tuple(sorted(dz.index for dz in combo))))
-  return tuple(combos)
-
-
 _SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, DizhiRelationCombos]] = frozendict({
   DizhiRelation.三会:  _ordered_combos(DizhiRules.DIZHI_SANHUI),
   DizhiRelation.六合:  _ordered_combos(DizhiRules.DIZHI_LIUHE),
@@ -498,15 +491,12 @@ _SUBSET_SEARCH_COMBOS: Final[frozendict[DizhiRelation, DizhiRelationCombos]] = f
   DizhiRelation.冲:   _ordered_combos(DizhiRules.DIZHI_CHONG),
   DizhiRelation.破:   _ordered_combos(DizhiRules.DIZHI_PO),
   DizhiRelation.害:   _ordered_combos(DizhiRules.DIZHI_HAI),
+  DizhiRelation.生:   _ordered_relation_pairs(DizhiRules.DIZHI_SHENG),
+  DizhiRelation.克:   _ordered_relation_pairs(DizhiRules.DIZHI_KE),
 })
 
 _ANHE_SEARCH_COMBOS: Final[frozendict[DizhiRules.AnheDef, DizhiRelationCombos]] = frozendict({
   definition: _ordered_combos(combos) for definition, combos in DizhiRules.DIZHI_ANHE.items()
-})
-
-_SHENG_KE_SEARCH_COMBOS: Final[frozendict[DizhiRelation, DizhiRelationCombos]] = frozendict({
-  DizhiRelation.生: _ordered_relation_pairs(DizhiRules.DIZHI_SHENG),
-  DizhiRelation.克: _ordered_relation_pairs(DizhiRules.DIZHI_KE),
 })
 
 
@@ -574,15 +564,12 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
 
     return DizhiRelationCombos(ret)
 
-  if relation is DizhiRelation.生 or relation is DizhiRelation.克:
-    dz_set: set[Dizhi] = set(dizhis)
-    return DizhiRelationCombos(combo for combo in _SHENG_KE_SEARCH_COMBOS[relation] if combo.issubset(dz_set))
-
   # 其余关系同构：保留完整出现在输入中的组合。暗合的表按 `definitions.anhe_def` 选，其余静态解析。
   combos = (
     _ANHE_SEARCH_COMBOS[definitions.anhe_def] if relation is DizhiRelation.暗合 else _SUBSET_SEARCH_COMBOS[relation]
   )
-  return DizhiRelationCombos(combo for combo in combos if combo.issubset(dizhis))
+  dz_set = set(dizhis)
+  return DizhiRelationCombos(combo for combo in combos if combo.issubset(dz_set))
 
 
 def discover(dizhis: Sequence[Dizhi], *,
