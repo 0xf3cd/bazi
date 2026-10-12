@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from datetime import UTC, date, time, datetime, timedelta, timezone, tzinfo
 from typing import Final, NamedTuple, TypedDict
 
+from .common import frozendict
 from .defines import Tiangan, Dizhi, Ganzhi
 from .calendar import (
   CalendarDate, CalendarType, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
@@ -73,6 +74,12 @@ class BaziGender(Enum):
       assert self is self.FEMALE
       return 'female'
 
+
+
+_GENDER_ALIASES: Final[frozendict[str, BaziGender]] = frozendict({
+  '男': BaziGender.MALE,   'male': BaziGender.MALE,
+  '女': BaziGender.FEMALE, 'female': BaziGender.FEMALE,
+})
 
 
 def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
@@ -284,17 +291,11 @@ class Bazi:
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
 
-    _gender: BaziGender
-    if isinstance(gender, BaziGender):
-      _gender = gender
-    else:
-      assert isinstance(gender, str)
-      if gender.lower() in ['男', 'male']:
-        _gender = BaziGender.MALE
-      elif gender.lower() in ['女', 'female']:
-        _gender = BaziGender.FEMALE
-      else:
-        raise ValueError(f'Currently not support gender: {gender}')
+    assert isinstance(gender, (BaziGender, str))
+    try:
+      _gender = _GENDER_ALIASES[gender.lower()] if isinstance(gender, str) else gender
+    except KeyError:
+      raise ValueError(f'Currently not support gender: {gender}') from None
 
     return _birth_time, _gender
 

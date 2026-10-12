@@ -74,4 +74,15 @@ class Jieqi(BaziEnum):
     else: # Return in the order that Jieqis appear in a solar year.
       return list(cls)[-2:] + list(cls)[:-2]
 
+  @classmethod
+  def jies(cls, ganzhi_year: bool = True) -> tuple['Jieqi', ...]:
+    '''返回十二节，不含中气；默认从立春起，公历年序从小寒起。
+
+    Args:
+    - ganzhi_year: (bool) True 为干支年序，False 为公历年序。
+    '''
+    if not isinstance(ganzhi_year, bool):
+      raise TypeError(f'Expected bool, got {type(ganzhi_year)}')
+    return tuple(cls.as_list(ganzhi_year=ganzhi_year)[::2])
+
 节气 = Jieqi # Alias

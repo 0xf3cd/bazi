@@ -1,8 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from typing import Self
+from typing import Final, Self
 
 from .enum_base import BaziEnum
+from ..common import frozendict
 
 
 class Shishen(BaziEnum):
@@ -30,24 +31,6 @@ class Shishen(BaziEnum):
   正印 = ZHENGYIN
   偏印 = PIANYIN
 
-  @staticmethod
-  def str_mapping_table() -> dict[str, str]:
-    '''
-    Return the mapping rules (from one Chinese character to the full name) for the Shishens.
-    '''
-    return {
-      '比': '比肩',
-      '劫': '劫财',
-      '食': '食神',
-      '伤': '伤官',
-      '财': '正财',
-      '才': '偏财',
-      '官': '正官',
-      '杀': '七杀',
-      '印': '正印',
-      '枭': '偏印',
-    }
-
   @classmethod
   def from_str(cls, s: str) -> Self:
     # Overrides the base: also accepts the single-char aliases (e.g. '比' -> 比肩).
@@ -58,20 +41,23 @@ class Shishen(BaziEnum):
       raise ValueError(f'Unsupported Shishen string: {s}')
 
     if len(s) == 1:
-      t: dict[str, str] = Shishen.str_mapping_table()
-      if s not in t:
-        raise ValueError(f'Unsupported Shishen string: {s}')
-      s = t[s]
+      try:
+        s = _ABBR_TO_NAME[s]
+      except KeyError:
+        raise ValueError(f'Unsupported Shishen string: {s}') from None
 
     return cls(s)
 
   @property
   def abbr(self) -> str:
-    '''
-    The short version of this Shishen. For example, "比" for "比肩", "财" for "正财", etc.
-    '''
-    t = Shishen.str_mapping_table()
-    reversed_t = { v : k for k, v in t.items() }
-    return reversed_t[str(self)]
+    '''此十神的单字简称，如比肩为比、正财为财、偏财为才。'''
+    return _NAME_TO_ABBR[str(self)]
+
+
+_ABBR_TO_NAME: Final[frozendict[str, str]] = frozendict({
+  '比': '比肩', '劫': '劫财', '食': '食神', '伤': '伤官', '财': '正财',
+  '才': '偏财', '官': '正官', '杀': '七杀', '印': '正印', '枭': '偏印',
+})
+_NAME_TO_ABBR: Final[frozendict[str, str]] = frozendict({name: abbr for abbr, name in _ABBR_TO_NAME.items()})
 
 十神 = Shishen # Alias

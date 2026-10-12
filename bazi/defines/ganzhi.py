@@ -51,23 +51,28 @@ class Ganzhi(NamedTuple):
     return [str(gz) for gz in Ganzhi.list_sexagenary_cycle()]
 
   def next(self, step: int = 1) -> 'Ganzhi':
+    '''在六十甲子中前进 step 步；阴阳不配的干支抛 ValueError。
+
+    step 接受 int（含 bool 与 int 子类），可为零或负数。
+    '''
     if not isinstance(step, int):
       raise TypeError(f'Expected int, got {type(step)}')
-    return self.__next(step)
+    return self.__shift(step)
 
   @functools.lru_cache(maxsize=1024)
-  def __next(self, step: int) -> 'Ganzhi':
-    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
-    return cycle[(cycle.index(self) + step) % 60]
+  def __shift(self, step: int) -> 'Ganzhi':
+    tiangan_index, dizhi_index = self.tiangan.index, self.dizhi.index
+    if tiangan_index % 2 != dizhi_index % 2:
+      raise ValueError(f'Unsupported sexagenary Ganzhi: {self}')
+    return Ganzhi(
+      Tiangan.from_index((tiangan_index + step) % 10),
+      Dizhi.from_index((dizhi_index + step) % 12),
+    )
 
   def prev(self, step: int = 1) -> 'Ganzhi':
+    '''在六十甲子中后退 step 步；输入契约与 next 相同。'''
     if not isinstance(step, int):
       raise TypeError(f'Expected int, got {type(step)}')
-    return self.__prev(step)
-
-  @functools.lru_cache(maxsize=1024)
-  def __prev(self, step: int) -> 'Ganzhi':
-    cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
-    return cycle[(cycle.index(self) - step) % 60]
+    return self.__shift(-step)
 
 干支 = Ganzhi # Alias

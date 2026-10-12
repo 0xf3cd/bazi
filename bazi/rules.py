@@ -196,7 +196,10 @@ class TianganRules:
   # 该表格用于查询天干之间的相生关系。
   # 相生关系是单向的。如甲丁相生，则是甲木生丁火。
   # 天干相生不考虑阴阳，只考虑五行。
-  TIANGAN_SHENG: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(BaziRules.TIANGAN_TRAITS, Wuxing.generates)
+  TIANGAN_SHENG: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(
+    BaziRules.TIANGAN_TRAITS,
+    Wuxing.generates,
+  )
 
   # The table is used to query the KE (克) relation across all Tiangans.
   # KE relation is a uni-directional relation.
@@ -204,7 +207,10 @@ class TianganRules:
   # 该表格用于查询天干之间的相克关系。
   # 相克关系是单向的。如壬丙相克，是壬水克丙火。
   # 天干相克不考虑阴阳，只考虑五行。
-  TIANGAN_KE: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(BaziRules.TIANGAN_TRAITS, Wuxing.destructs)
+  TIANGAN_KE: Final[frozenset[tuple[Tiangan, Tiangan]]] = _wuxing_relations(
+    BaziRules.TIANGAN_TRAITS,
+    Wuxing.destructs,
+  )
 
 
 
@@ -527,7 +533,10 @@ class DizhiRules:
   # 该表格用于查询地支之间的相生关系。
   # 相生关系是单向的。如丙寅相生，则是寅木生丙火。
   # 地支相生不考虑阴阳，只考虑五行。
-  DIZHI_SHENG: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(BaziRules.DIZHI_TRAITS, Wuxing.generates)
+  DIZHI_SHENG: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(
+    BaziRules.DIZHI_TRAITS,
+    Wuxing.generates,
+  )
 
   # The table is used to query the KE (克) relation across all Dizhis.
   # KE relation is a uni-directional relation.
@@ -535,7 +544,10 @@ class DizhiRules:
   # 该表格用于查询地支之间的相克关系。
   # 相克关系是单向的。如寅丑相克，则是寅木克丑土。
   # 地支相克不考虑阴阳，只考虑五行。
-  DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(BaziRules.DIZHI_TRAITS, Wuxing.destructs)
+  DIZHI_KE: Final[frozenset[tuple[Dizhi, Dizhi]]] = _wuxing_relations(
+    BaziRules.DIZHI_TRAITS,
+    Wuxing.destructs,
+  )
 
 
 @dataclass(frozen=True)

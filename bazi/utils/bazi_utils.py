@@ -216,30 +216,30 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
   
   if day_master_wuxing == other_wuxing:           # 比劫
     if homogeneous:
-      return Shishen.from_str('比')
+      return Shishen.比肩
     else:
-      return Shishen.from_str('劫')
+      return Shishen.劫财
   elif day_master_wuxing.generates(other_wuxing): # 食伤
     if homogeneous:
-      return Shishen.from_str('食')
+      return Shishen.食神
     else:
-      return Shishen.from_str('伤')
+      return Shishen.伤官
   elif day_master_wuxing.destructs(other_wuxing): # 财星
     if homogeneous:
-      return Shishen.from_str('才')
+      return Shishen.偏财
     else:
-      return Shishen.from_str('财')
+      return Shishen.正财
   elif other_wuxing.generates(day_master_wuxing): # 印枭
     if homogeneous:
-      return Shishen.from_str('枭')
+      return Shishen.偏印
     else:
-      return Shishen.from_str('印')
+      return Shishen.正印
   else:                                           # 官杀
     assert other_wuxing.destructs(day_master_wuxing) 
     if homogeneous:
-      return Shishen.from_str('杀')
+      return Shishen.七杀
     else:
-      return Shishen.from_str('官')
+      return Shishen.正官
 
 
 def nayin_str(gz: Ganzhi) -> str:

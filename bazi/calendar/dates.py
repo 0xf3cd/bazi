@@ -123,7 +123,7 @@ class GanzhiYearMonth:
   @property
   def opening_jie(self) -> tuple[int, Jieqi]:
     '''开月节的公历年与节名；丑月由下一公历年的小寒开启。'''
-    return self.year + (self.month == 12), Jieqi.as_list(ganzhi_year=True)[2 * (self.month - 1)]
+    return self.year + (self.month == 12), Jieqi.jies()[self.month - 1]
 
   @classmethod
   def from_dizhi(cls, year: int, dizhi: Dizhi) -> 'GanzhiYearMonth':
@@ -141,7 +141,7 @@ class GanzhiYearMonth:
       raise TypeError(f'Expected Jieqi, got {type(jie.jieqi)}')
     if not isinstance(jie.moment, datetime):
       raise TypeError(f'Expected datetime, got {type(jie.moment)}')
-    jies = Jieqi.as_list(ganzhi_year=True)[::2]
+    jies = Jieqi.jies()
     if jie.jieqi not in jies:
       raise ValueError(f'Unsupported opening Jie: {jie.jieqi}')
     return cls(jie.moment.year - (jie.jieqi is Jieqi.小寒), jies.index(jie.jieqi) + 1)

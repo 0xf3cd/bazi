@@ -110,19 +110,12 @@ class TransitSet:
     if len(set(kinds)) != len(kinds):
       raise ValueError(f'Duplicate transit kinds: {kinds}')
 
-    available = frozenset(iter(self))
-    missing = tuple(kind for kind in kinds if kind not in available)
+    selected = {kind.value: getattr(self, kind.value) for kind in kinds}
+    missing = tuple(kind for kind in kinds if selected[kind.value] is None)
     if len(missing) > 0:
       raise ValueError(f'Transit kinds not available: {missing}')
 
-    selected = frozenset(kinds)
-    return TransitSet(
-      xiaoyun=self.xiaoyun if TransitKind.XIAOYUN in selected else None,
-      dayun=self.dayun     if TransitKind.DAYUN   in selected else None,
-      liunian=self.liunian if TransitKind.LIUNIAN in selected else None,
-      liuyue=self.liuyue   if TransitKind.LIUYUE  in selected else None,
-      liuri=self.liuri     if TransitKind.LIURI   in selected else None,
-    )
+    return TransitSet(**selected)
 
 
 class TransitDatabase:

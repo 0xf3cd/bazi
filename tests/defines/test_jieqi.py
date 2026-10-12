@@ -55,6 +55,21 @@ def test_as_list() -> None:
   ]
 
 
+def test_jies() -> None:
+  assert Jieqi.jies() == (
+    Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种, Jieqi.小暑,
+    Jieqi.立秋, Jieqi.白露, Jieqi.寒露, Jieqi.立冬, Jieqi.大雪, Jieqi.小寒,
+  )
+  assert Jieqi.jies(ganzhi_year=False) == (
+    Jieqi.小寒, Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种,
+    Jieqi.小暑, Jieqi.立秋, Jieqi.白露, Jieqi.寒露, Jieqi.立冬, Jieqi.大雪,
+  )
+  assert Jieqi.jies(ganzhi_year=True) == Jieqi.jies()
+  for invalid in (0, 1, None, 'solar'):
+    with pytest.raises(TypeError, match='Expected bool'):
+      Jieqi.jies(invalid) # type: ignore[arg-type]
+
+
 def test_from_str() -> None:
   with pytest.raises(ValueError):
     Jieqi.from_str('甲甲')

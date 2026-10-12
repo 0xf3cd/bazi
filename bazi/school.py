@@ -77,6 +77,17 @@ class BaziPrecision(Enum):
       return 'minute'
 
 
+_PRECISION_ALIASES: Final[frozendict[str, BaziPrecision]] = frozendict({
+  alias: precision
+  for precision, aliases in (
+    (BaziPrecision.MINUTE, ('分', '分钟', 'm', 'min', 'minute')),
+    (BaziPrecision.HOUR,   ('时', '小时', 'h', 'hour')),
+    (BaziPrecision.DAY,    ('天', '日', 'd', 'day')),
+  )
+  for alias in aliases
+})
+
+
 class DayunYearRule(Enum):
   '''
   The rule projecting each precise Dayun (大运) boundary to a year label.
@@ -257,28 +268,28 @@ class BaziSchool:
   `DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
-  hongyan_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  # Rule-definition enums live with their tables; only referenced here.
-  # 规则定义枚举与各自规则表同住，这里只引用。
   anhe_def:      DizhiRules.AnheDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.anhe_def
   xing_def:      DizhiRules.XingDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.xing_def
   gong_def:      DizhiRules.GongDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.gong_def
   yangren_def:   ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
-  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  feiren_def:    ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
+
+  # Every anchor's provenance and supported readings live in its _ANCHOR_CHOICES row.
+  hongyan_anchor: Anchor = Anchor.DAY
+  tianyi_anchor: Anchor = Anchor.YEAR_AND_DAY
   tianyi_def:    ShenshaRules.TianyiDef = ShenshaRules.TianyiDef.GENG_WITH_JIA_WU
-  yima_anchor:      Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  jinyu_anchor: Anchor = Anchor.DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
-  feiren_def: ShenshaRules.YangrenDef = ShenshaRules.YangrenDef.ZIPING
-  zaisha_anchor: Anchor = Anchor.YEAR # Provenance: same-named `_ANCHOR_CHOICES` row.
-  wenchang_anchor: Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  yima_anchor:      Anchor = Anchor.YEAR_AND_DAY
+  huagai_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  jiangxing_anchor: Anchor = Anchor.YEAR_AND_DAY
+  jiesha_anchor:    Anchor = Anchor.YEAR_AND_DAY
+  wangshen_anchor:  Anchor = Anchor.YEAR_AND_DAY
+  jinyu_anchor: Anchor = Anchor.DAY
+  zaisha_anchor: Anchor = Anchor.YEAR
+  wenchang_anchor: Anchor = Anchor.YEAR_AND_DAY
   wenchang_def:    ShenshaRules.WenchangDef = ShenshaRules.WenchangDef.XIN_ZI
-  taiji_anchor:    Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  taiji_anchor:    Anchor = Anchor.YEAR_AND_DAY
   taiji_def:       ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH
-  guoyin_anchor:   Anchor = Anchor.YEAR_AND_DAY # Provenance: same-named `_ANCHOR_CHOICES` row.
+  guoyin_anchor:   Anchor = Anchor.YEAR_AND_DAY
   guoyin_def:      ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN
 
   def __post_init__(self) -> None:
@@ -384,9 +395,10 @@ class BaziSchool:
       if not isinstance(name, str):
         raise TypeError(f'Expected str, got {type(name)}')
       declared = cast(type[Enum], f.type)
-      if name not in declared.__members__:
-        raise ValueError(f'Unsupported {declared.__name__}: {name}')
-      kwargs[f.name] = declared[name]
+      try:
+        kwargs[f.name] = declared[name]
+      except KeyError:
+        raise ValueError(f'Unsupported {declared.__name__}: {name}') from None
 
     return cls(**kwargs)
 
@@ -464,39 +476,16 @@ class BaziConfig:
     if not isinstance(dayun_year_rule, (DayunYearRule, str)):
       raise TypeError(f'Expected DayunYearRule or str, got {type(dayun_year_rule)}')
 
-    _precision: BaziPrecision
-    if isinstance(precision, BaziPrecision):
-      _precision = precision
-    else:
-      assert isinstance(precision, str)
-      if precision.lower() in ['分', '分钟', 'm', 'min', 'minute']:
-        _precision = BaziPrecision.MINUTE
-      elif precision.lower() in ['时', '小时', 'h', 'hour']:
-        _precision = BaziPrecision.HOUR
-      elif precision.lower() in ['天', '日', 'd', 'day']:
-        _precision = BaziPrecision.DAY
-      else:
-        raise ValueError(f'Unsupported precision: {precision}')
-
-    _backend: CalendarBackend
-    if isinstance(backend, CalendarBackend):
-      _backend = backend
-    else:
-      assert isinstance(backend, str)
-      _backend = CalendarBackend.from_str(backend)
-
-    _dayun_year_rule: DayunYearRule
-    if isinstance(dayun_year_rule, DayunYearRule):
-      _dayun_year_rule = dayun_year_rule
-    else:
-      assert isinstance(dayun_year_rule, str)
-      _dayun_year_rule = DayunYearRule.from_str(dayun_year_rule)
+    try:
+      _precision = _PRECISION_ALIASES[precision.lower()] if isinstance(precision, str) else precision
+    except KeyError:
+      raise ValueError(f'Unsupported precision: {precision}') from None
 
     return cls(
       precision=_precision,
-      backend=_backend,
+      backend=CalendarBackend.from_str(backend) if isinstance(backend, str) else backend,
       school=school,
-      dayun_year_rule=_dayun_year_rule,
+      dayun_year_rule=DayunYearRule.from_str(dayun_year_rule) if isinstance(dayun_year_rule, str) else dayun_year_rule,
     )
 
 

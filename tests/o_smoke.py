@@ -109,6 +109,9 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('Ganzhi.next rejects 甲丑', ValueError, lambda: Ganzhi.from_str('甲丑').next()),
+    ('Ganzhi.prev rejects 甲丑 even at zero', ValueError, lambda: Ganzhi.from_str('甲丑').prev(0)),
+    ('Jieqi.jies rejects int', TypeError, lambda: Jieqi.jies(1)), # type: ignore[arg-type]
     ('nayin_str rejects 甲丑', ValueError,
      lambda: bazi_utils.nayin_str(Ganzhi.from_str('甲丑'))),
     ('xing rejects four Dizhis', ValueError,

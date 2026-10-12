@@ -9,8 +9,8 @@ agreement is a test result rather than a shared code path.
 What this backend adds over HKO is `jieqi_moment`: real second-level moments instead of
 day-level placeholders.  Everything that a `CalendarDate` can express stays day-level,
 because the GANZHI calendar itself is a date-level construct (day 1 of ganzhi month 1 is
-the 立春 *date*).  Attributing a *moment* to a pillar is the caller's job -- that is what
-issue #72 is about, and it is deliberately not done here.
+the 立春 *date*).  Attributing a *moment* to a pillar is the caller's job (`Bazi` applies
+its selected birth precision).
 
 Unlike the HKO backend, this one is a class with module-level singletons rather than a
 module of functions.  The lunar calendar has two algorithms and the caches must not be
@@ -220,9 +220,7 @@ class CelestialCalendarUtils:
       raise ValueError(f'Ganzhi year {ganzhi_year} needs jieqi data of year {ganzhi_year + 1}, '
                        f'which is out of the supported range {self._jieqi_table.supported_year_range()}')
 
-    jies: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
-    assert jies[0] is Jieqi.立春
-    assert len(jies) == 12
+    jies = Jieqi.jies()
 
     # The first 11 节 are in solar year `ganzhi_year`, the last one (小寒) in the next.
     start_dates: list[date] = [self.jieqi_date(ganzhi_year, jq) for jq in jies[:11]]
@@ -575,7 +573,7 @@ class CelestialCalendarUtils:
     self.__check_jie_range(dt)
 
     # Walk the year's 节 backwards; `dt` sits in the last interval whose start is <= it.
-    for jie in reversed(Jieqi.as_list(ganzhi_year=False)[::2]):
+    for jie in reversed(Jieqi.jies(ganzhi_year=False)):
       moment: datetime = self.jieqi_moment(dt.year, jie)
       if moment <= dt:
         return JieqiTime(jie, moment)
@@ -608,7 +606,7 @@ class CelestialCalendarUtils:
   def __next_jie(self, dt: datetime) -> JieqiTime:
     self.__check_jie_range(dt)
 
-    for jie in Jieqi.as_list(ganzhi_year=False)[::2]:
+    for jie in Jieqi.jies(ganzhi_year=False):
       moment: datetime = self.jieqi_moment(dt.year, jie)
       if moment > dt:
         return JieqiTime(jie, moment)

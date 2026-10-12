@@ -38,8 +38,6 @@ def test_str() -> None:
   assert ''.join([str(s) for s in Shishen.as_list()]) == '比肩劫财食神伤官正财偏财正官七杀正印偏印'
 
   # One character - abbreviation.
-  assert len(Shishen.str_mapping_table()) == 10
-
   assert Shishen.from_str('比') is Shishen.比肩
   assert Shishen.from_str('劫') is Shishen.劫财
   assert Shishen.from_str('食') is Shishen.食神

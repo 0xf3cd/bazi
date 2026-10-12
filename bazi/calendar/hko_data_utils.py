@@ -80,27 +80,9 @@ def __is_valid_solar_date(d: CalendarDate) -> bool:
   if d > get_max_supported_date(CalendarType.SOLAR):
     return False
 
-  if d.year <= 0:
-    return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
   if d.month < 1 or d.month > 12:
     return False
-  
-  if d.month in [1, 3, 5, 7, 8, 10, 12]:
-    if d.day < 1 or d.day > 31:
-      return False
-  elif d.month in [4, 6, 9, 11]:
-    if d.day < 1 or d.day > 30:
-      return False
-  else:
-    assert d.month == 2
-    if calendar.isleap(d.year):
-      if d.day < 1 or d.day > 29:
-        return False
-    else:
-      if d.day < 1 or d.day > 28:
-        return False
-
-  return True
+  return 1 <= d.day <= calendar.monthrange(d.year, d.month)[1]
 
 
 def is_valid_lunar_date(d: CalendarDate) -> bool:
@@ -130,8 +112,6 @@ def __is_valid_lunar_date(d: CalendarDate) -> bool:
   
   info: LunarYearInfo = lunar_years_db.get(d.year)
   
-  if d.year <= 0:
-    return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
   if d.month < 1 or d.month > len(info['days_counts']):
     return False 
   if d.day < 1 or d.day > 30:
@@ -166,8 +146,6 @@ def __is_valid_ganzhi_date(d: CalendarDate) -> bool:
   if d > get_max_supported_date(CalendarType.GANZHI):
     return False
   
-  if d.year <= 0:
-    return False # pragma: no cover # Already returning False in above "< min_supported_date" check.
   if d.month < 1 or d.month > 12:
     return False 
   if d.day < 1 or d.day > 32: # Max gap between Ganzhi months is 32 days.
@@ -185,9 +163,6 @@ def is_valid(d: CalendarDate) -> bool:
 
 @functools.lru_cache(maxsize=512)
 def __is_valid(d: CalendarDate) -> bool:
-  if d.date_type not in [CalendarType.SOLAR, CalendarType.LUNAR, CalendarType.GANZHI]:
-    return False # pragma: no cover # CalendarDate validates its CalendarType field.
-
   if d.date_type == CalendarType.SOLAR:
     return is_valid_solar_date(d)
   elif d.date_type == CalendarType.LUNAR:
@@ -211,9 +186,7 @@ def __days_counts_in_ganzhi_year(ganzhi_year: int) -> tuple[int, ...]:
     raise ValueError(f'Ganzhi year {ganzhi_year} is out of the supported range '
                      f'[{get_min_supported_date(CalendarType.GANZHI).year}, {get_max_supported_date(CalendarType.GANZHI).year}]')
 
-  jieqi_list: list[Jieqi] = Jieqi.as_list()[::2] # Pick the Jieqis when new months start.
-  assert jieqi_list[0] == Jieqi.立春 # The first jieqi in every year should be 立春.
-  assert len(jieqi_list) == 12
+  jieqi_list = Jieqi.jies()
 
   start_dates: list[date] = []
   for jq in jieqi_list[:11]: # First 11 jieqis are in solar year `ganzhi_year`.
@@ -581,6 +554,14 @@ def supported_jie_boundaries() -> tuple[datetime, datetime]:
   )
 
 
+def __check_jie_range(dt: datetime) -> None:
+  first_jie, last_jie = supported_jie_boundaries()
+  if dt < first_jie:
+    raise ValueError(f'"{dt}" is out of the supported range. The first available Jie is "{first_jie}"')
+  if dt >= last_jie:
+    raise ValueError(f'"{dt}" is out of the supported range. The last available Jie is "{last_jie}"')
+
+
 def prev_jie(dt: datetime) -> JieqiTime:
   '''
   Find out the previous Jie (节), not Jieqi, for the given solar datetime.
@@ -607,17 +588,13 @@ def prev_jie(dt: datetime) -> JieqiTime:
 
 @functools.lru_cache(maxsize=512)
 def __prev_jie(dt: datetime) -> JieqiTime:
-  supported_jie_range: tuple[datetime, datetime] = supported_jie_boundaries()
-  if dt < supported_jie_range[0]:
-    raise ValueError(f'"{dt}" is out of the supported range. The first available Jie is "{supported_jie_range[0]}"')
-  if dt >= supported_jie_range[1]:
-    raise ValueError(f'"{dt}" is out of the supported range. The last available Jie is "{supported_jie_range[1]}"')
+  __check_jie_range(dt)
 
   daxue_dt: datetime = jieqi_moment(dt.year, Jieqi.大雪)
   if dt >= daxue_dt:
     return JieqiTime(Jieqi.大雪, daxue_dt)
 
-  reversed_jies: list[Jieqi] = list(reversed(Jieqi.as_list(ganzhi_year=False)[::2]))
+  reversed_jies = tuple(reversed(Jieqi.jies(ganzhi_year=False)))
   for jie1, jie2 in zip(reversed_jies[1:], reversed_jies):
     jie1_dt: datetime = jieqi_moment(dt.year, jie1)
     jie2_dt: datetime = jieqi_moment(dt.year, jie2)
@@ -655,17 +632,13 @@ def next_jie(dt: datetime) -> JieqiTime:
 
 @functools.lru_cache(maxsize=512)
 def __next_jie(dt: datetime) -> JieqiTime:
-  supported_jie_range: tuple[datetime, datetime] = supported_jie_boundaries()
-  if dt < supported_jie_range[0]:
-    raise ValueError(f'"{dt}" is out of the supported range. The first available Jie is "{supported_jie_range[0]}"')
-  if dt >= supported_jie_range[1]:
-    raise ValueError(f'"{dt}" is out of the supported range. The last available Jie is "{supported_jie_range[1]}"')
+  __check_jie_range(dt)
 
   xiaohan_dt: datetime = jieqi_moment(dt.year, Jieqi.小寒)
   if dt < xiaohan_dt:
     return JieqiTime(Jieqi.小寒, xiaohan_dt)
   
-  jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
+  jies = Jieqi.jies(ganzhi_year=False)
   for jie1, jie2 in itertools.pairwise(jies):
     jie1_dt: datetime = jieqi_moment(dt.year, jie1)
     jie2_dt: datetime = jieqi_moment(dt.year, jie2)

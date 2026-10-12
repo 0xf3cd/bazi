@@ -58,14 +58,15 @@ def test_school_defaults() -> None:
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
-def test_school_positional_arguments_remain_stable() -> None:
+def test_school_grouped_positional_arguments() -> None:
   school: BaziSchool = BaziSchool(
     DayRollover.ZIZHENG,
-    Anchor.YEAR,
     DizhiRules.AnheDef.MANGPAI,
     DizhiRules.XingDef.STRICT,
     DizhiRules.GongDef.LU_NARROW,
     ShenshaRules.YangrenDef.DIWANG,
+    ShenshaRules.YangrenDef.LUMING,
+    Anchor.YEAR,
     Anchor.YEAR,
     ShenshaRules.TianyiDef.YINGUI,
     Anchor.DAY,
@@ -74,7 +75,6 @@ def test_school_positional_arguments_remain_stable() -> None:
     Anchor.DAY,
     Anchor.DAY,
     Anchor.YEAR_AND_DAY,
-    ShenshaRules.YangrenDef.LUMING,
     Anchor.YEAR_AND_DAY,
     Anchor.DAY,
     ShenshaRules.WenchangDef.XIN_XU,

@@ -217,6 +217,22 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 非拱跨组的按值查法与具体出现查法各自保留，不能互换。关系合并按左侧、右侧的首次出现
 顺序去重；规则映射按定义序，集合表按枚举序，刑按规则表中的首次组合出现顺序输出。
 
+### 基础接口与流派字段迁移
+
+`BaziSchool` 的位置参数顺序已调整：前六项为 `day_rollover`、`anhe_def`、`xing_def`、
+`gong_def`、`yangren_def`、`feiren_def`，之后为神煞锚及相邻的定义字段。调用方应改用
+关键字参数；JSON 键名、默认值和各读法不变，输出键序随字段声明序调整。
+`BaziSchool.from_json` 仍要求全部字段，以键名解析，不依赖输入字典的键序。
+
+`Shishen.str_mapping_table()` 已删除；字符串解析仍接受完整名称与十个单字简称，
+枚举的 `abbr` 返回简称。需要简称映射时可用 `{s.abbr: str(s) for s in Shishen}`。
+`Ganzhi` 仍可持有十干×十二支的120种组合，`next`／`prev` 只适用于六十甲子；
+阴阳不配的组合明确抛 `ValueError`，包括零步。步数仍接受 `int`、`bool` 与 `int` 子类。
+
+`Jieqi.jies()` 返回从立春开始的十二节元组，`ganzhi_year=False` 改为从小寒开始的公历年序；
+中气不在其中，年序参数只接受 `bool`。干支年月坐标、两历法后端的月长和前后节查询共用
+这一节序入口，各后端仍独立计算日期和时刻。
+
 ### 知识接口迁移
 
 `bazi.descriptions`、`bazi.interpreter` 及其枚举、重复记录、字段表和 `Interpreter` 方法已删除，
