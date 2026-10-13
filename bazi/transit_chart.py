@@ -25,7 +25,7 @@ class TransitChart:
 
   def __init__(self, bazi_chart: BaziChart) -> None:
     '''
-    接受一个 `BaziChart` 作为输入。
+    按给定的 `BaziChart` 查询流运。
 
     Args:
     - bazi_chart: (BaziChart) 查询所依据的原盘。
@@ -75,8 +75,8 @@ class TransitChart:
     )
 
   def at_month(self, gz_year: int, gz_month: Dizhi) -> TransitSet | None:
-    '''返回干支月坐标下的流运，
-    出生前或节令表范围外返回 `None`；大运按物理交运月边界解释。'''
+    '''返回干支月坐标下的流运，出生前或节令表范围外返回 `None`；
+    大运按物理交运月边界解释。'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     if not isinstance(gz_month, Dizhi):

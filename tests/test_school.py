@@ -354,7 +354,7 @@ def test_defaults_are_defined_once() -> None:
 
 
 def test_school_defaults_match_utils_signature_defaults() -> None:
-  # Rules own query defaults; school and utils share them without a reverse dependency.
+  # Batch queries share the rules' defaults with school; registered 神煞 defaults match the school.
   assert BaziSchool().relation_definitions == DEFAULT_DIZHI_RELATION_DEFINITIONS
   for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual,
              dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,

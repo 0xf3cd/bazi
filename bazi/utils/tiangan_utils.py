@@ -26,14 +26,14 @@ class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   '''
-  按无向相合关系查对应五行，不相合时返回 None。
+  按无向相合关系查对应五行。
   本函数不判断实际合化条件；能否合化仍须结合原盘。
 
   Args:
   - tg1: (Tiangan) 第一天干。
   - tg2: (Tiangan) 第二天干。
 
-  Return: (Wuxing | None) 合所对应的五行；不相合时为 None，不据此判定实际合化。
+  Return: (Wuxing | None) 合所对应的五行；不相合时为 None。
 
   Examples:
   - he(Tiangan.甲, Tiangan.丙):

@@ -128,7 +128,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
 })
 
 
-'''按注册序提供神煞展示标签，供 run_relationship_analyzer.py 等渲染方使用；
+'''按注册序提供神煞展示标签，供渲染方使用；
 从注册表推导，新增条目无需维护第二份列表。'''
 SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
   name: spec.label for name, spec in _REGISTRY.items()
@@ -359,7 +359,7 @@ class TransitAnalysis:
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
     '''
-    返回日主和其他流运的天干之间的关系。
+    返回日主与流运天干之间的关系。
 
     Args:
     - transits: (TransitSet) 参与分析的流运。
@@ -375,12 +375,12 @@ class TransitAnalysis:
 
   def house_relations(self, transits: TransitSet) -> dizhi_utils.DizhiRelationDiscovery:
     '''
-    返回配偶宫/婚姻宫和其他流运的地支之间的关系。
+    返回配偶宫/婚姻宫与流运地支之间的关系。
 
     Args:
     - transits: (TransitSet) 参与分析的流运。
 
-    Return: (dizhi_utils.DizhiRelationDiscovery) 婚姻宫与流运地支的关系。
+    Return: (dizhi_utils.DizhiRelationDiscovery) 配偶宫与流运地支的关系。
 
     Note:
     - 拱局按本盘流派判断，只保留日柱这一具体出现参与的组合。
@@ -439,7 +439,7 @@ class TransitAnalysis:
     *, level: Level = Level.ALL,
   ) -> GanzhiData[tiangan_utils.TianganRelationDiscovery, dizhi_utils.DizhiRelationDiscovery]:
     '''
-    返回配偶星/婚姻星和其他流运的干支之间的关系。
+    返回配偶星/婚姻星与流运干支之间的关系。
 
     Args:
     - transits: (TransitSet) 参与分析的流运。
@@ -538,7 +538,7 @@ class TransitAnalysis:
     Args:
     - transits: (TransitSet) 参与分析的流运。
 
-    Return: (GanzhiData[bool, bool]) 天干、地支是否分别含配偶星。
+    Return: (GanzhiData[bool, bool]) 天干、地支是否分别含夫妻星。
     '''
 
     self._check_transits(transits)

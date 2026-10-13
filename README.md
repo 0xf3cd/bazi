@@ -40,15 +40,15 @@ print(chart.nayin, chart.shier_zhangsheng)
 
 | 模块 | 主要接口与用途 |
 | --- | --- |
-| `bazi.bazi` | Bazi、BaziGender、LocationTime、LocationTimeJson：四柱与出生时间事实 |
-| `bazi.bazi_chart` | BaziChart、BaziJson：阴阳五行、十神、藏干、纳音、十二长生、大运及 JSON 恢复 |
-| `bazi.school` | BaziConfig、BaziSchool：出生精度、历法、流派及大运年份投影 |
-| `bazi.calendar` | CalendarBackend、CalendarDate、CalendarType、calendar_utils_of：历法换算 |
-| `bazi.calendar.dates` | GanzhiYearMonth、JieqiTime：干支年月坐标与节时刻 |
-| `bazi.transit_chart`、`bazi.transits` | TransitChart、TransitSet、TransitKind：按年、月、日期、时刻查流运 |
-| `bazi.analyzer.relationship` | RelationshipAnalyzer：原局与流运的亲密关系、神煞分析 |
-| `bazi.knowledge` | KnowledgeBase、KnowledgeEntry、KnowledgeObject、KnowledgeRole、KnowledgeRelation、KnowledgeContext、KnowledgeSource、LegacyDescription、object_id、DEFAULT_SOURCE_PATH |
-| `bazi.context_matching` | ContextProfile、ChartOccurrence、CriterionResult、EntryMatch、ContextResult、evaluate_context：显式范围前提判别 |
+| `bazi.bazi` | `Bazi`、`BaziGender`、`LocationTime`、`LocationTimeJson`：四柱与出生时间事实 |
+| `bazi.bazi_chart` | `BaziChart`、`BaziJson`：阴阳五行、十神、藏干、纳音、十二长生、大运及 JSON 恢复 |
+| `bazi.school` | `BaziConfig`、`BaziSchool`：出生精度、历法、流派及大运年份投影 |
+| `bazi.calendar` | `CalendarBackend`、`CalendarDate`、`CalendarType`、`calendar_utils_of`：历法换算 |
+| `bazi.calendar.dates` | `GanzhiYearMonth`、`JieqiTime`：干支年月坐标与节时刻 |
+| `bazi.transit_chart`、`bazi.transits` | `TransitChart`、`TransitSet`、`TransitKind`：按年、月、日期、时刻查流运 |
+| `bazi.analyzer.relationship` | `RelationshipAnalyzer`：原局与流运的亲密关系、神煞分析 |
+| `bazi.knowledge` | `KnowledgeBase`、`KnowledgeEntry`、`KnowledgeObject`、`KnowledgeRole`、`KnowledgeRelation`、`KnowledgeContext`、`KnowledgeSource`、`LegacyDescription`、`object_id`、`DEFAULT_SOURCE_PATH`：不可变知识记录、查询与导出 |
+| `bazi.context_matching` | `ContextProfile`、`ChartOccurrence`、`CriterionResult`、`EntryMatch`、`ContextResult`、`evaluate_context`：显式范围前提判别 |
 | `bazi.defines`、`bazi.utils` | 领域枚举与关系工具，具体契约见各模块说明 |
 
 领域名称用拼音，枚举另有中文别名。JSON 保留中文领域值与配置，py.typed 提供内联类型标注。
@@ -87,7 +87,7 @@ BaziSchool 声明换日、关系与神煞的可选读法，出处及支持锚见
 年/月柱与大运数节共用出生精度归属：DAY 的整个交节日归新，HOUR 按时辰、MINUTE 按分钟
 相等归新。Bazi.month_jies 返回出生月所属开月节及其下一节，保留后端原始时刻。
 提前归属时，开月节可以在出生之后；逆排数节的负间隔钳零，首运年标签不早于出生干支年。
-HKO 仍采用午夜节时刻；地点路径不支持 DAY 或 ALGO2。
+HKO 仍采用午夜节时刻。
 
 例如默认盘输入 2000-02-04 10:00，年/月柱为庚辰/戊寅，所属节为立春
 2000-02-04T20:40:23，下一节为惊蛰 2000-03-05T14:42:39。
@@ -122,18 +122,18 @@ GanzhiYearMonth 是可排序的不可变干支年月坐标，月序为 1（寅�
 出生坐标由 ganzhi_year_month 提供。物理大运边界与时刻流运按真实节归属，月、日期、时刻查询
 各有支持端点，不与出生日期窗口合并。
 
-reference_datetime 为节表、大运及流运共用参考时刻：默认盘为分钟截断的民用标签，地点盘为
-保留秒/微秒的无时区 UTC+08 标签。location_time 为不可变 LocationTime，默认盘返回 None；
-地点盘提供 UTC 绝对瞬间、固定出生偏移民用钟、经度及未截断真太阳钟，json 每次返回独立时间字段字典。
-solar_datetime 仍只显示分钟，读取上述事实不生成整盘 JSON。
-真实出生前后节以 reference_datetime 查询历法 prev_jie / next_jie，不用提前归属节替代物理前后节。
+`reference_datetime` 为节表、大运及流运共用参考时刻：默认盘为分钟截断的民用标签，地点盘为
+保留秒/微秒的无时区 UTC+08 标签。`location_time` 为不可变 `LocationTime`，默认盘返回 `None`；
+地点盘提供 UTC 绝对瞬间、固定出生偏移民用钟、经度及未截断真太阳钟，`json` 每次返回独立时间字段字典。
+`solar_datetime` 仍只显示分钟，读取上述事实不生成整盘 JSON。
+真实出生前后节以 `reference_datetime` 查询历法 `prev_jie` / `next_jie`，不用提前归属节替代物理前后节。
 
 ### 地点与真太阳时
 
 无经度时，出生输入为无时区当地民用时刻，拒绝带时区输入。
 显式启用真太阳时须给 Bazi 或 Bazi.create 带时区 datetime，以及东经为正、范围 [-180, 180] 的
-longitude；不使用纬度。输入时区、DST fold 及历史偏移由调用方负责。
-出生地区民用基准默认采用输入时区；输入用其他时区表示瞬间时，须用 civil_timezone（tzinfo）指定出生基准。
+`longitude`；不使用纬度。输入时区、DST `fold` 及历史偏移由调用方负责。
+出生地区民用基准默认采用输入时区；输入用其他时区表示瞬间时，须用 `civil_timezone`（`tzinfo`）指定出生基准。
 本库冻结出生瞬间的实际偏移，得到固定偏移民用 datetime，不推断地理或历史时区。
 
 ```python
@@ -174,7 +174,7 @@ EOT 采用每日十分之一秒样本及线性插值，保留微秒位不表示�
 不是真太阳钟，不做移动地点修正。例如纽约一月一日 20:00 UTC-05:00 出生，真太阳日期可为一月一日，
 UTC+08:00 日期却为一月二日；TransitChart.at_date 使用后者。1929 年前历史时间基准选择另见 #118。
 
-### 破坏性迁移
+## 破坏性迁移
 
 - 旧版 DAY 在真实交节前仍数向旧节的例外已删除，起运、小运及大运 JSON 可能改变。
   BaziChart.from_json 按当前版本重算并核完整记录；旧记录须从原出生输入重建，不能把旧派生值
@@ -194,7 +194,7 @@ UTC+08:00 日期却为一月二日；TransitChart.at_date 使用后者。1929 �
 大运各步有完整半开物理区间 `[start_moment, end_moment)`。
 JIE_PROJECTED 逐边界按所属节投影干支年，首标签不早于出生干支年；FIXED_DECADE 从共同首标签起
 每步加十年，只改变年表标签，不改变物理时刻线。年份视图的末区间延伸到末标签后十年，
-可与物理 end_moment 不同。
+可与物理 `end_moment` 不同。
 
 ```python
 from datetime import date, datetime
@@ -225,9 +225,9 @@ print(analyzer.transits.shensha(year.select(TransitKind.LIUNIAN)))
 print(analyzer.transits.house_relations(year))
 ```
 
-TransitSet 按小运、大运、流年、流月、流日的固定顺序持有具名干支；select 要求请求非空、
-无重复且全部存在，返回仍按固定顺序。at_year 按年份标签解释大运；月、日期与时刻查询按物理边界。
-at_moment 仅在支持真实节时刻且原盘为 HOUR / MINUTE 时可用，按整秒比较出生、查询与大运边界，
+`TransitSet` 按小运、大运、流年、流月、流日的固定顺序持有具名干支；`select` 要求请求非空、
+无重复且全部存在，返回仍按固定顺序。`at_year` 按年份标签解释大运；月、日期与时刻查询按物理边界。
+`at_moment` 仅在支持真实节时刻且原盘为 HOUR / MINUTE 时可用，按整秒比较出生、查询与大运边界，
 相等归新。月、日期与时刻入口在出生前或各自表范围外返回 None；不支持时刻查询也返回 None。
 
 ### 地支查询与迁移
@@ -281,9 +281,9 @@ discover_ganzhis、discover_mutual_ganzhis 的关系键按 relations 首次出�
 
 ## 知识与前提匹配
 
-KnowledgeBase 为知识记录的唯一模型。默认查询只选 output='default' 条目，
-include_reference_only=True 才同时查阅不具默认输出资格的参考条目。
-bazi/knowledge_data.json 是唯一编辑源；加载校验 schema、ID、角色绑定、引用及输出政策后建索引。
+`KnowledgeBase` 为知识记录的唯一模型。默认查询只选 `output='default'` 条目，
+`include_reference_only=True` 才同时查阅不具默认输出资格的参考条目。
+`bazi/knowledge_data.json` 是唯一编辑源；加载校验 schema、ID、角色绑定、引用及输出政策后建索引。
 同一文件随 wheel 与源码包分发，导出及文字投影由它派生，无需数据库服务或运行时依赖。
 
 ### 知识接口与迁移
@@ -355,29 +355,29 @@ with TemporaryDirectory() as directory:
 
 | 条目信息 | 含义 |
 | --- | --- |
-| roles、relations | 具名讨论对象与有方向的文字关系，不表示已计算或生效的命盘作用 |
-| topics、viewpoint | 查阅主题与解释采用的观点 |
-| applicability='unconditional' | 无命盘前提的知识陈述，如定义、历史象 |
-| applicability='described' | 已记录前提文字，术语仍可能没有计算定义 |
-| applicability='unresolved' | 前提仍待重建，旧条件元组为空不解决此问题 |
-| premise、contexts、limits、exceptions | 完整前提、带时间范围的具名情境、未解术语及边界 |
-| sources、source_state、attribution | 来源引用及 witnessed / editorial / unverified / repository-attributed 状态 |
-| output、legacy | 输出资格及旧字段、顺序、条件元数据 |
+| `roles`、`relations` | 具名讨论对象与有方向的文字关系，不表示已计算或生效的命盘作用 |
+| `topics`、`viewpoint` | 查阅主题与解释采用的观点 |
+| `applicability='unconditional'` | 无命盘前提的知识陈述，如定义、历史象 |
+| `applicability='described'` | 已记录前提文字，术语仍可能没有计算定义 |
+| `applicability='unresolved'` | 前提仍待重建，旧条件元组为空不解决此问题 |
+| `premise`、`contexts`、`limits`、`exceptions` | 完整前提、带时间范围的具名情境、未解术语及边界 |
+| `sources`、`source_state`、`attribution` | 来源引用及 witnessed / editorial / unverified / repository-attributed 状态 |
+| `output`、`legacy` | 输出资格及旧字段、顺序、条件元数据 |
 
 人工选择情境只检索知识，不判断命盘是否满足。多个情境标签不隐含 AND/OR。
 例如庚金流运条目保留行运有制有化与后天有教养，前者在此未定义，后者为盘外前提，不能据基本生克认定任一前提满足。
 
-query 对 object_id、context_id、topic、source_id、viewpoint、applicability、time_scope 取交集，
-返回保留语料顺序、传递不可变的元组。未知过滤值抛 ValueError，合法但无匹配返回空元组；
-参考条目须显式选择，entry(claim_id) 按稳定 ID 读取。
-export_json() 导出全部语料，包括参考记录及其政策；export_json(entries) 导出所选条目。
+`query` 对 `object_id`、`context_id`、`topic`、`source_id`、`viewpoint`、`applicability`、`time_scope` 取交集，
+返回保留语料顺序、深度不可变的元组。未知过滤值抛 `ValueError`，合法但无匹配返回空元组；
+参考条目须显式选择，`entry(claim_id)` 按稳定 ID 读取。
+`export_json()` 导出全部语料，包括参考记录及其政策；`export_json(entries)` 导出所选条目。
 两者均保留完整对象、情境、来源注册表，支持重载与证据展示；导出不改变输出资格。
 冻结旧位置测试数据只作迁移参照，不是第二编辑源。
 
-DEFAULT_SOURCE_PATH 为加载与源码 CLI 防覆盖共用的随库编辑源路径，指向当前安装或检出中的
-knowledge_data.json；自定义源用 KnowledgeBase.load(Path(...))。
-render(entry, show_sources=..., manual_context=..., premise_verdict=...) 只展示，
-premise_verdict 为调用方文字，优先于人工情境标注，不求值或授予默认资格；实际判别由 evaluate_context 执行。
+`DEFAULT_SOURCE_PATH` 为加载与源码 CLI 防覆盖共用的随库编辑源路径，指向当前安装或检出中的
+`knowledge_data.json`；自定义源用 `KnowledgeBase.load(Path(...))`。
+`render(entry, show_sources=..., manual_context=..., premise_verdict=...)` 只展示，
+`premise_verdict` 为调用方文字，优先于人工情境标注，不求值或授予默认资格；实际判别由 `evaluate_context` 执行。
 
 源码检出中可校验、查询并导出：
 
@@ -452,7 +452,7 @@ shishen.pianyin_favorable_or_balanced、shishen.xiaoyin_duoshi 尚无完整计�
 described / unresolved 为知识整理状态，不是计算真值。
 
 结构求值与条目匹配分开。四条原作绑定若在自定义库中改变同 ID 的条目、对象、前提、情境、来源或
-输出政策，该条返回 binding_unrecognized，不能凭 ID 或关键词认证语义；等值导出重载绑定可用。
+输出政策，该条返回 `binding_unrecognized`，不能仅凭 ID 或关键词判断语义一致；与原绑定等值的导出重载条目仍可绑定。
 前提满足不授予默认输出资格，独立 KnowledgeBase.render 不求值。参考条目须显式设置 include_reference_only=True；
 未选择参考条目或缺绑定条目时不生成其 EntryMatch 或显示行；
 四个未定义判据对提供的同 ID 条目显示 predicate_undefined。
@@ -533,7 +533,6 @@ python run_interpreter.py \
 | `-h`、`--help` | 显示帮助 |
 
 固定出生只接一个命盘，不能配 seed。地点参数要求固定出生，随机或纯知识模式拒绝它们。
-无经度仍拒绝带时区输入；有经度须显式选 hour 或 minute。
 civil-timezone 接 IANA 名或 +14:00 等固定偏移，负偏移须用 `--civil-timezone=-05:00`。
 地点 JSON 导出示例：
 
@@ -546,11 +545,11 @@ python run_interpreter.py \
   --export-chart-json output_data/chart.json
 ```
 
-前提匹配接相同经度、精度及民用时区参数。命盘 JSON 与前提记录导出均拒绝覆盖随库知识源及文件系统别名。
+前提匹配接相同经度、精度及民用时区参数。命盘 JSON 导出拒绝覆盖随库知识源及文件系统别名。
 命盘 JSON 路径若与同次 TXT 输出重叠，在生成任何输出前即拒绝，包括符号链接与硬链接别名。
 
 参考文字标明来源与前提状态。命盘展示和 TXT 以主题作前缀，包含前提及限度，不选旺衰、喜忌或格局。
-十神百分比只计三个非日主明干加四支主气位置，说明文字不评估这些状态。
+十神百分比只计三个非日主明干加四支主气位置，说明文字不评估旺衰、喜忌或格局。
 TXT 去掉终端色码；重复导出覆盖本次编号文件，其他文件及旧运行的更高序号文件保留。
 
 ## 开发
@@ -565,7 +564,7 @@ python run_tests.py -a -v
 ```
 
 完整门禁执行所有测试（含 slow 与 hkodata），要求 100% 覆盖率，运行 ruff、完整 flags 的源码 mypy、
-两个 demo、Interpreter、优化输入检查及隔离 wheel／sdist 重建 wheel 检查。
+两个 demo、`run_interpreter.py` 示例、`python -O` 公开输入契约冒烟及隔离 wheel／sdist 重建 wheel 检查。
 工件检查使用两个无依赖的新消费者环境及独立安装 mypy 环境；run_package_checks.py、-pkg、-a
 仍可能从包索引下载构建及类型工具与依赖，即使开发依赖已安装。
 构建与消费者在仓外临时目录；根 demo 可写 output_data/，安装库只读行为另行验证。
@@ -582,7 +581,7 @@ python run_tests.py -a -v
 | `-r`、`--ruff` | 运行 ruff check |
 | `-m`、`-mypy`、`--mypy` | 按 runner 完整 flags 运行源码 mypy |
 | `-d` | 运行两个 demo |
-| `-i` | 运行 Interpreter 示例 |
+| `-i` | 运行 `run_interpreter.py` 示例 |
 | `-osmoke`、`--o-smoke` | 用 python -O 运行源码公开输入契约冒烟 |
 | `-pkg`、`--package` | 隔离发行检查 |
 | `--package-output-dir <path>` | 与 -pkg 或 -a 一起保留已验证 sdist 及其重建 wheel |
@@ -609,10 +608,10 @@ python -m pytest \
 
 ### 离线数据生成
 
-打包与安装使用读取已提交数据，不重新生成。源码树及 sdist 含 HKO 原始输入，wheel 不含。
+打包和安装后使用时只读取已提交数据，不重新生成。源码树及 sdist 含 HKO 原始输入，wheel 不含。
 维护者可用 `python -m bazi.calendar.hko_data.encoder` 重建，仅下载原始输入时需要 requests；
 天文表用 `python -m bazi.calendar.celestial_data.generator`，需要 celestial-calendar==0.6.1。
-后者也生成每日均时差表，--eot-only 只生成该字节稳定文件；这些工具不是运行时依赖。
+后者也生成每日均时差表，`--eot-only` 只生成 `equation_of_time.bin`，其输出逐字节稳定；这些工具不是运行时依赖。
 在仓外目录生成候选 EOT 并比较，不覆盖随库表：
 
 ```sh

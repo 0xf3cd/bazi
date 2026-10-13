@@ -36,7 +36,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='运行全部测试、覆盖率、lint、类型检查、示例、解释展示、-O 冒烟及发行包检查。')
+                       help='运行全部测试、覆盖率、lint、类型检查、两个 demo、run_interpreter.py 示例、python -O 公开输入契约冒烟及发行包检查。')
 
 # 测试选择。
 argparser.add_argument('-nt', '--no-test', action='store_true', help='跳过测试与覆盖率。')

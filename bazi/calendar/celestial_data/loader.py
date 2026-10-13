@@ -34,7 +34,7 @@ EOT_CADENCE_SECONDS: Final[int] = 86_400
 EOT_SCALE:           Final[int] = 10
 EOT_HEADER:          Final[struct.Struct] = struct.Struct('>8sIIII32s')
 
-# jq_idx 使用此枚举序号；生成时与库的 jieqi_name 对拍，JieqiMomentTable 再逐行核对。
+# jq_idx 使用此枚举序号；生成时与库的 jieqi_name 交叉校验，JieqiMomentTable 再逐行核对。
 JIEQI_BY_INDEX: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=True)
 assert len(JIEQI_BY_INDEX) == 24
 assert JIEQI_BY_INDEX[0] is Jieqi.立春

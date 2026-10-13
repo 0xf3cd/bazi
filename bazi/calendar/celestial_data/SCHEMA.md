@@ -1,8 +1,8 @@
 # celestial_data 数据格式（schema_version 2）
 
-本文件规定离线生成器 generator.py 与运行时加载器 loader.py 的冻结数据契约。
+本文件规定离线生成器 `generator.py` 与运行时加载器 `loader.py` 的冻结数据契约。
 两侧各自实现，偏离下述约定的一侧须修复。生成器需要 celestial-calendar Python 包；
-运行时只用纯 Python，不依赖该包，与 HKO 的离线 encoder.py／运行时 decoder.py 分工相同。
+运行时只用纯 Python，不依赖该包，与 HKO 的离线 `encoder.py`／运行时 `decoder.py` 分工相同。
 
 ## 文件
 
@@ -18,7 +18,7 @@ tests/calendar/celestial_fixtures/ 中的文本夹具同名同格式，标有 `f
 
 ## 文本格式
 
-UTF-8 文本，末尾换行，磁盘采用 LF；读取时 splitlines() 规范换行，所以 CRLF 文件加载与哈希结果相同。
+UTF-8 文本，末尾换行，磁盘采用 LF；读取时 `splitlines()` 规范换行，所以 CRLF 文件加载与哈希结果相同。
 井号开头的行均为头部，随后每行一条数据，字段用单空格分隔，无空行。
 行按 `(year, jq_idx)` 或 `(lunar_year)` 升序写出。
 
@@ -39,9 +39,9 @@ UTF-8 文本，末尾换行，磁盘采用 LF；读取时 splitlines() 规范换
 | rows | 确切行数，加载器与解析所得数据行核对 |
 | columns | 按顺序列出、空格分隔的列名 |
 
-可选键为节气表的 timescale_caveat / rounding、农历表的 algo，以及只用于夹具的 fixture。
+可选键为节气表的 `timescale_caveat` / `rounding`、农历表的 `algo`，以及只用于夹具的 `fixture`。
 键集封闭：列名不能另作头部键，`# leap_month: 1..12, or 0 when …` 会把整句解析成来源键值。
-各列说明应放在 columns 的续行。tests/calendar/test_celestial_tables.py 按此列表核对各随库表及夹具，
+各列说明应放在 `columns` 的续行。`tests/calendar/test_celestial_tables.py` 按此列表核对各随库表及夹具，
 避免文档、生成器和加载器正则的三份契约静默分离。
 
 ## jieqi_moments.txt
@@ -84,7 +84,7 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
   位 i 表示顺序第 i+1 个月，闰月独占一位；1 为三十日，0 为二十九日。
   algo1 与 HKO days_counts 相符 199/199，由 tests/calendar/test_celestial_tables.py 核对，不是生成检查。
 - days_counts：从位图解码的十二或十三项月长，保留冗余；加载器核两列相等，任改一列导致不一致即失败。
-- ganzhi：在 Ganzhi.list_sexagenary_cycle() 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
+- ganzhi：在 `Ganzhi.list_sexagenary_cycle()` 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
   HKO LunarYearInfo 含此字段，所以差异比较保留它；199/199 相符由测试验证，不是生成检查。
   生成器不导入 hko_data，其检查范围见下节。
 - 默认 algo1，沿 HKO 官方历书体系；农历为展示数据，四柱以节气为基础，不读取农历。

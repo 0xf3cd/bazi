@@ -176,7 +176,7 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
 
   Return: (Shishen) 对应十神。
 
-  Example:
+  Examples:
   - shishen(Tiangan("甲"), Tiangan("甲")) -> Shishen("比肩") # 甲为甲的比肩。
   - shishen(Tiangan("甲"), Dizhi("寅")) -> Shishen("比肩")  # 寅为甲的比肩。
   - shishen(Tiangan("壬"), Dizhi("戌")) -> Shishen("七杀")  # 戌为壬的七杀。
@@ -242,7 +242,7 @@ def nayin_str(gz: Ganzhi) -> str:
 
   Return: (str) 对应的纳音。
 
-  Example:
+  Examples:
   - nayin_str(Ganzhi.from_str("甲子")) -> "海中金"
   '''
 
@@ -267,7 +267,7 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
 
   Return: (ShierZhangsheng) 对应的十二长生。
 
-  Example:
+  Examples:
   - shier_zhangsheng(Tiangan.甲, Dizhi.子) -> ShierZhangsheng.沐浴
   - shier_zhangsheng(Tiangan.丙, Dizhi.午) -> ShierZhangsheng.帝旺
   - shier_zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
@@ -300,7 +300,7 @@ def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
 
   Return: (Dizhi) 对应地支。
 
-  Example:
+  Examples:
   - from_shier_zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) -> Dizhi.子
   - from_shier_zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) -> Dizhi.午
   - from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
@@ -326,7 +326,7 @@ def lu(tg: Tiangan) -> Dizhi:
 
   Return: (Dizhi) 禄位地支。
 
-  Example:
+  Examples:
   - lu(Tiangan.甲) -> Dizhi.寅
   '''
 

@@ -374,7 +374,7 @@ class BaziChart:
     shishen_list: list[BaziChart.PillarShishens] = []
     for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
       tg_shishen: Shishen | None = shishen(day_master, tg)
-    # 日主的十神位置存为 None。
+      # 日主的十神位置存为 None。
       if pillar_idx == 2:
         tg_shishen = None
 
@@ -542,7 +542,7 @@ class BaziChart:
   @functools.cached_property
   def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:
     '''
-    一个包含所有小运的元组。
+    全部小运的元组。
 
     Usage:
     ```
@@ -566,7 +566,7 @@ class BaziChart:
   @property
   def liunian(self) -> Generator[LiunianTuple, None, None]:
     '''
-    一个生成器，用于生成流年。
+    流年生成器（无限）。
 
     Usage:
     ```

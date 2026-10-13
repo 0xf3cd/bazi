@@ -17,39 +17,39 @@ python -m pytest tests/integration/test_external_baseline.py -v
 
 发布案例从四十个合成边界与对照输入中选出，涵盖入闰二月、清明、立春分钟相等、晚子时、
 跨午夜子时、平常日的日柱／时柱换日、春节与立春的两种先后、性别配对及立春附近起运。
-case ID 标识输入，不标识真人；group 为采样类别。
+case ID 标识输入，不标识真人；`group` 为采样类别。
 
 各输入使用相同的无时区公历民用年月日时分，参考钟为 UTC+08:00，不做地点、夏令时或太阳时换算。
 来源身份不表示排盘器在普通时间模式下使用了地理坐标。
 
 | 来源 | 记录配置 | 身份与限度 |
 | --- | --- | --- |
-| bazi | CELESTIAL × DAY/HOUR/MINUTE × WAN_ZISHI/ZIZHENG × JIE_PROJECTED/FIXED_DECADE | 数据中记录生产提交、运行时 Git 子树及表指纹，其他流派字段显式给出 |
+| bazi | CELESTIAL × DAY/HOUR/MINUTE × WAN_ZISHI/ZIZHENG × JIE_PROJECTED/FIXED_DECADE | 数据中记录生成快照的提交、运行时 Git 子树及表指纹，其他流派字段显式给出 |
 | [lunar-python](https://github.com/6tail/lunar-python) | EightChar sect 1/2 × Yun sect 1/2，两个独立选项 | 1.4.8，寿星谱系 |
 | [China95](https://p.china95.net/paipan/bazi/) | 普通民用时间排盘，关闭太阳时修正 | 服务版本与谱系未知，交运显示到小时 |
 | [Iwzwh](https://pcbz.iwzwh.com/) | 固定 as-of 情境下采集的默认配置 | 服务版本与谱系未知，没有绝对起运时间戳 |
 
-各观测有 UTC 采集日期 captured_on_utc 与证据指纹。evidence_kind 标识指纹输入：序列化的
+各观测有 UTC 采集日期 `captured_on_utc` 与证据指纹。`evidence_kind` 标识指纹输入：序列化的
 本地方法记录或原始网页响应正文。正文哈希不涵盖随后按前端公式重建的标签。
-网页结果是这些配置的有日期观测，不是固定服务版本。采集工具、完整四十输入矩阵与原始响应另行保存，
+网页结果是某日采集的这些配置的观测，不是固定服务版本。采集工具、完整四十输入矩阵与原始响应另行保存，
 本仓只含已准入子集与离线测试。本文为仓内证据说明，不是安装包接口。
 
-顶层 reference 标识 bazi 快照生产者。runtime_tree 为该提交 bazi/ 子树的标准 Git tree ID，
-包括文件、权限模式与嵌套树；在含生产提交的克隆中用 `git rev-parse <reference.commit>:bazi` 复算。
-它标识当时生产者，不表示当前检出的新鲜度；后续代码即使重现相同快照，也不改变该身份。
+顶层 `reference` 标识生成 bazi 快照的提交。`runtime_tree` 为该提交 `bazi/` 子树的标准 Git tree ID，
+包括文件、权限模式与嵌套树；在含该提交的克隆中用 `git rev-parse <reference.commit>:bazi` 复算。
+它标识当时生成快照的提交，不表示当前检出是否最新；后续代码即使重现相同快照，也不改变该身份。
 离线回归核当前结果，不要求浅克隆含旧 Git 对象。
-jieqi_table_sha256 对表字节将 CRLF 规范为 LF 后求哈希。
+`jieqi_table_sha256` 对表字节将 CRLF 规范为 LF 后求哈希。
 
 ## 读法差异
 
 profile ID 标识精度、换日点与大运年份标签规则。四柱匹配同时比较年、月、日、时；
-dayun_sequence_matching_profiles 只比较前三步实际大运干支，与日期及标签分开。
+`dayun_sequence_matching_profiles` 只比较前三步实际大运干支，与日期及标签分开。
 这些字段相同不表示排盘器可互换。
 
 | 案例 | 数据保留的差异 |
 | --- | --- |
 | C10 | 2000-02-04 20:40，bazi 将整分钟归新年/月；lunar-python 在输入 20:40:00 时仍为己卯/丁丑，其边界为 20:40:24 |
-| C16 | 2017-02-03 23:10，bazi HOUR 将含立春的子时归新年，MINUTE 仍归旧；此次 Iwzwh 观测返回新年四柱 |
+| C16 | 2017-02-03 23:10，bazi HOUR 将含立春的子时归新年，MINUTE 仍归旧年；此次 Iwzwh 观测返回新年四柱 |
 | C18 | 2017-02-03 23:34，分钟相等与 sect-2 换日共同作用；lunar-python sect 2 与 bazi MINUTE/WAN_ZISHI 的年、月、日柱均不同 |
 | C23 | 2009-02-03 23:30，bazi HOUR 经跨午夜子时提前归次日 00:xx 的立春；DAY 与 MINUTE 仍归旧年 |
 | C29 | lunar-python sect 2 保留民用日柱庚子，时柱取戊子；所录 bazi 配置取辛丑/戊子或庚子/丙子 |
@@ -61,22 +61,22 @@ dayun_sequence_matching_profiles 只比较前三步实际大运干支，与日�
 bazi 配置，但没有一个配置匹配全部四十条；本文仍未识别其一般边界规则。
 
 闰月对照在农历进入闰二月时保留乙卯月柱，在该农历月内过清明后变丙辰。
-月干比较以各来源自身年干及月支为条件；这些样本不证明普遍不存在其他约定。
+月干比较以各来源自身年干及月支为条件；这些样本不能排除其他约定。
 
 ## 起运、区间与年份标签
 
 数据分别保存：
 
-- duration：来源给出的年/月/日/小时偏移，不将这些分量加到出生日期上伪造来源未报的时间戳。
-- start：来源提供的民用时间戳及显示分辨率，或显式缺失。China95 的小时显示舍入规则未知，
+- `duration`：来源给出的年/月/日/小时偏移，不将这些分量加到出生日期上伪造来源未报的时间戳。
+- `start`：来源提供的民用时间戳及显示分辨率，或显式缺失。China95 的小时显示舍入规则未知，
   补零不增加精度；lunar-python 显示秒不表示起运换算具有秒级准确度。
-  calculation 单独标识 Yun 换算，不与 EightChar sect 混同。
+  `calculation` 单独标识 Yun 换算，不与 EightChar sect 混同。
 - bazi dayun：半开起止区间及独立投影的干支年标签，FIXED_DECADE 只改变标签，不改物理时刻线。
-- 外部 year_labels / age_labels：来源特有值。lunar-python 返回两端包含的公历年份范围；
-  Iwzwh 年份与起始虚岁标签按采集的前端公式及返回的起运年龄重建，没有终端边界；
-  China95 提供未分类的年龄显示。field_status 区分观测、重建与未提供字段，
-  不将它们转成 bazi 的干支年标签。
-- reported_forward：库显式结果，或网页观测未给时为 null；sequence_direction 从有序干支序列推导。
+- 外部 `year_labels` / `age_labels`：来源特有值。lunar-python 返回两端包含的公历年份范围；
+  Iwzwh 年份与起始虚岁标签按采集的前端公式及返回的起运年龄重建，没有结束边界；
+  China95 提供未分类的年龄显示。`field_status` 区分观测、重建与未提供字段。
+  这些外部标签不转成 bazi 的干支年标签。
+- `reported_forward`：库显式结果，或网页观测未给时为 `null`；`sequence_direction` 从有序干支序列推导。
 
 例如 C03 的 bazi 首运在 2033 年一月开始，干支年标签为 2032；lunar-python 与 Iwzwh
 显示年标签始于 2033。把这些整数当同类年份比较会制造假差异。

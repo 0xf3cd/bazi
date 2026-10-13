@@ -126,7 +126,7 @@ class Bazi:
     civil_timezone: tzinfo | None = None,
   ) -> None:
     '''
-    `Bazi` 接受出生时间和性别作为输入，计算年、月、日、时的八字。
+    根据出生时间和性别计算年、月、日、时四柱。
     
     Note:
     - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，采用默认路径。
