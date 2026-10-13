@@ -290,9 +290,7 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
 
 def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   '''
-  输入天干和十二长生，返回对应的地支。
-
-  本方法用于反向查询十二长生所在地支。
+  输入天干和十二长生，返回对应的地支，即 `shier_zhangsheng` 的反查。
 
   Args:
   - tg: (Tiangan) 待查天干。

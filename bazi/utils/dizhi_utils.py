@@ -582,7 +582,7 @@ def discover(dizhis: Sequence[Dizhi], *,
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
   - 只接受 `Sequence`，非序列在遍历前抛出 `TypeError`；空序列合法，重复地支保留自刑重数。
   - 本纯地支发现不含拱合、拱会；需要柱位与天干条件时使用 `discover_ganzhis`。
-  - 参数原样传给 `search`。默认定义、选表及组合不保留作用方向的语义见 `search`。
+  - 默认定义、选表及组合不保留作用方向的语义见 `search`。
 
   Args:
   - dizhis: (Sequence[Dizhi]) 待查地支。
@@ -832,7 +832,7 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   - 返回的字典的键中可能不包含所有的 `DizhiRelation`。
   - 两组输入都须为 `Sequence`，在遍历任一组前检查；重复地支保留自刑重数。
   - 本纯地支跨组入口不含拱合、拱会；其跨作用域查法见 `discover_mutual_ganzhis`。
-  - 参数原样传给 `search`。默认定义、选表及组合不保留作用方向的语义见 `search`。
+  - 默认定义、选表及组合不保留作用方向的语义见 `search`。
 
   Args:
   - dizhis1: (Sequence[Dizhi]) 第一组地支。

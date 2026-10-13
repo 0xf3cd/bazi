@@ -30,7 +30,7 @@
   可用带理由的 `per-file-ignores`。
 - 安装包为 `bazi`，从定义模块导入，没有安装 CLI 或根类入口。
 - PR 前须实跑与 CI 相同的 **`run_tests.py -a -v`**。下列内层检查较快，但省略了两个 demo、
-  Interpreter 与安装工件检查，不能替代完整门禁：
+  `run_interpreter.py` 示例与安装工件检查，不能替代完整门禁：
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     （裸 `mypy .` 缺少 `--warn-unreachable`。）
@@ -109,7 +109,7 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
 - 完整类型标注，mypy 须通过；使用 Final、PEP 604 的 `X | None`、Callable、TypedDict、NamedTuple，
   不用 Optional。
 - 返回结果不可变，使用 frozenset、`..common` 的 frozendict、tuple；小值类型优先 frozen dataclass，
-  不手写重复的 __init__ / __eq__。
+  不手写重复的 `__init__` / `__eq__`。
 - 规则表是普通 Final 类属性，不叠加 classproperty / functools.cache；常量无需懒加载。
 - 类型别名上方用字符串说明。
 

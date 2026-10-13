@@ -25,8 +25,6 @@ class TransitChart:
 
   def __init__(self, bazi_chart: BaziChart) -> None:
     '''
-    按给定的 `BaziChart` 查询流运。
-
     Args:
     - bazi_chart: (BaziChart) 查询所依据的原盘。
     '''
