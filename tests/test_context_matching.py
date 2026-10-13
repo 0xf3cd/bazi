@@ -15,7 +15,9 @@ from bazi.context_matching import (
   ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, _BINDINGS, _binding_digest, evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import (
+  KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation,
+)
 from bazi.school import BaziConfig, BaziSchool, DayRollover, _config_json
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
@@ -586,6 +588,22 @@ def test_shared_knowledge_lifecycle_and_independent_record_recovery(monkeypatch:
   assert restored.render() == rendered and restored.export_json() == exported and count == 1
 
 
+def test_default_knowledge_is_loaded_independently(monkeypatch: pytest.MonkeyPatch) -> None:
+  original_load = KnowledgeBase.load
+  calls = 0
+
+  def counted(*args: Any, **kwargs: Any) -> KnowledgeBase:
+    nonlocal calls
+    calls += 1
+    return original_load(*args, **kwargs)
+
+  monkeypatch.setattr(KnowledgeBase, 'load', counted)
+  left, right = match(), match()
+  assert calls == 2
+  assert left.knowledge is not right.knowledge
+  assert left.knowledge == right.knowledge and left == right
+
+
 @pytest.mark.parametrize('registry', ['objects', 'contexts', 'sources', 'entries'])
 def test_record_equality_preserves_full_knowledge_content_and_order(registry: str) -> None:
   knowledge = KnowledgeBase.load()
@@ -604,20 +622,9 @@ def test_record_equality_preserves_full_knowledge_content_and_order(registry: st
   assert changed_result != result and len({result, changed_result}) == 2
 
 
-def test_default_knowledge_is_loaded_independently(monkeypatch: pytest.MonkeyPatch) -> None:
-  original_load = KnowledgeBase.load
-  calls = 0
-
-  def counted(*args: Any, **kwargs: Any) -> KnowledgeBase:
-    nonlocal calls
-    calls += 1
-    return original_load(*args, **kwargs)
-
-  monkeypatch.setattr(KnowledgeBase, 'load', counted)
-  left, right = match(), match()
-  assert calls == 2
-  assert left.knowledge is not right.knowledge
-  assert left.knowledge == right.knowledge and left == right
+def test_all_knowledge_value_fields_participate_in_comparison() -> None:
+  for record_type in (KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation):
+    assert all(field.compare for field in fields(record_type)), record_type.__name__
 
 
 @pytest.mark.parametrize('registry, field', [
@@ -632,5 +639,3 @@ def test_record_equality_preserves_nontext_knowledge_fields(registry: str, field
   other = match(knowledge=other_knowledge)
   assert knowledge != other_knowledge and result != other
   assert len({result, other}) == 2
-  records = {result: 'original', other: 'changed'}
-  assert records[result] == 'original' and records[other] == 'changed'

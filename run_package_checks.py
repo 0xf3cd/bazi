@@ -59,8 +59,12 @@ def source_files(root: Path) -> tuple[str, ...]:
 
 
 def check_description(content: bytes, readme: bytes, label: str) -> None:
+  content = content.replace(b'\r\n', b'\n')
+  readme = readme.replace(b'\r\n', b'\n')
+  if not readme.endswith(b'\n'):
+    readme += b'\n'
   header, separator, body = content.partition(b'\n\n')
-  if not separator or BytesParser().parsebytes(header + b'\n\n').get_all('Description-Content-Type') != ['text/markdown']:
+  if not separator or BytesParser().parsebytes(header).get_all('Description-Content-Type') != ['text/markdown']:
     raise ValueError(f'Description content type mismatch: {label}')
   if body != readme:
     raise ValueError(f'Description bytes differ from README: {label}')

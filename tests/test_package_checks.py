@@ -44,14 +44,11 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
   with zipfile.ZipFile(wheel, 'w') as archive:
     for name, value in reversed(tuple(content.items())):
       archive.writestr(name, value)
-    for name in ('METADATA', 'WHEEL', 'top_level.txt', 'RECORD'):
-      if name == 'METADATA':
-        header = b'Description-Content-Type: text/plain' if change == 'wrong-description-type' else b'Description-Content-Type: text/markdown'
-        body = b'Wrong README\n' if change == 'wrong-description' else readme
-        value = header + b'\n\n' + body
-      else:
-        value = b''
-      archive.writestr('bazi-1.0.0.dist-info/' + name, value)
+    header = b'Description-Content-Type: text/plain' if change == 'wrong-description-type' else b'Description-Content-Type: text/markdown'
+    body = b'Wrong README\n' if change == 'wrong-description' else readme
+    archive.writestr('bazi-1.0.0.dist-info/METADATA', header + b'\n\n' + body)
+    for name in ('WHEEL', 'top_level.txt', 'RECORD'):
+      archive.writestr('bazi-1.0.0.dist-info/' + name, b'')
     archive.writestr('bazi-1.0.0.dist-info/licenses/LICENSE', b'license')
     if change == 'zip-comment':
       archive.comment = b'Harmless archive comment'
@@ -74,14 +71,33 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
   (b'Description-Content-Type: text/markdown\nDescription-Content-Type: text/plain', b'# Bazi\n', False),
   (b'Description-Content-Type: text/markdown', b'Wrong README\n', False),
   (b'Description-Content-Type: text/markdown', b'# Bazi\n\n', False),
+  (b'Description-Content-Type: text/markdown', b'', False),
+  (b'Description-Content-Type: text/markdown', b'# Ba\n', False),
 ])
 def test_description_source_and_content_type(header: bytes, body: bytes, accepted: bool) -> None:
-  content = b'Metadata-Version: 2.4\n' + header + b'\n\n' + body
+  content = b'Metadata-Version: 2.4' + (b'\n' + header if header else b'') + b'\n\n' + body
   if accepted:
     check_description(content, b'# Bazi\n', 'artifact')
   else:
     with pytest.raises(ValueError, match='Description'):
       check_description(content, b'# Bazi\n', 'artifact')
+
+
+@pytest.mark.parametrize('metadata_newline, source', [
+  (b'\n', b'# Bazi\r\n'), (b'\r\n', b'# Bazi\n'),
+  (b'\r\n', b'# Bazi\r\n'), (b'\n', b'# Bazi'),
+])
+def test_description_accepts_builder_newlines(metadata_newline: bytes, source: bytes) -> None:
+  content = metadata_newline.join((
+    b'Metadata-Version: 2.4', b'Description-Content-Type: text/markdown', b'', b'# Bazi', b'',
+  ))
+  check_description(content, source, 'artifact')
+
+
+def test_description_rejects_missing_separator() -> None:
+  content = b'Metadata-Version: 2.4\nDescription-Content-Type: text/markdown'
+  with pytest.raises(ValueError, match='Description content type mismatch'):
+    check_description(content, b'', 'artifact')
 
 
 def test_real_subprocess_failure(tmp_path: Path) -> None:

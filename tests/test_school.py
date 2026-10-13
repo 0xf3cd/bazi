@@ -26,27 +26,6 @@ from bazi.school import (
 from bazi.analyzer.relationship import _REGISTRY
 
 
-def test_definition_dependency_direction() -> None:
-  root = Path(__file__).parents[1]
-  for name, forbidden in (
-    ('bazi.rules', ('bazi.school', 'bazi.utils')),
-    ('bazi.school', ('bazi.utils',)),
-    ('bazi.utils.dizhi_utils', ('bazi.school',)),
-    ('bazi.utils.tiangan_utils', ('bazi.school',)),
-    ('bazi.utils.shensha_utils', ('bazi.school',)),
-  ):
-    tree = ast.parse((root / Path(*name.split('.')).with_suffix('.py')).read_text(encoding='utf-8'))
-    imports: set[str] = set()
-    for node in ast.walk(tree):
-      if isinstance(node, ast.Import):
-        imports.update(alias.name for alias in node.names)
-      elif isinstance(node, ast.ImportFrom):
-        target = resolve_name('.' * node.level + (node.module or ''), name.rpartition('.')[0]) if node.level else (node.module or '')
-        imports.add(target)
-        imports.update(target + '.' + alias.name for alias in node.names)
-    assert not any(imported == denied or imported.startswith(denied + '.') for imported in imports for denied in forbidden), (name, imports)
-
-
 def test_bazi_precision_basic() -> None:
   assert len(BaziPrecision) == 3
 
@@ -417,6 +396,28 @@ def test_school_relation_definitions() -> None:
     BaziConfig(school=school),
   ))
   assert BaziSchool.from_json(dict(chart.json['school'])).relation_definitions == expected
+
+
+def test_definition_dependency_direction() -> None:
+  root = Path(__file__).parents[1]
+  for name, forbidden in (
+    ('bazi.rules', ('bazi.school', 'bazi.utils')),
+    ('bazi.school', ('bazi.utils',)),
+    ('bazi.utils.dizhi_utils', ('bazi.school',)),
+    ('bazi.utils.tiangan_utils', ('bazi.school',)),
+    ('bazi.utils.shensha_utils', ('bazi.school',)),
+  ):
+    tree = ast.parse((root / Path(*name.split('.')).with_suffix('.py')).read_text(encoding='utf-8'))
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+      if isinstance(node, ast.Import):
+        imports.update(alias.name for alias in node.names)
+      elif isinstance(node, ast.ImportFrom):
+        target = resolve_name('.' * node.level + (node.module or ''), name.rpartition('.')[0]) if node.level else (node.module or '')
+        imports.add(target)
+        imports.update(target + '.' + alias.name for alias in node.names)
+
+    assert not any(imported == denied or imported.startswith(denied + '.') for imported in imports for denied in forbidden), (name, imports)
 
 
 def test_bazi_default_config_is_the_shared_default(rng: random.Random) -> None:

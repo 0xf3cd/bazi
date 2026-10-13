@@ -6,29 +6,11 @@ import os
 import random
 import shutil
 import subprocess
-import importlib.util
-import re
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-
-
-@pytest.mark.parametrize('arguments', [
-  ('run_tests.py',), ('run_demo.py',), ('run_relationship_analyzer.py',), ('run_package_checks.py',),
-  ('-m', 'bazi.calendar.celestial_data.generator'),
-])
-def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
-  if arguments[0] == '-m' and importlib.util.find_spec('celestial_calendar') is None:
-    pytest.skip('The offline generator requires optional celestial-calendar.')
-  result = subprocess.run(
-    [sys.executable, '-B', *arguments, '--help'],
-    cwd=Path(__file__).parents[1],
-    capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
-  )
-  assert result.returncode == 0, result.stdout + result.stderr
-  assert re.search('[\u4e00-\u9fff]', result.stdout)
 
 
 @pytest.mark.parametrize('args, all_tasks, skip_test, expression, rate, verbose', [

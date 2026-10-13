@@ -1378,6 +1378,11 @@ def test_search_literal_enum_order() -> None:
     frozenset({Dizhi.寅, Dizhi.申}), frozenset({Dizhi.卯, Dizhi.酉}),
     frozenset({Dizhi.辰, Dizhi.戌}), frozenset({Dizhi.巳, Dizhi.亥}),
   )
+  assert dizhi_utils.search(list(Dizhi), DizhiRelation.害) == (
+    frozenset({Dizhi.子, Dizhi.未}), frozenset({Dizhi.丑, Dizhi.午}),
+    frozenset({Dizhi.寅, Dizhi.巳}), frozenset({Dizhi.卯, Dizhi.辰}),
+    frozenset({Dizhi.申, Dizhi.亥}), frozenset({Dizhi.酉, Dizhi.戌}),
+  )
   assert dizhi_utils.search([Dizhi.巳, Dizhi.丑, Dizhi.寅, Dizhi.子], DizhiRelation.生) == (
     frozenset({Dizhi.子, Dizhi.寅}), frozenset({Dizhi.寅, Dizhi.巳}), frozenset({Dizhi.丑, Dizhi.巳}),
   )
