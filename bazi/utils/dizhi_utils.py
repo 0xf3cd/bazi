@@ -568,7 +568,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
   combos = (
     _ANHE_SEARCH_COMBOS[definitions.anhe_def] if relation is DizhiRelation.暗合 else _SUBSET_SEARCH_COMBOS[relation]
   )
-  dz_set = set(dizhis)
+  dz_set: set[Dizhi] = set(dizhis)
   return DizhiRelationCombos(combo for combo in combos if combo.issubset(dz_set))
 
 

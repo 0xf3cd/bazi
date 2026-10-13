@@ -184,8 +184,6 @@ UTC+08:00 日期却为一月二日；TransitChart.at_date 使用后者。1929 �
   输出键序随声明序调整。from_json 仍要求全部字段，按键名解析，不依赖输入键序。
 - Shishen.str_mapping_table() 已删除。from_str 仍接受完整名称及十个单字简称，abbr 返回简称；
   需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
-- Ganzhi 仍能持有十干×十二支的 120 种组合，但 next / prev 只接受六十甲子；
-  阴阳不配组合明确抛 ValueError，包括零步。步数仍接受 int、bool 与 int 子类。
 - ContextResult 的 knowledge_json 构造字段及属性已删除，改传 knowledge: KnowledgeBase；
   原完整知识 JSON 可先交给 KnowledgeBase.from_json。ContextProfile.stem_scope 属性已删除。
   ChartOccurrence 构造不再接受 index，第三个位置参数变为 ganzhi；建议使用具名参数。
@@ -269,7 +267,7 @@ search_ganzhis、discover_ganzhis、discover_mutual_ganzhis 保留完整干支�
 容器须为 Sequence，迭代器在消耗前被拒。单组拱局要求相邻，跨组直接查两侧柱位对，
 填实与流派条件仍适用；投影只含两个实支，不含所拱虚支。
 
-非拱跨组的按值查法与具体出现查法不可互换。合并按左侧、右侧首次出现顺序去重。
+非拱跨组的按值查法与具体出现查法不可互换。
 
 | 返回结果 | 组合顺序 |
 | --- | --- |
