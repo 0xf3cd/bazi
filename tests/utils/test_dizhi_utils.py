@@ -1333,6 +1333,56 @@ def test_joint_relation_definitions(
     assert DizhiRelation.拱会 not in discovery
 
 
+@pytest.mark.parametrize('relations, expected', [
+  ((DizhiRelation.六合, DizhiRelation.冲), (DizhiRelation.六合, DizhiRelation.冲)),
+  ((DizhiRelation.冲, DizhiRelation.六合), (DizhiRelation.冲, DizhiRelation.六合)),
+  ((DizhiRelation.冲, DizhiRelation.六合, DizhiRelation.冲), (DizhiRelation.冲, DizhiRelation.六合)),
+])
+def test_discovery_multiple_relation_key_order(
+  monkeypatch: pytest.MonkeyPatch,
+  relations: tuple[DizhiRelation, ...],
+  expected: tuple[DizhiRelation, ...],
+) -> None:
+  left = (Ganzhi.from_str('甲子'),)
+  right = tuple(map(Ganzhi.from_str, ('乙丑', '庚午')))
+  calls: list[DizhiRelation] = []
+  original = dizhi_utils.search_ganzhis
+
+  def counted(*args: Any, **kwargs: Any) -> GanzhiRelationCombos:
+    calls.append(args[1])
+    return original(*args, **kwargs)
+
+  monkeypatch.setattr(dizhi_utils, 'search_ganzhis', counted)
+  discovery = dizhi_utils.discover_ganzhis(left + right, relations=relations)
+  assert tuple(calls) == expected and tuple(discovery) == expected
+  calls.clear()
+  mutual = dizhi_utils.discover_mutual_ganzhis(left, right, relations=relations)
+  assert tuple(calls) == expected and tuple(mutual) == expected
+  assert tuple(mutual.to_dizhi_discovery()) == expected
+
+
+def test_discovery_default_relation_key_order() -> None:
+  left = (Ganzhi.from_str('甲子'),)
+  right = tuple(map(Ganzhi.from_str, ('乙丑', '庚午')))
+  assert tuple(dizhi_utils.discover_ganzhis(left + right)) == (
+    DizhiRelation.六合, DizhiRelation.冲, DizhiRelation.害, DizhiRelation.生, DizhiRelation.克,
+  )
+  assert tuple(dizhi_utils.discover_mutual_ganzhis(left, right)) == (
+    DizhiRelation.六合, DizhiRelation.冲, DizhiRelation.克,
+  )
+
+
+def test_search_literal_enum_order() -> None:
+  assert dizhi_utils.search(list(reversed(list(Dizhi))), DizhiRelation.冲) == (
+    frozenset({Dizhi.子, Dizhi.午}), frozenset({Dizhi.丑, Dizhi.未}),
+    frozenset({Dizhi.寅, Dizhi.申}), frozenset({Dizhi.卯, Dizhi.酉}),
+    frozenset({Dizhi.辰, Dizhi.戌}), frozenset({Dizhi.巳, Dizhi.亥}),
+  )
+  assert dizhi_utils.search([Dizhi.巳, Dizhi.丑, Dizhi.寅, Dizhi.子], DizhiRelation.生) == (
+    frozenset({Dizhi.子, Dizhi.寅}), frozenset({Dizhi.寅, Dizhi.巳}), frozenset({Dizhi.丑, Dizhi.巳}),
+  )
+
+
 def test_discovery_relation_selection(monkeypatch: pytest.MonkeyPatch) -> None:
   ganzhis = tuple(Ganzhi.from_str(value) for value in ('庚申', '庚辰'))
   calls: list[DizhiRelation] = []

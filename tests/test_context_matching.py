@@ -496,6 +496,10 @@ def test_restore_rejects_corrupt_nested_records() -> None:
     data['occurrences'][-1][key] = value
     with pytest.raises((TypeError, ValueError)):
       ContextResult.from_json(json.dumps(data))
+  data = json.loads(json.dumps(original))
+  data['occurrences'][0]['index'] = 0
+  with pytest.raises(ValueError, match='JSON fields differ'):
+    ContextResult.from_json(json.dumps(data))
   for key, value in (('backend', 'nope'), ('precision', 'bogus'), ('dayun_year_rule', 'bogus'), ('school', {})):
     data = json.loads(json.dumps(original))
     data['input']['config'][key] = value
@@ -598,3 +602,35 @@ def test_record_equality_preserves_full_knowledge_content_and_order(registry: st
   changed['entries'][0]['text'] += ' Extra recorded text.'
   changed_result = match(knowledge=KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False)))
   assert changed_result != result and len({result, changed_result}) == 2
+
+
+def test_default_knowledge_is_loaded_independently(monkeypatch: pytest.MonkeyPatch) -> None:
+  original_load = KnowledgeBase.load
+  calls = 0
+
+  def counted(*args: Any, **kwargs: Any) -> KnowledgeBase:
+    nonlocal calls
+    calls += 1
+    return original_load(*args, **kwargs)
+
+  monkeypatch.setattr(KnowledgeBase, 'load', counted)
+  left, right = match(), match()
+  assert calls == 2
+  assert left.knowledge is not right.knowledge
+  assert left.knowledge == right.knowledge and left == right
+
+
+@pytest.mark.parametrize('registry, field', [
+  ('objects', 'name'), ('contexts', 'label'), ('sources', 'excerpt'), ('entries', 'viewpoint'),
+])
+def test_record_equality_preserves_nontext_knowledge_fields(registry: str, field: str) -> None:
+  knowledge = KnowledgeBase.load()
+  result = match(knowledge=knowledge)
+  changed = json.loads(knowledge.export_json())
+  changed[registry][0][field] += ' changed'
+  other_knowledge = KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False))
+  other = match(knowledge=other_knowledge)
+  assert knowledge != other_knowledge and result != other
+  assert len({result, other}) == 2
+  records = {result: 'original', other: 'changed'}
+  assert records[result] == 'original' and records[other] == 'changed'

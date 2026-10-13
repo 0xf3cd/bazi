@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from run_package_checks import ROOT, RUNTIME_DATA, check_wheel, run, source_files
+from run_package_checks import ROOT, RUNTIME_DATA, check_description, check_wheel, run, source_files
 
 
 def test_source_selection() -> None:
@@ -25,8 +25,10 @@ def test_source_selection() -> None:
   ('none', False), ('zip-comment', False), ('missing-data', True),
   ('missing-typing', True), ('extra-source', True), ('changed-bytes', True),
   ('duplicate', True),
+  ('wrong-description', True), ('wrong-description-type', True),
 ])
 def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
+  readme = b'# Bazi\n'
   content = {'bazi/__init__.py': b'', 'bazi/py.typed': b'', RUNTIME_DATA[0]: b'calendar'}
   expected = {name: hashlib.sha256(value).hexdigest() for name, value in content.items()}
   licenses = {'LICENSE': hashlib.sha256(b'license').hexdigest()}
@@ -43,7 +45,13 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
     for name, value in reversed(tuple(content.items())):
       archive.writestr(name, value)
     for name in ('METADATA', 'WHEEL', 'top_level.txt', 'RECORD'):
-      archive.writestr('bazi-1.0.0.dist-info/' + name, '')
+      if name == 'METADATA':
+        header = b'Description-Content-Type: text/plain' if change == 'wrong-description-type' else b'Description-Content-Type: text/markdown'
+        body = b'Wrong README\n' if change == 'wrong-description' else readme
+        value = header + b'\n\n' + body
+      else:
+        value = b''
+      archive.writestr('bazi-1.0.0.dist-info/' + name, value)
     archive.writestr('bazi-1.0.0.dist-info/licenses/LICENSE', b'license')
     if change == 'zip-comment':
       archive.comment = b'Harmless archive comment'
@@ -51,11 +59,29 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
       with pytest.warns(UserWarning, match='Duplicate name'):
         archive.writestr('bazi/__init__.py', b'')
   if rejected:
-    message = r'Duplicate wheel members: .*bazi/__init__\.py' if change == 'duplicate' else 'Wheel (file roster mismatch|bytes differ)'
+    message = r'Duplicate wheel members: .*bazi/__init__\.py' if change == 'duplicate' else ('Description' if change.startswith('wrong-description') else 'Wheel (file roster mismatch|bytes differ)')
     with pytest.raises(ValueError, match=message):
-      check_wheel(wheel, expected, licenses)
+      check_wheel(wheel, expected, licenses, readme)
   else:
-    check_wheel(wheel, expected, licenses)
+    check_wheel(wheel, expected, licenses, readme)
+
+
+@pytest.mark.parametrize('header, body, accepted', [
+  (b'Description-Content-Type: text/markdown', b'# Bazi\n', True),
+  (b'description-content-type: text/markdown', b'# Bazi\n', True),
+  (b'Description-Content-Type: text/plain', b'# Bazi\n', False),
+  (b'', b'# Bazi\n', False),
+  (b'Description-Content-Type: text/markdown\nDescription-Content-Type: text/plain', b'# Bazi\n', False),
+  (b'Description-Content-Type: text/markdown', b'Wrong README\n', False),
+  (b'Description-Content-Type: text/markdown', b'# Bazi\n\n', False),
+])
+def test_description_source_and_content_type(header: bytes, body: bytes, accepted: bool) -> None:
+  content = b'Metadata-Version: 2.4\n' + header + b'\n\n' + body
+  if accepted:
+    check_description(content, b'# Bazi\n', 'artifact')
+  else:
+    with pytest.raises(ValueError, match='Description'):
+      check_description(content, b'# Bazi\n', 'artifact')
 
 
 def test_real_subprocess_failure(tmp_path: Path) -> None:

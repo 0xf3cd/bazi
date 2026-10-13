@@ -175,9 +175,10 @@ def test_days_counts_validates_before_cache(year: int) -> None:
 
 
 @pytest.mark.parametrize('date_type', [CalendarType.LUNAR, CalendarType.GANZHI])
-def test_nonpositive_day_in_supported_year(date_type: CalendarType) -> None:
+@pytest.mark.parametrize('day', [0, -1])
+def test_nonpositive_day_in_supported_year(date_type: CalendarType, day: int) -> None:
   valid = CalendarDate(2000, 6, 1, date_type)
-  invalid = CalendarDate(2000, 6, 0, date_type)
+  invalid = CalendarDate(2000, 6, day, date_type)
   assert hko_data_utils.is_valid(valid)
   for _ in range(2):
     assert hko_data_utils.is_valid(invalid) is False

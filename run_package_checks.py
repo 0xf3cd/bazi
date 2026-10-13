@@ -15,6 +15,7 @@ import venv
 import zipfile
 
 from pathlib import Path
+from email.parser import BytesParser
 from typing import Final
 from collections import Counter
 
@@ -57,7 +58,15 @@ def source_files(root: Path) -> tuple[str, ...]:
   return tuple(sorted(files))
 
 
-def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str]) -> None:
+def check_description(content: bytes, readme: bytes, label: str) -> None:
+  header, separator, body = content.partition(b'\n\n')
+  if not separator or BytesParser().parsebytes(header + b'\n\n').get_all('Description-Content-Type') != ['text/markdown']:
+    raise ValueError(f'Description content type mismatch: {label}')
+  if body != readme:
+    raise ValueError(f'Description bytes differ from README: {label}')
+
+
+def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str], readme: bytes) -> None:
   with zipfile.ZipFile(wheel) as archive:
     names = archive.namelist()
     metadata_dir = wheel.name.split('-')[0] + '-' + wheel.name.split('-')[1] + '.dist-info/'
@@ -73,6 +82,7 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str])
     for name, digest in licenses.items():
       if hashlib.sha256(archive.read(metadata_dir + 'licenses/' + name)).hexdigest() != digest:
         raise ValueError(f'License bytes differ: {name}')
+    check_description(archive.read(metadata_dir + 'METADATA'), readme, wheel.name)
 
 
 def run(command: list[str], cwd: Path) -> None:
@@ -93,6 +103,7 @@ def consumer(directory: Path, wheel: Path) -> Path:
 def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   files = source_files(root)
   before = {name: sha256(root / name) for name in files}
+  readme = (root / 'README.md').read_bytes()
   project = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']
   package = {name: digest for name, digest in before.items() if name.startswith('bazi/') and (name.endswith('.py') or name == 'bazi/py.typed' or name in RUNTIME_DATA)}
   licenses = {name: before[name] for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md')}
@@ -128,6 +139,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     for name, digest in before.items():
       if hashlib.sha256(payload[name]).hexdigest() != digest:
         raise ValueError(f'Sdist bytes differ: {name}')
+    check_description(payload['PKG-INFO'], readme, sdist.name)
     # 只提取已核验的普通文件，不提取归档链接或任意路径。
     for name, content in payload.items():
       target = extracted / name
@@ -144,7 +156,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   expected = {'package': package, 'licenses': licenses, 'version': project['version']}
   (foreign / 'expected.json').write_text(json.dumps(expected), encoding='utf-8')
   for label, wheel in (('direct', direct), ('rebuilt', rebuilt)):
-    check_wheel(wheel, package, licenses)
+    check_wheel(wheel, package, licenses, readme)
     python = consumer(work / (label + '-venv'), wheel)
     for optimization in ([], ['-O']):
       run([str(python), '-I', '-B', *optimization, 'package_smoke.py', 'expected.json'], foreign)
