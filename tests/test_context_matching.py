@@ -16,7 +16,7 @@ from bazi.context_matching import (
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen
 from bazi.knowledge import (
-  KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation,
+  KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription,
 )
 from bazi.school import BaziConfig, BaziSchool, DayRollover, _config_json
 from bazi.transit_chart import TransitChart
@@ -604,6 +604,11 @@ def test_default_knowledge_is_loaded_independently(monkeypatch: pytest.MonkeyPat
   assert left.knowledge == right.knowledge and left == right
 
 
+def test_all_knowledge_value_fields_participate_in_comparison() -> None:
+  for record_type in (KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription):
+    assert all(field.compare for field in fields(record_type)), record_type.__name__
+
+
 @pytest.mark.parametrize('registry', ['objects', 'contexts', 'sources', 'entries'])
 def test_record_equality_preserves_full_knowledge_content_and_order(registry: str) -> None:
   knowledge = KnowledgeBase.load()
@@ -620,11 +625,6 @@ def test_record_equality_preserves_full_knowledge_content_and_order(registry: st
   changed['entries'][0]['text'] += ' Extra recorded text.'
   changed_result = match(knowledge=KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False)))
   assert changed_result != result and len({result, changed_result}) == 2
-
-
-def test_all_knowledge_value_fields_participate_in_comparison() -> None:
-  for record_type in (KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation):
-    assert all(field.compare for field in fields(record_type)), record_type.__name__
 
 
 @pytest.mark.parametrize('registry, field', [

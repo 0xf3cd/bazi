@@ -17,7 +17,7 @@ BLOCKS = tuple(re.findall(r'^```python\n(.*?)^```$', README, re.MULTILINE | re.D
 
 def test_readme_has_python_examples() -> None:
   assert BLOCKS
-  assert len(BLOCKS) == len(re.findall(r'^[ \t]*(?:`{3,}|~{3,})[ \t]*(?:python[0-9]*|py)\b[^\n]*$', README, re.MULTILINE | re.IGNORECASE))
+  assert len(BLOCKS) == len(re.findall(r'^[ \t]*(?:`{3,}|~{3,})[ \t]*(?:python[0-9]*|py)\b', README, re.MULTILINE | re.IGNORECASE))
 
 
 @pytest.mark.parametrize('block', BLOCKS, ids=[f'example-{index}' for index in range(len(BLOCKS))])

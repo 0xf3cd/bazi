@@ -72,7 +72,7 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
   (b'Description-Content-Type: text/markdown', b'Wrong README\n', False),
   (b'Description-Content-Type: text/markdown', b'# Bazi\n\n', False),
   (b'Description-Content-Type: text/markdown', b'', False),
-  (b'Description-Content-Type: text/markdown', b'# Ba\n', False),
+  (b'Description-Content-Type: text/markdown', b'# Bazi', False),
 ])
 def test_description_source_and_content_type(header: bytes, body: bytes, accepted: bool) -> None:
   content = b'Metadata-Version: 2.4' + (b'\n' + header if header else b'') + b'\n\n' + body
