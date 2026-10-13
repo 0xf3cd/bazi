@@ -17,7 +17,7 @@ python run_package_checks.py --output-dir ../bazi-tested
 python -m pip install ../bazi-tested/bazi-1.0.0-py3-none-any.whl
 ```
 
-输出目录须为空且在仓外。安装包为 bazi，从定义模块导入，没有安装 CLI、src 兼容包或根类入口。
+输出目录须为空且在仓外。安装包为 `bazi`，从定义模块导入，没有安装 CLI、`src` 兼容包或根类入口。
 下文每个 Python 块均可独立复制运行。
 
 ```python
@@ -59,7 +59,7 @@ print(chart.nayin, chart.shier_zhangsheng)
 
 ## 配置与时间口径
 
-默认配置为 CELESTIAL、DAY 精度。hko 提供日期级数据，celestial 与 celestial-algo2 读取随库天文表。
+默认配置为 CELESTIAL、DAY 精度。`hko` 提供日期级数据，`celestial` 与 `celestial-algo2` 读取随库天文表。
 后端差异与支持范围见历法模块；选择后端不安装离线生成器。
 
 ```python
@@ -176,7 +176,7 @@ UTC+08:00 日期却为一月二日；`TransitChart.at_date` 使用后者。1929 
 
 ## 破坏性迁移
 
-关系查询、知识接口与前提记录的迁移，分别见[地支查询与迁移](#地支查询与迁移)、
+关系查询、知识接口与前提判别记录的迁移，分别见[地支查询与迁移](#地支查询与迁移)、
 [知识接口与迁移](#知识接口与迁移)和[显式范围前提判别](#显式范围前提判别)。
 
 - 旧版 DAY 在真实交节前仍数向旧节的例外已删除，起运、小运及大运 JSON 可能改变。
@@ -401,11 +401,11 @@ python run_interpreter.py \
 | `--query-knowledge` | 不建盘，查询并展示知识，包含来源详情 |
 | `--validate-knowledge` | 校验完整编辑源 |
 | `--knowledge-source <path>` | 读取自定义或导出的 JSON |
-| `--object`、`--context`、`--topic`、`--source`、`--viewpoint`、`--applicability`、`--time-scope` | 查询过滤条件，context 明确为人工选择 |
-| `--export-knowledge-json <path>` | 导出全部记录；配 `query-knowledge` 时导出所选记录 |
+| `--object`、`--context`、`--topic`、`--source`、`--viewpoint`、`--applicability`、`--time-scope` | 查询过滤条件，`--context` 明确为人工选择 |
+| `--export-knowledge-json <path>` | 导出全部记录；配 `--query-knowledge` 时导出所选记录 |
 | `--include-reference-only` | 查询时包含参考条目 |
 
-知识模式拒绝命盘输入、`output-dir` 和旧 TXT 导出参数；不选择知识模式时仍有命盘 runner 的原参数组合。
+知识模式拒绝命盘输入、`--output-dir` 和旧 TXT 导出参数；不选择知识模式时仍有命盘 runner 的原参数组合。
 JSON 导出拒绝覆盖编辑源，包括文件系统别名。
 
 ### 显式范围前提判别
@@ -480,8 +480,8 @@ python run_interpreter.py \
   --export-context-json output_data/context.json
 ```
 
-匹配须给固定出生／性别与显式观察范围，拒绝随机／count、旧 TXT 导出及知识模式／过滤参数。
-可用 `knowledge-source` 给自定义知识；`export-context-json` 拒绝覆盖该源或随库语料，包括文件系统别名。
+匹配须给固定出生／性别与显式观察范围，拒绝随机／`--count`、旧 TXT 导出及知识模式／过滤参数。
+可用 `--knowledge-source` 给自定义知识；`--export-context-json` 拒绝覆盖该源或随库语料，包括文件系统别名。
 所选条目始终展示完整来源边界。
 
 ## 源码命盘示例与 help
@@ -494,7 +494,7 @@ python run_interpreter.py \
 | `python run_relationship_analyzer.py` | 夫妻宫、配偶星、原局神煞及十年流年神煞 |
 | `python run_interpreter.py` | 单盘静态说明，默认不导出文件 |
 
-三者均接受 `seed`，未给时生成并打印实际种子；展示含出生时刻与性别，完整门禁给各 runner 种子 236。
+三者均接受 `--seed`，未给时生成并打印实际种子；展示含出生时刻与性别，完整门禁给各 runner 种子 236。
 带来源的可重放示例：
 
 ```sh
@@ -535,8 +535,8 @@ python run_interpreter.py \
 | `--export-knowledge-base` | 将全部天干／十神文字写到 `knowledge_base/`，默认根目录 `output_data/` |
 | `-h`、`--help` | 显示帮助 |
 
-固定出生只接一个命盘，不能配 `seed`。地点参数要求固定出生，随机或纯知识模式拒绝它们。
-civil-timezone 接 IANA 名或 +14:00 等固定偏移，负偏移须用 `--civil-timezone=-05:00`。
+固定出生只接一个命盘，不能配 `--seed`。地点参数要求固定出生，随机或纯知识模式拒绝它们。
+`--civil-timezone` 接 IANA 名或 +14:00 等固定偏移，负偏移须用 `--civil-timezone=-05:00`。
 地点 JSON 导出示例：
 
 ```sh
@@ -558,7 +558,7 @@ TXT 去掉终端色码；重复导出覆盖本次编号文件，其他文件及�
 ## 开发
 
 `Requirements.txt` 为开发环境，含测试、lint、类型与发行验证工具，不是安装库的依赖列表。
-源码 mypy 另需 CPython CI 所用的 celestial-calendar==0.6.1。
+源码 mypy 另需 CPython CI 所用的 `celestial-calendar==0.6.1`。
 
 ```sh
 python -m pip install -r Requirements.txt
@@ -566,30 +566,30 @@ python -m pip install celestial-calendar==0.6.1
 python run_tests.py -a -v
 ```
 
-完整门禁执行所有测试（含 slow 与 hkodata），要求 100% 覆盖率，运行 ruff、完整 flags 的源码 mypy、
+完整门禁执行所有测试（含 `slow` 与 `hkodata`），要求 100% 覆盖率，运行 ruff、完整 flags 的源码 mypy、
 两个 demo、`run_interpreter.py` 示例、`python -O` 公开输入契约冒烟及隔离 wheel／sdist 重建 wheel 检查。
-工件检查使用两个无依赖的新消费者环境及独立安装 mypy 环境；`run_package_checks.py`、-pkg、-a
+工件检查使用两个无依赖的新消费者环境及独立安装 mypy 环境；`run_package_checks.py`、`-pkg`、`-a`
 仍可能从包索引下载构建及类型工具与依赖，即使开发依赖已安装。
 构建与消费者在仓外临时目录；根 demo 可写 `output_data/`，安装库只读行为另行验证。
 
 | 参数 | 用途 |
 | --- | --- |
-| `-a`、`--all` | 完整门禁，覆盖 -nt 与 -k |
+| `-a`、`--all` | 完整门禁，覆盖 `-nt` 与 `-k` |
 | `-nt`、`--no-test` | 跳过测试与覆盖率 |
-| `-s`、`-hko` | 包含 slow 或 hkodata 测试 |
-| `-k <expression>` | 筛选 pytest，忽略 -s 与 -hko |
+| `-s`、`-hko` | 包含 `slow` 或 `hkodata` 测试 |
+| `-k <expression>` | 筛选 pytest，忽略 `-s` 与 `-hko` |
 | `-v` | 详细输出 |
-| `-c` | 覆盖率报告，另写 covhtml/ |
+| `-c` | 覆盖率报告，另写 `covhtml/` |
 | `-cr <rate>`、`--coverage-rate <rate>` | 最低覆盖率，默认 100 |
 | `-r`、`--ruff` | 运行 ruff check |
 | `-m`、`-mypy`、`--mypy` | 按 runner 完整 flags 运行源码 mypy |
 | `-d` | 运行两个 demo |
 | `-i` | 运行 `run_interpreter.py` 示例 |
-| `-osmoke`、`--o-smoke` | 用 python -O 运行源码公开输入契约冒烟 |
+| `-osmoke`、`--o-smoke` | 用 `python -O` 运行源码公开输入契约冒烟 |
 | `-pkg`、`--package` | 隔离发行检查 |
-| `--package-output-dir <path>` | 与 -pkg 或 -a 一起保留已验证 sdist 及其重建 wheel |
+| `--package-output-dir <path>` | 与 `-pkg` 或 `-a` 一起保留已验证 sdist 及其重建 wheel |
 
-裸 `python run_tests.py` 排除 slow/hkodata，且不执行可选任务，不能替代完整门禁。
+裸 `python run_tests.py` 排除 `slow`/`hkodata`，且不执行可选任务，不能替代完整门禁。
 不用自动格式化器，只用 `ruff check .`。
 
 pytest 随机输入使用 `--random-seed`，默认基准 236。每个 `rng` 夹具打印 node ID、基准种子与实际种子；
@@ -613,7 +613,7 @@ python -m pytest \
 
 打包和安装后使用时只读取已提交数据，不重新生成。源码树及 sdist 含 HKO 原始输入，wheel 不含。
 维护者可用 `python -m bazi.calendar.hko_data.encoder` 重建，仅下载原始输入时需要 requests；
-天文表用 `python -m bazi.calendar.celestial_data.generator`，需要 celestial-calendar==0.6.1。
+天文表用 `python -m bazi.calendar.celestial_data.generator`，需要 `celestial-calendar==0.6.1`。
 后者也生成每日均时差表，`--eot-only` 只生成 `equation_of_time.bin`，其输出逐字节稳定；这些工具不是运行时依赖。
 在仓外目录生成候选 EOT 并比较，不覆盖随库表：
 

@@ -29,7 +29,7 @@ UTF-8 文本，末尾换行，磁盘采用 LF；读取时 `splitlines()` 规范�
 | --- | --- |
 | `schema_version` | 2 |
 | `celestial_version` | 0.6.1，须通过版本检查 |
-| `release_asset` | celestial-calendar==0.6.1 / PyPI wheel |
+| `release_asset` | `celestial-calendar==0.6.1` / PyPI wheel |
 | `generated_by` | 生成脚本路径 |
 | `generated_on` | YYYY-MM-DD |
 | `source_api` | 产生记录的公共 Python 调用 |
@@ -84,7 +84,7 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
   位 i 表示顺序第 i+1 个月，闰月独占一位；1 为三十日，0 为二十九日。
   algo1 与 HKO `days_counts` 相符 199/199，由 `tests/calendar/test_celestial_tables.py` 核对，不是生成检查。
 - `days_counts`：从位图解码的十二或十三项月长，保留冗余；加载器核两列相等，任改一列导致不一致即失败。
-- ganzhi：在 `Ganzhi.list_sexagenary_cycle()` 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
+- `ganzhi`：在 `Ganzhi.list_sexagenary_cycle()` 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
   HKO `LunarYearInfo` 含此字段，所以差异比较保留它；199/199 相符由测试验证，不是生成检查。
   生成器不导入 `hko_data`，其检查范围见下节。
 - 默认 algo1，沿 HKO 官方历书体系；农历为展示数据，四柱以节气为基础，不读取农历。
@@ -102,10 +102,10 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
   运行时查询采用不含末哨兵的半开范围，覆盖所有允许经度及民用偏移下映射到
   真太阳日期窗口 1901-02-19 至 2099-12-31 的 UTC 瞬间，并含精度归属所需下一节（2100 小寒）。
 - 间隔恰为 86,400 UTC 秒。运行时按 UTC 日内比例线性插值，不把范围外查询钳到端点。
-- 样本为大端有符号 int16，单位十分之一秒。生成时用 Python 的 ties-to-even round
+- 样本为大端有符号 int16，单位十分之一秒。生成时用 Python 的 ties-to-even `round`
   舍入到最近十分之一秒，量化误差不超过 0.05 秒；插值另有近似误差。
   `tests/calendar/test_celestial_loader.py` 的来源锚核编码值。
-- 固定五十六字节大端头部为 `>8sIIII32s`：magic BAZIEOT1、公历起始日 `ordinal`、样本数、
+- 固定五十六字节大端头部为 `>8sIIII32s`：magic `BAZIEOT1`、公历起始日 `ordinal`、样本数、
   间隔秒数、每秒单位数 10、载荷 SHA-256。载荷恰有 `sample_count` 个 int16。
   运行时在普通及优化 Python 下均校验全部头部字段、字节数及摘要。
 

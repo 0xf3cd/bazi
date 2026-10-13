@@ -24,8 +24,8 @@ case ID 标识输入，不标识真人；`group` 为采样类别。
 
 | 来源 | 记录配置 | 身份与限度 |
 | --- | --- | --- |
-| bazi | CELESTIAL × DAY/HOUR/MINUTE × `WAN_ZISHI`/`ZIZHENG` × `JIE_PROJECTED`/`FIXED_DECADE` | 数据中记录生成快照的提交、运行时 Git 子树及表指纹，其他流派字段显式给出 |
-| [lunar-python](https://github.com/6tail/lunar-python) | `EightChar` sect 1/2 × Yun sect 1/2，两个独立选项 | 1.4.8，寿星谱系 |
+| bazi | `CELESTIAL` × `DAY`/`HOUR`/`MINUTE` × `WAN_ZISHI`/`ZIZHENG` × `JIE_PROJECTED`/`FIXED_DECADE` | 数据中记录生成快照的提交、运行时 Git 子树及表指纹，其他流派字段显式给出 |
+| [lunar-python](https://github.com/6tail/lunar-python) | `EightChar` sect 1/2 × `Yun` sect 1/2，两个独立选项 | 1.4.8，寿星谱系 |
 | [China95](https://p.china95.net/paipan/bazi/) | 普通民用时间排盘，关闭太阳时修正 | 服务版本与谱系未知，交运显示到小时 |
 | [Iwzwh](https://pcbz.iwzwh.com/) | 固定 as-of 情境下采集的默认配置 | 服务版本与谱系未知，没有绝对起运时间戳 |
 
@@ -50,9 +50,9 @@ case ID 标识输入，不标识真人；`group` 为采样类别。
 | 案例 | 数据保留的差异 |
 | --- | --- |
 | C10 | 2000-02-04 20:40，bazi 将整分钟归新年/月；lunar-python 在输入 20:40:00 时仍为己卯/丁丑，其边界为 20:40:24 |
-| C16 | 2017-02-03 23:10，bazi HOUR 将含立春的子时归新年，MINUTE 仍归旧年；此次 Iwzwh 观测返回新年四柱 |
+| C16 | 2017-02-03 23:10，bazi `HOUR` 将含立春的子时归新年，`MINUTE` 仍归旧年；此次 Iwzwh 观测返回新年四柱 |
 | C18 | 2017-02-03 23:34，分钟相等与 sect-2 换日共同作用；lunar-python sect 2 与 bazi `MINUTE`/`WAN_ZISHI` 的年、月、日柱均不同 |
-| C23 | 2009-02-03 23:30，bazi HOUR 经跨午夜子时提前归次日 00:xx 的立春；DAY 与 MINUTE 仍归旧年 |
+| C23 | 2009-02-03 23:30，bazi `HOUR` 经跨午夜子时提前归次日 00:xx 的立春；`DAY` 与 `MINUTE` 仍归旧年 |
 | C29 | lunar-python sect 2 保留民用日柱庚子，时柱取戊子；所录 bazi 配置取辛丑/戊子或庚子/丙子 |
 | C12/C34 | China95 在 2000-02-04 22:01 对两种性别均取己卯/丙寅，所录 bazi 配置均取庚辰/戊寅，大运干支序列也不同 |
 | C32/C33 | China95 在所采 2023 春节日期仍取壬寅；与 C12 合看，不能把服务概括为春节换年 |
@@ -71,7 +71,7 @@ bazi 配置，但没有一个配置匹配全部四十条；本文仍未识别其
 - `duration`：来源给出的年/月/日/小时偏移，不将这些分量加到出生日期上伪造来源未报的时间戳。
 - `start`：来源提供的民用时间戳及显示分辨率，或显式缺失。China95 的小时显示舍入规则未知，
   补零不增加精度；lunar-python 显示秒不表示起运换算具有秒级准确度。
-  `calculation` 单独标识 Yun 换算，不与 `EightChar` sect 混同。
+  `calculation` 单独标识 `Yun` 换算，不与 `EightChar` sect 混同。
 - bazi `dayun`：半开起止区间及独立投影的干支年标签，`FIXED_DECADE` 只改变标签，不改物理时刻线。
 - 外部 `year_labels` / `age_labels`：来源特有值。lunar-python 返回两端包含的公历年份范围；
   Iwzwh 年份与起始虚岁标签按采集的前端公式及返回的起运年龄重建，没有结束边界；

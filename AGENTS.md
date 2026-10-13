@@ -25,8 +25,8 @@
 - ruff 使用默认规则，少数整类例外在 `ruff.toml` 中逐项说明理由。此文件只声明规则，
   不得添加格式参数。mypy 不设配置，完整 flags 在 `run_tests.py`；`pyproject.toml` 只管打包。
 - 不运行 `ruff format` 或其他自动格式化器，以免破坏刻意的纵向对齐；ruff 门禁只用 `ruff check`。
-- Requirements.txt 固定 ruff 版本；升级须逐条审议新增规则。单处有意写法用带理由的
-  `# noqa: <RULE>`；整类与领域或风格冲突时才在 ruff.toml 忽略。只与某一子树冲突的规则，
+- `Requirements.txt` 固定 ruff 版本；升级须逐条审议新增规则。单处有意写法用带理由的
+  `# noqa: <RULE>`；整类与领域或风格冲突时才在 `ruff.toml` 忽略。只与某一子树冲突的规则，
   可用带理由的 `per-file-ignores`。
 - 安装包为 `bazi`，从定义模块导入，没有安装 CLI 或根类入口。
 - PR 前须实跑与 CI 相同的 **`run_tests.py -a -v`**。下列内层检查较快，但省略了两个 demo、
@@ -84,16 +84,16 @@
 
 ## 领域命名
 
-领域术语用拼音，不翻译为英文，如 Tiangan、Shensha、he、chong。
+领域术语用拼音，不翻译为英文，如 `Tiangan`、`Shensha`、`he`、`chong`。
 领域枚举提供拉丁与中文成员别名（`甲 = JIA`、`天干 = Tiangan`）；
-BaziPrecision、TransitKind 等选项枚举不要求中文别名。测试和示例优先使用中文成员。
+`BaziPrecision`、`TransitKind` 等选项枚举不要求中文别名。测试和示例优先使用中文成员。
 JSON 中的领域值（四柱、性别等）用中文，供作者与下游 AI 助手读取。
 
 ## 说明与注释语言
 
 自有 API、模块、类、类型别名说明及源码叙述注释以中文为主，必要时保留英语辅助。
-docstring 沿用 Note / Args / Return / Examples，类型放在括号中。
-rules、defines、utils、knowledge、context_matching 等知识密集层须用中文说明规则、表与命理语义。
+docstring 沿用 `Note` / `Args` / `Return` / `Examples`，类型放在括号中。
+`rules`、`defines`、`utils`、`knowledge`、`context_matching` 等知识密集层须用中文说明规则、表与命理语义。
 既有说明随相关改动更新；明确授权的全量文档整理按其任务范围执行。
 
 tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言而改写既有测试叙述；纯中文引用按原文保留。
@@ -106,35 +106,35 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
 
 ## 类型与不可变性
 
-- 完整类型标注，mypy 须通过；使用 Final、PEP 604 的 `X | None`、Callable、TypedDict、NamedTuple，
-  不用 Optional。
-- 返回结果不可变，使用 frozenset、`..common` 的 frozendict、tuple；小值类型优先 frozen dataclass，
+- 完整类型标注，mypy 须通过；使用 `Final`、PEP 604 的 `X | None`、`Callable`、`TypedDict`、`NamedTuple`，
+  不用 `Optional`。
+- 返回结果不可变，使用 `frozenset`、`..common` 的 `frozendict`、`tuple`；小值类型优先 frozen dataclass，
   不手写重复的 `__init__` / `__eq__`。
-- 规则表是普通 Final 类属性，不叠加 classproperty / functools.cache；常量无需懒加载。
+- 规则表是普通 `Final` 类属性，不叠加 `classproperty` / `functools.cache`；常量无需懒加载。
 - 类型别名上方用字符串说明。
 
 ## 保留的写法
 
 - 内部辅助函数入口可用 `assert isinstance(...)` / `assert callable(...)`，调用方已在 bazi 内校验。
-  公开入口显式抛 TypeError / ValueError：类型或 callable 检查失败为 TypeError，值、范围、成员
-  不支持为 ValueError；公开枚举参数的穷尽 else 是成员检查，使用 ValueError。
+  公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
+  不支持为 `ValueError`；公开枚举参数的穷尽 else 是成员检查，使用 `ValueError`。
   消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
-  立即失败契约须在 python -O 下成立，说明见 hko_data/decoder.py，门禁见 tests/o_smoke.py。
-- 清晰时采用函数式写法，如 map/filter/starmap/product/compress、海象运算符、functools。
-- 计算结果用 property；昂贵的不可变结果可用 cached_property。
+  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`，门禁见 `tests/o_smoke.py`。
+- 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。
+- 计算结果用 `property`；昂贵的不可变结果可用 `cached_property`。
 - 保留等号、字典冒号的纵向对齐。
-- 常量用普通 Final 类属性或模块名称，由 mypy 检查；复用 common.py 的 frozendict 与 #region。
+- 常量用普通 `Final` 类属性或模块名称，由 mypy 检查；复用 `common.py` 的 `frozendict` 与 `#region`。
 
 ## 测试
 
 - 镜像包布局：`bazi/utils/tiangan_utils.py` 对应 `tests/utils/test_tiangan_utils.py`。
-- 使用模块级 test_*、裸 assert、pytest.raises；字面案例表用 parametrize，派生案例用普通循环。
-- 组合期望以内联字面集合给出；集成测试在 tests/integration/。
+- 使用模块级 `test_*`、裸 `assert`、`pytest.raises`；字面案例表用 `parametrize`，派生案例用普通循环。
+- 组合期望以内联字面集合给出；集成测试在 `tests/integration/`。
 
 ## 其他约束
 
 不添加 black/isort/配置文件、PascalCase 模块、知识层纯英文说明或英文领域命名。
-不运行格式化器，不改两空格缩进，不随意加依赖，保持 Requirements.txt 精简。
+不运行格式化器，不改两空格缩进，不随意加依赖，保持 `Requirements.txt` 精简。
 真实命盘示例须匿名，使用化名，出生地降到省级。
 公开注释、审阅、提交、PR 不写仓外路径、主机名或工具细节；现有文件含某路径不代表可公开。
 以相邻文件风格为准，内部一致性优先于外部“最佳实践”。
