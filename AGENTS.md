@@ -39,7 +39,7 @@
     没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
     有意不可达的行须有 `# pragma: no cover` 及理由。
   - `python -O tests/o_smoke.py`，公开输入的立即失败契约须在 `-O` 下保持；脚本拒绝无 `-O` 运行。
-- 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 slow 内。
+- 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 `slow` 内。
   要验证这些测试须给 `-s -hko` 或完整调用；可用 `pytest tests/ --collect-only -q`
   对比带标记与不带标记的收集结果。
 
@@ -117,7 +117,7 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
 
 - 内部辅助函数入口可用 `assert isinstance(...)` / `assert callable(...)`，调用方已在 bazi 内校验。
   公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
-  不支持为 `ValueError`；公开枚举参数的穷尽 else 是成员检查，使用 `ValueError`。
+  不支持为 `ValueError`；公开枚举参数的穷尽 `else` 是成员检查，使用 `ValueError`。
   消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
   立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`，门禁见 `tests/o_smoke.py`。
 - 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。

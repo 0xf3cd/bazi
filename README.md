@@ -581,7 +581,7 @@ python run_tests.py -a -v
 | `-v` | 详细输出 |
 | `-c` | 覆盖率报告，另写 `covhtml/` |
 | `-cr <rate>`、`--coverage-rate <rate>` | 最低覆盖率，默认 100 |
-| `-r`、`--ruff` | 运行 ruff check |
+| `-r`、`--ruff` | 运行 `ruff check` |
 | `-m`、`-mypy`、`--mypy` | 按 runner 完整 flags 运行源码 mypy |
 | `-d` | 运行两个 demo |
 | `-i` | 运行 `run_interpreter.py` 示例 |
@@ -594,13 +594,13 @@ python run_tests.py -a -v
 
 pytest 随机输入使用 `--random-seed`，默认基准 236。每个 `rng` 夹具打印 node ID、基准种子与实际种子；
 实际种子取 UTF-8 `"<base>:<nodeid>"` 的 SHA-256 前八字节，按大端无符号整数解释，
-初始化局部 Random，不改全局状态。同基准与完整 node ID 可重放：
+初始化局部 `Random`，不改全局状态。同基准与完整 node ID 可重放：
 
 ```sh
 python -m pytest tests/test_bazi_chart.py::test_dayun_order --random-seed 236 -s
 ```
 
-收集的随机关系案例用 base 至 base + 4，ID 含实际种子、出生与性别；改基准也会改变案例。
+收集的随机关系案例用 `base` 至 `base + 4`，ID 含实际种子、出生与性别；改基准也会改变案例。
 从仓根重放单例：
 
 ```sh
@@ -612,7 +612,7 @@ python -m pytest \
 ### 离线数据生成
 
 打包和安装后使用时只读取已提交数据，不重新生成。源码树及 sdist 含 HKO 原始输入，wheel 不含。
-维护者可用 `python -m bazi.calendar.hko_data.encoder` 重建，仅下载原始输入时需要 requests；
+维护者可用 `python -m bazi.calendar.hko_data.encoder` 重建，仅下载原始输入时需要 `requests`；
 天文表用 `python -m bazi.calendar.celestial_data.generator`，需要 `celestial-calendar==0.6.1`。
 后者也生成每日均时差表，`--eot-only` 只生成 `equation_of_time.bin`，其输出逐字节稳定；这些工具不是运行时依赖。
 在仓外目录生成候选 EOT 并比较，不覆盖随库表：
