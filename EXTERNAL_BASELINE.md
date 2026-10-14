@@ -3,7 +3,7 @@
 [基线数据](tests/integration/external_baseline.json) 保存十六个合成输入、十二种具名 bazi 配置的
 结果，以及三个外部排盘器的观测，用于配置比较与回归。一个外部结果可匹配多个配置，也可没有匹配。
 
-在源码目录离线运行：
+在仓库根目录离线运行：
 
 ```sh
 python -m pytest tests/integration/test_external_baseline.py -v

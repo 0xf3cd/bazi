@@ -14,7 +14,7 @@ from .defines import Shishen, Tiangan
 
 '''知识整理状态，不是命盘判别结果。
 unconditional：无命盘前提；described：已记录前提文字，术语可能尚无计算定义；
-unresolved：前提仍待重建，旧条件元组为空不表示问题已解决。
+unresolved：前提仍待重建。
 '''
 Applicability = Literal['unconditional', 'described', 'unresolved']
 
@@ -155,6 +155,7 @@ class LegacyDescription:
 
   复核旧位置时按 object_id、field 选择，再按 ordinal 排序，不与知识库的语料顺序混同。
   chart_context_required 记录旧前提；in_good_status / in_bad_status 是旧位置，不是现代知识分类。
+  conditions 为空不表示前提已解决。
   '''
 
   object_id:     str
@@ -294,8 +295,8 @@ class KnowledgeBase:
   - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
     查来源，query(source_id=...) 查关联条目。
-  - 仅供参考条目不判断命盘适用性。空 sources 或 “Legacy corpus; source unverified” 署名
-    不表示无来源或断言为假；仓内署名也不等于已经核定的古籍见证。
+  - 仅供参考条目不判断命盘适用性。条目的 sources 为空或署名为 “Legacy corpus; source unverified”，
+    均不表示无来源或断言为假；仓内署名也不等于已经核定的古籍见证。
   '''
 
   def __init__(

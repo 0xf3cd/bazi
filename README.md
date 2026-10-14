@@ -83,6 +83,7 @@ print(chart.json['school'])
 [天文后端](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_utils.py)。
 
 命盘 JSON 可用 `BaziChart.from_json(chart.json)` 恢复；它重算并核对完整记录，只保证与当前版本一致。
+旧记录的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#unreleased)。
 需要核对其他排盘器时，见[外部排盘对照](https://github.com/0xf3cd/bazi/blob/main/EXTERNAL_BASELINE.md)。
 
 ### 地点与真太阳时
@@ -236,7 +237,7 @@ restored_record = ContextResult.from_json(result.export_json())
 assert restored_record == result
 ```
 
-`SATISFIED` / `NOT_SATISFIED` 表示完整前提的判别；缺少所需流年或判据未定义时返回 `UNKNOWN`。
+`SATISFIED` / `NOT_SATISFIED` 表示完整前提的判别；所需流年缺失或不可查询、判据未定义时返回 `UNKNOWN`。
 它不计算旺衰、喜忌、格局或有效制化。观察范围和自定义知识的匹配条件见
 [`context_matching.py`](https://github.com/0xf3cd/bazi/blob/main/bazi/context_matching.py)。
 
@@ -287,8 +288,8 @@ python run_interpreter.py \
 ```
 
 随机示例用 `--seed` 重放；全部参数见 `python run_interpreter.py --help`。
-十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
-JSON 导出拒绝覆盖知识源；TXT 重复导出会覆盖本次编号文件，其他文件保留。
+命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
+JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖本次编号文件，其他文件保留。
 
 ## 开发
 

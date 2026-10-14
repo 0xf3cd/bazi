@@ -6,7 +6,7 @@
 # 本模块仅供离线重建；运行时 loader.py 只用纯 Python 读取已提交表，不得导入 celestial_calendar。
 # 与 HKO 的离线 encoder.py 和运行时 decoder.py 采用相同分工。
 #
-# 在源码目录运行，不从安装包运行：
+# 在仓库根目录运行，不从安装包运行：
 #   python -m bazi.calendar.celestial_data.generator
 # 比较候选均时差表时，输出到仓外目录，不覆盖随库表：
 #   python -m bazi.calendar.celestial_data.generator \
