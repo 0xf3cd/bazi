@@ -18,6 +18,8 @@
 - `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
   进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
 
+- `KnowledgeBase` 由实例身份比较改为四份注册表的内容与顺序比较，hash 使用相同依据。
+  等值的不同实例在集合中去重，作为字典键时对应同一项。
 - `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
   构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
   属性及记录字段删除。原完整知识 JSON 可先交给 `KnowledgeBase.from_json`。

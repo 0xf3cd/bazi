@@ -152,7 +152,7 @@ print(analyzer.transits.house_relations(year))
 
 `at_year` 的整数是干支年标签，按所选年份视图解释大运；月、日期与时刻查询按物理边界。
 `at_moment` 要求真实节时刻及 `HOUR` / `MINUTE` 原盘。不支持、出生前或各自范围外的查询返回 `None`。
-`TransitSet.select` 只选实际存在的种类；详细条件见
+`TransitSet.select` 要求指定种类全部存在，缺项时抛 `ValueError`；详细条件见
 [`TransitChart`](https://github.com/0xf3cd/bazi/blob/main/bazi/transit_chart.py) 和
 [`TransitSet`](https://github.com/0xf3cd/bazi/blob/main/bazi/transits.py)。
 
@@ -246,7 +246,8 @@ assert restored_record == result
 
 ## 源码脚本
 
-以下脚本在仓库根目录运行，不作为安装后的命令行入口。三者默认均生成随机命盘：
+以下脚本需先按[开发](#开发)安装依赖，再在仓库根目录运行，不作为安装后的命令行入口。
+三者默认均生成随机命盘：
 
 | 命令 | 输出 |
 | --- | --- |
