@@ -13,24 +13,19 @@ def _members(cls: type[Enum]) -> tuple[Enum, ...]:
 
 @functools.cache
 def _member_indexes(cls: type[Enum]) -> dict[Enum, int]:
-  # This cached table IS the O(1) `index` mechanism (not lazy loading of a rule table).
-  # Module-private; callers only read. 缓存表即 O(1) 下标本体；模块私有，只读消费。
+  # 模块私有缓存表提供 O(1) 下标；调用方只读，不用于规则表的懒加载。
   return { member : index for index, member in enumerate(cls) }
 
 
 class BaziEnum(Enum):
   '''
-  Shared base of the domain enums, deduplicating the `from_str` / `as_list` / `__str__`
-  boilerplate. Subclass hooks must be descriptors (e.g. classmethods) -- a plain class
-  attribute in an `Enum` body would be swallowed as a member.
-  领域枚举的公共基类，收敛 `from_str` / `as_list` / `__str__` 样板。子类钩子必须是
-  描述符（如 classmethod）——Enum 类体里的普通类属性会被吃成枚举成员。
+  领域枚举的公共基类，共用 `from_str` / `as_list` / `__str__`。
+  子类钩子必须是描述符（如 classmethod）；Enum 类体中的普通类属性会成为枚举成员。
   '''
 
   @classmethod
   def _str_len(cls) -> int | None:
-    '''Subclass hook: the exact `from_str` input length, or None for no length precondition.
-    子类钩子：`from_str` 输入的确切长度；None 表示不设长度前置条件。'''
+    '''子类钩子：`from_str` 输入的确切长度；None 表示不设长度前置条件。'''
     return None
 
   @classmethod
@@ -51,8 +46,7 @@ class BaziEnum(Enum):
 
 
 class IndexedBaziEnum(BaziEnum):
-  '''`BaziEnum` plus O(1) definition-order indexing (`index` / `from_index`).
-  在 `BaziEnum` 之上另提供 O(1) 的定义序下标（`index` / `from_index`）。'''
+  '''在 `BaziEnum` 之上提供 O(1) 的定义序下标（`index` / `from_index`）。'''
 
   @property
   def index(self) -> int:
@@ -60,11 +54,8 @@ class IndexedBaziEnum(BaziEnum):
 
   @classmethod
   def from_index(cls, i: int) -> Self:
-    '''Definition-order lookup with `list`-style indexing: negative indexes wrap,
-    out-of-range raises IndexError. 定义序取成员，下标语义同 `list`：负数回绕，越界 IndexError。'''
+    '''按定义序取成员，下标语义同 `list`：负数回绕，越界抛 IndexError。'''
     member = _members(cls)[i]
-    # The helper can't be generic (`functools.cache` erases typevars), so narrow the
-    # member back here; doubles as a runtime guard. helper 写不成泛型（cache 会抹平
-    # typevar），故在此窄回，兼作运行时防线。
+    # functools.cache 不保留 typevar，因此在此收窄辅助函数的返回类型，同时检查运行时类型。
     assert isinstance(member, cls)
     return member

@@ -40,7 +40,7 @@ def main() -> int:
   from bazi.bazi_chart import BaziChart
   from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
-  from bazi.rules import DizhiRules
+  from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
@@ -109,6 +109,9 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('Ganzhi.next rejects 甲丑', ValueError, lambda: Ganzhi.from_str('甲丑').next()),
+    ('Ganzhi.prev rejects 甲丑 even at zero', ValueError, lambda: Ganzhi.from_str('甲丑').prev(0)),
+    ('Jieqi.jies rejects int', TypeError, lambda: Jieqi.jies(1)), # type: ignore[arg-type]
     ('nayin_str rejects 甲丑', ValueError,
      lambda: bazi_utils.nayin_str(Ganzhi.from_str('甲丑'))),
     ('xing rejects four Dizhis', ValueError,
@@ -331,7 +334,7 @@ def main() -> int:
      lambda: dizhi_utils.search_ganzhis(
        [Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰')],
        DizhiRelation.拱合,
-       gong_def=DizhiRules.GongheDef.NARROW, # type: ignore
+       definitions=DizhiRules.GongheDef.NARROW, # type: ignore
      )),
     ('dizhi_utils.discover_mutual_ganzhis on raw Dizhis', TypeError,
      lambda: dizhi_utils.discover_mutual_ganzhis([Dizhi.申], [Dizhi.辰])), # type: ignore
@@ -388,6 +391,14 @@ def main() -> int:
      lambda: (ALGO1.days_counts_in_ganzhi_year(Year(2024)), ALGO1.days_counts_in_ganzhi_year(2024.0))), # type: ignore
     ('ALGO2 month lengths int-subclass warm cache wrong year', TypeError,
      lambda: (ALGO2.days_counts_in_ganzhi_year(Year(2024)), ALGO2.days_counts_in_ganzhi_year(2024.0))), # type: ignore
+    ('HKO rejects lunar day zero inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, 0, CalendarType.LUNAR))),
+    ('HKO rejects Ganzhi day zero inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, 0, CalendarType.GANZHI))),
+    ('HKO rejects negative lunar day inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, -1, CalendarType.LUNAR))),
+    ('HKO rejects negative Ganzhi day inside the supported range', ValueError,
+     lambda: hko_data_utils.to_solar(CalendarDate(2000, 6, -1, CalendarType.GANZHI))),
     ('CalendarDate ordering foreign rhs', TypeError,
      lambda: solar_date < date(2024, 1, 1)),
     ('CalendarDate ordering foreign lhs', TypeError,
@@ -554,6 +565,28 @@ def main() -> int:
     ('Bazi readonly reference', AttributeError, partial(setattr, local_chart.bazi, 'reference_datetime', datetime(2000, 1, 1))),
     ('LocationTime readonly facts', AttributeError, partial(setattr, local_chart.bazi.location_time, 'longitude', 0.0)),
   ])
+  for field, invalid_definition in (
+    ('anhe_def', 'NORMAL_EXTENDED'), ('anhe_def', 0), ('anhe_def', DizhiRules.XingDef.LOOSE),
+    ('xing_def', 'LOOSE'), ('xing_def', 1), ('xing_def', DizhiRules.AnheDef.NORMAL),
+    ('gong_def', 'NARROW'), ('gong_def', 0), ('gong_def', DizhiRules.GongheDef.NARROW),
+  ):
+    checks.append((f'Relation definitions wrong {field}: {invalid_definition}', TypeError,
+                   partial(replace, DizhiRelationDefinitions(), **{field: invalid_definition})))
+  for query, args in (
+    (dizhi_utils.search, ([], DizhiRelation.六合)),
+    (dizhi_utils.discover, ([],)),
+    (dizhi_utils.discover_mutual, ([], [])),
+    (dizhi_utils.search_ganzhis, ([], DizhiRelation.拱合)),
+    (dizhi_utils.discover_ganzhis, ([],)),
+    (dizhi_utils.discover_mutual_ganzhis, ([], [])),
+  ):
+    checks.append((f'{query.__name__} wrong definitions', TypeError, partial(query, *args, definitions=None))) # type: ignore[arg-type]
+  for query, args in (
+    (dizhi_utils.discover_ganzhis, ([],)),
+    (dizhi_utils.discover_mutual_ganzhis, ([], [])),
+  ):
+    for relations in (iter(DizhiRelation), [TianganRelation.合]):
+      checks.append((f'{query.__name__} wrong relations', TypeError, partial(query, *args, relations=relations))) # type: ignore[arg-type]
   failures: list[str] = []
   for gender in ('male', 'female'):
     day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))
@@ -621,6 +654,12 @@ def main() -> int:
   positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian', 2024), include_reference_only=True)
   if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or ContextResult.from_json(positive.export_json()) != positive:
     failures.append('Optimized context evaluation/export/restoration failed')
+  legacy_record = json.loads(positive.export_json())
+  legacy_record['record_version'] = 1
+  checks.extend([
+    ('Legacy context record version', ValueError, partial(ContextResult.from_json, json.dumps(legacy_record))),
+    ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
+  ])
   for label, expected, thunk in checks:
     try:
       thunk()

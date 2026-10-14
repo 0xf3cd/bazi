@@ -1,65 +1,48 @@
-# Releasing bazi
+# 发布 bazi
 
-The manual `release.yml` workflow prepares one verified sdist and its rebuilt
-wheel. The direct wheel is only a validation control. There are no push/tag
-publication triggers and no arbitrary ref, registry or artifact inputs.
+手动 `release.yml` workflow 准备一份已验证 sdist 及其重建 wheel；直接构建的 wheel 只作验证对照。
+没有 push/tag 发布触发器，也不接受任意 ref、包仓库或工件输入。
 
-## Prerequisites
+## 前提
 
-The owner must separately confirm PyPI account/project eligibility for `bazi` and
-configure a Trusted Publisher (or pending publisher) for owner `0xf3cd`, repository
-`bazi`, workflow `release.yml`, environment `release`. A public name lookup does not
-reserve the name or establish account readiness. No API token belongs in this repository.
+作者须另行确认 PyPI 账号及 bazi 项目资格，并配置 Trusted Publisher（或 pending publisher）：
+owner `0xf3cd`、repository `bazi`、workflow `release.yml`、environment `release`。
+公开查询包名不保留名称，也不能证明账号就绪；仓内不存 API token。
 
-Create the GitHub environment `release` explicitly, with at least one required
-reviewer and a custom deployment policy containing exactly branch `main` (not a
-tag or wildcard). Personal owner approval is valid; allow self-review if that is
-the intended approval path. This workflow does not require two people. Only the
-publishing jobs bind the environment; an earlier read-only REST preflight fails
-closed if the environment, reviewer rule or exact branch policy is missing.
+显式创建 GitHub 环境 `release`，至少指定一名必需审阅者；自定义部署策略只能包含确切分支
+`main`，不能用 tag 或通配符。作者个人批准有效，若采用此路径须允许 self-review，流程不要求两人。
+只有发布任务绑定环境；前置只读 REST 检查在环境、审阅规则或确切分支策略缺失时拒绝继续。
 
-The workflow must exist on the default branch before it can be dispatched.
+workflow 须先存在于默认分支，才能手动触发。
 
-## Rehearsal
+## 演练
 
-1. Review `pyproject.toml`'s static version and `RELEASE_NOTES.md`. Merge the intended
-   release changes to main before dispatch; do not create a tag yet.
-2. Dispatch `Prepare or Publish Release` on main with `mode=rehearsal` (the default).
-   This runs the full source and artifact gates at the dispatch SHA, with no
-   environment binding, write permission or OIDC permission.
-3. Inspect the run's `tested-release` artifact: exactly one wheel and sdist under
-   `dist/`, release notes, `release.json`, and `SHA256SUMS`. Confirm the source SHA,
-   run ID, version, licenses, file contents and checksums. Artifacts expire after
-   30 days; retain the approved bytes before expiry when recovery may be needed.
+1. 核对 pyproject.toml 静态版本与 RELEASE_NOTES.md，将拟发布内容合入 main 后再触发，不提前建 tag。
+2. 在 main 触发 `Prepare or Publish Release`，取默认 `mode=rehearsal`。
+   对触发 SHA 执行完整源码与工件验证，不绑定环境，也不取得写权限或 OIDC 权限。
+3. 检查该运行的 `tested-release` 工件：dist/ 下恰有一份 wheel 与 sdist，另含发布说明、
+   release.json 与 SHA256SUMS。核对源码 SHA、run ID、版本、许可证、文件内容及校验和。
+   工件三十日后过期；若可能需要恢复，须在过期前保存已批准的原字节。
 
-Run a rehearsal before authorizing real publication. Local artifact and offline
-policy tests do not substitute for it or prove GitHub/PyPI configuration is ready.
+授权正式发布前须实跑演练。本地工件与离线策略测试不能替代演练，也不能证明 GitHub/PyPI 配置就绪。
 
-## Real Release
+## 正式发布
 
-1. Obtain separate authorization and dispatch main with `mode=release`. Confirm
-   that the dispatch SHA is the intended release commit. The real run performs its
-   own full verification; it never accepts an artifact ID from a previous run.
-2. Approve the protected environment for PyPI after checking the run's verified
-   bundle. The OIDC-only job downloads the exact immutable artifact ID produced by
-   this run, verifies checksums and identity, and rejects existing versions/tags/releases.
-3. After PyPI succeeds, approve the GitHub Release job. This contents-write-only job
-   checks PyPI hashes, creates `v<version>` at the tested SHA, creates a draft release,
-   uploads the same bytes and notices, checks asset digests, then publishes the draft.
-   Neither privileged job checks out, builds, installs or imports repository code.
-4. Independently download both published artifacts from PyPI and GitHub and compare
-   them to the retained checksums. Confirm the tag SHA and release metadata. Install
-   the published wheel in a fresh environment and repeat the consumer smoke.
-   Verify the actual PyPI Trusted Publisher identity/attestations too.
+1. 单独取得授权，在 main 以 `mode=release` 触发；确认触发 SHA 为拟发布提交。
+   本次运行重新执行完整验证，不接受以往运行的 artifact ID。
+2. 核对本次已验证 bundle 后，批准 PyPI 受保护环境。仅有 OIDC 权限的任务下载本次运行产生的
+   确切不可变 artifact ID，核对校验和及身份，拒绝已存在的版本、tag 或 Release。
+3. PyPI 成功后，批准 GitHub Release 任务。此任务只取得 contents 写权限，先核 PyPI 哈希，
+   在已测试 SHA 建 `v<version>`，创建草稿，上传同一字节及声明文件，核 asset 摘要后发布草稿。
+   两个特权任务均不检出、构建、安装或导入仓库代码。
+4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
+   在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
 
-## Partial Failure
+## 部分失败
 
-Publication is not transactional. An existing version, tag or release is an error;
-there is no overwrite, tag move or `skip-existing` recovery. Do not rerun the whole
-workflow to bypass a partial failure and do not rebuild the accepted bytes.
+发布不是事务。已有版本、tag 或 Release 均报错；不覆盖、不移动 tag，也不以 skip-existing 恢复。
+不得重跑整个 workflow 绕过部分失败，也不得重建已经接受的字节。
 
-If PyPI has the pair but GitHub failed, stop and inspect the retained same-run
-bundle, PyPI digests, tag SHA and any draft release/assets. The owner must approve
-a targeted recovery of only the missing operations using those exact bytes. If a
-tag or draft already exists, verify it rather than moving or replacing it. A digest
-mismatch requires investigation, not automatic deletion, a version bump or a new upload.
+若 PyPI 已有工件对而 GitHub 失败，先停下核对保存的同次运行 bundle、PyPI 摘要、tag SHA
+以及草稿 Release/资产。作者须批准只补缺失步骤的定向恢复，且使用确切原字节。
+已有 tag 或草稿须核验，不能移动或替换。摘要不一致须查明原因，不能自动删除、加版本或重新上传。

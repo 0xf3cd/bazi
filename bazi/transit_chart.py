@@ -18,20 +18,15 @@ from .transits import TransitSet, TransitDatabase
 
 class TransitChart:
   '''
-  The unified entry for querying chart-derived and calendar transits.
   查询命盘流运与历法流运的统一入口。
 
-  Xiaoyun and Dayun come from `TransitDatabase`; Liunian, Liuyue, and Liuri are
-  calendar-derived. 小运、大运来自 `TransitDatabase`；流年、流月、流日由历法推导。
+  小运、大运来自 `TransitDatabase`；流年、流月、流日由历法推导。
   '''
 
   def __init__(self, bazi_chart: BaziChart) -> None:
     '''
-    Takes a `BaziChart` as the input.
-    接受一个 `BaziChart` 作为输入。
-
     Args:
-    - `bazi_chart`: (BaziChart) The bazi chart (原盘) to generate the transit chart from.
+    - bazi_chart: (BaziChart) 查询所依据的原盘。
     '''
 
     if not isinstance(bazi_chart, BaziChart):
@@ -42,9 +37,7 @@ class TransitChart:
 
   @property
   def bazi_chart(self) -> BaziChart:
-    '''The underlying `BaziChart` (原盘). Shared, not copied -- `BaziChart` is read-only
-    (its non-frozen `Bazi` is isolated inside the chart). 直接共享——`BaziChart` 只读，
-    非 frozen 的 `Bazi` 已由命盘自身隔离。'''
+    '''直接共享的只读原盘；命盘自身已隔离非 frozen 的 Bazi，无需再复制。'''
     return self._bazi_chart
 
   def _transits(
@@ -69,9 +62,7 @@ class TransitChart:
     )
 
   def at_year(self, gz_year: int) -> TransitSet | None:
-    '''Return transits for a Ganzhi-year coordinate, or `None` before birth. Dayun
-    lookup follows the chart's configured year-label view.
-    返回干支年坐标下的流运，出生前返回 `None`；大运按命盘所选年份标签视图解释。'''
+    '''返回干支年坐标下的流运，出生前返回 `None`；大运按命盘所选年份标签视图解释。'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     if gz_year < self._bazi_chart.bazi.ganzhi_year:
@@ -82,9 +73,8 @@ class TransitChart:
     )
 
   def at_month(self, gz_year: int, gz_month: Dizhi) -> TransitSet | None:
-    '''Return transits for a Ganzhi-month coordinate, or `None` before birth or outside
-    the Jie table. Dayun follows its physical month boundary. 返回干支月坐标下的流运，
-    出生前或节令表范围外返回 `None`；大运按物理交运月边界解释。'''
+    '''返回干支月坐标下的流运，出生前或节令表范围外返回 `None`；
+    大运按物理交运月边界解释。'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     if not isinstance(gz_month, Dizhi):
@@ -107,10 +97,7 @@ class TransitChart:
     )
 
   def at_date(self, solar_date: date) -> TransitSet | None:
-    '''Return transits for a solar date, or `None` before birth or outside the calendar
-    range. Dates are naive UTC+08:00 labels; a location-aware natal lower bound uses its
-    normalized absolute date, never its apparent date. Dayun follows its physical date
-    boundary. 返回东八区无时区公历日期下的流运，出生前或历法范围外返回 `None`；地点盘出生
+    '''返回东八区无时区公历日期下的流运，出生前或历法范围外返回 `None`；地点盘出生
     下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。'''
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
@@ -129,21 +116,13 @@ class TransitChart:
     )
 
   def at_moment(self, solar_moment: datetime) -> TransitSet | None:
-    '''Return transits for a naive UTC+08:00 solar label, or `None` when exact-moment querying is
-    unsupported, before birth, or outside the Jie table. Query, birth, and Dayun boundaries
-    compare at whole-second granularity, with ties on the new side. Location-aware charts
-    use their normalized absolute natal lower bound; query moments receive no location correction.
-    返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
+    '''返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
     地点盘出生下界取规范绝对时刻；查询时刻不做地点修正。
     查询、出生与大运边界均截到秒比较，相等归新。
 
     Note:
-    - Year/month coordinates follow the moment's owning Jie; Liuri follows the configured
-      `DayRollover`. `at_date()` can therefore give a different reading on the same civil day.
-    - HOUR natal attribution and this second-level reading are distinct granularities; inside
-      a tie 时辰, the natal pillars and moment transits can legitimately name different years.
     - 年/月按时刻所属节归属，流日按所选换日点解释；同一公历日可与 `at_date()` 结果不同。
-    - HOUR 原盘归属与秒级时刻流运是两种粒度；tie 时辰内可合法地落在不同干支年。'''
+    - HOUR 原盘归属与秒级时刻流运是两种粒度；相等时辰窗口内可落在不同干支年。'''
     if not isinstance(solar_moment, datetime):
       raise TypeError(f'Expected datetime, got {type(solar_moment)}')
     if solar_moment.tzinfo is not None:

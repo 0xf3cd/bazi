@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from datetime import UTC, date, time, datetime, timedelta, timezone, tzinfo
 from typing import Final, NamedTuple, TypedDict
 
+from .common import frozendict
 from .defines import Tiangan, Dizhi, Ganzhi
 from .calendar import (
   CalendarDate, CalendarType, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
@@ -30,8 +31,7 @@ _UTC8: Final[timezone] = timezone(timedelta(hours=8))
 
 @dataclass(frozen=True)
 class _Location:
-  '''Frozen absolute birth instant, civil offset and longitude.
-  冻结的绝对出生时刻、民用偏移及经度。'''
+  '''冻结的绝对出生时刻、民用偏移及经度。'''
   instant: datetime
   civil_offset: timedelta
   longitude: float
@@ -41,30 +41,28 @@ class _Location:
     return self.instant.astimezone(timezone(self.civil_offset))
 
   def apparent(self, instant: datetime) -> datetime:
-    '''Project an aware instant onto the same longitude and frozen birth-region offset.
-    把带时区瞬间投到同一经度及冻结的出生地区偏移。'''
+    '''把带时区瞬间投到同一经度及冻结的出生地区偏移。'''
     return solar_time.apparent_solar_datetime(instant.astimezone(timezone(self.civil_offset)), self.longitude)
 
 
 class BaziGender(Enum):
   '''
-  BaziGender is used to specify the gender of the person.
+  排盘使用的性别。
   '''
   YANG = '男'
   YIN = '女'
 
-  # Aliases
   MALE = YANG
   FEMALE = YIN
 
-  男 = YANG # noqa: PIE796 # deliberate alias
-  女 = YIN # noqa: PIE796 # deliberate alias
+  男 = YANG # noqa: PIE796 # 有意保留中文别名。
+  女 = YIN # noqa: PIE796 # 有意保留中文别名。
 
-  阳 = YANG # noqa: PIE796 # deliberate alias
-  阴 = YIN # noqa: PIE796 # deliberate alias
+  阳 = YANG # noqa: PIE796 # 有意保留中文别名。
+  阴 = YIN # noqa: PIE796 # 有意保留中文别名。
 
-  乾 = YANG # noqa: PIE796 # deliberate alias
-  坤 = YIN # noqa: PIE796 # deliberate alias
+  乾 = YANG # noqa: PIE796 # 有意保留中文别名。
+  坤 = YIN # noqa: PIE796 # 有意保留中文别名。
 
   def __str__(self) -> str:
     if self is self.MALE:
@@ -75,24 +73,27 @@ class BaziGender(Enum):
 
 
 
+_GENDER_ALIASES: Final[frozendict[str, BaziGender]] = frozendict({
+  '男': BaziGender.MALE,   'male': BaziGender.MALE,
+  '女': BaziGender.FEMALE, 'female': BaziGender.FEMALE,
+})
+
+
 def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   '''
-  Truncate `dt` to the start of `precision`'s granularity unit, so that two truncated values
-  compare per the `BaziPrecision` rule (`birth >= jieqi`, ties go new).
-  把时刻截断到 `precision` 粒度单位的起点，截断后的两个时刻即可按 `BaziPrecision` 规则比较。
+  把时刻截断到 `precision` 粒度单位的起点，按 `BaziPrecision` 比较（`birth >= jieqi`，相等归新）。
 
   Note:
-  - HOUR truncates to the start of the 时辰 (the odd clock hours: 23, 1, 3, ..., 21). The
-    start is a full datetime, not a (date, 时辰-index) pair: 子时 spans midnight, so a 23:30
-    birth must order *after* the same day's 亥时 -- an in-day index would order it first.
-  - MINUTE drops seconds and below.
-  - DAY is deliberately unsupported here: it compares dates via the `to_ganzhi` channel.
+  - HOUR 截到时辰起点（23、1、3、…、21 点），保留完整日期时刻。子时跨午夜，
+    当日 23:30 应排在亥时之后，不能用日内时辰序号比较。
+  - MINUTE 去掉秒及更细部分。
+  - 此处不支持 DAY；DAY 经 `to_ganzhi` 按日期比较。
 
   Args:
-  - dt: (datetime) The moment to truncate.
-  - precision: (BaziPrecision) `HOUR` or `MINUTE`.
+  - dt: (datetime) 待截断时刻。
+  - precision: (BaziPrecision) `HOUR` 或 `MINUTE`。
 
-  Return: (datetime) The start of the granularity unit containing `dt`.
+  Return: (datetime) `dt` 所属粒度单位的起点。
   '''
 
   assert isinstance(dt, datetime)
@@ -101,24 +102,16 @@ def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   if precision is BaziPrecision.MINUTE:
     return dt.replace(second=0, microsecond=0)
 
-  # Shift by 1 hour so 时辰 starts land on the even-hour grid, floor, then shift back.
+  # 先加一小时，使时辰起点落在偶数小时上，向下取整后再移回。
   shifted: Final[datetime] = dt + timedelta(hours=1)
   return datetime.combine(shifted.date(), time(shifted.hour - (shifted.hour % 2))) - timedelta(hours=1)
 
 
 class Bazi:
   '''
-  `Bazi` (八字) is the class that only stores very basic information.
-  A `Bazi` object stores 4 pillars of year, month, day, and hour.
-  For all other information (transits / shishen / ...), please see `bazi/bazi_chart.py` (e.g. `BaziChart`).
-
-  八字是仅存储基本信息的类。一个 `Bazi` 对象存储着年、月、日、时的四柱八个字。
-  对于其他信息（流年大运 / 十神等），请参阅 `bazi/bazi_chart.py`（例如 `BaziChart`）。
+  存储年、月、日、时四柱及排盘基本信息。十神、大运等派生信息见 `bazi_chart.py` 的 `BaziChart`。
 
   Note:
-  - The default path takes a naive civil time. Passing `longitude`
-    opts into apparent-solar conversion from a caller-supplied aware instant.
-  - The year pillar turns at 立春, not at 正月初一 (this library follows the 立春 school).
   - 默认路径直接采用无时区民用时刻；传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
   - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
@@ -133,30 +126,21 @@ class Bazi:
     civil_timezone: tzinfo | None = None,
   ) -> None:
     '''
-    `Bazi` (i.e. 八字, which means eight characters in Chinese) takes the birth time and gender as input, 
-    and figures out the pillars of year, month, day, and hour.
-    `Bazi` 接受出生时间和性别作为输入，计算年、月、日、时的八字。
+    根据出生时间和性别计算年、月、日、时四柱。
     
     Note:
-    - Without `longitude`, `birth_time` must be naive and follows the default path.
-    - With `longitude`, `birth_time` must be aware. Its timezone, DST fold and historical
-      offset are caller-owned. Seconds and microseconds are retained for conversion,
-      identity and JSON; HOUR/MINUTE attribution compares truncated apparent clocks.
     - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，采用默认路径。
     - 传入 `longitude` 时，`birth_time` 必须带时区；时区、夏令时折叠与历史偏移由调用方负责，
       换算、身份与 JSON 保留秒及微秒，HOUR/MINUTE 归属按截断后的真太阳时比较。
     
     Args:
-    - birth_time: (datetime) A naive civil time, or an aware absolute instant when
-      `longitude` is provided.
-    - gender: (BaziGender) The gender of the person.
-    - config: (BaziConfig) The chart-level configuration: birth-time precision, calendar
-      backend, school profile (流派档案), and default Dayun year projection.
-    - longitude: (float | None) East-positive degrees in `[-180, 180]`. This opt-in path
-      supports only `CalendarBackend.CELESTIAL` with `HOUR` or `MINUTE` precision.
-    - civil_timezone: (tzinfo | None) Birth-region basis, defaulting to the input timezone.
-      Its actual offset at birth is frozen; region rules and validity are caller-owned.
-      出生地民用时区基准，默认采用输入时区；冻结出生瞬间的实际偏移，时区规则与有效性由调用方负责。
+    - birth_time: (datetime) 无时区民用时刻；给定 `longitude` 时为带时区的绝对瞬间。
+    - gender: (BaziGender) 性别。
+    - config: (BaziConfig) 出生精度、历法后端、流派档案及默认大运年份投影。
+    - longitude: (float | None) 东经为正的角度，范围 `[-180, 180]`。地点路径只支持
+      `CalendarBackend.CELESTIAL` 的 `HOUR` 或 `MINUTE` 精度。
+    - civil_timezone: (tzinfo | None) 出生地民用时区基准，默认采用输入时区；
+      冻结出生瞬间的实际偏移，时区规则与有效性由调用方负责。
     '''
 
     if not isinstance(birth_time, datetime):
@@ -207,17 +191,16 @@ class Bazi:
     self._clock_datetime: Final[datetime] = clock_datetime
 
     utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
-    # `to_solar` is also the window gate: an out-of-window birth time raises ValueError here.
+    # to_solar 同时检查支持窗口；超出窗口的出生时刻在此抛 ValueError。
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._clock_datetime)
 
     self._gender: Final[BaziGender] = gender
 
-    # Which ganzhi year / month owns the birth, compared per `BaziPrecision`
-    # (`birth >= jieqi` at the known granularity, ties go new).
+    # 按 BaziPrecision 判断出生干支年月：已知粒度下 birth >= jieqi，相等归新。
     year_month: GanzhiYearMonth
     month_jies: tuple[JieqiTime, JieqiTime]
     if self._config.precision is BaziPrecision.DAY:
-      # DAY's date-level year/month also selects the Jies used for Dayun counting.
+      # DAY 的日期级年月也决定大运数节所用的节。
       ganzhi_calendardate: CalendarDate = utils.to_ganzhi(self._solar_date)
       year_month = GanzhiYearMonth(ganzhi_calendardate.year, ganzhi_calendardate.month)
       solar_year, jie = year_month.opening_jie
@@ -230,10 +213,8 @@ class Bazi:
           '(its `jieqi_moment` is a midnight placeholder). Use `CalendarBackend.CELESTIAL`.'
         )
 
-      # The truncated birth can never exceed the truncated next jie (truncation is monotone),
-      # so `>=` can only hit as a tie -- in which case the next jie owns the birth month, and
-      # its true moment may be up to one granularity unit after the birth (子时 spans midnight,
-      # so for HOUR the tie window may even start on the previous civil day).
+      # 截断单调，出生截断值不会超过下一节截断值，>= 只可能相等，此时归下一节。
+      # 真实节时刻可晚于出生最多一个粒度单位；子时跨午夜，HOUR 的相等窗口可始于前一民用日。
       birth_moment: Final[datetime] = self.reference_datetime
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
@@ -249,30 +230,28 @@ class Bazi:
       else:
         month_jies = (prev_j, next_j)
 
-      # Derive the ganzhi year / month from the owning jie -- the same source `BaziChart`
-      # consumes via `month_jies`, so the chart cannot contradict itself. 小寒 opens the
-      # last month of the *previous* ganzhi year (立春 has not come yet in its solar year).
+      # 年月由所属节推出，与 BaziChart 经 month_jies 读取的来源一致。
+      # 小寒开启上一干支年的末月，此公历年的立春尚未到来。
       owning: Final[JieqiTime] = month_jies[0]
       year_month = GanzhiYearMonth.from_jie(owning)
 
     self._month_jies: Final[tuple[JieqiTime, JieqiTime]] = month_jies
     self._ganzhi_year_month: Final[GanzhiYearMonth] = year_month
 
-    # The Year Ganzhi / Year Pillar (年柱).
+    # 年柱。
     self._ganzhi_year: Final[int] = year_month.year
     self._year_pillar: Final[Ganzhi] = ganzhi_of_year(self._ganzhi_year)
 
-    # The ganzhi month and the Month Dizhi (月令).
+    # 干支月及月令。
     self._month_dizhi: Final[Dizhi] = year_month.dizhi
 
-    # The day pillar follows the configured 换日点; year/month attribution above remains
-    # independent and follows `BaziPrecision`.
+    # 日柱按所选换日点判断；年/月归属独立按 BaziPrecision 判断。
     self._day_pillar: Final[Ganzhi] = _ganzhi_of_day_at_moment(
       self._clock_datetime,
       self._config.school.day_rollover,
     )
 
-    # Finally, find out the Hour Dizhi (时柱地支).
+    # 时柱地支。
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._clock_datetime.hour + 1) // 2 % 12)
 
   @staticmethod
@@ -284,17 +263,11 @@ class Bazi:
     assert isinstance(birth_time, (datetime, str))
     _birth_time: datetime = birth_time if isinstance(birth_time, datetime) else datetime.fromisoformat(birth_time)
 
-    _gender: BaziGender
-    if isinstance(gender, BaziGender):
-      _gender = gender
-    else:
-      assert isinstance(gender, str)
-      if gender.lower() in ['男', 'male']:
-        _gender = BaziGender.MALE
-      elif gender.lower() in ['女', 'female']:
-        _gender = BaziGender.FEMALE
-      else:
-        raise ValueError(f'Currently not support gender: {gender}')
+    assert isinstance(gender, (BaziGender, str))
+    try:
+      _gender = _GENDER_ALIASES[gender.lower()] if isinstance(gender, str) else gender
+    except KeyError:
+      raise ValueError(f'Currently not support gender: {gender}') from None
 
     return _birth_time, _gender
 
@@ -308,25 +281,16 @@ class Bazi:
     civil_timezone: tzinfo | None = None,
   ) -> 'Bazi':
     '''
-    Staticmethod that creates a `Bazi` object from the inputs.
+    从出生输入创建 `Bazi`。
 
     Args:
-    - birth_time: (datetime | str) The birth date. It must be naive unless `longitude`
-      opts into the aware-input path.
-      - if `datetime` type: it will be interpreted as a solar date to feed to `Bazi`.
-      - if `str` type: it will be converted by `datetime.fromisoformat`.
-    - gender: (BaziGender | str) The gender of the person.
-      - if `BaziGender` type: it will be directly fed to `Bazi`.
-      - if `str` type: it will be converted by `BaziGender`. 
-        - Supported values: "男"/"女"/"male"/"female" (case insensitive).
-    - config: (BaziConfig) The chart-level configuration
-      (precision / backend / school / Dayun year projection).
-      Use `BaziConfig.from_values` to build one from string spellings -- the same
-      acceptance face this method parsed here before #69.
-    - longitude: (float | None) East-positive longitude for the opt-in aware-input
-      apparent-solar path. Latitude is not used by this correction.
-    - civil_timezone: (tzinfo | None) Explicit birth-region basis, frozen at birth.
-      显式出生地民用时区基准，冻结出生瞬间的实际偏移。
+    - birth_time: (datetime | str) 公历出生时刻；字符串经 `datetime.fromisoformat` 解析。
+      未给经度时须无时区，给定经度时须带时区。
+    - gender: (BaziGender | str) 性别枚举，或 "男"/"女"/"male"/"female"（大小写不敏感）。
+    - config: (BaziConfig) 出生精度、历法后端、流派档案及大运年份投影；
+      可用 `BaziConfig.from_values` 从字符串构造。
+    - longitude: (float | None) 东经为正的经度，显式启用带时区输入的真太阳时路径；不使用纬度。
+    - civil_timezone: (tzinfo | None) 显式出生地民用时区基准，冻结出生瞬间的实际偏移。
     '''
 
     if not isinstance(birth_time, (datetime, str)):
@@ -378,26 +342,23 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    '''The apparent-solar birth date for a location-aware chart; otherwise the default
-    civil date. 地点盘返回真太阳时公历出生日期；默认路径返回民用日期。'''
+    '''地点盘的真太阳时公历出生日期；默认路径为民用日期。'''
     return self._utils.to_date(self._solar_date)
   
   @property
   def ganzhi_date(self) -> CalendarDate:
     '''
-    The birth date (in ganzhi calendar) / 干支历出生日期
+    干支历出生日期。
 
-    Note: this is a day-level channel by definition -- its input is a date. Under `HOUR` /
-    `MINUTE` precision it can disagree with `ganzhi_year` / the year and month pillars inside
-    a jieqi's tie window; precision-attributed consumers should use `ganzhi_year` instead.
+    Note: 此入口只按日期归属。HOUR / MINUTE 精度下，交节相等窗口内可与
+    `ganzhi_year` 及年/月柱不同；需要出生精度归属时使用 `ganzhi_year`。
     '''
     return self._utils.to_ganzhi(self._solar_date)
 
   @property
   def ganzhi_year(self) -> int:
     '''
-    The ganzhi year the birth belongs to, attributed at `self.config.precision` -- the year
-    pillar is `ganzhi_of_year` of exactly this. 按 `self.config.precision` 粒度归属的出生干支年，年柱即由它推出。
+    按 `self.config.precision` 归属的出生干支年；年柱为此年的 `ganzhi_of_year`。
     '''
     return self._ganzhi_year
 
@@ -429,16 +390,12 @@ class Bazi:
 
   @property
   def longitude(self) -> float | None:
-    '''The east-positive longitude of a location-aware chart, otherwise `None`.
-    地点盘采用的东经为正经度；默认路径返回 `None`。'''
+    '''地点盘采用的东经为正经度；默认路径返回 `None`。'''
     return None if self._location is None else self._location.longitude
 
   @property
   def solar_datetime(self) -> datetime:
-    '''The birth clock truncated to the minute, the finest `BaziPrecision`.
-    Default charts use this civil label for identity, JSON and calendar coordinates.
-    Location charts display apparent solar time, converted using full input precision.
-    出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON及历法坐标；
+    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON 及历法坐标；
     地点盘显示由完整输入精度换算得到的真太阳时。'''
     return self._clock_datetime.replace(second=0, microsecond=0)
 
@@ -475,29 +432,21 @@ class Bazi:
   
   @property
   def config(self) -> BaziConfig:
-    '''The chart-level configuration of this `Bazi`
-    (precision / backend / school / Dayun year projection).
-    此命盘的配置（出生时间精度 / 历法后端 / 流派档案 / 默认大运年份投影）。'''
+    '''此命盘的配置：出生精度、历法后端、流派档案及默认大运年份投影。'''
     return self._config
 
   @property
   def _utils(self) -> CalendarUtilsProtocol:
     '''
-    The resolved calendar utils of `self.config.backend`. Resolved on each access, so the resolved
-    utils -- the HKO module or a celestial singleton -- is never stored on the instance.
-    当前历法后端对应的实际工具。每次访问时现解析，实例上不存解析结果，保证 `Bazi` 可安全 deepcopy。
-
-    Do NOT turn this into a `cached_property` -- that would write the resolved utils into
-    the instance dict, where the module breaks `deepcopy` loudly and a singleton would be
-    silently duplicated, forking its caches.
+    每次访问时解析当前后端的历法工具，实例上不存 HKO 模块或 celestial 单例。
+    不能改为 `cached_property`：存模块会使 deepcopy 失败，存单例会复制实例并分裂缓存。
     '''
     return calendar_utils_of(self._config.backend)
   
   @property
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
     '''
-    Return the 4 Dizhis of Year, Month, Day, and Hour pillars (in that order!).
-    返回年、月、日、时的地支。
+    按年、月、日、时顺序返回四柱地支。
     '''
     return (self._year_pillar.dizhi, self._month_dizhi, 
             self._day_pillar.dizhi, self._hour_dizhi,)
@@ -505,8 +454,7 @@ class Bazi:
   @property
   def four_tiangans(self) -> tuple[Tiangan, Tiangan, Tiangan, Tiangan]:
     '''
-    Return the 4 Tiangans of Year, Month, Day, and Hour pillars (in that order!).
-    返回年、月、日、时的天干。
+    按年、月、日、时顺序返回四柱天干。
     '''
     return (self._year_pillar.tiangan, month_tiangan(self._year_pillar.tiangan, self._month_dizhi), 
             self._day_pillar.tiangan, hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi))
@@ -514,28 +462,28 @@ class Bazi:
   @property
   def day_master(self) -> Tiangan:
     '''
-    Day Master is the Tiangan of the Day Pillar (日主).
+    日主，即日柱天干。
     '''
     return self._day_pillar.tiangan
 
   @property
   def month_commander(self) -> Dizhi:
     '''
-    Month Commander is the Dizhi of the Month Pillar (月令 / 月柱地支).
+    月令，即月柱地支。
     '''
     return self._month_dizhi
 
   @property
   def year_pillar(self) -> Ganzhi:
     '''
-    Year Pillar is the Ganzhi of the Year (年柱).
+    年柱干支。
     '''
     return self._year_pillar
   
   @property
   def month_pillar(self) -> Ganzhi:
     '''
-    Month Pillar is the Ganzhi of the Month (月柱).
+    月柱干支。
     '''
     tg: Tiangan = month_tiangan(self._year_pillar.tiangan, self._month_dizhi)
     return Ganzhi(tg, self._month_dizhi)
@@ -543,14 +491,14 @@ class Bazi:
   @property
   def day_pillar(self) -> Ganzhi:
     '''
-    Day Pillar is the Ganzhi of the Day (日柱).
+    日柱干支。
     '''
     return self._day_pillar
   
   @property
   def hour_pillar(self) -> Ganzhi:
     '''
-    Hour Pillar is the Ganzhi of the Hour (时柱).
+    时柱干支。
     '''
     tg: Tiangan = hour_tiangan(self._day_pillar.tiangan, self._hour_dizhi)
     return Ganzhi(tg, self._hour_dizhi)
@@ -558,8 +506,7 @@ class Bazi:
   @property
   def pillars(self) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
     '''
-    Return the 4 Ganzhis (i.e. pillars) of Year, Month, Day, and Hour.
-    返回年、月、日、时的天干地支（即返回八字）。
+    按年、月、日、时顺序返回四柱干支。
     '''
     tgs: tuple[Tiangan, Tiangan, Tiangan, Tiangan] = self.four_tiangans
     dzs: tuple[Dizhi, Dizhi, Dizhi, Dizhi] = self.four_dizhis
@@ -572,23 +519,20 @@ class Bazi:
   
   @property
   def _identity(self) -> tuple[datetime | _Location, BaziGender, BaziConfig]:
-    '''Default identity uses the minute clock; location identity uses the exact instant,
-    frozen civil offset and canonical longitude. Both include gender and config.
-    默认盘身份采用分钟时刻；地点盘身份保留精确瞬间、民用偏移及经度，均结合性别与配置。'''
+    '''默认盘身份采用分钟时刻；地点盘身份采用精确瞬间、冻结民用偏移及规范经度，
+    均结合性别与配置。'''
     return (self.solar_datetime if self._location is None else self._location, self.gender, self.config)
 
   def __eq__(self, other: object) -> bool:
     return isinstance(other, Bazi) and self._identity == other._identity
 
   def __hash__(self) -> int:
-    # Identity derived from `Final` state is stable under the public API.
     # 身份派生自 `Final` 状态，在公开 API 下稳定。
     return hash(self._identity)
 
 
 class LocationTimeJson(TypedDict):
-  '''Canonical location inputs and the untruncated computed apparent clock.
-  规范地点输入及未截断的计算真太阳时。'''
+  '''规范地点输入及未截断的计算真太阳时。'''
   time_basis: str
   civil_time: str
   canonical_instant: str
@@ -620,8 +564,7 @@ class LocationTime(NamedTuple):
 
 
 def _parse_location(data: Mapping[str, object]) -> tuple[datetime, float]:
-  '''Validate canonical spellings and the civil/UTC instant equivalence.
-  验证规范拼写及民用／UTC 表示指向同一瞬间。'''
+  '''验证规范拼写及民用／UTC 表示指向同一瞬间。'''
   basis = data['time_basis']
   if type(basis) is not str:
     raise TypeError(f'Expected str at time_basis, got {type(basis)}')

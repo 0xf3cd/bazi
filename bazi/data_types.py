@@ -10,14 +10,12 @@ from .defines import Wuxing, Yinyang, Tiangan, Ganzhi
 
 
 '''
-Immutable domain value shapes shared across layers (rules / utils / chart / transits).
-跨层共享的不可变领域值类型。Split out of `common.py` (issue #99), which now keeps the
-infrastructure primitives only.
+rules、utils、命盘与流运层共享的不可变领域值类型；通用基础类型见 `common.py`。
 '''
 
 
 class TraitTuple(NamedTuple):
-  '''Representing the Wuxing and Yinyang of a Tiangan or Dizhi. 某天干或地支的五行和阴阳。'''
+  '''某天干或地支的五行和阴阳。'''
   wuxing:  Wuxing
   yinyang: Yinyang
 
@@ -27,15 +25,9 @@ class TraitTuple(NamedTuple):
 
 class DayunTuple(NamedTuple):
   '''
-  A Dayun (大运) with its projected year label and complete physical interval.
   带年份投影标签与完整物理区间的一步大运。
 
   Note:
-  `ganzhi_year` is the start-year label under the selected `DayunYearRule`. Under
-  `JIE_PROJECTED`, except for the first-label floor, it is also the Ganzhi year containing
-  `start_moment`; under `FIXED_DECADE`, it is a table position instead. The physical interval
-  is always `[start_moment, end_moment)` and never changes with the rule. A start-year label
-  does not mean that the Dayun occupies that entire label year.
   `ganzhi_year` 是所选规则下的起运年份标签。除首步下限外，`JIE_PROJECTED` 下它也是
   `start_moment` 所属干支年；`FIXED_DECADE` 下它只是年表位次。物理区间始终为
   `[start_moment, end_moment)`，不随规则改变；起运年份标签不表示该步大运占据整个标签年。
@@ -47,24 +39,20 @@ class DayunTuple(NamedTuple):
 
 
 class XiaoyunTuple(NamedTuple):
-  '''Representing the Xiaoyun of a bazi chart. 八字命盘的某个小运。'''
+  '''八字命盘的某个小运。'''
   xusui:  int    # 虚岁
   ganzhi: Ganzhi
 
 
 class LiunianTuple(NamedTuple):
-  '''Representing a Liunian. 流年。'''
+  '''流年。'''
   ganzhi_year: int
   ganzhi:      Ganzhi
 
 
 class HiddenTianganDict(frozendict[Tiangan, int]):
   '''
-  `HiddenTianganDict` reveals the hidden Tiangans info.
-  The dict represents the hidden Tiangans (i.e. Stems / 天干) and their percentages in the given Dizhi (Branch / 地支).
-  A `HiddenTianganDict` is simply a `frozendict` with a customized `__str__` function.
-
-  `HiddenTianganDict` 代表了某个地支的藏干和藏干各自所占的百分比。
+  某地支的藏干及各自所占百分比；在 `frozendict` 上定制 `__str__` 展示。
   '''
   def __str__(self) -> str:
     sorted_kv = sorted(self.items(), key=lambda kv : kv[1], reverse=True)
@@ -75,8 +63,7 @@ PillarDataType = TypeVar('PillarDataType')
 @dataclass(frozen=True)
 class BaziData(Generic[PillarDataType]):
   '''
-  A generic class for storing Bazi data.
-  A `BaziData` object stores 4 `PillarDataType` objects for year, month, day, and hour.
+  按年、月、日、时顺序存储四份 `PillarDataType` 数据的泛型容器。
   '''
   year: PillarDataType
   month: PillarDataType
@@ -92,8 +79,7 @@ DizhiDataType = TypeVar('DizhiDataType')
 @dataclass(frozen=True)
 class GanzhiData(Generic[TianganDataType, DizhiDataType]):
   '''
-  A helper class for storing the data of a Pillar/Ganzhi.
-  Can be used with `BaziData` class.
+  存储一柱天干与地支数据的容器，可作为 `BaziData` 的柱数据类型。
   '''
   tiangan: TianganDataType
   dizhi: DizhiDataType

@@ -27,8 +27,7 @@ from .utils.bazi_utils import (
 
 def _dayun_year_label(raw_year: int, first_year_label: int,
                       index: int, rule: DayunYearRule) -> int:
-  '''Project a physical Dayun boundary to the selected year-label view.
-  把物理大运边界投影到所选年份标签视图。'''
+  '''把物理大运边界投影到所选年份标签视图。'''
   assert isinstance(raw_year, int)
   assert isinstance(first_year_label, int)
   assert isinstance(index, int)
@@ -43,11 +42,11 @@ def _dayun_year_label(raw_year: int, first_year_label: int,
 
 class BaziJson:
   '''
-  The class that represents bazi-related charts in JSON format.
+  命盘 JSON 的字段类型及内部构造辅助函数。
   '''
 
   class FourPillars(TypedDict):
-    '''Not expected to be accessed directly. Used in `JsonDict`.'''
+    '''供 `BaziChartJsonDict` 使用的四柱字段，不作为独立访问入口。'''
     year:  str
     month: str
     day:   str
@@ -59,9 +58,8 @@ class BaziJson:
     return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
 
   class TianganShishens(TypedDict):
-    '''Not expected to be accessed directly. Used in `JsonDict`. Entries are `None`
-    (JSON null) where no Shishen exists -- i.e. `day`, the day master itself.
-    没有十神的位置为 None（JSON null）——即日主自身所在的 `day`。'''
+    '''供 `BaziChartJsonDict` 使用的天干十神字段，不作为独立访问入口。
+    日主自身所在的 `day` 没有十神，存为 None（JSON null）。'''
     year:  str | None
     month: str | None
     day:   str | None
@@ -74,41 +72,34 @@ class BaziJson:
     return { 'year': strs[0], 'month': strs[1], 'day': strs[2], 'hour': strs[3] }
 
   class Dayun(TypedDict):
-    '''Not expected to be accessed directly. Used in `Transits`.'''
+    '''供 `Transits` 使用的一步大运记录，不作为独立访问入口。'''
     ganzhi: str
-    # Naive UTC+08:00 physical boundaries for location-aware charts; default civil labels otherwise.
     # 地点盘采用东八区无时区物理区间边界；默认路径采用民用标签。
     start_time: str
     end_time: str
 
   class Transits(TypedDict):
-    '''Not expected to be accessed directly. Used in `JsonDict`.'''
-    # Same coordinate as Dayun.start_time. / 与 Dayun.start_time 使用相同时间坐标。
+    '''供 `BaziChartJsonDict` 使用的运限字段，不作为独立访问入口。'''
+    # 与 Dayun.start_time 使用相同时间坐标。
     dayun_start_time: str
 
-    # key: xusui / 虚岁
-    # value: xiaoyun at this xusui age / 对应虚岁的小运
+    # 键为虚岁，值为对应小运。
     xiaoyun: dict[str, str]
 
-    # key: start-year label under `dayun_year_rule`; it does not mean that the Dayun
-    # occupies the entire label year / 所选规则下的起运年份标签，不表示该步大运占据整个标签年
-    # value: Dayun Ganzhi and its physical interval / 大运干支与物理区间
+    # 键为所选规则下的起运年份标签，不表示该步大运占据整个标签年；值为大运干支与物理区间。
     dayun: dict[str, 'BaziJson.Dayun']
 
   class School(TypedDict):
-    '''Not expected to be accessed directly. Used in `BaziChartJsonDict`. The school
-    profile (流派档案), serialized as the member name of each school reading. The keys are
-    `BaziSchool`'s fields, listed in the order the dataclass declares them -- that is where
-    both the serialization and `BaziSchool.from_json` derive from; this declaration is the
-    contract they must satisfy.
-    流派档案：每项流派看法各存其枚举成员名。键即 `BaziSchool` 的字段，按 dataclass 的声明序
-    排列——序列化与 `BaziSchool.from_json` 都由那里推导，本声明是它们要满足的契约。'''
+    '''供 `BaziChartJsonDict` 使用的流派档案，不作为独立访问入口。
+    各读法存为枚举成员名；键为 `BaziSchool` 字段，按 dataclass 声明序排列。
+    序列化与 `BaziSchool.from_json` 均由该声明推导，并须满足本类型契约。'''
     day_rollover: str
-    hongyan_anchor: str
     anhe_def: str
     xing_def: str
     gong_def: str
     yangren_def: str
+    feiren_def: str
+    hongyan_anchor: str
     tianyi_anchor: str
     tianyi_def: str
     yima_anchor: str
@@ -117,7 +108,6 @@ class BaziJson:
     jiesha_anchor: str
     wangshen_anchor: str
     jinyu_anchor: str
-    feiren_def: str
     zaisha_anchor: str
     wenchang_anchor: str
     wenchang_def: str
@@ -127,8 +117,7 @@ class BaziJson:
     guoyin_def: str
 
   class _CommonChartJsonDict(TypedDict):
-    '''Fields shared by the default and location-aware chart rosters.
-    默认盘与地点盘 JSON 名册的共同字段。'''
+    '''默认盘与地点盘 JSON 的共同字段。'''
     gender: str
     precision: str
     backend: str
@@ -145,37 +134,27 @@ class BaziJson:
     transits: 'BaziJson.Transits'
 
   class DefaultBaziChartJsonDict(_CommonChartJsonDict):
-    '''The default roster with a minute-truncated civil birth time.
-    默认盘名册，出生时刻为截断到分钟的民用标签。'''
+    '''默认盘 JSON，出生时刻为截断到分钟的民用标签。'''
     birth_time: str
 
   class LocationBaziChartJsonDict(_CommonChartJsonDict, LocationTimeJson):
-    '''The location-aware roster. Strings use the emitter's exact ISO 8601 spelling.
-    地点盘名册；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
+    '''地点盘 JSON；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
 
-  '''Either the default or the location-aware chart roster.
-  默认盘或地点盘 JSON 名册。'''
+  '''默认盘或地点盘 JSON 的完整字段类型。'''
   BaziChartJsonDict: TypeAlias = DefaultBaziChartJsonDict | LocationBaziChartJsonDict
 
 
 class BaziChart:
   '''
-  `BaziChart` is a class that reveals the basic information of a given `Bazi`,
-  for example, the traits (i.e. Wuxing and Yinyang), Shishens, ShierZhangshengs, and HiddenTiangans...
-
-  Derived quantities are cached on first access: the chart assumes its `_bazi` is never
-  rebound after construction (rebinding it leaves already-warmed caches stale).
-
-  `BaziChart` 提供原盘中的一些信息，如天干地支的阴阳和五行、十神、十二长生、纳音、地支藏干等。
-  盘面派生量首次访问后缓存：命盘假定构造后 `_bazi` 不再被重绑（重绑不会刷新已暖缓存）。
+  提供原盘的阴阳五行、十神、十二长生、纳音、藏干等派生信息。
+  派生量首次访问后缓存；构造后不得重绑 `_bazi`，重绑不会刷新已有缓存。
   '''
 
   def __init__(self, bazi: Bazi) -> None:
     if not isinstance(bazi, Bazi):
       raise TypeError(f'Expected Bazi, got {type(bazi)}')
-    # `Bazi` is not frozen (private state can be reassigned), so keep an isolated copy --
-    # `test_malicious` pins that poisoning the caller's object never reaches the chart.
-    # `Bazi` 并非 frozen（私有状态可被改写），故持隔离副本；test_malicious 钉住污染不透传。
+    # Bazi 并非 frozen，私有状态可被改写，因此持有隔离副本。
+    # test_malicious 验证修改调用方对象不会影响命盘。
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
 
   @classmethod
@@ -194,33 +173,21 @@ class BaziChart:
   @classmethod
   def from_json(cls, d: Mapping[str, object]) -> 'BaziChart':
     '''
-    Rebuild a chart and validate the complete record against its current `json` output.
     从完整记录重建命盘，并与当前 `json` 输出逐项核对。
 
     Args:
-    - d: (Mapping[str, object]) A parsed `BaziChart.json` record, not JSON text.
-      已解析的 `BaziChart.json` 记录，不是 JSON 文本。
+    - d: (Mapping[str, object]) 已解析的 `BaziChart.json` 记录，不是 JSON 文本。
 
     Note:
-    - The root must match exactly `BaziJson.DefaultBaziChartJsonDict` or
-      `BaziJson.LocationBaziChartJsonDict`. The two cannot be mixed. Every
-      field is required; unknown keys at any depth and noncanonical spellings are rejected.
-      Mapping order does not matter.
-      Derived values are checked, never stored.
-      根对象须严格匹配默认盘或地点盘名册类型，两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。映射顺序不限，
-      派生值只核对、不存储。
-    - Keys and string values must be plain `str`, not subclasses; null values are `None`.
-      键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
-    - Wrong types raise `TypeError`; missing/extra keys, unsupported values and mismatches
-      raise `ValueError`. Consistency is with the installed library, not across versions.
-      Error precedence is unspecified when several constraints fail.
-      类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
+    - 根对象须严格匹配 `BaziJson.DefaultBaziChartJsonDict` 或 `BaziJson.LocationBaziChartJsonDict`，
+      两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。
+      映射顺序不限，派生值只核对、不存储。
+    - 键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
+    - 类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
       同时违反多个约束时，不保证先报告哪项错误。
-    - Caller mappings are neither modified nor retained. The existing empty-Dayun `json`
-      failure propagates unchanged.
-      不修改或持有调用方映射；大运为空时，沿用 `json` 既有的失败行为。
+    - 不修改或持有调用方映射；大运为空时，沿用 `json` 既有的失败行为。
 
-    Return: (BaziChart) The rebuilt chart / 重建的命盘。
+    Return: (BaziChart) 重建的命盘。
     '''
     if not isinstance(d, Mapping):
       raise TypeError(f'Expected Mapping at chart, got {type(d)}')
@@ -294,42 +261,34 @@ class BaziChart:
 
   @property
   def bazi(self) -> Bazi:
-    '''A fresh deep copy per access -- deliberately NOT a `cached_property`, since a cached
-    shared `Bazi` could be mutated through the returned handle.
-    每次访问深拷一份，故意不用 `cached_property`：缓存共享件会经返回句柄被改。'''
+    '''每次返回独立深拷贝；不使用 `cached_property`，避免调用方修改缓存中的共享 Bazi。'''
     return copy.deepcopy(self._bazi)
 
   @property
   def _utils(self) -> CalendarUtilsProtocol:
     '''
-    The resolved calendar utils of the underlying `Bazi`'s backend. Resolved on each access,
-    so the resolved utils -- the HKO module or a celestial singleton -- is never stored on
-    the instance.
-    底层 `Bazi` 所用历法后端对应的实际工具。每次访问时现解析，实例上不存解析结果，保证 `BaziChart` 可安全 deepcopy。
-
-    Do NOT turn this into a `cached_property` -- that would write the resolved utils into
-    the instance dict, where the module breaks `deepcopy` loudly and a singleton would be
-    silently duplicated, forking its caches.
+    每次访问时解析底层 Bazi 所用的历法工具，实例上不存 HKO 模块或 celestial 单例。
+    不能改为 `cached_property`：存模块会使 deepcopy 失败，存单例会复制实例并分裂缓存。
     '''
     return calendar_utils_of(self._bazi.config.backend)
   
   @property
   def house_of_relationship(self) -> Dizhi:
-    '''House of Partnership / House of Relationship / 婚姻宫 / 配偶宫, which is simply the day pillar's Dizhi.'''
+    '''婚姻宫（配偶宫），即日柱地支。'''
     return self._bazi.day_pillar.dizhi
   
   @functools.cached_property
   def relationship_stars(self) -> GanzhiData[Tiangan, tuple[Dizhi, ...]]:
-    '''Relationship Star / 夫妻星 / 配偶星.
+    '''夫妻星（配偶星）。
     
     Usage:
     ```
     stars = chart.relationship_stars
 
-    print(stars.tiangan) # Print the Tiangan that represents the Relationship Star
+    print(stars.tiangan) # 配偶星天干
 
-    print(stars.dizhi)   # Print the Dizhi tuple that represent the Relationship Star
-    assert 1 <= len(stars.dizhi) <= 2 # There can be 1 or 2 representations of Relationship Star in Dizhis
+    print(stars.dizhi)   # 配偶星地支元组
+    assert 1 <= len(stars.dizhi) <= 2 # 对应一到两个地支
     ```
     '''
     expected_shishen: Final[Shishen] = Shishen.正官 if self._bazi.gender is BaziGender.FEMALE else Shishen.正财
@@ -346,22 +305,21 @@ class BaziChart:
   @functools.cached_property
   def traits(self) -> BaziData[PillarTraits]:
     '''
-    The traits (i.e. Yinyang and Wuxing) of Tiangans and Dizhis in pillars of Year, Month, Day, and Hour.
     年、月、日、时的天干地支的阴阳和五行。
 
     Usage:
     ```
     traits = chart.traits
     
-    print(traits.year.tiangan) # Print the trait of Year's Tiangan (年柱天干)
-    assert traits.hour.dizhi == TraitTuple(Wuxing.木, Yinyang.阳) # Access the trait of Hour's Dizhi (时柱地支)
+    print(traits.year.tiangan) # 年柱天干的阴阳五行
+    assert traits.hour.dizhi == TraitTuple(Wuxing.木, Yinyang.阳) # 此例假设时支为寅
 
-    for pillar_traits in traits: # Iterate all pillars in the order of "Year, Month, Day, and Hour"
-      print(pillar_traits.tiangan) # Print the trait of Tiangan of the Pillar
-      print(pillar_traits.dizhi)   # Print the trait of Dizhi of the Pillar
+    for pillar_traits in traits: # 按年、月、日、时顺序遍历
+      print(pillar_traits.tiangan) # 此柱天干的阴阳五行
+      print(pillar_traits.dizhi)   # 此柱地支的阴阳五行
     ```
     '''
-    # Get the traits of the four tiangans and four dizhis
+    # 四柱天干与地支的阴阳五行。
     tiangan_traits: list[TraitTuple] = [traits(tg) for tg in self._bazi.four_tiangans]
     dizhi_traits: list[TraitTuple] = [traits(dz) for dz in self._bazi.four_dizhis]
     pillar_data: list = [BaziChart.PillarTraits(tg_traits, dz_traits) for tg_traits, dz_traits in zip(tiangan_traits, dizhi_traits)]
@@ -370,19 +328,18 @@ class BaziChart:
   @functools.cached_property
   def hidden_tiangan(self) -> BaziData[HiddenTianganDict]:
     '''
-    The hidden Tiangans in all Dizhis of current bazi.
     当前八字的所有地支中的藏干。
 
     Usage:
     ```
     hidden = chart.hidden_tiangan
 
-    print(hidden.year)  # Print the hidden tiangans of Year
-    print(hidden.month) # Print the hidden tiangans of Month
-    print(hidden.day)   # Print the hidden tiangans of Day
-    print(hidden.hour)  # Print the hidden tiangans of Hour
+    print(hidden.year)  # 年支藏干
+    print(hidden.month) # 月支藏干
+    print(hidden.day)   # 日支藏干
+    print(hidden.hour)  # 时支藏干
 
-    for h in hidden: # Iterate in the order of "Year, Month, Day, and Hour"
+    for h in hidden: # 按年、月、日、时顺序遍历
       pass
     ```
     '''
@@ -393,24 +350,22 @@ class BaziChart:
   @functools.cached_property
   def shishen(self) -> BaziData[PillarShishens]:
     '''
-    The Shishens of all Tiangans and Dizhis of Year, Month, Day, and Hour.
-    Notice that Day Master is not classified into any Shishen, as per the rules.
     年、月、日、时柱的天干地支所对应的十神。注意，日主没有十神。
 
     Usage:
     ```
     shishens = chart.shishen
 
-    print(shishens.year.tiangan) # Print the Shishen of Year's Tiangan
-    print(shishens.hour.dizhi)   # Print the Shishen of Hour's Dizhi
+    print(shishens.year.tiangan) # 年干十神
+    print(shishens.hour.dizhi)   # 时支十神
 
     for idx, pillar_shishens in enumerate(shishens):
-      print(pillar_shishens.dizhi) # Print the Shishen of Dizhi of current pillar
+      print(pillar_shishens.dizhi) # 此柱地支十神
 
-      if idx == 2: # Skip the Day Master
+      if idx == 2: # 跳过日主
         assert pillar_shishens.tiangan is None
         continue
-      print(pillar_shishens.tiangan) # Print the Shishen of Tiangan of current pillar
+      print(pillar_shishens.tiangan) # 此柱天干十神
     ```
     '''
 
@@ -419,7 +374,7 @@ class BaziChart:
     shishen_list: list[BaziChart.PillarShishens] = []
     for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
       tg_shishen: Shishen | None = shishen(day_master, tg)
-      # Remember to set the Day Master's position to `None`.
+      # 日主的十神位置存为 None。
       if pillar_idx == 2:
         tg_shishen = None
 
@@ -432,16 +387,15 @@ class BaziChart:
   @functools.cached_property
   def nayin(self) -> BaziData[str]:
     '''
-    The nayins of the pillars of Year, Month, Day, and Hour.
     年、月、日、时柱的纳音。
 
     Usage:
     ```
     nayins = chart.nayin
 
-    print(nayins.year) # Print the Nayin of the Year pillar
+    print(nayins.year) # 年柱纳音
 
-    for nayin in nayins: # Iterate in the order of "Year, Month, Day, and Hour"
+    for nayin in nayins: # 按年、月、日、时顺序遍历
       print(nayin)
     ```
     '''
@@ -452,16 +406,15 @@ class BaziChart:
   @functools.cached_property
   def shier_zhangsheng(self) -> BaziData[ShierZhangsheng]:
     '''
-    The Shier Zhangshengs (i.e. 12 stages of growth) of 4 pillars of Year, Month, Day, and Hour.
     年、月、日、时柱的十二长生。
 
     Usage:
     ```
     zhangshengs = chart.shier_zhangsheng
 
-    print(zhangshengs.day) # Print the Zhangsheng of the Day pillar
+    print(zhangshengs.day) # 日柱十二长生
 
-    for zs in zhangshengs: # Interate in the order of "Year, Month, Day, and Hour"
+    for zs in zhangshengs: # 按年、月、日、时顺序遍历
       pass
     ```
     '''
@@ -474,15 +427,9 @@ class BaziChart:
   @functools.cached_property
   def dayun_order(self) -> bool:
     '''
-    `True` if the Ganzhis of Dayuns are in a forward order.
-    `False` if the Ganzhis of Dayuns are in a backward order.
-
     `True` 代表大运是顺排的，`False` 代表大运是逆排的。
 
-    Note: the traditional phrasing keys on the year Tiangan's yinyang (阳男阴女顺排，阴男阳女逆排);
-    this implementation reads the year Dizhi's yinyang instead -- mathematically identical, since
-    within the 60 Jiazi a Ganzhi's Tiangan and Dizhi always share the same yinyang.
-    传统表述以年干阴阳论「阳男阴女顺、阴男阳女逆」；本实现读年支阴阳，二者数学恒等价——
+    Note: 传统表述以年干阴阳论「阳男阴女顺、阴男阳女逆」；本实现读年支阴阳，二者数学恒等价——
     六十甲子内干支的阴阳恒一致。
     '''
     is_male: bool = (self._bazi.gender is BaziGender.男)
@@ -492,47 +439,42 @@ class BaziChart:
   @functools.cached_property
   def dayun_start_moment(self) -> datetime:
     '''
-    The moment when first Dayun (大运) starts (solar/gregorian calendar).
     大运开始的时间 / 交运时间（公历）。
 
-    Location-aware charts return a naive UTC+08:00 label, not apparent solar time.
     地点盘返回东八区无时区标签，不是真太阳时。
     '''
     birthtime: Final[datetime] = self._bazi.reference_datetime
 
     def __gap() -> timedelta:
-      # All precisions count from the month pillar's owning/following Jie.
+      # 各精度均从月柱所属节或下一节数起。
       prev_j, next_j = self._bazi.month_jies
       if self.dayun_order:
         return next_j.moment - birthtime
-      # Ties go new: the owning Jie's true moment can follow birth under DAY/HOUR/MINUTE.
-      # Reverse counting clamps that negative interval to zero.
+      # 相等归新，DAY/HOUR/MINUTE 的所属节真实时刻可晚于出生；逆数时将负间隔钳为零。
       return max(timedelta(0), birthtime - prev_j.moment)
     
     def __diff() -> timedelta:
       gap: Final[timedelta] = __gap()
-      years: Final[float] = gap / timedelta(days=3) # 3 days in gap = 1 year.
-      return years * timedelta(days=365) # Assume 1 year = 365 days.
+      years: Final[float] = gap / timedelta(days=3) # 间隔三日折一年。
+      return years * timedelta(days=365) # 按一年 365 日换算。
     
     return birthtime + __diff()
 
   def _dayun_owning_ganzhi_year(self, moment: datetime) -> int:
-    '''Return the Ganzhi year containing `moment`, as determined by its owning Jie.
-    按所属节返回 `moment` 所在的干支年。'''
+    '''按所属节返回 `moment` 所在的干支年。'''
     assert isinstance(moment, datetime)
     return GanzhiYearMonth.from_jie(self._utils.prev_jie(moment)).year
 
   @property
   def _dayun_empty_timeline_message(self) -> str:
-    '''Return the shared error message for a Dayun timeline with no supported start.
-    返回大运时刻线无受支持起点时的共享报错消息。'''
+    '''返回大运时刻线无受支持起点时的共享报错消息。'''
     first, last = self._utils.supported_jie_boundaries()
     return f'No Dayun starts within the supported Jie range [{first}, {last})'
 
   @functools.cached_property
   def _dayun_first_year_label(self) -> int:
     '''
-    The shared first Dayun year label, independent of the later-year projection rule.
+    两种年份投影共用的首步大运年份标签，不受后续年份投影规则影响。
     提前归属立春的命盘已归新年，钳在出生时刻的首运却可能仍在物理旧年。
     首步标签取出生干支年为下限；JIE_PROJECTED 后续标签独立按真实起点投影，
     FIXED_DECADE 后续标签按首标签每步递增 10 年。
@@ -544,8 +486,7 @@ class BaziChart:
     return max(self._dayun_owning_ganzhi_year(first_start_moment), self._bazi.ganzhi_year)
 
   def _dayun_start_moment_at(self, index: int) -> datetime:
-    '''Return the `index`-th Dayun boundary, recomputed from the first; clamp Feb 29 to
-    Feb 28 in non-leap target years. 从首运边界重算第 `index` 个边界；目标平年把 2 月 29 日压到 2 月 28 日。'''
+    '''从首运边界重算第 `index` 个边界；目标平年把 2 月 29 日压到 2 月 28 日。'''
     assert isinstance(index, int)
     assert index >= 0
 
@@ -557,9 +498,6 @@ class BaziChart:
   @property
   def dayun(self) -> Generator[DayunTuple, None, None]:
     '''
-    A finite generator that produces Dayuns (大运) from their Gregorian start-moment
-    timeline. Each Dayun covers `[start_moment, end_moment)`; only starts in the selected
-    calendar backend's half-open Jie window are generated, so the result can be empty.
     从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`，只生成落在所选历法
     后端半开节气窗口内的起点，因此结果可以为空。
 
@@ -604,8 +542,7 @@ class BaziChart:
   @functools.cached_property
   def xiaoyun(self) -> tuple[XiaoyunTuple, ...]:
     '''
-    A tuple containing all Xiaoyuns (小运).
-    一个包含所有小运的元组。
+    全部小运的元组。
 
     Usage:
     ```
@@ -617,9 +554,8 @@ class BaziChart:
     '''
 
     step: Final[int] = 1 if self.dayun_order else -1
-    # Xiaoyun covers the xusui ages before the first dayun starts. Both ends of the
-    # subtraction live in the chart's own attribution (see `_dayun_first_year_label`),
-    # so the count can never go below one.
+    # 小运覆盖首步大运前的虚岁；差值两端均按命盘自身归属取年，见 _dayun_first_year_label。
+    # 因此小运数量不小于一。
     until_xusui_age: Final[int] = 1 + self._dayun_first_year_label - self._bazi.ganzhi_year
 
     def __xiaoyun_at_age(age: int) -> XiaoyunTuple:
@@ -630,21 +566,19 @@ class BaziChart:
   @property
   def liunian(self) -> Generator[LiunianTuple, None, None]:
     '''
-    A generator that produces the Liunians (流年).
-    一个生成器，用于生成流年。
+    流年生成器（无限）。
 
     Usage:
     ```
     chart: BaziChart = BaziChart(bazi)
 
-    for year, ganzhi in chart.liunian: # Infinite loop...
-      print(year, ganzhi) # Prints something like "2024 甲辰"
+    for year, ganzhi in chart.liunian: # 无限生成器
+      print(year, ganzhi) # 如 "2024 甲辰"
     ```
     '''
 
     def __liunian_generator() -> Generator[LiunianTuple, None, None]:
-      # Start from `Bazi.ganzhi_year` (precision-attributed, same source as the year pillar),
-      # so the first liunian's ganzhi always equals the year pillar.
+      # 从按出生精度归属的 Bazi.ganzhi_year 起，与年柱同源，首个流年干支始终等于年柱。
       year: int = self._bazi.ganzhi_year
       while True:
         yield LiunianTuple(year, ganzhi_of_year(year))
@@ -654,8 +588,7 @@ class BaziChart:
   @property
   def json(self) -> BaziJson.BaziChartJsonDict:
     '''
-    A json dict representing the `BaziChart`.
-    代表此 `BaziChart` 的 json 字典。
+    此命盘的 JSON 字典。
     '''
 
     dayuns: tuple[DayunTuple, ...] = tuple(itertools.islice(self.dayun, 10))

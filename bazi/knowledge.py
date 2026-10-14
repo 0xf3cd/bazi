@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Editable interpretation knowledge.
-可编辑的解释知识。'''
+'''可编辑的解释知识。'''
 
 import json
 from dataclasses import asdict, dataclass, fields, is_dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
@@ -12,13 +12,16 @@ from .common import frozendict
 from .defines import Shishen, Tiangan
 
 
-'''Knowledge organization state, not a chart verdict. / 知识整理状态，不是命盘判别结果。'''
+'''知识整理状态，不是命盘判别结果。
+unconditional：无命盘前提；described：已记录前提文字，术语可能尚无计算定义；
+unresolved：前提仍待重建。
+'''
 Applicability = Literal['unconditional', 'described', 'unresolved']
 
-'''A claim's source state. / 条目的来源状态。'''
+'''条目的来源状态。'''
 SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attributed']
 
-'''Presentation eligibility. / 输出资格。'''
+'''输出资格。'''
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
@@ -67,8 +70,7 @@ def _tuple(value: object, member_type: type[_T]) -> None:
 
 @dataclass(frozen=True)
 class KnowledgeObject:
-  '''A named discussion object.
-  具名讨论对象。'''
+  '''具名讨论对象。'''
 
   object_id: str
   kind:      str
@@ -82,7 +84,7 @@ class KnowledgeObject:
 
 @dataclass(frozen=True)
 class KnowledgeRole:
-  '''A named role bound to a discussion object. / 绑定讨论对象的具名角色。'''
+  '''绑定讨论对象的具名角色。'''
 
   name:      str
   object_id: str
@@ -94,8 +96,7 @@ class KnowledgeRole:
 
 @dataclass(frozen=True)
 class KnowledgeRelation:
-  '''A directed textual claim between roles, not a computed relation.
-  角色之间有方向的文字陈述，不表示已计算的命盘关系。'''
+  '''角色之间有方向的文字陈述，不表示已计算的命盘关系。'''
 
   from_role: str
   to_role:   str
@@ -108,8 +109,7 @@ class KnowledgeRelation:
 
 @dataclass(frozen=True)
 class KnowledgeContext:
-  '''A named lookup context with time scope and limits.
-  带时间语境与限度的具名查阅情境。'''
+  '''带时间语境与限度的具名查阅情境。'''
 
   context_id: str
   label:      str
@@ -124,8 +124,7 @@ class KnowledgeContext:
 
 @dataclass(frozen=True)
 class KnowledgeSource:
-  '''A source witness with attribution and evidentiary boundaries.
-  带署名与证据边界的来源见证。'''
+  '''带署名与证据边界的来源见证。'''
 
   source_id:   str
   work:        str
@@ -152,8 +151,12 @@ class KnowledgeSource:
 
 @dataclass(frozen=True)
 class LegacyDescription:
-  '''The exact placement and condition metadata of an old description.
-  旧描述的字段、顺序及条件元数据。'''
+  '''旧描述的确切字段、顺序及条件元数据。
+
+  复核旧位置时按 object_id、field 选择，再按 ordinal 排序，不与知识库的语料顺序混同。
+  chart_context_required 记录旧前提；in_good_status / in_bad_status 是旧位置，不是现代知识分类。
+  conditions 为空不表示前提已解决。
+  '''
 
   object_id:     str
   field:         str
@@ -176,8 +179,7 @@ class LegacyDescription:
 
 @dataclass(frozen=True)
 class KnowledgeEntry:
-  '''An interpretation with independently recorded source, premise and output states.
-  分别记录来源、前提及输出状态的解释条目。'''
+  '''分别记录来源、前提及输出状态的解释条目。'''
 
   claim_id:      str
   text:          str
@@ -260,7 +262,7 @@ def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
 
 
 def _decode(record_type: type[_T], value: object) -> _T:
-  attributes = fields(record_type) # type: ignore[arg-type] # Only the dataclasses above reach this helper.
+  attributes = fields(record_type) # type: ignore[arg-type] # 此辅助函数只接收上方 dataclass 类型。
   data = _mapping(value, tuple(field.name for field in attributes))
   kwargs: dict[str, Any] = dict(data)
   for field in attributes:
@@ -286,12 +288,15 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 
 class KnowledgeBase:
-  '''Validate, index, query and export immutable interpretation records.
-  校验、索引、查询并导出不可变解释条目。
+  '''校验、索引、查询并导出不可变解释条目。
 
   Note:
-  - JSON is the editing source; indexes and exports are derived.
   - JSON 为编辑来源；索引与导出由它生成。
+  - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
+  - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
+    查来源，query(source_id=...) 查关联条目。
+  - 仅供参考条目不判断命盘适用性。条目的 sources 为空或署名为 “Legacy corpus; source unverified”，
+    均不表示无来源或断言为假；仓内署名也不等于已经核定的古籍见证。
   '''
 
   def __init__(
@@ -353,6 +358,22 @@ class KnowledgeBase:
           index.setdefault((dimension, value), set()).add(entry.claim_id)
     self._index: Final = frozendict({key: frozenset(ids) for key, ids in index.items()})
 
+  @cached_property
+  def _value(self) -> tuple[
+    tuple[KnowledgeObject, ...], tuple[KnowledgeContext, ...],
+    tuple[KnowledgeSource, ...], tuple[KnowledgeEntry, ...],
+  ]:
+    return (
+      tuple(self.objects.values()), tuple(self.contexts.values()),
+      tuple(self.sources.values()), tuple(self.entries.values()),
+    )
+
+  def __eq__(self, other: object) -> bool:
+    return isinstance(other, KnowledgeBase) and self._value == other._value
+
+  def __hash__(self) -> int:
+    return hash(self._value)
+
   @property
   def objects(self) -> frozendict[str, KnowledgeObject]:
     return self._objects
@@ -371,17 +392,20 @@ class KnowledgeBase:
 
   @classmethod
   def from_json(cls, text: str) -> 'KnowledgeBase':
-    '''Load strict JSON, rejecting duplicate keys and dangling references.
-    加载严格 JSON，拒绝重复键、错误字段与断引用。
+    '''加载严格 JSON，拒绝重复键、错误字段与断引用。
 
     Args:
-    - text: (str) UTF-8 JSON text. / UTF-8 JSON 文字。
-    Returns:
-    - (KnowledgeBase) The validated knowledge base. / 校验后的知识库。
+    - text: (str) UTF-8 JSON 文字。
+    Return:
+    - (KnowledgeBase) 校验后的知识库。
     '''
     _text(text)
+    return cls._from_data(json.loads(text, object_pairs_hook=_pairs))
+
+  @classmethod
+  def _from_data(cls, value: Any) -> 'KnowledgeBase':
     data = _mapping(
-      json.loads(text, object_pairs_hook=_pairs),
+      value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
     if type(data['schema_version']) is not int or data['schema_version'] != 1:
@@ -408,7 +432,7 @@ class KnowledgeBase:
     return cls.from_json(source.read_text(encoding='utf-8'))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
-    '''Resolve a stable entry ID. / 按稳定标识查阅条目。'''
+    '''按稳定标识查阅条目。'''
     _text(claim_id)
     if claim_id not in self.entries:
       raise ValueError(f'Unknown claim ID: {claim_id}')
@@ -426,14 +450,14 @@ class KnowledgeBase:
     time_scope: str | None = None,
     include_reference_only: bool = False,
   ) -> tuple[KnowledgeEntry, ...]:
-    '''Intersect lookup filters, preserving corpus order and output eligibility.
-    按查阅条件取交集，保留语料顺序及输出资格。
+    '''按查阅条件取交集，返回保留语料顺序的不可变条目。
 
     Note:
-    - Object lookup includes every bound role. Unknown filters fail explicitly.
-    - 对象查询包含所有绑定角色；未知标识明确报错。
-    Returns:
-    - (tuple[KnowledgeEntry, ...]) Immutable matching entries. / 命中的不可变条目。
+    - 默认只选 output='default'；include_reference_only=True 同时选仅供参考条目。
+    - 对象查询包含所有绑定角色；未知过滤值抛 ValueError，合法但无匹配时返回空元组。
+    - context_id 是人工选择的查阅情境，不判断命盘是否满足；多个情境标签不隐含 AND/OR。
+    Return:
+    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')
@@ -461,9 +485,14 @@ class KnowledgeBase:
     )
 
   def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
-    '''Export a reloadable corpus or selection with all registries preserved.
-    导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
+    '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
+
+    Note:
+    - 省略 entries 时导出全部语料，包括仅供参考条目；导出不改变条目的输出资格。
     '''
+    return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
+
+  def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
     selected = tuple(self.entries.values()) if entries is None else entries
     _tuple(selected, KnowledgeEntry)
     ids: set[str] = set()
@@ -473,14 +502,13 @@ class KnowledgeBase:
       if entry.claim_id in ids:
         raise ValueError(f'Duplicate selection: {entry.claim_id}')
       ids.add(entry.claim_id)
-    data = {
+    return {
       'schema_version': 1,
       'objects': [asdict(value) for value in self.objects.values()],
       'contexts': [asdict(value) for value in self.contexts.values()],
       'sources': [asdict(value) for value in self.sources.values()],
       'entries': [asdict(value) for value in selected],
     }
-    return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
 
   def render(
     self,

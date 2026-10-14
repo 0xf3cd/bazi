@@ -3,11 +3,35 @@
 
 import re
 import inspect
+from dataclasses import fields, replace, FrozenInstanceError
 
 import pytest
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation, ShierZhangsheng
-from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules
+from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules, DizhiRelationDefinitions
+
+
+def test_relation_definitions() -> None:
+  default = DizhiRelationDefinitions()
+  assert tuple(field.name for field in fields(default)) == ('anhe_def', 'xing_def', 'gong_def')
+  assert default == DizhiRelationDefinitions()
+  assert hash(default) == hash(DizhiRelationDefinitions())
+  with pytest.raises(FrozenInstanceError):
+    default.gong_def = DizhiRules.GongDef.LU_NARROW # type: ignore[misc]
+  for field in fields(default):
+    for member in type(getattr(default, field.name)):
+      changed = replace(default, **{field.name: member})
+      assert getattr(changed, field.name) is member
+
+
+@pytest.mark.parametrize('field, invalid', [
+  ('anhe_def', 'NORMAL_EXTENDED'), ('anhe_def', 0), ('anhe_def', DizhiRules.XingDef.LOOSE),
+  ('xing_def', 'LOOSE'), ('xing_def', 1), ('xing_def', DizhiRules.AnheDef.NORMAL),
+  ('gong_def', 'NARROW'), ('gong_def', 0), ('gong_def', DizhiRules.GongheDef.NARROW),
+])
+def test_relation_definitions_negative(field: str, invalid: object) -> None:
+  with pytest.raises(TypeError, match='Expected'):
+    replace(DizhiRelationDefinitions(), **{field: invalid}) # type: ignore[arg-type]
 
 
 def test_basic() -> None:
@@ -210,10 +234,45 @@ def test_lushen_jinyu_tables() -> None:
   assert ShenshaRules.LUSHEN is BaziRules.TIANGAN_LU
   assert ShenshaRules.LUSHEN == expected_lushen
   assert ShenshaRules.JINYU == expected_jinyu
-  for tiangan in Tiangan:
-    assert ShenshaRules.JINYU[tiangan] is Dizhi.from_index(
-      (expected_lushen[tiangan].index + 2) % len(Dizhi)
-    )
+
+
+def test_derived_shensha_literals() -> None:
+  # Every cell is independent of the production offsets, including absent 阴干 blades.
+  stem_tables = (
+    (ShenshaRules.JINYU, '辰巳未申未申戌亥丑寅'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.ZIPING], '卯-午-午-酉-子-'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.LUMING], '卯辰午未午未酉戌子丑'),
+    (ShenshaRules.YANGREN[ShenshaRules.YangrenDef.DIWANG], '卯寅午巳午巳酉申子亥'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.ZIPING], '酉-子-子-卯-午-'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.LUMING], '酉戌子丑子丑卯辰午未'),
+    (ShenshaRules.FEIREN[ShenshaRules.YangrenDef.DIWANG], '酉申子亥子亥卯寅午巳'),
+    (ShenshaRules.GUOYIN[ShenshaRules.GuoyinDef.WUXING_JINGJI], '酉戌子丑子丑卯辰午未'),
+    (ShenshaRules.GUOYIN[ShenshaRules.GuoyinDef.MODERN], '戌亥丑寅丑寅辰巳未申'),
+  )
+  for table, targets in stem_tables:
+    assert tuple(table) == tuple(Tiangan)
+    assert tuple(table.values()) == tuple(None if char == '-' else Dizhi(char) for char in targets)
+
+  for branch_table, targets in (
+    (ShenshaRules.HONGLUAN, '卯寅丑子亥戌酉申未午巳辰'),
+    (ShenshaRules.TIANXI, '酉申未午巳辰卯寅丑子亥戌'),
+  ):
+    assert tuple(branch_table) == tuple(Dizhi)
+    assert tuple(branch_table.values()) == tuple(Dizhi(char) for char in targets)
+
+
+def test_sheng_ke_literal_pairs() -> None:
+  for table, groups in (
+    (TianganRules.TIANGAN_SHENG, (('甲乙', '丙丁'), ('丙丁', '戊己'), ('戊己', '庚辛'), ('庚辛', '壬癸'), ('壬癸', '甲乙'))),
+    (TianganRules.TIANGAN_KE, (('甲乙', '戊己'), ('丙丁', '庚辛'), ('戊己', '壬癸'), ('庚辛', '甲乙'), ('壬癸', '丙丁'))),
+  ):
+    assert table == frozenset((Tiangan(first), Tiangan(second)) for left, right in groups for first in left for second in right)
+
+  for branch_table, groups in (
+    (DizhiRules.DIZHI_SHENG, (('寅卯', '巳午'), ('巳午', '丑辰未戌'), ('丑辰未戌', '申酉'), ('申酉', '子亥'), ('子亥', '寅卯'))),
+    (DizhiRules.DIZHI_KE, (('寅卯', '丑辰未戌'), ('巳午', '申酉'), ('丑辰未戌', '子亥'), ('申酉', '寅卯'), ('子亥', '巳午'))),
+  ):
+    assert branch_table == frozenset((Dizhi(first), Dizhi(second)) for left, right in groups for first in left for second in right)
 
 
 def test_kuigang_rule() -> None:
@@ -365,22 +424,6 @@ def test_taiji() -> None:
 def test_guoyin() -> None:
   assert set(ShenshaRules.GUOYIN) == set(ShenshaRules.GuoyinDef)
   assert all(set(table) == set(Tiangan) for table in ShenshaRules.GUOYIN.values())
-
-  # Both readings are fixed offsets from 禄, so derive every cell from `TIANGAN_LU`
-  # instead of re-reading the literals -- a typo in the table cannot agree with a table it
-  # was not copied from. Same shape as the JINYU「禄前二辰」check above.
-  # 两读都是禄位的固定偏移，故由 `TIANGAN_LU` 推导每一格，而不重读表里的字面值——
-  # 表里写错一格，不会与一份并非抄自它的表相符。形状同上面 JINYU 的「禄前二辰」核。
-  offsets = {
-    ShenshaRules.GuoyinDef.WUXING_JINGJI : 7,
-    ShenshaRules.GuoyinDef.MODERN        : 8,
-  }
-  assert set(offsets) == set(ShenshaRules.GuoyinDef)
-  for guoyin_def, offset in offsets.items():
-    for tg in Tiangan:
-      assert ShenshaRules.GUOYIN[guoyin_def][tg] is Dizhi.from_index(
-        (BaziRules.TIANGAN_LU[tg].index + offset) % len(Dizhi)
-      ), (guoyin_def, tg)
 
   # The readings share no cell: distinct offsets on a twelve-branch cycle cannot collide, so
   # a hit is never ambiguous about which reading produced it. Pinning this makes a later

@@ -4,9 +4,12 @@
 import random
 import dataclasses
 import inspect
+import ast
 from dataclasses import FrozenInstanceError
 from datetime import datetime
 from enum import Enum
+from importlib.util import resolve_name
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -14,7 +17,7 @@ import pytest
 from bazi.calendar import CalendarBackend
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart, BaziJson
-from bazi.rules import DizhiRules, ShenshaRules
+from bazi.rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from bazi.utils import dizhi_utils
 from bazi.school import (
   BaziPrecision, DayunYearRule, DayRollover, Anchor, BaziSchool, BaziConfig,
@@ -58,14 +61,15 @@ def test_school_defaults() -> None:
   assert BaziSchool() == DEFAULT_SCHOOL
 
 
-def test_school_positional_arguments_remain_stable() -> None:
+def test_school_grouped_positional_arguments() -> None:
   school: BaziSchool = BaziSchool(
     DayRollover.ZIZHENG,
-    Anchor.YEAR,
     DizhiRules.AnheDef.MANGPAI,
     DizhiRules.XingDef.STRICT,
     DizhiRules.GongDef.LU_NARROW,
     ShenshaRules.YangrenDef.DIWANG,
+    ShenshaRules.YangrenDef.LUMING,
+    Anchor.YEAR,
     Anchor.YEAR,
     ShenshaRules.TianyiDef.YINGUI,
     Anchor.DAY,
@@ -74,7 +78,6 @@ def test_school_positional_arguments_remain_stable() -> None:
     Anchor.DAY,
     Anchor.DAY,
     Anchor.YEAR_AND_DAY,
-    ShenshaRules.YangrenDef.LUMING,
     Anchor.YEAR_AND_DAY,
     Anchor.DAY,
     ShenshaRules.WenchangDef.XIN_XU,
@@ -354,22 +357,15 @@ def test_defaults_are_defined_once() -> None:
 
 
 def test_school_defaults_match_utils_signature_defaults() -> None:
-  # The default reading is spelled twice by design -- the school field defaults (chart
-  # level) and the utils signature defaults (per-query override, same shape as
-  # `anhe` / `xing`). Pin the two spellings identical so they can't drift apart;
-  # do NOT "fix" this by making utils import school (issue #69).
-  # 「默认口径」刻意两写——school 字段默认（盘级）与 utils 签名默认（单次覆盖，同
-  # `anhe` / `xing` 先例）；钉住两处等价防漂移，但别让 utils 反过来 import school（issue #69）。
-  for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual):
+  # Batch queries share the rules' defaults with school; registered 神煞 defaults match the school.
+  assert BaziSchool().relation_definitions == DEFAULT_DIZHI_RELATION_DEFINITIONS
+  for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual,
+             dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,
+             dizhi_utils.discover_mutual_ganzhis):
     params = inspect.signature(fn).parameters
-    assert BaziSchool().anhe_def is params['anhe_def'].default
-    assert BaziSchool().xing_def is params['xing_def'].default
-  for positioned_fn in (dizhi_utils.search_ganzhis, dizhi_utils.discover_ganzhis,
-                        dizhi_utils.discover_mutual_ganzhis):
-    params = inspect.signature(positioned_fn).parameters
-    assert BaziSchool().anhe_def is params['anhe_def'].default
-    assert BaziSchool().xing_def is params['xing_def'].default
-    assert BaziSchool().gong_def is params['gong_def'].default
+    assert params['definitions'].default is DEFAULT_DIZHI_RELATION_DEFINITIONS
+    assert params['definitions'].kind is inspect.Parameter.KEYWORD_ONLY
+    assert {'anhe_def', 'xing_def', 'gong_def'}.isdisjoint(params)
   for name, spec in _REGISTRY.items():
     parameter = inspect.signature(spec.predicate).parameters.get('definition')
     resolver = spec.definition
@@ -380,6 +376,48 @@ def test_school_defaults_match_utils_signature_defaults() -> None:
     assert parameter.kind is inspect.Parameter.KEYWORD_ONLY, name
     school_side = resolver(BaziSchool())
     assert school_side is parameter.default, name
+
+
+def test_school_relation_definitions() -> None:
+  school = BaziSchool(
+    anhe_def=DizhiRules.AnheDef.MANGPAI,
+    xing_def=DizhiRules.XingDef.STRICT,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+  )
+  expected = DizhiRelationDefinitions(
+    anhe_def=DizhiRules.AnheDef.MANGPAI,
+    xing_def=DizhiRules.XingDef.STRICT,
+    gong_def=DizhiRules.GongDef.LU_NARROW,
+  )
+  assert school.relation_definitions == expected
+  chart = BaziChart(Bazi.create(
+    '2000-01-01',
+    'male',
+    BaziConfig(school=school),
+  ))
+  assert BaziSchool.from_json(dict(chart.json['school'])).relation_definitions == expected
+
+
+def test_definition_dependency_direction() -> None:
+  root = Path(__file__).parents[1]
+  for name, forbidden in (
+    ('bazi.rules', ('bazi.school', 'bazi.utils')),
+    ('bazi.school', ('bazi.utils',)),
+    ('bazi.utils.dizhi_utils', ('bazi.school',)),
+    ('bazi.utils.tiangan_utils', ('bazi.school',)),
+    ('bazi.utils.shensha_utils', ('bazi.school',)),
+  ):
+    tree = ast.parse((root / Path(*name.split('.')).with_suffix('.py')).read_text(encoding='utf-8'))
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+      if isinstance(node, ast.Import):
+        imports.update(alias.name for alias in node.names)
+      elif isinstance(node, ast.ImportFrom):
+        target = resolve_name('.' * node.level + (node.module or ''), name.rpartition('.')[0]) if node.level else (node.module or '')
+        imports.add(target)
+        imports.update(target + '.' + alias.name for alias in node.names)
+
+    assert not any(imported == denied or imported.startswith(denied + '.') for imported in imports for denied in forbidden), (name, imports)
 
 
 def test_bazi_default_config_is_the_shared_default(rng: random.Random) -> None:

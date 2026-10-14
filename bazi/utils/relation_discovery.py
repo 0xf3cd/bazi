@@ -1,9 +1,30 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from typing import TypeVar, Generic, Self
-from collections.abc import Callable, Set as AbstractSet
+from collections.abc import Callable, Collection, Set as AbstractSet
 
 from ..common import frozendict
+from ..defines.enum_base import IndexedBaziEnum
+
+
+_IndexedItem = TypeVar('_IndexedItem', bound=IndexedBaziEnum)
+
+
+def _ordered_combos(
+  combos: Collection[frozenset[_IndexedItem]],
+) -> tuple[frozenset[_IndexedItem], ...]:
+  '''映射表保留定义序，集合表按组合成员的枚举序排列。'''
+  if isinstance(combos, frozenset):
+    return tuple(sorted(combos, key=lambda combo: tuple(sorted(item.index for item in combo))))
+  return tuple(combos)
+
+
+def _ordered_relation_pairs(
+  pairs: Collection[tuple[_IndexedItem, _IndexedItem]],
+) -> tuple[frozenset[_IndexedItem], ...]:
+  '''按施方、受方的枚举序排列有向对，再投影为保序去重的无向组合。'''
+  ordered = sorted(pairs, key=lambda pair: tuple(item.index for item in pair))
+  return tuple(dict.fromkeys(frozenset(pair) for pair in ordered))
 
 
 RelationType = TypeVar('RelationType')
@@ -13,14 +34,11 @@ class RelationDiscovery(
   Generic[RelationType, RelationItemType],
 ):
   '''
-  Generic base of `TianganRelationDiscovery` / `DizhiRelationDiscovery`: a frozen mapping
-  from relation to its matching combos, with combo-level filtering and merging.
   天干/地支关系发现结果的泛型基类：关系到组合的冻结映射，支持按组合过滤与合并。
   '''
 
   def filter(self, f: Callable[[RelationType, frozenset[RelationItemType]], bool]) -> Self:
-    '''Keep only the combos accepted by `f`; relations left with no combo are dropped.
-    只保留 `f` 接受的组合；不再有组合的关系整键丢弃。'''
+    '''只保留 `f` 接受的组合；不再有组合的关系整键丢弃。'''
     if not callable(f):
       raise TypeError(f'Expected a callable, got {type(f)}')
     return type(self)({
@@ -30,28 +48,20 @@ class RelationDiscovery(
     })
 
   def merge(self, other: Self) -> Self:
-    '''Merge two discoveries together (set-union of combos per relation).
-    合并两个发现结果（每个关系下的组合做集合并）。'''
+    '''合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。'''
     if not isinstance(other, type(self)):
       raise TypeError(f'Expected {type(self).__name__}, got {type(other)}')
-    d: dict[RelationType, set[frozenset[RelationItemType]]] = {}
-
-    for rel, combos in self.items():
-      d[rel] = set(combos)
-    for rel, combos in other.items():
-      d[rel] = d.get(rel, set()) | set(combos)
+    d: dict[RelationType, dict[frozenset[RelationItemType], None]] = {}
+    for discovery in (self, other):
+      for rel, combos in discovery.items():
+        d.setdefault(rel, {}).update(dict.fromkeys(combos))
 
     return type(self)({ rel : tuple(combos) for rel, combos in d.items() })
 
   def mutual_only(self, items1: AbstractSet[RelationItemType], items2: AbstractSet[RelationItemType]) -> Self:
-    '''Keep only the combos that draw from both sides (a combo disjoint from either side
-    comes from one side only). 只保留同时取材于两侧的组合（与任一侧不相交即单侧组合）。
+    '''只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。
 
-    Note: the test is by VALUE, not by provenance -- a combo built entirely from one side
-    can still be kept if the other side happens to share the value:
-    `discover_mutual([子, 丑], [子])` keeps 六合{子,丑} (子 appears in both value-sets,
-    though side 1 alone completes the combo).
-    按值判定，非按出处：组合全由单侧凑成，只要另一侧碰巧也有这个值，就会被保留——
+    Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。
     `discover_mutual([子, 丑], [子])` 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。'''
     if not isinstance(items1, AbstractSet):
       raise TypeError(f'Expected AbstractSet, got {type(items1)}')

@@ -14,15 +14,12 @@ from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
 
 
-'''An orderable projection shared by a query and its physical Dayun boundaries.'''
+'''查询与物理大运边界共用的可排序投影。'''
 _DayunKey = TypeVar('_DayunKey', GanzhiYearMonth, tuple[int, ...])
 
 
 class DayunDatabase:
-  '''Locates the Dayun (大运) whose configured start-year label range contains a year.
-  Adjacent labels delimit each range; the final range is always ten label years and can
-  therefore differ from the physical `end_moment`.
-  按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
+  '''按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
   物理 `end_moment` 不一致。'''
   def __init__(self, chart: BaziChart) -> None:
     self._dayuns: Final[tuple[DayunTuple, ...]] = tuple(chart.dayun)
@@ -43,12 +40,12 @@ class DayunDatabase:
     for dayun in reversed(self._dayuns):
       if gz_year >= dayun.ganzhi_year:
         return dayun
-    raise AssertionError('Unreachable Dayun lookup state') # pragma: no cover # Lower bound checked above.
+    raise AssertionError('Unreachable Dayun lookup state') # pragma: no cover # 上方已检查下界。
 
 
 @unique
 class TransitKind(Enum):
-  '''A named kind of transit. 流运种类。'''
+  '''流运种类。'''
   XIAOYUN = 'xiaoyun'
   DAYUN   = 'dayun'
   LIUNIAN = 'liunian'
@@ -58,7 +55,7 @@ class TransitKind(Enum):
 
 @dataclass(frozen=True)
 class TransitSet:
-  '''An immutable, canonically ordered set of named transit Ganzhis. 一组不可变且顺序固定的具名流运干支。'''
+  '''一组不可变且顺序固定的具名流运干支。'''
   xiaoyun: Ganzhi | None = None
   dayun:   Ganzhi | None = None
   liunian: Ganzhi | None = None
@@ -73,7 +70,7 @@ class TransitSet:
 
   @property
   def items(self) -> tuple[tuple[TransitKind, Ganzhi], ...]:
-    '''The present transits in canonical order. 按固定顺序返回现有流运。'''
+    '''按固定顺序返回现有流运。'''
     pairs = (
       (TransitKind.XIAOYUN, self.xiaoyun),
       (TransitKind.DAYUN,   self.dayun),
@@ -91,17 +88,16 @@ class TransitSet:
 
   @property
   def ganzhis(self) -> tuple[Ganzhi, ...]:
-    '''The present Ganzhis in canonical transit order. 按固定流运顺序返回现有干支。'''
+    '''按固定流运顺序返回现有干支。'''
     return tuple(gz for _, gz in self.items)
 
   @property
   def json(self) -> dict[str, str]:
-    '''A JSON-safe named representation. JSON 可序列化的具名表示。'''
+    '''JSON 可序列化的具名表示。'''
     return {kind.value: str(gz) for kind, gz in self.items}
 
   def select(self, *kinds: TransitKind) -> 'TransitSet':
-    '''Return requested kinds in canonical order; every requested kind must be present.
-    按固定顺序返回指定的流运；指定的种类必须全部存在。'''
+    '''按固定顺序返回指定的流运；指定的种类必须全部存在。'''
     if len(kinds) == 0:
       raise ValueError('Expected at least one TransitKind')
     for kind in kinds:
@@ -110,35 +106,27 @@ class TransitSet:
     if len(set(kinds)) != len(kinds):
       raise ValueError(f'Duplicate transit kinds: {kinds}')
 
-    available = frozenset(iter(self))
-    missing = tuple(kind for kind in kinds if kind not in available)
+    present = dict(self.items)
+    missing = tuple(kind for kind in kinds if kind not in present)
     if len(missing) > 0:
       raise ValueError(f'Transit kinds not available: {missing}')
 
-    selected = frozenset(kinds)
-    return TransitSet(
-      xiaoyun=self.xiaoyun if TransitKind.XIAOYUN in selected else None,
-      dayun=self.dayun     if TransitKind.DAYUN   in selected else None,
-      liunian=self.liunian if TransitKind.LIUNIAN in selected else None,
-      liuyue=self.liuyue   if TransitKind.LIUYUE  in selected else None,
-      liuri=self.liuri     if TransitKind.LIURI   in selected else None,
-    )
+    return TransitSet(**{kind.value: present[kind] for kind in kinds})
 
 
 class TransitDatabase:
-  '''The chart-derived Xiaoyun, year-label Dayun, and physical Dayun lookups for a `BaziChart`.'''
+  '''查询命盘小运、按年份标签解释的大运及按物理边界解释的大运。'''
   def __init__(self, chart: BaziChart) -> None:
     bazi = chart.bazi
-    # The birth-side year is `Bazi.ganzhi_year` -- precision-attributed, same source as the
-    # year pillar -- NOT the day-level `ganzhi_date.year`, which disagrees with it inside a
-    # cross-midnight tie window (HOUR) and would shift every xiaoyun year by one.
+    # 出生年采用按出生精度归属的 Bazi.ganzhi_year，与年柱同源。
+    # HOUR 跨午夜相等窗口内，日期级 ganzhi_date.year 可与它不同，误用会使所有小运年错一位。
     self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
     self._birth_month_key: Final[GanzhiYearMonth] = bazi.ganzhi_year_month
     self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
     self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
-    # The calendar-only fallback cannot use BaziChart.xiaoyun; that property requires a first Dayun label.
+    # 仅历法流运的路径不能读取 BaziChart.xiaoyun，该属性需要首步大运标签。
     xiaoyuns = () if len(self._dayuns) == 0 else chart.xiaoyun
     self._xiaoyun_ganzhis: Final[frozendict[int, Ganzhi]] = frozendict({
       self._birth_ganzhi_year + age - 1 : gz
@@ -146,15 +134,14 @@ class TransitDatabase:
     })
 
   def xiaoyun(self, gz_year: int) -> Ganzhi | None:
-    '''Return the Xiaoyun for `gz_year`, or `None` outside the Xiaoyun year range.'''
+    '''返回 `gz_year` 的小运；超出小运年份范围时返回 `None`。'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     return self._xiaoyun_ganzhis.get(gz_year)
 
   def dayun(self, gz_year: int) -> Ganzhi | None:
-    '''Return the Dayun selected for the Ganzhi-year coordinate `gz_year` by the chart's
-    configured year labels. The finite year view extends the final label by ten years and
-    can differ from the physical final interval; return `None` outside that label view.'''
+    '''按命盘年份标签返回干支年坐标 `gz_year` 的大运。
+    有限年份视图延伸到末标签后十年，可与末步物理区间不同；视图外返回 `None`。'''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     try:

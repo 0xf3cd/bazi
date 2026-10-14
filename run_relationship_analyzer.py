@@ -24,10 +24,8 @@ _WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
 
 
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
-  # TypedDict access needs literal keys under mypy, so the analysis is read as a plain
-  # mapping and each label fetches its own entry -- `SHENSHA_LABELS` is the roster, in the
-  # order the registry declares. (An `AtBirthShenshaAnalysis` also carries the two
-  # whole-pillar entries; they are not in the roster, so they are never read here.)
+  # mypy 要求 TypedDict 用字面键，因此按普通映射读取，再依 SHENSHA_LABELS 注册序逐项展示。
+  # 原局结果还有两个整柱神煞，不在此名册中，此处不读取。
   dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)
   return tuple((label, dizhis[name]) for name, label in SHENSHA_LABELS.items())
 
@@ -55,8 +53,8 @@ def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Display relationships in a random chart.')
-  parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
+  parser = argparse.ArgumentParser(description='展示随机命盘的亲密关系分析。')
+  parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
   seed = parser.parse_args().seed
   seed = SystemRandom().getrandbits(64) if seed is None else seed
   print(f'random seed: {seed}')
@@ -86,7 +84,7 @@ if __name__ == '__main__':
 
   transits_analysis = analyzer.transits
   transit_chart = TransitChart(chart)
-  # Anchor the demo window on the chart's Ganzhi year; a fixed range could precede birth.
+  # 固定年份范围可能早于出生。
   start_gz_year = chart.bazi.ganzhi_year + 20
   print(f'流年神煞（{start_gz_year} 起十年）：')
   for gz_year in range(start_gz_year, start_gz_year + 10):

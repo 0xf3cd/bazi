@@ -1,13 +1,13 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # bazi/calendar/hko_data/common.py
 #
-# Define variables and functions used in other .py files in hkodata directory.
+# HKO 数据模块共用的常量与函数。
 
 from pathlib import Path
 from datetime import date
 from typing import Final
 
-# The year range covered by the HKO raw data (both edges included).
+# HKO 原始数据的年份范围，两端均包含。
 START_YEAR: Final[int] = 1901
 END_YEAR:   Final[int] = 2100
 
@@ -67,7 +67,7 @@ def date_to_bytes(dt: date) -> bytes:
   m: int = dt.month
   d: int = dt.day
   result: bytes = int_to_bytes(y, 2) + int_to_bytes(m, 1) + int_to_bytes(d, 1)
-  assert len(result) == 4 # Aligned to 4 bytes.
+  assert len(result) == 4
   return result
 
 def bytes_to_date(b: bytes) -> date:

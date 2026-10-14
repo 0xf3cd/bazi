@@ -1,109 +1,79 @@
 # AGENTS.md — bazi
 
-八字排盘引擎: 排盘、五行、十神、纳音、刑冲破害、合会.
-A Python library computing Bazi (Four Pillars) charts and their relations.
+八字排盘 Python 库：排盘、五行、十神、纳音、刑冲破害、合会。
+代码须沿用作者风格；风格问题先读相邻模块，不另造约定。
 
-This file tells any AI assistant how to write code **in the author's style**, so
-contributions stay indistinguishable from hand-written code. For *style* questions,
-read a neighbouring module and imitate it rather than inventing a convention.
+## 人工确认（先读）
 
-## Human-in-the-loop (read first)
-Stop and confirm with the author before proceeding whenever anything is unclear or
-non-obvious — an ambiguous requirement, a design fork with no precedent in the code,
-a 命理 rule you're not sure of, an unexpected test failure, or any change whose intent
-you can't verify from existing code. Prefer asking over guessing: a wrong 命理 rule
-silently corrupts every downstream reading. (Imitate neighbours for *style*; ask the
-human for *substance*.)
+需求有歧义、没有先例的设计分岔、无法确认的命理规则、意外测试失败，或无法从既有代码
+验证意图的改动，须先向作者确认。风格模仿相邻代码，知识与行为依据由作者确认；
+错误命理规则会静默影响下游解读。
 
-## This library is (partly) a knowledge base
-Bazi is not one fixed system — different 流派 (schools) hold different rules and readings.
-Treat this codebase as a **codified mirror of the author's Bazi knowledge base**, not just
-an engine:
-- Rules (刑冲破害 / 合会 / 神煞 / 十神 …) encode domain knowledge. When schools disagree,
-  **preserve the competing viewpoints** — model them as alternatives/variants; do NOT
-  silently collapse them into a single "correct" rule. School selection should be
-  runtime-configurable, with a configurable default (tracking: issue #69).
-- Attribute a rule to its 流派 / source where known (docstring or comment), so the
-  provenance survives in the code.
-- A change to a rule is a change to *knowledge*, not just code — apply the Human-in-the-loop
-  rule; confirm the 命理 basis with the author before encoding it.
+## 本库也是知识库
 
-## Toolchain
-Build / lint / type-check / test commands live in **README.md §Instructions** — follow
-those, don't restate them here. Two rules the README doesn't spell out:
-- `ruff` runs on its default rule face minus the few family-level carve-outs in
-  `ruff.toml`. That file declares the **rule face only** (ignores with a written
-  rationale each); formatting/style parameters must NEVER appear in it. `mypy`
-  runs config-less (flags live in `run_tests.py`) — do NOT add mypy settings; pyproject.toml is packaging-only.
-- NEVER run `ruff format` (or any auto-formatter) — it destroys the deliberate
-  vertical alignment (see Idioms). `ruff check` is the only ruff gate.
-- `ruff` is version-pinned in Requirements.txt; bumping it is a deliberate,
-  reviewed change (new default rules get triaged one by one). Resolve new-rule
-  hits by fixing the code, or an inline `# noqa: <RULE>` with a reason where a
-  single site is deliberate; a `ruff.toml` ignore (with rationale) is reserved
-  for whole families that fight the domain or the house style; scoped carve-outs
-  (`per-file-ignores`, rationale included) where a family only fights one tree.
-- The installable package is `bazi`, with modular imports and no installed CLI or root-class facade.
-- Before opening a PR, verify locally with the **same gates CI runs** — the PR
-  workflow invokes `run_tests.py -a -v`.
-  That full invocation is the gate. The four commands below are a **faster inner loop,
-  not an equivalent** — they omit the `-d` leg (`run_demo.py`, `run_relationship_analyzer.py`),
-  the `-i` leg (`run_interpreter.py`) and the `-pkg` installed-artifact checks.
+不同流派可以有不同规则和读法，本库记录作者的八字知识：
+
+- 刑冲破害、合会、神煞、十神等规则承载领域知识。流派有分歧时保留各读法，建模为可选变体，
+  不静默合成一个“正确”规则。流派及默认值应可在运行时配置，跟踪见 #69。
+- 已知流派或来源写入 docstring、注释，保留出处。
+- 改规则即改知识，编码前按人工确认要求核定命理依据。
+
+## 工具链
+
+构建、lint、类型检查与测试入口见 [README.md §开发](README.md#开发)。以下为补充约束：
+
+- ruff 使用默认规则，少数整类例外在 `ruff.toml` 中逐项说明理由。此文件只声明规则，
+  不得添加格式参数。mypy 不设配置，完整 flags 在 `run_tests.py`；`pyproject.toml` 只管打包。
+- 不运行 `ruff format` 或其他自动格式化器，以免破坏刻意的纵向对齐；ruff 门禁只用 `ruff check`。
+- `Requirements.txt` 固定 ruff 版本；升级须逐条审议新增规则。单处有意写法用带理由的
+  `# noqa: <RULE>`；整类与领域或风格冲突时才在 `ruff.toml` 忽略。只与某一子树冲突的规则，
+  可用带理由的 `per-file-ignores`。
+- 安装包为 `bazi`，从定义模块导入，没有安装 CLI 或根类入口。
+- PR 前须实跑与 CI 相同的 **`run_tests.py -a -v`**。下列内层检查较快，但省略了两个 demo、
+  `run_interpreter.py` 示例与安装工件检查，不能替代完整门禁：
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
-    (flags come from `run_tests.py`; a bare `mypy .` misses `--warn-unreachable`)
+    （裸 `mypy .` 缺少 `--warn-unreachable`。）
   - `python -m coverage run --source=bazi --omit='bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
-    then `python -m coverage report --show-missing --fail-under=100` — coverage must stay
-    at **100%**. Without the flag the report prints the number and still exits 0, so this
-    local loop would not notice a drop; CI never runs this path, it gates inside
-    `run_tests.py -a -v`
-    (intentionally unreachable lines carry `# pragma: no cover` + a reason).
-  - `python -O tests/o_smoke.py` — the public fail-fast contract must survive `-O`
-    (see Idioms below; the script refuses to run without `-O`).
-- ⚠️ A bare `./run_tests.py` silently deselects tests — it defaults to
-  `-m 'not slow and not hkodata'`, and the `slow` face holds the Shensha suites
-  (`test_at_birth_shensha`, `test_transit_shensha`) among others. Its green says nothing
-  about them. Pass `-s -hko` (or the full invocation above) whenever a green run is meant
-  to mean anything; `pytest tests/ --collect-only -q` with and without the marker prints
-  the gap for the tree in front of you.
+    然后 `python -m coverage report --show-missing --fail-under=100`，覆盖率须为 **100%**。
+    没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
+    有意不可达的行须有 `# pragma: no cover` 及理由。
+  - `python -O tests/o_smoke.py`，公开输入的立即失败契约须在 `-O` 下保持；脚本拒绝无 `-O` 运行。
+- 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 `slow` 内。
+  要验证这些测试须给 `-s -hko` 或完整调用；可用 `pytest tests/ --collect-only -q`
+  对比带标记与不带标记的收集结果。
 
-## PR workflow
-- Branch from `main`; PR body in Chinese, four sections (内容 / 测试 / 验证 / 范围说明);
-  squash-merge is the author's call.
-- Before the PR: run a double review round (same process as celestial-calendar) —
-  a correctness adversarial round × a style/design round; R1 findings → batched
-  fixes → R2 re-verify; don't touch the worktree while reviewers read. Reviewers
-  are independent AI models invoked as plain CLI (`claude -p …` / `kimi -p` /
-  `grok -p`), with task briefs written to disk for the callee to read. The detailed
-  playbook is author tooling outside this repo; contributors without it follow the
-  summary in this bullet.
-- Commits must be signed. Agents follow the author's approved commit workflow rather
-  than invoking local signing.
-- Attribution goes at the **end of the PR body**, one line naming the tools that did the
-  work — `Built by @0xf3cd with Claude Code (claude-opus-5).`, listing several with `and`
-  when more than one drove it. No session links: they resolve for nobody but the author.
-  Commits carry **no `Co-Authored-By:` trailer** — squash-merge takes the PR body as the
-  merge commit message (`squash_merge_commit_message=PR_BODY`), so the PR body is the part
-  that lands in `main` and a commit trailer would only ever live in branch history.
-  This paragraph exists because the convention used to live only in past PRs, where an
-  agent had to go read the history to find it — and one did not.
+## PR 流程
 
-## File conventions
-- Every source file opens with the copyright header, verbatim except the year:
-  `# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`
-  New files use the **current year**; never change the year on an existing file.
-  Exempt: `__init__.py` files and the root `run_*.py` entry scripts carry no header.
-- Module filenames and package directories are **snake_case** (`bazi_chart.py`,
-  `calendar/`). NOT PascalCase — the old PascalCase convention was a C++
-  carry-over, flipped repo-wide on 2026-07-31. Class names stay PascalCase.
-- Indentation is **2 spaces** (a fleet-wide convention that deliberately
-  overrides PEP 8's 4) — never re-indent.
-- Imports: stdlib → third-party → local (relative `from ..defines import ...`),
-  blank line between groups; long typing imports use the grouped `from typing import (…)` form.
-- Multi-line call layout: when an argument is itself a call, or the call grows long,
-  put each argument on its own line and the closing `)` on its own line at the call's
-  indentation (same rule as celestial-calendar). Trivial short calls stay on one line.
+- 从 main 分支开始；PR 正文用中文，分为内容、测试、验证、范围说明四节。squash 合并由作者决定。
+- PR 前执行正确性对抗与风格／设计双轮审阅：R1 发现合批修复，再由 R2 复验；
+  审阅者读取期间不改工作树。独立 AI 模型通过 CLI（`claude -p …` / `kimi -p` / `grok -p`）
+  调用，审阅说明写入文件供读取。详细流程在作者仓外工具中，无该工具的贡献者按本条摘要执行。
+- 提交须签名；代理使用作者批准的提交流程，不自行调用本地签名。
+- PR 正文末尾以一行注明实际使用的工具，如 `Built by @0xf3cd with Claude Code (claude-opus-5).`；
+  多个工具用 and 连接。不要写会话链接，其他读者无法访问。
+  提交不带 `Co-Authored-By:`：squash 合并以 PR 正文为提交正文
+  （`squash_merge_commit_message=PR_BODY`），归属写在进入 main 的 PR 正文中。
+
+## 文件约定
+
+- 源文件开头使用原样版权头，只有年份可按下述规则取值：
+  `# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`。
+  新文件用当年，既有文件不改年份；`__init__.py` 与根目录 `run_*.py` 不带版权头。
+- 模块文件与包目录用 snake_case，如 `bazi_chart.py`、`calendar/`；类名用 PascalCase。
+- 缩进为 **2 空格**，不得重缩进。
+- 导入顺序为标准库、第三方、本地相对导入，组间空行；长 typing 导入用 `from typing import (…)`。
+- 长调用或参数本身为调用时，逐参数换行，右括号与调用行同缩进；短调用保持单行。
+
   ```python
+  from datetime import datetime
+
+  from bazi.bazi import Bazi
+  from bazi.school import BaziConfig
+
+  birth_time = datetime(2000, 1, 1, 12)
+  gender = 'male'
+  config = BaziConfig()
   bazi = Bazi.create(
     birth_time,
     gender,
@@ -111,71 +81,56 @@ those, don't restate them here. Two rules the README doesn't spell out:
   )
   ```
 
-## Ubiquitous language = Pinyin
-Domain terms keep Pinyin names, never translated (`Tiangan`, `Shensha`, `he`, `chong`).
-Domain enums carry Latin + Chinese members as aliases (`甲 = JIA`; `天干 = Tiangan`).
-Option-style enums (`BaziPrecision`, `TransitKind`, …) are exempt from Chinese aliases.
-Prefer Chinese aliases in tests/examples (`Tiangan.甲`, `TianganRelation.合`).
-JSON output keeps domain values in Chinese (pillars, gender, …) — its consumers are
-the author and AI assistants downstream.
+## 领域命名
 
-## Docstrings are Chinese-first + structured
-自有 API 说明以中文为主，可保留必要英语辅助；沿用 `Note` / `Args` / `Return` /
-`Examples` 结构，类型放在括号中。知识密集层（`rules` / `defines` / `utils` /
-`knowledge` / `context_matching`——规则、表、命理语义）须有中文说明。既有说明随相关施工对齐，不为语言单独翻修全文。
+领域术语用拼音，不翻译为英文，如 `Tiangan`、`Shensha`、`he`、`chong`。
+领域枚举提供拉丁与中文成员别名（`甲 = JIA`、`天干 = Tiangan`）；
+`BaziPrecision`、`TransitKind` 等选项枚举不要求中文别名。测试和示例优先使用中文成员。
+JSON 中的领域值（四柱、性别等）用中文，供作者与下游 AI 助手读取。
 
-## Comment language
-Narrative in English; domain terms and quotations keep their original language
-(立春, 小运, 口诀 citations) — translating an entity loses it. So tests read as
-English sentences with Chinese terms inline; full-Chinese lines are for quoted
-material only, not for explanation.
-Punctuation: a Chinese narrative sentence takes full-width `，：；（）`; an English
-sentence keeps half-width even where Chinese terms sit inside it; **quoted material keeps
-whatever punctuation the source has** — a 口诀 or a 古籍 citation is someone else's text,
-not ours to normalise. (This line used to read "tests/ is overwhelmingly half-width",
-which was true when written in 2026-08. Sampled at `1f0f43c`, counting punctuation *marks*
-— not lines — in `#` comments that are Chinese narrative (English sentences, quotation lines
-and URLs excluded, matching the rule above): tests/ 144 full-width to 14 half-width, src/
-120 to 0. Those numbers are a dated sample, not the rule; the rule is the sentence above it.)
+## 说明与注释语言
 
-## Typing & immutability (non-negotiable)
-- Fully typed; `mypy .` must pass. Lean on `Final`, `X | None` unions (PEP 604, not `Optional`), `Callable`, `TypedDict`, `NamedTuple`.
-- Returns immutable: `frozenset`, `frozendict` (from `..common`), `tuple`,
-  or `@dataclass(frozen=True)` for small immutable value types (the preferred shape —
-  no hand-written `__init__`/`__eq__` boilerplate).
-- Rule tables are plain `Final` class attributes — no `@classproperty` / `functools.cache`
-  layering (the tables are constants; lazy loading buys nothing).
-- Document type aliases with a string literal above them.
+自有 API、模块、类、类型别名说明及源码叙述注释以中文为主，必要时保留英语辅助。
+docstring 沿用 `Note` / `Args` / `Return` / `Examples`，类型放在括号中。
+`rules`、`defines`、`utils`、`knowledge`、`context_matching` 等知识密集层须用中文说明规则、表与命理语义。
+既有说明随相关改动更新；明确授权的全量文档整理按其任务范围执行。
 
-## Idioms to keep
-- Defensive `assert isinstance(...)` / `assert callable(...)` at function entry —
-  for **internal helpers only** (callers inside `bazi/` already validated the values).
-  Public-boundary input checks are explicit `raise TypeError/ValueError` —
-  `isinstance`/`callable` failures are `TypeError`; bad values, ranges and members
-  are `ValueError` (the type follows the check as written: an exhausted `else` over
-  a public enum argument is a membership check, hence `ValueError`); messages follow
-  `Expected X, got {type(x)}` / `Unsupported ...: {value}`. The fail-fast contract must survive `python -O`
-  (canonical note: `hko_data/decoder.py`; gate: `tests/o_smoke.py`).
-- FP where it reads well (map/filter/starmap/product/compress, walrus, functools).
-- Expose computed results as `@property` (use `functools.cached_property` for
-  expensive immutable results).
-- Deliberate vertical alignment of `=` / dict `:` — preserve when editing nearby.
-- Constants are plain `Final` class attributes or module-level names (mypy is the
-  guard); reuse `frozendict` + `#region` from `common.py`; don't reinvent machinery.
+tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言而改写既有测试叙述；纯中文引用按原文保留。
+中文叙述使用全角 `，：；（）`，英文句子用半角。**引文保留来源原有字词、标点与标记**，
+不规范化口诀、古籍或第三方原文。代码、错误类型及规范消息、JSON keys、CLI flags、结构标签
+不因语言整理改名。
 
-## Tests
-- Mirror package layout (`bazi/utils/tiangan_utils.py` → `tests/utils/test_tiangan_utils.py`).
-- Plain pytest style: module-level `test_*` functions, bare `assert`, `pytest.raises`;
-  `pytest.mark.parametrize` for literal case tables, plain loops for derived ones.
-- Data-driven: inline expected combos as literal sets. Integration → `tests/integration/`.
+## 类型与不可变性
 
-## AI do / don't
-- DON'T add black/isort/a config file, PascalCase module filenames, English-only
-  docstrings in knowledge-dense layers, or English domain names — each breaks the
-  house style. DON'T run `ruff format` or re-indent (2-space indent is charter).
-- DON'T add deps casually; keep Requirements.txt lean.
-- Anonymise any real chart in examples (化名, birthplace → province).
-- DON'T quote paths, hostnames, or tooling from outside this repository in anything public
-  (comments, reviews, commit messages, PR text) — a path appearing in a file here does not
-  make it publishable, and that includes files you were handed rather than wrote.
-- Match the neighbouring file's texture; internal consistency > external "best practice".
+- 完整类型标注，mypy 须通过；使用 `Final`、PEP 604 的 `X | None`、`Callable`、`TypedDict`、`NamedTuple`，
+  不用 `Optional`。
+- 返回结果不可变，使用 `frozenset`、`..common` 的 `frozendict`、`tuple`；小值类型优先 frozen dataclass，
+  不手写重复的 `__init__` / `__eq__`。
+- 规则表是普通 `Final` 类属性，不叠加 `classproperty` / `functools.cache`；常量无需懒加载。
+- 类型别名上方用字符串说明。
+
+## 保留的写法
+
+- 内部辅助函数入口可用 `assert isinstance(...)` / `assert callable(...)`，调用方已在 bazi 内校验。
+  公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
+  不支持为 `ValueError`；公开枚举参数的穷尽 `else` 是成员检查，使用 `ValueError`。
+  消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
+  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`，门禁见 `tests/o_smoke.py`。
+- 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。
+- 计算结果用 `property`；昂贵的不可变结果可用 `cached_property`。
+- 保留等号、字典冒号的纵向对齐。
+- 常量用普通 `Final` 类属性或模块名称，由 mypy 检查；复用 `common.py` 的 `frozendict` 与 `#region`。
+
+## 测试
+
+- 镜像包布局：`bazi/utils/tiangan_utils.py` 对应 `tests/utils/test_tiangan_utils.py`。
+- 使用模块级 `test_*`、裸 `assert`、`pytest.raises`；字面案例表用 `parametrize`，派生案例用普通循环。
+- 组合期望以内联字面集合给出；集成测试在 `tests/integration/`。
+
+## 其他约束
+
+不添加 black/isort/配置文件、PascalCase 模块、知识层纯英文说明或英文领域命名。
+不运行格式化器，不改两空格缩进，不随意加依赖，保持 `Requirements.txt` 精简。
+真实命盘示例须匿名，使用化名，出生地降到省级。
+公开注释、审阅、提交、PR 不写仓外路径、主机名或工具细节；现有文件含某路径不代表可公开。
+以相邻文件风格为准，内部一致性优先于外部“最佳实践”。

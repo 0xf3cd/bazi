@@ -1,6 +1,31 @@
-# Release notes
+# 发布说明
 
 ## Unreleased
+
+- 自有 Markdown、API 说明、源码叙述注释与脚本 help 改为中文优先，保留原引文和技术拼写。
+  README 按功能入口组织，每个 Python 示例可独立运行。
+- `BaziSchool` 重排位置参数及 JSON 输出键序，将关系定义和独立羊刃／飞刃定义放在前面；
+  顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、`yangren_def`、`feiren_def`，
+  其后为神煞锚及相邻定义。调用方改用关键字参数。JSON 键名、默认值与读法不变；
+  `from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
+- 删除 `Shishen.str_mapping_table()`。`from_str` 仍接受完整名称及十个单字简称，`abbr` 返回简称；
+  需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
+- 新增 `Jieqi.jies()` 十二节元组入口。
+
+- 地支批量查询统一接收规则层的冻结 `DizhiRelationDefinitions`；删除查询入口的独立定义
+  参数 `anhe_def`、`xing_def`、`gong_def`，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
+  `BaziSchool.relation_definitions`。干支发现可用 `relations` 选择求值范围。
+- `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
+  进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
+
+- `KnowledgeBase` 由实例身份比较改为四份注册表的内容与顺序比较，hash 使用相同依据。
+  等值的不同实例在集合中去重，作为字典键时对应同一项。
+- `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
+  构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
+  属性及记录字段删除。原完整知识 JSON 可先交给 `KnowledgeBase.from_json`。
+  `ChartOccurrence` 构造移除 `index` 位置字段，第三个位置参数变为 `ganzhi`，建议使用具名参数；
+  `index` 由柱位派生，不进入记录，展示只保留柱位。新记录格式为版本2，版本1明确拒绝，
+  旧记录须以原出生输入及配置重新求值；知识内容和顺序仍参与结果值比较与 hash。
 
 - DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
   旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。
@@ -15,28 +40,21 @@
 - 新增 `object_id`、`DEFAULT_SOURCE_PATH` 和共用主体文字投影 `render_subject`。
   主体展示与全角色查询分开，旧位置顺序与语料顺序分开；公开 `render` 接受调用方的
   `premise_verdict` 展示文字，不求值前提或改变输出资格。前提判别仍由 `evaluate_context` 执行。
-- Apparent-solar charts accept an aware birth time, longitude and optional birth-region
-  `civil_timezone`, with civil, UTC and apparent times retained in JSON. The wheel also
-  bundles `equation_of_time.bin`. Dayun and transit queries use UTC+08:00 labels.
-  The Interpreter runner supports fixed location charts and exports.
-- The chart renderer in `run_interpreter.py` omits headings whose selected knowledge text is empty.
-- Knowledge queries expose immutable entries and source witnesses. The source-checkout runner supports fixed
-  births, seeded random charts, reference text, source display and explicit exports;
-  its default invocation now displays one chart without exporting files.
+- 真太阳时命盘接受带时区出生时刻、经度及可选出生地区 `civil_timezone`，JSON 保留民用、UTC
+  及真太阳时。wheel 增加 `equation_of_time.bin`；大运和流运查询采用 UTC+08:00 标签。
+  `run_interpreter.py` 支持固定地点命盘及导出。
+- `run_interpreter.py` 的命盘展示省略所选知识文字为空的标题。
+- 知识查询提供不可变条目与来源见证。源码 runner 支持固定出生、带种子的随机命盘、参考文字、
+  来源展示及显式导出；默认展示一个命盘，不导出文件。
 
 ## bazi 1.0.0
 
-- Installable `bazi` package with modular imports, Python 3.11+, inline typing and
-  no runtime dependencies. Source imports now use `bazi.*`, not `src.*`.
-- The wheel bundles the two encoded HKO tables and three celestial tables. The
-  source archive also includes raw HKO inputs and source-verification tests.
-- Existing calendar backends, rules, school defaults, JSON restoration, transits,
-  relationship analysis and Interpreter remain available without data regeneration.
-- Standard MIT permission covers author-owned material; third-party notices state
-  the separate scope of embedded data and quotations.
-- The manual release workflow defaults to rehearsal. Publication requires protected
-  environment approval and publishes only the tested sdist and its rebuilt wheel.
+- 可安装的 bazi 包从定义模块导入，支持 Python 3.11+，提供内联类型标注，无运行时依赖。
+  源码导入改用 `bazi.*`，不再用 `src.*`。
+- 当时 wheel 包含两份 HKO 编码表与三份 celestial 表；源码包另含 HKO 原始输入和源码验证测试。
+- 当时历法后端、规则、流派默认值、JSON 恢复、流运、亲密关系分析及 Interpreter 均可直接使用，
+  无需重建数据。此处 Interpreter 指该版本的类，后续已退役；现役 runner 为 `run_interpreter.py`。
+- 标准 MIT 授权涵盖作者自有材料，第三方说明另列内嵌数据与引文的权利范围。
+- 手动发布 workflow 默认演练，正式发布须经受保护环境批准，只发布已测试 sdist 及其重建 wheel。
 
-No `src` shim, root-class facade or installed command-line entrypoint is provided.
-See `README.md` for principal module interfaces and `RELEASING.md` for release
-prerequisites.
+不提供 src 兼容包、根类入口或安装命令行入口。模块接口见 README.md，发布前提见 RELEASING.md。

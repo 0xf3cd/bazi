@@ -4,7 +4,7 @@ from .enum_base import BaziEnum
 
 
 class Jieqi(BaziEnum):
-  '''Jieqi / 节气'''
+  '''节气（Jieqi）。'''
   LICHUN      = '立春'
   YUSHUI      = '雨水'
   JINGZHE     = '惊蛰'
@@ -30,7 +30,7 @@ class Jieqi(BaziEnum):
   XIAOHAN     = '小寒'
   DAHAN       = '大寒'
 
-  # Aliases
+  # 中文别名
   立春 = LICHUN
   雨水 = YUSHUI
   惊蛰 = JINGZHE
@@ -63,15 +63,23 @@ class Jieqi(BaziEnum):
   @classmethod
   def as_list(cls, ganzhi_year: bool = True) -> list['Jieqi']:
     '''
-    If `ganzhi_year` is True (which is the default case), returning the Jieqis
-    starting from "立春", as "立春" is the first Jieqi in any ganzhi year.
-
-    If `ganzhi_year` is False, returning the Jieqis starting from "小寒",
-    as "小寒" is the first Jieqi in any solar year.
+    返回二十四节气列表。`ganzhi_year=True`（默认）从干支年的首节立春开始；
+    `False` 从公历年的首节小寒开始。
     '''
     if ganzhi_year:
       return list(cls)
-    else: # Return in the order that Jieqis appear in a solar year.
+    else: # 按节气在公历年中的出现顺序返回。
       return list(cls)[-2:] + list(cls)[:-2]
 
-节气 = Jieqi # Alias
+  @classmethod
+  def jies(cls, ganzhi_year: bool = True) -> tuple['Jieqi', ...]:
+    '''返回十二节，不含中气；默认从立春起，公历年序从小寒起。
+
+    Args:
+    - ganzhi_year: (bool) True 为干支年序，False 为公历年序。
+    '''
+    if not isinstance(ganzhi_year, bool):
+      raise TypeError(f'Expected bool, got {type(ganzhi_year)}')
+    return tuple(cls.as_list(ganzhi_year=ganzhi_year)[::2])
+
+节气 = Jieqi # 中文别名

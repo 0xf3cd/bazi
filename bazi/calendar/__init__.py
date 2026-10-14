@@ -14,10 +14,9 @@ __all__ = [
 ]
 
 def __getattr__(name: str) -> Any:
-  # Both backends read their data tables at import time, which requires those tables to be
-  # present. Import them lazily (PEP 562) so that the offline tools which *regenerate* the
-  # tables (`python -m bazi.calendar.hko_data.encoder`,
-  # `python -m bazi.calendar.celestial_data.generator`) can still run when they are missing.
+  # 两后端导入时读取数据表；用 PEP 562 延迟导入，使缺表时仍能运行离线重建工具：
+  # python -m bazi.calendar.hko_data.encoder
+  # python -m bazi.calendar.celestial_data.generator
   if name in ('hko_data_utils', 'celestial_utils'):
     return import_module(f'.{name}', __name__)
   raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

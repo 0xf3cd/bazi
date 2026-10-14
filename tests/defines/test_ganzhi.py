@@ -179,6 +179,25 @@ def test_ganzhi_next_prev(rng: random.Random) -> None:
 
 
 @pytest.mark.parametrize('name', ['next', 'prev'])
+def test_sexagenary_step_domain(name: str) -> None:
+  # Holding all 120 values is distinct from stepping the 60 applicable values.
+  cycle = Ganzhi.list_sexagenary_cycle()
+  held = {Ganzhi(tg, dz) for tg in Tiangan for dz in Dizhi}
+  assert len(held) == 120
+  applicable = set(cycle)
+  assert len(applicable) == 60
+  for gz in held:
+    method = getattr(gz, name)
+    for step in (0, 1, -1, 60, -61, 10**100):
+      if gz not in applicable:
+        with pytest.raises(ValueError, match=f'^Unsupported sexagenary Ganzhi: {gz}$'):
+          method(step)
+      else:
+        offset = step if name == 'next' else -step
+        assert method(step) == cycle[(cycle.index(gz) + offset) % 60]
+
+
+@pytest.mark.parametrize('name', ['next', 'prev'])
 @pytest.mark.parametrize('form', ['positional', 'keyword', 'default'])
 @pytest.mark.parametrize('warm', [False, True], ids=['cold', 'warm'])
 def test_step_type_before_cache(name: str, form: str, warm: bool) -> None:

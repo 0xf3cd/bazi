@@ -1,24 +1,17 @@
-# Third-Party Material
+# 第三方材料
 
-`LICENSE` grants MIT permission for material authored by Ningqi Wang. It does not
-relicense third-party data, quotations or reference material included in this project.
+LICENSE 的 MIT 授权只及 Ningqi Wang 自有材料，不重新许可本项目中的第三方数据、引文或参考材料。
 
-- The raw calendar inputs and encoded tables in `bazi/calendar/hko_data/data/`
-  derive from the Hong Kong Observatory's Gregorian-Lunar calendar conversion
-  tables: https://www.hko.gov.hk/en/gts/time/conversion.htm.
-  Consult the Observatory's terms: https://www.hko.gov.hk/en/readme/readme.htm.
-- The tables in `bazi/calendar/celestial_data/data/` were generated with
-  [celestial-calendar](https://github.com/0xf3cd/celestial-calendar). Their original
-  generation headers record the version, algorithms and provenance. The schema
-  documentation, `bazi/calendar/celestial_data/SCHEMA.md`, is in the source archive,
-  not the wheel.
-- The MIT grant for original code does not grant rights in third-party quotations,
-  reference material or interpretive corpus content, including `bazi/knowledge_data.json`.
-  Citations are retained where
-  present; they identify sources, not grants of permission.
-- External calculator observations in `tests/integration/external_baseline.json`
-  identify their source, configuration and capture date. They are reference
-  observations, separate from the author-owned comparison tests and bazi snapshots.
+- `bazi/calendar/hko_data/data/` 的原始历法输入与编码表来自香港天文台公历／农历对照表：
+  <https://www.hko.gov.hk/en/gts/time/conversion.htm>。
+  使用条款见 <https://www.hko.gov.hk/en/readme/readme.htm>。
+- `bazi/calendar/celestial_data/data/` 的表由
+  [celestial-calendar](https://github.com/0xf3cd/celestial-calendar) 生成。
+  原生成头部记录版本、算法与来源；数据格式说明 `bazi/calendar/celestial_data/SCHEMA.md`
+  随源码包分发，不进入 wheel。
+- 自有代码的 MIT 授权不授予第三方引文、参考材料或解释语料的权利，包括 `bazi/knowledge_data.json`。
+  已有引用保留，用于识别来源，不表示授权许可。
+- `tests/integration/external_baseline.json` 的外部排盘观测记录来源、配置及采集日期，
+  是参考观测，与作者自有的比较测试及 bazi 快照分开。
 
-Inclusion in a wheel or source archive does not settle rights in third-party
-material. No blanket license expression is asserted for the combined distribution.
+进入 wheel 或源码包不解决第三方材料权利问题；不对合并分发内容声明统一许可证。

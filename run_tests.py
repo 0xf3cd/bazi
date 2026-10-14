@@ -26,44 +26,43 @@ import coverage
 import colorama
 
 
-# Ensure UTF-8 output, so that emojis can be printed on Windows consoles (e.g. cp1252).
-# If `sys.stdout` has been replaced by a non-standard writer, leave it as is.
+# 使用 UTF-8 输出，支持 cp1252 等 Windows 控制台显示 emoji；非标准 stdout 写入器保持原样。
 if isinstance(sys.stdout, io.TextIOWrapper):
   sys.stdout.reconfigure(encoding='utf-8')
 
 # region: Arg Parsing
 
-# Get the argument from terminal.
+# 解析命令行参数。
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='Run all tests, coverage, lint, static type check, demos, interpreter, optimized smoke and package checks.')
+                       help='运行全部测试、覆盖率、lint、类型检查、两个 demo、run_interpreter.py 示例、python -O 公开输入契约冒烟及发行包检查。')
 
-# Test related.
-argparser.add_argument('-nt', '--no-test', action='store_true', help='If set, no test and coverage will run.')
-argparser.add_argument('-s', '--slow-test', action='store_true', help='Whether or not to run slow tests.')
-argparser.add_argument('-hko', '--hkodata-test', action='store_true', help='Whether or not to run hkodata tests.')
-argparser.add_argument('-k', '--expression', type=str, help='Expression to filter tests.', default=None)
-argparser.add_argument('-v', '--verbose', action='store_true', help='Whether or not to print verbose information during testing.')
+# 测试选择。
+argparser.add_argument('-nt', '--no-test', action='store_true', help='跳过测试与覆盖率。')
+argparser.add_argument('-s', '--slow-test', action='store_true', help='包含 slow 测试。')
+argparser.add_argument('-hko', '--hkodata-test', action='store_true', help='包含 hkodata 测试。')
+argparser.add_argument('-k', '--expression', type=str, help='筛选 pytest 测试的表达式。', default=None)
+argparser.add_argument('-v', '--verbose', action='store_true', help='显示测试详细输出。')
 
-# Coverage.
-argparser.add_argument('-c', '--coverage', action='store_true', help='Whether or not to generate coverage report.')
-argparser.add_argument('-cr', '--coverage-rate', type=float, help='Must-met minimum coverage rate. Default: %(default)s', default=100.0)
+# 覆盖率。
+argparser.add_argument('-c', '--coverage', action='store_true', help='生成覆盖率报告。')
+argparser.add_argument('-cr', '--coverage-rate', type=float, help='必须达到的最低覆盖率，默认 %(default)s。', default=100.0)
 
-# Linter and static type check.
-argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='Whether or not to run linting (ruff).')
-argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='Whether or not to run static type check.')
+# lint 与类型检查。
+argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='运行 ruff check。')
+argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='运行静态类型检查。')
 
-# Demo and interpreter.
-argparser.add_argument('-d', '--demo', action='store_true', help='Whether or not to run demo code.')
-argparser.add_argument('-i', '--interpreter', action='store_true', help='Whether or not to run interpreter.')
+# 示例与知识展示。
+argparser.add_argument('-d', '--demo', action='store_true', help='运行两个 demo 脚本。')
+argparser.add_argument('-i', '--interpreter', action='store_true', help='运行 run_interpreter.py 示例。')
 
-# `python -O` public-contract smoke.
+# python -O 公开输入契约冒烟。
 argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
-                       help='Whether or not to run the `python -O` public-contract smoke script (tests/o_smoke.py).')
+                       help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
 
-argparser.add_argument('-pkg', '--package', action='store_true', help='Build and check isolated wheel and sdist installations.')
-argparser.add_argument('--package-output-dir', type=Path, help='With -pkg or -a, retain the tested pair in this external directory.')
+argparser.add_argument('-pkg', '--package', action='store_true', help='构建并检查隔离的 wheel 与 sdist 安装。')
+argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 一起使用，在此仓外目录保留验证后的工件对。')
 
 args = argparser.parse_args()
 
@@ -72,7 +71,7 @@ all_the_way: Final[bool] = args.all
 skip_test: Final[bool] = args.no_test and not all_the_way
 run_slow_test: Final[bool] = args.slow_test or all_the_way
 run_hko_test: Final[bool] = args.hkodata_test or all_the_way
-expression: Final[str | None] = args.expression if not all_the_way else None # '--all/-a' takes precedence over '--expression/-k'
+expression: Final[str | None] = args.expression if not all_the_way else None # --all/-a 优先于 --expression/-k。
 verbose: Final[bool] = args.verbose
 
 do_cov: Final[bool] = args.coverage or all_the_way
@@ -86,7 +85,7 @@ do_interpreter: Final[bool] = args.interpreter or all_the_way
 do_osmoke: Final[bool] = args.o_smoke or all_the_way
 do_package: Final[bool] = args.package or all_the_way
 
-# Root demo behavior is exercised by `-d` rather than library coverage.
+# 根目录 demo 行为由 -d 验证，不计入库覆盖率。
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')
 
 term_width: Final[int] = shutil.get_terminal_size().columns
@@ -166,7 +165,7 @@ def bold_print(s: str) -> None:
 # region: Sub-tasks
 
 def print_args() -> None:
-  '''Print terminal arguments.'''
+  '''打印命令行参数。'''
   print(devider())
   bold_print('>> Terminal args:')
 
@@ -199,7 +198,7 @@ def print_args() -> None:
 
 
 def print_sysinfo() -> None:
-  '''Print system time and other info.'''
+  '''打印系统时间及其他环境信息。'''
   mem = psutil.virtual_memory()
   this_moment: datetime = datetime.now()
 
@@ -229,7 +228,7 @@ def print_sysinfo() -> None:
   print(f'-- disk usage: {psutil.disk_usage("/").percent}%')
 
 def run_proc_and_print(cmds: list[str], print_details: bool = False) -> int:
-  '''This method is mainly for compatability with Windows. It creates a subprocess and runs the commands.'''
+  '''创建子进程运行命令，主要用于兼容 Windows。'''
   if platform.system() == 'Windows':
     return subprocess.run(cmds, check=False).returncode
   else:
@@ -245,7 +244,7 @@ def run_proc_and_print(cmds: list[str], print_details: bool = False) -> int:
 
 
 def run_tests() -> int:
-  '''Run tests with pytest, with args from terminal.'''
+  '''按命令行参数运行 pytest。'''
   print('\n' + devider())
   bold_print('>> Running bazi tests...')
 
@@ -258,7 +257,7 @@ def run_tests() -> int:
   if verbose:
     pytest_args.append('-v')
 
-  if expression is not None: # If `-k` is set, we don't care `-s` and `-hko`...
+  if expression is not None: # 给定 -k 时，不使用 -s 与 -hko 选择标记。
     pytest_args.extend(['-k', expression])
   else:
     marks: list[str] = []
@@ -284,8 +283,8 @@ def run_coverage(test_f: Callable[[], int]) -> int:
   cov = coverage.Coverage(
     source=[str(Path(__file__).parent / 'bazi')],
     omit=[
-      str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # Offline generation tool.
-      str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # Offline generation tool.
+      str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # 离线生成工具。
+      str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # 离线生成工具。
     ]
   )
   cov.start()
@@ -293,7 +292,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
   cov.stop()
   cov.html_report(directory=str(Path(__file__).parent / 'covhtml'))
 
-  # Print the coverage report.
+  # 打印覆盖率报告。
   print('\n' + devider())
   print('>> Generating coverage report...')
   cov_rate: float = cov.report(show_missing=True)
@@ -308,7 +307,7 @@ def run_coverage(test_f: Callable[[], int]) -> int:
 
 
 def run_ruff() -> int:
-  '''Use `ruff` to check for style violations.'''
+  '''用 ruff check 检查 lint 规则。'''
   print('\n' + devider())
   bold_print('>> Checking for style violations...')
 
@@ -327,7 +326,7 @@ def run_ruff() -> int:
 
 
 def run_mypy() -> int:
-  '''Do static type checking with `mypy`'''
+  '''用 mypy 检查静态类型。'''
   print('\n' + devider())
   bold_print('>> Running mypy...')
 
@@ -345,7 +344,7 @@ def run_mypy() -> int:
 
 
 def run_demo() -> int:
-  '''Run the executable demo scripts.'''
+  '''运行两个 demo 脚本。'''
   print('\n' + devider())
   bold_print('>> Running demo...')
 
@@ -364,7 +363,7 @@ def run_demo() -> int:
 
 
 def run_interpreter() -> int:
-  '''Run interpreter by executing `run_interpreter.py`'''
+  '''运行 run_interpreter.py 示例。'''
   print('\n' + devider())
   bold_print('>> Running interpreter...')
 
@@ -380,7 +379,7 @@ def run_interpreter() -> int:
 
 
 def run_o_smoke() -> int:
-  '''Run the `python -O` public-contract smoke script (`tests/o_smoke.py`).'''
+  '''用 python -O 运行 tests/o_smoke.py 的公开输入契约检查。'''
   print('\n' + devider())
   bold_print('>> Running o_smoke (`python -O` contract smoke)...')
 
@@ -396,7 +395,7 @@ def run_o_smoke() -> int:
 
 
 def run_package_checks() -> int:
-  '''Build and verify installed artifacts outside the checkout.'''
+  '''在仓外构建并验证安装工件。'''
   return run_proc_and_print([
     sys.executable, str(Path(__file__).parent / 'run_package_checks.py'),
     *(['--output-dir', str(args.package_output_dir)] if args.package_output_dir is not None else []),
@@ -488,7 +487,7 @@ def main() -> None:
     print(f'   -- {name}: {"✅" if ok else "❎"} | finished in {time_str} seconds {random_emoji()}')
 
   retcodes: map[int] = map(statuses.retcode, statuses.keys())
-  # Note that there may be no subtasks at all (e.g. bare `-nt`), in which case treat it as success.
+  # 可能没有子任务（如只给 -nt），此时视为成功。
   resolved_retcode: int = functools.reduce(operator.or_, retcodes, 0)
   if resolved_retcode == 0:
     green_print('>> All tasks passed! ' + 

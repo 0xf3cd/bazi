@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''Scoped editorial premises; no assessment of events, strength or effective 制化.
-仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
+'''仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
 import hashlib
 import json
@@ -20,23 +19,24 @@ from .transits import TransitKind
 from .utils.bazi_utils import hidden_tiangans, shishen
 
 
-'''Complete-premise verdict, independent of knowledge organization. / 完整前提判别，独立于知识整理状态。'''
+'''完整前提判别，独立于知识整理状态。'''
 MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
-'''Reason for a criterion or entry verdict. / 判据或条目判别的理由。'''
+'''判据或条目判别的理由。'''
 MatchReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable', 'predicate_undefined', 'binding_unrecognized',
 ]
 
-'''The observation range; no implicit default. / 观察范围，无隐式默认值。'''
+'''观察范围，无隐式默认值。'''
 ObservationScope = Literal['natal', 'natal_and_liunian']
 
-'''Position within the ordered observation query. / 有序观察查询中的位置。'''
+'''有序观察查询中的位置。'''
 Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
+_RECORD_VERSION: Final = 2
 
 
 class _Criterion(NamedTuple):
@@ -61,8 +61,7 @@ _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   'shishen.xiaoyin_duoshi': _Criterion('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',)),
 })
 
-# Fingerprints include the entire entry and its bound object/context/source records.
-# They identify the editorial meaning, not merely its ID or display words.
+# 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.zhengguan.legal_trouble': '0cc47687bf24c6f5ffde1eda9d38ac5532838f765562aea57bf8e7f2cc6a582a',
   'editorial.shishen.qisha.legal_trouble': 'f5ec75f1814c3409f0bda3d65d380d45c781201a78a259316e8e17eb59096434',
@@ -101,12 +100,11 @@ def _verdict(status: MatchStatus, reason: MatchReason) -> None:
 
 @dataclass(frozen=True)
 class ContextProfile:
-  '''Select natal or natal plus one LIUNIAN, including all hidden stems without percentage weights.
-  显式选择原局或原局加单流年；固定包含全部实际藏干，不以百分比计力量。
+  '''显式选择原局或原局加单流年；固定包含全部实际藏干，不以藏干百分比计力量。
 
   Note:
-  - A year is a Ganzhi-year label, not a Gregorian timestamp. Missing year is UNKNOWN.
   - 年份是干支年标签，不是公历时刻；缺失年份返回 UNKNOWN。
+  - natal 不接年份；natal_and_liunian 只加入单个 LIUNIAN。年份须为确切 int，拒绝 bool 与子类。
   '''
 
   observation_scope: ObservationScope
@@ -118,19 +116,13 @@ class ContextProfile:
     if self.observation_scope == 'natal' and self.ganzhi_year is not None:
       raise ValueError('Natal scope cannot include a transit coordinate')
 
-  @property
-  def stem_scope(self) -> Literal['visible_and_hidden']:
-    return 'visible_and_hidden'
-
 
 @dataclass(frozen=True)
 class ChartOccurrence:
-  '''One classified stem with position, layer and time identity; duplicate positions stay separate.
-  一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
+  '''一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。'''
 
   origin:      Literal['natal', 'transit']
   pillar:      Pillar
-  index:       int
   ganzhi:      Ganzhi
   layer:       Literal['visible', 'hidden']
   stem:        Tiangan
@@ -142,33 +134,34 @@ class ChartOccurrence:
     _choice(self.origin, ('natal', 'transit'))
     _choice(self.pillar, get_args(Pillar))
     _choice(self.layer, ('visible', 'hidden'))
-    if type(self.index) is not int:
-      raise TypeError(f'Expected int, got {type(self.index)}')
     for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan), (self.shishen, Shishen)):
       _typed(value, expected)
     _year(self.ganzhi_year)
     if self.kind is not None:
       _typed(self.kind, TransitKind)
     if self.origin == 'natal':
-      if self.pillar not in _PILLARS or self.index != _PILLARS.index(self.pillar) or self.kind is not None or self.ganzhi_year is not None:
+      if self.pillar not in _PILLARS or self.kind is not None or self.ganzhi_year is not None:
         raise ValueError('Invalid natal occurrence coordinate')
       if self.pillar == 'day' and self.layer == 'visible':
         raise ValueError('Day-master visible stem is excluded by convention')
-    elif self.pillar != 'liunian' or self.index != 4 or self.kind is not TransitKind.LIUNIAN or self.ganzhi_year is None:
+    elif self.pillar != 'liunian' or self.kind is not TransitKind.LIUNIAN or self.ganzhi_year is None:
       raise ValueError('Invalid LIUNIAN occurrence coordinate')
     if self.layer == 'visible' and self.stem != self.ganzhi.tiangan:
       raise ValueError('Visible stem differs from its Ganzhi')
     if self.layer == 'hidden' and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
       raise ValueError('Hidden stem is absent from its Ganzhi')
 
+  @property
+  def index(self) -> int:
+    '''返回有序观察查询的位置：原局四柱为0–3，流年为4。'''
+    return get_args(Pillar).index(self.pillar)
+
 
 @dataclass(frozen=True)
 class CriterionResult:
-  '''Complete verdict with known partial facts; partial facts do not complete a missing scope.
-  完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
+  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
 
   Note:
-  - `observed_coexistence` and `female` serve the editorial predicates.
   - `observed_coexistence` 与 `female` 用于原作判据。
   '''
 
@@ -196,8 +189,7 @@ class CriterionResult:
 
 @dataclass(frozen=True)
 class EntryMatch:
-  '''Entry verdict after semantic binding, separate from the structural criterion.
-  语义绑定后的条目前提判别，独立于结构判据。'''
+  '''语义绑定后的条目前提判别，独立于结构判据。'''
 
   claim_id: str
   status:   MatchStatus
@@ -239,15 +231,19 @@ def _validate_input(text: str) -> None:
 
 @dataclass(frozen=True)
 class ContextResult:
-  '''Immutable observation record with full input and knowledge snapshots.
-  不可变观察记录，附完整输入及知识快照。'''
+  '''保存前提判别、天干观察及条目匹配的不可变结果。
+
+  复用传入的已验证 KnowledgeBase，渲染不重建知识对象。JSON 保留判据、profile、
+  完整出生／性别／配置身份、年份／kind、全部观察、输入与知识快照。
+  地点输入使用与命盘 JSON 相同的五个字段，保留固定民用基准及未截断真太阳钟。
+  '''
 
   profile:        ContextProfile
   criterion:      CriterionResult
   occurrences:    tuple[ChartOccurrence, ...]
   entries:        tuple[EntryMatch, ...]
   input_json:     str
-  knowledge_json: str
+  knowledge:      KnowledgeBase
 
   def __post_init__(self) -> None:
     _typed(self.profile, ContextProfile)
@@ -256,16 +252,15 @@ class ContextResult:
     _tuple(self.entries, EntryMatch)
     _typed(self.input_json, str)
     _validate_input(self.input_json)
-    knowledge = KnowledgeBase.from_json(self.knowledge_json)
+    _typed(self.knowledge, KnowledgeBase)
     for match in self.entries:
-      knowledge.entry(match.claim_id)
+      self.knowledge.entry(match.claim_id)
 
   def export_json(self) -> str:
-    '''Export the record, evidence and knowledge registries without changing reference eligibility.
-    导出本记录、全部证据及知识注册表，不改变参考输出资格。'''
+    '''导出版本2记录、全部证据及知识注册表，不改变参考输出资格。'''
     data = {
-      'record_version': 1,
-      'profile': {**asdict(self.profile), 'stem_scope': self.profile.stem_scope},
+      'record_version': _RECORD_VERSION,
+      'profile': asdict(self.profile),
       'criterion': {**asdict(self.criterion), 'observations': dict(self.criterion.observations)},
       'occurrences': [
         {**asdict(value), 'ganzhi': str(value.ganzhi), 'stem': str(value.stem), 'shishen': str(value.shishen),
@@ -274,23 +269,26 @@ class ContextResult:
       ],
       'entries': [asdict(value) for value in self.entries],
       'input': json.loads(self.input_json),
-      'knowledge': json.loads(self.knowledge_json),
+      'knowledge': self.knowledge._export_data(),
     }
     return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
 
   @classmethod
   def from_json(cls, text: str) -> 'ContextResult':
-    '''Restore an exported record without recalculation or cross-record authentication.
-    恢复导出记录，不重算或认证判别、证据、输入与条目绑定间的一致性。'''
+    '''恢复版本2记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
+    版本1记录明确拒绝；需要新格式时应由原输入与配置重新求值。
+
+    Note:
+    - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
+    '''
     _typed(text, str)
     data = _mapping(
       json.loads(text, object_pairs_hook=_pairs),
       ('record_version', 'profile', 'criterion', 'occurrences', 'entries', 'input', 'knowledge'),
     )
-    if type(data['record_version']) is not int or data['record_version'] != 1:
+    if type(data['record_version']) is not int or data['record_version'] != _RECORD_VERSION:
       raise ValueError('Unsupported record version')
-    profile = _mapping(data['profile'], ('observation_scope', 'ganzhi_year', 'stem_scope'))
-    _choice(profile.pop('stem_scope'), ('visible_and_hidden',))
+    profile = _mapping(data['profile'], ('observation_scope', 'ganzhi_year'))
     criterion = _mapping(data['criterion'], tuple(field.name for field in fields(CriterionResult)))
     _typed(criterion['observations'], dict)
     criterion['observations'] = frozendict(criterion['observations'])
@@ -312,16 +310,15 @@ class ContextResult:
       tuple(occurrences),
       entries,
       json.dumps(data['input'], ensure_ascii=False),
-      KnowledgeBase.from_json(json.dumps(data['knowledge'], ensure_ascii=False)).export_json(),
+      KnowledgeBase._from_data(data['knowledge']),
     )
 
   def render(self) -> str:
-    '''Display verdict, evidence, full reference text and source boundaries; a premise verdict is not an event prediction.
-    展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
+    '''展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     lines = [
       f'判据：{criterion.criterion_id}；{criterion.definition}',
-      f'范围：{self.profile.stem_scope}；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
+      f'范围：全部明藏干；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
       f'结构前提：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
@@ -329,14 +326,13 @@ class ContextResult:
     ]
     for value in self.occurrences:
       lines.append(
-        f'证据：{value.origin}.{value.pillar}[{value.index}]；{value.ganzhi}；'
+        f'证据：{value.origin}.{value.pillar}；{value.ganzhi}；'
         f'{value.layer}；{value.stem}={value.shishen}；'
         f'kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}'
       )
-    knowledge = KnowledgeBase.from_json(self.knowledge_json)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-      lines.append(knowledge.render(knowledge.entry(match.claim_id), premise_verdict=match.status))
+      lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
     return '\n'.join(lines)
 
 
@@ -358,13 +354,22 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''Evaluate a registered criterion in an explicit scope, then bind reference entries.
-  在显式范围内求值已注册判据，再联接参考条目。
+  '''检查选定范围是否满足已注册判据，返回判别、观察及所选条目的匹配结果。
 
   Note:
-  - Only two editorial Guansha predicates are defined; missing scope or undefined predicates yield UNKNOWN.
-    No predicate is inferred from text.
-  - 仅定义两个原作官杀判据；缺失范围或未定义判据返回 UNKNOWN，不从文本推导新判据。
+  - 仅定义两个原作官杀判据；所需流年缺失或不可查询、判据未定义时返回 UNKNOWN，不从文本推导新判据。
+  - 参考条目须显式设置 include_reference_only=True；未传 knowledge 时每次独立加载默认语料。
+  - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
+    不观察日主明干，但等于日主的藏干仍分类为比肩；藏干百分比不作权重，重复位置保留。
+    不另加力量／次数阈值、相邻、去留或有效制化条件。
+  - 范围完整性优先于女命条件：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
+    SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
+  - 已定义官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
+    前提、情境、来源或输出政策，该条返回 binding_unrecognized。等值的导出重载条目仍可匹配。
+  - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch。
+    未定义判据所关联的条目显示 predicate_undefined；前提满足不授予默认输出资格。
+
+  Return: (ContextResult) 判据结果、逐柱观察、条目匹配，以及输入与知识快照。
   '''
   _typed(chart, BaziChart)
   _typed(profile, ContextProfile)
@@ -375,7 +380,7 @@ def evaluate_context(
   knowledge = KnowledgeBase.load() if knowledge is None else knowledge
   bazi = chart.bazi
 
-  def __occurrences(ganzhi: Ganzhi, pillar: Pillar, index: int, kind: TransitKind | None = None) -> tuple[ChartOccurrence, ...]:
+  def __occurrences(ganzhi: Ganzhi, pillar: Pillar, kind: TransitKind | None = None) -> tuple[ChartOccurrence, ...]:
     origin: Literal['natal', 'transit'] = 'natal' if kind is None else 'transit'
     year = None if kind is None else profile.ganzhi_year
     stems: tuple[tuple[Literal['visible', 'hidden'], Tiangan], ...] = (
@@ -387,7 +392,6 @@ def evaluate_context(
       ChartOccurrence(
         origin,
         pillar,
-        index,
         ganzhi,
         layer,
         stem,
@@ -400,8 +404,8 @@ def evaluate_context(
 
   occurrences = [
     occurrence
-    for index, (pillar, ganzhi) in enumerate(zip(_PILLARS, bazi.pillars, strict=True))
-    for occurrence in __occurrences(ganzhi, pillar, index)
+    for pillar, ganzhi in zip(_PILLARS, bazi.pillars, strict=True)
+    for occurrence in __occurrences(ganzhi, pillar)
   ]
   unavailable: MatchReason | None = None
   if profile.observation_scope == 'natal_and_liunian':
@@ -412,7 +416,7 @@ def evaluate_context(
       if transits is None or transits.liunian is None:
         unavailable = 'transit_unavailable'
       else:
-        occurrences.extend(__occurrences(transits.liunian, 'liunian', 4, TransitKind.LIUNIAN))
+        occurrences.extend(__occurrences(transits.liunian, 'liunian', TransitKind.LIUNIAN))
 
   classes = {value.shishen for value in occurrences}
   coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
@@ -463,5 +467,5 @@ def evaluate_context(
     tuple(occurrences),
     tuple(matches),
     json.dumps(identity, ensure_ascii=False),
-    knowledge.export_json(),
+    knowledge,
   )

@@ -1,9 +1,8 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # bazi/calendar/hko_data/decoder.py
 #
-# Decode the encoded data produced by encoder.py.
-# The decoder only reads the committed binary data files under `hko_data/data/`;
-# it never downloads or re-encodes anything (use encoder.py as an offline tool for that).
+# 解码 encoder.py 生成的数据；只读取 hko_data/data/ 中已提交的二进制文件。
+# 不下载或重新编码，重建数据须运行离线工具 encoder.py。
 
 import functools
 
@@ -19,19 +18,18 @@ from .common import (
 )
 
 
-'''Jieqi -> Solar-calendar Date'''
+'''节气到公历日期的映射。'''
 JieqiDates = dict[Jieqi, date]
 
 class DecodedJieqiDates:
   '''
-  This class is used to query the solar-calendar date (Gregorian Calendar) of each Jieqi in each solar-calendar year.
+  查询各公历年的节气日期。
   ''' 
 
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
 
   def __init__(self) -> None:
-    # Explicit raise (not assert): this is the public fail-fast contract for library
-    # consumers, and it must survive `python -O`.
+    # 显式抛异常，保证公开入口在 python -O 下仍会立即失败。
     if not encoded_data_ready():
       raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
 
@@ -49,21 +47,20 @@ class DecodedJieqiDates:
     assert len(encoded_bytes) == 24 * (self._end_year - self._start_year + 1) * DecodedJieqiDates.date_bytes_len
     self._bytes: Final[bytes] = encoded_bytes
 
-    # In Georgian calendar, the first Jieqi is "小寒".
-    # But in `Jieqi`'s order, the first Jieqi is "立春".
-    self._actual_jieqi_order: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=False) # This is the real order in HKO data.
+    # 公历年首节为小寒，而 Jieqi 枚举从立春开始；HKO 数据采用公历年序。
+    self._actual_jieqi_order: Final[list[Jieqi]] = Jieqi.as_list(ganzhi_year=False)
 
     self._jieqi_offset_mapping: Final[dict[Jieqi, int]] = { k : v for k, v in zip(self._actual_jieqi_order, range(0, 24 * DecodedJieqiDates.date_bytes_len, DecodedJieqiDates.date_bytes_len)) }
     assert len(self._jieqi_offset_mapping) == 24
 
   @property
   def start_year(self) -> int:
-    '''Note: Gregorian/Solar year / 公历年'''
+    '''支持的首公历年。'''
     return self._start_year
   
   @property
   def end_year(self) -> int:
-    '''Note: Gregorian/Solar year / 公历年'''
+    '''支持的末公历年。'''
     return self._end_year
 
   def __read_bytes_for_jieqi(self, year: int, jieqi: Jieqi) -> bytes:
@@ -72,17 +69,17 @@ class DecodedJieqiDates:
     return self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len + offset : (year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len + offset + DecodedJieqiDates.date_bytes_len]
 
   def __getitem__(self, year: int) -> JieqiDates:
-    '''Note: `year` means Gregorian/Solar year / 公历年'''
+    '''查询公历年 year 的全部节气日期。'''
     if not isinstance(year, int):
       raise TypeError(f'Expected int, got {type(year)}')
     if year not in self.supported_year_range():
       raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
 
-    # Extract the bytes for the input `year`.
+    # 提取输入年份的字节。
     year_bytes: bytes = self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len : (year - self.start_year + 1) * 24 * DecodedJieqiDates.date_bytes_len]
     assert len(year_bytes) == DecodedJieqiDates.date_bytes_len * 24
 
-    # Decode the bytes to `JieqiDates`.
+    # 解码为 JieqiDates。
     return { jq : bytes_to_date(self.__read_bytes_for_jieqi(year, jq)) for jq in self._actual_jieqi_order }
 
   @functools.cache
@@ -91,9 +88,7 @@ class DecodedJieqiDates:
 
   def get(self, year: int, jieqi: Jieqi) -> date:
     '''
-    This method is encouraged to be used over `__getitem__`, since it leverages the cache.
-
-    Note: `year` means Gregorian/Solar year / 公历年
+    查询公历年 year 的指定节气日期；复用缓存，优先于直接调用 __getitem__。
     '''
     if not isinstance(year, int):
       raise TypeError(f'Expected int, got {type(year)}')
@@ -104,35 +99,34 @@ class DecodedJieqiDates:
     return self.__cached_date(year, jieqi)
   
   def supported_year_range(self) -> range:
-    '''Note: Gregorian/Solar year / 公历年'''
+    '''支持的公历年份范围。'''
     return range(self.start_year, self.end_year + 1)
 
 
 class LunarYearInfo(TypedDict):
   '''
-  The information of a lunar year.
+  一年的农历信息。
   '''
-  first_solar_day: date        # The date of the first day of the lunar year (in solar calendar/gregorian calendar).
-  leap: bool                   # Whether the year is leap or not.
-  leap_month: int | None       # If `leap` is False, this field is None. Otherwise, it is the month of the leap.
-  days_counts: list[int]       # The number of days in each month. It contains 12 elements for normal years, and 13 elements for leap years.
-  ganzhi: Ganzhi               # The Tiangan-Dizhi pair of the year.
+  first_solar_day: date        # 农历年首日的公历日期。
+  leap: bool                   # 是否有闰月。
+  leap_month: int | None       # 无闰月为 None，否则为闰月月份。
+  days_counts: list[int]       # 各月日数，平年十二项，闰年十三项。
+  ganzhi: Ganzhi               # 此年的干支。
 
 class DecodedLunarYears:
   '''
-  This class is used to query the information of lunar years.
+  查询各农历年的信息。
   '''
 
   sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
   def __init__(self) -> None:
-    # Explicit raise (not assert): this is the public fail-fast contract for library
-    # consumers, and it must survive `python -O`.
+    # 显式抛异常，保证公开入口在 python -O 下仍会立即失败。
     if not encoded_data_ready():
       raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
 
     self._start_year: Final[int] = START_YEAR
-    self._end_year: Final[int] = END_YEAR - 1 # END_YEAR not included, since the data for it is incomplete.
+    self._end_year: Final[int] = END_YEAR - 1 # END_YEAR 的数据不完整，故不包含。
 
     lunardate_encoded_path: Path = get_lunardate_encoded_data_path()
     assert lunardate_encoded_path.exists() and lunardate_encoded_path.is_file()
@@ -141,17 +135,17 @@ class DecodedLunarYears:
     with lunardate_encoded_path.open('rb') as f:
       encoded_bytes: bytes = f.read()
     
-    assert len(encoded_bytes) == 8 * (self.end_year - self.start_year + 1) # END_YEAR not included, since the data for it is incomplete.
+    assert len(encoded_bytes) == 8 * (self.end_year - self.start_year + 1) # 不包含数据不完整的 END_YEAR。
     self._bytes: Final[bytes] = encoded_bytes
 
   @property
   def start_year(self) -> int:
-    '''Note: Lunar year / 阴历年'''
+    '''支持的首农历年。'''
     return self._start_year
   
   @property
   def end_year(self) -> int:
-    '''Note: Lunar year / 阴历年'''
+    '''支持的末农历年。'''
     return self._end_year
 
   @functools.cache
@@ -168,7 +162,7 @@ class DecodedLunarYears:
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
 
-    # Parse the bytes.
+    # 解析农历年字节。
     first_solar_day: date = bytes_to_date(data_bytes[:4])
     ganzhi_index: int = bytes_to_int(data_bytes[4:5])
     ganzhi: Ganzhi = DecodedLunarYears.sexagenary_cycle[ganzhi_index]
@@ -197,9 +191,8 @@ class DecodedLunarYears:
 
   def get(self, lunar_year: int) -> LunarYearInfo:
     '''
-    This method is encouraged to be used over `__getitem__`, since it leverages the cache.
-    The returned record is rebuilt per call (with a fresh `days_counts` list), so mutating
-    it cannot poison the cache. The other values are immutable and safe to share.
+    查询农历年信息；复用缓存，优先于直接调用 __getitem__。
+    每次返回新记录与独立 days_counts 列表，外部修改不影响缓存；其余值不可变，可共享。
     '''
     if not isinstance(lunar_year, int):
       raise TypeError(f'Expected int, got {type(lunar_year)}')
@@ -215,5 +208,5 @@ class DecodedLunarYears:
     )
 
   def supported_year_range(self) -> range:
-    '''Note: Lunar year / 阴历年'''
+    '''支持的农历年份范围。'''
     return range(self.start_year, self.end_year + 1)

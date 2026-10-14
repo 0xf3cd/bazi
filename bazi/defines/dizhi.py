@@ -4,7 +4,7 @@ from .enum_base import IndexedBaziEnum
 
 
 class Dizhi(IndexedBaziEnum):
-  '''Dizhi / Branch / 地支'''
+  '''地支（Dizhi）。'''
   ZI   = '子'
   CHOU = '丑'
   YIN  = '寅'
@@ -18,7 +18,7 @@ class Dizhi(IndexedBaziEnum):
   XU   = '戌'
   HAI  = '亥'
 
-  # Aliases
+  # 中文别名
   子   =   ZI
   丑   = CHOU
   寅   =  YIN
@@ -32,4 +32,4 @@ class Dizhi(IndexedBaziEnum):
   戌   =   XU
   亥   =  HAI
 
-地支 = Dizhi # Alias
+地支 = Dizhi # 中文别名

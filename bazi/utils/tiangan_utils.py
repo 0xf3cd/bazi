@@ -3,43 +3,37 @@
 from typing import Final
 from collections.abc import Sequence
 
+from ..common import frozendict
 from ..defines import Tiangan, Wuxing, TianganRelation
 from ..rules import TianganRules
-from .relation_discovery import RelationDiscovery
+from .relation_discovery import RelationDiscovery, _ordered_combos, _ordered_relation_pairs
 
 
 '''
-Functions in this file are used to find all possible Tiangan combos that satisfy different `TianganRelation`s.
-All methods' returns are expected to be immutable.
+查询满足各 TianganRelation 的天干组合；返回结果不可变。
 '''
 
 
-'''Represents a Tiangan combo that satisfies a certain `TianganRelation`.'''
+'''满足某天干关系的一个组合。'''
 TianganCombo = frozenset[Tiangan]
 
-'''A list of all possible Tiangan combos that satisfy a certain `TianganRelation`.'''
+'''满足某天干关系的全部组合元组。'''
 TianganRelationCombos = tuple[TianganCombo, ...]
 
 class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
-  '''A frozen mapping from `TianganRelation` to the Tiangan combos that satisfy it.
-  天干关系到满足它的天干组合的冻结映射。'''
+  '''天干关系到满足它的天干组合的冻结映射。'''
 
 
 def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   '''
-  Check if the input two Tiangans are in HE relation. If so, return the corresponding Wuxing. If not, return `None`.
-  We don't care the order of the inputs, since HE relation is non-directional/mutual.
-  检查输入的两个天干是否构成相合关系。如果是，返回合化后形成的五行。如果不是，返回 `None`。
-  返回结果与输入的天干顺序无关，因为相合关系是无方向的。
-
-  Note that the two Tiangans may not qualify for Hehua (合化), which depends on the bazi chart.
-  注意，这两个天干可能并不能合化。具体需要根据八字原盘来决定。
+  按无向相合关系查对应五行。
+  本函数不判断实际合化条件；能否合化仍须结合原盘。
 
   Args:
-  - tg1: (Tiangan) The first Tiangan.
-  - tg2: (Tiangan) The second Tiangan.
+  - tg1: (Tiangan) 第一天干。
+  - tg2: (Tiangan) 第二天干。
 
-  Return: (Wuxing | None) The Wuxing that the two Tiangans form, or `None` if the two Tiangans are not in HE relation.
+  Return: (Wuxing | None) 合所对应的五行；不相合时为 None。
 
   Examples:
   - he(Tiangan.甲, Tiangan.丙):
@@ -63,16 +57,14 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
 
 def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
   '''
-  Check if the input two Tiangans are in CHONG relation.
-  We don't care the order of the inputs, since CHONG relation is non-directional/mutual.
   检查输入的两个天干是否构成相冲关系。
   返回结果与输入的天干顺序无关，因为相冲关系是无方向的。
 
   Args:
-  - tg1: (Tiangan) The first Tiangan.
-  - tg2: (Tiangan) The second Tiangan.
+  - tg1: (Tiangan) 第一天干。
+  - tg2: (Tiangan) 第二天干。
 
-  Return: (bool) Whether the two Tiangans are in CHONG relation.
+  Return: (bool) 是否相冲。
 
   Examples:
   - chong(Tiangan.甲, Tiangan.丙):
@@ -92,16 +84,14 @@ def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
 
 def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
   '''
-  Check if the input two Tiangans are in SHENG relation.
-  The order of the inputs is important, since SHENG relation is uni-directional.
   检查输入的两个天干是否构成相生关系。
   返回结果与输入的天干顺序有关，因为相生关系是单向的。
 
   Args:
-  - tg1: (Tiangan) The first Tiangan.
-  - tg2: (Tiangan) The second Tiangan.
+  - tg1: (Tiangan) 生的一方。
+  - tg2: (Tiangan) 被生的一方。
 
-  Return: (bool) Whether the two Tiangans are in SHENG relation.
+  Return: (bool) 是否 tg1 生 tg2。
 
   Examples:
   - sheng(Tiangan.甲, Tiangan.丙):
@@ -121,16 +111,14 @@ def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
 
 def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
   '''
-  Check if the input two Tiangans are in KE relation.
-  The order of the inputs is important, since KE relation is uni-directional.
   检查输入的两个天干是否构成相克关系。
   返回结果与输入的天干顺序有关，因为相克关系是单向的。
 
   Args:
-  - tg1: (Tiangan) The first Tiangan.
-  - tg2: (Tiangan) The second Tiangan.
+  - tg1: (Tiangan) 克的一方。
+  - tg2: (Tiangan) 被克的一方。
 
-  Return: (bool) Whether the two Tiangans are in KE relation.
+  Return: (bool) 是否 tg1 克 tg2。
 
   Examples:
   - ke(Tiangan.甲, Tiangan.丙):
@@ -148,16 +136,22 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
   return (tg1, tg2) in TianganRules.TIANGAN_KE
 
 
+_SEARCH_COMBOS: Final[frozendict[TianganRelation, TianganRelationCombos]] = frozendict({
+  TianganRelation.合: _ordered_combos(TianganRules.TIANGAN_HE),
+  TianganRelation.冲: _ordered_combos(TianganRules.TIANGAN_CHONG),
+  TianganRelation.生: _ordered_relation_pairs(TianganRules.TIANGAN_SHENG),
+  TianganRelation.克: _ordered_relation_pairs(TianganRules.TIANGAN_KE),
+})
+
+
 def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRelationCombos:
   '''
   返回 `tiangans` 中所有满足该关系的组合。
 
   Note:
   - 只接受 `Sequence`，非序列在遍历前抛出 `TypeError`；空序列合法，重复天干不影响结果。
-  - 返回的 combos 中没有体现关系作用的方向。
-  - 比如说，如果检查输入天干的相生关系并返回 ({甲, 丁},)，那么不能从返回结果中看出是甲生丁还是丁生甲。
-  - 对于无方向的关系来说（合、冲），我们不用关心返回结果中的方向。
-  - 对于有方向的关系来说（生、克），请使用其他方法来检查（如 `.sheng` 和 `.ke`）。
+  - 组合不含作用方向，合、冲本身无向；生、克的方向用 sheng / ke 单独判断。
+    例如组合 {甲, 丁} 本身不表示甲生丁或丁生甲。
 
   Args:
   - tiangans: (Sequence[Tiangan]) 待查天干。
@@ -172,11 +166,9 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
     - return: ({甲, 庚})
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):
     - return: ({甲, 丙}, {甲, 丁})
-    - 返回组合不包含方向。
   - search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):
-    - return: ({甲, 庚}, {甲, 辛}, {丙, 庚}, {丙, 辛},
-               {丁, 庚}, {丁, 辛})
-    - 返回组合不包含方向。
+    - return: ({丙, 庚}, {丙, 辛}, {丁, 庚}, {丁, 辛},
+               {甲, 庚}, {甲, 辛})
   '''
 
   if not isinstance(tiangans, Sequence):
@@ -186,25 +178,17 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   if not all(isinstance(tg, Tiangan) for tg in tiangans):
     raise TypeError(f'Expected all Tiangan, got {[type(tg) for tg in tiangans]}')
 
-  if relation is TianganRelation.合:
-    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_HE if combo.issubset(tiangans))
-  elif relation is TianganRelation.冲:
-    return TianganRelationCombos(combo for combo in TianganRules.TIANGAN_CHONG if combo.issubset(tiangans))
-  
-  # Otherwise, relation is `TianganRelation.生` or `TianganRelation.克`.
-  tg_set: Final[set[Tiangan]] = set(tiangans)
+  if relation not in _SEARCH_COMBOS:
+    raise ValueError(f'Unsupported TianganRelation: {relation}') # pragma: no cover # 不可达的枚举穷尽检查。
 
-  if relation is TianganRelation.生:
-    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_SHENG if tg_set.issuperset(combo))
-  else: 
-    assert relation is TianganRelation.克
-    return TianganRelationCombos(TianganCombo(combo) for combo in TianganRules.TIANGAN_KE if tg_set.issuperset(combo))
+  tg_set: Final[set[Tiangan]] = set(tiangans)
+  return TianganRelationCombos(combo for combo in _SEARCH_COMBOS[relation] if combo.issubset(tg_set))
 
 
 def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
   返回给定天干中所有可能的天干关系组合（合、冲、生、克等）。
-  这个方法通过调用 `search` 来实现。
+  各关系由 `search` 求值。
 
   Note:
   - 返回的字典的键中可能不包含所有的 `TianganRelation`。
@@ -230,7 +214,7 @@ def discover(tiangans: Sequence[Tiangan]) -> TianganRelationDiscovery:
 def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) -> TianganRelationDiscovery:
   '''
   找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
-  注意返回的天干组合中的天干必须同时来自两组 `tiangans1` 和 `tiangans2` 中。
+  返回组合须与两组天干值集均相交，不追踪具体出现；按值过滤语义见 RelationDiscovery.mutual_only。
 
   Note:
   - 返回的字典的键中可能不包含所有的 `TianganRelation`。
@@ -264,8 +248,5 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   tg1_set: Final[set[Tiangan]] = set(tiangans1)
   tg2_set: Final[set[Tiangan]] = set(tiangans2)
 
-  # Tiangan relations are multiplicity-blind, so the two sides combine by set union.
-  # Deliberately different from `dizhi_utils.discover_mutual`, which CONCATENATES the
-  # inputs because 自刑 there depends on multiplicity.
-  # 天干关系不看重数，两侧集合并即可——与地支侧的拼接是刻意分歧（自刑依赖重数）。
+  # 天干关系不看重数，两侧取集合并；地支侧须拼接，因为自刑依赖重数。
   return discover(list(tg1_set | tg2_set)).mutual_only(tg1_set, tg2_set)

@@ -10,12 +10,11 @@ from ..defines import Dizhi, Jieqi
 
 class CalendarType(Enum):
   '''
-  CallendarType is an enum class. It contains 3 types of calendars.
+  公历、农历、干支历三种日期类型。
   '''
 
   '''
   0: SOLAR / 公历
-     - New years start on the first days of each year (Jan 1).
      - 公历新年在每年一月一号。
   '''
   SOLAR = 0
@@ -23,7 +22,6 @@ class CalendarType(Enum):
 
   '''
   1: LUNAR / 农历 / 阴历
-     - New years start on the first days on Zhengyues (正月). There are 13 months in a leap lunar year, and 12 months in a normal year.
      - 农历新年在每年正月初一。农历每个月的划定基于对月亮的观测。农历中的闰年有 13 个月，普通年有 12 个月。
   '''
   LUNAR = 1
@@ -31,9 +29,6 @@ class CalendarType(Enum):
 
   '''
   2: GANZHI / 干支历
-     - New years start on the days of Start of Spring (立春).
-     - When generating Bazi (八字) for a person, we use 24 Chinese Jieqis (24 solar terms / 24 节气) to determine the starts of new years and months.
-     - GANZHI is a solar calendar, as 24 Chinese Jieqis are based on the observations of the Sun.
      - 干支历新年在每年立春。干支历不存在闰月。
      - 当进行八字排盘时，人们以 24 节气中的 12 节来划分年、月。
        - 每一年的开始在于立春。每一年也叫“岁”（每一“岁”为立春到下一个立春前一天）
@@ -47,13 +42,11 @@ class CalendarType(Enum):
 @dataclass(frozen=True)
 class CalendarDate:
   '''
-  CalendarDate is a thin wrapper of the date.
-  ATTENTION: No validity check when instantiating.
+  带历法类型的不可变日期。构造时校验字段类型，不检查日期是否合法。
 
-  Cross-type comparison semantics follow Python's own convention: `==`/`!=` against a
-  non-`CalendarDate` is `False`/`True` (dataclass-generated `__eq__`), while ordering
-  against one raises `TypeError`. Ordering across different `CalendarType`s also raises --
-  dates on different calendars are incomparable.
+  Note:
+  - 与非 CalendarDate 比较，dataclass 生成的 `==` / `!=` 返回 False / True；排序抛 TypeError。
+  - 不同 CalendarType 的日期不能排序，抛 TypeError。
   '''
   year: int
   month: int
@@ -94,7 +87,7 @@ class CalendarDate:
 
 
 class JieqiTime(NamedTuple):
-  '''Representing a Jieqi and its accurate time (datetime). 节气及其精确时间。'''
+  '''节气及其时刻；时刻精度随后端数据而定。'''
   jieqi:  Jieqi
   moment: datetime
 
@@ -123,7 +116,7 @@ class GanzhiYearMonth:
   @property
   def opening_jie(self) -> tuple[int, Jieqi]:
     '''开月节的公历年与节名；丑月由下一公历年的小寒开启。'''
-    return self.year + (self.month == 12), Jieqi.as_list(ganzhi_year=True)[2 * (self.month - 1)]
+    return self.year + (self.month == 12), Jieqi.jies()[self.month - 1]
 
   @classmethod
   def from_dizhi(cls, year: int, dizhi: Dizhi) -> 'GanzhiYearMonth':
@@ -141,7 +134,7 @@ class GanzhiYearMonth:
       raise TypeError(f'Expected Jieqi, got {type(jie.jieqi)}')
     if not isinstance(jie.moment, datetime):
       raise TypeError(f'Expected datetime, got {type(jie.moment)}')
-    jies = Jieqi.as_list(ganzhi_year=True)[::2]
+    jies = Jieqi.jies()
     if jie.jieqi not in jies:
       raise ValueError(f'Unsupported opening Jie: {jie.jieqi}')
     return cls(jie.moment.year - (jie.jieqi is Jieqi.小寒), jies.index(jie.jieqi) + 1)

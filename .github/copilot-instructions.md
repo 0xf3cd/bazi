@@ -1,11 +1,15 @@
-# Copilot Instructions — bazi
+# Copilot 指令 — bazi
 
-八字排盘引擎 (Bazi/Four Pillars library). Conventions live in `AGENTS.md` and `README.md` §Instructions — read them first.
+八字排盘 Python 库。先读 AGENTS.md 与 README.md §开发。
 
-## Review focus
+## 审阅重点
 
-- **This repo is partly a knowledge base**: rules (刑冲破害 / 合会 / 神煞 / 十神) encode domain knowledge, and 流派 (schools) legitimately disagree. **Never silently collapse competing rules into one "correct" answer** — variants must be preserved as alternatives. Any rule change without a stated 命理 basis or source attribution in a comment/docstring is high-severity.
-- **Domain changes need provenance**: new or modified rules should cite their 流派/source; treat a missing citation like a missing test.
-- **File header**: every source file opens with the verbatim copyright header (`# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`); new files use the current year, existing years never change.
-- Python ≥ 3.11; installable `bazi` package with modular imports, no root-class facade or installed CLI. `pyproject.toml` is packaging-only; preserve lazy imports and the explicit runtime-data roster.
-- Style: imitate neighbouring modules; 2-space indent.
+- 本仓也是知识库：刑冲破害、合会、神煞、十神规则承载命理知识。流派有分歧时保留各读法，
+  不静默合成一个“正确”答案。规则变更缺少命理依据或注释／docstring 出处，按高严重度处理。
+- 新增或修改规则须注明流派／来源；缺出处与缺测试同样需要修复。
+- 源文件须有原样版权头 `# Copyright (C) <year> Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>`，
+  新文件用当年，既有年份不改；豁免按 AGENTS.md。
+- Python ≥ 3.11，bazi 安装包从定义模块导入，没有根类入口或安装 CLI。
+  pyproject.toml 只管打包，保留延迟导入及显式运行时数据清单。
+- 模仿相邻模块，缩进两空格。API 说明与源码叙述中文优先；tests 仍英文叙述夹中文实体。
+  引文、数据、错误消息、JSON keys、CLI flags 与结构标签保留原文或原拼写。

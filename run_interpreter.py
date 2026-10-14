@@ -30,7 +30,7 @@ def interpret(
   include_reference_only: bool = False,
   show_sources: bool = False,
 ) -> str:
-  s: str = '' # The string to return.
+  s: str = ''
   knowledge = KnowledgeBase.load()
   j: BaziJson.BaziChartJsonDict = chart.json
 
@@ -44,9 +44,9 @@ def interpret(
   def __gen_pillar_str(key: str) -> str:
     assert key in ['year', 'month', 'day', 'hour']
     __s: str = ''
-    __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，" # type: ignore # mypy complains.
-    __s += '日元' if key == 'day' else j['tiangan_shishen'][key] # type: ignore # mypy complains.
-    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishen'][key]}）。" # type: ignore # mypy complains.
+    __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，" # type: ignore # mypy 要求 TypedDict 使用字面键。
+    __s += '日元' if key == 'day' else j['tiangan_shishen'][key] # type: ignore # mypy 要求 TypedDict 使用字面键。
+    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishen'][key]}）。" # type: ignore # mypy 要求 TypedDict 使用字面键。
     return __s
   
   s += '\n' + '-' * 60 + '\n'
@@ -261,34 +261,34 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description='Display charts, match scoped premises, or query, validate and export interpretation knowledge.')
-  parser.add_argument('--birth-time', help='Fixed civil time; aware input requires longitude, e.g. "2024-01-01T12:00:00-05:00".')
-  parser.add_argument('--gender', choices=('male', 'female'), help='Required with --birth-time.')
-  parser.add_argument('--longitude', type=float, help='East-positive degrees; requires aware fixed input and hour/minute precision.')
-  parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='Birth precision (default: day).')
-  parser.add_argument('--civil-timezone', type=_civil_timezone, help='Explicit birth-region IANA zone (Pacific/Kiritimati) or fixed offset (+14:00); use --civil-timezone=-05:00 for negative offsets; requires longitude.')
-  parser.add_argument('--export-chart-json', type=Path, help='Export the fixed chart as reloadable JSON.')
-  parser.add_argument('--seed', type=int, help='Seed for reproducible random examples.')
-  parser.add_argument('--count', type=int, help='Number of random charts (default: 1).')
-  parser.add_argument('--include-reference-only', action='store_true', help='Include reference text; matching mode also displays its premise verdict.')
-  parser.add_argument('--show-sources', action='store_true', help='Show claim IDs, attribution and source witnesses (always included in knowledge queries and matching).')
-  parser.add_argument('--output-dir', type=Path, help='Export the displayed charts below this directory.')
-  parser.add_argument('--export-knowledge-base', action='store_true', help='Export descriptions for every Tiangan and Shishen.')
-  parser.add_argument('--query-knowledge', action='store_true', help='Query knowledge without creating a chart.')
-  parser.add_argument('--validate-knowledge', action='store_true', help='Validate the whole knowledge source.')
-  parser.add_argument('--export-knowledge-json', type=Path, help='Export reloadable knowledge JSON; with a query, export its selection.')
-  parser.add_argument('--knowledge-source', type=Path, help='Use an edited JSON source for knowledge queries, validation, export or context matching.')
-  parser.add_argument('--object', dest='object_id', help='Discussion object ID, including any bound role.')
-  parser.add_argument('--context', dest='context_id', help='Manually supplied lookup context ID, not a chart verdict.')
-  parser.add_argument('--topic', help='Knowledge topic.')
-  parser.add_argument('--source', dest='source_id', help='Source-witness ID.')
-  parser.add_argument('--viewpoint', help='Interpretation viewpoint.')
-  parser.add_argument('--applicability', choices=get_args(Applicability), help='Premise organization state.')
-  parser.add_argument('--time-scope', help='Time scope recorded by a lookup context.')
-  parser.add_argument('--match-context', help='Registered criterion ID; evaluate an explicitly scoped fixed chart.')
-  parser.add_argument('--observation-scope', choices=get_args(ObservationScope), help='Explicit natal or natal-plus-one-LIUNIAN scope; all hidden stems are included.')
-  parser.add_argument('--ganzhi-year', type=int, help='Ganzhi-year query coordinate for LIUNIAN, not a Gregorian timestamp.')
-  parser.add_argument('--export-context-json', type=Path, help='Export the matching record, evidence and complete knowledge snapshot.')
+  parser = argparse.ArgumentParser(description='展示命盘、判别显式范围前提，或查询、校验、导出解释知识。')
+  parser.add_argument('--birth-time', help='固定民用时刻；带时区输入须给经度，如 "2024-01-01T12:00:00-05:00"。')
+  parser.add_argument('--gender', choices=('male', 'female'), help='与 --birth-time 一起必填。')
+  parser.add_argument('--longitude', type=float, help='东经为正的角度；须用带时区固定输入及 hour/minute 精度。')
+  parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='出生精度，默认 day。')
+  parser.add_argument('--civil-timezone', type=_civil_timezone, help='显式出生地区 IANA 时区（Pacific/Kiritimati）或固定偏移（+14:00）；负偏移用 --civil-timezone=-05:00；须给经度。')
+  parser.add_argument('--export-chart-json', type=Path, help='将固定命盘导出为可重载 JSON。')
+  parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
+  parser.add_argument('--count', type=int, help='随机命盘数量，默认 1。')
+  parser.add_argument('--include-reference-only', action='store_true', help='包含参考文字；匹配模式同时展示其前提判别。')
+  parser.add_argument('--show-sources', action='store_true', help='展示条目 ID、署名及来源见证；知识查询与匹配始终展示。')
+  parser.add_argument('--output-dir', type=Path, help='在此目录下导出已展示命盘。')
+  parser.add_argument('--export-knowledge-base', action='store_true', help='导出全部天干及十神说明文字。')
+  parser.add_argument('--query-knowledge', action='store_true', help='查询知识，不创建命盘。')
+  parser.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
+  parser.add_argument('--export-knowledge-json', type=Path, help='导出可重载知识 JSON；查询时只导出所选条目。')
+  parser.add_argument('--knowledge-source', type=Path, help='为知识查询、校验、导出或前提匹配提供自定义 JSON 源。')
+  parser.add_argument('--object', dest='object_id', help='讨论对象 ID，包含所有绑定角色。')
+  parser.add_argument('--context', dest='context_id', help='人工给定的查阅情境 ID，不表示命盘前提判别。')
+  parser.add_argument('--topic', help='知识主题。')
+  parser.add_argument('--source', dest='source_id', help='来源见证 ID。')
+  parser.add_argument('--viewpoint', help='解释所用观点。')
+  parser.add_argument('--applicability', choices=get_args(Applicability), help='前提整理状态。')
+  parser.add_argument('--time-scope', help='查阅情境所记录的时间范围。')
+  parser.add_argument('--match-context', help='已注册判据 ID；对显式范围内的固定命盘求值。')
+  parser.add_argument('--observation-scope', choices=get_args(ObservationScope), help='显式选择原局或原局加单流年，均包含全部实际藏干。')
+  parser.add_argument('--ganzhi-year', type=int, help='流年的干支年查询坐标，不是公历时刻。')
+  parser.add_argument('--export-context-json', type=Path, help='导出匹配记录、证据及完整知识快照。')
   args = parser.parse_args(argv)
 
   if args.match_context is not None:
