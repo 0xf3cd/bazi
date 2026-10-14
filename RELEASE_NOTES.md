@@ -5,20 +5,25 @@
 - 自有 Markdown、API 说明、源码叙述注释与脚本 help 改为中文优先，保留原引文和技术拼写。
   README 按功能入口组织，每个 Python 示例可独立运行。
 - `BaziSchool` 重排位置参数及 JSON 输出键序，将关系定义和独立羊刃／飞刃定义放在前面；
-  调用方改用关键字参数。键名、默认值与按键名恢复完整档案的契约保留。
-- 删除 `Shishen.str_mapping_table()`。
+  顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、`yangren_def`、`feiren_def`，
+  其后为神煞锚及相邻定义。调用方改用关键字参数。JSON 键名、默认值与读法不变；
+  `from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
+- 删除 `Shishen.str_mapping_table()`。`from_str` 仍接受完整名称及十个单字简称，`abbr` 返回简称；
+  需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
 - 新增 `Jieqi.jies()` 十二节元组入口。
 
 - 地支批量查询统一接收规则层的冻结 `DizhiRelationDefinitions`；删除查询入口的独立定义
-  参数，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
+  参数 `anhe_def`、`xing_def`、`gong_def`，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
   `BaziSchool.relation_definitions`。干支发现可用 `relations` 选择求值范围。
 - `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
   进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
 
 - `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
   构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
-  属性及记录字段删除。`ChartOccurrence` 构造移除 `index` 位置字段；`index` 由柱位派生，
-  不进入记录，展示只保留柱位。新记录格式为版本2，版本1明确拒绝；知识内容和顺序仍参与结果值比较与 hash。
+  属性及记录字段删除。原完整知识 JSON 可先交给 `KnowledgeBase.from_json`。
+  `ChartOccurrence` 构造移除 `index` 位置字段，第三个位置参数变为 `ganzhi`，建议使用具名参数；
+  `index` 由柱位派生，不进入记录，展示只保留柱位。新记录格式为版本2，版本1明确拒绝，
+  旧记录须以原出生输入及配置重新求值；知识内容和顺序仍参与结果值比较与 hash。
 
 - DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
   旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。

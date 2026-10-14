@@ -5,7 +5,7 @@
 #
 # 本模块为重建 hko_data/data/ 的离线工具，运行时解码器只读已提交数据，无需本模块。
 # requests 不在 Requirements.txt 中，需要时手动 pip install requests。
-# 只从源码检出运行，不从安装包运行：
+# 在源码目录运行，不从安装包运行：
 #   python -m bazi.calendar.hko_data.encoder
 
 import re

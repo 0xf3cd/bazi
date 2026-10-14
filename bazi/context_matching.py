@@ -104,6 +104,7 @@ class ContextProfile:
 
   Note:
   - 年份是干支年标签，不是公历时刻；缺失年份返回 UNKNOWN。
+  - natal 不接年份；natal_and_liunian 只加入单个 LIUNIAN。年份须为确切 int，拒绝 bool 与子类。
   '''
 
   observation_scope: ObservationScope
@@ -230,7 +231,12 @@ def _validate_input(text: str) -> None:
 
 @dataclass(frozen=True)
 class ContextResult:
-  '''不可变观察记录，复用已验证知识对象；导出时保留完整知识快照。'''
+  '''保存前提判别、天干观察及条目匹配的不可变结果。
+
+  复用传入的已验证 KnowledgeBase，渲染不重建知识对象。JSON 保留判据、profile、
+  完整出生／性别／配置身份、年份／kind、全部观察及输入知识快照。
+  地点输入使用与命盘 JSON 相同的五个时间字段，保留固定民用基准及未截断真太阳钟。
+  '''
 
   profile:        ContextProfile
   criterion:      CriterionResult
@@ -271,6 +277,10 @@ class ContextResult:
   def from_json(cls, text: str) -> 'ContextResult':
     '''恢复版本2记录，不重算或认证判别、证据、输入与条目绑定间的一致性。
     版本1记录明确拒绝；需要新格式时应由原输入与配置重新求值。
+
+    Note:
+    - 校验记录结构及各值类型，不交叉验证所存判别、观察与输入是否一致。
+    - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
     '''
     _typed(text, str)
     data = _mapping(
@@ -345,11 +355,22 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''在显式范围内求值已注册判据，再联接按输出选项选择的条目。
+  '''检查选定范围是否满足已注册判据，返回判别、观察及所选条目的匹配结果。
 
   Note:
   - 仅定义两个原作官杀判据；缺失范围或未定义判据返回 UNKNOWN，不从文本推导新判据。
   - 参考条目须显式设置 include_reference_only=True；未传 knowledge 时每次独立加载默认语料。
+  - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
+    不观察日主明干，但等于日主的藏干仍分类为比肩；百分比不作权重，重复位置保留。
+    不另加力量／次数阈值、相邻、去留或有效制化条件。
+  - 范围完整性优先于女命条件：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
+    SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
+  - 已定义官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
+    前提、情境、来源或输出政策，该条返回 binding_unrecognized。等值的导出重载条目仍可匹配。
+    未选择参考条目或缺绑定条目时不生成其 EntryMatch；未定义判据的同 ID 条目显示 predicate_undefined。
+    前提满足不授予默认输出资格。
+
+  Return: (ContextResult) 判据结果、逐柱观察、条目匹配，以及输入与知识快照。
   '''
   _typed(chart, BaziChart)
   _typed(profile, ContextProfile)

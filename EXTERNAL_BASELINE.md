@@ -3,7 +3,7 @@
 [基线数据](tests/integration/external_baseline.json) 保存十六个合成输入、十二种具名 bazi 配置的
 结果，以及三个外部排盘器的观测，用于配置比较与回归。一个外部结果可匹配多个配置，也可没有匹配。
 
-从源码检出离线运行：
+在源码目录离线运行：
 
 ```sh
 python -m pytest tests/integration/test_external_baseline.py -v
@@ -34,7 +34,7 @@ case ID 标识输入，不标识真人；`group` 为采样类别。
 网页结果是这些配置在各自采集日的观测，不是固定服务版本。采集工具、完整四十输入矩阵与原始响应另行保存，
 本仓只含已准入子集与离线测试。本文为仓内证据说明，不是安装包接口。
 
-顶层 `reference` 标识当时生成 bazi 快照的提交，不表示当前检出是否最新；
+顶层 `reference` 标识当时生成 bazi 快照的提交，不表示当前源码是否最新；
 后续代码即使重现相同快照，也不改变该身份。
 `runtime_tree` 为该提交 `bazi/` 子树的标准 Git tree ID，包括文件、权限模式与嵌套树；
 在含该提交的克隆中用 `git rev-parse <reference.commit>:bazi` 复算。

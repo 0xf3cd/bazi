@@ -517,6 +517,8 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     - 需要具体刑类型及方向时用 xing。
   - 拱合、拱会依赖柱位与天干；本纯地支入口对两者抛 `ValueError`，请用 `search_ganzhis`。
   - 暗合查询的表由 `definitions.anhe_def` 选择，默认 `DizhiRules.AnheDef.NORMAL_EXTENDED`（最宽定义）。
+  - 结果顺序：映射表按定义序，集合表按组合成员枚举序；刑按规则表首次组合出现序，
+    生克先按施方、受方枚举序排列，再折为保序去重的无向组合。
 
   Args:
   - dizhis: (Sequence[Dizhi]) 待查地支；重数参与自刑判断。
@@ -671,6 +673,9 @@ def search_ganzhis(ganzhis: Sequence[Ganzhi], relation: DizhiRelation, *,
   拱合、拱会在本入口应用来源档案，只查相邻具体出现；所拱之支已在输入中出现时不再论暗拱。
   返回组合只含两个实支；虚支恢复契约见 `DizhiRelationDiscovery`。
 
+  非拱组合先沿 search 的地支组合序，再按输入序号展开同值的多处出现；
+  拱局按相邻柱位对的顺序返回。
+
   Args:
   - ganzhis: (Sequence[Ganzhi]) 有序干支序列；地支重数参与自刑判断。
   - relation: (DizhiRelation) 待查关系。
@@ -760,6 +765,7 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
   具体出现序号属于概念上的 `ganzhis1 + ganzhis2`；第二组从 `len(ganzhis1)` 起算。
   跨组拱局按岁运作用口径直接成为候选；单侧内部的拱局不进跨组结果。
   所拱之支已在任一组出现时不再论暗拱；组合只含真实参与者，保留完整干支与位置。
+  拱局组合按左侧柱位优先的两侧柱位对顺序返回；非拱组合沿 search_ganzhis 的查询顺序。
 
   Note:
   - 两组输入都须为 `Sequence`，在遍历任一组前检查；空序列合法。
