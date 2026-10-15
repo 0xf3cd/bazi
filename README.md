@@ -297,7 +297,7 @@ print(result.render())
 ```
 
 缺查询坐标、入口不可查询或所求种类部分缺失时返回 `UNKNOWN`，已取得岁运的证据照常保存。
-`--match-context` 的 CLI 增补 `--transit-entry`／`--gz-month`／`--solar-date`／`--solar-moment`／
+`--match-context` 另有 `--transit-entry`／`--gz-month`／`--solar-date`／`--solar-moment`／
 `--transit-kinds`；`--ganzhi-year` 同时是官杀流年坐标与 `at_year`／`at_month` 的年份坐标。
 婚恋判据关联的条文只是条件参考，不表示结构已命中或完整前提已满足；男命语境条文对女命
 不自动关联，静态知识查询不受限。

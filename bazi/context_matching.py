@@ -819,7 +819,7 @@ class ContextResult:
             ))
       lines.append(f'证据：{scope_name}；' + ('；'.join(chunks) if chunks else '无'))
 
-    lines.append('前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。')
+    lines.append('结构判别不表示原文完整条件已满足，也不表示现实事件成立。')
     header = '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）'
     for related in self.related:
       if related.recognized:
@@ -880,7 +880,7 @@ def evaluate_context(
   '''检查选定范围是否满足已注册判据，返回判别、观察、证据及条目的匹配结果。
 
   Note:
-  - 官杀判据走 `ContextProfile`，行为与既有版本一致；婚恋判据走 `RelationshipProfile`，
+  - 官杀判据走 `ContextProfile`；婚恋判据走 `RelationshipProfile`，
     按 `spouse_evidence` 计算结构证据。判据与 profile 种类不符抛 `ValueError`。
   - 仅定义两个原作官杀判据与两条婚恋结构判据；所需流年缺失或不可查询、判据未定义时返回
     UNKNOWN，不从文本推导新判据。「有用／喜忌／成格」等完整理论条件留在知识文本，不为它们

@@ -153,8 +153,7 @@ def _peiou_xing_target(day_master: Tiangan, gender: BaziGender, definition: Peio
   - 阴阳干读法（《三命通会·论六亲》，单源类推）：男取十神属正财、偏财且为阴干者，
     女取十神属正官、七杀且为阳干者。
 
-  目标恒不等于日主：财／官杀与日主五行不同，比肩不在候选内；
-  两读在个别格（如乙男取己、甲女取庚）可同阴阳，五行关系已保证目标不同。
+  目标恒不等于日主：财／官杀与日主五行不同，比肩不在候选内。
   '''
   assert isinstance(day_master, Tiangan)
   assert isinstance(gender, BaziGender)

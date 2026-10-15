@@ -1002,7 +1002,7 @@ def test_knowledge_export_io_error_uses_cli_error_exit(tmp_path: Path) -> None:
 
 
 # ----------------------------------------------------------------------------------
-# #233 婚恋判据的 CLI：守卫矩阵与合法组合。
+# #233 婚恋判据 CLI: guard matrix and legal combinations.
 
 PALACE = 'editorial.spouse_palace_xingchong.v1'
 TOUGAN = 'editorial.spouse_star_tougan.v1'
@@ -1173,7 +1173,7 @@ def test_matching_cli_legal_relationship_combinations(tmp_path: Path, entry_args
   assert result.returncode == 0, result.stderr
   assert '结构前提：' in result.stdout and '证据：原局内部；' in result.stdout
   assert '证据：原局×岁运；' in result.stdout and '证据：岁运内部；' in result.stdout
-  # at_moment 需要 HOUR／MINUTE 原盘；DAY 精度下入口不可用是 EXIT 0 的 UNKNOWN，不是错误。
+  # at_moment requires a HOUR／MINUTE natal chart; with DAY precision the unavailable entry is an EXIT 0 UNKNOWN, not an error.
   if entry_args[1] == 'at_moment':
     assert '结构前提：UNKNOWN；transit_unavailable' in result.stdout
   assert ('关联参考' in result.stdout) == bool(flag)

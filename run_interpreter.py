@@ -372,8 +372,8 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--transit-entry', choices=get_args(TransitEntry), help='婚恋判据的显式岁运查询入口；与坐标字段共同构成查询坐标。')
   parser.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名），配 at_month 入口与 --ganzhi-year。')
   parser.add_argument('--solar-date', type=_solar_date, help='东八区无时区公历日期坐标（如 2024-04-10），配 at_date 入口。')
-  parser.add_argument('--solar-moment', type=_solar_moment, help='东八区无时区时刻坐标（如 2024-04-10T12:00:00，可含微秒），配 at_moment 入口；要求 HOUR／MINUTE 原盘。')
-  parser.add_argument('--transit-kinds', help='逗号分隔的岁运种类值（xiaoyun,dayun,liunian,liuyue,liuri）；查重后按固定序规范化。')
+  parser.add_argument('--solar-moment', type=_solar_moment, help='东八区无时区时刻坐标（如 2024-04-10T12:00:00，可含微秒），配 at_moment 入口；要求 HOUR／MINUTE 原盘，DAY 精度返回 UNKNOWN。')
+  parser.add_argument('--transit-kinds', help='逗号分隔的岁运种类值（xiaoyun,dayun,liunian,liuyue,liuri）；重复或未知值报错，其余按固定序规范化。')
   parser.add_argument('--export-context-json', type=Path, help='导出匹配记录、证据及完整知识快照。')
   args = parser.parse_args(argv)
 

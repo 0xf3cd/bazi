@@ -51,7 +51,7 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
               'output': claim.output,
             },
           })
-  # 投影逻辑不动：期望值仅按 45 个允许 ID 的 attribution 精确允许表反向规范化。
+  # Projection logic untouched: expected rows are re-normalized only by the exact 45-ID attribution allowance table.
   expected_rows = [
     {**row, 'claim': {**row['claim'], 'attribution': ALLOWED_CHANGES[row['claim']['claim_id']]['attribution']}}
     if row['claim']['claim_id'] in ALLOWED_CHANGES and 'attribution' in ALLOWED_CHANGES[row['claim']['claim_id']]
@@ -72,7 +72,7 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
 
 
 def test_attribution_allowance_is_exactly_the_relationship_field_entries() -> None:
-  # 双向断言：允许表的 attribution 集合恰为 legacy.field=='relationship' 的 45 个 ID。
+  # Two-way assertion: the allowance table's attribution set is exactly the 45 IDs with legacy.field=='relationship'.
   attribution_allowed = {
     claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
   }
@@ -90,7 +90,7 @@ def test_attribution_allowance_is_exactly_the_relationship_field_entries() -> No
     entry = KNOWLEDGE_BASE.entry(claim_id)
     for field, expected in changes.items():
       actual = getattr(entry, field)
-      # limits 在 JSON 中是列表、条目上是元组；逐字相等。
+      # limits are a list in JSON and a tuple on the entry; compared verbatim.
       assert (list(actual) if isinstance(actual, tuple) else actual) == expected, (claim_id, field)
 
 
@@ -160,7 +160,7 @@ def test_premises_are_organized_without_inventing_rules() -> None:
     if entry.legacy is None:
       assert entry.output == 'reference_only'
       if entry.claim_id in new_relationship_ids:
-        # 本批新增的婚恋条目挂古籍见证，不再是仓内整理署名。
+        # 婚恋条目 have source_state 'witnessed' (古籍见证).
         assert entry.source_state == 'witnessed'
       else:
         assert entry.source_state == 'repository_attributed'
@@ -523,7 +523,7 @@ def test_witnessed_zhushi_is_a_distinct_text_layer() -> None:
   assert KnowledgeBase.from_json(k.export_json()).sources == k.sources
 
 
-# 本批新增的婚恋条目与注册表；语料事实钉在这里，保护断言见下两条。
+# 婚恋条目 and their registry; corpus facts are pinned here, with protection asserts in the two tests below.
 _NEW_RELATIONSHIP_IDS: tuple[str, ...] = (
   'editorial.liuqin.spouse_star_yinyanggan.v1',
   'editorial.liuqin.spouse_star_zhengpian.v1',
@@ -542,18 +542,18 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 def test_relationship_additions_registry_counts_and_default_surface() -> None:
   k = KNOWLEDGE_BASE
   assert len(k.entries) == 302 and len(k.sources) == 13 and len(k.contexts) == 10 and len(k.objects) == 31
-  assert len(k.query()) == 19 # 新条目全部 reference_only，默认输出面不变。
+  assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
     assert entry.legacy is None and entry.output == 'reference_only'
     assert entry.source_state == 'witnessed'
-  # 星坐地与两透两条件未核条目不挂判据、不挂情境（unresolved，premise 为空）。
+  # The 星坐地 and 两透 entries with unverified conditions bind no criterion and no context (unresolved, empty premise).
   for claim_id in ('editorial.tanyuan.wife_star_liangtou.v1', 'editorial.liuqin.sanming_qiqie_zuodi.v1'):
     entry = k.entry(claim_id)
     assert entry.applicability == 'unresolved' and entry.premise == '' and entry.contexts == ()
   for claim_id in _NEW_RELATIONSHIP_IDS[:5]:
     assert k.entry(claim_id).applicability == 'described' and k.entry(claim_id).premise
-  # 新查询面：两个对象与一个情境；旧对象／情境／来源的静态查询面不变由其余断言与指纹承担。
+  # New query surface: two objects and one context; the unchanged static query surface of old objects, contexts, and sources is covered by the remaining asserts and fingerprints.
   assert _ids(k.query(object_id='concept.peiou_xing', include_reference_only=True)) == (
     'editorial.liuqin.spouse_star_yinyanggan.v1', 'editorial.liuqin.spouse_star_zhengpian.v1',
     'editorial.tanyuan.wife_star_gantou.v1', 'editorial.tanyuan.wife_star_liangtou.v1',
@@ -566,7 +566,7 @@ def test_relationship_additions_registry_counts_and_default_surface() -> None:
     'editorial.liuqin.spouse_star_yinyanggan.v1', 'editorial.liuqin.spouse_star_zhengpian.v1',
   )
   assert len(k.query(topic='取象', include_reference_only=True)) == 193
-  # 新来源的 excerpt 是原样短摘，逐字出现在以其为引文依据的条目 text 里。
+  # New-source excerpts are verbatim short quotes, appearing word for word in the entry texts that cite them.
   for source_id in ('sanming_liuqin', 'yuanhai_liuqin_charts', 'yuanhai_qiqie_note', 'tanyuan_qizi'):
     source = k.sources[source_id]
     citing = [entry for entry in k.entries.values() if source_id in entry.sources]
@@ -574,7 +574,7 @@ def test_relationship_additions_registry_counts_and_default_surface() -> None:
 
 
 def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
-  # 语料标记与门槛表互为对照：含标记的条目恰是 _RELATED_GENDERS 的键，标记不进 text／premise。
+  # Corpus markers and the gate table mirror each other: marked entries are exactly the keys of _RELATED_GENDERS, and markers stay out of text／premise.
   from bazi.context_matching import _RELATED_GENDERS
   marker = '女命查询不关联本条，静态查阅不受限。'
   marked = {
@@ -590,8 +590,9 @@ def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
 
 
 def test_normalized_legacy_projection_fingerprint() -> None:
-  # 全 291 旧条目的规范化投影：去 45 个允许 ID 的 attribution、49 个允许 ID 的 limits，
-  # 其余字段全入。指纹在改前改后语料上相同，不是新 hash 消除保护。
+  # Normalized projection of all 291 old entries: attribution of the 45 allowed IDs and limits of the
+  # 49 allowed IDs stripped, all other fields included. Fingerprints are identical on the pre- and
+  # post-change corpora; this is not new-hash removal of protection.
   import hashlib
   from dataclasses import asdict as _asdict
   attribution_allowed = {
@@ -612,8 +613,9 @@ def test_normalized_legacy_projection_fingerprint() -> None:
     json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
   ).hexdigest()
   assert digest == 'b84a66ca805566abeab5bbd23c67cd665e84caa85bcadd365bd2b1ee887417c5'
-  # 既有非空 limits 的条目（旧语料 6 条中的 2 条 legacy；另 4 条仓内条目由
-  # test_reference_samples_preserve_text_and_complete_limits 逐字钉住）不由允许表放宽。
+  # Entries with pre-existing non-empty limits (2 of the 6 legacy entries in the old corpus; the other
+  # 4 in-repo entries are pinned verbatim by test_reference_samples_preserve_text_and_complete_limits)
+  # are not loosened by the allowance table.
   unchanged_nonempty = {
     entry.claim_id: entry.limits for entry in KNOWLEDGE_BASE.entries.values()
     if entry.legacy is not None and entry.limits and entry.claim_id not in limits_allowed

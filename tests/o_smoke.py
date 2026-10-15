@@ -194,7 +194,7 @@ def main() -> int:
      lambda: RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.LIUNIAN))),
     ('RelationshipProfile rejects kinds beyond the entry', ValueError,
      lambda: RelationshipProfile('natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUYUE,))),
-    ('RelationshipProfile rejects profile kind mismatch', ValueError,
+    ('evaluate_context rejects profile kind mismatch', ValueError,
      lambda: evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', profile=ContextProfile('natal'))),
     ('Relationship record rejects mixed context profile', ValueError,
      lambda: replace(relationship_result, profile=ContextProfile('natal'))),

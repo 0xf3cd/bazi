@@ -2059,9 +2059,9 @@ def test_guoyin_definition_at_birth_and_transits(
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['guoyin'] == expected
 
 # ----------------------------------------------------------------------------------
-# #233 婚恋结构证据：spouse_evidence 的序列契约、三类范围与流派配置。
-# 原局侧一律用可复建的真实出生输入；岁运侧是显式传入的 TransitSet（函数声明的输入），
-# 岁运侧是显式传入的 TransitSet（函数声明的输入），合成例不与真实命盘查询混用。
+# Spouse-structure evidence (issue #233): the index contract, three scopes, and school
+# configuration of spouse_evidence. Natal side uses reproducible real birth inputs; the
+# transit side is an explicit TransitSet (the declared input), synthetic cases never mixed with real queries.
 
 from dataclasses import replace
 from typing import Any
@@ -2078,8 +2078,8 @@ def _at(combo: frozenset) -> set[int]:
 
 
 def test_stem_occurrences_expand_value_combos_per_position() -> None:
-  # 值级 discover 按值去重；具体出现展开保留身份。甲己丙己的合是 (0)(1) 与 (0)(3)，
-  # 换位成甲丙己己后是 (0)(2) 与 (0)(3)，值级结果对两个顺序相同。
+  # Value-level discover dedups by value; occurrence-level expansion keeps identity: 甲己丙己
+  # 合 is (0)(1) and (0)(3), as 甲丙己己 (0)(2) and (0)(3); the value-level result is the same.
   left = [Ganzhi.from_str(value) for value in ('甲子', '己丑', '丙寅', '己卯')]
   right = [Ganzhi.from_str(value) for value in ('甲子', '丙寅', '己丑', '己卯')]
   left_discovery = _discover_stem_occurrences(left)
@@ -2088,17 +2088,17 @@ def test_stem_occurrences_expand_value_combos_per_position() -> None:
   assert [_at(combo) for combo in right_discovery[TianganRelation.合]] == [{0, 2}, {0, 3}]
   assert tiangan_utils.discover([gz.tiangan for gz in left]) == tiangan_utils.discover([gz.tiangan for gz in right])
   assert left_discovery != right_discovery
-  # 日主明干（此例 0 位）作为真实参与者可以出现；组合不含方向。
+  # The day master's visible stem (position 0 here) may appear as a real participant; combos carry no direction.
   for discovery in (left_discovery, right_discovery):
     assert all(0 in _at(combo) for combo in discovery[TianganRelation.合])
 
-  # 藏干不进天干关系组合：子藏癸、辰藏戊，若藏干入局则子位癸与辰位明干戊会成合。
+  # Hidden stems never enter Tiangan combos: 子 hides 癸, 辰 hides 戊, else 癸 at 子 and visible 戊 at 辰 would 合.
   hidden_carrier = [Ganzhi.from_str('甲子'), Ganzhi.from_str('戊辰')]
   assert TianganRelation.合 not in _discover_stem_occurrences(hidden_carrier)
 
 
 def test_evidence_transit_internal_relations_use_shifted_indexes() -> None:
-  # 丙日男命（2000-01-09T12:00，己卯丁丑丙寅甲午）：目标干辛、目标支酉。
+  # A 丙 day-master male chart (2000-01-09T12:00, 己卯丁丑丙寅甲午): target stem 辛, target branch 酉.
   chart = BaziChart(Bazi.create(datetime(2000, 1, 9, 12), 'male'))
   transits = TransitSet(
     xiaoyun=Ganzhi.from_str('丙戌'),
@@ -2111,35 +2111,35 @@ def test_evidence_transit_internal_relations_use_shifted_indexes() -> None:
   assert evidence.star_target.dizhi == (Dizhi.酉,)
   assert evidence.transits is transits
 
-  # 岁运内部三会申酉戌：序号 4、5、6。
+  # Transit-internal 三会 申酉戌: indexes 4, 5, 6.
   assert [_at(combo) for combo in evidence.star_relations[DizhiRelation.三会]] == [{4, 5, 6}]
-  # 它不含日柱，不进宫证据；含酉（配偶星支），进星证据。
+  # It has no day pillar, so no house evidence; it has 酉 (the spouse-star branch), so it enters star evidence.
   assert DizhiRelation.三会 not in evidence.house_relations
-  # 宫证据的每个组合都含日柱这一具体出现（序号 2）。
+  # Every house-evidence combo contains the day pillar as a specific occurrence (index 2).
   for combos in evidence.house_relations.values():
     assert all(2 in _at(combo) for combo in combos)
-  # 天干证据的组合都含目标干；本盘明干无辛，键为空。
+  # Every stem-evidence combo contains the target stem; this chart has no visible 辛, so the key is empty.
   assert evidence.stem_relations == StemRelationDiscovery({})
 
-  # 单流年内部不成关系，不能用它验证编号；至少两个岁运的内部成关系见上。
+  # One liunian forms no internal relation and cannot verify numbering; internal relations need two or more transits (above).
   single = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('甲辰')))
   assert single.transits is not None and single.transits.json == {'liunian': '甲辰'}
   for discovery in (single.house_relations, single.star_relations):
     for combos in discovery.values():
       for combo in combos:
-        # 单流年不可能有全部序号 ≥ 4 的组合；跨组组合（如 1、4）可以存在。
+        # A single-liunian combo cannot have all indexes >= 4; cross-group combos (like 1, 4) may exist.
         assert not all(index >= 4 for index in _at(combo))
 
 
 def test_evidence_gong_scopes_are_not_suppressed_by_either_side() -> None:
-  # 原局甲申、甲戌拱酉而岁运带来酉：原局内部拱会 (2,3) 照记，不被跨侧填实抑制。
+  # Natal 甲申、甲戌 拱 酉 with the transit bringing 酉: the natal-internal 拱会 (2,3) stays, not suppressed by the fill-in.
   natal_gong = BaziChart(Bazi.create(datetime(1998, 8, 5, 20), 'male'))
   assert tuple(map(str, natal_gong.bazi.pillars)) == ('戊寅', '己未', '甲申', '甲戌')
   filled = spouse_evidence(natal_gong, TransitSet(liunian=Ganzhi.from_str('己酉')))
   assert [_at(combo) for combo in filled.house_relations[DizhiRelation.拱会]] == [{2, 3}]
 
-  # 对称侧：岁运内部甲申、甲戌拱酉而原局含酉，岁运内部拱会 (4,5) 照记。
-  # 女命癸日目标干戊、目标支辰戌；戌是实支参与者，拱会进星证据。
+  # Mirror: transit-internal 甲申、甲戌 拱 酉 while the natal has 酉, so transit-internal 拱会 (4,5) stays.
+  # 癸 day-master female: target stem 戊, target branches 辰戌; 戌 is a real branch participant, so the 拱会 enters star evidence.
   transit_gong = BaziChart(Bazi.create(datetime(1969, 9, 25, 6), 'female'))
   assert tuple(map(str, transit_gong.bazi.pillars)) == ('己酉', '癸酉', '癸卯', '乙卯')
   mirrored = spouse_evidence(transit_gong, TransitSet(
@@ -2151,9 +2151,9 @@ def test_evidence_gong_scopes_are_not_suppressed_by_either_side() -> None:
 
 
 def test_evidence_reads_school_definitions_in_all_calls() -> None:
-  # 刑受 xing_def 影响：同一真实盘（庚辰辛巳丙寅甲午），LOOSE 下日柱（寅）与巳成刑，STRICT 下不成；
-  # 拱局受 gong_def 影响：戊寅己未甲申甲戌在 SAME_STEM 两档有原局内部拱会，
-  # TRANSFORMING_NARROW（无金干）与 LU_NARROW（禄字档无拱会）无。三类调用都传了本盘定义。
+  # 刑 follows xing_def: on the same real chart (庚辰辛巳丙寅甲午), LOOSE forms a 刑 between day pillar (寅) and 巳,
+  # STRICT does not. 拱 follows gong_def: 戊寅己未甲申甲戌 has natal-internal 拱会 under both SAME_STEM levels,
+  # none under TRANSFORMING_NARROW (no metal stem) or LU_NARROW (禄 level has no 拱会); all four evaluations pass this chart's definitions.
   for xing_def, expected in (
     (DizhiRules.XingDef.LOOSE, [{1, 2}]),
     (DizhiRules.XingDef.STRICT, []),
@@ -2166,7 +2166,7 @@ def test_evidence_reads_school_definitions_in_all_calls() -> None:
     evidence = spouse_evidence(chart, None)
     assert [{o.index for o in combo} for combo in evidence.house_relations.get(DizhiRelation.刑, ())] == expected
 
-  # 冲与自刑不受 xing_def 影响；本盘（己卯丙子戊午戊午）子午冲与午午自刑两档同结果。
+  # 冲 and 自刑 ignore xing_def: on 己卯丙子戊午戊午 the 子午 冲 and 午午 自刑 give the same result under both levels.
   for xing_def in DizhiRules.XingDef:
     chart = BaziChart(Bazi.create(
       datetime(2000, 1, 1, 12), 'male',
@@ -2191,9 +2191,9 @@ def test_evidence_reads_school_definitions_in_all_calls() -> None:
 
 
 def test_evidence_cross_group_gong_precise_participants() -> None:
-  # 戊寅己未甲申甲戌男命：所选流年甲戌（显式 TransitSet，函数声明的输入）与日柱拱酉。
-  # 跨组拱会恰为 {2,4}：序号 2 是日柱甲申，序号 4 是所选流年（岁运序自 4 起的第一项）；
-  # 原局内部拱会 {2,3} 照记，不被流年填实抑制。
+  # Male chart 戊寅己未甲申甲戌: the chosen liunian 甲戌 (explicit TransitSet, the function's declared input) 拱 酉
+  # with the day pillar; the cross-group 拱会 is exactly {2,4}: index 2 is day pillar 甲申, index 4 is the chosen
+  # liunian (transits start at 4); natal-internal 拱会 {2,3} stays, not suppressed by the liunian filling the 拱.
   chart = BaziChart(Bazi.create(datetime(1998, 8, 5, 20), 'male'))
   evidence = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('甲戌')))
   assert [_at(combo) for combo in evidence.house_relations[DizhiRelation.拱会]] == [{2, 3}, {2, 4}]
@@ -2206,9 +2206,9 @@ def test_evidence_cross_group_gong_precise_participants() -> None:
 
 
 def test_evidence_school_definitions_flow_through_all_segments_with_transits(monkeypatch: pytest.MonkeyPatch) -> None:
-  # 戊寅己未甲申甲戌男命（gong_def=SAME_STEM_WIDE）：岁运按坐标实查（at_year 2054，甲戌流年），
-  # 包装真实发现工具记录非拱完整序列、原局拱、跨组拱、岁运内部拱四段收到的 definitions，
-  # 各段须恒为本盘流派定义；不用人工外配干支冒充实际所取岁运。
+  # Male chart 戊寅己未甲申甲戌 (gong_def=SAME_STEM_WIDE): transits are queried for real by coordinate (at_year
+  # 2054, 甲戌 liunian), never hand-picked ganzhi. Spies wrap the real discovery tools, recording the definitions
+  # (non-拱 full sequence, natal 拱, cross-group 拱, transit-internal 拱); each must be this chart's definitions.
   chart = BaziChart(Bazi.create(
     datetime(1998, 8, 5, 20), 'male',
     BaziConfig(school=BaziSchool(gong_def=DizhiRules.GongDef.SAME_STEM_WIDE)),
@@ -2223,7 +2223,7 @@ def test_evidence_school_definitions_flow_through_all_segments_with_transits(mon
   original_mutual = dizhi_utils.discover_mutual_ganzhis
 
   def __spied_discover(ganzhis: Sequence[Ganzhi], **kwargs: Any) -> dizhi_utils.GanzhiRelationDiscovery:
-    # relation_definitions 每次构造新对象，按值核对。
+    # relation_definitions builds a new object each time, so the spy compares by value.
     seen.append(('discover_ganzhis', len(ganzhis), kwargs['definitions'] == definitions))
     return original_discover(ganzhis, **kwargs)
 
@@ -2242,7 +2242,7 @@ def test_evidence_school_definitions_flow_through_all_segments_with_transits(mon
     ('discover_mutual_ganzhis', 5, True),
     ('discover_ganzhis', 1, True),
   ]
-  # 非默认 gong_def 实际改变含岁运求值：跨组拱 {2,4} 存在，TRANSFORMING_NARROW 下同盘同岁运无拱会。
+  # Non-default gong_def changes transit-inclusive evaluation: cross-group 拱 {2,4} exists here; TRANSFORMING_NARROW on the same chart and liunian has none.
   assert [_at(combo) for combo in evidence.house_relations[DizhiRelation.拱会]] == [{2, 3}, {2, 4}]
   narrow = BaziChart(Bazi.create(
     datetime(1998, 8, 5, 20), 'male',
@@ -2255,7 +2255,7 @@ def test_evidence_school_definitions_flow_through_all_segments_with_transits(mon
 
 
 def test_evidence_star_target_follows_peiou_xing_def() -> None:
-  # 乙日男命（2000-01-08T12:00，己卯丁丑乙丑壬午）：默认取戊（辰戌），阴阳干取己（丑未）。
+  # 乙 day-master male (2000-01-08T12:00, 己卯丁丑乙丑壬午): the default reading takes 戊 (辰戌), 阴阳干 takes 己 (丑未).
   default = BaziChart(Bazi.create(datetime(2000, 1, 8, 12), 'male'))
   yinyang = BaziChart(Bazi.create(
     datetime(2000, 1, 8, 12), 'male',
@@ -2266,14 +2266,14 @@ def test_evidence_star_target_follows_peiou_xing_def() -> None:
   assert yinyang.relationship_stars.tiangan is Tiangan.己
   default_evidence = spouse_evidence(default, None)
   yinyang_evidence = spouse_evidence(yinyang, None)
-  # 默认读法下原局无辰戌，星证据为空；阴阳干读法下丑（两处）作为目标支参与关系。
+  # Default reading: the natal has no 辰戌, so star evidence is empty; 阴阳干 reading: 丑 (both occurrences) joins as a target branch.
   assert default_evidence.star_relations == dizhi_utils.GanzhiRelationDiscovery({})
   assert {o.index for combo in yinyang_evidence.star_relations[DizhiRelation.害] for o in combo} == {1, 2, 3}
 
 
 def test_evidence_appearances_keep_layers_and_positions() -> None:
-  # 丙日男命（2000-01-29T06:00，己卯丁丑丙戌辛卯）：目标干辛在月支丑与日支戌为藏干、
-  # 在时干为明干；同一位置两层并存各一条，日柱明干位不出现目标干（目标恒非日主）。
+  # 丙 day-master male (2000-01-29T06:00, 己卯丁丑丙戌辛卯): target 辛 is 藏干 in month branch 丑 and day branch
+  # 戌, 明干 in the hour stem; both layers coexist per position; the day pillar's visible slot never shows the target (never the day master).
   chart = BaziChart(Bazi.create(datetime(2000, 1, 29, 6), 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('己卯', '丁丑', '丙戌', '辛卯')
   evidence = spouse_evidence(chart, None)
@@ -2286,13 +2286,13 @@ def test_evidence_appearances_keep_layers_and_positions() -> None:
   assert [(a.origin, a.kind, str(a.ganzhi), a.layer) for a in with_transits.appearances if a.origin == 'transit'] == [
     ('transit', TransitKind.LIUNIAN, '辛亥', 'visible'),
   ]
-  # 所选流年辛酉：酉藏辛，同一位置明藏两层并存各一条，类型／kind 身份保留。
+  # Chosen liunian 辛酉: 酉 hides 辛, so visible and hidden layers coexist at one position, one appearance each, kind preserved.
   xinyou = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('辛酉')))
   assert [(a.origin, a.kind, str(a.ganzhi), a.layer) for a in xinyou.appearances if a.origin == 'transit'] == [
     ('transit', TransitKind.LIUNIAN, '辛酉', 'visible'),
     ('transit', TransitKind.LIUNIAN, '辛酉', 'hidden'),
   ]
-  # 构造校验沿用 ChartOccurrence 风格：明干须等于柱干、藏干须在支内、互斥坐标拒绝。
+  # Construction checks follow the ChartOccurrence style: visible stem must equal the pillar stem, hidden stem must live in its branch, exclusive coordinates rejected.
   appearance = evidence.appearances[2]
   assert appearance is not None
   value_changes: tuple[dict[str, Any], ...] = (
@@ -2309,7 +2309,7 @@ def test_evidence_appearances_keep_layers_and_positions() -> None:
   for change in type_changes:
     with pytest.raises(TypeError):
       replace(appearance, **change)
-  # RelationshipEvidence 的构造期类型闸；scope 类跨字段约束归 ContextResult。
+  # RelationshipEvidence's construction-time type gate; scope-style cross-field constraints belong to ContextResult.
   for change in (
     {'star_target': '辛'}, {'appearances': (object(),)}, {'house_relations': {}},
     {'stem_relations': {}}, {'transits': TransitChart},
@@ -2327,8 +2327,8 @@ def test_evidence_appearances_keep_layers_and_positions() -> None:
 
 
 def test_evidence_day_pillar_is_a_specific_occurrence() -> None:
-  # 己卯丙子戊午戊午：日支午与月支子相冲（1,2）；时支与日支同值午，但子午组合 (1,3)
-  # 不含日柱这一具体出现，不因同值地支进宫证据。
+  # 己卯丙子戊午戊午: day branch 午 冲 month branch 子 (1,2); the hour branch equals the day branch in value, but
+  # the 子午 combo (1,3) lacks the day pillar as a specific occurrence, so it does not enter house evidence.
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('己卯', '丙子', '戊午', '戊午')
   evidence = spouse_evidence(chart, None)
@@ -2340,8 +2340,8 @@ def test_evidence_day_pillar_is_a_specific_occurrence() -> None:
 
 @pytest.mark.slow
 def test_non_gong_full_sequence_equals_three_segment_union() -> None:
-  # 非拱关系对完整序列一次求值，与「原局内部 ∪ 跨组 ∪ 岁运内部(+4)」逐组合相等；
-  # 种子化随机性质测试（种子写死在此），不是穷举。拱局因填实语义刻意不分段并。
+  # Non-拱 relations on the full sequence equal, combo by combo, 「原局内部 ∪ 跨组 ∪ 岁运内部(+4)」; this is a seeded
+  # randomized property test (seed hardcoded here), not exhaustive; 拱 is deliberately not unioned segment-wise (fill-in semantics).
   from random import Random
   from bazi.rules import DizhiRelationDefinitions
   from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
