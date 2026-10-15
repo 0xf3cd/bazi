@@ -251,7 +251,7 @@ class BaziSchool:
     出处：
     - 《命理探原·卷上强弱》NLC 刊本：
       https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-      同一扫描件封面题《命理探源》，序页题《命理探原》，此处保留题名差异。
+      该扫描件封面题《命理探源》，卷上版心题《命理探原》。
     - 《命理探源》ctext 版（金輿祿「以日主為主，如甲日見辰」）：
       https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
       两版文字不同：NLC 刊本无金舆条，作「以日爲主」；ctext 作「以日主為主」。
