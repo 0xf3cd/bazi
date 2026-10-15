@@ -237,6 +237,9 @@ restored_record = ContextResult.from_json(result.export_json())
 assert restored_record == result
 ```
 
+示例显式传入 `knowledge`，可在多次求值间复用。省略它时，每次求值重新加载默认来源。
+文件更新只影响后续加载，已有知识库和结果保留原内容；要更新共享内容，重新加载并传入新对象。
+
 `SATISFIED` / `NOT_SATISFIED` 表示完整前提的判别；所需流年缺失或不可查询、判据未定义时返回 `UNKNOWN`。
 它不计算旺衰、喜忌、格局或有效制化。观察范围和自定义知识的匹配条件见
 [`context_matching.py`](https://github.com/0xf3cd/bazi/blob/main/bazi/context_matching.py)。
@@ -290,7 +293,8 @@ python run_interpreter.py \
 
 随机示例用 `--seed` 重放；全部参数见 `python run_interpreter.py --help`。
 命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
-JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖本次编号文件，其他文件保留。
+JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
+`interpretation_examples/{序号}.txt` 路径上已有的同名文件，其他文件保留。
 
 ## 开发
 

@@ -18,7 +18,11 @@ unresolved：前提仍待重建。
 '''
 Applicability = Literal['unconditional', 'described', 'unresolved']
 
-'''条目的来源状态。'''
+'''条目的来源状态，与前提整理状态和输出资格分别记录。
+witnessed：记录为已核定的原文出处；editorial：原作说明；
+unverified：来源尚未核定，条目不绑定来源见证；repository_attributed：仓内规则实现的归属。
+这些标记不表示命盘前提已满足，也不认证现实事件。
+'''
 SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attributed']
 
 '''输出资格。'''
@@ -423,8 +427,13 @@ class KnowledgeBase:
 
     Args:
     - path: (Path | None) 编辑来源路径；None 使用随库来源。
+
+    Note:
+    - 每次调用重新读取并校验文件，不缓存共享实例。已加载对象保留当时的内容；
+      来源修改不影响已有对象，须再次加载才能取得更新。
+
     Return:
-    - (KnowledgeBase) 校验后的知识库；每次加载独立读取，不缓存共享实例。
+    - (KnowledgeBase) 校验后的不可变知识快照。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')

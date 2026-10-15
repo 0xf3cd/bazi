@@ -344,6 +344,30 @@ def test_from_shier_zhangsheng_negative() -> None:
     bazi_utils.from_shier_zhangsheng(Tiangan.甲, '沐浴') # type: ignore
 
 
+@pytest.mark.parametrize('tg, branches', [
+  (Tiangan.甲, '亥子丑寅卯辰巳午未申酉戌'),
+  (Tiangan.乙, '午巳辰卯寅丑子亥戌酉申未'),
+  (Tiangan.丙, '寅卯辰巳午未申酉戌亥子丑'),
+  (Tiangan.丁, '酉申未午巳辰卯寅丑子亥戌'),
+  (Tiangan.戊, '寅卯辰巳午未申酉戌亥子丑'),
+  (Tiangan.己, '酉申未午巳辰卯寅丑子亥戌'),
+  (Tiangan.庚, '巳午未申酉戌亥子丑寅卯辰'),
+  (Tiangan.辛, '子亥戌酉申未午巳辰卯寅丑'),
+  (Tiangan.壬, '申酉戌亥子丑寅卯辰巳午未'),
+  (Tiangan.癸, '卯寅丑子亥戌酉申未午巳辰'),
+])
+def test_shier_zhangsheng_literal_rows(tg: Tiangan, branches: str) -> None:
+  places = (
+    ShierZhangsheng.长生, ShierZhangsheng.沐浴, ShierZhangsheng.冠带, ShierZhangsheng.临官,
+    ShierZhangsheng.帝旺, ShierZhangsheng.衰, ShierZhangsheng.病, ShierZhangsheng.死,
+    ShierZhangsheng.墓, ShierZhangsheng.绝, ShierZhangsheng.胎, ShierZhangsheng.养,
+  )
+  for place, branch in zip(places, branches, strict=True):
+    dz = Dizhi(branch)
+    assert bazi_utils.from_shier_zhangsheng(tg, place) is dz
+    assert bazi_utils.shier_zhangsheng(tg, dz) is place
+
+
 def test_shier_zhangsheng_consistency() -> None:
   for tg, dz in itertools.product(Tiangan, Dizhi):
     zs: ShierZhangsheng = bazi_utils.shier_zhangsheng(tg, dz)

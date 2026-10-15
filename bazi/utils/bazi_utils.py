@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timedelta
 
-from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, Yinyang, ShierZhangsheng
+from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, ShierZhangsheng
 from ..data_types import TraitTuple, HiddenTianganDict
 from ..rules import BaziRules
 from ..school import DayRollover
@@ -278,14 +278,7 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
   if not isinstance(dz, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(dz)}')
 
-  tg_yinyang: Yinyang = traits(tg).yinyang
-  zhangsheng_place: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
-
-  offset: int = dz.index - zhangsheng_place.index
-  if tg_yinyang is Yinyang.YIN:
-    offset = zhangsheng_place.index - dz.index
-
-  return ShierZhangsheng.from_index(offset % 12)
+  return ShierZhangsheng.from_index(BaziRules._ZHANGSHENG_ROWS[tg].index(dz))
 
 
 def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
@@ -309,10 +302,7 @@ def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   if not isinstance(place, ShierZhangsheng):
     raise TypeError(f'Expected ShierZhangsheng, got {type(place)}')
 
-  tg_yinyang: Yinyang = traits(tg).yinyang
-  zhangsheng_dizhi: Dizhi = BaziRules.TIANGAN_ZHANGSHENG[tg]
-  offset: int = place.index if tg_yinyang is Yinyang.YANG else -place.index
-  return Dizhi.from_index((zhangsheng_dizhi.index + offset) % 12)
+  return BaziRules._ZHANGSHENG_ROWS[tg][place.index]
 
 
 def lu(tg: Tiangan) -> Dizhi:
