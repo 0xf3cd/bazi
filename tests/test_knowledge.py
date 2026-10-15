@@ -160,7 +160,7 @@ def test_premises_are_organized_without_inventing_rules() -> None:
     if entry.legacy is None:
       assert entry.output == 'reference_only'
       if entry.claim_id in new_relationship_ids:
-        # 婚恋条目 have source_state 'witnessed' (古籍见证).
+        # Entries in new_relationship_ids have source_state 'witnessed' (古籍见证).
         assert entry.source_state == 'witnessed'
       else:
         assert entry.source_state == 'repository_attributed'
@@ -523,7 +523,7 @@ def test_witnessed_zhushi_is_a_distinct_text_layer() -> None:
   assert KnowledgeBase.from_json(k.export_json()).sources == k.sources
 
 
-# 婚恋条目 and their registry; corpus facts are pinned here, with protection asserts in the two tests below.
+# Entries in _NEW_RELATIONSHIP_IDS and their registry; corpus facts are pinned here, with protection asserts in the two tests below.
 _NEW_RELATIONSHIP_IDS: tuple[str, ...] = (
   'editorial.liuqin.spouse_star_yinyanggan.v1',
   'editorial.liuqin.spouse_star_zhengpian.v1',
@@ -574,7 +574,7 @@ def test_relationship_additions_registry_counts_and_default_surface() -> None:
 
 
 def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
-  # Corpus markers and the gate table mirror each other: marked entries are exactly the keys of _RELATED_GENDERS, and markers stay out of text／premise.
+  # Corpus markers and the gate table mirror each other: marked entries are exactly the keys of _RELATED_GENDERS, and markers stay out of text/premise.
   from bazi.context_matching import _RELATED_GENDERS
   marker = '女命查询不关联本条，静态查阅不受限。'
   marked = {

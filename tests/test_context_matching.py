@@ -694,7 +694,7 @@ def test_record_equality_preserves_nontext_knowledge_fields(registry: str, field
 
 
 # ----------------------------------------------------------------------------------
-# #233 婚恋判据：explicit transit profiles, missing data, three-state reference matrix, and record v3.
+# #233 婚恋判据: explicit transit profiles, missing data, three-state reference matrix, and record v3.
 # All cases use reproducible real birth inputs and configs; 岁运 come from real TransitChart queries by coordinate.
 
 from datetime import date as _date_module  # The construction-time matrix needs the native date type.
@@ -847,7 +847,7 @@ def test_relationship_verdicts_and_observations() -> None:
 
 def test_relationship_scope_missing_data_paths() -> None:
   c = chart_from('2000-01-01 12:00', 'male') # born 2000-01-01, 干支年 1999.
-  # Missing query coordinate: kinds stay explicitly non-empty; UNKNOWN／missing_transit_coordinate with transits None.
+  # Missing query coordinate: kinds stay explicitly non-empty; UNKNOWN/missing_transit_coordinate with transits None.
   no_coordinate = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
     'natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.DAYUN),
   ))
@@ -873,7 +873,7 @@ def test_relationship_scope_missing_data_paths() -> None:
 
 def test_relationship_partial_and_empty_kind_availability() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
-  # No 小运 after adulthood: requesting {小运, 大运} obtains only 大运 → UNKNOWN／transit_unavailable, evidence of obtained kinds kept.
+  # No 小运 after adulthood: requesting {小运, 大运} obtains only 大运 → UNKNOWN/transit_unavailable, evidence of obtained kinds kept.
   partial = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN),
   ))
@@ -935,7 +935,7 @@ def test_relationship_reference_matrix() -> None:
   off = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'))
   assert off.related == () and '关联参考' not in off.render()
 
-  # True × male × SATISFIED／NOT_SATISFIED／UNKNOWN (two reasons): entry returned, recognized=True.
+  # True × male × SATISFIED/NOT_SATISFIED/UNKNOWN (two reasons): entry returned, recognized=True.
   for result in (
     evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
     evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
@@ -948,7 +948,7 @@ def test_relationship_reference_matrix() -> None:
     rendered = result.render()
     assert '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：' + RELATED_PALACE in rendered
     assert knowledge_text(RELATED_PALACE) in rendered
-    # NOT_SATISFIED／UNKNOWN use the same reference wording as SATISFIED; no 「已核结构命中」 appears.
+    # NOT_SATISFIED/UNKNOWN use the same reference wording as SATISFIED; no 「已核结构命中」 appears.
     assert '已核结构命中' not in rendered
     assert '结构前提：' + result.criterion.status in rendered
     assert '结构判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
@@ -1087,7 +1087,7 @@ def test_relationship_record_roundtrip_and_rejections() -> None:
 
 
 def test_relationship_record_version_before_keys_and_old_school() -> None:
-  # Real v2 shape: a 官杀 record with the old key set (no relationship／related); the version check runs
+  # Real v2 shape: a 官杀 record with the old key set (no relationship/related); the version check runs
   # before the key-set check, so the rejection is about the version, not key differences. Not a v3 with a hand-edited version number.
   context_record = json.loads(match().export_json())
   v2_text = json.dumps({
@@ -1190,7 +1190,7 @@ def test_relationship_transits_flip_palace_and_tougan_verdicts() -> None:
 
 def test_relationship_record_zero_obtained_complete_scope_rejected() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
-  # Zero obtained: a no-coordinate record forged to scope_complete=True／SATISFIED must be rejected (via both direct construction and from_json).
+  # Zero obtained: a no-coordinate record forged to scope_complete=True/SATISFIED must be rejected (via both direct construction and from_json).
   no_coordinate = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN,)))
   assert no_coordinate.relationship is not None and no_coordinate.relationship.transits is None
   forged = replace(

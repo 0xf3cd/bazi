@@ -1173,7 +1173,7 @@ def test_matching_cli_legal_relationship_combinations(tmp_path: Path, entry_args
   assert result.returncode == 0, result.stderr
   assert '结构前提：' in result.stdout and '证据：原局内部；' in result.stdout
   assert '证据：原局×岁运；' in result.stdout and '证据：岁运内部；' in result.stdout
-  # at_moment requires a HOUR／MINUTE natal chart; with DAY precision the unavailable entry is an EXIT 0 UNKNOWN, not an error.
+  # at_moment requires a HOUR/MINUTE natal chart; with DAY precision the unavailable entry is an EXIT 0 UNKNOWN, not an error.
   if entry_args[1] == 'at_moment':
     assert '结构前提：UNKNOWN；transit_unavailable' in result.stdout
   assert ('关联参考' in result.stdout) == bool(flag)

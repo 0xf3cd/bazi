@@ -2148,7 +2148,7 @@ def test_evidence_gong_scopes_are_not_suppressed_by_either_side() -> None:
 def test_evidence_reads_school_definitions_in_all_calls() -> None:
   # 刑 follows xing_def: on the same real chart (庚辰辛巳丙寅甲午), LOOSE forms a 刑 between day pillar (寅) and 巳,
   # STRICT does not. 拱 follows gong_def: 戊寅己未甲申甲戌 has natal-internal 拱会 under both SAME_STEM levels,
-  # none under TRANSFORMING_NARROW (no metal stem) or LU_NARROW (禄 level has no 拱会); all four evaluations pass this chart's definitions.
+  # none under TRANSFORMING_NARROW (no metal stem) or LU_NARROW (禄 level has no 拱会).
   for xing_def, expected in (
     (DizhiRules.XingDef.LOOSE, [{1, 2}]),
     (DizhiRules.XingDef.STRICT, []),
