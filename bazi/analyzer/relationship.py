@@ -4,19 +4,20 @@ import functools
 
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
-from itertools import product
-from typing import Final, TypedDict, cast
-from collections.abc import Callable, Iterable
+from itertools import combinations, product
+from typing import Final, Literal, TypedDict, cast
+from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
 from ..data_types import GanzhiData
-from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation
+from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRelation
 from ..rules import DizhiRules
 from ..school import Anchor, BaziSchool
 from ..bazi import Bazi
 from ..bazi_chart import BaziChart
-from ..transits import TransitSet
+from ..transits import TransitKind, TransitSet
 from ..utils import bazi_utils, shensha_utils, tiangan_utils, dizhi_utils
+from ..utils.bazi_utils import hidden_tiangans
 
 
 '''从命盘流派解析神煞判断函数的可选 definition 参数。'''
@@ -551,6 +552,251 @@ class TransitAnalysis:
       any(gz.dizhi   in stars.dizhi   for gz in transit_ganzhis),
     )
 
+
+
+'''非拱地支关系全集；拱局由 `DizhiRules.GONG_RELATIONS` 单独分三段求值。'''
+_NON_GONG_RELATIONS: Final[tuple[DizhiRelation, ...]] = tuple(
+  relation for relation in DizhiRelation if relation not in DizhiRules.GONG_RELATIONS
+)
+
+'''天干关系到明干具体出现组合的冻结映射。组合成员是 `GanzhiOccurrence`（序号属于 RelationshipEvidence 的序列契约）；
+同一天干值的多处出现各成组合；组合不含方向。'''
+StemRelationDiscovery = frozendict[TianganRelation, tuple[frozenset[dizhi_utils.GanzhiOccurrence], ...]]
+
+
+def _discover_stem_occurrences(ganzhis: Sequence[Ganzhi]) -> StemRelationDiscovery:
+  '''把值级天干发现展开为明干具体出现组合。
+
+  对明干序列调值级 `tiangan_utils.search`，再把每个值组合展开为全部「天干值集合等于该组合」
+  的出现对；同值多处出现各成组合，值级结果与此不一致（值级按值去重）。天干四关系全二元，
+  不需要地支自刑的单支特例；藏干不进天干关系组合。
+  '''
+  occurrences = tuple(dizhi_utils.GanzhiOccurrence(index, gz) for index, gz in enumerate(ganzhis))
+  stems = tuple(gz.tiangan for gz in ganzhis)
+
+  result: dict[TianganRelation, tuple[frozenset[dizhi_utils.GanzhiOccurrence], ...]] = {}
+  for relation in TianganRelation:
+    pairs: list[frozenset[dizhi_utils.GanzhiOccurrence]] = []
+    for combo in tiangan_utils.search(stems, relation):
+      pairs.extend(
+        frozenset(candidate)
+        for candidate in combinations(occurrences, 2)
+        if frozenset(occurrence.ganzhi.tiangan for occurrence in candidate) == combo
+      )
+    if pairs:
+      result[relation] = tuple(pairs)
+  return StemRelationDiscovery(result)
+
+
+@dataclass(frozen=True)
+class StarAppearance:
+  '''配偶星目标干的一处实际出现；明干／藏干、原局柱位／岁运种类分开记录，重复位置不合并。'''
+
+  origin: Literal['natal', 'transit']
+  pillar: Literal['year', 'month', 'day', 'hour'] | None   # natal 才有
+  kind:   TransitKind | None                               # transit 才有
+  ganzhi: Ganzhi
+  layer:  Literal['visible', 'hidden']
+  stem:   Tiangan                                          # 恒为目标干
+
+  def __post_init__(self) -> None:
+    for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan)):
+      if not isinstance(value, expected):
+        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
+    if self.kind is not None and not isinstance(self.kind, TransitKind):
+      raise TypeError(f'Expected TransitKind | None, got {type(self.kind)}')
+    if self.origin == 'natal':
+      if self.pillar not in ('year', 'month', 'day', 'hour') or self.kind is not None:
+        raise ValueError('Invalid natal appearance coordinate')
+    elif self.origin == 'transit':
+      if self.pillar is not None or self.kind is None:
+        raise ValueError('Invalid transit appearance coordinate')
+    else:
+      raise ValueError(f'Unsupported origin: {self.origin}')
+    if self.layer not in ('visible', 'hidden'):
+      raise ValueError(f'Unsupported layer: {self.layer}')
+    # 目标干恒不是日主，日柱明干位不会出现目标干，无需官杀路径的「日主明干排除」特例。
+    if self.layer == 'visible' and self.stem is not self.ganzhi.tiangan:
+      raise ValueError('Visible stem differs from its Ganzhi')
+    if self.layer == 'hidden' and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
+      raise ValueError('Hidden stem is absent from its Ganzhi')
+
+
+@dataclass(frozen=True)
+class RelationshipEvidence:
+  '''一次婚恋结构查询的可核证据。
+
+  序号契约：`house_relations`／`star_relations`／`stem_relations` 的组合成员共享一个序列——
+  原局四柱为 0–3，所选岁运按 `TransitSet.items` 的固定顺序自 4 起；组合的范围由序号直接分出
+  （全部 `< 4` 为原局内部，全部 `≥ 4` 为岁运内部，其余为原局×岁运）。本类没有 scope 字段，
+  不声称它能单独检查范围；跨字段约束归拥有 profile 与 evidence 的 `ContextResult`。
+
+  `transits` 是实际取得的所选岁运；原局、无坐标或全部缺失时为 `None`。
+  '''
+
+  star_target:     GanzhiData[Tiangan, tuple[Dizhi, ...]]
+  appearances:     tuple[StarAppearance, ...]
+  house_relations: dizhi_utils.GanzhiRelationDiscovery   # 含日柱的组合，未投影
+  star_relations:  dizhi_utils.GanzhiRelationDiscovery   # 含配偶星地支参与者的组合，未投影
+  stem_relations:  StemRelationDiscovery                 # 含目标干的明干组合
+  transits:        TransitSet | None
+
+  def __post_init__(self) -> None:
+    if not isinstance(self.star_target, GanzhiData):
+      raise TypeError(f'Expected GanzhiData, got {type(self.star_target)}')
+    if not isinstance(self.appearances, tuple) or not all(
+      isinstance(member, StarAppearance) for member in self.appearances
+    ):
+      raise TypeError(f'Expected tuple of StarAppearance, got {type(self.appearances)}')
+    for value in (self.house_relations, self.star_relations):
+      if not isinstance(value, dizhi_utils.GanzhiRelationDiscovery):
+        raise TypeError(f'Expected GanzhiRelationDiscovery, got {type(value)}')
+    if not isinstance(self.stem_relations, frozendict):
+      raise TypeError(f'Expected StemRelationDiscovery, got {type(self.stem_relations)}')
+    if self.transits is not None and not isinstance(self.transits, TransitSet):
+      raise TypeError(f'Expected TransitSet | None, got {type(self.transits)}')
+
+
+def _merge_discoveries(*discoveries: dizhi_utils.GanzhiRelationDiscovery) -> dizhi_utils.GanzhiRelationDiscovery:
+  '''按键拼接多段发现结果；首个出现的关系键位保留，段内组合序保持发现顺序。
+
+  `GanzhiRelationDiscovery` 没有 `merge`；本函数只拼键，不复制规则定义。
+  三段拱局（原局内部、跨组、岁运内部）的组合序号互斥，不会产生重复组合。
+  '''
+  merged: dict[DizhiRelation, list[dizhi_utils.GanzhiRelationCombo]] = {}
+  for discovery in discoveries:
+    for relation, combos in discovery.items():
+      merged.setdefault(relation, []).extend(combos)
+  return dizhi_utils.GanzhiRelationDiscovery({
+    relation: tuple(combos) for relation, combos in merged.items()
+  })
+
+
+def _shifted(discovery: dizhi_utils.GanzhiRelationDiscovery, offset: int) -> dizhi_utils.GanzhiRelationDiscovery:
+  '''把单侧局部的组合序号平移到全局序列契约下。'''
+  return dizhi_utils.GanzhiRelationDiscovery({
+    relation: tuple(
+      frozenset(dizhi_utils.GanzhiOccurrence(occurrence.index + offset, occurrence.ganzhi) for occurrence in combo)
+      for combo in combos
+    )
+    for relation, combos in discovery.items()
+  })
+
+
+def _canonical_combos(
+  combos: tuple[dizhi_utils.GanzhiRelationCombo, ...],
+  predicate: Callable[[dizhi_utils.GanzhiRelationCombo], bool],
+) -> tuple[dizhi_utils.GanzhiRelationCombo, ...]:
+  '''保留满足谓词的组合并按序号元组升序排列；与导出契约同一顺序，记录往返后相等。'''
+  return tuple(sorted(
+    (combo for combo in combos if predicate(combo)),
+    key=lambda combo: tuple(sorted(occurrence.index for occurrence in combo)),
+  ))
+
+
+_PILLAR_NAMES: Final[tuple[Literal['year', 'month', 'day', 'hour'], ...]] = ('year', 'month', 'day', 'hour')
+
+
+def _star_appearances(
+  pillars: tuple[Ganzhi, ...],
+  transits: TransitSet | None,
+  target: Tiangan,
+) -> tuple[StarAppearance, ...]:
+  '''逐柱逐所取岁运记录目标干的实际出现；同一位置明藏两层并存各一条。'''
+  appearances: list[StarAppearance] = []
+  for pillar, ganzhi in zip(_PILLAR_NAMES, pillars):
+    if ganzhi.tiangan is target:
+      appearances.append(StarAppearance('natal', pillar, None, ganzhi, 'visible', target))
+    if target in hidden_tiangans(ganzhi.dizhi):
+      appearances.append(StarAppearance('natal', pillar, None, ganzhi, 'hidden', target))
+  if transits is not None:
+    for kind, ganzhi in transits.items:
+      if ganzhi.tiangan is target:
+        appearances.append(StarAppearance('transit', None, kind, ganzhi, 'visible', target))
+      if target in hidden_tiangans(ganzhi.dizhi):
+        appearances.append(StarAppearance('transit', None, kind, ganzhi, 'hidden', target))
+  return tuple(appearances)
+
+
+def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> RelationshipEvidence:
+  '''计算一次婚恋结构查询的可核证据；只读结构与位置，不判婚恋吉凶。
+
+  求值分四段：非拱关系对 `原局＋岁运` 完整序列一次求值（序号天然全局）；拱局分原局内部
+  （相邻、所拱之支不在原局）、原局×岁运（跨组柱位对）、岁运内部（相邻、局部序号 +4）三段——
+  拼接后序列里的所拱之支会填实全部拱局，使本成立的单侧拱局消失，因此不能一次拼接。
+  三段都不被另一侧填实抑制，也不把两份说成同一范围的有效性判断。
+
+  过滤：宫证据为组合含序号 2（日柱这一具体出现，不以同值地支代替柱位）；星证据为组合中任一
+  参与者的地支属配偶星地支；天干侧为明干组合含目标干。证据不投影，保留完整干支与序号。
+
+  Args:
+  - chart: (BaziChart) 待查命盘；取法与关系定义读自其流派配置。
+  - transits: (TransitSet | None) 实际取得的所选岁运；`None` 表示只查原局。
+
+  Return: (RelationshipEvidence) 目标、出现与三类关系证据。
+  '''
+  if not isinstance(chart, BaziChart):
+    raise TypeError(f'Expected BaziChart, got {type(chart)}')
+  if transits is not None and not isinstance(transits, TransitSet):
+    raise TypeError(f'Expected TransitSet | None, got {type(transits)}')
+
+  bazi = chart.bazi
+  pillars = bazi.pillars
+  transit_ganzhis = () if transits is None else transits.ganzhis
+  seq = pillars + transit_ganzhis
+  definitions = bazi.config.school.relation_definitions
+
+  merged = _merge_discoveries(
+    dizhi_utils.discover_ganzhis(seq, definitions=definitions, relations=_NON_GONG_RELATIONS),
+    dizhi_utils.discover_ganzhis(pillars, definitions=definitions, relations=DizhiRules.GONG_RELATIONS),
+    dizhi_utils.discover_mutual_ganzhis(
+      pillars, transit_ganzhis, definitions=definitions, relations=DizhiRules.GONG_RELATIONS,
+    ),
+    _shifted(
+      dizhi_utils.discover_ganzhis(
+        transit_ganzhis, definitions=definitions, relations=DizhiRules.GONG_RELATIONS,
+      ),
+      len(pillars),
+    ),
+  )
+
+  star_target = chart.relationship_stars
+  # 过滤保持具体组合与序号，不投影；GanzhiRelationDiscovery 没有值级 filter，
+  # 用与 RelationDiscovery.filter 同语义的键内过滤（无组合的关系整键丢弃）。
+
+  def __day_combo(combo: dizhi_utils.GanzhiRelationCombo) -> bool:
+    return any(occurrence.index == _DAY_PILLAR_INDEX for occurrence in combo)
+
+  def __star_combo(combo: dizhi_utils.GanzhiRelationCombo) -> bool:
+    return any(occurrence.ganzhi.dizhi in star_target.dizhi for occurrence in combo)
+
+  def __stem_combo(combo: frozenset[dizhi_utils.GanzhiOccurrence]) -> bool:
+    return any(occurrence.ganzhi.tiangan is star_target.tiangan for occurrence in combo)
+
+  house_relations = dizhi_utils.GanzhiRelationDiscovery({
+    relation : filtered
+    for relation, combos in merged.items()
+    if len(filtered := _canonical_combos(combos, __day_combo)) > 0
+  })
+  star_relations = dizhi_utils.GanzhiRelationDiscovery({
+    relation : filtered
+    for relation, combos in merged.items()
+    if len(filtered := _canonical_combos(combos, __star_combo)) > 0
+  })
+  stem_relations = StemRelationDiscovery({
+    relation : filtered
+    for relation, combos in _discover_stem_occurrences(seq).items()
+    if len(filtered := _canonical_combos(combos, __stem_combo)) > 0
+  })
+
+  return RelationshipEvidence(
+    star_target,
+    _star_appearances(pillars, transits, star_target.tiangan),
+    house_relations,
+    star_relations,
+    stem_relations,
+    transits,
+  )
 
 
 class RelationshipAnalyzer:

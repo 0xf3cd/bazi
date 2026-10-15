@@ -353,8 +353,8 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
-  check(len(knowledge.entries) == 295 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
-  check(len(knowledge.sources) == 9, 'Installed source registry incomplete')
+  check(len(knowledge.entries) == 302 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  check(len(knowledge.sources) == 13, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
     check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')

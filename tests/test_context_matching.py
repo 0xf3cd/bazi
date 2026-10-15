@@ -117,6 +117,7 @@ def test_liunian_coordinate_kind_and_repeated_cycle_identity() -> None:
   assert natal.criterion.status == 'NOT_SATISFIED'
   assert first.criterion.status == next_cycle.criterion.status == 'SATISFIED'
   assert first != next_cycle
+  assert isinstance(first.profile, ContextProfile) and isinstance(next_cycle.profile, ContextProfile)
   assert first.profile.ganzhi_year == 2024 and next_cycle.profile.ganzhi_year == 2084
   for result, year in ((first, 2024), (next_cycle, 2084)):
     transit = [o for o in result.occurrences if o.origin == 'transit']
@@ -134,7 +135,7 @@ def test_liunian_coordinate_kind_and_repeated_cycle_identity() -> None:
 def test_export_preserves_literal_evidence_year_kind_and_input() -> None:
   result = match(1, profile=ContextProfile('natal_and_liunian', 2024))
   data = json.loads(result.export_json())
-  assert data['record_version'] == 2
+  assert data['record_version'] == 3
   assert data['profile'] == {'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
   assert data['input'] == json.loads(result.input_json)
   assert len(data['occurrences']) == 13
@@ -222,7 +223,7 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   assert all('index' not in value for value in data['occurrences'])
   assert 'revision' not in data['criterion']
   assert data['knowledge'] == json.loads(knowledge.export_json())
-  assert len(data['knowledge']['entries']) == 295
+  assert len(data['knowledge']['entries']) == 302
   assert data['criterion']['observations']['observed_coexistence'] is True
   rendered = result.render()
   assert '来源状态：editorial' in rendered and '见证状态：editorial' in rendered
@@ -335,7 +336,7 @@ def test_full_input_identity_and_immutability() -> None:
   identity = json.loads(result.input_json)
   assert identity['birth_time'] == '2000-01-03T12:00:00' and identity['gender'] == 'female'
   assert identity['config']['backend'] == 'celestial' and identity['config']['precision'] == 'day'
-  assert len(identity['config']['school']) == 22
+  assert len(identity['config']['school']) == 23
   for config in (
     BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
     BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
@@ -345,6 +346,7 @@ def test_full_input_identity_and_immutability() -> None:
     changed_result = evaluate_context(changed, criterion_id=GUANSHA, profile=ContextProfile('natal'))
     assert changed_result.input_json != result.input_json
     assert ContextResult.from_json(changed_result.export_json()) == changed_result
+  assert isinstance(result.profile, ContextProfile)
   with pytest.raises(FrozenInstanceError):
     result.profile.ganzhi_year = 2024 # type: ignore[misc]
   with pytest.raises(FrozenInstanceError):
@@ -466,8 +468,9 @@ def test_public_verdict_status_types_raise_type_error(value: Any) -> None:
 @pytest.mark.parametrize('dimension,value,error', [
   ('record_version', True, ValueError), ('record_version', False, ValueError),
   ('record_version', -1, ValueError), ('record_version', 0, ValueError),
-  ('record_version', 1, ValueError), ('record_version', 3, ValueError),
-  ('record_version', 2.0, ValueError), ('record_version', '2', ValueError),
+  ('record_version', 1, ValueError), ('record_version', 2, ValueError),
+  ('record_version', 4, ValueError),
+  ('record_version', 3.0, ValueError), ('record_version', '3', ValueError),
   ('record_version', None, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
   ('entries', {}, TypeError), ('input', {}, ValueError), ('knowledge', {}, ValueError),
@@ -518,7 +521,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
 def test_restore_rejects_duplicate_keys_in_an_otherwise_complete_record() -> None:
   text = match().export_json()
   for needle, duplicate in (
-    ('"record_version": 2', '"record_version": 2'),
+    ('"record_version": 3', '"record_version": 3'),
     ('"gender": "female"', '"gender": "male"'),
     ('"scope_complete": true', '"scope_complete": false'),
   ):
@@ -533,7 +536,7 @@ def test_corpus_organization_and_frozen_oracle_hash() -> None:
   fixture = Path(__file__).with_name('data') / 'description_legacy_baseline.json'
   assert hashlib.sha256(fixture.read_bytes().replace(b'\r\n', b'\n')).hexdigest() == '6e50cf38d5b9a74a6f2a7ba2b3502b8dad818955a67ac6530e97f8d768f6b774'
   knowledge = KnowledgeBase.load()
-  assert len(knowledge.entries) == 295 and len(knowledge.sources) == 9 and len(knowledge.query()) == 19
+  assert len(knowledge.entries) == 302 and len(knowledge.sources) == 13 and len(knowledge.query()) == 19
   for criterion, keys, context_id in ((GUANSHA, LEGAL, 'editorial.guansha_coexistence'), (FEMALE, RELATIONSHIP, 'editorial.guansha_coexistence_female')):
     assert tuple(e.claim_id for e in knowledge.query(context_id=context_id, include_reference_only=True)) == keys
     assert knowledge.query(context_id=context_id) == ()
@@ -688,3 +691,472 @@ def test_record_equality_preserves_nontext_knowledge_fields(registry: str, field
   other = match(knowledge=other_knowledge)
   assert knowledge != other_knowledge and result != other
   assert len({result, other}) == 2
+
+
+# ----------------------------------------------------------------------------------
+# #233 婚恋判据：显式岁运 profile、缺数据、三态关联矩阵与记录 v3。
+# 全部用可复建的真实出生输入与配置；岁运由坐标经 TransitChart 真实查询。
+
+from datetime import date as _date_module  # 构造期矩阵需要原生 date。
+from datetime import UTC as _UTC
+
+from bazi.bazi import BaziGender as _BaziGender
+from bazi.context_matching import (
+  RelatedEntry, RelationshipProfile, TransitCoordinate, _CRITERIA, _RELATED_GENDERS,
+)
+from bazi.defines import Dizhi as _Dizhi
+
+
+PALACE = 'editorial.spouse_palace_xingchong.v1'
+TOUGAN = 'editorial.spouse_star_tougan.v1'
+RELATED_PALACE = 'editorial.tanyuan.wife_palace_xingchong.v1'
+RELATED_TOUGAN = 'editorial.tanyuan.wife_star_gantou.v1'
+
+
+def rel_match(
+  criterion_id: str = PALACE,
+  birth: str = '2000-01-01 12:00',
+  gender: str = 'male',
+  **kwargs: Any,
+) -> ContextResult:
+  options: dict[str, Any] = {'profile': RelationshipProfile('natal'), **kwargs}
+  return evaluate_context(chart_from(birth, gender), criterion_id=criterion_id, **options)
+
+
+def chart_from(birth: str, gender: str) -> BaziChart:
+  return BaziChart(Bazi.create(birth, gender))
+
+
+def test_relationship_criterion_registry_and_gates() -> None:
+  # 四层对照之第一层：全部关系判据的 claims 都在 _BINDINGS；门槛表恰为两条受限 ID 且是其子集。
+  relationship_claims = {
+    claim_id for criterion in _CRITERIA.values()
+    if criterion.profile_kind == 'relationship' for claim_id in criterion.claims
+  }
+  assert relationship_claims == {RELATED_PALACE, RELATED_TOUGAN}
+  assert relationship_claims <= set(_BINDINGS)
+  assert set(_RELATED_GENDERS) == {RELATED_PALACE, RELATED_TOUGAN}
+  assert set(_RELATED_GENDERS) <= relationship_claims
+  assert all(gender is _BaziGender.MALE for gender in _RELATED_GENDERS.values())
+  # 官杀判据与四条未定义判据标 context，行为与指纹不变。
+  assert {key for key, value in _CRITERIA.items() if value.profile_kind == 'context'} == {
+    GUANSHA, FEMALE, 'tiangan.ding_weak_and_overcontrolled', 'tiangan.geng_regulated_transit',
+    'shishen.pianyin_favorable_or_balanced', 'shishen.xiaoyin_duoshi',
+  }
+
+
+@pytest.mark.parametrize('claim_id', [RELATED_PALACE, RELATED_TOUGAN])
+def test_relationship_binding_fingerprints(claim_id: str) -> None:
+  knowledge = KnowledgeBase.load()
+  assert _binding_digest(knowledge, knowledge.entry(claim_id)) == _BINDINGS[claim_id]
+
+
+@pytest.mark.parametrize('criterion_id, profile, error', [
+  (PALACE, ContextProfile('natal'), ValueError),
+  (PALACE, ContextProfile('natal_and_liunian', 2024), ValueError),
+  (GUANSHA, RelationshipProfile('natal'), ValueError),
+  ('tiangan.ding_weak_and_overcontrolled', RelationshipProfile('natal'), ValueError),
+])
+def test_criterion_profile_kind_must_match(criterion_id: str, profile: ContextProfile | RelationshipProfile, error: type[Exception]) -> None:
+  with pytest.raises(error, match='profile'):
+    evaluate_context(chart(), criterion_id=criterion_id, profile=profile)
+
+
+@pytest.mark.parametrize('kwargs, error', [
+  ({'scope': 'natal_and_liunian'}, ValueError),
+  ({'scope': 'dayun'}, ValueError),
+  ({'scope': 'natal', 'kinds': (TransitKind.LIUNIAN,)}, ValueError),
+  ({'scope': 'natal_and_transits', 'coordinate': 'at_year', 'kinds': (TransitKind.LIUNIAN,)}, TypeError),
+  ({'scope': 'natal_and_transits'}, ValueError),
+  ({'scope': 'natal_and_transits', 'kinds': [TransitKind.LIUNIAN]}, TypeError),
+  ({'scope': 'natal_and_transits', 'kinds': ('liunian',)}, TypeError),
+  ({'scope': 'natal_and_transits', 'kinds': (TransitKind.LIUNIAN, TransitKind.LIUNIAN)}, ValueError),
+  ({
+    'scope': 'natal_and_transits',
+    'coordinate': TransitCoordinate('at_year', gz_year=2024),
+    'kinds': (TransitKind.LIUYUE,),
+  }, ValueError),
+  ({
+    'scope': 'natal_and_transits',
+    'coordinate': TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰),
+    'kinds': (TransitKind.LIURI,),
+  }, ValueError),
+])
+def test_relationship_profile_request_errors(kwargs: dict[str, Any], error: type[Exception]) -> None:
+  with pytest.raises(error):
+    RelationshipProfile(**kwargs)
+
+
+def test_relationship_profile_normalizes_legal_but_unordered_kinds() -> None:
+  profile = RelationshipProfile(
+    'natal_and_transits',
+    TransitCoordinate('at_date', solar_date=_date_module(2024, 4, 10)),
+    (TransitKind.LIUNIAN, TransitKind.XIAOYUN, TransitKind.DAYUN),
+  )
+  assert profile.kinds == (TransitKind.XIAOYUN, TransitKind.DAYUN, TransitKind.LIUNIAN)
+  assert profile == RelationshipProfile(
+    'natal_and_transits',
+    TransitCoordinate('at_date', solar_date=_date_module(2024, 4, 10)),
+    (TransitKind.DAYUN, TransitKind.LIUNIAN, TransitKind.XIAOYUN),
+  )
+  # coordinate=None 是合法 profile（缺坐标在求值期得到 UNKNOWN），与残缺坐标对象是两回事。
+  assert RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN,)).coordinate is None
+
+
+@pytest.mark.parametrize('entry, kwargs, error', [
+  ('at_five', {}, ValueError),
+  ('at_year', {'gz_month': _Dizhi.酉}, ValueError),
+  ('at_year', {'gz_year': 2024, 'solar_date': _date_module(2024, 4, 10)}, ValueError),
+  ('at_month', {'gz_year': 2024}, ValueError),
+  ('at_month', {'gz_month': _Dizhi.酉}, ValueError),
+  ('at_date', {}, ValueError),
+  ('at_date', {'solar_date': _date_module(2024, 4, 10), 'gz_year': 2024}, ValueError),
+  ('at_moment', {'solar_moment': datetime(2024, 4, 10, 12), 'gz_month': _Dizhi.酉}, ValueError),
+  ('at_year', {'gz_year': True}, TypeError),
+  ('at_year', {'gz_year': Year(2024)}, TypeError),
+  ('at_month', {'gz_year': 2024, 'gz_month': '酉'}, TypeError),
+  ('at_date', {'solar_date': datetime(2024, 4, 10, 12)}, TypeError),
+  ('at_moment', {'solar_moment': _date_module(2024, 4, 10)}, TypeError),
+  ('at_moment', {'solar_moment': datetime(2024, 4, 10, 12, tzinfo=_UTC)}, ValueError),
+])
+def test_transit_coordinate_request_errors(entry: str, kwargs: dict[str, Any], error: type[Exception]) -> None:
+  with pytest.raises(error):
+    TransitCoordinate(entry, **kwargs) # type: ignore[arg-type]
+
+
+def test_relationship_verdicts_and_observations() -> None:
+  # 宫刑冲：子午冲＋午午自刑的男命盘 SATISFIED；无刑无冲的丙寅日盘 NOT_SATISFIED。
+  satisfied = rel_match()
+  assert satisfied.criterion.status == 'SATISFIED' and satisfied.criterion.reason == 'premise_satisfied'
+  assert satisfied.criterion.scope_complete is True
+  assert dict(satisfied.criterion.observations) == {'day_pillar_in_chong': True, 'day_pillar_in_xing': True}
+  unsatisfied = rel_match(birth='2000-01-09 12:00')
+  assert unsatisfied.criterion.status == 'NOT_SATISFIED' and unsatisfied.criterion.reason == 'required_classification_absent'
+  assert dict(unsatisfied.criterion.observations) == {'day_pillar_in_chong': False, 'day_pillar_in_xing': False}
+  # 透干：辛明干可见 SATISFIED，藏干只记事实、永不满足「透」。
+  visible = rel_match(TOUGAN, birth='2000-01-29 06:00')
+  assert visible.criterion.status == 'SATISFIED'
+  assert dict(visible.criterion.observations) == {'target_stem_visible': True, 'target_stem_hidden': True}
+  hidden_only = rel_match(TOUGAN, birth='2000-01-01 12:00') # 丑藏辛，明干无辛。
+  assert hidden_only.criterion.status == 'NOT_SATISFIED'
+  assert dict(hidden_only.criterion.observations) == {'target_stem_visible': False, 'target_stem_hidden': True}
+  for result in (satisfied, unsatisfied, visible, hidden_only):
+    assert result.occurrences == () and result.entries == () and result.relationship is not None
+    assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_relationship_scope_missing_data_paths() -> None:
+  c = chart_from('2000-01-01 12:00', 'male') # 2000-01-01 出生，干支年 1999。
+  # 缺查询坐标：kinds 仍显式非空，UNKNOWN／missing_transit_coordinate，transits 为 None。
+  no_coordinate = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.DAYUN),
+  ))
+  assert no_coordinate.criterion.status == 'UNKNOWN' and no_coordinate.criterion.reason == 'missing_transit_coordinate'
+  assert no_coordinate.criterion.scope_complete is False
+  assert no_coordinate.relationship is not None and no_coordinate.relationship.transits is None
+  # 出生前：入口返回 None → transit_unavailable。
+  before_birth = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=1998), (TransitKind.LIUNIAN,),
+  ))
+  assert before_birth.criterion.reason == 'transit_unavailable'
+  assert before_birth.relationship is not None and before_birth.relationship.transits is None
+  # DAY 精度的 at_moment 入口不可用 → transit_unavailable。
+  day_precision = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12)), (TransitKind.LIUNIAN,),
+  ))
+  assert day_precision.criterion.reason == 'transit_unavailable'
+  for result in (no_coordinate, before_birth, day_precision):
+    assert ContextResult.from_json(result.export_json()) == result
+    rendered = result.render()
+    assert '请求种类=' in rendered and '未取得种类=' in rendered
+
+
+def test_relationship_partial_and_empty_kind_availability() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
+  # 成年无小运：所求 {小运, 大运} 只取得大运 → UNKNOWN／transit_unavailable，已取得种类的证据照常保留。
+  partial = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN),
+  ))
+  assert partial.criterion.reason == 'transit_unavailable' and partial.criterion.scope_complete is False
+  assert partial.relationship is not None
+  assert partial.relationship.transits is not None
+  assert tuple(partial.relationship.transits) == (TransitKind.DAYUN,)
+  # 全缺：所求只有小运而该年无小运 → 交集空，transits 为 None；不上抛 select 的底层异常。
+  all_missing = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN,),
+  ))
+  assert all_missing.criterion.reason == 'transit_unavailable'
+  assert all_missing.relationship is not None and all_missing.relationship.transits is None
+  # 全部所求种类都取得：按判据判别，取得集合为固定序。
+  complete = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN, TransitKind.DAYUN),
+  ))
+  assert complete.criterion.status == 'SATISFIED' and complete.criterion.scope_complete is True
+  assert complete.relationship is not None
+  assert complete.relationship.transits is not None
+  assert tuple(kind for kind, _ in complete.relationship.transits.items) == (TransitKind.DAYUN, TransitKind.LIUNIAN)
+  for result in (partial, all_missing, complete):
+    restored = ContextResult.from_json(result.export_json())
+    assert restored == result
+    # 往返后请求／取得差集仍可解。
+    assert isinstance(result.profile, RelationshipProfile) and isinstance(restored.profile, RelationshipProfile)
+    assert result.profile.kinds == restored.profile.kinds
+
+
+def test_relationship_at_moment_microseconds_are_evaluation_equal_but_recorded() -> None:
+  c = BaziChart(Bazi.create('2000-01-01 12:00', 'male', BaziConfig.from_values(precision='hour')))
+  profile_a = RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, 30, 0, 500000)),
+    (TransitKind.LIUNIAN, TransitKind.LIUYUE),
+  )
+  profile_b = RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, 29, 59, 750000)),
+    (TransitKind.LIUNIAN, TransitKind.LIUYUE),
+  )
+  left = evaluate_context(c, criterion_id=PALACE, profile=profile_a)
+  right = evaluate_context(c, criterion_id=PALACE, profile=profile_b)
+  assert left.criterion == right.criterion and left.relationship == right.relationship
+  assert left != right # 记录保存请求原样，不冒充亚秒精度。
+  assert isinstance(left.profile, RelationshipProfile) and isinstance(right.profile, RelationshipProfile)
+  assert left.profile.coordinate is not None
+  assert left.profile.coordinate.solar_moment is not None
+  assert left.profile.coordinate.solar_moment.microsecond == 500000
+  assert json.loads(left.export_json())['profile']['coordinate']['solar_moment'] == '2024-04-10T12:30:00.500000'
+  assert ContextResult.from_json(left.export_json()) == left
+
+
+def test_relationship_reference_matrix() -> None:
+  # | include_reference_only | 性别 | 结构状态 | → §5.3 矩阵。
+  male = chart_from('2000-01-01 12:00', 'male')
+  female = chart_from('2000-01-01 12:00', 'female')
+  hidden: dict[str, Any] = {'include_reference_only': True}
+
+  # False × 任意：不返回关联栏。
+  off = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'))
+  assert off.related == () and '关联参考' not in off.render()
+
+  # True × 男 × SATISFIED／NOT_SATISFIED／UNKNOWN（两种 reason）：返回条目，recognized=True。
+  for result in (
+    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
+    evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
+    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN,)), **hidden),
+    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile(
+      'natal_and_transits', TransitCoordinate('at_year', gz_year=1998), (TransitKind.LIUNIAN,)), **hidden),
+  ):
+    assert [entry.claim_id for entry in result.related] == [RELATED_PALACE]
+    assert all(entry.recognized for entry in result.related)
+    rendered = result.render()
+    assert '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：' + RELATED_PALACE in rendered
+    assert knowledge_text(RELATED_PALACE) in rendered
+    # NOT_SATISFIED／UNKNOWN 的关联措辞与 SATISFIED 相同；不出现「已核结构命中」。
+    assert '已核结构命中' not in rendered
+    assert '结构前提：' + result.criterion.status in rendered
+
+  # True × 女：两条受门槛条目一律不关联（含同 ID 顶替），结构照算；静态查询不受限。
+  female_result = evaluate_context(female, criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden)
+  assert female_result.related == () and '关联参考' not in female_result.render()
+  assert female_result.criterion.status == 'SATISFIED' # 女命结构判据照常判别。
+  knowledge = KnowledgeBase.load()
+  assert knowledge.entry(RELATED_PALACE).text and knowledge.entry(RELATED_TOUGAN).text
+
+  # True × 男 × 知识库缺该条目：不生成 RelatedEntry。
+  trimmed = KnowledgeBase.from_json(knowledge.export_json(()))
+  missing = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), knowledge=trimmed, **hidden)
+  assert missing.related == () and '关联参考' not in missing.render()
+
+
+def knowledge_text(claim_id: str) -> str:
+  return KnowledgeBase.load().entry(claim_id).text
+
+
+@pytest.mark.parametrize('dimension', ['text', 'premise', 'limits', 'viewpoint', 'object', 'source'])
+def test_relationship_female_gate_precedes_binding_and_replacement(dimension: str) -> None:
+  # 女命对两条受限 ID 一律不关联，同 ID 自定义顶替不能绕过；男命顶替返回 recognized=False，
+  # 只列 ID 与「绑定未识别」，不渲染被顶替的文字。
+  knowledge = KnowledgeBase.load()
+  data = json.loads(knowledge.export_json())
+  entry = next(value for value in data['entries'] if value['claim_id'] == RELATED_PALACE)
+  if dimension in ('text', 'premise', 'viewpoint'):
+    entry[dimension] += '（编辑口径）'
+  elif dimension == 'limits':
+    entry['limits'] = [*entry['limits'], '编辑者另记的限度。']
+  elif dimension == 'object':
+    next(value for value in data['objects'] if value['object_id'] == 'concept.peiou_gong')['name'] = '同名异物'
+  else:
+    next(value for value in data['sources'] if value['source_id'] == 'tanyuan_qizi')['limitations'] += '不同边界。'
+  custom = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+
+  female = evaluate_context(chart_from('2000-01-01 12:00', 'female'), criterion_id=PALACE,
+                            profile=RelationshipProfile('natal'), knowledge=custom, include_reference_only=True)
+  assert female.related == () and '关联参考' not in female.render()
+  assert '（编辑口径）' not in female.render()
+
+  male = evaluate_context(chart_from('2000-01-01 12:00', 'male'), criterion_id=PALACE,
+                          profile=RelationshipProfile('natal'), knowledge=custom, include_reference_only=True)
+  assert [entry.claim_id for entry in male.related] == [RELATED_PALACE]
+  assert male.related[0] == RelatedEntry(RELATED_PALACE, False)
+  rendered = male.render()
+  assert ('关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：' + RELATED_PALACE + '；绑定未识别') in rendered
+  assert '绑定未识别' in rendered
+  if dimension == 'text':
+    assert '（编辑口径）' not in rendered
+  assert ContextResult.from_json(male.export_json()) == male
+  with pytest.raises(ValueError):
+    RelatedEntry('', True)
+  with pytest.raises(TypeError):
+    RelatedEntry(RELATED_PALACE, 1) # type: ignore[arg-type]
+
+
+def test_relationship_record_roundtrip_and_rejections() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
+  result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ), include_reference_only=True)
+  data = json.loads(result.export_json())
+  assert data['record_version'] == 3
+  assert data['profile'] == {
+    'scope': 'natal_and_transits',
+    'coordinate': {'entry': 'at_month', 'gz_year': 2024, 'gz_month': '辰', 'solar_date': None, 'solar_moment': None},
+    'kinds': ['dayun', 'liunian'],
+  }
+  assert data['occurrences'] == [] and data['entries'] == []
+  assert data['related'] == [{'claim_id': RELATED_TOUGAN, 'recognized': True}]
+  assert data['relationship']['star_target'] == {'tiangan': '癸', 'dizhi': ['子']}
+  assert data['relationship']['transits'] == {'dayun': '甲戌', 'liunian': '甲辰'}
+  assert ContextResult.from_json(result.export_json()) == result
+  assert ContextResult.from_json(result.export_json()).render() == result.render()
+  rendered = result.render()
+  assert '范围：natal_and_transits；坐标=at_month；干支年=2024；干支月=辰；' in rendered
+  assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]；未取得种类=[]' in rendered
+
+  # at_date 与 at_moment 坐标的直接求值：日期查询真实可用，DAY 精度时刻入口不可用。
+  at_date = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_date', solar_date=_date_module(2024, 4, 10)),
+    (TransitKind.LIUNIAN, TransitKind.LIUYUE, TransitKind.LIURI),
+  ))
+  assert at_date.criterion.scope_complete is True
+  assert at_date.relationship is not None and at_date.relationship.transits is not None
+  assert json.loads(at_date.export_json())['profile']['coordinate']['solar_date'] == '2024-04-10'
+  assert ContextResult.from_json(at_date.export_json()) == at_date
+  assert '坐标=at_date；公历日=2024-04-10' in at_date.render()
+
+  # 非规范拼写逐项拒绝：日期紧凑写法、时刻空格分隔、微秒缩写、带偏移、支名回读、
+  # 种类乱序、非负序号、bool 序号与 bool 年份。
+  def __mutate(section: str, key: Any, value: Any) -> str:
+    mutated = json.loads(json.dumps(data))
+    if section == 'profile.coordinate':
+      mutated['profile']['coordinate'][key] = value
+    elif section == 'profile':
+      mutated['profile'][key] = value
+    elif section == 'relationship':
+      mutated['relationship'][key] = value
+    return json.dumps(mutated)
+
+  for section, key, value in (
+    ('profile.coordinate', 'solar_date', '20240410'),
+    ('profile.coordinate', 'solar_moment', '2024-04-10 12:00:00'),
+    ('profile.coordinate', 'gz_year', True),
+    ('profile', 'kinds', ['liunian', 'dayun']),
+    ('profile', 'kinds', ['dayun', 'dayun', 'liunian']),
+    ('profile', 'kinds', ['dayun', 'bogus']),
+  ):
+    with pytest.raises((TypeError, ValueError)):
+      ContextResult.from_json(__mutate(section, key, value))
+
+  # at_year 记录的入口字段互斥：把 at_month 的月份塞进 at_year 记录须被坐标构造拒绝。
+  year_result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  ), include_reference_only=True)
+  year_data = json.loads(year_result.export_json())
+  year_data['profile']['coordinate']['gz_month'] = '辰'
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(year_data))
+
+  # 证据组合的序号：bool 与负数拒绝（组合成员是 {index, ganzhi} 记录）。
+  evidence = json.loads(json.dumps(data))
+  star_relations = evidence['relationship']['star_relations']
+  first_key = next(iter(star_relations))
+  star_relations[first_key][0][0]['index'] = True
+  with pytest.raises(TypeError):
+    ContextResult.from_json(json.dumps(evidence))
+  star_relations[first_key][0][0]['index'] = -1
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(evidence))
+
+
+def test_relationship_record_version_before_keys_and_old_school() -> None:
+  # 真实 v2 形状：官杀记录在旧版的键集（无 relationship／related）；版本检查先于键集合，
+  # 因此得到版本拒绝而非键集差异。不是手改版本号的 v3。
+  context_record = json.loads(match().export_json())
+  v2_text = json.dumps({
+    key: value for key, value in context_record.items() if key not in ('relationship', 'related')
+  } | {'record_version': 2}, ensure_ascii=False)
+  with pytest.raises(ValueError, match='Unsupported record version'):
+    ContextResult.from_json(v2_text)
+
+  # v3 版本号＋旧 school（缺 peiou_xing_def）：与上一条是两个触发路径。
+  legacy_school = json.loads(match().export_json())
+  config_block: dict[str, Any] = legacy_school['input']['config']
+  config_block['school'] = {
+    key: value for key, value in config_block['school'].items() if key != 'peiou_xing_def'
+  }
+  with pytest.raises(ValueError, match='Missing school field: peiou_xing_def'):
+    ContextResult.from_json(json.dumps(legacy_school))
+
+  # 第三个入口：旧 chart JSON 缺该字段走 BaziChart.from_json 的同一条消息。
+  chart_json: dict[str, Any] = dict(chart().json)
+  chart_json['school'] = {
+    key: value for key, value in chart_json['school'].items() if key != 'peiou_xing_def'
+  }
+  with pytest.raises(ValueError, match='Missing school field: peiou_xing_def'):
+    BaziChart.from_json(chart_json)
+
+
+def test_relationship_record_structural_constraints() -> None:
+  result = rel_match(TOUGAN, birth='2000-01-29 06:00', include_reference_only=True)
+  # RelationshipEvidence 的类型闸与互斥组合、判据种类不符均拒绝。
+  with pytest.raises(TypeError):
+    replace(result, relationship=object()) # type: ignore[arg-type]
+  with pytest.raises(ValueError, match='profile'):
+    replace(result, profile=ContextProfile('natal'))
+  with pytest.raises(ValueError):
+    replace(result, occurrences=result_with_occurrences())
+  guansha = match()
+  with pytest.raises(ValueError):
+    replace(guansha, relationship=result.relationship, related=result.related)
+  # natal 范围携带取得岁运须拒绝。
+  carrying = json.loads(result.export_json())
+  carrying['relationship']['transits'] = {'liunian': '甲辰'}
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(carrying))
+  # 取得种类越出请求集合 / 序号越出查询序列 / scope_complete 未取得全部所求。
+  transiting = evaluate_context(chart_from('2000-01-01 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ))
+  exceeded = json.loads(transiting.export_json())
+  exceeded['profile']['kinds'] = ['dayun']
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(exceeded))
+  indexed = json.loads(result.export_json())
+  indexed['relationship']['house_relations'] = {'冲': [[{'index': 9, 'ganzhi': '甲子'}]]}
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(indexed))
+  # natal 范围 scope_complete=True 合法；natal_and_transits 缺种类时改真须拒绝。
+  partial_record = evaluate_context(chart_from('2000-01-01 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN),
+  ))
+  incomplete = json.loads(partial_record.export_json())
+  assert incomplete['criterion']['scope_complete'] is False
+  incomplete['criterion']['scope_complete'] = True
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(incomplete))
+  # related 引用知识库缺失条目拒绝。
+  missing_related = json.loads(result.export_json())
+  missing_related['related'] = [{'claim_id': 'unknown.claim', 'recognized': True}]
+  with pytest.raises(ValueError):
+    ContextResult.from_json(json.dumps(missing_related))
+
+
+def result_with_occurrences() -> tuple[Any, ...]:
+  occurrence = match().occurrences[0]
+  return (occurrence,)

@@ -15,6 +15,9 @@ from bazi.knowledge import (
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
+ALLOWED_CHANGES: dict[str, dict[str, object]] = json.loads(
+  (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+)['allowed_changes']
 
 
 def _ids(entries: tuple[KnowledgeEntry, ...]) -> tuple[str, ...]:
@@ -48,7 +51,14 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
               'output': claim.output,
             },
           })
-  assert actual == baseline['rows']
+  # 投影逻辑不动：期望值仅按 45 个允许 ID 的 attribution 精确允许表反向规范化。
+  expected_rows = [
+    {**row, 'claim': {**row['claim'], 'attribution': ALLOWED_CHANGES[row['claim']['claim_id']]['attribution']}}
+    if row['claim']['claim_id'] in ALLOWED_CHANGES and 'attribution' in ALLOWED_CHANGES[row['claim']['claim_id']]
+    else row
+    for row in baseline['rows']
+  ]
+  assert actual == expected_rows
   for source_id, expected in baseline['sources'].items():
     record = asdict(KNOWLEDGE_BASE.sources[source_id])
     assert {key: record[key] for key in expected} == expected
@@ -58,7 +68,30 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
   assert set(_ids(KNOWLEDGE_BASE.query())) == {
     row['claim']['claim_id'] for row in baseline['rows'] if row['claim']['output'] == 'default'
   }
-  assert len(KNOWLEDGE_BASE.entries) == 295
+  assert len(KNOWLEDGE_BASE.entries) == 302
+
+
+def test_attribution_allowance_is_exactly_the_relationship_field_entries() -> None:
+  # 双向断言：允许表的 attribution 集合恰为 legacy.field=='relationship' 的 45 个 ID。
+  attribution_allowed = {
+    claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
+  }
+  relationship_field = {
+    entry.claim_id for entry in KNOWLEDGE_BASE.entries.values()
+    if entry.legacy is not None and entry.legacy.field == 'relationship'
+  }
+  assert attribution_allowed == relationship_field and len(attribution_allowed) == 45
+  limits_allowed = {
+    claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'limits' in changes
+  }
+  old_stars = {'legacy.shishen.SH-' + number for number in ('094', '114', '135', '155')}
+  assert limits_allowed == attribution_allowed | old_stars and len(limits_allowed) == 49
+  for claim_id, changes in ALLOWED_CHANGES.items():
+    entry = KNOWLEDGE_BASE.entry(claim_id)
+    for field, expected in changes.items():
+      actual = getattr(entry, field)
+      # limits 在 JSON 中是列表、条目上是元组；逐字相等。
+      assert (list(actual) if isinstance(actual, tuple) else actual) == expected, (claim_id, field)
 
 
 def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
@@ -119,11 +152,19 @@ def test_premises_are_organized_without_inventing_rules() -> None:
   assert relation.relations[1].text == '食神又能克制七杀'
   assert k.entry('editorial.shishen.shishen.anxiety_insomnia').applicability == 'unresolved'
   assert k.entry('editorial.shishen.zhengguan.legal_trouble').applicability == 'described'
+  new_relationship_ids = set(json.loads(
+    (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+  )['added']['entries'])
   for entry in k.entries.values():
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:
-      assert entry.output == 'reference_only' and entry.source_state == 'repository_attributed'
-      assert all(k.sources[source].text_layer == 'editorial' for source in entry.sources)
+      assert entry.output == 'reference_only'
+      if entry.claim_id in new_relationship_ids:
+        # 本批新增的婚恋条目挂古籍见证，不再是仓内整理署名。
+        assert entry.source_state == 'witnessed'
+      else:
+        assert entry.source_state == 'repository_attributed'
+        assert all(k.sources[source].text_layer == 'editorial' for source in entry.sources)
 
 
 def test_reference_samples_preserve_text_and_complete_limits() -> None:
@@ -480,3 +521,106 @@ def test_witnessed_zhushi_is_a_distinct_text_layer() -> None:
   k = KnowledgeBase((), (), (source,), ())
   assert k.sources['annotation'].text_layer == 'zhushi'
   assert KnowledgeBase.from_json(k.export_json()).sources == k.sources
+
+
+# 本批新增的婚恋条目与注册表；语料事实钉在这里，保护断言见下两条。
+_NEW_RELATIONSHIP_IDS: tuple[str, ...] = (
+  'editorial.liuqin.spouse_star_yinyanggan.v1',
+  'editorial.liuqin.spouse_star_zhengpian.v1',
+  'editorial.liuqin.qiqie_gong.v1',
+  'editorial.tanyuan.wife_palace_xingchong.v1',
+  'editorial.tanyuan.wife_star_gantou.v1',
+  'editorial.tanyuan.wife_star_liangtou.v1',
+  'editorial.liuqin.sanming_qiqie_zuodi.v1',
+)
+_GATED_CLAIM_IDS: tuple[str, ...] = (
+  'editorial.tanyuan.wife_palace_xingchong.v1',
+  'editorial.tanyuan.wife_star_gantou.v1',
+)
+
+
+def test_relationship_additions_registry_counts_and_default_surface() -> None:
+  k = KNOWLEDGE_BASE
+  assert len(k.entries) == 302 and len(k.sources) == 13 and len(k.contexts) == 10 and len(k.objects) == 31
+  assert len(k.query()) == 19 # 新条目全部 reference_only，默认输出面不变。
+  for claim_id in _NEW_RELATIONSHIP_IDS:
+    entry = k.entry(claim_id)
+    assert entry.legacy is None and entry.output == 'reference_only'
+    assert entry.source_state == 'witnessed'
+  # 星坐地与兩透两条件未核条目不挂判据、不挂情境（unresolved，premise 为空）。
+  for claim_id in ('editorial.tanyuan.wife_star_liangtou.v1', 'editorial.liuqin.sanming_qiqie_zuodi.v1'):
+    entry = k.entry(claim_id)
+    assert entry.applicability == 'unresolved' and entry.premise == '' and entry.contexts == ()
+  for claim_id in _NEW_RELATIONSHIP_IDS[:5]:
+    assert k.entry(claim_id).applicability == 'described' and k.entry(claim_id).premise
+  # 新查询面：两个对象与一个情境；旧对象／情境／来源的静态查询面不变由其余断言与指纹承担。
+  assert _ids(k.query(object_id='concept.peiou_xing', include_reference_only=True)) == (
+    'editorial.liuqin.spouse_star_yinyanggan.v1', 'editorial.liuqin.spouse_star_zhengpian.v1',
+    'editorial.tanyuan.wife_star_gantou.v1', 'editorial.tanyuan.wife_star_liangtou.v1',
+    'editorial.liuqin.sanming_qiqie_zuodi.v1',
+  )
+  assert _ids(k.query(object_id='concept.peiou_gong', include_reference_only=True)) == (
+    'editorial.liuqin.qiqie_gong.v1', 'editorial.tanyuan.wife_palace_xingchong.v1',
+  )
+  assert _ids(k.query(context_id='liuqin.spouse_star_readings', include_reference_only=True)) == (
+    'editorial.liuqin.spouse_star_yinyanggan.v1', 'editorial.liuqin.spouse_star_zhengpian.v1',
+  )
+  assert len(k.query(topic='取象', include_reference_only=True)) == 193
+  # 新来源的 excerpt 是原样短摘，逐字出现在以其为引文依据的条目 text 里。
+  for source_id in ('sanming_liuqin', 'yuanhai_liuqin_charts', 'yuanhai_qiqie_note', 'tanyuan_qizi'):
+    source = k.sources[source_id]
+    citing = [entry for entry in k.entries.values() if source_id in entry.sources]
+    assert citing and any(source.excerpt in entry.text for entry in citing), source_id
+
+
+def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
+  # 语料标记与门槛表互为对照：含标记的条目恰是 _RELATED_GENDERS 的键，标记不进 text／premise。
+  from bazi.context_matching import _RELATED_GENDERS
+  marker = '女命查询不关联本条，静态查阅不受限。'
+  marked = {
+    entry.claim_id for entry in KNOWLEDGE_BASE.entries.values()
+    if any(marker in limit for limit in entry.limits)
+  }
+  assert marked == set(_RELATED_GENDERS) == set(_GATED_CLAIM_IDS)
+  assert len(marked) == 2
+  for entry in KNOWLEDGE_BASE.entries.values():
+    assert marker not in entry.text and marker not in entry.premise
+    if entry.claim_id not in _GATED_CLAIM_IDS:
+      assert all(marker not in limit for limit in entry.limits)
+
+
+def test_normalized_legacy_projection_fingerprint() -> None:
+  # 全 291 旧条目的规范化投影：去 45 个允许 ID 的 attribution、49 个允许 ID 的 limits，
+  # 其余字段全入。指纹在改前改后语料上相同，不是新 hash 消除保护。
+  import hashlib
+  from dataclasses import asdict as _asdict
+  attribution_allowed = {
+    claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
+  }
+  limits_allowed = {claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'limits' in changes}
+  rows = []
+  for entry in KNOWLEDGE_BASE.entries.values():
+    if entry.legacy is None:
+      continue
+    row = _asdict(entry)
+    if entry.claim_id in attribution_allowed:
+      del row['attribution']
+    if entry.claim_id in limits_allowed:
+      del row['limits']
+    rows.append(row)
+  digest = hashlib.sha256(
+    json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
+  ).hexdigest()
+  assert digest == 'b84a66ca805566abeab5bbd23c67cd665e84caa85bcadd365bd2b1ee887417c5'
+  # 既有非空 limits 的条目（旧语料 6 条中的 2 条 legacy；另 4 条仓内条目由
+  # test_reference_samples_preserve_text_and_complete_limits 逐字钉住）不由允许表放宽。
+  unchanged_nonempty = {
+    entry.claim_id: entry.limits for entry in KNOWLEDGE_BASE.entries.values()
+    if entry.legacy is not None and entry.limits and entry.claim_id not in limits_allowed
+  }
+  assert set(unchanged_nonempty) == {'legacy.shishen.SH-052', 'legacy.tiangan.ding.weak_state'}
+  assert unchanged_nonempty['legacy.shishen.SH-052'] == (
+    '财未具体分为正财或偏财。',
+    '克制与避祸等解释的适用前提尚未还原，不表示有效制杀已成立。',
+  )
+  assert unchanged_nonempty['legacy.tiangan.ding.weak_state'] == ('嵌套前提与中间结果尚未拆分。',)

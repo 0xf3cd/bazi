@@ -17,7 +17,9 @@ import pytest
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from bazi.bazi import BaziGender, Bazi
 from bazi.calendar import CalendarBackend, calendar_utils_of
-from bazi.school import BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG
+from bazi.school import (
+  BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, PeiouXingDef, DEFAULT_CONFIG,
+)
 from bazi.utils import bazi_utils
 
 from bazi.data_types import (
@@ -91,6 +93,69 @@ def test_relationship_stars(rng: random.Random) -> None:
     if len(stars.dizhi) != 1:
       assert 2 == len(stars.dizhi)
       assert all(bazi_utils.traits(dz).wuxing is Wuxing.土 for dz in stars.dizhi)
+
+
+# 二十（日主，性别）格 × 两读法的字面目标表；与实现独立手写，不由生产算法生成。
+# 依据分三层（详见 PeiouXingDef 与知识条目 editorial.liuqin.spouse_star_*）：
+# 1. 书影直例：默认读法为渊海子平六亲取用图逐格原载（男图十格「正妻」，女图六格「正夫」、
+#    三格「夫」、丙日一格「正」字存而第二字残损）；阴阳干读法仅三命通会甲、乙两干男女四格。
+# 2. 规则类推：阴阳干读法其余十六格按三命 p.169「其餘八干俱以類推」与 p.174「陽男陰女」重建，单源。
+# 3. 算法复算：独立字面表与十神推导对 40 值逐格比较（探针 EXIT 0）；复算不是来源。
+# 渊海女图丙日一格的「癸」按行列位置与其余十九格自洽得出，不是该格直读。
+_PEIOU_XING_TABLE: dict[tuple[Tiangan, BaziGender, PeiouXingDef], Tiangan] = {
+  (Tiangan.from_str(dm), gender, definition): Tiangan.from_str(target)
+  for dm, male_default, male_yinyang, female_default, female_yinyang in (
+    ('甲', '己', '己', '辛', '庚'),
+    ('乙', '戊', '己', '庚', '庚'),
+    ('丙', '辛', '辛', '癸', '壬'),
+    ('丁', '庚', '辛', '壬', '壬'),
+    ('戊', '癸', '癸', '乙', '甲'),
+    ('己', '壬', '癸', '甲', '甲'),
+    ('庚', '乙', '乙', '丁', '丙'),
+    ('辛', '甲', '乙', '丙', '丙'),
+    ('壬', '丁', '丁', '己', '戊'),
+    ('癸', '丙', '丁', '戊', '戊'),
+  )
+  for gender, default, yinyang in ((BaziGender.男, male_default, male_yinyang), (BaziGender.女, female_default, female_yinyang))
+  for definition, target in ((PeiouXingDef.ZHENGCAI_ZHENGGUAN, default), (PeiouXingDef.YINYANGGAN, yinyang))
+}
+
+
+@pytest.mark.parametrize('day_master', Tiangan)
+@pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
+@pytest.mark.parametrize('definition', PeiouXingDef)
+def test_relationship_stars_two_readings_hit_the_literal_forty_value_table(
+  day_master: Tiangan, gender: BaziGender, definition: PeiouXingDef,
+) -> None:
+  assert len(_PEIOU_XING_TABLE) == 40
+  expected = _PEIOU_XING_TABLE[(day_master, gender, definition)]
+  # 直接换日柱构造目标（日主，性别，取法）格；relationship_stars 只读日主、性别与取法。
+  bazi = Bazi.create(
+    datetime(2000, 1, 1, 12),
+    'male' if gender is BaziGender.男 else 'female',
+    BaziConfig(school=BaziSchool(peiou_xing_def=definition)),
+  )
+  bazi._day_pillar = Ganzhi.from_str(f'{day_master!s}子') # type: ignore[misc]
+  stars = BaziChart(bazi).relationship_stars
+  assert stars.tiangan is expected
+  # 地支侧两读一致：主气十神等于目标干十神。
+  target_shishen = bazi_utils.shishen(day_master, expected)
+  for dz in stars.dizhi:
+    assert bazi_utils.shishen(day_master, dz) is target_shishen
+  assert 1 <= len(stars.dizhi) <= 2
+  # 目标干恒不是日主；个别格（乙男取己、甲女取庚）两读同阴阳，目标仍不同。
+  assert stars.tiangan is not day_master
+
+
+def test_two_readings_agree_only_on_yang_male_and_yin_female_grids() -> None:
+  # 阳男、阴女十格两读目标相同；阴男、阳女十格不同（探针与计划复验一致的独立断言）。
+  for day_master in Tiangan:
+    is_yang = bazi_utils.traits(day_master).yinyang is Yinyang.阳
+    for gender in (BaziGender.男, BaziGender.女):
+      default = _PEIOU_XING_TABLE[(day_master, gender, PeiouXingDef.ZHENGCAI_ZHENGGUAN)]
+      yinyang = _PEIOU_XING_TABLE[(day_master, gender, PeiouXingDef.YINYANGGAN)]
+      grids_agree = is_yang == (gender is BaziGender.男)
+      assert (default is yinyang) is grids_agree, (day_master, gender)
 
 
 def test_traits() -> None:

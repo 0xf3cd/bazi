@@ -10,6 +10,14 @@ from bazi.knowledge import KnowledgeBase, KnowledgeEntry, object_id
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 BASELINE = json.loads((Path(__file__).with_name('data') / 'description_legacy_baseline.json').read_text(encoding='utf-8'))
+# 45 个允许改写 attribution 的 ID；limits 改写不进本文件的行指纹，由 test_knowledge 的允许表钉。
+ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(
+  claim_id for claim_id, fields in json.loads(
+    (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+  )['allowed_changes'].items() if 'attribution' in fields
+)
+OLD_ATTRIBUTION: str = 'Legacy corpus; source unverified'
+NEW_ATTRIBUTION: str = '作者据网络材料归纳，原始出处未核'
 
 
 def _positioned_entries(subject: Tiangan | Shishen, field: str) -> tuple[KnowledgeEntry, ...]:
@@ -34,9 +42,11 @@ def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
         for entry in _positioned_entries(subject, field):
           assert entry.legacy is not None
           rows.append(f'{prefix}:{subject}:{field}:{entry.text}')
+          # claim_rows 对 45 个允许 ID 做反向规范化后保持原指纹，不需要重钉新 hash。
+          attribution = OLD_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else entry.attribution
           claim_rows.append('\0'.join((
             'C', str(subject), field, entry.claim_id, entry.text,
-            ','.join(entry.sources), entry.attribution,
+            ','.join(entry.sources), attribution,
             ','.join(entry.legacy.conditions), entry.output,
           )))
           assert entry.text == entry.text.strip() and entry.text.endswith('。')
@@ -106,7 +116,8 @@ def test_legacy_reference_classification_is_not_upgraded_by_projection() -> None
       continue
     if not entry.sources:
       assert entry.source_state == 'unverified'
-      assert entry.attribution == 'Legacy corpus; source unverified'
+      # 45 个允许 ID 精确等于新署名，其余仍等于旧署名；不因投影升级输出资格。
+      assert entry.attribution == (NEW_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else OLD_ATTRIBUTION)
       assert entry.output == 'reference_only'
       if entry.legacy.object_id.startswith('shishen.') and entry.legacy.conditions:
         conditional_shishen.add(entry.claim_id)

@@ -22,6 +22,7 @@ def test_all_sources_and_future_sources_are_accessible_without_mirrors(tmp_path:
     'yuanhai_ziping_stem_symbols_p69', 'yuanhai_ziping_stem_symbols_p70',
     'mingli_tanyuan_stem_basics', 'mingli_tanyuan_shishen_definitions',
     'repository_guoyin_variants', 'repository_wuxing_relations',
+    'sanming_liuqin', 'yuanhai_liuqin_charts', 'yuanhai_qiqie_note', 'tanyuan_qizi',
   }
   # Both an unused source and a newly referenced source must survive reload.
   unused = replace(k.sources['yuanhai_ziping_relations'], source_id='future.unused', lineage='future.lineage', text_layer='zhushi')
@@ -35,7 +36,7 @@ def test_all_sources_and_future_sources_are_accessible_without_mirrors(tmp_path:
   path = tmp_path / 'edited.json'
   path.write_text(edited.export_json(), encoding='utf-8')
   loaded = KnowledgeBase.load(path)
-  assert len(loaded.sources) == 11
+  assert len(loaded.sources) == 15
   for source_id, record in edited.sources.items():
     assert isinstance(loaded.sources[source_id], KnowledgeSource)
     assert loaded.sources[source_id] == record
