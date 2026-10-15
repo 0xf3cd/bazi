@@ -2059,9 +2059,6 @@ def test_guoyin_definition_at_birth_and_transits(
   assert RelationshipAnalyzer(chart).transits.shensha(transits)['guoyin'] == expected
 
 # ----------------------------------------------------------------------------------
-# Spouse-structure evidence (issue #233): the index contract, three scopes, and school
-# configuration of spouse_evidence. Natal side uses reproducible real birth inputs; the
-# transit side is an explicit TransitSet (the declared input), synthetic cases never mixed with real queries.
 
 from dataclasses import replace
 from typing import Any
@@ -2078,8 +2075,6 @@ def _at(combo: frozenset) -> set[int]:
 
 
 def test_stem_occurrences_expand_value_combos_per_position() -> None:
-  # Value-level discover dedups by value; occurrence-level expansion keeps identity: 甲己丙己
-  # 合 is (0)(1) and (0)(3), as 甲丙己己 (0)(2) and (0)(3); the value-level result is the same.
   left = [Ganzhi.from_str(value) for value in ('甲子', '己丑', '丙寅', '己卯')]
   right = [Ganzhi.from_str(value) for value in ('甲子', '丙寅', '己丑', '己卯')]
   left_discovery = _discover_stem_occurrences(left)
