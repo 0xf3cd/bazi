@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
   transits_analysis = analyzer.transits
   transit_chart = TransitChart(chart)
-  # 固定年份范围可能早于出生。
+  # 演示年份随命盘的出生干支年移动。
   start_gz_year = chart.bazi.ganzhi_year + 20
   print(f'流年神煞（{start_gz_year} 起十年）：')
   for gz_year in range(start_gz_year, start_gz_year + 10):

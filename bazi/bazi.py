@@ -140,7 +140,7 @@ class Bazi:
     - longitude: (float | None) 东经为正的角度，范围 `[-180, 180]`。地点路径只支持
       `CalendarBackend.CELESTIAL` 的 `HOUR` 或 `MINUTE` 精度。
     - civil_timezone: (tzinfo | None) 出生地民用时区基准，默认采用输入时区；
-      冻结出生瞬间的实际偏移，时区规则与有效性由调用方负责。
+      模型只保存该时区在出生瞬间生效的固定偏移，时区规则与有效性由调用方负责。
     '''
 
     if not isinstance(birth_time, datetime):
@@ -290,7 +290,7 @@ class Bazi:
     - config: (BaziConfig) 出生精度、历法后端、流派档案及大运年份投影；
       可用 `BaziConfig.from_values` 从字符串构造。
     - longitude: (float | None) 东经为正的经度，显式启用带时区输入的真太阳时路径；不使用纬度。
-    - civil_timezone: (tzinfo | None) 显式出生地民用时区基准，冻结出生瞬间的实际偏移。
+    - civil_timezone: (tzinfo | None) 显式出生地民用时区基准；模型保存其在出生瞬间生效的固定偏移。
     '''
 
     if not isinstance(birth_time, (datetime, str)):

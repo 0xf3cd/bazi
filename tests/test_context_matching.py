@@ -604,6 +604,55 @@ def test_default_knowledge_is_loaded_independently(monkeypatch: pytest.MonkeyPat
   assert left.knowledge == right.knowledge and left == right
 
 
+def test_default_reload_and_shared_snapshot_after_source_update(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  data = json.loads(KnowledgeBase.load().export_json())
+  source = tmp_path / 'knowledge.json'
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  monkeypatch.setattr('bazi.knowledge.DEFAULT_SOURCE_PATH', source)
+  shared = KnowledgeBase.load()
+  original_text = shared.entry(LEGAL[0]).text
+  original_results = (match(), match(knowledge=shared))
+  snapshots = tuple((result, result.render(), result.export_json()) for result in original_results)
+
+  next(entry for entry in data['entries'] if entry['claim_id'] == LEGAL[0])['text'] = 'Updated reference text.'
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  default = match()
+  assert default.knowledge.entry(LEGAL[0]).text == 'Updated reference text.'
+  assert default.criterion.status == 'SATISFIED'
+  assert default.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
+  assert default.knowledge.entry(LEGAL[0]).output == 'reference_only'
+
+  still_shared = match(knowledge=shared)
+  assert still_shared.knowledge is shared and still_shared.knowledge.entry(LEGAL[0]).text == original_text
+  assert still_shared == original_results[1]
+  reloaded = KnowledgeBase.load()
+  assert match(knowledge=reloaded) == default
+  assert reloaded is not shared
+  for result, rendered, exported in snapshots:
+    assert result.knowledge.entry(LEGAL[0]).text == original_text
+    assert result.render() == rendered and result.export_json() == exported
+    assert ContextResult.from_json(exported) == result
+
+
+@pytest.mark.parametrize('missing', [False, True])
+def test_default_source_errors_leave_shared_results_intact(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, missing: bool) -> None:
+  source = tmp_path / 'knowledge.json'
+  source.write_text(KnowledgeBase.load().export_json(), encoding='utf-8')
+  monkeypatch.setattr('bazi.knowledge.DEFAULT_SOURCE_PATH', source)
+  shared = KnowledgeBase.load()
+  result = match()
+  rendered, exported = result.render(), result.export_json()
+  if missing:
+    source.unlink()
+  else:
+    source.write_text('{', encoding='utf-8')
+  with pytest.raises(FileNotFoundError if missing else json.JSONDecodeError):
+    match()
+  assert match(knowledge=shared) == result
+  assert result.render() == rendered and result.export_json() == exported
+  assert ContextResult.from_json(exported) == result
+
+
 def test_all_knowledge_value_fields_participate_in_comparison() -> None:
   for record_type in (KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription):
     assert all(field.compare for field in fields(record_type)), record_type.__name__

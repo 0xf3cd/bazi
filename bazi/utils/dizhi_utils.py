@@ -26,7 +26,7 @@ DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
-  `gonghe` / `gonghui` 恢复虚支。若生产该结果的干支查法使用了
+  `gonghe` / `gonghui` 恢复虚支。若生成该结果的干支查法使用了
   `gong_def`，调用 `gonghe` 时传 `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`。'''
 
 
@@ -56,7 +56,7 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
-  生产该结果的入口所定义的查询序列解释，详见各入口说明。'''
+  生成该结果的入口所定义的查询序列解释，详见各入口说明。'''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留

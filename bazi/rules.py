@@ -29,6 +29,20 @@ def _nayin() -> frozendict[Ganzhi, str]:
   return frozendict(nayin_mapping_table)
 
 
+def _zhangsheng_rows(
+  zhangsheng: frozendict[Tiangan, Dizhi],
+  traits: frozendict[Tiangan, TraitTuple],
+) -> frozendict[Tiangan, tuple[Dizhi, ...]]:
+  '''各天干从长生位起，阳干顺行、阴干逆行。'''
+  return frozendict({
+    tg: tuple(
+      Dizhi.from_index((start.index + place.index * (1 if traits[tg].yinyang is Yinyang.阳 else -1)) % len(Dizhi))
+      for place in ShierZhangsheng
+    )
+    for tg, start in zhangsheng.items()
+  })
+
+
 class BaziRules:
   '''Bazi 与 BaziChart 的基础规则。'''
 
@@ -122,6 +136,12 @@ class BaziRules:
     Tiangan.壬 : Dizhi.申,
     Tiangan.癸 : Dizhi.卯,
   })
+
+  # 十二长生依 ShierZhangsheng 顺序排列的地支位置。
+  _ZHANGSHENG_ROWS: Final[frozendict[Tiangan, tuple[Dizhi, ...]]] = _zhangsheng_rows(
+    TIANGAN_ZHANGSHENG,
+    TIANGAN_TRAITS,
+  )
 
   # 该字典用于查询天干的禄/禄身。
   TIANGAN_LU: Final[frozendict[Tiangan, Dizhi]] = frozendict({
@@ -781,11 +801,8 @@ class ShenshaRules:
     }),
     YangrenDef.LUMING : frozendict(_lu_offset(1)),
     YangrenDef.DIWANG : frozendict({
-      tg: _offset_dizhi(
-        zhangsheng,
-        ShierZhangsheng.帝旺.index if BaziRules.TIANGAN_TRAITS[tg].yinyang is Yinyang.阳 else -ShierZhangsheng.帝旺.index,
-      )
-      for tg, zhangsheng in BaziRules.TIANGAN_ZHANGSHENG.items()
+      tg: row[ShierZhangsheng.帝旺.index]
+      for tg, row in BaziRules._ZHANGSHENG_ROWS.items()
     }),
   })
 
