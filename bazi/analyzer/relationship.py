@@ -605,6 +605,12 @@ class StarAppearance:
         raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
     if self.kind is not None and not isinstance(self.kind, TransitKind):
       raise TypeError(f'Expected TransitKind | None, got {type(self.kind)}')
+    if not isinstance(self.origin, str):
+      raise TypeError(f'Expected str, got {type(self.origin)}')
+    if self.pillar is not None and not isinstance(self.pillar, str):
+      raise TypeError(f'Expected str | None, got {type(self.pillar)}')
+    if not isinstance(self.layer, str):
+      raise TypeError(f'Expected str, got {type(self.layer)}')
     if self.origin == 'natal':
       if self.pillar not in ('year', 'month', 'day', 'hour') or self.kind is not None:
         raise ValueError('Invalid natal appearance coordinate')
@@ -764,9 +770,6 @@ def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> Relationsh
   # 过滤保持具体组合与序号，不投影；GanzhiRelationDiscovery 没有值级 filter，
   # 用与 RelationDiscovery.filter 同语义的键内过滤（无组合的关系整键丢弃）。
 
-  def __day_combo(combo: dizhi_utils.GanzhiRelationCombo) -> bool:
-    return any(occurrence.index == _DAY_PILLAR_INDEX for occurrence in combo)
-
   def __star_combo(combo: dizhi_utils.GanzhiRelationCombo) -> bool:
     return any(occurrence.ganzhi.dizhi in star_target.dizhi for occurrence in combo)
 
@@ -776,7 +779,7 @@ def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> Relationsh
   house_relations = dizhi_utils.GanzhiRelationDiscovery({
     relation : filtered
     for relation, combos in merged.items()
-    if len(filtered := _canonical_combos(combos, __day_combo)) > 0
+    if len(filtered := _canonical_combos(combos, _day_pillar_participates)) > 0
   })
   star_relations = dizhi_utils.GanzhiRelationDiscovery({
     relation : filtered

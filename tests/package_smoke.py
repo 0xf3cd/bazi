@@ -413,6 +413,30 @@ def main() -> None:
     else:
       raise RuntimeError('Installed exact-int year rejection failed')
   print('PASS installed context matching/lazy/readonly/evidence/record restoration')
+  from bazi.context_matching import RelationshipProfile, TransitCoordinate
+  from bazi.analyzer.relationship import spouse_evidence
+  relationship_chart = BaziChart(Bazi.create(datetime(2000, 1, 9, 12), 'male'))
+  relationship = evaluate_context(relationship_chart, criterion_id='editorial.spouse_palace_xingchong.v1', profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2016), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ))
+  check(relationship.criterion.status == 'SATISFIED', 'Installed relationship evaluation mismatch')
+  evidence = relationship.relationship
+  check(evidence is not None and evidence.transits is not None, 'Installed relationship evidence missing transits')
+  if evidence is None or evidence.transits is None:
+    raise RuntimeError('Installed relationship evidence missing transits')
+  check(evidence.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}, 'Installed relationship transit identity mismatch')
+  check('宫·' in relationship.render(), 'Installed relationship render lost category labels')
+  check(ContextResult.from_json(relationship.export_json()) == relationship, 'Installed relationship record restore mismatch')
+  queried_2016 = TransitChart(relationship_chart).at_year(2016)
+  check(queried_2016 is not None, 'Installed relationship transits missing')
+  if queried_2016 is None:
+    raise RuntimeError('Installed relationship transits missing')
+  direct = spouse_evidence(relationship_chart, queried_2016)
+  check(direct.transits is not None, 'Installed spouse_evidence transits missing')
+  if direct.transits is None:
+    raise RuntimeError('Installed spouse_evidence transits missing')
+  check(direct.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}, 'Installed spouse_evidence transit mismatch')
+  print('PASS installed relationship evaluation/evidence/render/record restoration')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

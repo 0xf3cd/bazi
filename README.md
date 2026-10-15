@@ -159,7 +159,7 @@ print(analyzer.transits.house_relations(year))
 ### 配偶星取法
 
 `BaziSchool.peiou_xing_def` 选择配偶星（夫妻星）的取法：默认男命取正财干、女命取正官干；
-`YINYANGGAN` 为《三命通会·論六親》读法（男取我克五行的阴干、女取克我五行的阳干，
+`YINYANGGAN` 为《三命通会·论六亲》读法（男取我克五行的阴干、女取克我五行的阳干，
 书证直例仅甲乙两干，其余十六格按原书原则类推，单源）。地支侧两读一致，取主气为目标干之地支。
 取法影响 `relationship_stars` 及以其为目标的婚恋判别，不改变排盘与其他关系计算。
 

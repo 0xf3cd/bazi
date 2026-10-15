@@ -1002,7 +1002,7 @@ def test_knowledge_export_io_error_uses_cli_error_exit(tmp_path: Path) -> None:
 
 
 # ----------------------------------------------------------------------------------
-# #233 婚恋判据的 CLI：守卫矩阵与合法组合（§7 十八行）。
+# #233 婚恋判据的 CLI：守卫矩阵与合法组合。
 
 PALACE = 'editorial.spouse_palace_xingchong.v1'
 TOUGAN = 'editorial.spouse_star_tougan.v1'

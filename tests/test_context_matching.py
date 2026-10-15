@@ -14,11 +14,11 @@ from bazi.common import frozendict
 from bazi.context_matching import (
   ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, _BINDINGS, _binding_digest, evaluate_context,
 )
-from bazi.defines import Ganzhi, Tiangan, Shishen
+from bazi.defines import Ganzhi, Tiangan, Shishen, DizhiRelation
 from bazi.knowledge import (
   KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription,
 )
-from bazi.school import BaziConfig, BaziSchool, DayRollover, _config_json
+from bazi.school import BaziConfig, BaziSchool, DayRollover, PeiouXingDef, _config_json
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
 
@@ -926,7 +926,7 @@ def test_relationship_at_moment_microseconds_are_evaluation_equal_but_recorded()
 
 
 def test_relationship_reference_matrix() -> None:
-  # | include_reference_only | 性别 | 结构状态 | → §5.3 矩阵。
+  # | include_reference_only | 性别 | 结构状态 | 三态关联矩阵。
   male = chart_from('2000-01-01 12:00', 'male')
   female = chart_from('2000-01-01 12:00', 'female')
   hidden: dict[str, Any] = {'include_reference_only': True}
@@ -1155,6 +1155,184 @@ def test_relationship_record_structural_constraints() -> None:
   missing_related['related'] = [{'claim_id': 'unknown.claim', 'recognized': True}]
   with pytest.raises(ValueError):
     ContextResult.from_json(json.dumps(missing_related))
+
+
+def test_relationship_transits_flip_palace_and_tougan_verdicts() -> None:
+  # 2000-01-09 12:00 男命（己卯丁丑丙寅甲午）：所选岁运真正改变判别结论。
+  c = chart_from('2000-01-09 12:00', 'male')
+
+  def verdict(criterion_id: str, year: int | None) -> ContextResult:
+    profile = RelationshipProfile('natal') if year is None else RelationshipProfile(
+      'natal_and_transits', TransitCoordinate('at_year', gz_year=year), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+    )
+    return evaluate_context(c, criterion_id=criterion_id, profile=profile)
+
+  # 宫刑冲：原局 NOT；2016（乙亥大运、丙申流年，申寅刑冲）SAT；2021／2024 保持 NOT。
+  assert verdict(PALACE, None).criterion.status == 'NOT_SATISFIED'
+  flipped = verdict(PALACE, 2016)
+  assert flipped.criterion.status == 'SATISFIED' and flipped.criterion.reason == 'premise_satisfied'
+  assert flipped.criterion.scope_complete is True
+  assert dict(flipped.criterion.observations) == {'day_pillar_in_chong': True, 'day_pillar_in_xing': True}
+  assert flipped.relationship is not None and flipped.relationship.transits is not None
+  assert flipped.relationship.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}
+  for year in (2021, 2024):
+    stayed = verdict(PALACE, year)
+    assert stayed.criterion.status == 'NOT_SATISFIED' and stayed.criterion.scope_complete is True
+  # 透干：原局 NOT（辛仅丑藏）；2021（甲戌大运、辛丑流年，辛明透）SAT；2024 保持 NOT。
+  assert verdict(TOUGAN, None).criterion.status == 'NOT_SATISFIED'
+  assert verdict(TOUGAN, 2021).criterion.status == 'SATISFIED'
+  assert verdict(TOUGAN, 2024).criterion.status == 'NOT_SATISFIED'
+  for result in (flipped, verdict(PALACE, 2024), verdict(TOUGAN, 2021)):
+    assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_relationship_record_zero_obtained_complete_scope_rejected() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
+  # 零取得：缺坐标记录被改成 scope_complete=True／SATISFIED，完整范围须拒绝（直接构造与 from_json 两条路径）。
+  no_coordinate = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN,)))
+  assert no_coordinate.relationship is not None and no_coordinate.relationship.transits is None
+  forged = replace(
+    no_coordinate.criterion,
+    status='SATISFIED', reason='premise_satisfied', scope_complete=True,
+  )
+  with pytest.raises(ValueError, match='Complete scope'):
+    replace(no_coordinate, criterion=forged)
+  record = json.loads(no_coordinate.export_json())
+  record['criterion'].update(status='SATISFIED', reason='premise_satisfied', scope_complete=True)
+  with pytest.raises(ValueError, match='Complete scope'):
+    ContextResult.from_json(json.dumps(record))
+  # 部分取得：所求 {小运, 大运} 只取得大运，scope_complete=True 同样拒绝。
+  partial = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN),
+  ))
+  incomplete = json.loads(partial.export_json())
+  incomplete['criterion'].update(status='SATISFIED', reason='premise_satisfied', scope_complete=True)
+  with pytest.raises(ValueError, match='Complete scope'):
+    ContextResult.from_json(json.dumps(incomplete))
+  # 取得岁运但删坐标：完整范围须拒绝。
+  complete = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  ))
+  assert complete.criterion.scope_complete is True
+  no_coord_record = json.loads(complete.export_json())
+  no_coord_record['profile']['coordinate'] = None
+  with pytest.raises(ValueError, match='Complete scope'):
+    ContextResult.from_json(json.dumps(no_coord_record))
+  # 正常缺数据 UNKNOWN 记录（scope_complete=False）往返仍合法。
+  for result in (no_coordinate, partial):
+    assert result.criterion.scope_complete is False
+    assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_relationship_record_combo_order_rejections_and_absorptions() -> None:
+  result = rel_match(PALACE, birth='2000-01-01 12:00')
+  data = json.loads(result.export_json())
+  star_chong = data['relationship']['star_relations']['冲']
+  assert len(star_chong) == 2
+  # 组合外层反序：与导出的序号元组升序不符，拒绝。
+  reversed_record = json.loads(json.dumps(data))
+  reversed_record['relationship']['star_relations']['冲'] = list(reversed(star_chong))
+  with pytest.raises(ValueError, match='canonical order'):
+    ContextResult.from_json(json.dumps(reversed_record))
+  # 组合内成员乱序与关系键乱序由不可变集合／映射吸收，往返仍相等。
+  shuffled = json.loads(json.dumps(data))
+  shuffled['relationship']['star_relations']['冲'] = [list(reversed(combo)) for combo in star_chong]
+  shuffled['relationship']['star_relations'] = dict(
+    reversed(list(shuffled['relationship']['star_relations'].items()))
+  )
+  assert ContextResult.from_json(json.dumps(shuffled)) == result
+  assert ContextResult.from_json(json.dumps(data)) == result
+  # appearances 保持原行为：交换出现项的自身往返仍相等。
+  swapping = rel_match(TOUGAN, birth='2000-01-29 06:00')
+  swapped = json.loads(swapping.export_json())
+  swapped['relationship']['appearances'] = list(reversed(swapped['relationship']['appearances']))
+  restored = ContextResult.from_json(json.dumps(swapped))
+  assert restored != swapping # 出现项顺序不同是另一份记录。
+  assert ContextResult.from_json(restored.export_json()) == restored
+
+
+def test_relationship_render_labels_categories_and_scopes() -> None:
+  # 分栏与类别按值断言：同一组合属宫与星两类时分别带标签列出，不只检查栏目标题。
+  natal = rel_match(PALACE, birth='2000-01-01 12:00')
+  rendered = natal.render()
+  assert (
+    '证据：原局内部；宫·刑：2:戊午、3:戊午；宫·冲：1:丙子、2:戊午；宫·破：0:己卯、2:戊午；'
+    '宫·生：0:己卯、2:戊午；宫·克：1:丙子、2:戊午；星·刑：0:己卯、1:丙子；星·冲：1:丙子、2:戊午；'
+    '星·冲：1:丙子、3:戊午；星·生：0:己卯、1:丙子；星·克：1:丙子、2:戊午；星·克：1:丙子、3:戊午'
+  ) in rendered
+  assert '证据：原局×岁运；无' in rendered and '证据：岁运内部；无' in rendered
+  # 跨组组合落在原局×岁运栏；2016 岁运使宫刑冲判据由 NOT 转 SAT。
+  transits = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2016), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ))
+  rendered = transits.render()
+  assert (
+    '证据：原局×岁运；宫·六合：2:丙寅、4:乙亥；宫·刑：2:丙寅、5:丙申；宫·冲：2:丙寅、5:丙申；'
+    '宫·破：2:丙寅、4:乙亥；宫·生：2:丙寅、4:乙亥；宫·克：2:丙寅、5:丙申'
+  ) in rendered
+  # 明干类别：2021 辛丑流年明透，岁运明干组合带「明干」标签；纯岁运组合落岁运内部栏。
+  toug = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2021), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ))
+  rendered = toug.render()
+  assert '明干·合：2:丙寅、5:辛丑' in rendered
+  assert '明干·生：0:己卯、5:辛丑' in rendered
+  assert rendered.count('明干·克：') == 4
+  assert '证据：岁运内部；明干·克：4:甲戌、5:辛丑' in rendered
+
+
+def test_relationship_cross_group_gong_precise_participants() -> None:
+  # 戊寅己未甲申甲戌男命（1998-08-05 20:00）：at_year 2054（干支年标签，甲戌流年）真实查询。
+  c = chart_from('1998-08-05 20:00', 'male')
+  result = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2054), (TransitKind.LIUNIAN,),
+  ), include_reference_only=True)
+  assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
+  evidence = result.relationship
+  assert evidence is not None and evidence.transits is not None
+  assert evidence.transits.json == {'liunian': '甲戌'}
+  # 拱会恰为原局内部 {2,3} 与原局×岁运 {2,4}；序号 2 是日柱甲申，
+  # 序号 4 是 at_year 入口所选流年甲戌（唯一所取种类的第一项，岁运序自 4 起）。
+  assert [sorted(o.index for o in combo) for combo in evidence.house_relations[DizhiRelation.拱会]] == [[2, 3], [2, 4]]
+  participants = {
+    occurrence.index: str(occurrence.ganzhi)
+    for combo in evidence.house_relations[DizhiRelation.拱会]
+    for occurrence in combo
+  }
+  assert participants == {2: '甲申', 3: '甲戌', 4: '甲戌'}
+  assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_relationship_yinyanggan_evaluation_export_restore() -> None:
+  # 乙日男命（2000-01-08 12:00，己卯丁丑乙丑壬午）：阴阳干读法取己（丑、未），
+  # 非默认取法在求值／导出／恢复层保留输入身份。
+  c = BaziChart(Bazi.create('2000-01-08 12:00', 'male', BaziConfig(school=BaziSchool(peiou_xing_def=PeiouXingDef.YINYANGGAN))))
+  result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  ))
+  assert result.criterion.status == 'SATISFIED' and result.criterion.reason == 'premise_satisfied'
+  evidence = result.relationship
+  assert evidence is not None
+  assert evidence.star_target.tiangan is Tiangan.己 and evidence.star_target.dizhi == (_Dizhi.丑, _Dizhi.未)
+  assert json.loads(result.input_json)['config']['school']['peiou_xing_def'] == 'YINYANGGAN'
+  restored = ContextResult.from_json(result.export_json())
+  assert restored == result
+  assert json.loads(restored.input_json)['config']['school']['peiou_xing_def'] == 'YINYANGGAN'
+
+
+def test_relationship_location_chart_evaluation_and_roundtrip() -> None:
+  # 地点盘（真太阳时）与婚恋 profile 的组合：at_year 入口求值与记录往返。
+  c = BaziChart(Bazi.create(
+    '2024-01-01T12:00:00+14:00', 'male',
+    BaziConfig.from_values(precision='minute'), longitude=-157.4,
+  ))
+  result = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  ))
+  assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
+  assert 'time_basis' in result.input_json
+  restored = ContextResult.from_json(result.export_json())
+  assert restored == result and restored.render() == result.render()
 
 
 def result_with_occurrences() -> tuple[Any, ...]:

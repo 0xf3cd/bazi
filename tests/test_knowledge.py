@@ -547,7 +547,7 @@ def test_relationship_additions_registry_counts_and_default_surface() -> None:
     entry = k.entry(claim_id)
     assert entry.legacy is None and entry.output == 'reference_only'
     assert entry.source_state == 'witnessed'
-  # 星坐地与兩透两条件未核条目不挂判据、不挂情境（unresolved，premise 为空）。
+  # 星坐地与两透两条件未核条目不挂判据、不挂情境（unresolved，premise 为空）。
   for claim_id in ('editorial.tanyuan.wife_star_liangtou.v1', 'editorial.liuqin.sanming_qiqie_zuodi.v1'):
     entry = k.entry(claim_id)
     assert entry.applicability == 'unresolved' and entry.premise == '' and entry.contexts == ()

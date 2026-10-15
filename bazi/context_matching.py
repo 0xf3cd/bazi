@@ -47,7 +47,6 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
-_NATAL_PILLARS: Final[tuple[Literal['year', 'month', 'day', 'hour'], ...]] = ('year', 'month', 'day', 'hour')
 _RECORD_VERSION: Final = 3
 
 '''各入口结构上能取得的流运种类；取得与否还取决于命盘与后端，这张表只是上限。'''
@@ -372,11 +371,11 @@ def _validate_input(text: str) -> None:
 
 
 '''见 `RelationshipEvidence` 的序列契约：原局四柱为 0–3，所选岁运自 4 起。'''
-_NATAL_SEQUENCE_LENGTH: int = 4
+_NATAL_SEQUENCE_LENGTH: Final[int] = 4
 
-_COORDINATE_KEYS: tuple[str, ...] = ('entry', 'gz_year', 'gz_month', 'solar_date', 'solar_moment')
-_APPEARANCE_KEYS: tuple[str, ...] = ('origin', 'pillar', 'kind', 'ganzhi', 'layer', 'stem')
-_RELATIONSHIP_KEYS: tuple[str, ...] = (
+_COORDINATE_KEYS: Final[tuple[str, ...]] = ('entry', 'gz_year', 'gz_month', 'solar_date', 'solar_moment')
+_APPEARANCE_KEYS: Final[tuple[str, ...]] = ('origin', 'pillar', 'kind', 'ganzhi', 'layer', 'stem')
+_RELATIONSHIP_KEYS: Final[tuple[str, ...]] = (
   'star_target', 'appearances', 'house_relations', 'star_relations', 'stem_relations', 'transits',
 )
 
@@ -478,6 +477,11 @@ def _restore_relation_combos(
           raise ValueError(f'Expected a non-negative index, got {index}')
         members.append(GanzhiOccurrence(index, Ganzhi.from_str(_typed(item['ganzhi'], str))))
       restored.append(frozenset(members))
+    # 组合外层序按导出的同一排序键（序号元组升序）核对，非规范序拒绝；
+    # 关系键序与组合内成员序由映射与不可变集合吸收，不在此收紧。
+    order = [tuple(sorted(occurrence.index for occurrence in combo)) for combo in restored]
+    if order != sorted(order):
+      raise ValueError(f'Expected combos in the canonical order, got {order}')
     result[relation] = tuple(restored)
   return result
 
@@ -578,11 +582,14 @@ class ContextResult:
         raise ValueError('Relationship profile requires evidence without occurrences or entries')
       if self.profile.scope == 'natal' and relationship.transits is not None:
         raise ValueError('Natal scope cannot carry obtained transits')
-      if relationship.transits is not None:
-        obtained = frozenset(relationship.transits)
-        if not obtained <= frozenset(self.profile.kinds):
-          raise ValueError('Obtained transit kinds exceed the requested kinds')
-        if self.profile.scope == 'natal_and_transits' and self.criterion.scope_complete and obtained != frozenset(self.profile.kinds):
+      # 取得集合在 None 时为空；完整范围要求坐标与实际取得的岁运，取得集合恰等于非空所求。
+      obtained = frozenset() if relationship.transits is None else frozenset(relationship.transits)
+      if not obtained <= frozenset(self.profile.kinds):
+        raise ValueError('Obtained transit kinds exceed the requested kinds')
+      if self.profile.scope == 'natal_and_transits' and self.criterion.scope_complete:
+        if self.profile.coordinate is None or relationship.transits is None:
+          raise ValueError('Complete scope requires a queried coordinate and obtained transits')
+        if obtained != frozenset(self.profile.kinds):
           raise ValueError('Complete scope must obtain every requested kind')
       limit = _NATAL_SEQUENCE_LENGTH if relationship.transits is None else _NATAL_SEQUENCE_LENGTH + len(relationship.transits.items)
       for discovery in (relationship.house_relations, relationship.star_relations, relationship.stem_relations):
@@ -795,13 +802,18 @@ class ContextResult:
       ('岁运内部', lambda indexes: all(index >= _NATAL_SEQUENCE_LENGTH for index in indexes)),
     ):
       chunks: list[str] = []
-      for discovery in (evidence.house_relations, evidence.star_relations, evidence.stem_relations):
+      # 每项标宫／星／明干类别；同一组合属多类时分别列出，不合并、不改变关系与序号。
+      for category, discovery in (
+        ('宫', evidence.house_relations),
+        ('星', evidence.star_relations),
+        ('明干', evidence.stem_relations),
+      ):
         for relation, combos in discovery.items():
           for combo in combos:
             indexes = tuple(occurrence.index for occurrence in combo)
             if not in_scope(indexes):
               continue
-            chunks.append(f'{relation}：' + '、'.join(
+            chunks.append(f'{category}·{relation}：' + '、'.join(
               f'{occurrence.index}:{occurrence.ganzhi}'
               for occurrence in sorted(combo, key=lambda occurrence: occurrence.index)
             ))

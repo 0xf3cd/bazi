@@ -143,7 +143,7 @@ def test_relationship_stars_two_readings_hit_the_literal_forty_value_table(
   for dz in stars.dizhi:
     assert bazi_utils.shishen(day_master, dz) is target_shishen
   assert 1 <= len(stars.dizhi) <= 2
-  # 目标干恒不是日主；个别格（乙男取己、甲女取庚）两读同阴阳，目标仍不同。
+  # 目标干恒不是日主；个别格（乙男取己、甲女取庚）目标可与日主同阴阳，两读目标仍不同。
   assert stars.tiangan is not day_master
 
 

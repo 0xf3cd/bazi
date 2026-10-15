@@ -44,7 +44,7 @@ def main() -> int:
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
-  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
+  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind, spouse_evidence
   from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
@@ -70,7 +70,7 @@ def main() -> int:
   civil_zone = timezone(timedelta(hours=14))
   local_chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female', location_config, longitude=-157.4))
   local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  from bazi.context_matching import RelationshipProfile, TransitCoordinate
+  from bazi.context_matching import RelatedEntry, RelationshipProfile, TransitCoordinate
   from bazi.analyzer.relationship import StarAppearance
   relationship_result = evaluate_context(
     chart,
@@ -202,6 +202,26 @@ def main() -> int:
      lambda: replace(positive, relationship=relationship_result.relationship, related=relationship_result.related)),
     ('StarAppearance rejects non-TransitKind kind', TypeError,
      lambda: StarAppearance('transit', None, 'liuyue', Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str origin', TypeError,
+     lambda: StarAppearance(1, None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str layer', TypeError,
+     lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 1, Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str pillar', TypeError,
+     lambda: StarAppearance('natal', 1, None, Ganzhi.from_str('辛卯'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('spouse_evidence rejects non-chart', TypeError,
+     lambda: spouse_evidence('chart', None)), # type: ignore[arg-type]
+    ('spouse_evidence rejects non-TransitSet transits', TypeError,
+     lambda: spouse_evidence(chart, 'transits')), # type: ignore[arg-type]
+    ('TransitCoordinate rejects str gz_month', TypeError,
+     lambda: TransitCoordinate('at_month', gz_year=2024, gz_month='辰')), # type: ignore[arg-type]
+    ('TransitCoordinate rejects date moment', TypeError,
+     lambda: TransitCoordinate('at_moment', solar_moment=date(2024, 4, 10))), # type: ignore[arg-type]
+    ('RelationshipProfile rejects non-coordinate', TypeError,
+     lambda: RelationshipProfile('natal_and_transits', 'at_year', (TransitKind.LIUNIAN,))), # type: ignore[arg-type]
+    ('RelatedEntry rejects non-bool recognized', TypeError,
+     lambda: RelatedEntry('a.b', 1)), # type: ignore[arg-type]
+    ('BaziSchool rejects non-enum peiou_xing_def', TypeError,
+     lambda: BaziSchool(peiou_xing_def=1)), # type: ignore[arg-type]
     ('StarAppearance rejects visible stem mismatch', ValueError,
      lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.庚)),
     ('StarAppearance rejects natal kind coordinate', ValueError,
