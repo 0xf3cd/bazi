@@ -29,8 +29,8 @@ MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
 '''判据或条目判别的理由。'''
 MatchReason = Literal[
-  'premise_satisfied', 'required_classification_absent', 'female_gate_false',
-  'missing_transit_coordinate', 'transit_unavailable', 'predicate_undefined', 'binding_unrecognized',
+  'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
+  'missing_transit_coordinate', 'transit_unavailable', 'binding_unrecognized',
 ]
 
 '''观察范围，无隐式默认值。'''
@@ -47,7 +47,7 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
-_RECORD_VERSION: Final = 3
+_RECORD_VERSION: Final = 4
 
 '''各入口结构上能取得的流运种类；取得与否还取决于命盘与后端，这张表只是上限。'''
 _ENTRY_KINDS: Final[frozendict[TransitEntry, frozenset[TransitKind]]] = frozendict({
@@ -70,31 +70,57 @@ class _Criterion(NamedTuple):
   definition:    str
   claims:        tuple[str, ...]
   profile_kind:  Literal['context', 'relationship']
+  # premise：条目前提即本判据，条目以 `EntryMatch` 判别；condition：判据只判可计算事实，
+  # 条目文字另含程序不判的条件，条目以 `RelatedEntry` 作条件参考返回。
+  entry_role:    Literal['premise', 'condition']
 
 
 _GUANSHA: Final = 'editorial.guansha_coexistence.v1'
 _FEMALE: Final = 'editorial.guansha_coexistence_female.v1'
 _PALACE: Final = 'editorial.spouse_palace_xingchong.v1'
 _TOUGAN: Final = 'editorial.spouse_star_tougan.v1'
-_DEFINED_CRITERIA: Final[frozenset[str]] = frozenset((_GUANSHA, _FEMALE, _PALACE, _TOUGAN))
+_DING: Final = 'tiangan.ding_weak_and_overcontrolled'
+_GENG: Final = 'tiangan.geng_regulated_transit'
+_PIANYIN: Final = 'shishen.pianyin_favorable_or_balanced'
+_XIAOYIN: Final = 'shishen.xiaoyin_duoshi'
 
 _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   _GUANSHA: _Criterion('选定范围内正官与七杀各至少出现一次。', (
     'editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble',
-  ), 'context'),
+  ), 'context', 'premise'),
   _FEMALE: _Criterion('选定范围内正官与七杀各至少出现一次，且输入为女命。', (
     'editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity',
-  ), 'context'),
-  'tiangan.ding_weak_and_overcontrolled': _Criterion('丁火日主身弱及克太多；完整判据未定义。', ('legacy.tiangan.ding.weak_state',), 'context'),
-  'tiangan.geng_regulated_transit': _Criterion('庚金日主有制有化及后天有教养；完整判据未定义。', ('legacy.tiangan.geng.regulated_transit',), 'context'),
-  'shishen.pianyin_favorable_or_balanced': _Criterion('偏印喜用或状态良好；完整判据未定义。', ('legacy.shishen.SH-199',), 'context'),
-  'shishen.xiaoyin_duoshi': _Criterion('枭印夺食；完整判据未定义，不等同于偏印与食神共现。', ('legacy.shishen.SH-066',), 'context'),
+  ), 'context', 'premise'),
+  _DING: _Criterion('日主为丁火；身弱、克太多留在条目文字中，程序不判别。', (
+    'legacy.tiangan.ding.weak_state',
+  ), 'context', 'condition'),
+  _GENG: _Criterion('日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。', (
+    'legacy.tiangan.geng.regulated_transit',
+  ), 'context', 'condition'),
+  _PIANYIN: _Criterion('选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。', (
+    'legacy.shishen.SH-199',
+  ), 'context', 'condition'),
+  _XIAOYIN: _Criterion('选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。', (
+    'legacy.shishen.SH-066',
+  ), 'context', 'condition'),
   _PALACE: _Criterion('选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。', (
     'editorial.tanyuan.wife_palace_xingchong.v1',
-  ), 'relationship'),
+  ), 'relationship', 'condition'),
   _TOUGAN: _Criterion('选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。', (
     'editorial.tanyuan.wife_star_gantou.v1',
-  ), 'relationship'),
+  ), 'relationship', 'condition'),
+})
+
+'''日主判据：观察键与所需日主。'''
+_DAY_MASTER_CRITERIA: Final[frozendict[str, tuple[str, Tiangan]]] = frozendict({
+  _DING: ('day_master_ding', Tiangan.丁),
+  _GENG: ('day_master_geng', Tiangan.庚),
+})
+
+'''十神出现判据：观察键与所需十神，各至少出现一次；出现取自本次观察的明藏干（口径见 `evaluate_context`），不计力量。'''
+_CLASS_CRITERIA: Final[frozendict[str, frozendict[str, Shishen]]] = frozendict({
+  _PIANYIN: frozendict({'pianyin_observed': Shishen.偏印}),
+  _XIAOYIN: frozendict({'pianyin_observed': Shishen.偏印, 'shishen_observed': Shishen.食神}),
 })
 
 # 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
@@ -105,6 +131,10 @@ _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.qisha.infidelity': '6c687b90559b0b56cfc51a39e165025aad94811c9948bebe5c51bae9fd4f2801',
   'editorial.tanyuan.wife_palace_xingchong.v1': '9bfb37d64266e845b69d490d727bb330552b0d0d35f71389cd6afc3309d7a93c',
   'editorial.tanyuan.wife_star_gantou.v1': '9ea58eda691503f17e09551047d31620e7642bc15474a1fed159a22004cff96a',
+  'legacy.tiangan.ding.weak_state': 'e7c85b7cbbdbd25a77fcde10c28715c1ee57dee159f58ad73a5bb18ba4a74b7e',
+  'legacy.tiangan.geng.regulated_transit': 'd5f0f6943e46472b5e11c0f07c447b4fab55821927fc163c2d57291beb9403ef',
+  'legacy.shishen.SH-199': '4eb06f81db686d6cd6cee37f0fdd58fb42fc10c52e0b8f980052b8a59346968d',
+  'legacy.shishen.SH-066': 'cb84c6882a582b624d442da32b7ce0a488d41be38714fcef96879873bbcaf61d',
 })
 
 # 男命语境条文的性别门槛：女命查询不关联本条，静态查阅不受限；不在表内的条目无门槛。
@@ -117,10 +147,10 @@ _RELATED_GENDERS: Final[frozendict[str, BaziGender]] = frozendict({
 _STATUS_BY_REASON: Final[frozendict[MatchReason, MatchStatus]] = frozendict({
   'premise_satisfied':              'SATISFIED',
   'required_classification_absent': 'NOT_SATISFIED',
+  'day_master_differs':             'NOT_SATISFIED',
   'female_gate_false':              'NOT_SATISFIED',
   'missing_transit_coordinate':     'UNKNOWN',
   'transit_unavailable':            'UNKNOWN',
-  'predicate_undefined':            'UNKNOWN',
   'binding_unrecognized':           'UNKNOWN',
 })
 
@@ -245,8 +275,8 @@ class RelationshipProfile:
 
 @dataclass(frozen=True)
 class RelatedEntry:
-  '''该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是结构已命中，
-  也不是完整前提已满足；不升级来源状态或输出资格。结构状态只在 `CriterionResult` 展示。'''
+  '''该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是事实已成立，
+  也不是完整前提已满足；不升级来源状态或输出资格。判别状态只在 `CriterionResult` 展示。'''
 
   claim_id:   str
   recognized: bool   # 条目绑定摘要与 `_BINDINGS` 一致；同 ID 被自定义条目顶替时为 False
@@ -300,11 +330,7 @@ class ChartOccurrence:
 
 @dataclass(frozen=True)
 class CriterionResult:
-  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
-
-  Note:
-  - `observed_coexistence` 与 `female` 用于原作判据。
-  '''
+  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。'''
 
   criterion_id:   str
   definition:     str
@@ -527,23 +553,23 @@ def _restore_relationship(value: object) -> RelationshipEvidence:
 
 
 def _transit_kind(value: object) -> TransitKind:
-  '''恢复岁运种类；这是 `StarAppearance` 的五值白名单，与官杀观察的 `('liunian',)` 是两份白名单。'''
+  '''恢复岁运种类；这是 `StarAppearance` 的五值白名单，与原局／流年观察的 `('liunian',)` 是两份白名单。'''
   _choice(value, tuple(kind.value for kind in TransitKind))
   return TransitKind(value)
 
 
 @dataclass(frozen=True)
 class ContextResult:
-  '''保存前提判别、证据及条目匹配的不可变结果；婚恋结果另存结构证据与条件参考条目。
+  '''保存判别、证据及条目的不可变结果；婚恋结果另存结构证据，条件判据另存条件参考条目。
 
   复用传入的已验证 KnowledgeBase，渲染不重建知识对象。JSON 保留判据、profile、
   完整出生／性别／配置身份、年份／坐标／种类、全部观察、证据、输入与知识快照。
   地点输入使用与命盘 JSON 相同的五个字段，保留固定民用基准及未截断真太阳钟。
 
   Note:
-  - 婚恋 profile 的结果 `occurrences`／`entries` 恒为空，官杀 profile 不带
-    `relationship`／`related`；构造期校验字段间结构自洽，但不重算或认证命盘、
-    判别、证据真伪，也不认证输入与证据干支的一致性。
+  - 婚恋 profile 的结果 `occurrences` 恒为空，原局／流年 profile 不带 `relationship`；
+    前提判据（官杀两条）不带 `related`，条件判据的 `entries` 恒为空。构造期校验字段间
+    结构自洽，但不重算或认证命盘、判别、证据真伪，也不认证输入与证据干支的一致性。
   '''
 
   profile:        ContextProfile | RelationshipProfile
@@ -572,14 +598,19 @@ class ContextResult:
     for related in self.related:
       self.knowledge.entry(related.claim_id)
 
+    criterion = _CRITERIA[self.criterion.criterion_id]
     profile_kind = 'relationship' if isinstance(self.profile, RelationshipProfile) else 'context'
-    if _CRITERIA[self.criterion.criterion_id].profile_kind != profile_kind:
+    if criterion.profile_kind != profile_kind:
       raise ValueError('Criterion profile kind disagrees with the profile type')
+    if criterion.entry_role == 'premise' and self.related != ():
+      raise ValueError('Premise criterion cannot carry condition references')
+    if criterion.entry_role == 'condition' and self.entries != ():
+      raise ValueError('Condition criterion cannot carry premise matches')
 
     if isinstance(self.profile, RelationshipProfile):
       relationship = self.relationship
-      if relationship is None or self.occurrences != () or self.entries != ():
-        raise ValueError('Relationship profile requires evidence without occurrences or entries')
+      if relationship is None or self.occurrences != ():
+        raise ValueError('Relationship profile requires evidence without occurrences')
       if self.profile.scope == 'natal' and relationship.transits is not None:
         raise ValueError('Natal scope cannot carry obtained transits')
       # 取得集合在 None 时为空；完整范围要求坐标与实际取得的岁运，取得集合恰等于非空所求。
@@ -597,14 +628,14 @@ class ContextResult:
           for combo in combos:
             if any(occurrence.index >= limit for occurrence in combo):
               raise ValueError('Evidence index exceeds the queried sequence')
-    elif self.relationship is not None or self.related != ():
+    elif self.relationship is not None:
       raise ValueError('Context profile cannot carry relationship evidence')
 
   def export_json(self) -> str:
-    '''导出版本3记录、全部证据及知识注册表，不改变参考输出资格。
+    '''导出版本4记录、全部证据及知识注册表，不改变参考输出资格。
 
-    官杀记录显式带 `relationship: null`、`related: []`，不省键。婚恋证据的关系键按
-    枚举声明序、组合按序号元组升序导出，同一结果字节稳定。
+    原局／流年记录显式带 `relationship: null`，空的 `entries`／`related` 写空列表，不省键。
+    婚恋证据的关系键按枚举声明序、组合按序号元组升序导出，同一结果字节稳定。
     '''
     profile: object
     if isinstance(self.profile, RelationshipProfile):
@@ -670,14 +701,14 @@ class ContextResult:
 
   @classmethod
   def from_json(cls, text: str) -> 'ContextResult':
-    '''恢复版本3记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
+    '''恢复版本4记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
     旧版本记录明确拒绝；版本检查先于键集合检查，使真实 v2 记录得到版本拒绝而非键集差异。
     需要新格式时应由原输入与配置重新求值。
 
     Note:
     - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
-    - profile 按键集分派：`{observation_scope, ganzhi_year}` 为官杀，`{scope, coordinate, kinds}`
-      为婚恋，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
+    - profile 按键集分派：`{observation_scope, ganzhi_year}` 为 `ContextProfile`，`{scope, coordinate, kinds}`
+      为 `RelationshipProfile`，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
     '''
     _typed(text, str)
     data = json.loads(text, object_pairs_hook=_pairs)
@@ -736,14 +767,17 @@ class ContextResult:
     if isinstance(self.profile, RelationshipProfile):
       return self._render_relationship()
 
+    premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
+    verdict_label = '结构前提' if premise else '事实判别'
     lines = [
       f'判据：{criterion.criterion_id}；{criterion.definition}',
       f'范围：全部明藏干；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
-      f'结构前提：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
+      f'{verdict_label}：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
-      '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。',
     ]
+    if premise:
+      lines.append('前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。')
     for value in self.occurrences:
       lines.append(
         f'证据：{value.origin}.{value.pillar}；{value.ganzhi}；'
@@ -753,6 +787,8 @@ class ContextResult:
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
       lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
+    if not premise:
+      lines.extend(self._render_related())
     return '\n'.join(lines)
 
   def _render_relationship(self) -> str:
@@ -786,7 +822,7 @@ class ContextResult:
         f'范围：{profile.scope}；坐标={coordinate_text}；请求种类=[{requested_text}]；'
         f'取得种类=[{obtained_text}]；未取得种类=[{missing_text}]'
       ),
-      f'结构前提：{self.criterion.status}；{self.criterion.reason}；scope_complete={self.criterion.scope_complete}',
+      f'事实判别：{self.criterion.status}；{self.criterion.reason}；scope_complete={self.criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(self.criterion.observations), ensure_ascii=False),
       f'配偶星：目标干={evidence.star_target.tiangan}；地支={"、".join(str(dz) for dz in evidence.star_target.dizhi)}',
@@ -819,8 +855,13 @@ class ContextResult:
             ))
       lines.append(f'证据：{scope_name}；' + ('；'.join(chunks) if chunks else '无'))
 
-    lines.append('结构判别不表示原文完整条件已满足，也不表示现实事件成立。')
-    header = '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）'
+    lines.extend(self._render_related())
+    return '\n'.join(lines)
+
+  def _render_related(self) -> list[str]:
+    '''条件判据的判别说明与条件参考；条目文字中的条件一律标为未由程序判别。'''
+    lines = ['事实判别不表示原文完整条件已满足，也不表示现实事件成立。']
+    header = '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）'
     for related in self.related:
       if related.recognized:
         lines.append(f'{header}：{related.claim_id}')
@@ -831,7 +872,7 @@ class ContextResult:
       else:
         # 只列 ID 与「绑定未识别」，不渲染被顶替的自定义文字。
         lines.append(f'{header}：{related.claim_id}；绑定未识别')
-    return '\n'.join(lines)
+    return lines
 
 
 def _binding_digest(knowledge: KnowledgeBase, entry: KnowledgeEntry) -> str:
@@ -860,6 +901,25 @@ def _query_transits(chart: BaziChart, coordinate: TransitCoordinate) -> TransitS
   return transit_chart.at_moment(coordinate.solar_moment)
 
 
+def _eligible_claims(
+  criterion_id: str,
+  knowledge: KnowledgeBase,
+  include_reference_only: bool,
+  gender: BaziGender,
+) -> tuple[tuple[str, bool], ...]:
+  '''判据关联条目中通过输出资格与性别门槛的条目，及其绑定是否与 `_BINDINGS` 一致；两种条目角色共用。'''
+  eligible: list[tuple[str, bool]] = []
+  for claim_id in _CRITERIA[criterion_id].claims:
+    entry = knowledge.entries.get(claim_id)
+    if entry is None or (not include_reference_only and entry.output != 'default'):
+      continue
+    required_gender = _RELATED_GENDERS.get(claim_id)
+    if required_gender is not None and gender is not required_gender:
+      continue
+    eligible.append((claim_id, _binding_digest(knowledge, entry) == _BINDINGS[claim_id]))
+  return tuple(eligible)
+
+
 def _select_transits(queried: TransitSet, requested: tuple[TransitKind, ...]) -> TransitSet | None:
   '''取「所求 ∩ 现有」；交集空返回 `None`，不上抛 `select` 的缺项异常。'''
   present = frozenset(queried)
@@ -880,26 +940,28 @@ def evaluate_context(
   '''检查选定范围是否满足已注册判据，返回判别、观察、证据及条目的匹配结果。
 
   Note:
-  - 官杀判据走 `ContextProfile`；婚恋判据走 `RelationshipProfile`，
-    按 `spouse_evidence` 计算结构证据。判据与 profile 种类不符抛 `ValueError`。
-  - 仅定义两个原作官杀判据与两条婚恋结构判据；所需流年缺失或不可查询、判据未定义时返回
-    UNKNOWN，不从文本推导新判据。「有用／喜忌／成格」等完整理论条件留在知识文本，不为它们
-    新增 UNKNOWN，也不认证其已满足。
-  - 参考条目须显式设置 include_reference_only=True。婚恋判据的关联条目只是条件参考，
-    与结构状态无关；男命语境条文对女命一律不关联（门槛先于绑定状态），静态查阅不受限。
+  - 婚恋判据走 `RelationshipProfile`，按 `spouse_evidence` 计算结构证据；其余判据走
+    `ContextProfile`。判据与 profile 种类不符抛 `ValueError`。
+  - 官杀两条判据判别关联条目的完整前提。其余判据只判可计算事实：婚恋两条判结构，丁火、
+    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／
+    喜忌／成格」等完整理论条件留在知识文本，不为它们新增 UNKNOWN，也不认证其已满足；
+    所需流年缺失或不可查询时返回 UNKNOWN。
+  - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
+    与事实判别的状态无关；男命语境条文对女命一律不关联（门槛先于绑定状态），静态查阅不受限。
   - 未传 knowledge 时，每次独立加载默认来源，已保存的修改在后续加载时可见；
     传入知识库则直接复用。已有知识库和结果保留原内容，共享调用须显式重载才能取得更新。
   - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
     不观察日主明干，但等于日主的藏干仍分类为比肩；藏干百分比不作权重，重复位置保留。
     不另加力量／次数阈值、相邻、去留或有效制化条件。
-  - 范围完整性优先于女命条件：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
+  - 范围完整性优先于女命条件与事实判别：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
     婚恋范围缺查询坐标为 UNKNOWN / missing_transit_coordinate；入口不可查询或所求种类
     部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
     SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
-  - 已定义官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
-    前提、情境、来源或输出政策，该条返回 binding_unrecognized。等值的导出重载条目仍可匹配。
-  - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch。
-    未定义判据所关联的条目显示 predicate_undefined；前提满足不授予默认输出资格。
+  - 官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
+    前提、情境、来源或输出政策，该条返回 binding_unrecognized。条件参考同样核对绑定，
+    不一致时记 `recognized=False`，不改变事实判别。等值的导出重载条目仍可匹配。
+  - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch 或 RelatedEntry。
+    前提满足不授予默认输出资格。
 
   Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，以及输入与知识快照。
   '''
@@ -962,16 +1024,7 @@ def evaluate_context(
     else:
       reason = 'premise_satisfied' if target_stem_visible else 'required_classification_absent'
 
-    related: list[RelatedEntry] = []
-    for claim_id in _CRITERIA[criterion_id].claims:
-      entry = knowledge.entries.get(claim_id)
-      if entry is None or (not include_reference_only and entry.output != 'default'):
-        continue
-      required_gender = _RELATED_GENDERS.get(claim_id)
-      if required_gender is not None and bazi.gender is not required_gender:
-        continue
-      related.append(RelatedEntry(claim_id, _binding_digest(knowledge, entry) == _BINDINGS[claim_id]))
-
+    eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
     return ContextResult(
       profile,
       CriterionResult(
@@ -984,7 +1037,7 @@ def evaluate_context(
       ),
       (),
       evidence,
-      tuple(related),
+      tuple(RelatedEntry(*claim) for claim in eligible),
       (),
       input_json,
       knowledge,
@@ -1029,31 +1082,35 @@ def evaluate_context(
         occurrences.extend(__occurrences(transits.liunian, 'liunian', TransitKind.LIUNIAN))
 
   classes = {value.shishen for value in occurrences}
-  coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
-  female = bazi.gender is BaziGender.FEMALE
-  observations = frozendict({
-    'observed_coexistence': coexistence, 'female': female,
-  })
-
-  if criterion_id not in _DEFINED_CRITERIA:
-    reason = 'predicate_undefined'
-  elif unavailable is not None:
-    reason = unavailable
-  elif criterion_id == _FEMALE and not female:
-    reason = 'female_gate_false'
-  elif not coexistence:
-    reason = 'required_classification_absent'
+  fact: MatchReason
+  if criterion_id in _DAY_MASTER_CRITERIA:
+    key, day_master = _DAY_MASTER_CRITERIA[criterion_id]
+    observations = frozendict({key: bazi.day_master is day_master})
+    fact = 'premise_satisfied' if observations[key] else 'day_master_differs'
+  elif criterion_id in _CLASS_CRITERIA:
+    observations = frozendict({key: required in classes for key, required in _CLASS_CRITERIA[criterion_id].items()})
+    fact = 'premise_satisfied' if all(observations.values()) else 'required_classification_absent'
   else:
-    reason = 'premise_satisfied'
+    coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
+    female = bazi.gender is BaziGender.FEMALE
+    observations = frozendict({
+      'observed_coexistence': coexistence, 'female': female,
+    })
+    if criterion_id == _FEMALE and not female:
+      fact = 'female_gate_false'
+    else:
+      fact = 'premise_satisfied' if coexistence else 'required_classification_absent'
+  reason = fact if unavailable is None else unavailable
 
-  matches = []
-  for claim_id in _CRITERIA[criterion_id].claims:
-    entry = knowledge.entries.get(claim_id)
-    if entry is None or (not include_reference_only and entry.output != 'default'):
-      continue
-    recognized = criterion_id not in _DEFINED_CRITERIA or _binding_digest(knowledge, entry) == _BINDINGS[claim_id]
-    entry_reason = reason if recognized else 'binding_unrecognized'
-    matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
+  matches: list[EntryMatch] = []
+  related: tuple[RelatedEntry, ...] = ()
+  eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
+  if _CRITERIA[criterion_id].entry_role == 'premise':
+    for claim_id, recognized in eligible:
+      entry_reason = reason if recognized else 'binding_unrecognized'
+      matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
+  else:
+    related = tuple(RelatedEntry(*claim) for claim in eligible)
 
   return ContextResult(
     profile,
@@ -1067,7 +1124,7 @@ def evaluate_context(
     ),
     tuple(occurrences),
     None,
-    (),
+    related,
     tuple(matches),
     input_json,
     knowledge,

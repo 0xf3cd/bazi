@@ -31,7 +31,7 @@ def test_matching_cli_text_export_reload_and_library_agree(tmp_path: Path) -> No
   assert result.returncode == 0, result.stderr
   expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=True)
   assert output.read_text(encoding='utf-8') == expected.export_json()
-  assert result.stdout == expected.render() + '\n' + f'已导出前提判别记录：{output}\n'
+  assert result.stdout == expected.render() + '\n' + f'已导出判别记录：{output}\n'
   assert ContextResult.from_json(output.read_text(encoding='utf-8')) == expected
   assert '也许' in result.stdout and '仅供参考' in result.stdout
   assert 'Does not establish a classical rule or real-world prediction.' in result.stdout
@@ -110,15 +110,38 @@ def test_matching_custom_source_unknown_binding_and_alias_guards(tmp_path: Path)
   assert result.returncode == 2 and 'overwrite' in result.stderr
 
 
-def test_matching_export_io_error_and_undefined_text(tmp_path: Path) -> None:
+def test_matching_export_io_error(tmp_path: Path) -> None:
   output = tmp_path / 'directory'
   output.mkdir()
   result = _run_cli(tmp_path, *MATCH_ARGS, '--export-context-json', str(output))
   assert result.returncode == 2 and 'error:' in result.stderr
-  result = _run_cli(tmp_path, *MATCH_ARGS, '--match-context', 'tiangan.geng_regulated_transit', '--include-reference-only')
-  assert result.returncode == 0 and 'UNKNOWN' in result.stdout
-  for text in ('有制有化尚未定义，不据基础生克关系认定成立。', '后天有教养是盘外前提，不能从命盘查表还原。'):
-    assert text in result.stdout
+
+
+@pytest.mark.parametrize('criterion_id,status', [
+  ('tiangan.ding_weak_and_overcontrolled', 'NOT_SATISFIED'),
+  ('tiangan.geng_regulated_transit', 'SATISFIED'),
+  ('shishen.pianyin_favorable_or_balanced', 'SATISFIED'),
+  ('shishen.xiaoyin_duoshi', 'SATISFIED'),
+])
+@pytest.mark.parametrize('year', [None, 2024])
+@pytest.mark.parametrize('reference', [False, True])
+def test_matching_cli_condition_criteria_agree_with_library(
+  tmp_path: Path, criterion_id: str, status: str, year: int | None, reference: bool,
+) -> None:
+  output = tmp_path / 'match.json'
+  scope = ('--observation-scope', 'natal') if year is None else ('--observation-scope', 'natal_and_liunian', '--ganzhi-year', str(year))
+  result = _run_cli(
+    tmp_path, *MATCH_ARGS, '--match-context', criterion_id, *scope,
+    *(('--include-reference-only',) if reference else ()), '--export-context-json', str(output),
+  )
+  assert result.returncode == 0, result.stderr
+  profile = ContextProfile('natal') if year is None else ContextProfile('natal_and_liunian', year)
+  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=criterion_id, profile=profile, include_reference_only=reference)
+  assert expected.criterion.status == status
+  assert result.stdout == expected.render() + '\n' + f'已导出判别记录：{output}\n'
+  assert output.read_text(encoding='utf-8') == expected.export_json()
+  assert f'事实判别：{status}' in result.stdout
+  assert ('完整前提未由程序判别' in result.stdout) is reference
 
 
 @pytest.mark.parametrize('include_reference_only', [False, True])
@@ -397,6 +420,9 @@ def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: 
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
   assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)
+  flat_help = re.sub(r'\s+', '', help_result.stdout)
+  for phrase in ('匹配模式同时展示前提判别或条件参考。', '原局加单流年（婚恋以外的判据）', '婚恋以外的判据为流年'):
+    assert phrase in flat_help
   first = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
   second = _run_cli(tmp_path, '--seed', '42', optimized=optimized)
   assert first.returncode == second.returncode == 0
@@ -1143,7 +1169,7 @@ def test_matching_cli_coordinate_fields_require_entry(tmp_path: Path) -> None:
 def test_matching_cli_kinds_without_coordinate_is_unknown(tmp_path: Path) -> None:
   result = _run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian')
   assert result.returncode == 0, result.stderr
-  assert '结构前提：UNKNOWN；missing_transit_coordinate' in result.stdout
+  assert '事实判别：UNKNOWN；missing_transit_coordinate' in result.stdout
   assert '请求种类=[liunian]；取得种类=[]；未取得种类=[liunian]' in result.stdout
   assert '关联参考' not in result.stdout
 
@@ -1171,11 +1197,11 @@ def test_matching_cli_unordered_kinds_are_normalized(tmp_path: Path) -> None:
 def test_matching_cli_legal_relationship_combinations(tmp_path: Path, entry_args: tuple[str, ...], flag: tuple[str, ...]) -> None:
   result = _run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args, *flag)
   assert result.returncode == 0, result.stderr
-  assert '结构前提：' in result.stdout and '证据：原局内部；' in result.stdout
+  assert '事实判别：' in result.stdout and '证据：原局内部；' in result.stdout
   assert '证据：原局×岁运；' in result.stdout and '证据：岁运内部；' in result.stdout
   # at_moment requires a HOUR/MINUTE natal chart; with DAY precision the unavailable entry is an EXIT 0 UNKNOWN, not an error.
   if entry_args[1] == 'at_moment':
-    assert '结构前提：UNKNOWN；transit_unavailable' in result.stdout
+    assert '事实判别：UNKNOWN；transit_unavailable' in result.stdout
   assert ('关联参考' in result.stdout) == bool(flag)
   if flag:
-    assert '该判据的条件参考，不表示结构已命中或完整前提已满足' in result.stdout
+    assert '该判据的条件参考，不表示事实已成立或完整前提已满足' in result.stdout
