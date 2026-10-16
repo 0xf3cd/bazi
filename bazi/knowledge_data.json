@@ -145,6 +145,16 @@
       "object_id": "shensha.guoyin",
       "kind": "shensha",
       "name": "国印贵人"
+    },
+    {
+      "object_id": "concept.peiou_xing",
+      "kind": "concept",
+      "name": "配偶星"
+    },
+    {
+      "object_id": "concept.peiou_gong",
+      "kind": "concept",
+      "name": "配偶宫"
     }
   ],
   "contexts": [
@@ -205,6 +215,33 @@
       "limits": [
         "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，且输入为女命；不计力量、次数阈值、相邻、去留或有效制化。",
         "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+      ]
+    },
+    {
+      "context_id": "liuqin.spouse_star_readings",
+      "label": "配偶星取法条目情境",
+      "time_scope": "未限定",
+      "limits": [
+        "取法声明条目只作静态查阅，不判命盘前提；取法的选择由命盘流派配置承载。",
+        "取法给出的是目标干，不表示该干在命盘中实际出现。"
+      ]
+    },
+    {
+      "context_id": "editorial.spouse_palace_xingchong",
+      "label": "妻宫刑冲参考条目前提",
+      "time_scope": "显式选择原局或原局加显式选定岁运",
+      "limits": [
+        "取原局四柱及所选岁运的全部干支；日柱地支作为具体参与者卷入刑或冲即满足结构前提，刑按命盘流派的刑定义解释，不计力量、次数阈值、相邻、去留或有效制化。",
+        "仅用于仓内参考条目；结构前提满足不表示婚姻、寿命或现实事件成立。"
+      ]
+    },
+    {
+      "context_id": "editorial.spouse_star_tougan",
+      "label": "妻星干头参考条目前提",
+      "time_scope": "显式选择原局或原局加显式选定岁运",
+      "limits": [
+        "取原局四柱明干及所选岁运明干；按命盘流派配置的配偶星目标干至少一处明干实际出现即满足结构前提，藏干出现只记事实，不计作透。",
+        "仅用于仓内参考条目；结构前提满足不表示婚姻或现实事件成立。"
       ]
     }
   ],
@@ -334,6 +371,62 @@
       "supports": "The existing two table readings and the separately documented anchor/target boundaries.",
       "limitations": "Summarizes repository attribution without adding a verified classical witness. Textual descent remains unresolved (#194).",
       "state": "repository_attributed"
+    },
+    {
+      "source_id": "sanming_liuqin",
+      "work": "《三命通会》",
+      "attribution": "书影未见作者署名，不据此断言",
+      "edition": "钦定四库全书本（版心「欽定四庫全書」）",
+      "locator": "卷七《論六親》，Commons 书影 djvu 页 165–174（印刷叶码仅见于奇数页）",
+      "url": "https://commons.wikimedia.org/wiki/File:CADAL06056483_三命通會·卷七.djvu",
+      "text_layer": "baiwen",
+      "lineage": "sanming_liuqin",
+      "excerpt": "如女人則甲遇庚七煞乙遇庚正官皆夫星也謂庚是陽男為正夫屬陽不可以辛陰為夫也",
+      "supports": "阴阳干读法的书内例句：男命「我尅者為財為妻」，女命甲乙取庚为夫；174页对「不拘偏正惟辨陰陽陽男陰女」的取舍；168页小字「或云」的正偏读法；171页妻妾星坐地条件句。",
+      "limitations": "引文对书影逐字；Wikisource 转录层有己／已／巳混用，不作引文依据，书影中己字印形近已，按语境读作己。仅甲、乙两干的男女四格有书证直例，其余十六格按「其餘八干俱以類推」与174页原则类推重建，不是逐干原文。仅四库本一版，未取得第二独立来源。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "yuanhai_liuqin_charts",
+      "work": "《刻京台增补渊海子平大全》",
+      "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+      "edition": "卷首题署「閩書林喬山堂劉太易繡梓」（「太」或「大」未核）；Archive 元数据题「明萬曆二十八年閩書林劉龍田喬山堂刊本」，刊年与「劉龍田」仅元数据支持，不与题署认定为同一人",
+      "locator": "PDF p. 57（男图）与 p. 58（女图）六亲取用图，按行列坐标逐格读取",
+      "url": "https://archive.org/details/20260506_20260506_1149/page/n56",
+      "text_layer": "baiwen",
+      "lineage": "yuanhai_ziping",
+      "excerpt": "正妻",
+      "supports": "男图十个配偶格原载「正妻」，女图配偶格原载「正夫」六格、「夫」三格，另一格「正」字清楚、第二字残损；是正财／正官读法的逐格原载对照。",
+      "limitations": "图表格字不是连续行文；摘录取男图格字，女图格字见上一栏（支持范围）。女图丙日一格第二字残损未核，格值按行列位置与其余格自洽取得，不是直读。本图不是阴阳干读法的第二来源。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "yuanhai_qiqie_note",
+      "work": "《刻京台增补渊海子平大全》",
+      "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+      "edition": "同 yuanhai_liuqin_charts（题署第三字未核；刊年仅 Archive 元数据支持）",
+      "locator": "PDF p. 25，右栏双行夹注起首",
+      "url": "https://archive.org/details/20260506_20260506_1149/page/n24",
+      "text_layer": "zhushi",
+      "lineage": "yuanhai_ziping",
+      "excerpt": "論妻妾者以生日支辰爲妻妾之星",
+      "supports": "夹注前半串以「生日支辰」为妻妾之星。",
+      "limitations": "「星」之后一字与小注末字未核，所在章名未取得；夹注只涉妻妾，不是女命夫宫的古籍明文，也不单独证明「日支」就是配偶宫。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "tanyuan_qizi",
+      "work": "《命理探源》",
+      "attribution": "袁树珊著",
+      "edition": "版心题《命理探原》",
+      "locator": "PDF p. 171「六親 論妻子」（印页二六）",
+      "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+      "text_layer": "baiwen",
+      "lineage": "mingli_tanyuan",
+      "excerpt": "妻星者。幹頭之財也。",
+      "supports": "该页对妻星「幹頭之財」的定义，以及「妻透成格」「妻宮有用」坐下刑衝、「妻星兩透」偏正雜出两段的字句。",
+      "limitations": "该页起句为「子平真詮云」，所取各段属探原的转录层，未见子平真诠原书，不是任何命题的第二独立成文。原印小标点与「夫」后小点的性质未辨，条目引文以〔〕标出整理记号。",
+      "state": "witnessed"
     }
   ],
   "entries": [
@@ -1101,10 +1194,17 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为比肩之人（对象比肩由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「追求平等、自由」暂无命盘计算定义",
+        "「比较看重个人空间」暂无命盘计算定义",
+        "句内并列「朋友/伴侣」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.bijian",
@@ -1132,10 +1232,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为比肩之人（对象比肩由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「雷区」为比喻表述，暂无命盘计算定义",
+        "句内并列「朋友/伴侣」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.bijian",
@@ -1163,10 +1269,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为比肩之人（对象比肩由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是比肩之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.bijian",
@@ -1796,10 +1907,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "句内自称「劫财型的人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
+        "「寻求刺激和新鲜感」暂无命盘计算定义",
+        "「对财富和资源的渴望」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.jiecai",
@@ -1827,10 +1944,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为劫财之人（对象劫财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「情感世界多姿多彩」暂无命盘计算定义",
+        "「冒险型的人」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.jiecai",
@@ -1858,10 +1981,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为劫财之人（对象劫财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「充当引领者的角色」暂无命盘计算定义",
+        "「引领和主导」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.jiecai",
@@ -1889,10 +2018,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为劫财之人（对象劫财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是劫财之人；建议内容暂无命盘计算定义",
+        "句内并列「交友/恋爱」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.jiecai",
@@ -1920,10 +2055,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为劫财之人（对象劫财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是劫财之人；建议内容暂无命盘计算定义",
+        "句内并列「交友/恋爱」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.jiecai",
@@ -2628,10 +2769,17 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为食神之人（对象食神由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「共享美好的时光」暂无命盘计算定义",
+        "「共同的生活体验」暂无命盘计算定义",
+        "句内并列「朋友/伴侣」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shishen",
@@ -2659,10 +2807,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为食神之人（对象食神由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「审美和品味」暂无命盘计算定义",
+        "「共鸣的精神体验」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shishen",
@@ -2690,10 +2844,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为食神之人（对象食神由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是食神之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shishen",
@@ -3279,10 +3438,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「思想的火花」为比喻表述，暂无命盘计算定义",
+        "「智慧的碰撞」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3310,10 +3475,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「意见交换和思想交流」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3341,10 +3511,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「比较深刻的话题」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3372,10 +3547,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「探寻人生奥秘」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3403,10 +3583,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「浮于表面的恋爱游戏」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3434,10 +3619,17 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「批判精神」暂无命盘计算定义",
+        "「独立思考」暂无命盘计算定义",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是伤官之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.shangguan",
@@ -3566,7 +3758,11 @@
       "attribution": "Legacy corpus; source unverified",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "取象口径未核：原文未交代以何柱位、明藏层或旺衰条件，把正财归入这一取象。",
+        "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
+        "「老婆」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -3926,10 +4122,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「稳定和保障」暂无命盘计算定义",
+        "句首代词「他们」无栏内先行名词，所指对象依栏位（正财）归属"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -3957,10 +4159,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「可靠、舒适的环境」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -3988,10 +4195,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「恋爱更像是一种投资」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -4019,10 +4231,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「经济基础和生活能力」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -4050,10 +4267,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「责任感」暂无命盘计算定义",
+        "「承诺」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -4081,10 +4304,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是正财之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengcai",
@@ -4248,7 +4476,11 @@
       "attribution": "Legacy corpus; source unverified",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "取象口径未核：原文未交代以何柱位、明藏层或旺衰条件，把偏财归入这一取象。",
+        "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
+        "「女朋友、情人」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.piancai",
@@ -4686,10 +4918,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "句内自称「偏财型的人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
+        "「心跳加速感」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.piancai",
@@ -4717,10 +4954,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏财之人（对象偏财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「不按常理出牌」暂无命盘计算定义",
+        "「享受生活中的不确定性」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.piancai",
@@ -4748,10 +4991,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏财之人（对象偏财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「尝试新鲜事物（如玩剧本杀、冒险）」暂无命盘计算定义",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是偏财之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.piancai",
@@ -4973,7 +5222,11 @@
       "attribution": "Legacy corpus; source unverified",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "取象口径未核：原文未交代以何柱位、明藏层或旺衰条件，把正官归入这一取象。",
+        "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
+        "「老公、男友」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5337,10 +5590,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「尊重和认可」暂无命盘计算定义",
+        "「道德品质和社会地位」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5368,10 +5627,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「有序的生活方式」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5399,10 +5663,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「理想的另一半」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5430,10 +5699,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「共同价值观」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5461,10 +5735,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是正官之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengguan",
@@ -5657,7 +5936,11 @@
       "attribution": "Legacy corpus; source unverified",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "取象口径未核：原文未交代以何柱位、明藏层或旺衰条件，把七杀归入这一取象。",
+        "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
+        "「男朋友、情人、丈夫」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6058,10 +6341,17 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为七杀之人（对象七杀由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「强烈的情感体验」暂无命盘计算定义",
+        "「成长机会」暂无命盘计算定义",
+        "句首代词「他们」无栏内先行名词，所指对象依栏位（七杀）归属"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6089,10 +6379,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为七杀之人（对象七杀由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「传奇性的故事」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6120,10 +6415,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "句内自称「七杀型人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
+        "「动态和不稳定」暂无命盘计算定义",
+        "「“共患难”」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6151,10 +6452,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为七杀之人（对象七杀由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「独立性」暂无命盘计算定义",
+        "「能从逆境中站起来」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6182,10 +6489,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为七杀之人（对象七杀由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「战友」为比喻表述，暂无命盘计算定义",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是七杀之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.qisha",
@@ -6705,10 +7018,17 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "句内自称「正印型人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
+        "「良师益友」暂无命盘计算定义",
+        "「保护者」暂无命盘计算定义",
+        "句内并列「朋友/伴侣」，适用范围含交友"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengyin",
@@ -6736,10 +7056,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正印之人（对象正印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「智慧和慷慨」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengyin",
@@ -6767,10 +7092,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正印之人（对象正印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是正印之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengyin",
@@ -6798,10 +7128,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为正印之人（对象正印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「“深意”」为比喻表述，暂无命盘计算定义",
+        "「精神共鸣」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.zhengyin",
@@ -7391,10 +7727,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「灵魂共鸣」暂无命盘计算定义",
+        "「创意和灵感」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.pianyin",
@@ -7422,10 +7764,16 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "句内自称「偏印型人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
+        "「艺术气息」暂无命盘计算定义",
+        "「独特世界观」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.pianyin",
@@ -7453,10 +7801,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「非传统的交流互动」暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.pianyin",
@@ -7484,10 +7837,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "「探索未知世界的旅程」为比喻表述，暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.pianyin",
@@ -7515,10 +7873,15 @@
       "contexts": [],
       "sources": [],
       "source_state": "unverified",
-      "attribution": "Legacy corpus; source unverified",
+      "attribution": "作者据网络材料归纳，原始出处未核",
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "原文未交代性别限定；性别适用范围未核定",
+        "原文未交代原局／岁运时间限定；时间适用范围未核定",
+        "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
+        "本句为相处建议（规范句）：建议者是相处方，被相处者是偏印之人；建议内容暂无命盘计算定义"
+      ],
       "output": "reference_only",
       "legacy": {
         "object_id": "shishen.pianyin",
@@ -10002,6 +10365,245 @@
       "limits": [
         "年干锚与含禄起算的明文出自《五行精纪注释》的今人【注释】，不混作【原文】的断言。",
         "白文、清抄本与注释本的传抄关系未定（#194）。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.liuqin.spouse_star_yinyanggan.v1",
+      "text": "《三命通会·论六亲》主文：「故謂陰干生我者為母我尅陽干者為父尅我者為官為子我尅者為財為妻」；女命：「如女人則甲遇庚七煞乙遇庚正官皆夫星也謂庚是陽男為正夫屬陽不可以辛陰為夫也」；同卷对另一读法的取舍：「不拘偏正惟辨陰陽陽男陰女理之大順也」。转述（自有表述，非原文）：男命取我所克五行中的阴干为妻星，女命取克我五行中的阳干为夫星；书中甲、乙两干的例句，男命取己为妻，女命取庚为夫。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_xing"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "described",
+      "premise": "按《三命通会·论六亲》阴阳干读法：男命取我克五行的阴干、女命取克我五行的阳干为配偶星目标，地支取主气。",
+      "contexts": [
+        "liuqin.spouse_star_readings"
+      ],
+      "sources": [
+        "sanming_liuqin"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《三命通会·论六亲》",
+      "viewpoint": "阴阳干读法（单源）",
+      "exceptions": [],
+      "limits": [
+        "单源：仅《三命通会》四库本书影一处，未获第二独立来源。",
+        "二十格中只有甲、乙两干的男女四格有书证直例；其余十六格按「其餘八干俱以類推」与「陽男陰女」原则类推重建，不是逐干原文。",
+        "168页小字「或云」另有正偏读法，见 editorial.liuqin.spouse_star_zhengpian.v1；174页主文对「不拘偏正」有取舍倾向，两读在书内并存，不是中立并列。",
+        "转述中的「己」字，书影印形近「已」，按语境读作己。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.liuqin.spouse_star_zhengpian.v1",
+      "text": "《刻京台增补渊海子平大全》六亲取用图：男图（PDF p. 57）十个配偶格均作「正妻」；女图（p. 58）配偶格六格作「正夫」、三格只作「夫」，丙日一格「正」字清楚、第二字残损。《三命通会·论六亲》168页小字「或云」之后：「取正財為妻偏才為妾女甲則辛為正夫取陰陽之正合也」。转述（自有表述，非原文）：男命取正财、女命取正官为配偶星。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_xing"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "described",
+      "premise": "默认读法：男命取正财干、女命取正官干为配偶星目标，地支取主气。",
+      "contexts": [
+        "liuqin.spouse_star_readings"
+      ],
+      "sources": [
+        "yuanhai_liuqin_charts",
+        "sanming_liuqin"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《刻京台增补渊海子平大全》取用图；《三命通会·论六亲》「或云」",
+      "viewpoint": "正偏读法（两书按各自字句分别支持）",
+      "exceptions": [],
+      "limits": [
+        "渊海图是正财／正官读法的逐格原载，不是阴阳干读法的第二来源；两读互为对照，不互作对方的第二见证。",
+        "女图丙日一格第二字残损，格值取癸是按行列位置与其余格自洽得出，不是该格直读。",
+        "女图另三格只作「夫」，按图上省「正」字对待，不据此认定另一取法。",
+        "「或云」是小字标记，其后文字与大字同层；174页对此读法有取舍倾向，见 editorial.liuqin.spouse_star_yinyanggan.v1。",
+        "《命理探原》「幹頭之財」不引为本读法的第二支持：该句是另一命题。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.liuqin.qiqie_gong.v1",
+      "text": "《刻京台增补渊海子平大全》PDF p. 25 双行夹注：「論妻妾者以生日支辰爲妻妾之星」。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_gong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "described",
+      "premise": "本库以日柱地支为配偶宫，是仓内 house_of_relationship 的约定；夹注作「生日支辰」，其与日支的对应关系未核定。",
+      "contexts": [],
+      "sources": [
+        "yuanhai_qiqie_note"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《刻京台增补渊海子平大全》卷首夹注",
+      "viewpoint": "妻妾宫位线索（夹注前半串，单源）",
+      "exceptions": [],
+      "limits": [
+        "「星」之后一字与小注末字未核，所在章名未取得。",
+        "夹注只涉妻妾，不是女命夫宫的古籍明文；「生日支辰」不改写为「日支」。",
+        "不因本条改变仓内以日柱地支为配偶宫的约定。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+      "text": "《命理探原·论妻子》：「又有妻透成格。或妻宮有用〔小標點〕而坐下刑衝。未免得美妻而難偕老。」（〔〕内为整理记号，非原书文字。）",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_gong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "described",
+      "premise": "选定范围内，日柱地支（本库的配偶宫约定）作为具体参与者卷入刑或冲。",
+      "contexts": [
+        "editorial.spouse_palace_xingchong"
+      ],
+      "sources": [
+        "tanyuan_qizi"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《命理探原·论妻子》",
+      "viewpoint": "妻宫刑冲读法（探原转录，单源）",
+      "exceptions": [],
+      "limits": [
+        "「妻透成格」「妻宮有用」原文未给计算定义，本库不判别；结构前提满足不表示这些条件已满足。",
+        "不表示婚姻、寿命或其他现实事件成立。",
+        "刑按命盘流派的刑定义解释，同一命盘在不同刑定义下刑的观察值可不同；冲不受刑定义影响。",
+        "条文语境为男命妻宫；女命查询不关联本条，静态查阅不受限。",
+        "原文是否限于原局、是否论及岁运触发均未核；本库把选定岁运纳入求值范围，是对原文的外延，不是书中已载。",
+        "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+      "text": "《命理探原·论妻子》：「妻星者。幹頭之財也。」",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_xing"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "described",
+      "premise": "选定范围内，按命盘流派配置的配偶星目标干至少一处明干实际出现；「幹頭」按明现理解，藏干出现只记事实，不计作透。",
+      "contexts": [
+        "editorial.spouse_star_tougan"
+      ],
+      "sources": [
+        "tanyuan_qizi"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《命理探原·论妻子》",
+      "viewpoint": "妻星幹头读法（探原转录，单源）",
+      "exceptions": [],
+      "limits": [
+        "条文以「財」为妻星，未限定配偶星取法；按盘关联用当前配置的目标干，不据此认证取法。",
+        "「透」的完整成立条件（如是否须成局）原文未给，此处只核明干出现这一事实。",
+        "不断言藏干在一切妻星读法中无作用。",
+        "条文语境为男命妻星；女命夫星无此句明文，女命查询不关联本条，静态查阅不受限。",
+        "原文是否限于原局、是否论及岁运触发均未核；本库把选定岁运纳入求值范围，是对原文的外延，不是书中已载。",
+        "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.tanyuan.wife_star_liangtou.v1",
+      "text": "《命理探原·论妻子》：「又若妻星兩透。偏正〔小標點〕雜出。何一夫〔右下有小點，未辨是頓點或字形〕而多妻〔小標點〕亦防刑尅之道也。」（〔〕内为整理记号，非原书文字。）",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_xing"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "unresolved",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "tanyuan_qizi"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《命理探原·论妻子》",
+      "viewpoint": "妻星两透读法（探原转录，单源）",
+      "exceptions": [],
+      "limits": [
+        "「兩透」的计数口径（明干藏干是否并计、是否恰为两个）原文未给，本库不强定；本条不挂结构判据，仅静态查阅。",
+        "条文语境为男命；女命适用未核定。",
+        "「何一夫」保持原印，不改作「即一夫」；幹、尅、衝、兩、雜按原印字形保留。",
+        "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "editorial.liuqin.sanming_qiqie_zuodi.v1",
+      "text": "《三命通会·论六亲》171页妻妾星一节：「如妻妾星坐生旺庫祿馬貴人之地或有物以生之主妻妾富貴榮華美貌多才」；「如坐生旺祿馬之地被刑衝破害妻雖有壽亦主破相貧薄」。同节另两句转述如下（自有表述，非原文；〔〕保留未核字的位置，不代表补字）：星坐空刑〔条件字未核〕煞羊刃死絕衝敗之地，主妻妾貧薄醜貌、刑夭、〔字未核〕亂、殘疾或產亡、不得力；星坐祿馬貴人財庫之地而帶刑衝〔条件字未核〕煞，主妻雖富貴亦夭。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.peiou_xing"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "取象"
+      ],
+      "applicability": "unresolved",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_liuqin"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《三命通会·论六亲》",
+      "viewpoint": "妻妾星坐地条件组（单源）",
+      "exceptions": [],
+      "limits": [
+        "「坐地」的查法未核定；不把配偶星主气地支参与刑冲破害等关系等同于原文「坐地」已作判断。",
+        "生旺、庫、祿馬、貴人、空、羊刃、死絕等坐地状态本库无对应判据，不判别；吉凶断语由文本承载。",
+        "单源：仅《三命通会》四库本书影一处。",
+        "转述保留两处〔条件字未核〕煞及一处〔字未核〕亂的槽位，不猜未核字；整理占位不是原书文字。",
+        "条文称妻妾，语境为男命；女命对应未核定。",
+        "原文为四柱通论，未核是否论及岁运触发；本条不作岁运适用声明，不挂判据，仅静态查阅。"
       ],
       "output": "reference_only",
       "legacy": null

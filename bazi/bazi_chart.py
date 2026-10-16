@@ -16,7 +16,7 @@ from .data_types import (
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang
 from .bazi import Bazi, BaziGender, LocationTimeJson, _parse_location
-from .school import DayunYearRule, BaziConfig, BaziSchool, DEFAULT_CONFIG, _config_json
+from .school import DayunYearRule, BaziConfig, BaziSchool, PeiouXingDef, DEFAULT_CONFIG, _config_json
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
@@ -115,6 +115,7 @@ class BaziJson:
     taiji_def: str
     guoyin_anchor: str
     guoyin_def: str
+    peiou_xing_def: str
 
   class _CommonChartJsonDict(TypedDict):
     '''默认盘与地点盘 JSON 的共同字段。'''
@@ -142,6 +143,40 @@ class BaziJson:
 
   '''默认盘或地点盘 JSON 的完整字段类型。'''
   BaziChartJsonDict: TypeAlias = DefaultBaziChartJsonDict | LocationBaziChartJsonDict
+
+
+def _peiou_xing_target(day_master: Tiangan, gender: BaziGender, definition: PeiouXingDef) -> Tiangan:
+  '''
+  按取法定义选出配偶星的目标天干；同一（日主，性别，取法）恰有一个目标。
+
+  - 默认读法：十神为正财（男）／正官（女）的天干。
+  - 阴阳干读法（《三命通会·论六亲》，单源类推）：男取十神属正财、偏财且为阴干者，
+    女取十神属正官、七杀且为阳干者。
+
+  目标恒不等于日主：财／官杀与日主五行不同，比肩不在候选内。
+  '''
+  assert isinstance(day_master, Tiangan)
+  assert isinstance(gender, BaziGender)
+  assert isinstance(definition, PeiouXingDef)
+
+  expected: tuple[Shishen, ...]
+  if definition is PeiouXingDef.ZHENGCAI_ZHENGGUAN:
+    expected = (Shishen.正官,) if gender is BaziGender.FEMALE else (Shishen.正财,)
+  else:
+    assert definition is PeiouXingDef.YINYANGGAN
+    expected = (Shishen.正官, Shishen.七杀) if gender is BaziGender.FEMALE else (Shishen.正财, Shishen.偏财)
+
+  f = functools.partial(shishen, day_master)
+  found_tg = tuple(filter(
+    lambda tg: f(tg) in expected and (
+      definition is PeiouXingDef.ZHENGCAI_ZHENGGUAN
+      or traits(tg).yinyang is (Yinyang.阳 if gender is BaziGender.FEMALE else Yinyang.阴)
+    ),
+    Tiangan,
+  ))
+
+  assert len(found_tg) == 1
+  return found_tg[0]
 
 
 class BaziChart:
@@ -280,7 +315,11 @@ class BaziChart:
   @functools.cached_property
   def relationship_stars(self) -> GanzhiData[Tiangan, tuple[Dizhi, ...]]:
     '''夫妻星（配偶星）。
-    
+
+    目标干由 `BaziSchool.peiou_xing_def` 选定（`_peiou_xing_target`）；地支侧两读一致，
+    取主气十神等于目标干十神的地支。对固定日主，`shishen` 在十干上是双射，
+    「十神相等」与「主气等于目标干」等价。
+
     Usage:
     ```
     stars = chart.relationship_stars
@@ -291,15 +330,17 @@ class BaziChart:
     assert 1 <= len(stars.dizhi) <= 2 # 对应一到两个地支
     ```
     '''
-    expected_shishen: Final[Shishen] = Shishen.正官 if self._bazi.gender is BaziGender.FEMALE else Shishen.正财
+    target = _peiou_xing_target(
+      self._bazi.day_master,
+      self._bazi.gender,
+      self._bazi.config.school.peiou_xing_def,
+    )
 
     f = functools.partial(shishen, self._bazi.day_master)
-    found_tg = tuple(filter(lambda tg : f(tg) is expected_shishen, Tiangan))
-    found_dz = tuple(filter(lambda dz : f(dz) is expected_shishen, Dizhi))
+    found_dz = tuple(filter(lambda dz : f(dz) is f(target), Dizhi))
 
-    assert len(found_tg) == 1
     assert 1 <= len(found_dz) <= 2
-    return GanzhiData(found_tg[0], found_dz)
+    return GanzhiData(target, found_dz)
 
   PillarTraits = GanzhiData[TraitTuple, TraitTuple]
   @functools.cached_property

@@ -20,7 +20,7 @@ from bazi.bazi_chart import BaziChart, BaziJson
 from bazi.rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from bazi.utils import dizhi_utils
 from bazi.school import (
-  BaziPrecision, DayunYearRule, DayRollover, Anchor, BaziSchool, BaziConfig,
+  BaziPrecision, DayunYearRule, DayRollover, Anchor, PeiouXingDef, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG, _ANCHOR_CHOICES,
 )
 from bazi.analyzer.relationship import _REGISTRY
@@ -55,6 +55,9 @@ def test_school_enums_basic() -> None:
   assert len(ShenshaRules.YangrenDef) == 3
   assert not hasattr(ShenshaRules, 'FeirenDef')
   assert len(ShenshaRules.TianyiDef) == 4
+  assert len(PeiouXingDef) == 2
+  assert PeiouXingDef.ZHENGCAI_ZHENGGUAN.value == 0 # 默认读法.
+  assert PeiouXingDef.YINYANGGAN.value == 1         # 三命阴阳干读法.
 
 
 def test_school_defaults() -> None:
@@ -85,6 +88,7 @@ def test_school_grouped_positional_arguments() -> None:
     ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
     Anchor.YEAR,
     ShenshaRules.GuoyinDef.WUXING_JINGJI,
+    PeiouXingDef.YINYANGGAN,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -109,6 +113,7 @@ def test_school_grouped_positional_arguments() -> None:
     taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
     guoyin_anchor=Anchor.YEAR,
     guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
+    peiou_xing_def=PeiouXingDef.YINYANGGAN,
   )
 
 
@@ -514,6 +519,7 @@ def test_json_roundtrip_default_school() -> None:
     'wenchang_anchor': 'YEAR_AND_DAY', 'wenchang_def': 'XIN_ZI',
     'taiji_anchor': 'YEAR_AND_DAY', 'taiji_def': 'REN_GUI_BOTH',
     'guoyin_anchor': 'YEAR_AND_DAY', 'guoyin_def': 'MODERN',
+    'peiou_xing_def': 'ZHENGCAI_ZHENGGUAN',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -557,6 +563,7 @@ def test_json_roundtrip_non_default_school() -> None:
     taiji_def=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN,
     guoyin_anchor=Anchor.YEAR,
     guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
+    peiou_xing_def=PeiouXingDef.YINYANGGAN,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -575,6 +582,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'wenchang_anchor': 'DAY', 'wenchang_def': 'XIN_XU',
     'taiji_anchor': 'YEAR', 'taiji_def': 'REN_SI_GUI_SHEN',
     'guoyin_anchor': 'YEAR', 'guoyin_def': 'WUXING_JINGJI',
+    'peiou_xing_def': 'YINYANGGAN',
   }
 
   rebuilt: BaziChart = BaziChart(

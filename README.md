@@ -156,6 +156,30 @@ print(analyzer.transits.house_relations(year))
 [`TransitChart`](https://github.com/0xf3cd/bazi/blob/main/bazi/transit_chart.py) 和
 [`TransitSet`](https://github.com/0xf3cd/bazi/blob/main/bazi/transits.py)。
 
+### 配偶星取法
+
+`BaziSchool.peiou_xing_def` 选择配偶星（夫妻星）的取法：默认男命取正财干、女命取正官干；
+`YINYANGGAN` 为《三命通会·论六亲》读法（男取我克五行的阴干、女取克我五行的阳干，
+书证直例仅甲乙两干，其余十六格按原书原则类推，单源）。地支侧两读一致，取主气为目标干之地支。
+取法影响 `relationship_stars` 及以其为目标的婚恋判别，不改变排盘与其他关系计算。
+
+```python
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.school import BaziConfig, BaziSchool, PeiouXingDef
+
+chart = BaziChart(Bazi.create(datetime(2000, 1, 8, 12), 'male'))
+assert str(chart.relationship_stars.tiangan) == '戊'
+yinyang = BaziChart(Bazi.create(
+  datetime(2000, 1, 8, 12),
+  'male',
+  BaziConfig(school=BaziSchool(peiou_xing_def=PeiouXingDef.YINYANGGAN)),
+))
+assert str(yinyang.relationship_stars.tiangan) == '己'
+```
+
 ### 直接查地支关系
 
 纯地支用 `discover`；需要区分柱位或查拱局时，用 `discover_ganzhis` 保留完整干支。
@@ -244,7 +268,42 @@ assert restored_record == result
 它不计算旺衰、喜忌、格局或有效制化。观察范围和自定义知识的匹配条件见
 [`context_matching.py`](https://github.com/0xf3cd/bazi/blob/main/bazi/context_matching.py)。
 
-导出采用 `record_version=2`，版本 1 须从原出生输入及配置重新求值。
+两条婚恋结构判据走 `RelationshipProfile`：显式选择原局，或原局加一组按坐标查询、
+显式选定种类的岁运。宫刑冲判据检查日柱地支作为具体参与者卷入刑或冲；透干判据检查
+配偶星目标干至少一处明干出现（藏干只记事实）。证据按统一序号保存参与者与位置：
+原局四柱为 0–3，所选岁运自 4 起；拱局分原局内部、原局×岁运、岁运内部三段，互不因另一侧
+填实而失效。
+
+```python
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import RelationshipProfile, TransitCoordinate, evaluate_context
+from bazi.transits import TransitKind
+
+chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+result = evaluate_context(
+  chart,
+  criterion_id='editorial.spouse_palace_xingchong.v1',
+  profile=RelationshipProfile(
+    'natal_and_transits',
+    TransitCoordinate('at_year', gz_year=2024),
+    (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  ),
+  include_reference_only=True,
+)
+print(result.render())
+```
+
+缺查询坐标、入口不可查询或所求种类部分缺失时返回 `UNKNOWN`，已取得岁运的证据照常保存。
+`--match-context` 另有 `--transit-entry`／`--gz-month`／`--solar-date`／`--solar-moment`／
+`--transit-kinds`；`--ganzhi-year` 同时是官杀流年坐标与 `at_year`／`at_month` 的年份坐标。
+婚恋判据关联的条文只是条件参考，不表示结构已命中或完整前提已满足；男命语境条文对女命
+不自动关联，静态知识查询不受限。
+
+导出采用 `record_version=3`，保存查询坐标、请求与取得的岁运种类、结构证据与条件参考条目；
+版本 1／2 记录须从原出生输入及配置重新求值。
 `ContextResult.from_json` 只恢复记录，不重算或认证已存判别；它与命盘 JSON 的重算恢复不同。
 
 ## 源码脚本

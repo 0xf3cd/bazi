@@ -113,6 +113,23 @@ class DayRollover(Enum):
   ZIZHENG   = 1
 
 
+class PeiouXingDef(Enum):
+  '''
+  配偶星取法的流派分歧。
+
+  - ZHENGCAI_ZHENGGUAN：男命取正财干、女命取正官干。默认。
+  - YINYANGGAN：《三命通会·卷七·论六亲》读法：男命取我所克五行中的阴干，女命取克我五行中的阳干。
+    书证直例仅甲、乙两干的男女四格；其余十六格按「其餘八干俱以類推」与「陽男陰女」原则类推重建，单源，未获第二独立来源。
+
+  Note:
+  - 两读在阳男、阴女十格上目标相同，在阴男、阳女十格上不同；每个（日主，性别）仍恰有一个目标天干。
+  - 地支侧均取主气等于目标天干的地支。
+  - 不修改既有定义；新读法须另加定义。
+  '''
+  ZHENGCAI_ZHENGGUAN = 0
+  YINYANGGAN         = 1
+
+
 class Anchor(Enum):
   '''
   神煞查法所锚的柱位（流派分歧处）。
@@ -220,6 +237,9 @@ class BaziSchool:
   taiji_def:        ShenshaRules.TaijiDef = ShenshaRules.TaijiDef.REN_GUI_BOTH
   guoyin_anchor:    Anchor = Anchor.YEAR_AND_DAY
   guoyin_def:       ShenshaRules.GuoyinDef = ShenshaRules.GuoyinDef.MODERN
+
+  # 配偶星取法；两读的差异面见 PeiouXingDef。
+  peiou_xing_def:   PeiouXingDef = PeiouXingDef.ZHENGCAI_ZHENGGUAN
 
   def __post_init__(self) -> None:
     check_declared_types(self)

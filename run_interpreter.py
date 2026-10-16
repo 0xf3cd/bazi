@@ -5,7 +5,7 @@ import json
 from random import Random, SystemRandom
 import re
 from collections.abc import Callable, Iterable
-from datetime import datetime, tzinfo
+from datetime import date, datetime, tzinfo
 from pathlib import Path
 from typing import Final, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -14,10 +14,14 @@ from run_demo import get_basic_info
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
-from bazi.defines import Tiangan, Shishen
+from bazi.defines import Tiangan, Shishen, Dizhi
 from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
-from bazi.context_matching import ContextProfile, ObservationScope, evaluate_context
+from bazi.context_matching import (
+  ContextProfile, ObservationScope, RelationshipProfile, TransitCoordinate, TransitEntry,
+  _CRITERIA, evaluate_context,
+)
 from bazi.school import BaziConfig
+from bazi.transits import TransitKind
 
 
 _DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
@@ -228,6 +232,71 @@ def _fixed_chart(args: argparse.Namespace) -> BaziChart:
   ))
 
 
+def _gz_month(value: str) -> Dizhi:
+  try:
+    return Dizhi.from_str(value)
+  except (TypeError, ValueError) as error:
+    raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def _solar_date(value: str) -> date:
+  try:
+    parsed = date.fromisoformat(value)
+  except ValueError as error:
+    raise argparse.ArgumentTypeError(str(error)) from error
+  if parsed.isoformat() != value:
+    raise argparse.ArgumentTypeError(f'Expected canonical ISO date: {value}')
+  return parsed
+
+
+def _solar_moment(value: str) -> datetime:
+  try:
+    parsed = datetime.fromisoformat(value)
+  except ValueError as error:
+    raise argparse.ArgumentTypeError(str(error)) from error
+  if parsed.tzinfo is not None or parsed.isoformat() != value:
+    raise argparse.ArgumentTypeError(f'Expected canonical naive moment: {value}')
+  return parsed
+
+
+def _transit_kinds(parser: argparse.ArgumentParser, value: str) -> tuple[TransitKind, ...]:
+  '''解析逗号分隔的种类值；查重、拒未知名与空项，再按固定种类序规范化。'''
+  kinds: list[TransitKind] = []
+  for item in value.split(','):
+    try:
+      kinds.append(TransitKind(item))
+    except ValueError:
+      parser.error(f'Unsupported transit kind: {item}')
+  if len(set(kinds)) != len(kinds):
+    parser.error(f'Duplicate transit kinds: {value}')
+  return tuple(kind for kind in TransitKind if kind in frozenset(kinds))
+
+
+def _relationship_profile(parser: argparse.ArgumentParser, args: argparse.Namespace) -> RelationshipProfile:
+  '''由 CLI 参数构造婚恋 profile；构造期拒绝互斥与缺字段组合。'''
+  coordinate_flags = any((
+    args.ganzhi_year is not None, args.gz_month is not None,
+    args.solar_date is not None, args.solar_moment is not None,
+  ))
+  if args.transit_entry is None and coordinate_flags:
+    parser.error('Transit coordinates require --transit-entry')
+  kinds = _transit_kinds(parser, args.transit_kinds) if args.transit_kinds is not None else ()
+  try:
+    coordinate = None
+    if args.transit_entry is not None:
+      coordinate = TransitCoordinate(
+        args.transit_entry,
+        gz_year=args.ganzhi_year,
+        gz_month=args.gz_month,
+        solar_date=args.solar_date,
+        solar_moment=args.solar_moment,
+      )
+    return RelationshipProfile(args.observation_scope, coordinate, kinds)
+  except (TypeError, ValueError) as error:
+    parser.error(str(error))
+  raise AssertionError('Unreachable parser state') # pragma: no cover # parser.error 总是退出。
+
+
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   if args.birth_time is None or args.gender is None or args.observation_scope is None:
     parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
@@ -238,11 +307,23 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
                                     args.viewpoint, args.applicability, args.time_scope)
   ):
     parser.error('Matching cannot be combined with random input, TXT export or knowledge modes/filters')
+  if args.match_context not in _CRITERIA:
+    parser.error(f'Unsupported value: {args.match_context}')
+  if _CRITERIA[args.match_context].profile_kind == 'context' and any((
+    args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
+    args.solar_moment is not None, args.transit_kinds is not None,
+  )):
+    parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
   try:
+    profile: ContextProfile | RelationshipProfile
+    if _CRITERIA[args.match_context].profile_kind == 'context':
+      profile = ContextProfile(args.observation_scope, args.ganzhi_year)
+    else:
+      profile = _relationship_profile(parser, args)
     result = evaluate_context(
       _fixed_chart(args),
       criterion_id=args.match_context,
-      profile=ContextProfile(args.observation_scope, args.ganzhi_year),
+      profile=profile,
       knowledge=KnowledgeBase.load(args.knowledge_source),
       include_reference_only=args.include_reference_only,
     )
@@ -286,14 +367,23 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument('--applicability', choices=get_args(Applicability), help='前提整理状态。')
   parser.add_argument('--time-scope', help='查阅情境所记录的时间范围。')
   parser.add_argument('--match-context', help='已注册判据 ID；对显式范围内的固定命盘求值。')
-  parser.add_argument('--observation-scope', choices=get_args(ObservationScope), help='显式选择原局或原局加单流年，均包含全部实际藏干。')
-  parser.add_argument('--ganzhi-year', type=int, help='流年的干支年查询坐标，不是公历时刻。')
+  parser.add_argument('--observation-scope', choices=get_args(ObservationScope) + ('natal_and_transits',), help='显式选择原局或原局加单流年（官杀判据），或原局加显式选定岁运（婚恋判据）。')
+  parser.add_argument('--ganzhi-year', type=int, help='干支年查询坐标：官杀判据为流年，婚恋 at_year／at_month 入口为年份。')
+  parser.add_argument('--transit-entry', choices=get_args(TransitEntry), help='婚恋判据的显式岁运查询入口；与坐标字段共同构成查询坐标。')
+  parser.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名），配 at_month 入口与 --ganzhi-year。')
+  parser.add_argument('--solar-date', type=_solar_date, help='东八区无时区公历日期坐标（如 2024-04-10），配 at_date 入口。')
+  parser.add_argument('--solar-moment', type=_solar_moment, help='东八区无时区时刻坐标（如 2024-04-10T12:00:00，可含微秒），配 at_moment 入口；要求 HOUR／MINUTE 原盘，DAY 精度返回 UNKNOWN。')
+  parser.add_argument('--transit-kinds', help='逗号分隔的岁运种类值（xiaoyun,dayun,liunian,liuyue,liuri）；重复或未知值报错，其余按固定序规范化。')
   parser.add_argument('--export-context-json', type=Path, help='导出匹配记录、证据及完整知识快照。')
   args = parser.parse_args(argv)
 
   if args.match_context is not None:
     return _matching_main(parser, args)
-  if args.observation_scope is not None or args.ganzhi_year is not None or args.export_context_json is not None:
+  if args.observation_scope is not None or args.ganzhi_year is not None or args.export_context_json is not None or any(
+    value is not None for value in (
+      args.transit_entry, args.gz_month, args.solar_date, args.solar_moment, args.transit_kinds,
+    )
+  ):
     parser.error('Matching inputs require --match-context')
   if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
     return _knowledge_main(parser, args)

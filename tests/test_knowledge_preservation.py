@@ -10,6 +10,15 @@ from bazi.knowledge import KnowledgeBase, KnowledgeEntry, object_id
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 BASELINE = json.loads((Path(__file__).with_name('data') / 'description_legacy_baseline.json').read_text(encoding='utf-8'))
+# The 45 claim IDs allowed to rewrite attribution; limits rewrites stay out of this file's
+# row fingerprints and are pinned by test_knowledge's allow table.
+ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(
+  claim_id for claim_id, fields in json.loads(
+    (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+  )['allowed_changes'].items() if 'attribution' in fields
+)
+OLD_ATTRIBUTION: str = 'Legacy corpus; source unverified'
+NEW_ATTRIBUTION: str = '作者据网络材料归纳，原始出处未核'
 
 
 def _positioned_entries(subject: Tiangan | Shishen, field: str) -> tuple[KnowledgeEntry, ...]:
@@ -34,9 +43,12 @@ def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
         for entry in _positioned_entries(subject, field):
           assert entry.legacy is not None
           rows.append(f'{prefix}:{subject}:{field}:{entry.text}')
+          # claim_rows reverse-normalize the 45 allowed IDs back to the original
+          # fingerprints, so no new hash needs pinning.
+          attribution = OLD_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else entry.attribution
           claim_rows.append('\0'.join((
             'C', str(subject), field, entry.claim_id, entry.text,
-            ','.join(entry.sources), entry.attribution,
+            ','.join(entry.sources), attribution,
             ','.join(entry.legacy.conditions), entry.output,
           )))
           assert entry.text == entry.text.strip() and entry.text.endswith('。')
@@ -106,7 +118,9 @@ def test_legacy_reference_classification_is_not_upgraded_by_projection() -> None
       continue
     if not entry.sources:
       assert entry.source_state == 'unverified'
-      assert entry.attribution == 'Legacy corpus; source unverified'
+      # The 45 allowed IDs equal exactly the new attribution; the rest still equal the old
+      # one. Projection does not upgrade output eligibility.
+      assert entry.attribution == (NEW_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else OLD_ATTRIBUTION)
       assert entry.output == 'reference_only'
       if entry.legacy.object_id.startswith('shishen.') and entry.legacy.conditions:
         conditional_shishen.add(entry.claim_id)

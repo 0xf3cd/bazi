@@ -44,7 +44,7 @@ def main() -> int:
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
-  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind
+  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind, spouse_evidence
   from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
@@ -70,6 +70,40 @@ def main() -> int:
   civil_zone = timezone(timedelta(hours=14))
   local_chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female', location_config, longitude=-157.4))
   local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
+  from bazi.context_matching import RelatedEntry, RelationshipProfile, TransitCoordinate
+  from bazi.analyzer.relationship import StarAppearance
+  relationship_result = evaluate_context(
+    chart,
+    criterion_id='editorial.spouse_star_tougan.v1',
+    profile=RelationshipProfile('natal'),
+  )
+  relationship_json = json.loads(relationship_result.export_json())
+  bad_kind_record = json.dumps({
+    **relationship_json,
+    'relationship': {
+      **relationship_json['relationship'],
+      'appearances': [{'origin': 'transit', 'pillar': None, 'kind': 'bogus',
+                       'ganzhi': '辛亥', 'layer': 'visible', 'stem': '辛'}],
+    },
+  })
+  moment_result = evaluate_context(
+    chart,
+    criterion_id='editorial.spouse_star_tougan.v1',
+    profile=RelationshipProfile(
+      'natal_and_transits',
+      TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12)),
+      (TransitKind.LIUNIAN,),
+    ),
+  )
+  bad_moment_record = json.dumps({
+    **json.loads(moment_result.export_json()),
+    'profile': {
+      'scope': 'natal_and_transits',
+      'coordinate': {'entry': 'at_moment', 'gz_year': None, 'gz_month': None,
+                     'solar_date': None, 'solar_moment': '2024-04-10 12:00:00'},
+      'kinds': ['liunian'],
+    },
+  })
 
   class Year(int):
     pass
@@ -140,6 +174,62 @@ def main() -> int:
      lambda: ContextProfile('dayun')), # type: ignore[arg-type]
     ('ContextProfile rejects natal coordinate', ValueError,
      lambda: ContextProfile('natal', 2024)),
+    ('TransitCoordinate rejects bool year', TypeError,
+     lambda: TransitCoordinate('at_year', gz_year=True)),
+    ('TransitCoordinate rejects tz-aware moment', ValueError,
+     lambda: TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, tzinfo=ZoneInfo('Asia/Shanghai')))),
+    ('TransitCoordinate rejects datetime as date', TypeError,
+     lambda: TransitCoordinate('at_date', solar_date=datetime(2024, 4, 10, 12))),
+    ('TransitCoordinate rejects missing entry field', ValueError,
+     lambda: TransitCoordinate('at_month', gz_year=2024)),
+    ('TransitCoordinate rejects foreign entry field', ValueError,
+     lambda: TransitCoordinate('at_year', gz_year=2024, gz_month=Dizhi.辰)),
+    ('RelationshipProfile rejects unsupported scope', ValueError,
+     lambda: RelationshipProfile('natal_and_liunian')), # type: ignore[arg-type]
+    ('RelationshipProfile rejects natal transit inputs', ValueError,
+     lambda: RelationshipProfile('natal', None, (TransitKind.LIUNIAN,))),
+    ('RelationshipProfile rejects non-tuple kinds', TypeError,
+     lambda: RelationshipProfile('natal_and_transits', None, [TransitKind.LIUNIAN])), # type: ignore[arg-type]
+    ('RelationshipProfile rejects duplicate kinds', ValueError,
+     lambda: RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.LIUNIAN))),
+    ('RelationshipProfile rejects kinds beyond the entry', ValueError,
+     lambda: RelationshipProfile('natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUYUE,))),
+    ('evaluate_context rejects profile kind mismatch', ValueError,
+     lambda: evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', profile=ContextProfile('natal'))),
+    ('Relationship record rejects mixed context profile', ValueError,
+     lambda: replace(relationship_result, profile=ContextProfile('natal'))),
+    ('Context record rejects relationship evidence', ValueError,
+     lambda: replace(positive, relationship=relationship_result.relationship, related=relationship_result.related)),
+    ('StarAppearance rejects non-TransitKind kind', TypeError,
+     lambda: StarAppearance('transit', None, 'liuyue', Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str origin', TypeError,
+     lambda: StarAppearance(1, None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str layer', TypeError,
+     lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 1, Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects non-str pillar', TypeError,
+     lambda: StarAppearance('natal', 1, None, Ganzhi.from_str('辛卯'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+    ('spouse_evidence rejects non-chart', TypeError,
+     lambda: spouse_evidence('chart', None)), # type: ignore[arg-type]
+    ('spouse_evidence rejects non-TransitSet transits', TypeError,
+     lambda: spouse_evidence(chart, 'transits')), # type: ignore[arg-type]
+    ('TransitCoordinate rejects str gz_month', TypeError,
+     lambda: TransitCoordinate('at_month', gz_year=2024, gz_month='辰')), # type: ignore[arg-type]
+    ('TransitCoordinate rejects date moment', TypeError,
+     lambda: TransitCoordinate('at_moment', solar_moment=date(2024, 4, 10))), # type: ignore[arg-type]
+    ('RelationshipProfile rejects non-coordinate', TypeError,
+     lambda: RelationshipProfile('natal_and_transits', 'at_year', (TransitKind.LIUNIAN,))), # type: ignore[arg-type]
+    ('RelatedEntry rejects non-bool recognized', TypeError,
+     lambda: RelatedEntry('a.b', 1)), # type: ignore[arg-type]
+    ('BaziSchool rejects non-enum peiou_xing_def', TypeError,
+     lambda: BaziSchool(peiou_xing_def=1)), # type: ignore[arg-type]
+    ('StarAppearance rejects visible stem mismatch', ValueError,
+     lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.庚)),
+    ('StarAppearance rejects natal kind coordinate', ValueError,
+     lambda: StarAppearance('natal', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)),
+    ('Relationship record rejects unknown appearance kind', ValueError,
+     lambda: ContextResult.from_json(bad_kind_record)),
+    ('Relationship record rejects non-canonical moment', ValueError,
+     lambda: ContextResult.from_json(bad_moment_record)),
     ('evaluate_context rejects unknown criterion', ValueError,
      lambda: evaluate_context(chart, criterion_id='typo', profile=ContextProfile('natal'))),
     ('evaluate_context rejects wrong profile', TypeError,
