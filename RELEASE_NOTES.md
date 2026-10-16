@@ -9,7 +9,7 @@
 - 旧描述 API 退役：删除 `bazi.descriptions`、`bazi.interpreter`、`Interpreter`、旧枚举、重复记录与字段表，
   改用知识库 `KnowledgeBase` 的 `query`、`entry` 与 `sources`（见下节）。原文、稳定 ID、来源、限度和
   旧位置元数据保留；`LegacyDescription` 承载旧字段、序号与条件溯源。
-- `BaziSchool` 新增必填字段 `peiou_xing_def`（配偶星取法，见下节），并重排位置参数及 JSON 键序，
+- `BaziSchool` 新增字段 `peiou_xing_def`（配偶星取法，见下节；直接构造时可省略，取默认值），并重排位置参数及 JSON 键序，
   将关系定义和独立羊刃／飞刃定义放在前面；顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、
   `yangren_def`、`feiren_def`，其后为神煞锚及相邻定义。调用方改用关键字参数。已有 JSON 键名、默认值与
   读法不变；`from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
