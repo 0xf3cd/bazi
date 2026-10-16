@@ -1,58 +1,65 @@
 # 发布说明
 
-## Unreleased
+## bazi 2.0.0
 
-- 自有 Markdown、API 说明、源码叙述注释与脚本 help 改为中文优先，保留原引文和技术拼写。
-  README 按功能入口组织，每个 Python 示例可独立运行。
-- `BaziSchool` 重排位置参数及 JSON 输出键序，将关系定义和独立羊刃／飞刃定义放在前面；
-  顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、`yangren_def`、`feiren_def`，
-  其后为神煞锚及相邻定义。调用方改用关键字参数。JSON 键名、默认值与读法不变；
-  `from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
-- 删除 `Shishen.str_mapping_table()`。`from_str` 仍接受完整名称及十个单字简称，`abbr` 返回简称；
-  需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
-- 新增 `Jieqi.jies()` 十二节元组入口。
-- `frozendict` 及其子类（藏干、关系发现结果）的 `repr` 显示类名与内容，不再是对象地址。
+本版含破坏性变更。旧版导出的命盘 JSON 缺少新增的必填流派字段，需以原出生输入重新建盘。
 
+### 破坏性变更
+
+- 旧描述 API 退役：删除 `bazi.descriptions`、`bazi.interpreter`、`Interpreter`、旧枚举、重复记录与字段表，
+  改用知识库 `KnowledgeBase` 的 `query`、`entry` 与 `sources`（见下节）。原文、稳定 ID、来源、限度和
+  旧位置元数据保留；`LegacyDescription` 承载旧字段、序号与条件溯源。
+- `BaziSchool` 新增必填字段 `peiou_xing_def`（配偶星取法，见下节），并重排位置参数及 JSON 键序，
+  将关系定义和独立羊刃／飞刃定义放在前面；顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、
+  `yangren_def`、`feiren_def`，其后为神煞锚及相邻定义。调用方改用关键字参数。已有 JSON 键名、默认值与
+  读法不变；`from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
+- DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
+  旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。
+  此默认变化会改变起运、小运与大运派生 JSON；旧记录需以原出生输入重新建盘后核验。
+  `Bazi.bracketing_jies` 改名为 `month_jies`。
 - 地支批量查询统一接收规则层的冻结 `DizhiRelationDefinitions`；删除查询入口的独立定义
   参数 `anhe_def`、`xing_def`、`gong_def`，盘级字段与 JSON 保留。调用方通过 `definitions=...` 传入对象，或读取
   `BaziSchool.relation_definitions`。干支发现可用 `relations` 选择求值范围。
 - `RelationDiscovery.merge` 按首次出现顺序去重；刑、集合型关系及生克查询输出不再取决于
   进程的 hash seed。现有使用方若依赖旧的无序组合序列，需改为使用新的稳定顺序。
+- 删除 `Shishen.str_mapping_table()`。`from_str` 仍接受完整名称及十个单字简称，`abbr` 返回简称；
+  需要简称映射时用 `{s.abbr: str(s) for s in Shishen}`。
+- 删除 `bazi.analyzer.relationship.find_shensha`，它原本标为内部辅助函数。
 
-- `KnowledgeBase` 由实例身份比较改为四份注册表的内容与顺序比较，hash 使用相同依据。
-  等值的不同实例在集合中去重，作为字典键时对应同一项。
-- `ContextResult` 复用已验证的 `KnowledgeBase`，渲染不重建整库；导出保留完整知识快照。
-  构造字段及属性 `knowledge_json` 改为 `knowledge: KnowledgeBase`；`ContextProfile.stem_scope`
-  属性及记录字段删除。原完整知识 JSON 可先交给 `KnowledgeBase.from_json`。
-  `ChartOccurrence` 构造移除 `index` 位置字段，第三个位置参数变为 `ganzhi`，建议使用具名参数；
-  `index` 由柱位派生，不进入记录，展示只保留柱位。新记录格式为版本2，版本1明确拒绝，
-  旧记录须以原出生输入及配置重新求值；知识内容和顺序仍参与结果值比较与 hash。
-- 丁火身弱、庚金行运、偏印喜用、枭印夺食四个判据改为只判可计算事实：日主为丁或庚，
-  偏印（及食神）在选定范围内出现，藏干计入。不再一律返回 `UNKNOWN`；事实不成立时理由为
-  `day_master_differs` 或 `required_classification_absent`，范围不完整仍为 `UNKNOWN`。
-  `MatchReason` 删除 `predicate_undefined`，四个判据的观察项改为各自的事实键。
-  关联条目改为 `related` 中的条件参考，`entries` 为空，展示标为「完整前提未由程序判别」；
-  身弱、有制有化、喜用、夺食等条件留在条目文字中。记录格式升为版本4，旧版本拒绝。
+### 知识库与前提判别
 
-- DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
-  旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。
-  此默认变化会改变起运、小运与大运派生 JSON；旧记录需以原出生输入重新建盘后核验。
-- 新增不可变 `GanzhiYearMonth` 领域坐标，以及 `Bazi.month_jies`、`ganzhi_year_month`、
-  `reference_datetime`、`location_time` 只读接口。地点时间事实区分 UTC 瞬间、固定出生偏移、
-  未截断真太阳钟与分钟显示钟；展示直接格式化模型事实，真实前后节仍查物理时刻。
-- 知识 API 破坏性清理：删除 `bazi.descriptions`、`bazi.interpreter`、`Interpreter`、旧枚举、
-  重复记录与字段表。`KnowledgeBase` 及现有记录是唯一模型；原文、稳定 ID、来源、限度和
-  旧位置元数据保留，语料未扩充。调用方改用 `query`、`entry`、完整不可变 `sources` 注册表。
-  新来源无需同步枚举；`LegacyDescription` 继续承载字段、序号与条件溯源。
-- 新增 `object_id`、`DEFAULT_SOURCE_PATH` 和共用主体文字投影 `render_subject`。
-  主体展示与全角色查询分开，旧位置顺序与语料顺序分开；公开 `render` 接受调用方的
-  `premise_verdict` 展示文字，不求值前提或改变输出资格。前提判别仍由 `evaluate_context` 执行。
+- `KnowledgeBase` 管理对象、情境、来源与条目四份注册表：按对象、情境、主题及来源等条件取交集查询，
+  返回不可变条目与来源见证；`render`／`render_subject` 展示原文、来源与限度，`export_json`／`from_json`
+  导出与恢复。值比较与 hash 按四份注册表的内容与顺序。另有 `object_id` 与 `DEFAULT_SOURCE_PATH`。
+  `render` 接受调用方给的 `premise_verdict` 展示文字，不求值前提，也不改变输出资格。
+- 随库知识以仅供参考的旧语料为主，规模与来源状态的计数见 README；署名与来源说明均为中文。
+  婚恋相关 45 条旧文校准了署名与限度，原文不变；新增 7 条知识与 4 个古籍来源。
+- `evaluate_context` 在显式选择的范围内检查已注册判据，返回 `ContextResult`：
+  - 两个官杀判据判条目的完整前提：正官与七杀共现，以及共现且为女命。
+  - 丁火身弱、庚金行运、偏印喜用、枭印夺食四个判据只判可计算事实：日主为丁或庚，偏印（及食神）
+    在范围内出现，藏干计入。身弱、喜用等条件留在条目文字中，条目作条件参考返回。
+  - 妻宫刑冲、配偶星透干两个婚恋结构判据经 `RelationshipProfile` 选择原局，或原局加按
+    `TransitCoordinate` 查询的岁运，保存参与者、柱位与明藏层证据；男命语境条文不自动关联女命。
+
+  所需流年或岁运缺失、不可查询时返回 `UNKNOWN`。判别不计算旺衰、喜忌或有效制化，前提满足也不表示
+  现实事件成立。结果可导出 JSON（`record_version=4`，含完整知识快照），用 `ContextResult.from_json`
+  恢复；其他版本的记录拒绝恢复。
+- `BaziSchool.peiou_xing_def` 选择配偶星取法，影响 `BaziChart.relationship_stars` 与配偶星判据。
+  默认 `ZHENGCAI_ZHENGGUAN`（男命正财、女命正官）不变；`YINYANGGAN` 采用《三命通会》的阴阳干读法。
+
+### 其他
+
 - 真太阳时命盘接受带时区出生时刻、经度及可选出生地区 `civil_timezone`，JSON 保留民用、UTC
   及真太阳时。wheel 增加 `equation_of_time.bin`；大运和流运查询采用 UTC+08:00 标签。
-  `run_interpreter.py` 支持固定地点命盘及导出。
-- `run_interpreter.py` 的命盘展示省略所选知识文字为空的标题。
-- 知识查询提供不可变条目与来源见证。源码 runner 支持固定出生、带种子的随机命盘、参考文字、
-  来源展示及显式导出；默认展示一个命盘，不导出文件。
+- 新增不可变 `GanzhiYearMonth` 领域坐标，以及 `Bazi.ganzhi_year_month`、`reference_datetime`、
+  `location_time` 只读接口。地点时间事实区分 UTC 瞬间、固定出生偏移、未截断真太阳钟与分钟显示钟；
+  展示直接格式化模型事实，真实前后节仍查物理时刻。
+- 新增 `Jieqi.jies()` 十二节元组入口。
+- `frozendict` 及其子类（藏干、关系发现结果）的 `repr` 显示类名与内容，不再是对象地址。
+- 源码脚本 `run_interpreter.py` 支持固定出生与固定地点命盘、带种子的随机命盘、参考文字、来源展示、
+  前提判别与显式导出；默认展示一个命盘，不导出文件，所选知识文字为空的标题省略。
+- 自有 Markdown、API 说明、源码叙述注释与脚本 help 改为中文优先，保留原引文和技术拼写。
+  README 按功能入口组织，每个 Python 示例可独立运行。
 
 ## bazi 1.0.0
 

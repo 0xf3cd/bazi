@@ -4,7 +4,7 @@
 
 面向中文用户的 Python 3.11+ 八字排盘库，提供四柱、流运、关系与解释知识查询。
 运行时只用标准库及随库数据，无需联网或生成数据。
-本文对应当前源码；已发布版本请参阅[对应版本的 README](https://github.com/0xf3cd/bazi/blob/v1.0.0/README.md)。
+本文对应当前源码；已发布版本的说明见[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的 README。
 
 本库由个人维护，接受以 issue 提交的勘误与出处补充，暂不接受 PR。
 
@@ -16,8 +16,8 @@
 python -m pip install .
 ```
 
-已发布的 1.0.0 可用 `python -m pip install bazi==1.0.0` 安装，但接口与当前源码不同；
-升级说明见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+已发布版本可用 `python -m pip install bazi` 从 PyPI 安装；
+版本间的变化与升级说明见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 从定义模块导入所需类型，下文每个 Python 示例均可独立运行。
 
 ```python
@@ -404,7 +404,7 @@ python run_tests.py -a -v
 
 ```sh
 python run_package_checks.py --output-dir ../bazi-tested
-python -m pip install ../bazi-tested/bazi-1.0.0-py3-none-any.whl
+python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
 ```
 
 输出目录须为空且在仓外。发布步骤见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md)。
