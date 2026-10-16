@@ -336,7 +336,7 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
       args.export_context_json,
       args.knowledge_source,
       result.export_json,
-      '已导出前提判别记录：',
+      '已导出判别记录：',
     )
   return 0
 

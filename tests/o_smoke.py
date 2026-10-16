@@ -746,9 +746,12 @@ def main() -> int:
     failures.append('Optimized context evaluation/export/restoration failed')
   legacy_record = json.loads(positive.export_json())
   legacy_record['record_version'] = 1
+  condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', profile=ContextProfile('natal'), include_reference_only=True)
   checks.extend([
     ('Legacy context record version', ValueError, partial(ContextResult.from_json, json.dumps(legacy_record))),
     ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
+    ('Premise record rejects condition references', ValueError, partial(replace, positive, related=condition.related)),
+    ('Condition record rejects premise matches', ValueError, partial(replace, condition, entries=positive.entries[:1])),
   ])
   for label, expected, thunk in checks:
     try:

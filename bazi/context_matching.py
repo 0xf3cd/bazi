@@ -94,7 +94,7 @@ _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   _DING: _Criterion('日主为丁火；身弱、克太多留在条目文字中，程序不判别。', (
     'legacy.tiangan.ding.weak_state',
   ), 'context', 'condition'),
-  _GENG: _Criterion('日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别，所选流年不视为条文中的行运。', (
+  _GENG: _Criterion('日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。', (
     'legacy.tiangan.geng.regulated_transit',
   ), 'context', 'condition'),
   _PIANYIN: _Criterion('选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。', (
@@ -117,7 +117,7 @@ _DAY_MASTER_CRITERIA: Final[frozendict[str, tuple[str, Tiangan]]] = frozendict({
   _GENG: ('day_master_geng', Tiangan.庚),
 })
 
-'''十神出现判据：观察键与所需十神，各至少出现一次；出现按 `ContextProfile` 的明藏干口径，不计力量。'''
+'''十神出现判据：观察键与所需十神，各至少出现一次；出现取自本次观察的明藏干（口径见 `evaluate_context`），不计力量。'''
 _CLASS_CRITERIA: Final[frozendict[str, frozendict[str, Shishen]]] = frozendict({
   _PIANYIN: frozendict({'pianyin_observed': Shishen.偏印}),
   _XIAOYIN: frozendict({'pianyin_observed': Shishen.偏印, 'shishen_observed': Shishen.食神}),
@@ -275,8 +275,8 @@ class RelationshipProfile:
 
 @dataclass(frozen=True)
 class RelatedEntry:
-  '''该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是结构已命中，
-  也不是完整前提已满足；不升级来源状态或输出资格。结构状态只在 `CriterionResult` 展示。'''
+  '''该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是事实已成立，
+  也不是完整前提已满足；不升级来源状态或输出资格。判别状态只在 `CriterionResult` 展示。'''
 
   claim_id:   str
   recognized: bool   # 条目绑定摘要与 `_BINDINGS` 一致；同 ID 被自定义条目顶替时为 False
@@ -330,11 +330,7 @@ class ChartOccurrence:
 
 @dataclass(frozen=True)
 class CriterionResult:
-  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。
-
-  Note:
-  - `observed_coexistence` 与 `female` 用于原作判据。
-  '''
+  '''完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。'''
 
   criterion_id:   str
   definition:     str
@@ -557,7 +553,7 @@ def _restore_relationship(value: object) -> RelationshipEvidence:
 
 
 def _transit_kind(value: object) -> TransitKind:
-  '''恢复岁运种类；这是 `StarAppearance` 的五值白名单，与官杀观察的 `('liunian',)` 是两份白名单。'''
+  '''恢复岁运种类；这是 `StarAppearance` 的五值白名单，与原局／流年观察的 `('liunian',)` 是两份白名单。'''
   _choice(value, tuple(kind.value for kind in TransitKind))
   return TransitKind(value)
 
@@ -711,8 +707,8 @@ class ContextResult:
 
     Note:
     - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
-    - profile 按键集分派：`{observation_scope, ganzhi_year}` 为官杀，`{scope, coordinate, kinds}`
-      为婚恋，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
+    - profile 按键集分派：`{observation_scope, ganzhi_year}` 为 `ContextProfile`，`{scope, coordinate, kinds}`
+      为 `RelationshipProfile`，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
     '''
     _typed(text, str)
     data = json.loads(text, object_pairs_hook=_pairs)
@@ -772,10 +768,11 @@ class ContextResult:
       return self._render_relationship()
 
     premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
+    verdict_label = '结构前提' if premise else '事实判别'
     lines = [
       f'判据：{criterion.criterion_id}；{criterion.definition}',
       f'范围：全部明藏干；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
-      f'结构前提：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
+      f'{verdict_label}：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
     ]
@@ -825,7 +822,7 @@ class ContextResult:
         f'范围：{profile.scope}；坐标={coordinate_text}；请求种类=[{requested_text}]；'
         f'取得种类=[{obtained_text}]；未取得种类=[{missing_text}]'
       ),
-      f'结构前提：{self.criterion.status}；{self.criterion.reason}；scope_complete={self.criterion.scope_complete}',
+      f'事实判别：{self.criterion.status}；{self.criterion.reason}；scope_complete={self.criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(self.criterion.observations), ensure_ascii=False),
       f'配偶星：目标干={evidence.star_target.tiangan}；地支={"、".join(str(dz) for dz in evidence.star_target.dizhi)}',
@@ -863,8 +860,8 @@ class ContextResult:
 
   def _render_related(self) -> list[str]:
     '''条件判据的判别说明与条件参考；条目文字中的条件一律标为未由程序判别。'''
-    lines = ['结构判别不表示原文完整条件已满足，也不表示现实事件成立。']
-    header = '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）'
+    lines = ['事实判别不表示原文完整条件已满足，也不表示现实事件成立。']
+    header = '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）'
     for related in self.related:
       if related.recognized:
         lines.append(f'{header}：{related.claim_id}')
@@ -904,14 +901,14 @@ def _query_transits(chart: BaziChart, coordinate: TransitCoordinate) -> TransitS
   return transit_chart.at_moment(coordinate.solar_moment)
 
 
-def _related_entries(
+def _eligible_claims(
   criterion_id: str,
   knowledge: KnowledgeBase,
   include_reference_only: bool,
   gender: BaziGender,
-) -> tuple[RelatedEntry, ...]:
-  '''条件判据的条件参考：按输出资格与性别门槛选取，并记录绑定是否与 `_BINDINGS` 一致。'''
-  related: list[RelatedEntry] = []
+) -> tuple[tuple[str, bool], ...]:
+  '''判据关联条目中通过输出资格与性别门槛的条目，及其绑定是否与 `_BINDINGS` 一致；两种条目角色共用。'''
+  eligible: list[tuple[str, bool]] = []
   for claim_id in _CRITERIA[criterion_id].claims:
     entry = knowledge.entries.get(claim_id)
     if entry is None or (not include_reference_only and entry.output != 'default'):
@@ -919,8 +916,8 @@ def _related_entries(
     required_gender = _RELATED_GENDERS.get(claim_id)
     if required_gender is not None and gender is not required_gender:
       continue
-    related.append(RelatedEntry(claim_id, _binding_digest(knowledge, entry) == _BINDINGS[claim_id]))
-  return tuple(related)
+    eligible.append((claim_id, _binding_digest(knowledge, entry) == _BINDINGS[claim_id]))
+  return tuple(eligible)
 
 
 def _select_transits(queried: TransitSet, requested: tuple[TransitKind, ...]) -> TransitSet | None:
@@ -1039,7 +1036,7 @@ def evaluate_context(
       ),
       (),
       evidence,
-      _related_entries(criterion_id, knowledge, include_reference_only, bazi.gender),
+      tuple(RelatedEntry(*claim) for claim in _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)),
       (),
       input_json,
       knowledge,
@@ -1104,17 +1101,15 @@ def evaluate_context(
       fact = 'premise_satisfied' if coexistence else 'required_classification_absent'
   reason = fact if unavailable is None else unavailable
 
-  matches = []
+  matches: list[EntryMatch] = []
   related: tuple[RelatedEntry, ...] = ()
+  eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
   if _CRITERIA[criterion_id].entry_role == 'premise':
-    for claim_id in _CRITERIA[criterion_id].claims:
-      entry = knowledge.entries.get(claim_id)
-      if entry is None or (not include_reference_only and entry.output != 'default'):
-        continue
-      entry_reason = reason if _binding_digest(knowledge, entry) == _BINDINGS[claim_id] else 'binding_unrecognized'
+    for claim_id, recognized in eligible:
+      entry_reason = reason if recognized else 'binding_unrecognized'
       matches.append(EntryMatch(claim_id, _STATUS_BY_REASON[entry_reason], entry_reason))
   else:
-    related = _related_entries(criterion_id, knowledge, include_reference_only, bazi.gender)
+    related = tuple(RelatedEntry(*claim) for claim in eligible)
 
   return ContextResult(
     profile,

@@ -194,8 +194,11 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
 @pytest.mark.parametrize('criterion_id,day,year,observations,reason', [
   (DING, 10, None, {'day_master_ding': True}, 'premise_satisfied'),
   (DING, 3, None, {'day_master_ding': False}, 'day_master_differs'),
+  (DING, 10, 2024, {'day_master_ding': True}, 'premise_satisfied'),
   (GENG, 3, None, {'day_master_geng': True}, 'premise_satisfied'),
   (GENG, 10, None, {'day_master_geng': False}, 'day_master_differs'),
+  # The 2024 流年 is recorded as evidence but adds no observation key: it is not read as the text's 行运.
+  (GENG, 3, 2024, {'day_master_geng': True}, 'premise_satisfied'),
   # Day 3 holds 偏印 only as the 戊 hidden in 申 (literal inventory above); counting visible stems alone flips these.
   (PIANYIN, 3, None, {'pianyin_observed': True}, 'premise_satisfied'),
   (PIANYIN, 5, None, {'pianyin_observed': False}, 'required_classification_absent'),
@@ -203,17 +206,45 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   (XIAOYIN, 3, None, {'pianyin_observed': True, 'shishen_observed': True}, 'premise_satisfied'),
   (XIAOYIN, 1, None, {'pianyin_observed': True, 'shishen_observed': False}, 'required_classification_absent'),
   (XIAOYIN, 13, None, {'pianyin_observed': False, 'shishen_observed': True}, 'required_classification_absent'),
+  # Day 2 (己) has 伤官 庚 at the hour but no 食神 辛, so the 食神 key cannot be satisfied by its neighbor.
+  (XIAOYIN, 2, None, {'pianyin_observed': True, 'shishen_observed': False}, 'required_classification_absent'),
+  # The 2024 流年 supplies the missing 偏印, so both keys hold only with the transit included.
+  (XIAOYIN, 13, 2024, {'pianyin_observed': True, 'shishen_observed': True}, 'premise_satisfied'),
 ])
+@pytest.mark.parametrize('gender', ['female', 'male'])
 def test_condition_criteria_judge_only_computable_facts(
-  criterion_id: str, day: int, year: int | None, observations: dict[str, bool], reason: str,
+  criterion_id: str, day: int, year: int | None, observations: dict[str, bool], reason: str, gender: str,
 ) -> None:
   profile = ContextProfile('natal') if year is None else ContextProfile('natal_and_liunian', year)
-  result = match(day, criterion_id=criterion_id, profile=profile)
+  result = match(day, gender, criterion_id=criterion_id, profile=profile)
   assert result.criterion.observations == observations
   assert result.criterion.reason == reason and result.criterion.scope_complete is True
   assert result.criterion.status == ('SATISFIED' if reason == 'premise_satisfied' else 'NOT_SATISFIED')
-  # The reference is attached whatever the fact verdict, and never as a premise match.
+  assert any(o.origin == 'transit' for o in result.occurrences) is (year is not None)
+  # The reference is attached whatever the fact verdict or gender, and never as a premise match.
   assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
+  data = json.loads(result.export_json())
+  assert data['entries'] == [] and data['related'] == [{'claim_id': CONDITION_CLAIMS[criterion_id], 'recognized': True}]
+  assert ContextResult.from_json(result.export_json()) == result
+
+
+@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
+def test_restore_rejects_the_removed_undefined_reason(criterion_id: str) -> None:
+  data = json.loads(match(3, criterion_id=criterion_id, profile=ContextProfile('natal_and_liunian')).export_json())
+  data['criterion']['reason'] = 'predicate_undefined'
+  with pytest.raises(ValueError, match='predicate_undefined'):
+    ContextResult.from_json(json.dumps(data, ensure_ascii=False))
+
+
+@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
+def test_condition_criteria_without_their_entry_still_judge_the_fact(criterion_id: str) -> None:
+  knowledge = KnowledgeBase.load()
+  claim_id = CONDITION_CLAIMS[criterion_id]
+  custom = KnowledgeBase.from_json(knowledge.export_json(tuple(e for e in knowledge.entries.values() if e.claim_id != claim_id)))
+  result = match(3, criterion_id=criterion_id, knowledge=custom)
+  assert result.criterion == match(3, criterion_id=criterion_id).criterion
+  assert result.related == () and result.entries == ()
+  assert '关联参考' not in result.render()
   assert ContextResult.from_json(result.export_json()) == result
 
 
@@ -237,12 +268,12 @@ def test_condition_references_render_full_text_with_unevaluated_conditions(crite
   entry = knowledge.entry(claim_id)
   result = match(3, criterion_id=criterion_id, knowledge=knowledge)
   rendered = result.render()
-  block = rendered.split(f'关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：{claim_id}\n', 1)[1]
+  block = rendered.split(f'关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：{claim_id}\n', 1)[1]
   assert block == knowledge.render(entry, premise_verdict='完整前提未由程序判别')
   for text in (entry.text, entry.premise, *entry.limits, *(limit for key in entry.contexts for limit in knowledge.contexts[key].limits)):
     assert text in block
   assert entry.legacy is not None and entry.legacy.field_premise in block
-  assert '结构判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
+  assert '事实判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
   assert '前提满足只表示' not in rendered and '原作参考前提：' not in rendered
   # Static lookup by the same context returns the same entry without a chart verdict.
   assert tuple(value.claim_id for value in knowledge.query(context_id=criterion_id, include_reference_only=True)) == (claim_id,)
@@ -749,7 +780,7 @@ from datetime import UTC as _UTC
 
 from bazi.bazi import BaziGender as _BaziGender
 from bazi.context_matching import (
-  RelationshipProfile, TransitCoordinate, _CRITERIA, _RELATED_GENDERS,
+  RelationshipProfile, TransitCoordinate, _CLASS_CRITERIA, _CRITERIA, _DAY_MASTER_CRITERIA, _RECORD_VERSION, _RELATED_GENDERS,
 )
 from bazi.defines import Dizhi as _Dizhi
 
@@ -789,6 +820,26 @@ def test_relationship_criterion_registry_and_gates() -> None:
   assert {key for key, value in _CRITERIA.items() if value.profile_kind == 'context'} == {GUANSHA, FEMALE, *CONDITION_CLAIMS}
   assert {key for key, value in _CRITERIA.items() if value.entry_role == 'premise'} == {GUANSHA, FEMALE}
   assert all(claim_id in _BINDINGS for criterion in _CRITERIA.values() for claim_id in criterion.claims)
+  # evaluate_context treats any context criterion outside both fact tables as 官杀: each must be in exactly one place.
+  context_conditions = {key for key, value in _CRITERIA.items() if value.profile_kind == 'context' and value.entry_role == 'condition'}
+  assert not set(_DAY_MASTER_CRITERIA) & set(_CLASS_CRITERIA)
+  assert set(_DAY_MASTER_CRITERIA) | set(_CLASS_CRITERIA) == context_conditions
+
+
+def test_criterion_definitions_are_pinned_to_the_record_version() -> None:
+  # Records store each definition and restoring checks it against _CRITERIA, so editing one breaks every
+  # saved record of that criterion: change a definition only together with record_version.
+  assert _RECORD_VERSION == 4
+  assert {key: value.definition for key, value in _CRITERIA.items()} == {
+    GUANSHA: '选定范围内正官与七杀各至少出现一次。',
+    FEMALE: '选定范围内正官与七杀各至少出现一次，且输入为女命。',
+    DING: '日主为丁火；身弱、克太多留在条目文字中，程序不判别。',
+    GENG: '日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。',
+    PIANYIN: '选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。',
+    XIAOYIN: '选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。',
+    PALACE: '选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。',
+    TOUGAN: '选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。',
+  }
 
 
 @pytest.mark.parametrize('claim_id', [RELATED_PALACE, RELATED_TOUGAN])
@@ -801,7 +852,7 @@ def test_relationship_binding_fingerprints(claim_id: str) -> None:
   (PALACE, ContextProfile('natal'), ValueError),
   (PALACE, ContextProfile('natal_and_liunian', 2024), ValueError),
   (GUANSHA, RelationshipProfile('natal'), ValueError),
-  ('tiangan.ding_weak_and_overcontrolled', RelationshipProfile('natal'), ValueError),
+  *((criterion_id, RelationshipProfile('natal'), ValueError) for criterion_id in CONDITION_CLAIMS),
 ])
 def test_criterion_profile_kind_must_match(criterion_id: str, profile: ContextProfile | RelationshipProfile, error: type[Exception]) -> None:
   with pytest.raises(error, match='profile'):
@@ -992,12 +1043,12 @@ def test_relationship_reference_matrix() -> None:
     assert [entry.claim_id for entry in result.related] == [RELATED_PALACE]
     assert all(entry.recognized for entry in result.related)
     rendered = result.render()
-    assert '关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：' + RELATED_PALACE in rendered
+    assert '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE in rendered
     assert knowledge_text(RELATED_PALACE) in rendered
     # NOT_SATISFIED/UNKNOWN use the same reference wording as SATISFIED; no 「已核结构命中」 appears.
     assert '已核结构命中' not in rendered
-    assert '结构前提：' + result.criterion.status in rendered
-    assert '结构判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
+    assert '事实判别：' + result.criterion.status in rendered
+    assert '事实判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
     assert '前提满足只表示本范围内的原作使用条件满足' not in rendered
 
   # True × female: the two gated entries are never related (same-ID replacement included); structure is still evaluated; static queries stay unrestricted.
@@ -1044,7 +1095,7 @@ def test_relationship_female_gate_precedes_binding_and_replacement(dimension: st
   assert [entry.claim_id for entry in male.related] == [RELATED_PALACE]
   assert male.related[0] == RelatedEntry(RELATED_PALACE, False)
   rendered = male.render()
-  assert ('关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：' + RELATED_PALACE + '；绑定未识别') in rendered
+  assert ('关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE + '；绑定未识别') in rendered
   assert '绑定未识别' in rendered
   if dimension == 'text':
     assert '（编辑口径）' not in rendered
