@@ -6,6 +6,8 @@
 运行时只用标准库及随库数据，无需联网或生成数据。
 本文对应当前源码；已发布版本请参阅[对应版本的 README](https://github.com/0xf3cd/bazi/blob/v1.0.0/README.md)。
 
+本库由个人维护，接受以 issue 提交的勘误与出处补充，暂不接受 PR。
+
 ## 安装与快速排盘
 
 下文示例使用当前源码的接口。在仓库根目录安装：
@@ -210,6 +212,18 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 
 `KnowledgeBase` 查询知识条目、展示原文与来源，也可导出 JSON 后重新加载。
 默认只查 `output='default'` 条目；`include_reference_only=True` 同时查阅仅供参考的条目。
+
+随库知识以旧语料为主，多数条目仅供参考、来源未核实。默认查询只返回有古籍见证、
+无条件适用的定义条目。条目按输出资格（行）与来源状态（列）计数：
+
+| `output` | `witnessed` | `unverified` | `editorial` | `repository_attributed` | 合计 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `default` | 19 | 0 | 0 | 0 | 19 |
+| `reference_only` | 12 | 245 | 22 | 4 | 283 |
+| 合计 | 31 | 245 | 22 | 4 | 302 |
+
+其中 262 条前提待梳理（`applicability='unresolved'`）。另有对象 31 个、情境 10 个、来源 13 个。
+来源状态依次为古籍见证、未核实、作者编写、本仓规则署名。
 
 ```python
 from bazi.defines import Tiangan
