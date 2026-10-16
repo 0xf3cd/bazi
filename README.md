@@ -29,7 +29,8 @@ config = BaziConfig.from_values(backend='celestial', precision='day')
 chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', config))
 print(chart.json['pillars'])
 print(chart.json['tiangan_traits'], chart.json['dizhi_traits'])
-print(chart.json['tiangan_shishen'], chart.json['dizhi_shishen'], chart.json['hidden_tiangan'])
+print(chart.json['tiangan_shishen'], chart.json['dizhi_shishen'])
+print(chart.json['hidden_tiangan'])
 print(chart.nayin, chart.shier_zhangsheng)
 ```
 

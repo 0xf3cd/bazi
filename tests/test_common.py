@@ -8,6 +8,8 @@ import pytest
 from bazi.defines import Shishen, Tiangan
 from bazi.common import check_declared_types, frozendict
 from bazi.data_types import GanzhiData, BaziData, HiddenTianganDict
+from bazi.utils.dizhi_utils import DizhiRelationDiscovery, GanzhiRelationDiscovery
+from bazi.utils.tiangan_utils import TianganRelationDiscovery
 
 
 def test_frozendict() -> None:
@@ -60,6 +62,10 @@ def test_frozendict_repr() -> None:
   assert repr(htd) == "HiddenTianganDict({<Tiangan.DING: '丁'>: 70, <Tiangan.JI: '己'>: 30})"
   assert str(htd) == '丁:70,己:30'
   assert repr(BaziData(htd, htd, htd, htd)).count(repr(htd)) == 4
+  # Relation combos are frozensets, printed in hash-seed order; empty results keep a stable literal.
+  assert repr(TianganRelationDiscovery({})) == 'TianganRelationDiscovery({})'
+  assert repr(DizhiRelationDiscovery({})) == 'DizhiRelationDiscovery({})'
+  assert repr(GanzhiRelationDiscovery({})) == 'GanzhiRelationDiscovery({})'
 
 
 def test_check_declared_types_names_plain_and_union() -> None:

@@ -17,7 +17,8 @@ workflow 须先存在于默认分支，才能手动触发。
 
 ## 演练
 
-1. 核对 pyproject.toml 静态版本与 RELEASE_NOTES.md，将拟发布内容合入 main 后再触发，不提前建 tag。
+1. 核对 pyproject.toml 静态版本与 RELEASE_NOTES.md；发布说明顶部一节须为 `## bazi <version>`，
+   否则构建即失败。将拟发布内容合入 main 后再触发，不提前建 tag。
 2. 在 main 触发 `Prepare or Publish Release`，取默认 `mode=rehearsal`。
    对触发 SHA 执行完整源码与工件验证，不绑定环境，也不取得写权限或 OIDC 权限。
 3. 检查该运行的 `tested-release` 工件：dist/ 下恰有一份 wheel 与 sdist，另含发布说明、
@@ -33,8 +34,8 @@ workflow 须先存在于默认分支，才能手动触发。
 2. 核对本次已验证 bundle 后，批准 PyPI 受保护环境。仅有 OIDC 权限的任务下载本次运行产生的
    确切不可变 artifact ID，核对校验和及身份，拒绝已存在的版本、tag 或 Release。
 3. PyPI 成功后，批准 GitHub Release 任务。此任务只取得 contents 写权限，先核 PyPI 哈希，
-   在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，上传同一字节及
-   声明文件，核 asset 摘要后发布草稿。
+   在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，
+   上传同一字节及声明文件，核 asset 摘要后发布草稿。
    两个特权任务均不检出、构建、安装或导入仓库代码。
 4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
    在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
@@ -50,5 +51,5 @@ workflow 须先存在于默认分支，才能手动触发。
 
 ## 升级 action
 
-`release.yml` 的每条 `uses:` 钉 40 位 commit SHA，同行注释写版本号；策略测试只核这个形状。
-dependabot 提出升级时，审阅者按其正文的 compare 链接核对 tag 与 SHA 一致，再合并。
+`.github/workflows/` 下每条 `uses:` 钉 40 位 commit SHA，同行注释写版本号；策略测试只核这个形状。
+Dependabot 提出升级时，审阅者按其正文的 compare 链接核对 tag 与 SHA 一致，再合并。
