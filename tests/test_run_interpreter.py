@@ -110,15 +110,28 @@ def test_matching_custom_source_unknown_binding_and_alias_guards(tmp_path: Path)
   assert result.returncode == 2 and 'overwrite' in result.stderr
 
 
-def test_matching_export_io_error_and_undefined_text(tmp_path: Path) -> None:
+def test_matching_export_io_error(tmp_path: Path) -> None:
   output = tmp_path / 'directory'
   output.mkdir()
   result = _run_cli(tmp_path, *MATCH_ARGS, '--export-context-json', str(output))
   assert result.returncode == 2 and 'error:' in result.stderr
-  result = _run_cli(tmp_path, *MATCH_ARGS, '--match-context', 'tiangan.geng_regulated_transit', '--include-reference-only')
-  assert result.returncode == 0 and 'UNKNOWN' in result.stdout
-  for text in ('有制有化尚未定义，不据基础生克关系认定成立。', '后天有教养是盘外前提，不能从命盘查表还原。'):
-    assert text in result.stdout
+
+
+@pytest.mark.parametrize('criterion_id,status', [
+  ('tiangan.ding_weak_and_overcontrolled', 'NOT_SATISFIED'),
+  ('tiangan.geng_regulated_transit', 'SATISFIED'),
+  ('shishen.pianyin_favorable_or_balanced', 'SATISFIED'),
+  ('shishen.xiaoyin_duoshi', 'SATISFIED'),
+])
+def test_matching_cli_condition_criteria_agree_with_library(tmp_path: Path, criterion_id: str, status: str) -> None:
+  output = tmp_path / 'match.json'
+  result = _run_cli(tmp_path, *MATCH_ARGS, '--match-context', criterion_id, '--include-reference-only', '--export-context-json', str(output))
+  assert result.returncode == 0, result.stderr
+  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=criterion_id, profile=ContextProfile('natal'), include_reference_only=True)
+  assert expected.criterion.status == status
+  assert result.stdout == expected.render() + '\n' + f'已导出前提判别记录：{output}\n'
+  assert output.read_text(encoding='utf-8') == expected.export_json()
+  assert f'结构前提：{status}' in result.stdout and '完整前提未由程序判别' in result.stdout
 
 
 @pytest.mark.parametrize('include_reference_only', [False, True])

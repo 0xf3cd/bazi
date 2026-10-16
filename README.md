@@ -266,9 +266,21 @@ assert restored_record == result
 示例显式传入 `knowledge`，可在多次求值间复用。省略它时，每次求值重新加载默认来源。
 文件更新只影响后续加载，已有知识库和结果保留原内容；要更新共享内容，重新加载并传入新对象。
 
-`SATISFIED` / `NOT_SATISFIED` 表示完整前提的判别；所需流年缺失或不可查询、判据未定义时返回 `UNKNOWN`。
+官杀判据的 `SATISFIED` / `NOT_SATISFIED` 是对条目完整前提的判别；所需流年缺失或不可查询时返回 `UNKNOWN`。
 它不计算旺衰、喜忌、格局或有效制化。观察范围和自定义知识的匹配条件见
 [`context_matching.py`](https://github.com/0xf3cd/bazi/blob/main/bazi/context_matching.py)。
+
+另外四个判据只判能算出的事实，条目里的其余条件留在文字中，程序不判：
+
+| 判据 | 程序判的事实 | 留在文字中的条件 |
+| --- | --- | --- |
+| `tiangan.ding_weak_and_overcontrolled` | 日主为丁火 | 身弱、克太多 |
+| `tiangan.geng_regulated_transit` | 日主为庚金 | 行运有制有化、后天有教养；所选流年不视为行运 |
+| `shishen.pianyin_favorable_or_balanced` | 偏印至少出现一次 | 喜用、不过旺、不受刑克冲害 |
+| `shishen.xiaoyin_duoshi` | 偏印与食神各至少出现一次 | 夺食是否成立；共现不等于夺食 |
+
+「出现」与官杀判据同一口径，藏干也计入。关联条目放在 `related`，作为条件参考展示，
+标明「完整前提未由程序判别」；`entries` 为空。事实不成立或范围不完整时，条件参考照常返回。
 
 两条婚恋结构判据走 `RelationshipProfile`：显式选择原局，或原局加一组按坐标查询、
 显式选定种类的岁运。宫刑冲判据检查日柱地支作为具体参与者卷入刑或冲；透干判据检查
@@ -300,12 +312,12 @@ print(result.render())
 
 缺查询坐标、入口不可查询或所求种类部分缺失时返回 `UNKNOWN`，已取得岁运的证据照常保存。
 `--match-context` 另有 `--transit-entry`／`--gz-month`／`--solar-date`／`--solar-moment`／
-`--transit-kinds`；`--ganzhi-year` 同时是官杀流年坐标与 `at_year`／`at_month` 的年份坐标。
+`--transit-kinds`；`--ganzhi-year` 同时是婚恋以外判据的流年坐标与 `at_year`／`at_month` 的年份坐标。
 婚恋判据关联的条文只是条件参考，不表示结构已命中或完整前提已满足；男命语境条文对女命
 不自动关联，静态知识查询不受限。
 
-导出采用 `record_version=3`，保存查询坐标、请求与取得的岁运种类、结构证据与条件参考条目；
-版本 1／2 记录须从原出生输入及配置重新求值。
+导出采用 `record_version=4`，保存查询坐标、请求与取得的岁运种类、结构证据与条件参考条目；
+版本 1–3 记录须从原出生输入及配置重新求值。
 `ContextResult.from_json` 只恢复记录，不重算或认证已存判别；它与命盘 JSON 的重算恢复不同。
 
 ## 源码脚本

@@ -12,7 +12,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, _BINDINGS, _binding_digest, evaluate_context,
+  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, RelatedEntry, _BINDINGS, _binding_digest, evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen, DizhiRelation
 from bazi.knowledge import (
@@ -27,6 +27,12 @@ GUANSHA = 'editorial.guansha_coexistence.v1'
 FEMALE = 'editorial.guansha_coexistence_female.v1'
 LEGAL = ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble')
 RELATIONSHIP = ('editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity')
+DING, GENG = 'tiangan.ding_weak_and_overcontrolled', 'tiangan.geng_regulated_transit'
+PIANYIN, XIAOYIN = 'shishen.pianyin_favorable_or_balanced', 'shishen.xiaoyin_duoshi'
+CONDITION_CLAIMS = {
+  DING: 'legacy.tiangan.ding.weak_state', GENG: 'legacy.tiangan.geng.regulated_transit',
+  PIANYIN: 'legacy.shishen.SH-199', XIAOYIN: 'legacy.shishen.SH-066',
+}
 
 
 def chart(day: int = 3, gender: str = 'female', hour: int = 12) -> BaziChart:
@@ -38,7 +44,7 @@ def match(day: int = 3, gender: str = 'female', **kwargs: Any) -> ContextResult:
   return evaluate_context(chart(day, gender), **options)
 
 
-@pytest.mark.parametrize('claim_id', LEGAL + RELATIONSHIP)
+@pytest.mark.parametrize('claim_id', LEGAL + RELATIONSHIP + tuple(CONDITION_CLAIMS.values()))
 def test_builtin_editorial_binding_fingerprint(claim_id: str) -> None:
   knowledge = KnowledgeBase.load()
   computed = _binding_digest(knowledge, knowledge.entry(claim_id))
@@ -135,7 +141,7 @@ def test_liunian_coordinate_kind_and_repeated_cycle_identity() -> None:
 def test_export_preserves_literal_evidence_year_kind_and_input() -> None:
   result = match(1, profile=ContextProfile('natal_and_liunian', 2024))
   data = json.loads(result.export_json())
-  assert data['record_version'] == 3
+  assert data['record_version'] == 4
   assert data['profile'] == {'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
   assert data['input'] == json.loads(result.input_json)
   assert len(data['occurrences']) == 13
@@ -175,8 +181,6 @@ def test_required_kind_unavailable_is_unknown_and_errors_are_not_swallowed(monke
   (FEMALE, 'male', None, 'missing_transit_coordinate'),
   (FEMALE, 'female', 1998, 'transit_unavailable'),
   (FEMALE, 'male', 1998, 'transit_unavailable'),
-  ('tiangan.geng_regulated_transit', 'female', None, 'predicate_undefined'),
-  ('tiangan.geng_regulated_transit', 'male', 1998, 'predicate_undefined'),
 ])
 def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year: int | None, reason: str) -> None:
   result = match(gender=gender, criterion_id=criterion_id, profile=ContextProfile('natal_and_liunian', year))
@@ -187,28 +191,89 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   assert ContextResult.from_json(result.export_json()) == result
 
 
-@pytest.mark.parametrize('criterion_id,claim_id', [
-  ('tiangan.ding_weak_and_overcontrolled', 'legacy.tiangan.ding.weak_state'),
-  ('tiangan.geng_regulated_transit', 'legacy.tiangan.geng.regulated_transit'),
-  ('shishen.pianyin_favorable_or_balanced', 'legacy.shishen.SH-199'),
-  ('shishen.xiaoyin_duoshi', 'legacy.shishen.SH-066'),
+@pytest.mark.parametrize('criterion_id,day,year,observations,reason', [
+  (DING, 10, None, {'day_master_ding': True}, 'premise_satisfied'),
+  (DING, 3, None, {'day_master_ding': False}, 'day_master_differs'),
+  (GENG, 3, None, {'day_master_geng': True}, 'premise_satisfied'),
+  (GENG, 10, None, {'day_master_geng': False}, 'day_master_differs'),
+  # Day 3 holds 偏印 only as the 戊 hidden in 申 (literal inventory above); counting visible stems alone flips these.
+  (PIANYIN, 3, None, {'pianyin_observed': True}, 'premise_satisfied'),
+  (PIANYIN, 5, None, {'pianyin_observed': False}, 'required_classification_absent'),
+  (PIANYIN, 5, 2020, {'pianyin_observed': True}, 'premise_satisfied'),
+  (XIAOYIN, 3, None, {'pianyin_observed': True, 'shishen_observed': True}, 'premise_satisfied'),
+  (XIAOYIN, 1, None, {'pianyin_observed': True, 'shishen_observed': False}, 'required_classification_absent'),
+  (XIAOYIN, 13, None, {'pianyin_observed': False, 'shishen_observed': True}, 'required_classification_absent'),
 ])
-def test_registered_undefined_controls_preserve_every_premise_and_limit(criterion_id: str, claim_id: str) -> None:
+def test_condition_criteria_judge_only_computable_facts(
+  criterion_id: str, day: int, year: int | None, observations: dict[str, bool], reason: str,
+) -> None:
+  profile = ContextProfile('natal') if year is None else ContextProfile('natal_and_liunian', year)
+  result = match(day, criterion_id=criterion_id, profile=profile)
+  assert result.criterion.observations == observations
+  assert result.criterion.reason == reason and result.criterion.scope_complete is True
+  assert result.criterion.status == ('SATISFIED' if reason == 'premise_satisfied' else 'NOT_SATISFIED')
+  # The reference is attached whatever the fact verdict, and never as a premise match.
+  assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
+  assert ContextResult.from_json(result.export_json()) == result
+
+
+@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
+@pytest.mark.parametrize('year,reason', [(None, 'missing_transit_coordinate'), (1998, 'transit_unavailable')])
+def test_condition_criteria_keep_scope_reasons_apart_from_facts(criterion_id: str, year: int | None, reason: str) -> None:
+  # Day 3 makes the 丁 fact false and the other three true; incomplete scope overrides both.
+  result = match(3, criterion_id=criterion_id, profile=ContextProfile('natal_and_liunian', year))
+  assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == reason
+  assert result.criterion.scope_complete is False
+  assert result.criterion.observations == match(3, criterion_id=criterion_id).criterion.observations
+  assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
+  assert all(o.origin == 'natal' for o in result.occurrences)
+  assert ContextResult.from_json(result.export_json()) == result
+
+
+@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
+def test_condition_references_render_full_text_with_unevaluated_conditions(criterion_id: str) -> None:
   knowledge = KnowledgeBase.load()
-  result = match(criterion_id=criterion_id)
-  assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
-  assert result.criterion.observations == {'observed_coexistence': True, 'female': True}
-  assert result.entries == (EntryMatch(claim_id, 'UNKNOWN', 'predicate_undefined'),)
-  restored = result.knowledge
-  assert restored.entries == knowledge.entries and restored.contexts == knowledge.contexts
-  entry = restored.entry(claim_id)
+  claim_id = CONDITION_CLAIMS[criterion_id]
+  entry = knowledge.entry(claim_id)
+  result = match(3, criterion_id=criterion_id, knowledge=knowledge)
   rendered = result.render()
-  assert entry.text in rendered and entry.premise in rendered
-  for text in entry.limits + tuple(limit for key in entry.contexts for limit in restored.contexts[key].limits):
-    assert text in rendered
-  if entry.legacy is not None:
-    assert entry.legacy.field_premise in rendered
-  assert 'UNKNOWN' in rendered
+  block = rendered.split(f'关联参考（该判据的条件参考，不表示结构已命中或完整前提已满足）：{claim_id}\n', 1)[1]
+  assert block == knowledge.render(entry, premise_verdict='完整前提未由程序判别')
+  for text in (entry.text, entry.premise, *entry.limits, *(limit for key in entry.contexts for limit in knowledge.contexts[key].limits)):
+    assert text in block
+  assert entry.legacy is not None and entry.legacy.field_premise in block
+  assert '结构判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
+  assert '前提满足只表示' not in rendered and '原作参考前提：' not in rendered
+  # Static lookup by the same context returns the same entry without a chart verdict.
+  assert tuple(value.claim_id for value in knowledge.query(context_id=criterion_id, include_reference_only=True)) == (claim_id,)
+  assert '前提判别：' not in knowledge.render(entry)
+  # Reference output stays opt-in: the default call judges the same fact and attaches nothing.
+  default = evaluate_context(chart(3), criterion_id=criterion_id, profile=ContextProfile('natal'), knowledge=knowledge)
+  assert default.criterion == result.criterion and default.related == ()
+
+
+@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
+def test_condition_reference_binding_is_recorded_without_changing_the_fact(criterion_id: str) -> None:
+  claim_id = CONDITION_CLAIMS[criterion_id]
+  data = json.loads(KnowledgeBase.load().export_json())
+  next(e for e in data['entries'] if e['claim_id'] == claim_id)['text'] = 'CUSTOM-REPLACEMENT-TEXT'
+  knowledge = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  result = match(3, criterion_id=criterion_id, knowledge=knowledge)
+  assert result.related == (RelatedEntry(claim_id, False),)
+  assert result.criterion == match(3, criterion_id=criterion_id).criterion
+  rendered = result.render()
+  assert f'：{claim_id}；绑定未识别' in rendered and 'CUSTOM-REPLACEMENT-TEXT' not in rendered
+  restored = ContextResult.from_json(result.export_json())
+  assert restored == result and restored.render() == rendered
+
+
+def test_entry_role_separates_premise_matches_from_condition_references() -> None:
+  premise = match(3)
+  condition = match(3, criterion_id=PIANYIN)
+  with pytest.raises(ValueError, match='Premise criterion cannot carry condition references'):
+    replace(premise, related=condition.related)
+  with pytest.raises(ValueError, match='Condition criterion cannot carry premise matches'):
+    replace(condition, entries=premise.entries[:1])
 
 
 def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -249,14 +314,12 @@ def test_reference_eligibility_source_modal_and_full_knowledge_roundtrip(monkeyp
   assert restored == result and restored.render() == rendered and restored.export_json() == result.export_json()
 
 
-@pytest.mark.parametrize('day,criterion_id,status', [
-  (3, GUANSHA, 'SATISFIED'), (1, GUANSHA, 'NOT_SATISFIED'),
-  (3, 'tiangan.geng_regulated_transit', 'UNKNOWN'),
-])
-def test_render_premise_annotations_are_evaluation_only(day: int, criterion_id: str, status: str) -> None:
-  result = match(day, criterion_id=criterion_id)
+@pytest.mark.parametrize('day,status', [(3, 'SATISFIED'), (1, 'NOT_SATISFIED')])
+def test_render_premise_annotations_are_evaluation_only(day: int, status: str) -> None:
+  result = match(day)
   knowledge = result.knowledge
   text = result.render()
+  assert len(result.entries) == 2
   for entry_match in result.entries:
     block = text.split(f'原作参考前提：{entry_match.claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
     entry = knowledge.entry(entry_match.claim_id)
@@ -265,30 +328,22 @@ def test_render_premise_annotations_are_evaluation_only(day: int, criterion_id: 
     assert '输出资格：' not in knowledge.render(entry)
 
 
-@pytest.mark.parametrize('claim_id,criterion_id', [
-  (LEGAL[0], GUANSHA),
-  ('legacy.tiangan.ding.weak_state', 'tiangan.ding_weak_and_overcontrolled'),
-])
 @pytest.mark.parametrize('separator', ['\n', '\r\n', '\r', '\u2028'])
-def test_multiline_custom_text_keeps_one_copy_and_source_cautions(claim_id: str, criterion_id: str, separator: str) -> None:
+def test_multiline_custom_text_keeps_one_copy_and_source_cautions(separator: str) -> None:
+  claim_id = LEGAL[0]
   data = json.loads(KnowledgeBase.load().export_json())
   entry = next(e for e in data['entries'] if e['claim_id'] == claim_id)
   text = 'FIRST-TEXT-LINE' + separator + 'SECOND-TEXT-LINE'
   entry['text'] = text
   knowledge = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
-  result = match(criterion_id=criterion_id, knowledge=knowledge)
+  result = match(knowledge=knowledge)
   rendered = result.render()
   assert rendered.count(text) == 1 and rendered.count('SECOND-TEXT-LINE') == 1
   assert '命盘适用性未判断' not in rendered
   assert knowledge.render(knowledge.entry(claim_id)).count(text) == 1
   assert '命盘适用性未判断' in knowledge.render(knowledge.entry(claim_id))
-  if criterion_id == GUANSHA:
-    assert result.entries[0].reason == 'binding_unrecognized'
-    assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
-  else:
-    assert result.entries[0].reason == 'predicate_undefined'
-    assert '来源尚未核实' in rendered and '前提待梳理' in rendered
-    assert '来源状态：unverified' in rendered
+  assert result.entries[0].reason == 'binding_unrecognized'
+  assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
   restored = ContextResult.from_json(result.export_json())
   assert restored == result and restored.render() == rendered
 
@@ -366,14 +421,6 @@ def test_configuration_wire_roster_and_chart_input_agree() -> None:
   assert json.loads(match().input_json)['config'] == wire
 
 
-def test_undefined_criterion_observations_use_the_editorial_roster() -> None:
-  result = match(10, criterion_id='tiangan.ding_weak_and_overcontrolled')
-  assert chart(10).bazi.day_master is Tiangan.丁
-  assert set(result.criterion.observations) == {'observed_coexistence', 'female'}
-  assert result.criterion.observations['female'] is True
-  assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == 'predicate_undefined'
-
-
 class Year(int):
   pass
 
@@ -423,24 +470,24 @@ def test_public_record_value_boundaries() -> None:
     with pytest.raises(TypeError):
       replace(result.criterion, **change)
   with pytest.raises(TypeError):
-    EntryMatch(1, 'UNKNOWN', 'predicate_undefined') # type: ignore[arg-type]
+    EntryMatch(1, 'UNKNOWN', 'binding_unrecognized') # type: ignore[arg-type]
   with pytest.raises(ValueError):
-    EntryMatch('', 'UNKNOWN', 'predicate_undefined')
+    EntryMatch('', 'UNKNOWN', 'binding_unrecognized')
   for change in ({'profile': 'natal'}, {'criterion': {}}, {'occurrences': []}, {'entries': []}, {'input_json': None}, {'knowledge': None}, {'occurrences': (None,)}, {'entries': (None,)}):
     with pytest.raises(TypeError):
       replace(result, **change)
   with pytest.raises(ValueError):
-    replace(result, entries=(EntryMatch('unknown', 'UNKNOWN', 'predicate_undefined'),))
+    replace(result, entries=(EntryMatch('unknown', 'UNKNOWN', 'binding_unrecognized'),))
 
 
 def test_each_reason_has_one_admissible_status() -> None:
   expected: dict[MatchReason, MatchStatus] = {
     'premise_satisfied': 'SATISFIED',
     'required_classification_absent': 'NOT_SATISFIED',
+    'day_master_differs': 'NOT_SATISFIED',
     'female_gate_false': 'NOT_SATISFIED',
     'missing_transit_coordinate': 'UNKNOWN',
     'transit_unavailable': 'UNKNOWN',
-    'predicate_undefined': 'UNKNOWN',
     'binding_unrecognized': 'UNKNOWN',
   }
   assert set(expected) == set(get_args(MatchReason))
@@ -469,8 +516,8 @@ def test_public_verdict_status_types_raise_type_error(value: Any) -> None:
   ('record_version', True, ValueError), ('record_version', False, ValueError),
   ('record_version', -1, ValueError), ('record_version', 0, ValueError),
   ('record_version', 1, ValueError), ('record_version', 2, ValueError),
-  ('record_version', 4, ValueError),
-  ('record_version', 3.0, ValueError), ('record_version', '3', ValueError),
+  ('record_version', 3, ValueError), ('record_version', 5, ValueError),
+  ('record_version', 4.0, ValueError), ('record_version', '4', ValueError),
   ('record_version', None, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
   ('entries', {}, TypeError), ('input', {}, ValueError), ('knowledge', {}, ValueError),
@@ -521,7 +568,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
 def test_restore_rejects_duplicate_keys_in_an_otherwise_complete_record() -> None:
   text = match().export_json()
   for needle, duplicate in (
-    ('"record_version": 3', '"record_version": 3'),
+    ('"record_version": 4', '"record_version": 4'),
     ('"gender": "female"', '"gender": "male"'),
     ('"scope_complete": true', '"scope_complete": false'),
   ):
@@ -702,7 +749,7 @@ from datetime import UTC as _UTC
 
 from bazi.bazi import BaziGender as _BaziGender
 from bazi.context_matching import (
-  RelatedEntry, RelationshipProfile, TransitCoordinate, _CRITERIA, _RELATED_GENDERS,
+  RelationshipProfile, TransitCoordinate, _CRITERIA, _RELATED_GENDERS,
 )
 from bazi.defines import Dizhi as _Dizhi
 
@@ -738,11 +785,10 @@ def test_relationship_criterion_registry_and_gates() -> None:
   assert set(_RELATED_GENDERS) == {RELATED_PALACE, RELATED_TOUGAN}
   assert set(_RELATED_GENDERS) <= relationship_claims
   assert all(gender is _BaziGender.MALE for gender in _RELATED_GENDERS.values())
-  # The 官杀 criteria and the four undefined criteria are labeled 'context'; behavior and fingerprints stay unchanged.
-  assert {key for key, value in _CRITERIA.items() if value.profile_kind == 'context'} == {
-    GUANSHA, FEMALE, 'tiangan.ding_weak_and_overcontrolled', 'tiangan.geng_regulated_transit',
-    'shishen.pianyin_favorable_or_balanced', 'shishen.xiaoyin_duoshi',
-  }
+  # Two independent axes: profile kind picks the scope and evidence shape, entry role picks how claims attach.
+  assert {key for key, value in _CRITERIA.items() if value.profile_kind == 'context'} == {GUANSHA, FEMALE, *CONDITION_CLAIMS}
+  assert {key for key, value in _CRITERIA.items() if value.entry_role == 'premise'} == {GUANSHA, FEMALE}
+  assert all(claim_id in _BINDINGS for criterion in _CRITERIA.values() for claim_id in criterion.claims)
 
 
 @pytest.mark.parametrize('claim_id', [RELATED_PALACE, RELATED_TOUGAN])
@@ -1015,7 +1061,7 @@ def test_relationship_record_roundtrip_and_rejections() -> None:
     'natal_and_transits', TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰), (TransitKind.DAYUN, TransitKind.LIUNIAN),
   ), include_reference_only=True)
   data = json.loads(result.export_json())
-  assert data['record_version'] == 3
+  assert data['record_version'] == 4
   assert data['profile'] == {
     'scope': 'natal_and_transits',
     'coordinate': {'entry': 'at_month', 'gz_year': 2024, 'gz_month': '辰', 'solar_date': None, 'solar_moment': None},
@@ -1088,7 +1134,7 @@ def test_relationship_record_roundtrip_and_rejections() -> None:
 
 def test_relationship_record_version_before_keys_and_old_school() -> None:
   # Real v2 shape: a 官杀 record with the old key set (no relationship/related); the version check runs
-  # before the key-set check, so the rejection is about the version, not key differences. Not a v3 with a hand-edited version number.
+  # before the key-set check, so the rejection is about the version, not key differences. Not a current record with a hand-edited version number.
   context_record = json.loads(match().export_json())
   v2_text = json.dumps({
     key: value for key, value in context_record.items() if key not in ('relationship', 'related')
@@ -1096,7 +1142,7 @@ def test_relationship_record_version_before_keys_and_old_school() -> None:
   with pytest.raises(ValueError, match='Unsupported record version'):
     ContextResult.from_json(v2_text)
 
-  # v3 record version plus an old school (missing peiou_xing_def): a different trigger path from the case above.
+  # Current record version plus an old school (missing peiou_xing_def): a different trigger path from the case above.
   legacy_school = json.loads(match().export_json())
   config_block: dict[str, Any] = legacy_school['input']['config']
   config_block['school'] = {
@@ -1124,8 +1170,10 @@ def test_relationship_record_structural_constraints() -> None:
   with pytest.raises(ValueError):
     replace(result, occurrences=result_with_occurrences())
   guansha = match()
-  with pytest.raises(ValueError):
-    replace(guansha, relationship=result.relationship, related=result.related)
+  with pytest.raises(ValueError, match='Context profile cannot carry relationship evidence'):
+    replace(guansha, relationship=result.relationship)
+  with pytest.raises(ValueError, match='Premise criterion cannot carry condition references'):
+    replace(guansha, related=result.related)
   # A natal-scope record carrying obtained 岁运 must be rejected.
   carrying = json.loads(result.export_json())
   carrying['relationship']['transits'] = {'liunian': '甲辰'}
