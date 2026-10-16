@@ -108,7 +108,7 @@ jobs:
           names = {f'bazi-{version}.tar.gz', f'bazi-{version}-py3-none-any.whl'}
           if {p.name for p in (bundle / 'dist').iterdir()} != names:
             raise SystemExit('Expected exactly the tested sdist and rebuilt wheel')
-          if re.findall(r'^## (.*)$', Path('RELEASE_NOTES.md').read_text(), re.MULTILINE)[:1] != [f'bazi {version}']:
+          if re.findall(r'^## (.*)$', Path('RELEASE_NOTES.md').read_text(encoding='utf-8'), re.MULTILINE)[:1] != [f'bazi {version}']:
             raise SystemExit(f'RELEASE_NOTES.md top section must be "## bazi {version}"')
           shutil.copyfile('RELEASE_NOTES.md', bundle / 'RELEASE_NOTES.md')
           metadata = {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'],
@@ -239,7 +239,7 @@ jobs:
                 continue
               raise
             raise SystemExit('Existing tag/release; deliberate recovery required')
-          body = re.split(r'^## .*$', Path('artifact/RELEASE_NOTES.md').read_text(), flags=re.MULTILINE)[1].strip()
+          body = re.split(r'^## .*$', Path('artifact/RELEASE_NOTES.md').read_text(encoding='utf-8'), flags=re.MULTILINE)[1].strip()
           def post(path, data):
             request = urllib.request.Request(base + path, data=json.dumps(data).encode(), headers={**headers, 'Content-Type': 'application/json'}, method='POST')
             with urllib.request.urlopen(request, timeout=30) as response:
