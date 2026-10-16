@@ -677,6 +677,24 @@
           "Summarizes repository attribution without adding a verified classical witness. Textual descent remains unresolved (#194).",
           "概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。"
         ]
+      },
+      "yuanhai_liuqin_charts": {
+        "locator": [
+          "PDF p. 57（男图）与 p. 58（女图）六亲取用图，按行列坐标逐格读取",
+          "PDF 第 57 页（男图）与第 58 页（女图）六亲取用图，按行列坐标逐格读取"
+        ]
+      },
+      "yuanhai_qiqie_note": {
+        "locator": [
+          "PDF p. 25，右栏双行夹注起首",
+          "PDF 第 25 页，右栏双行夹注起首"
+        ]
+      },
+      "tanyuan_qizi": {
+        "locator": [
+          "PDF p. 171「六親 論妻子」（印页二六）",
+          "PDF 第 171 页「六親 論妻子」（印页二六）"
+        ]
       }
     }
   }

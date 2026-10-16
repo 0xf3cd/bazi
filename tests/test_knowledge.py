@@ -106,6 +106,8 @@ def test_translation_table_matches_the_corpus() -> None:
     for field, (old, new) in changes.items():
       assert record[field] == new and old != new, (source_id, field)
   attributions = {entry.attribution for entry in KNOWLEDGE_BASE.entries.values()}
+  # Unique translations keep the reverse map used by the fingerprints well defined.
+  assert len(set(TRANSLATED_ATTRIBUTION.values())) == len(TRANSLATED_ATTRIBUTION)
   assert set(TRANSLATED_ATTRIBUTION.values()) <= attributions
   assert not set(TRANSLATED_ATTRIBUTION) & attributions
 
@@ -659,3 +661,44 @@ def test_normalized_legacy_projection_fingerprint() -> None:
     '克制与避祸等解释的适用前提尚未还原，不表示有效制杀已成立。',
   )
   assert unchanged_nonempty['legacy.tiangan.ding.weak_state'] == ('嵌套前提与中间结果尚未拆分。',)
+
+
+def test_non_legacy_entries_fingerprint() -> None:
+  # The 11 entries without legacy metadata have no oracle row; pin every field, with translated
+  # attributions mapped back as in the legacy projection. The digest equals the pre-translation corpus.
+  import hashlib
+  original_attribution = {new: old for old, new in TRANSLATED_ATTRIBUTION.items()}
+  rows = []
+  for entry in KNOWLEDGE_BASE.entries.values():
+    if entry.legacy is not None:
+      continue
+    row = asdict(entry)
+    row['attribution'] = original_attribution.get(entry.attribution, entry.attribution)
+    rows.append(row)
+  assert len(rows) == 11
+  digest = hashlib.sha256(
+    json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
+  ).hexdigest()
+  assert digest == '8d988184034a46465c1763610cdaa16dd928cbec3e372570a468fae3cefb19c2'
+
+
+def test_non_oracle_sources_fingerprint() -> None:
+  # The 6 sources absent from the legacy oracle have no oracle record; pin every field, with translated
+  # fields mapped back to the ledger's originals. The digest equals the pre-translation corpus.
+  import hashlib
+  oracle = json.loads(
+    (Path(__file__).with_name('data') / 'description_legacy_baseline.json').read_text(encoding='utf-8')
+  )['sources']
+  rows = []
+  for source_id, source in KNOWLEDGE_BASE.sources.items():
+    if source_id in oracle:
+      continue
+    row = asdict(source)
+    for field, (old, _) in TRANSLATED_SOURCES.get(source_id, {}).items():
+      row[field] = old
+    rows.append(row)
+  assert len(rows) == 6
+  digest = hashlib.sha256(
+    json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
+  ).hexdigest()
+  assert digest == '41c021df77ea786cd5e5e0524fb56d5f568d4713b915860451c8c752f7373ab2'

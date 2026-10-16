@@ -57,7 +57,8 @@ def test_readme_knowledge_counts_match_the_corpus() -> None:
   table = re.search(r'^\| `output` \|.*?(?=\n\n)', README, re.MULTILINE | re.DOTALL)
   assert table is not None
   header, _, *body = table[0].splitlines()
-  cells = [[cell.strip().strip('`') for cell in line.strip('|').split('|')] for line in (header, *body)]
+  # Each cell's first token is the value; header and row labels may add a Chinese name after it.
+  cells = [[cell.split()[0].strip('`') for cell in line.strip('|').split('|')] for line in (header, *body)]
   states = cells[0][1:-1]
   # Columns and rows cover every declared value, so a new state or policy cannot drop out of the table.
   assert sorted(states) == sorted(get_args(SourceState))

@@ -16,8 +16,8 @@
 python -m pip install .
 ```
 
-已发布版本可用 `python -m pip install bazi` 从 PyPI 安装；
-版本间的变化与升级说明见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+已发布版本可用 `python -m pip install bazi` 从 PyPI 安装；版本间的变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+从旧版升级到 2.0.0 时，逐条迁移写法见其 [2.0.0 节](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-200)的「破坏性变更」。
 从定义模块导入所需类型，下文每个 Python 示例均可独立运行。
 
 ```python
@@ -87,7 +87,7 @@ print(chart.json['school'])
 [天文后端](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_utils.py)。
 
 命盘 JSON 可用 `BaziChart.from_json(chart.json)` 恢复；它重算并核对完整记录，只保证与当前版本一致。
-旧记录的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#unreleased)。
+旧记录的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-200)。
 需要核对其他排盘器时，见[外部排盘对照](https://github.com/0xf3cd/bazi/blob/main/EXTERNAL_BASELINE.md)。
 
 ### 地点与真太阳时
@@ -216,14 +216,13 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 随库知识以旧语料为主，多数条目仅供参考、来源未核实。默认查询只返回有古籍见证、
 无条件适用的定义条目。条目按输出资格（行）与来源状态（列）计数：
 
-| `output` | `witnessed` | `unverified` | `editorial` | `repository_attributed` | 合计 |
+| `output` | `witnessed` 古籍见证 | `unverified` 未核实 | `editorial` 作者编写 | `repository_attributed` 本仓规则说明 | 合计 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `default` | 19 | 0 | 0 | 0 | 19 |
-| `reference_only` | 12 | 245 | 22 | 4 | 283 |
+| `default` 默认输出 | 19 | 0 | 0 | 0 | 19 |
+| `reference_only` 仅供参考 | 12 | 245 | 22 | 4 | 283 |
 | 合计 | 31 | 245 | 22 | 4 | 302 |
 
 其中 262 条前提待梳理（`applicability='unresolved'`）。另有对象 31 个、情境 10 个、来源 13 个。
-来源状态依次为古籍见证、未核实、作者编写、本仓规则署名。
 
 ```python
 from bazi.defines import Tiangan

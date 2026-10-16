@@ -13,6 +13,9 @@
   将关系定义和独立羊刃／飞刃定义放在前面；顺序为 `day_rollover`、`anhe_def`、`xing_def`、`gong_def`、
   `yangren_def`、`feiren_def`，其后为神煞锚及相邻定义。调用方改用关键字参数。已有 JSON 键名、默认值与
   读法不变；`from_json` 仍要求全部字段，按键名解析，不依赖输入键序。
+- `BaziJson.BaziChartJsonDict` 改为默认盘与地点盘两种 JSON 的联合类型别名，只能用于类型标注。
+  构造字典或读取 `__required_keys__` 等字段元数据时，默认盘用 `BaziJson.DefaultBaziChartJsonDict`，
+  地点盘用 `BaziJson.LocationBaziChartJsonDict`。
 - DAY 出生月柱与大运数节统一使用日期级干支年月的所属节和下一节；删除真实交节前仍数向
   旧节的 DAY 例外。逆排提前归属窗口负间隔钳零，首运标签以出生干支年为下限。
   此默认变化会改变起运、小运与大运派生 JSON；旧记录需以原出生输入重新建盘后核验。

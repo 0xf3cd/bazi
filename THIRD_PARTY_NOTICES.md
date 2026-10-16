@@ -12,6 +12,8 @@ LICENSE 的 MIT 授权只及 Ningqi Wang 自有材料，不重新许可本项目
 - 自有代码的 MIT 授权不授予第三方引文、参考材料或解释语料的权利，包括 `bazi/knowledge_data.json`
   及测试中的语料快照 `tests/data/description_legacy_baseline.json`、`tests/data/corpus_allowed_changes.json`。
   已有引用保留，用于识别来源，不表示授权许可。
+- 源码与测试的 docstring、注释引用的古籍原文及今人注释，出处写在引用处，例如 `bazi/rules.py`
+  引《五行精纪注释》的【原文】与【注释】。这些引用用于说明规则依据，不表示授权许可。
 - `bazi/references/calendar.md` 是本仓自写的要点，整理自知乎用户子非鱼的回答
   <https://www.zhihu.com/question/22318210/answer/21004490>；原文权利归原作者，本仓不转载原文。
 - `tests/integration/external_baseline.json` 的外部排盘观测记录来源、配置及采集日期，
