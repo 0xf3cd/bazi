@@ -15,9 +15,12 @@ from bazi.knowledge import (
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
-ALLOWED_CHANGES: dict[str, dict[str, object]] = json.loads(
+LEDGER: dict[str, Any] = json.loads(
   (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
-)['allowed_changes']
+)
+ALLOWED_CHANGES: dict[str, dict[str, object]] = LEDGER['allowed_changes']
+TRANSLATED_ATTRIBUTION: dict[str, str] = LEDGER['translated']['attribution']
+TRANSLATED_SOURCES: dict[str, dict[str, list[str]]] = LEDGER['translated']['sources']
 
 
 def _ids(entries: tuple[KnowledgeEntry, ...]) -> tuple[str, ...]:
@@ -51,17 +54,19 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
               'output': claim.output,
             },
           })
-  # Projection logic untouched: expected rows are re-normalized only by the exact 45-ID attribution allowance table.
+  # Projection logic untouched: expected rows are re-normalized only by the exact 45-ID attribution
+  # allowance table and the attribution translation table.
   expected_rows = [
     {**row, 'claim': {**row['claim'], 'attribution': ALLOWED_CHANGES[row['claim']['claim_id']]['attribution']}}
     if row['claim']['claim_id'] in ALLOWED_CHANGES and 'attribution' in ALLOWED_CHANGES[row['claim']['claim_id']]
-    else row
+    else {**row, 'claim': {**row['claim'], 'attribution': TRANSLATED_ATTRIBUTION.get(row['claim']['attribution'], row['claim']['attribution'])}}
     for row in baseline['rows']
   ]
   assert actual == expected_rows
   for source_id, expected in baseline['sources'].items():
     record = asdict(KNOWLEDGE_BASE.sources[source_id])
-    assert {key: record[key] for key in expected} == expected
+    translated = {field: new for field, (_, new) in TRANSLATED_SOURCES.get(source_id, {}).items()}
+    assert {key: record[key] for key in expected} == {**expected, **translated}
   old_ids = {row['claim']['claim_id'] for row in baseline['rows']}
   assert len(old_ids) == 291
   assert {entry.claim_id for entry in KNOWLEDGE_BASE.entries.values() if entry.legacy is not None} == old_ids
@@ -92,6 +97,31 @@ def test_attribution_allowance_is_exactly_the_relationship_field_entries() -> No
       actual = getattr(entry, field)
       # limits are a list in JSON and a tuple on the entry; compared verbatim.
       assert (list(actual) if isinstance(actual, tuple) else actual) == expected, (claim_id, field)
+
+
+def test_translation_table_matches_the_corpus() -> None:
+  # Two-way: every translated value is in the corpus and no original value is left behind.
+  for source_id, changes in TRANSLATED_SOURCES.items():
+    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    for field, (old, new) in changes.items():
+      assert record[field] == new and old != new, (source_id, field)
+  attributions = {entry.attribution for entry in KNOWLEDGE_BASE.entries.values()}
+  assert set(TRANSLATED_ATTRIBUTION.values()) <= attributions
+  assert not set(TRANSLATED_ATTRIBUTION) & attributions
+
+
+def test_descriptive_fields_are_chinese() -> None:
+  # Quoted excerpts and URLs are exempt; editorial-layer excerpts are repository records, not quotes.
+  def has_han(value: str) -> bool:
+    return any('\u4e00' <= char <= '\u9fff' for char in value)
+  for entry in KNOWLEDGE_BASE.entries.values():
+    assert has_han(entry.attribution), entry.claim_id
+  for source in KNOWLEDGE_BASE.sources.values():
+    fields = ['work', 'attribution', 'edition', 'locator', 'supports', 'limitations']
+    if source.text_layer == 'editorial':
+      fields.append('excerpt')
+    for field in fields:
+      assert has_han(getattr(source, field)), (source.source_id, field)
 
 
 def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
@@ -591,14 +621,15 @@ def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
 
 def test_normalized_legacy_projection_fingerprint() -> None:
   # Normalized projection of all 291 old entries: attribution of the 45 allowed IDs and limits of the
-  # 49 allowed IDs stripped, all other fields included. Fingerprints are identical on the pre- and
-  # post-change corpora; this is not new-hash removal of protection.
+  # 49 allowed IDs stripped, translated attributions mapped back, all other fields included.
+  # Fingerprints are identical on the pre- and post-change corpora; this is not new-hash removal of protection.
   import hashlib
   from dataclasses import asdict as _asdict
   attribution_allowed = {
     claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
   }
   limits_allowed = {claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'limits' in changes}
+  original_attribution = {new: old for old, new in TRANSLATED_ATTRIBUTION.items()}
   rows = []
   for entry in KNOWLEDGE_BASE.entries.values():
     if entry.legacy is None:
@@ -606,6 +637,8 @@ def test_normalized_legacy_projection_fingerprint() -> None:
     row = _asdict(entry)
     if entry.claim_id in attribution_allowed:
       del row['attribution']
+    else:
+      row['attribution'] = original_attribution.get(entry.attribution, entry.attribution)
     if entry.claim_id in limits_allowed:
       del row['limits']
     rows.append(row)

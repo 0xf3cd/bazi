@@ -495,5 +495,189 @@
         "本句为相处建议（规范句）：建议者是相处方，被相处者是偏印之人；建议内容暂无命盘计算定义"
       ]
     }
+  },
+  "translated": {
+    "base_sha": "9bfd2a957836c557480c85fcec40a8b5f3736111",
+    "attribution": {
+      "Legacy corpus; source unverified": "旧语料，出处未核",
+      "Repository editorial": "作者编写",
+      "Repository rule documentation": "本仓规则说明"
+    },
+    "sources": {
+      "editorial": {
+        "work": [
+          "Bazi description corpus",
+          "本仓解释语料"
+        ],
+        "attribution": [
+          "Ningqi Wang",
+          "本仓作者 Ningqi Wang"
+        ],
+        "edition": [
+          "Repository editorial confirmed for issue #24",
+          "本仓编写，经 issue #24 确认"
+        ],
+        "locator": [
+          "PR #222",
+          "见 PR #222"
+        ],
+        "excerpt": [
+          "Repository-original editorial prose.",
+          "本仓原创编写的文字。"
+        ],
+        "supports": [
+          "Authorship and the reference-only product classification.",
+          "署名，以及仅供参考的输出分类。"
+        ],
+        "limitations": [
+          "Does not establish a classical rule or real-world prediction.",
+          "不确立古籍规则，也不作现实预测。"
+        ]
+      },
+      "yuanhai_ziping_relations": {
+        "locator": [
+          "PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”",
+          "PDF 第 6 页右半叶，以「生我者為正印偏印」起首的段落"
+        ],
+        "supports": [
+          "The five relations, paired Shishen names, and the 正/偏 polarity rule.",
+          "五种生克关系、成对的十神名称，以及正偏的阴阳规则。"
+        ],
+        "limitations": [
+          "Uses both 劫財 and 敗財; it does not support collapsing both into one name or support personality, kinship, fortune, or unconditional chart judgments.",
+          "劫財与敗財两名并用；不支持把二者并为一名，也不支持性格、六亲、运势或无条件的命盘判断。"
+        ]
+      },
+      "yuanhai_ziping_stem_table": {
+        "locator": [
+          "PDF p. 8, “天干五阳通变” and “天干五阴通变” tables",
+          "PDF 第 8 页「天干五阳通变」与「天干五阴通变」两表"
+        ],
+        "supports": [
+          "The Yang/Yin stem groups.",
+          "天干按阳、阴分组。"
+        ],
+        "limitations": [
+          "Uses separate 劫財 and 敗財 labels; it does not make their nomenclature or the attached kinship glosses unconditional across schools.",
+          "劫財与敗財分列两名；不使这套名称或所附六亲释义成为各流派无条件通用的说法。"
+        ]
+      },
+      "yuanhai_ziping_stem_symbols_p69": {
+        "locator": [
+          "PDF p. 69, left leaf, “十干体象”",
+          "PDF 第 69 页左半叶，「十干体象」"
+        ],
+        "supports": [
+          "The element names for 甲、乙、丙 and a named historical image for 丙.",
+          "甲、乙、丙的五行称名，以及丙的一则历史象。"
+        ],
+        "limitations": [
+          "Does not make the image a cross-school definition or a personality premise.",
+          "不使该象成为跨流派定义或性格前提。"
+        ]
+      },
+      "yuanhai_ziping_stem_symbols_p70": {
+        "locator": [
+          "PDF p. 70, both leaves, “十干体象”",
+          "PDF 第 70 页左右两半叶，「十干体象」"
+        ],
+        "supports": [
+          "The element names for 丁 through 癸 and named historical images for 丁、戊、辛、壬.",
+          "丁至癸的五行称名，以及丁、戊、辛、壬的历史象。"
+        ],
+        "limitations": [
+          "Does not make the images cross-school definitions or personality premises.",
+          "不使这些象成为跨流派定义或性格前提。"
+        ]
+      },
+      "mingli_tanyuan_stem_basics": {
+        "locator": [
+          "PDF pp. 33 and 36, “干枝阴阳” and “干枝五行及四时方位”",
+          "PDF 第 33、36 页，「干枝阴阳」与「干枝五行及四时方位」"
+        ],
+        "supports": [
+          "The ten stems grouped directly by polarity and element.",
+          "十干直接按阴阳与五行分组。"
+        ],
+        "limitations": [
+          "Does not support personality, fortune, fixed imagery, or health prose.",
+          "不支持性格、运势、固定意象或健康方面的文字。"
+        ]
+      },
+      "mingli_tanyuan_shishen_definitions": {
+        "locator": [
+          "PDF pp. 66-70, “十干生克定名”",
+          "PDF 第 66–70 页，「十干生克定名」"
+        ],
+        "supports": [
+          "The five relations, polarity distinctions, and this witness's Shishen nomenclature.",
+          "五种生克关系、阴阳之别，以及本见证的十神名称。"
+        ],
+        "limitations": [
+          "Does not support collapsing both into 劫財.",
+          "不支持把劫財与敗財并为劫財。"
+        ]
+      },
+      "repository_wuxing_relations": {
+        "work": [
+          "Bazi Wuxing definitions",
+          "本仓五行定义"
+        ],
+        "attribution": [
+          "Repository rule documentation",
+          "本仓规则说明"
+        ],
+        "edition": [
+          "Repository snapshot e7caf8f",
+          "本仓快照 e7caf8f"
+        ],
+        "locator": [
+          "bazi/defines/wuxing.py:Wuxing.generates/destructs",
+          "bazi/defines/wuxing.py 中的 Wuxing.generates／destructs"
+        ],
+        "excerpt": [
+          "Wuxing.木.generates(Wuxing.火) and Wuxing.金.destructs(Wuxing.木).",
+          "Wuxing.木.generates(Wuxing.火)；Wuxing.金.destructs(Wuxing.木)。"
+        ],
+        "supports": [
+          "The direction of the existing formal Wuxing relations.",
+          "本仓现有五行形式关系的方向。"
+        ],
+        "limitations": [
+          "Repository attribution, not a newly verified classical witness or evidence of effective chart interactions.",
+          "属本仓署名，不是新核实的古籍见证，也不证明命盘中的有效作用。"
+        ]
+      },
+      "repository_guoyin_variants": {
+        "work": [
+          "Bazi Guoyin rule documentation",
+          "本仓国印规则说明"
+        ],
+        "attribution": [
+          "Repository rule documentation",
+          "本仓规则说明"
+        ],
+        "edition": [
+          "Repository snapshot e7caf8f",
+          "本仓快照 e7caf8f"
+        ],
+        "locator": [
+          "bazi/rules.py:ShenshaRules.GuoyinDef",
+          "bazi/rules.py 中的 ShenshaRules.GuoyinDef"
+        ],
+        "excerpt": [
+          "WUXING_JINGJI uses 禄 + 7; MODERN uses 禄 + 8, with inclusive counting.",
+          "WUXING_JINGJI 取禄 + 7，MODERN 取禄 + 8，均含禄起算。"
+        ],
+        "supports": [
+          "The existing two table readings and the separately documented anchor/target boundaries.",
+          "现有的两种表读法，以及另行说明的锚点／目标边界。"
+        ],
+        "limitations": [
+          "Summarizes repository attribution without adding a verified classical witness. Textual descent remains unresolved (#194).",
+          "概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。"
+        ]
+      }
+    }
   }
 }

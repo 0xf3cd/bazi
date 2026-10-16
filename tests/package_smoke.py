@@ -385,7 +385,7 @@ def main() -> None:
   restored_knowledge = KnowledgeBase.from_json(knowledge.export_json(selected))
   check(restored_knowledge.entries == {entry.claim_id: entry for entry in selected}, 'Knowledge export/reload lost entries')
   check(restored_knowledge.sources == knowledge.sources, 'Knowledge export/reload lost witnesses')
-  check('p. 70' in restored_knowledge.render(selected[0]), 'Knowledge display lost source locator')
+  check('第 70 页' in restored_knowledge.render(selected[0]), 'Knowledge display lost source locator')
   try:
     knowledge.query(object_id='typo')
   except ValueError:
@@ -398,7 +398,7 @@ def main() -> None:
   matched = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal'), include_reference_only=True)
   check(matched.criterion.status == 'SATISFIED' and len(matched.entries) == 2, 'Installed context positive mismatch')
   check(any(o.pillar == 'hour' and o.layer == 'hidden' and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.occurrences), 'Installed context lost hidden witness')
-  check('也许' in matched.render() and 'Does not establish a classical rule or real-world prediction.' in matched.render(), 'Installed context lost modal/source limit')
+  check('也许' in matched.render() and '不确立古籍规则，也不作现实预测。' in matched.render(), 'Installed context lost modal/source limit')
   check(ContextResult.from_json(matched.export_json()) == matched, 'Installed context restoration lost evidence/knowledge')
   check(evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal')).entries == (), 'Installed context promoted reference output')
   missing = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian'))

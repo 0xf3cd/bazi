@@ -152,7 +152,7 @@ def test_render_verdict_is_display_only_and_does_not_change_eligibility() -> Non
   rendered = k.render(reference, manual_context=True, premise_verdict='SATISFIED')
   assert '前提判别：SATISFIED' in rendered
   assert '输出资格：reference_only' in rendered and '仅供参考' in rendered
-  assert '也许' in rendered and 'Does not establish a classical rule or real-world prediction.' in rendered
+  assert '也许' in rendered and '不确立古籍规则，也不作现实预测。' in rendered
   assert '人工给定情境' not in rendered
   assert '人工给定情境' in k.render(reference, manual_context=True, premise_verdict=None)
   assert reference not in k.query()

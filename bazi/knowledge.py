@@ -128,7 +128,10 @@ class KnowledgeContext:
 
 @dataclass(frozen=True)
 class KnowledgeSource:
-  '''带署名与证据边界的来源见证。'''
+  '''带署名与证据边界的来源见证。
+
+  新来源的 source_id 以 lineage 为前缀；已有 ID 不改名，归组以 lineage 为准。
+  '''
 
   source_id:   str
   work:        str
@@ -299,7 +302,7 @@ class KnowledgeBase:
   - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
     查来源，query(source_id=...) 查关联条目。
-  - 仅供参考条目不判断命盘适用性。条目的 sources 为空或署名为 “Legacy corpus; source unverified”，
+  - 仅供参考条目不判断命盘适用性。条目的 sources 为空或署名为“旧语料，出处未核”，
     均不表示无来源或断言为假；仓内署名也不等于已经核定的古籍见证。
   '''
 

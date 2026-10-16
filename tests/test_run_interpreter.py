@@ -34,7 +34,7 @@ def test_matching_cli_text_export_reload_and_library_agree(tmp_path: Path) -> No
   assert result.stdout == expected.render() + '\n' + f'已导出判别记录：{output}\n'
   assert ContextResult.from_json(output.read_text(encoding='utf-8')) == expected
   assert '也许' in result.stdout and '仅供参考' in result.stdout
-  assert 'Does not establish a classical rule or real-world prediction.' in result.stdout
+  assert '不确立古籍规则，也不作现实预测。' in result.stdout
 
 
 @pytest.mark.parametrize('scope,year,status', [
@@ -788,7 +788,7 @@ def test_knowledge_query_runs_without_birth_input_or_filesystem_writes(tmp_path:
   )
   assert result.returncode == 0, result.stderr
   assert 'tiangan.ding.lamp_symbol' in result.stdout
-  assert '丁火有烛灯之象。' in result.stdout and 'p. 70' in result.stdout
+  assert '丁火有烛灯之象。' in result.stdout and '第 70 页' in result.stdout
   assert '支持范围：' in result.stdout and '局限：' in result.stdout
   assert '出生时间：' not in result.stdout
   assert '丁为阴火。' not in result.stdout
@@ -844,7 +844,7 @@ def test_knowledge_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
   assert tuple(restored.entries) == ('tiangan.ding.lamp_symbol',)
   assert restored.sources == KNOWLEDGE_BASE.sources
   again = _run_cli(tmp_path, '--query-knowledge', '--knowledge-source', str(exported), '--include-reference-only')
-  assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and 'p. 70' in again.stdout
+  assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and '第 70 页' in again.stdout
   full = _run_cli(tmp_path, '--export-knowledge-json', str(complete))
   assert full.returncode == 0 and '出生时间：' not in full.stdout
   assert KnowledgeBase.load(complete).entries == KNOWLEDGE_BASE.entries

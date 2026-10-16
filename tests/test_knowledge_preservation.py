@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
+from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
 
@@ -10,14 +11,18 @@ from bazi.knowledge import KnowledgeBase, KnowledgeEntry, object_id
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 BASELINE = json.loads((Path(__file__).with_name('data') / 'description_legacy_baseline.json').read_text(encoding='utf-8'))
+LEDGER = json.loads((Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8'))
 # The 45 claim IDs allowed to rewrite attribution; limits rewrites stay out of this file's
 # row fingerprints and are pinned by test_knowledge's allow table.
 ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(
-  claim_id for claim_id, fields in json.loads(
-    (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
-  )['allowed_changes'].items() if 'attribution' in fields
+  claim_id for claim_id, fields in LEDGER['allowed_changes'].items() if 'attribution' in fields
 )
+# Translated attributions and source fields map back to the originals, so the pinned
+# fingerprints below still cover every other field.
+ORIGINAL_ATTRIBUTION: dict[str, str] = {new: old for old, new in LEDGER['translated']['attribution'].items()}
+TRANSLATED_SOURCES: dict[str, dict[str, list[str]]] = LEDGER['translated']['sources']
 OLD_ATTRIBUTION: str = 'Legacy corpus; source unverified'
+LEGACY_ATTRIBUTION: str = LEDGER['translated']['attribution'][OLD_ATTRIBUTION]
 NEW_ATTRIBUTION: str = '作者据网络材料归纳，原始出处未核'
 
 
@@ -43,9 +48,12 @@ def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
         for entry in _positioned_entries(subject, field):
           assert entry.legacy is not None
           rows.append(f'{prefix}:{subject}:{field}:{entry.text}')
-          # claim_rows reverse-normalize the 45 allowed IDs back to the original
-          # fingerprints, so no new hash needs pinning.
-          attribution = OLD_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else entry.attribution
+          # claim_rows reverse-normalize the 45 allowed IDs and the translated attributions
+          # back to the original fingerprints, so no new hash needs pinning.
+          attribution = (
+            OLD_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED
+            else ORIGINAL_ATTRIBUTION.get(entry.attribution, entry.attribution)
+          )
           claim_rows.append('\0'.join((
             'C', str(subject), field, entry.claim_id, entry.text,
             ','.join(entry.sources), attribution,
@@ -62,18 +70,18 @@ def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
 def test_original_source_registry_fingerprint_and_boundaries_are_conserved() -> None:
   rows: list[str] = []
   for source_id in BASELINE['sources']:
-    record = KNOWLEDGE_BASE.sources[source_id]
-    values = (
-      source_id, record.work, record.attribution, record.edition, record.locator,
-      record.url, record.text_layer, record.lineage, record.excerpt, record.supports,
-      record.limitations,
-    )
+    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    for field, (old, new) in TRANSLATED_SOURCES.get(source_id, {}).items():
+      assert record[field] == new and BASELINE['sources'][source_id][field] == old, (source_id, field)
+      record[field] = old
+    values = tuple(record[field] for field in (
+      'source_id', 'work', 'attribution', 'edition', 'locator', 'url', 'text_layer', 'lineage',
+      'excerpt', 'supports', 'limitations',
+    ))
     assert all(values)
-    assert record.text_layer == ('editorial' if source_id == 'editorial' else 'baiwen')
+    assert record['text_layer'] == ('editorial' if source_id == 'editorial' else 'baiwen')
     rows.append('\0'.join(values))
   assert sha256('\n'.join(rows).encode()).hexdigest() == '7ccb163266026302dfe340108e28c9018cccfec48001f696c2f5056893c06a3e'
-  assert KNOWLEDGE_BASE.sources['yuanhai_ziping_relations'].locator == 'PDF p. 6, right leaf, paragraph beginning “生我者為正印偏印”'
-  assert KNOWLEDGE_BASE.sources['yuanhai_ziping_stem_table'].locator == 'PDF p. 8, “天干五阳通变” and “天干五阴通变” tables'
   for source_id in ('mingli_tanyuan_stem_basics', 'mingli_tanyuan_shishen_definitions'):
     assert KNOWLEDGE_BASE.sources[source_id].work == '《命理探源》'
     assert KNOWLEDGE_BASE.sources[source_id].edition == '版心题《命理探原》'
@@ -118,9 +126,9 @@ def test_legacy_reference_classification_is_not_upgraded_by_projection() -> None
       continue
     if not entry.sources:
       assert entry.source_state == 'unverified'
-      # The 45 allowed IDs equal exactly the new attribution; the rest still equal the old
-      # one. Projection does not upgrade output eligibility.
-      assert entry.attribution == (NEW_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else OLD_ATTRIBUTION)
+      # The 45 allowed IDs equal exactly the new attribution; the rest equal the translated
+      # legacy one. Projection does not upgrade output eligibility.
+      assert entry.attribution == (NEW_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else LEGACY_ATTRIBUTION)
       assert entry.output == 'reference_only'
       if entry.legacy.object_id.startswith('shishen.') and entry.legacy.conditions:
         conditional_shishen.add(entry.claim_id)
@@ -130,5 +138,5 @@ def test_legacy_reference_classification_is_not_upgraded_by_projection() -> None
       assert entry.applicability != 'unconditional' and entry.output == 'reference_only'
     if entry.sources == ('editorial',):
       assert entry.source_state == 'editorial' and entry.output == 'reference_only'
-      assert entry.attribution == 'Repository editorial'
+      assert entry.attribution == LEDGER['translated']['attribution']['Repository editorial']
   assert len(conditional_shishen) == 79
