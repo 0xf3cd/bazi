@@ -29,6 +29,7 @@ def test_readme_python_example(block: str, tmp_path: Path) -> None:
     capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
   )
   assert result.returncode == 0, result.stdout + result.stderr
+  assert 'object at 0x' not in result.stdout
 
 
 @pytest.mark.parametrize('arguments', [

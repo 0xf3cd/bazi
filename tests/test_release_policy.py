@@ -17,7 +17,9 @@ import pytest
 import yaml
 
 
-WORKFLOW = yaml.safe_load((Path(__file__).parents[1] / '.github/workflows/release.yml').read_text(encoding='utf-8'))
+WORKFLOWS = Path(__file__).parents[1] / '.github/workflows'
+WORKFLOW_TEXT = (WORKFLOWS / 'release.yml').read_text(encoding='utf-8')
+WORKFLOW = yaml.safe_load(WORKFLOW_TEXT)
 SHA = 'a' * 40
 
 
@@ -50,18 +52,8 @@ def test_workflow_structure() -> None:
   assert jobs['github-release']['permissions'] == {'contents': 'write'}
   assert 'pypi' in jobs['github-release']['needs']
   assert "needs.pypi.result == 'success'" in jobs['github-release']['if']
-  pins = {
-    'actions/checkout': '3d3c42e5aac5ba805825da76410c181273ba90b1',
-    'actions/setup-python': '5fda3b95a4ea91299a34e894583c3862153e4b97',
-    'actions/upload-artifact': '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
-    'actions/download-artifact': '3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c',
-    'pypa/gh-action-pypi-publish': 'dc37677b2e1c63e2034f94d8a5b11f265b73ba33',
-  }
   for name, job in jobs.items():
     for step in job['steps']:
-      if 'uses' in step:
-        action, sha = step['uses'].split('@')
-        assert pins[action] == sha
       if 'run' in step and step.get('shell') == 'python':
         compile(step['run'], '<release-policy>', 'exec')
     if name in ('pypi', 'github-release'):
@@ -84,6 +76,34 @@ def test_workflow_structure() -> None:
   assert checkout['with']['persist-credentials'] is False
   assert jobs['build']['outputs']['artifact-id'] == '${{ steps.upload.outputs.artifact-id }}'
   assert '--package-output-dir' in workflow_code('build', 'Run full gate and retain its tested pair')
+
+
+def check_action_pins(text: str) -> None:
+  # Only the shape is checked here; reviewers match the tag to the SHA through the
+  # Dependabot compare link. `yaml.safe_load` drops comments, so read the raw lines.
+  steps = [step['uses'] for job in yaml.safe_load(text)['jobs'].values() for step in job['steps'] if 'uses' in step]
+  lines = re.findall(r'^ *(?:- )?uses: (.*)$', text, re.MULTILINE)
+  assert [line.split('#')[0].rstrip() for line in lines] == steps, 'Expected each action on its own `uses:` line'
+  shape = r'[\w.-]+/[\w.-]+@[0-9a-f]{40} # v[0-9]+\.[0-9]+\.[0-9]+'
+  for line in lines:
+    assert re.fullmatch(shape, line), f'Expected `uses: owner/repo@<40-hex commit SHA> # vX.Y.Z`, got `uses: {line}`'
+
+
+@pytest.mark.parametrize('workflow', sorted(p.name for p in WORKFLOWS.iterdir() if p.suffix in ('.yml', '.yaml')))
+def test_action_pins(workflow: str) -> None:
+  check_action_pins((WORKFLOWS / workflow).read_text(encoding='utf-8'))
+
+
+@pytest.mark.parametrize('pattern, replacement, message', [
+  (r'@[0-9a-f]{40}', '@v7', 'Expected `uses: owner/repo'),
+  (r'@([0-9a-f]{7})[0-9a-f]{33}', r'@\1', 'Expected `uses: owner/repo'),
+  (r'(@[0-9a-f]{40}) # v\S+', r'\1', 'Expected `uses: owner/repo'),
+  (r' # v', '  # v', 'Expected `uses: owner/repo'),
+  (r'- uses:', "- 'uses':", 'Expected each action on its own'),
+], ids=['tag', 'short-sha', 'no-version', 'double-space', 'quoted-key'])
+def test_action_pins_reject(pattern: str, replacement: str, message: str) -> None:
+  with pytest.raises(AssertionError, match=message):
+    check_action_pins(re.sub(pattern, replacement, WORKFLOW_TEXT, count=1))
 
 
 @pytest.fixture
@@ -198,15 +218,21 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
       run_policy(code)
 
 
-@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'tag-race', 'asset-bytes'])
-def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
+@pytest.mark.parametrize('notes, body', [
+  ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
+  ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
+])
+@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes'])
+def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, notes: str, body: str) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
   root = tmp_path / 'artifact'
   (root / 'dist').mkdir(parents=True)
   (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'tested sdist')
   (root / 'dist/bazi-1.0.0-py3-none-any.whl').write_bytes(b'tested wheel')
-  (root / 'RELEASE_NOTES.md').write_text('Release notes', encoding='utf-8')
+  (root / 'RELEASE_NOTES.md').write_text(notes, encoding='utf-8')
+  if change == 'notes-bytes':
+    (root / 'RELEASE_NOTES.md').write_bytes(b'\xff')
   writes: list[tuple[str, object]] = []
   def request(url: str | urllib.request.Request, timeout: int) -> io.BytesIO:
     address = url if isinstance(url, str) else url.full_url
@@ -228,7 +254,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
           raise urllib.error.HTTPError(address, 422, 'Already exists', {}, None)  # type: ignore[arg-type] # No headers needed.
       elif address.endswith('/releases'):
         assert json.loads(url.data) == {'tag_name': 'v1.0.0', 'target_commitish': SHA,
-          'name': 'bazi 1.0.0', 'body': 'Release notes', 'draft': True}
+          'name': 'bazi 1.0.0', 'body': body, 'draft': True}
         value = {'id': 1}
       elif '/assets?' in address:
         value = {'digest': 'sha256:' + ('0' * 64 if change == 'asset-bytes' else hashlib.sha256(url.data).hexdigest())}
@@ -243,7 +269,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     run_policy(code)
     assert [method for method, _ in writes] == ['POST'] * 5 + ['PATCH']
   else:
-    with pytest.raises((SystemExit, urllib.error.HTTPError)):
+    with pytest.raises((SystemExit, urllib.error.HTTPError, UnicodeDecodeError)):
       run_policy(code)
     assert not any(method == 'PATCH' for method, _ in writes)
     if change != 'asset-bytes':
@@ -251,7 +277,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.parametrize('crlf', [False, True])
-@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'extra', 'misnamed', 'missing'])
+@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'])
 def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
@@ -261,7 +287,12 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   wheel.write_bytes(b'fixture wheel')
   (bundle / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'fixture sdist')
   (tmp_path / 'pyproject.toml').write_text('[project]\nversion = "1.0.0"\n', encoding='utf-8')
-  (tmp_path / 'RELEASE_NOTES.md').write_bytes(b'Updated notes\n' if change == 'harmless-notes' else b'Notes\n')
+  top = {
+    'harmless-notes': '## bazi 1.0.0\n\n- Updated notes\n',
+    'unreleased-notes': '## Unreleased\n\n- Notes\n\n## bazi 1.0.0\n',
+    'wrong-version-notes': '## bazi 9.9.9\n\n- Notes\n',
+  }
+  (tmp_path / 'RELEASE_NOTES.md').write_text('# 发布说明\n\n' + top.get(change, '## bazi 1.0.0\n\n- Notes\n'), encoding='utf-8')
   output = tmp_path / 'outputs'
   monkeypatch.setenv('RUNNER_TEMP', str(runner_temp))
   monkeypatch.setenv('GITHUB_OUTPUT', str(output))
@@ -280,8 +311,9 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
     return write_text(path, data, encoding=encoding, errors=errors, newline=newline)
   monkeypatch.setattr(Path, 'write_text', platform_write)
   seal = workflow_code('build', 'Seal release bundle')
-  if change in ('extra', 'misnamed', 'missing'):
-    with pytest.raises(SystemExit, match='Expected exactly the tested sdist and rebuilt wheel'):
+  if change in ('unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'):
+    message = 'top section must be "## bazi 1.0.0"' if change.endswith('-notes') else 'Expected exactly the tested sdist and rebuilt wheel'
+    with pytest.raises(SystemExit, match=message):
       run_policy(seal)
     assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
     return

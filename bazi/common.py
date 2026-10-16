@@ -27,6 +27,8 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
     return iter(self._data)
   def __len__(self) -> int:
     return len(self._data)
+  def __repr__(self) -> str:
+    return f'{type(self).__name__}({self._data!r})'
   def __hash__(self) -> int:
     # 惰性计算：内容相等则哈希相等，与 `Mapping.__eq__` 一致。
     # 内容不可哈希（如 list 值）时，首次求哈希抛 TypeError。
