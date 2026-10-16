@@ -217,7 +217,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: python
         run: |
-          import hashlib, json, os, urllib.error, urllib.request
+          import hashlib, json, os, re, urllib.error, urllib.request
           from pathlib import Path
           version, sha = os.environ['VERSION'], os.environ['SHA']
           with urllib.request.urlopen(f'https://pypi.org/pypi/bazi/{version}/json', timeout=30) as response:
@@ -237,13 +237,16 @@ jobs:
                 continue
               raise
             raise SystemExit('Existing tag/release; deliberate recovery required')
+          notes = Path('artifact/RELEASE_NOTES.md').read_text()
+          sections = re.split(r'^## .*$', notes, flags=re.MULTILINE)
+          body = (sections[1] if len(sections) > 1 else notes).strip()
           def post(path, data):
             request = urllib.request.Request(base + path, data=json.dumps(data).encode(), headers={**headers, 'Content-Type': 'application/json'}, method='POST')
             with urllib.request.urlopen(request, timeout=30) as response:
               return json.load(response)
           post('/git/refs', {'ref': f'refs/tags/v{version}', 'sha': sha})
           release = post('/releases', {'tag_name': f'v{version}', 'target_commitish': sha,
-            'name': f'bazi {version}', 'body': Path('artifact/RELEASE_NOTES.md').read_text(), 'draft': True})
+            'name': f'bazi {version}', 'body': body, 'draft': True})
           for path in sorted(p for p in Path('artifact').rglob('*') if p.is_file()):
             url = f'https://uploads.github.com/repos/0xf3cd/bazi/releases/{release["id"]}/assets?name={path.name}'
             request = urllib.request.Request(url, data=path.read_bytes(), headers={**headers, 'Content-Type': 'application/octet-stream'}, method='POST')

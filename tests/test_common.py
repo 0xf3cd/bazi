@@ -53,6 +53,15 @@ def test_frozendict_hash() -> None:
   assert bd in {bd}
 
 
+def test_frozendict_repr() -> None:
+  # Subclasses show their own name, so dataclasses holding them print contents, not addresses.
+  assert repr(frozendict({1: 'a'})) == "frozendict({1: 'a'})"
+  htd: HiddenTianganDict = HiddenTianganDict({Tiangan.丁: 70, Tiangan.己: 30})
+  assert repr(htd) == "HiddenTianganDict({<Tiangan.DING: '丁'>: 70, <Tiangan.JI: '己'>: 30})"
+  assert str(htd) == '丁:70,己:30'
+  assert repr(BaziData(htd, htd, htd, htd)).count(repr(htd)) == 4
+
+
 def test_check_declared_types_names_plain_and_union() -> None:
   @dataclass(frozen=True)
   class Sample:

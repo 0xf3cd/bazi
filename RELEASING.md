@@ -33,7 +33,8 @@ workflow 须先存在于默认分支，才能手动触发。
 2. 核对本次已验证 bundle 后，批准 PyPI 受保护环境。仅有 OIDC 权限的任务下载本次运行产生的
    确切不可变 artifact ID，核对校验和及身份，拒绝已存在的版本、tag 或 Release。
 3. PyPI 成功后，批准 GitHub Release 任务。此任务只取得 contents 写权限，先核 PyPI 哈希，
-   在已测试 SHA 建 `v<version>`，创建草稿，上传同一字节及声明文件，核 asset 摘要后发布草稿。
+   在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，上传同一字节及
+   声明文件，核 asset 摘要后发布草稿。
    两个特权任务均不检出、构建、安装或导入仓库代码。
 4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
    在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
@@ -46,3 +47,8 @@ workflow 须先存在于默认分支，才能手动触发。
 若 PyPI 已有工件对而 GitHub 失败，先停下核对保存的同次运行 bundle、PyPI 摘要、tag SHA
 以及草稿 Release/资产。作者须批准只补缺失步骤的定向恢复，且使用确切原字节。
 已有 tag 或草稿须核验，不能移动或替换。摘要不一致须查明原因，不能自动删除、加版本或重新上传。
+
+## 升级 action
+
+`release.yml` 的每条 `uses:` 钉 40 位 commit SHA，同行注释写版本号；策略测试只核这个形状。
+dependabot 提出升级时，审阅者按其正文的 compare 链接核对 tag 与 SHA 一致，再合并。

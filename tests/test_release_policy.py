@@ -17,7 +17,8 @@ import pytest
 import yaml
 
 
-WORKFLOW = yaml.safe_load((Path(__file__).parents[1] / '.github/workflows/release.yml').read_text(encoding='utf-8'))
+WORKFLOW_TEXT = (Path(__file__).parents[1] / '.github/workflows/release.yml').read_text(encoding='utf-8')
+WORKFLOW = yaml.safe_load(WORKFLOW_TEXT)
 SHA = 'a' * 40
 
 
@@ -50,18 +51,8 @@ def test_workflow_structure() -> None:
   assert jobs['github-release']['permissions'] == {'contents': 'write'}
   assert 'pypi' in jobs['github-release']['needs']
   assert "needs.pypi.result == 'success'" in jobs['github-release']['if']
-  pins = {
-    'actions/checkout': '3d3c42e5aac5ba805825da76410c181273ba90b1',
-    'actions/setup-python': '5fda3b95a4ea91299a34e894583c3862153e4b97',
-    'actions/upload-artifact': '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
-    'actions/download-artifact': '3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c',
-    'pypa/gh-action-pypi-publish': 'dc37677b2e1c63e2034f94d8a5b11f265b73ba33',
-  }
   for name, job in jobs.items():
     for step in job['steps']:
-      if 'uses' in step:
-        action, sha = step['uses'].split('@')
-        assert pins[action] == sha
       if 'run' in step and step.get('shell') == 'python':
         compile(step['run'], '<release-policy>', 'exec')
     if name in ('pypi', 'github-release'):
@@ -84,6 +75,32 @@ def test_workflow_structure() -> None:
   assert checkout['with']['persist-credentials'] is False
   assert jobs['build']['outputs']['artifact-id'] == '${{ steps.upload.outputs.artifact-id }}'
   assert '--package-output-dir' in workflow_code('build', 'Run full gate and retain its tested pair')
+
+
+def check_action_pins(text: str) -> None:
+  # Only the shape is checked here; reviewers match the tag to the SHA through the
+  # dependabot compare link. `yaml.safe_load` drops comments, so read the raw lines.
+  steps = [step['uses'] for job in yaml.safe_load(text)['jobs'].values() for step in job['steps'] if 'uses' in step]
+  lines = re.findall(r'^ *(?:- )?uses: (.*)$', text, re.MULTILINE)
+  assert [line.split(' #')[0] for line in lines] == steps, 'Expected each action on its own `uses:` line'
+  shape = r'[\w.-]+/[\w.-]+@[0-9a-f]{40} # v[0-9]+\.[0-9]+\.[0-9]+'
+  for line in lines:
+    assert re.fullmatch(shape, line), f'Expected `uses: owner/repo@<40-hex commit SHA> # vX.Y.Z`, got `uses: {line}`'
+
+
+@pytest.mark.parametrize('change, pattern, replacement', [
+  ('none', '', ''),
+  ('tag', r'@[0-9a-f]{40}', '@v7'),
+  ('short-sha', r'@([0-9a-f]{7})[0-9a-f]{33}', r'@\1'),
+  ('no-version', r'(@[0-9a-f]{40}) # v\S+', r'\1'),
+  ('quoted-key', r'- uses:', "- 'uses':"),
+])
+def test_action_pins(change: str, pattern: str, replacement: str) -> None:
+  if change == 'none':
+    check_action_pins(WORKFLOW_TEXT)
+  else:
+    with pytest.raises(AssertionError, match='Expected'):
+      check_action_pins(re.sub(pattern, replacement, WORKFLOW_TEXT, count=1))
 
 
 @pytest.fixture
@@ -198,15 +215,20 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
       run_policy(code)
 
 
+@pytest.mark.parametrize('notes, body', [
+  ('Release notes', 'Release notes'),
+  ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
+  ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
+])
 @pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'tag-race', 'asset-bytes'])
-def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
+def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, notes: str, body: str) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
   root = tmp_path / 'artifact'
   (root / 'dist').mkdir(parents=True)
   (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'tested sdist')
   (root / 'dist/bazi-1.0.0-py3-none-any.whl').write_bytes(b'tested wheel')
-  (root / 'RELEASE_NOTES.md').write_text('Release notes', encoding='utf-8')
+  (root / 'RELEASE_NOTES.md').write_text(notes, encoding='utf-8')
   writes: list[tuple[str, object]] = []
   def request(url: str | urllib.request.Request, timeout: int) -> io.BytesIO:
     address = url if isinstance(url, str) else url.full_url
@@ -228,7 +250,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
           raise urllib.error.HTTPError(address, 422, 'Already exists', {}, None)  # type: ignore[arg-type] # No headers needed.
       elif address.endswith('/releases'):
         assert json.loads(url.data) == {'tag_name': 'v1.0.0', 'target_commitish': SHA,
-          'name': 'bazi 1.0.0', 'body': 'Release notes', 'draft': True}
+          'name': 'bazi 1.0.0', 'body': body, 'draft': True}
         value = {'id': 1}
       elif '/assets?' in address:
         value = {'digest': 'sha256:' + ('0' * 64 if change == 'asset-bytes' else hashlib.sha256(url.data).hexdigest())}
