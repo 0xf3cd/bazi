@@ -4,7 +4,9 @@
 
 面向中文用户的 Python 3.11+ 八字排盘库，提供四柱、流运、关系与解释知识查询。
 运行时只用标准库及随库数据，无需联网或生成数据。
-本文对应当前源码；已发布版本请参阅[对应版本的 README](https://github.com/0xf3cd/bazi/blob/v1.0.0/README.md)。
+本文对应当前源码；已发布版本的说明见[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的 README。
+
+本库由个人维护，接受以 issue 提交的勘误与出处补充，暂不接受 PR。
 
 ## 安装与快速排盘
 
@@ -14,8 +16,8 @@
 python -m pip install .
 ```
 
-已发布的 1.0.0 可用 `python -m pip install bazi==1.0.0` 安装，但接口与当前源码不同；
-升级说明见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+已发布版本可用 `python -m pip install bazi` 从 PyPI 安装；版本间的变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+从旧版升级到 2.0.0 时，逐条迁移写法见其 [2.0.0 节](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-200)的「破坏性变更」。
 从定义模块导入所需类型，下文每个 Python 示例均可独立运行。
 
 ```python
@@ -85,7 +87,7 @@ print(chart.json['school'])
 [天文后端](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_utils.py)。
 
 命盘 JSON 可用 `BaziChart.from_json(chart.json)` 恢复；它重算并核对完整记录，只保证与当前版本一致。
-旧记录的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#unreleased)。
+旧记录的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-200)。
 需要核对其他排盘器时，见[外部排盘对照](https://github.com/0xf3cd/bazi/blob/main/EXTERNAL_BASELINE.md)。
 
 ### 地点与真太阳时
@@ -210,6 +212,17 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 
 `KnowledgeBase` 查询知识条目、展示原文与来源，也可导出 JSON 后重新加载。
 默认只查 `output='default'` 条目；`include_reference_only=True` 同时查阅仅供参考的条目。
+
+随库知识以旧语料为主，多数条目仅供参考、来源未核实。默认查询只返回有古籍见证、
+无条件适用的定义条目。条目按输出资格（行）与来源状态（列）计数：
+
+| `output` | `witnessed` 古籍见证 | `unverified` 未核实 | `editorial` 作者编写 | `repository_attributed` 本仓规则说明 | 合计 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `default` 默认输出 | 19 | 0 | 0 | 0 | 19 |
+| `reference_only` 仅供参考 | 12 | 245 | 22 | 4 | 283 |
+| 合计 | 31 | 245 | 22 | 4 | 302 |
+
+其中 262 条前提待梳理（`applicability='unresolved'`）。另有对象 31 个、情境 10 个、来源 13 个。
 
 ```python
 from bazi.defines import Tiangan
@@ -390,7 +403,7 @@ python run_tests.py -a -v
 
 ```sh
 python run_package_checks.py --output-dir ../bazi-tested
-python -m pip install ../bazi-tested/bazi-1.0.0-py3-none-any.whl
+python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
 ```
 
 输出目录须为空且在仓外。发布步骤见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md)。

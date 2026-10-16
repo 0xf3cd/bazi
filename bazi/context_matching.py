@@ -125,16 +125,16 @@ _CLASS_CRITERIA: Final[frozendict[str, frozendict[str, Shishen]]] = frozendict({
 
 # 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
-  'editorial.shishen.zhengguan.legal_trouble': '0cc47687bf24c6f5ffde1eda9d38ac5532838f765562aea57bf8e7f2cc6a582a',
-  'editorial.shishen.qisha.legal_trouble': 'f5ec75f1814c3409f0bda3d65d380d45c781201a78a259316e8e17eb59096434',
-  'editorial.shishen.zhengguan.infidelity': '02215c0a516e55e0d14b4da4f585685d954f692b9268857a3416aaff78487896',
-  'editorial.shishen.qisha.infidelity': '6c687b90559b0b56cfc51a39e165025aad94811c9948bebe5c51bae9fd4f2801',
-  'editorial.tanyuan.wife_palace_xingchong.v1': '9bfb37d64266e845b69d490d727bb330552b0d0d35f71389cd6afc3309d7a93c',
-  'editorial.tanyuan.wife_star_gantou.v1': '9ea58eda691503f17e09551047d31620e7642bc15474a1fed159a22004cff96a',
-  'legacy.tiangan.ding.weak_state': 'e7c85b7cbbdbd25a77fcde10c28715c1ee57dee159f58ad73a5bb18ba4a74b7e',
-  'legacy.tiangan.geng.regulated_transit': 'd5f0f6943e46472b5e11c0f07c447b4fab55821927fc163c2d57291beb9403ef',
-  'legacy.shishen.SH-199': '4eb06f81db686d6cd6cee37f0fdd58fb42fc10c52e0b8f980052b8a59346968d',
-  'legacy.shishen.SH-066': 'cb84c6882a582b624d442da32b7ce0a488d41be38714fcef96879873bbcaf61d',
+  'editorial.shishen.zhengguan.legal_trouble': 'd5cc38a85c86d67b130125b7832f1c68ba9499523dc5f3069ffa4c9fe83b79c8',
+  'editorial.shishen.qisha.legal_trouble': 'dfec24146c99cb472d08f13a81fa94aef179e45c1ae55ddbdd9031b11d6dd8b0',
+  'editorial.shishen.zhengguan.infidelity': '521a35869f53778daf677a2666a381696eb77f8749a68057999f55a83a8b68f2',
+  'editorial.shishen.qisha.infidelity': '478c85056c653e1aade39f7bbd3baa04bbf0a0ac981aa7605b5c8241455fc8ee',
+  'editorial.tanyuan.wife_palace_xingchong.v1': '39f4cfac78016b9ab61e302d5286c3560b3affe5a9ebfced07ed63cd29c5b69c',
+  'editorial.tanyuan.wife_star_gantou.v1': '19c0828c98c02e2d63f4d666b63e21e4fd2c38c220d28f3565851b1fd4cbecb1',
+  'legacy.tiangan.ding.weak_state': 'ed2b7f071196ad84e88b8353cbad6feefb865f7dd73e4877d39a9c905673c658',
+  'legacy.tiangan.geng.regulated_transit': 'd81819f4276641522e2ae51190b473e2da70ac6bf0a939d1c634081d45d2c31c',
+  'legacy.shishen.SH-199': '3bedc4dc359b82d45e1e4ae155719b36efae39e104c2492dcbf8a1824cb16de0',
+  'legacy.shishen.SH-066': '3b8543516b20f854f9105aad3cc9c237b7da13e5d5753a59fc424140de8c4537',
 })
 
 # 男命语境条文的性别门槛：女命查询不关联本条，静态查阅不受限；不在表内的条目无门槛。
