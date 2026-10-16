@@ -13,8 +13,8 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, ObservationScope, RelatedEntry, _BINDINGS, _binding_digest,
-  evaluate_context,
+  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, ObservationScope, RelatedEntry, _BINDINGS, _CRITERIA,
+  _binding_digest, evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen, DizhiRelation
 from bazi.knowledge import (
@@ -238,7 +238,7 @@ RECORD_PROFILES = (
   ContextProfile('natal_and_liunian'), ContextProfile('natal_and_liunian', 1998),
 )
 RECORD_CHARTS = ((3, 'female'), (5, 'male'))
-RECORD_CRITERIA = (GUANSHA, FEMALE, *CONDITION_CLAIMS)
+RECORD_CRITERIA = tuple(key for key, value in _CRITERIA.items() if value.profile_kind == 'context')
 
 
 @cache
@@ -825,7 +825,7 @@ from datetime import UTC as _UTC
 
 from bazi.bazi import BaziGender as _BaziGender
 from bazi.context_matching import (
-  RelationshipProfile, TransitCoordinate, _CLASS_CRITERIA, _CRITERIA, _DAY_MASTER_CRITERIA, _RECORD_VERSION, _RELATED_GENDERS,
+  RelationshipProfile, TransitCoordinate, _CLASS_CRITERIA, _DAY_MASTER_CRITERIA, _RECORD_VERSION, _RELATED_GENDERS,
 )
 from bazi.defines import Dizhi as _Dizhi
 
