@@ -12,7 +12,8 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, RelatedEntry, _BINDINGS, _binding_digest, evaluate_context,
+  ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, ObservationScope, RelatedEntry, _BINDINGS, _binding_digest,
+  evaluate_context,
 )
 from bazi.defines import Ganzhi, Tiangan, Shishen, DizhiRelation
 from bazi.knowledge import (
@@ -227,20 +228,39 @@ def test_condition_criteria_judge_only_computable_facts(
   assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
   data = json.loads(result.export_json())
   assert data['entries'] == [] and data['related'] == [{'claim_id': CONDITION_CLAIMS[criterion_id], 'recognized': True}]
-  assert data['relationship'] is None
   assert ContextResult.from_json(result.export_json()) == result
 
 
-@pytest.mark.parametrize('profile', [
-  ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024), ContextProfile('natal_and_liunian'),
+# One profile per scope state a context record can carry: complete natal, complete 流年, missing year, unavailable year.
+RECORD_PROFILES = (
+  ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024),
+  ContextProfile('natal_and_liunian'), ContextProfile('natal_and_liunian', 1998),
+)
+
+
+def test_record_profiles_cover_every_scope_state() -> None:
+  verdicts = [(profile, match(profile=profile).criterion) for profile in RECORD_PROFILES]
+  assert {p.observation_scope for p, c in verdicts if c.scope_complete} == set(get_args(ObservationScope))
+  assert {c.reason for _, c in verdicts if not c.scope_complete} == {'missing_transit_coordinate', 'transit_unavailable'}
+
+
+@pytest.mark.parametrize('field,message', [
+  ('reason', 'predicate_undefined'), ('definition', 'Unsupported criterion definition'), ('status', 'Status and reason disagree'),
 ])
-@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_restore_rejects_the_removed_undefined_reason(criterion_id: str, profile: ContextProfile) -> None:
+@pytest.mark.parametrize('profile', RECORD_PROFILES)
+@pytest.mark.parametrize('criterion_id', [GUANSHA, FEMALE, *CONDITION_CLAIMS])
+def test_restore_rejects_a_corrupted_criterion(criterion_id: str, profile: ContextProfile, field: str, message: str) -> None:
   result = match(3, criterion_id=criterion_id, profile=profile)
   assert ContextResult.from_json(result.export_json()) == result
   data = json.loads(result.export_json())
-  data['criterion']['reason'] = 'predicate_undefined'
-  with pytest.raises(ValueError, match='predicate_undefined'):
+  assert data['relationship'] is None
+  criterion = data['criterion']
+  criterion[field] = {
+    'reason': 'predicate_undefined',
+    'definition': '完整前提已由程序确认。',
+    'status': 'NOT_SATISFIED' if criterion['status'] == 'SATISFIED' else 'SATISFIED',
+  }[field]
+  with pytest.raises(ValueError, match=message):
     ContextResult.from_json(json.dumps(data, ensure_ascii=False))
 
 
@@ -572,8 +592,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
   original = json.loads(match(profile=ContextProfile('natal_and_liunian', 2024)).export_json())
   mutations = [
     ('profile', 'stem_scope', 'visible'), ('profile', 'ganzhi_year', True),
-    ('criterion', 'observations', []), ('criterion', 'definition', 'other'),
-    ('input', 'birth_time', '2000-01-03T12:00:00+00:00'),
+    ('criterion', 'observations', []), ('input', 'birth_time', '2000-01-03T12:00:00+00:00'),
     ('input', 'birth_time', '2000-01-03 12:00'), ('input', 'birth_time', '2000-01-03T12:00:01'),
     ('input', 'birth_time', 42), ('input', 'gender', '女'), ('input', 'pillars', ['甲子']),
     ('input', 'pillars', ['甲子', '甲子', '甲子', 42]),
