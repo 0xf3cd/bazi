@@ -1024,6 +1024,7 @@ def evaluate_context(
     else:
       reason = 'premise_satisfied' if target_stem_visible else 'required_classification_absent'
 
+    eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
     return ContextResult(
       profile,
       CriterionResult(
@@ -1036,7 +1037,7 @@ def evaluate_context(
       ),
       (),
       evidence,
-      tuple(RelatedEntry(*claim) for claim in _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)),
+      tuple(RelatedEntry(*claim) for claim in eligible),
       (),
       input_json,
       knowledge,

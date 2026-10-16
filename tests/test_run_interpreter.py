@@ -123,7 +123,8 @@ def test_matching_export_io_error(tmp_path: Path) -> None:
   ('shishen.pianyin_favorable_or_balanced', 'SATISFIED'),
   ('shishen.xiaoyin_duoshi', 'SATISFIED'),
 ])
-@pytest.mark.parametrize('year,reference', [(None, True), (2024, False)])
+@pytest.mark.parametrize('year', [None, 2024])
+@pytest.mark.parametrize('reference', [False, True])
 def test_matching_cli_condition_criteria_agree_with_library(
   tmp_path: Path, criterion_id: str, status: str, year: int | None, reference: bool,
 ) -> None:

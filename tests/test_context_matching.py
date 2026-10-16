@@ -195,10 +195,12 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   (DING, 10, None, {'day_master_ding': True}, 'premise_satisfied'),
   (DING, 3, None, {'day_master_ding': False}, 'day_master_differs'),
   (DING, 10, 2024, {'day_master_ding': True}, 'premise_satisfied'),
+  (DING, 3, 2024, {'day_master_ding': False}, 'day_master_differs'),
   (GENG, 3, None, {'day_master_geng': True}, 'premise_satisfied'),
   (GENG, 10, None, {'day_master_geng': False}, 'day_master_differs'),
   # The 2024 流年 is recorded as evidence but adds no observation key: it is not read as the text's 行运.
   (GENG, 3, 2024, {'day_master_geng': True}, 'premise_satisfied'),
+  (GENG, 10, 2024, {'day_master_geng': False}, 'day_master_differs'),
   # Day 3 holds 偏印 only as the 戊 hidden in 申 (literal inventory above); counting visible stems alone flips these.
   (PIANYIN, 3, None, {'pianyin_observed': True}, 'premise_satisfied'),
   (PIANYIN, 5, None, {'pianyin_observed': False}, 'required_classification_absent'),
@@ -225,12 +227,18 @@ def test_condition_criteria_judge_only_computable_facts(
   assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
   data = json.loads(result.export_json())
   assert data['entries'] == [] and data['related'] == [{'claim_id': CONDITION_CLAIMS[criterion_id], 'recognized': True}]
+  assert data['relationship'] is None
   assert ContextResult.from_json(result.export_json()) == result
 
 
+@pytest.mark.parametrize('profile', [
+  ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024), ContextProfile('natal_and_liunian'),
+])
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_restore_rejects_the_removed_undefined_reason(criterion_id: str) -> None:
-  data = json.loads(match(3, criterion_id=criterion_id, profile=ContextProfile('natal_and_liunian')).export_json())
+def test_restore_rejects_the_removed_undefined_reason(criterion_id: str, profile: ContextProfile) -> None:
+  result = match(3, criterion_id=criterion_id, profile=profile)
+  assert ContextResult.from_json(result.export_json()) == result
+  data = json.loads(result.export_json())
   data['criterion']['reason'] = 'predicate_undefined'
   with pytest.raises(ValueError, match='predicate_undefined'):
     ContextResult.from_json(json.dumps(data, ensure_ascii=False))
@@ -244,7 +252,7 @@ def test_condition_criteria_without_their_entry_still_judge_the_fact(criterion_i
   result = match(3, criterion_id=criterion_id, knowledge=custom)
   assert result.criterion == match(3, criterion_id=criterion_id).criterion
   assert result.related == () and result.entries == ()
-  assert '关联参考' not in result.render()
+  assert '关联参考' not in result.render() and '事实判别不表示原文完整条件已满足' in result.render()
   assert ContextResult.from_json(result.export_json()) == result
 
 
@@ -564,7 +572,8 @@ def test_restore_rejects_corrupt_nested_records() -> None:
   original = json.loads(match(profile=ContextProfile('natal_and_liunian', 2024)).export_json())
   mutations = [
     ('profile', 'stem_scope', 'visible'), ('profile', 'ganzhi_year', True),
-    ('criterion', 'observations', []), ('input', 'birth_time', '2000-01-03T12:00:00+00:00'),
+    ('criterion', 'observations', []), ('criterion', 'definition', 'other'),
+    ('input', 'birth_time', '2000-01-03T12:00:00+00:00'),
     ('input', 'birth_time', '2000-01-03 12:00'), ('input', 'birth_time', '2000-01-03T12:00:01'),
     ('input', 'birth_time', 42), ('input', 'gender', '女'), ('input', 'pillars', ['甲子']),
     ('input', 'pillars', ['甲子', '甲子', '甲子', 42]),
