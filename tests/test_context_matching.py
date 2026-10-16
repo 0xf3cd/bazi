@@ -3,6 +3,7 @@
 import json
 from dataclasses import FrozenInstanceError, asdict, fields, replace
 from datetime import datetime
+from functools import cache
 from pathlib import Path
 from typing import Any, get_args
 
@@ -236,29 +237,45 @@ RECORD_PROFILES = (
   ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024),
   ContextProfile('natal_and_liunian'), ContextProfile('natal_and_liunian', 1998),
 )
+RECORD_CHARTS = ((3, 'female'), (5, 'male'))
+RECORD_CRITERIA = (GUANSHA, FEMALE, *CONDITION_CLAIMS)
 
 
-def test_record_profiles_cover_every_scope_state() -> None:
-  verdicts = [(profile, match(profile=profile).criterion) for profile in RECORD_PROFILES]
-  assert {p.observation_scope for p, c in verdicts if c.scope_complete} == set(get_args(ObservationScope))
-  assert {c.reason for _, c in verdicts if not c.scope_complete} == {'missing_transit_coordinate', 'transit_unavailable'}
+@cache
+def record(criterion_id: str, profile: ContextProfile, day: int, gender: str) -> ContextResult:
+  return match(day, gender, criterion_id=criterion_id, profile=profile)
+
+
+def test_record_matrix_is_a_complete_legal_baseline() -> None:
+  results = [
+    (profile, record(criterion_id, profile, day, gender))
+    for criterion_id in RECORD_CRITERIA for profile in RECORD_PROFILES for day, gender in RECORD_CHARTS
+  ]
+  for _, result in results:
+    assert ContextResult.from_json(result.export_json()) == result
+    assert json.loads(result.export_json())['relationship'] is None
+  assert {p.observation_scope for p, r in results if r.criterion.scope_complete} == set(get_args(ObservationScope))
+  # binding_unrecognized qualifies entries only, never a criterion.
+  assert {r.criterion.reason for _, r in results} == set(get_args(MatchReason)) - {'binding_unrecognized'}
 
 
 @pytest.mark.parametrize('field,message', [
-  ('reason', 'predicate_undefined'), ('definition', 'Unsupported criterion definition'), ('status', 'Status and reason disagree'),
+  ('reason', 'predicate_undefined'), ('definition', 'Unsupported criterion definition'),
+  ('status', 'Status and reason disagree'), ('criterion_id', 'editorial.unregistered.v1'),
 ])
+@pytest.mark.parametrize('day,gender', RECORD_CHARTS)
 @pytest.mark.parametrize('profile', RECORD_PROFILES)
-@pytest.mark.parametrize('criterion_id', [GUANSHA, FEMALE, *CONDITION_CLAIMS])
-def test_restore_rejects_a_corrupted_criterion(criterion_id: str, profile: ContextProfile, field: str, message: str) -> None:
-  result = match(3, criterion_id=criterion_id, profile=profile)
-  assert ContextResult.from_json(result.export_json()) == result
-  data = json.loads(result.export_json())
-  assert data['relationship'] is None
+@pytest.mark.parametrize('criterion_id', RECORD_CRITERIA)
+def test_restore_rejects_a_corrupted_criterion(
+  criterion_id: str, profile: ContextProfile, day: int, gender: str, field: str, message: str,
+) -> None:
+  data = json.loads(record(criterion_id, profile, day, gender).export_json())
   criterion = data['criterion']
   criterion[field] = {
     'reason': 'predicate_undefined',
     'definition': '完整前提已由程序确认。',
     'status': 'NOT_SATISFIED' if criterion['status'] == 'SATISFIED' else 'SATISFIED',
+    'criterion_id': 'editorial.unregistered.v1',
   }[field]
   with pytest.raises(ValueError, match=message):
     ContextResult.from_json(json.dumps(data, ensure_ascii=False))
