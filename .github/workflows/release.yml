@@ -109,7 +109,7 @@ jobs:
           if {p.name for p in (bundle / 'dist').iterdir()} != names:
             raise SystemExit('Expected exactly the tested sdist and rebuilt wheel')
           if re.findall(r'^## (.*)$', Path('RELEASE_NOTES.md').read_text(), re.MULTILINE)[:1] != [f'bazi {version}']:
-            raise SystemExit(f'RELEASE_NOTES.md must open with a "## bazi {version}" section')
+            raise SystemExit(f'RELEASE_NOTES.md top section must be "## bazi {version}"')
           shutil.copyfile('RELEASE_NOTES.md', bundle / 'RELEASE_NOTES.md')
           metadata = {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'],
             'repository': os.environ['REPOSITORY'], 'run_id': os.environ['RUN_ID'], 'mode': os.environ['MODE']}

@@ -277,7 +277,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.parametrize('crlf', [False, True])
-@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'extra', 'misnamed', 'missing'])
+@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'])
 def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
@@ -287,7 +287,11 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   wheel.write_bytes(b'fixture wheel')
   (bundle / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'fixture sdist')
   (tmp_path / 'pyproject.toml').write_text('[project]\nversion = "1.0.0"\n', encoding='utf-8')
-  top = {'harmless-notes': '## bazi 1.0.0\n\n- Updated notes\n', 'unreleased-notes': '## Unreleased\n\n- Notes\n\n## bazi 1.0.0\n'}
+  top = {
+    'harmless-notes': '## bazi 1.0.0\n\n- Updated notes\n',
+    'unreleased-notes': '## Unreleased\n\n- Notes\n\n## bazi 1.0.0\n',
+    'wrong-version-notes': '## bazi 9.9.9\n\n- Notes\n',
+  }
   (tmp_path / 'RELEASE_NOTES.md').write_text('# 发布说明\n\n' + top.get(change, '## bazi 1.0.0\n\n- Notes\n'), encoding='utf-8')
   output = tmp_path / 'outputs'
   monkeypatch.setenv('RUNNER_TEMP', str(runner_temp))
@@ -307,8 +311,8 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
     return write_text(path, data, encoding=encoding, errors=errors, newline=newline)
   monkeypatch.setattr(Path, 'write_text', platform_write)
   seal = workflow_code('build', 'Seal release bundle')
-  if change in ('unreleased-notes', 'extra', 'misnamed', 'missing'):
-    message = 'must open with a "## bazi 1.0.0" section' if change == 'unreleased-notes' else 'Expected exactly the tested sdist and rebuilt wheel'
+  if change in ('unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'):
+    message = 'top section must be "## bazi 1.0.0"' if change.endswith('-notes') else 'Expected exactly the tested sdist and rebuilt wheel'
     with pytest.raises(SystemExit, match=message):
       run_policy(seal)
     assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
