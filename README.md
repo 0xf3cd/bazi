@@ -210,6 +210,8 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 
 ## 知识与前提匹配
 
+名称／关键词发现、判据目录及 API／JSON 约定见[公开接口与记录兼容契约](API_CONTRACT.md)。
+
 `KnowledgeBase` 查询知识条目、展示原文与来源，也可导出 JSON 后重新加载。
 默认只查 `output='default'` 条目；`include_reference_only=True` 同时查阅仅供参考的条目。
 
@@ -326,8 +328,8 @@ print(result.render())
 缺查询坐标、入口不可查询或所求种类部分缺失时返回 `UNKNOWN`，已取得岁运的证据照常保存。
 `--match-context` 另有 `--transit-entry`／`--gz-month`／`--solar-date`／`--solar-moment`／
 `--transit-kinds`；`--ganzhi-year` 同时是婚恋以外判据的流年坐标与 `at_year`／`at_month` 的年份坐标。
-婚恋判据关联的条文只是条件参考，不表示事实已成立或完整前提已满足；男命语境条文对女命
-不自动关联，静态知识查询不受限。
+婚恋判据关联的条文只是条件参考，不表示事实已成立或完整前提已满足；只向男命返回的关联条目
+对女命不自动关联，静态知识查询不受限。
 
 导出采用 `record_version=4`，保存查询坐标、请求与取得的岁运种类、结构证据与条件参考条目；
 版本 1–3 记录须从原出生输入及配置重新求值。

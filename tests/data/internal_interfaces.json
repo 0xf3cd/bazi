@@ -1,0 +1,49 @@
+{
+  "imports": {
+    "bazi/bazi.py|.calendar.celestial_data.loader|_EquationOfTimeRangeError": "历法数据加载器定义均时差专用范围错误；出生时间翻译它与OverflowError，不吞其他ValueError。",
+    "bazi/bazi.py|.utils.bazi_utils|_ganzhi_of_day_at_moment": "换日点的时刻日柱算法由八字工具所有，出生与流运共同调用；不扩成对外入口。",
+    "bazi/bazi_chart.py|.bazi|_parse_location": "LocationTimeJson的定义和严格恢复同属bazi模块，命盘恢复复用该定义。",
+    "bazi/bazi_chart.py|.school|_config_json": "流派配置字段与序列化由school所有，命盘只组合记录，不另维护字段表。",
+    "bazi/calendar/solar_time.py|.celestial_data.loader|_utc_instant": "历法加载与太阳时共用规范UTC瞬间转换，位于低层loader；无出生模块反向依赖。",
+    "bazi/context_matching.py|.bazi|_parse_location": "前提记录中的地点数据仍按LocationTimeJson所属模块恢复。",
+    "bazi/context_matching.py|._validation|_text": "判据目录共用非空文字校验，ID是否注册仍由目录查询入口检查。",
+    "bazi/context_matching.py|._validation|_choice": "前提记录与判据目录共用成员取值检查，不依赖知识库领域规则。",
+    "bazi/context_matching.py|._validation|_mapping": "前提记录共用JSON对象形状校验，版本与含义在context_matching内检查。",
+    "bazi/context_matching.py|._validation|_pairs": "前提JSON与知识JSON共同拒绝重复键，不静默覆盖。",
+    "bazi/context_matching.py|._validation|_tuple": "前提记录与判据目录共同校验元组及成员类型。",
+    "bazi/context_matching.py|.school|_config_json": "前提记录引用同一流派配置序列化，不重新定义配置契约。",
+    "bazi/knowledge.py|._validation|_text": "知识记录共用非空文字检查，领域限制留在knowledge。",
+    "bazi/knowledge.py|._validation|_choice": "通用成员值检查归包内validation，不公开新运行时接口。",
+    "bazi/knowledge.py|._validation|_tuple": "知识记录使用通用元组形状检查。",
+    "bazi/knowledge.py|._validation|_pairs": "知识JSON拒绝重复键，和前提记录共用实现。",
+    "bazi/knowledge.py|._validation|_mapping": "知识JSON共用字段集合检查，schema版本及引用校验留在knowledge。",
+    "bazi/transit_chart.py|.utils.bazi_utils|_ganzhi_of_day_at_moment": "流运调用日柱算法所属模块，保留命盘换日点与现有精度。",
+    "bazi/utils/dizhi_utils.py|.relation_discovery|_ordered_combos": "关系结果的规范排序属于共同关系发现表示，不属于天干或地支某一侧。",
+    "bazi/utils/dizhi_utils.py|.relation_discovery|_ordered_relation_pairs": "关系名与组合对的规范顺序归共同关系发现模块。",
+    "bazi/utils/tiangan_utils.py|.relation_discovery|_ordered_combos": "天干与地支共用同一关系组合排序语义。",
+    "bazi/utils/tiangan_utils.py|.relation_discovery|_ordered_relation_pairs": "天干与地支共用关系发现顺序，不复制排序规则。"
+  },
+  "members": {
+    "cross_module": {
+      "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
+      "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",
+      "bazi/context_matching.py|KnowledgeBase._from_data": "前提记录从已解码嵌套JSON恢复知识库，复用与公开from_json相同的严格校验。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于TransitDatabase；TransitChart先校验坐标及历法可用性，再调用包内入口。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_date": "按日期解释物理交运边界的包内入口，公开日期校验仍由TransitChart承担。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_moment": "按时刻解释物理交运边界的包内入口，公开时刻校验及出生下界仍由TransitChart承担。",
+      "bazi/transits.py|chart._dayun_empty_timeline_message": "空大运视图错误由产出该视图的BaziChart定义；数据库复用消息，不反推起运规则。",
+      "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": "长生起点与方向归规则表所有，两个工具函数只解释该共享表；不复制BaziRules的长生规则。"
+    },
+    "same_module_or_class": {
+      "bazi/analyzer/relationship.py|TransitAnalysis._ALL_LEVELS": "同模块对分析层次全集的读取，不是跨模块私有依赖。",
+      "bazi/bazi.py|other._identity": "同类值相等比较读取对方身份投影，保留封装。",
+      "bazi/bazi_chart.py|BaziJson._CommonChartJsonDict": "同模块JSON类型组合，不是运行时私有字段读取。",
+      "bazi/knowledge.py|other._value": "同类不可变值比较，不是跨模块协作。",
+      "bazi/rules.py|BaziRules._ZHANGSHENG_ROWS": "同模块使用五行阴阳长生规则行，仍由BaziRules定义。",
+      "bazi/transits.py|self._dayun_db._dayuns": "同模块两个数据库共享已求值的不可变大运元组，不二次消耗生成器。"
+    }
+  },
+  "repeated_members": {
+    "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": 2
+  }
+}

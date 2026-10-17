@@ -39,7 +39,7 @@ def main() -> int:
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
-  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+  from bazi.context_matching import ContextProfile, ContextResult, criterion as lookup_criterion, evaluate_context
   from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -354,6 +354,24 @@ def main() -> int:
      lambda: object_id(Dizhi.子)), # type: ignore[arg-type]
     ('KnowledgeBase.render_subject wrong identifier', TypeError,
      lambda: knowledge.render_subject(Tiangan.甲)), # type: ignore[arg-type]
+    ('Criterion directory wrong ID type', TypeError,
+     lambda: lookup_criterion(1)), # type: ignore[arg-type]
+    ('Criterion directory unknown ID', ValueError,
+     lambda: lookup_criterion('unknown')),
+    ('KnowledgeBase.find_objects wrong name', TypeError,
+     lambda: knowledge.find_objects(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.find_objects blank name', ValueError,
+     lambda: knowledge.find_objects('   ')),
+    ('KnowledgeBase.search wrong keyword', TypeError,
+     lambda: knowledge.search(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.search blank keyword', ValueError,
+     lambda: knowledge.search('   ')),
+    ('KnowledgeBase.search invalid filter before empty result', ValueError,
+     lambda: knowledge.search('no match', topic='unknown')),
+    ('KnowledgeBase.filter_values wrong dimension type', TypeError,
+     lambda: knowledge.filter_values(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.filter_values unknown dimension', ValueError,
+     lambda: knowledge.filter_values('include_reference_only')),
     ('KnowledgeBase.render_subject unknown object', ValueError,
      lambda: knowledge.render_subject('missing')),
     ('KnowledgeBase.render_subject truthy reference flag', TypeError,
@@ -610,6 +628,21 @@ def main() -> int:
         (f'Bazi constructor overflowing {name} sign={sign}', ValueError,
          partial(Bazi, aware_birth, BaziGender.男, location_config, longitude=sign * longitude_value)), # type: ignore[arg-type]
       ])
+
+  criterion_metadata = lookup_criterion('editorial.guansha_coexistence.v1')
+  for metadata_field in (
+    'criterion_id', 'definition', 'profile_type', 'entry_role', 'observation_keys',
+    'required_gender', 'claim_ids', 'claim_genders',
+  ):
+    checks.append((f'CriterionInfo rejects wrong {metadata_field}', TypeError,
+                   partial(replace, criterion_metadata, **{metadata_field: object()})))
+  checks.extend([
+    ('CriterionInfo rejects blank ID', ValueError, partial(replace, criterion_metadata, criterion_id=' ')),
+    ('CriterionInfo rejects empty definition', ValueError, partial(replace, criterion_metadata, definition='')),
+    ('CriterionInfo rejects empty metadata', ValueError, partial(replace, criterion_metadata, claim_ids=())),
+    ('CriterionInfo rejects unsupported profile type', ValueError, partial(replace, criterion_metadata, profile_type=int)),
+    ('CriterionInfo remains frozen', AttributeError, partial(setattr, criterion_metadata, 'definition', 'changed')),
+  ])
 
   no_offset_birth = datetime(2000, 1, 1, tzinfo=MissingOffset())
   checks.extend([

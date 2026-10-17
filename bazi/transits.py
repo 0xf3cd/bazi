@@ -1,5 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''流运数据类型及命盘小运、大运查询。'''
+
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -115,7 +117,11 @@ class TransitSet:
 
 
 class TransitDatabase:
-  '''查询命盘小运、按年份标签解释的大运及按物理边界解释的大运。'''
+  '''查询命盘小运、按年份标签解释的大运及按物理边界解释的大运。
+
+  `_dayun_at_*` 是供 TransitChart 使用的包内物理边界入口；调用方先校验坐标、出生下界及
+  历法可用性，这些入口只解释交运边界，不重复公开入口校验，也不承诺包外调用。
+  '''
   def __init__(self, chart: BaziChart) -> None:
     bazi = chart.bazi
     # 出生年采用按出生精度归属的 Bazi.ganzhi_year，与年柱同源。

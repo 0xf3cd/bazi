@@ -120,7 +120,7 @@ def main() -> None:
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
-  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+  from bazi.context_matching import ContextProfile, ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context
 
   check(not EOT_READS, 'Imports eagerly read the EOT table')
   for longitude, error_type in ((True, TypeError), (float('nan'), ValueError), (180.01, ValueError)):
@@ -354,6 +354,14 @@ def main() -> None:
       f'Wrong complete Shishen projection: {shishen}',
     )
   check(len(knowledge.entries) == 302 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  for subject in knowledge.objects.values():
+    check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
+    check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
+  for dimension in ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'):
+    values = knowledge.filter_values(dimension)
+    check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
+    for filter_value in values:
+      check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
   check(len(knowledge.sources) == 13, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
@@ -370,6 +378,9 @@ def main() -> None:
   check(relation.text not in knowledge.render_subject('shishen.qisha', include_reference_only=True), 'Subject projection became all-role query')
   check(relation.text in knowledge.render_subject('shishen.shishen', include_reference_only=True), 'Subject projection lost its subject')
   for knowledge_operation in (
+    lambda: knowledge.find_objects(1), # type: ignore[arg-type]
+    lambda: knowledge.search(1), # type: ignore[arg-type]
+    lambda: knowledge.filter_values(1), # type: ignore[arg-type]
     lambda: object_id(Dizhi.子), # type: ignore[arg-type]
     lambda: knowledge.render(reference_entry, premise_verdict=1), # type: ignore[arg-type]
     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1), # type: ignore[arg-type]
@@ -393,6 +404,31 @@ def main() -> None:
   else:
     raise RuntimeError('Optimized knowledge input rejection failed')
   print('PASS installed knowledge query/display/export/reload')
+  catalog = criteria()
+  check(set(catalog) == {
+    'editorial.guansha_coexistence.v1', 'editorial.guansha_coexistence_female.v1',
+    'tiangan.ding_weak_and_overcontrolled', 'tiangan.geng_regulated_transit',
+    'shishen.pianyin_favorable_or_balanced', 'shishen.xiaoyin_duoshi',
+    'editorial.spouse_palace_xingchong.v1', 'editorial.spouse_star_tougan.v1',
+  }, 'Installed criterion directory incomplete')
+  for identifier, info in catalog.items():
+    check(isinstance(info, CriterionInfo) and lookup_criterion(identifier) == info, 'Installed criterion metadata mismatch')
+    check(bool(info.observation_keys) and bool(info.definition.strip()), 'Installed criterion metadata missing')
+    check(all(claim_id in knowledge.entries for claim_id in info.claim_ids), 'Installed default claim convention missing')
+  for invalid_identifier in ('', 'unknown'):
+    try:
+      lookup_criterion(invalid_identifier)
+    except ValueError:
+      pass
+    else:
+      raise RuntimeError('Installed criterion lookup accepted an unknown ID')
+  try:
+    lookup_criterion(1) # type: ignore[arg-type]
+  except TypeError:
+    pass
+  else:
+    raise RuntimeError('Installed criterion lookup skipped type validation')
+  print('PASS installed immutable criterion directory')
   criterion = 'editorial.guansha_coexistence.v1'
   positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
   matched = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal'), include_reference_only=True)

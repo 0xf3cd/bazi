@@ -1,0 +1,543 @@
+{
+  "source_sha": "ddfe16e7c51d695167b09cc4c2f64ba46e7565c3",
+  "chart": {
+    "birth_time": "2000-01-01T12:00:00",
+    "gender": "male",
+    "precision": "day",
+    "backend": "celestial",
+    "dayun_year_rule": "jie_projected",
+    "school": {
+      "day_rollover": "WAN_ZISHI",
+      "anhe_def": "NORMAL_EXTENDED",
+      "xing_def": "LOOSE",
+      "gong_def": "SAME_STEM_NARROW",
+      "yangren_def": "ZIPING",
+      "feiren_def": "ZIPING",
+      "hongyan_anchor": "DAY",
+      "tianyi_anchor": "YEAR_AND_DAY",
+      "tianyi_def": "GENG_WITH_JIA_WU",
+      "yima_anchor": "YEAR_AND_DAY",
+      "huagai_anchor": "YEAR_AND_DAY",
+      "jiangxing_anchor": "YEAR_AND_DAY",
+      "jiesha_anchor": "YEAR_AND_DAY",
+      "wangshen_anchor": "YEAR_AND_DAY",
+      "jinyu_anchor": "DAY",
+      "zaisha_anchor": "YEAR",
+      "wenchang_anchor": "YEAR_AND_DAY",
+      "wenchang_def": "XIN_ZI",
+      "taiji_anchor": "YEAR_AND_DAY",
+      "taiji_def": "REN_GUI_BOTH",
+      "guoyin_anchor": "YEAR_AND_DAY",
+      "guoyin_def": "MODERN",
+      "peiou_xing_def": "ZHENGCAI_ZHENGGUAN"
+    },
+    "pillars": {
+      "year": "己卯",
+      "month": "丙子",
+      "day": "戊午",
+      "hour": "戊午"
+    },
+    "nayin": {
+      "year": "城头土",
+      "month": "涧下水",
+      "day": "天上火",
+      "hour": "天上火"
+    },
+    "shier_zhangsheng": {
+      "year": "沐浴",
+      "month": "胎",
+      "day": "帝旺",
+      "hour": "帝旺"
+    },
+    "tiangan_traits": {
+      "year": "阴土",
+      "month": "阳火",
+      "day": "阳土",
+      "hour": "阳土"
+    },
+    "dizhi_traits": {
+      "year": "阴木",
+      "month": "阳水",
+      "day": "阳火",
+      "hour": "阳火"
+    },
+    "tiangan_shishen": {
+      "year": "劫财",
+      "month": "偏印",
+      "day": null,
+      "hour": "比肩"
+    },
+    "dizhi_shishen": {
+      "year": "正官",
+      "month": "正财",
+      "day": "正印",
+      "hour": "正印"
+    },
+    "hidden_tiangan": {
+      "year": "乙:100",
+      "month": "癸:100",
+      "day": "丁:70,己:30",
+      "hour": "丁:70,己:30"
+    },
+    "transits": {
+      "dayun_start_time": "2008-03-11T12:44:53.333333",
+      "xiaoyun": {
+        "1": "丁巳",
+        "2": "丙辰",
+        "3": "乙卯",
+        "4": "甲寅",
+        "5": "癸丑",
+        "6": "壬子",
+        "7": "辛亥",
+        "8": "庚戌",
+        "9": "己酉",
+        "10": "戊申"
+      },
+      "dayun": {
+        "2008": {
+          "ganzhi": "乙亥",
+          "start_time": "2008-03-11T12:44:53.333333",
+          "end_time": "2018-03-11T12:44:53.333333"
+        },
+        "2018": {
+          "ganzhi": "甲戌",
+          "start_time": "2018-03-11T12:44:53.333333",
+          "end_time": "2028-03-11T12:44:53.333333"
+        },
+        "2028": {
+          "ganzhi": "癸酉",
+          "start_time": "2028-03-11T12:44:53.333333",
+          "end_time": "2038-03-11T12:44:53.333333"
+        },
+        "2038": {
+          "ganzhi": "壬申",
+          "start_time": "2038-03-11T12:44:53.333333",
+          "end_time": "2048-03-11T12:44:53.333333"
+        },
+        "2048": {
+          "ganzhi": "辛未",
+          "start_time": "2048-03-11T12:44:53.333333",
+          "end_time": "2058-03-11T12:44:53.333333"
+        },
+        "2058": {
+          "ganzhi": "庚午",
+          "start_time": "2058-03-11T12:44:53.333333",
+          "end_time": "2068-03-11T12:44:53.333333"
+        },
+        "2068": {
+          "ganzhi": "己巳",
+          "start_time": "2068-03-11T12:44:53.333333",
+          "end_time": "2078-03-11T12:44:53.333333"
+        },
+        "2078": {
+          "ganzhi": "戊辰",
+          "start_time": "2078-03-11T12:44:53.333333",
+          "end_time": "2088-03-11T12:44:53.333333"
+        },
+        "2088": {
+          "ganzhi": "丁卯",
+          "start_time": "2088-03-11T12:44:53.333333",
+          "end_time": "2098-03-11T12:44:53.333333"
+        },
+        "2098": {
+          "ganzhi": "丙寅",
+          "start_time": "2098-03-11T12:44:53.333333",
+          "end_time": "2108-03-11T12:44:53.333333"
+        }
+      }
+    }
+  },
+  "knowledge": {
+    "schema_version": 1,
+    "objects": [
+      {
+        "object_id": "shishen.zhengguan",
+        "kind": "shishen",
+        "name": "正官"
+      },
+      {
+        "object_id": "shishen.qisha",
+        "kind": "shishen",
+        "name": "七杀"
+      }
+    ],
+    "contexts": [
+      {
+        "context_id": "editorial.guansha_coexistence",
+        "label": "官杀共现原作条目前提",
+        "time_scope": "显式选择原局或原局加单流年",
+        "limits": [
+          "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+          "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "editorial",
+        "work": "本仓解释语料",
+        "attribution": "本仓作者 Ningqi Wang",
+        "edition": "本仓编写，经 issue #24 确认",
+        "locator": "见 PR #222",
+        "url": "https://github.com/0xf3cd/bazi/pull/222",
+        "text_layer": "editorial",
+        "lineage": "editorial",
+        "excerpt": "本仓原创编写的文字。",
+        "supports": "署名，以及仅供参考的输出分类。",
+        "limitations": "不确立古籍规则，也不作现实预测。",
+        "state": "editorial"
+      }
+    ],
+    "entries": [
+      {
+        "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+        "text": "如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+        "roles": [
+          {
+            "name": "讨论对象",
+            "object_id": "shishen.zhengguan"
+          }
+        ],
+        "relations": [],
+        "topics": [
+          "取象"
+        ],
+        "applicability": "described",
+        "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+        "contexts": [
+          "editorial.guansha_coexistence"
+        ],
+        "sources": [
+          "editorial"
+        ],
+        "source_state": "editorial",
+        "attribution": "作者编写",
+        "viewpoint": "仓内原作",
+        "exceptions": [],
+        "limits": [],
+        "output": "reference_only",
+        "legacy": {
+          "object_id": "shishen.zhengguan",
+          "field": "general",
+          "ordinal": 9,
+          "conditions": [],
+          "field_premise": ""
+        }
+      },
+      {
+        "claim_id": "editorial.shishen.qisha.legal_trouble",
+        "text": "如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+        "roles": [
+          {
+            "name": "讨论对象",
+            "object_id": "shishen.qisha"
+          }
+        ],
+        "relations": [],
+        "topics": [
+          "取象"
+        ],
+        "applicability": "described",
+        "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+        "contexts": [
+          "editorial.guansha_coexistence"
+        ],
+        "sources": [
+          "editorial"
+        ],
+        "source_state": "editorial",
+        "attribution": "作者编写",
+        "viewpoint": "仓内原作",
+        "exceptions": [],
+        "limits": [],
+        "output": "reference_only",
+        "legacy": {
+          "object_id": "shishen.qisha",
+          "field": "general",
+          "ordinal": 8,
+          "conditions": [],
+          "field_premise": ""
+        }
+      }
+    ]
+  },
+  "context": {
+    "record_version": 4,
+    "profile": {
+      "observation_scope": "natal",
+      "ganzhi_year": null
+    },
+    "criterion": {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "definition": "选定范围内正官与七杀各至少出现一次。",
+      "status": "NOT_SATISFIED",
+      "reason": "required_classification_absent",
+      "scope_complete": true,
+      "observations": {
+        "observed_coexistence": false,
+        "female": false
+      }
+    },
+    "occurrences": [
+      {
+        "origin": "natal",
+        "pillar": "year",
+        "ganzhi": "己卯",
+        "layer": "visible",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "year",
+        "ganzhi": "己卯",
+        "layer": "hidden",
+        "stem": "乙",
+        "shishen": "正官",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "month",
+        "ganzhi": "丙子",
+        "layer": "visible",
+        "stem": "丙",
+        "shishen": "偏印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "month",
+        "ganzhi": "丙子",
+        "layer": "hidden",
+        "stem": "癸",
+        "shishen": "正财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "day",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "丁",
+        "shishen": "正印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "day",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "visible",
+        "stem": "戊",
+        "shishen": "比肩",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "丁",
+        "shishen": "正印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      }
+    ],
+    "relationship": null,
+    "related": [],
+    "entries": [
+      {
+        "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+        "status": "NOT_SATISFIED",
+        "reason": "required_classification_absent"
+      },
+      {
+        "claim_id": "editorial.shishen.qisha.legal_trouble",
+        "status": "NOT_SATISFIED",
+        "reason": "required_classification_absent"
+      }
+    ],
+    "input": {
+      "birth_time": "2000-01-01T12:00:00",
+      "gender": "male",
+      "config": {
+        "backend": "celestial",
+        "precision": "day",
+        "dayun_year_rule": "jie_projected",
+        "school": {
+          "day_rollover": "WAN_ZISHI",
+          "anhe_def": "NORMAL_EXTENDED",
+          "xing_def": "LOOSE",
+          "gong_def": "SAME_STEM_NARROW",
+          "yangren_def": "ZIPING",
+          "feiren_def": "ZIPING",
+          "hongyan_anchor": "DAY",
+          "tianyi_anchor": "YEAR_AND_DAY",
+          "tianyi_def": "GENG_WITH_JIA_WU",
+          "yima_anchor": "YEAR_AND_DAY",
+          "huagai_anchor": "YEAR_AND_DAY",
+          "jiangxing_anchor": "YEAR_AND_DAY",
+          "jiesha_anchor": "YEAR_AND_DAY",
+          "wangshen_anchor": "YEAR_AND_DAY",
+          "jinyu_anchor": "DAY",
+          "zaisha_anchor": "YEAR",
+          "wenchang_anchor": "YEAR_AND_DAY",
+          "wenchang_def": "XIN_ZI",
+          "taiji_anchor": "YEAR_AND_DAY",
+          "taiji_def": "REN_GUI_BOTH",
+          "guoyin_anchor": "YEAR_AND_DAY",
+          "guoyin_def": "MODERN",
+          "peiou_xing_def": "ZHENGCAI_ZHENGGUAN"
+        }
+      },
+      "pillars": [
+        "己卯",
+        "丙子",
+        "戊午",
+        "戊午"
+      ]
+    },
+    "knowledge": {
+      "schema_version": 1,
+      "objects": [
+        {
+          "object_id": "shishen.zhengguan",
+          "kind": "shishen",
+          "name": "正官"
+        },
+        {
+          "object_id": "shishen.qisha",
+          "kind": "shishen",
+          "name": "七杀"
+        }
+      ],
+      "contexts": [
+        {
+          "context_id": "editorial.guansha_coexistence",
+          "label": "官杀共现原作条目前提",
+          "time_scope": "显式选择原局或原局加单流年",
+          "limits": [
+            "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "editorial",
+          "work": "本仓解释语料",
+          "attribution": "本仓作者 Ningqi Wang",
+          "edition": "本仓编写，经 issue #24 确认",
+          "locator": "见 PR #222",
+          "url": "https://github.com/0xf3cd/bazi/pull/222",
+          "text_layer": "editorial",
+          "lineage": "editorial",
+          "excerpt": "本仓原创编写的文字。",
+          "supports": "署名，以及仅供参考的输出分类。",
+          "limitations": "不确立古籍规则，也不作现实预测。",
+          "state": "editorial"
+        }
+      ],
+      "entries": [
+        {
+          "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+          "text": "如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.zhengguan"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.zhengguan",
+            "field": "general",
+            "ordinal": 9,
+            "conditions": [],
+            "field_premise": ""
+          }
+        },
+        {
+          "claim_id": "editorial.shishen.qisha.legal_trouble",
+          "text": "如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.qisha"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.qisha",
+            "field": "general",
+            "ordinal": 8,
+            "conditions": [],
+            "field_premise": ""
+          }
+        }
+      ]
+    }
+  },
+  "full_knowledge_sha256": "15eb6b066357e68b58996fcd603972cf4a94f4b6ded70d591ddfd8595a574fa7"
+}

@@ -1,0 +1,2247 @@
+{
+  "source_sha": "ddfe16e7c51d695167b09cc4c2f64ba46e7565c3",
+  "cases": [
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.legal_trouble",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "14374f5945634002495383cc7dca75e979aa025ac279c41145890d42dfea2994"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.legal_trouble",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "ba2563b26c0d798a2ebd347153c43ccea51675bd78f50f9c4946ac6b567a47ad"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+            "status": "UNKNOWN",
+            "reason": "missing_transit_coordinate"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.legal_trouble",
+            "status": "UNKNOWN",
+            "reason": "missing_transit_coordinate"
+          }
+        ],
+        "related": [],
+        "record_sha256": "c549ff30ec8734bbdd51e3a4a4e34eabd824b511744498f5cef9af1d6f40cafb"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+            "status": "UNKNOWN",
+            "reason": "transit_unavailable"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.legal_trouble",
+            "status": "UNKNOWN",
+            "reason": "transit_unavailable"
+          }
+        ],
+        "related": [],
+        "record_sha256": "69bf5f48d151d5116a59242562a2b7f6bdac441fa6b07b8692f17e190211d29f"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+            "status": "UNKNOWN",
+            "reason": "binding_unrecognized"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.legal_trouble",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "a5c8d77808a35e01fc1e37b695adadd80a1d531000cbabbe67028d5f372881b6"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "c612a3fb7ae89c21854099458ecbe8836673fcc8ba5bd1ef69cee94812bd58ce"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.legal_trouble",
+        "editorial.shishen.qisha.legal_trouble"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "56ed33b44c452f6bfa5bfe98f262074f637f28ee7443f34d2e1b1ed0a5d7a18a"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.infidelity",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.infidelity",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "5f147e5fc25d7b0e493dd05b81fb13db2f1c103b3f876c0b2b9f1b7322ba91ed"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.infidelity",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.infidelity",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "01f25941db0049a0c3fe82c632c9250f39bfdc8b7ba37890aee301fbd89cf447"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.infidelity",
+            "status": "UNKNOWN",
+            "reason": "missing_transit_coordinate"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.infidelity",
+            "status": "UNKNOWN",
+            "reason": "missing_transit_coordinate"
+          }
+        ],
+        "related": [],
+        "record_sha256": "4d3228e36334d1fbce895a922e80fe277c095c2e76470b3d40f33b66450d1c77"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.infidelity",
+            "status": "UNKNOWN",
+            "reason": "transit_unavailable"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.infidelity",
+            "status": "UNKNOWN",
+            "reason": "transit_unavailable"
+          }
+        ],
+        "related": [],
+        "record_sha256": "b8a3bf3e3deb0441003d03842a0369890db057de0f38dd6baf3c3d21bba3ce3c"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [
+          {
+            "claim_id": "editorial.shishen.zhengguan.infidelity",
+            "status": "UNKNOWN",
+            "reason": "binding_unrecognized"
+          },
+          {
+            "claim_id": "editorial.shishen.qisha.infidelity",
+            "status": "SATISFIED",
+            "reason": "premise_satisfied"
+          }
+        ],
+        "related": [],
+        "record_sha256": "b02bea12ec24068ad0a9bfd3bc4c11c1017ef7d72fc7387ada7dab9cf6b67dd5"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "21f6773ab256487969e5c174283176531cae493cdeb2733ef2f39c978bd375b4"
+      }
+    },
+    {
+      "criterion_id": "editorial.guansha_coexistence_female.v1",
+      "profile_kind": "context",
+      "entry_role": "premise",
+      "observation_keys": [
+        "observed_coexistence",
+        "female"
+      ],
+      "claim_ids": [
+        "editorial.shishen.zhengguan.infidelity",
+        "editorial.shishen.qisha.infidelity"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.guansha_coexistence_female.v1",
+          "definition": "选定范围内正官与七杀各至少出现一次，且输入为女命。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "observed_coexistence": true,
+            "female": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "c75b4d98b4402d8df1d1e07a1b307bc8872b5d4dc41ebed941a261b0419e1c76"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "NOT_SATISFIED",
+          "reason": "day_master_differs",
+          "scope_complete": true,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.ding.weak_state",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "8d066bdfdc5d491d3efea34adcbecc7dc37a0e10a6b1f78c989699132d30be94"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "NOT_SATISFIED",
+          "reason": "day_master_differs",
+          "scope_complete": true,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.ding.weak_state",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "a9070d75db539e51b3ce747e2c7108b3ab99472da2f65000e6d493fb0d4b8df0"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.ding.weak_state",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "db492bc40a236e250e71d06191d4ca8b5d52af6e61d08dc39ef5703075949d82"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.ding.weak_state",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "19710378854c310dd60e6b0d7aa083231df25fa801b32e9f8605c7663b7e4f35"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "NOT_SATISFIED",
+          "reason": "day_master_differs",
+          "scope_complete": true,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.ding.weak_state",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "bff32a3e1f9ed4d26cce4f0e0370cd880529d779dcb6a2a6ef2d4edadfa524bf"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "NOT_SATISFIED",
+          "reason": "day_master_differs",
+          "scope_complete": true,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "75bab66a27ee4bda53333764ddff79968104a7ac401689f919a3de09548aa3d3"
+      }
+    },
+    {
+      "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_ding"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.ding.weak_state"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.ding_weak_and_overcontrolled",
+          "definition": "日主为丁火；身弱、克太多留在条目文字中，程序不判别。",
+          "status": "NOT_SATISFIED",
+          "reason": "day_master_differs",
+          "scope_complete": true,
+          "observations": {
+            "day_master_ding": false
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "b9182f06616cdb1702dbc8829412cf83414c60beadb2b804c8d633dd776867cf"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.geng.regulated_transit",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "1a6d3f8ccee6390ae8c6d45278c38d4b467ff512540dd3c137326112d55981c7"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.geng.regulated_transit",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "e4a00fa3036d9c0c9922b17f0a3ef4453596ce9c1097004c1aa34abc5413a3b0"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.geng.regulated_transit",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "10ab4bea880eb29ddb3163f132b7723c0a3821a709158faffaf6b16f08226375"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.geng.regulated_transit",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "475cf5eb52c6cdc41a2b0cab581e5166a06bf4d773eaff5a39d1306a7f570435"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.tiangan.geng.regulated_transit",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "e4d14a03ebf5b8430ad9ab01992fdf427a7a1ee6bb417589ff4322e8e1d2b6d0"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "a7813456931d5e5b4c2ea5592c2f83ed943f1a2ee58aa23f2dadac8eda8e4a29"
+      }
+    },
+    {
+      "criterion_id": "tiangan.geng_regulated_transit",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_master_geng"
+      ],
+      "claim_ids": [
+        "legacy.tiangan.geng.regulated_transit"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "tiangan.geng_regulated_transit",
+          "definition": "日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_master_geng": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "235fe72530587320f316df34f4a1d3caa9fc714254e5164f4e8960fd439417f7"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-199",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "c833534fe9b68faf44f4fbca3897c278f801f4cf8f0367a6b6cf6d00e25f7b0a"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-199",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "3e585ad95d944754509a30b4059db66bc94a26f346ce644da1dc8d4a8d3240b8"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-199",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "4e752de6dc6fa4a33c6a6db6c28cda1a2c4021e67bdd43cea0befba5e99f73c6"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-199",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "7d92ab61a3aed3836b72db517ced0b1be80ec7fefc20ee3a6e0eccc0fd0264ad"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-199",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "c79069e2e257abeddb3fb215cfe4dde9bb93faffbabb0662212783d106676329"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "ad0b2b5e545116b84dc7bafe8a74e34049c95f6505deaa917fb51c6b4bc65997"
+      }
+    },
+    {
+      "criterion_id": "shishen.pianyin_favorable_or_balanced",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-199"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.pianyin_favorable_or_balanced",
+          "definition": "选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "b1ecd7300e596bb36c463841c21a7330d8166d9cf6d8256888748e4d368015a0"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "natal",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-066",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "d4cc892d6c678ea7218220fb3fffaa772df8ed31d4191bc2c458ec4f52ac8559"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "transit",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 2024
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-066",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "00ebd953d61d68ff97a7354bb0dddbc155c65ed28e76c2d24bee51b036b1a691"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "missing",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-066",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "051c3f6f2bbeb8d32f893d69043b73551b3cb30f6d6513b696e9edd2d7a8aea6"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "unavailable",
+      "profile": {
+        "observation_scope": "natal_and_liunian",
+        "ganzhi_year": 1998
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-066",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "2287d258f6132ca99d850c4ba6f595d180b73a11612e62b06829529debcae8fc"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "binding_changed",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "legacy.shishen.SH-066",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "1da8a0bc444980beaf4dd43f4d4f25e8984b9e06121664199bdb8f3f475fdf97"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "entry_missing",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "26cbd83c49151ca4cfbae3181aa088b692dfafbb834c8723823e1ac33924e4ed"
+      }
+    },
+    {
+      "criterion_id": "shishen.xiaoyin_duoshi",
+      "profile_kind": "context",
+      "entry_role": "condition",
+      "observation_keys": [
+        "pianyin_observed",
+        "shishen_observed"
+      ],
+      "claim_ids": [
+        "legacy.shishen.SH-066"
+      ],
+      "birth": "2000-01-03 12:00",
+      "gender": "female",
+      "scenario": "default_output",
+      "profile": {
+        "observation_scope": "natal",
+        "ganzhi_year": null
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "shishen.xiaoyin_duoshi",
+          "definition": "选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "pianyin_observed": true,
+            "shishen_observed": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "f3760f160c83ec311e03dc964c036837a64731c7972a584961fc6a241e2fc750"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "natal",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "c764226630b8338c5da161cd24e594ddaff54e58e4d35bcbd165291c14d11707"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "transit",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": {
+          "entry": "at_year",
+          "gz_year": 2024,
+          "gz_month": null,
+          "solar_date": null,
+          "solar_moment": null
+        },
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "63c6fd44c78659c9ef43664bbbfbb3a4389b874efd25492d38f612b29604474c"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "missing",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": null,
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "4966950d300608c4b6351ce5670030f39f1558b3d091eb353e85cc80bbd55372"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "unavailable",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": {
+          "entry": "at_year",
+          "gz_year": 1998,
+          "gz_month": null,
+          "solar_date": null,
+          "solar_moment": null
+        },
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "34cbd71d317bf67b395f52301faea0d4d6dda34d66dd52022f7a9f07afb3b19f"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "binding_changed",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_palace_xingchong.v1",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "cedb4f6c4052b0789f27bcc4482b1c43a684c3994c71c4b327f64e942b70e5f7"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "entry_missing",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "c5fed55543a8f09faf49d615ae0ee73b2afe3c4c101d74c349c246a9893188d3"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_palace_xingchong.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "day_pillar_in_chong",
+        "day_pillar_in_xing"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_palace_xingchong.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "default_output",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_palace_xingchong.v1",
+          "definition": "选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。",
+          "status": "SATISFIED",
+          "reason": "premise_satisfied",
+          "scope_complete": true,
+          "observations": {
+            "day_pillar_in_chong": true,
+            "day_pillar_in_xing": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "6c8340ae1971caa11386d87e12ac07babb63e2e511ad4baf838bc0a3073631ae"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "natal",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "NOT_SATISFIED",
+          "reason": "required_classification_absent",
+          "scope_complete": true,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "80faf1ad49eda70823439a37cfb0e5ab8fd7ce55570610a0a100693371ff3cfd"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "transit",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": {
+          "entry": "at_year",
+          "gz_year": 2024,
+          "gz_month": null,
+          "solar_date": null,
+          "solar_moment": null
+        },
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "NOT_SATISFIED",
+          "reason": "required_classification_absent",
+          "scope_complete": true,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "2d84e98eed1e4bb1b47e9478e2a5c941d95bd02c7a22479fd342f68e152df95d"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "missing",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": null,
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "UNKNOWN",
+          "reason": "missing_transit_coordinate",
+          "scope_complete": false,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "beb7893e03cb9076c6a5b5aad309ac07ac3d53f37f2715f9fd34341d68d95c29"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "unavailable",
+      "profile": {
+        "scope": "natal_and_transits",
+        "coordinate": {
+          "entry": "at_year",
+          "gz_year": 1998,
+          "gz_month": null,
+          "solar_date": null,
+          "solar_moment": null
+        },
+        "kinds": [
+          "liunian"
+        ]
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "UNKNOWN",
+          "reason": "transit_unavailable",
+          "scope_complete": false,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+            "recognized": true
+          }
+        ],
+        "record_sha256": "923cf007de455008fbe581319d5b0b66a0a27366d21e6c6b2fbad79c1ea2a159"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "binding_changed",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "NOT_SATISFIED",
+          "reason": "required_classification_absent",
+          "scope_complete": true,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [
+          {
+            "claim_id": "editorial.tanyuan.wife_star_gantou.v1",
+            "recognized": false
+          }
+        ],
+        "record_sha256": "c727439d3889f222d8144fb8a815e5edd537cb2663eee7d60e671a8ece84f4d7"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "entry_missing",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "NOT_SATISFIED",
+          "reason": "required_classification_absent",
+          "scope_complete": true,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "bc41a0503490f94313ba645d1d0038c1537b05cc0007c62e7b5991c37534ab25"
+      }
+    },
+    {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "profile_kind": "relationship",
+      "entry_role": "condition",
+      "observation_keys": [
+        "target_stem_visible",
+        "target_stem_hidden"
+      ],
+      "claim_ids": [
+        "editorial.tanyuan.wife_star_gantou.v1"
+      ],
+      "birth": "2000-01-01 12:00",
+      "gender": "male",
+      "scenario": "default_output",
+      "profile": {
+        "scope": "natal",
+        "coordinate": null,
+        "kinds": []
+      },
+      "expected": {
+        "criterion": {
+          "criterion_id": "editorial.spouse_star_tougan.v1",
+          "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+          "status": "NOT_SATISFIED",
+          "reason": "required_classification_absent",
+          "scope_complete": true,
+          "observations": {
+            "target_stem_visible": false,
+            "target_stem_hidden": true
+          }
+        },
+        "entries": [],
+        "related": [],
+        "record_sha256": "a0fcc9603d444d77bc08b739e4fcd41bab0b0df2e7d4019718b1d02bbf641b92"
+      }
+    }
+  ]
+}
