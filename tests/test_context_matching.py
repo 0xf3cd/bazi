@@ -1619,6 +1619,19 @@ def test_directory_constructor_checks_each_declared_field() -> None:
       replace(info, **change)
 
 
+@pytest.mark.parametrize('field', ['criterion_id', 'definition'])
+@pytest.mark.parametrize('value, error, message', [
+  (object(), TypeError, "Expected str, got <class 'object'>"),
+  ('', ValueError, 'Expected non-empty text'),
+  (' \t\u3000', ValueError, 'Expected non-empty text'),
+])
+def test_directory_text_fields_preserve_validation_messages(field: str, value: object, error: type[Exception], message: str) -> None:
+  change: dict[str, Any] = {field: value}
+  with pytest.raises(error) as failure:
+    replace(lookup_criterion(GUANSHA), **change)
+  assert str(failure.value) == message
+
+
 @pytest.mark.parametrize('change, error', [
   ({'criterion_id': ''}, ValueError), ({'definition': ' '}, ValueError),
   ({'profile_type': int}, ValueError), ({'entry_role': 'full'}, ValueError),

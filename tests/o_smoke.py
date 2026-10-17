@@ -637,6 +637,8 @@ def main() -> int:
     checks.append((f'CriterionInfo rejects wrong {metadata_field}', TypeError,
                    partial(replace, criterion_metadata, **{metadata_field: object()})))
   checks.extend([
+    ('CriterionInfo rejects blank ID', ValueError, partial(replace, criterion_metadata, criterion_id=' ')),
+    ('CriterionInfo rejects empty definition', ValueError, partial(replace, criterion_metadata, definition='')),
     ('CriterionInfo rejects empty metadata', ValueError, partial(replace, criterion_metadata, claim_ids=())),
     ('CriterionInfo rejects unsupported profile type', ValueError, partial(replace, criterion_metadata, profile_type=int)),
     ('CriterionInfo remains frozen', AttributeError, partial(setattr, criterion_metadata, 'definition', 'changed')),

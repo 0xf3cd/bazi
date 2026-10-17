@@ -1,0 +1,11 @@
+{
+  "source_sha": "ddfe16e7c51d695167b09cc4c2f64ba46e7565c3",
+  "explicit_exports": {
+    "bazi": ["common", "defines", "calendar", "school", "bazi", "bazi_chart", "rules", "utils", "analyzer", "knowledge", "context_matching", "transits", "transit_chart"],
+    "bazi.analyzer": ["relationship"],
+    "bazi.calendar": ["hko_data", "CalendarType", "CalendarDate", "JieqiTime", "CalendarUtilsProtocol", "hko_data_utils", "celestial_utils", "CalendarBackend", "calendar_utils_of"],
+    "bazi.calendar.hko_data": ["START_YEAR", "END_YEAR", "get_data_base_path", "get_raw_txt_file_paths", "raw_data_ready", "get_jieqi_encoded_data_path", "get_lunardate_encoded_data_path", "encoded_data_ready", "jieqi_list_in_traditional_chinese", "twelve_months_in_traditional_chinese", "int_to_bytes", "bytes_to_int", "date_to_bytes", "bytes_to_date", "JieqiDates", "DecodedJieqiDates", "LunarYearInfo", "DecodedLunarYears"],
+    "bazi.defines": ["Tiangan", "天干", "Dizhi", "地支", "Ganzhi", "干支", "Jieqi", "节气", "Wuxing", "五行", "Yinyang", "阴阳", "Shishen", "十神", "ShierZhangsheng", "十二长生", "TianganRelation", "天干关系", "DizhiRelation", "地支关系"],
+    "bazi.utils": ["bazi_utils", "tiangan_utils", "dizhi_utils", "shensha_utils"]
+  }
+}

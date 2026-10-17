@@ -304,7 +304,7 @@ class CriterionInfo:
   Note:
   - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
   - claim_ids 是默认语料的约定，不保证自定义知识库有这些条目。绑定识别核对条目及其引用的
-    对象、情境、来源记录的摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。
+    对象、情境、来源记录的内容摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。
   - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
     男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
     不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。

@@ -199,6 +199,6 @@ assert restored == result
 前提判别记录只接受版本 4，旧版本或错误类型的版本值会拒绝。恢复仍检查 profile 类型、坐标结构、
 字段和值域等约束；能恢复不代表判别真实，也不等于绑定重新识别。
 需要当前规则下的结论时，应使用原输入与配置重新构造命盘并调用 `evaluate_context`，
-不要只改 `record_version` 冒充迁移。知识 schema 版本与前提 record 版本也不能互换。
+不要只改 `record_version` 冒充迁移。知识库的 `schema_version` 与前提判别记录的 `record_version` 也不能互换。
 
 旧记录不兼容时保留原件、记录原软件版本及失败原因；没有自动迁移接口。
