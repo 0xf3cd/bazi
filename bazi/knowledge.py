@@ -10,6 +10,7 @@ from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
+from ._validation import _text, _choice, _tuple, _pairs, _mapping
 
 
 '''知识整理状态，不是命盘判别结果。
@@ -47,29 +48,6 @@ def object_id(subject: Tiangan | Shishen) -> str:
   if not isinstance(subject, (Tiangan, Shishen)):
     raise TypeError(f'Expected Tiangan | Shishen, got {type(subject)}')
   return type(subject).__name__.lower() + '.' + subject.name.lower()
-
-
-def _text(value: object, *, empty: bool = False) -> None:
-  if not isinstance(value, str):
-    raise TypeError(f'Expected str, got {type(value)}')
-  if not empty and not value.strip():
-    raise ValueError('Expected non-empty text')
-
-
-def _choice(value: object, choices: tuple[str, ...]) -> None:
-  _text(value)
-  if value not in choices:
-    raise ValueError(f'Unsupported value: {value}')
-
-
-def _tuple(value: object, member_type: type[_T]) -> None:
-  if not isinstance(value, tuple):
-    raise TypeError(f'Expected tuple, got {type(value)}')
-  for member in value:
-    if not isinstance(member, member_type):
-      raise TypeError(f'Expected {member_type.__name__}, got {type(member)}')
-    if isinstance(member, str):
-      _text(member)
 
 
 @dataclass(frozen=True)
@@ -245,26 +223,9 @@ class KnowledgeEntry:
       raise ValueError(f'Ineligible default entry: {self.claim_id}')
 
 
-def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
-  result: dict[str, object] = {}
-  for key, value in pairs:
-    if key in result:
-      raise ValueError(f'Duplicate JSON key: {key}')
-    result[key] = value
-  return result
-
-
 def _array(value: object) -> list[Any]:
   if not isinstance(value, list):
     raise TypeError(f'Expected JSON array, got {type(value)}')
-  return value
-
-
-def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
-  if not isinstance(value, dict):
-    raise TypeError(f'Expected JSON object, got {type(value)}')
-  if set(value) != set(keys):
-    raise ValueError(f'JSON fields differ: {set(value) ^ set(keys)}')
   return value
 
 

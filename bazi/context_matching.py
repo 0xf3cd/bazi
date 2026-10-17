@@ -16,7 +16,8 @@ from .common import frozendict
 from .data_types import GanzhiData
 from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation, TianganRelation
 from .analyzer.relationship import RelationshipEvidence, StarAppearance, StemRelationDiscovery, spouse_evidence
-from .knowledge import KnowledgeBase, KnowledgeEntry, _choice, _mapping, _pairs, _tuple
+from .knowledge import KnowledgeBase, KnowledgeEntry
+from ._validation import _choice, _mapping, _pairs, _tuple
 from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
