@@ -76,6 +76,7 @@ def test_find_objects_preserves_duplicate_names_and_registration_order() -> None
   assert knowledge.find_objects('同名') == (knowledge.objects['concept.one'], knowledge.objects['concept.two'])
   assert knowledge.find_objects('Unused') == (knowledge.objects['concept.unused'],)
   assert knowledge.find_objects('unused') == ()
+  assert knowledge.find_objects(' 同名 ') == ()
   assert knowledge.find_objects('无此名称') == ()
   assert KnowledgeBase((), (), (), ()).find_objects('同名') == ()
   with pytest.raises(FrozenInstanceError):
@@ -162,6 +163,52 @@ def test_search_uses_query_filters_order_and_output_policy_without_searching_sou
   assert KnowledgeBase((), (), (), ()).search('body') == ()
   with pytest.raises(TypeError):
     knowledge.search('body', include_reference_only=1) # type: ignore[arg-type]
+
+
+def test_search_excludes_structural_and_provenance_metadata() -> None:
+  original = _discovery_knowledge()
+  source = next(iter(original.sources.values()))
+  source_fields = ('source_id', 'work', 'attribution', 'edition', 'locator', 'url', 'lineage', 'excerpt', 'supports', 'limitations')
+  changes: dict[str, Any] = {field: 'source-only-' + field for field in source_fields}
+  source = replace(source, **changes)
+  context = KnowledgeContext('context-only-id', 'context-only-label', 'context-only-scope', ('context-only-limit',))
+  entry = replace(
+    original.entry('custom.reference'),
+    claim_id='entry-only-id',
+    roles=(KnowledgeRole('role-only-name', 'concept.two'), KnowledgeRole('other-role-only-name', 'concept.one')),
+    relations=(KnowledgeRelation('role-only-name', 'other-role-only-name', 'relation-only-text'),),
+    sources=(source.source_id,),
+    contexts=(context.context_id,),
+    legacy=LegacyDescription('concept.two', 'general', 987654, ('chart_context_required',), 'legacy-only-premise'),
+  )
+  objects = tuple(replace(obj, kind='tiangan') if obj.object_id == 'concept.two' else obj for obj in original.objects.values())
+  knowledge = KnowledgeBase(objects, (context,), (source,), (entry,))
+  excluded = (
+    *changes.values(), source.text_layer, source.state,
+    context.context_id, context.label, context.time_scope, *context.limits,
+    entry.claim_id, 'role-only-name', 'other-role-only-name', 'relation-only-text',
+    'concept.two', 'tiangan', entry.applicability, entry.output, entry.source_state,
+    'general', '987654', 'chart_context_required', 'legacy-only-premise',
+  )
+  assert knowledge.search('reference body', include_reference_only=True) == (entry,)
+  for keyword in excluded:
+    assert knowledge.search(keyword, include_reference_only=True) == (), keyword
+
+
+def test_filter_values_use_unicode_code_point_order_for_every_variable_domain() -> None:
+  original = _discovery_knowledge()
+  labels = ('😀', 'Ａ', 'a', 'A')
+  source = next(iter(original.sources.values()))
+  knowledge = KnowledgeBase(
+    tuple(KnowledgeObject(label, 'concept', label) for label in labels),
+    tuple(KnowledgeContext(label, label, label, ()) for label in labels),
+    tuple(replace(source, source_id=label) for label in labels),
+    tuple(replace(original.entry('custom.default'), claim_id=label, output='reference_only',
+                  roles=(KnowledgeRole('subject', label),), sources=(label,),
+                  topics=(label,), viewpoint=label) for label in labels),
+  )
+  for dimension in ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'time_scope'):
+    assert knowledge.filter_values(dimension) == ('A', 'a', 'Ａ', '😀')
 
 
 @pytest.mark.parametrize('dimension', ['object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'])

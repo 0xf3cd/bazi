@@ -4,6 +4,7 @@ import ast
 import re
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -14,15 +15,29 @@ from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, B
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _scope_nodes(nodes: list[ast.stmt]) -> Iterator[ast.stmt]:
+  def visit(node: ast.AST) -> Iterator[ast.stmt]:
+    if isinstance(node, ast.stmt):
+      yield node
+    if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+      for child in ast.iter_child_nodes(node):
+        yield from visit(child)
+  for node in nodes:
+    yield from visit(node)
+
+
 def _names(nodes: list[ast.stmt]) -> set[str]:
   names: set[str] = set()
-  for node in nodes:
+  for node in _scope_nodes(nodes):
     if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
       names.add(node.name)
     elif isinstance(node, (ast.Assign, ast.AnnAssign)):
       for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
-        if isinstance(target, ast.Name):
-          names.add(target.id)
+        names.update(child.id for child in ast.walk(target) if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store))
+    elif isinstance(node, getattr(ast, 'TypeAlias', ())):
+      name = vars(node)['name']
+      assert isinstance(name, ast.Name)
+      names.add(name.id)
   return {name for name in names if not name.startswith('_')}
 
 
@@ -33,7 +48,7 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
   bases: dict[str, tuple[str, ...]] = {}
 
   def visit(nodes: list[ast.stmt], prefix: str) -> None:
-    for node in nodes:
+    for node in _scope_nodes(nodes):
       if not isinstance(node, ast.ClassDef):
         continue
       qualified = prefix + '.' + node.name
@@ -45,7 +60,7 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
       visit(node.body, qualified)
 
   visit(tree.body, module)
-  for node in tree.body:
+  for node in _scope_nodes(tree.body):
     if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == '__all__' for t in node.targets):
       names.update(ast.literal_eval(node.value))
   return names, members, bases
@@ -102,6 +117,10 @@ for module, words in PUBLIC_NAMES.items():
   if module in STATIC_MODULES:
     continue
   value = importlib.import_module(module)
+  own_definitions = {name for name, member in vars(value).items()
+                     if not name.startswith('_') and (inspect.isclass(member) or inspect.isfunction(member))
+                     and member.__module__ == module}
+  assert own_definitions <= set(words.split()), (module, own_definitions - set(words.split()))
   for name in words.split():
     qualified = module + '.' + name
     if qualified in STATIC_MODULES:
@@ -115,6 +134,8 @@ for qualified, words in (DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS).items():
     continue
   value = resolve(qualified)
   annotations = getattr(value, '__annotations__', {})
+  actual_members = {name for name in vars(value) if not name.startswith('_')}
+  assert actual_members <= set(words.split()), (qualified, actual_members - set(words.split()))
   for name in words.split():
     assert name in annotations or inspect.getattr_static(value, name, None) is not None, (qualified, name)
 for alias, canonical in (ALIASES | REEXPORTS).items():
@@ -131,6 +152,11 @@ print('PASS safe public imports, declared fields and aliases')
   '\ndef unregistered_api():\n  pass\n',
   '\n新别名 = KnowledgeBase\n',
   '\nclass UnregisteredType:\n  field: str\n',
+  '\nif True:\n  def unregistered_api():\n    pass\n',
+  '\nif True:\n  新别名 = KnowledgeBase\n',
+  '\ntry:\n  新别名 = KnowledgeBase\nexcept Exception:\n  pass\n',
+  '\nfirst, (second, *rest) = (1, (2, 3))\n',
+  '\nif True:\n  class UnregisteredType:\n    field: str\n',
 ])
 def test_new_public_candidates_cannot_escape_registration(addition: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
@@ -152,6 +178,33 @@ def test_new_field_and_enum_alias_cannot_escape_registration() -> None:
     lines.insert(declaration.end_lineno, '  unregistered_field: str\n' if class_name == 'KnowledgeObject' else '  新别名 = JIA\n')
     with pytest.raises(AssertionError):
       _check_surface(''.join(lines), module)
+
+
+def test_scope_candidates_include_control_flow_but_not_function_locals() -> None:
+  source = '''
+def function():
+  local = 1
+  class Local:
+    pass
+class Public:
+  if True:
+    field: str
+    def method(self):
+      local = 1
+  try:
+    alias = field
+  except Exception:
+    fallback = None
+'''
+  names, members, bases = _surface(source, 'example')
+  assert names == {'function', 'Public'}
+  assert members == {'example.Public': {'field', 'method', 'alias', 'fallback'}}
+  assert bases == {}
+
+
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='PEP 695 syntax requires Python 3.12')
+def test_type_alias_candidates_are_classified() -> None:
+  assert _names(ast.parse('type PublicAlias = str').body) == {'PublicAlias'}
 
 
 def test_public_contract_covers_existing_consumers_and_explicit_exports() -> None:

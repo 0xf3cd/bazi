@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import hashlib
+import inspect
 import json
 from dataclasses import FrozenInstanceError, asdict, fields, replace
 from datetime import datetime
@@ -1529,6 +1530,9 @@ def test_directory_is_complete_immutable_and_does_not_construct_charts_or_load_k
     assert lookup_criterion(identifier) == info and hash(lookup_criterion(identifier)) == hash(info)
     assert info.required_inputs == ('chart', 'criterion_id', 'profile')
     assert info.optional_inputs == ('knowledge', 'include_reference_only')
+    parameters = inspect.signature(evaluate_context).parameters
+    assert info.required_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is inspect.Parameter.empty)
+    assert info.optional_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is not inspect.Parameter.empty)
     assert set(info.unknown_conditions) == {'missing_transit_coordinate', 'transit_unavailable'}
     assert all(text.strip() for text in info.unknown_conditions.values())
     if info.profile_type is ContextProfile:
