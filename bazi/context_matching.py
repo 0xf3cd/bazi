@@ -17,7 +17,7 @@ from .data_types import GanzhiData
 from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation, TianganRelation
 from .analyzer.relationship import RelationshipEvidence, StarAppearance, StemRelationDiscovery, spouse_evidence
 from .knowledge import KnowledgeBase, KnowledgeEntry
-from ._validation import _choice, _mapping, _pairs, _tuple
+from ._validation import _text, _choice, _mapping, _pairs, _tuple
 from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
@@ -147,7 +147,7 @@ def _observation_keys(criterion_id: str) -> tuple[str, ...]:
     return (_OBS_STAR_VISIBLE, _OBS_STAR_HIDDEN)
   raise ValueError(f'Unsupported criterion metadata: {criterion_id}')
 
-# 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
+# 内容摘要包含完整条目及其绑定的对象、情境与来源记录，用于识别默认记录约定，不能只凭 ID 或展示词确认绑定。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.zhengguan.legal_trouble': 'd5cc38a85c86d67b130125b7832f1c68ba9499523dc5f3069ffa4c9fe83b79c8',
   'editorial.shishen.qisha.legal_trouble': 'dfec24146c99cb472d08f13a81fa94aef179e45c1ae55ddbdd9031b11d6dd8b0',
@@ -161,7 +161,7 @@ _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'legacy.shishen.SH-066': '3b8543516b20f854f9105aad3cc9c237b7da13e5d5753a59fc424140de8c4537',
 })
 
-# 男命语境条文的性别门槛：女命查询不关联本条，静态查阅不受限；不在表内的条目无门槛。
+# 关联条目的男命门槛：女命查询不关联本条，静态查阅不受限；不在表内的条目无门槛。
 # 门槛先于绑定识别，同 ID 自定义顶替不能绕过；语料侧的对照标记见各条目 limits。
 _RELATED_GENDERS: Final[frozendict[str, BaziGender]] = frozendict({
   'editorial.tanyuan.wife_palace_xingchong.v1': BaziGender.MALE,
@@ -307,7 +307,8 @@ class CriterionInfo:
     对象、情境、来源记录的摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。
   - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
     男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
-    不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛，两官杀判据都保留 female 观察键。
+    不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。
+  - observation_keys 在两个官杀判据中都保留 female，是否有性别门槛另由 required_gender 表示。
   - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
   '''
 
@@ -322,9 +323,7 @@ class CriterionInfo:
 
   def __post_init__(self) -> None:
     for value in (self.criterion_id, self.definition):
-      _typed(value, str)
-      if not value.strip():
-        raise ValueError('Expected non-empty text')
+      _text(value)
     _typed(self.profile_type, type)
     if self.profile_type not in (ContextProfile, RelationshipProfile):
       raise ValueError(f'Unsupported profile type: {self.profile_type}')
@@ -1094,7 +1093,7 @@ def evaluate_context(
     喜忌／成格」等完整理论条件留在知识文本，不为它们新增 UNKNOWN，也不认证其已满足；
     所需流年缺失或不可查询时返回 UNKNOWN。
   - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
-    与事实判别的状态无关；男命语境条文对女命一律不关联（门槛先于绑定状态），静态查阅不受限。
+    与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联（门槛先于绑定状态），静态查阅不受限。
   - 未传 knowledge 时，每次独立加载默认来源，已保存的修改在后续加载时可见；
     传入知识库则直接复用。已有知识库和结果保留原内容，共享调用须显式重载才能取得更新。
   - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。

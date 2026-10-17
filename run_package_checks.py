@@ -212,9 +212,9 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   (foreign / 'good.py').write_text(good, encoding='utf-8')
   bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
-                 'knowledge.query(object_id=42)\nContextProfile("dayun")\n'
-                 'knowledge.find_objects(42)\nknowledge.search(42)\nknowledge.filter_values(42)\n'
-                 'criterion(42)\ninfo.definition = "changed"\ncatalog["changed"] = info\n'
+                'knowledge.query(object_id=42)\nContextProfile("dayun")\n'
+                'knowledge.find_objects(42)\nknowledge.search(42)\nknowledge.filter_values(42)\n'
+                'criterion(42)\ninfo.definition = "changed"\ncatalog["changed"] = info\n'
                 'object_id(Dizhi.子)\n'
                 'knowledge.render(entries[0], premise_verdict=1)\n'
                 'knowledge.render_subject(Tiangan.丁, include_reference_only=1)\n'

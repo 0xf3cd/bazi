@@ -210,6 +210,8 @@ assert gong.to_dizhi_discovery()[DizhiRelation.拱合] == (frozenset({Dizhi.寅,
 
 ## 知识与前提匹配
 
+名称／关键词发现、判据目录及 API／JSON 约定见[公开接口与记录兼容契约](API_CONTRACT.md)。
+
 `KnowledgeBase` 查询知识条目、展示原文与来源，也可导出 JSON 后重新加载。
 默认只查 `output='default'` 条目；`include_reference_only=True` 同时查阅仅供参考的条目。
 

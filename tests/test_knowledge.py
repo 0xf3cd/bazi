@@ -197,7 +197,7 @@ def test_search_excludes_structural_and_provenance_metadata() -> None:
 
 def test_filter_values_use_unicode_code_point_order_for_every_variable_domain() -> None:
   original = _discovery_knowledge()
-  labels = ('😀', 'Ａ', 'a', 'A')
+  labels = ('😀', 'Ａ', 'a', 'B', 'A')
   source = next(iter(original.sources.values()))
   knowledge = KnowledgeBase(
     tuple(KnowledgeObject(label, 'concept', label) for label in labels),
@@ -208,7 +208,7 @@ def test_filter_values_use_unicode_code_point_order_for_every_variable_domain() 
                   topics=(label,), viewpoint=label) for label in labels),
   )
   for dimension in ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'time_scope'):
-    assert knowledge.filter_values(dimension) == ('A', 'a', 'Ａ', '😀')
+    assert knowledge.filter_values(dimension) == ('A', 'B', 'a', 'Ａ', '😀')
 
 
 @pytest.mark.parametrize('dimension', ['object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'])

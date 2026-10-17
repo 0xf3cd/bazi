@@ -416,9 +416,9 @@ class KnowledgeBase:
     '''按名称精确查找对象，重名全部返回，保持注册顺序；无匹配返回空元组。
 
     Args:
-    - name: (str) 非空名称，不做大小写转换、分词或近似匹配。
+    - name: (str) 非空名称，不做大小写转换、分词或近似匹配，有效名称两侧空白不剥除。
     Return:
-    - (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象。
+    - (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象；空或全空白名称抛 ValueError，错型抛 TypeError。
     '''
     _text(name)
     return tuple(value for value in self.objects.values() if value.name == name)

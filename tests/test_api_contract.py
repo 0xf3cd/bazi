@@ -15,11 +15,10 @@ from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, B
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _scope_nodes(nodes: list[ast.stmt]) -> Iterator[ast.stmt]:
-  def visit(node: ast.AST) -> Iterator[ast.stmt]:
-    if isinstance(node, ast.stmt):
-      yield node
-    if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+def _scope_nodes(nodes: list[ast.stmt]) -> Iterator[ast.AST]:
+  def visit(node: ast.AST) -> Iterator[ast.AST]:
+    yield node
+    if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
       for child in ast.iter_child_nodes(node):
         yield from visit(child)
   for node in nodes:
@@ -31,14 +30,48 @@ def _names(nodes: list[ast.stmt]) -> set[str]:
   for node in _scope_nodes(nodes):
     if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
       names.add(node.name)
-    elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+    elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr, ast.For, ast.AsyncFor)):
       for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
         names.update(child.id for child in ast.walk(target) if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store))
+    elif isinstance(node, (ast.With, ast.AsyncWith)):
+      for item in node.items:
+        if item.optional_vars is not None:
+          names.update(child.id for child in ast.walk(item.optional_vars) if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store))
+    elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name is not None:
+      names.add(node.name)
+    elif isinstance(node, ast.MatchMapping) and node.rest is not None:
+      names.add(node.rest)
     elif isinstance(node, getattr(ast, 'TypeAlias', ())):
       name = vars(node)['name']
       assert isinstance(name, ast.Name)
       names.add(name.id)
   return {name for name in names if not name.startswith('_')}
+
+
+def _declared_all(nodes: list[ast.stmt]) -> set[str]:
+  names: set[str] = set()
+  for node in _scope_nodes(nodes):
+    values: ast.AST | None = None
+    single = False
+    if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+      targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+      if any(isinstance(target, ast.Name) and target.id == '__all__' for target in targets):
+        if isinstance(node, ast.AugAssign):
+          assert isinstance(node.op, ast.Add), 'Unsupported __all__ operator'
+        values = node.value
+    elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id == '__all__':
+      assert node.func.attr in ('append', 'extend') and len(node.args) == 1 and not node.keywords, 'Unsupported __all__ mutation'
+      values = node.args[0]
+      single = node.func.attr == 'append'
+    if values is not None:
+      try:
+        value = ast.literal_eval(values)
+      except (ValueError, TypeError, SyntaxError) as error:
+        raise AssertionError('Unsupported dynamic __all__ declaration') from error
+      sequence = [value] if single else value
+      assert isinstance(sequence, (list, tuple)) and all(isinstance(name, str) for name in sequence), 'Expected literal __all__ names'
+      names.update(sequence)
+  return names
 
 
 def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], dict[str, tuple[str, ...]]]:
@@ -54,21 +87,24 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
       qualified = prefix + '.' + node.name
       if node.name.startswith('_') and qualified not in PRIVATE_BASE_MEMBERS:
         continue
-      members[qualified] = _names(node.body)
+      declared_bases = tuple(ast.unparse(base) for base in node.bases)
+      if qualified in members:
+        assert bases.get(qualified, ()) == declared_bases, ('Conflicting candidate bases', qualified)
+      members.setdefault(qualified, set()).update(_names(node.body))
       if node.bases:
-        bases[qualified] = tuple(ast.unparse(base) for base in node.bases)
+        bases[qualified] = declared_bases
       visit(node.body, qualified)
 
   visit(tree.body, module)
-  for node in _scope_nodes(tree.body):
-    if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == '__all__' for t in node.targets):
-      names.update(ast.literal_eval(node.value))
+  names.update(_declared_all(tree.body))
   return names, members, bases
 
 
 def _check_surface(source: str, module: str) -> None:
   names, members, bases = _surface(source, module)
   assert names <= set(PUBLIC_NAMES[module].split()), (module, names - set(PUBLIC_NAMES[module].split()))
+  if module in STATIC_MODULES:
+    assert names == set(PUBLIC_NAMES[module].split()), (module, set(PUBLIC_NAMES[module].split()) - names)
   declared = DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS
   def owner(qualified: str) -> str:
     return max((name for name in PUBLIC_NAMES if qualified.startswith(name + '.')), key=len)
@@ -92,7 +128,13 @@ def test_all_modules_and_declared_candidates_are_classified() -> None:
     assert len(words.split()) == len(set(words.split()))
 
 
-def test_public_surface_resolves_without_loading_tables_or_offline_tools() -> None:
+@pytest.mark.parametrize('injection, rejected_name', [
+  ('', None),
+  ("importlib.import_module('bazi.knowledge').UnregisteredDynamic = type('UnregisteredDynamic', (), {'__module__': 'bazi.knowledge'})", 'UnregisteredDynamic'),
+  ("importlib.import_module('bazi.knowledge').KnowledgeRole.unregistered_dynamic = property(lambda self: None)", 'unregistered_dynamic'),
+  ("importlib.import_module('bazi').__all__.append('Any')", 'Any'),
+])
+def test_public_surface_resolves_without_loading_tables_or_offline_tools(injection: str, rejected_name: str | None) -> None:
   # A fresh process prevents earlier calendar tests from hiding an eager import.
   script = '''
 import importlib, inspect, sys
@@ -117,6 +159,8 @@ for module, words in PUBLIC_NAMES.items():
   if module in STATIC_MODULES:
     continue
   value = importlib.import_module(module)
+  exported = set(getattr(value, '__all__', ()))
+  assert exported <= set(words.split()), (module, exported - set(words.split()))
   own_definitions = {name for name, member in vars(value).items()
                      if not name.startswith('_') and (inspect.isclass(member) or inspect.isfunction(member))
                      and member.__module__ == module}
@@ -143,9 +187,13 @@ for alias, canonical in (ALIASES | REEXPORTS).items():
 assert not any(name in sys.modules for name in STATIC_MODULES)
 print('PASS safe public imports, declared fields and aliases')
 '''
+  script = script.replace('for module, words in PUBLIC_NAMES.items():', injection + '\nfor module, words in PUBLIC_NAMES.items():', 1)
   result = subprocess.run([sys.executable, '-B', '-c', script], cwd=ROOT, text=True, capture_output=True, check=False)
-  assert result.returncode == 0, result.stdout + result.stderr
-  assert 'PASS safe public imports' in result.stdout
+  if rejected_name is None:
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'PASS safe public imports' in result.stdout
+  else:
+    assert result.returncode == 1 and 'AssertionError' in result.stderr and rejected_name in result.stderr, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize('addition', [
@@ -157,6 +205,10 @@ print('PASS safe public imports, declared fields and aliases')
   '\ntry:\n  新别名 = KnowledgeBase\nexcept Exception:\n  pass\n',
   '\nfirst, (second, *rest) = (1, (2, 3))\n',
   '\nif True:\n  class UnregisteredType:\n    field: str\n',
+  '\nfor unregistered_loop in ():\n  pass\n',
+  '\nwith open(__file__) as unregistered_file:\n  pass\n',
+  '\nif (unregistered_walrus := True):\n  pass\n',
+  '\nmatch {}:\n  case {"key": unregistered_capture, **unregistered_rest}:\n    pass\n',
 ])
 def test_new_public_candidates_cannot_escape_registration(addition: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
@@ -200,11 +252,67 @@ class Public:
   assert names == {'function', 'Public'}
   assert members == {'example.Public': {'field', 'method', 'alias', 'fallback'}}
   assert bases == {}
+  assert _names(ast.parse('result = [item for item in ()]').body) == {'result'}
+  assert _names(ast.parse('function = lambda: (local := 1)').body) == {'function'}
+  assert _names(ast.parse('result = [(outer := item) for item in ()]').body) == {'result', 'outer'}
+
+
+@pytest.mark.parametrize('earlier', [
+  'class KnowledgeRole:\n  unregistered_dead_member: str\n',
+  'class KnowledgeRole(object):\n  name: str\n  object_id: str\n',
+])
+def test_repeated_class_declarations_cannot_hide_candidates(earlier: str) -> None:
+  source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
+  anchor = '@dataclass(frozen=True)\nclass KnowledgeRole:'
+  assert source.count(anchor) == 1
+  changed = source.replace(anchor, 'if False:\n' + '\n'.join('  ' + line for line in earlier.splitlines()) + '\n\n' + anchor)
+  compile(changed, '<repeated-class-candidate>', 'exec')
+  with pytest.raises(AssertionError):
+    _check_surface(changed, 'bazi.knowledge')
+
+
+def test_repeated_class_declarations_combine_member_candidates() -> None:
+  names, members, bases = _surface('if True:\n  class Public:\n    first: str\nelse:\n  class Public:\n    second: str\n', 'example')
+  assert names == {'Public'}
+  assert members == {'example.Public': {'first', 'second'}}
+  assert bases == {}
 
 
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='PEP 695 syntax requires Python 3.12')
 def test_type_alias_candidates_are_classified() -> None:
   assert _names(ast.parse('type PublicAlias = str').body) == {'PublicAlias'}
+  source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
+  with pytest.raises(AssertionError, match='PublicAlias'):
+    _check_surface(source + '\ntype PublicAlias = str\n', 'bazi.knowledge')
+
+
+@pytest.mark.parametrize('declaration', [
+  '__all__ = ["unregistered_export"]',
+  '__all__: list[str] = ["unregistered_export"]',
+  '__all__ = []\n__all__ += ["unregistered_export"]',
+  '__all__ = []\n__all__.append("unregistered_export")',
+  '__all__ = []\n__all__.extend(["unregistered_export"])',
+])
+def test_declared_exports_cannot_escape_registration(declaration: str) -> None:
+  source = (ROOT / 'bazi/__init__.py').read_text(encoding='utf-8')
+  with pytest.raises(AssertionError, match='unregistered_export'):
+    _check_surface(source + '\n' + declaration, 'bazi')
+
+
+@pytest.mark.parametrize('declaration', ['__all__ = factory()', '__all__ *= 2', '__all__.clear()', '__all__ = [1]'])
+def test_unsupported_export_declarations_fail_loudly(declaration: str) -> None:
+  with pytest.raises(AssertionError):
+    _declared_all(ast.parse(declaration).body)
+
+
+def test_static_modules_reject_phantom_names_without_importing(monkeypatch: pytest.MonkeyPatch) -> None:
+  for module in STATIC_MODULES:
+    source = ROOT.joinpath(*module.split('.')).with_suffix('.py').read_text(encoding='utf-8')
+    _check_surface(source, module)
+    with monkeypatch.context() as patcher:
+      patcher.setitem(PUBLIC_NAMES, module, PUBLIC_NAMES[module] + ' phantom_func')
+      with pytest.raises(AssertionError, match='phantom_func'):
+        _check_surface(source, module)
 
 
 def test_public_contract_covers_existing_consumers_and_explicit_exports() -> None:
@@ -220,11 +328,9 @@ def test_public_contract_covers_existing_consumers_and_explicit_exports() -> Non
     path = ROOT.joinpath(*module.split('.')) / '__init__.py'
     if not path.exists():
       continue
-    for node in ast.parse(path.read_text(encoding='utf-8')).body:
-      if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == '__all__' for t in node.targets):
-        for name in ast.literal_eval(node.value):
-          qualified = module + '.' + name
-          assert qualified in PUBLIC_NAMES or qualified in REEXPORTS, qualified
+    for name in _declared_all(ast.parse(path.read_text(encoding='utf-8')).body):
+      qualified = module + '.' + name
+      assert qualified in PUBLIC_NAMES or qualified in REEXPORTS, qualified
   for alias_path, canonical in (ALIASES | REEXPORTS).items():
     for qualified in (alias_path, canonical):
       owner = max((module for module in PUBLIC_NAMES if qualified.startswith(module + '.')), key=len)

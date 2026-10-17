@@ -1,6 +1,6 @@
 # 公开接口与记录兼容契约
 
-本库从定义模块导入类型与函数，没有安装 CLI 或根类入口。例如：
+本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`。例如：
 
 ```python
 from datetime import datetime
@@ -25,7 +25,7 @@ assert chart.bazi.day_master in Tiangan
 - 领域枚举的中文与拉丁成员别名共用值；中文类型别名也保留，如 `天干` 与 `Tiangan`。
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
-  [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。不以去掉下划线扩大公开面。
+  [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
 - 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
@@ -48,7 +48,7 @@ assert chart.bazi.day_master in Tiangan
 - `BaziChart.json` 是独立的可变 JSON 字典，修改它不修改命盘。命盘隔离传入的 `Bazi`，
   `chart.bazi` 也按其既有防御性拷贝约定返回；不把 Python 属性只读等同于所有对象都深冻结。
 - `Bazi` 按值比较；`BaziChart` 按对象身份比较。恢复后的两个命盘可以 `json` 和 `bazi` 值相等，
-  但命盘对象本身不相等。知识库按内容及顺序比较，前提结果按其值字段比较。
+  但命盘对象本身不相等。知识库按内容及顺序比较，前提判别记录 `ContextResult` 按其值字段比较。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
 
@@ -88,23 +88,25 @@ assert isinstance(topics, tuple) and isinstance(entries, tuple)
 两者不加载知识库、不创建命盘，也不执行判别。目录值冻结，直接构造 `CriterionInfo` 只校验值的形状；
 需要已注册定义时应使用查询入口，不把自填说明当成程序认证。
 
+绑定识别会核对条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）是否符合默认约定；
+它不认证条文真伪或现实适用性。
+
 | 目录信息 | 含义 |
 |---|---|
-| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含绑定指纹值。 |
+| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含用于绑定识别的内部内容摘要。 |
 | `profile_type`、`profile_kind`、`scopes` | 需要的 profile 类型与合法范围，没有隐式范围默认值。 |
 | `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外 profile 字段。 |
 | `transit_entries`、`transit_kinds` | 关系 profile 的坐标入口、必填坐标字段和结构上可支持的种类上限；不保证某盘实际可取得。ContextProfile 不接 TransitCoordinate。 |
-| `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`。 |
+| `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`，不产生 UNKNOWN。 |
 | `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
 | `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
 | `claim_ids` | 默认语料的条目约定；自定义库不保证有这些条目，同 ID 也不能认证语义相同。 |
 
 只有 `editorial.guansha_coexistence_female.v1` 的 `required_gender` 为女命；范围完整时，
 男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
-婚恋两条男命语境条目的限制在 `claim_genders`：女命不返回这些关联条目，不改变事实判别。
+只向男命返回的两条婚恋条目由 `claim_genders` 限制：女命不返回这些关联条目，不改变事实判别。
 
-绑定识别会核对条目及其引用的对象、情境、来源记录的摘要是否符合默认约定；
-它不认证条文真伪或现实适用性。绑定未识别不改变 `CriterionResult`。
+绑定未识别不改变 `CriterionResult`。
 `binding_effect='entry_unknown'` 表示 premise 条目的
 `EntryMatch` 可为 `UNKNOWN/binding_unrecognized`；`'related_unrecognized'` 表示 condition 条目的
 `RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
@@ -194,10 +196,9 @@ restored = ContextResult.from_json(path.read_text(encoding='utf-8'))
 assert restored == result
 ```
 
-前提记录只接受版本 4，旧版本或错误类型的版本值会拒绝。恢复仍检查 profile 类型、坐标结构、
+前提判别记录只接受版本 4，旧版本或错误类型的版本值会拒绝。恢复仍检查 profile 类型、坐标结构、
 字段和值域等约束；能恢复不代表判别真实，也不等于绑定重新识别。
 需要当前规则下的结论时，应使用原输入与配置重新构造命盘并调用 `evaluate_context`，
 不要只改 `record_version` 冒充迁移。知识 schema 版本与前提 record 版本也不能互换。
 
 旧记录不兼容时保留原件、记录原软件版本及失败原因；没有自动迁移接口。
-确需修改接口或记录语义时须先说明兼容影响和迁移方式，不为统一字典与文本的外观而改变既有行为。
