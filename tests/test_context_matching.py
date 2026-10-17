@@ -1534,6 +1534,10 @@ def test_directory_is_complete_immutable_and_does_not_construct_charts_or_load_k
     assert info.required_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is inspect.Parameter.empty)
     assert info.optional_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is not inspect.Parameter.empty)
     assert set(info.unknown_conditions) == {'missing_transit_coordinate', 'transit_unavailable'}
+    assert set(info.unknown_conditions) == {
+      reason for reason, status in matching_module._STATUS_BY_REASON.items()
+      if status == 'UNKNOWN' and reason != 'binding_unrecognized'
+    }
     assert all(text.strip() for text in info.unknown_conditions.values())
     if info.profile_type is ContextProfile:
       assert info.scopes == ('natal', 'natal_and_liunian')

@@ -28,8 +28,7 @@ assert chart.bazi.day_master in Tiangan
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。不以去掉下划线扩大公开面。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
-- 清单不改变现有导入和 wildcard 行为。新增自有对象、字段、枚举别名或继承关系须同步登记；
-  运行时签名和类型以定义模块为准，不在清单中伪造签名。
+- 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
 
 ### 字符串输入不等于枚举别名
 
@@ -57,6 +56,7 @@ assert chart.bazi.day_master in Tiangan
 
 `KnowledgeBase.find_objects(name)` 按非空名称精确匹配，重名全部返回，顺序与对象注册顺序一致。
 名称无匹配返回 `()`；不把中文名称当成唯一 ID，不做模糊匹配或大小写转换。
+空或全空白名称抛 `ValueError`，错型抛 `TypeError`；有效名称的两侧空白不会被剥除。
 
 `search(keyword, ...)` 先应用 `query` 的七维交集与参考条目政策，再作 Unicode `casefold` 字面子串匹配。
 检索字段为条目正文、前提、署名、主题、口径、例外、限度及角色对象名称；
@@ -94,12 +94,18 @@ assert isinstance(topics, tuple) and isinstance(entries, tuple)
 | `profile_type`、`profile_kind`、`scopes` | 需要的 profile 类型与合法范围，没有隐式范围默认值。 |
 | `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外 profile 字段。 |
 | `transit_entries`、`transit_kinds` | 关系 profile 的坐标入口、必填坐标字段和结构上可支持的种类上限；不保证某盘实际可取得。ContextProfile 不接 TransitCoordinate。 |
-| `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds` 在构造时就必须非空，并非缺失时一律 UNKNOWN。 |
+| `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`。 |
 | `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
-| `required_gender`、`claim_genders` | 分别作用于判据和关联条目：女命官杀判据的门槛，不等于婚恋两条男命语境条文的关联门槛。 |
+| `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
 | `claim_ids` | 默认语料的条目约定；自定义库不保证有这些条目，同 ID 也不能认证语义相同。 |
 
-绑定未识别不改变 `CriterionResult`。`binding_effect='entry_unknown'` 表示 premise 条目的
+只有 `editorial.guansha_coexistence_female.v1` 的 `required_gender` 为女命；范围完整时，
+男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
+婚恋两条男命语境条目的限制在 `claim_genders`：女命不返回这些关联条目，不改变事实判别。
+
+绑定识别会核对条目及其引用的对象、情境、来源记录的摘要是否符合默认约定；
+它不认证条文真伪或现实适用性。绑定未识别不改变 `CriterionResult`。
+`binding_effect='entry_unknown'` 表示 premise 条目的
 `EntryMatch` 可为 `UNKNOWN/binding_unrecognized`；`'related_unrecognized'` 表示 condition 条目的
 `RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
 
@@ -114,7 +120,8 @@ assert info.entry_role == 'premise'
 assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
 ```
 
-本版新增的是 Python 发现接口与目录；源码 CLI 脚本保持既有参数，不新增名称／关键词／目录发现参数。
+发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
+也不提供名称／关键词／目录发现参数。
 
 ## 三类 JSON 分别保存与恢复
 
@@ -122,7 +129,7 @@ assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
 |---|---|---|
 | 命盘 | `BaziChart.json` 输出字典；`BaziChart.from_json` 接收映射 | 无内置版本字段。按记录中的输入、配置与当前实现重建，再逐项核对派生字段；只保证与当前版本一致。 |
 | 知识库 | `KnowledgeBase.export_json` 输出 JSON 文本；`from_json` 接收文本 | `schema_version=1`。恢复语料并校验结构、引用和各状态，不计算命盘前提。 |
-| 前提判别结果 | `ContextResult.export_json` 输出 JSON 文本；`from_json` 接收文本 | `record_version=4`。恢复记录并校验结构和值类型，不重新判别，不认证输入、观察、证据与绑定之间的事实一致性。 |
+| 前提判别记录 | `ContextResult.export_json` 输出 JSON 文本；`from_json` 接收文本 | `record_version=4`。恢复记录并校验结构和值类型，不重新判别，不认证输入、观察、证据与绑定之间的事实一致性。 |
 
 命盘映射严格区分默认盘与地点盘。缺键、多键、不支持的值、非规范拼写及重算不一致会拒绝；
 类型错误抛 `TypeError`，字段／值／一致性错误抛 `ValueError`。同时违反多个约束时不保证报错顺序。
@@ -165,7 +172,7 @@ assert restored == knowledge
 导出默认保留全部条目，包括仅供参考的条目；显式选择条目时仍保留全部对象、情境与来源注册表。
 `load` 每次重新读取文件；已有知识快照不随文件编辑而变化。
 
-### 前提结果：恢复不等于重新求值
+### 前提判别记录：恢复不等于重新求值
 
 ```python
 from datetime import datetime

@@ -1,6 +1,6 @@
 {
   "imports": {
-    "bazi/bazi.py|.calendar.celestial_data.loader|_EquationOfTimeRangeError": "历法数据加载器定义的均时差专用范围错误，出生时间只翻译这一已知错误，不吞其他ValueError。",
+    "bazi/bazi.py|.calendar.celestial_data.loader|_EquationOfTimeRangeError": "历法数据加载器定义均时差专用范围错误；出生时间翻译它与OverflowError，不吞其他ValueError。",
     "bazi/bazi.py|.utils.bazi_utils|_ganzhi_of_day_at_moment": "换日点的时刻日柱算法由八字工具所有，出生与流运共同调用；不扩成对外入口。",
     "bazi/bazi_chart.py|.bazi|_parse_location": "LocationTimeJson的定义和严格恢复同属bazi模块，命盘恢复复用该定义。",
     "bazi/bazi_chart.py|.school|_config_json": "流派配置字段与序列化由school所有，命盘只组合记录，不另维护字段表。",
@@ -24,7 +24,7 @@
   },
   "members": {
     "cross_module": {
-      "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；太阳时所有其精度及拒绝规则。",
+      "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",
       "bazi/context_matching.py|KnowledgeBase._from_data": "前提记录从已解码嵌套JSON恢复知识库，复用与公开from_json相同的严格校验。",
       "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于TransitDatabase；TransitChart先校验坐标及历法可用性，再调用包内入口。",

@@ -303,8 +303,11 @@ class CriterionInfo:
 
   Note:
   - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
-  - claim_ids 是默认语料的约定，不保证自定义知识库有这些条目，也不以相同 ID 认证绑定。
-  - required_gender 是判据门槛；claim_genders 是关联条目的门槛，两者作用层次不同。
+  - claim_ids 是默认语料的约定，不保证自定义知识库有这些条目。绑定识别核对条目及其引用的
+    对象、情境、来源记录的摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。
+  - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
+    男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
+    不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛，两官杀判据都保留 female 观察键。
   - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
   '''
 
@@ -339,10 +342,12 @@ class CriterionInfo:
 
   @property
   def profile_kind(self) -> Literal['context', 'relationship']:
+    '''profile_type 对应的查阅类别。'''
     return 'context' if self.profile_type is ContextProfile else 'relationship'
 
   @property
   def scopes(self) -> tuple[ObservationScope | RelationshipScope, ...]:
+    '''profile_type 接受的观察范围。'''
     return get_args(ObservationScope if self.profile_type is ContextProfile else RelationshipScope)
 
   @property
@@ -352,6 +357,7 @@ class CriterionInfo:
 
   @property
   def optional_inputs(self) -> tuple[str, ...]:
+    '''evaluate_context 的可选参数；省略时沿用求值入口的默认值。'''
     return ('knowledge', 'include_reference_only')
 
   @property

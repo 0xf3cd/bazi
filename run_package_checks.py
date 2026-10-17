@@ -260,8 +260,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     message = f'bad.py:{line_number}: error: Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
     if message not in result.stdout.splitlines():
       raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
-  if 'Unsupported target for indexed assignment' not in result.stdout:
-    raise ValueError('Installed knowledge typing negative control missed indexed assignment')
+  for value_type, trigger in (
+    ('CriterionInfo', 'catalog["changed"] = info'),
+    ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
+  ):
+    line_number = bad.splitlines().index(trigger) + 1
+    message = f'bad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]'
+    if message not in result.stdout.splitlines():
+      raise ValueError(f'Installed typing negative control missed immutable {value_type} mapping')
   for roster, key in (('LocationBaziChartJsonDict', 'birth_time'), ('DefaultBaziChartJsonDict', 'apparent_time')):
     if f'TypedDict "{roster}" has no key "{key}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {roster}.{key}')
