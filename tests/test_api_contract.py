@@ -162,6 +162,7 @@ def test_all_modules_and_declared_candidates_are_classified() -> None:
   ("importlib.import_module('bazi.knowledge').KnowledgeRole.unregistered_dynamic = property(lambda self: None)", 'unregistered_dynamic'),
   ("importlib.import_module('bazi').__all__.append('Any')", 'Any'),
   ("importlib.import_module('bazi').__all__.remove('bazi_chart')", 'bazi_chart'),
+  ("importlib.import_module('bazi.calendar').__all__.append('solar_time')", 'solar_time'),
 ])
 def test_public_surface_resolves_without_loading_tables_or_offline_tools(injection: str, rejected_name: str | None) -> None:
   # A fresh process prevents earlier calendar tests from hiding an eager import.
@@ -369,6 +370,7 @@ def test_type_alias_candidates_are_classified() -> None:
   '__all__ = []\n__all__ += ["unregistered_export"]',
   '__all__ = []\n__all__.append("unregistered_export")',
   '__all__ = []\n__all__.extend(["unregistered_export"])',
+  'if (__all__ := ["unregistered_export"]):\n  pass',
 ])
 def test_declared_exports_cannot_escape_registration(declaration: str) -> None:
   source = (ROOT / 'bazi/__init__.py').read_text(encoding='utf-8')
@@ -379,6 +381,7 @@ def test_declared_exports_cannot_escape_registration(declaration: str) -> None:
 @pytest.mark.parametrize('declaration', [
   '__all__ = factory()', '__all__ *= 2', '__all__.clear()', '__all__ = [1]',
   '__all__[:] = ["changed"]', '__all__[0] = "changed"', '(__all__, _other) = (["changed"], None)',
+  '(__all__, _other) = ["changed", "kept"]',
 ])
 def test_unsupported_export_declarations_fail_loudly(declaration: str) -> None:
   with pytest.raises(AssertionError):
@@ -412,6 +415,12 @@ def test_explicit_package_exports_preserve_fixed_v200_names() -> None:
   del lines[assignment.lineno - 1:assignment.end_lineno]
   with pytest.raises(AssertionError, match='Explicit exports differ'):
     _check_explicit_exports(''.join(lines), 'bazi')
+  module = 'bazi.calendar'
+  assert 'solar_time' in PUBLIC_NAMES[module].split()
+  assert 'solar_time' not in EXPLICIT_EXPORTS[module]
+  calendar_source = (ROOT / 'bazi/calendar/__init__.py').read_text(encoding='utf-8')
+  with pytest.raises(AssertionError, match='Explicit exports differ'):
+    _check_explicit_exports(calendar_source + '\n__all__.append("solar_time")\n', module)
 
 
 def test_public_contract_covers_existing_consumers_and_explicit_exports() -> None:
