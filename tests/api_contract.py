@@ -141,7 +141,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.knowledge.KnowledgeSource': 'source_id work attribution edition locator url text_layer lineage excerpt supports limitations state',
   'bazi.knowledge.LegacyDescription': 'object_id field ordinal conditions field_premise',
   'bazi.knowledge.KnowledgeEntry': 'claim_id text roles relations topics applicability premise contexts sources source_state attribution viewpoint exceptions limits output legacy',
-  'bazi.knowledge.KnowledgeBase': 'objects contexts sources entries from_json load entry query export_json render render_subject',
+  'bazi.knowledge.KnowledgeBase': 'objects contexts sources entries from_json load entry find_objects filter_values query search export_json render render_subject',
   'bazi.rules.BaziRules': 'YEAR_TO_MONTH_TABLE DAY_TO_HOUR_TABLE TIANGAN_TRAITS DIZHI_TRAITS HIDDEN_TIANGANS NAYIN TIANGAN_ZHANGSHENG TIANGAN_LU',
   'bazi.rules.TianganRules': 'TIANGAN_HE TIANGAN_CHONG TIANGAN_SHENG TIANGAN_KE',
   'bazi.rules.DizhiRules': 'GongheDef GongDef GONG_RELATIONS GONG_GONGHE_SCOPE DIZHI_SANHUI DIZHI_GONGHUI DIZHI_LIUHE AnheDef DIZHI_ANHE DIZHI_TONGHE DIZHI_TONGLUHE DIZHI_SANHE DIZHI_BANHE DIZHI_GONGHE DIZHI_GONG_LU_TIANGAN XingDef XingSubType DIZHI_XING DIZHI_CHONG DIZHI_PO DIZHI_HAI DIZHI_SHENG DIZHI_KE',

@@ -53,6 +53,34 @@ assert chart.bazi.day_master in Tiangan
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
 
+## 名称、关键词与过滤值发现
+
+`KnowledgeBase.find_objects(name)` 按非空名称精确匹配，重名全部返回，顺序与对象注册顺序一致。
+名称无匹配返回 `()`；不把中文名称当成唯一 ID，不做模糊匹配或大小写转换。
+
+`search(keyword, ...)` 先应用 `query` 的七维交集与参考条目政策，再作 Unicode `casefold` 字面子串匹配。
+检索字段为条目正文、前提、署名、主题、口径、例外、限度及角色对象名称；
+不搜对象／条目 ID、来源全文或情境标签，不解释正则，也不判断命盘适用性。
+空或全空白关键词抛 `ValueError`，错型抛 `TypeError`；有效关键词的两侧空白不会被剥除。
+结果保持语料顺序，默认仍排除仅供参考的条目。来源全文可直接查看 `sources`，关联条目用 `query(source_id=...)`。
+
+`filter_values(dimension)` 给出七维合法值全集，按 Unicode 字符串序排列。
+维度为 `object_id`、`context_id`、`source_id`、`topic`、`viewpoint`、`applicability`、`time_scope`，
+不包含布尔选项 `include_reference_only`。未知维度抛 `ValueError`。
+目录包括仅参考条目独有值、未引用的注册对象／来源／情境及其时间范围；空库的 applicability 仍有三个合法值。
+合法值不保证默认输出有命中；`query` 与该目录共用合法值定义。
+
+```python
+from bazi.knowledge import KnowledgeBase
+
+knowledge = KnowledgeBase.load()
+objects = knowledge.find_objects('比肩')
+assert tuple(obj.object_id for obj in objects) == ('shishen.bijian',)
+topics = knowledge.filter_values('topic')
+entries = knowledge.search('比肩', object_id=objects[0].object_id, include_reference_only=True)
+assert isinstance(topics, tuple) and isinstance(entries, tuple)
+```
+
 ## 三类 JSON 分别保存与恢复
 
 | 记录 | 输出／输入 | 版本与恢复含义 |

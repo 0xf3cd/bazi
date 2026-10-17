@@ -354,6 +354,20 @@ def main() -> int:
      lambda: object_id(Dizhi.子)), # type: ignore[arg-type]
     ('KnowledgeBase.render_subject wrong identifier', TypeError,
      lambda: knowledge.render_subject(Tiangan.甲)), # type: ignore[arg-type]
+    ('KnowledgeBase.find_objects wrong name', TypeError,
+     lambda: knowledge.find_objects(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.find_objects blank name', ValueError,
+     lambda: knowledge.find_objects('   ')),
+    ('KnowledgeBase.search wrong keyword', TypeError,
+     lambda: knowledge.search(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.search blank keyword', ValueError,
+     lambda: knowledge.search('   ')),
+    ('KnowledgeBase.search invalid filter before empty result', ValueError,
+     lambda: knowledge.search('no match', topic='unknown')),
+    ('KnowledgeBase.filter_values wrong dimension type', TypeError,
+     lambda: knowledge.filter_values(1)), # type: ignore[arg-type]
+    ('KnowledgeBase.filter_values unknown dimension', ValueError,
+     lambda: knowledge.filter_values('include_reference_only')),
     ('KnowledgeBase.render_subject unknown object', ValueError,
      lambda: knowledge.render_subject('missing')),
     ('KnowledgeBase.render_subject truthy reference flag', TypeError,

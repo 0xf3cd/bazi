@@ -23,20 +23,24 @@
     "bazi/utils/tiangan_utils.py|.relation_discovery|_ordered_relation_pairs": "天干与地支共用关系发现顺序，不复制排序规则。"
   },
   "members": {
-    "bazi/analyzer/relationship.py|TransitAnalysis._ALL_LEVELS": "同模块对分析层次全集的读取，不是跨模块私有依赖。",
-    "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；太阳时所有其精度及拒绝规则。",
-    "bazi/bazi.py|other._identity": "同类值相等比较读取对方身份投影，保留封装。",
-    "bazi/bazi_chart.py|BaziJson._CommonChartJsonDict": "同模块JSON类型组合，不是运行时私有字段读取。",
-    "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",
-    "bazi/context_matching.py|KnowledgeBase._from_data": "前提记录从已解码嵌套JSON恢复知识库，复用与公开from_json相同的严格校验。",
-    "bazi/knowledge.py|other._value": "同类不可变值比较，不是跨模块协作。",
-    "bazi/rules.py|BaziRules._ZHANGSHENG_ROWS": "同模块使用五行阴阳长生规则行，仍由BaziRules定义。",
-    "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于TransitDatabase；TransitChart先校验坐标及历法可用性，再调用包内入口。",
-    "bazi/transit_chart.py|self._transit_db._dayun_at_date": "按日期解释物理交运边界的包内入口，公开日期校验仍由TransitChart承担。",
-    "bazi/transit_chart.py|self._transit_db._dayun_at_moment": "按时刻解释物理交运边界的包内入口，公开时刻校验及出生下界仍由TransitChart承担。",
-    "bazi/transits.py|chart._dayun_empty_timeline_message": "空大运视图错误由产出该视图的BaziChart定义；数据库复用消息，不反推起运规则。",
-    "bazi/transits.py|self._dayun_db._dayuns": "同模块两个数据库共享已求值的不可变大运元组，不二次消耗生成器。",
-    "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": "长生起点与方向归规则表所有，两个工具函数只解释该共享表；不复制生产规则。"
+    "cross_module": {
+      "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；太阳时所有其精度及拒绝规则。",
+      "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",
+      "bazi/context_matching.py|KnowledgeBase._from_data": "前提记录从已解码嵌套JSON恢复知识库，复用与公开from_json相同的严格校验。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于TransitDatabase；TransitChart先校验坐标及历法可用性，再调用包内入口。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_date": "按日期解释物理交运边界的包内入口，公开日期校验仍由TransitChart承担。",
+      "bazi/transit_chart.py|self._transit_db._dayun_at_moment": "按时刻解释物理交运边界的包内入口，公开时刻校验及出生下界仍由TransitChart承担。",
+      "bazi/transits.py|chart._dayun_empty_timeline_message": "空大运视图错误由产出该视图的BaziChart定义；数据库复用消息，不反推起运规则。",
+      "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": "长生起点与方向归规则表所有，两个工具函数只解释该共享表；不复制生产规则。"
+    },
+    "same_module_or_class": {
+      "bazi/analyzer/relationship.py|TransitAnalysis._ALL_LEVELS": "同模块对分析层次全集的读取，不是跨模块私有依赖。",
+      "bazi/bazi.py|other._identity": "同类值相等比较读取对方身份投影，保留封装。",
+      "bazi/bazi_chart.py|BaziJson._CommonChartJsonDict": "同模块JSON类型组合，不是运行时私有字段读取。",
+      "bazi/knowledge.py|other._value": "同类不可变值比较，不是跨模块协作。",
+      "bazi/rules.py|BaziRules._ZHANGSHENG_ROWS": "同模块使用五行阴阳长生规则行，仍由BaziRules定义。",
+      "bazi/transits.py|self._dayun_db._dayuns": "同模块两个数据库共享已求值的不可变大运元组，不二次消耗生成器。"
+    }
   },
   "repeated_members": {
     "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": 2

@@ -10,7 +10,7 @@ import pytest
 from bazi.defines import Shishen, Tiangan
 from bazi.knowledge import (
   KnowledgeBase, KnowledgeObject, KnowledgeRole, KnowledgeRelation, KnowledgeEntry,
-  LegacyDescription, object_id,
+  LegacyDescription, KnowledgeContext, object_id,
 )
 
 
@@ -25,6 +25,151 @@ TRANSLATED_SOURCES: dict[str, dict[str, list[str]]] = LEDGER['translated']['sour
 
 def _ids(entries: tuple[KnowledgeEntry, ...]) -> tuple[str, ...]:
   return tuple(entry.claim_id for entry in entries)
+
+
+def _discovery_knowledge() -> KnowledgeBase:
+  original = KNOWLEDGE_BASE.entry('tiangan.ding.definition')
+  default = replace(
+    original,
+    claim_id='custom.default',
+    text='default body',
+    roles=(KnowledgeRole('subject', 'concept.one'),),
+    relations=(),
+    topics=('shared',),
+    attribution='known attribution',
+    viewpoint='default_view',
+    exceptions=(),
+    limits=(),
+    legacy=None,
+  )
+  reference = replace(
+    default,
+    claim_id='custom.reference',
+    text='reference body',
+    roles=(KnowledgeRole('subject', 'concept.two'),),
+    topics=('shared', 'reference_topic'),
+    applicability='described',
+    premise='explicit premise',
+    contexts=('context.used',),
+    viewpoint='reference_view',
+    output='reference_only',
+  )
+  sources = tuple(KNOWLEDGE_BASE.sources[key] for key in original.sources)
+  return KnowledgeBase(
+    (
+      KnowledgeObject('concept.one', 'concept', '同名'),
+      KnowledgeObject('concept.two', 'concept', '同名'),
+      KnowledgeObject('concept.unused', 'concept', 'Unused'),
+    ),
+    (
+      KnowledgeContext('context.used', '情境标签专用串', 'used.scope', ()),
+      KnowledgeContext('context.unused', '未引用情境', 'unused.scope', ()),
+    ),
+    tuple(replace(source, work='来源全文专用串', excerpt='来源全文专用串') for source in sources) +
+    (replace(sources[0], source_id='source.unused'),),
+    (default, reference),
+  )
+
+
+def test_find_objects_preserves_duplicate_names_and_registration_order() -> None:
+  knowledge = _discovery_knowledge()
+  assert knowledge.find_objects('同名') == (knowledge.objects['concept.one'], knowledge.objects['concept.two'])
+  assert knowledge.find_objects('Unused') == (knowledge.objects['concept.unused'],)
+  assert knowledge.find_objects('unused') == ()
+  assert knowledge.find_objects('无此名称') == ()
+  assert KnowledgeBase((), (), (), ()).find_objects('同名') == ()
+  with pytest.raises(FrozenInstanceError):
+    knowledge.find_objects('同名')[0].name = 'changed' # type: ignore[misc]
+
+
+@pytest.mark.parametrize('value', [None, 1, True, '', '   '])
+def test_discovery_text_inputs_fail_immediately(value: object) -> None:
+  knowledge = _discovery_knowledge()
+  error = ValueError if isinstance(value, str) else TypeError
+  with pytest.raises(error):
+    knowledge.find_objects(value) # type: ignore[arg-type]
+  with pytest.raises(error):
+    knowledge.search(value) # type: ignore[arg-type]
+  with pytest.raises(error):
+    knowledge.filter_values(value) # type: ignore[arg-type]
+
+
+def test_filter_values_cover_registries_static_domains_and_reference_only_values() -> None:
+  for knowledge in (KNOWLEDGE_BASE, _discovery_knowledge(), KnowledgeBase((), (), (), ())):
+    expected = {
+      'object_id': tuple(sorted(knowledge.objects)),
+      'context_id': tuple(sorted(knowledge.contexts)),
+      'source_id': tuple(sorted(knowledge.sources)),
+      'topic': tuple(sorted({topic for entry in knowledge.entries.values() for topic in entry.topics})),
+      'viewpoint': tuple(sorted({entry.viewpoint for entry in knowledge.entries.values()})),
+      'applicability': ('described', 'unconditional', 'unresolved'),
+      'time_scope': tuple(sorted({context.time_scope for context in knowledge.contexts.values()})),
+    }
+    for dimension, values in expected.items():
+      assert knowledge.filter_values(dimension) == values
+      for value in values:
+        assert isinstance(knowledge.query(**{dimension: value}, include_reference_only=True), tuple) # type: ignore[arg-type]
+  custom = _discovery_knowledge()
+  assert 'reference_topic' in custom.filter_values('topic')
+  assert custom.query(topic='reference_topic') == ()
+  assert _ids(custom.query(topic='reference_topic', include_reference_only=True)) == ('custom.reference',)
+  assert custom.query(object_id='concept.unused', time_scope='unused.scope', source_id='source.unused', include_reference_only=True) == ()
+  for dimension in ('unknown', 'include_reference_only'):
+    with pytest.raises(ValueError, match='Unknown dimension'):
+      custom.filter_values(dimension)
+
+
+@pytest.mark.parametrize('field', ['text', 'premise', 'attribution', 'topics', 'viewpoint', 'exceptions', 'limits', 'object_name'])
+def test_search_matches_each_documented_field_with_casefold(field: str) -> None:
+  original = _discovery_knowledge()
+  reference = original.entry('custom.reference')
+  objects = tuple(original.objects.values())
+  if field == 'object_name':
+    objects = tuple(replace(obj, name='Straße丁火') if obj.object_id == 'concept.two' else obj for obj in objects)
+  else:
+    value: Any = ('Straße丁火',) if field in ('topics', 'exceptions', 'limits') else 'Straße丁火'
+    reference = replace(reference, **{field: value})
+  knowledge = KnowledgeBase(objects, tuple(original.contexts.values()), tuple(original.sources.values()), (original.entry('custom.default'), reference))
+  assert _ids(knowledge.search('STRASSE', include_reference_only=True)) == ('custom.reference',)
+  assert knowledge.search('STRASSE') == ()
+  assert _ids(knowledge.search('丁火', include_reference_only=True)) == ('custom.reference',)
+  assert knowledge.search(' Straße丁火 ', include_reference_only=True) == ()
+  assert isinstance(knowledge.search('丁火', include_reference_only=True), tuple)
+
+
+def test_search_uses_query_filters_order_and_output_policy_without_searching_sources() -> None:
+  knowledge = _discovery_knowledge()
+  assert _ids(knowledge.search('body')) == ('custom.default',)
+  assert _ids(knowledge.search('BODY', include_reference_only=True)) == ('custom.default', 'custom.reference')
+  assert _ids(knowledge.search(
+    'body',
+    object_id='concept.two',
+    context_id='context.used',
+    topic='reference_topic',
+    source_id=knowledge.entry('custom.reference').sources[0],
+    viewpoint='reference_view',
+    applicability='described',
+    time_scope='used.scope',
+    include_reference_only=True,
+  )) == ('custom.reference',)
+  assert knowledge.search('reference', object_id='concept.one', include_reference_only=True) == ()
+  for keyword in ('来源全文专用串', '情境标签专用串', 'concept.two', 'custom.reference'):
+    assert knowledge.search(keyword, include_reference_only=True) == ()
+  reference = replace(knowledge.entry('custom.reference'), text='literal [ bracket')
+  literal = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), (reference,))
+  assert literal.search('[', include_reference_only=True) == (reference,)
+  assert literal.search('.', include_reference_only=True) == ()
+  assert KnowledgeBase((), (), (), ()).search('body') == ()
+  with pytest.raises(TypeError):
+    knowledge.search('body', include_reference_only=1) # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('dimension', ['object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'])
+def test_search_validates_filters_even_when_keyword_has_no_match(dimension: str) -> None:
+  knowledge = _discovery_knowledge()
+  for value, error in (('unknown', ValueError), (1, TypeError)):
+    with pytest.raises(error):
+      knowledge.search('no match', **{dimension: value}) # type: ignore[arg-type]
 
 
 def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:

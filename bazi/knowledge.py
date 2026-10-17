@@ -372,6 +372,7 @@ class KnowledgeBase:
 
   @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
+    '''包内嵌套知识记录入口，与 from_json 共用版本、字段及知识约束校验。'''
     data = _mapping(
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
@@ -411,6 +412,40 @@ class KnowledgeBase:
       raise ValueError(f'Unknown claim ID: {claim_id}')
     return self.entries[claim_id]
 
+  def find_objects(self, name: str) -> tuple[KnowledgeObject, ...]:
+    '''按名称精确查找对象，重名全部返回，保持注册顺序；无匹配返回空元组。
+
+    Args:
+    - name: (str) 非空名称，不做大小写转换、分词或近似匹配。
+    Return:
+    - (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象。
+    '''
+    _text(name)
+    return tuple(value for value in self.objects.values() if value.name == name)
+
+  def filter_values(self, dimension: str) -> tuple[str, ...]:
+    '''返回 query 接受的合法过滤值全集，按 Unicode 字符串序排列。
+
+    Note:
+    - 包含仅供参考条目独有的值，以及未被条目引用的对象、情境、来源与情境时间范围。
+    - applicability 来自类型定义，空库也保留合法域；合法值不保证默认查询有命中。
+    Args:
+    - dimension: (str) object_id、context_id、source_id、topic、viewpoint、applicability 或 time_scope。
+    Return:
+    - (tuple[str, ...]) 不重复的合法值；未知维度抛 ValueError，错型抛 TypeError。
+    '''
+    _text(dimension)
+    registries = {'object_id': tuple(self.objects), 'context_id': tuple(self.contexts), 'source_id': tuple(self.sources)}
+    if dimension in registries:
+      return tuple(sorted(registries[dimension]))
+    if dimension == 'applicability':
+      return tuple(sorted(_APPLICABILITY))
+    if dimension == 'time_scope':
+      return tuple(sorted({context.time_scope for context in self.contexts.values()}))
+    if dimension in ('topic', 'viewpoint'):
+      return tuple(sorted({key[1] for key in self._index if key[0] == dimension}))
+    raise ValueError(f'Unknown dimension: {dimension}')
+
   def query(
     self,
     *,
@@ -438,24 +473,66 @@ class KnowledgeBase:
       'object_id': object_id, 'context_id': context_id, 'topic': topic, 'source_id': source_id,
       'viewpoint': viewpoint, 'applicability': applicability, 'time_scope': time_scope,
     }
-    known = {
-      'object_id': set(self.objects), 'context_id': set(self.contexts), 'source_id': set(self.sources),
-      'applicability': set(_APPLICABILITY),
-      'time_scope': {context.time_scope for context in self.contexts.values()},
-    }
     candidates = frozenset(self.entries)
     for dimension, value in filters.items():
       if value is None:
         continue
       _text(value)
-      accepted = known.get(dimension, {key[1] for key in self._index if key[0] == dimension})
-      if value not in accepted:
+      if value not in self.filter_values(dimension):
         raise ValueError(f'Unknown {dimension}: {value}')
       candidates &= self._index.get((dimension, value), frozenset())
     return tuple(
       entry for entry in self.entries.values()
       if entry.claim_id in candidates and (include_reference_only or entry.output == 'default')
     )
+
+  def search(
+    self,
+    keyword: str,
+    *,
+    object_id: str | None = None,
+    context_id: str | None = None,
+    topic: str | None = None,
+    source_id: str | None = None,
+    viewpoint: str | None = None,
+    applicability: Applicability | None = None,
+    time_scope: str | None = None,
+    include_reference_only: bool = False,
+  ) -> tuple[KnowledgeEntry, ...]:
+    '''先按 query 过滤，再对条目文字及关联对象名称作 casefold 字面子串检索。
+
+    Note:
+    - 检索 text、premise、attribution、topics、viewpoint、exceptions、limits 及角色对象的 name。
+      不检索来源全文、情境标签或对象 ID，不分词、不解释正则、不计算命盘适用性。
+    - 七维过滤取交集，校验及参考条目政策与 query 相同，结果保持语料顺序。
+    Args:
+    - keyword: (str) 非空关键词，空或全空白抛 ValueError，错型抛 TypeError；不剥除有效词两侧空白。
+    - 其余参数与 query 相同。
+    Return:
+    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
+    '''
+    _text(keyword)
+    needle = keyword.casefold()
+    candidates = self.query(
+      object_id=object_id,
+      context_id=context_id,
+      topic=topic,
+      source_id=source_id,
+      viewpoint=viewpoint,
+      applicability=applicability,
+      time_scope=time_scope,
+      include_reference_only=include_reference_only,
+    )
+
+    def __matches(entry: KnowledgeEntry) -> bool:
+      texts = (
+        (entry.text, entry.premise, entry.attribution, entry.viewpoint) +
+        entry.topics + entry.exceptions + entry.limits +
+        tuple(self.objects[role.object_id].name for role in entry.roles)
+      )
+      return any(needle in text.casefold() for text in texts)
+
+    return tuple(entry for entry in candidates if __matches(entry))
 
   def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
     '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
@@ -466,6 +543,7 @@ class KnowledgeBase:
     return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
 
   def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
+    '''供包内嵌套的 JSON 结构；export_json 编码同一结构，条目选择的校验也在此完成。'''
     selected = tuple(self.entries.values()) if entries is None else entries
     _tuple(selected, KnowledgeEntry)
     ids: set[str] = set()

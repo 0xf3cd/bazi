@@ -17,10 +17,19 @@ def _dependencies(root: Path) -> tuple[Counter[str], Counter[str]]:
   for path in (root / 'bazi').rglob('*.py'):
     name = path.relative_to(root).as_posix()
     for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
-      if isinstance(node, ast.ImportFrom) and node.level:
+      if isinstance(node, ast.ImportFrom) and (
+        node.level or node.module == 'bazi' or (node.module or '').startswith('bazi.')
+      ):
         for alias in node.names:
-          if alias.name.startswith('_') and not alias.name.startswith('__'):
+          if (
+            (alias.name.startswith('_') and not alias.name.startswith('__'))
+            or any(part.startswith('_') for part in (node.module or '').split('.'))
+          ):
             imports[f'{name}|{"." * node.level}{node.module or ""}|{alias.name}'] += 1
+      if isinstance(node, ast.Import):
+        for alias in node.names:
+          if alias.name.startswith('bazi.') and any(part.startswith('_') for part in alias.name.split('.')):
+            imports[f'{name}|{alias.name}|<module>'] += 1
       if (
         isinstance(node, ast.Attribute) and node.attr.startswith('_') and not node.attr.startswith('__')
         and (not isinstance(node.value, ast.Name) or node.value.id not in ('self', 'cls'))
@@ -32,10 +41,14 @@ def _dependencies(root: Path) -> tuple[Counter[str], Counter[str]]:
 def test_private_dependencies_have_explicit_owners() -> None:
   # This is a static candidate guard, not a proof about dynamic getattr or all cross-object access.
   ledger = json.loads((ROOT / 'tests/data/internal_interfaces.json').read_text(encoding='utf-8'))
-  assert all(reason.strip() for group in ('imports', 'members') for reason in ledger[group].values())
+  cross = ledger['members']['cross_module']
+  same = ledger['members']['same_module_or_class']
+  assert not set(cross) & set(same)
+  member_reasons = cross | same
+  assert all(reason.strip() for group in (ledger['imports'], member_reasons) for reason in group.values())
   expected_imports = Counter({key: 1 for key in ledger['imports']})
-  expected_members = Counter({key: ledger['repeated_members'].get(key, 1) for key in ledger['members']})
-  assert set(ledger['repeated_members']) <= set(ledger['members'])
+  expected_members = Counter({key: ledger['repeated_members'].get(key, 1) for key in member_reasons})
+  assert set(ledger['repeated_members']) <= set(member_reasons)
   assert _dependencies(ROOT) == (expected_imports, expected_members)
 
 
@@ -45,6 +58,9 @@ def test_candidate_scan_includes_imports_and_nested_member_access(tmp_path: Path
   source = package / 'sample.py'
   source.write_text(
     'from .owner import _shared\n'
+    'from bazi.owner import _shared\n'
+    'from bazi._internals import shared\n'
+    'import bazi._internals as internal\n'
     'from .owner import Public\n'
     'def use(self, cls, other):\n'
     '  self._own\n'
@@ -55,7 +71,12 @@ def test_candidate_scan_includes_imports_and_nested_member_access(tmp_path: Path
     encoding='utf-8',
   )
   expected = (
-    Counter({'bazi/sample.py|.owner|_shared': 1}),
+    Counter({
+      'bazi/sample.py|.owner|_shared': 1,
+      'bazi/sample.py|bazi.owner|_shared': 1,
+      'bazi/sample.py|bazi._internals|shared': 1,
+      'bazi/sample.py|bazi._internals|<module>': 1,
+    }),
     Counter({'bazi/sample.py|other._shared': 1, 'bazi/sample.py|self._database._shared': 1}),
   )
   assert _dependencies(tmp_path) == expected

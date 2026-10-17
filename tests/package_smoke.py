@@ -354,6 +354,14 @@ def main() -> None:
       f'Wrong complete Shishen projection: {shishen}',
     )
   check(len(knowledge.entries) == 302 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  for subject in knowledge.objects.values():
+    check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
+    check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
+  for dimension in ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'):
+    values = knowledge.filter_values(dimension)
+    check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
+    for filter_value in values:
+      check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
   check(len(knowledge.sources) == 13, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
@@ -370,6 +378,9 @@ def main() -> None:
   check(relation.text not in knowledge.render_subject('shishen.qisha', include_reference_only=True), 'Subject projection became all-role query')
   check(relation.text in knowledge.render_subject('shishen.shishen', include_reference_only=True), 'Subject projection lost its subject')
   for knowledge_operation in (
+    lambda: knowledge.find_objects(1), # type: ignore[arg-type]
+    lambda: knowledge.search(1), # type: ignore[arg-type]
+    lambda: knowledge.filter_values(1), # type: ignore[arg-type]
     lambda: object_id(Dizhi.子), # type: ignore[arg-type]
     lambda: knowledge.render(reference_entry, premise_verdict=1), # type: ignore[arg-type]
     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1), # type: ignore[arg-type]
