@@ -68,12 +68,13 @@ _ENTRY_FIELDS: Final[frozendict[TransitEntry, tuple[str, ...]]] = frozendict({
 
 
 class _Criterion(NamedTuple):
-  definition:    str
-  claims:        tuple[str, ...]
-  profile_kind:  Literal['context', 'relationship']
+  definition:      str
+  claims:          tuple[str, ...]
+  profile_kind:    Literal['context', 'relationship']
   # premise：条目前提即本判据，条目以 `EntryMatch` 判别；condition：判据只判可计算事实，
   # 条目文字另含程序不判的条件，条目以 `RelatedEntry` 作条件参考返回。
-  entry_role:    Literal['premise', 'condition']
+  entry_role:      Literal['premise', 'condition']
+  female_required: bool
 
 
 _GUANSHA: Final = 'editorial.guansha_coexistence.v1'
@@ -88,28 +89,28 @@ _XIAOYIN: Final = 'shishen.xiaoyin_duoshi'
 _CRITERIA: Final[frozendict[str, _Criterion]] = frozendict({
   _GUANSHA: _Criterion('选定范围内正官与七杀各至少出现一次。', (
     'editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble',
-  ), 'context', 'premise'),
+  ), 'context', 'premise', False),
   _FEMALE: _Criterion('选定范围内正官与七杀各至少出现一次，且输入为女命。', (
     'editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity',
-  ), 'context', 'premise'),
+  ), 'context', 'premise', True),
   _DING: _Criterion('日主为丁火；身弱、克太多留在条目文字中，程序不判别。', (
     'legacy.tiangan.ding.weak_state',
-  ), 'context', 'condition'),
+  ), 'context', 'condition', False),
   _GENG: _Criterion('日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。', (
     'legacy.tiangan.geng.regulated_transit',
-  ), 'context', 'condition'),
+  ), 'context', 'condition', False),
   _PIANYIN: _Criterion('选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。', (
     'legacy.shishen.SH-199',
-  ), 'context', 'condition'),
+  ), 'context', 'condition', False),
   _XIAOYIN: _Criterion('选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。', (
     'legacy.shishen.SH-066',
-  ), 'context', 'condition'),
+  ), 'context', 'condition', False),
   _PALACE: _Criterion('选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。', (
     'editorial.tanyuan.wife_palace_xingchong.v1',
-  ), 'relationship', 'condition'),
+  ), 'relationship', 'condition', False),
   _TOUGAN: _Criterion('选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。', (
     'editorial.tanyuan.wife_star_gantou.v1',
-  ), 'relationship', 'condition'),
+  ), 'relationship', 'condition', False),
 })
 
 '''日主判据：观察键与所需日主。'''
@@ -123,6 +124,28 @@ _CLASS_CRITERIA: Final[frozendict[str, frozendict[str, Shishen]]] = frozendict({
   _PIANYIN: frozendict({'pianyin_observed': Shishen.偏印}),
   _XIAOYIN: frozendict({'pianyin_observed': Shishen.偏印, 'shishen_observed': Shishen.食神}),
 })
+
+'''求值与目录共用的观察键；日主与十神分类的观察键仍由各自定义表所有。'''
+_OBS_COEXISTENCE: Final = 'observed_coexistence'
+_OBS_FEMALE: Final = 'female'
+_OBS_PALACE_CHONG: Final = 'day_pillar_in_chong'
+_OBS_PALACE_XING: Final = 'day_pillar_in_xing'
+_OBS_STAR_VISIBLE: Final = 'target_stem_visible'
+_OBS_STAR_HIDDEN: Final = 'target_stem_hidden'
+
+
+def _observation_keys(criterion_id: str) -> tuple[str, ...]:
+  if criterion_id in _DAY_MASTER_CRITERIA:
+    return (_DAY_MASTER_CRITERIA[criterion_id][0],)
+  if criterion_id in _CLASS_CRITERIA:
+    return tuple(_CLASS_CRITERIA[criterion_id])
+  if criterion_id in (_GUANSHA, _FEMALE):
+    return (_OBS_COEXISTENCE, _OBS_FEMALE)
+  if criterion_id == _PALACE:
+    return (_OBS_PALACE_CHONG, _OBS_PALACE_XING)
+  if criterion_id == _TOUGAN:
+    return (_OBS_STAR_VISIBLE, _OBS_STAR_HIDDEN)
+  raise ValueError(f'Unsupported criterion metadata: {criterion_id}')
 
 # 指纹包含完整条目及其绑定的对象、情境与来源记录，识别原作语义，不能只凭 ID 或展示词确认绑定。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
@@ -272,6 +295,123 @@ class RelationshipProfile:
     object.__setattr__(self, 'kinds', tuple(
       kind for kind in TransitKind if kind in frozenset(self.kinds)
     ))
+
+
+@dataclass(frozen=True)
+class CriterionInfo:
+  '''判据的不可变查阅目录，不是一次命盘判别，也不认证条目适用于现实事件。
+
+  Note:
+  - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
+  - claim_ids 是默认语料的约定，不保证自定义知识库有这些条目，也不以相同 ID 认证绑定。
+  - required_gender 是判据门槛；claim_genders 是关联条目的门槛，两者作用层次不同。
+  - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
+  '''
+
+  criterion_id:     str
+  definition:       str
+  profile_type:     type[ContextProfile] | type[RelationshipProfile]
+  entry_role:       Literal['premise', 'condition']
+  observation_keys: tuple[str, ...]
+  required_gender:  BaziGender | None
+  claim_ids:        tuple[str, ...]
+  claim_genders:    frozendict[str, BaziGender]
+
+  def __post_init__(self) -> None:
+    for value in (self.criterion_id, self.definition):
+      _typed(value, str)
+      if not value.strip():
+        raise ValueError('Expected non-empty text')
+    _typed(self.profile_type, type)
+    if self.profile_type not in (ContextProfile, RelationshipProfile):
+      raise ValueError(f'Unsupported profile type: {self.profile_type}')
+    _choice(self.entry_role, ('premise', 'condition'))
+    for values in (self.observation_keys, self.claim_ids):
+      _tuple(values, str)
+      if not values or len(set(values)) != len(values):
+        raise ValueError('Expected non-empty distinct metadata values')
+    if self.required_gender is not None:
+      _typed(self.required_gender, BaziGender)
+    _typed(self.claim_genders, frozendict)
+    for claim_id, gender in self.claim_genders.items():
+      _choice(claim_id, self.claim_ids)
+      _typed(gender, BaziGender)
+
+  @property
+  def profile_kind(self) -> Literal['context', 'relationship']:
+    return 'context' if self.profile_type is ContextProfile else 'relationship'
+
+  @property
+  def scopes(self) -> tuple[ObservationScope | RelationshipScope, ...]:
+    return get_args(ObservationScope if self.profile_type is ContextProfile else RelationshipScope)
+
+  @property
+  def required_inputs(self) -> tuple[str, ...]:
+    '''evaluate_context 的必填参数；profile 的构造要求另见 profile_type 与 scope_inputs。'''
+    return ('chart', 'criterion_id', 'profile')
+
+  @property
+  def optional_inputs(self) -> tuple[str, ...]:
+    return ('knowledge', 'include_reference_only')
+
+  @property
+  def scope_inputs(self) -> frozendict[str, tuple[str, ...]]:
+    '''各 scope 取得完整范围的额外 profile 字段。
+
+    关系流运范围的 kinds 在构造期必须非空；年份／坐标缺失则在求值时返回 UNKNOWN，
+    不把这两种输入要求混为同一种失败。
+    '''
+    return frozendict({
+      scope: () if scope == 'natal' else (
+        ('ganzhi_year',) if self.profile_type is ContextProfile else ('coordinate', 'kinds')
+      ) for scope in self.scopes
+    })
+
+  @property
+  def transit_entries(self) -> frozendict[TransitEntry, tuple[str, ...]]:
+    '''关系 profile 的坐标入口及必填坐标字段；ContextProfile 不接 TransitCoordinate。'''
+    return _ENTRY_FIELDS if self.profile_type is RelationshipProfile else frozendict({})
+
+  @property
+  def transit_kinds(self) -> frozendict[TransitEntry, frozenset[TransitKind]]:
+    '''关系坐标入口结构上支持的流运种类上限，不保证某个命盘实际可取得。'''
+    return _ENTRY_KINDS if self.profile_type is RelationshipProfile else frozendict({})
+
+  @property
+  def unknown_conditions(self) -> frozendict[MatchReason, str]:
+    '''CriterionResult 的 UNKNOWN 条件；绑定失败另作用于条目层，不列为事实判别原因。'''
+    return frozendict({
+      'missing_transit_coordinate': '选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。',
+      'transit_unavailable': '流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。',
+    })
+
+  @property
+  def binding_effect(self) -> Literal['entry_unknown', 'related_unrecognized']:
+    '''绑定未识别时，premise 的 EntryMatch 为 UNKNOWN/binding_unrecognized，
+    condition 的 RelatedEntry.recognized 为 False；两者均不改变 CriterionResult。
+    '''
+    return 'entry_unknown' if self.entry_role == 'premise' else 'related_unrecognized'
+
+
+def criterion(id: str) -> CriterionInfo:
+  '''按稳定 ID 查阅判据，不加载知识库、不创建命盘；未知 ID 抛 ValueError，错型抛 TypeError。'''
+  _choice(id, tuple(_CRITERIA))
+  registered = _CRITERIA[id]
+  return CriterionInfo(
+    criterion_id=id,
+    definition=registered.definition,
+    profile_type=ContextProfile if registered.profile_kind == 'context' else RelationshipProfile,
+    entry_role=registered.entry_role,
+    observation_keys=_observation_keys(id),
+    required_gender=BaziGender.FEMALE if registered.female_required else None,
+    claim_ids=registered.claims,
+    claim_genders=frozendict({key: _RELATED_GENDERS[key] for key in registered.claims if key in _RELATED_GENDERS}),
+  )
+
+
+def criteria() -> frozendict[str, CriterionInfo]:
+  '''返回全部已注册判据的不可变目录；每项由现有定义与 profile 契约派生。'''
+  return frozendict({criterion_id: criterion(criterion_id) for criterion_id in _CRITERIA})
 
 
 @dataclass(frozen=True)
@@ -1012,9 +1152,9 @@ def evaluate_context(
     target_stem_visible = any(value.layer == 'visible' for value in evidence.appearances)
     target_stem_hidden = any(value.layer == 'hidden' for value in evidence.appearances)
     observations = frozendict(
-      {'day_pillar_in_chong': day_pillar_in_chong, 'day_pillar_in_xing': day_pillar_in_xing}
+      {_OBS_PALACE_CHONG: day_pillar_in_chong, _OBS_PALACE_XING: day_pillar_in_xing}
       if criterion_id == _PALACE
-      else {'target_stem_visible': target_stem_visible, 'target_stem_hidden': target_stem_hidden}
+      else {_OBS_STAR_VISIBLE: target_stem_visible, _OBS_STAR_HIDDEN: target_stem_hidden}
     )
 
     reason: MatchReason
@@ -1095,9 +1235,9 @@ def evaluate_context(
     coexistence = Shishen.正官 in classes and Shishen.七杀 in classes
     female = bazi.gender is BaziGender.FEMALE
     observations = frozendict({
-      'observed_coexistence': coexistence, 'female': female,
+      _OBS_COEXISTENCE: coexistence, _OBS_FEMALE: female,
     })
-    if criterion_id == _FEMALE and not female:
+    if _CRITERIA[criterion_id].female_required and not female:
       fact = 'female_gate_false'
     else:
       fact = 'premise_satisfied' if coexistence else 'required_classification_absent'

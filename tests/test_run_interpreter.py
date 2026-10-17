@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import argparse
+import inspect
 import re
 import json
 import random
@@ -8,21 +10,51 @@ import subprocess
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import cast
+from typing import cast, get_args
 
 import pytest
 
 from run_interpreter import interpret, main
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart, BaziJson
-from bazi.knowledge import KnowledgeBase, object_id
-from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+from bazi.knowledge import Applicability, KnowledgeBase, object_id
+from bazi.context_matching import ContextProfile, ContextResult, criteria, evaluate_context
 from bazi.school import BaziConfig
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 
 MATCH_ARGS = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--observation-scope', 'natal')
+
+
+def test_existing_cli_filter_and_scope_contract_matches_library_directories(monkeypatch: pytest.MonkeyPatch) -> None:
+  parsers: list[argparse.ArgumentParser] = []
+  class StopParsing(RuntimeError):
+    pass
+  def capture(parser: argparse.ArgumentParser, *args: object, **kwargs: object) -> argparse.Namespace:
+    parsers.append(parser)
+    raise StopParsing
+  monkeypatch.setattr(argparse.ArgumentParser, 'parse_args', capture)
+  with pytest.raises(StopParsing):
+    main([])
+  assert len(parsers) == 1
+  actions = {action.dest: action for action in parsers[0]._actions}
+  flags = {
+    'object_id': '--object', 'context_id': '--context', 'source_id': '--source',
+    'topic': '--topic', 'viewpoint': '--viewpoint', 'applicability': '--applicability', 'time_scope': '--time-scope',
+  }
+  assert set(inspect.signature(KnowledgeBase.query).parameters) - {'self', 'include_reference_only'} == set(flags)
+  assert set(inspect.signature(KnowledgeBase.search).parameters) - {'self', 'keyword', 'include_reference_only'} == set(flags)
+  for dimension, flag in flags.items():
+    assert actions[dimension].option_strings == [flag]
+  assert tuple(actions['applicability'].choices or ()) == get_args(Applicability)
+  scopes = tuple(actions['observation_scope'].choices or ())
+  assert scopes == ('natal', 'natal_and_liunian', 'natal_and_transits')
+  assert set(scopes) == {scope for info in criteria().values() for scope in info.scopes}
+  entries = tuple(actions['transit_entry'].choices or ())
+  assert entries == ('at_year', 'at_month', 'at_date', 'at_moment')
+  assert set(entries) == {entry for info in criteria().values() for entry in info.transit_entries}
+  assert not {'find_objects', 'search', 'criteria'} & set(actions)
 
 
 def test_matching_cli_text_export_reload_and_library_agree(tmp_path: Path) -> None:

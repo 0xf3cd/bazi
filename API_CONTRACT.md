@@ -81,6 +81,41 @@ entries = knowledge.search('比肩', object_id=objects[0].object_id, include_ref
 assert isinstance(topics, tuple) and isinstance(entries, tuple)
 ```
 
+## 判据目录
+
+`context_matching.criteria()` 返回 `frozendict[str, CriterionInfo]`，
+`criterion(id)` 返回单项；未知 ID 抛 `ValueError`，错型抛 `TypeError`。
+两者不加载知识库、不创建命盘，也不执行判别。目录值冻结，直接构造 `CriterionInfo` 只校验值的形状；
+需要已注册定义时应使用查询入口，不把自填说明当成程序认证。
+
+| 目录信息 | 含义 |
+|---|---|
+| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含绑定指纹值。 |
+| `profile_type`、`profile_kind`、`scopes` | 需要的 profile 类型与合法范围，没有隐式范围默认值。 |
+| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外 profile 字段。 |
+| `transit_entries`、`transit_kinds` | 关系 profile 的坐标入口、必填坐标字段和结构上可支持的种类上限；不保证某盘实际可取得。ContextProfile 不接 TransitCoordinate。 |
+| `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds` 在构造时就必须非空，并非缺失时一律 UNKNOWN。 |
+| `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
+| `required_gender`、`claim_genders` | 分别作用于判据和关联条目：女命官杀判据的门槛，不等于婚恋两条男命语境条文的关联门槛。 |
+| `claim_ids` | 默认语料的条目约定；自定义库不保证有这些条目，同 ID 也不能认证语义相同。 |
+
+绑定未识别不改变 `CriterionResult`。`binding_effect='entry_unknown'` 表示 premise 条目的
+`EntryMatch` 可为 `UNKNOWN/binding_unrecognized`；`'related_unrecognized'` 表示 condition 条目的
+`RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
+
+```python
+from bazi.context_matching import ContextProfile, criterion, criteria
+
+directory = criteria()
+info = criterion('editorial.guansha_coexistence.v1')
+assert info == directory[info.criterion_id]
+assert info.profile_type is ContextProfile
+assert info.entry_role == 'premise'
+assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
+```
+
+本版新增的是 Python 发现接口与目录；源码 CLI 脚本保持既有参数，不新增名称／关键词／目录发现参数。
+
 ## 三类 JSON 分别保存与恢复
 
 | 记录 | 输出／输入 | 版本与恢复含义 |

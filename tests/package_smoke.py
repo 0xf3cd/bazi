@@ -120,7 +120,7 @@ def main() -> None:
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
-  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+  from bazi.context_matching import ContextProfile, ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context
 
   check(not EOT_READS, 'Imports eagerly read the EOT table')
   for longitude, error_type in ((True, TypeError), (float('nan'), ValueError), (180.01, ValueError)):
@@ -404,6 +404,31 @@ def main() -> None:
   else:
     raise RuntimeError('Optimized knowledge input rejection failed')
   print('PASS installed knowledge query/display/export/reload')
+  catalog = criteria()
+  check(set(catalog) == {
+    'editorial.guansha_coexistence.v1', 'editorial.guansha_coexistence_female.v1',
+    'tiangan.ding_weak_and_overcontrolled', 'tiangan.geng_regulated_transit',
+    'shishen.pianyin_favorable_or_balanced', 'shishen.xiaoyin_duoshi',
+    'editorial.spouse_palace_xingchong.v1', 'editorial.spouse_star_tougan.v1',
+  }, 'Installed criterion directory incomplete')
+  for identifier, info in catalog.items():
+    check(isinstance(info, CriterionInfo) and lookup_criterion(identifier) == info, 'Installed criterion metadata mismatch')
+    check(bool(info.observation_keys) and bool(info.definition.strip()), 'Installed criterion metadata missing')
+    check(all(claim_id in knowledge.entries for claim_id in info.claim_ids), 'Installed default claim convention missing')
+  for invalid_identifier in ('', 'unknown'):
+    try:
+      lookup_criterion(invalid_identifier)
+    except ValueError:
+      pass
+    else:
+      raise RuntimeError('Installed criterion lookup accepted an unknown ID')
+  try:
+    lookup_criterion(1) # type: ignore[arg-type]
+  except TypeError:
+    pass
+  else:
+    raise RuntimeError('Installed criterion lookup skipped type validation')
+  print('PASS installed immutable criterion directory')
   criterion = 'editorial.guansha_coexistence.v1'
   positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
   matched = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal'), include_reference_only=True)
