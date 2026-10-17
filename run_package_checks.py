@@ -33,7 +33,7 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
 )
 SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
-  'README.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
+  'README.md', 'API_CONTRACT.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
   'run_tests.py', 'run_package_checks.py', 'run_demo.py', 'run_interpreter.py',
   'run_relationship_analyzer.py', '.github/workflows/release.yml',
   'bazi/py.typed', 'bazi/calendar/celestial_data/SCHEMA.md',
