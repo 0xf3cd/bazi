@@ -6,7 +6,7 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Final, TypeVar
 
-from .common import frozendict, check_declared_types
+from .common import frozendict, check_declared_types, _compact_dataclass_repr
 from .data_types import TraitTuple, HiddenTianganDict
 from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation, ShierZhangsheng
 
@@ -513,6 +513,9 @@ class DizhiRelationDefinitions:
 
   def __post_init__(self) -> None:
     check_declared_types(self)
+
+  def __repr__(self) -> str:
+    return _compact_dataclass_repr(self)
 
 
 DEFAULT_DIZHI_RELATION_DEFINITIONS: Final[DizhiRelationDefinitions] = DizhiRelationDefinitions()

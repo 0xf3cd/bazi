@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from dataclasses import fields
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Final, cast, get_args
 from collections.abc import Iterator, Mapping
 
@@ -37,6 +38,21 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
     return self._hash
 
 #endregion
+
+
+def _compact_dataclass_repr(instance: 'DataclassInstance') -> str:
+  '''配置摘要只列出非默认字段；枚举显示限定成员名，不改变枚举自身的 repr。'''
+  def display(value: object) -> str:
+    if isinstance(value, Enum):
+      return f'{type(value).__qualname__}.{value.name}'
+    return repr(value)
+
+  values = ', '.join(
+    f'{f.name}={display(value)}'
+    for f in fields(instance)
+    if (value := getattr(instance, f.name)) != f.default
+  )
+  return f'{type(instance).__name__}({values})'
 
 
 ######################################################

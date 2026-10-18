@@ -34,6 +34,39 @@ def test_bazi_precision_basic() -> None:
   assert str(BaziPrecision.MINUTE) == 'minute'
 
 
+@pytest.mark.parametrize(('value', 'expected'), [
+  (BaziConfig(), 'BaziConfig()'),
+  (BaziSchool(), 'BaziSchool()'),
+  (DizhiRelationDefinitions(), 'DizhiRelationDefinitions()'),
+  (BaziConfig(precision=BaziPrecision.MINUTE), 'BaziConfig(precision=BaziPrecision.MINUTE)'),
+  (BaziSchool(day_rollover=DayRollover.ZIZHENG), 'BaziSchool(day_rollover=DayRollover.ZIZHENG)'),
+  (
+    DizhiRelationDefinitions(anhe_def=DizhiRules.AnheDef.NORMAL),
+    'DizhiRelationDefinitions(anhe_def=DizhiRules.AnheDef.NORMAL)',
+  ),
+  (
+    BaziConfig(backend=CalendarBackend.HKO, school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+    'BaziConfig(backend=CalendarBackend.HKO, school=BaziSchool(day_rollover=DayRollover.ZIZHENG))',
+  ),
+])
+def test_configuration_repr(value: BaziConfig | BaziSchool | DizhiRelationDefinitions, expected: str) -> None:
+  assert repr(value) == expected
+
+
+def test_configuration_repr_preserves_defaults_and_values() -> None:
+  assert BaziConfig().school is DEFAULT_SCHOOL
+  assert inspect.signature(BaziConfig).parameters['school'].default is DEFAULT_SCHOOL
+  assert inspect.signature(Bazi.create).parameters['config'].default is DEFAULT_CONFIG
+  assert inspect.signature(dizhi_utils.discover).parameters['definitions'].default is DEFAULT_DIZHI_RELATION_DEFINITIONS
+  assert repr(DayRollover.ZIZHENG) == '<DayRollover.ZIZHENG: 1>'
+  school = BaziSchool.mingli_tanyuan()
+  config = BaziConfig(school=school)
+  assert config == BaziConfig(school=BaziSchool.mingli_tanyuan())
+  assert hash(config) == hash(BaziConfig(school=BaziSchool.mingli_tanyuan()))
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', config))
+  assert BaziChart.from_json(chart.json).json == chart.json
+
+
 def test_dayun_year_rule_basic() -> None:
   assert len(DayunYearRule) == 2
   assert str(DayunYearRule.JIE_PROJECTED) == 'jie_projected'

@@ -9,7 +9,7 @@ from typing import Any, Final, TypedDict, cast
 from collections.abc import Mapping
 
 from .calendar import CalendarBackend
-from .common import check_declared_types, frozendict
+from .common import check_declared_types, frozendict, _compact_dataclass_repr
 from .rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 
 
@@ -248,6 +248,9 @@ class BaziSchool:
       if anchor not in allowed:
         raise ValueError(f'Unsupported anchor for {name}: {anchor}; supported: {sorted(a.name for a in allowed)}')
 
+  def __repr__(self) -> str:
+    return _compact_dataclass_repr(self)
+
   @property
   def relation_definitions(self) -> DizhiRelationDefinitions:
     '''由本流派的暗合、刑与拱局定义构造查询对象。'''
@@ -358,6 +361,9 @@ class BaziConfig:
   def __post_init__(self) -> None:
     # 此处不转换类型；字符串解析由 from_values 提供。
     check_declared_types(self)
+
+  def __repr__(self) -> str:
+    return _compact_dataclass_repr(self)
 
   @classmethod
   def from_values(cls, precision: BaziPrecision | str = BaziPrecision.DAY,
