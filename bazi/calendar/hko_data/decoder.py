@@ -4,6 +4,10 @@
 # 解码 encoder.py 生成的数据；只读取 hko_data/data/ 中已提交的二进制文件。
 # 不下载或重新编码，重建数据须运行离线工具 encoder.py。
 
+'''读取随包 HKO 节气与阴历二进制表。
+
+JieqiDates 与 DecodedLunarYears 提供解码后的数据，不负责下载或生成文件。'''
+
 import functools
 
 from pathlib import Path

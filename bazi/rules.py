@@ -1,5 +1,10 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''排盘、天干地支关系与神煞的规则表。
+
+BaziRules、TianganRules、DizhiRules 与 ShenshaRules 分别保存对应规则；
+DizhiRelationDefinitions 承载可选择的地支关系定义。'''
+
 import itertools
 from dataclasses import dataclass
 from collections.abc import Callable

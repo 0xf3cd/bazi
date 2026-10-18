@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''阴阳枚举 Yinyang 及中文名称阴阳。'''
+
 from .enum_base import BaziEnum
 
 

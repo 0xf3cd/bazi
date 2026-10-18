@@ -48,28 +48,19 @@ def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
   assert re.search('[\u4e00-\u9fff]', result.stdout)
 
 
-def test_readme_knowledge_counts_match_the_corpus() -> None:
+def test_knowledge_guide_states_and_counts_match_the_corpus() -> None:
   from typing import get_args
 
-  from bazi.knowledge import KnowledgeBase, OutputPolicy, SourceState
+  from bazi.knowledge import Applicability, KnowledgeBase, OutputPolicy, SourceState
+
+  guide = (ROOT / 'docs/guides/knowledge.md').read_text(encoding='utf-8')
   knowledge = KnowledgeBase.load()
   entries = tuple(knowledge.entries.values())
-  table = re.search(r'^\| `output` \|.*?(?=\n\n)', README, re.MULTILINE | re.DOTALL)
-  assert table is not None
-  header, _, *body = table[0].splitlines()
-  # Each cell's first token is the value; header and row labels may add a Chinese name after it.
-  cells = [[cell.split()[0].strip('`') for cell in line.strip('|').split('|')] for line in (header, *body)]
-  states = cells[0][1:-1]
-  # Columns and rows cover every declared value, so a new state or policy cannot drop out of the table.
-  assert sorted(states) == sorted(get_args(SourceState))
-  assert [row[0] for row in cells[1:-1]] == list(get_args(OutputPolicy))
-  for output, *counts, total in cells[1:-1]:
-    selected = [entry for entry in entries if entry.output == output]
-    assert [int(count) for count in counts] == [sum(entry.source_state == state for entry in selected) for state in states]
-    assert int(total) == len(selected)
-  assert cells[-1][0] == '合计' and cells[-1][1:] == [str(sum(entry.source_state == state for entry in entries)) for state in states] + [str(len(entries))]
-  unresolved = sum(entry.applicability == 'unresolved' for entry in entries)
-  assert f'其中 {unresolved} 条前提待梳理' in README
-  assert (
-    f'另有对象 {len(knowledge.objects)} 个、情境 {len(knowledge.contexts)} 个、来源 {len(knowledge.sources)} 个。'
-  ) in README
+  # Every declared value must remain documented, including values with zero corpus hits.
+  for field, schema in (('source_state', SourceState), ('applicability', Applicability), ('output', OutputPolicy)):
+    row = next(line for line in guide.splitlines() if line.startswith(f'| `{field}` |'))
+    values = re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1])
+    assert sorted(values) == sorted(get_args(schema)), field
+  witnessed = sum(entry.source_state == 'witnessed' for entry in entries)
+  reference = sum(entry.source_state == 'witnessed' and entry.output == 'reference_only' for entry in entries)
+  assert f'`witnessed` 条目有 {witnessed} 条，其中 {reference} 条仍是 `reference_only`' in guide

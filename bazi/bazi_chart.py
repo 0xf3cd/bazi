@@ -1,5 +1,10 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''命盘派生信息与命盘 JSON。
+
+BaziChart 在 Bazi 上提供十神、藏干、纳音、十二长生与运限等信息；
+from_json 使用当前实现重算并核对记录，不是历史结果的冻结恢复。'''
+
 import copy
 import functools
 import itertools

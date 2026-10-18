@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''历法后端的选择与解析。
+
+CalendarBackend 列出后端身份；calendar_utils_of 返回对应的历法换算实现。'''
+
 from enum import Enum
 from typing import cast
 

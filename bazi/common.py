@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''包内共用的不可变映射与声明类型检查。
+
+frozendict 提供冻结映射；check_declared_types 校验声明类型。'''
+
 from dataclasses import fields
 from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Final, cast, get_args

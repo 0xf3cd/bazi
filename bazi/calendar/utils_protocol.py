@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''历法后端共同遵循的接口协议。
+
+CalendarUtilsProtocol 描述日期换算、节气和支持范围查询，不选择具体后端。'''
+
 from datetime import date, datetime
 from typing import Protocol, runtime_checkable
 

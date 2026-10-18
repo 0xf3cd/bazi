@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''按年、月、日期或时刻查询命盘流运。
+
+TransitChart 将查询坐标解释为相应的 TransitSet；各入口的支持范围与缺项条件分别说明。'''
+
 from datetime import date, datetime, timedelta
 from typing import Final
 
@@ -27,6 +31,9 @@ class TransitChart:
     '''
     Args:
     - bazi_chart: (BaziChart) 查询所依据的原盘。
+
+    Note:
+    - TypeError: bazi_chart 不是 BaziChart。
     '''
 
     if not isinstance(bazi_chart, BaziChart):
@@ -62,7 +69,14 @@ class TransitChart:
     )
 
   def at_year(self, gz_year: int) -> TransitSet | None:
-    '''返回干支年坐标下的流运，出生前返回 `None`；大运按命盘所选年份标签视图解释。'''
+    '''返回干支年坐标下的流运，早于出生干支年返回 `None`；大运按命盘所选年份标签视图解释。
+
+    Args:
+    - gz_year: (int) 干支年标签；远年份仍可返回流年，不以历法表上界截断。
+
+    Note:
+    - TypeError: gz_year 不是 int。
+    '''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     if gz_year < self._bazi_chart.bazi.ganzhi_year:
@@ -74,7 +88,15 @@ class TransitChart:
 
   def at_month(self, gz_year: int, gz_month: Dizhi) -> TransitSet | None:
     '''返回干支月坐标下的流运，出生前或节令表范围外返回 `None`；
-    大运按物理交运月边界解释。'''
+    大运按物理交运月边界解释。
+
+    Args:
+    - gz_year: (int) 干支年标签。
+    - gz_month: (Dizhi) 干支月的地支。
+
+    Note:
+    - TypeError: gz_year 不是 int，或 gz_month 不是 Dizhi。
+    '''
     if not isinstance(gz_year, int):
       raise TypeError(f'Expected int, got {type(gz_year)}')
     if not isinstance(gz_month, Dizhi):
@@ -98,7 +120,14 @@ class TransitChart:
 
   def at_date(self, solar_date: date) -> TransitSet | None:
     '''返回东八区无时区公历日期下的流运，出生前或历法范围外返回 `None`；地点盘出生
-    下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。'''
+    下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。
+
+    Args:
+    - solar_date: (date) 公历日期，类型须为 date 本身，不接受 datetime 或 date 子类。
+
+    Note:
+    - TypeError: solar_date 的类型不是 date 本身。
+    '''
     if type(solar_date) is not date:
       raise TypeError(f'Expected date (not datetime), got {type(solar_date)}')
     if solar_date < self._bazi_chart.bazi.reference_datetime.date():
@@ -122,7 +151,12 @@ class TransitChart:
 
     Note:
     - 年/月按时刻所属节归属，流日按所选换日点解释；同一公历日可与 `at_date()` 结果不同。
-    - HOUR 原盘归属与秒级时刻流运是两种粒度；相等时辰窗口内可落在不同干支年。'''
+    - HOUR 原盘归属与秒级时刻流运是两种粒度；相等时辰窗口内可落在不同干支年。
+    - solar_moment 不是 datetime 时抛 TypeError；tzinfo 不是 None 时抛 ValueError。
+
+    Args:
+    - solar_moment: (datetime) 东八区无时区标签，微秒在比较前截去。
+    '''
     if not isinstance(solar_moment, datetime):
       raise TypeError(f'Expected datetime, got {type(solar_moment)}')
     if solar_moment.tzinfo is not None:

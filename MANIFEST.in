@@ -1,6 +1,10 @@
 include pyproject.toml MANIFEST.in LICENSE THIRD_PARTY_NOTICES.md
 include README.md API_CONTRACT.md RELEASE_NOTES.md RELEASING.md Requirements.txt ruff.toml
 include run_tests.py run_package_checks.py run_demo.py run_interpreter.py run_relationship_analyzer.py
+include run_docs.py run_doc_checks.py CONTRIBUTING.md
+include run_docs_site.py
+recursive-include docs *.py *.md *.rst *.txt *.css
+prune docs/_build
 recursive-include bazi *.py py.typed
 include bazi/knowledge_data.json
 include bazi/calendar/hko_data/data/jieqi_encoded.bin
@@ -15,4 +19,7 @@ include bazi/calendar/celestial_data/data/equation_of_time.bin
 include bazi/calendar/celestial_data/SCHEMA.md
 recursive-include tests *.py *.ini *.txt *.json
 include .github/workflows/release.yml
+include .github/workflows/on_pull_request.yml .github/workflows/on_push.yml .github/workflows/pypy_compatibility.yml
+include .github/workflows/docs-publish.yml
+include .github/ISSUE_TEMPLATE/knowledge-correction.yml .github/ISSUE_TEMPLATE/school-reading.yml
 global-exclude *.py[cod]

@@ -1,3 +1,9 @@
+'''八字排盘与知识查询。
+
+排盘从 bazi.bazi.Bazi 和 bazi.bazi_chart.BaziChart 开始；
+独立查阅知识使用 bazi.knowledge.KnowledgeBase，无需创建命盘。
+类型从各定义模块导入，本包不提供根类或安装后的命令行入口。'''
+
 from importlib import import_module
 from typing import Any, Final
 

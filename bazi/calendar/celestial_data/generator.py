@@ -15,6 +15,10 @@
 #   cmp ../bazi-calendar-check/equation_of_time.bin \
 #     bazi/calendar/celestial_data/data/equation_of_time.bin
 
+'''离线重建 celestial 历法数据。
+
+main 是源码维护入口，不属于安装包的使用流程；运行时由 loader 读取已提交数据。'''
+
 import argparse
 import hashlib
 import struct

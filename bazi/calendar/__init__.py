@@ -1,3 +1,8 @@
+'''历法类型、后端与换算入口。
+
+CalendarBackend 选择数据口径，calendar_utils_of 返回对应换算实现；
+CalendarDate 与 JieqiTime 承载历法日期与节气时刻。'''
+
 from importlib import import_module
 from typing import Any
 

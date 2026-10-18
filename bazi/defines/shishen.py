@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''十神枚举 Shishen 及中文名称十神。'''
+
 from typing import Final, Self
 
 from .enum_base import BaziEnum

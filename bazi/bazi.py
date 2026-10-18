@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''出生输入、配置与四柱。
+
+Bazi.create 创建八字，BaziGender 表示性别；地点输入的时间事实由 LocationTime 保存。'''
+
 import math
 import random
 from random import Random

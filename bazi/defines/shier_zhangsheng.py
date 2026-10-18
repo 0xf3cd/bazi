@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''十二长生枚举 ShierZhangsheng 及其中文名称。'''
+
 from .enum_base import IndexedBaziEnum
 
 

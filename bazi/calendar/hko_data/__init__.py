@@ -1,3 +1,7 @@
+'''HKO 随包数据的读取与格式类型。
+
+JieqiDates 与 LunarYearInfo 提供解码后的节气、阴历信息；离线编码另见 encoder 模块。'''
+
 from .common import (
   START_YEAR, END_YEAR,
   get_data_base_path, get_raw_txt_file_paths, raw_data_ready,

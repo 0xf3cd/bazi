@@ -1,0 +1,115 @@
+name: 流派读法提案
+description: 提出与当前默认不同的流派读法，附出处。
+title: "[流派] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本库在流派有分歧时保留各读法，作为可选变体，不合成一个“正确”规则。提案不保证被采纳，也不保证改变默认值。
+        提交前请读 [CONTRIBUTING.md](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)。表单只收集线索，不是可直接导入的 JSON；未齐的信息由维护者核对补齐，不编造链接或占位值。
+        来源分组（`lineage`）、`source_id`、来源状态（`state`）与文本层（`text_layer`）由维护者核定。
+  - type: input
+    id: claim_id
+    attributes:
+      label: 相关条目（claim_id）
+      description: 涉及的条目 ID，如 `shishen.bijian.definition`；可在 bazi/knowledge_data.json 中查找，没有则留空。
+    validations:
+      required: false
+  - type: textarea
+    id: text
+    attributes:
+      label: 读法（text）
+      description: 这个流派怎么读，写成可以直接成为条目文字的陈述。
+    validations:
+      required: true
+  - type: textarea
+    id: difference
+    attributes:
+      label: 与当前默认的差异
+      description: 当前默认怎么读，两者在哪里不同；可附只涉及公开信息的最小例子。
+    validations:
+      required: true
+  - type: input
+    id: config_option
+    attributes:
+      label: 相关配置选项
+      description: 如 day_rollover、peiou_xing_def；不是条目 ID，没有则留空。新增取值属于知识变更，须有出处并由维护者核定。
+    validations:
+      required: false
+  - type: textarea
+    id: variant
+    attributes:
+      label: 建议的可选变体
+      description: 希望以什么形式提供，如新增选项或新增一条参考条目；也可写“交由维护者决定”。
+    validations:
+      required: false
+  - type: input
+    id: viewpoint
+    attributes:
+      label: 流派或条目口径（viewpoint）
+      description: 该读法所属流派或所据章节，不写进来源署名；不确定可留空，由维护者核对。
+    validations:
+      required: false
+  - type: input
+    id: work
+    attributes:
+      label: 作品（work）
+      description: 书名、文章名或页面标题。
+    validations:
+      required: true
+  - type: input
+    id: attribution
+    attributes:
+      label: 来源署名（attribution）
+      description: 作者或注者；流派称呼写在上方“流派或条目口径”，原文未署名则注明“未署名”。
+    validations:
+      required: true
+  - type: input
+    id: edition
+    attributes:
+      label: 版本（edition）
+      description: 所用刻本、影印本、点校本或电子书的出版信息。
+    validations:
+      required: true
+  - type: input
+    id: locator
+    attributes:
+      label: 位置（locator）
+      description: 页码、卷次或章节。
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: 链接（url）
+      description: 所用版本的在线原文链接。没有链接时，在上方“读法”中说明纸本版本与可查线索；正式来源记录仍须由维护者补齐真实的非空 url。
+    validations:
+      required: false
+  - type: input
+    id: text_layer
+    attributes:
+      label: 文本层（text_layer）
+      description: 描述摘录出自白文正文、注释或原创说明；不确定请写明。维护者核对后映射为 baiwen、zhushi 或 editorial，未说明不代表记录允许空值。
+    validations:
+      required: false
+  - type: textarea
+    id: excerpt
+    attributes:
+      label: 原文摘录（excerpt）
+      description: 逐字摘出，保留原有字词、标点与异体字，不改写。
+    validations:
+      required: true
+  - type: textarea
+    id: supports
+    attributes:
+      label: 支持什么（supports）
+      description: 这段原文支持上面哪个读法。
+    validations:
+      required: true
+  - type: textarea
+    id: limitations
+    attributes:
+      label: 限度（limitations）
+      description: 这段原文没有说什么；流派内部是否有不同说法。
+    validations:
+      required: true

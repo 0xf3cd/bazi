@@ -1,3 +1,7 @@
+'''天干、地支、干支及关系等领域类型。
+
+重导出常用枚举与值类型，并保留中文名称；具体类型的定义见各子模块。'''
+
 from .tiangan import Tiangan, 天干
 from .dizhi import Dizhi, 地支
 from .ganzhi import Ganzhi, 干支

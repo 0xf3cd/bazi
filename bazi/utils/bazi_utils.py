@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''排盘所用的干支、十神、藏干、纳音与十二长生计算。
+
+各函数接收相应领域值；组合成完整命盘使用 Bazi 与 BaziChart。'''
+
 from datetime import date, datetime, timedelta
 
 from ..defines import Ganzhi, Tiangan, Dizhi, Shishen, Wuxing, ShierZhangsheng
