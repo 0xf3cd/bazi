@@ -67,6 +67,15 @@ def test_configuration_repr_preserves_defaults_and_values() -> None:
   assert BaziChart.from_json(chart.json).json == chart.json
 
 
+def test_configuration_repr_field_contract() -> None:
+  for cls in (BaziConfig, BaziSchool, DizhiRelationDefinitions):
+    for field in dataclasses.fields(cls):
+      assert field.default is not dataclasses.MISSING
+      assert field.default_factory is dataclasses.MISSING
+      assert field.repr
+      assert isinstance(field.default, (Enum, BaziSchool))
+
+
 def test_dayun_year_rule_basic() -> None:
   assert len(DayunYearRule) == 2
   assert str(DayunYearRule.JIE_PROJECTED) == 'jie_projected'
