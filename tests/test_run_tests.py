@@ -202,9 +202,11 @@ def test_demo_and_interpreter_gate_pass_fixed_seeds(monkeypatch: pytest.MonkeyPa
   proc = Mock(return_value=0)
   monkeypatch.setitem(runner['run_demo'].__globals__, 'run_proc_and_print', proc)
   assert runner['run_demo']() == runner['run_interpreter']() == 0
+  root = Path(__file__).parents[1]
   assert [call.args[0] for call in proc.call_args_list] == [
-    [sys.executable, str(Path(__file__).parents[1] / script), '--seed', '236']
-    for script in ('run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py')
+    [sys.executable, str(root / 'run_demo.py'), '--seed', '236'],
+    [sys.executable, str(root / 'run_relationship_analyzer.py'), '--seed', '236'],
+    [sys.executable, str(root / 'run_interpreter.py'), 'chart', '--seed', '236'],
   ]
 
 

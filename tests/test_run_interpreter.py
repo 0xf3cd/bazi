@@ -448,7 +448,8 @@ def test_distinct_chart_json_and_txt_outputs_are_both_retained(tmp_path: Path, o
 @pytest.mark.parametrize('optimized', [False, True])
 def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, columns: str, optimized: bool) -> None:
   monkeypatch.setenv('COLUMNS', columns)
-  help_result = _run_cli(tmp_path, '--help', optimized=optimized)
+  # 单独的 --help 是新顶层帮助；旧路径的帮助在带旧选项时给出，内容不变。
+  help_result = _run_cli(tmp_path, '--seed', '1', '--help', optimized=optimized)
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
   assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)

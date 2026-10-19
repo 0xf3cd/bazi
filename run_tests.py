@@ -372,7 +372,7 @@ def run_interpreter() -> int:
   bold_print('>> Running interpreter...')
 
   ret: int = run_proc_and_print([
-    sys.executable, str(Path(__file__).parent / 'run_interpreter.py'), '--seed', '236'
+    sys.executable, str(Path(__file__).parent / 'run_interpreter.py'), 'chart', '--seed', '236'
   ], print_details=verbose)
   
   if ret == 0:
