@@ -8,7 +8,7 @@ from random import Random, SystemRandom
 import re
 from collections.abc import Callable, Iterable
 from datetime import date, datetime, timedelta, tzinfo
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Final, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -94,13 +94,22 @@ def interpret(
   return s
 
 
+def _knowledge_text_paths(base: Path) -> list[Path]:
+  return [
+    *(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan),
+    *(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen),
+  ]
+
+
 def save_knowledge_base(
   output_dir: Path = _DEFAULT_OUTPUT_DIR,
   *,
   include_reference_only: bool = False,
   show_sources: bool = False,
+  knowledge: KnowledgeBase | None = None,
 ) -> None:
-  knowledge = KnowledgeBase.load()
+  if knowledge is None:
+    knowledge = KnowledgeBase.load()
   tg_dir_path: Path = output_dir / 'knowledge_base' / 'tiangan'
   if not tg_dir_path.exists():
     tg_dir_path.mkdir(parents=True)
@@ -394,9 +403,7 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     if args.output_dir is not None:
       text_paths.append(args.output_dir / 'interpretation_examples' / '0.txt')
     if args.export_knowledge_base:
-      base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
-      text_paths.extend(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan)
-      text_paths.extend(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen)
+      text_paths.extend(_knowledge_text_paths(args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR))
     if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
       parser.error('--export-chart-json must not overlap generated TXT outputs')
 
@@ -624,15 +631,25 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
         print(value)
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
+  base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
+  if args.export_knowledge_base and args.export_knowledge_json is not None and any(
+    _same_export_path(args.export_knowledge_json, path) for path in _knowledge_text_paths(base)
+  ):
+    parser.error('--export-knowledge-json must not overlap generated TXT outputs')
   if query or args.validate_knowledge or args.export_knowledge_json is not None:
     args.query_knowledge = query
     _knowledge_main(parser, args)
   if args.export_knowledge_base:
     try:
+      knowledge = KnowledgeBase.load(args.knowledge_source)
+    except (OSError, TypeError, ValueError) as error:
+      parser.error(str(error))
+    try:
       save_knowledge_base(
-        args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR,
+        base,
         include_reference_only=args.include_reference_only,
         show_sources=args.show_sources,
+        knowledge=knowledge,
       )
     except OSError as error:
       parser.error(str(error))
@@ -729,6 +746,8 @@ def _option(flag: str, value: object) -> list[str]:
     return [f'{flag}={_zone_text(value)}']
   if isinstance(value, (date, datetime)):
     return [flag, value.isoformat()]
+  if isinstance(value, PurePath):
+    return [flag, value.as_posix()]
   return [flag, str(value)]
 
 
