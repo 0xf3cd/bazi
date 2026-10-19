@@ -1,0 +1,6 @@
+bazi.calendar.solar_time
+========================
+
+.. automodule:: bazi.calendar.solar_time
+
+.. autofunction:: bazi.calendar.solar_time.apparent_solar_datetime

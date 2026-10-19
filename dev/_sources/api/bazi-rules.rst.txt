@@ -1,0 +1,27 @@
+bazi.rules
+==========
+
+.. automodule:: bazi.rules
+
+.. autoclass:: bazi.rules.BaziRules
+   :members: DAY_TO_HOUR_TABLE, DIZHI_TRAITS, HIDDEN_TIANGANS, NAYIN, TIANGAN_LU, TIANGAN_TRAITS, TIANGAN_ZHANGSHENG, YEAR_TO_MONTH_TABLE
+   :undoc-members:
+
+.. autoclass:: bazi.rules.TianganRules
+   :members: TIANGAN_CHONG, TIANGAN_HE, TIANGAN_KE, TIANGAN_SHENG
+   :undoc-members:
+
+.. autoclass:: bazi.rules.DizhiRules
+   :members: AnheDef, DIZHI_ANHE, DIZHI_BANHE, DIZHI_CHONG, DIZHI_GONGHE, DIZHI_GONGHUI, DIZHI_GONG_LU_TIANGAN, DIZHI_HAI, DIZHI_KE, DIZHI_LIUHE, DIZHI_PO, DIZHI_SANHE, DIZHI_SANHUI, DIZHI_SHENG, DIZHI_TONGHE, DIZHI_TONGLUHE, DIZHI_XING, GONG_GONGHE_SCOPE, GONG_RELATIONS, GongDef, GongheDef, XingDef, XingSubType
+   :undoc-members:
+
+.. autoclass:: bazi.rules.DizhiRelationDefinitions
+   :members: anhe_def, gong_def, xing_def
+   :undoc-members:
+
+.. autodata:: bazi.rules.DEFAULT_DIZHI_RELATION_DEFINITIONS
+   :no-value:
+
+.. autoclass:: bazi.rules.ShenshaRules
+   :members: FEIREN, GUASU, GUCHEN, GUOYIN, GuoyinDef, HONGLUAN, HONGYAN, HUAGAI, JIANGXING, JIESHA, JINYU, KUIGANG, LUSHEN, TAIJI, TAOHUA, TIANSHE, TIANXI, TIANYI, TaijiDef, TianyiDef, WANGSHEN, WENCHANG, WENCHANGGUI, WenchangDef, YANGREN, YIMA, YangrenDef, ZAISHA
+   :undoc-members:

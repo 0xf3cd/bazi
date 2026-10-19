@@ -1,0 +1,10 @@
+bazi.calendar.backend
+=====================
+
+.. automodule:: bazi.calendar.backend
+
+.. autoclass:: bazi.calendar.backend.CalendarBackend
+   :members: CELESTIAL, CELESTIAL_ALGO2, HKO, from_str
+   :undoc-members:
+
+.. autofunction:: bazi.calendar.backend.calendar_utils_of

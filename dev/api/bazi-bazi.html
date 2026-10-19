@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.bazi &#8212; bazi · 开发版</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.bazi_chart" href="bazi-bazi_chart.html" />
+    <link rel="prev" title="bazi.analyzer.relationship" href="bazi-analyzer-relationship.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.bazi">
+<span id="bazi-bazi"></span><h1>bazi.bazi<a class="headerlink" href="#module-bazi.bazi" title="链接到此标题。">¶</a></h1>
+<p>出生输入、配置与四柱。</p>
+<p>Bazi.create 创建八字，BaziGender 表示性别；地点输入的时间事实由 LocationTime 保存。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.bazi.</span></span><span class="sig-name descname"><span class="pre">BaziGender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L52-L76"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender" title="链接到此定义。">¶</a></dt>
+<dd><p>排盘使用的性别。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender.FEMALE">
+<span class="sig-name descname"><span class="pre">FEMALE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'女'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender.FEMALE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender.MALE">
+<span class="sig-name descname"><span class="pre">MALE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'男'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender.MALE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender.YANG">
+<span class="sig-name descname"><span class="pre">YANG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'男'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender.YANG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender.YIN">
+<span class="sig-name descname"><span class="pre">YIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'女'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender.YIN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.BaziGender.">
+<span class="sig-name descname"><span class="pre">乾</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'男'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.BaziGender." title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">坤</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'女'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id0" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">女</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'女'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id1" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">男</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'男'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id2" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">阳</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'男'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id3" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">阴</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'女'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id4" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.bazi.</span></span><span class="sig-name descname"><span class="pre">Bazi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">birth_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_CONFIG</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">civil_timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L114-L535"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi" title="链接到此定义。">¶</a></dt>
+<dd><p>存储年、月、日、时四柱及排盘基本信息。十神、大运等派生信息见 <code class="docutils literal notranslate"><span class="pre">bazi_chart.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code>。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>默认路径直接采用无时区民用时刻；传入 <code class="docutils literal notranslate"><span class="pre">longitude</span></code> 才会从调用方给定的带时区时刻换算真太阳时。</p></li>
+<li><p>本库从立春派：年柱以立春换年，不以正月初一（春节）换年。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>birth_time</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p></li>
+<li><p><strong>gender</strong> (<a class="reference internal" href="#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><em>BaziGender</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><em>BaziConfig</em></a>)</p></li>
+<li><p><strong>longitude</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>civil_timezone</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.tzinfo"><em>tzinfo</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.config">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><span class="pre">BaziConfig</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L437-L440"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.config" title="链接到此定义。">¶</a></dt>
+<dd><p>此命盘的配置：出生精度、历法后端、流派档案及默认大运年份投影。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.create">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">birth_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_CONFIG</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">civil_timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L278-L315"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.create" title="链接到此定义。">¶</a></dt>
+<dd><p>从出生输入创建 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code>。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>birth_time: (datetime | str) 公历出生时刻；字符串经 <code class="docutils literal notranslate"><span class="pre">datetime.fromisoformat</span></code> 解析。
+未给经度时须无时区，给定经度时须带时区。</p></li>
+<li><p>gender: (BaziGender | str) 性别枚举，或 &quot;男&quot;/&quot;女&quot;/&quot;male&quot;/&quot;female&quot;（大小写不敏感）。</p></li>
+<li><p>config: (BaziConfig) 出生精度、历法后端、流派档案及大运年份投影；
+可用 <code class="docutils literal notranslate"><span class="pre">BaziConfig.from_values</span></code> 从字符串构造。</p></li>
+<li><p>longitude: (float | None) 东经为正的经度，显式启用带时区输入的真太阳时路径；不使用纬度。</p></li>
+<li><p>civil_timezone: (tzinfo | None) 显式出生地民用时区基准；模型保存其在出生瞬间生效的固定偏移。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>birth_time</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a><em> | </em><em>str</em>)</p></li>
+<li><p><strong>gender</strong> (<a class="reference internal" href="#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><em>BaziGender</em></a><em> | </em><em>str</em>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><em>BaziConfig</em></a>)</p></li>
+<li><p><strong>longitude</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>civil_timezone</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.tzinfo"><em>tzinfo</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><em>Bazi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.day_master">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">day_master</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L466-L471"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.day_master" title="链接到此定义。">¶</a></dt>
+<dd><p>日主，即日柱天干。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.day_pillar">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">day_pillar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L495-L500"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.day_pillar" title="链接到此定义。">¶</a></dt>
+<dd><p>日柱干支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.four_dizhis">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">four_dizhis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L450-L456"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.four_dizhis" title="链接到此定义。">¶</a></dt>
+<dd><p>按年、月、日、时顺序返回四柱地支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.four_tiangans">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">four_tiangans</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L458-L464"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.four_tiangans" title="链接到此定义。">¶</a></dt>
+<dd><p>按年、月、日、时顺序返回四柱天干。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.ganzhi_date">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ganzhi_date</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><span class="pre">CalendarDate</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L352-L360"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.ganzhi_date" title="链接到此定义。">¶</a></dt>
+<dd><p>干支历出生日期。</p>
+<p>Note: 此入口只按日期归属。HOUR / MINUTE 精度下，交节相等窗口内可与
+<code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code> 及年/月柱不同；需要出生精度归属时使用 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code>。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.ganzhi_year">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ganzhi_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L362-L367"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.ganzhi_year" title="链接到此定义。">¶</a></dt>
+<dd><p>按 <code class="docutils literal notranslate"><span class="pre">self.config.precision</span></code> 归属的出生干支年；年柱为此年的 <code class="docutils literal notranslate"><span class="pre">ganzhi_of_year</span></code>。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.ganzhi_year_month">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ganzhi_year_month</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.GanzhiYearMonth" title="bazi.calendar.dates.GanzhiYearMonth"><span class="pre">GanzhiYearMonth</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L369-L372"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.ganzhi_year_month" title="链接到此定义。">¶</a></dt>
+<dd><p>按出生精度归属的干支年月；年/月柱与大运数节共同使用此坐标。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.gender">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">gender</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><span class="pre">BaziGender</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L433-L435"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.gender" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.hour">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">hour</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L387-L389"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.hour" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.hour_pillar">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">hour_pillar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L502-L508"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.hour_pillar" title="链接到此定义。">¶</a></dt>
+<dd><p>时柱干支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.location_time">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">location_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.bazi.LocationTime" title="bazi.bazi.LocationTime"><span class="pre">LocationTime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L417-L431"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.location_time" title="链接到此定义。">¶</a></dt>
+<dd><p>地点盘的只读时间事实；默认盘返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<p>包含绝对 UTC 瞬间、固定出生偏移的民用钟、经度及未截断真太阳钟；
+<code class="docutils literal notranslate"><span class="pre">solar_datetime</span></code> 仍只显示分钟，<code class="docutils literal notranslate"><span class="pre">reference_datetime</span></code> 仍用于节表坐标。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.longitude">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">longitude</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L395-L398"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.longitude" title="链接到此定义。">¶</a></dt>
+<dd><p>地点盘采用的东经为正经度；默认路径返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.minute">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">minute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L391-L393"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.minute" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.month_commander">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">month_commander</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L473-L478"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.month_commander" title="链接到此定义。">¶</a></dt>
+<dd><p>月令，即月柱地支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.month_jies">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">month_jies</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.JieqiTime" title="bazi.calendar.dates.JieqiTime"><span class="pre">JieqiTime</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.JieqiTime" title="bazi.calendar.dates.JieqiTime"><span class="pre">JieqiTime</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L374-L385"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.month_jies" title="链接到此定义。">¶</a></dt>
+<dd><p>按 <code class="docutils literal notranslate"><span class="pre">self.config.precision</span></code> 归属的开月节与下一节，供年/月柱和大运数节共同使用。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[0]</span></code> 是出生月所属节，<code class="docutils literal notranslate"><span class="pre">[1]</span></code> 是其下一节，均保留后端原始节时刻。</p></li>
+<li><p>DAY 的整个交节日归新；HOUR/MINUTE 按各自粒度相等归新。提前归属窗口中，
+所属节的真实时刻可以在出生之后；逆排大运的负间隔钳为零。</p></li>
+<li><p>真实出生时刻前后节仍应以 <code class="docutils literal notranslate"><span class="pre">reference_datetime</span></code> 查询历法 <code class="docutils literal notranslate"><span class="pre">prev_jie</span></code> / <code class="docutils literal notranslate"><span class="pre">next_jie</span></code>。</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.month_pillar">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">month_pillar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L487-L493"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.month_pillar" title="链接到此定义。">¶</a></dt>
+<dd><p>月柱干支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.pillars">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pillars</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L510-L522"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.pillars" title="链接到此定义。">¶</a></dt>
+<dd><p>按年、月、日、时顺序返回四柱干支。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.random">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_CONFIG</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L317-L345"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.random" title="链接到此定义。">¶</a></dt>
+<dd><p>随机生成一个 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code>，主要用于测试。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>年份范围为 [1902, 2080]，日期范围为 [1, 28]。</p></li>
+<li><p>指定局部 <code class="docutils literal notranslate"><span class="pre">rng</span></code> 可重放样本且不改变全局随机状态；省略时沿用 <code class="docutils literal notranslate"><span class="pre">random</span></code> 模块的种子语义。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>config: (BaziConfig) 命盘级配置，传给 <code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code>。</p></li>
+<li><p>rng: (Random | None) 局部随机源；<code class="docutils literal notranslate"><span class="pre">None</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">random</span></code> 模块。</p></li>
+</ul>
+<p>Return: (Bazi) 随机八字。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><em>BaziConfig</em></a>)</p></li>
+<li><p><strong>rng</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/random.html#random.Random"><em>Random</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><em>Bazi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.reference_datetime">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">reference_datetime</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L406-L415"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.reference_datetime" title="链接到此定义。">¶</a></dt>
+<dd><p>节表、大运及流运查询的出生参考时刻。</p>
+<p>地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的民用标签。
+此坐标不是真太阳钟，也不改变出生精度的归属规则。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.solar_date">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">solar_date</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.date"><span class="pre">date</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L347-L350"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.solar_date" title="链接到此定义。">¶</a></dt>
+<dd><p>地点盘的真太阳时公历出生日期；默认路径为民用日期。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.solar_datetime">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">solar_datetime</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L400-L404"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.solar_datetime" title="链接到此定义。">¶</a></dt>
+<dd><p>出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON 及历法坐标；
+地点盘显示由完整输入精度换算得到的真太阳时。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.Bazi.year_pillar">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">year_pillar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L480-L485"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.Bazi.year_pillar" title="链接到此定义。">¶</a></dt>
+<dd><p>年柱干支。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.bazi.</span></span><span class="sig-name descname"><span class="pre">LocationTimeJson</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L538-L544"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTimeJson" title="链接到此定义。">¶</a></dt>
+<dd><p>规范地点输入及未截断的计算真太阳时。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson.apparent_time">
+<span class="sig-name descname"><span class="pre">apparent_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.bazi.LocationTimeJson.apparent_time" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson.canonical_instant">
+<span class="sig-name descname"><span class="pre">canonical_instant</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.bazi.LocationTimeJson.canonical_instant" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson.civil_time">
+<span class="sig-name descname"><span class="pre">civil_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.bazi.LocationTimeJson.civil_time" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson.longitude">
+<span class="sig-name descname"><span class="pre">longitude</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#bazi.bazi.LocationTimeJson.longitude" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTimeJson.time_basis">
+<span class="sig-name descname"><span class="pre">time_basis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.bazi.LocationTimeJson.time_basis" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.bazi.</span></span><span class="sig-name descname"><span class="pre">LocationTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canonical_instant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">civil_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apparent_time</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L547-L567"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime" title="链接到此定义。">¶</a></dt>
+<dd><p>模型返回的不可变地点时间事实；时间值不经 JSON 解析或重复换算。</p>
+<p><code class="docutils literal notranslate"><span class="pre">canonical_instant</span></code> 带 UTC 时区，<code class="docutils literal notranslate"><span class="pre">civil_time</span></code> 带固定出生偏移，
+<code class="docutils literal notranslate"><span class="pre">apparent_time</span></code> 为未截断的 naive 真太阳钟。直接构造此值不验证排盘输入。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>canonical_instant</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p></li>
+<li><p><strong>civil_time</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p></li>
+<li><p><strong>longitude</strong> (<em>float</em>)</p></li>
+<li><p><strong>apparent_time</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime.apparent_time">
+<span class="sig-name descname"><span class="pre">apparent_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime.apparent_time" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime.canonical_instant">
+<span class="sig-name descname"><span class="pre">canonical_instant</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime.canonical_instant" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime.civil_time">
+<span class="sig-name descname"><span class="pre">civil_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime.civil_time" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime.json">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">json</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.bazi.LocationTimeJson" title="bazi.bazi.LocationTimeJson"><span class="pre">LocationTimeJson</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L558-L567"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime.json" title="链接到此定义。">¶</a></dt>
+<dd><p>供命盘与情境记录共用的 JSON 时间字段；每次返回独立字典。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi.LocationTime.longitude">
+<span class="sig-name descname"><span class="pre">longitude</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi.LocationTime.longitude" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.bazi.">
+<span class="sig-prename descclassname"><span class="pre">bazi.bazi.</span></span><span class="sig-name descname"><span class="pre">八字</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/bazi.py#L114-L535"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi." title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.bazi.Bazi</span></code></a> 的别名。</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-analyzer-relationship.html" title="上一章">bazi.analyzer.relationship</a></li>
+      <li>Next: <a href="bazi-bazi_chart.html" title="下一章">bazi.bazi_chart</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

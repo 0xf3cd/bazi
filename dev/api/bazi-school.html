@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.school &#8212; bazi · 开发版</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.transit_chart" href="bazi-transit_chart.html" />
+    <link rel="prev" title="bazi.rules" href="bazi-rules.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.school">
+<span id="bazi-school"></span><h1>bazi.school<a class="headerlink" href="#module-bazi.school" title="链接到此标题。">¶</a></h1>
+<p>命盘配置 <code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code>、流派分歧声明 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> / <code class="docutils literal notranslate"><span class="pre">DayRollover</span></code> / <code class="docutils literal notranslate"><span class="pre">Anchor</span></code>，
+以及出生精度和大运年份投影选项 <code class="docutils literal notranslate"><span class="pre">BaziPrecision</span></code> / <code class="docutils literal notranslate"><span class="pre">DayunYearRule</span></code>。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.BaziPrecision">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">BaziPrecision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L16-L55"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziPrecision" title="链接到此定义。">¶</a></dt>
+<dd><p>出生精度，决定排盘时比较出生与节气的粒度。以立春换年，以十二节换月，
+所以同日出生也可有不同年/月柱。</p>
+<p>出生按「已知的粒度」与节气时刻比较，<code class="docutils literal notranslate"><span class="pre">birth</span> <span class="pre">&gt;=</span> <span class="pre">jieqi</span></code> 归新年 / 新月，相等归新。
+这是同一规则的三个粒度，不是对同一真值的三种估计。</p>
+<ul class="simple">
+<li><p>DAY：只知道日期，比到日。</p></li>
+<li><p>HOUR：知道时辰，比到日期与时辰；时辰为两小时，子时始于 23:00，不是单个钟表小时。</p></li>
+<li><p>MINUTE：知道到分，比到日期、小时与分钟。</p></li>
+</ul>
+<p>Examples:</p>
+<p>celestial 后端的 2000 年立春为 2000-02-04 20:40:23，HKO 只提供日期。</p>
+<ul class="simple">
+<li><p>DAY：02-04 全天取年柱庚辰、月支寅，包括 20:40:23 之前；02-03 取己卯、丑。</p></li>
+<li><p>HOUR：戌时 [19:00, 21:00) 与节同一时辰，取庚辰、寅；酉时 [17:00, 19:00) 及当日更早时辰取己卯、丑。</p></li>
+<li><p>MINUTE：20:40 起取庚辰、寅，之前取己卯、丑。</p></li>
+</ul>
+<p>2017 年立春为 2017-02-03 23:34:03，尽管当日约 98% 的时间在交节之前，DAY 仍将全天归新。
+DAY 调用方没有声明知道钟表时刻，不能据未知时刻改变归属或干支月长。</p>
+<p>子时跨午夜，相等时辰窗口可始于前一公历日：2009 年立春为 2009-02-04 00:49:48，
+所属子时始于 02-03 23:00，因此 HOUR 的 02-03 23:30 归新，DAY 的同日却归旧。
+三档不构成嵌套细化。</p>
+<p>HOUR 与 MINUTE 需要真实节时刻；<code class="docutils literal notranslate"><span class="pre">Bazi.__init__</span></code> 拒绝这两档使用 HKO，
+因为它的 <code class="docutils literal notranslate"><span class="pre">jieqi_moment</span></code> 只有午夜占位，见 <code class="docutils literal notranslate"><span class="pre">CalendarUtilsProtocol</span></code>。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziPrecision.DAY">
+<span class="sig-name descname"><span class="pre">DAY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziPrecision.DAY" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziPrecision.HOUR">
+<span class="sig-name descname"><span class="pre">HOUR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziPrecision.HOUR" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziPrecision.MINUTE">
+<span class="sig-name descname"><span class="pre">MINUTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziPrecision.MINUTE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.DayunYearRule">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">DayunYearRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L69-L95"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayunYearRule" title="链接到此定义。">¶</a></dt>
+<dd><p>把每个精确大运边界投影为年份标签的规则。</p>
+<ul class="simple">
+<li><p>JIE_PROJECTED：逐个边界按所属节投影干支年；首步标签不早于命盘按精度归属的出生年。</p></li>
+<li><p>FIXED_DECADE：从共享首标签起按传统固定十年排表；后续标签表示年表位次，不保证是边界所在干支年。</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.DayunYearRule.FIXED_DECADE">
+<span class="sig-name descname"><span class="pre">FIXED_DECADE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fixed_decade'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayunYearRule.FIXED_DECADE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.DayunYearRule.JIE_PROJECTED">
+<span class="sig-name descname"><span class="pre">JIE_PROJECTED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'jie_projected'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayunYearRule.JIE_PROJECTED" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.school.DayunYearRule.from_str">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L82-L95"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayunYearRule.from_str" title="链接到此定义。">¶</a></dt>
+<dd><p>从成员名或值解析 <code class="docutils literal notranslate"><span class="pre">DayunYearRule</span></code>（大小写不敏感）。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>s: (str) 待解析字符串；没有匹配规则时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.school.DayunYearRule" title="bazi.school.DayunYearRule"><em>DayunYearRule</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.DayRollover">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">DayRollover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L98-L113"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayRollover" title="链接到此定义。">¶</a></dt>
+<dd><p>日柱换日点的流派分歧。</p>
+<ul class="simple">
+<li><p>WAN_ZISHI（晚子时）：23:00 子时一开始即换日柱，[23:00, 24:00) 取次日日柱。
+默认采用此多数派读法，行为由 <code class="docutils literal notranslate"><span class="pre">test_bazi</span></code> 验证。</p></li>
+<li><p>ZIZHENG（子正）：00:00 才换日柱，子时按民用日期取日柱，不提前换。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>年/月柱独立按 <code class="docutils literal notranslate"><span class="pre">BaziPrecision</span></code> 比较节时刻，相等归新。WAN_ZISHI 的 23:30 出生取次日日柱，
+不使年/月归属随之改变。</p></li>
+</ul>
+<p>不修改既有定义；新读法须另加定义。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.DayRollover.WAN_ZISHI">
+<span class="sig-name descname"><span class="pre">WAN_ZISHI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayRollover.WAN_ZISHI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.DayRollover.ZIZHENG">
+<span class="sig-name descname"><span class="pre">ZIZHENG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DayRollover.ZIZHENG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.PeiouXingDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">PeiouXingDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L116-L130"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.PeiouXingDef" title="链接到此定义。">¶</a></dt>
+<dd><p>配偶星取法的流派分歧。</p>
+<ul class="simple">
+<li><p>ZHENGCAI_ZHENGGUAN：男命取正财干、女命取正官干。默认。</p></li>
+<li><p>YINYANGGAN：《三命通会·卷七·论六亲》读法：男命取我所克五行中的阴干，女命取克我五行中的阳干。
+书证直例仅甲、乙两干的男女四格；其余十六格按「其餘八干俱以類推」与「陽男陰女」原则类推重建，单源，未获第二独立来源。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>两读在阳男、阴女十格上目标相同，在阴男、阳女十格上不同；每个（日主，性别）仍恰有一个目标天干。</p></li>
+<li><p>地支侧均取主气等于目标天干的地支。</p></li>
+<li><p>不修改既有定义；新读法须另加定义。</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.PeiouXingDef.YINYANGGAN">
+<span class="sig-name descname"><span class="pre">YINYANGGAN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.PeiouXingDef.YINYANGGAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.PeiouXingDef.ZHENGCAI_ZHENGGUAN">
+<span class="sig-name descname"><span class="pre">ZHENGCAI_ZHENGGUAN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.PeiouXingDef.ZHENGCAI_ZHENGGUAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.Anchor">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">Anchor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L133-L148"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.Anchor" title="链接到此定义。">¶</a></dt>
+<dd><p>神煞查法所锚的柱位（流派分歧处）。</p>
+<ul class="simple">
+<li><p>YEAR：以年柱为锚。</p></li>
+<li><p>DAY：以日柱为锚。</p></li>
+<li><p>YEAR_AND_DAY：年、日两柱分别为锚，各查一遍。</p></li>
+</ul>
+<p>成员只指定锚柱；取该柱天干还是地支由神煞自身的查法决定，记录在分析层注册表中。
+<code class="docutils literal notranslate"><span class="pre">_ANCHOR_CHOICES</span></code> 按字段列出支持的取值及出处或已知出处缺口，<code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 拒绝表外取值。</p>
+<p>不修改既有定义；新读法须另加定义。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.Anchor.DAY">
+<span class="sig-name descname"><span class="pre">DAY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.Anchor.DAY" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.Anchor.YEAR">
+<span class="sig-name descname"><span class="pre">YEAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.Anchor.YEAR" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.Anchor.YEAR_AND_DAY">
+<span class="sig-name descname"><span class="pre">YEAR_AND_DAY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.Anchor.YEAR_AND_DAY" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">BaziSchool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">day_rollover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DayRollover.WAN_ZISHI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anhe_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">AnheDef.NORMAL_EXTENDED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xing_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">XingDef.LOOSE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gong_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GongDef.SAME_STEM_NARROW</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yangren_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">YangrenDef.ZIPING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feiren_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">YangrenDef.ZIPING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hongyan_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tianyi_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tianyi_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">TianyiDef.GENG_WITH_JIA_WU</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yima_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huagai_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jiangxing_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jiesha_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wangshen_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jinyu_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zaisha_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wenchang_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wenchang_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">WenchangDef.XIN_ZI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taiji_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taiji_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">TaijiDef.REN_GUI_BOTH</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guoyin_anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Anchor.YEAR_AND_DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guoyin_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GuoyinDef.MODERN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peiou_xing_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PeiouXingDef.ZHENGCAI_ZHENGGUAN</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L203-L333"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool" title="链接到此定义。">¶</a></dt>
+<dd><p>命盘采用的流派读法，只声明、不演算。<code class="docutils literal notranslate"><span class="pre">day_rollover</span></code> 在排盘期决定日柱，
+其余字段在神煞与关系求值时读取。每个字段均参与相等性及 JSON；
+只差一个选项的命盘也不同，相等档案的哈希相等。</p>
+<p>出生精度、历法后端见 <code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code>；性别由 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code> 输入。
+字段须为不可变类型（枚举或 frozen 值类型），不得用 dict / list 默认值，避免修改共享默认实例。</p>
+<p>默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
+<code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHOOL</span></code> 构造即默认，<code class="docutils literal notranslate"><span class="pre">BaziConfig.school</span></code> 指向同一实例。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>day_rollover</strong> (<a class="reference internal" href="#bazi.school.DayRollover" title="bazi.school.DayRollover"><em>DayRollover</em></a>)</p></li>
+<li><p><strong>anhe_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><em>AnheDef</em></a>)</p></li>
+<li><p><strong>xing_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><em>XingDef</em></a>)</p></li>
+<li><p><strong>gong_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><em>GongDef</em></a>)</p></li>
+<li><p><strong>yangren_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><em>YangrenDef</em></a>)</p></li>
+<li><p><strong>feiren_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><em>YangrenDef</em></a>)</p></li>
+<li><p><strong>hongyan_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>tianyi_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>tianyi_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.TianyiDef" title="bazi.rules.ShenshaRules.TianyiDef"><em>TianyiDef</em></a>)</p></li>
+<li><p><strong>yima_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>huagai_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>jiangxing_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>jiesha_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>wangshen_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>jinyu_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>zaisha_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>wenchang_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>wenchang_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.WenchangDef" title="bazi.rules.ShenshaRules.WenchangDef"><em>WenchangDef</em></a>)</p></li>
+<li><p><strong>taiji_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>taiji_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.TaijiDef" title="bazi.rules.ShenshaRules.TaijiDef"><em>TaijiDef</em></a>)</p></li>
+<li><p><strong>guoyin_anchor</strong> (<a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><em>Anchor</em></a>)</p></li>
+<li><p><strong>guoyin_def</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.GuoyinDef" title="bazi.rules.ShenshaRules.GuoyinDef"><em>GuoyinDef</em></a>)</p></li>
+<li><p><strong>peiou_xing_def</strong> (<a class="reference internal" href="#bazi.school.PeiouXingDef" title="bazi.school.PeiouXingDef"><em>PeiouXingDef</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.anhe_def">
+<span class="sig-name descname"><span class="pre">anhe_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><span class="pre">AnheDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.anhe_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.day_rollover">
+<span class="sig-name descname"><span class="pre">day_rollover</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.DayRollover" title="bazi.school.DayRollover"><span class="pre">DayRollover</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.day_rollover" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.feiren_def">
+<span class="sig-name descname"><span class="pre">feiren_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><span class="pre">YangrenDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.feiren_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.from_json">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L296-L333"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.from_json" title="链接到此定义。">¶</a></dt>
+<dd><p>从 <code class="docutils literal notranslate"><span class="pre">BaziChart.json</span></code> 的 <code class="docutils literal notranslate"><span class="pre">school</span></code> 对象还原流派档案，是序列化的逆运算。
+各字段按自身声明的枚举解析，新增字段也会被读取。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>d: (Mapping[str, object]) 每个 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 字段名对应其枚举成员名，
+如 <code class="docutils literal notranslate"><span class="pre">{'day_rollover':</span> <span class="pre">'WAN_ZISHI',</span> <span class="pre">...}</span></code>；不对应字段的键被忽略。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>入参不是 <code class="docutils literal notranslate"><span class="pre">Mapping</span></code> 抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，缺字段抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，
+值非 <code class="docutils literal notranslate"><span class="pre">str</span></code> 抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，成员名不存在抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，锚超出支持范围则由构造函数
+抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。残缺字典不会回落默认值。</p></li>
+</ul>
+<p>Return: (BaziSchool) 还原的冻结流派档案。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BaziSchool.from_json(chart.json['school'])</span> <span class="pre">==</span> <span class="pre">chart.bazi.config.school</span></code></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/collections.abc.html#collections.abc.Mapping"><em>Mapping</em></a><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><em>BaziSchool</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.gong_def">
+<span class="sig-name descname"><span class="pre">gong_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><span class="pre">GongDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.gong_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.guoyin_anchor">
+<span class="sig-name descname"><span class="pre">guoyin_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.guoyin_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.guoyin_def">
+<span class="sig-name descname"><span class="pre">guoyin_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.GuoyinDef" title="bazi.rules.ShenshaRules.GuoyinDef"><span class="pre">GuoyinDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.guoyin_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.hongyan_anchor">
+<span class="sig-name descname"><span class="pre">hongyan_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.hongyan_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.huagai_anchor">
+<span class="sig-name descname"><span class="pre">huagai_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.huagai_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.jiangxing_anchor">
+<span class="sig-name descname"><span class="pre">jiangxing_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.jiangxing_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.jiesha_anchor">
+<span class="sig-name descname"><span class="pre">jiesha_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.jiesha_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.jinyu_anchor">
+<span class="sig-name descname"><span class="pre">jinyu_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.jinyu_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.mingli_tanyuan">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mingli_tanyuan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L263-L294"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.mingli_tanyuan" title="链接到此定义。">¶</a></dt>
+<dd><p>据袁树珊《命理探原》NLC 刊本与《命理探源》ctext 版整理的口径档案：两版所载的八个锚各取
+其读法。驿马、华盖、将星、劫煞、亡神以日支为锚（原局随之查年、月、时支）；天乙贵人、
+金舆与文昌以日干为锚。金舆恰好也是当前默认，预设仍把它写出来——档案声明的是两版所载
+读法，默认值日后改动不该悄悄改写它。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>其余选项保持默认。</p></li>
+</ul>
+<p>出处：</p>
+<ul class="simple">
+<li><p>《命理探原·卷上强弱》NLC 刊本：
+https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
+该扫描件封面题《命理探源》，卷上版心题《命理探原》。</p></li>
+<li><p>《命理探源》ctext 版（金輿祿「以日主為主，如甲日見辰」）：
+https://ctext.org/wiki.pl?if=gb&amp;chapter=827425&amp;remap=gb
+两版文字不同：NLC 刊本无金舆条，作「以日爲主」；ctext 作「以日主為主」。</p></li>
+</ul>
+<p>Return: (BaziSchool) 冻结的流派档案。</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><em>BaziSchool</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.peiou_xing_def">
+<span class="sig-name descname"><span class="pre">peiou_xing_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.PeiouXingDef" title="bazi.school.PeiouXingDef"><span class="pre">PeiouXingDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.peiou_xing_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.relation_definitions">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">relation_definitions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><span class="pre">DizhiRelationDefinitions</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L254-L261"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.relation_definitions" title="链接到此定义。">¶</a></dt>
+<dd><p>由本流派的暗合、刑与拱局定义构造查询对象。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.taiji_anchor">
+<span class="sig-name descname"><span class="pre">taiji_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.taiji_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.taiji_def">
+<span class="sig-name descname"><span class="pre">taiji_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.TaijiDef" title="bazi.rules.ShenshaRules.TaijiDef"><span class="pre">TaijiDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.taiji_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.tianyi_anchor">
+<span class="sig-name descname"><span class="pre">tianyi_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.tianyi_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.tianyi_def">
+<span class="sig-name descname"><span class="pre">tianyi_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.TianyiDef" title="bazi.rules.ShenshaRules.TianyiDef"><span class="pre">TianyiDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.tianyi_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.wangshen_anchor">
+<span class="sig-name descname"><span class="pre">wangshen_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.wangshen_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.wenchang_anchor">
+<span class="sig-name descname"><span class="pre">wenchang_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.wenchang_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.wenchang_def">
+<span class="sig-name descname"><span class="pre">wenchang_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.WenchangDef" title="bazi.rules.ShenshaRules.WenchangDef"><span class="pre">WenchangDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.wenchang_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.xing_def">
+<span class="sig-name descname"><span class="pre">xing_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><span class="pre">XingDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.xing_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.yangren_def">
+<span class="sig-name descname"><span class="pre">yangren_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-rules.html#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><span class="pre">YangrenDef</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.yangren_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.yima_anchor">
+<span class="sig-name descname"><span class="pre">yima_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.yima_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziSchool.zaisha_anchor">
+<span class="sig-name descname"><span class="pre">zaisha_anchor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.Anchor" title="bazi.school.Anchor"><span class="pre">Anchor</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziSchool.zaisha_anchor" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.school.DEFAULT_SCHOOL">
+<span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SCHOOL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><span class="pre">BaziSchool</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DEFAULT_SCHOOL" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">BaziConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BaziPrecision.DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CalendarBackend.CELESTIAL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">school</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BaziSchool()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dayun_year_rule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DayunYearRule.JIE_PROJECTED</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L339-L406"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig" title="链接到此定义。">¶</a></dt>
+<dd><p>命盘级不可变配置，包括出生精度、历法后端、大运年份投影及求值时读取的流派档案。
+Bazi 持有整个配置，配置参与相等性与 JSON。大运年份投影虽不改变四柱与大运物理时刻线，
+仍属于命盘身份；相等配置的哈希相等。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>precision: (BaziPrecision) 出生时间精度。</p></li>
+<li><p>backend: (CalendarBackend) 所有历法换算所用的后端。</p></li>
+<li><p>school: (BaziSchool) 流派档案，默认 <code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHOOL</span></code>。</p></li>
+<li><p>dayun_year_rule: (DayunYearRule) 默认大运年份投影。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>性别不影响本配置所聚合的四柱计算，仍由 <code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code> 接收并解析字符串。</p></li>
+<li><p>构造只收声明类型，字符串解析由 <code class="docutils literal notranslate"><span class="pre">from_values</span></code> 提供。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>precision</strong> (<a class="reference internal" href="#bazi.school.BaziPrecision" title="bazi.school.BaziPrecision"><em>BaziPrecision</em></a>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference internal" href="bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><em>CalendarBackend</em></a>)</p></li>
+<li><p><strong>school</strong> (<a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><em>BaziSchool</em></a>)</p></li>
+<li><p><strong>dayun_year_rule</strong> (<a class="reference internal" href="#bazi.school.DayunYearRule" title="bazi.school.DayunYearRule"><em>DayunYearRule</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig.backend">
+<span class="sig-name descname"><span class="pre">backend</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><span class="pre">CalendarBackend</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'celestial'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig.backend" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig.dayun_year_rule">
+<span class="sig-name descname"><span class="pre">dayun_year_rule</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.DayunYearRule" title="bazi.school.DayunYearRule"><span class="pre">DayunYearRule</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'jie_projected'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig.dayun_year_rule" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig.from_values">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BaziPrecision.DAY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CalendarBackend.CELESTIAL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">school</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_SCHOOL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dayun_year_rule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DayunYearRule.JIE_PROJECTED</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py#L368-L406"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig.from_values" title="链接到此定义。">¶</a></dt>
+<dd><p>从枚举或支持的字符串构造 <code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code>。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>precision: (BaziPrecision | str) 出生精度。字符串支持
+&quot;分&quot;/&quot;分钟&quot;/&quot;时&quot;/&quot;小时&quot;/&quot;天&quot;/&quot;日&quot;/&quot;m&quot;/&quot;min&quot;/&quot;minute&quot;/&quot;h&quot;/&quot;hour&quot;/&quot;d&quot;/&quot;day&quot;，
+大小写不敏感，其他值抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+<li><p>backend: (CalendarBackend | str) 历法后端；<code class="docutils literal notranslate"><span class="pre">CalendarBackend.from_str</span></code> 接受成员名或值，
+如 &quot;HKO&quot;/&quot;hko&quot;，大小写不敏感，其他值抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+<li><p>school: (BaziSchool) 流派档案，不接受字符串；类型错误由构造函数抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。</p></li>
+<li><p>dayun_year_rule: (DayunYearRule | str) 大运年份投影；<code class="docutils literal notranslate"><span class="pre">DayunYearRule.from_str</span></code> 接受成员名或值，
+如 &quot;FIXED_DECADE&quot;/&quot;fixed_decade&quot;，大小写不敏感，其他值抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+</ul>
+<p>Return: (BaziConfig) 解析后的冻结配置。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>precision</strong> (<a class="reference internal" href="#bazi.school.BaziPrecision" title="bazi.school.BaziPrecision"><em>BaziPrecision</em></a><em> | </em><em>str</em>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference internal" href="bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><em>CalendarBackend</em></a><em> | </em><em>str</em>)</p></li>
+<li><p><strong>school</strong> (<a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><em>BaziSchool</em></a>)</p></li>
+<li><p><strong>dayun_year_rule</strong> (<a class="reference internal" href="#bazi.school.DayunYearRule" title="bazi.school.DayunYearRule"><em>DayunYearRule</em></a><em> | </em><em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><em>BaziConfig</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig.precision">
+<span class="sig-name descname"><span class="pre">precision</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.BaziPrecision" title="bazi.school.BaziPrecision"><span class="pre">BaziPrecision</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig.precision" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.school.BaziConfig.school">
+<span class="sig-name descname"><span class="pre">school</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><span class="pre">BaziSchool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">BaziSchool()</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.BaziConfig.school" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.school.DEFAULT_CONFIG">
+<span class="sig-prename descclassname"><span class="pre">bazi.school.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CONFIG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><span class="pre">BaziConfig</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/school.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.school.DEFAULT_CONFIG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-rules.html" title="上一章">bazi.rules</a></li>
+      <li>Next: <a href="bazi-transit_chart.html" title="下一章">bazi.transit_chart</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
