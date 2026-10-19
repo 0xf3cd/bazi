@@ -131,7 +131,7 @@ def test_doctest_count_accepts_both_interpreter_wordings(tmp_path, singular):
 
 @pytest.mark.parametrize('old,new', [
   ('1 tests in quickstart-chart', '1 tests in omitted-chart'),
-  ('27 tests', '0 tests'),
+  pytest.param(f'{sum(map(len, EXAMPLE_GROUPS.values()))} tests', '0 tests', id='total-count'),
   ('0 failures in setup code', '1 failure in setup code'),
   ('0 failures in cleanup code', '1 failure in cleanup code'),
 ])

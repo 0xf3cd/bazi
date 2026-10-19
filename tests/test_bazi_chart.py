@@ -4,6 +4,7 @@
 import json
 import copy
 import random
+import re
 import itertools
 from collections import UserDict
 from collections.abc import Iterator, Mapping
@@ -1204,3 +1205,29 @@ def test_liunian_and_xiaoyun_start_from_the_attributed_year(precision: str, firs
   assert first_liunian.ganzhi == chart.bazi.year_pillar
 
   assert len(chart.xiaoyun) == xiaoyun_len
+
+
+def test_repr_wraps_the_bazi_summary() -> None:
+  chart: BaziChart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  assert repr(chart) == f'BaziChart({chart.bazi!r})'
+  assert repr(chart) == 'BaziChart(Bazi(2000-01-01T12:00:00, male, 己卯 丙子 戊午 戊午))'
+
+
+def test_repr_does_not_compute_derived_values(monkeypatch: pytest.MonkeyPatch) -> None:
+  chart: BaziChart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+
+  def forbidden(self: BaziChart) -> object:
+    raise AssertionError('derived value computed')
+
+  for name in ('dayun', 'liunian', 'xiaoyun', 'dayun_start_moment', 'json', 'traits', 'shishen'):
+    monkeypatch.setattr(BaziChart, name, property(forbidden))
+  assert repr(chart).startswith('BaziChart(Bazi(')
+
+
+@pytest.mark.parametrize('bad, hint', [
+  (BaziChart(Bazi.create('2000-01-01 12:00', 'male')), 'pass chart.bazi'),
+  (datetime(2000, 1, 1, 12), 'build one with Bazi.create(birth_time, gender)'),
+])
+def test_constructor_points_to_the_right_input(bad: object, hint: str) -> None:
+  with pytest.raises(TypeError, match=f'^Expected Bazi, got <class .*>; {re.escape(hint)}$'):
+    BaziChart(bad) # type: ignore

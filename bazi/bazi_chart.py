@@ -191,11 +191,14 @@ class BaziChart:
   '''
 
   def __init__(self, bazi: Bazi) -> None:
-    if not isinstance(bazi, Bazi):
-      raise TypeError(f'Expected Bazi, got {type(bazi)}')
+    _check_bazi(bazi)
     # Bazi 并非 frozen，私有状态可被改写，因此持有隔离副本。
     # test_malicious 验证修改调用方对象不会影响命盘。
     self._bazi: Final[Bazi] = copy.deepcopy(bazi)
+
+  def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持 `Bazi` 的摘要；不触发派生计算，格式不是承诺。'''
+    return f'BaziChart({self._bazi!r})'
 
   @classmethod
   def random(cls, config: BaziConfig = DEFAULT_CONFIG, *, rng: Random | None = None) -> 'BaziChart':
@@ -679,5 +682,20 @@ class BaziChart:
       **location_time.json,
       **common,
     }
+
+
+def _check_bazi(bazi: object) -> None:
+  '''`BaziChart` 构造器的类型检查；错型消息指向取得 `Bazi` 的方式。'''
+  if not isinstance(bazi, Bazi):
+    hint = 'pass chart.bazi' if isinstance(bazi, BaziChart) else 'build one with Bazi.create(birth_time, gender)'
+    raise TypeError(f'Expected Bazi, got {type(bazi)}; {hint}')
+
+
+def _check_chart(chart: object) -> None:
+  '''接收命盘的公开入口共用的类型检查；错型消息指向构造命盘的方式。'''
+  if not isinstance(chart, BaziChart):
+    hint = 'wrap it with BaziChart(bazi)' if isinstance(chart, Bazi) else 'build one with BaziChart(Bazi.create(birth_time, gender))'
+    raise TypeError(f'Expected BaziChart, got {type(chart)}; {hint}')
+
 
 命盘 = BaziChart

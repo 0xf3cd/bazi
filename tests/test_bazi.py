@@ -784,3 +784,53 @@ def test_sub_minute_truncation() -> None:
   assert sub_minute.minute == 1
   assert bazi == sub_minute
   assert hash(bazi) == hash(sub_minute)
+
+
+def test_repr_summarizes_birth_gender_and_pillars() -> None:
+  bazi: Bazi = Bazi.create('2000-01-01 12:00', 'male')
+  assert repr(bazi) == 'Bazi(2000-01-01T12:00:00, male, 己卯 丙子 戊午 戊午)'
+  assert str(bazi) == repr(bazi)
+  assert repr(Bazi.create('2000-01-01 12:00', '女')).startswith('Bazi(2000-01-01T12:00:00, female, ')
+
+
+def test_repr_adds_config_only_when_not_default() -> None:
+  hour: Bazi = Bazi.create('2000-01-01 12:00', 'male', BaziConfig.from_values(precision='hour'))
+  assert repr(hour) == 'Bazi(2000-01-01T12:00:00, male, 己卯 丙子 戊午 戊午, config=BaziConfig(precision=BaziPrecision.HOUR))'
+  assert 'config=' not in repr(Bazi.create('2000-01-01 12:00', 'male', DEFAULT_CONFIG))
+
+
+def test_repr_adds_longitude_for_location_charts() -> None:
+  moment: datetime = datetime(2000, 1, 1, 12, tzinfo=ZoneInfo('Asia/Shanghai'))
+  bazi: Bazi = Bazi.create(moment, 'male', BaziConfig.from_values(precision='minute'), longitude=120)
+  assert repr(bazi) == 'Bazi(2000-01-01T11:56:00, male, 己卯 丙子 戊午 戊午, longitude=120.0, config=BaziConfig(precision=BaziPrecision.MINUTE))'
+
+
+def test_repr_has_bounded_size_for_any_chart(rng: random.Random) -> None:
+  for _ in range(50):
+    text: str = repr(Bazi.random(rng=rng))
+    assert text.startswith('Bazi(') and text.endswith(')') and len(text) < 80 and '\n' not in text
+
+
+@pytest.mark.parametrize('args, hint', [
+  (('2000-01-01 12:00', BaziGender.MALE), 'Bazi.create parses ISO strings'),
+  ((datetime(2000, 1, 1, 12), 'male'), "Bazi.create accepts strings such as 'male'"),
+  ((datetime(2000, 1, 1, 12), BaziGender.MALE, 'hko'), 'BaziConfig.from_values builds one from strings'),
+])
+def test_constructor_points_strings_to_create(args: tuple[object, ...], hint: str) -> None:
+  with pytest.raises(TypeError, match=f'^Expected .*, got <class .*>; {hint}$'):
+    Bazi(*args) # type: ignore
+
+
+def test_create_hints_from_values_for_config() -> None:
+  with pytest.raises(TypeError, match='^Expected BaziConfig, got <class .str.>; BaziConfig.from_values builds one from strings$'):
+    Bazi.create('2000-01-01 12:00', 'male', 'hko') # type: ignore
+
+
+@pytest.mark.parametrize('call', [
+  lambda: Bazi(None, BaziGender.MALE), # type: ignore
+  lambda: Bazi(datetime(2000, 1, 1, 12), None), # type: ignore
+  lambda: Bazi(datetime(2000, 1, 1, 12), BaziGender.MALE, None), # type: ignore
+])
+def test_constructor_keeps_plain_message(call: object) -> None:
+  with pytest.raises(TypeError, match=r"^Expected \w+, got <class 'NoneType'>$"):
+    call() # type: ignore

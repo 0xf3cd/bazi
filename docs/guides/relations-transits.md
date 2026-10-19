@@ -133,6 +133,45 @@ print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
 `chart.xiaoyun` 不同：它是缓存的元组，可以反复遍历。大运的 `ganzhi_year` 是起运年份标签，
 每步覆盖 `[start_moment, end_moment)`，不表示这步大运占据整个标签年；标签规则见 {doc}`configuration`。
 
+需要的是文字而不是对象时，`bazi.chart_text.transit_text` 把节、交运时间、大运、小运和流年排好。
+流年可以无限延续，所以数量由你给：`dayun_count` 取前几步大运，`liunian_count` 取从出生干支年起的几年，默认分别是 10 和 100。
+小运是有限的，全部列出。
+
+```{testcode} transits-text
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.chart_text import transit_text
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+print(transit_text(chart, dayun_count=2, liunian_count=10).strip())
+```
+
+```{testoutput} transits-text
+出生时刻前一节：立夏 - 1990-05-06T02:35:27
+出生时刻后一节：芒种 - 1990-06-06T06:46:19
+大运数节依据（逆排）：立夏 - 1990-05-06T02:35:27
+交运时间： 1994-02-23T20:46:55
+
+大运：            天干                 地支                 地支藏干
+1994年标签：       庚 [阳金] <偏印>     辰 [阳土] <七杀>    戊 [阳土] <杀> 乙 [阴木] <伤> 癸 [阴水] <劫>
+               -- 公历区间：1994-02-23 20:46 ～ 2004-02-23 20:46
+               -- 纳音：白蜡金  -- 十二长生：墓
+
+2004年标签：       己 [阴土] <正官>     卯 [阴木] <伤官>    乙 [阴木] <伤>
+               -- 公历区间：2004-02-23 20:46 ～ 2014-02-23 20:46
+               -- 纳音：城头土  -- 十二长生：死
+
+小运：
+1岁-甲辰  2岁-癸卯  3岁-壬寅  4岁-辛丑  5岁-庚子
+
+流年：
+1990-庚午  1991-辛未  1992-壬申  1993-癸酉  1994-甲戌  1995-乙亥  1996-丙子  1997-丁丑  1998-戊寅  1999-己卯
+```
+
+地点盘的节与大运区间仍用节气表时刻，文本会注明这一点，不采用真太阳时。
+
 ## 范围提醒
 
 - 月、日期和时刻查询按东八区无时区标签和物理节气边界；`at_moment` 还要求 `celestial` 系后端和 `HOUR` / `MINUTE` 精度，否则返回 `None`。

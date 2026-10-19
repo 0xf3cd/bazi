@@ -1,30 +1,18 @@
 #!/usr/bin/env python3
 
 import argparse
-import itertools
 from random import Random, SystemRandom
 
 from pprint import pprint
-from typing import TypeVar
-from collections.abc import Iterable, Generator
+from typing import Final
 
 import colorama
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import Tiangan, Dizhi, Wuxing, Ganzhi, ShierZhangsheng
-from bazi.data_types import HiddenTianganDict
-from bazi.utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
-from bazi.calendar.backend import calendar_utils_of
-
-
-T = TypeVar('T')
-def batched(it: Iterable[T], n: int) -> Generator[tuple[T, ...], None, None]:
-  '''为 Python 3.12 之前的版本提供分批迭代，替代 itertools.batched。'''
-  assert n > 0
-  it_list: list[T] = list(it)
-  for i in range(0, len(it_list), n):
-    yield tuple(it_list[i:i + n])
+from bazi.chart_text import TextStyle, basic_text, transit_text
+from bazi.defines import Tiangan, Dizhi, Wuxing, Ganzhi
+from bazi.utils.bazi_utils import traits
 
 
 def colored_str(s: Tiangan | Dizhi | Ganzhi) -> str:
@@ -43,99 +31,20 @@ def colored_str(s: Tiangan | Dizhi | Ganzhi) -> str:
     return color_mapping_table[wx] + str(s) + colorama.Style.RESET_ALL
 
 
-def traits_str(s: Tiangan | Dizhi) -> str:
-  t = traits(s)
-  return f'{t.yinyang}{t.wuxing}'
+def highlighted_day_master(label: str) -> str:
+  return colorama.Back.LIGHTBLUE_EX + colorama.Fore.BLACK + label + colorama.Style.RESET_ALL
 
 
-def hidden_tg_str(d: HiddenTianganDict, day_master: Tiangan) -> str:
-  def f(tg: Tiangan) -> str:
-    return f'{colored_str(tg)} [{traits_str(tg)}] <{shishen(day_master, tg).abbr}>'
-  return ' '.join(f(tg) for tg in d)
+# 命盘文本由安装包的 bazi.chart_text 生成，终端颜色在这里接入。
+TERMINAL_STYLE: Final[TextStyle] = TextStyle(glyph=colored_str, day_master_mark=highlighted_day_master)
 
 
 def get_basic_info(chart: BaziChart) -> str:
-  s: str = '\n'
-  bazi: Bazi = chart.bazi
-  day_master_wx: Wuxing = traits(bazi.day_master).wuxing
-  date_label = '生于 ' if bazi.longitude is None else '真太阳时日期：'
-  s += f'日元{colored_str(bazi.day_master)}{day_master_wx}，{bazi.gender}，{date_label}{bazi.solar_date}\n\n'
-  if bazi.longitude is None:
-    s += f'出生时刻：{bazi.solar_datetime.isoformat()}\n\n'
-  location_time = bazi.location_time
-  if location_time is not None:
-    s += f'民用出生时刻（固定出生地偏移）：{location_time.civil_time.isoformat()}；经度={location_time.longitude}\n'
-    s += f'真太阳出生时刻：{location_time.apparent_time.isoformat()}\n'
-    s += f'节气表出生时刻（UTC+08:00）：{bazi.reference_datetime.isoformat()}\n\n'
-
-  pillars: list[Ganzhi] = list(bazi.pillars)
-  shishens: list[BaziChart.PillarShishens] = list(chart.shishen)
-  hidden_tiangan: list[HiddenTianganDict] = list(chart.hidden_tiangan)
-  nayin: list[str] = list(chart.nayin)
-  zhangsheng: list[ShierZhangsheng] = list(chart.shier_zhangsheng)
-
-  s += '     天干                  地支                  地支藏干\n'
-  for idx, head in enumerate(['年', '月', '日', '时']):
-    tg: Tiangan = pillars[idx].tiangan
-    dz: Dizhi = pillars[idx].dizhi
-
-    tg_shishen: str = str(shishens[idx].tiangan)
-    if idx == 2:
-      tg_shishen = colorama.Back.LIGHTBLUE_EX + colorama.Fore.BLACK + '日主' + colorama.Style.RESET_ALL
-
-    tg_str: str = f'{colored_str(tg)} [{traits_str(tg)}] <{tg_shishen}>'
-    dz_str: str = f'{colored_str(dz)} [{traits_str(dz)}] <{shishens[idx].dizhi!s}>'
-    hd_str: str = hidden_tg_str(hidden_tiangan[idx], bazi.day_master)
-
-    s += f'{head}：  {tg_str}      {dz_str}     {hd_str}\n'
-    s += f'  -- 纳音：{nayin[idx]}  -- 十二长生：{zhangsheng[idx]}\n'
-
-  return s
+  return basic_text(chart, style=TERMINAL_STYLE)
 
 
 def get_transit_info(chart: BaziChart) -> str:
-  day_master: Tiangan = chart.bazi.day_master
-  s: str = '\n'
-
-  utils = calendar_utils_of(chart.bazi.config.backend)
-  birth_time = chart.bazi.reference_datetime
-  jie_before = utils.prev_jie(birth_time)
-  jie_after = utils.next_jie(birth_time)
-
-  if chart.bazi.longitude is not None:
-    s += '节与大运区间采用节气表时刻（UTC+08:00），不采用真太阳时。\n'
-
-  s += f'出生时刻前一节：{jie_before.jieqi} - {jie_before.moment.isoformat()}\n'
-  s += f'出生时刻后一节：{jie_after.jieqi} - {jie_after.moment.isoformat()}\n'
-  owning, following = chart.bazi.month_jies
-  counted = following if chart.dayun_order else owning
-  direction = '顺排' if chart.dayun_order else '逆排'
-  s += f'大运数节依据（{direction}）：{counted.jieqi} - {counted.moment.isoformat()}\n'
-  s += f'交运时间： {chart.dayun_start_moment.isoformat()}\n\n'
-
-  s += '大运：            天干                 地支                 地支藏干\n'
-  for dayun in itertools.islice(chart.dayun, 10):
-    tg, dz = dayun.ganzhi
-
-    tg_str: str = f'{colored_str(tg)} [{traits_str(tg)}] <{shishen(day_master, tg)}>'
-    dz_str: str = f'{colored_str(dz)} [{traits_str(dz)}] <{shishen(day_master, dz)}>'
-    hd_str: str = hidden_tg_str(hidden_tiangans(dz), day_master)
-
-    s += f'{dayun.ganzhi_year}年标签：       {tg_str}     {dz_str}    {hd_str}\n'
-    s += f'               -- 公历区间：{dayun.start_moment:%Y-%m-%d %H:%M} ～ {dayun.end_moment:%Y-%m-%d %H:%M}\n'
-    s += f'               -- 纳音：{nayin_str(dayun.ganzhi)}  -- 十二长生：{shier_zhangsheng(day_master, dz)}\n\n'
-
-  s += '小运：\n'
-  for xy_batch in batched(chart.xiaoyun, 10):
-    xy_batch_str: str = '  '.join(f'{xy.xusui}岁-{colored_str(xy.ganzhi)}' for xy in xy_batch)
-    s += f'{xy_batch_str}\n'
-
-  s += '\n流年：\n'
-  for ln_batch in batched(itertools.islice(chart.liunian, 100), 10):
-    ln_batch_str: str = '  '.join(f'{ln.ganzhi_year}-{colored_str(ln.ganzhi)}' for ln in ln_batch)
-    s += f'{ln_batch_str}\n'
-
-  return s
+  return transit_text(chart, style=TERMINAL_STYLE)
 
 
 def demo(seed: int | None = None) -> None:

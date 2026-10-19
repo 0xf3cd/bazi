@@ -1,6 +1,7 @@
 # 公开接口与记录兼容契约
 
-本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`。例如：
+本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`
+（`import bazi; bazi.Bazi` 的 `AttributeError` 会指出该从哪个定义模块导入；`from bazi import Bazi` 由解释器报 `ImportError`，不带这条指路）。例如：
 
 ```python
 from datetime import datetime
@@ -51,6 +52,27 @@ assert chart.bazi.day_master in Tiangan
   但命盘对象本身不相等。知识库按内容及顺序比较，前提判别记录 `ContextResult` 按其值字段比较。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
+
+## 对象摘要、报错指路与文本展示
+
+- `dir(bazi)` 列出 `__all__` 声明的全部子模块和 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
+  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但 `bazi.chart_text` 同样按需导入。
+- `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 的 `repr`
+  是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
+  摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
+  不是记录格式，也不应被程序解析**；保存与交换用 `BaziChart.json`，由测试钉住当前格式只为防止意外改动。
+- 接收命盘的入口（`TransitChart`、`DayunDatabase`、`TransitDatabase`、三个分析类、`spouse_evidence`、
+  `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类原先不检查类型，
+  传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；`DayunDatabase`、`TransitDatabase` 原先在构造时就抛
+  `AttributeError`。现在统一为构造时的 `TypeError`，只依赖鸭子类型的调用方须传真正的 `BaziChart`。
+- 类型错误消息保持 `Expected X, got <type>` 开头，对常见误用在其后以分号追加指路，如
+  `Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)`。
+  异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。
+- `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
+  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
+  流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
+  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun`、`json` 一致；`basic_text` 不受影响。
+  `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 名称、关键词与过滤值发现
 

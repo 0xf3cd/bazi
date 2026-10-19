@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any, Final, Literal, NamedTuple, TypeVar, get_args
 
 from .bazi import BaziGender, LocationTimeJson, _parse_location
-from .bazi_chart import BaziChart
+from .bazi_chart import BaziChart, _check_chart
 from .common import frozendict
 from .data_types import GanzhiData
 from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation, TianganRelation
@@ -1111,7 +1111,7 @@ def evaluate_context(
 
   Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，以及输入与知识快照。
   '''
-  _typed(chart, BaziChart)
+  _check_chart(chart)
   if not isinstance(profile, (ContextProfile, RelationshipProfile)):
     raise TypeError(f'Expected ContextProfile | RelationshipProfile, got {type(profile)}')
   _choice(criterion_id, tuple(_CRITERIA))

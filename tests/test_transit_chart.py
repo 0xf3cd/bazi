@@ -494,3 +494,17 @@ def test_empty_dayun_timeline_keeps_calendar_transits() -> None:
   assert TransitKind.LIUYUE in date_transits
   assert TransitKind.LIURI in date_transits
   assert chart.at_moment(bazi.solar_datetime) is None
+
+
+def test_repr_wraps_the_chart_summary() -> None:
+  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  assert repr(TransitChart(chart)) == f'TransitChart({chart!r})'
+
+
+@pytest.mark.parametrize('bad, hint', [
+  (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
+  (datetime(2000, 1, 1, 12), r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),
+])
+def test_constructor_points_to_the_right_input(bad: object, hint: str) -> None:
+  with pytest.raises(TypeError, match=f'^Expected BaziChart, got <class .*>; {hint}$'):
+    TransitChart(bad) # type: ignore

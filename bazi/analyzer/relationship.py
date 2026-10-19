@@ -18,7 +18,7 @@ from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRel
 from ..rules import DizhiRules
 from ..school import Anchor, BaziSchool
 from ..bazi import Bazi
-from ..bazi_chart import BaziChart
+from ..bazi_chart import BaziChart, _check_chart
 from ..transits import TransitKind, TransitSet
 from ..utils import bazi_utils, shensha_utils, tiangan_utils, dizhi_utils
 from ..utils.bazi_utils import hidden_tiangans
@@ -270,7 +270,12 @@ class AtBirthShenshaAnalysis(ShenshaAnalysis):
 class AtBirthAnalysis:
   '''原局亲密关系分析。'''
   def __init__(self, chart: BaziChart) -> None:
+    _check_chart(chart)
     self._chart: Final[BaziChart] = chart
+
+  def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
+    return f'AtBirthAnalysis({self._chart!r})'
 
   @property
   def shensha(self) -> AtBirthShenshaAnalysis:
@@ -335,7 +340,12 @@ class AtBirthAnalysis:
 class TransitAnalysis:
   '''流运亲密关系分析。'''
   def __init__(self, chart: BaziChart) -> None:
+    _check_chart(chart)
     self._chart: Final[BaziChart] = chart
+
+  def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
+    return f'TransitAnalysis({self._chart!r})'
 
   @staticmethod
   def _check_transits(transits: object) -> None:
@@ -745,8 +755,7 @@ def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> Relationsh
 
   Return: (RelationshipEvidence) 目标、出现与三类关系证据。
   '''
-  if not isinstance(chart, BaziChart):
-    raise TypeError(f'Expected BaziChart, got {type(chart)}')
+  _check_chart(chart)
   if transits is not None and not isinstance(transits, TransitSet):
     raise TypeError(f'Expected TransitSet | None, got {type(transits)}')
 
@@ -809,7 +818,12 @@ def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> Relationsh
 class RelationshipAnalyzer:
   '''组合 AtBirthAnalysis 与 TransitAnalysis 的亲密关系分析入口。'''
   def __init__(self, chart: BaziChart) -> None:
+    _check_chart(chart)
     self._chart: Final[BaziChart] = chart
+
+  def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
+    return f'RelationshipAnalyzer({self._chart!r})'
 
   @functools.cached_property
   def at_birth(self) -> AtBirthAnalysis:

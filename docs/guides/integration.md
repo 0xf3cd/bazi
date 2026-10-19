@@ -29,6 +29,31 @@ ImportError
 包的 `__all__` 只列子模块，不是公开 API 的全集；`bazi.data_types` 等定义模块同样可以直接导入。
 带下划线的名字是包内约定，不承诺包外调用。
 
+## 命盘文本与终端颜色
+
+`bazi.chart_text` 的 `basic_text`、`transit_text`、`chart_text` 返回纯文本，库本身不加颜色。
+要加颜色或标记，传一个 `TextStyle`：`glyph` 收到单个天干或地支，`day_master_mark` 收到“日主”二字，各自返回显示文字；
+两个字段都可以不设，不设就原样输出。钩子的返回值原样放进文本，库不做检查，版式由你负责。下面的例子给日主加上星号，再把每个字形用方括号括起来：
+
+```{testcode} integration-text-style
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.chart_text import TextStyle, basic_text
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+style = TextStyle(glyph=lambda s: f'[{s}]', day_master_mark=lambda label: f'*{label}*')
+text = basic_text(chart, style=style)
+print(next(line for line in text.splitlines() if line.startswith('日：')))
+```
+
+```{testoutput} integration-text-style
+日：  [壬] [阳水] <*日主*>      [午] [阳火] <正财>     [丁] [阴火] <财> [己] [阴土] <官>
+```
+
+源码里的 `run_demo.py` 就是用终端颜色码实现这两个钩子的；传给钩子的永远是单个字形，不是整段文字。
+
 ## 三类记录，三种恢复
 
 | 记录 | 导出 | 恢复 | 版本 |

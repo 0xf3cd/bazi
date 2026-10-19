@@ -36,6 +36,8 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 
 类型从定义模块导入；安装包没有根类入口或命令行程序。领域名称用拼音，枚举另有中文别名。
 
+在交互环境里直接输入对象会看到一行摘要；`bazi.chart_text` 可把命盘排成纯文本，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
+
 ## 按任务继续
 
 | 想做什么 | 从这里开始 |
