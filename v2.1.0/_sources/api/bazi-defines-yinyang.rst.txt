@@ -1,0 +1,14 @@
+bazi.defines.yinyang
+====================
+
+.. automodule:: bazi.defines.yinyang
+
+.. autoclass:: bazi.defines.yinyang.Yinyang
+   :members: YANG, YIN, as_list, from_str, opposite, 阳, 阴
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.yinyang
+
+.. py:data:: 阴阳
+
+   :py:obj:`bazi.defines.yinyang.Yinyang` 的别名。

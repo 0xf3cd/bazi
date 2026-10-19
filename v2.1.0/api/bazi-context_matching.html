@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.context_matching &#8212; bazi · v2.1.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.data_types" href="bazi-data_types.html" />
+    <link rel="prev" title="bazi.common" href="bazi-common.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.context_matching">
+<span id="bazi-context-matching"></span><h1>bazi.context_matching<a class="headerlink" href="#module-bazi.context_matching" title="链接到此标题。">¶</a></h1>
+<p>仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.MatchStatus">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">MatchStatus</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.MatchStatus" title="链接到此定义。">¶</a></dt>
+<dd><p>完整前提判别，独立于知识整理状态。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.MatchReason">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">MatchReason</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.MatchReason" title="链接到此定义。">¶</a></dt>
+<dd><p>判据或条目判别的理由。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false', 'missing_transit_coordinate', 'transit_unavailable', 'binding_unrecognized'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.ObservationScope">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">ObservationScope</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ObservationScope" title="链接到此定义。">¶</a></dt>
+<dd><p>观察范围，无隐式默认值。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['natal', 'natal_and_liunian'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.RelationshipScope">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">RelationshipScope</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.RelationshipScope" title="链接到此定义。">¶</a></dt>
+<dd><p>婚恋判据的观察范围。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['natal', 'natal_and_transits'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitEntry">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">TransitEntry</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitEntry" title="链接到此定义。">¶</a></dt>
+<dd><p>显式岁运查询的入口。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['at_year', 'at_month', 'at_date', 'at_moment'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.context_matching.Pillar">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">Pillar</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.Pillar" title="链接到此定义。">¶</a></dt>
+<dd><p>有序观察查询中的位置。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['year', 'month', 'day', 'hour', 'liunian'] 的别名</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextProfile">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">ContextProfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observation_scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganzhi_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L200-L216"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextProfile" title="链接到此定义。">¶</a></dt>
+<dd><p>显式选择原局或原局加单流年；固定包含全部实际藏干，不以藏干百分比计力量。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>年份是干支年标签，不是公历时刻；缺失年份返回 UNKNOWN。</p></li>
+<li><p>natal 不接年份；natal_and_liunian 只加入单个 LIUNIAN。年份须为确切 int，拒绝 bool 与子类。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>observation_scope</strong> (<em>Literal</em><em>[</em><em>'natal'</em><em>, </em><em>'natal_and_liunian'</em><em>]</em>)</p></li>
+<li><p><strong>ganzhi_year</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextProfile.ganzhi_year">
+<span class="sig-name descname"><span class="pre">ganzhi_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextProfile.ganzhi_year" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextProfile.observation_scope">
+<span class="sig-name descname"><span class="pre">observation_scope</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'natal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'natal_and_liunian'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ContextProfile.observation_scope" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">TransitCoordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gz_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gz_month</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solar_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solar_moment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L219-L257"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitCoordinate" title="链接到此定义。">¶</a></dt>
+<dd><p>一次岁运查询的入口与真实坐标；各入口字段互斥，缺字段与多余字段都是请求形错误。</p>
+<p>at_year／at_month 的年份是干支年标签；at_month 另需干支月；at_date 是东八区无时区公历日；
+at_moment 是东八区无时区时刻，保存请求原样（含微秒），求值按 <code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 既有规则截到秒。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">gz_year</span></code> 须为确切 <code class="docutils literal notranslate"><span class="pre">int</span></code>（拒 <code class="docutils literal notranslate"><span class="pre">bool</span></code> 与子类）；<code class="docutils literal notranslate"><span class="pre">solar_date</span></code> 须 <code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">is</span> <span class="pre">date</span></code>（<code class="docutils literal notranslate"><span class="pre">datetime</span></code>
+是 <code class="docutils literal notranslate"><span class="pre">date</span></code> 子类，须拒）；<code class="docutils literal notranslate"><span class="pre">solar_moment</span></code> 须 <code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">is</span> <span class="pre">datetime</span></code> 且不带时区。
+<code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 自身的年份入口只用 <code class="docutils literal notranslate"><span class="pre">isinstance</span></code>，坐标类型必须在这一层先拦。</p></li>
+<li><p>缺本入口必填字段或带其他入口字段抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entry</strong> (<em>Literal</em><em>[</em><em>'at_year'</em><em>, </em><em>'at_month'</em><em>, </em><em>'at_date'</em><em>, </em><em>'at_moment'</em><em>]</em>)</p></li>
+<li><p><strong>gz_year</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>gz_month</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>solar_date</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.date"><em>date</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>solar_moment</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate.entry">
+<span class="sig-name descname"><span class="pre">entry</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'at_year'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_month'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_date'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_moment'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.TransitCoordinate.entry" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate.gz_month">
+<span class="sig-name descname"><span class="pre">gz_month</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitCoordinate.gz_month" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate.gz_year">
+<span class="sig-name descname"><span class="pre">gz_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitCoordinate.gz_year" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate.solar_date">
+<span class="sig-name descname"><span class="pre">solar_date</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.date"><span class="pre">date</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitCoordinate.solar_date" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.TransitCoordinate.solar_moment">
+<span class="sig-name descname"><span class="pre">solar_moment</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.TransitCoordinate.solar_moment" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.RelationshipProfile">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">RelationshipProfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L260-L297"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.RelationshipProfile" title="链接到此定义。">¶</a></dt>
+<dd><p>显式选择原局，或原局加一组按坐标查询、显式选定种类的岁运；无隐式默认。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">kinds</span></code> 须为 <code class="docutils literal notranslate"><span class="pre">tuple[TransitKind,</span> <span class="pre">...]</span></code>，重复与不支持抛错；<code class="docutils literal notranslate"><span class="pre">natal</span></code> 不带坐标与种类，
+<code class="docutils literal notranslate"><span class="pre">natal_and_transits</span></code> 须显式给非空 <code class="docutils literal notranslate"><span class="pre">kinds</span></code>，缺查询坐标在求值期得到 UNKNOWN。</p></li>
+<li><p>有 <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> 时 <code class="docutils literal notranslate"><span class="pre">kinds</span></code> 须落在该入口结构上支持的种类内。</p></li>
+<li><p>合法但乱序的 <code class="docutils literal notranslate"><span class="pre">kinds</span></code> 在类型与重复检查后按 <code class="docutils literal notranslate"><span class="pre">TransitSet.items</span></code> 的固定种类序规范化，
+不因调用方顺序产生两份等价记录；JSON 恢复则要求记录已是规范序。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scope</strong> (<em>Literal</em><em>[</em><em>'natal'</em><em>, </em><em>'natal_and_transits'</em><em>]</em>)</p></li>
+<li><p><strong>coordinate</strong> (<a class="reference internal" href="#bazi.context_matching.TransitCoordinate" title="bazi.context_matching.TransitCoordinate"><em>TransitCoordinate</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>kinds</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><em>TransitKind</em></a><em>, </em><em>...</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.RelationshipProfile.coordinate">
+<span class="sig-name descname"><span class="pre">coordinate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.context_matching.TransitCoordinate" title="bazi.context_matching.TransitCoordinate"><span class="pre">TransitCoordinate</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.RelationshipProfile.coordinate" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.RelationshipProfile.kinds">
+<span class="sig-name descname"><span class="pre">kinds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><span class="pre">TransitKind</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.RelationshipProfile.kinds" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.RelationshipProfile.scope">
+<span class="sig-name descname"><span class="pre">scope</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'natal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'natal_and_transits'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.RelationshipProfile.scope" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">CriterionInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">criterion_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">definition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_role</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_gender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">claim_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">claim_genders</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L300-L398"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo" title="链接到此定义。">¶</a></dt>
+<dd><p>判据的不可变查阅目录，不是一次命盘判别，也不认证条目适用于现实事件。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。</p></li>
+<li><p>claim_ids 是默认语料的约定，不保证自定义知识库有这些条目。绑定识别核对条目及其引用的
+对象、情境、来源记录的内容摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。</p></li>
+<li><p>required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
+男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
+不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。</p></li>
+<li><p>observation_keys 在两个官杀判据中都保留 female，是否有性别门槛另由 required_gender 表示。</p></li>
+<li><p>直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>criterion_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>definition</strong> (<em>str</em>)</p></li>
+<li><p><strong>profile_type</strong> (<em>type</em><em>[</em><a class="reference internal" href="#bazi.context_matching.ContextProfile" title="bazi.context_matching.ContextProfile"><em>ContextProfile</em></a><em>] </em><em>| </em><em>type</em><em>[</em><a class="reference internal" href="#bazi.context_matching.RelationshipProfile" title="bazi.context_matching.RelationshipProfile"><em>RelationshipProfile</em></a><em>]</em>)</p></li>
+<li><p><strong>entry_role</strong> (<em>Literal</em><em>[</em><em>'premise'</em><em>, </em><em>'condition'</em><em>]</em>)</p></li>
+<li><p><strong>observation_keys</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>required_gender</strong> (<a class="reference internal" href="bazi-bazi.html#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><em>BaziGender</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>claim_ids</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>claim_genders</strong> (<a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><em>frozendict</em></a><em>[</em><em>str</em><em>, </em><a class="reference internal" href="bazi-bazi.html#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><em>BaziGender</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.binding_effect">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">binding_effect</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'entry_unknown'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'related_unrecognized'</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L393-L398"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.binding_effect" title="链接到此定义。">¶</a></dt>
+<dd><p>绑定未识别时，premise 的 EntryMatch 为 UNKNOWN/binding_unrecognized，
+condition 的 RelatedEntry.recognized 为 False；两者均不改变 CriterionResult。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.claim_genders">
+<span class="sig-name descname"><span class="pre">claim_genders</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi.html#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><span class="pre">BaziGender</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.claim_genders" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.claim_ids">
+<span class="sig-name descname"><span class="pre">claim_ids</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.claim_ids" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.criterion_id">
+<span class="sig-name descname"><span class="pre">criterion_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.criterion_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.definition">
+<span class="sig-name descname"><span class="pre">definition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.definition" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.entry_role">
+<span class="sig-name descname"><span class="pre">entry_role</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'premise'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'condition'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.entry_role" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.observation_keys">
+<span class="sig-name descname"><span class="pre">observation_keys</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.observation_keys" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.optional_inputs">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">optional_inputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L357-L360"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.optional_inputs" title="链接到此定义。">¶</a></dt>
+<dd><p>evaluate_context 的可选参数；省略时沿用求值入口的默认值。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.profile_kind">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">profile_kind</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'context'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'relationship'</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L342-L345"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.profile_kind" title="链接到此定义。">¶</a></dt>
+<dd><p>profile_type 对应的查阅类别。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.profile_type">
+<span class="sig-name descname"><span class="pre">profile_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.context_matching.ContextProfile" title="bazi.context_matching.ContextProfile"><span class="pre">ContextProfile</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.context_matching.RelationshipProfile" title="bazi.context_matching.RelationshipProfile"><span class="pre">RelationshipProfile</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.profile_type" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.required_gender">
+<span class="sig-name descname"><span class="pre">required_gender</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi.html#bazi.bazi.BaziGender" title="bazi.bazi.BaziGender"><span class="pre">BaziGender</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#bazi.context_matching.CriterionInfo.required_gender" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.required_inputs">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">required_inputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L352-L355"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.required_inputs" title="链接到此定义。">¶</a></dt>
+<dd><p>evaluate_context 的必填参数；profile 的构造要求另见 profile_type 与 scope_inputs。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.scope_inputs">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">scope_inputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L362-L373"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.scope_inputs" title="链接到此定义。">¶</a></dt>
+<dd><p>各 scope 取得完整范围的额外 profile 字段。</p>
+<p>关系流运范围的 kinds 在构造期必须非空；年份／坐标缺失则在求值时返回 UNKNOWN，
+不把这两种输入要求混为同一种失败。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.scopes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">scopes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'natal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'natal_and_liunian'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'natal_and_transits'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L347-L350"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.scopes" title="链接到此定义。">¶</a></dt>
+<dd><p>profile_type 接受的观察范围。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.transit_entries">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">transit_entries</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'at_year'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_month'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_date'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_moment'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L375-L378"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.transit_entries" title="链接到此定义。">¶</a></dt>
+<dd><p>关系 profile 的坐标入口及必填坐标字段；ContextProfile 不接 TransitCoordinate。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.transit_kinds">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">transit_kinds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'at_year'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_month'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_date'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'at_moment'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><span class="pre">TransitKind</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L380-L383"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.transit_kinds" title="链接到此定义。">¶</a></dt>
+<dd><p>关系坐标入口结构上支持的流运种类上限，不保证某个命盘实际可取得。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionInfo.unknown_conditions">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unknown_conditions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'premise_satisfied'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'required_classification_absent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'day_master_differs'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'female_gate_false'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'missing_transit_coordinate'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'transit_unavailable'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'binding_unrecognized'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L385-L391"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionInfo.unknown_conditions" title="链接到此定义。">¶</a></dt>
+<dd><p>CriterionResult 的 UNKNOWN 条件；绑定失败另作用于条目层，不列为事实判别原因。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.context_matching.criterion">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L401-L414"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.criterion" title="链接到此定义。">¶</a></dt>
+<dd><p>按稳定 ID 查阅判据，不加载知识库、不创建命盘；未知 ID 抛 ValueError，错型抛 TypeError。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>id</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.context_matching.CriterionInfo" title="bazi.context_matching.CriterionInfo"><em>CriterionInfo</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.context_matching.criteria">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">criteria</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L417-L419"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.criteria" title="链接到此定义。">¶</a></dt>
+<dd><p>返回全部已注册判据的不可变目录；每项由现有定义与 profile 契约派生。</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><em>frozendict</em></a>[str, <a class="reference internal" href="#bazi.context_matching.CriterionInfo" title="bazi.context_matching.CriterionInfo"><em>CriterionInfo</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.RelatedEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">RelatedEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recognized</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L422-L434"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.RelatedEntry" title="链接到此定义。">¶</a></dt>
+<dd><p>该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是事实已成立，
+也不是完整前提已满足；不升级来源状态或输出资格。判别状态只在 <code class="docutils literal notranslate"><span class="pre">CriterionResult</span></code> 展示。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>claim_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>recognized</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.RelatedEntry.claim_id">
+<span class="sig-name descname"><span class="pre">claim_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.RelatedEntry.claim_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.RelatedEntry.recognized">
+<span class="sig-name descname"><span class="pre">recognized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#bazi.context_matching.RelatedEntry.recognized" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">ChartOccurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pillar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganzhi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shishen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganzhi_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L437-L474"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ChartOccurrence" title="链接到此定义。">¶</a></dt>
+<dd><p>一处已分类天干，保留柱位、明藏层及时间身份；重复位置不合并。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin</strong> (<em>Literal</em><em>[</em><em>'natal'</em><em>, </em><em>'transit'</em><em>]</em>)</p></li>
+<li><p><strong>pillar</strong> (<em>Literal</em><em>[</em><em>'year'</em><em>, </em><em>'month'</em><em>, </em><em>'day'</em><em>, </em><em>'hour'</em><em>, </em><em>'liunian'</em><em>]</em>)</p></li>
+<li><p><strong>ganzhi</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a>)</p></li>
+<li><p><strong>layer</strong> (<em>Literal</em><em>[</em><em>'visible'</em><em>, </em><em>'hidden'</em><em>]</em>)</p></li>
+<li><p><strong>stem</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>shishen</strong> (<a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><em>Shishen</em></a>)</p></li>
+<li><p><strong>kind</strong> (<a class="reference internal" href="bazi-transits.html#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><em>TransitKind</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ganzhi_year</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.ganzhi">
+<span class="sig-name descname"><span class="pre">ganzhi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.ganzhi" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.ganzhi_year">
+<span class="sig-name descname"><span class="pre">ganzhi_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.ganzhi_year" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.index">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L471-L474"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.index" title="链接到此定义。">¶</a></dt>
+<dd><p>返回有序观察查询的位置：原局四柱为0–3，流年为4。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><span class="pre">TransitKind</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.kind" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.layer">
+<span class="sig-name descname"><span class="pre">layer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'visible'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hidden'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.layer" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.origin">
+<span class="sig-name descname"><span class="pre">origin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'natal'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'transit'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.origin" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.pillar">
+<span class="sig-name descname"><span class="pre">pillar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'year'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'month'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'day'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hour'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'liunian'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.pillar" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.shishen">
+<span class="sig-name descname"><span class="pre">shishen</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.shishen" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ChartOccurrence.stem">
+<span class="sig-name descname"><span class="pre">stem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a></span><a class="headerlink" href="#bazi.context_matching.ChartOccurrence.stem" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">CriterionResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">criterion_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">definition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope_complete</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L477-L500"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.CriterionResult" title="链接到此定义。">¶</a></dt>
+<dd><p>完整判别与已知局部观察分开记录，局部观察不替代缺失的范围。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>criterion_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>definition</strong> (<em>str</em>)</p></li>
+<li><p><strong>status</strong> (<em>Literal</em><em>[</em><em>'SATISFIED'</em><em>, </em><em>'NOT_SATISFIED'</em><em>, </em><em>'UNKNOWN'</em><em>]</em>)</p></li>
+<li><p><strong>reason</strong> (<em>Literal</em><em>[</em><em>'premise_satisfied'</em><em>, </em><em>'required_classification_absent'</em><em>, </em><em>'day_master_differs'</em><em>, </em><em>'female_gate_false'</em><em>, </em><em>'missing_transit_coordinate'</em><em>, </em><em>'transit_unavailable'</em><em>, </em><em>'binding_unrecognized'</em><em>]</em>)</p></li>
+<li><p><strong>scope_complete</strong> (<em>bool</em>)</p></li>
+<li><p><strong>observations</strong> (<a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><em>frozendict</em></a><em>[</em><em>str</em><em>, </em><em>bool</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.criterion_id">
+<span class="sig-name descname"><span class="pre">criterion_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.criterion_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.definition">
+<span class="sig-name descname"><span class="pre">definition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.definition" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.observations">
+<span class="sig-name descname"><span class="pre">observations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.observations" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.reason">
+<span class="sig-name descname"><span class="pre">reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'premise_satisfied'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'required_classification_absent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'day_master_differs'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'female_gate_false'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'missing_transit_coordinate'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'transit_unavailable'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'binding_unrecognized'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.reason" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.scope_complete">
+<span class="sig-name descname"><span class="pre">scope_complete</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.scope_complete" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.CriterionResult.status">
+<span class="sig-name descname"><span class="pre">status</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'SATISFIED'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'NOT_SATISFIED'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'UNKNOWN'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.CriterionResult.status" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.EntryMatch">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">EntryMatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L503-L515"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.EntryMatch" title="链接到此定义。">¶</a></dt>
+<dd><p>语义绑定后的条目前提判别，独立于结构判据。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>claim_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>status</strong> (<em>Literal</em><em>[</em><em>'SATISFIED'</em><em>, </em><em>'NOT_SATISFIED'</em><em>, </em><em>'UNKNOWN'</em><em>]</em>)</p></li>
+<li><p><strong>reason</strong> (<em>Literal</em><em>[</em><em>'premise_satisfied'</em><em>, </em><em>'required_classification_absent'</em><em>, </em><em>'day_master_differs'</em><em>, </em><em>'female_gate_false'</em><em>, </em><em>'missing_transit_coordinate'</em><em>, </em><em>'transit_unavailable'</em><em>, </em><em>'binding_unrecognized'</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.EntryMatch.claim_id">
+<span class="sig-name descname"><span class="pre">claim_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.EntryMatch.claim_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.EntryMatch.reason">
+<span class="sig-name descname"><span class="pre">reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'premise_satisfied'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'required_classification_absent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'day_master_differs'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'female_gate_false'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'missing_transit_coordinate'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'transit_unavailable'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'binding_unrecognized'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.EntryMatch.reason" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.EntryMatch.status">
+<span class="sig-name descname"><span class="pre">status</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'SATISFIED'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'NOT_SATISFIED'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'UNKNOWN'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.EntryMatch.status" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">ContextResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">occurrences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relationship</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_json</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knowledge</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L707-L1021"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextResult" title="链接到此定义。">¶</a></dt>
+<dd><p>保存判别、证据及条目的不可变结果；婚恋结果另存结构证据，条件判据另存条件参考条目。</p>
+<p>复用传入的已验证 KnowledgeBase，渲染不重建知识对象。JSON 保留判据、profile、
+完整出生／性别／配置身份、年份／坐标／种类、全部观察、证据、输入与知识快照。
+地点输入使用与命盘 JSON 相同的五个字段，保留固定民用基准及未截断真太阳钟。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>婚恋 profile 的结果 <code class="docutils literal notranslate"><span class="pre">occurrences</span></code> 恒为空，原局／流年 profile 不带 <code class="docutils literal notranslate"><span class="pre">relationship</span></code>；
+前提判据（官杀两条）不带 <code class="docutils literal notranslate"><span class="pre">related</span></code>，条件判据的 <code class="docutils literal notranslate"><span class="pre">entries</span></code> 恒为空。构造期校验字段间
+结构自洽，但不重算或认证命盘、判别、证据真伪，也不认证输入与证据干支的一致性。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>profile</strong> (<a class="reference internal" href="#bazi.context_matching.ContextProfile" title="bazi.context_matching.ContextProfile"><em>ContextProfile</em></a><em> | </em><a class="reference internal" href="#bazi.context_matching.RelationshipProfile" title="bazi.context_matching.RelationshipProfile"><em>RelationshipProfile</em></a>)</p></li>
+<li><p><strong>criterion</strong> (<a class="reference internal" href="#bazi.context_matching.CriterionResult" title="bazi.context_matching.CriterionResult"><em>CriterionResult</em></a>)</p></li>
+<li><p><strong>occurrences</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#bazi.context_matching.ChartOccurrence" title="bazi.context_matching.ChartOccurrence"><em>ChartOccurrence</em></a><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>relationship</strong> (<a class="reference internal" href="bazi-analyzer-relationship.html#bazi.analyzer.relationship.RelationshipEvidence" title="bazi.analyzer.relationship.RelationshipEvidence"><em>RelationshipEvidence</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>related</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#bazi.context_matching.RelatedEntry" title="bazi.context_matching.RelatedEntry"><em>RelatedEntry</em></a><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>entries</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#bazi.context_matching.EntryMatch" title="bazi.context_matching.EntryMatch"><em>EntryMatch</em></a><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>input_json</strong> (<em>str</em>)</p></li>
+<li><p><strong>knowledge</strong> (<a class="reference internal" href="bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><em>KnowledgeBase</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.criterion">
+<span class="sig-name descname"><span class="pre">criterion</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.context_matching.CriterionResult" title="bazi.context_matching.CriterionResult"><span class="pre">CriterionResult</span></a></span><a class="headerlink" href="#bazi.context_matching.ContextResult.criterion" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.entries">
+<span class="sig-name descname"><span class="pre">entries</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.context_matching.EntryMatch" title="bazi.context_matching.EntryMatch"><span class="pre">EntryMatch</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ContextResult.entries" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.export_json">
+<span class="sig-name descname"><span class="pre">export_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L780-L846"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextResult.export_json" title="链接到此定义。">¶</a></dt>
+<dd><p>导出版本4记录、全部证据及知识注册表，不改变参考输出资格。</p>
+<p>原局／流年记录显式带 <code class="docutils literal notranslate"><span class="pre">relationship:</span> <span class="pre">null</span></code>，空的 <code class="docutils literal notranslate"><span class="pre">entries</span></code>／<code class="docutils literal notranslate"><span class="pre">related</span></code> 写空列表，不省键。
+婚恋证据的关系键按枚举声明序、组合按序号元组升序导出，同一结果字节稳定。</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.from_json">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L848-L908"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextResult.from_json" title="链接到此定义。">¶</a></dt>
+<dd><p>恢复版本4记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
+旧版本记录明确拒绝；版本检查先于键集合检查，使真实 v2 记录得到版本拒绝而非键集差异。
+需要新格式时应由原输入与配置重新求值。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。</p></li>
+<li><p>profile 按键集分派：<code class="docutils literal notranslate"><span class="pre">{observation_scope,</span> <span class="pre">ganzhi_year}</span></code> 为 <code class="docutils literal notranslate"><span class="pre">ContextProfile</span></code>，<code class="docutils literal notranslate"><span class="pre">{scope,</span> <span class="pre">coordinate,</span> <span class="pre">kinds}</span></code>
+为 <code class="docutils literal notranslate"><span class="pre">RelationshipProfile</span></code>，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.context_matching.ContextResult" title="bazi.context_matching.ContextResult"><em>ContextResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.input_json">
+<span class="sig-name descname"><span class="pre">input_json</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.context_matching.ContextResult.input_json" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.knowledge">
+<span class="sig-name descname"><span class="pre">knowledge</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><span class="pre">KnowledgeBase</span></a></span><a class="headerlink" href="#bazi.context_matching.ContextResult.knowledge" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.occurrences">
+<span class="sig-name descname"><span class="pre">occurrences</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.context_matching.ChartOccurrence" title="bazi.context_matching.ChartOccurrence"><span class="pre">ChartOccurrence</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ContextResult.occurrences" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.context_matching.ContextProfile" title="bazi.context_matching.ContextProfile"><span class="pre">ContextProfile</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#bazi.context_matching.RelationshipProfile" title="bazi.context_matching.RelationshipProfile"><span class="pre">RelationshipProfile</span></a></span><a class="headerlink" href="#bazi.context_matching.ContextResult.profile" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.related">
+<span class="sig-name descname"><span class="pre">related</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.context_matching.RelatedEntry" title="bazi.context_matching.RelatedEntry"><span class="pre">RelatedEntry</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.context_matching.ContextResult.related" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.relationship">
+<span class="sig-name descname"><span class="pre">relationship</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-analyzer-relationship.html#bazi.analyzer.relationship.RelationshipEvidence" title="bazi.analyzer.relationship.RelationshipEvidence"><span class="pre">RelationshipEvidence</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#bazi.context_matching.ContextResult.relationship" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.context_matching.ContextResult.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L910-L938"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.ContextResult.render" title="链接到此定义。">¶</a></dt>
+<dd><p>展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.context_matching.evaluate_context">
+<span class="sig-prename descclassname"><span class="pre">bazi.context_matching.</span></span><span class="sig-name descname"><span class="pre">evaluate_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knowledge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_reference_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/context_matching.py#L1078-L1277"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.context_matching.evaluate_context" title="链接到此定义。">¶</a></dt>
+<dd><p>检查选定范围是否满足已注册判据，返回判别、观察、证据及条目的匹配结果。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>婚恋判据走 <code class="docutils literal notranslate"><span class="pre">RelationshipProfile</span></code>，按 <code class="docutils literal notranslate"><span class="pre">spouse_evidence</span></code> 计算结构证据；其余判据走
+<code class="docutils literal notranslate"><span class="pre">ContextProfile</span></code>。判据与 profile 种类不符抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+<li><p>官杀两条判据判别关联条目的完整前提。其余判据只判可计算事实：婚恋两条判结构，丁火、
+庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／
+喜忌／成格」等完整理论条件留在知识文本，不为它们新增 UNKNOWN，也不认证其已满足；
+所需流年缺失或不可查询时返回 UNKNOWN。</p></li>
+<li><p>参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
+与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联（门槛先于绑定状态），静态查阅不受限。</p></li>
+<li><p>未传 knowledge 时，每次独立加载默认来源，已保存的修改在后续加载时可见；
+传入知识库则直接复用。已有知识库和结果保留原内容，共享调用须显式重载才能取得更新。</p></li>
+<li><p>观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
+不观察日主明干，但等于日主的藏干仍分类为比肩；藏干百分比不作权重，重复位置保留。
+不另加力量／次数阈值、相邻、去留或有效制化条件。</p></li>
+<li><p>范围完整性优先于女命条件与事实判别：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
+婚恋范围缺查询坐标为 UNKNOWN / missing_transit_coordinate；入口不可查询或所求种类
+部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
+SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。</p></li>
+<li><p>官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
+前提、情境、来源或输出政策，该条返回 binding_unrecognized。条件参考同样核对绑定，
+不一致时记 <code class="docutils literal notranslate"><span class="pre">recognized=False</span></code>，不改变事实判别。等值的导出重载条目仍可匹配。</p></li>
+<li><p>未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch 或 RelatedEntry。
+前提满足不授予默认输出资格。</p></li>
+</ul>
+<p>Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，以及输入与知识快照。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p></li>
+<li><p><strong>criterion_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>profile</strong> (<a class="reference internal" href="#bazi.context_matching.ContextProfile" title="bazi.context_matching.ContextProfile"><em>ContextProfile</em></a><em> | </em><a class="reference internal" href="#bazi.context_matching.RelationshipProfile" title="bazi.context_matching.RelationshipProfile"><em>RelationshipProfile</em></a>)</p></li>
+<li><p><strong>knowledge</strong> (<a class="reference internal" href="bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><em>KnowledgeBase</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>include_reference_only</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.context_matching.ContextResult" title="bazi.context_matching.ContextResult"><em>ContextResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-common.html" title="上一章">bazi.common</a></li>
+      <li>Next: <a href="bazi-data_types.html" title="下一章">bazi.data_types</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

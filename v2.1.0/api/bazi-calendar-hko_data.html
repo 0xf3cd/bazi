@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.calendar.hko_data &#8212; bazi · v2.1.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.calendar.hko_data.common" href="bazi-calendar-hko_data-common.html" />
+    <link rel="prev" title="bazi.calendar.dates" href="bazi-calendar-dates.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.calendar.hko_data">
+<span id="bazi-calendar-hko-data"></span><h1>bazi.calendar.hko_data<a class="headerlink" href="#module-bazi.calendar.hko_data" title="链接到此标题。">¶</a></h1>
+<p>HKO 随包数据的读取与格式类型。</p>
+<p>JieqiDates 与 LunarYearInfo 提供解码后的节气、阴历信息；离线编码另见 encoder 模块。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.START_YEAR">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">START_YEAR</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/__init__.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.START_YEAR" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.START_YEAR" title="bazi.calendar.hko_data.common.START_YEAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.START_YEAR</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.END_YEAR">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">END_YEAR</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/__init__.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.END_YEAR" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.END_YEAR" title="bazi.calendar.hko_data.common.END_YEAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.END_YEAR</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.get_data_base_path">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">get_data_base_path</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L18-L19"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.get_data_base_path" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.get_data_base_path" title="bazi.calendar.hko_data.common.get_data_base_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.get_data_base_path</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.get_raw_txt_file_paths">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">get_raw_txt_file_paths</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L21-L26"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.get_raw_txt_file_paths" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.get_raw_txt_file_paths" title="bazi.calendar.hko_data.common.get_raw_txt_file_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.get_raw_txt_file_paths</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.raw_data_ready">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">raw_data_ready</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L28-L37"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.raw_data_ready" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.raw_data_ready" title="bazi.calendar.hko_data.common.raw_data_ready"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.raw_data_ready</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.get_jieqi_encoded_data_path">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">get_jieqi_encoded_data_path</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L39-L40"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.get_jieqi_encoded_data_path" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.get_jieqi_encoded_data_path" title="bazi.calendar.hko_data.common.get_jieqi_encoded_data_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.get_jieqi_encoded_data_path</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.get_lunardate_encoded_data_path">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">get_lunardate_encoded_data_path</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L42-L43"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.get_lunardate_encoded_data_path" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.get_lunardate_encoded_data_path" title="bazi.calendar.hko_data.common.get_lunardate_encoded_data_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.get_lunardate_encoded_data_path</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.encoded_data_ready">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">encoded_data_ready</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L45-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.encoded_data_ready" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.encoded_data_ready" title="bazi.calendar.hko_data.common.encoded_data_ready"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.encoded_data_ready</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.jieqi_list_in_traditional_chinese">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">jieqi_list_in_traditional_chinese</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/__init__.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.jieqi_list_in_traditional_chinese" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.jieqi_list_in_traditional_chinese" title="bazi.calendar.hko_data.common.jieqi_list_in_traditional_chinese"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.jieqi_list_in_traditional_chinese</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.twelve_months_in_traditional_chinese">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">twelve_months_in_traditional_chinese</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/__init__.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.twelve_months_in_traditional_chinese" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.twelve_months_in_traditional_chinese" title="bazi.calendar.hko_data.common.twelve_months_in_traditional_chinese"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.twelve_months_in_traditional_chinese</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.int_to_bytes">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">int_to_bytes</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L63-L64"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.int_to_bytes" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.int_to_bytes" title="bazi.calendar.hko_data.common.int_to_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.int_to_bytes</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.bytes_to_int">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">bytes_to_int</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L66-L67"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.bytes_to_int" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.bytes_to_int" title="bazi.calendar.hko_data.common.bytes_to_int"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.bytes_to_int</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.date_to_bytes">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">date_to_bytes</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L69-L75"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.date_to_bytes" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.date_to_bytes" title="bazi.calendar.hko_data.common.date_to_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.date_to_bytes</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.bytes_to_date">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">bytes_to_date</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/common.py#L77-L82"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.bytes_to_date" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-common.html#bazi.calendar.hko_data.common.bytes_to_date" title="bazi.calendar.hko_data.common.bytes_to_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.common.bytes_to_date</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.JieqiDates">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">JieqiDates</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/__init__.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.JieqiDates" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-decoder.html#bazi.calendar.hko_data.decoder.JieqiDates" title="bazi.calendar.hko_data.decoder.JieqiDates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.decoder.JieqiDates</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.DecodedJieqiDates">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">DecodedJieqiDates</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/decoder.py#L28-L107"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.DecodedJieqiDates" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-decoder.html#bazi.calendar.hko_data.decoder.DecodedJieqiDates" title="bazi.calendar.hko_data.decoder.DecodedJieqiDates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.decoder.DecodedJieqiDates</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.LunarYearInfo">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">LunarYearInfo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/decoder.py#L110-L118"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.LunarYearInfo" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-decoder.html#bazi.calendar.hko_data.decoder.LunarYearInfo" title="bazi.calendar.hko_data.decoder.LunarYearInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.decoder.LunarYearInfo</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.hko_data.DecodedLunarYears">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.hko_data.</span></span><span class="sig-name descname"><span class="pre">DecodedLunarYears</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/hko_data/decoder.py#L120-L216"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.hko_data.DecodedLunarYears" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-hko_data-decoder.html#bazi.calendar.hko_data.decoder.DecodedLunarYears" title="bazi.calendar.hko_data.decoder.DecodedLunarYears"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.decoder.DecodedLunarYears</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<p><a class="reference internal" href="bazi-calendar-hko_data-encoder.html#module-bazi.calendar.hko_data.encoder" title="bazi.calendar.hko_data.encoder"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.encoder</span></code></a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-calendar-dates.html" title="上一章">bazi.calendar.dates</a></li>
+      <li>Next: <a href="bazi-calendar-hko_data-common.html" title="下一章">bazi.calendar.hko_data.common</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

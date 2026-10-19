@@ -1,0 +1,56 @@
+bazi.calendar.celestial_data.generator
+======================================
+
+.. automodule:: bazi.calendar.celestial_data.generator
+
+.. autodata:: bazi.calendar.celestial_data.generator.CELESTIAL_VERSION
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.RELEASE_ASSET
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.JIEQI_START_YEAR
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.JIEQI_END_YEAR
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.LUNAR_START_YEAR
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.LUNAR_END_YEAR
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EXPECTED_JIEQI_ROWS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EXPECTED_LUNAR_ROWS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_MAGIC
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_START_DATE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_SENTINEL_DATE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_CADENCE_SECONDS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_SCALE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.generator.EOT_HEADER
+   :no-value:
+
+.. autoclass:: bazi.calendar.celestial_data.generator.JieqiRow
+   :members: jq_idx, moment, name, year
+   :undoc-members:
+
+.. autoclass:: bazi.calendar.celestial_data.generator.LunarRow
+   :members: days_counts, first_solar_date, ganzhi, leap_month, lunar_year, month_len_bits
+   :undoc-members:
+
+.. autofunction:: bazi.calendar.celestial_data.generator.main

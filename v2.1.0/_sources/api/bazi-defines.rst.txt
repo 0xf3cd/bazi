@@ -1,0 +1,124 @@
+bazi.defines
+============
+
+.. automodule:: bazi.defines
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Tiangan
+
+   :py:obj:`bazi.defines.tiangan.Tiangan` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 天干
+
+   :py:obj:`bazi.defines.tiangan.Tiangan` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Dizhi
+
+   :py:obj:`bazi.defines.dizhi.Dizhi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 地支
+
+   :py:obj:`bazi.defines.dizhi.Dizhi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Ganzhi
+
+   :py:obj:`bazi.defines.ganzhi.Ganzhi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 干支
+
+   :py:obj:`bazi.defines.ganzhi.Ganzhi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Jieqi
+
+   :py:obj:`bazi.defines.jieqi.Jieqi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 节气
+
+   :py:obj:`bazi.defines.jieqi.Jieqi` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Wuxing
+
+   :py:obj:`bazi.defines.wuxing.Wuxing` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 五行
+
+   :py:obj:`bazi.defines.wuxing.Wuxing` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Yinyang
+
+   :py:obj:`bazi.defines.yinyang.Yinyang` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 阴阳
+
+   :py:obj:`bazi.defines.yinyang.Yinyang` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: Shishen
+
+   :py:obj:`bazi.defines.shishen.Shishen` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 十神
+
+   :py:obj:`bazi.defines.shishen.Shishen` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: ShierZhangsheng
+
+   :py:obj:`bazi.defines.shier_zhangsheng.ShierZhangsheng` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 十二长生
+
+   :py:obj:`bazi.defines.shier_zhangsheng.ShierZhangsheng` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: TianganRelation
+
+   :py:obj:`bazi.defines.relations.TianganRelation` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 天干关系
+
+   :py:obj:`bazi.defines.relations.TianganRelation` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: DizhiRelation
+
+   :py:obj:`bazi.defines.relations.DizhiRelation` 的重导出。
+
+.. py:currentmodule:: bazi.defines
+
+.. py:data:: 地支关系
+
+   :py:obj:`bazi.defines.relations.DizhiRelation` 的重导出。

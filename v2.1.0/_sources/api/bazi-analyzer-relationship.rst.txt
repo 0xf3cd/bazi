@@ -1,0 +1,40 @@
+bazi.analyzer.relationship
+==========================
+
+.. automodule:: bazi.analyzer.relationship
+
+.. autodata:: bazi.analyzer.relationship.SHENSHA_LABELS
+   :no-value:
+
+.. autoclass:: bazi.analyzer.relationship.ShenshaAnalysis
+   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, lushen, taiji, taohua, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.AtBirthShenshaAnalysis
+   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kuigang, lushen, taiji, taohua, tianshe, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.AtBirthAnalysis
+   :members: day_master_relations, house_relations, shensha, star_relations
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.TransitAnalysis
+   :members: Level, day_master_relations, house_relations, shensha, star, star_relations, zhengyin
+   :undoc-members:
+
+.. autodata:: bazi.analyzer.relationship.StemRelationDiscovery
+   :no-value:
+
+.. autoclass:: bazi.analyzer.relationship.StarAppearance
+   :members: ganzhi, kind, layer, origin, pillar, stem
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.RelationshipEvidence
+   :members: appearances, house_relations, star_relations, star_target, stem_relations, transits
+   :undoc-members:
+
+.. autofunction:: bazi.analyzer.relationship.spouse_evidence
+
+.. autoclass:: bazi.analyzer.relationship.RelationshipAnalyzer
+   :members: at_birth, transits
+   :undoc-members:

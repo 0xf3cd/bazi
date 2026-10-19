@@ -1,0 +1,56 @@
+bazi.calendar.celestial_data.loader
+===================================
+
+.. automodule:: bazi.calendar.celestial_data.loader
+
+.. autodata:: bazi.calendar.celestial_data.loader.SCHEMA_VERSION
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.DATA_DIR
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.JIEQI_COLUMNS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.LUNAR_COLUMNS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_MAGIC
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_START_DATE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_SENTINEL_DATE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_SAMPLE_COUNT
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_CADENCE_SECONDS
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_SCALE
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.EOT_HEADER
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_data.loader.JIEQI_BY_INDEX
+   :no-value:
+
+.. autoclass:: bazi.calendar.celestial_data.loader.LunarYearInfo
+   :members: days_counts, first_solar_day, ganzhi, leap, leap_month
+   :undoc-members:
+
+.. autoclass:: bazi.calendar.celestial_data.loader.EquationOfTimeTable
+   :members: samples, seconds_at
+   :undoc-members:
+
+.. autoclass:: bazi.calendar.celestial_data.loader.JieqiMomentTable
+   :members: get, provenance, supported_year_range
+   :undoc-members:
+
+.. autoclass:: bazi.calendar.celestial_data.loader.LunarYearTable
+   :members: get, provenance, supported_year_range
+   :undoc-members:

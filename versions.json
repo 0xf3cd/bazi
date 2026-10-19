@@ -10,9 +10,9 @@
     },
     {
       "label": "v2.1.0",
-      "state": "pending",
-      "commit": null,
-      "digest": null
+      "state": "archived",
+      "commit": "7826c88e0139491ca010ca8d339c80071e10cc01",
+      "digest": "cb645d376965c86656fc54781b2b64d62b58237d8ca5ed49316d455062aa6d06"
     }
   ]
 }

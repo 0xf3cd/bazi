@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>API Reference &#8212; bazi · v2.1.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi" href="bazi.html" />
+    <link rel="prev" title="集成开发" href="../guides/integration.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="链接到此标题。">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bazi.html">bazi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-analyzer.html">bazi.analyzer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-analyzer-relationship.html">bazi.analyzer.relationship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-bazi.html">bazi.bazi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-bazi_chart.html">bazi.bazi_chart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar.html">bazi.calendar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-backend.html">bazi.calendar.backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-celestial_data.html">bazi.calendar.celestial_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-celestial_data-generator.html">bazi.calendar.celestial_data.generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-celestial_data-loader.html">bazi.calendar.celestial_data.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-celestial_utils.html">bazi.calendar.celestial_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-dates.html">bazi.calendar.dates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-hko_data.html">bazi.calendar.hko_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-hko_data-common.html">bazi.calendar.hko_data.common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-hko_data-decoder.html">bazi.calendar.hko_data.decoder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-hko_data-encoder.html">bazi.calendar.hko_data.encoder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-hko_data_utils.html">bazi.calendar.hko_data_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-solar_time.html">bazi.calendar.solar_time</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-calendar-utils_protocol.html">bazi.calendar.utils_protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-common.html">bazi.common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-context_matching.html">bazi.context_matching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-data_types.html">bazi.data_types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines.html">bazi.defines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-dizhi.html">bazi.defines.dizhi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-enum_base.html">bazi.defines.enum_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-ganzhi.html">bazi.defines.ganzhi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-jieqi.html">bazi.defines.jieqi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-relations.html">bazi.defines.relations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-shier_zhangsheng.html">bazi.defines.shier_zhangsheng</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-shishen.html">bazi.defines.shishen</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-tiangan.html">bazi.defines.tiangan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-wuxing.html">bazi.defines.wuxing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-yinyang.html">bazi.defines.yinyang</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-knowledge.html">bazi.knowledge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-rules.html">bazi.rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-school.html">bazi.school</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-transit_chart.html">bazi.transit_chart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-transits.html">bazi.transits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils.html">bazi.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils-bazi_utils.html">bazi.utils.bazi_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils-dizhi_utils.html">bazi.utils.dizhi_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils-relation_discovery.html">bazi.utils.relation_discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils-shensha_utils.html">bazi.utils.shensha_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-utils-tiangan_utils.html">bazi.utils.tiangan_utils</a></li>
+</ul>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../guides/integration.html" title="上一章">集成开发</a></li>
+      <li>Next: <a href="bazi.html" title="下一章">bazi</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

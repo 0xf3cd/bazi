@@ -1,0 +1,30 @@
+bazi.utils.bazi_utils
+=====================
+
+.. automodule:: bazi.utils.bazi_utils
+
+.. autofunction:: bazi.utils.bazi_utils.ganzhi_of_day
+
+.. autofunction:: bazi.utils.bazi_utils.ganzhi_of_year
+
+.. autofunction:: bazi.utils.bazi_utils.month_tiangan
+
+.. autofunction:: bazi.utils.bazi_utils.hour_tiangan
+
+.. autofunction:: bazi.utils.bazi_utils.tiangan_traits
+
+.. autofunction:: bazi.utils.bazi_utils.dizhi_traits
+
+.. autofunction:: bazi.utils.bazi_utils.traits
+
+.. autofunction:: bazi.utils.bazi_utils.hidden_tiangans
+
+.. autofunction:: bazi.utils.bazi_utils.shishen
+
+.. autofunction:: bazi.utils.bazi_utils.nayin_str
+
+.. autofunction:: bazi.utils.bazi_utils.shier_zhangsheng
+
+.. autofunction:: bazi.utils.bazi_utils.from_shier_zhangsheng
+
+.. autofunction:: bazi.utils.bazi_utils.lu

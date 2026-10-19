@@ -1,0 +1,14 @@
+bazi.defines.wuxing
+===================
+
+.. automodule:: bazi.defines.wuxing
+
+.. autoclass:: bazi.defines.wuxing.Wuxing
+   :members: EARTH, FIRE, METAL, WATER, WOOD, as_list, destructs, from_str, generates, 土, 木, 水, 火, 金
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.wuxing
+
+.. py:data:: 五行
+
+   :py:obj:`bazi.defines.wuxing.Wuxing` 的别名。
