@@ -224,8 +224,10 @@ def test_style_wraps_dayun_and_liunian_glyphs() -> None:
   text = transit_text(chart, dayun_count=3, liunian_count=20, style=TextStyle(glyph=glyph))
   assert text.replace('«', '').replace('»', '') == transit_text(chart, dayun_count=3, liunian_count=20)
   expected = list(itertools.islice(chart.dayun, 3))
-  hidden = sum(len(hidden_tiangans(d.ganzhi.dizhi)) for d in expected)
-  assert len(calls) == 2 * 3 + hidden + 2 * len(chart.xiaoyun) + 2 * 20
+  hidden_count = sum(len(hidden_tiangans(d.ganzhi.dizhi)) for d in expected)
+  assert len(calls) == 2 * 3 + hidden_count + 2 * len(chart.xiaoyun) + 2 * 20
+  dayun_rows = [line for line in text.splitlines() if '年标签：' in line]
+  assert [(f'«{d.ganzhi.tiangan}»' in row, f'«{d.ganzhi.dizhi}»' in row) for d, row in zip(expected, dayun_rows, strict=True)] == [(True, True)] * 3
   liunian_rows = text.split('流年：\n', 1)[1]
   assert liunian_rows.count('«') == 2 * 20 and all(f'«{ln.ganzhi.tiangan}»«{ln.ganzhi.dizhi}»' in liunian_rows for ln in itertools.islice(chart.liunian, 20))
 
