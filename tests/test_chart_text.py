@@ -142,7 +142,7 @@ def test_dayun_rows_hold_hidden_stems_and_labels() -> None:
   ]
 
 
-def test_style_wraps_every_glyph_and_the_day_master_mark() -> None:
+def test_style_wraps_glyphs_and_day_master_mark() -> None:
   seen: list[Tiangan | Dizhi] = []
 
   def glyph(s: Tiangan | Dizhi) -> str:

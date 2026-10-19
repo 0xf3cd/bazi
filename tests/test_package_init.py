@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LAZY = ('bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart')
 
 
-def test_dir_lists_lazy_submodules_without_importing() -> None:
+def test_dir_lists_lazy_submodules_unimported() -> None:
   code = (
     'import sys, bazi\n'
     f'lazy = {LAZY!r}\n'
@@ -34,7 +34,7 @@ def test_dir_covers_every_declared_name() -> None:
 
 
 @pytest.mark.parametrize('name, module', sorted(bazi._ENTRY_MODULES.items()))
-def test_entry_class_attribute_points_to_its_module(name: str, module: str) -> None:
+def test_entry_attribute_names_its_module(name: str, module: str) -> None:
   assert getattr(importlib.import_module(module), name).__module__ == module
   with pytest.raises(AttributeError, match=f'use: from {module} import {name}'):
     getattr(bazi, name)

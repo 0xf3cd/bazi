@@ -2404,6 +2404,6 @@ def test_repr_does_not_build_the_analyses(monkeypatch: pytest.MonkeyPatch) -> No
   assert repr(analyzer).startswith('RelationshipAnalyzer(BaziChart(')
 
 
-def test_spouse_evidence_rejects_non_charts_with_hint() -> None:
+def test_spouse_evidence_hints_on_wrong_chart() -> None:
   with pytest.raises(TypeError, match=r'^Expected BaziChart, got .*; wrap it with BaziChart\(bazi\)$'):
     relationship_module.spouse_evidence(Bazi.create('2000-01-01 12:00', 'male'), None) # type: ignore

@@ -821,7 +821,7 @@ def test_constructor_points_strings_to_create(args: tuple[object, ...], hint: st
     Bazi(*args) # type: ignore
 
 
-def test_create_points_string_config_to_from_values() -> None:
+def test_create_hints_from_values_for_config() -> None:
   with pytest.raises(TypeError, match='^Expected BaziConfig, got <class .str.>; BaziConfig.from_values builds one from strings$'):
     Bazi.create('2000-01-01 12:00', 'male', 'hko') # type: ignore
 
@@ -831,6 +831,6 @@ def test_create_points_string_config_to_from_values() -> None:
   lambda: Bazi(datetime(2000, 1, 1, 12), None), # type: ignore
   lambda: Bazi(datetime(2000, 1, 1, 12), BaziGender.MALE, None), # type: ignore
 ])
-def test_constructor_keeps_plain_message_for_other_types(call: object) -> None:
+def test_constructor_keeps_plain_message(call: object) -> None:
   with pytest.raises(TypeError, match=r"^Expected \w+, got <class 'NoneType'>$"):
     call() # type: ignore
