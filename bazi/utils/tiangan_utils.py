@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''天干关系判断、搜索与组合发现。
+
+he、chong、sheng、ke 判断单组关系，search、discover 与 discover_mutual 查询组合。'''
+
 from typing import Final
 from collections.abc import Sequence
 

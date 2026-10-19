@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''天干枚举 Tiangan 及中文名称天干。'''
+
 from .enum_base import IndexedBaziEnum
 
 

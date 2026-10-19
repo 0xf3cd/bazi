@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''神煞查法函数。
+
+各函数按传入的天干、地支或干支判断所定义的神煞；有分歧的查法由相应参数选择。'''
+
 from enum import Enum
 from typing import TypeVar
 

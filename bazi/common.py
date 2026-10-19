@@ -1,6 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''包内共用的不可变映射与声明类型检查。
+
+frozendict 提供冻结映射；check_declared_types 校验声明类型。'''
+
 from dataclasses import fields
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Final, cast, get_args
 from collections.abc import Iterator, Mapping
 
@@ -35,6 +40,31 @@ class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
     if self._hash is None:
       self._hash = hash(frozenset(self._data.items()))
     return self._hash
+
+#endregion
+
+
+######################################################
+#region Configuration display
+
+def _compact_dataclass_repr(instance: 'DataclassInstance') -> str:
+  '''配置摘要只列出非默认字段；枚举显示限定成员名，不改变枚举自身的 repr。
+
+  Note:
+  - 仅用于字段均有普通默认值、全部参与显示，且取值为枚举或不可变配置的类型。
+    这些前提由调用方类型及其测试保证，不是通用 dataclass 的 repr 实现。
+  '''
+  def display(value: object) -> str:
+    if isinstance(value, Enum):
+      return f'{type(value).__qualname__}.{value.name}'
+    return repr(value)
+
+  values = ', '.join(
+    f'{f.name}={display(value)}'
+    for f in fields(instance)
+    if (value := getattr(instance, f.name)) != f.default
+  )
+  return f'{type(instance).__name__}({values})'
 
 #endregion
 

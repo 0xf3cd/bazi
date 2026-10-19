@@ -1,6 +1,10 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 
+'''地支关系判断、搜索与组合发现。
+
+discover 处理地支，discover_ganzhis 保留干支与柱位；definitions 参数选择关系读法。'''
+
 from collections import Counter
 from dataclasses import dataclass
 from itertools import combinations, product

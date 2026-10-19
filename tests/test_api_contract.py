@@ -142,6 +142,13 @@ def _check_surface(source: str, module: str) -> None:
   assert bases == expected_bases, module
 
 
+def test_public_modules_describe_their_purpose() -> None:
+  for module in PUBLIC_NAMES:
+    path = ROOT.joinpath(*module.split('.'))
+    path = path / '__init__.py' if path.is_dir() else path.with_suffix('.py')
+    assert ast.get_docstring(ast.parse(path.read_text(encoding='utf-8'))), module
+
+
 def test_all_modules_and_declared_candidates_are_classified() -> None:
   modules: set[str] = set()
   for path in (ROOT / 'bazi').rglob('*.py'):

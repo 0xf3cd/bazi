@@ -8,6 +8,10 @@
 # 在仓库根目录运行，不从安装包运行：
 #   python -m bazi.calendar.hko_data.encoder
 
+'''HKO 原始历书的离线下载与编码。
+
+do_download 获取原始材料，do_encode 编码数据；安装后缺表应重装包，不调用此模块修补。'''
+
 import re
 
 from datetime import datetime

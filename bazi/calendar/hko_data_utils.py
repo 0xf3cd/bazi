@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''基于 HKO 日期级数据的历法换算。
+
+提供公历、阴历、干支历转换与节气日期查询；各入口分别校验其支持范围。'''
+
 import calendar  # 标准库模块，不是本文件所在的 bazi.calendar 包。
 import functools
 import itertools

@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''关系查询结果的不可变映射容器。
+
+RelationDiscovery 保存关系种类及其命中组合，供天干、地支查询共用。'''
+
 from typing import TypeVar, Generic, Self
 from collections.abc import Callable, Collection, Set as AbstractSet
 

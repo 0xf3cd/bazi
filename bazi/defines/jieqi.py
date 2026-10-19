@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''节气枚举 Jieqi 及中文名称节气。'''
+
 from .enum_base import BaziEnum
 
 

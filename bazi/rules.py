@@ -1,12 +1,17 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''排盘、天干地支关系与神煞的规则表。
+
+BaziRules、TianganRules、DizhiRules 与 ShenshaRules 分别保存对应规则；
+DizhiRelationDefinitions 承载可选择的地支关系定义。'''
+
 import itertools
 from dataclasses import dataclass
 from collections.abc import Callable
 from enum import Enum
 from typing import Final, TypeVar
 
-from .common import frozendict, check_declared_types
+from .common import frozendict, check_declared_types, _compact_dataclass_repr
 from .data_types import TraitTuple, HiddenTianganDict
 from .defines import Tiangan, Dizhi, Ganzhi, Wuxing, Yinyang, DizhiRelation, ShierZhangsheng
 
@@ -513,6 +518,9 @@ class DizhiRelationDefinitions:
 
   def __post_init__(self) -> None:
     check_declared_types(self)
+
+  def __repr__(self) -> str:
+    return _compact_dataclass_repr(self)
 
 
 DEFAULT_DIZHI_RELATION_DEFINITIONS: Final[DizhiRelationDefinitions] = DizhiRelationDefinitions()

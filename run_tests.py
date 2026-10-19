@@ -6,6 +6,7 @@ import io
 import random
 import shutil
 import psutil
+import tempfile
 import platform
 import argparse
 import subprocess
@@ -36,7 +37,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='运行全部测试、覆盖率、lint、类型检查、两个 demo、run_interpreter.py 示例、python -O 公开输入契约冒烟及发行包检查。')
+                       help='运行全部测试、覆盖率、lint、类型检查、两个 demo、run_interpreter.py 示例、python -O 公开输入契约冒烟、文档构建检查及发行包检查。')
 
 # 测试选择。
 argparser.add_argument('-nt', '--no-test', action='store_true', help='跳过测试与覆盖率。')
@@ -61,6 +62,7 @@ argparser.add_argument('-i', '--interpreter', action='store_true', help='运行 
 argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
                        help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
 
+argparser.add_argument('-docs', '--docs', action='store_true', help='在仓外临时目录严格构建文档并执行示例与对账检查。')
 argparser.add_argument('-pkg', '--package', action='store_true', help='构建并检查隔离的 wheel 与 sdist 安装。')
 argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 一起使用，在此仓外目录保留验证后的工件对。')
 
@@ -83,6 +85,7 @@ do_demo: Final[bool] = args.demo or all_the_way
 do_interpreter: Final[bool] = args.interpreter or all_the_way
 
 do_osmoke: Final[bool] = args.o_smoke or all_the_way
+do_docs: Final[bool] = args.docs or all_the_way
 do_package: Final[bool] = args.package or all_the_way
 
 # 根目录 demo 行为由 -d 验证，不计入库覆盖率。
@@ -194,6 +197,7 @@ def print_args() -> None:
   print(f'-- do_interpreter:   {colored(do_interpreter)}')
 
   print(f'-- do_osmoke:        {colored(do_osmoke)}')
+  print(f'-- do_docs:          {colored(do_docs)}')
   print(f'-- do_package:       {colored(do_package)}')
 
 
@@ -394,6 +398,14 @@ def run_o_smoke() -> int:
   return ret
 
 
+def run_docs() -> int:
+  '''在仓外临时目录构建并检查文档，不部署。'''
+  with tempfile.TemporaryDirectory(prefix='bazi-docs-check-') as output:
+    return run_proc_and_print([
+      sys.executable, '-B', str(Path(__file__).parent / 'run_docs.py'), '--output-dir', output,
+    ], print_details=True)
+
+
 def run_package_checks() -> int:
   '''在仓外构建并验证安装工件。'''
   return run_proc_and_print([
@@ -454,6 +466,9 @@ def run_subtasks() -> SubTaskStatuses:
 
   if do_mypy:
     run_subtask('mypy', run_mypy)
+
+  if do_docs:
+    run_subtask('docs', run_docs)
 
   if do_package:
     run_subtask('package', run_package_checks)

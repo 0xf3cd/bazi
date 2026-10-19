@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''天干关系与地支关系的枚举名称。
+
+枚举标识关系种类；具体规则与查询分别见 rules 和 utils。'''
+
 from .enum_base import BaziEnum
 
 

@@ -3,6 +3,10 @@
 #
 # HKO 数据模块共用的常量与函数。
 
+'''HKO 数据文件位置、日期范围与二进制转换。
+
+路径查询和数据就绪检查供编码、解码两侧共用。'''
+
 from pathlib import Path
 from datetime import date
 from typing import Final

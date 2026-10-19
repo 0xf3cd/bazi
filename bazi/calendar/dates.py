@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''历法日期与节气时刻的数据类型。
+
+CalendarType 区分历法，CalendarDate 承载日期，JieqiTime 与 GanzhiYearMonth 保存相应坐标。'''
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum

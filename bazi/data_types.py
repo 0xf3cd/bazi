@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''命盘计算中共用的值类型与容器。
+
+BaziData 按四柱保存数据，GanzhiData 按天干、地支保存数据；另有运限与属性的小型记录。'''
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TypeVar, Generic, NamedTuple

@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''干支值类型 Ganzhi 及中文名称干支。'''
+
 import functools
 
 from typing import NamedTuple

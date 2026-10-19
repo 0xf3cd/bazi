@@ -1,5 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''五行枚举 Wuxing 及中文名称五行。'''
+
 from typing import Final
 
 from .enum_base import BaziEnum

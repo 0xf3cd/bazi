@@ -1,5 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''领域枚举的共同行为。
+
+BaziEnum 提供领域枚举基类，IndexedBaziEnum 另提供索引访问。'''
+
 import functools
 
 from enum import Enum

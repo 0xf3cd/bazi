@@ -1,5 +1,9 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+'''原局与所选流运的关系、神煞及结构证据。
+
+RelationshipAnalyzer 组合原局与流运查询；结果描述结构事实，不预测现实事件。'''
+
 import functools
 
 from dataclasses import dataclass
