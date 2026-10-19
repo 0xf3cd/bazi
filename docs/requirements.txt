@@ -1,5 +1,5 @@
 Sphinx==9.0.4
 myst-parser==5.1.0
 docutils==0.22.4
-types-docutils==0.22.3.20260724
+types-docutils==0.23.0.20260923
 markdown-it-py==4.2.0
