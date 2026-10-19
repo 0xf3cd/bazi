@@ -71,6 +71,7 @@ assert chart.bazi.day_master in Tiangan
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
   `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
+  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun`、`json` 一致；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 名称、关键词与过滤值发现

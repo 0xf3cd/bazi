@@ -256,3 +256,14 @@ def test_basic_text_keeps_the_precision_pillars(precision: str) -> None:
   lines = [line for line in basic_text(chart).splitlines() if line.startswith(('年：', '月：', '日：', '时：'))]
   for line, pillar in zip(lines, chart.bazi.pillars, strict=True):
     assert line.split('  ')[1].startswith(str(pillar.tiangan)) and f' {pillar.dizhi} [' in line
+
+
+def test_transit_text_empty_dayun_timeline() -> None:
+  chart = BaziChart(Bazi.create(datetime(2099, 12, 31, 23, 59), 'male', BaziConfig.from_values(backend='hko')))
+  with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range') as expected:
+    chart.xiaoyun # noqa: B018
+  assert '日元' in basic_text(chart)
+  for func in (transit_text, chart_text):
+    with pytest.raises(ValueError) as error:
+      func(chart)
+    assert str(error.value) == str(expected.value)
