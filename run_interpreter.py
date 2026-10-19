@@ -550,7 +550,7 @@ def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
   more = parser.add_argument_group('更多选项（按判据说明所需给出，其余可省略）')
   more.add_argument('--ganzhi-year', type=int, help='干支年坐标，写公历年份数字，如 2024。')
   more.add_argument('--transit-entry', choices=get_args(TransitEntry), help='岁运查询入口（婚恋判据）。')
-  more.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名，如 午），配 at_month 入口。')
+  more.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名，如 午），配 at_month 入口与 --ganzhi-year。')
   more.add_argument('--solar-date', type=_solar_date, help='东八区公历日期坐标，如 2024-04-10，配 at_date 入口。')
   more.add_argument('--solar-moment', type=_solar_moment, help='东八区时刻坐标，如 2024-04-10T12:00:00，配 at_moment 入口；day 精度的命盘判别为 UNKNOWN。')
   more.add_argument('--transit-kinds', help='逗号分隔的岁运种类（xiaoyun,dayun,liunian,liuyue,liuri）。')
@@ -616,6 +616,8 @@ def _knowledge_overview(parser: argparse.ArgumentParser, args: argparse.Namespac
 def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   filters = (args.object_id, args.context_id, args.topic, args.source_id, args.viewpoint, args.applicability, args.time_scope)
   query = args.all or any(value is not None for value in filters)
+  if args.all and any(value is not None for value in filters):
+    parser.error('--all cannot be combined with query conditions')
   for flag, given in (('--output-dir', args.output_dir is not None), ('--show-sources', args.show_sources)):
     if given and not args.export_knowledge_base:
       parser.error(f'{flag} only applies with --export-knowledge-base')
@@ -632,10 +634,12 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
   base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
-  if args.export_knowledge_base and args.export_knowledge_json is not None and any(
-    _same_export_path(args.export_knowledge_json, path) for path in _knowledge_text_paths(base)
-  ):
-    parser.error('--export-knowledge-json must not overlap generated TXT outputs')
+  if args.export_knowledge_base:
+    text_paths = _knowledge_text_paths(base)
+    if args.export_knowledge_json is not None and any(_same_export_path(args.export_knowledge_json, path) for path in text_paths):
+      parser.error('--export-knowledge-json must not overlap generated TXT outputs')
+    if args.knowledge_source is not None and any(_same_export_path(args.knowledge_source, path) for path in text_paths):
+      parser.error('Export must not overwrite the editing source')
   if query or args.validate_knowledge or args.export_knowledge_json is not None:
     args.query_knowledge = query
     _knowledge_main(parser, args)

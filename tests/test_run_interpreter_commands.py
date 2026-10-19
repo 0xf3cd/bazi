@@ -306,6 +306,45 @@ def test_knowledge_json_export_must_not_overlap_the_default_text_export(tmp_path
   assert raised.value.code == 2 and list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
+def test_knowledge_text_export_cannot_overwrite_its_editing_source(tmp_path: Path, alias: str) -> None:
+  source = tmp_path / 'src.json'
+  target = tmp_path / 'out' / 'knowledge_base' / 'tiangan' / '甲.txt'
+  target.parent.mkdir(parents=True)
+  shutil.copyfile(DEFAULT_SOURCE_PATH, source)
+  if alias == 'direct':
+    source = target
+    shutil.copyfile(DEFAULT_SOURCE_PATH, source)
+  elif alias == 'symlink':
+    try:
+      target.symlink_to(source)
+    except (OSError, NotImplementedError):
+      pytest.skip('symlinks unavailable')
+  else:
+    os.link(source, target)
+  before = source.read_bytes()
+  result = _run(tmp_path, 'knowledge', '--knowledge-source', str(source), '--export-knowledge-base', '--output-dir', 'out')
+  assert result.returncode == 2 and 'Export must not overwrite the editing source' in result.stderr
+  assert result.stdout == '' and source.read_bytes() == before
+  assert [path.name for path in (tmp_path / 'out').rglob('*') if path.is_file()] == ['甲.txt']
+
+
+@pytest.mark.parametrize('flag, dimension', sorted(_LIST_DIMENSIONS.items()))
+def test_knowledge_all_does_not_combine_with_query_conditions(tmp_path: Path, flag: str, dimension: str) -> None:
+  value = KnowledgeBase.load().filter_values(dimension)[0]
+  result = _run(tmp_path, 'knowledge', '--all', f'--{flag}', value)
+  assert result.returncode == 2 and '--all cannot be combined with query conditions' in result.stderr
+  assert result.stdout == '' and list(tmp_path.iterdir()) == []
+
+
+def test_match_gz_month_help_names_the_year_it_needs(tmp_path: Path) -> None:
+  result = _run(tmp_path, 'match', 'editorial.spouse_star_tougan.v1', *BIRTH, '--gender', 'female',
+                '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month', '--gz-month', '午')
+  assert result.returncode == 2 and 'gz_year' in result.stderr
+  action = next(a for a in _subcommand_parsers(_command_parser())['match']._actions if '--gz-month' in a.option_strings)
+  assert '--ganzhi-year' in (action.help or '')
+
+
 def test_knowledge_json_and_text_exports_side_by_side(tmp_path: Path) -> None:
   result = _run(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--export-knowledge-json', 'out/k.json',
                 '--export-knowledge-base', '--output-dir', 'out')
@@ -329,6 +368,13 @@ def test_knowledge_list_values_stands_alone(tmp_path: Path, extra: tuple[str, ..
   result = _run(tmp_path, 'knowledge', '--list-values', 'topic', *extra)
   assert result.returncode == 2 and '--list-values only lists values' in result.stderr
   assert result.stdout == '' and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('extra', [('--validate-knowledge',), ('--export-knowledge-json', 'out/k.json')])
+def test_legacy_knowledge_filters_still_need_the_query_flag(tmp_path: Path, extra: tuple[str, ...]) -> None:
+  result = _run(tmp_path, *extra, '--object', 'tiangan.ding')
+  assert result.returncode == 2 and 'Knowledge filters require --query-knowledge' in result.stderr
+  assert result.stdout == '' and '提示：' not in result.stderr and list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('chart_flag', [('--seed', '1'), ('--output-dir', 'out'), ('--export-knowledge-base',)])
@@ -471,7 +517,8 @@ def test_inprocess_commands_cover_every_branch(monkeypatch: pytest.MonkeyPatch, 
     (('match', '--export-context-json', 'o7/m.json'), 2), (('--query-knowledge', '--seed', '1'), 2),
     (('knowledge', '--knowledge-source', 'missing.json', '--export-knowledge-base', '--output-dir', 'o8'), 2),
     (('knowledge', '--export-knowledge-json', 'o9/knowledge_base/tiangan/甲.txt', '--export-knowledge-base', '--output-dir', 'o9'), 2),
-    (('knowledge', '--list-values', 'topic', '--all'), 2),
+    (('knowledge', '--list-values', 'topic', '--all'), 2), (('knowledge', '--all', '--object', 'tiangan.ding'), 2),
+    (('knowledge', '--knowledge-source', 'o10/knowledge_base/tiangan/甲.txt', '--export-knowledge-base', '--output-dir', 'o10'), 2),
     (('knowledge', '--knowledge-source', 'missing.json'), 2),
     (('knowledge', '--list-values', 'topic', '--knowledge-source', 'missing.json'), 2),
     (('match',), 0), (('match', GUANSHA), 0), (('match', XINGCHONG), 0), (('match', 'nope'), 2),
