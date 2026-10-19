@@ -397,16 +397,19 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 
 ## 源码脚本
 
-仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑（只用已有的平铺参数）：
+仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑：
 
 ```sh
-python run_interpreter.py \
-  --query-knowledge \
+python run_interpreter.py knowledge --object tiangan.ding
+python run_interpreter.py knowledge --list-values topic
+python run_interpreter.py knowledge \
   --object tiangan.ding \
   --include-reference-only \
   --export-knowledge-json output_data/knowledge.json
 ```
 
-`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON。完整参数见 `python run_interpreter.py --help`。
+只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。
+判据目录用 `python run_interpreter.py match` 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 `python run_interpreter.py knowledge --help`。
+不带任务名的旧写法（`--query-knowledge` 等）这一版仍可用，会提示等价的新命令，将来会移除。
 
 字段与方法的完整说明见 {py:class}`~bazi.knowledge.KnowledgeBase` 和 {doc}`../api/index`，本文只讲上手路径。

@@ -72,43 +72,46 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 | --- | --- |
 | `python run_demo.py` | 命盘、大运／小运／流年及命盘 JSON |
 | `python run_relationship_analyzer.py` | 夫妻宫、配偶星、原局神煞及十年流年神煞 |
-| `python run_interpreter.py` | 单盘静态说明，默认不导出文件 |
+| `python run_interpreter.py` | 三个任务：`chart` 展示命盘，`knowledge` 查询知识，`match` 判别前提 |
 
-三者默认生成随机命盘。固定出生，显示参考文字及来源：
+前两个默认生成随机命盘。`run_interpreter.py` 先选任务，再按需要加选项；拿不准时只写任务名，
+它会告诉你下一步：`chart` 出一张随机命盘，`knowledge` 给知识库概览，`match` 列出全部判据。
+
+展示一张命盘；给了 `--birth-time` 就要同时给 `--gender`，都不给就随机生成，随机命盘的种子打印在第一行，用 `--seed` 重放：
 
 ```sh
-python run_interpreter.py \
+python run_interpreter.py chart \
   --birth-time "2000-01-01 12:00" \
-  --gender male \
-  --include-reference-only \
-  --show-sources
+  --gender male
 ```
 
-不输入出生信息，查询知识并导出所选条目：
+不排盘，查询知识：
 
 ```sh
-python run_interpreter.py \
-  --query-knowledge \
-  --object tiangan.ding \
-  --include-reference-only \
-  --export-knowledge-json output_data/knowledge.json
+python run_interpreter.py knowledge --object tiangan.ding
+python run_interpreter.py knowledge --list-values topic
 ```
 
-检查前提并导出记录：
+检查前提：先看有哪些判据和各自需要什么，再对命盘求值并导出记录：
 
 ```sh
-python run_interpreter.py \
-  --match-context editorial.guansha_coexistence.v1 \
+python run_interpreter.py match
+python run_interpreter.py match editorial.guansha_coexistence.v1
+python run_interpreter.py match editorial.guansha_coexistence.v1 \
   --birth-time "2000-01-01 12:00" \
   --gender female \
   --observation-scope natal_and_liunian \
   --ganzhi-year 2024 \
-  --include-reference-only \
   --export-context-json output_data/context.json
 ```
 
-随机示例用 `--seed` 重放；全部参数见 `python run_interpreter.py --help`。
-命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
+其余选项都可以省略，用到再加；各任务认的选项不同。`--include-reference-only` 三个任务都有，同时显示仅供参考的条目；
+`--show-sources` 显示来源（`chart`，以及 `knowledge` 的文本导出）；导出可重新载入的 JSON 则各用各的：`chart` 用
+`--export-chart-json`（须给 `--birth-time`），`knowledge` 用 `--export-knowledge-json`，`match` 用 `--export-context-json`。
+每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
+
+不带任务名的旧写法（如 `python run_interpreter.py --seed 236`）这一版仍然可用，并在标准错误里提示等价的新命令，
+将来会移除。命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
 JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
 `interpretation_examples/{序号}.txt` 路径上已有的同名文件，其他文件保留。
 

@@ -444,11 +444,18 @@ def test_distinct_chart_json_and_txt_outputs_are_both_retained(tmp_path: Path, o
   assert text == displayed and '已导出命盘' not in text
 
 
+@pytest.mark.parametrize('flag', ['-h', '--help'])
+def test_legacy_help_flag_stays_on_the_legacy_path(tmp_path: Path, flag: str) -> None:
+  result = _run_cli(tmp_path, '--seed', '1', flag)
+  assert result.returncode == 0 and '--query-knowledge' in result.stdout and '<任务>' not in result.stdout
+
+
 @pytest.mark.parametrize('columns', ['50', '80'])
 @pytest.mark.parametrize('optimized', [False, True])
 def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, columns: str, optimized: bool) -> None:
   monkeypatch.setenv('COLUMNS', columns)
-  help_result = _run_cli(tmp_path, '--help', optimized=optimized)
+  # 单独的 --help 是新顶层帮助；旧路径的帮助在带旧选项时给出，内容不变。
+  help_result = _run_cli(tmp_path, '--seed', '1', '--help', optimized=optimized)
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
   assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)
