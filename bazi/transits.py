@@ -11,7 +11,7 @@ from typing import Final, TypeVar
 from .common import check_declared_types, frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi, Dizhi
-from .bazi_chart import BaziChart
+from .bazi_chart import BaziChart, _check_chart
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
 
@@ -24,6 +24,7 @@ class DayunDatabase:
   '''按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
   物理 `end_moment` 不一致。'''
   def __init__(self, chart: BaziChart) -> None:
+    _check_chart(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = tuple(chart.dayun)
     self._empty_timeline_error: Final[str] = chart._dayun_empty_timeline_message
 
@@ -123,6 +124,7 @@ class TransitDatabase:
   历法可用性，这些入口只解释交运边界，不重复公开入口校验，也不承诺包外调用。
   '''
   def __init__(self, chart: BaziChart) -> None:
+    _check_chart(chart)
     bazi = chart.bazi
     # 出生年采用按出生精度归属的 Bazi.ganzhi_year，与年柱同源。
     # HOUR 跨午夜相等窗口内，日期级 ganzhi_date.year 可与它不同，误用会使所有小运年错一位。

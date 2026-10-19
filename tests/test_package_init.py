@@ -13,7 +13,7 @@ import bazi
 
 ROOT = Path(__file__).resolve().parents[1]
 
-LAZY = ('bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart')
+LAZY = ('bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text')
 
 
 def test_dir_lists_lazy_submodules_unimported() -> None:
@@ -44,3 +44,25 @@ def test_unknown_attribute_has_no_hint() -> None:
   with pytest.raises(AttributeError) as error:
     bazi.not_a_name # noqa: B018
   assert str(error.value) == "module 'bazi' has no attribute 'not_a_name'"
+
+
+def test_chart_text_loads_on_demand_outside_all() -> None:
+  code = (
+    'import sys, bazi\n'
+    'assert "chart_text" not in bazi.__all__ and "chart_text" in dir(bazi)\n'
+    'assert "bazi.chart_text" not in sys.modules\n'
+    'from bazi import chart_text as imported\n'
+    'assert bazi.chart_text is imported and callable(bazi.chart_text.chart_text)\n'
+    'namespace = {}\n'
+    'exec("from bazi import *", namespace)\n'
+    'assert "chart_text" not in namespace\n'
+  )
+  result = subprocess.run([sys.executable, '-c', code], cwd=ROOT, capture_output=True, text=True, check=False)
+  assert result.returncode == 0, result.stderr
+
+
+def test_entry_table_names_the_documented_entries() -> None:
+  assert set(bazi._ENTRY_MODULES) == {
+    'Bazi', 'BaziChart', 'TransitChart', 'RelationshipAnalyzer', 'AtBirthAnalysis', 'TransitAnalysis',
+    'BaziConfig', 'KnowledgeBase',
+  }

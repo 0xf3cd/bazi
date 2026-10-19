@@ -20,6 +20,8 @@
     "bazi/knowledge.py|._validation|_pairs": "知识JSON拒绝重复键，和前提记录共用实现。",
     "bazi/knowledge.py|._validation|_mapping": "知识JSON共用字段集合检查，schema版本及引用校验留在knowledge。",
     "bazi/transit_chart.py|.utils.bazi_utils|_ganzhi_of_day_at_moment": "流运调用日柱算法所属模块，保留命盘换日点与现有精度。",
+    "bazi/transits.py|.bazi_chart|_check_chart": "大运与流运数据库接收命盘，共用同一处类型检查与指路消息，不复制到每个入口。",
+    "bazi/context_matching.py|.bazi_chart|_check_chart": "前提判别入口接收命盘，共用同一处类型检查与指路消息，不另写通用类型断言。",
     "bazi/chart_text.py|.bazi_chart|_check_chart": "文本展示入口共用同一处命盘类型检查与指路消息，不复制到每个入口。",
     "bazi/transit_chart.py|.bazi_chart|_check_chart": "接收命盘的入口共用同一处类型检查与指路消息，命盘类型由bazi_chart定义，不在各入口复制。",
     "bazi/analyzer/relationship.py|..bazi_chart|_check_chart": "分析入口与spouse_evidence共用命盘类型检查与指路消息，不复制到每个入口。",

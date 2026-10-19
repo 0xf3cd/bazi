@@ -33,7 +33,8 @@ ImportError
 
 `bazi.chart_text` 的 `basic_text`、`transit_text`、`chart_text` 返回纯文本，库本身不加颜色。
 要加颜色或标记，传一个 `TextStyle`：`glyph` 收到单个天干或地支，`day_master_mark` 收到“日主”二字，各自返回显示文字；
-两个字段都可以不设，不设就原样输出。钩子只包装文字，不改变列宽和内容。下面的例子给日主加上星号，再把每个字形用方括号括起来：
+两个字段都可以不设，不设就原样输出。钩子决定对应片段怎么显示，返回值原样放进文本：行列的排列不变，
+列的位置随返回文字的长度移动（终端颜色码不占宽，不影响对齐），内容和宽度由你负责保留。下面的例子给日主加上星号，再把每个字形用方括号括起来：
 
 ```{testcode} integration-text-style
 from datetime import datetime

@@ -211,3 +211,46 @@ def test_counts_reject_wrong_values(func: object, name: str) -> None:
     func(DEFAULT_CHART, **{name: '3'}) # type: ignore
   with pytest.raises(ValueError, match=f'Unsupported {name}: -1'):
     func(DEFAULT_CHART, **{name: -1}) # type: ignore
+
+
+def test_style_wraps_dayun_and_liunian_glyphs() -> None:
+  chart = DEFAULT_CHART
+  calls: list[str] = []
+
+  def glyph(s: Tiangan | Dizhi) -> str:
+    calls.append(str(s))
+    return f'«{s}»'
+
+  text = transit_text(chart, dayun_count=3, liunian_count=20, style=TextStyle(glyph=glyph))
+  assert text.replace('«', '').replace('»', '') == transit_text(chart, dayun_count=3, liunian_count=20)
+  expected = list(itertools.islice(chart.dayun, 3))
+  hidden = sum(len(hidden_tiangans(d.ganzhi.dizhi)) for d in expected)
+  assert len(calls) == 2 * 3 + hidden + 2 * len(chart.xiaoyun) + 2 * 20
+  liunian_rows = text.split('流年：\n', 1)[1]
+  assert liunian_rows.count('«') == 2 * 20 and all(f'«{ln.ganzhi.tiangan}»«{ln.ganzhi.dizhi}»' in liunian_rows for ln in itertools.islice(chart.liunian, 20))
+
+
+def test_chart_text_forwards_transit_counts() -> None:
+  chart = DEFAULT_CHART
+  text = chart_text(chart, dayun_count=0, liunian_count=0)
+  assert '年标签：' not in text
+  assert text == basic_text(chart) + transit_text(chart, dayun_count=0, liunian_count=0)
+  assert chart_text(chart, dayun_count=2, liunian_count=11).count('年标签：') == 2
+
+
+def test_text_follows_the_hko_backend() -> None:
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', BaziConfig.from_values(backend='hko')))
+  utils = calendar_utils_of(chart.bazi.config.backend)
+  before, after = utils.prev_jie(chart.bazi.reference_datetime), utils.next_jie(chart.bazi.reference_datetime)
+  lines = chart_text(chart).splitlines()
+  assert f'出生时刻前一节：{before.jieqi} - {before.moment.isoformat()}' in lines
+  assert f'出生时刻后一节：{after.jieqi} - {after.moment.isoformat()}' in lines
+  assert [line for line in lines if line.startswith(('年：', '月：', '日：', '时：'))][2].startswith('日：  ')
+
+
+@pytest.mark.parametrize('precision', ['hour', 'minute'])
+def test_basic_text_keeps_the_precision_pillars(precision: str) -> None:
+  chart = BaziChart(Bazi.create(datetime(2009, 2, 3, 23, 30), 'female', BaziConfig.from_values(precision=precision)))
+  lines = [line for line in basic_text(chart).splitlines() if line.startswith(('年：', '月：', '日：', '时：'))]
+  for line, pillar in zip(lines, chart.bazi.pillars, strict=True):
+    assert line.split('  ')[1].startswith(str(pillar.tiangan)) and f' {pillar.dizhi} [' in line

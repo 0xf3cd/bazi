@@ -274,6 +274,7 @@ class AtBirthAnalysis:
     self._chart: Final[BaziChart] = chart
 
   def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
     return f'AtBirthAnalysis({self._chart!r})'
 
   @property
@@ -343,6 +344,7 @@ class TransitAnalysis:
     self._chart: Final[BaziChart] = chart
 
   def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
     return f'TransitAnalysis({self._chart!r})'
 
   @staticmethod
@@ -820,6 +822,7 @@ class RelationshipAnalyzer:
     self._chart: Final[BaziChart] = chart
 
   def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所持命盘的摘要；格式不是承诺。'''
     return f'RelationshipAnalyzer({self._chart!r})'
 
   @functools.cached_property

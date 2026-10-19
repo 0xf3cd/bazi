@@ -80,7 +80,7 @@ print(basic_text(chart).strip())
 ```
 
 - 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
-- 十神、藏干等内容与 `chart.shishen`、`chart.hidden_tiangan` 等结构化结果一致，只是排成了文字。
+- 十神、藏干等内容取自 `chart.shishen`、`chart.hidden_tiangan` 等同一批计算，排成了文字：藏干不列百分比，十神用缩写，日柱天干记作“日主”。
 - 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
 
 ## 在交互里看一眼
@@ -118,7 +118,7 @@ Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)
 module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
 ```
 
-`dir(bazi)` 会列出按需导入的子模块，导入后才加载它们。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。
+`dir(bazi)` 会列出按需导入的子模块，导入后才加载它们；上面只筛出了其中两个，实际的列表更长。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。
 
 ## 默认值是一种选定的口径
 

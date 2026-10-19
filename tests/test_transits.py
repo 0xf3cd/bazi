@@ -255,3 +255,13 @@ def test_empty_transit_database() -> None:
 
   assert db.xiaoyun(2099) is None
   assert db.dayun(2099) is None
+
+
+@pytest.mark.parametrize('database', [DayunDatabase, TransitDatabase])
+@pytest.mark.parametrize('bad, hint', [
+  (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
+  (None, r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),
+])
+def test_databases_reject_non_charts_early(database: type, bad: object, hint: str) -> None:
+  with pytest.raises(TypeError, match=f'^Expected BaziChart, got <class .*>; {hint}$'):
+    database(bad)

@@ -1672,3 +1672,9 @@ def test_directory_guards_missing_metadata_and_missing_behavior_cases(monkeypatc
     patcher.setattr(CriterionInfo, 'binding_effect', property(lambda self: 'related_unrecognized'))
     with pytest.raises(AssertionError):
       _check_directory_info(directory[GUANSHA], case)
+
+
+def test_evaluate_context_hints_chart_input() -> None:
+  bazi = Bazi.create('2000-01-01 12:00', 'male')
+  with pytest.raises(TypeError, match=r'^Expected BaziChart, got <class .*>; wrap it with BaziChart\(bazi\)$'):
+    evaluate_context(bazi, criterion_id=GUANSHA, profile=ContextProfile('natal')) # type: ignore
