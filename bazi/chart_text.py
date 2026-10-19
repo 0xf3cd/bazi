@@ -101,7 +101,6 @@ def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
 
   Note:
   - 文本以换行开头、换行结尾，可直接 `print`；地点盘另列民用、真太阳与节气表出生时刻。
-  - 内容与 `BaziChart` 的结构化结果一致，只是排成文本，不含 JSON。
 
   Args:
   - chart: (BaziChart) 待展示的命盘。

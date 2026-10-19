@@ -62,16 +62,15 @@ assert chart.bazi.day_master in Tiangan
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
   不是记录格式，也不应被程序解析**；保存与交换用 `BaziChart.json`，由测试钉住当前格式只为防止意外改动。
 - 接收命盘的入口（`TransitChart`、`DayunDatabase`、`TransitDatabase`、三个分析类、`spouse_evidence`、
-  `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类以及
-  `DayunDatabase`、`TransitDatabase` 原先不检查类型，传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；
-  现在统一为构造时的 `TypeError`，只依赖鸭子类型的调用方须传真正的 `BaziChart`。
+  `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类原先不检查类型，
+  传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；`DayunDatabase`、`TransitDatabase` 原先在构造时就抛
+  `AttributeError`。现在统一为构造时的 `TypeError`，只依赖鸭子类型的调用方须传真正的 `BaziChart`。
 - 类型错误消息保持 `Expected X, got <type>` 开头，对常见误用在其后以分号追加指路，如
   `Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)`。
   异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
-  `basic_text`（日元、出生时刻，以及四柱及其十神、藏干、纳音、十二长生）、`transit_text`（节、交运、大运、小运、流年；
+  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
-  文字取自与结构化结果同一批计算；排成文字时藏干不列百分比，十神用缩写，日柱天干记作“日主”。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 名称、关键词与过滤值发现

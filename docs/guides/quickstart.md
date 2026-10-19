@@ -80,7 +80,6 @@ print(basic_text(chart).strip())
 ```
 
 - 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
-- 十神、藏干等内容取自 `chart.shishen`、`chart.hidden_tiangan` 等同一批计算，排成了文字：藏干不列百分比，十神用缩写，日柱天干记作“日主”。
 - 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
 
 ## 在交互里看一眼
