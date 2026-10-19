@@ -329,6 +329,39 @@ def test_knowledge_text_export_cannot_overwrite_its_editing_source(tmp_path: Pat
   assert [path.name for path in (tmp_path / 'out').rglob('*') if path.is_file()] == ['甲.txt']
 
 
+@pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
+@pytest.mark.parametrize('args, target', [
+  (('knowledge', '--export-knowledge-base'), 'knowledge_base/tiangan/甲.txt'),
+  (('--seed', '1', '--export-knowledge-base'), 'knowledge_base/shishen/正官.txt'),
+  (('chart', '--seed', '1'), 'interpretation_examples/0.txt'),
+  (('--seed', '1'), 'interpretation_examples/0.txt'),
+])
+def test_text_exports_cannot_overwrite_the_bundled_source(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+  alias: str, args: tuple[str, ...], target: str,
+) -> None:
+  out = tmp_path / 'out'
+  source, link = tmp_path / 'bundled.json', out / target
+  link.parent.mkdir(parents=True)
+  shutil.copyfile(DEFAULT_SOURCE_PATH, source)
+  if alias == 'direct':
+    source = link
+    shutil.copyfile(DEFAULT_SOURCE_PATH, source)
+  elif alias == 'symlink':
+    try:
+      link.symlink_to(source)
+    except (OSError, NotImplementedError):
+      pytest.skip('symlinks unavailable')
+  else:
+    os.link(source, link)
+  monkeypatch.setattr(run_interpreter, 'DEFAULT_SOURCE_PATH', source)
+  before = source.read_bytes()
+  with pytest.raises(SystemExit) as raised:
+    main([*args, '--output-dir', str(out)])
+  assert raised.value.code == 2 and 'Export must not overwrite the editing source' in capsys.readouterr().err
+  assert source.read_bytes() == before
+
+
 @pytest.mark.parametrize('flag, dimension', sorted(_LIST_DIMENSIONS.items()))
 def test_knowledge_all_does_not_combine_with_query_conditions(tmp_path: Path, flag: str, dimension: str) -> None:
   value = KnowledgeBase.load().filter_values(dimension)[0]

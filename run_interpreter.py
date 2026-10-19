@@ -165,6 +165,12 @@ def _same_export_path(left: Path, right: Path) -> bool:
   )
 
 
+def _reject_source_overwrite(parser: argparse.ArgumentParser, targets: list[Path], knowledge_source: Path | None) -> None:
+  for source in (DEFAULT_SOURCE_PATH, knowledge_source):
+    if source is not None and any(_same_export_path(source, path) for path in targets):
+      parser.error('Export must not overwrite the editing source')
+
+
 def _export_json(
   parser: argparse.ArgumentParser,
   target: Path,
@@ -406,6 +412,12 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
       text_paths.extend(_knowledge_text_paths(args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR))
     if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
       parser.error('--export-chart-json must not overlap generated TXT outputs')
+  text_targets: list[Path] = []
+  if args.output_dir is not None and (args.output_dir / 'interpretation_examples').is_dir():
+    text_targets.extend((args.output_dir / 'interpretation_examples').glob('*.txt'))
+  if args.export_knowledge_base:
+    text_targets.extend(_knowledge_text_paths(args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR))
+  _reject_source_overwrite(parser, text_targets, None)
 
   charts: Iterable[BaziChart]
   if args.birth_time is not None:
@@ -638,8 +650,7 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
     text_paths = _knowledge_text_paths(base)
     if args.export_knowledge_json is not None and any(_same_export_path(args.export_knowledge_json, path) for path in text_paths):
       parser.error('--export-knowledge-json must not overlap generated TXT outputs')
-    if args.knowledge_source is not None and any(_same_export_path(args.knowledge_source, path) for path in text_paths):
-      parser.error('Export must not overwrite the editing source')
+    _reject_source_overwrite(parser, text_paths, args.knowledge_source)
   if query or args.validate_knowledge or args.export_knowledge_json is not None:
     args.query_knowledge = query
     _knowledge_main(parser, args)
