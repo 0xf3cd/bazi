@@ -2,6 +2,7 @@
 
 排盘从 bazi.bazi.Bazi 和 bazi.bazi_chart.BaziChart 开始；
 独立查阅知识使用 bazi.knowledge.KnowledgeBase，无需创建命盘。
+命盘的纯文本展示在 bazi.chart_text。
 类型从各定义模块导入，本包不提供根类或安装后的命令行入口。'''
 
 from importlib import import_module
@@ -26,7 +27,25 @@ _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart',
 })
 
+# 本包没有根类入口；常见入口类的属性访问会指向定义模块。
+_ENTRY_MODULES: Final[common.frozendict[str, str]] = common.frozendict({
+  'Bazi':                 'bazi.bazi',
+  'BaziChart':            'bazi.bazi_chart',
+  'TransitChart':         'bazi.transit_chart',
+  'RelationshipAnalyzer': 'bazi.analyzer.relationship',
+  'BaziConfig':           'bazi.school',
+  'KnowledgeBase':        'bazi.knowledge',
+})
+
 def __getattr__(name: str) -> Any:
   if name in _LAZY_SUBMODULES:
     return import_module(f'.{name}', __name__)
+  if name in _ENTRY_MODULES:
+    raise AttributeError(
+      f'module {__name__!r} has no attribute {name!r}; use: from {_ENTRY_MODULES[name]} import {name}'
+    )
   raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
+
+def __dir__() -> list[str]:
+  # 懒加载子模块尚未导入时不在模块字典里，补上才能被 dir() 与补全发现。
+  return sorted({*globals(), *_LAZY_SUBMODULES})

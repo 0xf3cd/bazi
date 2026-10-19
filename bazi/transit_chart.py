@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from typing import Final
 
 from .defines import Ganzhi, Dizhi
-from .bazi_chart import BaziChart
+from .bazi_chart import BaziChart, _check_chart
 from .calendar import CalendarBackend, calendar_utils_of
 from .calendar.utils_protocol import CalendarUtilsProtocol
 from .calendar.dates import GanzhiYearMonth
@@ -36,11 +36,14 @@ class TransitChart:
     - TypeError: bazi_chart 不是 BaziChart。
     '''
 
-    if not isinstance(bazi_chart, BaziChart):
-      raise TypeError(f'Expected BaziChart, got {type(bazi_chart)}')
+    _check_chart(bazi_chart)
     self._bazi_chart: Final[BaziChart] = bazi_chart
     self._transit_db: Final[TransitDatabase] = TransitDatabase(self._bazi_chart)
     self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(self._bazi_chart.bazi.config.backend)
+
+  def __repr__(self) -> str:
+    '''交互探索用的简短摘要，内容为所依据命盘的摘要；不构造流运，格式不是承诺。'''
+    return f'TransitChart({self._bazi_chart!r})'
 
   @property
   def bazi_chart(self) -> BaziChart:

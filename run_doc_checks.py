@@ -30,10 +30,10 @@ BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
 
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart'},
+  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-explore'},
   'guides/configuration': {'config-precision', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace'},
-  'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators'},
-  'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context'},
+  'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text'},
+  'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style'},
   'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria'},
 }
 

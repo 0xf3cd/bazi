@@ -83,6 +83,12 @@ _GENDER_ALIASES: Final[frozendict[str, BaziGender]] = frozendict({
 })
 
 
+def _expected(expected: str, value: object, str_hint: str = '') -> TypeError:
+  '''组装 `Expected X, got Y` 类型错误；传入字符串这一常见误用时，在规范消息后追加指路。'''
+  hint: Final[str] = f'; {str_hint}' if isinstance(value, str) and str_hint else ''
+  return TypeError(f'Expected {expected}, got {type(value)}{hint}')
+
+
 def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   '''
   把时刻截断到 `precision` 粒度单位的起点，按 `BaziPrecision` 比较（`birth >= jieqi`，相等归新）。
@@ -148,11 +154,11 @@ class Bazi:
     '''
 
     if not isinstance(birth_time, datetime):
-      raise TypeError(f'Expected datetime, got {type(birth_time)}')
+      raise _expected('datetime', birth_time, 'Bazi.create parses ISO strings')
     if not isinstance(gender, BaziGender):
-      raise TypeError(f'Expected BaziGender, got {type(gender)}')
+      raise _expected('BaziGender', gender, "Bazi.create accepts strings such as 'male'")
     if not isinstance(config, BaziConfig):
-      raise TypeError(f'Expected BaziConfig, got {type(config)}')
+      raise _expected('BaziConfig', config, 'BaziConfig.from_values builds one from strings')
     if civil_timezone is not None:
       if not isinstance(civil_timezone, tzinfo):
         raise TypeError(f'Expected tzinfo, got {type(civil_timezone)}')
@@ -302,7 +308,7 @@ class Bazi:
     if not isinstance(gender, (BaziGender, str)):
       raise TypeError(f'Expected BaziGender or str, got {type(gender)}')
     if not isinstance(config, BaziConfig):
-      raise TypeError(f'Expected BaziConfig, got {type(config)}')
+      raise _expected('BaziConfig', config, 'BaziConfig.from_values builds one from strings')
 
     _birth_time, _gender = Bazi.__parse_bazi_args(birth_time, gender)
     bazi: Bazi = Bazi(
@@ -533,6 +539,25 @@ class Bazi:
   def __hash__(self) -> int:
     # 身份派生自 `Final` 状态，在公开 API 下稳定。
     return hash(self._identity)
+
+  def __repr__(self) -> str:
+    '''
+    交互探索用的简短摘要：出生时刻、性别与四柱；经度及非默认配置存在时才附加。
+
+    Note:
+    - 地点盘的时刻为真太阳时（分钟）。摘要只含固定大小的字段，不触发流运计算；
+      格式只服务探索与调试，不是记录格式，也不承诺跨版本不变。
+    '''
+    parts: list[str] = [
+      self.solar_datetime.isoformat(),
+      str(self.gender),
+      ' '.join(map(str, self.pillars)),
+    ]
+    if self.longitude is not None:
+      parts.append(f'longitude={self.longitude}')
+    if self.config != DEFAULT_CONFIG:
+      parts.append(f'config={self.config!r}')
+    return f'Bazi({", ".join(parts)})'
 
 
 class LocationTimeJson(TypedDict):
