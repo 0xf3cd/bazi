@@ -147,7 +147,7 @@ assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
 发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
 它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values 条件` 对应 `filter_values`，
 `match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
-不带任务名的旧平铺调用这一版仍可用并提示等价的新命令，将来的移除按本契约的兼容政策另行安排。
+不带任务名的旧平铺调用这一版仍可用并提示等价的新命令；移除的版本与方式见 [#292](https://github.com/0xf3cd/bazi/issues/292)。
 
 ## 三类 JSON 分别保存与恢复
 
