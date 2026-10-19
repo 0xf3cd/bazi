@@ -40,27 +40,27 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
-| 排第一张盘，了解默认值和输出 | [快速开始](docs/guides/quickstart.md) |
-| 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](docs/guides/configuration.md) |
-| 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](docs/guides/relations-transits.md) |
-| 不排盘，只查条目、来源、过滤和导出重载 | [独立知识库指南](docs/guides/knowledge.md) |
-| 导入、JSON 恢复、前提匹配与记录兼容 | [集成开发](docs/guides/integration.md)、[接口与记录契约](API_CONTRACT.md) |
-| 按对象、来源、情境或判据浏览知识 | [知识目录](docs/catalog/index.rst) |
-| 逐模块查签名、参数与条件 | [文档入口](docs/index.md)，构建后进入 API Reference |
-| 提交勘误、出处或流派读法 | [贡献指南](CONTRIBUTING.md) |
+| 排第一张盘，了解默认值和输出 | [快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md) |
+| 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
+| 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
+| 不排盘，只查条目、来源、过滤和导出重载 | [独立知识库指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/knowledge.md) |
+| 导入、JSON 恢复、前提匹配与记录兼容 | [集成开发](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md)、[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md) |
+| 按对象、来源、情境或判据浏览知识 | [知识目录](https://github.com/0xf3cd/bazi/blob/main/docs/catalog/index.rst) |
+| 逐模块查签名、参数与条件 | [文档入口](https://github.com/0xf3cd/bazi/blob/main/docs/index.md)，构建后进入 API Reference |
+| 提交勘误、出处或流派读法 | [贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md) |
 
 完整文档由源码与知识注册表生成；构建方法见[开发](#开发)。安装包带有 `py.typed` 内联类型标注。
 
 ## 能力与解释边界
 
 默认使用 `celestial` 后端、`DAY` 精度、晚子时 23:00 换日柱；这些是选定的口径，不是唯一读法。
-`BaziSchool` 保留关系、神煞与配偶星等不同取法，出处随字段说明保留。需要比较其他排盘器时，见[外部排盘对照](EXTERNAL_BASELINE.md)。
+`BaziSchool` 保留关系、神煞与配偶星等不同取法，出处随字段说明保留。需要比较其他排盘器时，见[外部排盘对照](https://github.com/0xf3cd/bazi/blob/main/EXTERNAL_BASELINE.md)。
 
 知识条目分别记录来源状态、输出资格和前提整理状态。来源已核定不证明条文本身为真，
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
 三类 JSON 的恢复保证不同：命盘重算并核对，知识库恢复内容，前提判别记录只校验记录结构而不重判。
-详细条件见[接口与记录契约](API_CONTRACT.md)；升级变化见[发布说明](RELEASE_NOTES.md)。
+详细条件见[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；升级变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 源码脚本
 
@@ -132,7 +132,7 @@ python run_docs.py
 ```
 
 检查严格 HTML 构建、API 地址、完整知识目录、内部链接与教程示例；通过后可本地打开 `output_data/docs/html/index.html`。
-构建命令不部署站点，也不启用 Pages。更多测试选项见 `python run_tests.py --help`，外部贡献要求见[贡献指南](CONTRIBUTING.md)。
+构建命令不部署站点，也不启用 Pages。更多测试选项见 `python run_tests.py --help`，外部贡献要求见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)。
 
 ### 保留已验证的安装包
 
@@ -141,13 +141,13 @@ python run_package_checks.py --output-dir ../bazi-tested
 python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
 ```
 
-输出目录须为空且在仓外。发布步骤见[发布流程](RELEASING.md)。
-重建历法表见 [HKO 编码器](bazi/calendar/hko_data/encoder.py)、[天文表生成器](bazi/calendar/celestial_data/generator.py)
-及[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。安装后缺表应重装包，不运行生成器修补。
+输出目录须为空且在仓外。发布步骤见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md)。
+重建历法表见 [HKO 编码器](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/hko_data/encoder.py)、[天文表生成器](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_data/generator.py)
+及[数据格式](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_data/SCHEMA.md)。安装后缺表应重装包，不运行生成器修补。
 
 ## 贡献与许可
 
-本库由个人维护，接受 issue 勘误与出处补充；PR 先开 issue 讨论，方向获同意后再提交，要求见[贡献指南](CONTRIBUTING.md)。
+本库由个人维护，接受 issue 勘误与出处补充；PR 先开 issue 讨论，方向获同意后再提交，要求见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)。
 
-作者自有材料采用标准 [MIT License](LICENSE)。[第三方材料说明](THIRD_PARTY_NOTICES.md) 另列历法数据、引文等权利范围，
+作者自有材料采用标准 [MIT License](https://github.com/0xf3cd/bazi/blob/main/LICENSE)。[第三方材料说明](https://github.com/0xf3cd/bazi/blob/main/THIRD_PARTY_NOTICES.md) 另列历法数据、引文等权利范围，
 不由作者的 MIT 授权重新许可；两份声明都随工件分发。

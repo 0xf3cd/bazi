@@ -3,10 +3,13 @@
 import runpy
 import sys
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import pytest
 
 pytest.importorskip('sphinx', reason='Documentation dependencies are checked by the separate docs task.')
+
+from markdown_it import MarkdownIt
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -14,6 +17,24 @@ sys.path.insert(0, str(ROOT))
 import run_docs
 import run_docs_site
 from run_package_checks import source_files
+
+
+def test_readme_file_links_work_outside_the_repository():
+  links = [
+    child.attrGet('href') or ''
+    for token in MarkdownIt('commonmark').parse((ROOT / 'README.md').read_text(encoding='utf-8'))
+    for child in token.children or () if child.type == 'link_open'
+  ]
+  assert links
+  for link in links:
+    assert isinstance(link, str)
+    if link.startswith('#'):
+      continue
+    url = urlsplit(link)
+    assert url.scheme == 'https' and url.netloc, link
+    if link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
+      path = ROOT / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
+      assert path.resolve().is_relative_to(ROOT) and path.is_file(), link
 
 
 def test_builder_and_archive_share_release_label_grammar():
