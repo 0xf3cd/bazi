@@ -77,7 +77,7 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 前两个默认生成随机命盘。`run_interpreter.py` 先选任务，再按需要加选项；拿不准时只写任务名，
 它会告诉你下一步：`chart` 出一张随机命盘，`knowledge` 给知识库概览，`match` 列出全部判据。
 
-展示一张命盘；不给 `--birth-time` 就随机生成，随机命盘的种子打印在第一行，用 `--seed` 重放：
+展示一张命盘；给了 `--birth-time` 就要同时给 `--gender`，都不给就随机生成，随机命盘的种子打印在第一行，用 `--seed` 重放：
 
 ```sh
 python run_interpreter.py chart \
@@ -105,9 +105,10 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
   --export-context-json output_data/context.json
 ```
 
-其余选项都可以省略，用到再加：`--include-reference-only` 同时显示仅供参考的条目，`--show-sources` 显示来源，
-`--export-chart-json`、`--export-knowledge-json` 导出可重新载入的 JSON。每个任务的全部选项见
-`python run_interpreter.py <任务> --help`。
+其余选项都可以省略，用到再加；各任务认的选项不同。`--include-reference-only` 三个任务都有，同时显示仅供参考的条目；
+`--show-sources` 显示来源（`chart`，以及 `knowledge` 的文本导出）；导出可重新载入的 JSON 则各用各的：`chart` 用
+`--export-chart-json`（须给 `--birth-time`），`knowledge` 用 `--export-knowledge-json`，`match` 用 `--export-context-json`。
+每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
 
 不带任务名的旧写法（如 `python run_interpreter.py --seed 236`）这一版仍然可用，并在标准错误里提示等价的新命令，
 将来会移除。命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。

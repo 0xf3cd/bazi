@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import copy
 import json
 import shlex
 import sys
@@ -178,10 +177,6 @@ def _export_json(
 
 
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
-          args.output_dir, args.export_knowledge_base, args.longitude is not None,
-          args.precision is not None, args.civil_timezone is not None, args.export_chart_json is not None)):
-    parser.error('Knowledge mode cannot be combined with chart input or TXT export flags')
   filters = {
     'object_id': args.object_id, 'context_id': args.context_id, 'topic': args.topic,
     'source_id': args.source_id, 'viewpoint': args.viewpoint,
@@ -465,6 +460,10 @@ def _legacy_dispatch(parser: argparse.ArgumentParser, args: argparse.Namespace) 
   ):
     parser.error('Matching inputs require --match-context')
   if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
+    if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
+            args.output_dir, args.export_knowledge_base, args.longitude is not None,
+            args.precision is not None, args.civil_timezone is not None, args.export_chart_json is not None)):
+      parser.error('Knowledge mode cannot be combined with chart input or TXT export flags')
     return _knowledge_main(parser, args)
   if args.knowledge_source is not None or any(
     value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
@@ -483,6 +482,10 @@ _LIST_DIMENSIONS: Final[dict[str, str]] = {
   'viewpoint': 'viewpoint', 'applicability': 'applicability', 'time-scope': 'time_scope',
 }
 
+_LONGITUDE_HELP: Final[str] = (
+  '东经为正的角度，启用真太阳时；须配带时区的 --birth-time（如 "2000-01-01T12:00:00+08:00"）与 --precision hour 或 minute。'
+)
+
 # 判据目录里的查询坐标字段对应的命令行选项。
 _COORDINATE_FLAGS: Final[dict[str, str]] = {
   'ganzhi_year': '--ganzhi-year', 'gz_year': '--ganzhi-year', 'gz_month': '--gz-month',
@@ -497,24 +500,24 @@ _MATCH_EXAMPLE: Final[str] = (
 def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   basic = parser.add_argument_group('出生信息（都不给则随机生成一张盘）')
   basic.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
-  basic.add_argument('--gender', choices=('male', 'female'), help='给了 --birth-time 就要给。')
+  basic.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）；与 --birth-time 成对给出。')
   more = parser.add_argument_group('更多选项（都可省略）')
   more.add_argument('--seed', type=int, help='重放随机命盘的种子；随机命盘的种子会打印在第一行。')
   more.add_argument('--count', type=int, help='随机命盘数量，默认 1。')
-  more.add_argument('--precision', choices=('day', 'hour', 'minute'), help='出生精度，默认 day。')
-  more.add_argument('--longitude', type=float, help='东经为正的角度，启用真太阳时；须带时区的出生时刻与 hour/minute 精度。')
+  more.add_argument('--precision', choices=('day', 'hour', 'minute'), help='出生精度，默认 day；须配 --birth-time。')
+  more.add_argument('--longitude', type=float, help=_LONGITUDE_HELP)
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区（IANA 名如 Pacific/Kiritimati，或固定偏移如 +14:00；负偏移写成 --civil-timezone=-05:00）；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的知识条目。')
   more.add_argument('--show-sources', action='store_true', help='显示条目 ID、署名与来源见证。')
   more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为这个目录下的文本文件。')
-  more.add_argument('--export-chart-json', type=Path, help='把命盘导出为可重新载入的 JSON。')
+  more.add_argument('--export-chart-json', type=Path, help='把命盘导出为可重新载入的 JSON；须配 --birth-time。')
 
 
 def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   common = parser.add_argument_group('查询（给任一条件就是查询；条件可以组合）')
   common.add_argument('--object', dest='object_id', help='讨论对象 ID，如 tiangan.ding。')
   common.add_argument('--topic', help='知识主题。')
-  common.add_argument('--list-values', choices=tuple(_LIST_DIMENSIONS), help='列出某个条件的全部合法值。')
+  common.add_argument('--list-values', choices=tuple(_LIST_DIMENSIONS), help='列出某个条件的全部合法值；单独使用。')
   common.add_argument('--all', action='store_true', help='列出全部默认可见的条目。')
   more = parser.add_argument_group('更多选项（都可省略）')
   more.add_argument('--context', dest='context_id', help='人工给定的查阅情境 ID，不表示命盘前提判别。')
@@ -528,23 +531,24 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--export-knowledge-json', type=Path, help='导出可重新载入的知识 JSON；有查询条件时只导出所选条目。')
   more.add_argument('--export-knowledge-base', action='store_true', help='把全部天干与十神说明各存成一个文本文件。')
   more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认 output_data。')
+  more.add_argument('--show-sources', action='store_true', help='--export-knowledge-base 的文本附带条目 ID、署名与来源见证。')
 
 
 def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
-  parser.add_argument('criterion', nargs='?', metavar='判据ID', help='不给则列出全部判据；只给 ID 则说明该判据与所需输入。')
-  common = parser.add_argument_group('求值所需（给了任一求值输入就会求值）')
+  parser.add_argument('criterion', nargs='?', metavar='判据ID', help='不给则列出全部判据；只给 ID 则说明该判据与所需输入；再给任何选项就是求值。')
+  common = parser.add_argument_group('求值所需')
   common.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
-  common.add_argument('--gender', choices=('male', 'female'), help='性别。')
+  common.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）。')
   common.add_argument('--observation-scope', choices=get_args(ObservationScope) + ('natal_and_transits',), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
   more = parser.add_argument_group('更多选项（按判据说明所需给出，其余可省略）')
-  more.add_argument('--ganzhi-year', type=int, help='干支年坐标。')
+  more.add_argument('--ganzhi-year', type=int, help='干支年坐标，写公历年份数字，如 2024。')
   more.add_argument('--transit-entry', choices=get_args(TransitEntry), help='岁运查询入口（婚恋判据）。')
-  more.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名），配 at_month 入口。')
+  more.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名，如 午），配 at_month 入口。')
   more.add_argument('--solar-date', type=_solar_date, help='东八区公历日期坐标，如 2024-04-10，配 at_date 入口。')
-  more.add_argument('--solar-moment', type=_solar_moment, help='东八区时刻坐标，如 2024-04-10T12:00:00，配 at_moment 入口。')
+  more.add_argument('--solar-moment', type=_solar_moment, help='东八区时刻坐标，如 2024-04-10T12:00:00，配 at_moment 入口；day 精度的命盘判别为 UNKNOWN。')
   more.add_argument('--transit-kinds', help='逗号分隔的岁运种类（xiaoyun,dayun,liunian,liuyue,liuri）。')
   more.add_argument('--precision', choices=('day', 'hour', 'minute'), help='出生精度，默认 day。')
-  more.add_argument('--longitude', type=float, help='东经为正的角度，启用真太阳时。')
+  more.add_argument('--longitude', type=float, help=_LONGITUDE_HELP)
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的条目与条件参考。')
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
@@ -578,9 +582,9 @@ def _command_parser() -> argparse.ArgumentParser:
 
 def _fill_legacy_defaults(args: argparse.Namespace) -> None:
   '''补齐新子命令没有提供的旧选项，使共用的核心处理函数读到与旧路径相同的字段。'''
-  for action in _legacy_parser()._actions:
-    if action.dest != 'help' and not hasattr(args, action.dest):
-      setattr(args, action.dest, action.default)
+  for name, value in vars(_legacy_parser().parse_args([])).items():
+    if not hasattr(args, name):
+      setattr(args, name, value)
 
 
 def _knowledge_overview(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
@@ -605,29 +609,30 @@ def _knowledge_overview(parser: argparse.ArgumentParser, args: argparse.Namespac
 def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   filters = (args.object_id, args.context_id, args.topic, args.source_id, args.viewpoint, args.applicability, args.time_scope)
   query = args.all or any(value is not None for value in filters)
-  if args.output_dir is not None and not args.export_knowledge_base:
-    parser.error('--output-dir only applies with --export-knowledge-base')
+  for flag, given in (('--output-dir', args.output_dir is not None), ('--show-sources', args.show_sources)):
+    if given and not args.export_knowledge_base:
+      parser.error(f'{flag} only applies with --export-knowledge-base')
   if not any((query, args.list_values, args.validate_knowledge, args.export_knowledge_json is not None,
               args.export_knowledge_base)):
     return _knowledge_overview(parser, args)
 
   if args.list_values is not None:
+    if query or args.validate_knowledge or args.export_knowledge_json is not None or args.export_knowledge_base:
+      parser.error('--list-values only lists values; use it without queries, validation or exports')
     try:
       for value in KnowledgeBase.load(args.knowledge_source).filter_values(_LIST_DIMENSIONS[args.list_values]):
         print(value)
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
   if query or args.validate_knowledge or args.export_knowledge_json is not None:
-    core = copy.copy(args)
-    core.query_knowledge = query
-    core.output_dir = None
-    core.export_knowledge_base = False
-    _knowledge_main(parser, core)
+    args.query_knowledge = query
+    _knowledge_main(parser, args)
   if args.export_knowledge_base:
     try:
       save_knowledge_base(
         args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR,
         include_reference_only=args.include_reference_only,
+        show_sources=args.show_sources,
       )
     except OSError as error:
       parser.error(str(error))
@@ -660,22 +665,23 @@ def _criterion_description(parser: argparse.ArgumentParser, criterion_id: str) -
     flags = ' '.join(_COORDINATE_FLAGS[field] for field in fields)
     print(f'  --transit-entry {entry}：{flags}')
   if info.required_gender is not None:
-    print(f'  性别门槛：{info.required_gender}')
+    print(f'  性别门槛：{info.required_gender.value}（--gender {info.required_gender}）')
   print(f'  示例：{_MATCH_EXAMPLE.replace("<判据ID>", info.criterion_id)}')
   return 0
 
 
 def _match_command(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if args.criterion is None and any(value is not None for value in (args.birth_time, args.gender, args.observation_scope)):
-    parser.error(f'a criterion ID is required for evaluation; run {_PROG} match to list them')
-  if args.criterion is None:
-    return _criteria_listing()
   evaluation_inputs = (
     args.birth_time, args.gender, args.observation_scope, args.ganzhi_year, args.transit_entry, args.gz_month,
     args.solar_date, args.solar_moment, args.transit_kinds, args.longitude, args.precision, args.civil_timezone,
     args.knowledge_source, args.export_context_json,
   )
-  if not (any(value is not None for value in evaluation_inputs) or args.include_reference_only):
+  evaluating = any(value is not None for value in evaluation_inputs) or args.include_reference_only
+  if args.criterion is None:
+    if evaluating:
+      parser.error(f'a criterion ID is required for evaluation; run {_PROG} match to list them')
+    return _criteria_listing()
+  if not evaluating:
     return _criterion_description(parser, args.criterion)
   missing = [flag for flag, value in (
     ('--birth-time', args.birth_time), ('--gender', args.gender), ('--observation-scope', args.observation_scope),
@@ -771,6 +777,7 @@ def _replacement_commands(args: argparse.Namespace) -> list[str]:
       ['knowledge', '--export-knowledge-base'],
       _option('--output-dir', args.output_dir),
       _option('--include-reference-only', args.include_reference_only),
+      _option('--show-sources', args.show_sources),
     ))
   return commands
 

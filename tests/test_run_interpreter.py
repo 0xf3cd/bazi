@@ -444,6 +444,12 @@ def test_distinct_chart_json_and_txt_outputs_are_both_retained(tmp_path: Path, o
   assert text == displayed and '已导出命盘' not in text
 
 
+@pytest.mark.parametrize('flag', ['-h', '--help'])
+def test_legacy_help_flag_stays_on_the_legacy_path(tmp_path: Path, flag: str) -> None:
+  result = _run_cli(tmp_path, '--seed', '1', flag)
+  assert result.returncode == 0 and '--query-knowledge' in result.stdout and '<任务>' not in result.stdout
+
+
 @pytest.mark.parametrize('columns', ['50', '80'])
 @pytest.mark.parametrize('optimized', [False, True])
 def test_cli_help_and_seeded_default_are_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, columns: str, optimized: bool) -> None:

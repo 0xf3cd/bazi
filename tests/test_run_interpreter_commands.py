@@ -78,6 +78,13 @@ LEGACY_CASES = [
     [['chart', '--seed', '5', '--output-dir', 'out'], ['knowledge', '--export-knowledge-base', '--output-dir', 'out']],
   ),
   (
+    ('--seed', '5', '--output-dir', 'out', '--export-knowledge-base', '--show-sources', '--include-reference-only'),
+    [
+      ['chart', '--seed', '5', '--include-reference-only', '--show-sources', '--output-dir', 'out'],
+      ['knowledge', '--export-knowledge-base', '--output-dir', 'out', '--include-reference-only', '--show-sources'],
+    ],
+  ),
+  (
     ('--birth-time', '2000-01-01T12:00:00+08:00', '--gender', 'male', '--precision', 'minute', '--longitude', '120', '--civil-timezone=+08:00'),
     [['chart', '--birth-time', '2000-01-01T12:00:00+08:00', '--gender', 'male', '--precision', 'minute', '--longitude', '120.0', '--civil-timezone=+08:00']],
   ),
@@ -180,6 +187,17 @@ def test_chart_command_shows_a_seeded_chart(tmp_path: Path) -> None:
   assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize('flag, value, needs', [
+  ('--precision', 'hour', '--birth-time'), ('--longitude', '120', '--birth-time'),
+  ('--civil-timezone', '+08:00', '经度'), ('--export-chart-json', 'out/c.json', '--birth-time'),
+])
+def test_chart_help_names_what_these_options_need(tmp_path: Path, flag: str, value: str, needs: str) -> None:
+  result = _run(tmp_path, 'chart', flag, value)
+  assert result.returncode == 2 and 'require fixed birth input' in result.stderr
+  action = next(a for a in _subcommand_parsers(_command_parser())['chart']._actions if flag in a.option_strings)
+  assert needs in (action.help or '')
+
+
 def test_chart_command_has_no_knowledge_options(tmp_path: Path) -> None:
   for flag in (('--object', 'tiangan.ding'), ('--export-knowledge-base',), ('--observation-scope', 'natal')):
     result = _run(tmp_path, 'chart', *flag)
@@ -224,10 +242,44 @@ def test_knowledge_exports_the_base_texts_only(tmp_path: Path) -> None:
   assert not (tmp_path / 'out' / 'interpretation_examples').exists()
 
 
-def test_knowledge_output_dir_needs_the_export(tmp_path: Path) -> None:
-  result = _run(tmp_path, 'knowledge', '--output-dir', 'out')
-  assert result.returncode == 2 and '--export-knowledge-base' in result.stderr
+@pytest.mark.parametrize('args', [('--output-dir', 'out'), ('--show-sources',)])
+def test_knowledge_export_options_need_the_export(tmp_path: Path, args: tuple[str, ...]) -> None:
+  result = _run(tmp_path, 'knowledge', *args)
+  assert result.returncode == 2 and f'{args[0]} only applies with --export-knowledge-base' in result.stderr
   assert list(tmp_path.iterdir()) == []
+
+
+def test_knowledge_export_shows_sources_on_request(tmp_path: Path) -> None:
+  for name, extra in (('plain', ()), ('sourced', ('--show-sources',))):
+    result = _run(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', name, *extra)
+    assert result.returncode == 0 and result.stderr == ''
+  plain = (tmp_path / 'plain' / 'knowledge_base' / 'tiangan' / '甲.txt').read_text(encoding='utf-8')
+  sourced = (tmp_path / 'sourced' / 'knowledge_base' / 'tiangan' / '甲.txt').read_text(encoding='utf-8')
+  assert plain.startswith('甲知识条目：') and sourced.startswith('甲知识条目：') and len(sourced) > len(plain)
+
+
+def test_knowledge_validate_and_export_combine(tmp_path: Path) -> None:
+  result = _run(tmp_path, 'knowledge', '--validate-knowledge', '--export-knowledge-json', 'out/k.json')
+  assert result.returncode == 0
+  assert result.stdout.startswith('校验通过：') and result.stdout.endswith('已导出知识：out/k.json\n')
+  assert (tmp_path / 'out' / 'k.json').read_text(encoding='utf-8') == KnowledgeBase.load().export_json()
+
+
+@pytest.mark.parametrize('extra', [
+  ('--object', 'tiangan.ding'), ('--all',), ('--validate-knowledge',),
+  ('--export-knowledge-json', 'out/k.json'), ('--export-knowledge-base',),
+])
+def test_knowledge_list_values_stands_alone(tmp_path: Path, extra: tuple[str, ...]) -> None:
+  result = _run(tmp_path, 'knowledge', '--list-values', 'topic', *extra)
+  assert result.returncode == 2 and '--list-values only lists values' in result.stderr
+  assert result.stdout == '' and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('chart_flag', [('--seed', '1'), ('--output-dir', 'out'), ('--export-knowledge-base',)])
+def test_legacy_knowledge_mode_still_rejects_chart_flags(tmp_path: Path, chart_flag: tuple[str, ...]) -> None:
+  result = _run(tmp_path, '--query-knowledge', *chart_flag)
+  assert result.returncode == 2 and 'Knowledge mode cannot be combined with chart input' in result.stderr
+  assert '提示：' not in result.stderr and list(tmp_path.iterdir()) == []
 
 
 def test_knowledge_bad_values_exit_with_an_error(tmp_path: Path) -> None:
@@ -251,7 +303,9 @@ def test_match_with_only_an_id_describes_it(tmp_path: Path, criterion_id: str) -
   assert info.definition in result.stdout and f'match {criterion_id} --birth-time' in result.stdout
   assert all(scope in result.stdout for scope in info.scopes)
   assert all(f'--transit-entry {entry}' in result.stdout for entry in info.transit_entries)
-  assert (f'性别门槛：{info.required_gender}' in result.stdout) == (info.required_gender is not None)
+  gate = info.required_gender
+  assert (gate is not None) == ('性别门槛：' in result.stdout)
+  assert gate is None or f'性别门槛：{gate.value}（--gender {gate}）' in result.stdout
   assert list(tmp_path.iterdir()) == []
 
 
@@ -274,9 +328,35 @@ def test_match_names_every_missing_input(tmp_path: Path, given: tuple[str, ...],
   assert list(tmp_path.iterdir()) == []
 
 
-def test_match_inputs_need_an_id(tmp_path: Path) -> None:
-  result = _run(tmp_path, 'match', '--gender', 'female')
-  assert result.returncode == 2 and 'criterion ID is required' in result.stderr
+EVALUATION_INPUTS = [
+  ('birth_time', ('--birth-time', '2000-01-03 12:00')), ('gender', ('--gender', 'female')),
+  ('observation_scope', ('--observation-scope', 'natal')), ('ganzhi_year', ('--ganzhi-year', '2024')),
+  ('transit_entry', ('--transit-entry', 'at_year')), ('gz_month', ('--gz-month', '午')),
+  ('solar_date', ('--solar-date', '2024-04-10')), ('solar_moment', ('--solar-moment', '2024-04-10T12:00:00')),
+  ('transit_kinds', ('--transit-kinds', 'liuri')), ('longitude', ('--longitude', '120')),
+  ('precision', ('--precision', 'hour')), ('civil_timezone', ('--civil-timezone', '+08:00')),
+  ('knowledge_source', ('--knowledge-source', 'src.json')), ('export_context_json', ('--export-context-json', 'out/m.json')),
+  ('include_reference_only', ('--include-reference-only',)),
+]
+
+
+def test_every_match_option_is_an_evaluation_input() -> None:
+  dests = {action.dest for action in _subcommand_parsers(_command_parser())['match']._actions}
+  assert dests - {'help', 'criterion'} == {dest for dest, _ in EVALUATION_INPUTS}
+
+
+@pytest.mark.parametrize('dest, args', EVALUATION_INPUTS, ids=[dest for dest, _ in EVALUATION_INPUTS])
+def test_match_evaluation_inputs_need_an_id(tmp_path: Path, dest: str, args: tuple[str, ...]) -> None:
+  result = _run(tmp_path, 'match', *args)
+  assert result.returncode == 2 and 'criterion ID is required for evaluation' in result.stderr
+  assert result.stdout == '' and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('dest, args', EVALUATION_INPUTS, ids=[dest for dest, _ in EVALUATION_INPUTS])
+def test_match_with_an_id_and_one_input_asks_for_the_rest(tmp_path: Path, dest: str, args: tuple[str, ...]) -> None:
+  result = _run(tmp_path, 'match', GUANSHA, *args)
+  assert result.returncode == 2 and 'missing --' in result.stderr and 'example: ' in result.stderr
+  assert result.stdout == '' and list(tmp_path.iterdir()) == []
 
 
 def test_match_new_form_equals_the_library(tmp_path: Path) -> None:
@@ -330,7 +410,11 @@ def test_inprocess_commands_cover_every_branch(monkeypatch: pytest.MonkeyPatch, 
     (('knowledge', '--object', 'tiangan.ding', '--export-knowledge-json', 'o2/k.json'), 0),
     (('knowledge', '--validate-knowledge'), 0),
     (('knowledge', '--export-knowledge-base', '--output-dir', 'o3'), 0),
-    (('knowledge', '--output-dir', 'o4'), 2), (('knowledge', '--knowledge-source', 'missing.json'), 2),
+    (('knowledge', '--output-dir', 'o4'), 2), (('knowledge', '--show-sources'), 2),
+    (('knowledge', '--export-knowledge-base', '--show-sources', '--output-dir', 'o6'), 0),
+    (('match', '--export-context-json', 'o7/m.json'), 2), (('--query-knowledge', '--seed', '1'), 2),
+    (('knowledge', '--list-values', 'topic', '--all'), 2),
+    (('knowledge', '--knowledge-source', 'missing.json'), 2),
     (('knowledge', '--list-values', 'topic', '--knowledge-source', 'missing.json'), 2),
     (('match',), 0), (('match', GUANSHA), 0), (('match', XINGCHONG), 0), (('match', 'nope'), 2),
     (('match', GUANSHA, '--gender', 'female'), 2), (('match', '--gender', 'female'), 2),
@@ -390,6 +474,16 @@ def test_documented_commands_parse_as_subcommands() -> None:
   assert len(commands) >= 3
   for tokens in commands:
     _check_doc_command(tokens)
+
+
+def test_doc_gate_covers_every_file_with_commands() -> None:
+  mentions = {
+    path.relative_to(ROOT).as_posix()
+    for path in (*ROOT.glob('*.md'), *(ROOT / 'docs').rglob('*.md'))
+    if any('run_interpreter.py' in block
+           for block in re.findall(r'```(?:sh|bash)\n(.*?)```', path.read_text(encoding='utf-8'), flags=re.DOTALL))
+  }
+  assert mentions <= set(DOC_FILES), mentions - set(DOC_FILES)
 
 
 @pytest.mark.parametrize('block', [
