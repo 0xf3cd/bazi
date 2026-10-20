@@ -2,6 +2,7 @@
 
 import io
 import tokenize
+import unicodedata
 from pathlib import Path
 from typing import Final
 
@@ -11,11 +12,12 @@ NAME_LIMIT: Final = 45
 
 
 def overlong_test_names(source: bytes) -> list[str]:
-  return [
-    token.string
+  names = (
+    unicodedata.normalize('NFKC', token.string)
     for token in tokenize.tokenize(io.BytesIO(source).readline)
-    if token.type == tokenize.NAME and token.string.startswith('test') and len(token.string) > NAME_LIMIT
-  ]
+    if token.type == tokenize.NAME
+  )
+  return [name for name in names if name.startswith('test') and len(name) > NAME_LIMIT]
 
 
 def python_files(root: Path) -> list[Path]:
@@ -34,6 +36,7 @@ def test_name_limit_flags_only_longer_names() -> None:
   at_limit = 'test_' + 'a' * 40
   over = 'test_' + 'a' * 41
   bare = 'test' + 'd' * 60
+  fullwidth = '\uff54\uff45\uff53\uff54_'
   assert (len(at_limit), len(over)) == (45, 46)
   source = '\n'.join([
     f'def {at_limit}(): pass',
@@ -50,8 +53,9 @@ def test_name_limit_flags_only_longer_names() -> None:
     f'from sample import helper as {over}f',
     f'for {over}g in []: pass',
     f'match helper:\n  case {over}h: pass',
+    f'def {fullwidth}{"a" * 41}i(): pass',
   ]).encode()
-  expected = [over, bare, over + 'b', over + 'c', over + 'd', over + 'e', over + 'f', over + 'g', over + 'h']
+  expected = [over, bare, over + 'b', over + 'c', over + 'd', over + 'e', over + 'f', over + 'g', over + 'h', over + 'i']
   assert sorted(overlong_test_names(source)) == sorted(expected)
 
 
