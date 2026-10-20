@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>集成开发 &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="查阅知识库" href="knowledge.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>集成开发<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>这一页面向把 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 接进自己程序的开发者：怎么导入、怎么保存和恢复三类 JSON 记录，以及前提匹配返回什么。
+公开接口的完整约定写在对应版本源码根目录的 <code class="docutils literal notranslate"><span class="pre">API_CONTRACT.md</span></code>，这里只走最常用的几条路径。</p>
+<section id="id2">
+<h2>导入<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p>库没有根类，也没有安装后的命令行入口。类型和函数从定义模块导入：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">bazi</span> <span class="k">as</span> <span class="n">bazi_module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">Bazi</span> <span class="ow">is</span> <span class="n">bazi_module</span><span class="o">.</span><span class="n">Bazi</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="kn">from</span><span class="w"> </span><span class="nn">bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span> <span class="k">as</span> <span class="n">root_class</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'ImportError'</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>True
+ImportError
+</pre></div>
+</div>
+<p>包的 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> 只列子模块，不是公开 API 的全集；<code class="docutils literal notranslate"><span class="pre">bazi.data_types</span></code> 等定义模块同样可以直接导入。
+带下划线的名字是包内约定，不承诺包外调用。</p>
+</section>
+<section id="id3">
+<h2>命盘文本与终端颜色<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 的 <code class="docutils literal notranslate"><span class="pre">basic_text</span></code>、<code class="docutils literal notranslate"><span class="pre">transit_text</span></code>、<code class="docutils literal notranslate"><span class="pre">chart_text</span></code> 返回纯文本，库本身不加颜色。
+要加颜色或标记，传一个 <code class="docutils literal notranslate"><span class="pre">TextStyle</span></code>：<code class="docutils literal notranslate"><span class="pre">glyph</span></code> 收到单个天干或地支，<code class="docutils literal notranslate"><span class="pre">day_master_mark</span></code> 收到“日主”二字，各自返回显示文字；
+两个字段都可以不设，不设就原样输出。钩子的返回值原样放进文本，库不做检查，版式由你负责。下面的例子给日主加上星号，再把每个字形用方括号括起来：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextStyle</span><span class="p">,</span> <span class="n">basic_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">style</span> <span class="o">=</span> <span class="n">TextStyle</span><span class="p">(</span><span class="n">glyph</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'[</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">]'</span><span class="p">,</span> <span class="n">day_master_mark</span><span class="o">=</span><span class="k">lambda</span> <span class="n">label</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'*</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">*'</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">basic_text</span><span class="p">(</span><span class="n">chart</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'日：'</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>日：  [壬] [阳水] &lt;*日主*&gt;      [午] [阳火] &lt;正财&gt;     [丁] [阴火] &lt;财&gt; [己] [阴土] &lt;官&gt;
+</pre></div>
+</div>
+<p>源码里的 <code class="docutils literal notranslate"><span class="pre">run_demo.py</span></code> 就是用终端颜色码实现这两个钩子的；传给钩子的永远是单个字形，不是整段文字。</p>
+</section>
+<section id="id4">
+<h2>三类记录，三种恢复<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>记录</p></th>
+<th class="head"><p>导出</p></th>
+<th class="head"><p>恢复</p></th>
+<th class="head"><p>版本</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>命盘</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziChart.json</span></code>（字典）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziChart.from_json(映射)</span></code></p></td>
+<td><p>无版本字段</p></td>
+</tr>
+<tr class="row-odd"><td><p>知识库</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">KnowledgeBase.export_json()</span></code>（文本）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">KnowledgeBase.from_json(文本)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema_version</span></code> 为 1</p></td>
+</tr>
+<tr class="row-even"><td><p>前提判别记录</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ContextResult.export_json()</span></code>（文本）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ContextResult.from_json(文本)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">record_version</span></code> 为 4</p></td>
+</tr>
+</tbody>
+</table>
+<p>三类记录不能互换。入口要求的 Python 类型不符时抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；同为文本的知识库与前提判别记录互换时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。
+<code class="docutils literal notranslate"><span class="pre">schema_version</span></code> 与 <code class="docutils literal notranslate"><span class="pre">record_version</span></code> 是各自独立的版本号，也不能互相替代。</p>
+<section id="id5">
+<h3>命盘：重算后核对，不是原结果的冻结<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h3>
+<p>命盘 JSON 保存输入、配置和派生字段。<code class="docutils literal notranslate"><span class="pre">from_json</span></code> 用这些输入和<strong>当前版本</strong>的实现重新构造命盘，
+再逐项核对记录里的派生字段，不一致就拒绝。所以它只保证与当前版本一致，不是历史结果的冻结副本。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">json</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">restored</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'json 相等'</span><span class="p">,</span> <span class="n">restored</span><span class="o">.</span><span class="n">json</span> <span class="o">==</span> <span class="n">chart</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'bazi 相等'</span><span class="p">,</span> <span class="n">restored</span><span class="o">.</span><span class="n">bazi</span> <span class="o">==</span> <span class="n">chart</span><span class="o">.</span><span class="n">bazi</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'命盘对象相等'</span><span class="p">,</span> <span class="n">restored</span> <span class="o">==</span> <span class="n">chart</span><span class="p">)</span>
+
+<span class="n">tampered</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">tampered</span><span class="p">[</span><span class="s1">'pillars'</span><span class="p">][</span><span class="s1">'year'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'甲子'</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">BaziChart</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">tampered</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'改动年柱被拒绝'</span><span class="p">)</span>
+
+<span class="n">extra</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">extra</span><span class="p">[</span><span class="s1">'version'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'2.0.0'</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">BaziChart</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'多余字段被拒绝'</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>json 相等 True
+bazi 相等 True
+命盘对象相等 False
+改动年柱被拒绝
+多余字段被拒绝
+</pre></div>
+</div>
+<p>恢复后的两个命盘可以 <code class="docutils literal notranslate"><span class="pre">json</span></code> 和 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 值相等，但 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code> 按对象身份比较，对象本身不相等。
+命盘 JSON 没有版本字段，也不要往里加自定义键；需要记录软件版本时，写在你自己的外层记录里。</p>
+</section>
+<section id="id6">
+<h3>知识库和前提判别记录<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h3>
+<p>知识库导出的是全部对象、情境、来源和条目的文本，恢复后与原库按内容和顺序相等。
+前提判别记录只接受 <code class="docutils literal notranslate"><span class="pre">record_version</span></code> 为 4，恢复时校验结构和值类型，<strong>不会重新判别</strong>，也不核对输入、观察与证据之间的事实一致性。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.context_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextProfile</span><span class="p">,</span> <span class="n">ContextResult</span><span class="p">,</span> <span class="n">evaluate_context</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">knowledge</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">knowledge_text</span> <span class="o">=</span> <span class="n">knowledge</span><span class="o">.</span><span class="n">export_json</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">knowledge_text</span><span class="p">)[</span><span class="s1">'schema_version'</span><span class="p">],</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">knowledge_text</span><span class="p">)</span> <span class="o">==</span> <span class="n">knowledge</span><span class="p">)</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">evaluate_context</span><span class="p">(</span>
+  <span class="n">chart</span><span class="p">,</span>
+  <span class="n">criterion_id</span><span class="o">=</span><span class="s1">'editorial.guansha_coexistence.v1'</span><span class="p">,</span>
+  <span class="n">profile</span><span class="o">=</span><span class="n">ContextProfile</span><span class="p">(</span><span class="s1">'natal'</span><span class="p">),</span>
+  <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">result_text</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">export_json</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">result_text</span><span class="p">)[</span><span class="s1">'record_version'</span><span class="p">],</span> <span class="n">ContextResult</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">result_text</span><span class="p">)</span> <span class="o">==</span> <span class="n">result</span><span class="p">)</span>
+
+<span class="n">old</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">result_text</span><span class="p">)</span>
+<span class="n">old</span><span class="p">[</span><span class="s1">'record_version'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">ContextResult</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">old</span><span class="p">))</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'旧版本被拒绝'</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">load</span> <span class="ow">in</span> <span class="p">(</span>
+  <span class="p">(</span><span class="s1">'知识库读判别记录'</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">result_text</span><span class="p">)),</span>
+  <span class="p">(</span><span class="s1">'判别记录读知识库'</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ContextResult</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">knowledge_text</span><span class="p">)),</span>
+<span class="p">):</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">load</span><span class="p">()</span>
+  <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">'ValueError'</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1 True
+4 True
+旧版本被拒绝
+知识库读判别记录 ValueError
+判别记录读知识库 ValueError
+</pre></div>
+</div>
+<p>不要只改 <code class="docutils literal notranslate"><span class="pre">record_version</span></code> 来“迁移”旧记录。旧记录不兼容时，保留原件，记下原来的软件版本和失败原因；
+需要当前规则下的结论时，用原始输入和配置重新构造命盘，再调用 <code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code>。库没有自动迁移接口。</p>
+</section>
+</section>
+<section id="id7">
+<h2>前提匹配：结构事实，不是判断<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code> 求值已注册的判据，例如“选定范围内正官与七杀各至少出现一次”。
+<code class="docutils literal notranslate"><span class="pre">entry_role='premise'</span></code> 的判据检查关联条目的完整前提；<code class="docutils literal notranslate"><span class="pre">entry_role='condition'</span></code> 只检查局部事实，关联条目作为条件参考放在 <code class="docutils literal notranslate"><span class="pre">related</span></code>，不能据此认定条目全文的前提成立。
+<code class="docutils literal notranslate"><span class="pre">SATISFIED</span></code> 表示该判据的结构事实成立，不是旺衰、格局或现实事件的判断，也不说明条文本身为真。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.context_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextProfile</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">evaluate_context</span>
+
+<span class="n">info</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="s1">'editorial.guansha_coexistence.v1'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">definition</span><span class="p">)</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">evaluate_context</span><span class="p">(</span>
+  <span class="n">chart</span><span class="p">,</span>
+  <span class="n">criterion_id</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">criterion_id</span><span class="p">,</span>
+  <span class="n">profile</span><span class="o">=</span><span class="n">ContextProfile</span><span class="p">(</span><span class="s1">'natal'</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">criterion</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">criterion</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">criterion</span><span class="o">.</span><span class="n">scope_complete</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">criterion</span><span class="o">.</span><span class="n">observations</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'默认返回的关联条目'</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">entries</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>选定范围内正官与七杀各至少出现一次。
+SATISFIED premise_satisfied True
+{'observed_coexistence': True, 'female': True}
+默认返回的关联条目 0
+</pre></div>
+</div>
+<p>默认只返回满足默认输出资格的条目，这里没有；加 <code class="docutils literal notranslate"><span class="pre">include_reference_only=True</span></code> 才会包含仅供参考的条目，
+但前提满足也不会授予默认输出资格。判据目录、绑定识别和条目的来源状态在知识教程里展开，见 <a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a>。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="knowledge.html" title="上一章">查阅知识库</a></li>
+      <li>Next: <a href="../api/index.html" title="下一章">API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

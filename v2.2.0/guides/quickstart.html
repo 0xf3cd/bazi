@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>快速开始 &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="配置与时间口径" href="configuration.html" />
+    <link rel="prev" title="bazi" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>快速开始<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>这一页带你排出第一张盘，读出四柱，并指出下一步该去哪一页。</p>
+<section id="id2">
+<h2>安装<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>bazi
+</pre></div>
+</div>
+<p>需要 Python 3.11 或更高版本。运行时只用标准库和随包数据，不联网。</p>
+<p>本页说明对应当前开发源码。已发布版本的接口以该版本 tag 下的文档为准，两者可能不同。</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>本库没有安装后的命令行入口，也没有 <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">bazi</span> <span class="pre">import</span> <span class="pre">Bazi</span></code> 这样的根类。
+请从定义模块导入，下面每个示例都这样写。</p>
+</div>
+</section>
+<section id="id3">
+<h2>排第一张盘<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p>示例用虚构的出生时间。<code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code> 接收无时区的民用时刻和性别，<code class="docutils literal notranslate"><span class="pre">BaziChart</span></code> 在它之上提供十神、大运等派生信息。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+
+<span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">)</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'四柱'</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pillar</span><span class="p">)</span> <span class="k">for</span> <span class="n">pillar</span> <span class="ow">in</span> <span class="n">bazi</span><span class="o">.</span><span class="n">pillars</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'日主'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">day_master</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'性别'</span><span class="p">,</span> <span class="n">chart</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">'gender'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'精度与后端'</span><span class="p">,</span> <span class="n">chart</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">'precision'</span><span class="p">],</span> <span class="n">chart</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">'backend'</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>四柱 庚午 辛巳 壬午 乙巳
+日主 壬
+性别 female
+精度与后端 day celestial
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bazi.pillars</span></code> 依次是年、月、日、时柱，每柱是一个 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code>。</p></li>
+<li><p>性别字符串接受 <code class="docutils literal notranslate"><span class="pre">男</span></code>、<code class="docutils literal notranslate"><span class="pre">女</span></code>、<code class="docutils literal notranslate"><span class="pre">male</span></code>、<code class="docutils literal notranslate"><span class="pre">female</span></code>；<code class="docutils literal notranslate"><span class="pre">chart.json</span></code> 里统一存拉丁写法。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chart.json</span></code> 是每次新建的字典，字段和配置都在里面。需要保存或交换时见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>把盘排成文本<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
+<code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 给出日元、出生时刻，以及四柱各自的十神、阴阳五行、藏干、纳音和十二长生。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">basic_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">basic_text</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>日元壬水，female，生于 1990-05-17
+
+出生时刻：1990-05-17T10:30:00
+
+     天干                  地支                  地支藏干
+年：  庚 [阳金] &lt;偏印&gt;      午 [阳火] &lt;正财&gt;     丁 [阴火] &lt;财&gt; 己 [阴土] &lt;官&gt;
+  -- 纳音：路旁土  -- 十二长生：胎
+月：  辛 [阴金] &lt;正印&gt;      巳 [阴火] &lt;偏财&gt;     丙 [阳火] &lt;才&gt; 庚 [阳金] &lt;枭&gt; 戊 [阳土] &lt;杀&gt;
+  -- 纳音：白蜡金  -- 十二长生：绝
+日：  壬 [阳水] &lt;日主&gt;      午 [阳火] &lt;正财&gt;     丁 [阴火] &lt;财&gt; 己 [阴土] &lt;官&gt;
+  -- 纳音：杨柳木  -- 十二长生：胎
+时：  乙 [阴木] &lt;伤官&gt;      巳 [阴火] &lt;偏财&gt;     丙 [阳火] &lt;才&gt; 庚 [阳金] &lt;枭&gt; 戊 [阳土] &lt;杀&gt;
+  -- 纳音：覆灯火  -- 十二长生：绝
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>返回值是字符串，前后各有一个换行，可以直接 <code class="docutils literal notranslate"><span class="pre">print</span></code>。需要完整的文本，包括流运，用 <code class="docutils literal notranslate"><span class="pre">chart_text(chart)</span></code>。</p></li>
+<li><p>流运文本把流年的数量交给调用方，见 <a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>；要加终端颜色，见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>在交互里看一眼<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p>在 Python 交互环境里直接输入对象，会看到一行摘要：出生时刻、性别和四柱。配置不是默认值，或是地点盘时，摘要才会多出对应部分。
+摘要不会去算流运，也不展开整张盘；它只用来探索和调试，格式以后可能调整，要保存或交换请用 <code class="docutils literal notranslate"><span class="pre">chart.json</span></code>（见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>）。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transit_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransitChart</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">chart</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'knowledge'</span><span class="p">,</span> <span class="s1">'transit_chart'</span><span class="p">)])</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">TransitChart</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">bazi</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">bazi</span><span class="o">.</span><span class="n">Bazi</span>
+<span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>BaziChart(Bazi(1990-05-17T10:30:00, female, 庚午 辛巳 壬午 乙巳))
+['knowledge', 'transit_chart']
+Expected BaziChart, got &lt;class 'bazi.bazi.Bazi'&gt;; wrap it with BaziChart(bazi)
+module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dir(bazi)</span></code> 会列出按需导入的子模块，导入后才加载它们；上面只筛出了其中两个，实际的列表更长。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。</p>
+</section>
+<section id="id6">
+<h2>默认值是一种选定的口径<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<p>没有传配置时，库使用 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 精度、<code class="docutils literal notranslate"><span class="pre">celestial</span></code> 历法后端，晚子时 23:00 换日柱，以立春换年。
+这是本库选定的一套取法，不是八字唯一的读法：精度、历法后端和流派取法各有其他选项。</p>
+<p>出生在交节日前后、子时前后，或要采用其他流派时，先读 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>，再决定要不要改默认值。</p>
+</section>
+<section id="id7">
+<h2>下一步<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p>想改变精度、换日点、大运年份口径，或使用真太阳时：<a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。</p></li>
+<li><p>想查流年、流月，或看原局与流运之间的关系：<a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>。</p></li>
+<li><p>想把结果存成 JSON、重新加载，或接入自己的程序：<a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p></li>
+<li><p>不排盘，只查知识条目和出处：<a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a>。</p></li>
+</ul>
+<p>逐个类和方法的签名在 API 参考中，入口见 <a class="reference internal" href="../api/bazi-bazi.html#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><code class="xref py py-class docutils literal notranslate"><span class="pre">Bazi</span></code></a> 和 <a class="reference internal" href="../api/bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziChart</span></code></a>。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="上一章">bazi</a></li>
+      <li>Next: <a href="configuration.html" title="下一章">配置与时间口径</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

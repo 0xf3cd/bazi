@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.transit_chart &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.transits" href="bazi-transits.html" />
+    <link rel="prev" title="bazi.school" href="bazi-school.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.transit_chart">
+<span id="bazi-transit-chart"></span><h1>bazi.transit_chart<a class="headerlink" href="#module-bazi.transit_chart" title="链接到此标题。">¶</a></h1>
+<p>按年、月、日期或时刻查询命盘流运。</p>
+<p>TransitChart 将查询坐标解释为相应的 TransitSet；各入口的支持范围与缺项条件分别说明。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">TransitChart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bazi_chart</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L23-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart" title="链接到此定义。">¶</a></dt>
+<dd><p>查询命盘流运与历法流运的统一入口。</p>
+<p>小运、大运来自 <code class="docutils literal notranslate"><span class="pre">TransitDatabase</span></code>；流年、流月、流日由历法推导。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>bazi_chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_date">
+<span class="sig-name descname"><span class="pre">at_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L124-L148"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_date" title="链接到此定义。">¶</a></dt>
+<dd><p>返回东八区无时区公历日期下的流运，出生前或历法范围外返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；地点盘出生
+下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>solar_date: (date) 公历日期，类型须为 date 本身，不接受 datetime 或 date 子类。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>TypeError: solar_date 的类型不是 date 本身。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>solar_date</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.date"><em>date</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitSet" title="bazi.transits.TransitSet"><em>TransitSet</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_moment">
+<span class="sig-name descname"><span class="pre">at_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_moment</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L150-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_moment" title="链接到此定义。">¶</a></dt>
+<dd><p>返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。
+地点盘出生下界取规范绝对时刻；查询时刻不做地点修正。
+查询、出生与大运边界均截到秒比较，相等归新。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>年/月按时刻所属节归属，流日按所选换日点解释；同一公历日可与 <code class="docutils literal notranslate"><span class="pre">at_date()</span></code> 结果不同。</p></li>
+<li><p>HOUR 原盘归属与秒级时刻流运是两种粒度；相等时辰窗口内可落在不同干支年。</p></li>
+<li><p>solar_moment 不是 datetime 时抛 TypeError；tzinfo 不是 None 时抛 ValueError。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>solar_moment: (datetime) 东八区无时区标签，微秒在比较前截去。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>solar_moment</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitSet" title="bazi.transits.TransitSet"><em>TransitSet</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_month">
+<span class="sig-name descname"><span class="pre">at_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gz_month</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L92-L122"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_month" title="链接到此定义。">¶</a></dt>
+<dd><p>返回干支月坐标下的流运，出生前或节令表范围外返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；
+大运按物理交运月边界解释。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>gz_year: (int) 干支年标签。</p></li>
+<li><p>gz_month: (Dizhi) 干支月的地支。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>TypeError: gz_year 不是 int，或 gz_month 不是 Dizhi。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gz_year</strong> (<em>int</em>)</p></li>
+<li><p><strong>gz_month</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitSet" title="bazi.transits.TransitSet"><em>TransitSet</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_year">
+<span class="sig-name descname"><span class="pre">at_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L74-L90"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_year" title="链接到此定义。">¶</a></dt>
+<dd><p>返回干支年坐标下的流运，早于出生干支年返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；大运按命盘所选年份标签视图解释。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>gz_year: (int) 干支年标签；远年份仍可返回流年，不以历法表上界截断。</p></li>
+</ul>
+<p>Note:</p>
+<ul class="simple">
+<li><p>TypeError: gz_year 不是 int。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gz_year</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-transits.html#bazi.transits.TransitSet" title="bazi.transits.TransitSet"><em>TransitSet</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.bazi_chart">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bazi_chart</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><span class="pre">BaziChart</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L48-L51"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.bazi_chart" title="链接到此定义。">¶</a></dt>
+<dd><p>直接共享的只读原盘；命盘自身已隔离非 frozen 的 Bazi，无需再复制。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.transit_chart.">
+<span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">流年大运</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L23-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart." title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="#bazi.transit_chart.TransitChart" title="bazi.transit_chart.TransitChart"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.transit_chart.TransitChart</span></code></a> 的别名。</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-school.html" title="上一章">bazi.school</a></li>
+      <li>Next: <a href="bazi-transits.html" title="下一章">bazi.transits</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

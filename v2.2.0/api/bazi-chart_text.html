@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.chart_text &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.calendar" href="bazi-calendar.html" />
+    <link rel="prev" title="bazi.bazi_chart" href="bazi-bazi_chart.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.chart_text">
+<span id="bazi-chart-text"></span><h1>bazi.chart_text<a class="headerlink" href="#module-bazi.chart_text" title="链接到此标题。">¶</a></h1>
+<p>命盘与流运的纯文本展示。</p>
+<p>basic_text、transit_text 与 chart_text 接收调用方给定的 BaziChart 并返回文本：不写文件，
+不依赖终端着色库，固定输入的输出可重放。终端着色由调用方通过 TextStyle 接入，默认纯文本。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.chart_text.TextStyle">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.chart_text.</span></span><span class="sig-name descname"><span class="pre">TextStyle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">glyph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day_master_mark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py#L23-L48"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.TextStyle" title="链接到此定义。">¶</a></dt>
+<dd><p>给展示文字加样式的钩子；两个字段都不设（<code class="docutils literal notranslate"><span class="pre">None</span></code>）时原样输出，得到纯文本。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>钩子的返回值原样放进文本，不做检查；版式由调用方负责。</p></li>
+<li><p>字段既不是 <code class="docutils literal notranslate"><span class="pre">None</span></code> 也不可调用时抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>glyph: (Callable[[Tiangan | Dizhi], str] | None) 干支字形。收到单个天干或地支，
+返回显示文字；干支（<code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code>）逐字形分别调用。</p></li>
+<li><p>day_master_mark: (Callable[[str], str] | None) 日柱天干十神位置的“日主”标记。</p></li>
+</ul>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>不设样式即纯文本：<code class="docutils literal notranslate"><span class="pre">basic_text(chart)</span></code>。</p></li>
+<li><p>脚本里用 <code class="docutils literal notranslate"><span class="pre">TextStyle(glyph=colored,</span> <span class="pre">day_master_mark=highlight)</span></code> 接入终端着色。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>glyph</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/collections.abc.html#collections.abc.Callable"><em>Callable</em></a><em>[</em><em>[</em><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em> | </em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em>]</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>day_master_mark</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/collections.abc.html#collections.abc.Callable"><em>Callable</em></a><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.chart_text.TextStyle.day_master_mark">
+<span class="sig-name descname"><span class="pre">day_master_mark</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/collections.abc.html#collections.abc.Callable"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.TextStyle.day_master_mark" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.chart_text.TextStyle.glyph">
+<span class="sig-name descname"><span class="pre">glyph</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/collections.abc.html#collections.abc.Callable"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.TextStyle.glyph" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.chart_text.basic_text">
+<span class="sig-prename descclassname"><span class="pre">bazi.chart_text.</span></span><span class="sig-name descname"><span class="pre">basic_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py#L98-L149"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.basic_text" title="链接到此定义。">¶</a></dt>
+<dd><p>命盘的基本展示：日元、出生时刻、四柱及其十神、阴阳五行、藏干、纳音与十二长生。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>文本以换行开头、换行结尾，可直接 <code class="docutils literal notranslate"><span class="pre">print</span></code>；地点盘另列民用、真太阳与节气表出生时刻。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>chart: (BaziChart) 待展示的命盘。</p></li>
+<li><p>style: (TextStyle | None) 着色钩子；<code class="docutils literal notranslate"><span class="pre">None</span></code> 为纯文本。</p></li>
+</ul>
+<p>Return: (str) 纯文本展示。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#bazi.chart_text.TextStyle" title="bazi.chart_text.TextStyle"><em>TextStyle</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.chart_text.transit_text">
+<span class="sig-prename descclassname"><span class="pre">bazi.chart_text.</span></span><span class="sig-name descname"><span class="pre">transit_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dayun_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">liunian_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py#L152-L224"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.transit_text" title="链接到此定义。">¶</a></dt>
+<dd><p>命盘的运限展示：出生前后的节、交运时间、大运、小运与流年。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>流年可以无限延续，必须限定数量：大运取前 <code class="docutils literal notranslate"><span class="pre">dayun_count</span></code> 步，流年取自出生干支年起的
+<code class="docutils literal notranslate"><span class="pre">liunian_count</span></code> 年；小运是有限序列，全部列出。</p></li>
+<li><p>节与大运区间用节气表时刻（UTC+08:00），地点盘也不采用真太阳时。</p></li>
+<li><p>出生后没有大运起于历法支持范围内时（如 HKO 后端的 2099 年末出生），抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，
+与 <code class="docutils literal notranslate"><span class="pre">chart.xiaoyun</span></code>、<code class="docutils literal notranslate"><span class="pre">chart.json</span></code> 一致；<code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 不受影响。</p></li>
+<li><p>文本以换行开头、换行结尾，可直接 <code class="docutils literal notranslate"><span class="pre">print</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>chart: (BaziChart) 待展示的命盘。</p></li>
+<li><p>dayun_count: (int) 列出的大运步数，不小于 0。</p></li>
+<li><p>liunian_count: (int) 列出的流年数，不小于 0。</p></li>
+<li><p>style: (TextStyle | None) 着色钩子；<code class="docutils literal notranslate"><span class="pre">None</span></code> 为纯文本。</p></li>
+</ul>
+<p>Return: (str) 纯文本展示。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p></li>
+<li><p><strong>dayun_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>liunian_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#bazi.chart_text.TextStyle" title="bazi.chart_text.TextStyle"><em>TextStyle</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.chart_text.chart_text">
+<span class="sig-prename descclassname"><span class="pre">bazi.chart_text.</span></span><span class="sig-name descname"><span class="pre">chart_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dayun_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">liunian_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/chart_text.py#L227-L250"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.chart_text.chart_text" title="链接到此定义。">¶</a></dt>
+<dd><p>命盘的完整文本展示：<code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 之后接 <code class="docutils literal notranslate"><span class="pre">transit_text</span></code>。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>chart: (BaziChart) 待展示的命盘。</p></li>
+<li><p>dayun_count: (int) 列出的大运步数，不小于 0。</p></li>
+<li><p>liunian_count: (int) 列出的流年数，不小于 0。</p></li>
+<li><p>style: (TextStyle | None) 着色钩子；<code class="docutils literal notranslate"><span class="pre">None</span></code> 为纯文本。</p></li>
+</ul>
+<p>Return: (str) 纯文本展示。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p></li>
+<li><p><strong>dayun_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>liunian_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#bazi.chart_text.TextStyle" title="bazi.chart_text.TextStyle"><em>TextStyle</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-bazi_chart.html" title="上一章">bazi.bazi_chart</a></li>
+      <li>Next: <a href="bazi-calendar.html" title="下一章">bazi.calendar</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

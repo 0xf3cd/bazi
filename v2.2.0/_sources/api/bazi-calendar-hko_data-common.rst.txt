@@ -1,0 +1,36 @@
+bazi.calendar.hko_data.common
+=============================
+
+.. automodule:: bazi.calendar.hko_data.common
+
+.. autodata:: bazi.calendar.hko_data.common.START_YEAR
+   :no-value:
+
+.. autodata:: bazi.calendar.hko_data.common.END_YEAR
+   :no-value:
+
+.. autofunction:: bazi.calendar.hko_data.common.get_data_base_path
+
+.. autofunction:: bazi.calendar.hko_data.common.get_raw_txt_file_paths
+
+.. autofunction:: bazi.calendar.hko_data.common.raw_data_ready
+
+.. autofunction:: bazi.calendar.hko_data.common.get_jieqi_encoded_data_path
+
+.. autofunction:: bazi.calendar.hko_data.common.get_lunardate_encoded_data_path
+
+.. autofunction:: bazi.calendar.hko_data.common.encoded_data_ready
+
+.. autodata:: bazi.calendar.hko_data.common.jieqi_list_in_traditional_chinese
+   :no-value:
+
+.. autodata:: bazi.calendar.hko_data.common.twelve_months_in_traditional_chinese
+   :no-value:
+
+.. autofunction:: bazi.calendar.hko_data.common.int_to_bytes
+
+.. autofunction:: bazi.calendar.hko_data.common.bytes_to_int
+
+.. autofunction:: bazi.calendar.hko_data.common.date_to_bytes
+
+.. autofunction:: bazi.calendar.hko_data.common.bytes_to_date

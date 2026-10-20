@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>关系与流运 &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="查阅知识库" href="knowledge.html" />
+    <link rel="prev" title="配置与时间口径" href="configuration.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>关系与流运<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>这一页做两件事：取某一年的流运，查它与原局婚姻宫的地支关系；再从命盘取有限几步大运和流年。
+结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。</p>
+<section id="id2">
+<h2>查一年的流运和一个关系<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 按干支年、月、日期或时刻返回一个 <code class="docutils literal notranslate"><span class="pre">TransitSet</span></code>；<code class="docutils literal notranslate"><span class="pre">RelationshipAnalyzer</span></code> 对它做关系查询。
+下面取 2024 年的流运，查它与婚姻宫的地支关系。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">DizhiRelation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transit_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransitChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transits</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransitKind</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">year</span> <span class="o">=</span> <span class="n">TransitChart</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">at_year</span><span class="p">(</span><span class="mi">2024</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">year</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">year</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">kind</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">year</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">year</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">TransitKind</span><span class="o">.</span><span class="n">LIUNIAN</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+
+<span class="n">found</span> <span class="o">=</span> <span class="n">RelationshipAnalyzer</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">transits</span><span class="o">.</span><span class="n">house_relations</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">relation</span><span class="p">,</span> <span class="n">combos</span> <span class="ow">in</span> <span class="n">found</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+  <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">combos</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">relation</span><span class="p">,</span> <span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dizhi</span><span class="p">)</span> <span class="k">for</span> <span class="n">dizhi</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">combo</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">dizhi</span><span class="p">:</span> <span class="n">dizhi</span><span class="o">.</span><span class="n">index</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">DizhiRelation</span><span class="o">.</span><span class="n">害</span> <span class="ow">is</span> <span class="n">DizhiRelation</span><span class="o">.</span><span class="n">HAI</span><span class="p">,</span> <span class="n">DizhiRelation</span><span class="o">.</span><span class="n">害</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{'dayun': '丁丑', 'liunian': '甲辰'}
+['dayun', 'liunian']
+{'liunian': '甲辰'}
+害 丑午
+生 丑午
+生 辰午
+True 害
+</pre></div>
+</div>
+<p>几点读法：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">at_year</span></code> 在出生年之前返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>，所以先判断再用。返回的 <code class="docutils literal notranslate"><span class="pre">TransitSet</span></code> 只含当前有的种类（这里是大运和流年），
+缺项就是 <code class="docutils literal notranslate"><span class="pre">None</span></code>。<code class="docutils literal notranslate"><span class="pre">select</span></code> 要求指定种类全部存在，缺项抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransitKind</span></code> 是流运种类的枚举，成员值是英文小写的拼音；<code class="docutils literal notranslate"><span class="pre">year.json</span></code> 的键就是这些值，干支用中文。</p></li>
+<li><p>关系的键是 <code class="docutils literal notranslate"><span class="pre">DizhiRelation</span></code> 成员，有拉丁名和中文别名，二者是同一个对象（<code class="docutils literal notranslate"><span class="pre">DizhiRelation.害</span> <span class="pre">is</span> <span class="pre">DizhiRelation.HAI</span></code>）。</p></li>
+<li><p>每个组合是一个 <code class="docutils literal notranslate"><span class="pre">frozenset</span></code> 的地支，不带次序，所以示例先按枚举序排序再打印。
+各关系的取法与流派定义看 <a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziSchool</span></code></a> 和 <a class="reference internal" href="../api/bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><code class="xref py py-class docutils literal notranslate"><span class="pre">DizhiRelation</span></code></a>。</p></li>
+<li><p>结果是不可变的：<code class="docutils literal notranslate"><span class="pre">TransitSet</span></code> 是 frozen dataclass，关系结果是冻结映射，赋值会抛错。</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">DizhiRelation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transit_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransitChart</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">year</span> <span class="o">=</span> <span class="n">TransitChart</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">at_year</span><span class="p">(</span><span class="mi">2024</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">year</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<span class="n">found</span> <span class="o">=</span> <span class="n">RelationshipAnalyzer</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">transits</span><span class="o">.</span><span class="n">house_relations</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rewrite_year</span><span class="p">():</span>
+  <span class="n">year</span><span class="o">.</span><span class="n">liunian</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rewrite_found</span><span class="p">():</span>
+  <span class="n">found</span><span class="p">[</span><span class="n">DizhiRelation</span><span class="o">.</span><span class="n">害</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mutate</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'改流运'</span><span class="p">,</span> <span class="n">rewrite_year</span><span class="p">),</span> <span class="p">(</span><span class="s1">'改关系'</span><span class="p">,</span> <span class="n">rewrite_found</span><span class="p">)):</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">mutate</span><span class="p">()</span>
+  <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>改流运 FrozenInstanceError
+改关系 TypeError
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>取有限的几步大运和流年<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">chart.dayun</span></code> 和 <code class="docutils literal notranslate"><span class="pre">chart.liunian</span></code> 是生成器属性，<strong>每次访问都新建一个</strong>。三点要记住：</p>
+<ul class="simple">
+<li><p>存进变量的生成器会被耗尽，之后再取是空的。要重新开始就再访问一次属性。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chart.dayun</span></code> 是有限的，数量取决于出生时间和历法后端的节气范围。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chart.liunian</span></code> 可以无限延续，不要对它直接调用 <code class="docutils literal notranslate"><span class="pre">list</span></code> 或 <code class="docutils literal notranslate"><span class="pre">tuple</span></code>。用 <code class="docutils literal notranslate"><span class="pre">itertools.islice</span></code> 取需要的个数。</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">islice</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">liunian</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi_year</span><span class="p">,</span> <span class="n">step</span><span class="o">.</span><span class="n">ganzhi</span><span class="p">)</span>
+
+<span class="n">dayuns</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">dayun</span>
+<span class="n">first_two</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">dayuns</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">next_two</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">dayuns</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi_year</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">first_two</span><span class="p">],</span> <span class="p">[</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi_year</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">next_two</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">first_two</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start_moment</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span> <span class="n">first_two</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">end_moment</span><span class="o">.</span><span class="n">date</span><span class="p">())</span>
+
+<span class="nb">list</span><span class="p">(</span><span class="n">dayuns</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'耗尽后'</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">dayuns</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'重新访问'</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">dayun</span><span class="p">))</span><span class="o">.</span><span class="n">ganzhi_year</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'小运'</span><span class="p">,</span> <span class="p">[(</span><span class="n">step</span><span class="o">.</span><span class="n">xusui</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi</span><span class="p">))</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">chart</span><span class="o">.</span><span class="n">xiaoyun</span><span class="p">[:</span><span class="mi">2</span><span class="p">]])</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1990 庚午
+1991 辛未
+1992 壬申
+[1994, 2004] [2014, 2024]
+1994-02-23 2004-02-23
+耗尽后 []
+重新访问 1994
+小运 [(1, '甲辰'), (2, '癸卯')]
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">chart.xiaoyun</span></code> 不同：它是缓存的元组，可以反复遍历。大运的 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code> 是起运年份标签，
+每步覆盖 <code class="docutils literal notranslate"><span class="pre">[start_moment,</span> <span class="pre">end_moment)</span></code>，不表示这步大运占据整个标签年；标签规则见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。</p>
+<p>需要的是文字而不是对象时，<code class="docutils literal notranslate"><span class="pre">bazi.chart_text.transit_text</span></code> 把节、交运时间、大运、小运和流年排好。
+流年可以无限延续，所以数量由你给：<code class="docutils literal notranslate"><span class="pre">dayun_count</span></code> 取前几步大运，<code class="docutils literal notranslate"><span class="pre">liunian_count</span></code> 取从出生干支年起的几年，默认分别是 10 和 100。
+小运是有限的，全部列出。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">transit_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">transit_text</span><span class="p">(</span><span class="n">chart</span><span class="p">,</span> <span class="n">dayun_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">liunian_count</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>出生时刻前一节：立夏 - 1990-05-06T02:35:27
+出生时刻后一节：芒种 - 1990-06-06T06:46:19
+大运数节依据（逆排）：立夏 - 1990-05-06T02:35:27
+交运时间： 1994-02-23T20:46:55
+
+大运：            天干                 地支                 地支藏干
+1994年标签：       庚 [阳金] &lt;偏印&gt;     辰 [阳土] &lt;七杀&gt;    戊 [阳土] &lt;杀&gt; 乙 [阴木] &lt;伤&gt; 癸 [阴水] &lt;劫&gt;
+               -- 公历区间：1994-02-23 20:46 ～ 2004-02-23 20:46
+               -- 纳音：白蜡金  -- 十二长生：墓
+
+2004年标签：       己 [阴土] &lt;正官&gt;     卯 [阴木] &lt;伤官&gt;    乙 [阴木] &lt;伤&gt;
+               -- 公历区间：2004-02-23 20:46 ～ 2014-02-23 20:46
+               -- 纳音：城头土  -- 十二长生：死
+
+小运：
+1岁-甲辰  2岁-癸卯  3岁-壬寅  4岁-辛丑  5岁-庚子
+
+流年：
+1990-庚午  1991-辛未  1992-壬申  1993-癸酉  1994-甲戌  1995-乙亥  1996-丙子  1997-丁丑  1998-戊寅  1999-己卯
+</pre></div>
+</div>
+<p>地点盘的节与大运区间仍用节气表时刻，文本会注明这一点，不采用真太阳时。</p>
+</section>
+<section id="id4">
+<h2>范围提醒<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p>月、日期和时刻查询按东八区无时区标签和物理节气边界；<code class="docutils literal notranslate"><span class="pre">at_moment</span></code> 还要求 <code class="docutils literal notranslate"><span class="pre">celestial</span></code> 系后端和 <code class="docutils literal notranslate"><span class="pre">HOUR</span></code> / <code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 精度，否则返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">at_year</span></code> 在出生年之前返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>，远年份仍可返回流年，不能用它的 <code class="docutils literal notranslate"><span class="pre">None</span></code> 判断历法表上界。月、日期与时刻查询不满足各自支持范围时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；类型与取值校验另见各入口的 API 说明。</p></li>
+<li><p>这里的关系和神煞只说明“在所选流派的定义下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
+要看某条知识条目的前提在这张盘上是否成立，见 <a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a>。</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="configuration.html" title="上一章">配置与时间口径</a></li>
+      <li>Next: <a href="knowledge.html" title="下一章">查阅知识库</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

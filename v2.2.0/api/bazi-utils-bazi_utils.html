@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.utils.bazi_utils &#8212; bazi · v2.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.utils.dizhi_utils" href="bazi-utils-dizhi_utils.html" />
+    <link rel="prev" title="bazi.utils" href="bazi-utils.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.utils.bazi_utils">
+<span id="bazi-utils-bazi-utils"></span><h1>bazi.utils.bazi_utils<a class="headerlink" href="#module-bazi.utils.bazi_utils" title="链接到此标题。">¶</a></h1>
+<p>排盘所用的干支、十神、藏干、纳音与十二长生计算。</p>
+<p>各函数接收相应领域值；组合成完整命盘使用 Bazi 与 BaziChart。</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.ganzhi_of_day">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">ganzhi_of_day</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L15-L33"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.ganzhi_of_day" title="链接到此定义。">¶</a></dt>
+<dd><p>返回输入日期的日柱。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dt: (date) 公历日期。</p></li>
+</ul>
+<p>Return: (Ganzhi) 日柱。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dt</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.date"><em>date</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.ganzhi_of_year">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">ganzhi_of_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L50-L62"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.ganzhi_of_year" title="链接到此定义。">¶</a></dt>
+<dd><p>输入干支历年份，返回对应的天干和地支。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>ganzhi_year: (int) 干支年坐标。</p></li>
+</ul>
+<p>Return: (Ganzhi) 对应年份的干支。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ganzhi_year</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.month_tiangan">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">month_tiangan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year_tiangan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month_dizhi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L65-L84"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.month_tiangan" title="链接到此定义。">¶</a></dt>
+<dd><p>输入年柱天干和月柱地支，返回月柱天干。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>year_tiangan: (Tiangan) 年柱天干。</p></li>
+<li><p>month_dizhi: (Dizhi) 月柱地支，即月令。</p></li>
+</ul>
+<p>Return: (Tiangan) 月柱天干。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year_tiangan</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>month_dizhi</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.hour_tiangan">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">hour_tiangan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">day_tiangan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hour_dizhi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L87-L106"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.hour_tiangan" title="链接到此定义。">¶</a></dt>
+<dd><p>输入日柱天干和时柱地支，返回时柱天干。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>day_tiangan: (Tiangan) 日柱天干。</p></li>
+<li><p>hour_dizhi: (Dizhi) 时柱地支。</p></li>
+</ul>
+<p>Return: (Tiangan) 时柱天干。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>day_tiangan</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>hour_dizhi</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.tiangan_traits">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">tiangan_traits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L109-L121"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.tiangan_traits" title="链接到此定义。">¶</a></dt>
+<dd><p>输入天干，返回它的五行和阴阳。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg: (Tiangan) 待查天干。</p></li>
+</ul>
+<p>Return: (TraitTuple) 天干的五行和阴阳。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tg</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><em>TraitTuple</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.dizhi_traits">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">dizhi_traits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L124-L136"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.dizhi_traits" title="链接到此定义。">¶</a></dt>
+<dd><p>输入地支，返回它的五行和阴阳。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz: (Dizhi) 待查地支。</p></li>
+</ul>
+<p>Return: (TraitTuple) 地支的五行和阴阳。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dz</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><em>TraitTuple</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.traits">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">traits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg_or_dz</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L139-L155"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.traits" title="链接到此定义。">¶</a></dt>
+<dd><p>输入天干或者地支，返回它的五行和阴阳。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg_or_dz: (Tiangan | Dizhi) 待查天干或地支。</p></li>
+</ul>
+<p>Return: (TraitTuple) 对应的五行和阴阳。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tg_or_dz</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em> | </em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><em>TraitTuple</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.hidden_tiangans">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">hidden_tiangans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L158-L170"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.hidden_tiangans" title="链接到此定义。">¶</a></dt>
+<dd><p>输入地支，返回其中的藏干，以及各藏干的百分比。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz: (Dizhi) 待查地支。</p></li>
+</ul>
+<p>Return: (HiddenTianganDict) 藏干及其百分比。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dz</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.HiddenTianganDict" title="bazi.data_types.HiddenTianganDict"><em>HiddenTianganDict</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.shishen">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">shishen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">day_master</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L173-L236"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.shishen" title="链接到此定义。">¶</a></dt>
+<dd><p>输入日主和某天干或者地支，返回天干或地支对应的十神。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>day_master: (Tiangan) 日主天干。</p></li>
+<li><p>other: (Tiangan | Dizhi) 待查天干或地支；地支取主气。</p></li>
+</ul>
+<p>Return: (Shishen) 对应十神。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>shishen(Tiangan(&quot;甲&quot;), Tiangan(&quot;甲&quot;)) -&gt; Shishen(&quot;比肩&quot;) # 甲为甲的比肩。</p></li>
+<li><p>shishen(Tiangan(&quot;甲&quot;), Dizhi(&quot;寅&quot;)) -&gt; Shishen(&quot;比肩&quot;)  # 寅为甲的比肩。</p></li>
+<li><p>shishen(Tiangan(&quot;壬&quot;), Dizhi(&quot;戌&quot;)) -&gt; Shishen(&quot;七杀&quot;)  # 戌为壬的七杀。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>day_master</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em> | </em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><em>Shishen</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.nayin_str">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">nayin_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L239-L261"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.nayin_str" title="链接到此定义。">¶</a></dt>
+<dd><p>返回六十甲子干支对应的纳音；不属于六十甲子的组合抛出 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。
+<code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 本身允许全部 120 种天干、地支组合，本入口单独检查纳音的适用性。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>gz: (Ganzhi) 待查纳音的干支。</p></li>
+</ul>
+<p>Return: (str) 对应的纳音。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>nayin_str(Ganzhi.from_str(&quot;甲子&quot;)) -&gt; &quot;海中金&quot;</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gz</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.shier_zhangsheng">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">shier_zhangsheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L264-L285"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.shier_zhangsheng" title="链接到此定义。">¶</a></dt>
+<dd><p>输入天干和地支，返回对应的十二长生。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg: (Tiangan) 待查天干。</p></li>
+<li><p>dz: (Dizhi) 待查地支。</p></li>
+</ul>
+<p>Return: (ShierZhangsheng) 对应的十二长生。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>shier_zhangsheng(Tiangan.甲, Dizhi.子) -&gt; ShierZhangsheng.沐浴</p></li>
+<li><p>shier_zhangsheng(Tiangan.丙, Dizhi.午) -&gt; ShierZhangsheng.帝旺</p></li>
+<li><p>shier_zhangsheng(Tiangan.辛, Dizhi.丑) -&gt; ShierZhangsheng.养</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>dz</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-shier_zhangsheng.html#bazi.defines.shier_zhangsheng.ShierZhangsheng" title="bazi.defines.shier_zhangsheng.ShierZhangsheng"><em>ShierZhangsheng</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.from_shier_zhangsheng">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">from_shier_zhangsheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">place</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L288-L309"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.from_shier_zhangsheng" title="链接到此定义。">¶</a></dt>
+<dd><p>输入天干和十二长生，返回对应的地支，即 <code class="docutils literal notranslate"><span class="pre">shier_zhangsheng</span></code> 的反查。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg: (Tiangan) 待查天干。</p></li>
+<li><p>place: (ShierZhangsheng) 十二长生位。</p></li>
+</ul>
+<p>Return: (Dizhi) 对应地支。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>from_shier_zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) -&gt; Dizhi.子</p></li>
+<li><p>from_shier_zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) -&gt; Dizhi.午</p></li>
+<li><p>from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) -&gt; Dizhi.丑</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>place</strong> (<a class="reference internal" href="bazi-defines-shier_zhangsheng.html#bazi.defines.shier_zhangsheng.ShierZhangsheng" title="bazi.defines.shier_zhangsheng.ShierZhangsheng"><em>ShierZhangsheng</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.bazi_utils.lu">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.bazi_utils.</span></span><span class="sig-name descname"><span class="pre">lu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/bazi_utils.py#L312-L327"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.bazi_utils.lu" title="链接到此定义。">¶</a></dt>
+<dd><p>输入天干，返回该天干对应的禄。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg: (Tiangan) 待查天干。</p></li>
+</ul>
+<p>Return: (Dizhi) 禄位地支。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>lu(Tiangan.甲) -&gt; Dizhi.寅</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tg</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-utils.html" title="上一章">bazi.utils</a></li>
+      <li>Next: <a href="bazi-utils-dizhi_utils.html" title="下一章">bazi.utils.dizhi_utils</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

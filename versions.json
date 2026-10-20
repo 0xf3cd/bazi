@@ -9,6 +9,12 @@
       "digest": "443b8b78bbfbc3e7db5faf465e4271610709fd5b3230c2a153981765e7fd1dca"
     },
     {
+      "label": "v2.2.0",
+      "state": "archived",
+      "commit": "aa51db99a2cc1a852b8acdf2efa073162cdc57b9",
+      "digest": "c2626414720f8b19533cc5b74c6cee61906de27227e29ddf55d9c79fb5086d0f"
+    },
+    {
       "label": "v2.1.0",
       "state": "ready",
       "commit": "7826c88e0139491ca010ca8d339c80071e10cc01",
