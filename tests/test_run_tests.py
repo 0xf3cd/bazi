@@ -1,12 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import runpy
+import ast
+import re
 import sys
 import os
 import random
 import shutil
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -168,6 +170,7 @@ def test_docs_registration(monkeypatch: pytest.MonkeyPatch, args: list[str], res
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', *args])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   main = runner['main']
+  monkeypatch.setitem(main.__globals__, 'check_doc_environment', Mock())
   proc = Mock(return_value=7)
   monkeypatch.setitem(main.__globals__, 'run_proc_and_print', proc)
   with pytest.raises(SystemExit) as caught:
@@ -219,3 +222,174 @@ def test_pytest_args_keep_replay_details(monkeypatch: pytest.MonkeyPatch) -> Non
   assert run_tests() == 0
   arguments = main.call_args.args[0]
   assert '-x' in arguments and '--showlocals' in arguments
+
+
+@pytest.mark.parametrize('arguments, docs, tests', [
+  (['-a', '--runtime-only'], False, True),
+  (['-a', '-nt', '--runtime-only'], False, True),
+  (['-nt', '--runtime-only'], False, False),
+  (['-nt', '-docs'], True, False),
+])
+def test_runtime_scope_is_explicit(
+  monkeypatch: pytest.MonkeyPatch, arguments: list[str], docs: bool, tests: bool,
+) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', *arguments])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert runner['do_docs'] is docs
+  assert runner['skip_test'] is not tests
+  if '-a' in arguments:
+    for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_demo', 'do_interpreter', 'do_osmoke', 'do_package'):
+      assert runner[flag] is True, flag
+
+
+@pytest.mark.parametrize('flag', ['-docs', '--docs'])
+def test_runtime_scope_rejects_requested_docs(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '--runtime-only', flag])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert caught.value.code == 2
+
+
+@pytest.mark.parametrize('runtime', [False, True])
+def test_runtime_scope_is_reported(
+  monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], runtime: bool,
+) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', *(['--runtime-only'] if runtime else [])])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  report = runner['print_args']
+  report()
+  output = re.sub(r'\x1b\[[0-9;]*m', '', capsys.readouterr().out)
+  assert f'-- runtime_only:     {runtime}' in output
+
+
+@pytest.mark.parametrize('version, missing', [
+  ((3, 11), None), ((3, 12), 'sphinx'), ((3, 14), 'myst_parser'),
+  ((3, 12), 'docutils'), ((3, 12), 'markdown_it'),
+])
+def test_doc_preflight_precedes_all_tasks(
+  monkeypatch: pytest.MonkeyPatch, version: tuple[int, int], missing: str | None,
+) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-a'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  main = runner['main']
+  tasks = Mock()
+  monkeypatch.setitem(main.__globals__, 'run_subtasks', tasks)
+  monkeypatch.setitem(main.__globals__, 'find_spec', lambda name: None if name == missing else object())
+  monkeypatch.setattr(sys, 'version_info', version)
+  with pytest.raises(SystemExit) as caught:
+    main()
+  assert caught.value.code == 2
+  tasks.assert_not_called()
+
+
+@pytest.mark.parametrize('version', [(3, 12), (3, 14)])
+def test_doc_preflight_accepts_complete_env(monkeypatch: pytest.MonkeyPatch, version: tuple[int, int]) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  check = runner['check_doc_environment']
+  probe = Mock(return_value=object())
+  monkeypatch.setitem(check.__globals__, 'find_spec', probe)
+  monkeypatch.setattr(sys, 'version_info', version)
+  check()
+  assert [call.args[0] for call in probe.call_args_list] == list(runner['DOC_MODULES'])
+
+
+@pytest.mark.parametrize('path, expected', [
+  ('docs/_ext/extension.py', True), ('tests/docs/test_tool.py', True),
+  ('run_docs.py', True), ('run_doc_checks.py', True),
+  ('bazi/docs/feature.py', False), ('tests/docs_extra.py', False),
+  ('tests/test_docs_site.py', False), ('tests/test_docs_workflows.py', False),
+  ('run_docs_extra.py', False),
+])
+def test_doc_ownership_uses_path_components(
+  monkeypatch: pytest.MonkeyPatch, path: str, expected: bool,
+) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  for path_type in (PurePosixPath, PureWindowsPath):
+    assert runner['is_doc_tool'](path_type(path)) is expected
+
+
+def test_runtime_mypy_has_all_non_doc_targets(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  names = (
+    'run_demo.py', 'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
+    'tests/test_runtime.py', 'tests/nested/test_more.py', 'tests/docs/test_tool.py',
+    'docs/_ext/tool.py', 'bazi/__init__.py',
+  )
+  for name in names:
+    target = tmp_path / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.touch()
+  targets = runner['mypy_targets'](tmp_path, True)
+  assert set(targets) == {
+    tmp_path / name for name in ('bazi', 'run_demo.py', 'run_docs_site.py', 'tests/test_runtime.py', 'tests/nested/test_more.py')
+  }
+  assert runner['mypy_targets'](tmp_path, False) == (tmp_path,)
+
+
+def test_runtime_pytest_uses_the_owned_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '--runtime-only'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  run_tests = runner['run_tests']
+  main = Mock(return_value=0)
+  monkeypatch.setitem(run_tests.__globals__, 'pytest', SimpleNamespace(main=main))
+  assert run_tests() == 0
+  arguments = main.call_args.args[0]
+  assert [arg for arg in arguments if arg.startswith('--ignore=')] == [
+    f'--ignore={Path(__file__).parents[1] / "tests/docs"}',
+  ]
+
+
+def doc_dependents(root: Path, modules: tuple[str, ...]) -> set[Path]:
+  files = set(root.glob('*.py'))
+  for directory in ('bazi', 'tests', 'docs'):
+    files.update((root / directory).rglob('*.py'))
+  imports: dict[Path, set[str]] = {}
+  aliases: dict[str, set[Path]] = {}
+  for path in files:
+    aliases.setdefault(path.stem, set()).add(path)
+    aliases.setdefault('.'.join(path.relative_to(root).with_suffix('').parts), set()).add(path)
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding='utf-8-sig'))):
+      if isinstance(node, ast.Import):
+        names.update(alias.name for alias in node.names)
+      elif isinstance(node, ast.ImportFrom) and node.module is not None and not node.level:
+        names.add(node.module)
+      elif (
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'importorskip'
+        and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
+      ):
+        names.add(node.args[0].value)
+    imports[path] = names
+  dependent = {path for path, names in imports.items() if any(name.split('.')[0] in modules for name in names)}
+  while True:
+    updated = dependent | {
+      path for path, names in imports.items() if any(aliases.get(name, set()) & dependent for name in names)
+    }
+    if updated == dependent:
+      return {path.relative_to(root) for path in dependent}
+    dependent = updated
+
+
+def test_doc_import_closure_stays_owned(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+  root = Path(__file__).parents[1]
+  runner = runpy.run_path(str(root / 'run_tests.py'))
+  dependent = doc_dependents(root, runner['DOC_MODULES'])
+  assert {Path('run_docs.py'), Path('run_doc_checks.py')} <= dependent
+  assert all(runner['is_doc_tool'](path) for path in dependent), dependent
+  targets = runner['mypy_targets'](root, True)
+  checked: set[Path] = set()
+  for target in targets:
+    checked.update(target.rglob('*.py') if target.is_dir() else (target,))
+  assert {root / 'tests/test_docs_site.py', root / 'tests/test_docs_workflows.py'} <= checked
+  assert all(not runner['is_doc_tool'](path.relative_to(root)) for path in checked)
+
+
+@pytest.mark.parametrize('statement', ['import sphinx', 'from run_doc_checks import check'])
+def test_doc_import_closure_finds_new_scripts(tmp_path: Path, statement: str) -> None:
+  (tmp_path / 'run_doc_checks.py').write_text('from sphinx import application\n', encoding='utf-8')
+  (tmp_path / 'unexpected.py').write_text(statement + '\n', encoding='utf-8')
+  assert doc_dependents(tmp_path, ('sphinx',)) == {Path('run_doc_checks.py'), Path('unexpected.py')}

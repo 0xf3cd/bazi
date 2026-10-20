@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import Mock
+from typing import Any, cast
 
 import pytest
 
@@ -18,9 +19,30 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'docs/_ext'))
 sys.path.insert(0, str(ROOT))
 
-from house_docstrings import prepare_markdown, source_attribute_docs
+from house_docstrings import HouseDocstring, prepare_markdown, source_attribute_docs
 from run_doc_checks import EXAMPLE_GROUPS, Page, check_doctests, check_header_paragraphs
 import run_docs
+
+
+@pytest.mark.parametrize('mode', ['__main__', 'run_docs'])
+def test_version_guard_is_only_for_the_cli(mode: str) -> None:
+  code = '''import runpy
+import sys
+sys.version_info = (3, 11, 0, 'final', 0)
+try:
+  runpy.run_path(sys.argv[1], run_name=sys.argv[2])
+except SystemExit:
+  assert 'markdown_it' not in sys.modules
+  raise
+'''
+  result = subprocess.run(
+    [sys.executable, '-c', code, str(ROOT / 'run_docs.py'), mode],
+    capture_output=True, text=True, encoding='utf-8', check=False,
+  )
+  assert result.returncode == (2 if mode == '__main__' else 0), result.stderr
+  if mode == '__main__':
+    assert 'Documentation builds require Python 3.12 or later' in result.stderr
+    assert 'Traceback' not in result.stderr
 
 
 @pytest.mark.parametrize('header', ['Args', 'Return', 'Returns', 'Note', 'Examples', 'Raises', 'Usage'])
@@ -54,6 +76,30 @@ def test_colon_fence_uses_enabled_parser():
   parser = create_md_parser(MdParserConfig(enable_extensions={'colon_fence'}), RendererHTML)
   source = [':::{code-block} text', 'Args:', '- literal', 'Returns:', ':::']
   assert prepare_markdown(source, parser) == source
+
+
+@pytest.mark.parametrize('source', ['guide.md', None])
+def test_directive_requires_a_source_path(monkeypatch: pytest.MonkeyPatch, source: str | None) -> None:
+  directive = cast(Any, HouseDocstring.__new__(HouseDocstring))
+  directive.get_source_info = Mock(return_value=(source, 1))
+  directive.error = Mock(return_value=ValueError('missing source'))
+  directive.state = Mock()
+  directive.content = []
+  document = Mock()
+  document.children = []
+  create = Mock(return_value=document)
+  monkeypatch.setattr('house_docstrings.new_document', create)
+  monkeypatch.setattr('house_docstrings.create_md_parser', Mock(return_value=Mock(parse=Mock(return_value=[]))))
+  monkeypatch.setattr('house_docstrings.MystParser', Mock())
+  if source is None:
+    with pytest.raises(ValueError, match='missing source'):
+      directive.run()
+    create.assert_not_called()
+    directive.error.assert_called_once_with('Documentation directive has no source path')
+  else:
+    assert directive.run() == []
+    create.assert_called_once_with(source, settings=directive.state.document.settings)
+    directive.error.assert_not_called()
 
 
 def test_ownership_complete_without_imports(tmp_path):

@@ -11,12 +11,13 @@ import platform
 import argparse
 import subprocess
 import unicodedata
+from importlib.util import find_spec
 
 import operator
 import functools
 import itertools
 
-from pathlib import Path
+from pathlib import Path, PurePath
 from datetime import datetime
 from typing import Final, Any
 from collections.abc import Callable, Generator, Iterator
@@ -63,10 +64,13 @@ argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
                        help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
 
 argparser.add_argument('-docs', '--docs', action='store_true', help='在仓外临时目录严格构建文档并执行示例与对账检查。')
+argparser.add_argument('--runtime-only', action='store_true', help='只检查运行时与非文档工具，不收集文档工具测试或构建文档；可用于 Python 3.11。')
 argparser.add_argument('-pkg', '--package', action='store_true', help='构建并检查隔离的 wheel 与 sdist 安装。')
 argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 一起使用，在此仓外目录保留验证后的工件对。')
 
 args = argparser.parse_args()
+if args.runtime_only and args.docs:
+  argparser.error('--runtime-only cannot be combined with --docs')
 
 all_the_way: Final[bool] = args.all
 
@@ -85,8 +89,38 @@ do_demo: Final[bool] = args.demo or all_the_way
 do_interpreter: Final[bool] = args.interpreter or all_the_way
 
 do_osmoke: Final[bool] = args.o_smoke or all_the_way
-do_docs: Final[bool] = args.docs or all_the_way
+runtime_only: Final[bool] = args.runtime_only
+do_docs: Final[bool] = (args.docs or all_the_way) and not runtime_only
 do_package: Final[bool] = args.package or all_the_way
+
+ROOT: Final[Path] = Path(__file__).resolve().parent
+DOC_TOOL_PATHS: Final[tuple[Path, ...]] = (
+  Path('docs'), Path('tests/docs'), Path('run_docs.py'), Path('run_doc_checks.py'),
+)
+DOC_MODULES: Final[tuple[str, ...]] = ('sphinx', 'myst_parser', 'docutils', 'markdown_it')
+
+
+def is_doc_tool(path: PurePath) -> bool:
+  '''按相对路径识别文档工具，不将其他包内同名目录当作文档源。'''
+  return any(path.parts[:len(unit.parts)] == unit.parts for unit in DOC_TOOL_PATHS)
+
+
+def mypy_targets(root: Path, only_runtime: bool) -> tuple[Path, ...]:
+  '''完整检查保留整树发现；运行时检查显式排除文档工具及其测试。'''
+  if not only_runtime:
+    return (root,)
+  files = (*root.glob('*.py'), *(root / 'tests').rglob('*.py'))
+  return (root / 'bazi', *(path for path in sorted(files) if not is_doc_tool(path.relative_to(root))))
+
+
+def check_doc_environment() -> None:
+  '''完整文档任务在启动任何子任务之前核对构建环境。'''
+  if sys.version_info >= (3, 12):
+    missing = tuple(name for name in DOC_MODULES if find_spec(name) is None)
+    if missing:
+      argparser.error(f'Missing documentation dependencies: {", ".join(missing)}; install docs/requirements.txt or select --runtime-only')
+  else:
+    argparser.error('Documentation checks require Python 3.12 or later; create a Python 3.12+ environment with docs/requirements.txt, or select --runtime-only')
 
 # 根目录 demo 行为由 -d 验证，不计入库覆盖率。
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')
@@ -198,6 +232,7 @@ def print_args() -> None:
 
   print(f'-- do_osmoke:        {colored(do_osmoke)}')
   print(f'-- do_docs:          {colored(do_docs)}')
+  print(f'-- runtime_only:     {colored(runtime_only)}')
   print(f'-- do_package:       {colored(do_package)}')
 
 
@@ -257,6 +292,11 @@ def run_tests() -> int:
     '-x',
     '--showlocals',
   ]
+  if runtime_only:
+    pytest_args.extend(
+      f'--ignore={ROOT / unit}' for unit in DOC_TOOL_PATHS
+      if unit.parts[:1] == ('tests',)
+    )
 
   if verbose:
     pytest_args.append('-v')
@@ -335,7 +375,7 @@ def run_mypy() -> int:
   bold_print('>> Running mypy...')
 
   ret: int = run_proc_and_print([
-    sys.executable, '-m', 'mypy', str(Path(__file__).parent),
+    sys.executable, '-m', 'mypy', *(str(path) for path in mypy_targets(ROOT, runtime_only)),
     '--check-untyped-defs', '--warn-redundant-casts', '--warn-unused-ignores',
     '--warn-return-any', '--warn-unreachable',
   ], print_details=True)
@@ -479,6 +519,8 @@ def run_subtasks() -> SubTaskStatuses:
 # region: Main
 
 def main() -> None:
+  if do_docs:
+    check_doc_environment()
   start_time: datetime = datetime.now()
 
   print_args()

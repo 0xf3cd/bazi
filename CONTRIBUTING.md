@@ -41,9 +41,9 @@
 
 ### 准备环境
 
-需要 Python 3.11 及以上；CPython CI 覆盖 3.11 和 3.14。CI 另有跨平台和 PyPy 兼容检查，本机一次运行不等于全部 CI 通过。
+本库及其运行时检查支持 Python 3.11+；构建文档、检查文档工具及运行完整门禁需要 Python 3.12+。PR CI 在 3.11 上检查运行时，在 3.12 和 3.14 上运行包含文档的完整门禁，另有跨平台和 PyPy 兼容检查。本机一次运行不等于全部 CI 通过。
 
-在仓库根目录创建独立环境：
+使用 Python 3.12+，在仓库根目录创建独立开发环境：
 
 ```sh
 python -m venv .venv
@@ -59,9 +59,13 @@ python -m pip install celestial-calendar==0.6.1
 
 `Requirements.txt` 是开发依赖，`docs/requirements.txt` 是文档工具依赖，两者都不是运行时依赖；`celestial-calendar==0.6.1` 是历法测试用的工具依赖。
 
+如果只在 Python 3.11 上检查运行时，另建 3.11 环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、示例和安装工件检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.12+ 环境中执行。不要尝试在 3.11 环境安装新版 Sphinx。
+
+生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。
+
 ### 完整门禁
 
-PR 前须在仓库根目录实跑完整 CPython 门禁：
+PR 前须在上述 Python 3.12+ 开发环境、仓库根目录实跑完整 CPython 门禁：
 
 ```sh
 python run_tests.py -a -v

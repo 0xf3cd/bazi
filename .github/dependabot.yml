@@ -2,10 +2,18 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: "/docs"
+    # Sphinx 9.1 and MyST 5.1 require docutils<0.23; revisit when both support it.
+    ignore:
+      - dependency-name: docutils
+        versions: ["==0.23.*"]
     schedule:
       interval: weekly
   - package-ecosystem: pip
     directory: "/"
+    # This entry also discovers docs/requirements.txt.
+    ignore:
+      - dependency-name: docutils
+        versions: ["==0.23.*"]
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
