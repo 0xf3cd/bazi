@@ -11,6 +11,7 @@ guides/quickstart
 guides/configuration
 guides/relations-transits
 guides/knowledge
+guides/rule-coverage
 guides/integration
 ```
 
