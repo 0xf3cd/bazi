@@ -1,5 +1,34 @@
 # 发布说明
 
+## bazi 2.2.0
+
+### 交互探索与文本展示
+
+- 新增公开模块 `bazi.chart_text`：`basic_text`、`transit_text`、`chart_text` 把命盘排成纯文本，不写文件，也不依赖终端着色库。`run_demo.py` 改用它，输出不变。
+- `TextStyle` 的 `glyph`、`day_master_mark` 两个可选钩子供调用方加颜色或标记，默认原样输出。
+- 流年无限延续，由 `liunian_count`（默认 100）限定；大运数由 `dayun_count`（默认 10）限定；小运有限，全部列出。
+- `transit_text` 与 `chart_text` 在出生后没有大运起于历法支持范围内时抛 `ValueError`，与 `chart.xiaoyun` 一致；`basic_text` 不受影响。
+- `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 有一行 `repr`，如 `Bazi(2000-01-01T12:00:00, male, 己卯 丙子 戊午 戊午)`：出生时刻、性别、四柱，经度或非默认配置存在时再附加。摘要大小与命盘数据无关，不触发流运计算；格式只服务交互探索，不属兼容承诺。
+- `dir(bazi)` 列出按需导入的子模块（含 `chart_text`），不触发导入；八个常见入口类（`Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis`、`BaziConfig`、`KnowledgeBase`）的属性访问，如 `bazi.Bazi`，会指出该从哪个定义模块导入。
+- 接收命盘的入口收到错误对象时，错误消息保留 `Expected X, got Y` 的开头，其后追加指路，如 `build one with Bazi.create(birth_time, gender)`。
+
+### 命令行
+
+- 源码仓库里的 `run_interpreter.py` 改为三个任务：`chart` 展示命盘，不给出生信息就随机生成；`knowledge` 查询、校验、导出解释知识，不需要命盘；`match` 查看判据，或对给定命盘判别前提。参数都可选：只写 `knowledge` 给知识库概览，只写 `match` 列出全部判据，`match <判据ID>` 说明该判据需要的输入。
+- `knowledge` 新增 `--all` 与 `--list-values 条件名`，`--export-knowledge-base` 归到这里。导出多了两道写前检查，不符合就报错：`--export-knowledge-json` 的目标不得落在 `--export-knowledge-base` 生成的文本文件上；文本导出不得写到知识库的编辑源（包内默认知识库或 `--knowledge-source`，含符号链接）。
+- 旧的平铺写法这一版照常可用、输出不变，成功后在标准错误给出等价的新命令，本版无需改动调用；将来移除，计划见 #292。
+
+### 兼容与行为变化
+
+- 延续 2.1.0 的计算规则、默认值和记录格式；本版不要求迁移既有公开调用或重建记录。
+- `DayunDatabase`、`TransitDatabase`、`AtBirthAnalysis`、`TransitAnalysis`、`RelationshipAnalyzer` 收到类型错误的对象时，现在一律在构造时抛 `TypeError`。原来 `DayunDatabase`、`TransitDatabase` 在构造时抛 `AttributeError`，三个分析类构造时不检查；捕获 `AttributeError` 的调用方需改为 `TypeError`。
+- `run_interpreter.py` 的文本导出遇到指向包内知识库的符号链接时，原来会把该知识库文件截断，现在报错退出，文件保持不变。
+
+### 开发
+
+- 测试按主题拆出 `tests/run_interpreter/`、`tests/context_matching/`、`tests/analyzer/relationship/` 三个包，测试名都不超过 45 个字符；`tests/test_test_names.py` 检查以 `test` 开头的标识符长度，命名约定写入 `AGENTS.md`。
+- 仓内删除未被引用的 `bazi/calendar/hko_data/hko_data_explorer.ipynb`，它不在发布包中。
+
 ## bazi 2.1.0
 
 ### 知识发现与接口
