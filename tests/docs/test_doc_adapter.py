@@ -24,6 +24,27 @@ from run_doc_checks import EXAMPLE_GROUPS, Page, check_doctests, check_header_pa
 import run_docs
 
 
+@pytest.mark.parametrize('mode', ['__main__', 'run_docs'])
+def test_version_guard_is_only_for_the_cli(mode: str) -> None:
+  code = '''import runpy
+import sys
+sys.version_info = (3, 11, 0, 'final', 0)
+try:
+  runpy.run_path(sys.argv[1], run_name=sys.argv[2])
+except SystemExit:
+  assert 'markdown_it' not in sys.modules
+  raise
+'''
+  result = subprocess.run(
+    [sys.executable, '-c', code, str(ROOT / 'run_docs.py'), mode],
+    capture_output=True, text=True, encoding='utf-8', check=False,
+  )
+  assert result.returncode == (2 if mode == '__main__' else 0), result.stderr
+  if mode == '__main__':
+    assert 'Documentation builds require Python 3.12 or later' in result.stderr
+    assert 'Traceback' not in result.stderr
+
+
 @pytest.mark.parametrize('header', ['Args', 'Return', 'Returns', 'Note', 'Examples', 'Raises', 'Usage'])
 def test_plain_paragraph_after_each_header(header):
   parser = create_md_parser(MdParserConfig(), RendererHTML)

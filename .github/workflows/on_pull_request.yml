@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   test-on-ubuntu:
+    name: test-on-ubuntu (${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:

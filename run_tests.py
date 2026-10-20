@@ -120,7 +120,7 @@ def check_doc_environment() -> None:
     if missing:
       argparser.error(f'Missing documentation dependencies: {", ".join(missing)}; install docs/requirements.txt or select --runtime-only')
   else:
-    argparser.error('Documentation checks require Python 3.12 or later; use a documentation environment or --runtime-only on Python 3.11')
+    argparser.error('Documentation checks require Python 3.12 or later; create a Python 3.12+ environment with docs/requirements.txt, or select --runtime-only')
 
 # 根目录 demo 行为由 -d 验证，不计入库覆盖率。
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')

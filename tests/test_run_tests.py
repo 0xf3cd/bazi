@@ -2,6 +2,7 @@
 
 import runpy
 import ast
+import re
 import sys
 import os
 import random
@@ -247,6 +248,18 @@ def test_runtime_scope_rejects_requested_docs(monkeypatch: pytest.MonkeyPatch, f
   with pytest.raises(SystemExit) as caught:
     runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert caught.value.code == 2
+
+
+@pytest.mark.parametrize('runtime', [False, True])
+def test_runtime_scope_is_reported(
+  monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], runtime: bool,
+) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', *(['--runtime-only'] if runtime else [])])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  report = runner['print_args']
+  report()
+  output = re.sub(r'\x1b\[[0-9;]*m', '', capsys.readouterr().out)
+  assert f'-- runtime_only:     {runtime}' in output
 
 
 @pytest.mark.parametrize('version, missing', [

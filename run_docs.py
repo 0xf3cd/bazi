@@ -7,7 +7,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-if sys.version_info < (3, 12):
+if __name__ == '__main__' and sys.version_info < (3, 12):
   print('Documentation builds require Python 3.12 or later; running bazi still supports Python 3.11.', file=sys.stderr)
   raise SystemExit(2)
 

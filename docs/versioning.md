@@ -4,7 +4,7 @@
 
 ## 本地检查
 
-使用 Python 3.12+，在源码根目录安装文档依赖和离线生成器模块所需的依赖。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：
+使用 Python 3.12+，在源码根目录安装文档依赖和历法测试工具 `celestial-calendar==0.6.1`。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：
 
 ```sh
 python -m pip install -r docs/requirements.txt

@@ -230,6 +230,7 @@ def check_python_ci(
       {'python-version': next(item['with']['python-version'] for item in steps if 'setup-python@' in item.get('uses', ''))},
     ])
     if job == 'test-on-ubuntu':
+      assert definition.get('name') == 'test-on-ubuntu (${{ matrix.python-version }})'
       expected = {'3.11', '3.12', '3.14'} if name == 'on_pull_request.yml' else {'3.11', '3.14'}
       assert {leg['python-version'] for leg in legs} == expected
     for leg in legs:
@@ -273,7 +274,7 @@ def test_python_ci_keeps_runtime_and_docs_gates(
   check_python_ci(workflow, name, jobs, flags)
 
 
-@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'skip-docs', 'no-docs-install', 'no-runtime-scope'])
+@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'skip-docs', 'no-docs-install', 'no-runtime-scope', 'changed-check-name'])
 def test_python_ci_rejects_scope_regressions(defect: str) -> None:
   workflow = yaml.safe_load((WORKFLOWS / 'on_pull_request.yml').read_text(encoding='utf-8'))
   ubuntu = workflow['jobs']['test-on-ubuntu']
@@ -287,8 +288,10 @@ def test_python_ci_rejects_scope_regressions(defect: str) -> None:
     next(leg for leg in legs if leg['python-version'] == '3.12')['scope'] = '--runtime-only'
   elif defect == 'no-docs-install':
     install['run'] = 'python --version'
-  else:
+  elif defect == 'no-runtime-scope':
     next(leg for leg in legs if leg['python-version'] == '3.11')['scope'] = ''
+  else:
+    del ubuntu['name']
   with pytest.raises(AssertionError):
     check_python_ci(workflow, 'on_pull_request.yml', ['test-on-ubuntu'], {'-a', '-v'})
 
