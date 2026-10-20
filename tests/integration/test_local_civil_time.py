@@ -56,7 +56,7 @@ def test_midnight_carry_obeys_both_day_profiles(precision: BaziPrecision, rollov
   assert chart.day_pillar != other.day_pillar
 
 
-def test_civil_basis_identity_and_meridian_aliases() -> None:
+def test_civil_basis_identity_meridian_aliases() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   civil = datetime.fromisoformat('2024-01-01T12:00:00+14:00')
   basis = ZoneInfo('Pacific/Kiritimati')
@@ -119,7 +119,7 @@ def test_leading_corner_and_apparent_birth_window() -> None:
 
 
 @pytest.mark.parametrize('year', [1850, 2200])
-def test_out_of_table_birth_reports_the_apparent_birth_window(year: int) -> None:
+def test_out_of_table_reports_birth_window(year: int) -> None:
   with pytest.raises(ValueError, match=r'apparent-solar birth date.*1901-02-19.*2099-12-31'):
     Bazi.create(datetime(year, 1, 1, 12, tzinfo=UTC), 'male',
                 BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
@@ -139,7 +139,7 @@ def test_extreme_aware_birth_reports_value_error(direct: bool, birth: datetime, 
     create(birth, gender, BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0, civil_timezone=basis)
 
 
-def test_birth_window_error_does_not_hide_table_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_window_error_does_not_hide_table(monkeypatch: pytest.MonkeyPatch) -> None:
   from bazi.calendar.celestial_data.loader import EquationOfTimeTable
 
   def corrupt(table: EquationOfTimeTable, moment: datetime) -> float:
@@ -151,7 +151,7 @@ def test_birth_window_error_does_not_hide_table_failure(monkeypatch: pytest.Monk
                 BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
 
 
-def test_next_jie_uses_frozen_birth_basis_across_dst(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_next_jie_freezes_basis_across_dst(monkeypatch: pytest.MonkeyPatch) -> None:
   from bazi.calendar import solar_time
   original = solar_time.apparent_solar_datetime
   projected: list[datetime] = []
@@ -194,7 +194,7 @@ def test_civil_timezone_invalid_inputs(direct: bool) -> None:
     create(datetime(2000, 1, 1, tzinfo=MissingOffset()), gender, config, longitude=0.0)
 
 
-def test_demo_uses_physical_jies_and_distinguishes_clocks() -> None:
+def test_demo_separates_physical_jie_clocks() -> None:
   chart = BaziChart(Bazi.create('2000-02-04T07:50:00-05:00', 'male',
                                BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0))
   text = get_transit_info(chart)
@@ -205,7 +205,7 @@ def test_demo_uses_physical_jies_and_distinguishes_clocks() -> None:
     assert label in get_basic_info(chart)
 
 
-def test_location_context_snapshot_is_observational() -> None:
+def test_location_snapshot_is_observational() -> None:
   chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female',
                                BaziConfig(precision=BaziPrecision.HOUR), longitude=-157.4))
   result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))

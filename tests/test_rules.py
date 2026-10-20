@@ -169,7 +169,7 @@ def test_zaisha_table_is_jiangxing_chong() -> None:
     )) in DizhiRules.DIZHI_CHONG
 
 
-def test_sanhe_shensha_tables_follow_shier_zhangsheng() -> None:
+def test_sanhe_shensha_follow_zhangsheng() -> None:
   group_zhangsheng = {
     frozenset((Dizhi.申, Dizhi.子, Dizhi.辰)) : Dizhi.申,
     frozenset((Dizhi.寅, Dizhi.午, Dizhi.戌)) : Dizhi.寅,

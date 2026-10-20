@@ -53,7 +53,7 @@ def test_configuration_repr(value: BaziConfig | BaziSchool | DizhiRelationDefini
   assert repr(value) == expected
 
 
-def test_configuration_repr_preserves_defaults_and_values() -> None:
+def test_config_repr_keeps_defaults_values() -> None:
   assert BaziConfig().school is DEFAULT_SCHOOL
   assert inspect.signature(BaziConfig).parameters['school'].default is DEFAULT_SCHOOL
   assert inspect.signature(Bazi.create).parameters['config'].default is DEFAULT_CONFIG
@@ -188,7 +188,7 @@ def test_every_school_field_has_a_type_gate() -> None:
       BaziSchool(**{f.name: object()}) # type: ignore
 
 
-def test_anchor_choices_bind_to_every_anchor_field() -> None:
+def test_anchor_choices_bind_each_field() -> None:
   # Mechanical binding: the supported-values table and the `Anchor`-typed fields are one
   # set. A new anchor knob with no entry -- or an entry naming no field -- fails here, which
   # is what keeps each anchor's provenance status explicit.
@@ -202,7 +202,7 @@ def test_anchor_choices_bind_to_every_anchor_field() -> None:
     assert all(isinstance(a, Anchor) for a in allowed), name
 
 
-def test_anchor_choices_are_the_only_accepted_values() -> None:
+def test_anchor_choices_are_only_accepted() -> None:
   # Both directions: a supported value constructs, one outside the table raises. Without
   # the second half a table that allowed everything would still pass.
   # 两个方向都测：支持值能构造，表外值要抛；只测前者的话，一张放行一切的表也会全绿。
@@ -215,7 +215,7 @@ def test_anchor_choices_are_the_only_accepted_values() -> None:
           BaziSchool(**{name: anchor}) # type: ignore # Field name is data here.
 
 
-def test_anchor_choices_match_the_supported_readings() -> None:
+def test_anchor_choices_match_readings() -> None:
   # The subsets are supported knowledge, not defaults -- pin them as data so a silent widening
   # (or a lost reading) shows up as a failed assertion, not as a new legal school.
   # 支持集不是默认值，按数据钉死：悄悄放宽或丢掉一个读法都会在这里响。
@@ -403,7 +403,7 @@ def test_defaults_are_defined_once() -> None:
   assert DEFAULT_CONFIG.school is DEFAULT_SCHOOL
 
 
-def test_school_defaults_match_utils_signature_defaults() -> None:
+def test_school_defaults_match_utils() -> None:
   # Batch queries share the rules' defaults with school; registered 神煞 defaults match the school.
   assert BaziSchool().relation_definitions == DEFAULT_DIZHI_RELATION_DEFINITIONS
   for fn in (dizhi_utils.search, dizhi_utils.discover, dizhi_utils.discover_mutual,
@@ -467,7 +467,7 @@ def test_definition_dependency_direction() -> None:
     assert not any(imported == denied or imported.startswith(denied + '.') for imported in imports for denied in forbidden), (name, imports)
 
 
-def test_bazi_default_config_is_the_shared_default(rng: random.Random) -> None:
+def test_bazi_default_config_is_shared(rng: random.Random) -> None:
   # Every construction path picks up `DEFAULT_CONFIG` implicitly (默认零变化).
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   assert Bazi.create(dt, BaziGender.男).config is DEFAULT_CONFIG
@@ -641,7 +641,7 @@ def test_json_roundtrip_non_default_school() -> None:
   assert rebuilt.bazi.config.school == school
 
 
-def test_from_json_ignores_keys_that_name_no_field() -> None:
+def test_from_json_ignores_unknown_keys() -> None:
   # The reader takes the fields it declares; a key naming none of them is not an error.
   # The roundtrip itself is pinned by `test_json_roundtrip_default_school` and
   # `test_json_roundtrip_non_default_school`, which both rebuild through `from_json`.

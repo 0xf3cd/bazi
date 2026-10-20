@@ -297,7 +297,7 @@ def test_celestial_backend_end_to_end() -> None:
     assert BaziChart(bazi).json['backend'] == spelling
 
 
-def test_celestial_differs_from_hko_exactly_where_the_whitelist_says() -> None:
+def test_celestial_differs_from_hko_on_whitelist() -> None:
   '''
   celestial puts 1917 大雪 at 12-08 00:01:05; the HKO almanac dates it 12-07.  So on 12-07
   the two backends genuinely build different charts.  This is the one place F1's opt-in

@@ -68,7 +68,7 @@ def test_frozendict_repr() -> None:
   assert repr(GanzhiRelationDiscovery({})) == 'GanzhiRelationDiscovery({})'
 
 
-def test_check_declared_types_names_plain_and_union() -> None:
+def test_declared_type_errors_name_the_type() -> None:
   @dataclass(frozen=True)
   class Sample:
     plain: int

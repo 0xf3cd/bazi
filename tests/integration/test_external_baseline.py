@@ -74,7 +74,7 @@ def _snapshot(chart: BaziChart) -> dict[str, Any]:
 
 
 @pytest.mark.parametrize('newline', [b'\n', b'\r\n'])
-def test_table_fingerprint_preserves_values_across_checkout_newlines(tmp_path: Path, newline: bytes) -> None:
+def test_fingerprint_survives_newline_checkout(tmp_path: Path, newline: bytes) -> None:
   canonical = b'year=2000\nmoment=2000-02-04T20:40:23\n'
   table = tmp_path / 'jieqi_moments.txt'
   table.write_bytes(canonical.replace(b'\n', newline))

@@ -81,7 +81,7 @@ def test_coverage_result(
 
 
 @pytest.mark.parametrize('complete', [False, True])
-def test_coverage_enumerates_unimported_runtime_modules(tmp_path: Path, complete: bool) -> None:
+def test_coverage_enumerates_unimported_modules(tmp_path: Path, complete: bool) -> None:
   shutil.copyfile(Path(__file__).parents[1] / 'run_tests.py', tmp_path / 'run_tests.py')
   package = tmp_path / 'bazi'
   for directory in (package, package / 'nested', package / 'calendar/hko_data', package / 'calendar/celestial_data'):
@@ -127,7 +127,7 @@ sys.exit(runner['run_coverage'](execute))
 
 
 @pytest.mark.parametrize('result', [0, 7])
-def test_runner_emojis_leave_regression_inputs_unchanged(monkeypatch: pytest.MonkeyPatch, result: int) -> None:
+def test_emojis_leave_regression_inputs(monkeypatch: pytest.MonkeyPatch, result: int) -> None:
   state = random.getstate()
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
@@ -196,7 +196,7 @@ def test_package_output_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
   ], print_details=True)
 
 
-def test_demo_and_interpreter_gate_pass_fixed_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_demo_interpreter_gates_fixed_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   proc = Mock(return_value=0)
@@ -210,7 +210,7 @@ def test_demo_and_interpreter_gate_pass_fixed_seeds(monkeypatch: pytest.MonkeyPa
   ]
 
 
-def test_pytest_arguments_keep_failure_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_pytest_args_keep_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   run_tests = runner['run_tests']

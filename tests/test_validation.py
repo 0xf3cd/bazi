@@ -5,7 +5,7 @@ import pytest
 from bazi._validation import _text, _choice, _tuple, _pairs, _mapping
 
 
-def test_shared_validation_preserves_success_values_and_messages() -> None:
+def test_shared_validation_keeps_values_messages() -> None:
   _text('value')
   _text('   ', empty=True)
   _choice('value', ('value',))

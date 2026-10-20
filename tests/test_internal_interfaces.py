@@ -38,7 +38,7 @@ def _dependencies(root: Path) -> tuple[Counter[str], Counter[str]]:
   return imports, members
 
 
-def test_private_dependencies_have_explicit_owners() -> None:
+def test_private_dependencies_have_owners() -> None:
   # This is a static candidate guard, not a proof about dynamic getattr or all cross-object access.
   ledger = json.loads((ROOT / 'tests/data/internal_interfaces.json').read_text(encoding='utf-8'))
   cross = ledger['members']['cross_module']
@@ -52,7 +52,7 @@ def test_private_dependencies_have_explicit_owners() -> None:
   assert _dependencies(ROOT) == (expected_imports, expected_members)
 
 
-def test_candidate_scan_includes_imports_and_nested_member_access(tmp_path: Path) -> None:
+def test_candidate_scan_sees_imports_and_nesting(tmp_path: Path) -> None:
   package = tmp_path / 'bazi'
   package.mkdir()
   source = package / 'sample.py'

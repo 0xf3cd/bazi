@@ -27,7 +27,7 @@ JIE_MONTHS = (
 
 @pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2', 'hko'))
 @pytest.mark.parametrize('year', (1902, 1917, 1927, 2000, 2009, 2017, 2099))
-def test_day_ownership_and_counting_match_date_scan(backend: str, year: int) -> None:
+def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
   utils = calendar_utils_of(backend)
   candidates = sorted(
     [(utils.jieqi_moment(y, jie), jie, dizhi, month)
@@ -88,7 +88,7 @@ def test_day_ownership_and_counting_match_date_scan(backend: str, year: int) -> 
 
 
 @pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2', 'hko'))
-def test_birth_and_query_endpoints_remain_distinct(backend: str) -> None:
+def test_endpoints_remain_distinct(backend: str) -> None:
   utils = calendar_utils_of(backend)
   first_date = utils.to_date(utils.get_min_supported_date(CalendarType.SOLAR))
   last_date = utils.to_date(utils.get_max_supported_date(CalendarType.SOLAR))
@@ -121,7 +121,7 @@ def test_birth_and_query_endpoints_remain_distinct(backend: str) -> None:
   ('2000-02-04 10:00', 1999, Dizhi.丑, Dizhi.寅, '丁丑'),
   ('2000-03-05 10:00', 2000, Dizhi.寅, Dizhi.卯, '戊寅'),
 ])
-def test_day_first_month_floor_does_not_change_physical_queries(
+def test_month_floor_leaves_physical_queries(
   birth: str, previous_year: int, previous: Dizhi, current: Dizhi, first_ganzhi: str,
 ) -> None:
   chart = BaziChart(Bazi.create(birth, 'female'))
@@ -133,7 +133,7 @@ def test_day_first_month_floor_does_not_change_physical_queries(
   assert next(chart.dayun).ganzhi_year == 2000
 
 
-def test_day_year_floor_does_not_change_physical_queries() -> None:
+def test_year_floor_leaves_physical_queries() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 10:00', 'female'))
   transits = TransitChart(chart)
   database = TransitDatabase(chart)
@@ -157,7 +157,7 @@ def test_day_year_floor_does_not_change_physical_queries() -> None:
   ('male', '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39'),
   ('female', '大运数节依据（逆排）：立春 - 2000-02-04T20:40:23'),
 ])
-def test_demo_reads_time_facts_without_serializing_chart(
+def test_demo_reads_facts_not_serialized_chart(
   monkeypatch: pytest.MonkeyPatch, located: bool, gender: str, counting: str,
 ) -> None:
   def fail_json(_chart: BaziChart) -> object:
@@ -191,7 +191,7 @@ def test_demo_reads_time_facts_without_serializing_chart(
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
-def test_time_facts_are_readonly_and_json_is_detached() -> None:
+def test_time_facts_readonly_json_detached() -> None:
   bazi = Bazi.create('2000-02-04T07:40:12.123456-05:00', 'male',
                      BaziConfig.from_values(precision='minute'), longitude=0.0)
   facts = bazi.location_time
@@ -208,7 +208,7 @@ def test_time_facts_are_readonly_and_json_is_detached() -> None:
   assert Bazi.create('2000-02-04 10:00', 'male').location_time is None
 
 
-def test_day_json_restoration_rejects_old_derived_start() -> None:
+def test_day_json_rejects_old_derived_start() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 10:00', 'male'))
   data = chart.json
   assert BaziChart.from_json(data).json == data
@@ -219,7 +219,7 @@ def test_day_json_restoration_rejects_old_derived_start() -> None:
 
 @pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2'))
 @pytest.mark.parametrize('precision', ('hour', 'minute'))
-def test_precise_birth_and_physical_queries_match_scans(backend: str, precision: str) -> None:
+def test_precise_birth_queries_match_scans(backend: str, precision: str) -> None:
   utils = calendar_utils_of(backend)
 
   def truncated(moment: datetime) -> datetime:

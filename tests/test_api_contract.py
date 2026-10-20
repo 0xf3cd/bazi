@@ -149,7 +149,7 @@ def test_public_modules_describe_their_purpose() -> None:
     assert ast.get_docstring(ast.parse(path.read_text(encoding='utf-8'))), module
 
 
-def test_all_modules_and_declared_candidates_are_classified() -> None:
+def test_modules_and_candidates_classified() -> None:
   modules: set[str] = set()
   for path in (ROOT / 'bazi').rglob('*.py'):
     module = '.'.join(path.relative_to(ROOT).with_suffix('').parts).removesuffix('.__init__')
@@ -171,7 +171,7 @@ def test_all_modules_and_declared_candidates_are_classified() -> None:
   ("importlib.import_module('bazi').__all__.remove('bazi_chart')", 'bazi_chart'),
   ("importlib.import_module('bazi.calendar').__all__.append('solar_time')", 'solar_time'),
 ])
-def test_public_surface_resolves_without_loading_tables_or_offline_tools(injection: str, rejected_name: str | None) -> None:
+def test_surface_resolves_without_heavy_loads(injection: str, rejected_name: str | None) -> None:
   # A fresh process prevents earlier calendar tests from hiding an eager import.
   script = '''
 import importlib, inspect, json, sys
@@ -254,14 +254,14 @@ print('PASS safe public imports, declared fields and aliases')
   '\nmatch []:\n  case [*unregistered_star]:\n    pass\n',
   '\nmatch {"key": 1}:\n  case {**unregistered_rest}:\n    pass\n',
 ])
-def test_new_public_candidates_cannot_escape_registration(addition: str) -> None:
+def test_new_public_candidates_must_register(addition: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
   _check_surface(source, 'bazi.knowledge')
   with pytest.raises(AssertionError):
     _check_surface(source + addition, 'bazi.knowledge')
 
 
-def test_new_field_and_enum_alias_cannot_escape_registration() -> None:
+def test_new_field_enum_alias_must_register() -> None:
   for module, path, class_name in (
     ('bazi.knowledge', 'bazi/knowledge.py', 'KnowledgeObject'),
     ('bazi.defines.tiangan', 'bazi/defines/tiangan.py', 'Tiangan'),
@@ -276,7 +276,7 @@ def test_new_field_and_enum_alias_cannot_escape_registration() -> None:
       _check_surface(''.join(lines), module)
 
 
-def test_scope_candidates_include_control_flow_but_not_function_locals() -> None:
+def test_scope_candidates_skip_function_locals() -> None:
   source = '''
 def function():
   local = 1
@@ -305,7 +305,7 @@ class Public:
   'class KnowledgeRole:\n  unregistered_dead_member: str\n',
   'class KnowledgeRole(object):\n  name: str\n  object_id: str\n',
 ])
-def test_repeated_class_declarations_cannot_hide_candidates(earlier: str) -> None:
+def test_repeated_classes_cannot_hide_candidates(earlier: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
   anchor = '@dataclass(frozen=True)\nclass KnowledgeRole:'
   assert source.count(anchor) == 1
@@ -315,7 +315,7 @@ def test_repeated_class_declarations_cannot_hide_candidates(earlier: str) -> Non
     _check_surface(changed, 'bazi.knowledge')
 
 
-def test_repeated_class_declarations_combine_member_candidates() -> None:
+def test_repeated_classes_combine_members() -> None:
   names, members, bases = _surface('if True:\n  class Public:\n    first: str\nelse:\n  class Public:\n    second: str\n', 'example')
   assert names == {'Public'}
   assert members == {'example.Public': {'first', 'second'}}
@@ -323,12 +323,12 @@ def test_repeated_class_declarations_combine_member_candidates() -> None:
 
 
 @pytest.mark.parametrize('first, second', [('', '(Base)'), ('(Base)', ''), ('(Base)', '(Other)')])
-def test_repeated_class_base_conflicts_have_a_specific_failure(first: str, second: str) -> None:
+def test_repeated_class_base_conflict_fails(first: str, second: str) -> None:
   with pytest.raises(AssertionError, match='Conflicting candidate bases'):
     _surface(f'class Public{first}:\n  first: str\nclass Public{second}:\n  second: str\n', 'example')
 
 
-def test_repeated_classes_with_the_same_base_combine_candidates() -> None:
+def test_same_base_repeats_combine_candidates() -> None:
   names, members, bases = _surface('class Public(Base):\n  first: str\nclass Public(Base):\n  second: str\n', 'example')
   assert names == {'Public'}
   assert members == {'example.Public': {'first', 'second'}}
@@ -351,7 +351,7 @@ def test_outer_expression_bindings_are_candidates(source: str, expected: set[str
   assert _names(ast.parse(source).body) == expected
 
 
-def test_definition_defaults_bind_in_their_enclosing_namespace() -> None:
+def test_defaults_bind_in_enclosing_namespace() -> None:
   source = 'class Public:\n  def method(self, arg=(outer := 1)):\n    local = 1\n'
   namespace: dict[str, object] = {}
   exec(compile(source, '<class-default-binding>', 'exec'), namespace) # noqa: S102 -- Execute only this fixed source fixture.
@@ -379,7 +379,7 @@ def test_type_alias_candidates_are_classified() -> None:
   '__all__ = []\n__all__.extend(["unregistered_export"])',
   'if (__all__ := ["unregistered_export"]):\n  pass',
 ])
-def test_declared_exports_cannot_escape_registration(declaration: str) -> None:
+def test_declared_exports_must_register(declaration: str) -> None:
   source = (ROOT / 'bazi/__init__.py').read_text(encoding='utf-8')
   with pytest.raises(AssertionError, match='unregistered_export'):
     _check_surface(source + '\n' + declaration, 'bazi')
@@ -390,12 +390,12 @@ def test_declared_exports_cannot_escape_registration(declaration: str) -> None:
   '__all__[:] = ["changed"]', '__all__[0] = "changed"', '(__all__, _other) = (["changed"], None)',
   '(__all__, _other) = ["changed", "kept"]',
 ])
-def test_unsupported_export_declarations_fail_loudly(declaration: str) -> None:
+def test_unsupported_exports_fail_loudly(declaration: str) -> None:
   with pytest.raises(AssertionError):
     _declared_all(ast.parse(declaration).body)
 
 
-def test_static_modules_reject_phantom_names_without_importing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_static_modules_reject_phantom_names(monkeypatch: pytest.MonkeyPatch) -> None:
   for module in STATIC_MODULES:
     source = ROOT.joinpath(*module.split('.')).with_suffix('.py').read_text(encoding='utf-8')
     _check_surface(source, module)
@@ -405,7 +405,7 @@ def test_static_modules_reject_phantom_names_without_importing(monkeypatch: pyte
         _check_surface(source, module)
 
 
-def test_explicit_package_exports_preserve_fixed_v200_names() -> None:
+def test_package_exports_keep_v200_names() -> None:
   assert EXPLICIT_EXPORT_BASELINE['source_sha'] == 'ddfe16e7c51d695167b09cc4c2f64ba46e7565c3'
   for module in EXPLICIT_EXPORTS:
     path = ROOT.joinpath(*module.split('.')) / '__init__.py'
@@ -430,7 +430,7 @@ def test_explicit_package_exports_preserve_fixed_v200_names() -> None:
     _check_explicit_exports(calendar_source + '\n__all__.append("solar_time")\n', module)
 
 
-def test_public_contract_covers_existing_consumers_and_explicit_exports() -> None:
+def test_contract_covers_consumers_and_exports() -> None:
   # Existing consumer imports are additional evidence, not the definition of the public surface.
   for path in (*ROOT.glob('run_*.py'), *(ROOT / 'tests').rglob('*.py')):
     for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):

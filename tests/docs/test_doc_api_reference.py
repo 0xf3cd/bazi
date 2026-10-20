@@ -19,33 +19,33 @@ from run_doc_checks import runtime_members
 
 
 @pytest.mark.parametrize('base', ['LunarYearInfo', 'NoSuchBase'])
-def test_ambiguous_or_unresolvable_base_classes_fail(monkeypatch, base):
+def test_ambiguous_or_missing_bases_fail(monkeypatch, base):
   monkeypatch.setitem(api_reference.BASES, 'bazi.common.frozendict', (base,))
   with pytest.raises(ValueError, match='exactly one contract base class'):
     api_reference.inherited_members('bazi.common.frozendict')
 
 
-def test_external_base_classes_need_the_explicit_allowlist(monkeypatch):
+def test_external_bases_need_the_allowlist(monkeypatch):
   monkeypatch.setattr(api_reference, 'EXTERNAL_BASES', frozenset())
   with pytest.raises(ValueError, match='exactly one contract base class'):
     api_reference.inherited_members('bazi.bazi.BaziGender')
 
 
-def test_checker_oracle_ignores_the_typeddict_base_table(monkeypatch):
+def test_oracle_ignores_typeddict_bases(monkeypatch):
   expected = runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict')
   monkeypatch.setitem(api_reference.BASES, 'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict', ('TypedDict',))
   assert api_reference.inherited_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') != expected
   assert runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') == expected
 
 
-def test_checker_oracle_ignores_the_mro_base_table(monkeypatch):
+def test_oracle_ignores_mro_base_table(monkeypatch):
   expected = runtime_members('bazi.defines.dizhi.Dizhi')
   monkeypatch.setitem(api_reference.BASES, 'bazi.defines.dizhi.Dizhi', ('Enum',))
   assert api_reference.inherited_members('bazi.defines.dizhi.Dizhi') != expected
   assert runtime_members('bazi.defines.dizhi.Dizhi') == expected
 
 
-def test_every_contract_class_agrees_on_inherited_members():
+def test_contract_classes_agree_on_inheritance():
   for cls in DECLARED_MEMBERS:
     assert api_reference.inherited_members(cls) == runtime_members(cls), cls
 
@@ -61,7 +61,7 @@ def option_lines(text: str, qualified: str) -> list[str]:
   return block
 
 
-def test_empty_member_lists_are_not_documented_as_all_members(tmp_path):
+def test_empty_member_lists_not_all_members(tmp_path):
   api_reference.generate_api(tmp_path)
   for filename, qualified in (
     ('bazi-common.rst', 'bazi.common.frozendict'),
@@ -73,7 +73,7 @@ def test_empty_member_lists_are_not_documented_as_all_members(tmp_path):
   assert option_lines((tmp_path / 'api/bazi-data_types.rst').read_text(encoding='utf-8'), 'bazi.data_types.BaziData')
 
 
-def test_alias_and_reexport_pages_use_their_own_wording(tmp_path):
+def test_alias_reexport_pages_own_wording(tmp_path):
   api_reference.generate_api(tmp_path)
   defines = (tmp_path / 'api/bazi-defines-tiangan.rst').read_text(encoding='utf-8')
   calendar = (tmp_path / 'api/bazi-calendar.rst').read_text(encoding='utf-8')

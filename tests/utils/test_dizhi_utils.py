@@ -1042,7 +1042,7 @@ def test_ganzhi_occurrence() -> None:
     GanzhiOccurrence(2, Dizhi.申) # type: ignore
 
 
-def test_every_ganzhi_occurrence_field_has_a_type_gate() -> None:
+def test_every_occurrence_field_has_type_gate() -> None:
   # Mechanical binding: adding a field without a gate fails here.
   # 机械绑定：加字段不加闸会在这里响。
   valid: dict[str, object] = {'index': 0, 'ganzhi': Ganzhi.from_str('庚申')}
@@ -1225,7 +1225,7 @@ def test_search_ganzhis_covers_gong_rule_tables() -> None:
   ('辛卯', '癸巳', '己丑'),
   ('癸亥', '庚申', '戊辰'),
 ])
-def test_search_ganzhis_lu_profile_accepts_yin_tiangan(
+def test_search_lu_profile_accepts_yin(
   ganzhi_strs: tuple[str, str, str],
 ) -> None:
   ganzhis = tuple(Ganzhi.from_str(s) for s in ganzhi_strs)
@@ -1244,7 +1244,7 @@ def test_search_ganzhis_lu_profile_accepts_yin_tiangan(
   ('乙丑', '戊辰', '壬申'),
   ('乙丑', '己巳', '庚午'),
 ])
-def test_search_ganzhis_lu_profile_rejects_yang_tiangan(
+def test_search_lu_profile_rejects_yang(
   ganzhi_strs: tuple[str, str, str],
 ) -> None:
   ganzhis = tuple(Ganzhi.from_str(s) for s in ganzhi_strs)
@@ -1255,7 +1255,7 @@ def test_search_ganzhis_lu_profile_rejects_yang_tiangan(
   ) == ()
 
 
-def test_discover_mutual_ganzhis_scope_and_identity() -> None:
+def test_discover_mutual_scope_identity() -> None:
   first = (Ganzhi.from_str('庚申'), Ganzhi.from_str('丙午'))
   second = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('庚辰'))
   discovery = dizhi_utils.discover_mutual_ganzhis(first, second)

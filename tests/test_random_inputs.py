@@ -33,7 +33,7 @@ def test_random_factory_runtime_annotations(factory: type[Bazi] | type[BaziChart
 
 
 @pytest.mark.parametrize('_case', [0, 1])
-def test_rng_binds_printed_seed_to_real_state_without_touching_global_state(
+def test_rng_binds_seed_without_global_state(
   request: pytest.FixtureRequest, capsys: pytest.CaptureFixture[str], _case: int,
 ) -> None:
   state = random.getstate()
@@ -49,7 +49,7 @@ def test_rng_binds_printed_seed_to_real_state_without_touching_global_state(
 
 @pytest.mark.parametrize('script', ['run_demo.py', 'run_relationship_analyzer.py'])
 @pytest.mark.parametrize('seed', [0, 42, 236])
-def test_runner_seed_binds_birth_and_gender_across_processes(script: str, seed: int) -> None:
+def test_runner_seed_binds_birth_gender(script: str, seed: int) -> None:
   root = Path(__file__).resolve().parents[1]
   expected = Bazi.random(rng=random.Random(seed))
   outputs = []
@@ -72,7 +72,7 @@ def test_runner_seed_binds_birth_and_gender_across_processes(script: str, seed: 
 
 @pytest.mark.parametrize('runner', ['demo', 'relationship'])
 @pytest.mark.parametrize('sign', [-1, 1])
-def test_runner_binds_every_consumer_to_its_seeded_chart(
+def test_runner_binds_consumers_to_seeded_chart(
   monkeypatch: pytest.MonkeyPatch, rng: random.Random, runner: str, sign: int,
 ) -> None:
   seed = sign * rng.getrandbits(64)
@@ -133,7 +133,7 @@ def test_runner_binds_every_consumer_to_its_seeded_chart(
 
 
 @pytest.mark.parametrize('script', ['run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py'])
-def test_runner_automatic_seed_is_printed_and_replayable(tmp_path: Path, script: str) -> None:
+def test_runner_auto_seed_is_replayable(tmp_path: Path, script: str) -> None:
   path = Path(__file__).resolve().parents[1] / script
   command = [sys.executable, str(path)]
   first = subprocess.run(

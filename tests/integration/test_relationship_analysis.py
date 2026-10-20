@@ -67,7 +67,7 @@ def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], ac
   return True
 
 
-def test_month_date_and_moment_transits_reach_relationship_analysis() -> None:
+def test_transit_granularities_reach_analysis() -> None:
   chart = BaziChart(Bazi.create(
     '1984-04-01 11:08',
     'male',
@@ -985,7 +985,7 @@ def test_random_cases(bazi: Bazi, collection_seed: int, request: pytest.FixtureR
       assert star_results.dizhi != set(transits_dz_set).isdisjoint(stars.dizhi)
 
 
-def test_school_variants_reach_relationship_analysis() -> None:
+def test_school_variants_reach_the_analysis() -> None:
   # End-to-end pins that the chart's school steers relation discovery (issue #69). Assertions
   # pin exact combo sets, not "fewer results" -- MANGPAI ⊂ NORMAL_EXTENDED and STRICT ⊂ LOOSE,
   # so a "differs" assertion would also pass on a wrong or empty table.

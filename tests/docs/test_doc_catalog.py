@@ -43,7 +43,7 @@ def test_catalog_values_have_explicit_json_shapes(value, expected):
   assert json_value(value) == expected
 
 
-def test_unsupported_catalog_values_are_not_stringified():
+def test_unsupported_values_not_stringified():
   with pytest.raises(TypeError):
     json_value(object())
 
@@ -54,7 +54,7 @@ def test_unsupported_catalog_values_are_not_stringified():
   (2, 'tiangan.ding.definition', False),
   (1, 'wrong-visible-label', False),
 ])
-def test_related_entries_require_exact_ids_labels_and_multiplicity(count, label, valid):
+def test_related_entries_must_match_exactly(count, label, valid):
   identifier = 'catalog-sources-example'
   entry = KnowledgeBase.load().entry('tiangan.ding.definition')
   link = f'<a class="reference internal" href="entries.html#catalog-entries-{entry.claim_id}">{label}</a>'
@@ -67,7 +67,7 @@ def test_related_entries_require_exact_ids_labels_and_multiplicity(count, label,
       check_related(page, identifier, (entry,))
 
 
-def test_entry_heading_permalink_is_not_a_related_entry():
+def test_heading_permalink_not_related_entry():
   page = Page()
   page.feed('<section id="catalog-entries-example"><a class="headerlink" href="#catalog-entries-example">¶</a></section>')
   check_related(page, 'catalog-entries-example', ())

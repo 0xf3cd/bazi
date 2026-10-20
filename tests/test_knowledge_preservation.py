@@ -36,7 +36,7 @@ def _positioned_entries(subject: Tiangan | Shishen, field: str) -> tuple[Knowled
   ))
 
 
-def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
+def test_text_order_fingerprints_conserved() -> None:
   text_rows: list[list[str]] = [[], []]
   claim_rows: list[str] = []
   for subjects, field_order, prefix, rows in (
@@ -67,7 +67,7 @@ def test_complete_text_order_and_metadata_fingerprints_are_conserved() -> None:
   assert sha256('\n'.join(shishen_rows + tiangan_rows + claim_rows).encode()).hexdigest() == '42daeca42c35c59f30bbc5fa4a259f94edfec8e5e0b46f2ad113c7f4a5d6272d'
 
 
-def test_original_source_registry_fingerprint_and_boundaries_are_conserved() -> None:
+def test_source_registry_fingerprint_conserved() -> None:
   rows: list[str] = []
   for source_id in BASELINE['sources']:
     record = asdict(KNOWLEDGE_BASE.sources[source_id])
@@ -87,7 +87,7 @@ def test_original_source_registry_fingerprint_and_boundaries_are_conserved() -> 
     assert KNOWLEDGE_BASE.sources[source_id].edition == '版心题《命理探原》'
 
 
-def test_default_and_reference_selection_preserve_all_old_positions() -> None:
+def test_selections_preserve_old_positions() -> None:
   k = KNOWLEDGE_BASE
   for subjects, complete_counts, expected_default_total in (
     (Shishen, (25, 23, 23, 23, 20, 20, 22, 22, 19, 22), 9),
@@ -118,7 +118,7 @@ def test_default_and_reference_selection_preserve_all_old_positions() -> None:
   assert 'shishen.jiecai.definition' not in k.entries
 
 
-def test_legacy_reference_classification_is_not_upgraded_by_projection() -> None:
+def test_projection_keeps_legacy_classification() -> None:
   k = KNOWLEDGE_BASE
   conditional_shishen: set[str] = set()
   for entry in k.entries.values():
