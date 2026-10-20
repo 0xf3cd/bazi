@@ -81,7 +81,7 @@
 
 两条国印知识已经存在，不需要再次录入。默认过滤与来源访问的通用用法见 {doc}`knowledge`。这里补上当前流派字段到条目、再到来源的查阅路径。
 
-**下面的定义成员与条目 ID 对应是文档中的设计例子，不是库提供的规则关联接口。** 枚举名恰好等于 `viewpoint` 是现有字符串约定，不是类型保证；源码规则层不依赖 `KnowledgeBase`。
+**下面的定义成员与条目 ID 对应是文档中的设计例子，不是库提供的规则关联接口。** 源码规则层不依赖 `KnowledgeBase`。
 
 ```{testcode} rule-coverage-guoyin
 from bazi.defines import Tiangan
