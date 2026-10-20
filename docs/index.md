@@ -21,6 +21,7 @@ guides/integration
 
 api/index
 catalog/index
+guides/rule-coverage
 contributing
 versions
 versioning

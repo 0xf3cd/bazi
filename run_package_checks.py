@@ -46,6 +46,7 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'docs/_static/documentation.css',
   'docs/guides/quickstart.md', 'docs/guides/configuration.md',
   'docs/guides/relations-transits.md', 'docs/guides/integration.md', 'docs/guides/knowledge.md',
+  'docs/guides/rule-coverage.md',
   'docs/catalog/index.rst', 'docs/catalog/objects.rst', 'docs/catalog/contexts.rst',
   'docs/catalog/sources.rst', 'docs/catalog/entries.rst', 'docs/catalog/criteria.rst',
   'docs/catalog/topics.rst', 'docs/catalog/viewpoints.rst', 'docs/catalog/filters.rst',

@@ -35,6 +35,7 @@ EXAMPLE_GROUPS = {
   'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text'},
   'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style'},
   'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria'},
+  'guides/rule-coverage': {'rule-coverage-guoyin'},
 }
 
 SOURCELESS_ALIAS_DESCRIPTIONS = {
