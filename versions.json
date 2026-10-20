@@ -4,7 +4,7 @@
   "versions": [
     {
       "label": "dev",
-      "state": "archived",
+      "state": "ready",
       "commit": "aa51db99a2cc1a852b8acdf2efa073162cdc57b9",
       "digest": "2faf782b5f843916d91c0e929733ee21d48dfa0f5919ac8d381141280a69111a"
     },
