@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
+# Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # relationship_samples.py
 
 # Helpers shared by the relationship-analyzer tests in this directory: gong projection, discovery
