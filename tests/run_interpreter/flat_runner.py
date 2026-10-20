@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 # Shared by the flat-form (no subcommand) run_interpreter tests in this directory: the subprocess runner,
-# the write-guard script runner and the fixed arguments.
+# the write-guard script runner, the fixed arguments and the preloaded knowledge base.
 # Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
 # `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package
 # (see the NOTE in `tests/calendar/test_celestial_tables.py`).

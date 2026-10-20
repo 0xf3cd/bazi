@@ -10,15 +10,15 @@ from typing import Any
 import pytest
 
 import bazi.context_matching as matching_module
-from bazi.bazi import Bazi, BaziGender
-from bazi.bazi_chart import BaziChart
-from bazi.common import frozendict
 from bazi.context_matching import (
   ContextProfile, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
 )
+from bazi.context_matching import RelationshipProfile, TransitCoordinate
+from bazi.bazi import Bazi, BaziGender
+from bazi.bazi_chart import BaziChart
+from bazi.common import frozendict
 from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
-from bazi.context_matching import RelationshipProfile, TransitCoordinate
 
 from matching_samples import GUANSHA, FEMALE, LEGAL
 

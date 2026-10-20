@@ -10,10 +10,10 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextResult, RelatedEntry, evaluate_context, RelationshipProfile, TransitCoordinate
 from bazi.defines import Tiangan, DizhiRelation
+from bazi.defines import Dizhi as _Dizhi
 from bazi.knowledge import KnowledgeBase
 from bazi.school import BaziConfig, BaziSchool, PeiouXingDef
 from bazi.transits import TransitKind
-from bazi.defines import Dizhi as _Dizhi
 
 from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from
 

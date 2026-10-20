@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 
 import run_interpreter
-from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 from run_interpreter import _LIST_DIMENSIONS, main
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 from command_runner import run
 

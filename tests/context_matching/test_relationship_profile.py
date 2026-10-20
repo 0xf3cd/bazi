@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 from datetime import datetime
-from typing import Any
 from datetime import date as _date_module  # The construction-time matrix needs the native date type.
 from datetime import UTC as _UTC
+from typing import Any
 
 import pytest
 
