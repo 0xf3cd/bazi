@@ -124,6 +124,8 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
 ## 测试
 
 - 镜像包布局：`bazi/utils/tiangan_utils.py` 对应 `tests/utils/test_tiangan_utils.py`。
+- 测试名用 `test_<行为>`，写被守住的行为或不变量，对象交给所在的文件和包；名字不超过 45 个字符，
+  由 `tests/test_test_names.py` 检查。
 - 使用模块级 `test_*`、裸 `assert`、`pytest.raises`；字面案例表用 `parametrize`，派生案例用普通循环。
 - 组合期望以内联字面集合给出；集成测试在 `tests/integration/`。
 
