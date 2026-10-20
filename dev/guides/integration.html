@@ -63,7 +63,29 @@ ImportError
 带下划线的名字是包内约定，不承诺包外调用。</p>
 </section>
 <section id="id3">
-<h2>三类记录，三种恢复<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<h2>命盘文本与终端颜色<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 的 <code class="docutils literal notranslate"><span class="pre">basic_text</span></code>、<code class="docutils literal notranslate"><span class="pre">transit_text</span></code>、<code class="docutils literal notranslate"><span class="pre">chart_text</span></code> 返回纯文本，库本身不加颜色。
+要加颜色或标记，传一个 <code class="docutils literal notranslate"><span class="pre">TextStyle</span></code>：<code class="docutils literal notranslate"><span class="pre">glyph</span></code> 收到单个天干或地支，<code class="docutils literal notranslate"><span class="pre">day_master_mark</span></code> 收到“日主”二字，各自返回显示文字；
+两个字段都可以不设，不设就原样输出。钩子的返回值原样放进文本，库不做检查，版式由你负责。下面的例子给日主加上星号，再把每个字形用方括号括起来：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextStyle</span><span class="p">,</span> <span class="n">basic_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="n">style</span> <span class="o">=</span> <span class="n">TextStyle</span><span class="p">(</span><span class="n">glyph</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'[</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">]'</span><span class="p">,</span> <span class="n">day_master_mark</span><span class="o">=</span><span class="k">lambda</span> <span class="n">label</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'*</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">*'</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">basic_text</span><span class="p">(</span><span class="n">chart</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'日：'</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>日：  [壬] [阳水] &lt;*日主*&gt;      [午] [阳火] &lt;正财&gt;     [丁] [阴火] &lt;财&gt; [己] [阴土] &lt;官&gt;
+</pre></div>
+</div>
+<p>源码里的 <code class="docutils literal notranslate"><span class="pre">run_demo.py</span></code> 就是用终端颜色码实现这两个钩子的；传给钩子的永远是单个字形，不是整段文字。</p>
+</section>
+<section id="id4">
+<h2>三类记录，三种恢复<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>记录</p></th>
@@ -92,8 +114,8 @@ ImportError
 </table>
 <p>三类记录不能互换。入口要求的 Python 类型不符时抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；同为文本的知识库与前提判别记录互换时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。
 <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> 与 <code class="docutils literal notranslate"><span class="pre">record_version</span></code> 是各自独立的版本号，也不能互相替代。</p>
-<section id="id4">
-<h3>命盘：重算后核对，不是原结果的冻结<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h3>
+<section id="id5">
+<h3>命盘：重算后核对，不是原结果的冻结<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h3>
 <p>命盘 JSON 保存输入、配置和派生字段。<code class="docutils literal notranslate"><span class="pre">from_json</span></code> 用这些输入和<strong>当前版本</strong>的实现重新构造命盘，
 再逐项核对记录里的派生字段，不一致就拒绝。所以它只保证与当前版本一致，不是历史结果的冻结副本。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -135,8 +157,8 @@ bazi 相等 True
 <p>恢复后的两个命盘可以 <code class="docutils literal notranslate"><span class="pre">json</span></code> 和 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 值相等，但 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code> 按对象身份比较，对象本身不相等。
 命盘 JSON 没有版本字段，也不要往里加自定义键；需要记录软件版本时，写在你自己的外层记录里。</p>
 </section>
-<section id="id5">
-<h3>知识库和前提判别记录<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h3>
+<section id="id6">
+<h3>知识库和前提判别记录<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h3>
 <p>知识库导出的是全部对象、情境、来源和条目的文本，恢复后与原库按内容和顺序相等。
 前提判别记录只接受 <code class="docutils literal notranslate"><span class="pre">record_version</span></code> 为 4，恢复时校验结构和值类型，<strong>不会重新判别</strong>，也不核对输入、观察与证据之间的事实一致性。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -189,8 +211,8 @@ bazi 相等 True
 需要当前规则下的结论时，用原始输入和配置重新构造命盘，再调用 <code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code>。库没有自动迁移接口。</p>
 </section>
 </section>
-<section id="id6">
-<h2>前提匹配：结构事实，不是判断<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<section id="id7">
+<h2>前提匹配：结构事实，不是判断<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code> 求值已注册的判据，例如“选定范围内正官与七杀各至少出现一次”。
 <code class="docutils literal notranslate"><span class="pre">entry_role='premise'</span></code> 的判据检查关联条目的完整前提；<code class="docutils literal notranslate"><span class="pre">entry_role='condition'</span></code> 只检查局部事实，关联条目作为条件参考放在 <code class="docutils literal notranslate"><span class="pre">related</span></code>，不能据此认定条目全文的前提成立。
 <code class="docutils literal notranslate"><span class="pre">SATISFIED</span></code> 表示该判据的结构事实成立，不是旺衰、格局或现实事件的判断，也不说明条文本身为真。</p>

@@ -81,13 +81,81 @@
 </ul>
 </section>
 <section id="id4">
-<h2>默认值是一种选定的口径<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<h2>把盘排成文本<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
+<code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 给出日元、出生时刻，以及四柱各自的十神、阴阳五行、藏干、纳音和十二长生。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">basic_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">basic_text</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>日元壬水，female，生于 1990-05-17
+
+出生时刻：1990-05-17T10:30:00
+
+     天干                  地支                  地支藏干
+年：  庚 [阳金] &lt;偏印&gt;      午 [阳火] &lt;正财&gt;     丁 [阴火] &lt;财&gt; 己 [阴土] &lt;官&gt;
+  -- 纳音：路旁土  -- 十二长生：胎
+月：  辛 [阴金] &lt;正印&gt;      巳 [阴火] &lt;偏财&gt;     丙 [阳火] &lt;才&gt; 庚 [阳金] &lt;枭&gt; 戊 [阳土] &lt;杀&gt;
+  -- 纳音：白蜡金  -- 十二长生：绝
+日：  壬 [阳水] &lt;日主&gt;      午 [阳火] &lt;正财&gt;     丁 [阴火] &lt;财&gt; 己 [阴土] &lt;官&gt;
+  -- 纳音：杨柳木  -- 十二长生：胎
+时：  乙 [阴木] &lt;伤官&gt;      巳 [阴火] &lt;偏财&gt;     丙 [阳火] &lt;才&gt; 庚 [阳金] &lt;枭&gt; 戊 [阳土] &lt;杀&gt;
+  -- 纳音：覆灯火  -- 十二长生：绝
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>返回值是字符串，前后各有一个换行，可以直接 <code class="docutils literal notranslate"><span class="pre">print</span></code>。需要完整的文本，包括流运，用 <code class="docutils literal notranslate"><span class="pre">chart_text(chart)</span></code>。</p></li>
+<li><p>流运文本把流年的数量交给调用方，见 <a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>；要加终端颜色，见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>在交互里看一眼<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p>在 Python 交互环境里直接输入对象，会看到一行摘要：出生时刻、性别和四柱。配置不是默认值，或是地点盘时，摘要才会多出对应部分。
+摘要不会去算流运，也不展开整张盘；它只用来探索和调试，格式以后可能调整，要保存或交换请用 <code class="docutils literal notranslate"><span class="pre">chart.json</span></code>（见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>）。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transit_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransitChart</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">chart</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'knowledge'</span><span class="p">,</span> <span class="s1">'transit_chart'</span><span class="p">)])</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">TransitChart</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">bazi</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">bazi</span><span class="o">.</span><span class="n">Bazi</span>
+<span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>BaziChart(Bazi(1990-05-17T10:30:00, female, 庚午 辛巳 壬午 乙巳))
+['knowledge', 'transit_chart']
+Expected BaziChart, got &lt;class 'bazi.bazi.Bazi'&gt;; wrap it with BaziChart(bazi)
+module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dir(bazi)</span></code> 会列出按需导入的子模块，导入后才加载它们；上面只筛出了其中两个，实际的列表更长。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。</p>
+</section>
+<section id="id6">
+<h2>默认值是一种选定的口径<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
 <p>没有传配置时，库使用 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 精度、<code class="docutils literal notranslate"><span class="pre">celestial</span></code> 历法后端，晚子时 23:00 换日柱，以立春换年。
 这是本库选定的一套取法，不是八字唯一的读法：精度、历法后端和流派取法各有其他选项。</p>
 <p>出生在交节日前后、子时前后，或要采用其他流派时，先读 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>，再决定要不要改默认值。</p>
 </section>
-<section id="id5">
-<h2>下一步<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<section id="id7">
+<h2>下一步<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
 <ul class="simple">
 <li><p>想改变精度、换日点、大运年份口径，或使用真太阳时：<a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。</p></li>
 <li><p>想查流年、流月，或看原局与流运之间的关系：<a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>。</p></li>

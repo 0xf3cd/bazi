@@ -162,6 +162,41 @@ True 害
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">chart.xiaoyun</span></code> 不同：它是缓存的元组，可以反复遍历。大运的 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code> 是起运年份标签，
 每步覆盖 <code class="docutils literal notranslate"><span class="pre">[start_moment,</span> <span class="pre">end_moment)</span></code>，不表示这步大运占据整个标签年；标签规则见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。</p>
+<p>需要的是文字而不是对象时，<code class="docutils literal notranslate"><span class="pre">bazi.chart_text.transit_text</span></code> 把节、交运时间、大运、小运和流年排好。
+流年可以无限延续，所以数量由你给：<code class="docutils literal notranslate"><span class="pre">dayun_count</span></code> 取前几步大运，<code class="docutils literal notranslate"><span class="pre">liunian_count</span></code> 取从出生干支年起的几年，默认分别是 10 和 100。
+小运是有限的，全部列出。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.chart_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">transit_text</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1990</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s1">'female'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">transit_text</span><span class="p">(</span><span class="n">chart</span><span class="p">,</span> <span class="n">dayun_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">liunian_count</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>出生时刻前一节：立夏 - 1990-05-06T02:35:27
+出生时刻后一节：芒种 - 1990-06-06T06:46:19
+大运数节依据（逆排）：立夏 - 1990-05-06T02:35:27
+交运时间： 1994-02-23T20:46:55
+
+大运：            天干                 地支                 地支藏干
+1994年标签：       庚 [阳金] &lt;偏印&gt;     辰 [阳土] &lt;七杀&gt;    戊 [阳土] &lt;杀&gt; 乙 [阴木] &lt;伤&gt; 癸 [阴水] &lt;劫&gt;
+               -- 公历区间：1994-02-23 20:46 ～ 2004-02-23 20:46
+               -- 纳音：白蜡金  -- 十二长生：墓
+
+2004年标签：       己 [阴土] &lt;正官&gt;     卯 [阴木] &lt;伤官&gt;    乙 [阴木] &lt;伤&gt;
+               -- 公历区间：2004-02-23 20:46 ～ 2014-02-23 20:46
+               -- 纳音：城头土  -- 十二长生：死
+
+小运：
+1岁-甲辰  2岁-癸卯  3岁-壬寅  4岁-辛丑  5岁-庚子
+
+流年：
+1990-庚午  1991-辛未  1992-壬申  1993-癸酉  1994-甲戌  1995-乙亥  1996-丙子  1997-丁丑  1998-戊寅  1999-己卯
+</pre></div>
+</div>
+<p>地点盘的节与大运区间仍用节气表时刻，文本会注明这一点，不采用真太阳时。</p>
 </section>
 <section id="id4">
 <h2>范围提醒<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>

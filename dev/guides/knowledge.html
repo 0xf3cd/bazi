@@ -414,15 +414,18 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 </section>
 <section id="id12">
 <h2>源码脚本<a class="headerlink" href="#id12" title="链接到此标题。">¶</a></h2>
-<p>仓库根目录的 <code class="docutils literal notranslate"><span class="pre">run_interpreter.py</span></code> 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑（只用已有的平铺参数）：</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_interpreter.py<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query-knowledge<span class="w"> </span><span class="se">\</span>
+<p>仓库根目录的 <code class="docutils literal notranslate"><span class="pre">run_interpreter.py</span></code> 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span>--object<span class="w"> </span>tiangan.ding
+python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span>--list-values<span class="w"> </span>topic
+python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--object<span class="w"> </span>tiangan.ding<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--include-reference-only<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--export-knowledge-json<span class="w"> </span>output_data/knowledge.json
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">--validate-knowledge</span></code> 校验完整知识源，<code class="docutils literal notranslate"><span class="pre">--knowledge-source</span></code> 指定你自己的 JSON。完整参数见 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span> <span class="pre">--help</span></code>。</p>
+<p>只写 <code class="docutils literal notranslate"><span class="pre">knowledge</span></code> 会给出知识库概览和可用的查询条件；<code class="docutils literal notranslate"><span class="pre">--validate-knowledge</span></code> 校验完整知识源，<code class="docutils literal notranslate"><span class="pre">--knowledge-source</span></code> 指定你自己的 JSON，<code class="docutils literal notranslate"><span class="pre">--all</span></code> 列出全部默认可见的条目。
+判据目录用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span> <span class="pre">match</span></code> 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span> <span class="pre">knowledge</span> <span class="pre">--help</span></code>。
+不带任务名的旧写法（<code class="docutils literal notranslate"><span class="pre">--query-knowledge</span></code> 等）这一版仍可用，会提示等价的新命令，将来会移除。</p>
 <p>字段与方法的完整说明见 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeBase</span></code></a> 和 <a class="reference internal" href="../api/index.html"><span class="doc">API Reference</span></a>，本文只讲上手路径。</p>
 </section>
 </section>

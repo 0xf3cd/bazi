@@ -9,6 +9,7 @@ API Reference
    bazi-analyzer-relationship
    bazi-bazi
    bazi-bazi_chart
+   bazi-chart_text
    bazi-calendar
    bazi-calendar-backend
    bazi-calendar-celestial_data

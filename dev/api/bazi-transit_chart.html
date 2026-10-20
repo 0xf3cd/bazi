@@ -41,7 +41,7 @@
 <p>TransitChart 将查询坐标解释为相应的 TransitSet；各入口的支持范围与缺项条件分别说明。</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">TransitChart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bazi_chart</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L23-L185"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">TransitChart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bazi_chart</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L23-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart" title="链接到此定义。">¶</a></dt>
 <dd><p>查询命盘流运与历法流运的统一入口。</p>
 <p>小运、大运来自 <code class="docutils literal notranslate"><span class="pre">TransitDatabase</span></code>；流年、流月、流日由历法推导。</p>
 <dl class="field-list simple">
@@ -51,7 +51,7 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_date">
-<span class="sig-name descname"><span class="pre">at_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L121-L145"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">at_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L124-L148"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_date" title="链接到此定义。">¶</a></dt>
 <dd><p>返回东八区无时区公历日期下的流运，出生前或历法范围外返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；地点盘出生
 下界取规范绝对日期，不取真太阳时日期；大运按物理交运日边界解释。</p>
 <p>Args:</p>
@@ -74,7 +74,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_moment">
-<span class="sig-name descname"><span class="pre">at_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_moment</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L147-L185"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_moment" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">at_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_moment</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L150-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_moment" title="链接到此定义。">¶</a></dt>
 <dd><p>返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。
 地点盘出生下界取规范绝对时刻；查询时刻不做地点修正。
 查询、出生与大运边界均截到秒比较，相等归新。</p>
@@ -100,7 +100,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_month">
-<span class="sig-name descname"><span class="pre">at_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gz_month</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L89-L119"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_month" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">at_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gz_month</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L92-L122"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_month" title="链接到此定义。">¶</a></dt>
 <dd><p>返回干支月坐标下的流运，出生前或节令表范围外返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；
 大运按物理交运月边界解释。</p>
 <p>Args:</p>
@@ -127,7 +127,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.at_year">
-<span class="sig-name descname"><span class="pre">at_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L71-L87"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_year" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">at_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L74-L90"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.at_year" title="链接到此定义。">¶</a></dt>
 <dd><p>返回干支年坐标下的流运，早于出生干支年返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；大运按命盘所选年份标签视图解释。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -149,7 +149,7 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="bazi.transit_chart.TransitChart.bazi_chart">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bazi_chart</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><span class="pre">BaziChart</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L45-L48"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.bazi_chart" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bazi_chart</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><span class="pre">BaziChart</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L48-L51"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart.TransitChart.bazi_chart" title="链接到此定义。">¶</a></dt>
 <dd><p>直接共享的只读原盘；命盘自身已隔离非 frozen 的 Bazi，无需再复制。</p>
 </dd></dl>
 
@@ -157,7 +157,7 @@
 
 <dl class="py data">
 <dt class="sig sig-object py" id="bazi.transit_chart.">
-<span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">流年大运</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/transit_chart.py#L23-L185"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart." title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.transit_chart.</span></span><span class="sig-name descname"><span class="pre">流年大运</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/transit_chart.py#L23-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transit_chart." title="链接到此定义。">¶</a></dt>
 <dd><p><a class="reference internal" href="#bazi.transit_chart.TransitChart" title="bazi.transit_chart.TransitChart"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.transit_chart.TransitChart</span></code></a> 的别名。</p>
 </dd></dl>
 

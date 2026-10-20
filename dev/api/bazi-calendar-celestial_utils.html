@@ -45,7 +45,7 @@
 切换后可能返回旧算法的缓存结果；独立实例把算法选择纳入工具对象身份。</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">CelestialCalendarUtils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_table_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L32-L563"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">CelestialCalendarUtils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_table_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L32-L563"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="链接到此定义。">¶</a></dt>
 <dd><p>读取 celestial-calendar 表的历法工具；使用模块级单例 <code class="docutils literal notranslate"><span class="pre">ALGO1</span></code> / <code class="docutils literal notranslate"><span class="pre">ALGO2</span></code>，不直接构造。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
@@ -54,7 +54,7 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.days_counts_in_ganzhi_year">
-<span class="sig-name descname"><span class="pre">days_counts_in_ganzhi_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L188-L195"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.days_counts_in_ganzhi_year" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">days_counts_in_ganzhi_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L188-L195"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.days_counts_in_ganzhi_year" title="链接到此定义。">¶</a></dt>
 <dd><p>返回 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code> 的十二个干支月长，按连续节日期之差计算，见模块的日期级约定。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
@@ -68,7 +68,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_lunar">
-<span class="sig-name descname"><span class="pre">ganzhi_to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L312-L315"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_lunar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ganzhi_to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L312-L315"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_lunar" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ganzhi_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -81,7 +81,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_solar">
-<span class="sig-name descname"><span class="pre">ganzhi_to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L262-L265"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_solar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ganzhi_to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhi_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L262-L265"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.ganzhi_to_solar" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ganzhi_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -94,7 +94,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.get_max_supported_date">
-<span class="sig-name descname"><span class="pre">get_max_supported_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_type</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L64-L67"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.get_max_supported_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_max_supported_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_type</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L64-L67"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.get_max_supported_date" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>date_type</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarType" title="bazi.calendar.dates.CalendarType"><em>CalendarType</em></a>)</p>
@@ -107,7 +107,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.get_min_supported_date">
-<span class="sig-name descname"><span class="pre">get_min_supported_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_type</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L46-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.get_min_supported_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_min_supported_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_type</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L46-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.get_min_supported_date" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>date_type</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarType" title="bazi.calendar.dates.CalendarType"><em>CalendarType</em></a>)</p>
@@ -120,7 +120,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid">
-<span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L171-L174"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L171-L174"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>d</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -133,7 +133,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_ganzhi_date">
-<span class="sig-name descname"><span class="pre">is_valid_ganzhi_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L142-L154"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_ganzhi_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_valid_ganzhi_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L142-L154"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_ganzhi_date" title="链接到此定义。">¶</a></dt>
 <dd><p>检查干支历日期是否合法且在支持范围内。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -152,7 +152,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_lunar_date">
-<span class="sig-name descname"><span class="pre">is_valid_lunar_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L114-L126"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_lunar_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_valid_lunar_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L114-L126"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_lunar_date" title="链接到此定义。">¶</a></dt>
 <dd><p>检查农历日期是否合法且在支持范围内。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -171,7 +171,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_solar_date">
-<span class="sig-name descname"><span class="pre">is_valid_solar_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L84-L96"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_solar_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_valid_solar_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L84-L96"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.is_valid_solar_date" title="链接到此定义。">¶</a></dt>
 <dd><p>检查公历日期是否合法且在支持范围内。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -190,7 +190,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_date">
-<span class="sig-name descname"><span class="pre">jieqi_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jieqi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L446-L463"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">jieqi_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jieqi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L446-L463"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_date" title="链接到此定义。">¶</a></dt>
 <dd><p>输入公历年份和节气，返回节气日期。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -213,7 +213,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_moment">
-<span class="sig-name descname"><span class="pre">jieqi_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jieqi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L465-L486"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_moment" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">jieqi_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jieqi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L465-L486"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.jieqi_moment" title="链接到此定义。">¶</a></dt>
 <dd><p>输入公历年份和节气，返回节气的具体时刻。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -241,7 +241,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_ganzhi">
-<span class="sig-name descname"><span class="pre">lunar_to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L303-L306"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_ganzhi" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">lunar_to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L303-L306"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_ganzhi" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>lunar_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -254,7 +254,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_solar">
-<span class="sig-name descname"><span class="pre">lunar_to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L220-L223"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_solar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">lunar_to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lunar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L220-L223"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.lunar_to_solar" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>lunar_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -267,7 +267,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.next_jie">
-<span class="sig-name descname"><span class="pre">next_jie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L537-L549"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.next_jie" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">next_jie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L537-L549"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.next_jie" title="链接到此定义。">¶</a></dt>
 <dd><p>返回严格晚于输入公历时刻的最近一节及其时刻，不含中气；恰交节时继续查下一节（比较为 &gt;）。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -286,7 +286,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.prev_jie">
-<span class="sig-name descname"><span class="pre">prev_jie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L508-L520"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.prev_jie" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">prev_jie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L508-L520"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.prev_jie" title="链接到此定义。">¶</a></dt>
 <dd><p>返回不晚于输入公历时刻的最近一节及其时刻，不含中气；恰交节归该节（比较为 &gt;=）。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -305,7 +305,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_ganzhi">
-<span class="sig-name descname"><span class="pre">solar_to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L280-L283"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_ganzhi" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">solar_to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L280-L283"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_ganzhi" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>solar_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -318,7 +318,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_lunar">
-<span class="sig-name descname"><span class="pre">solar_to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L238-L241"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_lunar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">solar_to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solar_date</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L238-L241"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.solar_to_lunar" title="链接到此定义。">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>solar_date</strong> (<a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><em>CalendarDate</em></a>)</p>
@@ -331,7 +331,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.supported_jie_boundaries">
-<span class="sig-name descname"><span class="pre">supported_jie_boundaries</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.supported_jie_boundaries" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">supported_jie_boundaries</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.supported_jie_boundaries" title="链接到此定义。">¶</a></dt>
 <dd><p>返回首末支持节的时刻。prev_jie / next_jie 的输入须位于半开区间
 <code class="docutils literal notranslate"><span class="pre">[returned_tuple[0],</span> <span class="pre">returned_tuple[1])</span></code>，含首端、不含末端。</p>
 <dl class="field-list simple">
@@ -343,7 +343,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.to_date">
-<span class="sig-name descname"><span class="pre">to_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L421-L433"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_date" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L421-L433"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_date" title="链接到此定义。">¶</a></dt>
 <dd><p>把输入转换为公历 date。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -362,7 +362,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.to_ganzhi">
-<span class="sig-name descname"><span class="pre">to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L394-L409"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_ganzhi" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_ganzhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L394-L409"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_ganzhi" title="链接到此定义。">¶</a></dt>
 <dd><p>把输入转换为干支历 CalendarDate。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -383,7 +383,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.to_lunar">
-<span class="sig-name descname"><span class="pre">to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L370-L382"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_lunar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_lunar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L370-L382"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_lunar" title="链接到此定义。">¶</a></dt>
 <dd><p>把输入转换为农历 CalendarDate。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -402,7 +402,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.CelestialCalendarUtils.to_solar">
-<span class="sig-name descname"><span class="pre">to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py#L346-L358"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_solar" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_solar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py#L346-L358"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils.to_solar" title="链接到此定义。">¶</a></dt>
 <dd><p>把输入转换为公历 CalendarDate。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -423,13 +423,13 @@
 
 <dl class="py data">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.ALGO1">
-<span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">ALGO1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="bazi.calendar.celestial_utils.CelestialCalendarUtils"><span class="pre">CelestialCalendarUtils</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.ALGO1" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">ALGO1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="bazi.calendar.celestial_utils.CelestialCalendarUtils"><span class="pre">CelestialCalendarUtils</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.ALGO1" title="链接到此定义。">¶</a></dt>
 <dd><p>默认阴历算法，沿 HKO 官方历书体系。</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="bazi.calendar.celestial_utils.ALGO2">
-<span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">ALGO2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="bazi.calendar.celestial_utils.CelestialCalendarUtils"><span class="pre">CelestialCalendarUtils</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.ALGO2" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.celestial_utils.</span></span><span class="sig-name descname"><span class="pre">ALGO2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.calendar.celestial_utils.CelestialCalendarUtils" title="bazi.calendar.celestial_utils.CelestialCalendarUtils"><span class="pre">CelestialCalendarUtils</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/celestial_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.celestial_utils.ALGO2" title="链接到此定义。">¶</a></dt>
 <dd><p>可选阴历算法，按考虑闰秒的 UTC+8 划月；有六年不同于 ALGO1，见 SCHEMA.md。</p>
 </dd></dl>
 

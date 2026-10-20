@@ -41,21 +41,21 @@
 <p>he、chong、sheng、ke 判断单组关系，search、discover 与 discover_mutual 查询组合。</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganCombo">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganCombo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganCombo" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganCombo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganCombo" title="链接到此定义。">¶</a></dt>
 <dd><p>满足某天干关系的一个组合。</p>
 <p><code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tiangan</span></code></a>] 的别名</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationCombos">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationCombos</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationCombos" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationCombos</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationCombos" title="链接到此定义。">¶</a></dt>
 <dd><p>满足某天干关系的全部组合元组。</p>
 <p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tiangan</span></code></a>], ...] 的别名</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L27-L28"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L27-L28"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery" title="链接到此定义。">¶</a></dt>
 <dd><p>天干关系到满足它的天干组合的冻结映射。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
@@ -64,7 +64,7 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.filter">
-<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/relation_discovery.py#L44-L52"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.filter" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/relation_discovery.py#L44-L52"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.filter" title="链接到此定义。">¶</a></dt>
 <dd><p>只保留 <code class="docutils literal notranslate"><span class="pre">f</span></code> 接受的组合；不再有组合的关系整键丢弃。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
@@ -78,7 +78,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.merge">
-<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/relation_discovery.py#L54-L63"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.merge" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/relation_discovery.py#L54-L63"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.merge" title="链接到此定义。">¶</a></dt>
 <dd><p>合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
@@ -92,7 +92,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.mutual_only">
-<span class="sig-name descname"><span class="pre">mutual_only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/relation_discovery.py#L65-L74"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.mutual_only" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">mutual_only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/relation_discovery.py#L65-L74"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.mutual_only" title="链接到此定义。">¶</a></dt>
 <dd><p>只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。</p>
 <p>Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。
 <code class="docutils literal notranslate"><span class="pre">discover_mutual([子,</span> <span class="pre">丑],</span> <span class="pre">[子])</span></code> 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。</p>
@@ -113,7 +113,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.he">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">he</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L31-L59"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.he" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">he</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L31-L59"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.he" title="链接到此定义。">¶</a></dt>
 <dd><p>按无向相合关系查对应五行。
 本函数不判断实际合化条件；能否合化仍须结合原盘。</p>
 <p>Args:</p>
@@ -155,7 +155,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.chong">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">chong</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L62-L86"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.chong" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">chong</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L62-L86"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.chong" title="链接到此定义。">¶</a></dt>
 <dd><p>检查输入的两个天干是否构成相冲关系。
 返回结果与输入的天干顺序无关，因为相冲关系是无方向的。</p>
 <p>Args:</p>
@@ -197,7 +197,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.sheng">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">sheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L89-L113"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.sheng" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">sheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L89-L113"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.sheng" title="链接到此定义。">¶</a></dt>
 <dd><p>检查输入的两个天干是否构成相生关系。
 返回结果与输入的天干顺序有关，因为相生关系是单向的。</p>
 <p>Args:</p>
@@ -239,7 +239,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.ke">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">ke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L116-L140"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.ke" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">ke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L116-L140"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.ke" title="链接到此定义。">¶</a></dt>
 <dd><p>检查输入的两个天干是否构成相克关系。
 返回结果与输入的天干顺序有关，因为相克关系是单向的。</p>
 <p>Args:</p>
@@ -281,7 +281,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.search">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L151-L189"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.search" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L151-L189"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.search" title="链接到此定义。">¶</a></dt>
 <dd><p>返回 <code class="docutils literal notranslate"><span class="pre">tiangans</span></code> 中所有满足该关系的组合。</p>
 <p>Note:</p>
 <ul class="simple">
@@ -334,7 +334,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.discover">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L192-L215"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L192-L215"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover" title="链接到此定义。">¶</a></dt>
 <dd><p>返回给定天干中所有可能的天干关系组合（合、冲、生、克等）。
 各关系由 <code class="docutils literal notranslate"><span class="pre">search</span></code> 求值。</p>
 <p>Note:</p>
@@ -359,7 +359,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.utils.tiangan_utils.discover_mutual">
-<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover_mutual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tiangans2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/utils/tiangan_utils.py#L218-L256"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover_mutual" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover_mutual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tiangans2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/utils/tiangan_utils.py#L218-L256"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover_mutual" title="链接到此定义。">¶</a></dt>
 <dd><p>找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
 返回组合须与两组天干值集均相交，不追踪具体出现；按值过滤语义见 RelationDiscovery.mutual_only。</p>
 <p>Note:</p>

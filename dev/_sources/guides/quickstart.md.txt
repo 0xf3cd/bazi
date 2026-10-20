@@ -47,6 +47,78 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 - 性别字符串接受 `男`、`女`、`male`、`female`；`chart.json` 里统一存拉丁写法。
 - `chart.json` 是每次新建的字典，字段和配置都在里面。需要保存或交换时见 {doc}`integration`。
 
+## 把盘排成文本
+
+`bazi.chart_text` 把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
+`basic_text` 给出日元、出生时刻，以及四柱各自的十神、阴阳五行、藏干、纳音和十二长生。
+
+```{testcode} quickstart-text
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.chart_text import basic_text
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+print(basic_text(chart).strip())
+```
+
+```{testoutput} quickstart-text
+日元壬水，female，生于 1990-05-17
+
+出生时刻：1990-05-17T10:30:00
+
+     天干                  地支                  地支藏干
+年：  庚 [阳金] <偏印>      午 [阳火] <正财>     丁 [阴火] <财> 己 [阴土] <官>
+  -- 纳音：路旁土  -- 十二长生：胎
+月：  辛 [阴金] <正印>      巳 [阴火] <偏财>     丙 [阳火] <才> 庚 [阳金] <枭> 戊 [阳土] <杀>
+  -- 纳音：白蜡金  -- 十二长生：绝
+日：  壬 [阳水] <日主>      午 [阳火] <正财>     丁 [阴火] <财> 己 [阴土] <官>
+  -- 纳音：杨柳木  -- 十二长生：胎
+时：  乙 [阴木] <伤官>      巳 [阴火] <偏财>     丙 [阳火] <才> 庚 [阳金] <枭> 戊 [阳土] <杀>
+  -- 纳音：覆灯火  -- 十二长生：绝
+```
+
+- 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
+- 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
+
+## 在交互里看一眼
+
+在 Python 交互环境里直接输入对象，会看到一行摘要：出生时刻、性别和四柱。配置不是默认值，或是地点盘时，摘要才会多出对应部分。
+摘要不会去算流运，也不展开整张盘；它只用来探索和调试，格式以后可能调整，要保存或交换请用 `chart.json`（见 {doc}`integration`）。
+
+```{testcode} quickstart-explore
+from datetime import datetime
+
+import bazi
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.transit_chart import TransitChart
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+print(repr(chart))
+print([name for name in dir(bazi) if name in ('knowledge', 'transit_chart')])
+
+try:
+  TransitChart(chart.bazi)
+except TypeError as error:
+  print(error)
+
+try:
+  bazi.Bazi
+except AttributeError as error:
+  print(error)
+```
+
+```{testoutput} quickstart-explore
+BaziChart(Bazi(1990-05-17T10:30:00, female, 庚午 辛巳 壬午 乙巳))
+['knowledge', 'transit_chart']
+Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)
+module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
+```
+
+`dir(bazi)` 会列出按需导入的子模块，导入后才加载它们；上面只筛出了其中两个，实际的列表更长。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。
+
 ## 默认值是一种选定的口径
 
 没有传配置时，库使用 `DAY` 精度、`celestial` 历法后端，晚子时 23:00 换日柱，以立春换年。

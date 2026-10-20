@@ -33,11 +33,11 @@
 - `witnessed`：原文出处已经核定，有可核对的作品、版本、位置和摘录。
 - `unverified`：出处尚未核定，条目不绑定来源见证。
 
-来源核定不等于命盘前提满足，也不证明现实事件。`source_state`、输出资格 `output` 和前提整理状态 `applicability` 分开记录。默认输出要求出处已核定（`witnessed`）、无命盘前提（`unconditional`），且引用来源至少有两个不同的 `lineage`。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 [knowledge.py](https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/knowledge.py)。
+来源核定不等于命盘前提满足，也不证明现实事件。`source_state`、输出资格 `output` 和前提整理状态 `applicability` 分开记录。默认输出要求出处已核定（`witnessed`）、无命盘前提（`unconditional`），且引用来源至少有两个不同的 `lineage`。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 [knowledge.py](https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/knowledge.py)。
 
 ## 提 PR 之前
 
-从 `main` 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 [bazi/knowledge_data.json](https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/knowledge_data.json)，不是生成的目录页面；条目 ID 也可在该文件中查找。
+从 `main` 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 [bazi/knowledge_data.json](https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/knowledge_data.json)，不是生成的目录页面；条目 ID 也可在该文件中查找。
 
 ### 准备环境
 

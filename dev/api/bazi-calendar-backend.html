@@ -41,7 +41,7 @@
 <p>CalendarBackend 列出后端身份；calendar_utils_of 返回对应的历法换算实现。</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="bazi.calendar.backend.CalendarBackend">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.backend.</span></span><span class="sig-name descname"><span class="pre">CalendarBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py#L13-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.backend.</span></span><span class="sig-name descname"><span class="pre">CalendarBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py#L13-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend" title="链接到此定义。">¶</a></dt>
 <dd><p>命盘进行历法换算（公历 &lt;-&gt; 农历 &lt;-&gt; 干支、节气时刻等）所使用的历法后端。</p>
 <ul class="simple">
 <li><p>HKO：基于香港天文台数据，精度到日，没有节气准确时刻。</p></li>
@@ -53,22 +53,22 @@ CELESTIAL 不同；CELESTIAL 贴合香港天文台官方历书，应优先选用
 <p>参见 https://github.com/0xf3cd/bazi/issues/2 和 https://github.com/0xf3cd/bazi/issues/6。</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="bazi.calendar.backend.CalendarBackend.CELESTIAL">
-<span class="sig-name descname"><span class="pre">CELESTIAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'celestial'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.CELESTIAL" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">CELESTIAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'celestial'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.CELESTIAL" title="链接到此定义。">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="bazi.calendar.backend.CalendarBackend.CELESTIAL_ALGO2">
-<span class="sig-name descname"><span class="pre">CELESTIAL_ALGO2</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'celestial-algo2'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.CELESTIAL_ALGO2" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">CELESTIAL_ALGO2</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'celestial-algo2'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.CELESTIAL_ALGO2" title="链接到此定义。">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="bazi.calendar.backend.CalendarBackend.HKO">
-<span class="sig-name descname"><span class="pre">HKO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'hko'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.HKO" title="链接到此定义。">¶</a></dt>
+<span class="sig-name descname"><span class="pre">HKO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'hko'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.HKO" title="链接到此定义。">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bazi.calendar.backend.CalendarBackend.from_str">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py#L36-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.from_str" title="链接到此定义。">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py#L36-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.CalendarBackend.from_str" title="链接到此定义。">¶</a></dt>
 <dd><p>从字符串解析历法后端（大小写不敏感）。成员名和值都可以，例如 'HKO' 和 'hko'。</p>
 <p>Args:</p>
 <ul class="simple">
@@ -88,7 +88,7 @@ CELESTIAL 不同；CELESTIAL 贴合香港天文台官方历书，应优先选用
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bazi.calendar.backend.calendar_utils_of">
-<span class="sig-prename descclassname"><span class="pre">bazi.calendar.backend.</span></span><span class="sig-name descname"><span class="pre">calendar_utils_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/calendar/backend.py#L52-L76"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.calendar_utils_of" title="链接到此定义。">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.backend.</span></span><span class="sig-name descname"><span class="pre">calendar_utils_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/calendar/backend.py#L52-L76"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.backend.calendar_utils_of" title="链接到此定义。">¶</a></dt>
 <dd><p>把历法后端声明解析成实际的历法工具（懒加载），解析结果遵循 <code class="docutils literal notranslate"><span class="pre">CalendarUtilsProtocol</span></code>。</p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>

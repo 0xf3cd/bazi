@@ -82,11 +82,11 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code>：原文出处已经核定，有可核对的作品、版本、位置和摘录。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">unverified</span></code>：出处尚未核定，条目不绑定来源见证。</p></li>
 </ul>
-<p>来源核定不等于命盘前提满足，也不证明现实事件。<code class="docutils literal notranslate"><span class="pre">source_state</span></code>、输出资格 <code class="docutils literal notranslate"><span class="pre">output</span></code> 和前提整理状态 <code class="docutils literal notranslate"><span class="pre">applicability</span></code> 分开记录。默认输出要求出处已核定（<code class="docutils literal notranslate"><span class="pre">witnessed</span></code>）、无命盘前提（<code class="docutils literal notranslate"><span class="pre">unconditional</span></code>），且引用来源至少有两个不同的 <code class="docutils literal notranslate"><span class="pre">lineage</span></code>。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/knowledge.py">knowledge.py</a>。</p>
+<p>来源核定不等于命盘前提满足，也不证明现实事件。<code class="docutils literal notranslate"><span class="pre">source_state</span></code>、输出资格 <code class="docutils literal notranslate"><span class="pre">output</span></code> 和前提整理状态 <code class="docutils literal notranslate"><span class="pre">applicability</span></code> 分开记录。默认输出要求出处已核定（<code class="docutils literal notranslate"><span class="pre">witnessed</span></code>）、无命盘前提（<code class="docutils literal notranslate"><span class="pre">unconditional</span></code>），且引用来源至少有两个不同的 <code class="docutils literal notranslate"><span class="pre">lineage</span></code>。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/knowledge.py">knowledge.py</a>。</p>
 </section>
 <section id="pr">
 <h2>提 PR 之前<a class="headerlink" href="#pr" title="链接到此标题。">¶</a></h2>
-<p>从 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/7826c88e0139491ca010ca8d339c80071e10cc01/bazi/knowledge_data.json">bazi/knowledge_data.json</a>，不是生成的目录页面；条目 ID 也可在该文件中查找。</p>
+<p>从 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/aa51db99a2cc1a852b8acdf2efa073162cdc57b9/bazi/knowledge_data.json">bazi/knowledge_data.json</a>，不是生成的目录页面；条目 ID 也可在该文件中查找。</p>
 <section id="id4">
 <h3>准备环境<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h3>
 <p>需要 Python 3.11 及以上；CPython CI 覆盖 3.11 和 3.14。CI 另有跨平台和 PyPy 兼容检查，本机一次运行不等于全部 CI 通过。</p>
