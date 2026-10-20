@@ -36,7 +36,7 @@ def test_plain_paragraph_after_each_header(header):
   ['- first', '  Return: continuation', '- second'],
   ['- first', 'lazy continuation', '- second'],
 ])
-def test_code_html_and_lazy_continuations_are_unchanged(source):
+def test_code_html_lazy_continuations_unchanged(source):
   parser = create_md_parser(MdParserConfig(), RendererHTML)
   assert prepare_markdown(source, parser) == source
 
@@ -56,7 +56,7 @@ def test_colon_fence_uses_enabled_parser():
   assert prepare_markdown(source, parser) == source
 
 
-def test_source_ownership_is_complete_without_importing_modules(tmp_path):
+def test_ownership_complete_without_imports(tmp_path):
   package = tmp_path / 'sample'
   package.mkdir()
   (package / '__init__.py').write_text("'''Module purpose, not the next assignment.'''\nx = 1\n", encoding='utf-8')
@@ -86,12 +86,12 @@ def api_pages(*paragraphs: str) -> dict[str, Page]:
   return {'api/example.html': page}
 
 
-def test_bare_header_glued_to_the_next_line_is_rejected():
+def test_bare_header_glued_to_next_is_rejected():
   with pytest.raises(AssertionError, match='api/example.html'):
     check_header_paragraphs(api_pages('<p>Examples:\n正文。</p>'))
 
 
-def test_bare_header_glued_to_the_previous_line_is_rejected():
+def test_bare_header_glued_to_prev_is_rejected():
   with pytest.raises(AssertionError, match='api/example.html'):
     check_header_paragraphs(api_pages('<p>摘要。\nExamples:</p>', '<p>正文。</p>'))
 
@@ -101,7 +101,7 @@ def test_bare_header_glued_to_the_previous_line_is_rejected():
   ['<p>Usage: 调用 bazi.Bazi.create。</p>', '<p>Examples:</p>'],
   ['<p>摘要。</p>', '<p>Args: 返回年柱。</p>', '<p>Returns:</p>'],
 ])
-def test_split_headers_and_inline_headers_are_accepted(paragraphs):
+def test_split_inline_headers_accepted(paragraphs):
   assert check_header_paragraphs(api_pages(*paragraphs)) > 0
 
 
@@ -124,7 +124,7 @@ def doctest_output(singular):
 
 
 @pytest.mark.parametrize('singular', [False, True])
-def test_doctest_count_accepts_both_interpreter_wordings(tmp_path, singular):
+def test_doctest_count_accepts_both_wordings(tmp_path, singular):
   (tmp_path / 'output.txt').write_text(doctest_output(singular), encoding='utf-8')
   assert check_doctests(tmp_path) == sum(map(len, EXAMPLE_GROUPS.values()))
 
@@ -135,7 +135,7 @@ def test_doctest_count_accepts_both_interpreter_wordings(tmp_path, singular):
   ('0 failures in setup code', '1 failure in setup code'),
   ('0 failures in cleanup code', '1 failure in cleanup code'),
 ])
-def test_missing_examples_and_failed_setup_cleanup_are_rejected(tmp_path, old, new):
+def test_missing_examples_failed_setup_rejected(tmp_path, old, new):
   output = doctest_output(False)
   assert old in output
   (tmp_path / 'output.txt').write_text(output.replace(old, new, 1), encoding='utf-8')
@@ -185,7 +185,7 @@ def test_build_only_promotes_a_complete_candidate(build_environment, tmp_path, m
   assert not list(tmp_path.glob('.bazi-docs-*'))
 
 
-def test_nonempty_output_is_rejected_without_changing_existing_files(build_environment, tmp_path):
+def test_rejected_output_keeps_existing_files(build_environment, tmp_path):
   output = tmp_path / 'output'
   output.mkdir()
   marker = output / 'keep.txt'
@@ -196,7 +196,7 @@ def test_nonempty_output_is_rejected_without_changing_existing_files(build_envir
   assert set(output.iterdir()) == {marker}
 
 
-def test_output_inside_documentation_source_is_rejected(build_environment):
+def test_output_inside_source_is_rejected(build_environment):
   with pytest.raises(ValueError, match='outside its source'):
     run_docs.build(build_environment / 'docs/output', 'dev')
 
@@ -208,7 +208,7 @@ def test_output_inside_documentation_source_is_rejected(build_environment):
   ('dev', '', None, True),
   ('dev', ' M docs/index.md', None, True),
 ])
-def test_build_checks_tag_identity_and_records_source_state(
+def test_build_checks_tag_records_source_state(
   build_environment, tmp_path, monkeypatch, label, status, tagged_sha, accepted,
 ):
   sha = 'a' * 40

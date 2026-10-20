@@ -195,7 +195,7 @@ def uses_lines(text: str) -> list[str]:
   return re.findall(r'^ *(?:- )?uses: (.*)$', text, re.MULTILINE)
 
 
-def test_actions_are_existing_or_verified_pages_pins() -> None:
+def test_actions_use_existing_or_pinned_pages() -> None:
   existing = {line for path in WORKFLOWS.iterdir() if path.name != 'docs-publish.yml' for line in uses_lines(path.read_text(encoding='utf-8'))}
   lines = set(uses_lines(PUBLISH_TEXT))
   assert lines - existing == PAGES_PINS, sorted(lines - existing)
@@ -223,7 +223,7 @@ def test_label_grammar_matches_the_assembler() -> None:
   ('on_push.yml', ['test-on-ubuntu', 'test-on-macos', 'test-on-windows'], {'-ruff', '-mypy', '-d', '-osmoke'}),
   ('release.yml', ['build'], {'-a', '-v', '--package-output-dir'}),
 ])
-def test_python_ci_installs_documentation_dependencies_before_the_gate(
+def test_python_ci_installs_docs_deps_first(
   name: str, jobs: list[str], flags: set[str],
 ) -> None:
   workflow = yaml.safe_load((WORKFLOWS / name).read_text(encoding='utf-8'))
@@ -617,7 +617,7 @@ DEV = changed(candidate('dev', 'd' * 40, b'next'), {'_static/style.css': None, '
 
 
 @pytest.mark.parametrize('case', ['publish-release', 'publish-dev', 'promote', 'pending', 'unchanged', 'initialize'])
-def test_commit_policy_checks_a_staging_commit_before_moving_docs_site(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str) -> None:
+def test_commit_policy_checks_staging_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str) -> None:
   old = {} if case == 'initialize' else site
   mode, label, new = {
     'publish-release': ('publish', 'v99.2.0', add_build(site, RELEASE, 'v99.2.0', 'c' * 40)[1]),
@@ -670,7 +670,7 @@ def test_commit_policy_checks_a_staging_commit_before_moving_docs_site(tmp_path:
   ('lookalike-directory', 'publish', 'v99.0.0'),
   ('unknown-root-file', 'publish', 'dev'),
 ])
-def test_commit_policy_refuses_changes_outside_the_operation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str, mode: str, label: str) -> None:
+def test_commit_policy_refuses_stray_changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str, mode: str, label: str) -> None:
   new = {
     'release-modified': changed(site, {'v99.0.0/index.html': b'edited'}),
     'release-deleted': changed(site, {'v99.0.0/build.json': None}),
@@ -702,7 +702,7 @@ def test_commit_policy_refuses_changes_outside_the_operation(tmp_path: Path, mon
   ('graphql-response-lost', 'HTTP Error 502'),
   ('docs-site-moved', 'HTTP Error 422'),
 ])
-def test_commit_policy_leaves_docs_site_on_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str, message: str) -> None:
+def test_commit_policy_keeps_site_on_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str, message: str) -> None:
   new = add_build(site, DEV, 'dev', 'd' * 40)[1]
   git = FakeGit({HEAD: site, MOVED: site}, HEAD)
   api = FakeApi(git)
@@ -745,7 +745,7 @@ INITIAL = add_build(None, candidate('dev', SHA), 'dev', SHA)[1]
   ('replaced-mode-kept', 'tree that differs'),
   ('staging-moved', 'createCommitOnBranch failed'),
 ])
-def test_initialization_starts_from_the_signed_control_commit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str, message: str | None) -> None:
+def test_init_starts_from_signed_control_commit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str, message: str | None) -> None:
   git = FakeGit({}, None)
   api = FakeApi(git)
   if case in ('invalid-signature', 'unsigned'):
@@ -789,7 +789,7 @@ def test_initialization_starts_from_the_signed_control_commit(tmp_path: Path, mo
     ('POST', '/git/refs', 'refs/heads/docs-site', commit), ('DELETE', f'/git/refs/heads/{STAGING}', None, None)]
 
 
-def test_commit_policy_only_warns_when_the_staging_branch_stays(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], capsys: pytest.CaptureFixture[str]) -> None:
+def test_commit_policy_warns_if_branch_stays(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], capsys: pytest.CaptureFixture[str]) -> None:
   new = add_build(site, DEV, 'dev', 'd' * 40)[1]
   git = FakeGit({HEAD: site}, HEAD)
   api = FakeApi(git)
@@ -1023,7 +1023,7 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
 
 
 @pytest.mark.parametrize('failure', ['control-unsigned', 'staging-moved', 'graphql-unavailable', 'unsigned', 'graphql-response-lost', 'create-response-lost', 'created-meanwhile'])
-def test_interrupted_initialization_can_be_retried(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
+def test_interrupted_init_can_be_retried(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
   platform = Platform(tmp_path, monkeypatch)
   build = candidate('dev', SHA)
   if failure == 'control-unsigned':

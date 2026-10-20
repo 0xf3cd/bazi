@@ -73,7 +73,7 @@ def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random
     Bazi.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO), rng=rng)
 
 
-def test_random_default_retains_global_seed_draw_order() -> None:
+def test_random_default_keeps_seed_draw_order() -> None:
   state = random.getstate()
   try:
     random.seed(42)
@@ -120,7 +120,7 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   assert bazi.month_commander == month_dizhi
 
 
-def test_day_precision_month_jies_share_month_attribution() -> None:
+def test_day_precision_jies_share_attribution() -> None:
   # 立春 2000 = 02-04 20:40:23; midnight precedes the true moment by 20h40m...
   bazi: Bazi = Bazi.create('2000-02-04 00:00', 'male')
   # ...yet the pillars already read the new year and month (day-level attribution).
@@ -141,7 +141,7 @@ def test_day_precision_month_jies_share_month_attribution() -> None:
   ('1984-02-03 23:30', '癸亥', '乙丑', '戊辰'), # Day pillar already rolled, year/month not.
   ('1984-02-04 00:30', '甲子', '丙寅', '戊辰'), # Year/month rolled, day pillar unchanged.
 ])
-def test_the_23_oclock_rollover_moves_only_the_day_pillar(moment: str, year: str, month: str, day: str) -> None:
+def test_23_oclock_rollover_moves_only_day(moment: str, year: str, month: str, day: str) -> None:
   '''
   晚子时换日 moves the day pillar to the next day, while the year and month pillars keep
   comparing dates -- so a 23:30 birth carries the next day's day pillar and the current
@@ -186,7 +186,7 @@ def test_day_rollover_variant_at_23_oclock(rollover: DayRollover, day_pillar: st
   (DayRollover.WAN_ZISHI, ('己丑', '丙寅', '庚辰', '丙子')), # 晚子时: day rolled; 庚日 -> 丙子时.
   (DayRollover.ZIZHENG,   ('己丑', '丙寅', '己卯', '甲子')), # 子正: civil day kept; 己日 -> 甲子时.
 ])
-def test_day_rollover_variant_inside_a_jieqi_tie_window(rollover: DayRollover, pillars: tuple[str, str, str, str]) -> None:
+def test_rollover_variant_in_jieqi_tie_window(rollover: DayRollover, pillars: tuple[str, str, str, str]) -> None:
   '''
   立春 2009 = 02-04 00:49:48, inside the 子时 that began at 02-03 23:00, so a HOUR birth at
   2009-02-03 23:30 ties and the year/month pillars already read the new side -- under BOTH
@@ -285,7 +285,7 @@ def test_hko_backend_rejected() -> None:
   assert str(Bazi.create('2000-02-04 19:30', 'male', BaziConfig.from_values(backend='hko')).year_pillar) == '庚辰'
 
 
-def test_ganzhi_year_and_month_jies_are_the_attribution() -> None:
+def test_year_month_jies_are_the_attribution() -> None:
   '''`ganzhi_year` / `month_jies` expose exactly what the pillars were derived from.'''
   bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', BaziConfig.from_values(precision='hour'))
   assert bazi.ganzhi_year == 2009

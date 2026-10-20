@@ -15,7 +15,7 @@ from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
 
-def test_all_sources_and_future_sources_are_accessible_without_mirrors(tmp_path: Path) -> None:
+def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
   k = KnowledgeBase.load()
   assert set(k.sources) == {
     'editorial', 'yuanhai_ziping_relations', 'yuanhai_ziping_stem_table',
@@ -53,7 +53,7 @@ def test_all_sources_and_future_sources_are_accessible_without_mirrors(tmp_path:
     loaded.sources['future.used'] = unused # type: ignore[index]
 
 
-def test_removed_modules_are_absent_from_source_and_registration() -> None:
+def test_removed_modules_are_absent() -> None:
   for name in ('descriptions', 'interpreter'):
     assert name not in bazi.__all__
     assert importlib.util.find_spec('bazi.' + name) is None
@@ -91,7 +91,7 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
     assert f'前提判别：{match.status}' in text
 
 
-def test_object_ids_preserve_aliases_and_reject_unrelated_values() -> None:
+def test_object_ids_keep_aliases_reject_others() -> None:
   for subject in (*Tiangan, *Shishen):
     identifier = object_id(subject)
     record = KnowledgeBase.load().objects[identifier]
@@ -105,7 +105,7 @@ def test_object_ids_preserve_aliases_and_reject_unrelated_values() -> None:
 
 
 @pytest.mark.parametrize('show_sources', [False, True])
-def test_subject_projection_keeps_subject_roles_order_and_metadata_distinct(show_sources: bool) -> None:
+def test_subject_projection_keeps_roles_distinct(show_sources: bool) -> None:
   k = KnowledgeBase.load()
   relation = k.entry('legacy.shishen.SH-052')
   assert relation in k.query(object_id='shishen.qisha', include_reference_only=True)
@@ -145,7 +145,7 @@ def test_subject_display_public_boundaries(bad_flag: object) -> None:
     k.render_subject('tiangan.ding', True) # type: ignore[call-arg]
 
 
-def test_render_verdict_is_display_only_and_does_not_change_eligibility() -> None:
+def test_render_verdict_is_display_only() -> None:
   k = KnowledgeBase.load()
   reference = k.entry('editorial.shishen.zhengguan.legal_trouble')
   before = k.export_json()

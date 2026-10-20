@@ -48,7 +48,7 @@ def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
   assert re.search('[\u4e00-\u9fff]', result.stdout)
 
 
-def test_knowledge_guide_states_and_counts_match_the_corpus() -> None:
+def test_knowledge_guide_matches_the_corpus() -> None:
   from typing import get_args
 
   from bazi.knowledge import Applicability, KnowledgeBase, OutputPolicy, SourceState

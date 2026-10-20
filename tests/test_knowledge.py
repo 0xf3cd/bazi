@@ -71,7 +71,7 @@ def _discovery_knowledge() -> KnowledgeBase:
   )
 
 
-def test_find_objects_preserves_duplicate_names_and_registration_order() -> None:
+def test_find_objects_keeps_duplicates_in_order() -> None:
   knowledge = _discovery_knowledge()
   assert knowledge.find_objects('同名') == (knowledge.objects['concept.one'], knowledge.objects['concept.two'])
   assert knowledge.find_objects('Unused') == (knowledge.objects['concept.unused'],)
@@ -95,7 +95,7 @@ def test_discovery_text_inputs_fail_immediately(value: object) -> None:
     knowledge.filter_values(value) # type: ignore[arg-type]
 
 
-def test_filter_values_cover_registries_static_domains_and_reference_only_values() -> None:
+def test_filter_values_cover_every_domain() -> None:
   for knowledge in (KNOWLEDGE_BASE, _discovery_knowledge(), KnowledgeBase((), (), (), ())):
     expected = {
       'object_id': tuple(sorted(knowledge.objects)),
@@ -121,7 +121,7 @@ def test_filter_values_cover_registries_static_domains_and_reference_only_values
 
 
 @pytest.mark.parametrize('field', ['text', 'premise', 'attribution', 'topics', 'viewpoint', 'exceptions', 'limits', 'object_name'])
-def test_search_matches_each_documented_field_with_casefold(field: str) -> None:
+def test_search_matches_fields_casefolded(field: str) -> None:
   original = _discovery_knowledge()
   reference = original.entry('custom.reference')
   objects = tuple(original.objects.values())
@@ -138,7 +138,7 @@ def test_search_matches_each_documented_field_with_casefold(field: str) -> None:
   assert isinstance(knowledge.search('丁火', include_reference_only=True), tuple)
 
 
-def test_search_uses_query_filters_order_and_output_policy_without_searching_sources() -> None:
+def test_search_filters_without_searching_sources() -> None:
   knowledge = _discovery_knowledge()
   assert _ids(knowledge.search('body')) == ('custom.default',)
   assert _ids(knowledge.search('BODY', include_reference_only=True)) == ('custom.default', 'custom.reference')
@@ -165,7 +165,7 @@ def test_search_uses_query_filters_order_and_output_policy_without_searching_sou
     knowledge.search('body', include_reference_only=1) # type: ignore[arg-type]
 
 
-def test_search_excludes_structural_and_provenance_metadata() -> None:
+def test_search_excludes_structural_metadata() -> None:
   original = _discovery_knowledge()
   source = next(iter(original.sources.values()))
   source_fields = ('source_id', 'work', 'attribution', 'edition', 'locator', 'url', 'lineage', 'excerpt', 'supports', 'limitations')
@@ -195,7 +195,7 @@ def test_search_excludes_structural_and_provenance_metadata() -> None:
     assert knowledge.search(keyword, include_reference_only=True) == (), keyword
 
 
-def test_filter_values_use_unicode_code_point_order_for_every_variable_domain() -> None:
+def test_filter_values_sort_by_code_point() -> None:
   original = _discovery_knowledge()
   labels = ('😀', 'Ａ', 'a', 'B', 'A')
   source = next(iter(original.sources.values()))
@@ -212,14 +212,14 @@ def test_filter_values_use_unicode_code_point_order_for_every_variable_domain() 
 
 
 @pytest.mark.parametrize('dimension', ['object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'])
-def test_search_validates_filters_even_when_keyword_has_no_match(dimension: str) -> None:
+def test_search_validates_filters_without_match(dimension: str) -> None:
   knowledge = _discovery_knowledge()
   for value, error in (('unknown', ValueError), (1, TypeError)):
     with pytest.raises(error):
       knowledge.search('no match', **{dimension: value}) # type: ignore[arg-type]
 
 
-def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
+def test_frozen_oracle_conserves_claims_sources() -> None:
   fixture = Path(__file__).with_name('data') / 'description_legacy_baseline.json'
   baseline = json.loads(fixture.read_text(encoding='utf-8'))
   actual: list[dict[str, Any]] = []
@@ -268,7 +268,7 @@ def test_frozen_legacy_oracle_conserves_every_claim_and_source() -> None:
   assert len(KNOWLEDGE_BASE.entries) == 302
 
 
-def test_attribution_allowance_is_exactly_the_relationship_field_entries() -> None:
+def test_attribution_allowance_matches_entries() -> None:
   # Two-way assertion: the allowance table's attribution set is exactly the 45 IDs with legacy.field=='relationship'.
   attribution_allowed = {
     claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
@@ -318,7 +318,7 @@ def test_descriptive_fields_are_chinese() -> None:
       assert has_han(getattr(source, field)), (source.source_id, field)
 
 
-def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
+def test_real_queries_intersect_dimensions() -> None:
   k = KNOWLEDGE_BASE
   assert _ids(k.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)) == ('tiangan.ding.lamp_symbol',)
   assert _ids(k.query(object_id='tiangan.ding', topic='定义', include_reference_only=True)) == ('tiangan.ding.definition',)
@@ -351,7 +351,7 @@ def test_real_queries_intersect_roles_topics_contexts_and_sources() -> None:
   )
 
 
-def test_premises_are_organized_without_inventing_rules() -> None:
+def test_premises_organized_without_new_rules() -> None:
   k = KNOWLEDGE_BASE
   old = k.entry('legacy.shishen.SH-011')
   assert old.applicability == 'unresolved' and old.premise == ''
@@ -391,7 +391,7 @@ def test_premises_are_organized_without_inventing_rules() -> None:
         assert all(k.sources[source].text_layer == 'editorial' for source in entry.sources)
 
 
-def test_reference_samples_preserve_text_and_complete_limits() -> None:
+def test_reference_samples_keep_text_limits() -> None:
   k = KNOWLEDGE_BASE
   samples: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ('wuxing.mu_sheng_huo', '木生火。', ('仅说明基础关系方向，不证明命盘中的有效生克或流转。',)),
@@ -442,7 +442,7 @@ def test_reference_samples_preserve_text_and_complete_limits() -> None:
     assert limit in rendered
 
 
-def test_ding_nested_premises_remain_unresolved_and_time_unspecified() -> None:
+def test_ding_nested_premises_stay_unresolved() -> None:
   k = KNOWLEDGE_BASE
   entry = k.entry('legacy.tiangan.ding.weak_state')
   context_id = 'tiangan.ding_weak_and_overcontrolled'
@@ -478,7 +478,7 @@ def test_ding_nested_premises_remain_unresolved_and_time_unspecified() -> None:
   assert restored.render(entry, manual_context=True) == k.render(entry, manual_context=True)
 
 
-def test_migrated_legacy_field_premises_are_conserved() -> None:
+def test_migrated_field_premises_conserved() -> None:
   # Column wording from the pre-migration descriptions module.
   premises = {
     'in_good_status': '当十神处于力量不过强，状态良好的时候（如不被冲、克，也不过旺/为命主喜用时），这个十神代表的特征。',
@@ -543,7 +543,7 @@ def test_render_metadata_selection_and_limits() -> None:
       assert entry.legacy.field_premise in k.render(entry, show_sources=False)
 
 
-def test_registries_and_results_are_transitively_immutable() -> None:
+def test_registries_results_deeply_immutable() -> None:
   k = KNOWLEDGE_BASE
   for registry in (k.objects, k.contexts, k.sources, k.entries):
     with pytest.raises(TypeError):
@@ -608,7 +608,7 @@ def test_unknown_and_foreign_selections_fail() -> None:
     k.export_json((object(),)) # type: ignore[arg-type]
 
 
-def test_public_value_constructors_validate_all_declared_fields() -> None:
+def test_value_constructors_validate_fields() -> None:
   entry = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
   records = (
     KNOWLEDGE_BASE.objects['tiangan.ding'], entry.roles[0], entry.relations[0],
@@ -709,7 +709,7 @@ def test_corpus_reference_and_policy_integrity(mutation: str, message: str) -> N
     KnowledgeBase.from_json(json.dumps(data))
 
 
-def test_json_shape_and_optimized_public_boundary_contract() -> None:
+def test_json_shape_and_optimized_boundary() -> None:
   for text in ('{"schema_version":1,"schema_version":1}', '[1]', '{}', '{bad json'):
     with pytest.raises((TypeError, ValueError)):
       KnowledgeBase.from_json(text)
@@ -740,7 +740,7 @@ def test_json_shape_and_optimized_public_boundary_contract() -> None:
     KnowledgeBase.from_json('')
 
 
-def test_witnessed_zhushi_is_a_distinct_text_layer() -> None:
+def test_witnessed_zhushi_is_distinct_layer() -> None:
   source = replace(KNOWLEDGE_BASE.sources['yuanhai_ziping_relations'], source_id='annotation', text_layer='zhushi')
   k = KnowledgeBase((), (), (source,), ())
   assert k.sources['annotation'].text_layer == 'zhushi'
@@ -763,7 +763,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 )
 
 
-def test_relationship_additions_registry_counts_and_default_surface() -> None:
+def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
   assert len(k.entries) == 302 and len(k.sources) == 13 and len(k.contexts) == 10 and len(k.objects) == 31
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
@@ -797,7 +797,7 @@ def test_relationship_additions_registry_counts_and_default_surface() -> None:
     assert citing and any(source.excerpt in entry.text for entry in citing), source_id
 
 
-def test_gender_gate_marker_matches_the_gate_table_exactly() -> None:
+def test_gender_gate_marker_matches_table() -> None:
   # Corpus markers and the gate table mirror each other: marked entries are exactly the keys of _RELATED_GENDERS, and markers stay out of text/premise.
   from bazi.context_matching import _RELATED_GENDERS
   marker = '女命查询不关联本条，静态查阅不受限。'
@@ -841,7 +841,7 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   ).hexdigest()
   assert digest == 'b84a66ca805566abeab5bbd23c67cd665e84caa85bcadd365bd2b1ee887417c5'
   # Entries with pre-existing non-empty limits (2 of the 6 legacy entries in the old corpus; the other
-  # 4 in-repo entries are pinned verbatim by test_reference_samples_preserve_text_and_complete_limits)
+  # 4 in-repo entries are pinned verbatim by test_reference_samples_keep_text_limits)
   # are not loosened by the allowance table.
   unchanged_nonempty = {
     entry.claim_id: entry.limits for entry in KNOWLEDGE_BASE.entries.values()

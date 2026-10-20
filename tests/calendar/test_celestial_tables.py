@@ -303,7 +303,7 @@ def test_algo1_matches_hko_strictly() -> None:
   assert _hko_differences(rows) == {}
 
 
-def test_algo2_diverges_exactly_on_whitelist_years() -> None:
+def test_algo2_diverges_on_whitelist_years() -> None:
   _, rows = _load_lunar_table(ALGO2_TABLE_PATH)
   assert len(rows) == 199
   differences: dict[int, list[str]] = _hko_differences(rows)

@@ -130,7 +130,7 @@ def test_ganzhi_month_lengths() -> None:
     assert sum(counts) == span
 
 
-def test_ganzhi_month_lengths_cannot_poison_the_cache() -> None:
+def test_month_lengths_cannot_poison_cache() -> None:
   '''
   The lengths come from a cache, so handing back the cached list itself would let one
   caller's in-place edit corrupt every later answer.  Worse, it would not stay contained:

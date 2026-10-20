@@ -92,7 +92,7 @@ def test_dev_and_two_releases_are_retained(archive: dict[str, bytes]) -> None:
   assert archive['index.html'] == run_docs_site.ROOT_PAGE and b'url=versions/' in archive['index.html']
 
 
-def test_archived_versions_are_listed_but_not_linked(archive: dict[str, bytes]) -> None:
+def test_archived_versions_listed_not_linked(archive: dict[str, bytes]) -> None:
   # The first archive commit must not compute latest or advertise unverified directories.
   page = selector(archive)
   assert latest(archive) is None
@@ -103,7 +103,7 @@ def test_archived_versions_are_listed_but_not_linked(archive: dict[str, bytes]) 
   assert '不表示该版软件没有发布' in page
 
 
-def test_state_chain_from_pending_to_ready_and_latest() -> None:
+def test_state_chain_pending_to_ready_latest() -> None:
   status, site = add_pending(None, V1)
   assert status == 'added' and state(site, V1) == (V1, 'pending', None, None)
   assert not any(name.startswith(V1 + '/') for name in site)
@@ -171,7 +171,7 @@ def test_pending_is_only_for_unarchived_releases(archive: dict[str, bytes]) -> N
   assert version_files(site, DEV, V1, V2) == version_files(archive, DEV, V1, V2)
 
 
-def test_same_content_is_idempotent_and_keeps_its_state(archive: dict[str, bytes]) -> None:
+def test_same_content_idempotent_keeps_state(archive: dict[str, bytes]) -> None:
   assert publish(archive, build(V1), V1) == ('unchanged', archive)
   assert publish(archive, build(DEV), DEV) == ('unchanged', archive)
   site = ready(archive, V1)
@@ -431,7 +431,7 @@ def test_tar_round_trip_keeps_dotfiles_and_bytes(tmp_path: Path, archive: dict[s
   assert {name for name in archive if any(part.startswith('.') for part in name.split('/'))} == {f'{label}/.buildinfo' for label in (DEV, V1, V2)}
 
 
-def test_write_site_publishes_complete_tree_or_nothing(tmp_path: Path, archive: dict[str, bytes], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_write_site_is_all_or_nothing(tmp_path: Path, archive: dict[str, bytes], monkeypatch: pytest.MonkeyPatch) -> None:
   output = tmp_path / 'site'
   write_site(archive, output)
   assert run_docs_site.read_directory(output) == archive
@@ -470,7 +470,7 @@ class Truncating:
     return self.stream.write(data[:-1])
 
 
-def test_write_site_rejects_bytes_that_do_not_round_trip(tmp_path: Path, archive: dict[str, bytes], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_write_site_rejects_lossy_bytes(tmp_path: Path, archive: dict[str, bytes], monkeypatch: pytest.MonkeyPatch) -> None:
   original = Path.open
   def truncating_open(path: Path, mode: str = 'r', *args: object, **kwargs: object) -> object:
     stream = original(path, mode, *args, **kwargs)  # type: ignore[call-overload] # Forward the original signature.
@@ -494,7 +494,7 @@ def run_cli(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
   ['pending', '--archive', 'archive.tar', '--label', V1, '--output', 'site'],
   ['current', '--archive', 'archive.tar', '--label', V3, '--output', 'site'],
 ])
-def test_failed_operation_leaves_old_archive_bytes_unchanged(tmp_path: Path, archive: dict[str, bytes], args: list[str]) -> None:
+def test_failed_operation_keeps_old_archive(tmp_path: Path, archive: dict[str, bytes], args: list[str]) -> None:
   archive_tar = make_tar(tmp_path / 'archive.tar', archive)
   make_tar(tmp_path / 'changed.tar', build(V1, body=b'changed'))
   make_tar(tmp_path / 'v1.tar', build(V1))
@@ -506,7 +506,7 @@ def test_failed_operation_leaves_old_archive_bytes_unchanged(tmp_path: Path, arc
   assert read_tree(archive_tar) == archive
 
 
-def test_cli_runs_each_transition_into_a_new_directory(tmp_path: Path, archive: dict[str, bytes]) -> None:
+def test_cli_transitions_into_new_directory(tmp_path: Path, archive: dict[str, bytes]) -> None:
   make_tar(tmp_path / 'archive.tar', archive)
   make_tar(tmp_path / 'candidate.tar', build(V3))
   result = run_cli(tmp_path, 'archive', '--archive', 'archive.tar', '--label', V3, '--output', 'one', '--candidate', 'candidate.tar', '--commit', COMMITS[V3])
@@ -548,13 +548,13 @@ def test_cli_rejects_incomplete_operations(tmp_path: Path, args: list[str]) -> N
   assert not (tmp_path / 'site').exists()
 
 
-def test_assembly_does_not_depend_on_archive_member_order(archive: dict[str, bytes]) -> None:
+def test_assembly_ignores_archive_member_order(archive: dict[str, bytes]) -> None:
   forward = publish(archive, build(V3), V3)
   backward = publish(dict(reversed(archive.items())), build(V3), V3)
   assert forward == backward
 
 
-def test_assembler_imports_only_the_standard_library() -> None:
+def test_assembler_imports_only_stdlib() -> None:
   # The privileged archive job runs this file with `python -I`; it must not need third-party or repository modules.
   tree = ast.parse(SCRIPT.read_text(encoding='utf-8'))
   modules = {alias.name.split('.')[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}

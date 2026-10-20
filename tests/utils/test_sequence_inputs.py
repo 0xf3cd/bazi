@@ -43,7 +43,7 @@ def test_non_sequences_fail_before_iteration(call: Callable[..., object], kind: 
 
 @pytest.mark.parametrize('call, value', [(tiangan_utils.discover_mutual, Tiangan.甲), (dizhi_utils.discover_mutual, Dizhi.辰)])
 @pytest.mark.parametrize('side', [0, 1])
-def test_mutual_checks_both_containers_before_either_is_traversed(call: Callable[..., object], value: object, side: int) -> None:
+def test_mutual_checks_both_before_traversal(call: Callable[..., object], value: object, side: int) -> None:
   class UnreadSequence(Sequence[object]):
     def __len__(self) -> int:
       raise RuntimeError('Sequence traversed before container checks')
@@ -57,7 +57,7 @@ def test_mutual_checks_both_containers_before_either_is_traversed(call: Callable
 
 
 @pytest.mark.parametrize('container', [list, tuple])
-def test_sequences_preserve_empty_repeated_and_mutual_semantics(container: Callable[..., Sequence]) -> None:
+def test_sequences_keep_empty_repeat_mutual(container: Callable[..., Sequence]) -> None:
   tgs = container((Tiangan.甲, Tiangan.己, Tiangan.甲))
   dzs = container((Dizhi.辰, Dizhi.辰))
   assert tiangan_utils.search(tgs, TianganRelation.合) == (frozenset({Tiangan.甲, Tiangan.己}),)

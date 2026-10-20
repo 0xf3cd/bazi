@@ -24,7 +24,7 @@ def _text(value: object) -> str:
   return json.dumps(value, ensure_ascii=False, indent=2) + '\n'
 
 
-def test_v200_chart_record_recomputes_without_changing_the_mapping_contract() -> None:
+def test_v200_chart_record_recomputes() -> None:
   records = _records()
   assert records['source_sha'] == 'ddfe16e7c51d695167b09cc4c2f64ba46e7565c3'
   original = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
@@ -42,7 +42,7 @@ def test_v200_chart_record_recomputes_without_changing_the_mapping_contract() ->
     BaziChart.from_json(inconsistent)
 
 
-def test_v200_knowledge_and_context_records_keep_their_distinct_text_contracts() -> None:
+def test_v200_records_keep_distinct_contracts() -> None:
   records = _records()
   knowledge_text = _text(records['knowledge'])
   knowledge = KnowledgeBase.from_json(knowledge_text)
@@ -63,7 +63,7 @@ def test_v200_knowledge_and_context_records_keep_their_distinct_text_contracts()
 
 
 @pytest.mark.parametrize('version', [True, 0, 2, '1', None])
-def test_knowledge_record_rejects_unknown_or_wrongly_typed_versions(version: object) -> None:
+def test_knowledge_record_rejects_bad_versions(version: object) -> None:
   record = _records()['knowledge']
   record['schema_version'] = version
   with pytest.raises(ValueError):
@@ -78,7 +78,7 @@ def test_context_record_requires_its_own_version(version: object) -> None:
     ContextResult.from_json(_text(record))
 
 
-def test_generator_access_and_cached_tuple_have_different_lifetimes() -> None:
+def test_generator_cached_tuple_lifetimes() -> None:
   chart = BaziChart.from_json(_records()['chart'])
   first = chart.dayun
   expected = tuple(first)
@@ -94,7 +94,7 @@ def test_generator_access_and_cached_tuple_have_different_lifetimes() -> None:
 
 
 @pytest.mark.parametrize('alias', ['乾', '坤', '阳', '阴', 'YANG', 'YIN'])
-def test_gender_enum_aliases_do_not_expand_the_string_input_domain(alias: str) -> None:
+def test_gender_aliases_keep_string_domain(alias: str) -> None:
   assert alias in BaziGender.__members__
   with pytest.raises(ValueError):
     Bazi.create(datetime(2000, 1, 1, 12), alias)

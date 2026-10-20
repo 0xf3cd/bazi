@@ -133,7 +133,7 @@ def test_ganzhi_date() -> None:
   CalendarDate(2024, 1, 0, CalendarType.GANZHI) # Invalid day.
 
 
-def test_every_calendar_date_field_has_a_type_gate() -> None:
+def test_every_date_field_has_a_type_gate() -> None:
   # Mechanical binding: adding a field without a gate fails here.
   # 机械绑定：加字段不加闸会在这里响。
   valid: dict[str, object] = {'year': 2024, 'month': 1, 'day': 1, 'date_type': CalendarType.SOLAR}

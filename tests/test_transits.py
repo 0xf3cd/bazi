@@ -192,7 +192,7 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
   assert db.dayun(2019) == Ganzhi.from_str('甲子')
 
 
-def test_fixed_dayun_years_continue_from_the_first_label() -> None:
+def test_fixed_dayun_years_continue_labels() -> None:
   fixed_chart = BaziChart(Bazi.create(
     '2009-02-03 23:30',
     'male',
@@ -204,7 +204,7 @@ def test_fixed_dayun_years_continue_from_the_first_label() -> None:
   assert fixed_db.dayun(2019) == Ganzhi.from_str('甲子')
 
 
-def test_dayun_database_uses_projected_year_boundaries() -> None:
+def test_dayun_database_uses_projected_years() -> None:
   chart = BaziChart(Bazi.create('1910-04-07 06:01', 'male'))
   db = DayunDatabase(chart)
   first, second, third = itertools.islice(chart.dayun, 3)

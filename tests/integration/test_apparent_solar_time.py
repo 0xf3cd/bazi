@@ -77,7 +77,7 @@ def test_location_input_matrix(direct: bool) -> None:
 @pytest.mark.parametrize('direct', [False, True])
 @pytest.mark.parametrize('kind', ['integer', 'fraction'])
 @pytest.mark.parametrize('sign', [-1, 1])
-def test_overflowing_real_longitude_is_a_bounded_value_error(direct: bool, kind: str, sign: int) -> None:
+def test_overflowing_longitude_is_value_error(direct: bool, kind: str, sign: int) -> None:
   integer = sign * 10 ** 10_000
   longitude = integer if kind == 'integer' else Fraction(integer, 3)
   with pytest.raises(ValueError) as error:
@@ -98,7 +98,7 @@ def test_location_validation_precedence(direct: bool) -> None:
     _construct(direct, datetime(2000, 1, 1, tzinfo=UTC), unsupported, 0.0)
 
 
-def test_create_accepts_offset_iso_but_not_latitude() -> None:
+def test_create_accepts_offset_iso_not_latitude() -> None:
   with pytest.raises(ValueError, match='Timezone'):
     Bazi.create('2000-01-01T12:00:00+00:00', 'male', MINUTE_CONFIG)
   with pytest.raises(ValueError, match='timezone-aware'):
@@ -144,7 +144,7 @@ def test_eot_alone_crosses_a_shichen_boundary() -> None:
   # civil label follow the unprojected UTC+08:00 label.
   ('2000-02-05T02:30:00+14:00', 150.0, False, True, ('己卯', '丁丑')),
 ])
-def test_jie_attribution_does_not_mix_apparent_and_physical_frames(
+def test_jie_attribution_keeps_frames_apart(
   birth_time: str,
   longitude: float,
   absolute_after: bool,
@@ -158,7 +158,7 @@ def test_jie_attribution_does_not_mix_apparent_and_physical_frames(
   assert (str(bazi.year_pillar), str(bazi.month_pillar)) == pillars
 
 
-def test_apparent_clock_drives_date_day_hour_and_both_longitude_signs() -> None:
+def test_apparent_clock_drives_pillars_both_signs() -> None:
   instant = '2000-01-01T12:00:00+00:00'
   east = Bazi.create(instant, 'male', MINUTE_CONFIG, longitude=30.0)
   west = Bazi.create(instant, 'male', MINUTE_CONFIG, longitude=-30.0)
@@ -174,7 +174,7 @@ def test_apparent_clock_drives_date_day_hour_and_both_longitude_signs() -> None:
   assert rollover.ganzhi_date == rollover._utils.to_ganzhi(date(1999, 12, 31))
 
 
-def test_dayun_and_transit_lower_bounds_use_absolute_time() -> None:
+def test_dayun_transit_bounds_use_absolute_time() -> None:
   instant = datetime(2000, 1, 1, 12, tzinfo=UTC)
   east = BaziChart(Bazi.create(instant, 'male', MINUTE_CONFIG, longitude=120.0))
   west = BaziChart(Bazi.create(instant, 'male', MINUTE_CONFIG, longitude=-180.0))
@@ -191,7 +191,7 @@ def test_dayun_and_transit_lower_bounds_use_absolute_time() -> None:
   assert transits.at_moment(datetime(2000, 1, 1, 20, 0)) is not None
 
 
-def test_same_instant_offset_identity_and_canonical_json() -> None:
+def test_same_instant_identity_canonical_json() -> None:
   utc = Bazi.create(
     '2000-01-01T12:34:56+00:00',
     'female',
@@ -219,7 +219,7 @@ def test_same_instant_offset_identity_and_canonical_json() -> None:
   assert len({utc, offset, other_longitude}) == 2
 
 
-def test_dst_fold_is_an_absolute_instant_distinction() -> None:
+def test_dst_fold_is_absolute_distinction() -> None:
   zone = ZoneInfo('America/New_York')
   fold0 = datetime(2024, 11, 3, 1, 30, tzinfo=zone, fold=0)
   fold1 = datetime(2024, 11, 3, 1, 30, tzinfo=zone, fold=1)
@@ -242,7 +242,7 @@ def test_dst_fold_is_an_absolute_instant_distinction() -> None:
   assert second_json['canonical_instant'] == '2024-11-03T06:30:00+00:00'
 
 
-def test_location_json_roster_roundtrip_and_tampering() -> None:
+def test_location_json_roundtrip_tampering() -> None:
   chart = BaziChart(Bazi.create(
     '2000-01-01T07:34:00-05:00',
     'female',
@@ -327,7 +327,7 @@ def test_minute_jie_ties_use_apparent_minutes(birth_time: str, pillars: tuple[st
 
 
 @pytest.mark.parametrize('config', [HOUR_CONFIG, MINUTE_CONFIG])
-def test_seconds_are_preserved_before_apparent_conversion(config: BaziConfig) -> None:
+def test_seconds_survive_apparent_conversion(config: BaziConfig) -> None:
   chart = BaziChart(Bazi.create(
     '2000-11-03T00:43:59+00:00',
     'male',
@@ -345,7 +345,7 @@ def test_seconds_are_preserved_before_apparent_conversion(config: BaziConfig) ->
   assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
 
 
-def test_exact_instant_identity_and_microsecond_roundtrip() -> None:
+def test_instant_identity_microsecond_roundtrip() -> None:
   chart = BaziChart(Bazi.create(
     '2000-01-01T12:34:56.123456+00:00',
     'female',
@@ -374,7 +374,7 @@ def test_exact_instant_identity_and_microsecond_roundtrip() -> None:
 
 
 @pytest.mark.parametrize('direct', [False, True])
-def test_negative_zero_longitude_emits_canonical_roundtrippable_json(direct: bool) -> None:
+def test_negative_zero_longitude_json_canonical(direct: bool) -> None:
   chart = BaziChart(_construct(
     direct,
     datetime(2000, 1, 1, 12, tzinfo=UTC),

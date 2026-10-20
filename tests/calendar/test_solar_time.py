@@ -25,7 +25,7 @@ def test_solar_time_public_boundary(civil: Any, longitude: Any, error: type[Exce
     apparent_solar_datetime(civil, longitude)
 
 
-def test_solar_time_none_offset_and_real_longitude() -> None:
+def test_none_offset_and_real_longitude() -> None:
   class MissingOffset(tzinfo):
     def utcoffset(self, dt: datetime | None) -> None:
       return None
@@ -53,7 +53,7 @@ def test_solar_clock_meridian_and_zero_aliases(longitude: float, canonical: floa
   datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),
 ])
 @pytest.mark.parametrize('table_reader', [False, True])
-def test_extreme_aware_conversion_is_a_value_error(moment: datetime, table_reader: bool) -> None:
+def test_extreme_aware_conversion_raises(moment: datetime, table_reader: bool) -> None:
   with pytest.raises(ValueError, match='Unsupported UTC instant'):
     if table_reader:
       EquationOfTimeTable().seconds_at(moment)

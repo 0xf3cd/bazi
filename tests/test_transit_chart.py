@@ -51,7 +51,7 @@ def test_query_boundaries() -> None:
   assert chart.at_date(date(2100, 1, 1)) is None
 
 
-def test_queries_use_precision_attributed_birth_boundary() -> None:
+def test_queries_use_attributed_boundary() -> None:
   config = BaziConfig.from_values(precision='hour')
   chart = TransitChart(BaziChart(Bazi.create('2009-02-03 23:30', 'female', config)))
   assert chart.bazi_chart.bazi.ganzhi_date.year == 2008
@@ -158,7 +158,7 @@ def test_date_uses_day_level_calendar_coordinates() -> None:
   assert transits.liuri == ganzhi_of_day(date(2009, 2, 3))
 
 
-def test_physical_dayun_boundaries_at_three_granularities() -> None:
+def test_physical_dayun_three_granularities() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '1984-04-01 11:08',
     'male',
@@ -211,7 +211,7 @@ def test_physical_dayun_boundaries_at_three_granularities() -> None:
     assert transits.dayun == expected
 
 
-def test_dayun_moment_boundaries_truncate_to_seconds() -> None:
+def test_moment_boundaries_truncate_seconds() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '1910-04-07 06:01',
     'male',
@@ -235,7 +235,7 @@ def test_dayun_moment_boundaries_truncate_to_seconds() -> None:
   assert chart.at_moment(birth + timedelta(microseconds=999999)) is not None
 
 
-def test_month_projection_uses_the_boundary_owning_jie() -> None:
+def test_month_projection_uses_owning_jie() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '1977-06-12 14:10',
     'female',
@@ -255,7 +255,7 @@ def test_month_projection_uses_the_boundary_owning_jie() -> None:
   assert same_day.liuyue == Ganzhi.from_str('乙酉')
 
 
-def test_month_projection_floors_the_first_dayun_at_birth() -> None:
+def test_month_projection_floors_first_dayun() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '2009-02-03 23:30',
     'male',
@@ -268,7 +268,7 @@ def test_month_projection_floors_the_first_dayun_at_birth() -> None:
   assert birth_month.dayun == Ganzhi.from_str('乙丑')
 
 
-def test_physical_dayun_queries_ignore_the_year_label_rule() -> None:
+def test_physical_queries_ignore_year_labels() -> None:
   projected = TransitChart(BaziChart(Bazi.create(
     '1910-04-07 06:01',
     'male',
@@ -306,7 +306,7 @@ def test_physical_dayun_queries_ignore_the_year_label_rule() -> None:
   assert fixed_moment.dayun == Ganzhi.from_str('辛巳')
 
 
-def test_leap_dayun_boundaries_are_recomputed_from_the_first() -> None:
+def test_leap_boundaries_recomputed_from_first() -> None:
   chart = TransitChart(BaziChart(Bazi.create('2010-04-18 07:59', 'male')))
   first = Ganzhi.from_str('辛巳')
   second = Ganzhi.from_str('壬午')
@@ -423,7 +423,7 @@ def test_moment_at_cross_midnight_clamped_birth(
   )
 
 
-def test_physical_and_year_label_tail_views_diverge() -> None:
+def test_physical_year_label_tails_diverge() -> None:
   chart = TransitChart(BaziChart(Bazi.create('2045-10-07 05:29', 'female')))
   year_transits = chart.at_year(2195)
   month_transits = chart.at_month(2195, Dizhi.亥)
@@ -472,7 +472,7 @@ def test_calendar_query_windows() -> None:
   assert hko.at_month(2100, Dizhi.子) is None
 
 
-def test_empty_dayun_timeline_keeps_calendar_transits() -> None:
+def test_empty_timeline_keeps_calendar_transits() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '2099-12-20 12:00',
     'male',

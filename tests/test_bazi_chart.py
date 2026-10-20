@@ -125,7 +125,7 @@ _PEIOU_XING_TABLE: dict[tuple[Tiangan, BaziGender, PeiouXingDef], Tiangan] = {
 @pytest.mark.parametrize('day_master', Tiangan)
 @pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
 @pytest.mark.parametrize('definition', PeiouXingDef)
-def test_relationship_stars_two_readings_hit_the_literal_forty_value_table(
+def test_relationship_stars_literal_forty_table(
   day_master: Tiangan, gender: BaziGender, definition: PeiouXingDef,
 ) -> None:
   assert len(_PEIOU_XING_TABLE) == 40
@@ -147,7 +147,7 @@ def test_relationship_stars_two_readings_hit_the_literal_forty_value_table(
   assert stars.tiangan is not day_master
 
 
-def test_two_readings_agree_only_on_yang_male_and_yin_female_grids() -> None:
+def test_readings_agree_only_on_aligned_grids() -> None:
   # 阳男 and 阴女 grids have the same target under both readings; 阴男 and 阳女 grids differ.
   for day_master in Tiangan:
     is_yang = bazi_utils.traits(day_master).yinyang is Yinyang.阳
@@ -380,7 +380,7 @@ def test_dayun_start_moment() -> None:
   )
 
 
-def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
+def test_dayun_start_before_true_jieqi_moment() -> None:
   '''DAY forward counting reaches 惊蛰; reverse counting before the true moment clamps to zero.'''
   delta: timedelta = timedelta(seconds=1)
 
@@ -396,7 +396,7 @@ def test_dayun_start_before_the_true_moment_on_a_jieqi_day() -> None:
   assert len(reverse.xiaoyun) == 1
 
 
-def test_dayun_start_diverges_across_backends_on_the_same_pillars() -> None:
+def test_dayun_start_diverges_by_backend() -> None:
   '''Celestial and HKO share 立春/惊蛰 ownership; HKO's midnight placeholder changes the start.'''
   delta: timedelta = timedelta(seconds=1)
 
@@ -475,7 +475,7 @@ def test_dayun_timeline_uses_each_boundary_moment() -> None:
   ]
 
 
-def test_dayun_boundary_before_the_true_lichun_stays_in_the_old_year() -> None:
+def test_dayun_boundary_before_lichun_old_year() -> None:
   chart = BaziChart(Bazi.create('2045-10-07 05:29', 'female'))
   third_dayun = next(itertools.islice(chart.dayun, 2, None))
   utils = calendar_utils_of(chart.bazi.config.backend)
@@ -486,7 +486,7 @@ def test_dayun_boundary_before_the_true_lichun_stays_in_the_old_year() -> None:
   assert third_dayun.ganzhi_year == 2065
 
 
-def test_dayun_leap_day_boundaries_are_recomputed_from_the_first() -> None:
+def test_dayun_leap_day_boundaries_recomputed() -> None:
   chart = BaziChart(Bazi.create('2010-04-18 07:59', 'male'))
   dayuns = list(itertools.islice(chart.dayun, 3))
 
@@ -522,7 +522,7 @@ def test_dayun_year_labels_match_lichun_oracle() -> None:
       assert dayun.ganzhi_year == expected_year, (132, chart.bazi.solar_datetime, chart.bazi.gender)
 
 
-def test_dayun_year_rules_share_one_physical_timeline() -> None:
+def test_year_rules_share_physical_timeline() -> None:
   birth_time = '1910-04-07 06:01'
   projected = BaziChart(Bazi.create(birth_time, 'male'))
   fixed = BaziChart(Bazi.create(
@@ -546,7 +546,7 @@ def test_dayun_year_rules_share_one_physical_timeline() -> None:
   assert fixed.json['dayun_year_rule'] == 'fixed_decade'
 
 
-def test_dayun_generator_stops_at_the_backend_jie_boundary() -> None:
+def test_dayun_generator_stops_at_jie_boundary() -> None:
   earliest = BaziChart(Bazi.create('1901-02-19 12:00', 'male'))
   latest = BaziChart(Bazi.create('2099-12-20 12:00', 'male'))
   late_hko = BaziChart(Bazi.create(
@@ -1004,7 +1004,7 @@ def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random
 
 
 @pytest.mark.parametrize('cls', [BaziChart, _ChartSubclass])
-def test_random_local_source_replays_without_changing_global_state(cls: type[BaziChart]) -> None:
+def test_random_local_source_keeps_global_state(cls: type[BaziChart]) -> None:
   state = random.getstate()
   config = BaziConfig.from_values(precision='minute', dayun_year_rule='fixed_decade')
   first = random.Random(42)
@@ -1123,7 +1123,7 @@ def test_deepcopy(rng: random.Random) -> None:
 # a chart cannot contradict itself about which jie owns the birth month.
 
 
-def test_backward_dayun_counts_from_the_month_owning_jie() -> None:
+def test_backward_dayun_counts_from_month_jie() -> None:
   '''
   立春 2009 = 02-04 00:49:48. A HOUR birth at 02-04 00:30 ties into the new year (己丑, 阴),
   so a male chart runs backward -- and the month-owning jie is 立春, whose true moment lies
@@ -1150,7 +1150,7 @@ def test_forward_dayun_skips_the_tie_jie() -> None:
   assert chart.dayun_start_moment == birth + (gap / timedelta(days=3)) * timedelta(days=365)
 
 
-def test_minute_precision_counts_to_the_true_moment() -> None:
+def test_minute_precision_counts_to_true_moment() -> None:
   '''
   The same birth at MINUTE precision is NOT a tie (00:30 < 00:49): the year stays 戊子 (阳,
   male -> forward), and the next jie is 立春 itself, 19m48s away.
@@ -1163,7 +1163,7 @@ def test_minute_precision_counts_to_the_true_moment() -> None:
   assert chart.dayun_start_moment == birth + (gap / timedelta(days=3)) * timedelta(days=365)
 
 
-def test_backward_clamp_across_midnight_matches_the_same_shichen() -> None:
+def test_backward_clamp_keeps_same_shichen() -> None:
   '''
   The cross-midnight tie birth (2009-02-03 23:30, male -> backward, clamp) must produce
   the SAME xiaoyun and dayun-year face as its same-子时 sibling on the jieqi's own day
@@ -1189,7 +1189,7 @@ def test_backward_clamp_across_midnight_matches_the_same_shichen() -> None:
   ('hour', 2009, '己丑', 10),
   ('day',  2008, '戊子', 11),
 ])
-def test_liunian_and_xiaoyun_start_from_the_attributed_year(precision: str, first_year: int, year_pillar: str, xiaoyun_len: int) -> None:
+def test_liunian_xiaoyun_start_from_attributed(precision: str, first_year: int, year_pillar: str, xiaoyun_len: int) -> None:
   '''
   The cross-midnight tie birth (2009-02-03 23:30, HOUR) belongs to 己丑 2009; the same
   moment at DAY belongs to 戊子 2008. In both charts the first liunian must equal the year

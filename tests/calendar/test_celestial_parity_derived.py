@@ -110,7 +110,7 @@ def test_only_two_of_them_are_jie() -> None:
   assert [(row.year, row.name) for row in flipped_jies()] == [(1917, '大雪'), (1927, '白露')]
 
 
-def test_prev_next_jie_diverge_only_inside_the_moment_window() -> None:
+def test_prev_next_jie_diverge_in_moment_window() -> None:
   '''
   `prev_jie`/`next_jie` escape layer (c) by design (see the protocol's carve-out): inside
   the window between the two backends' ideas of when a jie starts, they legitimately name
@@ -209,7 +209,7 @@ def test_bounds() -> None:
 # Layer (c): every expectation below is computed from the whitelist.
 
 
-def test_solar_side_disagreements_are_exactly_derived() -> None:
+def test_solar_disagreements_are_exactly_derived() -> None:
   expected: set[date] = affected_solar_days()
   measured_ganzhi: set[date] = set()
   measured_via_lunar: set[date] = set()
@@ -230,7 +230,7 @@ def test_solar_side_disagreements_are_exactly_derived() -> None:
   assert len(expected) == 61
 
 
-def test_days_counts_disagrees_on_exactly_the_derived_years() -> None:
+def test_days_counts_differ_on_derived_years() -> None:
   expected: set[int] = {year for year, _ in affected_ganzhi_months()}
   measured: set[int] = {year for year in range(1901, 2100)
                         if CEL.days_counts_in_ganzhi_year(year) != HKO.days_counts_in_ganzhi_year(year)}
@@ -240,7 +240,7 @@ def test_days_counts_disagrees_on_exactly_the_derived_years() -> None:
     assert sum(CEL.days_counts_in_ganzhi_year(year)) == sum(HKO.days_counts_in_ganzhi_year(year))
 
 
-def test_ganzhi_side_disagreements_stay_in_the_derived_months() -> None:
+def test_ganzhi_disagreements_in_derived_months() -> None:
   expected_months: set[tuple[int, int]] = affected_ganzhi_months()
   measured_months: set[tuple[int, int]] = set()
   measured_validity: set[tuple[int, int, int]] = set()

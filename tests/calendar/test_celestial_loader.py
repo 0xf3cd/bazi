@@ -71,7 +71,7 @@ def test_package_provenance_value_is_pinned() -> None:
     assert {key: table.provenance[key] for key in expected} == expected
 
 
-def test_fixture_rows_appear_verbatim_in_the_shipped_tables() -> None:
+def test_fixture_rows_match_shipped_tables() -> None:
   '''
   The fixtures and the shipped tables were written by two generators that never shared
   code (the fixtures came from a throwaway script, the tables from
@@ -265,7 +265,7 @@ def test_lunar_bits_disagree_with_days_counts(lunar_lines: list[str], tmp_path: 
     LunarYearTable(path)
 
 
-def test_lunar_leap_month_disagrees_with_month_count(lunar_lines: list[str], tmp_path: Path) -> None:
+def test_leap_month_disagrees_with_month_count(lunar_lines: list[str], tmp_path: Path) -> None:
   # 12 months but a non-zero leap month.
   path = _write(tmp_path, _replace(
     lunar_lines, '1901 ',
@@ -379,7 +379,7 @@ def test_interpolation_uses_utc_day_fraction() -> None:
     )
 
 
-def test_equation_of_time_normalizes_non_utc_offsets() -> None:
+def test_equation_of_time_normalizes_offsets() -> None:
   table = EquationOfTimeTable()
   utc = datetime(2000, 1, 1, 12, 34, 56, 123456, tzinfo=UTC)
   for zone in (timezone(timedelta(hours=8)), timezone(timedelta(hours=-5))):
@@ -404,7 +404,7 @@ def test_interpolation_range_is_half_open() -> None:
     table.seconds_at(date(2000, 1, 1)) # type: ignore[arg-type]
 
 
-def test_reader_rejects_schema_and_payload_corruption(tmp_path: Path) -> None:
+def test_reader_rejects_corruption(tmp_path: Path) -> None:
   with pytest.raises(RuntimeError, match='table is missing'):
     EquationOfTimeTable(tmp_path / 'missing.bin')
 
@@ -428,7 +428,7 @@ def test_reader_rejects_schema_and_payload_corruption(tmp_path: Path) -> None:
       EquationOfTimeTable(path)
 
 
-def test_named_sign_and_index_mutants_fail_anchors(tmp_path: Path) -> None:
+def test_named_sign_index_mutants_fail_anchors(tmp_path: Path) -> None:
   _, samples = _independent_read_eot(EOT_PATH)
   meeus = datetime(1992, 10, 13, tzinfo=UTC)
 

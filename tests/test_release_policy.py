@@ -357,7 +357,7 @@ def test_source_identity(monkeypatch: pytest.MonkeyPatch, release_env: None, cha
     checkout.assert_not_called()
 
 
-def test_repository_notes_top_section_matches_the_version() -> None:
+def test_notes_top_section_matches_version() -> None:
   # Between releases the top section may stay Unreleased; the seal step rejects that at release time.
   root = Path(__file__).parents[1]
   version = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version']

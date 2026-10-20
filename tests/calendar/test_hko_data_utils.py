@@ -141,7 +141,7 @@ def test_days_counts_in_ganzhi_year() -> None:
       assert days_in_this_month == (next_start_date - start_date).days
 
 
-def test_days_counts_in_ganzhi_year_cannot_poison_the_cache() -> None:
+def test_days_counts_cannot_poison_cache() -> None:
   '''
   The lengths come from a cache, so handing back the cached list itself would let one
   caller's in-place edit corrupt every later answer.  Worse, it would not stay contained:
