@@ -29,7 +29,12 @@
   `# noqa: <RULE>`；整类与领域或风格冲突时才在 `ruff.toml` 忽略。只与某一子树冲突的规则，
   可用带理由的 `per-file-ignores`。
 - 安装包为 `bazi`，从定义模块导入，没有安装 CLI 或根类入口。
-- PR 前须实跑与 CI 相同的 **`run_tests.py -a -v`**。下列内层检查较快，但省略了两个 demo、
+- 库运行时支持 Python 3.11+；文档构建、文档工具检查及完整开发门禁需要 Python 3.12+。
+  已生成的 HTML 是静态文件，阅读不需要 Python。3.11 环境不安装 `docs/requirements.txt`，使用
+  `run_tests.py -a -v --runtime-only`：保留全部库检查，排除 `docs/`、`tests/docs/`、
+  `run_docs.py`、`run_doc_checks.py` 的文档工具类型检查和测试／构建。其余站点与 workflow 测试保留。
+- PR 前须在 Python 3.12+ 文档开发环境实跑与 CI 相同的 **`run_tests.py -a -v`**；
+  `--runtime-only` 不能代替该完整门禁。下列内层检查较快，但省略了两个 demo、
   `run_interpreter.py` 示例与安装工件检查，不能替代完整门禁：
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`

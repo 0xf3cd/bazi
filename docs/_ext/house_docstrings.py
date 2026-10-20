@@ -92,7 +92,10 @@ class HouseDocstring(SphinxDirective):
   has_content = True
 
   def run(self) -> list[nodes.Node]:
-    document = new_document(self.get_source_info()[0], settings=self.state.document.settings)
+    source, _ = self.get_source_info()
+    if source is None:
+      raise self.error('Documentation directive has no source path')
+    document = new_document(source, settings=self.state.document.settings)
     parser = create_md_parser(cast(Any, self.env).myst_config, RendererHTML)
     lines = prepare_markdown(list(self.content), parser)
     MystParser().parse('\n'.join(lines), document)
