@@ -11,7 +11,6 @@ guides/quickstart
 guides/configuration
 guides/relations-transits
 guides/knowledge
-guides/rule-coverage
 guides/integration
 ```
 
@@ -22,6 +21,7 @@ guides/integration
 
 api/index
 catalog/index
+guides/rule-coverage
 contributing
 versions
 versioning

@@ -15,7 +15,7 @@
 
 ### 基础表与天干关系
 
-| 规则族 | 实现位置 | 已有知识、出处与缺口 |
+| 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
 | 年上起月、日上起时 | {py:attr}`~bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE`、{py:attr}`~bazi.rules.BaziRules.DAY_TO_HOUR_TABLE`；推算入口在 {py:mod}`~bazi.utils.bazi_utils` | 表旁说明起干与推算含义；当前知识对象目录没有这两类规则的专门对象。 |
 | 干支阴阳五行 | {py:attr}`~bazi.rules.BaziRules.TIANGAN_TRAITS`、{py:attr}`~bazi.rules.BaziRules.DIZHI_TRAITS` | `tiangan.*.definition` 已记录十干定义及出处；没有地支对象，不能把十干定义的覆盖扩大到地支表。 |
@@ -30,7 +30,7 @@
 
 直接查法与批量查法见 {py:mod}`~bazi.utils.dizhi_utils`。{py:class}`~bazi.rules.DizhiRelationDefinitions` 承载暗合、刑与拱局定义，{py:meth}`~bazi.school.BaziSchool.relation_definitions` 从流派配置取得同一组定义。当前知识对象目录没有地支关系对象；下列出处仍在源码说明中，没有统一的规则到来源 ID 索引。
 
-| 规则族 | 实现与配置 | 出处位置及支持边界 |
+| 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
 | 三会、六合、三合、半合 | {py:attr}`~bazi.rules.DizhiRules.DIZHI_SANHUI`、{py:attr}`~bazi.rules.DizhiRules.DIZHI_LIUHE`、{py:attr}`~bazi.rules.DizhiRules.DIZHI_SANHE`、{py:attr}`~bazi.rules.DizhiRules.DIZHI_BANHE` | 表旁给出组合与结果；结构命中不自动证明合化成立或吉凶解释。 |
 | 暗合、通合、通禄合 | {py:attr}`~bazi.rules.DizhiRules.DIZHI_ANHE`、{py:attr}`~bazi.rules.DizhiRules.DIZHI_TONGHE`、{py:attr}`~bazi.rules.DizhiRules.DIZHI_TONGLUHE`；{py:attr}`~bazi.school.BaziSchool.anhe_def` | {py:class}`~bazi.rules.DizhiRules.AnheDef` 列三读；`NORMAL` 暗合与通禄合给出相同组合，不是两份独立证据。 |
@@ -45,7 +45,7 @@
 
 当前神煞知识对象只有 `shensha.guoyin`。其余行尚无同类专门对象，不等于全库文字从未提到这些名称。源码所列古籍、现代汇编与本仓署名也不因出现在下表就成为新的 `KnowledgeSource` 记录。
 
-| 规则族 | 实现与流派字段 | 源码出处入口及差异 |
+| 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
 | 桃花、红艳 | {py:attr}`~bazi.rules.ShenshaRules.TAOHUA`、{py:attr}`~bazi.rules.ShenshaRules.HONGYAN`；{py:attr}`~bazi.school.BaziSchool.hongyan_anchor` | 桃花注释分开表值与现代四柱查法；红艳记录乙一格分叉。红艳年干锚的出处缺口仍记在锚点表。 |
 | 红鸾、天喜 | {py:attr}`~bazi.rules.ShenshaRules.HONGLUAN`、{py:attr}`~bazi.rules.ShenshaRules.TIANXI` | 表旁区分《星学大成》的宫限表值与现代查原局其余柱的用途。 |
@@ -54,7 +54,7 @@
 | 劫煞、亡神 | {py:attr}`~bazi.rules.ShenshaRules.JIESHA`、{py:attr}`~bazi.rules.ShenshaRules.WANGSHEN`；{py:attr}`~bazi.school.BaziSchool.jiesha_anchor`、{py:attr}`~bazi.school.BaziSchool.wangshen_anchor` | 表旁说明绝位／临官位与出处；日锚、现代双锚的依据分列。 |
 | 孤辰、寡宿 | {py:attr}`~bazi.rules.ShenshaRules.GUCHEN`、{py:attr}`~bazi.rules.ShenshaRules.GUASU` | 共用的表旁注释列规则与查法出处；解释层豁免不删除原始命中。 |
 | 禄神、金舆 | {py:attr}`~bazi.rules.ShenshaRules.LUSHEN`、{py:attr}`~bazi.rules.ShenshaRules.JINYU`；{py:attr}`~bazi.school.BaziSchool.jinyu_anchor` | 禄神共用基础禄位表，金舆从禄位派生；出处见表旁，金舆的锚点依据另列。 |
-| 魁罡、天赦 | {py:attr}`~bazi.rules.ShenshaRules.KUIGANG`、{py:attr}`~bazi.rules.ShenshaRules.TIANSHE` | 表旁列规则与出处，低层查法分别接收日柱、月令与日柱；两者未列入分析器 `_REGISTRY`，不能从“有表”推成“分析器已输出”。 |
+| 魁罡、天赦 | {py:attr}`~bazi.rules.ShenshaRules.KUIGANG`、{py:attr}`~bazi.rules.ShenshaRules.TIANSHE` | 表旁列规则与出处，低层查法分别接收日柱、月令与日柱；原局分析器在 `_REGISTRY` 之外单独输出这两项整柱结果。 |
 | 羊刃、飞刃 | {py:attr}`~bazi.rules.ShenshaRules.YANGREN`、{py:attr}`~bazi.rules.ShenshaRules.FEIREN`；{py:attr}`~bazi.school.BaziSchool.yangren_def`、{py:attr}`~bazi.school.BaziSchool.feiren_def` | {py:class}`~bazi.rules.ShenshaRules.YangrenDef` 分列子平、古禄命、帝旺三读与出处；两个字段独立，飞刃从相应羊刃表派生。 |
 | 天乙贵人 | {py:attr}`~bazi.rules.ShenshaRules.TIANYI`；{py:attr}`~bazi.school.BaziSchool.tianyi_def`、{py:attr}`~bazi.school.BaziSchool.tianyi_anchor` | {py:class}`~bazi.rules.ShenshaRules.TianyiDef` 保存完整口诀／表档案；选择阳贵或阴贵不替调用方决定昼夜界线。 |
 | 文昌 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANG`；{py:attr}`~bazi.school.BaziSchool.wenchang_def`、{py:attr}`~bazi.school.BaziSchool.wenchang_anchor` | {py:class}`~bazi.rules.ShenshaRules.WenchangDef` 分列辛子／辛戌；表值、锚点与查找位置的来源边界分开保留。 |
@@ -66,12 +66,12 @@
 
 {py:attr}`~bazi.school.BaziConfig.school` 选择整个流派档案。其余配置和纯计算规则不能从四个规则容器的属性清单中省略。
 
-| 规则族／边界 | 实现与配置 | 已有知识及本页处置 |
+| 规则族／边界 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
 | 五行、干支循环 | {py:class}`~bazi.defines.Wuxing`、{py:class}`~bazi.defines.Ganzhi`；{py:func}`~bazi.utils.bazi_utils.ganzhi_of_year`、{py:func}`~bazi.utils.bazi_utils.ganzhi_of_day` | 五行两条本仓署名示例已存在；年／日干支计算有源码定义与基准日期，但尚无相应规则到知识来源的关联。 |
 | 十神计算 | {py:func}`~bazi.utils.bazi_utils.shishen` | 已有 `shishen.*` 对象与定义条目，如 `shishen.bijian.definition`；定义条目不为地支取主气、藏干比例或全部解释作证，也不能由此假定十个对象都有默认定义条目。 |
 | 四柱节界与换日 | {py:class}`~bazi.bazi.Bazi`；{py:attr}`~bazi.school.BaziConfig.precision`、{py:attr}`~bazi.school.BaziSchool.day_rollover` | {py:class}`~bazi.school.BaziPrecision`、{py:class}`~bazi.school.DayRollover` 与 {doc}`configuration` 说明边界。知识目录不是历法精度或换日出处目录。 |
-| 历法、民用钟与真太阳钟 | {py:attr}`~bazi.school.BaziConfig.backend`；{py:class}`~bazi.calendar.backend.CalendarBackend`、`calendar/solar_time.py` 与地点输入 | 数据来源、精度及钟的边界见配置教程和后端说明。逐行历书／天文数据的独立定标不属本页评估；不因缺少知识条目就判计算无依据。 |
+| 历法、民用钟与真太阳钟 | {py:attr}`~bazi.school.BaziConfig.backend`；{py:class}`~bazi.calendar.backend.CalendarBackend`、`bazi/calendar/solar_time.py` 与地点输入 | 数据来源、精度及钟的边界见 {doc}`configuration` 和 {py:class}`~bazi.calendar.backend.CalendarBackend` 的说明。逐行历书／天文数据的独立定标不属本页评估；不因缺少知识条目就判计算无依据。 |
 | 配偶星与配偶宫 | {py:attr}`~bazi.school.BaziSchool.peiou_xing_def`；{py:class}`~bazi.school.PeiouXingDef` 与 {py:class}`~bazi.bazi_chart.BaziChart` | 已有 `concept.peiou_xing`、`concept.peiou_gong` 及带原文来源的 `reference_only` 条目；历史读法、软件默认与适用条件仍须分别读取。 |
 | 交运、小运、大运与流年 | {py:class}`~bazi.bazi_chart.BaziChart`；{py:attr}`~bazi.school.BaziConfig.dayun_year_rule` 与 {py:class}`~bazi.school.DayunYearRule` | 顺逆、间隔折算、物理时刻线与年份标签在源码说明中；当前没有相应专门知识对象。标签规则不能代替物理边界规则。 |
 | 流运查询与关系组合 | {py:mod}`~bazi.transits`、{py:mod}`~bazi.utils.tiangan_utils`、{py:mod}`~bazi.utils.dizhi_utils`、{py:mod}`~bazi.analyzer.relationship` | 查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。 |
@@ -98,7 +98,6 @@ claims = {
 for definition, claim_id in claims.items():
   school = BaziSchool(guoyin_def=definition)
   entry = kb.entry(claim_id)
-  assert entry.viewpoint == school.guoyin_def.name
   table = ShenshaRules.GUOYIN[school.guoyin_def]
   target = table[Tiangan.甲]
   offset = (target.index - BaziRules.TIANGAN_LU[Tiangan.甲].index) % 12
