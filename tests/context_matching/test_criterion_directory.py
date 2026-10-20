@@ -49,7 +49,7 @@ def _check_directory_info(info: CriterionInfo, case: dict[str, Any]) -> None:
   assert info.binding_effect == ('entry_unknown' if case['entry_role'] == 'premise' else 'related_unrecognized')
 
 
-def test_directory_is_complete_and_immutable(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch) -> None:
   def forbidden(*args: Any, **kwargs: Any) -> Any:
     raise AssertionError('Directory lookup must not create a chart or load a corpus')
   monkeypatch.setattr(KnowledgeBase, 'load', forbidden)

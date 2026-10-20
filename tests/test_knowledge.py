@@ -138,7 +138,7 @@ def test_search_matches_fields_casefolded(field: str) -> None:
   assert isinstance(knowledge.search('丁火', include_reference_only=True), tuple)
 
 
-def test_search_applies_query_policy() -> None:
+def test_search_filters_without_searching_sources() -> None:
   knowledge = _discovery_knowledge()
   assert _ids(knowledge.search('body')) == ('custom.default',)
   assert _ids(knowledge.search('BODY', include_reference_only=True)) == ('custom.default', 'custom.reference')

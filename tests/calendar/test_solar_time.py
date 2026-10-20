@@ -25,7 +25,7 @@ def test_solar_time_public_boundary(civil: Any, longitude: Any, error: type[Exce
     apparent_solar_datetime(civil, longitude)
 
 
-def test_none_offset_with_real_longitude() -> None:
+def test_none_offset_and_real_longitude() -> None:
   class MissingOffset(tzinfo):
     def utcoffset(self, dt: datetime | None) -> None:
       return None

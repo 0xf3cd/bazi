@@ -20,7 +20,7 @@ SOURCE_FIELDS: Final = {
   ('knowledge-correction', {'problem': True}),
   ('school-reading', {'difference': True, 'config_option': False, 'variant': False, 'viewpoint': False}),
 ])
-def test_issue_forms_collect_record_fields(
+def test_issue_forms_record_and_discussion_fields(
   name: str, discussion_fields: dict[str, bool],
 ) -> None:
   path = Path(__file__).parents[1] / '.github/ISSUE_TEMPLATE' / (name + '.yml')

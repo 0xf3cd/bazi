@@ -1,6 +1,12 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # relationship_samples.py
 
+# Helpers shared by the relationship-analyzer tests in this directory: gong projection, discovery
+# equality and the year-transit builders.
+# Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
+# `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package
+# (see the NOTE in `tests/calendar/test_celestial_tables.py`).
+
 import random
 from collections.abc import Callable
 

@@ -3,15 +3,13 @@
 import json
 from dataclasses import replace
 from typing import Any
+from datetime import date as _date_module  # The construction-time matrix needs the native date type.
 
 import pytest
 
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context, RelationshipProfile, TransitCoordinate
 from bazi.transits import TransitKind
-
-from datetime import date as _date_module  # The construction-time matrix needs the native date type.
-
 from bazi.defines import Dizhi as _Dizhi
 
 from matching_samples import chart, match, PALACE, TOUGAN, RELATED_TOUGAN, rel_match, chart_from

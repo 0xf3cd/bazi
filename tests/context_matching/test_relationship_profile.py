@@ -2,6 +2,8 @@
 
 from datetime import datetime
 from typing import Any
+from datetime import date as _date_module  # The construction-time matrix needs the native date type.
+from datetime import UTC as _UTC
 
 import pytest
 
@@ -11,10 +13,6 @@ from bazi.context_matching import (
 )
 from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
-
-from datetime import date as _date_module  # The construction-time matrix needs the native date type.
-from datetime import UTC as _UTC
-
 from bazi.bazi import BaziGender as _BaziGender
 from bazi.defines import Dizhi as _Dizhi
 

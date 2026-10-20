@@ -5,6 +5,8 @@ import pytest
 
 from datetime import datetime
 from collections.abc import Sequence
+from dataclasses import replace
+from typing import Any
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, DizhiRelation, TianganRelation
 from bazi.utils import tiangan_utils, dizhi_utils
@@ -14,10 +16,6 @@ from bazi.rules import DizhiRules
 from bazi.school import BaziConfig, BaziSchool, PeiouXingDef
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
-
-from dataclasses import replace
-from typing import Any
-
 from bazi.analyzer.relationship import (
   RelationshipEvidence, StarAppearance, StemRelationDiscovery, _discover_stem_occurrences, spouse_evidence,
 )

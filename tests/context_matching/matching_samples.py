@@ -1,5 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+# Sample charts, criterion IDs and evaluation helpers shared by the context-matching tests in this directory.
+# Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
+# `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package
+# (see the NOTE in `tests/calendar/test_celestial_tables.py`).
+
 from datetime import datetime
 from functools import cache
 from typing import Any
