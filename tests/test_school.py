@@ -293,12 +293,15 @@ def test_every_school_field_reaches_json() -> None:
   assert set(BaziJson.School.__annotations__.values()) == {str}
 
 
-def test_config_and_school_are_frozen() -> None:
+def test_config_is_frozen() -> None:
   config: BaziConfig = BaziConfig()
   with pytest.raises(FrozenInstanceError):
     config.precision = BaziPrecision.HOUR # type: ignore
   with pytest.raises(FrozenInstanceError):
     config.school = BaziSchool(day_rollover=DayRollover.ZIZHENG) # type: ignore
+
+
+def test_default_school_is_frozen() -> None:
   with pytest.raises(FrozenInstanceError):
     DEFAULT_SCHOOL.hongyan_anchor = Anchor.YEAR # type: ignore
 

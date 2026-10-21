@@ -142,15 +142,25 @@ def test_yangren_feiren_definitions_independent() -> None:
   assert shensha['feiren'] == {Dizhi.戌}
 
 
-def test_feiren_dedup_and_empty_result() -> None:
+@pytest.fixture
+def repeated_feiren_analysis() -> RelationshipAnalyzer:
   chart = BaziChart(Bazi.create('1902-09-08 18:00', 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '己酉', '甲午', '癸酉')
   analysis = RelationshipAnalyzer(chart)
+  return analysis
+
+
+def test_feiren_deduplicates_transit_branches(repeated_feiren_analysis: RelationshipAnalyzer) -> None:
+  analysis = repeated_feiren_analysis
   assert analysis.at_birth.shensha['feiren'] == {Dizhi.酉}
   assert analysis.transits.shensha(TransitSet(
     dayun=Ganzhi.from_str('癸酉'),
     liunian=Ganzhi.from_str('乙酉'),
   ))['feiren'] == {Dizhi.酉}
+
+
+def test_feiren_returns_empty_without_hits(repeated_feiren_analysis: RelationshipAnalyzer) -> None:
+  analysis = repeated_feiren_analysis
   assert analysis.transits.shensha(
     TransitSet(liunian=Ganzhi.from_str('甲子'))
   )['feiren'] == set()
@@ -186,16 +196,18 @@ def test_tianyi_anchor_at_birth_and_transits(
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['tianyi'] == expected
 
 
+@pytest.mark.parametrize('scope', ['at_birth', 'transits'])
 @pytest.mark.parametrize('tianyi_def, at_birth_expected, transits_expected', [
   (ShenshaRules.TianyiDef.GENG_WITH_JIA_WU, frozenset({Dizhi.丑, Dizhi.子}), frozenset({Dizhi.丑, Dizhi.未})),
   (ShenshaRules.TianyiDef.GENG_WITH_XIN, frozenset({Dizhi.午, Dizhi.寅, Dizhi.子}), frozenset({Dizhi.午, Dizhi.寅})),
   (ShenshaRules.TianyiDef.YANGGUI, frozenset({Dizhi.丑}), frozenset({Dizhi.丑})),
   (ShenshaRules.TianyiDef.YINGUI, frozenset({Dizhi.子}), frozenset({Dizhi.未})),
 ])
-def test_tianyi_definition_at_birth_and_transits(
+def test_tianyi_definition_reaches_each_scope(
   tianyi_def: ShenshaRules.TianyiDef,
   at_birth_expected: frozenset[Dizhi],
   transits_expected: frozenset[Dizhi],
+  scope: str,
 ) -> None:
   chart: BaziChart = BaziChart(Bazi.create(
     '1985-03-02 11:08',
@@ -206,14 +218,16 @@ def test_tianyi_definition_at_birth_and_transits(
     )),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('乙丑', '戊寅', '庚子', '壬午')
-  assert RelationshipAnalyzer(chart).at_birth.shensha['tianyi'] == at_birth_expected
-  transits = TransitSet(
-    xiaoyun=Ganzhi.from_str('乙丑'),
-    dayun=Ganzhi.from_str('癸未'),
-    liunian=Ganzhi.from_str('庚午'),
-    liuyue=Ganzhi.from_str('丙寅'),
-  )
-  assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == transits_expected
+  if scope == 'at_birth':
+    assert RelationshipAnalyzer(chart).at_birth.shensha['tianyi'] == at_birth_expected
+  else:
+    transits = TransitSet(
+      xiaoyun=Ganzhi.from_str('乙丑'),
+      dayun=Ganzhi.from_str('癸未'),
+      liunian=Ganzhi.from_str('庚午'),
+      liuyue=Ganzhi.from_str('丙寅'),
+    )
+    assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == transits_expected
 
 
 @pytest.mark.parametrize('anchor, expected', [
@@ -264,7 +278,8 @@ def test_jinyu_year_anchor_can_be_the_only_hit() -> None:
   assert year_and_day_analysis.transits.shensha(transit)['jinyu'] == {Dizhi.戌}
 
 
-def test_jinyu_dedup_and_empty_result() -> None:
+@pytest.fixture
+def repeated_jinyu_chart() -> BaziChart:
   # 丙年、戊日的金舆均在未；两锚命中同一支时只返回一个位置值。
   chart = BaziChart(Bazi.create(
     '1906-07-13 12:00',
@@ -272,10 +287,19 @@ def test_jinyu_dedup_and_empty_result() -> None:
     BaziConfig(school=BaziSchool(jinyu_anchor=Anchor.YEAR_AND_DAY)),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('丙午', '乙未', '戊午', '戊午')
+  return chart
+
+
+def test_jinyu_deduplicates_anchor_hits(repeated_jinyu_chart: BaziChart) -> None:
+  chart = repeated_jinyu_chart
   assert RelationshipAnalyzer(chart).at_birth.shensha['jinyu'] == {Dizhi.未}
   assert RelationshipAnalyzer(chart).transits.shensha(
     TransitSet(liunian=Ganzhi.from_str('乙未'))
   )['jinyu'] == {Dizhi.未}
+
+
+def test_jinyu_returns_empty_without_hits(repeated_jinyu_chart: BaziChart) -> None:
+  chart = repeated_jinyu_chart
   assert RelationshipAnalyzer(chart).transits.shensha(
     TransitSet(liunian=Ganzhi.from_str('甲子'))
   )['jinyu'] == set()

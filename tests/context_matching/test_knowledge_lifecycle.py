@@ -15,10 +15,13 @@ from bazi.knowledge import (
 from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, match
 
 
-def test_corpus_organization_and_oracle_hash() -> None:
+def test_legacy_oracle_matches_frozen_hash() -> None:
   import hashlib
   fixture = Path(__file__).parents[1] / 'data' / 'description_legacy_baseline.json'
   assert hashlib.sha256(fixture.read_bytes().replace(b'\r\n', b'\n')).hexdigest() == '6e50cf38d5b9a74a6f2a7ba2b3502b8dad818955a67ac6530e97f8d768f6b774'
+
+
+def test_corpus_organizes_reference_entries() -> None:
   knowledge = KnowledgeBase.load()
   assert len(knowledge.entries) == 302 and len(knowledge.sources) == 13 and len(knowledge.query()) == 19
   for criterion, keys, context_id in ((GUANSHA, LEGAL, 'editorial.guansha_coexistence'), (FEMALE, RELATIONSHIP, 'editorial.guansha_coexistence_female')):

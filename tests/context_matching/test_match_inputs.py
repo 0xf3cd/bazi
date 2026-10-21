@@ -18,7 +18,7 @@ from bazi.transits import TransitKind
 from matching_samples import GUANSHA, LEGAL, chart, match, Year
 
 
-def test_full_input_identity_and_immutability() -> None:
+def test_input_identity_includes_configuration() -> None:
   result = match()
   identity = json.loads(result.input_json)
   assert identity['birth_time'] == '2000-01-03T12:00:00' and identity['gender'] == 'female'
@@ -33,6 +33,10 @@ def test_full_input_identity_and_immutability() -> None:
     changed_result = evaluate_context(changed, criterion_id=GUANSHA, profile=ContextProfile('natal'))
     assert changed_result.input_json != result.input_json
     assert ContextResult.from_json(changed_result.export_json()) == changed_result
+
+
+def test_result_components_are_immutable() -> None:
+  result = match()
   assert isinstance(result.profile, ContextProfile)
   with pytest.raises(FrozenInstanceError):
     result.profile.ganzhi_year = 2024 # type: ignore[misc]

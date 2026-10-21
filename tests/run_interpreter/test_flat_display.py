@@ -41,8 +41,7 @@ def test_legacy_help_flag_stays_legacy(tmp_path: Path, flag: str) -> None:
 
 @pytest.mark.parametrize('columns', ['50', '80'])
 @pytest.mark.parametrize('optimized', [False, True])
-def test_help_and_seeded_default_read_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, columns: str, optimized: bool) -> None:
-  monkeypatch.setenv('COLUMNS', columns)
+def test_help_is_read_only(tmp_path: Path, terminal_columns: None, columns: str, optimized: bool) -> None:
   # 单独的 --help 是新顶层帮助；旧路径的帮助在带旧选项时给出，内容不变。
   help_result = run_cli(tmp_path, '--seed', '1', '--help', optimized=optimized)
   assert help_result.returncode == 0
@@ -51,6 +50,17 @@ def test_help_and_seeded_default_read_only(tmp_path: Path, monkeypatch: pytest.M
   flat_help = re.sub(r'\s+', '', help_result.stdout)
   for phrase in ('匹配模式同时展示前提判别或条件参考。', '原局加单流年（婚恋以外的判据）', '婚恋以外的判据为流年'):
     assert phrase in flat_help
+  assert list(tmp_path.iterdir()) == []
+
+
+@pytest.fixture
+def terminal_columns(monkeypatch: pytest.MonkeyPatch, columns: str) -> None:
+  monkeypatch.setenv('COLUMNS', columns)
+
+
+@pytest.mark.parametrize('columns', ['50', '80'])
+@pytest.mark.parametrize('optimized', [False, True])
+def test_seeded_default_is_read_only(tmp_path: Path, terminal_columns: None, columns: str, optimized: bool) -> None:
   first = run_cli(tmp_path, '--seed', '42', optimized=optimized)
   second = run_cli(tmp_path, '--seed', '42', optimized=optimized)
   assert first.returncode == second.returncode == 0

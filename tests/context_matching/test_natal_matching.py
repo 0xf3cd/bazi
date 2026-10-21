@@ -68,12 +68,15 @@ def test_duplicate_pillars_keep_all_occurrences() -> None:
   assert len(result.occurrences) == 9
 
 
-def test_visible_positive_and_female_gate() -> None:
+def test_visible_guansha_satisfies_premise() -> None:
   result = evaluate_context(chart(5, hour=16), criterion_id=GUANSHA, profile=ContextProfile('natal'), include_reference_only=True)
   assert json.loads(result.input_json)['pillars'] == ['己卯', '丙子', '壬戌', '戊申']
   assert {(o.pillar, str(o.stem), str(o.shishen)) for o in result.occurrences if o.layer == 'visible' and o.shishen in (Shishen.正官, Shishen.七杀)} == {
     ('year', '己', '正官'), ('hour', '戊', '七杀'),
   }
+
+
+def test_female_premise_rejects_male_chart() -> None:
   female, male = match(criterion_id=FEMALE), match(gender='male', criterion_id=FEMALE)
   assert female.criterion.status == 'SATISFIED'
   assert male.criterion.status == 'NOT_SATISFIED' and male.criterion.reason == 'female_gate_false'
@@ -102,6 +105,9 @@ def test_liunian_kind_and_cycle_identity() -> None:
     ]
     assert ContextResult.from_json(result.export_json()) == result
   assert [(o.pillar, str(o.stem), str(o.shishen)) for o in first.occurrences] == [(o.pillar, str(o.stem), str(o.shishen)) for o in next_cycle.occurrences]
+
+
+def test_liunian_label_has_no_calendar_cutoff() -> None:
   # at_year has no calendar-data upper cutoff: preserve that existing label contract.
   assert match(1, profile=ContextProfile('natal_and_liunian', 10000)).criterion.scope_complete
 

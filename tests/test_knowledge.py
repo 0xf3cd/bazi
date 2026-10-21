@@ -519,7 +519,7 @@ def test_edit_validate_query_render_export_reload(tmp_path: Path) -> None:
   assert empty.query(object_id='tiangan.ding') == ()
 
 
-def test_render_metadata_selection_and_limits() -> None:
+def test_render_definition_metadata() -> None:
   k = KNOWLEDGE_BASE
   definition = k.render(k.entry('shishen.shishen.definition'))
   assert '仅供参考' not in definition and '未判断' not in definition
@@ -527,9 +527,17 @@ def test_render_metadata_selection_and_limits() -> None:
   assert '文本层：baiwen' in definition
   assert '生我者為正印偏印' in definition
   assert '文字关系：讨论对象→七杀' in k.render(k.entry('legacy.shishen.SH-052'))
+
+
+def test_render_historical_reference_warning() -> None:
+  k = KNOWLEDGE_BASE
   historical = k.entry('tiangan.ding.lamp_symbol')
   assert '仅供参考' in k.render(historical)
   assert '来源尚未核实' not in k.render(historical)
+
+
+def test_render_preserves_legacy_premises() -> None:
+  k = KNOWLEDGE_BASE
   text = k.render(k.entry('legacy.shishen.SH-011'), show_sources=False)
   assert '前提待梳理' in text and '命盘适用性未判断' in text
   assert '旧栏目前提（待梳理；未作为判据）：当十神处于力量不过强' in text
@@ -537,10 +545,14 @@ def test_render_metadata_selection_and_limits() -> None:
   legacy_detail = k.render(k.entry('legacy.shishen.SH-011'))
   assert '旧栏目前提（待梳理；未作为判据）：当十神处于力量不过强' in legacy_detail
   assert '如不被冲、克，也不过旺/为命主喜用时' in legacy_detail
-  assert '来源状态：repository_attributed' in k.render(k.entry('shensha.guoyin.modern'))
   for entry in k.entries.values():
     if entry.legacy is not None and entry.legacy.field_premise:
       assert entry.legacy.field_premise in k.render(entry, show_sources=False)
+
+
+def test_render_reports_repository_attribution() -> None:
+  k = KNOWLEDGE_BASE
+  assert '来源状态：repository_attributed' in k.render(k.entry('shensha.guoyin.modern'))
 
 
 def test_registries_results_deeply_immutable() -> None:
@@ -571,7 +583,7 @@ def test_filters_fail_for_typos_and_invalid_types(dimension: str) -> None:
 
 
 @pytest.mark.parametrize('value', [1, None, 'yes'])
-def test_boolean_and_lookup_boundaries(value: object) -> None:
+def test_boolean_options_reject_non_bools(value: object) -> None:
   k = KNOWLEDGE_BASE
   with pytest.raises(TypeError):
     k.query(include_reference_only=value) # type: ignore[arg-type]
@@ -579,27 +591,54 @@ def test_boolean_and_lookup_boundaries(value: object) -> None:
     k.render(k.entry('tiangan.ding.definition'), show_sources=value) # type: ignore[arg-type]
   with pytest.raises(TypeError):
     k.render(k.entry('tiangan.ding.definition'), manual_context=value) # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('value', [1, None, 'yes'])
+def test_render_rejects_non_entries(value: object) -> None:
+  k = KNOWLEDGE_BASE
   with pytest.raises(TypeError):
     k.render(value) # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('value', [1, None, 'yes'])
+def test_lookup_rejects_invalid_ids(value: object) -> None:
+  k = KNOWLEDGE_BASE
   with pytest.raises(ValueError if isinstance(value, str) else TypeError):
     k.entry(value) # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('value', [1, None, 'yes'])
+def test_file_load_rejects_invalid_input(value: object) -> None:
   if value is not None:
     with pytest.raises(TypeError):
       KnowledgeBase.load(value) # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('value', [1, None, 'yes'])
+def test_json_load_rejects_invalid_input(value: object) -> None:
   with pytest.raises(ValueError if isinstance(value, str) else TypeError):
     KnowledgeBase.from_json(value) # type: ignore[arg-type]
 
 
-def test_unknown_and_foreign_selections_fail() -> None:
+def test_lookup_rejects_unknown_claim() -> None:
   k = KNOWLEDGE_BASE
   with pytest.raises(ValueError, match='Unknown claim'):
     k.entry('missing')
+
+
+def test_selections_reject_foreign_entries() -> None:
+  k = KNOWLEDGE_BASE
   entry = k.entry('tiangan.ding.definition')
   foreign = replace(entry, text='Another text.')
   with pytest.raises(ValueError, match='Foreign entry'):
     k.render(foreign)
   with pytest.raises(ValueError, match='Foreign entry'):
     k.export_json((foreign,))
+
+
+def test_export_rejects_invalid_selection() -> None:
+  k = KNOWLEDGE_BASE
+  entry = k.entry('tiangan.ding.definition')
   with pytest.raises(ValueError, match='Duplicate selection'):
     k.export_json((entry, entry))
   with pytest.raises(TypeError):
@@ -680,7 +719,7 @@ def test_duplicate_registry_ids_are_rejected(kind: str) -> None:
   ('legacy-object', 'Legacy object is missing'), ('legacy-field', 'Unsupported legacy field'),
   ('legacy-placement', 'Duplicate legacy placement'), ('concept-legacy', 'Unsupported legacy field'),
 ])
-def test_corpus_reference_and_policy_integrity(mutation: str, message: str) -> None:
+def test_corpus_rejects_integrity_violations(mutation: str, message: str) -> None:
   data = json.loads(KNOWLEDGE_BASE.export_json())
   entry = data['entries'][0]
   if mutation == 'object':
@@ -709,7 +748,7 @@ def test_corpus_reference_and_policy_integrity(mutation: str, message: str) -> N
     KnowledgeBase.from_json(json.dumps(data))
 
 
-def test_json_shape_and_optimized_boundary() -> None:
+def test_json_rejects_malformed_corpus() -> None:
   for text in ('{"schema_version":1,"schema_version":1}', '[1]', '{}', '{bad json'):
     with pytest.raises((TypeError, ValueError)):
       KnowledgeBase.from_json(text)
@@ -732,12 +771,15 @@ def test_json_shape_and_optimized_boundary() -> None:
   data['entries'][0]['roles'] = {}
   with pytest.raises(TypeError, match='JSON array'):
     KnowledgeBase.from_json(json.dumps(data))
+  with pytest.raises(ValueError):
+    KnowledgeBase.from_json('')
+
+
+def test_constructor_requires_typed_tuples() -> None:
   with pytest.raises(TypeError):
     KnowledgeBase([], (), (), ()) # type: ignore[arg-type]
   with pytest.raises(TypeError):
     KnowledgeBase((object(),), (), (), ()) # type: ignore[arg-type]
-  with pytest.raises(ValueError):
-    KnowledgeBase.from_json('')
 
 
 def test_witnessed_zhushi_is_distinct_layer() -> None:

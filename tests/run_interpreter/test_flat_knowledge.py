@@ -77,12 +77,18 @@ def test_manual_context_keeps_open_premises(tmp_path: Path) -> None:
   assert '出生时间：' not in result.stdout
 
 
-def test_default_and_known_empty_queries(tmp_path: Path) -> None:
+def test_default_query_omits_reference_entries(tmp_path: Path) -> None:
   default = run_cli(tmp_path, '--query-knowledge', '--object', 'tiangan.ding')
   assert default.returncode == 0
   assert '丁为阴火。' in default.stdout and '烛灯' not in default.stdout
+
+
+def test_known_object_can_have_no_entries(tmp_path: Path) -> None:
   empty = run_cli(tmp_path, '--query-knowledge', '--object', 'wuxing.mu')
   assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
+
+
+def test_query_selects_reference_viewpoint(tmp_path: Path) -> None:
   variant = run_cli(
     tmp_path, '--query-knowledge', '--object', 'shensha.guoyin',
     '--viewpoint', 'WUXING_JINGJI', '--include-reference-only',

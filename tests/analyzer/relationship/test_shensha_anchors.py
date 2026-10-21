@@ -54,7 +54,8 @@ def test_zaisha_anchor_at_birth_and_transits(
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['zaisha'] == expected
 
 
-def test_zaisha_dedup_and_empty_result() -> None:
+@pytest.fixture
+def repeated_zaisha_chart() -> BaziChart:
   # 年、日支同为丑，双锚的灾煞都在卯；重复流运支也只返回一个值。
   chart = BaziChart(Bazi.create(
     '1902-01-06 12:00',
@@ -62,11 +63,20 @@ def test_zaisha_dedup_and_empty_result() -> None:
     BaziConfig(school=BaziSchool(zaisha_anchor=Anchor.YEAR_AND_DAY)),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('辛丑', '辛丑', '己丑', '庚午')
-  assert RelationshipAnalyzer(chart).at_birth.shensha['zaisha'] == set()
+  return chart
+
+
+def test_zaisha_deduplicates_transit_branches(repeated_zaisha_chart: BaziChart) -> None:
+  chart = repeated_zaisha_chart
   assert RelationshipAnalyzer(chart).transits.shensha(TransitSet(
     dayun=Ganzhi.from_str('甲卯'),
     liunian=Ganzhi.from_str('乙卯'),
   ))['zaisha'] == {Dizhi.卯}
+
+
+def test_zaisha_returns_empty_without_hits(repeated_zaisha_chart: BaziChart) -> None:
+  chart = repeated_zaisha_chart
+  assert RelationshipAnalyzer(chart).at_birth.shensha['zaisha'] == set()
   assert RelationshipAnalyzer(chart).transits.shensha(
     TransitSet(liuyue=Ganzhi.from_str('甲子'))
   )['zaisha'] == set()

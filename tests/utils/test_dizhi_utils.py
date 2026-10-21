@@ -1117,7 +1117,7 @@ def test_search_ganzhis_occurrence_identity() -> None:
     )
 
 
-def test_search_ganzhis_gong_profiles_and_scope() -> None:
+def test_search_gonghe_profiles_and_scope() -> None:
   same = (Ganzhi.from_str('庚申'), Ganzhi.from_str('庚辰'))
   expected_same = (
     GanzhiRelationCombo((GanzhiOccurrence(0, same[0]), GanzhiOccurrence(1, same[1]))),
@@ -1169,6 +1169,9 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
     definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.TRANSFORMING_NARROW),
   ) == ()
 
+
+
+def test_search_gonghui_profiles() -> None:
   gonghui = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲辰'))
   assert dizhi_utils.search_ganzhis(gonghui, DizhiRelation.拱会) == (
     GanzhiRelationCombo((GanzhiOccurrence(0, gonghui[0]), GanzhiOccurrence(1, gonghui[1]))),
@@ -1190,6 +1193,9 @@ def test_search_ganzhis_gong_profiles_and_scope() -> None:
     definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.LU_NARROW),
   ) == ()
 
+
+
+def test_search_gonghe_keeps_multiple_pairs() -> None:
   multiple = tuple(Ganzhi.from_str(s) for s in ('庚申', '庚辰', '甲寅', '甲戌'))
   assert dizhi_utils.search_ganzhis(multiple, DizhiRelation.拱合) == (
     GanzhiRelationCombo((GanzhiOccurrence(0, multiple[0]), GanzhiOccurrence(1, multiple[1]))),

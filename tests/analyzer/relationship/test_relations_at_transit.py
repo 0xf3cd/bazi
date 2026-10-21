@@ -92,8 +92,14 @@ def test_transit_house_relations(rng: random.Random) -> None:
       assert discoveries_equal(expected, actual)
 
 
-def test_transit_gong_mutual_scope_and_fill() -> None:
+@pytest.fixture
+def gong_chart() -> BaziChart:
   chart = BaziChart(Bazi.create(datetime(1980, 1, 12, 20), BaziGender.MALE))
+  return chart
+
+
+def test_transit_gong_rejects_filled_gap(gong_chart: BaziChart) -> None:
+  chart = gong_chart
   analysis = RelationshipAnalyzer(chart).transits
   combo = dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.辰))
 
@@ -106,6 +112,10 @@ def test_transit_gong_mutual_scope_and_fill() -> None:
   )
   assert combo not in analysis.house_relations(filled).get(DizhiRelation.拱合, ())
 
+
+def test_transit_gong_obeys_school_scope(gong_chart: BaziChart) -> None:
+  chart = gong_chart
+  analysis = RelationshipAnalyzer(chart).transits
   wide_only = TransitSet(liunian=Ganzhi.from_str('甲子'))
   assert DizhiRelation.拱合 not in analysis.house_relations(wide_only)
   wide_chart = BaziChart(Bazi.create(
@@ -117,6 +127,10 @@ def test_transit_gong_mutual_scope_and_fill() -> None:
     RelationshipAnalyzer(wide_chart).transits.house_relations(wide_only)[DizhiRelation.拱合]
   )
 
+
+def test_transit_gonghui_hits_mutual_scope(gong_chart: BaziChart) -> None:
+  chart = gong_chart
+  analysis = RelationshipAnalyzer(chart).transits
   gonghui = TransitSet(liunian=Ganzhi.from_str('甲戌'))
   assert dizhi_utils.DizhiCombo((Dizhi.申, Dizhi.戌)) in (
     analysis.house_relations(gonghui)[DizhiRelation.拱会]

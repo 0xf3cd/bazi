@@ -18,7 +18,7 @@ from bazi.transits import TransitKind
 from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from
 
 
-def test_relationship_verdicts_and_observations() -> None:
+def test_palace_verdict_matches_observations() -> None:
   # 宫刑冲: the male chart with 子午冲＋午午自刑 is SATISFIED; the 丙寅 day chart without 刑 or 冲 is NOT_SATISFIED.
   satisfied = rel_match()
   assert satisfied.criterion.status == 'SATISFIED' and satisfied.criterion.reason == 'premise_satisfied'
@@ -27,6 +27,12 @@ def test_relationship_verdicts_and_observations() -> None:
   unsatisfied = rel_match(birth='2000-01-09 12:00')
   assert unsatisfied.criterion.status == 'NOT_SATISFIED' and unsatisfied.criterion.reason == 'required_classification_absent'
   assert dict(unsatisfied.criterion.observations) == {'day_pillar_in_chong': False, 'day_pillar_in_xing': False}
+  for result in (satisfied, unsatisfied):
+    assert result.occurrences == () and result.entries == () and result.relationship is not None
+    assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_tougan_verdict_matches_observations() -> None:
   # 透干: a visible 辛明干 is SATISFIED; 藏干 only record facts and never satisfy 「透」.
   visible = rel_match(TOUGAN, birth='2000-01-29 06:00')
   assert visible.criterion.status == 'SATISFIED'
@@ -34,7 +40,7 @@ def test_relationship_verdicts_and_observations() -> None:
   hidden_only = rel_match(TOUGAN, birth='2000-01-01 12:00') # 丑 hides 辛; no 辛 in 明干.
   assert hidden_only.criterion.status == 'NOT_SATISFIED'
   assert dict(hidden_only.criterion.observations) == {'target_stem_visible': False, 'target_stem_hidden': True}
-  for result in (satisfied, unsatisfied, visible, hidden_only):
+  for result in (visible, hidden_only):
     assert result.occurrences == () and result.entries == () and result.relationship is not None
     assert ContextResult.from_json(result.export_json()) == result
 

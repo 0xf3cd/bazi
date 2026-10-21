@@ -14,7 +14,7 @@ from bazi.transit_chart import TransitChart
 from matching_samples import GUANSHA, FEMALE, LEGAL, chart, match
 
 
-def test_reference_eligibility_and_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_reference_binding_keeps_eligibility() -> None:
   knowledge = KnowledgeBase.load()
   default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'))
   assert default.criterion.status == 'SATISFIED' and default.entries == ()
@@ -43,6 +43,11 @@ def test_reference_eligibility_and_roundtrip(monkeypatch: pytest.MonkeyPatch) ->
     for context_id in entry.contexts:
       assert all(limit in rendered for limit in knowledge.contexts[context_id].limits)
   assert '可能会' in match(criterion_id=FEMALE).render()
+
+
+def test_reference_restore_does_not_recalculate(monkeypatch: pytest.MonkeyPatch) -> None:
+  result = match()
+  rendered = result.render()
   # Record restoration must not call a chart/transit constructor or evaluator.
   def forbidden(*args: Any, **kwargs: Any) -> Any:
     raise RuntimeError('Unexpected recalculation')

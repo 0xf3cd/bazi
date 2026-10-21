@@ -108,17 +108,27 @@ def test_missing_source_is_an_argparse_error(tmp_path: Path) -> None:
   assert not output.exists()
 
 
-def test_custom_source_binding_and_alias_guards(tmp_path: Path) -> None:
+@pytest.fixture
+def edited_source(tmp_path: Path) -> Path:
   data = json.loads(KNOWLEDGE_BASE.export_json())
   next(e for e in data['entries'] if e['claim_id'] == 'editorial.shishen.zhengguan.legal_trouble')['premise'] = '不同前提'
   source = tmp_path / 'edited.json'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  return source
+
+
+def test_custom_source_reports_binding_mismatch(tmp_path: Path, edited_source: Path) -> None:
+  source = edited_source
   output = tmp_path / 'result.json'
   result = run_cli(tmp_path, *MATCH_ARGS, '--include-reference-only', '--knowledge-source', str(source), '--export-context-json', str(output))
   assert result.returncode == 0 and 'binding_unrecognized' in result.stdout
   assert '不同前提' in result.stdout
   restored = ContextResult.from_json(output.read_text(encoding='utf-8'))
   assert restored.entries[0].status == 'UNKNOWN'
+
+
+def test_export_rejects_source_aliases(tmp_path: Path, edited_source: Path) -> None:
+  source = edited_source
   aliases = [source, tmp_path / 'symlink.json', tmp_path / 'hardlink.json']
   aliases[1].symlink_to(source)
   aliases[2].hardlink_to(source)

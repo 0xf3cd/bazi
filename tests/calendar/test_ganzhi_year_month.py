@@ -26,11 +26,21 @@ def test_month_coordinate(month: int, dizhi: Dizhi, jie: Jieqi, solar_year: int)
   assert hash(GanzhiYearMonth.from_dizhi(2024, dizhi)) == hash(value)
 
 
-def test_month_order_and_immutability() -> None:
-  assert GanzhiYearMonth(2023, 12) < GanzhiYearMonth(2024, 1) < GanzhiYearMonth(2024, 12)
+@pytest.fixture
+def month_value() -> GanzhiYearMonth:
   value = GanzhiYearMonth(2024, 1)
+  return value
+
+
+def test_month_value_is_frozen(month_value: GanzhiYearMonth) -> None:
+  value = month_value
   with pytest.raises(FrozenInstanceError):
     value.month = 12 # type: ignore[misc]
+
+
+def test_month_order_rejects_other_types(month_value: GanzhiYearMonth) -> None:
+  value = month_value
+  assert GanzhiYearMonth(2023, 12) < GanzhiYearMonth(2024, 1) < GanzhiYearMonth(2024, 12)
   assert value != (2024, 1)
   with pytest.raises(TypeError):
     _ = value < (2024, 1) # type: ignore[operator]
