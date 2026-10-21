@@ -131,36 +131,21 @@ def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
   assert not (tmp_path / 'knowledge_base').exists()
 
 
-@pytest.mark.parametrize('args', [
-  ('--birth-time', '2000-01-01 12:00'),
-  ('--gender', 'male'),
-  ('--gender', 'other'),
-  ('--count', '0'),
-  ('--count', '-1'),
-  ('--count', 'invalid'),
-  ('--birth-time', 'invalid', '--gender', 'male'),
-  ('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--seed', '42'),
-  ('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--count', '2'),
-  ('--unknown',),
+@pytest.mark.parametrize('args,error', [
+  (('--birth-time', '2000-01-01 12:00'), '--birth-time and --gender must be supplied together'),
+  (('--gender', 'male'), '--birth-time and --gender must be supplied together'),
+  (('--gender', 'other'), 'invalid choice'),
+  (('--count', '0'), '--count must be positive'),
+  (('--count', '-1'), '--count must be positive'),
+  (('--count', 'invalid'), 'invalid int value'),
+  (('--birth-time', 'invalid', '--gender', 'male'), 'Invalid isoformat string'),
+  (('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--seed', '42'), 'require random input'),
+  (('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--count', '2'), 'require random input'),
+  (('--unknown',), 'unrecognized arguments'),
 ])
-def test_invalid_inputs_export_nothing(tmp_path: Path, args: tuple[str, ...]) -> None:
+def test_invalid_inputs_export_nothing(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, 'chart', *args)
-  assert result.returncode == 2
-  assert 'error:' in result.stderr and 'v2.3.0' not in result.stderr
-  if args[0] == '--unknown':
-    assert_cli_error(result, 'chart', 'unrecognized arguments')
-  elif args[0] == '--count' and args[1] != 'invalid':
-    assert '--count must be positive' in result.stderr
-  elif '--seed' in args or '--count' in args:
-    assert 'random input' in result.stderr or 'invalid int value' in result.stderr
-  elif args == ('--gender', 'other'):
-    assert 'invalid choice' in result.stderr
-  elif 'invalid' in args:
-    assert 'Invalid isoformat string' in result.stderr
-  else:
-    assert '--birth-time and --gender must be supplied together' in result.stderr
-  if args[0] != '--unknown':
-    assert 'usage: python run_interpreter.py chart' in result.stderr
+  assert_cli_error(result, 'chart', error)
   assert not result.stdout
   assert list(tmp_path.iterdir()) == []
 

@@ -66,19 +66,21 @@ def test_verdicts_follow_reference_opt_in(tmp_path: Path, scope: str, year: str 
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('extra', [
-  ('--seed', '42'), ('--count', '1'), ('--output-dir', 'out'), ('--export-knowledge-base',),
-  ('--query-knowledge',), ('--validate-knowledge',), ('--export-knowledge-json', 'k.json'),
-  ('--object', 'tiangan.ding'), ('--context', 'legacy.chart_context'), ('--topic', '取象'),
-  ('--source', 'editorial'), ('--viewpoint', '仓内原作'), ('--applicability', 'described'), ('--time-scope', '行运'),
-  ('--ganzhi-year', '2024'), ('--ganzhi-year', 'bad'),
+@pytest.mark.parametrize('extra,error', [
+  (('--seed', '42'), 'unrecognized arguments'), (('--count', '1'), 'unrecognized arguments'),
+  (('--output-dir', 'out'), 'unrecognized arguments'), (('--export-knowledge-base',), 'unrecognized arguments'),
+  (('--query-knowledge',), 'unrecognized arguments'), (('--validate-knowledge',), 'unrecognized arguments'),
+  (('--export-knowledge-json', 'k.json'), 'unrecognized arguments'),
+  (('--object', 'tiangan.ding'), 'unrecognized arguments'), (('--context', 'legacy.chart_context'), 'unrecognized arguments'),
+  (('--topic', '取象'), 'unrecognized arguments'), (('--source', 'editorial'), 'unrecognized arguments'),
+  (('--viewpoint', '仓内原作'), 'unrecognized arguments'), (('--applicability', 'described'), 'unrecognized arguments'),
+  (('--time-scope', '行运'), 'unrecognized arguments'),
+  (('--ganzhi-year', '2024'), 'Natal scope cannot include a transit coordinate'),
+  (('--ganzhi-year', 'bad'), 'invalid int value'),
 ])
-def test_invalid_combinations_do_not_export(tmp_path: Path, extra: tuple[str, ...]) -> None:
+def test_invalid_match_options_do_not_export(tmp_path: Path, extra: tuple[str, ...], error: str) -> None:
   output = tmp_path / 'match.json'
   result = run_cli(tmp_path, *MATCH_ARGS, *extra, '--export-context-json', str(output))
-  assert result.returncode == 2 and 'error:' in result.stderr
-  error = ('unrecognized arguments' if extra[0] != '--ganzhi-year'
-           else 'invalid int value' if extra[1] == 'bad' else 'Natal scope cannot include a transit coordinate')
   assert_cli_error(result, 'match', error)
   assert not output.exists()
 

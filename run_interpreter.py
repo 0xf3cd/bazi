@@ -19,7 +19,7 @@ from bazi.defines import Tiangan, Shishen, Dizhi
 from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from bazi.context_matching import (
   ContextProfile, ObservationScope, RelationshipProfile, TransitCoordinate, TransitEntry,
-  _CRITERIA, criteria, criterion, evaluate_context,
+  criteria, criterion, evaluate_context,
 )
 from bazi.school import BaziConfig
 from bazi.transits import TransitKind
@@ -103,12 +103,10 @@ def _knowledge_text_paths(base: Path) -> list[Path]:
 def save_knowledge_base(
   output_dir: Path = _DEFAULT_OUTPUT_DIR,
   *,
+  knowledge: KnowledgeBase,
   include_reference_only: bool = False,
   show_sources: bool = False,
-  knowledge: KnowledgeBase | None = None,
 ) -> None:
-  if knowledge is None:
-    knowledge = KnowledgeBase.load()
   tg_dir_path: Path = output_dir / 'knowledge_base' / 'tiangan'
   if not tg_dir_path.exists():
     tg_dir_path.mkdir(parents=True)
@@ -308,16 +306,15 @@ def _relationship_profile(parser: argparse.ArgumentParser, args: argparse.Namesp
 
 
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if args.criterion not in _CRITERIA:
-    parser.error(f'Unsupported value: {args.criterion}')
-  if _CRITERIA[args.criterion].profile_kind == 'context' and any((
-    args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
-    args.solar_moment is not None, args.transit_kinds is not None,
-  )):
-    parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
   try:
+    info = criterion(args.criterion)
+    if info.profile_kind == 'context' and any((
+      args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
+      args.solar_moment is not None, args.transit_kinds is not None,
+    )):
+      parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
     profile: ContextProfile | RelationshipProfile
-    if _CRITERIA[args.criterion].profile_kind == 'context':
+    if info.profile_kind == 'context':
       profile = ContextProfile(args.observation_scope, args.ganzhi_year)
     else:
       profile = _relationship_profile(parser, args)

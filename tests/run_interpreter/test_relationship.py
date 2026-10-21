@@ -42,7 +42,7 @@ def test_relationship_inputs_need_a_criterion(tmp_path: Path, args: tuple[str, .
   ('--seed', '7'),
   ('--export-knowledge-json', 'k.json'),
 ])
-def test_relationship_cannot_combine_modes(tmp_path: Path, extra: tuple[str, ...]) -> None:
+def test_relationship_rejects_unknown_options(tmp_path: Path, extra: tuple[str, ...]) -> None:
   output = tmp_path / 'match.json'
   result = run_cli(tmp_path, *REL_BASE, '--transit-kinds', 'liunian', '--observation-scope', 'natal_and_transits', *extra, '--export-context-json', str(output))
   assert result.returncode == 2 and 'error:' in result.stderr
@@ -77,18 +77,17 @@ def test_relationship_rejects_natal_liunian(tmp_path: Path) -> None:
   assert 'usage: python run_interpreter.py match' in result.stderr and 'Unsupported value: natal_and_liunian' in result.stderr
 
 
-@pytest.mark.parametrize('extra', [
-  ('--ganzhi-year', '2024'), ('--gz-month', '辰'), ('--solar-date', '2024-04-10'),
-  ('--solar-moment', '2024-04-10T12:00:00'), ('--transit-kinds', 'liunian'),
-  ('--transit-entry', 'at_year'),
+@pytest.mark.parametrize('extra,error', [
+  (('--ganzhi-year', '2024'), 'Transit coordinates require --transit-entry'),
+  (('--gz-month', '辰'), 'Transit coordinates require --transit-entry'),
+  (('--solar-date', '2024-04-10'), 'Transit coordinates require --transit-entry'),
+  (('--solar-moment', '2024-04-10T12:00:00'), 'Transit coordinates require --transit-entry'),
+  (('--transit-kinds', 'liunian'), 'Natal scope cannot include transit inputs'),
+  (('--transit-entry', 'at_year'), 'Missing coordinate field'),
 ])
-def test_relationship_natal_rejects_transits(tmp_path: Path, extra: tuple[str, ...]) -> None:
+def test_relationship_natal_rejects_transits(tmp_path: Path, extra: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, *REL_BASE, *extra)
-  assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr
-  assert ('Natal scope cannot include transit inputs' if extra[0] == '--transit-kinds'
-          else 'Missing coordinate field' if extra[0] == '--transit-entry'
-          else 'Transit coordinates require --transit-entry') in result.stderr
+  assert_cli_error(result, 'match', error)
 
 
 def test_natal_transits_requires_kinds(tmp_path: Path) -> None:
@@ -105,6 +104,7 @@ def test_natal_transits_requires_kinds(tmp_path: Path) -> None:
   ('--solar-moment', '2024-04-10 12:00:00', 'Expected canonical naive moment'),
   ('--solar-moment', '2024-04-10T12:00:00.25', 'Expected canonical naive moment'),
   ('--solar-moment', '2024-04-10T12:00:00+08:00', 'Expected canonical naive moment'),
+  ('--solar-moment', 'bad', 'Invalid isoformat string'),
 ])
 def test_coordinate_values_must_be_canonical(tmp_path: Path, flag: str, value: str, error: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-entry', 'at_date', '--transit-kinds', 'liunian', flag, value)
@@ -116,8 +116,8 @@ def test_coordinate_values_must_be_canonical(tmp_path: Path, flag: str, value: s
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--gz-month', '辰'),
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--solar-date', '2024-04-10'),
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--solar-moment', '2024-04-10T12:00:00'),
-  ('--transit-entry', 'at_month', '--ganzhi-year', '2024'),
-  ('--transit-entry', 'at_month', '--gz-month', '辰'),
+  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰', '--solar-date', '2024-04-10'),
+  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰', '--solar-moment', '2024-04-10T12:00:00'),
   ('--transit-entry', 'at_date', '--solar-date', '2024-04-10', '--ganzhi-year', '2024'),
   ('--transit-entry', 'at_date', '--solar-date', '2024-04-10', '--gz-month', '辰'),
   ('--transit-entry', 'at_moment', '--solar-moment', '2024-04-10T12:00:00', '--ganzhi-year', '2024'),
@@ -125,9 +125,7 @@ def test_coordinate_values_must_be_canonical(tmp_path: Path, flag: str, value: s
 ])
 def test_entry_fields_are_mutually_exclusive(tmp_path: Path, entry_args: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args)
-  assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr
-  assert ('Missing coordinate field' if entry_args[1] == 'at_month' else 'Unexpected coordinate field') in result.stderr
+  assert_cli_error(result, 'match', 'Unexpected coordinate field')
 
 
 @pytest.mark.parametrize('entry_args, missing', [
@@ -156,13 +154,15 @@ def test_kinds_must_be_within_entry_support(tmp_path: Path, entry_args: tuple[st
   assert 'usage: python run_interpreter.py match' in result.stderr and 'Unsupported transit kinds for' in result.stderr
 
 
-@pytest.mark.parametrize('kinds', ['liunian,liunian', 'bogus', 'liunian,', ',liunian', ''])
-def test_kinds_reject_duplicates_unknown_empty(tmp_path: Path, kinds: str) -> None:
+@pytest.mark.parametrize('kinds,error', [
+  ('liunian,liunian', 'Duplicate transit kinds'), ('bogus', 'Unsupported transit kind'),
+  ('liunian,', 'Unsupported transit kind'), (',liunian', 'Unsupported transit kind'),
+  ('', 'Unsupported transit kind'),
+])
+def test_kinds_reject_duplicates_unknown_empty(tmp_path: Path, kinds: str, error: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', kinds,
                     '--transit-entry', 'at_year', '--ganzhi-year', '2024')
-  assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr
-  assert ('Duplicate transit kinds' if kinds == 'liunian,liunian' else 'Unsupported transit kind') in result.stderr
+  assert_cli_error(result, 'match', error)
 
 
 def test_coordinate_fields_require_entry(tmp_path: Path) -> None:

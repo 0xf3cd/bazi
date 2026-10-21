@@ -3,14 +3,18 @@
 
 from datetime import timedelta
 from pathlib import Path
+import os
+import subprocess
+import sys
 from zoneinfo import ZoneInfo
 
 import pytest
 
 import run_interpreter
+import cli_runner
 from run_interpreter import main
 
-from command_runner import GUANSHA, XINGCHONG, BIRTH, prepare
+from cli_runner import GUANSHA, XINGCHONG, BIRTH, prepare
 
 
 # ---- 进程内：同一批分支再走一遍，便于对脚本做覆盖测量（根脚本不在库覆盖闸门内）。
@@ -65,3 +69,35 @@ def test_civil_timezone_parses_both_forms(zone: str, seconds: int | None) -> Non
     assert isinstance(parsed, ZoneInfo) and parsed.key == zone
   else:
     assert parsed.utcoffset(None) == timedelta(seconds=seconds)
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('custom_script', [False, True])
+@pytest.mark.parametrize('custom_env', [False, True])
+def test_runner_preserves_subprocess_options(
+  monkeypatch: pytest.MonkeyPatch, tmp_path: Path, optimized: bool, custom_script: bool, custom_env: bool,
+) -> None:
+  calls: list[tuple[list[str], dict[str, object]]] = []
+  expected = subprocess.CompletedProcess(['script'], 0, 'output', '')
+  def capture(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+    calls.append((command, kwargs))
+    return expected
+  monkeypatch.setattr(subprocess, 'run', capture)
+  monkeypatch.setenv('BAZI_RUNNER_TEST', 'inherited')
+  script = tmp_path / 'custom.py' if custom_script else None
+  env = {'BAZI_RUNNER_TEST': 'override'} if custom_env else None
+  assert cli_runner.run_cli(tmp_path, 'chart', '--seed', '42', script=script, optimized=optimized, env=env) is expected
+  assert calls == [(
+    [sys.executable, *(['-O'] if optimized else []), str(cli_runner.SCRIPT if script is None else script), 'chart', '--seed', '42'],
+    {'cwd': tmp_path, 'capture_output': True, 'text': True, 'encoding': 'utf-8', 'timeout': 45, 'check': False,
+     'env': None if env is None else {**os.environ, **env}},
+  )]
+
+
+def test_error_helper_rejects_usage_only_match() -> None:
+  result = subprocess.CompletedProcess(
+    ['script'], 2, '',
+    'usage: python run_interpreter.py chart --longitude\npython run_interpreter.py chart: error: wrong reason\n',
+  )
+  with pytest.raises(AssertionError):
+    cli_runner.assert_cli_error(result, 'chart', '--longitude')

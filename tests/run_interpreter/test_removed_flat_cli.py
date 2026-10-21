@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from command_runner import SCRIPT, run
-from cli_runner import run_cli, run_guarded_script
+from cli_runner import SCRIPT, run_cli, run_guarded_script
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -40,14 +39,14 @@ def test_bare_call_is_identical_to_help(tmp_path: Path, optimized: bool) -> None
 
 
 def test_unknown_task_is_not_a_removed_call(tmp_path: Path) -> None:
-  result = run(tmp_path, 'chrat')
+  result = run_cli(tmp_path, 'chrat')
   assert result.returncode == 2 and 'invalid choice' in result.stderr
   assert 'v2.3.0' not in result.stderr and result.stdout == ''
   assert list(tmp_path.iterdir()) == []
 
 
 def test_migration_help_survives_ascii_output(tmp_path: Path) -> None:
-  result = run(tmp_path, '--seed', '1', env={'PYTHONIOENCODING': 'ascii:backslashreplace'})
+  result = run_cli(tmp_path, '--seed', '1', env={'PYTHONIOENCODING': 'ascii:backslashreplace'})
   assert result.returncode == 2 and 'v2.3.0' in result.stderr
   assert 'python run_interpreter.py chart' in result.stderr and 'Traceback' not in result.stderr
   assert result.stdout == '' and list(tmp_path.iterdir()) == []

@@ -410,11 +410,11 @@ python run_interpreter.py knowledge \
 
 只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。
 判据目录用 `python run_interpreter.py match` 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 `python run_interpreter.py knowledge --help`。
-v2.3.0 移除不带任务名的旧平铺写法，裸调用只打印帮助。原 `--query-knowledge --object tiangan.ding`
+v2.3.0 起移除不带任务名的旧平铺写法，裸调用只打印帮助。原 `--query-knowledge --object tiangan.ding`
 改为 `knowledge --object tiangan.ding`；不带筛选的 `--query-knowledge` 改为 `knowledge --all`。
 命盘调用 `--seed 236` 改为 `chart --seed 236`，`--match-context 判据ID …` 改为 `match 判据ID …`，
-这些参数都接在 `python run_interpreter.py` 后。
-原命盘加知识 TXT 导出须拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令，
+上面的新写法都接在 `python run_interpreter.py` 后。
+原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令，
 没有跨命令的冲突预检或整体回滚；每条命令仍检查自己的输出冲突及知识源覆盖。
 
 字段与方法的完整说明见 {py:class}`~bazi.knowledge.KnowledgeBase` 和 {doc}`../api/index`，本文只讲上手路径。

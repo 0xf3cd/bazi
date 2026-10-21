@@ -147,9 +147,9 @@ assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
 ### 源码脚本
 
 发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
-它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values 条件` 对应 `filter_values`，
+它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values topic` 对应 `filter_values('topic')`，
 `match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
-本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 移除**，不保留到 3.0.0。
+本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 起移除**。
 这一支持窗口只适用于源码脚本，不改变上面的 Python API 与记录兼容契约。
 裸调用打印顶层帮助并返回 0；随机命盘须显式选择 `chart`。旧平铺选项报错并指向三个任务的新写法。
 

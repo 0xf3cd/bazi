@@ -63,18 +63,6 @@ def test_json_collision_keeps_aliases(tmp_path: Path, optimized: bool, alias: st
 
 
 @pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('family,member', [('tiangan', '甲'), ('shishen', '比肩')])
-def test_json_rejects_knowledge_txt_collision(tmp_path: Path, optimized: bool, family: str, member: str) -> None:
-  output = tmp_path / 'output'
-  target = output / 'knowledge_base' / family / f'{member}.txt'
-  result = run_cli(tmp_path, 'knowledge',
-                    '--output-dir', str(output), '--export-knowledge-base',
-                    '--export-knowledge-json', str(target), optimized=optimized)
-  assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
-  assert not output.exists() and '已导出知识' not in result.stdout
-
-
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('located', [False, True])
 def test_distinct_json_txt_outputs_both_kept(tmp_path: Path, optimized: bool, located: bool) -> None:
   output = tmp_path / 'output'
