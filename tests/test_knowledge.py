@@ -265,7 +265,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
   assert set(_ids(KNOWLEDGE_BASE.query())) == {
     row['claim']['claim_id'] for row in baseline['rows'] if row['claim']['output'] == 'default'
   }
-  assert len(KNOWLEDGE_BASE.entries) == 302
+  assert len(KNOWLEDGE_BASE.entries) == 305
 
 
 def test_attribution_allowance_matches_entries() -> None:
@@ -383,7 +383,7 @@ def test_premises_organized_without_new_rules() -> None:
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:
       assert entry.output == 'reference_only'
-      if entry.claim_id in new_relationship_ids:
+      if entry.claim_id in new_relationship_ids | {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup'}:
         # Entries in new_relationship_ids have source_state 'witnessed' (古籍见证).
         assert entry.source_state == 'witnessed'
       else:
@@ -806,7 +806,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 
 def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
-  assert len(k.entries) == 302 and len(k.sources) == 13 and len(k.contexts) == 10 and len(k.objects) == 31
+  assert len(k.entries) == 305 and len(k.sources) == 18 and len(k.contexts) == 10 and len(k.objects) == 32
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
@@ -903,7 +903,9 @@ def test_non_legacy_entries_fingerprint() -> None:
   original_attribution = {new: old for old, new in TRANSLATED_ATTRIBUTION.items()}
   rows = []
   for entry in KNOWLEDGE_BASE.entries.values():
-    if entry.legacy is not None:
+    if entry.legacy is not None or entry.claim_id in {
+      'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository',
+    }:
       continue
     row = asdict(entry)
     row['attribution'] = original_attribution.get(entry.attribution, entry.attribution)
@@ -924,7 +926,10 @@ def test_non_oracle_sources_fingerprint() -> None:
   )['sources']
   rows = []
   for source_id, source in KNOWLEDGE_BASE.sources.items():
-    if source_id in oracle:
+    if source_id in oracle or source_id in {
+      'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
+      'wuxing_jingji.kongwang', 'repository.kongwang',
+    }:
       continue
     row = asdict(source)
     for field, (old, _) in TRANSLATED_SOURCES.get(source_id, {}).items():
@@ -935,3 +940,67 @@ def test_non_oracle_sources_fingerprint() -> None:
     json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
   ).hexdigest()
   assert digest == '41c021df77ea786cd5e5e0524fb56d5f568d4713b915860451c8c752f7373ab2'
+
+
+def test_kongwang_additions_are_reference_only() -> None:
+  k = KNOWLEDGE_BASE
+  assert asdict(k.objects['shensha.kongwang']) == {
+    'object_id': 'shensha.kongwang', 'kind': 'shensha', 'name': '六甲旬空',
+  }
+  expected = {
+    'shensha.kongwang.xunkong': (
+      'witnessed', '六甲旬空二支定义',
+      ('yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang'),
+    ),
+    'shensha.kongwang.lookup': (
+      'witnessed', '年日锚与流运语境', ('wuxing_jingji.kongwang', 'sanming_tonghui.kongwang'),
+    ),
+    'shensha.kongwang.repository': ('repository_attributed', '本仓默认与查询范围', ('repository.kongwang',)),
+  }
+  entries = k.query(object_id='shensha.kongwang', include_reference_only=True)
+  texts = {
+    'shensha.kongwang.xunkong': '六甲旬空的基础二支，是一旬十干配十支后余下的二支。《渊海子平》转录列：「甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。」《三命通会》四库本转录说明：「如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡」。《消息赋注》注中另述：「假令甲子旬中，戌亥空亡也。」',
+    'shensha.kongwang.lookup': '查法须与基础二支分开。《五行精纪》卷二十五转引《神白经》有「此空亡只用生日旬中空亡極緊」，同段论及运与太岁；另引《林开五命》有「論空亡止以年日所在」。《三命通会》四库本转录有「假令甲子年壬戌日」的年日互换例。这里只记录汇编转引与该版例解，不把引书名当作已见原书。',
+    'shensha.kongwang.repository': '日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。原局逐锚查其余三柱地支，流运只以本命锚查所选流运支。无命中保留二支，同值锚、重复柱支与同干支不同流运种类分别保留来源和位置。',
+  }
+  assert _ids(entries) == tuple(expected)
+  assert k.query(object_id='shensha.kongwang') == ()
+  assert len(k.query()) == 19
+  for entry in entries:
+    assert entry.text == texts[entry.claim_id]
+    assert (entry.source_state, entry.viewpoint, entry.sources) == expected[entry.claim_id]
+    assert entry.output == 'reference_only' and entry.legacy is None
+    assert entry.applicability == 'unconditional' and entry.premise == '' and entry.contexts == ()
+    assert entry.relations == () and len(entry.roles) == 1
+    assert entry.roles[0].object_id == 'shensha.kongwang'
+    assert all(k.sources[source].state == entry.source_state for source in entry.sources)
+    assert entry.limits and entry.exceptions == ()
+  assert KnowledgeBase.from_json(k.export_json()).query(object_id='shensha.kongwang', include_reference_only=True) == entries
+
+
+def test_kongwang_sources_keep_witness_boundaries() -> None:
+  k = KNOWLEDGE_BASE
+  expected = {
+    'yuanhai_ziping.kongwang': ('witnessed', 'baiwen', 'https://www.donglishuzhai.net/chapter/12794.html',
+      '甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。'),
+    'sanming_tonghui.kongwang': ('witnessed', 'baiwen', 'https://zh.wikisource.org/w/index.php?oldid=657369',
+      '如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡'),
+    'luoluzi_xiaoxifu.kongwang': ('witnessed', 'zhushi', 'https://zh.wikisource.org/w/index.php?oldid=857114',
+      '假令甲子旬中，戌亥空亡也。'),
+    'wuxing_jingji.kongwang': ('witnessed', 'baiwen', 'https://zh.wikisource.org/w/index.php?oldid=10494296',
+      '此空亡只用生日旬中空亡極緊'),
+    'repository.kongwang': ('repository_attributed', 'editorial', 'https://github.com/0xf3cd/bazi/issues/277',
+      '日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。'),
+  }
+  cited = {source for entry in k.query(object_id='shensha.kongwang', include_reference_only=True) for source in entry.sources}
+  assert cited == set(expected)
+  for source_id, values in expected.items():
+    source = k.sources[source_id]
+    assert (source.state, source.text_layer, source.url, source.excerpt) == values
+    assert source_id.startswith(source.lineage + '.')
+    assert source.supports and source.limitations
+    assert any(source.excerpt in entry.text for entry in k.query(source_id=source_id, include_reference_only=True))
+  assert '不指已见《神白经》或《林开五命》原书' in k.sources['wuxing_jingji.kongwang'].limitations
+  assert '壬戌月' in k.sources['sanming_tonghui.kongwang'].limitations
+  assert '不把三命通会转引的单支读法归入本书' in k.sources['luoluzi_xiaoxifu.kongwang'].limitations
+  assert '仓内政策不是古籍见证' in k.sources['repository.kongwang'].limitations

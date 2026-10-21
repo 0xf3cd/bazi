@@ -17,14 +17,14 @@ def test_predicate_argument_types() -> None:
     if name.startswith('_') or predicate.__module__ != shensha_utils.__name__:
       continue
     # Whole-pillar predicates have their own negative tests below.
-    if predicate in (shensha_utils.kuigang, shensha_utils.tianshe):
+    if predicate in (shensha_utils.kuigang, shensha_utils.tianshe, shensha_utils.xunkong):
       continue
     parameters = tuple(inspect.signature(predicate).parameters.values())
     assert len(parameters) in (2, 3), name
     key_type = parameters[0].annotation
-    assert key_type in (Tiangan, Dizhi), name
+    assert key_type in (Tiangan, Dizhi, Ganzhi), name
     assert parameters[1].annotation is Dizhi, name
-    key = Tiangan.甲 if key_type is Tiangan else Dizhi.子
+    key = {Tiangan: Tiangan.甲, Dizhi: Dizhi.子, Ganzhi: Ganzhi.from_str('甲子')}[key_type]
 
     with pytest.raises(TypeError, match=f'Expected {key_type.__name__}'):
       predicate(str(key), Dizhi.子)

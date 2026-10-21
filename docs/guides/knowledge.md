@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-31 10 13 302
+32 10 18 305
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变快照。
@@ -209,13 +209,13 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 ```{testoutput} states
 ('default', 'witnessed') 19
 ('reference_only', 'editorial') 22
-('reference_only', 'repository_attributed') 4
+('reference_only', 'repository_attributed') 5
 ('reference_only', 'unverified') 245
-('reference_only', 'witnessed') 12
-[('unresolved', 262), ('unconditional', 28), ('described', 12)]
+('reference_only', 'witnessed') 14
+[('unresolved', 262), ('unconditional', 31), ('described', 12)]
 ```
 
-`witnessed` 条目有 31 条，其中 12 条仍是 `reference_only`，所以 `witnessed` 不单独推出默认输出。成为 `default` 要同时满足四个条件：
+`witnessed` 条目有 33 条，其中 14 条仍是 `reference_only`，所以 `witnessed` 不单独推出默认输出。成为 `default` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -284,14 +284,14 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} export
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-1 8 31 13
+1 8 32 18
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
 True
-8 31
+8 32
 True
 ```
 
-导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（31 个对象、13 个来源），所以所选条目的引用不会断。
+导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（32 个对象、18 个来源），所以所选条目的引用不会断。
 
 `from_json` 与 `load(Path(...))` 走同一套校验。省略 `export_json` 的参数则导出全部条目，包括仅供参考的条目。
 

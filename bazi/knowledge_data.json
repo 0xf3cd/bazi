@@ -155,6 +155,11 @@
       "object_id": "concept.peiou_gong",
       "kind": "concept",
       "name": "配偶宫"
+    },
+    {
+      "object_id": "shensha.kongwang",
+      "kind": "shensha",
+      "name": "六甲旬空"
     }
   ],
   "contexts": [
@@ -427,6 +432,76 @@
       "supports": "该页对妻星「幹頭之財」的定义，以及「妻透成格」「妻宮有用」坐下刑衝、「妻星兩透」偏正雜出两段的字句。",
       "limitations": "该页起句为「子平真詮云」，所取各段属探原的转录层，未见子平真诠原书，不是任何命题的第二独立成文。原印小标点与「夫」后小点的性质未辨，条目引文以〔〕标出整理记号。",
       "state": "witnessed"
+    },
+    {
+      "source_id": "yuanhai_ziping.kongwang",
+      "work": "《渊海子平》",
+      "attribution": "《渊海子平》六甲空亡条",
+      "edition": "东里书斋下游转录",
+      "locator": "卷一·论六甲空亡",
+      "url": "https://www.donglishuzhai.net/chapter/12794.html",
+      "text_layer": "baiwen",
+      "lineage": "yuanhai_ziping",
+      "excerpt": "甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。",
+      "supports": "逐列六旬空亡二支，支持六甲旬空的基础表。",
+      "limitations": "本轮所见为下游转录，未逐页校勘影印；同书其他载体不另计独立来源。方括号注文及东里山人按不混入此引文；本段不决定锚柱。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.kongwang",
+      "work": "《三命通会》",
+      "attribution": "《三命通会》卷三论空亡",
+      "edition": "四库全书本维基文库转录，revision 657369",
+      "locator": "卷三·论空亡",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡",
+      "supports": "用一旬十干配支说明余下二支；同段后文有甲子年壬戌日的年日互换例。",
+      "limitations": "仅核到四库本转录，未逐页校勘影印。该卷转引诸书不等于已见各原书；普通转录互换例作壬戌月，与本版壬戌日分开。单支筛选及解释段不并入基础二支。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "luoluzi_xiaoxifu.kongwang",
+      "work": "《珞琭子三命消息赋注》",
+      "attribution": "《珞琭子三命消息赋注》注释层",
+      "edition": "维基文库转录，revision 857114",
+      "locator": "六虚下于空亡注",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=857114",
+      "text_layer": "zhushi",
+      "lineage": "luoluzi_xiaoxifu",
+      "excerpt": "假令甲子旬中，戌亥空亡也。",
+      "supports": "注中另述甲子旬戌亥空亡，佐证基础二支。",
+      "limitations": "所见为转录的注释层，不是影印校勘；不据此证明其他五旬表或固定锚。此本提要警示三命通会所引珞琭子与此本不合，不把三命通会转引的单支读法归入本书。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wuxing_jingji.kongwang",
+      "work": "《五行精纪》",
+      "attribution": "《五行精纪》卷二十五转引《神白经》与《林开五命》",
+      "edition": "维基文库转录，revision 10494296",
+      "locator": "卷二十五·说空亡及空亡条",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=10494296",
+      "text_layer": "baiwen",
+      "lineage": "wuxing_jingji",
+      "excerpt": "此空亡只用生日旬中空亡極緊",
+      "supports": "汇编转引层记录生日旬中为紧及运、太岁语境，另有论空亡止以年日所在。",
+      "limitations": "witnessed 只指已核汇编转录，不指已见《神白经》或《林开五命》原书，不作两部原书的独立见证。汇编另收前后五位单支读法，本条不合并其筛选与解释。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "repository.kongwang",
+      "work": "本库六甲旬空查法约定",
+      "attribution": "bazi 仓内采用的查法范围与默认选择",
+      "edition": "六甲旬空首批实现",
+      "locator": "ShenshaRules.KONGWANG、BaziSchool.kongwang_anchor 与关系分析器",
+      "url": "https://github.com/0xf3cd/bazi/issues/277",
+      "text_layer": "editorial",
+      "lineage": "repository",
+      "excerpt": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。",
+      "supports": "本库的默认锚、可选锚、原局自身排除和本命锚查流运支的组合范围。",
+      "limitations": "仓内政策不是古籍见证，不宣称古籍一致只看日柱。不作反向流运锚查询，不含单支筛选、截路、四大空亡或冲合取消与吉凶解释。",
+      "state": "repository_attributed"
     }
   ],
   "entries": [
@@ -10604,6 +10679,99 @@
         "转述保留两处〔条件字未核〕煞及一处〔字未核〕亂的槽位，不猜未核字；整理占位不是原书文字。",
         "条文称妻妾，语境为男命；女命对应未核定。",
         "原文为四柱通论，未核是否论及岁运触发；本条不作岁运适用声明，不挂判据，仅静态查阅。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.kongwang.xunkong",
+      "text": "六甲旬空的基础二支，是一旬十干配十支后余下的二支。《渊海子平》转录列：「甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。」《三命通会》四库本转录说明：「如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡」。《消息赋注》注中另述：「假令甲子旬中，戌亥空亡也。」",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.kongwang"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "定义"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "yuanhai_ziping.kongwang",
+        "sanming_tonghui.kongwang",
+        "luoluzi_xiaoxifu.kongwang"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《渊海子平》《三命通会》转录及《消息赋注》注释层",
+      "viewpoint": "六甲旬空二支定义",
+      "exceptions": [],
+      "limits": [
+        "基础二支本身不决定锚柱或单支筛选；所见转录的层次和支持限度见各来源。",
+        "阴阳分取、前后五位分取未在本条编码；截路、四大空亡等同名规则另论。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.kongwang.lookup",
+      "text": "查法须与基础二支分开。《五行精纪》卷二十五转引《神白经》有「此空亡只用生日旬中空亡極緊」，同段论及运与太岁；另引《林开五命》有「論空亡止以年日所在」。《三命通会》四库本转录有「假令甲子年壬戌日」的年日互换例。这里只记录汇编转引与该版例解，不把引书名当作已见原书。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.kongwang"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wuxing_jingji.kongwang",
+        "sanming_tonghui.kongwang"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《五行精纪》汇编转引与《三命通会》四库本转录",
+      "viewpoint": "年日锚与流运语境",
+      "exceptions": [],
+      "limits": [
+        "古籍收录多家读法，不据此宣称只许日锚，亦不把互换例与所有单支筛选段合成一套查法。",
+        "此条不启用吉凶解释、冲合取消或前提判据；流运种类的具体组合范围属于本库政策。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.kongwang.repository",
+      "text": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。原局逐锚查其余三柱地支，流运只以本命锚查所选流运支。无命中保留二支，同值锚、重复柱支与同干支不同流运种类分别保留来源和位置。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.kongwang"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "repository.kongwang"
+      ],
+      "source_state": "repository_attributed",
+      "attribution": "本库六甲旬空查法约定",
+      "viewpoint": "本仓默认与查询范围",
+      "exceptions": [],
+      "limits": [
+        "默认锚是本库选择，不冒充古籍共识；不删除地支或改变五行、十神、纳音与其他关系。",
+        "不反向以流运为锚查原局，不以冲合刑取消命中，不含出空、填实或吉凶解释。"
       ],
       "output": "reference_only",
       "legacy": null

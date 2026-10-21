@@ -1118,3 +1118,21 @@ class ShenshaRules:
     GuoyinDef.WUXING_JINGJI : _lu_offset(7),
     GuoyinDef.MODERN        : _lu_offset(8),
   })
+
+  # 六甲旬空：一旬十干配十支，余下二支。六旬字面表展开为六十个合法干支锚，各锚取所在旬的冻结二支。
+  # 《渊海子平·论六甲空亡》下游转录逐列六旬，不把同书两个载体算作两路来源：
+  # https://www.donglishuzhai.net/chapter/12794.html
+  # 「甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。」
+  # 《三命通会》四库本转录卷三亦以十干不到说明二支定义（未逐页校勘影印）：
+  # https://zh.wikisource.org/w/index.php?oldid=657369
+  # 《珞琭子三命消息赋注》转录另有「假令甲子旬中，戌亥空亡也」：
+  # https://zh.wikisource.org/w/index.php?oldid=857114
+  # 上述定义不决定锚柱。查法出处见 _ANCHOR_CHOICES；本表不含阴阳／半旬单支筛选、截路、四大或解释性取消。
+  KONGWANG: Final[frozendict[Ganzhi, frozenset[Dizhi]]] = frozendict({
+    Ganzhi.from_str(head).next(offset): frozenset(Dizhi(dz) for dz in absent)
+    for head, absent in (
+      ('甲子', '戌亥'), ('甲戌', '申酉'), ('甲申', '午未'),
+      ('甲午', '辰巳'), ('甲辰', '寅卯'), ('甲寅', '子丑'),
+    )
+    for offset in range(10)
+  })

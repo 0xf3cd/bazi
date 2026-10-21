@@ -11,7 +11,7 @@ import pytest
 
 import bazi.context_matching as matching_module
 from bazi.context_matching import (
-  ContextProfile, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
+  ContextProfile, ContextResult, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
 )
 from bazi.context_matching import RelationshipProfile, TransitCoordinate
 from bazi.bazi import Bazi, BaziGender
@@ -127,7 +127,20 @@ def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
   record_data = json.loads(text)
   for key in ('criterion', 'entries', 'related'):
     assert record_data[key] == case['expected'][key]
-  assert hashlib.sha256(text.encode()).hexdigest() == case['expected']['record_sha256']
+  assert ContextResult.from_json(text) == result
+  # Compare the old record fingerprint without changing its fixture or accepting the old input format.
+  assert record_data['input']['config']['school'].pop('kongwang_anchor') == 'DAY'
+  for registry, identifier, added in (
+    ('objects', 'object_id', {'shensha.kongwang'}),
+    ('sources', 'source_id', {
+      'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
+      'wuxing_jingji.kongwang', 'repository.kongwang',
+    }),
+    ('entries', 'claim_id', {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository'}),
+  ):
+    record_data['knowledge'][registry] = [row for row in record_data['knowledge'][registry] if row[identifier] not in added]
+  old_text = json.dumps(record_data, ensure_ascii=False, indent=2) + '\n'
+  assert hashlib.sha256(old_text.encode()).hexdigest() == case['expected']['record_sha256']
   assert tuple(result.criterion.observations) == info.observation_keys
   if result.criterion.status == 'UNKNOWN':
     assert result.criterion.reason in info.unknown_conditions

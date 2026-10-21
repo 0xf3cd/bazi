@@ -16,7 +16,7 @@ from typing import Final
 PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart',
   'bazi.analyzer': 'relationship',
-  'bazi.analyzer.relationship': 'SHENSHA_LABELS ShenshaAnalysis AtBirthShenshaAnalysis AtBirthAnalysis TransitAnalysis StemRelationDiscovery StarAppearance RelationshipEvidence spouse_evidence RelationshipAnalyzer',
+  'bazi.analyzer.relationship': 'SHENSHA_LABELS ShenshaAnalysis AtBirthShenshaAnalysis KongwangHit KongwangResult AtBirthAnalysis TransitAnalysis StemRelationDiscovery StarAppearance RelationshipEvidence spouse_evidence RelationshipAnalyzer',
   'bazi.bazi': 'BaziGender Bazi LocationTimeJson LocationTime 八字',
   'bazi.bazi_chart': 'BaziJson BaziChart 命盘',
   'bazi.chart_text': 'TextStyle basic_text transit_text chart_text',
@@ -57,7 +57,7 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.utils.bazi_utils': 'ganzhi_of_day ganzhi_of_year month_tiangan hour_tiangan tiangan_traits dizhi_traits traits hidden_tiangans shishen nayin_str shier_zhangsheng from_shier_zhangsheng lu',
   'bazi.utils.dizhi_utils': 'DizhiCombo DizhiRelationCombos DizhiRelationDiscovery GanzhiOccurrence GanzhiRelationCombo GanzhiRelationCombos GanzhiRelationDiscovery sanhui liuhe anhe tonghe tongluhe sanhe banhe gonghe gonghui xing chong po hai sheng ke search discover search_ganzhis discover_ganzhis discover_mutual_ganzhis discover_mutual',
   'bazi.utils.relation_discovery': 'RelationType RelationItemType RelationDiscovery',
-  'bazi.utils.shensha_utils': 'taohua hongyan hongluan tianxi yima huagai jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu kuigang tianshe yangren feiren tianyi wenchang wenchanggui taiji guoyin',
+  'bazi.utils.shensha_utils': 'xunkong kongwang taohua hongyan hongluan tianxi yima huagai jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu kuigang tianshe yangren feiren tianyi wenchang wenchanggui taiji guoyin',
   'bazi.utils.tiangan_utils': 'TianganCombo TianganRelationCombos TianganRelationDiscovery he chong sheng ke search discover discover_mutual',
 }
 
@@ -73,10 +73,12 @@ STATIC_MODULES: Final[dict[str, str]] = {
 }
 
 DECLARED_MEMBERS: Final[dict[str, str]] = {
-  'bazi.analyzer.relationship.ShenshaAnalysis': 'taohua hongyan hongluan tianxi yima huagai yangren feiren tianyi jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu wenchang wenchanggui taiji guoyin',
+  'bazi.analyzer.relationship.ShenshaAnalysis': 'taohua hongyan hongluan tianxi yima huagai yangren feiren tianyi jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu wenchang wenchanggui taiji guoyin kongwang',
   'bazi.analyzer.relationship.AtBirthShenshaAnalysis': 'kuigang tianshe',
-  'bazi.analyzer.relationship.AtBirthAnalysis': 'shensha day_master_relations house_relations star_relations',
-  'bazi.analyzer.relationship.TransitAnalysis': 'shensha day_master_relations house_relations Level star_relations zhengyin star',
+  'bazi.analyzer.relationship.AtBirthAnalysis': 'shensha kongwang day_master_relations house_relations star_relations',
+  'bazi.analyzer.relationship.TransitAnalysis': 'shensha kongwang day_master_relations house_relations Level star_relations zhengyin star',
+  'bazi.analyzer.relationship.KongwangHit': 'origin pillar kind ganzhi',
+  'bazi.analyzer.relationship.KongwangResult': 'anchor ganzhi hits xunkong',
   'bazi.analyzer.relationship.TransitAnalysis.Level': 'TRANSITS_ONLY MUTUAL ALL',
   'bazi.analyzer.relationship.StarAppearance': 'origin pillar kind ganzhi layer stem',
   'bazi.analyzer.relationship.RelationshipEvidence': 'star_target appearances house_relations star_relations stem_relations transits',
@@ -90,7 +92,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.bazi_chart.BaziJson.TianganShishens': 'year month day hour',
   'bazi.bazi_chart.BaziJson.Dayun': 'ganzhi start_time end_time',
   'bazi.bazi_chart.BaziJson.Transits': 'dayun_start_time xiaoyun dayun',
-  'bazi.bazi_chart.BaziJson.School': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def',
+  'bazi.bazi_chart.BaziJson.School': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor',
   'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict': 'birth_time',
   'bazi.bazi_chart.BaziJson.LocationBaziChartJsonDict': '',
   'bazi.bazi_chart.BaziChart': 'random from_json bazi house_of_relationship relationship_stars PillarTraits traits hidden_tiangan PillarShishens shishen nayin shier_zhangsheng dayun_order dayun_start_moment dayun xiaoyun liunian json',
@@ -157,7 +159,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.rules.DizhiRules.XingDef': 'STRICT LOOSE',
   'bazi.rules.DizhiRules.XingSubType': 'SANXING ZIMAOXING ZIXING 三刑 子卯刑 自刑',
   'bazi.rules.DizhiRelationDefinitions': 'anhe_def xing_def gong_def',
-  'bazi.rules.ShenshaRules': 'TAOHUA HONGYAN HONGLUAN TIANXI YIMA HUAGAI JIANGXING ZAISHA JIESHA WANGSHEN GUCHEN GUASU LUSHEN JINYU KUIGANG TIANSHE YangrenDef YANGREN FEIREN TianyiDef TIANYI WenchangDef WENCHANG WENCHANGGUI TaijiDef TAIJI GuoyinDef GUOYIN',
+  'bazi.rules.ShenshaRules': 'TAOHUA HONGYAN HONGLUAN TIANXI YIMA HUAGAI JIANGXING ZAISHA JIESHA WANGSHEN GUCHEN GUASU LUSHEN JINYU KUIGANG TIANSHE YangrenDef YANGREN FEIREN TianyiDef TIANYI WenchangDef WENCHANG WENCHANGGUI TaijiDef TAIJI GuoyinDef GUOYIN KONGWANG',
   'bazi.rules.ShenshaRules.YangrenDef': 'ZIPING LUMING DIWANG',
   'bazi.rules.ShenshaRules.TianyiDef': 'GENG_WITH_JIA_WU GENG_WITH_XIN YANGGUI YINGUI',
   'bazi.rules.ShenshaRules.WenchangDef': 'XIN_ZI XIN_XU',
@@ -168,7 +170,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.school.DayRollover': 'WAN_ZISHI ZIZHENG',
   'bazi.school.PeiouXingDef': 'ZHENGCAI_ZHENGGUAN YINYANGGAN',
   'bazi.school.Anchor': 'YEAR DAY YEAR_AND_DAY',
-  'bazi.school.BaziSchool': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def relation_definitions mingli_tanyuan from_json',
+  'bazi.school.BaziSchool': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor relation_definitions mingli_tanyuan from_json',
   'bazi.school.BaziConfig': 'precision backend school dayun_year_rule from_values',
   'bazi.transit_chart.TransitChart': 'bazi_chart at_year at_month at_date at_moment',
   'bazi.transits.DayunDatabase': '',

@@ -231,3 +231,21 @@ day minute
 | `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
 
 字段与枚举成员的完整说明由 API 参考生成，见 {py:class}`~bazi.school.BaziConfig`。
+
+## 六甲旬空取锚
+
+{py:attr}`~bazi.school.BaziSchool.kongwang_anchor` 默认取 `Anchor.DAY`，也支持 `YEAR` 与
+`YEAR_AND_DAY`。它取完整干支，不只取日支；双锚分别保留年、日来源，即使两柱干支相同也不合并。
+基础二支定义不决定取哪根柱，古籍查法与本库默认的出处边界见 {doc}`rule-coverage`。
+
+```{testcode} kongwang-configuration
+from bazi.school import Anchor, BaziConfig, BaziSchool
+
+config = BaziConfig(school=BaziSchool(kongwang_anchor=Anchor.YEAR_AND_DAY))
+assert config.school.kongwang_anchor is Anchor.YEAR_AND_DAY
+assert BaziSchool().kongwang_anchor is Anchor.DAY
+```
+
+该字段追加在流派字段末尾，参与命盘相等性、哈希与 JSON。旧命盘或旧前提记录缺少该字段会被拒绝，
+不会自动补 `DAY`。保留原件和原软件版本，以原输入、完整原配置及明确选择的新锚重建当前命盘；
+前提记录须重新求值后另存，不能给旧观察补键或改版本号便称已更新。库不提供自动迁移接口。

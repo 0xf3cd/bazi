@@ -104,6 +104,21 @@ def test_school_enums_basic() -> None:
 
 def test_school_defaults() -> None:
   assert BaziSchool() == DEFAULT_SCHOOL
+  assert DEFAULT_SCHOOL.kongwang_anchor is Anchor.DAY
+
+
+def test_kongwang_is_appended_and_in_identity() -> None:
+  assert tuple(field.name for field in dataclasses.fields(BaziSchool))[-2:] == ('peiou_xing_def', 'kongwang_anchor')
+  charts = tuple(BaziChart(Bazi.create(
+    '1984-03-29 12:00', 'male', BaziConfig(school=BaziSchool(kongwang_anchor=anchor)),
+  )) for anchor in (Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY))
+  assert len({chart.bazi for chart in charts}) == 3
+  for chart in charts:
+    restored = BaziChart.from_json(chart.json)
+    assert restored.bazi == chart.bazi and hash(restored.bazi) == hash(chart.bazi)
+    assert restored.json == chart.json
+    assert chart.bazi.pillars == charts[0].bazi.pillars
+    assert chart.nayin == charts[0].nayin and chart.shishen == charts[0].shishen and chart.traits == charts[0].traits
 
 
 def test_school_grouped_positional_arguments() -> None:
@@ -131,6 +146,7 @@ def test_school_grouped_positional_arguments() -> None:
     Anchor.YEAR,
     ShenshaRules.GuoyinDef.WUXING_JINGJI,
     PeiouXingDef.YINYANGGAN,
+    Anchor.YEAR_AND_DAY,
   )
   assert school == BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
@@ -156,6 +172,7 @@ def test_school_grouped_positional_arguments() -> None:
     guoyin_anchor=Anchor.YEAR,
     guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
     peiou_xing_def=PeiouXingDef.YINYANGGAN,
+    kongwang_anchor=Anchor.YEAR_AND_DAY,
   )
 
 
@@ -226,6 +243,7 @@ def test_anchor_choices_match_readings() -> None:
   assert _ANCHOR_CHOICES['wenchang_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['taiji_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
   assert _ANCHOR_CHOICES['guoyin_anchor'] == frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY})
+  assert _ANCHOR_CHOICES['kongwang_anchor'] == frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY})
   for name in ('yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor'):
     assert _ANCHOR_CHOICES[name] == frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}), name
 
@@ -239,7 +257,7 @@ def test_anchor_choices_match_readings() -> None:
   # 从没提过的键，于是覆盖面交给执行者钉住：新增旋钮会在这里红，直到有人把它的读法写出来。
   asserted = {
     'hongyan_anchor', 'tianyi_anchor', 'jinyu_anchor', 'zaisha_anchor', 'wenchang_anchor',
-    'taiji_anchor', 'guoyin_anchor',
+    'taiji_anchor', 'guoyin_anchor', 'kongwang_anchor',
     'yima_anchor', 'huagai_anchor', 'jiangxing_anchor', 'jiesha_anchor', 'wangshen_anchor',
   }
   assert asserted == set(_ANCHOR_CHOICES), sorted(asserted ^ set(_ANCHOR_CHOICES))
@@ -565,6 +583,7 @@ def test_json_roundtrip_default_school() -> None:
     'taiji_anchor': 'YEAR_AND_DAY', 'taiji_def': 'REN_GUI_BOTH',
     'guoyin_anchor': 'YEAR_AND_DAY', 'guoyin_def': 'MODERN',
     'peiou_xing_def': 'ZHENGCAI_ZHENGGUAN',
+    'kongwang_anchor': 'DAY',
   }
 
   rebuilt: BaziChart = BaziChart(
@@ -609,6 +628,7 @@ def test_json_roundtrip_non_default_school() -> None:
     guoyin_anchor=Anchor.YEAR,
     guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
     peiou_xing_def=PeiouXingDef.YINYANGGAN,
+    kongwang_anchor=Anchor.YEAR,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -628,6 +648,7 @@ def test_json_roundtrip_non_default_school() -> None:
     'taiji_anchor': 'YEAR', 'taiji_def': 'REN_SI_GUI_SHEN',
     'guoyin_anchor': 'YEAR', 'guoyin_def': 'WUXING_JINGJI',
     'peiou_xing_def': 'YINYANGGAN',
+    'kongwang_anchor': 'YEAR',
   }
 
   rebuilt: BaziChart = BaziChart(

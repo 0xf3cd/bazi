@@ -111,7 +111,8 @@ def main() -> None:
     check(not hasattr(bazi, name), 'Retired root module attribute remains')
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart, BaziJson
-  from bazi.school import BaziConfig
+  from bazi.school import Anchor, BaziConfig, BaziSchool
+  from bazi.utils.shensha_utils import xunkong, kongwang
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
   from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
@@ -321,6 +322,32 @@ def main() -> None:
       check(str(error).startswith('Expected int'), 'Wrong step rejection boundary')
     else:
       raise RuntimeError('Ganzhi warm cache bypassed step validation')
+  check(xunkong(Ganzhi.from_str('甲子')) == frozenset({Dizhi.戌, Dizhi.亥}), 'Installed xunkong mismatch')
+  check(kongwang(Ganzhi.from_str('甲子'), Dizhi.戌), 'Installed kongwang predicate mismatch')
+  kongwang_chart = BaziChart(Bazi.create(
+    '1984-03-29 12:00', 'male', BaziConfig(school=BaziSchool(kongwang_anchor=Anchor.YEAR_AND_DAY)),
+  ))
+  kongwang_analysis = RelationshipAnalyzer(kongwang_chart)
+  natal_details = kongwang_analysis.at_birth.kongwang
+  check(tuple(result.anchor for result in natal_details) == ('year', 'day'), 'Installed kongwang anchors mismatch')
+  check(tuple((hit.pillar, str(hit.ganzhi)) for result in natal_details for hit in result.hits) == (
+    ('day', '壬戌'), ('year', '甲子'),
+  ), 'Installed natal kongwang details mismatch')
+  from bazi.transits import TransitSet
+  kongwang_transits = TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲戌'))
+  details = kongwang_analysis.transits.kongwang(kongwang_transits)
+  check(tuple(hit.kind for hit in details[0].hits) == (TransitKind.DAYUN, TransitKind.LIUNIAN), 'Installed kongwang transit kinds merged')
+  check(kongwang_analysis.transits.shensha(kongwang_transits)['kongwang'] == frozenset({Dizhi.戌}), 'Installed kongwang projection mismatch')
+  check(BaziChart.from_json(kongwang_chart.json).json == kongwang_chart.json, 'Installed kongwang school roundtrip mismatch')
+  old_school = kongwang_chart.json
+  del old_school['school']['kongwang_anchor'] # type: ignore[misc] # Deliberately incomplete record.
+  try:
+    BaziChart.from_json(old_school)
+  except ValueError:
+    pass
+  else:
+    raise RuntimeError('Installed incomplete school was silently defaulted')
+  print('PASS xunkong/kongwang/natal/transit details and strict school record')
   knowledge = KnowledgeBase.load()
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   for value in Tiangan:
@@ -353,7 +380,7 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
-  check(len(knowledge.entries) == 302 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  check(len(knowledge.entries) == 305 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
   for subject in knowledge.objects.values():
     check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
     check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
@@ -362,7 +389,7 @@ def main() -> None:
     check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
     for filter_value in values:
       check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
-  check(len(knowledge.sources) == 13, 'Installed source registry incomplete')
+  check(len(knowledge.sources) == 18, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
     check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')

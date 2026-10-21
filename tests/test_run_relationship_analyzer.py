@@ -7,9 +7,11 @@ from run_demo import colored_str
 from run_relationship_analyzer import (
   _WHOLE_PILLAR_SHENSHA_LABELS, SHENSHA_LABELS,
   _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
+  kongwang_strs,
 )
 from bazi.defines import Dizhi, Ganzhi
-from bazi.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis
+from bazi.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis, KongwangResult, KongwangHit
+from bazi.transits import TransitKind
 
 
 def test_shensha_labels() -> None:
@@ -35,6 +37,7 @@ def test_shensha_labels() -> None:
     'wenchanggui': frozenset((Dizhi.卯,)),
     'taiji'      : frozenset((Dizhi.辰,)),
     'guoyin'     : frozenset((Dizhi.巳,)),
+    'kongwang'   : frozenset((Dizhi.戌,)),
   }
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
@@ -58,6 +61,7 @@ def test_shensha_labels() -> None:
     ('文昌贵', frozenset((Dizhi.卯,))),
     ('太极贵人', frozenset((Dizhi.辰,))),
     ('国印贵人', frozenset((Dizhi.巳,))),
+    ('空亡', frozenset((Dizhi.戌,))),
   )
 
   # Keep display labels exhaustive as ShenshaAnalysis grows.
@@ -125,6 +129,7 @@ def test_shensha_labels() -> None:
     'wenchanggui': frozenset(),
     'taiji'      : frozenset(),
     'guoyin'     : frozenset(),
+    'kongwang'   : frozenset(),
   }
   empty_at_birth_shensha: AtBirthShenshaAnalysis = {
     **empty_shensha,
@@ -138,7 +143,7 @@ def test_shensha_labels() -> None:
     'kuigang': None,
     'tianshe': tianshe,
   }) == [f'天赦：{colored_str(tianshe)}']
-  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、魁罡、天赦'
+  assert _no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、空亡、魁罡、天赦'
 
   branches = (Dizhi.子, Dizhi.丑, Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.巳,
               Dizhi.午, Dizhi.未, Dizhi.申, Dizhi.酉, Dizhi.戌, Dizhi.亥)
@@ -148,3 +153,16 @@ def test_shensha_labels() -> None:
       for name, label in SHENSHA_LABELS.items():
         current = cast(ShenshaAnalysis, {**empty_shensha, name: frozenset(selected)})
         assert shensha_strs(current) == ([f'{label}：{text}'] if selected else [])
+
+
+def test_kongwang_display_keeps_anchor_and_target() -> None:
+  anchor = Ganzhi.from_str('甲子')
+  target = Ganzhi.from_str('甲戌')
+  assert kongwang_strs((
+    KongwangResult('day', anchor, (KongwangHit('natal', 'hour', None, target),)),
+    KongwangResult('year', anchor, ()),
+  )) == ['日柱 甲子 → 旬空戌亥；命中：时柱 甲戌', '年柱 甲子 → 旬空戌亥；命中：无']
+  assert kongwang_strs((KongwangResult('day', anchor, (
+    KongwangHit('transit', None, TransitKind.DAYUN, target),
+    KongwangHit('transit', None, TransitKind.LIUNIAN, target),
+  )),)) == ['日柱 甲子 → 旬空戌亥；命中：dayun 甲戌、liunian 甲戌']

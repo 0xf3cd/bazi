@@ -23,7 +23,8 @@ def test_input_identity_includes_configuration() -> None:
   identity = json.loads(result.input_json)
   assert identity['birth_time'] == '2000-01-03T12:00:00' and identity['gender'] == 'female'
   assert identity['config']['backend'] == 'celestial' and identity['config']['precision'] == 'day'
-  assert len(identity['config']['school']) == 23
+  assert len(identity['config']['school']) == 24
+  assert identity['config']['school']['kongwang_anchor'] == 'DAY'
   for config in (
     BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
     BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
