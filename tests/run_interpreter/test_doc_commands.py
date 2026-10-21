@@ -74,13 +74,22 @@ def _migration_tokens(command: str) -> list[str]:
   return shlex.split(command.replace('…', '').replace('判据ID', GUANSHA))
 
 
+def _inline_task_commands(markdown: str) -> list[list[str]]:
+  snippets = re.findall(r'(?<!`)`([^`\n]+)`(?!`)', markdown)
+  return [
+    _migration_tokens(text) for text in snippets
+    if (parts := text.split(maxsplit=1)) and (
+      parts[0] in _COMMANDS or re.match(r'^[A-Za-z][A-Za-z0-9_-]*\s+(?:--|判据ID(?:\s|$))', text)
+    )
+  ]
+
+
 @pytest.mark.parametrize('name', ['README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md'])
 def test_inline_task_examples_are_parseable(name: str) -> None:
-  snippets = re.findall(r'(?<!`)`([^`\n]+)`(?!`)', (ROOT / name).read_text(encoding='utf-8'))
-  commands = [text for text in snippets if (parts := text.split(maxsplit=1)) and parts[0] in _COMMANDS]
+  commands = _inline_task_commands((ROOT / name).read_text(encoding='utf-8'))
   assert len(commands) >= 3
-  for command in commands:
-    _check_doc_command(_migration_tokens(command))
+  for tokens in commands:
+    _check_doc_command(tokens)
 
 
 def test_migration_table_new_commands_parse() -> None:
@@ -96,7 +105,11 @@ def test_migration_table_new_commands_parse() -> None:
       _check_doc_command(_migration_tokens(command))
 
 
-@pytest.mark.parametrize('command', ['knowledge --allx', 'chart --no-such-flag', 'knwoledge --all'])
+@pytest.mark.parametrize('command', [
+  'knowledge --allx', 'chart --no-such-flag', 'knwoledge --all', 'Knowledge --all', 'know-ledge --all',
+])
 def test_migration_typos_are_rejected(command: str) -> None:
+  commands = _inline_task_commands(f'改为 `{command}`。')
+  assert len(commands) == 1
   with pytest.raises((AssertionError, SystemExit)):
-    _check_doc_command(_migration_tokens(command))
+    _check_doc_command(commands[0])

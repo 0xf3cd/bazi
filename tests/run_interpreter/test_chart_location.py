@@ -156,7 +156,7 @@ def test_legacy_renderer_keeps_birth_labels() -> None:
   ((*MATCH_ARGS, '--civil-timezone', 'Unknown/Region'), 'argument --civil-timezone'),
   ((*MATCH_ARGS, '--export-chart-json', 'out.json'), 'unrecognized arguments'),
 ])
-def test_invalid_location_modes_fail_early(tmp_path: Path, optimized: bool, args: tuple[str, ...], error: str) -> None:
+def test_invalid_task_inputs_fail_early(tmp_path: Path, optimized: bool, args: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, *args, optimized=optimized)
   assert result.returncode == 2 and 'error:' in result.stderr
   assert_cli_error(result, args[0], error)
