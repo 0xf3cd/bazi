@@ -196,18 +196,16 @@ def test_tianyi_anchor_at_birth_and_transits(
     assert RelationshipAnalyzer(default_chart).at_birth.shensha['tianyi'] == expected
 
 
-@pytest.mark.parametrize('scope', ['at_birth', 'transits'])
 @pytest.mark.parametrize('tianyi_def, at_birth_expected, transits_expected', [
   (ShenshaRules.TianyiDef.GENG_WITH_JIA_WU, frozenset({Dizhi.丑, Dizhi.子}), frozenset({Dizhi.丑, Dizhi.未})),
   (ShenshaRules.TianyiDef.GENG_WITH_XIN, frozenset({Dizhi.午, Dizhi.寅, Dizhi.子}), frozenset({Dizhi.午, Dizhi.寅})),
   (ShenshaRules.TianyiDef.YANGGUI, frozenset({Dizhi.丑}), frozenset({Dizhi.丑})),
   (ShenshaRules.TianyiDef.YINGUI, frozenset({Dizhi.子}), frozenset({Dizhi.未})),
 ])
-def test_tianyi_definition_reaches_each_scope(
+def test_tianyi_definition_at_birth_and_transits(
   tianyi_def: ShenshaRules.TianyiDef,
   at_birth_expected: frozenset[Dizhi],
   transits_expected: frozenset[Dizhi],
-  scope: str,
 ) -> None:
   chart: BaziChart = BaziChart(Bazi.create(
     '1985-03-02 11:08',
@@ -218,16 +216,14 @@ def test_tianyi_definition_reaches_each_scope(
     )),
   ))
   assert tuple(map(str, chart.bazi.pillars)) == ('乙丑', '戊寅', '庚子', '壬午')
-  if scope == 'at_birth':
-    assert RelationshipAnalyzer(chart).at_birth.shensha['tianyi'] == at_birth_expected
-  else:
-    transits = TransitSet(
-      xiaoyun=Ganzhi.from_str('乙丑'),
-      dayun=Ganzhi.from_str('癸未'),
-      liunian=Ganzhi.from_str('庚午'),
-      liuyue=Ganzhi.from_str('丙寅'),
-    )
-    assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == transits_expected
+  assert RelationshipAnalyzer(chart).at_birth.shensha['tianyi'] == at_birth_expected
+  transits = TransitSet(
+    xiaoyun=Ganzhi.from_str('乙丑'),
+    dayun=Ganzhi.from_str('癸未'),
+    liunian=Ganzhi.from_str('庚午'),
+    liuyue=Ganzhi.from_str('丙寅'),
+  )
+  assert RelationshipAnalyzer(chart).transits.shensha(transits)['tianyi'] == transits_expected
 
 
 @pytest.mark.parametrize('anchor, expected', [

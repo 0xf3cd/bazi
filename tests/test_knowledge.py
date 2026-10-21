@@ -607,11 +607,10 @@ def test_lookup_rejects_invalid_ids(value: object) -> None:
     k.entry(value) # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize('value', [1, None, 'yes'])
+@pytest.mark.parametrize('value', [1, 'yes'])
 def test_file_load_rejects_invalid_input(value: object) -> None:
-  if value is not None:
-    with pytest.raises(TypeError):
-      KnowledgeBase.load(value) # type: ignore[arg-type]
+  with pytest.raises(TypeError):
+    KnowledgeBase.load(value) # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize('value', [1, None, 'yes'])

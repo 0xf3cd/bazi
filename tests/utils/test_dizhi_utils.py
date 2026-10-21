@@ -1170,7 +1170,6 @@ def test_search_gonghe_profiles_and_scope() -> None:
   ) == ()
 
 
-
 def test_search_gonghui_profiles() -> None:
   gonghui = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('甲辰'))
   assert dizhi_utils.search_ganzhis(gonghui, DizhiRelation.拱会) == (
@@ -1192,7 +1191,6 @@ def test_search_gonghui_profiles() -> None:
     DizhiRelation.拱会,
     definitions=DizhiRelationDefinitions(gong_def=DizhiRules.GongDef.LU_NARROW),
   ) == ()
-
 
 
 def test_search_gonghe_keeps_multiple_pairs() -> None:

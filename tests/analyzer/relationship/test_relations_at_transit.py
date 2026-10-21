@@ -94,8 +94,7 @@ def test_transit_house_relations(rng: random.Random) -> None:
 
 @pytest.fixture
 def gong_chart() -> BaziChart:
-  chart = BaziChart(Bazi.create(datetime(1980, 1, 12, 20), BaziGender.MALE))
-  return chart
+  return BaziChart(Bazi.create(datetime(1980, 1, 12, 20), BaziGender.MALE))
 
 
 def test_transit_gong_rejects_filled_gap(gong_chart: BaziChart) -> None:
