@@ -31,8 +31,8 @@ BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
   'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-explore'},
-  'guides/configuration': {'config-precision', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace'},
-  'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text'},
+  'guides/configuration': {'config-precision', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
+  'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
   'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style'},
   'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria'},
   'guides/rule-coverage': {'rule-coverage-guoyin'},

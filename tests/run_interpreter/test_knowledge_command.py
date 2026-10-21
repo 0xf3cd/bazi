@@ -46,6 +46,16 @@ def test_all_lists_the_default_view(tmp_path: Path) -> None:
   assert result.stdout.count('\n\n') >= len(library.query()) - 1 and library.query()[0].claim_id in result.stdout
 
 
+def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
+  default = run_cli(tmp_path, 'knowledge', '--object', 'shensha.kongwang')
+  complete = run_cli(tmp_path, 'knowledge', '--object', 'shensha.kongwang', '--include-reference-only')
+  assert default.returncode == complete.returncode == 0
+  assert '六甲旬空的基础二支' not in default.stdout
+  assert '六甲旬空的基础二支' in complete.stdout
+  assert '查法须与基础二支分开' in complete.stdout
+  assert '日柱默认，年柱或年日双锚可选' in complete.stdout
+
+
 def test_exports_the_base_texts_only(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', 'out')
   assert result.returncode == 0 and result.stdout == '' and result.stderr == ''

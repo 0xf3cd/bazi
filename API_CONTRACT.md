@@ -44,6 +44,21 @@ assert chart.bazi.day_master in Tiangan
 
 ## 返回值、拷贝与相等性
 
+### 六甲旬空
+
+`shensha_utils.xunkong(ganzhi)` 返回该旬二支冻结集，`kongwang(anchor_ganzhi, target_dizhi)` 返回
+目标支是否命中。错误外层或内部干支字段类型抛 `TypeError`，阴阳不配锚抛 `ValueError`，在 `python -O`
+下同样检查；不改变 `Ganzhi` 自身的构造域。目标不附加天干、纳音或冲合条件。
+
+`BaziSchool.kongwang_anchor` 尾部追加，默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
+`AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
+逐锚记录 `anchor`（`year`／`day`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
+`KongwangHit` 的 `origin='natal'` 时有 `pillar`、无 `kind`，`origin='transit'` 时相反；`ganzhi` 保留完整目标。
+无命中也返回该锚二支，双锚同值与重复目标位置不合并。原局排除锚自身柱，流运只从本命锚单向查询。
+详情命中投影为地支集合，等于 `shensha['kongwang']`。不删除支、不改其他关系，不实现解释性取消或吉凶判断。
+
+### 共享与记录
+
 - 查询结果和规则集合使用 `tuple`、`frozenset`、`frozendict` 等不可变结构；
   `frozendict` 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。
 - `BaziChart.json` 是独立的可变 JSON 字典，修改它不修改命盘。命盘隔离传入的 `Bazi`，
@@ -241,3 +256,7 @@ assert restored == result
 不要只改 `record_version` 冒充迁移。知识库的 `schema_version` 与前提判别记录的 `record_version` 也不能互换。
 
 旧记录不兼容时保留原件、记录原软件版本及失败原因；没有自动迁移接口。
+
+新增 `kongwang_anchor` 与其他流派字段一起进入命盘身份及 JSON。旧命盘与旧前提记录缺此字段时拒绝，
+不自动补 `DAY`；以原输入、完整原配置及显式选择的新锚重建当前盘。前提记录须重新求值后另存，
+不给旧观察补键或改 `record_version` 冒充重新求值。知识 `schema_version=1`、前提 `record_version=4` 不变。

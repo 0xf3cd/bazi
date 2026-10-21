@@ -607,7 +607,12 @@ def main() -> int:
 
   # The registry covers branch results; the whole-pillar predicates stay explicit above.
   for name, spec in _REGISTRY.items():
-    key = Tiangan.甲 if spec.kind is _AnchorKind.TIANGAN else Dizhi.子
+    key = {
+      _AnchorKind.TIANGAN: Tiangan.甲,
+      _AnchorKind.DIZHI: Dizhi.子,
+      _AnchorKind.GANZHI: Ganzhi.from_str('甲子'),
+    }[spec.kind]
+    spec.predicate(key, Dizhi.子)
     checks.extend([
       (f'shensha_utils.{name} wrong key', TypeError, partial(spec.predicate, str(key), Dizhi.子)),
       (f'shensha_utils.{name} wrong dizhi', TypeError, partial(spec.predicate, key, '子')),
@@ -619,6 +624,18 @@ def main() -> int:
         (f'shensha_utils.{name} wrong definition enum', TypeError,
          partial(spec.predicate, key, Dizhi.子, definition=DizhiRules.AnheDef.NORMAL)),
       ])
+
+  shensha_utils.xunkong(Ganzhi.from_str('甲子'))
+  for bad_anchor, expected_error in (
+    ('甲子', TypeError),
+    (Ganzhi.from_str('甲丑'), ValueError),
+    (Ganzhi('甲', Dizhi.子), TypeError), # type: ignore[arg-type]
+    (Ganzhi(Tiangan.甲, '子'), TypeError), # type: ignore[arg-type]
+  ):
+    checks.extend([
+      ('xunkong rejects invalid anchor', expected_error, partial(shensha_utils.xunkong, bad_anchor)), # type: ignore[arg-type]
+      ('kongwang rejects invalid anchor', expected_error, partial(shensha_utils.kongwang, bad_anchor, Dizhi.戌)), # type: ignore[arg-type]
+    ])
 
   for name, longitude_value in (('integer', 10 ** 10_000), ('fraction', Fraction(10 ** 10_000, 3))):
     for sign in (-1, 1):

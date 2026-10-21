@@ -22,6 +22,40 @@ _Definition = TypeVar('_Definition', bound=Enum)
 _TableValue = TypeVar('_TableValue', bound=Dizhi | frozenset[Dizhi] | None)
 
 
+def xunkong(ganzhi: Ganzhi) -> frozenset[Dizhi]:
+  '''返回干支所在旬的空亡二支；只实现六甲旬空，不含单支筛选或吉凶解释。
+
+  Args:
+  - ganzhi: (Ganzhi) 完整查法锚。外层或内部干支字段错型抛 TypeError，阴阳不配抛 ValueError。
+
+  Return: (frozenset[Dizhi]) 所在旬未配天干的二支；取锚柱由调用方决定。
+  '''
+  if not isinstance(ganzhi, Ganzhi):
+    raise TypeError(f'Expected Ganzhi, got {type(ganzhi)}')
+  if not isinstance(ganzhi.tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(ganzhi.tiangan)}')
+  if not isinstance(ganzhi.dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(ganzhi.dizhi)}')
+  if ganzhi not in ShenshaRules.KONGWANG:
+    raise ValueError(f'Unsupported sexagenary Ganzhi: {ganzhi}')
+  return ShenshaRules.KONGWANG[ganzhi]
+
+
+def kongwang(anchor_ganzhi: Ganzhi, target_dizhi: Dizhi) -> bool:
+  '''检查目标支是否落入锚柱的六甲旬空二支，不附加目标天干、纳音或冲合条件。
+
+  Args:
+  - anchor_ganzhi: (Ganzhi) 完整锚柱，校验与 xunkong 相同。
+  - target_dizhi: (Dizhi) 待查地支；错型抛 TypeError。
+
+  Return: (bool) 目标支是否在该旬二支中。
+  '''
+  absent = xunkong(anchor_ganzhi)
+  if not isinstance(target_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(target_dizhi)}')
+  return target_dizhi in absent
+
+
 def _table_shensha(
   table: frozendict[_TableKey, Dizhi],
   key: _TableKey,

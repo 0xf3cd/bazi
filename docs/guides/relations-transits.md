@@ -1,7 +1,54 @@
 # 关系与流运
 
-这一页做两件事：取某一年的流运，查它与原局婚姻宫的地支关系；再从命盘取有限几步大运和流年。
+本页先查询六甲旬空，再选取某一年的流运，查它与原局婚姻宫的地支关系；最后从命盘读取有限几步大运和流年。
 结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。
+
+## 六甲旬空：保留取锚依据与目标位置
+
+低层 {py:func}`~bazi.utils.shensha_utils.xunkong` 接收合法六十甲子的完整锚并返回冻结二支，
+{py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。阴阳不配的锚会被拒绝，
+但不改变 `Ganzhi` 本身允许构造干支组合的合同。目标只按地支判断，不附加天干或纳音条件。
+
+分析层的 `shensha['kongwang']` 是命中地支的并集。要看依据哪一锚、命中哪个位置，使用
+{py:attr}`~bazi.analyzer.relationship.AtBirthAnalysis.kongwang` 或
+{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是年／日来源，
+`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项保留原局柱位或流运种类及完整目标干支。
+
+```{testcode} kongwang-details
+from bazi.analyzer.relationship import RelationshipAnalyzer
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Ganzhi
+from bazi.school import Anchor, BaziConfig, BaziSchool
+from bazi.transits import TransitSet
+
+chart = BaziChart(Bazi.create(
+    '1984-03-29 12:00', 'male',
+    BaziConfig(school=BaziSchool(kongwang_anchor=Anchor.YEAR_AND_DAY)),
+))
+analyzer = RelationshipAnalyzer(chart)
+for result in analyzer.at_birth.kongwang:
+    print(result.anchor, str(result.ganzhi), sorted(map(str, result.xunkong)),
+          [(hit.pillar, str(hit.ganzhi)) for hit in result.hits])
+
+transits = TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲戌'))
+for result in analyzer.transits.kongwang(transits):
+    print(result.anchor, [(hit.kind.value, str(hit.ganzhi)) for hit in result.hits])
+assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
+    hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
+)
+```
+
+```{testoutput} kongwang-details
+year 甲子 ['亥', '戌'] [('day', '壬戌')]
+day 壬戌 ['丑', '子'] [('year', '甲子')]
+year [('dayun', '甲戌'), ('liunian', '甲戌')]
+day []
+```
+
+原局排除锚自身柱；流运只用本命锚查流运支，不反向查询。无命中仍保留二支；同支不同柱、
+同干支不同流运种类、同值的年日双锚均不合并。这里只标原始命中，不删除地支，不以冲合刑取消，
+不改变五行、十神、纳音或其他关系，也不判断出空、填实与吉凶。单支筛选、截路、四大空亡未在此接口实现。
 
 ## 查一年的流运和一个关系
 

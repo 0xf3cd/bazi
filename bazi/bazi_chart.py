@@ -121,6 +121,7 @@ class BaziJson:
     guoyin_anchor: str
     guoyin_def: str
     peiou_xing_def: str
+    kongwang_anchor: str
 
   class _CommonChartJsonDict(TypedDict):
     '''默认盘与地点盘 JSON 的共同字段。'''

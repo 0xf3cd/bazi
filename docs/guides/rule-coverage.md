@@ -43,7 +43,7 @@
 
 低层查法见 {py:mod}`~bazi.utils.shensha_utils`。表值及定义来源在 {py:class}`~bazi.rules.ShenshaRules`，锚点取值范围与出处在 `school.py` 的 `_ANCHOR_CHOICES`，分析器接入在 `analyzer/relationship.py` 的 `_REGISTRY`。固定锚点、被查位置和原局／流运使用范围还须读注册表及消费者，不能只看表值。
 
-当前神煞知识对象只有 `shensha.guoyin`。其余行尚无同类专门对象，不等于全库文字从未提到这些名称。源码所列古籍、现代汇编与本仓署名也不因出现在下表就成为新的 `KnowledgeSource` 记录。
+当前神煞知识对象为 `shensha.guoyin` 与 `shensha.kongwang`。其余行尚无同类专门对象，不等于全库文字从未提到这些名称。源码所列古籍、现代汇编与本仓署名也不因出现在下表就成为新的 `KnowledgeSource` 记录。
 
 | 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
@@ -61,6 +61,7 @@
 | 文昌贵 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANGGUI` | 表旁列全表与年干锚出处；它与文昌分列，不把同名近亲并成一个变体。 |
 | 太极贵人 | {py:attr}`~bazi.rules.ShenshaRules.TAIJI`；{py:attr}`~bazi.school.BaziSchool.taiji_def`、{py:attr}`~bazi.school.BaziSchool.taiji_anchor` | {py:class}`~bazi.rules.ShenshaRules.TaijiDef` 保存壬癸两读、文字差异与戊己格矛盾；锚点依据另列。 |
 | 国印贵人 | {py:attr}`~bazi.rules.ShenshaRules.GUOYIN`；{py:attr}`~bazi.school.BaziSchool.guoyin_def`、{py:attr}`~bazi.school.BaziSchool.guoyin_anchor` | {py:class}`~bazi.rules.ShenshaRules.GuoyinDef` 分开两表、锚点、查找位置与传抄限度；已有两条 `reference_only` 条目，见下方示例。 |
+| 六甲旬空 | {py:attr}`~bazi.rules.ShenshaRules.KONGWANG`；{py:attr}`~bazi.school.BaziSchool.kongwang_anchor` | `shensha.kongwang.xunkong` 记基础二支，`.lookup` 记汇编转引与年日例，`.repository` 另记本库默认和范围；均为 `reference_only`。固定 revision 转录、下游白文、注释层与仓内政策分列，不把所引原书当作已见。详情查法见 {doc}`relations-transits`，不含单支筛选、截路、四大或解释层。 |
 
 ### 表外计算、配置与评估边界
 
@@ -90,7 +91,7 @@ from bazi.rules import BaziRules, ShenshaRules
 from bazi.school import BaziSchool
 
 kb = KnowledgeBase.load()
-assert {obj.object_id for obj in kb.objects.values() if obj.kind == 'shensha'} == {'shensha.guoyin'}
+assert {obj.object_id for obj in kb.objects.values() if obj.kind == 'shensha'} == {'shensha.guoyin', 'shensha.kongwang'}
 claims = {
   ShenshaRules.GuoyinDef.MODERN: 'shensha.guoyin.modern',
   ShenshaRules.GuoyinDef.WUXING_JINGJI: 'shensha.guoyin.wuxing_jingji',

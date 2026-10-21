@@ -479,6 +479,7 @@ def test_case2(rng: random.Random) -> None:
     'wenchanggui': frozenset([Dizhi.寅]),
     'taiji'      : frozenset([Dizhi.寅, Dizhi.亥, Dizhi.卯, Dizhi.酉]),
     'guoyin'     : frozenset([Dizhi.辰, Dizhi.丑]),
+    'kongwang'   : frozenset([Dizhi.寅, Dizhi.卯]),
   }
 
   for _ in range(50):

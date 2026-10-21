@@ -9,7 +9,7 @@ import functools
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
 from itertools import combinations, product
-from typing import Final, Literal, TypedDict, cast
+from typing import Final, Literal, TypedDict, assert_never, cast
 from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
@@ -30,9 +30,10 @@ _DefinitionResolver = Callable[[BaziSchool], object]
 
 @unique
 class _AnchorKind(Enum):
-  '''神煞查法取锚柱的天干还是地支。'''
+  '''神煞查法取锚柱的天干、地支或完整干支。'''
   TIANGAN = auto()
   DIZHI   = auto()
+  GANZHI  = auto()
 
 
 '''各 Anchor 选择的柱位序号，按年、月、日、时排序。'''
@@ -51,7 +52,7 @@ class _ShenshaSpec:
   '''
   神煞的规格：判断函数、查法锚、展示标签，以及可选的流派定义参数。
 
-  kind 指定取锚柱天干还是地支；anchor 指定锚柱，无分歧时为固定 Anchor，
+  kind 指定取锚柱天干、地支或完整干支；anchor 指定锚柱，无分歧时为固定 Anchor，
   有分歧时为读取命盘选项的解析函数。两者均须依该神煞自身出处，不能沿用既有神煞作默认，见 #167。
 
   Note:
@@ -130,6 +131,7 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
     '国印贵人',
     lambda school: school.guoyin_def,
   ),
+  'kongwang'   : _ShenshaSpec(shensha_utils.kongwang, _AnchorKind.GANZHI, lambda school: school.kongwang_anchor, '空亡'),
 })
 
 
@@ -140,13 +142,18 @@ SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
 })
 
 
-def _anchor_keys(spec: _ShenshaSpec, bazi: Bazi) -> tuple[tuple[int, Tiangan | Dizhi], ...]:
+def _anchor_keys(spec: _ShenshaSpec, bazi: Bazi) -> tuple[tuple[int, Tiangan | Dizhi | Ganzhi], ...]:
   '''该神煞在本盘上的柱位序号与查询值，按年、月、日、时排序。'''
   anchor = spec.anchor if isinstance(spec.anchor, Anchor) else spec.anchor(bazi.config.school)
   pillars = bazi.pillars
   if spec.kind is _AnchorKind.TIANGAN:
     return tuple((index, pillars[index].tiangan) for index in _ANCHOR_PILLARS[anchor])
-  return tuple((index, pillars[index].dizhi) for index in _ANCHOR_PILLARS[anchor])
+  elif spec.kind is _AnchorKind.DIZHI:
+    return tuple((index, pillars[index].dizhi) for index in _ANCHOR_PILLARS[anchor])
+  elif spec.kind is _AnchorKind.GANZHI:
+    return tuple((index, pillars[index]) for index in _ANCHOR_PILLARS[anchor])
+  else:
+    assert_never(spec.kind) # pragma: no cover # _AnchorKind 的全部成员已在上方分派。
 
 
 def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., bool]:
@@ -159,7 +166,7 @@ def _shensha_predicate(spec: _ShenshaSpec, school: BaziSchool) -> Callable[..., 
 
 def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   '''在原局上判断某神煞。
-  干锚查四支，支锚查其余三支（地支不自查），双锚按柱各查一次。
+  干锚查四支，支锚／整柱锚查其余三支（排除自身柱），双锚按柱各查一次。
   '''
   dizhis = bazi.four_dizhis
   keys = _anchor_keys(spec, bazi)
@@ -258,6 +265,8 @@ class ShenshaAnalysis(TypedDict):
   taiji:       frozenset[Dizhi]
   # 国印贵人所在地支。
   guoyin:      frozenset[Dizhi]
+  # 六甲旬空命中的地支；逐锚二支与具体位置见 kongwang 详情。
+  kongwang:    frozenset[Dizhi]
 
 
 class AtBirthShenshaAnalysis(ShenshaAnalysis):
@@ -265,6 +274,87 @@ class AtBirthShenshaAnalysis(ShenshaAnalysis):
   kuigang: Ganzhi | None
   # 天赦日柱。
   tianshe: Ganzhi | None
+
+
+@dataclass(frozen=True)
+class KongwangHit:
+  '''旬空命中的一处目标。原局保留柱位，流运保留种类；同支或同干支的不同位置不合并。
+
+  origin 为 natal 时 pillar 是年／月／日／时且 kind 为 None；transit 时相反。
+  ganzhi 保留完整目标，但查法只使用其地支，不加目标天干或纳音条件。
+  '''
+  origin: Literal['natal', 'transit']
+  pillar: Literal['year', 'month', 'day', 'hour'] | None
+  kind:   TransitKind | None
+  ganzhi: Ganzhi
+
+  def __post_init__(self) -> None:
+    if not isinstance(self.ganzhi, Ganzhi):
+      raise TypeError(f'Expected Ganzhi, got {type(self.ganzhi)}')
+    for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
+      if not isinstance(value, expected):
+        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
+    if not isinstance(self.origin, str):
+      raise TypeError(f'Expected str, got {type(self.origin)}')
+    if self.pillar is not None and not isinstance(self.pillar, str):
+      raise TypeError(f'Expected str | None, got {type(self.pillar)}')
+    if self.kind is not None and not isinstance(self.kind, TransitKind):
+      raise TypeError(f'Expected TransitKind | None, got {type(self.kind)}')
+    if self.origin == 'natal':
+      if self.pillar not in ('year', 'month', 'day', 'hour') or self.kind is not None:
+        raise ValueError('Invalid natal kongwang coordinate')
+    elif self.origin == 'transit':
+      if self.pillar is not None or self.kind is None:
+        raise ValueError('Invalid transit kongwang coordinate')
+    else:
+      raise ValueError(f'Unsupported origin: {self.origin}')
+
+
+@dataclass(frozen=True)
+class KongwangResult:
+  '''一个本命锚的旬空二支与原始命中。anchor 记录年／日来源，ganzhi 记录完整锚。
+
+  无命中仍返回该锚及空 hits；xunkong 由已校验的完整锚计算，不另存一份可矛盾的二支。
+  不判断填实、冲合解空或吉凶，也不修改目标地支及其他关系结果。
+  '''
+  anchor: Literal['year', 'day']
+  ganzhi: Ganzhi
+  hits:   tuple[KongwangHit, ...]
+
+  def __post_init__(self) -> None:
+    absent = shensha_utils.xunkong(self.ganzhi)
+    if not isinstance(self.anchor, str):
+      raise TypeError(f'Expected str, got {type(self.anchor)}')
+    if self.anchor not in ('year', 'day'):
+      raise ValueError(f'Unsupported anchor: {self.anchor}')
+    if not isinstance(self.hits, tuple) or not all(isinstance(hit, KongwangHit) for hit in self.hits):
+      raise TypeError(f'Expected tuple of KongwangHit, got {type(self.hits)}')
+    for hit in self.hits:
+      if hit.ganzhi.dizhi not in absent:
+        raise ValueError('Kongwang hit is outside the anchor xunkong')
+      if hit.origin == 'natal' and hit.pillar == self.anchor:
+        raise ValueError('Kongwang anchor cannot inspect its own natal pillar')
+
+  @property
+  def xunkong(self) -> frozenset[Dizhi]:
+    '''该完整锚所在旬的空亡二支。'''
+    return shensha_utils.xunkong(self.ganzhi)
+
+
+def _kongwang_results(bazi: Bazi, targets: tuple[KongwangHit, ...]) -> tuple[KongwangResult, ...]:
+  '''与支集汇总共用注册表取锚和谓词；位置在投影前保留，原局按具体柱位排除自身。'''
+  spec = _REGISTRY['kongwang']
+  predicate = _shensha_predicate(spec, bazi.config.school)
+  results = []
+  for index, key in _anchor_keys(spec, bazi):
+    assert isinstance(key, Ganzhi)
+    anchor = cast(Literal['year', 'day'], _PILLAR_NAMES[index])
+    results.append(KongwangResult(anchor, key, tuple(
+      target for target in targets
+      if target.origin != 'natal' or target.pillar != anchor
+      if predicate(key, target.ganzhi.dizhi)
+    )))
+  return tuple(results)
 
 
 class AtBirthAnalysis:
@@ -287,6 +377,15 @@ class AtBirthAnalysis:
       'kuigang'  : bazi.day_pillar if shensha_utils.kuigang(bazi.day_pillar) else None,
       'tianshe'  : bazi.day_pillar if shensha_utils.tianshe(bazi.month_commander, bazi.day_pillar) else None,
     })
+
+  @property
+  def kongwang(self) -> tuple[KongwangResult, ...]:
+    '''按配置的年／日锚次序返回原局旬空详情；命中按年、月、日、时排序，排除锚自身柱。'''
+    bazi = self._chart.bazi
+    return _kongwang_results(bazi, tuple(
+      KongwangHit('natal', pillar, None, ganzhi)
+      for pillar, ganzhi in zip(_PILLAR_NAMES, bazi.pillars)
+    ))
 
   @property
   def day_master_relations(self) -> tiangan_utils.TianganRelationDiscovery:
@@ -371,6 +470,19 @@ class TransitAnalysis:
     return cast(ShenshaAnalysis, {
       name: _eval_transits(spec, bazi, transit_dizhis) for name, spec in _REGISTRY.items()
     })
+
+  def kongwang(self, transits: TransitSet) -> tuple[KongwangResult, ...]:
+    '''本命年／日锚查所选流运支；命中依 TransitSet.items 排序，不反向以流运为锚查原局。
+
+    Args:
+    - transits: (TransitSet) 所选具名流运；错型抛 TypeError。
+
+    Return: (tuple[KongwangResult, ...]) 逐锚详情；同干支不同流运种类分别保留，无命中也保留二支。
+    '''
+    self._check_transits(transits)
+    return _kongwang_results(self._chart.bazi, tuple(
+      KongwangHit('transit', None, kind, ganzhi) for kind, ganzhi in transits.items
+    ))
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
     '''

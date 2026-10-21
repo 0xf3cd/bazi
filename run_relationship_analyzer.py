@@ -14,6 +14,7 @@ from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind
 from bazi.analyzer.relationship import (
   RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
+  KongwangResult,
 )
 
 
@@ -52,6 +53,20 @@ def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
   return f'原局无{"、".join(labels + tuple(_WHOLE_PILLAR_SHENSHA_LABELS.values()))}'
 
 
+def kongwang_strs(results: tuple[KongwangResult, ...]) -> list[str]:
+  '''逐锚展示旬空二支与具体命中；没有命中时仍列二支。'''
+  pillars = {'year': '年柱', 'month': '月柱', 'day': '日柱', 'hour': '时柱'}
+  lines = []
+  for result in results:
+    absent = ''.join(map(str, sorted(result.xunkong, key=lambda dz: dz.index)))
+    hits = '、'.join(
+      f'{pillars[hit.pillar] if hit.pillar is not None else hit.kind.value} {hit.ganzhi}' # type: ignore[union-attr] # 流运命中必有 kind。
+      for hit in result.hits
+    )
+    lines.append(f'{pillars[result.anchor]} {result.ganzhi} → 旬空{absent}；命中：{hits or "无"}')
+  return lines
+
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='展示随机命盘的亲密关系分析。')
   parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
@@ -79,6 +94,8 @@ if __name__ == '__main__':
   else:
     print('原局神煞：')
     print('\n'.join(shensha_str_list))
+  print('六甲旬空依据：')
+  print('\n'.join(kongwang_strs(analyzer.at_birth.kongwang)))
 
   print('\n' + '-' * 60 + '\n')
 
@@ -98,3 +115,6 @@ if __name__ == '__main__':
     else:
       print(f'{gz_year}：')
       print('\n'.join(f'  {s}' for s in year_strs))
+    print('\n'.join(f'  {s}' for s in kongwang_strs(transits_analysis.kongwang(
+      year_transits.select(TransitKind.LIUNIAN)
+    ))))

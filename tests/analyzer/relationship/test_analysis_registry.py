@@ -58,8 +58,8 @@ def test_at_birth_extras_are_whole_pillar_only() -> None:
 def test_at_birth_anchors_keep_kind_and_scope() -> None:
   '''Pin every (kind, anchor) pair's key x inspected-pillar calls, repeated branch values
   included. This is the executor for the one at-birth rule: a Tiangan key inspects all four
-  branches, a Dizhi key skips its own pillar, and a two-pillar anchor runs once per pillar.
-  一条原局规则的执行者：干锚查四支，支锚跳过自身柱，两柱锚按柱各跑一遍。'''
+   branches, a Dizhi or Ganzhi key skips its own pillar, and a two-pillar anchor runs once per pillar.
+   原局干锚查四支，支锚／整柱锚跳过自身柱，两柱锚按柱各跑一遍。'''
   YD, MD, DD, HD = Dizhi.子, Dizhi.午, Dizhi.午, Dizhi.戌
   YT, DT = Tiangan.庚, Tiangan.丙
   all_dizhis = (YD, MD, DD, HD)
@@ -70,13 +70,20 @@ def test_at_birth_anchors_keep_kind_and_scope() -> None:
 
   DIZHI = relationship_module._AnchorKind.DIZHI
   TIANGAN = relationship_module._AnchorKind.TIANGAN
-  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[tuple[Tiangan | Dizhi, Dizhi], ...]], ...] = (
+  GANZHI = relationship_module._AnchorKind.GANZHI
+  YG, DG = Ganzhi.from_str('庚子'), Ganzhi.from_str('丙午')
+  year_ganzhi_calls = ((YG, MD), (YG, DD), (YG, HD))
+  day_ganzhi_calls = ((DG, YD), (DG, MD), (DG, HD))
+  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[tuple[Tiangan | Dizhi | Ganzhi, Dizhi], ...]], ...] = (
     (DIZHI, Anchor.YEAR, year_dizhi_calls),
     (DIZHI, Anchor.DAY, day_dizhi_calls),
     (DIZHI, Anchor.YEAR_AND_DAY, (*year_dizhi_calls, *day_dizhi_calls)),
     (TIANGAN, Anchor.YEAR, year_tiangan_calls),
     (TIANGAN, Anchor.DAY, day_tiangan_calls),
     (TIANGAN, Anchor.YEAR_AND_DAY, (*year_tiangan_calls, *day_tiangan_calls)),
+    (GANZHI, Anchor.YEAR, year_ganzhi_calls),
+    (GANZHI, Anchor.DAY, day_ganzhi_calls),
+    (GANZHI, Anchor.YEAR_AND_DAY, (*year_ganzhi_calls, *day_ganzhi_calls)),
   )
   assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
     relationship_module._AnchorKind,
@@ -87,9 +94,9 @@ def test_at_birth_anchors_keep_kind_and_scope() -> None:
   assert tuple(map(str, chart.bazi.pillars)) == ('庚子', '壬午', '丙午', '戊戌')
 
   for kind, anchor, expected_calls in cases:
-    calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+    calls: list[tuple[Tiangan | Dizhi | Ganzhi, Dizhi]] = []
 
-    def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+    def record(key: Tiangan | Dizhi | Ganzhi, dizhi: Dizhi) -> bool:
       calls.append((key, dizhi))
       return False
 
@@ -158,13 +165,17 @@ def test_transit_anchors_reuse_keys_no_exclusion() -> None:
   transit_dizhis = (Dizhi.卯, Dizhi.子)
   DIZHI = relationship_module._AnchorKind.DIZHI
   TIANGAN = relationship_module._AnchorKind.TIANGAN
-  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[Tiangan | Dizhi, ...]], ...] = (
+  GANZHI = relationship_module._AnchorKind.GANZHI
+  cases: tuple[tuple[relationship_module._AnchorKind, Anchor, tuple[Tiangan | Dizhi | Ganzhi, ...]], ...] = (
     (DIZHI, Anchor.YEAR, (Dizhi.子,)),
     (DIZHI, Anchor.DAY, (Dizhi.午,)),
     (DIZHI, Anchor.YEAR_AND_DAY, (Dizhi.子, Dizhi.午)),
     (TIANGAN, Anchor.YEAR, (Tiangan.庚,)),
     (TIANGAN, Anchor.DAY, (Tiangan.丙,)),
     (TIANGAN, Anchor.YEAR_AND_DAY, (Tiangan.庚, Tiangan.丙)),
+    (GANZHI, Anchor.YEAR, (Ganzhi.from_str('庚子'),)),
+    (GANZHI, Anchor.DAY, (Ganzhi.from_str('丙午'),)),
+    (GANZHI, Anchor.YEAR_AND_DAY, (Ganzhi.from_str('庚子'), Ganzhi.from_str('丙午'))),
   )
   assert {(kind, anchor) for kind, anchor, _ in cases} == set(itertools.product(
     relationship_module._AnchorKind,
@@ -172,9 +183,9 @@ def test_transit_anchors_reuse_keys_no_exclusion() -> None:
   ))
 
   for kind, anchor, keys in cases:
-    calls: list[tuple[Tiangan | Dizhi, Dizhi]] = []
+    calls: list[tuple[Tiangan | Dizhi | Ganzhi, Dizhi]] = []
 
-    def record(key: Tiangan | Dizhi, dizhi: Dizhi) -> bool:
+    def record(key: Tiangan | Dizhi | Ganzhi, dizhi: Dizhi) -> bool:
       calls.append((key, dizhi))
       return False
 
@@ -207,6 +218,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
   # 每个神煞的（key 类型，锚）全表按数据钉死：偷偷换锚、或偷偷改成/不再读流派旋钮都会响。
   DIZHI = relationship_module._AnchorKind.DIZHI
   TIANGAN = relationship_module._AnchorKind.TIANGAN
+  GANZHI = relationship_module._AnchorKind.GANZHI
   fixed = {
     name: (spec.kind, spec.anchor)
     for name, spec in _REGISTRY.items() if isinstance(spec.anchor, Anchor)
@@ -239,6 +251,7 @@ def test_registry_anchors_are_the_declared_table() -> None:
     'wenchang':  (TIANGAN, 'wenchang_anchor'),
     'taiji':     (TIANGAN, 'taiji_anchor'),
     'guoyin':    (TIANGAN, 'guoyin_anchor'),
+    'kongwang':  (GANZHI, 'kongwang_anchor'),
   }
   assert set(knobs) | set(fixed) == set(_REGISTRY)
   for name, (kind, field) in knobs.items():

@@ -138,7 +138,7 @@ class Anchor(Enum):
   - DAY：以日柱为锚。
   - YEAR_AND_DAY：年、日两柱分别为锚，各查一遍。
 
-  成员只指定锚柱；取该柱天干还是地支由神煞自身的查法决定，记录在分析层注册表中。
+  成员只指定锚柱；取该柱天干、地支还是完整干支由神煞自身的查法决定，记录在分析层注册表中。
   `_ANCHOR_CHOICES` 按字段列出支持的取值及出处或已知出处缺口，`BaziSchool` 拒绝表外取值。
 
   不修改既有定义；新读法须另加定义。
@@ -197,6 +197,15 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # 寅前八位是酉」。YEAR_AND_DAY 依问真、高人的现代读法，为本库默认。
   # GuoyinDef 的抄本见证不能证明此今人注释所取的锚。
   'guoyin_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
+  # 六甲旬空取完整干支。DAY 依《五行精纪》卷二十五转引《神白经》：
+  # 「此空亡只用生日旬中空亡極緊」，并有运、太岁语境；这里只见汇编转录，未见所引原书。
+  # 同卷转引《林开五命》有「論空亡止以年日所在」，为年、日分别查的依据：
+  # https://zh.wikisource.org/w/index.php?oldid=10494296
+  # YEAR 与年日互查例另见《三命通会》四库本卷三「假令甲子年壬戌日」：
+  # https://zh.wikisource.org/w/index.php?oldid=657369
+  # 现代日柱为主且兼看其他柱／流运的读法：https://www.xifengduzui.com/article461.html
+  # DAY 是本库默认选择，不宣称古籍一致只看日柱；本轮只记本命锚查原局及流运支的原始命中。
+  'kongwang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 
 
@@ -240,6 +249,9 @@ class BaziSchool:
 
   # 配偶星取法；两读的差异面见 PeiouXingDef。
   peiou_xing_def:   PeiouXingDef = PeiouXingDef.ZHENGCAI_ZHENGGUAN
+
+  # 六甲旬空整柱锚；尾部追加以保留既有位置参数次序。
+  kongwang_anchor:  Anchor = Anchor.DAY
 
   def __post_init__(self) -> None:
     check_declared_types(self)
