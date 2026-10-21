@@ -8,7 +8,7 @@ import pytest
 
 from run_interpreter import _COMMANDS, _command_parser
 
-from command_runner import ROOT, GUANSHA
+from cli_runner import ROOT, GUANSHA
 
 
 # ---- 文档里的命令只解析、不执行：新形式才算数。
@@ -30,7 +30,7 @@ def _check_doc_command(tokens: list[str]) -> None:
   _command_parser().parse_args(tokens)
 
 
-DOC_FILES = ('README.md', 'docs/guides/knowledge.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md',
+DOC_FILES = ('README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md',
              'docs/guides/configuration.md', 'docs/guides/relations-transits.md', 'CONTRIBUTING.md')
 
 
@@ -68,3 +68,48 @@ def test_doc_command_check_accepts_a_good_example() -> None:
   commands = _doc_commands(f'```sh\npython run_interpreter.py \\\n  match {GUANSHA} \\\n  --birth-time "2000-01-01 12:00" --gender male --observation-scope natal\n```')
   assert commands[0][0] == 'match'
   _check_doc_command(commands[0])
+
+
+def _migration_tokens(command: str) -> list[str]:
+  return shlex.split(command.replace('…', '').replace('判据ID', GUANSHA))
+
+
+def _inline_task_commands(markdown: str) -> list[list[str]]:
+  snippets = re.findall(r'(?<!`)`([^`\n]+)`(?!`)', markdown)
+  return [
+    _migration_tokens(text) for text in snippets
+    if (parts := text.split(maxsplit=1)) and (
+      parts[0] in _COMMANDS or re.match(r'^[A-Za-z][A-Za-z0-9_-]*\s+(?:--|判据ID(?:\s|$))', text)
+    )
+  ]
+
+
+@pytest.mark.parametrize('name', ['README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md'])
+def test_inline_task_examples_are_parseable(name: str) -> None:
+  commands = _inline_task_commands((ROOT / name).read_text(encoding='utf-8'))
+  assert len(commands) >= 3
+  for tokens in commands:
+    _check_doc_command(tokens)
+
+
+def test_migration_table_new_commands_parse() -> None:
+  text = (ROOT / 'API_CONTRACT.md').read_text(encoding='utf-8')
+  section = re.search(r'### 源码脚本\n(.*?)(?=\n## |\Z)', text, flags=re.DOTALL)
+  assert section is not None
+  rows = re.findall(r'^\| `[^`]+` \| (.*) \|$', section[1], flags=re.MULTILINE)
+  assert len(rows) >= 5
+  for row in rows:
+    commands = re.findall(r'`([^`]+)`', row)
+    assert commands
+    for command in commands:
+      _check_doc_command(_migration_tokens(command))
+
+
+@pytest.mark.parametrize('command', [
+  'knowledge --allx', 'chart --no-such-flag', 'knwoledge --all', 'Knowledge --all', 'know-ledge --all',
+])
+def test_migration_typos_are_rejected(command: str) -> None:
+  commands = _inline_task_commands(f'改为 `{command}`。')
+  assert len(commands) == 1
+  with pytest.raises((AssertionError, SystemExit)):
+    _check_doc_command(commands[0])

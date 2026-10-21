@@ -7,14 +7,14 @@ import pytest
 
 from run_interpreter import main
 
-from flat_runner import run_cli, run_guarded_script
+from cli_runner import run_cli, run_guarded_script
 
 
 @pytest.mark.parametrize(('args', 'writes'), [
-  ((), False),
-  (('--seed', '42'), False),
-  (('--output-dir', 'exported'), True),
-  (('--export-knowledge-base',), True),
+  (('chart',), False),
+  (('chart', '--seed', '42'), False),
+  (('chart', '--output-dir', 'exported'), True),
+  (('knowledge', '--export-knowledge-base'), True),
 ])
 def test_default_cli_rejects_filesystem_writes(
   tmp_path: Path,
@@ -55,13 +55,13 @@ def test_write_guard_checks_high_level_modes(
 
 
 def test_exports_retain_other_existing_files(tmp_path: Path) -> None:
-  first = run_cli(tmp_path, '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
+  first = run_cli(tmp_path, 'chart', '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
   assert first.returncode == 0
   output = tmp_path / 'interpretation_examples'
   earlier = (output / '1.txt').read_bytes()
   (output / '0.txt').write_text('sentinel', encoding='utf-8')
   (output / 'notes.txt').write_text('personal notes', encoding='utf-8')
-  second = run_cli(tmp_path, '--seed', '42', '--output-dir', str(tmp_path))
+  second = run_cli(tmp_path, 'chart', '--seed', '42', '--output-dir', str(tmp_path))
   assert second.returncode == 0
   assert (output / '0.txt').read_text(encoding='utf-8') == re.sub(
     r'\x1b\[[0-9;]*m', '', second.stdout.removeprefix('random seed: 42\n'),
@@ -73,7 +73,7 @@ def test_exports_retain_other_existing_files(tmp_path: Path) -> None:
 def test_bad_export_path_uses_cli_error_exit(tmp_path: Path) -> None:
   output = tmp_path / 'file'
   output.write_text('existing data', encoding='utf-8')
-  result = run_cli(tmp_path, '--seed', '42', '--output-dir', str(output))
+  result = run_cli(tmp_path, 'chart', '--seed', '42', '--output-dir', str(output))
   assert result.returncode == 2
   assert not result.stdout
   assert 'error:' in result.stderr
@@ -93,7 +93,7 @@ def test_internal_rendering_errors_propagate(
 
   monkeypatch.setitem(main.__globals__, '_chart_text', broken_render)
   with pytest.raises(error_type, match='Internal rendering failure') as caught:
-    main(['--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+    main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
   assert caught.value is error
 
 
@@ -116,8 +116,9 @@ def test_export_io_failures_use_error_exit(
 
   with pytest.raises(SystemExit) as caught:
     main([
-      '--birth-time', '2000-01-01 12:00', '--gender', 'male',
-      '--output-dir', str(tmp_path), '--export-knowledge-base',
+      *(['knowledge', '--export-knowledge-base'] if stage == 'knowledge'
+        else ['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male']),
+      '--output-dir', str(tmp_path),
     ])
   assert caught.value.code == 2
   assert 'error: Export I/O failure' in capsys.readouterr().err
@@ -131,5 +132,5 @@ def test_print_errors_propagate(monkeypatch: pytest.MonkeyPatch) -> None:
 
   monkeypatch.setitem(main.__globals__, 'print', fail)
   with pytest.raises(BrokenPipeError) as caught:
-    main(['--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+    main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
   assert caught.value is error

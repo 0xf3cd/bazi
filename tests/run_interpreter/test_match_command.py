@@ -10,11 +10,11 @@ from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextProfile, criteria, evaluate_context
 from run_interpreter import _command_parser, _subcommand_parsers
 
-from command_runner import GUANSHA, BIRTH, run
+from cli_runner import GUANSHA, BIRTH, run_cli
 
 
 def test_bare_match_lists_every_criterion(tmp_path: Path) -> None:
-  result = run(tmp_path, 'match')
+  result = run_cli(tmp_path, 'match')
   assert result.returncode == 0
   for criterion_id, info in criteria().items():
     assert criterion_id in result.stdout and info.definition in result.stdout
@@ -23,7 +23,7 @@ def test_bare_match_lists_every_criterion(tmp_path: Path) -> None:
 @pytest.mark.parametrize('criterion_id', sorted(criteria()))
 def test_match_with_only_an_id_describes_it(tmp_path: Path, criterion_id: str) -> None:
   info = criteria()[criterion_id]
-  result = run(tmp_path, 'match', criterion_id)
+  result = run_cli(tmp_path, 'match', criterion_id)
   assert result.returncode == 0 and result.stderr == ''
   assert info.definition in result.stdout and f'match {criterion_id} --birth-time' in result.stdout
   assert all(scope in result.stdout for scope in info.scopes)
@@ -35,7 +35,7 @@ def test_match_with_only_an_id_describes_it(tmp_path: Path, criterion_id: str) -
 
 
 def test_match_unknown_id_points_to_the_list(tmp_path: Path) -> None:
-  result = run(tmp_path, 'match', 'nope')
+  result = run_cli(tmp_path, 'match', 'nope')
   assert result.returncode == 2 and 'Unsupported' in result.stderr and 'match 可列出全部判据' in result.stderr
 
 
@@ -46,7 +46,7 @@ def test_match_unknown_id_points_to_the_list(tmp_path: Path) -> None:
   (('--include-reference-only',), ('--birth-time', '--gender', '--observation-scope')),
 ])
 def test_match_names_every_missing_input(tmp_path: Path, given: tuple[str, ...], missing: tuple[str, ...]) -> None:
-  result = run(tmp_path, 'match', GUANSHA, *given)
+  result = run_cli(tmp_path, 'match', GUANSHA, *given)
   assert result.returncode == 2
   assert f'missing {" and ".join(missing)};' in result.stderr
   assert 'example: python run_interpreter.py match <判据ID> --birth-time' in result.stderr
@@ -72,20 +72,20 @@ def test_every_option_is_an_evaluation_input() -> None:
 
 @pytest.mark.parametrize('dest, args', EVALUATION_INPUTS, ids=[dest for dest, _ in EVALUATION_INPUTS])
 def test_match_evaluation_inputs_need_an_id(tmp_path: Path, dest: str, args: tuple[str, ...]) -> None:
-  result = run(tmp_path, 'match', *args)
+  result = run_cli(tmp_path, 'match', *args)
   assert result.returncode == 2 and 'criterion ID is required for evaluation' in result.stderr
   assert result.stdout == '' and list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('dest, args', EVALUATION_INPUTS, ids=[dest for dest, _ in EVALUATION_INPUTS])
 def test_id_with_one_input_asks_for_the_rest(tmp_path: Path, dest: str, args: tuple[str, ...]) -> None:
-  result = run(tmp_path, 'match', GUANSHA, *args)
+  result = run_cli(tmp_path, 'match', GUANSHA, *args)
   assert result.returncode == 2 and 'missing --' in result.stderr and 'example: ' in result.stderr
   assert result.stdout == '' and list(tmp_path.iterdir()) == []
 
 
 def test_match_new_form_equals_the_library(tmp_path: Path) -> None:
-  result = run(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal')
+  result = run_cli(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal')
   expected = evaluate_context(
     BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=GUANSHA, profile=ContextProfile('natal'),
   ).render()
@@ -97,5 +97,5 @@ def test_match_keeps_the_input_validation(tmp_path: Path) -> None:
     ('--observation-scope', 'natal_and_transits'),
     ('--observation-scope', 'natal', '--transit-entry', 'at_year'),
   ):
-    result = run(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female', *args)
+    result = run_cli(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female', *args)
     assert result.returncode == 2 and 'error:' in result.stderr

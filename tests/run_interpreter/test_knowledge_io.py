@@ -11,7 +11,19 @@ import pytest
 from run_interpreter import main
 from bazi.knowledge import KnowledgeBase
 
-from flat_runner import KNOWLEDGE_BASE, run_cli, run_guarded_script
+from cli_runner import KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('family,member', [('tiangan', '甲'), ('shishen', '比肩')])
+def test_json_rejects_knowledge_txt_collision(tmp_path: Path, optimized: bool, family: str, member: str) -> None:
+  output = tmp_path / 'output'
+  target = output / 'knowledge_base' / family / f'{member}.txt'
+  result = run_cli(tmp_path, 'knowledge',
+                    '--output-dir', str(output), '--export-knowledge-base',
+                    '--export-knowledge-json', str(target), optimized=optimized)
+  assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
+  assert not output.exists() and '已导出知识' not in result.stdout
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -21,11 +33,10 @@ def test_default_txt_collision_in_checkout(
 ) -> None:
   output = knowledge_checkout / 'output_data'
   target = output / 'knowledge_base' / family / f'{member}.txt'
-  result = run_cli(knowledge_checkout, '--birth-time', '2024-01-01T12:00:00', '--gender', 'female',
-                    '--export-knowledge-base', '--export-chart-json', str(target),
+  result = run_cli(knowledge_checkout, 'knowledge', '--export-knowledge-base', '--export-knowledge-json', str(target),
                     optimized=optimized, script=knowledge_checkout / 'run_interpreter.py')
   assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
-  assert not output.exists() and '已导出命盘' not in result.stdout
+  assert not output.exists() and '已导出知识' not in result.stdout
 
 
 def test_knowledge_export_defaults_are_isolated(
@@ -34,7 +45,7 @@ def test_knowledge_export_defaults_are_isolated(
 ) -> None:
   monkeypatch.setitem(main.__globals__, '_DEFAULT_OUTPUT_DIR', tmp_path)
   assert main([
-    '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--export-knowledge-base',
+    'knowledge', '--export-knowledge-base',
   ]) == 0
   assert not (tmp_path / 'interpretation_examples').exists()
   assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
@@ -48,7 +59,7 @@ def test_knowledge_export_defaults_are_isolated(
 
 def test_query_needs_no_birth_input_or_writes(tmp_path: Path) -> None:
   result = run_cli(
-    tmp_path, '--query-knowledge', '--object', 'tiangan.ding', '--topic', '历史象',
+    tmp_path, 'knowledge', '--object', 'tiangan.ding', '--topic', '历史象',
     '--source', 'yuanhai_ziping_stem_symbols_p70', '--include-reference-only',
   )
   assert result.returncode == 0, result.stderr
@@ -60,14 +71,14 @@ def test_query_needs_no_birth_input_or_writes(tmp_path: Path) -> None:
   assert list(tmp_path.iterdir()) == []
   guarded = run_guarded_script(
     Path(__file__).parents[2] / 'run_interpreter.py', tmp_path,
-    ('--query-knowledge', '--object', 'tiangan.ding'),
+    ('knowledge', '--object', 'tiangan.ding'),
   )
   assert guarded.returncode == 0, guarded.stderr
 
 
 def test_manual_context_keeps_open_premises(tmp_path: Path) -> None:
   result = run_cli(
-    tmp_path, '--query-knowledge', '--object', 'tiangan.geng',
+    tmp_path, 'knowledge', '--object', 'tiangan.geng',
     '--context', 'tiangan.geng_regulated_transit', '--topic', '性格',
     '--applicability', 'described', '--time-scope', '行运', '--include-reference-only',
   )
@@ -78,19 +89,19 @@ def test_manual_context_keeps_open_premises(tmp_path: Path) -> None:
 
 
 def test_default_query_omits_reference_entries(tmp_path: Path) -> None:
-  default = run_cli(tmp_path, '--query-knowledge', '--object', 'tiangan.ding')
+  default = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding')
   assert default.returncode == 0
   assert '丁为阴火。' in default.stdout and '烛灯' not in default.stdout
 
 
 def test_known_object_can_have_no_entries(tmp_path: Path) -> None:
-  empty = run_cli(tmp_path, '--query-knowledge', '--object', 'wuxing.mu')
+  empty = run_cli(tmp_path, 'knowledge', '--object', 'wuxing.mu')
   assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
 
 
 def test_query_selects_reference_viewpoint(tmp_path: Path) -> None:
   variant = run_cli(
-    tmp_path, '--query-knowledge', '--object', 'shensha.guoyin',
+    tmp_path, 'knowledge', '--object', 'shensha.guoyin',
     '--viewpoint', 'WUXING_JINGJI', '--include-reference-only',
   )
   assert variant.returncode == 0 and '#194' in variant.stdout
@@ -104,7 +115,7 @@ def test_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
   source, exported, complete = (tmp_path / name for name in ('source.json', 'selection.json', 'complete.json'))
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   query = run_cli(
-    tmp_path, '--knowledge-source', str(source), '--validate-knowledge', '--query-knowledge',
+    tmp_path, 'knowledge', '--knowledge-source', str(source), '--validate-knowledge',
     '--object', 'tiangan.ding', '--topic', '历史象', '--include-reference-only',
     '--export-knowledge-json', str(exported),
   )
@@ -114,34 +125,35 @@ def test_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
   restored = KnowledgeBase.load(exported)
   assert tuple(restored.entries) == ('tiangan.ding.lamp_symbol',)
   assert restored.sources == KNOWLEDGE_BASE.sources
-  again = run_cli(tmp_path, '--query-knowledge', '--knowledge-source', str(exported), '--include-reference-only')
+  again = run_cli(tmp_path, 'knowledge', '--all', '--knowledge-source', str(exported), '--include-reference-only')
   assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and '第 70 页' in again.stdout
-  full = run_cli(tmp_path, '--export-knowledge-json', str(complete))
+  full = run_cli(tmp_path, 'knowledge', '--export-knowledge-json', str(complete))
   assert full.returncode == 0 and '出生时间：' not in full.stdout
   assert KnowledgeBase.load(complete).entries == KNOWLEDGE_BASE.entries
 
 
-@pytest.mark.parametrize('args', [
-  ('--query-knowledge', '--birth-time', '2000-01-01 12:00', '--gender', 'male'),
-  ('--validate-knowledge', '--birth-time', ''),
-  ('--query-knowledge', '--seed', '42'), ('--query-knowledge', '--count', '1'),
-  ('--validate-knowledge', '--export-knowledge-base'), ('--query-knowledge', '--output-dir', 'output'),
-  ('--object', 'tiangan.ding'), ('--knowledge-source', 'source.json'),
-  ('--validate-knowledge', '--topic', '历史象'), ('--query-knowledge', '--object', 'typo'),
-  ('--query-knowledge', '--context', 'typo'), ('--query-knowledge', '--applicability', 'typo'),
-  ('--validate-knowledge', '--knowledge-source', 'missing.json'),
+@pytest.mark.parametrize('args,error', [
+  (('--birth-time', '2000-01-01 12:00', '--gender', 'male'), 'unrecognized arguments'),
+  (('--validate-knowledge', '--birth-time', ''), 'unrecognized arguments'),
+  (('--seed', '42'), 'unrecognized arguments'), (('--count', '1'), 'unrecognized arguments'),
+  (('--output-dir', 'output'), '--output-dir only applies with --export-knowledge-base'),
+  (('--knowledge-source', 'source.json'), 'No such file or directory'),
+  (('--object', 'typo'), 'Unknown object_id: typo'), (('--context', 'typo'), 'Unknown context_id: typo'),
+  (('--applicability', 'typo'), 'invalid choice'),
+  (('--validate-knowledge', '--knowledge-source', 'missing.json'), 'No such file or directory'),
 ])
-def test_bad_inputs_do_not_create_exports(tmp_path: Path, args: tuple[str, ...]) -> None:
-  result = run_cli(tmp_path, *args)
+def test_bad_inputs_do_not_create_exports(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
+  result = run_cli(tmp_path, 'knowledge', *args)
   assert result.returncode == 2
   assert 'error:' in result.stderr and 'Traceback' not in result.stderr
+  assert_cli_error(result, 'knowledge', error)
   assert list(tmp_path.iterdir()) == []
 
 
 def test_validation_rejects_corrupt_source(tmp_path: Path) -> None:
   source = tmp_path / 'corrupt.json'
   source.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  result = run_cli(tmp_path, '--validate-knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(tmp_path / 'out.json'))
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(tmp_path / 'out.json'))
   assert result.returncode == 2 and 'Duplicate JSON key' in result.stderr
   assert not (tmp_path / 'out.json').exists()
 
@@ -161,16 +173,16 @@ def test_validation_reads_corrupt_bundled_source(knowledge_checkout: Path) -> No
   custom.write_bytes(corpus.read_bytes())
   corpus.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
   script = knowledge_checkout / 'run_interpreter.py'
-  invalid = run_cli(knowledge_checkout, '--validate-knowledge', script=script)
+  invalid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', script=script)
   assert invalid.returncode == 2
   assert 'Duplicate JSON key' in invalid.stderr and 'Traceback' not in invalid.stderr
-  valid = run_cli(knowledge_checkout, '--validate-knowledge', '--knowledge-source', str(custom), script=script)
+  valid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), script=script)
   assert valid.returncode == 0 and '校验通过：' in valid.stdout
   corpus.unlink()
   exported = knowledge_checkout / 'output.json'
   exported.write_text('old output', encoding='utf-8')
   independent = run_cli(
-    knowledge_checkout, '--knowledge-source', str(custom), '--export-knowledge-json', str(exported), script=script,
+    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--export-knowledge-json', str(exported), script=script,
   )
   assert independent.returncode == 0, independent.stderr
   assert KnowledgeBase.load(exported).entries == KNOWLEDGE_BASE.entries
@@ -193,7 +205,7 @@ def test_loading_is_independent_of_projection(
   else:
     data['sources'] = [source for source in data['sources'] if source['source_id'] != 'yuanhai_ziping_stem_table']
   corpus.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  result = run_cli(knowledge_checkout, '--validate-knowledge', script=knowledge_checkout / 'run_interpreter.py')
+  result = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', script=knowledge_checkout / 'run_interpreter.py')
   assert result.returncode == 0 and '校验通过：' in result.stdout
   imported = subprocess.run(
     [sys.executable, '-B', '-c', 'from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
@@ -202,7 +214,7 @@ def test_loading_is_independent_of_projection(
   assert imported.returncode == 0, imported.stderr
   if mutation == 'new-source':
     queried = run_cli(
-      knowledge_checkout, '--query-knowledge', '--source', 'independent_probe',
+      knowledge_checkout, 'knowledge', '--source', 'independent_probe',
       '--include-reference-only', script=knowledge_checkout / 'run_interpreter.py',
     )
     assert queried.returncode == 0, queried.stderr
@@ -212,7 +224,7 @@ def test_loading_is_independent_of_projection(
 
 @pytest.mark.parametrize('source_id', tuple(KNOWLEDGE_BASE.sources))
 def test_cli_can_query_every_registered_source(tmp_path: Path, source_id: str) -> None:
-  result = run_cli(tmp_path, '--query-knowledge', '--source', source_id, '--include-reference-only')
+  result = run_cli(tmp_path, 'knowledge', '--source', source_id, '--include-reference-only')
   assert result.returncode == 0, result.stderr
   selected = KNOWLEDGE_BASE.query(source_id=source_id, include_reference_only=True)
   assert result.stdout == ''.join(KNOWLEDGE_BASE.render(entry) + '\n\n' for entry in selected) if selected else result.stdout == '无匹配条目。\n'
@@ -238,7 +250,7 @@ def test_custom_export_cannot_overwrite_bundled(
         pytest.skip('Symbolic links unavailable')
   before = corpus.read_bytes()
   result = run_cli(
-    knowledge_checkout, '--knowledge-source', str(custom), '--export-knowledge-json', str(target),
+    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--export-knowledge-json', str(target),
     script=knowledge_checkout / 'run_interpreter.py',
   )
   assert result.returncode == 2 and 'overwrite the editing source' in result.stderr
@@ -256,12 +268,16 @@ def test_chart_txt_share_subject_projection(knowledge_checkout: Path, show_sourc
   relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
   assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
   result = run_cli(
-    tmp_path, '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only',
+    tmp_path, 'chart', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only',
     *(['--show-sources'] if show_sources else []),
-    '--export-knowledge-base', '--output-dir', str(tmp_path),
+    '--output-dir', str(tmp_path),
     script=knowledge_checkout / 'run_interpreter.py',
   )
   assert result.returncode == 0, result.stderr
+  exported = run_cli(tmp_path, 'knowledge', '--include-reference-only', '--export-knowledge-base',
+                      '--output-dir', str(tmp_path), *(['--show-sources'] if show_sources else []),
+                      script=knowledge_checkout / 'run_interpreter.py')
+  assert exported.returncode == 0 and exported.stdout == '' and exported.stderr == ''
   for subject, kind in (('七杀', 'shishen.qisha'), ('食神', 'shishen.shishen')):
     text = (tmp_path / 'knowledge_base/shishen' / (subject + '.txt')).read_text(encoding='utf-8')
     expected = knowledge.render_subject(kind, include_reference_only=True, show_sources=show_sources)
@@ -283,7 +299,7 @@ def test_export_cannot_truncate_editing_source(tmp_path: Path) -> None:
     if target != source:
       target.hardlink_to(source)
     result = run_cli(
-      tmp_path, '--knowledge-source', str(source), '--query-knowledge', '--object', 'tiangan.ding',
+      tmp_path, 'knowledge', '--knowledge-source', str(source), '--object', 'tiangan.ding',
       '--export-knowledge-json', str(target),
     )
     assert result.returncode == 2 and 'overwrite the editing source' in result.stderr
@@ -293,6 +309,6 @@ def test_export_cannot_truncate_editing_source(tmp_path: Path) -> None:
 def test_export_io_error_uses_cli_exit(tmp_path: Path) -> None:
   blocker = tmp_path / 'file'
   blocker.write_text('existing', encoding='utf-8')
-  result = run_cli(tmp_path, '--export-knowledge-json', str(blocker / 'out.json'))
+  result = run_cli(tmp_path, 'knowledge', '--export-knowledge-json', str(blocker / 'out.json'))
   assert result.returncode == 2 and 'error:' in result.stderr
   assert 'Traceback' not in result.stderr and blocker.read_text(encoding='utf-8') == 'existing'

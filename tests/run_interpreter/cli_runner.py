@@ -1,33 +1,61 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-# Shared by the flat-form (no subcommand) run_interpreter tests in this directory: the subprocess runner,
-# the write-guard script runner, the fixed arguments and the preloaded knowledge base.
+# Shared subprocess runners, sample inputs and working-directory preparation.
 # Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
 # `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package
 # (see the NOTE in `tests/calendar/test_celestial_tables.py`).
 
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 
-MATCH_ARGS = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--observation-scope', 'natal')
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / 'run_interpreter.py'
+GUANSHA = 'editorial.guansha_coexistence.v1'
+XINGCHONG = 'editorial.spouse_palace_xingchong.v1'
+BIRTH = ('--birth-time', '2000-01-03 12:00')
+MATCH_BIRTH = ('--birth-time', '2000-01-03 12:00', '--gender', 'female')
+MATCH_ARGS = ('match', GUANSHA, *MATCH_BIRTH, '--observation-scope', 'natal')
 
 
-def run_cli(cwd: Path, *args: str, script: Path | None = None, optimized: bool = False) -> subprocess.CompletedProcess[str]:
+def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error: str) -> None:
+  # argparse reports unknown subcommand options through the top-level parser.
+  usage = '[-h] <任务>' if error == 'unrecognized arguments' else task
+  assert result.returncode == 2 and f'usage: python run_interpreter.py {usage}' in result.stderr
+  assert error in result.stderr.split(': error:', 1)[1]
+  assert 'v2.3.0' not in result.stderr and 'Traceback' not in result.stderr
+
+
+def run_cli(
+  cwd: Path,
+  *args: str,
+  script: Path | None = None,
+  optimized: bool = False,
+  env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
   return subprocess.run(
-    [sys.executable, *(['-O'] if optimized else []), str(Path(__file__).parents[2] / 'run_interpreter.py' if script is None else script), *args],
+    [sys.executable, *(['-O'] if optimized else []), str(SCRIPT if script is None else script), *args],
     cwd=cwd,
     capture_output=True,
     text=True,
     encoding='utf-8',
     timeout=45,
     check=False,
+    env=None if env is None else {**os.environ, **env},
   )
+
+
+def prepare(cwd: Path) -> Path:
+  cwd.mkdir(parents=True, exist_ok=True)
+  shutil.copyfile(DEFAULT_SOURCE_PATH, cwd / 'src.json')
+  return cwd
 
 
 def run_guarded_script(
