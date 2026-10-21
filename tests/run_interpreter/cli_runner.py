@@ -1,6 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-# Shared by the flat-form (no subcommand) run_interpreter tests in this directory: the subprocess runner,
+# Shared by the core run_interpreter tests in this directory: the subprocess runner,
 # the write-guard script runner, the fixed arguments and the preloaded knowledge base.
 # Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
 # `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package
@@ -15,7 +15,16 @@ from bazi.knowledge import KnowledgeBase
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 
-MATCH_ARGS = ('--match-context', 'editorial.guansha_coexistence.v1', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--observation-scope', 'natal')
+MATCH_BIRTH = ('--birth-time', '2000-01-03 12:00', '--gender', 'female')
+MATCH_ARGS = ('match', 'editorial.guansha_coexistence.v1', *MATCH_BIRTH, '--observation-scope', 'natal')
+
+
+def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error: str) -> None:
+  # argparse reports unknown subcommand options through the top-level parser.
+  usage = '[-h] <任务>' if error == 'unrecognized arguments' else task
+  assert result.returncode == 2 and f'usage: python run_interpreter.py {usage}' in result.stderr
+  assert error in result.stderr.split(': error:', 1)[1]
+  assert 'v2.3.0' not in result.stderr and 'Traceback' not in result.stderr
 
 
 def run_cli(cwd: Path, *args: str, script: Path | None = None, optimized: bool = False) -> subprocess.CompletedProcess[str]:

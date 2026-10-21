@@ -110,8 +110,14 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
 `--export-chart-json`（须给 `--birth-time`），`knowledge` 用 `--export-knowledge-json`，`match` 用 `--export-context-json`。
 每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
 
-不带任务名的旧写法（如 `python run_interpreter.py --seed 236`）这一版仍然可用，并在标准错误里提示等价的新命令，
-将来会移除。命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
+v2.3.0 移除不带任务名的旧平铺写法；裸调用只打印帮助，随机命盘用 `chart`。
+例如 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`，
+带筛选的 `--query-knowledge --object tiangan.ding` 改为 `knowledge --object tiangan.ding`，
+`--match-context 判据ID …` 改为 `match 判据ID …`，都接在 `python run_interpreter.py` 后。
+原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
+它们没有跨命令的冲突预检或整体回滚。支持窗口与完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
+
+命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
 JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
 `interpretation_examples/{序号}.txt` 路径上已有的同名文件，其他文件保留。
 

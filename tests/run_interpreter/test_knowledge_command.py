@@ -142,9 +142,8 @@ def test_text_export_cannot_overwrite_source(tmp_path: Path, alias: str) -> None
 @pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
 @pytest.mark.parametrize('args, target', [
   (('knowledge', '--export-knowledge-base'), 'knowledge_base/tiangan/甲.txt'),
-  (('--seed', '1', '--export-knowledge-base'), 'knowledge_base/shishen/正官.txt'),
+  (('knowledge', '--export-knowledge-base'), 'knowledge_base/shishen/正官.txt'),
   (('chart', '--seed', '1'), 'interpretation_examples/0.txt'),
-  (('--seed', '1'), 'interpretation_examples/0.txt'),
 ])
 def test_text_exports_cannot_overwrite_bundled(
   tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
@@ -203,3 +202,18 @@ def test_bad_values_exit_with_an_error(tmp_path: Path) -> None:
   for args in (('--list-values', 'nope'), ('--applicability', 'maybe'), ('--knowledge-source', 'missing.json')):
     result = run(tmp_path, 'knowledge', *args)
     assert result.returncode == 2 and 'error:' in result.stderr and 'Traceback' not in result.stderr
+
+
+@pytest.mark.parametrize('args', [
+  ('--validate-knowledge', '--export-knowledge-base'),
+  ('--validate-knowledge', '--topic', '历史象'),
+  ('--object', 'tiangan.ding'),
+])
+def test_knowledge_tasks_need_no_old_mode_flag(tmp_path: Path, args: tuple[str, ...], monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(run_interpreter, '_DEFAULT_OUTPUT_DIR', tmp_path / 'out')
+  monkeypatch.chdir(tmp_path)
+  assert main(['knowledge', *args]) == 0
+  if '--export-knowledge-base' in args:
+    assert len(list((tmp_path / 'out' / 'knowledge_base').rglob('*.txt'))) == 20
+  else:
+    assert list(tmp_path.iterdir()) == []

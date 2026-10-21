@@ -10,7 +10,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.knowledge import KnowledgeBase, object_id
 
-from flat_runner import KNOWLEDGE_BASE, run_cli
+from cli_runner import KNOWLEDGE_BASE, run_cli, assert_cli_error
 
 
 @pytest.mark.parametrize('include_reference_only', [False, True])
@@ -34,9 +34,10 @@ def test_empty_projection_keeps_chart_counts(monkeypatch: pytest.MonkeyPatch) ->
 
 
 @pytest.mark.parametrize('flag', ['-h', '--help'])
-def test_legacy_help_flag_stays_legacy(tmp_path: Path, flag: str) -> None:
-  result = run_cli(tmp_path, '--seed', '1', flag)
-  assert result.returncode == 0 and '--query-knowledge' in result.stdout and '<任务>' not in result.stdout
+def test_chart_help_with_input_is_read_only(tmp_path: Path, flag: str) -> None:
+  result = run_cli(tmp_path, 'chart', '--seed', '1', flag)
+  assert result.returncode == 0 and '--seed' in result.stdout and '--query-knowledge' not in result.stdout
+  assert list(tmp_path.iterdir()) == []
 
 
 @pytest.fixture
@@ -48,14 +49,14 @@ def terminal_columns(monkeypatch: pytest.MonkeyPatch, columns: str) -> None:
 @pytest.mark.parametrize('columns', ['50', '80'])
 @pytest.mark.parametrize('optimized', [False, True])
 def test_help_is_read_only(tmp_path: Path, columns: str, optimized: bool) -> None:
-  # 单独的 --help 是新顶层帮助；旧路径的帮助在带旧选项时给出，内容不变。
-  help_result = run_cli(tmp_path, '--seed', '1', '--help', optimized=optimized)
+  help_result = run_cli(tmp_path, 'chart', '--seed', '1', '--help', optimized=optimized)
   assert help_result.returncode == 0
   assert '--show-sources' in help_result.stdout
   assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)
-  flat_help = re.sub(r'\s+', '', help_result.stdout)
-  for phrase in ('匹配模式同时展示前提判别或条件参考。', '原局加单流年（婚恋以外的判据）', '婚恋以外的判据为流年'):
-    assert phrase in flat_help
+  match_help = run_cli(tmp_path, 'match', '--help', optimized=optimized)
+  assert match_help.returncode == 0
+  for phrase in ('--observation-scope', '--ganzhi-year', '--transit-entry', '--transit-kinds'):
+    assert phrase in match_help.stdout
   assert list(tmp_path.iterdir()) == []
 
 
@@ -63,8 +64,8 @@ def test_help_is_read_only(tmp_path: Path, columns: str, optimized: bool) -> Non
 @pytest.mark.parametrize('columns', ['50', '80'])
 @pytest.mark.parametrize('optimized', [False, True])
 def test_seeded_default_is_read_only(tmp_path: Path, columns: str, optimized: bool) -> None:
-  first = run_cli(tmp_path, '--seed', '42', optimized=optimized)
-  second = run_cli(tmp_path, '--seed', '42', optimized=optimized)
+  first = run_cli(tmp_path, 'chart', '--seed', '42', optimized=optimized)
+  second = run_cli(tmp_path, 'chart', '--seed', '42', optimized=optimized)
   assert first.returncode == second.returncode == 0
   assert first.stdout == second.stdout
   assert first.stdout.count('出生时间：') == 1
@@ -74,7 +75,7 @@ def test_seeded_default_is_read_only(tmp_path: Path, columns: str, optimized: bo
 
 def test_source_display_keeps_reference_selection(tmp_path: Path) -> None:
   result = run_cli(
-    tmp_path, '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--show-sources',
+    tmp_path, 'chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--show-sources',
   )
   assert result.returncode == 0
   assert '出生时间：2000-01-01, 12:0' in result.stdout
@@ -92,10 +93,10 @@ def test_source_display_keeps_reference_selection(tmp_path: Path) -> None:
 ])
 def test_reference_export_keeps_unverified(tmp_path: Path, chart_args: tuple[str, ...]) -> None:
   result = run_cli(
-    tmp_path,
+    tmp_path, 'chart',
     *chart_args,
     '--include-reference-only', '--show-sources',
-    '--output-dir', str(tmp_path), '--export-knowledge-base',
+    '--output-dir', str(tmp_path),
   )
   assert result.returncode == 0
   assert '来源尚未核实' in result.stdout
@@ -107,6 +108,9 @@ def test_reference_export_keeps_unverified(tmp_path: Path, chart_args: tuple[str
     assert displayed.startswith('random seed: 42\n')
     displayed = displayed.removeprefix('random seed: 42\n')
   assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', displayed).removesuffix('\n')
+  knowledge = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', str(tmp_path),
+                      '--include-reference-only', '--show-sources')
+  assert knowledge.returncode == 0 and knowledge.stdout == '' and knowledge.stderr == ''
   assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
   assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
   ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
@@ -120,7 +124,7 @@ def test_reference_export_keeps_unverified(tmp_path: Path, chart_args: tuple[str
 
 
 def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
+  result = run_cli(tmp_path, 'chart', '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
   assert result.returncode == 0
   assert result.stdout.count('出生时间：') == 2
   assert {p.name for p in (tmp_path / 'interpretation_examples').iterdir()} == {'0.txt', '1.txt'}
@@ -140,9 +144,23 @@ def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
   ('--unknown',),
 ])
 def test_invalid_inputs_export_nothing(tmp_path: Path, args: tuple[str, ...]) -> None:
-  result = run_cli(tmp_path, *args)
+  result = run_cli(tmp_path, 'chart', *args)
   assert result.returncode == 2
-  assert 'error:' in result.stderr
+  assert 'error:' in result.stderr and 'v2.3.0' not in result.stderr
+  if args[0] == '--unknown':
+    assert_cli_error(result, 'chart', 'unrecognized arguments')
+  elif args[0] == '--count' and args[1] != 'invalid':
+    assert '--count must be positive' in result.stderr
+  elif '--seed' in args or '--count' in args:
+    assert 'random input' in result.stderr or 'invalid int value' in result.stderr
+  elif args == ('--gender', 'other'):
+    assert 'invalid choice' in result.stderr
+  elif 'invalid' in args:
+    assert 'Invalid isoformat string' in result.stderr
+  else:
+    assert '--birth-time and --gender must be supplied together' in result.stderr
+  if args[0] != '--unknown':
+    assert 'usage: python run_interpreter.py chart' in result.stderr
   assert not result.stdout
   assert list(tmp_path.iterdir()) == []
 
@@ -172,7 +190,7 @@ def test_reference_claims_get_distinct_lines() -> None:
 
 def test_reference_only_without_source_display(tmp_path: Path) -> None:
   result = run_cli(
-    tmp_path,
+    tmp_path, 'chart',
     '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--include-reference-only',
   )
   assert result.returncode == 0

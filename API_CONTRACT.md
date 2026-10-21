@@ -144,10 +144,25 @@ assert info.entry_role == 'premise'
 assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
 ```
 
+### 源码脚本
+
 发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
 它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values 条件` 对应 `filter_values`，
 `match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
-不带任务名的旧平铺调用这一版仍可用并提示等价的新命令；移除的版本与方式见 [#292](https://github.com/0xf3cd/bazi/issues/292)。
+本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 移除**，不保留到 3.0.0。
+这一支持窗口只适用于源码脚本，不改变上面的 Python API 与记录兼容契约。
+裸调用打印顶层帮助并返回 0；随机命盘须显式选择 `chart`。旧平铺选项报错并指向三个任务的新写法。
+
+| 旧写法（已移除） | 新写法 |
+| --- | --- |
+| `--seed 236` | `chart --seed 236` |
+| `--query-knowledge --object tiangan.ding` | `knowledge --object tiangan.ding` |
+| `--query-knowledge` | `knowledge --all` |
+| `--match-context 判据ID …` | `match 判据ID …` |
+| `--seed 236 --output-dir out --export-knowledge-base` | 先运行 `chart --seed 236 --output-dir out`，再运行 `knowledge --export-knowledge-base --output-dir out` |
+
+表中参数均接在 `python run_interpreter.py` 后。最后一行是两条独立命令，分别检查各自的导出目标，
+不提供跨命令的冲突预检或整体回滚；各任务的 JSON／TXT 输出冲突与知识源覆盖保护仍保留。
 
 ## 三类 JSON 分别保存与恢复
 

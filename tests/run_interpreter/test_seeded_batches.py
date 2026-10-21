@@ -27,7 +27,7 @@ def test_batch_generation_interleaves_rendering(
 
   monkeypatch.setattr(Bazi, 'random', staticmethod(generate))
   monkeypatch.setitem(main.__globals__, '_chart_text', render)
-  assert main(['--seed', '42', '--count', '3']) == 0
+  assert main(['chart', '--seed', '42', '--count', '3']) == 0
   assert events == ['generate', 'render', 'generate', 'render', 'generate', 'render']
   assert capsys.readouterr().out == 'random seed: 42\nchart\nchart\nchart\n'
 
@@ -54,6 +54,6 @@ def test_seed_keeps_birth_draw_order(monkeypatch: pytest.MonkeyPatch, seed: int)
     actual.append(chart.bazi)
     return f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}'
   monkeypatch.setitem(main.__globals__, '_chart_text', render)
-  assert main(['--seed', str(seed), '--count', '2']) == 0
+  assert main(['chart', '--seed', str(seed), '--count', '2']) == 0
   assert actual == expected
   assert random.getstate() == state

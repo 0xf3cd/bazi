@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # command_runner.py
 
-# Shared by the `chart`/`knowledge`/`match` subcommand tests and the legacy-call hint tests in this
+# Shared by the `chart`/`knowledge`/`match` subcommand tests in this
 # directory: the subprocess runner, the sample inputs and the working-directory preparer.
 # Imported as a bare sibling module: the suite has no `__init__.py`, so pytest puts this directory on
 # `sys.path`, and `from tests.<package>...` would be shadowed by a stray installed `tests` package

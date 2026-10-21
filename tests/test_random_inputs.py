@@ -132,10 +132,12 @@ def test_runner_binds_consumers_to_seeded_chart(
   assert all(chart.json == expected for chart in receivers.values())
 
 
-@pytest.mark.parametrize('script', ['run_demo.py', 'run_relationship_analyzer.py', 'run_interpreter.py'])
-def test_runner_auto_seed_is_replayable(tmp_path: Path, script: str) -> None:
+@pytest.mark.parametrize('script,prefix', [
+  ('run_demo.py', ()), ('run_relationship_analyzer.py', ()), ('run_interpreter.py', ('chart',)),
+])
+def test_runner_auto_seed_is_replayable(tmp_path: Path, script: str, prefix: tuple[str, ...]) -> None:
   path = Path(__file__).resolve().parents[1] / script
-  command = [sys.executable, str(path)]
+  command = [sys.executable, str(path), *prefix]
   first = subprocess.run(
     command,
     cwd=tmp_path,

@@ -2,13 +2,12 @@
 
 import argparse
 import json
-import shlex
 import sys
 from random import Random, SystemRandom
 import re
 from collections.abc import Callable, Iterable
-from datetime import date, datetime, timedelta, tzinfo
-from pathlib import Path, PurePath
+from datetime import date, datetime, tzinfo
+from pathlib import Path
 from typing import Final, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -191,17 +190,15 @@ def _export_json(
   print(f'{label}{target}')
 
 
-def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace, *, query: bool) -> int:
   filters = {
     'object_id': args.object_id, 'context_id': args.context_id, 'topic': args.topic,
     'source_id': args.source_id, 'viewpoint': args.viewpoint,
     'applicability': args.applicability, 'time_scope': args.time_scope,
   }
-  if not args.query_knowledge and any(value is not None for value in filters.values()):
-    parser.error('Knowledge filters require --query-knowledge')
   try:
     knowledge = KnowledgeBase.load(args.knowledge_source)
-    selection = knowledge.query(**filters, include_reference_only=args.include_reference_only) if args.query_knowledge else None
+    selection = knowledge.query(**filters, include_reference_only=args.include_reference_only) if query else None
   except (OSError, TypeError, ValueError) as error:
     parser.error(str(error))
   if args.validate_knowledge:
@@ -311,31 +308,22 @@ def _relationship_profile(parser: argparse.ArgumentParser, args: argparse.Namesp
 
 
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if args.birth_time is None or args.gender is None or args.observation_scope is None:
-    parser.error('Matching requires fixed --birth-time, --gender and explicit --observation-scope')
-  if any((args.seed is not None, args.count is not None, args.output_dir is not None, args.export_knowledge_base,
-          args.query_knowledge, args.validate_knowledge, args.export_knowledge_json is not None,
-          args.export_chart_json is not None)) or any(
-    value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
-                                    args.viewpoint, args.applicability, args.time_scope)
-  ):
-    parser.error('Matching cannot be combined with random input, TXT export or knowledge modes/filters')
-  if args.match_context not in _CRITERIA:
-    parser.error(f'Unsupported value: {args.match_context}')
-  if _CRITERIA[args.match_context].profile_kind == 'context' and any((
+  if args.criterion not in _CRITERIA:
+    parser.error(f'Unsupported value: {args.criterion}')
+  if _CRITERIA[args.criterion].profile_kind == 'context' and any((
     args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
     args.solar_moment is not None, args.transit_kinds is not None,
   )):
     parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
   try:
     profile: ContextProfile | RelationshipProfile
-    if _CRITERIA[args.match_context].profile_kind == 'context':
+    if _CRITERIA[args.criterion].profile_kind == 'context':
       profile = ContextProfile(args.observation_scope, args.ganzhi_year)
     else:
       profile = _relationship_profile(parser, args)
     result = evaluate_context(
       _fixed_chart(args),
-      criterion_id=args.match_context,
+      criterion_id=args.criterion,
       profile=profile,
       knowledge=KnowledgeBase.load(args.knowledge_source),
       include_reference_only=args.include_reference_only,
@@ -352,43 +340,6 @@ def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
       '已导出判别记录：',
     )
   return 0
-
-
-def _legacy_parser() -> argparse.ArgumentParser:
-  parser = argparse.ArgumentParser(description='展示命盘、判别显式范围前提，或查询、校验、导出解释知识。')
-  parser.add_argument('--birth-time', help='固定民用时刻；带时区输入须给经度，如 "2024-01-01T12:00:00-05:00"。')
-  parser.add_argument('--gender', choices=('male', 'female'), help='与 --birth-time 一起必填。')
-  parser.add_argument('--longitude', type=float, help='东经为正的角度；须用带时区固定输入及 hour/minute 精度。')
-  parser.add_argument('--precision', choices=('day', 'hour', 'minute'), help='出生精度，默认 day。')
-  parser.add_argument('--civil-timezone', type=_civil_timezone, help='显式出生地区 IANA 时区（Pacific/Kiritimati）或固定偏移（+14:00）；负偏移用 --civil-timezone=-05:00；须给经度。')
-  parser.add_argument('--export-chart-json', type=Path, help='将固定命盘导出为可重载 JSON。')
-  parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
-  parser.add_argument('--count', type=int, help='随机命盘数量，默认 1。')
-  parser.add_argument('--include-reference-only', action='store_true', help='包含参考文字；匹配模式同时展示前提判别或条件参考。')
-  parser.add_argument('--show-sources', action='store_true', help='展示条目 ID、署名及来源见证；知识查询与匹配始终展示。')
-  parser.add_argument('--output-dir', type=Path, help='在此目录下导出已展示命盘。')
-  parser.add_argument('--export-knowledge-base', action='store_true', help='导出全部天干及十神说明文字。')
-  parser.add_argument('--query-knowledge', action='store_true', help='查询知识，不创建命盘。')
-  parser.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
-  parser.add_argument('--export-knowledge-json', type=Path, help='导出可重载知识 JSON；查询时只导出所选条目。')
-  parser.add_argument('--knowledge-source', type=Path, help='为知识查询、校验、导出或前提匹配提供自定义 JSON 源。')
-  parser.add_argument('--object', dest='object_id', help='讨论对象 ID，包含所有绑定角色。')
-  parser.add_argument('--context', dest='context_id', help='人工给定的查阅情境 ID，不表示命盘前提判别。')
-  parser.add_argument('--topic', help='知识主题。')
-  parser.add_argument('--source', dest='source_id', help='来源见证 ID。')
-  parser.add_argument('--viewpoint', help='解释所用观点。')
-  parser.add_argument('--applicability', choices=get_args(Applicability), help='前提整理状态。')
-  parser.add_argument('--time-scope', help='查阅情境所记录的时间范围。')
-  parser.add_argument('--match-context', help='已注册判据 ID；对显式范围内的固定命盘求值。')
-  parser.add_argument('--observation-scope', choices=get_args(ObservationScope) + ('natal_and_transits',), help='显式选择原局或原局加单流年（婚恋以外的判据），或原局加显式选定岁运（婚恋判据）。')
-  parser.add_argument('--ganzhi-year', type=int, help='干支年查询坐标：婚恋以外的判据为流年，婚恋 at_year／at_month 入口为年份。')
-  parser.add_argument('--transit-entry', choices=get_args(TransitEntry), help='婚恋判据的显式岁运查询入口；与坐标字段共同构成查询坐标。')
-  parser.add_argument('--gz-month', type=_gz_month, help='干支月坐标（中文支名），配 at_month 入口与 --ganzhi-year。')
-  parser.add_argument('--solar-date', type=_solar_date, help='东八区无时区公历日期坐标（如 2024-04-10），配 at_date 入口。')
-  parser.add_argument('--solar-moment', type=_solar_moment, help='东八区无时区时刻坐标（如 2024-04-10T12:00:00，可含微秒），配 at_moment 入口；要求 HOUR／MINUTE 原盘，DAY 精度返回 UNKNOWN。')
-  parser.add_argument('--transit-kinds', help='逗号分隔的岁运种类值（xiaoyun,dayun,liunian,liuyue,liuri）；重复或未知值报错，其余按固定序规范化。')
-  parser.add_argument('--export-context-json', type=Path, help='导出匹配记录、证据及完整知识快照。')
-  return parser
 
 
 def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
@@ -408,15 +359,11 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     text_paths: list[Path] = []
     if args.output_dir is not None:
       text_paths.append(args.output_dir / 'interpretation_examples' / '0.txt')
-    if args.export_knowledge_base:
-      text_paths.extend(_knowledge_text_paths(args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR))
     if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
       parser.error('--export-chart-json must not overlap generated TXT outputs')
   text_targets: list[Path] = []
   if args.output_dir is not None and (args.output_dir / 'interpretation_examples').is_dir():
     text_targets.extend((args.output_dir / 'interpretation_examples').glob('*.txt'))
-  if args.export_knowledge_base:
-    text_targets.extend(_knowledge_text_paths(args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR))
   _reject_source_overwrite(parser, text_targets, None)
 
   charts: Iterable[BaziChart]
@@ -456,40 +403,7 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
       except OSError as error:
         parser.error(str(error))
 
-  if args.export_knowledge_base:
-    try:
-      save_knowledge_base(
-        args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR,
-        include_reference_only=args.include_reference_only,
-        show_sources=args.show_sources,
-      )
-    except OSError as error:
-      parser.error(str(error))
-
   return 0
-
-
-def _legacy_dispatch(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-  if args.match_context is not None:
-    return _matching_main(parser, args)
-  if args.observation_scope is not None or args.ganzhi_year is not None or args.export_context_json is not None or any(
-    value is not None for value in (
-      args.transit_entry, args.gz_month, args.solar_date, args.solar_moment, args.transit_kinds,
-    )
-  ):
-    parser.error('Matching inputs require --match-context')
-  if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
-    if any((args.birth_time is not None, args.gender is not None, args.seed is not None, args.count is not None,
-            args.output_dir, args.export_knowledge_base, args.longitude is not None,
-            args.precision is not None, args.civil_timezone is not None, args.export_chart_json is not None)):
-      parser.error('Knowledge mode cannot be combined with chart input or TXT export flags')
-    return _knowledge_main(parser, args)
-  if args.knowledge_source is not None or any(
-    value is not None for value in (args.object_id, args.context_id, args.topic, args.source_id,
-                                    args.viewpoint, args.applicability, args.time_scope)
-  ):
-    parser.error('Knowledge inputs require a knowledge mode flag')
-  return _chart_main(parser, args)
 
 
 _COMMANDS: Final[tuple[str, ...]] = ('chart', 'knowledge', 'match')
@@ -599,13 +513,6 @@ def _command_parser() -> argparse.ArgumentParser:
   return parser
 
 
-def _fill_legacy_defaults(args: argparse.Namespace) -> None:
-  '''补齐新子命令没有提供的旧选项，使共用的核心处理函数读到与旧路径相同的字段。'''
-  for name, value in vars(_legacy_parser().parse_args([])).items():
-    if not hasattr(args, name):
-      setattr(args, name, value)
-
-
 def _knowledge_overview(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   try:
     knowledge = KnowledgeBase.load(args.knowledge_source)
@@ -652,8 +559,7 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
       parser.error('--export-knowledge-json must not overlap generated TXT outputs')
     _reject_source_overwrite(parser, text_paths, args.knowledge_source)
   if query or args.validate_knowledge or args.export_knowledge_json is not None:
-    args.query_knowledge = query
-    _knowledge_main(parser, args)
+    _knowledge_main(parser, args, query=query)
   if args.export_knowledge_base:
     try:
       knowledge = KnowledgeBase.load(args.knowledge_source)
@@ -720,7 +626,6 @@ def _match_command(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
   ) if value is None]
   if missing:
     parser.error(f'missing {" and ".join(missing)}; example: {_MATCH_EXAMPLE}')
-  args.match_context = args.criterion
   return _matching_main(parser, args)
 
 
@@ -731,8 +636,16 @@ def _subcommand_parsers(parser: argparse.ArgumentParser) -> dict[str, argparse.A
 
 def _command_main(tokens: list[str]) -> int:
   parser = _command_parser()
+  if not tokens:
+    parser.print_help()
+    return 0
+  if tokens[0].startswith('-') and tokens not in (['-h'], ['--help']):
+    parser.error(
+      f'不带任务名的旧写法已在 v2.3.0 移除。请改用 {_PROG} chart [选项]、'
+      f'{_PROG} knowledge [查询条件或选项]、{_PROG} match <判据ID> [选项]；'
+      f'用 {_PROG} --help 查看示例。'
+    )
   args = parser.parse_args(tokens)
-  _fill_legacy_defaults(args)
   sub = _subcommand_parsers(parser)[args.command]
   if args.command == 'chart':
     return _chart_main(sub, args)
@@ -741,95 +654,9 @@ def _command_main(tokens: list[str]) -> int:
   return _match_command(sub, args)
 
 
-def _zone_text(zone: tzinfo) -> str:
-  if isinstance(zone, ZoneInfo):
-    return zone.key
-  offset = zone.utcoffset(None) or timedelta(0)
-  seconds = int(offset.total_seconds())
-  sign = '-' if seconds < 0 else '+'
-  hours, rest = divmod(abs(seconds), 3600)
-  minutes, secs = divmod(rest, 60)
-  return f'{sign}{hours:02d}:{minutes:02d}' + (f':{secs:02d}' if secs else '')
-
-
-def _option(flag: str, value: object) -> list[str]:
-  if value is None or value is False:
-    return []
-  if value is True:
-    return [flag]
-  if isinstance(value, tzinfo):
-    return [f'{flag}={_zone_text(value)}']
-  if isinstance(value, (date, datetime)):
-    return [flag, value.isoformat()]
-  if isinstance(value, PurePath):
-    return [flag, value.as_posix()]
-  return [flag, str(value)]
-
-
-def _replacement_commands(args: argparse.Namespace) -> list[str]:
-  '''旧平铺调用对应的新命令；命盘加知识文本导出的旧组合要拆成两条。'''
-  def command(*parts: list[str]) -> str:
-    return ' '.join([_PROG] + [token if token.startswith('--') and '=' in token else shlex.quote(token)
-                               for part in parts for token in part])
-
-  filters = ('object_id', 'context_id', 'topic', 'source_id', 'viewpoint', 'applicability', 'time_scope')
-  flag_of = {'object_id': '--object', 'context_id': '--context', 'source_id': '--source', 'time_scope': '--time-scope'}
-  if args.match_context is not None:
-    return [command(
-      ['match', args.match_context],
-      *(_option(flag, getattr(args, name)) for flag, name in (
-        ('--birth-time', 'birth_time'), ('--gender', 'gender'), ('--observation-scope', 'observation_scope'),
-        ('--ganzhi-year', 'ganzhi_year'), ('--transit-entry', 'transit_entry'), ('--gz-month', 'gz_month'),
-        ('--solar-date', 'solar_date'), ('--solar-moment', 'solar_moment'), ('--transit-kinds', 'transit_kinds'),
-        ('--precision', 'precision'), ('--longitude', 'longitude'), ('--civil-timezone', 'civil_timezone'),
-        ('--include-reference-only', 'include_reference_only'), ('--knowledge-source', 'knowledge_source'),
-        ('--export-context-json', 'export_context_json'),
-      )),
-    )]
-  if args.query_knowledge or args.validate_knowledge or args.export_knowledge_json is not None:
-    has_filter = any(getattr(args, name) is not None for name in filters)
-    return [command(
-      ['knowledge'],
-      ['--all'] if args.query_knowledge and not has_filter else [],
-      *(_option(flag_of.get(name, '--' + name.replace('_', '-')), getattr(args, name)) for name in filters),
-      _option('--include-reference-only', args.include_reference_only),
-      _option('--knowledge-source', args.knowledge_source),
-      _option('--validate-knowledge', args.validate_knowledge),
-      _option('--export-knowledge-json', args.export_knowledge_json),
-    )]
-  commands = [command(
-    ['chart'],
-    *(_option(flag, getattr(args, name)) for flag, name in (
-      ('--birth-time', 'birth_time'), ('--gender', 'gender'), ('--seed', 'seed'), ('--count', 'count'),
-      ('--precision', 'precision'), ('--longitude', 'longitude'), ('--civil-timezone', 'civil_timezone'),
-      ('--include-reference-only', 'include_reference_only'), ('--show-sources', 'show_sources'),
-      ('--output-dir', 'output_dir'), ('--export-chart-json', 'export_chart_json'),
-    )),
-  )]
-  if args.export_knowledge_base:
-    commands.append(command(
-      ['knowledge', '--export-knowledge-base'],
-      _option('--output-dir', args.output_dir),
-      _option('--include-reference-only', args.include_reference_only),
-      _option('--show-sources', args.show_sources),
-    ))
-  return commands
-
-
-def _legacy_main(tokens: list[str]) -> int:
-  parser = _legacy_parser()
-  args = parser.parse_args(tokens)
-  status = _legacy_dispatch(parser, args)
-  # 校验失败经 parser.error 退出，到不了这里；只有成功的旧调用才给迁移提示。
-  print('提示：不带任务名的旧写法将来会移除，请改用：' + ' && '.join(_replacement_commands(args)), file=sys.stderr)
-  return status
-
-
 def main(argv: list[str] | None = None) -> int:
   tokens = sys.argv[1:] if argv is None else list(argv)
-  if (tokens and tokens[0] in _COMMANDS) or tokens in (['-h'], ['--help']):
-    return _command_main(tokens)
-  return _legacy_main(tokens)
+  return _command_main(tokens)
 
 
 if __name__ == '__main__':
