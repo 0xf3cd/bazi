@@ -37,6 +37,13 @@ def _rebuilt_chart() -> BaziChart:
   ))
 
 
+def test_default_inputs_preserve_v200_chart() -> None:
+  current = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male')).json
+  assert current['school']['kongwang_anchor'] == 'DAY'
+  del current['school']['kongwang_anchor'] # type: ignore[misc] # Compare the old shape without deriving defaults from its record.
+  assert current == _records()['chart']
+
+
 def test_v200_chart_requires_explicit_rebuild() -> None:
   records = _records()
   assert records['source_sha'] == 'ddfe16e7c51d695167b09cc4c2f64ba46e7565c3'

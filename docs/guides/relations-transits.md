@@ -22,20 +22,33 @@ from bazi.defines import Ganzhi
 from bazi.school import Anchor, BaziConfig, BaziSchool
 from bazi.transits import TransitSet
 
-chart = BaziChart(Bazi.create(
-    '1984-03-29 12:00', 'male',
+chart = BaziChart(
+  Bazi.create(
+    '1984-03-29 12:00',
+    'male',
     BaziConfig(school=BaziSchool(kongwang_anchor=Anchor.YEAR_AND_DAY)),
-))
+  ),
+)
 analyzer = RelationshipAnalyzer(chart)
 for result in analyzer.at_birth.kongwang:
-    print(result.anchor, str(result.ganzhi), sorted(map(str, result.xunkong)),
-          [(hit.pillar, str(hit.ganzhi)) for hit in result.hits])
+  print(
+    result.anchor,
+    str(result.ganzhi),
+    sorted(map(str, result.xunkong)),
+    [(hit.pillar, str(hit.ganzhi)) for hit in result.hits],
+  )
 
-transits = TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲戌'))
+transits = TransitSet(
+  dayun=Ganzhi.from_str('甲戌'),
+  liunian=Ganzhi.from_str('甲戌'),
+)
 for result in analyzer.transits.kongwang(transits):
-    print(result.anchor, [(hit.kind.value, str(hit.ganzhi)) for hit in result.hits])
+  print(
+    result.anchor,
+    [(hit.kind.value, str(hit.ganzhi)) for hit in result.hits],
+  )
 assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
-    hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
+  hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
 )
 ```
 

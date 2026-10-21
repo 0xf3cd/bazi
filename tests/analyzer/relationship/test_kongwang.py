@@ -122,6 +122,7 @@ def test_detail_results_are_frozen_values() -> None:
   ({'ganzhi': Ganzhi(Tiangan.甲, '戌')}, TypeError), # type: ignore[arg-type]
   ({'origin': 1}, TypeError), ({'pillar': 1}, TypeError), ({'kind': 'dayun'}, TypeError),
   ({'origin': 'unknown'}, ValueError), ({'pillar': None}, ValueError),
+  ({'pillar': 'unknown'}, ValueError),
   ({'kind': TransitKind.DAYUN}, ValueError),
   ({'origin': 'transit'}, ValueError),
   ({'origin': 'transit', 'pillar': None}, ValueError),

@@ -44,7 +44,9 @@ def main() -> int:
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitDatabase, TransitKind, TransitSet
-  from bazi.analyzer.relationship import RelationshipAnalyzer, _REGISTRY, _AnchorKind, spouse_evidence
+  from bazi.analyzer.relationship import (
+    RelationshipAnalyzer, KongwangHit, KongwangResult, _REGISTRY, _AnchorKind, spouse_evidence,
+  )
   from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
@@ -636,6 +638,31 @@ def main() -> int:
       ('xunkong rejects invalid anchor', expected_error, partial(shensha_utils.xunkong, bad_anchor)), # type: ignore[arg-type]
       ('kongwang rejects invalid anchor', expected_error, partial(shensha_utils.kongwang, bad_anchor, Dizhi.戌)), # type: ignore[arg-type]
     ])
+
+  kongwang_anchor = Ganzhi.from_str('甲子')
+  kongwang_target = Ganzhi.from_str('甲戌')
+  kongwang_natal_hit = KongwangHit('natal', 'hour', None, kongwang_target)
+  kongwang_transit_hit = KongwangHit('transit', None, TransitKind.DAYUN, kongwang_target)
+  KongwangResult('day', kongwang_anchor, (kongwang_natal_hit,))
+  KongwangResult('year', kongwang_anchor, (kongwang_transit_hit,))
+  checks.extend([
+    ('KongwangHit wrong Ganzhi type', TypeError,
+     lambda: KongwangHit('natal', 'hour', None, '甲戌')), # type: ignore[arg-type]
+    ('KongwangHit unknown natal pillar', ValueError,
+     lambda: replace(kongwang_natal_hit, pillar='unknown')), # type: ignore[arg-type]
+    ('KongwangHit natal coordinate with transit kind', ValueError,
+     lambda: replace(kongwang_natal_hit, kind=TransitKind.DAYUN)),
+    ('KongwangResult wrong Ganzhi type', TypeError,
+     lambda: KongwangResult('day', '甲子', ())), # type: ignore[arg-type]
+    ('KongwangResult unknown anchor', ValueError,
+     lambda: KongwangResult('month', kongwang_anchor, ())), # type: ignore[arg-type]
+    ('KongwangResult mutable hits', TypeError,
+     lambda: KongwangResult('day', kongwang_anchor, [kongwang_natal_hit])), # type: ignore[arg-type]
+    ('KongwangResult hit outside xunkong', ValueError,
+     lambda: KongwangResult('day', kongwang_anchor, (replace(kongwang_natal_hit, ganzhi=kongwang_anchor),))),
+    ('KongwangResult natal anchor inspects itself', ValueError,
+     lambda: KongwangResult('day', kongwang_anchor, (replace(kongwang_natal_hit, pillar='day'),))),
+  ])
 
   for name, longitude_value in (('integer', 10 ** 10_000), ('fraction', Fraction(10 ** 10_000, 3))):
     for sign in (-1, 1):
