@@ -56,7 +56,7 @@ def test_zaisha_anchor_at_birth_and_transits(
 
 @pytest.fixture
 def repeated_zaisha_chart() -> BaziChart:
-  # 年、日支同为丑，双锚的灾煞都在卯；重复流运支也只返回一个值。
+  # 年、日支同为丑，双锚的灾煞都在卯。
   chart = BaziChart(Bazi.create(
     '1902-01-06 12:00',
     'male',

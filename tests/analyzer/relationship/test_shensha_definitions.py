@@ -146,11 +146,10 @@ def test_yangren_feiren_definitions_independent() -> None:
 def repeated_feiren_analysis() -> RelationshipAnalyzer:
   chart = BaziChart(Bazi.create('1902-09-08 18:00', 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('壬寅', '己酉', '甲午', '癸酉')
-  analysis = RelationshipAnalyzer(chart)
-  return analysis
+  return RelationshipAnalyzer(chart)
 
 
-def test_feiren_deduplicates_transit_branches(repeated_feiren_analysis: RelationshipAnalyzer) -> None:
+def test_feiren_deduplicates_repeated_branches(repeated_feiren_analysis: RelationshipAnalyzer) -> None:
   analysis = repeated_feiren_analysis
   assert analysis.at_birth.shensha['feiren'] == {Dizhi.酉}
   assert analysis.transits.shensha(TransitSet(
@@ -276,7 +275,7 @@ def test_jinyu_year_anchor_can_be_the_only_hit() -> None:
 
 @pytest.fixture
 def repeated_jinyu_chart() -> BaziChart:
-  # 丙年、戊日的金舆均在未；两锚命中同一支时只返回一个位置值。
+  # 丙年、戊日的金舆均在未。
   chart = BaziChart(Bazi.create(
     '1906-07-13 12:00',
     'male',

@@ -46,7 +46,7 @@ def test_month_record_roundtrip(month_record: tuple[ContextResult, dict[str, Any
 
 def test_date_record_roundtrip() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
-  # Direct evaluation of at_date and at_moment coordinates: date queries really work; the DAY-precision moment entry is unavailable.
+  # Evaluate an at_date coordinate and preserve it through record readback.
   at_date = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_date', solar_date=_date_module(2024, 4, 10)),
     (TransitKind.LIUNIAN, TransitKind.LIUYUE, TransitKind.LIURI),
@@ -60,8 +60,7 @@ def test_date_record_roundtrip() -> None:
 
 def test_record_rejects_noncanonical_fields(month_record: tuple[ContextResult, dict[str, Any]]) -> None:
   _, data = month_record
-  # Non-canonical spellings rejected case by case: compact dates, space-separated moments, microsecond
-  # abbreviations, offsets, branch-name readback, unordered kinds, non-negative indexes, bool indexes and bool years.
+  # Reject compact dates, space-separated moments, bool years, and unordered, duplicate or unknown kinds.
   def __mutate(section: str, key: Any, value: Any) -> str:
     mutated = json.loads(json.dumps(data))
     if section == 'profile.coordinate':

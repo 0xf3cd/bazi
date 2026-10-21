@@ -219,8 +219,8 @@ def test_evidence_star_target_follows_peiou_xing() -> None:
 
 @pytest.fixture
 def layer_evidence() -> tuple[BaziChart, RelationshipEvidence]:
-  # 丙 day-master male (2000-01-29T06:00, 己卯丁丑丙戌辛卯): target 辛 is 藏干 in month branch 丑 and day branch
-  # 戌, 明干 in the hour stem; both layers coexist per position; the day pillar's visible slot never shows the target (never the day master).
+  # 丙 day-master male (2000-01-29T06:00, 己卯丁丑丙戌辛卯): target 辛 is 藏干 in month branch 丑 and day branch 戌,
+  # and 明干 in the hour stem. The day pillar's visible stem is not the target.
   chart = BaziChart(Bazi.create(datetime(2000, 1, 29, 6), 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('己卯', '丁丑', '丙戌', '辛卯')
   evidence = spouse_evidence(chart, None)
