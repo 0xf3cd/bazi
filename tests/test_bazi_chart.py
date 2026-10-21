@@ -749,9 +749,15 @@ def test_from_json_roundtrip(gender: BaziGender, dayun_year_rule: DayunYearRule)
     assert restored.json == chart.json
 
 
-@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
-def test_from_json_mapping_order_and_isolation(chart_json: dict[str, Any], wrapper: type) -> None:
+@pytest.fixture
+def json_snapshot(chart_json: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
   expected = copy.deepcopy(chart_json)
+  return chart_json, expected
+
+
+@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
+def test_from_json_accepts_unordered_mappings(json_snapshot: tuple[dict[str, Any], dict[str, Any]], wrapper: type) -> None:
+  chart_json, expected = json_snapshot
 
   def __wrap(value: object) -> object:
     if isinstance(value, Mapping):
@@ -765,6 +771,9 @@ def test_from_json_mapping_order_and_isolation(chart_json: dict[str, Any], wrapp
   assert restored.json == expected
   assert data == expected
 
+
+def test_from_json_detaches_input_mapping(json_snapshot: tuple[dict[str, Any], dict[str, Any]]) -> None:
+  chart_json, expected = json_snapshot
   restored = BaziChart.from_json(chart_json)
   assert chart_json == expected
   chart_json['birth_time'] = '2000-01-01T12:00:00'

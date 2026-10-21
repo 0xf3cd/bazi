@@ -68,7 +68,11 @@ def test_frozendict_repr() -> None:
   assert repr(GanzhiRelationDiscovery({})) == 'GanzhiRelationDiscovery({})'
 
 
-def test_type_errors_name_plain_and_union() -> None:
+@pytest.mark.parametrize('plain, union, message', [
+  ('1', None, r"^Expected int, got <class 'str'>$"),
+  (1, 1, r"^Expected str \| None, got <class 'int'>$"),
+])
+def test_type_errors_name_declared_types(plain: object, union: object, message: str) -> None:
   @dataclass(frozen=True)
   class Sample:
     plain: int
@@ -77,10 +81,8 @@ def test_type_errors_name_plain_and_union() -> None:
     def __post_init__(self) -> None:
       check_declared_types(self)
 
-  with pytest.raises(TypeError, match=r"^Expected int, got <class 'str'>$"):
-    Sample('1', None) # type: ignore[arg-type]
-  with pytest.raises(TypeError, match=r"^Expected str \| None, got <class 'int'>$"):
-    Sample(1, 1) # type: ignore[arg-type]
+  with pytest.raises(TypeError, match=message):
+    Sample(plain, union) # type: ignore[arg-type]
 
 
 def test_pillardata() -> None:

@@ -217,12 +217,18 @@ def test_evidence_star_target_follows_peiou_xing() -> None:
   assert {o.index for combo in yinyang_evidence.star_relations[DizhiRelation.害] for o in combo} == {1, 2, 3}
 
 
-def test_evidence_keeps_layers_and_positions() -> None:
-  # 丙 day-master male (2000-01-29T06:00, 己卯丁丑丙戌辛卯): target 辛 is 藏干 in month branch 丑 and day branch
-  # 戌, 明干 in the hour stem; both layers coexist per position; the day pillar's visible slot never shows the target (never the day master).
+@pytest.fixture
+def layer_evidence() -> tuple[BaziChart, RelationshipEvidence]:
+  # 丙 day-master male (2000-01-29T06:00, 己卯丁丑丙戌辛卯): target 辛 is 藏干 in month branch 丑 and day branch 戌,
+  # and 明干 in the hour stem. The day pillar's visible stem is not the target.
   chart = BaziChart(Bazi.create(datetime(2000, 1, 29, 6), 'male'))
   assert tuple(map(str, chart.bazi.pillars)) == ('己卯', '丁丑', '丙戌', '辛卯')
   evidence = spouse_evidence(chart, None)
+  return chart, evidence
+
+
+def test_evidence_keeps_appearance_positions(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
+  chart, evidence = layer_evidence
   assert [(a.origin, a.pillar, a.kind, str(a.ganzhi), a.layer, a.stem) for a in evidence.appearances] == [
     ('natal', 'month', None, '丁丑', 'hidden', Tiangan.辛),
     ('natal', 'day', None, '丙戌', 'hidden', Tiangan.辛),
@@ -238,6 +244,10 @@ def test_evidence_keeps_layers_and_positions() -> None:
     ('transit', TransitKind.LIUNIAN, '辛酉', 'visible'),
     ('transit', TransitKind.LIUNIAN, '辛酉', 'hidden'),
   ]
+
+
+def test_star_appearance_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
+  _, evidence = layer_evidence
   # Construction checks follow the ChartOccurrence style: visible stem must equal the pillar stem, hidden stem must live in its branch, exclusive coordinates rejected.
   appearance = evidence.appearances[2]
   assert appearance is not None
@@ -255,21 +265,30 @@ def test_evidence_keeps_layers_and_positions() -> None:
   for change in type_changes:
     with pytest.raises(TypeError):
       replace(appearance, **change)
+  assert StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
+  with pytest.raises(ValueError):
+    StarAppearance('transit', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
+
+
+def test_evidence_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
+  _, evidence = layer_evidence
   # RelationshipEvidence's construction-time type gate; scope-style cross-field constraints belong to ContextResult.
+  change: dict[str, Any]
   for change in (
     {'star_target': '辛'}, {'appearances': (object(),)}, {'house_relations': {}},
     {'stem_relations': {}}, {'transits': TransitChart},
   ):
     with pytest.raises(TypeError):
       replace(evidence, **change)
+
+
+def test_evidence_rejects_invalid_inputs(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
+  chart, _ = layer_evidence
   assert spouse_evidence(chart, None).transits is None
   with pytest.raises(TypeError):
     spouse_evidence(chart.bazi, None) # type: ignore[arg-type]
   with pytest.raises(TypeError):
     spouse_evidence(chart, '甲辰') # type: ignore[arg-type]
-  assert StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
-  with pytest.raises(ValueError):
-    StarAppearance('transit', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
 
 
 def test_evidence_day_pillar_is_occurrence() -> None:

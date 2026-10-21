@@ -322,7 +322,7 @@ def _rewrite_eot(tmp_path: Path, samples: tuple[int, ...]) -> Path:
   return path
 
 
-def test_binary_schema_and_frozen_bytes() -> None:
+def test_binary_schema_is_self_consistent() -> None:
   header, samples = _independent_read_eot(EOT_PATH)
   magic, start_ordinal, count, cadence, scale, digest = header
   payload = EOT_PATH.read_bytes()[56:]
@@ -335,6 +335,9 @@ def test_binary_schema_and_frozen_bytes() -> None:
   assert scale == 10
   assert len(samples) == count
   assert hashlib.sha256(payload).digest() == digest
+
+
+def test_binary_bytes_match_frozen_digest() -> None:
   assert hashlib.sha256(EOT_PATH.read_bytes()).hexdigest() == \
          'bfabfb3560969ec54679972f8a942f5ff081833df581746d77f317a5dccb4d89'
 

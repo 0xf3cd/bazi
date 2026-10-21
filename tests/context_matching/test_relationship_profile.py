@@ -33,7 +33,7 @@ from matching_samples import (
 )
 
 
-def test_relationship_registry_and_gates() -> None:
+def test_relationship_claims_have_male_gates() -> None:
   # Claims of all relationship criteria sit in _BINDINGS; the gate table holds exactly the two restricted IDs and is a subset of those claims.
   relationship_claims = {
     claim_id for criterion in _CRITERIA.values()
@@ -44,6 +44,9 @@ def test_relationship_registry_and_gates() -> None:
   assert set(_RELATED_GENDERS) == {RELATED_PALACE, RELATED_TOUGAN}
   assert set(_RELATED_GENDERS) <= relationship_claims
   assert all(gender is _BaziGender.MALE for gender in _RELATED_GENDERS.values())
+
+
+def test_criteria_partition_scope_and_entry_roles() -> None:
   # Two independent axes: profile kind picks the scope and evidence shape, entry role picks how claims attach.
   assert {key for key, value in _CRITERIA.items() if value.profile_kind == 'context'} == {GUANSHA, FEMALE, *CONDITION_CLAIMS}
   assert {key for key, value in _CRITERIA.items() if value.entry_role == 'premise'} == {GUANSHA, FEMALE}

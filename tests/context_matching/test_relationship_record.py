@@ -15,12 +15,18 @@ from bazi.defines import Dizhi as _Dizhi
 from matching_samples import chart, match, PALACE, TOUGAN, RELATED_TOUGAN, rel_match, chart_from
 
 
-def test_record_roundtrip_and_rejections() -> None:
+@pytest.fixture
+def month_record() -> tuple[ContextResult, dict[str, Any]]:
   c = chart_from('2000-01-01 12:00', 'male')
   result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰), (TransitKind.DAYUN, TransitKind.LIUNIAN),
   ), include_reference_only=True)
   data = json.loads(result.export_json())
+  return result, data
+
+
+def test_month_record_roundtrip(month_record: tuple[ContextResult, dict[str, Any]]) -> None:
+  result, data = month_record
   assert data['record_version'] == 4
   assert data['profile'] == {
     'scope': 'natal_and_transits',
@@ -37,7 +43,10 @@ def test_record_roundtrip_and_rejections() -> None:
   assert '范围：natal_and_transits；坐标=at_month；干支年=2024；干支月=辰；' in rendered
   assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]；未取得种类=[]' in rendered
 
-  # Direct evaluation of at_date and at_moment coordinates: date queries really work; the DAY-precision moment entry is unavailable.
+
+def test_date_record_roundtrip() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
+  # Evaluate an at_date coordinate and preserve it through record readback.
   at_date = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_date', solar_date=_date_module(2024, 4, 10)),
     (TransitKind.LIUNIAN, TransitKind.LIUYUE, TransitKind.LIURI),
@@ -48,8 +57,10 @@ def test_record_roundtrip_and_rejections() -> None:
   assert ContextResult.from_json(at_date.export_json()) == at_date
   assert '坐标=at_date；公历日=2024-04-10' in at_date.render()
 
-  # Non-canonical spellings rejected case by case: compact dates, space-separated moments, microsecond
-  # abbreviations, offsets, branch-name readback, unordered kinds, non-negative indexes, bool indexes and bool years.
+
+def test_record_rejects_noncanonical_fields(month_record: tuple[ContextResult, dict[str, Any]]) -> None:
+  _, data = month_record
+  # Reject compact dates, space-separated moments, bool years, and unordered, duplicate or unknown kinds.
   def __mutate(section: str, key: Any, value: Any) -> str:
     mutated = json.loads(json.dumps(data))
     if section == 'profile.coordinate':
@@ -71,6 +82,9 @@ def test_record_roundtrip_and_rejections() -> None:
     with pytest.raises((TypeError, ValueError)):
       ContextResult.from_json(__mutate(section, key, value))
 
+
+def test_year_record_rejects_month_coordinate() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
   # at_year records have mutually exclusive entry fields: injecting an at_month month into an at_year record must be rejected by the coordinate construction.
   year_result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
@@ -80,6 +94,9 @@ def test_record_roundtrip_and_rejections() -> None:
   with pytest.raises(ValueError):
     ContextResult.from_json(json.dumps(year_data))
 
+
+def test_record_rejects_invalid_evidence_indexes(month_record: tuple[ContextResult, dict[str, Any]]) -> None:
+  _, data = month_record
   # Evidence combo indexes: bool and negative values rejected (combo members are {index, ganzhi} records).
   evidence = json.loads(json.dumps(data))
   star_relations = evidence['relationship']['star_relations']

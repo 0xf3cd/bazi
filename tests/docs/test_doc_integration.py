@@ -50,7 +50,7 @@ def test_builder_rejects_noncanonical_labels(monkeypatch, tmp_path, label):
   assert not output.exists()
 
 
-def test_sdist_ships_archive_and_guide():
+def test_sdist_includes_doc_site_inputs():
   assert {
     'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
     '.github/workflows/docs-publish.yml', 'docs/versioning.md',

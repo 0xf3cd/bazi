@@ -25,7 +25,7 @@ def test_solar_time_public_boundary(civil: Any, longitude: Any, error: type[Exce
     apparent_solar_datetime(civil, longitude)
 
 
-def test_none_offset_and_real_longitude() -> None:
+def test_solar_clock_rejects_missing_utc_offset() -> None:
   class MissingOffset(tzinfo):
     def utcoffset(self, dt: datetime | None) -> None:
       return None
@@ -37,6 +37,8 @@ def test_none_offset_and_real_longitude() -> None:
   with pytest.raises(ValueError, match='timezone-aware'):
     apparent_solar_datetime(datetime(2000, 1, 1, tzinfo=MissingOffset()), 0.0)
 
+
+def test_solar_clock_accepts_integer_longitude() -> None:
   instant = datetime(2000, 11, 3, 0, 50, tzinfo=UTC)
   assert apparent_solar_datetime(instant, 0) == apparent_solar_datetime(instant, 0.0)
   assert apparent_solar_datetime(instant, 0) == datetime(2000, 11, 3, 1, 6, 26, 82639)

@@ -94,7 +94,7 @@ def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrec
   assert len({legacy, location}) == len({location, legacy}) == 2
 
 
-def test_leading_corner_and_apparent_birth_window() -> None:
+def test_apparent_birth_at_lower_boundary() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   first = Bazi.create('1901-02-18T12:24:00+23:54', 'male', config, longitude=177.0)
   first_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(first).json)
@@ -105,10 +105,18 @@ def test_leading_corner_and_apparent_birth_window() -> None:
   assert abs((first._clock_datetime - source_apparent).total_seconds()) < 0.16
   assert first.solar_date == date(1901, 2, 19)
   assert first._utils.to_lunar(first.solar_date) == CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+
+
+def test_apparent_birth_at_upper_boundary() -> None:
+  config = BaziConfig(precision=BaziPrecision.MINUTE)
   last = Bazi.create('2100-01-01T12:00:00+00:00', 'male', config, longitude=-180.0)
   assert last.solar_date == date(2099, 12, 31)
   assert last._utils.to_date(last._utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
   assert str(last.month_jies[1].jieqi) == '小寒'
+
+
+def test_apparent_birth_rejects_outside_window() -> None:
+  config = BaziConfig(precision=BaziPrecision.MINUTE)
   for civil, longitude in (
     ('1901-02-18T12:24:00+23:54', 176.0),
     ('2100-01-01T12:10:00+00:00', -180.0),
