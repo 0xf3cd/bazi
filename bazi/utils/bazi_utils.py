@@ -96,6 +96,7 @@ def taiyuan(month_pillar: Ganzhi) -> Ganzhi:
 
   Return: (Ganzhi) 胎元干支，不加入原盘四柱。
   '''
+
   if not isinstance(month_pillar, Ganzhi):
     raise TypeError(f'Expected Ganzhi, got {type(month_pillar)}')
   if not isinstance(month_pillar.tiangan, Tiangan):
@@ -119,6 +120,7 @@ def minggong(year_tiangan: Tiangan, month_dizhi: Dizhi, hour_dizhi: Dizhi) -> Ga
 
   Return: (Ganzhi) 命宫干支，不加入原盘四柱。
   '''
+
   if not isinstance(year_tiangan, Tiangan):
     raise TypeError(f'Expected Tiangan, got {type(year_tiangan)}')
   if not isinstance(month_dizhi, Dizhi):

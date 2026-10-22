@@ -969,10 +969,28 @@ def test_auxiliary_queries_stay_reference_only() -> None:
   assert KnowledgeBase.from_json(k.export_json()) == k
 
 
+@pytest.mark.parametrize('claim_id,sources', [
+  ('concept.minggong.palm', ('sanming_tonghui.minggong', 'youyilu.taiyuan_minggong')),
+  ('concept.taiyuan.month_shift', ('youyilu.taiyuan_minggong', 'sanming_tonghui.taiyuan')),
+])
+def test_auxiliary_default_needs_independence(claim_id: str, sources: tuple[str, ...]) -> None:
+  k = KNOWLEDGE_BASE
+  entry = k.entry(claim_id)
+  assert entry.sources == sources
+  assert entry.applicability == 'unconditional' and entry.source_state == 'witnessed'
+  promoted = replace(entry, output='default')
+  with pytest.raises(ValueError, match=f'^Default entry needs independent lineages: {claim_id}$'):
+    KnowledgeBase(
+      tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()),
+      tuple(promoted if value.claim_id == claim_id else value for value in k.entries.values()),
+    )
+  assert entry.output == 'reference_only' and len(k.query()) == 19
+
+
 def test_auxiliary_source_support_is_separated() -> None:
   k = KNOWLEDGE_BASE
   expected = {
-    'youyilu.taiyuan_minggong': ('baiwen', 'youyilu', '生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。'),
+    'youyilu.taiyuan_minggong': ('baiwen', 'sanming_tonghui', '生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。'),
     'sanming_tonghui.taiyuan': ('baiwen', 'sanming_tonghui', '惟有一法以當生前三百日為十月之氣乃是受胎之正'),
     'sanming_tonghui.minggong': ('baiwen', 'sanming_tonghui', '次将所生之時加於所生之月順行十二位逢卯即安命宫'),
     'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人谓交过中气，即作次月推'),
@@ -983,8 +1001,23 @@ def test_auxiliary_source_support_is_separated() -> None:
     assert any(excerpt in entry.text for entry in k.query(source_id=identifier, include_reference_only=True))
     assert '转录' in source.edition + source.attribution and source.limitations
   assert '然則貴人受胎定在三百日又豈可據乎' in k.sources['sanming_tonghui.taiyuan'].limitations
+  critique = '今人多以法取胎元未審精當'
+  source = k.sources['sanming_tonghui.taiyuan']
+  assert critique in source.supports
+  assert '一巳' in source.limitations and '前十日' in source.limitations
+  shifted = k.entry('concept.taiyuan.month_shift')
+  assert critique in ''.join(shifted.limits)
+  assert '不等于该书赞同' in ''.join(shifted.limits)
+  grouped = k.sources['youyilu.taiyuan_minggong']
+  assert '独立性未核' in grouped.limitations and '保守' in grouped.limitations
+  assert '不是已证直接承袭' in grouped.limitations
   assert '未明确' in k.sources['sanming_tonghui.minggong'].limitations
   assert '按语' in k.sources['mingli_tanyuan.minggong'].limitations
+  locator = k.sources['mingli_tanyuan.minggong'].locator
+  assert '下载页题名作《命理探源》' in locator and '本库沿称《命理探原》' in locator
+  assert '立春' not in k.entry('concept.minggong.zhongqi').text
+  candidate = ''.join(k.entry('concept.taiyuan.three_hundred_days').limits)
+  assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末质疑', '核截取／转录范围，再查底本'))
   policy = k.sources['repository.taiyuan_minggong']
   assert policy.state == 'repository_attributed' and policy.text_layer == 'editorial'
 
