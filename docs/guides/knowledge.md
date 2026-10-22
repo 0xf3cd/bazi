@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-32 10 18 305
+34 10 23 312
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变快照。
@@ -104,6 +104,44 @@ ValueError Unknown object_id: tiangan.dingg
 - **默认与参考。** 默认只返回 `output='default'` 的条目；加 `include_reference_only=True` 才包含仅供参考的条目。丁一共 8 条，默认只有 1 条。
 - **合法值不保证有结果。** `shensha.guoyin` 是合法对象，默认查询却为空，加上参考条目才有 2 条。可用的过滤值由 `filter_values(维度)` 列出。
 - **未知值与无匹配不同。** 值不在 `filter_values` 里会抛 `ValueError`；值合法但没有交集，只返回空元组。
+
+## 胎元与命宫：已实现取法和待核候选
+
+`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，默认输出仍为 19 条。
+计算用法见 {doc}`integration`；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。
+
+```{testcode} auxiliary-knowledge
+from bazi.knowledge import KnowledgeBase
+
+kb = KnowledgeBase.load()
+for identifier in ('concept.taiyuan', 'concept.minggong'):
+  entries = kb.query(object_id=identifier, include_reference_only=True)
+  print(identifier, len(kb.query(object_id=identifier)), len(entries))
+  print([e.viewpoint for e in entries if e.applicability == 'unresolved'])
+```
+
+```{testoutput} auxiliary-knowledge
+concept.taiyuan 0 3
+['三百日候选待核']
+concept.minggong 0 4
+['其他月界候选待核']
+```
+
+每个对象后面的两个数字依次是默认查询条数、包含参考条目的查询条数。
+
+《游艺录》卷四直接转录支持胎元月干进一、月支进三；《三命通会》掌诀段支持命宫定支与年干配宫干，
+未明说月界。《三命通会》胎元同段的甲寅／乙巳例与本库月柱顺移在该例结果相同，原段也质疑该取法是否精当；
+见证取法存在不等于该书赞同取法。
+中气进月及丙午年大寒例仍按丙午年配干，来自《命理探原》起例按语；下载页题名作《命理探源》，本库沿称《命理探原》。
+所核为固定或下载转录，未逐页校勘影印；后书转引前书不多算一份独立谱系。
+《游艺录》与《三命通会》命宫掌诀措辞近同，独立性未核，来源暂同组，保守不多算一条独立见证；这不表示已证直接承袭。
+本库的立春年界、精度、时区及地点钟政策另记为仓内约定，不与原例的支持范围混用。
+
+三百日胎元未编码。四库固定转录在「惟有一法」前保留了对通行取法的批评，段末另有质疑；
+老资料网网页选录没有这两部分，且写作「唯有一法」。继续核定时先核对选录截取与转录范围，再查底本；
+不把所见差异称为已校底本差异。随后核全段及例解、起算、月柱历法、边界、地点钟与支持窗口。
+其他命宫月界也未编码，须反查明确系统归属、月界和跨界例解，说明闰月、跨年及年干归属，
+再由作者批准可选变体；不能把“未言月界”当成某一月界的证据，也不据此判其他读法错误或不存在。
 
 ## 字面关键词搜索
 
@@ -209,13 +247,13 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 ```{testoutput} states
 ('default', 'witnessed') 19
 ('reference_only', 'editorial') 22
-('reference_only', 'repository_attributed') 5
+('reference_only', 'repository_attributed') 8
 ('reference_only', 'unverified') 245
-('reference_only', 'witnessed') 14
-[('unresolved', 262), ('unconditional', 31), ('described', 12)]
+('reference_only', 'witnessed') 18
+[('unresolved', 264), ('unconditional', 36), ('described', 12)]
 ```
 
-`witnessed` 条目有 33 条，其中 14 条仍是 `reference_only`，所以 `witnessed` 不单独推出默认输出。成为 `default` 要同时满足四个条件：
+`witnessed` 条目有 37 条，其中 18 条仍是 `reference_only`，所以 `witnessed` 不单独推出默认输出。成为 `default` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -284,14 +322,14 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} export
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-1 8 32 18
+1 8 34 23
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
 True
-8 32
+8 34
 True
 ```
 
-导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（32 个对象、18 个来源），所以所选条目的引用不会断。
+导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（34 个对象、23 个来源），所以所选条目的引用不会断。
 
 `from_json` 与 `load(Path(...))` 走同一套校验。省略 `export_json` 的参数则导出全部条目，包括仅供参考的条目。
 

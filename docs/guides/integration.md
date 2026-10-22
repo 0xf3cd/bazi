@@ -54,6 +54,40 @@ print(next(line for line in text.splitlines() if line.startswith('日：')))
 
 源码里的 `run_demo.py` 就是用终端颜色码实现这两个钩子的；传给钩子的永远是单个字形，不是整段文字。
 
+## 四柱之外：胎元与命宫
+
+这两个属性返回 `Ganzhi`，首次访问后缓存；四柱仍只有年、月、日、时，不增加柱位。
+
+```{testcode} integration-auxiliary
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+
+chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+record = chart.json
+print(chart.taiyuan)
+print(chart.minggong)
+print(len(chart.bazi.pillars), chart.json == record)
+```
+
+```{testoutput} integration-auxiliary
+丁卯
+甲戌
+4 True
+```
+
+胎元取月干顺移一、月支顺移三，只作符号派生，不倒推实际受孕时间。
+命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
+时支取本盘时柱：DAY 仍使用输入小时，地点盘取真太阳钟，换日设置（`day_rollover`）不改时支。
+中气归属沿用本盘精度：DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点，相等归新；
+地点盘先把中气转换到与出生相同的真太阳钟。HKO 仍仅支持 DAY。
+
+这两项不进入现有五行、十神、神煞、关系或流运分析，也不进入盘身份、`school`、JSON 或旧文本输出。
+低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；
+后者需要已调整的有效命宫月支，不接收裸整数月序。来源与其他读法候选可查知识对象
+`concept.taiyuan`、`concept.minggong`，均须显式包含参考条目，不自动认定解释成立。
+
 ## 三类记录，三种恢复
 
 | 记录 | 导出 | 恢复 | 版本 |

@@ -21,6 +21,7 @@ from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
 
 from matching_samples import GUANSHA, FEMALE, LEGAL
+from knowledge_additions import AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS
 
 
 DIRECTORY_BASELINE: dict[str, Any] = json.loads(
@@ -131,12 +132,13 @@ def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
   # Compare the old record fingerprint without changing its fixture or accepting the old input format.
   assert record_data['input']['config']['school'].pop('kongwang_anchor') == 'DAY'
   for registry, identifier, added in (
-    ('objects', 'object_id', {'shensha.kongwang'}),
+    ('objects', 'object_id', {'shensha.kongwang', *AUXILIARY_OBJECT_IDS}),
     ('sources', 'source_id', {
       'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
       'wuxing_jingji.kongwang', 'repository.kongwang',
+      *AUXILIARY_SOURCE_IDS,
     }),
-    ('entries', 'claim_id', {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository'}),
+    ('entries', 'claim_id', {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository', *AUXILIARY_ENTRY_IDS}),
   ):
     record_data['knowledge'][registry] = [row for row in record_data['knowledge'][registry] if row[identifier] not in added]
   old_text = json.dumps(record_data, ensure_ascii=False, indent=2) + '\n'

@@ -830,6 +830,39 @@ def main() -> int:
     ('Premise record rejects condition references', ValueError, partial(replace, positive, related=condition.related)),
     ('Condition record rejects premise matches', ValueError, partial(replace, condition, entries=positive.entries[:1])),
   ])
+  def auxiliary_type_error(thunk: Callable[[], object], name: str, value: object) -> object:
+    # Verify the canonical first failure even when Python strips every assert.
+    try:
+      return thunk()
+    except TypeError as error:
+      if str(error) != f'Expected {name}, got {type(value)}':
+        raise RuntimeError(f'Unexpected auxiliary type message: {error}') from error
+      raise
+
+  auxiliary_bad: object
+  for auxiliary_bad in ('子', 0, 13, None, [], True):
+    for name, operation in (
+      ('Ganzhi', partial(bazi_utils.taiyuan, auxiliary_bad)), # type: ignore[arg-type]
+      ('Tiangan', partial(bazi_utils.taiyuan, Ganzhi(auxiliary_bad, Dizhi.子))), # type: ignore[arg-type]
+      ('Dizhi', partial(bazi_utils.taiyuan, Ganzhi(Tiangan.甲, auxiliary_bad))), # type: ignore[arg-type]
+      ('Tiangan', partial(bazi_utils.minggong, auxiliary_bad, Dizhi.寅, Dizhi.子)), # type: ignore[arg-type]
+      ('Dizhi', partial(bazi_utils.minggong, Tiangan.甲, auxiliary_bad, Dizhi.子)), # type: ignore[arg-type]
+      ('Dizhi', partial(bazi_utils.minggong, Tiangan.甲, Dizhi.寅, auxiliary_bad)), # type: ignore[arg-type]
+    ):
+      checks.append((f'Auxiliary {name} rejects {auxiliary_bad!r}: {operation}', TypeError,
+                     partial(auxiliary_type_error, operation, name, auxiliary_bad)))
+  for tg in Tiangan:
+    for dz in Dizhi:
+      if tg.index % 2 != dz.index % 2:
+        checks.append((f'Taiyuan rejects {tg}{dz}', ValueError, partial(bazi_utils.taiyuan, Ganzhi(tg, dz))))
+  if bazi_utils.taiyuan(Ganzhi.from_str('己巳')) != Ganzhi.from_str('庚申'):
+    failures.append('Optimized 胎元 example failed')
+  if bazi_utils.minggong(Tiangan.甲, Dizhi.辰, Dizhi.戌) != Ganzhi.from_str('丁卯'):
+    failures.append('Optimized 命宫 example failed')
+  _ = chart.taiyuan, chart.minggong
+  if chart.json != chart_json or len(chart.bazi.pillars) != 4:
+    failures.append('Optimized auxiliary query changed the natal chart')
+
   for label, expected, thunk in checks:
     try:
       thunk()

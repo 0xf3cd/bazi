@@ -121,6 +121,84 @@ def test_month_tiangan_negative() -> None:
     bazi_utils.month_tiangan(Tiangan.甲, '寅') # type: ignore
 
 
+def test_taiyuan_covers_sixty_months() -> None:
+  count = 0
+  for tg, dz in itertools.product(Tiangan, Dizhi):
+    month = Ganzhi(tg, dz)
+    if tg.index % 2 != dz.index % 2:
+      with pytest.raises(ValueError):
+        bazi_utils.taiyuan(month)
+    else:
+      expected = Ganzhi(Tiangan.from_index((tg.index + 1) % 10), Dizhi.from_index((dz.index + 3) % 12))
+      assert bazi_utils.taiyuan(month) == expected
+      count += 1
+  assert count == 60
+
+
+@pytest.mark.parametrize('month,expected', [('己巳', '庚申'), ('壬午', '癸酉')])
+def test_taiyuan_youyilu_examples(month: str, expected: str) -> None:
+  assert bazi_utils.taiyuan(Ganzhi.from_str(month)) == Ganzhi.from_str(expected)
+
+
+@pytest.mark.parametrize('bad', ['甲', 1, None, [], True])
+def test_taiyuan_type_checks_precede_step(bad: object) -> None:
+  with pytest.raises(TypeError) as error:
+    bazi_utils.taiyuan(bad) # type: ignore[arg-type]
+  assert str(error.value) == f'Expected Ganzhi, got {type(bad)}'
+  for month, name in (
+    (Ganzhi(bad, Dizhi.子), 'Tiangan'), # type: ignore[arg-type]
+    (Ganzhi(Tiangan.甲, bad), 'Dizhi'), # type: ignore[arg-type]
+  ):
+    with pytest.raises(TypeError) as error:
+      bazi_utils.taiyuan(month)
+    assert str(error.value) == f'Expected {name}, got {type(bad)}'
+
+
+def test_minggong_all_enum_combinations() -> None:
+  # Walk the palm independently: count months backward from 子, then hours forward until 卯.
+  stems = {
+    Tiangan.甲: '丙丁戊己庚辛壬癸甲乙丙丁', Tiangan.己: '丙丁戊己庚辛壬癸甲乙丙丁',
+    Tiangan.乙: '戊己庚辛壬癸甲乙丙丁戊己', Tiangan.庚: '戊己庚辛壬癸甲乙丙丁戊己',
+    Tiangan.丙: '庚辛壬癸甲乙丙丁戊己庚辛', Tiangan.辛: '庚辛壬癸甲乙丙丁戊己庚辛',
+    Tiangan.丁: '壬癸甲乙丙丁戊己庚辛壬癸', Tiangan.壬: '壬癸甲乙丙丁戊己庚辛壬癸',
+    Tiangan.戊: '甲乙丙丁戊己庚辛壬癸甲乙', Tiangan.癸: '甲乙丙丁戊己庚辛壬癸甲乙',
+  }
+  branches = list(Dizhi)
+  for year, month, hour in itertools.product(Tiangan, _GANZHI_MONTH_DIZHIS, Dizhi):
+    position = 0
+    for _ in _GANZHI_MONTH_DIZHIS[:_GANZHI_MONTH_DIZHIS.index(month)]:
+      position = (position - 1) % 12
+    current = hour.index
+    while branches[current] is not Dizhi.卯:
+      position = (position + 1) % 12
+      current = (current + 1) % 12
+    palace = branches[position]
+    expected = Ganzhi(Tiangan(stems[year][_GANZHI_MONTH_DIZHIS.index(palace)]), palace)
+    assert bazi_utils.minggong(year, month, hour) == expected
+    assert expected in Ganzhi.list_sexagenary_cycle()
+
+
+@pytest.mark.parametrize('year,month,hour,expected', [
+  (Tiangan.甲, Dizhi.辰, Dizhi.戌, '丁卯'), # 三命通会: third month, 戌 hour.
+  (Tiangan.甲, Dizhi.辰, Dizhi.酉, '戊辰'), # 游艺录: third month, 酉 hour.
+  (Tiangan.丙, Dizhi.寅, Dizhi.申, '乙未'), # 命理探原: after 大寒, effective first month.
+])
+def test_minggong_transcribed_examples(year: Tiangan, month: Dizhi, hour: Dizhi, expected: str) -> None:
+  assert bazi_utils.minggong(year, month, hour) == Ganzhi.from_str(expected)
+
+
+@pytest.mark.parametrize('bad', ['子', 0, 13, None, [], True])
+def test_minggong_checks_each_parameter(bad: object) -> None:
+  for args, name in (
+    ((bad, Dizhi.寅, Dizhi.子), 'Tiangan'),
+    ((Tiangan.甲, bad, Dizhi.子), 'Dizhi'),
+    ((Tiangan.甲, Dizhi.寅, bad), 'Dizhi'),
+  ):
+    with pytest.raises(TypeError) as error:
+      bazi_utils.minggong(*args)
+    assert str(error.value) == f'Expected {name}, got {type(bad)}'
+
+
 def test_hour_tiangan() -> None:
   # 五鼠遁口诀(日上起时):甲己还加甲,乙庚丙作初,丙辛从戊起,丁壬庚子居,戊癸壬子求。
   # Hand transcription of the mnemonic (an oracle independent of any table in this repo):

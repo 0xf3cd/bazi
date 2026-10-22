@@ -13,6 +13,8 @@ from bazi.knowledge import (
   LegacyDescription, KnowledgeContext, object_id,
 )
 
+from knowledge_additions import AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS
+
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
 LEDGER: dict[str, Any] = json.loads(
@@ -265,7 +267,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
   assert set(_ids(KNOWLEDGE_BASE.query())) == {
     row['claim']['claim_id'] for row in baseline['rows'] if row['claim']['output'] == 'default'
   }
-  assert len(KNOWLEDGE_BASE.entries) == 305
+  assert len(KNOWLEDGE_BASE.entries) == 312
 
 
 def test_attribution_allowance_matches_entries() -> None:
@@ -383,7 +385,7 @@ def test_premises_organized_without_new_rules() -> None:
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:
       assert entry.output == 'reference_only'
-      if entry.claim_id in new_relationship_ids | {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup'}:
+      if entry.claim_id in new_relationship_ids | {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS}:
         # Entries in new_relationship_ids have source_state 'witnessed' (古籍见证).
         assert entry.source_state == 'witnessed'
       else:
@@ -806,7 +808,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 
 def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
-  assert len(k.entries) == 305 and len(k.sources) == 18 and len(k.contexts) == 10 and len(k.objects) == 32
+  assert len(k.entries) == 312 and len(k.sources) == 23 and len(k.contexts) == 10 and len(k.objects) == 34
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
@@ -905,6 +907,7 @@ def test_non_legacy_entries_fingerprint() -> None:
   for entry in KNOWLEDGE_BASE.entries.values():
     if entry.legacy is not None or entry.claim_id in {
       'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository',
+      *AUXILIARY_ENTRY_IDS,
     }:
       continue
     row = asdict(entry)
@@ -929,6 +932,7 @@ def test_non_oracle_sources_fingerprint() -> None:
     if source_id in oracle or source_id in {
       'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
       'wuxing_jingji.kongwang', 'repository.kongwang',
+      *AUXILIARY_SOURCE_IDS,
     }:
       continue
     row = asdict(source)
@@ -940,6 +944,82 @@ def test_non_oracle_sources_fingerprint() -> None:
     json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
   ).hexdigest()
   assert digest == '41c021df77ea786cd5e5e0524fb56d5f568d4713b915860451c8c752f7373ab2'
+
+
+def test_auxiliary_queries_stay_reference_only() -> None:
+  k = KNOWLEDGE_BASE
+  for identifier in ('concept.taiyuan', 'concept.minggong'):
+    assert k.objects[identifier].kind == 'concept'
+    assert k.query(object_id=identifier) == ()
+    selected = k.query(object_id=identifier, include_reference_only=True)
+    assert selected and all(entry.claim_id in AUXILIARY_ENTRY_IDS for entry in selected)
+    assert all({role.object_id for role in entry.roles} == {identifier} for entry in selected)
+  for identifier in AUXILIARY_ENTRY_IDS:
+    entry = k.entry(identifier)
+    assert entry.output == 'reference_only' and entry.legacy is None
+    assert entry.contexts == () and entry.relations == () and entry.limits
+    assert entry.source_state == ('witnessed' if identifier in AUXILIARY_WITNESSED_IDS else 'repository_attributed')
+    assert all(k.sources[source].state == entry.source_state for source in entry.sources)
+    if identifier in ('concept.taiyuan.three_hundred_days', 'concept.minggong.month_boundary_candidates'):
+      assert entry.applicability == 'unresolved' and entry.premise == ''
+      assert '未编码' in ''.join(entry.limits)
+    else:
+      assert entry.applicability == 'unconditional' and entry.premise == ''
+  assert len(k.query()) == 19
+  assert KnowledgeBase.from_json(k.export_json()) == k
+
+
+@pytest.mark.parametrize('claim_id,sources', [
+  ('concept.minggong.palm', ('sanming_tonghui.minggong', 'youyilu.taiyuan_minggong')),
+  ('concept.taiyuan.month_shift', ('youyilu.taiyuan_minggong', 'sanming_tonghui.taiyuan')),
+])
+def test_auxiliary_default_needs_independence(claim_id: str, sources: tuple[str, ...]) -> None:
+  k = KNOWLEDGE_BASE
+  entry = k.entry(claim_id)
+  assert entry.sources == sources
+  assert entry.applicability == 'unconditional' and entry.source_state == 'witnessed'
+  promoted = replace(entry, output='default')
+  with pytest.raises(ValueError, match=f'^Default entry needs independent lineages: {claim_id}$'):
+    KnowledgeBase(
+      tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()),
+      tuple(promoted if value.claim_id == claim_id else value for value in k.entries.values()),
+    )
+  assert entry.output == 'reference_only' and len(k.query()) == 19
+
+
+def test_auxiliary_source_support_is_separated() -> None:
+  k = KNOWLEDGE_BASE
+  expected = {
+    'youyilu.taiyuan_minggong': ('baiwen', 'sanming_tonghui', '生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。'),
+    'sanming_tonghui.taiyuan': ('baiwen', 'sanming_tonghui', '惟有一法以當生前三百日為十月之氣乃是受胎之正'),
+    'sanming_tonghui.minggong': ('baiwen', 'sanming_tonghui', '次将所生之時加於所生之月順行十二位逢卯即安命宫'),
+    'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人谓交过中气，即作次月推'),
+  }
+  for identifier, (layer, lineage, excerpt) in expected.items():
+    source = k.sources[identifier]
+    assert (source.text_layer, source.lineage, source.excerpt, source.state) == (layer, lineage, excerpt, 'witnessed')
+    assert any(excerpt in entry.text for entry in k.query(source_id=identifier, include_reference_only=True))
+    assert '转录' in source.edition + source.attribution and source.limitations
+  assert '然則貴人受胎定在三百日又豈可據乎' in k.sources['sanming_tonghui.taiyuan'].limitations
+  critique = '今人多以法取胎元未審精當'
+  source = k.sources['sanming_tonghui.taiyuan']
+  assert critique in source.supports
+  assert '一巳' in source.limitations and '前十日' in source.limitations
+  shifted = k.entry('concept.taiyuan.month_shift')
+  assert critique in ''.join(shifted.limits)
+  assert '不等于该书赞同' in ''.join(shifted.limits)
+  grouped = k.sources['youyilu.taiyuan_minggong']
+  assert '独立性未核' in grouped.limitations and '保守' in grouped.limitations
+  assert '不是已证直接承袭' in grouped.limitations
+  assert '未明确' in k.sources['sanming_tonghui.minggong'].limitations
+  assert '按语' in k.sources['mingli_tanyuan.minggong'].limitations
+  locator = k.sources['mingli_tanyuan.minggong'].locator
+  assert '下载页题名作《命理探源》' in locator and '本库沿称《命理探原》' in locator
+  assert '立春' not in k.entry('concept.minggong.zhongqi').text
+  candidate = ''.join(k.entry('concept.taiyuan.three_hundred_days').limits)
+  assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末另有质疑', '先核对选录截取与转录范围，再查底本'))
+  policy = k.sources['repository.taiyuan_minggong']
+  assert policy.state == 'repository_attributed' and policy.text_layer == 'editorial'
 
 
 def test_kongwang_additions_are_reference_only() -> None:

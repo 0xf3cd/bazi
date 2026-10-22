@@ -97,7 +97,7 @@ def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   - HOUR 截到时辰起点（23、1、3、…、21 点），保留完整日期时刻。子时跨午夜，
     当日 23:30 应排在亥时之后，不能用日内时辰序号比较。
   - MINUTE 去掉秒及更细部分。
-  - 此处不支持 DAY；DAY 经 `to_ganzhi` 按日期比较。
+  - 此处不支持 DAY；DAY 由调用方按日期处理。
 
   Args:
   - dt: (datetime) 待截断时刻。
@@ -229,13 +229,7 @@ class Bazi:
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
 
-      attribution_birth: datetime = birth_moment
-      attribution_jie: datetime = next_j.moment
-      if location is not None:
-        attribution_birth = self._clock_datetime
-        attribution_jie = location.apparent(next_j.moment.replace(tzinfo=_UTC8))
-
-      if _truncated(attribution_birth, self._config.precision) >= _truncated(attribution_jie, self._config.precision):
+      if self._attribution_reached(next_j.moment):
         month_jies = (next_j, utils.next_jie(next_j.moment))
       else:
         month_jies = (prev_j, next_j)
@@ -263,6 +257,23 @@ class Bazi:
 
     # 时柱地支。
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._clock_datetime.hour + 1) // 2 % 12)
+
+  def _attribution_reached(self, boundary: datetime) -> bool:
+    '''按本盘精度判断是否达到 naive UTC+8 边界，相等归新。
+
+    DAY 仅比日期；地点盘先把边界换到与出生相同的真太阳钟，再按时辰／分钟截断。
+    出生节界与命宫中气共用此归属政策，不改变原始节气时刻。
+    '''
+    assert isinstance(boundary, datetime)
+    assert boundary.tzinfo is None
+    if self._config.precision is BaziPrecision.DAY:
+      return self._clock_datetime.date() >= boundary.date()
+    attribution_boundary: datetime = boundary
+    if self._location is not None:
+      attribution_boundary = self._location.apparent(boundary.replace(tzinfo=_UTC8))
+    return _truncated(self._clock_datetime, self._config.precision) >= _truncated(
+      attribution_boundary, self._config.precision,
+    )
 
   @staticmethod
   def __parse_bazi_args(
