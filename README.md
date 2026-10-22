@@ -177,7 +177,7 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
 | 选项 | 适用任务 | 作用 |
 | --- | --- | --- |
 | `--include-reference-only` | 三个任务 | 同时显示仅供参考的条目 |
-| `--show-sources` | `chart`、`knowledge` 的文本导出 | 显示来源 |
+| `--show-sources` | `chart` 展示；`knowledge` 文本导出 | 显示来源 |
 | `--export-chart-json` | `chart` | 导出可恢复的命盘 JSON，须给 `--birth-time` |
 | `--export-knowledge-json` | `knowledge` | 导出可恢复的知识库 JSON |
 | `--export-context-json` | `match` | 导出可恢复的前提判别 JSON |
