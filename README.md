@@ -127,7 +127,7 @@ JSON 恢复需要先读成字典，再交给 `BaziChart.from_json`；恢复会�
 python -m pip install colorama==0.4.6
 ```
 
-源码根中的 `bazi/` 就是这些脚本使用的库，无须先 `pip install .`；只安装 PyPI 包不会得到这些脚本。地点盘若使用 IANA 时区，还需要系统时区数据库，缺少时可安装 `tzdata`，详见[配置指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md)。
+源码根中的 `bazi/` 就是这些脚本使用的库，无须先 `pip install .`；只安装 PyPI 包不会得到这些脚本。地点盘若使用 IANA 时区，需要系统时区数据库，缺少时可运行 `python -m pip install tzdata`。地点盘的输入口径见[配置指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md)。
 
 | 命令 | 输出 |
 | --- | --- |

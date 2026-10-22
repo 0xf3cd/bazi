@@ -45,10 +45,10 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 精度与后端 day celestial
 ```
 
-把上面的程序保存为 UTF-8 文件 `first_chart.py`，不要取名为 `bazi.py`。在终端进入该文件所在目录，使用刚才安装包的同一个环境运行：
+把上面的程序保存为 UTF-8 文件 `show_chart.py`，不要取名为 `bazi.py`。在终端进入该文件所在目录，使用刚才安装包的同一个环境运行：
 
 ```sh
-python first_chart.py
+python show_chart.py
 ```
 
 把 `datetime(1990, 5, 17, 10, 30)` 换成公历出生民用时刻，`female` 为女、`male` 为男。本例没有经度，不自动换算时区或真太阳时；需要地点盘时先读 {doc}`configuration`。

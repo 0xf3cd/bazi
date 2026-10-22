@@ -1,9 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_doc_commands.py
 
+import importlib.util
 import json
+import os
 import re
 import shlex
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,6 +16,7 @@ import pytest
 from run_interpreter import _COMMANDS, _command_parser
 
 from bazi.bazi_chart import BaziChart
+from bazi.context_matching import ContextResult
 
 from cli_runner import ROOT, GUANSHA, run_cli
 
@@ -48,8 +54,6 @@ def test_readme_task_commands_execute(tokens: list[str], tmp_path: Path) -> None
   result = run_cli(tmp_path, *tokens)
   assert result.returncode == 0, result.stdout + result.stderr
   if '--export-context-json' in tokens:
-    from bazi.context_matching import ContextResult
-
     path = tmp_path / tokens[tokens.index('--export-context-json') + 1]
     text = path.read_text(encoding='utf-8')
     assert json.loads(ContextResult.from_json(text).export_json()) == json.loads(text)
@@ -69,6 +73,20 @@ def test_readme_chart_exports_roundtrip(tmp_path: Path) -> None:
   assert record['pillars'] == {'year': '庚午', 'month': '辛巳', 'day': '壬午', 'hour': '乙巳'}
   text = (tmp_path / 'output_data/interpretation_examples/0.txt').read_text(encoding='utf-8')
   assert '\x1b' not in text and text in re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+
+
+def test_source_chart_needs_only_colorama(tmp_path: Path) -> None:
+  spec = importlib.util.find_spec('colorama')
+  assert spec is not None and spec.origin is not None
+  shutil.copytree(Path(spec.origin).parent, tmp_path / 'colorama')
+  result = subprocess.run(
+    [sys.executable, '-S', str(ROOT / 'run_interpreter.py'), 'chart',
+     '--birth-time', '1990-05-17 10:30', '--gender', 'female'],
+    cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(tmp_path)},
+    capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
+  )
+  assert result.returncode == 0, result.stdout + result.stderr
+  assert '年柱：天干庚' in result.stdout
 
 
 def test_doc_gate_covers_every_file_with_commands() -> None:

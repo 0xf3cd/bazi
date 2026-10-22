@@ -12,6 +12,8 @@ import pytest
 pytest.importorskip('sphinx', reason='Documentation dependencies are checked by the separate docs task.')
 
 from markdown_it import MarkdownIt
+from markdown_it.tree import SyntaxTreeNode
+from myst_parser.mdit_to_docutils.base import compute_unique_slug
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -21,22 +23,53 @@ import run_docs_site
 from run_package_checks import source_files
 
 
-def test_readme_links_work_outside_repo():
+def _check_navigation(source: Path) -> None:
   links = [
     child.attrGet('href') or ''
-    for token in MarkdownIt('commonmark').parse((ROOT / 'README.md').read_text(encoding='utf-8'))
+    for token in MarkdownIt('commonmark').parse(source.read_text(encoding='utf-8'))
     for child in token.children or () if child.type == 'link_open'
   ]
   assert links
   for link in links:
     assert isinstance(link, str)
-    if link.startswith('#'):
-      continue
     url = urlsplit(link)
-    assert url.scheme == 'https' and url.netloc, link
-    if link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
+    if link.startswith('#'):
+      path = source
+    else:
+      assert url.scheme == 'https' and url.netloc, link
+      if not link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
+        continue
       path = ROOT / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
-      assert path.resolve().is_relative_to(ROOT) and path.is_file(), link
+    assert path.resolve().is_relative_to(ROOT) and path.is_file(), link
+    if url.fragment:
+      headings = SyntaxTreeNode(MarkdownIt('commonmark').parse(path.read_text(encoding='utf-8')))
+      slugs: set[str] = set()
+      for heading in headings.children:
+        if heading.type == 'heading':
+          slugs.add(compute_unique_slug(heading, slugs))
+      assert unquote(url.fragment) in slugs, (source, link, slugs)
+
+
+@pytest.mark.parametrize('name', ['README.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md'])
+def test_navigation_links_resolve(name):
+  _check_navigation(ROOT / name)
+
+
+@pytest.mark.parametrize('heading', ['从 v2.2.0 迁移到 v2.3.0', '迁移指南'])
+def test_navigation_detects_heading_rename(monkeypatch, tmp_path, heading):
+  target = tmp_path / 'target.md'
+  target.write_text('# ' + heading + '\n', encoding='utf-8')
+  source = tmp_path / 'README.md'
+  source.write_text(
+    '[迁移](https://github.com/0xf3cd/bazi/blob/main/target.md#从-v220-迁移到-v230)\n',
+    encoding='utf-8',
+  )
+  monkeypatch.setattr(sys.modules[__name__], 'ROOT', tmp_path)
+  if heading == '迁移指南':
+    with pytest.raises(AssertionError):
+      _check_navigation(source)
+  else:
+    _check_navigation(source)
 
 
 @pytest.mark.parametrize('between', ['说明文字。\n', '```sh\npython first_chart.py\n```\n'])
