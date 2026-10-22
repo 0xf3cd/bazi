@@ -26,7 +26,7 @@ def test_reference_binding_keeps_eligibility() -> None:
   assert all('index' not in value for value in data['occurrences'])
   assert 'revision' not in data['criterion']
   assert data['knowledge'] == json.loads(knowledge.export_json())
-  assert len(data['knowledge']['entries']) == 305
+  assert len(data['knowledge']['entries']) == 312
   assert data['criterion']['observations']['observed_coexistence'] is True
   rendered = result.render()
   assert '来源状态：editorial' in rendered and '见证状态：editorial' in rendered

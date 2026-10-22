@@ -32,6 +32,7 @@
   },
   "members": {
     "cross_module": {
+      "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由Bazi所有；命宫组合复用同一政策，不读取地点私有状态。",
       "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",
       "bazi/context_matching.py|KnowledgeBase._from_data": "前提记录从已解码嵌套JSON恢复知识库，复用与公开from_json相同的严格校验。",

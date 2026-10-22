@@ -15,6 +15,8 @@ from bazi.context_matching import ContextResult, ContextProfile, evaluate_contex
 from bazi.knowledge import KnowledgeBase
 from bazi.school import Anchor, BaziConfig, BaziSchool
 
+from knowledge_additions import AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS
+
 
 def _records() -> dict[str, Any]:
   records: dict[str, Any] = json.loads((Path(__file__).with_name('data') / 'v200_records.json').read_text(encoding='utf-8'))
@@ -77,12 +79,13 @@ def test_v200_records_keep_distinct_contracts() -> None:
   assert hash(knowledge) == hash(KnowledgeBase.from_json(knowledge_text))
   assert records['knowledge']['schema_version'] == 1
   current = KnowledgeBase.load()
-  new_objects = {'shensha.kongwang'}
+  new_objects = {'shensha.kongwang', *AUXILIARY_OBJECT_IDS}
   new_sources = {
     'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
     'wuxing_jingji.kongwang', 'repository.kongwang',
+    *AUXILIARY_SOURCE_IDS,
   }
-  new_entries = {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository'}
+  new_entries = {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository', *AUXILIARY_ENTRY_IDS}
   old = KnowledgeBase(
     tuple(value for key, value in current.objects.items() if key not in new_objects),
     tuple(current.contexts.values()),
@@ -94,6 +97,24 @@ def test_v200_records_keep_distinct_contracts() -> None:
   with pytest.raises(ValueError, match='Missing school field: kongwang_anchor'):
     ContextResult.from_json(context_text)
   assert records['context']['record_version'] == 4
+
+
+def test_auxiliary_knowledge_is_append_only() -> None:
+  current = KnowledgeBase.load()
+  objects = tuple(value for key, value in current.objects.items() if key not in AUXILIARY_OBJECT_IDS)
+  sources = tuple(value for key, value in current.sources.items() if key not in AUXILIARY_SOURCE_IDS)
+  entries = tuple(value for key, value in current.entries.items() if key not in AUXILIARY_ENTRY_IDS)
+  old = KnowledgeBase(objects, tuple(current.contexts.values()), sources, entries)
+  assert (len(objects), len(old.contexts), len(sources), len(entries), len(old.query())) == (32, 10, 18, 305, 19)
+  assert hashlib.sha256(old.export_json().encode()).hexdigest() == '64a1c29572de1d45e6e3a19361823af0da0b961eb25b9c3bcb19b6d5e29fa7f4'
+  for registry, prefix, additions in (
+    (current.objects, old.objects, AUXILIARY_OBJECT_IDS),
+    (current.sources, old.sources, AUXILIARY_SOURCE_IDS),
+    (current.entries, old.entries, AUXILIARY_ENTRY_IDS),
+  ):
+    assert tuple(registry) == (*prefix, *additions)
+  assert current.contexts == old.contexts
+  assert current.query() == old.query()
 
 
 def test_current_context_restores_without_recheck() -> None:

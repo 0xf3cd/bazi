@@ -25,6 +25,8 @@ def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
     'sanming_liuqin', 'yuanhai_liuqin_charts', 'yuanhai_qiqie_note', 'tanyuan_qizi',
     'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
     'wuxing_jingji.kongwang', 'repository.kongwang',
+    'youyilu.taiyuan_minggong', 'sanming_tonghui.taiyuan', 'sanming_tonghui.minggong',
+    'mingli_tanyuan.minggong', 'repository.taiyuan_minggong',
   }
   # Both an unused source and a newly referenced source must survive reload.
   unused = replace(k.sources['yuanhai_ziping_relations'], source_id='future.unused', lineage='future.lineage', text_layer='zhushi')
@@ -38,7 +40,7 @@ def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
   path = tmp_path / 'edited.json'
   path.write_text(edited.export_json(), encoding='utf-8')
   loaded = KnowledgeBase.load(path)
-  assert len(loaded.sources) == 20
+  assert len(loaded.sources) == 25
   for source_id, record in edited.sources.items():
     assert isinstance(loaded.sources[source_id], KnowledgeSource)
     assert loaded.sources[source_id] == record
@@ -123,7 +125,7 @@ def test_subject_projection_keeps_roles_distinct(show_sources: bool) -> None:
   positions = tuple(text.index(entry.text) for entry in selected)
   assert positions == tuple(sorted(positions))
   assert tuple(entry.legacy for entry in selected) == tuple(reversed(tuple(entry.legacy for entry in k.query(object_id='tiangan.ding', include_reference_only=True))))
-  for identifier in ('wuxing.mu', 'wuxing.huo', 'shensha.guoyin', 'shensha.kongwang'):
+  for identifier in ('wuxing.mu', 'wuxing.huo', 'shensha.guoyin', 'shensha.kongwang', 'concept.taiyuan', 'concept.minggong'):
     for entry in k.query(object_id=identifier, include_reference_only=True):
       assert entry.text in k.render_subject(identifier, include_reference_only=True)
   assert k.render_subject('shishen.jiecai') == ''

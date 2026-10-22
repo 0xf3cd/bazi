@@ -120,7 +120,7 @@ def test_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
     '--export-knowledge-json', str(exported),
   )
   assert query.returncode == 0, query.stderr
-  assert '校验通过：305 条目，18 来源见证，10 情境。' in query.stdout
+  assert '校验通过：312 条目，23 来源见证，10 情境。' in query.stdout
   assert '本次编辑的限度。' in query.stdout
   restored = KnowledgeBase.load(exported)
   assert tuple(restored.entries) == ('tiangan.ding.lamp_symbol',)

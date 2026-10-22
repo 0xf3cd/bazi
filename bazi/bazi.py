@@ -229,13 +229,7 @@ class Bazi:
       prev_j: Final[JieqiTime] = utils.prev_jie(birth_moment)
       next_j: Final[JieqiTime] = utils.next_jie(birth_moment)
 
-      attribution_birth: datetime = birth_moment
-      attribution_jie: datetime = next_j.moment
-      if location is not None:
-        attribution_birth = self._clock_datetime
-        attribution_jie = location.apparent(next_j.moment.replace(tzinfo=_UTC8))
-
-      if _truncated(attribution_birth, self._config.precision) >= _truncated(attribution_jie, self._config.precision):
+      if self._attribution_reached(next_j.moment):
         month_jies = (next_j, utils.next_jie(next_j.moment))
       else:
         month_jies = (prev_j, next_j)
@@ -263,6 +257,23 @@ class Bazi:
 
     # 时柱地支。
     self._hour_dizhi: Final[Dizhi] = Dizhi.from_index((self._clock_datetime.hour + 1) // 2 % 12)
+
+  def _attribution_reached(self, boundary: datetime) -> bool:
+    '''按本盘精度判断是否达到 naive UTC+8 边界，相等归新。
+
+    DAY 仅比日期；地点盘先把边界换到与出生相同的真太阳钟，再按时辰／分钟截断。
+    出生节界与命宫中气共用此归属政策，不改变原始节气时刻。
+    '''
+    assert isinstance(boundary, datetime)
+    assert boundary.tzinfo is None
+    if self._config.precision is BaziPrecision.DAY:
+      return self._clock_datetime.date() >= boundary.date()
+    attribution_boundary: datetime = boundary
+    if self._location is not None:
+      attribution_boundary = self._location.apparent(boundary.replace(tzinfo=_UTC8))
+    return _truncated(self._clock_datetime, self._config.precision) >= _truncated(
+      attribution_boundary, self._config.precision,
+    )
 
   @staticmethod
   def __parse_bazi_args(

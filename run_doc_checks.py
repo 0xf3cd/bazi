@@ -33,8 +33,8 @@ EXAMPLE_GROUPS = {
   'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-explore'},
   'guides/configuration': {'config-precision', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
   'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
-  'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style'},
-  'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria'},
+  'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style', 'integration-auxiliary'},
+  'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria', 'auxiliary-knowledge'},
   'guides/rule-coverage': {'rule-coverage-guoyin'},
 }
 

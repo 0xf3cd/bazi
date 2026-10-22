@@ -84,6 +84,53 @@ def month_tiangan(year_tiangan: Tiangan, month_dizhi: Dizhi) -> Tiangan:
   return Tiangan.from_index(month_tiangan_index)
 
 
+def taiyuan(month_pillar: Ganzhi) -> Ganzhi:
+  '''
+  由合法六十甲子月柱推胎元：月干顺移一位、月支顺移三位。
+
+  《游艺录》卷四转录以己巳得庚申、壬午得癸酉为例；这里只作干支序推算，
+  不倒推实际受孕日期。《三命通会》的三百日说另存知识候选，未编码。
+
+  Args:
+  - month_pillar: (Ganzhi) 合法六十甲子月柱；错型抛 TypeError，阴阳不配抛 ValueError。
+
+  Return: (Ganzhi) 胎元干支，不加入原盘四柱。
+  '''
+  if not isinstance(month_pillar, Ganzhi):
+    raise TypeError(f'Expected Ganzhi, got {type(month_pillar)}')
+  if not isinstance(month_pillar.tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(month_pillar.tiangan)}')
+  if not isinstance(month_pillar.dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(month_pillar.dizhi)}')
+  return month_pillar.prev(9)
+
+
+def minggong(year_tiangan: Tiangan, month_dizhi: Dizhi, hour_dizhi: Dizhi) -> Ganzhi:
+  '''
+  子起正月逆数，把生时加于月位后顺数到卯，按本盘年干五虎遁配宫干。
+
+  掌诀见《三命通会》卷二；该段未明确月界。本库命盘依《命理探原》起例按语，
+  达到中气后月序循环进一，大寒后仍用本盘年干。月界归属由调用方决定。
+
+  Args:
+  - year_tiangan: (Tiangan) 本盘年干，不随命宫月序循环提前换年。
+  - month_dizhi: (Dizhi) 已按所选口径确定的有效命宫月支，非农历月或裸整数月序。
+  - hour_dizhi: (Dizhi) 本盘时支。
+
+  Return: (Ganzhi) 命宫干支，不加入原盘四柱。
+  '''
+  if not isinstance(year_tiangan, Tiangan):
+    raise TypeError(f'Expected Tiangan, got {type(year_tiangan)}')
+  if not isinstance(month_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(month_dizhi)}')
+  if not isinstance(hour_dizhi, Dizhi):
+    raise TypeError(f'Expected Dizhi, got {type(hour_dizhi)}')
+
+  month_index: int = (month_dizhi.index - Dizhi.寅.index) % 12
+  palace: Dizhi = Dizhi.from_index((Dizhi.卯.index - month_index - hour_dizhi.index) % 12)
+  return Ganzhi(month_tiangan(year_tiangan, palace), palace)
+
+
 def hour_tiangan(day_tiangan: Tiangan, hour_dizhi: Dizhi) -> Tiangan:
   '''
   输入日柱天干和时柱地支，返回时柱天干。

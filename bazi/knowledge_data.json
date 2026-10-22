@@ -160,6 +160,16 @@
       "object_id": "shensha.kongwang",
       "kind": "shensha",
       "name": "六甲旬空"
+    },
+    {
+      "object_id": "concept.taiyuan",
+      "kind": "concept",
+      "name": "胎元"
+    },
+    {
+      "object_id": "concept.minggong",
+      "kind": "concept",
+      "name": "命宫"
     }
   ],
   "contexts": [
@@ -501,6 +511,76 @@
       "excerpt": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。",
       "supports": "本库的默认锚、可选锚、原局自身排除和本命锚查流运支的组合范围。",
       "limitations": "仓内政策不是古籍见证，不宣称古籍一致只看日柱。不作反向流运锚查询，不含单支筛选、截路、四大空亡或冲合取消与吉凶解释。",
+      "state": "repository_attributed"
+    },
+    {
+      "source_id": "youyilu.taiyuan_minggong",
+      "work": "《游艺录》卷四",
+      "attribution": "俞樾原书，识典古籍转录",
+      "edition": "在线下载转录，未逐页校勘影印",
+      "locator": "卷四命宫例及胎元段",
+      "url": "https://www.shidianguji.com/book/CADAL01025514/chapter/1l47npzydewbp",
+      "text_layer": "baiwen",
+      "lineage": "youyilu",
+      "excerpt": "生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。",
+      "supports": "例解明确月干顺移一、月支顺移三；同页甲子年三月酉时命宫例为戊辰。",
+      "limitations": "直接取得转录，不再仅依《命理探原》转引；转引不另计独立谱系。页面有识别和表格混排痕迹，未校影印；不证明实际受孕时刻，也未明确命宫月界。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.taiyuan",
+      "work": "《三命通会》卷二",
+      "attribution": "万民英原书，维基文库四库本固定转录",
+      "edition": "固定 revision 761691，未逐页校勘影印",
+      "locator": "论胎元段，三百日说及段末质疑",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "惟有一法以當生前三百日為十月之氣乃是受胎之正",
+      "supports": "记录三百日候选及同段对固定三百日的质疑，不把其中一句当作全段一致结论。",
+      "limitations": "同段另有「然則貴人受胎定在三百日又豈可據乎」；如何定义历法月柱、边界、地点钟与窗口仍待核定。本库未编码，不据此认定真实孕期或寿命。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.minggong",
+      "work": "《三命通会》卷二",
+      "attribution": "万民英原书，维基文库四库本固定转录",
+      "edition": "固定 revision 761691，未逐页校勘影印",
+      "locator": "论坐命宫段，掌诀及甲子年三月戌时例",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "次将所生之時加於所生之月順行十二位逢卯即安命宫",
+      "supports": "子起正月逆数、生时加月位顺数到卯，并按出生年起月法配干；三月戌时例得丁卯。",
+      "limitations": "该段未明确正月按农历、节月或中气划分；原字、异体字及疑似讹字未擅改，不从此段推出时区、真太阳钟或精度政策，不收入吉凶断语。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "mingli_tanyuan.minggong",
+      "work": "《命理探原》起例",
+      "attribution": "袁树珊按语，典藏网下游简体转录",
+      "edition": "在线下载转录，未校原书影印",
+      "locator": "推命宫法按语，中气及丙午大寒例",
+      "url": "https://www.diancang.xyz/xuanxuewushu/minglitanyuan/160971.html",
+      "text_layer": "zhushi",
+      "lineage": "mingli_tanyuan",
+      "excerpt": "古人谓交过中气，即作次月推",
+      "supports": "按语明确中气进月，丙午年十二月过大寒、申时取乙未宫，仍用丙午年配干。",
+      "limitations": "中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "repository.taiyuan_minggong",
+      "work": "本库胎元与命宫附加查询约定",
+      "attribution": "bazi 仓内采用的口径与候选边界",
+      "edition": "胎元与命宫首批实现",
+      "locator": "BaziChart.taiyuan、BaziChart.minggong 与 bazi_utils",
+      "url": "https://github.com/0xf3cd/bazi/issues/117",
+      "text_layer": "editorial",
+      "lineage": "repository",
+      "excerpt": "胎元按月柱干进一、支进三；命宫按中气进月，均为四柱之外的附加查询。",
+      "supports": "本库已实现口径、精度与地点钟政策，以及尚未编码的其他读法候选。",
+      "limitations": "软件政策不冒充古籍共识；附加干支不进入旧四柱、身份、JSON、关系或流运分析，不据计算结果认定解释前提成立。其他月界线索仍须核定系统归属、规则和查法。",
       "state": "repository_attributed"
     }
   ],
@@ -10772,6 +10852,210 @@
       "limits": [
         "默认锚是本库选择，不冒充古籍共识；不删除地支或改变五行、十神、纳音与其他关系。",
         "不反向以流运为锚查原局，不以冲合刑取消命中，不含出空、填实或吉凶解释。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.taiyuan.month_shift",
+      "text": "《游艺录》卷四转录写：「生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。」两例支持月干顺移一、月支顺移三的符号取法。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.taiyuan"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "youyilu.taiyuan_minggong"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《游艺录》卷四直接转录与明确例解",
+      "viewpoint": "月柱顺移取法",
+      "exceptions": [],
+      "limits": [
+        "未校影印；干支符号派生不等于已核实际受孕日期，不附带吉凶或寿命解释。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.taiyuan.three_hundred_days",
+      "text": "《三命通会》四库本转录有「惟有一法以當生前三百日為十月之氣乃是受胎之正」，同段末又问「然則貴人受胎定在三百日又豈可據乎」。保留三百日说为文献候选，不截句判成唯一正确规则。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.taiyuan"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "文献候选"
+      ],
+      "applicability": "unresolved",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.taiyuan"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《三命通会》卷二论胎元固定转录",
+      "viewpoint": "三百日候选待核",
+      "exceptions": [],
+      "limits": [
+        "未编码，也不判错或丢弃。继续核定须校勘全段及例解，确定三百日的起算、月柱历法、边界时刻、地点钟与支持窗口，再由作者批准变体。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.taiyuan.repository",
+      "text": "本库已实现合法六十甲子月柱干进一、支进三的胎元查询，返回 Ganzhi。它只作干支序步进，不反推受孕时间，不把胎元加成第五柱。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.taiyuan"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "repository.taiyuan_minggong"
+      ],
+      "source_state": "repository_attributed",
+      "attribution": "本库胎元附加查询约定",
+      "viewpoint": "本库已实现口径",
+      "exceptions": [],
+      "limits": [
+        "不改变 Ganzhi 本身的构造域；不进入旧五行、十神、神煞、关系、流运或 JSON，不自动输出解释。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.minggong.palm",
+      "text": "《三命通会》卷二转录写：「次将所生之時加於所生之月順行十二位逢卯即安命宫」，甲子年三月戌时例得丁卯。《游艺录》同年三月酉时例为戊辰，输入时支不同，不能当作算法矛盾。两处均按生年起月法配宫干。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.minggong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.minggong",
+        "youyilu.taiyuan_minggong"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《三命通会》与《游艺录》命宫掌诀及例解转录",
+      "viewpoint": "掌诀与配干",
+      "exceptions": [],
+      "limits": [
+        "两段未明确月界；不把正月两字自行解释为农历、节月或中气，不收入原页吉凶断语。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.minggong.zhongqi",
+      "text": "《命理探原》推命宫法按语说「古人谓交过中气，即作次月推」，举丙午年十二月过大寒、申时取乙未宫。月序进正月后仍按丙午年起宫干，不提前按立春换年。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.minggong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "mingli_tanyuan.minggong"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《命理探原》起例按语下游转录",
+      "viewpoint": "中气进月例",
+      "exceptions": [],
+      "limits": [
+        "未校影印；此按语不证明更早掌诀段已明确中气月界，也未规定现代时区、真太阳钟或三档精度。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.minggong.month_boundary_candidates",
+      "text": "命宫其他月界保留为待核候选：节月、农历月及其他星命系统同名读法须分别反查，不与中气进月合成一套规则。本轮未完成穷尽流派目录，不据此判其他读法错误或不存在。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.minggong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "文献候选"
+      ],
+      "applicability": "unresolved",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "repository.taiyuan_minggong"
+      ],
+      "source_state": "repository_attributed",
+      "attribution": "本库命宫月界候选整理范围",
+      "viewpoint": "其他月界候选待核",
+      "exceptions": [],
+      "limits": [
+        "未编码。继续核定须找到明确系统归属、月界与跨界例解的独立成文，说明闰月、跨年及年干归属，再由作者批准可选变体；不能把《三命通会》未言月界当成某一月界的证据。"
+      ],
+      "output": "reference_only",
+      "legacy": null
+    },
+    {
+      "claim_id": "concept.minggong.repository",
+      "text": "本库已实现现有节月达到中气后月序循环进一、掌诀定宫支、本盘年干五虎遁配干的命宫查询。DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点，相等归新；地点盘先将中气转换到与出生相同的真太阳钟。时支固定取本盘时柱，DAY 仍用输入小时，日换点不改变时支。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "concept.minggong"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "repository.taiyuan_minggong"
+      ],
+      "source_state": "repository_attributed",
+      "attribution": "本库命宫附加查询与时间归属约定",
+      "viewpoint": "本库已实现口径",
+      "exceptions": [],
+      "limits": [
+        "大寒后月序进正月不提前换八字年；HKO 仅支持 DAY，不把零点占位当真实时刻。结果不扩四柱，不改身份、school、JSON 或旧分析，也不认证解释前提。"
       ],
       "output": "reference_only",
       "legacy": null

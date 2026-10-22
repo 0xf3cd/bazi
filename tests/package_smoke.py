@@ -380,7 +380,11 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
-  check(len(knowledge.entries) == 305 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  check(len(knowledge.entries) == 312 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  for identifier, count in (('concept.taiyuan', 3), ('concept.minggong', 4)):
+    entries = knowledge.query(object_id=identifier, include_reference_only=True)
+    check(len(entries) == count and not knowledge.query(object_id=identifier), 'Installed auxiliary knowledge missing')
+    check(all(entry.output == 'reference_only' and entry.contexts == () for entry in entries), 'Auxiliary knowledge gained eligibility')
   for subject in knowledge.objects.values():
     check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
     check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
@@ -389,7 +393,7 @@ def main() -> None:
     check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
     for filter_value in values:
       check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
-  check(len(knowledge.sources) == 18, 'Installed source registry incomplete')
+  check(len(knowledge.sources) == 23, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
     check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')
