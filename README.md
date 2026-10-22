@@ -84,13 +84,13 @@ print('已保存 chart.txt 和 chart.json')
 python first_chart.py
 ```
 
-上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的完整基本命盘文本；`chart.json` 供程序保存和恢复。两个文件都写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
+上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；`chart.json` 供程序保存和恢复。两个文件都写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
 
 JSON 恢复需要先读成字典，再交给 `BaziChart.from_json`；恢复会重算并核对，不保证旧版本记录可直接载入新版本。完整例子与兼容条件见[集成开发](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md)及[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)。
 
-类型从定义模块导入；安装包没有根类入口或命令行程序。领域名称用拼音，枚举另有中文别名。
+类型从定义模块导入；安装包没有根类入口或命令行程序。
 
-在交互环境里直接输入对象会看到一行摘要；`bazi.chart_text` 可把命盘排成纯文本，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
+在交互环境里直接输入对象会看到一行摘要；模块 `bazi.chart_text` 提供把命盘排成纯文本的函数，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
 
 ## 按任务继续
 
@@ -172,9 +172,16 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
   --export-context-json output_data/context.json
 ```
 
-其余选项都可以省略，用到再加；各任务认的选项不同。`--include-reference-only` 三个任务都有，同时显示仅供参考的条目；
-`--show-sources` 显示来源（`chart`，以及 `knowledge` 的文本导出）；导出可重新载入的 JSON 则各用各的：`chart` 用
-`--export-chart-json`（须给 `--birth-time`），`knowledge` 用 `--export-knowledge-json`，`match` 用 `--export-context-json`。
+其余选项可以省略，用到再加；各任务认的选项不同：
+
+| 选项 | 适用任务 | 作用 |
+| --- | --- | --- |
+| `--include-reference-only` | 三个任务 | 同时显示仅供参考的条目 |
+| `--show-sources` | `chart`、`knowledge` 的文本导出 | 显示来源 |
+| `--export-chart-json` | `chart` | 导出可恢复的命盘 JSON，须给 `--birth-time` |
+| `--export-knowledge-json` | `knowledge` | 导出可恢复的知识库 JSON |
+| `--export-context-json` | `match` | 导出可恢复的前提判别 JSON |
+
 每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
 
 命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
@@ -194,9 +201,9 @@ python -m pip install --upgrade bazi
 带筛选的 `--query-knowledge --object tiangan.ding` 改为 `knowledge --object tiangan.ding`，
 `--match-context 判据ID …` 改为 `match 判据ID …`。上面的新写法都接在 `python run_interpreter.py` 后。
 原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
-它们没有跨命令的冲突预检或整体回滚。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
+两条命令各自检查输出路径，不会预先检查彼此是否写到同一个位置；一条失败不会撤销另一条已写出的文件。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
 
-旧命盘或前提判别记录也不保证直接恢复：保留原件，并按原出生输入、完整配置和显式选择的取锚重建，前提记录须重新求值。不要只补字段或修改版本号；具体条件仍以[记录兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)为准。
+旧命盘或前提判别记录也不保证直接恢复：保留原件，按原出生输入和完整配置重建，包括明确选择旬空按哪一柱查询等取法；前提记录须重新求值。不要只补字段或修改版本号；具体条件仍以[记录兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)为准。
 
 ## 开发
 

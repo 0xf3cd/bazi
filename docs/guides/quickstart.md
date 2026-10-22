@@ -4,13 +4,13 @@
 
 ## 安装
 
+需要 Python 3.11 或更高版本。在独立环境中安装；如果还不熟悉环境创建和终端操作，先按 [README 的准备步骤](https://github.com/0xf3cd/bazi/blob/main/README.md#1-准备环境)操作。
+
 ```sh
 python -m pip install bazi
 ```
 
-需要 Python 3.11 或更高版本。运行时只用标准库和随包数据，不联网。
-
-在独立环境中安装；如果还不熟悉环境创建和终端操作，先按 [README 的准备步骤](https://github.com/0xf3cd/bazi/blob/main/README.md#1-准备环境)操作。普通使用不需要测试或文档构建工具。
+运行时只用标准库和随包数据，不联网。普通使用不需要测试或文档构建工具。
 
 本页说明对应当前开发源码。已发布版本的接口以该版本 tag 下的文档为准，两者可能不同。
 
@@ -59,7 +59,7 @@ python show_chart.py
 
 ## 把盘排成文本
 
-`bazi.chart_text` 把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
+模块 `bazi.chart_text` 的函数把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
 `basic_text` 给出日元、出生时刻，以及四柱各自的十神、阴阳五行、藏干、纳音和十二长生。
 
 ```{testcode} quickstart-text
@@ -89,12 +89,12 @@ print(basic_text(chart).strip())
   -- 纳音：覆灯火  -- 十二长生：绝
 ```
 
-- 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
+- 返回值是字符串，前后各有一个换行，可以直接 `print`。需要包含流运的文本时，用同一模块中的函数 `chart_text(chart)`。
 - 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
 
 ## 保存结果
 
-下面是独立可运行的保存例子，可另存为 `save_chart.py`。在该文件所在目录运行 `python save_chart.py` 后，打开 `chart.txt` 看基本命盘，或把 `chart.json` 交给程序恢复。路径相对运行命令时的当前目录，重复运行会覆盖同名文件，需保留的旧结果请先另存。
+下面的保存例子与 README 的 `first_chart.py` 排同一张盘，可独立另存为 `save_chart.py`。在该文件所在目录运行 `python save_chart.py` 后，打开 `chart.txt` 看基本命盘，或把 `chart.json` 交给程序恢复。路径相对运行命令时的当前目录，重复运行会覆盖同名文件，需保留的旧结果请先另存。
 
 ```{testsetup} quickstart-save
 import os

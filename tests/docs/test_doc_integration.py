@@ -23,7 +23,7 @@ import run_docs_site
 from run_package_checks import source_files
 
 
-def _check_navigation(source: Path) -> None:
+def _check_navigation(source: Path, root: Path) -> None:
   links = [
     child.attrGet('href') or ''
     for token in MarkdownIt('commonmark').parse(source.read_text(encoding='utf-8'))
@@ -39,8 +39,8 @@ def _check_navigation(source: Path) -> None:
       assert url.scheme == 'https' and url.netloc, link
       if not link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
         continue
-      path = ROOT / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
-    assert path.resolve().is_relative_to(ROOT) and path.is_file(), link
+      path = root / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
+    assert path.resolve().is_relative_to(root) and path.is_file(), link
     if url.fragment:
       headings = SyntaxTreeNode(MarkdownIt('commonmark').parse(path.read_text(encoding='utf-8')))
       slugs: set[str] = set()
@@ -52,11 +52,11 @@ def _check_navigation(source: Path) -> None:
 
 @pytest.mark.parametrize('name', ['README.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md'])
 def test_navigation_links_resolve(name):
-  _check_navigation(ROOT / name)
+  _check_navigation(ROOT / name, ROOT)
 
 
-@pytest.mark.parametrize('heading', ['从 v2.2.0 迁移到 v2.3.0', '迁移指南'])
-def test_navigation_detects_heading_rename(monkeypatch, tmp_path, heading):
+@pytest.mark.parametrize('heading, valid', [('从 v2.2.0 迁移到 v2.3.0', True), ('迁移指南', False)])
+def test_navigation_detects_heading_rename(tmp_path, heading, valid):
   target = tmp_path / 'target.md'
   target.write_text('# ' + heading + '\n', encoding='utf-8')
   source = tmp_path / 'README.md'
@@ -64,12 +64,11 @@ def test_navigation_detects_heading_rename(monkeypatch, tmp_path, heading):
     '[迁移](https://github.com/0xf3cd/bazi/blob/main/target.md#从-v220-迁移到-v230)\n',
     encoding='utf-8',
   )
-  monkeypatch.setattr(sys.modules[__name__], 'ROOT', tmp_path)
-  if heading == '迁移指南':
+  if not valid:
     with pytest.raises(AssertionError):
-      _check_navigation(source)
+      _check_navigation(source, tmp_path)
   else:
-    _check_navigation(source)
+    _check_navigation(source, tmp_path)
 
 
 @pytest.mark.parametrize('between', ['说明文字。\n', '```sh\npython first_chart.py\n```\n'])

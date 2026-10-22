@@ -79,6 +79,7 @@ def test_source_chart_needs_only_colorama(tmp_path: Path) -> None:
   spec = importlib.util.find_spec('colorama')
   assert spec is not None and spec.origin is not None
   shutil.copytree(Path(spec.origin).parent, tmp_path / 'colorama')
+  # run_cli keeps site-packages enabled; this dependency check needs -S.
   result = subprocess.run(
     [sys.executable, '-S', str(ROOT / 'run_interpreter.py'), 'chart',
      '--birth-time', '1990-05-17 10:30', '--gender', 'female'],
