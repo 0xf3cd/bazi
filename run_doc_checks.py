@@ -26,11 +26,12 @@ from bazi.school import BaziConfig, BaziSchool
 
 
 BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
+DOCTEST_PHASES = ('setup', 'cleanup')
 
 
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-explore'},
+  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore'},
   'guides/configuration': {'config-precision', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
   'guides/relations-transits': {'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
   'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style', 'integration-auxiliary'},
@@ -431,14 +432,18 @@ def check_doctests(doctest: Path) -> int:
   assert summary is not None and int(summary[1]) == sum(map(len, EXAMPLE_GROUPS.values())) and int(summary[2]) == 0, 'Missing or failing doctests'
   blocks = re.split(r'^Document: (.+)\n-+\n', output, flags=re.MULTILINE)
   actual = {}
+  phases = tuple(f' ({phase} code)' for phase in DOCTEST_PHASES)
   for index in range(1, len(blocks), 2):
     name, body = blocks[index:index + 2]
     assert name not in actual, ('Duplicate doctest document', name)
-    groups = re.findall(r'^\s+1 tests? in (.+)$', body, flags=re.MULTILINE)
-    assert len(groups) == len(set(groups)), ('Duplicate doctest group', name)
-    actual[name] = set(groups)
+    reported = re.findall(r'^\s+1 tests? in (.+)$', body, flags=re.MULTILINE)
+    assert len(reported) == len(set(reported)), ('Duplicate doctest group', name)
+    groups = {group for group in reported if not group.endswith(phases)}
+    lifecycle = {group.rsplit(' (', 1)[0] for group in reported if group.endswith(phases)}
+    assert lifecycle <= groups, ('Orphan doctest setup or cleanup', name, lifecycle - groups)
+    actual[name] = groups
   assert actual == EXAMPLE_GROUPS, ('Example coverage', actual, EXAMPLE_GROUPS)
-  assert not re.search(r'\b[1-9][0-9]* failures? in (?:setup|cleanup) code', output), 'Doctest setup or cleanup failed'
+  assert not re.search(r'\b[1-9][0-9]* failures? in (?:' + '|'.join(DOCTEST_PHASES) + ') code', output), 'Doctest setup or cleanup failed'
   return int(summary[1])
 
 

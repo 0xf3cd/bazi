@@ -1,17 +1,25 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_doc_commands.py
 
+import importlib.util
+import json
+import os
 import re
 import shlex
+import shutil
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
 from run_interpreter import _COMMANDS, _command_parser
 
-from cli_runner import ROOT, GUANSHA
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import ContextResult
 
+from cli_runner import ROOT, GUANSHA, run_cli
 
-# ---- 文档里的命令只解析、不执行：新形式才算数。
 
 def _doc_commands(markdown: str) -> list[list[str]]:
   found: list[list[str]] = []
@@ -39,6 +47,47 @@ def test_documented_commands_parse_as_subcommands() -> None:
   assert len(commands) >= 3
   for tokens in commands:
     _check_doc_command(tokens)
+
+
+@pytest.mark.parametrize('tokens', _doc_commands((ROOT / 'README.md').read_text(encoding='utf-8')))
+def test_readme_task_commands_execute(tokens: list[str], tmp_path: Path) -> None:
+  result = run_cli(tmp_path, *tokens)
+  assert result.returncode == 0, result.stdout + result.stderr
+  if '--export-context-json' in tokens:
+    path = tmp_path / tokens[tokens.index('--export-context-json') + 1]
+    text = path.read_text(encoding='utf-8')
+    assert json.loads(ContextResult.from_json(text).export_json()) == json.loads(text)
+
+
+def test_readme_chart_exports_roundtrip(tmp_path: Path) -> None:
+  commands = _doc_commands((ROOT / 'README.md').read_text(encoding='utf-8'))
+  exporting = [tokens for tokens in commands if tokens[0] == 'chart' and '--export-chart-json' in tokens]
+  assert len(exporting) == 1
+  result = run_cli(tmp_path, *exporting[0])
+  assert result.returncode == 0, result.stdout + result.stderr
+  paths = {path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob('*') if path.is_file()}
+  assert paths == {'output_data/interpretation_examples/0.txt', 'output_data/chart.json'}
+  record = json.loads((tmp_path / 'output_data/chart.json').read_text(encoding='utf-8'))
+  restored = BaziChart.from_json(record)
+  assert restored.json == record
+  assert record['pillars'] == {'year': '庚午', 'month': '辛巳', 'day': '壬午', 'hour': '乙巳'}
+  text = (tmp_path / 'output_data/interpretation_examples/0.txt').read_text(encoding='utf-8')
+  assert '\x1b' not in text and text in re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+
+
+def test_source_chart_needs_only_colorama(tmp_path: Path) -> None:
+  spec = importlib.util.find_spec('colorama')
+  assert spec is not None and spec.origin is not None
+  shutil.copytree(Path(spec.origin).parent, tmp_path / 'colorama')
+  # run_cli keeps site-packages enabled; this dependency check needs -S.
+  result = subprocess.run(
+    [sys.executable, '-S', str(ROOT / 'run_interpreter.py'), 'chart',
+     '--birth-time', '1990-05-17 10:30', '--gender', 'female'],
+    cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(tmp_path)},
+    capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
+  )
+  assert result.returncode == 0, result.stdout + result.stderr
+  assert '年柱：天干庚' in result.stdout
 
 
 def test_doc_gate_covers_every_file_with_commands() -> None:

@@ -2,6 +2,7 @@
 
 这一页面向把 `bazi` 接进自己程序的开发者：怎么导入、怎么保存和恢复三类 JSON 记录，以及前提匹配返回什么。
 公开接口的完整约定写在对应版本源码根目录的 `API_CONTRACT.md`，这里只走最常用的几条路径。
+第一次排盘及保存文件先看 {doc}`quickstart`；升级旧源码调用则从 [README 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)开始。
 
 ## 导入
 

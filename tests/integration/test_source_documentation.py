@@ -2,12 +2,16 @@
 
 import os
 import importlib.util
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+from bazi.bazi_chart import BaziChart
+from bazi.chart_text import basic_text
 
 
 ROOT = Path(__file__).parents[2]
@@ -20,16 +24,37 @@ def test_readme_has_python_examples() -> None:
   assert len(BLOCKS) == len(re.findall(r'^[ \t]*(?:`{3,}|~{3,})[ \t]*(?:python[0-9]*|py)\b', README, re.MULTILINE | re.IGNORECASE))
 
 
-@pytest.mark.parametrize('block', BLOCKS, ids=[f'example-{index}' for index in range(len(BLOCKS))])
-def test_readme_python_example(block: str, tmp_path: Path) -> None:
-  result = subprocess.run(
-    [sys.executable, '-B', '-c', block],
-    cwd=tmp_path,
+def _run_readme(block: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+  script = cwd / 'first_chart.py'
+  script.write_text(block, encoding='utf-8')
+  return subprocess.run(
+    [sys.executable, '-B', str(script)],
+    cwd=cwd,
     env={**os.environ, 'PYTHONPATH': str(ROOT)},
     capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
   )
+
+
+@pytest.mark.parametrize('block', BLOCKS, ids=[f'example-{index}' for index in range(len(BLOCKS))])
+def test_readme_python_example(block: str, tmp_path: Path) -> None:
+  result = _run_readme(block, tmp_path)
   assert result.returncode == 0, result.stdout + result.stderr
   assert 'object at 0x' not in result.stdout
+
+
+def test_first_chart_saves_readable_records(tmp_path: Path) -> None:
+  result = _run_readme(BLOCKS[0], tmp_path)
+  assert result.returncode == 0, result.stdout + result.stderr
+  expected = re.search(r'^```text\n(.*?)^```$', README, re.MULTILINE | re.DOTALL)
+  assert expected is not None and result.stdout == expected[1]
+  assert {path.name for path in tmp_path.iterdir()} == {'first_chart.py', 'chart.txt', 'chart.json'}
+  record = json.loads((tmp_path / 'chart.json').read_text(encoding='utf-8'))
+  restored = BaziChart.from_json(record)
+  assert restored.json == record
+  assert record['pillars'] == {'year': '庚午', 'month': '辛巳', 'day': '壬午', 'hour': '乙巳'}
+  assert record['gender'] == 'female' and record['precision'] == 'day'
+  text = (tmp_path / 'chart.txt').read_text(encoding='utf-8')
+  assert text == basic_text(restored) and '\x1b' not in text
 
 
 @pytest.mark.parametrize('arguments', [
