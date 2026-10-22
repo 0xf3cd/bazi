@@ -1017,7 +1017,7 @@ def test_auxiliary_source_support_is_separated() -> None:
   assert '下载页题名作《命理探源》' in locator and '本库沿称《命理探原》' in locator
   assert '立春' not in k.entry('concept.minggong.zhongqi').text
   candidate = ''.join(k.entry('concept.taiyuan.three_hundred_days').limits)
-  assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末质疑', '核截取／转录范围，再查底本'))
+  assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末另有质疑', '先核对选录截取与转录范围，再查底本'))
   policy = k.sources['repository.taiyuan_minggong']
   assert policy.state == 'repository_attributed' and policy.text_layer == 'editorial'
 

@@ -97,7 +97,7 @@ def _truncated(dt: datetime, precision: BaziPrecision) -> datetime:
   - HOUR 截到时辰起点（23、1、3、…、21 点），保留完整日期时刻。子时跨午夜，
     当日 23:30 应排在亥时之后，不能用日内时辰序号比较。
   - MINUTE 去掉秒及更细部分。
-  - 此处不支持 DAY；DAY 经 `to_ganzhi` 按日期比较。
+  - 此处不支持 DAY；DAY 由调用方按日期处理。
 
   Args:
   - dt: (datetime) 待截断时刻。

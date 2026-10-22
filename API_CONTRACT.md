@@ -62,17 +62,17 @@ assert chart.bazi.day_master in Tiangan
 `chart.taiyuan` 与 `chart.minggong` 是无参缓存属性，返回不可变的 `Ganzhi`，只在首次访问时计算。
 胎元按本盘月柱干顺移一、支顺移三，是符号派生，不反推实际受孕时刻。
 命宫以现有节月为基础，达到中气后月序循环进一，掌诀定宫支，再用本盘年干五虎遁配宫干。
-大寒后进正月不提前换八字年；时支固定取本盘时柱，DAY 也保留输入小时，换日点不改变时支。
+大寒后进正月不提前换八字年；时支固定取本盘时柱，DAY 也保留输入小时，换日设置（`day_rollover`）不改变时支。
 
 中气按本盘出生精度相等归新：DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点；
 地点盘先把边界换到与出生相同的真太阳钟。HKO 仍只支持 DAY，不把零点占位视作真实时刻。
 时间政策是本库执行口径，不冒称古籍规定；300 日胎元和其他命宫月界仅存知识候选，未编码。
 
 纯函数从 `bazi.utils.bazi_utils` 导入：`taiyuan(month_pillar)` 先检查外层 `Ganzhi`，再检查
-`tiangan`／`dizhi` 字段类型，错型立即 `TypeError`；通过后用既有 `prev(9)` 校验合法六十甲子域，
-阴阳不配抛 `ValueError`。`minggong(year_tiangan, month_dizhi, hour_dizhi)` 逐参接收
+`tiangan`／`dizhi` 字段类型，错型立即抛 `TypeError`；通过后检查是否属于合法六十甲子，
+阴阳不配的组合抛 `ValueError`。`minggong(year_tiangan, month_dizhi, hour_dizhi)` 逐参接收
 `Tiangan`、已调整的有效命宫月支 `Dizhi`、本盘时支 `Dizhi`，非相应枚举抛 `TypeError`。
-普通与 `python -O` 相同，不改变 `Ganzhi` 本身的 120 种构造域。
+普通运行与 `python -O` 下的校验行为相同；`Ganzhi` 构造器本身仍接受全部 10×12 个干支组合。
 
 两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、JSON、旧文本输出，也不加入原有
 五行、十神、神煞、关系或流运分析。读取它们不使任何解释条目的前提自动成立。

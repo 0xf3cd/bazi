@@ -318,11 +318,7 @@ class BaziChart:
   
   @functools.cached_property
   def taiyuan(self) -> Ganzhi:
-    '''月干顺移一、月支顺移三的胎元干支；不是实际受孕时刻，也不扩原盘四柱。
-
-    Examples:
-    - chart.taiyuan
-    '''
+    '''月干顺移一、月支顺移三的胎元干支；不是实际受孕时刻，也不扩原盘四柱。'''
     return taiyuan(self._bazi.month_pillar)
 
   @functools.cached_property
@@ -332,9 +328,6 @@ class BaziChart:
     依《命理探原》起例按语，现有节月达到中气后月序循环进一；大寒后不提前换年。
     中气按出生精度相等归新，地点盘先换真太阳钟。时区与精度政策是本库执行约定，
     不称为古籍原文；结果不进入原四柱分析或 JSON。
-
-    Examples:
-    - chart.minggong
     '''
     opening = self._bazi.month_jies[0]
     jieqis = Jieqi.as_list()

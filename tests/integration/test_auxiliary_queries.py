@@ -118,7 +118,6 @@ def test_hour_zhongqi_crosses_midnight() -> None:
     assert bazi._attribution_reached(midnight_boundary) is reached
     hour = Dizhi.子 if reached else Dizhi.亥
     assert BaziChart(bazi).minggong == _expected(Tiangan.壬, 2 if reached else 1, hour)
-    # The next civil midnight stays in the same 子 grain, not an earlier hour index.
     following = Bazi.create(birth + timedelta(days=1), 'male', BaziConfig.from_values(precision='hour'))
     assert following._attribution_reached(midnight_boundary)
 

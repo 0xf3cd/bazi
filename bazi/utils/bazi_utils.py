@@ -103,12 +103,15 @@ def taiyuan(month_pillar: Ganzhi) -> Ganzhi:
     raise TypeError(f'Expected Tiangan, got {type(month_pillar.tiangan)}')
   if not isinstance(month_pillar.dizhi, Dizhi):
     raise TypeError(f'Expected Dizhi, got {type(month_pillar.dizhi)}')
+  # 六十甲子退九步，等价于天干顺移一位、地支顺移三位。
   return month_pillar.prev(9)
 
 
 def minggong(year_tiangan: Tiangan, month_dizhi: Dizhi, hour_dizhi: Dizhi) -> Ganzhi:
   '''
-  子起正月逆数，把生时加于月位后顺数到卯，按本盘年干五虎遁配宫干。
+  掌上十二地支位置固定：子位排正月、亥位排二月、戌位排三月，依次逆排。
+  把本盘时支放在生月所在的位置，再按地支顺序逐位顺排，直到排到卯。
+  卯所落的固定地支位置就是宫支，最后按本盘年干五虎遁配宫干。
 
   掌诀见《三命通会》卷二；该段未明确月界。本库命盘依《命理探原》起例按语，
   达到中气后月序循环进一，大寒后仍用本盘年干。月界归属由调用方决定。
