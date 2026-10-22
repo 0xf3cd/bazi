@@ -10,6 +10,8 @@ python -m pip install bazi
 
 需要 Python 3.11 或更高版本。运行时只用标准库和随包数据，不联网。
 
+在独立环境中安装；如果还不熟悉环境创建和终端操作，先按 [README 的准备步骤](https://github.com/0xf3cd/bazi/blob/main/README.md#1-准备环境)操作。普通使用不需要测试或文档构建工具。
+
 本页说明对应当前开发源码。已发布版本的接口以该版本 tag 下的文档为准，两者可能不同。
 
 ```{note}
@@ -42,6 +44,14 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 性别 female
 精度与后端 day celestial
 ```
+
+把上面的程序保存为 UTF-8 文件 `first_chart.py`，不要取名为 `bazi.py`。在终端进入该文件所在目录，使用刚才安装包的同一个环境运行：
+
+```sh
+python first_chart.py
+```
+
+把 `datetime(1990, 5, 17, 10, 30)` 换成公历出生民用时刻，`female` 为女、`male` 为男。本例没有经度，不自动换算时区或真太阳时；需要地点盘时先读 {doc}`configuration`。
 
 - `bazi.pillars` 依次是年、月、日、时柱，每柱是一个 `Ganzhi`。
 - 性别字符串接受 `男`、`女`、`male`、`female`；`chart.json` 里统一存拉丁写法。
@@ -81,6 +91,53 @@ print(basic_text(chart).strip())
 
 - 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
 - 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
+
+## 保存结果
+
+下面是独立可运行的保存例子，可另存为 `save_chart.py`。在该文件所在目录运行 `python save_chart.py` 后，打开 `chart.txt` 看基本命盘，或把 `chart.json` 交给程序恢复。路径相对运行命令时的当前目录，重复运行会覆盖同名文件，需保留的旧结果请先另存。
+
+```{testsetup} quickstart-save
+import os
+import tempfile
+
+_save_cwd = os.getcwd()
+_save_directory = tempfile.TemporaryDirectory()
+os.chdir(_save_directory.name)
+```
+
+```{testcode} quickstart-save
+import json
+from datetime import datetime
+from pathlib import Path
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.chart_text import basic_text
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+text_path = Path('chart.txt')
+json_path = Path('chart.json')
+text_path.write_text(basic_text(chart), encoding='utf-8')
+json_path.write_text(
+  json.dumps(chart.json, ensure_ascii=False, indent=2) + '\n',
+  encoding='utf-8',
+)
+restored = BaziChart.from_json(json.loads(json_path.read_text(encoding='utf-8')))
+print(text_path, json_path)
+print(restored.json == chart.json)
+```
+
+```{testoutput} quickstart-save
+chart.txt chart.json
+True
+```
+
+```{testcleanup} quickstart-save
+os.chdir(_save_cwd)
+_save_directory.cleanup()
+```
+
+命盘恢复会重建并核对，不是原结果的冻结；旧记录不兼容时保留原件，不要直接补字段，详见 {doc}`integration`。源码脚本有另一组保存选项，运行位置与输出路径见 [README 源码路线](https://github.com/0xf3cd/bazi/blob/main/README.md#源码脚本)。
 
 ## 在交互里看一眼
 
@@ -128,6 +185,7 @@ module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
 
 ## 下一步
 
+- 更新旧源码调用或处理旧记录：[v2.2.0→v2.3.0 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)，完整约定以对应版本的 `API_CONTRACT.md` 为准。
 - 想改变精度、换日点、大运年份口径，或使用真太阳时：{doc}`configuration`。
 - 想查流年、流月，或看原局与流运之间的关系：{doc}`relations-transits`。
 - 想把结果存成 JSON、重新加载，或接入自己的程序：{doc}`integration`。

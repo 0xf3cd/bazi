@@ -1,6 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import os
 import runpy
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -35,6 +37,58 @@ def test_readme_links_work_outside_repo():
     if link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
       path = ROOT / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
       assert path.resolve().is_relative_to(ROOT) and path.is_file(), link
+
+
+@pytest.mark.parametrize('between', ['说明文字。\n', '```sh\npython first_chart.py\n```\n'])
+def test_readme_output_must_follow_code(monkeypatch, tmp_path, between):
+  (tmp_path / 'README.md').write_text(
+    '```python\nprint("example")\n```\n' + between + '```text\nexample\n```\n',
+    encoding='utf-8',
+  )
+  monkeypatch.setattr(run_docs, 'ROOT', tmp_path)
+  with pytest.raises(ValueError, match='must be followed by a text output fence'):
+    run_docs.generate_readme_example(tmp_path)
+
+
+@pytest.mark.parametrize('failing', [False, True])
+def test_readme_doctest_preserves_caller(monkeypatch, tmp_path, failing):
+  project = tmp_path / 'project'
+  project.mkdir()
+  caller = tmp_path / 'caller'
+  caller.mkdir()
+  marker = caller / 'chart.txt'
+  marker.write_bytes(b'keep exactly')
+  temporary = tmp_path / 'temporary'
+  temporary.mkdir()
+  body = "from pathlib import Path\nPath('chart.txt').write_text('example', encoding='utf-8')\nprint('example')\n"
+  if failing:
+    body += "raise RuntimeError('sample failure')\n"
+  (project / 'README.md').write_text('```python\n' + body + '```\n\n```text\nexample\n```\n', encoding='utf-8')
+  (project / 'conf.py').write_text('project = "example"\nroot_doc = "readme-example"\nextensions = ["sphinx.ext.doctest"]\n', encoding='utf-8')
+  monkeypatch.setattr(run_docs, 'ROOT', project)
+  run_docs.generate_readme_example(project)
+  with (project / 'readme-example.rst').open('a', encoding='utf-8') as stream:
+    stream.write(
+      '\n.. testcode:: after-readme\n\n   from pathlib import Path\n'
+      f'   print(Path.cwd() == Path({str(caller)!r}))\n'
+      '\n.. testoutput:: after-readme\n\n   True\n',
+    )
+  output = tmp_path / 'output'
+  result = subprocess.run(
+    [sys.executable, '-B', '-m', 'sphinx', '-E', '-b', 'doctest', '-n', '-W', '--keep-going',
+     '-d', str(tmp_path / 'doctrees'), str(project), str(output)],
+    cwd=caller, env={**os.environ, 'TMPDIR': str(temporary)}, capture_output=True, text=True, encoding='utf-8',
+    timeout=60, check=False,
+  )
+  assert result.returncode == int(failing), result.stdout + result.stderr
+  report = (output / 'output.txt').read_text(encoding='utf-8')
+  assert '0 failures in setup code' in report and '0 failures in cleanup code' in report
+  assert 'after-readme' in report
+  if failing:
+    assert 'RuntimeError: sample failure' in report
+  assert marker.read_bytes() == b'keep exactly'
+  assert set(caller.iterdir()) == {marker}
+  assert not list(temporary.iterdir())
 
 
 def test_release_label_grammar_is_shared():

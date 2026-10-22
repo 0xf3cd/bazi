@@ -175,6 +175,27 @@ def test_doctest_count_accepts_both_wordings(tmp_path, singular):
   assert check_doctests(tmp_path) == sum(map(len, EXAMPLE_GROUPS.values()))
 
 
+@pytest.mark.parametrize('phase', ['setup', 'cleanup'])
+def test_doctest_phases_are_not_examples(tmp_path, phase):
+  output = doctest_output(False).replace(
+    '   1 tests in readme-first\n',
+    f'   1 tests in readme-first\n   1 tests in readme-first ({phase} code)\n',
+  )
+  (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
+  assert check_doctests(tmp_path) == sum(map(len, EXAMPLE_GROUPS.values()))
+
+
+@pytest.mark.parametrize('phase', ['setup', 'cleanup'])
+def test_orphan_doctest_phase_is_rejected(tmp_path, phase):
+  output = doctest_output(False).replace(
+    '   1 tests in readme-first\n',
+    f'   1 tests in readme-first\n   1 tests in missing-example ({phase} code)\n',
+  )
+  (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
+  with pytest.raises(AssertionError, match='Orphan doctest'):
+    check_doctests(tmp_path)
+
+
 @pytest.mark.parametrize('old,new', [
   ('1 tests in quickstart-chart', '1 tests in omitted-chart'),
   pytest.param(f'{sum(map(len, EXAMPLE_GROUPS.values()))} tests', '0 tests', id='total-count'),

@@ -22,7 +22,7 @@ from run_docs_site import RELEASE_LABEL
 
 
 def generate_readme_example(source: Path) -> None:
-  '''从 README 的首个 Python 围栏及紧随其后的输出生成执行检查。'''
+  '''从 README 首个 Python 围栏及紧随输出生成检查，在临时工作目录执行。'''
   tokens = MarkdownIt('commonmark').parse((ROOT / 'README.md').read_text(encoding='utf-8'))
   index = next((index for index, token in enumerate(tokens) if token.type == 'fence' and token.info.strip() == 'python'), None)
   if index is None or index + 1 == len(tokens):
@@ -30,10 +30,22 @@ def generate_readme_example(source: Path) -> None:
   code, expected = tokens[index:index + 2]
   if expected.type != 'fence' or expected.info.strip() != 'text':
     raise ValueError('README Python example must be followed by a text output fence')
-  lines = [':orphan:', '', 'README 首例检查', '===============', '', '.. testcode:: readme-first', '']
+  lines = [
+    ':orphan:', '', 'README 首例检查', '===============', '',
+    '.. testsetup:: readme-first', '',
+    '   import os', '   import tempfile',
+    '   _readme_cwd = os.getcwd()',
+    '   _readme_directory = tempfile.TemporaryDirectory()',
+    '   os.chdir(_readme_directory.name)', '',
+    '.. testcode:: readme-first', '',
+  ]
   lines.extend('   ' + line for line in code.content.splitlines())
   lines.extend(['', '.. testoutput:: readme-first', ''])
   lines.extend('   ' + line for line in expected.content.splitlines())
+  lines.extend([
+    '', '.. testcleanup:: readme-first', '',
+    '   os.chdir(_readme_cwd)', '   _readme_directory.cleanup()',
+  ])
   (source / 'readme-example.rst').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
