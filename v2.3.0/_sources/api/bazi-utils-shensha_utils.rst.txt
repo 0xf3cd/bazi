@@ -1,0 +1,54 @@
+bazi.utils.shensha_utils
+========================
+
+.. automodule:: bazi.utils.shensha_utils
+
+.. autofunction:: bazi.utils.shensha_utils.xunkong
+
+.. autofunction:: bazi.utils.shensha_utils.kongwang
+
+.. autofunction:: bazi.utils.shensha_utils.taohua
+
+.. autofunction:: bazi.utils.shensha_utils.hongyan
+
+.. autofunction:: bazi.utils.shensha_utils.hongluan
+
+.. autofunction:: bazi.utils.shensha_utils.tianxi
+
+.. autofunction:: bazi.utils.shensha_utils.yima
+
+.. autofunction:: bazi.utils.shensha_utils.huagai
+
+.. autofunction:: bazi.utils.shensha_utils.jiangxing
+
+.. autofunction:: bazi.utils.shensha_utils.zaisha
+
+.. autofunction:: bazi.utils.shensha_utils.jiesha
+
+.. autofunction:: bazi.utils.shensha_utils.wangshen
+
+.. autofunction:: bazi.utils.shensha_utils.guchen
+
+.. autofunction:: bazi.utils.shensha_utils.guasu
+
+.. autofunction:: bazi.utils.shensha_utils.lushen
+
+.. autofunction:: bazi.utils.shensha_utils.jinyu
+
+.. autofunction:: bazi.utils.shensha_utils.kuigang
+
+.. autofunction:: bazi.utils.shensha_utils.tianshe
+
+.. autofunction:: bazi.utils.shensha_utils.yangren
+
+.. autofunction:: bazi.utils.shensha_utils.feiren
+
+.. autofunction:: bazi.utils.shensha_utils.tianyi
+
+.. autofunction:: bazi.utils.shensha_utils.wenchang
+
+.. autofunction:: bazi.utils.shensha_utils.wenchanggui
+
+.. autofunction:: bazi.utils.shensha_utils.taiji
+
+.. autofunction:: bazi.utils.shensha_utils.guoyin

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>规则、知识与出处的覆盖 &#8212; bazi · v2.3.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="贡献指南" href="../contributing.html" />
+    <link rel="prev" title="前提判据" href="../catalog/criteria.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>规则、知识与出处的覆盖<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>能计算一条规则、能查到解释文字、能追溯该条规则的出处，是三件不同的事。本页对账现有实现与知识目录，并用国印两读说明如何把它们连起来；不增加规则、查询接口或来源见证。</p>
+<section id="id2">
+<h2>读表口径<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p><strong>实现</strong>以规则表、定义枚举、计算入口与配置字段为准，不能从已有知识对象反推全部计算能力。</p></li>
+<li><p><strong>知识关联</strong>指现有对象、条目和来源 ID。文字提到某个词，不等于已经有该规则的专门对象或结构化关联。</p></li>
+<li><p><strong>源码出处</strong>包括规则旁的注释和定义 docstring。本页只记录这些说明的位置与支持边界，没有重新核验其外部古籍或天文数据。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">repository_attributed</span></code> 是本仓署名，<code class="docutils literal notranslate"><span class="pre">witnessed</span></code> 是已核原文出处，二者不互换；<code class="docutils literal notranslate"><span class="pre">reference_only</span></code> 另管默认输出资格。状态的完整含义见 <a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a>。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>规则与配置覆盖<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p>下表按规则族组织，覆盖 <a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules" title="bazi.rules.BaziRules"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziRules</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.TianganRules" title="bazi.rules.TianganRules"><code class="xref py py-class docutils literal notranslate"><span class="pre">TianganRules</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules" title="bazi.rules.DizhiRules"><code class="xref py py-class docutils literal notranslate"><span class="pre">DizhiRules</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules" title="bazi.rules.ShenshaRules"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShenshaRules</span></code></a> 的公共带注解属性，以及 <a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziSchool</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziConfig</span></code></a> 的字段。派生表、共享定义和独立规则不按属性数混算成一个“知识覆盖率”。</p>
+<section id="id4">
+<h3>基础表与天干关系<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>规则族</p></th>
+<th class="head"><p>实现与配置</p></th>
+<th class="head"><p>知识、出处与缺口</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>年上起月、日上起时</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE" title="bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">YEAR_TO_MONTH_TABLE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.DAY_TO_HOUR_TABLE" title="bazi.rules.BaziRules.DAY_TO_HOUR_TABLE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DAY_TO_HOUR_TABLE</span></code></a>；推算入口在 <a class="reference internal" href="../api/bazi-utils-bazi_utils.html#module-bazi.utils.bazi_utils" title="bazi.utils.bazi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi_utils</span></code></a></p></td>
+<td><p>表旁说明起干与推算含义；当前知识对象目录没有这两类规则的专门对象。</p></td>
+</tr>
+<tr class="row-odd"><td><p>干支阴阳五行</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.TIANGAN_TRAITS" title="bazi.rules.BaziRules.TIANGAN_TRAITS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_TRAITS</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.DIZHI_TRAITS" title="bazi.rules.BaziRules.DIZHI_TRAITS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_TRAITS</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tiangan.*.definition</span></code> 已记录十干定义及出处；没有地支对象，不能把十干定义的覆盖扩大到地支表。</p></td>
+</tr>
+<tr class="row-even"><td><p>藏干及比例</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.HIDDEN_TIANGANS" title="bazi.rules.BaziRules.HIDDEN_TIANGANS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">HIDDEN_TIANGANS</span></code></a></p></td>
+<td><p>源码列成员与百分比，表旁未列各比例的出处；尚无专门知识对象。十神释义不能替这些比例作证。</p></td>
+</tr>
+<tr class="row-odd"><td><p>纳音</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.NAYIN" title="bazi.rules.BaziRules.NAYIN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NAYIN</span></code></a></p></td>
+<td><p>源码将六十甲子映射为纳音；尚无纳音对象及条目关联。</p></td>
+</tr>
+<tr class="row-even"><td><p>十二长生</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.TIANGAN_ZHANGSHENG" title="bazi.rules.BaziRules.TIANGAN_ZHANGSHENG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_ZHANGSHENG</span></code></a>；查询与逆查在 <a class="reference internal" href="../api/bazi-utils-bazi_utils.html#module-bazi.utils.bazi_utils" title="bazi.utils.bazi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi_utils</span></code></a></p></td>
+<td><p>长生起点与阳顺阴逆的计算在源码；尚无十二长生对象及条目关联。</p></td>
+</tr>
+<tr class="row-odd"><td><p>十干禄位</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.BaziRules.TIANGAN_LU" title="bazi.rules.BaziRules.TIANGAN_LU"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_LU</span></code></a></p></td>
+<td><p>神煞层的 <code class="docutils literal notranslate"><span class="pre">LUSHEN</span></code> 共用此表，其源码注释列出处；知识库尚无禄位专门对象。</p></td>
+</tr>
+<tr class="row-even"><td><p>天干合、冲</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.TianganRules.TIANGAN_HE" title="bazi.rules.TianganRules.TIANGAN_HE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_HE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.TianganRules.TIANGAN_CHONG" title="bazi.rules.TianganRules.TIANGAN_CHONG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_CHONG</span></code></a></p></td>
+<td><p>表旁说明组合与方向；十干对象存在，不代表这两张关系表已关联到来源记录。</p></td>
+</tr>
+<tr class="row-odd"><td><p>天干生、克</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.TianganRules.TIANGAN_SHENG" title="bazi.rules.TianganRules.TIANGAN_SHENG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_SHENG</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.TianganRules.TIANGAN_KE" title="bazi.rules.TianganRules.TIANGAN_KE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANGAN_KE</span></code></a></p></td>
+<td><p>由五行关系派生；已有 <code class="docutils literal notranslate"><span class="pre">wuxing.mu_sheng_huo</span></code>、<code class="docutils literal notranslate"><span class="pre">wuxing.jin_ke_mu</span></code> 两条本仓署名示例，不是全体生克组合的来源目录。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3>地支关系<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h3>
+<p>直接查法与批量查法见 <a class="reference internal" href="../api/bazi-utils-dizhi_utils.html#module-bazi.utils.dizhi_utils" title="bazi.utils.dizhi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dizhi_utils</span></code></a>。<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><code class="xref py py-class docutils literal notranslate"><span class="pre">DizhiRelationDefinitions</span></code></a> 承载暗合、刑与拱局定义，<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.relation_definitions" title="bazi.school.BaziSchool.relation_definitions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">relation_definitions()</span></code></a> 从流派配置取得同一组定义。当前知识对象目录没有地支关系对象；下列出处仍在源码说明中，没有统一的规则到来源 ID 索引。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>规则族</p></th>
+<th class="head"><p>实现与配置</p></th>
+<th class="head"><p>知识、出处与缺口</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>三会、六合、三合、半合</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_SANHUI" title="bazi.rules.DizhiRules.DIZHI_SANHUI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_SANHUI</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_LIUHE" title="bazi.rules.DizhiRules.DIZHI_LIUHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_LIUHE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_SANHE" title="bazi.rules.DizhiRules.DIZHI_SANHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_SANHE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_BANHE" title="bazi.rules.DizhiRules.DIZHI_BANHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_BANHE</span></code></a></p></td>
+<td><p>表旁给出组合与结果；结构命中不自动证明合化成立或吉凶解释。</p></td>
+</tr>
+<tr class="row-odd"><td><p>暗合、通合、通禄合</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_ANHE" title="bazi.rules.DizhiRules.DIZHI_ANHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_ANHE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_TONGHE" title="bazi.rules.DizhiRules.DIZHI_TONGHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_TONGHE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_TONGLUHE" title="bazi.rules.DizhiRules.DIZHI_TONGLUHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_TONGLUHE</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.anhe_def" title="bazi.school.BaziSchool.anhe_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">anhe_def</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnheDef</span></code></a> 列三读；<code class="docutils literal notranslate"><span class="pre">NORMAL</span></code> 暗合与通禄合给出相同组合，不是两份独立证据。</p></td>
+</tr>
+<tr class="row-even"><td><p>拱合、拱会与成立条件</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_GONGHE" title="bazi.rules.DizhiRules.DIZHI_GONGHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_GONGHE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_GONGHUI" title="bazi.rules.DizhiRules.DIZHI_GONGHUI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_GONGHUI</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.GONG_RELATIONS" title="bazi.rules.DizhiRules.GONG_RELATIONS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GONG_RELATIONS</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.GONG_GONGHE_SCOPE" title="bazi.rules.DizhiRules.GONG_GONGHE_SCOPE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GONG_GONGHE_SCOPE</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_GONG_LU_TIANGAN" title="bazi.rules.DizhiRules.DIZHI_GONG_LU_TIANGAN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_GONG_LU_TIANGAN</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.gong_def" title="bazi.school.BaziSchool.gong_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">gong_def</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.GongheDef" title="bazi.rules.DizhiRules.GongheDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">GongheDef</span></code></a> 管结构，<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">GongDef</span></code></a> 保存同干、透化神、见禄字的完整来源档案。后者列现代来源与适用范围，不任意拼接成新读法。</p></td>
+</tr>
+<tr class="row-odd"><td><p>刑</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_XING" title="bazi.rules.DizhiRules.DIZHI_XING"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_XING</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.xing_def" title="bazi.school.BaziSchool.xing_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">xing_def</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">XingDef</span></code></a> 区分严格／宽松；按序查法可见方向，批量入口按多重集比较，不能混作同一方向语义。</p></td>
+</tr>
+<tr class="row-even"><td><p>冲、破、害</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_CHONG" title="bazi.rules.DizhiRules.DIZHI_CHONG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_CHONG</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_PO" title="bazi.rules.DizhiRules.DIZHI_PO"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_PO</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_HAI" title="bazi.rules.DizhiRules.DIZHI_HAI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_HAI</span></code></a></p></td>
+<td><p>表旁给出无方向组合；没有专门的结构化来源关联。</p></td>
+</tr>
+<tr class="row-odd"><td><p>地支生、克</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_SHENG" title="bazi.rules.DizhiRules.DIZHI_SHENG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_SHENG</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.DizhiRules.DIZHI_KE" title="bazi.rules.DizhiRules.DIZHI_KE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DIZHI_KE</span></code></a></p></td>
+<td><p>只从地支五行派生，不考虑阴阳；五行的两个知识示例不覆盖地支间全部应用。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id6">
+<h3>神煞<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h3>
+<p>低层查法见 <a class="reference internal" href="../api/bazi-utils-shensha_utils.html#module-bazi.utils.shensha_utils" title="bazi.utils.shensha_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">shensha_utils</span></code></a>。表值及定义来源在 <a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules" title="bazi.rules.ShenshaRules"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShenshaRules</span></code></a>，锚点取值范围与出处在 <code class="docutils literal notranslate"><span class="pre">school.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">_ANCHOR_CHOICES</span></code>，分析器接入在 <code class="docutils literal notranslate"><span class="pre">analyzer/relationship.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">_REGISTRY</span></code>。固定锚点、被查位置和原局／流运使用范围还须读注册表及消费者，不能只看表值。</p>
+<p>当前神煞知识对象为 <code class="docutils literal notranslate"><span class="pre">shensha.guoyin</span></code> 与 <code class="docutils literal notranslate"><span class="pre">shensha.kongwang</span></code>。其余行尚无同类专门对象，不等于全库文字从未提到这些名称。源码所列古籍、现代汇编与本仓署名也不因出现在下表就成为新的 <code class="docutils literal notranslate"><span class="pre">KnowledgeSource</span></code> 记录。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>规则族</p></th>
+<th class="head"><p>实现与配置</p></th>
+<th class="head"><p>知识、出处与缺口</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>桃花、红艳</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TAOHUA" title="bazi.rules.ShenshaRules.TAOHUA"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TAOHUA</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.HONGYAN" title="bazi.rules.ShenshaRules.HONGYAN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">HONGYAN</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.hongyan_anchor" title="bazi.school.BaziSchool.hongyan_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hongyan_anchor</span></code></a></p></td>
+<td><p>桃花注释分开表值与现代四柱查法；红艳记录乙一格分叉。红艳年干锚的出处缺口仍记在锚点表。</p></td>
+</tr>
+<tr class="row-odd"><td><p>红鸾、天喜</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.HONGLUAN" title="bazi.rules.ShenshaRules.HONGLUAN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">HONGLUAN</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TIANXI" title="bazi.rules.ShenshaRules.TIANXI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANXI</span></code></a></p></td>
+<td><p>表旁区分《星学大成》的宫限表值与现代查原局其余柱的用途。</p></td>
+</tr>
+<tr class="row-even"><td><p>驿马、华盖</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.YIMA" title="bazi.rules.ShenshaRules.YIMA"><code class="xref py py-attr docutils literal notranslate"><span class="pre">YIMA</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.HUAGAI" title="bazi.rules.ShenshaRules.HUAGAI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">HUAGAI</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.yima_anchor" title="bazi.school.BaziSchool.yima_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">yima_anchor</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.huagai_anchor" title="bazi.school.BaziSchool.huagai_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">huagai_anchor</span></code></a></p></td>
+<td><p>表旁与锚点说明分列；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.mingli_tanyuan" title="bazi.school.BaziSchool.mingli_tanyuan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mingli_tanyuan()</span></code></a> 记录日锚档案，不把现代双锚合并成袁氏原法。</p></td>
+</tr>
+<tr class="row-odd"><td><p>将星、灾煞</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.JIANGXING" title="bazi.rules.ShenshaRules.JIANGXING"><code class="xref py py-attr docutils literal notranslate"><span class="pre">JIANGXING</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.ZAISHA" title="bazi.rules.ShenshaRules.ZAISHA"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ZAISHA</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.jiangxing_anchor" title="bazi.school.BaziSchool.jiangxing_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">jiangxing_anchor</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.zaisha_anchor" title="bazi.school.BaziSchool.zaisha_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">zaisha_anchor</span></code></a></p></td>
+<td><p>表旁列《三命通会》与查法来源；不同字段支持的锚点集合分别取自锚点表。</p></td>
+</tr>
+<tr class="row-even"><td><p>劫煞、亡神</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.JIESHA" title="bazi.rules.ShenshaRules.JIESHA"><code class="xref py py-attr docutils literal notranslate"><span class="pre">JIESHA</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.WANGSHEN" title="bazi.rules.ShenshaRules.WANGSHEN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">WANGSHEN</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.jiesha_anchor" title="bazi.school.BaziSchool.jiesha_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">jiesha_anchor</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.wangshen_anchor" title="bazi.school.BaziSchool.wangshen_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">wangshen_anchor</span></code></a></p></td>
+<td><p>表旁说明绝位／临官位与出处；日锚、现代双锚的依据分列。</p></td>
+</tr>
+<tr class="row-odd"><td><p>孤辰、寡宿</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.GUCHEN" title="bazi.rules.ShenshaRules.GUCHEN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GUCHEN</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.GUASU" title="bazi.rules.ShenshaRules.GUASU"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GUASU</span></code></a></p></td>
+<td><p>共用的表旁注释列规则与查法出处；解释层豁免不删除原始命中。</p></td>
+</tr>
+<tr class="row-even"><td><p>禄神、金舆</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.LUSHEN" title="bazi.rules.ShenshaRules.LUSHEN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">LUSHEN</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.JINYU" title="bazi.rules.ShenshaRules.JINYU"><code class="xref py py-attr docutils literal notranslate"><span class="pre">JINYU</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.jinyu_anchor" title="bazi.school.BaziSchool.jinyu_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">jinyu_anchor</span></code></a></p></td>
+<td><p>禄神共用基础禄位表，金舆从禄位派生；出处见表旁，金舆的锚点依据另列。</p></td>
+</tr>
+<tr class="row-odd"><td><p>魁罡、天赦</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.KUIGANG" title="bazi.rules.ShenshaRules.KUIGANG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">KUIGANG</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TIANSHE" title="bazi.rules.ShenshaRules.TIANSHE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANSHE</span></code></a></p></td>
+<td><p>表旁列规则与出处，低层查法分别接收日柱、月令与日柱；原局分析器在 <code class="docutils literal notranslate"><span class="pre">_REGISTRY</span></code> 之外单独输出这两项整柱结果。</p></td>
+</tr>
+<tr class="row-even"><td><p>羊刃、飞刃</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.YANGREN" title="bazi.rules.ShenshaRules.YANGREN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">YANGREN</span></code></a>、<a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.FEIREN" title="bazi.rules.ShenshaRules.FEIREN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">FEIREN</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.yangren_def" title="bazi.school.BaziSchool.yangren_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">yangren_def</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.feiren_def" title="bazi.school.BaziSchool.feiren_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">feiren_def</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">YangrenDef</span></code></a> 分列子平、古禄命、帝旺三读与出处；两个字段独立，飞刃从相应羊刃表派生。</p></td>
+</tr>
+<tr class="row-odd"><td><p>天乙贵人</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TIANYI" title="bazi.rules.ShenshaRules.TIANYI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TIANYI</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.tianyi_def" title="bazi.school.BaziSchool.tianyi_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">tianyi_def</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.tianyi_anchor" title="bazi.school.BaziSchool.tianyi_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">tianyi_anchor</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TianyiDef" title="bazi.rules.ShenshaRules.TianyiDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">TianyiDef</span></code></a> 保存完整口诀／表档案；选择阳贵或阴贵不替调用方决定昼夜界线。</p></td>
+</tr>
+<tr class="row-even"><td><p>文昌</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.WENCHANG" title="bazi.rules.ShenshaRules.WENCHANG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">WENCHANG</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.wenchang_def" title="bazi.school.BaziSchool.wenchang_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">wenchang_def</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.wenchang_anchor" title="bazi.school.BaziSchool.wenchang_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">wenchang_anchor</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.WenchangDef" title="bazi.rules.ShenshaRules.WenchangDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">WenchangDef</span></code></a> 分列辛子／辛戌；表值、锚点与查找位置的来源边界分开保留。</p></td>
+</tr>
+<tr class="row-odd"><td><p>文昌贵</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.WENCHANGGUI" title="bazi.rules.ShenshaRules.WENCHANGGUI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">WENCHANGGUI</span></code></a></p></td>
+<td><p>表旁列全表与年干锚出处；它与文昌分列，不把同名近亲并成一个变体。</p></td>
+</tr>
+<tr class="row-even"><td><p>太极贵人</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TAIJI" title="bazi.rules.ShenshaRules.TAIJI"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TAIJI</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.taiji_def" title="bazi.school.BaziSchool.taiji_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">taiji_def</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.taiji_anchor" title="bazi.school.BaziSchool.taiji_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">taiji_anchor</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.TaijiDef" title="bazi.rules.ShenshaRules.TaijiDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">TaijiDef</span></code></a> 保存壬癸两读、文字差异与戊己格矛盾；锚点依据另列。</p></td>
+</tr>
+<tr class="row-odd"><td><p>国印贵人</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.GUOYIN" title="bazi.rules.ShenshaRules.GUOYIN"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GUOYIN</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.guoyin_def" title="bazi.school.BaziSchool.guoyin_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">guoyin_def</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.guoyin_anchor" title="bazi.school.BaziSchool.guoyin_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">guoyin_anchor</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.GuoyinDef" title="bazi.rules.ShenshaRules.GuoyinDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">GuoyinDef</span></code></a> 分开两表、锚点、查找位置与传抄限度；已有两条 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code> 条目，见下方示例。</p></td>
+</tr>
+<tr class="row-even"><td><p>六甲旬空</p></td>
+<td><p><a class="reference internal" href="../api/bazi-rules.html#bazi.rules.ShenshaRules.KONGWANG" title="bazi.rules.ShenshaRules.KONGWANG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">KONGWANG</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.kongwang_anchor" title="bazi.school.BaziSchool.kongwang_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">kongwang_anchor</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">shensha.kongwang.xunkong</span></code> 记基础二支，<code class="docutils literal notranslate"><span class="pre">.lookup</span></code> 记汇编转引与年日例，<code class="docutils literal notranslate"><span class="pre">.repository</span></code> 另记本库默认和范围；均为 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code>。固定 revision 转录、下游白文、注释层与仓内政策分列，不把所引原书当作已见。详情查法见 <a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>，不含单支筛选、截路、四大或解释层。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id7">
+<h3>表外计算、配置与评估边界<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h3>
+<p><a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziConfig.school" title="bazi.school.BaziConfig.school"><code class="xref py py-attr docutils literal notranslate"><span class="pre">school</span></code></a> 选择整个流派档案。其余配置和纯计算规则不能从四个规则容器的属性清单中省略。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>规则族／边界</p></th>
+<th class="head"><p>实现与配置</p></th>
+<th class="head"><p>知识、出处与缺口</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>五行、干支循环</p></td>
+<td><p><a class="reference internal" href="../api/bazi-defines.html#bazi.defines.Wuxing" title="bazi.defines.Wuxing"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wuxing</span></code></a>、<a class="reference internal" href="../api/bazi-defines.html#bazi.defines.Ganzhi" title="bazi.defines.Ganzhi"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ganzhi</span></code></a>；<a class="reference internal" href="../api/bazi-utils-bazi_utils.html#bazi.utils.bazi_utils.ganzhi_of_year" title="bazi.utils.bazi_utils.ganzhi_of_year"><code class="xref py py-func docutils literal notranslate"><span class="pre">ganzhi_of_year()</span></code></a>、<a class="reference internal" href="../api/bazi-utils-bazi_utils.html#bazi.utils.bazi_utils.ganzhi_of_day" title="bazi.utils.bazi_utils.ganzhi_of_day"><code class="xref py py-func docutils literal notranslate"><span class="pre">ganzhi_of_day()</span></code></a></p></td>
+<td><p>五行两条本仓署名示例已存在；年／日干支计算有源码定义与基准日期，但尚无相应规则到知识来源的关联。</p></td>
+</tr>
+<tr class="row-odd"><td><p>十神计算</p></td>
+<td><p><a class="reference internal" href="../api/bazi-utils-bazi_utils.html#bazi.utils.bazi_utils.shishen" title="bazi.utils.bazi_utils.shishen"><code class="xref py py-func docutils literal notranslate"><span class="pre">shishen()</span></code></a></p></td>
+<td><p>已有 <code class="docutils literal notranslate"><span class="pre">shishen.*</span></code> 对象与定义条目，如 <code class="docutils literal notranslate"><span class="pre">shishen.bijian.definition</span></code>；定义条目不为地支取主气、藏干比例或全部解释作证，也不能由此假定十个对象都有默认定义条目。</p></td>
+</tr>
+<tr class="row-even"><td><p>四柱节界与换日</p></td>
+<td><p><a class="reference internal" href="../api/bazi-bazi.html#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><code class="xref py py-class docutils literal notranslate"><span class="pre">Bazi</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziConfig.precision" title="bazi.school.BaziConfig.precision"><code class="xref py py-attr docutils literal notranslate"><span class="pre">precision</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.day_rollover" title="bazi.school.BaziSchool.day_rollover"><code class="xref py py-attr docutils literal notranslate"><span class="pre">day_rollover</span></code></a></p></td>
+<td><p><a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziPrecision" title="bazi.school.BaziPrecision"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziPrecision</span></code></a>、<a class="reference internal" href="../api/bazi-school.html#bazi.school.DayRollover" title="bazi.school.DayRollover"><code class="xref py py-class docutils literal notranslate"><span class="pre">DayRollover</span></code></a> 与 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a> 说明边界。知识目录不是历法精度或换日出处目录。</p></td>
+</tr>
+<tr class="row-odd"><td><p>胎元与命宫附加查询</p></td>
+<td><p><a class="reference internal" href="../api/bazi-bazi_chart.html#bazi.bazi_chart.BaziChart.taiyuan" title="bazi.bazi_chart.BaziChart.taiyuan"><code class="xref py py-attr docutils literal notranslate"><span class="pre">taiyuan</span></code></a>、<a class="reference internal" href="../api/bazi-bazi_chart.html#bazi.bazi_chart.BaziChart.minggong" title="bazi.bazi_chart.BaziChart.minggong"><code class="xref py py-attr docutils literal notranslate"><span class="pre">minggong</span></code></a>；纯函数在 <a class="reference internal" href="../api/bazi-utils-bazi_utils.html#module-bazi.utils.bazi_utils" title="bazi.utils.bazi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi_utils</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">concept.taiyuan</span></code>、<code class="docutils literal notranslate"><span class="pre">concept.minggong</span></code> 区分月柱顺移、掌诀、中气按语、本库执行政策与待核候选，均为 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code>。三百日胎元及其他命宫月界未编码；不扩四柱、配置或旧分析，计算不认证解释。用法见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p></td>
+</tr>
+<tr class="row-even"><td><p>历法、民用钟与真太阳钟</p></td>
+<td><p><a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziConfig.backend" title="bazi.school.BaziConfig.backend"><code class="xref py py-attr docutils literal notranslate"><span class="pre">backend</span></code></a>；<a class="reference internal" href="../api/bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalendarBackend</span></code></a>、<code class="docutils literal notranslate"><span class="pre">bazi/calendar/solar_time.py</span></code> 与地点输入</p></td>
+<td><p>数据来源、精度及钟的边界见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a> 和 <a class="reference internal" href="../api/bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalendarBackend</span></code></a> 的说明。逐行历书／天文数据的独立定标不属本页评估；不因缺少知识条目就判计算无依据。</p></td>
+</tr>
+<tr class="row-odd"><td><p>配偶星与配偶宫</p></td>
+<td><p><a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.peiou_xing_def" title="bazi.school.BaziSchool.peiou_xing_def"><code class="xref py py-attr docutils literal notranslate"><span class="pre">peiou_xing_def</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.PeiouXingDef" title="bazi.school.PeiouXingDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">PeiouXingDef</span></code></a> 与 <a class="reference internal" href="../api/bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziChart</span></code></a></p></td>
+<td><p>已有 <code class="docutils literal notranslate"><span class="pre">concept.peiou_xing</span></code>、<code class="docutils literal notranslate"><span class="pre">concept.peiou_gong</span></code> 及带原文来源的 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code> 条目；历史读法、软件默认与适用条件仍须分别读取。</p></td>
+</tr>
+<tr class="row-even"><td><p>交运、小运、大运与流年</p></td>
+<td><p><a class="reference internal" href="../api/bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziChart</span></code></a>；<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziConfig.dayun_year_rule" title="bazi.school.BaziConfig.dayun_year_rule"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dayun_year_rule</span></code></a> 与 <a class="reference internal" href="../api/bazi-school.html#bazi.school.DayunYearRule" title="bazi.school.DayunYearRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">DayunYearRule</span></code></a></p></td>
+<td><p>顺逆、间隔折算、物理时刻线与年份标签在源码说明中；当前没有相应专门知识对象。标签规则不能代替物理边界规则。</p></td>
+</tr>
+<tr class="row-odd"><td><p>流运查询与关系组合</p></td>
+<td><p><a class="reference internal" href="../api/bazi-transits.html#module-bazi.transits" title="bazi.transits"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transits</span></code></a>、<a class="reference internal" href="../api/bazi-utils-tiangan_utils.html#module-bazi.utils.tiangan_utils" title="bazi.utils.tiangan_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tiangan_utils</span></code></a>、<a class="reference internal" href="../api/bazi-utils-dizhi_utils.html#module-bazi.utils.dizhi_utils" title="bazi.utils.dizhi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dizhi_utils</span></code></a>、<a class="reference internal" href="../api/bazi-analyzer-relationship.html#module-bazi.analyzer.relationship" title="bazi.analyzer.relationship"><code class="xref py py-mod docutils literal notranslate"><span class="pre">relationship</span></code></a></p></td>
+<td><p>查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。</p></td>
+</tr>
+<tr class="row-even"><td><p>解释前提匹配</p></td>
+<td><p><a class="reference internal" href="../api/bazi-context_matching.html#module-bazi.context_matching" title="bazi.context_matching"><code class="xref py py-mod docutils literal notranslate"><span class="pre">context_matching</span></code></a> 与 <a class="reference internal" href="../catalog/criteria.html"><span class="doc">前提判据</span></a></p></td>
+<td><p>已有可发现判据目录与知识引用；不等同于全库计算规则的来源索引，更不自动证明解释前提成立。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="id8">
+<h2>国印关联示例<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h2>
+<p>两条国印知识已经存在，不需要再次录入。默认过滤与来源访问的通用用法见 <a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a>。这里补上当前流派字段到条目、再到来源的查阅路径。</p>
+<p><strong>下面的定义成员与条目 ID 对应是文档中的设计例子，不是库提供的规则关联接口。</strong> 源码规则层不依赖 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase</span></code>。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tiangan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziRules</span><span class="p">,</span> <span class="n">ShenshaRules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziSchool</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="k">assert</span> <span class="p">{</span><span class="n">obj</span><span class="o">.</span><span class="n">object_id</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">'shensha'</span><span class="p">}</span> <span class="o">==</span> <span class="p">{</span><span class="s1">'shensha.guoyin'</span><span class="p">,</span> <span class="s1">'shensha.kongwang'</span><span class="p">}</span>
+<span class="n">claims</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">ShenshaRules</span><span class="o">.</span><span class="n">GuoyinDef</span><span class="o">.</span><span class="n">MODERN</span><span class="p">:</span> <span class="s1">'shensha.guoyin.modern'</span><span class="p">,</span>
+  <span class="n">ShenshaRules</span><span class="o">.</span><span class="n">GuoyinDef</span><span class="o">.</span><span class="n">WUXING_JINGJI</span><span class="p">:</span> <span class="s1">'shensha.guoyin.wuxing_jingji'</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">definition</span><span class="p">,</span> <span class="n">claim_id</span> <span class="ow">in</span> <span class="n">claims</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+  <span class="n">school</span> <span class="o">=</span> <span class="n">BaziSchool</span><span class="p">(</span><span class="n">guoyin_def</span><span class="o">=</span><span class="n">definition</span><span class="p">)</span>
+  <span class="n">entry</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="n">claim_id</span><span class="p">)</span>
+  <span class="n">table</span> <span class="o">=</span> <span class="n">ShenshaRules</span><span class="o">.</span><span class="n">GUOYIN</span><span class="p">[</span><span class="n">school</span><span class="o">.</span><span class="n">guoyin_def</span><span class="p">]</span>
+  <span class="n">target</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">Tiangan</span><span class="o">.</span><span class="n">甲</span><span class="p">]</span>
+  <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">BaziRules</span><span class="o">.</span><span class="n">TIANGAN_LU</span><span class="p">[</span><span class="n">Tiangan</span><span class="o">.</span><span class="n">甲</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">%</span> <span class="mi">12</span>
+  <span class="k">assert</span> <span class="nb">all</span><span class="p">((</span><span class="n">table</span><span class="p">[</span><span class="n">tg</span><span class="p">]</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">lu</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">%</span> <span class="mi">12</span> <span class="o">==</span> <span class="n">offset</span>
+             <span class="k">for</span> <span class="n">tg</span><span class="p">,</span> <span class="n">lu</span> <span class="ow">in</span> <span class="n">BaziRules</span><span class="o">.</span><span class="n">TIANGAN_LU</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+  <span class="c1"># 对账当前条目措辞，不把解释文字当作结构化接口。</span>
+  <span class="k">assert</span> <span class="sa">f</span><span class="s1">'偏移 +</span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s1">'</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">text</span>
+  <span class="k">assert</span> <span class="n">entry</span><span class="o">.</span><span class="n">limits</span>
+  <span class="n">source</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">definition</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">school</span><span class="o">.</span><span class="n">guoyin_anchor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">'甲见'</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">claim_id</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">source_state</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">source_id</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">text_layer</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MODERN YEAR_AND_DAY 甲见戌
+shensha.guoyin.modern repository_attributed reference_only
+repository_guoyin_variants editorial repository_attributed
+WUXING_JINGJI YEAR_AND_DAY 甲见酉
+shensha.guoyin.wuxing_jingji repository_attributed reference_only
+repository_guoyin_variants editorial repository_attributed
+</pre></div>
+</div>
+<p>这段代码只查表与知识，不创建命盘，也不执行“以哪柱查哪些位置”的命盘求值。三层支持要分别读：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>层</p></th>
+<th class="head"><p>当前事实从哪里取</p></th>
+<th class="head"><p>来源边界</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>表值</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.GUOYIN</span></code>、<code class="docutils literal notranslate"><span class="pre">GuoyinDef</span></code> 及条目文字</p></td>
+<td><p>两表从禄位派生；定义说明区分原文、今人注释、抄本与现代读法，不合成一份无分歧的古籍证明。</p></td>
+</tr>
+<tr class="row-odd"><td><p>锚点</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziSchool.guoyin_anchor</span></code> 与 <code class="docutils literal notranslate"><span class="pre">_ANCHOR_CHOICES</span></code> 的对应注释</p></td>
+<td><p>支持年锚、年日双锚；年干锚的明文出自今人注释，抄本表值见证不能证明该锚。</p></td>
+</tr>
+<tr class="row-even"><td><p>查找位置</p></td>
+<td><p>定义 docstring、条目 <code class="docutils literal notranslate"><span class="pre">limits</span></code> 与实际消费者</p></td>
+<td><p>果老文献的身命宫不等于四柱地支；本库四柱查法的现代来源与表值来源分开。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">repository_guoyin_variants</span></code> 概述的是本仓说明，<code class="docutils literal notranslate"><span class="pre">supports</span></code> 及 <code class="docutils literal notranslate"><span class="pre">limitations</span></code> 都应保留阅读。该来源引用固定的仓内快照；当前表与条目对账成功，不会把历史快照变成新增的古籍见证。</p>
+</section>
+<section id="id9">
+<h2>关联如何维护<a class="headerlink" href="#id9" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p>计算表仍归 <code class="docutils literal notranslate"><span class="pre">rules.py</span></code>，默认与允许的配置归 <code class="docutils literal notranslate"><span class="pre">school.py</span></code>，知识文字、来源及状态归 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase</span></code> 的注册表。禄神共表、金舆／国印派生等已有共享关系继续从源码取值，不在知识库或本页复制十格表。</p></li>
+<li><p>不能从算法派生的原文、解释、锚点依据与支持限度继续独立保留。规则或文字变更时，对照条目 ID、定义成员、实际表值、锚点范围和消费者检查差异；上面的示例只校验当前两读的偏移与文字一致，不声称已自动维护全部语义。</p></li>
+<li><p>覆盖表漏掉规则属性或配置字段，由文档测试的集合核对报告；引用与示例由严格构建及文档示例检查验证。这些检查不裁定命理依据，也不证明表外计算已经穷尽。</p></li>
+<li><p>若将来增加可查询关联，建议先在知识侧验证一组“定义成员／配置字段 → 稳定条目 ID”的窄关联，保留表值、锚点、查找位置各自的支持来源。规则层不反向导入知识层，不把本页的手写对应直接宣布为公开接口。</p></li>
+</ul>
+</section>
+<section id="id10">
+<h2>评估结论与首批候选<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>项目</p></th>
+<th class="head"><p>结论</p></th>
+<th class="head"><p>后续条件</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>国印两读</p></td>
+<td><p>作为首个关联设计例子；保留现有条目与来源等级</p></td>
+<td><p>运行时关联的归属、稳定标识和查询形状须另定；不借本页裁定传抄关系或改变查法。</p></td>
+</tr>
+<tr class="row-odd"><td><p>五行生克</p></td>
+<td><p>可作为下一组较小候选</p></td>
+<td><p>现有两条只是本仓署名示例；扩展前先定是否只关联形式定义，不能直接升级为古籍见证或全体生克解释。</p></td>
+</tr>
+<tr class="row-even"><td><p>配偶星／宫</p></td>
+<td><p>保留现有原文与前提边界，暂不作为机械关联的首个试点</p></td>
+<td><p>先区分历史取法、默认计算、条件解释与消费者，不能把同对象的所有条目绑定为同一条计算规则。</p></td>
+</tr>
+<tr class="row-odd"><td><p>全量规则查询 API、知识迁移</p></td>
+<td><p>暂缓；本页不实施</p></td>
+<td><p>先用小样本确认规则身份、关联所有者、维护成本与来源粒度，再确定实施范围；结构化知识缺口不等于每项都应新增解释。</p></td>
+</tr>
+</tbody>
+</table>
+<p>新增来源或读法仍须分别确认系统归属、规则本身、锚点与查找对象。不同流派保留可选变体；来源未核或只有本仓署名的部分维持原状态，不因“已关联”就提高证据或默认输出资格。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../catalog/criteria.html" title="上一章">前提判据</a></li>
+      <li>Next: <a href="../contributing.html" title="下一章">贡献指南</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

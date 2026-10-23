@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.calendar.dates &#8212; bazi · v2.3.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.calendar.hko_data" href="bazi-calendar-hko_data.html" />
+    <link rel="prev" title="bazi.calendar.celestial_utils" href="bazi-calendar-celestial_utils.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.calendar.dates">
+<span id="bazi-calendar-dates"></span><h1>bazi.calendar.dates<a class="headerlink" href="#module-bazi.calendar.dates" title="链接到此标题。">¶</a></h1>
+<p>历法日期与节气时刻的数据类型。</p>
+<p>CalendarType 区分历法，CalendarDate 承载日期，JieqiTime 与 GanzhiYearMonth 保存相应坐标。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarType">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.dates.</span></span><span class="sig-name descname"><span class="pre">CalendarType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L15-L43"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarType" title="链接到此定义。">¶</a></dt>
+<dd><p>公历、农历、干支历三种日期类型。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarType.GANZHI">
+<span class="sig-name descname"><span class="pre">GANZHI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarType.GANZHI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarType.LUNAR">
+<span class="sig-name descname"><span class="pre">LUNAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarType.LUNAR" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarType.SOLAR">
+<span class="sig-name descname"><span class="pre">SOLAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarType.SOLAR" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarType.">
+<span class="sig-name descname"><span class="pre">公历</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarType." title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">农历</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id0" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">干支历</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id1" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarDate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.dates.</span></span><span class="sig-name descname"><span class="pre">CalendarDate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">day</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_type</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L46-L90"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.CalendarDate" title="链接到此定义。">¶</a></dt>
+<dd><p>带历法类型的不可变日期。构造时校验字段类型，不检查日期是否合法。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>与非 CalendarDate 比较，dataclass 生成的 <code class="docutils literal notranslate"><span class="pre">==</span></code> / <code class="docutils literal notranslate"><span class="pre">!=</span></code> 返回 False / True；排序抛 TypeError。</p></li>
+<li><p>不同 CalendarType 的日期不能排序，抛 TypeError。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<em>int</em>)</p></li>
+<li><p><strong>month</strong> (<em>int</em>)</p></li>
+<li><p><strong>day</strong> (<em>int</em>)</p></li>
+<li><p><strong>date_type</strong> (<a class="reference internal" href="#bazi.calendar.dates.CalendarType" title="bazi.calendar.dates.CalendarType"><em>CalendarType</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarDate.date_type">
+<span class="sig-name descname"><span class="pre">date_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.calendar.dates.CalendarType" title="bazi.calendar.dates.CalendarType"><span class="pre">CalendarType</span></a></span><a class="headerlink" href="#bazi.calendar.dates.CalendarDate.date_type" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarDate.day">
+<span class="sig-name descname"><span class="pre">day</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.calendar.dates.CalendarDate.day" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarDate.month">
+<span class="sig-name descname"><span class="pre">month</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.calendar.dates.CalendarDate.month" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.CalendarDate.year">
+<span class="sig-name descname"><span class="pre">year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.calendar.dates.CalendarDate.year" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.calendar.dates.JieqiTime">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.dates.</span></span><span class="sig-name descname"><span class="pre">JieqiTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jieqi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L93-L96"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.JieqiTime" title="链接到此定义。">¶</a></dt>
+<dd><p>节气及其时刻；时刻精度随后端数据而定。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>jieqi</strong> (<a class="reference internal" href="bazi-defines-jieqi.html#bazi.defines.jieqi.Jieqi" title="bazi.defines.jieqi.Jieqi"><em>Jieqi</em></a>)</p></li>
+<li><p><strong>moment</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><em>datetime</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.JieqiTime.jieqi">
+<span class="sig-name descname"><span class="pre">jieqi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-jieqi.html#bazi.defines.jieqi.Jieqi" title="bazi.defines.jieqi.Jieqi"><span class="pre">Jieqi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.JieqiTime.jieqi" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.JieqiTime.moment">
+<span class="sig-name descname"><span class="pre">moment</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.12/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.JieqiTime.moment" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.calendar.dates.</span></span><span class="sig-name descname"><span class="pre">GanzhiYearMonth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">month</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L99-L144"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth" title="链接到此定义。">¶</a></dt>
+<dd><p>干支年月坐标，以立春起年，月序为 1（寅）至 12（丑）。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>坐标本身不限定历法表范围，也不指定出生、日期或时刻的归属粒度。</p></li>
+<li><p>按年、月序排序；不与公历年月或 0-based 月偏移混用。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<em>int</em>)</p></li>
+<li><p><strong>month</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.dizhi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dizhi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L115-L118"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.dizhi" title="链接到此定义。">¶</a></dt>
+<dd><p>此干支月的月支。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.from_dizhi">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_dizhi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dizhi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L125-L130"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.from_dizhi" title="链接到此定义。">¶</a></dt>
+<dd><p>从干支年与月支构造坐标，不接受公历月份。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<em>int</em>)</p></li>
+<li><p><strong>dizhi</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.calendar.dates.GanzhiYearMonth" title="bazi.calendar.dates.GanzhiYearMonth"><em>GanzhiYearMonth</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.from_jie">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_jie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jie</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L132-L144"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.from_jie" title="链接到此定义。">¶</a></dt>
+<dd><p>真实节所开启的干支年月；中气不能开启干支月。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>jie</strong> (<a class="reference internal" href="#bazi.calendar.dates.JieqiTime" title="bazi.calendar.dates.JieqiTime"><em>JieqiTime</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.calendar.dates.GanzhiYearMonth" title="bazi.calendar.dates.GanzhiYearMonth"><em>GanzhiYearMonth</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.month">
+<span class="sig-name descname"><span class="pre">month</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.month" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.opening_jie">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">opening_jie</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-jieqi.html#bazi.defines.jieqi.Jieqi" title="bazi.defines.jieqi.Jieqi"><span class="pre">Jieqi</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/097c8bfa7556df1d2339d273844edf0e52c813b3/bazi/calendar/dates.py#L120-L123"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.opening_jie" title="链接到此定义。">¶</a></dt>
+<dd><p>开月节的公历年与节名；丑月由下一公历年的小寒开启。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.calendar.dates.GanzhiYearMonth.year">
+<span class="sig-name descname"><span class="pre">year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.calendar.dates.GanzhiYearMonth.year" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-calendar-celestial_utils.html" title="上一章">bazi.calendar.celestial_utils</a></li>
+      <li>Next: <a href="bazi-calendar-hko_data.html" title="下一章">bazi.calendar.hko_data</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

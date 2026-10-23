@@ -1,0 +1,14 @@
+bazi.defines.tiangan
+====================
+
+.. automodule:: bazi.defines.tiangan
+
+.. autoclass:: bazi.defines.tiangan.Tiangan
+   :members: BING, DING, GENG, GUI, JI, JIA, REN, WU, XIN, YI, as_list, from_index, from_str, index, 丁, 丙, 乙, 壬, 己, 庚, 戊, 甲, 癸, 辛
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.tiangan
+
+.. py:data:: 天干
+
+   :py:obj:`bazi.defines.tiangan.Tiangan` 的别名。

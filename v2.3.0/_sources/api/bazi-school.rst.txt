@@ -1,0 +1,38 @@
+bazi.school
+===========
+
+.. automodule:: bazi.school
+
+.. autoclass:: bazi.school.BaziPrecision
+   :members: DAY, HOUR, MINUTE
+   :undoc-members:
+
+.. autoclass:: bazi.school.DayunYearRule
+   :members: FIXED_DECADE, JIE_PROJECTED, from_str
+   :undoc-members:
+
+.. autoclass:: bazi.school.DayRollover
+   :members: WAN_ZISHI, ZIZHENG
+   :undoc-members:
+
+.. autoclass:: bazi.school.PeiouXingDef
+   :members: YINYANGGAN, ZHENGCAI_ZHENGGUAN
+   :undoc-members:
+
+.. autoclass:: bazi.school.Anchor
+   :members: DAY, YEAR, YEAR_AND_DAY
+   :undoc-members:
+
+.. autoclass:: bazi.school.BaziSchool
+   :members: anhe_def, day_rollover, feiren_def, from_json, gong_def, guoyin_anchor, guoyin_def, hongyan_anchor, huagai_anchor, jiangxing_anchor, jiesha_anchor, jinyu_anchor, kongwang_anchor, mingli_tanyuan, peiou_xing_def, relation_definitions, taiji_anchor, taiji_def, tianyi_anchor, tianyi_def, wangshen_anchor, wenchang_anchor, wenchang_def, xing_def, yangren_def, yima_anchor, zaisha_anchor
+   :undoc-members:
+
+.. autodata:: bazi.school.DEFAULT_SCHOOL
+   :no-value:
+
+.. autoclass:: bazi.school.BaziConfig
+   :members: backend, dayun_year_rule, from_values, precision, school
+   :undoc-members:
+
+.. autodata:: bazi.school.DEFAULT_CONFIG
+   :no-value:

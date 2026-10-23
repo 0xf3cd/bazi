@@ -1,0 +1,112 @@
+:root {
+  --bazi-ink: #203a50;
+  --bazi-text: #3c4856;
+  --bazi-link: #175d9a;
+  --bazi-paper: #ffffff;
+  --bazi-code: #f4f7f9;
+}
+
+body {
+  color: var(--bazi-text);
+  background: var(--bazi-paper);
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.8;
+}
+
+div.document {
+  width: auto;
+  max-width: 1200px;
+  margin: 36px auto;
+}
+
+div.body {
+  min-width: 0;
+  max-width: 860px;
+  overflow-wrap: anywhere;
+}
+
+div.sphinxsidebar {
+  position: sticky;
+  top: 24px;
+}
+
+div.body h1, div.body h2, div.body h3 {
+  color: var(--bazi-ink);
+  font-family: "Songti SC", "Noto Serif CJK SC", "SimSun", serif;
+  line-height: 1.45;
+}
+
+a, div.sphinxsidebar a {
+  color: var(--bazi-link);
+}
+
+pre, code, .sig {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+div.highlight, pre {
+  background: var(--bazi-code);
+}
+
+dt.sig {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+
+.sig-param {
+  display: inline;
+}
+
+div.body .pre {
+  white-space: normal;
+}
+
+dd {
+  margin-inline-start: 1.2em;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--bazi-link);
+  outline-offset: 3px;
+}
+
+@media (max-width: 875px) {
+  div.document {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  div.documentwrapper {
+    order: 2;
+    float: none;
+    width: 100%;
+  }
+
+  div.bodywrapper {
+    margin: 0;
+  }
+
+  div.sphinxsidebar {
+    background: var(--bazi-code);
+    position: static;
+    top: auto;
+    order: 1;
+    width: auto;
+  }
+
+  div.sphinxsidebar p.blurb,
+  div.sphinxsidebar h3,
+  div.sphinxsidebar h4 {
+    color: var(--bazi-ink);
+  }
+
+  div.sphinxsidebar .sphinxsidebarwrapper > ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+}

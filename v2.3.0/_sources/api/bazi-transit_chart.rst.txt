@@ -1,0 +1,14 @@
+bazi.transit_chart
+==================
+
+.. automodule:: bazi.transit_chart
+
+.. autoclass:: bazi.transit_chart.TransitChart
+   :members: at_date, at_moment, at_month, at_year, bazi_chart
+   :undoc-members:
+
+.. py:currentmodule:: bazi.transit_chart
+
+.. py:data:: 流年大运
+
+   :py:obj:`bazi.transit_chart.TransitChart` 的别名。
