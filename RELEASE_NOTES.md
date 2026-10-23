@@ -1,5 +1,29 @@
 # 发布说明
 
+## bazi 2.3.0
+
+本版含旧记录与源码脚本调用的破坏性变更，升级前请保留原记录及出生输入，见 [迁移说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)。
+
+### 兼容与迁移
+
+- `BaziSchool` 尾部新增 `kongwang_anchor`，默认 `Anchor.DAY`，也可选 `YEAR`、`YEAR_AND_DAY`。该字段进入命盘身份与 JSON。
+- 缺少 `kongwang_anchor` 的旧命盘或前提判别记录拒绝恢复，不自动补默认值。须按原出生输入、完整配置及显式选择的新锚重建命盘；前提判别记录须重新求值后另存。没有自动迁移接口，不要只补字段或改版本号。
+- 知识库的 `schema_version=1`、前提判别记录的 `record_version=4` 不变；版本值不变不表示缺字段的旧记录可恢复。
+- 源码脚本 `run_interpreter.py` 移除 v2.2.0 保留的旧平铺写法，裸调用只打印帮助。原 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`；其他对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。这些变化不新增安装后的 CLI；更新 bazi 包不会更新本地源码脚本。
+
+### 六甲旬空、胎元与命宫
+
+- `shensha_utils.xunkong(ganzhi)` 返回所属旬的二支冻结集，`kongwang(anchor_ganzhi, target_dizhi)` 判断目标支是否命中。原局与流运分析新增旬空查询，按本命年柱、日柱或双锚保留命中柱位与来源；原局排除锚自身柱，流运从本命锚单向查询。旬空详情的命中地支集合与 `shensha['kongwang']` 一致，不删除地支、不取消其他关系，也不附带出空／填实或吉凶判断。
+- `BaziChart.taiyuan`、`BaziChart.minggong` 为无参缓存属性，返回不可变 `Ganzhi`。胎元按月柱干顺移一、支顺移三，不推算实际受孕时刻；命宫按本盘精度处理中气进月，再配宫支与宫干。完整时间口径见 [接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#胎元与命宫附加查询)。
+- 胎元／命宫只作四柱外附加查询，不扩四柱、柱位、流派配置、命盘身份或 JSON，不改既有文本输出，也不加入原有关系与流运分析。三百日胎元及其他命宫月界读法仍未编码。
+
+### 使用与开发文档
+
+- README 与快速开始串起准备环境、填写输入、排盘、读结果及保存 UTF-8 TXT／JSON 的步骤；老用户有独立迁移入口，区分安装包与源码脚本。
+- 新增计算规则、知识与出处的覆盖对账，以及国印两种读法的关联设计示例；不新增运行时关联查询接口，也不把设计示例升级为古籍见证。
+- 文档工具升级至 Sphinx 9.1.0、MyST 5.1.0，构建文档与完整开发检查需要 Python 3.12+；bazi 库仍支持 Python 3.11+，已生成的 HTML 阅读不需要 Python。3.11 用 `run_tests.py -a -v --runtime-only`，不能代替完整文档门禁。
+- ruff 升至 0.17.1，并按主题拆分部分复合测试、整理测试名；不改变原有测试保护的行为。docutils 仍为 0.22.4，不随类型桩升级到 0.23。
+
 ## bazi 2.2.0
 
 ### 交互探索与文本展示

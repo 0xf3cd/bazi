@@ -50,7 +50,7 @@ def _check_navigation(source: Path, root: Path) -> None:
       assert unquote(url.fragment) in slugs, (source, link, slugs)
 
 
-@pytest.mark.parametrize('name', ['README.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md'])
+@pytest.mark.parametrize('name', ['README.md', 'RELEASE_NOTES.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md'])
 def test_navigation_links_resolve(name):
   _check_navigation(ROOT / name, ROOT)
 
