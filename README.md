@@ -197,13 +197,15 @@ python -m pip install --upgrade bazi
 ```
 
 使用源码脚本的读者需另行取得对应版本的完整源码，再在该源码根运行命令。v2.3.0 起移除不带任务名的旧平铺写法；裸调用只打印帮助，随机命盘用 `chart`。
+
 例如 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`，
 带筛选的 `--query-knowledge --object tiangan.ding` 改为 `knowledge --object tiangan.ding`，
 `--match-context 判据ID …` 改为 `match 判据ID …`。上面的新写法都接在 `python run_interpreter.py` 后。
+
 原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
 两条命令各自检查输出路径，不会预先检查彼此是否写到同一个位置；一条失败不会撤销另一条已写出的文件。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
 
-旧命盘或前提判别记录也不保证直接恢复：保留原件，按原出生输入和完整配置重建，包括明确选择旬空按哪一柱查询等取法；前提记录须重新求值。不要只补字段或修改版本号；具体条件仍以[记录兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)为准。
+缺少 `kongwang_anchor` 的旧命盘或前提判别记录会被拒绝恢复。请保留原件，按原出生输入和完整配置重建；重建时显式选择 `BaziSchool.kongwang_anchor`（默认日柱 `Anchor.DAY`），前提记录须重新求值。不要只补字段或修改版本号；具体条件仍以[记录兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)为准。
 
 ## 开发
 
