@@ -1,7 +1,8 @@
 # 集成开发
 
 这一页面向把 `bazi` 接进自己程序的开发者：怎么导入、怎么保存和恢复三类 JSON 记录，以及前提匹配返回什么。
-公开接口的完整约定写在对应版本源码根目录的 `API_CONTRACT.md`，这里只走最常用的几条路径。
+导入、兼容与恢复承诺以对应版本源码根目录的 `API_CONTRACT.md` 为准；签名、字段和局部返回说明查 API 参考，
+本指南负责可运行的集成任务，不另立一份兼容政策。
 第一次排盘及保存文件先看 {doc}`quickstart`；升级旧源码调用则从 [README 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)开始。
 
 ## 导入
@@ -80,9 +81,7 @@ print(len(chart.bazi.pillars), chart.json == record)
 
 胎元取月干顺移一、月支顺移三，只作符号派生，不倒推实际受孕时间。
 命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
-时支取本盘时柱：DAY 仍使用输入小时，地点盘取真太阳钟，换日设置（`day_rollover`）不改时支。
-中气归属沿用本盘精度：DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点，相等归新；
-地点盘先把中气转换到与出生相同的真太阳钟。HKO 仍仅支持 DAY。
+时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#胎元与命宫附加查询)。
 
 这两项不进入现有五行、十神、神煞、关系或流运分析，也不进入盘身份、`school`、JSON 或旧文本输出。
 低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；

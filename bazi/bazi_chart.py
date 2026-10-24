@@ -79,7 +79,7 @@ class BaziJson:
   class Dayun(TypedDict):
     '''供 `Transits` 使用的一步大运记录，不作为独立访问入口。'''
     ganzhi: str
-    # 地点盘采用东八区无时区物理区间边界；默认路径采用民用标签。
+    # 地点盘采用东八区无时区物理区间边界；默认路径采用输入钟时标签。
     start_time: str
     end_time: str
 
@@ -141,7 +141,7 @@ class BaziJson:
     transits: 'BaziJson.Transits'
 
   class DefaultBaziChartJsonDict(_CommonChartJsonDict):
-    '''默认盘 JSON，出生时刻为截断到分钟的民用标签。'''
+    '''默认盘 JSON，出生时刻为截断到分钟的输入钟时标签。'''
     birth_time: str
 
   class LocationBaziChartJsonDict(_CommonChartJsonDict, LocationTimeJson):

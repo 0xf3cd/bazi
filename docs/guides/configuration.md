@@ -6,12 +6,27 @@
 
 配置只表示你选择了哪一种口径，不判断哪一种更对。库没有替你选“最准确”的读法。
 
+## 默认输入：东八区节表与输入钟
+
+不传 `longitude` 时，`Bazi.create` 接收无时区 `datetime` 或等价字符串，不从中推断地点或时区：
+
+- **年月柱**按选定精度，将输入标签与东八区（UTC+8）的节气表比较。默认示例因此按东八区公历钟填写。
+- **日柱、时柱**按输入标签的日时读取，再应用所选换日点；即使使用 `DAY`，小时也没有被丢弃。
+- **起运与流运**同样使用东八区参考标签；默认盘的 `reference_datetime` 就是输入钟时，不另作时区换算。
+
+非 UTC+8 地区的当地民用标签不能直接当作东八区标签，夏令时也不会由默认入口补算。
+若选择按北京时间排盘，先换为 UTC+8，再去掉时区交给默认入口；这样日时柱也会按北京时间读取，
+不再保留当地民用钟。需要真太阳时则使用[地点盘](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#真太阳时时区经度和节气时刻)，它会修正日时所读的钟。
+
+**当前没有“保留当地民用钟、按物理节界归年月、但不作太阳时修正”的对应入口。**
+不要只把带时区输入的 `tzinfo` 去掉，也不要把时区转换和真太阳时当成等价操作。
+
 ## 精度：你知道出生到哪一步
 
 `BaziPrecision` 决定出生时间与节气比较到什么粒度。默认的 `DAY` 只比日期，整个交节日都归新一节；
 `HOUR` 按两小时的时辰比，`MINUTE` 比到分钟。这是同一条规则的三个粒度，不是对同一真值的三种估计。
 
-下面以 2000 年立春当天（20:40:23 交节）为例，出生在 20:00：
+下面以东八区 2000 年立春当天（20:40:23 交节）为例，分别读取年、月、日、时柱：
 
 ```{testcode} config-precision
 from datetime import datetime
@@ -19,21 +34,73 @@ from datetime import datetime
 from bazi.bazi import Bazi
 from bazi.school import BaziConfig
 
-birth = datetime(2000, 2, 4, 20, 0)
-for precision in ('day', 'hour', 'minute'):
-  config = BaziConfig.from_values(precision=precision)
-  bazi = Bazi.create(birth, 'male', config)
-  print(precision, bazi.year_pillar, bazi.month_pillar)
+for birth in (datetime(2000, 2, 4, 20, 39), datetime(2000, 2, 4, 20, 40)):
+  for precision in ('day', 'hour', 'minute'):
+    config = BaziConfig.from_values(precision=precision)
+    bazi = Bazi.create(birth, 'male', config)
+    print(birth.strftime('%H:%M'), precision, ' '.join(map(str, bazi.pillars)))
 ```
 
 ```{testoutput} config-precision
-day 庚辰 戊寅
-hour 庚辰 戊寅
-minute 己卯 丁丑
+20:39 day 庚辰 戊寅 壬辰 庚戌
+20:39 hour 庚辰 戊寅 壬辰 庚戌
+20:39 minute 己卯 丁丑 壬辰 庚戌
+20:40 day 庚辰 戊寅 壬辰 庚戌
+20:40 hour 庚辰 戊寅 壬辰 庚戌
+20:40 minute 庚辰 戊寅 壬辰 庚戌
 ```
 
-只知道日期时用默认的 `DAY`；知道时分且在意交节当天的归属，才改成 `HOUR` 或 `MINUTE`。
-三档的边界例子见 {py:class}`~bazi.school.BaziPrecision`。
+`MINUTE` 从 20:40 这一分钟的起点便归新节，`HOUR` 从包含交节时刻的戌时起点归新，`DAY` 则整天归新。
+这三档只改变年月的交节归属，例中的日时柱不变。只知道日期时可选默认 `DAY`，但日时是否有可靠输入仍需另行判断；
+知道时分且在意交节当天归属时，再选择适合的粒度。完整边界约定见 {py:class}`~bazi.school.BaziPrecision`。
+
+## 海外与夏令时：三种输入方式的区别
+
+以下使用纽约冬令时与夏令时的当地钟各一例。第一种故意演示误用：丢掉时区后，默认入口不会知道它是纽约时间。
+第二种改用东八区钟，第三种显式启用经度 −74 的真太阳时。经度只作演示，不对应真实个人。
+`ZoneInfo` 需要系统时区数据库；环境缺少时可安装 `tzdata`。
+
+```{testcode} config-overseas
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+from bazi.bazi import Bazi
+from bazi.school import BaziConfig
+
+config = BaziConfig.from_values(precision='minute')
+zone = ZoneInfo('America/New_York')
+utc8 = timezone(timedelta(hours=8))
+for civil in (
+  datetime(2000, 2, 4, 8, 30, tzinfo=zone),
+  datetime(2000, 8, 7, 1, 4, tzinfo=zone),
+):
+  print('当地民用钟', civil.isoformat())
+  local_label = civil.replace(tzinfo=None)
+  reference_label = civil.astimezone(utc8).replace(tzinfo=None)
+  cases = (
+    ('当地标签（误用）', local_label, None),
+    ('东八区标签', reference_label, None),
+    ('地点盘真太阳时', civil, -74),
+  )
+  for label, birth, longitude in cases:
+    bazi = Bazi.create(birth, 'male', config, longitude=longitude)
+    print(label, ' '.join(map(str, bazi.pillars)))
+```
+
+```{testoutput} config-overseas
+当地民用钟 2000-02-04T08:30:00-05:00
+当地标签（误用） 己卯 丁丑 壬辰 甲辰
+东八区标签 庚辰 戊寅 壬辰 辛亥
+地点盘真太阳时 庚辰 戊寅 壬辰 甲辰
+当地民用钟 2000-08-07T01:04:00-04:00
+当地标签（误用） 庚辰 癸未 丁酉 辛丑
+东八区标签 庚辰 甲申 丁酉 丁未
+地点盘真太阳时 庚辰 甲申 丁酉 庚子
+```
+
+这两个瞬间均已过相应物理节界，但当地标签被当成东八区钟比较时仍归旧年月。
+转换为东八区钟改变了时柱；真太阳时又是另一种日时读取方式，夏令时例中甚至从丑时改为子时。
+冬令时例的当地标签与真太阳时恰好同为辰时，不表示两种钟等价。
 
 ## 历法后端：节气数据从哪里来
 
@@ -101,7 +168,7 @@ fixed_decade [1919, 1929, 1939] ['辛巳', '壬午', '癸未']
 
 ## 真太阳时：时区、经度和节气时刻
 
-默认路径把输入当作当地民用时刻，不做任何太阳时修正。要启用真太阳时，需要同时满足：
+默认路径使用上文的无时区标签，不做太阳时修正。要启用真太阳时，需要同时满足：
 
 - `birth_time` 是带时区的 `datetime`，时区由你负责；库不会根据经度推断时区，夏令时和历史偏移也由调用方处理。
 - 传入 `longitude`，东经为正，范围 `[-180, 180]`。库只使用经度，不接受纬度。

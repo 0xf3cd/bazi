@@ -24,6 +24,26 @@ def test_incomplete_scope_beats_partial_natal(day: int, year: int | None, reason
   assert ContextResult.from_json(result.export_json()) == result
 
 
+def test_render_distinguishes_unused_missing_year() -> None:
+  for profile, scope_line in (
+    (ContextProfile('natal'), '范围：全部明藏干；natal'),
+    (ContextProfile('natal_and_liunian'), '范围：全部明藏干；natal_and_liunian；干支年=未提供'),
+    (ContextProfile('natal_and_liunian', 2024), '范围：全部明藏干；natal_and_liunian；干支年=2024'),
+  ):
+    result = match(profile=profile)
+    record = result.export_json()
+    rendered = result.render()
+    assert rendered.splitlines()[1] == scope_line
+    natal_lines = tuple(line for line in rendered.splitlines() if line.startswith('证据：natal.'))
+    assert natal_lines and all('kind=' not in line and '干支年=' not in line for line in natal_lines)
+    if profile.observation_scope == 'natal_and_liunian' and profile.ganzhi_year is None:
+      assert 'UNKNOWN；missing_transit_coordinate；scope_complete=False' in rendered
+    if profile.ganzhi_year == 2024:
+      assert '；kind=liunian；干支年=2024' in rendered
+    assert result.export_json() == record
+    assert ContextResult.from_json(record).render() == rendered
+
+
 def test_unavailable_kind_unknown_errors_surface(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(TransitChart, 'at_year', lambda self, year: TransitSet(dayun=Ganzhi.from_str('甲辰')))
   result = match(profile=ContextProfile('natal_and_liunian', 2024))

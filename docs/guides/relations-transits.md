@@ -1,7 +1,49 @@
 # 关系与流运
 
-本页先查询六甲旬空，再选取某一年的流运，查它与原局婚姻宫的地支关系；最后从命盘读取有限几步大运和流年。
+本页先查原局日主关系和六甲旬空，再选取某一年的流运，查它与原局婚姻宫的地支关系；最后从命盘读取有限几步大运和流年。
 结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。
+
+## 原局日主关系：按天干值汇总
+
+{py:attr}`~bazi.analyzer.relationship.AtBirthAnalysis.day_master_relations` 比较日主与年、月、时的明干，
+返回关系到天干组合元组的冻结映射：
+
+```{testcode} relations-day-master
+from bazi.analyzer.relationship import RelationshipAnalyzer
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Tiangan
+from bazi.utils import tiangan_utils
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+print('四柱', ' '.join(map(str, chart.bazi.pillars)))
+found = RelationshipAnalyzer(chart).at_birth.day_master_relations
+for relation, combos in found.items():
+  print(relation, [''.join(map(str, sorted(combo, key=lambda stem: stem.index))) for combo in combos])
+print(
+  '庚生壬／壬生庚',
+  tiangan_utils.sheng(Tiangan.庚, Tiangan.壬),
+  tiangan_utils.sheng(Tiangan.壬, Tiangan.庚),
+)
+print(
+  '壬生乙／乙生壬',
+  tiangan_utils.sheng(Tiangan.壬, Tiangan.乙),
+  tiangan_utils.sheng(Tiangan.乙, Tiangan.壬),
+)
+```
+
+```{testoutput} relations-day-master
+四柱 庚午 辛巳 壬午 乙巳
+生 ['庚壬', '辛壬', '乙壬']
+庚生壬／壬生庚 True False
+壬生乙／乙生壬 True False
+```
+
+每个组合是无序的 `frozenset`：庚生壬与壬生乙都归在“生”下，集合自身不保存方向。
+它也不携带柱位，同一对干在多柱出现时合并；排序只用于显示，不能读成生克方向。
+需要有向判断时用 {py:func}`~bazi.utils.tiangan_utils.sheng`／{py:func}`~bazi.utils.tiangan_utils.ke`；
+需要按柱位比较时由 `chart.bazi.four_tiangans` 取年、月、日、时干，各柱十神见 `chart.shishen`。
+配偶星证据中的 `stem_relations` 仅覆盖含配偶星目标干的明干组合，不是通用的日主关系接口。
 
 ## 六甲旬空：保留取锚依据与目标位置
 

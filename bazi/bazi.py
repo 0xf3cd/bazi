@@ -122,7 +122,8 @@ class Bazi:
   存储年、月、日、时四柱及排盘基本信息。十神、大运等派生信息见 `bazi_chart.py` 的 `BaziChart`。
 
   Note:
-  - 默认路径直接采用无时区民用时刻；传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
+  - 默认路径采用无时区钟时标签：年月与东八区节气表比较，日时按输入钟读取；
+    传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
   - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
 
@@ -139,12 +140,13 @@ class Bazi:
     根据出生时间和性别计算年、月、日、时四柱。
     
     Note:
-    - 不传 `longitude` 时，`birth_time` 必须是不带时区的时刻，采用默认路径。
+    - 不传 `longitude` 时，`birth_time` 必须是不带时区的钟时标签。年月与东八区节气表按精度比较，
+      日柱、时柱按输入钟读取，不自动换算时区；任意海外当地标签不能当作东八区输入。
     - 传入 `longitude` 时，`birth_time` 必须带时区；时区、夏令时折叠与历史偏移由调用方负责，
       换算、身份与 JSON 保留秒及微秒，HOUR/MINUTE 归属按截断后的真太阳时比较。
     
     Args:
-    - birth_time: (datetime) 无时区民用时刻；给定 `longitude` 时为带时区的绝对瞬间。
+    - birth_time: (datetime) 默认路径的无时区钟时标签；给定 `longitude` 时为带时区的绝对瞬间。
     - gender: (BaziGender) 性别。
     - config: (BaziConfig) 出生精度、历法后端、流派档案及默认大运年份投影。
     - longitude: (float | None) 东经为正的角度，范围 `[-180, 180]`。地点路径只支持
@@ -288,7 +290,10 @@ class Bazi:
     try:
       _gender = _GENDER_ALIASES[gender.lower()] if isinstance(gender, str) else gender
     except KeyError:
-      raise ValueError(f'Currently not support gender: {gender}') from None
+      raise ValueError(
+        f"Unsupported gender: {gender}; use '男', '女', 'male' or 'female' "
+        '(Latin case-insensitive), or a BaziGender member'
+      ) from None
 
     return _birth_time, _gender
 
@@ -305,8 +310,9 @@ class Bazi:
     从出生输入创建 `Bazi`。
 
     Args:
-    - birth_time: (datetime | str) 公历出生时刻；字符串经 `datetime.fromisoformat` 解析。
-      未给经度时须无时区，给定经度时须带时区。
+    - birth_time: (datetime | str) 公历出生钟时；字符串经 `datetime.fromisoformat` 解析。
+      未给经度时须无时区：年月与东八区节气表比较，日时按输入钟读取，不自动换算时区。
+      给定经度时须带时区，并将出生与节界换到同一真太阳钟；这不等同于保留当地民用钟。
     - gender: (BaziGender | str) 性别枚举，或 "男"/"女"/"male"/"female"（大小写不敏感）。
     - config: (BaziConfig) 出生精度、历法后端、流派档案及大运年份投影；
       可用 `BaziConfig.from_values` 从字符串构造。
@@ -363,7 +369,7 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    '''地点盘的真太阳时公历出生日期；默认路径为民用日期。'''
+    '''地点盘的真太阳时公历出生日期；默认路径为输入钟时标签所在日期。'''
     return self._utils.to_date(self._solar_date)
   
   @property
@@ -416,7 +422,7 @@ class Bazi:
 
   @property
   def solar_datetime(self) -> datetime:
-    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON 及历法坐标；
+    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此输入钟时标签参与身份、JSON 及历法坐标；
     地点盘显示由完整输入精度换算得到的真太阳时。'''
     return self._clock_datetime.replace(second=0, microsecond=0)
 
@@ -424,7 +430,7 @@ class Bazi:
   def reference_datetime(self) -> datetime:
     '''节表、大运及流运查询的出生参考时刻。
 
-    地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的民用标签。
+    地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的输入钟时标签。
     此坐标不是真太阳钟，也不改变出生精度的归属规则。
     '''
     if self._location is None:

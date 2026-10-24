@@ -39,6 +39,25 @@ def test_str() -> None:
   assert BaziGender.YIN is BaziGender('女')
 
 
+@pytest.mark.parametrize('gender,expected', [
+  ('男', BaziGender.男), ('male', BaziGender.男), ('MALE', BaziGender.男),
+  ('女', BaziGender.女), ('female', BaziGender.女), ('FEMALE', BaziGender.女),
+  (BaziGender.YANG, BaziGender.男), (BaziGender.YIN, BaziGender.女),
+])
+def test_gender_input_choices(gender: str | BaziGender, expected: BaziGender) -> None:
+  assert Bazi.create('2000-01-01 12:00', gender).gender is expected
+
+
+@pytest.mark.parametrize('gender', ['YANG', 'YIN', 'M', ' male', 'male ', 'ｍale'])
+def test_gender_error_points_to_accepted_values(gender: str) -> None:
+  with pytest.raises(ValueError, match='Unsupported gender:') as error:
+    Bazi.create('2000-01-01 12:00', gender)
+  assert str(error.value) == (
+    f"Unsupported gender: {gender}; use '男', '女', 'male' or 'female' "
+    '(Latin case-insensitive), or a BaziGender member'
+  )
+
+
 @pytest.mark.parametrize('upper, birth_time', [
   (False, datetime(1902, 1, 1, 0, 0)),
   (True, datetime(2080, 12, 28, 23, 59)),
