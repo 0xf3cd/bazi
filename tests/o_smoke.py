@@ -34,6 +34,7 @@ def main() -> int:
   from functools import partial
   from fractions import Fraction
   from zoneinfo import ZoneInfo
+  from unittest.mock import patch
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
@@ -885,7 +886,10 @@ def main() -> int:
   bad_knowledge['entries'][0]['text'] = '\ud800'
   bad_context = json.loads(positive.export_json())
   bad_context['criterion']['observations'] = {'\ud800': True}
-  deep_text = '[' * (sys.getrecursionlimit() * 20) + '0' + ']' * (sys.getrecursionlimit() * 20)
+  def parser_limit(load: Callable[[str], object]) -> None:
+    with patch('json.loads', side_effect=RecursionError('injected parser limit')):
+      load('{}')
+
   checks.extend([
     ('Knowledge rejects float target version', ValueError, partial(KnowledgeBase.from_json, json.dumps({**json.loads(knowledge.export_json()), 'schema_version': 2.0}))),
     ('Context rejects float target version', ValueError, partial(ContextResult.from_json, json.dumps({**json.loads(positive.export_json()), 'record_version': 5.0}))),
@@ -894,7 +898,7 @@ def main() -> int:
     ('Migration rejects mixed knowledge version', ValueError, partial(migrate_context_json, json.dumps({**frozen['context'], 'record_version': 5}))),
   ])
   for load in (KnowledgeBase.from_json, ContextResult.from_json, migrate_knowledge_json, migrate_context_json):
-    checks.append(('Record depth remains a value error', ValueError, partial(load, deep_text)))
+    checks.append(('Record parser limit remains a value error', ValueError, partial(parser_limit, load)))
 
   for label, expected, thunk in checks:
     try:
