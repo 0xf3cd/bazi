@@ -285,20 +285,6 @@ day minute
 
 `BaziConfig()` 等于 `DEFAULT_CONFIG`，但不是同一个对象；`BaziConfig().school` 与 `DEFAULT_SCHOOL` 是同一个实例。
 
-## 术语索引
-
-| 术语 | 在本库 API 里的含义 |
-| --- | --- |
-| 精度 `BaziPrecision` | 出生与节气比较的粒度：`DAY`、`HOUR`、`MINUTE` |
-| 历法后端 `CalendarBackend` | 节气与干支历的数据来源：`hko`、`celestial`、`celestial-algo2` |
-| 换日 `DayRollover` | 日柱在 23:00 还是 00:00 更换 |
-| 起运年份 `DayunYearRule` | 大运年份标签的投影方式，不改变物理时刻 |
-| 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性与 JSON |
-| 真太阳时 | 由经度、民用偏移与均时差换算的钟；见 `Bazi.location_time` |
-| `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
-
-字段与枚举成员的完整说明由 API 参考生成，见 {py:class}`~bazi.school.BaziConfig`。
-
 ## 六甲旬空取锚
 
 {py:attr}`~bazi.school.BaziSchool.kongwang_anchor` 默认取 `Anchor.DAY`，也支持 `YEAR` 与
@@ -318,3 +304,18 @@ assert BaziSchool().kongwang_anchor is Anchor.DAY
 前提记录须重新求值后另存，不能给旧观察补键或改版本号便称已更新。
 配置完整的旧命盘／前提另有[主动格式迁移](integration.md)，普通读取不会替调用方运行；
 迁移也不猜缺失锚点或改变流派默认值。
+
+## 术语索引
+
+| 术语 | 在本库 API 里的含义 |
+| --- | --- |
+| 精度 `BaziPrecision` | 出生与节气比较的粒度：`DAY`、`HOUR`、`MINUTE` |
+| 历法后端 `CalendarBackend` | 节气与干支历的数据来源：`hko`、`celestial`、`celestial-algo2` |
+| 换日 `DayRollover` | 日柱在 23:00 还是 00:00 更换 |
+| 起运年份 `DayunYearRule` | 大运年份标签的投影方式，不改变物理时刻 |
+| 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性与 JSON |
+| 六甲旬空取锚 `kongwang_anchor` | 选择年柱、日柱或分别使用双锚，见[六甲旬空取锚](#六甲旬空取锚) |
+| 真太阳时 | 由经度、民用偏移与均时差换算的钟；见 `Bazi.location_time` |
+| `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
+
+字段与枚举成员的完整说明由 API 参考生成，见 {py:class}`~bazi.school.BaziConfig`。

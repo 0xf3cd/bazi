@@ -862,12 +862,16 @@ class ContextResult:
       为 `RelationshipProfile`，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
     '''
     _typed(text, str)
-    data = _json_loads(text)
+    return cls._from_data(_json_loads(text))
+
+  @classmethod
+  def _from_data(cls, data: Any) -> 'ContextResult':
+    '''普通读取与主动迁移共用的记录恢复；不重新求值，不附加入口指引。'''
     if not isinstance(data, dict):
       raise TypeError(f'Expected JSON object, got {type(data)}')
     version = data.get('record_version')
     if type(version) is not int or version != _RECORD_VERSION:
-      raise ValueError('Unsupported record version')
+      raise ValueError(f'Unsupported record version: {version!r}')
     _mapping(
       data,
       ('record_version', 'profile', 'criterion', 'occurrences', 'relationship', 'related', 'entries', 'input', 'knowledge'),

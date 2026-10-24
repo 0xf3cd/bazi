@@ -8,11 +8,12 @@ from typing import Any
 
 import pytest
 
+from bazi.bazi_chart import BaziChart
 from bazi._validation import _json_loads, _json_dumps
 from bazi.common import frozendict
 from bazi.context_matching import ContextResult
 from bazi.knowledge import KnowledgeBase
-from bazi.record_migration import migrate_knowledge_json, migrate_context_json
+from bazi.record_migration import migrate_chart_json, migrate_knowledge_json, migrate_context_json
 
 
 def _records() -> dict[str, Any]:
@@ -111,6 +112,33 @@ def test_deep_records_fail_at_runtime_limit() -> None:
     _json_dumps(nested)
 
 
+@pytest.mark.parametrize('kind', ['knowledge', 'context'])
+@pytest.mark.parametrize('error_type,expected_error', [(RecursionError, ValueError), (RuntimeError, RuntimeError)])
+def test_import_checks_record_encoding(
+  kind: str, error_type: type[Exception], expected_error: type[Exception], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  record = _records()[kind]
+  if kind == 'knowledge':
+    record['schema_version'] = 2
+  else:
+    record['record_version'] = 5
+    record['knowledge']['schema_version'] = 2
+  text = json.dumps(record)
+  restore = KnowledgeBase.from_json if kind == 'knowledge' else ContextResult.from_json
+  restore(text)
+  original_dumps = json.dumps
+
+  def encoding(value: object, *args: Any, **kwargs: Any) -> str:
+    if kwargs.get('indent') == 2:
+      raise error_type('injected output boundary')
+    return original_dumps(value, *args, **kwargs)
+
+  monkeypatch.setattr(json, 'dumps', encoding)
+  message = 'serialization depth' if error_type is RecursionError else 'injected output boundary'
+  with pytest.raises(expected_error, match=message):
+    restore(text)
+
+
 def test_recursion_conversion_does_not_hide_bugs(monkeypatch: pytest.MonkeyPatch) -> None:
   def recursion(*args: object, **kwargs: object) -> Any:
     raise RecursionError('injected parser limit')
@@ -123,3 +151,51 @@ def test_recursion_conversion_does_not_hide_bugs(monkeypatch: pytest.MonkeyPatch
   monkeypatch.setattr(json, 'loads', bug)
   with pytest.raises(RuntimeError, match='programming error'):
     _json_loads('{}')
+
+
+@pytest.mark.parametrize('load,next_step', [
+  (KnowledgeBase.from_json, 'Use migrate_knowledge_json'),
+  (ContextResult.from_json, 'Use migrate_context_json'),
+  (migrate_knowledge_json, 'Preserve the original knowledge source'),
+  (migrate_context_json, 'Preserve the original context record'),
+])
+def test_parse_error_keeps_source_and_position(load: Any, next_step: str) -> None:
+  text = '\n{"field":'
+  with pytest.raises(json.JSONDecodeError) as original:
+    json.loads(text)
+  with pytest.raises(json.JSONDecodeError) as raised:
+    load(text)
+  assert raised.value.doc == original.value.doc == text
+  assert raised.value.pos == original.value.pos
+  assert raised.value.msg.startswith(original.value.msg)
+  assert next_step in raised.value.msg
+
+
+@pytest.mark.parametrize('kind', ['chart', 'location_chart'])
+@pytest.mark.parametrize('surface', ['gender', 'derived', 'key'])
+def test_chart_bad_text_has_displayable_error(kind: str, surface: str) -> None:
+  record = _records()[kind]
+  record['schema_version'] = 1
+  BaziChart.from_json(record)
+  if surface == 'gender':
+    record['gender'] = '\ud800'
+  elif surface == 'derived':
+    record['pillars']['day'] = '\ud800'
+  else:
+    record['\ud800'] = 'extra'
+  for load in (BaziChart.from_json, migrate_chart_json):
+    with pytest.raises(ValueError) as raised:
+      load(record)
+    str(raised.value).encode('utf-8')
+
+
+@pytest.mark.parametrize('version', [None, 4, 5.0, '5'])
+def test_record_version_error_reports_value(version: object) -> None:
+  record = _records()['context']
+  record['record_version'] = 5
+  record['knowledge']['schema_version'] = 2
+  ContextResult.from_json(json.dumps(record))
+  record['record_version'] = version
+  with pytest.raises(ValueError) as raised:
+    ContextResult.from_json(json.dumps(record))
+  assert str(raised.value).startswith(f'Unsupported record version: {version!r}')

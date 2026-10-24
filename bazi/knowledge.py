@@ -376,7 +376,7 @@ class KnowledgeBase:
 
   @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
-    '''包内嵌套知识记录入口，与 from_json 共用版本、字段及知识约束校验。'''
+    '''校验已解码知识记录的版本、字段与引用；不附加入口指引。'''
     data = _mapping(
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),

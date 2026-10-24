@@ -45,6 +45,9 @@
   },
   "members": {
     "cross_module": {
+      "bazi/record_migration.py|BaziChart._from_data": "主动迁移与普通读取共用重建校验，各入口分别附加适用的失败指引。",
+      "bazi/record_migration.py|KnowledgeBase._from_data": "主动迁移复用知识字段与引用校验，不叠加普通读取的迁移提示。",
+      "bazi/record_migration.py|ContextResult._from_data": "主动迁移复用前提记录恢复与定义校验，不叠加普通读取的迁移提示。",
       "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由 Bazi 所有；BaziChart.minggong 复用同一时间归属政策，不读取地点私有状态。",
       "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/context_matching.py|self.knowledge._export_data": "前提记录嵌套完整知识JSON对象，委托知识库原生结构编码，避免文字反解。",

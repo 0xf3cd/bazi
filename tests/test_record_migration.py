@@ -4,7 +4,7 @@ import base64
 import copy
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import FrozenInstanceError
 from importlib import metadata
 from pathlib import Path
@@ -26,6 +26,37 @@ def _records() -> dict[str, Any]:
 
 def _readonly(value: Any) -> Any:
   return MappingProxyType({key: _readonly(item) for key, item in value.items()}) if isinstance(value, dict) else value
+
+
+@pytest.mark.parametrize('kind', ['chart', 'location_chart', 'knowledge', 'context', 'relationship'])
+def test_record_output_keeps_public_format(kind: str) -> None:
+  record = _records()[kind]
+  result = (
+    migrate_chart_json(record) if kind in ('chart', 'location_chart') else
+    migrate_knowledge_json(json.dumps(record)) if kind == 'knowledge' else
+    migrate_context_json(json.dumps(record))
+  )
+  data = json.loads(result.json_text)
+  expected = json.dumps(data, ensure_ascii=False, indent=2) + '\n'
+  assert result.json_text == expected
+  if kind == 'knowledge':
+    assert KnowledgeBase.from_json(result.json_text).export_json() == expected
+  elif kind in ('context', 'relationship'):
+    assert ContextResult.from_json(result.json_text).export_json() == expected
+
+
+@pytest.mark.parametrize('version', [None, '9.8.7'])
+def test_migration_reports_tool_version(version: str | None, monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(migration, '_tool_version', lambda: version)
+  records = _records()
+  results = (
+    migrate_chart_json(records['chart']),
+    migrate_chart_json(records['location_chart']),
+    migrate_knowledge_json(json.dumps(records['knowledge'])),
+    migrate_context_json(json.dumps(records['context'])),
+    migrate_context_json(json.dumps(records['relationship'])),
+  )
+  assert all(result.tool_version == version for result in results)
 
 
 @pytest.mark.parametrize('name', ['chart', 'location_chart'])
@@ -126,6 +157,39 @@ def test_migration_rejects_mixed_nested_versions(outer: int, inner: object) -> N
     migrate_context_json(json.dumps(record))
 
 
+@pytest.mark.parametrize('version', [1, 2, 3])
+def test_context_migration_rejects_old_versions(version: int) -> None:
+  record = _records()['context']
+  migrate_context_json(json.dumps(record))
+  record['record_version'] = version
+  with pytest.raises(ValueError, match='Unsupported record version'):
+    migrate_context_json(json.dumps(record))
+
+
+@pytest.mark.parametrize('outer', [4, 5])
+@pytest.mark.parametrize('missing', [True, False])
+def test_migration_requires_nested_version(outer: int, missing: bool) -> None:
+  record = _records()['context']
+  record['record_version'] = outer
+  record['knowledge']['schema_version'] = 1 if outer == 4 else 2
+  migrate_context_json(json.dumps(record))
+  if missing:
+    del record['knowledge']['schema_version']
+  else:
+    record['knowledge']['schema_version'] = None
+  with pytest.raises(ValueError, match='nested knowledge schema version'):
+    migrate_context_json(json.dumps(record))
+
+
+def test_knowledge_migration_rejects_float_target() -> None:
+  record = _records()['knowledge']
+  record['schema_version'] = 2
+  migrate_knowledge_json(json.dumps(record))
+  record['schema_version'] = 2.0
+  with pytest.raises(ValueError, match='Unsupported knowledge schema version'):
+    migrate_knowledge_json(json.dumps(record))
+
+
 def test_migration_validates_full_source_shape() -> None:
   chart = _records()['chart']
   chart['pillars']['day'] = '甲子'
@@ -167,6 +231,56 @@ def test_migration_keeps_input_type_contracts() -> None:
       migrate('[]')
     with pytest.raises(json.JSONDecodeError):
       migrate('{')
+
+
+@pytest.mark.parametrize('kind', ['chart', 'knowledge', 'context'])
+def test_errors_have_one_applicable_next_step(kind: str) -> None:
+  record = _records()[kind]
+  ordinary: Callable[[], object]
+  if kind == 'chart':
+    record['schema_version'] = 1
+    BaziChart.from_json(record)
+    record['pillars']['day'] = '甲子'
+    ordinary = lambda: BaziChart.from_json(record)
+    migrate = lambda: migrate_chart_json(record)
+  elif kind == 'knowledge':
+    record['schema_version'] = 2
+    KnowledgeBase.from_json(json.dumps(record))
+    record['sources'] = []
+    ordinary = lambda: KnowledgeBase.from_json(json.dumps(record))
+    migrate = lambda: migrate_knowledge_json(json.dumps(record))
+  else:
+    record['record_version'] = 5
+    record['knowledge']['schema_version'] = 2
+    ContextResult.from_json(json.dumps(record))
+    record['criterion']['definition'] = '失效定义'
+    ordinary = lambda: ContextResult.from_json(json.dumps(record))
+    migrate = lambda: migrate_context_json(json.dumps(record))
+  with pytest.raises(ValueError) as ordinary_error:
+    ordinary()
+  with pytest.raises(ValueError) as migration_error:
+    migrate()
+  assert str(ordinary_error.value).count('Preserve the original') == 1
+  assert 'Use migrate_' in str(ordinary_error.value)
+  assert str(migration_error.value).casefold().count('preserve the original') == 1
+  assert 'Use migrate_' not in str(migration_error.value)
+  assert str(ordinary_error.value).split('. Preserve', 1)[0] == str(migration_error.value).split('. Preserve', 1)[0]
+
+
+@pytest.mark.parametrize('kind', ['chart', 'knowledge', 'context'])
+def test_version_error_preserves_original_once(kind: str) -> None:
+  record = _records()[kind]
+  key = 'record_version' if kind == 'context' else 'schema_version'
+  record[key] = 99
+  migrate = migrate_knowledge_json if kind == 'knowledge' else migrate_context_json
+  with pytest.raises(ValueError) as raised:
+    if kind == 'chart':
+      migrate_chart_json(record)
+    else:
+      migrate(json.dumps(record))
+  message = str(raised.value)
+  assert '99' in message and 'check its producing version' in message
+  assert message.casefold().count('preserve the original') == 1
 
 
 @pytest.mark.parametrize('case', ['missing', 'no_files', 'unlisted', 'wrong_path', 'no_hash', 'wrong_mode', 'changed', 'match', 'unreadable'])

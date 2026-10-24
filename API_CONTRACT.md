@@ -92,8 +92,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 ## 对象摘要、报错指路与文本展示
 
-- `dir(bazi)` 列出 `__all__` 声明的全部子模块和 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
-  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但 `bazi.chart_text` 同样按需导入。
+- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text` 和 `record_migration`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
+  后两者不进 `__all__`（v2.0.0 的显式导出清单保持不变），但同样按需导入。
 - `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 的 `repr`
   是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
@@ -279,7 +279,7 @@ assert restored == result
 返回的 `MigrationResult` 是 frozen dataclass，包含 `json_text`、`source_version`、`target_version`、
 `tool_version` 与不可变的 `changes` 元组。每个 `MigrationChange` 说明字段路径 `path`、转换前后的
 `before`／`after` 及依据 `reason`；无版本命盘的来源和原缺字段均以 `None` 表示。
-`tool_version` 取自分发元数据：只有分发列出的迁移模块路径、RECORD SHA-256 与正在使用的文件相符时才报告，
+`tool_version` 取自分发元数据：安装清单（`RECORD`）须列出当前迁移模块，记录的路径及 SHA-256 须与正在使用的文件相符才报告，
 无法核定（包括没有可核哈希的 editable 安装）为 `None`。它不认证元数据真伪或历史执行，不代替原记录的生成软件版本。
 
 调用方读取源文件后主动迁移，再独占创建新文件。下面先生成一份当前格式，示范可独立运行的文件管理；

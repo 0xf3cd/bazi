@@ -236,13 +236,19 @@ class BaziChart:
     - 根对象须严格匹配 `BaziJson.DefaultBaziChartJsonDict` 或 `BaziJson.LocationBaziChartJsonDict`，
       两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。
       映射顺序不限，派生值只核对、不存储。
-    - 键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
+    - 键和字符串值必须是原生 `str`，不接受子类。`None` 只用于 `tiangan_shishen.day`，
+      不表示其他字段可以省略或置空。
     - 类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
       同时违反多个约束时，不保证先报告哪项错误。
     - 不修改或持有调用方映射；重建的大运时刻线为空时，读取 `json` 核对会抛 `ValueError`。
 
     Return: (BaziChart) 重建的命盘。
     '''
+    return cls._from_data(d)
+
+  @classmethod
+  def _from_data(cls, d: Mapping[str, object]) -> 'BaziChart':
+    '''普通读取与主动迁移共用的命盘重建及逐项核对；不附加入口指引。'''
     if not isinstance(d, Mapping):
       raise TypeError(f'Expected Mapping at chart, got {type(d)}')
     for key in d:

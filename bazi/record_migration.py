@@ -65,7 +65,7 @@ def _tool_version() -> str | None:
 
 def _version(value: object, allowed: tuple[int, ...], label: str) -> int:
   if type(value) is not int or value not in allowed:
-    raise ValueError(f'Unsupported {label}: {value!r}; preserve the original and check its producing version')
+    raise ValueError(f'Unsupported {label}: {value!r}; check its producing version')
   return value
 
 
@@ -81,7 +81,7 @@ def migrate_chart_json(record: Mapping[str, object]) -> MigrationResult:
   source = None if 'schema_version' not in record else _version(record['schema_version'], (_CHART_VERSION,), 'chart schema version')
   data = dict(record)
   data['schema_version'] = _CHART_VERSION
-  chart = BaziChart.from_json(data)
+  chart = BaziChart._from_data(data)
   changes = () if source is not None else (
     MigrationChange('schema_version', None, _CHART_VERSION, '完整无版本命盘新增格式版本；输入、配置与派生值不变。'),
   )
@@ -101,7 +101,7 @@ def migrate_knowledge_json(text: str) -> MigrationResult:
   source = _version(data.get('schema_version'), (1, _KNOWLEDGE_VERSION), 'knowledge schema version')
   data['schema_version'] = _KNOWLEDGE_VERSION
   output = _json_dumps(data)
-  KnowledgeBase.from_json(output)
+  KnowledgeBase._from_data(data)
   changes = () if source == _KNOWLEDGE_VERSION else (
     MigrationChange('schema_version', source, _KNOWLEDGE_VERSION, '知识格式增加 UTF-8 保存边界；不改语料。'),
   )
@@ -129,7 +129,7 @@ def migrate_context_json(text: str) -> MigrationResult:
   data['record_version'] = _RECORD_VERSION
   knowledge['schema_version'] = _KNOWLEDGE_VERSION
   output = _json_dumps(data)
-  ContextResult.from_json(output)
+  ContextResult._from_data(data)
   changes = () if source == _RECORD_VERSION else (
     MigrationChange('record_version', source, _RECORD_VERSION, '前提记录新增文本保存边界；保留原判别，不重新求值。'),
     MigrationChange('knowledge.schema_version', 1, _KNOWLEDGE_VERSION, '只迁移内嵌知识格式，不替换知识快照或绑定。'),

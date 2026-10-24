@@ -887,6 +887,8 @@ def main() -> int:
   bad_context['criterion']['observations'] = {'\ud800': True}
   deep_text = '[' * (sys.getrecursionlimit() * 20) + '0' + ']' * (sys.getrecursionlimit() * 20)
   checks.extend([
+    ('Knowledge rejects float target version', ValueError, partial(KnowledgeBase.from_json, json.dumps({**json.loads(knowledge.export_json()), 'schema_version': 2.0}))),
+    ('Context rejects float target version', ValueError, partial(ContextResult.from_json, json.dumps({**json.loads(positive.export_json()), 'record_version': 5.0}))),
     ('Knowledge rejects surrogate', ValueError, partial(KnowledgeBase.from_json, json.dumps(bad_knowledge))),
     ('Context rejects surrogate key', ValueError, partial(ContextResult.from_json, json.dumps(bad_context))),
     ('Migration rejects mixed knowledge version', ValueError, partial(migrate_context_json, json.dumps({**frozen['context'], 'record_version': 5}))),

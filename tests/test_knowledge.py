@@ -758,7 +758,7 @@ def test_json_rejects_malformed_corpus() -> None:
     data[key] = {}
     with pytest.raises(TypeError, match='JSON array'):
       KnowledgeBase.from_json(json.dumps(data))
-  for version in (True, '2', 1, 3):
+  for version in (True, '2', 1, 3, 2.0):
     data = json.loads(KNOWLEDGE_BASE.export_json())
     data['schema_version'] = version
     with pytest.raises(ValueError, match='schema version'):
