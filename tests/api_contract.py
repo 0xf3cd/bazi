@@ -14,7 +14,7 @@ from typing import Final
 
 
 PUBLIC_NAMES: Final[dict[str, str]] = {
-  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart',
+  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching record_migration transits transit_chart',
   'bazi.analyzer': 'relationship',
   'bazi.analyzer.relationship': 'SHENSHA_LABELS ShenshaAnalysis AtBirthShenshaAnalysis KongwangHit KongwangResult AtBirthAnalysis TransitAnalysis StemRelationDiscovery StarAppearance RelationshipEvidence spouse_evidence RelationshipAnalyzer',
   'bazi.bazi': 'BaziGender Bazi LocationTimeJson LocationTime 八字',
@@ -49,6 +49,7 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.defines.wuxing': 'Wuxing 五行',
   'bazi.defines.yinyang': 'Yinyang 阴阳',
   'bazi.knowledge': 'Applicability SourceState OutputPolicy DEFAULT_SOURCE_PATH object_id KnowledgeObject KnowledgeRole KnowledgeRelation KnowledgeContext KnowledgeSource LegacyDescription KnowledgeEntry KnowledgeBase',
+  'bazi.record_migration': 'MigrationChange MigrationResult migrate_chart_json migrate_knowledge_json migrate_context_json',
   'bazi.rules': 'BaziRules TianganRules DizhiRules DizhiRelationDefinitions DEFAULT_DIZHI_RELATION_DEFINITIONS ShenshaRules',
   'bazi.school': 'BaziPrecision DayunYearRule DayRollover PeiouXingDef Anchor BaziSchool DEFAULT_SCHOOL BaziConfig DEFAULT_CONFIG',
   'bazi.transit_chart': 'TransitChart 流年大运',
@@ -150,6 +151,8 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.knowledge.LegacyDescription': 'object_id field ordinal conditions field_premise',
   'bazi.knowledge.KnowledgeEntry': 'claim_id text roles relations topics applicability premise contexts sources source_state attribution viewpoint exceptions limits output legacy',
   'bazi.knowledge.KnowledgeBase': 'objects contexts sources entries from_json load entry find_objects filter_values query search export_json render render_subject',
+  'bazi.record_migration.MigrationChange': 'path before after reason',
+  'bazi.record_migration.MigrationResult': 'json_text source_version target_version tool_version changes',
   'bazi.rules.BaziRules': 'YEAR_TO_MONTH_TABLE DAY_TO_HOUR_TABLE TIANGAN_TRAITS DIZHI_TRAITS HIDDEN_TIANGANS NAYIN TIANGAN_ZHANGSHENG TIANGAN_LU',
   'bazi.rules.TianganRules': 'TIANGAN_HE TIANGAN_CHONG TIANGAN_SHENG TIANGAN_KE',
   'bazi.rules.DizhiRules': 'GongheDef GongDef GONG_RELATIONS GONG_GONGHE_SCOPE DIZHI_SANHUI DIZHI_GONGHUI DIZHI_LIUHE AnheDef DIZHI_ANHE DIZHI_TONGHE DIZHI_TONGLUHE DIZHI_SANHE DIZHI_BANHE DIZHI_GONGHE DIZHI_GONG_LU_TIANGAN XingDef XingSubType DIZHI_XING DIZHI_CHONG DIZHI_PO DIZHI_HAI DIZHI_SHENG DIZHI_KE',
@@ -186,7 +189,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
 
 '''私有基类自身不公开，但这些字段通过公开的两种命盘记录继承。'''
 PRIVATE_BASE_MEMBERS: Final[dict[str, str]] = {
-  'bazi.bazi_chart.BaziJson._CommonChartJsonDict': 'gender precision backend dayun_year_rule school pillars nayin shier_zhangsheng tiangan_traits dizhi_traits tiangan_shishen dizhi_shishen hidden_tiangan transits',
+  'bazi.bazi_chart.BaziJson._CommonChartJsonDict': 'schema_version gender precision backend dayun_year_rule school pillars nayin shier_zhangsheng tiangan_traits dizhi_traits tiangan_shishen dizhi_shishen hidden_tiangan transits',
 }
 
 '''源码基类表达式；显式登记继承关系，不能只查子类自己声明的字段。'''

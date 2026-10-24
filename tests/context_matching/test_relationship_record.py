@@ -27,7 +27,7 @@ def month_record() -> tuple[ContextResult, dict[str, Any]]:
 
 def test_month_record_roundtrip(month_record: tuple[ContextResult, dict[str, Any]]) -> None:
   result, data = month_record
-  assert data['record_version'] == 4
+  assert data['record_version'] == 5
   assert data['profile'] == {
     'scope': 'natal_and_transits',
     'coordinate': {'entry': 'at_month', 'gz_year': 2024, 'gz_month': '辰', 'solar_date': None, 'solar_moment': None},

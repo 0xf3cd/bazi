@@ -22,12 +22,16 @@ from .data_types import (
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi
 from .bazi import Bazi, BaziGender, LocationTimeJson, _parse_location
 from .school import DayunYearRule, BaziConfig, BaziSchool, PeiouXingDef, DEFAULT_CONFIG, _config_json
+from ._validation import _record_errors
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year, taiyuan, minggong,
 )
+
+
+_SCHEMA_VERSION: Final = 1
 
 
 def _dayun_year_label(raw_year: int, first_year_label: int,
@@ -125,6 +129,7 @@ class BaziJson:
 
   class _CommonChartJsonDict(TypedDict):
     '''默认盘与地点盘 JSON 的共同字段。'''
+    schema_version: int
     gender: str
     precision: str
     backend: str
@@ -215,9 +220,14 @@ class BaziChart:
     return cls(Bazi.random(config, rng=rng))
 
   @classmethod
+  @_record_errors(
+    'Preserve the original record. Use migrate_chart_json for a complete unversioned chart; '
+    'missing kongwang_anchor requires an explicit school choice and chart reconstruction. '
+    'For malformed or inconsistent data, check the original inputs and regenerate the chart.'
+  )
   def from_json(cls, d: Mapping[str, object]) -> 'BaziChart':
     '''
-    从完整记录重建命盘，并与当前 `json` 输出逐项核对。
+    从 schema 1 完整记录重建命盘，并与当前 `json` 输出逐项核对；不迁移旧记录。
 
     Args:
     - d: (Mapping[str, object]) 已解析的 `BaziChart.json` 记录，不是 JSON 文本。
@@ -226,18 +236,26 @@ class BaziChart:
     - 根对象须严格匹配 `BaziJson.DefaultBaziChartJsonDict` 或 `BaziJson.LocationBaziChartJsonDict`，
       两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。
       映射顺序不限，派生值只核对、不存储。
-    - 键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
+    - 键和字符串值必须是原生 `str`，不接受子类。`None` 只用于 `tiangan_shishen.day`，
+      不表示其他字段可以省略或置空。
     - 类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
       同时违反多个约束时，不保证先报告哪项错误。
     - 不修改或持有调用方映射；重建的大运时刻线为空时，读取 `json` 核对会抛 `ValueError`。
 
     Return: (BaziChart) 重建的命盘。
     '''
+    return cls._from_data(d)
+
+  @classmethod
+  def _from_data(cls, d: Mapping[str, object]) -> 'BaziChart':
+    '''普通读取与主动迁移共用的命盘重建及逐项核对；不附加入口指引。'''
     if not isinstance(d, Mapping):
       raise TypeError(f'Expected Mapping at chart, got {type(d)}')
     for key in d:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
+    if type(d.get('schema_version')) is not int or d['schema_version'] != _SCHEMA_VERSION:
+      raise ValueError(f'Unsupported chart schema version: {d.get("schema_version")!r}')
 
     default_keys = BaziJson.DefaultBaziChartJsonDict.__required_keys__
     location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
@@ -680,6 +698,7 @@ class BaziChart:
     config = _config_json(self._bazi.config)
     f = BaziJson.gen_fourpillars
     common: BaziJson._CommonChartJsonDict = {
+      'schema_version': _SCHEMA_VERSION,
       'gender': str(self._bazi.gender),
       'precision': config['precision'],
       'backend': config['backend'],

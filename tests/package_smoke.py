@@ -101,6 +101,7 @@ def main() -> None:
   check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
   check('bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
   check('bazi.context_matching' not in sys.modules, 'Root import eagerly loaded context matcher')
+  check('bazi.record_migration' not in sys.modules, 'Root import eagerly loaded record migration')
   matching_module = bazi.context_matching
   check('context_matching' in bazi.__all__ and matching_module is bazi.context_matching, 'Matching ordinary module attribute registration mismatch')
   knowledge_module = bazi.knowledge
@@ -504,6 +505,25 @@ def main() -> None:
     raise RuntimeError('Installed spouse_evidence transits missing')
   check(direct.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}, 'Installed spouse_evidence transit mismatch')
   print('PASS installed relationship evaluation/evidence/render/record restoration')
+  from bazi.record_migration import migrate_chart_json, migrate_knowledge_json, migrate_context_json
+
+  old_chart = dict(location_chart.json)
+  del old_chart['schema_version']
+  chart_migration = migrate_chart_json(old_chart)
+  check(BaziChart.from_json(json.loads(chart_migration.json_text)).json == location_chart.json, 'Installed chart migration mismatch')
+  old_knowledge = json.loads(knowledge.export_json())
+  old_knowledge['schema_version'] = 1
+  knowledge_migration = migrate_knowledge_json(json.dumps(old_knowledge))
+  check(KnowledgeBase.from_json(knowledge_migration.json_text) == knowledge, 'Installed knowledge migration mismatch')
+  old_context = json.loads(relationship.export_json())
+  old_context['record_version'] = 4
+  old_context['knowledge']['schema_version'] = 1
+  context_migration = migrate_context_json(json.dumps(old_context))
+  check(ContextResult.from_json(context_migration.json_text) == relationship, 'Installed context migration mismatch')
+  check(all(result.tool_version == importlib.metadata.version('bazi') for result in (
+    chart_migration, knowledge_migration, context_migration,
+  )), 'Installed migration version does not match the distribution')
+  print('PASS installed migration/version/readonly restoration')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

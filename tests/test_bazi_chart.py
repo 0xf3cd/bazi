@@ -843,6 +843,8 @@ def test_from_json_types_at_every_node(chart_json: dict[str, Any]) -> None:
   assert {'value': fake} == {'value': 'male'}
   assert {'value': fake} == {'value': None}
   for path, value in _json_nodes(chart_json):
+    if path == ('schema_version',):
+      continue
     bad_values: list[object] = [42, False, [], fake]
     bad_values += ['None', ''] if value is None else [None]
     if isinstance(value, dict):
@@ -859,6 +861,13 @@ def test_from_json_types_at_every_node(chart_json: dict[str, Any]) -> None:
       with pytest.raises(TypeError) as exc:
         BaziChart.from_json(data)
       assert str(type(bad)) in str(exc.value)
+
+
+@pytest.mark.parametrize('version', [None, True, False, 0, 2, '1', 1.0, []])
+def test_from_json_requires_chart_schema(chart_json: dict[str, Any], version: object) -> None:
+  chart_json['schema_version'] = version
+  with pytest.raises(ValueError, match='Unsupported chart schema version'):
+    BaziChart.from_json(chart_json)
 
 
 def test_from_json_derived_values(chart_json: dict[str, Any]) -> None:

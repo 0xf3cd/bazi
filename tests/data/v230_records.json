@@ -1,0 +1,2664 @@
+{
+  "source_sha": "b40e89f41b077f4429a6fcd8a8a2a707c8a2e18d",
+  "knowledge_selection": [
+    "editorial.shishen.qisha.legal_trouble",
+    "editorial.shishen.zhengguan.legal_trouble"
+  ],
+  "chart": {
+    "birth_time": "2000-01-01T12:00:00",
+    "gender": "male",
+    "precision": "day",
+    "backend": "celestial",
+    "dayun_year_rule": "jie_projected",
+    "school": {
+      "day_rollover": "WAN_ZISHI",
+      "anhe_def": "NORMAL_EXTENDED",
+      "xing_def": "LOOSE",
+      "gong_def": "SAME_STEM_NARROW",
+      "yangren_def": "ZIPING",
+      "feiren_def": "ZIPING",
+      "hongyan_anchor": "DAY",
+      "tianyi_anchor": "YEAR_AND_DAY",
+      "tianyi_def": "GENG_WITH_JIA_WU",
+      "yima_anchor": "YEAR_AND_DAY",
+      "huagai_anchor": "YEAR_AND_DAY",
+      "jiangxing_anchor": "YEAR_AND_DAY",
+      "jiesha_anchor": "YEAR_AND_DAY",
+      "wangshen_anchor": "YEAR_AND_DAY",
+      "jinyu_anchor": "DAY",
+      "zaisha_anchor": "YEAR",
+      "wenchang_anchor": "YEAR_AND_DAY",
+      "wenchang_def": "XIN_ZI",
+      "taiji_anchor": "YEAR_AND_DAY",
+      "taiji_def": "REN_GUI_BOTH",
+      "guoyin_anchor": "YEAR_AND_DAY",
+      "guoyin_def": "MODERN",
+      "peiou_xing_def": "ZHENGCAI_ZHENGGUAN",
+      "kongwang_anchor": "DAY"
+    },
+    "pillars": {
+      "year": "己卯",
+      "month": "丙子",
+      "day": "戊午",
+      "hour": "戊午"
+    },
+    "nayin": {
+      "year": "城头土",
+      "month": "涧下水",
+      "day": "天上火",
+      "hour": "天上火"
+    },
+    "shier_zhangsheng": {
+      "year": "沐浴",
+      "month": "胎",
+      "day": "帝旺",
+      "hour": "帝旺"
+    },
+    "tiangan_traits": {
+      "year": "阴土",
+      "month": "阳火",
+      "day": "阳土",
+      "hour": "阳土"
+    },
+    "dizhi_traits": {
+      "year": "阴木",
+      "month": "阳水",
+      "day": "阳火",
+      "hour": "阳火"
+    },
+    "tiangan_shishen": {
+      "year": "劫财",
+      "month": "偏印",
+      "day": null,
+      "hour": "比肩"
+    },
+    "dizhi_shishen": {
+      "year": "正官",
+      "month": "正财",
+      "day": "正印",
+      "hour": "正印"
+    },
+    "hidden_tiangan": {
+      "year": "乙:100",
+      "month": "癸:100",
+      "day": "丁:70,己:30",
+      "hour": "丁:70,己:30"
+    },
+    "transits": {
+      "dayun_start_time": "2008-03-11T12:44:53.333333",
+      "xiaoyun": {
+        "1": "丁巳",
+        "2": "丙辰",
+        "3": "乙卯",
+        "4": "甲寅",
+        "5": "癸丑",
+        "6": "壬子",
+        "7": "辛亥",
+        "8": "庚戌",
+        "9": "己酉",
+        "10": "戊申"
+      },
+      "dayun": {
+        "2008": {
+          "ganzhi": "乙亥",
+          "start_time": "2008-03-11T12:44:53.333333",
+          "end_time": "2018-03-11T12:44:53.333333"
+        },
+        "2018": {
+          "ganzhi": "甲戌",
+          "start_time": "2018-03-11T12:44:53.333333",
+          "end_time": "2028-03-11T12:44:53.333333"
+        },
+        "2028": {
+          "ganzhi": "癸酉",
+          "start_time": "2028-03-11T12:44:53.333333",
+          "end_time": "2038-03-11T12:44:53.333333"
+        },
+        "2038": {
+          "ganzhi": "壬申",
+          "start_time": "2038-03-11T12:44:53.333333",
+          "end_time": "2048-03-11T12:44:53.333333"
+        },
+        "2048": {
+          "ganzhi": "辛未",
+          "start_time": "2048-03-11T12:44:53.333333",
+          "end_time": "2058-03-11T12:44:53.333333"
+        },
+        "2058": {
+          "ganzhi": "庚午",
+          "start_time": "2058-03-11T12:44:53.333333",
+          "end_time": "2068-03-11T12:44:53.333333"
+        },
+        "2068": {
+          "ganzhi": "己巳",
+          "start_time": "2068-03-11T12:44:53.333333",
+          "end_time": "2078-03-11T12:44:53.333333"
+        },
+        "2078": {
+          "ganzhi": "戊辰",
+          "start_time": "2078-03-11T12:44:53.333333",
+          "end_time": "2088-03-11T12:44:53.333333"
+        },
+        "2088": {
+          "ganzhi": "丁卯",
+          "start_time": "2088-03-11T12:44:53.333333",
+          "end_time": "2098-03-11T12:44:53.333333"
+        },
+        "2098": {
+          "ganzhi": "丙寅",
+          "start_time": "2098-03-11T12:44:53.333333",
+          "end_time": "2108-03-11T12:44:53.333333"
+        }
+      }
+    }
+  },
+  "location_chart": {
+    "time_basis": "apparent_solar",
+    "civil_time": "2000-01-01T12:00:00+08:00",
+    "canonical_instant": "2000-01-01T04:00:00+00:00",
+    "longitude": 121.5,
+    "apparent_time": "2000-01-01T12:02:52.650000",
+    "gender": "male",
+    "precision": "minute",
+    "backend": "celestial",
+    "dayun_year_rule": "jie_projected",
+    "school": {
+      "day_rollover": "WAN_ZISHI",
+      "anhe_def": "NORMAL_EXTENDED",
+      "xing_def": "LOOSE",
+      "gong_def": "SAME_STEM_NARROW",
+      "yangren_def": "ZIPING",
+      "feiren_def": "ZIPING",
+      "hongyan_anchor": "DAY",
+      "tianyi_anchor": "YEAR_AND_DAY",
+      "tianyi_def": "GENG_WITH_JIA_WU",
+      "yima_anchor": "YEAR_AND_DAY",
+      "huagai_anchor": "YEAR_AND_DAY",
+      "jiangxing_anchor": "YEAR_AND_DAY",
+      "jiesha_anchor": "YEAR_AND_DAY",
+      "wangshen_anchor": "YEAR_AND_DAY",
+      "jinyu_anchor": "DAY",
+      "zaisha_anchor": "YEAR",
+      "wenchang_anchor": "YEAR_AND_DAY",
+      "wenchang_def": "XIN_ZI",
+      "taiji_anchor": "YEAR_AND_DAY",
+      "taiji_def": "REN_GUI_BOTH",
+      "guoyin_anchor": "YEAR_AND_DAY",
+      "guoyin_def": "MODERN",
+      "peiou_xing_def": "ZHENGCAI_ZHENGGUAN",
+      "kongwang_anchor": "DAY"
+    },
+    "pillars": {
+      "year": "己卯",
+      "month": "丙子",
+      "day": "戊午",
+      "hour": "戊午"
+    },
+    "nayin": {
+      "year": "城头土",
+      "month": "涧下水",
+      "day": "天上火",
+      "hour": "天上火"
+    },
+    "shier_zhangsheng": {
+      "year": "沐浴",
+      "month": "胎",
+      "day": "帝旺",
+      "hour": "帝旺"
+    },
+    "tiangan_traits": {
+      "year": "阴土",
+      "month": "阳火",
+      "day": "阳土",
+      "hour": "阳土"
+    },
+    "dizhi_traits": {
+      "year": "阴木",
+      "month": "阳水",
+      "day": "阳火",
+      "hour": "阳火"
+    },
+    "tiangan_shishen": {
+      "year": "劫财",
+      "month": "偏印",
+      "day": null,
+      "hour": "比肩"
+    },
+    "dizhi_shishen": {
+      "year": "正官",
+      "month": "正财",
+      "day": "正印",
+      "hour": "正印"
+    },
+    "hidden_tiangan": {
+      "year": "乙:100",
+      "month": "癸:100",
+      "day": "丁:70,己:30",
+      "hour": "丁:70,己:30"
+    },
+    "transits": {
+      "dayun_start_time": "2008-03-11T12:44:53.333333",
+      "xiaoyun": {
+        "1": "丁巳",
+        "2": "丙辰",
+        "3": "乙卯",
+        "4": "甲寅",
+        "5": "癸丑",
+        "6": "壬子",
+        "7": "辛亥",
+        "8": "庚戌",
+        "9": "己酉",
+        "10": "戊申"
+      },
+      "dayun": {
+        "2008": {
+          "ganzhi": "乙亥",
+          "start_time": "2008-03-11T12:44:53.333333",
+          "end_time": "2018-03-11T12:44:53.333333"
+        },
+        "2018": {
+          "ganzhi": "甲戌",
+          "start_time": "2018-03-11T12:44:53.333333",
+          "end_time": "2028-03-11T12:44:53.333333"
+        },
+        "2028": {
+          "ganzhi": "癸酉",
+          "start_time": "2028-03-11T12:44:53.333333",
+          "end_time": "2038-03-11T12:44:53.333333"
+        },
+        "2038": {
+          "ganzhi": "壬申",
+          "start_time": "2038-03-11T12:44:53.333333",
+          "end_time": "2048-03-11T12:44:53.333333"
+        },
+        "2048": {
+          "ganzhi": "辛未",
+          "start_time": "2048-03-11T12:44:53.333333",
+          "end_time": "2058-03-11T12:44:53.333333"
+        },
+        "2058": {
+          "ganzhi": "庚午",
+          "start_time": "2058-03-11T12:44:53.333333",
+          "end_time": "2068-03-11T12:44:53.333333"
+        },
+        "2068": {
+          "ganzhi": "己巳",
+          "start_time": "2068-03-11T12:44:53.333333",
+          "end_time": "2078-03-11T12:44:53.333333"
+        },
+        "2078": {
+          "ganzhi": "戊辰",
+          "start_time": "2078-03-11T12:44:53.333333",
+          "end_time": "2088-03-11T12:44:53.333333"
+        },
+        "2088": {
+          "ganzhi": "丁卯",
+          "start_time": "2088-03-11T12:44:53.333333",
+          "end_time": "2098-03-11T12:44:53.333333"
+        },
+        "2098": {
+          "ganzhi": "丙寅",
+          "start_time": "2098-03-11T12:44:53.333333",
+          "end_time": "2108-03-11T12:44:53.333333"
+        }
+      }
+    }
+  },
+  "knowledge": {
+    "schema_version": 1,
+    "objects": [
+      {
+        "object_id": "shishen.bijian",
+        "kind": "shishen",
+        "name": "比肩"
+      },
+      {
+        "object_id": "shishen.jiecai",
+        "kind": "shishen",
+        "name": "劫财"
+      },
+      {
+        "object_id": "shishen.shishen",
+        "kind": "shishen",
+        "name": "食神"
+      },
+      {
+        "object_id": "shishen.shangguan",
+        "kind": "shishen",
+        "name": "伤官"
+      },
+      {
+        "object_id": "shishen.zhengcai",
+        "kind": "shishen",
+        "name": "正财"
+      },
+      {
+        "object_id": "shishen.piancai",
+        "kind": "shishen",
+        "name": "偏财"
+      },
+      {
+        "object_id": "shishen.zhengguan",
+        "kind": "shishen",
+        "name": "正官"
+      },
+      {
+        "object_id": "shishen.qisha",
+        "kind": "shishen",
+        "name": "七杀"
+      },
+      {
+        "object_id": "shishen.zhengyin",
+        "kind": "shishen",
+        "name": "正印"
+      },
+      {
+        "object_id": "shishen.pianyin",
+        "kind": "shishen",
+        "name": "偏印"
+      },
+      {
+        "object_id": "tiangan.jia",
+        "kind": "tiangan",
+        "name": "甲"
+      },
+      {
+        "object_id": "tiangan.yi",
+        "kind": "tiangan",
+        "name": "乙"
+      },
+      {
+        "object_id": "tiangan.bing",
+        "kind": "tiangan",
+        "name": "丙"
+      },
+      {
+        "object_id": "tiangan.ding",
+        "kind": "tiangan",
+        "name": "丁"
+      },
+      {
+        "object_id": "tiangan.wu",
+        "kind": "tiangan",
+        "name": "戊"
+      },
+      {
+        "object_id": "tiangan.ji",
+        "kind": "tiangan",
+        "name": "己"
+      },
+      {
+        "object_id": "tiangan.geng",
+        "kind": "tiangan",
+        "name": "庚"
+      },
+      {
+        "object_id": "tiangan.xin",
+        "kind": "tiangan",
+        "name": "辛"
+      },
+      {
+        "object_id": "tiangan.ren",
+        "kind": "tiangan",
+        "name": "壬"
+      },
+      {
+        "object_id": "tiangan.gui",
+        "kind": "tiangan",
+        "name": "癸"
+      },
+      {
+        "object_id": "wuxing.mu",
+        "kind": "wuxing",
+        "name": "木"
+      },
+      {
+        "object_id": "wuxing.huo",
+        "kind": "wuxing",
+        "name": "火"
+      },
+      {
+        "object_id": "wuxing.tu",
+        "kind": "wuxing",
+        "name": "土"
+      },
+      {
+        "object_id": "wuxing.jin",
+        "kind": "wuxing",
+        "name": "金"
+      },
+      {
+        "object_id": "wuxing.shui",
+        "kind": "wuxing",
+        "name": "水"
+      },
+      {
+        "object_id": "concept.cai",
+        "kind": "concept",
+        "name": "财"
+      },
+      {
+        "object_id": "concept.xiaoyin",
+        "kind": "concept",
+        "name": "枭印"
+      },
+      {
+        "object_id": "concept.bijie",
+        "kind": "concept",
+        "name": "比劫"
+      },
+      {
+        "object_id": "shensha.guoyin",
+        "kind": "shensha",
+        "name": "国印贵人"
+      },
+      {
+        "object_id": "concept.peiou_xing",
+        "kind": "concept",
+        "name": "配偶星"
+      },
+      {
+        "object_id": "concept.peiou_gong",
+        "kind": "concept",
+        "name": "配偶宫"
+      },
+      {
+        "object_id": "shensha.kongwang",
+        "kind": "shensha",
+        "name": "六甲旬空"
+      },
+      {
+        "object_id": "concept.taiyuan",
+        "kind": "concept",
+        "name": "胎元"
+      },
+      {
+        "object_id": "concept.minggong",
+        "kind": "concept",
+        "name": "命宫"
+      }
+    ],
+    "contexts": [
+      {
+        "context_id": "legacy.chart_context",
+        "label": "旧条目未还原的命盘前提",
+        "time_scope": "未限定",
+        "limits": [
+          "此标记不定义强弱、喜用或有效生克。"
+        ]
+      },
+      {
+        "context_id": "shishen.xiaoyin_duoshi",
+        "label": "枭印夺食条目情境",
+        "time_scope": "未限定",
+        "limits": [
+          "枭印夺食的判据及适用范围尚未定义，不等同于偏印与食神共现。"
+        ]
+      },
+      {
+        "context_id": "shishen.pianyin_favorable_or_balanced",
+        "label": "偏印喜用或状态良好条目情境",
+        "time_scope": "未限定",
+        "limits": [
+          "喜用、不过旺及不受刑克冲害的具体判据尚未确认。"
+        ]
+      },
+      {
+        "context_id": "tiangan.ding_weak_and_overcontrolled",
+        "label": "丁火日主身弱条目情境",
+        "time_scope": "未限定",
+        "limits": [
+          "身弱与克太多的判据尚未定义。"
+        ]
+      },
+      {
+        "context_id": "tiangan.geng_regulated_transit",
+        "label": "庚金日主行运条目情境",
+        "time_scope": "行运",
+        "limits": [
+          "有制有化尚未定义，不据基础生克关系认定成立。",
+          "后天有教养是盘外前提，不能从命盘查表还原。"
+        ]
+      },
+      {
+        "context_id": "editorial.guansha_coexistence",
+        "label": "官杀共现原作条目前提",
+        "time_scope": "显式选择原局或原局加单流年",
+        "limits": [
+          "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+          "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+        ]
+      },
+      {
+        "context_id": "editorial.guansha_coexistence_female",
+        "label": "官杀共现且女命原作条目前提",
+        "time_scope": "显式选择原局或原局加单流年",
+        "limits": [
+          "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，且输入为女命；不计力量、次数阈值、相邻、去留或有效制化。",
+          "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+        ]
+      },
+      {
+        "context_id": "liuqin.spouse_star_readings",
+        "label": "配偶星取法条目情境",
+        "time_scope": "未限定",
+        "limits": [
+          "取法声明条目只作静态查阅，不判命盘前提；取法的选择由命盘流派配置承载。",
+          "取法给出的是目标干，不表示该干在命盘中实际出现。"
+        ]
+      },
+      {
+        "context_id": "editorial.spouse_palace_xingchong",
+        "label": "妻宫刑冲参考条目前提",
+        "time_scope": "显式选择原局或原局加显式选定岁运",
+        "limits": [
+          "取原局四柱及所选岁运的全部干支；日柱地支作为具体参与者卷入刑或冲即满足结构前提，刑按命盘流派的刑定义解释，不计力量、次数阈值、相邻、去留或有效制化。",
+          "仅用于仓内参考条目；结构前提满足不表示婚姻、寿命或现实事件成立。"
+        ]
+      },
+      {
+        "context_id": "editorial.spouse_star_tougan",
+        "label": "妻星干头参考条目前提",
+        "time_scope": "显式选择原局或原局加显式选定岁运",
+        "limits": [
+          "取原局四柱明干及所选岁运明干；按命盘流派配置的配偶星目标干至少一处明干实际出现即满足结构前提，藏干出现只记事实，不计作透。",
+          "仅用于仓内参考条目；结构前提满足不表示婚姻或现实事件成立。"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "source_id": "editorial",
+        "work": "本仓解释语料",
+        "attribution": "本仓作者 Ningqi Wang",
+        "edition": "本仓编写，经 issue #24 确认",
+        "locator": "见 PR #222",
+        "url": "https://github.com/0xf3cd/bazi/pull/222",
+        "text_layer": "editorial",
+        "lineage": "editorial",
+        "excerpt": "本仓原创编写的文字。",
+        "supports": "署名，以及仅供参考的输出分类。",
+        "limitations": "不确立古籍规则，也不作现实预测。",
+        "state": "editorial"
+      },
+      {
+        "source_id": "yuanhai_ziping_relations",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "李钦增补",
+        "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+        "locator": "PDF 第 6 页右半叶，以「生我者為正印偏印」起首的段落",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也",
+        "supports": "五种生克关系、成对的十神名称，以及正偏的阴阳规则。",
+        "limitations": "劫財与敗財两名并用；不支持把二者并为一名，也不支持性格、六亲、运势或无条件的命盘判断。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_ziping_stem_table",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "李钦增补",
+        "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+        "locator": "PDF 第 8 页「天干五阳通变」与「天干五阴通变」两表",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n7/mode/2up",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "天干五陽通變天干五陰通變",
+        "supports": "天干按阳、阴分组。",
+        "limitations": "劫財与敗財分列两名；不使这套名称或所附六亲释义成为各流派无条件通用的说法。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_ziping_stem_symbols_p69",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "李钦增补",
+        "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+        "locator": "PDF 第 69 页左半叶，「十干体象」",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "甲木天干作首排乙木根荄種得深丙火明明一太陽",
+        "supports": "甲、乙、丙的五行称名，以及丙的一则历史象。",
+        "limitations": "不使该象成为跨流派定义或性格前提。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_ziping_stem_symbols_p70",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "李钦增补",
+        "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+        "locator": "PDF 第 70 页左右两半叶，「十干体象」",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼",
+        "supports": "丁至癸的五行称名，以及丁、戊、辛、壬的历史象。",
+        "limitations": "不使这些象成为跨流派定义或性格前提。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "mingli_tanyuan_stem_basics",
+        "work": "《命理探源》",
+        "attribution": "袁树珊著",
+        "edition": "版心题《命理探原》",
+        "locator": "PDF 第 33、36 页，「干枝阴阳」与「干枝五行及四时方位」",
+        "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+        "text_layer": "baiwen",
+        "lineage": "mingli_tanyuan",
+        "excerpt": "甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方",
+        "supports": "十干直接按阴阳与五行分组。",
+        "limitations": "不支持性格、运势、固定意象或健康方面的文字。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "mingli_tanyuan_shishen_definitions",
+        "work": "《命理探源》",
+        "attribution": "袁树珊著",
+        "edition": "版心题《命理探原》",
+        "locator": "PDF 第 66–70 页，「十干生克定名」",
+        "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+        "text_layer": "baiwen",
+        "lineage": "mingli_tanyuan",
+        "excerpt": "陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印",
+        "supports": "五种生克关系、阴阳之别，以及本见证的十神名称。",
+        "limitations": "不支持把劫財与敗財并为劫財。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "repository_wuxing_relations",
+        "work": "本仓五行定义",
+        "attribution": "本仓规则说明",
+        "edition": "本仓快照 e7caf8f",
+        "locator": "bazi/defines/wuxing.py 中的 Wuxing.generates／destructs",
+        "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/defines/wuxing.py",
+        "text_layer": "editorial",
+        "lineage": "repository_rules",
+        "excerpt": "Wuxing.木.generates(Wuxing.火)；Wuxing.金.destructs(Wuxing.木)。",
+        "supports": "本仓现有五行形式关系的方向。",
+        "limitations": "属本仓署名，不是新核实的古籍见证，也不证明命盘中的有效作用。",
+        "state": "repository_attributed"
+      },
+      {
+        "source_id": "repository_guoyin_variants",
+        "work": "本仓国印规则说明",
+        "attribution": "本仓规则说明",
+        "edition": "本仓快照 e7caf8f",
+        "locator": "bazi/rules.py 中的 ShenshaRules.GuoyinDef",
+        "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/rules.py",
+        "text_layer": "editorial",
+        "lineage": "repository_rules",
+        "excerpt": "WUXING_JINGJI 取禄 + 7，MODERN 取禄 + 8，均含禄起算。",
+        "supports": "现有的两种表读法，以及另行说明的锚点／目标边界。",
+        "limitations": "概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。",
+        "state": "repository_attributed"
+      },
+      {
+        "source_id": "sanming_liuqin",
+        "work": "《三命通会》",
+        "attribution": "书影未见作者署名，不据此断言",
+        "edition": "钦定四库全书本（版心「欽定四庫全書」）",
+        "locator": "卷七《論六親》，Commons 书影 djvu 页 165–174（印刷叶码仅见于奇数页）",
+        "url": "https://commons.wikimedia.org/wiki/File:CADAL06056483_三命通會·卷七.djvu",
+        "text_layer": "baiwen",
+        "lineage": "sanming_liuqin",
+        "excerpt": "如女人則甲遇庚七煞乙遇庚正官皆夫星也謂庚是陽男為正夫屬陽不可以辛陰為夫也",
+        "supports": "阴阳干读法的书内例句：男命「我尅者為財為妻」，女命甲乙取庚为夫；174页对「不拘偏正惟辨陰陽陽男陰女」的取舍；168页小字「或云」的正偏读法；171页妻妾星坐地条件句。",
+        "limitations": "引文对书影逐字；Wikisource 转录层有己／已／巳混用，不作引文依据，书影中己字印形近已，按语境读作己。仅甲、乙两干的男女四格有书证直例，其余十六格按「其餘八干俱以類推」与174页原则类推重建，不是逐干原文。仅四库本一版，未取得第二独立来源。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_liuqin_charts",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+        "edition": "卷首题署「閩書林喬山堂劉太易繡梓」（「太」或「大」未核）；Archive 元数据题「明萬曆二十八年閩書林劉龍田喬山堂刊本」，刊年与「劉龍田」仅元数据支持，不与题署认定为同一人",
+        "locator": "PDF 第 57 页（男图）与第 58 页（女图）六亲取用图，按行列坐标逐格读取",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n56",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "正妻",
+        "supports": "男图十个配偶格原载「正妻」，女图配偶格原载「正夫」六格、「夫」三格，另一格「正」字清楚、第二字残损；是正财／正官读法的逐格原载对照。",
+        "limitations": "图表格字不是连续行文；摘录取男图格字，女图格字见上一栏（支持范围）。女图丙日一格第二字残损未核，格值按行列位置与其余格自洽取得，不是直读。本图不是阴阳干读法的第二来源。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_qiqie_note",
+        "work": "《刻京台增补渊海子平大全》",
+        "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+        "edition": "同 yuanhai_liuqin_charts（题署第三字未核；刊年仅 Archive 元数据支持）",
+        "locator": "PDF 第 25 页，右栏双行夹注起首",
+        "url": "https://archive.org/details/20260506_20260506_1149/page/n24",
+        "text_layer": "zhushi",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "論妻妾者以生日支辰爲妻妾之星",
+        "supports": "夹注前半串以「生日支辰」为妻妾之星。",
+        "limitations": "「星」之后一字与小注末字未核，所在章名未取得；夹注只涉妻妾，不是女命夫宫的古籍明文，也不单独证明「日支」就是配偶宫。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "tanyuan_qizi",
+        "work": "《命理探源》",
+        "attribution": "袁树珊著",
+        "edition": "版心题《命理探原》",
+        "locator": "PDF 第 171 页「六親 論妻子」（印页二六）",
+        "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+        "text_layer": "baiwen",
+        "lineage": "mingli_tanyuan",
+        "excerpt": "妻星者。幹頭之財也。",
+        "supports": "该页对妻星「幹頭之財」的定义，以及「妻透成格」「妻宮有用」坐下刑衝、「妻星兩透」偏正雜出两段的字句。",
+        "limitations": "该页起句为「子平真詮云」，所取各段属探原的转录层，未见子平真诠原书，不是任何命题的第二独立成文。原印小标点与「夫」后小点的性质未辨，条目引文以〔〕标出整理记号。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "yuanhai_ziping.kongwang",
+        "work": "《渊海子平》",
+        "attribution": "《渊海子平》六甲空亡条",
+        "edition": "东里书斋下游转录",
+        "locator": "卷一·论六甲空亡",
+        "url": "https://www.donglishuzhai.net/chapter/12794.html",
+        "text_layer": "baiwen",
+        "lineage": "yuanhai_ziping",
+        "excerpt": "甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。",
+        "supports": "逐列六旬空亡二支，支持六甲旬空的基础表。",
+        "limitations": "本轮所见为下游转录，未逐页校勘影印；同书其他载体不另计独立来源。方括号注文及东里山人按不混入此引文；本段不决定锚柱。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "sanming_tonghui.kongwang",
+        "work": "《三命通会》",
+        "attribution": "《三命通会》卷三论空亡",
+        "edition": "四库全书本维基文库转录，revision 657369",
+        "locator": "卷三·论空亡",
+        "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+        "text_layer": "baiwen",
+        "lineage": "sanming_tonghui",
+        "excerpt": "如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡",
+        "supports": "用一旬十干配支说明余下二支；同段后文有甲子年壬戌日的年日互换例。",
+        "limitations": "仅核到四库本转录，未逐页校勘影印。该卷转引诸书不等于已见各原书；普通转录互换例作壬戌月，与本版壬戌日分开。单支筛选及解释段不并入基础二支。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "luoluzi_xiaoxifu.kongwang",
+        "work": "《珞琭子三命消息赋注》",
+        "attribution": "《珞琭子三命消息赋注》注释层",
+        "edition": "维基文库转录，revision 857114",
+        "locator": "六虚下于空亡注",
+        "url": "https://zh.wikisource.org/w/index.php?oldid=857114",
+        "text_layer": "zhushi",
+        "lineage": "luoluzi_xiaoxifu",
+        "excerpt": "假令甲子旬中，戌亥空亡也。",
+        "supports": "注中另述甲子旬戌亥空亡，佐证基础二支。",
+        "limitations": "所见为转录的注释层，不是影印校勘；不据此证明其他五旬表或固定锚。此本提要警示三命通会所引珞琭子与此本不合，不把三命通会转引的单支读法归入本书。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "wuxing_jingji.kongwang",
+        "work": "《五行精纪》",
+        "attribution": "《五行精纪》卷二十五转引《神白经》与《林开五命》",
+        "edition": "维基文库转录，revision 10494296",
+        "locator": "卷二十五·说空亡及空亡条",
+        "url": "https://zh.wikisource.org/w/index.php?oldid=10494296",
+        "text_layer": "baiwen",
+        "lineage": "wuxing_jingji",
+        "excerpt": "此空亡只用生日旬中空亡極緊",
+        "supports": "汇编转引层记录生日旬中为紧及运、太岁语境，另有论空亡止以年日所在。",
+        "limitations": "witnessed 只指已核汇编转录，不指已见《神白经》或《林开五命》原书，不作两部原书的独立见证。汇编另收前后五位单支读法，本条不合并其筛选与解释。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "repository.kongwang",
+        "work": "本库六甲旬空查法约定",
+        "attribution": "bazi 仓内采用的查法范围与默认选择",
+        "edition": "六甲旬空首批实现",
+        "locator": "ShenshaRules.KONGWANG、BaziSchool.kongwang_anchor 与关系分析器",
+        "url": "https://github.com/0xf3cd/bazi/issues/277",
+        "text_layer": "editorial",
+        "lineage": "repository",
+        "excerpt": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。",
+        "supports": "本库的默认锚、可选锚、原局自身排除和本命锚查流运支的组合范围。",
+        "limitations": "仓内政策不是古籍见证，不宣称古籍一致只看日柱。不作反向流运锚查询，不含单支筛选、截路、四大空亡或冲合取消与吉凶解释。",
+        "state": "repository_attributed"
+      },
+      {
+        "source_id": "youyilu.taiyuan_minggong",
+        "work": "《游艺录》卷四",
+        "attribution": "俞樾原书，识典古籍转录",
+        "edition": "在线下载转录，未逐页校勘影印",
+        "locator": "卷四命宫例及胎元段",
+        "url": "https://www.shidianguji.com/book/CADAL01025514/chapter/1l47npzydewbp",
+        "text_layer": "baiwen",
+        "lineage": "sanming_tonghui",
+        "excerpt": "生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。",
+        "supports": "例解明确月干顺移一、月支顺移三；同页甲子年三月酉时命宫例为戊辰。",
+        "limitations": "直接取得转录，不再仅依《命理探原》转引；转引不另计独立谱系。命宫掌诀措辞近同，独立性未核，暂与《三命通会》同组，保守不多算一条独立见证；这不是已证直接承袭。页面有识别和表格混排痕迹，未校影印；不证明实际受孕时刻，也未明确命宫月界。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "sanming_tonghui.taiyuan",
+        "work": "《三命通会》卷二",
+        "attribution": "万民英原书，维基文库四库本固定转录",
+        "edition": "固定 revision 761691，未逐页校勘影印",
+        "locator": "论胎元段，通行取法批评、三百日说及段末质疑",
+        "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+        "text_layer": "baiwen",
+        "lineage": "sanming_tonghui",
+        "excerpt": "惟有一法以當生前三百日為十月之氣乃是受胎之正",
+        "supports": "同段记通行取法并质疑其是否精当：「今人多以法取胎元未審精當且戊子生甲寅月往往便以一巳為胎葢言乙巳是生月前十日更不明其中有閏無閏」。甲寅／乙巳例与本库月柱顺移在该例结果相同；另记三百日候选及段末质疑。见证取法存在，不表示该书认可该取法。",
+        "limitations": "同段另有「然則貴人受胎定在三百日又豈可據乎」，不把其中一句当作全段一致结论。一巳、前十日按转录原字保留，未校影印，不推定其校勘读法。三百日候选的月柱历法、边界、地点钟与窗口仍待核定，本库未编码，不据此认定真实孕期或寿命。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "sanming_tonghui.minggong",
+        "work": "《三命通会》卷二",
+        "attribution": "万民英原书，维基文库四库本固定转录",
+        "edition": "固定 revision 761691，未逐页校勘影印",
+        "locator": "论坐命宫段，掌诀及甲子年三月戌时例",
+        "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+        "text_layer": "baiwen",
+        "lineage": "sanming_tonghui",
+        "excerpt": "次将所生之時加於所生之月順行十二位逢卯即安命宫",
+        "supports": "子起正月逆数、生时加月位顺数到卯，并按出生年起月法配干；三月戌时例得丁卯。",
+        "limitations": "该段未明确正月按农历、节月或中气划分；原字、异体字及疑似讹字未擅改，不从此段推出时区、真太阳钟或精度政策，不收入吉凶断语。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "mingli_tanyuan.minggong",
+        "work": "《命理探原》起例",
+        "attribution": "袁树珊按语，典藏网下游简体转录",
+        "edition": "在线下载转录，未校原书影印",
+        "locator": "下载页题名作《命理探源》，本库沿称《命理探原》；推命宫法按语，中气及丙午大寒例",
+        "url": "https://www.diancang.xyz/xuanxuewushu/minglitanyuan/160971.html",
+        "text_layer": "zhushi",
+        "lineage": "mingli_tanyuan",
+        "excerpt": "古人谓交过中气，即作次月推",
+        "supports": "按语明确中气进月，丙午年十二月过大寒、申时取乙未宫，仍用丙午年配干。",
+        "limitations": "中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
+        "state": "witnessed"
+      },
+      {
+        "source_id": "repository.taiyuan_minggong",
+        "work": "本库胎元与命宫附加查询约定",
+        "attribution": "bazi 仓内采用的口径与候选边界",
+        "edition": "胎元与命宫首批实现",
+        "locator": "BaziChart.taiyuan、BaziChart.minggong 与 bazi_utils",
+        "url": "https://github.com/0xf3cd/bazi/issues/117",
+        "text_layer": "editorial",
+        "lineage": "repository",
+        "excerpt": "胎元按月柱干进一、支进三；命宫按中气进月，均为四柱之外的附加查询。",
+        "supports": "本库已实现口径、精度与地点钟政策，以及尚未编码的其他读法候选。",
+        "limitations": "软件政策不冒充古籍共识；附加干支不进入旧四柱、身份、JSON、关系或流运分析，不据计算结果认定解释前提成立。其他月界线索仍须核定系统归属、规则和查法。",
+        "state": "repository_attributed"
+      }
+    ],
+    "entries": [
+      {
+        "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+        "text": "如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+        "roles": [
+          {
+            "name": "讨论对象",
+            "object_id": "shishen.zhengguan"
+          }
+        ],
+        "relations": [],
+        "topics": [
+          "取象"
+        ],
+        "applicability": "described",
+        "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+        "contexts": [
+          "editorial.guansha_coexistence"
+        ],
+        "sources": [
+          "editorial"
+        ],
+        "source_state": "editorial",
+        "attribution": "作者编写",
+        "viewpoint": "仓内原作",
+        "exceptions": [],
+        "limits": [],
+        "output": "reference_only",
+        "legacy": {
+          "object_id": "shishen.zhengguan",
+          "field": "general",
+          "ordinal": 9,
+          "conditions": [],
+          "field_premise": ""
+        }
+      },
+      {
+        "claim_id": "editorial.shishen.qisha.legal_trouble",
+        "text": "如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+        "roles": [
+          {
+            "name": "讨论对象",
+            "object_id": "shishen.qisha"
+          }
+        ],
+        "relations": [],
+        "topics": [
+          "取象"
+        ],
+        "applicability": "described",
+        "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+        "contexts": [
+          "editorial.guansha_coexistence"
+        ],
+        "sources": [
+          "editorial"
+        ],
+        "source_state": "editorial",
+        "attribution": "作者编写",
+        "viewpoint": "仓内原作",
+        "exceptions": [],
+        "limits": [],
+        "output": "reference_only",
+        "legacy": {
+          "object_id": "shishen.qisha",
+          "field": "general",
+          "ordinal": 8,
+          "conditions": [],
+          "field_premise": ""
+        }
+      }
+    ]
+  },
+  "context": {
+    "record_version": 4,
+    "profile": {
+      "observation_scope": "natal",
+      "ganzhi_year": null
+    },
+    "criterion": {
+      "criterion_id": "editorial.guansha_coexistence.v1",
+      "definition": "选定范围内正官与七杀各至少出现一次。",
+      "status": "NOT_SATISFIED",
+      "reason": "required_classification_absent",
+      "scope_complete": true,
+      "observations": {
+        "observed_coexistence": false,
+        "female": false
+      }
+    },
+    "occurrences": [
+      {
+        "origin": "natal",
+        "pillar": "year",
+        "ganzhi": "己卯",
+        "layer": "visible",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "year",
+        "ganzhi": "己卯",
+        "layer": "hidden",
+        "stem": "乙",
+        "shishen": "正官",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "month",
+        "ganzhi": "丙子",
+        "layer": "visible",
+        "stem": "丙",
+        "shishen": "偏印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "month",
+        "ganzhi": "丙子",
+        "layer": "hidden",
+        "stem": "癸",
+        "shishen": "正财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "day",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "丁",
+        "shishen": "正印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "day",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "visible",
+        "stem": "戊",
+        "shishen": "比肩",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "丁",
+        "shishen": "正印",
+        "kind": null,
+        "ganzhi_year": null
+      },
+      {
+        "origin": "natal",
+        "pillar": "hour",
+        "ganzhi": "戊午",
+        "layer": "hidden",
+        "stem": "己",
+        "shishen": "劫财",
+        "kind": null,
+        "ganzhi_year": null
+      }
+    ],
+    "relationship": null,
+    "related": [],
+    "entries": [
+      {
+        "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+        "status": "NOT_SATISFIED",
+        "reason": "required_classification_absent"
+      },
+      {
+        "claim_id": "editorial.shishen.qisha.legal_trouble",
+        "status": "NOT_SATISFIED",
+        "reason": "required_classification_absent"
+      }
+    ],
+    "input": {
+      "birth_time": "2000-01-01T12:00:00",
+      "gender": "male",
+      "config": {
+        "backend": "celestial",
+        "precision": "day",
+        "dayun_year_rule": "jie_projected",
+        "school": {
+          "day_rollover": "WAN_ZISHI",
+          "anhe_def": "NORMAL_EXTENDED",
+          "xing_def": "LOOSE",
+          "gong_def": "SAME_STEM_NARROW",
+          "yangren_def": "ZIPING",
+          "feiren_def": "ZIPING",
+          "hongyan_anchor": "DAY",
+          "tianyi_anchor": "YEAR_AND_DAY",
+          "tianyi_def": "GENG_WITH_JIA_WU",
+          "yima_anchor": "YEAR_AND_DAY",
+          "huagai_anchor": "YEAR_AND_DAY",
+          "jiangxing_anchor": "YEAR_AND_DAY",
+          "jiesha_anchor": "YEAR_AND_DAY",
+          "wangshen_anchor": "YEAR_AND_DAY",
+          "jinyu_anchor": "DAY",
+          "zaisha_anchor": "YEAR",
+          "wenchang_anchor": "YEAR_AND_DAY",
+          "wenchang_def": "XIN_ZI",
+          "taiji_anchor": "YEAR_AND_DAY",
+          "taiji_def": "REN_GUI_BOTH",
+          "guoyin_anchor": "YEAR_AND_DAY",
+          "guoyin_def": "MODERN",
+          "peiou_xing_def": "ZHENGCAI_ZHENGGUAN",
+          "kongwang_anchor": "DAY"
+        }
+      },
+      "pillars": [
+        "己卯",
+        "丙子",
+        "戊午",
+        "戊午"
+      ]
+    },
+    "knowledge": {
+      "schema_version": 1,
+      "objects": [
+        {
+          "object_id": "shishen.bijian",
+          "kind": "shishen",
+          "name": "比肩"
+        },
+        {
+          "object_id": "shishen.jiecai",
+          "kind": "shishen",
+          "name": "劫财"
+        },
+        {
+          "object_id": "shishen.shishen",
+          "kind": "shishen",
+          "name": "食神"
+        },
+        {
+          "object_id": "shishen.shangguan",
+          "kind": "shishen",
+          "name": "伤官"
+        },
+        {
+          "object_id": "shishen.zhengcai",
+          "kind": "shishen",
+          "name": "正财"
+        },
+        {
+          "object_id": "shishen.piancai",
+          "kind": "shishen",
+          "name": "偏财"
+        },
+        {
+          "object_id": "shishen.zhengguan",
+          "kind": "shishen",
+          "name": "正官"
+        },
+        {
+          "object_id": "shishen.qisha",
+          "kind": "shishen",
+          "name": "七杀"
+        },
+        {
+          "object_id": "shishen.zhengyin",
+          "kind": "shishen",
+          "name": "正印"
+        },
+        {
+          "object_id": "shishen.pianyin",
+          "kind": "shishen",
+          "name": "偏印"
+        },
+        {
+          "object_id": "tiangan.jia",
+          "kind": "tiangan",
+          "name": "甲"
+        },
+        {
+          "object_id": "tiangan.yi",
+          "kind": "tiangan",
+          "name": "乙"
+        },
+        {
+          "object_id": "tiangan.bing",
+          "kind": "tiangan",
+          "name": "丙"
+        },
+        {
+          "object_id": "tiangan.ding",
+          "kind": "tiangan",
+          "name": "丁"
+        },
+        {
+          "object_id": "tiangan.wu",
+          "kind": "tiangan",
+          "name": "戊"
+        },
+        {
+          "object_id": "tiangan.ji",
+          "kind": "tiangan",
+          "name": "己"
+        },
+        {
+          "object_id": "tiangan.geng",
+          "kind": "tiangan",
+          "name": "庚"
+        },
+        {
+          "object_id": "tiangan.xin",
+          "kind": "tiangan",
+          "name": "辛"
+        },
+        {
+          "object_id": "tiangan.ren",
+          "kind": "tiangan",
+          "name": "壬"
+        },
+        {
+          "object_id": "tiangan.gui",
+          "kind": "tiangan",
+          "name": "癸"
+        },
+        {
+          "object_id": "wuxing.mu",
+          "kind": "wuxing",
+          "name": "木"
+        },
+        {
+          "object_id": "wuxing.huo",
+          "kind": "wuxing",
+          "name": "火"
+        },
+        {
+          "object_id": "wuxing.tu",
+          "kind": "wuxing",
+          "name": "土"
+        },
+        {
+          "object_id": "wuxing.jin",
+          "kind": "wuxing",
+          "name": "金"
+        },
+        {
+          "object_id": "wuxing.shui",
+          "kind": "wuxing",
+          "name": "水"
+        },
+        {
+          "object_id": "concept.cai",
+          "kind": "concept",
+          "name": "财"
+        },
+        {
+          "object_id": "concept.xiaoyin",
+          "kind": "concept",
+          "name": "枭印"
+        },
+        {
+          "object_id": "concept.bijie",
+          "kind": "concept",
+          "name": "比劫"
+        },
+        {
+          "object_id": "shensha.guoyin",
+          "kind": "shensha",
+          "name": "国印贵人"
+        },
+        {
+          "object_id": "concept.peiou_xing",
+          "kind": "concept",
+          "name": "配偶星"
+        },
+        {
+          "object_id": "concept.peiou_gong",
+          "kind": "concept",
+          "name": "配偶宫"
+        },
+        {
+          "object_id": "shensha.kongwang",
+          "kind": "shensha",
+          "name": "六甲旬空"
+        },
+        {
+          "object_id": "concept.taiyuan",
+          "kind": "concept",
+          "name": "胎元"
+        },
+        {
+          "object_id": "concept.minggong",
+          "kind": "concept",
+          "name": "命宫"
+        }
+      ],
+      "contexts": [
+        {
+          "context_id": "legacy.chart_context",
+          "label": "旧条目未还原的命盘前提",
+          "time_scope": "未限定",
+          "limits": [
+            "此标记不定义强弱、喜用或有效生克。"
+          ]
+        },
+        {
+          "context_id": "shishen.xiaoyin_duoshi",
+          "label": "枭印夺食条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "枭印夺食的判据及适用范围尚未定义，不等同于偏印与食神共现。"
+          ]
+        },
+        {
+          "context_id": "shishen.pianyin_favorable_or_balanced",
+          "label": "偏印喜用或状态良好条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "喜用、不过旺及不受刑克冲害的具体判据尚未确认。"
+          ]
+        },
+        {
+          "context_id": "tiangan.ding_weak_and_overcontrolled",
+          "label": "丁火日主身弱条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "身弱与克太多的判据尚未定义。"
+          ]
+        },
+        {
+          "context_id": "tiangan.geng_regulated_transit",
+          "label": "庚金日主行运条目情境",
+          "time_scope": "行运",
+          "limits": [
+            "有制有化尚未定义，不据基础生克关系认定成立。",
+            "后天有教养是盘外前提，不能从命盘查表还原。"
+          ]
+        },
+        {
+          "context_id": "editorial.guansha_coexistence",
+          "label": "官杀共现原作条目前提",
+          "time_scope": "显式选择原局或原局加单流年",
+          "limits": [
+            "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+          ]
+        },
+        {
+          "context_id": "editorial.guansha_coexistence_female",
+          "label": "官杀共现且女命原作条目前提",
+          "time_scope": "显式选择原局或原局加单流年",
+          "limits": [
+            "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，且输入为女命；不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+          ]
+        },
+        {
+          "context_id": "liuqin.spouse_star_readings",
+          "label": "配偶星取法条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "取法声明条目只作静态查阅，不判命盘前提；取法的选择由命盘流派配置承载。",
+            "取法给出的是目标干，不表示该干在命盘中实际出现。"
+          ]
+        },
+        {
+          "context_id": "editorial.spouse_palace_xingchong",
+          "label": "妻宫刑冲参考条目前提",
+          "time_scope": "显式选择原局或原局加显式选定岁运",
+          "limits": [
+            "取原局四柱及所选岁运的全部干支；日柱地支作为具体参与者卷入刑或冲即满足结构前提，刑按命盘流派的刑定义解释，不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内参考条目；结构前提满足不表示婚姻、寿命或现实事件成立。"
+          ]
+        },
+        {
+          "context_id": "editorial.spouse_star_tougan",
+          "label": "妻星干头参考条目前提",
+          "time_scope": "显式选择原局或原局加显式选定岁运",
+          "limits": [
+            "取原局四柱明干及所选岁运明干；按命盘流派配置的配偶星目标干至少一处明干实际出现即满足结构前提，藏干出现只记事实，不计作透。",
+            "仅用于仓内参考条目；结构前提满足不表示婚姻或现实事件成立。"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "editorial",
+          "work": "本仓解释语料",
+          "attribution": "本仓作者 Ningqi Wang",
+          "edition": "本仓编写，经 issue #24 确认",
+          "locator": "见 PR #222",
+          "url": "https://github.com/0xf3cd/bazi/pull/222",
+          "text_layer": "editorial",
+          "lineage": "editorial",
+          "excerpt": "本仓原创编写的文字。",
+          "supports": "署名，以及仅供参考的输出分类。",
+          "limitations": "不确立古籍规则，也不作现实预测。",
+          "state": "editorial"
+        },
+        {
+          "source_id": "yuanhai_ziping_relations",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 6 页右半叶，以「生我者為正印偏印」起首的段落",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也",
+          "supports": "五种生克关系、成对的十神名称，以及正偏的阴阳规则。",
+          "limitations": "劫財与敗財两名并用；不支持把二者并为一名，也不支持性格、六亲、运势或无条件的命盘判断。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_table",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 8 页「天干五阳通变」与「天干五阴通变」两表",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n7/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "天干五陽通變天干五陰通變",
+          "supports": "天干按阳、阴分组。",
+          "limitations": "劫財与敗財分列两名；不使这套名称或所附六亲释义成为各流派无条件通用的说法。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_symbols_p69",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 69 页左半叶，「十干体象」",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "甲木天干作首排乙木根荄種得深丙火明明一太陽",
+          "supports": "甲、乙、丙的五行称名，以及丙的一则历史象。",
+          "limitations": "不使该象成为跨流派定义或性格前提。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_symbols_p70",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 70 页左右两半叶，「十干体象」",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼",
+          "supports": "丁至癸的五行称名，以及丁、戊、辛、壬的历史象。",
+          "limitations": "不使这些象成为跨流派定义或性格前提。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan_stem_basics",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 33、36 页，「干枝阴阳」与「干枝五行及四时方位」",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方",
+          "supports": "十干直接按阴阳与五行分组。",
+          "limitations": "不支持性格、运势、固定意象或健康方面的文字。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan_shishen_definitions",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 66–70 页，「十干生克定名」",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印",
+          "supports": "五种生克关系、阴阳之别，以及本见证的十神名称。",
+          "limitations": "不支持把劫財与敗財并为劫財。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository_wuxing_relations",
+          "work": "本仓五行定义",
+          "attribution": "本仓规则说明",
+          "edition": "本仓快照 e7caf8f",
+          "locator": "bazi/defines/wuxing.py 中的 Wuxing.generates／destructs",
+          "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/defines/wuxing.py",
+          "text_layer": "editorial",
+          "lineage": "repository_rules",
+          "excerpt": "Wuxing.木.generates(Wuxing.火)；Wuxing.金.destructs(Wuxing.木)。",
+          "supports": "本仓现有五行形式关系的方向。",
+          "limitations": "属本仓署名，不是新核实的古籍见证，也不证明命盘中的有效作用。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "repository_guoyin_variants",
+          "work": "本仓国印规则说明",
+          "attribution": "本仓规则说明",
+          "edition": "本仓快照 e7caf8f",
+          "locator": "bazi/rules.py 中的 ShenshaRules.GuoyinDef",
+          "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/rules.py",
+          "text_layer": "editorial",
+          "lineage": "repository_rules",
+          "excerpt": "WUXING_JINGJI 取禄 + 7，MODERN 取禄 + 8，均含禄起算。",
+          "supports": "现有的两种表读法，以及另行说明的锚点／目标边界。",
+          "limitations": "概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "sanming_liuqin",
+          "work": "《三命通会》",
+          "attribution": "书影未见作者署名，不据此断言",
+          "edition": "钦定四库全书本（版心「欽定四庫全書」）",
+          "locator": "卷七《論六親》，Commons 书影 djvu 页 165–174（印刷叶码仅见于奇数页）",
+          "url": "https://commons.wikimedia.org/wiki/File:CADAL06056483_三命通會·卷七.djvu",
+          "text_layer": "baiwen",
+          "lineage": "sanming_liuqin",
+          "excerpt": "如女人則甲遇庚七煞乙遇庚正官皆夫星也謂庚是陽男為正夫屬陽不可以辛陰為夫也",
+          "supports": "阴阳干读法的书内例句：男命「我尅者為財為妻」，女命甲乙取庚为夫；174页对「不拘偏正惟辨陰陽陽男陰女」的取舍；168页小字「或云」的正偏读法；171页妻妾星坐地条件句。",
+          "limitations": "引文对书影逐字；Wikisource 转录层有己／已／巳混用，不作引文依据，书影中己字印形近已，按语境读作己。仅甲、乙两干的男女四格有书证直例，其余十六格按「其餘八干俱以類推」与174页原则类推重建，不是逐干原文。仅四库本一版，未取得第二独立来源。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_liuqin_charts",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+          "edition": "卷首题署「閩書林喬山堂劉太易繡梓」（「太」或「大」未核）；Archive 元数据题「明萬曆二十八年閩書林劉龍田喬山堂刊本」，刊年与「劉龍田」仅元数据支持，不与题署认定为同一人",
+          "locator": "PDF 第 57 页（男图）与第 58 页（女图）六亲取用图，按行列坐标逐格读取",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n56",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "正妻",
+          "supports": "男图十个配偶格原载「正妻」，女图配偶格原载「正夫」六格、「夫」三格，另一格「正」字清楚、第二字残损；是正财／正官读法的逐格原载对照。",
+          "limitations": "图表格字不是连续行文；摘录取男图格字，女图格字见上一栏（支持范围）。女图丙日一格第二字残损未核，格值按行列位置与其余格自洽取得，不是直读。本图不是阴阳干读法的第二来源。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_qiqie_note",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+          "edition": "同 yuanhai_liuqin_charts（题署第三字未核；刊年仅 Archive 元数据支持）",
+          "locator": "PDF 第 25 页，右栏双行夹注起首",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n24",
+          "text_layer": "zhushi",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "論妻妾者以生日支辰爲妻妾之星",
+          "supports": "夹注前半串以「生日支辰」为妻妾之星。",
+          "limitations": "「星」之后一字与小注末字未核，所在章名未取得；夹注只涉妻妾，不是女命夫宫的古籍明文，也不单独证明「日支」就是配偶宫。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "tanyuan_qizi",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 171 页「六親 論妻子」（印页二六）",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "妻星者。幹頭之財也。",
+          "supports": "该页对妻星「幹頭之財」的定义，以及「妻透成格」「妻宮有用」坐下刑衝、「妻星兩透」偏正雜出两段的字句。",
+          "limitations": "该页起句为「子平真詮云」，所取各段属探原的转录层，未见子平真诠原书，不是任何命题的第二独立成文。原印小标点与「夫」后小点的性质未辨，条目引文以〔〕标出整理记号。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping.kongwang",
+          "work": "《渊海子平》",
+          "attribution": "《渊海子平》六甲空亡条",
+          "edition": "东里书斋下游转录",
+          "locator": "卷一·论六甲空亡",
+          "url": "https://www.donglishuzhai.net/chapter/12794.html",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。",
+          "supports": "逐列六旬空亡二支，支持六甲旬空的基础表。",
+          "limitations": "本轮所见为下游转录，未逐页校勘影印；同书其他载体不另计独立来源。方括号注文及东里山人按不混入此引文；本段不决定锚柱。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.kongwang",
+          "work": "《三命通会》",
+          "attribution": "《三命通会》卷三论空亡",
+          "edition": "四库全书本维基文库转录，revision 657369",
+          "locator": "卷三·论空亡",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡",
+          "supports": "用一旬十干配支说明余下二支；同段后文有甲子年壬戌日的年日互换例。",
+          "limitations": "仅核到四库本转录，未逐页校勘影印。该卷转引诸书不等于已见各原书；普通转录互换例作壬戌月，与本版壬戌日分开。单支筛选及解释段不并入基础二支。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "luoluzi_xiaoxifu.kongwang",
+          "work": "《珞琭子三命消息赋注》",
+          "attribution": "《珞琭子三命消息赋注》注释层",
+          "edition": "维基文库转录，revision 857114",
+          "locator": "六虚下于空亡注",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=857114",
+          "text_layer": "zhushi",
+          "lineage": "luoluzi_xiaoxifu",
+          "excerpt": "假令甲子旬中，戌亥空亡也。",
+          "supports": "注中另述甲子旬戌亥空亡，佐证基础二支。",
+          "limitations": "所见为转录的注释层，不是影印校勘；不据此证明其他五旬表或固定锚。此本提要警示三命通会所引珞琭子与此本不合，不把三命通会转引的单支读法归入本书。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "wuxing_jingji.kongwang",
+          "work": "《五行精纪》",
+          "attribution": "《五行精纪》卷二十五转引《神白经》与《林开五命》",
+          "edition": "维基文库转录，revision 10494296",
+          "locator": "卷二十五·说空亡及空亡条",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=10494296",
+          "text_layer": "baiwen",
+          "lineage": "wuxing_jingji",
+          "excerpt": "此空亡只用生日旬中空亡極緊",
+          "supports": "汇编转引层记录生日旬中为紧及运、太岁语境，另有论空亡止以年日所在。",
+          "limitations": "witnessed 只指已核汇编转录，不指已见《神白经》或《林开五命》原书，不作两部原书的独立见证。汇编另收前后五位单支读法，本条不合并其筛选与解释。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository.kongwang",
+          "work": "本库六甲旬空查法约定",
+          "attribution": "bazi 仓内采用的查法范围与默认选择",
+          "edition": "六甲旬空首批实现",
+          "locator": "ShenshaRules.KONGWANG、BaziSchool.kongwang_anchor 与关系分析器",
+          "url": "https://github.com/0xf3cd/bazi/issues/277",
+          "text_layer": "editorial",
+          "lineage": "repository",
+          "excerpt": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。",
+          "supports": "本库的默认锚、可选锚、原局自身排除和本命锚查流运支的组合范围。",
+          "limitations": "仓内政策不是古籍见证，不宣称古籍一致只看日柱。不作反向流运锚查询，不含单支筛选、截路、四大空亡或冲合取消与吉凶解释。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "youyilu.taiyuan_minggong",
+          "work": "《游艺录》卷四",
+          "attribution": "俞樾原书，识典古籍转录",
+          "edition": "在线下载转录，未逐页校勘影印",
+          "locator": "卷四命宫例及胎元段",
+          "url": "https://www.shidianguji.com/book/CADAL01025514/chapter/1l47npzydewbp",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。",
+          "supports": "例解明确月干顺移一、月支顺移三；同页甲子年三月酉时命宫例为戊辰。",
+          "limitations": "直接取得转录，不再仅依《命理探原》转引；转引不另计独立谱系。命宫掌诀措辞近同，独立性未核，暂与《三命通会》同组，保守不多算一条独立见证；这不是已证直接承袭。页面有识别和表格混排痕迹，未校影印；不证明实际受孕时刻，也未明确命宫月界。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.taiyuan",
+          "work": "《三命通会》卷二",
+          "attribution": "万民英原书，维基文库四库本固定转录",
+          "edition": "固定 revision 761691，未逐页校勘影印",
+          "locator": "论胎元段，通行取法批评、三百日说及段末质疑",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "惟有一法以當生前三百日為十月之氣乃是受胎之正",
+          "supports": "同段记通行取法并质疑其是否精当：「今人多以法取胎元未審精當且戊子生甲寅月往往便以一巳為胎葢言乙巳是生月前十日更不明其中有閏無閏」。甲寅／乙巳例与本库月柱顺移在该例结果相同；另记三百日候选及段末质疑。见证取法存在，不表示该书认可该取法。",
+          "limitations": "同段另有「然則貴人受胎定在三百日又豈可據乎」，不把其中一句当作全段一致结论。一巳、前十日按转录原字保留，未校影印，不推定其校勘读法。三百日候选的月柱历法、边界、地点钟与窗口仍待核定，本库未编码，不据此认定真实孕期或寿命。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.minggong",
+          "work": "《三命通会》卷二",
+          "attribution": "万民英原书，维基文库四库本固定转录",
+          "edition": "固定 revision 761691，未逐页校勘影印",
+          "locator": "论坐命宫段，掌诀及甲子年三月戌时例",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "次将所生之時加於所生之月順行十二位逢卯即安命宫",
+          "supports": "子起正月逆数、生时加月位顺数到卯，并按出生年起月法配干；三月戌时例得丁卯。",
+          "limitations": "该段未明确正月按农历、节月或中气划分；原字、异体字及疑似讹字未擅改，不从此段推出时区、真太阳钟或精度政策，不收入吉凶断语。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan.minggong",
+          "work": "《命理探原》起例",
+          "attribution": "袁树珊按语，典藏网下游简体转录",
+          "edition": "在线下载转录，未校原书影印",
+          "locator": "下载页题名作《命理探源》，本库沿称《命理探原》；推命宫法按语，中气及丙午大寒例",
+          "url": "https://www.diancang.xyz/xuanxuewushu/minglitanyuan/160971.html",
+          "text_layer": "zhushi",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "古人谓交过中气，即作次月推",
+          "supports": "按语明确中气进月，丙午年十二月过大寒、申时取乙未宫，仍用丙午年配干。",
+          "limitations": "中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository.taiyuan_minggong",
+          "work": "本库胎元与命宫附加查询约定",
+          "attribution": "bazi 仓内采用的口径与候选边界",
+          "edition": "胎元与命宫首批实现",
+          "locator": "BaziChart.taiyuan、BaziChart.minggong 与 bazi_utils",
+          "url": "https://github.com/0xf3cd/bazi/issues/117",
+          "text_layer": "editorial",
+          "lineage": "repository",
+          "excerpt": "胎元按月柱干进一、支进三；命宫按中气进月，均为四柱之外的附加查询。",
+          "supports": "本库已实现口径、精度与地点钟政策，以及尚未编码的其他读法候选。",
+          "limitations": "软件政策不冒充古籍共识；附加干支不进入旧四柱、身份、JSON、关系或流运分析，不据计算结果认定解释前提成立。其他月界线索仍须核定系统归属、规则和查法。",
+          "state": "repository_attributed"
+        }
+      ],
+      "entries": [
+        {
+          "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+          "text": "如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.zhengguan"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.zhengguan",
+            "field": "general",
+            "ordinal": 9,
+            "conditions": [],
+            "field_premise": ""
+          }
+        },
+        {
+          "claim_id": "editorial.shishen.qisha.legal_trouble",
+          "text": "如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.qisha"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.qisha",
+            "field": "general",
+            "ordinal": 8,
+            "conditions": [],
+            "field_premise": ""
+          }
+        }
+      ]
+    }
+  },
+  "relationship": {
+    "record_version": 4,
+    "profile": {
+      "scope": "natal",
+      "coordinate": null,
+      "kinds": []
+    },
+    "criterion": {
+      "criterion_id": "editorial.spouse_star_tougan.v1",
+      "definition": "选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。",
+      "status": "NOT_SATISFIED",
+      "reason": "required_classification_absent",
+      "scope_complete": true,
+      "observations": {
+        "target_stem_visible": false,
+        "target_stem_hidden": true
+      }
+    },
+    "occurrences": [],
+    "relationship": {
+      "star_target": {
+        "tiangan": "癸",
+        "dizhi": [
+          "子"
+        ]
+      },
+      "appearances": [
+        {
+          "origin": "natal",
+          "pillar": "month",
+          "kind": null,
+          "ganzhi": "丙子",
+          "layer": "hidden",
+          "stem": "癸"
+        }
+      ],
+      "house_relations": {
+        "刑": [
+          [
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            },
+            {
+              "index": 3,
+              "ganzhi": "戊午"
+            }
+          ]
+        ],
+        "冲": [
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ]
+        ],
+        "破": [
+          [
+            {
+              "index": 0,
+              "ganzhi": "己卯"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ]
+        ],
+        "生": [
+          [
+            {
+              "index": 0,
+              "ganzhi": "己卯"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ]
+        ],
+        "克": [
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ]
+        ]
+      },
+      "star_relations": {
+        "刑": [
+          [
+            {
+              "index": 0,
+              "ganzhi": "己卯"
+            },
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            }
+          ]
+        ],
+        "冲": [
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ],
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 3,
+              "ganzhi": "戊午"
+            }
+          ]
+        ],
+        "生": [
+          [
+            {
+              "index": 0,
+              "ganzhi": "己卯"
+            },
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            }
+          ]
+        ],
+        "克": [
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 2,
+              "ganzhi": "戊午"
+            }
+          ],
+          [
+            {
+              "index": 1,
+              "ganzhi": "丙子"
+            },
+            {
+              "index": 3,
+              "ganzhi": "戊午"
+            }
+          ]
+        ]
+      },
+      "stem_relations": {},
+      "transits": null
+    },
+    "related": [],
+    "entries": [],
+    "input": {
+      "birth_time": "2000-01-01T12:00:00",
+      "gender": "male",
+      "config": {
+        "backend": "celestial",
+        "precision": "day",
+        "dayun_year_rule": "jie_projected",
+        "school": {
+          "day_rollover": "WAN_ZISHI",
+          "anhe_def": "NORMAL_EXTENDED",
+          "xing_def": "LOOSE",
+          "gong_def": "SAME_STEM_NARROW",
+          "yangren_def": "ZIPING",
+          "feiren_def": "ZIPING",
+          "hongyan_anchor": "DAY",
+          "tianyi_anchor": "YEAR_AND_DAY",
+          "tianyi_def": "GENG_WITH_JIA_WU",
+          "yima_anchor": "YEAR_AND_DAY",
+          "huagai_anchor": "YEAR_AND_DAY",
+          "jiangxing_anchor": "YEAR_AND_DAY",
+          "jiesha_anchor": "YEAR_AND_DAY",
+          "wangshen_anchor": "YEAR_AND_DAY",
+          "jinyu_anchor": "DAY",
+          "zaisha_anchor": "YEAR",
+          "wenchang_anchor": "YEAR_AND_DAY",
+          "wenchang_def": "XIN_ZI",
+          "taiji_anchor": "YEAR_AND_DAY",
+          "taiji_def": "REN_GUI_BOTH",
+          "guoyin_anchor": "YEAR_AND_DAY",
+          "guoyin_def": "MODERN",
+          "peiou_xing_def": "ZHENGCAI_ZHENGGUAN",
+          "kongwang_anchor": "DAY"
+        }
+      },
+      "pillars": [
+        "己卯",
+        "丙子",
+        "戊午",
+        "戊午"
+      ]
+    },
+    "knowledge": {
+      "schema_version": 1,
+      "objects": [
+        {
+          "object_id": "shishen.bijian",
+          "kind": "shishen",
+          "name": "比肩"
+        },
+        {
+          "object_id": "shishen.jiecai",
+          "kind": "shishen",
+          "name": "劫财"
+        },
+        {
+          "object_id": "shishen.shishen",
+          "kind": "shishen",
+          "name": "食神"
+        },
+        {
+          "object_id": "shishen.shangguan",
+          "kind": "shishen",
+          "name": "伤官"
+        },
+        {
+          "object_id": "shishen.zhengcai",
+          "kind": "shishen",
+          "name": "正财"
+        },
+        {
+          "object_id": "shishen.piancai",
+          "kind": "shishen",
+          "name": "偏财"
+        },
+        {
+          "object_id": "shishen.zhengguan",
+          "kind": "shishen",
+          "name": "正官"
+        },
+        {
+          "object_id": "shishen.qisha",
+          "kind": "shishen",
+          "name": "七杀"
+        },
+        {
+          "object_id": "shishen.zhengyin",
+          "kind": "shishen",
+          "name": "正印"
+        },
+        {
+          "object_id": "shishen.pianyin",
+          "kind": "shishen",
+          "name": "偏印"
+        },
+        {
+          "object_id": "tiangan.jia",
+          "kind": "tiangan",
+          "name": "甲"
+        },
+        {
+          "object_id": "tiangan.yi",
+          "kind": "tiangan",
+          "name": "乙"
+        },
+        {
+          "object_id": "tiangan.bing",
+          "kind": "tiangan",
+          "name": "丙"
+        },
+        {
+          "object_id": "tiangan.ding",
+          "kind": "tiangan",
+          "name": "丁"
+        },
+        {
+          "object_id": "tiangan.wu",
+          "kind": "tiangan",
+          "name": "戊"
+        },
+        {
+          "object_id": "tiangan.ji",
+          "kind": "tiangan",
+          "name": "己"
+        },
+        {
+          "object_id": "tiangan.geng",
+          "kind": "tiangan",
+          "name": "庚"
+        },
+        {
+          "object_id": "tiangan.xin",
+          "kind": "tiangan",
+          "name": "辛"
+        },
+        {
+          "object_id": "tiangan.ren",
+          "kind": "tiangan",
+          "name": "壬"
+        },
+        {
+          "object_id": "tiangan.gui",
+          "kind": "tiangan",
+          "name": "癸"
+        },
+        {
+          "object_id": "wuxing.mu",
+          "kind": "wuxing",
+          "name": "木"
+        },
+        {
+          "object_id": "wuxing.huo",
+          "kind": "wuxing",
+          "name": "火"
+        },
+        {
+          "object_id": "wuxing.tu",
+          "kind": "wuxing",
+          "name": "土"
+        },
+        {
+          "object_id": "wuxing.jin",
+          "kind": "wuxing",
+          "name": "金"
+        },
+        {
+          "object_id": "wuxing.shui",
+          "kind": "wuxing",
+          "name": "水"
+        },
+        {
+          "object_id": "concept.cai",
+          "kind": "concept",
+          "name": "财"
+        },
+        {
+          "object_id": "concept.xiaoyin",
+          "kind": "concept",
+          "name": "枭印"
+        },
+        {
+          "object_id": "concept.bijie",
+          "kind": "concept",
+          "name": "比劫"
+        },
+        {
+          "object_id": "shensha.guoyin",
+          "kind": "shensha",
+          "name": "国印贵人"
+        },
+        {
+          "object_id": "concept.peiou_xing",
+          "kind": "concept",
+          "name": "配偶星"
+        },
+        {
+          "object_id": "concept.peiou_gong",
+          "kind": "concept",
+          "name": "配偶宫"
+        },
+        {
+          "object_id": "shensha.kongwang",
+          "kind": "shensha",
+          "name": "六甲旬空"
+        },
+        {
+          "object_id": "concept.taiyuan",
+          "kind": "concept",
+          "name": "胎元"
+        },
+        {
+          "object_id": "concept.minggong",
+          "kind": "concept",
+          "name": "命宫"
+        }
+      ],
+      "contexts": [
+        {
+          "context_id": "legacy.chart_context",
+          "label": "旧条目未还原的命盘前提",
+          "time_scope": "未限定",
+          "limits": [
+            "此标记不定义强弱、喜用或有效生克。"
+          ]
+        },
+        {
+          "context_id": "shishen.xiaoyin_duoshi",
+          "label": "枭印夺食条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "枭印夺食的判据及适用范围尚未定义，不等同于偏印与食神共现。"
+          ]
+        },
+        {
+          "context_id": "shishen.pianyin_favorable_or_balanced",
+          "label": "偏印喜用或状态良好条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "喜用、不过旺及不受刑克冲害的具体判据尚未确认。"
+          ]
+        },
+        {
+          "context_id": "tiangan.ding_weak_and_overcontrolled",
+          "label": "丁火日主身弱条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "身弱与克太多的判据尚未定义。"
+          ]
+        },
+        {
+          "context_id": "tiangan.geng_regulated_transit",
+          "label": "庚金日主行运条目情境",
+          "time_scope": "行运",
+          "limits": [
+            "有制有化尚未定义，不据基础生克关系认定成立。",
+            "后天有教养是盘外前提，不能从命盘查表还原。"
+          ]
+        },
+        {
+          "context_id": "editorial.guansha_coexistence",
+          "label": "官杀共现原作条目前提",
+          "time_scope": "显式选择原局或原局加单流年",
+          "limits": [
+            "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+          ]
+        },
+        {
+          "context_id": "editorial.guansha_coexistence_female",
+          "label": "官杀共现且女命原作条目前提",
+          "time_scope": "显式选择原局或原局加单流年",
+          "limits": [
+            "取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。正官与七杀各至少出现一次，且输入为女命；不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内原作参考条目；前提满足不表示职场、法律或感情事件成立。"
+          ]
+        },
+        {
+          "context_id": "liuqin.spouse_star_readings",
+          "label": "配偶星取法条目情境",
+          "time_scope": "未限定",
+          "limits": [
+            "取法声明条目只作静态查阅，不判命盘前提；取法的选择由命盘流派配置承载。",
+            "取法给出的是目标干，不表示该干在命盘中实际出现。"
+          ]
+        },
+        {
+          "context_id": "editorial.spouse_palace_xingchong",
+          "label": "妻宫刑冲参考条目前提",
+          "time_scope": "显式选择原局或原局加显式选定岁运",
+          "limits": [
+            "取原局四柱及所选岁运的全部干支；日柱地支作为具体参与者卷入刑或冲即满足结构前提，刑按命盘流派的刑定义解释，不计力量、次数阈值、相邻、去留或有效制化。",
+            "仅用于仓内参考条目；结构前提满足不表示婚姻、寿命或现实事件成立。"
+          ]
+        },
+        {
+          "context_id": "editorial.spouse_star_tougan",
+          "label": "妻星干头参考条目前提",
+          "time_scope": "显式选择原局或原局加显式选定岁运",
+          "limits": [
+            "取原局四柱明干及所选岁运明干；按命盘流派配置的配偶星目标干至少一处明干实际出现即满足结构前提，藏干出现只记事实，不计作透。",
+            "仅用于仓内参考条目；结构前提满足不表示婚姻或现实事件成立。"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "editorial",
+          "work": "本仓解释语料",
+          "attribution": "本仓作者 Ningqi Wang",
+          "edition": "本仓编写，经 issue #24 确认",
+          "locator": "见 PR #222",
+          "url": "https://github.com/0xf3cd/bazi/pull/222",
+          "text_layer": "editorial",
+          "lineage": "editorial",
+          "excerpt": "本仓原创编写的文字。",
+          "supports": "署名，以及仅供参考的输出分类。",
+          "limitations": "不确立古籍规则，也不作现实预测。",
+          "state": "editorial"
+        },
+        {
+          "source_id": "yuanhai_ziping_relations",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 6 页右半叶，以「生我者為正印偏印」起首的段落",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n5/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "生我者為正印偏印我生者為傷官食神尅我者為正官七殺我尅者為偏財正財比肩者為劫財敗財其法陽見陰為正陰見陽為正陽見陽為偏陰見陰為偏如甲丙戊庚壬屬陽乙丁己辛癸屬陰是也",
+          "supports": "五种生克关系、成对的十神名称，以及正偏的阴阳规则。",
+          "limitations": "劫財与敗財两名并用；不支持把二者并为一名，也不支持性格、六亲、运势或无条件的命盘判断。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_table",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 8 页「天干五阳通变」与「天干五阴通变」两表",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n7/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "天干五陽通變天干五陰通變",
+          "supports": "天干按阳、阴分组。",
+          "limitations": "劫財与敗財分列两名；不使这套名称或所附六亲释义成为各流派无条件通用的说法。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_symbols_p69",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 69 页左半叶，「十干体象」",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "甲木天干作首排乙木根荄種得深丙火明明一太陽",
+          "supports": "甲、乙、丙的五行称名，以及丙的一则历史象。",
+          "limitations": "不使该象成为跨流派定义或性格前提。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping_stem_symbols_p70",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "李钦增补",
+          "edition": "明万历二十八年闽书林刘龙田乔山堂刊本",
+          "locator": "PDF 第 70 页左右两半叶，「十干体象」",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼",
+          "supports": "丁至癸的五行称名，以及丁、戊、辛、壬的历史象。",
+          "limitations": "不使这些象成为跨流派定义或性格前提。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan_stem_basics",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 33、36 页，「干枝阴阳」与「干枝五行及四时方位」",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方",
+          "supports": "十干直接按阴阳与五行分组。",
+          "limitations": "不支持性格、运势、固定意象或健康方面的文字。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan_shishen_definitions",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 66–70 页，「十干生克定名」",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印",
+          "supports": "五种生克关系、阴阳之别，以及本见证的十神名称。",
+          "limitations": "不支持把劫財与敗財并为劫財。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository_wuxing_relations",
+          "work": "本仓五行定义",
+          "attribution": "本仓规则说明",
+          "edition": "本仓快照 e7caf8f",
+          "locator": "bazi/defines/wuxing.py 中的 Wuxing.generates／destructs",
+          "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/defines/wuxing.py",
+          "text_layer": "editorial",
+          "lineage": "repository_rules",
+          "excerpt": "Wuxing.木.generates(Wuxing.火)；Wuxing.金.destructs(Wuxing.木)。",
+          "supports": "本仓现有五行形式关系的方向。",
+          "limitations": "属本仓署名，不是新核实的古籍见证，也不证明命盘中的有效作用。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "repository_guoyin_variants",
+          "work": "本仓国印规则说明",
+          "attribution": "本仓规则说明",
+          "edition": "本仓快照 e7caf8f",
+          "locator": "bazi/rules.py 中的 ShenshaRules.GuoyinDef",
+          "url": "https://github.com/0xf3cd/bazi/blob/e7caf8f/bazi/rules.py",
+          "text_layer": "editorial",
+          "lineage": "repository_rules",
+          "excerpt": "WUXING_JINGJI 取禄 + 7，MODERN 取禄 + 8，均含禄起算。",
+          "supports": "现有的两种表读法，以及另行说明的锚点／目标边界。",
+          "limitations": "概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "sanming_liuqin",
+          "work": "《三命通会》",
+          "attribution": "书影未见作者署名，不据此断言",
+          "edition": "钦定四库全书本（版心「欽定四庫全書」）",
+          "locator": "卷七《論六親》，Commons 书影 djvu 页 165–174（印刷叶码仅见于奇数页）",
+          "url": "https://commons.wikimedia.org/wiki/File:CADAL06056483_三命通會·卷七.djvu",
+          "text_layer": "baiwen",
+          "lineage": "sanming_liuqin",
+          "excerpt": "如女人則甲遇庚七煞乙遇庚正官皆夫星也謂庚是陽男為正夫屬陽不可以辛陰為夫也",
+          "supports": "阴阳干读法的书内例句：男命「我尅者為財為妻」，女命甲乙取庚为夫；174页对「不拘偏正惟辨陰陽陽男陰女」的取舍；168页小字「或云」的正偏读法；171页妻妾星坐地条件句。",
+          "limitations": "引文对书影逐字；Wikisource 转录层有己／已／巳混用，不作引文依据，书影中己字印形近已，按语境读作己。仅甲、乙两干的男女四格有书证直例，其余十六格按「其餘八干俱以類推」与174页原则类推重建，不是逐干原文。仅四库本一版，未取得第二独立来源。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_liuqin_charts",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+          "edition": "卷首题署「閩書林喬山堂劉太易繡梓」（「太」或「大」未核）；Archive 元数据题「明萬曆二十八年閩書林劉龍田喬山堂刊本」，刊年与「劉龍田」仅元数据支持，不与题署认定为同一人",
+          "locator": "PDF 第 57 页（男图）与第 58 页（女图）六亲取用图，按行列坐标逐格读取",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n56",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "正妻",
+          "supports": "男图十个配偶格原载「正妻」，女图配偶格原载「正夫」六格、「夫」三格，另一格「正」字清楚、第二字残损；是正财／正官读法的逐格原载对照。",
+          "limitations": "图表格字不是连续行文；摘录取男图格字，女图格字见上一栏（支持范围）。女图丙日一格第二字残损未核，格值按行列位置与其余格自洽取得，不是直读。本图不是阴阳干读法的第二来源。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_qiqie_note",
+          "work": "《刻京台增补渊海子平大全》",
+          "attribution": "卷首题署「欽天監承德郎李欽增補」，题署页无年款",
+          "edition": "同 yuanhai_liuqin_charts（题署第三字未核；刊年仅 Archive 元数据支持）",
+          "locator": "PDF 第 25 页，右栏双行夹注起首",
+          "url": "https://archive.org/details/20260506_20260506_1149/page/n24",
+          "text_layer": "zhushi",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "論妻妾者以生日支辰爲妻妾之星",
+          "supports": "夹注前半串以「生日支辰」为妻妾之星。",
+          "limitations": "「星」之后一字与小注末字未核，所在章名未取得；夹注只涉妻妾，不是女命夫宫的古籍明文，也不单独证明「日支」就是配偶宫。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "tanyuan_qizi",
+          "work": "《命理探源》",
+          "attribution": "袁树珊著",
+          "edition": "版心题《命理探原》",
+          "locator": "PDF 第 171 页「六親 論妻子」（印页二六）",
+          "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
+          "text_layer": "baiwen",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "妻星者。幹頭之財也。",
+          "supports": "该页对妻星「幹頭之財」的定义，以及「妻透成格」「妻宮有用」坐下刑衝、「妻星兩透」偏正雜出两段的字句。",
+          "limitations": "该页起句为「子平真詮云」，所取各段属探原的转录层，未见子平真诠原书，不是任何命题的第二独立成文。原印小标点与「夫」后小点的性质未辨，条目引文以〔〕标出整理记号。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "yuanhai_ziping.kongwang",
+          "work": "《渊海子平》",
+          "attribution": "《渊海子平》六甲空亡条",
+          "edition": "东里书斋下游转录",
+          "locator": "卷一·论六甲空亡",
+          "url": "https://www.donglishuzhai.net/chapter/12794.html",
+          "text_layer": "baiwen",
+          "lineage": "yuanhai_ziping",
+          "excerpt": "甲子旬中無戌亥，甲戌旬中無申酉，甲申旬中無午未，甲午旬中無辰巳，甲辰旬中無寅卯，甲寅旬中無子丑。",
+          "supports": "逐列六旬空亡二支，支持六甲旬空的基础表。",
+          "limitations": "本轮所见为下游转录，未逐页校勘影印；同书其他载体不另计独立来源。方括号注文及东里山人按不混入此引文；本段不决定锚柱。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.kongwang",
+          "work": "《三命通会》",
+          "attribution": "《三命通会》卷三论空亡",
+          "edition": "四库全书本维基文库转录，revision 657369",
+          "locator": "卷三·论空亡",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "如甲子旬遁至酉而十干足所以無戌亥餘五干例見是為空亡",
+          "supports": "用一旬十干配支说明余下二支；同段后文有甲子年壬戌日的年日互换例。",
+          "limitations": "仅核到四库本转录，未逐页校勘影印。该卷转引诸书不等于已见各原书；普通转录互换例作壬戌月，与本版壬戌日分开。单支筛选及解释段不并入基础二支。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "luoluzi_xiaoxifu.kongwang",
+          "work": "《珞琭子三命消息赋注》",
+          "attribution": "《珞琭子三命消息赋注》注释层",
+          "edition": "维基文库转录，revision 857114",
+          "locator": "六虚下于空亡注",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=857114",
+          "text_layer": "zhushi",
+          "lineage": "luoluzi_xiaoxifu",
+          "excerpt": "假令甲子旬中，戌亥空亡也。",
+          "supports": "注中另述甲子旬戌亥空亡，佐证基础二支。",
+          "limitations": "所见为转录的注释层，不是影印校勘；不据此证明其他五旬表或固定锚。此本提要警示三命通会所引珞琭子与此本不合，不把三命通会转引的单支读法归入本书。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "wuxing_jingji.kongwang",
+          "work": "《五行精纪》",
+          "attribution": "《五行精纪》卷二十五转引《神白经》与《林开五命》",
+          "edition": "维基文库转录，revision 10494296",
+          "locator": "卷二十五·说空亡及空亡条",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=10494296",
+          "text_layer": "baiwen",
+          "lineage": "wuxing_jingji",
+          "excerpt": "此空亡只用生日旬中空亡極緊",
+          "supports": "汇编转引层记录生日旬中为紧及运、太岁语境，另有论空亡止以年日所在。",
+          "limitations": "witnessed 只指已核汇编转录，不指已见《神白经》或《林开五命》原书，不作两部原书的独立见证。汇编另收前后五位单支读法，本条不合并其筛选与解释。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository.kongwang",
+          "work": "本库六甲旬空查法约定",
+          "attribution": "bazi 仓内采用的查法范围与默认选择",
+          "edition": "六甲旬空首批实现",
+          "locator": "ShenshaRules.KONGWANG、BaziSchool.kongwang_anchor 与关系分析器",
+          "url": "https://github.com/0xf3cd/bazi/issues/277",
+          "text_layer": "editorial",
+          "lineage": "repository",
+          "excerpt": "日柱默认，年柱或年日双锚可选；只记录六甲旬空二支与原始命中。",
+          "supports": "本库的默认锚、可选锚、原局自身排除和本命锚查流运支的组合范围。",
+          "limitations": "仓内政策不是古籍见证，不宣称古籍一致只看日柱。不作反向流运锚查询，不含单支筛选、截路、四大空亡或冲合取消与吉凶解释。",
+          "state": "repository_attributed"
+        },
+        {
+          "source_id": "youyilu.taiyuan_minggong",
+          "work": "《游艺录》卷四",
+          "attribution": "俞樾原书，识典古籍转录",
+          "edition": "在线下载转录，未逐页校勘影印",
+          "locator": "卷四命宫例及胎元段",
+          "url": "https://www.shidianguji.com/book/CADAL01025514/chapter/1l47npzydewbp",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。",
+          "supports": "例解明确月干顺移一、月支顺移三；同页甲子年三月酉时命宫例为戊辰。",
+          "limitations": "直接取得转录，不再仅依《命理探原》转引；转引不另计独立谱系。命宫掌诀措辞近同，独立性未核，暂与《三命通会》同组，保守不多算一条独立见证；这不是已证直接承袭。页面有识别和表格混排痕迹，未校影印；不证明实际受孕时刻，也未明确命宫月界。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.taiyuan",
+          "work": "《三命通会》卷二",
+          "attribution": "万民英原书，维基文库四库本固定转录",
+          "edition": "固定 revision 761691，未逐页校勘影印",
+          "locator": "论胎元段，通行取法批评、三百日说及段末质疑",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "惟有一法以當生前三百日為十月之氣乃是受胎之正",
+          "supports": "同段记通行取法并质疑其是否精当：「今人多以法取胎元未審精當且戊子生甲寅月往往便以一巳為胎葢言乙巳是生月前十日更不明其中有閏無閏」。甲寅／乙巳例与本库月柱顺移在该例结果相同；另记三百日候选及段末质疑。见证取法存在，不表示该书认可该取法。",
+          "limitations": "同段另有「然則貴人受胎定在三百日又豈可據乎」，不把其中一句当作全段一致结论。一巳、前十日按转录原字保留，未校影印，不推定其校勘读法。三百日候选的月柱历法、边界、地点钟与窗口仍待核定，本库未编码，不据此认定真实孕期或寿命。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "sanming_tonghui.minggong",
+          "work": "《三命通会》卷二",
+          "attribution": "万民英原书，维基文库四库本固定转录",
+          "edition": "固定 revision 761691，未逐页校勘影印",
+          "locator": "论坐命宫段，掌诀及甲子年三月戌时例",
+          "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+          "text_layer": "baiwen",
+          "lineage": "sanming_tonghui",
+          "excerpt": "次将所生之時加於所生之月順行十二位逢卯即安命宫",
+          "supports": "子起正月逆数、生时加月位顺数到卯，并按出生年起月法配干；三月戌时例得丁卯。",
+          "limitations": "该段未明确正月按农历、节月或中气划分；原字、异体字及疑似讹字未擅改，不从此段推出时区、真太阳钟或精度政策，不收入吉凶断语。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "mingli_tanyuan.minggong",
+          "work": "《命理探原》起例",
+          "attribution": "袁树珊按语，典藏网下游简体转录",
+          "edition": "在线下载转录，未校原书影印",
+          "locator": "下载页题名作《命理探源》，本库沿称《命理探原》；推命宫法按语，中气及丙午大寒例",
+          "url": "https://www.diancang.xyz/xuanxuewushu/minglitanyuan/160971.html",
+          "text_layer": "zhushi",
+          "lineage": "mingli_tanyuan",
+          "excerpt": "古人谓交过中气，即作次月推",
+          "supports": "按语明确中气进月，丙午年十二月过大寒、申时取乙未宫，仍用丙午年配干。",
+          "limitations": "中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
+          "state": "witnessed"
+        },
+        {
+          "source_id": "repository.taiyuan_minggong",
+          "work": "本库胎元与命宫附加查询约定",
+          "attribution": "bazi 仓内采用的口径与候选边界",
+          "edition": "胎元与命宫首批实现",
+          "locator": "BaziChart.taiyuan、BaziChart.minggong 与 bazi_utils",
+          "url": "https://github.com/0xf3cd/bazi/issues/117",
+          "text_layer": "editorial",
+          "lineage": "repository",
+          "excerpt": "胎元按月柱干进一、支进三；命宫按中气进月，均为四柱之外的附加查询。",
+          "supports": "本库已实现口径、精度与地点钟政策，以及尚未编码的其他读法候选。",
+          "limitations": "软件政策不冒充古籍共识；附加干支不进入旧四柱、身份、JSON、关系或流运分析，不据计算结果认定解释前提成立。其他月界线索仍须核定系统归属、规则和查法。",
+          "state": "repository_attributed"
+        }
+      ],
+      "entries": [
+        {
+          "claim_id": "editorial.shishen.zhengguan.legal_trouble",
+          "text": "如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.zhengguan"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.zhengguan",
+            "field": "general",
+            "ordinal": 9,
+            "conditions": [],
+            "field_premise": ""
+          }
+        },
+        {
+          "claim_id": "editorial.shishen.qisha.legal_trouble",
+          "text": "如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。",
+          "roles": [
+            {
+              "name": "讨论对象",
+              "object_id": "shishen.qisha"
+            }
+          ],
+          "relations": [],
+          "topics": [
+            "取象"
+          ],
+          "applicability": "described",
+          "premise": "在显式选择的原局或原局加单流年范围内，正官与七杀各至少出现一次。取年、月、时明干及四柱全部藏干；加流年时取该流年的明干及全部藏干。",
+          "contexts": [
+            "editorial.guansha_coexistence"
+          ],
+          "sources": [
+            "editorial"
+          ],
+          "source_state": "editorial",
+          "attribution": "作者编写",
+          "viewpoint": "仓内原作",
+          "exceptions": [],
+          "limits": [],
+          "output": "reference_only",
+          "legacy": {
+            "object_id": "shishen.qisha",
+            "field": "general",
+            "ordinal": 8,
+            "conditions": [],
+            "field_premise": ""
+          }
+        }
+      ]
+    }
+  }
+}

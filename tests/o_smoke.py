@@ -34,12 +34,14 @@ def main() -> int:
   from functools import partial
   from fractions import Fraction
   from zoneinfo import ZoneInfo
+  from unittest.mock import patch
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import ContextProfile, ContextResult, criterion as lookup_criterion, evaluate_context
+  from bazi.record_migration import migrate_chart_json, migrate_knowledge_json, migrate_context_json
   from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -862,6 +864,41 @@ def main() -> int:
   _ = chart.taiyuan, chart.minggong
   if chart.json != chart_json or len(chart.bazi.pillars) != 4:
     failures.append('Optimized auxiliary query changed the natal chart')
+
+  frozen = json.loads((Path(__file__).parent / 'data/v230_records.json').read_text(encoding='utf-8'))
+  for key in ('chart', 'location_chart'):
+    migrated_chart = migrate_chart_json(frozen[key])
+    if BaziChart.from_json(json.loads(migrated_chart.json_text)).json != json.loads(migrated_chart.json_text):
+      failures.append('Optimized chart migration is not readable')
+    checks.append(('Old chart requires active migration', ValueError, partial(BaziChart.from_json, frozen[key])))
+  for key, migrate, restore in (
+    ('knowledge', migrate_knowledge_json, KnowledgeBase.from_json),
+    ('context', migrate_context_json, ContextResult.from_json),
+    ('relationship', migrate_context_json, ContextResult.from_json),
+  ):
+    old_text = json.dumps(frozen[key])
+    migrated_text = migrate(old_text)
+    restore(migrated_text.json_text)
+    if migrate(migrated_text.json_text).changes:
+      failures.append('Optimized migration is not idempotent')
+    checks.append(('Old record requires active migration', ValueError, partial(restore, old_text)))
+  bad_knowledge = json.loads(knowledge.export_json())
+  bad_knowledge['entries'][0]['text'] = '\ud800'
+  bad_context = json.loads(positive.export_json())
+  bad_context['criterion']['observations'] = {'\ud800': True}
+  def parser_limit(load: Callable[[str], object]) -> None:
+    with patch('json.loads', side_effect=RecursionError('injected parser limit')):
+      load('{}')
+
+  checks.extend([
+    ('Knowledge rejects float target version', ValueError, partial(KnowledgeBase.from_json, json.dumps({**json.loads(knowledge.export_json()), 'schema_version': 2.0}))),
+    ('Context rejects float target version', ValueError, partial(ContextResult.from_json, json.dumps({**json.loads(positive.export_json()), 'record_version': 5.0}))),
+    ('Knowledge rejects surrogate', ValueError, partial(KnowledgeBase.from_json, json.dumps(bad_knowledge))),
+    ('Context rejects surrogate key', ValueError, partial(ContextResult.from_json, json.dumps(bad_context))),
+    ('Migration rejects mixed knowledge version', ValueError, partial(migrate_context_json, json.dumps({**frozen['context'], 'record_version': 5}))),
+  ])
+  for load in (KnowledgeBase.from_json, ContextResult.from_json, migrate_knowledge_json, migrate_context_json):
+    checks.append(('Record parser limit remains a value error', ValueError, partial(parser_limit, load)))
 
   for label, expected, thunk in checks:
     try:

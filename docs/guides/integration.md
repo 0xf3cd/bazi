@@ -92,9 +92,9 @@ print(len(chart.bazi.pillars), chart.json == record)
 
 | 记录 | 导出 | 恢复 | 版本 |
 | --- | --- | --- | --- |
-| 命盘 | `BaziChart.json`（字典） | `BaziChart.from_json(映射)` | 无版本字段 |
-| 知识库 | `KnowledgeBase.export_json()`（文本） | `KnowledgeBase.from_json(文本)` | `schema_version` 为 1 |
-| 前提判别记录 | `ContextResult.export_json()`（文本） | `ContextResult.from_json(文本)` | `record_version` 为 4 |
+| 命盘 | `BaziChart.json`（字典） | `BaziChart.from_json(映射)` | `schema_version` 为 1 |
+| 知识库 | `KnowledgeBase.export_json()`（文本） | `KnowledgeBase.from_json(文本)` | `schema_version` 为 2 |
+| 前提判别记录 | `ContextResult.export_json()`（文本） | `ContextResult.from_json(文本)` | `record_version` 为 5，内嵌知识 schema 2 |
 
 三类记录不能互换。入口要求的 Python 类型不符时抛 `TypeError`；同为文本的知识库与前提判别记录互换时抛 `ValueError`。
 `schema_version` 与 `record_version` 是各自独立的版本号，也不能互相替代。
@@ -143,12 +143,12 @@ bazi 相等 True
 ```
 
 恢复后的两个命盘可以 `json` 和 `bazi` 值相等，但 `BaziChart` 按对象身份比较，对象本身不相等。
-命盘 JSON 没有版本字段，也不要往里加自定义键；需要记录软件版本时，写在你自己的外层记录里。
+命盘 JSON 的 `schema_version` 是格式号，不是软件版本。不要往里加自定义键；软件版本写在自己的外层记录里。
 
 ### 知识库和前提判别记录
 
 知识库导出的是全部对象、情境、来源和条目的文本，恢复后与原库按内容和顺序相等。
-前提判别记录只接受 `record_version` 为 4，恢复时校验结构和值类型，**不会重新判别**，也不核对输入、观察与证据之间的事实一致性。
+前提判别记录只接受 `record_version` 为 5，恢复时校验结构和值类型，**不会重新判别**，也不核对输入、观察与证据之间的事实一致性。
 
 ```{testcode} integration-other-json
 import json
@@ -191,15 +191,30 @@ for name, load in (
 ```
 
 ```{testoutput} integration-other-json
-1 True
-4 True
+2 True
+5 True
 旧版本被拒绝
 知识库读判别记录 ValueError
 判别记录读知识库 ValueError
 ```
 
-不要只改 `record_version` 来“迁移”旧记录。旧记录不兼容时，保留原件，记下原来的软件版本和失败原因；
-需要当前规则下的结论时，用原始输入和配置重新构造命盘，再调用 `evaluate_context`。库没有自动迁移接口。
+不要只改 `record_version` 来“迁移”旧记录。普通读取不会自动迁移，缺版本、旧版与未知版均拒绝。
+完整旧记录可以主动调用 {py:func}`~bazi.record_migration.migrate_chart_json`（无版本命盘映射）、
+{py:func}`~bazi.record_migration.migrate_knowledge_json`（schema 1 文本）或
+{py:func}`~bazi.record_migration.migrate_context_json`（record 4／内嵌 schema 1 文本）。
+这些函数返回 {py:class}`~bazi.record_migration.MigrationResult`：新 JSON 文本、源／目标格式、可核的工具版本及不可变变更清单，
+不修改原件，不写文件，也不重新求值。已是目标格式时校验后返回空变更清单；混版、失效定义和损坏字段仍拒绝。
+
+保留原件，使用新路径并以 `open('x', encoding='utf-8')` 独占创建文件，避免覆盖已有结果。
+缺 `kongwang_anchor` 的旧命盘／前提不能直接迁移，须显式选定配置后重建，前提另行求值；
+需要当前规则下的结论时，也应使用原输入与配置重建并调用 `evaluate_context`，而不是把格式升级当作重新求值。
+完整调用示例、工具版本来源与格式升版责任见[记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#主动迁移生成新记录保留原件)。
+
+JSON 字符串键和值必须可用 UTF-8 保存，孤立代理项抛 `ValueError`，不替换原文；中文、非 BMP 字符与合法 JSON 转义保留。
+导入与带缩进导出走相同保存检查，直接构造对象的相关文字渲染也会检查输出。
+超过解析或编码能力的深嵌套抛 `ValueError`，阈值取决于运行环境，不是固定层数。
+源码 CLI 按参数错误退出，序列化检查失败不打开或截断目标文件；不保证一般 I/O 失败整体回滚。
+这是明确的兼容变化：旧完整记录须先主动迁移，此前能导入却不能保存的文本将提前拒绝，普通运行与 `-O` 一致。
 
 ## 前提匹配：结构事实，不是判断
 
