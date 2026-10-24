@@ -91,15 +91,37 @@ def test_programmatic_render_export_utf8_guards() -> None:
         operation()
 
 
-def test_nesting_follows_runtime_json_capacity() -> None:
+def test_nesting_follows_runtime_json_capacity(monkeypatch: pytest.MonkeyPatch) -> None:
+  recursion_errors: set[str] = set()
+  original_loads, original_dumps = json.loads, json.dumps
+
+  def loads(*args: Any, **kwargs: Any) -> Any:
+    try:
+      return original_loads(*args, **kwargs)
+    except RecursionError:
+      recursion_errors.add('parsing depth')
+      raise
+
+  def dumps(*args: Any, **kwargs: Any) -> str:
+    try:
+      return original_dumps(*args, **kwargs)
+    except RecursionError:
+      recursion_errors.add('serialization depth')
+      raise
+
+  monkeypatch.setattr(json, 'loads', loads)
+  monkeypatch.setattr(json, 'dumps', dumps)
   depth = 2000
   text = '[' * depth + '0' + ']' * depth
   for load in (KnowledgeBase.from_json, ContextResult.from_json, migrate_knowledge_json, migrate_context_json):
+    recursion_errors.clear()
     try:
       load(text)
     except ValueError as error:
-      assert 'depth' in str(error)
+      assert len(recursion_errors) == 1
+      assert next(iter(recursion_errors)) in str(error)
     except TypeError as error:
+      assert not recursion_errors
       assert 'Expected JSON object' in str(error)
     else:
       pytest.fail('A non-object record was accepted')
@@ -108,11 +130,14 @@ def test_nesting_follows_runtime_json_capacity() -> None:
   record['knowledge']['schema_version'] = 2
   record['input']['config']['school']['extension'] = '__depth_marker__'
   text = json.dumps(record).replace('"__depth_marker__"', '[' * depth + '0' + ']' * depth)
+  recursion_errors.clear()
   try:
     restored = ContextResult.from_json(text)
   except ValueError as error:
-    assert 'depth' in str(error)
+    assert len(recursion_errors) == 1
+    assert next(iter(recursion_errors)) in str(error)
   else:
+    assert not recursion_errors
     extension = json.loads(restored.input_json)['config']['school']['extension']
     for _ in range(depth):
       assert isinstance(extension, list) and len(extension) == 1
@@ -121,11 +146,14 @@ def test_nesting_follows_runtime_json_capacity() -> None:
   nested: object = 0
   for _ in range(depth):
     nested = [nested]
+  recursion_errors.clear()
   try:
     encoded = _json_dumps(nested)
   except ValueError as error:
+    assert recursion_errors == {'serialization depth'}
     assert 'serialization depth' in str(error)
   else:
+    assert not recursion_errors
     assert encoded == json.dumps(nested, ensure_ascii=False, indent=2) + '\n'
 
 
@@ -179,7 +207,7 @@ def test_recursion_conversion_does_not_hide_bugs(monkeypatch: pytest.MonkeyPatch
 def test_parse_error_keeps_source_and_position(load: Any, next_step: str) -> None:
   text = '\n{"field":'
   with pytest.raises(json.JSONDecodeError) as original:
-    json.loads(text)
+    json.loads(text, object_pairs_hook=dict)
   with pytest.raises(json.JSONDecodeError) as raised:
     load(text)
   assert raised.value.doc == original.value.doc == text
