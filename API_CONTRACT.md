@@ -279,7 +279,7 @@ assert restored == result
 返回的 `MigrationResult` 是 frozen dataclass，包含 `json_text`、`source_version`、`target_version`、
 `tool_version` 与不可变的 `changes` 元组。每个 `MigrationChange` 说明字段路径 `path`、转换前后的
 `before`／`after` 及依据 `reason`；无版本命盘的来源和原缺字段均以 `None` 表示。
-`tool_version` 取自分发元数据：安装清单（`RECORD`）须列出当前迁移模块，记录的路径及 SHA-256 须与正在使用的文件相符才报告，
+`tool_version` 取自分发元数据：安装清单（`RECORD`）须列出当前迁移模块，清单中该模块的路径及 SHA-256 须与正在使用的文件相符才报告，
 无法核定（包括没有可核哈希的 editable 安装）为 `None`。它不认证元数据真伪或历史执行，不代替原记录的生成软件版本。
 
 调用方读取源文件后主动迁移，再独占创建新文件。下面先生成一份当前格式，示范可独立运行的文件管理；

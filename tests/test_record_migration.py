@@ -166,6 +166,17 @@ def test_context_migration_rejects_old_versions(version: int) -> None:
     migrate_context_json(json.dumps(record))
 
 
+@pytest.mark.parametrize('version', [4, 5])
+def test_context_migration_rejects_float_version(version: int) -> None:
+  record = _records()['context']
+  record['record_version'] = version
+  record['knowledge']['schema_version'] = 1 if version == 4 else 2
+  migrate_context_json(json.dumps(record))
+  record['record_version'] = float(version)
+  with pytest.raises(ValueError, match='Unsupported record version'):
+    migrate_context_json(json.dumps(record))
+
+
 @pytest.mark.parametrize('outer', [4, 5])
 @pytest.mark.parametrize('missing', [True, False])
 def test_migration_requires_nested_version(outer: int, missing: bool) -> None:

@@ -30,7 +30,7 @@ class MigrationChange:
 class MigrationResult:
   '''迁移入口返回的新文本及不可变说明，不持有原输入。
 
-  tool_version 只报告路径及文件哈希可核的分发元数据；无法核定时为 None。
+  tool_version 仅在迁移模块的路径与文件哈希可核时给出分发版本；无法核定时为 None。
   它不认证元数据真伪或历史执行。json_text 可用 UTF-8 保存，文件与原件由调用方管理。
   '''
 

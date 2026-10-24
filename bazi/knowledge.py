@@ -382,7 +382,7 @@ class KnowledgeBase:
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
     if type(data['schema_version']) is not int or data['schema_version'] != _SCHEMA_VERSION:
-      raise ValueError(f'Unsupported schema version: {data["schema_version"]}')
+      raise ValueError(f'Unsupported schema version: {data["schema_version"]!r}')
     return cls(
       tuple(_decode(KnowledgeObject, item) for item in _array(data['objects'])),
       tuple(_decode(KnowledgeContext, item) for item in _array(data['contexts'])),

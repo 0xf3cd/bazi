@@ -199,3 +199,20 @@ def test_record_version_error_reports_value(version: object) -> None:
   with pytest.raises(ValueError) as raised:
     ContextResult.from_json(json.dumps(record))
   assert str(raised.value).startswith(f'Unsupported record version: {version!r}')
+
+
+@pytest.mark.parametrize('kind', ['chart', 'knowledge'])
+def test_string_version_error_keeps_quotes(kind: str) -> None:
+  record = _records()[kind]
+  record['schema_version'] = 1 if kind == 'chart' else 2
+  if kind == 'chart':
+    BaziChart.from_json(record)
+  else:
+    KnowledgeBase.from_json(json.dumps(record))
+  record['schema_version'] = str(record['schema_version'])
+  with pytest.raises(ValueError) as raised:
+    if kind == 'chart':
+      BaziChart.from_json(record)
+    else:
+      KnowledgeBase.from_json(json.dumps(record))
+  assert f'version: {record["schema_version"]!r}.' in str(raised.value)

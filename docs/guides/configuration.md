@@ -314,7 +314,7 @@ assert BaziSchool().kongwang_anchor is Anchor.DAY
 | 换日 `DayRollover` | 日柱在 23:00 还是 00:00 更换 |
 | 起运年份 `DayunYearRule` | 大运年份标签的投影方式，不改变物理时刻 |
 | 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性与 JSON |
-| 六甲旬空取锚 `kongwang_anchor` | 选择年柱、日柱或分别使用双锚，见[六甲旬空取锚](#六甲旬空取锚) |
+| 六甲旬空取锚 `kongwang_anchor` | 选择年柱、日柱或分别使用双锚 |
 | 真太阳时 | 由经度、民用偏移与均时差换算的钟；见 `Bazi.location_time` |
 | `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
 

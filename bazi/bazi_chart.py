@@ -255,7 +255,7 @@ class BaziChart:
       if type(key) is not str:
         raise TypeError(f'Expected str key at chart, got {type(key)}')
     if type(d.get('schema_version')) is not int or d['schema_version'] != _SCHEMA_VERSION:
-      raise ValueError(f'Unsupported chart schema version: {d.get("schema_version")}')
+      raise ValueError(f'Unsupported chart schema version: {d.get("schema_version")!r}')
 
     default_keys = BaziJson.DefaultBaziChartJsonDict.__required_keys__
     location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
