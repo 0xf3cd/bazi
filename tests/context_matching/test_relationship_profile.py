@@ -60,7 +60,7 @@ def test_criteria_partition_scope_and_entry_roles() -> None:
 def test_definitions_pinned_to_record_version() -> None:
   # Records store each definition and restoring checks it against _CRITERIA, so editing one breaks every
   # saved record of that criterion: change a definition only together with record_version.
-  assert _RECORD_VERSION == 4
+  assert _RECORD_VERSION == 5
   assert {key: value.definition for key, value in _CRITERIA.items()} == {
     GUANSHA: '选定范围内正官与七杀各至少出现一次。',
     FEMALE: '选定范围内正官与七杀各至少出现一次，且输入为女命。',

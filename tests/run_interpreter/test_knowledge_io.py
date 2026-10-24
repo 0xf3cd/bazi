@@ -1,5 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import argparse
 import json
 import shutil
 import subprocess
@@ -8,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import main
+from run_interpreter import main, _export_json
+from bazi._validation import _json_dumps
 from bazi.knowledge import KnowledgeBase
 
 from cli_runner import KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
@@ -156,6 +158,44 @@ def test_validation_rejects_corrupt_source(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(tmp_path / 'out.json'))
   assert result.returncode == 2 and 'Duplicate JSON key' in result.stderr
   assert not (tmp_path / 'out.json').exists()
+
+
+@pytest.mark.parametrize('existing', [False, True])
+@pytest.mark.parametrize('error', [TypeError, ValueError])
+def test_export_errors_do_not_open_target(tmp_path: Path, existing: bool, error: type[Exception]) -> None:
+  target = tmp_path / 'out.json'
+  if existing:
+    target.write_text('original target', encoding='utf-8')
+
+  def export() -> str:
+    raise error('invalid record')
+
+  with pytest.raises(SystemExit) as caught:
+    _export_json(argparse.ArgumentParser(), target, None, export, 'export: ')
+  assert caught.value.code == 2
+  assert target.read_text(encoding='utf-8') == 'original target' if existing else not target.exists()
+
+
+def test_utf8_export_failure_keeps_target(tmp_path: Path) -> None:
+  target = tmp_path / 'out.json'
+  target.write_text('original target', encoding='utf-8')
+  with pytest.raises(SystemExit) as caught:
+    _export_json(argparse.ArgumentParser(), target, None, lambda: _json_dumps({'text': '\ud800'}), 'export: ')
+  assert caught.value.code == 2 and target.read_text(encoding='utf-8') == 'original target'
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('bad', ['surrogate', 'deep'])
+def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, bad: str) -> None:
+  data = json.loads(KNOWLEDGE_BASE.export_json())
+  data['entries'][0]['text'] = '\ud800'
+  text = json.dumps(data) if bad == 'surrogate' else '[' * (sys.getrecursionlimit() * 20) + '0' + ']' * (sys.getrecursionlimit() * 20)
+  source, target = tmp_path / 'source.json', tmp_path / 'out.json'
+  source.write_text(text, encoding='utf-8')
+  result = run_cli(tmp_path, 'knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(target), optimized=optimized)
+  assert result.returncode == 2 and 'Traceback' not in result.stderr
+  assert ('surrogate' if bad == 'surrogate' else 'depth') in result.stderr
+  assert not target.exists()
 
 
 @pytest.fixture

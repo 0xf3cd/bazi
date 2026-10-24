@@ -2,7 +2,6 @@
 
 '''可编辑的解释知识。'''
 
-import json
 from dataclasses import asdict, dataclass, fields, is_dataclass
 from functools import cached_property
 from pathlib import Path
@@ -10,7 +9,7 @@ from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
-from ._validation import _text, _choice, _tuple, _pairs, _mapping
+from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _json_dumps, _utf8, _record_errors
 
 
 '''知识整理状态，不是命盘判别结果。
@@ -30,6 +29,7 @@ SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attrib
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
+_SCHEMA_VERSION: Final = 2
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
 _OUTPUTS: Final = get_args(OutputPolicy)
@@ -359,6 +359,10 @@ class KnowledgeBase:
     return self._entries
 
   @classmethod
+  @_record_errors(
+    'Preserve the original record. Use migrate_knowledge_json for schema 1; '
+    'for malformed data, check the original knowledge source. Migration does not repair text or references.'
+  )
   def from_json(cls, text: str) -> 'KnowledgeBase':
     '''加载严格 JSON，拒绝重复键、错误字段与断引用。
 
@@ -368,7 +372,7 @@ class KnowledgeBase:
     - (KnowledgeBase) 校验后的知识库。
     '''
     _text(text)
-    return cls._from_data(json.loads(text, object_pairs_hook=_pairs))
+    return cls._from_data(_json_loads(text))
 
   @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
@@ -377,7 +381,7 @@ class KnowledgeBase:
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
-    if type(data['schema_version']) is not int or data['schema_version'] != 1:
+    if type(data['schema_version']) is not int or data['schema_version'] != _SCHEMA_VERSION:
       raise ValueError(f'Unsupported schema version: {data["schema_version"]}')
     return cls(
       tuple(_decode(KnowledgeObject, item) for item in _array(data['objects'])),
@@ -540,7 +544,7 @@ class KnowledgeBase:
     Note:
     - 省略 entries 时导出全部语料，包括仅供参考条目；导出不改变条目的输出资格。
     '''
-    return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
+    return _json_dumps(self._export_data(entries))
 
   def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
     '''供包内嵌套的 JSON 结构；export_json 编码同一结构，条目选择的校验也在此完成。'''
@@ -554,7 +558,7 @@ class KnowledgeBase:
         raise ValueError(f'Duplicate selection: {entry.claim_id}')
       ids.add(entry.claim_id)
     return {
-      'schema_version': 1,
+      'schema_version': _SCHEMA_VERSION,
       'objects': [asdict(value) for value in self.objects.values()],
       'contexts': [asdict(value) for value in self.contexts.values()],
       'sources': [asdict(value) for value in self.sources.values()],
@@ -635,7 +639,7 @@ class KnowledgeBase:
           f'支持范围：{source.supports}',
           f'局限：{source.limitations}',
         ))
-    return '\n'.join(lines)
+    return _utf8('\n'.join(lines))
 
   def render_subject(
     self,
@@ -659,8 +663,8 @@ class KnowledgeBase:
     '''
     if not isinstance(show_sources, bool):
       raise TypeError(f'Expected bool, got {type(show_sources)}')
-    return '\n\n'.join(
+    return _utf8('\n\n'.join(
       '／'.join(entry.topics) + '：' + self.render(entry, show_sources=show_sources)
       for entry in self.query(object_id=object_id, include_reference_only=include_reference_only)
       if entry.legacy is None or entry.legacy.object_id == object_id
-    )
+    ))

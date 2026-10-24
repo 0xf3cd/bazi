@@ -115,7 +115,7 @@ def test_liunian_label_has_no_calendar_cutoff() -> None:
 def test_export_keeps_evidence_year_kind_input() -> None:
   result = match(1, profile=ContextProfile('natal_and_liunian', 2024))
   data = json.loads(result.export_json())
-  assert data['record_version'] == 4
+  assert data['record_version'] == 5
   assert data['profile'] == {'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
   assert data['input'] == json.loads(result.input_json)
   assert len(data['occurrences']) == 13

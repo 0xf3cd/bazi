@@ -17,7 +17,7 @@ from .data_types import GanzhiData
 from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation, TianganRelation
 from .analyzer.relationship import RelationshipEvidence, StarAppearance, StemRelationDiscovery, spouse_evidence
 from .knowledge import KnowledgeBase, KnowledgeEntry
-from ._validation import _text, _choice, _mapping, _pairs, _tuple
+from ._validation import _text, _choice, _mapping, _tuple, _json_loads, _json_dumps, _utf8, _record_errors
 from .school import BaziConfig, BaziSchool, _config_json
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
@@ -48,7 +48,7 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
-_RECORD_VERSION: Final = 4
+_RECORD_VERSION: Final = 5
 
 '''各入口结构上能取得的流运种类；取得与否还取决于命盘与后端，这张表只是上限。'''
 _ENTRY_KINDS: Final[frozendict[TransitEntry, frozenset[TransitKind]]] = frozendict({
@@ -516,7 +516,7 @@ class EntryMatch:
 
 
 def _validate_input(text: str) -> None:
-  data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
+  data = _typed(_json_loads(text), dict)
   common_keys = {'gender', 'config', 'pillars'}
   default_keys = common_keys | {'birth_time'}
   location_keys = common_keys | LocationTimeJson.__required_keys__
@@ -778,7 +778,7 @@ class ContextResult:
       raise ValueError('Context profile cannot carry relationship evidence')
 
   def export_json(self) -> str:
-    '''导出版本4记录、全部证据及知识注册表，不改变参考输出资格。
+    '''导出版本5记录、全部证据及 schema 2 知识注册表，不改变参考输出资格。
 
     原局／流年记录显式带 `relationship: null`，空的 `entries`／`related` 写空列表，不省键。
     婚恋证据的关系键按枚举声明序、组合按序号元组升序导出，同一结果字节稳定。
@@ -840,16 +840,21 @@ class ContextResult:
       'relationship': relationship,
       'related': [asdict(value) for value in self.related],
       'entries': [asdict(value) for value in self.entries],
-      'input': json.loads(self.input_json),
+      'input': _json_loads(self.input_json),
       'knowledge': self.knowledge._export_data(),
     }
-    return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
+    return _json_dumps(data)
 
   @classmethod
+  @_record_errors(
+    'Preserve the original record. Use migrate_context_json for a complete record 4 with knowledge schema 1; '
+    'missing kongwang_anchor requires an explicit school choice, chart reconstruction and reevaluation. '
+    'For malformed records or stale definitions, check the original inputs and knowledge source before reevaluation.'
+  )
   def from_json(cls, text: str) -> 'ContextResult':
-    '''恢复版本4记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
+    '''恢复版本5记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
     旧版本记录明确拒绝；版本检查先于键集合检查，使真实 v2 记录得到版本拒绝而非键集差异。
-    需要新格式时应由原输入与配置重新求值。
+    完整版本4可主动迁移；缺失配置不能猜补，须显式选择后重建或重新求值。
 
     Note:
     - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
@@ -857,7 +862,7 @@ class ContextResult:
       为 `RelationshipProfile`，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
     '''
     _typed(text, str)
-    data = json.loads(text, object_pairs_hook=_pairs)
+    data = _json_loads(text)
     if not isinstance(data, dict):
       raise TypeError(f'Expected JSON object, got {type(data)}')
     version = data.get('record_version')
@@ -911,7 +916,7 @@ class ContextResult:
     '''展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
     criterion = self.criterion
     if isinstance(self.profile, RelationshipProfile):
-      return self._render_relationship()
+      return _utf8(self._render_relationship())
 
     premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
     verdict_label = '结构前提' if premise else '事实判别'
@@ -942,7 +947,7 @@ class ContextResult:
       lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
     if not premise:
       lines.extend(self._render_related())
-    return '\n'.join(lines)
+    return _utf8('\n'.join(lines))
 
   def _render_relationship(self) -> str:
     '''婚恋结果的三栏证据与条件参考渲染；不输出任何「某组合在全局仍有效」的结论。'''

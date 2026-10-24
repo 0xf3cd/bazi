@@ -129,6 +129,9 @@ def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
   for key in ('criterion', 'entries', 'related'):
     assert record_data[key] == case['expected'][key]
   assert ContextResult.from_json(text) == result
+  assert record_data['record_version'] == 5 and record_data['knowledge']['schema_version'] == 2
+  record_data['record_version'] = 4
+  record_data['knowledge']['schema_version'] = 1
   # Compare the old record fingerprint without changing its fixture or accepting the old input format.
   assert record_data['input']['config']['school'].pop('kongwang_anchor') == 'DAY'
   for registry, identifier, added in (

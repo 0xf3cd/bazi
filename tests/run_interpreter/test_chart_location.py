@@ -31,9 +31,10 @@ def test_naive_cli_precision_and_exports(tmp_path: Path, optimized: bool, precis
   assert output.is_file()
   data = json.loads(output.read_text(encoding='utf-8'))
   assert set(data) == {
-    'birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school', 'pillars', 'nayin',
+    'birth_time', 'schema_version', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school', 'pillars', 'nayin',
     'shier_zhangsheng', 'tiangan_traits', 'dizhi_traits', 'tiangan_shishen', 'dizhi_shishen', 'hidden_tiangan', 'transits',
   }
+  assert data['schema_version'] == 1
   assert data['birth_time'] == '2000-02-04T20:39:00' and data['precision'] == precision
   assert (data['pillars']['year'], data['pillars']['month']) == pillars
   restored = BaziChart.from_json(data)

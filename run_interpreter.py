@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
 import sys
 from random import Random, SystemRandom
 import re
@@ -17,6 +16,7 @@ from bazi.bazi_chart import BaziChart
 from bazi.bazi_chart import BaziJson
 from bazi.defines import Tiangan, Shishen, Dizhi
 from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
+from bazi._validation import _json_dumps
 from bazi.context_matching import (
   ContextProfile, ObservationScope, RelationshipProfile, TransitCoordinate, TransitEntry,
   criteria, criterion, evaluate_context,
@@ -183,7 +183,7 @@ def _export_json(
   try:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(export(), encoding='utf-8')
-  except OSError as error:
+  except (OSError, TypeError, ValueError) as error:
     parser.error(str(error))
   print(f'{label}{target}')
 
@@ -392,7 +392,7 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     print(text)
     if args.export_chart_json is not None:
       def __export_chart(chart: BaziChart = chart) -> str:
-        return json.dumps(chart.json, ensure_ascii=False, indent=2) + '\n'
+        return _json_dumps(chart.json)
       _export_json(parser, args.export_chart_json, None, __export_chart, '已导出命盘：')
     if output is not None:
       try:

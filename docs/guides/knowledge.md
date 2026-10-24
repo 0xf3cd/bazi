@@ -322,16 +322,19 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} export
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-1 8 34 23
+2 8 34 23
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
 True
 8 34
 True
 ```
 
-导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（34 个对象、23 个来源），所以所选条目的引用不会断。
+导出的是 `schema_version`（当前为 2）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（34 个对象、23 个来源），所以所选条目的引用不会断。
 
 `from_json` 与 `load(Path(...))` 走同一套校验。省略 `export_json` 的参数则导出全部条目，包括仅供参考的条目。
+旧 schema 1 须主动调用 {py:func}`~bazi.record_migration.migrate_knowledge_json`，再把返回的 `json_text` 交给读取入口。
+迁移保留该快照的条目和注册表，不换成默认语料。字符串键和值中的孤立代理项会拒绝，不修复原文；
+JSON 导入、导出和知识渲染输出均检查 UTF-8 保存能力。中文、非 BMP 字符与合法 JSON 转义仍可使用。
 
 ## 改一份本地副本
 
@@ -393,7 +396,7 @@ print(len(KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False)).entries)
 ```
 
 ```{testoutput} broken
-ValueError Unknown source: no_such_source (tiangan.ding.definition)
+ValueError Unknown source: no_such_source (tiangan.ding.definition). Preserve the original record. Use migrate_knowledge_json for schema 1; for malformed data, check the original knowledge source. Migration does not repair text or references.
 1
 ```
 

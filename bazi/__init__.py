@@ -26,6 +26,7 @@ __all__ = [
 # chart_text 不在 __all__：v2.0.0 的显式导出清单保持不变；它仍是入口子模块，同样按需导入。
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text',
+  'record_migration',
 })
 
 # 本包没有根类入口；常见入口类的属性访问会指向定义模块。

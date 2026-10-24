@@ -58,7 +58,7 @@ def test_restore_rejects_a_corrupted_criterion(
   ('record_version', True, ValueError), ('record_version', False, ValueError),
   ('record_version', -1, ValueError), ('record_version', 0, ValueError),
   ('record_version', 1, ValueError), ('record_version', 2, ValueError),
-  ('record_version', 3, ValueError), ('record_version', 5, ValueError),
+  ('record_version', 3, ValueError), ('record_version', 4, ValueError), ('record_version', 6, ValueError),
   ('record_version', 4.0, ValueError), ('record_version', '4', ValueError),
   ('record_version', None, ValueError),
   ('profile', [], TypeError), ('criterion', {}, ValueError), ('occurrences', {}, TypeError),
@@ -110,7 +110,7 @@ def test_restore_rejects_corrupt_nested_records() -> None:
 def test_restore_rejects_duplicate_keys() -> None:
   text = match().export_json()
   for needle, duplicate in (
-    ('"record_version": 4', '"record_version": 4'),
+    ('"record_version": 5', '"record_version": 5'),
     ('"gender": "female"', '"gender": "male"'),
     ('"scope_complete": true', '"scope_complete": false'),
   ):
