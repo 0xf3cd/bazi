@@ -141,7 +141,7 @@ class BaziJson:
     transits: 'BaziJson.Transits'
 
   class DefaultBaziChartJsonDict(_CommonChartJsonDict):
-    '''默认盘 JSON，出生时刻为截断到分钟的民用标签。'''
+    '''默认盘 JSON，出生时刻为截断到分钟的输入钟时标签。'''
     birth_time: str
 
   class LocationBaziChartJsonDict(_CommonChartJsonDict, LocationTimeJson):

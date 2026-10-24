@@ -122,7 +122,8 @@ class Bazi:
   存储年、月、日、时四柱及排盘基本信息。十神、大运等派生信息见 `bazi_chart.py` 的 `BaziChart`。
 
   Note:
-  - 默认路径直接采用无时区民用时刻；传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
+  - 默认路径采用无时区钟时标签：年月与东八区节气表比较，日时按输入钟读取；
+    传入 `longitude` 才会从调用方给定的带时区时刻换算真太阳时。
   - 本库从立春派：年柱以立春换年，不以正月初一（春节）换年。
   '''
 
@@ -368,7 +369,7 @@ class Bazi:
 
   @property
   def solar_date(self) -> date:
-    '''地点盘的真太阳时公历出生日期；默认路径为民用日期。'''
+    '''地点盘的真太阳时公历出生日期；默认路径为输入钟时标签所在日期。'''
     return self._utils.to_date(self._solar_date)
   
   @property
@@ -421,7 +422,7 @@ class Bazi:
 
   @property
   def solar_datetime(self) -> datetime:
-    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此民用标签参与身份、JSON 及历法坐标；
+    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此输入钟时标签参与身份、JSON 及历法坐标；
     地点盘显示由完整输入精度换算得到的真太阳时。'''
     return self._clock_datetime.replace(second=0, microsecond=0)
 
@@ -429,7 +430,7 @@ class Bazi:
   def reference_datetime(self) -> datetime:
     '''节表、大运及流运查询的出生参考时刻。
 
-    地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的民用标签。
+    地点盘返回保留秒/微秒的 naive UTC+08 标签；默认盘返回分钟截断的输入钟时标签。
     此坐标不是真太阳钟，也不改变出生精度的归属规则。
     '''
     if self._location is None:

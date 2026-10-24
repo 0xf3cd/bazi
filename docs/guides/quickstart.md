@@ -51,11 +51,11 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 python show_chart.py
 ```
 
-把 `datetime(1990, 5, 17, 10, 30)` 换成上面口径的公历出生钟时，`female` 为女、`male` 为男。本例没有经度，不换算真太阳时；地点盘或保留海外当地钟的需求先读 {doc}`configuration`，不要把时区转换与真太阳时当成同一个操作。
+把 `datetime(1990, 5, 17, 10, 30)` 换成上面口径的公历出生钟时，`female` 为女、`male` 为男。本例没有经度，不换算真太阳时；地点盘与海外当地钟的使用边界见 {doc}`configuration`，不要把时区转换与真太阳时当成同一个操作。
 
 - `bazi.pillars` 依次是年、月、日、时柱，每柱是一个 `Ganzhi`。
 - 性别字符串接受 `男`、`女`、`male`、`female`；`chart.json` 里统一存拉丁写法。
-- 藏干十神显示为单字简称，如财、才、官、杀；完整名称与简称见 {py:class}`~bazi.defines.shishen.Shishen`。
+- 藏干十神显示为单字简称，如财、才、官、杀；完整名称见 {py:class}`~bazi.defines.shishen.Shishen`，每个十神的简称由 {py:attr}`~bazi.defines.shishen.Shishen.abbr` 取得。
 - `chart.json` 是每次新建的字典，字段和配置都在里面。需要保存或交换时见 {doc}`integration`。
 
 ## 把盘排成文本

@@ -35,11 +35,13 @@ def _check_navigation(source: Path, root: Path) -> None:
     url = urlsplit(link)
     if link.startswith('#'):
       path = source
-    else:
+    elif url.scheme or url.netloc:
       assert url.scheme == 'https' and url.netloc, link
       if not link.startswith('https://github.com/0xf3cd/bazi/blob/main/'):
         continue
       path = root / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
+    else:
+      path = source.parent / unquote(url.path)
     assert path.resolve().is_relative_to(root) and path.is_file(), link
     if url.fragment:
       headings = SyntaxTreeNode(MarkdownIt('commonmark').parse(path.read_text(encoding='utf-8')))
@@ -50,18 +52,23 @@ def _check_navigation(source: Path, root: Path) -> None:
       assert unquote(url.fragment) in slugs, (source, link, slugs)
 
 
-@pytest.mark.parametrize('name', ['README.md', 'RELEASE_NOTES.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md'])
+@pytest.mark.parametrize('name', [
+  'README.md', 'RELEASE_NOTES.md', 'API_CONTRACT.md', 'AGENTS.md', 'CONTRIBUTING.md',
+  'docs/guides/quickstart.md', 'docs/guides/integration.md', 'docs/guides/configuration.md',
+])
 def test_navigation_links_resolve(name):
   _check_navigation(ROOT / name, ROOT)
 
 
 @pytest.mark.parametrize('heading, valid', [('从 v2.2.0 迁移到 v2.3.0', True), ('迁移指南', False)])
-def test_navigation_detects_heading_rename(tmp_path, heading, valid):
+@pytest.mark.parametrize('prefix', ['https://github.com/0xf3cd/bazi/blob/main/', '../'])
+def test_navigation_detects_heading_rename(tmp_path, heading, valid, prefix):
   target = tmp_path / 'target.md'
   target.write_text('# ' + heading + '\n', encoding='utf-8')
-  source = tmp_path / 'README.md'
+  (tmp_path / 'docs').mkdir()
+  source = tmp_path / 'docs/README.md'
   source.write_text(
-    '[迁移](https://github.com/0xf3cd/bazi/blob/main/target.md#从-v220-迁移到-v230)\n',
+    f'[迁移]({prefix}target.md#从-v220-迁移到-v230)\n',
     encoding='utf-8',
   )
   if not valid:
