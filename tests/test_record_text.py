@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
-import sys
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -92,24 +91,48 @@ def test_programmatic_render_export_utf8_guards() -> None:
         operation()
 
 
-def test_deep_records_fail_at_runtime_limit() -> None:
-  depth = sys.getrecursionlimit() * 20
+def test_nesting_follows_runtime_json_capacity() -> None:
+  depth = 2000
   text = '[' * depth + '0' + ']' * depth
+  error_type: type[Exception]
+  try:
+    json.dumps(json.loads(text), ensure_ascii=False, indent=2)
+  except RecursionError:
+    error_type = ValueError
+    message = 'depth'
+  else:
+    error_type = TypeError
+    message = 'Expected JSON object'
   for load in (KnowledgeBase.from_json, ContextResult.from_json, migrate_knowledge_json, migrate_context_json):
-    with pytest.raises(ValueError, match='depth'):
+    with pytest.raises(error_type, match=message):
       load(text)
   record = _records()['context']
   record['record_version'] = 5
   record['knowledge']['schema_version'] = 2
   record['input']['config']['school']['extension'] = '__depth_marker__'
   text = json.dumps(record).replace('"__depth_marker__"', '[' * depth + '0' + ']' * depth)
-  with pytest.raises(ValueError, match='depth'):
-    ContextResult.from_json(text)
+  try:
+    json.dumps(json.loads(text), ensure_ascii=False, indent=2)
+  except RecursionError:
+    with pytest.raises(ValueError, match='depth'):
+      ContextResult.from_json(text)
+  else:
+    restored = ContextResult.from_json(text)
+    extension = json.loads(restored.input_json)['config']['school']['extension']
+    for _ in range(depth):
+      assert isinstance(extension, list) and len(extension) == 1
+      extension = extension[0]
+    assert extension == 0
   nested: object = 0
-  for _ in range(sys.getrecursionlimit() * 2):
+  for _ in range(depth):
     nested = [nested]
-  with pytest.raises(ValueError, match='serialization depth'):
-    _json_dumps(nested)
+  try:
+    expected = json.dumps(nested, ensure_ascii=False, indent=2) + '\n'
+  except RecursionError:
+    with pytest.raises(ValueError, match='serialization depth'):
+      _json_dumps(nested)
+  else:
+    assert _json_dumps(nested) == expected
 
 
 @pytest.mark.parametrize('kind', ['knowledge', 'context'])

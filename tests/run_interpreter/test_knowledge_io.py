@@ -185,16 +185,48 @@ def test_utf8_export_failure_keeps_target(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('bad', ['surrogate', 'deep'])
+@pytest.mark.parametrize('bad', ['surrogate', 'parser_limit', 'nested'])
 def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, bad: str) -> None:
   data = json.loads(KNOWLEDGE_BASE.export_json())
   data['entries'][0]['text'] = '\ud800'
-  text = json.dumps(data) if bad == 'surrogate' else '[' * (sys.getrecursionlimit() * 20) + '0' + ']' * (sys.getrecursionlimit() * 20)
+  if bad == 'surrogate':
+    text = json.dumps(data)
+  elif bad == 'parser_limit':
+    text = '{"parser_limit": true}'
+  else:
+    text = '[' * 200 + '0' + ']' * 200
   source, target = tmp_path / 'source.json', tmp_path / 'out.json'
   source.write_text(text, encoding='utf-8')
-  result = run_cli(tmp_path, 'knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(target), optimized=optimized)
+  args = ('knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(target))
+  if bad == 'parser_limit':
+    code = '''
+import json
+import runpy
+import sys
+from pathlib import Path
+
+original_loads = json.loads
+def loads(text, *args, **kwargs):
+  if text == '{"parser_limit": true}':
+    raise RecursionError('injected parser limit')
+  return original_loads(text, *args, **kwargs)
+json.loads = loads
+sys.path.insert(0, str(Path(sys.argv[1]).parent))
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name='__main__')
+'''
+    result = subprocess.run(
+      [sys.executable, *(['-O'] if optimized else []), '-B', '-c', code,
+       str(Path(__file__).parents[2] / 'run_interpreter.py'), *args],
+      cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', timeout=45, check=False,
+    )
+  else:
+    result = run_cli(tmp_path, *args, optimized=optimized)
   assert result.returncode == 2 and 'Traceback' not in result.stderr
-  assert ('surrogate' if bad == 'surrogate' else 'depth') in result.stderr
+  if bad != 'nested':
+    assert ('surrogate' if bad == 'surrogate' else 'depth') in result.stderr
+  else:
+    assert 'depth' in result.stderr or 'Expected JSON object' in result.stderr
   assert not target.exists()
 
 
