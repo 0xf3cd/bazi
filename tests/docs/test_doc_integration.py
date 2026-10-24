@@ -78,6 +78,17 @@ def test_navigation_detects_heading_rename(tmp_path, heading, valid, prefix):
     _check_navigation(source, tmp_path)
 
 
+@pytest.mark.parametrize('link', ['missing.md', '../outside.md'])
+def test_navigation_rejects_missing_or_outside(tmp_path, link):
+  root = tmp_path / 'project'
+  root.mkdir()
+  (tmp_path / 'outside.md').write_text('# Outside\n', encoding='utf-8')
+  source = root / 'README.md'
+  source.write_text(f'[Navigation]({link})\n', encoding='utf-8')
+  with pytest.raises(AssertionError):
+    _check_navigation(source, root)
+
+
 @pytest.mark.parametrize('between', ['说明文字。\n', '```sh\npython first_chart.py\n```\n'])
 def test_readme_output_must_follow_code(monkeypatch, tmp_path, between):
   (tmp_path / 'README.md').write_text(

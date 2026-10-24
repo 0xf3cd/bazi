@@ -62,7 +62,7 @@ assert chart.bazi.day_master in Tiangan
 `chart.taiyuan` 与 `chart.minggong` 是无参缓存属性，返回不可变的 `Ganzhi`，只在首次访问时计算。
 计算口径和可运行示例见[集成指南](docs/guides/integration.md#四柱之外胎元与命宫)；字段说明以
 [`BaziChart.taiyuan`](bazi/bazi_chart.py)／`minggong` 的 docstring 为准。时支固定取本盘时柱，
-DAY 也保留输入小时，换日设置（`day_rollover`）不改变时支。
+DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollover`）不改变时支。
 
 中气按本盘出生精度相等归新：DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点；
 地点盘先把边界换到与出生相同的真太阳钟。HKO 仍只支持 DAY，不把零点占位视作真实时刻。
