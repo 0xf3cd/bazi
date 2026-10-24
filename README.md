@@ -41,7 +41,7 @@ python -m pip install bazi
 
 在工作目录中创建 UTF-8 文件 `first_chart.py`，复制下面的完整程序。不要把文件命名为 `bazi.py`，否则会遮蔽安装包。
 
-示例出生信息是虚构的。把 `datetime(年, 月, 日, 时, 分)` 改成公历出生民用时刻，性别用 `female`（女）或 `male`（男）。本例不提供经度，不做时区或真太阳时换算；默认 `DAY` 按日期比较节气，输入的小时仍用于时柱。交节、子时或地点盘的选择见[配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md)。
+示例出生信息是虚构的。本例按东八区（UTC+8）的公历钟填写 `datetime(年, 月, 日, 时, 分)`，性别用 `female`（女）或 `male`（男）。默认入口不做时区换算：年月与东八区节气表比较，日时按输入的钟读取；默认 `DAY` 只按日期比较节气，小时仍用于时柱。海外当地钟不能直接当作本例输入；转成北京时间也会改变所读日时，见[配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#默认输入东八区节表与输入钟)。
 
 ```python
 import json

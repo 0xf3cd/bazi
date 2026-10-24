@@ -389,6 +389,16 @@ class AtBirthAnalysis:
 
   @property
   def day_master_relations(self) -> tiangan_utils.TianganRelationDiscovery:
+    '''日主与年、月、时明干的关系，按天干值汇总。
+
+    Return: (TianganRelationDiscovery) 关系到冻结天干组合元组的不可变映射。
+
+    Note:
+    - 每个组合是无序的 frozenset，不携带柱位；同一对干在不同柱位出现时合并。
+      生／克的组合也不表达方向，不能按集合迭代顺序判断谁生谁、谁克谁。
+    - 有向判断使用 `tiangan_utils.sheng`／`ke`；按柱位比较时由 `chart.bazi.four_tiangans`
+      取干，各柱十神见 `chart.shishen`。配偶星证据不是通用的日主关系入口。
+    '''
     y_tg, m_tg, d_tg, h_tg = self._chart.bazi.four_tiangans
     return tiangan_utils.discover_mutual([d_tg], [y_tg, m_tg, h_tg])
   

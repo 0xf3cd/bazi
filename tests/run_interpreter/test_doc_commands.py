@@ -143,7 +143,7 @@ def test_inline_task_examples_are_parseable(name: str) -> None:
 
 def test_migration_table_new_commands_parse() -> None:
   text = (ROOT / 'API_CONTRACT.md').read_text(encoding='utf-8')
-  section = re.search(r'### 源码脚本\n(.*?)(?=\n## |\Z)', text, flags=re.DOTALL)
+  section = re.search(r'## 源码脚本\n(.*?)(?=\n## |\Z)', text, flags=re.DOTALL)
   assert section is not None
   rows = re.findall(r'^\| `[^`]+` \| (.*) \|$', section[1], flags=re.MULTILINE)
   assert len(rows) >= 5

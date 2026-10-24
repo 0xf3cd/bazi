@@ -915,9 +915,13 @@ class ContextResult:
 
     premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
     verdict_label = '结构前提' if premise else '事实判别'
+    scope = f'范围：全部明藏干；{self.profile.observation_scope}'
+    if self.profile.observation_scope != 'natal':
+      year = self.profile.ganzhi_year
+      scope += f'；干支年={"未提供" if year is None else year}'
     lines = [
       f'判据：{criterion.criterion_id}；{criterion.definition}',
-      f'范围：全部明藏干；{self.profile.observation_scope}；干支年={self.profile.ganzhi_year}',
+      scope,
       f'{verdict_label}：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
       f'输入：{self.input_json}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
@@ -925,11 +929,14 @@ class ContextResult:
     if premise:
       lines.append('前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。')
     for value in self.occurrences:
-      lines.append(
+      occurrence = (
         f'证据：{value.origin}.{value.pillar}；{value.ganzhi}；'
-        f'{value.layer}；{value.stem}={value.shishen}；'
-        f'kind={None if value.kind is None else value.kind.value}；干支年={value.ganzhi_year}'
+        f'{value.layer}；{value.stem}={value.shishen}'
       )
+      if value.origin == 'transit':
+        assert value.kind is not None # ChartOccurrence 构造期已核流年坐标。
+        occurrence += f'；kind={value.kind.value}；干支年={value.ganzhi_year}'
+      lines.append(occurrence)
     for match in self.entries:
       lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
       lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))

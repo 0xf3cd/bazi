@@ -42,7 +42,7 @@ assert chart.bazi.day_master in Tiangan
 后端与大运年份规则分别由 `CalendarBackend.from_str`、`DayunYearRule.from_str` 解释成员名或值；
 流派档案仍传 `BaziSchool`，不接受字符串。不统一这些既有输入域。
 
-## 返回值、拷贝与相等性
+## 关系与附加查询
 
 ### 六甲旬空
 
@@ -60,9 +60,9 @@ assert chart.bazi.day_master in Tiangan
 ### 胎元与命宫附加查询
 
 `chart.taiyuan` 与 `chart.minggong` 是无参缓存属性，返回不可变的 `Ganzhi`，只在首次访问时计算。
-胎元按本盘月柱干顺移一、支顺移三，是符号派生，不反推实际受孕时刻。
-命宫以现有节月为基础，达到中气后月序循环进一，掌诀定宫支，再用本盘年干五虎遁配宫干。
-大寒后进正月不提前换八字年；时支固定取本盘时柱，DAY 也保留输入小时，换日设置（`day_rollover`）不改变时支。
+计算口径和可运行示例见[集成指南](docs/guides/integration.md#四柱之外胎元与命宫)；字段说明以
+[`BaziChart.taiyuan`](bazi/bazi_chart.py)／`minggong` 的 docstring 为准。时支固定取本盘时柱，
+DAY 也保留输入小时，换日设置（`day_rollover`）不改变时支。
 
 中气按本盘出生精度相等归新：DAY 比日期，HOUR 比完整日期中的时辰起点，MINUTE 比分钟起点；
 地点盘先把边界换到与出生相同的真太阳钟。HKO 仍只支持 DAY，不把零点占位视作真实时刻。
@@ -76,6 +76,8 @@ assert chart.bazi.day_master in Tiangan
 
 两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、JSON、旧文本输出，也不加入原有
 五行、十神、神煞、关系或流运分析。读取它们不使任何解释条目的前提自动成立。
+
+## 返回值、拷贝与相等性
 
 ### 共享与记录
 
@@ -127,16 +129,7 @@ assert chart.bazi.day_master in Tiangan
 目录包括仅参考条目独有值、未引用的注册对象／来源／情境及其时间范围；空库的 applicability 仍有三个合法值。
 合法值不保证默认输出有命中；`query` 与该目录共用合法值定义。
 
-```python
-from bazi.knowledge import KnowledgeBase
-
-knowledge = KnowledgeBase.load()
-objects = knowledge.find_objects('比肩')
-assert tuple(obj.object_id for obj in objects) == ('shishen.bijian',)
-topics = knowledge.filter_values('topic')
-entries = knowledge.search('比肩', object_id=objects[0].object_id, include_reference_only=True)
-assert isinstance(topics, tuple) and isinstance(entries, tuple)
-```
+查询示例见[独立知识库指南](docs/guides/knowledge.md#按名称或-id-找对象)；完整签名与字段说明由定义模块的 API 参考生成。
 
 ## 判据目录
 
@@ -168,18 +161,9 @@ assert isinstance(topics, tuple) and isinstance(entries, tuple)
 `EntryMatch` 可为 `UNKNOWN/binding_unrecognized`；`'related_unrecognized'` 表示 condition 条目的
 `RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
 
-```python
-from bazi.context_matching import ContextProfile, criterion, criteria
+目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节保留绑定识别、范围和条目关联的合同，不重复维护调用示例。
 
-directory = criteria()
-info = criterion('editorial.guansha_coexistence.v1')
-assert info == directory[info.criterion_id]
-assert info.profile_type is ContextProfile
-assert info.entry_role == 'premise'
-assert info.scope_inputs['natal_and_liunian'] == ('ganzhi_year',)
-```
-
-### 源码脚本
+## 源码脚本
 
 发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
 它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values topic` 对应 `filter_values('topic')`，

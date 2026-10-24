@@ -21,7 +21,7 @@ python -m pip install bazi
 
 ## 排第一张盘
 
-示例用虚构的出生时间。`Bazi.create` 接收无时区的民用时刻和性别，`BaziChart` 在它之上提供十神、大运等派生信息。
+示例用虚构的出生时间，按东八区（UTC+8）公历钟填写无时区 `datetime`。默认入口的年月与东八区节气表比较，日时按输入的钟读取，不自动换算时区；海外当地钟的限制见 {doc}`configuration`。`BaziChart` 在 `Bazi` 之上提供十神、大运等派生信息。
 
 ```{testcode} quickstart-chart
 from datetime import datetime
@@ -51,10 +51,11 @@ print('精度与后端', chart.json['precision'], chart.json['backend'])
 python show_chart.py
 ```
 
-把 `datetime(1990, 5, 17, 10, 30)` 换成公历出生民用时刻，`female` 为女、`male` 为男。本例没有经度，不自动换算时区或真太阳时；需要地点盘时先读 {doc}`configuration`。
+把 `datetime(1990, 5, 17, 10, 30)` 换成上面口径的公历出生钟时，`female` 为女、`male` 为男。本例没有经度，不换算真太阳时；地点盘或保留海外当地钟的需求先读 {doc}`configuration`，不要把时区转换与真太阳时当成同一个操作。
 
 - `bazi.pillars` 依次是年、月、日、时柱，每柱是一个 `Ganzhi`。
 - 性别字符串接受 `男`、`女`、`male`、`female`；`chart.json` 里统一存拉丁写法。
+- 藏干十神显示为单字简称，如财、才、官、杀；完整名称与简称见 {py:class}`~bazi.defines.shishen.Shishen`。
 - `chart.json` 是每次新建的字典，字段和配置都在里面。需要保存或交换时见 {doc}`integration`。
 
 ## 把盘排成文本
