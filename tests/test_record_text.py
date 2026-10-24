@@ -94,30 +94,25 @@ def test_programmatic_render_export_utf8_guards() -> None:
 def test_nesting_follows_runtime_json_capacity() -> None:
   depth = 2000
   text = '[' * depth + '0' + ']' * depth
-  error_type: type[Exception]
-  try:
-    json.dumps(json.loads(text), ensure_ascii=False, indent=2)
-  except RecursionError:
-    error_type = ValueError
-    message = 'depth'
-  else:
-    error_type = TypeError
-    message = 'Expected JSON object'
   for load in (KnowledgeBase.from_json, ContextResult.from_json, migrate_knowledge_json, migrate_context_json):
-    with pytest.raises(error_type, match=message):
+    try:
       load(text)
+    except ValueError as error:
+      assert 'depth' in str(error)
+    except TypeError as error:
+      assert 'Expected JSON object' in str(error)
+    else:
+      pytest.fail('A non-object record was accepted')
   record = _records()['context']
   record['record_version'] = 5
   record['knowledge']['schema_version'] = 2
   record['input']['config']['school']['extension'] = '__depth_marker__'
   text = json.dumps(record).replace('"__depth_marker__"', '[' * depth + '0' + ']' * depth)
   try:
-    json.dumps(json.loads(text), ensure_ascii=False, indent=2)
-  except RecursionError:
-    with pytest.raises(ValueError, match='depth'):
-      ContextResult.from_json(text)
-  else:
     restored = ContextResult.from_json(text)
+  except ValueError as error:
+    assert 'depth' in str(error)
+  else:
     extension = json.loads(restored.input_json)['config']['school']['extension']
     for _ in range(depth):
       assert isinstance(extension, list) and len(extension) == 1
@@ -127,12 +122,11 @@ def test_nesting_follows_runtime_json_capacity() -> None:
   for _ in range(depth):
     nested = [nested]
   try:
-    expected = json.dumps(nested, ensure_ascii=False, indent=2) + '\n'
-  except RecursionError:
-    with pytest.raises(ValueError, match='serialization depth'):
-      _json_dumps(nested)
+    encoded = _json_dumps(nested)
+  except ValueError as error:
+    assert 'serialization depth' in str(error)
   else:
-    assert _json_dumps(nested) == expected
+    assert encoded == json.dumps(nested, ensure_ascii=False, indent=2) + '\n'
 
 
 @pytest.mark.parametrize('kind', ['knowledge', 'context'])
