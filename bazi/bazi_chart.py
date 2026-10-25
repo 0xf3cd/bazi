@@ -1,27 +1,23 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''命盘派生信息与命盘 JSON。
-
-BaziChart 在 Bazi 上提供十神、藏干、纳音、十二长生与运限等信息；
-from_json 使用当前实现重算并核对记录，不是历史结果的冻结恢复。'''
+'''Bazi 上的命盘派生信息：十神、藏干、纳音、十二长生与运限等。'''
 
 import copy
 import functools
-import itertools
 from random import Random
 
 from calendar import monthrange
 from datetime import datetime, timedelta
-from typing import Final, TypeAlias, TypedDict, cast
-from collections.abc import Generator, Mapping, Sequence
+from typing import Final
+from collections.abc import Generator
 
 from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
   HiddenTianganDict, BaziData, GanzhiData,
 )
 from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi
-from .bazi import Bazi, BaziGender, LocationTimeJson, _parse_location
-from .school import DayunYearRule, BaziConfig, BaziSchool, PeiouXingDef, DEFAULT_CONFIG, _config_json
+from .bazi import Bazi, BaziGender
+from .school import DayunYearRule, BaziConfig, PeiouXingDef, DEFAULT_CONFIG
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
@@ -43,112 +39,6 @@ def _dayun_year_label(raw_year: int, first_year_label: int,
     return first_year_label if index == 0 else raw_year
   assert rule is DayunYearRule.FIXED_DECADE
   return first_year_label + 10 * index
-
-
-class BaziJson:
-  '''
-  命盘 JSON 的字段类型及内部构造辅助函数。
-  '''
-
-  class FourPillars(TypedDict):
-    '''供 `BaziChartJsonDict` 使用的四柱字段，不作为独立访问入口。'''
-    year:  str
-    month: str
-    day:   str
-    hour:  str
-
-  @staticmethod
-  def gen_fourpillars(data: Sequence[str]) -> 'BaziJson.FourPillars':
-    assert len(data) == 4
-    return { 'year': data[0], 'month': data[1], 'day': data[2], 'hour': data[3] }
-
-  class TianganShishens(TypedDict):
-    '''供 `BaziChartJsonDict` 使用的天干十神字段，不作为独立访问入口。
-    日主自身所在的 `day` 没有十神，存为 None（JSON null）。'''
-    year:  str | None
-    month: str | None
-    day:   str | None
-    hour:  str | None
-
-  @staticmethod
-  def gen_tiangan_shishens(data: Sequence[Shishen | None]) -> 'BaziJson.TianganShishens':
-    assert len(data) == 4
-    strs: list[str | None] = [None if s is None else str(s) for s in data]
-    return { 'year': strs[0], 'month': strs[1], 'day': strs[2], 'hour': strs[3] }
-
-  class Dayun(TypedDict):
-    '''供 `Transits` 使用的一步大运记录，不作为独立访问入口。'''
-    ganzhi: str
-    # 地点盘采用东八区无时区物理区间边界；默认路径采用输入钟时标签。
-    start_time: str
-    end_time: str
-
-  class Transits(TypedDict):
-    '''供 `BaziChartJsonDict` 使用的运限字段，不作为独立访问入口。'''
-    # 与 Dayun.start_time 使用相同时间坐标。
-    dayun_start_time: str
-
-    # 键为虚岁，值为对应小运。
-    xiaoyun: dict[str, str]
-
-    # 键为所选规则下的起运年份标签，不表示该步大运占据整个标签年；值为大运干支与物理区间。
-    dayun: dict[str, 'BaziJson.Dayun']
-
-  class School(TypedDict):
-    '''供 `BaziChartJsonDict` 使用的流派档案，不作为独立访问入口。
-    各读法存为枚举成员名；键为 `BaziSchool` 字段，按 dataclass 声明序排列。
-    序列化与 `BaziSchool.from_json` 均由该声明推导，并须满足本类型契约。'''
-    day_rollover: str
-    anhe_def: str
-    xing_def: str
-    gong_def: str
-    yangren_def: str
-    feiren_def: str
-    hongyan_anchor: str
-    tianyi_anchor: str
-    tianyi_def: str
-    yima_anchor: str
-    huagai_anchor: str
-    jiangxing_anchor: str
-    jiesha_anchor: str
-    wangshen_anchor: str
-    jinyu_anchor: str
-    zaisha_anchor: str
-    wenchang_anchor: str
-    wenchang_def: str
-    taiji_anchor: str
-    taiji_def: str
-    guoyin_anchor: str
-    guoyin_def: str
-    peiou_xing_def: str
-    kongwang_anchor: str
-
-  class _CommonChartJsonDict(TypedDict):
-    '''默认盘与地点盘 JSON 的共同字段。'''
-    gender: str
-    precision: str
-    backend: str
-    dayun_year_rule: str
-    school: 'BaziJson.School'
-    pillars: 'BaziJson.FourPillars'
-    nayin: 'BaziJson.FourPillars'
-    shier_zhangsheng: 'BaziJson.FourPillars'
-    tiangan_traits: 'BaziJson.FourPillars'
-    dizhi_traits: 'BaziJson.FourPillars'
-    tiangan_shishen: 'BaziJson.TianganShishens'
-    dizhi_shishen: 'BaziJson.FourPillars'
-    hidden_tiangan: 'BaziJson.FourPillars'
-    transits: 'BaziJson.Transits'
-
-  class DefaultBaziChartJsonDict(_CommonChartJsonDict):
-    '''默认盘 JSON，出生时刻为截断到分钟的输入钟时标签。'''
-    birth_time: str
-
-  class LocationBaziChartJsonDict(_CommonChartJsonDict, LocationTimeJson):
-    '''地点盘 JSON；时间字符串须使用输出端的规范 ISO 8601 拼写。'''
-
-  '''默认盘或地点盘 JSON 的完整字段类型。'''
-  BaziChartJsonDict: TypeAlias = DefaultBaziChartJsonDict | LocationBaziChartJsonDict
 
 
 def _peiou_xing_target(day_master: Tiangan, gender: BaziGender, definition: PeiouXingDef) -> Tiangan:
@@ -214,95 +104,6 @@ class BaziChart:
     '''
     return cls(Bazi.random(config, rng=rng))
 
-  @classmethod
-  def from_json(cls, d: Mapping[str, object]) -> 'BaziChart':
-    '''
-    从完整记录重建命盘，并与当前 `json` 输出逐项核对。
-
-    Args:
-    - d: (Mapping[str, object]) 已解析的 `BaziChart.json` 记录，不是 JSON 文本。
-
-    Note:
-    - 根对象须严格匹配 `BaziJson.DefaultBaziChartJsonDict` 或 `BaziJson.LocationBaziChartJsonDict`，
-      两者不可混用。所有字段必填；任何层级的多余键及非规范拼写均被拒绝。
-      映射顺序不限，派生值只核对、不存储。
-    - 键和字符串值必须是原生 `str`，不接受子类；空值为 `None`。
-    - 类型错误抛 `TypeError`；缺键、多键、不支持的值及不一致抛 `ValueError`。只保证与当前版本一致。
-      同时违反多个约束时，不保证先报告哪项错误。
-    - 不修改或持有调用方映射；重建的大运时刻线为空时，读取 `json` 核对会抛 `ValueError`。
-
-    Return: (BaziChart) 重建的命盘。
-    '''
-    if not isinstance(d, Mapping):
-      raise TypeError(f'Expected Mapping at chart, got {type(d)}')
-    for key in d:
-      if type(key) is not str:
-        raise TypeError(f'Expected str key at chart, got {type(key)}')
-
-    default_keys = BaziJson.DefaultBaziChartJsonDict.__required_keys__
-    location_keys = BaziJson.LocationBaziChartJsonDict.__required_keys__
-    location_aware: bool
-    if d.keys() == default_keys:
-      location_aware = False
-    elif d.keys() == location_keys:
-      location_aware = True
-    else:
-      raise ValueError(
-        f'Unexpected fields at chart: expected the default or location-aware roster, got {d.keys()}'
-      )
-
-    string_keys = ('gender', 'precision', 'backend', 'dayun_year_rule') + (
-      () if location_aware else ('birth_time',)
-    )
-    for key in string_keys:
-      if not isinstance(d[key], str):
-        raise TypeError(f'Expected str at {key}, got {type(d[key])}')
-    school = d['school']
-    if not isinstance(school, Mapping):
-      raise TypeError(f'Expected Mapping at school, got {type(school)}')
-
-    birth: datetime | str
-    longitude: float | None = None
-    if location_aware:
-      birth, longitude = _parse_location(d)
-    else:
-      birth = cast(str, d['birth_time'])
-
-    config = BaziConfig.from_values(
-      precision=cast(str, d['precision']),
-      backend=cast(str, d['backend']),
-      dayun_year_rule=cast(str, d['dayun_year_rule']),
-      school=BaziSchool.from_json(school),
-    )
-    chart = cls(
-      Bazi.create(
-        birth,
-        cast(str, d['gender']),
-        config,
-        longitude=longitude,
-      ),
-    )
-
-    def __compare(actual: object, expected: object, path: str) -> None:
-      if isinstance(expected, Mapping):
-        if not isinstance(actual, Mapping):
-          raise TypeError(f'Expected Mapping at {path}, got {type(actual)}')
-        for key in actual:
-          if type(key) is not str:
-            raise TypeError(f'Expected str key at {path}, got {type(key)}')
-        if actual.keys() != expected.keys():
-          raise ValueError(f'Unexpected fields at {path}: {actual.keys() ^ expected.keys()}')
-        for key, value in expected.items():
-          __compare(actual[key], value, f'{path}.{key}')
-      else:
-        if type(actual) is not type(expected):
-          raise TypeError(f'Expected {type(expected).__name__} at {path}, got {type(actual)}')
-        if actual != expected:
-          raise ValueError(f'Inconsistent value at {path}: {actual!r}; expected {expected!r}')
-
-    __compare(d, chart.json, 'chart')
-    return chart
-
   @property
   def bazi(self) -> Bazi:
     '''每次返回独立深拷贝；不使用 `cached_property`，避免调用方修改缓存中的共享 Bazi。'''
@@ -327,7 +128,7 @@ class BaziChart:
 
     依《命理探原》起例按语，现有节月达到中气后月序循环进一；大寒后不提前换年。
     中气按出生精度相等归新，地点盘先换真太阳钟。时区与精度政策是本库执行约定，
-    不称为古籍原文；结果不进入原四柱分析或 JSON。
+    不称为古籍原文；结果不进入原四柱分析。
     '''
     opening = self._bazi.month_jies[0]
     jieqis = Jieqi.as_list()
@@ -656,56 +457,6 @@ class BaziChart:
         yield LiunianTuple(year, ganzhi_of_year(year))
         year += 1
     return __liunian_generator()
-
-  @property
-  def json(self) -> BaziJson.BaziChartJsonDict:
-    '''
-    此命盘的 JSON 字典。
-    '''
-
-    dayuns: tuple[DayunTuple, ...] = tuple(itertools.islice(self.dayun, 10))
-    transits: BaziJson.Transits = {
-      'dayun_start_time': self.dayun_start_moment.isoformat(),
-      'xiaoyun': { str(age) : str(xiaoyun) for age, xiaoyun in self.xiaoyun },
-      'dayun': {
-        str(dayun.ganzhi_year): {
-          'ganzhi': str(dayun.ganzhi),
-          'start_time': dayun.start_moment.isoformat(),
-          'end_time': dayun.end_moment.isoformat(),
-        }
-        for dayun in dayuns
-      },
-    }
-
-    config = _config_json(self._bazi.config)
-    f = BaziJson.gen_fourpillars
-    common: BaziJson._CommonChartJsonDict = {
-      'gender': str(self._bazi.gender),
-      'precision': config['precision'],
-      'backend': config['backend'],
-      'dayun_year_rule': config['dayun_year_rule'],
-      'school': cast(BaziJson.School, config['school']),
-      'pillars': f([str(p) for p in self._bazi.pillars]),
-      'nayin': f([str(ny) for ny in self.nayin]),
-      'shier_zhangsheng': f([str(sz) for sz in self.shier_zhangsheng]),
-      'tiangan_traits': f([str(t.tiangan) for t in self.traits]),
-      'dizhi_traits': f([str(t.dizhi) for t in self.traits]),
-      'tiangan_shishen': BaziJson.gen_tiangan_shishens([s.tiangan for s in self.shishen]),
-      'dizhi_shishen': f([str(s.dizhi) for s in self.shishen]),
-      'hidden_tiangan': f([str(h) for h in self.hidden_tiangan]),
-      'transits': transits,
-    }
-    location_time = self._bazi.location_time
-    if location_time is None:
-      return {
-        'birth_time': self._bazi.solar_datetime.isoformat(),
-        **common,
-      }
-    return {
-      **location_time.json,
-      **common,
-    }
-
 
 def _check_bazi(bazi: object) -> None:
   '''`BaziChart` 构造器的类型检查；错型消息指向取得 `Bazi` 的方式。'''

@@ -4,9 +4,8 @@
 以及出生精度和大运年份投影选项 `BaziPrecision` / `DayunYearRule`。'''
 
 from enum import Enum
-from dataclasses import dataclass, fields
-from typing import Any, Final, TypedDict, cast
-from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Final
 
 from .calendar import CalendarBackend
 from .common import check_declared_types, frozendict, _compact_dataclass_repr
@@ -213,7 +212,7 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
 class BaziSchool:
   '''
   命盘采用的流派读法，只声明、不演算。`day_rollover` 在排盘期决定日柱，
-  其余字段在神煞与关系求值时读取。每个字段均参与相等性及 JSON；
+  其余字段在神煞与关系求值时读取。每个字段均参与相等性；
   只差一个选项的命盘也不同，相等档案的哈希相等。
 
   出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。
@@ -305,45 +304,6 @@ class BaziSchool:
       wenchang_anchor=Anchor.DAY,
     )
 
-  @classmethod
-  def from_json(cls, d: Mapping[str, object]) -> 'BaziSchool':
-    '''
-    从 `BaziChart.json` 的 `school` 对象还原流派档案，是序列化的逆运算。
-    各字段按自身声明的枚举解析，新增字段也会被读取。
-
-    Args:
-    - d: (Mapping[str, object]) 每个 `BaziSchool` 字段名对应其枚举成员名，
-      如 `{'day_rollover': 'WAN_ZISHI', ...}`；不对应字段的键被忽略。
-
-    Note:
-    - 入参不是 `Mapping` 抛 `TypeError`，缺字段抛 `ValueError`，
-      值非 `str` 抛 `TypeError`，成员名不存在抛 `ValueError`，锚超出支持范围则由构造函数
-      抛 `ValueError`。残缺字典不会回落默认值。
-
-    Return: (BaziSchool) 还原的冻结流派档案。
-
-    Examples:
-    - `BaziSchool.from_json(chart.json['school']) == chart.bazi.config.school`
-    '''
-
-    if not isinstance(d, Mapping):
-      raise TypeError(f'Expected Mapping, got {type(d)}')
-
-    kwargs: dict[str, Any] = {}
-    for f in fields(cls):
-      if f.name not in d:
-        raise ValueError(f'Missing school field: {f.name}')
-      name = d[f.name]
-      if not isinstance(name, str):
-        raise TypeError(f'Expected str, got {type(name)}')
-      declared = cast(type[Enum], f.type)
-      try:
-        kwargs[f.name] = declared[name]
-      except KeyError:
-        raise ValueError(f'Unsupported {declared.__name__}: {name}') from None
-
-    return cls(**kwargs)
-
 
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
@@ -352,7 +312,7 @@ DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 class BaziConfig:
   '''
   命盘级不可变配置，包括出生精度、历法后端、大运年份投影及求值时读取的流派档案。
-  Bazi 持有整个配置，配置参与相等性与 JSON。大运年份投影虽不改变四柱与大运物理时刻线，
+  Bazi 持有整个配置，配置参与相等性。大运年份投影虽不改变四柱与大运物理时刻线，
   仍属于命盘身份；相等配置的哈希相等。
 
   Args:
@@ -419,21 +379,3 @@ class BaziConfig:
 
 
 DEFAULT_CONFIG: Final[BaziConfig] = BaziConfig()
-
-
-class _ConfigJson(TypedDict):
-  backend:         str
-  precision:       str
-  dayun_year_rule: str
-  school:          dict[str, str]
-
-
-def _config_json(config: BaziConfig) -> _ConfigJson:
-  '''序列化配置值；流派字段存枚举成员名。'''
-  assert isinstance(config, BaziConfig)
-  return {
-    'backend':         str(config.backend),
-    'precision':       str(config.precision),
-    'dayun_year_rule': str(config.dayun_year_rule),
-    'school':          {knob.name: getattr(config.school, knob.name).name for knob in fields(config.school)},
-  }

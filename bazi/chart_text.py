@@ -164,7 +164,7 @@ def transit_text(
     `liunian_count` 年；小运是有限序列，全部列出。
   - 节与大运区间用节气表时刻（UTC+08:00），地点盘也不采用真太阳时。
   - 出生后没有大运起于历法支持范围内时（如 HKO 后端的 2099 年末出生），抛 `ValueError`，
-    与 `chart.xiaoyun`、`chart.json` 一致；`basic_text` 不受影响。
+    与 `chart.xiaoyun` 一致；`basic_text` 不受影响。
   - 文本以换行开头、换行结尾，可直接 `print`。
 
   Args:

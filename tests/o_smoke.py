@@ -28,18 +28,22 @@ def main() -> int:
   # Imports live here: at module level they would sit below the sys.path bootstrap and trip E402.
   import inspect
   import json
+  import os
+  from tempfile import TemporaryDirectory
   from dataclasses import replace
   from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
   from collections.abc import Callable
   from functools import partial
   from fractions import Fraction
   from zoneinfo import ZoneInfo
+  from unittest.mock import patch
 
   from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.knowledge import KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
-  from bazi.context_matching import ContextProfile, ContextResult, criterion as lookup_criterion, evaluate_context
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
+  from bazi.context_matching import ContextProfile, criterion as lookup_criterion, evaluate_context
+  from bazi.common import frozendict
   from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
@@ -62,8 +66,7 @@ def main() -> int:
     raise RuntimeError('Expected year 2024 to be supported')
   liunian = year_transits.select(TransitKind.LIUNIAN)
   transit_analysis = RelationshipAnalyzer(chart).transits
-  chart_json = chart.json
-  school_json: dict[str, object] = dict(chart_json['school'])
+  chart_input = chart.bazi
   decoded_jieqi = hko_data.DecodedJieqiDates()
   knowledge = KnowledgeBase.load()
   solar_date = CalendarDate(2024, 1, 1, CalendarType.公历)
@@ -74,38 +77,12 @@ def main() -> int:
   local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
   from bazi.context_matching import RelatedEntry, RelationshipProfile, TransitCoordinate
   from bazi.analyzer.relationship import StarAppearance
-  relationship_result = evaluate_context(
-    chart,
-    criterion_id='editorial.spouse_star_tougan.v1',
-    profile=RelationshipProfile('natal'),
-  )
-  relationship_json = json.loads(relationship_result.export_json())
-  bad_kind_record = json.dumps({
-    **relationship_json,
-    'relationship': {
-      **relationship_json['relationship'],
-      'appearances': [{'origin': 'transit', 'pillar': None, 'kind': 'bogus',
-                       'ganzhi': '辛亥', 'layer': 'visible', 'stem': '辛'}],
-    },
-  })
-  moment_result = evaluate_context(
-    chart,
-    criterion_id='editorial.spouse_star_tougan.v1',
-    profile=RelationshipProfile(
-      'natal_and_transits',
-      TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12)),
-      (TransitKind.LIUNIAN,),
-    ),
-  )
-  bad_moment_record = json.dumps({
-    **json.loads(moment_result.export_json()),
-    'profile': {
-      'scope': 'natal_and_transits',
-      'coordinate': {'entry': 'at_moment', 'gz_year': None, 'gz_month': None,
-                     'solar_date': None, 'solar_moment': '2024-04-10 12:00:00'},
-      'kinds': ['liunian'],
-    },
-  })
+  relationship_result = evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', profile=RelationshipProfile('natal'))
+  def load_source(text: str) -> KnowledgeBase:
+    with TemporaryDirectory(prefix='bazi-source-', dir=os.environ.get('SCRATCH')) as directory:
+      source = Path(directory) / 'knowledge.json'
+      source.write_text(text, encoding='utf-8')
+      return KnowledgeBase.load(source)
 
   class Year(int):
     pass
@@ -119,20 +96,6 @@ def main() -> int:
       return None
     def fromutc(self, dt: datetime) -> datetime:
       return dt
-
-  class StringKey(str):
-    pass
-
-  # Looks up like a mapping without being one; a list would raise TypeError on its own.
-  class _DuckMapping:
-    def __contains__(self, key: object) -> bool:
-      return True
-    def __getitem__(self, key: str) -> str:
-      return 'WAN_ZISHI'
-
-  class _EqualToAnything:
-    def __eq__(self, other: object) -> bool:
-      return True
 
   class EqualKey:
     def __init__(self, value: object) -> None:
@@ -228,18 +191,14 @@ def main() -> int:
      lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.庚)),
     ('StarAppearance rejects natal kind coordinate', ValueError,
      lambda: StarAppearance('natal', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)),
-    ('Relationship record rejects unknown appearance kind', ValueError,
-     lambda: ContextResult.from_json(bad_kind_record)),
-    ('Relationship record rejects non-canonical moment', ValueError,
-     lambda: ContextResult.from_json(bad_moment_record)),
     ('evaluate_context rejects unknown criterion', ValueError,
      lambda: evaluate_context(chart, criterion_id='typo', profile=ContextProfile('natal'))),
     ('evaluate_context rejects wrong profile', TypeError,
      lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile='natal')), # type: ignore[arg-type]
     ('evaluate_context rejects truthy reference flag', TypeError,
      lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=1)), # type: ignore[arg-type]
-    ('ContextResult restoration rejects wrong input', TypeError,
-     lambda: ContextResult.from_json(42)), # type: ignore[arg-type]
+    ('ContextResult rejects wrong Bazi input', TypeError,
+     lambda: replace(local_result, _bazi=42)), # type: ignore[arg-type]
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
     ('Bazi.create above window (2100-06-01)', ValueError,
@@ -291,57 +250,6 @@ def main() -> int:
        aware_birth, BaziGender.男,
        BaziConfig.from_values(precision='minute', backend='celestial-algo2'), longitude=120.0,
      )),
-    ('BaziChart.from_json non-mapping', TypeError,
-     lambda: BaziChart.from_json(_DuckMapping())), # type: ignore
-    ('BaziChart.from_json str-subclass root keys', TypeError,
-     lambda: BaziChart.from_json({StringKey(key): value for key, value in chart_json.items()})),
-    ('BaziChart.from_json str-subclass school keys', TypeError,
-     lambda: BaziChart.from_json({
-       **chart_json, 'school': {StringKey(key): value for key, value in school_json.items()},
-     })),
-    ('BaziChart.from_json str-subclass transit keys', TypeError,
-     lambda: BaziChart.from_json({
-       **chart_json, 'transits': {StringKey(key): value for key, value in chart_json['transits'].items()},
-     })),
-    ('BaziChart.from_json raw datetime', TypeError,
-     lambda: BaziChart.from_json({**chart_json, 'birth_time': datetime(2000, 1, 1, 12)})),
-    ('BaziChart.from_json partial chart', ValueError,
-     lambda: BaziChart.from_json({key: value for key, value in chart_json.items() if key != 'backend'})),
-    ('BaziChart.from_json extra field', ValueError,
-     lambda: BaziChart.from_json({**chart_json, 'unknown': 'extra'})),
-    ('BaziChart.from_json partial school', ValueError,
-     lambda: BaziChart.from_json({
-       **chart_json, 'school': {key: value for key, value in school_json.items() if key != 'day_rollover'},
-     })),
-    ('BaziChart.from_json extra school field', ValueError,
-     lambda: BaziChart.from_json({**chart_json, 'school': {**school_json, 'unknown': 'extra'}})),
-    ('BaziChart.from_json canonical gender', ValueError,
-     lambda: BaziChart.from_json({**chart_json, 'gender': '男'})),
-    ('BaziChart.from_json canonical time', ValueError,
-     lambda: BaziChart.from_json({**chart_json, 'birth_time': '2000-01-01 12:00:00'})),
-    ('BaziChart.from_json derived value', ValueError,
-     lambda: BaziChart.from_json({**chart_json, 'pillars': {**chart_json['pillars'], 'day': '甲子'}})),
-    ('BaziChart.from_json fake equal leaf', TypeError,
-     lambda: BaziChart.from_json({**chart_json, 'pillars': {**chart_json['pillars'], 'day': _EqualToAnything()}})),
-    ('BaziChart.from_json fake equal mapping', TypeError,
-     lambda: BaziChart.from_json({**chart_json, 'pillars': _EqualToAnything()})),
-    ('BaziChart.from_json null type', TypeError,
-     lambda: BaziChart.from_json({**chart_json, 'tiangan_shishen': {**chart_json['tiangan_shishen'], 'day': 'None'}})),
-    ('BaziChart.from_json extra xiaoyun key', ValueError,
-     lambda: BaziChart.from_json({
-       **chart_json, 'transits': {
-         **chart_json['transits'], 'xiaoyun': {**chart_json['transits']['xiaoyun'], '999': '甲子'},
-       },
-     })),
-    ('BaziChart.from_json derived dayun time', ValueError,
-     lambda: BaziChart.from_json({
-       **chart_json, 'transits': {
-         **chart_json['transits'], 'dayun': {
-           year: {**dayun, 'start_time': '2000-01-01T00:00:00'}
-           for year, dayun in chart_json['transits']['dayun'].items()
-         },
-       },
-     })),
     ('Bazi.random wrong config', TypeError,
      lambda: Bazi.random(None)), # type: ignore
     ('BaziChart.random wrong config', TypeError,
@@ -398,10 +306,10 @@ def main() -> int:
      lambda: knowledge.query(object_id=42)), # type: ignore[arg-type]
     ('KnowledgeBase truthy reference flag', TypeError,
      lambda: knowledge.query(include_reference_only=1)), # type: ignore[arg-type]
-    ('KnowledgeBase wrong JSON type', TypeError,
-     lambda: KnowledgeBase.from_json([])), # type: ignore[arg-type]
+    ('KnowledgeBase wrong source type', TypeError,
+     lambda: KnowledgeBase.load([])), # type: ignore[arg-type]
     ('KnowledgeBase duplicate JSON keys', ValueError,
-     lambda: KnowledgeBase.from_json('{"schema_version":1,"schema_version":1}')),
+     lambda: load_source('{"schema_version":1,"schema_version":1}')),
     ('KnowledgeRole wrong object type', TypeError,
      lambda: KnowledgeRole('role', 1)), # type: ignore[arg-type]
     ('KnowledgeEntry ineligible default', ValueError,
@@ -454,20 +362,10 @@ def main() -> int:
      lambda: shensha_utils.tianshe('寅', Ganzhi.from_str('戊寅'))), # type: ignore
     ('shensha_utils.tianshe on raw day string', TypeError,
      lambda: shensha_utils.tianshe(Dizhi.寅, '戊寅')), # type: ignore
-    ('BaziSchool.from_json non-mapping', TypeError,
-     lambda: BaziSchool.from_json(_DuckMapping())), # type: ignore
-    ('BaziSchool.from_json missing field', ValueError,
-     lambda: BaziSchool.from_json({})),
-    ('BaziSchool.from_json non-str value', TypeError,
-     lambda: BaziSchool.from_json({**school_json, 'day_rollover': 0})),
-    ('BaziSchool.from_json unknown member name', ValueError,
-     lambda: BaziSchool.from_json({**school_json, 'day_rollover': 'NOT_A_MEMBER'})),
     ('BaziSchool wrong Yima anchor', TypeError,
      lambda: BaziSchool(yima_anchor=object())), # type: ignore
     ('BaziSchool unsupported Hongyan anchor', ValueError,
      lambda: BaziSchool(hongyan_anchor=Anchor.YEAR_AND_DAY)),
-    ('BaziSchool.from_json unsupported anchor', ValueError,
-     lambda: BaziSchool.from_json({**school_json, 'hongyan_anchor': 'YEAR_AND_DAY'})),
     ('BaziSchool wrong Jinyu anchor', TypeError,
      lambda: BaziSchool(jinyu_anchor=object())), # type: ignore
     ('BaziSchool wrong Feiren definition', TypeError,
@@ -755,11 +653,6 @@ def main() -> int:
     for relations in (iter(DizhiRelation), [TianganRelation.合]):
       checks.append((f'{query.__name__} wrong relations', TypeError, partial(query, *args, relations=relations))) # type: ignore[arg-type]
   failures: list[str] = []
-  for gender in ('male', 'female'):
-    day_chart = BaziChart(Bazi.create('2000-02-04 10:00', gender))
-    old_data = day_chart.json
-    old_data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
-    checks.append((f'Old DAY derived JSON {gender}', ValueError, partial(BaziChart.from_json, old_data)))
   for label, birth, basis in (
     ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
@@ -781,35 +674,10 @@ def main() -> int:
       ('Solar primitive UTC conversion overflow', ValueError, partial(apparent_solar_datetime, birth, 0.0)),
       ('EOT reader UTC conversion overflow', ValueError, partial(EquationOfTimeTable().seconds_at, birth)),
     ])
-  for field_name, value, expected_error in (
-    ('civil_time', 42, TypeError), ('civil_time', '2024-01-01T12:00:00', ValueError),
-    ('canonical_instant', 42, TypeError), ('apparent_time', 42, TypeError),
-    ('civil_time', 'not-a-datetime', ValueError),
-    ('canonical_instant', 'not-a-datetime', ValueError),
-    ('apparent_time', 'not-a-datetime', ValueError),
-    ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
-    ('canonical_instant', '2030-01-01T00:00:00+00:00', ValueError),
-    ('canonical_instant', '2023-12-31T22:00:00.000001+00:00', ValueError),
-    ('civil_time', '2024-01-01T12:00:00+13:00', ValueError),
-    ('longitude', 180.0, ValueError), ('longitude', -0.0, ValueError),
-    ('longitude', 180, TypeError), ('apparent_time', '2024-01-01T11:27:00+00:00', ValueError),
-    ('time_basis', 'mean_solar', ValueError),
-    ('time_basis', 42, TypeError),
-  ):
-    bad_chart: dict[str, object] = {**local_chart.json, field_name: value}
-    bad_result = json.loads(local_result.export_json())
-    bad_result['input'][field_name] = value
-    checks.append((f'Location chart rejects {field_name}={value}', expected_error, partial(BaziChart.from_json, bad_chart)))
-    checks.append((f'Location record rejects {field_name}={value}', expected_error, partial(ContextResult.from_json, json.dumps(bad_result))))
   if local_chart.bazi.solar_date != date(2024, 1, 1) or local_chart.bazi.solar_datetime != datetime(2024, 1, 1, 11, 27):
     failures.append('Optimized Kiritimati civil date lost')
-  if BaziChart.from_json(local_chart.json).json != local_chart.json or ContextResult.from_json(local_result.export_json()) != local_result:
-    failures.append('Optimized location restoration failed')
-  historical = json.loads(local_result.export_json())
-  historical['input'].update(civil_time='1850-01-01T12:00:00+14:00', canonical_instant='1849-12-31T22:00:00+00:00', apparent_time='2000-01-01T12:00:00')
-  recovered = ContextResult.from_json(json.dumps(historical))
-  if recovered.criterion != local_result.criterion or recovered.occurrences != local_result.occurrences:
-    failures.append('Optimized observation recovery recalculated stored observations')
+  if local_result.bazi != local_chart.bazi or local_result.bazi.location_time != local_chart.bazi.location_time:
+    failures.append('Optimized context input lost location facts')
   location_bazi = local_chart.bazi
   for moment in (location_bazi.reference_datetime, location_bazi.solar_datetime):
     legacy_bazi = Bazi.create(moment, 'female', location_config)
@@ -819,13 +687,10 @@ def main() -> int:
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')
   positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian', 2024), include_reference_only=True)
-  if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or ContextResult.from_json(positive.export_json()) != positive:
-    failures.append('Optimized context evaluation/export/restoration failed')
-  legacy_record = json.loads(positive.export_json())
-  legacy_record['record_version'] = 1
+  if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or positive.bazi != chart.bazi:
+    failures.append('Optimized context evaluation/input failed')
   condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', profile=ContextProfile('natal'), include_reference_only=True)
   checks.extend([
-    ('Legacy context record version', ValueError, partial(ContextResult.from_json, json.dumps(legacy_record))),
     ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
     ('Premise record rejects condition references', ValueError, partial(replace, positive, related=condition.related)),
     ('Condition record rejects premise matches', ValueError, partial(replace, condition, entries=positive.entries[:1])),
@@ -860,8 +725,23 @@ def main() -> int:
   if bazi_utils.minggong(Tiangan.甲, Dizhi.辰, Dizhi.戌) != Ganzhi.from_str('丁卯'):
     failures.append('Optimized 命宫 example failed')
   _ = chart.taiyuan, chart.minggong
-  if chart.json != chart_json or len(chart.bazi.pillars) != 4:
+  if chart.bazi != chart_input or len(chart.bazi.pillars) != 4:
     failures.append('Optimized auxiliary query changed the natal chart')
+
+  source_data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+  bad_knowledge = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+  bad_knowledge['entries'][0]['text'] = '\ud800'
+  def parser_limit(load: Callable[[str], object]) -> None:
+    with patch('json.loads', side_effect=RecursionError('injected parser limit')):
+      load('{}')
+
+  checks.extend([
+    ('Knowledge rejects float source version', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': 2.0}))),
+    ('Knowledge rejects old source version', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': 1}))),
+    ('Knowledge rejects surrogate', ValueError, partial(load_source, json.dumps(bad_knowledge))),
+    ('Context render rejects surrogate key', ValueError, lambda: replace(positive, criterion=replace(positive.criterion, observations=frozendict({'\ud800': True}))).render()),
+  ])
+  checks.append(('Source parser limit remains a value error', ValueError, partial(parser_limit, load_source)))
 
   for label, expected, thunk in checks:
     try:

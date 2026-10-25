@@ -2,15 +2,14 @@
 
 '''可编辑的解释知识。'''
 
-import json
-from dataclasses import asdict, dataclass, fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
-from ._validation import _text, _choice, _tuple, _pairs, _mapping
+from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _utf8
 
 
 '''知识整理状态，不是命盘判别结果。
@@ -30,6 +29,7 @@ SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attrib
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
+_SCHEMA_VERSION: Final = 2
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
 _OUTPUTS: Final = get_args(OutputPolicy)
@@ -256,10 +256,10 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 
 class KnowledgeBase:
-  '''校验、索引、查询并导出不可变解释条目。
+  '''校验、索引、查询并渲染不可变解释条目。
 
   Note:
-  - JSON 为编辑来源；索引与导出由它生成。
+  - JSON 为编辑来源；加载时校验内容并建立索引。
   - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
     查来源，query(source_id=...) 查关联条目。
@@ -359,26 +359,17 @@ class KnowledgeBase:
     return self._entries
 
   @classmethod
-  def from_json(cls, text: str) -> 'KnowledgeBase':
-    '''加载严格 JSON，拒绝重复键、错误字段与断引用。
-
-    Args:
-    - text: (str) UTF-8 JSON 文字。
-    Return:
-    - (KnowledgeBase) 校验后的知识库。
-    '''
-    _text(text)
-    return cls._from_data(json.loads(text, object_pairs_hook=_pairs))
-
-  @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
-    '''包内嵌套知识记录入口，与 from_json 共用版本、字段及知识约束校验。'''
+    '''校验当前编辑源的版本、字段与引用。'''
     data = _mapping(
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
-    if type(data['schema_version']) is not int or data['schema_version'] != 1:
-      raise ValueError(f'Unsupported schema version: {data["schema_version"]}')
+    version = data['schema_version']
+    if type(version) is not int:
+      raise ValueError(f'Unsupported schema version type: {type(version)}')
+    if version != _SCHEMA_VERSION:
+      raise ValueError(f'Unsupported schema version: {version}')
     return cls(
       tuple(_decode(KnowledgeObject, item) for item in _array(data['objects'])),
       tuple(_decode(KnowledgeContext, item) for item in _array(data['contexts'])),
@@ -398,12 +389,12 @@ class KnowledgeBase:
       来源修改不影响已有对象，须再次加载才能取得更新。
 
     Return:
-    - (KnowledgeBase) 校验后的不可变知识快照。
+    - (KnowledgeBase) 校验后的不可变知识库对象。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')
     source = DEFAULT_SOURCE_PATH if path is None else path
-    return cls.from_json(source.read_text(encoding='utf-8'))
+    return cls._from_data(_json_loads(source.read_text(encoding='utf-8')))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
     '''按稳定标识查阅条目。'''
@@ -534,33 +525,6 @@ class KnowledgeBase:
 
     return tuple(entry for entry in candidates if __matches(entry))
 
-  def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
-    '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
-
-    Note:
-    - 省略 entries 时导出全部语料，包括仅供参考条目；导出不改变条目的输出资格。
-    '''
-    return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
-
-  def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
-    '''供包内嵌套的 JSON 结构；export_json 编码同一结构，条目选择的校验也在此完成。'''
-    selected = tuple(self.entries.values()) if entries is None else entries
-    _tuple(selected, KnowledgeEntry)
-    ids: set[str] = set()
-    for entry in selected:
-      if self.entries.get(entry.claim_id) != entry:
-        raise ValueError(f'Foreign entry: {entry.claim_id}')
-      if entry.claim_id in ids:
-        raise ValueError(f'Duplicate selection: {entry.claim_id}')
-      ids.add(entry.claim_id)
-    return {
-      'schema_version': 1,
-      'objects': [asdict(value) for value in self.objects.values()],
-      'contexts': [asdict(value) for value in self.contexts.values()],
-      'sources': [asdict(value) for value in self.sources.values()],
-      'entries': [asdict(value) for value in selected],
-    }
-
   def render(
     self,
     entry: KnowledgeEntry,
@@ -635,7 +599,7 @@ class KnowledgeBase:
           f'支持范围：{source.supports}',
           f'局限：{source.limitations}',
         ))
-    return '\n'.join(lines)
+    return _utf8('\n'.join(lines))
 
   def render_subject(
     self,
@@ -659,8 +623,8 @@ class KnowledgeBase:
     '''
     if not isinstance(show_sources, bool):
       raise TypeError(f'Expected bool, got {type(show_sources)}')
-    return '\n\n'.join(
+    return _utf8('\n\n'.join(
       '／'.join(entry.topics) + '：' + self.render(entry, show_sources=show_sources)
       for entry in self.query(object_id=object_id, include_reference_only=include_reference_only)
       if entry.legacy is None or entry.legacy.object_id == object_id
-    )
+    ))

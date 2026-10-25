@@ -1,10 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''知识语料与前提记录共用的结构校验；仅供包内调用，不是对外 API。
+'''知识编辑源、领域值与文字输出共用的结构及 UTF-8 校验；不是对外 API。'''
 
-这里只检查文字、元组、JSON 键、字段集合及调用方给定的成员集合。知识引用、判据与版本规则留在各自模块。
-'''
-
+import json
 from typing import Any, TypeVar
 
 
@@ -37,6 +35,7 @@ def _tuple(value: object, member_type: type[_T]) -> None:
 def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
   result: dict[str, object] = {}
   for key, value in pairs:
+    _utf8(key)
     if key in result:
       raise ValueError(f'Duplicate JSON key: {key}')
     result[key] = value
@@ -48,4 +47,32 @@ def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
     raise TypeError(f'Expected JSON object, got {type(value)}')
   if set(value) != set(keys):
     raise ValueError(f'JSON fields differ: {set(value) ^ set(keys)}')
+  return value
+
+
+def _utf8(text: str) -> str:
+  '''文字须能按 UTF-8 编码；不替换不支持的字符。'''
+  try:
+    text.encode('utf-8')
+  except UnicodeEncodeError:
+    raise ValueError('Unsupported surrogate in text; expected UTF-8') from None
+  return text
+
+
+def _json_loads(text: str) -> Any:
+  '''拒绝重复键和孤立代理项；键由解析 hook 检查，值使用显式栈遍历，避免深层值检查触发递归。'''
+  _text(text, empty=True)
+  try:
+    value = json.loads(text, object_pairs_hook=_pairs)
+  except RecursionError:
+    raise ValueError('JSON nesting exceeds the supported parsing depth') from None
+  pending = [value]
+  while pending:
+    current = pending.pop()
+    if isinstance(current, str):
+      _utf8(current)
+    elif isinstance(current, list):
+      pending.extend(current)
+    elif isinstance(current, dict):
+      pending.extend(current.values())
   return value

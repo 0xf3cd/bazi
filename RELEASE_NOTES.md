@@ -1,5 +1,12 @@
 # 发布说明
 
+## Unreleased
+
+- 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值，见 [未发布升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#未发布升级说明)。
+- `ContextResult` 的构造及 `replace` 使用 `_bazi` 参数，验证后保存 `Bazi` 输入的独立深拷贝；`bazi` 属性每次返回独立深拷贝。输入完整身份仍参与相等与哈希，原 `input_json` 字段删除。
+- 知识库保留 `KnowledgeBase.load(path)`、完整引用校验和查询／渲染。JSON 只作当前编辑源，`schema_version` 只接受精确整数 2，不自动迁移旧版来源。
+- 源码脚本删除 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json`；保留 TXT、知识编辑源读取和源文件覆盖保护。
+
 ## bazi 2.3.0
 
 本版含旧记录与源码脚本调用的破坏性变更，升级前请保留原记录及出生输入，见 [迁移说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)。

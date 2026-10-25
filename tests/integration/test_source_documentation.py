@@ -2,7 +2,6 @@
 
 import os
 import importlib.util
-import json
 import re
 import subprocess
 import sys
@@ -11,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from bazi.bazi_chart import BaziChart
+from bazi.bazi import Bazi
 from bazi.chart_text import basic_text
 
 
@@ -47,14 +47,12 @@ def test_first_chart_saves_readable_records(tmp_path: Path) -> None:
   assert result.returncode == 0, result.stdout + result.stderr
   expected = re.search(r'^```text\n(.*?)^```$', README, re.MULTILINE | re.DOTALL)
   assert expected is not None and result.stdout == expected[1]
-  assert {path.name for path in tmp_path.iterdir()} == {'first_chart.py', 'chart.txt', 'chart.json'}
-  record = json.loads((tmp_path / 'chart.json').read_text(encoding='utf-8'))
-  restored = BaziChart.from_json(record)
-  assert restored.json == record
-  assert record['pillars'] == {'year': '庚午', 'month': '辛巳', 'day': '壬午', 'hour': '乙巳'}
-  assert record['gender'] == 'female' and record['precision'] == 'day'
+  assert {path.name for path in tmp_path.iterdir()} == {'first_chart.py', 'chart.txt'}
+  expected_chart = BaziChart(Bazi.create('1990-05-17T10:30:00', 'female'))
+  assert tuple(map(str, expected_chart.bazi.pillars)) == ('庚午', '辛巳', '壬午', '乙巳')
+  assert str(expected_chart.bazi.gender) == 'female' and str(expected_chart.bazi.config.precision) == 'day'
   text = (tmp_path / 'chart.txt').read_text(encoding='utf-8')
-  assert text == basic_text(restored) and '\x1b' not in text
+  assert text == basic_text(expected_chart) and '\x1b' not in text
 
 
 @pytest.mark.parametrize('arguments', [

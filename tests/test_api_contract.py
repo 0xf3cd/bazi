@@ -149,6 +149,34 @@ def test_public_modules_describe_their_purpose() -> None:
     assert ast.get_docstring(ast.parse(path.read_text(encoding='utf-8'))), module
 
 
+def test_removed_persistence_is_absent() -> None:
+  import importlib
+  import importlib.util
+  import bazi
+  from bazi.bazi import Bazi, LocationTime
+  from bazi.bazi_chart import BaziChart
+  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+  from bazi.knowledge import KnowledgeBase
+  from bazi.school import BaziSchool
+  from bazi.transits import TransitSet
+  for module, name in (('bazi.bazi', 'LocationTimeJson'), ('bazi.bazi_chart', 'BaziJson'), ('bazi.school', '_ConfigJson'), ('bazi.school', '_config_json')):
+    assert not hasattr(importlib.import_module(module), name)
+  for owner, names in (
+    (BaziChart, ('json', 'from_json', '_from_data')), (LocationTime, ('json',)),
+    (BaziSchool, ('from_json',)), (TransitSet, ('json',)),
+    (ContextResult, ('input_json', 'export_json', 'from_json', '_from_data')),
+    (KnowledgeBase, ('export_json', 'from_json', '_export_data')),
+  ):
+    assert all(not hasattr(owner, name) for name in names)
+  assert importlib.util.find_spec('bazi.record_migration') is None
+  assert 'record_migration' not in dir(bazi) and 'record_migration' not in bazi.__all__
+  with pytest.raises(AttributeError):
+    bazi.record_migration # noqa: B018 # Removed lazy attribute must fail at runtime.
+  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
+  assert result.bazi == chart.bazi and result.render() and KnowledgeBase.load().entries
+
+
 def test_modules_and_candidates_classified() -> None:
   modules: set[str] = set()
   for path in (ROOT / 'bazi').rglob('*.py'):

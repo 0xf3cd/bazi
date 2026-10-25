@@ -1,12 +1,9 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import json
 from pathlib import Path
 
 import pytest
 
-from bazi.context_matching import ContextResult, RelationshipProfile
-from bazi.transits import TransitKind
 
 from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
 
@@ -44,7 +41,7 @@ def test_relationship_inputs_need_a_criterion(tmp_path: Path, args: tuple[str, .
 ])
 def test_relationship_rejects_unknown_options(tmp_path: Path, extra: tuple[str, ...]) -> None:
   output = tmp_path / 'match.json'
-  result = run_cli(tmp_path, *REL_BASE, '--transit-kinds', 'liunian', '--observation-scope', 'natal_and_transits', *extra, '--export-context-json', str(output))
+  result = run_cli(tmp_path, *REL_BASE, '--transit-kinds', 'liunian', '--observation-scope', 'natal_and_transits', *extra)
   assert result.returncode == 2 and 'error:' in result.stderr
   assert_cli_error(result, 'match', 'unrecognized arguments')
   assert not output.exists()
@@ -180,16 +177,10 @@ def test_kinds_without_coordinate_is_unknown(tmp_path: Path) -> None:
 
 
 def test_unordered_kinds_are_normalized(tmp_path: Path) -> None:
-  output = tmp_path / 'rel.json'
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian,dayun',
-                    '--transit-entry', 'at_year', '--ganzhi-year', '2024',
-                    '--export-context-json', str(output))
+                    '--transit-entry', 'at_year', '--ganzhi-year', '2024')
   assert result.returncode == 0, result.stderr
-  data = json.loads(output.read_text(encoding='utf-8'))
-  assert data['profile']['kinds'] == ['dayun', 'liunian']
-  restored = ContextResult.from_json(output.read_text(encoding='utf-8'))
-  assert isinstance(restored.profile, RelationshipProfile)
-  assert restored.profile.kinds == (TransitKind.DAYUN, TransitKind.LIUNIAN)
+  assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]' in result.stdout
 
 
 @pytest.mark.parametrize('entry_args', [

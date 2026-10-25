@@ -124,9 +124,9 @@ chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
 year = TransitChart(chart).at_year(2024)
 assert year is not None
 
-print(year.json)
+print([str(ganzhi) for ganzhi in year.ganzhis])
 print([kind.value for kind in year])
-print(year.select(TransitKind.LIUNIAN).json)
+print([str(ganzhi) for ganzhi in year.select(TransitKind.LIUNIAN).ganzhis])
 
 found = RelationshipAnalyzer(chart).transits.house_relations(year)
 for relation, combos in found.items():
@@ -136,9 +136,9 @@ print(DizhiRelation.害 is DizhiRelation.HAI, DizhiRelation.害.value)
 ```
 
 ```{testoutput} relations-house
-{'dayun': '丁丑', 'liunian': '甲辰'}
+['丁丑', '甲辰']
 ['dayun', 'liunian']
-{'liunian': '甲辰'}
+['甲辰']
 害 丑午
 生 丑午
 生 辰午
@@ -149,7 +149,7 @@ True 害
 
 - `at_year` 在出生年之前返回 `None`，所以先判断再用。返回的 `TransitSet` 只含当前有的种类（这里是大运和流年），
   缺项就是 `None`。`select` 要求指定种类全部存在，缺项抛 `ValueError`。
-- `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.json` 的键就是这些值，干支用中文。
+- `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.items` 按固定顺序给出种类与干支对。
 - 关系的键是 `DizhiRelation` 成员，有拉丁名和中文别名，二者是同一个对象（`DizhiRelation.害 is DizhiRelation.HAI`）。
 - 每个组合是一个 `frozenset` 的地支，不带次序，所以示例先按枚举序排序再打印。
   各关系的取法与流派定义看 {py:class}`~bazi.school.BaziSchool` 和 {py:class}`~bazi.defines.relations.DizhiRelation`。

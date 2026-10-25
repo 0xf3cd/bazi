@@ -1,11 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import json
 from dataclasses import replace
 
 import pytest
 
-from bazi.context_matching import ContextProfile, ContextResult, RelatedEntry, evaluate_context
+from bazi.context_matching import ContextProfile, RelatedEntry, evaluate_context
 from bazi.knowledge import KnowledgeBase
 
 from matching_samples import DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS, chart, match
@@ -45,21 +44,17 @@ def test_conditions_judge_only_computable_facts(
   assert any(o.origin == 'transit' for o in result.occurrences) is (year is not None)
   # The reference is attached whatever the fact verdict or gender, and never as a premise match.
   assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
-  data = json.loads(result.export_json())
-  assert data['entries'] == [] and data['related'] == [{'claim_id': CONDITION_CLAIMS[criterion_id], 'recognized': True}]
-  assert ContextResult.from_json(result.export_json()) == result
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
 def test_conditions_without_entry_still_judge(criterion_id: str) -> None:
   knowledge = KnowledgeBase.load()
   claim_id = CONDITION_CLAIMS[criterion_id]
-  custom = KnowledgeBase.from_json(knowledge.export_json(tuple(e for e in knowledge.entries.values() if e.claim_id != claim_id)))
+  custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), tuple(e for e in knowledge.entries.values() if e.claim_id != claim_id))
   result = match(3, criterion_id=criterion_id, knowledge=custom)
   assert result.criterion == match(3, criterion_id=criterion_id).criterion
   assert result.related == () and result.entries == ()
   assert '关联参考' not in result.render() and '事实判别不表示原文完整条件已满足' in result.render()
-  assert ContextResult.from_json(result.export_json()) == result
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
@@ -72,7 +67,6 @@ def test_conditions_keep_scope_reasons_apart(criterion_id: str, year: int | None
   assert result.criterion.observations == match(3, criterion_id=criterion_id).criterion.observations
   assert result.entries == () and result.related == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
   assert all(o.origin == 'natal' for o in result.occurrences)
-  assert ContextResult.from_json(result.export_json()) == result
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
@@ -100,16 +94,17 @@ def test_references_render_full_unevaluated_text(criterion_id: str) -> None:
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
 def test_reference_binding_leaves_the_fact(criterion_id: str) -> None:
   claim_id = CONDITION_CLAIMS[criterion_id]
-  data = json.loads(KnowledgeBase.load().export_json())
-  next(e for e in data['entries'] if e['claim_id'] == claim_id)['text'] = 'CUSTOM-REPLACEMENT-TEXT'
-  knowledge = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  original = KnowledgeBase.load()
+  knowledge = KnowledgeBase(
+    tuple(original.objects.values()), tuple(original.contexts.values()), tuple(original.sources.values()),
+    tuple(replace(e, text='CUSTOM-REPLACEMENT-TEXT') if e.claim_id == claim_id else e for e in original.entries.values()),
+  )
   result = match(3, criterion_id=criterion_id, knowledge=knowledge)
   assert result.related == (RelatedEntry(claim_id, False),)
   assert result.criterion == match(3, criterion_id=criterion_id).criterion
   rendered = result.render()
   assert f'：{claim_id}；绑定未识别' in rendered and 'CUSTOM-REPLACEMENT-TEXT' not in rendered
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result and restored.render() == rendered
+  assert result.render() == rendered
 
 
 def test_entry_role_separates_premise_condition() -> None:

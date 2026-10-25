@@ -1,18 +1,15 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import copy
-import json
 import math
 
 from datetime import UTC, date, datetime, timedelta, timezone
 from fractions import Fraction
-from typing import cast
 from zoneinfo import ZoneInfo
 
 import pytest
 
 from bazi.bazi import Bazi, BaziGender
-from bazi.bazi_chart import BaziChart, BaziJson
+from bazi.bazi_chart import BaziChart
 from bazi.calendar import CalendarBackend
 from bazi.defines import Dizhi
 from bazi.school import BaziConfig, BaziPrecision
@@ -191,7 +188,7 @@ def test_dayun_transit_bounds_use_absolute_time() -> None:
   assert transits.at_moment(datetime(2000, 1, 1, 20, 0)) is not None
 
 
-def test_same_instant_identity_canonical_json() -> None:
+def test_same_instant_identity() -> None:
   utc = Bazi.create(
     '2000-01-01T12:34:56+00:00',
     'female',
@@ -214,7 +211,7 @@ def test_same_instant_identity_canonical_json() -> None:
 
   assert utc == offset
   assert hash(utc) == hash(offset)
-  assert BaziChart(utc).json == BaziChart(offset).json
+  assert BaziChart(utc).bazi.location_time == BaziChart(offset).bazi.location_time
   assert utc != other_longitude
   assert len({utc, offset, other_longitude}) == 2
 
@@ -236,64 +233,9 @@ def test_dst_fold_is_absolute_distinction() -> None:
   assert first == same_first
   assert hash(first) == hash(same_first)
   assert first != second
-  first_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(first).json)
-  second_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(second).json)
-  assert first_json['canonical_instant'] == '2024-11-03T05:30:00+00:00'
-  assert second_json['canonical_instant'] == '2024-11-03T06:30:00+00:00'
-
-
-def test_location_json_roundtrip_tampering() -> None:
-  chart = BaziChart(Bazi.create(
-    '2000-01-01T07:34:00-05:00',
-    'female',
-    MINUTE_CONFIG,
-    longitude=116.4,
-  ))
-  data = json.loads(json.dumps(chart.json))
-  assert set(data) == BaziChart(chart.bazi).json.keys()
-  assert {'time_basis', 'canonical_instant', 'longitude', 'apparent_time'} <= set(data)
-  assert 'birth_time' not in data
-  assert BaziChart.from_json(data).json == chart.json
-
-  legacy = dict(BaziChart(Bazi.create('2000-01-01T12:34:00', 'female')).json)
-  for mixed in (
-    {**data, 'birth_time': legacy['birth_time']},
-    {**legacy, 'longitude': 116.4},
-    {**data, 'unknown': 'value'},
-  ):
-    with pytest.raises(ValueError, match='roster'):
-      BaziChart.from_json(mixed)
-
-  for key, value in (
-    ('time_basis', 'mean_solar'),
-    ('canonical_instant', '2000-01-01T12:35+00:00'),
-    ('longitude', 116.5),
-  ):
-    tampered = copy.deepcopy(data)
-    tampered[key] = value
-    with pytest.raises(ValueError):
-      BaziChart.from_json(tampered)
-
-  non_float_longitude = copy.deepcopy(data)
-  non_float_longitude['longitude'] = 116
-  with pytest.raises(TypeError, match='float at longitude'):
-    BaziChart.from_json(non_float_longitude)
-
-  zero_chart = BaziChart(Bazi.create(
-    '2000-01-01T12:34:00+00:00',
-    'female',
-    MINUTE_CONFIG,
-    longitude=0.0,
-  ))
-  negative_zero_longitude = copy.deepcopy(cast(BaziJson.LocationBaziChartJsonDict, zero_chart.json))
-  negative_zero_longitude['longitude'] = -0.0
-  with pytest.raises(ValueError, match='canonical longitude'):
-    BaziChart.from_json(negative_zero_longitude)
-
-  derived = copy.deepcopy(data)
-  derived['pillars']['hour'] = '甲子'
-  with pytest.raises(ValueError, match='pillars.hour'):
-    BaziChart.from_json(derived)
+  assert first.location_time is not None and second.location_time is not None
+  assert first.location_time.canonical_instant.isoformat() == '2024-11-03T05:30:00+00:00'
+  assert second.location_time.canonical_instant.isoformat() == '2024-11-03T06:30:00+00:00'
 
 
 @pytest.mark.parametrize('birth_time, pillars, hour_dizhi', [
@@ -339,13 +281,13 @@ def test_seconds_survive_apparent_conversion(config: BaziConfig) -> None:
   assert chart.bazi.hour_pillar.dizhi is Dizhi.丑
   assert floored.hour_pillar.dizhi is Dizhi.子
   assert chart.bazi != floored
-  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
-  assert data['canonical_instant'] == '2000-11-03T00:43:59+00:00'
-  assert data['apparent_time'] == '2000-11-03T01:00:25.084728'
-  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
+  facts = chart.bazi.location_time
+  assert facts is not None
+  assert facts.canonical_instant.isoformat() == '2000-11-03T00:43:59+00:00'
+  assert facts.apparent_time.isoformat() == '2000-11-03T01:00:25.084728'
 
 
-def test_instant_identity_microsecond_roundtrip() -> None:
+def test_instant_identity_keeps_microseconds() -> None:
   chart = BaziChart(Bazi.create(
     '2000-01-01T12:34:56.123456+00:00',
     'female',
@@ -369,12 +311,12 @@ def test_instant_identity_microsecond_roundtrip() -> None:
   assert hash(chart.bazi) == hash(offset)
   assert chart.bazi.solar_datetime == other_second.solar_datetime
   assert chart.bazi != other_second
-  assert cast(BaziJson.LocationBaziChartJsonDict, chart.json)['canonical_instant'] == '2000-01-01T12:34:56.123456+00:00'
-  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
+  assert chart.bazi.location_time is not None
+  assert chart.bazi.location_time.canonical_instant.isoformat() == '2000-01-01T12:34:56.123456+00:00'
 
 
 @pytest.mark.parametrize('direct', [False, True])
-def test_negative_zero_longitude_json_canonical(direct: bool) -> None:
+def test_negative_zero_longitude_is_positive(direct: bool) -> None:
   chart = BaziChart(_construct(
     direct,
     datetime(2000, 1, 1, 12, tzinfo=UTC),
@@ -384,7 +326,6 @@ def test_negative_zero_longitude_json_canonical(direct: bool) -> None:
   longitude = chart.bazi.longitude
   assert longitude is not None
   assert math.copysign(1.0, longitude) == 1.0
-  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
-  assert data['longitude'] == 0.0
-  assert math.copysign(1.0, data['longitude']) == 1.0
-  assert BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json
+  facts = chart.bazi.location_time
+  assert facts is not None and facts.longitude == 0.0
+  assert math.copysign(1.0, facts.longitude) == 1.0

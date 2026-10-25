@@ -76,18 +76,10 @@ def test_transit_set() -> None:
   assert TransitKind.LIUYUE in transits
   assert object() not in transits
   assert transits.ganzhis == (xiaoyun, dayun, liunian, liuyue, liuri)
-  assert transits.json == {
-    'xiaoyun': '癸未',
-    'dayun': '戊辰',
-    'liunian': '甲辰',
-    'liuyue': '丙寅',
-    'liuri': '戊戌',
-  }
 
   selected = transits.select(TransitKind.LIURI, TransitKind.DAYUN)
   assert selected == TransitSet(dayun=dayun, liuri=liuri)
   assert selected.ganzhis == (dayun, liuri)
-  assert selected.json == {'dayun': '戊辰', 'liuri': '戊戌'}
 
 
 def test_transit_set_negative() -> None:

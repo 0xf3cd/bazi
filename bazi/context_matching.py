@@ -2,27 +2,23 @@
 
 '''仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
+import copy
 import hashlib
 import json
-from collections.abc import Mapping
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
-from enum import Enum
-from typing import Any, Final, Literal, NamedTuple, TypeVar, get_args
+from typing import Final, Literal, NamedTuple, TypeVar, get_args
 
-from .bazi import BaziGender, LocationTimeJson, _parse_location
+from .bazi import Bazi, BaziGender
 from .bazi_chart import BaziChart, _check_chart
 from .common import frozendict
-from .data_types import GanzhiData
-from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation, TianganRelation
-from .analyzer.relationship import RelationshipEvidence, StarAppearance, StemRelationDiscovery, spouse_evidence
+from .defines import Dizhi, Ganzhi, Tiangan, Shishen, DizhiRelation
+from .analyzer.relationship import RelationshipEvidence, spouse_evidence
 from .knowledge import KnowledgeBase, KnowledgeEntry
-from ._validation import _text, _choice, _mapping, _pairs, _tuple
-from .school import BaziConfig, BaziSchool, _config_json
+from ._validation import _text, _choice, _tuple, _utf8
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
 from .utils.bazi_utils import hidden_tiangans, shishen
-from .utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
 
 
 '''完整前提判别，独立于知识整理状态。'''
@@ -48,7 +44,6 @@ Pillar = Literal['year', 'month', 'day', 'hour', 'liunian']
 
 _T = TypeVar('_T')
 _PILLARS: Final[tuple[Pillar, ...]] = ('year', 'month', 'day', 'hour')
-_RECORD_VERSION: Final = 4
 
 '''各入口结构上能取得的流运种类；取得与否还取决于命盘与后端，这张表只是上限。'''
 _ENTRY_KINDS: Final[frozendict[TransitEntry, frozenset[TransitKind]]] = frozendict({
@@ -147,7 +142,7 @@ def _observation_keys(criterion_id: str) -> tuple[str, ...]:
     return (_OBS_STAR_VISIBLE, _OBS_STAR_HIDDEN)
   raise ValueError(f'Unsupported criterion metadata: {criterion_id}')
 
-# 内容摘要包含完整条目及其绑定的对象、情境与来源记录，用于识别默认记录约定，不能只凭 ID 或展示词确认绑定。
+# 内容摘要包含完整条目及其绑定的对象、情境与来源，用于识别已知绑定，不能只凭 ID 或展示词确认。
 _BINDINGS: Final[frozendict[str, str]] = frozendict({
   'editorial.shishen.zhengguan.legal_trouble': 'd5cc38a85c86d67b130125b7832f1c68ba9499523dc5f3069ffa4c9fe83b79c8',
   'editorial.shishen.qisha.legal_trouble': 'dfec24146c99cb472d08f13a81fa94aef179e45c1ae55ddbdd9031b11d6dd8b0',
@@ -266,7 +261,7 @@ class RelationshipProfile:
     `natal_and_transits` 须显式给非空 `kinds`，缺查询坐标在求值期得到 UNKNOWN。
   - 有 `coordinate` 时 `kinds` 须落在该入口结构上支持的种类内。
   - 合法但乱序的 `kinds` 在类型与重复检查后按 `TransitSet.items` 的固定种类序规范化，
-    不因调用方顺序产生两份等价记录；JSON 恢复则要求记录已是规范序。
+    不因调用方顺序产生两份等价结果。
   '''
 
   scope:      RelationshipScope
@@ -515,202 +510,17 @@ class EntryMatch:
     _verdict(self.status, self.reason)
 
 
-def _validate_input(text: str) -> None:
-  data = _typed(json.loads(text, object_pairs_hook=_pairs), dict)
-  common_keys = {'gender', 'config', 'pillars'}
-  default_keys = common_keys | {'birth_time'}
-  location_keys = common_keys | LocationTimeJson.__required_keys__
-  if data.keys() == location_keys:
-    _parse_location(data)
-  elif data.keys() == default_keys:
-    _typed(data['birth_time'], str)
-    birth = datetime.fromisoformat(data['birth_time'])
-    if birth.tzinfo is not None or birth.second or birth.microsecond or birth.isoformat() != data['birth_time']:
-      raise ValueError('Expected canonical naive minute birth time')
-  else:
-    raise ValueError('Expected complete default or location-aware input roster')
-
-  _choice(data['gender'], ('male', 'female'))
-  config = _mapping(data['config'], tuple(field.name for field in fields(BaziConfig)))
-  BaziConfig.from_values(**{**config, 'school': BaziSchool.from_json(config['school'])})
-
-  pillars = _typed(data['pillars'], list)
-  if len(pillars) != 4:
-    raise ValueError('Expected four ordered natal pillars')
-  for value in pillars:
-    _typed(value, str)
-    Ganzhi.from_str(value)
-
-
 '''见 `RelationshipEvidence` 的序列契约：原局四柱为 0–3，所选岁运自 4 起。'''
 _NATAL_SEQUENCE_LENGTH: Final[int] = 4
-
-_COORDINATE_KEYS: Final[tuple[str, ...]] = ('entry', 'gz_year', 'gz_month', 'solar_date', 'solar_moment')
-_APPEARANCE_KEYS: Final[tuple[str, ...]] = ('origin', 'pillar', 'kind', 'ganzhi', 'layer', 'stem')
-_RELATIONSHIP_KEYS: Final[tuple[str, ...]] = (
-  'star_target', 'appearances', 'house_relations', 'star_relations', 'stem_relations', 'transits',
-)
-
-_EnumT = TypeVar('_EnumT', bound=Enum)
-_RelationEnumT = TypeVar('_RelationEnumT', DizhiRelation, TianganRelation)
-
-def _canonical_date(value: object) -> date:
-  '''要求规范 ISO 日期拼写；`datetime` 串与紧凑写法回读不等，均拒。'''
-  text = _typed(value, str)
-  parsed = date.fromisoformat(text)
-  if parsed.isoformat() != text:
-    raise ValueError(f'Expected canonical ISO date: {text}')
-  return parsed
-
-
-def _canonical_moment(value: object) -> datetime:
-  '''要求无时区、保留请求原样（含微秒）的规范时刻；空格分隔、`…15.25`、带偏移均拒。'''
-  text = _typed(value, str)
-  parsed = datetime.fromisoformat(text)
-  if parsed.tzinfo is not None or parsed.isoformat() != text:
-    raise ValueError(f'Expected canonical naive moment: {text}')
-  return parsed
-
-
-def _restore_kinds(value: object) -> tuple[TransitKind, ...]:
-  '''恢复种类列表：逐个成员复核、查重，且须已是固定种类序，非规范序拒绝。'''
-  kinds: list[TransitKind] = []
-  for item in _typed(value, list):
-    text = _typed(item, str)
-    try:
-      kinds.append(TransitKind(text))
-    except ValueError:
-      raise ValueError(f'Unsupported TransitKind: {text}') from None
-  if len(set(kinds)) != len(kinds):
-    raise ValueError(f'Duplicate transit kinds: {kinds}')
-  canonical = tuple(kind for kind in TransitKind if kind in set(kinds))
-  if tuple(kinds) != canonical:
-    raise ValueError(f'Expected transit kinds in the canonical order, got {kinds}')
-  return canonical
-
-
-def _restore_coordinate(value: object) -> TransitCoordinate:
-  data = _typed(value, dict)
-  _mapping(data, _COORDINATE_KEYS)
-  gz_year = data['gz_year']
-  if gz_year is not None and type(gz_year) is not int:
-    raise TypeError(f'Expected int | None, got {type(gz_year)}')
-  return TransitCoordinate(
-    data['entry'],
-    gz_year,
-    None if data['gz_month'] is None else Dizhi.from_str(_typed(data['gz_month'], str)),
-    None if data['solar_date'] is None else _canonical_date(data['solar_date']),
-    None if data['solar_moment'] is None else _canonical_moment(data['solar_moment']),
-  )
-
-
-def _restore_relationship_profile(data: dict[str, Any]) -> RelationshipProfile:
-  coordinate = None if data['coordinate'] is None else _restore_coordinate(data['coordinate'])
-  return RelationshipProfile(data['scope'], coordinate, _restore_kinds(data['kinds']))
-
-
-def _export_relation_combos(
-  discovery: Mapping[_EnumT, tuple[frozenset[GanzhiOccurrence], ...]],
-  declarations: tuple[_EnumT, ...],
-) -> dict[str, list[list[dict[str, object]]]]:
-  '''关系键按枚举声明序、组合按序号元组升序导出，同一结果字节稳定。'''
-  exported: dict[str, list[list[dict[str, object]]]] = {}
-  for relation in declarations:
-    combos = discovery.get(relation)
-    if combos is None:
-      continue
-    exported[relation.value] = [
-      [
-        {'index': occurrence.index, 'ganzhi': str(occurrence.ganzhi)}
-        for occurrence in sorted(combo, key=lambda occurrence: occurrence.index)
-      ]
-      for combo in sorted(combos, key=lambda combo: tuple(sorted(occurrence.index for occurrence in combo)))
-    ]
-  return exported
-
-
-def _restore_relation_combos(
-  value: object,
-  relation_type: type[_RelationEnumT],
-) -> dict[_RelationEnumT, tuple[frozenset[GanzhiOccurrence], ...]]:
-  data = _typed(value, dict)
-  result: dict[_RelationEnumT, tuple[frozenset[GanzhiOccurrence], ...]] = {}
-  for key, combos in data.items():
-    relation = relation_type.from_str(_typed(key, str))
-    restored: list[frozenset[GanzhiOccurrence]] = []
-    for combo in _typed(combos, list):
-      members: list[GanzhiOccurrence] = []
-      for member in _typed(combo, list):
-        item = _mapping(member, ('index', 'ganzhi'))
-        index = item['index']
-        if type(index) is not int:
-          raise TypeError(f'Expected int, got {type(index)}')
-        if index < 0:
-          raise ValueError(f'Expected a non-negative index, got {index}')
-        members.append(GanzhiOccurrence(index, Ganzhi.from_str(_typed(item['ganzhi'], str))))
-      restored.append(frozenset(members))
-    # 组合外层序按导出的同一排序键（序号元组升序）核对，非规范序拒绝；
-    # 关系键序与组合内成员序由映射与不可变集合吸收，不在此收紧。
-    order = [tuple(sorted(occurrence.index for occurrence in combo)) for combo in restored]
-    if order != sorted(order):
-      raise ValueError(f'Expected combos in the canonical order, got {order}')
-    result[relation] = tuple(restored)
-  return result
-
-
-def _restore_transits(value: object) -> TransitSet | None:
-  if value is None:
-    return None
-  data = _typed(value, dict)
-  kinds = _restore_kinds(list(data))
-  return TransitSet(**{
-    kind.value: Ganzhi.from_str(_typed(data[kind.value], str))
-    for kind in kinds
-  })
-
-
-def _restore_relationship(value: object) -> RelationshipEvidence:
-  data = _typed(value, dict)
-  _mapping(data, _RELATIONSHIP_KEYS)
-  target = _mapping(data['star_target'], ('tiangan', 'dizhi'))
-  appearances = []
-  for item in _typed(data['appearances'], list):
-    record = _mapping(item, _APPEARANCE_KEYS)
-    kind = None if record['kind'] is None else _transit_kind(record['kind'])
-    appearances.append(StarAppearance(
-      record['origin'],
-      record['pillar'],
-      kind,
-      Ganzhi.from_str(_typed(record['ganzhi'], str)),
-      record['layer'],
-      Tiangan.from_str(_typed(record['stem'], str)),
-    ))
-  return RelationshipEvidence(
-    GanzhiData(
-      Tiangan.from_str(_typed(target['tiangan'], str)),
-      tuple(Dizhi.from_str(_typed(dz, str)) for dz in _typed(target['dizhi'], list)),
-    ),
-    tuple(appearances),
-    GanzhiRelationDiscovery(_restore_relation_combos(data['house_relations'], DizhiRelation)),
-    GanzhiRelationDiscovery(_restore_relation_combos(data['star_relations'], DizhiRelation)),
-    StemRelationDiscovery(_restore_relation_combos(data['stem_relations'], TianganRelation)),
-    _restore_transits(data['transits']),
-  )
-
-
-def _transit_kind(value: object) -> TransitKind:
-  '''恢复岁运种类；这是 `StarAppearance` 的五值白名单，与原局／流年观察的 `('liunian',)` 是两份白名单。'''
-  _choice(value, tuple(kind.value for kind in TransitKind))
-  return TransitKind(value)
 
 
 @dataclass(frozen=True)
 class ContextResult:
   '''保存判别、证据及条目的不可变结果；婚恋结果另存结构证据，条件判据另存条件参考条目。
 
-  复用传入的已验证 KnowledgeBase，渲染不重建知识对象。JSON 保留判据、profile、
-  完整出生／性别／配置身份、年份／坐标／种类、全部观察、证据、输入与知识快照。
-  地点输入使用与命盘 JSON 相同的五个字段，保留固定民用基准及未截断真太阳钟。
+  构造参数 `_bazi` 接收 `Bazi` 输入，验证后保存独立深拷贝；`bazi` 属性每次返回独立深拷贝。
+  输入的完整身份参与相等与哈希，`knowledge` 复用传入的已验证 `KnowledgeBase`。
+  `render()` 直接读取领域值，不重新排盘或重建知识对象。
 
   Note:
   - 婚恋 profile 的结果 `occurrences` 恒为空，原局／流年 profile 不带 `relationship`；
@@ -724,7 +534,7 @@ class ContextResult:
   relationship:   RelationshipEvidence | None
   related:        tuple[RelatedEntry, ...]
   entries:        tuple[EntryMatch, ...]
-  input_json:     str
+  _bazi:          Bazi = field(repr=False)
   knowledge:      KnowledgeBase
 
   def __post_init__(self) -> None:
@@ -736,8 +546,8 @@ class ContextResult:
       raise TypeError(f'Expected RelationshipEvidence | None, got {type(self.relationship)}')
     _tuple(self.related, RelatedEntry)
     _tuple(self.entries, EntryMatch)
-    _typed(self.input_json, str)
-    _validate_input(self.input_json)
+    _typed(self._bazi, Bazi)
+    object.__setattr__(self, '_bazi', copy.deepcopy(self._bazi))
     _typed(self.knowledge, KnowledgeBase)
     for match in self.entries:
       self.knowledge.entry(match.claim_id)
@@ -777,141 +587,34 @@ class ContextResult:
     elif self.relationship is not None:
       raise ValueError('Context profile cannot carry relationship evidence')
 
-  def export_json(self) -> str:
-    '''导出版本4记录、全部证据及知识注册表，不改变参考输出资格。
+  @property
+  def bazi(self) -> Bazi:
+    '''每次返回独立深拷贝，不暴露结果持有的输入实例。'''
+    return copy.deepcopy(self._bazi)
 
-    原局／流年记录显式带 `relationship: null`，空的 `entries`／`related` 写空列表，不省键。
-    婚恋证据的关系键按枚举声明序、组合按序号元组升序导出，同一结果字节稳定。
-    '''
-    profile: object
-    if isinstance(self.profile, RelationshipProfile):
-      coordinate = self.profile.coordinate
-      coordinate_json: object = None
-      if coordinate is not None:
-        coordinate_json = {
-          'entry':        coordinate.entry,
-          'gz_year':      coordinate.gz_year,
-          'gz_month':     None if coordinate.gz_month is None else coordinate.gz_month.value,
-          'solar_date':   None if coordinate.solar_date is None else coordinate.solar_date.isoformat(),
-          'solar_moment': None if coordinate.solar_moment is None else coordinate.solar_moment.isoformat(),
-        }
-      profile = {
-        'scope':      self.profile.scope,
-        'coordinate': coordinate_json,
-        'kinds':      [kind.value for kind in self.profile.kinds],
-      }
+  def _render_input(self) -> str:
+    '''两个 profile 共用的输入说明，直接读取领域值，不重新排盘。'''
+    bazi = self._bazi
+    parts = [f'性别={bazi.gender}', '四柱=' + '、'.join(map(str, bazi.pillars))]
+    location = bazi.location_time
+    if location is None:
+      parts.append(f'出生钟时={bazi.solar_datetime.isoformat()}')
     else:
-      profile = asdict(self.profile)
-
-    relationship: object = None
-    if self.relationship is not None:
-      evidence = self.relationship
-      relationship = {
-        'star_target': {
-          'tiangan': str(evidence.star_target.tiangan),
-          'dizhi':   [str(dz) for dz in evidence.star_target.dizhi],
-        },
-        'appearances': [
-          {
-            'origin':  value.origin,
-            'pillar':  value.pillar,
-            'kind':    None if value.kind is None else value.kind.value,
-            'ganzhi':  str(value.ganzhi),
-            'layer':   value.layer,
-            'stem':    str(value.stem),
-          }
-          for value in evidence.appearances
-        ],
-        'house_relations': _export_relation_combos(evidence.house_relations, tuple(DizhiRelation)),
-        'star_relations':  _export_relation_combos(evidence.star_relations, tuple(DizhiRelation)),
-        'stem_relations':  _export_relation_combos(evidence.stem_relations, tuple(TianganRelation)),
-        'transits':        None if evidence.transits is None else evidence.transits.json,
-      }
-
-    data = {
-      'record_version': _RECORD_VERSION,
-      'profile': profile,
-      'criterion': {**asdict(self.criterion), 'observations': dict(self.criterion.observations)},
-      'occurrences': [
-        {**asdict(value), 'ganzhi': str(value.ganzhi), 'stem': str(value.stem), 'shishen': str(value.shishen),
-         'kind': None if value.kind is None else value.kind.value}
-        for value in self.occurrences
-      ],
-      'relationship': relationship,
-      'related': [asdict(value) for value in self.related],
-      'entries': [asdict(value) for value in self.entries],
-      'input': json.loads(self.input_json),
-      'knowledge': self.knowledge._export_data(),
-    }
-    return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
-
-  @classmethod
-  def from_json(cls, text: str) -> 'ContextResult':
-    '''恢复版本4记录并校验结构及各值类型，不重算或认证判别、证据、输入与条目绑定间的一致性。
-    旧版本记录明确拒绝；版本检查先于键集合检查，使真实 v2 记录得到版本拒绝而非键集差异。
-    需要新格式时应由原输入与配置重新求值。
-
-    Note:
-    - 地点输入校验字段集合、规范拼写及民用／UTC 瞬间相等，不重算命盘或观察。
-    - profile 按键集分派：`{observation_scope, ganzhi_year}` 为 `ContextProfile`，`{scope, coordinate, kinds}`
-      为 `RelationshipProfile`，两者不混写；婚恋记录的坐标、种类与证据按各自规范拼写逐项复核。
-    '''
-    _typed(text, str)
-    data = json.loads(text, object_pairs_hook=_pairs)
-    if not isinstance(data, dict):
-      raise TypeError(f'Expected JSON object, got {type(data)}')
-    version = data.get('record_version')
-    if type(version) is not int or version != _RECORD_VERSION:
-      raise ValueError('Unsupported record version')
-    _mapping(
-      data,
-      ('record_version', 'profile', 'criterion', 'occurrences', 'relationship', 'related', 'entries', 'input', 'knowledge'),
-    )
-
-    profile_data = _typed(data['profile'], dict)
-    profile: ContextProfile | RelationshipProfile
-    if set(profile_data) == {'observation_scope', 'ganzhi_year'}:
-      profile = ContextProfile(**_mapping(data['profile'], ('observation_scope', 'ganzhi_year')))
-    elif set(profile_data) == {'scope', 'coordinate', 'kinds'}:
-      profile = _restore_relationship_profile(_mapping(data['profile'], ('scope', 'coordinate', 'kinds')))
-    else:
-      raise ValueError(f'JSON fields differ: {set(profile_data)}')
-
-    criterion = _mapping(data['criterion'], tuple(field.name for field in fields(CriterionResult)))
-    _typed(criterion['observations'], dict)
-    criterion['observations'] = frozendict(criterion['observations'])
-    occurrences = []
-    for item in _typed(data['occurrences'], list):
-      value = _mapping(item, tuple(field.name for field in fields(ChartOccurrence)))
-      for name, domain in (('ganzhi', Ganzhi), ('stem', Tiangan), ('shishen', Shishen)):
-        _typed(value[name], str)
-        value[name] = domain.from_str(value[name])
-      if value['kind'] is not None:
-        _choice(value['kind'], ('liunian',))
-        value['kind'] = TransitKind.LIUNIAN
-      occurrences.append(ChartOccurrence(**value))
-    relationship = None if data['relationship'] is None else _restore_relationship(data['relationship'])
-    related = tuple(
-      RelatedEntry(**_mapping(item, ('claim_id', 'recognized'))) for item in _typed(data['related'], list)
-    )
-    entries = tuple(EntryMatch(**_mapping(item, ('claim_id', 'status', 'reason'))) for item in _typed(data['entries'], list))
-
-    return cls(
-      profile,
-      CriterionResult(**criterion),
-      tuple(occurrences),
-      relationship,
-      related,
-      entries,
-      json.dumps(data['input'], ensure_ascii=False),
-      KnowledgeBase._from_data(data['knowledge']),
-    )
+      parts.extend((
+        f'UTC瞬间={location.canonical_instant.isoformat()}',
+        f'民用时刻={location.civil_time.isoformat()}',
+        f'经度={location.longitude}',
+        f'真太阳时={location.apparent_time.isoformat()}',
+      ))
+    parts.append(f'配置={bazi.config!r}')
+    return '；'.join(parts)
 
   def render(self) -> str:
-    '''展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
+    '''直接读取结果持有的领域值，展示判别、证据及完整参考原文和来源限度。
+    不重新排盘，前提满足不表示事件成立。'''
     criterion = self.criterion
     if isinstance(self.profile, RelationshipProfile):
-      return self._render_relationship()
+      return _utf8(self._render_relationship())
 
     premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
     verdict_label = '结构前提' if premise else '事实判别'
@@ -923,7 +626,7 @@ class ContextResult:
       f'判据：{criterion.criterion_id}；{criterion.definition}',
       scope,
       f'{verdict_label}：{criterion.status}；{criterion.reason}；scope_complete={criterion.scope_complete}',
-      f'输入：{self.input_json}',
+      f'输入：{self._render_input()}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
     ]
     if premise:
@@ -942,7 +645,7 @@ class ContextResult:
       lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
     if not premise:
       lines.extend(self._render_related())
-    return '\n'.join(lines)
+    return _utf8('\n'.join(lines))
 
   def _render_relationship(self) -> str:
     '''婚恋结果的三栏证据与条件参考渲染；不输出任何「某组合在全局仍有效」的结论。'''
@@ -976,7 +679,7 @@ class ContextResult:
         f'取得种类=[{obtained_text}]；未取得种类=[{missing_text}]'
       ),
       f'事实判别：{self.criterion.status}；{self.criterion.reason}；scope_complete={self.criterion.scope_complete}',
-      f'输入：{self.input_json}',
+      f'输入：{self._render_input()}',
       '已知观察：' + json.dumps(dict(self.criterion.observations), ensure_ascii=False),
       f'配偶星：目标干={evidence.star_target.tiangan}；地支={"、".join(str(dz) for dz in evidence.star_target.dizhi)}',
     ]
@@ -1112,11 +815,12 @@ def evaluate_context(
     SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
   - 官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
     前提、情境、来源或输出政策，该条返回 binding_unrecognized。条件参考同样核对绑定，
-    不一致时记 `recognized=False`，不改变事实判别。等值的导出重载条目仍可匹配。
+    不一致时记 `recognized=False`，不改变事实判别。等值的条目仍可匹配。
   - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch 或 RelatedEntry。
     前提满足不授予默认输出资格。
 
-  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，以及输入与知识快照。
+  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，
+  以及 `Bazi` 输入的独立副本和本次使用的 `KnowledgeBase` 对象。
   '''
   _check_chart(chart)
   if not isinstance(profile, (ContextProfile, RelationshipProfile)):
@@ -1131,15 +835,6 @@ def evaluate_context(
     _typed(knowledge, KnowledgeBase)
   knowledge = KnowledgeBase.load() if knowledge is None else knowledge
   bazi = chart.bazi
-
-  location_time = bazi.location_time
-  identity = {
-    **({'birth_time': bazi.solar_datetime.isoformat()} if location_time is None else location_time.json),
-    'gender': str(bazi.gender),
-    'config': _config_json(bazi.config),
-    'pillars': [str(value) for value in bazi.pillars],
-  }
-  input_json = json.dumps(identity, ensure_ascii=False)
 
   if isinstance(profile, RelationshipProfile):
     unavailable: MatchReason | None = None
@@ -1192,7 +887,7 @@ def evaluate_context(
       evidence,
       tuple(RelatedEntry(*claim) for claim in eligible),
       (),
-      input_json,
+      bazi,
       knowledge,
     )
 
@@ -1279,6 +974,6 @@ def evaluate_context(
     None,
     related,
     tuple(matches),
-    input_json,
+    bazi,
     knowledge,
   )

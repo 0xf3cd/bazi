@@ -22,7 +22,7 @@ def test_basic(rng: random.Random) -> None:
 
   bazi_chart = BaziChart.random(rng=rng)
   transits = TransitChart(bazi_chart)
-  assert bazi_chart.json == transits.bazi_chart.json
+  assert bazi_chart.bazi == transits.bazi_chart.bazi
 
 
 def test_basic_negative(rng: random.Random) -> None:
@@ -142,7 +142,7 @@ def test_date_transits(backend: str) -> None:
     TransitKind.LIUYUE,
     TransitKind.LIURI,
   )
-  assert transits.json['liuri'] == str(ganzhi_of_day(solar_date))
+  assert transits.liuri == ganzhi_of_day(solar_date)
 
 
 def test_date_uses_day_level_calendar_coordinates() -> None:

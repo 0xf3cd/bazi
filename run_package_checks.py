@@ -181,7 +181,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
 
   python = consumer(work / 'typing-venv', rebuilt)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom bazi.bazi import Bazi, LocationTime, LocationTimeJson\nfrom bazi.bazi_chart import BaziChart, BaziJson\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
           'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime\n'
           'from bazi.defines import Dizhi, Jieqi, Tiangan\n'
           'from bazi.school import BaziConfig\n'
@@ -202,16 +202,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
           'witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]\n'
           'display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")\n'
           'subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)\n'
-          'text: str = knowledge.export_json(entries)\n'
           'matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
-          'record: str = matched.export_json()\n'
-          'restored: ContextResult = ContextResult.from_json(record)\n')
+          'result_input: Bazi = matched.bazi\n'
+          'copied: ContextResult = replace(matched, _bazi=result_input)\n'
+          'constructed: ContextResult = ContextResult(profile=matched.profile, criterion=matched.criterion, occurrences=matched.occurrences, relationship=matched.relationship, related=matched.related, entries=matched.entries, _bazi=result_input, knowledge=knowledge)\n')
   good += ('local: Bazi = Bazi.create(datetime(2023, 12, 31, 22, tzinfo=UTC), "female", '
            'BaziConfig.from_values(precision="minute"), longitude=-157.4, civil_timezone=timezone(timedelta(hours=14)))\n'
-           'local_chart: BaziChart = BaziChart.from_json(BaziChart(local).json)\n'
+           'local_chart: BaziChart = BaziChart(local)\n'
            'local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", profile=ContextProfile("natal"))\n'
-           'roster: BaziJson.BaziChartJsonDict = local_chart.json\n'
-           'pillars: BaziJson.FourPillars = roster["pillars"]\n'
            'coordinate: GanzhiYearMonth = local.ganzhi_year_month\n'
            'from_branch: GanzhiYearMonth = GanzhiYearMonth.from_dizhi(2000, Dizhi.寅)\n'
            'from_jie: GanzhiYearMonth = GanzhiYearMonth.from_jie(JieqiTime(Jieqi.立春, datetime(2000, 2, 4)))\n'
@@ -221,8 +219,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
            'if facts is not None:\n'
            '  instant: datetime = facts.canonical_instant\n'
            '  civil: datetime = facts.civil_time\n'
-           '  apparent: datetime = facts.apparent_time\n'
-           '  location_json: LocationTimeJson = facts.json\n')
+           '  apparent: datetime = facts.apparent_time\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
   bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
@@ -234,9 +231,10 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
                 'knowledge.render_subject(Tiangan.丁, include_reference_only=1)\n'
                 'knowledge.sources["editorial"] = witness\n'
                 'witness.work = "changed"\n'
-                'evaluate_context(chart, criterion_id=42, profile="natal")\nContextResult.from_json(42)\n'
-                'def unsafe_birth(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["birth_time"]\n'
-                'def unsafe_apparent(data: BaziJson.BaziChartJsonDict) -> str:\n  return data["apparent_time"]\n'
+                'evaluate_context(chart, criterion_id=42, profile="natal")\n'
+                'ContextResult(matched.profile, matched.criterion, matched.occurrences, matched.relationship, matched.related, matched.entries, 42, knowledge)\n'
+                'matched.bazi = chart.bazi\n'
+                'chart.json\nBaziChart.from_json({})\nmatched.input_json\nmatched.export_json()\nContextResult.from_json("")\nknowledge.export_json()\nKnowledgeBase.from_json("")\n'
                 'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
                 'GanzhiYearMonth.from_jie(datetime.now())\n'
                 'local.reference_datetime = datetime.now()\n'
@@ -257,7 +255,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'ContextProfile', 'evaluate_context', 'from_json', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
+  for interface in ('create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'ContextProfile', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('"None"',):
@@ -269,6 +267,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
     ('KnowledgeSource', 'work', 'witness.work = "changed"'),
     ('CriterionInfo', 'definition', 'info.definition = "changed"'),
+    ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
   ):
     line_number = bad.splitlines().index(trigger) + 1
     message = f'bad.py:{line_number}: error: Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
@@ -282,9 +281,9 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     message = f'bad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]'
     if message not in result.stdout.splitlines():
       raise ValueError(f'Installed typing negative control missed immutable {value_type} mapping')
-  for roster, key in (('LocationBaziChartJsonDict', 'birth_time'), ('DefaultBaziChartJsonDict', 'apparent_time')):
-    if f'TypedDict "{roster}" has no key "{key}"' not in result.stdout:
-      raise ValueError(f'Installed typing negative control missed {roster}.{key}')
+  for owner, removed_member in (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')):
+    if f'"{owner}" has no attribute "{removed_member}"' not in result.stdout:
+      raise ValueError(f'Installed typing negative control missed removed {owner}.{removed_member}')
 
   for path, digest in pair.items():
     if sha256(path) != digest:

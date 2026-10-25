@@ -1,6 +1,6 @@
 # 查阅知识库
 
-这篇教程不创建命盘。装好 `bazi` 后，你可以查对象、过滤和搜索条目、读出处，把所选条目导出再加载，也可以在内存里改一份副本。
+这篇教程不创建命盘。装好 `bazi` 后，你可以查对象、过滤和搜索条目、读出处，也可以修改自己的知识编辑源并加载。
 
 先说一个前提：知识库记录的是**文字及其出处**，不是对命盘的判断。`witnessed`（见证）说明条目绑定了已核定的原文出处，不证明这句话为真，也不证明现实中会发生什么。
 
@@ -26,7 +26,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 34 10 23 312
 ```
 
-`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变快照。
+`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
 
 这四个数字对应四份注册表：
 
@@ -294,59 +294,56 @@ ValueError Default entry needs independent lineages: tiangan.ding.definition
 
 第二个例子里，只留一个来源的条目通过了条目自身的检查（仍是 `default`），但放进知识库时因为只剩一个谱系被拒。另外，`source_state` 为 `unverified` 当且仅当 `sources` 为空，两者不一致也会被拒。
 
-## 导出所选条目并重新加载
+## 读取知识编辑源
 
-```{testcode} export
+```{testcode} source
 import json
 import tempfile
 from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
-kb = KnowledgeBase.load()
-chosen = kb.query(object_id='tiangan.ding', include_reference_only=True)
-text = kb.export_json(chosen)
+text = DEFAULT_SOURCE_PATH.read_text(encoding='utf-8')
 data = json.loads(text)
 print(list(data))
 print(data['schema_version'], len(data['entries']), len(data['objects']), len(data['sources']))
 print(list(data['entries'][0]))
-restored = KnowledgeBase.from_json(text)
-print(tuple(restored.entries.values()) == chosen)
-print(len(restored.entries), len(restored.objects))
-
 with tempfile.TemporaryDirectory() as folder:
-  path = Path(folder) / 'ding.json'
+  path = Path(folder) / 'knowledge.json'
   path.write_text(text, encoding='utf-8')
-  print(KnowledgeBase.load(path) == restored)
+  print(KnowledgeBase.load(path) == KnowledgeBase.load())
 ```
 
-```{testoutput} export
+```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-1 8 34 23
+2 312 34 23
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
 True
-8 34
-True
 ```
 
-导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（34 个对象、23 个来源），所以所选条目的引用不会断。
-
-`from_json` 与 `load(Path(...))` 走同一套校验。省略 `export_json` 的参数则导出全部条目，包括仅供参考的条目。
+当前编辑源由精确整数 `schema_version=2` 加四份注册表组成，加载时检查形状、状态和引用。
+不接受旧 schema 1，也不提供迁移、知识库 JSON 导出或历史结果恢复。字符串键和值中的孤立代理项会拒绝，不修复原文；
+知识渲染也检查 UTF-8，中文、非 BMP 字符与合法 JSON 转义仍可使用。
 
 ## 改一份本地副本
 
-想加几行自己的备注，改导出的 JSON 副本，再加载。下面只在内存里操作，不写回随包的 `knowledge_data.json`：
+想加几行自己的备注，复制当前编辑源，修改自己的文件再加载。下面使用临时副本，不写回随包的 `knowledge_data.json`：
 
 ```{testcode} edit
 import json
+import tempfile
+from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 kb = KnowledgeBase.load()
-data = json.loads(kb.export_json(kb.query(object_id='tiangan.ding')))
-entry = data['entries'][0]
+data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+entry = next(value for value in data['entries'] if value['claim_id'] == 'tiangan.ding.definition')
 entry['limits'].append('演示副本：此行为教程添加，不是来源内容。')
-copy = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+with tempfile.TemporaryDirectory() as folder:
+  path = Path(folder) / 'edited.json'
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  copy = KnowledgeBase.load(path)
 
 edited = copy.entry('tiangan.ding.definition')
 print(edited.claim_id, edited.text)
@@ -376,25 +373,31 @@ False
 
 ```{testcode} broken
 import json
+import tempfile
+from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 kb = KnowledgeBase.load()
-data = json.loads(kb.export_json(kb.query(object_id='tiangan.ding')))
-good = data['entries'][0]['sources']
-data['entries'][0]['sources'] = ['no_such_source']
-try:
-  KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
-except ValueError as error:
-  print(type(error).__name__, error)
-
-data['entries'][0]['sources'] = good
-print(len(KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False)).entries))
+data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+entry = next(value for value in data['entries'] if value['claim_id'] == 'tiangan.ding.definition')
+good = entry['sources']
+entry['sources'] = ['no_such_source']
+with tempfile.TemporaryDirectory() as folder:
+  path = Path(folder) / 'broken.json'
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  try:
+    KnowledgeBase.load(path)
+  except ValueError as error:
+    print(type(error).__name__, error)
+  entry['sources'] = good
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  print(len(KnowledgeBase.load(path).entries))
 ```
 
 ```{testoutput} broken
 ValueError Unknown source: no_such_source (tiangan.ding.definition)
-1
+312
 ```
 
 加载抛 `ValueError`，消息里带出未知的 ID 和出问题的条目。修法是让引用指回注册表里存在的 ID，要么改回，要么在 `sources` 里补上这条来源记录。对象和情境的引用同理；字段缺失、重复键、不支持的 `schema_version` 也都在加载时拒绝。
@@ -435,15 +438,14 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 
 ## 源码脚本
 
-仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑：
+仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，可以这样查询：
 
 ```sh
 python run_interpreter.py knowledge --object tiangan.ding
 python run_interpreter.py knowledge --list-values topic
 python run_interpreter.py knowledge \
   --object tiangan.ding \
-  --include-reference-only \
-  --export-knowledge-json output_data/knowledge.json
+  --include-reference-only
 ```
 
 只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。

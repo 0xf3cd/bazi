@@ -1,10 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import json
-
 import pytest
 
-from bazi.context_matching import ContextProfile, ContextResult, _BINDINGS, _binding_digest, evaluate_context
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import ContextProfile, CriterionResult, _BINDINGS, _binding_digest, evaluate_context
+from bazi.common import frozendict
 from bazi.defines import Shishen
 from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
@@ -24,7 +25,7 @@ def test_builtin_editorial_binding_fingerprint(claim_id: str) -> None:
 
 def test_literal_witnesses_and_negative_control() -> None:
   result = match()
-  assert json.loads(result.input_json)['pillars'] == ['己卯', '丙子', '庚申', '壬午']
+  assert tuple(map(str, result.bazi.pillars)) == ('己卯', '丙子', '庚申', '壬午')
   # This oracle is a literal ordered inventory, not a call to the production classifier.
   expected = (
     ('year', 0, '己卯', 'visible', '己', '正印'),
@@ -60,7 +61,7 @@ def test_non_main_hidden_stem_is_in_scope() -> None:
 
 def test_duplicate_pillars_keep_all_occurrences() -> None:
   result = match(1)
-  assert json.loads(result.input_json)['pillars'] == ['己卯', '丙子', '戊午', '戊午']
+  assert tuple(map(str, result.bazi.pillars)) == ('己卯', '丙子', '戊午', '戊午')
   repeated = [(o.pillar, o.index, str(o.ganzhi), str(o.stem)) for o in result.occurrences if o.layer == 'hidden' and o.ganzhi.dizhi.name == 'WU']
   assert repeated == [('day', 2, '戊午', '丁'), ('day', 2, '戊午', '己'), ('hour', 3, '戊午', '丁'), ('hour', 3, '戊午', '己')]
   assert result.criterion.status == 'NOT_SATISFIED'
@@ -70,7 +71,7 @@ def test_duplicate_pillars_keep_all_occurrences() -> None:
 
 def test_visible_guansha_satisfies_premise() -> None:
   result = evaluate_context(chart(5, hour=16), criterion_id=GUANSHA, profile=ContextProfile('natal'), include_reference_only=True)
-  assert json.loads(result.input_json)['pillars'] == ['己卯', '丙子', '壬戌', '戊申']
+  assert tuple(map(str, result.bazi.pillars)) == ('己卯', '丙子', '壬戌', '戊申')
   assert {(o.pillar, str(o.stem), str(o.shishen)) for o in result.occurrences if o.layer == 'visible' and o.shishen in (Shishen.正官, Shishen.七杀)} == {
     ('year', '己', '正官'), ('hour', '戊', '七杀'),
   }
@@ -103,7 +104,6 @@ def test_liunian_kind_and_cycle_identity() -> None:
     assert [(o.layer, str(o.stem), str(o.shishen)) for o in transit] == [
       ('visible', '甲', '七杀'), ('hidden', '戊', '比肩'), ('hidden', '乙', '正官'), ('hidden', '癸', '正财'),
     ]
-    assert ContextResult.from_json(result.export_json()) == result
   assert [(o.pillar, str(o.stem), str(o.shishen)) for o in first.occurrences] == [(o.pillar, str(o.stem), str(o.shishen)) for o in next_cycle.occurrences]
 
 
@@ -112,14 +112,36 @@ def test_liunian_label_has_no_calendar_cutoff() -> None:
   assert match(1, profile=ContextProfile('natal_and_liunian', 10000)).criterion.scope_complete
 
 
-def test_export_keeps_evidence_year_kind_input() -> None:
+def test_evidence_keeps_year_kind_input() -> None:
   result = match(1, profile=ContextProfile('natal_and_liunian', 2024))
-  data = json.loads(result.export_json())
-  assert data['record_version'] == 4
-  assert data['profile'] == {'observation_scope': 'natal_and_liunian', 'ganzhi_year': 2024}
-  assert data['input'] == json.loads(result.input_json)
-  assert len(data['occurrences']) == 13
-  assert data['occurrences'][-3:] == [
-    {'origin': 'transit', 'pillar': 'liunian', 'ganzhi': '甲辰', 'layer': 'hidden', 'stem': stem, 'shishen': classification, 'kind': 'liunian', 'ganzhi_year': 2024}
-    for stem, classification in [('戊', '比肩'), ('乙', '正官'), ('癸', '正财')]
-  ]
+  assert result.profile == ContextProfile('natal_and_liunian', 2024)
+  assert result.bazi == chart(1).bazi
+  assert len(result.occurrences) == 13
+  assert tuple((o.origin, o.pillar, str(o.ganzhi), o.layer, str(o.stem), str(o.shishen), o.kind, o.ganzhi_year) for o in result.occurrences[-3:]) == (
+    ('transit', 'liunian', '甲辰', 'hidden', '戊', '比肩', TransitKind.LIUNIAN, 2024),
+    ('transit', 'liunian', '甲辰', 'hidden', '乙', '正官', TransitKind.LIUNIAN, 2024),
+    ('transit', 'liunian', '甲辰', 'hidden', '癸', '正财', TransitKind.LIUNIAN, 2024),
+  )
+
+
+def test_historical_default_observations() -> None:
+  # Literal criterion and occurrences from ddfe16e7c51d695167b09cc4c2f64ba46e7565c3.
+  result = evaluate_context(
+    BaziChart(Bazi.create('2000-01-01T12:00:00', 'male')),
+    criterion_id=GUANSHA, profile=ContextProfile('natal'),
+  )
+  assert result.criterion == CriterionResult(
+    GUANSHA, '选定范围内正官与七杀各至少出现一次。', 'NOT_SATISFIED',
+    'required_classification_absent', True, frozendict({'observed_coexistence': False, 'female': False}),
+  )
+  assert tuple((o.origin, o.pillar, str(o.ganzhi), o.layer, str(o.stem), str(o.shishen), o.kind, o.ganzhi_year) for o in result.occurrences) == (
+    ('natal', 'year', '己卯', 'visible', '己', '劫财', None, None),
+    ('natal', 'year', '己卯', 'hidden', '乙', '正官', None, None),
+    ('natal', 'month', '丙子', 'visible', '丙', '偏印', None, None),
+    ('natal', 'month', '丙子', 'hidden', '癸', '正财', None, None),
+    ('natal', 'day', '戊午', 'hidden', '丁', '正印', None, None),
+    ('natal', 'day', '戊午', 'hidden', '己', '劫财', None, None),
+    ('natal', 'hour', '戊午', 'visible', '戊', '比肩', None, None),
+    ('natal', 'hour', '戊午', 'hidden', '丁', '正印', None, None),
+    ('natal', 'hour', '戊午', 'hidden', '己', '劫财', None, None),
+  )

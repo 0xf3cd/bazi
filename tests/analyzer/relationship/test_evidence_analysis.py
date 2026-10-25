@@ -25,6 +25,22 @@ def _at(combo: frozenset) -> set[int]:
   return {occurrence.index for occurrence in combo}
 
 
+def test_evidence_order_is_part_of_value() -> None:
+  from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
+  c = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  evidence = spouse_evidence(c, None)
+  combos = evidence.star_relations[DizhiRelation.冲]
+  assert tuple(tuple(sorted(o.index for o in combo)) for combo in combos) == ((1, 2), (1, 3))
+  shuffled = GanzhiRelationDiscovery(dict(reversed(list(evidence.star_relations.items()))))
+  assert shuffled == evidence.star_relations
+  assert frozenset(reversed(tuple(combos[0]))) == combos[0]
+  assert GanzhiRelationDiscovery({DizhiRelation.冲: tuple(reversed(combos))}) != GanzhiRelationDiscovery({DizhiRelation.冲: combos})
+  with pytest.raises(ValueError):
+    GanzhiOccurrence(-1, Ganzhi.from_str('甲子'))
+  appearances = spouse_evidence(BaziChart(Bazi.create('2000-01-29 06:00', 'male')), None)
+  assert replace(appearances, appearances=tuple(reversed(appearances.appearances))) != appearances
+
+
 def test_stem_occurrences_expand_per_position() -> None:
   left = [Ganzhi.from_str(value) for value in ('甲子', '己丑', '丙寅', '己卯')]
   right = [Ganzhi.from_str(value) for value in ('甲子', '丙寅', '己丑', '己卯')]
@@ -69,7 +85,7 @@ def test_evidence_transit_relations_shift_indexes() -> None:
 
   # One liunian forms no internal relation and cannot verify numbering; internal relations need two or more transits (above).
   single = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('甲辰')))
-  assert single.transits is not None and single.transits.json == {'liunian': '甲辰'}
+  assert single.transits is not None and single.transits.items == ((TransitKind.LIUNIAN, Ganzhi.from_str('甲辰')),)
   for discovery in (single.house_relations, single.star_relations):
     for combos in discovery.values():
       for combo in combos:
