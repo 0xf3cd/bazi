@@ -23,6 +23,90 @@ class Year(int):
   pass
 
 
+@pytest.mark.parametrize('decoder_type, stop', [
+  (hko_data.DecodedJieqiDates, 2101),
+  (hko_data.DecodedLunarYears, 2100),
+])
+@pytest.mark.parametrize('year, error_type', [
+  (True, ValueError), (False, ValueError), (2000.0, TypeError), ('2000', TypeError), (None, TypeError),
+])
+def test_year_rejection_keeps_message(
+  decoder_type: type[hko_data.DecodedJieqiDates] | type[hko_data.DecodedLunarYears],
+  stop: int,
+  year: object,
+  error_type: type[Exception],
+) -> None:
+  decoded = decoder_type()
+  expected = (
+    f'Year {year} is out of the supported range range(1901, {stop})'
+    if error_type is ValueError else f'Expected int, got {type(year)}'
+  )
+  with pytest.raises(error_type) as error:
+    decoded[year] # type: ignore[index]
+  assert str(error.value) == expected
+  with pytest.raises(error_type) as error:
+    if isinstance(decoded, hko_data.DecodedJieqiDates):
+      decoded.get(year, Jieqi.立春) # type: ignore[arg-type]
+    else:
+      decoded.get(year) # type: ignore[arg-type]
+  assert str(error.value) == expected
+
+
+@pytest.mark.parametrize('decoder_type', [hko_data.DecodedJieqiDates, hko_data.DecodedLunarYears])
+def test_year_int_subclass_keeps_results(
+  decoder_type: type[hko_data.DecodedJieqiDates] | type[hko_data.DecodedLunarYears],
+) -> None:
+  decoded = decoder_type()
+  assert decoded[Year(2000)] == decoded[2000]
+  if isinstance(decoded, hko_data.DecodedJieqiDates):
+    assert decoded.get(Year(2000), Jieqi.立春) == date(2000, 2, 4)
+  else:
+    assert decoded.get(Year(2000)) == decoded[2000]
+
+
+@pytest.mark.parametrize('year, error_type, expected', [
+  ('2000', TypeError, "Expected int, got <class 'str'>"),
+  (True, ValueError, 'Year True is out of the supported range range(1901, 2101)'),
+  (2101, ValueError, 'Year 2101 is out of the supported range range(1901, 2101)'),
+  (2000, TypeError, "Expected Jieqi, got <class 'NoneType'>"),
+])
+def test_year_failure_precedes_jieqi(
+  year: object,
+  error_type: type[Exception],
+  expected: str,
+) -> None:
+  decoded = hko_data.DecodedJieqiDates()
+  with pytest.raises(error_type) as error:
+    decoded.get(year, None) # type: ignore[arg-type]
+  assert str(error.value) == expected
+
+
+@pytest.mark.parametrize('decoder_type, stop', [
+  (hko_data.DecodedJieqiDates, 2101),
+  (hko_data.DecodedLunarYears, 2100),
+])
+def test_year_type_precedes_range_lookup(
+  decoder_type: type[hko_data.DecodedJieqiDates] | type[hko_data.DecodedLunarYears],
+  stop: int,
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  decoded = decoder_type()
+  lookups: list[None] = []
+
+  def supported() -> range:
+    lookups.append(None)
+    return range(1901, stop)
+
+  monkeypatch.setattr(decoded, 'supported_year_range', supported)
+  with pytest.raises(TypeError, match='Expected int'):
+    decoded['2000'] # type: ignore[index]
+  assert lookups == []
+  with pytest.raises(ValueError) as error:
+    decoded[1900]
+  assert str(error.value) == f'Year 1900 is out of the supported range range(1901, {stop})'
+  assert lookups == [None, None]
+
+
 def test_traditional_chinese_jieqi() -> None:
   assert len(hko_data.jieqi_list_in_traditional_chinese) == 24
 

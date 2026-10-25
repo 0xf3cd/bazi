@@ -59,10 +59,15 @@ def kongwang_strs(results: tuple[KongwangResult, ...]) -> list[str]:
   lines = []
   for result in results:
     absent = ''.join(map(str, sorted(result.xunkong, key=lambda dz: dz.index)))
-    hits = '、'.join(
-      f'{pillars[hit.pillar] if hit.pillar is not None else hit.kind.value} {hit.ganzhi}' # type: ignore[union-attr] # 流运命中必有 kind。
-      for hit in result.hits
-    )
+    hit_texts: list[str] = []
+    for hit in result.hits:
+      if hit.pillar is not None:
+        label = pillars[hit.pillar]
+      else:
+        assert hit.kind is not None
+        label = hit.kind.value
+      hit_texts.append(f'{label} {hit.ganzhi}')
+    hits = '、'.join(hit_texts)
     lines.append(f'{pillars[result.anchor]} {result.ganzhi} → 旬空{absent}；命中：{hits or "无"}')
   return lines
 

@@ -3,7 +3,7 @@
 
 import random
 import itertools
-from collections.abc import Iterable
+from collections.abc import Iterable, Callable
 
 import pytest
 
@@ -25,6 +25,23 @@ def _tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
     if s not in _l2:
       return False
   return True
+
+
+@pytest.mark.parametrize('query', [tiangan_utils.he, tiangan_utils.chong, tiangan_utils.sheng, tiangan_utils.ke])
+@pytest.mark.parametrize('args, bad', [
+  ((True, Tiangan.甲), True),
+  ((Tiangan.甲, True), True),
+  (('甲', 1), '甲'),
+  ((1, '甲'), 1),
+])
+def test_pair_rejection_keeps_first_error(
+  query: Callable[..., object],
+  args: tuple[object, object],
+  bad: object,
+) -> None:
+  with pytest.raises(TypeError) as error:
+    query(*args)
+  assert str(error.value) == f'Expected Tiangan, got {type(bad)}'
 
 
 def test_search_basic() -> None:

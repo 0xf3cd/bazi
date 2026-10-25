@@ -13,6 +13,7 @@ import functools
 from pathlib import Path
 from datetime import date
 from typing import TypedDict, Final
+from collections.abc import Callable
 
 from ...defines import Jieqi, Ganzhi
 
@@ -24,6 +25,15 @@ from .common import (
 
 '''节气到公历日期的映射。'''
 JieqiDates = dict[Jieqi, date]
+
+
+def _validate_year(year: int, supported_year_range: Callable[[], range]) -> None:
+  '''先检查年份类型，再查询解码器自己的支持范围。'''
+  if not isinstance(year, int):
+    raise TypeError(f'Expected int, got {type(year)}')
+  if year not in supported_year_range():
+    raise ValueError(f'Year {year} is out of the supported range {supported_year_range()}')
+
 
 class DecodedJieqiDates:
   '''
@@ -74,10 +84,7 @@ class DecodedJieqiDates:
 
   def __getitem__(self, year: int) -> JieqiDates:
     '''查询公历年 year 的全部节气日期。'''
-    if not isinstance(year, int):
-      raise TypeError(f'Expected int, got {type(year)}')
-    if year not in self.supported_year_range():
-      raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
+    _validate_year(year, self.supported_year_range)
 
     # 提取输入年份的字节。
     year_bytes: bytes = self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len : (year - self.start_year + 1) * 24 * DecodedJieqiDates.date_bytes_len]
@@ -94,10 +101,7 @@ class DecodedJieqiDates:
     '''
     查询公历年 year 的指定节气日期；复用缓存，优先于直接调用 __getitem__。
     '''
-    if not isinstance(year, int):
-      raise TypeError(f'Expected int, got {type(year)}')
-    if year not in self.supported_year_range():
-      raise ValueError(f'Year {year} is out of the supported range {self.supported_year_range()}')
+    _validate_year(year, self.supported_year_range)
     if not isinstance(jieqi, Jieqi):
       raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
     return self.__cached_date(year, jieqi)
@@ -158,10 +162,7 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
-    if not isinstance(lunar_year, int):
-      raise TypeError(f'Expected int, got {type(lunar_year)}')
-    if lunar_year not in self.supported_year_range():
-      raise ValueError(f'Year {lunar_year} is out of the supported range {self.supported_year_range()}')
+    _validate_year(lunar_year, self.supported_year_range)
 
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
@@ -198,10 +199,7 @@ class DecodedLunarYears:
     查询农历年信息；复用缓存，优先于直接调用 __getitem__。
     每次返回新记录与独立 days_counts 列表，外部修改不影响缓存；其余值不可变，可共享。
     '''
-    if not isinstance(lunar_year, int):
-      raise TypeError(f'Expected int, got {type(lunar_year)}')
-    if lunar_year not in self.supported_year_range():
-      raise ValueError(f'Year {lunar_year} is out of the supported range {self.supported_year_range()}')
+    _validate_year(lunar_year, self.supported_year_range)
     info: LunarYearInfo = self.__cached_info(lunar_year)
     return LunarYearInfo(
       first_solar_day=info['first_solar_day'],

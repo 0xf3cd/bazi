@@ -42,8 +42,8 @@ def object_id(subject: Tiangan | Shishen) -> str:
 
   Args:
   - subject: (Tiangan | Shishen) 讨论对象。
-  Return:
-  - (str) 对象标识；自定义库是否注册该对象由查询时校验。
+
+  Return: (str) 对象标识；自定义库是否注册该对象由查询时校验。
   '''
   if not isinstance(subject, (Tiangan, Shishen)):
     raise TypeError(f'Expected Tiangan | Shishen, got {type(subject)}')
@@ -196,6 +196,7 @@ class KnowledgeEntry:
     _choice(self.output, _OUTPUTS)
     if self.legacy is not None and not isinstance(self.legacy, LegacyDescription):
       raise TypeError(f'Expected LegacyDescription | None, got {type(self.legacy)}')
+
     if not self.roles or not self.topics:
       raise ValueError('Entries require roles and topics')
     names = tuple(role.name for role in self.roles)
@@ -207,6 +208,7 @@ class KnowledgeEntry:
     for values in (self.topics, self.contexts, self.sources):
       if len(set(values)) != len(values):
         raise ValueError(f'Duplicate reference: {self.claim_id}')
+
     if self.applicability == 'unconditional' and (self.premise or self.contexts):
       raise ValueError(f'Unconditional entry has a premise: {self.claim_id}')
     if self.applicability == 'described' and not self.premise.strip():
@@ -381,15 +383,14 @@ class KnowledgeBase:
   def load(cls, path: Path | None = None) -> 'KnowledgeBase':
     '''读取指定编辑来源；未给路径时读取 DEFAULT_SOURCE_PATH 的随库语料。
 
-    Args:
-    - path: (Path | None) 编辑来源路径；None 使用随库来源。
-
     Note:
     - 每次调用重新读取并校验文件，不缓存共享实例。已加载对象保留当时的内容；
       来源修改不影响已有对象，须再次加载才能取得更新。
 
-    Return:
-    - (KnowledgeBase) 校验后的不可变知识库对象。
+    Args:
+    - path: (Path | None) 编辑来源路径；None 使用随库来源。
+
+    Return: (KnowledgeBase) 校验后的不可变知识库对象。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')
@@ -408,8 +409,8 @@ class KnowledgeBase:
 
     Args:
     - name: (str) 非空名称，不做大小写转换、分词或近似匹配，有效名称两侧空白不剥除。
-    Return:
-    - (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象；空或全空白名称抛 ValueError，错型抛 TypeError。
+
+    Return: (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象；空或全空白名称抛 ValueError，错型抛 TypeError。
     '''
     _text(name)
     return tuple(value for value in self.objects.values() if value.name == name)
@@ -420,10 +421,11 @@ class KnowledgeBase:
     Note:
     - 包含仅供参考条目独有的值，以及未被条目引用的对象、情境、来源与情境时间范围。
     - applicability 来自类型定义，空库也保留合法域；合法值不保证默认查询有命中。
+
     Args:
     - dimension: (str) object_id、context_id、source_id、topic、viewpoint、applicability 或 time_scope。
-    Return:
-    - (tuple[str, ...]) 不重复的合法值；未知维度抛 ValueError，错型抛 TypeError。
+
+    Return: (tuple[str, ...]) 不重复的合法值；未知维度抛 ValueError，错型抛 TypeError。
     '''
     _text(dimension)
     registries = {'object_id': tuple(self.objects), 'context_id': tuple(self.contexts), 'source_id': tuple(self.sources)}
@@ -455,8 +457,8 @@ class KnowledgeBase:
     - 默认只选 output='default'；include_reference_only=True 同时选仅供参考条目。
     - 对象查询包含所有绑定角色；未知过滤值抛 ValueError，合法但无匹配时返回空元组。
     - context_id 是人工选择的查阅情境，不判断命盘是否满足；多个情境标签不隐含 AND/OR。
-    Return:
-    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
+
+    Return: (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')
@@ -499,8 +501,8 @@ class KnowledgeBase:
     Args:
     - keyword: (str) 非空关键词，空或全空白抛 ValueError，错型抛 TypeError；不剥除有效词两侧空白。
     - 其余参数与 query 相同。
-    Return:
-    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
+
+    Return: (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     _text(keyword)
     needle = keyword.casefold()
@@ -542,8 +544,8 @@ class KnowledgeBase:
     - show_sources: (bool) 是否展示来源详情；前提与限度始终保留。
     - manual_context: (bool) 标注人工给定情境，不表示前提满足。
     - premise_verdict: (str | None) 调用方的展示文字，须含非空白字符；给定时优先于人工情境标注。
-    Return:
-    - (str) 展示文字。
+
+    Return: (str) 展示文字。
     '''
     if premise_verdict is not None and not isinstance(premise_verdict, str):
       raise TypeError(f'Expected str | None, got {type(premise_verdict)}')
@@ -618,8 +620,8 @@ class KnowledgeBase:
     - object_id: (str) 注册对象标识。
     - include_reference_only: (bool) 是否包含仅供参考条目，不求值其前提。
     - show_sources: (bool) 是否展示来源详情。
-    Return:
-    - (str) 展示文字；合法对象没有所选主体条目时返回空串。
+
+    Return: (str) 展示文字；合法对象没有所选主体条目时返回空串。
     '''
     if not isinstance(show_sources, bool):
       raise TypeError(f'Expected bool, got {type(show_sources)}')
