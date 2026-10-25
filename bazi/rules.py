@@ -470,6 +470,8 @@ class DizhiRules:
 
   # 该表格用于查询地支之间的破。
   # 相破是无方向的，两个地支之间互相破坏。
+  # 本六对地支关系表不等同于《三命通会》卷三〈總論諸神煞〉只取四对的“破煞”神煞条，
+  # 不以该条替本表作证，也不据此增改读法：https://zh.wikisource.org/w/index.php?oldid=657369
   DIZHI_PO: Final[frozenset[frozenset[Dizhi]]] = frozenset([frozenset(dz_tuple) for dz_tuple in (
     (Dizhi.子, Dizhi.酉), (Dizhi.卯, Dizhi.午),
     (Dizhi.辰, Dizhi.丑), (Dizhi.未, Dizhi.戌),
@@ -558,9 +560,8 @@ class ShenshaRules:
   口诀是公共财产，况且两家并不总挑同一首（见下文天乙）。
   但**有几处断语也长段逐字相同**——断语是各家自撰的评断文字，
   本无必须一致的理由，那确实指向共享文本。反方向的事实同时存在：多数断语除了
-  三五个字外毫无共同处，而且两家读法有分歧——天乙各择一个歌诀版本
-  （高人并自述用的是哪一个），红艳问真作乙午而高人作乙申，即下面 `HONGYAN`
-  已记的散文本／歌诀本之分。
+  三五个字外毫无共同处，而且两家读法有分歧——天乙各择一个歌诀版本，
+  红艳的乙格也不同；两家的红艳表都不与四库本完全相同，见下方 `HONGYAN`。
 
   **哪一份是上游、是否互相读过，所查材料无一裁定。**
 
@@ -587,10 +588,13 @@ class ShenshaRules:
     Dizhi,
   )
 
-  # 红艳表；《三命通会》原文："甲乙逢午、丙寅、丁未、
-  # 戊辰、己辰、庚戌、辛酉、壬子、癸申，为红艳煞"。
-  # 歌诀本作「甲乙午申庚见戌」，两谱系见 #69 考证。
-  # 乙 一格两谱系分叉：散文本作乙午（问真等从之），本表从歌诀本作乙申。
+  # 红艳表从高人 README 的十干表与歌诀（日干查地支节）：
+  # https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L182-L203
+  # 《三命通会》四库本转录卷三〈總論諸神煞〉“桃花紅艶煞”条作：
+  # 「甲乙逢午丙寅丁未戊子己辰庚戌辛酉壬巳癸申為紅艶煞」
+  # https://zh.wikisource.org/w/index.php?oldid=657369
+  # 本表乙申、戊辰、壬子与该载体的乙午、戊子、壬巳不同；问真作乙午、戊辰、壬子。
+  # 问真：https://book.taiyi.me/命/神煞大全；现代载体不因网站不同就多算独立谱系。
   # 另有庚申/癸戌异表流传，但仅见聚合站单一文本谱系，未采（2026-08-04 考证，详见 #69）。
   HONGYAN: Final[frozendict[Tiangan, Dizhi]] = frozendict({
     Tiangan.甲 : Dizhi.午,
@@ -631,10 +635,11 @@ class ShenshaRules:
     Dizhi,
   )
 
-  # 华盖取三合墓库；袁树珊《命理探源》转引《三命通会》：
-  # 「华盖者，形象之称也……故以三合本库为华盖也。如寅午戌
-  # 见戌，火库也，巳酉丑见丑，金库也，馀仿此。」
-  # 出处：https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb（#16）。
+  # 华盖取三合墓库；袁树珊《命理探原》NLC 刊本卷上〈强弱〉印页六四（PDF95）
+  # 引《三命通會》作「華蓋者。象形之稱也。」；这是袁氏的转引，不称已校所引原书。
+  # 《三命通会》四库本卷二〈論將星華葢〉措辞不同，不能混作同一逐字引文。
+  # 直接载体：https://commons.wikimedia.org/w/index.php?curid=132876481
+  # 四库本转录：https://zh.wikisource.org/w/index.php?oldid=761691
   # YEAR_AND_DAY 查法锚补充出处：百度百科「神煞」、高人。
   # 支持读法：_ANCHOR_CHOICES['huagai_anchor']。
   HUAGAI: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
@@ -737,6 +742,8 @@ class ShenshaRules:
   # 表值出处（#163）：
   # - 《三命通会·卷三·论金舆》：https://book.taiyi.me/命/三命通会/三命通会(卷三)
   # - 袁树珊《命理探源》：https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+  # 四库本卷三〈論金轝〉另有年锚例及同名异法，不能据表值相同替本库日锚作证：
+  # https://zh.wikisource.org/w/index.php?oldid=657369
   JINYU: Final[frozendict[Tiangan, Dizhi]] = _lu_offset(2)
 
   # 魁罡固定取四个日柱，《渊海子平·论魁罡》与《三命通会·卷六·魁罡》所载相同。
@@ -784,9 +791,11 @@ class ShenshaRules:
 
     羊刃出处：
     - 《三命通会·卷三·论羊刃》同时记录 ZIPING 与 LUMING：
-      https://m.guwendao.net/guwen/bookv_d6957d252951.aspx
+      https://zh.wikisource.org/w/index.php?oldid=657369 （四库本转录）
     - 现代 DIWANG 表：https://book.taiyi.me/命/神煞大全 及
       https://github.com/gaorenyes/gaorenyes.github.io
+
+    上述表值与分类不单独证明查法锚；分析器固定按日干查羊刃，锚的出处仍待核。
 
     飞刃出处：
     - 《三命通会·卷三·论羊刃》：
@@ -820,24 +829,32 @@ class ShenshaRules:
   })
 
   class TianyiDef(Enum):
-    '''天乙贵人的查法定义；口诀、庚辛分组与昼夜表彼此牵连，按出处保留完整档案，
+    '''天乙贵人的查法定义；口诀、庚辛分组与阳贵／阴贵表彼此牵连，按出处保留完整档案，
     不作无出处的自由组合。
 
-    - GENG_WITH_JIA_WU：传统合并口诀「甲戊庚牛羊……六辛逢马虎」，庚与甲戊同组，辛取午寅。
-    - GENG_WITH_XIN：改口诀「甲戊兼牛羊……庚辛逢马虎」，庚改与辛同组。
-    - YANGGUI：该传统谱系的昼间阳贵表，与阴贵表合并即为庚随甲戊的传统合并表。
-    - YINGUI：该谱系的夜间阴贵表，与阳贵表合并即为传统合并表；所引来源采用「六辛逢午马」版口诀，
-      按干对分承所得十干表与本表相同。
+    - GENG_WITH_JIA_WU：庚与甲戊同组、辛取午寅的传统合并表。
+    - GENG_WITH_XIN：庚改与辛同组的合并表。
+    - YANGGUI、YINGUI：依下列通玄经推法命名的阳贵、阴贵表，二十格与该推法相同；
+      两表合并即为 GENG_WITH_JIA_WU。
 
     传统合并表有较多古籍谱系依据，问真亦采用；`BaziSchool.tianyi_def` 与
-    `BaziSchool.tianyi_anchor` 相互独立，本表不代选昼夜界线。
+    `BaziSchool.tianyi_anchor` 相互独立，本表不代选使用时间或界线。
+
+    用法有分歧：四库本所引通玄经推法之后明说
+    「其曰陽貴陰貴乃冬至用陽夏至用陰非晝夜之說」。袁氏所引曹震圭则作昼／夜贵，
+    按语称据吳椒甫寄示改入。曹氏的说法在此只用于说明昼／夜名称；其戊格兼取丑未，
+    不作为本库阳贵／阴贵二表戊格的依据。
+    四库本同卷另有方向不同的術者昼夜法及夹注命名，不合并进这两表。
 
     出处：
-    - 袁树珊《命理探源》引古歌「甲戊庚牛羊……六辛逢马虎」：
-      https://upload.wikimedia.org/wikipedia/commons/5/52/NLC416-07jh011647-5318_命理探源.pdf
+    - 《三命通会》四库本转录卷三〈論天乙貴人〉所引通玄经推法：
+      https://zh.wikisource.org/w/index.php?oldid=657369
+    - 袁树珊《命理探原》NLC 刊本卷上〈强弱〉，印页六二至六三（PDF93–94）：
+      古歌作「六辛逢虎馬。此是貴人方。」，曹氏说法在次页。四库本引句作“六辛逢馬虎”。
+      https://commons.wikimedia.org/w/index.php?curid=132876481
     - 两版合并口诀：
       https://www.click2macao.com/2024/04/10/tygrkjdz/
-    - 阳贵、阴贵表与所用口诀：
+    - 现代阳贵、阴贵表与所用口诀：
       https://www.usece.com/3858/
     - 问真读法：https://book.taiyi.me/命/神煞大全
 
@@ -912,14 +929,15 @@ class ShenshaRules:
 
     出处限度：
 
-    - 《命理探源》散文只逐条列甲乙丙丁戊己，末句「庚辛壬癸仿此」。
-      后四干见所引口诀（「庚猪辛鼠壬逢虎，癸人见兔入云梯」），辛取子依据口诀而非散文。
+    - 《命理探原》NLC 刊本散文只逐条列甲乙丙丁戊己，末句「庚辛壬癸倣此。」。
+      后四干依袁氏引作《紫微斗數》的口诀，辛取子依据口诀而非散文；该署名不单独判定本库规则的系统归属。
     - 《星学大成》口诀作辛戌，散文说明（「独辛不以生而以戌为文昌，戌在辛之方位」），
       因此 XIN_XU 是自成一说，不是抄讹。
 
     出处：
-    - 袁树珊《命理探源》卷三「以日主为主，如甲见己，乙见午是也」：
-      https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
+    - 袁树珊《命理探原》NLC 刊本卷上〈强弱〉，印页六三至六四（PDF94–95）：
+      「以日爲主。如甲日見巳。乙日見午是也。」
+      https://commons.wikimedia.org/w/index.php?curid=132876481
     - 问真《神煞大全》：https://book.taiyi.me/命/神煞大全
     - 明·万民英《星学大成》「论文昌」：https://book.taiyi.me/命/星学大成
     - 同书四库全书本，与上一条逐字相同（两处转录的底本关系未见声明）：

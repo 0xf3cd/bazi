@@ -47,16 +47,16 @@
 
 | 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
-| 桃花、红艳 | {py:attr}`~bazi.rules.ShenshaRules.TAOHUA`、{py:attr}`~bazi.rules.ShenshaRules.HONGYAN`；{py:attr}`~bazi.school.BaziSchool.hongyan_anchor` | 桃花注释分开表值与现代四柱查法；红艳记录乙一格分叉。红艳年干锚的出处缺口仍记在锚点表。 |
+| 桃花、红艳 | {py:attr}`~bazi.rules.ShenshaRules.TAOHUA`、{py:attr}`~bazi.rules.ShenshaRules.HONGYAN`；{py:attr}`~bazi.school.BaziSchool.hongyan_anchor` | 桃花注释分开表值与现代四柱查法；红艳分列四库本转录、现表所从高人表／歌诀及问真的乙、戊、壬三格差异，不改现表。红艳年干锚的出处缺口仍记在锚点表。 |
 | 红鸾、天喜 | {py:attr}`~bazi.rules.ShenshaRules.HONGLUAN`、{py:attr}`~bazi.rules.ShenshaRules.TIANXI` | 表旁区分《星学大成》的宫限表值与现代查原局其余柱的用途。 |
 | 驿马、华盖 | {py:attr}`~bazi.rules.ShenshaRules.YIMA`、{py:attr}`~bazi.rules.ShenshaRules.HUAGAI`；{py:attr}`~bazi.school.BaziSchool.yima_anchor`、{py:attr}`~bazi.school.BaziSchool.huagai_anchor` | 表旁与锚点说明分列；{py:meth}`~bazi.school.BaziSchool.mingli_tanyuan` 记录日锚档案，不把现代双锚合并成袁氏原法。 |
 | 将星、灾煞 | {py:attr}`~bazi.rules.ShenshaRules.JIANGXING`、{py:attr}`~bazi.rules.ShenshaRules.ZAISHA`；{py:attr}`~bazi.school.BaziSchool.jiangxing_anchor`、{py:attr}`~bazi.school.BaziSchool.zaisha_anchor` | 表旁列《三命通会》与查法来源；不同字段支持的锚点集合分别取自锚点表。 |
-| 劫煞、亡神 | {py:attr}`~bazi.rules.ShenshaRules.JIESHA`、{py:attr}`~bazi.rules.ShenshaRules.WANGSHEN`；{py:attr}`~bazi.school.BaziSchool.jiesha_anchor`、{py:attr}`~bazi.school.BaziSchool.wangshen_anchor` | 表旁说明绝位／临官位与出处；日锚、现代双锚的依据分列。 |
+| 劫煞、亡神 | {py:attr}`~bazi.rules.ShenshaRules.JIESHA`、{py:attr}`~bazi.rules.ShenshaRules.WANGSHEN`；{py:attr}`~bazi.school.BaziSchool.jiesha_anchor`、{py:attr}`~bazi.school.BaziSchool.wangshen_anchor` | 表旁说明绝位／临官位与出处；日锚沿用既有档案、原刊出处待核，现代双锚的依据另列。 |
 | 孤辰、寡宿 | {py:attr}`~bazi.rules.ShenshaRules.GUCHEN`、{py:attr}`~bazi.rules.ShenshaRules.GUASU` | 共用的表旁注释列规则与查法出处；解释层豁免不删除原始命中。 |
 | 禄神、金舆 | {py:attr}`~bazi.rules.ShenshaRules.LUSHEN`、{py:attr}`~bazi.rules.ShenshaRules.JINYU`；{py:attr}`~bazi.school.BaziSchool.jinyu_anchor` | 禄神共用基础禄位表，金舆从禄位派生；出处见表旁，金舆的锚点依据另列。 |
 | 魁罡、天赦 | {py:attr}`~bazi.rules.ShenshaRules.KUIGANG`、{py:attr}`~bazi.rules.ShenshaRules.TIANSHE` | 表旁列规则与出处，低层查法分别接收日柱、月令与日柱；原局分析器在 `_REGISTRY` 之外单独输出这两项整柱结果。 |
 | 羊刃、飞刃 | {py:attr}`~bazi.rules.ShenshaRules.YANGREN`、{py:attr}`~bazi.rules.ShenshaRules.FEIREN`；{py:attr}`~bazi.school.BaziSchool.yangren_def`、{py:attr}`~bazi.school.BaziSchool.feiren_def` | {py:class}`~bazi.rules.ShenshaRules.YangrenDef` 分列子平、古禄命、帝旺三读与出处；两个字段独立，飞刃从相应羊刃表派生。 |
-| 天乙贵人 | {py:attr}`~bazi.rules.ShenshaRules.TIANYI`；{py:attr}`~bazi.school.BaziSchool.tianyi_def`、{py:attr}`~bazi.school.BaziSchool.tianyi_anchor` | {py:class}`~bazi.rules.ShenshaRules.TianyiDef` 保存完整口诀／表档案；选择阳贵或阴贵不替调用方决定昼夜界线。 |
+| 天乙贵人 | {py:attr}`~bazi.rules.ShenshaRules.TIANYI`；{py:attr}`~bazi.school.BaziSchool.tianyi_def`、{py:attr}`~bazi.school.BaziSchool.tianyi_anchor` | {py:class}`~bazi.rules.ShenshaRules.TianyiDef` 分开表值与用法：阳贵／阴贵二表依所引通玄经推法命名；冬夏至说与曹氏昼夜说、戊格限制分别记录，不自动选择使用时间或界线。 |
 | 文昌 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANG`；{py:attr}`~bazi.school.BaziSchool.wenchang_def`、{py:attr}`~bazi.school.BaziSchool.wenchang_anchor` | {py:class}`~bazi.rules.ShenshaRules.WenchangDef` 分列辛子／辛戌；表值、锚点与查找位置的来源边界分开保留。 |
 | 文昌贵 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANGGUI` | 表旁列全表与年干锚出处；它与文昌分列，不把同名近亲并成一个变体。 |
 | 太极贵人 | {py:attr}`~bazi.rules.ShenshaRules.TAIJI`；{py:attr}`~bazi.school.BaziSchool.taiji_def`、{py:attr}`~bazi.school.BaziSchool.taiji_anchor` | {py:class}`~bazi.rules.ShenshaRules.TaijiDef` 保存壬癸两读、文字差异与戊己格矛盾；锚点依据另列。 |

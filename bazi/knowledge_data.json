@@ -312,9 +312,9 @@
       "url": "https://archive.org/details/20260506_20260506_1149/page/n68/mode/2up",
       "text_layer": "baiwen",
       "lineage": "yuanhai_ziping",
-      "excerpt": "甲木天干作首排乙木根荄種得深丙火明明一太陽",
+      "excerpt": "甲木天干作首排〔……〕乙木根荄種得深〔……〕丙火明明一太陽",
       "supports": "甲、乙、丙的五行称名，以及丙的一则历史象。",
-      "limitations": "不使该象成为跨流派定义或性格前提。",
+      "limitations": "甲、乙、丙各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使该象成为跨流派定义或性格前提。",
       "state": "witnessed"
     },
     {
@@ -326,9 +326,9 @@
       "url": "https://archive.org/details/20260506_20260506_1149/page/n69/mode/2up",
       "text_layer": "baiwen",
       "lineage": "yuanhai_ziping",
-      "excerpt": "丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼",
+      "excerpt": "丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼",
       "supports": "丁至癸的五行称名，以及丁、戊、辛、壬的历史象。",
-      "limitations": "不使这些象成为跨流派定义或性格前提。",
+      "limitations": "丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。",
       "state": "witnessed"
     },
     {
@@ -336,13 +336,13 @@
       "work": "《命理探源》",
       "attribution": "袁树珊著",
       "edition": "版心题《命理探原》",
-      "locator": "PDF 第 33、36 页，「干枝阴阳」与「干枝五行及四时方位」",
+      "locator": "PDF 第 33 页（印页二）〈幹枝陰陽〉；PDF 第 36 页（印页五）〈幹枝五行及四時方位〉",
       "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
       "text_layer": "baiwen",
       "lineage": "mingli_tanyuan",
-      "excerpt": "甲丙戊庚壬爲陽乙丁己辛癸爲陰甲乙屬木爲東方丙丁屬火爲南方戊己屬土爲中央庚辛屬金爲西方壬癸屬水爲北方",
+      "excerpt": "甲丙戊庚壬爲陽。乙丁己辛癸爲陰。〔……〕甲乙屬木爲東方。丙丁屬火爲南方。戊己屬土爲中央。庚辛屬金爲西方。壬癸屬水爲北方。",
       "supports": "十干直接按阴阳与五行分组。",
-      "limitations": "不支持性格、运势、固定意象或健康方面的文字。",
+      "limitations": "分取〈幹枝陰陽〉与〈幹枝五行及四時方位〉两节，〔……〕为本仓省略标记，句读依所核页图。不支持性格、运势、固定意象或健康方面的文字。",
       "state": "witnessed"
     },
     {
@@ -350,13 +350,13 @@
       "work": "《命理探源》",
       "attribution": "袁树珊著",
       "edition": "版心题《命理探原》",
-      "locator": "PDF 第 66–70 页，「十干生克定名」",
+      "locator": "PDF 第 66 页（印页三五），卷上〈起例〉〈十幹生尅定名〉",
       "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
       "text_layer": "baiwen",
       "lineage": "mingli_tanyuan",
-      "excerpt": "陽見陰陰見陽則爲正陽見陽陰見陰則爲偏與我比者爲比肩爲劫財敗財我生者爲傷官食神我尅者爲正財偏財尅我者爲正官偏官生我者爲正印偏印",
+      "excerpt": "陽見陰陰見陽則爲正。陽見陽陰見陰則爲偏。與我比者。爲比肩。爲劫財。敗財。我生者。爲傷官食神。我尅者。爲正財偏財。尅我者。爲正官偏官。生我者。爲正印偏印。",
       "supports": "五种生克关系、阴阳之别，以及本见证的十神名称。",
-      "limitations": "不支持把劫財与敗財并为劫財。",
+      "limitations": "摘录及句读依印页三五的连续正文，未把后续表格与例解拼入。不支持把劫財与敗財并为劫財。",
       "state": "witnessed"
     },
     {
@@ -557,16 +557,16 @@
     },
     {
       "source_id": "mingli_tanyuan.minggong",
-      "work": "《命理探原》起例",
-      "attribution": "袁树珊按语，典藏网下游简体转录",
-      "edition": "在线下载转录，未校原书影印",
-      "locator": "下载页题名作《命理探源》，本库沿称《命理探原》；推命宫法按语，中气及丙午大寒例",
-      "url": "https://www.diancang.xyz/xuanxuewushu/minglitanyuan/160971.html",
+      "work": "《命理探源》",
+      "attribution": "袁树珊按语，NLC 刊本卷上〈起例〉〈推命宮法〉",
+      "edition": "扫描文件题《命理探源》，所核页版心题《命理探原》",
+      "locator": "PDF 第 75–76 页（印页四四至四五），卷上〈起例〉〈推命宮法〉正文、按语及丙午大寒例",
+      "url": "https://commons.wikimedia.org/w/index.php?curid=132876481",
       "text_layer": "zhushi",
       "lineage": "mingli_tanyuan",
-      "excerpt": "古人谓交过中气，即作次月推",
+      "excerpt": "古人謂交過中氣。卽作次月推",
       "supports": "按语明确中气进月，丙午年十二月过大寒、申时取乙未宫，仍用丙午年配干。",
-      "limitations": "中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
+      "limitations": "据 NLC 刊本 PDF 第 75–76 页（印页四四至四五）页图核读正文、按语与丙午例；按语后的列式页未核，未校全书。中气规则的明确支持来自此按语，不能倒称《三命通会》掌诀段已明说。转引《游艺录》不多算一份独立成文；未定义现代时区、精度与真太阳钟。",
       "state": "witnessed"
     },
     {
@@ -10978,7 +10978,7 @@
     },
     {
       "claim_id": "concept.minggong.zhongqi",
-      "text": "《命理探原》推命宫法按语说「古人谓交过中气，即作次月推」，举丙午年十二月过大寒、申时取乙未宫。月序进正月后仍按丙午年起宫干。",
+      "text": "《命理探原》推命宫法按语说「古人謂交過中氣。卽作次月推」，举丙午年十二月过大寒、申时取乙未宫。月序进正月后仍按丙午年起宫干。",
       "roles": [
         {
           "name": "讨论对象",
@@ -10996,11 +10996,11 @@
         "mingli_tanyuan.minggong"
       ],
       "source_state": "witnessed",
-      "attribution": "《命理探原》起例按语下游转录",
+      "attribution": "《命理探原》卷上〈起例〉〈推命宮法〉按语（NLC 刊本）",
       "viewpoint": "中气进月例",
       "exceptions": [],
       "limits": [
-        "未校影印；此按语不证明更早掌诀段已明确中气月界，也未规定现代时区、真太阳钟或三档精度。"
+        "据 NLC 刊本 PDF 第 75–76 页（印页四四至四五）页图核读；按语后的列式页未核。此按语不证明更早掌诀段已明确中气月界，也未规定现代时区、真太阳钟或三档精度。"
       ],
       "output": "reference_only",
       "legacy": null
