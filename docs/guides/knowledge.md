@@ -107,7 +107,7 @@ ValueError Unknown object_id: tiangan.dingg
 
 ## 胎元与命宫：已实现取法和待核候选
 
-`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，默认输出仍为 19 条。
+`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，全库默认输出仍为 19 条。
 计算用法见 {doc}`integration`；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。
 
 ```{testcode} auxiliary-knowledge
@@ -145,9 +145,6 @@ concept.minggong 0 4
 其他命宫月界也未编码，须反查明确系统归属、月界和跨界例解，说明闰月、跨年及年干归属，
 再由作者批准可选变体；不能把“未言月界”当成某一月界的证据，也不据此判其他读法错误或不存在。
 
-体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，
-没有把不同诗句或章节拼成一段连续原文；句读、摘录位置与未录的干名圈示分别记在来源说明中。
-
 ## 字面关键词搜索
 
 ```{testcode} search
@@ -170,6 +167,9 @@ print(kb.search('tiangan.ding'))
 搜索不自动转换繁简字。条目引用按载体原字修订后，相关字面关键词的命中可能随之变化；这不改变默认查询资格。
 
 ## 条目的来源
+
+体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，
+没有把不同诗句或章节拼成一段连续原文；句读、摘录位置与未录的干名圈示分别记在来源说明中。
 
 ```{testcode} sources
 from bazi.knowledge import KnowledgeBase
@@ -207,6 +207,8 @@ yuanhai_ziping baiwen witnessed
 ```
 
 路径是：`kb.entry(条目 ID).sources` 给出来源 ID，再用 `kb.sources[来源 ID]` 取记录。记录里的 `work`、`attribution`、`edition`、`locator` 说明出处，`excerpt` 是摘录，`supports` 与 `limitations` 写明这段原文支持什么、不支持什么。读来源时请连 `limitations` 一起读。
+
+渲染结果中，条目的 `source_state` 标为“来源状态”，来源记录的 `state` 标为“见证状态”。
 
 反向用 `query(source_id=...)` 找引用某个来源的条目。
 
