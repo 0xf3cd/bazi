@@ -51,7 +51,7 @@ def _mapping(value: object, keys: tuple[str, ...]) -> dict[str, Any]:
 
 
 def _utf8(text: str) -> str:
-  '''输出须能按 UTF-8 保存；不替换不支持的字符。'''
+  '''文字须能按 UTF-8 编码；不替换不支持的字符。'''
   try:
     text.encode('utf-8')
   except UnicodeEncodeError:
@@ -60,7 +60,7 @@ def _utf8(text: str) -> str:
 
 
 def _json_loads(text: str) -> Any:
-  '''拒绝重复键和孤立代理项；键由解析 hook 检查，值使用显式栈遍历。'''
+  '''拒绝重复键和孤立代理项；键由解析 hook 检查，值使用显式栈遍历，避免深层值检查触发递归。'''
   _text(text, empty=True)
   try:
     value = json.loads(text, object_pairs_hook=_pairs)

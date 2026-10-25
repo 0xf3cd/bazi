@@ -159,6 +159,8 @@ python run_interpreter.py knowledge --list-values topic
 python run_interpreter.py knowledge --export-knowledge-base --output-dir output_data
 ```
 
+此命令把知识 TXT 按对象分类保存在 `output_data/knowledge_base/` 下，不向终端打印结果。
+
 检查前提：先看有哪些判据和各自需要什么，再对命盘求值：
 
 ```sh
@@ -209,7 +211,7 @@ python -m pip install --upgrade bazi
 
 本次删除命盘／判别结果与知识快照的公开 JSON 存取、迁移模块及三类 JSON 导出参数，不保留兼容入口。请保留旧原件；需要当前结论时，按原出生输入和完整配置重新构造命盘并求值。
 
-`BaziSchool.kongwang_anchor` 不传时使用默认日柱 `Anchor.DAY`；所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置，该字段仍参与命盘身份。例子见[六甲旬空取锚](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#六甲旬空取锚)。
+重新构造命盘时，不传 `BaziSchool.kongwang_anchor` 则使用默认日柱 `Anchor.DAY`；所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置，该字段仍参与命盘身份。例子见[六甲旬空取锚](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#六甲旬空取锚)。
 
 知识编辑源仍可用 `KnowledgeBase.load(path)` 读取，当前只接受 `schema_version=2`；边界见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识编辑源与文本边界)。
 

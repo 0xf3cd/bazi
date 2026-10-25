@@ -26,7 +26,7 @@ assert chart.bazi.day_master in Tiangan
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
-  `ContextResult` 的生成构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
+  由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
 - 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。

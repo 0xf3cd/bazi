@@ -312,7 +312,7 @@ def test_cross_group_gong_precise_participants() -> None:
 
 
 def test_yinyanggan_evaluation_input_identity() -> None:
-  # Male chart with 乙 day master (2000-01-08 12:00, 己卯丁丑乙丑壬午): the 阴阳干读法 targets 己 (丑、未),
+  # Male chart with 乙 day master (2000-01-08 12:00, 己卯丁丑乙丑壬午): the 阴阳干读法 targets 己 (丑、未).
   # The non-default definition remains part of the result's input identity.
   c = BaziChart(Bazi.create('2000-01-08 12:00', 'male', BaziConfig(school=BaziSchool(peiou_xing_def=PeiouXingDef.YINYANGGAN))))
   result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(

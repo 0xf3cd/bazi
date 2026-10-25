@@ -271,7 +271,7 @@ def test_default_backend_is_celestial(rng: random.Random) -> None:
   assert Bazi.random(rng=rng).config.backend is CalendarBackend.CELESTIAL
 
 
-def test_json_contains_backend() -> None:
+def test_backend_string_values() -> None:
   chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   assert str(chart.bazi.config.backend) == 'celestial' # the default
   hko_chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,

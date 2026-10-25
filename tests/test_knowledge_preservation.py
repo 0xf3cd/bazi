@@ -39,7 +39,7 @@ def _positioned_entries(subject: Tiangan | Shishen, field: str) -> tuple[Knowled
 
 
 def test_historical_corpus_is_append_only() -> None:
-  # Historical fingerprints from ddfe16e7c51d695167b09cc4c2f64ba46e7565c3 and test_record_contract.
+  # Historical fingerprints from ddfe16e7c51d695167b09cc4c2f64ba46e7565c3 and the now-deleted test_record_contract.
   # Compare the loaded values to the editing source before checking its historical subsets.
   current = KnowledgeBase.load()
   source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))

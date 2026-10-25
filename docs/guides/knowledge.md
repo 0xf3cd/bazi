@@ -26,7 +26,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 34 10 23 312
 ```
 
-`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变快照。
+`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
 
 这四个数字对应四份注册表：
 

@@ -177,7 +177,8 @@ module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
 
 ## 下一步
 
-- 更新旧源码调用或处理旧记录：[v2.2.0→v2.3.0 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)，完整约定以对应版本的 `API_CONTRACT.md` 为准。
+- 更新到已发布 v2.3.0 的源码调用：[v2.2.0→v2.3.0 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)，完整约定以对应版本的 `API_CONTRACT.md` 为准。
+- 处理当前未发布源码的存取接口移除：[未发布升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#未发布升级说明)。
 - 想改变精度、换日点、大运年份口径，或使用真太阳时：{doc}`configuration`。
 - 想查流年、流月，或看原局与流运之间的关系：{doc}`relations-transits`。
 - 想读取内存结果，或接入自己的程序：{doc}`integration`。
