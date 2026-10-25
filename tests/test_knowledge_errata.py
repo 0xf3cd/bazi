@@ -50,8 +50,10 @@ def _assert_source_errata(data: dict[str, Any], changes: dict[str, Any]) -> None
     assert [before_errata(row, changes[registry].get(row[identifier], {})) for row in rows] == BASELINE[registry]
 
 
-def test_errata_baseline_is_fixed() -> None:
-  assert sha256(BASELINE_PATH.read_bytes()).hexdigest() == 'd582dc1a0a6e784eadac353ecb443ee6cbca28685b62b8e10fee95868372515c'
+@pytest.mark.parametrize('newline', [b'\n', b'\r\n'])
+def test_errata_baseline_is_fixed(newline: bytes) -> None:
+  raw = BASELINE_PATH.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', newline)
+  assert sha256(raw.replace(b'\r\n', b'\n')).hexdigest() == 'd582dc1a0a6e784eadac353ecb443ee6cbca28685b62b8e10fee95868372515c'
   assert len(BASELINE['sources']) == 23
   assert [row['claim_id'] for row in BASELINE['entries']] == ['concept.minggong.zhongqi']
 
