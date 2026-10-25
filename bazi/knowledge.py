@@ -389,7 +389,7 @@ class KnowledgeBase:
       来源修改不影响已有对象，须再次加载才能取得更新。
 
     Return:
-    - (KnowledgeBase) 校验后的不可变知识快照。
+    - (KnowledgeBase) 校验后的不可变知识库对象。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')

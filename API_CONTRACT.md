@@ -26,7 +26,7 @@ assert chart.bazi.day_master in Tiangan
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
-  `ContextResult` 的生成构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，读取使用 `bazi` 属性。
+  `ContextResult` 的生成构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
 - 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
@@ -89,7 +89,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 - `ContextResult` 是 frozen dataclass；构造参数 `_bazi: Bazi` 验证后深拷贝，公开 `bazi` 属性每次返回独立深拷贝。
   构造及 `replace` 使用 `_bazi`，不支持 `input_json`。相等／哈希使用 `Bazi` 的完整身份，包含性别、完整配置，
   地点盘另含精确瞬间、固定民用偏移及经度。修改输入或属性返回的副本不改变已有结果。
-  显示直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。
+  `ContextResult.render()` 直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。
 - 求值显式传入的 `KnowledgeBase` 被共享；未传时每次独立加载编辑源。已有结果不随源文件修改而变化。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
@@ -142,8 +142,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 两者不加载知识库、不创建命盘，也不执行判别。目录值冻结，直接构造 `CriterionInfo` 只校验值的形状；
 需要已注册定义时应使用查询入口，不把自填说明当成程序认证。
 
-绑定识别会核对条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）是否符合默认约定；
-它不认证条文真伪或现实适用性。
+绑定识别用来确认知识条目与可执行判据的关联是否仍符合随库的默认内容，核对的是条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）。
+这项检查不认证条文真伪或现实适用性。
 
 | 目录信息 | 含义 |
 |---|---|
@@ -189,7 +189,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 ## 已删除的存取接口
 
-当前源码不提供命盘／前提判别结果的保存恢复，也不导出知识快照。不保留兼容壳或替代记录格式。
+以下移除仅针对当前未发布源码，尚未进入已发布的 v2.3.0。
+命盘／前提判别结果不再提供保存恢复，知识库不再导出快照；不保留兼容壳或替代记录格式。
 已删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
 `BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
 `KnowledgeBase.export_json/from_json` 及整个 `bazi.record_migration` 模块。

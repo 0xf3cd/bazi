@@ -78,8 +78,7 @@ def test_source_never_preencodes_loaded_tree(monkeypatch: pytest.MonkeyPatch, tm
 
 
 @pytest.mark.parametrize('surface', ['root', 'objects', 'schema_version'])
-def test_deep_source_rejects_without_formatting(surface: str, tmp_path: Path) -> None:
-  from bazi._validation import _pairs
+def test_deep_source_rejects_without_formatting(surface: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
   depth = sys.getrecursionlimit() + 100
   nested = '[' * depth + '0' + ']' * depth
   text = nested if surface == 'root' else DEFAULT_SOURCE_PATH.read_text(encoding='utf-8').replace(
@@ -89,16 +88,28 @@ def test_deep_source_rejects_without_formatting(surface: str, tmp_path: Path) ->
   )
   source = tmp_path / 'deep.json'
   source.write_text(text, encoding='utf-8')
-  try:
-    json.loads(text, object_pairs_hook=_pairs)
-  except RecursionError:
-    with pytest.raises(ValueError, match='parsing depth'):
-      KnowledgeBase.load(source)
-    return
-  error_type = ValueError if surface == 'schema_version' else TypeError
-  message = 'schema version type' if surface == 'schema_version' else 'Expected JSON object'
-  with pytest.raises(error_type, match=message):
+  original_loads = json.loads
+  outcomes: list[str] = []
+  def loads(*args: Any, **kwargs: Any) -> Any:
+    try:
+      value = original_loads(*args, **kwargs)
+    except RecursionError:
+      outcomes.append('recursion')
+      raise
+    outcomes.append('parsed')
+    return value
+  monkeypatch.setattr(json, 'loads', loads)
+  with pytest.raises((TypeError, ValueError)) as raised:
     KnowledgeBase.load(source)
+  error_type: type[Exception]
+  if outcomes == ['recursion']:
+    error_type, message = ValueError, 'JSON nesting exceeds the supported parsing depth'
+  else:
+    assert outcomes == ['parsed']
+    error_type = ValueError if surface == 'schema_version' else TypeError
+    message = "Unsupported schema version type: <class 'list'>" if surface == 'schema_version' else "Expected JSON object, got <class 'list'>"
+  assert type(raised.value) is error_type
+  assert str(raised.value) == message
 
 
 def test_schema_error_does_not_format_container() -> None:
@@ -117,11 +128,12 @@ def test_schema_error_does_not_format_container() -> None:
 
 
 def test_parse_error_preserves_source_position(tmp_path: Path) -> None:
+  from bazi._validation import _pairs
   text = '\n{"field":'
   source = tmp_path / 'broken.json'
   source.write_text(text, encoding='utf-8')
   with pytest.raises(json.JSONDecodeError) as original:
-    json.loads(text)
+    json.loads(text, object_pairs_hook=_pairs)
   with pytest.raises(json.JSONDecodeError) as raised:
     KnowledgeBase.load(source)
   assert (raised.value.doc, raised.value.pos, raised.value.msg) == (text, original.value.pos, original.value.msg)

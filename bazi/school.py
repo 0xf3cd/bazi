@@ -304,6 +304,7 @@ class BaziSchool:
       wenchang_anchor=Anchor.DAY,
     )
 
+
 DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 
 

@@ -513,12 +513,14 @@ class EntryMatch:
 '''见 `RelationshipEvidence` 的序列契约：原局四柱为 0–3，所选岁运自 4 起。'''
 _NATAL_SEQUENCE_LENGTH: Final[int] = 4
 
+
 @dataclass(frozen=True)
 class ContextResult:
   '''保存判别、证据及条目的不可变结果；婚恋结果另存结构证据，条件判据另存条件参考条目。
 
-  复用传入的已验证 KnowledgeBase，渲染不重建知识对象。构造参数 `_bazi` 接收领域输入，
-  构造时深拷贝；读取 `bazi` 每次取得独立深拷贝。输入的完整身份参与相等与哈希。
+  构造参数 `_bazi` 接收 `Bazi` 输入，验证后保存独立深拷贝；`bazi` 属性每次返回独立深拷贝。
+  输入的完整身份参与相等与哈希，`knowledge` 复用传入的已验证 `KnowledgeBase`。
+  `render()` 直接读取领域值，不重新排盘或重建知识对象。
 
   Note:
   - 婚恋 profile 的结果 `occurrences` 恒为空，原局／流年 profile 不带 `relationship`；
@@ -608,7 +610,8 @@ class ContextResult:
     return '；'.join(parts)
 
   def render(self) -> str:
-    '''展示判别、证据及完整参考原文和来源限度；前提满足不表示事件成立。'''
+    '''直接读取结果持有的领域值，展示判别、证据及完整参考原文和来源限度。
+    不重新排盘，前提满足不表示事件成立。'''
     criterion = self.criterion
     if isinstance(self.profile, RelationshipProfile):
       return _utf8(self._render_relationship())
@@ -816,7 +819,8 @@ def evaluate_context(
   - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch 或 RelatedEntry。
     前提满足不授予默认输出资格。
 
-  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，以及输入与知识快照。
+  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，
+  以及 `Bazi` 输入的独立副本和本次使用的 `KnowledgeBase` 对象。
   '''
   _check_chart(chart)
   if not isinstance(profile, (ContextProfile, RelationshipProfile)):

@@ -93,10 +93,11 @@ print(len(chart.bazi.pillars), chart.bazi == original)
 `Bazi` 按完整输入身份比较，`BaziChart` 按对象身份比较。知识库按内容和顺序比较。
 知识 JSON 只作当前编辑来源，读取方法见 {doc}`knowledge`。
 
-`ContextResult` 是 frozen dataclass。它保留求值时的输入与知识对象：输入的构造参数名为 `_bazi`，
-构造时深拷贝，正常读取走 `bazi` 属性，每次取得独立深拷贝。`dataclasses.replace(result, _bazi=...)`
+`ContextResult` 是 frozen dataclass。构造参数 `_bazi` 接收 `Bazi` 输入并在构造时深拷贝；
+`bazi` 属性每次返回独立深拷贝。`dataclasses.replace(result, _bazi=...)`
 也会验证并复制输入。相等与哈希包括输入的性别、完整配置及地点时间身份，不使用显示文本作身份。
 `knowledge` 复用显式传入的不可变实例；未传时，每次求值独立加载当前编辑源，已有结果不随源文件变化。
+`ContextResult.render()` 直接读取结果持有的领域值，不重新排盘或重建知识对象。
 
 ## 前提匹配：结构事实，不是判断
 
@@ -133,4 +134,4 @@ SATISFIED premise_satisfied True
 ```
 
 默认只返回满足默认输出资格的条目，这里没有；加 `include_reference_only=True` 才会包含仅供参考的条目，
-但前提满足也不会授予默认输出资格。判据目录、绑定识别和条目的来源状态在知识教程里展开，见 {doc}`knowledge`。
+但前提满足也不会授予默认输出资格。判据目录与绑定识别见[接口契约的判据目录](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)；条目的来源状态见 {doc}`knowledge`。

@@ -299,8 +299,9 @@ assert config.school.kongwang_anchor is Anchor.YEAR_AND_DAY
 assert BaziSchool().kongwang_anchor is Anchor.DAY
 ```
 
-该字段追加在流派字段末尾，参与命盘相等性与哈希。需要按当前实现重新求值时，使用原输入、
-完整配置及明确选择的新锚构造命盘；本库不提供旧命盘或前提判别记录的恢复、迁移接口。
+该字段追加在流派字段末尾，参与命盘相等性与哈希。需要按当前实现重新求值时，使用原输入和完整配置构造命盘；
+不传 `kongwang_anchor` 时使用默认日柱 `Anchor.DAY`，所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置。
+当前未发布源码不提供旧命盘或前提判别记录的恢复、迁移接口，升级边界见[未发布升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#未发布升级说明)。
 
 ## 术语索引
 
