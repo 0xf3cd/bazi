@@ -35,7 +35,7 @@ python -m venv .venv
 python -m pip install bazi
 ```
 
-普通使用不需要安装 pytest、mypy 或文档工具。本文及下方指南对应当前源码；`pip install bazi` 安装已发布版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与保存接口在 v2.2.0 已提供。
+普通使用不需要安装 pytest、mypy 或文档工具。本文及下方指南对应当前源码；`pip install bazi` 安装已发布版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供。
 
 ### 2. 填写出生信息
 
@@ -44,7 +44,6 @@ python -m pip install bazi
 示例出生信息是虚构的。本例按东八区（UTC+8）的公历钟填写 `datetime(年, 月, 日, 时, 分)`，性别用 `female`（女）或 `male`（男）。默认入口不做时区换算：年月柱与东八区节气表比较，日柱、时柱按输入的钟读取；默认 `DAY` 只按日期比较节气，小时仍用于时柱。海外当地钟不能直接当作本例输入；转成北京时间也会改变日柱、时柱所用的钟，见[配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#默认输入东八区节表与输入钟)。
 
 ```python
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -57,15 +56,11 @@ chart = BaziChart(bazi)
 
 print('四柱', ' '.join(str(pillar) for pillar in bazi.pillars))
 print('日主', bazi.day_master)
-print('性别', chart.json['gender'])
-print('精度与后端', chart.json['precision'], chart.json['backend'])
+print('性别', bazi.gender)
+print('精度与后端', bazi.config.precision, bazi.config.backend)
 
 Path('chart.txt').write_text(basic_text(chart), encoding='utf-8')
-Path('chart.json').write_text(
-  json.dumps(chart.json, ensure_ascii=False, indent=2) + '\n',
-  encoding='utf-8',
-)
-print('已保存 chart.txt 和 chart.json')
+print('已保存 chart.txt')
 ```
 
 ```text
@@ -73,7 +68,7 @@ print('已保存 chart.txt 和 chart.json')
 日主 壬
 性别 female
 精度与后端 day celestial
-已保存 chart.txt 和 chart.json
+已保存 chart.txt
 ```
 
 ### 3. 运行、读盘与保存
@@ -84,9 +79,7 @@ print('已保存 chart.txt 和 chart.json')
 python first_chart.py
 ```
 
-上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；`chart.json` 供程序保存和恢复。两个文件都写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
-
-JSON 恢复需要先读成字典，再交给 `BaziChart.from_json`；恢复会重算并核对，不保证旧版本记录可直接载入新版本。完整例子与兼容条件见[集成开发](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md)及[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)。
+上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；文件写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
 
 类型从定义模块导入；安装包没有根类入口或命令行程序。
 
@@ -100,8 +93,8 @@ JSON 恢复需要先读成字典，再交给 `BaziChart.from_json`；恢复会�
 | 从 v2.2.0 更新源码调用或处理旧记录 | [迁移说明](#从-v220-迁移到-v230) |
 | 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
 | 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
-| 不排盘，只查条目、来源、过滤和导出重载 | [独立知识库指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/knowledge.md) |
-| 导入、JSON 恢复、前提匹配与记录兼容 | [集成开发](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md)、[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md) |
+| 不排盘，只查条目、来源、过滤和编辑源加载 | [独立知识库指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/knowledge.md) |
+| 导入、内存对象与前提匹配 | [集成开发](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md)、[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md) |
 | 按对象、来源、情境或判据浏览知识 | [知识目录](https://github.com/0xf3cd/bazi/blob/main/docs/catalog/index.rst) |
 | 逐模块查签名、参数与条件 | [文档入口](https://github.com/0xf3cd/bazi/blob/main/docs/index.md)，构建后进入 API Reference |
 | 提交勘误、出处或流派读法 | [贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md) |
@@ -116,8 +109,8 @@ JSON 恢复需要先读成字典，再交给 `BaziChart.from_json`；恢复会�
 知识条目分别记录来源状态、输出资格和前提整理状态。来源已核定不证明条文本身为真，
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
-三类 JSON 的恢复保证不同：命盘重算并核对，知识库恢复内容，前提判别记录只校验记录结构而不重判。
-详细条件见[接口与记录契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；升级变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+本库不提供命盘或判别结果的保存恢复接口。知识 JSON 仅作当前编辑来源，不承诺历史结果恢复。
+详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；升级变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 源码脚本
 
@@ -131,7 +124,7 @@ python -m pip install colorama==0.4.6
 
 | 命令 | 输出 |
 | --- | --- |
-| `python run_demo.py` | 命盘、大运／小运／流年及命盘 JSON |
+| `python run_demo.py` | 命盘与大运／小运／流年的文本 |
 | `python run_relationship_analyzer.py` | 夫妻宫、配偶星、原局神煞及十年流年神煞 |
 | `python run_interpreter.py` | 三个任务：`chart` 展示命盘，`knowledge` 查询知识，`match` 判别前提 |
 
@@ -144,11 +137,10 @@ python -m pip install colorama==0.4.6
 python run_interpreter.py chart \
   --birth-time "1990-05-17 10:30" \
   --gender female \
-  --output-dir output_data \
-  --export-chart-json output_data/chart.json
+  --output-dir output_data
 ```
 
-上面多行命令使用 sh／bash 的 `\` 续行；在 Windows PowerShell 或 cmd 中，去掉行末 `\` 并合并成一行执行。终端会展示带颜色的命盘与条目，TXT 保存在 `output_data/interpretation_examples/0.txt`，不带终端颜色码；JSON 单独保存在 `output_data/chart.json`。这些相对路径以运行命令时的目录为准。
+上面多行命令使用 sh／bash 的 `\` 续行；在 Windows PowerShell 或 cmd 中，去掉行末 `\` 并合并成一行执行。终端会展示带颜色的命盘与条目，TXT 保存在 `output_data/interpretation_examples/0.txt`，不带终端颜色码。相对路径以运行命令时的目录为准。
 
 给了 `--birth-time` 就要同时给 `--gender`；都不给就随机生成，随机种子打印在第一行，例如用 `chart --seed 236` 重放种子236。固定输入不要加 `--seed`。
 
@@ -159,7 +151,7 @@ python run_interpreter.py knowledge --object tiangan.ding
 python run_interpreter.py knowledge --list-values topic
 ```
 
-检查前提：先看有哪些判据和各自需要什么，再对命盘求值并导出记录：
+检查前提：先看有哪些判据和各自需要什么，再对命盘求值：
 
 ```sh
 python run_interpreter.py match
@@ -168,8 +160,7 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
   --birth-time "2000-01-01 12:00" \
   --gender female \
   --observation-scope natal_and_liunian \
-  --ganzhi-year 2024 \
-  --export-context-json output_data/context.json
+  --ganzhi-year 2024
 ```
 
 其余选项可以省略，用到再加；各任务认的选项不同：
@@ -178,14 +169,13 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
 | --- | --- | --- |
 | `--include-reference-only` | 三个任务 | 同时显示仅供参考的条目 |
 | `--show-sources` | `chart` 展示；`knowledge` 文本导出 | 显示来源 |
-| `--export-chart-json` | `chart` | 导出可恢复的命盘 JSON，须给 `--birth-time` |
-| `--export-knowledge-json` | `knowledge` | 导出可恢复的知识库 JSON |
-| `--export-context-json` | `match` | 导出可恢复的前提判别 JSON |
+| `--output-dir` | `chart`；`knowledge` 文本导出 | 保存 TXT 的目录 |
+| `--knowledge-source` | `knowledge`；`match` | 读取自己的知识编辑源 |
 
 每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
 
 命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
-JSON 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
+TXT 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
 `interpretation_examples/{序号}.txt` 路径上已有的同名文件，其他文件保留。
 
 ## 从 v2.2.0 迁移到 v2.3.0
@@ -205,7 +195,7 @@ python -m pip install --upgrade bazi
 原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
 两条命令各自检查输出路径，不会预先检查彼此是否写到同一个位置；一条失败不会撤销另一条已写出的文件。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
 
-缺少 `kongwang_anchor` 的旧命盘或前提判别记录会被拒绝恢复。请保留原件，按原出生输入和完整配置重建；重建时显式选择 `BaziSchool.kongwang_anchor`（默认日柱 `Anchor.DAY`），前提记录须重新求值。不要只补字段或修改版本号；具体条件仍以[记录兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#三类-json-分别保存与恢复)为准。
+当前源码已删除命盘／判别结果与知识快照的公开 JSON 存取、迁移模块及三类 JSON 导出参数，不保留兼容入口。请保留旧原件；需要当前结论时，按原出生输入和完整配置重新构造命盘并求值。`BaziSchool.kongwang_anchor` 须按所需读法明确选择（默认日柱 `Anchor.DAY`）。知识编辑源仍可用 `KnowledgeBase.load(path)` 读取，当前只接受 `schema_version=2`；边界见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识编辑源与文本边界)。
 
 ## 开发
 

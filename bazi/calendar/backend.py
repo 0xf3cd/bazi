@@ -30,7 +30,7 @@ class CalendarBackend(Enum):
   CELESTIAL_ALGO2 = 'celestial-algo2'
 
   def __str__(self) -> str:
-    # 枚举值即序列化格式，新增成员无需另列格式映射。
+    # 字符串使用枚举值，新增成员无需另列映射。
     return self.value
 
   @staticmethod

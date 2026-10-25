@@ -1,6 +1,5 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import argparse
 import json
 import shutil
 import subprocess
@@ -9,36 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import main, _export_json
-from bazi._validation import _json_dumps
-from bazi.knowledge import KnowledgeBase
+from run_interpreter import main
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 from cli_runner import KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
-
-
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('family,member', [('tiangan', '甲'), ('shishen', '比肩')])
-def test_json_rejects_knowledge_txt_collision(tmp_path: Path, optimized: bool, family: str, member: str) -> None:
-  output = tmp_path / 'output'
-  target = output / 'knowledge_base' / family / f'{member}.txt'
-  result = run_cli(tmp_path, 'knowledge',
-                    '--output-dir', str(output), '--export-knowledge-base',
-                    '--export-knowledge-json', str(target), optimized=optimized)
-  assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
-  assert not output.exists() and '已导出知识' not in result.stdout
-
-
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('family,member', [('tiangan', '甲'), ('shishen', '比肩')])
-def test_default_txt_collision_in_checkout(
-  knowledge_checkout: Path, optimized: bool, family: str, member: str,
-) -> None:
-  output = knowledge_checkout / 'output_data'
-  target = output / 'knowledge_base' / family / f'{member}.txt'
-  result = run_cli(knowledge_checkout, 'knowledge', '--export-knowledge-base', '--export-knowledge-json', str(target),
-                    optimized=optimized, script=knowledge_checkout / 'run_interpreter.py')
-  assert result.returncode == 2 and 'overlap generated TXT' in result.stderr
-  assert not output.exists() and '已导出知识' not in result.stdout
 
 
 def test_knowledge_export_defaults_are_isolated(
@@ -110,28 +83,24 @@ def test_query_selects_reference_viewpoint(tmp_path: Path) -> None:
   assert 'shensha.guoyin.modern' not in variant.stdout
 
 
-def test_edit_validate_export_reload_cycle(tmp_path: Path) -> None:
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+def test_edit_validate_reload_cycle(tmp_path: Path) -> None:
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   record = next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')
   record['limits'] = ['本次编辑的限度。']
-  source, exported, complete = (tmp_path / name for name in ('source.json', 'selection.json', 'complete.json'))
+  source = tmp_path / 'source.json'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   query = run_cli(
     tmp_path, 'knowledge', '--knowledge-source', str(source), '--validate-knowledge',
     '--object', 'tiangan.ding', '--topic', '历史象', '--include-reference-only',
-    '--export-knowledge-json', str(exported),
   )
   assert query.returncode == 0, query.stderr
   assert '校验通过：312 条目，23 来源见证，10 情境。' in query.stdout
   assert '本次编辑的限度。' in query.stdout
-  restored = KnowledgeBase.load(exported)
-  assert tuple(restored.entries) == ('tiangan.ding.lamp_symbol',)
+  restored = KnowledgeBase.load(source)
+  assert restored.entry('tiangan.ding.lamp_symbol').limits == ('本次编辑的限度。',)
   assert restored.sources == KNOWLEDGE_BASE.sources
-  again = run_cli(tmp_path, 'knowledge', '--all', '--knowledge-source', str(exported), '--include-reference-only')
+  again = run_cli(tmp_path, 'knowledge', '--all', '--knowledge-source', str(source), '--include-reference-only')
   assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and '第 70 页' in again.stdout
-  full = run_cli(tmp_path, 'knowledge', '--export-knowledge-json', str(complete))
-  assert full.returncode == 0 and '出生时间：' not in full.stdout
-  assert KnowledgeBase.load(complete).entries == KNOWLEDGE_BASE.entries
 
 
 @pytest.mark.parametrize('args,error', [
@@ -155,39 +124,15 @@ def test_bad_inputs_do_not_create_exports(tmp_path: Path, args: tuple[str, ...],
 def test_validation_rejects_corrupt_source(tmp_path: Path) -> None:
   source = tmp_path / 'corrupt.json'
   source.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(tmp_path / 'out.json'))
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(source))
   assert result.returncode == 2 and 'Duplicate JSON key' in result.stderr
   assert not (tmp_path / 'out.json').exists()
-
-
-@pytest.mark.parametrize('existing', [False, True])
-@pytest.mark.parametrize('error', [TypeError, ValueError])
-def test_export_errors_do_not_open_target(tmp_path: Path, existing: bool, error: type[Exception]) -> None:
-  target = tmp_path / 'out.json'
-  if existing:
-    target.write_text('original target', encoding='utf-8')
-
-  def export() -> str:
-    raise error('invalid record')
-
-  with pytest.raises(SystemExit) as caught:
-    _export_json(argparse.ArgumentParser(), target, None, export, 'export: ')
-  assert caught.value.code == 2
-  assert target.read_text(encoding='utf-8') == 'original target' if existing else not target.exists()
-
-
-def test_utf8_export_failure_keeps_target(tmp_path: Path) -> None:
-  target = tmp_path / 'out.json'
-  target.write_text('original target', encoding='utf-8')
-  with pytest.raises(SystemExit) as caught:
-    _export_json(argparse.ArgumentParser(), target, None, lambda: _json_dumps({'text': '\ud800'}), 'export: ')
-  assert caught.value.code == 2 and target.read_text(encoding='utf-8') == 'original target'
 
 
 @pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('bad', ['surrogate', 'parser_limit', 'nested'])
 def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, bad: str) -> None:
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   data['entries'][0]['text'] = '\ud800'
   if bad == 'surrogate':
     text = json.dumps(data)
@@ -197,7 +142,7 @@ def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, ba
     text = '[' * 200 + '0' + ']' * 200
   source, target = tmp_path / 'source.json', tmp_path / 'out.json'
   source.write_text(text, encoding='utf-8')
-  args = ('knowledge', '--knowledge-source', str(source), '--export-knowledge-json', str(target))
+  args = ('knowledge', '--knowledge-source', str(source), '--validate-knowledge')
   if bad == 'parser_limit':
     code = '''
 import json
@@ -251,13 +196,11 @@ def test_validation_reads_corrupt_bundled_source(knowledge_checkout: Path) -> No
   valid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), script=script)
   assert valid.returncode == 0 and '校验通过：' in valid.stdout
   corpus.unlink()
-  exported = knowledge_checkout / 'output.json'
-  exported.write_text('old output', encoding='utf-8')
   independent = run_cli(
-    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--export-knowledge-json', str(exported), script=script,
+    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--validate-knowledge', script=script,
   )
   assert independent.returncode == 0, independent.stderr
-  assert KnowledgeBase.load(exported).entries == KNOWLEDGE_BASE.entries
+  assert KnowledgeBase.load(custom).entries == KNOWLEDGE_BASE.entries
 
 
 @pytest.mark.parametrize('mutation', ['new-source', 'zhushi', 'removed-unused-source'])
@@ -302,41 +245,14 @@ def test_cli_can_query_every_registered_source(tmp_path: Path, source_id: str) -
   assert result.stdout == ''.join(KNOWLEDGE_BASE.render(entry) + '\n\n' for entry in selected) if selected else result.stdout == '无匹配条目。\n'
 
 
-@pytest.mark.parametrize('alias', ['direct', 'hardlink', 'symlink'])
-def test_custom_export_cannot_overwrite_bundled(
-  knowledge_checkout: Path,
-  alias: str,
-) -> None:
-  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
-  custom = knowledge_checkout / 'custom.json'
-  custom.write_bytes(corpus.read_bytes())
-  target = corpus
-  if alias != 'direct':
-    target = knowledge_checkout / 'alias.json'
-    if alias == 'hardlink':
-      target.hardlink_to(corpus)
-    else:
-      try:
-        target.symlink_to(corpus)
-      except OSError:
-        pytest.skip('Symbolic links unavailable')
-  before = corpus.read_bytes()
-  result = run_cli(
-    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--export-knowledge-json', str(target),
-    script=knowledge_checkout / 'run_interpreter.py',
-  )
-  assert result.returncode == 2 and 'overwrite the editing source' in result.stderr
-  assert corpus.read_bytes() == before
-
-
 @pytest.mark.parametrize('show_sources', [False, True])
 def test_chart_txt_share_subject_projection(knowledge_checkout: Path, show_sources: bool) -> None:
   tmp_path = knowledge_checkout
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   data['entries'].reverse()
   corpus = json.dumps(data, ensure_ascii=False)
   (knowledge_checkout / 'bazi/knowledge_data.json').write_text(corpus, encoding='utf-8')
-  knowledge = KnowledgeBase.from_json(corpus)
+  knowledge = KnowledgeBase.load(knowledge_checkout / 'bazi/knowledge_data.json')
   relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
   assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
   result = run_cli(
@@ -361,26 +277,3 @@ def test_chart_txt_share_subject_projection(knowledge_checkout: Path, show_sourc
     assert positions == tuple(sorted(positions))
   assert relation.text not in KNOWLEDGE_BASE.render_subject('shishen.qisha', include_reference_only=True)
   assert relation.text in KNOWLEDGE_BASE.render_subject('shishen.shishen', include_reference_only=True)
-
-
-def test_export_cannot_truncate_editing_source(tmp_path: Path) -> None:
-  source = tmp_path / 'source.json'
-  source.write_text(KNOWLEDGE_BASE.export_json(), encoding='utf-8')
-  before = source.read_bytes()
-  for target in (source, tmp_path / 'hardlink.json'):
-    if target != source:
-      target.hardlink_to(source)
-    result = run_cli(
-      tmp_path, 'knowledge', '--knowledge-source', str(source), '--object', 'tiangan.ding',
-      '--export-knowledge-json', str(target),
-    )
-    assert result.returncode == 2 and 'overwrite the editing source' in result.stderr
-    assert source.read_bytes() == before
-
-
-def test_export_io_error_uses_cli_exit(tmp_path: Path) -> None:
-  blocker = tmp_path / 'file'
-  blocker.write_text('existing', encoding='utf-8')
-  result = run_cli(tmp_path, 'knowledge', '--export-knowledge-json', str(blocker / 'out.json'))
-  assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'Traceback' not in result.stderr and blocker.read_text(encoding='utf-8') == 'existing'

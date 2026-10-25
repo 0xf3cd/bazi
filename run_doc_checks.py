@@ -20,7 +20,7 @@ from api_contract import DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, PUBLIC_NAMES
 from house_docstrings import HEADER_WORDS, source_attribute_docs
 from knowledge_catalog import json_value
 from bazi.context_matching import CriterionInfo, criteria
-from bazi.knowledge import KnowledgeBase, KnowledgeEntry
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry
 from bazi.rules import DizhiRelationDefinitions
 from bazi.school import BaziConfig, BaziSchool
 
@@ -34,8 +34,8 @@ EXAMPLE_GROUPS = {
   'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore'},
   'guides/configuration': {'config-precision', 'config-overseas', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
   'guides/relations-transits': {'relations-day-master', 'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
-  'guides/integration': {'integration-imports', 'integration-chart-json', 'integration-other-json', 'integration-context', 'integration-text-style', 'integration-auxiliary'},
-  'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'export', 'edit', 'broken', 'criteria', 'auxiliary-knowledge'},
+  'guides/integration': {'integration-imports', 'integration-context', 'integration-text-style', 'integration-auxiliary'},
+  'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'source', 'edit', 'broken', 'criteria', 'auxiliary-knowledge'},
   'guides/rule-coverage': {'rule-coverage-guoyin'},
 }
 
@@ -331,9 +331,9 @@ def check_related(page: Page, identifier: str, entries: tuple[KnowledgeEntry, ..
 
 def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
   kb = KnowledgeBase.load()
-  exported = json.loads(kb.export_json())
+  source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   records: dict[str, Mapping[str, typing.Any]] = {
-    kind: {record[key_name]: record for record in exported[kind]} for kind, key_name in (
+    kind: {record[key_name]: record for record in source[kind]} for kind, key_name in (
       ('objects', 'object_id'), ('contexts', 'context_id'), ('sources', 'source_id'), ('entries', 'claim_id'),
     )
   }

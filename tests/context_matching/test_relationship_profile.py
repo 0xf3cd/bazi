@@ -9,7 +9,7 @@ import pytest
 
 from bazi.context_matching import (
   ContextProfile, _BINDINGS, _CRITERIA, _binding_digest, evaluate_context, RelationshipProfile, TransitCoordinate,
-  _CLASS_CRITERIA, _DAY_MASTER_CRITERIA, _RECORD_VERSION, _RELATED_GENDERS,
+  _CLASS_CRITERIA, _DAY_MASTER_CRITERIA, _RELATED_GENDERS,
 )
 from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
@@ -57,10 +57,7 @@ def test_criteria_partition_scope_and_entry_roles() -> None:
   assert set(_DAY_MASTER_CRITERIA) | set(_CLASS_CRITERIA) == context_conditions
 
 
-def test_definitions_pinned_to_record_version() -> None:
-  # Records store each definition and restoring checks it against _CRITERIA, so editing one breaks every
-  # saved record of that criterion: change a definition only together with record_version.
-  assert _RECORD_VERSION == 5
+def test_literal_criterion_definitions() -> None:
   assert {key: value.definition for key, value in _CRITERIA.items()} == {
     GUANSHA: '选定范围内正官与七杀各至少出现一次。',
     FEMALE: '选定范围内正官与七杀各至少出现一次，且输入为女命。',

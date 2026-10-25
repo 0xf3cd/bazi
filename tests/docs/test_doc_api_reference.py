@@ -32,10 +32,10 @@ def test_external_bases_need_the_allowlist(monkeypatch):
 
 
 def test_oracle_ignores_typeddict_bases(monkeypatch):
-  expected = runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict')
-  monkeypatch.setitem(api_reference.BASES, 'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict', ('TypedDict',))
-  assert api_reference.inherited_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') != expected
-  assert runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') == expected
+  expected = runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis')
+  monkeypatch.setitem(api_reference.BASES, 'bazi.analyzer.relationship.AtBirthShenshaAnalysis', ('TypedDict',))
+  assert api_reference.inherited_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') != expected
+  assert runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') == expected
 
 
 def test_oracle_ignores_mro_base_table(monkeypatch):

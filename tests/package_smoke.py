@@ -11,7 +11,7 @@ import sys
 
 from datetime import date, datetime, timedelta, timezone, UTC
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 
 WRITE_ATTEMPTS: list[str] = []
@@ -106,12 +106,13 @@ def main() -> None:
   check('context_matching' in bazi.__all__ and matching_module is bazi.context_matching, 'Matching ordinary module attribute registration mismatch')
   knowledge_module = bazi.knowledge
   check('knowledge' in bazi.__all__ and knowledge_module is bazi.knowledge, 'Knowledge module registration mismatch')
-  for name in ('descriptions', 'interpreter'):
+  for name in ('descriptions', 'interpreter', 'record_migration'):
     check(name not in bazi.__all__, 'Retired module remains registered')
     check(importlib.util.find_spec('bazi.' + name) is None, 'Retired module remains installed')
     check(not hasattr(bazi, name), 'Retired root module attribute remains')
-  from bazi.bazi import Bazi
-  from bazi.bazi_chart import BaziChart, BaziJson
+    check(name not in dir(bazi), 'Retired root module remains in dir')
+  from bazi.bazi import Bazi, LocationTime
+  from bazi.bazi_chart import BaziChart
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.utils.shensha_utils import xunkong, kongwang
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
@@ -123,6 +124,17 @@ def main() -> None:
   from bazi.analyzer.relationship import RelationshipAnalyzer
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
   from bazi.context_matching import ContextProfile, ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context
+
+  from bazi.transits import TransitSet
+  for module, member in ((bazi.bazi, 'LocationTimeJson'), (bazi.bazi_chart, 'BaziJson'), (bazi.school, '_ConfigJson'), (bazi.school, '_config_json')):
+    check(not hasattr(module, member), 'Removed persistence type/helper remains installed')
+  for owner, members in (
+    (BaziChart, ('json', 'from_json', '_from_data')), (LocationTime, ('json',)),
+    (BaziSchool, ('from_json',)), (TransitSet, ('json',)),
+    (ContextResult, ('input_json', 'export_json', 'from_json', '_from_data')),
+    (KnowledgeBase, ('export_json', 'from_json', '_export_data')),
+  ):
+    check(all(not hasattr(owner, member) for member in members), 'Removed persistence member remains installed')
 
   check(not EOT_READS, 'Imports eagerly read the EOT table')
   for longitude, error_type in ((True, TypeError), (float('nan'), ValueError), (180.01, ValueError)):
@@ -144,10 +156,6 @@ def main() -> None:
     longitude=0.0,
   ))
   check(location_chart.bazi.hour == 1, 'Installed apparent-solar chart mismatch')
-  check(
-    BaziChart.from_json(json.loads(json.dumps(location_chart.json))).json == location_chart.json,
-    'Installed apparent-solar JSON restoration mismatch',
-  )
 
   precise_chart = BaziChart(Bazi.create(
     datetime(2000, 11, 3, 0, 43, 59, 123456, tzinfo=UTC),
@@ -155,14 +163,12 @@ def main() -> None:
     BaziConfig.from_values(precision='hour'),
     longitude=-0.0,
   ))
-  precise_data = cast(BaziJson.LocationBaziChartJsonDict, precise_chart.json)
+  precise_data = precise_chart.bazi.location_time
+  if precise_data is None:
+    raise RuntimeError('Installed precise location facts missing')
   check(precise_chart.bazi.hour_pillar.dizhi is Dizhi.丑, 'Installed conversion discarded seconds')
-  check(precise_data['canonical_instant'] == '2000-11-03T00:43:59.123456+00:00', 'Installed exact instant mismatch')
-  check(str(precise_data['longitude']) == '0.0', 'Installed negative-zero emission mismatch')
-  check(
-    BaziChart.from_json(json.loads(json.dumps(precise_chart.json))).json == precise_chart.json,
-    'Installed precise-instant JSON restoration mismatch',
-  )
+  check(precise_data.canonical_instant.isoformat() == '2000-11-03T00:43:59.123456+00:00', 'Installed exact instant mismatch')
+  check(str(precise_data.longitude) == '0.0', 'Installed negative-zero mismatch')
   hour_tie = Bazi.create(
     datetime(2024, 3, 5, 1, 52, 45, tzinfo=UTC),
     'male',
@@ -179,7 +185,7 @@ def main() -> None:
     civil_timezone=datetime.fromisoformat('2024-01-01T12:00:00+14:00').tzinfo,
   ))
   check(alternate.bazi == kiritimati.bazi and hash(alternate.bazi) == hash(kiritimati.bazi), 'Installed explicit civil identity mismatch')
-  check(alternate.json == kiritimati.json and BaziChart.from_json(kiritimati.json).json == kiritimati.json, 'Installed civil JSON mismatch')
+  check(alternate.bazi.location_time == kiritimati.bazi.location_time, 'Installed civil facts mismatch')
   facts = kiritimati.bazi.location_time
   check(facts is not None, 'Installed location facts missing')
   if facts is None:
@@ -195,7 +201,6 @@ def main() -> None:
     check(day.bazi.ganzhi_year_month == GanzhiYearMonth(2000, 1), 'Installed DAY month mismatch')
     check(day.bazi.month_jies[0] == JieqiTime(Jieqi.立春, datetime(2000, 2, 4, 20, 40, 23)), 'Installed DAY Jie mismatch')
     check(day.dayun_start_moment == start and next(day.dayun).ganzhi_year == first_label, 'Installed DAY counting mismatch')
-    check(BaziChart.from_json(day.json).json == day.json, 'Installed DAY restoration mismatch')
     check(day.bazi.location_time is None, 'Default birth acquired location facts')
   for operation, expected_time_error in (
     (lambda: GanzhiYearMonth(2000, 0), ValueError),
@@ -212,8 +217,8 @@ def main() -> None:
     else:
       raise RuntimeError('Installed time API negative control failed')
   location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  check(json.loads(location_match.input_json)['civil_time'] == '2024-01-01T12:00:00+14:00', 'Installed context dropped civil basis')
-  check(ContextResult.from_json(location_match.export_json()) == location_match, 'Installed location context restore mismatch')
+  check(location_match.bazi.location_time == facts and location_match.bazi == kiritimati.bazi, 'Installed context dropped civil basis')
+  check('2024-01-01T12:00:00+14:00' in location_match.render(), 'Installed context display dropped civil basis')
   for birth, basis in (
     (datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     (datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
@@ -234,21 +239,6 @@ def main() -> None:
       pass
     else:
       raise RuntimeError('Installed solar primitive leaked an extreme instant')
-  for field, spelling in (('canonical_instant', '2030-01-01T00:00:00+00:00'),
-                       ('civil_time', '2024-01-01T12:00:00+13:00')):
-    inconsistent = json.loads(location_match.export_json())
-    inconsistent['input'][field] = spelling
-    try:
-      ContextResult.from_json(json.dumps(inconsistent))
-    except ValueError:
-      pass
-    else:
-      raise RuntimeError('Installed record accepted contradictory civil/UTC inputs')
-  historical = json.loads(location_match.export_json())
-  historical['input'].update(civil_time='1850-01-01T12:00:00+14:00', canonical_instant='1849-12-31T22:00:00+00:00', apparent_time='2000-01-01T12:00:00')
-  recovered = ContextResult.from_json(json.dumps(historical))
-  check(recovered.criterion == location_match.criterion and recovered.occurrences == location_match.occurrences,
-        'Installed observation recovery recalculated stored observations')
   for kwargs, expected_error in (({'civil_timezone': UTC}, ValueError), ({'longitude': 0.0, 'civil_timezone': 'UTC'}, TypeError)):
     try:
       Bazi.create(datetime(2000, 1, 1, tzinfo=UTC), 'male', BaziConfig.from_values(precision='minute'), **kwargs)
@@ -294,7 +284,7 @@ def main() -> None:
       check(utils.to_date(project(b)) == date(2024, 2, 29), 'Warm civil projection mismatch')
     print(f'PASS backend={backend.value} cache boundaries/civil projection')
     chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', BaziConfig.from_values(backend=backend, precision='day')))
-    check(BaziChart.from_json(json.loads(json.dumps(chart.json))).json == chart.json, 'JSON restoration mismatch')
+    check(chart.bazi.config.backend is backend and len(chart.bazi.pillars) == 4, 'Installed chart input mismatch')
     transits = TransitChart(chart).at_year(2024)
     check(transits is not None, 'Missing transits')
     if transits is None:
@@ -308,13 +298,7 @@ def main() -> None:
       pass
     else:
       raise RuntimeError('Timezone rejection failed')
-    try:
-      BaziChart.from_json({**chart.json, 'extra': 'invalid'})
-    except ValueError:
-      pass
-    else:
-      raise RuntimeError('JSON input rejection failed')
-    print(f'PASS backend={backend.value} JSON/transits/analysis/input rejection')
+    print(f'PASS backend={backend.value} transits/analysis/input rejection')
   for step in (Ganzhi.from_str('甲子').next, Ganzhi.from_str('甲子').prev):
     step(1)
     try:
@@ -334,21 +318,12 @@ def main() -> None:
   check(tuple((hit.pillar, str(hit.ganzhi)) for result in natal_details for hit in result.hits) == (
     ('day', '壬戌'), ('year', '甲子'),
   ), 'Installed natal kongwang details mismatch')
-  from bazi.transits import TransitSet
   kongwang_transits = TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲戌'))
   details = kongwang_analysis.transits.kongwang(kongwang_transits)
   check(tuple(hit.kind for hit in details[0].hits) == (TransitKind.DAYUN, TransitKind.LIUNIAN), 'Installed kongwang transit kinds merged')
   check(kongwang_analysis.transits.shensha(kongwang_transits)['kongwang'] == frozenset({Dizhi.戌}), 'Installed kongwang projection mismatch')
-  check(BaziChart.from_json(kongwang_chart.json).json == kongwang_chart.json, 'Installed kongwang school roundtrip mismatch')
-  old_school = kongwang_chart.json
-  del old_school['school']['kongwang_anchor'] # type: ignore[misc] # Deliberately incomplete record.
-  try:
-    BaziChart.from_json(old_school)
-  except ValueError:
-    pass
-  else:
-    raise RuntimeError('Installed incomplete school was silently defaulted')
-  print('PASS xunkong/kongwang/natal/transit details and strict school record')
+  check(kongwang_chart.bazi.config.school.kongwang_anchor is Anchor.YEAR_AND_DAY, 'Installed kongwang school mismatch')
+  print('PASS xunkong/kongwang/natal/transit details and school identity')
   knowledge = KnowledgeBase.load()
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   for value in Tiangan:
@@ -401,7 +376,7 @@ def main() -> None:
   from dataclasses import replace
   future = replace(knowledge.sources['editorial'], source_id='future', lineage='future')
   expanded = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), (*knowledge.sources.values(), future), tuple(knowledge.entries.values()))
-  check(KnowledgeBase.from_json(expanded.export_json()).sources['future'] == future, 'New source needs a vocabulary mirror')
+  check(expanded.sources['future'] == future, 'New source needs a vocabulary mirror')
   reference_entry = knowledge.entry('editorial.shishen.zhengguan.legal_trouble')
   display = knowledge.render(reference_entry, premise_verdict='SATISFIED')
   check('前提判别：SATISFIED' in display and '输出资格：reference_only' in display and '也许' in display, 'Verdict display changed eligibility or original modality')
@@ -425,9 +400,10 @@ def main() -> None:
       raise RuntimeError('Installed knowledge boundary bypassed validation')
   selected = knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)
   check(tuple(entry.claim_id for entry in selected) == ('tiangan.ding.lamp_symbol',), 'Installed knowledge lookup mismatch')
-  restored_knowledge = KnowledgeBase.from_json(knowledge.export_json(selected))
-  check(restored_knowledge.entries == {entry.claim_id: entry for entry in selected}, 'Knowledge export/reload lost entries')
-  check(restored_knowledge.sources == knowledge.sources, 'Knowledge export/reload lost witnesses')
+  restored_knowledge = KnowledgeBase.load(DEFAULT_SOURCE_PATH)
+  check(restored_knowledge == knowledge and restored_knowledge is not knowledge, 'Knowledge editing-source reload mismatch')
+  check(restored_knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True) == selected, 'Knowledge reload lost entries')
+  check(restored_knowledge.sources == knowledge.sources, 'Knowledge reload lost witnesses')
   check('第 70 页' in restored_knowledge.render(selected[0]), 'Knowledge display lost source locator')
   try:
     knowledge.query(object_id='typo')
@@ -435,7 +411,7 @@ def main() -> None:
     pass
   else:
     raise RuntimeError('Optimized knowledge input rejection failed')
-  print('PASS installed knowledge query/display/export/reload')
+  print('PASS installed knowledge query/display/source reload')
   catalog = criteria()
   check(set(catalog) == {
     'editorial.guansha_coexistence.v1', 'editorial.guansha_coexistence_female.v1',
@@ -467,7 +443,14 @@ def main() -> None:
   check(matched.criterion.status == 'SATISFIED' and len(matched.entries) == 2, 'Installed context positive mismatch')
   check(any(o.pillar == 'hour' and o.layer == 'hidden' and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.occurrences), 'Installed context lost hidden witness')
   check('也许' in matched.render() and '不确立古籍规则，也不作现实预测。' in matched.render(), 'Installed context lost modal/source limit')
-  check(ContextResult.from_json(matched.export_json()) == matched, 'Installed context restoration lost evidence/knowledge')
+  check(matched.bazi == positive_chart.bazi, 'Installed context lost input identity')
+  fingerprint, rendered = hash(matched), matched.render()
+  incoming = matched.bazi
+  copied = replace(matched, _bazi=incoming)
+  outgoing = copied.bazi
+  for input_copy in (incoming, outgoing):
+    object.__setattr__(input_copy, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
+  check(copied == matched and hash(copied) == fingerprint and copied.render() == rendered, 'Installed result input copy boundary failed')
   check(evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal')).entries == (), 'Installed context promoted reference output')
   missing = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian'))
   check(missing.criterion.status == 'UNKNOWN', 'Installed context missing year became false')
@@ -480,7 +463,7 @@ def main() -> None:
       pass
     else:
       raise RuntimeError('Installed exact-int year rejection failed')
-  print('PASS installed context matching/lazy/readonly/evidence/record restoration')
+  print('PASS installed context matching/lazy/readonly/evidence/input isolation')
   from bazi.context_matching import RelationshipProfile, TransitCoordinate
   from bazi.analyzer.relationship import spouse_evidence
   relationship_chart = BaziChart(Bazi.create(datetime(2000, 1, 9, 12), 'male'))
@@ -492,9 +475,8 @@ def main() -> None:
   check(evidence is not None and evidence.transits is not None, 'Installed relationship evidence missing transits')
   if evidence is None or evidence.transits is None:
     raise RuntimeError('Installed relationship evidence missing transits')
-  check(evidence.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}, 'Installed relationship transit identity mismatch')
+  check(evidence.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed relationship transit identity mismatch')
   check('宫·' in relationship.render(), 'Installed relationship render lost category labels')
-  check(ContextResult.from_json(relationship.export_json()) == relationship, 'Installed relationship record restore mismatch')
   queried_2016 = TransitChart(relationship_chart).at_year(2016)
   check(queried_2016 is not None, 'Installed relationship transits missing')
   if queried_2016 is None:
@@ -503,27 +485,8 @@ def main() -> None:
   check(direct.transits is not None, 'Installed spouse_evidence transits missing')
   if direct.transits is None:
     raise RuntimeError('Installed spouse_evidence transits missing')
-  check(direct.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}, 'Installed spouse_evidence transit mismatch')
-  print('PASS installed relationship evaluation/evidence/render/record restoration')
-  from bazi.record_migration import migrate_chart_json, migrate_knowledge_json, migrate_context_json
-
-  old_chart = dict(location_chart.json)
-  del old_chart['schema_version']
-  chart_migration = migrate_chart_json(old_chart)
-  check(BaziChart.from_json(json.loads(chart_migration.json_text)).json == location_chart.json, 'Installed chart migration mismatch')
-  old_knowledge = json.loads(knowledge.export_json())
-  old_knowledge['schema_version'] = 1
-  knowledge_migration = migrate_knowledge_json(json.dumps(old_knowledge))
-  check(KnowledgeBase.from_json(knowledge_migration.json_text) == knowledge, 'Installed knowledge migration mismatch')
-  old_context = json.loads(relationship.export_json())
-  old_context['record_version'] = 4
-  old_context['knowledge']['schema_version'] = 1
-  context_migration = migrate_context_json(json.dumps(old_context))
-  check(ContextResult.from_json(context_migration.json_text) == relationship, 'Installed context migration mismatch')
-  check(all(result.tool_version == importlib.metadata.version('bazi') for result in (
-    chart_migration, knowledge_migration, context_migration,
-  )), 'Installed migration version does not match the distribution')
-  print('PASS installed migration/version/readonly restoration')
+  check(direct.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed spouse_evidence transit mismatch')
+  print('PASS installed relationship evaluation/evidence/render')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

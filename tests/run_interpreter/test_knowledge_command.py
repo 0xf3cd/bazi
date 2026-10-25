@@ -80,14 +80,14 @@ def test_export_shows_sources_on_request(tmp_path: Path) -> None:
 
 
 def test_validate_and_export_combine(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--export-knowledge-json', 'out/k.json')
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--export-knowledge-base', '--output-dir', 'out')
   assert result.returncode == 0
-  assert result.stdout.startswith('校验通过：') and result.stdout.endswith(f'已导出知识：{Path("out") / "k.json"}\n')
-  assert (tmp_path / 'out' / 'k.json').read_text(encoding='utf-8') == KnowledgeBase.load().export_json()
+  assert result.stdout.startswith('校验通过：')
+  assert len(list((tmp_path / 'out').rglob('*.txt'))) == 20
 
 
 def test_text_export_reads_the_given_source(tmp_path: Path) -> None:
-  data = json.loads(KnowledgeBase.load().export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   record = next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')
   record['limits'] = ['本次编辑的限度。']
   (tmp_path / 'src.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
@@ -104,26 +104,6 @@ def test_text_export_bad_source_writes_nothing(tmp_path: Path) -> None:
     result = run_cli(tmp_path, 'knowledge', '--knowledge-source', source, '--export-knowledge-base', '--output-dir', 'out')
     assert result.returncode == 2 and 'error:' in result.stderr and 'Traceback' not in result.stderr
     assert result.stdout == '' and not (tmp_path / 'out').exists()
-
-
-@pytest.mark.parametrize('target, output_dir', [
-  ('out/knowledge_base/tiangan/甲.txt', ('--output-dir', 'out')),
-  ('out/knowledge_base/shishen/正官.txt', ('--output-dir', 'out')),
-  ('out/./knowledge_base/../knowledge_base/tiangan/甲.txt', ('--output-dir', 'out')),
-])
-def test_json_export_must_not_overlap_text_export(tmp_path: Path, target: str, output_dir: tuple[str, ...]) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--export-knowledge-json', target, '--export-knowledge-base', *output_dir)
-  assert result.returncode == 2 and '--export-knowledge-json must not overlap generated TXT outputs' in result.stderr
-  assert result.stdout == '' and list(tmp_path.iterdir()) == []
-
-
-def test_json_export_must_not_hit_default_text(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-  default = tmp_path / 'default'
-  monkeypatch.setattr(run_interpreter, '_DEFAULT_OUTPUT_DIR', default)
-  with pytest.raises(SystemExit) as raised:
-    main(['knowledge', '--object', 'tiangan.ding', '--export-knowledge-base',
-          '--export-knowledge-json', str(default / 'knowledge_base' / 'shishen' / '正官.txt')])
-  assert raised.value.code == 2 and list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
@@ -189,18 +169,17 @@ def test_all_does_not_combine_with_conditions(tmp_path: Path, flag: str, dimensi
   assert result.stdout == '' and list(tmp_path.iterdir()) == []
 
 
-def test_json_and_text_exports_side_by_side(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--export-knowledge-json', 'out/k.json',
+def test_query_and_text_export_combine(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding',
                 '--export-knowledge-base', '--output-dir', 'out')
   assert result.returncode == 0 and result.stderr == ''
-  library = KnowledgeBase.load()
-  assert (tmp_path / 'out' / 'k.json').read_text(encoding='utf-8') == library.export_json(library.query(object_id='tiangan.ding'))
+  assert '丁为阴火。' in result.stdout
   assert len(list((tmp_path / 'out' / 'knowledge_base').rglob('*.txt'))) == 20
 
 
 @pytest.mark.parametrize('extra', [
   ('--object', 'tiangan.ding'), ('--all',), ('--validate-knowledge',),
-  ('--export-knowledge-json', 'out/k.json'), ('--export-knowledge-base',),
+  ('--export-knowledge-base',),
 ])
 def test_list_values_stands_alone(tmp_path: Path, extra: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, 'knowledge', '--list-values', 'topic', *extra)

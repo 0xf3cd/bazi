@@ -1,13 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''记录与文字输出共用的结构、JSON 及 UTF-8 校验；不是对外 API。
-
-知识引用、判据、版本及失败后的处理指引由各记录模块决定。
-'''
+'''知识编辑源、领域值与文字输出共用的结构及 UTF-8 校验；不是对外 API。'''
 
 import json
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Any, TypeVar
 
 
@@ -64,33 +59,20 @@ def _utf8(text: str) -> str:
   return text
 
 
-def _json_dumps(value: object) -> str:
-  '''记录的带缩进输出，同时检查所有字符串键和值的 UTF-8 保存能力。'''
-  try:
-    return _utf8(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
-  except RecursionError:
-    raise ValueError('JSON nesting exceeds the supported serialization depth') from None
-
-
 def _json_loads(text: str) -> Any:
-  '''拒绝重复键，并使用实际记录编码路径检查解析结果的保存能力。'''
+  '''拒绝重复键和孤立代理项；键由解析 hook 检查，值使用显式栈遍历。'''
   _text(text, empty=True)
   try:
     value = json.loads(text, object_pairs_hook=_pairs)
   except RecursionError:
     raise ValueError('JSON nesting exceeds the supported parsing depth') from None
-  _json_dumps(value)
+  pending = [value]
+  while pending:
+    current = pending.pop()
+    if isinstance(current, str):
+      _utf8(current)
+    elif isinstance(current, list):
+      pending.extend(current)
+    elif isinstance(current, dict):
+      pending.extend(current.values())
   return value
-
-
-@contextmanager
-def _record_errors(next_step: str) -> Iterator[None]:
-  '''保留记录错误的类型分类与原因，附加该记录的处理指引。'''
-  try:
-    yield
-  except json.JSONDecodeError as error:
-    raise json.JSONDecodeError(f'{error.msg}. {next_step}', error.doc, error.pos) from None
-  except (TypeError, ValueError) as error:
-    message = f'{error}. {next_step}'.encode('utf-8', errors='backslashreplace').decode('utf-8')
-    error_type = TypeError if isinstance(error, TypeError) else ValueError
-    raise error_type(message) from None

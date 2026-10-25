@@ -94,11 +94,6 @@ class TransitSet:
     '''按固定流运顺序返回现有干支。'''
     return tuple(gz for _, gz in self.items)
 
-  @property
-  def json(self) -> dict[str, str]:
-    '''JSON 可序列化的具名表示。'''
-    return {kind.value: str(gz) for kind, gz in self.items}
-
   def select(self, *kinds: TransitKind) -> 'TransitSet':
     '''按固定顺序返回指定的流运；指定的种类必须全部存在。'''
     if len(kinds) == 0:

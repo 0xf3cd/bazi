@@ -1,13 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import pytest
+from typing import get_args
 
-from bazi.context_matching import ContextProfile, ContextResult
+from bazi.context_matching import ContextProfile, MatchReason, ObservationScope, _CRITERIA
 from bazi.defines import Ganzhi
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitSet
 
-from matching_samples import FEMALE, match
+from matching_samples import FEMALE, match, record
 
 
 @pytest.mark.parametrize('day,year,reason', [
@@ -21,7 +22,6 @@ def test_incomplete_scope_beats_partial_natal(day: int, year: int | None, reason
   assert all(o.origin == 'natal' for o in result.occurrences)
   assert result.criterion.observations['observed_coexistence'] is (day == 3)
   assert all(m.status == 'UNKNOWN' for m in result.entries)
-  assert ContextResult.from_json(result.export_json()) == result
 
 
 def test_render_distinguishes_unused_missing_year() -> None:
@@ -31,7 +31,6 @@ def test_render_distinguishes_unused_missing_year() -> None:
     (ContextProfile('natal_and_liunian', 2024), '范围：全部明藏干；natal_and_liunian；干支年=2024'),
   ):
     result = match(profile=profile)
-    record = result.export_json()
     rendered = result.render()
     assert rendered.splitlines()[1] == scope_line
     natal_lines = tuple(line for line in rendered.splitlines() if line.startswith('证据：natal.'))
@@ -40,8 +39,7 @@ def test_render_distinguishes_unused_missing_year() -> None:
       assert 'UNKNOWN；missing_transit_coordinate；scope_complete=False' in rendered
     if profile.ganzhi_year == 2024:
       assert '；kind=liunian；干支年=2024' in rendered
-    assert result.export_json() == record
-    assert ContextResult.from_json(record).render() == rendered
+    assert result.render() == rendered
 
 
 def test_unavailable_kind_unknown_errors_surface(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -67,4 +65,15 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   assert result.criterion.reason == reason and result.criterion.scope_complete is False
   assert all(entry.status == 'UNKNOWN' and entry.reason == reason for entry in result.entries)
   assert all(o.origin == 'natal' for o in result.occurrences)
-  assert ContextResult.from_json(result.export_json()) == result
+
+
+def test_scope_matrix_covers_legal_reasons() -> None:
+  results = [
+    (profile, record(criterion_id, profile, day, gender))
+    for criterion_id, info in _CRITERIA.items() if info.profile_kind == 'context'
+    for profile in (ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024), ContextProfile('natal_and_liunian'), ContextProfile('natal_and_liunian', 1998))
+    for day, gender in ((3, 'female'), (5, 'male'))
+  ]
+  assert all(result.relationship is None for _, result in results)
+  assert {p.observation_scope for p, r in results if r.criterion.scope_complete} == set(get_args(ObservationScope))
+  assert {r.criterion.reason for _, r in results} == set(get_args(MatchReason)) - {'binding_unrecognized'}

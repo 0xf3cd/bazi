@@ -60,7 +60,7 @@ EVALUATION_INPUTS = [
   ('solar_date', ('--solar-date', '2024-04-10')), ('solar_moment', ('--solar-moment', '2024-04-10T12:00:00')),
   ('transit_kinds', ('--transit-kinds', 'liuri')), ('longitude', ('--longitude', '120')),
   ('precision', ('--precision', 'hour')), ('civil_timezone', ('--civil-timezone', '+08:00')),
-  ('knowledge_source', ('--knowledge-source', 'src.json')), ('export_context_json', ('--export-context-json', 'out/m.json')),
+  ('knowledge_source', ('--knowledge-source', 'src.json')),
   ('include_reference_only', ('--include-reference-only',)),
 ]
 

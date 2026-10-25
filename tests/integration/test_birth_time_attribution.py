@@ -157,12 +157,9 @@ def test_year_floor_leaves_physical_queries() -> None:
   ('male', '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39'),
   ('female', '大运数节依据（逆排）：立春 - 2000-02-04T20:40:23'),
 ])
-def test_demo_reads_facts_not_serialized_chart(
+def test_demo_reads_time_facts(
   monkeypatch: pytest.MonkeyPatch, located: bool, gender: str, counting: str,
 ) -> None:
-  def fail_json(_chart: BaziChart) -> object:
-    raise AssertionError('Display must not generate a complete chart JSON')
-  monkeypatch.setattr(BaziChart, 'json', property(fail_json))
   chart = BaziChart(Bazi.create(
     '2000-02-04T07:40:00-05:00' if located else '2000-02-04 10:00',
     gender,
@@ -191,7 +188,7 @@ def test_demo_reads_facts_not_serialized_chart(
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
-def test_time_facts_readonly_json_detached() -> None:
+def test_time_facts_are_readonly() -> None:
   bazi = Bazi.create('2000-02-04T07:40:12.123456-05:00', 'male',
                      BaziConfig.from_values(precision='minute'), longitude=0.0)
   facts = bazi.location_time
@@ -202,19 +199,7 @@ def test_time_facts_readonly_json_detached() -> None:
     facts.longitude = 1.0 # type: ignore[misc]
   with pytest.raises(AttributeError):
     bazi.reference_datetime = datetime(2000, 1, 1) # type: ignore[misc]
-  detached = facts.json
-  detached['apparent_time'] = 'wrong'
-  assert facts.json['apparent_time'] == facts.apparent_time.isoformat()
   assert Bazi.create('2000-02-04 10:00', 'male').location_time is None
-
-
-def test_day_json_rejects_old_derived_start() -> None:
-  chart = BaziChart(Bazi.create('2000-02-04 10:00', 'male'))
-  data = chart.json
-  assert BaziChart.from_json(data).json == data
-  data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
-  with pytest.raises(ValueError):
-    BaziChart.from_json(data)
 
 
 @pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2'))

@@ -1,4 +1,4 @@
-# 公开接口与记录兼容契约
+# 公开接口契约
 
 本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`
 （`import bazi; bazi.Bazi` 的 `AttributeError` 会指出该从哪个定义模块导入；`from bazi import Bazi` 由解释器报 `ImportError`，不带这条指路）。例如：
@@ -19,14 +19,14 @@ assert chart.bazi.day_master in Tiangan
 完整名称、类成员、字段、枚举别名、继承关系及规范定义路径登记在
 [`tests/api_contract.py`](tests/api_contract.py)，供测试和参考文档共同使用。
 `PUBLIC_NAMES` 登记定义模块的自有名称和既有包入口；`REEXPORTS`、`ALIASES` 区分重导出与别名。
-`DECLARED_MEMBERS` 包含方法、属性、类型别名和字段；继承关系另由 `BASES` 登记，
-公开命盘记录从私有基类继承的字段也在清单中，不因基类名带下划线而遗漏。
+`DECLARED_MEMBERS` 包含方法、属性、类型别名和字段；继承关系另由 `BASES` 登记。
 
 - 包的 `__all__` 不是公开 API 全集；`bazi.data_types` 等定义模块同样可直接导入。
 - 领域枚举的中文与拉丁成员别名共用值；中文类型别名也保留，如 `天干` 与 `Tiangan`。
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
+  `ContextResult` 的生成构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，读取使用 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
 - 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
@@ -74,30 +74,34 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 `Tiangan`、已调整的有效命宫月支 `Dizhi`、本盘时支 `Dizhi`，非相应枚举抛 `TypeError`。
 普通运行与 `python -O` 下的校验行为相同；`Ganzhi` 构造器本身仍接受全部 10×12 个干支组合。
 
-两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、JSON、旧文本输出，也不加入原有
+两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、旧文本输出，也不加入原有
 五行、十神、神煞、关系或流运分析。读取它们不使任何解释条目的前提自动成立。
 
 ## 返回值、拷贝与相等性
 
-### 共享与记录
+### 共享与输入
 
 - 查询结果和规则集合使用 `tuple`、`frozenset`、`frozendict` 等不可变结构；
   `frozendict` 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。
-- `BaziChart.json` 是独立的可变 JSON 字典，修改它不修改命盘。命盘隔离传入的 `Bazi`，
-  `chart.bazi` 也按其既有防御性拷贝约定返回；不把 Python 属性只读等同于所有对象都深冻结。
-- `Bazi` 按值比较；`BaziChart` 按对象身份比较。恢复后的两个命盘可以 `json` 和 `bazi` 值相等，
-  但命盘对象本身不相等。知识库按内容及顺序比较，前提判别记录 `ContextResult` 按其值字段比较。
+- 命盘隔离传入的 `Bazi`，`chart.bazi` 每次返回独立深拷贝；不把 Python 属性只读等同于所有对象都深冻结。
+- `Bazi` 按值比较；`BaziChart` 按对象身份比较。两个命盘的 `bazi` 值可以相等，命盘对象本身仍不相等。
+  知识库按内容及顺序比较，`ContextResult` 按其值字段比较。
+- `ContextResult` 是 frozen dataclass；构造参数 `_bazi: Bazi` 验证后深拷贝，公开 `bazi` 属性每次返回独立深拷贝。
+  构造及 `replace` 使用 `_bazi`，不支持 `input_json`。相等／哈希使用 `Bazi` 的完整身份，包含性别、完整配置，
+  地点盘另含精确瞬间、固定民用偏移及经度。修改输入或属性返回的副本不改变已有结果。
+  显示直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。
+- 求值显式传入的 `KnowledgeBase` 被共享；未传时每次独立加载编辑源。已有结果不随源文件修改而变化。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
 
 ## 对象摘要、报错指路与文本展示
 
-- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text` 和 `record_migration`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
-  后两者不进 `__all__`（v2.0.0 的显式导出清单保持不变），但同样按需导入。
+- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
+  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但同样按需导入。
 - `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 的 `repr`
   是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
-  不是记录格式，也不应被程序解析**；保存与交换用 `BaziChart.json`，由测试钉住当前格式只为防止意外改动。
+  不是记录格式，也不应被程序解析**。
 - 接收命盘的入口（`TransitChart`、`DayunDatabase`、`TransitDatabase`、三个分析类、`spouse_evidence`、
   `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类原先不检查类型，
   传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；`DayunDatabase`、`TransitDatabase` 原先在构造时就抛
@@ -108,7 +112,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
   `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
-  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun`、`json` 一致；`basic_text` 不受影响。
+  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun` 一致；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 名称、关键词与过滤值发现
@@ -169,7 +173,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values topic` 对应 `filter_values('topic')`，
 `match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
 本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 起移除**。
-这一支持窗口只适用于源码脚本，不改变上面的 Python API 与记录兼容契约。
+这一支持窗口只适用于源码脚本，不改变上面的 Python API 契约。
 裸调用打印顶层帮助并返回 0；随机命盘须显式选择 `chart`。旧平铺选项报错并指向三个任务的新写法。
 
 | 旧写法（已移除） | 新写法 |
@@ -181,146 +185,29 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 | `--seed 236 --output-dir out --export-knowledge-base` | 先运行 `chart --seed 236 --output-dir out`，再运行 `knowledge --export-knowledge-base --output-dir out` |
 
 表中参数均接在 `python run_interpreter.py` 后。最后一行是两条独立命令，分别检查各自的导出目标，
-不提供跨命令的冲突预检或整体回滚；各任务的 JSON／TXT 输出冲突与知识源覆盖保护仍保留。
+不提供跨命令的冲突预检或整体回滚；TXT 输出的知识源覆盖保护仍保留。
 
-## 三类 JSON 分别保存与恢复
+## 已删除的存取接口
 
-| 记录 | 输出／输入 | 版本与恢复含义 |
-|---|---|---|
-| 命盘 | `BaziChart.json` 输出字典；`BaziChart.from_json` 接收映射 | `schema_version=1`。按记录中的输入、配置与当前实现重建，再逐项核对派生字段；只保证与当前版本一致。 |
-| 知识库 | `KnowledgeBase.export_json` 输出 JSON 文本；`from_json` 接收文本 | `schema_version=2`。恢复语料并校验结构、引用和各状态，不计算命盘前提。 |
-| 前提判别记录 | `ContextResult.export_json` 输出 JSON 文本；`from_json` 接收文本 | `record_version=5`，内嵌知识 schema 2。恢复记录并校验结构和值类型，不重新判别，不认证输入、观察、证据与绑定之间的事实一致性。 |
+当前源码不提供命盘／前提判别结果的保存恢复，也不导出知识快照。不保留兼容壳或替代记录格式。
+已删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
+`BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
+`KnowledgeBase.export_json/from_json` 及整个 `bazi.record_migration` 模块。
+源码脚本的 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json` 也已删除；
+普通运行与 `python -O` 均按未知选项拒绝，不创建输出文件。TXT、知识编辑源读取与领域查询保留。
 
-命盘映射严格区分默认盘与地点盘。缺键、多键、不支持的值、非规范拼写及重算不一致会拒绝；
-类型错误抛 `TypeError`，字段／值／一致性错误抛 `ValueError`。同时违反多个约束时不保证报错顺序。
-格式版本不是软件版本。需要长期保存生成软件版本时，写在调用方的外层记录中，不给命盘映射加自定义键。
-普通读取只接受上表格式，不静默迁移。缺版本、旧版、未知版与不兼容结构均拒绝，并保留具体原因和处理指引；
-指引不表示损坏的记录一定能修复。bool、浮点数或字符串不能冒充整数版本。
+旧结果需保留原件；要得到当前实现下的结论，使用原出生输入与完整配置重新排盘、求值。
+本库不从旧记录猜补配置或重建历史结果。
 
-以下三段各自独立运行，文件由调用方管理。
+## 知识编辑源与文本边界
 
-### 命盘：文本先解析成映射
+`KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随库 `knowledge_data.json`。
+已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`contexts`、`sources`、`entries` 四份注册表；
+版本只接受精确整数 2，拒绝 bool、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+重复键、字段差异、断引用、不合法状态及无法按 UTF-8 编码的孤立代理项均拒绝，不修复原文。
+非整数版本的 `ValueError` 仅显示类型，不展开未知容器。类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；
+JSON 解析错误保留 `JSONDecodeError` 的原文与位置，实际解析递归失败转为 `ValueError`，不设固定深度上限。
 
-```python
-import json
-from datetime import datetime
-from pathlib import Path
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-
-chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
-path = Path('chart.json')
-path.write_text(json.dumps(chart.json, ensure_ascii=False), encoding='utf-8')
-restored = BaziChart.from_json(json.loads(path.read_text(encoding='utf-8')))
-assert restored.json == chart.json
-assert restored.bazi == chart.bazi
-assert restored != chart
-```
-
-### 知识库：直接保存导出的文本
-
-```python
-from pathlib import Path
-from bazi.knowledge import KnowledgeBase
-
-knowledge = KnowledgeBase.load()
-path = Path('knowledge.json')
-path.write_text(knowledge.export_json(), encoding='utf-8')
-restored = KnowledgeBase.from_json(path.read_text(encoding='utf-8'))
-assert restored == knowledge
-```
-
-知识 JSON 拒绝重复键、字段差异、不支持的版本、断引用及不合法的条目状态。
-导出默认保留全部条目，包括仅供参考的条目；显式选择条目时仍保留全部对象、情境与来源注册表。
-`load` 每次重新读取文件；已有知识快照不随文件编辑而变化。
-
-### 前提判别记录：恢复不等于重新求值
-
-```python
-from datetime import datetime
-from pathlib import Path
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
-
-chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
-result = evaluate_context(
-  chart,
-  criterion_id='editorial.guansha_coexistence.v1',
-  profile=ContextProfile('natal'),
-  include_reference_only=True,
-)
-path = Path('context.json')
-path.write_text(result.export_json(), encoding='utf-8')
-restored = ContextResult.from_json(path.read_text(encoding='utf-8'))
-assert restored == result
-```
-
-前提判别记录只接受版本 5，旧版本或错误类型的版本值会拒绝。恢复仍检查 profile 类型、坐标结构、
-字段和值域等约束；能恢复不代表判别真实，也不等于绑定重新识别。
-需要当前规则下的结论时，应使用原输入与配置重新构造命盘并调用 `evaluate_context`，
-不要只改 `record_version` 冒充迁移。知识库的 `schema_version` 与前提判别记录的 `record_version` 也不能互换。
-
-### 主动迁移：生成新记录，保留原件
-
-从 `bazi.record_migration` 导入三个入口；它们不写文件，也不由普通读取自动调用：
-
-| 入口 | 首批支持的旧源 | 目标与不做什么 |
-| --- | --- | --- |
-| `migrate_chart_json(映射)` | 完整无版本命盘，包括默认盘、地点盘 | schema 1；仍按当前实现重建核对，不改变输入、配置或派生值 |
-| `migrate_knowledge_json(文本)` | 合法知识 schema 1 | schema 2；保留原知识快照，不换成当前默认语料 |
-| `migrate_context_json(文本)` | 完整 record 4，内嵌知识必须是 schema 1 | record 5／schema 2；保留原判别、观察、证据、绑定和输入拼写，不重新求值 |
-
-已有目标格式也可调用：校验后返回新结果，`changes` 为空。混版、未知版本、record 1–3、损坏字段、
-失效判据定义或不支持的文本拒绝，类型错误为 `TypeError`，结构／值／版本错误为 `ValueError`。
-命盘迁移的 `json_text` 仍须先 `json.loads` 才能交给命盘读取入口。JSON 空白和字段排列可以规范化，字段值不因格式迁移改变。
-此前合法的前提配置别名、school 扩展键及观察键继续保留，不借迁移统一它们。
-
-返回的 `MigrationResult` 是 frozen dataclass，包含 `json_text`、`source_version`、`target_version`、
-`tool_version` 与不可变的 `changes` 元组。每个 `MigrationChange` 说明字段路径 `path`、转换前后的
-`before`／`after` 及依据 `reason`；无版本命盘的来源和原缺字段均以 `None` 表示。
-`tool_version` 取自分发元数据：安装清单（`RECORD`）须列出当前迁移模块，清单中该模块的路径及 SHA-256 须与正在使用的文件相符才报告，
-无法核定（包括没有可核哈希的 editable 安装）为 `None`。它不认证元数据真伪或历史执行，不代替原记录的生成软件版本。
-
-调用方读取源文件后主动迁移，再独占创建新文件。下面先生成一份当前格式，示范可独立运行的文件管理；
-实际处理旧命盘时改用已有源文件，迁移调用不变。当前格式只校验，变更清单为空：
-
-```python
-import json
-from datetime import datetime
-from pathlib import Path
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.record_migration import migrate_chart_json
-
-source = Path('chart.json')
-with source.open('x', encoding='utf-8') as original:
-  json.dump(BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male')).json, original, ensure_ascii=False)
-original_bytes = source.read_bytes()
-result = migrate_chart_json(json.loads(source.read_text(encoding='utf-8')))
-with Path('chart-schema1.json').open('x', encoding='utf-8') as target:
-  target.write(result.json_text)
-assert source.read_bytes() == original_bytes
-for change in result.changes:
-  print(change.path, change.before, change.after, change.reason)
-```
-
-`'x'` 在目标已存在时拒绝，避免覆盖原件或已有结果。迁移不会冻结旧算法，也不把记录恢复变成重新求值；
-需要当前结论时仍显式重建并调用 `evaluate_context`，另存新结果。
-
-新增 `kongwang_anchor` 与其他流派字段一起进入命盘身份及 JSON。旧命盘与旧前提记录缺此字段时拒绝，
-不自动补 `DAY`；以原输入、完整原配置及显式选择的新锚重建当前盘。前提记录须重新求值后另存，
-不给旧观察补键或改 `record_version` 冒充重新求值。迁移函数也不猜这个缺项。
-
-### 文本边界与升版责任
-
-JSON 文本拒绝重复键和孤立代理项，字符串键和值均检查，包括内嵌知识、观察键和 input 扩展字段。
-中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字可往返，不替换或修复原文。
-导入用公开导出的同一条带缩进编码检查 UTF-8 保存能力；导出与相关知识／前提文字渲染也检查输出，
-包括直接构造对象和渲染展示参数。普通文字查询不因此收紧。解析或编码超出运行环境递归能力时抛 `ValueError`，
-不承诺固定层数。源码 CLI 使用现有参数错误通道退出；序列化校验失败不打开或截断目标，不承诺一般 I/O 失败整体回滚。
-
-本次是记录兼容变化：旧完整记录须先主动迁移；此前可导入但不能保存的文本会提前拒绝，普通运行和 `-O` 一致。
-格式版本覆盖字段、嵌套配置、profile／坐标、判据 ID／definition、观察与证据结构以及文本接受规则。
-改变这些恢复要求时应评估格式升版；知识语料勘误不自动等于格式升版。条目绑定摘要识别所绑定的内容，
-不是格式号或软件版本，不能替代它们。
+字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
+知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
+条目绑定摘要只识别所绑定的内容，不是保存格式或软件版本，也不认证条文真伪。

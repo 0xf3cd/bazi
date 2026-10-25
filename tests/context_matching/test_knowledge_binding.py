@@ -1,17 +1,18 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from bazi.bazi import Bazi
-from bazi.context_matching import ContextProfile, ContextResult, EntryMatch, evaluate_context
-from bazi.knowledge import KnowledgeBase
+from bazi.context_matching import ContextProfile, EntryMatch, evaluate_context
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 from bazi.transit_chart import TransitChart
 
-from matching_samples import GUANSHA, FEMALE, LEGAL, chart, match
+from matching_samples import GUANSHA, FEMALE, LEGAL, chart, match, load_knowledge
 
 
 def test_reference_binding_keeps_eligibility() -> None:
@@ -21,13 +22,8 @@ def test_reference_binding_keeps_eligibility() -> None:
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
-  data = json.loads(result.export_json())
-  assert 'stem_scope' not in data['profile']
-  assert all('index' not in value for value in data['occurrences'])
-  assert 'revision' not in data['criterion']
-  assert data['knowledge'] == json.loads(knowledge.export_json())
-  assert len(data['knowledge']['entries']) == 312
-  assert data['criterion']['observations']['observed_coexistence'] is True
+  assert result.knowledge == knowledge and len(result.knowledge.entries) == 312
+  assert result.criterion.observations['observed_coexistence'] is True
   rendered = result.render()
   assert '来源状态：editorial' in rendered and '见证状态：editorial' in rendered
   source = knowledge.sources['editorial']
@@ -45,16 +41,15 @@ def test_reference_binding_keeps_eligibility() -> None:
   assert '可能会' in match(criterion_id=FEMALE).render()
 
 
-def test_reference_restore_does_not_recalculate(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_reference_render_does_not_recalculate(monkeypatch: pytest.MonkeyPatch) -> None:
   result = match()
   rendered = result.render()
-  # Record restoration must not call a chart/transit constructor or evaluator.
+  # Rendering must not call a chart/transit constructor or evaluator.
   def forbidden(*args: Any, **kwargs: Any) -> Any:
     raise RuntimeError('Unexpected recalculation')
   monkeypatch.setattr(Bazi, 'create', forbidden)
   monkeypatch.setattr(TransitChart, 'at_year', forbidden)
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result and restored.render() == rendered and restored.export_json() == result.export_json()
+  assert result.render() == rendered
 
 
 @pytest.mark.parametrize('day,status', [(3, 'SATISFIED'), (1, 'NOT_SATISFIED')])
@@ -74,11 +69,12 @@ def test_premise_annotations_are_evaluation_only(day: int, status: str) -> None:
 @pytest.mark.parametrize('separator', ['\n', '\r\n', '\r', '\u2028'])
 def test_multiline_custom_text_keeps_one_copy(separator: str) -> None:
   claim_id = LEGAL[0]
-  data = json.loads(KnowledgeBase.load().export_json())
-  entry = next(e for e in data['entries'] if e['claim_id'] == claim_id)
   text = 'FIRST-TEXT-LINE' + separator + 'SECOND-TEXT-LINE'
-  entry['text'] = text
-  knowledge = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  original = KnowledgeBase.load()
+  knowledge = KnowledgeBase(
+    tuple(original.objects.values()), tuple(original.contexts.values()), tuple(original.sources.values()),
+    tuple(replace(e, text=text) if e.claim_id == claim_id else e for e in original.entries.values()),
+  )
   result = match(knowledge=knowledge)
   rendered = result.render()
   assert rendered.count(text) == 1 and rendered.count('SECOND-TEXT-LINE') == 1
@@ -87,13 +83,12 @@ def test_multiline_custom_text_keeps_one_copy(separator: str) -> None:
   assert '命盘适用性未判断' in knowledge.render(knowledge.entry(claim_id))
   assert result.entries[0].reason == 'binding_unrecognized'
   assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result and restored.render() == rendered
+  assert result.render() == rendered
 
 
 @pytest.mark.parametrize('dimension', ['text', 'premise', 'contexts', 'roles', 'viewpoint', 'source', 'context', 'object', 'qualification'])
-def test_same_id_binding_is_not_authentication(dimension: str) -> None:
-  data = json.loads(KnowledgeBase.load().export_json())
+def test_same_id_binding_is_not_authentication(dimension: str, tmp_path: Path) -> None:
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   entry = next(e for e in data['entries'] if e['claim_id'] == LEGAL[0])
   if dimension in ('text', 'premise', 'viewpoint'):
     entry[dimension] += '（编辑口径）'
@@ -109,21 +104,20 @@ def test_same_id_binding_is_not_authentication(dimension: str) -> None:
     next(o for o in data['objects'] if o['object_id'] == 'shishen.zhengguan')['name'] = '同名异物'
   else:
     entry.update(output='default', applicability='unconditional', premise='', contexts=[], source_state='witnessed', sources=['yuanhai_ziping_relations', 'mingli_tanyuan_shishen_definitions'])
-  custom = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  custom = load_knowledge(data, tmp_path)
   result = match(knowledge=custom)
   assert result.criterion.status == 'SATISFIED'
   assert result.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
-  assert json.loads(result.knowledge.export_json()) == data
-  assert ContextResult.from_json(result.export_json()) == result
+  assert result.knowledge is custom
   if dimension == 'qualification':
     default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'), knowledge=custom)
     assert default.entries == (EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized'),)
     assert '输出资格：default' in default.render() and '前提判别：UNKNOWN' in default.render()
 
 
-def test_custom_export_bindings_missing_entries() -> None:
+def test_custom_bindings_missing_entries() -> None:
   knowledge = KnowledgeBase.load()
   selection = knowledge.query(context_id='editorial.guansha_coexistence', include_reference_only=True)
-  custom = KnowledgeBase.from_json(knowledge.export_json(selection))
+  custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), selection)
   assert match(knowledge=custom).entries == match().entries
-  assert match(knowledge=KnowledgeBase.from_json(knowledge.export_json(()))).entries == ()
+  assert match(knowledge=KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())).entries == ()

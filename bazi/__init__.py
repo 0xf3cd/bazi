@@ -3,7 +3,6 @@
 排盘从 bazi.bazi.Bazi 和 bazi.bazi_chart.BaziChart 开始；
 独立查阅知识使用 bazi.knowledge.KnowledgeBase，无需创建命盘。
 命盘的纯文本展示在 bazi.chart_text。
-记录格式的主动迁移在 bazi.record_migration。
 类型从各定义模块导入，本包不提供根类或安装后的命令行入口。'''
 
 from importlib import import_module
@@ -24,10 +23,9 @@ __all__ = [
 
 # Bazi / BaziChart 延迟解析历法后端，首次构造 Bazi 才加载历法数据，见 calendar/backend.py。
 # 子模块仍按 PEP 562 延迟导入，减少 import bazi 的成本，也避免离线 HKO encoder 引入命盘层。
-# chart_text 和 record_migration 不在 __all__：v2.0.0 的显式导出清单保持不变；两者仍按需导入。
+# chart_text 不在 __all__：v2.0.0 的显式导出清单保持不变，仍可按需导入。
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text',
-  'record_migration',
 })
 
 # 本包没有根类入口；常见入口类的属性访问会指向定义模块。

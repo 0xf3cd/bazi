@@ -14,11 +14,11 @@ from typing import Final
 
 
 PUBLIC_NAMES: Final[dict[str, str]] = {
-  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching record_migration transits transit_chart',
+  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart',
   'bazi.analyzer': 'relationship',
   'bazi.analyzer.relationship': 'SHENSHA_LABELS ShenshaAnalysis AtBirthShenshaAnalysis KongwangHit KongwangResult AtBirthAnalysis TransitAnalysis StemRelationDiscovery StarAppearance RelationshipEvidence spouse_evidence RelationshipAnalyzer',
-  'bazi.bazi': 'BaziGender Bazi LocationTimeJson LocationTime 八字',
-  'bazi.bazi_chart': 'BaziJson BaziChart 命盘',
+  'bazi.bazi': 'BaziGender Bazi LocationTime 八字',
+  'bazi.bazi_chart': 'BaziChart 命盘',
   'bazi.chart_text': 'TextStyle basic_text transit_text chart_text',
   'bazi.calendar': 'hko_data CalendarType CalendarDate JieqiTime CalendarUtilsProtocol hko_data_utils celestial_utils CalendarBackend calendar_utils_of solar_time',
   'bazi.calendar.backend': 'CalendarBackend calendar_utils_of',
@@ -49,7 +49,6 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.defines.wuxing': 'Wuxing 五行',
   'bazi.defines.yinyang': 'Yinyang 阴阳',
   'bazi.knowledge': 'Applicability SourceState OutputPolicy DEFAULT_SOURCE_PATH object_id KnowledgeObject KnowledgeRole KnowledgeRelation KnowledgeContext KnowledgeSource LegacyDescription KnowledgeEntry KnowledgeBase',
-  'bazi.record_migration': 'MigrationChange MigrationResult migrate_chart_json migrate_knowledge_json migrate_context_json',
   'bazi.rules': 'BaziRules TianganRules DizhiRules DizhiRelationDefinitions DEFAULT_DIZHI_RELATION_DEFINITIONS ShenshaRules',
   'bazi.school': 'BaziPrecision DayunYearRule DayRollover PeiouXingDef Anchor BaziSchool DEFAULT_SCHOOL BaziConfig DEFAULT_CONFIG',
   'bazi.transit_chart': 'TransitChart 流年大运',
@@ -63,7 +62,7 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
 }
 
 INTERNAL_MODULES: Final[dict[str, str]] = {
-  'bazi._validation': '知识语料与前提记录的共享结构校验；不承诺包外调用。',
+  'bazi._validation': '知识编辑源、领域值与文字输出的共享校验；不承诺包外调用。',
 }
 
 STATIC_MODULES: Final[dict[str, str]] = {
@@ -86,17 +85,8 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.analyzer.relationship.RelationshipAnalyzer': 'at_birth transits',
   'bazi.bazi.BaziGender': 'YANG YIN MALE FEMALE 男 女 阳 阴 乾 坤',
   'bazi.bazi.Bazi': 'create random solar_date ganzhi_date ganzhi_year ganzhi_year_month month_jies hour minute longitude solar_datetime reference_datetime location_time gender config four_dizhis four_tiangans day_master month_commander year_pillar month_pillar day_pillar hour_pillar pillars',
-  'bazi.bazi.LocationTimeJson': 'time_basis civil_time canonical_instant longitude apparent_time',
-  'bazi.bazi.LocationTime': 'canonical_instant civil_time longitude apparent_time json',
-  'bazi.bazi_chart.BaziJson': 'FourPillars gen_fourpillars TianganShishens gen_tiangan_shishens Dayun Transits School DefaultBaziChartJsonDict LocationBaziChartJsonDict BaziChartJsonDict',
-  'bazi.bazi_chart.BaziJson.FourPillars': 'year month day hour',
-  'bazi.bazi_chart.BaziJson.TianganShishens': 'year month day hour',
-  'bazi.bazi_chart.BaziJson.Dayun': 'ganzhi start_time end_time',
-  'bazi.bazi_chart.BaziJson.Transits': 'dayun_start_time xiaoyun dayun',
-  'bazi.bazi_chart.BaziJson.School': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor',
-  'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict': 'birth_time',
-  'bazi.bazi_chart.BaziJson.LocationBaziChartJsonDict': '',
-  'bazi.bazi_chart.BaziChart': 'random from_json bazi taiyuan minggong house_of_relationship relationship_stars PillarTraits traits hidden_tiangan PillarShishens shishen nayin shier_zhangsheng dayun_order dayun_start_moment dayun xiaoyun liunian json',
+  'bazi.bazi.LocationTime': 'canonical_instant civil_time longitude apparent_time',
+  'bazi.bazi_chart.BaziChart': 'random bazi taiyuan minggong house_of_relationship relationship_stars PillarTraits traits hidden_tiangan PillarShishens shishen nayin shier_zhangsheng dayun_order dayun_start_moment dayun xiaoyun liunian',
   'bazi.chart_text.TextStyle': 'glyph day_master_mark',
   'bazi.calendar.backend.CalendarBackend': 'HKO CELESTIAL CELESTIAL_ALGO2 from_str',
   'bazi.calendar.celestial_data.generator.JieqiRow': 'year jq_idx name moment',
@@ -123,7 +113,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.context_matching.ChartOccurrence': 'origin pillar ganzhi layer stem shishen kind ganzhi_year index',
   'bazi.context_matching.CriterionResult': 'criterion_id definition status reason scope_complete observations',
   'bazi.context_matching.EntryMatch': 'claim_id status reason',
-  'bazi.context_matching.ContextResult': 'profile criterion occurrences relationship related entries input_json knowledge export_json from_json render',
+  'bazi.context_matching.ContextResult': 'profile criterion occurrences relationship related entries knowledge bazi render',
   'bazi.data_types.TraitTuple': 'wuxing yinyang',
   'bazi.data_types.DayunTuple': 'ganzhi_year ganzhi start_moment end_moment',
   'bazi.data_types.XiaoyunTuple': 'xusui ganzhi',
@@ -150,9 +140,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.knowledge.KnowledgeSource': 'source_id work attribution edition locator url text_layer lineage excerpt supports limitations state',
   'bazi.knowledge.LegacyDescription': 'object_id field ordinal conditions field_premise',
   'bazi.knowledge.KnowledgeEntry': 'claim_id text roles relations topics applicability premise contexts sources source_state attribution viewpoint exceptions limits output legacy',
-  'bazi.knowledge.KnowledgeBase': 'objects contexts sources entries from_json load entry find_objects filter_values query search export_json render render_subject',
-  'bazi.record_migration.MigrationChange': 'path before after reason',
-  'bazi.record_migration.MigrationResult': 'json_text source_version target_version tool_version changes',
+  'bazi.knowledge.KnowledgeBase': 'objects contexts sources entries load entry find_objects filter_values query search render render_subject',
   'bazi.rules.BaziRules': 'YEAR_TO_MONTH_TABLE DAY_TO_HOUR_TABLE TIANGAN_TRAITS DIZHI_TRAITS HIDDEN_TIANGANS NAYIN TIANGAN_ZHANGSHENG TIANGAN_LU',
   'bazi.rules.TianganRules': 'TIANGAN_HE TIANGAN_CHONG TIANGAN_SHENG TIANGAN_KE',
   'bazi.rules.DizhiRules': 'GongheDef GongDef GONG_RELATIONS GONG_GONGHE_SCOPE DIZHI_SANHUI DIZHI_GONGHUI DIZHI_LIUHE AnheDef DIZHI_ANHE DIZHI_TONGHE DIZHI_TONGLUHE DIZHI_SANHE DIZHI_BANHE DIZHI_GONGHE DIZHI_GONG_LU_TIANGAN XingDef XingSubType DIZHI_XING DIZHI_CHONG DIZHI_PO DIZHI_HAI DIZHI_SHENG DIZHI_KE',
@@ -173,12 +161,12 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.school.DayRollover': 'WAN_ZISHI ZIZHENG',
   'bazi.school.PeiouXingDef': 'ZHENGCAI_ZHENGGUAN YINYANGGAN',
   'bazi.school.Anchor': 'YEAR DAY YEAR_AND_DAY',
-  'bazi.school.BaziSchool': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor relation_definitions mingli_tanyuan from_json',
+  'bazi.school.BaziSchool': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor relation_definitions mingli_tanyuan',
   'bazi.school.BaziConfig': 'precision backend school dayun_year_rule from_values',
   'bazi.transit_chart.TransitChart': 'bazi_chart at_year at_month at_date at_moment',
   'bazi.transits.DayunDatabase': '',
   'bazi.transits.TransitKind': 'XIAOYUN DAYUN LIUNIAN LIUYUE LIURI',
-  'bazi.transits.TransitSet': 'xiaoyun dayun liunian liuyue liuri items ganzhis json select',
+  'bazi.transits.TransitSet': 'xiaoyun dayun liunian liuyue liuri items ganzhis select',
   'bazi.transits.TransitDatabase': 'xiaoyun dayun',
   'bazi.utils.dizhi_utils.DizhiRelationDiscovery': '',
   'bazi.utils.dizhi_utils.GanzhiOccurrence': 'index ganzhi',
@@ -187,10 +175,8 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.utils.tiangan_utils.TianganRelationDiscovery': '',
 }
 
-'''私有基类自身不公开，但这些字段通过公开的两种命盘记录继承。'''
-PRIVATE_BASE_MEMBERS: Final[dict[str, str]] = {
-  'bazi.bazi_chart.BaziJson._CommonChartJsonDict': 'schema_version gender precision backend dayun_year_rule school pillars nayin shier_zhangsheng tiangan_traits dizhi_traits tiangan_shishen dizhi_shishen hidden_tiangan transits',
-}
+'''经公开子类继承的私有基类字段；当前无此类声明。'''
+PRIVATE_BASE_MEMBERS: Final[dict[str, str]] = {}
 
 '''源码基类表达式；显式登记继承关系，不能只查子类自己声明的字段。'''
 BASES: Final[dict[str, tuple[str, ...]]] = {
@@ -198,16 +184,7 @@ BASES: Final[dict[str, tuple[str, ...]]] = {
   'bazi.analyzer.relationship.AtBirthShenshaAnalysis': ('ShenshaAnalysis',),
   'bazi.analyzer.relationship.TransitAnalysis.Level': ('IntFlag',),
   'bazi.bazi.BaziGender': ('Enum',),
-  'bazi.bazi.LocationTimeJson': ('TypedDict',),
   'bazi.bazi.LocationTime': ('NamedTuple',),
-  'bazi.bazi_chart.BaziJson.FourPillars': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson.TianganShishens': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson.Dayun': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson.Transits': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson.School': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson._CommonChartJsonDict': ('TypedDict',),
-  'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict': ('_CommonChartJsonDict',),
-  'bazi.bazi_chart.BaziJson.LocationBaziChartJsonDict': ('_CommonChartJsonDict', 'LocationTimeJson'),
   'bazi.calendar.backend.CalendarBackend': ('Enum',),
   'bazi.calendar.celestial_data.loader.LunarYearInfo': ('TypedDict',),
   'bazi.calendar.dates.CalendarType': ('Enum',),

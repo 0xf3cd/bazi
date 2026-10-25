@@ -1,6 +1,5 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import json
 from dataclasses import FrozenInstanceError, fields, replace
 from datetime import datetime
 from typing import Any, get_args
@@ -10,21 +9,24 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
-from bazi.context_matching import ContextProfile, ContextResult, EntryMatch, MatchReason, MatchStatus, evaluate_context
-from bazi.defines import Tiangan
-from bazi.school import BaziConfig, BaziSchool, DayRollover, _config_json
-from bazi.transits import TransitKind
+from bazi.context_matching import (
+  ContextProfile, ContextResult, EntryMatch, RelatedEntry, MatchReason, MatchStatus,
+  RelationshipProfile, TransitCoordinate, _CRITERIA, evaluate_context,
+)
+from bazi.defines import Tiangan, Ganzhi, DizhiRelation
+from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, DEFAULT_CONFIG
+from bazi.transits import TransitKind, TransitSet
+from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
 
-from matching_samples import GUANSHA, LEGAL, chart, match, Year
+from matching_samples import GUANSHA, LEGAL, PALACE, TOUGAN, chart, match, rel_match, Year, record
 
 
 def test_input_identity_includes_configuration() -> None:
   result = match()
-  identity = json.loads(result.input_json)
-  assert identity['birth_time'] == '2000-01-03T12:00:00' and identity['gender'] == 'female'
-  assert identity['config']['backend'] == 'celestial' and identity['config']['precision'] == 'day'
-  assert len(identity['config']['school']) == 24
-  assert identity['config']['school']['kongwang_anchor'] == 'DAY'
+  assert result.bazi.solar_datetime == datetime(2000, 1, 3, 12) and str(result.bazi.gender) == 'female'
+  assert result.bazi.config == DEFAULT_CONFIG
+  assert len(fields(result.bazi.config.school)) == 24
+  assert result.bazi.config.school.kongwang_anchor is Anchor.DAY
   for config in (
     BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
     BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
@@ -32,8 +34,8 @@ def test_input_identity_includes_configuration() -> None:
   ):
     changed = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female', config))
     changed_result = evaluate_context(changed, criterion_id=GUANSHA, profile=ContextProfile('natal'))
-    assert changed_result.input_json != result.input_json
-    assert ContextResult.from_json(changed_result.export_json()) == changed_result
+    assert changed_result.bazi != result.bazi and changed_result != result
+    assert changed_result.bazi.config == config
 
 
 def test_result_components_are_immutable() -> None:
@@ -45,17 +47,29 @@ def test_result_components_are_immutable() -> None:
     result.occurrences[0].index = 1 # type: ignore[misc]
   with pytest.raises(TypeError):
     result.criterion.observations['female'] = False # type: ignore[index]
-  assert hash(result) == hash(ContextResult.from_json(result.export_json()))
+  assert result == match() and hash(result) == hash(match())
 
 
-def test_wire_roster_and_chart_input_agree() -> None:
-  c = chart()
-  wire = _config_json(c.bazi.config)
-  assert set(wire) == {field.name for field in fields(BaziConfig)}
-  assert set(wire['school']) == {field.name for field in fields(BaziSchool)}
-  chart_json: dict[str, Any] = dict(c.json)
-  assert {key: chart_json[key] for key in wire} == wire
-  assert json.loads(match().input_json)['config'] == wire
+def test_result_input_is_copied_in_and_out() -> None:
+  baseline = match()
+  incoming = baseline.bazi
+  result = replace(baseline, _bazi=incoming)
+  expected_hash, rendered, pillars = hash(result), result.render(), result.bazi.pillars
+  outgoing = result.bazi
+  assert outgoing is not result.bazi and outgoing is not incoming
+  for value in (incoming, outgoing):
+    # Private mutation is a probe of the copy boundary, not a supported Bazi operation.
+    object.__setattr__(value, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
+    object.__setattr__(value, '_solar_datetime', datetime(2001, 1, 1))
+  assert result == baseline and hash(result) == expected_hash
+  assert result.render() == rendered and result.bazi.pillars == pillars
+
+
+def test_result_render_rejects_surrogates() -> None:
+  for result in (match(), rel_match()):
+    bad = replace(result, criterion=replace(result.criterion, observations=frozendict({'\ud800': True})))
+    with pytest.raises(ValueError, match='surrogate'):
+      bad.render()
 
 
 @pytest.mark.parametrize('value', [True, False, Year(2024), '2024', 2024.0, []])
@@ -106,7 +120,7 @@ def test_public_record_value_boundaries() -> None:
     EntryMatch(1, 'UNKNOWN', 'binding_unrecognized') # type: ignore[arg-type]
   with pytest.raises(ValueError):
     EntryMatch('', 'UNKNOWN', 'binding_unrecognized')
-  for change in ({'profile': 'natal'}, {'criterion': {}}, {'occurrences': []}, {'entries': []}, {'input_json': None}, {'knowledge': None}, {'occurrences': (None,)}, {'entries': (None,)}):
+  for change in ({'profile': 'natal'}, {'criterion': {}}, {'occurrences': []}, {'entries': []}, {'_bazi': None}, {'knowledge': None}, {'occurrences': (None,)}, {'entries': (None,)}):
     with pytest.raises(TypeError):
       replace(result, **change)
   with pytest.raises(ValueError):
@@ -152,3 +166,62 @@ def test_verdict_status_types_raise_type_error(value: Any) -> None:
 def test_evaluate_context_hints_chart_input(bad: object, hint: str) -> None:
   with pytest.raises(TypeError, match=f'^Expected BaziChart, got <class .*>; {hint}$'):
     evaluate_context(bad, criterion_id=GUANSHA, profile=ContextProfile('natal')) # type: ignore
+
+
+@pytest.mark.parametrize('profile', [ContextProfile('natal'), ContextProfile('natal_and_liunian', 2024), ContextProfile('natal_and_liunian'), ContextProfile('natal_and_liunian', 1998)])
+@pytest.mark.parametrize('day,gender', [(3, 'female'), (5, 'male')])
+@pytest.mark.parametrize('criterion_id', [key for key, value in _CRITERIA.items() if value.profile_kind == 'context'])
+@pytest.mark.parametrize('field,message', [
+  ('reason', 'predicate_undefined'), ('definition', 'Unsupported criterion definition'),
+  ('status', 'Status and reason disagree'), ('criterion_id', 'editorial.unregistered.v1'),
+])
+def test_criterion_matrix_rejects_corruption(criterion_id: str, profile: ContextProfile, day: int, gender: str, field: str, message: str) -> None:
+  criterion = record(criterion_id, profile, day, gender).criterion
+  change = {
+    'reason': 'predicate_undefined', 'definition': '完整前提已由程序确认。',
+    'status': 'NOT_SATISFIED' if criterion.status == 'SATISFIED' else 'SATISFIED',
+    'criterion_id': 'editorial.unregistered.v1',
+  }
+  with pytest.raises(ValueError, match=message):
+    replace(criterion, **{field: change[field]}) # type: ignore[arg-type]
+
+
+def test_result_cross_field_constraints() -> None:
+  result = rel_match(TOUGAN, birth='2000-01-29 06:00', include_reference_only=True)
+  assert result.relationship is not None
+  with pytest.raises(TypeError):
+    replace(result, relationship=object()) # type: ignore[arg-type]
+  with pytest.raises(ValueError, match='profile'):
+    replace(result, profile=ContextProfile('natal'))
+  with pytest.raises(ValueError):
+    replace(result, occurrences=match().occurrences[:1])
+  with pytest.raises(ValueError, match='Context profile cannot carry relationship evidence'):
+    replace(match(), relationship=result.relationship)
+  with pytest.raises(ValueError, match='Premise criterion cannot carry condition references'):
+    replace(match(), related=result.related)
+  with pytest.raises(ValueError, match='Natal scope'):
+    replace(result, relationship=replace(result.relationship, transits=TransitSet(liunian=Ganzhi.from_str('甲辰'))))
+  with pytest.raises(ValueError, match='sequence'):
+    replace(result, relationship=replace(result.relationship, house_relations=GanzhiRelationDiscovery({
+      DizhiRelation.冲: (frozenset({GanzhiOccurrence(9, Ganzhi.from_str('甲子'))}),),
+    })))
+  with pytest.raises(ValueError, match='Unknown claim'):
+    replace(result, related=(RelatedEntry('unknown.claim', True),))
+
+
+def test_complete_scope_requires_obtained_kinds() -> None:
+  def evaluate(coordinate: TransitCoordinate | None, kinds: tuple[TransitKind, ...]) -> ContextResult:
+    return evaluate_context(chart(1, 'male'), criterion_id=PALACE, profile=RelationshipProfile('natal_and_transits', coordinate, kinds))
+
+  no_coordinate = evaluate(None, (TransitKind.LIUNIAN,))
+  partial = evaluate(TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN))
+  for result in (no_coordinate, partial):
+    assert result.criterion.scope_complete is False
+    with pytest.raises(ValueError, match='Complete scope'):
+      replace(result, criterion=replace(result.criterion, status='SATISFIED', reason='premise_satisfied', scope_complete=True))
+  complete = evaluate(TransitCoordinate('at_year', gz_year=2024), (TransitKind.DAYUN, TransitKind.LIUNIAN))
+  assert isinstance(complete.profile, RelationshipProfile) and complete.criterion.scope_complete
+  with pytest.raises(ValueError, match='Complete scope'):
+    replace(complete, profile=replace(complete.profile, coordinate=None))
+  with pytest.raises(ValueError, match='requested kinds'):
+    replace(complete, profile=replace(complete.profile, kinds=(TransitKind.DAYUN,)))

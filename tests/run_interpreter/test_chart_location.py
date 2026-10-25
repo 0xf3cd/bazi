@@ -1,16 +1,14 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import re
-import json
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from run_interpreter import interpret
 from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart, BaziJson
-from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import ContextProfile, evaluate_context
 from bazi.school import BaziConfig
 
 from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
@@ -20,63 +18,41 @@ from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
 @pytest.mark.parametrize('precision,pillars', [
   ('hour', ('庚辰', '戊寅')), ('minute', ('己卯', '丁丑')),
 ])
-def test_naive_cli_precision_and_exports(tmp_path: Path, optimized: bool, precision: str, pillars: tuple[str, str]) -> None:
+def test_naive_cli_precision(tmp_path: Path, optimized: bool, precision: str, pillars: tuple[str, str]) -> None:
   birth = '2000-02-04T20:39:59.123456'
   config = BaziConfig.from_values(precision=precision)
   expected = BaziChart(Bazi.create(birth, 'female', config))
-  output = tmp_path / 'legacy-chart.json'
   args = ('--birth-time', birth, '--gender', 'female', '--precision', precision)
-  result = run_cli(tmp_path, 'chart', *args, '--export-chart-json', str(output), optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
   assert result.returncode == 0, result.stderr
-  assert output.is_file()
-  data = json.loads(output.read_text(encoding='utf-8'))
-  assert set(data) == {
-    'birth_time', 'schema_version', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school', 'pillars', 'nayin',
-    'shier_zhangsheng', 'tiangan_traits', 'dizhi_traits', 'tiangan_shishen', 'dizhi_shishen', 'hidden_tiangan', 'transits',
-  }
-  assert data['schema_version'] == 1
-  assert data['birth_time'] == '2000-02-04T20:39:00' and data['precision'] == precision
-  assert (data['pillars']['year'], data['pillars']['month']) == pillars
-  restored = BaziChart.from_json(data)
-  assert restored.bazi.config == config and restored.json == data == expected.json
-
-  matched = tmp_path / 'legacy-context.json'
+  assert expected.bazi.solar_datetime.isoformat() == '2000-02-04T20:39:00'
+  assert tuple(map(str, expected.bazi.pillars))[:2] == pillars
+  assert interpret(expected) in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', '--include-reference-only', '--export-context-json', str(matched), optimized=optimized)
+                    '--observation-scope', 'natal', '--include-reference-only', optimized=optimized)
   assert result.returncode == 0, result.stderr
-  assert matched.is_file()
-  record = ContextResult.from_json(matched.read_text(encoding='utf-8'))
-  identity = json.loads(record.input_json)
-  assert set(identity) == {'birth_time', 'gender', 'config', 'pillars'}
-  assert identity['birth_time'] == '2000-02-04T20:39:00' and identity['config']['precision'] == precision
-  assert tuple(identity['pillars'][:2]) == pillars
   expected_record = evaluate_context(expected, criterion_id='editorial.guansha_coexistence.v1',
                                      profile=ContextProfile('natal'), include_reference_only=True)
-  assert record == expected_record
-  assert record.export_json() == matched.read_text(encoding='utf-8') == expected_record.export_json()
+  assert result.stdout == expected_record.render() + '\n'
+  assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('precision', ['hour', 'minute'])
 @pytest.mark.parametrize('basis', ['+14:00', 'Pacific/Kiritimati'])
-def test_location_chart_matching_export_restore(tmp_path: Path, optimized: bool, precision: str, basis: str) -> None:
-  output = tmp_path / 'chart.json'
+def test_location_chart_matching_text(tmp_path: Path, optimized: bool, precision: str, basis: str) -> None:
   args = ('--birth-time', '2023-12-31T22:00:00+00:00', '--gender', 'female',
           '--longitude', '-157.4', '--precision', precision, '--civil-timezone', basis)
-  result = run_cli(tmp_path, 'chart', *args, '--export-chart-json', str(output), optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
   assert result.returncode == 0, result.stderr
-  chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
-  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
-  assert data['civil_time'] == '2024-01-01T12:00:00+14:00'
-  assert data['apparent_time'] == '2024-01-01T11:27:21.883333'
+  assert '2024-01-01T12:00:00+14:00' in result.stdout
+  assert '2024-01-01T11:27:21.883333' in result.stdout
   assert '民用出生时刻' in result.stdout and '真太阳出生时刻' in result.stdout
-  matched = tmp_path / 'matching.json'
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
+                    '--observation-scope', 'natal', optimized=optimized)
   assert result.returncode == 0, result.stderr
-  restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
-  assert json.loads(restored.input_json)['civil_time'] == data['civil_time']
-  assert json.loads(restored.input_json)['apparent_time'] == data['apparent_time']
+  assert '民用时刻=2024-01-01T12:00:00+14:00' in result.stdout
+  assert '真太阳时=2024-01-01T11:27:21.883333' in result.stdout
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -84,19 +60,14 @@ def test_location_chart_matching_export_restore(tmp_path: Path, optimized: bool,
 def test_negative_fixed_offset_equals_syntax(tmp_path: Path, optimized: bool, precision: str) -> None:
   args = ('--birth-time', '2024-01-02T01:00:00+00:00', '--gender', 'female',
           '--longitude', '-74', '--precision', precision, '--civil-timezone=-05:00')
-  output = tmp_path / 'chart.json'
-  result = run_cli(tmp_path, 'chart', *args, '--export-chart-json', str(output), optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
   assert result.returncode == 0, result.stderr
-  chart = BaziChart.from_json(json.loads(output.read_text(encoding='utf-8')))
-  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
-  assert data['civil_time'] == '2024-01-01T20:00:00-05:00'
-  assert data['apparent_time'] == '2024-01-01T20:00:25.933333'
-  matched = tmp_path / 'matching.json'
+  assert '2024-01-01T20:00:00-05:00' in result.stdout
+  assert '2024-01-01T20:00:25.933333' in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', '--export-context-json', str(matched), optimized=optimized)
+                    '--observation-scope', 'natal', optimized=optimized)
   assert result.returncode == 0, result.stderr
-  restored = ContextResult.from_json(matched.read_text(encoding='utf-8'))
-  assert json.loads(restored.input_json)['civil_time'] == data['civil_time']
+  assert '民用时刻=2024-01-01T20:00:00-05:00' in result.stdout
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -105,10 +76,8 @@ def test_negative_fixed_offset_equals_syntax(tmp_path: Path, optimized: bool, pr
 def test_bad_civil_zone_is_an_argument_error(tmp_path: Path, optimized: bool, matching: bool, zone: str) -> None:
   args = ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'female', '--longitude', '-157.4',
           '--precision', 'minute', '--civil-timezone', zone)
-  export = tmp_path / 'record.json'
   task = ('match', 'editorial.guansha_coexistence.v1') if matching else ('chart',)
-  extra = ('--observation-scope', 'natal',
-           '--export-context-json', str(export)) if matching else ('--export-chart-json', str(export))
+  extra = ('--observation-scope', 'natal') if matching else ()
   result = run_cli(tmp_path, *task, *args, *extra, optimized=optimized)
   assert result.returncode == 2
   assert 'error: argument --civil-timezone:' in result.stderr
@@ -143,7 +112,7 @@ def test_legacy_renderer_keeps_birth_labels() -> None:
   (('chart', '--longitude', '0'), 'require fixed birth input'),
   (('chart', '--precision', 'hour'), 'require fixed birth input'),
   (('chart', '--civil-timezone', '+14:00'), 'require fixed birth input'),
-  (('chart', '--export-chart-json', 'out.json'), 'require fixed birth input'),
+  (('chart', '--export-chart-json', 'out.json'), 'unrecognized arguments'),
   (('knowledge', '--longitude', '0'), 'unrecognized arguments'),
   (('knowledge', '--validate-knowledge', '--precision', 'minute'), 'unrecognized arguments'),
   (('knowledge', '--export-knowledge-json', 'out.json', '--civil-timezone', '+14:00'), 'unrecognized arguments'),

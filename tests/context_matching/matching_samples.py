@@ -7,12 +7,15 @@
 
 from datetime import datetime
 from functools import cache
+from pathlib import Path
+import json
 from typing import Any
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextProfile, ContextResult, evaluate_context, RelationshipProfile
 from bazi.school import BaziConfig
+from bazi.knowledge import KnowledgeBase
 
 
 GUANSHA = 'editorial.guansha_coexistence.v1'
@@ -45,7 +48,7 @@ class Year(int):
   pass
 
 
-# #233 婚恋判据: explicit transit profiles, missing data, three-state reference matrix, and record v3.
+# #233 婚恋判据: explicit transit profiles, missing data and three-state reference matrix.
 # All cases use reproducible real birth inputs and configs; 岁运 come from real TransitChart queries by coordinate.
 
 PALACE = 'editorial.spouse_palace_xingchong.v1'
@@ -66,3 +69,9 @@ def rel_match(
 
 def chart_from(birth: str, gender: str) -> BaziChart:
   return BaziChart(Bazi.create(birth, gender))
+
+
+def load_knowledge(data: dict[str, Any], directory: Path) -> KnowledgeBase:
+  source = directory / 'knowledge.json'
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  return KnowledgeBase.load(source)

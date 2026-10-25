@@ -2,14 +2,14 @@
 
 '''可编辑的解释知识。'''
 
-from dataclasses import asdict, dataclass, fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
-from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _json_dumps, _utf8, _record_errors
+from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _utf8
 
 
 '''知识整理状态，不是命盘判别结果。
@@ -256,10 +256,10 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 
 class KnowledgeBase:
-  '''校验、索引、查询并导出不可变解释条目。
+  '''校验、索引、查询并渲染不可变解释条目。
 
   Note:
-  - JSON 为编辑来源；索引与导出由它生成。
+  - JSON 为编辑来源；加载时校验内容并建立索引。
   - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
     查来源，query(source_id=...) 查关联条目。
@@ -359,30 +359,17 @@ class KnowledgeBase:
     return self._entries
 
   @classmethod
-  @_record_errors(
-    'Preserve the original record. Use migrate_knowledge_json for schema 1; '
-    'for malformed data, check the original knowledge source. Migration does not repair text or references.'
-  )
-  def from_json(cls, text: str) -> 'KnowledgeBase':
-    '''加载严格 JSON，拒绝重复键、错误字段与断引用。
-
-    Args:
-    - text: (str) UTF-8 JSON 文字。
-    Return:
-    - (KnowledgeBase) 校验后的知识库。
-    '''
-    _text(text)
-    return cls._from_data(_json_loads(text))
-
-  @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
-    '''校验已解码知识记录的版本、字段与引用；不附加入口指引。'''
+    '''校验当前编辑源的版本、字段与引用。'''
     data = _mapping(
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
-    if type(data['schema_version']) is not int or data['schema_version'] != _SCHEMA_VERSION:
-      raise ValueError(f'Unsupported schema version: {data["schema_version"]!r}')
+    version = data['schema_version']
+    if type(version) is not int:
+      raise ValueError(f'Unsupported schema version type: {type(version)}')
+    if version != _SCHEMA_VERSION:
+      raise ValueError(f'Unsupported schema version: {version}')
     return cls(
       tuple(_decode(KnowledgeObject, item) for item in _array(data['objects'])),
       tuple(_decode(KnowledgeContext, item) for item in _array(data['contexts'])),
@@ -407,7 +394,7 @@ class KnowledgeBase:
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')
     source = DEFAULT_SOURCE_PATH if path is None else path
-    return cls.from_json(source.read_text(encoding='utf-8'))
+    return cls._from_data(_json_loads(source.read_text(encoding='utf-8')))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
     '''按稳定标识查阅条目。'''
@@ -537,33 +524,6 @@ class KnowledgeBase:
       return any(needle in text.casefold() for text in texts)
 
     return tuple(entry for entry in candidates if __matches(entry))
-
-  def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
-    '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
-
-    Note:
-    - 省略 entries 时导出全部语料，包括仅供参考条目；导出不改变条目的输出资格。
-    '''
-    return _json_dumps(self._export_data(entries))
-
-  def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
-    '''供包内嵌套的 JSON 结构；export_json 编码同一结构，条目选择的校验也在此完成。'''
-    selected = tuple(self.entries.values()) if entries is None else entries
-    _tuple(selected, KnowledgeEntry)
-    ids: set[str] = set()
-    for entry in selected:
-      if self.entries.get(entry.claim_id) != entry:
-        raise ValueError(f'Foreign entry: {entry.claim_id}')
-      if entry.claim_id in ids:
-        raise ValueError(f'Duplicate selection: {entry.claim_id}')
-      ids.add(entry.claim_id)
-    return {
-      'schema_version': _SCHEMA_VERSION,
-      'objects': [asdict(value) for value in self.objects.values()],
-      'contexts': [asdict(value) for value in self.contexts.values()],
-      'sources': [asdict(value) for value in self.sources.values()],
-      'entries': [asdict(value) for value in selected],
-    }
 
   def render(
     self,

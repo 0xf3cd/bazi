@@ -1,7 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
-from datetime import datetime
+from datetime import date, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -11,11 +12,35 @@ from bazi.bazi_chart import BaziChart
 from bazi.context_matching import ContextResult, RelatedEntry, evaluate_context, RelationshipProfile, TransitCoordinate
 from bazi.defines import Tiangan, DizhiRelation
 from bazi.defines import Dizhi as _Dizhi
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 from bazi.school import BaziConfig, BaziSchool, PeiouXingDef
-from bazi.transits import TransitKind
+from bazi.transits import TransitKind, TransitSet
+from bazi.defines import Ganzhi
 
-from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from
+from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from, load_knowledge
+
+
+def test_month_and_date_coordinates_render() -> None:
+  c = chart_from('2000-01-01 12:00', 'male')
+  profile = RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰),
+    (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  )
+  result = evaluate_context(c, criterion_id=TOUGAN, profile=profile, include_reference_only=True)
+  assert result.profile == profile and result.occurrences == () and result.entries == ()
+  assert result.related == (RelatedEntry(RELATED_TOUGAN, True),)
+  assert result.relationship is not None
+  assert result.relationship.star_target.tiangan is Tiangan.癸 and result.relationship.star_target.dizhi == (_Dizhi.子,)
+  assert result.relationship.transits == TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲辰'))
+  assert '范围：natal_and_transits；坐标=at_month；干支年=2024；干支月=辰；' in result.render()
+  assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]；未取得种类=[]' in result.render()
+  at_date = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
+    'natal_and_transits', TransitCoordinate('at_date', solar_date=date(2024, 4, 10)),
+    (TransitKind.LIUNIAN, TransitKind.LIUYUE, TransitKind.LIURI),
+  ))
+  assert at_date.criterion.scope_complete is True
+  assert at_date.relationship is not None and at_date.relationship.transits is not None
+  assert '坐标=at_date；公历日=2024-04-10' in at_date.render()
 
 
 def test_palace_verdict_matches_observations() -> None:
@@ -29,7 +54,6 @@ def test_palace_verdict_matches_observations() -> None:
   assert dict(unsatisfied.criterion.observations) == {'day_pillar_in_chong': False, 'day_pillar_in_xing': False}
   for result in (satisfied, unsatisfied):
     assert result.occurrences == () and result.entries == () and result.relationship is not None
-    assert ContextResult.from_json(result.export_json()) == result
 
 
 def test_tougan_verdict_matches_observations() -> None:
@@ -42,7 +66,6 @@ def test_tougan_verdict_matches_observations() -> None:
   assert dict(hidden_only.criterion.observations) == {'target_stem_visible': False, 'target_stem_hidden': True}
   for result in (visible, hidden_only):
     assert result.occurrences == () and result.entries == () and result.relationship is not None
-    assert ContextResult.from_json(result.export_json()) == result
 
 
 def test_relationship_scope_missing_data_paths() -> None:
@@ -66,17 +89,8 @@ def test_relationship_scope_missing_data_paths() -> None:
   ))
   assert day_precision.criterion.reason == 'transit_unavailable'
   for result in (no_coordinate, before_birth, day_precision):
-    assert ContextResult.from_json(result.export_json()) == result
     rendered = result.render()
     assert '请求种类=' in rendered and '未取得种类=' in rendered
-
-
-def _assert_kind_record_roundtrip(result: ContextResult) -> None:
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result
-  # The record keeps the requested kinds after round-trip.
-  assert isinstance(result.profile, RelationshipProfile) and isinstance(restored.profile, RelationshipProfile)
-  assert result.profile.kinds == restored.profile.kinds
 
 
 def test_partial_kinds_keep_obtained_evidence() -> None:
@@ -89,7 +103,7 @@ def test_partial_kinds_keep_obtained_evidence() -> None:
   assert partial.relationship is not None
   assert partial.relationship.transits is not None
   assert tuple(partial.relationship.transits) == (TransitKind.DAYUN,)
-  _assert_kind_record_roundtrip(partial)
+  assert isinstance(partial.profile, RelationshipProfile) and partial.profile.kinds == (TransitKind.XIAOYUN, TransitKind.DAYUN)
 
 
 def test_missing_kinds_return_no_transits() -> None:
@@ -100,7 +114,7 @@ def test_missing_kinds_return_no_transits() -> None:
   ))
   assert all_missing.criterion.reason == 'transit_unavailable'
   assert all_missing.relationship is not None and all_missing.relationship.transits is None
-  _assert_kind_record_roundtrip(all_missing)
+  assert isinstance(all_missing.profile, RelationshipProfile) and all_missing.profile.kinds == (TransitKind.XIAOYUN,)
 
 
 def test_complete_kinds_keep_fixed_order() -> None:
@@ -113,7 +127,7 @@ def test_complete_kinds_keep_fixed_order() -> None:
   assert complete.relationship is not None
   assert complete.relationship.transits is not None
   assert tuple(kind for kind, _ in complete.relationship.transits.items) == (TransitKind.DAYUN, TransitKind.LIUNIAN)
-  _assert_kind_record_roundtrip(complete)
+  assert isinstance(complete.profile, RelationshipProfile) and complete.profile.kinds == (TransitKind.DAYUN, TransitKind.LIUNIAN)
 
 
 def test_moment_microseconds_equal_but_recorded() -> None:
@@ -129,13 +143,12 @@ def test_moment_microseconds_equal_but_recorded() -> None:
   left = evaluate_context(c, criterion_id=PALACE, profile=profile_a)
   right = evaluate_context(c, criterion_id=PALACE, profile=profile_b)
   assert left.criterion == right.criterion and left.relationship == right.relationship
-  assert left != right # records keep the request as given, with no fake sub-second precision.
+  assert left != right # Results keep the request as given, with no fake sub-second precision.
   assert isinstance(left.profile, RelationshipProfile) and isinstance(right.profile, RelationshipProfile)
   assert left.profile.coordinate is not None
   assert left.profile.coordinate.solar_moment is not None
   assert left.profile.coordinate.solar_moment.microsecond == 500000
-  assert json.loads(left.export_json())['profile']['coordinate']['solar_moment'] == '2024-04-10T12:30:00.500000'
-  assert ContextResult.from_json(left.export_json()) == left
+  assert left.profile.coordinate.solar_moment.isoformat() == '2024-04-10T12:30:00.500000'
 
 
 def test_relationship_reference_matrix() -> None:
@@ -175,7 +188,7 @@ def test_relationship_reference_matrix() -> None:
   assert knowledge.entry(RELATED_PALACE).text and knowledge.entry(RELATED_TOUGAN).text
 
   # True × male × entry missing from the knowledge base: no RelatedEntry is produced.
-  trimmed = KnowledgeBase.from_json(knowledge.export_json(()))
+  trimmed = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())
   missing = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), knowledge=trimmed, **hidden)
   assert missing.related == () and '关联参考' not in missing.render()
 
@@ -185,11 +198,10 @@ def knowledge_text(claim_id: str) -> str:
 
 
 @pytest.mark.parametrize('dimension', ['text', 'premise', 'limits', 'viewpoint', 'object', 'source'])
-def test_female_gate_comes_before_binding(dimension: str) -> None:
+def test_female_gate_comes_before_binding(dimension: str, tmp_path: Path) -> None:
   # Female charts never relate the two restricted IDs, and a same-ID custom replacement cannot bypass;
   # male replacement yields recognized=False, listing only the ID with 「绑定未识别」, without rendering the replacement text.
-  knowledge = KnowledgeBase.load()
-  data = json.loads(knowledge.export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   entry = next(value for value in data['entries'] if value['claim_id'] == RELATED_PALACE)
   if dimension in ('text', 'premise', 'viewpoint'):
     entry[dimension] += '（编辑口径）'
@@ -199,7 +211,7 @@ def test_female_gate_comes_before_binding(dimension: str) -> None:
     next(value for value in data['objects'] if value['object_id'] == 'concept.peiou_gong')['name'] = '同名异物'
   else:
     next(value for value in data['sources'] if value['source_id'] == 'tanyuan_qizi')['limitations'] += '不同边界。'
-  custom = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  custom = load_knowledge(data, tmp_path)
 
   female = evaluate_context(chart_from('2000-01-01 12:00', 'female'), criterion_id=PALACE,
                             profile=RelationshipProfile('natal'), knowledge=custom, include_reference_only=True)
@@ -215,7 +227,6 @@ def test_female_gate_comes_before_binding(dimension: str) -> None:
   assert '绑定未识别' in rendered
   if dimension == 'text':
     assert '（编辑口径）' not in rendered
-  assert ContextResult.from_json(male.export_json()) == male
   with pytest.raises(ValueError):
     RelatedEntry('', True)
   with pytest.raises(TypeError):
@@ -239,7 +250,7 @@ def test_transits_flip_palace_tougan_verdicts() -> None:
   assert flipped.criterion.scope_complete is True
   assert dict(flipped.criterion.observations) == {'day_pillar_in_chong': True, 'day_pillar_in_xing': True}
   assert flipped.relationship is not None and flipped.relationship.transits is not None
-  assert flipped.relationship.transits.json == {'dayun': '乙亥', 'liunian': '丙申'}
+  assert flipped.relationship.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申'))
   for year in (2021, 2024):
     stayed = verdict(PALACE, year)
     assert stayed.criterion.status == 'NOT_SATISFIED' and stayed.criterion.scope_complete is True
@@ -247,8 +258,6 @@ def test_transits_flip_palace_tougan_verdicts() -> None:
   assert verdict(TOUGAN, None).criterion.status == 'NOT_SATISFIED'
   assert verdict(TOUGAN, 2021).criterion.status == 'SATISFIED'
   assert verdict(TOUGAN, 2024).criterion.status == 'NOT_SATISFIED'
-  for result in (flipped, verdict(PALACE, 2024), verdict(TOUGAN, 2021)):
-    assert ContextResult.from_json(result.export_json()) == result
 
 
 def test_render_labels_categories_scopes() -> None:
@@ -290,7 +299,7 @@ def test_cross_group_gong_precise_participants() -> None:
   assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
   evidence = result.relationship
   assert evidence is not None and evidence.transits is not None
-  assert evidence.transits.json == {'liunian': '甲戌'}
+  assert evidence.transits == TransitSet(liunian=Ganzhi.from_str('甲戌'))
   # 拱会 is exactly 原局内部 {2,3} and 原局×岁运 {2,4}; index 2 is the day pillar 甲申,
   # index 4 is the 甲戌流年 chosen via the at_year entry (first item of the only requested kind; transit indexes start at 4).
   assert [sorted(o.index for o in combo) for combo in evidence.house_relations[DizhiRelation.拱会]] == [[2, 3], [2, 4]]
@@ -300,12 +309,11 @@ def test_cross_group_gong_precise_participants() -> None:
     for occurrence in combo
   }
   assert participants == {2: '甲申', 3: '甲戌', 4: '甲戌'}
-  assert ContextResult.from_json(result.export_json()) == result
 
 
-def test_yinyanggan_evaluation_export_restore() -> None:
+def test_yinyanggan_evaluation_input_identity() -> None:
   # Male chart with 乙 day master (2000-01-08 12:00, 己卯丁丑乙丑壬午): the 阴阳干读法 targets 己 (丑、未),
-  # and the non-default definition keeps its input identity across evaluation, export, and restoration.
+  # The non-default definition remains part of the result's input identity.
   c = BaziChart(Bazi.create('2000-01-08 12:00', 'male', BaziConfig(school=BaziSchool(peiou_xing_def=PeiouXingDef.YINYANGGAN))))
   result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
     'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
@@ -314,14 +322,11 @@ def test_yinyanggan_evaluation_export_restore() -> None:
   evidence = result.relationship
   assert evidence is not None
   assert evidence.star_target.tiangan is Tiangan.己 and evidence.star_target.dizhi == (_Dizhi.丑, _Dizhi.未)
-  assert json.loads(result.input_json)['config']['school']['peiou_xing_def'] == 'YINYANGGAN'
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result
-  assert json.loads(restored.input_json)['config']['school']['peiou_xing_def'] == 'YINYANGGAN'
+  assert result.bazi.config.school.peiou_xing_def is PeiouXingDef.YINYANGGAN
 
 
-def test_location_chart_evaluation_roundtrip() -> None:
-  # Location chart (真太阳时) combined with a 婚恋 profile: at_year evaluation and record round-trip.
+def test_location_chart_evaluation_input() -> None:
+  # Location chart (真太阳时) combined with a 婚恋 profile and an at_year query.
   c = BaziChart(Bazi.create(
     '2024-01-01T12:00:00+14:00', 'male',
     BaziConfig.from_values(precision='minute'), longitude=-157.4,
@@ -330,6 +335,10 @@ def test_location_chart_evaluation_roundtrip() -> None:
     'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
   ))
   assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
-  assert 'time_basis' in result.input_json
-  restored = ContextResult.from_json(result.export_json())
-  assert restored == result and restored.render() == result.render()
+  assert result.bazi == c.bazi and result.bazi.location_time is not None
+  assert result.bazi.location_time == c.bazi.location_time
+  for value in (
+    result.bazi.location_time.canonical_instant.isoformat(), result.bazi.location_time.civil_time.isoformat(),
+    str(result.bazi.location_time.longitude), result.bazi.location_time.apparent_time.isoformat(),
+  ):
+    assert value in result.render()

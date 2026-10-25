@@ -829,7 +829,7 @@ def _canonical_combos(
   combos: tuple[dizhi_utils.GanzhiRelationCombo, ...],
   predicate: Callable[[dizhi_utils.GanzhiRelationCombo], bool],
 ) -> tuple[dizhi_utils.GanzhiRelationCombo, ...]:
-  '''保留满足谓词的组合并按序号元组升序排列；与导出契约同一顺序，记录往返后相等。'''
+  '''保留满足谓词的组合并按序号元组升序排列。'''
   return tuple(sorted(
     (combo for combo in combos if predicate(combo)),
     key=lambda combo: tuple(sorted(occurrence.index for occurrence in combo)),

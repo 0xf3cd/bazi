@@ -1,18 +1,16 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import json
-
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
-from typing import Any, cast
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
 
 from bazi.bazi import Bazi, BaziGender
-from bazi.bazi_chart import BaziChart, BaziJson
+from bazi.bazi_chart import BaziChart
 from bazi.calendar import CalendarDate, CalendarType
-from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+from bazi.context_matching import ContextProfile, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
 from run_demo import get_basic_info, get_transit_info
 
@@ -33,12 +31,12 @@ from run_demo import get_basic_info, get_transit_info
 def test_named_civil_clocks(precision: BaziPrecision, civil: str, longitude: float, apparent: str) -> None:
   chart = BaziChart(Bazi.create(civil, 'male', BaziConfig(precision=precision), longitude=longitude))
   expected = datetime.fromisoformat(apparent)
-  data = cast(BaziJson.LocationBaziChartJsonDict, chart.json)
+  facts = chart.bazi.location_time
+  assert facts is not None
   assert chart.bazi._clock_datetime == expected
   assert chart.bazi.solar_date == expected.date()
-  assert data['civil_time'] == civil
-  assert data['apparent_time'] == expected.isoformat()
-  assert BaziChart.from_json(chart.json).json == chart.json
+  assert facts.civil_time.isoformat() == civil
+  assert facts.apparent_time == expected
 
 
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
@@ -65,7 +63,7 @@ def test_civil_basis_identity_meridian_aliases() -> None:
     alternate = Bazi.create(civil.astimezone(zone), 'male', config, longitude=-157.4, civil_timezone=basis)
     assert alternate == original
     assert hash(alternate) == hash(original)
-    assert BaziChart(alternate).json == BaziChart(original).json
+    assert alternate.location_time == original.location_time
   different_basis = Bazi.create(civil.astimezone(UTC), 'male', config, longitude=-157.4)
   assert different_basis != original
   assert len({original, different_basis}) == 2
@@ -75,7 +73,7 @@ def test_civil_basis_identity_meridian_aliases() -> None:
     east = Bazi.create(civil.astimezone(zone), 'male', config, longitude=180.0)
     west = Bazi.create(civil.astimezone(zone), 'male', config, longitude=-180.0)
     assert east == west and hash(east) == hash(west)
-    assert BaziChart(east).json == BaziChart(west).json
+    assert east.location_time == west.location_time
     assert east.longitude == -180.0
 
 
@@ -97,8 +95,8 @@ def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrec
 def test_apparent_birth_at_lower_boundary() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   first = Bazi.create('1901-02-18T12:24:00+23:54', 'male', config, longitude=177.0)
-  first_json = cast(BaziJson.LocationBaziChartJsonDict, BaziChart(first).json)
-  assert first_json['canonical_instant'] == '1901-02-17T12:30:00+00:00'
+  assert first.location_time is not None
+  assert first.location_time.canonical_instant.isoformat() == '1901-02-17T12:30:00+00:00'
   assert first._clock_datetime == datetime(1901, 2, 19, 0, 3, 45, 35417)
   # Pinned source at the exact instant; the daily interpolant is an approximation.
   source_apparent = datetime(1901, 2, 19, 0, 3, 44, 914798)
@@ -213,64 +211,15 @@ def test_demo_separates_physical_jie_clocks() -> None:
     assert label in get_basic_info(chart)
 
 
-def test_location_snapshot_is_observational() -> None:
+def test_context_keeps_exact_location_input() -> None:
   chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female',
                                BaziConfig(precision=BaziPrecision.HOUR), longitude=-157.4))
   result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  data = json.loads(result.export_json())
-  assert set(data['input']) == {'time_basis', 'civil_time', 'canonical_instant', 'longitude', 'apparent_time', 'gender', 'config', 'pillars'}
-  assert data['input']['civil_time'] == '2024-01-01T12:00:00+14:00'
-  assert data['input']['canonical_instant'] == '2023-12-31T22:00:00+00:00'
-  assert ContextResult.from_json(result.export_json()) == result
-  data['input']['apparent_time'] = '2000-01-01T12:00:00'
-  data['input']['pillars'][0] = '甲子'
-  restored = ContextResult.from_json(json.dumps(data))
-  assert restored.criterion == result.criterion and restored.occurrences == result.occurrences
-  assert json.loads(restored.input_json)['apparent_time'] == '2000-01-01T12:00:00'
-  # Input self-consistency is not a birth-window gate or certification of the stored observations.
-  data['input']['civil_time'] = '1850-01-01T12:00:00+14:00'
-  data['input']['canonical_instant'] = '1849-12-31T22:00:00+00:00'
-  historical = ContextResult.from_json(json.dumps(data))
-  assert historical.criterion == result.criterion and historical.occurrences == result.occurrences
-  assert json.loads(historical.input_json)['apparent_time'] == '2000-01-01T12:00:00'
-  for identity in (
-    {**data['input'], 'birth_time': '2024-01-01T12:00:00'},
-    {key: value for key, value in data['input'].items() if key != 'civil_time'},
-    {key: value for key, value in data['input'].items() if key != 'time_basis'},
-  ):
-    with pytest.raises(ValueError):
-      ContextResult.from_json(json.dumps({**data, 'input': identity}))
-
-
-@pytest.mark.parametrize('key,value,error', [
-  ('civil_time', 42, TypeError),
-  ('time_basis', 42, TypeError),
-  ('canonical_instant', 42, TypeError),
-  ('apparent_time', 42, TypeError),
-  ('civil_time', 'not-a-datetime', ValueError),
-  ('canonical_instant', 'not-a-datetime', ValueError),
-  ('apparent_time', 'not-a-datetime', ValueError),
-  ('civil_time', '2024-01-01T12:00:00', ValueError),
-  ('civil_time', '2024-01-01T12:00+14:00', ValueError),
-  ('canonical_instant', '2023-12-31T22:00:00+01:00', ValueError),
-  ('canonical_instant', '2023-12-31T22:00:00', ValueError),
-  ('canonical_instant', '2030-01-01T00:00:00+00:00', ValueError),
-  ('canonical_instant', '2023-12-31T22:00:00.000001+00:00', ValueError),
-  ('civil_time', '2024-01-01T12:00:00+13:00', ValueError),
-  ('apparent_time', '2024-01-01T11:27:21.883333+00:00', ValueError),
-  ('longitude', 180.0, ValueError),
-  ('longitude', float('nan'), ValueError),
-  ('time_basis', 'mean_solar', ValueError),
-])
-def test_location_record_canonical_fields(key: str, value: object, error: type[Exception]) -> None:
-  chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female',
-                               BaziConfig(precision=BaziPrecision.MINUTE), longitude=-157.4))
-  bad: dict[str, object] = dict(chart.json)
-  bad[key] = value
-  with pytest.raises(error):
-    BaziChart.from_json(bad)
-  result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  data = json.loads(result.export_json())
-  data['input'][key] = value
-  with pytest.raises(error):
-    ContextResult.from_json(json.dumps(data))
+  assert result.bazi == chart.bazi and result.bazi.config == chart.bazi.config
+  facts = result.bazi.location_time
+  assert facts is not None
+  assert facts.civil_time.isoformat() == '2024-01-01T12:00:00+14:00'
+  assert facts.canonical_instant.isoformat() == '2023-12-31T22:00:00+00:00'
+  assert facts.apparent_time.isoformat() == '2024-01-01T11:27:21.883333'
+  for value in (facts.civil_time.isoformat(), facts.canonical_instant.isoformat(), facts.apparent_time.isoformat()):
+    assert value in result.render()

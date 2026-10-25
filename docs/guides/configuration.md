@@ -266,7 +266,7 @@ except AttributeError as error:
 birth = datetime(2000, 2, 4, 20, 0)
 default_chart = BaziChart(Bazi.create(birth, 'male', DEFAULT_CONFIG))
 minute_chart = BaziChart(Bazi.create(birth, 'male', minute))
-print(default_chart.json['precision'], minute_chart.json['precision'])
+print(default_chart.bazi.config.precision, minute_chart.bazi.config.precision)
 ```
 
 ```{testoutput} config-replace
@@ -280,7 +280,7 @@ day minute
 配置属于 `Bazi` 本身，所以换了配置就要重新生成依赖它的对象：
 
 - 新的 `Bazi`，再包成新的 `BaziChart`；`TransitChart` 和 `RelationshipAnalyzer` 也持有原来的命盘，需要对新命盘重建。
-- 已导出的命盘 JSON 记录了当时的配置，不会随之变化。
+- 已创建的判别结果保留当时的输入配置，不会随新对象变化。
 - `Bazi` 按值比较，`BaziChart` 按对象身份比较，换配置后两者都与原来的不等。
 
 `BaziConfig()` 等于 `DEFAULT_CONFIG`，但不是同一个对象；`BaziConfig().school` 与 `DEFAULT_SCHOOL` 是同一个实例。
@@ -299,11 +299,8 @@ assert config.school.kongwang_anchor is Anchor.YEAR_AND_DAY
 assert BaziSchool().kongwang_anchor is Anchor.DAY
 ```
 
-该字段追加在流派字段末尾，参与命盘相等性、哈希与 JSON。旧命盘或旧前提记录缺少该字段会被拒绝，
-不会自动补 `DAY`。保留原件和原软件版本，以原输入、完整原配置及明确选择的新锚重建当前命盘；
-前提记录须重新求值后另存，不能给旧观察补键或改版本号便称已更新。
-配置完整的旧命盘／前提另有[主动格式迁移](integration.md)，普通读取不会替调用方运行；
-迁移也不猜缺失锚点或改变流派默认值。
+该字段追加在流派字段末尾，参与命盘相等性与哈希。需要按当前实现重新求值时，使用原输入、
+完整配置及明确选择的新锚构造命盘；本库不提供旧命盘或前提判别记录的恢复、迁移接口。
 
 ## 术语索引
 
@@ -313,7 +310,7 @@ assert BaziSchool().kongwang_anchor is Anchor.DAY
 | 历法后端 `CalendarBackend` | 节气与干支历的数据来源：`hko`、`celestial`、`celestial-algo2` |
 | 换日 `DayRollover` | 日柱在 23:00 还是 00:00 更换 |
 | 起运年份 `DayunYearRule` | 大运年份标签的投影方式，不改变物理时刻 |
-| 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性与 JSON |
+| 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性 |
 | 六甲旬空取锚 `kongwang_anchor` | 选择年柱、日柱或分别使用双锚 |
 | 真太阳时 | 由经度、民用偏移与均时差换算的钟；见 `Bazi.location_time` |
 | `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
