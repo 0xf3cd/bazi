@@ -9,6 +9,7 @@ from bazi.defines import Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, object_id
 
 from knowledge_additions import AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS
+from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -45,6 +46,7 @@ def test_historical_corpus_is_append_only() -> None:
   source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   for registry in ('objects', 'contexts', 'sources', 'entries'):
     assert json.loads(json.dumps([asdict(value) for value in getattr(current, registry).values()])) == source[registry]
+  source['sources'] = [before_errata(row, SOURCE_ERRATA['sources'].get(row['source_id'], {})) for row in source['sources']]
   for objects, sources, entries, fingerprint in (
     (
       AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS,
@@ -115,7 +117,7 @@ def test_text_order_fingerprints_conserved() -> None:
 def test_source_registry_fingerprint_conserved() -> None:
   rows: list[str] = []
   for source_id in BASELINE['sources']:
-    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    record = before_errata(asdict(KNOWLEDGE_BASE.sources[source_id]), SOURCE_ERRATA['sources'].get(source_id, {}))
     for field, (old, new) in TRANSLATED_SOURCES.get(source_id, {}).items():
       assert record[field] == new and BASELINE['sources'][source_id][field] == old, (source_id, field)
       record[field] = old

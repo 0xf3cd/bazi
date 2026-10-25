@@ -15,6 +15,7 @@ from bazi.knowledge import (
 )
 
 from knowledge_additions import AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS
+from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -382,7 +383,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
   ]
   assert actual == expected_rows
   for source_id, expected in baseline['sources'].items():
-    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    record = before_errata(asdict(KNOWLEDGE_BASE.sources[source_id]), SOURCE_ERRATA['sources'].get(source_id, {}))
     translated = {field: new for field, (_, new) in TRANSLATED_SOURCES.get(source_id, {}).items()}
     assert {key: record[key] for key in expected} == {**expected, **translated}
   old_ids = {row['claim']['claim_id'] for row in baseline['rows']}
@@ -420,7 +421,7 @@ def test_attribution_allowance_matches_entries() -> None:
 def test_translation_table_matches_the_corpus() -> None:
   # Two-way: every translated value is in the corpus and no original value is left behind.
   for source_id, changes in TRANSLATED_SOURCES.items():
-    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    record = before_errata(asdict(KNOWLEDGE_BASE.sources[source_id]), SOURCE_ERRATA['sources'].get(source_id, {}))
     for field, (old, new) in changes.items():
       assert record[field] == new and old != new, (source_id, field)
   attributions = {entry.attribution for entry in KNOWLEDGE_BASE.entries.values()}
@@ -1041,7 +1042,7 @@ def test_non_oracle_sources_fingerprint() -> None:
       *AUXILIARY_SOURCE_IDS,
     }:
       continue
-    row = asdict(source)
+    row = before_errata(asdict(source), SOURCE_ERRATA['sources'].get(source_id, {}))
     for field, (old, _) in TRANSLATED_SOURCES.get(source_id, {}).items():
       row[field] = old
     rows.append(row)
@@ -1099,13 +1100,19 @@ def test_auxiliary_source_support_is_separated() -> None:
     'youyilu.taiyuan_minggong': ('baiwen', 'sanming_tonghui', '生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。'),
     'sanming_tonghui.taiyuan': ('baiwen', 'sanming_tonghui', '惟有一法以當生前三百日為十月之氣乃是受胎之正'),
     'sanming_tonghui.minggong': ('baiwen', 'sanming_tonghui', '次将所生之時加於所生之月順行十二位逢卯即安命宫'),
-    'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人谓交过中气，即作次月推'),
+    'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人謂交過中氣。卽作次月推'),
   }
   for identifier, (layer, lineage, excerpt) in expected.items():
     source = k.sources[identifier]
     assert (source.text_layer, source.lineage, source.excerpt, source.state) == (layer, lineage, excerpt, 'witnessed')
     assert any(excerpt in entry.text for entry in k.query(source_id=identifier, include_reference_only=True))
-    assert '转录' in source.edition + source.attribution and source.limitations
+    assert source.limitations
+    if identifier == 'mingli_tanyuan.minggong':
+      assert source.url == 'https://commons.wikimedia.org/w/index.php?curid=132876481'
+      assert '扫描文件题《命理探源》' in source.edition and '版心题《命理探原》' in source.edition
+      assert 'PDF 第 75–76 页' in source.locator and '印页四四至四五' in source.locator
+    else:
+      assert '转录' in source.edition + source.attribution
   assert '然則貴人受胎定在三百日又豈可據乎' in k.sources['sanming_tonghui.taiyuan'].limitations
   critique = '今人多以法取胎元未審精當'
   source = k.sources['sanming_tonghui.taiyuan']
@@ -1120,7 +1127,7 @@ def test_auxiliary_source_support_is_separated() -> None:
   assert '未明确' in k.sources['sanming_tonghui.minggong'].limitations
   assert '按语' in k.sources['mingli_tanyuan.minggong'].limitations
   locator = k.sources['mingli_tanyuan.minggong'].locator
-  assert '下载页题名作《命理探源》' in locator and '本库沿称《命理探原》' in locator
+  assert '〈起例〉〈推命宮法〉' in locator and '按语及丙午大寒例' in locator
   assert '立春' not in k.entry('concept.minggong.zhongqi').text
   candidate = ''.join(k.entry('concept.taiyuan.three_hundred_days').limits)
   assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末另有质疑', '先核对选录截取与转录范围，再查底本'))
