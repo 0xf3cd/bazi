@@ -494,7 +494,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   monkeypatch.setattr(package_checks, 'run', run_fixture)
 
   def diagnostics(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
-    bad = (work / 'consumer/bad.py').read_text().splitlines()
+    bad = (work / 'consumer/bad.py').read_text(encoding='utf-8').splitlines()
     messages = ['[assignment] [arg-type] "None"']
     messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
       'criterion', 'ContextProfile', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
