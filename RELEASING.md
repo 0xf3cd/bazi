@@ -54,7 +54,9 @@ workflow 须先存在于默认分支，才能手动触发。
 3. PyPI 成功后，批准 GitHub Release 任务。此任务只取得 contents 写权限，先核 PyPI 哈希，
    在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，
    上传同一字节及声明文件，核 asset 摘要后发布草稿。
-   两个特权任务均不检出、构建、安装或导入仓库代码。
+   两个特权任务均不检出、构建或安装源码，也不执行工件中的代码。
+   发布工具 `run_release.py` 从本仓本次触发 SHA 的 HTTPS 地址取得，取用前要求该 SHA 与 workflow SHA 相同；
+   只接受 HTTP 200，再按临时目录中的绝对路径以 `python -I` 执行，避免工件目录影响脚本选择或模块导入。
 4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
    在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
 

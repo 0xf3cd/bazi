@@ -5,9 +5,11 @@ import io
 import json
 import os
 import re
+import runpy
 import shlex
 import shutil
 import subprocess
+import sys
 import tomllib
 import urllib.error
 import urllib.parse
@@ -15,10 +17,12 @@ import urllib.request
 
 from pathlib import Path, PureWindowsPath
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
+
+import run_release
 
 
 WORKFLOWS = Path(__file__).parents[1] / '.github/workflows'
@@ -27,8 +31,9 @@ WORKFLOW = yaml.safe_load(WORKFLOW_TEXT)
 SHA = 'a' * 40
 
 
-def run_policy(code: str) -> None:
-  exec(compile(code, '<release-policy>', 'exec'), {})  # noqa: S102 # Execute the actual checked-in policy with fixture-backed I/O.
+def run_policy(command: str) -> None:
+  with patch.object(sys, 'argv', ['run_release.py', *shlex.split(command)[3:]]):
+    run_release.main()
 
 
 def workflow_code(job: str, name: str) -> str:
@@ -68,9 +73,7 @@ def test_workflow_structure() -> None:
   assert 'pypi' in jobs['github-release']['needs']
   assert "needs.pypi.result == 'success'" in jobs['github-release']['if']
   for name, job in jobs.items():
-    for step in job['steps']:
-      if 'run' in step and step.get('shell') == 'python':
-        compile(step['run'], '<release-policy>', 'exec')
+    assert all(step.get('shell') != 'python' for step in job['steps'])
     if name in ('pypi', 'github-release'):
       assert job['environment'] == 'release'
       for condition in ("inputs.mode == 'release'", "needs.preflight.result == 'success'", "github.repository == '0xf3cd/bazi'", "github.ref == 'refs/heads/main'"):
@@ -78,7 +81,7 @@ def test_workflow_structure() -> None:
       for step in job['steps']:
         action = step.get('uses', '').split('@')[0]
         assert action in ('', 'actions/download-artifact', 'pypa/gh-action-pypi-publish')
-        assert not re.search(r'\b(import bazi|pip install|checkout|run_\w+\.py|subprocess|exec\(|eval\()', step.get('run', ''))
+        assert not re.search(r'\b(import bazi|pip install|checkout|subprocess|exec\(|eval\()', step.get('run', ''))
         if action == 'actions/download-artifact':
           assert step['with'] == {
             'artifact-ids': '${{ needs.build.outputs.artifact-id }}', 'path': 'artifact',
@@ -91,6 +94,7 @@ def test_workflow_structure() -> None:
   assert checkout['with']['persist-credentials'] is False
   assert jobs['build']['outputs']['artifact-id'] == '${{ steps.upload.outputs.artifact-id }}'
   assert '--package-output-dir' in workflow_code('build', 'Run full gate and retain its tested pair')
+  check_script_wiring(WORKFLOW)
 
 
 def test_environment_report_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -103,7 +107,168 @@ def test_environment_report_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
     'python -m pip --version >> "$receipt"', 'python -m pip install -r Requirements.txt',
     'python -m pip --version >> "$receipt"', 'python -m pip install -r docs/requirements.txt',
     'python -m pip --version >> "$receipt"', 'python -m pip install celestial-calendar==0.6.1']
-  assert "raw = Path(os.environ['RUNNER_TEMP']) / 'raw-environments.json'" in workflow_code('build', 'Seal release bundle')
+  assert workflow_code('build', 'Seal release bundle') == 'python -I "$GITHUB_WORKSPACE/run_release.py" seal'
+
+
+def check_script_wiring(workflow: dict[str, Any]) -> None:
+  calls = {
+    'preflight': {'Require an existing protected release environment': 'preflight'},
+    'build': {'Verify source identity': 'source', 'Seal release bundle': 'seal'},
+    'pypi': {'Verify exact same-run bundle': 'verify', 'Reject existing version, tag or release': 'check-existing'},
+    'github-release': {'Verify exact same-run bundle': 'verify', 'Verify PyPI bytes and create the tag and release without overwriting': 'publish'},
+  }
+  fetch = (
+    '[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]]\n'
+    'status="$(curl --fail --silent --show-error --proto \'=https\' --max-time 60 \\\n'
+    '  --output "$RUNNER_TEMP/run_release.py" --write-out \'%{http_code}\' \\\n'
+    '  "https://raw.githubusercontent.com/$REPOSITORY/$SHA/run_release.py")"\n'
+    'test "$status" = 200\n'
+  )
+  for name, job in workflow['jobs'].items():
+    steps = job['steps']
+    if name != 'build':
+      loader = steps[0]
+      assert loader['name'] == 'Load trusted release tooling'
+      assert loader['shell'] == 'bash' and loader['run'] == fetch
+      assert loader['env'] == {'REPOSITORY': '${{ github.repository }}', 'SHA': '${{ github.sha }}', 'WORKFLOW_SHA': '${{ github.workflow_sha }}'}
+    if name == 'preflight':
+      assert all('uses' not in step for step in steps)
+    seen = []
+    for step in steps:
+      if step.get('name') == 'Load trusted release tooling':
+        assert name != 'build' and step is steps[0]
+        continue
+      if step.get('name') in calls[name]:
+        operation = calls[name][step['name']]
+        source = 'GITHUB_WORKSPACE' if name == 'build' else 'RUNNER_TEMP'
+        assert step['shell'] == 'bash'
+        assert step['run'] == f'python -I "${source}/run_release.py" {operation}'
+        seen.append(step['name'])
+      else:
+        assert 'run_release.py' not in step.get('run', '')
+    assert seen == list(calls[name])
+
+
+@pytest.mark.parametrize('change', ['operation', 'relative', 'artifact', 'shell', 'source', 'workflow-sha', 'guard', 'http-status', 'loader-order', 'preflight-action'])
+def test_release_wiring_rejects_changes(change: str) -> None:
+  workflow = yaml.safe_load(WORKFLOW_TEXT)
+  job = workflow['jobs']['preflight']
+  loader, invocation = job['steps']
+  if change in ('operation', 'relative', 'artifact'):
+    old, new = {'operation': (' preflight', ' verify'), 'relative': ('$RUNNER_TEMP/', ''),
+      'artifact': ('$RUNNER_TEMP/', 'artifact/')}[change]
+    invocation['run'] = invocation['run'].replace(old, new)
+  elif change == 'shell':
+    invocation['shell'] = 'python'
+  elif change in ('source', 'workflow-sha'):
+    loader['env']['SHA' if change == 'source' else 'WORKFLOW_SHA'] = '${{ needs.build.outputs.sha }}'
+  elif change in ('guard', 'http-status'):
+    loader['run'] = '\n'.join(line for line in loader['run'].splitlines()
+      if not line.startswith('[[' if change == 'guard' else 'test ')) + '\n'
+  elif change == 'loader-order':
+    job['steps'].reverse()
+  elif change == 'preflight-action':
+    job['steps'].append({'uses': 'actions/checkout@' + 'a' * 40})
+  with pytest.raises(AssertionError):
+    check_script_wiring(workflow)
+
+
+@pytest.mark.parametrize('operation, function', [
+  ('preflight', 'check_environment'), ('source', 'verify_source'), ('seal', 'seal_bundle'),
+  ('verify', 'verify_bundle'), ('check-existing', 'check_existing'), ('publish', 'publish_github'),
+])
+def test_cli_dispatches_operations(monkeypatch: pytest.MonkeyPatch, operation: str, function: str) -> None:
+  called = Mock()
+  monkeypatch.setattr(run_release, function, called)
+  monkeypatch.setattr(sys, 'argv', ['run_release.py', operation])
+  run_release.main()
+  called.assert_called_once_with()
+
+
+@pytest.mark.parametrize('arguments, code', [([], 2), (['unknown'], 2), (['--help'], 0)])
+def test_cli_entrypoint_rejects_unknown(monkeypatch: pytest.MonkeyPatch, arguments: list[str], code: int) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_release.py', *arguments])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(run_release.__file__, run_name='__main__')
+  assert caught.value.code == code
+
+
+@pytest.mark.parametrize('change', ['none', 'checksum', 'mode', 'unknown', 'artifact-code'])
+def test_cli_checks_bundle_from_foreign_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
+  trusted = tmp_path / 'trusted script'
+  trusted.mkdir()
+  script = trusted / 'run_release.py'
+  shutil.copyfile(run_release.__file__, script)
+  root = tmp_path / 'artifact'
+  (root / 'dist').mkdir(parents=True)
+  for name in ('bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl'):
+    (root / 'dist' / name).write_bytes(b'tested fixture')
+  metadata = {'name': 'bazi', 'version': '1.0.0', 'sha': SHA, 'repository': '0xf3cd/bazi', 'run_id': '123', 'mode': 'release'}
+  (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
+  (root / 'environments.json').write_text(json.dumps({**environment_report(root / 'dist'), 'identity': metadata}), encoding='utf-8')
+  (root / 'RELEASE_NOTES.md').write_text('fixture', encoding='utf-8')
+  files = sorted((p for p in root.rglob('*') if p.is_file()), key=lambda p: p.relative_to(root).as_posix())
+  sums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root).as_posix()}\n' for p in files)
+  (root / 'SHA256SUMS').write_bytes(sums.encode())
+  monkeypatch.setenv('MANIFEST_SHA', hashlib.sha256(sums.encode()).hexdigest())
+  monkeypatch.setenv('PYTHONPATH', str(tmp_path))
+  for path in (tmp_path / 'run_release.py', tmp_path / 'json.py'):
+    path.write_text('raise RuntimeError("untrusted code executed")\n', encoding='utf-8')
+  if change == 'checksum':
+    (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'changed')
+  elif change == 'mode':
+    monkeypatch.setenv('MODE', 'rehearsal')
+  elif change == 'artifact-code':
+    (root / 'run_release.py').write_text('raise RuntimeError("untrusted code executed")\n', encoding='utf-8')
+  result = subprocess.run([sys.executable, '-I', str(script), 'unknown' if change == 'unknown' else 'verify'],
+    cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', check=False)
+  assert result.returncode == (0 if change == 'none' else 2 if change == 'unknown' else 1)
+  assert 'untrusted code executed' not in result.stdout + result.stderr
+  if change in ('checksum', 'mode'):
+    assert ('Release bundle checksum mismatch' if change == 'checksum' else 'Invalid publication identity') in result.stderr
+  elif change == 'artifact-code':
+    assert 'Unexpected release bundle files' in result.stderr
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='Release shell steps run on Ubuntu; the standalone Python CLI is tested on Windows.')
+@pytest.mark.parametrize('change', ['none', 'workflow-sha', 'invalid-sha', 'http-302', 'http-404', 'curl-error', 'temp-relative'])
+def test_trusted_tool_fetch_fails_closed(tmp_path: Path, change: str) -> None:
+  loader = WORKFLOW['jobs']['preflight']['steps'][0]
+  tools, temporary = tmp_path / 'bin', tmp_path / 'runner temp'
+  tools.mkdir()
+  temporary.mkdir()
+  calls, marker = tmp_path / 'curl-calls.json', tmp_path / 'next-step'
+  stub = tmp_path / 'curl_stub.py'
+  stub.write_text('''import json, os, shutil, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(os.environ['CURL_CALLS']).write_text(json.dumps(args), encoding='utf-8')
+target = args[args.index('--output') + 1]
+shutil.copyfile(os.environ['CURL_SOURCE'], target)
+print(os.environ['CURL_STATUS'], end='')
+sys.exit(int(os.environ['CURL_EXIT']))
+''', encoding='utf-8')
+  curl = tools / 'curl'
+  curl.write_text('#!/bin/sh\nexec "$CURL_PYTHON" "$CURL_STUB" "$@"\n', encoding='utf-8')
+  curl.chmod(0o755)
+  env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
+    SHA='invalid' if change == 'invalid-sha' else SHA, WORKFLOW_SHA='b' * 40 if change == 'workflow-sha' else SHA,
+    REPOSITORY='0xf3cd/bazi', RUNNER_TEMP='relative' if change == 'temp-relative' else str(temporary),
+    CURL_CALLS=str(calls), CURL_PYTHON=sys.executable, CURL_STUB=str(stub), CURL_SOURCE=run_release.__file__,
+    CURL_STATUS='302' if change == 'http-302' else '404' if change == 'http-404' else '200',
+    CURL_EXIT='22' if change == 'http-404' else '28' if change == 'curl-error' else '0', NEXT_STEP=str(marker))
+  result = subprocess.run(['bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c',
+    loader['run'] + '\nprintf reached > "$NEXT_STEP"\n'], cwd=tmp_path, env=env, capture_output=True, text=True, encoding='utf-8', check=False)
+  assert (result.returncode == 0) == (change == 'none')
+  assert marker.exists() == (change == 'none')
+  assert calls.exists() == (change not in ('workflow-sha', 'invalid-sha', 'temp-relative'))
+  if calls.exists():
+    args = json.loads(calls.read_text(encoding='utf-8'))
+    assert args == ['--fail', '--silent', '--show-error', '--proto', '=https', '--max-time', '60',
+      '--output', str(temporary / 'run_release.py'), '--write-out', '%{http_code}',
+      f'https://raw.githubusercontent.com/0xf3cd/bazi/{SHA}/run_release.py']
+  if change == 'none':
+    assert (temporary / 'run_release.py').read_bytes() == Path(run_release.__file__).read_bytes()
 
 
 def check_action_pins(text: str) -> None:
@@ -282,7 +447,7 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
   ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
   ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
 ])
-@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes'])
+@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes', 'network-error'])
 def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, notes: str, body: str) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
@@ -308,7 +473,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         value['urls'][0]['digests']['sha256'] = '0' * 64
     elif method == 'GET':
       if not ((change == 'tag' and '/git/ref/tags/' in address) or (change == 'release' and '/releases/tags/' in address)):
-        raise urllib.error.HTTPError(address, 404, 'Fixture', {}, None)  # type: ignore[arg-type] # No headers needed.
+        raise urllib.error.HTTPError(address, 503 if change == 'network-error' else 404, 'Fixture', {}, None)  # type: ignore[arg-type] # No headers needed.
     else:
       assert isinstance(url, urllib.request.Request) and isinstance(url.data, bytes)
       if address.endswith('/git/refs'):
@@ -466,6 +631,14 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
     'dist/bazi-1.0.0.tar.gz', 'dist/bazi-1.0.0-py3-none-any.whl', 'RELEASE_NOTES.md',
     'release.json', 'environments.json', 'SHA256SUMS',
   }
+
+
+@pytest.mark.parametrize('version', ['1.0', '1.0.0rc1', '1.0.0+local'])
+def test_seal_requires_stable_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, version: str) -> None:
+  monkeypatch.chdir(tmp_path)
+  (tmp_path / 'pyproject.toml').write_text(f'[project]\nversion = "{version}"\n', encoding='utf-8')
+  with pytest.raises(SystemExit, match='^Use a stable three-part release version$'):
+    run_policy(workflow_code('build', 'Seal release bundle'))
 
 
 @pytest.mark.parametrize('change, message', [

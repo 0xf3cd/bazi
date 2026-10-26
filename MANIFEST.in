@@ -1,6 +1,6 @@
 include pyproject.toml MANIFEST.in LICENSE THIRD_PARTY_NOTICES.md
 include README.md API_CONTRACT.md RELEASE_NOTES.md RELEASING.md Requirements.txt ruff.toml
-include run_tests.py run_package_checks.py run_demo.py run_interpreter.py run_relationship_analyzer.py
+include run_tests.py run_package_checks.py run_release.py run_demo.py run_interpreter.py run_relationship_analyzer.py
 include run_docs.py run_doc_checks.py CONTRIBUTING.md
 include run_docs_site.py
 recursive-include docs *.py *.md *.rst *.txt *.css

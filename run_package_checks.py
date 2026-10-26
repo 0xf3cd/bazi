@@ -40,7 +40,7 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
 SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
   'README.md', 'API_CONTRACT.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
-  'run_tests.py', 'run_package_checks.py', 'run_demo.py', 'run_interpreter.py',
+  'run_tests.py', 'run_package_checks.py', 'run_release.py', 'run_demo.py', 'run_interpreter.py',
   'run_relationship_analyzer.py', 'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
   'CONTRIBUTING.md',
   '.github/workflows/release.yml', '.github/workflows/on_pull_request.yml',
