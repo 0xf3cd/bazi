@@ -199,10 +199,11 @@ def test_package_output_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
   ], print_details=True)
 
 
-def test_environment_report_forwarding(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize('flag', ['-pkg', '-a'])
+def test_environment_report_forwarding(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, flag: str) -> None:
   values = [str(tmp_path / name) for name in ('pair', 'report.json', 'receipt.txt')]
   options = ['--package-output-dir', values[0], '--environment-report', values[1], '--outer-installer-report', values[2]]
-  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-pkg', *options])
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', flag, *options])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   function = runner['run_package_checks']
   proc = Mock(return_value=0)
@@ -218,6 +219,14 @@ def test_environment_report_forwarding(monkeypatch: pytest.MonkeyPatch, tmp_path
 ])
 def test_environment_report_requires_pair(monkeypatch: pytest.MonkeyPatch, options: list[str]) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-pkg', *options])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert caught.value.code == 2
+
+
+def test_environment_export_requires_package(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '--package-output-dir', str(tmp_path / 'pair'),
+    '--environment-report', str(tmp_path / 'report.json'), '--outer-installer-report', str(tmp_path / 'receipt.txt')])
   with pytest.raises(SystemExit) as caught:
     runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert caught.value.code == 2

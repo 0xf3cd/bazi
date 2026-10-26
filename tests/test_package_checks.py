@@ -2,22 +2,27 @@
 
 import hashlib
 import importlib.util
+import io
 import json
 import logging
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import venv
 import zipfile
 
 from pathlib import Path
 from typing import Literal
+from unittest.mock import Mock
 
 import pytest
 
+import run_package_checks as package_checks
+
 from run_package_checks import (
-  ROOT, RUNTIME_DATA, Installer, _INSTALLATION, build_context, check_description,
+  ROOT, RUNTIME_DATA, Environment, Installer, _INSTALLATION, build_context, check_description,
   check_packages, check_wheel, collect_environment, observe_build_installer, outer_installers, pip_version,
   run, source_files, source_identity,
 )
@@ -176,7 +181,7 @@ def test_observer_rejects_unknown_and_restores(monkeypatch: pytest.MonkeyPatch) 
   assert _INSTALLATION.get() is None and records == []
 
 
-@pytest.mark.parametrize('change', ['none', 'dirty', 'ignored', 'no-git'])
+@pytest.mark.parametrize('change', ['none', 'dirty', 'ignored', 'no-git', 'untracked', 'nested'])
 def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> None:
   subprocess.run(['git', 'init', str(tmp_path)], capture_output=True, check=True)
   (tmp_path / 'input.py').write_text('X = 1\n', encoding='utf-8')
@@ -196,10 +201,27 @@ def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> 
     files += ('lib/extra.py',)
   elif change == 'no-git':
     shutil.rmtree(tmp_path / '.git')
+  elif change == 'untracked':
+    (tmp_path / 'not-an-input').write_text('untracked', encoding='utf-8')
+  elif change == 'nested':
+    (tmp_path / 'nested').mkdir()
+    tmp_path /= 'nested'
   if change == 'none':
     assert source_identity(tmp_path, files) == commit
+  elif change == 'no-git':
+    # A test temp root can itself be inside another checkout.
+    parent = subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=tmp_path, capture_output=True, text=True, check=False)
+    if parent.returncode:
+      with pytest.raises(subprocess.CalledProcessError) as caught:
+        source_identity(tmp_path, files)
+      assert caught.value.cmd == ['git', 'rev-parse', '--show-toplevel']
+    else:
+      with pytest.raises(ValueError, match='^Environment export requires a source checkout$'):
+        source_identity(tmp_path, files)
   else:
-    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+    message = {'dirty': 'a clean source checkout', 'untracked': 'a clean source checkout',
+      'ignored': 'tracked source inputs', 'nested': 'a source checkout'}[change]
+    with pytest.raises(ValueError, match='Environment export requires ' + message + '$'):
       source_identity(tmp_path, files)
 
 
@@ -298,7 +320,9 @@ def test_collector_uses_target_metadata(tmp_path: Path, monkeypatch: pytest.Monk
 
 
 @pytest.mark.parametrize('change', ['report-only', 'receipt-only', 'no-pair', 'inside-source', 'inside-pair', 'same-path'])
-def test_export_arguments_rejected(tmp_path: Path, change: str) -> None:
+def test_export_arguments_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
+  root = tmp_path / 'checkout'
+  monkeypatch.setattr(package_checks, 'ROOT', root)
   output, report, receipt = (tmp_path / name for name in ('pair', 'report.json', 'receipt.txt'))
   options = ['--output-dir', str(output), '--environment-report', str(report), '--outer-installer-report', str(receipt)]
   if change == 'report-only':
@@ -308,14 +332,23 @@ def test_export_arguments_rejected(tmp_path: Path, change: str) -> None:
   elif change == 'no-pair':
     options = options[2:]
   elif change == 'inside-source':
-    options[3] = str(ROOT / 'environment-report.json')
+    options[3] = str(root / 'environment-report.json')
   elif change == 'inside-pair':
     options[3] = str(output / 'report.json')
   elif change == 'same-path':
     options[3] = str(receipt)
-  result = subprocess.run([sys.executable, str(ROOT / 'run_package_checks.py'), *options], capture_output=True, text=True, check=False)
-  assert result.returncode != 0
-  assert 'Environment' in result.stderr
+  monkeypatch.setattr(sys, 'argv', ['run_package_checks.py', *options])
+  message = ('Environment export requires --output-dir, --environment-report and --outer-installer-report together'
+    if change in ('report-only', 'receipt-only', 'no-pair') else
+    'Environment report and installer receipt must be different files' if change == 'same-path' else
+    'Environment reports must stay outside the source checkout and artifact directory')
+  if change in ('report-only', 'receipt-only', 'no-pair'):
+    with pytest.raises(SystemExit) as caught:
+      package_checks.main()
+    assert caught.value.code == 2
+  else:
+    with pytest.raises(ValueError, match='^' + message + '$'):
+      package_checks.main()
   assert not output.exists() and not report.exists()
 
 
@@ -327,3 +360,137 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
   receipt.write_text(receipt.read_text().replace('25.1rc1', 'file:///private'), encoding='utf-8')
   with pytest.raises(ValueError):
     outer_installers(receipt)
+
+
+@pytest.mark.parametrize('change', ['none', 'identity-changed', 'source-changed', 'report-race', 'role-missing'])
+def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
+  root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
+  root.mkdir()
+  work.mkdir()
+  source = {'README.md': b'# Fixture\n', 'pyproject.toml': b'[project]\nversion="1.0.0"\n',
+    'LICENSE': b'license', 'THIRD_PARTY_NOTICES.md': b'notices', 'bazi/fixture.py': b'X = 1\n',
+    'tests/package_smoke.py': b'# Fixture consumer\n'}
+  for name, content in source.items():
+    path = root / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+  monkeypatch.setattr(package_checks, 'source_files', lambda directory: tuple(source))
+  identity = Mock(side_effect=['a' * 40, 'b' * 40 if change == 'identity-changed' else 'a' * 40])
+  monkeypatch.setattr(package_checks, 'source_identity', identity)
+  states: dict[str, dict[str, str]] = {}
+  observations: list[str] = []
+  report = tmp_path / 'report.json'
+  receipt = tmp_path / 'receipt.txt'
+  receipt.write_text(''.join(f'pip {version} from /discarded path/pip (python 3.12)\n'
+    for version in ('25.0.1', '25.1rc1', '25.1rc1')), encoding='utf-8')
+
+  def collect(python: str, role: str, installers: list[Installer]) -> Environment:
+    observations.append(role)
+    distributions = states[python].copy() if role != 'outer' else {'outer-only': '1.0'}
+    if role == 'outer':
+      if change == 'source-changed':
+        (root / 'bazi/fixture.py').write_bytes(b'X = 2\n')
+      elif change == 'report-race':
+        report.write_text('keep competing file', encoding='utf-8')
+    return {'role': role, 'python': {'implementation': 'CPython', 'version': '3.12.13'},
+      'platform': {'system': 'Linux', 'machine': 'x86_64'}, 'distributions': distributions,
+      'installers': list(installers)}
+  monkeypatch.setattr(package_checks, 'collect_environment', collect)
+
+  def build(source_dir: Path, directory: Path, kind: str, role: str, cwd: Path, environments: list[Environment] | None) -> None:
+    directory.mkdir()
+    metadata = b'Description-Content-Type: text/markdown\n\n' + source['README.md']
+    if kind == 'sdist':
+      generated = {'PKG-INFO': metadata, 'setup.cfg': b''} | {
+        'bazi.egg-info/' + name: b'' for name in ('PKG-INFO', 'SOURCES.txt', 'dependency_links.txt', 'top_level.txt')}
+      with tarfile.open(directory / 'bazi-1.0.0.tar.gz', 'w:gz') as archive:
+        for name, content in {**source, **generated}.items():
+          item = tarfile.TarInfo('bazi-1.0.0/' + name)
+          item.size = len(content)
+          archive.addfile(item, io.BytesIO(content))
+    else:
+      with zipfile.ZipFile(directory / 'bazi-1.0.0-py3-none-any.whl', 'w') as archive:
+        archive.writestr('bazi/fixture.py', source['bazi/fixture.py'])
+        archive.writestr('bazi-1.0.0.dist-info/METADATA', metadata)
+        for name in ('WHEEL', 'top_level.txt', 'RECORD'):
+          archive.writestr('bazi-1.0.0.dist-info/' + name, b'')
+        for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
+          archive.writestr('bazi-1.0.0.dist-info/licenses/' + name, source[name])
+    assert environments is not None
+    if not (change == 'role-missing' and role == 'build-sdist'):
+      states[role] = {'setuptools': '84.0.0'}
+      environments.append(collect(role, role, [{'name': 'pip', 'version': '24.0', 'scope': 'runner'}]))
+  monkeypatch.setattr(package_checks, 'build_artifact', build)
+  monkeypatch.setattr(venv.EnvBuilder, 'create', lambda self, directory: directory.mkdir())
+
+  def observe(prefix: list[str], scope: Literal['runner', 'target'], installers: list[Installer]) -> None:
+    observations.append('pip:' + Path(prefix[0]).parent.parent.name)
+    record: Installer = {'name': 'pip', 'version': '23.0', 'scope': scope}
+    if record not in installers:
+      installers.append(record)
+  monkeypatch.setattr(package_checks, 'observe_pip', observe)
+
+  def run_fixture(command: list[str], cwd: Path) -> None:
+    if 'pip' not in command:
+      return
+    python = command[0]
+    if 'uninstall' in command:
+      states[python].pop('setuptools')
+    elif command[-1].endswith('.whl'):
+      states[python] = {'bazi': '1.0', 'pip': '23.0', 'setuptools': '84.0.0',
+        'wheel-origin': '1.0' if Path(command[-1]).parent.name == 'direct' else '2.0'}
+    else:
+      observations.append('install-mypy')
+      states[python].update({'mypy': '2.4.0', 'typing-transitive': '1.0'})
+  monkeypatch.setattr(package_checks, 'run', run_fixture)
+
+  def diagnostics(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+    bad = (work / 'consumer/bad.py').read_text().splitlines()
+    messages = ['[assignment] [arg-type] "None"']
+    messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
+      'criterion', 'ContextProfile', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
+      'object_id', 'render', 'render_subject'))
+    for owner, member, trigger in (
+      ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
+      ('Bazi', 'month_jies', 'local.month_jies = ()'), ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
+      ('KnowledgeSource', 'work', 'witness.work = "changed"'), ('CriterionInfo', 'definition', 'info.definition = "changed"'),
+      ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
+    ):
+      messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Property "{member}" defined in "{owner}" is read-only  [misc]')
+    for value, trigger in (('CriterionInfo', 'catalog["changed"] = info'), ('KnowledgeSource', 'knowledge.sources["editorial"] = witness')):
+      messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Unsupported target for indexed assignment ("frozendict[str, {value}]")  [index]')
+    messages.extend(f'"{owner}" has no attribute "{member}"' for owner, member in
+      (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')))
+    return subprocess.CompletedProcess([], 1, '\n'.join(messages), '')
+  monkeypatch.setattr(subprocess, 'run', diagnostics)
+  if change == 'none':
+    check_packages(root, work, output, report, receipt)
+  else:
+    exception = FileExistsError if change == 'report-race' else ValueError
+    message = {'identity-changed': 'Source identity changed', 'source-changed': 'Source changed',
+      'role-missing': 'Environment role roster mismatch', 'report-race': ''}[change]
+    with pytest.raises(exception, match=message or None):
+      check_packages(root, work, output, report, receipt)
+    if change == 'report-race':
+      assert report.read_text() == 'keep competing file'
+    else:
+      assert not report.exists()
+    return
+  data = json.loads(report.read_text())
+  assert data['schema_version'] == 1 and data['source_sha'] == 'a' * 40
+  records = data['environments']
+  assert [record['role'] for record in records] == ['outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+    'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing']
+  assert records[0]['installers'] == [{'name': 'pip', 'version': version, 'scope': 'runner'} for version in ('25.0.1', '25.1rc1')]
+  assert records[4]['distributions'] == {'bazi': '1.0', 'pip': '23.0', 'wheel-origin': '1.0'}
+  assert records[5]['distributions'] == {'bazi': '1.0', 'pip': '23.0', 'wheel-origin': '2.0'}
+  assert records[6]['distributions'] == {**records[5]['distributions'], 'mypy': '2.4.0', 'typing-transitive': '1.0'}
+  assert observations.index('install-mypy') < observations.index('consumer-typing')
+  assert observations.count('pip:direct-venv') == observations.count('pip:rebuilt-venv') == 2
+  assert observations.count('pip:typing-venv') == 3
+  assert identity.call_count == 2
+  assert data['pair'] == {kind: {'filename': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+    for kind, path in (('sdist', output / 'bazi-1.0.0.tar.gz'), ('wheel', output / 'bazi-1.0.0-py3-none-any.whl'))}
+  assert str(tmp_path) not in report.read_text()
+  with pytest.raises(ValueError, match='^Environment report must not exist$'):
+    check_packages(root, work, None, report, receipt)

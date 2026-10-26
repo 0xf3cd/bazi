@@ -4,9 +4,9 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import logging
 import os
 import re
-import logging
 import shutil
 import subprocess
 import sys
@@ -199,7 +199,7 @@ def build_artifact(source: Path, output: Path, kind: Literal['wheel', 'sdist'], 
   if environments is None:
     run([sys.executable, '-m', 'build', '--' + kind, '--outdir', str(output), str(source)], work)
     return
-  # 普通门禁保留 CLI 路径；导出时持有公共生命周期，才可在环境清理前采集。
+  # 导出时用 build 公开 API 持有隔离环境上下文，在清理前采集；普通门禁仍用 CLI。
   from build import ProjectBuilder
   from build.env import DefaultIsolatedEnv
 
