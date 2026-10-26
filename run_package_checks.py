@@ -123,6 +123,11 @@ def observe_build_installer(event: str, args: tuple[Any, ...]) -> None:
     return
   python, installers = active
   argv = args[1]
+  if isinstance(argv, str):
+    for prefix in ([sys.executable, '-m', 'pip', '--python', python], [python, '-Im', 'pip']):
+      if argv.startswith(subprocess.list2cmdline([*prefix, 'install']) + ' '):
+        argv = [*prefix, 'install']
+        break
   if not isinstance(argv, (list, tuple)):
     raise TypeError('Unsupported build installer invocation')
   scope: Literal['runner', 'target']

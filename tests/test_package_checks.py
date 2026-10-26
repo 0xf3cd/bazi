@@ -181,6 +181,48 @@ def test_observer_rejects_unknown_and_restores(monkeypatch: pytest.MonkeyPatch) 
   assert _INSTALLATION.get() is None and records == []
 
 
+@pytest.mark.parametrize('scope', ['runner', 'target'])
+@pytest.mark.parametrize('serialized', [False, True])
+def test_installer_commandline_keeps_identity(
+  monkeypatch: pytest.MonkeyPatch, scope: Literal['runner', 'target'], serialized: bool,
+) -> None:
+  python = 'C:\\target space\\python.exe'
+  prefix = [sys.executable, '-m', 'pip', '--python', python] if scope == 'runner' else [python, '-Im', 'pip']
+  command = [*prefix, 'install', '--no-input', '-r', 'C:\\requirements space\\input.txt']
+  records: list[Installer] = []
+  query = Mock(return_value='pip 25.0.1 from discarded path (python 3.12)')
+  monkeypatch.setattr(subprocess, 'check_output', query)
+  token = _INSTALLATION.set((python, records))
+  try:
+    observe_build_installer('subprocess.Popen', (prefix[0], subprocess.list2cmdline(command) if serialized else command, None, None))
+    assert _INSTALLATION.get() == (python, records)
+  finally:
+    _INSTALLATION.reset(token)
+  assert records == [{'name': 'pip', 'version': '25.0.1', 'scope': scope}]
+  query_prefix = [sys.executable, '-m', 'pip'] if scope == 'runner' else prefix
+  assert query.call_count == 1 and query.call_args.args[0] == [*query_prefix, '--version']
+
+
+@pytest.mark.parametrize('change', ['other-python', 'other-target', 'not-install', 'install-suffix'])
+def test_commandline_rejects_unknown(change: str) -> None:
+  python = 'C:\\target space\\python.exe'
+  command = [sys.executable, '-m', 'pip', '--python', python, 'install', '-r', 'input.txt']
+  if change == 'other-python':
+    command[0] += '-other'
+  elif change == 'other-target':
+    command[4] += '-other'
+  elif change == 'not-install':
+    command[5] = 'uninstall'
+  elif change == 'install-suffix':
+    command[5] = 'installer'
+  token = _INSTALLATION.set((python, []))
+  try:
+    with pytest.raises(TypeError, match='^Unsupported build installer invocation$'):
+      observe_build_installer('subprocess.Popen', (command[0], subprocess.list2cmdline(command), None, None))
+  finally:
+    _INSTALLATION.reset(token)
+
+
 @pytest.mark.parametrize('change', ['none', 'dirty', 'ignored', 'no-git', 'untracked', 'nested'])
 def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> None:
   subprocess.run(['git', 'init', str(tmp_path)], capture_output=True, check=True)
