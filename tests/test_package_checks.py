@@ -410,6 +410,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
           archive.addfile(item, io.BytesIO(content))
     else:
       with zipfile.ZipFile(directory / 'bazi-1.0.0-py3-none-any.whl', 'w') as archive:
+        archive.comment = role.encode('utf-8')
         archive.writestr('bazi/fixture.py', source['bazi/fixture.py'])
         archive.writestr('bazi-1.0.0.dist-info/METADATA', metadata)
         for name in ('WHEEL', 'top_level.txt', 'RECORD'):
@@ -489,8 +490,11 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   assert observations.count('pip:direct-venv') == observations.count('pip:rebuilt-venv') == 2
   assert observations.count('pip:typing-venv') == 3
   assert identity.call_count == 2
+  assert (work / 'direct/bazi-1.0.0-py3-none-any.whl').read_bytes() != (work / 'rebuilt/bazi-1.0.0-py3-none-any.whl').read_bytes()
+  expected_pair = {'sdist': work / 'sdist/bazi-1.0.0.tar.gz', 'wheel': work / 'rebuilt/bazi-1.0.0-py3-none-any.whl'}
   assert data['pair'] == {kind: {'filename': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
-    for kind, path in (('sdist', output / 'bazi-1.0.0.tar.gz'), ('wheel', output / 'bazi-1.0.0-py3-none-any.whl'))}
+    for kind, path in expected_pair.items()}
+  assert {path.name: path.read_bytes() for path in output.iterdir()} == {path.name: path.read_bytes() for path in expected_pair.values()}
   assert str(tmp_path) not in report.read_text()
   with pytest.raises(ValueError, match='^Environment report must not exist$'):
     check_packages(root, work, None, report, receipt)
