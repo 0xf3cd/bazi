@@ -200,7 +200,7 @@ def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> 
     (tmp_path / 'lib/extra.py').write_text('X = 3\n', encoding='utf-8')
     files += ('lib/extra.py',)
   elif change == 'no-git':
-    shutil.rmtree(tmp_path / '.git')
+    (tmp_path / '.git').rename(tmp_path / 'git-data')
   elif change == 'untracked':
     (tmp_path / 'not-an-input').write_text('untracked', encoding='utf-8')
   elif change == 'nested':
