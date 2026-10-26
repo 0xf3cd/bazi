@@ -320,7 +320,9 @@ def test_collector_uses_target_metadata(tmp_path: Path, monkeypatch: pytest.Monk
 
 
 @pytest.mark.parametrize('change', ['report-only', 'receipt-only', 'no-pair', 'inside-source', 'inside-pair', 'same-path'])
-def test_export_arguments_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
+def test_export_arguments_rejected(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], change: str,
+) -> None:
   root = tmp_path / 'checkout'
   monkeypatch.setattr(package_checks, 'ROOT', root)
   output, report, receipt = (tmp_path / name for name in ('pair', 'report.json', 'receipt.txt'))
@@ -346,6 +348,7 @@ def test_export_arguments_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     with pytest.raises(SystemExit) as caught:
       package_checks.main()
     assert caught.value.code == 2
+    assert message in capsys.readouterr().err
   else:
     with pytest.raises(ValueError, match='^' + message + '$'):
       package_checks.main()

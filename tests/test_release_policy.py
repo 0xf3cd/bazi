@@ -10,8 +10,8 @@ import shutil
 import subprocess
 import tomllib
 import urllib.error
-import urllib.request
 import urllib.parse
+import urllib.request
 
 from pathlib import Path, PureWindowsPath
 from typing import Any
