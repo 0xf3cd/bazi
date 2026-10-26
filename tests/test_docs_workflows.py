@@ -156,11 +156,16 @@ def test_publish_job_boundaries() -> None:
 
 def test_publish_identity_and_artifacts() -> None:
   jobs = PUBLISH['jobs']
+  assert jobs['build']['outputs'] == {'artifact-id': '${{ steps.upload.outputs.artifact-id }}'}
+  assert jobs['build']['steps'][-1]['id'] == 'upload'
   # The archive job re-derives identity with the same step instead of trusting build outputs.
   assert jobs['build']['steps'][0] == jobs['archive']['steps'][0] == step('build', 'Resolve documentation source identity')
   assert jobs['build']['steps'][0]['if'] == jobs['build']['if']
   # Promotion consumes only what the no-permission check read from the live site.
   assert jobs['check']['steps'] == jobs['readback']['steps']
+  assert jobs['check']['steps'][0]['id'] == 'readback'
+  assert jobs['check']['outputs'] == {
+    'commit': '${{ steps.readback.outputs.commit }}', 'digest': '${{ steps.readback.outputs.digest }}'}
   assert jobs['check']['env'] == {'LABEL': '${{ inputs.version }}', 'COMMIT': ''}
   assert jobs['readback']['env'] == {'LABEL': '${{ inputs.version }}', 'COMMIT': '${{ needs.archive.outputs.commit }}'}
   assert step('archive', 'Read the archive branch')['env']['EXPECTED'] == '${{ needs.check.outputs.commit }}'
