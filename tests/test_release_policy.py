@@ -248,8 +248,9 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     if change == 'none':
       run_policy(code)
     elif change == 'environment-truncated':
-      with pytest.raises(json.JSONDecodeError, match='Expecting property name'):
+      with pytest.raises(json.JSONDecodeError) as caught:
         run_policy(code)
+      assert caught.value.doc == '{' and caught.value.pos == 1
     else:
       message = ('Unexpected release bundle files' if change == 'environment-missing' else
         'Environment report role roster mismatch' if change in ('environment-role', 'environment-duplicate', 'environment-extra-record') else
@@ -435,8 +436,9 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
     return
   if change.startswith('report-') or change == 'post-gate-swap':
     if change == 'report-truncated':
-      with pytest.raises(json.JSONDecodeError, match='Expecting'):
+      with pytest.raises(json.JSONDecodeError) as caught:
         run_policy(seal)
+      assert caught.value.doc == raw.read_text(encoding='utf-8')
     else:
       message = ('Gate environment pair differs from retained artifacts' if change == 'post-gate-swap' else
         'Missing gate environment report' if change == 'report-missing' else
