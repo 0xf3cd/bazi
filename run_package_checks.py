@@ -5,6 +5,8 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import re
+import logging
 import shutil
 import subprocess
 import sys
@@ -16,8 +18,12 @@ import zipfile
 
 from pathlib import Path
 from email.parser import BytesParser
-from typing import Final
+from typing import Any, Final, Literal, TypedDict
 from collections import Counter
+from collections.abc import Collection, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from functools import cache
 
 
 ROOT: Final[Path] = Path(__file__).resolve().parent
@@ -52,6 +58,178 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'docs/catalog/topics.rst', 'docs/catalog/viewpoints.rst', 'docs/catalog/filters.rst',
   'bazi/py.typed', 'bazi/calendar/celestial_data/SCHEMA.md',
 )
+
+ENVIRONMENT_ROLES: Final[tuple[str, ...]] = (
+  'outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+  'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing',
+)
+
+
+class Installer(TypedDict):
+  '''实际调用前观察到的安装工具；scope 相对于所记录的目标环境。'''
+  name: str
+  version: str
+  scope: Literal['runner', 'target']
+
+
+class Environment(TypedDict):
+  '''环境销毁前采集的白名单字段，不包含路径或安装来源。'''
+  role: str
+  python: dict[str, str]
+  platform: dict[str, str]
+  distributions: dict[str, str]
+  installers: list[Installer]
+
+
+_INSTALLATION: Final[ContextVar[tuple[str, list[Installer]] | None]] = ContextVar('installation', default=None)
+
+
+def clean_environment() -> dict[str, str]:
+  return {key: value for key, value in os.environ.items() if key not in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH')}
+
+
+def pip_version(line: str) -> str:
+  from packaging.version import Version
+
+  match = re.fullmatch(r'pip (\S+) from .+ \(python [0-9]+\.[0-9]+\)', line)
+  if match is None:
+    raise ValueError('Unsupported pip version output')
+  Version(match[1])
+  return match[1]
+
+
+def observe_pip(prefix: list[str], scope: Literal['runner', 'target'], installers: list[Installer]) -> None:
+  line = subprocess.check_output([*prefix, '--version'], env=clean_environment(), text=True, encoding='utf-8')
+  record: Installer = {'name': 'pip', 'version': pip_version(line.strip()), 'scope': scope}
+  if record not in installers:
+    installers.append(record)
+
+
+def outer_installers(receipt: Path) -> list[Installer]:
+  lines = receipt.read_text(encoding='utf-8').splitlines()
+  if len(lines) != 3:
+    raise ValueError('Expected three outer installer observations')
+  records: list[Installer] = []
+  for line in lines:
+    record: Installer = {'name': 'pip', 'version': pip_version(line), 'scope': 'runner'}
+    if record not in records:
+      records.append(record)
+  return records
+
+
+def observe_build_installer(event: str, args: tuple[Any, ...]) -> None:
+  active = _INSTALLATION.get()
+  if event != 'subprocess.Popen' or active is None:
+    return
+  python, installers = active
+  argv = args[1]
+  if not isinstance(argv, (list, tuple)):
+    raise TypeError('Unsupported build installer invocation')
+  scope: Literal['runner', 'target']
+  if list(argv[:5]) == [sys.executable, '-m', 'pip', '--python', python] and 'install' in argv[5:]:
+    prefix, scope = [sys.executable, '-m', 'pip'], 'runner'
+  elif list(argv[:3]) == [python, '-Im', 'pip'] and 'install' in argv[3:]:
+    prefix, scope = [python, '-Im', 'pip'], 'target'
+  else:
+    raise ValueError('Unsupported build installer invocation')
+  token = _INSTALLATION.set(None)
+  try:
+    observe_pip(prefix, scope, installers)
+  finally:
+    _INSTALLATION.reset(token)
+
+
+@cache
+def register_installer_observer() -> None:
+  # 审计钩子无法移除；只注册一次，非安装窗口不观察，也不保存命令参数。
+  sys.addaudithook(observe_build_installer)
+
+
+@contextmanager
+def build_context() -> Iterator[None]:
+  '''为串行构建临时过滤导入路径并显示 build 的安装失败输出，退出时恢复。'''
+  original = {key: os.environ[key] for key in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH') if key in os.environ}
+  logger = logging.getLogger('build')
+  level = logger.level
+  handler = logging.StreamHandler()
+  for key in original:
+    del os.environ[key]
+  logger.addHandler(handler)
+  logger.setLevel(logging.INFO)
+  try:
+    yield
+  finally:
+    logger.removeHandler(handler)
+    logger.setLevel(level)
+    for key in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH'):
+      os.environ.pop(key, None)
+    os.environ.update(original)
+
+
+def collect_environment(python: str, role: str, installers: list[Installer]) -> Environment:
+  from packaging.version import Version
+
+  script = '''import importlib.metadata as metadata, json, platform, re
+distributions = {}
+for distribution in metadata.distributions():
+  name = distribution.metadata['Name']
+  if not name or not re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?', name):
+    raise ValueError('Invalid distribution name')
+  name = re.sub(r'[-_.]+', '-', name).lower()
+  if name in distributions:
+    raise ValueError('Duplicate normalized distribution')
+  distributions[name] = distribution.version
+print(json.dumps({'python': {'implementation': platform.python_implementation(), 'version': platform.python_version()},
+  'platform': {'system': platform.system(), 'machine': platform.machine()}, 'distributions': dict(sorted(distributions.items()))}))
+'''
+  data = json.loads(subprocess.check_output([python, '-I', '-c', script], env=clean_environment(), text=True, encoding='utf-8'))
+  if not installers:
+    raise ValueError('Missing installer observations')
+  for version in data['distributions'].values():
+    Version(version)
+  for value in (*data['python'].values(), *data['platform'].values()):
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+      raise ValueError('Unsupported environment identity')
+  return {'role': role, 'python': data['python'], 'platform': data['platform'],
+    'distributions': data['distributions'], 'installers': list(installers)}
+
+
+def build_artifact(source: Path, output: Path, kind: Literal['wheel', 'sdist'], role: str, work: Path,
+                   environments: list[Environment] | None) -> None:
+  if environments is None:
+    run([sys.executable, '-m', 'build', '--' + kind, '--outdir', str(output), str(source)], work)
+    return
+  # 普通门禁保留 CLI 路径；导出时持有公共生命周期，才可在环境清理前采集。
+  from build import ProjectBuilder
+  from build.env import DefaultIsolatedEnv
+
+  register_installer_observer()
+  installers: list[Installer] = []
+  with build_context(), DefaultIsolatedEnv() as environment:
+    builder = ProjectBuilder.from_isolated_env(environment, str(source))
+    def install(requirements: Collection[str]) -> None:
+      token = _INSTALLATION.set((environment.python_executable, installers))
+      try:
+        environment.install(requirements)
+      finally:
+        _INSTALLATION.reset(token)
+    install(builder.build_system_requires)
+    install(builder.get_requires_for_build(kind))
+    builder.build(kind, str(output))
+    environments.append(collect_environment(environment.python_executable, role, installers))
+
+
+def source_identity(root: Path, files: tuple[str, ...]) -> str:
+  def git(*args: str) -> str:
+    return subprocess.check_output(['git', *args], cwd=root, env=clean_environment(), text=True, encoding='utf-8').strip()
+  if Path(git('rev-parse', '--show-toplevel')).resolve() != root.resolve():
+    raise ValueError('Environment export requires a source checkout')
+  sha = git('rev-parse', 'HEAD')
+  if not re.fullmatch(r'[0-9a-f]{40}', sha) or git('status', '--porcelain', '--untracked-files=all'):
+    raise ValueError('Environment export requires a clean source checkout')
+  if not set(files) <= set(git('ls-files', '-z').split('\0')):
+    raise ValueError('Environment export requires tracked source inputs')
+  return sha
 
 
 def sha256(path: Path) -> str:
@@ -105,21 +283,32 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str],
 
 def run(command: list[str], cwd: Path) -> None:
   print(f'RUN cwd={cwd} argv={command!r}', flush=True)
-  env = {key: value for key, value in os.environ.items() if key not in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH')}
-  subprocess.run(command, cwd=cwd, env=env, check=True)
+  subprocess.run(command, cwd=cwd, env=clean_environment(), check=True)
 
 
-def consumer(directory: Path, wheel: Path) -> Path:
+def consumer(directory: Path, wheel: Path, installers: list[Installer] | None = None) -> Path:
   venv.EnvBuilder(with_pip=True).create(directory)
   python = directory / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+  if installers is not None:
+    observe_pip([str(python), '-I', '-m', 'pip'], 'target', installers)
   run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--no-deps', '--no-compile', str(wheel)], directory.parent)
   # Python 3.11 的 ensurepip 还会安装 setuptools；消费者只需要 pip 与 bazi。
+  if installers is not None:
+    observe_pip([str(python), '-I', '-m', 'pip'], 'target', installers)
   run([str(python), '-I', '-m', 'pip', 'uninstall', '-y', 'setuptools'], directory.parent)
   return python
 
 
-def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
+def check_packages(root: Path, work: Path, output_dir: Path | None,
+                   environment_report: Path | None = None, outer_installer_report: Path | None = None) -> None:
+  if output_dir is not None and output_dir.exists() and any(output_dir.iterdir()):
+    raise ValueError('Output directory must be empty')
+  if environment_report is not None and environment_report.exists():
+    raise ValueError('Environment report must not exist')
   files = source_files(root)
+  source_sha = source_identity(root, files) if environment_report is not None else None
+  environments: list[Environment] | None = [] if environment_report is not None else None
+  outer = outer_installers(outer_installer_report) if outer_installer_report is not None else []
   before = {name: sha256(root / name) for name in files}
   readme = (root / 'README.md').read_bytes()
   project = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']
@@ -132,8 +321,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     shutil.copy2(root / name, target)
 
   direct_dir, sdist_dir, rebuilt_dir = (work / name for name in ('direct', 'sdist', 'rebuilt'))
-  for option, out in (('--wheel', direct_dir), ('--sdist', sdist_dir)):
-    run([sys.executable, '-m', 'build', option, '--outdir', str(out), str(stage)], work)
+  build_artifact(stage, direct_dir, 'wheel', 'build-wheel-direct', work, environments)
+  build_artifact(stage, sdist_dir, 'sdist', 'build-sdist', work, environments)
   direct, = direct_dir.glob('*.whl')
   sdist, = sdist_dir.glob('*.tar.gz')
   extracted = work / 'extracted'
@@ -163,7 +352,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
       target = extracted / name
       target.parent.mkdir(parents=True, exist_ok=True)
       target.write_bytes(content)
-  run([sys.executable, '-m', 'build', '--wheel', '--outdir', str(rebuilt_dir), str(extracted)], work)
+  build_artifact(extracted, rebuilt_dir, 'wheel', 'build-wheel-rebuilt', work, environments)
   rebuilt, = rebuilt_dir.glob('*.whl')
   pair = {path: sha256(path) for path in (sdist, rebuilt)}
   run([sys.executable, '-m', 'twine', 'check', '--strict', str(direct), str(sdist), str(rebuilt)], work)
@@ -175,11 +364,17 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
   (foreign / 'expected.json').write_text(json.dumps(expected), encoding='utf-8')
   for label, wheel in (('direct', direct), ('rebuilt', rebuilt)):
     check_wheel(wheel, package, licenses, readme)
-    python = consumer(work / (label + '-venv'), wheel)
+    installers: list[Installer] | None = [] if environments is not None else None
+    python = consumer(work / (label + '-venv'), wheel, installers)
     for optimization in ([], ['-O']):
       run([str(python), '-I', '-B', *optimization, 'package_smoke.py', 'expected.json'], foreign)
+    if environments is not None and installers is not None:
+      environments.append(collect_environment(str(python), 'consumer-wheel-' + label, installers))
 
-  python = consumer(work / 'typing-venv', rebuilt)
+  installers = [] if environments is not None else None
+  python = consumer(work / 'typing-venv', rebuilt, installers)
+  if installers is not None:
+    observe_pip([str(python), '-I', '-m', 'pip'], 'target', installers)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
   good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
           'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime\n'
@@ -285,12 +480,18 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
     if f'"{owner}" has no attribute "{removed_member}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed removed {owner}.{removed_member}')
 
+  if environments is not None and installers is not None:
+    environments.append(collect_environment(str(python), 'consumer-typing', installers))
+    environments.insert(0, collect_environment(sys.executable, 'outer', outer))
+
   for path, digest in pair.items():
     if sha256(path) != digest:
       raise ValueError(f'Tested artifact changed: {path.name}')
     print(f'TESTED {path.name} sha256={digest}', flush=True)
   if before != {name: sha256(root / name) for name in files}:
     raise ValueError('Source changed during artifact verification')
+  if source_sha is not None and source_identity(root, source_files(root)) != source_sha:
+    raise ValueError('Source identity changed during artifact verification')
   if output_dir is not None:
     output_dir.mkdir(parents=True, exist_ok=True)
     if any(output_dir.iterdir()):
@@ -300,20 +501,41 @@ def check_packages(root: Path, work: Path, output_dir: Path | None) -> None:
       shutil.copyfile(path, destination)
       if sha256(destination) != digest:
         raise ValueError(f'Retained artifact changed: {path.name}')
+  if environment_report is not None and environments is not None:
+    if tuple(environment['role'] for environment in environments) != ENVIRONMENT_ROLES:
+      raise ValueError('Environment role roster mismatch')
+    report = {'schema_version': 1, 'source_sha': source_sha,
+      'pair': {kind: {'filename': path.name, 'sha256': pair[path]} for kind, path in (('sdist', sdist), ('wheel', rebuilt))},
+      'environments': environments}
+    environment_report.parent.mkdir(parents=True, exist_ok=True)
+    with environment_report.open('x', encoding='utf-8') as report_stream:
+      json.dump(report, report_stream, sort_keys=True, ensure_ascii=False, indent=2)
+      report_stream.write('\n')
 
 
 def main() -> None:
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument('--output-dir', type=Path, help='在空的仓外目录中只保留已验证 sdist 及其重建 wheel。')
+  parser.add_argument('--environment-report', type=Path, help='在仓外新文件中记录七类实际环境；须同时保留工件并提供外层安装器记录。')
+  parser.add_argument('--outer-installer-report', type=Path, help='release 安装步骤三次 pip --version 的原始行，仅解析版本，不复制原文。')
   args = parser.parse_args()
   output_dir = args.output_dir.resolve() if args.output_dir is not None else None
+  environment_report = args.environment_report.resolve() if args.environment_report is not None else None
+  outer_installer_report = args.outer_installer_report.resolve() if args.outer_installer_report is not None else None
+  if (environment_report is None) != (outer_installer_report is None) or (environment_report is not None and output_dir is None):
+    parser.error('Environment export requires --output-dir, --environment-report and --outer-installer-report together')
   if output_dir is not None and output_dir.is_relative_to(ROOT):
     raise ValueError('Artifacts must stay outside the source checkout')
+  for path in (environment_report, outer_installer_report):
+    if path is not None and (path.is_relative_to(ROOT) or (output_dir is not None and path.is_relative_to(output_dir))):
+      raise ValueError('Environment reports must stay outside the source checkout and artifact directory')
+  if environment_report is not None and environment_report == outer_installer_report:
+    raise ValueError('Environment report and installer receipt must be different files')
   with tempfile.TemporaryDirectory(prefix='bazi-package-') as temporary:
     work = Path(temporary).resolve()
     if work.is_relative_to(ROOT):
       raise ValueError('TMPDIR must be outside the source checkout')
-    check_packages(ROOT, work, output_dir)
+    check_packages(ROOT, work, output_dir, environment_report, outer_installer_report)
 
 
 if __name__ == '__main__':

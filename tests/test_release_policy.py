@@ -33,6 +33,17 @@ def workflow_code(job: str, name: str) -> str:
   return code
 
 
+def environment_report(dist: Path) -> dict[str, Any]:
+  roles = ('outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+    'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing')
+  return {'schema_version': 1, 'source_sha': SHA,
+    'pair': {kind: {'filename': name, 'sha256': hashlib.sha256((dist / name).read_bytes()).hexdigest()}
+      for kind, name in (('sdist', 'bazi-1.0.0.tar.gz'), ('wheel', 'bazi-1.0.0-py3-none-any.whl'))},
+    'environments': [{'role': role, 'python': {'implementation': 'CPython', 'version': '3.12.13'},
+      'platform': {'system': 'Linux', 'machine': 'x86_64'}, 'distributions': {'pip': '25.0.1'},
+      'installers': [{'name': 'pip', 'version': '25.0.1', 'scope': 'target'}]} for role in roles]}
+
+
 def test_workflow_structure() -> None:
   # PyYAML's YAML 1.1 parser reads the YAML 1.2 key `on` as True.
   trigger = WORKFLOW[True]
@@ -159,7 +170,8 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
       run_policy(code)
 
 
-@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version'])
+@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version',
+  'environment-run', 'environment-source', 'environment-pair', 'environment-role', 'environment-duplicate', 'environment-schema'])
 def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   root = tmp_path / 'artifact'
@@ -171,6 +183,20 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
   if change == 'run':
     metadata['run_id'] = '999'
   (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
+  report = {**environment_report(root / 'dist'), 'identity': dict(metadata)}
+  if change == 'environment-run':
+    report['identity']['run_id'] = '999'
+  elif change == 'environment-source':
+    report['source_sha'] = 'b' * 40
+  elif change == 'environment-pair':
+    report['pair']['wheel']['sha256'] = '0' * 64
+  elif change == 'environment-role':
+    report['environments'].pop()
+  elif change == 'environment-duplicate':
+    report['environments'][-1]['role'] = 'outer'
+  elif change == 'environment-schema':
+    report['schema_version'] = True
+  (root / 'environments.json').write_text(json.dumps(report), encoding='utf-8')
   files = sorted(
     (p for p in root.rglob('*') if p.is_file()),
     key=lambda p: p.relative_to(root).as_posix(),
@@ -278,7 +304,9 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.parametrize('crlf', [False, True])
-@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'])
+@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing',
+  'post-gate-swap', 'report-missing', 'report-truncated', 'report-source', 'report-role', 'report-duplicate',
+  'report-extra-field', 'report-python-field', 'report-platform-field', 'report-installer-field', 'report-schema'])
 def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
@@ -297,6 +325,30 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   output = tmp_path / 'outputs'
   monkeypatch.setenv('RUNNER_TEMP', str(runner_temp))
   monkeypatch.setenv('GITHUB_OUTPUT', str(output))
+  report = environment_report(bundle / 'dist')
+  if change == 'report-source':
+    report['source_sha'] = 'b' * 40
+  elif change == 'report-role':
+    report['environments'].pop()
+  elif change == 'report-duplicate':
+    report['environments'][-1]['role'] = 'outer'
+  elif change == 'report-extra-field':
+    report['environments'][0]['direct_url'] = 'synthetic-private-placeholder'
+  elif change == 'report-python-field':
+    report['environments'][0]['python']['executable'] = 'synthetic-private-placeholder'
+  elif change == 'report-platform-field':
+    report['environments'][0]['platform']['node'] = 'synthetic-private-placeholder'
+  elif change == 'report-installer-field':
+    report['environments'][0]['installers'][0]['argv'] = 'synthetic-private-placeholder'
+  elif change == 'report-schema':
+    report['schema_version'] = True
+  raw = runner_temp / 'raw-environments.json'
+  if change != 'report-missing':
+    raw.write_text(json.dumps(report), encoding='utf-8')
+  if change == 'report-truncated':
+    raw.write_text(raw.read_text()[:-1], encoding='utf-8')
+  elif change == 'post-gate-swap':
+    wheel.write_bytes(b'not gate-tested')
   if change == 'extra':
     (bundle / 'dist/extra.whl').write_bytes(b'extra')
   elif change == 'misnamed':
@@ -318,6 +370,11 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
       run_policy(seal)
     assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
     return
+  if change.startswith('report-') or change == 'post-gate-swap':
+    with pytest.raises((SystemExit, json.JSONDecodeError)):
+      run_policy(seal)
+    assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
+    return
 
   run_policy(seal)
   outputs = dict(line.split('=', 1) for line in output.read_text(encoding='utf-8').splitlines())
@@ -328,6 +385,8 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   manifest = (bundle / 'SHA256SUMS').read_bytes()
   assert hashlib.sha256(manifest).hexdigest() == outputs['manifest-sha']
   assert b'\r\n' not in manifest
+  assert {p.name for p in (bundle / 'dist').iterdir()} == {'bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl'}
+  assert (bundle / 'environments.json').is_file() and not (bundle / 'outer-pip.txt').exists()
 
 
 @pytest.mark.parametrize('change, message', [

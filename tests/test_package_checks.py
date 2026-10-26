@@ -1,15 +1,26 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import hashlib
+import importlib.util
+import json
+import logging
+import os
+import shutil
 import subprocess
 import sys
+import venv
 import zipfile
 
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
-from run_package_checks import ROOT, RUNTIME_DATA, check_description, check_wheel, run, source_files
+from run_package_checks import (
+  ROOT, RUNTIME_DATA, Installer, _INSTALLATION, build_context, check_description,
+  check_packages, check_wheel, collect_environment, observe_build_installer, outer_installers, pip_version,
+  run, source_files, source_identity,
+)
 
 
 def test_source_selection() -> None:
@@ -105,3 +116,214 @@ def test_real_subprocess_failure(tmp_path: Path) -> None:
   with pytest.raises(subprocess.CalledProcessError) as caught:
     run([sys.executable, '-I', '-c', 'import sys; print("reached failure control"); sys.exit(7)'], tmp_path)
   assert caught.value.returncode == 7
+
+
+@pytest.mark.parametrize('version', ['25.0.1', '25.1rc1', '25.0.1.dev0', '25.0.1.post1', '25.0.1+vendor.1'])
+def test_pip_versions_discard_paths(version: str) -> None:
+  assert pip_version(f'pip {version} from C:\\with space\\pip (python 3.12)') == version
+
+
+@pytest.mark.parametrize('line', ['pip file:///private from /pip (python 3.12)', 'pip not-a-version from /pip (python 3.12)', 'warning', ''])
+def test_pip_output_rejects_invalid_values(line: str) -> None:
+  with pytest.raises(ValueError):
+    pip_version(line)
+
+
+@pytest.mark.parametrize('count', [0, 1, 2, 3, 4])
+def test_outer_receipt_roster(tmp_path: Path, count: int) -> None:
+  receipt = tmp_path / 'receipt'
+  receipt.write_text('pip 25.0.1 from /synthetic-private/pip (python 3.12)\n' * count, encoding='utf-8')
+  if count == 3:
+    assert outer_installers(receipt) == [{'name': 'pip', 'version': '25.0.1', 'scope': 'runner'}]
+  else:
+    with pytest.raises(ValueError, match='three outer'):
+      outer_installers(receipt)
+  receipt.unlink()
+  with pytest.raises(FileNotFoundError):
+    outer_installers(receipt)
+
+
+def test_build_context_restores_state(monkeypatch: pytest.MonkeyPatch) -> None:
+  logger = logging.getLogger('build')
+  level, handlers = logger.level, tuple(logger.handlers)
+  for name in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH'):
+    monkeypatch.setenv(name, 'synthetic-private-placeholder')
+  with pytest.raises(RuntimeError), build_context():
+    assert all(name not in os.environ for name in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH'))
+    assert len(logger.handlers) == len(handlers) + 1
+    raise RuntimeError('cleanup control')
+  assert logger.level == level and tuple(logger.handlers) == handlers
+  assert all(os.environ[name] == 'synthetic-private-placeholder' for name in ('PYTHONPATH', 'PYTHONHOME', 'MYPYPATH'))
+
+
+def test_observer_rejects_unknown_and_restores(monkeypatch: pytest.MonkeyPatch) -> None:
+  records: list[Installer] = []
+  token = _INSTALLATION.set(('target-python', records))
+  try:
+    with pytest.raises(ValueError, match='Unsupported build'):
+      observe_build_installer('subprocess.Popen', ('unknown', ['unknown'], None, None))
+    with pytest.raises(TypeError, match='Unsupported build'):
+      observe_build_installer('subprocess.Popen', ('unknown', 'unknown', None, None))
+    def fail(*args: object, **kwargs: object) -> str:
+      assert _INSTALLATION.get() is None
+      raise RuntimeError('query failed')
+    monkeypatch.setattr(subprocess, 'check_output', fail)
+    with pytest.raises(RuntimeError, match='query failed'):
+      observe_build_installer('subprocess.Popen', ('target-python', ['target-python', '-Im', 'pip', 'install'], None, None))
+    assert _INSTALLATION.get() == ('target-python', records)
+  finally:
+    _INSTALLATION.reset(token)
+  assert _INSTALLATION.get() is None and records == []
+
+
+@pytest.mark.parametrize('change', ['none', 'dirty', 'ignored', 'no-git'])
+def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> None:
+  subprocess.run(['git', 'init', str(tmp_path)], capture_output=True, check=True)
+  (tmp_path / 'input.py').write_text('X = 1\n', encoding='utf-8')
+  (tmp_path / '.gitignore').write_text('lib/\n', encoding='utf-8')
+  # Synthetic history uses plumbing so local signing and credentials are never invoked.
+  subprocess.run(['git', 'add', 'input.py', '.gitignore'], cwd=tmp_path, check=True)
+  tree = subprocess.check_output(['git', 'write-tree'], cwd=tmp_path, text=True).strip()
+  content = f'tree {tree}\nauthor Fixture <fixture@example.invalid> 1000000000 +0000\ncommitter Fixture <fixture@example.invalid> 1000000000 +0000\n\nfixture\n'
+  commit = subprocess.check_output(['git', 'hash-object', '-t', 'commit', '-w', '--stdin'], input=content, cwd=tmp_path, text=True).strip()
+  subprocess.run(['git', 'update-ref', 'HEAD', commit], cwd=tmp_path, check=True)
+  files: tuple[str, ...] = ('input.py',)
+  if change == 'dirty':
+    (tmp_path / 'input.py').write_text('X = 2\n', encoding='utf-8')
+  elif change == 'ignored':
+    (tmp_path / 'lib').mkdir()
+    (tmp_path / 'lib/extra.py').write_text('X = 3\n', encoding='utf-8')
+    files += ('lib/extra.py',)
+  elif change == 'no-git':
+    shutil.rmtree(tmp_path / '.git')
+  if change == 'none':
+    assert source_identity(tmp_path, files) == commit
+  else:
+    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+      source_identity(tmp_path, files)
+
+
+def test_output_conflicts_precede_build(tmp_path: Path) -> None:
+  output = tmp_path / 'output'
+  output.mkdir()
+  (output / 'existing').write_text('keep', encoding='utf-8')
+  with pytest.raises(ValueError, match='Output directory'):
+    check_packages(tmp_path / 'no-source', tmp_path / 'no-work', output)
+  report = tmp_path / 'report.json'
+  report.write_text('keep', encoding='utf-8')
+  with pytest.raises(ValueError, match='report must not exist'):
+    check_packages(tmp_path / 'no-source', tmp_path / 'no-work', None, report)
+  assert report.read_text() == 'keep' and (output / 'existing').read_text() == 'keep'
+
+
+@pytest.mark.parametrize('kind', ['wheel', 'sdist'])
+@pytest.mark.parametrize('runner_pip', [False, True])
+@pytest.mark.skipif(importlib.util.find_spec('build') is None, reason='The partial PyPy job does not install build tools.')
+def test_real_build_environment_snapshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: Literal['wheel', 'sdist'], runner_pip: bool) -> None:
+  source, wheels = tmp_path / 'source', tmp_path / 'wheels'
+  source.mkdir()
+  wheels.mkdir()
+  for name, version, dependency in (('statdep', '1.0', ''), ('dynreq', '2.0', 'Requires-Dist: trans==3.0\n'), ('trans', '3.0', ''), ('pip', '99.0', '')):
+    with zipfile.ZipFile(wheels / f'{name}-{version}-py3-none-any.whl', 'w') as archive:
+      archive.writestr(f'{name}-{version}.dist-info/METADATA', f'Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n{dependency}')
+      archive.writestr(f'{name}-{version}.dist-info/WHEEL', 'Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
+      archive.writestr(f'{name}-{version}.dist-info/RECORD', '')
+  (source / 'pyproject.toml').write_text('[build-system]\nrequires = ["statdep==1.0"]\nbuild-backend = "backend"\nbackend-path = ["."]\n', encoding='utf-8')
+  (source / 'backend.py').write_text('''from pathlib import Path
+def get_requires_for_build_wheel(config_settings=None):
+  return ['dynreq==2.0', 'pip==99.0']
+def get_requires_for_build_sdist(config_settings=None):
+  return ['trans==3.0', 'pip==99.0']
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+  path = Path(wheel_directory) / 'fixture-1.0-py3-none-any.whl'
+  path.write_bytes(b'wheel')
+  return path.name
+def build_sdist(sdist_directory, config_settings=None):
+  path = Path(sdist_directory) / 'fixture-1.0.tar.gz'
+  path.write_bytes(b'sdist')
+  return path.name
+''', encoding='utf-8')
+  for name, value in {'PIP_NO_INDEX': '1', 'PIP_CONFIG_FILE': os.devnull, 'PIP_FIND_LINKS': str(wheels),
+    'PIP_DISABLE_PIP_VERSION_CHECK': '1', 'TMPDIR': str(tmp_path)}.items():
+    monkeypatch.setenv(name, value)
+  outer = tmp_path / 'outer'
+  venv.EnvBuilder(with_pip=runner_pip).create(outer)
+  python = outer / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+  site = Path(subprocess.check_output([str(python), '-I', '-c', 'import sysconfig; print(sysconfig.get_paths()["purelib"])'], text=True).strip())
+  for name in ('build', 'packaging', 'pyproject_hooks'):
+    spec = importlib.util.find_spec(name)
+    assert spec is not None and spec.submodule_search_locations is not None
+    shutil.copytree(next(iter(spec.submodule_search_locations)), site / name, ignore=shutil.ignore_patterns('__pycache__'))
+  script = '''import json, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import run_package_checks as checks
+environments = []
+paths = []
+original = checks.collect_environment
+def collect(python, role, installers):
+  paths.append(Path(python))
+  return original(python, role, installers)
+checks.collect_environment = collect
+work = Path(sys.argv[2])
+checks.build_artifact(work / 'source', work / 'out', sys.argv[3], 'synthetic', work, environments)
+assert paths and all(not path.exists() for path in paths)
+print('RESULT ' + json.dumps(environments))
+'''
+  result = subprocess.run([str(python), '-I', '-c', script, str(ROOT), str(tmp_path), kind], capture_output=True, text=True, env=dict(os.environ), check=False)
+  assert result.returncode == 0, result.stdout + result.stderr
+  records = json.loads(next(line.removeprefix('RESULT ') for line in result.stdout.splitlines() if line.startswith('RESULT ')))
+  record, = records
+  assert record['distributions']['statdep'] == '1.0'
+  assert record['distributions']['trans'] == '3.0'
+  assert ('dynreq' in record['distributions']) == (kind == 'wheel')
+  assert record['distributions']['pip'] == '99.0'
+  assert {installer['scope'] for installer in record['installers']} == {'runner' if runner_pip else 'target'}
+  assert all(installer['version'] != '99.0' for installer in record['installers'])
+  encoded = json.dumps(record)
+  assert str(tmp_path) not in encoded and 'direct_url' not in encoded
+
+
+def test_collector_uses_target_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+  venv.EnvBuilder(with_pip=True).create(tmp_path / 'target')
+  python = tmp_path / 'target' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+  records: list[Installer] = [{'name': 'pip', 'version': '25.0.1', 'scope': 'target'}]
+  monkeypatch.setenv('SYNTHETIC_PRIVATE', str(tmp_path))
+  record = collect_environment(str(python), 'consumer', records)
+  assert 'pip' in record['distributions'] and 'mypy' not in record['distributions']
+  assert set(record) == {'role', 'python', 'platform', 'distributions', 'installers'}
+  assert str(tmp_path) not in json.dumps(record) and 'SYNTHETIC_PRIVATE' not in json.dumps(record)
+  with pytest.raises(ValueError, match='Missing installer'):
+    collect_environment(str(python), 'consumer', [])
+
+
+@pytest.mark.parametrize('change', ['report-only', 'receipt-only', 'no-pair', 'inside-source', 'inside-pair', 'same-path'])
+def test_export_arguments_rejected(tmp_path: Path, change: str) -> None:
+  output, report, receipt = (tmp_path / name for name in ('pair', 'report.json', 'receipt.txt'))
+  options = ['--output-dir', str(output), '--environment-report', str(report), '--outer-installer-report', str(receipt)]
+  if change == 'report-only':
+    options = options[:4]
+  elif change == 'receipt-only':
+    options = options[:2] + options[4:]
+  elif change == 'no-pair':
+    options = options[2:]
+  elif change == 'inside-source':
+    options[3] = str(ROOT / 'environment-report.json')
+  elif change == 'inside-pair':
+    options[3] = str(output / 'report.json')
+  elif change == 'same-path':
+    options[3] = str(receipt)
+  result = subprocess.run([sys.executable, str(ROOT / 'run_package_checks.py'), *options], capture_output=True, text=True, check=False)
+  assert result.returncode != 0
+  assert 'Environment' in result.stderr
+  assert not output.exists() and not report.exists()
+
+
+def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
+  receipt = tmp_path / 'receipt'
+  receipt.write_text(''.join(f'pip {version} from /discarded path/pip (python 3.12)\n'
+    for version in ('25.0.1', '25.1rc1', '25.1rc1')), encoding='utf-8')
+  assert outer_installers(receipt) == [{'name': 'pip', 'version': version, 'scope': 'runner'} for version in ('25.0.1', '25.1rc1')]
+  receipt.write_text(receipt.read_text().replace('25.1rc1', 'file:///private'), encoding='utf-8')
+  with pytest.raises(ValueError):
+    outer_installers(receipt)

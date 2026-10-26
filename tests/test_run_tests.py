@@ -199,6 +199,30 @@ def test_package_output_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
   ], print_details=True)
 
 
+def test_environment_report_forwarding(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  values = [str(tmp_path / name) for name in ('pair', 'report.json', 'receipt.txt')]
+  options = ['--package-output-dir', values[0], '--environment-report', values[1], '--outer-installer-report', values[2]]
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-pkg', *options])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  function = runner['run_package_checks']
+  proc = Mock(return_value=0)
+  monkeypatch.setitem(function.__globals__, 'run_proc_and_print', proc)
+  assert function() == 0
+  proc.assert_called_once_with([sys.executable, str(Path(__file__).parents[1] / 'run_package_checks.py'),
+    '--output-dir', values[0], *options[2:]], print_details=True)
+
+
+@pytest.mark.parametrize('options', [
+  ['--environment-report', 'report'], ['--outer-installer-report', 'receipt'],
+  ['--environment-report', 'report', '--outer-installer-report', 'receipt'],
+])
+def test_environment_report_requires_pair(monkeypatch: pytest.MonkeyPatch, options: list[str]) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-pkg', *options])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert caught.value.code == 2
+
+
 def test_demo_interpreter_gates_fixed_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))

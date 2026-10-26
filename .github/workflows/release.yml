@@ -86,11 +86,19 @@ jobs:
             raise SystemExit('Checkout SHA differs from dispatch SHA')
       - name: Install development requirements
         run: |
+          receipt="$RUNNER_TEMP/outer-pip.txt"
+          test ! -e "$receipt"
+          python -m pip --version >> "$receipt"
           python -m pip install -r Requirements.txt
+          python -m pip --version >> "$receipt"
           python -m pip install -r docs/requirements.txt
+          python -m pip --version >> "$receipt"
           python -m pip install celestial-calendar==0.6.1
       - name: Run full gate and retain its tested pair
-        run: python run_tests.py -a -v --package-output-dir "$RUNNER_TEMP/bundle/dist"
+        run: >-
+          python run_tests.py -a -v --package-output-dir "$RUNNER_TEMP/bundle/dist"
+          --environment-report "$RUNNER_TEMP/raw-environments.json"
+          --outer-installer-report "$RUNNER_TEMP/outer-pip.txt"
       - name: Seal release bundle
         id: bundle
         env:
@@ -111,11 +119,50 @@ jobs:
             raise SystemExit('Expected exactly the tested sdist and rebuilt wheel')
           if re.findall(r'^## (.*)$', Path('RELEASE_NOTES.md').read_text(encoding='utf-8'), re.MULTILINE)[:1] != [f'bazi {version}']:
             raise SystemExit(f'RELEASE_NOTES.md top section must be "## bazi {version}"')
+          raw = Path(os.environ['RUNNER_TEMP']) / 'raw-environments.json'
+          if not raw.is_file():
+            raise SystemExit('Missing gate environment report')
+          report = json.loads(raw.read_text(encoding='utf-8'))
+          def keys(value, expected):
+            return isinstance(value, dict) and set(value) == set(expected.split())
+          roles = {'outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+            'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing'}
+          if (not keys(report, 'schema_version source_sha pair environments')
+              or type(report['schema_version']) is not int or report['schema_version'] != 1
+              or report['source_sha'] != os.environ['SHA']):
+            raise SystemExit('Gate environment schema or source mismatch')
+          records = report['environments']
+          if (not isinstance(records, list) or len(records) != len(roles)
+              or any(not keys(record, 'role python platform distributions installers') for record in records)
+              or any(not isinstance(record['role'], str) for record in records)
+              or {record['role'] for record in records} != roles):
+            raise SystemExit('Gate environment role roster mismatch')
+          for record in records:
+            if (not keys(record['python'], 'implementation version') or not keys(record['platform'], 'system machine')
+                or any(not isinstance(value, str) or not re.fullmatch(r'[A-Za-z0-9_.-]+', value)
+                  for value in (*record['python'].values(), *record['platform'].values()))
+                or not isinstance(record['distributions'], dict)
+                or any(not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', name)
+                  or not isinstance(value, str) or not re.fullmatch(r'[A-Za-z0-9_.+!-]+', value)
+                  for name, value in record['distributions'].items())
+                or not isinstance(record['installers'], list) or not record['installers']):
+              raise SystemExit('Invalid gate environment fields')
+            for installer in record['installers']:
+              if (not keys(installer, 'name version scope') or installer['name'] != 'pip'
+                  or installer['scope'] not in ('runner', 'target') or not isinstance(installer['version'], str)
+                  or not re.fullmatch(r'[A-Za-z0-9_.+!-]+', installer['version'])):
+                raise SystemExit('Invalid gate installer fields')
+          pair = report['pair']
+          if (not keys(pair, 'sdist wheel') or any(not keys(entry, 'filename sha256') for entry in pair.values())
+              or pair != {kind: {'filename': name, 'sha256': hashlib.sha256((bundle / 'dist' / name).read_bytes()).hexdigest()}
+                for kind, name in (('sdist', f'bazi-{version}.tar.gz'), ('wheel', f'bazi-{version}-py3-none-any.whl'))}):
+            raise SystemExit('Gate environment pair differs from retained artifacts')
           shutil.copyfile('RELEASE_NOTES.md', bundle / 'RELEASE_NOTES.md')
           metadata = {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'],
             'repository': os.environ['REPOSITORY'], 'run_id': os.environ['RUN_ID'], 'mode': os.environ['MODE']}
           (bundle / 'release.json').write_text(json.dumps(metadata, sort_keys=True) + '\n')
-          files = sorted([*(bundle / 'dist').iterdir(), bundle / 'RELEASE_NOTES.md', bundle / 'release.json'], key=lambda p: p.relative_to(bundle).as_posix())
+          (bundle / 'environments.json').write_text(json.dumps({**report, 'identity': metadata}, sort_keys=True) + '\n', encoding='utf-8')
+          files = sorted([*(bundle / 'dist').iterdir(), bundle / 'RELEASE_NOTES.md', bundle / 'release.json', bundle / 'environments.json'], key=lambda p: p.relative_to(bundle).as_posix())
           checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(bundle).as_posix()}\n' for p in files)
           (bundle / 'SHA256SUMS').write_bytes(checksums.encode('utf-8'))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
@@ -165,7 +212,7 @@ jobs:
               or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version)):
             raise SystemExit('Invalid publication identity')
           root = Path('artifact')
-          expected = {f'dist/bazi-{version}.tar.gz', f'dist/bazi-{version}-py3-none-any.whl', 'release.json', 'RELEASE_NOTES.md'}
+          expected = {f'dist/bazi-{version}.tar.gz', f'dist/bazi-{version}-py3-none-any.whl', 'release.json', 'RELEASE_NOTES.md', 'environments.json'}
           if ({p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()} != expected | {'SHA256SUMS'}
               or any(p.is_symlink() for p in root.rglob('*'))):
             raise SystemExit('Unexpected release bundle files')
@@ -178,6 +225,21 @@ jobs:
           metadata = json.loads((root / 'release.json').read_text())
           if metadata != {'name': 'bazi', 'version': version, 'sha': os.environ['SHA'], 'repository': '0xf3cd/bazi', 'run_id': os.environ['RUN_ID'], 'mode': 'release'}:
             raise SystemExit('Release metadata identity mismatch')
+          report = json.loads((root / 'environments.json').read_text(encoding='utf-8'))
+          roles = {'outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+            'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing'}
+          if (not isinstance(report, dict) or set(report) != {'schema_version', 'source_sha', 'pair', 'environments', 'identity'}
+              or type(report['schema_version']) is not int or report['schema_version'] != 1
+              or report['identity'] != metadata or report['source_sha'] != os.environ['SHA']):
+            raise SystemExit('Environment report identity mismatch')
+          records = report['environments']
+          if (not isinstance(records, list) or len(records) != len(roles)
+              or any(not isinstance(record, dict) or not isinstance(record.get('role'), str) for record in records)
+              or {record['role'] for record in records} != roles):
+            raise SystemExit('Environment report role roster mismatch')
+          if report['pair'] != {kind: {'filename': name, 'sha256': hashlib.sha256((root / 'dist' / name).read_bytes()).hexdigest()}
+              for kind, name in (('sdist', f'bazi-{version}.tar.gz'), ('wheel', f'bazi-{version}-py3-none-any.whl'))}:
+            raise SystemExit('Environment report pair mismatch')
       - name: Reject existing version, tag or release
         env:
           VERSION: ${{ needs.build.outputs.version }}
