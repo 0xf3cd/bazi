@@ -17,7 +17,7 @@ from relationship_samples import at_year
 
 # 红艳查法 variants (issue #69): `Anchor` mounted on `BaziSchool.hongyan_anchor`; the analyzer
 # re-reads the anchor stem from the chart's school profile at evaluation time. The chart below
-# is the golden chart of `test_relationship_analysis.test_case1` (1984-04-01 11:08, male:
+# is the golden chart of `test_relationship_analysis.test_wenzhen_1984_relationship_analysis` (1984-04-01 11:08, male:
 # 甲子/丁卯/乙丑/壬午) -- the day master 乙 keys on 申 (absent from the chart), while the year
 # tiangan 甲 keys on 午 (the hour Dizhi), so the two 查法 answer differently on this chart.
 @pytest.mark.parametrize('anchor, expected', [
@@ -40,7 +40,7 @@ def test_hongyan_anchor_variant_at_birth(anchor: Anchor, expected: frozenset[Diz
   (Anchor.YEAR, frozenset({Dizhi.午})), # 年干甲 -> 午: the 1990 流年 is 庚午.
 ])
 def test_hongyan_anchor_variant_at_transits(anchor: Anchor, expected: frozenset[Dizhi]) -> None:
-  '''Same chart; the selected 1990 Dayun and Liunian are 戊辰/庚午 (pinned in `test_case1`).'''
+  '''Same chart; the selected 1990 Dayun and Liunian are 戊辰/庚午 (pinned in `test_wenzhen_1984_relationship_analysis`).'''
   config: BaziConfig = BaziConfig(school=BaziSchool(hongyan_anchor=anchor))
   chart: BaziChart = BaziChart(Bazi.create('1984-04-01 11:08', 'male', config))
   transits: TransitAnalysis = RelationshipAnalyzer(chart).transits

@@ -19,11 +19,11 @@ TgCmpType = list[set[Tiangan]] | Iterable[TianganCombo]
 def _tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
   _l1 = list(l1)
   _l2 = list(l2)
-  if len(_l1) != len(_l2):
+  if len(_l1) != len(_l2) or any(s not in _l2 for s in _l1):
+    print(f'Combo counts: actual={len(_l1)}, expected={len(_l2)}')
+    print(f'Missing combos: {[s for s in _l2 if s not in _l1]}')
+    print(f'Extra combos: {[s for s in _l1 if s not in _l2]}')
     return False
-  for s in _l1:
-    if s not in _l2:
-      return False
   return True
 
 

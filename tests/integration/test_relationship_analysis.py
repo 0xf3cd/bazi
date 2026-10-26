@@ -24,12 +24,19 @@ pytestmark = pytest.mark.integration
 
 '''Operand type of `_equal`: either relation-discovery flavor.'''
 DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
+
+
 def _equal(d1: DiscoveryType, d2: DiscoveryType) -> bool:
   assert type(d1) is type(d2)
   if set(d1.keys()) != set(d2.keys()):
+    print(f'Left-only relations: {d1.keys() - d2.keys()}')
+    print(f'Right-only relations: {d2.keys() - d1.keys()}')
     return False
   for rel, combos in d1.items():
-    if set(combos) != set(d2[rel]):  # type: ignore
+    left = set(combos)
+    right = set(d2[rel])  # type: ignore
+    if left != right:
+      print(f'{rel}: left-only combos={left - right}, right-only combos={right - left}')
       return False
   return True
 
@@ -50,9 +57,11 @@ def _random_year_transits(transit_chart: TransitChart, gz_year: int, rng: random
 def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
+      print(f'Missing relation {rel}: {expected_combos}')
       return False
     for combo in expected_combos:
       if combo not in actual[rel]:
+        print(f'Missing {rel} combo: {combo}; actual={actual[rel]}')
         return False
   return True
 
@@ -60,9 +69,11 @@ def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCom
 def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], actual: dizhi_utils.DizhiRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
+      print(f'Missing relation {rel}: {expected_combos}')
       return False
     for combo in expected_combos:
       if combo not in actual[rel]:
+        print(f'Missing {rel} combo: {combo}; actual={actual[rel]}')
         return False
   return True
 
@@ -129,7 +140,7 @@ def test_wenzhen_yangren_definitions(
   assert RelationshipAnalyzer(default_chart).at_birth.shensha['yangren'] == frozenset()
 
 
-def test_case1() -> None:
+def test_wenzhen_1984_relationship_analysis() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 1, 11, 8),
@@ -387,7 +398,7 @@ def test_case1() -> None:
   assert not transits.star(transits_2031).dizhi
 
 
-def test_case2(rng: random.Random) -> None:
+def test_wenzhen_2020_relationship_analysis(rng: random.Random) -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
     birth_time=datetime(2020, 7, 2, 19, 8),

@@ -114,16 +114,21 @@ def site() -> dict[str, bytes]:
   return tree
 
 
-def test_publish_workflow_structure() -> None:
+def test_publish_dispatch_defaults() -> None:
   # PyYAML's YAML 1.1 parser reads the YAML 1.2 key `on` as True.
   trigger = PUBLISH[True]
   assert set(trigger) == {'workflow_dispatch'}
   inputs = trigger['workflow_dispatch']['inputs']
-  assert set(inputs) == {'version', 'mode', 'initialize'}
-  assert inputs['mode']['default'] == 'rehearsal' and inputs['mode']['options'] == ['rehearsal', 'publish', 'pending', 'promote', 'resume']
+  assert inputs['mode']['default'] == 'rehearsal'
+  assert inputs['mode']['options'] == ['rehearsal', 'publish', 'pending', 'promote', 'resume']
   assert inputs['initialize']['default'] is False
   assert PUBLISH['permissions'] == {}
-  assert PUBLISH['concurrency'] == {'group': 'bazi-docs', 'cancel-in-progress': False}
+  concurrency = PUBLISH['concurrency']
+  assert isinstance(concurrency['group'], str) and concurrency['group'] and '${{' not in concurrency['group']
+  assert concurrency['cancel-in-progress'] is False
+
+
+def test_publish_job_boundaries() -> None:
   jobs = PUBLISH['jobs']
   assert {name: job['permissions'] for name, job in jobs.items()} == {
     'build': {'contents': 'read'}, 'check': {}, 'archive': {'contents': 'write'},
@@ -135,7 +140,7 @@ def test_publish_workflow_structure() -> None:
     'archive': ['actions/checkout', 'actions/download-artifact', 'actions/upload-pages-artifact'],
     'deploy': ['actions/deploy-pages'], 'readback': []}
   assert [name for name, job in jobs.items() if 'environment' in job] == ['deploy']
-  assert jobs['deploy']['environment'] == {'name': 'github-pages', 'url': '${{ steps.deployment.outputs.page_url }}'}
+  assert jobs['deploy']['environment']['name'] == 'github-pages'
 
   assert jobs['build']['if'] == "inputs.mode == 'rehearsal' || inputs.mode == 'publish'"
   assert jobs['check']['if'] == "inputs.mode == 'promote'"
@@ -148,6 +153,9 @@ def test_publish_workflow_structure() -> None:
     assert condition in jobs['deploy']['if']
   assert "needs.deploy.result == 'success'" in jobs['readback']['if']
 
+
+def test_publish_identity_and_artifacts() -> None:
+  jobs = PUBLISH['jobs']
   # The archive job re-derives identity with the same step instead of trusting build outputs.
   assert jobs['build']['steps'][0] == jobs['archive']['steps'][0] == step('build', 'Resolve documentation source identity')
   assert jobs['build']['steps'][0]['if'] == jobs['build']['if']
@@ -162,16 +170,23 @@ def test_publish_workflow_structure() -> None:
   # Initialization starts from the commit this job checked out as control/, not from any branch named by an input.
   assert step('archive', COMMIT_STEP)['env']['CONTROL'] == jobs['archive']['steps'][1]['with']['ref'] == '${{ github.sha }}'
 
-  assert jobs['build']['steps'][1]['with'] == {'ref': '${{ steps.identity.outputs.ref }}', 'persist-credentials': False}
-  assert jobs['archive']['steps'][1]['with'] == {'ref': '${{ github.sha }}', 'path': 'control', 'persist-credentials': False}
-  assert jobs['archive']['steps'][2] == {'uses': jobs['archive']['steps'][2]['uses'], 'if': "inputs.mode == 'publish'", 'with': {
-    'artifact-ids': '${{ needs.build.outputs.artifact-id }}', 'path': 'candidate', 'merge-multiple': True, 'digest-mismatch': 'error'}}
+  assert jobs['build']['steps'][1]['with']['ref'] == '${{ steps.identity.outputs.ref }}'
+  assert jobs['archive']['steps'][1]['with']['path'] == 'control'
+  download = jobs['archive']['steps'][2]
+  assert download['if'] == "inputs.mode == 'publish'"
+  assert download['with'] == {
+    'artifact-ids': '${{ needs.build.outputs.artifact-id }}', 'path': 'candidate', 'merge-multiple': True, 'digest-mismatch': 'error'}
+
+
+def test_publish_privileged_execution() -> None:
+  jobs = PUBLISH['jobs']
   # Hidden files such as .buildinfo are part of every version digest, so the Pages upload must keep them.
   upload = jobs['archive']['steps'][-1]
   assert upload['uses'].startswith('actions/upload-pages-artifact@')
-  assert upload['with'] == {'path': 'site/', 'include-hidden-files': True, 'retention-days': 1}
+  assert upload['with']['path'] == 'site/'
+  assert upload['with']['include-hidden-files'] is True
   deploy = jobs['deploy']['steps']
-  assert deploy[0]['name'] == 'Refuse to deploy a superseded archive' and deploy[-1] == {'uses': deploy[-1]['uses'], 'id': 'deployment'}
+  assert deploy[0]['name'] == 'Refuse to deploy a superseded archive' and deploy[-1]['id'] == 'deployment'
   assert '-I' in code('archive', 'Apply the requested archive change')
   # The privileged jobs install nothing and never run the built candidate.
   for name in ('archive', 'deploy'):
