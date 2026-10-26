@@ -190,7 +190,7 @@ def test_source_identity_requires_tracked_input(tmp_path: Path, change: str) -> 
   subprocess.run(['git', 'add', 'input.py', '.gitignore'], cwd=tmp_path, check=True)
   tree = subprocess.check_output(['git', 'write-tree'], cwd=tmp_path, text=True).strip()
   content = f'tree {tree}\nauthor Fixture <fixture@example.invalid> 1000000000 +0000\ncommitter Fixture <fixture@example.invalid> 1000000000 +0000\n\nfixture\n'
-  commit = subprocess.check_output(['git', 'hash-object', '-t', 'commit', '-w', '--stdin'], input=content, cwd=tmp_path, text=True).strip()
+  commit = subprocess.check_output(['git', 'hash-object', '-t', 'commit', '-w', '--stdin'], input=content.encode('utf-8'), cwd=tmp_path).decode('ascii').strip()
   subprocess.run(['git', 'update-ref', 'HEAD', commit], cwd=tmp_path, check=True)
   files: tuple[str, ...] = ('input.py',)
   if change == 'dirty':
@@ -380,6 +380,8 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   monkeypatch.setattr(package_checks, 'source_files', lambda directory: tuple(source))
   identity = Mock(side_effect=['a' * 40, 'b' * 40 if change == 'identity-changed' else 'a' * 40])
   monkeypatch.setattr(package_checks, 'source_identity', identity)
+  version = Mock(return_value='2.4.0')
+  monkeypatch.setattr(package_checks.importlib.metadata, 'version', version)
   states: dict[str, dict[str, str]] = {}
   observations: list[str] = []
   report = tmp_path / 'report.json'
@@ -444,6 +446,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       states[python] = {'bazi': '1.0', 'pip': '23.0', 'setuptools': '84.0.0',
         'wheel-origin': '1.0' if Path(command[-1]).parent.name == 'direct' else '2.0'}
     else:
+      assert command[-1] == 'mypy==2.4.0'
       observations.append('install-mypy')
       states[python].update({'mypy': '2.4.0', 'typing-transitive': '1.0'})
   monkeypatch.setattr(package_checks, 'run', run_fixture)
@@ -493,6 +496,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   assert observations.count('pip:direct-venv') == observations.count('pip:rebuilt-venv') == 2
   assert observations.count('pip:typing-venv') == 3
   assert identity.call_count == 2
+  version.assert_called_once_with('mypy')
   assert (work / 'direct/bazi-1.0.0-py3-none-any.whl').read_bytes() != (work / 'rebuilt/bazi-1.0.0-py3-none-any.whl').read_bytes()
   expected_pair = {'sdist': work / 'sdist/bazi-1.0.0.tar.gz', 'wheel': work / 'rebuilt/bazi-1.0.0-py3-none-any.whl'}
   assert data['pair'] == {kind: {'filename': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
