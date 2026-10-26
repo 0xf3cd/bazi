@@ -159,7 +159,10 @@ def test_removed_persistence_is_absent() -> None:
   from bazi.knowledge import KnowledgeBase
   from bazi.school import BaziSchool
   from bazi.transits import TransitSet
-  for module, name in (('bazi.bazi', 'LocationTimeJson'), ('bazi.bazi_chart', 'BaziJson'), ('bazi.school', '_ConfigJson'), ('bazi.school', '_config_json')):
+  for module, name in (
+    ('bazi.bazi', 'LocationTimeJson'), ('bazi.bazi_chart', 'BaziJson'),
+    ('bazi.school', '_ConfigJson'), ('bazi.school', '_config_json'),
+  ):
     assert not hasattr(importlib.import_module(module), name)
   for owner, names in (
     (BaziChart, ('json', 'from_json', '_from_data')), (LocationTime, ('json',)),
@@ -173,8 +176,14 @@ def test_removed_persistence_is_absent() -> None:
   with pytest.raises(AttributeError):
     bazi.record_migration # noqa: B018 # Removed lazy attribute must fail at runtime.
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  assert result.bazi == chart.bazi and result.render() and KnowledgeBase.load().entries
+  result = evaluate_context(
+    chart,
+    criterion_id='editorial.guansha_coexistence.v1',
+    profile=ContextProfile('natal'),
+  )
+  assert result.bazi == chart.bazi
+  assert result.render()
+  assert KnowledgeBase.load().entries
 
 
 def test_modules_and_candidates_classified() -> None:
@@ -263,7 +272,9 @@ print('PASS safe public imports, declared fields and aliases')
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'PASS safe public imports' in result.stdout
   else:
-    assert result.returncode == 1 and 'AssertionError' in result.stderr and rejected_name in result.stderr, result.stdout + result.stderr
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert 'AssertionError' in result.stderr, result.stdout + result.stderr
+    assert rejected_name in result.stderr, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize('addition', [

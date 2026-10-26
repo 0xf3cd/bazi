@@ -38,9 +38,11 @@ def _at_year(transit_chart: TransitChart, gz_year: int) -> TransitSet:
 def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCombo]], actual: tiangan_utils.TianganRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
+      print(f'Missing relation {rel}: {expected_combos}')
       return False
     for combo in expected_combos:
       if combo not in actual[rel]:
+        print(f'Missing {rel} combo: {combo}; actual={actual[rel]}')
         return False
   return True
 
@@ -48,14 +50,16 @@ def _check_tiangan(expected: dict[TianganRelation, list[tiangan_utils.TianganCom
 def _check_dizhi(expected: dict[DizhiRelation, list[dizhi_utils.DizhiCombo]], actual: dizhi_utils.DizhiRelationDiscovery) -> bool:
   for rel, expected_combos in expected.items():
     if rel not in actual:
+      print(f'Missing relation {rel}: {expected_combos}')
       return False
     for combo in expected_combos:
       if combo not in actual[rel]:
+        print(f'Missing {rel} combo: {combo}; actual={actual[rel]}')
         return False
   return True
 
 
-def test_case1() -> None:
+def test_wenzhen_1984_ganzhi_relations() -> None:
   '''From 问真八字 https://pcbz.iwzwh.com/#/paipan/index'''
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 1, 11, 8),
@@ -151,7 +155,7 @@ def test_case1() -> None:
   }, dizhi_utils.discover_mutual(bazi.four_dizhis, tuple(gz.dizhi for gz in ganzhis)))
 
 
-def test_case2() -> None:
+def test_apps_2024_ganzhi_relations() -> None:
   '''From 测测 and 问真八字'''
   bazi: Bazi = Bazi(
     birth_time=datetime(2024, 5, 19, 18, 59),
