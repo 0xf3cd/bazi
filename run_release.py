@@ -57,6 +57,7 @@ def verify_source() -> None:
 
 def seal_bundle() -> None:
   '''将原受测工件、发布说明和白名单环境清单绑定到本次运行，并写入校验和。'''
+  # 只有构建任务使用 tomllib，且已固定 Python 3.12。
   import tomllib
 
   version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']

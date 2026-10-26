@@ -22,6 +22,7 @@ from unittest.mock import Mock, patch
 import pytest
 import yaml
 
+import run_package_checks
 import run_release
 
 
@@ -98,6 +99,7 @@ def test_workflow_structure() -> None:
 
 
 def test_environment_report_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
+  assert run_release.ENVIRONMENT_ROLES == frozenset(run_package_checks.ENVIRONMENT_ROLES)
   monkeypatch.setenv('RUNNER_TEMP', '/fixture temp')
   gate = shlex.split(os.path.expandvars(workflow_code('build', 'Run full gate and retain its tested pair')))
   assert gate == ['python', 'run_tests.py', '-a', '-v', '--package-output-dir', '/fixture temp/bundle/dist',
@@ -118,7 +120,7 @@ def check_script_wiring(workflow: dict[str, Any]) -> None:
     'github-release': {'Verify exact same-run bundle': 'verify', 'Verify PyPI bytes and create the tag and release without overwriting': 'publish'},
   }
   fetch = (
-    '[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]]\n'
+    '[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]] || exit 1\n'
     'status="$(curl --fail --silent --show-error --proto \'=https\' --max-time 60 \\\n'
     '  --output "$RUNNER_TEMP/run_release.py" --write-out \'%{http_code}\' \\\n'
     '  "https://raw.githubusercontent.com/$REPOSITORY/$SHA/run_release.py")"\n'
@@ -146,6 +148,8 @@ def check_script_wiring(workflow: dict[str, Any]) -> None:
         seen.append(step['name'])
       else:
         assert 'run_release.py' not in step.get('run', '')
+        if name != 'build':
+          assert 'run' not in step
     assert seen == list(calls[name])
 
 
@@ -169,6 +173,15 @@ def test_release_wiring_rejects_changes(change: str) -> None:
     job['steps'].reverse()
   elif change == 'preflight-action':
     job['steps'].append({'uses': 'actions/checkout@' + 'a' * 40})
+  with pytest.raises(AssertionError):
+    check_script_wiring(workflow)
+
+
+@pytest.mark.parametrize('job', ['preflight', 'pypi', 'github-release'])
+@pytest.mark.parametrize('command', ['python run_tests.py', 'python artifact/extra.py'])
+def test_release_jobs_reject_extra_scripts(job: str, command: str) -> None:
+  workflow = yaml.safe_load(WORKFLOW_TEXT)
+  workflow['jobs'][job]['steps'].append({'name': 'Extra script', 'shell': 'bash', 'run': command})
   with pytest.raises(AssertionError):
     check_script_wiring(workflow)
 
@@ -353,7 +366,9 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
 
 @pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version',
   'environment-run', 'environment-source', 'environment-pair', 'environment-role', 'environment-duplicate', 'environment-schema',
-  'environment-extra-record', 'environment-missing', 'environment-truncated'])
+  'environment-extra-record', 'environment-missing', 'environment-truncated',
+  pytest.param('symlink-file', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.')),
+  pytest.param('symlink-directory', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.'))])
 def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   root = tmp_path / 'artifact'
@@ -406,6 +421,12 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     (root / 'unexpected.py').write_bytes(b'')
   elif change == 'version':
     monkeypatch.setenv('VERSION', '2.0.0')
+  elif change == 'symlink-file':
+    target = tmp_path / 'original-environments.json'
+    (root / 'environments.json').rename(target)
+    (root / 'environments.json').symlink_to(target)
+  elif change == 'symlink-directory':
+    (root / 'linked-dist').symlink_to(root / 'dist', target_is_directory=True)
   code = workflow_code('pypi', 'Verify exact same-run bundle')
   assert code == workflow_code('github-release', 'Verify exact same-run bundle')
   for job in ('pypi', 'github-release'):
@@ -417,7 +438,7 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
         run_policy(code)
       assert caught.value.doc == '{' and caught.value.pos == 1
     else:
-      message = ('Unexpected release bundle files' if change == 'environment-missing' else
+      message = ('Unexpected release bundle files' if change in ('environment-missing', 'symlink-file', 'symlink-directory') else
         'Environment report role roster mismatch' if change in ('environment-role', 'environment-duplicate', 'environment-extra-record') else
         'Environment report pair mismatch' if change == 'environment-pair' else
         'Environment report identity mismatch' if change.startswith('environment-') else '')

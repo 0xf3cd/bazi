@@ -29,7 +29,7 @@ jobs:
           WORKFLOW_SHA: ${{ github.workflow_sha }}
         shell: bash
         run: |
-          [[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]]
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]] || exit 1
           status="$(curl --fail --silent --show-error --proto '=https' --max-time 60 \
             --output "$RUNNER_TEMP/run_release.py" --write-out '%{http_code}' \
             "https://raw.githubusercontent.com/$REPOSITORY/$SHA/run_release.py")"
