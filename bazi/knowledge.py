@@ -498,6 +498,7 @@ class KnowledgeBase:
     - 检索 text、premise、attribution、topics、viewpoint、exceptions、limits 及角色对象的 name。
       不检索来源全文、情境标签或对象 ID，不分词、不解释正则、不计算命盘适用性。
     - 七维过滤取交集，校验及参考条目政策与 query 相同，结果保持语料顺序。
+
     Args:
     - keyword: (str) 非空关键词，空或全空白抛 ValueError，错型抛 TypeError；不剥除有效词两侧空白。
     - 其余参数与 query 相同。
@@ -539,6 +540,7 @@ class KnowledgeBase:
 
     Note:
     - 本方法不选择条目、不求值前提，也不改变输出资格。
+
     Args:
     - entry: (KnowledgeEntry) 本库条目。
     - show_sources: (bool) 是否展示来源详情；前提与限度始终保留。
@@ -616,6 +618,7 @@ class KnowledgeBase:
     - 有旧位置元数据的条目只在其旧主体下展示；其余条目包含所有绑定角色。
       query 的对象过滤始终包含全部角色，二者范围不同。
     - 旧字段位置与 ordinal 仍在 entry.legacy 中，不决定此处的语料顺序。
+
     Args:
     - object_id: (str) 注册对象标识。
     - include_reference_only: (bool) 是否包含仅供参考条目，不求值其前提。

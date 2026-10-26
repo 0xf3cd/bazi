@@ -84,7 +84,7 @@ class DecodedJieqiDates:
 
   def __getitem__(self, year: int) -> JieqiDates:
     '''查询公历年 year 的全部节气日期。'''
-    _validate_year(year, self.supported_year_range)
+    _validate_year(year, lambda: self.supported_year_range())
 
     # 提取输入年份的字节。
     year_bytes: bytes = self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len : (year - self.start_year + 1) * 24 * DecodedJieqiDates.date_bytes_len]
@@ -101,7 +101,7 @@ class DecodedJieqiDates:
     '''
     查询公历年 year 的指定节气日期；复用缓存，优先于直接调用 __getitem__。
     '''
-    _validate_year(year, self.supported_year_range)
+    _validate_year(year, lambda: self.supported_year_range())
     if not isinstance(jieqi, Jieqi):
       raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
     return self.__cached_date(year, jieqi)
@@ -162,7 +162,7 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
-    _validate_year(lunar_year, self.supported_year_range)
+    _validate_year(lunar_year, lambda: self.supported_year_range())
 
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
@@ -199,7 +199,7 @@ class DecodedLunarYears:
     查询农历年信息；复用缓存，优先于直接调用 __getitem__。
     每次返回新记录与独立 days_counts 列表，外部修改不影响缓存；其余值不可变，可共享。
     '''
-    _validate_year(lunar_year, self.supported_year_range)
+    _validate_year(lunar_year, lambda: self.supported_year_range())
     info: LunarYearInfo = self.__cached_info(lunar_year)
     return LunarYearInfo(
       first_solar_day=info['first_solar_day'],

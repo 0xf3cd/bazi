@@ -119,6 +119,23 @@ def test_validation_precedence() -> None:
     dizhi_utils.xing(Dizhi.子, Dizhi.午, Dizhi.辰, Dizhi.酉, definition='LOOSE') # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize('query, args, option', [
+  (dizhi_utils.gonghe, (True, Dizhi.子), 'definition'),
+  (dizhi_utils.search, ([True, Dizhi.子], DizhiRelation.暗合), 'definitions'),
+  (dizhi_utils.discover, ([True, Dizhi.子],), 'definitions'),
+  (dizhi_utils.discover_mutual, ([True, Dizhi.子], [Dizhi.午]), 'definitions'),
+  (dizhi_utils.discover_mutual, ([Dizhi.午], [True, Dizhi.子]), 'definitions'),
+])
+def test_elements_precede_definition(
+  query: Callable[..., object],
+  args: tuple[object, ...],
+  option: str,
+) -> None:
+  with pytest.raises(TypeError) as error:
+    query(*args, **{option: 'invalid'})
+  assert str(error.value) == "Expected all Dizhi, got [<class 'bool'>, <enum 'Dizhi'>]"
+
+
 def _project_ganzhi_combos(combos: GanzhiRelationCombos) -> set[DizhiCombo]:
   return {
     DizhiCombo(occurrence.ganzhi.dizhi for occurrence in combo)
