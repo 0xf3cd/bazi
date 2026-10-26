@@ -65,6 +65,21 @@ def test_dizhi_anhe() -> None:
     _ = DizhiRules.DIZHI_ANHE['not an AnheDef'] # type: ignore
 
 
+def test_normal_reuses_tongluhe() -> None:
+  expected = frozenset({
+    frozenset((Dizhi.卯, Dizhi.申)),
+    frozenset((Dizhi.巳, Dizhi.酉)),
+    frozenset((Dizhi.亥, Dizhi.午)),
+    frozenset((Dizhi.子, Dizhi.巳)),
+    frozenset((Dizhi.寅, Dizhi.午)),
+  })
+  normal = DizhiRules.DIZHI_ANHE[DizhiRules.AnheDef.NORMAL]
+  assert normal is DizhiRules.DIZHI_TONGLUHE
+  assert normal == expected
+  assert isinstance(normal, frozenset)
+  assert all(isinstance(combo, frozenset) for combo in normal)
+
+
 def test_dizhi_xing() -> None:
   # `DIZHI_XING` is a frozendict keyed by `XingDef` - one sub-table per definition.
   assert set(DizhiRules.DIZHI_XING) == set(DizhiRules.XingDef)

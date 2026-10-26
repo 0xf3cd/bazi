@@ -743,6 +743,28 @@ def main() -> int:
   ])
   checks.append(('Source parser limit remains a value error', ValueError, partial(parser_limit, load_source)))
 
+  for relation_query in (tiangan_utils.he, tiangan_utils.chong, tiangan_utils.sheng, tiangan_utils.ke):
+    for operands in ((True, Tiangan.甲), (Tiangan.甲, True)):
+      checks.append((f'{relation_query.__name__} rejects bool at either position', TypeError, partial(relation_query, *operands)))
+  for dz_query in (
+    dizhi_utils.liuhe, dizhi_utils.anhe, dizhi_utils.tonghe, dizhi_utils.tongluhe,
+    dizhi_utils.banhe, dizhi_utils.gonghe, dizhi_utils.gonghui,
+    dizhi_utils.chong, dizhi_utils.po, dizhi_utils.hai, dizhi_utils.sheng, dizhi_utils.ke,
+  ):
+    for dz_operands in ((True, Dizhi.子), (Dizhi.子, True)):
+      checks.append((f'{dz_query.__name__} rejects bool at either position', TypeError, partial(dz_query, *dz_operands)))
+  for triple_query in (dizhi_utils.sanhui, dizhi_utils.sanhe):
+    for dz_triple in ((True, Dizhi.子, Dizhi.丑), (Dizhi.子, True, Dizhi.丑), (Dizhi.子, Dizhi.丑, True)):
+      checks.append((f'{triple_query.__name__} rejects bool at every position', TypeError, partial(triple_query, *dz_triple)))
+  decoded_lunar = hko_data.DecodedLunarYears()
+  for bool_year in (True, False):
+    checks.extend([
+      ('Jieqi get rejects bool year by range', ValueError, partial(decoded_jieqi.get, bool_year, Jieqi.立春)),
+      ('Jieqi index rejects bool year by range', ValueError, partial(decoded_jieqi.__getitem__, bool_year)),
+      ('Lunar get rejects bool year by range', ValueError, partial(decoded_lunar.get, bool_year)),
+      ('Lunar index rejects bool year by range', ValueError, partial(decoded_lunar.__getitem__, bool_year)),
+    ])
+
   for label, expected, thunk in checks:
     try:
       thunk()
