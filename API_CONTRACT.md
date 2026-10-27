@@ -198,7 +198,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 库内直接构造时，缺字段／多余字段由构造器抛 TypeError；值错型或带时区则由各类显式检查。
 坐标缺失是合法观察请求，在求值时为 UNKNOWN；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
 这些严格请求不收紧 `TransitChart.at_year/at_month` 既有的输入检查：年份使用 `isinstance(value, int)`，
-bool 和 int 子类也通过该类型检查，之后仍受出生范围与后端支持范围约束；严格请求类则拒绝 bool 和 int 子类。
+bool 和 int 子类也通过该类型检查；严格请求类则拒绝 bool 和 int 子类。
 
 ### 结果构造与 dataclass 操作
 
