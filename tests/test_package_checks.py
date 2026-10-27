@@ -407,7 +407,10 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
     outer_installers(receipt)
 
 
-@pytest.mark.parametrize('change', ['none', 'identity-changed', 'source-changed', 'report-race', 'role-missing'])
+@pytest.mark.parametrize('change', [
+  'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
+  'typing-internal-error', 'typing-missing-kongwang',
+])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
   root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
   root.mkdir()
@@ -479,6 +482,8 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   monkeypatch.setattr(package_checks, 'observe_pip', observe)
 
   def run_fixture(command: list[str], cwd: Path) -> None:
+    if 'mypy' in command:
+      assert '--show-traceback' in command and command[-1] == 'good.py'
     if 'pip' not in command:
       return
     python = command[0]
@@ -494,7 +499,11 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   monkeypatch.setattr(package_checks, 'run', run_fixture)
 
   def diagnostics(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+    command, = args
+    assert isinstance(command, list) and command[-1] == 'bad.py' and '--show-traceback' in command
     bad = (work / 'consumer/bad.py').read_text(encoding='utf-8').splitlines()
+    assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
+    assert 'KongwangResult(Zhu.月, target, ())' not in bad
     messages = ['[assignment] [arg-type] "None"']
     messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
       'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate',
@@ -513,14 +522,18 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Unsupported target for indexed assignment ("frozendict[str, {value}]")  [index]')
     messages.extend(f'"{owner}" has no attribute "{member}"' for owner, member in
       (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')))
-    return subprocess.CompletedProcess([], 1, '\n'.join(messages), '')
+    if change == 'typing-missing-kongwang':
+      messages.remove('to "KongwangResult"')
+    return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, '\n'.join(messages), '')
   monkeypatch.setattr(subprocess, 'run', diagnostics)
   if change == 'none':
     check_packages(root, work, output, report, receipt)
   else:
     exception = FileExistsError if change == 'report-race' else ValueError
     message = {'identity-changed': 'Source identity changed', 'source-changed': 'Source changed',
-      'role-missing': 'Environment role roster mismatch', 'report-race': ''}[change]
+      'role-missing': 'Environment role roster mismatch', 'report-race': '',
+      'typing-internal-error': 'Installed typing negative control did not reach both type checks',
+      'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult'}[change]
     with pytest.raises(exception, match=message or None):
       check_packages(root, work, output, report, receipt)
     if change == 'report-race':

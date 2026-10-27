@@ -458,7 +458,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'ContextResult(matched.observation, matched.criterion, matched.evidence, matched.references, 42, knowledge)\n'
                 'YearCoordinate("2024")\nMonthCoordinate(2024, "辰")\nDateCoordinate("2024-04-10")\nMomentCoordinate("2024-04-10T12:00:00")\n'
                 'TransitObservation(("liunian",))\nLiunianPosition("2024")\n'
-                'KongwangHit("年", target)\nKongwangResult(Zhu.月, target, ())\n'
+                'KongwangHit("年", target)\nKongwangResult(Zhu.YUE, target, ())\n'
                 'StarAppearance(Zhu.月, target, "明干", Tiangan.甲)\n'
                 'ChartOccurrence("年", target, TianganLayer.明干, Tiangan.甲, "比肩")\n'
                 'CriterionResult(info.criterion_id, "binding_unrecognized", frozendict({}))\nEntryMatch("sample", "invalid")\n'
@@ -472,7 +472,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'coordinate.month = 0\n'
                 'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
-  command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent']
+  command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent', '--show-traceback']
   run([*command, 'good.py'], foreign)
   result = subprocess.run(
     [*command, 'bad.py'],
