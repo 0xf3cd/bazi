@@ -30,6 +30,8 @@ def test_match_with_only_an_id_describes_it(tmp_path: Path, criterion_id: str) -
   assert all(f'--transit-entry {entry}' in result.stdout for entry in info.transit_entries)
   if 'natal_and_liunian' in info.scopes:
     assert '--observation-scope natal_and_liunian 还需要：--ganzhi-year' in result.stdout
+  if 'natal_and_transits' in info.scopes:
+    assert '--observation-scope natal_and_transits 还需要：--transit-entry 及其坐标（见下）、--transit-kinds' in result.stdout
   gate = info.required_gender
   assert (gate is not None) == ('性别门槛：' in result.stdout)
   assert gate is None or f'性别门槛：{gate.value}（--gender {gate}）' in result.stdout

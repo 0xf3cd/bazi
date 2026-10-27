@@ -9,8 +9,10 @@
 - 知识库保留 `KnowledgeBase.load(path)`、完整引用校验和查询／渲染。JSON 只作当前编辑源，`schema_version` 只接受精确整数 2，不自动迁移旧版来源。
 - 源码脚本删除 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json`；保留 TXT、知识编辑源读取和源文件覆盖保护。
 - 位置共享 `Zhu`／`柱`，明藏共享 `TianganLayer`／`天干层次`；空亡和配偶星出现改用 position，前提证据保留具体流年年份。文本柱位及明藏层改为中文值，如 `natal.月`、`藏干`。
+  同名 anchor／layer 字段改为非 str 枚举，旧字符串比较、in 判断和关键字类模式可能静默不命中；须改用枚举成员，不能只迁移构造调用。
 - 观察请求改为 NatalObservation、LiunianObservation、TransitObservation，岁运坐标改为年／月／日期／时刻四类；删除旧 profile 和通用坐标构造。CriterionResult、EntryMatch 的定义或状态改为派生属性，ContextResult 用 evidence／references 组合证据和两种参考；不保留旧字段兼容壳。构造、replace、asdict 与位置式类模式均须迁移，后者可能静默失配，见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
-- 两后端 LunarYearInfo 统一由 calendar.dates 定义，三个旧导入路径规范重导出同一类型；字典／列表行为不变。包内月查询复用已有 GanzhiYearMonth，不改变便捷入口的 bool 接受政策或查询准入。
+  CriterionInfo 删除 profile_type／profile_kind，第三构造字段改为 analysis_kind；可接受的观察请求类从 observation_types 读取。
+- 两后端 LunarYearInfo 统一由 calendar.dates 定义，三个旧导入路径规范重导出同一类型；字典／列表行为不变。包内月查询复用已有 GanzhiYearMonth，不改变便捷入口既有的输入检查或查询准入。
 
 ## bazi 2.3.0
 

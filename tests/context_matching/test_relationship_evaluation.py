@@ -149,6 +149,10 @@ def test_moment_microseconds_equal_but_recorded() -> None:
   assert isinstance(left.observation.coordinate, MomentCoordinate)
   assert left.observation.coordinate.solar_moment.microsecond == 500000
   assert left.observation.coordinate.solar_moment.isoformat() == '2024-04-10T12:30:00.500000'
+  assert (
+    '范围：natal_and_transits；坐标=at_moment；时刻=2024-04-10T12:30:00.500000；'
+    '请求种类=[liunian,liuyue]；取得种类=[liunian,liuyue]；未取得种类=[]'
+  ) in left.render().splitlines()
 
 
 def test_relationship_reference_matrix() -> None:
@@ -275,6 +279,10 @@ def test_render_labels_categories_scopes() -> None:
   ))
   rendered = transits.render()
   assert (
+    '范围：natal_and_transits；坐标=at_year；干支年=2016；'
+    '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]；未取得种类=[]'
+  ) in rendered.splitlines()
+  assert (
     '证据：原局×岁运；宫·六合：2:丙寅、4:乙亥；宫·刑：2:丙寅、5:丙申；宫·冲：2:丙寅、5:丙申；'
     '宫·破：2:丙寅、4:乙亥；宫·生：2:丙寅、4:乙亥；宫·克：2:丙寅、5:丙申'
   ) in rendered
@@ -283,6 +291,7 @@ def test_render_labels_categories_scopes() -> None:
     (TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(ganzhi_year=2021),
   ))
   rendered = toug.render()
+  assert '证据出现：transit.liunian；辛丑；明干；辛' in rendered.splitlines()
   assert '明干·合：2:丙寅、5:辛丑' in rendered
   assert '明干·生：0:己卯、5:辛丑' in rendered
   assert rendered.count('明干·克：') == 4

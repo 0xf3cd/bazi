@@ -181,7 +181,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
   `KongwangResult.anchor` 只接受年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查和运行时均拒绝。
   配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
 - `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 position 为 `Zhu | LiunianPosition`；
-  后者保存具体 `ganzhi_year`。原局 index 为 0–3，流年为 4。任意输入序列的 GanzhiOccurrence.index 不受四柱限制。
+  后者保存具体 `ganzhi_year`。原局 index 为 0–3，流年为 4。
+  另一类型 `bazi.utils.dizhi_utils.GanzhiOccurrence` 用于关系查询组合，index 是调用方输入序列中的位置，不受四柱限制。
 - `evaluate_context(..., observation=...)` 替代 profile 参数。`NatalObservation()` 供全部判据共用；
   `LiunianObservation(ganzhi_year=None)` 用于原局加单流年，`TransitObservation(kinds, coordinate=None)` 用于婚恋结构岁运查询。
   ScopeName 按 natal、natal_and_liunian、natal_and_transits 排序；ContextProfile、RelationshipProfile、Pillar 删除。
@@ -196,7 +197,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 四类均从 context_matching 导入；TransitCoordinate 只保留为四者联合类型，不能再用 entry 加可选字段构造。
 库内直接构造时，缺字段／多余字段由构造器抛 TypeError；值错型或带时区则由各类显式检查。
 坐标缺失是合法观察请求，在求值时为 UNKNOWN；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
-这些严格请求不收紧 TransitChart 便捷入口原有的 bool/int 政策。
+这些严格请求不收紧 `TransitChart.at_year/at_month` 既有的输入检查：年份使用 `isinstance(value, int)`，
+bool 和 int 子类也通过该类型检查，之后仍受出生范围与后端支持范围约束；严格请求类则拒绝 bool 和 int 子类。
 
 ### 结果构造与 dataclass 操作
 
@@ -206,6 +208,11 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 | `EntryMatch` | claim_id、reason | status |
 | `ContextResult` | observation、criterion、evidence、references、_bazi、knowledge | bazi |
 | `PremiseMatches`／`ConditionReferences` | entries | 无 |
+
+`CriterionInfo` 的第三个构造字段由旧 `profile_type`（profile 类）改为 `analysis_kind`（`'context'`／`'relationship'`）；
+其余七个存储字段顺序保持。读取时，旧 `info.profile_kind` 改为 `info.analysis_kind`，旧单个
+`info.profile_type` 改为 `info.observation_types` 中的可接受观察类元组。
+例如旧 `case CriterionInfo(_, _, profile_type)` 现在会把类别字符串绑定给 profile_type，不能再当作类构造请求。
 
 ContextResult.evidence 保存 `tuple[ChartOccurrence, ...]` 或 RelationshipEvidence，references 分别保存完整前提匹配
 或条件参考，空 entries 也保留两种类型。删除 occurrences/relationship/entries/related 旧总结果字段。
@@ -232,6 +239,44 @@ scope_complete 由原因派生，不认证该原因与观察、请求年份或�
 **旧位置式类模式也可能静默不匹配或把新字段绑定到旧含义**，不能只改构造调用而保留模式或解构代码。
 例如旧 `case CriterionResult(id, definition, status)` 现在会依次读取 criterion_id、reason、observations。
 需要属性值时显式读取；不要把 asdict 当作包含派生结论的导出记录。
+
+### 同名枚举字段的读取与穷尽分支
+
+`KongwangResult.anchor`、`StarAppearance.layer`、`ChartOccurrence.layer` 名称不变，
+值却从字符串改为不继承 str 的枚举。旧字符串比较、`in` 判断和关键字类模式不会报错，但不再命中：
+
+| 旧读取／模式 | 新读取／模式 |
+| --- | --- |
+| `result.anchor == 'year'` | `result.anchor is Zhu.年` |
+| `result.anchor in ('year', 'day')` | `result.anchor in (Zhu.年, Zhu.日)` |
+| `appearance.layer == 'visible'` | `appearance.layer is TianganLayer.明干` |
+| `occurrence.layer == 'hidden'` | `occurrence.layer is TianganLayer.藏干` |
+| `case StarAppearance(layer='visible')` | `case StarAppearance(layer=TianganLayer.明干)` |
+
+判断用枚举成员；打印 Zhu／TianganLayer 用 `str(value)` 取得中文值，打印 TransitKind 用 `.value`。
+当前仓级 mypy 参数不保证发现旧字符串比较，不能把类型检查通过当成这些读法已迁移的证明。
+
+当前钉版 mypy 将中文／拼音成员别名作为不同 Literal 处理。对 anchor 做穷尽缩窄时，
+年、日两个分支须各覆盖两种拼写，仍保留 `assert_never`。例如：
+
+```python
+from typing import assert_never
+
+from bazi.analyzer.relationship import KongwangResult
+from bazi.defines import Zhu
+
+
+def anchor_label(result: KongwangResult) -> str:
+  anchor = result.anchor
+  if anchor is Zhu.年 or anchor is Zhu.NIAN:
+    return '年'
+  if anchor is Zhu.日 or anchor is Zhu.RI:
+    return '日'
+  assert_never(anchor)
+```
+
+运行时同一年／日的两种拼写各是同一成员；上例同时保留四种拼写的静态接受和月／时的静态拒绝。
+只写中文两支时，mypy 会在 `assert_never` 处报告仍有 `Literal[Zhu.NIAN, Zhu.RI]` 未覆盖；不应通过宽化锚点类型或删除穷尽断言绕过。
 
 ### 显示与农历年信息
 

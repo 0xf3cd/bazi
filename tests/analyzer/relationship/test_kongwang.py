@@ -1,6 +1,10 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import ast
+import inspect
 from dataclasses import FrozenInstanceError, replace
+from pathlib import Path
+from typing import assert_never
 
 import pytest
 
@@ -16,6 +20,24 @@ def _analyzer(birth: str, anchor: Anchor) -> RelationshipAnalyzer:
   return RelationshipAnalyzer(BaziChart(Bazi.create(
     birth, 'male', BaziConfig(school=BaziSchool(kongwang_anchor=anchor)),
   )))
+
+
+def anchor_label(result: KongwangResult) -> str:
+  anchor = result.anchor
+  if anchor is Zhu.年 or anchor is Zhu.NIAN:
+    return '年'
+  if anchor is Zhu.日 or anchor is Zhu.RI:
+    return '日'
+  assert_never(anchor)
+
+
+def test_anchor_narrowing_matches_contract() -> None:
+  contract = (Path(__file__).resolve().parents[3] / 'API_CONTRACT.md').read_text(encoding='utf-8')
+  examples = (part.split('```', 1)[0] for part in contract.split('```python\n')[1:])
+  example, = (code for code in examples if 'def anchor_label(' in code)
+  declared, = (node for node in ast.parse(example).body if isinstance(node, ast.FunctionDef))
+  checked = ast.parse(inspect.getsource(anchor_label)).body[0]
+  assert ast.dump(declared) == ast.dump(checked)
 
 
 @pytest.mark.parametrize('anchor, names, targets', [
@@ -149,6 +171,7 @@ def test_anchor_alias_subset_is_checked() -> None:
     KongwangResult(Zhu.日, anchor, ()), KongwangResult(Zhu.RI, anchor, ()),
   )
   assert tuple(result.anchor for result in results) == (Zhu.年, Zhu.年, Zhu.日, Zhu.日)
+  assert tuple(anchor_label(result) for result in results) == ('年', '年', '日', '日')
   with pytest.raises(ValueError):
     KongwangResult(Zhu.月, anchor, ()) # type: ignore[arg-type] # 月／时不在年日锚点静态子集中。
   with pytest.raises(ValueError):

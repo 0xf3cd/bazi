@@ -810,7 +810,7 @@ def _canonical_combos(
 
 
 def _star_appearances(
-  pillars: tuple[Ganzhi, ...],
+  pillars: tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi],
   transits: TransitSet | None,
   target: Tiangan,
 ) -> tuple[StarAppearance, ...]:

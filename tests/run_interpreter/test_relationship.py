@@ -81,6 +81,7 @@ def test_relationship_rejects_natal_liunian(tmp_path: Path) -> None:
   (('--solar-moment', '2024-04-10T12:00:00'), 'Transit coordinates require --transit-entry'),
   (('--transit-kinds', 'liunian'), 'Natal scope cannot include transit inputs'),
   (('--transit-entry', 'at_year'), 'Missing coordinate field'),
+  (('--transit-entry', 'at_year', '--ganzhi-year', '2024'), 'Natal scope cannot include transit inputs'),
 ])
 def test_relationship_natal_rejects_transits(tmp_path: Path, extra: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, *REL_BASE, *extra)

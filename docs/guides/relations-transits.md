@@ -107,7 +107,8 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 
 配偶星的 `StarAppearance` 同样用 `position` 区分原局柱位与流运种类；`layer` 为
 `TianganLayer.明干`／`TianganLayer.藏干`。这两个类型从 `bazi.defines` 导入，中文类别名分别为
-`柱` 和 `天干层次`。打印位置或层次用 `str(value)` 取得中文值，不依赖枚举的 repr。
+`柱` 和 `天干层次`。打印原局柱位 `Zhu` 或明藏层 `TianganLayer` 用 `str(value)` 取得中文值，
+不依赖枚举的 repr；流运种类 `TransitKind` 用 `.value` 取得 `dayun`、`liunian` 等标签。
 
 ## 查一年的流运和一个关系
 

@@ -131,6 +131,14 @@ def test_observation_normalizes_unordered_kinds() -> None:
   assert TransitObservation((TransitKind.LIUNIAN,)).coordinate is None
 
 
+class DateSubclass(_date_module):
+  pass
+
+
+class DatetimeSubclass(datetime):
+  pass
+
+
 @pytest.mark.parametrize('factory, kwargs, error', [
   (YearCoordinate, {}, TypeError),
   (YearCoordinate, {'ganzhi_month': _Dizhi.酉}, TypeError),
@@ -144,9 +152,12 @@ def test_observation_normalizes_unordered_kinds() -> None:
   (YearCoordinate, {'ganzhi_year': True}, TypeError),
   (YearCoordinate, {'ganzhi_year': Year(2024)}, TypeError),
   (MonthCoordinate, {'ganzhi_year': True, 'ganzhi_month': _Dizhi.酉}, TypeError),
+  (MonthCoordinate, {'ganzhi_year': Year(2024), 'ganzhi_month': _Dizhi.酉}, TypeError),
   (MonthCoordinate, {'ganzhi_year': 2024, 'ganzhi_month': '酉'}, TypeError),
   (DateCoordinate, {'solar_date': datetime(2024, 4, 10, 12)}, TypeError),
+  (DateCoordinate, {'solar_date': DateSubclass(2024, 4, 10)}, TypeError),
   (MomentCoordinate, {'solar_moment': _date_module(2024, 4, 10)}, TypeError),
+  (MomentCoordinate, {'solar_moment': DatetimeSubclass(2024, 4, 10, 12)}, TypeError),
   (MomentCoordinate, {'solar_moment': datetime(2024, 4, 10, 12, tzinfo=_UTC)}, ValueError),
 ])
 def test_transit_coordinate_request_errors(factory: Any, kwargs: dict[str, Any], error: type[Exception]) -> None:
