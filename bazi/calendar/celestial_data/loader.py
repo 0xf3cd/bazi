@@ -6,6 +6,7 @@
 加载层只解析、校验表并按键查询，不解释八字历法语义；上层 `CelestialCalendarUtils`
 负责历法查询，使数据格式或来源变更与历法语义分开。
 运行时只用纯 Python 读取已提交表，不导入离线生成器所用的 celestial-calendar 包。
+LunarYearInfo 从共同日期层规范重导出，保留既有导入路径。
 '''
 
 import hashlib
@@ -14,9 +15,10 @@ import struct
 
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Final, TypedDict
+from typing import Final
 
 from ...defines import Ganzhi, Jieqi
+from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 显式规范重导出，供严格类型检查的包外调用方使用。
 
 
 SCHEMA_VERSION: Final[str] = '2'
@@ -41,17 +43,6 @@ assert JIEQI_BY_INDEX[0] is Jieqi.立春
 
 # 头部键行采用 `# key: value`，井号后恰有一个空格；续行进一步缩进，不会误作键。
 _HEADER_KEY: Final[re.Pattern[str]] = re.compile(r'^# (\w+): ?(.*)$')
-
-
-class LunarYearInfo(TypedDict):
-  '''
-  与 `hko_data.LunarYearInfo` 逐键对应，供差异测试直接比较两后端农历年字典。
-  '''
-  first_solar_day: date
-  leap: bool
-  leap_month: int | None
-  days_counts: list[int]
-  ganzhi: Ganzhi
 
 
 class _EquationOfTimeRangeError(ValueError):

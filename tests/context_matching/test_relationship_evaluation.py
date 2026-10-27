@@ -9,7 +9,11 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextResult, RelatedEntry, evaluate_context, RelationshipProfile, TransitCoordinate
+from bazi.context_matching import (
+  ContextResult, RelatedEntry, evaluate_context, NatalObservation, TransitObservation,
+  YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate,
+)
+from bazi.analyzer.relationship import RelationshipEvidence
 from bazi.defines import Tiangan, DizhiRelation
 from bazi.defines import Dizhi as _Dizhi
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
@@ -18,28 +22,29 @@ from bazi.transits import TransitKind, TransitSet
 from bazi.defines import Ganzhi
 
 from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from, load_knowledge
+from matching_samples import condition_entries, relationship_evidence, obtained_transits
 
 
 def test_month_and_date_coordinates_render() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
-  profile = RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_month', gz_year=2024, gz_month=_Dizhi.辰),
+  observation = TransitObservation(
     (TransitKind.DAYUN, TransitKind.LIUNIAN),
+    MonthCoordinate(ganzhi_year=2024, ganzhi_month=_Dizhi.辰),
   )
-  result = evaluate_context(c, criterion_id=TOUGAN, profile=profile, include_reference_only=True)
-  assert result.profile == profile and result.occurrences == () and result.entries == ()
-  assert result.related == (RelatedEntry(RELATED_TOUGAN, True),)
-  assert result.relationship is not None
-  assert result.relationship.star_target.tiangan is Tiangan.癸 and result.relationship.star_target.dizhi == (_Dizhi.子,)
-  assert result.relationship.transits == TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲辰'))
+  result = evaluate_context(c, criterion_id=TOUGAN, observation=observation, include_reference_only=True)
+  assert result.observation == observation and isinstance(result.evidence, RelationshipEvidence)
+  assert condition_entries(result) == (RelatedEntry(RELATED_TOUGAN, True),)
+  evidence = relationship_evidence(result)
+  assert evidence.star_target.tiangan is Tiangan.癸 and evidence.star_target.dizhi == (_Dizhi.子,)
+  assert evidence.transits == TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲辰'))
   assert '范围：natal_and_transits；坐标=at_month；干支年=2024；干支月=辰；' in result.render()
   assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]；未取得种类=[]' in result.render()
-  at_date = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_date', solar_date=date(2024, 4, 10)),
+  at_date = evaluate_context(c, criterion_id=TOUGAN, observation=TransitObservation(
     (TransitKind.LIUNIAN, TransitKind.LIUYUE, TransitKind.LIURI),
+    DateCoordinate(solar_date=date(2024, 4, 10)),
   ))
   assert at_date.criterion.scope_complete is True
-  assert at_date.relationship is not None and at_date.relationship.transits is not None
+  assert relationship_evidence(at_date).transits is not None
   assert '坐标=at_date；公历日=2024-04-10' in at_date.render()
 
 
@@ -53,7 +58,7 @@ def test_palace_verdict_matches_observations() -> None:
   assert unsatisfied.criterion.status == 'NOT_SATISFIED' and unsatisfied.criterion.reason == 'required_classification_absent'
   assert dict(unsatisfied.criterion.observations) == {'day_pillar_in_chong': False, 'day_pillar_in_xing': False}
   for result in (satisfied, unsatisfied):
-    assert result.occurrences == () and result.entries == () and result.relationship is not None
+    assert isinstance(result.evidence, RelationshipEvidence)
 
 
 def test_tougan_verdict_matches_observations() -> None:
@@ -65,27 +70,27 @@ def test_tougan_verdict_matches_observations() -> None:
   assert hidden_only.criterion.status == 'NOT_SATISFIED'
   assert dict(hidden_only.criterion.observations) == {'target_stem_visible': False, 'target_stem_hidden': True}
   for result in (visible, hidden_only):
-    assert result.occurrences == () and result.entries == () and result.relationship is not None
+    assert isinstance(result.evidence, RelationshipEvidence)
 
 
 def test_relationship_scope_missing_data_paths() -> None:
   c = chart_from('2000-01-01 12:00', 'male') # born 2000-01-01, 干支年 1999.
   # Missing query coordinate: kinds stay explicitly non-empty; UNKNOWN/missing_transit_coordinate with transits None.
-  no_coordinate = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.DAYUN),
+  no_coordinate = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN, TransitKind.DAYUN),
   ))
   assert no_coordinate.criterion.status == 'UNKNOWN' and no_coordinate.criterion.reason == 'missing_transit_coordinate'
   assert no_coordinate.criterion.scope_complete is False
-  assert no_coordinate.relationship is not None and no_coordinate.relationship.transits is None
+  assert relationship_evidence(no_coordinate).transits is None
   # Before birth: the entry returns None → transit_unavailable.
-  before_birth = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=1998), (TransitKind.LIUNIAN,),
+  before_birth = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=1998),
   ))
   assert before_birth.criterion.reason == 'transit_unavailable'
-  assert before_birth.relationship is not None and before_birth.relationship.transits is None
+  assert relationship_evidence(before_birth).transits is None
   # A DAY-precision at_moment entry is unavailable → transit_unavailable.
-  day_precision = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12)), (TransitKind.LIUNIAN,),
+  day_precision = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN,), MomentCoordinate(solar_moment=datetime(2024, 4, 10, 12)),
   ))
   assert day_precision.criterion.reason == 'transit_unavailable'
   for result in (no_coordinate, before_birth, day_precision):
@@ -96,59 +101,54 @@ def test_relationship_scope_missing_data_paths() -> None:
 def test_partial_kinds_keep_obtained_evidence() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
   # No 小运 after adulthood: requesting {小运, 大运} obtains only 大运 → UNKNOWN/transit_unavailable, evidence of obtained kinds kept.
-  partial = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN),
+  partial = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.XIAOYUN, TransitKind.DAYUN), YearCoordinate(ganzhi_year=2024),
   ))
   assert partial.criterion.reason == 'transit_unavailable' and partial.criterion.scope_complete is False
-  assert partial.relationship is not None
-  assert partial.relationship.transits is not None
-  assert tuple(partial.relationship.transits) == (TransitKind.DAYUN,)
-  assert isinstance(partial.profile, RelationshipProfile) and partial.profile.kinds == (TransitKind.XIAOYUN, TransitKind.DAYUN)
+  assert tuple(obtained_transits(partial)) == (TransitKind.DAYUN,)
+  assert isinstance(partial.observation, TransitObservation) and partial.observation.kinds == (TransitKind.XIAOYUN, TransitKind.DAYUN)
 
 
 def test_missing_kinds_return_no_transits() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
   # Fully missing: only 小运 requested and none that year → empty intersection, transits None; the underlying select exception is not raised.
-  all_missing = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.XIAOYUN,),
+  all_missing = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.XIAOYUN,), YearCoordinate(ganzhi_year=2024),
   ))
   assert all_missing.criterion.reason == 'transit_unavailable'
-  assert all_missing.relationship is not None and all_missing.relationship.transits is None
-  assert isinstance(all_missing.profile, RelationshipProfile) and all_missing.profile.kinds == (TransitKind.XIAOYUN,)
+  assert relationship_evidence(all_missing).transits is None
+  assert isinstance(all_missing.observation, TransitObservation) and all_missing.observation.kinds == (TransitKind.XIAOYUN,)
 
 
 def test_complete_kinds_keep_fixed_order() -> None:
   c = chart_from('2000-01-01 12:00', 'male')
   # All requested kinds obtained: verdict per the criterion, obtained set in fixed order.
-  complete = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN, TransitKind.DAYUN),
+  complete = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN, TransitKind.DAYUN), YearCoordinate(ganzhi_year=2024),
   ))
   assert complete.criterion.status == 'SATISFIED' and complete.criterion.scope_complete is True
-  assert complete.relationship is not None
-  assert complete.relationship.transits is not None
-  assert tuple(kind for kind, _ in complete.relationship.transits.items) == (TransitKind.DAYUN, TransitKind.LIUNIAN)
-  assert isinstance(complete.profile, RelationshipProfile) and complete.profile.kinds == (TransitKind.DAYUN, TransitKind.LIUNIAN)
+  assert tuple(kind for kind, _ in obtained_transits(complete).items) == (TransitKind.DAYUN, TransitKind.LIUNIAN)
+  assert isinstance(complete.observation, TransitObservation) and complete.observation.kinds == (TransitKind.DAYUN, TransitKind.LIUNIAN)
 
 
 def test_moment_microseconds_equal_but_recorded() -> None:
   c = BaziChart(Bazi.create('2000-01-01 12:00', 'male', BaziConfig.from_values(precision='hour')))
-  profile_a = RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, 30, 0, 500000)),
+  observation_a = TransitObservation(
     (TransitKind.LIUNIAN, TransitKind.LIUYUE),
+    MomentCoordinate(solar_moment=datetime(2024, 4, 10, 12, 30, 0, 500000)),
   )
-  profile_b = RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, 29, 59, 750000)),
+  observation_b = TransitObservation(
     (TransitKind.LIUNIAN, TransitKind.LIUYUE),
+    MomentCoordinate(solar_moment=datetime(2024, 4, 10, 12, 29, 59, 750000)),
   )
-  left = evaluate_context(c, criterion_id=PALACE, profile=profile_a)
-  right = evaluate_context(c, criterion_id=PALACE, profile=profile_b)
-  assert left.criterion == right.criterion and left.relationship == right.relationship
+  left = evaluate_context(c, criterion_id=PALACE, observation=observation_a)
+  right = evaluate_context(c, criterion_id=PALACE, observation=observation_b)
+  assert left.criterion == right.criterion and left.evidence == right.evidence
   assert left != right # Results keep the request as given, with no fake sub-second precision.
-  assert isinstance(left.profile, RelationshipProfile) and isinstance(right.profile, RelationshipProfile)
-  assert left.profile.coordinate is not None
-  assert left.profile.coordinate.solar_moment is not None
-  assert left.profile.coordinate.solar_moment.microsecond == 500000
-  assert left.profile.coordinate.solar_moment.isoformat() == '2024-04-10T12:30:00.500000'
+  assert isinstance(left.observation, TransitObservation) and isinstance(right.observation, TransitObservation)
+  assert isinstance(left.observation.coordinate, MomentCoordinate)
+  assert left.observation.coordinate.solar_moment.microsecond == 500000
+  assert left.observation.coordinate.solar_moment.isoformat() == '2024-04-10T12:30:00.500000'
 
 
 def test_relationship_reference_matrix() -> None:
@@ -158,19 +158,19 @@ def test_relationship_reference_matrix() -> None:
   hidden: dict[str, Any] = {'include_reference_only': True}
 
   # False × anything: no reference section.
-  off = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'))
-  assert off.related == () and '关联参考' not in off.render()
+  off = evaluate_context(male, criterion_id=PALACE, observation=NatalObservation())
+  assert condition_entries(off) == () and '关联参考' not in off.render()
 
   # True × male × SATISFIED/NOT_SATISFIED/UNKNOWN (two reasons): entry returned, recognized=True.
   for result in (
-    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
-    evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden),
-    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN,)), **hidden),
-    evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile(
-      'natal_and_transits', TransitCoordinate('at_year', gz_year=1998), (TransitKind.LIUNIAN,)), **hidden),
+    evaluate_context(male, criterion_id=PALACE, observation=NatalObservation(), **hidden),
+    evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, observation=NatalObservation(), **hidden),
+    evaluate_context(male, criterion_id=PALACE, observation=TransitObservation((TransitKind.LIUNIAN,)), **hidden),
+    evaluate_context(male, criterion_id=PALACE, observation=TransitObservation(
+      (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=1998)), **hidden),
   ):
-    assert [entry.claim_id for entry in result.related] == [RELATED_PALACE]
-    assert all(entry.recognized for entry in result.related)
+    assert [entry.claim_id for entry in condition_entries(result)] == [RELATED_PALACE]
+    assert all(entry.recognized for entry in condition_entries(result))
     rendered = result.render()
     assert '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE in rendered
     assert knowledge_text(RELATED_PALACE) in rendered
@@ -181,16 +181,16 @@ def test_relationship_reference_matrix() -> None:
     assert '前提满足只表示本范围内的原作使用条件满足' not in rendered
 
   # True × female: the two gated entries are never related (same-ID replacement included); structure is still evaluated; static queries stay unrestricted.
-  female_result = evaluate_context(female, criterion_id=PALACE, profile=RelationshipProfile('natal'), **hidden)
-  assert female_result.related == () and '关联参考' not in female_result.render()
+  female_result = evaluate_context(female, criterion_id=PALACE, observation=NatalObservation(), **hidden)
+  assert condition_entries(female_result) == () and '关联参考' not in female_result.render()
   assert female_result.criterion.status == 'SATISFIED' # female charts are still evaluated by the structural criteria.
   knowledge = KnowledgeBase.load()
   assert knowledge.entry(RELATED_PALACE).text and knowledge.entry(RELATED_TOUGAN).text
 
   # True × male × entry missing from the knowledge base: no RelatedEntry is produced.
   trimmed = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())
-  missing = evaluate_context(male, criterion_id=PALACE, profile=RelationshipProfile('natal'), knowledge=trimmed, **hidden)
-  assert missing.related == () and '关联参考' not in missing.render()
+  missing = evaluate_context(male, criterion_id=PALACE, observation=NatalObservation(), knowledge=trimmed, **hidden)
+  assert condition_entries(missing) == () and '关联参考' not in missing.render()
 
 
 def knowledge_text(claim_id: str) -> str:
@@ -214,14 +214,14 @@ def test_female_gate_comes_before_binding(dimension: str, tmp_path: Path) -> Non
   custom = load_knowledge(data, tmp_path)
 
   female = evaluate_context(chart_from('2000-01-01 12:00', 'female'), criterion_id=PALACE,
-                            profile=RelationshipProfile('natal'), knowledge=custom, include_reference_only=True)
-  assert female.related == () and '关联参考' not in female.render()
+                            observation=NatalObservation(), knowledge=custom, include_reference_only=True)
+  assert condition_entries(female) == () and '关联参考' not in female.render()
   assert '（编辑口径）' not in female.render()
 
   male = evaluate_context(chart_from('2000-01-01 12:00', 'male'), criterion_id=PALACE,
-                          profile=RelationshipProfile('natal'), knowledge=custom, include_reference_only=True)
-  assert [entry.claim_id for entry in male.related] == [RELATED_PALACE]
-  assert male.related[0] == RelatedEntry(RELATED_PALACE, False)
+                          observation=NatalObservation(), knowledge=custom, include_reference_only=True)
+  assert [entry.claim_id for entry in condition_entries(male)] == [RELATED_PALACE]
+  assert condition_entries(male)[0] == RelatedEntry(RELATED_PALACE, False)
   rendered = male.render()
   assert ('关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE + '；绑定未识别') in rendered
   assert '绑定未识别' in rendered
@@ -238,10 +238,10 @@ def test_transits_flip_palace_tougan_verdicts() -> None:
   c = chart_from('2000-01-09 12:00', 'male')
 
   def verdict(criterion_id: str, year: int | None) -> ContextResult:
-    profile = RelationshipProfile('natal') if year is None else RelationshipProfile(
-      'natal_and_transits', TransitCoordinate('at_year', gz_year=year), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+    observation = NatalObservation() if year is None else TransitObservation(
+      (TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(ganzhi_year=year),
     )
-    return evaluate_context(c, criterion_id=criterion_id, profile=profile)
+    return evaluate_context(c, criterion_id=criterion_id, observation=observation)
 
   # 宫刑冲: NOT at birth; SAT in 2016 (乙亥大运、丙申流年, 申寅刑冲); NOT again in 2021／2024.
   assert verdict(PALACE, None).criterion.status == 'NOT_SATISFIED'
@@ -249,8 +249,7 @@ def test_transits_flip_palace_tougan_verdicts() -> None:
   assert flipped.criterion.status == 'SATISFIED' and flipped.criterion.reason == 'premise_satisfied'
   assert flipped.criterion.scope_complete is True
   assert dict(flipped.criterion.observations) == {'day_pillar_in_chong': True, 'day_pillar_in_xing': True}
-  assert flipped.relationship is not None and flipped.relationship.transits is not None
-  assert flipped.relationship.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申'))
+  assert obtained_transits(flipped) == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申'))
   for year in (2021, 2024):
     stayed = verdict(PALACE, year)
     assert stayed.criterion.status == 'NOT_SATISFIED' and stayed.criterion.scope_complete is True
@@ -271,8 +270,8 @@ def test_render_labels_categories_scopes() -> None:
   ) in rendered
   assert '证据：原局×岁运；无' in rendered and '证据：岁运内部；无' in rendered
   # Cross-group combos land in the 原局×岁运 section; the 2016 岁运 flips the 宫刑冲 criterion from NOT to SAT.
-  transits = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2016), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  transits = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(ganzhi_year=2016),
   ))
   rendered = transits.render()
   assert (
@@ -280,8 +279,8 @@ def test_render_labels_categories_scopes() -> None:
     '宫·破：2:丙寅、4:乙亥；宫·生：2:丙寅、4:乙亥；宫·克：2:丙寅、5:丙申'
   ) in rendered
   # 明干 category: 辛 shows in the 2021 辛丑流年, so transit 明干 combos carry the 「明干」 label; pure-transit combos land in the 岁运内部 section.
-  toug = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=TOUGAN, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2021), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  toug = evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=TOUGAN, observation=TransitObservation(
+    (TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(ganzhi_year=2021),
   ))
   rendered = toug.render()
   assert '明干·合：2:丙寅、5:辛丑' in rendered
@@ -293,11 +292,11 @@ def test_render_labels_categories_scopes() -> None:
 def test_cross_group_gong_precise_participants() -> None:
   # Male chart 戊寅己未甲申甲戌 (1998-08-05 20:00): at_year 2054 (干支年 label, 甲戌流年) queried for real.
   c = chart_from('1998-08-05 20:00', 'male')
-  result = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2054), (TransitKind.LIUNIAN,),
+  result = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=2054),
   ), include_reference_only=True)
   assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
-  evidence = result.relationship
+  evidence = relationship_evidence(result)
   assert evidence is not None and evidence.transits is not None
   assert evidence.transits == TransitSet(liunian=Ganzhi.from_str('甲戌'))
   # 拱会 is exactly 原局内部 {2,3} and 原局×岁运 {2,4}; index 2 is the day pillar 甲申,
@@ -315,24 +314,24 @@ def test_yinyanggan_evaluation_input_identity() -> None:
   # Male chart with 乙 day master (2000-01-08 12:00, 己卯丁丑乙丑壬午): the 阴阳干读法 targets 己 (丑、未).
   # The non-default definition remains part of the result's input identity.
   c = BaziChart(Bazi.create('2000-01-08 12:00', 'male', BaziConfig(school=BaziSchool(peiou_xing_def=PeiouXingDef.YINYANGGAN))))
-  result = evaluate_context(c, criterion_id=TOUGAN, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  result = evaluate_context(c, criterion_id=TOUGAN, observation=TransitObservation(
+    (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=2024),
   ))
   assert result.criterion.status == 'SATISFIED' and result.criterion.reason == 'premise_satisfied'
-  evidence = result.relationship
+  evidence = relationship_evidence(result)
   assert evidence is not None
   assert evidence.star_target.tiangan is Tiangan.己 and evidence.star_target.dizhi == (_Dizhi.丑, _Dizhi.未)
   assert result.bazi.config.school.peiou_xing_def is PeiouXingDef.YINYANGGAN
 
 
 def test_location_chart_evaluation_input() -> None:
-  # Location chart (真太阳时) combined with a 婚恋 profile and an at_year query.
+  # Location chart (真太阳时) combined with a 婚恋 observation and an at_year query.
   c = BaziChart(Bazi.create(
     '2024-01-01T12:00:00+14:00', 'male',
     BaziConfig.from_values(precision='minute'), longitude=-157.4,
   ))
-  result = evaluate_context(c, criterion_id=PALACE, profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUNIAN,),
+  result = evaluate_context(c, criterion_id=PALACE, observation=TransitObservation(
+    (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=2024),
   ))
   assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete is True
   assert result.bazi == c.bazi and result.bazi.location_time is not None

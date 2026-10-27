@@ -53,8 +53,8 @@ print(
 
 分析层的 `shensha['kongwang']` 是命中地支的并集。要看依据哪一锚、命中哪个位置，使用
 {py:attr}`~bazi.analyzer.relationship.AtBirthAnalysis.kongwang` 或
-{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是年／日来源，
-`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项保留原局柱位或流运种类及完整目标干支。
+{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是 `Zhu.年`／`Zhu.日`，
+`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项的 `position` 为原局柱位 `Zhu` 或流运种类 `TransitKind`，并保留完整目标干支。
 
 ```{testcode} kongwang-details
 from bazi.analyzer.relationship import RelationshipAnalyzer
@@ -74,10 +74,10 @@ chart = BaziChart(
 analyzer = RelationshipAnalyzer(chart)
 for result in analyzer.at_birth.kongwang:
   print(
-    result.anchor,
+    str(result.anchor),
     str(result.ganzhi),
     sorted(map(str, result.xunkong)),
-    [(hit.pillar, str(hit.ganzhi)) for hit in result.hits],
+    [(str(hit.position), str(hit.ganzhi)) for hit in result.hits],
   )
 
 transits = TransitSet(
@@ -86,8 +86,8 @@ transits = TransitSet(
 )
 for result in analyzer.transits.kongwang(transits):
   print(
-    result.anchor,
-    [(hit.kind.value, str(hit.ganzhi)) for hit in result.hits],
+    str(result.anchor),
+    [(hit.position.value, str(hit.ganzhi)) for hit in result.hits],
   )
 assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
   hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
@@ -95,15 +95,19 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 ```
 
 ```{testoutput} kongwang-details
-year 甲子 ['亥', '戌'] [('day', '壬戌')]
-day 壬戌 ['丑', '子'] [('year', '甲子')]
-year [('dayun', '甲戌'), ('liunian', '甲戌')]
-day []
+年 甲子 ['亥', '戌'] [('日', '壬戌')]
+日 壬戌 ['丑', '子'] [('年', '甲子')]
+年 [('dayun', '甲戌'), ('liunian', '甲戌')]
+日 []
 ```
 
 原局排除锚自身柱；流运只用本命锚查流运支，不反向查询。无命中仍保留二支；同支不同柱、
 同干支不同流运种类、同值的年日双锚均不合并。这里只标原始命中，不删除地支，不以冲合刑取消，
 不改变五行、十神、纳音或其他关系，也不判断出空、填实与吉凶。单支筛选、截路、四大空亡未在此接口实现。
+
+配偶星的 `StarAppearance` 同样用 `position` 区分原局柱位与流运种类；`layer` 为
+`TianganLayer.明干`／`TianganLayer.藏干`。这两个类型从 `bazi.defines` 导入，中文类别名分别为
+`柱` 和 `天干层次`。打印位置或层次用 `str(value)` 取得中文值，不依赖枚举的 repr。
 
 ## 查一年的流运和一个关系
 

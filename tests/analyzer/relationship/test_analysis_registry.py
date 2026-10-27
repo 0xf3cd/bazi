@@ -204,11 +204,11 @@ def test_every_anchor_member_is_wired_to_pillars() -> None:
   # 不变量——新成员漏登记的话，只会在查法时抛裸 `KeyError`。
   pillars = relationship_module._ANCHOR_PILLARS
   assert set(pillars) == set(Anchor)
-  for anchor, indices in pillars.items():
-    assert indices, anchor
-    assert all(0 <= i < 4 for i in indices), anchor          # Four pillars, 年月日时.
-    assert list(indices) == sorted(set(indices)), anchor     # Ascending and distinct: the
-                                                             # call order follows pillar order.
+  for anchor, positions in pillars.items():
+    assert positions, anchor
+    indices = tuple(position.index for position in positions)
+    assert all(0 <= i < 4 for i in indices), anchor
+    assert list(indices) == sorted(set(indices)), anchor # Call order follows pillar order.
 
 
 def test_registry_anchors_are_the_declared_table() -> None:

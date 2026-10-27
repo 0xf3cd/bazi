@@ -8,17 +8,18 @@ from typing import Any
 import pytest
 
 from bazi.bazi import Bazi
-from bazi.context_matching import ContextProfile, EntryMatch, evaluate_context
+from bazi.context_matching import NatalObservation, EntryMatch, evaluate_context
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 from bazi.transit_chart import TransitChart
 
 from matching_samples import GUANSHA, FEMALE, LEGAL, chart, match, load_knowledge
+from matching_samples import premise_entries
 
 
 def test_reference_binding_keeps_eligibility() -> None:
   knowledge = KnowledgeBase.load()
-  default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'))
-  assert default.criterion.status == 'SATISFIED' and default.entries == ()
+  default = evaluate_context(chart(), criterion_id=GUANSHA, observation=NatalObservation())
+  assert default.criterion.status == 'SATISFIED' and premise_entries(default) == ()
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
@@ -57,8 +58,8 @@ def test_premise_annotations_are_evaluation_only(day: int, status: str) -> None:
   result = match(day)
   knowledge = result.knowledge
   text = result.render()
-  assert len(result.entries) == 2
-  for entry_match in result.entries:
+  assert len(premise_entries(result)) == 2
+  for entry_match in premise_entries(result):
     block = text.split(f'原作参考前提：{entry_match.claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
     entry = knowledge.entry(entry_match.claim_id)
     assert f'输出资格：{entry.output}' in block and f'前提判别：{status}' in block
@@ -81,7 +82,7 @@ def test_multiline_custom_text_keeps_one_copy(separator: str) -> None:
   assert '命盘适用性未判断' not in rendered
   assert knowledge.render(knowledge.entry(claim_id)).count(text) == 1
   assert '命盘适用性未判断' in knowledge.render(knowledge.entry(claim_id))
-  assert result.entries[0].reason == 'binding_unrecognized'
+  assert premise_entries(result)[0].reason == 'binding_unrecognized'
   assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
   assert result.render() == rendered
 
@@ -107,11 +108,11 @@ def test_same_id_binding_is_not_authentication(dimension: str, tmp_path: Path) -
   custom = load_knowledge(data, tmp_path)
   result = match(knowledge=custom)
   assert result.criterion.status == 'SATISFIED'
-  assert result.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
+  assert premise_entries(result)[0] == EntryMatch(LEGAL[0], 'binding_unrecognized')
   assert result.knowledge is custom
   if dimension == 'qualification':
-    default = evaluate_context(chart(), criterion_id=GUANSHA, profile=ContextProfile('natal'), knowledge=custom)
-    assert default.entries == (EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized'),)
+    default = evaluate_context(chart(), criterion_id=GUANSHA, observation=NatalObservation(), knowledge=custom)
+    assert premise_entries(default) == (EntryMatch(LEGAL[0], 'binding_unrecognized'),)
     assert '输出资格：default' in default.render() and '前提判别：UNKNOWN' in default.render()
 
 
@@ -119,5 +120,5 @@ def test_custom_bindings_missing_entries() -> None:
   knowledge = KnowledgeBase.load()
   selection = knowledge.query(context_id='editorial.guansha_coexistence', include_reference_only=True)
   custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), selection)
-  assert match(knowledge=custom).entries == match().entries
-  assert match(knowledge=KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())).entries == ()
+  assert premise_entries(match(knowledge=custom)) == premise_entries(match())
+  assert premise_entries(match(knowledge=KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ()))) == ()

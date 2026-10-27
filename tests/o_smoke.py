@@ -37,12 +37,18 @@ def main() -> int:
   from fractions import Fraction
   from zoneinfo import ZoneInfo
   from unittest.mock import patch
+  from typing import get_args
 
-  from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
+  from bazi.defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
-  from bazi.context_matching import ContextProfile, criterion as lookup_criterion, evaluate_context
+  from bazi.context_matching import (
+    NatalObservation, LiunianObservation, TransitObservation, LiunianPosition, ChartOccurrence,
+    YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, ScopeName, CriterionReason,
+    CriterionResult, EntryMatch, PremiseMatches, ConditionReferences, RelatedEntry,
+    criterion as lookup_criterion, evaluate_context,
+  )
   from bazi.common import frozendict
   from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
@@ -74,10 +80,9 @@ def main() -> int:
   location_config = BaziConfig.from_values(precision='minute')
   civil_zone = timezone(timedelta(hours=14))
   local_chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female', location_config, longitude=-157.4))
-  local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
-  from bazi.context_matching import RelatedEntry, RelationshipProfile, TransitCoordinate
+  local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation())
   from bazi.analyzer.relationship import StarAppearance
-  relationship_result = evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', profile=RelationshipProfile('natal'))
+  relationship_result = evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', observation=NatalObservation())
   def load_source(text: str) -> KnowledgeBase:
     with TemporaryDirectory(prefix='bazi-source-', dir=os.environ.get('SCRATCH')) as directory:
       source = Path(directory) / 'knowledge.json'
@@ -129,74 +134,60 @@ def main() -> int:
      lambda: Bazi.create(aware_birth, 'male', location_config, longitude=0.0, civil_timezone='+14:00')), # type: ignore[arg-type]
     ('Bazi constructor civil timezone wrong type', TypeError,
      lambda: Bazi(aware_birth, BaziGender.男, location_config, longitude=0.0, civil_timezone=14)), # type: ignore[arg-type]
-    ('ContextProfile rejects bool year', TypeError,
-     lambda: ContextProfile('natal_and_liunian', True)),
-    ('ContextProfile rejects int subclass year', TypeError,
-     lambda: ContextProfile('natal_and_liunian', Year(2024))),
-    ('ContextProfile rejects wrong scope type', TypeError,
-     lambda: ContextProfile(42)), # type: ignore[arg-type]
-    ('ContextProfile rejects unsupported scope', ValueError,
-     lambda: ContextProfile('dayun')), # type: ignore[arg-type]
-    ('ContextProfile rejects natal coordinate', ValueError,
-     lambda: ContextProfile('natal', 2024)),
-    ('TransitCoordinate rejects bool year', TypeError,
-     lambda: TransitCoordinate('at_year', gz_year=True)),
-    ('TransitCoordinate rejects tz-aware moment', ValueError,
-     lambda: TransitCoordinate('at_moment', solar_moment=datetime(2024, 4, 10, 12, tzinfo=ZoneInfo('Asia/Shanghai')))),
-    ('TransitCoordinate rejects datetime as date', TypeError,
-     lambda: TransitCoordinate('at_date', solar_date=datetime(2024, 4, 10, 12))),
-    ('TransitCoordinate rejects missing entry field', ValueError,
-     lambda: TransitCoordinate('at_month', gz_year=2024)),
-    ('TransitCoordinate rejects foreign entry field', ValueError,
-     lambda: TransitCoordinate('at_year', gz_year=2024, gz_month=Dizhi.辰)),
-    ('RelationshipProfile rejects unsupported scope', ValueError,
-     lambda: RelationshipProfile('natal_and_liunian')), # type: ignore[arg-type]
-    ('RelationshipProfile rejects natal transit inputs', ValueError,
-     lambda: RelationshipProfile('natal', None, (TransitKind.LIUNIAN,))),
-    ('RelationshipProfile rejects non-tuple kinds', TypeError,
-     lambda: RelationshipProfile('natal_and_transits', None, [TransitKind.LIUNIAN])), # type: ignore[arg-type]
-    ('RelationshipProfile rejects duplicate kinds', ValueError,
-     lambda: RelationshipProfile('natal_and_transits', None, (TransitKind.LIUNIAN, TransitKind.LIUNIAN))),
-    ('RelationshipProfile rejects kinds beyond the entry', ValueError,
-     lambda: RelationshipProfile('natal_and_transits', TransitCoordinate('at_year', gz_year=2024), (TransitKind.LIUYUE,))),
-    ('evaluate_context rejects profile kind mismatch', ValueError,
-     lambda: evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', profile=ContextProfile('natal'))),
-    ('Relationship record rejects mixed context profile', ValueError,
-     lambda: replace(relationship_result, profile=ContextProfile('natal'))),
+    ('LiunianObservation rejects bool year', TypeError, lambda: LiunianObservation(True)),
+    ('LiunianObservation rejects int subclass year', TypeError, lambda: LiunianObservation(Year(2024))),
+    ('LiunianPosition rejects bool year', TypeError, lambda: LiunianPosition(True)),
+    ('NatalObservation rejects a coordinate', TypeError, lambda: NatalObservation(2024)), # type: ignore[call-arg]
+    ('YearCoordinate rejects bool year', TypeError, lambda: YearCoordinate(True)),
+    ('YearCoordinate rejects int subclass', TypeError, lambda: YearCoordinate(Year(2024))),
+    ('MonthCoordinate rejects bool year', TypeError, lambda: MonthCoordinate(True, Dizhi.辰)),
+    ('MomentCoordinate rejects tz-aware moment', ValueError,
+     lambda: MomentCoordinate(datetime(2024, 4, 10, 12, tzinfo=ZoneInfo('Asia/Shanghai')))),
+    ('DateCoordinate rejects datetime', TypeError, lambda: DateCoordinate(datetime(2024, 4, 10, 12))),
+    ('MonthCoordinate rejects missing field', TypeError, lambda: MonthCoordinate(2024)), # type: ignore[call-arg]
+    ('YearCoordinate rejects foreign field', TypeError,
+     lambda: YearCoordinate(2024, ganzhi_month=Dizhi.辰)), # type: ignore[call-arg]
+    ('TransitObservation rejects empty kinds', ValueError, lambda: TransitObservation(())),
+    ('TransitObservation rejects non-tuple kinds', TypeError,
+     lambda: TransitObservation([TransitKind.LIUNIAN])), # type: ignore[arg-type]
+    ('TransitObservation rejects duplicate kinds', ValueError,
+     lambda: TransitObservation((TransitKind.LIUNIAN, TransitKind.LIUNIAN))),
+    ('TransitObservation rejects kinds beyond entry', ValueError,
+     lambda: TransitObservation((TransitKind.LIUYUE,), YearCoordinate(2024))),
+    ('evaluate_context rejects observation mismatch', ValueError,
+     lambda: evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', observation=LiunianObservation())),
+    ('Relationship record rejects liunian observation', ValueError,
+     lambda: replace(relationship_result, observation=LiunianObservation())),
     ('Context record rejects relationship evidence', ValueError,
-     lambda: replace(positive, relationship=relationship_result.relationship, related=relationship_result.related)),
-    ('StarAppearance rejects non-TransitKind kind', TypeError,
-     lambda: StarAppearance('transit', None, 'liuyue', Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
-    ('StarAppearance rejects non-str origin', TypeError,
-     lambda: StarAppearance(1, None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
-    ('StarAppearance rejects non-str layer', TypeError,
-     lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 1, Tiangan.辛)), # type: ignore[arg-type]
-    ('StarAppearance rejects non-str pillar', TypeError,
-     lambda: StarAppearance('natal', 1, None, Ganzhi.from_str('辛卯'), 'visible', Tiangan.辛)), # type: ignore[arg-type]
+     lambda: replace(positive, evidence=relationship_result.evidence)),
+    ('StarAppearance rejects string position', TypeError,
+     lambda: StarAppearance('liuyue', Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects integer position', TypeError,
+     lambda: StarAppearance(1, Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.辛)), # type: ignore[arg-type]
+    ('StarAppearance rejects string layer', TypeError,
+     lambda: StarAppearance(TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), '明干', Tiangan.辛)), # type: ignore[arg-type]
     ('spouse_evidence rejects non-chart', TypeError,
      lambda: spouse_evidence('chart', None)), # type: ignore[arg-type]
     ('spouse_evidence rejects non-TransitSet transits', TypeError,
      lambda: spouse_evidence(chart, 'transits')), # type: ignore[arg-type]
-    ('TransitCoordinate rejects str gz_month', TypeError,
-     lambda: TransitCoordinate('at_month', gz_year=2024, gz_month='辰')), # type: ignore[arg-type]
-    ('TransitCoordinate rejects date moment', TypeError,
-     lambda: TransitCoordinate('at_moment', solar_moment=date(2024, 4, 10))), # type: ignore[arg-type]
-    ('RelationshipProfile rejects non-coordinate', TypeError,
-     lambda: RelationshipProfile('natal_and_transits', 'at_year', (TransitKind.LIUNIAN,))), # type: ignore[arg-type]
+    ('MonthCoordinate rejects str month', TypeError, lambda: MonthCoordinate(2024, '辰')), # type: ignore[arg-type]
+    ('MomentCoordinate rejects date', TypeError, lambda: MomentCoordinate(date(2024, 4, 10))), # type: ignore[arg-type]
+    ('TransitObservation rejects non-coordinate', TypeError,
+     lambda: TransitObservation((TransitKind.LIUNIAN,), 'at_year')), # type: ignore[arg-type]
     ('RelatedEntry rejects non-bool recognized', TypeError,
      lambda: RelatedEntry('a.b', 1)), # type: ignore[arg-type]
     ('BaziSchool rejects non-enum peiou_xing_def', TypeError,
      lambda: BaziSchool(peiou_xing_def=1)), # type: ignore[arg-type]
     ('StarAppearance rejects visible stem mismatch', ValueError,
-     lambda: StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.庚)),
-    ('StarAppearance rejects natal kind coordinate', ValueError,
-     lambda: StarAppearance('natal', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)),
+     lambda: StarAppearance(TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.庚)),
+    ('StarAppearance rejects absent hidden stem', ValueError,
+     lambda: StarAppearance(Zhu.时, Ganzhi.from_str('辛亥'), TianganLayer.藏干, Tiangan.辛)),
     ('evaluate_context rejects unknown criterion', ValueError,
-     lambda: evaluate_context(chart, criterion_id='typo', profile=ContextProfile('natal'))),
-    ('evaluate_context rejects wrong profile', TypeError,
-     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile='natal')), # type: ignore[arg-type]
+     lambda: evaluate_context(chart, criterion_id='typo', observation=NatalObservation())),
+    ('evaluate_context rejects wrong observation', TypeError,
+     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation='natal')), # type: ignore[arg-type]
     ('evaluate_context rejects truthy reference flag', TypeError,
-     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=1)), # type: ignore[arg-type]
+     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation(), include_reference_only=1)), # type: ignore[arg-type]
     ('ContextResult rejects wrong Bazi input', TypeError,
      lambda: replace(local_result, _bazi=42)), # type: ignore[arg-type]
     ('Bazi.create below window (1901-01-01)', ValueError,
@@ -539,27 +530,30 @@ def main() -> int:
 
   kongwang_anchor = Ganzhi.from_str('甲子')
   kongwang_target = Ganzhi.from_str('甲戌')
-  kongwang_natal_hit = KongwangHit('natal', 'hour', None, kongwang_target)
-  kongwang_transit_hit = KongwangHit('transit', None, TransitKind.DAYUN, kongwang_target)
-  KongwangResult('day', kongwang_anchor, (kongwang_natal_hit,))
-  KongwangResult('year', kongwang_anchor, (kongwang_transit_hit,))
+  kongwang_natal_hit = KongwangHit(Zhu.时, kongwang_target)
+  kongwang_transit_hit = KongwangHit(TransitKind.DAYUN, kongwang_target)
+  KongwangResult(Zhu.日, kongwang_anchor, (kongwang_natal_hit,))
+  KongwangResult(Zhu.年, kongwang_anchor, (kongwang_transit_hit,))
+  for rejected_anchor in (Zhu.月, Zhu.YUE, Zhu.时, Zhu.SHI):
+    checks.append((
+      'KongwangResult rejects month/hour aliases', ValueError,
+      partial(KongwangResult, rejected_anchor, kongwang_anchor, ()), # type: ignore[arg-type] # 月／时不属于年日静态子集。
+    ))
   checks.extend([
     ('KongwangHit wrong Ganzhi type', TypeError,
-     lambda: KongwangHit('natal', 'hour', None, '甲戌')), # type: ignore[arg-type]
-    ('KongwangHit unknown natal pillar', ValueError,
-     lambda: replace(kongwang_natal_hit, pillar='unknown')), # type: ignore[arg-type]
-    ('KongwangHit natal coordinate with transit kind', ValueError,
-     lambda: replace(kongwang_natal_hit, kind=TransitKind.DAYUN)),
+     lambda: KongwangHit(Zhu.时, '甲戌')), # type: ignore[arg-type]
+    ('KongwangHit unknown position', TypeError,
+     lambda: replace(kongwang_natal_hit, position='unknown')), # type: ignore[arg-type]
     ('KongwangResult wrong Ganzhi type', TypeError,
-     lambda: KongwangResult('day', '甲子', ())), # type: ignore[arg-type]
+     lambda: KongwangResult(Zhu.日, '甲子', ())), # type: ignore[arg-type]
     ('KongwangResult unknown anchor', ValueError,
-     lambda: KongwangResult('month', kongwang_anchor, ())), # type: ignore[arg-type]
+     lambda: KongwangResult(Zhu.月, kongwang_anchor, ())), # type: ignore[arg-type] # 月不在年日静态子集中。
     ('KongwangResult mutable hits', TypeError,
-     lambda: KongwangResult('day', kongwang_anchor, [kongwang_natal_hit])), # type: ignore[arg-type]
+     lambda: KongwangResult(Zhu.日, kongwang_anchor, [kongwang_natal_hit])), # type: ignore[arg-type]
     ('KongwangResult hit outside xunkong', ValueError,
-     lambda: KongwangResult('day', kongwang_anchor, (replace(kongwang_natal_hit, ganzhi=kongwang_anchor),))),
+     lambda: KongwangResult(Zhu.日, kongwang_anchor, (replace(kongwang_natal_hit, ganzhi=kongwang_anchor),))),
     ('KongwangResult natal anchor inspects itself', ValueError,
-     lambda: KongwangResult('day', kongwang_anchor, (replace(kongwang_natal_hit, pillar='day'),))),
+     lambda: KongwangResult(Zhu.日, kongwang_anchor, (replace(kongwang_natal_hit, position=Zhu.日),))),
   ])
 
   for name, longitude_value in (('integer', 10 ** 10_000), ('fraction', Fraction(10 ** 10_000, 3))):
@@ -573,7 +567,7 @@ def main() -> int:
 
   criterion_metadata = lookup_criterion('editorial.guansha_coexistence.v1')
   for metadata_field in (
-    'criterion_id', 'definition', 'profile_type', 'entry_role', 'observation_keys',
+    'criterion_id', 'definition', 'analysis_kind', 'entry_role', 'observation_keys',
     'required_gender', 'claim_ids', 'claim_genders',
   ):
     checks.append((f'CriterionInfo rejects wrong {metadata_field}', TypeError,
@@ -582,7 +576,7 @@ def main() -> int:
     ('CriterionInfo rejects blank ID', ValueError, partial(replace, criterion_metadata, criterion_id=' ')),
     ('CriterionInfo rejects empty definition', ValueError, partial(replace, criterion_metadata, definition='')),
     ('CriterionInfo rejects empty metadata', ValueError, partial(replace, criterion_metadata, claim_ids=())),
-    ('CriterionInfo rejects unsupported profile type', ValueError, partial(replace, criterion_metadata, profile_type=int)),
+    ('CriterionInfo rejects unsupported analysis kind', ValueError, partial(replace, criterion_metadata, analysis_kind='unknown')),
     ('CriterionInfo remains frozen', AttributeError, partial(setattr, criterion_metadata, 'definition', 'changed')),
   ])
 
@@ -653,6 +647,9 @@ def main() -> int:
     for relations in (iter(DizhiRelation), [TianganRelation.合]):
       checks.append((f'{query.__name__} wrong relations', TypeError, partial(query, *args, relations=relations))) # type: ignore[arg-type]
   failures: list[str] = []
+  for anchor in (Zhu.年, Zhu.NIAN, Zhu.日, Zhu.RI):
+    if KongwangResult(anchor, kongwang_anchor, ()).anchor is not anchor:
+      failures.append('Optimized year/day anchor alias changed')
   for label, birth, basis in (
     ('UTC underflow', datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None),
     ('UTC overflow', datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))), None),
@@ -683,18 +680,40 @@ def main() -> int:
     legacy_bazi = Bazi.create(moment, 'female', location_config)
     if not (legacy_bazi != location_bazi and location_bazi != legacy_bazi and len({legacy_bazi, location_bazi}) == 2):
       failures.append('Optimized legacy/location identity partition failed')
-  missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian'))
+  missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation())
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')
-  positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal_and_liunian', 2024), include_reference_only=True)
-  if positive.criterion.status != 'SATISFIED' or len(positive.entries) != 2 or positive.bazi != chart.bazi:
+  positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation(2024), include_reference_only=True)
+  if positive.criterion.status != 'SATISFIED' or not isinstance(positive.references, PremiseMatches) or len(positive.references.entries) != 2 or positive.bazi != chart.bazi:
     failures.append('Optimized context evaluation/input failed')
-  condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', profile=ContextProfile('natal'), include_reference_only=True)
+  condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', observation=NatalObservation(), include_reference_only=True)
   checks.extend([
     ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
-    ('Premise record rejects condition references', ValueError, partial(replace, positive, related=condition.related)),
-    ('Condition record rejects premise matches', ValueError, partial(replace, condition, entries=positive.entries[:1])),
+    ('Premise record rejects condition references', ValueError, partial(replace, positive, references=condition.references)),
+    ('Condition record rejects premise matches', ValueError, partial(replace, condition, references=positive.references)),
+    ('CriterionResult rejects entry-only reason', ValueError,
+     partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'binding_unrecognized', frozendict({}))), # type: ignore[arg-type]
+    ('EntryMatch rejects unknown reason', ValueError, partial(EntryMatch, 'a.b', 'invalid')), # type: ignore[arg-type]
+    ('PremiseMatches rejects related members', TypeError, partial(PremiseMatches, (RelatedEntry('a.b', True),))), # type: ignore[arg-type]
+    ('ConditionReferences rejects premise members', TypeError, partial(ConditionReferences, (EntryMatch('a.b', 'premise_satisfied'),))), # type: ignore[arg-type]
+    ('ChartOccurrence rejects foreign position', TypeError,
+     partial(ChartOccurrence, TransitKind.LIUNIAN, Ganzhi.from_str('甲子'), TianganLayer.明干, Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))), # type: ignore[arg-type]
+    ('ChartOccurrence excludes day master visible', ValueError,
+     partial(ChartOccurrence, Zhu.日, Ganzhi.from_str('甲子'), TianganLayer.明干, Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))),
+    ('ChartOccurrence rejects string layer', TypeError,
+     partial(ChartOccurrence, Zhu.年, Ganzhi.from_str('甲子'), '明干', Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))), # type: ignore[arg-type]
+    ('ContextResult rejects unwrapped references', TypeError, partial(replace, positive, references=())),
+    ('ContextResult rejects foreign evidence', TypeError, partial(replace, positive, evidence=object())),
+    ('CriterionResult rejects non-bool observation', TypeError,
+     partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'premise_satisfied', frozendict({'known': 1}))), # type: ignore[dict-item]
   ])
+  if get_args(ScopeName) != ('natal', 'natal_and_liunian', 'natal_and_transits') or set(get_args(CriterionReason)) != {
+    'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
+    'missing_transit_coordinate', 'transit_unavailable',
+  }:
+    failures.append('Optimized scope/reason public subsets changed')
+  if PremiseMatches(()) == ConditionReferences(()):
+    failures.append('Optimized empty references lost their roles')
   def auxiliary_type_error(thunk: Callable[[], object], name: str, value: object) -> object:
     # Verify the canonical first failure even when Python strips every assert.
     try:

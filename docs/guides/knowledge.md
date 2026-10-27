@@ -421,7 +421,7 @@ from bazi.context_matching import criteria, criterion
 catalog = criteria()
 print(len(catalog))
 for criterion_id, info in catalog.items():
-  print(criterion_id, info.entry_role, info.profile_kind, len(info.claim_ids))
+  print(criterion_id, info.entry_role, info.analysis_kind, len(info.claim_ids))
 info = criterion('editorial.guansha_coexistence_female.v1')
 print(info.claim_ids)
 print(info.required_gender.value)
@@ -440,10 +440,14 @@ editorial.spouse_palace_xingchong.v1 condition relationship 1
 editorial.spouse_star_tougan.v1 condition relationship 1
 ('editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity')
 女
-('chart', 'criterion_id', 'profile') ('knowledge', 'include_reference_only')
+('chart', 'criterion_id', 'observation') ('knowledge', 'include_reference_only')
 ```
 
 这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
+
+`analysis_kind` 区分明藏干分类与婚恋结构分析；`observation_types` 和 `scopes` 由它派生，列出可接受的请求类和范围。
+`scope_inputs` 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。
+`transit_entries` 的年月字段为 ganzhi_year、ganzhi_month，CLI 对应的 flags 仍是 `--ganzhi-year`、`--gz-month`。
 
 ## 源码脚本
 

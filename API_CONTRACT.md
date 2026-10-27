@@ -29,7 +29,7 @@ assert chart.bazi.day_master in Tiangan
   由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
-- 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
+- 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。未发布结构调整新增的导出见下文。
 
 ### 字符串输入不等于枚举别名
 
@@ -52,8 +52,8 @@ assert chart.bazi.day_master in Tiangan
 
 `BaziSchool.kongwang_anchor` 尾部追加，默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
 `AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
-逐锚记录 `anchor`（`year`／`day`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
-`KongwangHit` 的 `origin='natal'` 时有 `pillar`、无 `kind`，`origin='transit'` 时相反；`ganzhi` 保留完整目标。
+逐锚记录 `anchor`（`Zhu.年`／`Zhu.日`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
+`KongwangHit(position, ganzhi)` 的 position 为原局柱位 `Zhu` 或流运种类 `TransitKind`；`ganzhi` 保留完整目标。
 无命中也返回该锚二支，双锚同值与重复目标位置不合并。原局排除锚自身柱，流运只从本命锚单向查询。
 详情命中投影为地支集合，等于 `shensha['kongwang']`。不删除支、不改其他关系，不实现解释性取消或吉凶判断。
 
@@ -148,9 +148,9 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 | 目录信息 | 含义 |
 |---|---|
 | `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含用于绑定识别的内部内容摘要。 |
-| `profile_type`、`profile_kind`、`scopes` | 需要的 profile 类型与合法范围，没有隐式范围默认值。 |
-| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外 profile 字段。 |
-| `transit_entries`、`transit_kinds` | 关系 profile 的坐标入口、必填坐标字段和结构上可支持的种类上限；不保证某盘实际可取得。ContextProfile 不接 TransitCoordinate。 |
+| `analysis_kind`、`observation_types`、`scopes` | 分析类别，以及由它派生的可接受观察请求类与合法范围；没有隐式范围默认值。 |
+| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外输入；关系范围按 coordinate、kinds 排序。 |
+| `transit_entries`、`transit_kinds` | 婚恋结构观察的坐标入口、必填字段及种类上限；不保证某盘实际可取得。单流年观察不接 TransitCoordinate。 |
 | `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`，不产生 UNKNOWN。 |
 | `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
 | `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
@@ -166,6 +166,82 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 `RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
 
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节保留绑定识别、范围和条目关联的合同，不重复维护调用示例。
+
+## 结构接口迁移
+
+以下调整属于当前未发布源码；命理规则、默认流派、历法算法与时钟口径不变。不保留旧构造器或兼容属性。
+
+### 位置、观察与坐标
+
+- `bazi.defines.Zhu`（中文类别名 `柱`）按年、月、日、时排列，成员为 `NIAN/YUE/RI/SHI` 与 `年/月/日/时`。
+  `TianganLayer`（`天干层次`）成员为 `MINGGAN/CANGGAN` 与 `明干/藏干`。两个类都从 defines 重导出；
+  定义模块分别是 defines.zhu 和 defines.tiangan。原局柱序与中文标签取自 Zhu，不再保留英文柱位词表。
+- `KongwangHit` 和 `StarAppearance` 的 origin/pillar/kind 三字段合成 position，类型为 `Zhu | TransitKind`。
+  `StarAppearance(position, ganzhi, layer, stem)` 的 layer 用 TianganLayer；明干与干支一致、藏干属于地支的检查保留。
+  `KongwangResult.anchor` 只接受年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查和运行时均拒绝。
+  配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
+- `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 position 为 `Zhu | LiunianPosition`；
+  后者保存具体 `ganzhi_year`。原局 index 为 0–3，流年为 4。任意输入序列的 GanzhiOccurrence.index 不受四柱限制。
+- `evaluate_context(..., observation=...)` 替代 profile 参数。`NatalObservation()` 供全部判据共用；
+  `LiunianObservation(ganzhi_year=None)` 用于原局加单流年，`TransitObservation(kinds, coordinate=None)` 用于婚恋结构岁运查询。
+  ScopeName 按 natal、natal_and_liunian、natal_and_transits 排序；ContextProfile、RelationshipProfile、Pillar 删除。
+
+| 具体坐标构造 | 含义 |
+| --- | --- |
+| `YearCoordinate(ganzhi_year)` | 干支年标签，年份须为确切 int，拒绝 bool 与子类。 |
+| `MonthCoordinate(ganzhi_year, ganzhi_month)` | 干支年月，月用 Dizhi；年份同上。 |
+| `DateCoordinate(solar_date)` | 东八区公历日，须为 date 本身，不接 datetime 或 date 子类。 |
+| `MomentCoordinate(solar_moment)` | 东八区无时区时刻，须为 datetime 本身；保留微秒请求身份，求值按秒解释。 |
+
+四类均从 context_matching 导入；TransitCoordinate 只保留为四者联合类型，不能再用 entry 加可选字段构造。
+库内直接构造时，缺字段／多余字段由构造器抛 TypeError；值错型或带时区则由各类显式检查。
+坐标缺失是合法观察请求，在求值时为 UNKNOWN；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
+这些严格请求不收紧 TransitChart 便捷入口原有的 bool/int 政策。
+
+### 结果构造与 dataclass 操作
+
+| 类型 | 实际构造字段 | 派生属性 |
+| --- | --- | --- |
+| `CriterionResult` | criterion_id、reason、observations | definition、status、scope_complete |
+| `EntryMatch` | claim_id、reason | status |
+| `ContextResult` | observation、criterion、evidence、references、_bazi、knowledge | bazi |
+| `PremiseMatches`／`ConditionReferences` | entries | 无 |
+
+ContextResult.evidence 保存 `tuple[ChartOccurrence, ...]` 或 RelationshipEvidence，references 分别保存完整前提匹配
+或条件参考，空 entries 也保留两种类型。删除 occurrences/relationship/entries/related 旧总结果字段。
+部分种类不可取得时仍保留取得部分的证据。出生输入独立深拷、知识对象复用及完整值身份保持。
+
+CriterionReason 仅有下表六因；MatchReason 另保留条目层 binding_unrecognized，对应 UNKNOWN。
+CriterionResult 不接受该条目原因；CriterionInfo 的自填 definition 仍只作形状校验，不套用注册定义派生。
+
+| CriterionReason | status | scope_complete |
+| --- | --- | --- |
+| premise_satisfied | SATISFIED | True |
+| required_classification_absent | NOT_SATISFIED | True |
+| day_master_differs | NOT_SATISFIED | True |
+| female_gate_false | NOT_SATISFIED | True |
+| missing_transit_coordinate | UNKNOWN | False |
+| transit_unavailable | UNKNOWN | False |
+
+scope_complete 由原因派生，不认证该原因与观察、请求年份或手填证据一致。原局观察手填缺流运原因、已给年份手填缺坐标原因等
+原有非认证组合不因这次调整新增拒绝；实际 evaluate_context 负责正确计算，婚恋范围／取得集合的既有自洽检查保留。
+
+固定 scope／entry 改为 ClassVar，仍可查阅，但不进入构造、repr、fields、asdict、相等／hash 或位置模式。
+上表的派生属性也不进入 fields/asdict／构造；dataclasses.replace 不能再传 status、definition、scope_complete。
+所有变更后的字段顺序同时改变 `__match_args__`：旧关键字或旧参数数量通常抛 TypeError，
+**旧位置式类模式也可能静默不匹配或把新字段绑定到旧含义**，不能只改构造调用而保留模式或解构代码。
+例如旧 `case CriterionResult(id, definition, status)` 现在会依次读取 criterion_id、reason、observations。
+需要属性值时显式读取；不要把 asdict 当作包含派生结论的导出记录。
+
+### 显示与农历年信息
+
+位置／明藏层显示改用枚举中文值，如 `natal.month` 改为 `natal.月`，`hidden` 改为 `藏干`；其他 scope、origin、kind 标签不改。
+CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项／多余项错误随之使用完整字段名，
+如 `Missing coordinate field for at_year: ganzhi_year` 和 `Unexpected coordinate field for at_year: ganzhi_month`，边界错误仍退出 2。
+
+`LunarYearInfo` 唯一定义归 calendar.dates；calendar.hko_data、calendar.hko_data.decoder、calendar.celestial_data.loader
+三路径规范重导出同一类型，`__module__` 现在指向 dates。其 first_solar_day、leap、leap_month、days_counts、ganzhi
+字段及字典／可变列表行为保持，查询仍按原约定返回独立副本。不新增转换壳或后端数据加载。
 
 ## 源码脚本
 

@@ -1,16 +1,26 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''历法日期与节气时刻的数据类型。
+'''历法日期、农历年表与节气时刻的数据类型。
 
 CalendarType 区分历法，CalendarDate 承载日期，JieqiTime 与 GanzhiYearMonth 保存相应坐标。'''
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
 
 from ..common import check_declared_types
-from ..defines import Dizhi, Jieqi
+from ..defines import Dizhi, Ganzhi, Jieqi
+
+
+class LunarYearInfo(TypedDict):
+  '''两后端共用的农历年字典；各月日数仍用可变列表，查询返回副本的约定由加载器负责。'''
+  first_solar_day: date        # 农历年首日的公历日期。
+  leap: bool                   # 是否有闰月。
+  leap_month: int | None       # 无闰月为 None，否则为闰月月份。
+  days_counts: list[int]       # 各月日数，平年十二项，闰年十三项。
+  ganzhi: Ganzhi               # 此年的干支。
+
 
 class CalendarType(Enum):
   '''

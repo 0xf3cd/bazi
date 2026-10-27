@@ -1,8 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''天干枚举 Tiangan 及中文名称天干。'''
+'''天干与明藏层次枚举，保留中文名称。'''
 
-from .enum_base import IndexedBaziEnum
+from .enum_base import BaziEnum, IndexedBaziEnum
 
 
 class Tiangan(IndexedBaziEnum):
@@ -31,3 +31,16 @@ class Tiangan(IndexedBaziEnum):
   癸  =  GUI
 
 天干 = Tiangan # 中文别名
+
+
+class TianganLayer(BaziEnum):
+  '''天干在一柱中的明干／藏干层次。'''
+  MINGGAN = '明干'
+  CANGGAN = '藏干'
+
+  # 中文别名
+  明干 = MINGGAN
+  藏干 = CANGGAN
+
+
+天干层次 = TianganLayer # 中文别名

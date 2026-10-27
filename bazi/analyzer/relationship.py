@@ -14,7 +14,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 from ..common import frozendict
 from ..data_types import GanzhiData
-from ..defines import Tiangan, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRelation
+from ..defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRelation
 from ..rules import DizhiRules
 from ..school import Anchor, BaziSchool
 from ..bazi import Bazi
@@ -36,11 +36,14 @@ class _AnchorKind(Enum):
   GANZHI  = auto()
 
 
-'''各 Anchor 选择的柱位序号，按年、月、日、时排序。'''
-_ANCHOR_PILLARS: Final[frozendict[Anchor, tuple[int, ...]]] = frozendict({
-  Anchor.YEAR:         (0,),
-  Anchor.DAY:          (2,),
-  Anchor.YEAR_AND_DAY: (0, 2),
+'''年／日锚点的四项拼写只有两个运行时成员；中、拼音别名均须能通过静态检查。'''
+_AnchorZhu = Literal[Zhu.年, Zhu.日, Zhu.NIAN, Zhu.RI]
+
+'''各 Anchor 选择的柱位，按年、月、日、时排序；多锚策略不作为单柱身份。'''
+_ANCHOR_PILLARS: Final[frozendict[Anchor, tuple[_AnchorZhu, ...]]] = frozendict({
+  Anchor.YEAR:         (Zhu.年,),
+  Anchor.DAY:          (Zhu.日,),
+  Anchor.YEAR_AND_DAY: (Zhu.年, Zhu.日),
 })
 
 '''在流派有分歧处，从命盘流派解析神煞锚柱。'''
@@ -142,16 +145,16 @@ SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
 })
 
 
-def _anchor_keys(spec: _ShenshaSpec, bazi: Bazi) -> tuple[tuple[int, Tiangan | Dizhi | Ganzhi], ...]:
-  '''该神煞在本盘上的柱位序号与查询值，按年、月、日、时排序。'''
+def _anchor_keys(spec: _ShenshaSpec, bazi: Bazi) -> tuple[tuple[_AnchorZhu, Tiangan | Dizhi | Ganzhi], ...]:
+  '''该神煞在本盘上的锚柱与查询值，按年、月、日、时排序。'''
   anchor = spec.anchor if isinstance(spec.anchor, Anchor) else spec.anchor(bazi.config.school)
   pillars = bazi.pillars
   if spec.kind is _AnchorKind.TIANGAN:
-    return tuple((index, pillars[index].tiangan) for index in _ANCHOR_PILLARS[anchor])
+    return tuple((zhu, pillars[zhu.index].tiangan) for zhu in _ANCHOR_PILLARS[anchor])
   elif spec.kind is _AnchorKind.DIZHI:
-    return tuple((index, pillars[index].dizhi) for index in _ANCHOR_PILLARS[anchor])
+    return tuple((zhu, pillars[zhu.index].dizhi) for zhu in _ANCHOR_PILLARS[anchor])
   elif spec.kind is _AnchorKind.GANZHI:
-    return tuple((index, pillars[index]) for index in _ANCHOR_PILLARS[anchor])
+    return tuple((zhu, pillars[zhu.index]) for zhu in _ANCHOR_PILLARS[anchor])
   else:
     assert_never(spec.kind) # pragma: no cover # _AnchorKind 的全部成员已在上方分派。
 
@@ -174,9 +177,9 @@ def _eval_at_birth(spec: _ShenshaSpec, bazi: Bazi) -> frozenset[Dizhi]:
   predicate = _shensha_predicate(spec, bazi.config.school)
   return frozenset(
     dz
-    for index, key in keys
+    for zhu, key in keys
     for candidate_index, dz in enumerate(dizhis)
-    if spec.kind is _AnchorKind.TIANGAN or candidate_index != index
+    if spec.kind is _AnchorKind.TIANGAN or candidate_index != zhu.index
     if predicate(key, dz)
   )
 
@@ -193,12 +196,9 @@ def _eval_transits(spec: _ShenshaSpec, bazi: Bazi, transit_dizhis: Iterable[Dizh
   )
 
 
-_DAY_PILLAR_INDEX: Final[int] = 2
-
-
 def _day_pillar_participates(combo: dizhi_utils.GanzhiRelationCombo) -> bool:
   '''检查组合中是否有日柱这一具体出现，不以相同地支值代替柱位。'''
-  return any(occurrence.index == _DAY_PILLAR_INDEX for occurrence in combo)
+  return any(occurrence.index == Zhu.日.index for occurrence in combo)
 
 
 def _project_gong(
@@ -276,38 +276,29 @@ class AtBirthShenshaAnalysis(ShenshaAnalysis):
   tianshe: Ganzhi | None
 
 
+def _check_position(position: Zhu | TransitKind) -> None:
+  '''原局柱位与流运种类是命中位置的两个互斥分支。'''
+  if not isinstance(position, (Zhu, TransitKind)):
+    raise TypeError(f'Expected Zhu | TransitKind, got {type(position)}')
+
+
 @dataclass(frozen=True)
 class KongwangHit:
   '''旬空命中的一处目标。原局保留柱位，流运保留种类；同支或同干支的不同位置不合并。
 
-  origin 为 natal 时 pillar 是年／月／日／时且 kind 为 None；transit 时相反。
+  position 是原局柱位或流运种类。
   ganzhi 保留完整目标，但查法只使用其地支，不加目标天干或纳音条件。
   '''
-  origin: Literal['natal', 'transit']
-  pillar: Literal['year', 'month', 'day', 'hour'] | None
-  kind:   TransitKind | None
-  ganzhi: Ganzhi
+  position: Zhu | TransitKind
+  ganzhi:   Ganzhi
 
   def __post_init__(self) -> None:
+    _check_position(self.position)
     if not isinstance(self.ganzhi, Ganzhi):
       raise TypeError(f'Expected Ganzhi, got {type(self.ganzhi)}')
     for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
       if not isinstance(value, expected):
         raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-    if not isinstance(self.origin, str):
-      raise TypeError(f'Expected str, got {type(self.origin)}')
-    if self.pillar is not None and not isinstance(self.pillar, str):
-      raise TypeError(f'Expected str | None, got {type(self.pillar)}')
-    if self.kind is not None and not isinstance(self.kind, TransitKind):
-      raise TypeError(f'Expected TransitKind | None, got {type(self.kind)}')
-    if self.origin == 'natal':
-      if self.pillar not in ('year', 'month', 'day', 'hour') or self.kind is not None:
-        raise ValueError('Invalid natal kongwang coordinate')
-    elif self.origin == 'transit':
-      if self.pillar is not None or self.kind is None:
-        raise ValueError('Invalid transit kongwang coordinate')
-    else:
-      raise ValueError(f'Unsupported origin: {self.origin}')
 
 
 @dataclass(frozen=True)
@@ -317,22 +308,22 @@ class KongwangResult:
   无命中仍返回该锚及空 hits；xunkong 由已校验的完整锚计算，不另存一份可矛盾的二支。
   不判断填实、冲合解空或吉凶，也不修改目标地支及其他关系结果。
   '''
-  anchor: Literal['year', 'day']
+  anchor: _AnchorZhu
   ganzhi: Ganzhi
   hits:   tuple[KongwangHit, ...]
 
   def __post_init__(self) -> None:
     absent = shensha_utils.xunkong(self.ganzhi)
-    if not isinstance(self.anchor, str):
-      raise TypeError(f'Expected str, got {type(self.anchor)}')
-    if self.anchor not in ('year', 'day'):
+    if not isinstance(self.anchor, Zhu):
+      raise TypeError(f'Expected Zhu, got {type(self.anchor)}')
+    if self.anchor not in (Zhu.年, Zhu.日):
       raise ValueError(f'Unsupported anchor: {self.anchor}')
     if not isinstance(self.hits, tuple) or not all(isinstance(hit, KongwangHit) for hit in self.hits):
       raise TypeError(f'Expected tuple of KongwangHit, got {type(self.hits)}')
     for hit in self.hits:
       if hit.ganzhi.dizhi not in absent:
         raise ValueError('Kongwang hit is outside the anchor xunkong')
-      if hit.origin == 'natal' and hit.pillar == self.anchor:
+      if hit.position == self.anchor:
         raise ValueError('Kongwang anchor cannot inspect its own natal pillar')
 
   @property
@@ -346,12 +337,11 @@ def _kongwang_results(bazi: Bazi, targets: tuple[KongwangHit, ...]) -> tuple[Kon
   spec = _REGISTRY['kongwang']
   predicate = _shensha_predicate(spec, bazi.config.school)
   results = []
-  for index, key in _anchor_keys(spec, bazi):
+  for anchor, key in _anchor_keys(spec, bazi):
     assert isinstance(key, Ganzhi)
-    anchor = cast(Literal['year', 'day'], _PILLAR_NAMES[index])
     results.append(KongwangResult(anchor, key, tuple(
       target for target in targets
-      if target.origin != 'natal' or target.pillar != anchor
+      if target.position != anchor
       if predicate(key, target.ganzhi.dizhi)
     )))
   return tuple(results)
@@ -383,8 +373,8 @@ class AtBirthAnalysis:
     '''按配置的年／日锚次序返回原局旬空详情；命中按年、月、日、时排序，排除锚自身柱。'''
     bazi = self._chart.bazi
     return _kongwang_results(bazi, tuple(
-      KongwangHit('natal', pillar, None, ganzhi)
-      for pillar, ganzhi in zip(_PILLAR_NAMES, bazi.pillars)
+      KongwangHit(zhu, ganzhi)
+      for zhu, ganzhi in zip(Zhu, bazi.pillars)
     ))
 
   @property
@@ -491,7 +481,7 @@ class TransitAnalysis:
     '''
     self._check_transits(transits)
     return _kongwang_results(self._chart.bazi, tuple(
-      KongwangHit('transit', None, kind, ganzhi) for kind, ganzhi in transits.items
+      KongwangHit(kind, ganzhi) for kind, ganzhi in transits.items
     ))
   
   def day_master_relations(self, transits: TransitSet) -> tiangan_utils.TianganRelationDiscovery:
@@ -728,39 +718,22 @@ def _discover_stem_occurrences(ganzhis: Sequence[Ganzhi]) -> StemRelationDiscove
 class StarAppearance:
   '''配偶星目标干的一处实际出现；明干／藏干、原局柱位／岁运种类分开记录，重复位置不合并。'''
 
-  origin: Literal['natal', 'transit']
-  pillar: Literal['year', 'month', 'day', 'hour'] | None   # natal 才有
-  kind:   TransitKind | None                               # transit 才有
-  ganzhi: Ganzhi
-  layer:  Literal['visible', 'hidden']
-  stem:   Tiangan                                          # 恒为目标干
+  position: Zhu | TransitKind
+  ganzhi:   Ganzhi
+  layer:    TianganLayer
+  stem:     Tiangan                  # 恒为目标干
 
   def __post_init__(self) -> None:
+    _check_position(self.position)
     for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan)):
       if not isinstance(value, expected):
         raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-    if self.kind is not None and not isinstance(self.kind, TransitKind):
-      raise TypeError(f'Expected TransitKind | None, got {type(self.kind)}')
-    if not isinstance(self.origin, str):
-      raise TypeError(f'Expected str, got {type(self.origin)}')
-    if self.pillar is not None and not isinstance(self.pillar, str):
-      raise TypeError(f'Expected str | None, got {type(self.pillar)}')
-    if not isinstance(self.layer, str):
-      raise TypeError(f'Expected str, got {type(self.layer)}')
-    if self.origin == 'natal':
-      if self.pillar not in ('year', 'month', 'day', 'hour') or self.kind is not None:
-        raise ValueError('Invalid natal appearance coordinate')
-    elif self.origin == 'transit':
-      if self.pillar is not None or self.kind is None:
-        raise ValueError('Invalid transit appearance coordinate')
-    else:
-      raise ValueError(f'Unsupported origin: {self.origin}')
-    if self.layer not in ('visible', 'hidden'):
-      raise ValueError(f'Unsupported layer: {self.layer}')
+    if not isinstance(self.layer, TianganLayer):
+      raise TypeError(f'Expected TianganLayer, got {type(self.layer)}')
     # 目标干恒不是日主，日柱明干位不会出现目标干，无需官杀路径的「日主明干排除」特例。
-    if self.layer == 'visible' and self.stem is not self.ganzhi.tiangan:
+    if self.layer is TianganLayer.明干 and self.stem is not self.ganzhi.tiangan:
       raise ValueError('Visible stem differs from its Ganzhi')
-    if self.layer == 'hidden' and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
+    if self.layer is TianganLayer.藏干 and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
       raise ValueError('Hidden stem is absent from its Ganzhi')
 
 
@@ -771,7 +744,7 @@ class RelationshipEvidence:
   序号契约：`house_relations`／`star_relations`／`stem_relations` 的组合成员共享一个序列——
   原局四柱为 0–3，所选岁运按 `TransitSet.items` 的固定顺序自 4 起；组合的范围由序号直接分出
   （全部 `< 4` 为原局内部，全部 `≥ 4` 为岁运内部，其余为原局×岁运）。本类没有 scope 字段，
-  不声称它能单独检查范围；跨字段约束归拥有 profile 与 evidence 的 `ContextResult`。
+  不声称它能单独检查范围；跨字段约束归拥有 observation 与 evidence 的 `ContextResult`。
 
   `transits` 是实际取得的所选岁运；原局、无坐标或全部缺失时为 `None`。
   '''
@@ -836,9 +809,6 @@ def _canonical_combos(
   ))
 
 
-_PILLAR_NAMES: Final[tuple[Literal['year', 'month', 'day', 'hour'], ...]] = ('year', 'month', 'day', 'hour')
-
-
 def _star_appearances(
   pillars: tuple[Ganzhi, ...],
   transits: TransitSet | None,
@@ -846,17 +816,17 @@ def _star_appearances(
 ) -> tuple[StarAppearance, ...]:
   '''逐柱逐所取岁运记录目标干的实际出现；同一位置明藏两层并存各一条。'''
   appearances: list[StarAppearance] = []
-  for pillar, ganzhi in zip(_PILLAR_NAMES, pillars):
+  for zhu, ganzhi in zip(Zhu, pillars):
     if ganzhi.tiangan is target:
-      appearances.append(StarAppearance('natal', pillar, None, ganzhi, 'visible', target))
+      appearances.append(StarAppearance(zhu, ganzhi, TianganLayer.明干, target))
     if target in hidden_tiangans(ganzhi.dizhi):
-      appearances.append(StarAppearance('natal', pillar, None, ganzhi, 'hidden', target))
+      appearances.append(StarAppearance(zhu, ganzhi, TianganLayer.藏干, target))
   if transits is not None:
     for kind, ganzhi in transits.items:
       if ganzhi.tiangan is target:
-        appearances.append(StarAppearance('transit', None, kind, ganzhi, 'visible', target))
+        appearances.append(StarAppearance(kind, ganzhi, TianganLayer.明干, target))
       if target in hidden_tiangans(ganzhi.dizhi):
-        appearances.append(StarAppearance('transit', None, kind, ganzhi, 'hidden', target))
+        appearances.append(StarAppearance(kind, ganzhi, TianganLayer.藏干, target))
   return tuple(appearances)
 
 

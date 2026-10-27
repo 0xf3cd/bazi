@@ -497,7 +497,10 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     bad = (work / 'consumer/bad.py').read_text(encoding='utf-8').splitlines()
     messages = ['[assignment] [arg-type] "None"']
     messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
-      'criterion', 'ContextProfile', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
+      'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate',
+      'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance',
+      'CriterionResult', 'EntryMatch', 'PremiseMatches', 'ConditionReferences',
+      'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
       'object_id', 'render', 'render_subject'))
     for owner, member, trigger in (
       ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
