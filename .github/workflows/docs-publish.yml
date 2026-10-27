@@ -88,7 +88,7 @@ jobs:
             raise SystemExit('Checkout differs from the resolved documentation commit')
           if not all(Path(name).is_file() for name in ('run_docs.py', 'run_doc_checks.py', 'docs/requirements.txt')):
             raise SystemExit(f"{os.environ['LABEL']} ships no documentation runner; only such versions can be archived")
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - name: Install documentation requirements of the checked-out source
