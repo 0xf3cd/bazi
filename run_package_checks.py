@@ -472,7 +472,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'coordinate.month = 0\n'
                 'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
-  command = [str(python), '-I', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent', '--show-traceback']
+  command = [str(python), '-I', '-X', 'utf8', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent', '--show-traceback']
   run([*command, 'good.py'], foreign)
   result = subprocess.run(
     [*command, 'bad.py'],

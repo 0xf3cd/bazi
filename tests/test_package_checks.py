@@ -483,6 +483,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
 
   def run_fixture(command: list[str], cwd: Path) -> None:
     if 'mypy' in command:
+      assert command[1:5] == ['-I', '-X', 'utf8', '-m']
       assert '--show-traceback' in command and command[-1] == 'good.py'
     if 'pip' not in command:
       return
@@ -501,6 +502,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   def diagnostics(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
     command, = args
     assert isinstance(command, list) and command[-1] == 'bad.py' and '--show-traceback' in command
+    assert command[1:5] == ['-I', '-X', 'utf8', '-m']
     bad = (work / 'consumer/bad.py').read_text(encoding='utf-8').splitlines()
     assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
     assert 'KongwangResult(Zhu.月, target, ())' not in bad
