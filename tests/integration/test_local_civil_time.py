@@ -10,7 +10,7 @@ import pytest
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
 from bazi.calendar import CalendarDate, CalendarType
-from bazi.context_matching import ContextProfile, evaluate_context
+from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
 from run_demo import get_basic_info, get_transit_info
 
@@ -214,7 +214,7 @@ def test_demo_separates_physical_jie_clocks() -> None:
 def test_context_keeps_exact_location_input() -> None:
   chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female',
                                BaziConfig(precision=BaziPrecision.HOUR), longitude=-157.4))
-  result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
+  result = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation())
   assert result.bazi == chart.bazi and result.bazi.config == chart.bazi.config
   facts = result.bazi.location_time
   assert facts is not None

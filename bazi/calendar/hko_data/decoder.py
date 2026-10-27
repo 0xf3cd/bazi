@@ -6,16 +6,19 @@
 
 '''读取随包 HKO 节气与阴历二进制表。
 
-JieqiDates 与 DecodedLunarYears 提供解码后的数据，不负责下载或生成文件。'''
+JieqiDates 与 DecodedLunarYears 提供解码后的数据，不负责下载或生成文件。
+两个后端共用 bazi.calendar.dates 中定义的 LunarYearInfo。
+也可继续从本模块导入，取得的是同一个类型。'''
 
 import functools
 
 from pathlib import Path
 from datetime import date
-from typing import TypedDict, Final
+from typing import Final
 from collections.abc import Callable
 
 from ...defines import Jieqi, Ganzhi
+from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 这里的 as 让 mypy 接受调用方从本模块导入这个类型。
 
 from .common import (
   START_YEAR, END_YEAR, date_to_bytes, bytes_to_date, bytes_to_int,
@@ -110,16 +113,6 @@ class DecodedJieqiDates:
     '''支持的公历年份范围。'''
     return range(self.start_year, self.end_year + 1)
 
-
-class LunarYearInfo(TypedDict):
-  '''
-  一年的农历信息。
-  '''
-  first_solar_day: date        # 农历年首日的公历日期。
-  leap: bool                   # 是否有闰月。
-  leap_month: int | None       # 无闰月为 None，否则为闰月月份。
-  days_counts: list[int]       # 各月日数，平年十二项，闰年十三项。
-  ganzhi: Ganzhi               # 此年的干支。
 
 class DecodedLunarYears:
   '''

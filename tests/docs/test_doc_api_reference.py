@@ -18,8 +18,10 @@ from api_contract import DECLARED_MEMBERS
 from run_doc_checks import runtime_members
 
 
-@pytest.mark.parametrize('base', ['LunarYearInfo', 'NoSuchBase'])
+@pytest.mark.parametrize('base', ['RepeatedBase', 'NoSuchBase'])
 def test_ambiguous_or_missing_bases_fail(monkeypatch, base):
+  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, 'fixture.first.RepeatedBase', '')
+  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, 'fixture.second.RepeatedBase', '')
   monkeypatch.setitem(api_reference.BASES, 'bazi.common.frozendict', (base,))
   with pytest.raises(ValueError, match='exactly one contract base class'):
     api_reference.inherited_members('bazi.common.frozendict')

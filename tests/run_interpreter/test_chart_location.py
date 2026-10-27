@@ -8,7 +8,7 @@ import pytest
 from run_interpreter import interpret
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, evaluate_context
+from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig
 
 from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
@@ -32,7 +32,7 @@ def test_naive_cli_precision(tmp_path: Path, optimized: bool, precision: str, pi
                     '--observation-scope', 'natal', '--include-reference-only', optimized=optimized)
   assert result.returncode == 0, result.stderr
   expected_record = evaluate_context(expected, criterion_id='editorial.guansha_coexistence.v1',
-                                     profile=ContextProfile('natal'), include_reference_only=True)
+                                     observation=NatalObservation(), include_reference_only=True)
   assert result.stdout == expected_record.render() + '\n'
   assert list(tmp_path.iterdir()) == []
 

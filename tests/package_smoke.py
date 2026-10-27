@@ -117,13 +117,20 @@ def main() -> None:
   from bazi.utils.shensha_utils import xunkong, kongwang
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
-  from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
-  from bazi.defines import Ganzhi, Jieqi, Tiangan, Shishen, Dizhi
+  from bazi.calendar.dates import GanzhiYearMonth, JieqiTime, LunarYearInfo
+  from bazi.calendar.hko_data import LunarYearInfo as HkoInfo
+  from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo
+  from bazi.calendar.celestial_data.loader import LunarYearInfo as CelestialInfo
+  from bazi.defines import Zhu, TianganLayer, Ganzhi, Jieqi, Tiangan, Shishen, Dizhi
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
-  from bazi.analyzer.relationship import RelationshipAnalyzer
+  from bazi.analyzer.relationship import RelationshipAnalyzer, RelationshipEvidence
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
-  from bazi.context_matching import ContextProfile, ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context
+  from bazi.context_matching import (
+    NatalObservation, LiunianObservation, LiunianPosition, TransitObservation, YearCoordinate,
+    ContextResult, CriterionInfo, PremiseMatches, ConditionReferences, criteria, criterion as lookup_criterion, evaluate_context,
+  )
+  check(LunarYearInfo is HkoInfo is DecoderInfo is CelestialInfo, 'Installed lunar type identity changed')
 
   from bazi.transits import TransitSet
   for module, member in ((bazi.bazi, 'LocationTimeJson'), (bazi.bazi_chart, 'BaziJson'), (bazi.school, '_ConfigJson'), (bazi.school, '_config_json')):
@@ -216,7 +223,7 @@ def main() -> None:
       pass
     else:
       raise RuntimeError('Installed time API negative control failed')
-  location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'))
+  location_match = evaluate_context(kiritimati, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation())
   check(location_match.bazi.location_time == facts and location_match.bazi == kiritimati.bazi, 'Installed context dropped civil basis')
   check('2024-01-01T12:00:00+14:00' in location_match.render(), 'Installed context display dropped civil basis')
   for birth, basis in (
@@ -314,13 +321,13 @@ def main() -> None:
   ))
   kongwang_analysis = RelationshipAnalyzer(kongwang_chart)
   natal_details = kongwang_analysis.at_birth.kongwang
-  check(tuple(result.anchor for result in natal_details) == ('year', 'day'), 'Installed kongwang anchors mismatch')
-  check(tuple((hit.pillar, str(hit.ganzhi)) for result in natal_details for hit in result.hits) == (
-    ('day', '壬戌'), ('year', '甲子'),
+  check(tuple(result.anchor for result in natal_details) == (Zhu.年, Zhu.日), 'Installed kongwang anchors mismatch')
+  check(tuple((hit.position, str(hit.ganzhi)) for result in natal_details for hit in result.hits) == (
+    (Zhu.日, '壬戌'), (Zhu.年, '甲子'),
   ), 'Installed natal kongwang details mismatch')
   kongwang_transits = TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲戌'))
   details = kongwang_analysis.transits.kongwang(kongwang_transits)
-  check(tuple(hit.kind for hit in details[0].hits) == (TransitKind.DAYUN, TransitKind.LIUNIAN), 'Installed kongwang transit kinds merged')
+  check(tuple(hit.position for hit in details[0].hits) == (TransitKind.DAYUN, TransitKind.LIUNIAN), 'Installed kongwang transit kinds merged')
   check(kongwang_analysis.transits.shensha(kongwang_transits)['kongwang'] == frozenset({Dizhi.戌}), 'Installed kongwang projection mismatch')
   check(kongwang_chart.bazi.config.school.kongwang_anchor is Anchor.YEAR_AND_DAY, 'Installed kongwang school mismatch')
   print('PASS xunkong/kongwang/natal/transit details and school identity')
@@ -439,9 +446,11 @@ def main() -> None:
   print('PASS installed immutable criterion directory')
   criterion = 'editorial.guansha_coexistence.v1'
   positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
-  matched = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal'), include_reference_only=True)
-  check(matched.criterion.status == 'SATISFIED' and len(matched.entries) == 2, 'Installed context positive mismatch')
-  check(any(o.pillar == 'hour' and o.layer == 'hidden' and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.occurrences), 'Installed context lost hidden witness')
+  matched = evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation(), include_reference_only=True)
+  if not isinstance(matched.evidence, tuple) or not isinstance(matched.references, PremiseMatches):
+    raise TypeError('Installed context evidence/reference types changed')
+  check(matched.criterion.status == 'SATISFIED' and len(matched.references.entries) == 2, 'Installed context positive mismatch')
+  check(any(o.position is Zhu.时 and o.layer is TianganLayer.藏干 and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.evidence), 'Installed context lost hidden witness')
   check('也许' in matched.render() and '不确立古籍规则，也不作现实预测。' in matched.render(), 'Installed context lost modal/source limit')
   check(matched.bazi == positive_chart.bazi, 'Installed context lost input identity')
   fingerprint, rendered = hash(matched), matched.render()
@@ -451,32 +460,35 @@ def main() -> None:
   for input_copy in (incoming, outgoing):
     object.__setattr__(input_copy, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
   check(copied == matched and hash(copied) == fingerprint and copied.render() == rendered, 'Installed result input copy boundary failed')
-  check(evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal')).entries == (), 'Installed context promoted reference output')
-  missing = evaluate_context(positive_chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian'))
+  check(evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation()).references == PremiseMatches(()), 'Installed context promoted reference output')
+  missing = evaluate_context(positive_chart, criterion_id=criterion, observation=LiunianObservation())
   check(missing.criterion.status == 'UNKNOWN', 'Installed context missing year became false')
-  first, second = (evaluate_context(chart, criterion_id=criterion, profile=ContextProfile('natal_and_liunian', year)) for year in (2024, 2084))
-  check(first != second and all(o.ganzhi_year == 2024 and o.kind is TransitKind.LIUNIAN for o in first.occurrences if o.origin == 'transit'), 'Installed context lost transit coordinate/kind')
+  first, second = (evaluate_context(chart, criterion_id=criterion, observation=LiunianObservation(year)) for year in (2024, 2084))
+  if not isinstance(first.evidence, tuple):
+    raise TypeError('Installed single-year evidence changed')
+  check(first != second and any(o.position == LiunianPosition(2024) for o in first.evidence), 'Installed context lost transit coordinate/kind')
   for invalid_year in (True, type('Year', (int,), {})(2024)):
     try:
-      ContextProfile('natal_and_liunian', invalid_year)
+      LiunianObservation(invalid_year)
     except TypeError:
       pass
     else:
       raise RuntimeError('Installed exact-int year rejection failed')
   print('PASS installed context matching/lazy/readonly/evidence/input isolation')
-  from bazi.context_matching import RelationshipProfile, TransitCoordinate
   from bazi.analyzer.relationship import spouse_evidence
   relationship_chart = BaziChart(Bazi.create(datetime(2000, 1, 9, 12), 'male'))
-  relationship = evaluate_context(relationship_chart, criterion_id='editorial.spouse_palace_xingchong.v1', profile=RelationshipProfile(
-    'natal_and_transits', TransitCoordinate('at_year', gz_year=2016), (TransitKind.DAYUN, TransitKind.LIUNIAN),
+  relationship = evaluate_context(relationship_chart, criterion_id='editorial.spouse_palace_xingchong.v1', observation=TransitObservation(
+    (TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(ganzhi_year=2016),
   ))
   check(relationship.criterion.status == 'SATISFIED', 'Installed relationship evaluation mismatch')
-  evidence = relationship.relationship
-  check(evidence is not None and evidence.transits is not None, 'Installed relationship evidence missing transits')
-  if evidence is None or evidence.transits is None:
+  evidence = relationship.evidence
+  check(isinstance(evidence, RelationshipEvidence), 'Installed relationship evidence type changed')
+  if not isinstance(evidence, RelationshipEvidence) or evidence.transits is None:
     raise RuntimeError('Installed relationship evidence missing transits')
   check(evidence.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed relationship transit identity mismatch')
   check('宫·' in relationship.render(), 'Installed relationship render lost category labels')
+  check(isinstance(relationship.references, ConditionReferences), 'Installed relationship references changed')
+  check(PremiseMatches(()) != ConditionReferences(()), 'Installed empty reference roles merged')
   queried_2016 = TransitChart(relationship_chart).at_year(2016)
   check(queried_2016 is not None, 'Installed relationship transits missing')
   if queried_2016 is None:

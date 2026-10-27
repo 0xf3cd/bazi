@@ -3,6 +3,7 @@
 
 import random
 from datetime import date, datetime, timedelta
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -11,6 +12,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.defines import Ganzhi, Dizhi
 from bazi.calendar import calendar_utils_of
+from bazi.calendar.dates import GanzhiYearMonth
 from bazi.school import BaziConfig, BaziSchool, DayRollover
 from bazi.transit_chart import TransitChart, 流年大运
 from bazi.transits import TransitKind, TransitSet
@@ -49,6 +51,14 @@ def test_query_boundaries() -> None:
   # The lower date is also pre-birth; the upper date is one day past the solar range.
   assert chart.at_date(date(1901, 2, 18)) is None
   assert chart.at_date(date(2100, 1, 1)) is None
+
+
+def test_month_reuses_coordinate_and_accepts_bool() -> None:
+  chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
+  assert chart.at_month(True, Dizhi.辰) is None
+  with patch.object(GanzhiYearMonth, 'from_dizhi', wraps=GanzhiYearMonth.from_dizhi) as construct:
+    assert chart.at_month(2024, Dizhi.辰) is not None
+    assert construct.call_args_list == [((2024, Dizhi.辰),)]
 
 
 def test_queries_use_attributed_boundary() -> None:
