@@ -24,13 +24,16 @@ from .utils.bazi_utils import hidden_tiangans, shishen
 '''完整前提判别，独立于知识整理状态。'''
 MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
-'''判据的六种事实判别原因；绑定识别只属于条目层。'''
+'''说明判据为何满足、不满足或无法判断。
+判据是要检查的命盘条件，例如选定范围内正官与七杀是否都出现。
+知识条目与登记内容是否一致，由 EntryMatch 或 RelatedEntry 单独记录。
+'''
 CriterionReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable',
 ]
 
-'''条目前提判别的原因，另含条目绑定未识别。'''
+'''知识条目的匹配原因；比 CriterionReason 多出 binding_unrecognized，表示条目与登记内容不一致。'''
 MatchReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable', 'binding_unrecognized',
@@ -386,7 +389,7 @@ class CriterionInfo:
 
   @property
   def unknown_conditions(self) -> frozendict[CriterionReason, str]:
-    '''CriterionResult 的 UNKNOWN 条件；绑定失败另作用于条目层，不列为事实判别原因。'''
+    '''判据为 UNKNOWN 的情况；知识条目与登记内容是否一致，不改变判据结果。'''
     return frozendict({
       'missing_transit_coordinate': '选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。',
       'transit_unavailable': '流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。',

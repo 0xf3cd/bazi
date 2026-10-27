@@ -6,7 +6,8 @@
 加载层只解析、校验表并按键查询，不解释八字历法语义；上层 `CelestialCalendarUtils`
 负责历法查询，使数据格式或来源变更与历法语义分开。
 运行时只用纯 Python 读取已提交表，不导入离线生成器所用的 celestial-calendar 包。
-LunarYearInfo 从共同日期层规范重导出，保留既有导入路径。
+两个后端共用 bazi.calendar.dates 中定义的 LunarYearInfo。
+也可继续从本模块导入，取得的是同一个类型。
 '''
 
 import hashlib
@@ -18,7 +19,7 @@ from pathlib import Path
 from typing import Final
 
 from ...defines import Ganzhi, Jieqi
-from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 显式规范重导出，供严格类型检查的包外调用方使用。
+from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 这里的 as 让 mypy 接受调用方从本模块导入这个类型。
 
 
 SCHEMA_VERSION: Final[str] = '2'

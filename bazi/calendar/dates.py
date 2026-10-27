@@ -14,7 +14,10 @@ from ..defines import Dizhi, Ganzhi, Jieqi
 
 
 class LunarYearInfo(TypedDict):
-  '''两后端共用的农历年字典；各月日数仍用可变列表，查询返回副本的约定由加载器负责。'''
+  '''两个历法后端共用的农历年信息类型。
+
+  各月日数用可变列表保存，加载器负责在查询时返回副本。
+  '''
   first_solar_day: date        # 农历年首日的公历日期。
   leap: bool                   # 是否有闰月。
   leap_month: int | None       # 无闰月为 None，否则为闰月月份。

@@ -7,7 +7,8 @@
 '''读取随包 HKO 节气与阴历二进制表。
 
 JieqiDates 与 DecodedLunarYears 提供解码后的数据，不负责下载或生成文件。
-LunarYearInfo 从共同日期层规范重导出，保留既有导入路径。'''
+两个后端共用 bazi.calendar.dates 中定义的 LunarYearInfo。
+也可继续从本模块导入，取得的是同一个类型。'''
 
 import functools
 
@@ -17,7 +18,7 @@ from typing import Final
 from collections.abc import Callable
 
 from ...defines import Jieqi, Ganzhi
-from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 显式规范重导出，供严格类型检查的包外调用方使用。
+from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 这里的 as 让 mypy 接受调用方从本模块导入这个类型。
 
 from .common import (
   START_YEAR, END_YEAR, date_to_bytes, bytes_to_date, bytes_to_int,
