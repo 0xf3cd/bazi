@@ -3,19 +3,27 @@
 import hashlib
 import io
 import json
+import os
 import re
+import runpy
+import shlex
 import shutil
 import subprocess
+import sys
 import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from pathlib import Path, PureWindowsPath
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
+
+import run_package_checks
+import run_release
 
 
 WORKFLOWS = Path(__file__).parents[1] / '.github/workflows'
@@ -24,13 +32,25 @@ WORKFLOW = yaml.safe_load(WORKFLOW_TEXT)
 SHA = 'a' * 40
 
 
-def run_policy(code: str) -> None:
-  exec(compile(code, '<release-policy>', 'exec'), {})  # noqa: S102 # Execute the actual checked-in policy with fixture-backed I/O.
+def run_policy(command: str) -> None:
+  with patch.object(sys, 'argv', ['run_release.py', *shlex.split(command)[3:]]):
+    run_release.main()
 
 
 def workflow_code(job: str, name: str) -> str:
   code: str = next(step['run'] for step in WORKFLOW['jobs'][job]['steps'] if step.get('name') == name)
   return code
+
+
+def environment_report(dist: Path) -> dict[str, Any]:
+  roles = ('outer', 'build-wheel-direct', 'build-sdist', 'build-wheel-rebuilt',
+    'consumer-wheel-direct', 'consumer-wheel-rebuilt', 'consumer-typing')
+  return {'schema_version': 1, 'source_sha': SHA,
+    'pair': {kind: {'filename': name, 'sha256': hashlib.sha256((dist / name).read_bytes()).hexdigest()}
+      for kind, name in (('sdist', 'bazi-1.0.0.tar.gz'), ('wheel', 'bazi-1.0.0-py3-none-any.whl'))},
+    'environments': [{'role': role, 'python': {'implementation': 'CPython', 'version': '3.12.13'},
+      'platform': {'system': 'Linux', 'machine': 'x86_64'}, 'distributions': {'pip': '25.0.1'},
+      'installers': [{'name': 'pip', 'version': '25.0.1', 'scope': 'target'}]} for role in roles]}
 
 
 def test_workflow_structure() -> None:
@@ -54,9 +74,7 @@ def test_workflow_structure() -> None:
   assert 'pypi' in jobs['github-release']['needs']
   assert "needs.pypi.result == 'success'" in jobs['github-release']['if']
   for name, job in jobs.items():
-    for step in job['steps']:
-      if 'run' in step and step.get('shell') == 'python':
-        compile(step['run'], '<release-policy>', 'exec')
+    assert all(step.get('shell') != 'python' for step in job['steps'])
     if name in ('pypi', 'github-release'):
       assert job['environment'] == 'release'
       for condition in ("inputs.mode == 'release'", "needs.preflight.result == 'success'", "github.repository == '0xf3cd/bazi'", "github.ref == 'refs/heads/main'"):
@@ -64,7 +82,7 @@ def test_workflow_structure() -> None:
       for step in job['steps']:
         action = step.get('uses', '').split('@')[0]
         assert action in ('', 'actions/download-artifact', 'pypa/gh-action-pypi-publish')
-        assert not re.search(r'\b(import bazi|pip install|checkout|run_\w+\.py|subprocess|exec\(|eval\()', step.get('run', ''))
+        assert not re.search(r'\b(import bazi|pip install|checkout|subprocess|exec\(|eval\()', step.get('run', ''))
         if action == 'actions/download-artifact':
           assert step['with'] == {
             'artifact-ids': '${{ needs.build.outputs.artifact-id }}', 'path': 'artifact',
@@ -77,6 +95,193 @@ def test_workflow_structure() -> None:
   assert checkout['with']['persist-credentials'] is False
   assert jobs['build']['outputs']['artifact-id'] == '${{ steps.upload.outputs.artifact-id }}'
   assert '--package-output-dir' in workflow_code('build', 'Run full gate and retain its tested pair')
+  check_script_wiring(WORKFLOW)
+
+
+def test_environment_report_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
+  assert run_release.ENVIRONMENT_ROLES == frozenset(run_package_checks.ENVIRONMENT_ROLES)
+  monkeypatch.setenv('RUNNER_TEMP', '/fixture temp')
+  gate = shlex.split(os.path.expandvars(workflow_code('build', 'Run full gate and retain its tested pair')))
+  assert gate == ['python', 'run_tests.py', '-a', '-v', '--package-output-dir', '/fixture temp/bundle/dist',
+    '--environment-report', '/fixture temp/raw-environments.json', '--outer-installer-report', '/fixture temp/outer-pip.txt']
+  install = workflow_code('build', 'Install development requirements').splitlines()
+  assert install == ['receipt="$RUNNER_TEMP/outer-pip.txt"', 'test ! -e "$receipt"',
+    'python -m pip --version >> "$receipt"', 'python -m pip install -r Requirements.txt',
+    'python -m pip --version >> "$receipt"', 'python -m pip install -r docs/requirements.txt',
+    'python -m pip --version >> "$receipt"', 'python -m pip install celestial-calendar==0.6.1']
+  assert workflow_code('build', 'Seal release bundle') == 'python -I "$GITHUB_WORKSPACE/run_release.py" seal'
+
+
+def check_script_wiring(workflow: dict[str, Any]) -> None:
+  calls = {
+    'preflight': {'Require an existing protected release environment': 'preflight'},
+    'build': {'Verify source identity': 'source', 'Seal release bundle': 'seal'},
+    'pypi': {'Verify exact same-run bundle': 'verify', 'Reject existing version, tag or release': 'check-existing'},
+    'github-release': {'Verify exact same-run bundle': 'verify', 'Verify PyPI bytes and create the tag and release without overwriting': 'publish'},
+  }
+  fetch = (
+    '[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$WORKFLOW_SHA" == "$SHA" && "$RUNNER_TEMP" == /* ]] || exit 1\n'
+    'status="$(curl --fail --silent --show-error --proto \'=https\' --max-time 60 \\\n'
+    '  --output "$RUNNER_TEMP/run_release.py" --write-out \'%{http_code}\' \\\n'
+    '  "https://raw.githubusercontent.com/$REPOSITORY/$SHA/run_release.py")"\n'
+    'test "$status" = 200\n'
+  )
+  for name, job in workflow['jobs'].items():
+    steps = job['steps']
+    if name != 'build':
+      loader = steps[0]
+      assert loader['name'] == 'Load trusted release tooling'
+      assert loader['shell'] == 'bash' and loader['run'] == fetch
+      assert loader['env'] == {'REPOSITORY': '${{ github.repository }}', 'SHA': '${{ github.sha }}', 'WORKFLOW_SHA': '${{ github.workflow_sha }}'}
+    if name == 'preflight':
+      assert all('uses' not in step for step in steps)
+    seen = []
+    for step in steps:
+      if step.get('name') == 'Load trusted release tooling':
+        assert name != 'build' and step is steps[0]
+        continue
+      if step.get('name') in calls[name]:
+        operation = calls[name][step['name']]
+        source = 'GITHUB_WORKSPACE' if name == 'build' else 'RUNNER_TEMP'
+        assert step['shell'] == 'bash'
+        assert step['run'] == f'python -I "${source}/run_release.py" {operation}'
+        seen.append(step['name'])
+      else:
+        assert 'run_release.py' not in step.get('run', '')
+        if name != 'build':
+          assert 'run' not in step
+    assert seen == list(calls[name])
+
+
+@pytest.mark.parametrize('change', ['operation', 'relative', 'artifact', 'shell', 'source', 'workflow-sha', 'guard', 'http-status', 'loader-order', 'preflight-action'])
+def test_release_wiring_rejects_changes(change: str) -> None:
+  workflow = yaml.safe_load(WORKFLOW_TEXT)
+  job = workflow['jobs']['preflight']
+  loader, invocation = job['steps']
+  if change in ('operation', 'relative', 'artifact'):
+    old, new = {'operation': (' preflight', ' verify'), 'relative': ('$RUNNER_TEMP/', ''),
+      'artifact': ('$RUNNER_TEMP/', 'artifact/')}[change]
+    invocation['run'] = invocation['run'].replace(old, new)
+  elif change == 'shell':
+    invocation['shell'] = 'python'
+  elif change in ('source', 'workflow-sha'):
+    loader['env']['SHA' if change == 'source' else 'WORKFLOW_SHA'] = '${{ needs.build.outputs.sha }}'
+  elif change in ('guard', 'http-status'):
+    loader['run'] = '\n'.join(line for line in loader['run'].splitlines()
+      if not line.startswith('[[' if change == 'guard' else 'test ')) + '\n'
+  elif change == 'loader-order':
+    job['steps'].reverse()
+  elif change == 'preflight-action':
+    job['steps'].append({'uses': 'actions/checkout@' + 'a' * 40})
+  with pytest.raises(AssertionError):
+    check_script_wiring(workflow)
+
+
+@pytest.mark.parametrize('job', ['preflight', 'pypi', 'github-release'])
+@pytest.mark.parametrize('command', ['python run_tests.py', 'python artifact/extra.py'])
+def test_release_jobs_reject_extra_scripts(job: str, command: str) -> None:
+  workflow = yaml.safe_load(WORKFLOW_TEXT)
+  workflow['jobs'][job]['steps'].append({'name': 'Extra script', 'shell': 'bash', 'run': command})
+  with pytest.raises(AssertionError):
+    check_script_wiring(workflow)
+
+
+@pytest.mark.parametrize('operation, function', [
+  ('preflight', 'check_environment'), ('source', 'verify_source'), ('seal', 'seal_bundle'),
+  ('verify', 'verify_bundle'), ('check-existing', 'check_existing'), ('publish', 'publish_github'),
+])
+def test_cli_dispatches_operations(monkeypatch: pytest.MonkeyPatch, operation: str, function: str) -> None:
+  called = Mock()
+  monkeypatch.setattr(run_release, function, called)
+  monkeypatch.setattr(sys, 'argv', ['run_release.py', operation])
+  run_release.main()
+  called.assert_called_once_with()
+
+
+@pytest.mark.parametrize('arguments, code', [([], 2), (['unknown'], 2), (['--help'], 0)])
+def test_cli_entrypoint_rejects_unknown(monkeypatch: pytest.MonkeyPatch, arguments: list[str], code: int) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_release.py', *arguments])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(run_release.__file__, run_name='__main__')
+  assert caught.value.code == code
+
+
+@pytest.mark.parametrize('change', ['none', 'checksum', 'mode', 'unknown', 'artifact-code'])
+def test_cli_checks_bundle_from_foreign_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
+  trusted = tmp_path / 'trusted script'
+  trusted.mkdir()
+  script = trusted / 'run_release.py'
+  shutil.copyfile(run_release.__file__, script)
+  root = tmp_path / 'artifact'
+  (root / 'dist').mkdir(parents=True)
+  for name in ('bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl'):
+    (root / 'dist' / name).write_bytes(b'tested fixture')
+  metadata = {'name': 'bazi', 'version': '1.0.0', 'sha': SHA, 'repository': '0xf3cd/bazi', 'run_id': '123', 'mode': 'release'}
+  (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
+  (root / 'environments.json').write_text(json.dumps({**environment_report(root / 'dist'), 'identity': metadata}), encoding='utf-8')
+  (root / 'RELEASE_NOTES.md').write_text('fixture', encoding='utf-8')
+  files = sorted((p for p in root.rglob('*') if p.is_file()), key=lambda p: p.relative_to(root).as_posix())
+  sums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root).as_posix()}\n' for p in files)
+  (root / 'SHA256SUMS').write_bytes(sums.encode())
+  monkeypatch.setenv('MANIFEST_SHA', hashlib.sha256(sums.encode()).hexdigest())
+  monkeypatch.setenv('PYTHONPATH', str(tmp_path))
+  for path in (tmp_path / 'run_release.py', tmp_path / 'json.py'):
+    path.write_text('raise RuntimeError("untrusted code executed")\n', encoding='utf-8')
+  if change == 'checksum':
+    (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'changed')
+  elif change == 'mode':
+    monkeypatch.setenv('MODE', 'rehearsal')
+  elif change == 'artifact-code':
+    (root / 'run_release.py').write_text('raise RuntimeError("untrusted code executed")\n', encoding='utf-8')
+  result = subprocess.run([sys.executable, '-I', str(script), 'unknown' if change == 'unknown' else 'verify'],
+    cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', check=False)
+  assert result.returncode == (0 if change == 'none' else 2 if change == 'unknown' else 1)
+  assert 'untrusted code executed' not in result.stdout + result.stderr
+  if change in ('checksum', 'mode'):
+    assert ('Release bundle checksum mismatch' if change == 'checksum' else 'Invalid publication identity') in result.stderr
+  elif change == 'artifact-code':
+    assert 'Unexpected release bundle files' in result.stderr
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='Release shell steps run on Ubuntu; the standalone Python CLI is tested on Windows.')
+@pytest.mark.parametrize('change', ['none', 'workflow-sha', 'invalid-sha', 'http-302', 'http-404', 'curl-error', 'temp-relative'])
+def test_trusted_tool_fetch_fails_closed(tmp_path: Path, change: str) -> None:
+  loader = WORKFLOW['jobs']['preflight']['steps'][0]
+  tools, temporary = tmp_path / 'bin', tmp_path / 'runner temp'
+  tools.mkdir()
+  temporary.mkdir()
+  calls, marker = tmp_path / 'curl-calls.json', tmp_path / 'next-step'
+  stub = tmp_path / 'curl_stub.py'
+  stub.write_text('''import json, os, shutil, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(os.environ['CURL_CALLS']).write_text(json.dumps(args), encoding='utf-8')
+target = args[args.index('--output') + 1]
+shutil.copyfile(os.environ['CURL_SOURCE'], target)
+print(os.environ['CURL_STATUS'], end='')
+sys.exit(int(os.environ['CURL_EXIT']))
+''', encoding='utf-8')
+  curl = tools / 'curl'
+  curl.write_text('#!/bin/sh\nexec "$CURL_PYTHON" "$CURL_STUB" "$@"\n', encoding='utf-8')
+  curl.chmod(0o755)
+  env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
+    SHA='invalid' if change == 'invalid-sha' else SHA, WORKFLOW_SHA='b' * 40 if change == 'workflow-sha' else SHA,
+    REPOSITORY='0xf3cd/bazi', RUNNER_TEMP='relative' if change == 'temp-relative' else str(temporary),
+    CURL_CALLS=str(calls), CURL_PYTHON=sys.executable, CURL_STUB=str(stub), CURL_SOURCE=run_release.__file__,
+    CURL_STATUS='302' if change == 'http-302' else '404' if change == 'http-404' else '200',
+    CURL_EXIT='22' if change == 'http-404' else '28' if change == 'curl-error' else '0', NEXT_STEP=str(marker))
+  result = subprocess.run(['bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c',
+    loader['run'] + '\nprintf reached > "$NEXT_STEP"\n'], cwd=tmp_path, env=env, capture_output=True, text=True, encoding='utf-8', check=False)
+  assert (result.returncode == 0) == (change == 'none')
+  assert marker.exists() == (change == 'none')
+  assert calls.exists() == (change not in ('workflow-sha', 'invalid-sha', 'temp-relative'))
+  if calls.exists():
+    args = json.loads(calls.read_text(encoding='utf-8'))
+    assert args == ['--fail', '--silent', '--show-error', '--proto', '=https', '--max-time', '60',
+      '--output', str(temporary / 'run_release.py'), '--write-out', '%{http_code}',
+      f'https://raw.githubusercontent.com/0xf3cd/bazi/{SHA}/run_release.py']
+  if change == 'none':
+    assert (temporary / 'run_release.py').read_bytes() == Path(run_release.__file__).read_bytes()
 
 
 def check_action_pins(text: str) -> None:
@@ -159,7 +364,11 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
       run_policy(code)
 
 
-@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version'])
+@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version',
+  'environment-run', 'environment-source', 'environment-pair', 'environment-role', 'environment-duplicate', 'environment-schema',
+  'environment-extra-record', 'environment-missing', 'environment-truncated',
+  pytest.param('symlink-file', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.')),
+  pytest.param('symlink-directory', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.'))])
 def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   root = tmp_path / 'artifact'
@@ -171,6 +380,26 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
   if change == 'run':
     metadata['run_id'] = '999'
   (root / 'release.json').write_text(json.dumps(metadata), encoding='utf-8')
+  report = {**environment_report(root / 'dist'), 'identity': dict(metadata)}
+  if change == 'environment-run':
+    report['identity']['run_id'] = '999'
+  elif change == 'environment-source':
+    report['source_sha'] = 'b' * 40
+  elif change == 'environment-pair':
+    report['pair']['wheel']['sha256'] = '0' * 64
+  elif change == 'environment-role':
+    report['environments'].pop()
+  elif change == 'environment-duplicate':
+    report['environments'][-1]['role'] = 'outer'
+  elif change == 'environment-schema':
+    report['schema_version'] = True
+  elif change == 'environment-extra-record':
+    report['environments'].append(report['environments'][0])
+  (root / 'environments.json').write_text(json.dumps(report), encoding='utf-8')
+  if change == 'environment-missing':
+    (root / 'environments.json').unlink()
+  elif change == 'environment-truncated':
+    (root / 'environments.json').write_text('{', encoding='utf-8')
   files = sorted(
     (p for p in root.rglob('*') if p.is_file()),
     key=lambda p: p.relative_to(root).as_posix(),
@@ -192,13 +421,29 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     (root / 'unexpected.py').write_bytes(b'')
   elif change == 'version':
     monkeypatch.setenv('VERSION', '2.0.0')
+  elif change == 'symlink-file':
+    target = tmp_path / 'original-environments.json'
+    (root / 'environments.json').rename(target)
+    (root / 'environments.json').symlink_to(target)
+  elif change == 'symlink-directory':
+    (root / 'linked-dist').symlink_to(root / 'dist', target_is_directory=True)
   code = workflow_code('pypi', 'Verify exact same-run bundle')
   assert code == workflow_code('github-release', 'Verify exact same-run bundle')
-  if change == 'none':
-    run_policy(code)
-  else:
-    with pytest.raises(SystemExit):
+  for job in ('pypi', 'github-release'):
+    code = workflow_code(job, 'Verify exact same-run bundle')
+    if change == 'none':
       run_policy(code)
+    elif change == 'environment-truncated':
+      with pytest.raises(json.JSONDecodeError) as caught:
+        run_policy(code)
+      assert caught.value.doc == '{' and caught.value.pos == 1
+    else:
+      message = ('Unexpected release bundle files' if change in ('environment-missing', 'symlink-file', 'symlink-directory') else
+        'Environment report role roster mismatch' if change in ('environment-role', 'environment-duplicate', 'environment-extra-record') else
+        'Environment report pair mismatch' if change == 'environment-pair' else
+        'Environment report identity mismatch' if change.startswith('environment-') else '')
+      with pytest.raises(SystemExit, match=message or None):
+        run_policy(code)
 
 
 @pytest.mark.parametrize('existing', [None, 'pypi', 'git/ref', 'releases/tags', 'network-error'])
@@ -223,7 +468,7 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
   ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
   ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
 ])
-@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes'])
+@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes', 'network-error'])
 def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, notes: str, body: str) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
@@ -232,9 +477,12 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
   (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'tested sdist')
   (root / 'dist/bazi-1.0.0-py3-none-any.whl').write_bytes(b'tested wheel')
   (root / 'RELEASE_NOTES.md').write_text(notes, encoding='utf-8')
+  for name in ('release.json', 'environments.json', 'SHA256SUMS'):
+    (root / name).write_bytes(b'fixture ' + name.encode())
   if change == 'notes-bytes':
     (root / 'RELEASE_NOTES.md').write_bytes(b'\xff')
   writes: list[tuple[str, object]] = []
+  assets: set[str] = set()
   def request(url: str | urllib.request.Request, timeout: int) -> io.BytesIO:
     address = url if isinstance(url, str) else url.full_url
     method = 'GET' if isinstance(url, str) else url.get_method()
@@ -246,7 +494,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         value['urls'][0]['digests']['sha256'] = '0' * 64
     elif method == 'GET':
       if not ((change == 'tag' and '/git/ref/tags/' in address) or (change == 'release' and '/releases/tags/' in address)):
-        raise urllib.error.HTTPError(address, 404, 'Fixture', {}, None)  # type: ignore[arg-type] # No headers needed.
+        raise urllib.error.HTTPError(address, 503 if change == 'network-error' else 404, 'Fixture', {}, None)  # type: ignore[arg-type] # No headers needed.
     else:
       assert isinstance(url, urllib.request.Request) and isinstance(url.data, bytes)
       if address.endswith('/git/refs'):
@@ -258,6 +506,9 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
           'name': 'bazi 1.0.0', 'body': body, 'draft': True}
         value = {'id': 1}
       elif '/assets?' in address:
+        name, = urllib.parse.parse_qs(urllib.parse.urlsplit(address).query)['name']
+        assets.add(name)
+        assert url.data == (root / ('dist/' if name.endswith(('.whl', '.tar.gz')) else '') / name).read_bytes()
         value = {'digest': 'sha256:' + ('0' * 64 if change == 'asset-bytes' else hashlib.sha256(url.data).hexdigest())}
       else:
         assert address.endswith('/releases/1') and method == 'PATCH'
@@ -268,7 +519,9 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
   code = workflow_code('github-release', 'Verify PyPI bytes and create the tag and release without overwriting')
   if change == 'none':
     run_policy(code)
-    assert [method for method, _ in writes] == ['POST'] * 5 + ['PATCH']
+    assert [method for method, _ in writes] == ['POST'] * 8 + ['PATCH']
+    assert assets == {'bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl',
+      'RELEASE_NOTES.md', 'release.json', 'environments.json', 'SHA256SUMS'}
   else:
     with pytest.raises((SystemExit, urllib.error.HTTPError, UnicodeDecodeError)):
       run_policy(code)
@@ -278,7 +531,12 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.parametrize('crlf', [False, True])
-@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'])
+@pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing',
+  'post-gate-swap', 'report-missing', 'report-truncated', 'report-source', 'report-role', 'report-duplicate',
+  'report-extra-field', 'report-python-field', 'report-platform-field', 'report-installer-field', 'report-schema',
+  'report-extra-record', 'report-python-value', 'report-platform-value', 'report-distribution-name',
+  'report-distribution-version', 'report-installer-scope', 'report-installer-name', 'report-installers-empty',
+  'report-value-type', 'report-installer-version'])
 def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
@@ -297,6 +555,50 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   output = tmp_path / 'outputs'
   monkeypatch.setenv('RUNNER_TEMP', str(runner_temp))
   monkeypatch.setenv('GITHUB_OUTPUT', str(output))
+  report = environment_report(bundle / 'dist')
+  if change == 'report-source':
+    report['source_sha'] = 'b' * 40
+  elif change == 'report-role':
+    report['environments'].pop()
+  elif change == 'report-duplicate':
+    report['environments'][-1]['role'] = 'outer'
+  elif change == 'report-extra-field':
+    report['environments'][0]['direct_url'] = 'synthetic-private-placeholder'
+  elif change == 'report-python-field':
+    report['environments'][0]['python']['executable'] = 'synthetic-private-placeholder'
+  elif change == 'report-platform-field':
+    report['environments'][0]['platform']['node'] = 'synthetic-private-placeholder'
+  elif change == 'report-installer-field':
+    report['environments'][0]['installers'][0]['argv'] = 'synthetic-private-placeholder'
+  elif change == 'report-schema':
+    report['schema_version'] = True
+  elif change == 'report-extra-record':
+    report['environments'].append(report['environments'][0])
+  elif change == 'report-python-value':
+    report['environments'][0]['python']['version'] = 'invalid/value'
+  elif change == 'report-platform-value':
+    report['environments'][0]['platform']['system'] = 'invalid/value'
+  elif change == 'report-distribution-name':
+    report['environments'][0]['distributions'] = {'invalid/name': '1.0'}
+  elif change == 'report-distribution-version':
+    report['environments'][0]['distributions'] = {'pip': 'invalid/value'}
+  elif change == 'report-installer-scope':
+    report['environments'][0]['installers'][0]['scope'] = 'unknown'
+  elif change == 'report-installer-name':
+    report['environments'][0]['installers'][0]['name'] = 'uv'
+  elif change == 'report-installers-empty':
+    report['environments'][0]['installers'] = []
+  elif change == 'report-value-type':
+    report['environments'][0]['python']['version'] = 42
+  elif change == 'report-installer-version':
+    report['environments'][0]['installers'][0]['version'] = None
+  raw = runner_temp / 'raw-environments.json'
+  if change != 'report-missing':
+    raw.write_text(json.dumps(report), encoding='utf-8')
+  if change == 'report-truncated':
+    raw.write_text(raw.read_text()[:-1], encoding='utf-8')
+  elif change == 'post-gate-swap':
+    wheel.write_bytes(b'not gate-tested')
   if change == 'extra':
     (bundle / 'dist/extra.whl').write_bytes(b'extra')
   elif change == 'misnamed':
@@ -318,6 +620,23 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
       run_policy(seal)
     assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
     return
+  if change.startswith('report-') or change == 'post-gate-swap':
+    if change == 'report-truncated':
+      with pytest.raises(json.JSONDecodeError) as caught:
+        run_policy(seal)
+      assert caught.value.doc == raw.read_text(encoding='utf-8')
+    else:
+      message = ('Gate environment pair differs from retained artifacts' if change == 'post-gate-swap' else
+        'Missing gate environment report' if change == 'report-missing' else
+        'Gate environment schema or source mismatch' if change in ('report-source', 'report-schema') else
+        'Invalid gate installer fields' if change in ('report-installer-field', 'report-installer-scope', 'report-installer-name', 'report-installer-version') else
+        'Invalid gate environment fields' if change in ('report-python-field', 'report-platform-field', 'report-python-value', 'report-platform-value',
+          'report-distribution-name', 'report-distribution-version', 'report-installers-empty', 'report-value-type') else
+        'Gate environment role roster mismatch')
+      with pytest.raises(SystemExit, match='^' + message + '$'):
+        run_policy(seal)
+    assert not output.exists() and not (bundle / 'SHA256SUMS').exists()
+    return
 
   run_policy(seal)
   outputs = dict(line.split('=', 1) for line in output.read_text(encoding='utf-8').splitlines())
@@ -328,6 +647,19 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   manifest = (bundle / 'SHA256SUMS').read_bytes()
   assert hashlib.sha256(manifest).hexdigest() == outputs['manifest-sha']
   assert b'\r\n' not in manifest
+  assert {p.name for p in (bundle / 'dist').iterdir()} == {'bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl'}
+  assert {p.relative_to(bundle).as_posix() for p in bundle.rglob('*') if p.is_file()} == {
+    'dist/bazi-1.0.0.tar.gz', 'dist/bazi-1.0.0-py3-none-any.whl', 'RELEASE_NOTES.md',
+    'release.json', 'environments.json', 'SHA256SUMS',
+  }
+
+
+@pytest.mark.parametrize('version', ['1.0', '1.0.0rc1', '1.0.0+local'])
+def test_seal_requires_stable_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, version: str) -> None:
+  monkeypatch.chdir(tmp_path)
+  (tmp_path / 'pyproject.toml').write_text(f'[project]\nversion = "{version}"\n', encoding='utf-8')
+  with pytest.raises(SystemExit, match='^Use a stable three-part release version$'):
+    run_policy(workflow_code('build', 'Seal release bundle'))
 
 
 @pytest.mark.parametrize('change, message', [
