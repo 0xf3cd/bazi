@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
+import sys
 from dataclasses import FrozenInstanceError, asdict, fields, replace
 from pathlib import Path
 from typing import Any, get_args, get_origin
@@ -10,10 +11,11 @@ import pytest
 from bazi.defines import Shishen, Tiangan
 from bazi.knowledge import (
   KnowledgeBase, KnowledgeObject, KnowledgeRole, KnowledgeRelation, KnowledgeEntry,
-  LegacyDescription, KnowledgeContext, object_id,
+  DEFAULT_SOURCE_PATH, LegacyDescription, KnowledgeContext, object_id,
 )
 
 from knowledge_additions import AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS
+from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -27,6 +29,129 @@ TRANSLATED_SOURCES: dict[str, dict[str, list[str]]] = LEDGER['translated']['sour
 
 def _ids(entries: tuple[KnowledgeEntry, ...]) -> tuple[str, ...]:
   return tuple(entry.claim_id for entry in entries)
+
+
+def _source_data() -> dict[str, Any]:
+  data: dict[str, Any] = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+  return data
+
+
+def _load_source(data: object, directory: Path) -> KnowledgeBase:
+  source = directory / 'knowledge.json'
+  source.write_text(json.dumps(data, ensure_ascii=True), encoding='utf-8')
+  return KnowledgeBase.load(source)
+
+
+@pytest.mark.parametrize('text', ['中文', '😀', json.loads('"\\ud83d\\ude00"'), '\\ud800'])
+def test_source_preserves_supported_text(text: str, tmp_path: Path) -> None:
+  data = _source_data()
+  data['entries'][0]['text'] = text
+  loaded = _load_source(data, tmp_path)
+  entry = loaded.entry(data['entries'][0]['claim_id'])
+  assert entry.text == text and text in loaded.render(entry)
+  loaded.render(entry).encode('utf-8')
+
+
+@pytest.mark.parametrize('bad', [chr(0xd800), chr(0xdfff)])
+@pytest.mark.parametrize('surface', ['text', 'nested_value', 'nested_key'])
+def test_source_rejects_surrogates(bad: str, surface: str, tmp_path: Path) -> None:
+  data = _source_data()
+  if surface == 'text':
+    data['entries'][0]['text'] = bad
+  else:
+    data['entries'][0]['extension'] = {bad: 'ok'} if surface == 'nested_key' else {'nested': [bad]}
+  with pytest.raises(ValueError, match='surrogate'):
+    _load_source(data, tmp_path)
+
+
+def test_source_never_preencodes_loaded_tree(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  source = tmp_path / 'knowledge.json'
+  source.write_bytes(DEFAULT_SOURCE_PATH.read_bytes())
+  def forbidden(*args: Any, **kwargs: Any) -> str:
+    raise AssertionError('Knowledge loading must not encode JSON')
+  monkeypatch.setattr(json, 'dumps', forbidden)
+  assert KnowledgeBase.load(source) == KNOWLEDGE_BASE
+  sample = '[' * 400 + ','.join(['0'] * 20000) + ']' * 400
+  assert len(sample.encode('utf-8')) == 40799
+  source.write_text(sample, encoding='utf-8')
+  with pytest.raises(TypeError, match='Expected JSON object'):
+    KnowledgeBase.load(source)
+
+
+@pytest.mark.parametrize('surface', ['root', 'objects', 'schema_version'])
+def test_deep_source_rejects_without_formatting(surface: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+  depth = sys.getrecursionlimit() + 100
+  nested = '[' * depth + '0' + ']' * depth
+  text = nested if surface == 'root' else DEFAULT_SOURCE_PATH.read_text(encoding='utf-8').replace(
+    '"schema_version": 2' if surface == 'schema_version' else '"objects": [',
+    '"schema_version": ' + nested if surface == 'schema_version' else '"objects": [' + nested + ',',
+    1,
+  )
+  source = tmp_path / 'deep.json'
+  source.write_text(text, encoding='utf-8')
+  original_loads = json.loads
+  outcomes: list[str] = []
+  def loads(*args: Any, **kwargs: Any) -> Any:
+    try:
+      value = original_loads(*args, **kwargs)
+    except RecursionError:
+      outcomes.append('recursion')
+      raise
+    outcomes.append('parsed')
+    return value
+  monkeypatch.setattr(json, 'loads', loads)
+  with pytest.raises((TypeError, ValueError)) as raised:
+    KnowledgeBase.load(source)
+  error_type: type[Exception]
+  if outcomes == ['recursion']:
+    error_type, message = ValueError, 'JSON nesting exceeds the supported parsing depth'
+  else:
+    assert outcomes == ['parsed']
+    error_type = ValueError if surface == 'schema_version' else TypeError
+    message = "Unsupported schema version type: <class 'list'>" if surface == 'schema_version' else "Expected JSON object, got <class 'list'>"
+  assert type(raised.value) is error_type
+  assert str(raised.value) == message
+
+
+def test_schema_error_does_not_format_container() -> None:
+  class Unprintable(list):
+    def __repr__(self) -> str:
+      raise AssertionError('repr of unknown container')
+    def __str__(self) -> str:
+      raise AssertionError('str of unknown container')
+    def __format__(self, spec: str) -> str:
+      raise AssertionError('format of unknown container')
+  data = _source_data()
+  data['schema_version'] = Unprintable()
+  with pytest.raises(ValueError) as error:
+    KnowledgeBase._from_data(data)
+  assert str(error.value) == f'Unsupported schema version type: {type(data["schema_version"])}'
+
+
+def test_parse_error_preserves_source_position(tmp_path: Path) -> None:
+  from bazi._validation import _pairs
+  text = '\n{"field":'
+  source = tmp_path / 'broken.json'
+  source.write_text(text, encoding='utf-8')
+  with pytest.raises(json.JSONDecodeError) as original:
+    json.loads(text, object_pairs_hook=_pairs)
+  with pytest.raises(json.JSONDecodeError) as raised:
+    KnowledgeBase.load(source)
+  assert (raised.value.doc, raised.value.pos, raised.value.msg) == (text, original.value.pos, original.value.msg)
+
+
+def test_programmatic_render_utf8_boundaries() -> None:
+  knowledge = KnowledgeBase.load()
+  entry = knowledge.entry('tiangan.ding.definition')
+  bad = replace(entry, text=entry.text + '\ud800')
+  custom = KnowledgeBase(
+    tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()),
+    tuple(bad if value.claim_id == entry.claim_id else value for value in knowledge.entries.values()),
+  )
+  for operation in (lambda: custom.render(bad), lambda: custom.render_subject('tiangan.ding'), lambda: knowledge.render(entry, premise_verdict='\ud800')):
+    with pytest.raises(ValueError, match='surrogate'):
+      operation()
+  assert knowledge.find_objects('\ud800') == () and knowledge.search('\ud800') == ()
 
 
 def _discovery_knowledge() -> KnowledgeBase:
@@ -258,7 +383,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
   ]
   assert actual == expected_rows
   for source_id, expected in baseline['sources'].items():
-    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    record = before_errata(asdict(KNOWLEDGE_BASE.sources[source_id]), SOURCE_ERRATA['sources'].get(source_id, {}))
     translated = {field: new for field, (_, new) in TRANSLATED_SOURCES.get(source_id, {}).items()}
     assert {key: record[key] for key in expected} == {**expected, **translated}
   old_ids = {row['claim']['claim_id'] for row in baseline['rows']}
@@ -296,7 +421,7 @@ def test_attribution_allowance_matches_entries() -> None:
 def test_translation_table_matches_the_corpus() -> None:
   # Two-way: every translated value is in the corpus and no original value is left behind.
   for source_id, changes in TRANSLATED_SOURCES.items():
-    record = asdict(KNOWLEDGE_BASE.sources[source_id])
+    record = before_errata(asdict(KNOWLEDGE_BASE.sources[source_id]), SOURCE_ERRATA['sources'].get(source_id, {}))
     for field, (old, new) in changes.items():
       assert record[field] == new and old != new, (source_id, field)
   attributions = {entry.attribution for entry in KNOWLEDGE_BASE.entries.values()}
@@ -475,7 +600,7 @@ def test_ding_nested_premises_stay_unresolved() -> None:
       '限度：' + limit,
     ):
       assert text in rendered
-  restored = KnowledgeBase.from_json(k.export_json(selected))
+  restored = KnowledgeBase(tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()), selected)
   assert restored.query(context_id=context_id, applicability='unresolved', time_scope='未限定', include_reference_only=True) == selected
   assert restored.render(entry, manual_context=True) == k.render(entry, manual_context=True)
 
@@ -491,8 +616,8 @@ def test_migrated_field_premises_conserved() -> None:
       assert entry.legacy.field_premise == premises.get(entry.legacy.field, ''), entry.claim_id
 
 
-def test_edit_validate_query_render_export_reload(tmp_path: Path) -> None:
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+def test_edit_validate_query_render_reload(tmp_path: Path) -> None:
+  data = _source_data()
   entry = next(value for value in data['entries'] if value['claim_id'] == 'legacy.tiangan.geng.regulated_transit')
   entry['limits'] = ['编辑者另记的适用限度。']
   entry['exceptions'] = ['编辑者另记的例外。']
@@ -504,20 +629,18 @@ def test_edit_validate_query_render_export_reload(tmp_path: Path) -> None:
   rendered = edited.render(selected[0], manual_context=True)
   for text in ('后天有教养', '有制有化尚未定义', '来源尚未核实', '命盘适用性未判断', '人工给定情境', '编辑者另记的例外。', '编辑者另记的适用限度。'):
     assert text in rendered
-  exported = edited.export_json(selected)
-  restored = KnowledgeBase.from_json(exported)
+  restored = KnowledgeBase.load(source)
   assert restored.query(object_id='tiangan.geng', time_scope='行运', include_reference_only=True) == selected
   assert restored.render(selected[0], manual_context=True) == rendered
-  assert restored.export_json() == exported
+  assert restored == edited and hash(restored) == hash(edited)
   assert KNOWLEDGE_BASE.entry(selected[0].claim_id).limits == ()
   default = KnowledgeBase.load()
-  assert default.export_json() == KNOWLEDGE_BASE.export_json()
-  assert KnowledgeBase.from_json(default.export_json()).entries == default.entries
+  assert default == KNOWLEDGE_BASE and default.entries == KNOWLEDGE_BASE.entries
   symbolic = default.query(topic='历史象', include_reference_only=True)
-  selection = KnowledgeBase.from_json(default.export_json(symbolic))
+  selection = KnowledgeBase(tuple(default.objects.values()), tuple(default.contexts.values()), tuple(default.sources.values()), symbolic)
   assert selection.query(topic='历史象', include_reference_only=True) == symbolic
   assert selection.sources == default.sources
-  empty = KnowledgeBase.from_json(default.export_json(()))
+  empty = KnowledgeBase(tuple(default.objects.values()), tuple(default.contexts.values()), tuple(default.sources.values()), ())
   assert empty.query(object_id='tiangan.ding') == ()
 
 
@@ -615,12 +738,6 @@ def test_file_load_rejects_invalid_input(value: object) -> None:
     KnowledgeBase.load(value) # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize('value', [1, None, 'yes'])
-def test_json_load_rejects_invalid_input(value: object) -> None:
-  with pytest.raises(ValueError if isinstance(value, str) else TypeError):
-    KnowledgeBase.from_json(value) # type: ignore[arg-type]
-
-
 def test_lookup_rejects_unknown_claim() -> None:
   k = KNOWLEDGE_BASE
   with pytest.raises(ValueError, match='Unknown claim'):
@@ -633,19 +750,6 @@ def test_selections_reject_foreign_entries() -> None:
   foreign = replace(entry, text='Another text.')
   with pytest.raises(ValueError, match='Foreign entry'):
     k.render(foreign)
-  with pytest.raises(ValueError, match='Foreign entry'):
-    k.export_json((foreign,))
-
-
-def test_export_rejects_invalid_selection() -> None:
-  k = KNOWLEDGE_BASE
-  entry = k.entry('tiangan.ding.definition')
-  with pytest.raises(ValueError, match='Duplicate selection'):
-    k.export_json((entry, entry))
-  with pytest.raises(TypeError):
-    k.export_json([entry]) # type: ignore[arg-type]
-  with pytest.raises(TypeError):
-    k.export_json((object(),)) # type: ignore[arg-type]
 
 
 def test_value_constructors_validate_fields() -> None:
@@ -707,11 +811,11 @@ def test_constructor_value_boundaries() -> None:
 
 
 @pytest.mark.parametrize('kind', ['objects', 'contexts', 'sources', 'entries'])
-def test_duplicate_registry_ids_are_rejected(kind: str) -> None:
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+def test_duplicate_registry_ids_are_rejected(kind: str, tmp_path: Path) -> None:
+  data = _source_data()
   data[kind].append(data[kind][0])
   with pytest.raises(ValueError, match='Duplicate identifier'):
-    KnowledgeBase.from_json(json.dumps(data))
+    _load_source(data, tmp_path)
 
 
 @pytest.mark.parametrize('mutation, message', [
@@ -720,8 +824,8 @@ def test_duplicate_registry_ids_are_rejected(kind: str) -> None:
   ('legacy-object', 'Legacy object is missing'), ('legacy-field', 'Unsupported legacy field'),
   ('legacy-placement', 'Duplicate legacy placement'), ('concept-legacy', 'Unsupported legacy field'),
 ])
-def test_corpus_rejects_integrity_violations(mutation: str, message: str) -> None:
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+def test_corpus_rejects_integrity_violations(mutation: str, message: str, tmp_path: Path) -> None:
+  data = _source_data()
   entry = data['entries'][0]
   if mutation == 'object':
     entry['roles'][0]['object_id'] = 'missing'
@@ -746,34 +850,37 @@ def test_corpus_rejects_integrity_violations(mutation: str, message: str) -> Non
     extra['claim_id'] = 'extra'
     data['entries'].append(extra)
   with pytest.raises(ValueError, match=message):
-    KnowledgeBase.from_json(json.dumps(data))
+    _load_source(data, tmp_path)
 
 
-def test_json_rejects_malformed_corpus() -> None:
+def test_source_rejects_malformed_corpus(tmp_path: Path) -> None:
+  source = tmp_path / 'malformed.json'
   for text in ('{"schema_version":1,"schema_version":1}', '[1]', '{}', '{bad json'):
     with pytest.raises((TypeError, ValueError)):
-      KnowledgeBase.from_json(text)
+      source.write_text(text, encoding='utf-8')
+      KnowledgeBase.load(source)
   for key in ('objects', 'contexts', 'sources', 'entries'):
-    data = json.loads(KNOWLEDGE_BASE.export_json())
+    data = _source_data()
     data[key] = {}
     with pytest.raises(TypeError, match='JSON array'):
-      KnowledgeBase.from_json(json.dumps(data))
-  for version in (True, '1', 2):
-    data = json.loads(KNOWLEDGE_BASE.export_json())
+      _load_source(data, tmp_path)
+  for version in (True, '2', 1, 3, 2.0):
+    data = _source_data()
     data['schema_version'] = version
     with pytest.raises(ValueError, match='schema version'):
-      KnowledgeBase.from_json(json.dumps(data))
+      _load_source(data, tmp_path)
   for bad in (1, {}, {'object_id': 'x', 'kind': 'concept', 'name': 'X', 'extra': 'x'}):
-    data = json.loads(KNOWLEDGE_BASE.export_json())
+    data = _source_data()
     data['objects'][0] = bad
     with pytest.raises((TypeError, ValueError)):
-      KnowledgeBase.from_json(json.dumps(data))
-  data = json.loads(KNOWLEDGE_BASE.export_json())
+      _load_source(data, tmp_path)
+  data = _source_data()
   data['entries'][0]['roles'] = {}
   with pytest.raises(TypeError, match='JSON array'):
-    KnowledgeBase.from_json(json.dumps(data))
+    _load_source(data, tmp_path)
   with pytest.raises(ValueError):
-    KnowledgeBase.from_json('')
+    source.write_text('', encoding='utf-8')
+    KnowledgeBase.load(source)
 
 
 def test_constructor_requires_typed_tuples() -> None:
@@ -787,7 +894,7 @@ def test_witnessed_zhushi_is_distinct_layer() -> None:
   source = replace(KNOWLEDGE_BASE.sources['yuanhai_ziping_relations'], source_id='annotation', text_layer='zhushi')
   k = KnowledgeBase((), (), (source,), ())
   assert k.sources['annotation'].text_layer == 'zhushi'
-  assert KnowledgeBase.from_json(k.export_json()).sources == k.sources
+  assert KnowledgeBase(tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()), tuple(k.entries.values())).sources == k.sources
 
 
 # Entries in _NEW_RELATIONSHIP_IDS and their registry; corpus facts are pinned here, with protection asserts in the two tests below.
@@ -935,7 +1042,7 @@ def test_non_oracle_sources_fingerprint() -> None:
       *AUXILIARY_SOURCE_IDS,
     }:
       continue
-    row = asdict(source)
+    row = before_errata(asdict(source), SOURCE_ERRATA['sources'].get(source_id, {}))
     for field, (old, _) in TRANSLATED_SOURCES.get(source_id, {}).items():
       row[field] = old
     rows.append(row)
@@ -966,7 +1073,7 @@ def test_auxiliary_queries_stay_reference_only() -> None:
     else:
       assert entry.applicability == 'unconditional' and entry.premise == ''
   assert len(k.query()) == 19
-  assert KnowledgeBase.from_json(k.export_json()) == k
+  assert KnowledgeBase.load() == k
 
 
 @pytest.mark.parametrize('claim_id,sources', [
@@ -993,13 +1100,19 @@ def test_auxiliary_source_support_is_separated() -> None:
     'youyilu.taiyuan_minggong': ('baiwen', 'sanming_tonghui', '生月干前一位，枝前三位即是。如己巳月生，则胎元在庚申；壬午月生，则胎元在癸酉。'),
     'sanming_tonghui.taiyuan': ('baiwen', 'sanming_tonghui', '惟有一法以當生前三百日為十月之氣乃是受胎之正'),
     'sanming_tonghui.minggong': ('baiwen', 'sanming_tonghui', '次将所生之時加於所生之月順行十二位逢卯即安命宫'),
-    'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人谓交过中气，即作次月推'),
+    'mingli_tanyuan.minggong': ('zhushi', 'mingli_tanyuan', '古人謂交過中氣。卽作次月推'),
   }
   for identifier, (layer, lineage, excerpt) in expected.items():
     source = k.sources[identifier]
     assert (source.text_layer, source.lineage, source.excerpt, source.state) == (layer, lineage, excerpt, 'witnessed')
     assert any(excerpt in entry.text for entry in k.query(source_id=identifier, include_reference_only=True))
-    assert '转录' in source.edition + source.attribution and source.limitations
+    assert source.limitations
+    if identifier == 'mingli_tanyuan.minggong':
+      assert source.url == 'https://commons.wikimedia.org/w/index.php?curid=132876481'
+      assert '扫描文件题《命理探源》' in source.edition and '版心题《命理探原》' in source.edition
+      assert 'PDF 第 75–76 页' in source.locator and '印页四四至四五' in source.locator
+    else:
+      assert '转录' in source.edition + source.attribution
   assert '然則貴人受胎定在三百日又豈可據乎' in k.sources['sanming_tonghui.taiyuan'].limitations
   critique = '今人多以法取胎元未審精當'
   source = k.sources['sanming_tonghui.taiyuan']
@@ -1014,7 +1127,7 @@ def test_auxiliary_source_support_is_separated() -> None:
   assert '未明确' in k.sources['sanming_tonghui.minggong'].limitations
   assert '按语' in k.sources['mingli_tanyuan.minggong'].limitations
   locator = k.sources['mingli_tanyuan.minggong'].locator
-  assert '下载页题名作《命理探源》' in locator and '本库沿称《命理探原》' in locator
+  assert '〈起例〉〈推命宮法〉' in locator and '按语及丙午大寒例' in locator
   assert '立春' not in k.entry('concept.minggong.zhongqi').text
   candidate = ''.join(k.entry('concept.taiyuan.three_hundred_days').limits)
   assert all(text in candidate for text in ('四库固定转录', '网页选录', '批评', '段末另有质疑', '先核对选录截取与转录范围，再查底本'))
@@ -1055,7 +1168,7 @@ def test_kongwang_additions_are_reference_only() -> None:
     assert entry.roles[0].object_id == 'shensha.kongwang'
     assert all(k.sources[source].state == entry.source_state for source in entry.sources)
     assert entry.limits and entry.exceptions == ()
-  assert KnowledgeBase.from_json(k.export_json()).query(object_id='shensha.kongwang', include_reference_only=True) == entries
+  assert KnowledgeBase.load().query(object_id='shensha.kongwang', include_reference_only=True) == entries
 
 
 def test_kongwang_sources_keep_witness_boundaries() -> None:

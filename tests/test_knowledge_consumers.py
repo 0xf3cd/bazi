@@ -1,7 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import importlib.util
-from dataclasses import FrozenInstanceError, fields, replace
+import json
+from dataclasses import FrozenInstanceError, asdict, fields, replace
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -10,7 +11,7 @@ import pytest
 import bazi
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, evaluate_context
+from bazi.context_matching import NatalObservation, PremiseMatches, evaluate_context
 from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
@@ -38,7 +39,10 @@ def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
     tuple(lamp if entry.claim_id == lamp.claim_id else entry for entry in k.entries.values()),
   )
   path = tmp_path / 'edited.json'
-  path.write_text(edited.export_json(), encoding='utf-8')
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+  data['sources'].extend((asdict(unused), asdict(used)))
+  next(entry for entry in data['entries'] if entry['claim_id'] == lamp.claim_id)['sources'] = ['future.used']
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   loaded = KnowledgeBase.load(path)
   assert len(loaded.sources) == 25
   for source_id, record in edited.sources.items():
@@ -76,7 +80,7 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
   result = evaluate_context(
     BaziChart(Bazi.create('2000-01-01 12:00', 'female')),
     criterion_id='editorial.guansha_coexistence.v1',
-    profile=ContextProfile('natal'),
+    observation=NatalObservation(),
     include_reference_only=True,
   )
   consumer = Mock(wraps=KnowledgeBase.render)
@@ -84,9 +88,9 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
     return str(consumer(self, *args, **kwargs))
   monkeypatch.setattr(KnowledgeBase, 'render', render)
   text = result.render()
-  assert result.entries
-  assert consumer.call_count == len(result.entries)
-  for call, match in zip(consumer.call_args_list, result.entries):
+  assert isinstance(result.references, PremiseMatches) and result.references.entries
+  assert consumer.call_count == len(result.references.entries)
+  for call, match in zip(consumer.call_args_list, result.references.entries):
     knowledge, entry = call.args
     assert isinstance(knowledge, KnowledgeBase)
     assert entry == knowledge.entry(match.claim_id)
@@ -129,7 +133,7 @@ def test_subject_projection_keeps_roles_distinct(show_sources: bool) -> None:
     for entry in k.query(object_id=identifier, include_reference_only=True):
       assert entry.text in k.render_subject(identifier, include_reference_only=True)
   assert k.render_subject('shishen.jiecai') == ''
-  assert KnowledgeBase.from_json(k.export_json(())).render_subject('tiangan.ding') == ''
+  assert KnowledgeBase(tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()), ()).render_subject('tiangan.ding') == ''
   assert hash(selected) == hash(reversed_k.query(object_id='tiangan.ding', include_reference_only=True))
 
 
@@ -152,7 +156,7 @@ def test_subject_display_public_boundaries(bad_flag: object) -> None:
 def test_render_verdict_is_display_only() -> None:
   k = KnowledgeBase.load()
   reference = k.entry('editorial.shishen.zhengguan.legal_trouble')
-  before = k.export_json()
+  before = (k.objects, k.contexts, k.sources, k.entries)
   rendered = k.render(reference, manual_context=True, premise_verdict='SATISFIED')
   assert '前提判别：SATISFIED' in rendered
   assert '输出资格：reference_only' in rendered and '仅供参考' in rendered
@@ -160,7 +164,7 @@ def test_render_verdict_is_display_only() -> None:
   assert '人工给定情境' not in rendered
   assert '人工给定情境' in k.render(reference, manual_context=True, premise_verdict=None)
   assert reference not in k.query()
-  assert k.export_json() == before
+  assert (k.objects, k.contexts, k.sources, k.entries) == before
   for value in (1, False, (), object()):
     with pytest.raises(TypeError, match='Expected str | None'):
       k.render(reference, premise_verdict=value) # type: ignore[arg-type]

@@ -9,6 +9,7 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.calendar import CalendarType, JieqiTime, calendar_utils_of
+from bazi.calendar.dates import GanzhiYearMonth
 from bazi.defines import Dizhi, Jieqi
 from bazi.school import BaziConfig
 from bazi.transit_chart import TransitChart
@@ -78,7 +79,7 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
           assert current_month is not None and current_month.dayun == first.ganzhi
           previous_year = expected_year - (owning[3] == 1)
           previous_branch = candidates[owning_index - 1][2]
-          assert TransitDatabase(chart)._dayun_at_month(previous_year, previous_branch) is None
+          assert TransitDatabase(chart)._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous_branch)) is None
           counting = [line for line in get_transit_info(chart).splitlines() if line.startswith('大运数节依据')]
           assert counting == [f'大运数节依据（逆排）：{owning[1]} - {owning[0].isoformat()}']
         # Calendar lookups still bracket the physical minute, including DAY's advance window.
@@ -128,8 +129,8 @@ def test_month_floor_leaves_physical_queries(
   database = TransitDatabase(chart)
   assert chart.dayun_start_moment == datetime.fromisoformat(birth)
   assert chart.bazi.month_jies[0].moment > chart.bazi.reference_datetime
-  assert database._dayun_at_month(previous_year, previous) is None
-  assert str(database._dayun_at_month(2000, current)) == first_ganzhi
+  assert database._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous)) is None
+  assert str(database._dayun_at_month(GanzhiYearMonth.from_dizhi(2000, current))) == first_ganzhi
   assert next(chart.dayun).ganzhi_year == 2000
 
 
@@ -137,8 +138,8 @@ def test_year_floor_leaves_physical_queries() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 10:00', 'female'))
   transits = TransitChart(chart)
   database = TransitDatabase(chart)
-  assert database._dayun_at_month(1999, Dizhi.丑) is None
-  assert str(database._dayun_at_month(2000, Dizhi.寅)) == '丁丑'
+  assert database._dayun_at_month(GanzhiYearMonth.from_dizhi(1999, Dizhi.丑)) is None
+  assert str(database._dayun_at_month(GanzhiYearMonth.from_dizhi(2000, Dizhi.寅))) == '丁丑'
   assert next(chart.dayun).ganzhi_year == 2000
   assert transits.at_year(1999) is None
   assert transits.at_month(1999, Dizhi.丑) is None
@@ -157,12 +158,9 @@ def test_year_floor_leaves_physical_queries() -> None:
   ('male', '大运数节依据（顺排）：惊蛰 - 2000-03-05T14:42:39'),
   ('female', '大运数节依据（逆排）：立春 - 2000-02-04T20:40:23'),
 ])
-def test_demo_reads_facts_not_serialized_chart(
+def test_demo_reads_time_facts(
   monkeypatch: pytest.MonkeyPatch, located: bool, gender: str, counting: str,
 ) -> None:
-  def fail_json(_chart: BaziChart) -> object:
-    raise AssertionError('Display must not generate a complete chart JSON')
-  monkeypatch.setattr(BaziChart, 'json', property(fail_json))
   chart = BaziChart(Bazi.create(
     '2000-02-04T07:40:00-05:00' if located else '2000-02-04 10:00',
     gender,
@@ -191,7 +189,7 @@ def test_demo_reads_facts_not_serialized_chart(
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
-def test_time_facts_readonly_json_detached() -> None:
+def test_time_facts_are_readonly() -> None:
   bazi = Bazi.create('2000-02-04T07:40:12.123456-05:00', 'male',
                      BaziConfig.from_values(precision='minute'), longitude=0.0)
   facts = bazi.location_time
@@ -202,19 +200,7 @@ def test_time_facts_readonly_json_detached() -> None:
     facts.longitude = 1.0 # type: ignore[misc]
   with pytest.raises(AttributeError):
     bazi.reference_datetime = datetime(2000, 1, 1) # type: ignore[misc]
-  detached = facts.json
-  detached['apparent_time'] = 'wrong'
-  assert facts.json['apparent_time'] == facts.apparent_time.isoformat()
   assert Bazi.create('2000-02-04 10:00', 'male').location_time is None
-
-
-def test_day_json_rejects_old_derived_start() -> None:
-  chart = BaziChart(Bazi.create('2000-02-04 10:00', 'male'))
-  data = chart.json
-  assert BaziChart.from_json(data).json == data
-  data['transits']['dayun_start_time'] = '2000-03-29T12:33:18.333333'
-  with pytest.raises(ValueError):
-    BaziChart.from_json(data)
 
 
 @pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2'))

@@ -53,8 +53,8 @@ print(
 
 分析层的 `shensha['kongwang']` 是命中地支的并集。要看依据哪一锚、命中哪个位置，使用
 {py:attr}`~bazi.analyzer.relationship.AtBirthAnalysis.kongwang` 或
-{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是年／日来源，
-`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项保留原局柱位或流运种类及完整目标干支。
+{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是 `Zhu.年`／`Zhu.日`，
+`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项的 `position` 为原局柱位 `Zhu` 或流运种类 `TransitKind`，并保留完整目标干支。
 
 ```{testcode} kongwang-details
 from bazi.analyzer.relationship import RelationshipAnalyzer
@@ -74,10 +74,10 @@ chart = BaziChart(
 analyzer = RelationshipAnalyzer(chart)
 for result in analyzer.at_birth.kongwang:
   print(
-    result.anchor,
+    str(result.anchor),
     str(result.ganzhi),
     sorted(map(str, result.xunkong)),
-    [(hit.pillar, str(hit.ganzhi)) for hit in result.hits],
+    [(str(hit.position), str(hit.ganzhi)) for hit in result.hits],
   )
 
 transits = TransitSet(
@@ -86,8 +86,8 @@ transits = TransitSet(
 )
 for result in analyzer.transits.kongwang(transits):
   print(
-    result.anchor,
-    [(hit.kind.value, str(hit.ganzhi)) for hit in result.hits],
+    str(result.anchor),
+    [(hit.position.value, str(hit.ganzhi)) for hit in result.hits],
   )
 assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
   hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
@@ -95,15 +95,20 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 ```
 
 ```{testoutput} kongwang-details
-year 甲子 ['亥', '戌'] [('day', '壬戌')]
-day 壬戌 ['丑', '子'] [('year', '甲子')]
-year [('dayun', '甲戌'), ('liunian', '甲戌')]
-day []
+年 甲子 ['亥', '戌'] [('日', '壬戌')]
+日 壬戌 ['丑', '子'] [('年', '甲子')]
+年 [('dayun', '甲戌'), ('liunian', '甲戌')]
+日 []
 ```
 
 原局排除锚自身柱；流运只用本命锚查流运支，不反向查询。无命中仍保留二支；同支不同柱、
 同干支不同流运种类、同值的年日双锚均不合并。这里只标原始命中，不删除地支，不以冲合刑取消，
 不改变五行、十神、纳音或其他关系，也不判断出空、填实与吉凶。单支筛选、截路、四大空亡未在此接口实现。
+
+配偶星的 `StarAppearance` 同样用 `position` 区分原局柱位与流运种类；`layer` 为
+`TianganLayer.明干`／`TianganLayer.藏干`。这两个类型从 `bazi.defines` 导入，中文类别名分别为
+`柱` 和 `天干层次`。打印原局柱位 `Zhu` 或明藏层 `TianganLayer` 用 `str(value)` 取得中文值，
+不依赖枚举的 repr；流运种类 `TransitKind` 用 `.value` 取得 `dayun`、`liunian` 等标签。
 
 ## 查一年的流运和一个关系
 
@@ -124,9 +129,9 @@ chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
 year = TransitChart(chart).at_year(2024)
 assert year is not None
 
-print(year.json)
+print([str(ganzhi) for ganzhi in year.ganzhis])
 print([kind.value for kind in year])
-print(year.select(TransitKind.LIUNIAN).json)
+print([str(ganzhi) for ganzhi in year.select(TransitKind.LIUNIAN).ganzhis])
 
 found = RelationshipAnalyzer(chart).transits.house_relations(year)
 for relation, combos in found.items():
@@ -136,9 +141,9 @@ print(DizhiRelation.害 is DizhiRelation.HAI, DizhiRelation.害.value)
 ```
 
 ```{testoutput} relations-house
-{'dayun': '丁丑', 'liunian': '甲辰'}
+['丁丑', '甲辰']
 ['dayun', 'liunian']
-{'liunian': '甲辰'}
+['甲辰']
 害 丑午
 生 丑午
 生 辰午
@@ -149,7 +154,7 @@ True 害
 
 - `at_year` 在出生年之前返回 `None`，所以先判断再用。返回的 `TransitSet` 只含当前有的种类（这里是大运和流年），
   缺项就是 `None`。`select` 要求指定种类全部存在，缺项抛 `ValueError`。
-- `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.json` 的键就是这些值，干支用中文。
+- `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.items` 按固定顺序给出种类与干支对。
 - 关系的键是 `DizhiRelation` 成员，有拉丁名和中文别名，二者是同一个对象（`DizhiRelation.害 is DizhiRelation.HAI`）。
 - 每个组合是一个 `frozenset` 的地支，不带次序，所以示例先按枚举序排序再打印。
   各关系的取法与流派定义看 {py:class}`~bazi.school.BaziSchool` 和 {py:class}`~bazi.defines.relations.DizhiRelation`。

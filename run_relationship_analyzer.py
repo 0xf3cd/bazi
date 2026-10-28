@@ -9,7 +9,7 @@ from run_demo import get_basic_info, colored_str
 
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
-from bazi.defines import Dizhi, Ganzhi
+from bazi.defines import Zhu, Dizhi, Ganzhi
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind
 from bazi.analyzer.relationship import (
@@ -55,15 +55,16 @@ def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
 
 def kongwang_strs(results: tuple[KongwangResult, ...]) -> list[str]:
   '''逐锚展示旬空二支与具体命中；没有命中时仍列二支。'''
-  pillars = {'year': '年柱', 'month': '月柱', 'day': '日柱', 'hour': '时柱'}
   lines = []
   for result in results:
     absent = ''.join(map(str, sorted(result.xunkong, key=lambda dz: dz.index)))
-    hits = '、'.join(
-      f'{pillars[hit.pillar] if hit.pillar is not None else hit.kind.value} {hit.ganzhi}' # type: ignore[union-attr] # 流运命中必有 kind。
-      for hit in result.hits
-    )
-    lines.append(f'{pillars[result.anchor]} {result.ganzhi} → 旬空{absent}；命中：{hits or "无"}')
+    hit_texts: list[str] = []
+    for hit in result.hits:
+      position = hit.position
+      label = f'{position}柱' if isinstance(position, Zhu) else position.value
+      hit_texts.append(f'{label} {hit.ganzhi}')
+    hits = '、'.join(hit_texts)
+    lines.append(f'{result.anchor}柱 {result.ganzhi} → 旬空{absent}；命中：{hits or "无"}')
   return lines
 
 

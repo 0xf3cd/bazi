@@ -1,9 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import hashlib
 import inspect
 import json
-from dataclasses import FrozenInstanceError, fields, replace
+from dataclasses import FrozenInstanceError, asdict, fields, replace
 from pathlib import Path
 from typing import Any
 
@@ -11,9 +10,9 @@ import pytest
 
 import bazi.context_matching as matching_module
 from bazi.context_matching import (
-  ContextProfile, ContextResult, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
+  Observation, NatalObservation, LiunianObservation, TransitObservation, YearCoordinate,
+  PremiseMatches, ConditionReferences, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
 )
-from bazi.context_matching import RelationshipProfile, TransitCoordinate
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
@@ -21,7 +20,6 @@ from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
 
 from matching_samples import GUANSHA, FEMALE, LEGAL
-from knowledge_additions import AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS
 
 
 DIRECTORY_BASELINE: dict[str, Any] = json.loads(
@@ -40,8 +38,8 @@ def _check_directory_coverage(directory: frozendict[str, CriterionInfo], cases: 
 def _check_directory_info(info: CriterionInfo, case: dict[str, Any]) -> None:
   assert info.criterion_id == case['criterion_id']
   assert info.definition == case['expected']['criterion']['definition']
-  assert info.profile_kind == case['profile_kind']
-  assert info.profile_type is (ContextProfile if case['profile_kind'] == 'context' else RelationshipProfile)
+  assert info.analysis_kind == case['profile_kind']
+  assert info.observation_types == ((NatalObservation, LiunianObservation) if case['profile_kind'] == 'context' else (NatalObservation, TransitObservation))
   assert info.entry_role == case['entry_role']
   assert info.observation_keys == tuple(case['observation_keys'])
   assert info.claim_ids == tuple(case['claim_ids'])
@@ -63,18 +61,14 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
   assert tuple(directory) == tuple(dict.fromkeys(case['criterion_id'] for case in DIRECTORY_BASELINE['cases']))
   for identifier, info in directory.items():
     assert lookup_criterion(identifier) == info and hash(lookup_criterion(identifier)) == hash(info)
-    assert info.required_inputs == ('chart', 'criterion_id', 'profile')
+    assert info.required_inputs == ('chart', 'criterion_id', 'observation')
     assert info.optional_inputs == ('knowledge', 'include_reference_only')
     parameters = inspect.signature(evaluate_context).parameters
     assert info.required_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is inspect.Parameter.empty)
     assert info.optional_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is not inspect.Parameter.empty)
     assert set(info.unknown_conditions) == {'missing_transit_coordinate', 'transit_unavailable'}
-    assert set(info.unknown_conditions) == {
-      reason for reason, status in matching_module._STATUS_BY_REASON.items()
-      if status == 'UNKNOWN' and reason != 'binding_unrecognized'
-    }
     assert all(text.strip() for text in info.unknown_conditions.values())
-    if info.profile_type is ContextProfile:
+    if info.analysis_kind == 'context':
       assert info.scopes == ('natal', 'natal_and_liunian')
       assert info.scope_inputs == {'natal': (), 'natal_and_liunian': ('ganzhi_year',)}
       assert info.transit_entries == {} and info.transit_kinds == {}
@@ -82,7 +76,7 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
       assert info.scopes == ('natal', 'natal_and_transits')
       assert info.scope_inputs == {'natal': (), 'natal_and_transits': ('coordinate', 'kinds')}
       assert info.transit_entries == {
-        'at_year': ('gz_year',), 'at_month': ('gz_year', 'gz_month'),
+        'at_year': ('ganzhi_year',), 'at_month': ('ganzhi_year', 'ganzhi_month'),
         'at_date': ('solar_date',), 'at_moment': ('solar_moment',),
       }
       assert info.transit_kinds == {
@@ -103,12 +97,18 @@ def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
   info = lookup_criterion(case['criterion_id'])
   _check_directory_info(info, case)
   profile_data = case['profile']
-  profile: ContextProfile | RelationshipProfile
+  observation: Observation
   if case['profile_kind'] == 'context':
-    profile = ContextProfile(**profile_data)
+    observation = NatalObservation() if profile_data['observation_scope'] == 'natal' else LiunianObservation(profile_data['ganzhi_year'])
+  elif profile_data['scope'] == 'natal':
+    observation = NatalObservation()
   else:
-    coordinate = None if profile_data['coordinate'] is None else TransitCoordinate(**profile_data['coordinate'])
-    profile = RelationshipProfile(profile_data['scope'], coordinate, tuple(TransitKind(kind) for kind in profile_data['kinds']))
+    old_coordinate = profile_data['coordinate']
+    if old_coordinate is not None:
+      assert old_coordinate['entry'] == 'at_year'
+      assert all(old_coordinate[name] is None for name in ('gz_month', 'solar_date', 'solar_moment'))
+    coordinate = None if old_coordinate is None else YearCoordinate(old_coordinate['gz_year'])
+    observation = TransitObservation(tuple(TransitKind(kind) for kind in profile_data['kinds']), coordinate)
   knowledge = KnowledgeBase.load()
   entries = tuple(knowledge.entries.values())
   if case['scenario'] == 'binding_changed':
@@ -120,38 +120,34 @@ def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
   result = evaluate_context(
     BaziChart(Bazi.create(case['birth'], case['gender'])),
     criterion_id=case['criterion_id'],
-    profile=profile,
+    observation=observation,
     knowledge=knowledge,
     include_reference_only=case['scenario'] != 'default_output',
   )
-  text = result.export_json()
-  record_data = json.loads(text)
-  for key in ('criterion', 'entries', 'related'):
-    assert record_data[key] == case['expected'][key]
-  assert ContextResult.from_json(text) == result
-  # Compare the old record fingerprint without changing its fixture or accepting the old input format.
-  assert record_data['input']['config']['school'].pop('kongwang_anchor') == 'DAY'
-  for registry, identifier, added in (
-    ('objects', 'object_id', {'shensha.kongwang', *AUXILIARY_OBJECT_IDS}),
-    ('sources', 'source_id', {
-      'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
-      'wuxing_jingji.kongwang', 'repository.kongwang',
-      *AUXILIARY_SOURCE_IDS,
-    }),
-    ('entries', 'claim_id', {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository', *AUXILIARY_ENTRY_IDS}),
-  ):
-    record_data['knowledge'][registry] = [row for row in record_data['knowledge'][registry] if row[identifier] not in added]
-  old_text = json.dumps(record_data, ensure_ascii=False, indent=2) + '\n'
-  assert hashlib.sha256(old_text.encode()).hexdigest() == case['expected']['record_sha256']
+  verdict = result.criterion
+  assert {
+    'criterion_id': verdict.criterion_id, 'definition': verdict.definition, 'status': verdict.status,
+    'reason': verdict.reason, 'scope_complete': verdict.scope_complete, 'observations': dict(verdict.observations),
+  } == case['expected']['criterion']
+  if case['entry_role'] == 'premise':
+    assert isinstance(result.references, PremiseMatches)
+    assert [{'claim_id': value.claim_id, 'status': value.status, 'reason': value.reason} for value in result.references.entries] == case['expected']['entries']
+    assert case['expected']['related'] == []
+  else:
+    assert isinstance(result.references, ConditionReferences)
+    assert [asdict(value) for value in result.references.entries] == case['expected']['related']
+    assert case['expected']['entries'] == []
   assert tuple(result.criterion.observations) == info.observation_keys
   if result.criterion.status == 'UNKNOWN':
     assert result.criterion.reason in info.unknown_conditions
   if case['scenario'] == 'binding_changed':
     assert result.criterion.reason != 'binding_unrecognized'
     if info.binding_effect == 'entry_unknown':
-      assert result.entries[0].reason == 'binding_unrecognized'
+      assert isinstance(result.references, PremiseMatches)
+      assert result.references.entries[0].reason == 'binding_unrecognized'
     else:
-      assert result.related[0].recognized is False
+      assert isinstance(result.references, ConditionReferences)
+      assert result.references.entries[0].recognized is False
 
 
 @pytest.mark.parametrize('value', [None, 1, True, '', ' ', 'unknown'])
@@ -183,7 +179,7 @@ def test_text_fields_keep_validation_messages(field: str, value: object, error: 
 
 @pytest.mark.parametrize('change, error', [
   ({'criterion_id': ''}, ValueError), ({'definition': ' '}, ValueError),
-  ({'profile_type': int}, ValueError), ({'entry_role': 'full'}, ValueError),
+  ({'analysis_kind': 'unknown'}, ValueError), ({'entry_role': 'full'}, ValueError),
   ({'observation_keys': ()}, ValueError), ({'observation_keys': ('x', 'x')}, ValueError),
   ({'claim_ids': ()}, ValueError), ({'claim_ids': ('x', 'x')}, ValueError),
   ({'observation_keys': ('',)}, ValueError),
@@ -213,7 +209,7 @@ def test_guards_missing_metadata_behavior_cases(monkeypatch: pytest.MonkeyPatch)
   case = next(case for case in DIRECTORY_BASELINE['cases'] if case['criterion_id'] == GUANSHA)
   for changed in (
     replace(directory[GUANSHA], observation_keys=('wrong',)),
-    replace(directory[GUANSHA], profile_type=RelationshipProfile),
+    replace(directory[GUANSHA], analysis_kind='relationship'),
   ):
     with pytest.raises(AssertionError):
       _check_directory_info(changed, case)

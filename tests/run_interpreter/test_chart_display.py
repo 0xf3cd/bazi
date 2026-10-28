@@ -26,11 +26,23 @@ def test_chart_display_uses_knowledge_topics(include_reference_only: bool) -> No
 
 
 def test_empty_projection_keeps_chart_counts(monkeypatch: pytest.MonkeyPatch) -> None:
-  empty = KnowledgeBase.from_json(KNOWLEDGE_BASE.export_json(()))
+  empty = KnowledgeBase(tuple(KNOWLEDGE_BASE.objects.values()), tuple(KNOWLEDGE_BASE.contexts.values()), tuple(KNOWLEDGE_BASE.sources.values()), ())
   monkeypatch.setattr(KnowledgeBase, 'load', staticmethod(lambda path=None: empty))
   text = interpret(BaziChart(Bazi.create('2000-01-01 12:00', 'male')))
   assert '原局中，劫财有' in text
   assert '定义：' not in text and '仅供参考' not in text
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('located', [False, True])
+def test_saved_txt_equals_display(tmp_path: Path, optimized: bool, located: bool) -> None:
+  birth = '2024-01-01T12:00:00+14:00' if located else '2024-01-01T12:00:00'
+  location = ('--longitude', '-157.4') if located else ()
+  result = run_cli(tmp_path, 'chart', '--birth-time', birth, '--gender', 'female', '--precision', 'minute',
+                    *location, '--output-dir', str(tmp_path), optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  text = (tmp_path / 'interpretation_examples/0.txt').read_text(encoding='utf-8')
+  assert text == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
 
 
 @pytest.mark.parametrize('flag', ['-h', '--help'])

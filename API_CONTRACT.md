@@ -1,4 +1,4 @@
-# 公开接口与记录兼容契约
+# 公开接口契约
 
 本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`
 （`import bazi; bazi.Bazi` 的 `AttributeError` 会指出该从哪个定义模块导入；`from bazi import Bazi` 由解释器报 `ImportError`，不带这条指路）。例如：
@@ -19,17 +19,17 @@ assert chart.bazi.day_master in Tiangan
 完整名称、类成员、字段、枚举别名、继承关系及规范定义路径登记在
 [`tests/api_contract.py`](tests/api_contract.py)，供测试和参考文档共同使用。
 `PUBLIC_NAMES` 登记定义模块的自有名称和既有包入口；`REEXPORTS`、`ALIASES` 区分重导出与别名。
-`DECLARED_MEMBERS` 包含方法、属性、类型别名和字段；继承关系另由 `BASES` 登记，
-公开命盘记录从私有基类继承的字段也在清单中，不因基类名带下划线而遗漏。
+`DECLARED_MEMBERS` 包含方法、属性、类型别名和字段；继承关系另由 `BASES` 登记。
 
 - 包的 `__all__` 不是公开 API 全集；`bazi.data_types` 等定义模块同样可直接导入。
 - 领域枚举的中文与拉丁成员别名共用值；中文类型别名也保留，如 `天干` 与 `Tiangan`。
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
+  由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
-- 清单不改变现有导入和 wildcard 行为；运行时签名和类型以定义模块为准。
+- 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。未发布结构调整新增的导出见下文。
 
 ### 字符串输入不等于枚举别名
 
@@ -52,8 +52,8 @@ assert chart.bazi.day_master in Tiangan
 
 `BaziSchool.kongwang_anchor` 尾部追加，默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
 `AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
-逐锚记录 `anchor`（`year`／`day`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
-`KongwangHit` 的 `origin='natal'` 时有 `pillar`、无 `kind`，`origin='transit'` 时相反；`ganzhi` 保留完整目标。
+逐锚记录 `anchor`（`Zhu.年`／`Zhu.日`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
+`KongwangHit(position, ganzhi)` 的 position 为原局柱位 `Zhu` 或流运种类 `TransitKind`；`ganzhi` 保留完整目标。
 无命中也返回该锚二支，双锚同值与重复目标位置不合并。原局排除锚自身柱，流运只从本命锚单向查询。
 详情命中投影为地支集合，等于 `shensha['kongwang']`。不删除支、不改其他关系，不实现解释性取消或吉凶判断。
 
@@ -74,30 +74,34 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 `Tiangan`、已调整的有效命宫月支 `Dizhi`、本盘时支 `Dizhi`，非相应枚举抛 `TypeError`。
 普通运行与 `python -O` 下的校验行为相同；`Ganzhi` 构造器本身仍接受全部 10×12 个干支组合。
 
-两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、JSON、旧文本输出，也不加入原有
+两值不扩四柱、`BaziData` 或柱位，不改 `school`、盘身份、旧文本输出，也不加入原有
 五行、十神、神煞、关系或流运分析。读取它们不使任何解释条目的前提自动成立。
 
 ## 返回值、拷贝与相等性
 
-### 共享与记录
+### 共享与输入
 
 - 查询结果和规则集合使用 `tuple`、`frozenset`、`frozendict` 等不可变结构；
   `frozendict` 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。
-- `BaziChart.json` 是独立的可变 JSON 字典，修改它不修改命盘。命盘隔离传入的 `Bazi`，
-  `chart.bazi` 也按其既有防御性拷贝约定返回；不把 Python 属性只读等同于所有对象都深冻结。
-- `Bazi` 按值比较；`BaziChart` 按对象身份比较。恢复后的两个命盘可以 `json` 和 `bazi` 值相等，
-  但命盘对象本身不相等。知识库按内容及顺序比较，前提判别记录 `ContextResult` 按其值字段比较。
+- 命盘隔离传入的 `Bazi`，`chart.bazi` 每次返回独立深拷贝；不把 Python 属性只读等同于所有对象都深冻结。
+- `Bazi` 按值比较；`BaziChart` 按对象身份比较。两个命盘的 `bazi` 值可以相等，命盘对象本身仍不相等。
+  知识库按内容及顺序比较，`ContextResult` 按其值字段比较。
+- `ContextResult` 是 frozen dataclass；构造参数 `_bazi: Bazi` 验证后深拷贝，公开 `bazi` 属性每次返回独立深拷贝。
+  构造及 `replace` 使用 `_bazi`，不支持 `input_json`。相等／哈希使用 `Bazi` 的完整身份，包含性别、完整配置，
+  地点盘另含精确瞬间、固定民用偏移及经度。修改输入或属性返回的副本不改变已有结果。
+  `ContextResult.render()` 直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。
+- 求值显式传入的 `KnowledgeBase` 被共享；未传时每次独立加载编辑源。已有结果不随源文件修改而变化。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
 
 ## 对象摘要、报错指路与文本展示
 
-- `dir(bazi)` 列出 `__all__` 声明的全部子模块和 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
-  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但 `bazi.chart_text` 同样按需导入。
+- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
+  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但同样按需导入。
 - `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 的 `repr`
   是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
-  不是记录格式，也不应被程序解析**；保存与交换用 `BaziChart.json`，由测试钉住当前格式只为防止意外改动。
+  不是记录格式，也不应被程序解析**。
 - 接收命盘的入口（`TransitChart`、`DayunDatabase`、`TransitDatabase`、三个分析类、`spouse_evidence`、
   `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类原先不检查类型，
   传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；`DayunDatabase`、`TransitDatabase` 原先在构造时就抛
@@ -108,7 +112,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
   `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
-  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun`、`json` 一致；`basic_text` 不受影响。
+  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun` 一致；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 名称、关键词与过滤值发现
@@ -138,15 +142,15 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 两者不加载知识库、不创建命盘，也不执行判别。目录值冻结，直接构造 `CriterionInfo` 只校验值的形状；
 需要已注册定义时应使用查询入口，不把自填说明当成程序认证。
 
-绑定识别会核对条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）是否符合默认约定；
-它不认证条文真伪或现实适用性。
+绑定识别用来确认知识条目与可执行判据的关联是否仍符合随库的默认内容，核对的是条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）。
+这项检查不认证条文真伪或现实适用性。
 
 | 目录信息 | 含义 |
 |---|---|
 | `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含用于绑定识别的内部内容摘要。 |
-| `profile_type`、`profile_kind`、`scopes` | 需要的 profile 类型与合法范围，没有隐式范围默认值。 |
-| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外 profile 字段。 |
-| `transit_entries`、`transit_kinds` | 关系 profile 的坐标入口、必填坐标字段和结构上可支持的种类上限；不保证某盘实际可取得。ContextProfile 不接 TransitCoordinate。 |
+| `analysis_kind`、`observation_types`、`scopes` | 分析类别，以及由它派生的可接受观察请求类与合法范围；没有隐式范围默认值。 |
+| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外输入；关系范围按 coordinate、kinds 排序。 |
+| `transit_entries`、`transit_kinds` | 婚恋结构观察的坐标入口、必填字段及种类上限；不保证某盘实际可取得。单流年观察不接 TransitCoordinate。 |
 | `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`，不产生 UNKNOWN。 |
 | `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
 | `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
@@ -163,13 +167,134 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节保留绑定识别、范围和条目关联的合同，不重复维护调用示例。
 
+## 结构接口迁移
+
+以下调整属于当前未发布源码；命理规则、默认流派、历法算法与时钟口径不变。不保留旧构造器或兼容属性。
+
+### 位置、观察与坐标
+
+- `bazi.defines.Zhu`（中文类别名 `柱`）按年、月、日、时排列，成员为 `NIAN/YUE/RI/SHI` 与 `年/月/日/时`。
+  `TianganLayer`（`天干层次`）成员为 `MINGGAN/CANGGAN` 与 `明干/藏干`。两个类都从 defines 重导出；
+  定义模块分别是 defines.zhu 和 defines.tiangan。原局柱序与中文标签取自 Zhu，不再保留英文柱位词表。
+- `KongwangHit` 和 `StarAppearance` 的 origin/pillar/kind 三字段合成 position，类型为 `Zhu | TransitKind`。
+  `StarAppearance(position, ganzhi, layer, stem)` 的 layer 用 TianganLayer；明干与干支一致、藏干属于地支的检查保留。
+  `KongwangResult.anchor` 只接受年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查和运行时均拒绝。
+  配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
+- `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 position 为 `Zhu | LiunianPosition`；
+  后者保存具体 `ganzhi_year`。原局 index 为 0–3，流年为 4。
+  另一类型 `bazi.utils.dizhi_utils.GanzhiOccurrence` 用于关系查询组合，index 是调用方输入序列中的位置，不受四柱限制。
+- `evaluate_context(..., observation=...)` 替代 profile 参数。`NatalObservation()` 供全部判据共用；
+  `LiunianObservation(ganzhi_year=None)` 用于原局加单流年，`TransitObservation(kinds, coordinate=None)` 用于婚恋结构岁运查询。
+  ScopeName 按 natal、natal_and_liunian、natal_and_transits 排序；ContextProfile、RelationshipProfile、Pillar 删除。
+
+| 具体坐标构造 | 含义 |
+| --- | --- |
+| `YearCoordinate(ganzhi_year)` | 干支年标签，年份须为确切 int，拒绝 bool 与子类。 |
+| `MonthCoordinate(ganzhi_year, ganzhi_month)` | 干支年月，月用 Dizhi；年份同上。 |
+| `DateCoordinate(solar_date)` | 东八区公历日，须为 date 本身，不接 datetime 或 date 子类。 |
+| `MomentCoordinate(solar_moment)` | 东八区无时区时刻，须为 datetime 本身；保留微秒请求身份，求值按秒解释。 |
+
+四类均从 context_matching 导入；TransitCoordinate 只保留为四者联合类型，不能再用 entry 加可选字段构造。
+库内直接构造时，缺字段／多余字段由构造器抛 TypeError；值错型或带时区则由各类显式检查。
+坐标缺失是合法观察请求，在求值时为 UNKNOWN；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
+这些严格请求不收紧 `TransitChart.at_year/at_month` 既有的输入检查：年份使用 `isinstance(value, int)`，
+bool 和 int 子类也通过该类型检查；严格请求类则拒绝 bool 和 int 子类。
+
+### 结果构造与 dataclass 操作
+
+| 类型 | 实际构造字段 | 派生属性 |
+| --- | --- | --- |
+| `CriterionResult` | criterion_id、reason、observations | definition、status、scope_complete |
+| `EntryMatch` | claim_id、reason | status |
+| `ContextResult` | observation、criterion、evidence、references、_bazi、knowledge | bazi |
+| `PremiseMatches`／`ConditionReferences` | entries | 无 |
+
+`CriterionInfo` 的第三个构造字段由旧 `profile_type`（profile 类）改为 `analysis_kind`（`'context'`／`'relationship'`）；
+其余七个存储字段顺序保持。读取时，旧 `info.profile_kind` 改为 `info.analysis_kind`，旧单个
+`info.profile_type` 改为 `info.observation_types` 中的可接受观察类元组。
+例如旧 `case CriterionInfo(_, _, profile_type)` 现在会把类别字符串绑定给 profile_type，不能再当作类构造请求。
+
+ContextResult.evidence 保存 `tuple[ChartOccurrence, ...]` 或 RelationshipEvidence，references 分别保存完整前提匹配
+或条件参考，空 entries 也保留两种类型。删除 occurrences/relationship/entries/related 旧总结果字段。
+部分种类不可取得时仍保留取得部分的证据。出生输入独立深拷、知识对象复用及完整值身份保持。
+
+CriterionReason 仅有下表六因；MatchReason 另保留条目层 binding_unrecognized，对应 UNKNOWN。
+CriterionResult 不接受该条目原因；CriterionInfo 的自填 definition 仍只作形状校验，不套用注册定义派生。
+
+| CriterionReason | status | scope_complete |
+| --- | --- | --- |
+| premise_satisfied | SATISFIED | True |
+| required_classification_absent | NOT_SATISFIED | True |
+| day_master_differs | NOT_SATISFIED | True |
+| female_gate_false | NOT_SATISFIED | True |
+| missing_transit_coordinate | UNKNOWN | False |
+| transit_unavailable | UNKNOWN | False |
+
+scope_complete 由原因派生，不认证该原因与观察、请求年份或手填证据一致。原局观察手填缺流运原因、已给年份手填缺坐标原因等
+原有非认证组合不因这次调整新增拒绝；实际 evaluate_context 负责正确计算，婚恋范围／取得集合的既有自洽检查保留。
+
+固定 scope／entry 改为 ClassVar，仍可查阅，但不进入构造、repr、fields、asdict、相等／hash 或位置模式。
+上表的派生属性也不进入 fields/asdict／构造；dataclasses.replace 不能再传 status、definition、scope_complete。
+所有变更后的字段顺序同时改变 `__match_args__`：旧关键字或旧参数数量通常抛 TypeError，
+**旧位置式类模式也可能静默不匹配或把新字段绑定到旧含义**，不能只改构造调用而保留模式或解构代码。
+例如旧 `case CriterionResult(id, definition, status)` 现在会依次读取 criterion_id、reason、observations。
+需要属性值时显式读取；不要把 asdict 当作包含派生结论的导出记录。
+
+### 同名枚举字段的读取与穷尽分支
+
+`KongwangResult.anchor`、`StarAppearance.layer`、`ChartOccurrence.layer` 名称不变，
+值却从字符串改为不继承 str 的枚举。旧字符串比较、`in` 判断和关键字类模式不会报错，但不再命中：
+
+| 旧读取／模式 | 新读取／模式 |
+| --- | --- |
+| `result.anchor == 'year'` | `result.anchor is Zhu.年` |
+| `result.anchor in ('year', 'day')` | `result.anchor in (Zhu.年, Zhu.日)` |
+| `appearance.layer == 'visible'` | `appearance.layer is TianganLayer.明干` |
+| `occurrence.layer == 'hidden'` | `occurrence.layer is TianganLayer.藏干` |
+| `case StarAppearance(layer='visible')` | `case StarAppearance(layer=TianganLayer.明干)` |
+
+判断用枚举成员；打印 Zhu／TianganLayer 用 `str(value)` 取得中文值，打印 TransitKind 用 `.value`。
+当前仓级 mypy 参数不保证发现旧字符串比较，不能把类型检查通过当成这些读法已迁移的证明。
+
+当前钉版 mypy 将中文／拼音成员别名作为不同 Literal 处理。对 anchor 做穷尽缩窄时，
+年、日两个分支须各覆盖两种拼写，仍保留 `assert_never`。例如：
+
+```python
+from typing import assert_never
+
+from bazi.analyzer.relationship import KongwangResult
+from bazi.defines import Zhu
+
+
+def anchor_label(result: KongwangResult) -> str:
+  anchor = result.anchor
+  if anchor is Zhu.年 or anchor is Zhu.NIAN:
+    return '年'
+  if anchor is Zhu.日 or anchor is Zhu.RI:
+    return '日'
+  assert_never(anchor)
+```
+
+运行时同一年／日的两种拼写各是同一成员；上例同时保留四种拼写的静态接受和月／时的静态拒绝。
+只写中文两支时，mypy 会在 `assert_never` 处报告仍有 `Literal[Zhu.NIAN, Zhu.RI]` 未覆盖；不应通过宽化锚点类型或删除穷尽断言绕过。
+
+### 显示与农历年信息
+
+位置／明藏层显示改用枚举中文值，如 `natal.month` 改为 `natal.月`，`hidden` 改为 `藏干`；其他 scope、origin、kind 标签不改。
+CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项／多余项错误随之使用完整字段名，
+如 `Missing coordinate field for at_year: ganzhi_year` 和 `Unexpected coordinate field for at_year: ganzhi_month`，边界错误仍退出 2。
+
+`LunarYearInfo` 唯一定义归 calendar.dates；calendar.hko_data、calendar.hko_data.decoder、calendar.celestial_data.loader
+三路径规范重导出同一类型，`__module__` 现在指向 dates。其 first_solar_day、leap、leap_month、days_counts、ganzhi
+字段及字典／可变列表行为保持，查询仍按原约定返回独立副本。不新增转换壳或后端数据加载。
+
 ## 源码脚本
 
 发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
 它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values topic` 对应 `filter_values('topic')`，
 `match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
 本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 起移除**。
-这一支持窗口只适用于源码脚本，不改变上面的 Python API 与记录兼容契约。
+这一支持窗口只适用于源码脚本，不改变上面的 Python API 契约。
 裸调用打印顶层帮助并返回 0；随机命盘须显式选择 `chart`。旧平铺选项报错并指向三个任务的新写法。
 
 | 旧写法（已移除） | 新写法 |
@@ -181,86 +306,30 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 | `--seed 236 --output-dir out --export-knowledge-base` | 先运行 `chart --seed 236 --output-dir out`，再运行 `knowledge --export-knowledge-base --output-dir out` |
 
 表中参数均接在 `python run_interpreter.py` 后。最后一行是两条独立命令，分别检查各自的导出目标，
-不提供跨命令的冲突预检或整体回滚；各任务的 JSON／TXT 输出冲突与知识源覆盖保护仍保留。
+不提供跨命令的冲突预检或整体回滚；TXT 输出的知识源覆盖保护仍保留。
 
-## 三类 JSON 分别保存与恢复
+## 已删除的存取接口
 
-| 记录 | 输出／输入 | 版本与恢复含义 |
-|---|---|---|
-| 命盘 | `BaziChart.json` 输出字典；`BaziChart.from_json` 接收映射 | 无内置版本字段。按记录中的输入、配置与当前实现重建，再逐项核对派生字段；只保证与当前版本一致。 |
-| 知识库 | `KnowledgeBase.export_json` 输出 JSON 文本；`from_json` 接收文本 | `schema_version=1`。恢复语料并校验结构、引用和各状态，不计算命盘前提。 |
-| 前提判别记录 | `ContextResult.export_json` 输出 JSON 文本；`from_json` 接收文本 | `record_version=4`。恢复记录并校验结构和值类型，不重新判别，不认证输入、观察、证据与绑定之间的事实一致性。 |
+以下移除仅针对当前未发布源码，尚未进入已发布的 v2.3.0。
+命盘／前提判别结果不再提供保存恢复，知识库不再导出快照；不保留兼容壳或替代记录格式。
+已删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
+`BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
+`KnowledgeBase.export_json/from_json` 及整个 `bazi.record_migration` 模块。
+源码脚本的 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json` 也已删除；
+普通运行与 `python -O` 均按未知选项拒绝，不创建输出文件。TXT、知识编辑源读取与领域查询保留。
 
-命盘映射严格区分默认盘与地点盘。缺键、多键、不支持的值、非规范拼写及重算不一致会拒绝；
-类型错误抛 `TypeError`，字段／值／一致性错误抛 `ValueError`。同时违反多个约束时不保证报错顺序。
-命盘 JSON 无版本字段，若需长期保存软件版本，可在调用方的外层记录中保存；不要给命盘映射加自定义键。
+旧结果需保留原件；要得到当前实现下的结论，使用原出生输入与完整配置重新排盘、求值。
+本库不从旧记录猜补配置或重建历史结果。
 
-以下三段各自独立运行，文件由调用方管理。
+## 知识编辑源与文本边界
 
-### 命盘：文本先解析成映射
+`KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随库 `knowledge_data.json`。
+已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`contexts`、`sources`、`entries` 四份注册表；
+版本只接受精确整数 2，拒绝 bool、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+重复键、字段差异、断引用、不合法状态及无法按 UTF-8 编码的孤立代理项均拒绝，不修复原文。
+非整数版本的 `ValueError` 仅显示类型，不展开未知容器。类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；
+JSON 解析错误保留 `JSONDecodeError` 的原文与位置，实际解析递归失败转为 `ValueError`，不设固定深度上限。
 
-```python
-import json
-from datetime import datetime
-from pathlib import Path
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-
-chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
-path = Path('chart.json')
-path.write_text(json.dumps(chart.json, ensure_ascii=False), encoding='utf-8')
-restored = BaziChart.from_json(json.loads(path.read_text(encoding='utf-8')))
-assert restored.json == chart.json
-assert restored.bazi == chart.bazi
-assert restored != chart
-```
-
-### 知识库：直接保存导出的文本
-
-```python
-from pathlib import Path
-from bazi.knowledge import KnowledgeBase
-
-knowledge = KnowledgeBase.load()
-path = Path('knowledge.json')
-path.write_text(knowledge.export_json(), encoding='utf-8')
-restored = KnowledgeBase.from_json(path.read_text(encoding='utf-8'))
-assert restored == knowledge
-```
-
-知识 JSON 拒绝重复键、字段差异、不支持的版本、断引用及不合法的条目状态。
-导出默认保留全部条目，包括仅供参考的条目；显式选择条目时仍保留全部对象、情境与来源注册表。
-`load` 每次重新读取文件；已有知识快照不随文件编辑而变化。
-
-### 前提判别记录：恢复不等于重新求值
-
-```python
-from datetime import datetime
-from pathlib import Path
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
-
-chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
-result = evaluate_context(
-  chart,
-  criterion_id='editorial.guansha_coexistence.v1',
-  profile=ContextProfile('natal'),
-  include_reference_only=True,
-)
-path = Path('context.json')
-path.write_text(result.export_json(), encoding='utf-8')
-restored = ContextResult.from_json(path.read_text(encoding='utf-8'))
-assert restored == result
-```
-
-前提判别记录只接受版本 4，旧版本或错误类型的版本值会拒绝。恢复仍检查 profile 类型、坐标结构、
-字段和值域等约束；能恢复不代表判别真实，也不等于绑定重新识别。
-需要当前规则下的结论时，应使用原输入与配置重新构造命盘并调用 `evaluate_context`，
-不要只改 `record_version` 冒充迁移。知识库的 `schema_version` 与前提判别记录的 `record_version` 也不能互换。
-
-旧记录不兼容时保留原件、记录原软件版本及失败原因；没有自动迁移接口。
-
-新增 `kongwang_anchor` 与其他流派字段一起进入命盘身份及 JSON。旧命盘与旧前提记录缺此字段时拒绝，
-不自动补 `DAY`；以原输入、完整原配置及显式选择的新锚重建当前盘。前提记录须重新求值后另存，
-不给旧观察补键或改 `record_version` 冒充重新求值。知识 `schema_version=1`、前提 `record_version=4` 不变。
+字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
+知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
+条目绑定摘要只识别所绑定的内容，不是保存格式或软件版本，也不认证条文真伪。

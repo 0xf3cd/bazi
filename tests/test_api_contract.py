@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, BASES, INTERNAL_MODULES, STATIC_MODULES, REEXPORTS, ALIASES
+from api_contract import EXPLICIT_EXPORT_ADDITIONS
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,8 +98,8 @@ def _declared_all(nodes: list[ast.stmt]) -> set[str]:
 def _check_explicit_exports(source: str, module: str) -> None:
   if module in EXPLICIT_EXPORTS:
     actual = _declared_all(ast.parse(source).body)
-    expected = set(EXPLICIT_EXPORTS[module])
-    assert actual == expected, (module, 'Explicit exports differ from v2.0.0', actual ^ expected)
+    expected = set(EXPLICIT_EXPORTS[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
+    assert actual == expected, (module, 'Explicit exports differ from the approved surface', actual ^ expected)
 
 
 def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], dict[str, tuple[str, ...]]]:
@@ -149,6 +150,59 @@ def test_public_modules_describe_their_purpose() -> None:
     assert ast.get_docstring(ast.parse(path.read_text(encoding='utf-8'))), module
 
 
+def test_removed_persistence_is_absent() -> None:
+  import importlib
+  import importlib.util
+  import bazi
+  from bazi.bazi import Bazi, LocationTime
+  from bazi.bazi_chart import BaziChart
+  from bazi.context_matching import NatalObservation, ContextResult, evaluate_context
+  from bazi.knowledge import KnowledgeBase
+  from bazi.school import BaziSchool
+  from bazi.transits import TransitSet
+  for module, name in (
+    ('bazi.bazi', 'LocationTimeJson'), ('bazi.bazi_chart', 'BaziJson'),
+    ('bazi.school', '_ConfigJson'), ('bazi.school', '_config_json'),
+  ):
+    assert not hasattr(importlib.import_module(module), name)
+  for owner, names in (
+    (BaziChart, ('json', 'from_json', '_from_data')), (LocationTime, ('json',)),
+    (BaziSchool, ('from_json',)), (TransitSet, ('json',)),
+    (ContextResult, ('input_json', 'export_json', 'from_json', '_from_data')),
+    (KnowledgeBase, ('export_json', 'from_json', '_export_data')),
+  ):
+    assert all(not hasattr(owner, name) for name in names)
+  assert importlib.util.find_spec('bazi.record_migration') is None
+  assert 'record_migration' not in dir(bazi) and 'record_migration' not in bazi.__all__
+  with pytest.raises(AttributeError):
+    bazi.record_migration # noqa: B018 # Removed lazy attribute must fail at runtime.
+  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
+  result = evaluate_context(
+    chart,
+    criterion_id='editorial.guansha_coexistence.v1',
+    observation=NatalObservation(),
+  )
+  assert result.bazi == chart.bazi
+  assert result.render()
+  assert KnowledgeBase.load().entries
+
+
+def test_removed_structure_fields_are_absent() -> None:
+  import bazi.context_matching as matching
+  from bazi.analyzer.relationship import KongwangHit, StarAppearance
+  from bazi.context_matching import CriterionInfo, ContextResult, ChartOccurrence
+  for name in ('ContextProfile', 'RelationshipProfile', 'Pillar', 'ObservationScope', 'RelationshipScope'):
+    assert not hasattr(matching, name)
+  for owner, names in (
+    (ContextResult, ('profile', 'occurrences', 'relationship', 'related', 'entries')),
+    (CriterionInfo, ('profile_type', 'profile_kind')),
+    (KongwangHit, ('origin', 'pillar', 'kind')),
+    (StarAppearance, ('origin', 'pillar', 'kind')),
+    (ChartOccurrence, ('origin', 'pillar', 'kind', 'ganzhi_year')),
+  ):
+    assert all(not hasattr(owner, name) for name in names)
+
+
 def test_modules_and_candidates_classified() -> None:
   modules: set[str] = set()
   for path in (ROOT / 'bazi').rglob('*.py'):
@@ -177,7 +231,7 @@ def test_surface_resolves_without_heavy_loads(injection: str, rejected_name: str
 import importlib, inspect, json, sys
 from pathlib import Path
 sys.path.insert(0, 'tests')
-from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, STATIC_MODULES, ALIASES, REEXPORTS
+from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, STATIC_MODULES, ALIASES, REEXPORTS, EXPLICIT_EXPORT_ADDITIONS
 explicit_exports = json.loads(Path('tests/data/v200_explicit_exports.json').read_text(encoding='utf-8'))['explicit_exports']
 
 def guard(event, args):
@@ -200,7 +254,7 @@ for module, words in PUBLIC_NAMES.items():
   value = importlib.import_module(module)
   exported = set(getattr(value, '__all__', ()))
   if module in explicit_exports:
-    expected_exports = set(explicit_exports[module])
+    expected_exports = set(explicit_exports[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
     assert exported == expected_exports, (module, exported ^ expected_exports)
   assert exported <= set(words.split()), (module, exported - set(words.split()))
   own_definitions = {name for name, member in vars(value).items()
@@ -235,7 +289,9 @@ print('PASS safe public imports, declared fields and aliases')
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'PASS safe public imports' in result.stdout
   else:
-    assert result.returncode == 1 and 'AssertionError' in result.stderr and rejected_name in result.stderr, result.stdout + result.stderr
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert 'AssertionError' in result.stderr, result.stdout + result.stderr
+    assert rejected_name in result.stderr, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize('addition', [

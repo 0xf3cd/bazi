@@ -22,10 +22,28 @@ workflow 须先存在于默认分支，才能手动触发。
 2. 在 main 触发 `Prepare or Publish Release`，取默认 `mode=rehearsal`。
    对触发 SHA 执行完整源码与工件验证，不绑定环境，也不取得写权限或 OIDC 权限。
 3. 检查该运行的 `tested-release` 工件：dist/ 下恰有一份 wheel 与 sdist，另含发布说明、
-   release.json 与 SHA256SUMS。核对源码 SHA、run ID、版本、许可证、文件内容及校验和。
+   release.json、environments.json 与 SHA256SUMS。核对源码 SHA、run ID、版本、许可证、文件内容及校验和。
    工件三十日后过期；若可能需要恢复，须在过期前保存已批准的原字节。
 
 授权正式发布前须实跑演练。本地工件与离线策略测试不能替代演练，也不能证明 GitHub/PyPI 配置就绪。
+
+## 实际环境清单
+
+`environments.json` 记录外层门禁、三次隔离构建、两个最小 wheel 消费者及 typing 消费者。
+每条记录包含 Python 实现与版本、系统与架构、完整已安装发行版名称／版本及实际安装器版本。
+构建成功后、隔离环境销毁前取样；typing 环境在安装 mypy 及传递依赖后取样。
+安装器观察覆盖依赖安装及消费者的 pip 调用，不包含 venv／ensurepip 初始化。
+安装器按调用前的实际 pip 命令记录，`runner` 表示由外层 pip 向目标安装，`target` 表示目标自己的 pip。
+同一角色使用过多个版本时保留多个观察；目标里有 pip 不等于安装由它执行。
+
+清单不含路径、环境变量、pip 配置或 `direct_url.json`。外层三次安装前的原始版本输出只作临时输入，
+解析后只保留版本，不上传原文。清单在 `dist/` 外，与门禁已测试 pair 的文件名／哈希、源码 SHA 及同次运行身份绑定；
+封装和两个发布任务均核对这条对应关系，缺失、截断、角色不全或身份／字节错配即失败。PyPI 仍只上传原 pair，GitHub Release 另带清单。
+
+这是一份实际环境记录，不是依赖锁：不保证以后解析到相同环境、离线恢复或逐字节重建，也不表示依赖没有漏洞。
+它能检出构建／封装之间的意外漂移；若构建任务已被控制、工件和报告一起被伪造，清单不提供独立证明。
+普通无报告的包检查仍可从 sdist 或无 Git 的目录运行；导出报告须在干净 Git 检出中执行，且实际源码输入均受跟踪。
+构建观察器依赖钉版 build 的 pip 调用形态，升级 build 时须重跑两种安装器分支、未知形态拒绝与消费者对照测试。
 
 ## 正式发布
 
@@ -36,7 +54,9 @@ workflow 须先存在于默认分支，才能手动触发。
 3. PyPI 成功后，批准 GitHub Release 任务。此任务只取得 contents 写权限，先核 PyPI 哈希，
    在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，
    上传同一字节及声明文件，核 asset 摘要后发布草稿。
-   两个特权任务均不检出、构建、安装或导入仓库代码。
+   两个特权任务均不检出、构建或安装源码，也不执行工件中的代码。
+   前置检查和两个特权任务均从本仓本次触发 SHA 的 HTTPS 地址取得 `run_release.py`，取用前要求该 SHA 与 workflow SHA 相同；
+   只接受 HTTP 200，再按临时目录中的绝对路径以 `python -I` 执行，避免工件目录影响脚本选择或模块导入。
 4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
    在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
 

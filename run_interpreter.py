@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
 import sys
 from random import Random, SystemRandom
 import re
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from datetime import date, datetime, tzinfo
 from pathlib import Path
 from typing import Final, get_args
@@ -14,11 +13,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from run_demo import get_basic_info
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.bazi_chart import BaziJson
-from bazi.defines import Tiangan, Shishen, Dizhi
+from bazi.defines import Zhu, Tiangan, Shishen, Dizhi
 from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from bazi.context_matching import (
-  ContextProfile, ObservationScope, RelationshipProfile, TransitCoordinate, TransitEntry,
+  CriterionInfo, Observation, NatalObservation, LiunianObservation, TransitObservation, ScopeName,
+  TransitCoordinate, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, TransitEntry,
   criteria, criterion, evaluate_context,
 )
 from bazi.school import BaziConfig
@@ -37,7 +36,6 @@ def interpret(
 ) -> str:
   s: str = ''
   knowledge = KnowledgeBase.load()
-  j: BaziJson.BaziChartJsonDict = chart.json
 
   bazi: Bazi = chart.bazi
   if bazi.longitude is None:
@@ -46,23 +44,14 @@ def interpret(
     s += f'真太阳时（分钟显示）：{bazi.solar_datetime.isoformat()}\n'
   s += f'性别：{bazi.gender}\n'
 
-  def __gen_pillar_str(key: str) -> str:
-    assert key in ['year', 'month', 'day', 'hour']
-    __s: str = ''
-    __s += f"天干{j['pillars'][key][0]}（{j['tiangan_traits'][key]}，" # type: ignore # mypy 要求 TypedDict 使用字面键。
-    __s += '日元' if key == 'day' else j['tiangan_shishen'][key] # type: ignore # mypy 要求 TypedDict 使用字面键。
-    __s += f"）。地支{j['pillars'][key][1]}（{j['dizhi_traits'][key]}，{j['dizhi_shishen'][key]}）。" # type: ignore # mypy 要求 TypedDict 使用字面键。
-    return __s
-  
   s += '\n' + '-' * 60 + '\n'
-  s += '年柱：' + __gen_pillar_str('year') + '\n'
-  s += '月柱：' + __gen_pillar_str('month') + '\n'
-  s += '日柱：' + __gen_pillar_str('day') + '\n'
-  s += '时柱：' + __gen_pillar_str('hour') + '\n'
+  for label, pillar, trait, classification in zip(Zhu, bazi.pillars, chart.traits, chart.shishen, strict=True):
+    stem_label = '日元' if classification.tiangan is None else str(classification.tiangan)
+    s += f'{label}柱：天干{pillar.tiangan}（{trait.tiangan}，{stem_label}）。地支{pillar.dizhi}（{trait.dizhi}，{classification.dizhi}）。\n'
 
-  day_master: Tiangan = chart.bazi.day_master
+  day_master: Tiangan = bazi.day_master
   s += '\n' + '-' * 60 + '\n'
-  s += f"日主：{j['pillars']['day'][0]}，为{j['tiangan_traits']['day']}。\n\n"
+  s += f'日主：{day_master}，为{chart.traits.day.tiangan}。\n\n'
   if descriptions := knowledge.render_subject(
     object_id(day_master),
     include_reference_only=include_reference_only,
@@ -168,26 +157,6 @@ def _reject_source_overwrite(parser: argparse.ArgumentParser, targets: list[Path
       parser.error('Export must not overwrite the editing source')
 
 
-def _export_json(
-  parser: argparse.ArgumentParser,
-  target: Path,
-  knowledge_source: Path | None,
-  export: Callable[[], str],
-  label: str,
-) -> None:
-  sources: tuple[Path, ...] = (DEFAULT_SOURCE_PATH,)
-  if knowledge_source is not None:
-    sources += (knowledge_source,)
-  if any(_same_export_path(target, source) for source in sources):
-    parser.error('Export must not overwrite the editing source')
-  try:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(export(), encoding='utf-8')
-  except OSError as error:
-    parser.error(str(error))
-  print(f'{label}{target}')
-
-
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace, *, query: bool) -> int:
   filters = {
     'object_id': args.object_id, 'context_id': args.context_id, 'topic': args.topic,
@@ -207,14 +176,6 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace, *
       print()
     if not selection:
       print('无匹配条目。')
-  if args.export_knowledge_json is not None:
-    _export_json(
-      parser,
-      args.export_knowledge_json,
-      args.knowledge_source,
-      lambda: knowledge.export_json(selection),
-      '已导出知识：',
-    )
   return 0
 
 
@@ -280,62 +241,73 @@ def _transit_kinds(parser: argparse.ArgumentParser, value: str) -> tuple[Transit
   return tuple(kind for kind in TransitKind if kind in frozenset(kinds))
 
 
-def _relationship_profile(parser: argparse.ArgumentParser, args: argparse.Namespace) -> RelationshipProfile:
-  '''由 CLI 参数构造婚恋 profile；构造期拒绝互斥与缺字段组合。'''
-  coordinate_flags = any((
-    args.ganzhi_year is not None, args.gz_month is not None,
-    args.solar_date is not None, args.solar_moment is not None,
-  ))
-  if args.transit_entry is None and coordinate_flags:
+def _relationship_observation(
+  parser: argparse.ArgumentParser,
+  args: argparse.Namespace,
+  info: CriterionInfo,
+) -> NatalObservation | TransitObservation:
+  '''在 CLI 边界检查坐标缺项／多余项，再构造具体婚恋观察请求。'''
+  values = {
+    'ganzhi_year': args.ganzhi_year, 'ganzhi_month': args.gz_month,
+    'solar_date': args.solar_date, 'solar_moment': args.solar_moment,
+  }
+  if args.transit_entry is None and any(value is not None for value in values.values()):
     parser.error('Transit coordinates require --transit-entry')
   kinds = _transit_kinds(parser, args.transit_kinds) if args.transit_kinds is not None else ()
-  try:
-    coordinate = None
-    if args.transit_entry is not None:
-      coordinate = TransitCoordinate(
-        args.transit_entry,
-        gz_year=args.ganzhi_year,
-        gz_month=args.gz_month,
-        solar_date=args.solar_date,
-        solar_moment=args.solar_moment,
-      )
-    return RelationshipProfile(args.observation_scope, coordinate, kinds)
-  except (TypeError, ValueError) as error:
-    parser.error(str(error))
-  raise AssertionError('Unreachable parser state') # pragma: no cover # parser.error 总是退出。
+  coordinate: TransitCoordinate | None = None
+  if args.transit_entry is not None:
+    required = info.transit_entries[args.transit_entry]
+    for name in required:
+      if values[name] is None:
+        parser.error(f'Missing coordinate field for {args.transit_entry}: {name}')
+    for name, value in values.items():
+      if name not in required and value is not None:
+        parser.error(f'Unexpected coordinate field for {args.transit_entry}: {name}')
+    if args.transit_entry == 'at_year':
+      coordinate = YearCoordinate(args.ganzhi_year)
+    elif args.transit_entry == 'at_month':
+      coordinate = MonthCoordinate(args.ganzhi_year, args.gz_month)
+    elif args.transit_entry == 'at_date':
+      coordinate = DateCoordinate(args.solar_date)
+    else:
+      coordinate = MomentCoordinate(args.solar_moment)
+  if args.observation_scope == 'natal':
+    if coordinate is not None or kinds:
+      parser.error('Natal scope cannot include transit inputs')
+    return NatalObservation()
+  return TransitObservation(kinds, coordinate)
 
 
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   try:
     info = criterion(args.criterion)
-    if info.profile_kind == 'context' and any((
+    if info.analysis_kind == 'context' and any((
       args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
       args.solar_moment is not None, args.transit_kinds is not None,
     )):
       parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
-    profile: ContextProfile | RelationshipProfile
-    if info.profile_kind == 'context':
-      profile = ContextProfile(args.observation_scope, args.ganzhi_year)
+    if args.observation_scope not in info.scopes:
+      parser.error(f'Unsupported value: {args.observation_scope}')
+    observation: Observation
+    if info.analysis_kind == 'context':
+      if args.observation_scope == 'natal':
+        if args.ganzhi_year is not None:
+          parser.error('Natal scope cannot include a transit coordinate')
+        observation = NatalObservation()
+      else:
+        observation = LiunianObservation(args.ganzhi_year)
     else:
-      profile = _relationship_profile(parser, args)
+      observation = _relationship_observation(parser, args, info)
     result = evaluate_context(
       _fixed_chart(args),
       criterion_id=args.criterion,
-      profile=profile,
+      observation=observation,
       knowledge=KnowledgeBase.load(args.knowledge_source),
       include_reference_only=args.include_reference_only,
     )
   except (OSError, TypeError, ValueError) as error:
     parser.error(str(error))
   print(result.render())
-  if args.export_context_json is not None:
-    _export_json(
-      parser,
-      args.export_context_json,
-      args.knowledge_source,
-      result.export_json,
-      '已导出判别记录：',
-    )
   return 0
 
 
@@ -348,16 +320,9 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
   if args.birth_time is not None and (args.seed is not None or count != 1):
     parser.error('--seed and multiple charts require random input')
   if args.birth_time is None and any(value is not None for value in (
-    args.longitude, args.precision, args.civil_timezone, args.export_chart_json,
+    args.longitude, args.precision, args.civil_timezone,
   )):
-    parser.error('Location, precision and chart JSON flags require fixed birth input')
-
-  if args.export_chart_json is not None:
-    text_paths: list[Path] = []
-    if args.output_dir is not None:
-      text_paths.append(args.output_dir / 'interpretation_examples' / '0.txt')
-    if any(_same_export_path(args.export_chart_json, path) for path in text_paths):
-      parser.error('--export-chart-json must not overlap generated TXT outputs')
+    parser.error('Location and precision flags require fixed birth input')
   text_targets: list[Path] = []
   if args.output_dir is not None and (args.output_dir / 'interpretation_examples').is_dir():
     text_targets.extend((args.output_dir / 'interpretation_examples').glob('*.txt'))
@@ -390,10 +355,6 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
       show_sources=args.show_sources,
     )
     print(text)
-    if args.export_chart_json is not None:
-      def __export_chart(chart: BaziChart = chart) -> str:
-        return json.dumps(chart.json, ensure_ascii=False, indent=2) + '\n'
-      _export_json(parser, args.export_chart_json, None, __export_chart, '已导出命盘：')
     if output is not None:
       try:
         _write_chart(text, output, i)
@@ -418,7 +379,7 @@ _LONGITUDE_HELP: Final[str] = (
 
 # 判据目录里的查询坐标字段对应的命令行选项。
 _COORDINATE_FLAGS: Final[dict[str, str]] = {
-  'ganzhi_year': '--ganzhi-year', 'gz_year': '--ganzhi-year', 'gz_month': '--gz-month',
+  'ganzhi_year': '--ganzhi-year', 'ganzhi_month': '--gz-month',
   'solar_date': '--solar-date', 'solar_moment': '--solar-moment',
 }
 
@@ -440,7 +401,6 @@ def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的知识条目。')
   more.add_argument('--show-sources', action='store_true', help='显示条目 ID、署名与来源见证。')
   more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为这个目录下的文本文件。')
-  more.add_argument('--export-chart-json', type=Path, help='把命盘导出为可重新载入的 JSON；须配 --birth-time。')
 
 
 def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
@@ -458,7 +418,6 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--include-reference-only', action='store_true', help='同时包含仅供参考的条目。')
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
   more.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
-  more.add_argument('--export-knowledge-json', type=Path, help='导出可重新载入的知识 JSON；有查询条件时只导出所选条目。')
   more.add_argument('--export-knowledge-base', action='store_true', help='把全部天干与十神说明各存成一个文本文件。')
   more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认 output_data。')
   more.add_argument('--show-sources', action='store_true', help='--export-knowledge-base 的文本附带条目 ID、署名与来源见证。')
@@ -469,7 +428,7 @@ def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
   common = parser.add_argument_group('求值所需')
   common.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
   common.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）。')
-  common.add_argument('--observation-scope', choices=get_args(ObservationScope) + ('natal_and_transits',), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
+  common.add_argument('--observation-scope', choices=get_args(ScopeName), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
   more = parser.add_argument_group('更多选项（按判据说明所需给出，其余可省略）')
   more.add_argument('--ganzhi-year', type=int, help='干支年坐标，写公历年份数字，如 2024。')
   more.add_argument('--transit-entry', choices=get_args(TransitEntry), help='岁运查询入口（婚恋判据）。')
@@ -482,7 +441,6 @@ def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的条目与条件参考。')
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
-  more.add_argument('--export-context-json', type=Path, help='导出判别记录与知识快照。')
 
 
 def _command_parser() -> argparse.ArgumentParser:
@@ -537,12 +495,11 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
   for flag, given in (('--output-dir', args.output_dir is not None), ('--show-sources', args.show_sources)):
     if given and not args.export_knowledge_base:
       parser.error(f'{flag} only applies with --export-knowledge-base')
-  if not any((query, args.list_values, args.validate_knowledge, args.export_knowledge_json is not None,
-              args.export_knowledge_base)):
+  if not any((query, args.list_values, args.validate_knowledge, args.export_knowledge_base)):
     return _knowledge_overview(parser, args)
 
   if args.list_values is not None:
-    if query or args.validate_knowledge or args.export_knowledge_json is not None or args.export_knowledge_base:
+    if query or args.validate_knowledge or args.export_knowledge_base:
       parser.error('--list-values only lists values; use it without queries, validation or exports')
     try:
       for value in KnowledgeBase.load(args.knowledge_source).filter_values(_LIST_DIMENSIONS[args.list_values]):
@@ -552,10 +509,8 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
   base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
   if args.export_knowledge_base:
     text_paths = _knowledge_text_paths(base)
-    if args.export_knowledge_json is not None and any(_same_export_path(args.export_knowledge_json, path) for path in text_paths):
-      parser.error('--export-knowledge-json must not overlap generated TXT outputs')
     _reject_source_overwrite(parser, text_paths, args.knowledge_source)
-  if query or args.validate_knowledge or args.export_knowledge_json is not None:
+  if query or args.validate_knowledge:
     _knowledge_main(parser, args, query=query)
   if args.export_knowledge_base:
     try:
@@ -591,9 +546,9 @@ def _criterion_description(parser: argparse.ArgumentParser, criterion_id: str) -
   print(f'  求值需要：--birth-time、--gender、--observation-scope（可选：{", ".join(info.scopes)}）')
   for scope, inputs in info.scope_inputs.items():
     if inputs:
-      needs = '、'.join(
-        '--transit-kinds' if name == 'kinds' else '--transit-entry 及其坐标（见下）' if name == 'coordinate'
-        else _COORDINATE_FLAGS.get(name, name) for name in inputs
+      needs = (
+        '--transit-entry 及其坐标（见下）、--transit-kinds' if inputs == ('coordinate', 'kinds')
+        else '、'.join(_COORDINATE_FLAGS[name] for name in inputs)
       )
       print(f'  --observation-scope {scope} 还需要：{needs}')
   for entry, fields in info.transit_entries.items():
@@ -609,7 +564,7 @@ def _match_command(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
   evaluation_inputs = (
     args.birth_time, args.gender, args.observation_scope, args.ganzhi_year, args.transit_entry, args.gz_month,
     args.solar_date, args.solar_moment, args.transit_kinds, args.longitude, args.precision, args.civil_timezone,
-    args.knowledge_source, args.export_context_json,
+    args.knowledge_source,
   )
   evaluating = any(value is not None for value in evaluation_inputs) or args.include_reference_only
   if args.criterion is None:

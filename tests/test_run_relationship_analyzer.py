@@ -9,7 +9,7 @@ from run_relationship_analyzer import (
   _named_shensha, _no_shensha_str, shensha_strs, at_birth_shensha_strs,
   kongwang_strs,
 )
-from bazi.defines import Dizhi, Ganzhi
+from bazi.defines import Zhu, Dizhi, Ganzhi
 from bazi.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis, KongwangResult, KongwangHit
 from bazi.transits import TransitKind
 
@@ -159,10 +159,10 @@ def test_kongwang_display_keeps_anchor_and_target() -> None:
   anchor = Ganzhi.from_str('甲子')
   target = Ganzhi.from_str('甲戌')
   assert kongwang_strs((
-    KongwangResult('day', anchor, (KongwangHit('natal', 'hour', None, target),)),
-    KongwangResult('year', anchor, ()),
+    KongwangResult(Zhu.日, anchor, (KongwangHit(Zhu.时, target),)),
+    KongwangResult(Zhu.年, anchor, ()),
   )) == ['日柱 甲子 → 旬空戌亥；命中：时柱 甲戌', '年柱 甲子 → 旬空戌亥；命中：无']
-  assert kongwang_strs((KongwangResult('day', anchor, (
-    KongwangHit('transit', None, TransitKind.DAYUN, target),
-    KongwangHit('transit', None, TransitKind.LIUNIAN, target),
+  assert kongwang_strs((KongwangResult(Zhu.日, anchor, (
+    KongwangHit(TransitKind.DAYUN, target),
+    KongwangHit(TransitKind.LIUNIAN, target),
   )),)) == ['日柱 甲子 → 旬空戌亥；命中：dayun 甲戌、liunian 甲戌']

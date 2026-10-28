@@ -1,17 +1,11 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_bazi_chart.py
 
-import json
 import copy
 import random
 import re
 import itertools
-from collections import UserDict
-from collections.abc import Iterator, Mapping
-from dataclasses import replace
 from datetime import datetime, date, timedelta
-from types import MappingProxyType
-from typing import Any, Self, cast
 
 import pytest
 
@@ -28,7 +22,7 @@ from bazi.data_types import (
   HiddenTianganDict, BaziData,
 )
 
-from bazi.bazi_chart import BaziChart, BaziJson, 命盘
+from bazi.bazi_chart import BaziChart, 命盘
 
 
 def test_basic() -> None:
@@ -542,8 +536,8 @@ def test_year_rules_share_physical_timeline() -> None:
   assert projected.dayun_order == fixed.dayun_order
   assert projected.xiaoyun == fixed.xiaoyun
   assert projected.bazi.pillars == fixed.bazi.pillars
-  assert projected.json['dayun_year_rule'] == 'jie_projected'
-  assert fixed.json['dayun_year_rule'] == 'fixed_decade'
+  assert projected.bazi.config.dayun_year_rule is DayunYearRule.JIE_PROJECTED
+  assert fixed.bazi.config.dayun_year_rule is DayunYearRule.FIXED_DECADE
 
 
 def test_dayun_generator_stops_at_jie_boundary() -> None:
@@ -564,8 +558,6 @@ def test_dayun_generator_stops_at_jie_boundary() -> None:
   assert tuple(late_hko.dayun) == ()
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
     _ = late_hko.xiaoyun
-  with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
-    _ = late_hko.json
 
 
 def test_xiaoyun() -> None:
@@ -634,260 +626,10 @@ def test_consistency(rng: random.Random) -> None:
       assert list(itertools.islice(chart.liunian, 100)) == list(itertools.islice(expected.liunian, 100))
       assert list(itertools.islice(chart.dayun, 100)) == list(itertools.islice(expected.dayun, 100))
 
-      assert chart.json == expected.json
-
-
-@pytest.mark.slow
-def test_json(rng: random.Random) -> None:
-  for _ in range(32):
-    chart: BaziChart = BaziChart.random(
-      BaziConfig(
-        precision=rng.choice(list(BaziPrecision)),
-        dayun_year_rule=rng.choice(list(DayunYearRule)),
-      ),
-      rng=rng,
-    )
-    print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
-    dt: datetime = chart.bazi.solar_datetime
-
-    j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
-    j_str: str = json.dumps(j)
-    __j: dict = json.loads(j_str)
-
-    assert j == __j
-
-    # Do something bad on the JSON object `__j`.
-    # This shouldn't have any effect on `chart`.
-    __j['datetime'] = datetime.now().isoformat() # type: ignore # `assert j == __j` narrows `__j` to the TypedDict; it is a plain dict.
-    __j['gender'] = 'male'
-    __j['tiangan_traits'], __j['dizhi_traits'] = __j['dizhi_traits'], __j['tiangan_traits']
-    __j['tiangan_shishen'], __j['dizhi_shishen'] = __j['dizhi_shishen'], __j['tiangan_shishen'] # type: ignore # Same narrowing; the mismatched swap is the point.
-    assert chart.json == j
-    assert chart.json != __j
-
-    assert datetime.fromisoformat(j['birth_time']) == dt
-    assert j['precision'] == str(chart.bazi.config.precision)
-    assert j['dayun_year_rule'] == str(chart.bazi.config.dayun_year_rule)
-    assert all(set(dayun) == {'ganzhi', 'start_time', 'end_time'}
-               for dayun in j['transits']['dayun'].values())
-
-    j_gender: BaziGender = BaziGender.MALE
-    if j['gender'] == 'female':
-      j_gender = BaziGender.FEMALE
-    assert j_gender == chart.bazi.gender
-
-    __chart: BaziChart = BaziChart.from_json(j)
-    assert __chart.bazi == chart.bazi
-    assert j == __chart.json
-
-
-@pytest.fixture
-def chart_json() -> dict[str, Any]:
-  return dict(BaziChart(Bazi.create('1984-04-02T04:02:00', 'male')).json)
 
 
 class _ChartSubclass(BaziChart):
   pass
-
-
-class _EqualToAnything:
-  def __eq__(self, other: object) -> bool:
-    return True
-
-
-class _EqualKey:
-  def __init__(self, value: str) -> None:
-    self.value = value
-
-  def __hash__(self) -> int:
-    return hash(self.value)
-
-  def __eq__(self, other: object) -> bool:
-    return self.value == other
-
-
-class _EqualStringKey(str):
-  value: str
-
-  def __new__(cls, value: str) -> Self:
-    result = super().__new__(cls, 'not-' + value)
-    result.value = value
-    return result
-
-  def __hash__(self) -> int:
-    return hash(self.value)
-
-  def __eq__(self, other: object) -> bool:
-    return self.value == other
-
-
-def _json_nodes(d: dict[str, Any], path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], object]]:
-  yield path, d
-  for key, value in d.items():
-    if isinstance(value, dict):
-      yield from _json_nodes(value, (*path, key))
-    else:
-      yield (*path, key), value
-
-
-@pytest.mark.parametrize('gender', [BaziGender.男, BaziGender.女])
-@pytest.mark.parametrize('dayun_year_rule', list(DayunYearRule))
-def test_from_json_roundtrip(gender: BaziGender, dayun_year_rule: DayunYearRule) -> None:
-  for backend, precision in itertools.product(CalendarBackend, BaziPrecision):
-    if backend is CalendarBackend.HKO and precision is not BaziPrecision.DAY:
-      continue
-    config = BaziConfig(
-      precision=precision,
-      backend=backend,
-      school=replace(BaziSchool.mingli_tanyuan(), day_rollover=DayRollover.ZIZHENG),
-      dayun_year_rule=dayun_year_rule,
-    )
-    chart = BaziChart(Bazi.create('2009-02-03T23:30:00', gender, config))
-    data = json.loads(json.dumps(chart.json))
-    restored = BaziChart.from_json(data)
-    assert restored.bazi == chart.bazi
-    assert restored.json == chart.json
-
-
-@pytest.fixture
-def json_snapshot(chart_json: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-  expected = copy.deepcopy(chart_json)
-  return chart_json, expected
-
-
-@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
-def test_from_json_accepts_unordered_mappings(json_snapshot: tuple[dict[str, Any], dict[str, Any]], wrapper: type) -> None:
-  chart_json, expected = json_snapshot
-
-  def __wrap(value: object) -> object:
-    if isinstance(value, Mapping):
-      return wrapper({key: __wrap(value[key]) for key in reversed(list(value))})
-    return value
-
-  data = __wrap(chart_json)
-  assert isinstance(data, Mapping)
-  restored = _ChartSubclass.from_json(data)
-  assert isinstance(restored, _ChartSubclass)
-  assert restored.json == expected
-  assert data == expected
-
-
-def test_from_json_detaches_input_mapping(json_snapshot: tuple[dict[str, Any], dict[str, Any]]) -> None:
-  chart_json, expected = json_snapshot
-  restored = BaziChart.from_json(chart_json)
-  assert chart_json == expected
-  chart_json['birth_time'] = '2000-01-01T12:00:00'
-  chart_json['school']['day_rollover'] = 'ZIZHENG'
-  chart_json['pillars']['year'] = '甲午'
-  chart_json['transits']['dayun'].clear()
-  assert restored.json == expected
-  default_expected = cast(BaziJson.DefaultBaziChartJsonDict, expected)
-  assert restored.bazi == Bazi.create(default_expected['birth_time'], default_expected['gender'])
-
-
-def test_from_json_keys_at_every_mapping(chart_json: dict[str, Any]) -> None:
-  for path, value in _json_nodes(chart_json):
-    if not isinstance(value, dict):
-      continue
-    for key in (*value, 'unknown'):
-      data = copy.deepcopy(chart_json)
-      node = data
-      for part in path:
-        node = node[part]
-      if key == 'unknown':
-        node[key] = 'extra'
-      else:
-        del node[key]
-      with pytest.raises(ValueError):
-        BaziChart.from_json(data)
-
-  school = {**chart_json['school'], 'unknown': 'extra'}
-  assert BaziSchool.from_json(school) == DEFAULT_CONFIG.school
-
-
-@pytest.mark.parametrize('key_type', [_EqualKey, _EqualStringKey])
-@pytest.mark.parametrize('wrapper', [dict, UserDict, MappingProxyType])
-def test_from_json_plain_keys_at_every_mapping(
-  chart_json: dict[str, Any], key_type: type[_EqualKey] | type[_EqualStringKey], wrapper: type,
-) -> None:
-  for path, value in _json_nodes(chart_json):
-    if not isinstance(value, dict):
-      continue
-    for key in value:
-      data = copy.deepcopy(chart_json)
-      node = data
-      for part in path:
-        node = node[part]
-      fake = key_type(key)
-      assert fake == key and hash(fake) == hash(key)
-      if isinstance(fake, str):
-        assert str(fake) == 'not-' + key
-      node[fake] = node.pop(key) # type: ignore[index] # Deliberately replace a canonical key.
-      assert any(stored is fake for stored in node)
-      wrapped = wrapper(node)
-      if path:
-        parent = data
-        for part in path[:-1]:
-          parent = parent[part]
-        parent[path[-1]] = wrapped
-      else:
-        data = wrapped
-      with pytest.raises(TypeError) as exc:
-        BaziChart.from_json(data)
-      assert '.'.join(('chart', *path)) in str(exc.value)
-      assert str(type(fake)) in str(exc.value)
-
-
-def test_from_json_types_at_every_node(chart_json: dict[str, Any]) -> None:
-  fake = _EqualToAnything()
-  assert {'value': fake} == {'value': 'male'}
-  assert {'value': fake} == {'value': None}
-  for path, value in _json_nodes(chart_json):
-    bad_values: list[object] = [42, False, [], fake]
-    bad_values += ['None', ''] if value is None else [None]
-    if isinstance(value, dict):
-      bad_values.append('{}')
-    for bad in bad_values:
-      data = copy.deepcopy(chart_json)
-      if path:
-        node = data
-        for part in path[:-1]:
-          node = node[part]
-        node[path[-1]] = bad
-      else:
-        data = bad # type: ignore # Deliberately exercise the public root type gate.
-      with pytest.raises(TypeError) as exc:
-        BaziChart.from_json(data)
-      assert str(type(bad)) in str(exc.value)
-
-
-def test_from_json_derived_values(chart_json: dict[str, Any]) -> None:
-  for path, value in _json_nodes(chart_json):
-    if not isinstance(value, str) or path[0] in (
-      'birth_time', 'gender', 'precision', 'backend', 'dayun_year_rule', 'school',
-    ):
-      continue
-    data = copy.deepcopy(chart_json)
-    node = data
-    for part in path[:-1]:
-      node = node[part]
-    node[path[-1]] = value + '?'
-    with pytest.raises(ValueError) as exc:
-      BaziChart.from_json(data)
-    assert '.'.join(path) in str(exc.value)
-
-
-@pytest.mark.parametrize('key, value', [
-  ('birth_time', datetime(1984, 4, 2, 4, 2)),
-  ('gender', BaziGender.男),
-  ('precision', BaziPrecision.DAY),
-  ('backend', CalendarBackend.CELESTIAL),
-  ('dayun_year_rule', DayunYearRule.JIE_PROJECTED),
-])
-def test_from_json_raw_input_types(chart_json: dict[str, Any], key: str, value: object) -> None:
-  chart_json[key] = value
-  with pytest.raises(TypeError, match=key):
-    BaziChart.from_json(chart_json)
 
 
 @pytest.mark.parametrize('key, value', [
@@ -901,75 +643,33 @@ def test_from_json_raw_input_types(chart_json: dict[str, Any], key: str, value: 
   ('backend', 'CELESTIAL'),
   ('dayun_year_rule', 'JIE_PROJECTED'),
 ])
-def test_from_json_rejects_aliases(chart_json: dict[str, Any], key: str, value: str) -> None:
-  expected = BaziChart.from_json(chart_json)
-  chart_json[key] = value
+def test_flexible_input_aliases(key: str, value: str) -> None:
+  inputs = {'birth_time': '1984-04-02T04:02:00', 'gender': 'male', 'precision': 'day', 'backend': 'celestial', 'dayun_year_rule': 'jie_projected'}
+  inputs[key] = value
   flexible = Bazi.create(
-    chart_json['birth_time'],
-    chart_json['gender'],
+    inputs['birth_time'],
+    inputs['gender'],
     BaziConfig.from_values(
-      precision=chart_json['precision'],
-      backend=chart_json['backend'],
-      dayun_year_rule=chart_json['dayun_year_rule'],
-      school=BaziSchool.from_json(chart_json['school']),
+      precision=inputs['precision'],
+      backend=inputs['backend'],
+      dayun_year_rule=inputs['dayun_year_rule'],
     ),
   )
-  assert flexible == expected.bazi
-  with pytest.raises(ValueError, match=key):
-    BaziChart.from_json(chart_json)
+  assert flexible == Bazi.create('1984-04-02T04:02:00', 'male')
 
 
-@pytest.mark.parametrize('key, value', [
-  ('birth_time', 'not-a-time'),
-  ('birth_time', '1800-01-01T00:00:00'),
-  ('birth_time', '1984-04-02T04:02:00+08:00'),
-  ('gender', 'unknown'),
-  ('precision', 'second'),
-  ('backend', 'unknown'),
-  ('dayun_year_rule', 'unknown'),
-])
-def test_from_json_unsupported_inputs(chart_json: dict[str, Any], key: str, value: str) -> None:
-  chart_json[key] = value
-  with pytest.raises(ValueError):
-    BaziChart.from_json(chart_json)
-
-
-@pytest.mark.parametrize('value', ['wan_zishi', 'UNKNOWN'])
-def test_from_json_school_member_names(chart_json: dict[str, Any], value: str) -> None:
-  chart_json['school']['day_rollover'] = value
-  with pytest.raises(ValueError):
-    BaziChart.from_json(chart_json)
-
-
-@pytest.mark.parametrize('precision', ['hour', 'minute'])
-def test_from_json_unsupported_config(chart_json: dict[str, Any], precision: str) -> None:
-  chart_json.update(backend='hko', precision=precision)
-  with pytest.raises(ValueError, match='HKO'):
-    BaziChart.from_json(chart_json)
-
-
-def test_from_json_dayun_boundaries() -> None:
+def test_short_and_fractional_dayun_boundaries() -> None:
   short = BaziChart(Bazi.create(
     '2090-06-01T12:00:00',
     'male',
     BaziConfig.from_values(backend='hko'),
   ))
-  data = cast(BaziJson.DefaultBaziChartJsonDict, short.json)
-  assert set(data['transits']['dayun']) == {'2091'}
-  assert BaziChart.from_json(data).json == data
-
-  fractional = BaziChart(Bazi.create('1984-04-02T04:02:00', 'female')).json
-  first = next(iter(fractional['transits']['dayun'].values()))
-  assert datetime.fromisoformat(first['start_time']).microsecond != 0
-  assert BaziChart.from_json(fractional).json == fractional
-  first['start_time'] = datetime.fromisoformat(first['start_time']).isoformat(timespec='seconds')
-  with pytest.raises(ValueError, match='start_time'):
-    BaziChart.from_json(fractional)
-
-  # A complete shape still cannot serialize a rebuilt chart with no supported Dayun.
-  data['birth_time'] = '2099-12-20T12:00:00'
+  assert tuple(value.ganzhi_year for value in short.dayun) == (2091,)
+  fractional = BaziChart(Bazi.create('1984-04-02T04:02:00', 'female'))
+  assert next(fractional.dayun).start_moment.microsecond != 0
+  unsupported = BaziChart(Bazi.create('2099-12-20T12:00:00', 'male', BaziConfig.from_values(backend='hko')))
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
-    BaziChart.from_json(data)
+    _ = unsupported.xiaoyun
 
 
 @pytest.mark.parametrize('upper, birth_time', [
@@ -997,7 +697,7 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
       expected = BaziChart(Bazi.create(birth_time, gender, config))
       assert isinstance(chart, cls)
       assert chart.bazi == expected.bazi
-      assert chart.json == expected.json
+      assert chart.bazi.config == expected.bazi.config
 
 
 @pytest.mark.parametrize('config', [None, False, 'day', {}])
@@ -1034,7 +734,7 @@ def test_random_rejects_wrong_rng(bad: object) -> None:
       factory(rng=bad) # type: ignore[arg-type]
 
 
-def test_json_correctness() -> None:
+def test_literal_1984_chart() -> None:
   chart: BaziChart = BaziChart(Bazi.create(
     birth_time=datetime(1984, 4, 2, 4, 2),
     gender=BaziGender.男,
@@ -1044,72 +744,65 @@ def test_json_correctness() -> None:
   # Tiangan    甲       丁       丙       庚
   #   Dizhi    子       卯       寅       寅
 
-  j: BaziJson.BaziChartJsonDict = chart.json
-  j_str: str = json.dumps(j)
-  __j: dict = json.loads(j_str)
+  assert tuple(map(str, chart.bazi.pillars)) == ('甲子', '丁卯', '丙寅', '庚寅')
+  assert tuple(str(value.tiangan) for value in chart.traits) == ('阳木', '阴火', '阳火', '阳金')
+  assert tuple(str(value.dizhi) for value in chart.traits) == ('阳水', '阴木', '阳木', '阳木')
+  assert tuple(map(str, chart.hidden_tiangan)) == ('癸:100', '乙:100', '甲:60,丙:30,戊:10', '甲:60,丙:30,戊:10')
+  assert tuple(None if value.tiangan is None else str(value.tiangan) for value in chart.shishen) == ('偏印', '劫财', None, '偏财')
+  assert tuple(str(value.dizhi) for value in chart.shishen) == ('正官', '正印', '偏印', '偏印')
+  assert tuple(chart.nayin) == ('海中金', '炉中火', '炉中火', '松柏木')
+  assert tuple(map(str, chart.shier_zhangsheng)) == ('胎', '沐浴', '长生', '长生')
+  assert chart.bazi.config.dayun_year_rule is DayunYearRule.JIE_PROJECTED
+  first_dayun = next(chart.dayun)
+  assert first_dayun.start_moment < first_dayun.end_moment
 
-  assert j == __j
 
-  assert j['pillars'] == {
-    'year': '甲子',
-    'month': '丁卯',
-    'day': '丙寅',
-    'hour': '庚寅',
-  }
+def test_historical_default_chart() -> None:
+  # Literal baseline from ddfe16e7c51d695167b09cc4c2f64ba46e7565c3, formerly v200_records.chart.
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+  assert chart.bazi.solar_datetime == datetime(2000, 1, 1, 12)
+  assert chart.bazi.gender is BaziGender.MALE
+  assert chart.bazi.config == DEFAULT_CONFIG
+  assert tuple(map(str, chart.bazi.pillars)) == ('己卯', '丙子', '戊午', '戊午')
+  assert tuple(chart.nayin) == ('城头土', '涧下水', '天上火', '天上火')
+  assert tuple(map(str, chart.shier_zhangsheng)) == ('沐浴', '胎', '帝旺', '帝旺')
+  assert tuple(str(value.tiangan) for value in chart.traits) == ('阴土', '阳火', '阳土', '阳土')
+  assert tuple(str(value.dizhi) for value in chart.traits) == ('阴木', '阳水', '阳火', '阳火')
+  assert tuple(None if value.tiangan is None else str(value.tiangan) for value in chart.shishen) == ('劫财', '偏印', None, '比肩')
+  assert tuple(str(value.dizhi) for value in chart.shishen) == ('正官', '正财', '正印', '正印')
+  assert tuple(map(str, chart.hidden_tiangan)) == ('乙:100', '癸:100', '丁:70,己:30', '丁:70,己:30')
+  assert chart.dayun_start_moment.isoformat() == '2008-03-11T12:44:53.333333'
+  assert tuple((value.xusui, str(value.ganzhi)) for value in chart.xiaoyun) == (
+    (1, '丁巳'), (2, '丙辰'), (3, '乙卯'), (4, '甲寅'), (5, '癸丑'),
+    (6, '壬子'), (7, '辛亥'), (8, '庚戌'), (9, '己酉'), (10, '戊申'),
+  )
+  assert tuple((value.ganzhi_year, str(value.ganzhi), value.start_moment.isoformat(), value.end_moment.isoformat()) for value in itertools.islice(chart.dayun, 10)) == (
+    (2008, '乙亥', '2008-03-11T12:44:53.333333', '2018-03-11T12:44:53.333333'),
+    (2018, '甲戌', '2018-03-11T12:44:53.333333', '2028-03-11T12:44:53.333333'),
+    (2028, '癸酉', '2028-03-11T12:44:53.333333', '2038-03-11T12:44:53.333333'),
+    (2038, '壬申', '2038-03-11T12:44:53.333333', '2048-03-11T12:44:53.333333'),
+    (2048, '辛未', '2048-03-11T12:44:53.333333', '2058-03-11T12:44:53.333333'),
+    (2058, '庚午', '2058-03-11T12:44:53.333333', '2068-03-11T12:44:53.333333'),
+    (2068, '己巳', '2068-03-11T12:44:53.333333', '2078-03-11T12:44:53.333333'),
+    (2078, '戊辰', '2078-03-11T12:44:53.333333', '2088-03-11T12:44:53.333333'),
+    (2088, '丁卯', '2088-03-11T12:44:53.333333', '2098-03-11T12:44:53.333333'),
+    (2098, '丙寅', '2098-03-11T12:44:53.333333', '2108-03-11T12:44:53.333333'),
+  )
 
-  assert j['tiangan_traits'] == {
-    'year': '阳木',
-    'month': '阴火',
-    'day': '阳火',
-    'hour': '阳金',
-  }
 
-  assert j['dizhi_traits'] == {
-    'year': '阳水',
-    'month': '阴木',
-    'day': '阳木',
-    'hour': '阳木',
-  }
-
-  assert j['hidden_tiangan'] == {
-    'year': '癸:100',
-    'month': '乙:100',
-    'day': '甲:60,丙:30,戊:10',
-    'hour': '甲:60,丙:30,戊:10',
-  }
-
-  assert j['tiangan_shishen'] == {
-    'year': '偏印',
-    'month': '劫财',
-    'day': None, # The day master itself has no Shishen -- a real JSON null, not 'None'.
-    'hour': '偏财',
-  }
-
-  assert j['dizhi_shishen'] == {
-    'year': '正官',
-    'month': '正印',
-    'day': '偏印',
-    'hour': '偏印',
-  }
-
-  assert j['nayin'] == {
-    'year': '海中金',
-    'month': '炉中火',
-    'day': '炉中火',
-    'hour': '松柏木',
-  }
-
-  assert j['shier_zhangsheng'] == {
-    'year': '胎',
-    'month': '沐浴',
-    'day': '长生',
-    'hour': '长生',
-  }
-
-  assert j['dayun_year_rule'] == 'jie_projected'
-  first_dayun = next(iter(j['transits']['dayun'].values()))
-  assert set(first_dayun) == {'ganzhi', 'start_time', 'end_time'}
-  assert datetime.fromisoformat(first_dayun['start_time']) < datetime.fromisoformat(first_dayun['end_time'])
+def test_generator_cached_tuple_lifetimes() -> None:
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+  first = chart.dayun
+  expected = tuple(first)
+  assert expected and tuple(first) == ()
+  assert tuple(chart.dayun) == expected
+  assert chart.dayun is not chart.dayun
+  years = chart.liunian
+  prefix = tuple(itertools.islice(years, 3))
+  assert len(prefix) == 3
+  assert next(years) != prefix[0]
+  assert tuple(itertools.islice(chart.liunian, 3)) == prefix
+  assert chart.xiaoyun is chart.xiaoyun
 
 
 def test_deepcopy(rng: random.Random) -> None:
@@ -1228,7 +921,7 @@ def test_repr_does_not_compute_derived_values(monkeypatch: pytest.MonkeyPatch) -
   def forbidden(self: BaziChart) -> object:
     raise AssertionError('derived value computed')
 
-  for name in ('dayun', 'liunian', 'xiaoyun', 'dayun_start_moment', 'json', 'traits', 'shishen'):
+  for name in ('dayun', 'liunian', 'xiaoyun', 'dayun_start_moment', 'traits', 'shishen'):
     monkeypatch.setattr(BaziChart, name, property(forbidden))
   assert repr(chart).startswith('BaziChart(Bazi(')
 

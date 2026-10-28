@@ -10,7 +10,7 @@ from typing import Final, TypeVar
 
 from .common import check_declared_types, frozendict
 from .data_types import DayunTuple
-from .defines import Ganzhi, Dizhi
+from .defines import Ganzhi
 from .bazi_chart import BaziChart, _check_chart
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
@@ -94,11 +94,6 @@ class TransitSet:
     '''按固定流运顺序返回现有干支。'''
     return tuple(gz for _, gz in self.items)
 
-  @property
-  def json(self) -> dict[str, str]:
-    '''JSON 可序列化的具名表示。'''
-    return {kind.value: str(gz) for kind, gz in self.items}
-
   def select(self, *kinds: TransitKind) -> 'TransitSet':
     '''按固定顺序返回指定的流运；指定的种类必须全部存在。'''
     if len(kinds) == 0:
@@ -171,16 +166,15 @@ class TransitDatabase:
         return dayun.ganzhi
     return None
 
-  def _dayun_at_month(self, gz_year: int, gz_month: Dizhi) -> Ganzhi | None:
-    assert isinstance(gz_year, int)
-    assert isinstance(gz_month, Dizhi)
+  def _dayun_at_month(self, query_key: GanzhiYearMonth) -> Ganzhi | None:
+    assert isinstance(query_key, GanzhiYearMonth)
 
     def __start_key(index: int, dayun: DayunTuple) -> GanzhiYearMonth:
       key = GanzhiYearMonth.from_jie(self._utils.prev_jie(dayun.start_moment))
       return max(key, self._birth_month_key) if index == 0 else key
 
     return self._physical_dayun(
-      GanzhiYearMonth.from_dizhi(gz_year, gz_month),
+      query_key,
       __start_key,
     )
 

@@ -4,6 +4,7 @@
 import json
 import hashlib
 from datetime import date, datetime
+from dataclasses import fields
 from itertools import islice, pairwise, product
 from pathlib import Path
 from typing import Any, Final
@@ -55,7 +56,7 @@ def _chart(case: dict[str, Any], profile: str) -> BaziChart:
     BaziConfig.from_values(
       precision=values['precision'],
       backend=values['backend'],
-      school=BaziSchool.from_json({**values['school'], 'kongwang_anchor': Anchor.DAY.name}),
+      school=BaziSchool(day_rollover=DayRollover[values['school']['day_rollover']], kongwang_anchor=Anchor.DAY),
       dayun_year_rule=values['dayun_year_rule'],
     ),
   ))
@@ -120,9 +121,8 @@ def test_baseline_inventory() -> None:
     precision, rollover, year_rule = profile.split('/')
     assert values['backend'] == 'celestial'
     assert values['precision'] == precision
-    assert BaziSchool.from_json({**values['school'], 'kongwang_anchor': Anchor.DAY.name}) == BaziSchool(
-      day_rollover=DayRollover[rollover], kongwang_anchor=Anchor.DAY,
-    )
+    school = BaziSchool(day_rollover=DayRollover[rollover], kongwang_anchor=Anchor.DAY)
+    assert values['school'] == {field.name: getattr(school, field.name).name for field in fields(school) if field.name != 'kongwang_anchor'}
     assert values['dayun_year_rule'] == year_rule
   for case in cases:
     assert set(case['reference']) == set(BASELINE['profiles'])

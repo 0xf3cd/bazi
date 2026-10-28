@@ -13,7 +13,7 @@ from typing import TypeVar
 from .bazi_chart import BaziChart, _check_chart
 from .calendar import calendar_utils_of
 from .data_types import HiddenTianganDict
-from .defines import Tiangan, Dizhi, Ganzhi
+from .defines import Zhu, Tiangan, Dizhi, Ganzhi
 from .utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
 
 
@@ -131,12 +131,13 @@ def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
   zhangsheng = list(chart.shier_zhangsheng)
 
   s += '     天干                  地支                  地支藏干\n'
-  for idx, head in enumerate(['年', '月', '日', '时']):
+  for head in Zhu:
+    idx = head.index
     tg = pillars[idx].tiangan
     dz = pillars[idx].dizhi
 
     tg_shishen: str = str(shishens[idx].tiangan)
-    if idx == 2:
+    if head is Zhu.日:
       tg_shishen = _day_master_mark(style)
 
     tg_str: str = f'{_glyph(style, tg)} [{_traits(tg)}] <{tg_shishen}>'
@@ -164,7 +165,7 @@ def transit_text(
     `liunian_count` 年；小运是有限序列，全部列出。
   - 节与大运区间用节气表时刻（UTC+08:00），地点盘也不采用真太阳时。
   - 出生后没有大运起于历法支持范围内时（如 HKO 后端的 2099 年末出生），抛 `ValueError`，
-    与 `chart.xiaoyun`、`chart.json` 一致；`basic_text` 不受影响。
+    与 `chart.xiaoyun` 一致；`basic_text` 不受影响。
   - 文本以换行开头、换行结尾，可直接 `print`。
 
   Args:

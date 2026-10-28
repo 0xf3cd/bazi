@@ -46,16 +46,17 @@ def test_unknown_attribute_has_no_hint() -> None:
   assert str(error.value) == "module 'bazi' has no attribute 'not_a_name'"
 
 
-def test_chart_text_loads_on_demand_outside_all() -> None:
+@pytest.mark.parametrize('name,entry', [('chart_text', 'chart_text')])
+def test_module_loads_on_demand_outside_all(name: str, entry: str) -> None:
   code = (
     'import sys, bazi\n'
-    'assert "chart_text" not in bazi.__all__ and "chart_text" in dir(bazi)\n'
-    'assert "bazi.chart_text" not in sys.modules\n'
-    'from bazi import chart_text as imported\n'
-    'assert bazi.chart_text is imported and callable(bazi.chart_text.chart_text)\n'
+    f'assert {name!r} not in bazi.__all__ and {name!r} in dir(bazi)\n'
+    f'assert "bazi.{name}" not in sys.modules\n'
+    f'from bazi import {name} as imported\n'
+    f'assert bazi.{name} is imported and callable(getattr(imported, {entry!r}))\n'
     'namespace = {}\n'
     'exec("from bazi import *", namespace)\n'
-    'assert "chart_text" not in namespace\n'
+    f'assert {name!r} not in namespace\n'
   )
   result = subprocess.run([sys.executable, '-c', code], cwd=ROOT, capture_output=True, text=True, check=False)
   assert result.returncode == 0, result.stderr
