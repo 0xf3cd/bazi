@@ -116,12 +116,13 @@ def edited_source(tmp_path: Path) -> Path:
   return source
 
 
-def test_custom_source_reports_binding_mismatch(tmp_path: Path, edited_source: Path) -> None:
+def test_custom_source_keeps_criterion_verdict(tmp_path: Path, edited_source: Path) -> None:
   source = edited_source
   result = run_cli(tmp_path, *MATCH_ARGS, '--include-reference-only', '--knowledge-source', str(source))
-  assert result.returncode == 0 and 'binding_unrecognized' in result.stdout
+  assert result.returncode == 0 and '结构前提：SATISFIED；premise_satisfied' in result.stdout
   assert '不同前提' in result.stdout
-  assert '原作参考前提：editorial.shishen.zhengguan.legal_trouble；UNKNOWN' in result.stdout
+  assert '原作参考前提：editorial.shishen.zhengguan.legal_trouble；SATISFIED；premise_satisfied' in result.stdout
+  assert '默认展示：否；前提判别：SATISFIED' in result.stdout
 
 
 @pytest.mark.parametrize('criterion_id,status', [

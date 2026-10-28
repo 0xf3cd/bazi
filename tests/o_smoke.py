@@ -30,23 +30,23 @@ def main() -> int:
   import json
   import os
   from tempfile import TemporaryDirectory
-  from dataclasses import replace
+  from dataclasses import fields, replace
   from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
   from collections.abc import Callable
   from functools import partial
   from fractions import Fraction
   from zoneinfo import ZoneInfo
   from unittest.mock import patch
-  from typing import get_args
+  from typing import Any, get_args
 
   from bazi.defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeRole, LegacyDescription, object_id
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeRole, LegacyDescription, object_id
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, TransitObservation, LiunianPosition, ChartOccurrence,
     YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, ScopeName, CriterionReason,
-    CriterionResult, EntryMatch, PremiseMatches, ConditionReferences, RelatedEntry,
+    CriterionResult,
     criterion as lookup_criterion, evaluate_context,
   )
   from bazi.common import frozendict
@@ -174,8 +174,6 @@ def main() -> int:
     ('MomentCoordinate rejects date', TypeError, lambda: MomentCoordinate(date(2024, 4, 10))), # type: ignore[arg-type]
     ('TransitObservation rejects non-coordinate', TypeError,
      lambda: TransitObservation((TransitKind.LIUNIAN,), 'at_year')), # type: ignore[arg-type]
-    ('RelatedEntry rejects non-bool recognized', TypeError,
-     lambda: RelatedEntry('a.b', 1)), # type: ignore[arg-type]
     ('BaziSchool rejects non-enum peiou_xing_def', TypeError,
      lambda: BaziSchool(peiou_xing_def=1)), # type: ignore[arg-type]
     ('StarAppearance rejects visible stem mismatch', ValueError,
@@ -304,7 +302,7 @@ def main() -> int:
     ('KnowledgeRole wrong object type', TypeError,
      lambda: KnowledgeRole('role', 1)), # type: ignore[arg-type]
     ('KnowledgeEntry ineligible default', ValueError,
-     lambda: replace(knowledge.entry('legacy.shishen.SH-199'), output='default')),
+     lambda: replace(knowledge.entry('legacy.shishen.SH-199'), show_by_default=True)),
     ('KnowledgeEntry unconditional legacy condition', ValueError,
      lambda: replace(
        knowledge.entry('tiangan.ding.definition'),
@@ -684,25 +682,24 @@ def main() -> int:
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')
   positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation(2024), include_reference_only=True)
-  if positive.criterion.status != 'SATISFIED' or not isinstance(positive.references, PremiseMatches) or len(positive.references.entries) != 2 or positive.bazi != chart.bazi:
+  if positive.criterion.status != 'SATISFIED' or positive.reference_ids != ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble') or positive.bazi != chart.bazi:
     failures.append('Optimized context evaluation/input failed')
   condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', observation=NatalObservation(), include_reference_only=True)
   checks.extend([
     ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
-    ('Premise record rejects condition references', ValueError, partial(replace, positive, references=condition.references)),
-    ('Condition record rejects premise matches', ValueError, partial(replace, condition, references=positive.references)),
     ('CriterionResult rejects entry-only reason', ValueError,
      partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'binding_unrecognized', frozendict({}))), # type: ignore[arg-type]
-    ('EntryMatch rejects unknown reason', ValueError, partial(EntryMatch, 'a.b', 'invalid')), # type: ignore[arg-type]
-    ('PremiseMatches rejects related members', TypeError, partial(PremiseMatches, (RelatedEntry('a.b', True),))), # type: ignore[arg-type]
-    ('ConditionReferences rejects premise members', TypeError, partial(ConditionReferences, (EntryMatch('a.b', 'premise_satisfied'),))), # type: ignore[arg-type]
     ('ChartOccurrence rejects foreign position', TypeError,
      partial(ChartOccurrence, TransitKind.LIUNIAN, Ganzhi.from_str('甲子'), TianganLayer.明干, Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))), # type: ignore[arg-type]
     ('ChartOccurrence excludes day master visible', ValueError,
      partial(ChartOccurrence, Zhu.日, Ganzhi.from_str('甲子'), TianganLayer.明干, Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))),
     ('ChartOccurrence rejects string layer', TypeError,
      partial(ChartOccurrence, Zhu.年, Ganzhi.from_str('甲子'), '明干', Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))), # type: ignore[arg-type]
-    ('ContextResult rejects unwrapped references', TypeError, partial(replace, positive, references=())),
+    ('ContextResult rejects mutable IDs', TypeError, partial(replace, positive, reference_ids=[])),
+    ('ContextResult rejects non-string ID', TypeError, partial(replace, positive, reference_ids=(1,))),
+    ('ContextResult rejects missing ID', ValueError, partial(replace, positive, reference_ids=('unknown',))),
+    ('ContextResult rejects empty ID', ValueError, partial(replace, positive, reference_ids=('',))),
+    ('ContextResult rejects old references field', TypeError, partial(replace, positive, references=())),
     ('ContextResult rejects foreign evidence', TypeError, partial(replace, positive, evidence=object())),
     ('CriterionResult rejects non-bool observation', TypeError,
      partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'premise_satisfied', frozendict({'known': 1}))), # type: ignore[dict-item]
@@ -712,8 +709,14 @@ def main() -> int:
     'missing_transit_coordinate', 'transit_unavailable',
   }:
     failures.append('Optimized scope/reason public subsets changed')
-  if PremiseMatches(()) == ConditionReferences(()):
-    failures.append('Optimized empty references lost their roles')
+  empty_condition = replace(condition, reference_ids=())
+  if '事实判别不表示原文完整条件已满足' not in empty_condition.render():
+    failures.append('Optimized empty condition references lost their role')
+  ids = (positive.reference_ids[1], positive.reference_ids[0], positive.reference_ids[1])
+  if replace(positive, reference_ids=ids).reference_ids != ids:
+    failures.append('Optimized manual reference IDs lost order or repeats')
+  if replace(positive, reference_ids=('tiangan.ding.definition',)).reference_ids != ('tiangan.ding.definition',):
+    failures.append('Optimized manual IDs gained an unapproved claim-membership gate')
   def auxiliary_type_error(thunk: Callable[[], object], name: str, value: object) -> object:
     # Verify the canonical first failure even when Python strips every assert.
     try:
@@ -748,6 +751,31 @@ def main() -> int:
     failures.append('Optimized auxiliary query changed the natal chart')
 
   source_data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+  if source_data['schema_version'] != 3 or KnowledgeBase._from_data(source_data) != knowledge:
+    failures.append('Optimized schema3 source did not load')
+  display_entry = knowledge.entry('tiangan.ding.definition')
+  display_bad: Any
+  for display_bad in (1, 0, 'true', None):
+    bad_source = json.loads(json.dumps(source_data))
+    bad_source['entries'][0]['show_by_default'] = display_bad
+    checks.extend([
+      (f'KnowledgeEntry rejects non-bool display {display_bad!r}', TypeError, partial(replace, display_entry, show_by_default=display_bad)),
+      (f'KnowledgeEntry constructor rejects non-bool display {display_bad!r}', TypeError,
+       partial(KnowledgeEntry, **{**{f.name: getattr(display_entry, f.name) for f in fields(display_entry)}, 'show_by_default': display_bad})),
+      (f'Editing source rejects non-bool display {display_bad!r}', TypeError, partial(load_source, json.dumps(bad_source))),
+    ])
+  for version in (1, 2, 3.0, True, '3'):
+    checks.append((f'Knowledge rejects source version {version!r}', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': version}))))
+  for mutation in ('old', 'extra', 'missing'):
+    bad_source = json.loads(json.dumps(source_data))
+    row = bad_source['entries'][0]
+    if mutation == 'old':
+      row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
+    elif mutation == 'extra':
+      row['output'] = 'default'
+    else:
+      del row['show_by_default']
+    checks.append((f'Knowledge rejects {mutation} display fields', ValueError, partial(load_source, json.dumps(bad_source))))
   bad_knowledge = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   bad_knowledge['entries'][0]['text'] = '\ud800'
   def parser_limit(load: Callable[[str], object]) -> None:
@@ -755,8 +783,6 @@ def main() -> int:
       load('{}')
 
   checks.extend([
-    ('Knowledge rejects float source version', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': 2.0}))),
-    ('Knowledge rejects old source version', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': 1}))),
     ('Knowledge rejects surrogate', ValueError, partial(load_source, json.dumps(bad_knowledge))),
     ('Context render rejects surrogate key', ValueError, lambda: replace(positive, criterion=replace(positive.criterion, observations=frozendict({'\ud800': True}))).render()),
   ])

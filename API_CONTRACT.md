@@ -142,34 +142,41 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 两者不加载知识库、不创建命盘，也不执行判别。目录值冻结，直接构造 `CriterionInfo` 只校验值的形状；
 需要已注册定义时应使用查询入口，不把自填说明当成程序认证。
 
-绑定识别用来确认知识条目与可执行判据的关联是否仍符合随库的默认内容，核对的是条目及其引用的对象、情境、来源记录的内容摘要（SHA-256）。
-这项检查不认证条文真伪或现实适用性。
+关联使用稳定 claim ID，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义；
+目录不认证条文真伪或现实适用性。
 
 | 目录信息 | 含义 |
 |---|---|
-| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键，不包含用于绑定识别的内部内容摘要。 |
+| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键。 |
 | `analysis_kind`、`observation_types`、`scopes` | 分析类别，以及由它派生的可接受观察请求类与合法范围；没有隐式范围默认值。 |
 | `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外输入；关系范围按 coordinate、kinds 排序。 |
 | `transit_entries`、`transit_kinds` | 婚恋结构观察的坐标入口、必填字段及种类上限；不保证某盘实际可取得。单流年观察不接 TransitCoordinate。 |
 | `unknown_conditions` | 缺所需年份／坐标或流运不可用等事实判别 UNKNOWN 条件；范围完整性先于性别门槛与事实。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`，不产生 UNKNOWN。 |
-| `entry_role`、`binding_effect` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。 |
+| `entry_role` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。空参考元组也由此区分。 |
 | `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
-| `claim_ids` | 默认语料的条目约定；自定义库不保证有这些条目，同 ID 也不能认证语义相同。 |
+| `claim_ids` | 按判据声明序排列的条目约定；自定义库不保证有这些条目，同 ID 也不能认证语义相同。 |
 
 只有 `editorial.guansha_coexistence_female.v1` 的 `required_gender` 为女命；范围完整时，
 男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
 只向男命返回的两条婚恋条目由 `claim_genders` 限制：女命不返回这些关联条目，不改变事实判别。
 
-绑定未识别不改变 `CriterionResult`。
-`binding_effect='entry_unknown'` 表示 premise 条目的
-`EntryMatch` 可为 `UNKNOWN/binding_unrecognized`；`'related_unrecognized'` 表示 condition 条目的
-`RelatedEntry.recognized=False`。参考条目仍须显式选择，判据前提满足也不会授予默认输出资格。
+`ContextResult.reference_ids` 按声明序省略缺失、被默认展示或性别门槛过滤的 ID，不另行去重。
+参考条目仍须显式选择，判据前提满足也不会授予默认展示资格。
+正文、引文和来源说明的编辑不改变 `CriterionResult`，不再有条目层的 UNKNOWN 或识别状态。
 
-目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节保留绑定识别、范围和条目关联的合同，不重复维护调用示例。
+目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节说明范围和条目关联的合同。
 
 ## 结构接口迁移
 
-以下调整自 v2.4.0 起生效；命理规则、默认流派、历法算法与时钟口径不变。不保留旧构造器或兼容属性。
+位置与观察调整自 v2.4.0 起生效；知识结构另有下列开发版迁移。命理规则、默认流派、历法算法与时钟口径不变，不保留旧构造器或兼容属性。
+
+### 知识结构：开发版迁移
+
+- `KnowledgeEntry.output`／`OutputPolicy` 删除，改为严格 bool `show_by_default`：旧 `'default'` 对应 `True`，`'reference_only'` 对应 `False`。`0`、`1`、字符串和 None 均抛 `TypeError`；默认展示只控制查询，不认证知识正确或适用于当前命盘。`include_reference_only` 和原有准入条件不变。
+- 知识编辑源改用精确整数 `schema_version=3`，条目用 JSON boolean `show_by_default`。升级自定义编辑源时须自行替换版本和每条的旧 `output` 键；旧 schema 1／2、旧键、遗漏或额外键均拒绝，不提供运行时迁移层。
+- `ContextResult.references` 改为 `reference_ids: tuple[str, ...]`。删除 `MatchReason`、`EntryMatch`、`RelatedEntry`、`PremiseMatches`、`ConditionReferences` 和 `CriterionInfo.binding_effect`。用 `result.knowledge.entry(id)` 取条目，用 `criterion(result.criterion.criterion_id).entry_role` 取完整前提／条件参考语义，状态和原因只从 `result.criterion` 读取。
+- 显式构造与 `replace` 改传 `reference_ids=`；`asdict` 返回该 ID 元组。直接构造保留顺序与重复，检查 str 类型、非空 ID 和知识库中的存在性，不强制 ID 属于判据 claims。正常求值按上节的声明序与筛选规则返回 ID。
+- `ContextResult` 第四位置字段现在是 ID 元组，`KnowledgeEntry` 倒数第二字段现在是 bool；旧位置式类模式可能静默失配或读取不同含义，必须同步修改。`__match_args__` 与下表构造字段一致。
 
 ### 位置、观察与坐标
 
@@ -205,21 +212,18 @@ bool 和 int 子类也通过该类型检查；严格请求类则拒绝 bool 和 
 | 类型 | 实际构造字段 | 派生属性 |
 | --- | --- | --- |
 | `CriterionResult` | criterion_id、reason、observations | definition、status、scope_complete |
-| `EntryMatch` | claim_id、reason | status |
-| `ContextResult` | observation、criterion、evidence、references、_bazi、knowledge | bazi |
-| `PremiseMatches`／`ConditionReferences` | entries | 无 |
+| `ContextResult` | observation、criterion、evidence、reference_ids、_bazi、knowledge | bazi |
 
 `CriterionInfo` 的第三个构造字段由旧 `profile_type`（profile 类）改为 `analysis_kind`（`'context'`／`'relationship'`）；
 其余七个存储字段顺序保持。读取时，旧 `info.profile_kind` 改为 `info.analysis_kind`，旧单个
 `info.profile_type` 改为 `info.observation_types` 中的可接受观察类元组。
 例如旧 `case CriterionInfo(_, _, profile_type)` 现在会把类别字符串绑定给 profile_type，不能再当作类构造请求。
 
-ContextResult.evidence 保存 `tuple[ChartOccurrence, ...]` 或 RelationshipEvidence，references 分别保存完整前提匹配
-或条件参考，空 entries 也保留两种类型。删除 occurrences/relationship/entries/related 旧总结果字段。
+ContextResult.evidence 保存 `tuple[ChartOccurrence, ...]` 或 RelationshipEvidence，reference_ids 保存参考条目 ID。
+完整前提与条件参考由已注册判据的 entry_role 区分。删除 occurrences/relationship/entries/related 旧总结果字段。
 部分种类不可取得时仍保留取得部分的证据。出生输入独立深拷、知识对象复用及完整值身份保持。
 
-CriterionReason 仅有下表六因；MatchReason 另保留条目层 binding_unrecognized，对应 UNKNOWN。
-CriterionResult 不接受该条目原因；CriterionInfo 的自填 definition 仍只作形状校验，不套用注册定义派生。
+CriterionReason 仅有下表六因；CriterionInfo 的自填 definition 仍只作形状校验，不套用注册定义派生。
 
 | CriterionReason | status | scope_complete |
 | --- | --- | --- |
@@ -325,11 +329,11 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 
 `KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随库 `knowledge_data.json`。
 已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`contexts`、`sources`、`entries` 四份注册表；
-版本只接受精确整数 2，拒绝 bool、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+版本只接受精确整数 3，拒绝 bool、浮点数、字符串、容器、旧版与未知版，不自动迁移。
 重复键、字段差异、断引用、不合法状态及无法按 UTF-8 编码的孤立代理项均拒绝，不修复原文。
 非整数版本的 `ValueError` 仅显示类型，不展开未知容器。类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；
 JSON 解析错误保留 `JSONDecodeError` 的原文与位置，实际解析递归失败转为 `ValueError`，不设固定深度上限。
 
 字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
 知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
-条目绑定摘要只识别所绑定的内容，不是保存格式或软件版本，也不认证条文真伪。
+条目按稳定 ID 关联，编辑源版本不是条文真伪的认证。

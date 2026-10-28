@@ -8,8 +8,8 @@ from bazi.defines import Zhu, Ganzhi
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitSet
 
-from matching_samples import FEMALE, match, record
-from matching_samples import occurrences, premise_entries
+from matching_samples import FEMALE, LEGAL, RELATIONSHIP, match, record
+from matching_samples import occurrences
 
 
 @pytest.mark.parametrize('day,year,reason', [
@@ -22,7 +22,8 @@ def test_incomplete_scope_beats_partial_natal(day: int, year: int | None, reason
   assert result.criterion.scope_complete is False
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
   assert result.criterion.observations['observed_coexistence'] is (day == 3)
-  assert all(m.status == 'UNKNOWN' for m in premise_entries(result))
+  assert result.reference_ids == LEGAL
+  assert result.render().count('前提判别：UNKNOWN') == 2
 
 
 def test_render_distinguishes_unused_missing_year() -> None:
@@ -64,7 +65,8 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   result = match(gender=gender, criterion_id=criterion_id, observation=LiunianObservation(year))
   assert result.criterion.status == 'UNKNOWN'
   assert result.criterion.reason == reason and result.criterion.scope_complete is False
-  assert all(entry.status == 'UNKNOWN' and entry.reason == reason for entry in premise_entries(result))
+  assert result.reference_ids == RELATIONSHIP
+  assert result.render().count('前提判别：UNKNOWN') == 2
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
 
 

@@ -14,8 +14,7 @@ from typing import Any
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import (
-  Observation, NatalObservation, ContextResult, ChartOccurrence, EntryMatch, RelatedEntry,
-  PremiseMatches, ConditionReferences, evaluate_context,
+  Observation, NatalObservation, ContextResult, ChartOccurrence, evaluate_context,
 )
 from bazi.analyzer.relationship import RelationshipEvidence
 from bazi.school import BaziConfig
@@ -52,16 +51,6 @@ def record(criterion_id: str, observation: Observation, day: int, gender: str) -
 def occurrences(result: ContextResult) -> tuple[ChartOccurrence, ...]:
   assert isinstance(result.evidence, tuple)
   return result.evidence
-
-
-def premise_entries(result: ContextResult) -> tuple[EntryMatch, ...]:
-  assert isinstance(result.references, PremiseMatches)
-  return result.references.entries
-
-
-def condition_entries(result: ContextResult) -> tuple[RelatedEntry, ...]:
-  assert isinstance(result.references, ConditionReferences)
-  return result.references.entries
 
 
 def relationship_evidence(result: ContextResult) -> RelationshipEvidence:

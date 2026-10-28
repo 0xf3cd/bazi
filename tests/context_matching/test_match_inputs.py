@@ -2,7 +2,7 @@
 
 from dataclasses import FrozenInstanceError, asdict, fields, replace
 from datetime import datetime
-from typing import Any, get_args
+from typing import Any
 
 import pytest
 
@@ -11,8 +11,8 @@ from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
   Observation, NatalObservation, LiunianObservation, TransitObservation, LiunianPosition,
-  ContextResult, CriterionResult, EntryMatch, RelatedEntry, MatchReason, MatchStatus, CriterionReason,
-  TransitCoordinate, YearCoordinate, PremiseMatches, ConditionReferences, _CRITERIA, evaluate_context,
+  ContextResult, CriterionResult, MatchStatus, CriterionReason,
+  TransitCoordinate, YearCoordinate, _CRITERIA, evaluate_context,
 )
 from bazi.defines import Zhu, Tiangan, Ganzhi, DizhiRelation
 from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, DEFAULT_CONFIG
@@ -114,37 +114,13 @@ def test_public_record_value_boundaries() -> None:
   for change in ({'observations': {}}, {'observations': frozendict({1: True})}, {'observations': frozendict({'a': 1})}, {'reason': 1}):
     with pytest.raises(TypeError):
       replace(result.criterion, **change)
-  with pytest.raises(TypeError):
-    EntryMatch(1, 'binding_unrecognized') # type: ignore[arg-type]
-  with pytest.raises(ValueError):
-    EntryMatch('', 'binding_unrecognized')
-  for change in ({'observation': 'natal'}, {'criterion': {}}, {'evidence': []}, {'references': ()}, {'_bazi': None}, {'knowledge': None}, {'evidence': (None,)}):
+  for change in ({'observation': 'natal'}, {'criterion': {}}, {'evidence': []}, {'reference_ids': []}, {'reference_ids': (1,)}, {'_bazi': None}, {'knowledge': None}, {'evidence': (None,)}):
     with pytest.raises(TypeError):
       replace(result, **change)
   with pytest.raises(ValueError):
-    replace(result, references=PremiseMatches((EntryMatch('unknown', 'binding_unrecognized'),)))
-  for factory in (PremiseMatches, ConditionReferences):
-    value: Any
-    for value in ([], (object(),), (None,)):
-      with pytest.raises(TypeError):
-        factory(value)
-
-
-def test_each_reason_has_one_admissible_status() -> None:
-  expected: dict[MatchReason, MatchStatus] = {
-    'premise_satisfied': 'SATISFIED',
-    'required_classification_absent': 'NOT_SATISFIED',
-    'day_master_differs': 'NOT_SATISFIED',
-    'female_gate_false': 'NOT_SATISFIED',
-    'missing_transit_coordinate': 'UNKNOWN',
-    'transit_unavailable': 'UNKNOWN',
-    'binding_unrecognized': 'UNKNOWN',
-  }
-  assert set(expected) == set(get_args(MatchReason))
-  for reason, status in expected.items():
-    assert EntryMatch(LEGAL[0], reason).status == status
-    with pytest.raises(TypeError):
-      EntryMatch(LEGAL[0], status, reason) # type: ignore[call-arg,arg-type] # 旧三字段构造不再受支持。
+    replace(result, reference_ids=('unknown',))
+  with pytest.raises(ValueError):
+    replace(result, reference_ids=('',))
 
 
 @pytest.mark.parametrize('reason,status,complete', [
@@ -165,14 +141,10 @@ def test_criterion_reasons_derive_scope(
 @pytest.mark.parametrize('value', [None, True, 1, 1.0, [], {}])
 def test_verdict_reason_types_raise_type_error(value: Any) -> None:
   result = match()
-  for factory in (
-    lambda: EntryMatch(LEGAL[0], value),
-    lambda: replace(result.criterion, reason=value),
-  ):
-    with pytest.raises((TypeError, ValueError)) as error:
-      factory()
-    assert type(error.value) is TypeError
-    assert str(error.value).startswith('Expected str, got ')
+  with pytest.raises((TypeError, ValueError)) as error:
+    replace(result.criterion, reason=value)
+  assert type(error.value) is TypeError
+  assert str(error.value).startswith('Expected str, got ')
 
 
 @pytest.mark.parametrize('bad, hint', [
@@ -211,8 +183,6 @@ def test_result_cross_field_constraints() -> None:
     replace(result, evidence=occurrences(match())[:1])
   with pytest.raises(ValueError, match='Context criterion requires occurrences'):
     replace(match(), evidence=evidence)
-  with pytest.raises(ValueError, match='Premise criterion cannot carry condition references'):
-    replace(match(), references=result.references)
   with pytest.raises(ValueError, match='Natal scope'):
     replace(result, evidence=replace(evidence, transits=TransitSet(liunian=Ganzhi.from_str('甲辰'))))
   with pytest.raises(ValueError, match='sequence'):
@@ -220,7 +190,7 @@ def test_result_cross_field_constraints() -> None:
       DizhiRelation.冲: (frozenset({GanzhiOccurrence(9, Ganzhi.from_str('甲子'))}),),
     })))
   with pytest.raises(ValueError, match='Unknown claim'):
-    replace(result, references=ConditionReferences((RelatedEntry('unknown.claim', True),)))
+    replace(result, reference_ids=('unknown.claim',))
 
 
 def test_complete_scope_requires_obtained_kinds() -> None:
@@ -245,9 +215,18 @@ def test_result_fields_and_noncertification() -> None:
   result = match()
   assert tuple(asdict(result.criterion)) == ('criterion_id', 'reason', 'observations')
   assert CriterionResult.__match_args__ == ('criterion_id', 'reason', 'observations')
-  assert EntryMatch.__match_args__ == ('claim_id', 'reason')
-  assert ContextResult.__match_args__ == ('observation', 'criterion', 'evidence', 'references', '_bazi', 'knowledge')
-  assert PremiseMatches(()) != ConditionReferences(())
+  assert ContextResult.__match_args__ == ('observation', 'criterion', 'evidence', 'reference_ids', '_bazi', 'knowledge')
+  assert tuple(asdict(result)) == ('observation', 'criterion', 'evidence', 'reference_ids', '_bazi', 'knowledge')
+  assert asdict(result)['reference_ids'] == LEGAL
+  constructed = ContextResult(result.observation, result.criterion, result.evidence, LEGAL, result.bazi, result.knowledge)
+  assert constructed == result and hash(constructed) == hash(result)
+  match constructed:
+    case ContextResult(_, _, _, ids, _, _):
+      assert ids == LEGAL
+    case _:
+      pytest.fail('ContextResult positional pattern did not match')
+  with pytest.raises(TypeError):
+    replace(result, references=()) # type: ignore[call-arg] # Removed field.
   for name in ('status', 'definition', 'scope_complete'):
     with pytest.raises(TypeError):
       replace(result.criterion, **{name: 'obsolete'}) # type: ignore[arg-type] # 派生属性不再是构造字段。
@@ -256,3 +235,17 @@ def test_result_fields_and_noncertification() -> None:
   manual = replace(result, observation=LiunianObservation(2024), criterion=unknown)
   assert manual.criterion.reason == 'missing_transit_coordinate'
   assert all(isinstance(value.position, Zhu) for value in occurrences(manual))
+
+
+def test_manual_reference_ids_keep_order_repeats() -> None:
+  result = match()
+  ids = (LEGAL[1], LEGAL[0], LEGAL[1])
+  manual = replace(result, reference_ids=ids)
+  assert manual.reference_ids == ids
+  assert asdict(manual)['reference_ids'] == ids
+  rendered = manual.render()
+  assert rendered.index('原作参考前提：' + LEGAL[1]) < rendered.index('原作参考前提：' + LEGAL[0])
+  assert rendered.count('原作参考前提：' + LEGAL[1]) == 2
+  foreign = ('tiangan.ding.definition',)
+  assert replace(result, reference_ids=foreign).reference_ids == foreign
+  assert result.reference_ids == LEGAL

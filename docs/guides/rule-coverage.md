@@ -110,16 +110,16 @@ for definition, claim_id in claims.items():
   assert entry.limits
   source = kb.sources[entry.sources[0]]
   print(definition.name, school.guoyin_anchor.name, '甲见' + str(target))
-  print(entry.claim_id, entry.source_state, entry.output)
+  print(entry.claim_id, entry.source_state, entry.show_by_default)
   print(source.source_id, source.text_layer, source.state)
 ```
 
 ```{testoutput} rule-coverage-guoyin
 MODERN YEAR_AND_DAY 甲见戌
-shensha.guoyin.modern repository_attributed reference_only
+shensha.guoyin.modern repository_attributed False
 repository_guoyin_variants editorial repository_attributed
 WUXING_JINGJI YEAR_AND_DAY 甲见酉
-shensha.guoyin.wuxing_jingji repository_attributed reference_only
+shensha.guoyin.wuxing_jingji repository_attributed False
 repository_guoyin_variants editorial repository_attributed
 ```
 

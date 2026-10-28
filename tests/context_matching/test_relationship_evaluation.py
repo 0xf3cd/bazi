@@ -10,7 +10,7 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import (
-  ContextResult, RelatedEntry, evaluate_context, NatalObservation, TransitObservation,
+  ContextResult, evaluate_context, NatalObservation, TransitObservation,
   YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate,
 )
 from bazi.analyzer.relationship import RelationshipEvidence
@@ -22,7 +22,7 @@ from bazi.transits import TransitKind, TransitSet
 from bazi.defines import Ganzhi
 
 from matching_samples import PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, rel_match, chart_from, load_knowledge
-from matching_samples import condition_entries, relationship_evidence, obtained_transits
+from matching_samples import relationship_evidence, obtained_transits
 
 
 def test_month_and_date_coordinates_render() -> None:
@@ -33,7 +33,7 @@ def test_month_and_date_coordinates_render() -> None:
   )
   result = evaluate_context(c, criterion_id=TOUGAN, observation=observation, include_reference_only=True)
   assert result.observation == observation and isinstance(result.evidence, RelationshipEvidence)
-  assert condition_entries(result) == (RelatedEntry(RELATED_TOUGAN, True),)
+  assert result.reference_ids == (RELATED_TOUGAN,)
   evidence = relationship_evidence(result)
   assert evidence.star_target.tiangan is Tiangan.癸 and evidence.star_target.dizhi == (_Dizhi.子,)
   assert evidence.transits == TransitSet(dayun=Ganzhi.from_str('甲戌'), liunian=Ganzhi.from_str('甲辰'))
@@ -155,29 +155,30 @@ def test_moment_microseconds_equal_but_recorded() -> None:
   ) in left.render().splitlines()
 
 
-def test_relationship_reference_matrix() -> None:
-  # Related-entry matrix over include_reference_only × gender × structural status (three states).
+@pytest.mark.parametrize('criterion_id,claim_id', [(PALACE, RELATED_PALACE), (TOUGAN, RELATED_TOUGAN)])
+def test_relationship_reference_matrix(criterion_id: str, claim_id: str) -> None:
+  # Reference IDs over include_reference_only × gender × structural status (three states).
   male = chart_from('2000-01-01 12:00', 'male')
   female = chart_from('2000-01-01 12:00', 'female')
   hidden: dict[str, Any] = {'include_reference_only': True}
 
   # False × anything: no reference section.
-  off = evaluate_context(male, criterion_id=PALACE, observation=NatalObservation())
-  assert condition_entries(off) == () and '关联参考' not in off.render()
+  off = evaluate_context(male, criterion_id=criterion_id, observation=NatalObservation())
+  assert off.reference_ids == () and '关联参考' not in off.render()
 
-  # True × male × SATISFIED/NOT_SATISFIED/UNKNOWN (two reasons): entry returned, recognized=True.
+  # True × male × SATISFIED/NOT_SATISFIED/UNKNOWN (two reasons): entry returned.
   for result in (
-    evaluate_context(male, criterion_id=PALACE, observation=NatalObservation(), **hidden),
-    evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=PALACE, observation=NatalObservation(), **hidden),
-    evaluate_context(male, criterion_id=PALACE, observation=TransitObservation((TransitKind.LIUNIAN,)), **hidden),
-    evaluate_context(male, criterion_id=PALACE, observation=TransitObservation(
+    evaluate_context(male, criterion_id=criterion_id, observation=NatalObservation(), **hidden),
+    evaluate_context(chart_from('2000-01-29 06:00', 'male'), criterion_id=criterion_id, observation=NatalObservation(), **hidden),
+    evaluate_context(chart_from('2000-01-09 12:00', 'male'), criterion_id=criterion_id, observation=NatalObservation(), **hidden),
+    evaluate_context(male, criterion_id=criterion_id, observation=TransitObservation((TransitKind.LIUNIAN,)), **hidden),
+    evaluate_context(male, criterion_id=criterion_id, observation=TransitObservation(
       (TransitKind.LIUNIAN,), YearCoordinate(ganzhi_year=1998)), **hidden),
   ):
-    assert [entry.claim_id for entry in condition_entries(result)] == [RELATED_PALACE]
-    assert all(entry.recognized for entry in condition_entries(result))
+    assert result.reference_ids == (claim_id,)
     rendered = result.render()
-    assert '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE in rendered
-    assert knowledge_text(RELATED_PALACE) in rendered
+    assert '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + claim_id in rendered
+    assert knowledge_text(claim_id) in rendered
     # NOT_SATISFIED/UNKNOWN use the same reference wording as SATISFIED; no 「已核结构命中」 appears.
     assert '已核结构命中' not in rendered
     assert '事实判别：' + result.criterion.status in rendered
@@ -185,16 +186,16 @@ def test_relationship_reference_matrix() -> None:
     assert '前提满足只表示本范围内的原作使用条件满足' not in rendered
 
   # True × female: the two gated entries are never related (same-ID replacement included); structure is still evaluated; static queries stay unrestricted.
-  female_result = evaluate_context(female, criterion_id=PALACE, observation=NatalObservation(), **hidden)
-  assert condition_entries(female_result) == () and '关联参考' not in female_result.render()
-  assert female_result.criterion.status == 'SATISFIED' # female charts are still evaluated by the structural criteria.
+  female_result = evaluate_context(female, criterion_id=criterion_id, observation=NatalObservation(), **hidden)
+  assert female_result.reference_ids == () and '关联参考' not in female_result.render()
+  assert female_result.criterion.scope_complete # Female charts are still evaluated by the structural criteria.
   knowledge = KnowledgeBase.load()
   assert knowledge.entry(RELATED_PALACE).text and knowledge.entry(RELATED_TOUGAN).text
 
-  # True × male × entry missing from the knowledge base: no RelatedEntry is produced.
+  # True × male × entry missing from the knowledge base: no reference ID is produced.
   trimmed = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())
-  missing = evaluate_context(male, criterion_id=PALACE, observation=NatalObservation(), knowledge=trimmed, **hidden)
-  assert condition_entries(missing) == () and '关联参考' not in missing.render()
+  missing = evaluate_context(male, criterion_id=criterion_id, observation=NatalObservation(), knowledge=trimmed, **hidden)
+  assert missing.reference_ids == () and '关联参考' not in missing.render()
 
 
 def knowledge_text(claim_id: str) -> str:
@@ -202,9 +203,9 @@ def knowledge_text(claim_id: str) -> str:
 
 
 @pytest.mark.parametrize('dimension', ['text', 'premise', 'limits', 'viewpoint', 'object', 'source'])
-def test_female_gate_comes_before_binding(dimension: str, tmp_path: Path) -> None:
+def test_custom_edits_preserve_gender_gate(dimension: str, tmp_path: Path) -> None:
   # Female charts never relate the two restricted IDs, and a same-ID custom replacement cannot bypass;
-  # male replacement yields recognized=False, listing only the ID with 「绑定未识别」, without rendering the replacement text.
+  # Male queries keep the ID and render the current custom text.
   data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   entry = next(value for value in data['entries'] if value['claim_id'] == RELATED_PALACE)
   if dimension in ('text', 'premise', 'viewpoint'):
@@ -219,22 +220,18 @@ def test_female_gate_comes_before_binding(dimension: str, tmp_path: Path) -> Non
 
   female = evaluate_context(chart_from('2000-01-01 12:00', 'female'), criterion_id=PALACE,
                             observation=NatalObservation(), knowledge=custom, include_reference_only=True)
-  assert condition_entries(female) == () and '关联参考' not in female.render()
+  assert female.reference_ids == () and '关联参考' not in female.render()
   assert '（编辑口径）' not in female.render()
 
   male = evaluate_context(chart_from('2000-01-01 12:00', 'male'), criterion_id=PALACE,
                           observation=NatalObservation(), knowledge=custom, include_reference_only=True)
-  assert [entry.claim_id for entry in condition_entries(male)] == [RELATED_PALACE]
-  assert condition_entries(male)[0] == RelatedEntry(RELATED_PALACE, False)
+  assert male.reference_ids == (RELATED_PALACE,)
+  assert male.criterion.status == 'SATISFIED'
   rendered = male.render()
-  assert ('关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE + '；绑定未识别') in rendered
-  assert '绑定未识别' in rendered
+  assert ('关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：' + RELATED_PALACE) in rendered
+  assert '前提判别：完整前提未由程序判别' in rendered
   if dimension == 'text':
-    assert '（编辑口径）' not in rendered
-  with pytest.raises(ValueError):
-    RelatedEntry('', True)
-  with pytest.raises(TypeError):
-    RelatedEntry(RELATED_PALACE, 1) # type: ignore[arg-type]
+    assert '（编辑口径）' in rendered
 
 
 def test_transits_flip_palace_tougan_verdicts() -> None:

@@ -17,9 +17,7 @@ BASELINE = json.loads((Path(__file__).with_name('data') / 'description_legacy_ba
 LEDGER = json.loads((Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8'))
 # The 45 claim IDs allowed to rewrite attribution; limits rewrites stay out of this file's
 # row fingerprints and are pinned by test_knowledge's allow table.
-ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(
-  claim_id for claim_id, fields in LEDGER['allowed_changes'].items() if 'attribution' in fields
-)
+ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(LEDGER['attribution']['ids'])
 # Translated attributions and source fields map back to the originals, so the pinned
 # fingerprints below still cover every other field.
 ORIGINAL_ATTRIBUTION: dict[str, str] = {new: old for old, new in LEDGER['translated']['attribution'].items()}
@@ -47,6 +45,11 @@ def test_historical_corpus_is_append_only() -> None:
   for registry in ('objects', 'contexts', 'sources', 'entries'):
     assert json.loads(json.dumps([asdict(value) for value in getattr(current, registry).values()])) == source[registry]
   source['sources'] = [before_errata(row, SOURCE_ERRATA['sources'].get(row['source_id'], {})) for row in source['sources']]
+  for row in source['entries']:
+    row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
+    # The historical pretty-printed hash also fixes key order.
+    legacy = row.pop('legacy')
+    row['legacy'] = legacy
   for objects, sources, entries, fingerprint in (
     (
       AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS,
@@ -104,7 +107,7 @@ def test_text_order_fingerprints_conserved() -> None:
           claim_rows.append('\0'.join((
             'C', str(subject), field, entry.claim_id, entry.text,
             ','.join(entry.sources), attribution,
-            ','.join(entry.legacy.conditions), entry.output,
+            ','.join(entry.legacy.conditions), 'default' if entry.show_by_default else 'reference_only',
           )))
           assert entry.text == entry.text.strip() and entry.text.endswith('。')
   shishen_rows, tiangan_rows = text_rows
@@ -176,14 +179,14 @@ def test_projection_keeps_legacy_classification() -> None:
       # The 45 allowed IDs equal exactly the new attribution; the rest equal the translated
       # legacy one. Projection does not upgrade output eligibility.
       assert entry.attribution == (NEW_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED else LEGACY_ATTRIBUTION)
-      assert entry.output == 'reference_only'
+      assert entry.show_by_default is False
       if entry.legacy.object_id.startswith('shishen.') and entry.legacy.conditions:
         conditional_shishen.add(entry.claim_id)
     if entry.legacy.field in ('in_good_status', 'in_bad_status'):
       if not entry.sources:
         assert entry.legacy.conditions == ('chart_context_required',)
-      assert entry.applicability != 'unconditional' and entry.output == 'reference_only'
+      assert entry.applicability != 'unconditional' and entry.show_by_default is False
     if entry.sources == ('editorial',):
-      assert entry.source_state == 'editorial' and entry.output == 'reference_only'
+      assert entry.source_state == 'editorial' and entry.show_by_default is False
       assert entry.attribution == LEDGER['translated']['attribution']['Repository editorial']
   assert len(conditional_shishen) == 79

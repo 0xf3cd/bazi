@@ -33,7 +33,7 @@
 - `witnessed`：原文出处已经核定，有可核对的作品、版本、位置和摘录。
 - `unverified`：出处尚未核定，条目不绑定来源见证。
 
-来源核定不等于命盘前提满足，也不证明现实事件。`source_state`、输出资格 `output` 和前提整理状态 `applicability` 分开记录。默认输出要求出处已核定（`witnessed`）、无命盘前提（`unconditional`），且引用来源至少有两个不同的 `lineage`。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 [knowledge.py](bazi/knowledge.py)。
+来源核定不等于命盘前提满足，也不证明现实事件。`source_state`、默认展示选择 `show_by_default` 和前提整理状态 `applicability` 分开记录。默认展示要求出处已核定（`witnessed`）、无命盘前提（`unconditional`），且引用来源至少有两个不同的 `lineage`。两个来源不自动构成独立见证，作品与版本是否同源仍由维护者核对。字段定义与校验见 [knowledge.py](bazi/knowledge.py)。
 
 ## 提 PR 之前
 

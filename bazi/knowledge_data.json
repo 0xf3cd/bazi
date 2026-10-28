@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "objects": [
     {
       "object_id": "shishen.bijian",
@@ -610,7 +610,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -641,7 +641,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -672,7 +672,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -703,7 +703,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -734,7 +734,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -765,7 +765,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -798,7 +798,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -833,7 +833,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -866,7 +866,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -899,7 +899,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "general",
@@ -934,7 +934,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_good_status",
@@ -970,7 +970,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_good_status",
@@ -1005,7 +1005,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_good_status",
@@ -1040,7 +1040,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_good_status",
@@ -1075,7 +1075,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_good_status",
@@ -1110,7 +1110,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1145,7 +1145,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1180,7 +1180,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1215,7 +1215,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1250,7 +1250,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1285,7 +1285,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1320,7 +1320,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "in_bad_status",
@@ -1360,7 +1360,7 @@
         "「比较看重个人空间」暂无命盘计算定义",
         "句内并列「朋友/伴侣」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "relationship",
@@ -1397,7 +1397,7 @@
         "「雷区」为比喻表述，暂无命盘计算定义",
         "句内并列「朋友/伴侣」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "relationship",
@@ -1433,7 +1433,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为比肩之人（对象比肩由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是比肩之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.bijian",
         "field": "relationship",
@@ -1464,7 +1464,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1495,7 +1495,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1526,7 +1526,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1559,7 +1559,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1592,7 +1592,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1623,7 +1623,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1654,7 +1654,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1687,7 +1687,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1722,7 +1722,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1755,7 +1755,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "general",
@@ -1788,7 +1788,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_good_status",
@@ -1823,7 +1823,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_good_status",
@@ -1858,7 +1858,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -1893,7 +1893,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -1928,7 +1928,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -1963,7 +1963,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -1998,7 +1998,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -2033,7 +2033,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "in_bad_status",
@@ -2072,7 +2072,7 @@
         "「寻求刺激和新鲜感」暂无命盘计算定义",
         "「对财富和资源的渴望」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "relationship",
@@ -2109,7 +2109,7 @@
         "「情感世界多姿多彩」暂无命盘计算定义",
         "「冒险型的人」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "relationship",
@@ -2146,7 +2146,7 @@
         "「充当引领者的角色」暂无命盘计算定义",
         "「引领和主导」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "relationship",
@@ -2183,7 +2183,7 @@
         "本句为相处建议（规范句）：建议者是相处方，被相处者是劫财之人；建议内容暂无命盘计算定义",
         "句内并列「交友/恋爱」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "relationship",
@@ -2220,7 +2220,7 @@
         "本句为相处建议（规范句）：建议者是相处方，被相处者是劫财之人；建议内容暂无命盘计算定义",
         "句内并列「交友/恋爱」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.jiecai",
         "field": "relationship",
@@ -2254,7 +2254,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2285,7 +2285,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2316,7 +2316,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2347,7 +2347,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2378,7 +2378,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2431,7 +2431,7 @@
         "财未具体分为正财或偏财。",
         "克制与避祸等解释的适用前提尚未还原，不表示有效制杀已成立。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2462,7 +2462,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2493,7 +2493,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2524,7 +2524,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2555,7 +2555,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2588,7 +2588,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2621,7 +2621,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2652,7 +2652,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2683,7 +2683,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2714,7 +2714,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2745,7 +2745,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "general",
@@ -2778,7 +2778,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "in_good_status",
@@ -2813,7 +2813,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "in_bad_status",
@@ -2848,7 +2848,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "in_bad_status",
@@ -2895,7 +2895,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "in_bad_status",
@@ -2935,7 +2935,7 @@
         "「共同的生活体验」暂无命盘计算定义",
         "句内并列「朋友/伴侣」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "relationship",
@@ -2972,7 +2972,7 @@
         "「审美和品味」暂无命盘计算定义",
         "「共鸣的精神体验」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "relationship",
@@ -3008,7 +3008,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为食神之人（对象食神由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是食神之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shishen",
         "field": "relationship",
@@ -3042,7 +3042,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3073,7 +3073,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3104,7 +3104,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3135,7 +3135,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3166,7 +3166,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3199,7 +3199,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3232,7 +3232,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3263,7 +3263,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3294,7 +3294,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3325,7 +3325,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3356,7 +3356,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "general",
@@ -3389,7 +3389,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_good_status",
@@ -3424,7 +3424,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_good_status",
@@ -3459,7 +3459,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_good_status",
@@ -3494,7 +3494,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_bad_status",
@@ -3529,7 +3529,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_bad_status",
@@ -3564,7 +3564,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "in_bad_status",
@@ -3603,7 +3603,7 @@
         "「思想的火花」为比喻表述，暂无命盘计算定义",
         "「智慧的碰撞」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3639,7 +3639,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「意见交换和思想交流」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3675,7 +3675,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「比较深刻的话题」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3711,7 +3711,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「探寻人生奥秘」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3747,7 +3747,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为伤官之人（对象伤官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「浮于表面的恋爱游戏」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3785,7 +3785,7 @@
         "「独立思考」暂无命盘计算定义",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是伤官之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.shangguan",
         "field": "relationship",
@@ -3819,7 +3819,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -3850,7 +3850,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -3881,7 +3881,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -3918,7 +3918,7 @@
         "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
         "「老婆」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -3951,7 +3951,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -3982,7 +3982,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -4013,7 +4013,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -4044,7 +4044,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -4075,7 +4075,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "general",
@@ -4108,7 +4108,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "in_good_status",
@@ -4143,7 +4143,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "in_good_status",
@@ -4178,7 +4178,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "in_good_status",
@@ -4213,7 +4213,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "in_bad_status",
@@ -4248,7 +4248,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "in_bad_status",
@@ -4287,7 +4287,7 @@
         "「稳定和保障」暂无命盘计算定义",
         "句首代词「他们」无栏内先行名词，所指对象依栏位（正财）归属"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4323,7 +4323,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「可靠、舒适的环境」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4359,7 +4359,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「恋爱更像是一种投资」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4395,7 +4395,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「经济基础和生活能力」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4432,7 +4432,7 @@
         "「责任感」暂无命盘计算定义",
         "「承诺」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4468,7 +4468,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正财之人（对象正财由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是正财之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengcai",
         "field": "relationship",
@@ -4502,7 +4502,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4533,7 +4533,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4566,7 +4566,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4599,7 +4599,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4636,7 +4636,7 @@
         "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
         "「女朋友、情人」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4669,7 +4669,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4700,7 +4700,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4733,7 +4733,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4768,7 +4768,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4801,7 +4801,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "general",
@@ -4834,7 +4834,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_good_status",
@@ -4869,7 +4869,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_good_status",
@@ -4904,7 +4904,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_good_status",
@@ -4939,7 +4939,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_bad_status",
@@ -4974,7 +4974,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_bad_status",
@@ -5009,7 +5009,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_bad_status",
@@ -5044,7 +5044,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "in_bad_status",
@@ -5082,7 +5082,7 @@
         "句内自称「偏财型的人」，该「型」的人物归类标准未给：柱位、明藏层、旺衰、喜忌均未交代",
         "「心跳加速感」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "relationship",
@@ -5119,7 +5119,7 @@
         "「不按常理出牌」暂无命盘计算定义",
         "「享受生活中的不确定性」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "relationship",
@@ -5156,7 +5156,7 @@
         "「尝试新鲜事物（如玩剧本杀、冒险）」暂无命盘计算定义",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是偏财之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.piancai",
         "field": "relationship",
@@ -5190,7 +5190,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5221,7 +5221,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5252,7 +5252,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5283,7 +5283,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5314,7 +5314,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5345,7 +5345,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5382,7 +5382,7 @@
         "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
         "「老公、男友」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5415,7 +5415,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5446,7 +5446,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5481,7 +5481,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5516,7 +5516,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5547,7 +5547,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5578,7 +5578,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "general",
@@ -5611,7 +5611,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "in_good_status",
@@ -5646,7 +5646,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "in_good_status",
@@ -5681,7 +5681,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "in_bad_status",
@@ -5716,7 +5716,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "in_bad_status",
@@ -5755,7 +5755,7 @@
         "「尊重和认可」暂无命盘计算定义",
         "「道德品质和社会地位」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "relationship",
@@ -5791,7 +5791,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「有序的生活方式」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "relationship",
@@ -5827,7 +5827,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「理想的另一半」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "relationship",
@@ -5863,7 +5863,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「共同价值观」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "relationship",
@@ -5899,7 +5899,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正官之人（对象正官由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是正官之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengguan",
         "field": "relationship",
@@ -5933,7 +5933,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -5964,7 +5964,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -5995,7 +5995,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6026,7 +6026,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6059,7 +6059,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6096,7 +6096,7 @@
         "配偶星取法另见 editorial.liuqin.spouse_star_zhengpian.v1 与 editorial.liuqin.spouse_star_yinyanggan.v1（情境 liuqin.spouse_star_readings）；本条与二者的关系未核定，不据二者改写本条。",
         "「男朋友、情人、丈夫」照原字保留；古籍条文用「妻」「妾」「夫」，二者的对应关系未核定。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6129,7 +6129,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6160,7 +6160,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6195,7 +6195,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6230,7 +6230,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6263,7 +6263,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6296,7 +6296,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "general",
@@ -6329,7 +6329,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "in_good_status",
@@ -6364,7 +6364,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "in_good_status",
@@ -6399,7 +6399,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "in_bad_status",
@@ -6434,7 +6434,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "in_bad_status",
@@ -6469,7 +6469,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "in_bad_status",
@@ -6507,7 +6507,7 @@
         "「成长机会」暂无命盘计算定义",
         "句首代词「他们」无栏内先行名词，所指对象依栏位（七杀）归属"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "relationship",
@@ -6543,7 +6543,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为七杀之人（对象七杀由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「传奇性的故事」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "relationship",
@@ -6580,7 +6580,7 @@
         "「动态和不稳定」暂无命盘计算定义",
         "「“共患难”」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "relationship",
@@ -6617,7 +6617,7 @@
         "「独立性」暂无命盘计算定义",
         "「能从逆境中站起来」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "relationship",
@@ -6654,7 +6654,7 @@
         "「战友」为比喻表述，暂无命盘计算定义",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是七杀之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.qisha",
         "field": "relationship",
@@ -6688,7 +6688,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6719,7 +6719,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6750,7 +6750,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6781,7 +6781,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6812,7 +6812,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6843,7 +6843,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6874,7 +6874,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6905,7 +6905,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6936,7 +6936,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "general",
@@ -6969,7 +6969,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_good_status",
@@ -7004,7 +7004,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_good_status",
@@ -7039,7 +7039,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_good_status",
@@ -7074,7 +7074,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_bad_status",
@@ -7109,7 +7109,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_bad_status",
@@ -7144,7 +7144,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "in_bad_status",
@@ -7184,7 +7184,7 @@
         "「保护者」暂无命盘计算定义",
         "句内并列「朋友/伴侣」，适用范围含交友"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "relationship",
@@ -7220,7 +7220,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正印之人（对象正印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「智慧和慷慨」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "relationship",
@@ -7256,7 +7256,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为正印之人（对象正印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是正印之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "relationship",
@@ -7293,7 +7293,7 @@
         "「“深意”」为比喻表述，暂无命盘计算定义",
         "「精神共鸣」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.zhengyin",
         "field": "relationship",
@@ -7327,7 +7327,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7358,7 +7358,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7389,7 +7389,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7420,7 +7420,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7451,7 +7451,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7482,7 +7482,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7513,7 +7513,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7544,7 +7544,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7575,7 +7575,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "general",
@@ -7608,7 +7608,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_good_status",
@@ -7643,7 +7643,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_good_status",
@@ -7678,7 +7678,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_good_status",
@@ -7713,7 +7713,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_good_status",
@@ -7748,7 +7748,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_bad_status",
@@ -7783,7 +7783,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_bad_status",
@@ -7818,7 +7818,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_bad_status",
@@ -7853,7 +7853,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "in_bad_status",
@@ -7892,7 +7892,7 @@
         "「灵魂共鸣」暂无命盘计算定义",
         "「创意和灵感」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "relationship",
@@ -7929,7 +7929,7 @@
         "「艺术气息」暂无命盘计算定义",
         "「独特世界观」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "relationship",
@@ -7965,7 +7965,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「非传统的交流互动」暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "relationship",
@@ -8001,7 +8001,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "「探索未知世界的旅程」为比喻表述，暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "relationship",
@@ -8037,7 +8037,7 @@
         "所述人物的归类依据未给：原文未说明凭什么把人物归为偏印之人（对象偏印由栏位给出）；句内无柱位、明藏层、旺衰、喜忌判据",
         "本句为相处建议（规范句）：建议者是相处方，被相处者是偏印之人；建议内容暂无命盘计算定义"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "shishen.pianyin",
         "field": "relationship",
@@ -8071,7 +8071,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "general",
@@ -8102,7 +8102,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "general",
@@ -8135,7 +8135,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "general",
@@ -8168,7 +8168,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "general",
@@ -8199,7 +8199,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "personality",
@@ -8230,7 +8230,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "personality",
@@ -8263,7 +8263,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "personality",
@@ -8298,7 +8298,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "personality",
@@ -8333,7 +8333,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
         "field": "personality",
@@ -8369,7 +8369,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "general",
@@ -8400,7 +8400,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "general",
@@ -8433,7 +8433,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "general",
@@ -8464,7 +8464,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "personality",
@@ -8495,7 +8495,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "personality",
@@ -8526,7 +8526,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
         "field": "personality",
@@ -8560,7 +8560,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "general",
@@ -8593,7 +8593,7 @@
       "viewpoint": "渊海子平·十干体象",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "general",
@@ -8624,7 +8624,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "general",
@@ -8657,7 +8657,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "general",
@@ -8690,7 +8690,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "general",
@@ -8721,7 +8721,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "personality",
@@ -8752,7 +8752,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "personality",
@@ -8783,7 +8783,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
         "field": "personality",
@@ -8817,7 +8817,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "general",
@@ -8850,7 +8850,7 @@
       "viewpoint": "渊海子平·十干体象",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "general",
@@ -8881,7 +8881,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "general",
@@ -8914,7 +8914,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "general",
@@ -8947,7 +8947,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "general",
@@ -8978,7 +8978,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "personality",
@@ -9013,7 +9013,7 @@
       "limits": [
         "嵌套前提与中间结果尚未拆分。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "personality",
@@ -9046,7 +9046,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
         "field": "personality",
@@ -9080,7 +9080,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "general",
@@ -9113,7 +9113,7 @@
       "viewpoint": "渊海子平·十干体象",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "general",
@@ -9144,7 +9144,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "general",
@@ -9175,7 +9175,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "general",
@@ -9208,7 +9208,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "general",
@@ -9239,7 +9239,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "personality",
@@ -9270,7 +9270,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
         "field": "personality",
@@ -9304,7 +9304,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "general",
@@ -9335,7 +9335,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "general",
@@ -9368,7 +9368,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "general",
@@ -9401,7 +9401,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "general",
@@ -9432,7 +9432,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "personality",
@@ -9465,7 +9465,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "personality",
@@ -9498,7 +9498,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
         "field": "personality",
@@ -9532,7 +9532,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.geng",
         "field": "general",
@@ -9563,7 +9563,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",
         "field": "general",
@@ -9596,7 +9596,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",
         "field": "general",
@@ -9627,7 +9627,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",
         "field": "personality",
@@ -9660,7 +9660,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",
         "field": "personality",
@@ -9696,7 +9696,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "general",
@@ -9729,7 +9729,7 @@
       "viewpoint": "渊海子平·十干体象",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "general",
@@ -9760,7 +9760,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "general",
@@ -9793,7 +9793,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "general",
@@ -9824,7 +9824,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "personality",
@@ -9855,7 +9855,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
         "field": "personality",
@@ -9889,7 +9889,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "general",
@@ -9922,7 +9922,7 @@
       "viewpoint": "渊海子平·十干体象",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "general",
@@ -9955,7 +9955,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "general",
@@ -9988,7 +9988,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "general",
@@ -10019,7 +10019,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "personality",
@@ -10050,7 +10050,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "personality",
@@ -10081,7 +10081,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "personality",
@@ -10114,7 +10114,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "personality",
@@ -10149,7 +10149,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
         "field": "personality",
@@ -10185,7 +10185,7 @@
       "viewpoint": "原定义",
       "exceptions": [],
       "limits": [],
-      "output": "default",
+      "show_by_default": true,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "general",
@@ -10216,7 +10216,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "general",
@@ -10249,7 +10249,7 @@
       "viewpoint": "仓内原作",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "general",
@@ -10280,7 +10280,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "personality",
@@ -10311,7 +10311,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "personality",
@@ -10342,7 +10342,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "personality",
@@ -10375,7 +10375,7 @@
       "viewpoint": "旧语料（未核）",
       "exceptions": [],
       "limits": [],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",
         "field": "personality",
@@ -10422,7 +10422,7 @@
       "limits": [
         "仅说明基础关系方向，不证明命盘中的有效生克或流转。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10461,7 +10461,7 @@
       "limits": [
         "仅说明基础关系方向，不证明命盘中的有效生克或流转。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10491,7 +10491,7 @@
         "表值与四柱查法的支持来源分开；古籍的守照身命表述不等于查四柱地支。",
         "本条转述仓内来源边界，未新增已核古籍见证。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10521,7 +10521,7 @@
         "年干锚与含禄起算的明文出自《五行精纪注释》的今人【注释】，不混作【原文】的断言。",
         "白文、清抄本与注释本的传抄关系未定（#194）。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10555,7 +10555,7 @@
         "168页小字「或云」另有正偏读法，见 editorial.liuqin.spouse_star_zhengpian.v1；174页主文对「不拘偏正」有取舍倾向，两读在书内并存，不是中立并列。",
         "转述中的「己」字，书影印形近「已」，按语境读作己。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10591,7 +10591,7 @@
         "「或云」是小字标记，其后文字与大字同层；174页对此读法有取舍倾向，见 editorial.liuqin.spouse_star_yinyanggan.v1。",
         "《命理探原》「幹頭之財」不引为本读法的第二支持：该句是另一命题。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10622,7 +10622,7 @@
         "夹注只涉妻妾，不是女命夫宫的古籍明文；「生日支辰」不改写为「日支」。",
         "不因本条改变仓内以日柱地支为配偶宫的约定。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10658,7 +10658,7 @@
         "原文是否限于原局、是否论及岁运触发均未核；本库把选定岁运纳入求值范围，是对原文的外延，不是书中已载。",
         "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10694,7 +10694,7 @@
         "原文是否限于原局、是否论及岁运触发均未核；本库把选定岁运纳入求值范围，是对原文的外延，不是书中已载。",
         "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10726,7 +10726,7 @@
         "「何一夫」保持原印，不改作「即一夫」；幹、尅、衝、兩、雜按原印字形保留。",
         "本段属《命理探原》转录层，该页起句为「子平真詮云」，未见子平真诠原书，不作第二独立来源。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10760,7 +10760,7 @@
         "条文称妻妾，语境为男命；女命对应未核定。",
         "原文为四柱通论，未核是否论及岁运触发；本条不作岁运适用声明，不挂判据，仅静态查阅。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10792,7 +10792,7 @@
         "基础二支本身不决定锚柱或单支筛选；所见转录的层次和支持限度见各来源。",
         "阴阳分取、前后五位分取未在本条编码；截路、四大空亡等同名规则另论。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10823,7 +10823,7 @@
         "古籍收录多家读法，不据此宣称只许日锚，亦不把互换例与所有单支筛选段合成一套查法。",
         "此条不启用吉凶解释、冲合取消或前提判据；流运种类的具体组合范围属于本库政策。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10853,7 +10853,7 @@
         "默认锚是本库选择，不冒充古籍共识；不删除地支或改变五行、十神、纳音与其他关系。",
         "不反向以流运为锚查原局，不以冲合刑取消命中，不含出空、填实或吉凶解释。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10884,7 +10884,7 @@
         "未校影印；干支符号派生不等于已核实际受孕日期，不附带吉凶或寿命解释。",
         "《三命通会》同段的甲寅／乙巳例与本库月柱顺移在该例结果相同；原段以「今人多以法取胎元未審精當」质疑该取法是否精当。见证取法存在不等于该书赞同该取法；unconditional 只表示本条无命盘前提，不表示认可取法。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10914,7 +10914,7 @@
         "未编码，也不判错或丢弃。四库固定转录在「惟有一法」前保留了对通行取法的批评，段末另有质疑；老资料网网页选录没有这两部分，且写作「唯有一法」。继续核定时先核对选录截取与转录范围，再查底本；不把所见差异称为已校底本差异。",
         "继续核定须校勘全段及例解，确定三百日的起算、月柱历法、边界时刻、地点钟与支持窗口，再由作者批准变体。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10943,7 +10943,7 @@
       "limits": [
         "不改变 Ganzhi 本身的构造域；不进入旧五行、十神、神煞、关系、流运或 JSON，不自动输出解释。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -10973,7 +10973,7 @@
       "limits": [
         "两段未明确月界；不把正月两字自行解释为农历、节月或中气，不收入原页吉凶断语。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -11002,7 +11002,7 @@
       "limits": [
         "据 NLC 刊本 PDF 第 75–76 页（印页四四至四五）页图核读；按语后的列式页未核。此按语不证明更早掌诀段已明确中气月界，也未规定现代时区、真太阳钟或三档精度。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -11031,7 +11031,7 @@
       "limits": [
         "未编码。继续核定须找到明确系统归属、月界与跨界例解的独立成文，说明闰月、跨年及年干归属，再由作者批准可选变体；不能把《三命通会》未言月界当成某一月界的证据。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     },
     {
@@ -11060,7 +11060,7 @@
       "limits": [
         "大寒后月序进正月不提前换八字年；HKO 仅支持 DAY，不把零点占位当真实时刻。结果不扩四柱，不改身份、school、JSON 或旧分析，也不认证解释前提。"
       ],
-      "output": "reference_only",
+      "show_by_default": false,
       "legacy": null
     }
   ]

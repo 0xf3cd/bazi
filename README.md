@@ -112,7 +112,7 @@ python first_chart.py
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
 v2.4.0 不提供命盘或判别结果（`ContextResult`）的保存恢复接口，知识 JSON 仅作当前编辑来源，不承诺历史结果恢复；升级前请读[升级说明](#从-v230-升级到-v240)。
-v2.4.0 也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`，证据和参考条目分别从 `evidence`、`references` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+v2.4.0 也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`。当前开发版进一步以 `reference_ids` 返回参考条目 ID，证据仍从 `evidence` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
 详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；各版本变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 源码脚本
@@ -214,7 +214,7 @@ python -m pip install --upgrade bazi
 
 重新构造命盘时，不传 `BaziSchool.kongwang_anchor` 则使用默认日柱 `Anchor.DAY`；所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置，该字段仍参与命盘身份。例子见[六甲旬空取锚](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#六甲旬空取锚)。
 
-知识编辑源仍可用 `KnowledgeBase.load(path)` 读取，当前只接受 `schema_version=2`；边界见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识编辑源与文本边界)。
+知识编辑源仍可用 `KnowledgeBase.load(path)` 读取，当前开发版只接受 `schema_version=3`，条目用布尔字段 `show_by_default`；边界见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识编辑源与文本边界)。
 
 ## 开发
 

@@ -23,6 +23,8 @@ LEDGER: dict[str, Any] = json.loads(
   (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
 )
 ALLOWED_CHANGES: dict[str, dict[str, object]] = LEDGER['allowed_changes']
+ATTRIBUTION_ALLOWED: frozenset[str] = frozenset(LEDGER['attribution']['ids'])
+RELATIONSHIP_ATTRIBUTION: str = LEDGER['attribution']['value']
 TRANSLATED_ATTRIBUTION: dict[str, str] = LEDGER['translated']['attribution']
 TRANSLATED_SOURCES: dict[str, dict[str, list[str]]] = LEDGER['translated']['sources']
 
@@ -83,7 +85,7 @@ def test_deep_source_rejects_without_formatting(surface: str, tmp_path: Path, mo
   depth = sys.getrecursionlimit() + 100
   nested = '[' * depth + '0' + ']' * depth
   text = nested if surface == 'root' else DEFAULT_SOURCE_PATH.read_text(encoding='utf-8').replace(
-    '"schema_version": 2' if surface == 'schema_version' else '"objects": [',
+    '"schema_version": 3' if surface == 'schema_version' else '"objects": [',
     '"schema_version": ' + nested if surface == 'schema_version' else '"objects": [' + nested + ',',
     1,
   )
@@ -179,7 +181,7 @@ def _discovery_knowledge() -> KnowledgeBase:
     premise='explicit premise',
     contexts=('context.used',),
     viewpoint='reference_view',
-    output='reference_only',
+    show_by_default=False,
   )
   sources = tuple(KNOWLEDGE_BASE.sources[key] for key in original.sources)
   return KnowledgeBase(
@@ -314,7 +316,7 @@ def test_search_excludes_structural_metadata() -> None:
     *changes.values(), source.text_layer, source.state,
     context.context_id, context.label, context.time_scope, *context.limits,
     entry.claim_id, 'role-only-name', 'other-role-only-name', 'relation-only-text',
-    'concept.two', 'tiangan', entry.applicability, entry.output, entry.source_state,
+    'concept.two', 'tiangan', entry.applicability, str(entry.show_by_default), entry.source_state,
     'general', '987654', 'chart_context_required', 'legacy-only-premise',
   )
   assert knowledge.search('reference body', include_reference_only=True) == (entry,)
@@ -330,7 +332,7 @@ def test_filter_values_sort_by_code_point() -> None:
     tuple(KnowledgeObject(label, 'concept', label) for label in labels),
     tuple(KnowledgeContext(label, label, label, ()) for label in labels),
     tuple(replace(source, source_id=label) for label in labels),
-    tuple(replace(original.entry('custom.default'), claim_id=label, output='reference_only',
+    tuple(replace(original.entry('custom.default'), claim_id=label, show_by_default=False,
                   roles=(KnowledgeRole('subject', label),), sources=(label,),
                   topics=(label,), viewpoint=label) for label in labels),
   )
@@ -370,14 +372,13 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
             'claim': {
               'claim_id': claim.claim_id, 'text': claim.text, 'sources': list(claim.sources),
               'attribution': claim.attribution, 'conditions': list(claim.legacy.conditions),
-              'output': claim.output,
+              'output': 'default' if claim.show_by_default else 'reference_only',
             },
           })
-  # Projection logic untouched: expected rows are re-normalized only by the exact 45-ID attribution
-  # allowance table and the attribution translation table.
+  # Historical output strings exist only in this test projection.
   expected_rows = [
-    {**row, 'claim': {**row['claim'], 'attribution': ALLOWED_CHANGES[row['claim']['claim_id']]['attribution']}}
-    if row['claim']['claim_id'] in ALLOWED_CHANGES and 'attribution' in ALLOWED_CHANGES[row['claim']['claim_id']]
+    {**row, 'claim': {**row['claim'], 'attribution': RELATIONSHIP_ATTRIBUTION}}
+    if row['claim']['claim_id'] in ATTRIBUTION_ALLOWED
     else {**row, 'claim': {**row['claim'], 'attribution': TRANSLATED_ATTRIBUTION.get(row['claim']['attribution'], row['claim']['attribution'])}}
     for row in baseline['rows']
   ]
@@ -397,14 +398,15 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
 
 def test_attribution_allowance_matches_entries() -> None:
   # Two-way assertion: the allowance table's attribution set is exactly the 45 IDs with legacy.field=='relationship'.
-  attribution_allowed = {
-    claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
-  }
+  attribution_allowed = ATTRIBUTION_ALLOWED
   relationship_field = {
     entry.claim_id for entry in KNOWLEDGE_BASE.entries.values()
     if entry.legacy is not None and entry.legacy.field == 'relationship'
   }
   assert attribution_allowed == relationship_field and len(attribution_allowed) == 45
+  assert RELATIONSHIP_ATTRIBUTION == '作者据网络材料归纳，原始出处未核'
+  assert len(LEDGER['attribution']['ids']) == len(attribution_allowed)
+  assert all(KNOWLEDGE_BASE.entry(key).attribution == RELATIONSHIP_ATTRIBUTION for key in attribution_allowed)
   limits_allowed = {
     claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'limits' in changes
   }
@@ -487,7 +489,7 @@ def test_premises_organized_without_new_rules() -> None:
   compound = k.entry('legacy.shishen.SH-199')
   assert compound.applicability == 'described'
   assert compound.premise == '偏印为喜用或状态良好（不过旺、不受刑克冲害）'
-  assert compound.source_state == 'unverified' and compound.output == 'reference_only'
+  assert compound.source_state == 'unverified' and compound.show_by_default is False
   transit = k.entry('legacy.tiangan.geng.regulated_transit')
   assert transit.contexts == ('tiangan.geng_regulated_transit',)
   context = k.contexts[transit.contexts[0]]
@@ -503,15 +505,12 @@ def test_premises_organized_without_new_rules() -> None:
   assert relation.relations[1].text == '食神又能克制七杀'
   assert k.entry('editorial.shishen.shishen.anxiety_insomnia').applicability == 'unresolved'
   assert k.entry('editorial.shishen.zhengguan.legal_trouble').applicability == 'described'
-  new_relationship_ids = set(json.loads(
-    (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
-  )['added']['entries'])
   for entry in k.entries.values():
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:
-      assert entry.output == 'reference_only'
-      if entry.claim_id in new_relationship_ids | {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS}:
-        # Entries in new_relationship_ids have source_state 'witnessed' (古籍见证).
+      assert entry.show_by_default is False
+      if entry.claim_id in {*_NEW_RELATIONSHIP_IDS, 'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS}:
+        # These literal IDs retain witnessed 古籍见证.
         assert entry.source_state == 'witnessed'
       else:
         assert entry.source_state == 'repository_attributed'
@@ -718,6 +717,48 @@ def test_boolean_options_reject_non_bools(value: object) -> None:
     k.render(k.entry('tiangan.ding.definition'), manual_context=value) # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize('value', [1, 0, 'true', None, [], {}])
+def test_default_display_requires_bool(value: Any, tmp_path: Path) -> None:
+  entry = KNOWLEDGE_BASE.entry('tiangan.ding.definition')
+  with pytest.raises(TypeError, match='Expected bool'):
+    replace(entry, show_by_default=value)
+  with pytest.raises(TypeError, match='Expected bool'):
+    KnowledgeEntry(**{**asdict(entry), 'roles': entry.roles, 'relations': entry.relations, 'legacy': entry.legacy, 'show_by_default': value})
+  data = _source_data()
+  data['entries'][0]['show_by_default'] = value
+  with pytest.raises(TypeError, match='Expected bool'):
+    _load_source(data, tmp_path)
+
+
+def test_schema3_and_display_field_contract(tmp_path: Path) -> None:
+  data = _source_data()
+  assert type(data['schema_version']) is int and data['schema_version'] == 3
+  assert _load_source(data, tmp_path) == KNOWLEDGE_BASE
+  entry = KNOWLEDGE_BASE.entry('tiangan.ding.definition')
+  assert entry.show_by_default is True
+  assert KnowledgeEntry.__match_args__[-2:] == ('show_by_default', 'legacy')
+  assert 'output' not in asdict(entry)
+  assert replace(entry) == entry and hash(replace(entry)) == hash(entry)
+  match entry:
+    case KnowledgeEntry(show_by_default=True):
+      pass
+    case _:
+      pytest.fail('KnowledgeEntry pattern did not match')
+  with pytest.raises(TypeError):
+    replace(entry, output='default') # type: ignore[call-arg] # Removed field.
+  for mutation in ('old', 'extra', 'missing'):
+    changed = _source_data()
+    row = changed['entries'][0]
+    if mutation == 'old':
+      row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
+    elif mutation == 'extra':
+      row['output'] = 'default'
+    else:
+      del row['show_by_default']
+    with pytest.raises(ValueError, match='fields'):
+      _load_source(changed, tmp_path)
+
+
 @pytest.mark.parametrize('value', [1, None, 'yes'])
 def test_render_rejects_non_entries(value: object) -> None:
   k = KNOWLEDGE_BASE
@@ -783,8 +824,8 @@ def test_value_constructors_validate_fields() -> None:
   {'premise': 'Unexpected premise'}, {'contexts': ('legacy.chart_context',)},
   {'applicability': 'described', 'premise': ''},
   {'source_state': 'unverified'}, {'sources': ()},
-  {'output': 'default', 'applicability': 'unresolved'},
-  {'source_state': 'editorial'}, {'applicability': 'typo'}, {'source_state': 'typo'}, {'output': 'typo'},
+  {'show_by_default': True, 'applicability': 'unresolved'},
+  {'source_state': 'editorial'}, {'applicability': 'typo'}, {'source_state': 'typo'},
   {'legacy': LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), '')},
   {'legacy': LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise')},
 ])
@@ -830,7 +871,7 @@ def test_corpus_rejects_integrity_violations(mutation: str, message: str, tmp_pa
   if mutation == 'object':
     entry['roles'][0]['object_id'] = 'missing'
   elif mutation == 'context':
-    entry.update(applicability='described', premise='A premise', contexts=['missing'], output='reference_only')
+    entry.update(applicability='described', premise='A premise', contexts=['missing'], show_by_default=False)
   elif mutation == 'source':
     entry['sources'][0] = 'missing'
   elif mutation == 'state':
@@ -864,7 +905,7 @@ def test_source_rejects_malformed_corpus(tmp_path: Path) -> None:
     data[key] = {}
     with pytest.raises(TypeError, match='JSON array'):
       _load_source(data, tmp_path)
-  for version in (True, '2', 1, 3, 2.0):
+  for version in (True, '3', 1, 2, 3.0):
     data = _source_data()
     data['schema_version'] = version
     with pytest.raises(ValueError, match='schema version'):
@@ -919,7 +960,7 @@ def test_relationship_additions_counts_surface() -> None:
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
-    assert entry.legacy is None and entry.output == 'reference_only'
+    assert entry.legacy is None and entry.show_by_default is False
     assert entry.source_state == 'witnessed'
   # The 星坐地 and 两透 entries with unverified conditions bind no criterion and no context (unresolved, empty premise).
   for claim_id in ('editorial.tanyuan.wife_star_liangtou.v1', 'editorial.liuqin.sanming_qiqie_zuodi.v1'):
@@ -969,9 +1010,7 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   # Fingerprints are identical on the pre- and post-change corpora; this is not new-hash removal of protection.
   import hashlib
   from dataclasses import asdict as _asdict
-  attribution_allowed = {
-    claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'attribution' in changes
-  }
+  attribution_allowed = ATTRIBUTION_ALLOWED
   limits_allowed = {claim_id for claim_id, changes in ALLOWED_CHANGES.items() if 'limits' in changes}
   original_attribution = {new: old for old, new in TRANSLATED_ATTRIBUTION.items()}
   rows = []
@@ -979,6 +1018,7 @@ def test_normalized_legacy_projection_fingerprint() -> None:
     if entry.legacy is None:
       continue
     row = _asdict(entry)
+    row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
     if entry.claim_id in attribution_allowed:
       del row['attribution']
     else:
@@ -1018,6 +1058,7 @@ def test_non_legacy_entries_fingerprint() -> None:
     }:
       continue
     row = asdict(entry)
+    row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
     row['attribution'] = original_attribution.get(entry.attribution, entry.attribution)
     rows.append(row)
   assert len(rows) == 11
@@ -1063,7 +1104,7 @@ def test_auxiliary_queries_stay_reference_only() -> None:
     assert all({role.object_id for role in entry.roles} == {identifier} for entry in selected)
   for identifier in AUXILIARY_ENTRY_IDS:
     entry = k.entry(identifier)
-    assert entry.output == 'reference_only' and entry.legacy is None
+    assert entry.show_by_default is False and entry.legacy is None
     assert entry.contexts == () and entry.relations == () and entry.limits
     assert entry.source_state == ('witnessed' if identifier in AUXILIARY_WITNESSED_IDS else 'repository_attributed')
     assert all(k.sources[source].state == entry.source_state for source in entry.sources)
@@ -1085,13 +1126,13 @@ def test_auxiliary_default_needs_independence(claim_id: str, sources: tuple[str,
   entry = k.entry(claim_id)
   assert entry.sources == sources
   assert entry.applicability == 'unconditional' and entry.source_state == 'witnessed'
-  promoted = replace(entry, output='default')
+  promoted = replace(entry, show_by_default=True)
   with pytest.raises(ValueError, match=f'^Default entry needs independent lineages: {claim_id}$'):
     KnowledgeBase(
       tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()),
       tuple(promoted if value.claim_id == claim_id else value for value in k.entries.values()),
     )
-  assert entry.output == 'reference_only' and len(k.query()) == 19
+  assert entry.show_by_default is False and len(k.query()) == 19
 
 
 def test_auxiliary_source_support_is_separated() -> None:
@@ -1162,7 +1203,8 @@ def test_kongwang_additions_are_reference_only() -> None:
   for entry in entries:
     assert entry.text == texts[entry.claim_id]
     assert (entry.source_state, entry.viewpoint, entry.sources) == expected[entry.claim_id]
-    assert entry.output == 'reference_only' and entry.legacy is None
+    assert entry.show_by_default is False and entry.legacy is None
+
     assert entry.applicability == 'unconditional' and entry.premise == '' and entry.contexts == ()
     assert entry.relations == () and len(entry.roles) == 1
     assert entry.roles[0].object_id == 'shensha.kongwang'

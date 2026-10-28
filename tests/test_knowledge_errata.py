@@ -33,29 +33,39 @@ def _assert_source_errata(data: dict[str, Any], changes: dict[str, Any]) -> None
   assert set(changes['reasons']) == set(allowed)
   for registry, identifier in (('sources', 'source_id'), ('entries', 'claim_id')):
     assert set(changes[registry]) == set(changes['reasons'][registry]) == set(allowed[registry])
-    old_rows = {row[identifier]: row for row in BASELINE[registry]}
     rows = data[registry] if registry == 'sources' else [
-      row for row in data[registry] if row[identifier] in old_rows
+      row for row in data[registry] if row[identifier] in changes[registry]
     ]
-    assert len(rows) == len(old_rows) and {row[identifier] for row in rows} == set(old_rows)
     current = {row[identifier]: row for row in rows}
+    assert set(changes[registry]) <= set(current)
     for key, fields in changes[registry].items():
       assert set(fields) == set(changes['reasons'][registry][key]) == allowed[registry][key]
       for field, pair in fields.items():
         assert isinstance(pair, list) and len(pair) == 2
         old, new = pair
-        assert old == old_rows[key][field] and new == current[key][field] and old != new, (key, field)
+        assert new == current[key][field] and old != new, (key, field)
         reason = changes['reasons'][registry][key][field]
         assert isinstance(reason, str) and reason.strip(), (key, field)
-    assert [before_errata(row, changes[registry].get(row[identifier], {})) for row in rows] == BASELINE[registry]
+  old_sources = [before_errata(row, changes['sources'].get(row['source_id'], {})) for row in data['sources']]
+  old_entries = []
+  for row in data['entries']:
+    if row['claim_id'] not in changes['entries']:
+      continue
+    old = before_errata(row, changes['entries'][row['claim_id']])
+    old['output'] = 'default' if old.pop('show_by_default') else 'reference_only'
+    old_entries.append(old)
+  projection = json.dumps(
+    {'sources': old_sources, 'entries': old_entries},
+    ensure_ascii=False, sort_keys=True, separators=(',', ':'),
+  )
+  assert sha256(projection.encode('utf-8')).hexdigest() == BASELINE['sha256']
 
 
-@pytest.mark.parametrize('newline', [b'\n', b'\r\n'])
-def test_errata_baseline_is_fixed(newline: bytes) -> None:
-  raw = BASELINE_PATH.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', newline)
-  assert sha256(raw.replace(b'\r\n', b'\n')).hexdigest() == 'd582dc1a0a6e784eadac353ecb443ee6cbca28685b62b8e10fee95868372515c'
-  assert len(BASELINE['sources']) == 23
-  assert [row['claim_id'] for row in BASELINE['entries']] == ['concept.minggong.zhongqi']
+def test_errata_baseline_is_fixed() -> None:
+  # Canonical all-source and registered-entry projection captured from 53f9caa,
+  # before replacing the full historical fixture; no current-corpus re-pinning.
+  assert set(BASELINE) == {'base_sha', 'sha256'}
+  assert BASELINE['sha256'] == '231b459b709fa6269bdf894c2371d76bf691be5bb0772dff0d7aec985313f604'
 
 
 def test_errata_matches_old_and_current_values() -> None:

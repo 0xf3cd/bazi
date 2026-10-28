@@ -8,18 +8,17 @@ from typing import Any
 import pytest
 
 from bazi.bazi import Bazi
-from bazi.context_matching import NatalObservation, EntryMatch, evaluate_context
+from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 from bazi.transit_chart import TransitChart
 
 from matching_samples import GUANSHA, FEMALE, LEGAL, chart, match, load_knowledge
-from matching_samples import premise_entries
 
 
-def test_reference_binding_keeps_eligibility() -> None:
+def test_references_keep_default_eligibility() -> None:
   knowledge = KnowledgeBase.load()
   default = evaluate_context(chart(), criterion_id=GUANSHA, observation=NatalObservation())
-  assert default.criterion.status == 'SATISFIED' and premise_entries(default) == ()
+  assert default.criterion.status == 'SATISFIED' and default.reference_ids == ()
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
@@ -34,7 +33,7 @@ def test_reference_binding_keeps_eligibility() -> None:
     entry = knowledge.entry(key)
     assert entry.text in rendered and '也许' in entry.text
     assert entry.premise in rendered and entry.viewpoint in rendered
-    assert entry.source_state == 'editorial' and entry.output == 'reference_only'
+    assert entry.source_state == 'editorial' and entry.show_by_default is False
     assert '命盘适用性未判断' in knowledge.render(entry)
     assert '命盘适用性未判断' not in rendered
     for context_id in entry.contexts:
@@ -58,13 +57,13 @@ def test_premise_annotations_are_evaluation_only(day: int, status: str) -> None:
   result = match(day)
   knowledge = result.knowledge
   text = result.render()
-  assert len(premise_entries(result)) == 2
-  for entry_match in premise_entries(result):
-    block = text.split(f'原作参考前提：{entry_match.claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
-    entry = knowledge.entry(entry_match.claim_id)
-    assert f'输出资格：{entry.output}' in block and f'前提判别：{status}' in block
+  assert result.reference_ids == LEGAL
+  for claim_id in result.reference_ids:
+    block = text.split(f'原作参考前提：{claim_id}；', 1)[1].split('\n原作参考前提：', 1)[0]
+    entry = knowledge.entry(claim_id)
+    assert '默认展示：否' in block and f'前提判别：{status}' in block
     assert '前提判别：' not in knowledge.render(entry)
-    assert '输出资格：' not in knowledge.render(entry)
+    assert '默认展示：' not in knowledge.render(entry)
 
 
 @pytest.mark.parametrize('separator', ['\n', '\r\n', '\r', '\u2028'])
@@ -82,13 +81,13 @@ def test_multiline_custom_text_keeps_one_copy(separator: str) -> None:
   assert '命盘适用性未判断' not in rendered
   assert knowledge.render(knowledge.entry(claim_id)).count(text) == 1
   assert '命盘适用性未判断' in knowledge.render(knowledge.entry(claim_id))
-  assert premise_entries(result)[0].reason == 'binding_unrecognized'
+  assert result.reference_ids == LEGAL and result.criterion.status == 'SATISFIED'
   assert all(value in rendered for value in asdict(knowledge.sources['editorial']).values())
   assert result.render() == rendered
 
 
 @pytest.mark.parametrize('dimension', ['text', 'premise', 'contexts', 'roles', 'viewpoint', 'source', 'context', 'object', 'qualification'])
-def test_same_id_binding_is_not_authentication(dimension: str, tmp_path: Path) -> None:
+def test_same_id_edits_keep_criterion_and_ids(dimension: str, tmp_path: Path) -> None:
   data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   entry = next(e for e in data['entries'] if e['claim_id'] == LEGAL[0])
   if dimension in ('text', 'premise', 'viewpoint'):
@@ -104,21 +103,37 @@ def test_same_id_binding_is_not_authentication(dimension: str, tmp_path: Path) -
   elif dimension == 'object':
     next(o for o in data['objects'] if o['object_id'] == 'shishen.zhengguan')['name'] = '同名异物'
   else:
-    entry.update(output='default', applicability='unconditional', premise='', contexts=[], source_state='witnessed', sources=['yuanhai_ziping_relations', 'mingli_tanyuan_shishen_definitions'])
+    entry.update(show_by_default=True, applicability='unconditional', premise='', contexts=[], source_state='witnessed', sources=['yuanhai_ziping_relations', 'mingli_tanyuan_shishen_definitions'])
   custom = load_knowledge(data, tmp_path)
   result = match(knowledge=custom)
   assert result.criterion.status == 'SATISFIED'
-  assert premise_entries(result)[0] == EntryMatch(LEGAL[0], 'binding_unrecognized')
+  assert result.reference_ids == LEGAL
+  assert result.criterion == match().criterion
   assert result.knowledge is custom
   if dimension == 'qualification':
     default = evaluate_context(chart(), criterion_id=GUANSHA, observation=NatalObservation(), knowledge=custom)
-    assert premise_entries(default) == (EntryMatch(LEGAL[0], 'binding_unrecognized'),)
-    assert '输出资格：default' in default.render() and '前提判别：UNKNOWN' in default.render()
+    assert default.reference_ids == (LEGAL[0],)
+    assert '默认展示：是' in default.render() and '前提判别：SATISFIED' in default.render()
 
 
-def test_custom_bindings_missing_entries() -> None:
+def test_custom_knowledge_missing_entries() -> None:
   knowledge = KnowledgeBase.load()
   selection = knowledge.query(context_id='editorial.guansha_coexistence', include_reference_only=True)
   custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), selection)
-  assert premise_entries(match(knowledge=custom)) == premise_entries(match())
-  assert premise_entries(match(knowledge=KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ()))) == ()
+  assert match(knowledge=custom).reference_ids == LEGAL
+  empty = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), ())
+  assert match(knowledge=empty).reference_ids == ()
+
+
+def test_claim_order_ignores_registry_order() -> None:
+  knowledge = KnowledgeBase.load()
+  reordered = KnowledgeBase(
+    tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()),
+    tuple(reversed(tuple(knowledge.entries.values()))),
+  )
+  assert match(knowledge=reordered).reference_ids == LEGAL
+  single = KnowledgeBase(
+    tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()),
+    (knowledge.entry(LEGAL[1]),),
+  )
+  assert match(knowledge=single).reference_ids == (LEGAL[1],)
