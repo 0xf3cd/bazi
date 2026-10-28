@@ -1,11 +1,12 @@
 # 发布说明
 
-## Unreleased
+## bazi 2.4.0
 
-- 文档工具升级至 Sphinx 9.2.0，构建文档和完整开发检查需要 Python 3.13+。bazi 库仍支持 Python 3.11+，没有新增运行时依赖；Python 3.11／3.12 可用 `run_tests.py -a -v --runtime-only` 检查运行时。
-- 勘正红艳三格来源差异、天乙阳贵／阴贵的表值与用法边界，以及华盖、文昌和查法锚的引文定位；规则表、算法、锚点和默认不变。
-- 知识来源用〔……〕区分不连续摘录，恢复所取刊页的句读；命宫中气来源据 NLC 刊页更新，并同步参考条目的引文与载体说明。条目引文的字面搜索随原字更新，不改变谱系、默认输出资格或绑定判据。
-- 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值，见 [未发布升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#未发布升级说明)。
+本版删除公开 JSON 存取与迁移接口，并调整位置、观察请求和分析结果的构造。升级前请保留原出生输入、完整配置和旧记录，核对[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)及[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+
+### 兼容与调用调整
+
+- 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值，见[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)。
 - `ContextResult` 的构造及 `replace` 使用 `_bazi` 参数，验证后保存 `Bazi` 输入的独立深拷贝；`bazi` 属性每次返回独立深拷贝。输入完整身份仍参与相等与哈希，原 `input_json` 字段删除。
 - 知识库保留 `KnowledgeBase.load(path)`、完整引用校验和查询／渲染。JSON 只作当前编辑源，`schema_version` 只接受精确整数 2，不自动迁移旧版来源。
 - 源码脚本删除 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json`；保留 TXT、知识编辑源读取和源文件覆盖保护。
@@ -13,7 +14,22 @@
   同名 anchor／layer 字段改为非 str 枚举，旧字符串比较、in 判断和关键字类模式可能静默不命中；须改用枚举成员，不能只迁移构造调用。
 - 观察请求改为 NatalObservation、LiunianObservation、TransitObservation，岁运坐标改为年／月／日期／时刻四类；删除旧 profile 和通用坐标构造。CriterionResult、EntryMatch 的定义或状态改为派生属性，ContextResult 用 evidence／references 组合证据和两种参考；不保留旧字段兼容壳。构造、replace、asdict 与位置式类模式均须迁移，后者可能静默失配，见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
   CriterionInfo 删除 profile_type／profile_kind，第三构造字段改为 analysis_kind；可接受的观察请求类从 observation_types 读取。
-- 两后端 LunarYearInfo 统一由 calendar.dates 定义，三个旧导入路径规范重导出同一类型；字典／列表行为不变。包内月查询复用已有 GanzhiYearMonth，不改变便捷入口既有的输入检查或查询准入。
+- 两个后端共用 `bazi.calendar.dates` 中定义的 `LunarYearInfo`，三个旧导入路径仍能取得同一个类型；字典／列表行为不变。包内月查询复用已有 `GanzhiYearMonth`，不改变便捷入口既有的输入检查或查询准入。
+
+### 输入、知识与来源
+
+- 说明默认输入钟与东八区节气表的关系，区分当地钟时标签、北京时间转换和地点盘真太阳时；不改变排盘算法或默认时间口径。
+- 前提文本区分原局与缺少流年年份的范围；性别错误消息列出合法输入，仍抛 `ValueError`，接受集合不变。
+- 勘正红艳三格来源差异、天乙阳贵／阴贵的表值与用法边界，以及华盖、文昌和查法锚的引文定位；规则表、算法、锚点和默认不变。
+- 知识来源用〔……〕区分不连续摘录，恢复所取刊页的句读；命宫中气来源据 NLC 刊页更新，并同步参考条目的引文与载体说明。条目引文的字面搜索随原字更新，不改变谱系、默认输出资格或绑定判据。
+
+### 开发与发布
+
+- NORMAL 暗合与通禄合共用同一组组合定义，两个公开关系名及查询结果键仍保留；其他暗合读法不合并，规则值和默认不变。
+- 关系测试补充失败差异，发布结构测试按主题拆分，案例名说明被检查的行为；只整理测试，不改变库行为。
+- 文档工具升级至 Sphinx 9.2.0，构建文档和完整开发检查需要 Python 3.13+。bazi 库仍支持 Python 3.11+，没有新增运行时依赖；Python 3.11／3.12 可用 `run_tests.py -a -v --runtime-only` 检查运行时。
+- setuptools 升至 84.2.1，setup-python 升至 7.1.0，PyPI 发布 action 升至 1.14.3；两个 action 仍固定到提交 SHA。
+- 发布工件附带实际构建与验证环境清单，并核对清单、源码和同次运行工件的对应关系。这不是依赖锁，不保证日后解析到相同环境或逐字节重建，见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md#实际环境清单)。
 
 ## bazi 2.3.0
 

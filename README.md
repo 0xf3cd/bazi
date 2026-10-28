@@ -7,8 +7,8 @@
 
 - 第一次使用：按下面的[安装包路线](#安装包排第一张盘)运行 Python 程序。
 - 已有源码，想直接运行脚本：看[源码脚本](#源码脚本)，安装包不提供命令行入口。
-- 从 v2.2.0 升级：直接看[迁移说明](#从-v220-迁移到-v230)，无需重走新手步骤。
-- 使用当前未发布源码：[未发布升级说明](#未发布升级说明)列出本次存取接口移除；这些变化尚未发布。
+- 从 v2.3.0 升级：先看[v2.4.0 升级说明](#从-v230-升级到-v240)，其中列出存取接口删除和结构调用变化。
+- 从 v2.2.0 升级：先看[v2.2.0→v2.3.0 迁移说明](#从-v220-迁移到-v230)，再看[v2.4.0 升级说明](#从-v230-升级到-v240)，无需重走新手步骤。
 
 ## 安装包：排第一张盘
 
@@ -36,7 +36,7 @@ python -m venv .venv
 python -m pip install bazi
 ```
 
-普通使用不需要安装 pytest、mypy 或文档工具。本文及下方指南对应当前未发布源码；`pip install bazi` 安装已发布版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供。
+普通使用不需要安装 pytest、mypy 或文档工具。本文及下方指南对应 v2.4.0；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供。
 
 ### 2. 填写出生信息
 
@@ -92,7 +92,7 @@ python first_chart.py
 | --- | --- |
 | 排第一张盘，了解默认值和输出 | [快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md) |
 | 从 v2.2.0 更新到已发布 v2.3.0 的源码调用 | [迁移说明](#从-v220-迁移到-v230) |
-| 跟进当前未发布源码的存取接口移除 | [未发布升级说明](#未发布升级说明) |
+| 从 v2.3.0 升级到 v2.4.0 | [存取接口删除与结构调用调整](#从-v230-升级到-v240) |
 | 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
 | 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
 | 不排盘，只查条目、来源、过滤和编辑源加载 | [独立知识库指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/knowledge.md) |
@@ -111,8 +111,8 @@ python first_chart.py
 知识条目分别记录来源状态、输出资格和前提整理状态。来源已核定不证明条文本身为真，
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
-当前未发布源码不提供命盘或判别结果（`ContextResult`）的保存恢复接口，知识 JSON 仅作当前编辑来源，不承诺历史结果恢复；升级前请读[未发布升级说明](#未发布升级说明)。
-未发布源码也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`，证据和参考条目分别从 `evidence`、`references` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+v2.4.0 不提供命盘或判别结果（`ContextResult`）的保存恢复接口，知识 JSON 仅作当前编辑来源，不承诺历史结果恢复；升级前请读[升级说明](#从-v230-升级到-v240)。
+v2.4.0 也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`，证据和参考条目分别从 `evidence`、`references` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
 详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；各版本变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 源码脚本
@@ -191,7 +191,7 @@ TXT 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会�
 
 ## 从 v2.2.0 迁移到 v2.3.0
 
-本节说明已发布 v2.3.0 的源码脚本调用变化；本次存取接口移除另见[未发布升级说明](#未发布升级说明)。要更新 bazi 包，可在原环境运行下面的命令；它只安装包索引中已发布的版本，不会下载或更新本地的源码脚本：
+本节说明已发布 v2.3.0 的源码脚本调用变化；v2.4.0 的存取接口移除另见[升级说明](#从-v230-升级到-v240)。要更新 bazi 包，可在原环境运行下面的命令；它只安装包索引中已发布的版本，不会下载或更新本地的源码脚本：
 
 ```sh
 python -m pip install --upgrade bazi
@@ -206,11 +206,11 @@ python -m pip install --upgrade bazi
 原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
 两条命令各自检查输出路径，不会预先检查彼此是否写到同一个位置；一条失败不会撤销另一条已写出的文件。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
 
-## 未发布升级说明
-
-以下变化仅对应当前未发布源码，更新到已发布的 v2.3.0 不会得到这些变化。
+## 从 v2.3.0 升级到 v2.4.0
 
 本次删除命盘／判别结果与知识快照的公开 JSON 存取、迁移模块及三类 JSON 导出参数，不保留兼容入口。请保留旧原件；需要当前结论时，按原出生输入和完整配置重新构造命盘并求值。
+
+`profile=` 改为 `observation=`，柱位和明藏层改用枚举，岁运坐标按年／月／日期／时刻分别构造。直接构造、`replace`、`asdict` 和位置式类模式的调整见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)；旧字符串比较和位置式类模式可能静默失配。
 
 重新构造命盘时，不传 `BaziSchool.kongwang_anchor` 则使用默认日柱 `Anchor.DAY`；所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置，该字段仍参与命盘身份。例子见[六甲旬空取锚](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#六甲旬空取锚)。
 
