@@ -11,7 +11,7 @@ import pytest
 import bazi
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, evaluate_context
+from bazi.context_matching import NatalObservation, PremiseMatches, evaluate_context
 from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
@@ -80,7 +80,7 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
   result = evaluate_context(
     BaziChart(Bazi.create('2000-01-01 12:00', 'female')),
     criterion_id='editorial.guansha_coexistence.v1',
-    profile=ContextProfile('natal'),
+    observation=NatalObservation(),
     include_reference_only=True,
   )
   consumer = Mock(wraps=KnowledgeBase.render)
@@ -88,9 +88,9 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
     return str(consumer(self, *args, **kwargs))
   monkeypatch.setattr(KnowledgeBase, 'render', render)
   text = result.render()
-  assert result.entries
-  assert consumer.call_count == len(result.entries)
-  for call, match in zip(consumer.call_args_list, result.entries):
+  assert isinstance(result.references, PremiseMatches) and result.references.entries
+  assert consumer.call_count == len(result.references.entries)
+  for call, match in zip(consumer.call_args_list, result.references.entries):
     knowledge, entry = call.args
     assert isinstance(knowledge, KnowledgeBase)
     assert entry == knowledge.entry(match.claim_id)

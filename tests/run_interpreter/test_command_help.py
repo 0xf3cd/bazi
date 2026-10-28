@@ -7,7 +7,7 @@ from typing import get_args
 
 import pytest
 
-from bazi.context_matching import ObservationScope, TransitEntry, criteria
+from bazi.context_matching import ScopeName, TransitEntry, criteria
 from bazi.knowledge import Applicability
 from run_interpreter import _COMMANDS, _LIST_DIMENSIONS, _command_parser, _subcommand_parsers
 
@@ -69,7 +69,7 @@ def test_removed_export_options_write_nothing(tmp_path: Path, optimized: bool, t
 def test_gz_month_help_names_the_year(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'match', 'editorial.spouse_star_tougan.v1', *BIRTH, '--gender', 'female',
                 '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month', '--gz-month', '午')
-  assert result.returncode == 2 and 'gz_year' in result.stderr
+  assert result.returncode == 2 and 'ganzhi_year' in result.stderr
   action = next(a for a in _subcommand_parsers(_command_parser())['match']._actions if '--gz-month' in a.option_strings)
   assert '--ganzhi-year' in (action.help or '')
 
@@ -81,7 +81,7 @@ def test_options_agree_with_library_directories() -> None:
   assert set(dests['knowledge']['applicability'].choices or ()) == set(get_args(Applicability))
   assert tuple(dests['knowledge']['list_values'].choices or ()) == tuple(_LIST_DIMENSIONS)
   scopes = tuple(dests['match']['observation_scope'].choices or ())
-  assert scopes == (*get_args(ObservationScope), 'natal_and_transits')
+  assert scopes == get_args(ScopeName) == ('natal', 'natal_and_liunian', 'natal_and_transits')
   assert set(scopes) == {scope for info in criteria().values() for scope in info.scopes}
   entries = tuple(dests['match']['transit_entry'].choices or ())
   assert entries == get_args(TransitEntry)

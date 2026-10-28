@@ -13,10 +13,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from run_demo import get_basic_info
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import Tiangan, Shishen, Dizhi
+from bazi.defines import Zhu, Tiangan, Shishen, Dizhi
 from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from bazi.context_matching import (
-  ContextProfile, ObservationScope, RelationshipProfile, TransitCoordinate, TransitEntry,
+  CriterionInfo, Observation, NatalObservation, LiunianObservation, TransitObservation, ScopeName,
+  TransitCoordinate, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, TransitEntry,
   criteria, criterion, evaluate_context,
 )
 from bazi.school import BaziConfig
@@ -44,7 +45,7 @@ def interpret(
   s += f'性别：{bazi.gender}\n'
 
   s += '\n' + '-' * 60 + '\n'
-  for label, pillar, trait, classification in zip(('年', '月', '日', '时'), bazi.pillars, chart.traits, chart.shishen, strict=True):
+  for label, pillar, trait, classification in zip(Zhu, bazi.pillars, chart.traits, chart.shishen, strict=True):
     stem_label = '日元' if classification.tiangan is None else str(classification.tiangan)
     s += f'{label}柱：天干{pillar.tiangan}（{trait.tiangan}，{stem_label}）。地支{pillar.dizhi}（{trait.dizhi}，{classification.dizhi}）。\n'
 
@@ -240,48 +241,67 @@ def _transit_kinds(parser: argparse.ArgumentParser, value: str) -> tuple[Transit
   return tuple(kind for kind in TransitKind if kind in frozenset(kinds))
 
 
-def _relationship_profile(parser: argparse.ArgumentParser, args: argparse.Namespace) -> RelationshipProfile:
-  '''由 CLI 参数构造婚恋 profile；构造期拒绝互斥与缺字段组合。'''
-  coordinate_flags = any((
-    args.ganzhi_year is not None, args.gz_month is not None,
-    args.solar_date is not None, args.solar_moment is not None,
-  ))
-  if args.transit_entry is None and coordinate_flags:
+def _relationship_observation(
+  parser: argparse.ArgumentParser,
+  args: argparse.Namespace,
+  info: CriterionInfo,
+) -> NatalObservation | TransitObservation:
+  '''在 CLI 边界检查坐标缺项／多余项，再构造具体婚恋观察请求。'''
+  values = {
+    'ganzhi_year': args.ganzhi_year, 'ganzhi_month': args.gz_month,
+    'solar_date': args.solar_date, 'solar_moment': args.solar_moment,
+  }
+  if args.transit_entry is None and any(value is not None for value in values.values()):
     parser.error('Transit coordinates require --transit-entry')
   kinds = _transit_kinds(parser, args.transit_kinds) if args.transit_kinds is not None else ()
-  try:
-    coordinate = None
-    if args.transit_entry is not None:
-      coordinate = TransitCoordinate(
-        args.transit_entry,
-        gz_year=args.ganzhi_year,
-        gz_month=args.gz_month,
-        solar_date=args.solar_date,
-        solar_moment=args.solar_moment,
-      )
-    return RelationshipProfile(args.observation_scope, coordinate, kinds)
-  except (TypeError, ValueError) as error:
-    parser.error(str(error))
-  raise AssertionError('Unreachable parser state') # pragma: no cover # parser.error 总是退出。
+  coordinate: TransitCoordinate | None = None
+  if args.transit_entry is not None:
+    required = info.transit_entries[args.transit_entry]
+    for name in required:
+      if values[name] is None:
+        parser.error(f'Missing coordinate field for {args.transit_entry}: {name}')
+    for name, value in values.items():
+      if name not in required and value is not None:
+        parser.error(f'Unexpected coordinate field for {args.transit_entry}: {name}')
+    if args.transit_entry == 'at_year':
+      coordinate = YearCoordinate(args.ganzhi_year)
+    elif args.transit_entry == 'at_month':
+      coordinate = MonthCoordinate(args.ganzhi_year, args.gz_month)
+    elif args.transit_entry == 'at_date':
+      coordinate = DateCoordinate(args.solar_date)
+    else:
+      coordinate = MomentCoordinate(args.solar_moment)
+  if args.observation_scope == 'natal':
+    if coordinate is not None or kinds:
+      parser.error('Natal scope cannot include transit inputs')
+    return NatalObservation()
+  return TransitObservation(kinds, coordinate)
 
 
 def _matching_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
   try:
     info = criterion(args.criterion)
-    if info.profile_kind == 'context' and any((
+    if info.analysis_kind == 'context' and any((
       args.transit_entry is not None, args.gz_month is not None, args.solar_date is not None,
       args.solar_moment is not None, args.transit_kinds is not None,
     )):
       parser.error('Context criteria cannot combine transit entry, coordinate or kind inputs')
-    profile: ContextProfile | RelationshipProfile
-    if info.profile_kind == 'context':
-      profile = ContextProfile(args.observation_scope, args.ganzhi_year)
+    if args.observation_scope not in info.scopes:
+      parser.error(f'Unsupported value: {args.observation_scope}')
+    observation: Observation
+    if info.analysis_kind == 'context':
+      if args.observation_scope == 'natal':
+        if args.ganzhi_year is not None:
+          parser.error('Natal scope cannot include a transit coordinate')
+        observation = NatalObservation()
+      else:
+        observation = LiunianObservation(args.ganzhi_year)
     else:
-      profile = _relationship_profile(parser, args)
+      observation = _relationship_observation(parser, args, info)
     result = evaluate_context(
       _fixed_chart(args),
       criterion_id=args.criterion,
-      profile=profile,
+      observation=observation,
       knowledge=KnowledgeBase.load(args.knowledge_source),
       include_reference_only=args.include_reference_only,
     )
@@ -359,7 +379,7 @@ _LONGITUDE_HELP: Final[str] = (
 
 # 判据目录里的查询坐标字段对应的命令行选项。
 _COORDINATE_FLAGS: Final[dict[str, str]] = {
-  'ganzhi_year': '--ganzhi-year', 'gz_year': '--ganzhi-year', 'gz_month': '--gz-month',
+  'ganzhi_year': '--ganzhi-year', 'ganzhi_month': '--gz-month',
   'solar_date': '--solar-date', 'solar_moment': '--solar-moment',
 }
 
@@ -408,7 +428,7 @@ def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
   common = parser.add_argument_group('求值所需')
   common.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
   common.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）。')
-  common.add_argument('--observation-scope', choices=get_args(ObservationScope) + ('natal_and_transits',), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
+  common.add_argument('--observation-scope', choices=get_args(ScopeName), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
   more = parser.add_argument_group('更多选项（按判据说明所需给出，其余可省略）')
   more.add_argument('--ganzhi-year', type=int, help='干支年坐标，写公历年份数字，如 2024。')
   more.add_argument('--transit-entry', choices=get_args(TransitEntry), help='岁运查询入口（婚恋判据）。')
@@ -526,9 +546,9 @@ def _criterion_description(parser: argparse.ArgumentParser, criterion_id: str) -
   print(f'  求值需要：--birth-time、--gender、--observation-scope（可选：{", ".join(info.scopes)}）')
   for scope, inputs in info.scope_inputs.items():
     if inputs:
-      needs = '、'.join(
-        '--transit-kinds' if name == 'kinds' else '--transit-entry 及其坐标（见下）' if name == 'coordinate'
-        else _COORDINATE_FLAGS.get(name, name) for name in inputs
+      needs = (
+        '--transit-entry 及其坐标（见下）、--transit-kinds' if inputs == ('coordinate', 'kinds')
+        else '、'.join(_COORDINATE_FLAGS[name] for name in inputs)
       )
       print(f'  --observation-scope {scope} 还需要：{needs}')
   for entry, fields in info.transit_entries.items():

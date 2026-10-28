@@ -2,7 +2,8 @@
 
 重导出常用枚举与值类型，并保留中文名称；具体类型的定义见各子模块。'''
 
-from .tiangan import Tiangan, 天干
+from .zhu import Zhu, 柱
+from .tiangan import Tiangan, 天干, TianganLayer, 天干层次
 from .dizhi import Dizhi, 地支
 from .ganzhi import Ganzhi, 干支
 from .jieqi import Jieqi, 节气
@@ -13,7 +14,7 @@ from .shier_zhangsheng import ShierZhangsheng, 十二长生
 from .relations import TianganRelation, 天干关系, DizhiRelation, 地支关系
 
 __all__ = [
-  'Tiangan', '天干', 'Dizhi', '地支',
+  'Zhu', '柱', 'Tiangan', '天干', 'TianganLayer', '天干层次', 'Dizhi', '地支',
   'Ganzhi', '干支', 'Jieqi', '节气',
   'Wuxing', '五行', 'Yinyang', '阴阳',
   'Shishen', '十神', 'ShierZhangsheng', '十二长生',

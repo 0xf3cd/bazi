@@ -81,6 +81,7 @@ def test_relationship_rejects_natal_liunian(tmp_path: Path) -> None:
   (('--solar-moment', '2024-04-10T12:00:00'), 'Transit coordinates require --transit-entry'),
   (('--transit-kinds', 'liunian'), 'Natal scope cannot include transit inputs'),
   (('--transit-entry', 'at_year'), 'Missing coordinate field'),
+  (('--transit-entry', 'at_year', '--ganzhi-year', '2024'), 'Natal scope cannot include transit inputs'),
 ])
 def test_relationship_natal_rejects_transits(tmp_path: Path, extra: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, *REL_BASE, *extra)
@@ -135,7 +136,7 @@ def test_entry_fields_are_mutually_exclusive(tmp_path: Path, entry_args: tuple[s
 def test_entry_fields_are_required(tmp_path: Path, entry_args: tuple[str, ...], missing: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args)
   assert result.returncode == 2 and 'error:' in result.stderr, missing
-  field = {'--ganzhi-year': 'gz_year', '--gz-month': 'gz_month', '--solar-date': 'solar_date', '--solar-moment': 'solar_moment'}[missing]
+  field = {'--ganzhi-year': 'ganzhi_year', '--gz-month': 'ganzhi_month', '--solar-date': 'solar_date', '--solar-moment': 'solar_moment'}[missing]
   assert 'usage: python run_interpreter.py match' in result.stderr
   assert f'Missing coordinate field for {entry_args[1]}: {field}' in result.stderr
 
@@ -181,6 +182,17 @@ def test_unordered_kinds_are_normalized(tmp_path: Path) -> None:
                     '--transit-entry', 'at_year', '--ganzhi-year', '2024')
   assert result.returncode == 0, result.stderr
   assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]' in result.stdout
+
+
+def test_natal_month_hidden_literal(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'match', TOUGAN, '--birth-time', '2000-01-09 12:00', '--gender', 'male', '--observation-scope', 'natal')
+  assert result.returncode == 0, result.stderr
+  assert '证据出现：natal.月；丁丑；藏干；辛' in result.stdout.splitlines()
+
+
+def test_extra_month_field_names_library_field(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', '--transit-entry', 'at_year', '--ganzhi-year', '2024', '--gz-month', '辰')
+  assert_cli_error(result, 'match', 'Unexpected coordinate field for at_year: ganzhi_month')
 
 
 @pytest.mark.parametrize('entry_args', [

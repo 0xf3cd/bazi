@@ -117,7 +117,7 @@ class TransitChart:
       return None
     return self._transits(
       gz_year,
-      dayun=self._transit_db._dayun_at_month(gz_year, gz_month),
+      dayun=self._transit_db._dayun_at_month(query_key),
       gz_month=gz_month,
     )
 
