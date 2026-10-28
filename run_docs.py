@@ -7,8 +7,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-if __name__ == '__main__' and sys.version_info < (3, 12):
-  print('Documentation builds require Python 3.12 or later; running bazi still supports Python 3.11.', file=sys.stderr)
+if __name__ == '__main__' and sys.version_info < (3, 13):
+  print('Documentation builds require Python 3.13 or later; running bazi still supports Python 3.11.', file=sys.stderr)
   raise SystemExit(2)
 
 from markdown_it import MarkdownIt

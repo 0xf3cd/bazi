@@ -16,7 +16,9 @@ jobs:
         include:
           - python-version: "3.11"
             scope: --runtime-only
-          - python-version: "3.12" # minimum documentation-tooling version
+          - python-version: "3.12"
+            scope: --runtime-only
+          - python-version: "3.13" # minimum documentation-tooling version
             scope: ""
           - python-version: "3.14"
             scope: ""
@@ -35,7 +37,7 @@ jobs:
           if [ -f Requirements.txt ]; then pip install -r Requirements.txt; fi
           python -m pip install celestial-calendar==0.6.1
       - name: Install documentation dependencies
-        if: matrix.python-version != '3.11'
+        if: matrix.scope != '--runtime-only'
         run: python -m pip install -r docs/requirements.txt
       - name: Testing, linting, and statc type checking
         run: |

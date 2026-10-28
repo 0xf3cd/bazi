@@ -90,7 +90,7 @@ jobs:
             raise SystemExit(f"{os.environ['LABEL']} ships no documentation runner; only such versions can be archived")
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install documentation requirements of the checked-out source
         run: |
           python -m pip install -r docs/requirements.txt

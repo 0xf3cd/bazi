@@ -4,7 +4,7 @@
 
 ## 本地检查
 
-使用 Python 3.12+，在源码根目录安装文档依赖和历法测试工具 `celestial-calendar==0.6.1`。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：
+使用 Python 3.13+，在源码根目录安装文档依赖和历法测试工具 `celestial-calendar==0.6.1`。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：
 
 ```sh
 python -m pip install -r docs/requirements.txt
@@ -14,7 +14,7 @@ python run_docs.py --output-dir output_data/docs-preview
 
 输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接；全部成功后才交付成品。打开 `output_data/docs-preview/html/index.html` 查看。
 
-源码脚本的完整检查另需开发依赖，见 {doc}`contributing`。在 Python 3.12+ 文档开发环境中，`python run_tests.py -a -v` 包含文档任务；只运行文档可用 `python run_tests.py -nt -docs`。Python 3.11 可用 `python run_tests.py -a -v --runtime-only` 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 `TMPDIR` 等环境设置。
+源码脚本的完整检查另需开发依赖，见 {doc}`contributing`。在 Python 3.13+ 文档开发环境中，`python run_tests.py -a -v` 包含文档任务；只运行文档可用 `python run_tests.py -nt -docs`。Python 3.11／3.12 可用 `python run_tests.py -a -v --runtime-only` 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 `TMPDIR` 等环境设置。
 
 `run_docs.py --version vX.Y.Z` 只接受干净检出且当前提交恰为该 tag 的源码；不接受把开发源码标成任意版本。开发版也记录实际提交和工作树状态，含未提交修改的构建不能进入归档。
 

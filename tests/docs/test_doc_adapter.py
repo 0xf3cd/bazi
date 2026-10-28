@@ -25,10 +25,11 @@ import run_docs
 
 
 @pytest.mark.parametrize('mode', ['__main__', 'run_docs'])
-def test_version_guard_is_only_for_the_cli(mode: str) -> None:
+@pytest.mark.parametrize('version', ['3.11', '3.12'])
+def test_version_guard_is_only_for_the_cli(mode: str, version: str) -> None:
   code = '''import runpy
 import sys
-sys.version_info = (3, 11, 0, 'final', 0)
+sys.version_info = tuple(map(int, sys.argv[3].split('.'))) + (0, 'final', 0)
 try:
   runpy.run_path(sys.argv[1], run_name=sys.argv[2])
 except SystemExit:
@@ -36,12 +37,12 @@ except SystemExit:
   raise
 '''
   result = subprocess.run(
-    [sys.executable, '-c', code, str(ROOT / 'run_docs.py'), mode],
+    [sys.executable, '-c', code, str(ROOT / 'run_docs.py'), mode, version],
     capture_output=True, text=True, encoding='utf-8', check=False,
   )
   assert result.returncode == (2 if mode == '__main__' else 0), result.stderr
   if mode == '__main__':
-    assert 'Documentation builds require Python 3.12 or later' in result.stderr
+    assert 'Documentation builds require Python 3.13 or later' in result.stderr
     assert 'Traceback' not in result.stderr
 
 
