@@ -203,7 +203,6 @@ def test_auxiliary_reads_preserve_old_contracts(located: bool) -> None:
   chart = BaziChart(original)
   snapshot = copy.deepcopy(original)
   identity_hash = hash(original)
-  before = chart.json
   text = chart_text(chart)
   properties = (chart.traits, chart.hidden_tiangan, chart.shishen, chart.nayin, chart.shier_zhangsheng,
                 chart.relationship_stars, tuple(chart.dayun), chart.xiaoyun, tuple(islice(chart.liunian, 3)))
@@ -223,12 +222,12 @@ def test_auxiliary_reads_preserve_old_contracts(located: bool) -> None:
   assert original == snapshot == chart.bazi == other.bazi
   assert hash(original) == identity_hash == hash(chart.bazi)
   assert len(chart.bazi.pillars) == 4 and chart.bazi.pillars == snapshot.pillars
-  assert chart.json == before == other.json
-  assert 'taiyuan' not in before and 'minggong' not in before
-  assert BaziChart.from_json(before).json == before
+  assert chart.bazi == other.bazi
   assert chart_text(chart) == text
   assert properties == (chart.traits, chart.hidden_tiangan, chart.shishen, chart.nayin, chart.shier_zhangsheng,
-                        chart.relationship_stars, tuple(chart.dayun), chart.xiaoyun, tuple(islice(chart.liunian, 3)))
+                         chart.relationship_stars, tuple(chart.dayun), chart.xiaoyun, tuple(islice(chart.liunian, 3)))
+  assert properties == (other.traits, other.hidden_tiangan, other.shishen, other.nayin, other.shier_zhangsheng,
+                        other.relationship_stars, tuple(other.dayun), other.xiaoyun, tuple(islice(other.liunian, 3)))
   assert relations == (analyzer.at_birth.shensha, analyzer.at_birth.day_master_relations,
                        analyzer.at_birth.house_relations)
   assert analyzer.transits.shensha(selected) == transit_relations

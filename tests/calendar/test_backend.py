@@ -271,12 +271,12 @@ def test_default_backend_is_celestial(rng: random.Random) -> None:
   assert Bazi.random(rng=rng).config.backend is CalendarBackend.CELESTIAL
 
 
-def test_json_contains_backend() -> None:
+def test_backend_string_values() -> None:
   chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  assert chart.json['backend'] == 'celestial' # the default
+  assert str(chart.bazi.config.backend) == 'celestial' # the default
   hko_chart: BaziChart = BaziChart(Bazi(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                         BaziConfig(backend=CalendarBackend.HKO)))
-  assert hko_chart.json['backend'] == 'hko'
+  assert str(hko_chart.bazi.config.backend) == 'hko'
 
 
 def test_celestial_backend_end_to_end() -> None:
@@ -294,7 +294,7 @@ def test_celestial_backend_end_to_end() -> None:
     assert bazi == Bazi.create('1984-04-02 04:02', 'male', BaziConfig(backend=backend))
     # The bare-`datetime` call shape, which is what `Bazi.__init__` actually uses.
     assert bazi.solar_date == calendar_utils_of(backend).to_date(datetime(1984, 4, 2))
-    assert BaziChart(bazi).json['backend'] == spelling
+    assert str(BaziChart(bazi).bazi.config.backend) == spelling
 
 
 def test_celestial_differs_from_hko_on_whitelist() -> None:

@@ -2,7 +2,6 @@
 # test_doc_commands.py
 
 import importlib.util
-import json
 import os
 import re
 import shlex
@@ -15,8 +14,6 @@ import pytest
 
 from run_interpreter import _COMMANDS, _command_parser
 
-from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextResult
 
 from cli_runner import ROOT, GUANSHA, run_cli
 
@@ -53,24 +50,17 @@ def test_documented_commands_parse_as_subcommands() -> None:
 def test_readme_task_commands_execute(tokens: list[str], tmp_path: Path) -> None:
   result = run_cli(tmp_path, *tokens)
   assert result.returncode == 0, result.stdout + result.stderr
-  if '--export-context-json' in tokens:
-    path = tmp_path / tokens[tokens.index('--export-context-json') + 1]
-    text = path.read_text(encoding='utf-8')
-    assert json.loads(ContextResult.from_json(text).export_json()) == json.loads(text)
 
 
-def test_readme_chart_exports_roundtrip(tmp_path: Path) -> None:
+def test_readme_chart_saves_displayed_text(tmp_path: Path) -> None:
   commands = _doc_commands((ROOT / 'README.md').read_text(encoding='utf-8'))
-  exporting = [tokens for tokens in commands if tokens[0] == 'chart' and '--export-chart-json' in tokens]
+  exporting = [tokens for tokens in commands if tokens[0] == 'chart' and '--output-dir' in tokens]
   assert len(exporting) == 1
   result = run_cli(tmp_path, *exporting[0])
   assert result.returncode == 0, result.stdout + result.stderr
   paths = {path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob('*') if path.is_file()}
-  assert paths == {'output_data/interpretation_examples/0.txt', 'output_data/chart.json'}
-  record = json.loads((tmp_path / 'output_data/chart.json').read_text(encoding='utf-8'))
-  restored = BaziChart.from_json(record)
-  assert restored.json == record
-  assert record['pillars'] == {'year': '庚午', 'month': '辛巳', 'day': '壬午', 'hour': '乙巳'}
+  assert paths == {'output_data/interpretation_examples/0.txt'}
+  assert all(value in result.stdout for value in ('年柱：天干庚', '月柱：天干辛', '日柱：天干壬', '时柱：天干乙'))
   text = (tmp_path / 'output_data/interpretation_examples/0.txt').read_text(encoding='utf-8')
   assert '\x1b' not in text and text in re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
 

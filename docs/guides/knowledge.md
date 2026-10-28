@@ -1,6 +1,6 @@
 # 查阅知识库
 
-这篇教程不创建命盘。装好 `bazi` 后，你可以查对象、过滤和搜索条目、读出处，把所选条目导出再加载，也可以在内存里改一份副本。
+这篇教程不创建命盘。装好 `bazi` 后，你可以查对象、过滤和搜索条目、读出处，也可以修改自己的知识编辑源并加载。
 
 先说一个前提：知识库记录的是**文字及其出处**，不是对命盘的判断。`witnessed`（见证）说明条目绑定了已核定的原文出处，不证明这句话为真，也不证明现实中会发生什么。
 
@@ -26,7 +26,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 34 10 23 312
 ```
 
-`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变快照。
+`load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
 
 这四个数字对应四份注册表：
 
@@ -107,7 +107,7 @@ ValueError Unknown object_id: tiangan.dingg
 
 ## 胎元与命宫：已实现取法和待核候选
 
-`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，默认输出仍为 19 条。
+`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，全库默认输出仍为 19 条。
 计算用法见 {doc}`integration`；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。
 
 ```{testcode} auxiliary-knowledge
@@ -132,8 +132,10 @@ concept.minggong 0 4
 《游艺录》卷四直接转录支持胎元月干进一、月支进三；《三命通会》掌诀段支持命宫定支与年干配宫干，
 未明说月界。《三命通会》胎元同段的甲寅／乙巳例与本库月柱顺移在该例结果相同，原段也质疑该取法是否精当；
 见证取法存在不等于该书赞同取法。
-中气进月及丙午年大寒例仍按丙午年配干，来自《命理探原》起例按语；下载页题名作《命理探源》，本库沿称《命理探原》。
-所核为固定或下载转录，未逐页校勘影印；后书转引前书不多算一份独立谱系。
+中气进月及丙午年大寒例仍按丙午年配干，来自《命理探原》卷上〈起例〉〈推命宮法〉按语。
+该条已据 NLC 刊本 PDF 第 75–76 页（印页四四至四五）页图核读正文、按语与丙午例；
+扫描文件题《命理探源》，所核页版心题《命理探原》。按语后的列式页未核，未校全书。
+其余上述来源仍为固定或下载转录，未校影印；换用同书原刊载体、后书转引前书都不多算独立谱系。
 《游艺录》与《三命通会》命宫掌诀措辞近同，独立性未核，来源暂同组，保守不多算一条独立见证；这不表示已证直接承袭。
 本库的立春年界、精度、时区及地点钟政策另记为仓内约定，不与原例的支持范围混用。
 
@@ -162,7 +164,12 @@ print(kb.search('tiangan.ding'))
 
 `search` 先按上面的规则过滤，再对条目文字、前提、署名、主题、观点、例外、限度和对象名称做不分大小写的子串匹配。它不分词，不解释正则，也不搜对象 ID、情境标签或来源全文，所以 `search('tiangan.ding')` 没有命中。对象 ID 请用 `query(object_id=...)`。
 
+搜索不自动转换繁简字。条目引用按载体原字修订后，相关字面关键词的命中可能随之变化；这不改变默认查询资格。
+
 ## 条目的来源
+
+体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，
+没有把不同诗句或章节拼成一段连续原文；句读、摘录位置与未录的干名圈示分别记在来源说明中。
 
 ```{testcode} sources
 from bazi.knowledge import KnowledgeBase
@@ -192,14 +199,16 @@ print([s for s in kb.sources if not kb.query(source_id=s, include_reference_only
 明万历二十八年闽书林刘龙田乔山堂刊本
 PDF 第 70 页左右两半叶，「十干体象」
 yuanhai_ziping baiwen witnessed
-丁火其形一燭燈戊土城墻堤岸同己土田園屬四維庚金頑鈍性偏剛辛金珠玉性虛靈壬水汪洋併百川癸水應非雨露麼
+丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼
 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
-不使这些象成为跨流派定义或性格前提。
+丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
 () unverified reference_only
 ['yuanhai_ziping_stem_table']
 ```
 
 路径是：`kb.entry(条目 ID).sources` 给出来源 ID，再用 `kb.sources[来源 ID]` 取记录。记录里的 `work`、`attribution`、`edition`、`locator` 说明出处，`excerpt` 是摘录，`supports` 与 `limitations` 写明这段原文支持什么、不支持什么。读来源时请连 `limitations` 一起读。
+
+渲染结果中，条目的 `source_state` 标为“来源状态”，来源记录的 `state` 标为“见证状态”。
 
 反向用 `query(source_id=...)` 找引用某个来源的条目。
 
@@ -294,59 +303,56 @@ ValueError Default entry needs independent lineages: tiangan.ding.definition
 
 第二个例子里，只留一个来源的条目通过了条目自身的检查（仍是 `default`），但放进知识库时因为只剩一个谱系被拒。另外，`source_state` 为 `unverified` 当且仅当 `sources` 为空，两者不一致也会被拒。
 
-## 导出所选条目并重新加载
+## 读取知识编辑源
 
-```{testcode} export
+```{testcode} source
 import json
 import tempfile
 from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
-kb = KnowledgeBase.load()
-chosen = kb.query(object_id='tiangan.ding', include_reference_only=True)
-text = kb.export_json(chosen)
+text = DEFAULT_SOURCE_PATH.read_text(encoding='utf-8')
 data = json.loads(text)
 print(list(data))
 print(data['schema_version'], len(data['entries']), len(data['objects']), len(data['sources']))
 print(list(data['entries'][0]))
-restored = KnowledgeBase.from_json(text)
-print(tuple(restored.entries.values()) == chosen)
-print(len(restored.entries), len(restored.objects))
-
 with tempfile.TemporaryDirectory() as folder:
-  path = Path(folder) / 'ding.json'
+  path = Path(folder) / 'knowledge.json'
   path.write_text(text, encoding='utf-8')
-  print(KnowledgeBase.load(path) == restored)
+  print(KnowledgeBase.load(path) == KnowledgeBase.load())
 ```
 
-```{testoutput} export
+```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-1 8 34 23
+2 312 34 23
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
 True
-8 34
-True
 ```
 
-导出的是 `schema_version`（当前为 1）加四份注册表。**条目只含你选的 8 条，但对象、情境、来源三份注册表完整保留**（34 个对象、23 个来源），所以所选条目的引用不会断。
-
-`from_json` 与 `load(Path(...))` 走同一套校验。省略 `export_json` 的参数则导出全部条目，包括仅供参考的条目。
+当前编辑源由精确整数 `schema_version=2` 加四份注册表组成，加载时检查形状、状态和引用。
+不接受旧 schema 1，也不提供迁移、知识库 JSON 导出或历史结果恢复。字符串键和值中的孤立代理项会拒绝，不修复原文；
+知识渲染也检查 UTF-8，中文、非 BMP 字符与合法 JSON 转义仍可使用。
 
 ## 改一份本地副本
 
-想加几行自己的备注，改导出的 JSON 副本，再加载。下面只在内存里操作，不写回随包的 `knowledge_data.json`：
+想加几行自己的备注，复制当前编辑源，修改自己的文件再加载。下面使用临时副本，不写回随包的 `knowledge_data.json`：
 
 ```{testcode} edit
 import json
+import tempfile
+from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 kb = KnowledgeBase.load()
-data = json.loads(kb.export_json(kb.query(object_id='tiangan.ding')))
-entry = data['entries'][0]
+data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+entry = next(value for value in data['entries'] if value['claim_id'] == 'tiangan.ding.definition')
 entry['limits'].append('演示副本：此行为教程添加，不是来源内容。')
-copy = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+with tempfile.TemporaryDirectory() as folder:
+  path = Path(folder) / 'edited.json'
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  copy = KnowledgeBase.load(path)
 
 edited = copy.entry('tiangan.ding.definition')
 print(edited.claim_id, edited.text)
@@ -376,25 +382,31 @@ False
 
 ```{testcode} broken
 import json
+import tempfile
+from pathlib import Path
 
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 kb = KnowledgeBase.load()
-data = json.loads(kb.export_json(kb.query(object_id='tiangan.ding')))
-good = data['entries'][0]['sources']
-data['entries'][0]['sources'] = ['no_such_source']
-try:
-  KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
-except ValueError as error:
-  print(type(error).__name__, error)
-
-data['entries'][0]['sources'] = good
-print(len(KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False)).entries))
+data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+entry = next(value for value in data['entries'] if value['claim_id'] == 'tiangan.ding.definition')
+good = entry['sources']
+entry['sources'] = ['no_such_source']
+with tempfile.TemporaryDirectory() as folder:
+  path = Path(folder) / 'broken.json'
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  try:
+    KnowledgeBase.load(path)
+  except ValueError as error:
+    print(type(error).__name__, error)
+  entry['sources'] = good
+  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  print(len(KnowledgeBase.load(path).entries))
 ```
 
 ```{testoutput} broken
 ValueError Unknown source: no_such_source (tiangan.ding.definition)
-1
+312
 ```
 
 加载抛 `ValueError`，消息里带出未知的 ID 和出问题的条目。修法是让引用指回注册表里存在的 ID，要么改回，要么在 `sources` 里补上这条来源记录。对象和情境的引用同理；字段缺失、重复键、不支持的 `schema_version` 也都在加载时拒绝。
@@ -409,7 +421,7 @@ from bazi.context_matching import criteria, criterion
 catalog = criteria()
 print(len(catalog))
 for criterion_id, info in catalog.items():
-  print(criterion_id, info.entry_role, info.profile_kind, len(info.claim_ids))
+  print(criterion_id, info.entry_role, info.analysis_kind, len(info.claim_ids))
 info = criterion('editorial.guansha_coexistence_female.v1')
 print(info.claim_ids)
 print(info.required_gender.value)
@@ -428,22 +440,25 @@ editorial.spouse_palace_xingchong.v1 condition relationship 1
 editorial.spouse_star_tougan.v1 condition relationship 1
 ('editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity')
 女
-('chart', 'criterion_id', 'profile') ('knowledge', 'include_reference_only')
+('chart', 'criterion_id', 'observation') ('knowledge', 'include_reference_only')
 ```
 
 这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
 
+`analysis_kind` 区分明藏干分类与婚恋结构分析；`observation_types` 和 `scopes` 由它派生，列出可接受的请求类和范围。
+`scope_inputs` 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。
+`transit_entries` 的年月字段为 ganzhi_year、ganzhi_month，CLI 对应的 flags 仍是 `--ganzhi-year`、`--gz-month`。
+
 ## 源码脚本
 
-仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，同样的查询与导出可以这样跑：
+仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，可以这样查询：
 
 ```sh
 python run_interpreter.py knowledge --object tiangan.ding
 python run_interpreter.py knowledge --list-values topic
 python run_interpreter.py knowledge \
   --object tiangan.ding \
-  --include-reference-only \
-  --export-knowledge-json output_data/knowledge.json
+  --include-reference-only
 ```
 
 只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。

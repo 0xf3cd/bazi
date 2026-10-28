@@ -853,3 +853,10 @@ def test_create_hints_from_values_for_config() -> None:
 def test_constructor_keeps_plain_message(call: object) -> None:
   with pytest.raises(TypeError, match=r"^Expected \w+, got <class 'NoneType'>$"):
     call() # type: ignore
+
+
+@pytest.mark.parametrize('alias', ['乾', '坤', '阳', '阴', 'YANG', 'YIN'])
+def test_gender_aliases_keep_string_domain(alias: str) -> None:
+  assert alias in BaziGender.__members__
+  with pytest.raises(ValueError):
+    Bazi.create(datetime(2000, 1, 1, 12), alias)

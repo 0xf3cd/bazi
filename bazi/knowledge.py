@@ -2,15 +2,14 @@
 
 '''可编辑的解释知识。'''
 
-import json
-from dataclasses import asdict, dataclass, fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
-from ._validation import _text, _choice, _tuple, _pairs, _mapping
+from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _utf8
 
 
 '''知识整理状态，不是命盘判别结果。
@@ -30,6 +29,7 @@ SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attrib
 OutputPolicy = Literal['default', 'reference_only']
 
 _T = TypeVar('_T')
+_SCHEMA_VERSION: Final = 2
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
 _OUTPUTS: Final = get_args(OutputPolicy)
@@ -42,8 +42,8 @@ def object_id(subject: Tiangan | Shishen) -> str:
 
   Args:
   - subject: (Tiangan | Shishen) 讨论对象。
-  Return:
-  - (str) 对象标识；自定义库是否注册该对象由查询时校验。
+
+  Return: (str) 对象标识；自定义库是否注册该对象由查询时校验。
   '''
   if not isinstance(subject, (Tiangan, Shishen)):
     raise TypeError(f'Expected Tiangan | Shishen, got {type(subject)}')
@@ -196,6 +196,7 @@ class KnowledgeEntry:
     _choice(self.output, _OUTPUTS)
     if self.legacy is not None and not isinstance(self.legacy, LegacyDescription):
       raise TypeError(f'Expected LegacyDescription | None, got {type(self.legacy)}')
+
     if not self.roles or not self.topics:
       raise ValueError('Entries require roles and topics')
     names = tuple(role.name for role in self.roles)
@@ -207,6 +208,7 @@ class KnowledgeEntry:
     for values in (self.topics, self.contexts, self.sources):
       if len(set(values)) != len(values):
         raise ValueError(f'Duplicate reference: {self.claim_id}')
+
     if self.applicability == 'unconditional' and (self.premise or self.contexts):
       raise ValueError(f'Unconditional entry has a premise: {self.claim_id}')
     if self.applicability == 'described' and not self.premise.strip():
@@ -256,10 +258,10 @@ def _registry(values: tuple[_T, ...], key: str) -> frozendict[str, _T]:
 
 
 class KnowledgeBase:
-  '''校验、索引、查询并导出不可变解释条目。
+  '''校验、索引、查询并渲染不可变解释条目。
 
   Note:
-  - JSON 为编辑来源；索引与导出由它生成。
+  - JSON 为编辑来源；加载时校验内容并建立索引。
   - 值比较与 hash 包含四份注册表的内容及顺序，不依赖实例身份。
   - sources 包含完整来源注册表，包括未被条目引用的记录；直接读取 sources[source_id]
     查来源，query(source_id=...) 查关联条目。
@@ -359,26 +361,17 @@ class KnowledgeBase:
     return self._entries
 
   @classmethod
-  def from_json(cls, text: str) -> 'KnowledgeBase':
-    '''加载严格 JSON，拒绝重复键、错误字段与断引用。
-
-    Args:
-    - text: (str) UTF-8 JSON 文字。
-    Return:
-    - (KnowledgeBase) 校验后的知识库。
-    '''
-    _text(text)
-    return cls._from_data(json.loads(text, object_pairs_hook=_pairs))
-
-  @classmethod
   def _from_data(cls, value: Any) -> 'KnowledgeBase':
-    '''包内嵌套知识记录入口，与 from_json 共用版本、字段及知识约束校验。'''
+    '''校验当前编辑源的版本、字段与引用。'''
     data = _mapping(
       value,
       ('schema_version', 'objects', 'contexts', 'sources', 'entries'),
     )
-    if type(data['schema_version']) is not int or data['schema_version'] != 1:
-      raise ValueError(f'Unsupported schema version: {data["schema_version"]}')
+    version = data['schema_version']
+    if type(version) is not int:
+      raise ValueError(f'Unsupported schema version type: {type(version)}')
+    if version != _SCHEMA_VERSION:
+      raise ValueError(f'Unsupported schema version: {version}')
     return cls(
       tuple(_decode(KnowledgeObject, item) for item in _array(data['objects'])),
       tuple(_decode(KnowledgeContext, item) for item in _array(data['contexts'])),
@@ -390,20 +383,19 @@ class KnowledgeBase:
   def load(cls, path: Path | None = None) -> 'KnowledgeBase':
     '''读取指定编辑来源；未给路径时读取 DEFAULT_SOURCE_PATH 的随库语料。
 
-    Args:
-    - path: (Path | None) 编辑来源路径；None 使用随库来源。
-
     Note:
     - 每次调用重新读取并校验文件，不缓存共享实例。已加载对象保留当时的内容；
       来源修改不影响已有对象，须再次加载才能取得更新。
 
-    Return:
-    - (KnowledgeBase) 校验后的不可变知识快照。
+    Args:
+    - path: (Path | None) 编辑来源路径；None 使用随库来源。
+
+    Return: (KnowledgeBase) 校验后的不可变知识库对象。
     '''
     if path is not None and not isinstance(path, Path):
       raise TypeError(f'Expected Path | None, got {type(path)}')
     source = DEFAULT_SOURCE_PATH if path is None else path
-    return cls.from_json(source.read_text(encoding='utf-8'))
+    return cls._from_data(_json_loads(source.read_text(encoding='utf-8')))
 
   def entry(self, claim_id: str) -> KnowledgeEntry:
     '''按稳定标识查阅条目。'''
@@ -417,8 +409,8 @@ class KnowledgeBase:
 
     Args:
     - name: (str) 非空名称，不做大小写转换、分词或近似匹配，有效名称两侧空白不剥除。
-    Return:
-    - (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象；空或全空白名称抛 ValueError，错型抛 TypeError。
+
+    Return: (tuple[KnowledgeObject, ...]) 本知识库中同名的不可变对象；空或全空白名称抛 ValueError，错型抛 TypeError。
     '''
     _text(name)
     return tuple(value for value in self.objects.values() if value.name == name)
@@ -429,10 +421,11 @@ class KnowledgeBase:
     Note:
     - 包含仅供参考条目独有的值，以及未被条目引用的对象、情境、来源与情境时间范围。
     - applicability 来自类型定义，空库也保留合法域；合法值不保证默认查询有命中。
+
     Args:
     - dimension: (str) object_id、context_id、source_id、topic、viewpoint、applicability 或 time_scope。
-    Return:
-    - (tuple[str, ...]) 不重复的合法值；未知维度抛 ValueError，错型抛 TypeError。
+
+    Return: (tuple[str, ...]) 不重复的合法值；未知维度抛 ValueError，错型抛 TypeError。
     '''
     _text(dimension)
     registries = {'object_id': tuple(self.objects), 'context_id': tuple(self.contexts), 'source_id': tuple(self.sources)}
@@ -464,8 +457,8 @@ class KnowledgeBase:
     - 默认只选 output='default'；include_reference_only=True 同时选仅供参考条目。
     - 对象查询包含所有绑定角色；未知过滤值抛 ValueError，合法但无匹配时返回空元组。
     - context_id 是人工选择的查阅情境，不判断命盘是否满足；多个情境标签不隐含 AND/OR。
-    Return:
-    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
+
+    Return: (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     if not isinstance(include_reference_only, bool):
       raise TypeError(f'Expected bool, got {type(include_reference_only)}')
@@ -505,11 +498,12 @@ class KnowledgeBase:
     - 检索 text、premise、attribution、topics、viewpoint、exceptions、limits 及角色对象的 name。
       不检索来源全文、情境标签或对象 ID，不分词、不解释正则、不计算命盘适用性。
     - 七维过滤取交集，校验及参考条目政策与 query 相同，结果保持语料顺序。
+
     Args:
     - keyword: (str) 非空关键词，空或全空白抛 ValueError，错型抛 TypeError；不剥除有效词两侧空白。
     - 其余参数与 query 相同。
-    Return:
-    - (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
+
+    Return: (tuple[KnowledgeEntry, ...]) 命中的不可变条目。
     '''
     _text(keyword)
     needle = keyword.casefold()
@@ -534,33 +528,6 @@ class KnowledgeBase:
 
     return tuple(entry for entry in candidates if __matches(entry))
 
-  def export_json(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> str:
-    '''导出可重载的完整语料或所选条目，保留全部对象、情境及来源注册表。
-
-    Note:
-    - 省略 entries 时导出全部语料，包括仅供参考条目；导出不改变条目的输出资格。
-    '''
-    return json.dumps(self._export_data(entries), ensure_ascii=False, indent=2) + '\n'
-
-  def _export_data(self, entries: tuple[KnowledgeEntry, ...] | None = None) -> dict[str, Any]:
-    '''供包内嵌套的 JSON 结构；export_json 编码同一结构，条目选择的校验也在此完成。'''
-    selected = tuple(self.entries.values()) if entries is None else entries
-    _tuple(selected, KnowledgeEntry)
-    ids: set[str] = set()
-    for entry in selected:
-      if self.entries.get(entry.claim_id) != entry:
-        raise ValueError(f'Foreign entry: {entry.claim_id}')
-      if entry.claim_id in ids:
-        raise ValueError(f'Duplicate selection: {entry.claim_id}')
-      ids.add(entry.claim_id)
-    return {
-      'schema_version': 1,
-      'objects': [asdict(value) for value in self.objects.values()],
-      'contexts': [asdict(value) for value in self.contexts.values()],
-      'sources': [asdict(value) for value in self.sources.values()],
-      'entries': [asdict(value) for value in selected],
-    }
-
   def render(
     self,
     entry: KnowledgeEntry,
@@ -573,13 +540,14 @@ class KnowledgeBase:
 
     Note:
     - 本方法不选择条目、不求值前提，也不改变输出资格。
+
     Args:
     - entry: (KnowledgeEntry) 本库条目。
     - show_sources: (bool) 是否展示来源详情；前提与限度始终保留。
     - manual_context: (bool) 标注人工给定情境，不表示前提满足。
     - premise_verdict: (str | None) 调用方的展示文字，须含非空白字符；给定时优先于人工情境标注。
-    Return:
-    - (str) 展示文字。
+
+    Return: (str) 展示文字。
     '''
     if premise_verdict is not None and not isinstance(premise_verdict, str):
       raise TypeError(f'Expected str | None, got {type(premise_verdict)}')
@@ -635,7 +603,7 @@ class KnowledgeBase:
           f'支持范围：{source.supports}',
           f'局限：{source.limitations}',
         ))
-    return '\n'.join(lines)
+    return _utf8('\n'.join(lines))
 
   def render_subject(
     self,
@@ -650,17 +618,18 @@ class KnowledgeBase:
     - 有旧位置元数据的条目只在其旧主体下展示；其余条目包含所有绑定角色。
       query 的对象过滤始终包含全部角色，二者范围不同。
     - 旧字段位置与 ordinal 仍在 entry.legacy 中，不决定此处的语料顺序。
+
     Args:
     - object_id: (str) 注册对象标识。
     - include_reference_only: (bool) 是否包含仅供参考条目，不求值其前提。
     - show_sources: (bool) 是否展示来源详情。
-    Return:
-    - (str) 展示文字；合法对象没有所选主体条目时返回空串。
+
+    Return: (str) 展示文字；合法对象没有所选主体条目时返回空串。
     '''
     if not isinstance(show_sources, bool):
       raise TypeError(f'Expected bool, got {type(show_sources)}')
-    return '\n\n'.join(
+    return _utf8('\n\n'.join(
       '／'.join(entry.topics) + '：' + self.render(entry, show_sources=show_sources)
       for entry in self.query(object_id=object_id, include_reference_only=include_reference_only)
       if entry.legacy is None or entry.legacy.object_id == object_id
-    )
+    ))

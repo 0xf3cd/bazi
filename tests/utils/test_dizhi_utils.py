@@ -28,12 +28,112 @@ DzCmpType = list[set[Dizhi]] | Iterable[DizhiCombo]
 def _dz_equal(l1: DzCmpType, l2: DzCmpType) -> bool:
   _l1 = list(l1)
   _l2 = list(l2)
-  if len(_l1) != len(_l2):
+  if len(_l1) != len(_l2) or any(s not in _l2 for s in _l1):
+    print(f'Combo counts: actual={len(_l1)}, expected={len(_l2)}')
+    print(f'Missing combos: {[s for s in _l2 if s not in _l1]}')
+    print(f'Extra combos: {[s for s in _l1 if s not in _l2]}')
     return False
-  for s in _l1:
-    if s not in _l2:
-      return False
   return True
+
+
+@pytest.mark.parametrize('definition, expected', [
+  (DizhiRules.AnheDef.NORMAL, (
+    frozenset((Dizhi.子, Dizhi.巳)),
+    frozenset((Dizhi.寅, Dizhi.午)),
+    frozenset((Dizhi.卯, Dizhi.申)),
+    frozenset((Dizhi.巳, Dizhi.酉)),
+    frozenset((Dizhi.午, Dizhi.亥)),
+  )),
+  (DizhiRules.AnheDef.NORMAL_EXTENDED, (
+    frozenset((Dizhi.子, Dizhi.巳)),
+    frozenset((Dizhi.丑, Dizhi.寅)),
+    frozenset((Dizhi.寅, Dizhi.午)),
+    frozenset((Dizhi.卯, Dizhi.申)),
+    frozenset((Dizhi.巳, Dizhi.酉)),
+    frozenset((Dizhi.午, Dizhi.亥)),
+  )),
+  (DizhiRules.AnheDef.MANGPAI, (
+    frozenset((Dizhi.丑, Dizhi.寅)),
+    frozenset((Dizhi.卯, Dizhi.申)),
+    frozenset((Dizhi.午, Dizhi.亥)),
+  )),
+])
+def test_anhe_literal_order(
+  definition: DizhiRules.AnheDef,
+  expected: DizhiRelationCombos,
+) -> None:
+  definitions = DizhiRelationDefinitions(anhe_def=definition)
+  values = tuple(reversed(tuple(Dizhi))) + (Dizhi.子, Dizhi.巳)
+  assert dizhi_utils.search(values, DizhiRelation.暗合, definitions=definitions) == expected
+  assert dizhi_utils.discover(values, definitions=definitions)[DizhiRelation.暗合] == expected
+  assert dizhi_utils.discover_mutual(values, values, definitions=definitions)[DizhiRelation.暗合] == expected
+  for first, second in itertools.product(Dizhi, repeat=2):
+    assert dizhi_utils.anhe(first, second, definition=definition) == (frozenset((first, second)) in expected)
+
+
+def test_tongluhe_literal_order() -> None:
+  expected = (
+    frozenset((Dizhi.子, Dizhi.巳)),
+    frozenset((Dizhi.寅, Dizhi.午)),
+    frozenset((Dizhi.卯, Dizhi.申)),
+    frozenset((Dizhi.巳, Dizhi.酉)),
+    frozenset((Dizhi.午, Dizhi.亥)),
+  )
+  values = tuple(reversed(tuple(Dizhi)))
+  assert dizhi_utils.search(values, DizhiRelation.通禄合) == expected
+  for definition in DizhiRules.AnheDef:
+    definitions = DizhiRelationDefinitions(anhe_def=definition)
+    result = dizhi_utils.discover(values, definitions=definitions)
+    assert DizhiRelation.暗合 in result and DizhiRelation.通禄合 in result
+    assert result[DizhiRelation.通禄合] == expected
+    assert dizhi_utils.discover_mutual(values, values, definitions=definitions)[DizhiRelation.通禄合] == expected
+    if definition is DizhiRules.AnheDef.NORMAL:
+      assert result[DizhiRelation.暗合] == expected
+  for first, second in itertools.product(Dizhi, repeat=2):
+    assert dizhi_utils.tongluhe(first, second) == (frozenset((first, second)) in expected)
+
+
+@pytest.mark.parametrize('query', [
+  dizhi_utils.liuhe, dizhi_utils.anhe, dizhi_utils.tonghe, dizhi_utils.tongluhe,
+  dizhi_utils.banhe, dizhi_utils.gonghe, dizhi_utils.gonghui,
+  dizhi_utils.chong, dizhi_utils.po, dizhi_utils.hai, dizhi_utils.sheng, dizhi_utils.ke,
+])
+@pytest.mark.parametrize('args', [(True, Dizhi.子), (Dizhi.子, True), ('子', 1)])
+def test_pair_rejection_keeps_all_types(
+  query: Callable[..., object],
+  args: tuple[object, object],
+) -> None:
+  with pytest.raises(TypeError) as error:
+    query(*args)
+  assert str(error.value) == f'Expected all Dizhi, got {[type(value) for value in args]}'
+
+
+def test_validation_precedence() -> None:
+  with pytest.raises(TypeError) as error:
+    dizhi_utils.anhe(True, Dizhi.子, definition='NORMAL') # type: ignore[arg-type]
+  assert str(error.value) == "Expected all Dizhi, got [<class 'bool'>, <enum 'Dizhi'>]"
+  with pytest.raises(TypeError) as error:
+    dizhi_utils.xing(True, Dizhi.子, Dizhi.午, Dizhi.辰, definition='LOOSE') # type: ignore[arg-type]
+  assert str(error.value) == "Expected all Dizhi, got [<class 'bool'>, <enum 'Dizhi'>, <enum 'Dizhi'>, <enum 'Dizhi'>]"
+  with pytest.raises(ValueError, match='^Expected at most 3 Dizhis, got 4$'):
+    dizhi_utils.xing(Dizhi.子, Dizhi.午, Dizhi.辰, Dizhi.酉, definition='LOOSE') # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize('query, args, option', [
+  (dizhi_utils.gonghe, (True, Dizhi.子), 'definition'),
+  (dizhi_utils.search, ([True, Dizhi.子], DizhiRelation.暗合), 'definitions'),
+  (dizhi_utils.discover, ([True, Dizhi.子],), 'definitions'),
+  (dizhi_utils.discover_mutual, ([True, Dizhi.子], [Dizhi.午]), 'definitions'),
+  (dizhi_utils.discover_mutual, ([Dizhi.午], [True, Dizhi.子]), 'definitions'),
+])
+def test_elements_precede_definition(
+  query: Callable[..., object],
+  args: tuple[object, ...],
+  option: str,
+) -> None:
+  with pytest.raises(TypeError) as error:
+    query(*args, **{option: 'invalid'})
+  assert str(error.value) == "Expected all Dizhi, got [<class 'bool'>, <enum 'Dizhi'>]"
 
 
 def _project_ganzhi_combos(combos: GanzhiRelationCombos) -> set[DizhiCombo]:

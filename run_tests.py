@@ -67,10 +67,15 @@ argparser.add_argument('-docs', '--docs', action='store_true', help='在仓外�
 argparser.add_argument('--runtime-only', action='store_true', help='只检查运行时与非文档工具，不收集文档工具测试或构建文档；可用于 Python 3.11。')
 argparser.add_argument('-pkg', '--package', action='store_true', help='构建并检查隔离的 wheel 与 sdist 安装。')
 argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 一起使用，在此仓外目录保留验证后的工件对。')
+argparser.add_argument('--environment-report', type=Path, help='与工件保全一起使用，在此仓外新文件记录实际构建与验证环境。')
+argparser.add_argument('--outer-installer-report', type=Path, help='导出环境时提供 release 步骤的三次外层 pip 版本观察。')
 
 args = argparser.parse_args()
 if args.runtime_only and args.docs:
   argparser.error('--runtime-only cannot be combined with --docs')
+if ((args.environment_report is None) != (args.outer_installer_report is None)
+    or (args.environment_report is not None and (args.package_output_dir is None or not (args.package or args.all)))):
+  argparser.error('Environment export requires -pkg or -a, --package-output-dir, --environment-report and --outer-installer-report')
 
 all_the_way: Final[bool] = args.all
 
@@ -451,6 +456,8 @@ def run_package_checks() -> int:
   return run_proc_and_print([
     sys.executable, str(Path(__file__).parent / 'run_package_checks.py'),
     *(['--output-dir', str(args.package_output_dir)] if args.package_output_dir is not None else []),
+    *(['--environment-report', str(args.environment_report)] if args.environment_report is not None else []),
+    *(['--outer-installer-report', str(args.outer_installer_report)] if args.outer_installer_report is not None else []),
   ], print_details=True)
 
 

@@ -3,7 +3,6 @@
 import argparse
 from random import Random, SystemRandom
 
-from pprint import pprint
 from typing import Final
 
 import colorama
@@ -57,9 +56,6 @@ def demo(seed: int | None = None) -> None:
 
   transit_info: str = get_transit_info(chart)
   print(transit_info)
-
-  print('\n' + 'chart json:')
-  pprint(chart.json)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import json
+from typing import Any
+
 import pytest
 
-from bazi._validation import _text, _choice, _tuple, _pairs, _mapping
+from bazi._validation import _text, _choice, _tuple, _pairs, _mapping, _json_loads
 
 
 def test_shared_validation_keeps_values_messages() -> None:
@@ -34,3 +37,16 @@ def test_shared_validation_keeps_values_messages() -> None:
     _mapping([], ())
   with pytest.raises(ValueError, match="^JSON fields differ: .*a.*$"):
     _mapping({'a': 1}, ())
+
+
+def test_parser_recursion_does_not_hide_bugs(monkeypatch: pytest.MonkeyPatch) -> None:
+  def recursion(*args: object, **kwargs: object) -> Any:
+    raise RecursionError('injected parser limit')
+  monkeypatch.setattr(json, 'loads', recursion)
+  with pytest.raises(ValueError, match='parsing depth'):
+    _json_loads('{}')
+  def bug(*args: object, **kwargs: object) -> Any:
+    raise RuntimeError('programming error')
+  monkeypatch.setattr(json, 'loads', bug)
+  with pytest.raises(RuntimeError, match='programming error'):
+    _json_loads('{}')

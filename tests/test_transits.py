@@ -9,6 +9,7 @@ from datetime import datetime
 import pytest
 
 from bazi.data_types import DayunTuple
+from bazi.calendar.dates import GanzhiYearMonth
 from bazi.defines import Ganzhi, Dizhi
 
 from bazi.bazi import Bazi
@@ -76,18 +77,10 @@ def test_transit_set() -> None:
   assert TransitKind.LIUYUE in transits
   assert object() not in transits
   assert transits.ganzhis == (xiaoyun, dayun, liunian, liuyue, liuri)
-  assert transits.json == {
-    'xiaoyun': '癸未',
-    'dayun': '戊辰',
-    'liunian': '甲辰',
-    'liuyue': '丙寅',
-    'liuri': '戊戌',
-  }
 
   selected = transits.select(TransitKind.LIURI, TransitKind.DAYUN)
   assert selected == TransitSet(dayun=dayun, liuri=liuri)
   assert selected.ganzhis == (dayun, liuri)
-  assert selected.json == {'dayun': '戊辰', 'liuri': '戊戌'}
 
 
 def test_transit_set_negative() -> None:
@@ -184,8 +177,8 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
   db = TransitDatabase(chart)
   assert db.dayun(2008) is None
   assert db.dayun(2009) == Ganzhi.from_str('乙丑')
-  assert db._dayun_at_month(2008, Dizhi.丑) is None
-  assert db._dayun_at_month(2009, Dizhi.寅) == Ganzhi.from_str('乙丑')
+  assert db._dayun_at_month(GanzhiYearMonth.from_dizhi(2008, Dizhi.丑)) is None
+  assert db._dayun_at_month(GanzhiYearMonth.from_dizhi(2009, Dizhi.寅)) == Ganzhi.from_str('乙丑')
   assert db.xiaoyun(2009) == Ganzhi.from_str('乙亥')
   # The first-label floor does not propagate: the second Dayun boundary belongs to 2018.
   assert db.dayun(2018) == Ganzhi.from_str('甲子')

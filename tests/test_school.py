@@ -10,13 +10,12 @@ from datetime import datetime
 from enum import Enum
 from importlib.util import resolve_name
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from bazi.calendar import CalendarBackend
 from bazi.bazi import Bazi, BaziGender
-from bazi.bazi_chart import BaziChart, BaziJson
+from bazi.bazi_chart import BaziChart
 from bazi.rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from bazi.utils import dizhi_utils
 from bazi.school import (
@@ -64,7 +63,7 @@ def test_config_repr_keeps_defaults_values() -> None:
   assert config == BaziConfig(school=BaziSchool.mingli_tanyuan())
   assert hash(config) == hash(BaziConfig(school=BaziSchool.mingli_tanyuan()))
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', config))
-  assert BaziChart.from_json(chart.json).json == chart.json
+  assert BaziChart(chart.bazi).bazi == chart.bazi
 
 
 def test_configuration_repr_field_contract() -> None:
@@ -114,9 +113,8 @@ def test_kongwang_is_appended_and_in_identity() -> None:
   )) for anchor in (Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY))
   assert len({chart.bazi for chart in charts}) == 3
   for chart in charts:
-    restored = BaziChart.from_json(chart.json)
-    assert restored.bazi == chart.bazi and hash(restored.bazi) == hash(chart.bazi)
-    assert restored.json == chart.json
+    copied = BaziChart(chart.bazi)
+    assert copied.bazi == chart.bazi and hash(copied.bazi) == hash(chart.bazi)
     assert chart.bazi.pillars == charts[0].bazi.pillars
     assert chart.nayin == charts[0].nayin and chart.shishen == charts[0].shishen and chart.traits == charts[0].traits
 
@@ -295,22 +293,6 @@ def test_mingli_tanyuan_is_the_book_profile() -> None:
   assert BaziSchool.mingli_tanyuan() == preset
 
 
-def test_every_school_field_reaches_json() -> None:
-  # Mechanical binding: every `BaziSchool` field must land in JSON under its own name --
-  # adding a knob without serializing it fails here (issue #69).
-  # 机械绑定：每个字段都要以同名键进 JSON，加字段不序列化会在这里响。
-  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  declared: list[str] = [f.name for f in dataclasses.fields(BaziSchool)]
-  assert list(chart.json['school']) == declared
-  # The declared contract must track the fields too -- keys, order, and value type. Both the
-  # serialization and `BaziSchool.from_json` derive from `fields()` behind a `cast`, so nothing
-  # static binds either of them to `BaziJson.School` any more (issue #172).
-  # 声明的契约也要跟着字段走：键、顺序、值类型。序列化与 `from_json` 都经 `cast` 推导，
-  # 静态检查不再把任何一侧钉在 `BaziJson.School` 上。
-  assert list(BaziJson.School.__annotations__) == declared
-  assert set(BaziJson.School.__annotations__.values()) == {str}
-
-
 def test_config_is_frozen() -> None:
   config: BaziConfig = BaziConfig()
   with pytest.raises(FrozenInstanceError):
@@ -463,7 +445,7 @@ def test_school_relation_definitions() -> None:
     'male',
     BaziConfig(school=school),
   ))
-  assert BaziSchool.from_json(dict(chart.json['school'])).relation_definitions == expected
+  assert chart.bazi.config.school.relation_definitions == expected
 
 
 def test_definition_dependency_direction() -> None:
@@ -565,10 +547,9 @@ def test_identity_includes_dayun_year_rule() -> None:
   assert len({projected, fixed}) == 2
 
 
-def test_json_roundtrip_default_school() -> None:
+def test_literal_default_school() -> None:
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
-  assert j['school'] == {
+  assert {f.name: getattr(chart.bazi.config.school, f.name).name for f in dataclasses.fields(BaziSchool)} == {
     'day_rollover': 'WAN_ZISHI', 'hongyan_anchor': 'DAY',
     'yangren_def': 'ZIPING',
     'anhe_def': 'NORMAL_EXTENDED', 'xing_def': 'LOOSE', 'gong_def': 'SAME_STEM_NARROW',
@@ -586,24 +567,8 @@ def test_json_roundtrip_default_school() -> None:
     'kongwang_anchor': 'DAY',
   }
 
-  rebuilt: BaziChart = BaziChart(
-    Bazi.create(datetime.fromisoformat(j['birth_time']), j['gender'],
-                BaziConfig.from_values(
-                  precision=j['precision'],
-                  backend=j['backend'],
-                  dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool.from_json(j['school']),
-                ))
-  )
-  assert rebuilt.json == j
-  assert rebuilt.bazi == chart.bazi
-
-
-def test_json_roundtrip_non_default_school() -> None:
-  # A non-default school must survive the JSON roundtrip losslessly: rebuilding
-  # from the json alone reproduces the same chart, not a silent default-school one.
-  # Every field takes a non-default value, so each one proves it roundtrips (issue #69).
-  # 每个字段都取非默认值，逐项证明能往返。
+def test_literal_non_default_school() -> None:
+  # Every field takes a non-default value; the chart must retain the complete school (issue #69).
   school: BaziSchool = BaziSchool(
     day_rollover=DayRollover.ZIZHENG,
     hongyan_anchor=Anchor.YEAR,
@@ -632,8 +597,7 @@ def test_json_roundtrip_non_default_school() -> None:
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
-  j = cast(BaziJson.DefaultBaziChartJsonDict, chart.json)
-  assert j['school'] == {
+  assert {f.name: getattr(chart.bazi.config.school, f.name).name for f in dataclasses.fields(BaziSchool)} == {
     'day_rollover': 'ZIZHENG', 'hongyan_anchor': 'YEAR',
     'yangren_def': 'DIWANG',
     'anhe_def': 'MANGPAI', 'xing_def': 'STRICT', 'gong_def': 'LU_NARROW',
@@ -651,58 +615,5 @@ def test_json_roundtrip_non_default_school() -> None:
     'kongwang_anchor': 'YEAR',
   }
 
-  rebuilt: BaziChart = BaziChart(
-    Bazi.create(datetime.fromisoformat(j['birth_time']), j['gender'],
-                BaziConfig.from_values(
-                  precision=j['precision'],
-                  backend=j['backend'],
-                  dayun_year_rule=j['dayun_year_rule'],
-                  school=BaziSchool.from_json(j['school']),
-                ))
-  )
-  assert rebuilt.json == j
-  assert rebuilt.bazi == chart.bazi
-  assert rebuilt.bazi.config.school == school
-
-
-def test_from_json_ignores_unknown_keys() -> None:
-  # The reader takes the fields it declares; a key naming none of them is not an error.
-  # The roundtrip itself is pinned by `test_json_roundtrip_default_school` and
-  # `test_json_roundtrip_non_default_school`, which both rebuild through `from_json`.
-  # 读法只取自己声明的字段，不对应字段的键不算错；往返本身由两条 roundtrip 测试钉住。
-  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  serialized: dict[str, object] = dict(chart.json['school'])
-  serialized['not_a_school_field'] = 'WHATEVER'
-  assert BaziSchool.from_json(serialized) == chart.bazi.config.school
-
-
-def test_from_json_takes_the_profile_whole() -> None:
-  # Mechanical binding: dropping any one field, or spelling any one member wrong, is
-  # rejected -- a partial profile never silently falls back to defaults (issue #172).
-  # 机械绑定：少任何一个字段、写错任何一个成员名都要被拒，残缺档案不许静默取默认。
-  chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
-  serialized: dict[str, object] = dict(chart.json['school'])
-
-  for f in dataclasses.fields(BaziSchool):
-    with pytest.raises(ValueError):
-      BaziSchool.from_json({k: v for k, v in serialized.items() if k != f.name})
-    with pytest.raises(ValueError):
-      BaziSchool.from_json({**serialized, f.name: 'NOT_A_MEMBER'})
-    with pytest.raises(TypeError):
-      BaziSchool.from_json({**serialized, f.name: 0})
-
-
-class _DuckMapping:
-  '''Looks up like a mapping without being one / 长得像映射但不是 `Mapping`。'''
-  def __contains__(self, key: object) -> bool:
-    return True
-  def __getitem__(self, key: str) -> str:
-    return 'WAN_ZISHI'
-
-
-def test_from_json_rejects_a_non_mapping() -> None:
-  # A duck-typed lookalike, not a list: with the gate gone a list still raises `TypeError`
-  # from its own indexing, so that input cannot tell the gate apart from its absence.
-  # 用鸭子冒牌货而非 list：删掉闸之后 list 照样因下标类型抛 `TypeError`，分不出闸在不在。
-  with pytest.raises(TypeError):
-    BaziSchool.from_json(_DuckMapping()) # type: ignore
+  assert chart.bazi.config.school == school
+  assert chart.bazi != Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE)

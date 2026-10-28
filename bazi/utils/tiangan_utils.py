@@ -28,6 +28,13 @@ class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
   '''天干关系到满足它的天干组合的冻结映射。'''
 
 
+def _validate_pair(tg1: Tiangan, tg2: Tiangan) -> None:
+  '''按参数顺序校验两个天干，先报告第一个错型参数。'''
+  for tg in (tg1, tg2):
+    if not isinstance(tg, Tiangan):
+      raise TypeError(f'Expected Tiangan, got {type(tg)}')
+
+
 def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   '''
   按无向相合关系查对应五行。
@@ -48,10 +55,7 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
     - return: Wuxing("土")
   '''
 
-  if not isinstance(tg1, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
-  if not isinstance(tg2, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
+  _validate_pair(tg1, tg2)
 
   fs: TianganCombo = TianganCombo((tg1, tg2))
   if fs in TianganRules.TIANGAN_HE:
@@ -79,10 +83,7 @@ def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: True
   '''
 
-  if not isinstance(tg1, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
-  if not isinstance(tg2, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
+  _validate_pair(tg1, tg2)
   return TianganCombo((tg1, tg2)) in TianganRules.TIANGAN_CHONG
 
 
@@ -106,10 +107,7 @@ def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: False
   '''
 
-  if not isinstance(tg1, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
-  if not isinstance(tg2, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
+  _validate_pair(tg1, tg2)
   return (tg1, tg2) in TianganRules.TIANGAN_SHENG
 
 
@@ -133,10 +131,7 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
     - return: True
   '''
 
-  if not isinstance(tg1, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg1)}')
-  if not isinstance(tg2, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(tg2)}')
+  _validate_pair(tg1, tg2)
   return (tg1, tg2) in TianganRules.TIANGAN_KE
 
 

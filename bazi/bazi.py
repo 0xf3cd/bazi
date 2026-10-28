@@ -4,15 +4,13 @@
 
 Bazi.create 创建八字，BaziGender 表示性别；地点输入的时间事实由 LocationTime 保存。'''
 
-import math
 import random
 from random import Random
 
 from enum import Enum
 from dataclasses import dataclass
-from collections.abc import Mapping
 from datetime import UTC, date, time, datetime, timedelta, timezone, tzinfo
-from typing import Final, NamedTuple, TypedDict
+from typing import Final, NamedTuple
 
 from .common import frozendict
 from .defines import Tiangan, Dizhi, Ganzhi
@@ -143,7 +141,7 @@ class Bazi:
     - 不传 `longitude` 时，`birth_time` 必须是不带时区的钟时标签。年月与东八区节气表按精度比较，
       日柱、时柱按输入钟读取，不自动换算时区；任意海外当地标签不能当作东八区输入。
     - 传入 `longitude` 时，`birth_time` 必须带时区；时区、夏令时折叠与历史偏移由调用方负责，
-      换算、身份与 JSON 保留秒及微秒，HOUR/MINUTE 归属按截断后的真太阳时比较。
+      换算与身份保留秒及微秒，HOUR/MINUTE 归属按截断后的真太阳时比较。
     
     Args:
     - birth_time: (datetime) 默认路径的无时区钟时标签；给定 `longitude` 时为带时区的绝对瞬间。
@@ -422,7 +420,7 @@ class Bazi:
 
   @property
   def solar_datetime(self) -> datetime:
-    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此输入钟时标签参与身份、JSON 及历法坐标；
+    '''出生时刻截断到最细排盘精度（分钟）。默认盘以此输入钟时标签参与身份及历法坐标；
     地点盘显示由完整输入精度换算得到的真太阳时。'''
     return self._clock_datetime.replace(second=0, microsecond=0)
 
@@ -577,17 +575,8 @@ class Bazi:
     return f'Bazi({", ".join(parts)})'
 
 
-class LocationTimeJson(TypedDict):
-  '''规范地点输入及未截断的计算真太阳时。'''
-  time_basis: str
-  civil_time: str
-  canonical_instant: str
-  longitude: float
-  apparent_time: str
-
-
 class LocationTime(NamedTuple):
-  '''模型返回的不可变地点时间事实；时间值不经 JSON 解析或重复换算。
+  '''模型返回的不可变地点时间事实；时间值不重复换算。
 
   `canonical_instant` 带 UTC 时区，`civil_time` 带固定出生偏移，
   `apparent_time` 为未截断的 naive 真太阳钟。直接构造此值不验证排盘输入。
@@ -596,55 +585,5 @@ class LocationTime(NamedTuple):
   civil_time: datetime
   longitude: float
   apparent_time: datetime
-
-  @property
-  def json(self) -> LocationTimeJson:
-    '''供命盘与情境记录共用的 JSON 时间字段；每次返回独立字典。'''
-    return {
-      'time_basis': 'apparent_solar',
-      'civil_time': self.civil_time.isoformat(),
-      'canonical_instant': self.canonical_instant.isoformat(),
-      'longitude': self.longitude,
-      'apparent_time': self.apparent_time.isoformat(),
-    }
-
-
-def _parse_location(data: Mapping[str, object]) -> tuple[datetime, float]:
-  '''验证规范拼写及民用／UTC 表示指向同一瞬间。'''
-  basis = data['time_basis']
-  if type(basis) is not str:
-    raise TypeError(f'Expected str at time_basis, got {type(basis)}')
-  if basis != 'apparent_solar':
-    raise ValueError(f'Unsupported time_basis: {basis}')
-
-  moments: dict[str, datetime] = {}
-  for key in ('civil_time', 'canonical_instant', 'apparent_time'):
-    value = data[key]
-    if type(value) is not str:
-      raise TypeError(f'Expected str at {key}, got {type(value)}')
-    moment = datetime.fromisoformat(value)
-    if moment.isoformat() != value:
-      raise ValueError(f'Expected canonical datetime at {key}')
-    moments[key] = moment
-
-  civil = moments['civil_time']
-  if civil.utcoffset() is None:
-    raise ValueError('Expected fixed-offset aware civil_time')
-  instant = moments['canonical_instant']
-  if instant.utcoffset() is None or instant.utcoffset() != UTC.utcoffset(instant):
-    raise ValueError('Expected canonical UTC instant')
-  if instant != civil:
-    raise ValueError('Inconsistent civil_time and canonical_instant')
-  if moments['apparent_time'].tzinfo is not None:
-    raise ValueError('Expected naive apparent_time')
-
-  longitude = data['longitude']
-  if type(longitude) is not float:
-    raise TypeError(f'Expected float at longitude, got {type(longitude)}')
-  if (not math.isfinite(longitude) or not -180 <= longitude < 180
-      or (longitude == 0 and math.copysign(1.0, longitude) < 0)):
-    raise ValueError(f'Expected canonical longitude in [-180, 180), got {longitude}')
-
-  return civil, longitude
 
 八字 = Bazi

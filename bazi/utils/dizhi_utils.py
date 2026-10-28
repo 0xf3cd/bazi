@@ -75,6 +75,12 @@ class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
     return DizhiRelationDiscovery(projected)
 
 
+def _validate_dizhis(values: Sequence[Dizhi]) -> None:
+  '''校验参与地支的类型；错型时报告整组参数的类型。'''
+  if not all(isinstance(dz, Dizhi) for dz in values):
+    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in values]}')
+
+
 def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   '''
   检查输入的地支是否构成三会关系。
@@ -94,8 +100,7 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
     - return: None
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2, dz3)]}')
+  _validate_dizhis((dz1, dz2, dz3))
   combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
   return DizhiRules.DIZHI_SANHUI.get(combo, None)
 
@@ -118,8 +123,7 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
     - return: None
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return DizhiRules.DIZHI_LIUHE.get(combo, None)
 
@@ -147,8 +151,7 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: DizhiRules.AnheDef = DizhiRules.
     - return: False
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   if not isinstance(definition, DizhiRules.AnheDef):
     raise TypeError(f'Expected AnheDef, got {type(definition)}')
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
@@ -173,8 +176,7 @@ def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: True
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return combo in DizhiRules.DIZHI_TONGHE
 
@@ -197,8 +199,7 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: False
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return combo in DizhiRules.DIZHI_TONGLUHE
 
@@ -221,8 +222,7 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
     - return: None
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2, dz3)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2, dz3)]}')
+  _validate_dizhis((dz1, dz2, dz3))
   combo: DizhiCombo = DizhiCombo((dz1, dz2, dz3))
   return DizhiRules.DIZHI_SANHE.get(combo, None)
 
@@ -246,8 +246,7 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
     - return: None
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   combo: DizhiCombo = DizhiCombo((dz1, dz2))
   return DizhiRules.DIZHI_BANHE.get(combo, None)
 
@@ -275,8 +274,8 @@ def gonghe(dz1: Dizhi, dz2: Dizhi, *,
   - gonghe(Dizhi.申, Dizhi.子, definition=DizhiRules.GongheDef.WIDE)
     - return: Dizhi.辰
   '''
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+
+  _validate_dizhis((dz1, dz2))
   if not isinstance(definition, DizhiRules.GongheDef):
     raise TypeError(f'Expected GongheDef, got {type(definition)}')
   return DizhiRules.DIZHI_GONGHE[definition].get(DizhiCombo((dz1, dz2)), None)
@@ -300,8 +299,8 @@ def gonghui(dz1: Dizhi, dz2: Dizhi) -> Dizhi | None:
   - gonghui(Dizhi.寅, Dizhi.卯)
     - return: None
   '''
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+
+  _validate_dizhis((dz1, dz2))
   return DizhiRules.DIZHI_GONGHUI.get(DizhiCombo((dz1, dz2)), None)
 
 
@@ -340,8 +339,7 @@ def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOO
     - raise: ValueError
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in dizhis):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
+  _validate_dizhis(dizhis)
   if len(dizhis) > 3:
     raise ValueError(f'Expected at most 3 Dizhis, got {len(dizhis)}')
   if not isinstance(definition, DizhiRules.XingDef):
@@ -370,8 +368,7 @@ def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: False
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_CHONG
 
 
@@ -396,8 +393,7 @@ def po(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: True
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_PO
 
 
@@ -422,8 +418,7 @@ def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: True
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   return DizhiCombo((dz1, dz2)) in DizhiRules.DIZHI_HAI
 
 
@@ -451,8 +446,7 @@ def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: True
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   return (dz1, dz2) in DizhiRules.DIZHI_SHENG
 
 
@@ -480,8 +474,7 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
     - return: False
   '''
 
-  if not all(isinstance(dz, Dizhi) for dz in (dz1, dz2)):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in (dz1, dz2)]}')
+  _validate_dizhis((dz1, dz2))
   return (dz1, dz2) in DizhiRules.DIZHI_KE
 
 
@@ -550,8 +543,7 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
     raise TypeError(f'Expected DizhiRelation, got {type(relation)}')
   if not isinstance(dizhis, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(dizhis)}')
-  if not all(isinstance(dz, Dizhi) for dz in dizhis):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
+  _validate_dizhis(dizhis)
   if not isinstance(definitions, DizhiRelationDefinitions):
     raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 
@@ -599,8 +591,7 @@ def discover(dizhis: Sequence[Dizhi], *,
 
   if not isinstance(dizhis, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(dizhis)}')
-  if not all(isinstance(dz, Dizhi) for dz in dizhis):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis]}')
+  _validate_dizhis(dizhis)
   if not isinstance(definitions, DizhiRelationDefinitions):
     raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
   return DizhiRelationDiscovery({
@@ -785,6 +776,7 @@ def discover_mutual_ganzhis(ganzhis1: Sequence[Ganzhi], ganzhis2: Sequence[Ganzh
 
   Return: (GanzhiRelationDiscovery) 参与者横跨两侧的具体出现组合。
   '''
+
   if not isinstance(ganzhis1, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(ganzhis1)}')
   if not isinstance(ganzhis2, Sequence):
@@ -865,10 +857,8 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
     raise TypeError(f'Expected a Sequence, got {type(dizhis1)}')
   if not isinstance(dizhis2, Sequence):
     raise TypeError(f'Expected a Sequence, got {type(dizhis2)}')
-  if not all(isinstance(dz, Dizhi) for dz in dizhis1):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis1]}')
-  if not all(isinstance(dz, Dizhi) for dz in dizhis2):
-    raise TypeError(f'Expected all Dizhi, got {[type(dz) for dz in dizhis2]}')
+  _validate_dizhis(dizhis1)
+  _validate_dizhis(dizhis2)
   if not isinstance(definitions, DizhiRelationDefinitions):
     raise TypeError(f'Expected DizhiRelationDefinitions, got {type(definitions)}')
 

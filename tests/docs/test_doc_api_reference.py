@@ -18,8 +18,10 @@ from api_contract import DECLARED_MEMBERS
 from run_doc_checks import runtime_members
 
 
-@pytest.mark.parametrize('base', ['LunarYearInfo', 'NoSuchBase'])
+@pytest.mark.parametrize('base', ['RepeatedBase', 'NoSuchBase'])
 def test_ambiguous_or_missing_bases_fail(monkeypatch, base):
+  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, 'fixture.first.RepeatedBase', '')
+  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, 'fixture.second.RepeatedBase', '')
   monkeypatch.setitem(api_reference.BASES, 'bazi.common.frozendict', (base,))
   with pytest.raises(ValueError, match='exactly one contract base class'):
     api_reference.inherited_members('bazi.common.frozendict')
@@ -32,10 +34,10 @@ def test_external_bases_need_the_allowlist(monkeypatch):
 
 
 def test_oracle_ignores_typeddict_bases(monkeypatch):
-  expected = runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict')
-  monkeypatch.setitem(api_reference.BASES, 'bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict', ('TypedDict',))
-  assert api_reference.inherited_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') != expected
-  assert runtime_members('bazi.bazi_chart.BaziJson.DefaultBaziChartJsonDict') == expected
+  expected = runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis')
+  monkeypatch.setitem(api_reference.BASES, 'bazi.analyzer.relationship.AtBirthShenshaAnalysis', ('TypedDict',))
+  assert api_reference.inherited_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') != expected
+  assert runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') == expected
 
 
 def test_oracle_ignores_mro_base_table(monkeypatch):

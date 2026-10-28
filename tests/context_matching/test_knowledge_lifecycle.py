@@ -7,12 +7,13 @@ from typing import Any
 
 import pytest
 
-from bazi.context_matching import ContextResult, EntryMatch
+from bazi.context_matching import EntryMatch
 from bazi.knowledge import (
-  KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription,
+  DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeContext, KnowledgeSource, KnowledgeEntry, KnowledgeRole, KnowledgeRelation, LegacyDescription,
 )
 
-from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, match
+from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, match, load_knowledge
+from matching_samples import premise_entries
 
 
 def test_legacy_oracle_matches_frozen_hash() -> None:
@@ -32,11 +33,11 @@ def test_corpus_organizes_reference_entries() -> None:
       assert entry.applicability == 'described' and entry.sources == ('editorial',)
       assert entry.output == 'reference_only' and entry.viewpoint == '仓内原作'
       assert all(limit in knowledge.render(entry) for limit in knowledge.contexts[context_id].limits)
-    assert all(m.status == 'SATISFIED' for m in match(criterion_id=criterion).entries)
+    assert all(m.status == 'SATISFIED' for m in premise_entries(match(criterion_id=criterion)))
 
 
-def test_shared_lifecycle_and_record_recovery(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-  data = json.loads(KnowledgeBase.load().export_json())
+def test_shared_lifecycle_keeps_loaded_values(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   source = tmp_path / 'knowledge.json'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   knowledge = KnowledgeBase.load(source)
@@ -48,34 +49,26 @@ def test_shared_lifecycle_and_record_recovery(monkeypatch: pytest.MonkeyPatch, t
     count += 1
     original_init(self, *args, **kwargs)
 
-  def forbidden(*args: Any, **kwargs: Any) -> Any:
-    raise AssertionError('Unexpected whole-corpus JSON round trip')
-
   monkeypatch.setattr(KnowledgeBase, '__init__', counted)
-  monkeypatch.setattr(KnowledgeBase, 'from_json', forbidden)
-  monkeypatch.setattr(KnowledgeBase, 'export_json', forbidden)
   results = tuple(match(day, knowledge=knowledge) for day in (1, 3, 5))
   for result in results:
     assert result.knowledge is knowledge
     rendered = result.render()
     assert result.render() == rendered
-    assert json.loads(result.export_json())['knowledge'] == data
   assert count == 0
 
   result = results[1]
-  rendered, exported = result.render(), result.export_json()
+  rendered, fingerprint = result.render(), hash(result)
   changed = json.loads(json.dumps(data))
   next(entry for entry in changed['entries'] if entry['claim_id'] == LEGAL[0])['text'] = 'External source changed.'
   source.write_text(json.dumps(changed, ensure_ascii=False), encoding='utf-8')
-  assert result.render() == rendered and result.export_json() == exported
+  assert result.render() == rendered and hash(result) == fingerprint
   source.unlink()
-  assert result.render() == rendered and result.export_json() == exported
-  restored = ContextResult.from_json(exported)
-  assert count == 1
-  assert restored.knowledge is not knowledge and restored.knowledge == knowledge
-  assert restored == result and hash(restored) == hash(result)
-  assert len({result, restored}) == 1 and {result: 'record'}[restored] == 'record'
-  assert restored.render() == rendered and restored.export_json() == exported and count == 1
+  assert result.render() == rendered and hash(result) == fingerprint and count == 0
+  equal = match(3, knowledge=knowledge)
+  assert equal == result and hash(equal) == hash(result)
+  assert len({result, equal}) == 1 and {result: 'value'}[equal] == 'value'
+  assert equal.render() == rendered and count == 0
 
 
 def test_default_knowledge_loads_independently(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -95,21 +88,21 @@ def test_default_knowledge_loads_independently(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_reload_snapshot_after_source_update(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-  data = json.loads(KnowledgeBase.load().export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   source = tmp_path / 'knowledge.json'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   monkeypatch.setattr('bazi.knowledge.DEFAULT_SOURCE_PATH', source)
   shared = KnowledgeBase.load()
   original_text = shared.entry(LEGAL[0]).text
   original_results = (match(), match(knowledge=shared))
-  snapshots = tuple((result, result.render(), result.export_json()) for result in original_results)
+  snapshots = tuple((result, result.render(), hash(result)) for result in original_results)
 
   next(entry for entry in data['entries'] if entry['claim_id'] == LEGAL[0])['text'] = 'Updated reference text.'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   default = match()
   assert default.knowledge.entry(LEGAL[0]).text == 'Updated reference text.'
   assert default.criterion.status == 'SATISFIED'
-  assert default.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
+  assert premise_entries(default)[0] == EntryMatch(LEGAL[0], 'binding_unrecognized')
   assert default.knowledge.entry(LEGAL[0]).output == 'reference_only'
 
   still_shared = match(knowledge=shared)
@@ -118,20 +111,19 @@ def test_reload_snapshot_after_source_update(monkeypatch: pytest.MonkeyPatch, tm
   reloaded = KnowledgeBase.load()
   assert match(knowledge=reloaded) == default
   assert reloaded is not shared
-  for result, rendered, exported in snapshots:
+  for result, rendered, fingerprint in snapshots:
     assert result.knowledge.entry(LEGAL[0]).text == original_text
-    assert result.render() == rendered and result.export_json() == exported
-    assert ContextResult.from_json(exported) == result
+    assert result.render() == rendered and hash(result) == fingerprint
 
 
 @pytest.mark.parametrize('missing', [False, True])
 def test_source_errors_keep_shared_results(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, missing: bool) -> None:
   source = tmp_path / 'knowledge.json'
-  source.write_text(KnowledgeBase.load().export_json(), encoding='utf-8')
+  source.write_text(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'), encoding='utf-8')
   monkeypatch.setattr('bazi.knowledge.DEFAULT_SOURCE_PATH', source)
   shared = KnowledgeBase.load()
   result = match()
-  rendered, exported = result.render(), result.export_json()
+  rendered, fingerprint = result.render(), hash(result)
   if missing:
     source.unlink()
   else:
@@ -139,8 +131,7 @@ def test_source_errors_keep_shared_results(monkeypatch: pytest.MonkeyPatch, tmp_
   with pytest.raises(FileNotFoundError if missing else json.JSONDecodeError):
     match()
   assert match(knowledge=shared) == result
-  assert result.render() == rendered and result.export_json() == exported
-  assert ContextResult.from_json(exported) == result
+  assert result.render() == rendered and hash(result) == fingerprint
 
 
 def test_value_fields_participate_in_comparison() -> None:
@@ -149,32 +140,32 @@ def test_value_fields_participate_in_comparison() -> None:
 
 
 @pytest.mark.parametrize('registry', ['objects', 'contexts', 'sources', 'entries'])
-def test_record_equality_keeps_content_order(registry: str) -> None:
+def test_value_equality_keeps_content_order(registry: str, tmp_path: Path) -> None:
   knowledge = KnowledgeBase.load()
   result = match(knowledge=knowledge)
-  data = json.loads(knowledge.export_json())
+  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   data[registry].reverse()
-  reordered = KnowledgeBase.from_json(json.dumps(data, ensure_ascii=False))
+  reordered = load_knowledge(data, tmp_path)
   other = match(knowledge=reordered)
   assert knowledge != reordered and reordered != knowledge and knowledge != object()
   assert result != other and len({result, other}) == 2
-  assert json.loads(other.export_json())['knowledge'][registry] == data[registry]
+  assert tuple(getattr(other.knowledge, registry)) == tuple(reversed(tuple(getattr(knowledge, registry))))
 
-  changed = json.loads(knowledge.export_json())
+  changed = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   changed['entries'][0]['text'] += ' Extra recorded text.'
-  changed_result = match(knowledge=KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False)))
+  changed_result = match(knowledge=load_knowledge(changed, tmp_path))
   assert changed_result != result and len({result, changed_result}) == 2
 
 
 @pytest.mark.parametrize('registry, field', [
   ('objects', 'name'), ('contexts', 'label'), ('sources', 'excerpt'), ('entries', 'viewpoint'),
 ])
-def test_record_equality_keeps_nontext_fields(registry: str, field: str) -> None:
+def test_value_equality_keeps_nontext_fields(registry: str, field: str, tmp_path: Path) -> None:
   knowledge = KnowledgeBase.load()
   result = match(knowledge=knowledge)
-  changed = json.loads(knowledge.export_json())
+  changed = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   changed[registry][0][field] += ' changed'
-  other_knowledge = KnowledgeBase.from_json(json.dumps(changed, ensure_ascii=False))
+  other_knowledge = load_knowledge(changed, tmp_path)
   other = match(knowledge=other_knowledge)
   assert knowledge != other_knowledge and result != other
   assert len({result, other}) == 2

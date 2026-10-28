@@ -31,13 +31,21 @@ def project_gong(
 
 '''Operand type of `discoveries_equal`: either relation-discovery flavor.'''
 DiscoveryType = tiangan_utils.TianganRelationDiscovery | dizhi_utils.DizhiRelationDiscovery
+
+
 def discoveries_equal(discovery1: DiscoveryType, discovery2: DiscoveryType) -> bool:
   if type(discovery1) is not type(discovery2):
+    print(f'Different discovery types: {type(discovery1).__name__}, {type(discovery2).__name__}')
     return False
   if set(discovery1.keys()) != set(discovery2.keys()):
+    print(f'Left-only relations: {discovery1.keys() - discovery2.keys()}')
+    print(f'Right-only relations: {discovery2.keys() - discovery1.keys()}')
     return False
-  for key in discovery1:
-    if set(discovery1[key]) != set(discovery2[key]):  # type: ignore
+  for key, combos in discovery1.items():
+    left = set(combos)
+    right = set(discovery2[key])  # type: ignore
+    if left != right:
+      print(f'{key}: left-only combos={left - right}, right-only combos={right - left}')
       return False
   return True
 

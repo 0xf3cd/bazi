@@ -76,22 +76,19 @@ def test_runner_binds_consumers_to_seeded_chart(
   monkeypatch: pytest.MonkeyPatch, rng: random.Random, runner: str, sign: int,
 ) -> None:
   seed = sign * rng.getrandbits(64)
-  expected = BaziChart(Bazi.random(rng=random.Random(seed))).json
+  expected = Bazi.random(rng=random.Random(seed))
   print(f'runner={runner} seed={seed}')
   basic = Mock(wraps=run_demo.get_basic_info)
   monkeypatch.setattr(run_demo, 'get_basic_info', basic)
   observed: list[BaziChart] = []
   if runner == 'demo':
     transit = Mock(wraps=run_demo.get_transit_info)
-    printer = Mock(wraps=run_demo.pprint)
     monkeypatch.setattr(run_demo, 'get_transit_info', transit)
-    monkeypatch.setattr(run_demo, 'pprint', printer)
     run_demo.demo(seed)
     for call in transit.call_args_list:
       chart = call.args[0]
       assert isinstance(chart, BaziChart)
       observed.append(chart)
-    printer.assert_called_once_with(expected)
   else:
     analyzer_init = RelationshipAnalyzer.__init__
     transit_init = TransitChart.__init__
@@ -129,7 +126,7 @@ def test_runner_binds_consumers_to_seeded_chart(
     assert isinstance(chart, BaziChart)
     observed.append(chart)
   receivers = {id(chart): chart for chart in observed}
-  assert all(chart.json == expected for chart in receivers.values())
+  assert all(chart.bazi == expected for chart in receivers.values())
 
 
 @pytest.mark.parametrize('script,prefix', [
