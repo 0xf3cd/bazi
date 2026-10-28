@@ -7,7 +7,7 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import ContextProfile, criteria, evaluate_context
+from bazi.context_matching import NatalObservation, criteria, evaluate_context
 from run_interpreter import _command_parser, _subcommand_parsers
 
 from cli_runner import GUANSHA, BIRTH, run_cli
@@ -28,6 +28,10 @@ def test_match_with_only_an_id_describes_it(tmp_path: Path, criterion_id: str) -
   assert info.definition in result.stdout and f'match {criterion_id} --birth-time' in result.stdout
   assert all(scope in result.stdout for scope in info.scopes)
   assert all(f'--transit-entry {entry}' in result.stdout for entry in info.transit_entries)
+  if 'natal_and_liunian' in info.scopes:
+    assert '--observation-scope natal_and_liunian 还需要：--ganzhi-year' in result.stdout
+  if 'natal_and_transits' in info.scopes:
+    assert '--observation-scope natal_and_transits 还需要：--transit-entry 及其坐标（见下）、--transit-kinds' in result.stdout
   gate = info.required_gender
   assert (gate is not None) == ('性别门槛：' in result.stdout)
   assert gate is None or f'性别门槛：{gate.value}（--gender {gate}）' in result.stdout
@@ -87,7 +91,7 @@ def test_id_with_one_input_asks_for_the_rest(tmp_path: Path, dest: str, args: tu
 def test_match_new_form_equals_the_library(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal')
   expected = evaluate_context(
-    BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=GUANSHA, profile=ContextProfile('natal'),
+    BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=GUANSHA, observation=NatalObservation(),
   ).render()
   assert result.returncode == 0 and result.stdout == expected + '\n'
 

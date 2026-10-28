@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, BASES, INTERNAL_MODULES, STATIC_MODULES, REEXPORTS, ALIASES
+from api_contract import EXPLICIT_EXPORT_ADDITIONS
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,8 +98,8 @@ def _declared_all(nodes: list[ast.stmt]) -> set[str]:
 def _check_explicit_exports(source: str, module: str) -> None:
   if module in EXPLICIT_EXPORTS:
     actual = _declared_all(ast.parse(source).body)
-    expected = set(EXPLICIT_EXPORTS[module])
-    assert actual == expected, (module, 'Explicit exports differ from v2.0.0', actual ^ expected)
+    expected = set(EXPLICIT_EXPORTS[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
+    assert actual == expected, (module, 'Explicit exports differ from the approved surface', actual ^ expected)
 
 
 def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], dict[str, tuple[str, ...]]]:
@@ -155,7 +156,7 @@ def test_removed_persistence_is_absent() -> None:
   import bazi
   from bazi.bazi import Bazi, LocationTime
   from bazi.bazi_chart import BaziChart
-  from bazi.context_matching import ContextProfile, ContextResult, evaluate_context
+  from bazi.context_matching import NatalObservation, ContextResult, evaluate_context
   from bazi.knowledge import KnowledgeBase
   from bazi.school import BaziSchool
   from bazi.transits import TransitSet
@@ -179,11 +180,27 @@ def test_removed_persistence_is_absent() -> None:
   result = evaluate_context(
     chart,
     criterion_id='editorial.guansha_coexistence.v1',
-    profile=ContextProfile('natal'),
+    observation=NatalObservation(),
   )
   assert result.bazi == chart.bazi
   assert result.render()
   assert KnowledgeBase.load().entries
+
+
+def test_removed_structure_fields_are_absent() -> None:
+  import bazi.context_matching as matching
+  from bazi.analyzer.relationship import KongwangHit, StarAppearance
+  from bazi.context_matching import CriterionInfo, ContextResult, ChartOccurrence
+  for name in ('ContextProfile', 'RelationshipProfile', 'Pillar', 'ObservationScope', 'RelationshipScope'):
+    assert not hasattr(matching, name)
+  for owner, names in (
+    (ContextResult, ('profile', 'occurrences', 'relationship', 'related', 'entries')),
+    (CriterionInfo, ('profile_type', 'profile_kind')),
+    (KongwangHit, ('origin', 'pillar', 'kind')),
+    (StarAppearance, ('origin', 'pillar', 'kind')),
+    (ChartOccurrence, ('origin', 'pillar', 'kind', 'ganzhi_year')),
+  ):
+    assert all(not hasattr(owner, name) for name in names)
 
 
 def test_modules_and_candidates_classified() -> None:
@@ -214,7 +231,7 @@ def test_surface_resolves_without_heavy_loads(injection: str, rejected_name: str
 import importlib, inspect, json, sys
 from pathlib import Path
 sys.path.insert(0, 'tests')
-from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, STATIC_MODULES, ALIASES, REEXPORTS
+from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, STATIC_MODULES, ALIASES, REEXPORTS, EXPLICIT_EXPORT_ADDITIONS
 explicit_exports = json.loads(Path('tests/data/v200_explicit_exports.json').read_text(encoding='utf-8'))['explicit_exports']
 
 def guard(event, args):
@@ -237,7 +254,7 @@ for module, words in PUBLIC_NAMES.items():
   value = importlib.import_module(module)
   exported = set(getattr(value, '__all__', ()))
   if module in explicit_exports:
-    expected_exports = set(explicit_exports[module])
+    expected_exports = set(explicit_exports[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
     assert exported == expected_exports, (module, exported ^ expected_exports)
   assert exported <= set(words.split()), (module, exported - set(words.split()))
   own_definitions = {name for name, member in vars(value).items()

@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / 'docs/_ext'))
 from run_doc_checks import Page, check_related
 from knowledge_catalog import json_value
 from bazi.common import frozendict
+from bazi.context_matching import criteria
 from bazi.knowledge import KnowledgeBase
 
 
@@ -46,6 +47,21 @@ def test_catalog_values_have_explicit_json_shapes(value, expected):
 def test_unsupported_values_not_stringified():
   with pytest.raises(TypeError):
     json_value(object())
+
+
+def test_observation_metadata_serializes_as_names():
+  for info in criteria().values():
+    expected = (
+      ['bazi.context_matching.NatalObservation', 'bazi.context_matching.LiunianObservation']
+      if info.analysis_kind == 'context' else
+      ['bazi.context_matching.NatalObservation', 'bazi.context_matching.TransitObservation']
+    )
+    assert json_value(info.observation_types) == expected
+    assert json_value(info)['analysis_kind'] == info.analysis_kind
+    assert 'observation_types' not in json_value(info)
+    for name, member in vars(type(info)).items():
+      if isinstance(member, property):
+        json_value(getattr(info, name))
 
 
 @pytest.mark.parametrize('count, label, valid', [

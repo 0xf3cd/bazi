@@ -7,11 +7,11 @@ from typing import get_args
 
 import pytest
 
-from run_interpreter import _LIST_DIMENSIONS, _command_parser, _subcommand_parsers
+from run_interpreter import _LIST_DIMENSIONS, _COORDINATE_FLAGS, _command_parser, _subcommand_parsers
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.knowledge import DEFAULT_SOURCE_PATH, Applicability, KnowledgeBase
-from bazi.context_matching import ContextProfile, criteria, evaluate_context
+from bazi.context_matching import NatalObservation, LiunianObservation, criteria, evaluate_context
 
 from cli_runner import MATCH_ARGS, MATCH_BIRTH, run_cli, assert_cli_error
 
@@ -36,16 +36,21 @@ def test_cli_filters_match_library_directories() -> None:
   entries = tuple(matching['transit_entry'].choices or ())
   assert entries == ('at_year', 'at_month', 'at_date', 'at_moment')
   assert set(entries) == {entry for info in criteria().values() for entry in info.transit_entries}
+  actual_flags = {flag for action in matching.values() for flag in action.option_strings}
+  for info in criteria().values():
+    for names in info.transit_entries.values():
+      assert all(_COORDINATE_FLAGS[name] in actual_flags for name in names)
   assert not {'find_objects', 'search', 'criteria'} & (set(actions) | set(matching))
 
 
 def test_text_agrees_with_library(tmp_path: Path) -> None:
   result = run_cli(tmp_path, *MATCH_ARGS, '--include-reference-only')
   assert result.returncode == 0, result.stderr
-  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id='editorial.guansha_coexistence.v1', profile=ContextProfile('natal'), include_reference_only=True)
+  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation(), include_reference_only=True)
   assert result.stdout == expected.render() + '\n'
   assert '也许' in result.stdout and '仅供参考' in result.stdout
   assert '不确立古籍规则，也不作现实预测。' in result.stdout
+  assert any(line.startswith('证据：natal.月；') for line in result.stdout.splitlines())
 
 
 @pytest.mark.parametrize('scope,year,status', [
@@ -136,8 +141,8 @@ def test_condition_criteria_agree_with_library(
     *(('--include-reference-only',) if reference else ()),
   )
   assert result.returncode == 0, result.stderr
-  profile = ContextProfile('natal') if year is None else ContextProfile('natal_and_liunian', year)
-  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=criterion_id, profile=profile, include_reference_only=reference)
+  observation = NatalObservation() if year is None else LiunianObservation(year)
+  expected = evaluate_context(BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=criterion_id, observation=observation, include_reference_only=reference)
   assert expected.criterion.status == status
   assert result.stdout == expected.render() + '\n'
   assert f'事实判别：{status}' in result.stdout

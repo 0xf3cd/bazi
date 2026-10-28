@@ -15,7 +15,7 @@ from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
   HiddenTianganDict, BaziData, GanzhiData,
 )
-from .defines import Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi
+from .defines import Zhu, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi
 from .bazi import Bazi, BaziGender
 from .school import DayunYearRule, BaziConfig, PeiouXingDef, DEFAULT_CONFIG
 
@@ -235,7 +235,7 @@ class BaziChart:
     for idx, pillar_shishens in enumerate(shishens):
       print(pillar_shishens.dizhi) # 此柱地支十神
 
-      if idx == 2: # 跳过日主
+      if idx == Zhu.日.index: # 跳过日主
         assert pillar_shishens.tiangan is None
         continue
       print(pillar_shishens.tiangan) # 此柱天干十神
@@ -248,13 +248,13 @@ class BaziChart:
     for pillar_idx, (tg, dz) in enumerate(self._bazi.pillars):
       tg_shishen: Shishen | None = shishen(day_master, tg)
       # 日主的十神位置存为 None。
-      if pillar_idx == 2:
+      if pillar_idx == Zhu.日.index:
         tg_shishen = None
 
       dz_shishen: Shishen = shishen(day_master, dz)
       shishen_list.append(BaziChart.PillarShishens(tg_shishen, dz_shishen))
 
-    assert len(shishen_list) == 4
+    assert len(shishen_list) == len(Zhu)
     return BaziData(*shishen_list)
   
   @functools.cached_property

@@ -112,6 +112,7 @@ python first_chart.py
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
 当前未发布源码不提供命盘或判别结果（`ContextResult`）的保存恢复接口，知识 JSON 仅作当前编辑来源，不承诺历史结果恢复；升级前请读[未发布升级说明](#未发布升级说明)。
+未发布源码也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`，证据和参考条目分别从 `evidence`、`references` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
 详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；各版本变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 源码脚本

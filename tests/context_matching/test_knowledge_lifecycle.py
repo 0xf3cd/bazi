@@ -13,6 +13,7 @@ from bazi.knowledge import (
 )
 
 from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, match, load_knowledge
+from matching_samples import premise_entries
 
 
 def test_legacy_oracle_matches_frozen_hash() -> None:
@@ -32,7 +33,7 @@ def test_corpus_organizes_reference_entries() -> None:
       assert entry.applicability == 'described' and entry.sources == ('editorial',)
       assert entry.output == 'reference_only' and entry.viewpoint == '仓内原作'
       assert all(limit in knowledge.render(entry) for limit in knowledge.contexts[context_id].limits)
-    assert all(m.status == 'SATISFIED' for m in match(criterion_id=criterion).entries)
+    assert all(m.status == 'SATISFIED' for m in premise_entries(match(criterion_id=criterion)))
 
 
 def test_shared_lifecycle_keeps_loaded_values(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -101,7 +102,7 @@ def test_reload_snapshot_after_source_update(monkeypatch: pytest.MonkeyPatch, tm
   default = match()
   assert default.knowledge.entry(LEGAL[0]).text == 'Updated reference text.'
   assert default.criterion.status == 'SATISFIED'
-  assert default.entries[0] == EntryMatch(LEGAL[0], 'UNKNOWN', 'binding_unrecognized')
+  assert premise_entries(default)[0] == EntryMatch(LEGAL[0], 'binding_unrecognized')
   assert default.knowledge.entry(LEGAL[0]).output == 'reference_only'
 
   still_shared = match(knowledge=shared)

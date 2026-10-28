@@ -13,7 +13,7 @@ from typing import TypeVar
 from .bazi_chart import BaziChart, _check_chart
 from .calendar import calendar_utils_of
 from .data_types import HiddenTianganDict
-from .defines import Tiangan, Dizhi, Ganzhi
+from .defines import Zhu, Tiangan, Dizhi, Ganzhi
 from .utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
 
 
@@ -131,12 +131,13 @@ def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
   zhangsheng = list(chart.shier_zhangsheng)
 
   s += '     天干                  地支                  地支藏干\n'
-  for idx, head in enumerate(['年', '月', '日', '时']):
+  for head in Zhu:
+    idx = head.index
     tg = pillars[idx].tiangan
     dz = pillars[idx].dizhi
 
     tg_shishen: str = str(shishens[idx].tiangan)
-    if idx == 2:
+    if head is Zhu.日:
       tg_shishen = _day_master_mark(style)
 
     tg_str: str = f'{_glyph(style, tg)} [{_traits(tg)}] <{tg_shishen}>'

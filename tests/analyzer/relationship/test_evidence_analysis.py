@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from typing import Any
 
-from bazi.defines import Tiangan, Dizhi, Ganzhi, DizhiRelation, TianganRelation
+from bazi.defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, DizhiRelation, TianganRelation
 from bazi.utils import tiangan_utils, dizhi_utils
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
@@ -245,45 +245,43 @@ def layer_evidence() -> tuple[BaziChart, RelationshipEvidence]:
 
 def test_evidence_keeps_appearance_positions(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
   chart, evidence = layer_evidence
-  assert [(a.origin, a.pillar, a.kind, str(a.ganzhi), a.layer, a.stem) for a in evidence.appearances] == [
-    ('natal', 'month', None, '丁丑', 'hidden', Tiangan.辛),
-    ('natal', 'day', None, '丙戌', 'hidden', Tiangan.辛),
-    ('natal', 'hour', None, '辛卯', 'visible', Tiangan.辛),
+  assert [(a.position, str(a.ganzhi), a.layer, a.stem) for a in evidence.appearances] == [
+    (Zhu.月, '丁丑', TianganLayer.藏干, Tiangan.辛),
+    (Zhu.日, '丙戌', TianganLayer.藏干, Tiangan.辛),
+    (Zhu.时, '辛卯', TianganLayer.明干, Tiangan.辛),
   ]
   with_transits = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('辛亥')))
-  assert [(a.origin, a.kind, str(a.ganzhi), a.layer) for a in with_transits.appearances if a.origin == 'transit'] == [
-    ('transit', TransitKind.LIUNIAN, '辛亥', 'visible'),
+  assert [(a.position, str(a.ganzhi), a.layer) for a in with_transits.appearances if isinstance(a.position, TransitKind)] == [
+    (TransitKind.LIUNIAN, '辛亥', TianganLayer.明干),
   ]
   # Chosen liunian 辛酉: 酉 hides 辛, so visible and hidden layers coexist at one position, one appearance each, kind preserved.
   xinyou = spouse_evidence(chart, TransitSet(liunian=Ganzhi.from_str('辛酉')))
-  assert [(a.origin, a.kind, str(a.ganzhi), a.layer) for a in xinyou.appearances if a.origin == 'transit'] == [
-    ('transit', TransitKind.LIUNIAN, '辛酉', 'visible'),
-    ('transit', TransitKind.LIUNIAN, '辛酉', 'hidden'),
+  assert [(a.position, str(a.ganzhi), a.layer) for a in xinyou.appearances if isinstance(a.position, TransitKind)] == [
+    (TransitKind.LIUNIAN, '辛酉', TianganLayer.明干),
+    (TransitKind.LIUNIAN, '辛酉', TianganLayer.藏干),
   ]
 
 
 def test_star_appearance_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
   _, evidence = layer_evidence
-  # Construction checks follow the ChartOccurrence style: visible stem must equal the pillar stem, hidden stem must live in its branch, exclusive coordinates rejected.
+  # Visible stems must equal their pillar stem; hidden stems must live in its branch.
   appearance = evidence.appearances[2]
   assert appearance is not None
   value_changes: tuple[dict[str, Any], ...] = (
-    {'origin': 'other'}, {'layer': 'other'}, {'layer': 'hidden'}, {'pillar': 'liunian'},
-    {'kind': TransitKind.LIUNIAN}, {'stem': Tiangan.庚},
+    {'layer': TianganLayer.藏干}, {'stem': Tiangan.庚},
   )
   for change in value_changes:
     with pytest.raises(ValueError):
       replace(appearance, **change)
   type_changes: tuple[dict[str, Any], ...] = (
-    {'ganzhi': '辛卯'}, {'stem': '辛'}, {'kind': 'liunian'},
-    {'origin': 1}, {'layer': 1}, {'pillar': 1},
+    {'ganzhi': '辛卯'}, {'stem': '辛'}, {'position': 'liunian'},
+    {'position': 1}, {'layer': 1}, {'layer': '明干'},
   )
   for change in type_changes:
     with pytest.raises(TypeError):
       replace(appearance, **change)
-  assert StarAppearance('transit', None, TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
-  with pytest.raises(ValueError):
-    StarAppearance('transit', 'hour', TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), 'visible', Tiangan.辛)
+  assert StarAppearance(TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.辛)
+  assert all(not hasattr(appearance, name) for name in ('origin', 'pillar', 'kind'))
 
 
 def test_evidence_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
