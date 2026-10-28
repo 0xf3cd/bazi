@@ -296,8 +296,8 @@ def test_runtime_scope_is_reported(
 
 
 @pytest.mark.parametrize('version, missing', [
-  ((3, 11), None), ((3, 12), 'sphinx'), ((3, 14), 'myst_parser'),
-  ((3, 12), 'docutils'), ((3, 12), 'markdown_it'),
+  ((3, 11), None), ((3, 12), None), ((3, 13), 'sphinx'), ((3, 14), 'myst_parser'),
+  ((3, 13), 'docutils'), ((3, 13), 'markdown_it'),
 ])
 def test_doc_preflight_precedes_all_tasks(
   monkeypatch: pytest.MonkeyPatch, version: tuple[int, int], missing: str | None,
@@ -315,7 +315,7 @@ def test_doc_preflight_precedes_all_tasks(
   tasks.assert_not_called()
 
 
-@pytest.mark.parametrize('version', [(3, 12), (3, 14)])
+@pytest.mark.parametrize('version', [(3, 13), (3, 14)])
 def test_doc_preflight_accepts_complete_env(monkeypatch: pytest.MonkeyPatch, version: tuple[int, int]) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))

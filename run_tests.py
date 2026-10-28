@@ -64,7 +64,7 @@ argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
                        help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
 
 argparser.add_argument('-docs', '--docs', action='store_true', help='在仓外临时目录严格构建文档并执行示例与对账检查。')
-argparser.add_argument('--runtime-only', action='store_true', help='只检查运行时与非文档工具，不收集文档工具测试或构建文档；可用于 Python 3.11。')
+argparser.add_argument('--runtime-only', action='store_true', help='只检查运行时与非文档工具，不收集文档工具测试或构建文档；可用于 Python 3.11／3.12。')
 argparser.add_argument('-pkg', '--package', action='store_true', help='构建并检查隔离的 wheel 与 sdist 安装。')
 argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 一起使用，在此仓外目录保留验证后的工件对。')
 argparser.add_argument('--environment-report', type=Path, help='与工件保全一起使用，在此仓外新文件记录实际构建与验证环境。')
@@ -120,12 +120,12 @@ def mypy_targets(root: Path, only_runtime: bool) -> tuple[Path, ...]:
 
 def check_doc_environment() -> None:
   '''完整文档任务在启动任何子任务之前核对构建环境。'''
-  if sys.version_info >= (3, 12):
+  if sys.version_info >= (3, 13):
     missing = tuple(name for name in DOC_MODULES if find_spec(name) is None)
     if missing:
       argparser.error(f'Missing documentation dependencies: {", ".join(missing)}; install docs/requirements.txt or select --runtime-only')
   else:
-    argparser.error('Documentation checks require Python 3.12 or later; create a Python 3.12+ environment with docs/requirements.txt, or select --runtime-only')
+    argparser.error('Documentation checks require Python 3.13 or later; create a Python 3.13+ environment with docs/requirements.txt, or select --runtime-only')
 
 # 根目录 demo 行为由 -d 验证，不计入库覆盖率。
 DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')

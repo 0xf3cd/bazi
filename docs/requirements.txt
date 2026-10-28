@@ -1,5 +1,5 @@
-# Documentation builds/checks require Python >=3.12; bazi runtime remains >=3.11.
-Sphinx==9.1.0
+# Documentation builds/checks require Python >=3.13; bazi runtime remains >=3.11.
+Sphinx==9.2.0
 myst-parser==5.1.0
 docutils==0.22.4
 types-docutils==0.23.0.20260923

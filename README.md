@@ -218,9 +218,9 @@ python -m pip install --upgrade bazi
 
 ## 开发
 
-运行本库仍只需 Python 3.11+。**构建文档和运行完整开发检查需要 Python 3.12+**；这不会提高安装包的运行时要求。已经生成的 HTML 可直接用浏览器阅读，不需要 Python 或文档工具。
+运行本库仍只需 Python 3.11+。**构建文档和运行完整开发检查需要 Python 3.13+**；这不会提高安装包的运行时要求。已经生成的 HTML 可直接用浏览器阅读，不需要 Python 或文档工具。
 
-在独立的 Python 3.12+ 环境中安装开发与文档依赖，运行完整检查：
+在独立的 Python 3.13+ 环境中安装开发与文档依赖，运行完整检查：
 
 ```sh
 python -m pip install -r Requirements.txt
@@ -230,7 +230,7 @@ python run_tests.py -a -v
 ```
 
 完整检查包含所有测试及 100% 库覆盖率、ruff、mypy、示例、`python -O` 输入检查、安装工件验证和文档检查。
-在 Python 3.11 环境中，只安装 `Requirements.txt` 和 `celestial-calendar==0.6.1`，不安装 `docs/requirements.txt`，再运行 `python run_tests.py -a -v --runtime-only`。此命令保留全部库检查，只省去文档工具的类型检查、`tests/docs/` 测试及文档构建；它不能代替完整检查。
+在 Python 3.11／3.12 环境中，只安装 `Requirements.txt` 和 `celestial-calendar==0.6.1`，不安装 `docs/requirements.txt`，再运行 `python run_tests.py -a -v --runtime-only`。此命令保留全部库检查，只省去文档工具的类型检查、`tests/docs/` 测试及文档构建；它不能代替完整检查。
 裸 `python run_tests.py` 不含 `slow`／`hkodata` 和可选任务，不能替代完整检查。
 工件验证可能联网下载构建及类型工具；源码示例可能写入 `output_data/`。
 

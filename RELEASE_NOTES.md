@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- 文档工具升级至 Sphinx 9.2.0，构建文档和完整开发检查需要 Python 3.13+。bazi 库仍支持 Python 3.11+，没有新增运行时依赖；Python 3.11／3.12 可用 `run_tests.py -a -v --runtime-only` 检查运行时。
 - 勘正红艳三格来源差异、天乙阳贵／阴贵的表值与用法边界，以及华盖、文昌和查法锚的引文定位；规则表、算法、锚点和默认不变。
 - 知识来源用〔……〕区分不连续摘录，恢复所取刊页的句读；命宫中气来源据 NLC 刊页更新，并同步参考条目的引文与载体说明。条目引文的字面搜索随原字更新，不改变谱系、默认输出资格或绑定判据。
 - 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值，见 [未发布升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#未发布升级说明)。
