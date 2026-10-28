@@ -29,7 +29,7 @@ assert chart.bazi.day_master in Tiangan
   由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
-- 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。未发布结构调整新增的导出见下文。
+- 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。v2.4.0 结构调整新增的导出见下文。
 
 ### 字符串输入不等于枚举别名
 
@@ -169,7 +169,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 ## 结构接口迁移
 
-以下调整属于当前未发布源码；命理规则、默认流派、历法算法与时钟口径不变。不保留旧构造器或兼容属性。
+以下调整自 v2.4.0 起生效；命理规则、默认流派、历法算法与时钟口径不变。不保留旧构造器或兼容属性。
 
 ### 位置、观察与坐标
 
@@ -310,7 +310,7 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 
 ## 已删除的存取接口
 
-以下移除仅针对当前未发布源码，尚未进入已发布的 v2.3.0。
+以下接口自 v2.4.0 起移除。
 命盘／前提判别结果不再提供保存恢复，知识库不再导出快照；不保留兼容壳或替代记录格式。
 已删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
 `BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
