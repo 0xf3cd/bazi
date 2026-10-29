@@ -68,8 +68,8 @@ def test_female_premise_rejects_male_chart() -> None:
   female, male = match(criterion_id=FEMALE), match(gender='male', criterion_id=FEMALE)
   assert female.criterion.status == 'SATISFIED'
   assert male.criterion.status == 'NOT_SATISFIED' and male.criterion.reason == 'female_gate_false'
-  assert male.criterion.observations['observed_coexistence'] is True
-  assert male.criterion.observations['female'] is False
+  assert female.criterion.observations == {'observed_coexistence': True, 'female': True}
+  assert male.criterion.observations == {'observed_coexistence': True, 'female': False}
   assert female.reference_ids == male.reference_ids == RELATIONSHIP
   assert match(gender='male').criterion.status == 'SATISFIED'
 

@@ -19,7 +19,7 @@ from bazi.transits import TransitKind
 
 from matching_samples import (
   GUANSHA, FEMALE, LEGAL, RELATIONSHIP, DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS,
-  PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN,
+  PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, chart,
 )
 
 
@@ -65,6 +65,13 @@ EXPECTED = frozendict({
 def _check_directory(directory: frozendict[str, CriterionInfo]) -> None:
   assert tuple(directory) == tuple(EXPECTED)
   assert directory == EXPECTED
+
+
+@pytest.mark.parametrize('criterion_id', EXPECTED)
+def test_observed_keys_follow_directory(criterion_id: str) -> None:
+  info = lookup_criterion(criterion_id)
+  result = evaluate_context(chart(), criterion_id=criterion_id, observation=NatalObservation())
+  assert tuple(result.criterion.observations) == info.observation_keys == EXPECTED[criterion_id].observation_keys
 
 
 def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch) -> None:

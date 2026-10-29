@@ -107,7 +107,7 @@ ValueError Unknown object_id: tiangan.dingg
 
 ## 胎元与命宫：已实现取法和待核候选
 
-`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，全库默认输出仍为 19 条。
+`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均不默认展示（`show_by_default=False`），全库默认展示仍为 19 条。
 计算用法见 {doc}`integration`；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。
 
 ```{testcode} auxiliary-knowledge
@@ -444,7 +444,7 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 ('chart', 'criterion_id', 'observation') ('knowledge', 'include_reference_only')
 ```
 
-这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
+这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。关联按 ID；使用已注册 ID 的自定义库负责保持其领域含义。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
 
 `analysis_kind` 区分明藏干分类与婚恋结构分析；`observation_types` 和 `scopes` 由它派生，列出可接受的请求类和范围。
 `scope_inputs` 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。

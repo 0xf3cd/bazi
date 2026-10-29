@@ -685,7 +685,30 @@ def main() -> int:
   if positive.criterion.status != 'SATISFIED' or positive.reference_ids != ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble') or positive.bazi != chart.bazi:
     failures.append('Optimized context evaluation/input failed')
   condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', observation=NatalObservation(), include_reference_only=True)
+  range_evidence = spouse_evidence(chart, None)
+  obtained_evidence = replace(range_evidence, transits=liunian)
+  missing_scope = evaluate_context(
+    chart, criterion_id='editorial.spouse_star_tougan.v1',
+    observation=TransitObservation((TransitKind.LIUNIAN,)),
+  )
+  partial_scope = evaluate_context(
+    chart, criterion_id='editorial.spouse_star_tougan.v1',
+    observation=TransitObservation((TransitKind.XIAOYUN, TransitKind.DAYUN), YearCoordinate(2024)),
+  )
+  outside_evidence = replace(range_evidence, house_relations=dizhi_utils.GanzhiRelationDiscovery({
+    DizhiRelation.冲: (frozenset({dizhi_utils.GanzhiOccurrence(9, Ganzhi.from_str('甲子'))}),),
+  }))
   checks.extend([
+    ('ContextResult rejects natal obtained transits', ValueError,
+     partial(replace, relationship_result, evidence=obtained_evidence)),
+    ('ContextResult rejects obtained kinds outside request', ValueError,
+     partial(replace, missing_scope, observation=TransitObservation((TransitKind.DAYUN,)), evidence=obtained_evidence)),
+    ('ContextResult rejects complete scope without query', ValueError,
+     partial(replace, missing_scope, criterion=replace(missing_scope.criterion, reason='premise_satisfied'))),
+    ('ContextResult rejects complete scope with partial kinds', ValueError,
+     partial(replace, partial_scope, criterion=replace(partial_scope.criterion, reason='premise_satisfied'))),
+    ('ContextResult rejects evidence outside sequence', ValueError,
+     partial(replace, relationship_result, evidence=outside_evidence)),
     ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
     ('CriterionResult rejects entry-only reason', ValueError,
      partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'binding_unrecognized', frozendict({}))), # type: ignore[arg-type]

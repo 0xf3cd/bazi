@@ -5,7 +5,7 @@
 ### 知识关联与默认展示
 
 - `ContextResult.reference_ids: tuple[str, ...]` 替代 `references` 和条目包装类型。用 `knowledge.entry(id)` 查文字，用判据目录的 `entry_role` 区分完整前提与条件参考；判别状态只从 `criterion` 读取。删除 `MatchReason`、`EntryMatch`、`RelatedEntry`、`PremiseMatches`、`ConditionReferences` 与 `CriterionInfo.binding_effect`，不留兼容入口。
-- 参考按稳定 ID 关联，不再比较条目及来源的内容摘要。正常求值按判据声明序，保留缺条目、默认展示和性别筛选；编辑正文、引文或来源说明不会制造 UNKNOWN。自定义库负责保持同 ID 的领域含义。
+- 参考按稳定 ID 关联，不再比较条目及来源的内容摘要。正常求值按声明序返回现有且通过默认展示／性别筛选的条目 ID；编辑正文、引文或来源说明不会制造 UNKNOWN。自定义库负责保持同 ID 的领域含义。
 - `KnowledgeEntry.show_by_default: bool` 替代 `output`／`OutputPolicy`，`include_reference_only` 不变。编辑源升为整数 schema 3，条目键改为 `show_by_default`，值为 JSON boolean；旧 schema 1／2 直接拒绝，不自动迁移。312 条知识及 19 条默认展示、默认展示准入和命理规则不变。
 - 构造、`replace`、`asdict` 及位置式类模式须同步迁移；直接构造的参考 ID 保留顺序和重复。迁移方法与限制见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识结构开发版迁移)。
 

@@ -732,7 +732,7 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''检查选定范围是否满足已注册判据，返回判别、观察、证据及条目的匹配结果。
+  '''检查选定范围是否满足已注册判据，返回判别、观察、证据及参考条目 ID。
 
   Note:
   - `NatalObservation` 供所有判据共用；`LiunianObservation` 用于原局加单流年观察，
@@ -757,7 +757,7 @@ def evaluate_context(
   - reference_ids 按判据声明序返回，省略缺失或被展示／性别门槛过滤的条目；
     前提满足不授予默认展示资格。
 
-  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，
+  Return: (ContextResult) 判据结果、逐柱观察或结构证据、参考条目 ID，
   以及 `Bazi` 输入的独立副本和本次使用的 `KnowledgeBase` 对象。
   '''
   _check_chart(chart)
