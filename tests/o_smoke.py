@@ -704,7 +704,7 @@ def main() -> int:
     ('ContextResult rejects obtained kinds outside request', ValueError,
      partial(replace, missing_scope, observation=TransitObservation((TransitKind.DAYUN,)), evidence=obtained_evidence)),
     ('ContextResult rejects complete scope without query', ValueError,
-     partial(replace, missing_scope, criterion=replace(missing_scope.criterion, reason='premise_satisfied'))),
+     partial(replace, missing_scope, criterion=replace(missing_scope.criterion, reason='premise_satisfied'), evidence=obtained_evidence)),
     ('ContextResult rejects complete scope with partial kinds', ValueError,
      partial(replace, partial_scope, criterion=replace(partial_scope.criterion, reason='premise_satisfied'))),
     ('ContextResult rejects evidence outside sequence', ValueError,
