@@ -392,10 +392,11 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'from bazi.school import BaziConfig\n'
           'from bazi.common import frozendict\n'
           'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id\n'
-          'from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, EntryMatch, RelatedEntry, PremiseMatches, ConditionReferences, ContextResult, CriterionInfo, criterion, criteria, evaluate_context\n'
+          'from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
           'knowledge = KnowledgeBase.load()\n'
           'entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")\n'
+          'entry = entries[0]\ndisplay_flag: bool = entry.show_by_default\n'
           'objects: tuple[KnowledgeObject, ...] = knowledge.find_objects("丁")\n'
           'found: tuple[KnowledgeEntry, ...] = knowledge.search("丁", include_reference_only=True)\n'
           'topics: tuple[str, ...] = knowledge.filter_values("topic")\n'
@@ -410,7 +411,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", observation=NatalObservation())\n'
           'result_input: Bazi = matched.bazi\n'
           'copied: ContextResult = replace(matched, _bazi=result_input)\n'
-          'constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, references=matched.references, _bazi=result_input, knowledge=knowledge)\n'
+          'ids: tuple[str, ...] = matched.reference_ids\n'
+          'constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, reference_ids=ids, _bazi=result_input, knowledge=knowledge)\n'
           'year_request = YearCoordinate(ganzhi_year=2024)\n'
           'month_request = MonthCoordinate(ganzhi_year=2024, ganzhi_month=Dizhi.辰)\n'
           'date_request = DateCoordinate(datetime(2024, 4, 10).date())\n'
@@ -420,9 +422,6 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'position = LiunianPosition(2024)\n'
           'reason: CriterionReason = "premise_satisfied"\n'
           'verdict = CriterionResult(info.criterion_id, reason, frozendict({}))\n'
-          'match = EntryMatch("sample", reason)\n'
-          'premises = PremiseMatches((match,))\n'
-          'conditions = ConditionReferences(())\n'
           'target = Ganzhi.from_str("甲子")\n'
           'hit = KongwangHit(Zhu.月, target)\n'
           'anchor = KongwangResult(Zhu.日, target, ())\n'
@@ -455,14 +454,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'knowledge.sources["editorial"] = witness\n'
                 'witness.work = "changed"\n'
                 'evaluate_context(chart, criterion_id=42, observation="natal")\n'
-                'ContextResult(matched.observation, matched.criterion, matched.evidence, matched.references, 42, knowledge)\n'
+                'ContextResult(matched.observation, matched.criterion, matched.evidence, (1,), 42, knowledge)\n'
+                'KnowledgeEntry(entry.claim_id, entry.text, entry.roles, entry.relations, entry.topics, entry.applicability, entry.premise, entry.contexts, entry.sources, entry.source_state, entry.attribution, entry.viewpoint, entry.exceptions, entry.limits, "true", entry.legacy)\n'
                 'YearCoordinate("2024")\nMonthCoordinate(2024, "辰")\nDateCoordinate("2024-04-10")\nMomentCoordinate("2024-04-10T12:00:00")\n'
                 'TransitObservation(("liunian",))\nLiunianPosition("2024")\n'
                 'KongwangHit("年", target)\nKongwangResult(Zhu.YUE, target, ())\n'
                 'StarAppearance(Zhu.月, target, "明干", Tiangan.甲)\n'
                 'ChartOccurrence("年", target, TianganLayer.明干, Tiangan.甲, "比肩")\n'
-                'CriterionResult(info.criterion_id, "binding_unrecognized", frozendict({}))\nEntryMatch("sample", "invalid")\n'
-                'PremiseMatches((RelatedEntry("sample", True),))\nConditionReferences((match,))\n'
+                'CriterionResult(info.criterion_id, "invalid", frozendict({}))\n'
                 'matched.bazi = chart.bazi\n'
                 'chart.json\nBaziChart.from_json({})\nmatched.input_json\nmatched.export_json()\nContextResult.from_json("")\nknowledge.export_json()\nKnowledgeBase.from_json("")\n'
                 'GanzhiYearMonth(2000, "1")\nGanzhiYearMonth.from_dizhi(2000, 1)\n'
@@ -485,7 +484,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'EntryMatch', 'PremiseMatches', 'ConditionReferences', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
+  for interface in ('create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('"None"',):

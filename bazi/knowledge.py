@@ -18,21 +18,17 @@ unresolved：前提仍待重建。
 '''
 Applicability = Literal['unconditional', 'described', 'unresolved']
 
-'''条目的来源状态，与前提整理状态和输出资格分别记录。
+'''条目的来源状态，与前提整理状态和默认展示分别记录。
 witnessed：记录为已核定的原文出处；editorial：原作说明；
 unverified：来源尚未核定，条目不绑定来源见证；repository_attributed：仓内规则实现的归属。
 这些标记不表示命盘前提已满足，也不认证现实事件。
 '''
 SourceState = Literal['witnessed', 'editorial', 'unverified', 'repository_attributed']
 
-'''输出资格。'''
-OutputPolicy = Literal['default', 'reference_only']
-
 _T = TypeVar('_T')
-_SCHEMA_VERSION: Final = 2
+_SCHEMA_VERSION: Final = 3
 _APPLICABILITY: Final = get_args(Applicability)
 _SOURCE_STATES: Final = get_args(SourceState)
-_OUTPUTS: Final = get_args(OutputPolicy)
 
 DEFAULT_SOURCE_PATH: Final[Path] = Path(__file__).with_name('knowledge_data.json')
 
@@ -164,24 +160,27 @@ class LegacyDescription:
 
 @dataclass(frozen=True)
 class KnowledgeEntry:
-  '''分别记录来源、前提及输出状态的解释条目。'''
+  '''分别记录来源、前提及默认展示选择的解释条目。
 
-  claim_id:      str
-  text:          str
-  roles:         tuple[KnowledgeRole, ...]
-  relations:     tuple[KnowledgeRelation, ...]
-  topics:        tuple[str, ...]
-  applicability: Applicability
-  premise:       str
-  contexts:      tuple[str, ...]
-  sources:       tuple[str, ...]
-  source_state:  SourceState
-  attribution:   str
-  viewpoint:     str
-  exceptions:    tuple[str, ...]
-  limits:        tuple[str, ...]
-  output:        OutputPolicy
-  legacy:        LegacyDescription | None
+  show_by_default 只控制默认查询是否返回，不认证知识正确或适用于当前命盘。
+  '''
+
+  claim_id:        str
+  text:            str
+  roles:           tuple[KnowledgeRole, ...]
+  relations:       tuple[KnowledgeRelation, ...]
+  topics:          tuple[str, ...]
+  applicability:   Applicability
+  premise:         str
+  contexts:        tuple[str, ...]
+  sources:         tuple[str, ...]
+  source_state:    SourceState
+  attribution:     str
+  viewpoint:       str
+  exceptions:      tuple[str, ...]
+  limits:          tuple[str, ...]
+  show_by_default: bool
+  legacy:          LegacyDescription | None
 
   def __post_init__(self) -> None:
     for value in (self.claim_id, self.text, self.attribution, self.viewpoint):
@@ -193,7 +192,8 @@ class KnowledgeEntry:
       _tuple(values, str)
     _choice(self.applicability, _APPLICABILITY)
     _choice(self.source_state, _SOURCE_STATES)
-    _choice(self.output, _OUTPUTS)
+    if not isinstance(self.show_by_default, bool):
+      raise TypeError(f'Expected bool, got {type(self.show_by_default)}')
     if self.legacy is not None and not isinstance(self.legacy, LegacyDescription):
       raise TypeError(f'Expected LegacyDescription | None, got {type(self.legacy)}')
 
@@ -219,7 +219,7 @@ class KnowledgeEntry:
       raise ValueError(f'Unconditional entry has a legacy field premise: {self.claim_id}')
     if (self.source_state == 'unverified') != (not self.sources):
       raise ValueError(f'Source state and witnesses disagree: {self.claim_id}')
-    if self.output == 'default' and (
+    if self.show_by_default and (
       self.applicability != 'unconditional' or self.source_state != 'witnessed'
     ):
       raise ValueError(f'Ineligible default entry: {self.claim_id}')
@@ -300,7 +300,7 @@ class KnowledgeBase:
             raise ValueError(f'Unknown {dimension}: {reference} ({entry.claim_id})')
       if any(self.sources[source].state != entry.source_state for source in entry.sources):
         raise ValueError(f'Witness state differs: {entry.claim_id}')
-      if entry.output == 'default' and len({self.sources[source].lineage for source in entry.sources}) < 2:
+      if entry.show_by_default and len({self.sources[source].lineage for source in entry.sources}) < 2:
         raise ValueError(f'Default entry needs independent lineages: {entry.claim_id}')
       if entry.legacy is not None:
         legacy = entry.legacy
@@ -454,7 +454,7 @@ class KnowledgeBase:
     '''按查阅条件取交集，返回保留语料顺序的不可变条目。
 
     Note:
-    - 默认只选 output='default'；include_reference_only=True 同时选仅供参考条目。
+    - 默认只选 show_by_default=True；include_reference_only=True 同时选仅供参考条目。
     - 对象查询包含所有绑定角色；未知过滤值抛 ValueError，合法但无匹配时返回空元组。
     - context_id 是人工选择的查阅情境，不判断命盘是否满足；多个情境标签不隐含 AND/OR。
 
@@ -476,7 +476,7 @@ class KnowledgeBase:
       candidates &= self._index.get((dimension, value), frozenset())
     return tuple(
       entry for entry in self.entries.values()
-      if entry.claim_id in candidates and (include_reference_only or entry.output == 'default')
+      if entry.claim_id in candidates and (include_reference_only or entry.show_by_default)
     )
 
   def search(
@@ -539,7 +539,7 @@ class KnowledgeBase:
     '''展示原文、前提与限度，可附调用方提供的前提判别。
 
     Note:
-    - 本方法不选择条目、不求值前提，也不改变输出资格。
+    - 本方法不选择条目、不求值前提，也不改变默认展示选择。
 
     Args:
     - entry: (KnowledgeEntry) 本库条目。
@@ -562,14 +562,14 @@ class KnowledgeBase:
       raise ValueError(f'Foreign entry: {entry.claim_id}')
 
     notes: list[str] = []
-    if entry.output == 'reference_only':
+    if not entry.show_by_default:
       notes.append('仅供参考')
     if entry.source_state == 'unverified':
       notes.append('来源尚未核实')
     if entry.applicability == 'unresolved':
       notes.append('前提待梳理')
     if premise_verdict is not None:
-      notes.extend((f'输出资格：{entry.output}', f'前提判别：{premise_verdict}'))
+      notes.extend((f'默认展示：{"是" if entry.show_by_default else "否"}', f'前提判别：{premise_verdict}'))
     elif manual_context:
       notes.append('人工给定情境；命盘适用性未判断')
     elif entry.applicability != 'unconditional':

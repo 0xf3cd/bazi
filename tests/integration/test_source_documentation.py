@@ -74,16 +74,18 @@ def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
 def test_knowledge_guide_matches_the_corpus() -> None:
   from typing import get_args
 
-  from bazi.knowledge import Applicability, KnowledgeBase, OutputPolicy, SourceState
+  from bazi.knowledge import Applicability, KnowledgeBase, SourceState
 
   guide = (ROOT / 'docs/guides/knowledge.md').read_text(encoding='utf-8')
   knowledge = KnowledgeBase.load()
   entries = tuple(knowledge.entries.values())
   # Every declared value must remain documented, including values with zero corpus hits.
-  for field, schema in (('source_state', SourceState), ('applicability', Applicability), ('output', OutputPolicy)):
+  for field, schema in (('source_state', SourceState), ('applicability', Applicability)):
     row = next(line for line in guide.splitlines() if line.startswith(f'| `{field}` |'))
     values = re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1])
     assert sorted(values) == sorted(get_args(schema)), field
   witnessed = sum(entry.source_state == 'witnessed' for entry in entries)
-  reference = sum(entry.source_state == 'witnessed' and entry.output == 'reference_only' for entry in entries)
-  assert f'`witnessed` 条目有 {witnessed} 条，其中 {reference} 条仍是 `reference_only`' in guide
+  row = next(line for line in guide.splitlines() if line.startswith('| `show_by_default` |'))
+  assert re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1]) == ['True', 'False']
+  reference = sum(entry.source_state == 'witnessed' and not entry.show_by_default for entry in entries)
+  assert f'`witnessed` 条目有 {witnessed} 条，其中 {reference} 条仍不默认展示' in guide

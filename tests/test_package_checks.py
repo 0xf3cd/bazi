@@ -510,7 +510,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
       'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate',
       'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance',
-      'CriterionResult', 'EntryMatch', 'PremiseMatches', 'ConditionReferences',
+      'CriterionResult', 'KnowledgeEntry',
       'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
       'object_id', 'render', 'render_subject'))
     for owner, member, trigger in (

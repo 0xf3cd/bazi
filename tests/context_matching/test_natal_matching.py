@@ -1,26 +1,13 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import pytest
-
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, CriterionResult, _BINDINGS, _binding_digest, evaluate_context
+from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, CriterionResult, evaluate_context
 from bazi.common import frozendict
 from bazi.defines import Zhu, TianganLayer, Shishen
-from bazi.knowledge import KnowledgeBase
 
-from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, CONDITION_CLAIMS, chart, match
-from matching_samples import occurrences, premise_entries
-
-
-@pytest.mark.parametrize('claim_id', LEGAL + RELATIONSHIP + tuple(CONDITION_CLAIMS.values()))
-def test_builtin_editorial_binding_fingerprint(claim_id: str) -> None:
-  knowledge = KnowledgeBase.load()
-  computed = _binding_digest(knowledge, knowledge.entry(claim_id))
-  assert computed == _BINDINGS.get(claim_id), (
-    f'Binding fingerprint mismatch for {claim_id}: computed {computed}. '
-    'Re-pin _BINDINGS in bazi/context_matching.py.'
-  )
+from matching_samples import GUANSHA, FEMALE, LEGAL, RELATIONSHIP, chart, match
+from matching_samples import occurrences
 
 
 def test_literal_witnesses_and_negative_control() -> None:
@@ -44,8 +31,7 @@ def test_literal_witnesses_and_negative_control() -> None:
   assert any(line.startswith('证据：natal.月；') for line in result.render().splitlines())
   assert result.criterion.status == 'SATISFIED' and result.criterion.scope_complete
   assert result.criterion.reason == 'premise_satisfied'
-  assert tuple(m.claim_id for m in premise_entries(result)) == LEGAL
-  assert all(m.status == 'SATISFIED' for m in premise_entries(result))
+  assert result.reference_ids == LEGAL
   visible = {o.shishen for o in occurrences(result) if o.layer is TianganLayer.明干}
   assert not {Shishen.正官, Shishen.七杀} <= visible
   assert chart().shishen.day.tiangan is None
@@ -82,10 +68,9 @@ def test_female_premise_rejects_male_chart() -> None:
   female, male = match(criterion_id=FEMALE), match(gender='male', criterion_id=FEMALE)
   assert female.criterion.status == 'SATISFIED'
   assert male.criterion.status == 'NOT_SATISFIED' and male.criterion.reason == 'female_gate_false'
-  assert male.criterion.observations['observed_coexistence'] is True
-  assert male.criterion.observations['female'] is False
-  assert tuple(m.claim_id for m in premise_entries(female)) == RELATIONSHIP
-  assert all(m.status == 'NOT_SATISFIED' for m in premise_entries(male))
+  assert female.criterion.observations == {'observed_coexistence': True, 'female': True}
+  assert male.criterion.observations == {'observed_coexistence': True, 'female': False}
+  assert female.reference_ids == male.reference_ids == RELATIONSHIP
   assert match(gender='male').criterion.status == 'SATISFIED'
 
 

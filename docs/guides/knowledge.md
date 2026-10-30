@@ -101,13 +101,13 @@ ValueError Unknown object_id: tiangan.dingg
 
 三点区别：
 
-- **默认与参考。** 默认只返回 `output='default'` 的条目；加 `include_reference_only=True` 才包含仅供参考的条目。丁一共 8 条，默认只有 1 条。
+- **默认与参考。** 默认只返回 `show_by_default=True` 的条目；加 `include_reference_only=True` 才包含仅供参考的条目。丁一共 8 条，默认只有 1 条。
 - **合法值不保证有结果。** `shensha.guoyin` 是合法对象，默认查询却为空，加上参考条目才有 2 条。可用的过滤值由 `filter_values(维度)` 列出。
 - **未知值与无匹配不同。** 值不在 `filter_values` 里会抛 `ValueError`；值合法但没有交集，只返回空元组。
 
 ## 胎元与命宫：已实现取法和待核候选
 
-`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均为 `reference_only`，全库默认输出仍为 19 条。
+`concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均不默认展示（`show_by_default=False`），全库默认展示仍为 19 条。
 计算用法见 {doc}`integration`；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。
 
 ```{testcode} auxiliary-knowledge
@@ -188,7 +188,7 @@ print(source.supports)
 print(source.limitations)
 
 unverified = kb.entry('legacy.shishen.SH-001')
-print(unverified.sources, unverified.source_state, unverified.output)
+print(unverified.sources, unverified.source_state, unverified.show_by_default)
 print([s for s in kb.sources if not kb.query(source_id=s, include_reference_only=True)])
 ```
 
@@ -202,7 +202,7 @@ yuanhai_ziping baiwen witnessed
 丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼
 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
 丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
-() unverified reference_only
+() unverified False
 ['yuanhai_ziping_stem_table']
 ```
 
@@ -231,15 +231,15 @@ print(kb.render(entry, show_sources=False))
 代表同辈、竞争、合作。【仅供参考；来源尚未核实；前提待梳理；命盘适用性未判断】
 ```
 
-## 三个状态各管一件事
+## 来源、前提与默认展示
 
 | 字段 | 回答什么 | 取值 |
 | --- | --- | --- |
 | `source_state` | 出处核定到哪一步 | `witnessed`、`editorial`、`unverified`、`repository_attributed` |
 | `applicability` | 前提整理到哪一步 | `unconditional`、`described`、`unresolved` |
-| `output` | 默认查询是否返回 | `default`、`reference_only` |
+| `show_by_default` | 默认查询是否返回 | `True`、`False` |
 
-这些都是知识整理状态，不是某张命盘的求值结果。`applicability='described'` 只说明前提已用文字记下，术语可能还没有计算定义。
+来源与前提字段记录知识整理状态，`show_by_default` 只控制默认展示；它们都不认证知识正确或适用于当前命盘。`applicability='described'` 只说明前提已用文字记下，术语可能还没有计算定义。
 
 ```{testcode} states
 from collections import Counter
@@ -247,22 +247,22 @@ from collections import Counter
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-counts = Counter((e.output, e.source_state) for e in kb.entries.values())
+counts = Counter((e.show_by_default, e.source_state) for e in kb.entries.values())
 for key in sorted(counts):
   print(key, counts[key])
 print(Counter(e.applicability for e in kb.entries.values()).most_common())
 ```
 
 ```{testoutput} states
-('default', 'witnessed') 19
-('reference_only', 'editorial') 22
-('reference_only', 'repository_attributed') 8
-('reference_only', 'unverified') 245
-('reference_only', 'witnessed') 18
+(False, 'editorial') 22
+(False, 'repository_attributed') 8
+(False, 'unverified') 245
+(False, 'witnessed') 18
+(True, 'witnessed') 19
 [('unresolved', 264), ('unconditional', 36), ('described', 12)]
 ```
 
-`witnessed` 条目有 37 条，其中 18 条仍是 `reference_only`，所以 `witnessed` 不单独推出默认输出。成为 `default` 要同时满足四个条件：
+`witnessed` 条目有 37 条，其中 18 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -279,13 +279,13 @@ from bazi.knowledge import KnowledgeBase
 kb = KnowledgeBase.load()
 loose = kb.entry('legacy.shishen.SH-001')
 try:
-  replace(loose, output='default')
+  replace(loose, show_by_default=True)
 except ValueError as error:
   print(type(error).__name__, error)
 
 default = kb.entry('tiangan.ding.definition')
 one_source = replace(default, sources=default.sources[:1])
-print(one_source.output)
+print(one_source.show_by_default)
 try:
   KnowledgeBase(
     tuple(kb.objects.values()), tuple(kb.contexts.values()),
@@ -297,11 +297,11 @@ except ValueError as error:
 
 ```{testoutput} gate
 ValueError Ineligible default entry: legacy.shishen.SH-001
-default
+True
 ValueError Default entry needs independent lineages: tiangan.ding.definition
 ```
 
-第二个例子里，只留一个来源的条目通过了条目自身的检查（仍是 `default`），但放进知识库时因为只剩一个谱系被拒。另外，`source_state` 为 `unverified` 当且仅当 `sources` 为空，两者不一致也会被拒。
+第二个例子里，只留一个来源的条目通过了条目自身的检查（`show_by_default` 仍为 `True`），但放进知识库时因为只剩一个谱系被拒。另外，`source_state` 为 `unverified` 当且仅当 `sources` 为空，两者不一致也会被拒。
 
 ## 读取知识编辑源
 
@@ -325,13 +325,14 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-2 312 34 23
-['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
+3 312 34 23
+['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'show_by_default', 'legacy']
 True
 ```
 
-当前编辑源由精确整数 `schema_version=2` 加四份注册表组成，加载时检查形状、状态和引用。
-不接受旧 schema 1，也不提供迁移、知识库 JSON 导出或历史结果恢复。字符串键和值中的孤立代理项会拒绝，不修复原文；
+当前编辑源由精确整数 `schema_version=3` 加四份注册表组成，加载时检查形状、状态和引用。
+条目用 JSON boolean `show_by_default`，拒绝旧 `output` 键以及 `0`、`1` 等非 bool 值。
+不接受旧 schema 1／2，也不提供运行时迁移、知识库 JSON 导出或历史结果恢复。升级自定义编辑源时，将版本改为整数 3，并把每条的 `output='default'`／`'reference_only'` 分别改成 `show_by_default=true`／`false`，再加载校验。字符串键和值中的孤立代理项会拒绝，不修复原文；
 知识渲染也检查 UTF-8，中文、非 BMP 字符与合法 JSON 转义仍可使用。
 
 ## 改一份本地副本
@@ -357,7 +358,7 @@ with tempfile.TemporaryDirectory() as folder:
 edited = copy.entry('tiangan.ding.definition')
 print(edited.claim_id, edited.text)
 print(edited.limits)
-print(edited.source_state, edited.output, edited.sources == kb.entry(edited.claim_id).sources)
+print(edited.source_state, edited.show_by_default, edited.sources == kb.entry(edited.claim_id).sources)
 print(kb.entry('tiangan.ding.definition').limits)
 print(copy == kb)
 ```
@@ -365,7 +366,7 @@ print(copy == kb)
 ```{testoutput} edit
 tiangan.ding.definition 丁为阴火。
 ('演示副本：此行为教程添加，不是来源内容。',)
-witnessed default True
+witnessed True True
 ()
 False
 ```
@@ -443,7 +444,7 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 ('chart', 'criterion_id', 'observation') ('knowledge', 'include_reference_only')
 ```
 
-这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
+这是静态目录，不判断任何命盘。`entry_role` 区分两种关联：`premise` 判关联条目的完整前提；`condition` 只判局部事实，不能据此认定条目全文的前提成立。`claim_ids` 是默认语料的约定，自定义知识库不保证有这些条目。关联按 ID；使用已注册 ID 的自定义库负责保持其领域含义。真正对命盘求值用 `evaluate_context`，见 {doc}`integration`；字段说明见 {py:class}`~bazi.context_matching.CriterionInfo`，完整列表见 {doc}`../catalog/criteria`。
 
 `analysis_kind` 区分明藏干分类与婚恋结构分析；`observation_types` 和 `scopes` 由它派生，列出可接受的请求类和范围。
 `scope_inputs` 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。

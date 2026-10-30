@@ -4,12 +4,12 @@ from dataclasses import replace
 
 import pytest
 
-from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, RelatedEntry, evaluate_context
+from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, criterion, evaluate_context
 from bazi.defines import Zhu
 from bazi.knowledge import KnowledgeBase
 
 from matching_samples import DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS, chart, match
-from matching_samples import condition_entries, occurrences
+from matching_samples import occurrences
 
 
 @pytest.mark.parametrize('criterion_id,day,year,observations,reason', [
@@ -45,7 +45,7 @@ def test_conditions_judge_only_computable_facts(
   assert result.criterion.status == ('SATISFIED' if reason == 'premise_satisfied' else 'NOT_SATISFIED')
   assert any(isinstance(o.position, LiunianPosition) for o in occurrences(result)) is (year is not None)
   # The reference is attached whatever the fact verdict or gender, and never as a premise match.
-  assert condition_entries(result) == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
+  assert result.reference_ids == (CONDITION_CLAIMS[criterion_id],)
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
@@ -55,7 +55,7 @@ def test_conditions_without_entry_still_judge(criterion_id: str) -> None:
   custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), tuple(e for e in knowledge.entries.values() if e.claim_id != claim_id))
   result = match(3, criterion_id=criterion_id, knowledge=custom)
   assert result.criterion == match(3, criterion_id=criterion_id).criterion
-  assert condition_entries(result) == ()
+  assert result.reference_ids == ()
   assert '关联参考' not in result.render() and '事实判别不表示原文完整条件已满足' in result.render()
 
 
@@ -67,7 +67,7 @@ def test_conditions_keep_scope_reasons_apart(criterion_id: str, year: int | None
   assert result.criterion.status == 'UNKNOWN' and result.criterion.reason == reason
   assert result.criterion.scope_complete is False
   assert result.criterion.observations == match(3, criterion_id=criterion_id).criterion.observations
-  assert condition_entries(result) == (RelatedEntry(CONDITION_CLAIMS[criterion_id], True),)
+  assert result.reference_ids == (CONDITION_CLAIMS[criterion_id],)
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
 
 
@@ -90,11 +90,11 @@ def test_references_render_full_unevaluated_text(criterion_id: str) -> None:
   assert '前提判别：' not in knowledge.render(entry)
   # Reference output stays opt-in: the default call judges the same fact and attaches nothing.
   default = evaluate_context(chart(3), criterion_id=criterion_id, observation=NatalObservation(), knowledge=knowledge)
-  assert default.criterion == result.criterion and condition_entries(default) == ()
+  assert default.criterion == result.criterion and default.reference_ids == ()
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_reference_binding_leaves_the_fact(criterion_id: str) -> None:
+def test_custom_reference_leaves_the_fact(criterion_id: str) -> None:
   claim_id = CONDITION_CLAIMS[criterion_id]
   original = KnowledgeBase.load()
   knowledge = KnowledgeBase(
@@ -102,17 +102,21 @@ def test_reference_binding_leaves_the_fact(criterion_id: str) -> None:
     tuple(replace(e, text='CUSTOM-REPLACEMENT-TEXT') if e.claim_id == claim_id else e for e in original.entries.values()),
   )
   result = match(3, criterion_id=criterion_id, knowledge=knowledge)
-  assert condition_entries(result) == (RelatedEntry(claim_id, False),)
+  assert result.reference_ids == (claim_id,)
   assert result.criterion == match(3, criterion_id=criterion_id).criterion
   rendered = result.render()
-  assert f'：{claim_id}；绑定未识别' in rendered and 'CUSTOM-REPLACEMENT-TEXT' not in rendered
+  assert f'：{claim_id}' in rendered and 'CUSTOM-REPLACEMENT-TEXT' in rendered
+  assert '前提判别：完整前提未由程序判别' in rendered
   assert result.render() == rendered
 
 
 def test_entry_role_separates_premise_condition() -> None:
   premise = match(3)
   condition = match(3, criterion_id=PIANYIN)
-  with pytest.raises(ValueError, match='Premise criterion cannot carry condition references'):
-    replace(premise, references=condition.references)
-  with pytest.raises(ValueError, match='Condition criterion cannot carry premise matches'):
-    replace(condition, references=premise.references)
+  assert criterion(premise.criterion.criterion_id).entry_role == 'premise'
+  assert criterion(condition.criterion.criterion_id).entry_role == 'condition'
+  for result in (premise, condition):
+    empty = replace(result, reference_ids=())
+    rendered = empty.render()
+    assert ('结构前提：' in rendered) is (result is premise)
+    assert ('事实判别不表示原文完整条件已满足' in rendered) is (result is condition)

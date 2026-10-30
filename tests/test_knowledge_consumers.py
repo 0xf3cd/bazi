@@ -11,7 +11,7 @@ import pytest
 import bazi
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import NatalObservation, PremiseMatches, evaluate_context
+from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
@@ -88,15 +88,15 @@ def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) 
     return str(consumer(self, *args, **kwargs))
   monkeypatch.setattr(KnowledgeBase, 'render', render)
   text = result.render()
-  assert isinstance(result.references, PremiseMatches) and result.references.entries
-  assert consumer.call_count == len(result.references.entries)
-  for call, match in zip(consumer.call_args_list, result.references.entries):
+  assert result.reference_ids
+  assert consumer.call_count == len(result.reference_ids)
+  for call, claim_id in zip(consumer.call_args_list, result.reference_ids):
     knowledge, entry = call.args
     assert isinstance(knowledge, KnowledgeBase)
-    assert entry == knowledge.entry(match.claim_id)
-    assert call.kwargs == {'premise_verdict': match.status}
+    assert entry == knowledge.entry(claim_id)
+    assert call.kwargs == {'premise_verdict': result.criterion.status}
     assert entry.text in text
-    assert f'前提判别：{match.status}' in text
+    assert f'前提判别：{result.criterion.status}' in text
 
 
 def test_object_ids_keep_aliases_reject_others() -> None:
@@ -159,7 +159,7 @@ def test_render_verdict_is_display_only() -> None:
   before = (k.objects, k.contexts, k.sources, k.entries)
   rendered = k.render(reference, manual_context=True, premise_verdict='SATISFIED')
   assert '前提判别：SATISFIED' in rendered
-  assert '输出资格：reference_only' in rendered and '仅供参考' in rendered
+  assert '默认展示：否' in rendered and '仅供参考' in rendered
   assert '也许' in rendered and '不确立古籍规则，也不作现实预测。' in rendered
   assert '人工给定情境' not in rendered
   assert '人工给定情境' in k.render(reference, manual_context=True, premise_verdict=None)

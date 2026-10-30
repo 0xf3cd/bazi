@@ -191,11 +191,12 @@ def test_removed_structure_fields_are_absent() -> None:
   import bazi.context_matching as matching
   from bazi.analyzer.relationship import KongwangHit, StarAppearance
   from bazi.context_matching import CriterionInfo, ContextResult, ChartOccurrence
-  for name in ('ContextProfile', 'RelationshipProfile', 'Pillar', 'ObservationScope', 'RelationshipScope'):
+  for name in ('ContextProfile', 'RelationshipProfile', 'Pillar', 'ObservationScope', 'RelationshipScope',
+               'MatchReason', 'EntryMatch', 'RelatedEntry', 'PremiseMatches', 'ConditionReferences'):
     assert not hasattr(matching, name)
   for owner, names in (
     (ContextResult, ('profile', 'occurrences', 'relationship', 'related', 'entries')),
-    (CriterionInfo, ('profile_type', 'profile_kind')),
+    (CriterionInfo, ('profile_type', 'profile_kind', 'binding_effect')),
     (KongwangHit, ('origin', 'pillar', 'kind')),
     (StarAppearance, ('origin', 'pillar', 'kind')),
     (ChartOccurrence, ('origin', 'pillar', 'kind', 'ganzhi_year')),

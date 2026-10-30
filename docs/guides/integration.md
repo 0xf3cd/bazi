@@ -102,9 +102,9 @@ print(len(chart.bazi.pillars), chart.bazi == original)
 ## 前提匹配：结构事实，不是判断
 
 `evaluate_context` 求值已注册的判据，例如“选定范围内正官与七杀各至少出现一次”。
-`entry_role='premise'` 的判据检查关联条目的完整前提，`references` 为 `PremiseMatches`；
-`entry_role='condition'` 只检查局部事实，`references` 为 `ConditionReferences`，不能据此认定条目全文的前提成立。
-条目都从 `references.entries` 读取；即使没有条目，两个外层类型也保留不同含义。
+`entry_role='premise'` 的判据检查关联条目的完整前提；`entry_role='condition'` 只检查局部事实，不能据此认定条目全文的前提成立。
+`result.reference_ids` 给出参考条目的 ID 元组，用 `result.knowledge.entry(claim_id)` 读取文字。
+两种语义由 `criterion(result.criterion.criterion_id).entry_role` 区分，即使 ID 元组为空也不改变。
 `SATISFIED` 表示该判据的结构事实成立，不是旺衰、格局或现实事件的判断，也不说明条文本身为真。
 
 ```{testcode} integration-context
@@ -112,7 +112,7 @@ from datetime import datetime
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.context_matching import NatalObservation, PremiseMatches, criterion, evaluate_context
+from bazi.context_matching import NatalObservation, criterion, evaluate_context
 
 info = criterion('editorial.guansha_coexistence.v1')
 print(info.definition)
@@ -125,8 +125,7 @@ result = evaluate_context(
 )
 print(result.criterion.status, result.criterion.reason, result.criterion.scope_complete)
 print(dict(result.criterion.observations))
-assert isinstance(result.references, PremiseMatches)
-print('默认返回的关联条目', len(result.references.entries))
+print('默认返回的关联条目', len(result.reference_ids))
 ```
 
 ```{testoutput} integration-context
@@ -136,8 +135,10 @@ SATISFIED premise_satisfied True
 默认返回的关联条目 0
 ```
 
-默认只返回满足默认输出资格的条目，这里没有；加 `include_reference_only=True` 才会包含仅供参考的条目，
-但前提满足也不会授予默认输出资格。判据目录与绑定识别见[接口契约的判据目录](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)；条目的来源状态见 {doc}`knowledge`。
+默认只返回 `show_by_default=True` 的条目，这里没有；加 `include_reference_only=True` 才会包含仅供参考的条目，
+但前提满足也不会授予默认展示资格。参考 ID 按判据声明序筛选，不按知识库条目顺序排列。
+正文、引文与来源说明的编辑不改变判据状态；自定义库须保持同 ID 的领域含义，不再核对内容摘要。
+判据目录见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)；条目的来源状态见 {doc}`knowledge`。
 
 ### 选择观察范围与读取证据
 
@@ -164,7 +165,7 @@ from bazi.analyzer.relationship import RelationshipEvidence
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import (
-  ConditionReferences, TransitObservation, YearCoordinate, evaluate_context,
+  TransitObservation, YearCoordinate, criterion, evaluate_context,
 )
 from bazi.transits import TransitKind
 
@@ -179,20 +180,22 @@ result = evaluate_context(
   include_reference_only=True,
 )
 assert isinstance(result.evidence, RelationshipEvidence)
-assert isinstance(result.references, ConditionReferences)
 assert result.evidence.transits is not None
 print(result.criterion.status, result.criterion.scope_complete)
 print(tuple(kind.value for kind in result.evidence.transits))
-print(type(result.references).__name__, len(result.references.entries))
+print(criterion(result.criterion.criterion_id).entry_role, len(result.reference_ids))
+print(result.knowledge.entry(result.reference_ids[0]).claim_id)
 ```
 
 ```{testoutput} integration-transits
 SATISFIED True
 ('dayun', 'liunian')
-ConditionReferences 1
+condition 1
+editorial.tanyuan.wife_palace_xingchong.v1
 ```
 
 `CriterionResult` 只存 criterion_id、reason、observations，definition、status、scope_complete 从注册定义和原因派生；
-`EntryMatch` 只存 claim_id、reason，status 也为派生属性。`asdict` 不包含这些属性，固定 scope／entry 标签也不属于 dataclass 构造字段。
+`asdict` 不包含这些派生属性，固定 scope／entry 标签也不属于 dataclass 构造字段。
+`ContextResult` 直接构造保留参考 ID 的顺序和重复，只检查类型与存在性，不要求其属于该判据的 claims。
 直接构造只检查结构，不认证观察、原因、请求年份和手填证据的事实对应关系；通常应使用 evaluate_context 取得结果。
 旧构造与位置模式的迁移细目见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。

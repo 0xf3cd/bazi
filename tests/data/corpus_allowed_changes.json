@@ -1,40 +1,57 @@
 {
   "base_sha": "12173dd55bf88541642b00e3a5b099a5d5e085fd",
-  "counts": {
-    "entries": 302,
-    "sources": 13,
-    "contexts": 10,
-    "objects": 31
-  },
-  "added": {
-    "objects": [
-      "concept.peiou_xing",
-      "concept.peiou_gong"
-    ],
-    "contexts": [
-      "liuqin.spouse_star_readings",
-      "editorial.spouse_palace_xingchong",
-      "editorial.spouse_star_tougan"
-    ],
-    "sources": [
-      "sanming_liuqin",
-      "yuanhai_liuqin_charts",
-      "yuanhai_qiqie_note",
-      "tanyuan_qizi"
-    ],
-    "entries": [
-      "editorial.liuqin.spouse_star_yinyanggan.v1",
-      "editorial.liuqin.spouse_star_zhengpian.v1",
-      "editorial.liuqin.qiqie_gong.v1",
-      "editorial.tanyuan.wife_palace_xingchong.v1",
-      "editorial.tanyuan.wife_star_gantou.v1",
-      "editorial.tanyuan.wife_star_liangtou.v1",
-      "editorial.liuqin.sanming_qiqie_zuodi.v1"
+  "attribution": {
+    "value": "作者据网络材料归纳，原始出处未核",
+    "ids": [
+      "legacy.shishen.SH-022",
+      "legacy.shishen.SH-023",
+      "legacy.shishen.SH-024",
+      "legacy.shishen.SH-043",
+      "legacy.shishen.SH-044",
+      "legacy.shishen.SH-045",
+      "legacy.shishen.SH-046",
+      "legacy.shishen.SH-047",
+      "legacy.shishen.SH-067",
+      "legacy.shishen.SH-068",
+      "legacy.shishen.SH-069",
+      "legacy.shishen.SH-086",
+      "legacy.shishen.SH-087",
+      "legacy.shishen.SH-088",
+      "legacy.shishen.SH-089",
+      "legacy.shishen.SH-090",
+      "legacy.shishen.SH-091",
+      "legacy.shishen.SH-105",
+      "legacy.shishen.SH-106",
+      "legacy.shishen.SH-107",
+      "legacy.shishen.SH-108",
+      "legacy.shishen.SH-109",
+      "legacy.shishen.SH-110",
+      "legacy.shishen.SH-127",
+      "legacy.shishen.SH-128",
+      "legacy.shishen.SH-129",
+      "legacy.shishen.SH-146",
+      "legacy.shishen.SH-147",
+      "legacy.shishen.SH-148",
+      "legacy.shishen.SH-149",
+      "legacy.shishen.SH-150",
+      "legacy.shishen.SH-167",
+      "legacy.shishen.SH-168",
+      "legacy.shishen.SH-169",
+      "legacy.shishen.SH-170",
+      "legacy.shishen.SH-171",
+      "legacy.shishen.SH-186",
+      "legacy.shishen.SH-187",
+      "legacy.shishen.SH-188",
+      "legacy.shishen.SH-189",
+      "legacy.shishen.SH-206",
+      "legacy.shishen.SH-207",
+      "legacy.shishen.SH-208",
+      "legacy.shishen.SH-209",
+      "legacy.shishen.SH-210"
     ]
   },
   "allowed_changes": {
     "legacy.shishen.SH-022": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -45,7 +62,6 @@
       ]
     },
     "legacy.shishen.SH-023": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -55,7 +71,6 @@
       ]
     },
     "legacy.shishen.SH-024": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -64,7 +79,6 @@
       ]
     },
     "legacy.shishen.SH-043": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -74,7 +88,6 @@
       ]
     },
     "legacy.shishen.SH-044": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -84,7 +97,6 @@
       ]
     },
     "legacy.shishen.SH-045": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -94,7 +106,6 @@
       ]
     },
     "legacy.shishen.SH-046": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -104,7 +115,6 @@
       ]
     },
     "legacy.shishen.SH-047": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -114,7 +124,6 @@
       ]
     },
     "legacy.shishen.SH-067": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -125,7 +134,6 @@
       ]
     },
     "legacy.shishen.SH-068": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -135,7 +143,6 @@
       ]
     },
     "legacy.shishen.SH-069": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -144,7 +151,6 @@
       ]
     },
     "legacy.shishen.SH-086": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -154,7 +160,6 @@
       ]
     },
     "legacy.shishen.SH-087": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -163,7 +168,6 @@
       ]
     },
     "legacy.shishen.SH-088": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -172,7 +176,6 @@
       ]
     },
     "legacy.shishen.SH-089": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -181,7 +184,6 @@
       ]
     },
     "legacy.shishen.SH-090": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -190,7 +192,6 @@
       ]
     },
     "legacy.shishen.SH-091": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -208,7 +209,6 @@
       ]
     },
     "legacy.shishen.SH-105": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -218,7 +218,6 @@
       ]
     },
     "legacy.shishen.SH-106": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -227,7 +226,6 @@
       ]
     },
     "legacy.shishen.SH-107": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -236,7 +234,6 @@
       ]
     },
     "legacy.shishen.SH-108": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -245,7 +242,6 @@
       ]
     },
     "legacy.shishen.SH-109": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -255,7 +251,6 @@
       ]
     },
     "legacy.shishen.SH-110": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -271,7 +266,6 @@
       ]
     },
     "legacy.shishen.SH-127": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -280,7 +274,6 @@
       ]
     },
     "legacy.shishen.SH-128": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -290,7 +283,6 @@
       ]
     },
     "legacy.shishen.SH-129": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -307,7 +299,6 @@
       ]
     },
     "legacy.shishen.SH-146": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -317,7 +308,6 @@
       ]
     },
     "legacy.shishen.SH-147": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -326,7 +316,6 @@
       ]
     },
     "legacy.shishen.SH-148": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -335,7 +324,6 @@
       ]
     },
     "legacy.shishen.SH-149": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -344,7 +332,6 @@
       ]
     },
     "legacy.shishen.SH-150": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -360,7 +347,6 @@
       ]
     },
     "legacy.shishen.SH-167": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -371,7 +357,6 @@
       ]
     },
     "legacy.shishen.SH-168": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -380,7 +365,6 @@
       ]
     },
     "legacy.shishen.SH-169": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -390,7 +374,6 @@
       ]
     },
     "legacy.shishen.SH-170": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -400,7 +383,6 @@
       ]
     },
     "legacy.shishen.SH-171": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -410,7 +392,6 @@
       ]
     },
     "legacy.shishen.SH-186": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -421,7 +402,6 @@
       ]
     },
     "legacy.shishen.SH-187": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -430,7 +410,6 @@
       ]
     },
     "legacy.shishen.SH-188": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -439,7 +418,6 @@
       ]
     },
     "legacy.shishen.SH-189": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -449,7 +427,6 @@
       ]
     },
     "legacy.shishen.SH-206": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -459,7 +436,6 @@
       ]
     },
     "legacy.shishen.SH-207": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -469,7 +445,6 @@
       ]
     },
     "legacy.shishen.SH-208": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -478,7 +453,6 @@
       ]
     },
     "legacy.shishen.SH-209": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",
@@ -487,7 +461,6 @@
       ]
     },
     "legacy.shishen.SH-210": {
-      "attribution": "作者据网络材料归纳，原始出处未核",
       "limits": [
         "原文未交代性别限定；性别适用范围未核定",
         "原文未交代原局／岁运时间限定；时间适用范围未核定",

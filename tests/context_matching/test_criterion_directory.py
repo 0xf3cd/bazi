@@ -1,17 +1,15 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import inspect
-import json
-from dataclasses import FrozenInstanceError, asdict, fields, replace
-from pathlib import Path
+from dataclasses import FrozenInstanceError, fields, replace
 from typing import Any
 
 import pytest
 
 import bazi.context_matching as matching_module
 from bazi.context_matching import (
-  Observation, NatalObservation, LiunianObservation, TransitObservation, YearCoordinate,
-  PremiseMatches, ConditionReferences, _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
+  NatalObservation, LiunianObservation, TransitObservation,
+  _CRITERIA, evaluate_context, CriterionInfo, criterion as lookup_criterion, criteria,
 )
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
@@ -19,33 +17,61 @@ from bazi.common import frozendict
 from bazi.knowledge import KnowledgeBase
 from bazi.transits import TransitKind
 
-from matching_samples import GUANSHA, FEMALE, LEGAL
-
-
-DIRECTORY_BASELINE: dict[str, Any] = json.loads(
-  (Path(__file__).parents[1] / 'data' / 'criterion_behavior_v200.json').read_text(encoding='utf-8')
+from matching_samples import (
+  GUANSHA, FEMALE, LEGAL, RELATIONSHIP, DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS,
+  PALACE, TOUGAN, RELATED_PALACE, RELATED_TOUGAN, chart,
 )
 
 
-def _check_directory_coverage(directory: frozendict[str, CriterionInfo], cases: list[dict[str, Any]]) -> None:
-  assert set(directory) == {case['criterion_id'] for case in cases}
-  for identifier in directory:
-    assert {case['scenario'] for case in cases if case['criterion_id'] == identifier} == {
-      'natal', 'transit', 'missing', 'unavailable', 'binding_changed', 'entry_missing', 'default_output',
-    }
+# Literal public metadata, independent of the production registry and evaluator.
+EXPECTED = frozendict({
+  GUANSHA: CriterionInfo(
+    GUANSHA, '选定范围内正官与七杀各至少出现一次。', 'context', 'premise',
+    ('observed_coexistence', 'female'), None, LEGAL, frozendict({}),
+  ),
+  FEMALE: CriterionInfo(
+    FEMALE, '选定范围内正官与七杀各至少出现一次，且输入为女命。', 'context', 'premise',
+    ('observed_coexistence', 'female'), BaziGender.FEMALE, RELATIONSHIP, frozendict({}),
+  ),
+  DING: CriterionInfo(
+    DING, '日主为丁火；身弱、克太多留在条目文字中，程序不判别。', 'context', 'condition',
+    ('day_master_ding',), None, (CONDITION_CLAIMS[DING],), frozendict({}),
+  ),
+  GENG: CriterionInfo(
+    GENG, '日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。',
+    'context', 'condition', ('day_master_geng',), None, (CONDITION_CLAIMS[GENG],), frozendict({}),
+  ),
+  PIANYIN: CriterionInfo(
+    PIANYIN, '选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。',
+    'context', 'condition', ('pianyin_observed',), None, (CONDITION_CLAIMS[PIANYIN],), frozendict({}),
+  ),
+  XIAOYIN: CriterionInfo(
+    XIAOYIN, '选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。',
+    'context', 'condition', ('pianyin_observed', 'shishen_observed'), None, (CONDITION_CLAIMS[XIAOYIN],), frozendict({}),
+  ),
+  PALACE: CriterionInfo(
+    PALACE, '选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。',
+    'relationship', 'condition', ('day_pillar_in_chong', 'day_pillar_in_xing'), None,
+    (RELATED_PALACE,), frozendict({RELATED_PALACE: BaziGender.MALE}),
+  ),
+  TOUGAN: CriterionInfo(
+    TOUGAN, '选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。',
+    'relationship', 'condition', ('target_stem_visible', 'target_stem_hidden'), None,
+    (RELATED_TOUGAN,), frozendict({RELATED_TOUGAN: BaziGender.MALE}),
+  ),
+})
 
 
-def _check_directory_info(info: CriterionInfo, case: dict[str, Any]) -> None:
-  assert info.criterion_id == case['criterion_id']
-  assert info.definition == case['expected']['criterion']['definition']
-  assert info.analysis_kind == case['profile_kind']
-  assert info.observation_types == ((NatalObservation, LiunianObservation) if case['profile_kind'] == 'context' else (NatalObservation, TransitObservation))
-  assert info.entry_role == case['entry_role']
-  assert info.observation_keys == tuple(case['observation_keys'])
-  assert info.claim_ids == tuple(case['claim_ids'])
-  assert info.required_gender is (BaziGender.FEMALE if case['criterion_id'] == FEMALE else None)
-  assert info.claim_genders == ({key: BaziGender.MALE for key in case['claim_ids']} if case['profile_kind'] == 'relationship' else {})
-  assert info.binding_effect == ('entry_unknown' if case['entry_role'] == 'premise' else 'related_unrecognized')
+def _check_directory(directory: frozendict[str, CriterionInfo]) -> None:
+  assert tuple(directory) == tuple(EXPECTED)
+  assert directory == EXPECTED
+
+
+@pytest.mark.parametrize('criterion_id', EXPECTED)
+def test_observed_keys_follow_directory(criterion_id: str) -> None:
+  info = lookup_criterion(criterion_id)
+  result = evaluate_context(chart(), criterion_id=criterion_id, observation=NatalObservation())
+  assert tuple(result.criterion.observations) == info.observation_keys == EXPECTED[criterion_id].observation_keys
 
 
 def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -55,12 +81,10 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
   monkeypatch.setattr(Bazi, 'create', forbidden)
   monkeypatch.setattr(BaziChart, '__init__', forbidden)
   directory = criteria()
-  _check_directory_coverage(directory, DIRECTORY_BASELINE['cases'])
-  assert set(directory) == set(_CRITERIA)
-  assert DIRECTORY_BASELINE['source_sha'] == 'ddfe16e7c51d695167b09cc4c2f64ba46e7565c3'
-  assert tuple(directory) == tuple(dict.fromkeys(case['criterion_id'] for case in DIRECTORY_BASELINE['cases']))
+  _check_directory(directory)
   for identifier, info in directory.items():
     assert lookup_criterion(identifier) == info and hash(lookup_criterion(identifier)) == hash(info)
+    assert info.observation_types == ((NatalObservation, LiunianObservation) if info.analysis_kind == 'context' else (NatalObservation, TransitObservation))
     assert info.required_inputs == ('chart', 'criterion_id', 'observation')
     assert info.optional_inputs == ('knowledge', 'include_reference_only')
     parameters = inspect.signature(evaluate_context).parameters
@@ -90,64 +114,6 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
       info.scope_inputs['natal'] = ('changed',) # type: ignore[index]
     with pytest.raises(TypeError):
       directory[identifier] = info # type: ignore[index]
-
-
-@pytest.mark.parametrize('case', DIRECTORY_BASELINE['cases'], ids=lambda case: case['criterion_id'] + ':' + case['scenario'])
-def test_directory_matches_v200_behavior(case: dict[str, Any]) -> None:
-  info = lookup_criterion(case['criterion_id'])
-  _check_directory_info(info, case)
-  profile_data = case['profile']
-  observation: Observation
-  if case['profile_kind'] == 'context':
-    observation = NatalObservation() if profile_data['observation_scope'] == 'natal' else LiunianObservation(profile_data['ganzhi_year'])
-  elif profile_data['scope'] == 'natal':
-    observation = NatalObservation()
-  else:
-    old_coordinate = profile_data['coordinate']
-    if old_coordinate is not None:
-      assert old_coordinate['entry'] == 'at_year'
-      assert all(old_coordinate[name] is None for name in ('gz_month', 'solar_date', 'solar_moment'))
-    coordinate = None if old_coordinate is None else YearCoordinate(old_coordinate['gz_year'])
-    observation = TransitObservation(tuple(TransitKind(kind) for kind in profile_data['kinds']), coordinate)
-  knowledge = KnowledgeBase.load()
-  entries = tuple(knowledge.entries.values())
-  if case['scenario'] == 'binding_changed':
-    entries = tuple(replace(entry, text=entry.text + '（测试改写）') if entry.claim_id == case['claim_ids'][0] else entry for entry in entries)
-  elif case['scenario'] == 'entry_missing':
-    entries = tuple(entry for entry in entries if entry.claim_id not in case['claim_ids'])
-  if case['scenario'] in ('binding_changed', 'entry_missing'):
-    knowledge = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), entries)
-  result = evaluate_context(
-    BaziChart(Bazi.create(case['birth'], case['gender'])),
-    criterion_id=case['criterion_id'],
-    observation=observation,
-    knowledge=knowledge,
-    include_reference_only=case['scenario'] != 'default_output',
-  )
-  verdict = result.criterion
-  assert {
-    'criterion_id': verdict.criterion_id, 'definition': verdict.definition, 'status': verdict.status,
-    'reason': verdict.reason, 'scope_complete': verdict.scope_complete, 'observations': dict(verdict.observations),
-  } == case['expected']['criterion']
-  if case['entry_role'] == 'premise':
-    assert isinstance(result.references, PremiseMatches)
-    assert [{'claim_id': value.claim_id, 'status': value.status, 'reason': value.reason} for value in result.references.entries] == case['expected']['entries']
-    assert case['expected']['related'] == []
-  else:
-    assert isinstance(result.references, ConditionReferences)
-    assert [asdict(value) for value in result.references.entries] == case['expected']['related']
-    assert case['expected']['entries'] == []
-  assert tuple(result.criterion.observations) == info.observation_keys
-  if result.criterion.status == 'UNKNOWN':
-    assert result.criterion.reason in info.unknown_conditions
-  if case['scenario'] == 'binding_changed':
-    assert result.criterion.reason != 'binding_unrecognized'
-    if info.binding_effect == 'entry_unknown':
-      assert isinstance(result.references, PremiseMatches)
-      assert result.references.entries[0].reason == 'binding_unrecognized'
-    else:
-      assert isinstance(result.references, ConditionReferences)
-      assert result.references.entries[0].recognized is False
 
 
 @pytest.mark.parametrize('value', [None, 1, True, '', ' ', 'unknown'])
@@ -192,7 +158,7 @@ def test_constructor_rejects_invalid_metadata(change: dict[str, Any], error: typ
     replace(lookup_criterion(GUANSHA), **change)
 
 
-def test_guards_missing_metadata_behavior_cases(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_guards_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
   directory = criteria()
   with monkeypatch.context() as patcher:
     patcher.setattr(matching_module, '_CRITERIA', frozendict({**_CRITERIA, 'test.ninth': _CRITERIA[GUANSHA]}))
@@ -203,17 +169,20 @@ def test_guards_missing_metadata_behavior_cases(monkeypatch: pytest.MonkeyPatch)
     with pytest.raises(ValueError, match='non-empty distinct metadata'):
       lookup_criterion(GUANSHA)
   with pytest.raises(AssertionError):
-    _check_directory_coverage(frozendict({**directory, 'test.ninth': replace(directory[GUANSHA], criterion_id='test.ninth')}), DIRECTORY_BASELINE['cases'])
+    _check_directory(frozendict({**directory, 'test.ninth': replace(directory[GUANSHA], criterion_id='test.ninth')}))
   with pytest.raises(AssertionError):
-    _check_directory_coverage(directory, [case for case in DIRECTORY_BASELINE['cases'] if case['criterion_id'] != GUANSHA])
-  case = next(case for case in DIRECTORY_BASELINE['cases'] if case['criterion_id'] == GUANSHA)
-  for changed in (
-    replace(directory[GUANSHA], observation_keys=('wrong',)),
-    replace(directory[GUANSHA], analysis_kind='relationship'),
-  ):
-    with pytest.raises(AssertionError):
-      _check_directory_info(changed, case)
-  with monkeypatch.context() as patcher:
-    patcher.setattr(CriterionInfo, 'binding_effect', property(lambda self: 'related_unrecognized'))
-    with pytest.raises(AssertionError):
-      _check_directory_info(directory[GUANSHA], case)
+    _check_directory(frozendict({key: value for key, value in directory.items() if key != GUANSHA}))
+  with pytest.raises(AssertionError):
+    _check_directory(frozendict(dict(reversed(tuple(directory.items())))))
+
+
+@pytest.mark.parametrize('change', [
+  {'definition': 'wrong'}, {'analysis_kind': 'relationship'}, {'entry_role': 'condition'},
+  {'observation_keys': ('wrong',)}, {'claim_ids': tuple(reversed(LEGAL))},
+  {'required_gender': BaziGender.MALE}, {'claim_genders': frozendict({LEGAL[0]: BaziGender.MALE})},
+])
+def test_metadata_oracle_rejects_changes(change: dict[str, Any]) -> None:
+  directory = criteria()
+  changed = replace(directory[GUANSHA], **change)
+  with pytest.raises(AssertionError):
+    _check_directory(frozendict({**directory, GUANSHA: changed}))

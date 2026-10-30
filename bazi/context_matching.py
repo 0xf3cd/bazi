@@ -3,9 +3,8 @@
 '''仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
 import copy
-import hashlib
 import json
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import dataclass, field, fields
 from datetime import date, datetime
 from typing import ClassVar, Final, Literal, NamedTuple, TypeVar, get_args
 
@@ -14,7 +13,7 @@ from .bazi_chart import BaziChart, _check_chart
 from .common import frozendict
 from .defines import Zhu, Dizhi, Ganzhi, Tiangan, TianganLayer, Shishen, DizhiRelation
 from .analyzer.relationship import RelationshipEvidence, spouse_evidence
-from .knowledge import KnowledgeBase, KnowledgeEntry
+from .knowledge import KnowledgeBase
 from ._validation import _text, _choice, _tuple, _utf8
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
@@ -26,17 +25,10 @@ MatchStatus = Literal['SATISFIED', 'NOT_SATISFIED', 'UNKNOWN']
 
 '''说明判据为何满足、不满足或无法判断。
 判据是要检查的命盘条件，例如选定范围内正官与七杀是否都出现。
-知识条目与登记内容是否一致，由 EntryMatch 或 RelatedEntry 单独记录。
 '''
 CriterionReason = Literal[
   'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
   'missing_transit_coordinate', 'transit_unavailable',
-]
-
-'''知识条目的匹配原因；比 CriterionReason 多出 binding_unrecognized，表示条目与登记内容不一致。'''
-MatchReason = Literal[
-  'premise_satisfied', 'required_classification_absent', 'day_master_differs', 'female_gate_false',
-  'missing_transit_coordinate', 'transit_unavailable', 'binding_unrecognized',
 ]
 
 '''CLI 与目录使用的观察范围名称；具体请求由 Observation 表达。'''
@@ -60,8 +52,7 @@ class _Criterion(NamedTuple):
   definition:      str
   claims:          tuple[str, ...]
   analysis_kind:   Literal['context', 'relationship']
-  # premise：条目前提即本判据，条目以 `EntryMatch` 判别；condition：判据只判可计算事实，
-  # 条目文字另含程序不判的条件，条目以 `RelatedEntry` 作条件参考返回。
+  # premise：条目前提即本判据；condition：只判可计算事实，条目另含程序不判的条件。
   entry_role:      Literal['premise', 'condition']
   female_required: bool
 
@@ -136,35 +127,20 @@ def _observation_keys(criterion_id: str) -> tuple[str, ...]:
     return (_OBS_STAR_VISIBLE, _OBS_STAR_HIDDEN)
   raise ValueError(f'Unsupported criterion metadata: {criterion_id}')
 
-# 内容摘要包含完整条目及其绑定的对象、情境与来源，用于识别已知绑定，不能只凭 ID 或展示词确认。
-_BINDINGS: Final[frozendict[str, str]] = frozendict({
-  'editorial.shishen.zhengguan.legal_trouble': 'd5cc38a85c86d67b130125b7832f1c68ba9499523dc5f3069ffa4c9fe83b79c8',
-  'editorial.shishen.qisha.legal_trouble': 'dfec24146c99cb472d08f13a81fa94aef179e45c1ae55ddbdd9031b11d6dd8b0',
-  'editorial.shishen.zhengguan.infidelity': '521a35869f53778daf677a2666a381696eb77f8749a68057999f55a83a8b68f2',
-  'editorial.shishen.qisha.infidelity': '478c85056c653e1aade39f7bbd3baa04bbf0a0ac981aa7605b5c8241455fc8ee',
-  'editorial.tanyuan.wife_palace_xingchong.v1': '39f4cfac78016b9ab61e302d5286c3560b3affe5a9ebfced07ed63cd29c5b69c',
-  'editorial.tanyuan.wife_star_gantou.v1': '19c0828c98c02e2d63f4d666b63e21e4fd2c38c220d28f3565851b1fd4cbecb1',
-  'legacy.tiangan.ding.weak_state': 'ed2b7f071196ad84e88b8353cbad6feefb865f7dd73e4877d39a9c905673c658',
-  'legacy.tiangan.geng.regulated_transit': 'd81819f4276641522e2ae51190b473e2da70ac6bf0a939d1c634081d45d2c31c',
-  'legacy.shishen.SH-199': '3bedc4dc359b82d45e1e4ae155719b36efae39e104c2492dcbf8a1824cb16de0',
-  'legacy.shishen.SH-066': '3b8543516b20f854f9105aad3cc9c237b7da13e5d5753a59fc424140de8c4537',
-})
-
 # 关联条目的男命门槛：女命查询不关联本条，静态查阅不受限；不在表内的条目无门槛。
-# 门槛先于绑定识别，同 ID 自定义顶替不能绕过；语料侧的对照标记见各条目 limits。
+# 同 ID 自定义条目不能绕过门槛；语料侧的对照标记见各条目 limits。
 _RELATED_GENDERS: Final[frozendict[str, BaziGender]] = frozendict({
   'editorial.tanyuan.wife_palace_xingchong.v1': BaziGender.MALE,
   'editorial.tanyuan.wife_star_gantou.v1':      BaziGender.MALE,
 })
 
-_STATUS_BY_REASON: Final[frozendict[MatchReason, MatchStatus]] = frozendict({
+_STATUS_BY_REASON: Final[frozendict[CriterionReason, MatchStatus]] = frozendict({
   'premise_satisfied':              'SATISFIED',
   'required_classification_absent': 'NOT_SATISFIED',
   'day_master_differs':             'NOT_SATISFIED',
   'female_gate_false':              'NOT_SATISFIED',
   'missing_transit_coordinate':     'UNKNOWN',
   'transit_unavailable':            'UNKNOWN',
-  'binding_unrecognized':           'UNKNOWN',
 })
 
 
@@ -310,8 +286,8 @@ class CriterionInfo:
 
   Note:
   - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
-  - claim_ids 是默认语料的约定，不保证自定义知识库有这些条目。绑定识别核对条目及其引用的
-    对象、情境、来源记录的内容摘要，不以相同 ID 认证内容，也不认证条文真伪或现实适用性。
+  - claim_ids 按判据声明序列出关联条目，不保证自定义知识库有这些条目。
+    自定义库负责保持同 ID 的领域含义；目录不认证条文真伪或现实适用性。
   - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
     男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
     不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。
@@ -389,19 +365,11 @@ class CriterionInfo:
 
   @property
   def unknown_conditions(self) -> frozendict[CriterionReason, str]:
-    '''判据为 UNKNOWN 的情况；知识条目与登记内容是否一致，不改变判据结果。'''
+    '''判据为 UNKNOWN 的情况；知识文字的编辑不改变判据结果。'''
     return frozendict({
       'missing_transit_coordinate': '选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。',
       'transit_unavailable': '流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。',
     })
-
-  @property
-  def binding_effect(self) -> Literal['entry_unknown', 'related_unrecognized']:
-    '''绑定未识别时，premise 的 EntryMatch 为 UNKNOWN/binding_unrecognized，
-    condition 的 RelatedEntry.recognized 为 False；两者均不改变 CriterionResult。
-    '''
-    return 'entry_unknown' if self.entry_role == 'premise' else 'related_unrecognized'
-
 
 def criterion(id: str) -> CriterionInfo:
   '''按稳定 ID 查阅判据，不加载知识库、不创建命盘；未知 ID 抛 ValueError，错型抛 TypeError。'''
@@ -422,21 +390,6 @@ def criterion(id: str) -> CriterionInfo:
 def criteria() -> frozendict[str, CriterionInfo]:
   '''返回全部已注册判据的不可变目录；每项由现有定义与观察契约派生。'''
   return frozendict({criterion_id: criterion(criterion_id) for criterion_id in _CRITERIA})
-
-
-@dataclass(frozen=True)
-class RelatedEntry:
-  '''该判据的条件参考条目。关联只表示「这条文字是这个判据所选条件的参考」，不是事实已成立，
-  也不是完整前提已满足；不升级来源状态或输出资格。判别状态只在 `CriterionResult` 展示。'''
-
-  claim_id:   str
-  recognized: bool   # 条目绑定摘要与 `_BINDINGS` 一致；同 ID 被自定义条目顶替时为 False
-
-  def __post_init__(self) -> None:
-    _typed(self.claim_id, str)
-    if not self.claim_id.strip():
-      raise ValueError('Expected non-empty claim ID')
-    _typed(self.recognized, bool)
 
 
 @dataclass(frozen=True)
@@ -510,43 +463,6 @@ class CriterionResult:
     return self.status != 'UNKNOWN'
 
 
-@dataclass(frozen=True)
-class EntryMatch:
-  '''语义绑定后的条目前提判别，独立于结构判据。'''
-
-  claim_id: str
-  reason:   MatchReason
-
-  def __post_init__(self) -> None:
-    _typed(self.claim_id, str)
-    if not self.claim_id.strip():
-      raise ValueError('Expected non-empty claim ID')
-    _choice(self.reason, get_args(MatchReason))
-
-  @property
-  def status(self) -> MatchStatus:
-    '''由条目前提原因派生的判别状态。'''
-    return _STATUS_BY_REASON[self.reason]
-
-
-@dataclass(frozen=True)
-class PremiseMatches:
-  '''完整前提的条目匹配；即使 entries 为空，也保留与条件参考的区别。'''
-  entries: tuple[EntryMatch, ...]
-
-  def __post_init__(self) -> None:
-    _tuple(self.entries, EntryMatch)
-
-
-@dataclass(frozen=True)
-class ConditionReferences:
-  '''只作条件参考的条目，不表示完整前提已满足；空集合仍是条件参考。'''
-  entries: tuple[RelatedEntry, ...]
-
-  def __post_init__(self) -> None:
-    _tuple(self.entries, RelatedEntry)
-
-
 '''见 `RelationshipEvidence` 的序列契约：原局四柱为 0–3，所选岁运自 4 起。'''
 _NATAL_SEQUENCE_LENGTH: Final[int] = len(Zhu)
 
@@ -560,8 +476,11 @@ class ContextResult:
   `render()` 直接读取领域值，不重新排盘或重建知识对象。
 
   Note:
-  - evidence 保存逐柱明藏出现或婚恋结构证据；references 区分完整前提匹配与条件参考，
-    空集合也不合并两种语义。构造期检查判据支持的观察类型、证据形状、参考种类及条目 ID 是否存在于知识库。
+  - evidence 保存逐柱明藏出现或婚恋结构证据；reference_ids 保存参考条目 ID。
+    已注册判据的 entry_role 区分完整前提与条件参考，空元组也保留该区别。
+    构造期检查判据支持的观察类型、证据形状及条目 ID 是否存在于知识库。
+  - 直接构造保留 reference_ids 的顺序和重复，不要求 ID 属于判据声明的 claims；
+    正常求值则按声明序经过缺条目、默认展示与性别筛选，不去重。
   - 婚恋结构结果另核范围与取得集合的自洽：原局不能带已取得岁运，取得种类不能超出请求；
     岁运范围完整时须有查询坐标并取得全部所求种类，关系证据序号不得超出本次查询序列。
   - 不重算或认证命盘、判别、证据真伪，也不认证输入与证据干支的一致性；
@@ -571,7 +490,7 @@ class ContextResult:
   observation:    Observation
   criterion:      CriterionResult
   evidence:       tuple[ChartOccurrence, ...] | RelationshipEvidence
-  references:     PremiseMatches | ConditionReferences
+  reference_ids:  tuple[str, ...]
   _bazi:          Bazi = field(repr=False)
   knowledge:      KnowledgeBase
 
@@ -583,21 +502,16 @@ class ContextResult:
       _tuple(self.evidence, ChartOccurrence)
     elif not isinstance(self.evidence, RelationshipEvidence):
       raise TypeError(f'Expected tuple of ChartOccurrence | RelationshipEvidence, got {type(self.evidence)}')
-    if not isinstance(self.references, (PremiseMatches, ConditionReferences)):
-      raise TypeError(f'Expected PremiseMatches | ConditionReferences, got {type(self.references)}')
+    _tuple(self.reference_ids, str)
     _typed(self._bazi, Bazi)
     object.__setattr__(self, '_bazi', copy.deepcopy(self._bazi))
     _typed(self.knowledge, KnowledgeBase)
-    for entry in self.references.entries:
-      self.knowledge.entry(entry.claim_id)
+    for claim_id in self.reference_ids:
+      self.knowledge.entry(claim_id)
 
     criterion = _CRITERIA[self.criterion.criterion_id]
     if not isinstance(self.observation, _OBSERVATION_TYPES[criterion.analysis_kind]):
       raise ValueError('Criterion does not support the observation type') # noqa: TRY004 # 已核为 Observation，此处检查判据支持集合。
-    if criterion.entry_role == 'premise' and not isinstance(self.references, PremiseMatches):
-      raise ValueError('Premise criterion cannot carry condition references')
-    if criterion.entry_role == 'condition' and not isinstance(self.references, ConditionReferences):
-      raise ValueError('Condition criterion cannot carry premise matches')
 
     if criterion.analysis_kind == 'relationship':
       relationship = self.evidence
@@ -655,7 +569,7 @@ class ContextResult:
 
     observation = self.observation
     assert isinstance(observation, (NatalObservation, LiunianObservation)) # 构造期已核证据与观察类型。
-    premise = isinstance(self.references, PremiseMatches)
+    premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
     verdict_label = '结构前提' if premise else '事实判别'
     scope = f'范围：全部明藏干；{observation.scope}'
     if isinstance(observation, LiunianObservation):
@@ -752,36 +666,22 @@ class ContextResult:
     return '\n'.join(lines)
 
   def _render_references(self) -> list[str]:
-    '''按参考种类展示完整前提判别或条件参考，不把局部事实提升为完整前提。'''
-    if isinstance(self.references, PremiseMatches):
+    '''按已注册判据的 entry_role 展示参考，不把局部事实提升为完整前提。'''
+    if _CRITERIA[self.criterion.criterion_id].entry_role == 'premise':
       lines = []
-      for match in self.references.entries:
-        lines.append(f'原作参考前提：{match.claim_id}；{match.status}；{match.reason}')
-        lines.append(self.knowledge.render(self.knowledge.entry(match.claim_id), premise_verdict=match.status))
+      for claim_id in self.reference_ids:
+        lines.append(f'原作参考前提：{claim_id}；{self.criterion.status}；{self.criterion.reason}')
+        lines.append(self.knowledge.render(self.knowledge.entry(claim_id), premise_verdict=self.criterion.status))
       return lines
     lines = ['事实判别不表示原文完整条件已满足，也不表示现实事件成立。']
     header = '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）'
-    for related in self.references.entries:
-      if related.recognized:
-        lines.append(f'{header}：{related.claim_id}')
-        lines.append(self.knowledge.render(
-          self.knowledge.entry(related.claim_id),
-          premise_verdict='完整前提未由程序判别',
-        ))
-      else:
-        # 只列 ID 与「绑定未识别」，不渲染被顶替的自定义文字。
-        lines.append(f'{header}：{related.claim_id}；绑定未识别')
+    for claim_id in self.reference_ids:
+      lines.append(f'{header}：{claim_id}')
+      lines.append(self.knowledge.render(
+        self.knowledge.entry(claim_id),
+        premise_verdict='完整前提未由程序判别',
+      ))
     return lines
-
-
-def _binding_digest(knowledge: KnowledgeBase, entry: KnowledgeEntry) -> str:
-  binding = {
-    'entry': asdict(entry),
-    'objects': [asdict(knowledge.objects[role.object_id]) for role in entry.roles],
-    'contexts': [asdict(knowledge.contexts[key]) for key in entry.contexts],
-    'sources': [asdict(knowledge.sources[key]) for key in entry.sources],
-  }
-  return hashlib.sha256(json.dumps(binding, ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()
 
 
 def _query_transits(chart: BaziChart, coordinate: TransitCoordinate) -> TransitSet | None:
@@ -801,17 +701,17 @@ def _eligible_claims(
   knowledge: KnowledgeBase,
   include_reference_only: bool,
   gender: BaziGender,
-) -> tuple[tuple[str, bool], ...]:
-  '''判据关联条目中通过输出资格与性别门槛的条目，及其绑定是否与 `_BINDINGS` 一致；两种条目角色共用。'''
-  eligible: list[tuple[str, bool]] = []
+) -> tuple[str, ...]:
+  '''按判据声明序返回通过默认展示与性别筛选的现有条目 ID。'''
+  eligible: list[str] = []
   for claim_id in _CRITERIA[criterion_id].claims:
     entry = knowledge.entries.get(claim_id)
-    if entry is None or (not include_reference_only and entry.output != 'default'):
+    if entry is None or (not include_reference_only and not entry.show_by_default):
       continue
     required_gender = _RELATED_GENDERS.get(claim_id)
     if required_gender is not None and gender is not required_gender:
       continue
-    eligible.append((claim_id, _binding_digest(knowledge, entry) == _BINDINGS[claim_id]))
+    eligible.append(claim_id)
   return tuple(eligible)
 
 
@@ -832,7 +732,7 @@ def evaluate_context(
   knowledge: KnowledgeBase | None = None,
   include_reference_only: bool = False,
 ) -> ContextResult:
-  '''检查选定范围是否满足已注册判据，返回判别、观察、证据及条目的匹配结果。
+  '''检查选定范围是否满足已注册判据，返回判别、观察、证据及参考条目 ID。
 
   Note:
   - `NatalObservation` 供所有判据共用；`LiunianObservation` 用于原局加单流年观察，
@@ -842,7 +742,7 @@ def evaluate_context(
     喜忌／成格」等完整理论条件留在知识文本，不为它们新增 UNKNOWN，也不认证其已满足；
     所需流年缺失或不可查询时返回 UNKNOWN。
   - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
-    与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联（门槛先于绑定状态），静态查阅不受限。
+    与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联，静态查阅不受限。
   - 未传 knowledge 时，每次独立加载默认来源，已保存的修改在后续加载时可见；
     传入知识库则直接复用。已有知识库和结果保留原内容，共享调用须显式重载才能取得更新。
   - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
@@ -852,13 +752,12 @@ def evaluate_context(
     婚恋范围缺查询坐标为 UNKNOWN / missing_transit_coordinate；入口不可查询或所求种类
     部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
     SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
-  - 官杀判据关联的四条原作知识均仅供参考；自定义库若改变同 ID 的条目、对象、
-    前提、情境、来源或输出政策，该条返回 binding_unrecognized。条件参考同样核对绑定，
-    不一致时记 `recognized=False`，不改变事实判别。等值的条目仍可匹配。
-  - 未选择参考条目或知识库中缺少相应条目时，不生成其 EntryMatch 或 RelatedEntry。
-    前提满足不授予默认输出资格。
+  - 关联按稳定 claim ID，不比较文字或来源摘要；自定义库负责同 ID 的领域含义。
+    编辑正文、引文或来源说明不改变判据状态，也不使参考条目变为 UNKNOWN。
+  - reference_ids 按判据声明序返回，省略缺失或被展示／性别门槛过滤的条目；
+    前提满足不授予默认展示资格。
 
-  Return: (ContextResult) 判据结果、逐柱观察或结构证据、条目匹配，
+  Return: (ContextResult) 判据结果、逐柱观察或结构证据、参考条目 ID，
   以及 `Bazi` 输入的独立副本和本次使用的 `KnowledgeBase` 对象。
   '''
   _check_chart(chart)
@@ -916,7 +815,7 @@ def evaluate_context(
       observation,
       CriterionResult(criterion_id, reason, observations),
       evidence,
-      ConditionReferences(tuple(RelatedEntry(*claim) for claim in eligible)),
+      eligible,
       bazi,
       knowledge,
     )
@@ -977,22 +876,13 @@ def evaluate_context(
       fact = 'premise_satisfied' if coexistence else 'required_classification_absent'
   reason = fact if unavailable is None else unavailable
 
-  matches: list[EntryMatch] = []
-  references: PremiseMatches | ConditionReferences
   eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
-  if _CRITERIA[criterion_id].entry_role == 'premise':
-    for claim_id, recognized in eligible:
-      entry_reason: MatchReason = reason if recognized else 'binding_unrecognized'
-      matches.append(EntryMatch(claim_id, entry_reason))
-    references = PremiseMatches(tuple(matches))
-  else:
-    references = ConditionReferences(tuple(RelatedEntry(*claim) for claim in eligible))
 
   return ContextResult(
     observation,
     CriterionResult(criterion_id, reason, observations),
     tuple(occurrences),
-    references,
+    eligible,
     bazi,
     knowledge,
   )

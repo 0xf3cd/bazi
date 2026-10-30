@@ -128,7 +128,7 @@ def main() -> None:
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, LiunianPosition, TransitObservation, YearCoordinate,
-    ContextResult, CriterionInfo, PremiseMatches, ConditionReferences, criteria, criterion as lookup_criterion, evaluate_context,
+    ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context,
   )
   check(LunarYearInfo is HkoInfo is DecoderInfo is CelestialInfo, 'Installed lunar type identity changed')
 
@@ -367,7 +367,7 @@ def main() -> None:
   for identifier, count in (('concept.taiyuan', 3), ('concept.minggong', 4)):
     entries = knowledge.query(object_id=identifier, include_reference_only=True)
     check(len(entries) == count and not knowledge.query(object_id=identifier), 'Installed auxiliary knowledge missing')
-    check(all(entry.output == 'reference_only' and entry.contexts == () for entry in entries), 'Auxiliary knowledge gained eligibility')
+    check(all(entry.show_by_default is False and entry.contexts == () for entry in entries), 'Auxiliary knowledge gained eligibility')
   for subject in knowledge.objects.values():
     check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
     check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
@@ -386,7 +386,7 @@ def main() -> None:
   check(expanded.sources['future'] == future, 'New source needs a vocabulary mirror')
   reference_entry = knowledge.entry('editorial.shishen.zhengguan.legal_trouble')
   display = knowledge.render(reference_entry, premise_verdict='SATISFIED')
-  check('前提判别：SATISFIED' in display and '输出资格：reference_only' in display and '也许' in display, 'Verdict display changed eligibility or original modality')
+  check('前提判别：SATISFIED' in display and '默认展示：否' in display and '也许' in display, 'Verdict display changed eligibility or original modality')
   check(reference_entry not in knowledge.query(), 'Verdict display granted default eligibility')
   relation = knowledge.entry('legacy.shishen.SH-052')
   check(relation.text not in knowledge.render_subject('shishen.qisha', include_reference_only=True), 'Subject projection became all-role query')
@@ -447,9 +447,9 @@ def main() -> None:
   criterion = 'editorial.guansha_coexistence.v1'
   positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
   matched = evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation(), include_reference_only=True)
-  if not isinstance(matched.evidence, tuple) or not isinstance(matched.references, PremiseMatches):
+  if not isinstance(matched.evidence, tuple) or not isinstance(matched.reference_ids, tuple):
     raise TypeError('Installed context evidence/reference types changed')
-  check(matched.criterion.status == 'SATISFIED' and len(matched.references.entries) == 2, 'Installed context positive mismatch')
+  check(matched.criterion.status == 'SATISFIED' and matched.reference_ids == ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble'), 'Installed context positive mismatch')
   check(any(o.position is Zhu.时 and o.layer is TianganLayer.藏干 and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.evidence), 'Installed context lost hidden witness')
   check('也许' in matched.render() and '不确立古籍规则，也不作现实预测。' in matched.render(), 'Installed context lost modal/source limit')
   check(matched.bazi == positive_chart.bazi, 'Installed context lost input identity')
@@ -460,7 +460,7 @@ def main() -> None:
   for input_copy in (incoming, outgoing):
     object.__setattr__(input_copy, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
   check(copied == matched and hash(copied) == fingerprint and copied.render() == rendered, 'Installed result input copy boundary failed')
-  check(evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation()).references == PremiseMatches(()), 'Installed context promoted reference output')
+  check(evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation()).reference_ids == (), 'Installed context promoted reference output')
   missing = evaluate_context(positive_chart, criterion_id=criterion, observation=LiunianObservation())
   check(missing.criterion.status == 'UNKNOWN', 'Installed context missing year became false')
   first, second = (evaluate_context(chart, criterion_id=criterion, observation=LiunianObservation(year)) for year in (2024, 2084))
@@ -487,8 +487,9 @@ def main() -> None:
     raise RuntimeError('Installed relationship evidence missing transits')
   check(evidence.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed relationship transit identity mismatch')
   check('宫·' in relationship.render(), 'Installed relationship render lost category labels')
-  check(isinstance(relationship.references, ConditionReferences), 'Installed relationship references changed')
-  check(PremiseMatches(()) != ConditionReferences(()), 'Installed empty reference roles merged')
+  check(relationship.reference_ids == (), 'Installed relationship references changed')
+  check(lookup_criterion(relationship.criterion.criterion_id).entry_role == 'condition', 'Installed condition reference role changed')
+  check('事实判别不表示原文完整条件已满足' in relationship.render(), 'Installed empty references lost condition meaning')
   queried_2016 = TransitChart(relationship_chart).at_year(2016)
   check(queried_2016 is not None, 'Installed relationship transits missing')
   if queried_2016 is None:
