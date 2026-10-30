@@ -11,20 +11,19 @@ from bazi.context_matching import ScopeName, TransitEntry, criteria
 from bazi.knowledge import Applicability
 from bazi import cli
 
-from cli_runner import BIRTH, run_cli, run_guarded_script
+from cli_runner import BIRTH, COMMANDS, run_cli, run_guarded_script
 
 
 @pytest.mark.parametrize('args', [('--help',), ('-h',)])
 def test_top_level_help_lists_five_tasks(tmp_path: Path, args: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, *args)
   assert result.returncode == 0 and '提示：' not in result.stderr
-  assert cli._COMMANDS == ('demo', 'relationship', 'chart', 'knowledge', 'match')
-  for task in cli._COMMANDS:
+  for task in COMMANDS:
     assert re.search(rf'^\s+{task}\s+\S', result.stdout, flags=re.MULTILINE)
     assert f'bazi {task}' in result.stdout
 
 
-@pytest.mark.parametrize('task', cli._COMMANDS)
+@pytest.mark.parametrize('task', COMMANDS)
 def test_task_help_fits_one_screen(tmp_path: Path, task: str) -> None:
   result = run_cli(tmp_path, task, '--help', env={'COLUMNS': '80'})
   assert result.returncode == 0
@@ -81,7 +80,7 @@ def test_gz_month_help_names_the_year(tmp_path: Path) -> None:
 
 def test_options_agree_with_library_directories() -> None:
   subparsers = cli._subcommand_parsers(cli._command_parser())
-  assert tuple(subparsers) == cli._COMMANDS
+  assert tuple(subparsers) == COMMANDS
   dests = {name: {action.dest: action for action in sub._actions} for name, sub in subparsers.items()}
   assert set(dests['knowledge']['applicability'].choices or ()) == set(get_args(Applicability))
   assert tuple(dests['knowledge']['list_values'].choices or ()) == tuple(cli._LIST_DIMENSIONS)

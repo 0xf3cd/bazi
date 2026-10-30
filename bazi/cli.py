@@ -1,6 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''安装版 bazi 命令：展示命盘、查询知识与判别前提。'''
+'''安装版 bazi 命令：展示命盘与关系报告、查询知识、判别前提。'''
 
 import argparse
 import sys
@@ -224,11 +224,11 @@ def _interpret(
   return s
 
 
-def _knowledge_text_paths(base: Path) -> list[Path]:
-  return [
-    *(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan),
-    *(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen),
-  ]
+def _knowledge_exports(base: Path) -> tuple[tuple[Path, Tiangan | Shishen], ...]:
+  return (
+    *((base / 'knowledge_base' / 'tiangan' / f'{tg}.txt', tg) for tg in Tiangan),
+    *((base / 'knowledge_base' / 'shishen' / f'{ss}.txt', ss) for ss in Shishen),
+  )
 
 
 def _save_knowledge_base(
@@ -238,29 +238,12 @@ def _save_knowledge_base(
   include_reference_only: bool = False,
   show_sources: bool = False,
 ) -> None:
-  tg_dir_path: Path = output_dir / 'knowledge_base' / 'tiangan'
-  if not tg_dir_path.exists():
-    tg_dir_path.mkdir(parents=True)
-
-  for tg in Tiangan:
-    with open(tg_dir_path / f'{tg}.txt', 'w', encoding='utf-8') as f:
-      f.write(f'{tg}知识条目：\n')
+  for path, subject in _knowledge_exports(output_dir):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+      f.write(f'{subject}知识条目：\n')
       f.write(knowledge.render_subject(
-        object_id(tg),
-        include_reference_only=include_reference_only,
-        show_sources=show_sources,
-      ))
-      f.write('\n')
-
-  ss_dir_path: Path = output_dir / 'knowledge_base' / 'shishen'
-  if not ss_dir_path.exists():
-    ss_dir_path.mkdir(parents=True)
-
-  for ss in Shishen:
-    with open(ss_dir_path / f'{ss}.txt', 'w', encoding='utf-8') as f:
-      f.write(f'{ss}知识条目：\n')
-      f.write(knowledge.render_subject(
-        object_id(ss),
+        object_id(subject),
         include_reference_only=include_reference_only,
         show_sources=show_sources,
       ))
@@ -465,9 +448,10 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     args.longitude, args.precision, args.civil_timezone,
   )):
     parser.error('Location and precision flags require fixed birth input')
+  output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   text_targets: list[Path] = []
-  if args.output_dir is not None and (args.output_dir / 'interpretation_examples').is_dir():
-    text_targets.extend((args.output_dir / 'interpretation_examples').glob('*.txt'))
+  if output is not None and output.is_dir():
+    text_targets.extend(output.glob('*.txt'))
   _reject_source_overwrite(parser, text_targets, None)
 
   charts: Iterable[BaziChart]
@@ -481,7 +465,6 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     rng = Random(seed)
     charts = (BaziChart(Bazi.random(rng=rng)) for _ in range(count))
 
-  output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   if output is not None:
     try:
       output.mkdir(parents=True, exist_ok=True)
@@ -506,7 +489,6 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
   return 0
 
 
-_COMMANDS: Final[tuple[str, ...]] = ('demo', 'relationship', 'chart', 'knowledge', 'match')
 _PROG: Final[str] = 'bazi'
 
 # `--list-values` 的取值与知识过滤选项同名；右侧是 `KnowledgeBase.filter_values` 的维度名。
@@ -546,7 +528,7 @@ def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区（IANA 名如 Pacific/Kiritimati，或固定偏移如 +14:00；负偏移写成 --civil-timezone=-05:00）；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的知识条目。')
   more.add_argument('--show-sources', action='store_true', help='显示条目 ID、署名与来源见证。')
-  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为这个目录下的文本文件。')
+  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为目录下 interpretation_examples/{序号}.txt。')
 
 
 def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
@@ -565,7 +547,7 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
   more.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
   more.add_argument('--export-knowledge-base', action='store_true', help='把全部天干与十神说明各存成一个文本文件。')
-  more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认 output_data。')
+  more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认当前目录下的 output_data。')
   more.add_argument('--show-sources', action='store_true', help='--export-knowledge-base 的文本附带条目 ID、署名与来源见证。')
 
 
@@ -656,10 +638,14 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
         print(value)
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
-  base = args.output_dir if args.output_dir is not None else Path.cwd() / 'output_data'
+    return 0
   if args.export_knowledge_base:
-    text_paths = _knowledge_text_paths(base)
-    _reject_source_overwrite(parser, text_paths, args.knowledge_source)
+    try:
+      base = args.output_dir if args.output_dir is not None else Path.cwd() / 'output_data'
+      text_paths = [path for path, _ in _knowledge_exports(base)]
+      _reject_source_overwrite(parser, text_paths, args.knowledge_source)
+    except OSError as error:
+      parser.error(str(error))
   if query or args.validate_knowledge:
     _knowledge_main(parser, args, query=query)
   if args.export_knowledge_base:
@@ -758,13 +744,12 @@ def main(argv: list[str] | None = None) -> int:
   '''执行一个命令行任务；未给参数时只显示帮助。
 
   Args:
-  - argv: (list[str] | None) 不含程序名的参数；None 表示读取 sys.argv。
+  - argv: (list[str] | None) 不含程序名的参数；None 表示读取 sys.argv[1:]。
 
-  Return:
-  (int) 成功时为0；参数错误由argparse以退出码2结束。
+  Return: (int) 成功时为 0；参数错误由 argparse 以退出码 2 结束。
 
   Note:
-  - TypeError: argv不是列表或包含非字符串成员。
+  - TypeError: argv 不是列表或包含非字符串成员。
   '''
   if argv is not None:
     if not isinstance(argv, list):

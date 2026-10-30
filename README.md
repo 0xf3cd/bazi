@@ -6,9 +6,9 @@
 ## 从这里开始
 
 - 第一次使用：按下面的[安装包路线](#安装包排第一张盘)运行 Python 程序。
-- 想在终端操作：看[命令行](#命令行)，使用安装后的 `bazi` 命令。
+- 想在终端操作：看[命令行](#命令行)，安装当前开发版的 `bazi` 命令；发布版暂未包含此命令。
 - 从 v2.3.0 升级：先看[v2.4.0 升级说明](#从-v230-升级到-v240)，其中列出存取接口删除和结构调用变化。
-- 从旧脚本迁移：看[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)，三个脚本现由一个 `bazi` 命令承接。
+- 从旧脚本迁移：看[脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移)，三个脚本现由一个 `bazi` 命令承接。
 
 ## 安装包：排第一张盘
 
@@ -82,7 +82,7 @@ python first_chart.py
 
 上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；文件写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
 
-类型从定义模块导入；安装包没有根类入口。终端操作使用下方的 `bazi` 命令。
+类型从定义模块导入；安装包没有根类入口。终端操作见下方开发版 `bazi` 命令的安装与用法。
 
 在交互环境里直接输入对象会看到一行摘要；模块 `bazi.chart_text` 提供把命盘排成纯文本的函数，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
 
@@ -91,7 +91,7 @@ python first_chart.py
 | 想做什么 | 从这里开始 |
 | --- | --- |
 | 排第一张盘，了解默认值和输出 | [快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md) |
-| 从旧源码脚本升级到安装命令 | [发布与迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md) |
+| 从旧源码脚本升级到安装命令 | [脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移) |
 | 从 v2.3.0 升级到 v2.4.0 | [存取接口删除与结构调用调整](#从-v230-升级到-v240) |
 | 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
 | 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
@@ -151,7 +151,7 @@ bazi chart \
 
 上面多行命令使用 sh／bash 的 `\` 续行；在 Windows PowerShell 或 cmd 中，去掉行末 `\` 并合并成一行执行。终端会展示带颜色的命盘与条目，TXT 保存在 `output_data/interpretation_examples/0.txt`，不带终端颜色码。相对路径以运行命令时的目录为准。
 
-给了 `--birth-time` 就要同时给 `--gender`；都不给就随机生成，随机种子打印在第一行，例如用 `chart --seed 236` 重放种子236。固定输入不要加 `--seed`。
+`--birth-time` 与 `--gender` 必须同时给或同时不给；都不给就随机生成，并在第一行打印种子。要重放同一张随机盘，可用 `chart --seed 236`；固定输入不要加 `--seed`。
 
 不排盘，查询知识：
 

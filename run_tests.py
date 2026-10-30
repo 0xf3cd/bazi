@@ -66,6 +66,9 @@ argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 
 argparser.add_argument('--environment-report', type=Path, help='与工件保全一起使用，在此仓外新文件记录实际构建与验证环境。')
 argparser.add_argument('--outer-installer-report', type=Path, help='导出环境时提供 release 步骤的三次外层 pip 版本观察。')
 
+# 保留 -docs，但拒绝已退役的 -d 被当成它的缩写。
+if '-d' in sys.argv[1:]:
+  argparser.error('unrecognized arguments: -d')
 args = argparser.parse_args()
 if args.runtime_only and args.docs:
   argparser.error('--runtime-only cannot be combined with --docs')

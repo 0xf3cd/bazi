@@ -4,6 +4,7 @@ from datetime import date, datetime
 import errno
 import os
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -25,6 +26,51 @@ from cli_runner import GUANSHA, XINGCHONG, MATCH_ARGS, MATCH_BIRTH
 REL_NATAL = ('match', XINGCHONG, *MATCH_BIRTH, '--observation-scope', 'natal')
 REL_TRANSITS = ('match', XINGCHONG, *MATCH_BIRTH, '--observation-scope', 'natal_and_transits')
 MISSING_SOURCE = str(FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), 'missing.json'))
+
+
+@pytest.mark.parametrize('tokens, expected', [
+  (['--all'], '丁为阴火。'),
+  (['--validate-knowledge'], '校验通过：'),
+  (['--list-values', 'topic'], '定义'),
+])
+def test_knowledge_reads_do_not_resolve_cwd(
+  tokens: list[str], expected: str, tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+  monkeypatch.chdir(tmp_path)
+  cwd = Mock(side_effect=FileNotFoundError('Missing working directory'))
+  monkeypatch.setattr(Path, 'cwd', cwd)
+  assert cli.main(['knowledge', *tokens]) == 0
+  captured = capsys.readouterr()
+  assert expected in captured.out and captured.err == ''
+  cwd.assert_not_called()
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_missing_cwd_uses_export_error_exit(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+  monkeypatch.chdir(tmp_path)
+  monkeypatch.setattr(Path, 'cwd', Mock(side_effect=FileNotFoundError('Missing working directory')))
+  with pytest.raises(SystemExit) as caught:
+    cli.main(['knowledge', '--export-knowledge-base'])
+  assert caught.value.code == 2
+  captured = capsys.readouterr()
+  assert captured.out == ''
+  assert captured.err.endswith('bazi knowledge: error: Missing working directory\n')
+  assert 'Traceback' not in captured.err and list(tmp_path.iterdir()) == []
+
+
+def test_explicit_export_does_not_resolve_cwd(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+  cwd = Mock(side_effect=FileNotFoundError('Missing working directory'))
+  monkeypatch.setattr(Path, 'cwd', cwd)
+  assert cli.main(['knowledge', '--export-knowledge-base', '--output-dir', str(tmp_path)]) == 0
+  captured = capsys.readouterr()
+  assert captured.out == captured.err == ''
+  assert len(list(tmp_path.rglob('*.txt'))) == 20
+  cwd.assert_not_called()
 
 
 def _expect_error(capsys: pytest.CaptureFixture[str], args: tuple[str, ...], reason: str) -> None:

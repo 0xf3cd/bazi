@@ -10,7 +10,7 @@ import pytest
 from bazi import cli
 
 
-from cli_runner import ROOT, GUANSHA, run_cli
+from cli_runner import ROOT, GUANSHA, COMMANDS, run_cli
 
 
 def _doc_commands(markdown: str) -> list[list[str]]:
@@ -25,7 +25,7 @@ def _doc_commands(markdown: str) -> list[list[str]]:
 
 
 def _check_doc_command(tokens: list[str]) -> None:
-  if not tokens or tokens[0] not in cli._COMMANDS:
+  if not tokens or tokens[0] not in COMMANDS:
     raise AssertionError(f'Not a subcommand form: {tokens}')
   try:
     cli._command_parser().parse_args(tokens)
@@ -107,7 +107,7 @@ def _inline_task_commands(markdown: str) -> list[list[str]]:
   return [
     _inline_tokens(text) for text in snippets
     if (parts := text.split(maxsplit=1)) and (
-      (parts[0] == 'bazi' and len(parts) > 1) or parts[0] in cli._COMMANDS
+      (parts[0] == 'bazi' and len(parts) > 1) or parts[0] in COMMANDS
       or re.match(r'^[A-Za-z][A-Za-z0-9_-]*\s+(?:--|判据ID(?:\s|$))', text)
     )
   ]
@@ -135,7 +135,7 @@ def test_inline_examples_keep_the_task(command: str, tokens: list[str]) -> None:
   _check_doc_command(commands[0])
 
 
-@pytest.mark.parametrize('task', cli._COMMANDS)
+@pytest.mark.parametrize('task', COMMANDS)
 @pytest.mark.parametrize('flag', ['-h', '--help'])
 def test_help_examples_are_valid(task: str, flag: str, capsys: pytest.CaptureFixture[str]) -> None:
   command = f'bazi {task} {flag}'

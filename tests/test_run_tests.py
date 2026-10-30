@@ -232,12 +232,20 @@ def test_environment_export_requires_package(monkeypatch: pytest.MonkeyPatch, tm
   assert caught.value.code == 2
 
 
-@pytest.mark.parametrize('flag', ['--demo', '-i', '--interpreter'])
+@pytest.mark.parametrize('flag', ['-d', '--demo', '-i', '--interpreter'])
 def test_removed_script_flags_are_rejected(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', flag])
   with pytest.raises(SystemExit) as caught:
     runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert caught.value.code == 2
+
+
+@pytest.mark.parametrize('flag', ['-docs', '--docs'])
+def test_doc_flags_keep_their_current_meaning(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', flag])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert runner['do_docs'] and runner['skip_test']
+  assert 'do_demo' not in runner
 
 
 def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) -> None:

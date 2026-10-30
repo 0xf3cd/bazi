@@ -16,7 +16,7 @@ python -m pip install bazi
 
 ```{note}
 本库没有 `from bazi import Bazi` 这样的根类，请从定义模块导入，下面每个示例都这样写。
-终端操作使用安装后的 `bazi` 命令，方法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)。
+终端操作可安装当前开发版的 `bazi` 命令，发布版暂未包含；安装与用法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)。
 ```
 
 ## 排第一张盘

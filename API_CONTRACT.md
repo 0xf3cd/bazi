@@ -298,18 +298,19 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 ## 命令行
 
 `console_scripts` 中只有命令 `bazi`，对应 `bazi.cli:main`；不提供 `python -m bazi` 或根目录兼容脚本。
-调用方法见 [README](README.md#命令行)；旧脚本与参数的迁移见[发布说明](RELEASE_NOTES.md)。
+调用方法见 [README](README.md#命令行)；旧脚本与参数的迁移见[脚本迁移说明](RELEASE_NOTES.md#安装版命令与脚本迁移)。
 
 | 任务 | 行为 |
 | --- | --- |
 | `bazi demo` | 随机命盘和完整流运文本，保留终端颜色。 |
 | `bazi relationship` | 夫妻宫、配偶星、原局及整柱神煞、旬空和连续十年流年报告。 |
-| `bazi chart` | 命盘与知识展示，支持种子、数量、固定出生与地点输入。 |
+| `bazi chart` | 命盘与知识展示，支持 `--seed`、`--count`、固定出生与地点输入。 |
 | `bazi knowledge` | 概览、多维查询、校验编辑源、TXT 导出和合法过滤值目录。 |
 | `bazi match` | 判据目录、单项输入说明或给定命盘的前提求值。 |
 
-前三个任务默认随机生成，打印种子，可用 `--seed 整数` 重放。固定 `chart` 输入须同时给
-`--birth-time`、`--gender`，不能与随机种子或多盘数量组合。地点与时区输入沿用库的时间口径。
+`demo`、`relationship`、`chart` 默认随机生成，打印种子，可用 `--seed 整数` 重放。
+固定 `chart` 输入须同时给 `--birth-time`、`--gender`，不能与 `--seed` 或大于 1 的 `--count` 组合。
+地点与时区输入沿用库的时间口径。
 `knowledge --list-values topic` 对应 `filter_values('topic')`，`match` 与 `match 判据ID`
 对应 `criteria()` 与 `criterion(id)`；CLI 不提供名称精确匹配或关键词检索参数。
 
