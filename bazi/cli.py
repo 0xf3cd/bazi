@@ -1,34 +1,176 @@
-#!/usr/bin/env python3
+# Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
+
+'''安装版 bazi 命令：展示命盘与关系报告、查询知识、判别前提。'''
 
 import argparse
 import sys
 from random import Random, SystemRandom
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import date, datetime, tzinfo
 from pathlib import Path
-from typing import Final, get_args
+from typing import Final, cast, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from run_demo import get_basic_info
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.defines import Zhu, Tiangan, Shishen, Dizhi
-from bazi.knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
-from bazi.context_matching import (
+from .bazi import Bazi
+from .bazi_chart import BaziChart
+from .chart_text import TextStyle, basic_text, transit_text
+from .common import frozendict
+from .defines import Zhu, Tiangan, Shishen, Dizhi, Wuxing, Ganzhi
+from .knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
+from .context_matching import (
   CriterionInfo, Observation, NatalObservation, LiunianObservation, TransitObservation, ScopeName,
   TransitCoordinate, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, TransitEntry,
   criteria, criterion, evaluate_context,
 )
-from bazi.school import BaziConfig
-from bazi.transits import TransitKind
+from .school import BaziConfig
+from .transit_chart import TransitChart
+from .transits import TransitKind
+from .utils.bazi_utils import traits
+from .analyzer.relationship import (
+  RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
+  KongwangResult,
+)
 
 
-_DEFAULT_OUTPUT_DIR: Final[Path] = Path(__file__).parent / 'output_data'
 _ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r'\x1b\[[0-9;]*m')
 
 
-def interpret(
+def _colored_str(s: Tiangan | Dizhi | Ganzhi) -> str:
+  color_mapping_table: dict[Wuxing, str] = {
+    Wuxing.火: '\x1b[31m',
+    Wuxing.木: '\x1b[32m',
+    Wuxing.金: '\x1b[33m',
+    Wuxing.水: '\x1b[34m',
+    Wuxing.土: '\x1b[35m',
+  }
+
+  if isinstance(s, Ganzhi):
+    return _colored_str(s.tiangan) + _colored_str(s.dizhi)
+  else:
+    return color_mapping_table[traits(s).wuxing] + str(s) + '\x1b[0m'
+
+
+def _highlighted_day_master(label: str) -> str:
+  return '\x1b[104m\x1b[30m' + label + '\x1b[0m'
+
+
+_TERMINAL_STYLE: Final[TextStyle] = TextStyle(glyph=_colored_str, day_master_mark=_highlighted_day_master)
+
+
+def _get_basic_info(chart: BaziChart) -> str:
+  return basic_text(chart, style=_TERMINAL_STYLE)
+
+
+def _get_transit_info(chart: BaziChart) -> str:
+  return transit_text(chart, style=_TERMINAL_STYLE)
+
+
+def _demo(seed: int | None) -> int:
+  seed = SystemRandom().getrandbits(64) if seed is None else seed
+  print(f'random seed: {seed}')
+  chart = BaziChart(Bazi.random(rng=Random(seed)))
+  print(_get_basic_info(chart))
+  print(_get_transit_info(chart))
+  return 0
+
+
+_WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
+  'kuigang': '魁罡',
+  'tianshe': '天赦',
+})
+
+
+def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
+  # TypedDict 用字面键索引；展示按 SHENSHA_LABELS 注册序读取，不包含原局的两个整柱神煞。
+  dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)
+  return tuple((label, dizhis[name]) for name, label in SHENSHA_LABELS.items())
+
+
+def _shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
+  return [
+    f'{label}：{", ".join(map(_colored_str, sorted(dz_fs, key=lambda dz: dz.index)))}'
+    for label, dz_fs in _named_shensha(shensha)
+    if dz_fs
+  ]
+
+
+def _at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
+  result = _shensha_strs(shensha)
+  whole_pillars = cast(Mapping[str, Ganzhi | None], shensha)
+  for name, label in _WHOLE_PILLAR_SHENSHA_LABELS.items():
+    if (ganzhi := whole_pillars[name]) is not None:
+      result.append(f'{label}：{_colored_str(ganzhi)}')
+  return result
+
+
+def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
+  labels = tuple(label for label, _ in _named_shensha(shensha))
+  return f'原局无{"、".join(labels + tuple(_WHOLE_PILLAR_SHENSHA_LABELS.values()))}'
+
+
+def _kongwang_strs(results: tuple[KongwangResult, ...]) -> list[str]:
+  '''逐锚展示旬空二支与具体命中；没有命中时仍列二支。'''
+  lines = []
+  for result in results:
+    absent = ''.join(map(str, sorted(result.xunkong, key=lambda dz: dz.index)))
+    hit_texts: list[str] = []
+    for hit in result.hits:
+      position = hit.position
+      label = f'{position}柱' if isinstance(position, Zhu) else position.value
+      hit_texts.append(f'{label} {hit.ganzhi}')
+    lines.append(f'{result.anchor}柱 {result.ganzhi} → 旬空{absent}；命中：{"、".join(hit_texts) or "无"}')
+  return lines
+
+
+def _relationship(seed: int | None) -> int:
+  seed = SystemRandom().getrandbits(64) if seed is None else seed
+  print(f'random seed: {seed}')
+  chart = BaziChart.random(rng=Random(seed))
+  analyzer = RelationshipAnalyzer(chart)
+  print(_get_basic_info(chart))
+  print('\n' + '-' * 60 + '\n')
+
+  house = chart.house_of_relationship
+  stars = chart.relationship_stars
+  star_strs = [_colored_str(stars.tiangan), *map(_colored_str, stars.dizhi)]
+  print(f'夫妻宫：{_colored_str(house)}')
+  print(f'配偶星：{", ".join(star_strs)}')
+  print('\n' + '-' * 60 + '\n')
+
+  at_birth_shensha = analyzer.at_birth.shensha
+  shensha_str_list = _at_birth_shensha_strs(at_birth_shensha)
+  if len(shensha_str_list) == 0:
+    print(_no_shensha_str(at_birth_shensha))
+  else:
+    print('原局神煞：')
+    print('\n'.join(shensha_str_list))
+  print('六甲旬空依据：')
+  print('\n'.join(_kongwang_strs(analyzer.at_birth.kongwang)))
+  print('\n' + '-' * 60 + '\n')
+
+  transits_analysis = analyzer.transits
+  transit_chart = TransitChart(chart)
+  start_gz_year = chart.bazi.ganzhi_year + 20
+  print(f'流年神煞（{start_gz_year} 起十年）：')
+  for gz_year in range(start_gz_year, start_gz_year + 10):
+    year_transits = transit_chart.at_year(gz_year)
+    assert year_transits is not None
+    year_strs = _shensha_strs(transits_analysis.shensha(
+      year_transits.select(TransitKind.LIUNIAN)
+    ))
+    if len(year_strs) == 0:
+      print(f'{gz_year}：无')
+    else:
+      print(f'{gz_year}：')
+      print('\n'.join(f'  {s}' for s in year_strs))
+    print('\n'.join(f'  {s}' for s in _kongwang_strs(transits_analysis.kongwang(
+      year_transits.select(TransitKind.LIUNIAN)
+    ))))
+  return 0
+
+
+def _interpret(
   chart: BaziChart,
   *,
   include_reference_only: bool = False,
@@ -82,43 +224,26 @@ def interpret(
   return s
 
 
-def _knowledge_text_paths(base: Path) -> list[Path]:
-  return [
-    *(base / 'knowledge_base' / 'tiangan' / f'{tg}.txt' for tg in Tiangan),
-    *(base / 'knowledge_base' / 'shishen' / f'{ss}.txt' for ss in Shishen),
-  ]
+def _knowledge_exports(base: Path) -> tuple[tuple[Path, Tiangan | Shishen], ...]:
+  return (
+    *((base / 'knowledge_base' / 'tiangan' / f'{tg}.txt', tg) for tg in Tiangan),
+    *((base / 'knowledge_base' / 'shishen' / f'{ss}.txt', ss) for ss in Shishen),
+  )
 
 
-def save_knowledge_base(
-  output_dir: Path = _DEFAULT_OUTPUT_DIR,
+def _save_knowledge_base(
+  output_dir: Path,
   *,
   knowledge: KnowledgeBase,
   include_reference_only: bool = False,
   show_sources: bool = False,
 ) -> None:
-  tg_dir_path: Path = output_dir / 'knowledge_base' / 'tiangan'
-  if not tg_dir_path.exists():
-    tg_dir_path.mkdir(parents=True)
-
-  for tg in Tiangan:
-    with open(tg_dir_path / f'{tg}.txt', 'w', encoding='utf-8') as f:
-      f.write(f'{tg}知识条目：\n')
+  for path, subject in _knowledge_exports(output_dir):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+      f.write(f'{subject}知识条目：\n')
       f.write(knowledge.render_subject(
-        object_id(tg),
-        include_reference_only=include_reference_only,
-        show_sources=show_sources,
-      ))
-      f.write('\n')
-
-  ss_dir_path: Path = output_dir / 'knowledge_base' / 'shishen'
-  if not ss_dir_path.exists():
-    ss_dir_path.mkdir(parents=True)
-
-  for ss in Shishen:
-    with open(ss_dir_path / f'{ss}.txt', 'w', encoding='utf-8') as f:
-      f.write(f'{ss}知识条目：\n')
-      f.write(knowledge.render_subject(
-        object_id(ss),
+        object_id(subject),
         include_reference_only=include_reference_only,
         show_sources=show_sources,
       ))
@@ -131,7 +256,7 @@ def _chart_text(
   include_reference_only: bool = False,
   show_sources: bool = False,
 ) -> str:
-  return get_basic_info(chart) + '\n' + '=' * 60 + '\n' + interpret(
+  return _get_basic_info(chart) + '\n' + '=' * 60 + '\n' + _interpret(
     chart,
     include_reference_only=include_reference_only,
     show_sources=show_sources,
@@ -323,9 +448,10 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     args.longitude, args.precision, args.civil_timezone,
   )):
     parser.error('Location and precision flags require fixed birth input')
+  output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   text_targets: list[Path] = []
-  if args.output_dir is not None and (args.output_dir / 'interpretation_examples').is_dir():
-    text_targets.extend((args.output_dir / 'interpretation_examples').glob('*.txt'))
+  if output is not None and output.is_dir():
+    text_targets.extend(output.glob('*.txt'))
   _reject_source_overwrite(parser, text_targets, None)
 
   charts: Iterable[BaziChart]
@@ -339,7 +465,6 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
     rng = Random(seed)
     charts = (BaziChart(Bazi.random(rng=rng)) for _ in range(count))
 
-  output = None if args.output_dir is None else args.output_dir / 'interpretation_examples'
   if output is not None:
     try:
       output.mkdir(parents=True, exist_ok=True)
@@ -364,8 +489,7 @@ def _chart_main(parser: argparse.ArgumentParser, args: argparse.Namespace) -> in
   return 0
 
 
-_COMMANDS: Final[tuple[str, ...]] = ('chart', 'knowledge', 'match')
-_PROG: Final[str] = 'python run_interpreter.py'
+_PROG: Final[str] = 'bazi'
 
 # `--list-values` 的取值与知识过滤选项同名；右侧是 `KnowledgeBase.filter_values` 的维度名。
 _LIST_DIMENSIONS: Final[dict[str, str]] = {
@@ -388,6 +512,10 @@ _MATCH_EXAMPLE: Final[str] = (
 )
 
 
+def _add_seed_arguments(parser: argparse.ArgumentParser) -> None:
+  parser.add_argument('--seed', type=int, help='重放随机示例的种子。')
+
+
 def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   basic = parser.add_argument_group('出生信息（都不给则随机生成一张盘）')
   basic.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
@@ -400,7 +528,7 @@ def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区（IANA 名如 Pacific/Kiritimati，或固定偏移如 +14:00；负偏移写成 --civil-timezone=-05:00）；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的知识条目。')
   more.add_argument('--show-sources', action='store_true', help='显示条目 ID、署名与来源见证。')
-  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为这个目录下的文本文件。')
+  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为此目录下的 interpretation_examples/{序号}.txt。')
 
 
 def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
@@ -419,7 +547,7 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
   more.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
   more.add_argument('--export-knowledge-base', action='store_true', help='把全部天干与十神说明各存成一个文本文件。')
-  more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认 output_data。')
+  more.add_argument('--output-dir', type=Path, help='导出基目录（其下为 knowledge_base/{tiangan,shishen}/），默认当前目录下的 output_data。')
   more.add_argument('--show-sources', action='store_true', help='--export-knowledge-base 的文本附带条目 ID、署名与来源见证。')
 
 
@@ -446,9 +574,11 @@ def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
 def _command_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
     prog=_PROG,
-    description='源码脚本：展示命盘、查询解释知识、判别判据前提。先选一个任务，再用「任务 --help」看它的选项。',
+    description='展示命盘、查询解释知识、判别判据前提。先选一个任务，再用「任务 --help」看它的选项。',
     epilog=(
       '示例：\n'
+      f'  {_PROG} demo --seed 236                        完整命盘与流运示例\n'
+      f'  {_PROG} relationship --seed 236                婚恋与十年流年报告\n'
       f'  {_PROG} chart                                  随机命盘\n'
       f'  {_PROG} chart --birth-time "2000-01-01 12:00" --gender male\n'
       f'  {_PROG} knowledge                              知识库概览\n'
@@ -460,6 +590,8 @@ def _command_parser() -> argparse.ArgumentParser:
   )
   tasks = parser.add_subparsers(dest='command', metavar='<任务>', required=True)
   for name, summary, usage, add in (
+    ('demo', '展示随机命盘及其完整流运', '[--seed 整数]', _add_seed_arguments),
+    ('relationship', '展示随机命盘的亲密关系分析', '[--seed 整数]', _add_seed_arguments),
     ('chart', '展示命盘；不给出生信息就随机生成', '[--birth-time 时刻 --gender male|female] [选项]', _add_chart_arguments),
     ('knowledge', '查询、校验、导出解释知识，不需要命盘', '[查询条件] [选项]', _add_knowledge_arguments),
     ('match', '查看判据，或对给定命盘判别前提', '[判据ID] [选项]', _add_match_arguments),
@@ -506,10 +638,14 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
         print(value)
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
-  base = args.output_dir if args.output_dir is not None else _DEFAULT_OUTPUT_DIR
+    return 0
   if args.export_knowledge_base:
-    text_paths = _knowledge_text_paths(base)
-    _reject_source_overwrite(parser, text_paths, args.knowledge_source)
+    try:
+      base = args.output_dir if args.output_dir is not None else Path.cwd() / 'output_data'
+      text_paths = [path for path, _ in _knowledge_exports(base)]
+      _reject_source_overwrite(parser, text_paths, args.knowledge_source)
+    except OSError as error:
+      parser.error(str(error))
   if query or args.validate_knowledge:
     _knowledge_main(parser, args, query=query)
   if args.export_knowledge_base:
@@ -518,7 +654,7 @@ def _knowledge_command(parser: argparse.ArgumentParser, args: argparse.Namespace
     except (OSError, TypeError, ValueError) as error:
       parser.error(str(error))
     try:
-      save_knowledge_base(
+      _save_knowledge_base(
         base,
         include_reference_only=args.include_reference_only,
         show_sources=args.show_sources,
@@ -591,14 +727,12 @@ def _command_main(tokens: list[str]) -> int:
   if not tokens:
     parser.print_help()
     return 0
-  if tokens[0].startswith('-') and tokens not in (['-h'], ['--help']):
-    parser.error(
-      f'不带任务名的旧写法已在 v2.3.0 移除。请改用 {_PROG} chart [选项]、'
-      f'{_PROG} knowledge [查询条件或选项]、{_PROG} match <判据ID> [选项]；'
-      f'用 {_PROG} --help 查看示例。'
-    )
   args = parser.parse_args(tokens)
   sub = _subcommand_parsers(parser)[args.command]
+  if args.command == 'demo':
+    return _demo(args.seed)
+  if args.command == 'relationship':
+    return _relationship(args.seed)
   if args.command == 'chart':
     return _chart_main(sub, args)
   if args.command == 'knowledge':
@@ -607,9 +741,21 @@ def _command_main(tokens: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+  '''执行一个命令行任务；未给参数时只显示帮助。
+
+  Args:
+  - argv: (list[str] | None) 不含程序名的参数；None 表示读取 sys.argv[1:]。
+
+  Return: (int) 成功时为 0；参数错误由 argparse 以退出码 2 结束。
+
+  Note:
+  - TypeError: argv 不是列表或包含非字符串成员。
+  '''
+  if argv is not None:
+    if not isinstance(argv, list):
+      raise TypeError(f'Expected list, got {type(argv)}')
+    for token in argv:
+      if not isinstance(token, str):
+        raise TypeError(f'Expected str, got {type(token)}')
   tokens = sys.argv[1:] if argv is None else list(argv)
   return _command_main(tokens)
-
-
-if __name__ == '__main__':
-  raise SystemExit(main())

@@ -279,6 +279,7 @@ def check_python_ci(
       index, command = commands[0]
       arguments = set(shlex.split(command))
       assert flags <= arguments, (name, job, version, command)
+      assert not {'-d', '--demo', '-i', '--interpreter'} & arguments, (name, job, version, command)
       assert ('--runtime-only' not in arguments) is docs, (name, job, version, command)
       assert bool(installations) is docs, (name, job, version, installations)
       assert all(installation < index for installation in installations)
@@ -286,7 +287,7 @@ def check_python_ci(
 
 @pytest.mark.parametrize('name, jobs, flags', [
   ('on_pull_request.yml', ['test-on-ubuntu', 'test-on-macos', 'test-on-windows'], {'-a', '-v'}),
-  ('on_push.yml', ['test-on-ubuntu', 'test-on-macos', 'test-on-windows'], {'-ruff', '-mypy', '-d', '-osmoke'}),
+  ('on_push.yml', ['test-on-ubuntu', 'test-on-macos', 'test-on-windows'], {'-ruff', '-mypy', '-osmoke'}),
   ('release.yml', ['build'], {'-a', '-v', '--package-output-dir'}),
 ])
 def test_python_ci_keeps_runtime_and_docs_gates(
@@ -296,7 +297,7 @@ def test_python_ci_keeps_runtime_and_docs_gates(
   check_python_ci(workflow, name, jobs, flags)
 
 
-@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'docs-on-312', 'skip-docs', 'no-docs-install', 'no-runtime-scope', 'no-312-runtime-scope', 'changed-check-name'])
+@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'docs-on-312', 'skip-docs', 'no-docs-install', 'no-runtime-scope', 'no-312-runtime-scope', 'changed-check-name', 'retired-flag'])
 def test_python_ci_rejects_scope_regressions(defect: str) -> None:
   workflow = yaml.safe_load((WORKFLOWS / 'on_pull_request.yml').read_text(encoding='utf-8'))
   ubuntu = workflow['jobs']['test-on-ubuntu']
@@ -315,6 +316,9 @@ def test_python_ci_rejects_scope_regressions(defect: str) -> None:
   elif defect in ('no-runtime-scope', 'no-312-runtime-scope'):
     version = '3.11' if defect == 'no-runtime-scope' else '3.12'
     next(leg for leg in legs if leg['python-version'] == version)['scope'] = ''
+  elif defect == 'retired-flag':
+    testing = next(item for item in ubuntu['steps'] if 'run_tests.py' in item.get('run', ''))
+    testing['run'] = testing['run'].replace('-a -v', '-a -v -d')
   else:
     del ubuntu['name']
   with pytest.raises(AssertionError):
@@ -326,6 +330,14 @@ def test_doc_builders_use_supported_python(name: str) -> None:
   workflow = yaml.safe_load((WORKFLOWS / name).read_text(encoding='utf-8'))
   setup = next(item for item in workflow['jobs']['build']['steps'] if 'setup-python@' in item.get('uses', ''))
   assert tuple(map(int, setup['with']['python-version'].split('.'))) >= (3, 13)
+
+
+def test_pypy_keeps_test_and_optimized_gates() -> None:
+  workflow = yaml.safe_load((WORKFLOWS / 'pypy_compatibility.yml').read_text(encoding='utf-8'))
+  testing = next(item for item in workflow['jobs']['build']['steps'] if item.get('name') == 'Testing')
+  arguments = set(shlex.split(testing['run']))
+  assert {'pypy', './run_tests.py', '-s', '-hko', '-osmoke'} <= arguments
+  assert not {'-d', '--demo', '-i', '--interpreter'} & arguments
 
 
 def response(value: object) -> io.BytesIO:

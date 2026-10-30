@@ -8,24 +8,27 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import main
+from bazi import cli
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
-from cli_runner import KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
+from cli_runner import ROOT, KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
 
 
 def test_knowledge_export_defaults_are_isolated(
   tmp_path: Path,
   monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-  monkeypatch.setitem(main.__globals__, '_DEFAULT_OUTPUT_DIR', tmp_path)
-  assert main([
+  # cli was imported before chdir: the export directory must follow this call's cwd.
+  monkeypatch.chdir(tmp_path)
+  assert cli.main([
     'knowledge', '--export-knowledge-base',
   ]) == 0
-  assert not (tmp_path / 'interpretation_examples').exists()
-  assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
-  assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
-  ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
+  output = tmp_path / 'output_data'
+  assert not (output / 'interpretation_examples').exists()
+  assert len(list((output / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
+  assert len(list((output / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
+  assert list(tmp_path.iterdir()) == [output]
+  ding = (output / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
   assert '丁为阴火。' in ding
   assert '丁火有烛灯之象' not in ding
   assert '仅供参考' not in ding
@@ -45,7 +48,7 @@ def test_query_needs_no_birth_input_or_writes(tmp_path: Path) -> None:
   assert '丁为阴火。' not in result.stdout
   assert list(tmp_path.iterdir()) == []
   guarded = run_guarded_script(
-    Path(__file__).parents[2] / 'run_interpreter.py', tmp_path,
+    tmp_path,
     ('knowledge', '--object', 'tiangan.ding'),
   )
   assert guarded.returncode == 0, guarded.stderr
@@ -67,6 +70,20 @@ def test_default_query_omits_reference_entries(tmp_path: Path) -> None:
   default = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding')
   assert default.returncode == 0
   assert '丁为阴火。' in default.stdout and '烛灯' not in default.stdout
+
+
+def test_ding_query_keeps_reference_text(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--include-reference-only')
+  assert result.returncode == 0 and result.stderr == ''
+  assert '丁为阴火。' in result.stdout and '丁火有烛灯之象' in result.stdout and '仅供参考' in result.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_validation_alone_is_read_only(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge')
+  assert result.returncode == 0 and result.stderr == ''
+  assert result.stdout == '校验通过：312 条目，23 来源见证，10 情境。\n'
+  assert list(tmp_path.iterdir()) == []
 
 
 def test_known_object_can_have_no_entries(tmp_path: Path) -> None:
@@ -99,8 +116,13 @@ def test_edit_validate_reload_cycle(tmp_path: Path) -> None:
   restored = KnowledgeBase.load(source)
   assert restored.entry('tiangan.ding.lamp_symbol').limits == ('本次编辑的限度。',)
   assert restored.sources == KNOWLEDGE_BASE.sources
+  default = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--knowledge-source', str(source))
+  assert default.returncode == 0 and default.stderr == ''
+  assert default.stdout == ''.join(restored.render(entry) + '\n\n' for entry in restored.query(object_id='tiangan.ding'))
+  assert '丁为阴火。' in default.stdout and '仅供参考' not in default.stdout
   again = run_cli(tmp_path, 'knowledge', '--all', '--knowledge-source', str(source), '--include-reference-only')
   assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and '第 70 页' in again.stdout
+  assert set(tmp_path.iterdir()) == {source}
 
 
 @pytest.mark.parametrize('args,error', [
@@ -146,9 +168,7 @@ def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, ba
   if bad == 'parser_limit':
     code = '''
 import json
-import runpy
 import sys
-from pathlib import Path
 
 original_loads = json.loads
 def loads(text, *args, **kwargs):
@@ -156,13 +176,13 @@ def loads(text, *args, **kwargs):
     raise RecursionError('injected parser limit')
   return original_loads(text, *args, **kwargs)
 json.loads = loads
-sys.path.insert(0, str(Path(sys.argv[1]).parent))
-sys.argv = sys.argv[1:]
-runpy.run_path(sys.argv[0], run_name='__main__')
+sys.path.insert(0, sys.argv.pop(1))
+from bazi.cli import main
+raise SystemExit(main())
 '''
     result = subprocess.run(
       [sys.executable, *(['-O'] if optimized else []), '-B', '-c', code,
-       str(Path(__file__).parents[2] / 'run_interpreter.py'), *args],
+       str(ROOT), *args],
       cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', timeout=45, check=False,
     )
   else:
@@ -177,10 +197,7 @@ runpy.run_path(sys.argv[0], run_name='__main__')
 
 @pytest.fixture
 def knowledge_checkout(tmp_path: Path) -> Path:
-  root = Path(__file__).parents[2]
-  shutil.copytree(root / 'bazi', tmp_path / 'bazi', ignore=shutil.ignore_patterns('__pycache__'))
-  for name in ('run_interpreter.py', 'run_demo.py'):
-    shutil.copyfile(root / name, tmp_path / name)
+  shutil.copytree(ROOT / 'bazi', tmp_path / 'bazi', ignore=shutil.ignore_patterns('__pycache__'))
   return tmp_path
 
 
@@ -189,15 +206,14 @@ def test_validation_reads_corrupt_bundled_source(knowledge_checkout: Path) -> No
   custom = knowledge_checkout / 'custom.json'
   custom.write_bytes(corpus.read_bytes())
   corpus.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  script = knowledge_checkout / 'run_interpreter.py'
-  invalid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', script=script)
+  invalid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', checkout_root=knowledge_checkout)
   assert invalid.returncode == 2
   assert 'Duplicate JSON key' in invalid.stderr and 'Traceback' not in invalid.stderr
-  valid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), script=script)
+  valid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), checkout_root=knowledge_checkout)
   assert valid.returncode == 0 and '校验通过：' in valid.stdout
   corpus.unlink()
   independent = run_cli(
-    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--validate-knowledge', script=script,
+    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--validate-knowledge', checkout_root=knowledge_checkout,
   )
   assert independent.returncode == 0, independent.stderr
   assert KnowledgeBase.load(custom).entries == KNOWLEDGE_BASE.entries
@@ -220,7 +236,7 @@ def test_loading_is_independent_of_projection(
   else:
     data['sources'] = [source for source in data['sources'] if source['source_id'] != 'yuanhai_ziping_stem_table']
   corpus.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  result = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', script=knowledge_checkout / 'run_interpreter.py')
+  result = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', checkout_root=knowledge_checkout)
   assert result.returncode == 0 and '校验通过：' in result.stdout
   imported = subprocess.run(
     [sys.executable, '-B', '-c', 'from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
@@ -230,7 +246,7 @@ def test_loading_is_independent_of_projection(
   if mutation == 'new-source':
     queried = run_cli(
       knowledge_checkout, 'knowledge', '--source', 'independent_probe',
-      '--include-reference-only', script=knowledge_checkout / 'run_interpreter.py',
+      '--include-reference-only', checkout_root=knowledge_checkout,
     )
     assert queried.returncode == 0, queried.stderr
     assert '条目：tiangan.ding.lamp_symbol' in queried.stdout
@@ -259,12 +275,12 @@ def test_chart_txt_share_subject_projection(knowledge_checkout: Path, show_sourc
     tmp_path, 'chart', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only',
     *(['--show-sources'] if show_sources else []),
     '--output-dir', str(tmp_path),
-    script=knowledge_checkout / 'run_interpreter.py',
+    checkout_root=knowledge_checkout,
   )
   assert result.returncode == 0, result.stderr
   exported = run_cli(tmp_path, 'knowledge', '--include-reference-only', '--export-knowledge-base',
                       '--output-dir', str(tmp_path), *(['--show-sources'] if show_sources else []),
-                      script=knowledge_checkout / 'run_interpreter.py')
+                       checkout_root=knowledge_checkout)
   assert exported.returncode == 0 and exported.stdout == '' and exported.stderr == ''
   for subject, kind in (('七杀', 'shishen.qisha'), ('食神', 'shishen.shishen')):
     text = (tmp_path / 'knowledge_base/shishen' / (subject + '.txt')).read_text(encoding='utf-8')

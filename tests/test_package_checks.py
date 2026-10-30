@@ -33,6 +33,8 @@ def test_source_selection() -> None:
   assert set(RUNTIME_DATA) <= files
   assert {f'bazi/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101)} <= files
   assert {'bazi/py.typed', 'tests/package_smoke.py', '.github/workflows/release.yml'} <= files
+  assert {'bazi/cli.py', 'tests/package_cli_smoke.py'} <= files
+  assert not {'run_demo.py', 'run_interpreter.py', 'run_relationship_analyzer.py'} & files
   assert not any('/references/' in name or name.endswith('.ipynb') for name in files)
   assert {p.relative_to(ROOT).as_posix() for p in (ROOT / 'bazi').rglob('*.py')} <= files
 
@@ -42,6 +44,8 @@ def test_source_selection() -> None:
   ('missing-typing', True), ('extra-source', True), ('changed-bytes', True),
   ('duplicate', True),
   ('wrong-description', True), ('wrong-description-type', True),
+  ('missing-entrypoints', True), ('extra-entrypoint', True), ('wrong-entrypoint', True),
+  ('wrong-entrypoint-group', True), ('wrong-entrypoint-name', True),
 ])
 def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
   readme = b'# Bazi\n'
@@ -65,6 +69,17 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
     archive.writestr('bazi-1.0.0.dist-info/METADATA', header + b'\n\n' + body)
     for name in ('WHEEL', 'top_level.txt', 'RECORD'):
       archive.writestr('bazi-1.0.0.dist-info/' + name, b'')
+    entrypoints = b'[console_scripts]\nbazi = bazi.cli:main\n'
+    if change == 'extra-entrypoint':
+      entrypoints += b'other = bazi.cli:main\n'
+    elif change == 'wrong-entrypoint':
+      entrypoints = entrypoints.replace(b'bazi.cli:main', b'bazi.other:main')
+    elif change == 'wrong-entrypoint-group':
+      entrypoints = entrypoints.replace(b'console_scripts', b'gui_scripts')
+    elif change == 'wrong-entrypoint-name':
+      entrypoints = entrypoints.replace(b'bazi =', b'other =')
+    if change != 'missing-entrypoints':
+      archive.writestr('bazi-1.0.0.dist-info/entry_points.txt', entrypoints)
     archive.writestr('bazi-1.0.0.dist-info/licenses/LICENSE', b'license')
     if change == 'zip-comment':
       archive.comment = b'Harmless archive comment'
@@ -72,7 +87,7 @@ def test_wheel_roster(tmp_path: Path, change: str, rejected: bool) -> None:
       with pytest.warns(UserWarning, match='Duplicate name'):
         archive.writestr('bazi/__init__.py', b'')
   if rejected:
-    message = r'Duplicate wheel members: .*bazi/__init__\.py' if change == 'duplicate' else ('Description' if change.startswith('wrong-description') else 'Wheel (file roster mismatch|bytes differ)')
+    message = r'Duplicate wheel members: .*bazi/__init__\.py' if change == 'duplicate' else ('Description' if change.startswith('wrong-description') else 'Wheel (file roster mismatch|bytes differ|entrypoints mismatch)')
     with pytest.raises(ValueError, match=message):
       check_wheel(wheel, expected, licenses, readme)
   else:
@@ -409,7 +424,7 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize('change', [
   'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
-  'typing-internal-error', 'typing-missing-kongwang',
+  'typing-internal-error', 'typing-missing-kongwang', 'typing-missing-cli', 'sdist-wrong-entrypoint',
   'typing-missing-dayun', 'typing-missing-transit', 'typing-missing-transit-chart',
 ])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
@@ -418,7 +433,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   work.mkdir()
   source = {'README.md': b'# Fixture\n', 'pyproject.toml': b'[project]\nversion="1.0.0"\n',
     'LICENSE': b'license', 'THIRD_PARTY_NOTICES.md': b'notices', 'bazi/fixture.py': b'X = 1\n',
-    'tests/package_smoke.py': b'# Fixture consumer\n'}
+    'tests/package_smoke.py': b'# Fixture consumer\n', 'tests/package_cli_smoke.py': b'# Fixture CLI consumer\n'}
   for name, content in source.items():
     path = root / name
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -454,6 +469,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     if kind == 'sdist':
       generated = {'PKG-INFO': metadata, 'setup.cfg': b''} | {
         'bazi.egg-info/' + name: b'' for name in ('PKG-INFO', 'SOURCES.txt', 'dependency_links.txt', 'top_level.txt')}
+      generated['bazi.egg-info/entry_points.txt'] = b'[console_scripts]\nbazi = bazi.cli:main\n'
+      if change == 'sdist-wrong-entrypoint':
+        generated['bazi.egg-info/entry_points.txt'] = b'[console_scripts]\nbazi = bazi.other:main\n'
       with tarfile.open(directory / 'bazi-1.0.0.tar.gz', 'w:gz') as archive:
         for name, content in {**source, **generated}.items():
           item = tarfile.TarInfo('bazi-1.0.0/' + name)
@@ -466,6 +484,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
         archive.writestr('bazi-1.0.0.dist-info/METADATA', metadata)
         for name in ('WHEEL', 'top_level.txt', 'RECORD'):
           archive.writestr('bazi-1.0.0.dist-info/' + name, b'')
+        archive.writestr('bazi-1.0.0.dist-info/entry_points.txt', b'[console_scripts]\nbazi = bazi.cli:main\n')
         for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
           archive.writestr('bazi-1.0.0.dist-info/licenses/' + name, source[name])
     assert environments is not None
@@ -483,10 +502,13 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   monkeypatch.setattr(package_checks, 'observe_pip', observe)
 
   def run_fixture(command: list[str], cwd: Path) -> None:
+    if command[-1] == 'package_cli_smoke.py':
+      observations.append('cli:' + Path(command[0]).parent.parent.name + (':optimized' if '-O' in command else ':normal'))
     if 'mypy' in command:
       assert command[1:5] == ['-I', '-X', 'utf8', '-m']
       assert '--show-traceback' in command and command[-1] == 'good.py'
       good = (cwd / 'good.py').read_text(encoding='utf-8')
+      assert 'from bazi.cli import main as cli_main' in good and 'cli_exit: int = cli_main(["--help"])' in good
       for method in ('at_year', 'at_month', 'at_date', 'at_moment'):
         assert f': TransitSet | None = transits.{method}(' in good
     if 'pip' not in command:
@@ -511,7 +533,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
     assert 'KongwangResult(Zhu.月, target, ())' not in bad
     messages = ['[assignment] [arg-type] "None"']
-    messages.extend(f'to "{name}"' for name in ('create', 'query', 'find_objects', 'search', 'filter_values',
+    messages.extend(f'to "{name}"' for name in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values',
       'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate',
       'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance',
       'CriterionResult', 'KnowledgeEntry',
@@ -538,6 +560,8 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
         messages.append(f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"  [attr-defined]')
     if change == 'typing-missing-kongwang':
       messages.remove('to "KongwangResult"')
+    elif change == 'typing-missing-cli':
+      messages.remove('to "main"')
     return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, '\n'.join(messages), '')
   monkeypatch.setattr(subprocess, 'run', diagnostics)
   if change == 'none':
@@ -547,7 +571,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     message = {'identity-changed': 'Source identity changed', 'source-changed': 'Source changed',
       'role-missing': 'Environment role roster mismatch', 'report-race': '',
       'typing-internal-error': 'Installed typing negative control did not reach both type checks',
-      'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult',
+       'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult',
+       'typing-missing-cli': 'Installed typing negative control missed main',
+       'sdist-wrong-entrypoint': 'Sdist entrypoints mismatch',
       'typing-missing-dayun': r'Installed typing negative control missed removed bazi\.transits\.DayunDatabase',
       'typing-missing-transit': r'Installed typing negative control missed removed bazi\.transits\.TransitDatabase',
       'typing-missing-transit-chart': r'Installed typing negative control missed removed bazi\.transit_chart\.TransitDatabase'}[change]
@@ -570,6 +596,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   assert observations.index('install-mypy') < observations.index('consumer-typing')
   assert observations.count('pip:direct-venv') == observations.count('pip:rebuilt-venv') == 2
   assert observations.count('pip:typing-venv') == 3
+  for label in ('direct', 'rebuilt'):
+    for optimization in ('normal', 'optimized'):
+      assert observations.count(f'cli:{label}-venv:{optimization}') == 1
   assert identity.call_count == 2
   version.assert_called_once_with('mypy')
   assert (work / 'direct/bazi-1.0.0-py3-none-any.whl').read_bytes() != (work / 'rebuilt/bazi-1.0.0-py3-none-any.whl').read_bytes()

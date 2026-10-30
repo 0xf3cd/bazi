@@ -2,16 +2,38 @@
 
 import re
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
-from run_interpreter import interpret
+from bazi import cli
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig
 
 from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
+
+
+@pytest.mark.parametrize('birth,gender,precision,longitude,zone', [
+  ('2000-01-01T12:00:00+08:00', 'male', 'minute', 120.0, '+08:00'),
+  ('2000-01-01T12:00:00-05:00', 'female', 'hour', -75.0, 'America/New_York'),
+])
+def test_east_and_west_location_inputs(
+  tmp_path: Path, birth: str, gender: str, precision: str, longitude: float, zone: str,
+) -> None:
+  from datetime import timedelta, timezone
+
+  chart = BaziChart(Bazi.create(
+    birth, gender, BaziConfig.from_values(precision=precision), longitude=longitude,
+    civil_timezone=timezone(timedelta(hours=8)) if zone == '+08:00' else ZoneInfo(zone),
+  ))
+  result = run_cli(tmp_path, 'chart', '--birth-time', birth, '--gender', gender, '--precision', precision,
+                   '--longitude', str(longitude), f'--civil-timezone={zone}')
+  assert result.returncode == 0 and result.stderr == '', result.stderr
+  assert '真太阳出生时刻' in result.stdout and birth in result.stdout
+  assert cli._interpret(chart) in result.stdout
+  assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -27,7 +49,7 @@ def test_naive_cli_precision(tmp_path: Path, optimized: bool, precision: str, pi
   assert result.returncode == 0, result.stderr
   assert expected.bazi.solar_datetime.isoformat() == '2000-02-04T20:39:00'
   assert tuple(map(str, expected.bazi.pillars))[:2] == pillars
-  assert interpret(expected) in result.stdout
+  assert cli._interpret(expected) in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
                     '--observation-scope', 'natal', '--include-reference-only', optimized=optimized)
   assert result.returncode == 0, result.stderr
@@ -99,12 +121,11 @@ def test_location_midnight_labels_in_outputs(tmp_path: Path, optimized: bool) ->
 
 
 def test_legacy_renderer_keeps_birth_labels() -> None:
-  from run_demo import get_basic_info
   chart = BaziChart(Bazi.create('2024-06-01T23:50:00', 'male', BaziConfig.from_values(precision='minute')))
-  assert '生于 2024-06-01' in get_basic_info(chart)
-  text = interpret(chart)
+  assert '生于 2024-06-01' in cli._get_basic_info(chart)
+  text = cli._interpret(chart)
   assert text.startswith('出生时间：2024-06-01, 23:50\n')
-  assert '真太阳时' not in text and '民用出生时刻' not in get_basic_info(chart)
+  assert '真太阳时' not in text and '民用出生时刻' not in cli._get_basic_info(chart)
 
 
 @pytest.mark.parametrize('optimized', [False, True])

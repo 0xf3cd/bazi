@@ -17,7 +17,9 @@ from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 KNOWLEDGE_BASE = KnowledgeBase.load()
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / 'run_interpreter.py'
+COMMANDS = ('demo', 'relationship', 'chart', 'knowledge', 'match')
+# Source-checkout tests only; package checks exercise the installed launcher.
+SOURCE_MAIN = 'import sys; sys.path.insert(0, sys.argv.pop(1)); from bazi.cli import main; raise SystemExit(main())'
 GUANSHA = 'editorial.guansha_coexistence.v1'
 XINGCHONG = 'editorial.spouse_palace_xingchong.v1'
 BIRTH = ('--birth-time', '2000-01-03 12:00')
@@ -28,7 +30,7 @@ MATCH_ARGS = ('match', GUANSHA, *MATCH_BIRTH, '--observation-scope', 'natal')
 def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error: str) -> None:
   # argparse reports unknown subcommand options through the top-level parser.
   usage = '[-h] <任务>' if error == 'unrecognized arguments' else task
-  assert result.returncode == 2 and f'usage: python run_interpreter.py {usage}' in result.stderr
+  assert result.returncode == 2 and f'usage: bazi {usage}' in result.stderr
   assert error in result.stderr.split(': error:', 1)[1]
   assert 'v2.3.0' not in result.stderr and 'Traceback' not in result.stderr
 
@@ -36,12 +38,13 @@ def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error:
 def run_cli(
   cwd: Path,
   *args: str,
-  script: Path | None = None,
+  checkout_root: Path | None = None,
   optimized: bool = False,
   env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
   return subprocess.run(
-    [sys.executable, *(['-O'] if optimized else []), str(SCRIPT if script is None else script), *args],
+    [sys.executable, *(['-O'] if optimized else []), '-c', SOURCE_MAIN,
+     str(ROOT if checkout_root is None else checkout_root), *args],
     cwd=cwd,
     capture_output=True,
     text=True,
@@ -59,19 +62,16 @@ def prepare(cwd: Path) -> Path:
 
 
 def run_guarded_script(
-  script: Path,
   cwd: Path,
   args: tuple[str, ...],
+  *,
+  checkout_root: Path = ROOT,
 ) -> subprocess.CompletedProcess[str]:
   guard = '''
 import os
-import runpy
 import sys
-from pathlib import Path
 
-script = sys.argv[1]
-sys.path.insert(0, str(Path(script).parent))
-sys.argv = sys.argv[1:]
+sys.path.insert(0, sys.argv.pop(1))
 
 def deny_writes(event, args):
   if event == 'open':
@@ -88,10 +88,11 @@ def deny_writes(event, args):
     raise PermissionError('Unexpected default filesystem change')
 
 sys.addaudithook(deny_writes)
-runpy.run_path(script, run_name='__main__')
+from bazi.cli import main
+raise SystemExit(main())
 '''
   return subprocess.run(
-    [sys.executable, '-B', '-c', guard, str(script), *args],
+    [sys.executable, '-B', '-c', guard, str(checkout_root), *args],
     cwd=cwd,
     capture_output=True,
     text=True,

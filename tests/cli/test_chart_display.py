@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import interpret
+from bazi import cli
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.knowledge import KnowledgeBase, object_id
@@ -16,7 +16,7 @@ from cli_runner import KNOWLEDGE_BASE, run_cli, assert_cli_error
 @pytest.mark.parametrize('include_reference_only', [False, True])
 def test_chart_display_uses_knowledge_topics(include_reference_only: bool) -> None:
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  text = interpret(chart, include_reference_only=include_reference_only)
+  text = cli._interpret(chart, include_reference_only=include_reference_only)
   assert '定义：' + KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master))[0].text in text
   assert '原局中，劫财有' in text
   assert '当劫财状态不好时' not in text
@@ -28,7 +28,7 @@ def test_chart_display_uses_knowledge_topics(include_reference_only: bool) -> No
 def test_empty_projection_keeps_chart_counts(monkeypatch: pytest.MonkeyPatch) -> None:
   empty = KnowledgeBase(tuple(KNOWLEDGE_BASE.objects.values()), tuple(KNOWLEDGE_BASE.contexts.values()), tuple(KNOWLEDGE_BASE.sources.values()), ())
   monkeypatch.setattr(KnowledgeBase, 'load', staticmethod(lambda path=None: empty))
-  text = interpret(BaziChart(Bazi.create('2000-01-01 12:00', 'male')))
+  text = cli._interpret(BaziChart(Bazi.create('2000-01-01 12:00', 'male')))
   assert '原局中，劫财有' in text
   assert '定义：' not in text and '仅供参考' not in text
 
@@ -99,8 +99,20 @@ def test_source_display_keeps_reference_selection(tmp_path: Path) -> None:
   assert 'legacy.' not in result.stdout
 
 
+def test_fixed_reference_display_is_read_only(tmp_path: Path) -> None:
+  result = run_cli(
+    tmp_path, 'chart', '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--precision', 'hour',
+    '--include-reference-only', '--show-sources',
+  )
+  assert result.returncode == 0 and result.stderr == ''
+  assert result.stdout.count('出生时间：') == 1
+  assert '仅供参考' in result.stdout and '来源：' in result.stdout
+  assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize('chart_args', [
   ('--birth-time', '2000-01-01 12:00', '--gender', 'male'),
+  ('--birth-time', '2000-01-01 12:00', '--gender', 'female', '--precision', 'hour'),
   ('--seed', '42'),
 ])
 def test_reference_export_keeps_unverified(tmp_path: Path, chart_args: tuple[str, ...]) -> None:
@@ -143,6 +155,14 @@ def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
   assert not (tmp_path / 'knowledge_base').exists()
 
 
+def test_seeded_batch_without_export_is_read_only(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'chart', '--seed', '3', '--count', '2')
+  assert result.returncode == 0 and result.stderr == ''
+  assert result.stdout.startswith('random seed: 3\n')
+  assert result.stdout.count('出生时间：') == 2
+  assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize('args,error', [
   (('--birth-time', '2000-01-01 12:00'), '--birth-time and --gender must be supplied together'),
   (('--gender', 'male'), '--birth-time and --gender must be supplied together'),
@@ -164,7 +184,7 @@ def test_invalid_inputs_export_nothing(tmp_path: Path, args: tuple[str, ...], er
 
 def test_source_reference_rendering_independent() -> None:
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  text = interpret(chart, include_reference_only=True)
+  text = cli._interpret(chart, include_reference_only=True)
   assert '仅供参考' in text
   assert '命盘适用性未判断' in text
   assert '来源尚未核实' in text
@@ -173,7 +193,7 @@ def test_source_reference_rendering_independent() -> None:
 
 def test_reference_claims_get_distinct_lines() -> None:
   chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  result = interpret(chart, include_reference_only=True)
+  result = cli._interpret(chart, include_reference_only=True)
   general = tuple(
     entry for entry in KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master), include_reference_only=True)
     if entry.legacy is not None and entry.legacy.field == 'general'

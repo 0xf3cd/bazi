@@ -38,7 +38,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument('-a', '--all', action='store_true', 
-                       help='运行全部测试、覆盖率、lint、类型检查、两个 demo、run_interpreter.py 示例、python -O 公开输入契约冒烟、文档构建检查及发行包检查。')
+                       help='运行全部测试、覆盖率、lint、类型检查、python -O 公开输入契约冒烟、文档构建检查及发行包和安装命令检查。')
 
 # 测试选择。
 argparser.add_argument('-nt', '--no-test', action='store_true', help='跳过测试与覆盖率。')
@@ -55,10 +55,6 @@ argparser.add_argument('-cr', '--coverage-rate', type=float, help='必须达到�
 argparser.add_argument('-r', '-ruff', '--ruff', action='store_true', help='运行 ruff check。')
 argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='运行静态类型检查。')
 
-# 示例与知识展示。
-argparser.add_argument('-d', '--demo', action='store_true', help='运行两个 demo 脚本。')
-argparser.add_argument('-i', '--interpreter', action='store_true', help='运行 run_interpreter.py 示例。')
-
 # python -O 公开输入契约冒烟。
 argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
                        help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
@@ -70,6 +66,9 @@ argparser.add_argument('--package-output-dir', type=Path, help='与 -pkg 或 -a 
 argparser.add_argument('--environment-report', type=Path, help='与工件保全一起使用，在此仓外新文件记录实际构建与验证环境。')
 argparser.add_argument('--outer-installer-report', type=Path, help='导出环境时提供 release 步骤的三次外层 pip 版本观察。')
 
+# 保留 -docs，但拒绝已退役的 -d 被当成它的缩写。
+if '-d' in sys.argv[1:]:
+  argparser.error('unrecognized arguments: -d')
 args = argparser.parse_args()
 if args.runtime_only and args.docs:
   argparser.error('--runtime-only cannot be combined with --docs')
@@ -89,9 +88,6 @@ do_cov: Final[bool] = args.coverage or all_the_way
 minimum_cov_rate: Final[float] = args.coverage_rate
 do_ruff: Final[bool] = args.ruff or all_the_way
 do_mypy: Final[bool] = args.mypy or all_the_way
-
-do_demo: Final[bool] = args.demo or all_the_way
-do_interpreter: Final[bool] = args.interpreter or all_the_way
 
 do_osmoke: Final[bool] = args.o_smoke or all_the_way
 runtime_only: Final[bool] = args.runtime_only
@@ -126,9 +122,6 @@ def check_doc_environment() -> None:
       argparser.error(f'Missing documentation dependencies: {", ".join(missing)}; install docs/requirements.txt or select --runtime-only')
   else:
     argparser.error('Documentation checks require Python 3.13 or later; create a Python 3.13+ environment with docs/requirements.txt, or select --runtime-only')
-
-# 根目录 demo 行为由 -d 验证，不计入库覆盖率。
-DEMO_SCRIPTS: Final[tuple[str, ...]] = ('run_demo.py', 'run_relationship_analyzer.py')
 
 term_width: Final[int] = shutil.get_terminal_size().columns
 _emoji_rng: Final[random.Random] = random.Random()
@@ -231,9 +224,6 @@ def print_args() -> None:
 
   print(f'-- do_ruff:          {colored(do_ruff)}')
   print(f'-- do_mypy:          {colored(do_mypy)}')
-
-  print(f'-- do_demo:          {colored(do_demo)}')
-  print(f'-- do_interpreter:   {colored(do_interpreter)}')
 
   print(f'-- do_osmoke:        {colored(do_osmoke)}')
   print(f'-- do_docs:          {colored(do_docs)}')
@@ -392,41 +382,6 @@ def run_mypy() -> int:
   return ret
 
 
-def run_demo() -> int:
-  '''运行两个 demo 脚本。'''
-  print('\n' + devider())
-  bold_print('>> Running demo...')
-
-  ret: int = 0
-  for script in DEMO_SCRIPTS:
-    if run_proc_and_print([
-      sys.executable, str(Path(__file__).parent / script), '--seed', '236'
-    ], print_details=verbose) != 0:
-      ret = 1
-
-  if ret == 0:
-    green_print(f'>> {next(emoji_pair)} Demo passed!')
-  else:
-    red_print(f'>> {next(emoji_pair)} Demo failed!')
-  return ret
-
-
-def run_interpreter() -> int:
-  '''运行 run_interpreter.py 示例。'''
-  print('\n' + devider())
-  bold_print('>> Running interpreter...')
-
-  ret: int = run_proc_and_print([
-    sys.executable, str(Path(__file__).parent / 'run_interpreter.py'), 'chart', '--seed', '236'
-  ], print_details=verbose)
-  
-  if ret == 0:
-    green_print(f'>> {next(emoji_pair)} Interpreter passed!')
-  else:
-    red_print(f'>> {next(emoji_pair)} Interpreter failed!')
-  return ret
-
-
 def run_o_smoke() -> int:
   '''用 python -O 运行 tests/o_smoke.py 的公开输入契约检查。'''
   print('\n' + devider())
@@ -498,12 +453,6 @@ def run_subtasks() -> SubTaskStatuses:
       run_subtask('coverage with tests', lambda: run_coverage(run_tests))
     else:
       run_subtask('tests', run_tests)
-
-  if do_demo:
-    run_subtask('demo', run_demo)
-
-  if do_interpreter:
-    run_subtask('interpreter', run_interpreter)
 
   if do_osmoke:
     run_subtask('o_smoke', run_o_smoke)

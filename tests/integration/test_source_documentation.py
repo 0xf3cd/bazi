@@ -56,7 +56,9 @@ def test_first_chart_saves_readable_records(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize('arguments', [
-  ('run_tests.py',), ('run_demo.py',), ('run_relationship_analyzer.py',), ('run_package_checks.py',),
+  ('run_tests.py',), ('run_package_checks.py',),
+  ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'demo'),
+  ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'relationship'),
   ('-m', 'bazi.calendar.celestial_data.generator'),
 ])
 def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:

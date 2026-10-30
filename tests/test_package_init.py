@@ -13,7 +13,7 @@ import bazi
 
 ROOT = Path(__file__).resolve().parents[1]
 
-LAZY = ('bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text')
+LAZY = ('bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text', 'cli')
 
 
 def test_dir_lists_lazy_submodules_unimported() -> None:
@@ -46,7 +46,7 @@ def test_unknown_attribute_has_no_hint() -> None:
   assert str(error.value) == "module 'bazi' has no attribute 'not_a_name'"
 
 
-@pytest.mark.parametrize('name,entry', [('chart_text', 'chart_text')])
+@pytest.mark.parametrize('name,entry', [('chart_text', 'chart_text'), ('cli', 'main')])
 def test_module_loads_on_demand_outside_all(name: str, entry: str) -> None:
   code = (
     'import sys, bazi\n'

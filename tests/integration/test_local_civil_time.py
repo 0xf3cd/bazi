@@ -12,7 +12,7 @@ from bazi.bazi_chart import BaziChart
 from bazi.calendar import CalendarDate, CalendarType
 from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
-from run_demo import get_basic_info, get_transit_info
+from bazi import cli
 
 
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
@@ -203,12 +203,12 @@ def test_civil_timezone_invalid_inputs(direct: bool) -> None:
 def test_demo_separates_physical_jie_clocks() -> None:
   chart = BaziChart(Bazi.create('2000-02-04T07:50:00-05:00', 'male',
                                BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0))
-  text = get_transit_info(chart)
+  text = cli._get_transit_info(chart)
   assert '出生时刻前一节：立春 - 2000-02-04T20:40:23' in text
   assert '出生时刻后一节：惊蛰' in text
   assert 'UTC+08:00' in text
   for label in ('民用出生时刻', '真太阳出生时刻', '节气表出生时刻'):
-    assert label in get_basic_info(chart)
+    assert label in cli._get_basic_info(chart)
 
 
 def test_context_keeps_exact_location_input() -> None:

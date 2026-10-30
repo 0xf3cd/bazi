@@ -64,7 +64,9 @@ def main() -> None:
   check(dist.metadata['Name'] == 'bazi', 'Installed name mismatch')
   check(dist.metadata['Requires-Python'] == '>=3.11', 'Python requirement mismatch')
   check(not dist.requires, 'Unexpected runtime dependencies')
-  check(not dist.entry_points, 'Unexpected installed entrypoints')
+  check([(entry.group, entry.name, entry.value) for entry in dist.entry_points] == [
+    ('console_scripts', 'bazi', 'bazi.cli:main'),
+  ], 'Installed entrypoints mismatch')
   check(not dist.metadata.get_all('License-Expression', []) and not dist.metadata.get_all('License', []), 'Blanket license claim')
   check(not any('License ::' in value for value in dist.metadata.get_all('Classifier', [])), 'Blanket license classifier')
   check(set(dist.metadata.get_all('License-File', [])) == {'LICENSE', 'THIRD_PARTY_NOTICES.md'}, 'License file metadata mismatch')
@@ -77,6 +79,7 @@ def main() -> None:
   check(package_root.is_relative_to(prefix), 'Package origin outside consumer')
   check(not Path.cwd().is_relative_to(package_root), 'Consumer cwd is inside package')
   check(importlib.util.find_spec('src') is None, 'Unexpected src compatibility package')
+  check(importlib.util.find_spec('bazi.__main__') is None, 'Unexpected parallel module CLI')
   roster = {path.relative_to(package_root.parent).as_posix() for path in package_root.rglob('*') if path.is_file()}
   check(roster == set(expected['package']), 'Installed package file roster mismatch')
   for name, digest in expected['package'].items():
@@ -516,6 +519,15 @@ def main() -> None:
     raise RuntimeError('Installed spouse_evidence transits missing')
   check(direct.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed spouse_evidence transit mismatch')
   print('PASS installed relationship evaluation/evidence/render')
+  from bazi.cli import main as cli_main
+  check(next(iter(dist.entry_points)).load() is cli_main, 'Installed entrypoint resolves to another function')
+  for argv in ('chart', ('chart',), [1]):
+    try:
+      cli_main(argv) # type: ignore[arg-type] # Deliberately invalid public CLI arguments.
+    except TypeError as error:
+      check(str(error).startswith('Expected '), 'CLI type rejection failed for another reason')
+    else:
+      raise RuntimeError('Installed CLI argv validation failed')
   try:
     calendar_utils_of(42)  # type: ignore[arg-type] # Deliberately invalid public input.
   except TypeError:

@@ -4,8 +4,13 @@ from pathlib import Path
 
 import pytest
 
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import DateCoordinate, MonthCoordinate, TransitObservation, evaluate_context
+from bazi.defines import Dizhi
+from bazi.transits import TransitKind
 
-from cli_runner import MATCH_ARGS, run_cli, assert_cli_error
+from cli_runner import BIRTH, MATCH_ARGS, run_cli, assert_cli_error
 
 
 # #233 婚恋判据 CLI: guard matrix and legal combinations.
@@ -30,7 +35,7 @@ REL_TRANSIT_BASE = ('match', TOUGAN, '--birth-time', '2000-01-01 12:00', '--gend
 def test_relationship_inputs_need_a_criterion(tmp_path: Path, args: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, 'match', *args)
   assert result.returncode == 2 and 'a criterion ID is required' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr
+  assert 'usage: bazi match' in result.stderr
   assert list(tmp_path.iterdir()) == []
 
 
@@ -57,7 +62,7 @@ def test_relationship_rejects_unknown_options(tmp_path: Path, extra: tuple[str, 
 def test_context_criteria_reject_new_flags(tmp_path: Path, extra: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, *MATCH_ARGS, *extra)
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr
+  assert 'usage: bazi match' in result.stderr
   assert 'Context criteria cannot combine transit entry, coordinate or kind inputs' in result.stderr
   assert list(tmp_path.iterdir()) == []
 
@@ -65,13 +70,13 @@ def test_context_criteria_reject_new_flags(tmp_path: Path, extra: tuple[str, ...
 def test_context_scope_rejects_natal_transits(tmp_path: Path) -> None:
   result = run_cli(tmp_path, *MATCH_ARGS, '--observation-scope', 'natal_and_transits')
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and 'Unsupported value: natal_and_transits' in result.stderr
+  assert 'usage: bazi match' in result.stderr and 'Unsupported value: natal_and_transits' in result.stderr
 
 
 def test_relationship_rejects_natal_liunian(tmp_path: Path) -> None:
   result = run_cli(tmp_path, *REL_BASE, '--observation-scope', 'natal_and_liunian')
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and 'Unsupported value: natal_and_liunian' in result.stderr
+  assert 'usage: bazi match' in result.stderr and 'Unsupported value: natal_and_liunian' in result.stderr
 
 
 @pytest.mark.parametrize('extra,error', [
@@ -91,7 +96,7 @@ def test_relationship_natal_rejects_transits(tmp_path: Path, extra: tuple[str, .
 def test_natal_transits_requires_kinds(tmp_path: Path) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE)
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and 'requires explicit transit kinds' in result.stderr
+  assert 'usage: bazi match' in result.stderr and 'requires explicit transit kinds' in result.stderr
 
 
 @pytest.mark.parametrize('flag,value,error', [
@@ -107,7 +112,7 @@ def test_natal_transits_requires_kinds(tmp_path: Path) -> None:
 def test_coordinate_values_must_be_canonical(tmp_path: Path, flag: str, value: str, error: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-entry', 'at_date', '--transit-kinds', 'liunian', flag, value)
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and error in result.stderr
+  assert 'usage: bazi match' in result.stderr and error in result.stderr
 
 
 @pytest.mark.parametrize('entry_args', [
@@ -137,7 +142,7 @@ def test_entry_fields_are_required(tmp_path: Path, entry_args: tuple[str, ...], 
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args)
   assert result.returncode == 2 and 'error:' in result.stderr, missing
   field = {'--ganzhi-year': 'ganzhi_year', '--gz-month': 'ganzhi_month', '--solar-date': 'solar_date', '--solar-moment': 'solar_moment'}[missing]
-  assert 'usage: python run_interpreter.py match' in result.stderr
+  assert 'usage: bazi match' in result.stderr
   assert f'Missing coordinate field for {entry_args[1]}: {field}' in result.stderr
 
 
@@ -149,7 +154,7 @@ def test_entry_fields_are_required(tmp_path: Path, entry_args: tuple[str, ...], 
 def test_kinds_must_be_within_entry_support(tmp_path: Path, entry_args: tuple[str, ...], kinds: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', kinds, *entry_args)
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and 'Unsupported transit kinds for' in result.stderr
+  assert 'usage: bazi match' in result.stderr and 'Unsupported transit kinds for' in result.stderr
 
 
 @pytest.mark.parametrize('kinds,error', [
@@ -166,7 +171,7 @@ def test_kinds_reject_duplicates_unknown_empty(tmp_path: Path, kinds: str, error
 def test_coordinate_fields_require_entry(tmp_path: Path) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', '--ganzhi-year', '2024')
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and 'Transit coordinates require --transit-entry' in result.stderr
+  assert 'usage: bazi match' in result.stderr and 'Transit coordinates require --transit-entry' in result.stderr
 
 
 def test_kinds_without_coordinate_is_unknown(tmp_path: Path) -> None:
@@ -182,6 +187,33 @@ def test_unordered_kinds_are_normalized(tmp_path: Path) -> None:
                     '--transit-entry', 'at_year', '--ganzhi-year', '2024')
   assert result.returncode == 0, result.stderr
   assert '请求种类=[dayun,liunian]；取得种类=[dayun,liunian]' in result.stdout
+
+
+@pytest.mark.parametrize('entry,gender,kinds,coordinates', [
+  ('at_month', 'female', 'liuyue,liunian', ('--ganzhi-year', '2024', '--gz-month', '午')),
+  ('at_date', 'male', 'liuri', ('--solar-date', '2024-04-10')),
+])
+def test_month_and_date_keep_requested_kinds(
+  tmp_path: Path, entry: str, gender: str, kinds: str, coordinates: tuple[str, ...],
+) -> None:
+  from datetime import date
+
+  result = run_cli(tmp_path, 'match', PALACE, *BIRTH, '--gender', gender,
+                   '--observation-scope', 'natal_and_transits', '--transit-entry', entry,
+                   '--transit-kinds', kinds, *coordinates)
+  observation = (
+    TransitObservation((TransitKind.LIUNIAN, TransitKind.LIUYUE), MonthCoordinate(2024, Dizhi.午))
+    if entry == 'at_month' else TransitObservation((TransitKind.LIURI,), DateCoordinate(date(2024, 4, 10)))
+  )
+  expected = evaluate_context(
+    BaziChart(Bazi.create('2000-01-03 12:00', gender)), criterion_id=PALACE, observation=observation,
+  )
+  assert result.returncode == 0 and result.stderr == '', result.stderr
+  assert result.stdout == expected.render() + '\n'
+  normalized = 'liunian,liuyue' if entry == 'at_month' else 'liuri'
+  assert f'请求种类=[{normalized}]；取得种类=[{normalized}]；未取得种类=[]' in result.stdout
+  assert entry in result.stdout and ('2024' if entry == 'at_month' else '2024-04-10') in result.stdout
+  assert list(tmp_path.iterdir()) == []
 
 
 def test_natal_month_hidden_literal(tmp_path: Path) -> None:

@@ -63,6 +63,7 @@ def main() -> int:
   from bazi.calendar.celestial_utils import ALGO1, ALGO2
   from bazi.calendar.backend import CalendarBackend, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
+  from bazi.cli import main as cli_main
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)
@@ -832,6 +833,9 @@ def main() -> int:
       ('Lunar get rejects bool year by range', ValueError, partial(decoded_lunar.get, bool_year)),
       ('Lunar index rejects bool year by range', ValueError, partial(decoded_lunar.__getitem__, bool_year)),
     ])
+
+  for invalid_argv in ('chart', ('chart',), [1], ['chart', None]):
+    checks.append(('CLI rejects malformed argv', TypeError, partial(cli_main, invalid_argv))) # type: ignore[arg-type] # Deliberately malformed public input.
 
   for label, expected, thunk in checks:
     try:

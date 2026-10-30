@@ -8,7 +8,7 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import NatalObservation, criteria, evaluate_context
-from run_interpreter import _command_parser, _subcommand_parsers
+from bazi import cli
 
 from cli_runner import GUANSHA, BIRTH, run_cli
 
@@ -53,7 +53,7 @@ def test_match_names_every_missing_input(tmp_path: Path, given: tuple[str, ...],
   result = run_cli(tmp_path, 'match', GUANSHA, *given)
   assert result.returncode == 2
   assert f'missing {" and ".join(missing)};' in result.stderr
-  assert 'example: python run_interpreter.py match <判据ID> --birth-time' in result.stderr
+  assert 'example: bazi match <判据ID> --birth-time' in result.stderr
   assert list(tmp_path.iterdir()) == []
 
 
@@ -70,7 +70,7 @@ EVALUATION_INPUTS = [
 
 
 def test_every_option_is_an_evaluation_input() -> None:
-  dests = {action.dest for action in _subcommand_parsers(_command_parser())['match']._actions}
+  dests = {action.dest for action in cli._subcommand_parsers(cli._command_parser())['match']._actions}
   assert dests - {'help', 'criterion'} == {dest for dest, _ in EVALUATION_INPUTS}
 
 

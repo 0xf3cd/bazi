@@ -1,21 +1,16 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_doc_commands.py
 
-import importlib.util
-import os
 import re
 import shlex
-import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from run_interpreter import _COMMANDS, _command_parser
+from bazi import cli
 
 
-from cli_runner import ROOT, GUANSHA, run_cli
+from cli_runner import ROOT, GUANSHA, COMMANDS, run_cli
 
 
 def _doc_commands(markdown: str) -> list[list[str]]:
@@ -24,15 +19,19 @@ def _doc_commands(markdown: str) -> list[list[str]]:
     text = re.sub(r'\\\n\s*', ' ', block)
     for line in text.splitlines():
       tokens = shlex.split(line)
-      if 'run_interpreter.py' in tokens:
-        found.append(tokens[tokens.index('run_interpreter.py') + 1:])
+      if tokens and tokens[0] == 'bazi':
+        found.append(tokens[1:])
   return found
 
 
 def _check_doc_command(tokens: list[str]) -> None:
-  if not tokens or tokens[0] not in _COMMANDS:
+  if not tokens or tokens[0] not in COMMANDS:
     raise AssertionError(f'Not a subcommand form: {tokens}')
-  _command_parser().parse_args(tokens)
+  try:
+    cli._command_parser().parse_args(tokens)
+  except SystemExit as stop:
+    if stop.code != 0:
+      raise
 
 
 DOC_FILES = ('README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md',
@@ -42,6 +41,7 @@ DOC_FILES = ('README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md', 'docs/g
 def test_documented_commands_parse_as_subcommands() -> None:
   commands = [tokens for name in DOC_FILES for tokens in _doc_commands((ROOT / name).read_text(encoding='utf-8'))]
   assert len(commands) >= 3
+  assert len(_doc_commands((ROOT / 'README.md').read_text(encoding='utf-8'))) >= 3
   for tokens in commands:
     _check_doc_command(tokens)
 
@@ -65,60 +65,50 @@ def test_readme_chart_saves_displayed_text(tmp_path: Path) -> None:
   assert '\x1b' not in text and text in re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
 
 
-def test_source_chart_needs_only_colorama(tmp_path: Path) -> None:
-  spec = importlib.util.find_spec('colorama')
-  assert spec is not None and spec.origin is not None
-  shutil.copytree(Path(spec.origin).parent, tmp_path / 'colorama')
-  # run_cli keeps site-packages enabled; this dependency check needs -S.
-  result = subprocess.run(
-    [sys.executable, '-S', str(ROOT / 'run_interpreter.py'), 'chart',
-     '--birth-time', '1990-05-17 10:30', '--gender', 'female'],
-    cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(tmp_path)},
-    capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
-  )
-  assert result.returncode == 0, result.stdout + result.stderr
-  assert '年柱：天干庚' in result.stdout
-
-
 def test_doc_gate_covers_every_file_with_commands() -> None:
   mentions = {
     path.relative_to(ROOT).as_posix()
     for path in (*ROOT.glob('*.md'), *(ROOT / 'docs').rglob('*.md'))
-    if any('run_interpreter.py' in block
-           for block in re.findall(r'```(?:sh|bash)\n(.*?)```', path.read_text(encoding='utf-8'), flags=re.DOTALL))
+    if _doc_commands(path.read_text(encoding='utf-8'))
   }
+  assert mentions
   assert mentions <= set(DOC_FILES), mentions - set(DOC_FILES)
 
 
 @pytest.mark.parametrize('block', [
-  '```sh\npython run_interpreter.py --seed 1\n```',
-  '```sh\npython run_interpreter.py chart --no-such-flag\n```',
-  '```sh\npython run_interpreter.py chart --seed \\\n  one\n```',
-  '```sh\npython run_interpreter.py\n```',
+  '```sh\nbazi --seed 1\n```',
+  '```sh\nbazi chart --no-such-flag\n```',
+  '```sh\nbazi chart --seed \\\n  one\n```',
+  '```sh\nbazi\n```',
+  '```sh\nbazi chrat --seed 1\n```',
 ])
 def test_doc_command_check_rejects_bad_examples(block: str) -> None:
   commands = _doc_commands(block)
   assert len(commands) == 1
-  with pytest.raises((AssertionError, SystemExit)):
+  with pytest.raises((AssertionError, SystemExit)) as rejected:
     _check_doc_command(commands[0])
+  if isinstance(rejected.value, SystemExit):
+    assert rejected.value.code == 2
 
 
 def test_doc_command_check_accepts_a_good_example() -> None:
-  commands = _doc_commands(f'```sh\npython run_interpreter.py \\\n  match {GUANSHA} \\\n  --birth-time "2000-01-01 12:00" --gender male --observation-scope natal\n```')
+  commands = _doc_commands(f'```sh\nbazi \\\n  match {GUANSHA} \\\n  --birth-time "2000-01-01 12:00" --gender male --observation-scope natal\n```')
   assert commands[0][0] == 'match'
   _check_doc_command(commands[0])
 
 
-def _migration_tokens(command: str) -> list[str]:
-  return shlex.split(command.replace('…', '').replace('判据ID', GUANSHA))
+def _inline_tokens(command: str) -> list[str]:
+  tokens = shlex.split(command.replace('…', '').replace('<判据ID>', GUANSHA).replace('判据ID', GUANSHA))
+  return tokens[1:] if tokens and tokens[0] == 'bazi' else tokens
 
 
 def _inline_task_commands(markdown: str) -> list[list[str]]:
   snippets = re.findall(r'(?<!`)`([^`\n]+)`(?!`)', markdown)
   return [
-    _migration_tokens(text) for text in snippets
+    _inline_tokens(text) for text in snippets
     if (parts := text.split(maxsplit=1)) and (
-      parts[0] in _COMMANDS or re.match(r'^[A-Za-z][A-Za-z0-9_-]*\s+(?:--|判据ID(?:\s|$))', text)
+      (parts[0] == 'bazi' and len(parts) > 1) or parts[0] in COMMANDS
+      or re.match(r'^[A-Za-z][A-Za-z0-9_-]*\s+(?:--|判据ID(?:\s|$))', text)
     )
   ]
 
@@ -131,24 +121,57 @@ def test_inline_task_examples_are_parseable(name: str) -> None:
     _check_doc_command(tokens)
 
 
-def test_migration_table_new_commands_parse() -> None:
-  text = (ROOT / 'API_CONTRACT.md').read_text(encoding='utf-8')
-  section = re.search(r'^## 源码脚本\n(.*?)(?=\n## |\Z)', text, flags=re.DOTALL | re.MULTILINE)
-  assert section is not None
-  rows = re.findall(r'^\| `[^`]+` \| (.*) \|$', section[1], flags=re.MULTILINE)
-  assert len(rows) >= 5
-  for row in rows:
-    commands = re.findall(r'`([^`]+)`', row)
-    assert commands
-    for command in commands:
-      _check_doc_command(_migration_tokens(command))
+@pytest.mark.parametrize('command,tokens', [
+  ('bazi demo --seed 236', ['demo', '--seed', '236']),
+  ('bazi relationship --seed 236', ['relationship', '--seed', '236']),
+  ('bazi chart --seed 1', ['chart', '--seed', '1']),
+  ('knowledge --all', ['knowledge', '--all']),
+  ('bazi match <判据ID>', ['match', GUANSHA]),
+  ('match 判据ID …', ['match', GUANSHA]),
+])
+def test_inline_examples_keep_the_task(command: str, tokens: list[str]) -> None:
+  commands = _inline_task_commands(f'运行 `{command}`。')
+  assert commands == [tokens]
+  _check_doc_command(commands[0])
+
+
+@pytest.mark.parametrize('task', COMMANDS)
+@pytest.mark.parametrize('flag', ['-h', '--help'])
+def test_help_examples_are_valid(task: str, flag: str, capsys: pytest.CaptureFixture[str]) -> None:
+  command = f'bazi {task} {flag}'
+  commands = _doc_commands(f'```sh\n{command}\n```') + _inline_task_commands(f'运行 `{command}`。')
+  assert commands == [[task, flag], [task, flag]]
+  for tokens in commands:
+    _check_doc_command(tokens)
+  captured = capsys.readouterr()
+  assert captured.out.count(f'usage: bazi {task}') == 2 and captured.err == ''
+
+
+@pytest.mark.parametrize('task', ['chrat', 'knwoledge'])
+@pytest.mark.parametrize('flag', ['-h', '--help'])
+def test_unknown_help_still_requires_a_task(task: str, flag: str, capsys: pytest.CaptureFixture[str]) -> None:
+  with pytest.raises(AssertionError, match='Not a subcommand form'):
+    _check_doc_command([task, flag])
+  captured = capsys.readouterr()
+  assert captured.out == captured.err == ''
+
+
+def test_fenced_examples_cover_five_tasks() -> None:
+  commands = _doc_commands('```bash\nbazi demo --seed 1\nbazi relationship --seed 1\n'
+                           'bazi chart --seed 1\nbazi knowledge --all\nbazi match\n```')
+  assert [tokens[0] for tokens in commands] == ['demo', 'relationship', 'chart', 'knowledge', 'match']
+  for tokens in commands:
+    _check_doc_command(tokens)
 
 
 @pytest.mark.parametrize('command', [
   'knowledge --allx', 'chart --no-such-flag', 'knwoledge --all', 'Knowledge --all', 'know-ledge --all',
+  'bazi knowledge --allx', 'bazi chrat --seed 1', 'bazi demo --seed one',
 ])
-def test_migration_typos_are_rejected(command: str) -> None:
+def test_inline_typos_are_rejected(command: str) -> None:
   commands = _inline_task_commands(f'改为 `{command}`。')
   assert len(commands) == 1
-  with pytest.raises((AssertionError, SystemExit)):
+  with pytest.raises((AssertionError, SystemExit)) as rejected:
     _check_doc_command(commands[0])
+  if isinstance(rejected.value, SystemExit):
+    assert rejected.value.code == 2

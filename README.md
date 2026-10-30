@@ -6,9 +6,9 @@
 ## 从这里开始
 
 - 第一次使用：按下面的[安装包路线](#安装包排第一张盘)运行 Python 程序。
-- 已有源码，想直接运行脚本：看[源码脚本](#源码脚本)，安装包不提供命令行入口。
+- 想在终端操作：看[命令行](#命令行)，安装当前开发版的 `bazi` 命令；发布版暂未包含此命令。
 - 从 v2.3.0 升级：先看[v2.4.0 升级说明](#从-v230-升级到-v240)，其中列出存取接口删除和结构调用变化。
-- 从 v2.2.0 升级：先看[v2.2.0→v2.3.0 迁移说明](#从-v220-迁移到-v230)，再看[v2.4.0 升级说明](#从-v230-升级到-v240)，无需重走新手步骤。
+- 从旧脚本迁移：看[脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移)，三个脚本现由一个 `bazi` 命令承接。
 
 ## 安装包：排第一张盘
 
@@ -36,7 +36,7 @@ python -m venv .venv
 python -m pip install bazi
 ```
 
-普通使用不需要安装 pytest、mypy 或文档工具。本文及下方指南对应 v2.4.0；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供。
+普通使用不需要安装 pytest、mypy 或文档工具。本文对应当前开发版；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供；新增 CLI 的安装方法见[命令行](#命令行)。
 
 ### 2. 填写出生信息
 
@@ -82,7 +82,7 @@ python first_chart.py
 
 上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；文件写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
 
-类型从定义模块导入；安装包没有根类入口或命令行程序。
+类型从定义模块导入；安装包没有根类入口。终端操作见下方开发版 `bazi` 命令的安装与用法。
 
 在交互环境里直接输入对象会看到一行摘要；模块 `bazi.chart_text` 提供把命盘排成纯文本的函数，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
 
@@ -91,7 +91,7 @@ python first_chart.py
 | 想做什么 | 从这里开始 |
 | --- | --- |
 | 排第一张盘，了解默认值和输出 | [快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md) |
-| 从 v2.2.0 更新到已发布 v2.3.0 的源码调用 | [迁移说明](#从-v220-迁移到-v230) |
+| 从旧源码脚本升级到安装命令 | [脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移) |
 | 从 v2.3.0 升级到 v2.4.0 | [存取接口删除与结构调用调整](#从-v230-升级到-v240) |
 | 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
 | 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
@@ -115,29 +115,35 @@ v2.4.0 不提供命盘或判别结果（`ContextResult`）的保存恢复接口�
 v2.4.0 也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`。当前开发版进一步以 `reference_ids` 返回参考条目 ID，证据仍从 `evidence` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
 详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；各版本变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
-## 源码脚本
+## 命令行
 
-下载或克隆[源码](https://github.com/0xf3cd/bazi)后，在终端进入含 `run_interpreter.py` 的根目录。使用 Python 3.11+ 的独立环境（创建与激活方法同[上文](#1-准备环境)）。运行下面的普通排盘命令只需安装终端着色依赖，不需要整套开发工具：
+安装包提供唯一的 `bazi` 命令，不额外安装终端着色库。此命令尚未正式发布；要试用当前开发版，下载或克隆[源码](https://github.com/0xf3cd/bazi)，进入源码根目录，在 Python 3.11+ 独立环境中安装：
 
 ```sh
-python -m pip install colorama==0.4.6
+python -m pip install .
 ```
 
-源码根中的 `bazi/` 就是这些脚本使用的库，无须先 `pip install .`；只安装 PyPI 包不会得到这些脚本。地点盘若使用 IANA 时区，需要系统时区数据库，缺少时可运行 `python -m pip install tzdata`。地点盘的输入口径见[配置指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md)。
+安装后可以离开源码目录，在自己的工作目录运行以下命令。未激活环境时，直接指定该虚拟环境中 `bin/bazi`（macOS／Linux）或 `Scripts\bazi.exe`（Windows）的完整路径。地点盘若使用 IANA 时区，需要系统时区数据库，缺少时可运行 `python -m pip install tzdata`；输入口径见[配置指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md)。
 
 | 命令 | 输出 |
 | --- | --- |
-| `python run_demo.py` | 命盘与大运／小运／流年的文本 |
-| `python run_relationship_analyzer.py` | 夫妻宫、配偶星、原局神煞及十年流年神煞 |
-| `python run_interpreter.py` | 三个任务：`chart` 展示命盘，`knowledge` 查询知识，`match` 判别前提 |
+| `bazi demo` | 随机命盘与完整大运／小运／流年文本 |
+| `bazi relationship` | 夫妻宫、配偶星、原局神煞、旬空及连续十年流年报告 |
+| `bazi chart` | 命盘与解释条目，可选固定出生输入或随机命盘 |
+| `bazi knowledge` | 知识概览、查询、校验与 TXT 导出 |
+| `bazi match` | 判据目录、输入说明与前提求值 |
 
-前两个默认生成随机命盘。`run_interpreter.py` 先选任务，再按需要加选项；拿不准时只写任务名，
-它会告诉你下一步：`chart` 出一张随机命盘，`knowledge` 给知识库概览，`match` 列出全部判据。
-
-展示上面同一张命盘，并把结果保存到源码根下的 `output_data/`：
+裸调用 `bazi` 只打印帮助，不写文件。先选任务，再按需加选项：`chart` 出一张随机命盘，`knowledge` 给知识库概览，`match` 列出全部判据。两个演示任务同样支持种子重放：
 
 ```sh
-python run_interpreter.py chart \
+bazi demo --seed 236
+bazi relationship --seed 236
+```
+
+展示上面同一张命盘，并把结果保存到当前目录下的 `output_data/`：
+
+```sh
+bazi chart \
   --birth-time "1990-05-17 10:30" \
   --gender female \
   --output-dir output_data
@@ -145,29 +151,29 @@ python run_interpreter.py chart \
 
 上面多行命令使用 sh／bash 的 `\` 续行；在 Windows PowerShell 或 cmd 中，去掉行末 `\` 并合并成一行执行。终端会展示带颜色的命盘与条目，TXT 保存在 `output_data/interpretation_examples/0.txt`，不带终端颜色码。相对路径以运行命令时的目录为准。
 
-给了 `--birth-time` 就要同时给 `--gender`；都不给就随机生成，随机种子打印在第一行，例如用 `chart --seed 236` 重放种子236。固定输入不要加 `--seed`。
+`--birth-time` 与 `--gender` 必须同时给或同时不给；都不给就随机生成，并在第一行打印种子。要重放同一张随机盘，可用 `chart --seed 236`；固定输入不要加 `--seed`。
 
 不排盘，查询知识：
 
 ```sh
-python run_interpreter.py knowledge --object tiangan.ding
-python run_interpreter.py knowledge --list-values topic
+bazi knowledge --object tiangan.ding
+bazi knowledge --list-values topic
 ```
 
 保存知识 TXT：
 
 ```sh
-python run_interpreter.py knowledge --export-knowledge-base --output-dir output_data
+bazi knowledge --export-knowledge-base
 ```
 
-此命令把知识 TXT 按对象分类保存在 `output_data/knowledge_base/` 下，不向终端打印结果。
+`bazi knowledge --export-knowledge-base` 默认在**调用时当前目录**的 `output_data/knowledge_base/` 下保存知识 TXT；改用 `--output-dir out` 则写到 `out/knowledge_base/`。该命令不向终端打印结果。命盘只有显式给出 `--output-dir` 才写文件，不会默认导出。两个演示任务不写文件，也不把结果写入安装目录。
 
 检查前提：先看有哪些判据和各自需要什么，再对命盘求值：
 
 ```sh
-python run_interpreter.py match
-python run_interpreter.py match editorial.guansha_coexistence.v1
-python run_interpreter.py match editorial.guansha_coexistence.v1 \
+bazi match
+bazi match editorial.guansha_coexistence.v1
+bazi match editorial.guansha_coexistence.v1 \
   --birth-time "2000-01-01 12:00" \
   --gender female \
   --observation-scope natal_and_liunian \
@@ -178,12 +184,12 @@ python run_interpreter.py match editorial.guansha_coexistence.v1 \
 
 | 选项 | 适用任务 | 作用 |
 | --- | --- | --- |
-| `--include-reference-only` | 三个任务 | 同时显示仅供参考的条目 |
+| `--include-reference-only` | `chart`、`knowledge`、`match` | 默认省略仅供参考的条目；加此选项一起显示 |
 | `--show-sources` | `chart` 展示；`knowledge` 文本导出 | 显示来源 |
 | `--output-dir` | `chart`；`knowledge` 文本导出 | 保存 TXT 的目录 |
 | `--knowledge-source` | `knowledge`；`match` | 读取自己的知识编辑源 |
 
-每个任务的全部选项见 `python run_interpreter.py <任务> --help`。
+各任务的全部选项见该任务的 `--help`，例如 `bazi chart --help`。
 
 命盘展示中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
 TXT 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
@@ -191,20 +197,7 @@ TXT 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会�
 
 ## 从 v2.2.0 迁移到 v2.3.0
 
-本节说明已发布 v2.3.0 的源码脚本调用变化；v2.4.0 的存取接口移除另见[升级说明](#从-v230-升级到-v240)。要更新 bazi 包，可在原环境运行下面的命令；它只安装包索引中已发布的版本，不会下载或更新本地的源码脚本：
-
-```sh
-python -m pip install --upgrade bazi
-```
-
-使用源码脚本的读者需另行取得对应版本的完整源码，再在该源码根运行命令。v2.3.0 起移除不带任务名的旧平铺写法；裸调用只打印帮助，随机命盘用 `chart`。
-
-例如 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`，
-带筛选的 `--query-knowledge --object tiangan.ding` 改为 `knowledge --object tiangan.ding`，
-`--match-context 判据ID …` 改为 `match 判据ID …`。上面的新写法都接在 `python run_interpreter.py` 后。
-
-原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令；
-两条命令各自检查输出路径，不会预先检查彼此是否写到同一个位置；一条失败不会撤销另一条已写出的文件。弃用与移除时间线及完整对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。
+该版本的脚本参数变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-230)。当前开发版已改用安装后的 `bazi` 命令，调用方法见[命令行](#命令行)。
 
 ## 从 v2.3.0 升级到 v2.4.0
 
@@ -229,10 +222,10 @@ python -m pip install celestial-calendar==0.6.1
 python run_tests.py -a -v
 ```
 
-完整检查包含所有测试及 100% 库覆盖率、ruff、mypy、示例、`python -O` 输入检查、安装工件验证和文档检查。
+完整检查包含所有测试及 100% 库覆盖率、ruff、mypy、`python -O` 输入检查、安装工件与真实安装命令验证，以及文档检查。CLI 行为由库测试和安装消费覆盖，不再另设脚本冒烟任务。
 在 Python 3.11／3.12 环境中，只安装 `Requirements.txt` 和 `celestial-calendar==0.6.1`，不安装 `docs/requirements.txt`，再运行 `python run_tests.py -a -v --runtime-only`。此命令保留全部库检查，只省去文档工具的类型检查、`tests/docs/` 测试及文档构建；它不能代替完整检查。
 裸 `python run_tests.py` 不含 `slow`／`hkodata` 和可选任务，不能替代完整检查。
-工件验证可能联网下载构建及类型工具；源码示例可能写入 `output_data/`。
+工件验证可能联网下载构建及类型工具；安装命令的导出测试在仓外临时目录运行。
 
 只构建并检查文档：
 

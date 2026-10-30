@@ -8,8 +8,7 @@ from pathlib import Path
 
 import pytest
 
-import run_interpreter
-from run_interpreter import _LIST_DIMENSIONS, main
+from bazi import cli
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 from cli_runner import run_cli
@@ -20,12 +19,12 @@ def test_bare_knowledge_gives_an_overview(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge')
   assert result.returncode == 0 and result.stderr == ''
   assert f'{len(library.entries)} 条目（默认可见 {len(library.query())} 条' in result.stdout
-  for flag, dimension in _LIST_DIMENSIONS.items():
+  for flag, dimension in cli._LIST_DIMENSIONS.items():
     assert f'--{flag}：{len(library.filter_values(dimension))} 个值' in result.stdout
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('flag, dimension', sorted(_LIST_DIMENSIONS.items()))
+@pytest.mark.parametrize('flag, dimension', sorted(cli._LIST_DIMENSIONS.items()))
 def test_list_values_matches_the_library(tmp_path: Path, flag: str, dimension: str) -> None:
   result = run_cli(tmp_path, 'knowledge', '--list-values', flag)
   assert result.returncode == 0
@@ -42,8 +41,10 @@ def test_filters_query_without_a_flag(tmp_path: Path) -> None:
 def test_all_lists_the_default_view(tmp_path: Path) -> None:
   library = KnowledgeBase.load()
   result = run_cli(tmp_path, 'knowledge', '--all')
-  assert result.returncode == 0
-  assert result.stdout.count('\n\n') >= len(library.query()) - 1 and library.query()[0].claim_id in result.stdout
+  assert result.returncode == 0 and result.stderr == ''
+  assert result.stdout == ''.join(library.render(entry) + '\n\n' for entry in library.query())
+  assert '比肩为与日主五行、阴阳皆相同者。' in result.stdout
+  assert list(tmp_path.iterdir()) == []
 
 
 def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
@@ -153,15 +154,15 @@ def test_text_exports_cannot_overwrite_bundled(
       pytest.skip('symlinks unavailable')
   else:
     os.link(source, link)
-  monkeypatch.setattr(run_interpreter, 'DEFAULT_SOURCE_PATH', source)
+  monkeypatch.setattr(cli, 'DEFAULT_SOURCE_PATH', source)
   before = source.read_bytes()
   with pytest.raises(SystemExit) as raised:
-    main([*args, '--output-dir', str(out)])
+    cli.main([*args, '--output-dir', str(out)])
   assert raised.value.code == 2 and 'Export must not overwrite the editing source' in capsys.readouterr().err
   assert source.read_bytes() == before
 
 
-@pytest.mark.parametrize('flag, dimension', sorted(_LIST_DIMENSIONS.items()))
+@pytest.mark.parametrize('flag, dimension', sorted(cli._LIST_DIMENSIONS.items()))
 def test_all_does_not_combine_with_conditions(tmp_path: Path, flag: str, dimension: str) -> None:
   value = KnowledgeBase.load().filter_values(dimension)[0]
   result = run_cli(tmp_path, 'knowledge', '--all', f'--{flag}', value)
@@ -199,10 +200,9 @@ def test_bad_values_exit_with_an_error(tmp_path: Path) -> None:
   ('--object', 'tiangan.ding'),
 ])
 def test_knowledge_tasks_need_no_old_mode_flag(tmp_path: Path, args: tuple[str, ...], monkeypatch: pytest.MonkeyPatch) -> None:
-  monkeypatch.setattr(run_interpreter, '_DEFAULT_OUTPUT_DIR', tmp_path / 'out')
   monkeypatch.chdir(tmp_path)
-  assert main(['knowledge', *args]) == 0
+  assert cli.main(['knowledge', *args]) == 0
   if '--export-knowledge-base' in args:
-    assert len(list((tmp_path / 'out' / 'knowledge_base').rglob('*.txt'))) == 20
+    assert len(list((tmp_path / 'output_data' / 'knowledge_base').rglob('*.txt'))) == 20
   else:
     assert list(tmp_path.iterdir()) == []

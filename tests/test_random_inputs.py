@@ -3,7 +3,6 @@
 import inspect
 import os
 import random
-import runpy
 import subprocess
 import sys
 from hashlib import sha256
@@ -17,7 +16,7 @@ from bazi.bazi import Bazi, 八字
 from bazi.bazi_chart import BaziChart, 命盘
 from bazi.analyzer.relationship import RelationshipAnalyzer
 from bazi.transit_chart import TransitChart
-import run_demo
+from bazi import cli
 
 
 @pytest.mark.parametrize('factory', [Bazi, BaziChart])
@@ -47,20 +46,23 @@ def test_rng_binds_seed_without_global_state(
   print(f'verified base={base} effective={effective} nodeid={request.node.nodeid}')
 
 
-@pytest.mark.parametrize('script', ['run_demo.py', 'run_relationship_analyzer.py'])
+@pytest.mark.parametrize('task', ['demo', 'relationship'])
 @pytest.mark.parametrize('seed', [0, 42, 236])
-def test_runner_seed_binds_birth_gender(script: str, seed: int) -> None:
+@pytest.mark.parametrize('optimized', [False, True])
+def test_runner_seed_binds_birth_gender(task: str, seed: int, optimized: bool) -> None:
   root = Path(__file__).resolve().parents[1]
   expected = Bazi.random(rng=random.Random(seed))
   outputs = []
   for hash_seed in ('0', '1'):
     result = subprocess.run(
-      [sys.executable, str(root / script), '--seed', str(seed)],
+      [sys.executable, *(['-O'] if optimized else []), '-c',
+       'from bazi.cli import main; raise SystemExit(main())', task, '--seed', str(seed)],
       cwd=root,
       env={**os.environ, 'PYTHONHASHSEED': hash_seed},
       capture_output=True,
       text=True,
       encoding='utf-8',
+      timeout=45,
       check=True,
     )
     assert result.stdout.startswith(f'random seed: {seed}\n')
@@ -78,13 +80,14 @@ def test_runner_binds_consumers_to_seeded_chart(
   seed = sign * rng.getrandbits(64)
   expected = Bazi.random(rng=random.Random(seed))
   print(f'runner={runner} seed={seed}')
-  basic = Mock(wraps=run_demo.get_basic_info)
-  monkeypatch.setattr(run_demo, 'get_basic_info', basic)
+  state = random.getstate()
+  basic = Mock(wraps=cli._get_basic_info)
+  monkeypatch.setattr(cli, '_get_basic_info', basic)
   observed: list[BaziChart] = []
   if runner == 'demo':
-    transit = Mock(wraps=run_demo.get_transit_info)
-    monkeypatch.setattr(run_demo, 'get_transit_info', transit)
-    run_demo.demo(seed)
+    transit = Mock(wraps=cli._get_transit_info)
+    monkeypatch.setattr(cli, '_get_transit_info', transit)
+    assert cli.main(['demo', '--seed', str(seed)]) == 0
     for call in transit.call_args_list:
       chart = call.args[0]
       assert isinstance(chart, BaziChart)
@@ -115,11 +118,7 @@ def test_runner_binds_consumers_to_seeded_chart(
     monkeypatch.setattr(BaziChart, 'house_of_relationship', observed_property('house_of_relationship'))
     monkeypatch.setattr(BaziChart, 'relationship_stars', observed_property('relationship_stars'))
     monkeypatch.setattr(BaziChart, 'bazi', observed_property('bazi'))
-    monkeypatch.setattr(sys, 'argv', ['run_relationship_analyzer.py', '--seed', str(seed)])
-    runpy.run_path(
-      str(Path(__file__).resolve().parents[1] / 'run_relationship_analyzer.py'),
-      run_name='__main__',
-    )
+    assert cli.main(['relationship', '--seed', str(seed)]) == 0
   assert observed and basic.call_args_list
   for call in basic.call_args_list:
     chart = call.args[0]
@@ -127,20 +126,24 @@ def test_runner_binds_consumers_to_seeded_chart(
     observed.append(chart)
   receivers = {id(chart): chart for chart in observed}
   assert all(chart.bazi == expected for chart in receivers.values())
+  assert len(receivers) == 1
+  assert random.getstate() == state
 
 
-@pytest.mark.parametrize('script,prefix', [
-  ('run_demo.py', ()), ('run_relationship_analyzer.py', ()), ('run_interpreter.py', ('chart',)),
-])
-def test_runner_auto_seed_is_replayable(tmp_path: Path, script: str, prefix: tuple[str, ...]) -> None:
-  path = Path(__file__).resolve().parents[1] / script
-  command = [sys.executable, str(path), *prefix]
+@pytest.mark.parametrize('task', ['demo', 'relationship', 'chart'])
+@pytest.mark.parametrize('optimized', [False, True])
+def test_runner_auto_seed_is_replayable(tmp_path: Path, task: str, optimized: bool) -> None:
+  root = Path(__file__).resolve().parents[1]
+  command = [sys.executable, *(['-O'] if optimized else []), '-c',
+             'import sys; sys.path.insert(0, sys.argv.pop(1)); from bazi.cli import main; raise SystemExit(main())',
+             str(root), task]
   first = subprocess.run(
     command,
     cwd=tmp_path,
     capture_output=True,
     text=True,
     encoding='utf-8',
+    timeout=45,
     check=True,
   )
   seed_line = first.stdout.splitlines()[0]
@@ -152,6 +155,7 @@ def test_runner_auto_seed_is_replayable(tmp_path: Path, script: str, prefix: tup
     capture_output=True,
     text=True,
     encoding='utf-8',
+    timeout=45,
     check=True,
   )
   assert replay.stdout == first.stdout
