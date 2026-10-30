@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from run_interpreter import main
+from bazi import cli
 
 from cli_runner import run_cli, run_guarded_script
 
@@ -22,7 +22,6 @@ def test_default_cli_rejects_filesystem_writes(
   writes: bool,
 ) -> None:
   result = run_guarded_script(
-    Path(__file__).parents[2] / 'run_interpreter.py',
     tmp_path,
     args,
   )
@@ -43,12 +42,15 @@ def test_write_guard_checks_high_level_modes(
 ) -> None:
   target = tmp_path / 'target.txt'
   target.write_text('existing data', encoding='utf-8')
-  script = tmp_path / 'probe.py'
-  script.write_text(
-    f"open('target.txt', {mode!r}, encoding='utf-8')\n",
+  checkout = tmp_path / 'checkout'
+  package = checkout / 'bazi'
+  package.mkdir(parents=True)
+  (package / '__init__.py').write_text('', encoding='utf-8')
+  (package / 'cli.py').write_text(
+    f"def main():\n  open('target.txt', {mode!r}, encoding='utf-8')\n",
     encoding='utf-8',
   )
-  result = run_guarded_script(script, tmp_path, ())
+  result = run_guarded_script(tmp_path, (), checkout_root=checkout)
   assert result.returncode != 0
   assert 'Unexpected default file export' in result.stderr
   assert target.read_text(encoding='utf-8') == 'existing data'
@@ -91,9 +93,9 @@ def test_internal_rendering_errors_propagate(
   def broken_render(*args: object, **kwargs: object) -> str:
     raise error
 
-  monkeypatch.setitem(main.__globals__, '_chart_text', broken_render)
+  monkeypatch.setattr(cli, '_chart_text', broken_render)
   with pytest.raises(error_type, match='Internal rendering failure') as caught:
-    main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+    cli.main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
   assert caught.value is error
 
 
@@ -110,12 +112,12 @@ def test_export_io_failures_use_error_exit(
   if stage == 'directory':
     monkeypatch.setattr(Path, 'mkdir', fail)
   elif stage == 'chart':
-    monkeypatch.setitem(main.__globals__, '_write_chart', fail)
+    monkeypatch.setattr(cli, '_write_chart', fail)
   else:
-    monkeypatch.setitem(main.__globals__, 'save_knowledge_base', fail)
+    monkeypatch.setattr(cli, '_save_knowledge_base', fail)
 
   with pytest.raises(SystemExit) as caught:
-    main([
+    cli.main([
       *(['knowledge', '--export-knowledge-base'] if stage == 'knowledge'
         else ['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male']),
       '--output-dir', str(tmp_path),
@@ -130,7 +132,7 @@ def test_print_errors_propagate(monkeypatch: pytest.MonkeyPatch) -> None:
   def fail(*args: object, **kwargs: object) -> None:
     raise error
 
-  monkeypatch.setitem(main.__globals__, 'print', fail)
+  monkeypatch.setitem(cli.main.__globals__, 'print', fail)
   with pytest.raises(BrokenPipeError) as caught:
-    main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
+    cli.main(['chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male'])
   assert caught.value is error

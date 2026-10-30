@@ -40,8 +40,8 @@ RUNTIME_DATA: Final[tuple[str, ...]] = (
 SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
   'README.md', 'API_CONTRACT.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
-  'run_tests.py', 'run_package_checks.py', 'run_release.py', 'run_demo.py', 'run_interpreter.py',
-  'run_relationship_analyzer.py', 'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
+  'run_tests.py', 'run_package_checks.py', 'run_release.py',
+  'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
   'CONTRIBUTING.md',
   '.github/workflows/release.yml', '.github/workflows/on_pull_request.yml',
   '.github/workflows/on_push.yml', '.github/workflows/pypy_compatibility.yml', '.github/workflows/docs-publish.yml',
@@ -271,12 +271,14 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str],
   with zipfile.ZipFile(wheel) as archive:
     names = archive.namelist()
     metadata_dir = wheel.name.split('-')[0] + '-' + wheel.name.split('-')[1] + '.dist-info/'
-    metadata_files = {metadata_dir + name for name in ('METADATA', 'WHEEL', 'top_level.txt', 'RECORD')}
+    metadata_files = {metadata_dir + name for name in ('METADATA', 'WHEEL', 'top_level.txt', 'RECORD', 'entry_points.txt')}
     license_files = {metadata_dir + 'licenses/' + name for name in licenses}
     if duplicates := sorted(name for name, count in Counter(names).items() if count > 1):
       raise ValueError(f'Duplicate wheel members: {wheel.name}: {duplicates}')
     if set(names) != set(expected) | metadata_files | license_files:
       raise ValueError(f'Wheel file roster mismatch: {wheel.name}: {set(names) ^ (set(expected) | metadata_files | license_files)}')
+    if archive.read(metadata_dir + 'entry_points.txt') != b'[console_scripts]\nbazi = bazi.cli:main\n':
+      raise ValueError(f'Wheel entrypoints mismatch: {wheel.name}')
     for name, digest in expected.items():
       if hashlib.sha256(archive.read(name)).hexdigest() != digest:
         raise ValueError(f'Wheel bytes differ: {name}')
@@ -345,9 +347,11 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
       if stream is None:
         raise ValueError(f'Unreadable sdist member: {name}')
       payload[name] = stream.read()
-    generated = {'PKG-INFO', 'setup.cfg'} | {f'bazi.egg-info/{name}' for name in ('PKG-INFO', 'SOURCES.txt', 'dependency_links.txt', 'top_level.txt')}
+    generated = {'PKG-INFO', 'setup.cfg'} | {f'bazi.egg-info/{name}' for name in ('PKG-INFO', 'SOURCES.txt', 'dependency_links.txt', 'top_level.txt', 'entry_points.txt')}
     if set(payload) != set(files) | generated:
       raise ValueError(f'Sdist file roster mismatch: {set(payload) ^ (set(files) | generated)}')
+    if payload['bazi.egg-info/entry_points.txt'] != b'[console_scripts]\nbazi = bazi.cli:main\n':
+      raise ValueError('Sdist entrypoints mismatch')
     for name, digest in before.items():
       if hashlib.sha256(payload[name]).hexdigest() != digest:
         raise ValueError(f'Sdist bytes differ: {name}')
@@ -365,6 +369,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   foreign = work / 'consumer'
   foreign.mkdir()
   shutil.copyfile(root / 'tests/package_smoke.py', foreign / 'package_smoke.py')
+  shutil.copyfile(root / 'tests/package_cli_smoke.py', foreign / 'package_cli_smoke.py')
   expected = {'package': package, 'licenses': licenses, 'version': project['version']}
   (foreign / 'expected.json').write_text(json.dumps(expected), encoding='utf-8')
   for label, wheel in (('direct', direct), ('rebuilt', rebuilt)):
@@ -373,6 +378,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
     python = consumer(work / (label + '-venv'), wheel, installers)
     for optimization in ([], ['-O']):
       run([str(python), '-I', '-B', *optimization, 'package_smoke.py', 'expected.json'], foreign)
+      run([str(python), '-I', '-B', *optimization, 'package_cli_smoke.py'], foreign)
     if environments is not None and installers is not None:
       environments.append(collect_environment(str(python), 'consumer-wheel-' + label, installers))
 
@@ -390,11 +396,13 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'from bazi.transits import TransitKind, TransitSet\n'
           'from bazi.transit_chart import TransitChart\n'
           'from bazi.analyzer.relationship import KongwangHit, KongwangResult, StarAppearance\n'
-          'from bazi.school import BaziConfig\n'
+           'from bazi.school import BaziConfig\n'
+           'from bazi.cli import main as cli_main\n'
           'from bazi.common import frozendict\n'
           'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id\n'
           'from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context\n'
-          'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
+           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
+           'cli_exit: int = cli_main(["--help"])\n'
           'transits = TransitChart(chart)\n'
           'year_transits: TransitSet | None = transits.at_year(2024)\n'
           'month_transits: TransitSet | None = transits.at_month(2024, Dizhi.辰)\n'
@@ -449,7 +457,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
            '  civil: datetime = facts.civil_time\n'
            '  apparent: datetime = facts.apparent_time\n')
   (foreign / 'good.py').write_text(good, encoding='utf-8')
-  bad = good + ('wrong: int = chart\nBazi.create(42, "male")\n'
+  bad = good + ('wrong: int = chart\nBazi.create(42, "male")\ncli_main(42)\n'
                 'Bazi.create(datetime.now(), "male", longitude="0", civil_timezone="UTC")\n'
                 'knowledge.query(object_id=42)\nLiunianObservation("2024")\n'
                 'knowledge.find_objects(42)\nknowledge.search(42)\nknowledge.filter_values(42)\n'
@@ -493,7 +501,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
+  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('"None"',):

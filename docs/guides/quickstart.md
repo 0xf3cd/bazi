@@ -15,8 +15,8 @@ python -m pip install bazi
 本页说明对应当前开发源码。已发布版本的接口以该版本 tag 下的文档为准，两者可能不同。
 
 ```{note}
-本库没有安装后的命令行入口，也没有 `from bazi import Bazi` 这样的根类。
-请从定义模块导入，下面每个示例都这样写。
+本库没有 `from bazi import Bazi` 这样的根类，请从定义模块导入，下面每个示例都这样写。
+终端操作使用安装后的 `bazi` 命令，方法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)。
 ```
 
 ## 排第一张盘
@@ -129,7 +129,7 @@ os.chdir(_save_cwd)
 _save_directory.cleanup()
 ```
 
-本库不提供命盘保存恢复接口。源码脚本也可保存 TXT，运行位置与输出路径见 [README 源码路线](https://github.com/0xf3cd/bazi/blob/main/README.md#源码脚本)。
+本库不提供命盘保存恢复接口。安装后的 `bazi chart` 也可保存 TXT，运行位置与输出路径见 [README 命令行说明](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)。
 
 ## 在交互里看一眼
 

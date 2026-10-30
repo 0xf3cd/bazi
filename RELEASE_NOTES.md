@@ -15,6 +15,28 @@
 - 需要每步大运的年份标签与物理起止时刻时，遍历 `chart.dayun`，读取 `DayunTuple` 的 `ganzhi_year`、`start_moment`、`end_moment`；`TransitSet.dayun` 只给出干支。
 - 按干支月、公历日期或时刻查询，分别用 `at_month(year, Dizhi成员)`、`at_date(date)`、`at_moment(datetime)`。四个入口的范围、缺项、异常条件，以及大运年份标签与物理交运边界的读法不变。`TransitKind`、`TransitSet` 和 `BaziChart.random` 保留。
 
+### 安装版命令与脚本迁移
+
+安装包新增唯一的 `bazi` 命令，运行时仍只用标准库与随包数据。安装后无需进入源码目录，也不必另装 colorama；源码调用改为：
+
+| 原入口 | 当前命令 |
+| --- | --- |
+| `python run_demo.py --seed 236` | `bazi demo --seed 236` |
+| `python run_relationship_analyzer.py --seed 236` | `bazi relationship --seed 236` |
+| `python run_interpreter.py chart …` | `bazi chart …` |
+| `python run_interpreter.py knowledge …` | `bazi knowledge …` |
+| `python run_interpreter.py match …` | `bazi match …` |
+
+- 三个旧脚本删除，不留兼容壳。保留完整演示、终端颜色、随机种子、地点输入、知识与判据查询、TXT 和知识源覆盖保护；不改变领域计算或规则。
+- 默认知识 TXT 导出目录从源码所在目录改为**调用时当前目录**下的 `output_data/`。`chart` 仍须显式给 `--output-dir` 才导出，不会默认写文件。裸调用只显示帮助；未知任务／选项及已删除的三个 JSON 导出参数继续以退出码 2 拒绝，普通与优化模式相同。
+- `run_tests.py` 删除独立的 `-d`／`--demo`、`-i`／`--interpreter` 任务；CLI 全部计入库覆盖率，并由专项测试和 direct／rebuilt wheel 的实际安装命令验证。
+
+从 v2.2.0 及更早的平铺参数迁移时，先选任务：`--seed 236` 改为 `bazi chart --seed 236`，
+`--query-knowledge` 改为 `bazi knowledge --all`，`--query-knowledge --object tiangan.ding` 改为
+`bazi knowledge --object tiangan.ding`，`--match-context 判据ID …` 改为 `bazi match 判据ID …`。
+同时展示命盘与导出知识须分成 `bazi chart …`、`bazi knowledge --export-knowledge-base …` 两条命令，
+各自检查输出目标；一条失败不撤销另一条已写出的文件。
+
 ## bazi 2.4.0
 
 本版删除公开 JSON 存取与迁移接口，并调整位置、观察请求和分析结果的构造。升级前请保留原出生输入、完整配置和旧记录，核对[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)及[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。

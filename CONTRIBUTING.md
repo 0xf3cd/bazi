@@ -59,7 +59,7 @@ python -m pip install celestial-calendar==0.6.1
 
 `Requirements.txt` 是开发依赖，`docs/requirements.txt` 是文档工具依赖，两者都不是运行时依赖；`celestial-calendar==0.6.1` 是历法测试用的工具依赖。
 
-如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、示例和安装工件检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。
+如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。
 
 生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。
 
@@ -71,10 +71,10 @@ PR 前须在上述 Python 3.13+ 开发环境、仓库根目录实跑完整 CPyth
 python run_tests.py -a -v
 ```
 
-完整检查包含全部测试与 100% 覆盖率检查、`ruff check`、`mypy`、两个 demo、`run_interpreter.py` 示例、`python -O` 输入契约检查、安装工件验证以及文档构建与检查。
+完整检查包含全部测试与 100% 覆盖率检查、`ruff check`、`mypy`、`python -O` 输入契约检查、安装工件及真实安装命令验证，以及文档构建与检查。CLI 专项测试计入库覆盖率，不另设旧脚本冒烟任务。
 
 - 裸 `python run_tests.py` 不含 `slow`、`hkodata` 测试和可选任务，不能代替完整门禁。
-- 工件验证可能联网下载构建与类型工具；示例可能写入 `output_data/`。
+- 工件验证可能联网下载构建与类型工具；安装命令的导出测试在仓外临时目录运行。
 - 只改知识 JSON 或文档也要跑完整门禁。
 - 不要运行 `ruff format` 或其他自动格式化器，代码保留两空格缩进和纵向对齐。
 

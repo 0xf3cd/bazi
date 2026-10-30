@@ -29,6 +29,8 @@
   },
   "members": {
     "cross_module": {
+      "bazi/cli.py|parser._actions": "CLI 从同一 argparse 任务树取得子解析器，用于任务帮助与参数错误归属，不维护第二份任务映射。",
+      "bazi/cli.py|argparse._SubParsersAction": "识别 argparse 的子命令动作，仅供 CLI 解析器自省，不成为库 API。",
       "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由 Bazi 所有；BaziChart.minggong 复用同一时间归属政策，不读取地点私有状态。",
       "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于包内流运数据库；TransitChart先校验坐标及历法可用性，再调用包内入口。",

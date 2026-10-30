@@ -14,7 +14,7 @@ from bazi.defines import Dizhi, Jieqi
 from bazi.school import BaziConfig
 from bazi.transit_chart import TransitChart
 from bazi.transits import _TransitDatabase
-from run_demo import get_basic_info, get_transit_info
+from bazi import cli
 
 
 # Literal month ownership; neither enum indices nor production coordinate conversions are an oracle.
@@ -80,7 +80,7 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
           previous_year = expected_year - (owning[3] == 1)
           previous_branch = candidates[owning_index - 1][2]
           assert _TransitDatabase(chart)._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous_branch)) is None
-          counting = [line for line in get_transit_info(chart).splitlines() if line.startswith('大运数节依据')]
+          counting = [line for line in cli._get_transit_info(chart).splitlines() if line.startswith('大运数节依据')]
           assert counting == [f'大运数节依据（逆排）：{owning[1]} - {owning[0].isoformat()}']
         # Calendar lookups still bracket the physical minute, including DAY's advance window.
         physical_index = max(i for i, row in enumerate(candidates) if row[0] <= reference)
@@ -169,7 +169,7 @@ def test_demo_reads_time_facts(
   ))
   bazi = chart.bazi
   facts = bazi.location_time
-  basic = get_basic_info(chart)
+  basic = cli._get_basic_info(chart)
   if located:
     assert facts is not None
     assert facts.canonical_instant == datetime(2000, 2, 4, 12, 40, tzinfo=UTC)
@@ -183,7 +183,7 @@ def test_demo_reads_time_facts(
     assert facts is None
     assert '出生时刻：2000-02-04T10:00:00' in basic
   assert bazi.month_jies[0].jieqi is Jieqi.立春
-  text = get_transit_info(chart)
+  text = cli._get_transit_info(chart)
   assert '出生时刻前一节：小寒' in text
   assert '出生时刻后一节：立春 - 2000-02-04T20:40:23' in text
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]

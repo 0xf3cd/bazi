@@ -38,7 +38,7 @@ jobs:
       - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -ruff -mypy -d -osmoke ${{ matrix.scope }}
+          ./run_tests.py -ruff -mypy -osmoke ${{ matrix.scope }}
 
   test-on-macos:
     runs-on: macos-latest
@@ -63,7 +63,7 @@ jobs:
       - name: Testing, linting, and statc type checking
         run: |
           chmod +x ./run_tests.py
-          ./run_tests.py -ruff -mypy -d -osmoke
+          ./run_tests.py -ruff -mypy -osmoke
 
   test-on-windows:
     runs-on: windows-latest
@@ -89,4 +89,4 @@ jobs:
         run: |
           chcp.com 65001
           $env:PYTHONIOENCODING = "utf-8"
-          python ./run_tests.py -ruff -mypy -d -osmoke
+          python ./run_tests.py -ruff -mypy -osmoke

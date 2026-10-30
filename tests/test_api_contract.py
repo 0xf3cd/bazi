@@ -502,6 +502,15 @@ def test_package_exports_keep_v200_names() -> None:
     _check_explicit_exports(calendar_source + '\n__all__.append("solar_time")\n', module)
 
 
+def test_cli_is_public_outside_explicit_exports() -> None:
+  assert 'cli' in PUBLIC_NAMES['bazi'].split()
+  assert PUBLIC_NAMES['bazi.cli'] == 'main'
+  source = (ROOT / 'bazi/__init__.py').read_text(encoding='utf-8')
+  _check_explicit_exports(source, 'bazi')
+  with pytest.raises(AssertionError, match='Explicit exports differ'):
+    _check_explicit_exports(source + '\n__all__.append("cli")\n', 'bazi')
+
+
 def test_contract_covers_consumers_and_exports() -> None:
   # Existing consumer imports are additional evidence, not the definition of the public surface.
   for path in (*ROOT.glob('run_*.py'), *(ROOT / 'tests').rglob('*.py')):

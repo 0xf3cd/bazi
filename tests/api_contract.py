@@ -14,12 +14,13 @@ from typing import Final
 
 
 PUBLIC_NAMES: Final[dict[str, str]] = {
-  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart',
+  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart cli',
   'bazi.analyzer': 'relationship',
   'bazi.analyzer.relationship': 'SHENSHA_LABELS ShenshaAnalysis AtBirthShenshaAnalysis KongwangHit KongwangResult AtBirthAnalysis TransitAnalysis StemRelationDiscovery StarAppearance RelationshipEvidence spouse_evidence RelationshipAnalyzer',
   'bazi.bazi': 'BaziGender Bazi LocationTime 八字',
   'bazi.bazi_chart': 'BaziChart 命盘',
   'bazi.chart_text': 'TextStyle basic_text transit_text chart_text',
+  'bazi.cli': 'main',
   'bazi.calendar': 'hko_data CalendarType CalendarDate JieqiTime CalendarUtilsProtocol hko_data_utils celestial_utils CalendarBackend calendar_utils_of solar_time',
   'bazi.calendar.backend': 'CalendarBackend calendar_utils_of',
   'bazi.calendar.celestial_data': '',

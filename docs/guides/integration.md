@@ -2,11 +2,11 @@
 
 这一页面向把 `bazi` 接进自己程序的开发者：怎么导入、读取内存结果，以及前提匹配返回什么。
 导入与行为承诺以对应版本源码根目录的 `API_CONTRACT.md` 为准；签名、字段和局部返回说明查 API 参考。
-第一次排盘及保存文本先看 {doc}`quickstart`；升级旧源码调用则从 [README 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)开始。
+第一次排盘及保存文本先看 {doc}`quickstart`；升级旧调用先看[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 导入
 
-库没有根类，也没有安装后的命令行入口。类型和函数从定义模块导入：
+库没有根类；类型和函数从定义模块导入。安装后的 `bazi` 命令用于终端操作，不改变这些导入路径：
 
 ```{testcode} integration-imports
 from bazi import bazi as bazi_module
@@ -53,7 +53,7 @@ print(next(line for line in text.splitlines() if line.startswith('日：')))
 日：  [壬] [阳水] <*日主*>      [午] [阳火] <正财>     [丁] [阴火] <财> [己] [阴土] <官>
 ```
 
-源码里的 `run_demo.py` 就是用终端颜色码实现这两个钩子的；传给钩子的永远是单个字形，不是整段文字。
+`bazi demo` 用终端颜色码实现这两个钩子；传给字形钩子的永远是单个字形，不是整段文字。
 
 ## 四柱之外：胎元与命宫
 

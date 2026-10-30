@@ -6,23 +6,23 @@ from pathlib import Path
 import os
 import subprocess
 import sys
+from typing import cast
 from zoneinfo import ZoneInfo
 
 import pytest
 
-import run_interpreter
+from bazi import cli
 import cli_runner
-from run_interpreter import main
 
 from cli_runner import GUANSHA, XINGCHONG, BIRTH, prepare
 
 
-# ---- 进程内：同一批分支再走一遍，便于对脚本做覆盖测量（根脚本不在库覆盖闸门内）。
+# Exercise CLI branches in-process so library coverage includes the entry point.
 
 def _call(monkeypatch: pytest.MonkeyPatch, cwd: Path, *args: str) -> int | str | None:
   monkeypatch.chdir(cwd)
   try:
-    return main(list(args))
+    return cli.main(list(args))
   except SystemExit as stop:
     return stop.code
 
@@ -63,7 +63,7 @@ def test_inprocess_commands_cover_every_branch(monkeypatch: pytest.MonkeyPatch, 
 
 @pytest.mark.parametrize('zone,seconds', [('Asia/Shanghai', None), ('+05:30', 19800), ('-05:00', -18000), ('+05:30:15', 19815)])
 def test_civil_timezone_parses_both_forms(zone: str, seconds: int | None) -> None:
-  parsed = run_interpreter._civil_timezone(zone)
+  parsed = cli._civil_timezone(zone)
   if seconds is None:
     assert isinstance(parsed, ZoneInfo) and parsed.key == zone
   else:
@@ -71,10 +71,10 @@ def test_civil_timezone_parses_both_forms(zone: str, seconds: int | None) -> Non
 
 
 @pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('custom_script', [False, True])
+@pytest.mark.parametrize('custom_root', [False, True])
 @pytest.mark.parametrize('custom_env', [False, True])
 def test_runner_preserves_subprocess_options(
-  monkeypatch: pytest.MonkeyPatch, tmp_path: Path, optimized: bool, custom_script: bool, custom_env: bool,
+  monkeypatch: pytest.MonkeyPatch, tmp_path: Path, optimized: bool, custom_root: bool, custom_env: bool,
 ) -> None:
   calls: list[tuple[list[str], dict[str, object]]] = []
   expected = subprocess.CompletedProcess(['script'], 0, 'output', '')
@@ -83,11 +83,12 @@ def test_runner_preserves_subprocess_options(
     return expected
   monkeypatch.setattr(subprocess, 'run', capture)
   monkeypatch.setenv('BAZI_RUNNER_TEST', 'inherited')
-  script = tmp_path / 'custom.py' if custom_script else None
+  root = tmp_path / 'checkout' if custom_root else None
   env = {'BAZI_RUNNER_TEST': 'override'} if custom_env else None
-  assert cli_runner.run_cli(tmp_path, 'chart', '--seed', '42', script=script, optimized=optimized, env=env) is expected
+  assert cli_runner.run_cli(tmp_path, 'chart', '--seed', '42', checkout_root=root, optimized=optimized, env=env) is expected
   assert calls == [(
-    [sys.executable, *(['-O'] if optimized else []), str(cli_runner.SCRIPT if script is None else script), 'chart', '--seed', '42'],
+    [sys.executable, *(['-O'] if optimized else []), '-c', cli_runner.SOURCE_MAIN,
+     str(cli_runner.ROOT if root is None else root), 'chart', '--seed', '42'],
     {'cwd': tmp_path, 'capture_output': True, 'text': True, 'encoding': 'utf-8', 'timeout': 45, 'check': False,
      'env': None if env is None else {**os.environ, **env}},
   )]
@@ -96,7 +97,43 @@ def test_runner_preserves_subprocess_options(
 def test_error_helper_rejects_usage_only_match() -> None:
   result = subprocess.CompletedProcess(
     ['script'], 2, '',
-    'usage: python run_interpreter.py chart --longitude\npython run_interpreter.py chart: error: wrong reason\n',
+    'usage: bazi chart --longitude\nbazi chart: error: wrong reason\n',
   )
   with pytest.raises(AssertionError):
     cli_runner.assert_cli_error(result, 'chart', '--longitude')
+
+
+@pytest.mark.parametrize('argv,expected', [
+  ('chart', 'Expected list'), (('chart',), 'Expected list'), ({}, 'Expected list'),
+  (1, 'Expected list'), ([1], 'Expected str'), (['chart', None], 'Expected str'),
+])
+def test_main_rejects_invalid_argv(argv: object, expected: str) -> None:
+  with pytest.raises(TypeError, match=expected):
+    cli.main(cast(list[str], argv))
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+def test_main_type_errors_survive_optimization(tmp_path: Path, optimized: bool) -> None:
+  code = '''
+import sys
+sys.path.insert(0, sys.argv[1])
+from bazi.cli import main
+for value, message in [('chart', 'Expected list'), (('chart',), 'Expected list'),
+                       ({}, 'Expected list'), (1, 'Expected list'),
+                       ([1], 'Expected str'), (['chart', None], 'Expected str')]:
+  try:
+    main(value)
+  except TypeError as error:
+    if message not in str(error):
+      raise RuntimeError(str(error))
+  else:
+    raise RuntimeError(f'Accepted invalid argv: {value!r}')
+print(f'checked=6 optimized={sys.flags.optimize}')
+'''
+  result = subprocess.run(
+    [sys.executable, *(['-O'] if optimized else []), '-c', code, str(cli_runner.ROOT)],
+    cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', timeout=45, check=False,
+  )
+  assert result.returncode == 0 and result.stderr == '', result.stderr
+  assert result.stdout == f'checked=6 optimized={int(optimized)}\n'
+  assert list(tmp_path.iterdir()) == []

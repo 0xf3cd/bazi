@@ -12,6 +12,9 @@ authors = [{name = "Ningqi Wang (0xf3cd)"}]
 dependencies = []
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 
+[project.scripts]
+bazi = "bazi.cli:main"
+
 [project.urls]
 Repository = "https://github.com/0xf3cd/bazi"
 Issues = "https://github.com/0xf3cd/bazi/issues"

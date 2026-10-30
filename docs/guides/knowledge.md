@@ -450,25 +450,22 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 `scope_inputs` 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。
 `transit_entries` 的年月字段为 ganzhi_year、ganzhi_month，CLI 对应的 flags 仍是 `--ganzhi-year`、`--gz-month`。
 
-## 源码脚本
+## 命令行
 
-仓库根目录的 `run_interpreter.py` 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，可以这样查询：
+安装后的 `bazi` 命令可直接查询知识，无需创建命盘。开发版安装方法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)：
 
 ```sh
-python run_interpreter.py knowledge --object tiangan.ding
-python run_interpreter.py knowledge --list-values topic
-python run_interpreter.py knowledge \
+bazi knowledge --object tiangan.ding
+bazi knowledge --list-values topic
+bazi knowledge \
   --object tiangan.ding \
   --include-reference-only
 ```
 
 只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。
-判据目录用 `python run_interpreter.py match` 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 `python run_interpreter.py knowledge --help`。
-v2.3.0 起移除不带任务名的旧平铺写法，裸调用只打印帮助。原 `--query-knowledge --object tiangan.ding`
-改为 `knowledge --object tiangan.ding`；不带筛选的 `--query-knowledge` 改为 `knowledge --all`。
-命盘调用 `--seed 236` 改为 `chart --seed 236`，`--match-context 判据ID …` 改为 `match 判据ID …`，
-上面的新写法都接在 `python run_interpreter.py` 后。
-原来同时展示命盘并导出知识 TXT 的调用，拆成 `chart …` 和 `knowledge --export-knowledge-base …` 两条独立命令，
-没有跨命令的冲突预检或整体回滚；每条命令仍检查自己的输出冲突及知识源覆盖。
+判据目录用 `bazi match` 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 `bazi knowledge --help`。
+`bazi knowledge --export-knowledge-base` 默认将 TXT 写入调用时当前目录的 `output_data/knowledge_base/`，
+也可用 `--output-dir` 指定目录。命盘展示与知识导出是独立命令，不做跨命令的冲突预检或整体回滚；
+每条命令仍拒绝覆盖知识编辑源。旧脚本与参数的迁移见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 字段与方法的完整说明见 {py:class}`~bazi.knowledge.KnowledgeBase` 和 {doc}`../api/index`，本文只讲上手路径。

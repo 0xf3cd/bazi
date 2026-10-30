@@ -1,6 +1,6 @@
 # 公开接口契约
 
-本库从定义模块导入类型与函数，没有安装 CLI，也不支持 `from bazi import Bazi`
+本库从定义模块导入类型与函数，终端操作使用安装后的 `bazi` 命令；不支持 `from bazi import Bazi`
 （`import bazi; bazi.Bazi` 的 `AttributeError` 会指出该从哪个定义模块导入；`from bazi import Bazi` 由解释器报 `ImportError`，不带这条指路）。例如：
 
 ```python
@@ -97,8 +97,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 ## 对象摘要、报错指路与文本展示
 
-- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
-  `chart_text` 不进 `__all__`（v2.0.0 的显式导出清单保持不变），但同样按需导入。
+- `dir(bazi)` 列出 `__all__` 声明的全部子模块，以及 `chart_text`、`cli`，包括尚未导入的按需子模块；`dir()` 本身不触发导入。
+  `chart_text`、`cli` 不进 `__all__`，但同样按需导入。
 - `Bazi`、`BaziChart`、`TransitChart`、`RelationshipAnalyzer`、`AtBirthAnalysis`、`TransitAnalysis` 的 `repr`
   是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
@@ -293,23 +293,35 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 
 ## 源码脚本
 
-发现接口与判据目录通过 Python 调用。源码脚本 `run_interpreter.py` 不随 wheel 安装，
-它的 `knowledge` 与 `match` 任务提供同样的目录查阅：`knowledge --list-values topic` 对应 `filter_values('topic')`，
-`match` 与 `match 判据ID` 对应 `criteria()` 与 `criterion(id)`；不提供名称精确匹配和关键词检索参数。
-本源码脚本的旧平铺调用在 v2.2.0 保留并提示迁移，**v2.3.0 起移除**。
-这一支持窗口只适用于源码脚本，不改变上面的 Python API 契约。
-裸调用打印顶层帮助并返回 0；随机命盘须显式选择 `chart`。旧平铺选项报错并指向三个任务的新写法。
+旧的三个源码入口已退役，当前使用下方的安装命令；旧版调用变化见[发布说明](RELEASE_NOTES.md)。
 
-| 旧写法（已移除） | 新写法 |
+## 命令行
+
+`console_scripts` 中只有命令 `bazi`，对应 `bazi.cli:main`；不提供 `python -m bazi` 或根目录兼容脚本。
+调用方法见 [README](README.md#命令行)；旧脚本与参数的迁移见[发布说明](RELEASE_NOTES.md)。
+
+| 任务 | 行为 |
 | --- | --- |
-| `--seed 236` | `chart --seed 236` |
-| `--query-knowledge --object tiangan.ding` | `knowledge --object tiangan.ding` |
-| `--query-knowledge` | `knowledge --all` |
-| `--match-context 判据ID …` | `match 判据ID …` |
-| `--seed 236 --output-dir out --export-knowledge-base` | 先运行 `chart --seed 236 --output-dir out`，再运行 `knowledge --export-knowledge-base --output-dir out` |
+| `bazi demo` | 随机命盘和完整流运文本，保留终端颜色。 |
+| `bazi relationship` | 夫妻宫、配偶星、原局及整柱神煞、旬空和连续十年流年报告。 |
+| `bazi chart` | 命盘与知识展示，支持种子、数量、固定出生与地点输入。 |
+| `bazi knowledge` | 概览、多维查询、校验编辑源、TXT 导出和合法过滤值目录。 |
+| `bazi match` | 判据目录、单项输入说明或给定命盘的前提求值。 |
 
-表中参数均接在 `python run_interpreter.py` 后。最后一行是两条独立命令，分别检查各自的导出目标，
-不提供跨命令的冲突预检或整体回滚；TXT 输出的知识源覆盖保护仍保留。
+前三个任务默认随机生成，打印种子，可用 `--seed 整数` 重放。固定 `chart` 输入须同时给
+`--birth-time`、`--gender`，不能与随机种子或多盘数量组合。地点与时区输入沿用库的时间口径。
+`knowledge --list-values topic` 对应 `filter_values('topic')`，`match` 与 `match 判据ID`
+对应 `criteria()` 与 `criterion(id)`；CLI 不提供名称精确匹配或关键词检索参数。
+
+裸调用与 `--help` 只打印帮助并返回 0，不写文件。未知任务／选项、缺项或非法输入由 argparse
+以退出码 2 报错；普通运行与优化模式保持相同的立即失败行为。`bazi.cli.main(argv=None)`
+不含程序名，None 表示读取 `sys.argv[1:]`；非列表或包含非字符串成员时抛 `TypeError`。
+
+`chart` 只有显式传 `--output-dir` 才写 `interpretation_examples/{序号}.txt`；
+`knowledge --export-knowledge-base` 默认写到调用时当前目录的 `output_data/knowledge_base/`，
+也可指定 `--output-dir`。导出 TXT 剥除终端颜色码，默认路径不取安装位置，拒绝覆盖包内或自定义知识编辑源，
+包括指向该源的符号链接和硬链接。同名导出目标会覆盖，其他文件保留。
+两个导出任务是独立命令，分别检查各自目标，不提供跨命令冲突预检或整体回滚。
 
 ## 已删除的存取接口
 
@@ -318,7 +330,7 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 已删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
 `BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
 `KnowledgeBase.export_json/from_json` 及整个 `bazi.record_migration` 模块。
-源码脚本的 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json` 也已删除；
+CLI 的 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json` 也不提供；
 普通运行与 `python -O` 均按未知选项拒绝，不创建输出文件。TXT、知识编辑源读取与领域查询保留。
 
 旧结果需保留原件；要得到当前实现下的结论，使用原出生输入与完整配置重新排盘、求值。

@@ -7,17 +7,17 @@ from typing import get_args
 
 import pytest
 
-from run_interpreter import _LIST_DIMENSIONS, _COORDINATE_FLAGS, _command_parser, _subcommand_parsers
+from bazi import cli
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.knowledge import DEFAULT_SOURCE_PATH, Applicability, KnowledgeBase
 from bazi.context_matching import NatalObservation, LiunianObservation, criteria, evaluate_context
 
-from cli_runner import MATCH_ARGS, MATCH_BIRTH, run_cli, assert_cli_error
+from cli_runner import GUANSHA, BIRTH, MATCH_ARGS, MATCH_BIRTH, run_cli, assert_cli_error
 
 
 def test_cli_filters_match_library_directories() -> None:
-  parsers = _subcommand_parsers(_command_parser())
+  parsers = cli._subcommand_parsers(cli._command_parser())
   actions = {action.dest: action for action in parsers['knowledge']._actions}
   matching = {action.dest: action for action in parsers['match']._actions}
   flags = {
@@ -26,7 +26,7 @@ def test_cli_filters_match_library_directories() -> None:
   }
   assert set(inspect.signature(KnowledgeBase.query).parameters) - {'self', 'include_reference_only'} == set(flags)
   assert set(inspect.signature(KnowledgeBase.search).parameters) - {'self', 'keyword', 'include_reference_only'} == set(flags)
-  assert set(_LIST_DIMENSIONS.values()) == set(flags)
+  assert set(cli._LIST_DIMENSIONS.values()) == set(flags)
   for dimension, flag in flags.items():
     assert actions[dimension].option_strings == [flag]
   assert tuple(actions['applicability'].choices or ()) == get_args(Applicability)
@@ -39,7 +39,7 @@ def test_cli_filters_match_library_directories() -> None:
   actual_flags = {flag for action in matching.values() for flag in action.option_strings}
   for info in criteria().values():
     for names in info.transit_entries.values():
-      assert all(_COORDINATE_FLAGS[name] in actual_flags for name in names)
+      assert all(cli._COORDINATE_FLAGS[name] in actual_flags for name in names)
   assert not {'find_objects', 'search', 'criteria'} & (set(actions) | set(matching))
 
 
@@ -51,6 +51,19 @@ def test_text_agrees_with_library(tmp_path: Path) -> None:
   assert '也许' in result.stdout and '仅供参考' in result.stdout
   assert '不确立古籍规则，也不作现实预测。' in result.stdout
   assert any(line.startswith('证据：natal.月；') for line in result.stdout.splitlines())
+
+
+def test_guansha_liunian_keeps_reference_text(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'match', GUANSHA, *BIRTH, '--gender', 'female',
+                   '--observation-scope', 'natal_and_liunian', '--ganzhi-year', '2024', '--include-reference-only')
+  expected = evaluate_context(
+    BaziChart(Bazi.create('2000-01-03 12:00', 'female')), criterion_id=GUANSHA,
+    observation=LiunianObservation(2024), include_reference_only=True,
+  )
+  assert result.returncode == 0 and result.stderr == '', result.stderr
+  assert result.stdout == expected.render() + '\n'
+  assert '结构前提：SATISFIED' in result.stdout and '仅供参考' in result.stdout
+  assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize('scope,year,status', [
@@ -95,7 +108,7 @@ def test_invalid_match_options_do_not_export(tmp_path: Path, extra: tuple[str, .
 def test_missing_or_bad_requests_fail(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
   result = run_cli(tmp_path, *args)
   assert result.returncode == 2 and 'error:' in result.stderr
-  assert 'usage: python run_interpreter.py match' in result.stderr and error in result.stderr
+  assert 'usage: bazi match' in result.stderr and error in result.stderr
   assert list(tmp_path.iterdir()) == []
 
 

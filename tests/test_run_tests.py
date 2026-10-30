@@ -22,7 +22,7 @@ import pytest
   (['-a', '-cr', '90'], True, False, None, 90.0, False),
   (['-nt', '-k', 'selected'], False, True, 'selected', 100.0, False),
   # Explicit flags enable every task without -a.
-  (['-v', '-s', '-hko', '-c', '-cr', '100', '-ruff', '-mypy', '-d', '-i', '-osmoke', '-docs', '-pkg'],
+  (['-v', '-s', '-hko', '-c', '-cr', '100', '-ruff', '-mypy', '-osmoke', '-docs', '-pkg'],
    True, False, None, 100.0, True),
 ])
 def test_arguments(
@@ -41,7 +41,7 @@ def test_arguments(
   assert runner['expression'] == expression
   assert runner['minimum_cov_rate'] == rate
   assert runner['verbose'] is verbose
-  for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_demo', 'do_interpreter', 'do_osmoke', 'do_docs', 'do_package'):
+  for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_osmoke', 'do_docs', 'do_package'):
     assert runner[flag] is all_tasks, flag
 
 
@@ -232,18 +232,27 @@ def test_environment_export_requires_package(monkeypatch: pytest.MonkeyPatch, tm
   assert caught.value.code == 2
 
 
-def test_demo_interpreter_gates_fixed_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
-  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
+@pytest.mark.parametrize('flag', ['--demo', '-i', '--interpreter'])
+def test_removed_script_flags_are_rejected(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', flag])
+  with pytest.raises(SystemExit) as caught:
+    runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  assert caught.value.code == 2
+
+
+def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-a'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
-  proc = Mock(return_value=0)
-  monkeypatch.setitem(runner['run_demo'].__globals__, 'run_proc_and_print', proc)
-  assert runner['run_demo']() == runner['run_interpreter']() == 0
-  root = Path(__file__).parents[1]
-  assert [call.args[0] for call in proc.call_args_list] == [
-    [sys.executable, str(root / 'run_demo.py'), '--seed', '236'],
-    [sys.executable, str(root / 'run_relationship_analyzer.py'), '--seed', '236'],
-    [sys.executable, str(root / 'run_interpreter.py'), 'chart', '--seed', '236'],
-  ]
+  subtasks = runner['run_subtasks']
+  coverage = Mock(return_value=0)
+  for name in ('run_o_smoke', 'run_ruff', 'run_mypy', 'run_docs', 'run_package_checks'):
+    monkeypatch.setitem(subtasks.__globals__, name, Mock(return_value=0))
+  monkeypatch.setitem(subtasks.__globals__, 'run_coverage', coverage)
+  statuses = subtasks()
+  assert list(statuses) == ['coverage with tests', 'o_smoke', 'ruff', 'mypy', 'docs', 'package']
+  coverage.assert_called_once_with(runner['run_tests'])
+  assert not {'do_demo', 'do_interpreter', 'DEMO_SCRIPTS', 'run_demo', 'run_interpreter'} & runner.keys()
+  assert not {'-d', '--demo', '-i', '--interpreter'} & runner['argparser']._option_string_actions.keys()
 
 
 def test_pytest_args_keep_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -271,7 +280,7 @@ def test_runtime_scope_is_explicit(
   assert runner['do_docs'] is docs
   assert runner['skip_test'] is not tests
   if '-a' in arguments:
-    for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_demo', 'do_interpreter', 'do_osmoke', 'do_package'):
+    for flag in ('run_slow_test', 'run_hko_test', 'do_cov', 'do_ruff', 'do_mypy', 'do_osmoke', 'do_package'):
       assert runner[flag] is True, flag
 
 
@@ -347,7 +356,7 @@ def test_runtime_mypy_has_all_non_doc_targets(monkeypatch: pytest.MonkeyPatch, t
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt'])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   names = (
-    'run_demo.py', 'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
+    'run_package_checks.py', 'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
     'tests/test_runtime.py', 'tests/nested/test_more.py', 'tests/docs/test_tool.py',
     'docs/_ext/tool.py', 'bazi/__init__.py',
   )
@@ -357,7 +366,7 @@ def test_runtime_mypy_has_all_non_doc_targets(monkeypatch: pytest.MonkeyPatch, t
     target.touch()
   targets = runner['mypy_targets'](tmp_path, True)
   assert set(targets) == {
-    tmp_path / name for name in ('bazi', 'run_demo.py', 'run_docs_site.py', 'tests/test_runtime.py', 'tests/nested/test_more.py')
+    tmp_path / name for name in ('bazi', 'run_package_checks.py', 'run_docs_site.py', 'tests/test_runtime.py', 'tests/nested/test_more.py')
   }
   assert runner['mypy_targets'](tmp_path, False) == (tmp_path,)
 
