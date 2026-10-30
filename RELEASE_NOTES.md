@@ -9,6 +9,11 @@
 - `KnowledgeEntry.show_by_default: bool` 替代 `output`／`OutputPolicy`，`include_reference_only` 不变。编辑源升为整数 schema 3，条目键改为 `show_by_default`，值为 JSON boolean；旧 schema 1／2 直接拒绝，不自动迁移。312 条知识及 19 条默认展示、默认展示准入和命理规则不变。
 - 构造、`replace`、`asdict` 及位置式类模式须同步迁移；直接构造的参考 ID 保留顺序和重复。迁移方法与限制见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识结构开发版迁移)。
 
+### 流运查询入口
+
+- `DayunDatabase`、`TransitDatabase` 改为包内实现，不再支持从 `bazi.transits` 导入；`bazi.transit_chart.TransitDatabase` 也不再可用，不保留兼容别名。调用方改用 `TransitChart(chart).at_year(year)`，再从返回的 `TransitSet` 读取 `xiaoyun` 或 `dayun`，没有相应流运时字段为 `None`；早于出生干支年的查询则返回 `None`。
+- 按干支月、公历日期或时刻查询，分别用 `at_month(year, Dizhi成员)`、`at_date(date)`、`at_moment(datetime)`。四个入口的范围、缺项、异常条件，以及大运年份标签与物理交运边界的读法不变。`TransitKind`、`TransitSet` 和 `BaziChart.random` 保留。
+
 ## bazi 2.4.0
 
 本版删除公开 JSON 存取与迁移接口，并调整位置、观察请求和分析结果的构造。升级前请保留原出生输入、完整配置和旧记录，核对[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)及[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。

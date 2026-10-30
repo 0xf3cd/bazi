@@ -17,14 +17,14 @@ from .utils.bazi_utils import (
   ganzhi_of_day, ganzhi_of_year, month_tiangan,
   _ganzhi_of_day_at_moment,
 )
-from .transits import TransitSet, TransitDatabase
+from .transits import TransitSet, _TransitDatabase
 
 
 class TransitChart:
   '''
   查询命盘流运与历法流运的统一入口。
 
-  小运、大运来自 `TransitDatabase`；流年、流月、流日由历法推导。
+  小运、大运来自命盘；流年、流月、流日由历法推导。
   '''
 
   def __init__(self, bazi_chart: BaziChart) -> None:
@@ -38,7 +38,7 @@ class TransitChart:
 
     _check_chart(bazi_chart)
     self._bazi_chart: Final[BaziChart] = bazi_chart
-    self._transit_db: Final[TransitDatabase] = TransitDatabase(self._bazi_chart)
+    self._transit_db: Final[_TransitDatabase] = _TransitDatabase(self._bazi_chart)
     self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(self._bazi_chart.bazi.config.backend)
 
   def __repr__(self) -> str:

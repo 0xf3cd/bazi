@@ -410,6 +410,7 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
 @pytest.mark.parametrize('change', [
   'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
   'typing-internal-error', 'typing-missing-kongwang',
+  'typing-missing-dayun', 'typing-missing-transit', 'typing-missing-transit-chart',
 ])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
   root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
@@ -524,6 +525,14 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Unsupported target for indexed assignment ("frozendict[str, {value}]")  [index]')
     messages.extend(f'"{owner}" has no attribute "{member}"' for owner, member in
       (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')))
+    for module, name, missing in (
+      ('bazi.transits', 'DayunDatabase', 'typing-missing-dayun'),
+      ('bazi.transits', 'TransitDatabase', 'typing-missing-transit'),
+      ('bazi.transit_chart', 'TransitDatabase', 'typing-missing-transit-chart'),
+    ):
+      if change != missing:
+        line_number = bad.index(f'from {module} import {name}') + 1
+        messages.append(f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"  [attr-defined]')
     if change == 'typing-missing-kongwang':
       messages.remove('to "KongwangResult"')
     return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, '\n'.join(messages), '')
@@ -535,7 +544,10 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     message = {'identity-changed': 'Source identity changed', 'source-changed': 'Source changed',
       'role-missing': 'Environment role roster mismatch', 'report-race': '',
       'typing-internal-error': 'Installed typing negative control did not reach both type checks',
-      'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult'}[change]
+      'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult',
+      'typing-missing-dayun': r'Installed typing negative control missed removed bazi\.transits\.DayunDatabase',
+      'typing-missing-transit': r'Installed typing negative control missed removed bazi\.transits\.TransitDatabase',
+      'typing-missing-transit-chart': r'Installed typing negative control missed removed bazi\.transit_chart\.TransitDatabase'}[change]
     with pytest.raises(exception, match=message or None):
       check_packages(root, work, output, report, receipt)
     if change == 'report-race':

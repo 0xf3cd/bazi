@@ -68,11 +68,19 @@ def test_empty_member_lists_not_all_members(tmp_path):
   for filename, qualified in (
     ('bazi-common.rst', 'bazi.common.frozendict'),
     ('bazi-data_types.rst', 'bazi.data_types.HiddenTianganDict'),
-    ('bazi-transits.rst', 'bazi.transits.DayunDatabase'),
   ):
     text = (tmp_path / 'api' / filename).read_text(encoding='utf-8')
     assert option_lines(text, qualified) == [], qualified
   assert option_lines((tmp_path / 'api/bazi-data_types.rst').read_text(encoding='utf-8'), 'bazi.data_types.BaziData')
+
+
+def test_transit_page_omits_internal_databases(tmp_path):
+  api_reference.generate_api(tmp_path)
+  text = (tmp_path / 'api/bazi-transits.rst').read_text(encoding='utf-8')
+  for name in ('DayunDatabase', 'TransitDatabase', '_DayunDatabase', '_TransitDatabase'):
+    assert '.. autoclass:: bazi.transits.' + name not in text
+  assert '.. autoclass:: bazi.transits.TransitSet' in text
+  assert '.. autoclass:: bazi.transits.TransitKind' in text
 
 
 def test_alias_reexport_pages_own_wording(tmp_path):

@@ -13,7 +13,7 @@ from bazi.calendar.dates import GanzhiYearMonth
 from bazi.defines import Dizhi, Jieqi
 from bazi.school import BaziConfig
 from bazi.transit_chart import TransitChart
-from bazi.transits import TransitDatabase
+from bazi.transits import _TransitDatabase
 from run_demo import get_basic_info, get_transit_info
 
 
@@ -79,7 +79,7 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
           assert current_month is not None and current_month.dayun == first.ganzhi
           previous_year = expected_year - (owning[3] == 1)
           previous_branch = candidates[owning_index - 1][2]
-          assert TransitDatabase(chart)._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous_branch)) is None
+          assert _TransitDatabase(chart)._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous_branch)) is None
           counting = [line for line in get_transit_info(chart).splitlines() if line.startswith('大运数节依据')]
           assert counting == [f'大运数节依据（逆排）：{owning[1]} - {owning[0].isoformat()}']
         # Calendar lookups still bracket the physical minute, including DAY's advance window.
@@ -126,7 +126,7 @@ def test_month_floor_leaves_physical_queries(
   birth: str, previous_year: int, previous: Dizhi, current: Dizhi, first_ganzhi: str,
 ) -> None:
   chart = BaziChart(Bazi.create(birth, 'female'))
-  database = TransitDatabase(chart)
+  database = _TransitDatabase(chart)
   assert chart.dayun_start_moment == datetime.fromisoformat(birth)
   assert chart.bazi.month_jies[0].moment > chart.bazi.reference_datetime
   assert database._dayun_at_month(GanzhiYearMonth.from_dizhi(previous_year, previous)) is None
@@ -137,7 +137,7 @@ def test_month_floor_leaves_physical_queries(
 def test_year_floor_leaves_physical_queries() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 10:00', 'female'))
   transits = TransitChart(chart)
-  database = TransitDatabase(chart)
+  database = _TransitDatabase(chart)
   assert database._dayun_at_month(GanzhiYearMonth.from_dizhi(1999, Dizhi.丑)) is None
   assert str(database._dayun_at_month(GanzhiYearMonth.from_dizhi(2000, Dizhi.寅))) == '丁丑'
   assert next(chart.dayun).ganzhi_year == 2000

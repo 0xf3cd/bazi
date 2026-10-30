@@ -3,6 +3,7 @@
 '''Copied into a foreign cwd and run with an installed wheel, under -I -B and -O.'''
 
 import hashlib
+import importlib
 import importlib.metadata
 import importlib.util
 import json
@@ -133,6 +134,21 @@ def main() -> None:
   check(LunarYearInfo is HkoInfo is DecoderInfo is CelestialInfo, 'Installed lunar type identity changed')
 
   from bazi.transits import TransitSet
+  for module_name, name in (
+    ('bazi.transits', 'DayunDatabase'),
+    ('bazi.transits', 'TransitDatabase'),
+    ('bazi.transit_chart', 'TransitDatabase'),
+  ):
+    check(not hasattr(importlib.import_module(module_name), name), f'Removed database remains installed: {module_name}.{name}')
+    try:
+      exec(f'from {module_name} import {name}', {}) # noqa: S102 # Import paths are fixed cases above.
+    except ImportError as error:
+      check(name in str(error), f'Database import failed for another reason: {error}')
+    else:
+      raise RuntimeError(f'Removed database import succeeded: {module_name}.{name}')
+    namespace: dict[str, object] = {}
+    exec(f'from {module_name} import *', namespace) # noqa: S102 # Exercise fixed installed-module star imports.
+    check(name not in namespace, f'Removed database remains in star imports: {module_name}.{name}')
   for module, member in ((bazi.bazi, 'LocationTimeJson'), (bazi.bazi_chart, 'BaziJson'), (bazi.school, '_ConfigJson'), (bazi.school, '_config_json')):
     check(not hasattr(module, member), 'Removed persistence type/helper remains installed')
   for owner, members in (
