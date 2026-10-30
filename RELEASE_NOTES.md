@@ -12,6 +12,7 @@
 ### 流运查询入口
 
 - `DayunDatabase`、`TransitDatabase` 改为包内实现，不再支持从 `bazi.transits` 导入；`bazi.transit_chart.TransitDatabase` 也不再可用，不保留兼容别名。调用方改用 `TransitChart(chart).at_year(year)`，再从返回的 `TransitSet` 读取 `xiaoyun` 或 `dayun`，没有相应流运时字段为 `None`；早于出生干支年的查询则返回 `None`。
+- 需要每步大运的年份标签与物理起止时刻时，遍历 `chart.dayun`，读取 `DayunTuple` 的 `ganzhi_year`、`start_moment`、`end_moment`；`TransitSet.dayun` 只给出干支。
 - 按干支月、公历日期或时刻查询，分别用 `at_month(year, Dizhi成员)`、`at_date(date)`、`at_moment(datetime)`。四个入口的范围、缺项、异常条件，以及大运年份标签与物理交运边界的读法不变。`TransitKind`、`TransitSet` 和 `BaziChart.random` 保留。
 
 ## bazi 2.4.0

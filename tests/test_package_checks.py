@@ -486,6 +486,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     if 'mypy' in command:
       assert command[1:5] == ['-I', '-X', 'utf8', '-m']
       assert '--show-traceback' in command and command[-1] == 'good.py'
+      good = (cwd / 'good.py').read_text(encoding='utf-8')
+      for method in ('at_year', 'at_month', 'at_date', 'at_moment'):
+        assert f': TransitSet | None = transits.{method}(' in good
     if 'pip' not in command:
       return
     python = command[0]

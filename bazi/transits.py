@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''流运数据类型及命盘小运、大运查询。'''
+'''流运种类与查询结果类型。'''
 
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
