@@ -6,11 +6,14 @@ import re
 import sys
 import typing
 import zlib
+from collections import Counter
 from collections.abc import Callable, Mapping
 from enum import Enum
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+
+from markdown_it import MarkdownIt
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'tests'))
@@ -31,7 +34,7 @@ DOCTEST_PHASES = ('setup', 'cleanup')
 
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore'},
+  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore', 'quickstart-transits', 'quickstart-liunian', 'quickstart-context'},
   'guides/configuration': {'config-precision', 'config-overseas', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
   'guides/relations-transits': {'relations-day-master', 'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
   'guides/integration': {'integration-imports', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary'},
@@ -62,6 +65,7 @@ class Page(HTMLParser):
     self.related_text: list[str] = []
     self.row: list[str] | None = None
     self.cell: list[str] | None = None
+    self.cells: list[str] = []
     self.section: str | None = None
     self.section_stack: list[str | None] = []
     self.dt: list[str] | None = None
@@ -70,9 +74,13 @@ class Page(HTMLParser):
     self.paragraph: list[str] | None = None
     self.paragraphs: list[str] = []
     self.field_name: str | None = None
+    self.heading: list[str] | None = None
+    self.headings: list[str] = []
 
   def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
     attributes = dict(attrs)
+    if tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+      self.heading = []
     identifier = attributes.get('id')
     if identifier:
       if identifier in self.ids:
@@ -113,12 +121,14 @@ class Page(HTMLParser):
         self.pre = []
       elif tag == 'tr':
         self.row = []
-      elif tag in ('th', 'td'):
-        self.cell = []
+    if tag in ('th', 'td'):
+      self.cell = []
     if tag == 'p':
       self.paragraph = []
 
   def handle_data(self, text: str) -> None:
+    if self.heading is not None:
+      self.heading.append(text)
     if self.label_depth:
       self.label_text.append(text)
     if self.related_id is not None:
@@ -130,6 +140,9 @@ class Page(HTMLParser):
         target.append(text)
 
   def handle_endtag(self, tag: str) -> None:
+    if tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6') and self.heading is not None:
+      self.headings.append(''.join(self.heading).removesuffix('¶').strip())
+      self.heading = None
     if tag == 'a' and self.related_id is not None:
       assert self.section is not None
       self.related[self.section].append((self.related_id, ''.join(self.related_text)))
@@ -158,8 +171,10 @@ class Page(HTMLParser):
     elif tag == 'section':
       self.section = self.section_stack.pop()
     elif tag in ('th', 'td') and self.cell is not None:
-      assert self.row is not None
-      self.row.append(''.join(self.cell).strip())
+      text = ''.join(self.cell).strip()
+      self.cells.append(text)
+      if self.row is not None:
+        self.row.append(text)
       self.cell = None
     elif tag == 'tr' and self.row is not None:
       assert self.section is not None
@@ -410,6 +425,24 @@ def check_links(site: Path, pages: dict[str, Page]) -> None:
         assert relative in pages and unquote(target.fragment) in pages[relative].ids, (filename, href)
 
 
+def check_release_notes(pages: dict[str, Page]) -> int:
+  '''检查发布页导航、必需迁移节及正本标题、段落和表格的渲染对应。'''
+  page = pages['release-notes.html']
+  assert any(urlsplit(link).path == 'release-notes.html' and not urlsplit(link).scheme
+    for link in pages['index.html'].links), 'Release notes missing from navigation'
+  reference = Page()
+  source = (ROOT / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
+  reference.feed(MarkdownIt('commonmark').enable('table').render(source))
+  assert {
+    '知识结构迁移', '安装版命令与脚本迁移', '存取接口移除', '结构接口迁移', '源码脚本的平铺参数',
+  } <= set(reference.headings), 'Missing release migration sections'
+  assert page.headings[:len(reference.headings)] == reference.headings, 'Rendered release headings differ from source'
+  expected = Counter(map(normalized, reference.paragraphs))
+  assert expected <= Counter(map(normalized, page.paragraphs)), 'Rendered release paragraphs differ from source'
+  assert Counter(map(normalized, reference.cells)) <= Counter(map(normalized, page.cells)), 'Rendered release tables differ from source'
+  return len(reference.headings)
+
+
 def check_attribute_descriptions(site: Path) -> int:
   docs = source_attribute_docs(ROOT / 'bazi')
   checked = 0
@@ -460,6 +493,7 @@ def main() -> None:
   result['header_paragraphs'] = check_header_paragraphs(pages)
   check_configuration_signatures(site)
   check_links(site, pages)
+  result['release_sections'] = check_release_notes(pages)
   result['source_less_attributes'] = check_attribute_descriptions(site)
   result['doctests'] = check_doctests(doctest)
   (site.parent / 'checks.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

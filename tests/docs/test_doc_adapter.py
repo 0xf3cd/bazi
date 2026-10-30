@@ -217,6 +217,7 @@ def build_environment(tmp_path, monkeypatch):
   (root / 'docs').mkdir(parents=True)
   (root / 'docs/index.md').write_text('# Example\n', encoding='utf-8')
   (root / 'CONTRIBUTING.md').write_text('# Contributing\n', encoding='utf-8')
+  (root / 'RELEASE_NOTES.md').write_text('# Release notes\n', encoding='utf-8')
   (root / 'README.md').write_text("```python\nprint('example')\n```\n\n```text\nexample\n```\n", encoding='utf-8')
   monkeypatch.setattr(run_docs, 'ROOT', root)
   monkeypatch.setattr(run_docs, 'git_output', lambda *args: 'a' * 40 if args[0] == 'rev-parse' else '')
@@ -262,6 +263,29 @@ def test_rejected_output_keeps_existing_files(build_environment, tmp_path):
     run_docs.build(output, 'dev')
   assert marker.read_bytes() == b'keep exactly'
   assert set(output.iterdir()) == {marker}
+
+
+def test_release_copy_and_contribution_links(build_environment, tmp_path, monkeypatch):
+  root = build_environment
+  (root / 'CONTRIBUTING.md').write_text(
+    '[构建](docs/versioning.md)\n[工件](RELEASING.md#本地保留已验证工件)\n[表](bazi/table.py)\n',
+    encoding='utf-8',
+  )
+  (root / 'RELEASE_NOTES.md').write_text('# 发布说明\n\n保留 `reference_ids` 与原有标点。\n', encoding='utf-8')
+
+  def run(command, **kwargs):
+    if '-m' in command:
+      source = Path(command[-2])
+      assert (source / 'release-notes.md').read_bytes() == (root / 'RELEASE_NOTES.md').read_bytes()
+      contributing = (source / 'contributing.md').read_text(encoding='utf-8')
+      assert '](versioning.md)' in contributing and '](docs/versioning.md)' not in contributing
+      assert f'](https://github.com/0xf3cd/bazi/blob/{"a" * 40}/RELEASING.md#本地保留已验证工件)' in contributing
+      assert f'](https://github.com/0xf3cd/bazi/blob/{"a" * 40}/bazi/table.py)' in contributing
+      Path(command[-1]).mkdir(parents=True)
+    return subprocess.CompletedProcess(command, 0)
+
+  monkeypatch.setattr(run_docs.subprocess, 'run', run)
+  run_docs.build(tmp_path / 'output', 'dev')
 
 
 def test_output_inside_source_is_rejected(build_environment):

@@ -83,7 +83,10 @@ def build(output: Path, version_label: str) -> None:
     generate_readme_example(source)
     contributing = (ROOT / 'CONTRIBUTING.md').read_text(encoding='utf-8')
     contributing = contributing.replace('](bazi/', f'](https://github.com/0xf3cd/bazi/blob/{sha}/bazi/')
+    contributing = contributing.replace('](docs/versioning.md)', '](versioning.md)')
+    contributing = contributing.replace('](RELEASING.md', f'](https://github.com/0xf3cd/bazi/blob/{sha}/RELEASING.md')
     (source / 'contributing.md').write_text(contributing, encoding='utf-8')
+    shutil.copyfile(ROOT / 'RELEASE_NOTES.md', source / 'release-notes.md')
     version_text = f'''# 文档版本
 
 当前页面：{'开发版' if version_label == 'dev' else version_label}。

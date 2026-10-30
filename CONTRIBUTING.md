@@ -78,6 +78,29 @@ python run_tests.py -a -v
 - 只改知识 JSON 或文档也要跑完整门禁。
 - 不要运行 `ruff format` 或其他自动格式化器，代码保留两空格缩进和纵向对齐。
 
+### 只构建并检查文档
+
+在上面的 Python 3.13+ 开发环境中运行：
+
+```sh
+python run_docs.py --output-dir output_data/docs-preview
+```
+
+输出目录须为空。命令严格构建 HTML、执行 README 与教程示例，再检查 API 地址、完整知识目录、
+内部链接及发布／迁移页面；成功后可用浏览器打开 `output_data/docs-preview/html/index.html`。
+已经生成的 HTML 阅读不需要 Python。此命令不部署站点、不启用 Pages，构建与归档政策见
+[文档归档说明](docs/versioning.md)。
+
+要保留已验证的安装工件，见[本地保留已验证工件](RELEASING.md#本地保留已验证工件)；
+不要把一次源码测试通过当作另一份 wheel 已被测试。
+
+### 历法数据维护
+
+离线重建工具为 [HKO 编码器](bazi/calendar/hko_data/encoder.py)和
+[天文表生成器](bazi/calendar/celestial_data/generator.py)，天文表的记录布局见
+[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。它们供维护数据来源使用，不是安装后的修补步骤；
+安装包缺表时应重装包，不运行生成器修补。
+
 ### 提交与 PR 正文
 
 - **提交须签名**，由维护者核验。提交信息不要带 `Co-Authored-By:`。

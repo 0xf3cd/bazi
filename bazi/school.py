@@ -154,7 +154,7 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
   # 红艳：DAY 依问真（https://book.taiyi.me/命/神煞大全，「以日干查四地支」）及高人，
   # 高人将红艳列于「日干查地支」节。《三命通会》四库本卷三〈總論諸神煞〉
   # “桃花紅艶煞”条只给干支表，未定锚柱；三格表值分歧见 ShenshaRules.HONGYAN。
-  # YEAR 自 #69 起支持，但出处仍缺；所查材料亦未见 YEAR_AND_DAY 读法。
+  # YEAR 已支持，但出处仍缺；所查材料亦未见 YEAR_AND_DAY 读法。
   'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
   # 天乙贵人：DAY 为子平法，袁树珊《命理探原》NLC 刊本印页六三（PDF94）
   # 「以日爲主。如甲日見丑見未」。YEAR 为以年柱取贵神的禄命法；

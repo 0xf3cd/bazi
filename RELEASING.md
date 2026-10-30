@@ -15,6 +15,22 @@ owner `0xf3cd`、repository `bazi`、workflow `release.yml`、environment `relea
 
 workflow 须先存在于默认分支，才能手动触发。
 
+## 本地保留已验证工件
+
+按[贡献指南](CONTRIBUTING.md#准备环境)准备独立开发环境，再从源码根目录运行：
+
+```sh
+python run_package_checks.py --output-dir ../bazi-tested
+python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
+```
+
+输出目录必须为空且在仓外。检查通过后，命令保留受测 sdist 及其重建 wheel；直接构建的 wheel 只作验证对照。
+安装示例使用保留的 wheel，不重新构建另一份安装包。检查可能联网取得构建与类型工具，
+真实安装命令的导出检查在仓外临时目录执行。
+
+本地通过不替代下面的 GitHub 真实演练，也不证明 PyPI／GitHub 配置或发布权限已就绪。
+正式发布仍使用同次发布运行产生并验证的工件，不接受任意本地路径作为发布输入。
+
 ## 演练
 
 1. 核对 pyproject.toml 静态版本与 RELEASE_NOTES.md；发布说明顶部一节须为 `## bazi <version>`，
