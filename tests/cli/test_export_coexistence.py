@@ -20,7 +20,7 @@ def test_chart_and_knowledge_share_export_dir(tmp_path: Path, reference: bool, s
   assert chart.stdout.startswith('random seed: 5\n') and chart.stdout.count('出生时间：') == 1
   saved = tmp_path / 'out/interpretation_examples/0.txt'
   before = saved.read_bytes()
-  assert before.decode('utf-8') == re.sub(
+  assert saved.read_text(encoding='utf-8') == re.sub(
     r'\x1b\[[0-9;]*m', '', chart.stdout.removeprefix('random seed: 5\n'),
   ).removesuffix('\n')
   assert ('仅供参考' in chart.stdout) is reference
