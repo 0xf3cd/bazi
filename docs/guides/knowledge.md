@@ -466,7 +466,7 @@ bazi knowledge \
 知识查询的完整选项见 `bazi knowledge --help`。判据目录用 `bazi match` 查看，
 只给判据 ID 会说明它需要哪些输入；判据任务的选项见 `bazi match --help`。
 `bazi knowledge --export-knowledge-base` 默认将 TXT 写入调用时当前目录的 `output_data/knowledge_base/`，
-也可用 `--output-dir` 指定目录。命盘展示与知识导出是独立命令，不做跨命令的冲突预检或整体回滚；
+改用 `--output-dir out` 则写到 `out/knowledge_base/`。命盘展示与知识导出是独立命令，不做跨命令的冲突预检或整体回滚；
 每条命令仍拒绝覆盖知识编辑源。旧脚本与参数的迁移见[脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移)。
 
 字段与方法的完整说明见 {py:class}`~bazi.knowledge.KnowledgeBase` 和 {doc}`../api/index`，本文只讲上手路径。

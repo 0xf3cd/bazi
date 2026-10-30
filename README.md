@@ -166,7 +166,7 @@ bazi knowledge --list-values topic
 bazi knowledge --export-knowledge-base
 ```
 
-此命令默认在**调用时当前目录**的 `output_data/knowledge_base/` 下保存知识 TXT，不向终端打印结果；也可用 `--output-dir` 指定目录。命盘只有显式给出 `--output-dir` 才写文件，不会默认导出。两个演示任务不写文件，也不把结果写入安装目录。
+`bazi knowledge --export-knowledge-base` 默认在**调用时当前目录**的 `output_data/knowledge_base/` 下保存知识 TXT；改用 `--output-dir out` 则写到 `out/knowledge_base/`。该命令不向终端打印结果。命盘只有显式给出 `--output-dir` 才写文件，不会默认导出。两个演示任务不写文件，也不把结果写入安装目录。
 
 检查前提：先看有哪些判据和各自需要什么，再对命盘求值：
 
@@ -184,7 +184,7 @@ bazi match editorial.guansha_coexistence.v1 \
 
 | 选项 | 适用任务 | 作用 |
 | --- | --- | --- |
-| `--include-reference-only` | `chart`、`knowledge`、`match` | 同时显示仅供参考的条目 |
+| `--include-reference-only` | `chart`、`knowledge`、`match` | 默认省略仅供参考的条目；加此选项一起显示 |
 | `--show-sources` | `chart` 展示；`knowledge` 文本导出 | 显示来源 |
 | `--output-dir` | `chart`；`knowledge` 文本导出 | 保存 TXT 的目录 |
 | `--knowledge-source` | `knowledge`；`match` | 读取自己的知识编辑源 |

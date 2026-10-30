@@ -528,7 +528,7 @@ def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--civil-timezone', type=_civil_timezone, help='出生地时区（IANA 名如 Pacific/Kiritimati，或固定偏移如 +14:00；负偏移写成 --civil-timezone=-05:00）；须给经度。')
   more.add_argument('--include-reference-only', action='store_true', help='同时显示仅供参考的知识条目。')
   more.add_argument('--show-sources', action='store_true', help='显示条目 ID、署名与来源见证。')
-  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为目录下 interpretation_examples/{序号}.txt。')
+  more.add_argument('--output-dir', type=Path, help='把展示的命盘另存为此目录下的 interpretation_examples/{序号}.txt。')
 
 
 def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
@@ -547,7 +547,7 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
   more.add_argument('--knowledge-source', type=Path, help='改用你自己的知识 JSON。')
   more.add_argument('--validate-knowledge', action='store_true', help='校验完整知识源。')
   more.add_argument('--export-knowledge-base', action='store_true', help='把全部天干与十神说明各存成一个文本文件。')
-  more.add_argument('--output-dir', type=Path, help='--export-knowledge-base 的目录，默认当前目录下的 output_data。')
+  more.add_argument('--output-dir', type=Path, help='导出基目录（其下为 knowledge_base/{tiangan,shishen}/），默认当前目录下的 output_data。')
   more.add_argument('--show-sources', action='store_true', help='--export-knowledge-base 的文本附带条目 ID、署名与来源见证。')
 
 

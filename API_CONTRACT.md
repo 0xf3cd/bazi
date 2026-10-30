@@ -294,6 +294,7 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 ## 源码脚本
 
 旧的三个源码入口已退役，当前使用下方的安装命令；旧版调用变化见[发布说明](RELEASE_NOTES.md)。
+v2.3.0 当时的平铺参数对照保存在[该版本的接口契约](https://github.com/0xf3cd/bazi/blob/v2.3.0/API_CONTRACT.md#源码脚本)。
 
 ## 命令行
 
@@ -320,7 +321,7 @@ CLI flags 保持，目录年月字段改为 ganzhi_year／ganzhi_month；缺项�
 
 `chart` 只有显式传 `--output-dir` 才写 `interpretation_examples/{序号}.txt`；
 `knowledge --export-knowledge-base` 默认写到调用时当前目录的 `output_data/knowledge_base/`，
-也可指定 `--output-dir`。导出 TXT 剥除终端颜色码，默认路径不取安装位置，拒绝覆盖包内或自定义知识编辑源，
+改用 `--output-dir out` 则写到 `out/knowledge_base/`。导出 TXT 剥除终端颜色码，默认路径不取安装位置，拒绝覆盖包内或自定义知识编辑源，
 包括指向该源的符号链接和硬链接。同名导出目标会覆盖，其他文件保留。
 两个导出任务是独立命令，分别检查各自目标，不提供跨命令冲突预检或整体回滚。
 
