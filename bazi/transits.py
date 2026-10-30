@@ -1,6 +1,6 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''流运数据类型及命盘小运、大运查询。'''
+'''流运种类与查询结果类型。'''
 
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
@@ -20,7 +20,7 @@ from .calendar.dates import GanzhiYearMonth
 _DayunKey = TypeVar('_DayunKey', GanzhiYearMonth, tuple[int, ...])
 
 
-class DayunDatabase:
+class _DayunDatabase:
   '''按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
   物理 `end_moment` 不一致。'''
   def __init__(self, chart: BaziChart) -> None:
@@ -112,7 +112,7 @@ class TransitSet:
     return TransitSet(**{kind.value: present[kind] for kind in kinds})
 
 
-class TransitDatabase:
+class _TransitDatabase:
   '''查询命盘小运、按年份标签解释的大运及按物理边界解释的大运。
 
   `_dayun_at_*` 是供 TransitChart 使用的包内物理边界入口；调用方先校验坐标、出生下界及
@@ -126,7 +126,7 @@ class TransitDatabase:
     self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
     self._birth_month_key: Final[GanzhiYearMonth] = bazi.ganzhi_year_month
     self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
-    self._dayun_db: Final[DayunDatabase] = DayunDatabase(chart)
+    self._dayun_db: Final[_DayunDatabase] = _DayunDatabase(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
     # 仅历法流运的路径不能读取 BaziChart.xiaoyun，该属性需要首步大运标签。

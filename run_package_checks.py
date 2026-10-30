@@ -387,13 +387,19 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo\n'
           'from bazi.calendar.celestial_data.loader import LunarYearInfo as CelestialInfo\n'
           'from bazi.defines import Zhu, TianganLayer, Dizhi, Jieqi, Tiangan, Ganzhi\n'
-          'from bazi.transits import TransitKind\n'
+          'from bazi.transits import TransitKind, TransitSet\n'
+          'from bazi.transit_chart import TransitChart\n'
           'from bazi.analyzer.relationship import KongwangHit, KongwangResult, StarAppearance\n'
           'from bazi.school import BaziConfig\n'
           'from bazi.common import frozendict\n'
           'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id\n'
           'from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
+          'transits = TransitChart(chart)\n'
+          'year_transits: TransitSet | None = transits.at_year(2024)\n'
+          'month_transits: TransitSet | None = transits.at_month(2024, Dizhi.辰)\n'
+          'date_transits: TransitSet | None = transits.at_date(datetime(2024, 4, 10).date())\n'
+          'moment_transits: TransitSet | None = transits.at_moment(datetime(2024, 4, 10, 12))\n'
           'knowledge = KnowledgeBase.load()\n'
           'entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")\n'
           'entry = entries[0]\ndisplay_flag: bool = entry.show_by_default\n'
@@ -469,7 +475,10 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'local.reference_datetime = datetime.now()\n'
                 'local.month_jies = ()\n'
                 'coordinate.month = 0\n'
-                'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n')
+                'def unsafe_time(value: Bazi) -> datetime:\n  return value.location_time.canonical_instant\n'
+                'from bazi.transits import DayunDatabase\n'
+                'from bazi.transits import TransitDatabase\n'
+                'from bazi.transit_chart import TransitDatabase\n')
   (foreign / 'bad.py').write_text(bad, encoding='utf-8')
   command = [str(python), '-I', '-X', 'utf8', '-m', 'mypy', '--strict', '--no-incremental', '--follow-imports=silent', '--show-traceback']
   run([*command, 'good.py'], foreign)
@@ -513,6 +522,15 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   for owner, removed_member in (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')):
     if f'"{owner}" has no attribute "{removed_member}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed removed {owner}.{removed_member}')
+  for module, name in (
+    ('bazi.transits', 'DayunDatabase'),
+    ('bazi.transits', 'TransitDatabase'),
+    ('bazi.transit_chart', 'TransitDatabase'),
+  ):
+    line_number = bad.splitlines().index(f'from {module} import {name}') + 1
+    prefix = f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"'
+    if not any(line.startswith(prefix) and line.endswith('  [attr-defined]') for line in result.stdout.splitlines()):
+      raise ValueError(f'Installed typing negative control missed removed {module}.{name}')
 
   if environments is not None and installers is not None:
     environments.append(collect_environment(str(python), 'consumer-typing', installers))

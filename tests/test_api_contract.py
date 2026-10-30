@@ -187,6 +187,21 @@ def test_removed_persistence_is_absent() -> None:
   assert KnowledgeBase.load().entries
 
 
+@pytest.mark.parametrize('module,name', [
+  ('bazi.transits', 'DayunDatabase'),
+  ('bazi.transits', 'TransitDatabase'),
+  ('bazi.transit_chart', 'TransitDatabase'),
+])
+def test_database_imports_are_private(module: str, name: str) -> None:
+  import importlib
+  assert not hasattr(importlib.import_module(module), name)
+  with pytest.raises(ImportError, match=name):
+    exec(f'from {module} import {name}', {}) # noqa: S102 # Import paths are fixed test cases above.
+  namespace: dict[str, object] = {}
+  exec(f'from {module} import *', namespace) # noqa: S102 # Exercise star imports from the same fixed modules.
+  assert name not in namespace
+
+
 def test_removed_structure_fields_are_absent() -> None:
   import bazi.context_matching as matching
   from bazi.analyzer.relationship import KongwangHit, StarAppearance

@@ -27,6 +27,7 @@ assert chart.bazi.day_master in Tiangan
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
   由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
+- 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
 - 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。v2.4.0 结构调整新增的导出见下文。
@@ -102,10 +103,8 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
   是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
   摘要大小与命盘数据无关，不计算流运或其他派生值。**它只服务交互探索与调试，格式不属于兼容承诺，
   不是记录格式，也不应被程序解析**。
-- 接收命盘的入口（`TransitChart`、`DayunDatabase`、`TransitDatabase`、三个分析类、`spouse_evidence`、
-  `evaluate_context`、`bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`。三个分析类原先不检查类型，
-  传入 `Bazi` 等对象会推迟到首次访问才抛 `AttributeError`；`DayunDatabase`、`TransitDatabase` 原先在构造时就抛
-  `AttributeError`。现在统一为构造时的 `TypeError`，只依赖鸭子类型的调用方须传真正的 `BaziChart`。
+- 接收命盘的公开入口（`TransitChart`、三个分析类、`spouse_evidence`、`evaluate_context`、
+  `bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`；调用方须传真正的 `BaziChart`，不接受只具有同名属性的对象。
 - 类型错误消息保持 `Expected X, got <type>` 开头，对常见误用在其后以分号追加指路，如
   `Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)`。
   异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。

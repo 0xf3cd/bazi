@@ -53,7 +53,7 @@ def main() -> int:
   from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
-  from bazi.transits import TransitDatabase, TransitKind, TransitSet
+  from bazi.transits import _TransitDatabase, TransitKind, TransitSet
   from bazi.analyzer.relationship import (
     RelationshipAnalyzer, KongwangHit, KongwangResult, _REGISTRY, _AnchorKind, spouse_evidence,
   )
@@ -66,7 +66,7 @@ def main() -> int:
 
   chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   transit_chart = TransitChart(chart)
-  transit_db = TransitDatabase(chart)
+  transit_db = _TransitDatabase(chart)
   year_transits = transit_chart.at_year(2024)
   if year_transits is None:
     raise RuntimeError('Expected year 2024 to be supported')
@@ -426,9 +426,9 @@ def main() -> int:
      lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.LIUNIAN)),
     ('TransitSet.select absent kind', ValueError,
      lambda: liunian.select(TransitKind.LIUNIAN, TransitKind.DAYUN)),
-    ('TransitDatabase.xiaoyun wrong year type', TypeError,
+    ('_TransitDatabase.xiaoyun wrong year type', TypeError,
      lambda: transit_db.xiaoyun('2024')), # type: ignore
-    ('TransitDatabase.dayun wrong year type', TypeError,
+    ('_TransitDatabase.dayun wrong year type', TypeError,
      lambda: transit_db.dayun('2024')), # type: ignore
     ('TransitAnalysis.shensha wrong transits type', TypeError,
      lambda: transit_analysis.shensha(object())), # type: ignore

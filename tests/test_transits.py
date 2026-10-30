@@ -16,8 +16,8 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.school import BaziConfig
 from bazi.transits import (
-  DayunDatabase,
-  TransitDatabase,
+  _DayunDatabase,
+  _TransitDatabase,
   TransitKind,
   TransitSet,
 )
@@ -25,7 +25,7 @@ from bazi.transits import (
 
 def test_simple() -> None:
   chart = BaziChart(Bazi.create('2000-02-04 22:01', 'male'))
-  db = DayunDatabase(chart)
+  db = _DayunDatabase(chart)
 
   dayuns = list(itertools.islice(chart.dayun, 3))
   assert [str(dayun.ganzhi) for dayun in dayuns] == ['己卯', '庚辰', '辛巳']
@@ -45,7 +45,7 @@ def test_dayun_database(rng: random.Random) -> None:
   for year in range(dayuns[-1].ganzhi_year, dayuns[-1].ganzhi_year + 10):
     expected[year] = dayuns[-1]
 
-  db = DayunDatabase(chart)
+  db = _DayunDatabase(chart)
   with pytest.raises(TypeError):
     db['2000'] # type: ignore
   with pytest.raises(ValueError):
@@ -109,7 +109,7 @@ def test_transit_database(rng: random.Random) -> None:
   for _ in range(4):
     chart = BaziChart.random(rng=rng)
     print(f'birth={chart.bazi.solar_datetime.isoformat()} gender={chart.bazi.gender}')
-    db = TransitDatabase(chart)
+    db = _TransitDatabase(chart)
 
     with pytest.raises(TypeError):
       db.xiaoyun('2000') # type: ignore
@@ -138,7 +138,7 @@ def test_transit_database(rng: random.Random) -> None:
 def test_birth_year_is_precision_attributed() -> None:
   chart = BaziChart(Bazi.create('2009-02-03 23:30', 'female', BaziConfig.from_values(precision='hour')))
   assert chart.bazi.ganzhi_year == 2009
-  db = TransitDatabase(chart)
+  db = _TransitDatabase(chart)
 
   assert db.xiaoyun(2008) is None
   assert db.xiaoyun(2009) == chart.xiaoyun[0].ganzhi
@@ -149,7 +149,7 @@ def test_birth_year_is_precision_attributed() -> None:
 def test_day_precision_unchanged() -> None:
   chart = BaziChart(Bazi.create('2009-02-03 23:30', 'female'))
   assert chart.bazi.ganzhi_year == chart.bazi.ganzhi_date.year
-  db = TransitDatabase(chart)
+  db = _TransitDatabase(chart)
   assert db.xiaoyun(2008) == chart.xiaoyun[0].ganzhi
   assert db.xiaoyun(2007) is None
 
@@ -174,7 +174,7 @@ def test_dayun_year_floored_at_ganzhi_year() -> None:
     datetime(2029, 2, 3, 23, 30),
   )
 
-  db = TransitDatabase(chart)
+  db = _TransitDatabase(chart)
   assert db.dayun(2008) is None
   assert db.dayun(2009) == Ganzhi.from_str('乙丑')
   assert db._dayun_at_month(GanzhiYearMonth.from_dizhi(2008, Dizhi.丑)) is None
@@ -192,14 +192,14 @@ def test_fixed_dayun_years_continue_labels() -> None:
     BaziConfig.from_values(precision='hour', dayun_year_rule='fixed_decade'),
   ))
   assert [dayun.ganzhi_year for dayun in itertools.islice(fixed_chart.dayun, 3)] == [2009, 2019, 2029]
-  fixed_db = TransitDatabase(fixed_chart)
+  fixed_db = _TransitDatabase(fixed_chart)
   assert fixed_db.dayun(2018) == Ganzhi.from_str('乙丑')
   assert fixed_db.dayun(2019) == Ganzhi.from_str('甲子')
 
 
 def test_dayun_database_uses_projected_years() -> None:
   chart = BaziChart(Bazi.create('1910-04-07 06:01', 'male'))
-  db = DayunDatabase(chart)
+  db = _DayunDatabase(chart)
   first, second, third = itertools.islice(chart.dayun, 3)
 
   assert (first.ganzhi_year, second.ganzhi_year, third.ganzhi_year) == (1919, 1930, 1939)
@@ -210,7 +210,7 @@ def test_dayun_database_uses_projected_years() -> None:
 
 def test_dayun_database_tail_uses_label_years() -> None:
   chart = BaziChart(Bazi.create('2045-10-07 05:29', 'female'))
-  db = DayunDatabase(chart)
+  db = _DayunDatabase(chart)
   last = tuple(chart.dayun)[-1]
 
   assert last.ganzhi_year == 2195
@@ -220,7 +220,7 @@ def test_dayun_database_tail_uses_label_years() -> None:
   with pytest.raises(ValueError):
     db[2205]
 
-  transit_db = TransitDatabase(chart)
+  transit_db = _TransitDatabase(chart)
   assert transit_db.dayun(2204) == last.ganzhi
   assert transit_db.dayun(2205) is None
   assert datetime(2205, 8, 1) < last.end_moment
@@ -232,7 +232,7 @@ def test_empty_dayun_database() -> None:
     'male',
     BaziConfig.from_values(backend='hko'),
   ))
-  db = DayunDatabase(chart)
+  db = _DayunDatabase(chart)
 
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
     db[2100]
@@ -244,13 +244,13 @@ def test_empty_transit_database() -> None:
     'male',
     BaziConfig.from_values(backend='hko'),
   ))
-  db = TransitDatabase(chart)
+  db = _TransitDatabase(chart)
 
   assert db.xiaoyun(2099) is None
   assert db.dayun(2099) is None
 
 
-@pytest.mark.parametrize('database', [DayunDatabase, TransitDatabase])
+@pytest.mark.parametrize('database', [_DayunDatabase, _TransitDatabase])
 @pytest.mark.parametrize('bad, hint', [
   (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
   (None, r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),
