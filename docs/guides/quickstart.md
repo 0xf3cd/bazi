@@ -182,11 +182,13 @@ module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
 ### 查某一年的流年
 
 ```{testcode} quickstart-transits
+from datetime import datetime
+
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.transit_chart import TransitChart
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
 year = TransitChart(chart).at_year(2024)
 if year is not None:
   print(year.liunian)
@@ -202,12 +204,13 @@ if year is not None:
 ### 只取需要的几个流年
 
 ```{testcode} quickstart-liunian
+from datetime import datetime
 from itertools import islice
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
 for year in islice(chart.liunian, 3):
   print(year.ganzhi_year, year.ganzhi)
 ```
@@ -225,11 +228,13 @@ for year in islice(chart.liunian, 3):
 ### 检查一项结构前提
 
 ```{testcode} quickstart-context
+from datetime import datetime
+
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import NatalObservation, evaluate_context
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
 result = evaluate_context(
   chart,
   criterion_id='editorial.guansha_coexistence.v1',

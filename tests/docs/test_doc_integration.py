@@ -70,6 +70,22 @@ def test_quickstart_keeps_three_task_examples():
   assert expected <= EXAMPLE_GROUPS['guides/quickstart']
 
 
+@pytest.mark.parametrize('name', ['quickstart', 'configuration', 'integration', 'knowledge'])
+def test_guides_link_to_release_notes(name: str) -> None:
+  source = (ROOT / 'docs/guides' / (name + '.md')).read_text(encoding='utf-8')
+  assert re.search(r'\{doc\}`(?:[^`<>]+<)?\.\./release-notes>?`', source)
+
+
+@pytest.mark.parametrize('name, moved', [
+  ('README.md', {'从 v2.2.0 迁移到 v2.3.0', '从 v2.3.0 升级到 v2.4.0'}),
+  ('API_CONTRACT.md', {'结构接口迁移', '知识结构：开发版迁移', '源码脚本', '已删除的存取接口'}),
+])
+def test_current_docs_omit_migration_history(name: str, moved: set[str]) -> None:
+  tokens = MarkdownIt('commonmark').parse((ROOT / name).read_text(encoding='utf-8'))
+  headings = {tokens[index + 1].content for index, token in enumerate(tokens) if token.type == 'heading_open'}
+  assert not headings & moved
+
+
 @pytest.mark.parametrize('heading, valid', [('从 v2.2.0 迁移到 v2.3.0', True), ('迁移指南', False)])
 @pytest.mark.parametrize('prefix', ['https://github.com/0xf3cd/bazi/blob/main/', '../'])
 def test_navigation_detects_heading_rename(tmp_path, heading, valid, prefix):
