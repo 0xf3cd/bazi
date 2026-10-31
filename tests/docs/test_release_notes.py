@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip('sphinx', reason='Documentation dependencies are checked by the separate docs task.')
+
 from run_doc_checks import Page, check_release_notes
 
 
