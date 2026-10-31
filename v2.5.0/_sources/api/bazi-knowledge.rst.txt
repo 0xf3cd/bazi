@@ -1,0 +1,47 @@
+bazi.knowledge
+==============
+
+.. automodule:: bazi.knowledge
+
+.. autodata:: bazi.knowledge.Applicability
+   :no-value:
+
+.. autodata:: bazi.knowledge.SourceState
+   :no-value:
+
+.. autodata:: bazi.knowledge.DEFAULT_SOURCE_PATH
+   :no-value:
+
+.. autofunction:: bazi.knowledge.object_id
+
+.. autoclass:: bazi.knowledge.KnowledgeObject
+   :members: kind, name, object_id
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeRole
+   :members: name, object_id
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeRelation
+   :members: from_role, text, to_role
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeContext
+   :members: context_id, label, limits, time_scope
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeSource
+   :members: attribution, edition, excerpt, limitations, lineage, locator, source_id, state, supports, text_layer, url, work
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.LegacyDescription
+   :members: conditions, field, field_premise, object_id, ordinal
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeEntry
+   :members: applicability, attribution, claim_id, contexts, exceptions, legacy, limits, premise, relations, roles, show_by_default, source_state, sources, text, topics, viewpoint
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeBase
+   :members: contexts, entries, entry, filter_values, find_objects, load, objects, query, render, render_subject, search, sources
+   :undoc-members:

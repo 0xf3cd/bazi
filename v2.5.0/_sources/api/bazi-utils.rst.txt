@@ -1,0 +1,12 @@
+bazi.utils
+==========
+
+.. automodule:: bazi.utils
+
+:py:mod:`bazi.utils.bazi_utils`
+
+:py:mod:`bazi.utils.tiangan_utils`
+
+:py:mod:`bazi.utils.dizhi_utils`
+
+:py:mod:`bazi.utils.shensha_utils`

@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.utils.dizhi_utils &#8212; bazi · v2.5.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.utils.relation_discovery" href="bazi-utils-relation_discovery.html" />
+    <link rel="prev" title="bazi.utils.bazi_utils" href="bazi-utils-bazi_utils.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.utils.dizhi_utils">
+<span id="bazi-utils-dizhi-utils"></span><h1>bazi.utils.dizhi_utils<a class="headerlink" href="#module-bazi.utils.dizhi_utils" title="链接到此标题。">¶</a></h1>
+<p>地支关系判断、搜索与组合发现。</p>
+<p>discover 处理地支，discover_ganzhis 保留干支与柱位；definitions 参数选择关系读法。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiCombo">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">DizhiCombo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiCombo" title="链接到此定义。">¶</a></dt>
+<dd><p>满足某地支关系的一个组合。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dizhi</span></code></a>] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiRelationCombos">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">DizhiRelationCombos</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiRelationCombos" title="链接到此定义。">¶</a></dt>
+<dd><p>满足某地支关系的全部组合元组。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dizhi</span></code></a>], ...] 的别名</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiRelationDiscovery">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">DizhiRelationDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L31-L34"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery" title="链接到此定义。">¶</a></dt>
+<dd><p>地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
+<code class="docutils literal notranslate"><span class="pre">gonghe</span></code> / <code class="docutils literal notranslate"><span class="pre">gonghui</span></code> 恢复虚支。若生成该结果的干支查法使用了
+<code class="docutils literal notranslate"><span class="pre">gong_def</span></code>，调用 <code class="docutils literal notranslate"><span class="pre">gonghe</span></code> 时传 <code class="docutils literal notranslate"><span class="pre">DizhiRules.GONG_GONGHE_SCOPE[gong_def]</span></code>。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Mapping"><em>Mapping</em></a><em>[</em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictKeyType" title="bazi.common.FrozenDictKeyType"><em>FrozenDictKeyType</em></a><em>, </em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictValueType" title="bazi.common.FrozenDictValueType"><em>FrozenDictValueType</em></a><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiRelationDiscovery.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L44-L52"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery.filter" title="链接到此定义。">¶</a></dt>
+<dd><p>只保留 <code class="docutils literal notranslate"><span class="pre">f</span></code> 接受的组合；不再有组合的关系整键丢弃。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Callable"><em>Callable</em></a><em>[</em><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationType" title="bazi.utils.relation_discovery.RelationType"><em>RelationType</em></a><em>, </em><em>frozenset</em><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em><em>]</em><em>, </em><em>bool</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiRelationDiscovery.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L54-L63"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery.merge" title="链接到此定义。">¶</a></dt>
+<dd><p>合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<em>Self</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.DizhiRelationDiscovery.mutual_only">
+<span class="sig-name descname"><span class="pre">mutual_only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L65-L74"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery.mutual_only" title="链接到此定义。">¶</a></dt>
+<dd><p>只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。</p>
+<p>Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。
+<code class="docutils literal notranslate"><span class="pre">discover_mutual([子,</span> <span class="pre">丑],</span> <span class="pre">[子])</span></code> 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>items1</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Set"><em>Set</em></a><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em>)</p></li>
+<li><p><strong>items2</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Set"><em>Set</em></a><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiOccurrence">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">GanzhiOccurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganzhi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L37-L52"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiOccurrence" title="链接到此定义。">¶</a></dt>
+<dd><p>一次关系查询中位于某个零基序号的具体干支值。相等与哈希使用两个字段；序号只属于
+该次查询的输入序列。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>index: (int) 该次查询输入序列中的零基序号。</p></li>
+<li><p>ganzhi: (Ganzhi) 此位置的完整干支。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>)</p></li>
+<li><p><strong>ganzhi</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiOccurrence.ganzhi">
+<span class="sig-name descname"><span class="pre">ganzhi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiOccurrence.ganzhi" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiOccurrence.index">
+<span class="sig-name descname"><span class="pre">index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiOccurrence.index" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiRelationCombo">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">GanzhiRelationCombo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiRelationCombo" title="链接到此定义。">¶</a></dt>
+<dd><p>地支满足某关系的具体干支位置组合。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="#bazi.utils.dizhi_utils.GanzhiOccurrence" title="bazi.utils.dizhi_utils.GanzhiOccurrence"><code class="xref py py-class docutils literal notranslate"><span class="pre">GanzhiOccurrence</span></code></a>] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiRelationCombos">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">GanzhiRelationCombos</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiRelationCombos" title="链接到此定义。">¶</a></dt>
+<dd><p>地支满足某关系的全部具体干支位置组合。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="#bazi.utils.dizhi_utils.GanzhiOccurrence" title="bazi.utils.dizhi_utils.GanzhiOccurrence"><code class="xref py py-class docutils literal notranslate"><span class="pre">GanzhiOccurrence</span></code></a>], ...] 的别名</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiRelationDiscovery">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">GanzhiRelationDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L61-L75"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiRelationDiscovery" title="链接到此定义。">¶</a></dt>
+<dd><p>地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
+生成该结果的入口所定义的查询序列解释，详见各入口说明。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Mapping"><em>Mapping</em></a><em>[</em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictKeyType" title="bazi.common.FrozenDictKeyType"><em>FrozenDictKeyType</em></a><em>, </em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictValueType" title="bazi.common.FrozenDictValueType"><em>FrozenDictValueType</em></a><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.GanzhiRelationDiscovery.to_dizhi_discovery">
+<span class="sig-name descname"><span class="pre">to_dizhi_discovery</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L65-L75"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.GanzhiRelationDiscovery.to_dizhi_discovery" title="链接到此定义。">¶</a></dt>
+<dd><p>把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留
+两个实支；拱局键的结果形状与虚支恢复契约见 <code class="docutils literal notranslate"><span class="pre">DizhiRelationDiscovery</span></code>。</p>
+<dl class="field-list simple">
+<dt class="field-odd">返回类型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery" title="bazi.utils.dizhi_utils.DizhiRelationDiscovery"><em>DizhiRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.sanhui">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">sanhui</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz3</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L84-L105"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.sanhui" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成三会关系。
+返回结果与输入的地支顺序无关，因为三会关系是无方向的。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+<li><p>dz3: (Dizhi) 第三地支。</p></li>
+</ul>
+<p>Return: (Wuxing | None) 三会对应五行；不构成三会时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰)</p>
+<ul>
+<li><p>return: Wuxing.木</p></li>
+</ul>
+</li>
+<li><p>sanhui(Dizhi.寅, Dizhi.卯, Dizhi.丑)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz3</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><em>Wuxing</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.liuhe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">liuhe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L108-L128"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.liuhe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成六合关系。
+返回结果与输入的地支顺序无关，因为六合关系是无方向的。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (Wuxing | None) 六合对应五行；不构成六合时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>liuhe(Dizhi.寅, Dizhi.亥)</p>
+<ul>
+<li><p>return: Wuxing.木</p></li>
+</ul>
+</li>
+<li><p>liuhe(Dizhi.寅, Dizhi.辰)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><em>Wuxing</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.anhe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">anhe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DizhiRules.AnheDef.NORMAL_EXTENDED</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L131-L158"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.anhe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成暗合关系。
+暗合关系的看法有多种，默认使用 <code class="docutils literal notranslate"><span class="pre">DizhiRules.AnheDef.NORMAL_EXTENDED</span></code>。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+<li><p>definition: (DizhiRules.AnheDef) 暗合定义，默认 NORMAL_EXTENDED。</p></li>
+</ul>
+<p>Return: (bool) 是否构成暗合。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>anhe(Dizhi.寅, Dizhi.午)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>anhe(Dizhi.寅, Dizhi.丑)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>anhe(Dizhi.寅, Dizhi.丑, definition=DizhiRules.AnheDef.NORMAL)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>anhe(Dizhi.寅, Dizhi.午, definition=DizhiRules.AnheDef.MANGPAI)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>definition</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><em>AnheDef</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.tonghe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">tonghe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L161-L181"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.tonghe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成通合关系。
+通合指的是两个地支的所有藏干都两两相合。通合常用于盲派。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (bool) 是否构成通合。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>tonghe(Dizhi.寅, Dizhi.午)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>tonghe(Dizhi.寅, Dizhi.丑)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.tongluhe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">tongluhe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L184-L204"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.tongluhe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成通禄合关系。
+通禄合指的是五合的天干在地支对应的禄身之间的相合。通禄合常用于盲派。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (bool) 是否构成通禄合。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>tongluhe(Dizhi.寅, Dizhi.午)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>tongluhe(Dizhi.寅, Dizhi.丑)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.sanhe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">sanhe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz3</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L207-L227"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.sanhe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成三合关系。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+<li><p>dz3: (Dizhi) 第三地支。</p></li>
+</ul>
+<p>Return: (Wuxing | None) 三合对应五行；不构成三合时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未)</p>
+<ul>
+<li><p>return: Wuxing.木</p></li>
+</ul>
+</li>
+<li><p>sanhe(Dizhi.亥, Dizhi.卯, Dizhi.丑)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz3</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><em>Wuxing</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.banhe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">banhe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L230-L251"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.banhe" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成半合关系。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (Wuxing | None) 半合对应五行；不构成半合时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>banhe(Dizhi.亥, Dizhi.卯)</p>
+<ul>
+<li><p>return: Wuxing.木</p></li>
+</ul>
+</li>
+<li><p>banhe(Dizhi.卯, Dizhi.未)</p>
+<ul>
+<li><p>return: Wuxing.木</p></li>
+</ul>
+</li>
+<li><p>banhe(Dizhi.亥, Dizhi.丑)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><em>Wuxing</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.gonghe">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">gonghe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DizhiRules.GongheDef.NARROW</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L254-L281"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.gonghe" title="链接到此定义。">¶</a></dt>
+<dd><p>返回两支按所选拱合定义拱出的第三支；结构不成立时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<p>本直接查询只回答地支结构，不判断柱位相邻、流派天干条件或所拱之支是否已经填实；
+查单一序列的完整成立条件时使用 <code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code> / <code class="docutils literal notranslate"><span class="pre">discover_ganzhis</span></code>，查两组输入时使用
+<code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code>。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一参与支。</p></li>
+<li><p>dz2: (Dizhi) 第二参与支。</p></li>
+<li><p>definition: (DizhiRules.GongheDef) 狭义缺中神，广义收三合任意两支。</p></li>
+</ul>
+<p>Return: (Dizhi | None) 所拱之支；不符合所选定义时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>gonghe(Dizhi.申, Dizhi.辰)</p>
+<ul>
+<li><p>return: Dizhi.子</p></li>
+</ul>
+</li>
+<li><p>gonghe(Dizhi.申, Dizhi.子)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+<li><p>gonghe(Dizhi.申, Dizhi.子, definition=DizhiRules.GongheDef.WIDE)</p>
+<ul>
+<li><p>return: Dizhi.辰</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>definition</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.GongheDef" title="bazi.rules.DizhiRules.GongheDef"><em>GongheDef</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.gonghui">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">gonghui</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L284-L304"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.gonghui" title="链接到此定义。">¶</a></dt>
+<dd><p>返回两支三会端点拱出的中神；结构不成立时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<p>本直接查询只查地支结构；单一序列的柱位、天干与填实条件由
+<code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code> / <code class="docutils literal notranslate"><span class="pre">discover_ganzhis</span></code> 判断，两组输入由 <code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code> 判断。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一参与支。</p></li>
+<li><p>dz2: (Dizhi) 第二参与支。</p></li>
+</ul>
+<p>Return: (Dizhi | None) 所拱中神；结构不成立时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>gonghui(Dizhi.寅, Dizhi.辰)</p>
+<ul>
+<li><p>return: Dizhi.卯</p></li>
+</ul>
+</li>
+<li><p>gonghui(Dizhi.寅, Dizhi.卯)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.xing">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">xing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dizhis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">definition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DizhiRules.XingDef.LOOSE</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L307-L349"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.xing" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否刚好构成相刑关系。
+相刑关系的看法有多种，默认使用 <code class="docutils literal notranslate"><span class="pre">DizhiRules.XingDef.LOOSE</span></code>。
+如果使用 <code class="docutils literal notranslate"><span class="pre">DizhiRules.XingDef.LOOSE</span></code>，则 <code class="docutils literal notranslate"><span class="pre">dizhis</span></code> 的顺序会影响结果。
+如果使用 <code class="docutils literal notranslate"><span class="pre">DizhiRules.XingDef.STRICT</span></code>，则 <code class="docutils literal notranslate"><span class="pre">dizhis</span></code> 的顺序不会影响结果。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dizhis</span></code> 的最大长度为 3，超过时抛出 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>*dizhis: (Dizhi) 待查地支。</p></li>
+<li><p>definition: (DizhiRules.XingDef) 相刑的定义。</p></li>
+</ul>
+<p>Return: (DizhiRules.XingSubType | None) 相刑类型；不构成相刑时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申])</p>
+<ul>
+<li><p>return: XingSubType.SANXING</p></li>
+</ul>
+</li>
+<li><p>xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.STRICT)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+<li><p>xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.LOOSE)</p>
+<ul>
+<li><p>return: XingSubType.SANXING</p></li>
+</ul>
+</li>
+<li><p>xing(Dizhi.午)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+<li><p>xing(Dizhi.午, Dizhi.午)</p>
+<ul>
+<li><p>return: XingSubType.ZIXING</p></li>
+</ul>
+</li>
+<li><p>xing(Dizhi.午, definition=DizhiRules.XingDef.LOOSE)</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+<li><p>xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午])</p>
+<ul>
+<li><p>raise: ValueError</p></li>
+</ul>
+</li>
+<li><p>xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午])</p>
+<ul>
+<li><p>raise: ValueError</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dizhis</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>definition</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><em>XingDef</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRules.XingSubType" title="bazi.rules.DizhiRules.XingSubType"><em>XingSubType</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.chong">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">chong</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L352-L372"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.chong" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成冲关系。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (bool) 是否相冲。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>chong(Dizhi.子, Dizhi.午)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>chong(Dizhi.午, Dizhi.子)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>chong(Dizhi.子, Dizhi.丑)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.po">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">po</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L375-L397"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.po" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成破关系。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (bool) 是否相破。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>po(Dizhi.卯, Dizhi.午)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>po(Dizhi.午, Dizhi.卯)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>po(Dizhi.丑, Dizhi.子)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>po(Dizhi.丑, Dizhi.辰)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.hai">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">hai</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L400-L422"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.hai" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成相害关系。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 第一地支。</p></li>
+<li><p>dz2: (Dizhi) 第二地支。</p></li>
+</ul>
+<p>Return: (bool) 是否相害。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>hai(Dizhi.卯, Dizhi.辰)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>hai(Dizhi.辰, Dizhi.卯)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>hai(Dizhi.丑, Dizhi.子)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>hai(Dizhi.丑, Dizhi.午)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.sheng">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">sheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L425-L450"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.sheng" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成生关系。
+相生关系只关注五行，不区分阴阳。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 生的一方。</p></li>
+<li><p>dz2: (Dizhi) 被生的一方。</p></li>
+</ul>
+<p>Return: (bool) 是否 dz1 生 dz2。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>sheng(Dizhi.卯, Dizhi.亥)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>sheng(Dizhi.亥, Dizhi.卯)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>sheng(Dizhi.丑, Dizhi.子)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>sheng(Dizhi.丑, Dizhi.午)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>sheng(Dizhi.午, Dizhi.丑)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.ke">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">ke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L453-L478"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.ke" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的地支是否构成相克关系。
+相克关系只关注五行，不区分阴阳。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dz1: (Dizhi) 克的一方。</p></li>
+<li><p>dz2: (Dizhi) 被克的一方。</p></li>
+</ul>
+<p>Return: (bool) 是否 dz1 克 dz2。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>ke(Dizhi.子, Dizhi.巳)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>ke(Dizhi.巳, Dizhi.子)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>ke(Dizhi.丑, Dizhi.子)</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>ke(Dizhi.丑, Dizhi.午)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>ke(Dizhi.午, Dizhi.丑)</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dz1</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+<li><p><strong>dz2</strong> (<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.search">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dizhis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L500-L570"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.search" title="链接到此定义。">¶</a></dt>
+<dd><p>返回 <code class="docutils literal notranslate"><span class="pre">dizhis</span></code> 中所有满足该关系的组合。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>只接受 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，非序列在遍历前抛出 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；空序列合法，重复地支保留自刑重数。</p></li>
+<li><p>组合不含作用方向，合、会本身无向；生、克的方向用 sheng / ke 单独判断。
+例如组合 {午, 寅} 本身不表示寅生午或午生寅。</p></li>
+<li><p>对于刑关系，更复杂一些：</p>
+<ul>
+<li><p>对于辰午酉亥自刑，只需要同时出现两次就满足相刑关系。</p></li>
+<li><p>对于子卯相刑，只需要子、卯都出现就满足相刑关系。</p></li>
+<li><p>对于丑未戌、寅巳申三刑，有的看法认为需要三个地支同时出现才算刑，有的看法认为只需要出现两个也算相刑。</p></li>
+<li><p>用哪个定义由 <code class="docutils literal notranslate"><span class="pre">definitions.xing_def</span></code> 决定；默认 <code class="docutils literal notranslate"><span class="pre">XingDef.LOOSE</span></code> 下，丑未戌、寅巳申三取二即算。</p></li>
+<li><p>需要具体刑类型及方向时用 xing。</p></li>
+</ul>
+</li>
+<li><p>拱合、拱会依赖柱位与天干；本纯地支入口对两者抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，请用 <code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code>。</p></li>
+<li><p>暗合查询的表由 <code class="docutils literal notranslate"><span class="pre">definitions.anhe_def</span></code> 选择，默认 <code class="docutils literal notranslate"><span class="pre">DizhiRules.AnheDef.NORMAL_EXTENDED</span></code>（最宽定义）。</p></li>
+<li><p>结果顺序：三会、六合、三合、半合按定义序，暗合等集合型关系按组合成员枚举序；
+刑按规则表首次组合出现序，生克先按施方、受方枚举序排列，再折为保序去重的无向组合。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dizhis: (Sequence[Dizhi]) 待查地支；重数参与自刑判断。</p></li>
+<li><p>relation: (DizhiRelation) 待查关系。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 已校验的关系定义；本入口只读取暗合与刑定义。</p></li>
+</ul>
+<p>Return: (DizhiRelationCombos) 所有匹配组合，不包含作用方向。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)</p>
+<ul>
+<li><p>return: ({Dizhi.寅, Dizhi.卯, Dizhi.辰})</p></li>
+</ul>
+</li>
+<li><p>search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)</p>
+<ul>
+<li><p>return: ({ Dizhi.丑, Dizhi.寅}, { Dizhi.寅, Dizhi.午}, { Dizhi.卯, Dizhi.申})</p></li>
+</ul>
+</li>
+<li><p>search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)</p>
+<ul>
+<li><p>return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })</p></li>
+<li><p>输入只有一个辰，不构成自刑。</p></li>
+</ul>
+</li>
+<li><p>search([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)</p>
+<ul>
+<li><p>return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })</p></li>
+<li><p>输入两个辰构成自刑；返回组合的集合中只保留一个辰。</p></li>
+</ul>
+</li>
+<li><p>search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)</p>
+<ul>
+<li><p>return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳 })</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dizhis</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em>]</em>)</p></li>
+<li><p><strong>relation</strong> (<a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><em>DizhiRelation</em></a>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[frozenset[<a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a>], ...]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.discover">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dizhis</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L573-L602"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.discover" title="链接到此定义。">¶</a></dt>
+<dd><p>返回给定地支中所有可能的地支关系组合（三会、六合、刑等）。
+各关系由 <code class="docutils literal notranslate"><span class="pre">search</span></code> 求值。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>返回的字典的键中可能不包含所有的 <code class="docutils literal notranslate"><span class="pre">DizhiRelation</span></code>。</p></li>
+<li><p>只接受 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，非序列在遍历前抛出 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；空序列合法，重复地支保留自刑重数。</p></li>
+<li><p>本纯地支发现不含拱合、拱会；需要柱位与天干条件时使用 <code class="docutils literal notranslate"><span class="pre">discover_ganzhis</span></code>。</p></li>
+<li><p>默认定义、选表及组合不保留作用方向的语义见 <code class="docutils literal notranslate"><span class="pre">search</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dizhis: (Sequence[Dizhi]) 待查地支。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 关系定义，原样传给 <code class="docutils literal notranslate"><span class="pre">search</span></code>。</p></li>
+</ul>
+<p>Return: (DizhiRelationDiscovery) 所有匹配组合的冻结映射，不包含作用方向。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dizhis</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em>]</em>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery" title="bazi.utils.dizhi_utils.DizhiRelationDiscovery"><em>DizhiRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.search_ganzhis">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">search_ganzhis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L661-L710"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.search_ganzhis" title="链接到此定义。">¶</a></dt>
+<dd><p>找出地支满足 <code class="docutils literal notranslate"><span class="pre">relation</span></code> 的具体干支位置组合。</p>
+<p>输入序列中的零基序号就是具体出现的身份，因此不同位置的相同干支或地支不会混同。
+对现有不依赖位置的关系，逐项投影到地支并去重后与 <code class="docutils literal notranslate"><span class="pre">search</span></code> 完全等价。</p>
+<p>拱合、拱会在本入口应用来源档案，只查相邻具体出现；所拱之支已在输入中出现时不再论暗拱。
+返回组合只含两个实支；虚支恢复契约见 <code class="docutils literal notranslate"><span class="pre">DizhiRelationDiscovery</span></code>。</p>
+<p>非拱组合先沿 <code class="docutils literal notranslate"><span class="pre">search</span></code> 的地支组合序，再按输入序号展开同值的多处出现；
+拱局按相邻柱位对的顺序返回。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>ganzhis: (Sequence[Ganzhi]) 有序干支序列；地支重数参与自刑判断。</p></li>
+<li><p>relation: (DizhiRelation) 待查关系。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 关系定义；拱局读取 <code class="docutils literal notranslate"><span class="pre">gong_def</span></code>，只查相邻具体出现。</p></li>
+</ul>
+<p>Return: (GanzhiRelationCombos) 所有匹配的具体出现组合，不包含作用方向。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ganzhis</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em>]</em>)</p></li>
+<li><p><strong>relation</strong> (<a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><em>DizhiRelation</em></a>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[frozenset[<a class="reference internal" href="#bazi.utils.dizhi_utils.GanzhiOccurrence" title="bazi.utils.dizhi_utils.GanzhiOccurrence"><em>GanzhiOccurrence</em></a>], ...]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.discover_ganzhis">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">discover_ganzhis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhis</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuple(DizhiRelation)</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L713-L752"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.discover_ganzhis" title="链接到此定义。">¶</a></dt>
+<dd><p>保留输入位置与天干，发现具体干支之间的所选地支关系。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>没有匹配组合的关系不会出现在返回映射中。</p></li>
+<li><p>返回的组合不体现有向关系的方向。</p></li>
+<li><p>拱局的来源档案、相邻、填实与结果形状语义同 <code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code>。</p></li>
+<li><p>关系按 <code class="docutils literal notranslate"><span class="pre">relations</span></code> 的首次出现顺序求值，重复关系只查一次。</p></li>
+<li><p>输入须为 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>；非序列在遍历前抛出 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>ganzhis: (Sequence[Ganzhi]) 有序干支序列。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 关系定义，原样传给 <code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code>。</p></li>
+<li><p>relations: (Sequence[DizhiRelation]) 只求值这些关系，默认全部；空序列不求值任何关系。</p></li>
+</ul>
+<p>Return: (GanzhiRelationDiscovery) 保留具体出现位置的冻结关系映射。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ganzhis</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em>]</em>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+<li><p><strong>relations</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><em>DizhiRelation</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.dizhi_utils.GanzhiRelationDiscovery" title="bazi.utils.dizhi_utils.GanzhiRelationDiscovery"><em>GanzhiRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.discover_mutual_ganzhis">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">discover_mutual_ganzhis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganzhis1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganzhis2</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuple(DizhiRelation)</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L755-L824"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.discover_mutual_ganzhis" title="链接到此定义。">¶</a></dt>
+<dd><p>发现参与柱横跨两组输入的所选干支关系。</p>
+<p>具体出现序号属于概念上的 <code class="docutils literal notranslate"><span class="pre">ganzhis1</span> <span class="pre">+</span> <span class="pre">ganzhis2</span></code>；第二组从 <code class="docutils literal notranslate"><span class="pre">len(ganzhis1)</span></code> 起算。
+跨组拱局按岁运作用口径直接成为候选；单侧内部的拱局不进跨组结果。
+所拱之支已在任一组出现时不再论暗拱；组合只含真实参与者，保留完整干支与位置。
+拱局组合按左侧柱位优先的两侧柱位对顺序返回；非拱组合沿 <code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code> 的查询顺序。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>两组输入都须为 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，在遍历任一组前检查；空序列合法。</p></li>
+<li><p>关系按 <code class="docutils literal notranslate"><span class="pre">relations</span></code> 的首次出现顺序求值，重复关系只查一次；没有组合的键不返回。</p></li>
+<li><p>非拱关系同样要求具体参与者来自两侧，与 <code class="docutils literal notranslate"><span class="pre">discover_mutual</span></code> 的按值查法不同。</p></li>
+<li><p>返回的组合不体现有向关系的方向。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>ganzhis1: (Sequence[Ganzhi]) 第一组有序干支。</p></li>
+<li><p>ganzhis2: (Sequence[Ganzhi]) 第二组有序干支。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 关系定义。</p></li>
+<li><p>relations: (Sequence[DizhiRelation]) 只求值这些关系，默认全部；空序列不求值任何关系。</p></li>
+</ul>
+<p>Return: (GanzhiRelationDiscovery) 参与者横跨两侧的具体出现组合。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ganzhis1</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em>]</em>)</p></li>
+<li><p><strong>ganzhis2</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em>]</em>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+<li><p><strong>relations</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><em>DizhiRelation</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.dizhi_utils.GanzhiRelationDiscovery" title="bazi.utils.dizhi_utils.GanzhiRelationDiscovery"><em>GanzhiRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.dizhi_utils.discover_mutual">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.dizhi_utils.</span></span><span class="sig-name descname"><span class="pre">discover_mutual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dizhis1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dizhis2</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">definitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/dizhi_utils.py#L827-L867"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.dizhi_utils.discover_mutual" title="链接到此定义。">¶</a></dt>
+<dd><p>找出输入的两组地支中所有可能的关系组合（三会、六合、刑等）。
+返回组合须与两组地支值集均相交，不追踪具体出现；按值过滤语义见 RelationDiscovery.mutual_only。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>返回的字典的键中可能不包含所有的 <code class="docutils literal notranslate"><span class="pre">DizhiRelation</span></code>。</p></li>
+<li><p>两组输入都须为 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，在遍历任一组前检查；重复地支保留自刑重数。</p></li>
+<li><p>本纯地支跨组入口不含拱合、拱会；其跨作用域查法见 <code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code>。</p></li>
+<li><p>默认定义、选表及组合不保留作用方向的语义见 <code class="docutils literal notranslate"><span class="pre">search</span></code>。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>dizhis1: (Sequence[Dizhi]) 第一组地支。</p></li>
+<li><p>dizhis2: (Sequence[Dizhi]) 第二组地支。</p></li>
+<li><p>definitions: (DizhiRelationDefinitions) 关系定义，原样传给 <code class="docutils literal notranslate"><span class="pre">search</span></code>。</p></li>
+</ul>
+<p>Return: (DizhiRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>discover_mutual([子], [丑])</p>
+<ul>
+<li><p>return: {
+DizhiRelation.六合: DizhiRelationCombos({子, 丑},),
+DizhiRelation.克: DizhiRelationCombos({子, 丑},)
+}</p></li>
+</ul>
+</li>
+<li><p>discover_mutual([子, 丑], [])</p>
+<ul>
+<li><p>return: {} // 空的冻结映射。</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dizhis1</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em>]</em>)</p></li>
+<li><p><strong>dizhis2</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><em>Dizhi</em></a><em>]</em>)</p></li>
+<li><p><strong>definitions</strong> (<a class="reference internal" href="bazi-rules.html#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><em>DizhiRelationDefinitions</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.dizhi_utils.DizhiRelationDiscovery" title="bazi.utils.dizhi_utils.DizhiRelationDiscovery"><em>DizhiRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-utils-bazi_utils.html" title="上一章">bazi.utils.bazi_utils</a></li>
+      <li>Next: <a href="bazi-utils-relation_discovery.html" title="下一章">bazi.utils.relation_discovery</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

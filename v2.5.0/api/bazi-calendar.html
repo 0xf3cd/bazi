@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.calendar &#8212; bazi · v2.5.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.calendar.backend" href="bazi-calendar-backend.html" />
+    <link rel="prev" title="bazi.cli" href="bazi-cli.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.calendar">
+<span id="bazi-calendar"></span><h1>bazi.calendar<a class="headerlink" href="#module-bazi.calendar" title="链接到此标题。">¶</a></h1>
+<p>历法类型、后端与换算入口。</p>
+<p>CalendarBackend 选择数据口径，calendar_utils_of 返回对应换算实现；
+CalendarDate 与 JieqiTime 承载历法日期与节气时刻。</p>
+<p><a class="reference internal" href="bazi-calendar-hko_data.html#module-bazi.calendar.hko_data" title="bazi.calendar.hko_data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.hko_data</span></code></a></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.CalendarType">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">CalendarType</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/dates.py#L28-L56"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.CalendarType" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarType" title="bazi.calendar.dates.CalendarType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.dates.CalendarType</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.CalendarDate">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">CalendarDate</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/dates.py#L59-L103"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.CalendarDate" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.CalendarDate" title="bazi.calendar.dates.CalendarDate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.dates.CalendarDate</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.JieqiTime">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">JieqiTime</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/dates.py#L106-L109"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.JieqiTime" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-dates.html#bazi.calendar.dates.JieqiTime" title="bazi.calendar.dates.JieqiTime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.dates.JieqiTime</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.CalendarUtilsProtocol">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">CalendarUtilsProtocol</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/utils_protocol.py#L14-L50"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.CalendarUtilsProtocol" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-utils_protocol.html#bazi.calendar.utils_protocol.CalendarUtilsProtocol" title="bazi.calendar.utils_protocol.CalendarUtilsProtocol"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.utils_protocol.CalendarUtilsProtocol</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<p><a class="reference internal" href="bazi-calendar-hko_data_utils.html#module-bazi.calendar.hko_data_utils" title="bazi.calendar.hko_data_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.hko_data_utils</span></code></a></p>
+<p><a class="reference internal" href="bazi-calendar-celestial_utils.html#module-bazi.calendar.celestial_utils" title="bazi.calendar.celestial_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.celestial_utils</span></code></a></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.CalendarBackend">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">CalendarBackend</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/backend.py#L13-L49"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.CalendarBackend" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.backend.CalendarBackend</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.calendar.calendar_utils_of">
+<span class="sig-prename descclassname"><span class="pre">bazi.calendar.</span></span><span class="sig-name descname"><span class="pre">calendar_utils_of</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/calendar/backend.py#L52-L76"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.calendar.calendar_utils_of" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-calendar-backend.html#bazi.calendar.backend.calendar_utils_of" title="bazi.calendar.backend.calendar_utils_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.calendar.backend.calendar_utils_of</span></code></a> 的重导出。</p>
+</dd></dl>
+
+<p><a class="reference internal" href="bazi-calendar-solar_time.html#module-bazi.calendar.solar_time" title="bazi.calendar.solar_time"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.solar_time</span></code></a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-cli.html" title="上一章">bazi.cli</a></li>
+      <li>Next: <a href="bazi-calendar-backend.html" title="下一章">bazi.calendar.backend</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

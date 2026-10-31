@@ -1,0 +1,53 @@
+API Reference
+=============
+
+.. toctree::
+   :maxdepth: 1
+
+   bazi
+   bazi-analyzer
+   bazi-analyzer-relationship
+   bazi-bazi
+   bazi-bazi_chart
+   bazi-chart_text
+   bazi-cli
+   bazi-calendar
+   bazi-calendar-backend
+   bazi-calendar-celestial_data
+   bazi-calendar-celestial_data-generator
+   bazi-calendar-celestial_data-loader
+   bazi-calendar-celestial_utils
+   bazi-calendar-dates
+   bazi-calendar-hko_data
+   bazi-calendar-hko_data-common
+   bazi-calendar-hko_data-decoder
+   bazi-calendar-hko_data-encoder
+   bazi-calendar-hko_data_utils
+   bazi-calendar-solar_time
+   bazi-calendar-utils_protocol
+   bazi-common
+   bazi-context_matching
+   bazi-data_types
+   bazi-defines
+   bazi-defines-dizhi
+   bazi-defines-enum_base
+   bazi-defines-ganzhi
+   bazi-defines-jieqi
+   bazi-defines-relations
+   bazi-defines-shier_zhangsheng
+   bazi-defines-shishen
+   bazi-defines-tiangan
+   bazi-defines-wuxing
+   bazi-defines-yinyang
+   bazi-defines-zhu
+   bazi-knowledge
+   bazi-rules
+   bazi-school
+   bazi-transit_chart
+   bazi-transits
+   bazi-utils
+   bazi-utils-bazi_utils
+   bazi-utils-dizhi_utils
+   bazi-utils-relation_discovery
+   bazi-utils-shensha_utils
+   bazi-utils-tiangan_utils

@@ -1,0 +1,6 @@
+bazi.cli
+========
+
+.. automodule:: bazi.cli
+
+.. autofunction:: bazi.cli.main

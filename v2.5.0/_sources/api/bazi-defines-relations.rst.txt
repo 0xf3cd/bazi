@@ -1,0 +1,24 @@
+bazi.defines.relations
+======================
+
+.. automodule:: bazi.defines.relations
+
+.. autoclass:: bazi.defines.relations.TianganRelation
+   :members: CHONG, HE, KE, SHENG, as_list, from_str, 克, 冲, 合, 生
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.relations
+
+.. py:data:: 天干关系
+
+   :py:obj:`bazi.defines.relations.TianganRelation` 的别名。
+
+.. autoclass:: bazi.defines.relations.DizhiRelation
+   :members: ANHE, BANHE, CHONG, GONGHE, GONGHUI, HAI, KE, LIUHE, PO, SANHE, SANHUI, SHENG, TONGHE, TONGLUHE, XING, as_list, from_str, 三会, 三合, 克, 六合, 冲, 刑, 半合, 害, 拱会, 拱合, 暗合, 生, 破, 通合, 通禄合
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.relations
+
+.. py:data:: 地支关系
+
+   :py:obj:`bazi.defines.relations.DizhiRelation` 的别名。

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.utils.tiangan_utils &#8212; bazi · v2.5.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="知识目录" href="../catalog/index.html" />
+    <link rel="prev" title="bazi.utils.shensha_utils" href="bazi-utils-shensha_utils.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.utils.tiangan_utils">
+<span id="bazi-utils-tiangan-utils"></span><h1>bazi.utils.tiangan_utils<a class="headerlink" href="#module-bazi.utils.tiangan_utils" title="链接到此标题。">¶</a></h1>
+<p>天干关系判断、搜索与组合发现。</p>
+<p>he、chong、sheng、ke 判断单组关系，search、discover 与 discover_mutual 查询组合。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganCombo">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganCombo</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganCombo" title="链接到此定义。">¶</a></dt>
+<dd><p>满足某天干关系的一个组合。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tiangan</span></code></a>] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationCombos">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationCombos</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationCombos" title="链接到此定义。">¶</a></dt>
+<dd><p>满足某天干关系的全部组合元组。</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">frozenset</span></code>[<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tiangan</span></code></a>], ...] 的别名</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">TianganRelationDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L27-L28"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery" title="链接到此定义。">¶</a></dt>
+<dd><p>天干关系到满足它的天干组合的冻结映射。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Mapping"><em>Mapping</em></a><em>[</em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictKeyType" title="bazi.common.FrozenDictKeyType"><em>FrozenDictKeyType</em></a><em>, </em><a class="reference internal" href="bazi-common.html#bazi.common.FrozenDictValueType" title="bazi.common.FrozenDictValueType"><em>FrozenDictValueType</em></a><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L44-L52"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.filter" title="链接到此定义。">¶</a></dt>
+<dd><p>只保留 <code class="docutils literal notranslate"><span class="pre">f</span></code> 接受的组合；不再有组合的关系整键丢弃。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Callable"><em>Callable</em></a><em>[</em><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationType" title="bazi.utils.relation_discovery.RelationType"><em>RelationType</em></a><em>, </em><em>frozenset</em><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em><em>]</em><em>, </em><em>bool</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L54-L63"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.merge" title="链接到此定义。">¶</a></dt>
+<dd><p>合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<em>Self</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.TianganRelationDiscovery.mutual_only">
+<span class="sig-name descname"><span class="pre">mutual_only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/relation_discovery.py#L65-L74"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery.mutual_only" title="链接到此定义。">¶</a></dt>
+<dd><p>只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。</p>
+<p>Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。
+<code class="docutils literal notranslate"><span class="pre">discover_mutual([子,</span> <span class="pre">丑],</span> <span class="pre">[子])</span></code> 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>items1</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Set"><em>Set</em></a><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em>)</p></li>
+<li><p><strong>items2</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Set"><em>Set</em></a><em>[</em><a class="reference internal" href="bazi-utils-relation_discovery.html#bazi.utils.relation_discovery.RelationItemType" title="bazi.utils.relation_discovery.RelationItemType"><em>RelationItemType</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Self</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.he">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">he</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L38-L63"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.he" title="链接到此定义。">¶</a></dt>
+<dd><p>按无向相合关系查对应五行。
+本函数不判断实际合化条件；能否合化仍须结合原盘。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg1: (Tiangan) 第一天干。</p></li>
+<li><p>tg2: (Tiangan) 第二天干。</p></li>
+</ul>
+<p>Return: (Wuxing | None) 合所对应的五行；不相合时为 None。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>he(Tiangan.甲, Tiangan.丙):</p>
+<ul>
+<li><p>return: None</p></li>
+</ul>
+</li>
+<li><p>he(Tiangan.甲, Tiangan.己):</p>
+<ul>
+<li><p>return: Wuxing(&quot;土&quot;)</p></li>
+</ul>
+</li>
+<li><p>he(Tiangan.己, Tiangan.甲):</p>
+<ul>
+<li><p>return: Wuxing(&quot;土&quot;)</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg1</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>tg2</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><em>Wuxing</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.chong">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">chong</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L66-L87"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.chong" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的两个天干是否构成相冲关系。
+返回结果与输入的天干顺序无关，因为相冲关系是无方向的。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg1: (Tiangan) 第一天干。</p></li>
+<li><p>tg2: (Tiangan) 第二天干。</p></li>
+</ul>
+<p>Return: (bool) 是否相冲。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>chong(Tiangan.甲, Tiangan.丙):</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>chong(Tiangan.甲, Tiangan.庚):</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>chong(Tiangan.庚, Tiangan.甲):</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg1</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>tg2</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.sheng">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">sheng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L90-L111"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.sheng" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的两个天干是否构成相生关系。
+返回结果与输入的天干顺序有关，因为相生关系是单向的。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg1: (Tiangan) 生的一方。</p></li>
+<li><p>tg2: (Tiangan) 被生的一方。</p></li>
+</ul>
+<p>Return: (bool) 是否 tg1 生 tg2。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>sheng(Tiangan.甲, Tiangan.丙):</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+<li><p>sheng(Tiangan.丙, Tiangan.甲):</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>sheng(Tiangan.庚, Tiangan.甲):</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg1</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>tg2</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.ke">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">ke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tg2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L114-L135"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.ke" title="链接到此定义。">¶</a></dt>
+<dd><p>检查输入的两个天干是否构成相克关系。
+返回结果与输入的天干顺序有关，因为相克关系是单向的。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tg1: (Tiangan) 克的一方。</p></li>
+<li><p>tg2: (Tiangan) 被克的一方。</p></li>
+</ul>
+<p>Return: (bool) 是否 tg1 克 tg2。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>ke(Tiangan.甲, Tiangan.丙):</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>ke(Tiangan.甲, Tiangan.庚):</p>
+<ul>
+<li><p>return: False</p></li>
+</ul>
+</li>
+<li><p>ke(Tiangan.庚, Tiangan.甲):</p>
+<ul>
+<li><p>return: True</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg1</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+<li><p><strong>tg2</strong> (<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.search">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L146-L184"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.search" title="链接到此定义。">¶</a></dt>
+<dd><p>返回 <code class="docutils literal notranslate"><span class="pre">tiangans</span></code> 中所有满足该关系的组合。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>只接受 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，非序列在遍历前抛出 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；空序列合法，重复天干不影响结果。</p></li>
+<li><p>组合不含作用方向，合、冲本身无向；生、克的方向用 sheng / ke 单独判断。
+例如组合 {甲, 丁} 本身不表示甲生丁或丁生甲。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tiangans: (Sequence[Tiangan]) 待查天干。</p></li>
+<li><p>relation: (TianganRelation) 待查关系。</p></li>
+</ul>
+<p>Return: (TianganRelationCombos) 所有匹配组合，不包含作用方向。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>search([甲, 丙, 丁, 庚, 辛], TianganRelation.合):</p>
+<ul>
+<li><p>return: ({丙, 辛})</p></li>
+</ul>
+</li>
+<li><p>search([甲, 丙, 丁, 庚, 辛], TianganRelation.冲):</p>
+<ul>
+<li><p>return: ({甲, 庚})</p></li>
+</ul>
+</li>
+<li><p>search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):</p>
+<ul>
+<li><p>return: ({甲, 丙}, {甲, 丁})</p></li>
+</ul>
+</li>
+<li><p>search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):</p>
+<ul>
+<li><p>return: ({丙, 庚}, {丙, 辛}, {丁, 庚}, {丁, 辛},
+{甲, 庚}, {甲, 辛})</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tiangans</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em>]</em>)</p></li>
+<li><p><strong>relation</strong> (<a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.TianganRelation" title="bazi.defines.relations.TianganRelation"><em>TianganRelation</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[frozenset[<a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a>], ...]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.discover">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L187-L210"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover" title="链接到此定义。">¶</a></dt>
+<dd><p>返回给定天干中所有可能的天干关系组合（合、冲、生、克等）。
+各关系由 <code class="docutils literal notranslate"><span class="pre">search</span></code> 求值。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>返回的字典的键中可能不包含所有的 <code class="docutils literal notranslate"><span class="pre">TianganRelation</span></code>。</p></li>
+<li><p>只接受 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，非序列在遍历前抛出 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；空序列合法，重复天干不影响结果。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tiangans: (Sequence[Tiangan]) 待查天干。</p></li>
+</ul>
+<p>Return: (TianganRelationDiscovery) 所有匹配组合的冻结映射，不包含作用方向。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tiangans</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery" title="bazi.utils.tiangan_utils.TianganRelationDiscovery"><em>TianganRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.utils.tiangan_utils.discover_mutual">
+<span class="sig-prename descclassname"><span class="pre">bazi.utils.tiangan_utils.</span></span><span class="sig-name descname"><span class="pre">discover_mutual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiangans1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tiangans2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/cefa84a8f022bf3476d5af3830ae3ca9e9902aa3/bazi/utils/tiangan_utils.py#L213-L251"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.utils.tiangan_utils.discover_mutual" title="链接到此定义。">¶</a></dt>
+<dd><p>找出输入的两组天干中的所有可能的关系组合（合、冲、生、克等）。
+返回组合须与两组天干值集均相交，不追踪具体出现；按值过滤语义见 RelationDiscovery.mutual_only。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>返回的字典的键中可能不包含所有的 <code class="docutils literal notranslate"><span class="pre">TianganRelation</span></code>。</p></li>
+<li><p>两组输入都须为 <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>，在遍历任一组前检查；重复天干不影响结果。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>tiangans1: (Sequence[Tiangan]) 第一组天干。</p></li>
+<li><p>tiangans2: (Sequence[Tiangan]) 第二组天干。</p></li>
+</ul>
+<p>Return: (TianganRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>discover_mutual([甲], [己])</p>
+<ul>
+<li><p>return: {
+TianganRelation.合: TianganRelationCombos({甲, 己},),
+TianganRelation.克: TianganRelationCombos({甲, 己},)
+}</p></li>
+</ul>
+</li>
+<li><p>discover_mutual([甲, 己], [])</p>
+<ul>
+<li><p>return: {} // 空的冻结映射。</p></li>
+</ul>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tiangans1</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em>]</em>)</p></li>
+<li><p><strong>tiangans2</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Sequence"><em>Sequence</em></a><em>[</em><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><em>Tiangan</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.utils.tiangan_utils.TianganRelationDiscovery" title="bazi.utils.tiangan_utils.TianganRelationDiscovery"><em>TianganRelationDiscovery</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-utils-shensha_utils.html" title="上一章">bazi.utils.shensha_utils</a></li>
+      <li>Next: <a href="../catalog/index.html" title="下一章">知识目录</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

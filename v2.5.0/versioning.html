@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>构建与归档文档 &#8212; bazi · v2.5.0</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=9effcd8b" />
+    <script src="_static/documentation_options.js?v=7d86a446"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="prev" title="文档版本" href="versions.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>构建与归档文档<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>本地构建不会部署站点，也不会启用 GitHub Pages。站点由维护者另行启用后，开发版位于 <code class="docutils literal notranslate"><span class="pre">dev/</span></code>，发布版位于固定 tag 的同名目录，全部版本入口为 <code class="docutils literal notranslate"><span class="pre">versions/</span></code>。</p>
+<section id="id2">
+<h2>本地检查<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p>使用 Python 3.13+，在源码根目录安装文档依赖和历法测试工具 <code class="docutils literal notranslate"><span class="pre">celestial-calendar==0.6.1</span></code>。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>celestial-calendar<span class="o">==</span><span class="m">0</span>.6.1
+python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<span class="w"> </span>output_data/docs-preview
+</pre></div>
+</div>
+<p>输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接；全部成功后才交付成品。打开 <code class="docutils literal notranslate"><span class="pre">output_data/docs-preview/html/index.html</span></code> 查看。</p>
+<p>仓库的完整检查另需开发依赖，见 <a class="reference internal" href="contributing.html"><span class="doc">贡献指南</span></a>。在 Python 3.13+ 文档开发环境中，<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span></code> 包含文档任务；只运行文档可用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-nt</span> <span class="pre">-docs</span></code>。Python 3.11／3.12 可用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span> <span class="pre">--runtime-only</span></code> 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 <code class="docutils literal notranslate"><span class="pre">TMPDIR</span></code> 等环境设置。</p>
+<p><code class="docutils literal notranslate"><span class="pre">run_docs.py</span> <span class="pre">--version</span> <span class="pre">vX.Y.Z</span></code> 只接受干净检出且当前提交恰为该 tag 的源码；不接受把开发源码标成任意版本。开发版也记录实际提交和工作树状态，含未提交修改的构建不能进入归档。</p>
+</section>
+<section id="id3">
+<h2>维护者手动归档<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Publish</span> <span class="pre">Documentation</span></code> 工作流只有手动入口，默认模式 <code class="docutils literal notranslate"><span class="pre">rehearsal</span></code> 只构建，不写归档或部署。写入与部署只允许主仓的 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支执行；PR 和普通 push 不会触发它，fork 也不满足写入和部署条件。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>模式</p></th>
+<th class="head"><p>做什么</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rehearsal</span></code></p></td>
+<td><p>检出并检查选定源码，上传短期构建工件，不修改站点</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pending</span></code></p></td>
+<td><p>将发布版列为“文档待就绪”，不伪装该目录已经可用</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">publish</span></code></p></td>
+<td><p>归档本次构建并部署完整站点，随后回读；不直接改成 <code class="docutils literal notranslate"><span class="pre">ready</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">promote</span></code></p></td>
+<td><p>重新核对线上字节，通过后将版本标为 <code class="docutils literal notranslate"><span class="pre">ready</span></code>，更新选择页及 <code class="docutils literal notranslate"><span class="pre">latest</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resume</span></code></p></td>
+<td><p>从持久归档重新部署，不重建版本 HTML</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">initialize</span></code> 仅在归档分支 <code class="docutils literal notranslate"><span class="pre">docs-site</span></code> 尚不存在时设为 <code class="docutils literal notranslate"><span class="pre">true</span></code>。初始化从已检出的固定控制提交起步，先核有效签名，再在运行专用临时分支创建归档提交；核父提交、完整树与新提交签名后才建立 <code class="docutils literal notranslate"><span class="pre">docs-site</span></code>。不改写原有源码历史，也不要求关闭签名保护。</p>
+<p>归档分支持久保存静态文件，不以短期 Actions 工件代替多版本保留。发布版目录已有内容时拒绝异字节覆盖；<code class="docutils literal notranslate"><span class="pre">dev/</span></code> 可整目录更新。后续发布只追加本版并保留旧版原字节，不重建旧 tag。</p>
+<p>发布版构建还要求该 tag 已有正式 GitHub Release，并携带身份一致的 <code class="docutils literal notranslate"><span class="pre">release.json</span></code>；仅能归档自身带有文档构建器的版本，不修改旧 tag 来补文档。文档发布失败不表示软件尚未发布，<code class="docutils literal notranslate"><span class="pre">pending</span></code> 与 <code class="docutils literal notranslate"><span class="pre">archived</span></code> 都显示为待就绪。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pending</span></code> 仅登记版本，尚无归档目录；<code class="docutils literal notranslate"><span class="pre">archived</span></code> 已归档，尚未通过线上回读；<code class="docutils literal notranslate"><span class="pre">ready</span></code> 已通过线上回读，选择页才提供链接。</p>
+<p>维护者确认平台前提后，通常先 <code class="docutils literal notranslate"><span class="pre">publish</span></code>，等自动回读完成，再运行 <code class="docutils literal notranslate"><span class="pre">promote</span></code>。<code class="docutils literal notranslate"><span class="pre">latest</span></code> 只指向已回读的 <code class="docutils literal notranslate"><span class="pre">ready</span></code> 发布版；开发版不参与。<code class="docutils literal notranslate"><span class="pre">resume</span></code> 用于归档已成功、部署或回读失败的重试；需要补归档时才重跑 <code class="docutils literal notranslate"><span class="pre">publish</span></code>。</p>
+</section>
+<section id="id4">
+<h2>平台前提与失败边界<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p>首次实际使用前，维护者须另行将 Pages Source 设为 GitHub Actions，并检查 <code class="docutils literal notranslate"><span class="pre">github-pages</span></code> 环境、归档分支规则及默认令牌的权限。构建、归档和 Pages 部署分 job 授权，不新增个人令牌或签名密钥。签名、父提交、树、身份或回读字节不符时停止，不通过关闭保护来绕过。</p>
+<p>归档提交已生效但响应丢失时，可从归档继续重试；初始化是否已建成以分支实际存在性为准，不能一直保留 <code class="docutils literal notranslate"><span class="pre">initialize=true</span></code>。临时分支清理失败或运行取消可能留下 <code class="docutils literal notranslate"><span class="pre">docs-site-staging-*</span></code>，确认对应运行已经结束后由维护者检查清理。</p>
+<p>本地测试和模拟响应不能替代 GitHub 实际运行。默认令牌、规则集、工件重跑、特殊文件模式及 CDN 可见性仍需首次部署后的回读验证；在这之前不宣称站点已经上线。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versions.html">文档版本</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="versions.html" title="上一章">文档版本</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

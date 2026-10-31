@@ -1,0 +1,22 @@
+bazi.bazi
+=========
+
+.. automodule:: bazi.bazi
+
+.. autoclass:: bazi.bazi.BaziGender
+   :members: FEMALE, MALE, YANG, YIN, 乾, 坤, 女, 男, 阳, 阴
+   :undoc-members:
+
+.. autoclass:: bazi.bazi.Bazi
+   :members: config, create, day_master, day_pillar, four_dizhis, four_tiangans, ganzhi_date, ganzhi_year, ganzhi_year_month, gender, hour, hour_pillar, location_time, longitude, minute, month_commander, month_jies, month_pillar, pillars, random, reference_datetime, solar_date, solar_datetime, year_pillar
+   :undoc-members:
+
+.. autoclass:: bazi.bazi.LocationTime
+   :members: apparent_time, canonical_instant, civil_time, longitude
+   :undoc-members:
+
+.. py:currentmodule:: bazi.bazi
+
+.. py:data:: 八字
+
+   :py:obj:`bazi.bazi.Bazi` 的别名。
