@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "latest": "v2.3.0",
+  "latest": "v2.4.0",
   "versions": [
     {
       "label": "dev",
@@ -10,7 +10,7 @@
     },
     {
       "label": "v2.4.0",
-      "state": "archived",
+      "state": "ready",
       "commit": "53f9caa56ee8523f42102f2f0df4693962431a37",
       "digest": "db5e4ffe6f0c917aee8091f38f6648e79cbc46fe700b030baf128f3715476201"
     },
