@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>查阅知识库 &#8212; bazi · v2.4.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="集成开发" href="integration.html" />
+    <link rel="prev" title="关系与流运" href="relations-transits.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>查阅知识库<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>这篇教程不创建命盘。装好 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 后，你可以查对象、过滤和搜索条目、读出处，也可以修改自己的知识编辑源并加载。</p>
+<p>先说一个前提：知识库记录的是<strong>文字及其出处</strong>，不是对命盘的判断。<code class="docutils literal notranslate"><span class="pre">witnessed</span></code>（见证）说明条目绑定了已核定的原文出处，不证明这句话为真，也不证明现实中会发生什么。</p>
+<section id="id2">
+<h2>安装与版本<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>bazi
+</pre></div>
+</div>
+<p>本页对应当前开发源码；已发布版本以<a class="reference external" href="https://github.com/0xf3cd/bazi/tags">对应 tag</a> 下的说明为准。从源码试用当前接口时，在仓库根目录运行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>。
+本教程全程无需出生输入；排盘路径另见 <a class="reference internal" href="quickstart.html"><span class="doc">快速开始</span></a>。</p>
+</section>
+<section id="id3">
+<h2>加载<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">objects</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">contexts</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">sources</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">entries</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>34 10 23 312
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">load()</span></code> 不需要出生信息。每次调用都会重新读取并校验随包的 <code class="docutils literal notranslate"><span class="pre">knowledge_data.json</span></code>，返回不可变的知识库对象。</p>
+<p>这四个数字对应四份注册表：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">objects</span></code>：被讨论的对象，如天干、十神。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">contexts</span></code>：人工选择的查阅情境，带时间范围与限度。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sources</span></code>：来源见证，记录书名、版本、页位、摘录和适用范围。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entries</span></code>：解释条目，文字、角色、主题和出处引用都在这里。</p></li>
+</ul>
+<p>条目只引用另外三份注册表里的稳定 ID。反过来，注册表里的记录不一定有条目引用它：来源库就包含没有被任何条目用到的记录，所以不能从有引用的条目反推完整目录。</p>
+<p>不运行 Python 也可直接浏览 <a class="reference internal" href="../catalog/index.html"><span class="doc">知识目录</span></a>。记录字段见 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeObject" title="bazi.knowledge.KnowledgeObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeObject</span></code></a>、<a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeContext" title="bazi.knowledge.KnowledgeContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeContext</span></code></a>、<a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeSource" title="bazi.knowledge.KnowledgeSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeSource</span></code></a> 和 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeEntry</span></code></a>。</p>
+</section>
+<section id="id">
+<h2>按名称或 ID 找对象<a class="headerlink" href="#id" title="链接到此标题。">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tiangan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span><span class="p">,</span> <span class="n">object_id</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">found</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="s1">'丁'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([(</span><span class="n">o</span><span class="o">.</span><span class="n">object_id</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">found</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">object_id</span><span class="p">(</span><span class="n">Tiangan</span><span class="o">.</span><span class="n">丁</span><span class="p">)</span> <span class="o">==</span> <span class="n">found</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">object_id</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="s1">'丁火'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="s1">'丁 '</span><span class="p">))</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">kb</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="s1">'  '</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[('tiangan.ding', 'tiangan')]
+True
+()
+()
+ValueError
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">find_objects</span></code> 只做精确比较：<code class="docutils literal notranslate"><span class="pre">'丁火'</span></code> 和带空格的 <code class="docutils literal notranslate"><span class="pre">'丁</span> <span class="pre">'</span></code> 都找不到对象，返回空元组；全空白名称则抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。已有 <code class="docutils literal notranslate"><span class="pre">Tiangan</span></code> 或 <code class="docutils literal notranslate"><span class="pre">Shishen</span></code> 成员时，用 <code class="docutils literal notranslate"><span class="pre">object_id()</span></code> 直接得到稳定 ID。</p>
+</section>
+<section id="id4">
+<h2>查询与过滤<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">query</span></code> 接受七个过滤维度：<code class="docutils literal notranslate"><span class="pre">object_id</span></code>、<code class="docutils literal notranslate"><span class="pre">context_id</span></code>、<code class="docutils literal notranslate"><span class="pre">topic</span></code>、<code class="docutils literal notranslate"><span class="pre">source_id</span></code>、<code class="docutils literal notranslate"><span class="pre">viewpoint</span></code>、<code class="docutils literal notranslate"><span class="pre">applicability</span></code>、<code class="docutils literal notranslate"><span class="pre">time_scope</span></code>。多个条件取交集，结果保持语料顺序。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">default</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">)</span>
+<span class="n">everything</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">claim_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">default</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">everything</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">,</span> <span class="n">applicability</span><span class="o">=</span><span class="s1">'unconditional'</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">,</span> <span class="n">applicability</span><span class="o">=</span><span class="s1">'unconditional'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'shensha.guoyin'</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">filter_values</span><span class="p">(</span><span class="s1">'object_id'</span><span class="p">),</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'shensha.guoyin'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'shensha.guoyin'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.dingg'</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>['tiangan.ding.definition']
+8
+1
+2
+True ()
+2
+ValueError Unknown object_id: tiangan.dingg
+</pre></div>
+</div>
+<p>三点区别：</p>
+<ul class="simple">
+<li><p><strong>默认与参考。</strong> 默认只返回 <code class="docutils literal notranslate"><span class="pre">output='default'</span></code> 的条目；加 <code class="docutils literal notranslate"><span class="pre">include_reference_only=True</span></code> 才包含仅供参考的条目。丁一共 8 条，默认只有 1 条。</p></li>
+<li><p><strong>合法值不保证有结果。</strong> <code class="docutils literal notranslate"><span class="pre">shensha.guoyin</span></code> 是合法对象，默认查询却为空，加上参考条目才有 2 条。可用的过滤值由 <code class="docutils literal notranslate"><span class="pre">filter_values(维度)</span></code> 列出。</p></li>
+<li><p><strong>未知值与无匹配不同。</strong> 值不在 <code class="docutils literal notranslate"><span class="pre">filter_values</span></code> 里会抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>；值合法但没有交集，只返回空元组。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>胎元与命宫：已实现取法和待核候选<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">concept.taiyuan</span></code> 与 <code class="docutils literal notranslate"><span class="pre">concept.minggong</span></code> 是独立知识对象，所有条目均为 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code>，全库默认输出仍为 19 条。
+计算用法见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>；知识查询不创建命盘，也不因计算得到干支就认定解释前提成立。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'concept.taiyuan'</span><span class="p">,</span> <span class="s1">'concept.minggong'</span><span class="p">):</span>
+  <span class="n">entries</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="n">identifier</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span>
+  <span class="nb">print</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">viewpoint</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">applicability</span> <span class="o">==</span> <span class="s1">'unresolved'</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>concept.taiyuan 0 3
+['三百日候选待核']
+concept.minggong 0 4
+['其他月界候选待核']
+</pre></div>
+</div>
+<p>每个对象后面的两个数字依次是默认查询条数、包含参考条目的查询条数。</p>
+<p>《游艺录》卷四直接转录支持胎元月干进一、月支进三；《三命通会》掌诀段支持命宫定支与年干配宫干，
+未明说月界。《三命通会》胎元同段的甲寅／乙巳例与本库月柱顺移在该例结果相同，原段也质疑该取法是否精当；
+见证取法存在不等于该书赞同取法。
+中气进月及丙午年大寒例仍按丙午年配干，来自《命理探原》卷上〈起例〉〈推命宮法〉按语。
+该条已据 NLC 刊本 PDF 第 75–76 页（印页四四至四五）页图核读正文、按语与丙午例；
+扫描文件题《命理探源》，所核页版心题《命理探原》。按语后的列式页未核，未校全书。
+其余上述来源仍为固定或下载转录，未校影印；换用同书原刊载体、后书转引前书都不多算独立谱系。
+《游艺录》与《三命通会》命宫掌诀措辞近同，独立性未核，来源暂同组，保守不多算一条独立见证；这不表示已证直接承袭。
+本库的立春年界、精度、时区及地点钟政策另记为仓内约定，不与原例的支持范围混用。</p>
+<p>三百日胎元未编码。四库固定转录在「惟有一法」前保留了对通行取法的批评，段末另有质疑；
+老资料网网页选录没有这两部分，且写作「唯有一法」。继续核定时先核对选录截取与转录范围，再查底本；
+不把所见差异称为已校底本差异。随后核全段及例解、起算、月柱历法、边界、地点钟与支持窗口。
+其他命宫月界也未编码，须反查明确系统归属、月界和跨界例解，说明闰月、跨年及年干归属，
+再由作者批准可选变体；不能把“未言月界”当成某一月界的证据，也不据此判其他读法错误或不存在。</p>
+</section>
+<section id="id6">
+<h2>字面关键词搜索<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">claim_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">'火'</span><span class="p">,</span> <span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">'火'</span><span class="p">,</span> <span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">'tiangan.ding'</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>['tiangan.ding.definition']
+4
+()
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">search</span></code> 先按上面的规则过滤，再对条目文字、前提、署名、主题、观点、例外、限度和对象名称做不分大小写的子串匹配。它不分词，不解释正则，也不搜对象 ID、情境标签或来源全文，所以 <code class="docutils literal notranslate"><span class="pre">search('tiangan.ding')</span></code> 没有命中。对象 ID 请用 <code class="docutils literal notranslate"><span class="pre">query(object_id=...)</span></code>。</p>
+<p>搜索不自动转换繁简字。条目引用按载体原字修订后，相关字面关键词的命中可能随之变化；这不改变默认查询资格。</p>
+</section>
+<section id="id7">
+<h2>条目的来源<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
+<p>体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，
+没有把不同诗句或章节拼成一段连续原文；句读、摘录位置与未录的干名圈示分别记在来源说明中。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+<span class="n">source</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">work</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">attribution</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">edition</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">locator</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">lineage</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">text_layer</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">excerpt</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">supports</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">limitations</span><span class="p">)</span>
+
+<span class="n">unverified</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'legacy.shishen.SH-001'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">unverified</span><span class="o">.</span><span class="n">sources</span><span class="p">,</span> <span class="n">unverified</span><span class="o">.</span><span class="n">source_state</span><span class="p">,</span> <span class="n">unverified</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">source_id</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>('yuanhai_ziping_stem_symbols_p70', 'mingli_tanyuan_stem_basics')
+《刻京台增补渊海子平大全》
+李钦增补
+明万历二十八年闽书林刘龙田乔山堂刊本
+PDF 第 70 页左右两半叶，「十干体象」
+yuanhai_ziping baiwen witnessed
+丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼
+丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
+丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
+() unverified reference_only
+['yuanhai_ziping_stem_table']
+</pre></div>
+</div>
+<p>路径是：<code class="docutils literal notranslate"><span class="pre">kb.entry(条目</span> <span class="pre">ID).sources</span></code> 给出来源 ID，再用 <code class="docutils literal notranslate"><span class="pre">kb.sources[来源</span> <span class="pre">ID]</span></code> 取记录。记录里的 <code class="docutils literal notranslate"><span class="pre">work</span></code>、<code class="docutils literal notranslate"><span class="pre">attribution</span></code>、<code class="docutils literal notranslate"><span class="pre">edition</span></code>、<code class="docutils literal notranslate"><span class="pre">locator</span></code> 说明出处，<code class="docutils literal notranslate"><span class="pre">excerpt</span></code> 是摘录，<code class="docutils literal notranslate"><span class="pre">supports</span></code> 与 <code class="docutils literal notranslate"><span class="pre">limitations</span></code> 写明这段原文支持什么、不支持什么。读来源时请连 <code class="docutils literal notranslate"><span class="pre">limitations</span></code> 一起读。</p>
+<p>渲染结果中，条目的 <code class="docutils literal notranslate"><span class="pre">source_state</span></code> 标为“来源状态”，来源记录的 <code class="docutils literal notranslate"><span class="pre">state</span></code> 标为“见证状态”。</p>
+<p>反向用 <code class="docutils literal notranslate"><span class="pre">query(source_id=...)</span></code> 找引用某个来源的条目。</p>
+<p>两种“看起来没有来源”的情形要分开：</p>
+<ul class="simple">
+<li><p>条目的 <code class="docutils literal notranslate"><span class="pre">sources</span></code> 为空，且 <code class="docutils literal notranslate"><span class="pre">source_state</span></code> 为 <code class="docutils literal notranslate"><span class="pre">unverified</span></code>：出处尚未核定。这不表示没有来源，也不表示断言为假。</p></li>
+<li><p>来源本身没有条目引用（上面最后一行）：它只是注册表里的记录。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">render</span></code> 把这些字段排成可读文字。<code class="docutils literal notranslate"><span class="pre">show_sources=False</span></code> 只关闭来源详情；前提与限度始终保留：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'legacy.shishen.SH-001'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">show_sources</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>代表同辈、竞争、合作。【仅供参考；来源尚未核实；前提待梳理；命盘适用性未判断】
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h2>三个状态各管一件事<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>字段</p></th>
+<th class="head"><p>回答什么</p></th>
+<th class="head"><p>取值</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">source_state</span></code></p></td>
+<td><p>出处核定到哪一步</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code>、<code class="docutils literal notranslate"><span class="pre">editorial</span></code>、<code class="docutils literal notranslate"><span class="pre">unverified</span></code>、<code class="docutils literal notranslate"><span class="pre">repository_attributed</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">applicability</span></code></p></td>
+<td><p>前提整理到哪一步</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">unconditional</span></code>、<code class="docutils literal notranslate"><span class="pre">described</span></code>、<code class="docutils literal notranslate"><span class="pre">unresolved</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p>默认查询是否返回</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">default</span></code>、<code class="docutils literal notranslate"><span class="pre">reference_only</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>这些都是知识整理状态，不是某张命盘的求值结果。<code class="docutils literal notranslate"><span class="pre">applicability='described'</span></code> 只说明前提已用文字记下，术语可能还没有计算定义。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">source_state</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">counts</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Counter</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">applicability</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">entries</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">most_common</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>('default', 'witnessed') 19
+('reference_only', 'editorial') 22
+('reference_only', 'repository_attributed') 8
+('reference_only', 'unverified') 245
+('reference_only', 'witnessed') 18
+[('unresolved', 264), ('unconditional', 36), ('described', 12)]
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code> 条目有 37 条，其中 18 条仍是 <code class="docutils literal notranslate"><span class="pre">reference_only</span></code>，所以 <code class="docutils literal notranslate"><span class="pre">witnessed</span></code> 不单独推出默认输出。成为 <code class="docutils literal notranslate"><span class="pre">default</span></code> 要同时满足四个条件：</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">applicability</span></code> 为 <code class="docutils literal notranslate"><span class="pre">unconditional</span></code>；</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">source_state</span></code> 为 <code class="docutils literal notranslate"><span class="pre">witnessed</span></code>；</p></li>
+<li><p>引用的每个来源，<code class="docutils literal notranslate"><span class="pre">state</span></code> 都与条目的 <code class="docutils literal notranslate"><span class="pre">source_state</span></code> 一致；</p></li>
+<li><p>引用的来源至少来自两个不同的 <code class="docutils literal notranslate"><span class="pre">lineage</span></code>（谱系）。</p></li>
+</ol>
+<p>前两条在条目构造时检查，后两条在 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase</span></code> 构造时检查。下面逐条触发：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">loose</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'legacy.shishen.SH-001'</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">replace</span><span class="p">(</span><span class="n">loose</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">'default'</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+
+<span class="n">default</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
+<span class="n">one_source</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">sources</span><span class="o">=</span><span class="n">default</span><span class="o">.</span><span class="n">sources</span><span class="p">[:</span><span class="mi">1</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">one_source</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">KnowledgeBase</span><span class="p">(</span>
+    <span class="nb">tuple</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">contexts</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+    <span class="nb">tuple</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="p">(</span><span class="n">one_source</span><span class="p">,),</span>
+  <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ValueError Ineligible default entry: legacy.shishen.SH-001
+default
+ValueError Default entry needs independent lineages: tiangan.ding.definition
+</pre></div>
+</div>
+<p>第二个例子里，只留一个来源的条目通过了条目自身的检查（仍是 <code class="docutils literal notranslate"><span class="pre">default</span></code>），但放进知识库时因为只剩一个谱系被拒。另外，<code class="docutils literal notranslate"><span class="pre">source_state</span></code> 为 <code class="docutils literal notranslate"><span class="pre">unverified</span></code> 当且仅当 <code class="docutils literal notranslate"><span class="pre">sources</span></code> 为空，两者不一致也会被拒。</p>
+</section>
+<section id="id9">
+<h2>读取知识编辑源<a class="headerlink" href="#id9" title="链接到此标题。">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_SOURCE_PATH</span><span class="p">,</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="n">DEFAULT_SOURCE_PATH</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'schema_version'</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'entries'</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'objects'</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'sources'</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'entries'</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">folder</span><span class="p">:</span>
+  <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'knowledge.json'</span>
+  <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>['schema_version', 'objects', 'contexts', 'sources', 'entries']
+2 312 34 23
+['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'output', 'legacy']
+True
+</pre></div>
+</div>
+<p>当前编辑源由精确整数 <code class="docutils literal notranslate"><span class="pre">schema_version=2</span></code> 加四份注册表组成，加载时检查形状、状态和引用。
+不接受旧 schema 1，也不提供迁移、知识库 JSON 导出或历史结果恢复。字符串键和值中的孤立代理项会拒绝，不修复原文；
+知识渲染也检查 UTF-8，中文、非 BMP 字符与合法 JSON 转义仍可使用。</p>
+</section>
+<section id="id10">
+<h2>改一份本地副本<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h2>
+<p>想加几行自己的备注，复制当前编辑源，修改自己的文件再加载。下面使用临时副本，不写回随包的 <code class="docutils literal notranslate"><span class="pre">knowledge_data.json</span></code>：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_SOURCE_PATH</span><span class="p">,</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">DEFAULT_SOURCE_PATH</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">))</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">'entries'</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="s1">'claim_id'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
+<span class="n">entry</span><span class="p">[</span><span class="s1">'limits'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'演示副本：此行为教程添加，不是来源内容。'</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">folder</span><span class="p">:</span>
+  <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'edited.json'</span>
+  <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+  <span class="n">copy</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="n">edited</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">edited</span><span class="o">.</span><span class="n">claim_id</span><span class="p">,</span> <span class="n">edited</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">edited</span><span class="o">.</span><span class="n">limits</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">edited</span><span class="o">.</span><span class="n">source_state</span><span class="p">,</span> <span class="n">edited</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">edited</span><span class="o">.</span><span class="n">sources</span> <span class="o">==</span> <span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="n">edited</span><span class="o">.</span><span class="n">claim_id</span><span class="p">)</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'tiangan.ding.definition'</span><span class="p">)</span><span class="o">.</span><span class="n">limits</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">copy</span> <span class="o">==</span> <span class="n">kb</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>tiangan.ding.definition 丁为阴火。
+('演示副本：此行为教程添加，不是来源内容。',)
+witnessed default True
+()
+False
+</pre></div>
+</div>
+<p>改动只在副本里：原知识库的 <code class="docutils literal notranslate"><span class="pre">limits</span></code> 仍是空，两个库不相等。几条习惯：</p>
+<ul class="simple">
+<li><p>保留稳定 ID 和原文。改了原文，就在 <code class="docutils literal notranslate"><span class="pre">limits</span></code> 里说明是你改的。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">source_state</span></code> 仍是 <code class="docutils literal notranslate"><span class="pre">witnessed</span></code>，是因为你没动来源；它不代表你的改动已被核定。</p></li>
+<li><p>要保存的话，把 JSON 文本写到你自己的文件，再用 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase.load(Path(...))</span></code> 读回。</p></li>
+</ul>
+<section id="id11">
+<h3>引用断了会怎样<a class="headerlink" href="#id11" title="链接到此标题。">¶</a></h3>
+<p>把条目指向一个不存在的来源：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_SOURCE_PATH</span><span class="p">,</span> <span class="n">KnowledgeBase</span>
+
+<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">DEFAULT_SOURCE_PATH</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">))</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">'entries'</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="s1">'claim_id'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
+<span class="n">good</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s1">'sources'</span><span class="p">]</span>
+<span class="n">entry</span><span class="p">[</span><span class="s1">'sources'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'no_such_source'</span><span class="p">]</span>
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">folder</span><span class="p">:</span>
+  <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'broken.json'</span>
+  <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+  <span class="n">entry</span><span class="p">[</span><span class="s1">'sources'</span><span class="p">]</span> <span class="o">=</span> <span class="n">good</span>
+  <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">entries</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ValueError Unknown source: no_such_source (tiangan.ding.definition)
+312
+</pre></div>
+</div>
+<p>加载抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，消息里带出未知的 ID 和出问题的条目。修法是让引用指回注册表里存在的 ID，要么改回，要么在 <code class="docutils literal notranslate"><span class="pre">sources</span></code> 里补上这条来源记录。对象和情境的引用同理；字段缺失、重复键、不支持的 <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> 也都在加载时拒绝。</p>
+</section>
+</section>
+<section id="id12">
+<h2>不建命盘浏览判据目录<a class="headerlink" href="#id12" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">criteria()</span></code> 返回以判据 ID 为键的映射，每个值是 <code class="docutils literal notranslate"><span class="pre">CriterionInfo</span></code>：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.context_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">criterion</span>
+
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">criteria</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">catalog</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">criterion_id</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">catalog</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">criterion_id</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">entry_role</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">analysis_kind</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">claim_ids</span><span class="p">))</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="s1">'editorial.guansha_coexistence_female.v1'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">claim_ids</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">required_gender</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">required_inputs</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">optional_inputs</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>8
+editorial.guansha_coexistence.v1 premise context 2
+editorial.guansha_coexistence_female.v1 premise context 2
+tiangan.ding_weak_and_overcontrolled condition context 1
+tiangan.geng_regulated_transit condition context 1
+shishen.pianyin_favorable_or_balanced condition context 1
+shishen.xiaoyin_duoshi condition context 1
+editorial.spouse_palace_xingchong.v1 condition relationship 1
+editorial.spouse_star_tougan.v1 condition relationship 1
+('editorial.shishen.zhengguan.infidelity', 'editorial.shishen.qisha.infidelity')
+女
+('chart', 'criterion_id', 'observation') ('knowledge', 'include_reference_only')
+</pre></div>
+</div>
+<p>这是静态目录，不判断任何命盘。<code class="docutils literal notranslate"><span class="pre">entry_role</span></code> 区分两种关联：<code class="docutils literal notranslate"><span class="pre">premise</span></code> 判关联条目的完整前提；<code class="docutils literal notranslate"><span class="pre">condition</span></code> 只判局部事实，不能据此认定条目全文的前提成立。<code class="docutils literal notranslate"><span class="pre">claim_ids</span></code> 是默认语料的约定，自定义知识库不保证有这些条目。真正对命盘求值用 <code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code>，见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>；字段说明见 <a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.CriterionInfo" title="bazi.context_matching.CriterionInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">CriterionInfo</span></code></a>，完整列表见 <a class="reference internal" href="../catalog/criteria.html"><span class="doc">前提判据</span></a>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">analysis_kind</span></code> 区分明藏干分类与婚恋结构分析；<code class="docutils literal notranslate"><span class="pre">observation_types</span></code> 和 <code class="docutils literal notranslate"><span class="pre">scopes</span></code> 由它派生，列出可接受的请求类和范围。
+<code class="docutils literal notranslate"><span class="pre">scope_inputs</span></code> 说明取得完整范围还需要什么，关系范围保持 coordinate、kinds 的顺序。
+<code class="docutils literal notranslate"><span class="pre">transit_entries</span></code> 的年月字段为 ganzhi_year、ganzhi_month，CLI 对应的 flags 仍是 <code class="docutils literal notranslate"><span class="pre">--ganzhi-year</span></code>、<code class="docutils literal notranslate"><span class="pre">--gz-month</span></code>。</p>
+</section>
+<section id="id13">
+<h2>源码脚本<a class="headerlink" href="#id13" title="链接到此标题。">¶</a></h2>
+<p>仓库根目录的 <code class="docutils literal notranslate"><span class="pre">run_interpreter.py</span></code> 是源码脚本，不随安装包发布；安装包只提供上面的 Python API。克隆仓库并装好依赖后，可以这样查询：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span>--object<span class="w"> </span>tiangan.ding
+python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span>--list-values<span class="w"> </span>topic
+python<span class="w"> </span>run_interpreter.py<span class="w"> </span>knowledge<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--object<span class="w"> </span>tiangan.ding<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--include-reference-only
+</pre></div>
+</div>
+<p>只写 <code class="docutils literal notranslate"><span class="pre">knowledge</span></code> 会给出知识库概览和可用的查询条件；<code class="docutils literal notranslate"><span class="pre">--validate-knowledge</span></code> 校验完整知识源，<code class="docutils literal notranslate"><span class="pre">--knowledge-source</span></code> 指定你自己的 JSON，<code class="docutils literal notranslate"><span class="pre">--all</span></code> 列出全部默认可见的条目。
+判据目录用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span> <span class="pre">match</span></code> 查看，只给判据 ID 会说明它需要哪些输入。完整选项见 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span> <span class="pre">knowledge</span> <span class="pre">--help</span></code>。
+v2.3.0 起移除不带任务名的旧平铺写法，裸调用只打印帮助。原 <code class="docutils literal notranslate"><span class="pre">--query-knowledge</span> <span class="pre">--object</span> <span class="pre">tiangan.ding</span></code>
+改为 <code class="docutils literal notranslate"><span class="pre">knowledge</span> <span class="pre">--object</span> <span class="pre">tiangan.ding</span></code>；不带筛选的 <code class="docutils literal notranslate"><span class="pre">--query-knowledge</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">knowledge</span> <span class="pre">--all</span></code>。
+命盘调用 <code class="docutils literal notranslate"><span class="pre">--seed</span> <span class="pre">236</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">chart</span> <span class="pre">--seed</span> <span class="pre">236</span></code>，<code class="docutils literal notranslate"><span class="pre">--match-context</span> <span class="pre">判据ID</span> <span class="pre">…</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">match</span> <span class="pre">判据ID</span> <span class="pre">…</span></code>，
+上面的新写法都接在 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_interpreter.py</span></code> 后。
+原来同时展示命盘并导出知识 TXT 的调用，拆成 <code class="docutils literal notranslate"><span class="pre">chart</span> <span class="pre">…</span></code> 和 <code class="docutils literal notranslate"><span class="pre">knowledge</span> <span class="pre">--export-knowledge-base</span> <span class="pre">…</span></code> 两条独立命令，
+没有跨命令的冲突预检或整体回滚；每条命令仍检查自己的输出冲突及知识源覆盖。</p>
+<p>字段与方法的完整说明见 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeBase</span></code></a> 和 <a class="reference internal" href="../api/index.html"><span class="doc">API Reference</span></a>，本文只讲上手路径。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="relations-transits.html" title="上一章">关系与流运</a></li>
+      <li>Next: <a href="integration.html" title="下一章">集成开发</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

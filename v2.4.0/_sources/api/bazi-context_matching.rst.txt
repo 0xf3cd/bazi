@@ -1,0 +1,95 @@
+bazi.context_matching
+=====================
+
+.. automodule:: bazi.context_matching
+
+.. autodata:: bazi.context_matching.MatchStatus
+   :no-value:
+
+.. autodata:: bazi.context_matching.CriterionReason
+   :no-value:
+
+.. autodata:: bazi.context_matching.MatchReason
+   :no-value:
+
+.. autodata:: bazi.context_matching.ScopeName
+   :no-value:
+
+.. autodata:: bazi.context_matching.TransitEntry
+   :no-value:
+
+.. autoclass:: bazi.context_matching.YearCoordinate
+   :members: entry, ganzhi_year
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.MonthCoordinate
+   :members: entry, ganzhi_month, ganzhi_year
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.DateCoordinate
+   :members: entry, solar_date
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.MomentCoordinate
+   :members: entry, solar_moment
+   :undoc-members:
+
+.. autodata:: bazi.context_matching.TransitCoordinate
+   :no-value:
+
+.. autoclass:: bazi.context_matching.NatalObservation
+   :members: scope
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.LiunianObservation
+   :members: ganzhi_year, scope
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.TransitObservation
+   :members: coordinate, kinds, scope
+   :undoc-members:
+
+.. autodata:: bazi.context_matching.Observation
+   :no-value:
+
+.. autoclass:: bazi.context_matching.CriterionInfo
+   :members: analysis_kind, binding_effect, claim_genders, claim_ids, criterion_id, definition, entry_role, observation_keys, observation_types, optional_inputs, required_gender, required_inputs, scope_inputs, scopes, transit_entries, transit_kinds, unknown_conditions
+   :undoc-members:
+
+.. autofunction:: bazi.context_matching.criterion
+
+.. autofunction:: bazi.context_matching.criteria
+
+.. autoclass:: bazi.context_matching.RelatedEntry
+   :members: claim_id, recognized
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.LiunianPosition
+   :members: ganzhi_year
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.ChartOccurrence
+   :members: ganzhi, index, layer, position, shishen, stem
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.CriterionResult
+   :members: criterion_id, definition, observations, reason, scope_complete, status
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.EntryMatch
+   :members: claim_id, reason, status
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.PremiseMatches
+   :members: entries
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.ConditionReferences
+   :members: entries
+   :undoc-members:
+
+.. autoclass:: bazi.context_matching.ContextResult
+   :members: bazi, criterion, evidence, knowledge, observation, references, render
+   :undoc-members:
+
+.. autofunction:: bazi.context_matching.evaluate_context

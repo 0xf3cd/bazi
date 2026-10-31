@@ -1,0 +1,14 @@
+bazi.common
+===========
+
+.. automodule:: bazi.common
+
+.. autodata:: bazi.common.FrozenDictKeyType
+   :no-value:
+
+.. autodata:: bazi.common.FrozenDictValueType
+   :no-value:
+
+.. autoclass:: bazi.common.frozendict
+
+.. autofunction:: bazi.common.check_declared_types

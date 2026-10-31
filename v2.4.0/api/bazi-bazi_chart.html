@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.bazi_chart &#8212; bazi · v2.4.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.chart_text" href="bazi-chart_text.html" />
+    <link rel="prev" title="bazi.bazi" href="bazi-bazi.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.bazi_chart">
+<span id="bazi-bazi-chart"></span><h1>bazi.bazi_chart<a class="headerlink" href="#module-bazi.bazi_chart" title="链接到此标题。">¶</a></h1>
+<p>Bazi 上的命盘派生信息：十神、藏干、纳音、十二长生与运限等。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.bazi_chart.</span></span><span class="sig-name descname"><span class="pre">BaziChart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bazi</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L78-L459"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart" title="链接到此定义。">¶</a></dt>
+<dd><p>提供原盘的阴阳五行、十神、十二长生、纳音、藏干等派生信息。
+派生量首次访问后缓存；构造后不得重绑 <code class="docutils literal notranslate"><span class="pre">_bazi</span></code>，重绑不会刷新已有缓存。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>bazi</strong> (<a class="reference internal" href="bazi-bazi.html#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><em>Bazi</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.PillarShishens">
+<span class="sig-name descname"><span class="pre">PillarShishens</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.PillarShishens" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.GanzhiData" title="bazi.data_types.GanzhiData"><code class="xref py py-class docutils literal notranslate"><span class="pre">GanzhiData</span></code></a>[<a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shishen</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>, <a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shishen</span></code></a>] 的别名</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.PillarTraits">
+<span class="sig-name descname"><span class="pre">PillarTraits</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.PillarTraits" title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="bazi-data_types.html#bazi.data_types.GanzhiData" title="bazi.data_types.GanzhiData"><code class="xref py py-class docutils literal notranslate"><span class="pre">GanzhiData</span></code></a>[<a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">TraitTuple</span></code></a>, <a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">TraitTuple</span></code></a>] 的别名</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.bazi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bazi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-bazi.html#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><span class="pre">Bazi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L107-L110"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.bazi" title="链接到此定义。">¶</a></dt>
+<dd><p>每次返回独立深拷贝；不使用 <code class="docutils literal notranslate"><span class="pre">cached_property</span></code>，避免调用方修改缓存中的共享 Bazi。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.dayun">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dayun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Generator"><span class="pre">Generator</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.DayunTuple" title="bazi.data_types.DayunTuple"><span class="pre">DayunTuple</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L371-L413"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.dayun" title="链接到此定义。">¶</a></dt>
+<dd><p>从公历交运时刻线生成有限大运；每步覆盖 <code class="docutils literal notranslate"><span class="pre">[start_moment,</span> <span class="pre">end_moment)</span></code>，只生成落在所选历法
+后端半开节气窗口内的起点，因此结果可以为空。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chart</span><span class="p">:</span> <span class="n">BaziChart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span>
+
+<span class="n">gen</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">dayun</span>
+<span class="n">first_ten_dayuns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DayunTuple</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="n">next_ten_dayuns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DayunTuple</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">dayun</span> <span class="ow">in</span> <span class="n">chart</span><span class="o">.</span><span class="n">dayun</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">dayun</span><span class="o">.</span><span class="n">start_moment</span><span class="p">,</span> <span class="n">dayun</span><span class="o">.</span><span class="n">ganzhi</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.dayun_order">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dayun_order</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.dayun_order" title="链接到此定义。">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> 代表大运是顺排的，<code class="docutils literal notranslate"><span class="pre">False</span></code> 代表大运是逆排的。</p>
+<p>Note: 传统表述以年干阴阳论「阳男阴女顺、阴男阳女逆」；本实现读年支阴阳，二者数学恒等价——
+六十甲子内干支的阴阳恒一致。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.dayun_start_moment">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dayun_start_moment</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.13/library/datetime.html#datetime.datetime"><span class="pre">datetime</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.dayun_start_moment" title="链接到此定义。">¶</a></dt>
+<dd><p>大运开始的时间 / 交运时间（公历）。</p>
+<p>地点盘返回东八区无时区标签，不是真太阳时。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.hidden_tiangan">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">hidden_tiangan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.BaziData" title="bazi.data_types.BaziData"><span class="pre">BaziData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.HiddenTianganDict" title="bazi.data_types.HiddenTianganDict"><span class="pre">HiddenTianganDict</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.hidden_tiangan" title="链接到此定义。">¶</a></dt>
+<dd><p>当前八字的所有地支中的藏干。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hidden</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">hidden_tiangan</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">hidden</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>  <span class="c1"># 年支藏干</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hidden</span><span class="o">.</span><span class="n">month</span><span class="p">)</span> <span class="c1"># 月支藏干</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hidden</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>   <span class="c1"># 日支藏干</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hidden</span><span class="o">.</span><span class="n">hour</span><span class="p">)</span>  <span class="c1"># 时支藏干</span>
+
+<span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hidden</span><span class="p">:</span> <span class="c1"># 按年、月、日、时顺序遍历</span>
+  <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.house_of_relationship">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">house_of_relationship</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L142-L145"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.house_of_relationship" title="链接到此定义。">¶</a></dt>
+<dd><p>婚姻宫（配偶宫），即日柱地支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.liunian">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">liunian</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Generator"><span class="pre">Generator</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.LiunianTuple" title="bazi.data_types.LiunianTuple"><span class="pre">LiunianTuple</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L439-L459"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.liunian" title="链接到此定义。">¶</a></dt>
+<dd><p>流年生成器（无限）。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chart</span><span class="p">:</span> <span class="n">BaziChart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">ganzhi</span> <span class="ow">in</span> <span class="n">chart</span><span class="o">.</span><span class="n">liunian</span><span class="p">:</span> <span class="c1"># 无限生成器</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">ganzhi</span><span class="p">)</span> <span class="c1"># 如 "2024 甲辰"</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.minggong">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">minggong</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.minggong" title="链接到此定义。">¶</a></dt>
+<dd><p>中气进月的命宫干支，时支取本盘时柱，宫干取本盘年干五虎遁。</p>
+<p>依《命理探原》起例按语，现有节月达到中气后月序循环进一；大寒后不提前换年。
+中气按出生精度相等归新，地点盘先换真太阳钟。时区与精度政策是本库执行约定，
+不称为古籍原文；结果不进入原四柱分析。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.nayin">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nayin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.BaziData" title="bazi.data_types.BaziData"><span class="pre">BaziData</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.nayin" title="链接到此定义。">¶</a></dt>
+<dd><p>年、月、日、时柱的纳音。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nayins</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">nayin</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">nayins</span><span class="o">.</span><span class="n">year</span><span class="p">)</span> <span class="c1"># 年柱纳音</span>
+
+<span class="k">for</span> <span class="n">nayin</span> <span class="ow">in</span> <span class="n">nayins</span><span class="p">:</span> <span class="c1"># 按年、月、日、时顺序遍历</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">nayin</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.random">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_CONFIG</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L94-L105"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.random" title="链接到此定义。">¶</a></dt>
+<dd><p>用 <code class="docutils literal notranslate"><span class="pre">Bazi.random</span></code> 随机生成命盘，主要用于测试。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>config: (BaziConfig) 原样传递的命盘配置。</p></li>
+<li><p>rng: (Random | None) 局部随机源；省略时沿用全局种子语义。</p></li>
+</ul>
+<p>Return: (BaziChart) 随机命盘。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><em>BaziConfig</em></a>)</p></li>
+<li><p><strong>rng</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/random.html#random.Random"><em>Random</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.relationship_stars">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">relationship_stars</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.GanzhiData" title="bazi.data_types.GanzhiData"><span class="pre">GanzhiData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.relationship_stars" title="链接到此定义。">¶</a></dt>
+<dd><p>夫妻星（配偶星）。</p>
+<p>目标干由 <code class="docutils literal notranslate"><span class="pre">BaziSchool.peiou_xing_def</span></code> 选定（<code class="docutils literal notranslate"><span class="pre">_peiou_xing_target</span></code>）；地支侧两读一致，
+取主气十神等于目标干十神的地支。对固定日主，<code class="docutils literal notranslate"><span class="pre">shishen</span></code> 在十干上是双射，
+「十神相等」与「主气等于目标干」等价。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stars</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">relationship_stars</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">stars</span><span class="o">.</span><span class="n">tiangan</span><span class="p">)</span> <span class="c1"># 配偶星天干</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">stars</span><span class="o">.</span><span class="n">dizhi</span><span class="p">)</span>   <span class="c1"># 配偶星地支元组</span>
+<span class="k">assert</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stars</span><span class="o">.</span><span class="n">dizhi</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="c1"># 对应一到两个地支</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.shier_zhangsheng">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shier_zhangsheng</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.BaziData" title="bazi.data_types.BaziData"><span class="pre">BaziData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-shier_zhangsheng.html#bazi.defines.shier_zhangsheng.ShierZhangsheng" title="bazi.defines.shier_zhangsheng.ShierZhangsheng"><span class="pre">ShierZhangsheng</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.shier_zhangsheng" title="链接到此定义。">¶</a></dt>
+<dd><p>年、月、日、时柱的十二长生。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">zhangshengs</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">shier_zhangsheng</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">zhangshengs</span><span class="o">.</span><span class="n">day</span><span class="p">)</span> <span class="c1"># 日柱十二长生</span>
+
+<span class="k">for</span> <span class="n">zs</span> <span class="ow">in</span> <span class="n">zhangshengs</span><span class="p">:</span> <span class="c1"># 按年、月、日、时顺序遍历</span>
+  <span class="k">pass</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.shishen">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shishen</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.BaziData" title="bazi.data_types.BaziData"><span class="pre">BaziData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.GanzhiData" title="bazi.data_types.GanzhiData"><span class="pre">GanzhiData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.shishen" title="链接到此定义。">¶</a></dt>
+<dd><p>年、月、日、时柱的天干地支所对应的十神。注意，日主没有十神。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shishens</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">shishen</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">shishens</span><span class="o">.</span><span class="n">year</span><span class="o">.</span><span class="n">tiangan</span><span class="p">)</span> <span class="c1"># 年干十神</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">shishens</span><span class="o">.</span><span class="n">hour</span><span class="o">.</span><span class="n">dizhi</span><span class="p">)</span>   <span class="c1"># 时支十神</span>
+
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pillar_shishens</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shishens</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">pillar_shishens</span><span class="o">.</span><span class="n">dizhi</span><span class="p">)</span> <span class="c1"># 此柱地支十神</span>
+
+  <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">Zhu</span><span class="o">.</span><span class="n">日</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="c1"># 跳过日主</span>
+    <span class="k">assert</span> <span class="n">pillar_shishens</span><span class="o">.</span><span class="n">tiangan</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">continue</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">pillar_shishens</span><span class="o">.</span><span class="n">tiangan</span><span class="p">)</span> <span class="c1"># 此柱天干十神</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.taiyuan">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">taiyuan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.taiyuan" title="链接到此定义。">¶</a></dt>
+<dd><p>月干顺移一、月支顺移三的胎元干支；不是实际受孕时刻，也不扩原盘四柱。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.traits">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">traits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.BaziData" title="bazi.data_types.BaziData"><span class="pre">BaziData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.GanzhiData" title="bazi.data_types.GanzhiData"><span class="pre">GanzhiData</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><span class="pre">TraitTuple</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><span class="pre">TraitTuple</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.traits" title="链接到此定义。">¶</a></dt>
+<dd><p>年、月、日、时的天干地支的阴阳和五行。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">traits</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">traits</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">year</span><span class="o">.</span><span class="n">tiangan</span><span class="p">)</span> <span class="c1"># 年柱天干的阴阳五行</span>
+<span class="k">assert</span> <span class="n">traits</span><span class="o">.</span><span class="n">hour</span><span class="o">.</span><span class="n">dizhi</span> <span class="o">==</span> <span class="n">TraitTuple</span><span class="p">(</span><span class="n">Wuxing</span><span class="o">.</span><span class="n">木</span><span class="p">,</span> <span class="n">Yinyang</span><span class="o">.</span><span class="n">阳</span><span class="p">)</span> <span class="c1"># 此例假设时支为寅</span>
+
+<span class="k">for</span> <span class="n">pillar_traits</span> <span class="ow">in</span> <span class="n">traits</span><span class="p">:</span> <span class="c1"># 按年、月、日、时顺序遍历</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">pillar_traits</span><span class="o">.</span><span class="n">tiangan</span><span class="p">)</span> <span class="c1"># 此柱天干的阴阳五行</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">pillar_traits</span><span class="o">.</span><span class="n">dizhi</span><span class="p">)</span>   <span class="c1"># 此柱地支的阴阳五行</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.bazi_chart.BaziChart.xiaoyun">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">xiaoyun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.XiaoyunTuple" title="bazi.data_types.XiaoyunTuple"><span class="pre">XiaoyunTuple</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart.BaziChart.xiaoyun" title="链接到此定义。">¶</a></dt>
+<dd><p>全部小运的元组。</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chart</span><span class="p">:</span> <span class="n">BaziChart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">bazi</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">xusui_age</span><span class="p">,</span> <span class="n">ganzhi</span> <span class="ow">in</span> <span class="n">chart</span><span class="o">.</span><span class="n">xiaoyun</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'虚岁: </span><span class="si">{</span><span class="n">xusui_age</span><span class="si">}</span><span class="s1">, 小运: </span><span class="si">{</span><span class="n">ganzhi</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.bazi_chart.">
+<span class="sig-prename descclassname"><span class="pre">bazi.bazi_chart.</span></span><span class="sig-name descname"><span class="pre">命盘</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/bazi_chart.py#L78-L459"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.bazi_chart." title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.bazi_chart.BaziChart</span></code></a> 的别名。</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-bazi.html" title="上一章">bazi.bazi</a></li>
+      <li>Next: <a href="bazi-chart_text.html" title="下一章">bazi.chart_text</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

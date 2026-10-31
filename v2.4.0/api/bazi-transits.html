@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.transits &#8212; bazi · v2.4.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.utils" href="bazi-utils.html" />
+    <link rel="prev" title="bazi.transit_chart" href="bazi-transit_chart.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.transits">
+<span id="bazi-transits"></span><h1>bazi.transits<a class="headerlink" href="#module-bazi.transits" title="链接到此标题。">¶</a></h1>
+<p>流运数据类型及命盘小运、大运查询。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.transits.DayunDatabase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transits.</span></span><span class="sig-name descname"><span class="pre">DayunDatabase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L23-L46"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.DayunDatabase" title="链接到此定义。">¶</a></dt>
+<dd><p>按所选规则的起运年份标签区间定位大运；相邻标签划分区间，末区间固定为十个标签年，因此可与
+物理 <code class="docutils literal notranslate"><span class="pre">end_moment</span></code> 不一致。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transits.</span></span><span class="sig-name descname"><span class="pre">TransitKind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L49-L56"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind" title="链接到此定义。">¶</a></dt>
+<dd><p>流运种类。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind.DAYUN">
+<span class="sig-name descname"><span class="pre">DAYUN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dayun'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind.DAYUN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind.LIUNIAN">
+<span class="sig-name descname"><span class="pre">LIUNIAN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'liunian'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind.LIUNIAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind.LIURI">
+<span class="sig-name descname"><span class="pre">LIURI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'liuri'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind.LIURI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind.LIUYUE">
+<span class="sig-name descname"><span class="pre">LIUYUE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'liuyue'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind.LIUYUE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitKind.XIAOYUN">
+<span class="sig-name descname"><span class="pre">XIAOYUN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'xiaoyun'</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitKind.XIAOYUN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transits.</span></span><span class="sig-name descname"><span class="pre">TransitSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xiaoyun</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dayun</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">liunian</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">liuyue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">liuri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L59-L112"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet" title="链接到此定义。">¶</a></dt>
+<dd><p>一组不可变且顺序固定的具名流运干支。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xiaoyun</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dayun</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>liunian</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>liuyue</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>liuri</strong> (<a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.dayun">
+<span class="sig-name descname"><span class="pre">dayun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.dayun" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.ganzhis">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ganzhis</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L92-L95"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.ganzhis" title="链接到此定义。">¶</a></dt>
+<dd><p>按固定流运顺序返回现有干支。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.items">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">items</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><span class="pre">TransitKind</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L74-L84"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.items" title="链接到此定义。">¶</a></dt>
+<dd><p>按固定顺序返回现有流运。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.liunian">
+<span class="sig-name descname"><span class="pre">liunian</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.liunian" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.liuri">
+<span class="sig-name descname"><span class="pre">liuri</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.liuri" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.liuyue">
+<span class="sig-name descname"><span class="pre">liuyue</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.liuyue" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.select">
+<span class="sig-name descname"><span class="pre">select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">kinds</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L97-L112"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.select" title="链接到此定义。">¶</a></dt>
+<dd><p>按固定顺序返回指定的流运；指定的种类必须全部存在。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kinds</strong> (<a class="reference internal" href="#bazi.transits.TransitKind" title="bazi.transits.TransitKind"><em>TransitKind</em></a>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#bazi.transits.TransitSet" title="bazi.transits.TransitSet"><em>TransitSet</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.transits.TransitSet.xiaoyun">
+<span class="sig-name descname"><span class="pre">xiaoyun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitSet.xiaoyun" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.transits.TransitDatabase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.transits.</span></span><span class="sig-name descname"><span class="pre">TransitDatabase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chart</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L115-L207"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitDatabase" title="链接到此定义。">¶</a></dt>
+<dd><p>查询命盘小运、按年份标签解释的大运及按物理边界解释的大运。</p>
+<p><code class="docutils literal notranslate"><span class="pre">_dayun_at_*</span></code> 是供 TransitChart 使用的包内物理边界入口；调用方先校验坐标、出生下界及
+历法可用性，这些入口只解释交运边界，不重复公开入口校验，也不承诺包外调用。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>chart</strong> (<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><em>BaziChart</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transits.TransitDatabase.dayun">
+<span class="sig-name descname"><span class="pre">dayun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L145-L153"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitDatabase.dayun" title="链接到此定义。">¶</a></dt>
+<dd><p>按命盘年份标签返回干支年坐标 <code class="docutils literal notranslate"><span class="pre">gz_year</span></code> 的大运。
+有限年份视图延伸到末标签后十年，可与末步物理区间不同；视图外返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gz_year</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.transits.TransitDatabase.xiaoyun">
+<span class="sig-name descname"><span class="pre">xiaoyun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gz_year</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/transits.py#L139-L143"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.transits.TransitDatabase.xiaoyun" title="链接到此定义。">¶</a></dt>
+<dd><p>返回 <code class="docutils literal notranslate"><span class="pre">gz_year</span></code> 的小运；超出小运年份范围时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gz_year</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><em>Ganzhi</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-transit_chart.html" title="上一章">bazi.transit_chart</a></li>
+      <li>Next: <a href="bazi-utils.html" title="下一章">bazi.utils</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

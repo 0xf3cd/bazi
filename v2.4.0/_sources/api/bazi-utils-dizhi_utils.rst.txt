@@ -1,0 +1,70 @@
+bazi.utils.dizhi_utils
+======================
+
+.. automodule:: bazi.utils.dizhi_utils
+
+.. autodata:: bazi.utils.dizhi_utils.DizhiCombo
+   :no-value:
+
+.. autodata:: bazi.utils.dizhi_utils.DizhiRelationCombos
+   :no-value:
+
+.. autoclass:: bazi.utils.dizhi_utils.DizhiRelationDiscovery
+   :members: filter, merge, mutual_only
+   :undoc-members:
+
+.. autoclass:: bazi.utils.dizhi_utils.GanzhiOccurrence
+   :members: ganzhi, index
+   :undoc-members:
+
+.. autodata:: bazi.utils.dizhi_utils.GanzhiRelationCombo
+   :no-value:
+
+.. autodata:: bazi.utils.dizhi_utils.GanzhiRelationCombos
+   :no-value:
+
+.. autoclass:: bazi.utils.dizhi_utils.GanzhiRelationDiscovery
+   :members: to_dizhi_discovery
+   :undoc-members:
+
+.. autofunction:: bazi.utils.dizhi_utils.sanhui
+
+.. autofunction:: bazi.utils.dizhi_utils.liuhe
+
+.. autofunction:: bazi.utils.dizhi_utils.anhe
+
+.. autofunction:: bazi.utils.dizhi_utils.tonghe
+
+.. autofunction:: bazi.utils.dizhi_utils.tongluhe
+
+.. autofunction:: bazi.utils.dizhi_utils.sanhe
+
+.. autofunction:: bazi.utils.dizhi_utils.banhe
+
+.. autofunction:: bazi.utils.dizhi_utils.gonghe
+
+.. autofunction:: bazi.utils.dizhi_utils.gonghui
+
+.. autofunction:: bazi.utils.dizhi_utils.xing
+
+.. autofunction:: bazi.utils.dizhi_utils.chong
+
+.. autofunction:: bazi.utils.dizhi_utils.po
+
+.. autofunction:: bazi.utils.dizhi_utils.hai
+
+.. autofunction:: bazi.utils.dizhi_utils.sheng
+
+.. autofunction:: bazi.utils.dizhi_utils.ke
+
+.. autofunction:: bazi.utils.dizhi_utils.search
+
+.. autofunction:: bazi.utils.dizhi_utils.discover
+
+.. autofunction:: bazi.utils.dizhi_utils.search_ganzhis
+
+.. autofunction:: bazi.utils.dizhi_utils.discover_ganzhis
+
+.. autofunction:: bazi.utils.dizhi_utils.discover_mutual_ganzhis
+
+.. autofunction:: bazi.utils.dizhi_utils.discover_mutual

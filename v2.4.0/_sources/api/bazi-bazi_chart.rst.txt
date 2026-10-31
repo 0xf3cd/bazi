@@ -1,0 +1,14 @@
+bazi.bazi_chart
+===============
+
+.. automodule:: bazi.bazi_chart
+
+.. autoclass:: bazi.bazi_chart.BaziChart
+   :members: PillarShishens, PillarTraits, bazi, dayun, dayun_order, dayun_start_moment, hidden_tiangan, house_of_relationship, liunian, minggong, nayin, random, relationship_stars, shier_zhangsheng, shishen, taiyuan, traits, xiaoyun
+   :undoc-members:
+
+.. py:currentmodule:: bazi.bazi_chart
+
+.. py:data:: 命盘
+
+   :py:obj:`bazi.bazi_chart.BaziChart` 的别名。

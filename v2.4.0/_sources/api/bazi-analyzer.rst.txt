@@ -1,0 +1,6 @@
+bazi.analyzer
+=============
+
+.. automodule:: bazi.analyzer
+
+:py:mod:`bazi.analyzer.relationship`

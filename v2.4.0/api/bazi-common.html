@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.common &#8212; bazi · v2.4.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.context_matching" href="bazi-context_matching.html" />
+    <link rel="prev" title="bazi.calendar.utils_protocol" href="bazi-calendar-utils_protocol.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.common">
+<span id="bazi-common"></span><h1>bazi.common<a class="headerlink" href="#module-bazi.common" title="链接到此标题。">¶</a></h1>
+<p>包内共用的不可变映射与声明类型检查。</p>
+<p>frozendict 提供冻结映射；check_declared_types 校验声明类型。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.common.FrozenDictKeyType">
+<span class="sig-prename descclassname"><span class="pre">bazi.common.</span></span><span class="sig-name descname"><span class="pre">FrozenDictKeyType</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/common.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.common.FrozenDictKeyType" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.common.FrozenDictValueType">
+<span class="sig-prename descclassname"><span class="pre">bazi.common.</span></span><span class="sig-name descname"><span class="pre">FrozenDictValueType</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/common.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.common.FrozenDictValueType" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.common.frozendict">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.common.</span></span><span class="sig-name descname"><span class="pre">frozendict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/common.py#L21-L42"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.common.frozendict" title="链接到此定义。">¶</a></dt>
+<dd><p>浅冻结的不可变映射：映射本身不可变，取值原样返回，不做防御性拷贝。
+持有可变值的一方须在自己的边界防止外部修改。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.13/library/collections.abc.html#collections.abc.Mapping"><em>Mapping</em></a><em>[</em><a class="reference internal" href="#bazi.common.FrozenDictKeyType" title="bazi.common.FrozenDictKeyType"><em>FrozenDictKeyType</em></a><em>, </em><a class="reference internal" href="#bazi.common.FrozenDictValueType" title="bazi.common.FrozenDictValueType"><em>FrozenDictValueType</em></a><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bazi.common.check_declared_types">
+<span class="sig-prename descclassname"><span class="pre">bazi.common.</span></span><span class="sig-name descname"><span class="pre">check_declared_types</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/53f9caa56ee8523f42102f2f0df4693962431a37/bazi/common.py#L75-L98"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.common.check_declared_types" title="链接到此定义。">¶</a></dt>
+<dd><p>逐字段核对运行时类型，第一个不符合声明类型的字段抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。
+用于构造函数为公开入口的 frozen 值类型；校验依据字段注解，新增字段也会被检查。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>由 <code class="docutils literal notranslate"><span class="pre">__post_init__</span></code> 调用；值域检查（范围、成员、跨字段规则）留在调用处，本函数只检查类型。</p></li>
+<li><p>字段注解必须是运行时类或它们的联合，不能是延迟注解或参数化泛型。
+不满足此条件的 dataclass 须自行校验。</p></li>
+</ul>
+<p>Args:</p>
+<ul class="simple">
+<li><p>instance: (DataclassInstance) 待检查的 dataclass 实例，通常为 <code class="docutils literal notranslate"><span class="pre">self</span></code>。</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>instance</strong> (<em>DataclassInstance</em>)</p>
+</dd>
+<dt class="field-even">返回类型<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="bazi-calendar-utils_protocol.html" title="上一章">bazi.calendar.utils_protocol</a></li>
+      <li>Next: <a href="bazi-context_matching.html" title="下一章">bazi.context_matching</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

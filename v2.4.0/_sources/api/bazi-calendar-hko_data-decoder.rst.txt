@@ -1,0 +1,21 @@
+bazi.calendar.hko_data.decoder
+==============================
+
+.. automodule:: bazi.calendar.hko_data.decoder
+
+.. autodata:: bazi.calendar.hko_data.decoder.JieqiDates
+   :no-value:
+
+.. autoclass:: bazi.calendar.hko_data.decoder.DecodedJieqiDates
+   :members: date_bytes_len, end_year, get, start_year, supported_year_range
+   :undoc-members:
+
+.. py:currentmodule:: bazi.calendar.hko_data.decoder
+
+.. py:data:: LunarYearInfo
+
+   :py:obj:`bazi.calendar.dates.LunarYearInfo` 的重导出。
+
+.. autoclass:: bazi.calendar.hko_data.decoder.DecodedLunarYears
+   :members: end_year, get, sexagenary_cycle, start_year, supported_year_range
+   :undoc-members:
