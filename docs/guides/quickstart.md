@@ -177,11 +177,81 @@ module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
 
 ## 下一步
 
-- 更新到已发布 v2.3.0 的源码调用：[v2.2.0→v2.3.0 迁移入口](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)，完整约定以对应版本的 `API_CONTRACT.md` 为准。
-- 从 v2.3.0 升级到 v2.4.0：[存取接口删除与结构调用调整](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)。
-- 想改变精度、换日点、大运年份口径，或使用真太阳时：{doc}`configuration`。
-- 想查流年、流月，或看原局与流运之间的关系：{doc}`relations-transits`。
-- 想读取内存结果，或接入自己的程序：{doc}`integration`。
-- 不排盘，只查知识条目和出处：{doc}`knowledge`。
+排好一张盘之后，常用的三条路径如下。示例仍按上文的东八区钟填写出生输入，每段都可独立运行。
+
+### 查某一年的流年
+
+```{testcode} quickstart-transits
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.transit_chart import TransitChart
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+year = TransitChart(chart).at_year(2024)
+if year is not None:
+  print(year.liunian)
+```
+
+```{testoutput} quickstart-transits
+甲辰
+```
+
+2024 是干支年标签；`at_year` 在出生干支年之前返回 `None`，所以先检查再取字段。
+返回的 `TransitSet` 也可包含小运或大运，缺项为 `None`。流月、日期、时刻及原局关系查询见 {doc}`relations-transits`。
+
+### 只取需要的几个流年
+
+```{testcode} quickstart-liunian
+from datetime import datetime
+from itertools import islice
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+for year in islice(chart.liunian, 3):
+  print(year.ganzhi_year, year.ganzhi)
+```
+
+```{testoutput} quickstart-liunian
+1990 庚午
+1991 辛未
+1992 壬申
+```
+
+这里取出生干支年起的前三年。`chart.liunian` 可无限延续，不要直接转成 `list` 或 `tuple`；
+每次访问该属性都会新建生成器；将生成器存到变量后，再次迭代会从上次停止的位置继续。
+有限大运和流年文字的用法见 {doc}`relations-transits`。
+
+### 检查一项结构前提
+
+```{testcode} quickstart-context
+from datetime import datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.context_matching import NatalObservation, evaluate_context
+
+chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+result = evaluate_context(
+  chart,
+  criterion_id='editorial.guansha_coexistence.v1',
+  observation=NatalObservation(),
+)
+print(result.criterion.status, result.criterion.scope_complete)
+```
+
+```{testoutput} quickstart-context
+SATISFIED True
+```
+
+本例只查原局，结果表示“正官与七杀各至少出现一次”这一结构前提满足，观察范围完整。
+它不是旺衰、格局或现实事件的判断，也不证明知识条文本身为真。证据、参考条目和其他观察范围见 {doc}`integration`；
+不排盘而查文字与出处，见 {doc}`knowledge`。
+
+- 选择精度、换日点、大运年份口径或真太阳时：{doc}`configuration`。
+- 旧调用与脚本的升级条件：{doc}`../release-notes`。
 
 逐个类和方法的签名在 API 参考中，入口见 {py:class}`~bazi.bazi.Bazi` 和 {py:class}`~bazi.bazi_chart.BaziChart`。

@@ -7,8 +7,6 @@
 
 - 第一次使用：按下面的[安装包路线](#安装包排第一张盘)运行 Python 程序。
 - 想在终端操作：看[命令行](#命令行)，安装当前开发版的 `bazi` 命令；发布版暂未包含此命令。
-- 从 v2.3.0 升级：先看[v2.4.0 升级说明](#从-v230-升级到-v240)，其中列出存取接口删除和结构调用变化。
-- 从旧脚本迁移：看[脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移)，三个脚本现由一个 `bazi` 命令承接。
 
 ## 安装包：排第一张盘
 
@@ -36,7 +34,7 @@ python -m venv .venv
 python -m pip install bazi
 ```
 
-普通使用不需要安装 pytest、mypy 或文档工具。本文对应当前开发版；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。下例使用的基本排盘与文本接口在 v2.2.0 已提供；新增 CLI 的安装方法见[命令行](#命令行)。
+普通使用不需要安装 pytest、mypy 或文档工具。本文对应当前开发源码；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。当前开发版的源码安装与终端用法见[命令行](#命令行)。
 
 ### 2. 填写出生信息
 
@@ -91,8 +89,6 @@ python first_chart.py
 | 想做什么 | 从这里开始 |
 | --- | --- |
 | 排第一张盘，了解默认值和输出 | [快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md) |
-| 从旧源码脚本升级到安装命令 | [脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移) |
-| 从 v2.3.0 升级到 v2.4.0 | [存取接口删除与结构调用调整](#从-v230-升级到-v240) |
 | 改精度、换日点、真太阳时或流派取法 | [配置与时间口径](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md) |
 | 查原局与流运的关系，取有限几步大运和流年 | [关系与流运](https://github.com/0xf3cd/bazi/blob/main/docs/guides/relations-transits.md) |
 | 不排盘，只查条目、来源、过滤和编辑源加载 | [独立知识库指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/knowledge.md) |
@@ -101,7 +97,7 @@ python first_chart.py
 | 逐模块查签名、参数与条件 | [文档入口](https://github.com/0xf3cd/bazi/blob/main/docs/index.md)，构建后进入 API Reference |
 | 提交勘误、出处或流派读法 | [贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md) |
 
-完整文档由源码与知识注册表生成；构建方法见[开发](#开发)。安装包带有 `py.typed` 内联类型标注。
+完整文档由源码与知识注册表生成；本地构建见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md#只构建并检查文档)。安装包带有 `py.typed` 内联类型标注。
 
 ## 能力与解释边界
 
@@ -111,9 +107,9 @@ python first_chart.py
 知识条目分别记录来源状态、默认展示选择和前提整理状态。来源已核定不证明条文本身为真，
 也不证明适用于某张命盘。前提判别不计算旺衰、喜忌、格局或现实事件；部分判据只检查前提的一部分，限度见知识目录。
 
-v2.4.0 不提供命盘或判别结果（`ContextResult`）的保存恢复接口，知识 JSON 仅作当前编辑来源，不承诺历史结果恢复；升级前请读[升级说明](#从-v230-升级到-v240)。
-v2.4.0 也调整了位置、观察请求和分析结果：原局用 `Zhu` 柱位，求值用 `observation=`。当前开发版进一步以 `reference_ids` 返回参考条目 ID，证据仍从 `evidence` 读取。新调用见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，旧构造与 dataclass 操作的影响见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
-详细条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)；各版本变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+本库不提供命盘或判别结果（`ContextResult`）的保存恢复接口；知识 JSON 仅作当前编辑来源，不承诺历史结果恢复。
+当前内存结果的读取、观察范围与参考条目用法见[集成指南](https://github.com/0xf3cd/bazi/blob/main/docs/guides/integration.md#前提匹配结构事实不是判断)，完整输入、返回与错误条件见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md)。
+已有调用或旧脚本的升级条件统一见[发布与迁移](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 命令行
 
@@ -195,57 +191,11 @@ bazi match editorial.guansha_coexistence.v1 \
 TXT 导出拒绝覆盖知识源；用 `--output-dir` 导出命盘 TXT 时，会覆盖
 `interpretation_examples/{序号}.txt` 路径上已有的同名文件，其他文件保留。
 
-## 从 v2.2.0 迁移到 v2.3.0
-
-该版本的脚本参数变化见[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#bazi-230)。当前开发版已改用安装后的 `bazi` 命令，调用方法见[命令行](#命令行)。
-
-## 从 v2.3.0 升级到 v2.4.0
-
-本次删除命盘／判别结果与知识快照的公开 JSON 存取、迁移模块及三类 JSON 导出参数，不保留兼容入口。请保留旧原件；需要当前结论时，按原出生输入和完整配置重新构造命盘并求值。
-
-`profile=` 改为 `observation=`，柱位和明藏层改用枚举，岁运坐标按年／月／日期／时刻分别构造。直接构造、`replace`、`asdict` 和位置式类模式的调整见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)；旧字符串比较和位置式类模式可能静默失配。
-
-重新构造命盘时，不传 `BaziSchool.kongwang_anchor` 则使用默认日柱 `Anchor.DAY`；所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置，该字段仍参与命盘身份。例子见[六甲旬空取锚](https://github.com/0xf3cd/bazi/blob/main/docs/guides/configuration.md#六甲旬空取锚)。
-
-知识编辑源仍可用 `KnowledgeBase.load(path)` 读取，当前开发版只接受 `schema_version=3`，条目用布尔字段 `show_by_default`；边界见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识编辑源与文本边界)。
-
 ## 开发
 
-运行本库仍只需 Python 3.11+。**构建文档和运行完整开发检查需要 Python 3.13+**；这不会提高安装包的运行时要求。已经生成的 HTML 可直接用浏览器阅读，不需要 Python 或文档工具。
-
-在独立的 Python 3.13+ 环境中安装开发与文档依赖，运行完整检查：
-
-```sh
-python -m pip install -r Requirements.txt
-python -m pip install -r docs/requirements.txt
-python -m pip install celestial-calendar==0.6.1
-python run_tests.py -a -v
-```
-
-完整检查包含所有测试及 100% 库覆盖率、ruff、mypy、`python -O` 输入检查、安装工件与真实安装命令验证，以及文档检查。CLI 行为由库测试和安装消费覆盖，不再另设脚本冒烟任务。
-在 Python 3.11／3.12 环境中，只安装 `Requirements.txt` 和 `celestial-calendar==0.6.1`，不安装 `docs/requirements.txt`，再运行 `python run_tests.py -a -v --runtime-only`。此命令保留全部库检查，只省去文档工具的类型检查、`tests/docs/` 测试及文档构建；它不能代替完整检查。
-裸 `python run_tests.py` 不含 `slow`／`hkodata` 和可选任务，不能替代完整检查。
-工件验证可能联网下载构建及类型工具；安装命令的导出测试在仓外临时目录运行。
-
-只构建并检查文档：
-
-```sh
-python run_docs.py
-```
-
-检查严格 HTML 构建、API 地址、完整知识目录、内部链接与教程示例；通过后可本地打开 `output_data/docs/html/index.html`。
-构建命令不部署站点，也不启用 Pages。更多测试选项见 `python run_tests.py --help`，外部贡献要求见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)。
-
-### 保留已验证的安装包
-
-```sh
-python run_package_checks.py --output-dir ../bazi-tested
-python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
-```
-
-输出目录须为空且在仓外。发布步骤见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md)。
-重建历法表见 [HKO 编码器](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/hko_data/encoder.py)、[天文表生成器](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_data/generator.py)
-及[数据格式](https://github.com/0xf3cd/bazi/blob/main/bazi/calendar/celestial_data/SCHEMA.md)。安装后缺表应重装包，不运行生成器修补。
+运行本库只需 Python 3.11+；文档构建和完整开发检查需要 Python 3.13+。
+开发环境、`python run_tests.py -a -v`、单独构建文档及历法数据维护见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)。
+保留已验证安装工件与发布步骤见[发布流程](https://github.com/0xf3cd/bazi/blob/main/RELEASING.md)。
 
 ## 贡献与许可
 

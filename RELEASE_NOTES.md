@@ -7,7 +7,25 @@
 - `ContextResult.reference_ids: tuple[str, ...]` 替代 `references` 和条目包装类型。用 `knowledge.entry(id)` 查文字，用判据目录的 `entry_role` 区分完整前提与条件参考；判别状态只从 `criterion` 读取。删除 `MatchReason`、`EntryMatch`、`RelatedEntry`、`PremiseMatches`、`ConditionReferences` 与 `CriterionInfo.binding_effect`，不留兼容入口。
 - 参考按稳定 ID 关联，不再比较条目及来源的内容摘要。正常求值按声明序返回现有且通过默认展示／性别筛选的条目 ID；编辑正文、引文或来源说明不会制造 UNKNOWN。自定义库负责保持同 ID 的领域含义。
 - `KnowledgeEntry.show_by_default: bool` 替代 `output`／`OutputPolicy`，`include_reference_only` 不变。编辑源升为整数 schema 3，条目键改为 `show_by_default`，值为 JSON boolean；旧 schema 1／2 直接拒绝，不自动迁移。312 条知识及 19 条默认展示、默认展示准入和命理规则不变。
-- 构造、`replace`、`asdict` 及位置式类模式须同步迁移；直接构造的参考 ID 保留顺序和重复。迁移方法与限制见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#知识结构开发版迁移)。
+- 构造、`replace`、`asdict` 及位置式类模式须同步迁移；直接构造的参考 ID 保留顺序和重复，具体改法如下。
+
+### 知识结构迁移
+
+| 原接口或编辑源 | 当前做法 |
+| --- | --- |
+| `KnowledgeEntry.output='default'`／`'reference_only'` | `show_by_default=True`／`False`，只接受确切 bool |
+| schema 1／2、条目的 `output` 键 | 自行改为精确整数 `schema_version=3` 和 JSON boolean `show_by_default`，再加载校验 |
+| `result.references` 及条目包装类型 | `result.reference_ids`，用 `result.knowledge.entry(id)` 取条目 |
+| `CriterionInfo.binding_effect`、包装层状态与原因 | 用 `criterion(result.criterion.criterion_id).entry_role` 区分参考语义，状态和原因只从 `result.criterion` 读取 |
+
+旧 schema、旧键、遗漏或额外键均拒绝，不提供运行时迁移层。`show_by_default` 的 `0`、`1`、字符串和 None
+会抛 `TypeError`；默认展示只控制查询，不认证知识正确或适用于当前命盘。`include_reference_only` 及默认展示准入条件不变。
+
+显式构造 `ContextResult` 与 `dataclasses.replace` 改传 `reference_ids=`，`asdict` 返回该 ID 元组。
+直接构造保留顺序与重复，检查 str 类型、非空 ID 和知识库中的存在性，不强制 ID 属于判据 claims；
+正常求值仍按判据声明序与筛选规则返回 ID。
+`ContextResult` 第四位置字段由参考包装改为 ID 元组，`KnowledgeEntry` 倒数第二字段由策略改为 bool。
+**旧位置式类模式可能静默失配或读取不同含义**，构造调用、解构和模式须一起修改，不能只改关键字。
 
 ### 流运查询入口
 
@@ -39,19 +57,99 @@
 
 ## bazi 2.4.0
 
-本版删除公开 JSON 存取与迁移接口，并调整位置、观察请求和分析结果的构造。升级前请保留原出生输入、完整配置和旧记录，核对[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)及[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+本版删除公开 JSON 存取与迁移接口，并调整位置、观察请求和分析结果的构造。升级前请保留原出生输入、完整配置和旧记录，核对下方“存取接口移除”和“结构接口迁移”两节。本节记录 v2.4.0 当时的接口；后续知识结构变化另见 Unreleased。
 
 ### 兼容与调用调整
 
-- 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值，见[升级说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v230-升级到-v240)。
+- 删除命盘／前提判别结果的公开 JSON 保存恢复、知识快照导出与恢复及 `record_migration` 模块，不保留兼容入口或替代保存格式。`BaziJson`、`LocationTimeJson`、`BaziSchool.from_json`、`TransitSet.json` 一并删除。请保留旧原件；需要当前结论时，用原出生输入与完整配置重新排盘、求值。
 - `ContextResult` 的构造及 `replace` 使用 `_bazi` 参数，验证后保存 `Bazi` 输入的独立深拷贝；`bazi` 属性每次返回独立深拷贝。输入完整身份仍参与相等与哈希，原 `input_json` 字段删除。
 - 知识库保留 `KnowledgeBase.load(path)`、完整引用校验和查询／渲染。JSON 只作当前编辑源，`schema_version` 只接受精确整数 2，不自动迁移旧版来源。
 - 源码脚本删除 `--export-chart-json`、`--export-context-json`、`--export-knowledge-json`；保留 TXT、知识编辑源读取和源文件覆盖保护。
 - 位置共享 `Zhu`／`柱`，明藏共享 `TianganLayer`／`天干层次`；空亡和配偶星出现改用 position，前提证据保留具体流年年份。文本柱位及明藏层改为中文值，如 `natal.月`、`藏干`。
   同名 anchor／layer 字段改为非 str 枚举，旧字符串比较、in 判断和关键字类模式可能静默不命中；须改用枚举成员，不能只迁移构造调用。
-- 观察请求改为 NatalObservation、LiunianObservation、TransitObservation，岁运坐标改为年／月／日期／时刻四类；删除旧 profile 和通用坐标构造。CriterionResult、EntryMatch 的定义或状态改为派生属性，ContextResult 用 evidence／references 组合证据和两种参考；不保留旧字段兼容壳。构造、replace、asdict 与位置式类模式均须迁移，后者可能静默失配，见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+- 观察请求改为 NatalObservation、LiunianObservation、TransitObservation，岁运坐标改为年／月／日期／时刻四类；删除旧 profile 和通用坐标构造。CriterionResult、EntryMatch 的定义或状态改为派生属性，ContextResult 用 evidence／references 组合证据和两种参考；不保留旧字段兼容壳。构造、replace、asdict 与位置式类模式均须迁移，后者可能静默失配，详见下表。
   CriterionInfo 删除 profile_type／profile_kind，第三构造字段改为 analysis_kind；可接受的观察请求类从 observation_types 读取。
 - 两个后端共用 `bazi.calendar.dates` 中定义的 `LunarYearInfo`，三个旧导入路径仍能取得同一个类型；字典／列表行为不变。包内月查询复用已有 `GanzhiYearMonth`，不改变便捷入口既有的输入检查或查询准入。
+
+### 存取接口移除
+
+删除 `BaziJson`、`LocationTimeJson`、`BaziChart.json/from_json`、`LocationTime.json`、
+`BaziSchool.from_json`、`TransitSet.json`、`ContextResult.input_json/export_json/from_json`、
+`KnowledgeBase.export_json/from_json` 及整个 `bazi.record_migration` 模块。
+`--export-chart-json`、`--export-context-json`、`--export-knowledge-json` 也不再提供；
+普通运行与 `python -O` 均按未知选项拒绝，不创建输出文件。TXT、知识编辑源读取与领域查询保留。
+
+旧结果需保留原件。本库不从旧记录猜补配置或重建历史结果；要得到升级后实现的结论，
+用原出生输入与完整配置重新排盘、求值。重新构造时，不传 `BaziSchool.kongwang_anchor`
+会使用默认日柱 `Anchor.DAY`；需要 `YEAR` 或 `YEAR_AND_DAY` 时必须显式配置。
+知识编辑源不是历史结果快照；v2.4.0 接受 schema 2，后续 schema 3 的迁移另见上方知识结构迁移。
+
+### 结构接口迁移
+
+以下旧新对照只描述 v2.3.0→v2.4.0；命理规则、默认流派、历法算法和时钟口径不变，不留旧构造器或兼容属性。
+
+| 原调用或字段 | v2.4.0 调用或字段 |
+| --- | --- |
+| 原局英文柱位／`Pillar` | `bazi.defines.Zhu`，中文类别名 `柱`；按年、月、日、时排列 |
+| 明藏层字符串 | `TianganLayer.明干`／`藏干`，中文类别名 `天干层次` |
+| `KongwangHit`／`StarAppearance` 的 origin/pillar/kind | 合为 `position: Zhu \| TransitKind`；`StarAppearance(position, ganzhi, layer, stem)` 的 layer 为 TianganLayer |
+| `ContextProfile`／`RelationshipProfile`、`profile=` | `NatalObservation`／`LiunianObservation`／`TransitObservation`、`observation=` |
+| `TransitCoordinate(entry=..., ...)` | 明确构造 `YearCoordinate`／`MonthCoordinate`／`DateCoordinate`／`MomentCoordinate`；TransitCoordinate 只作联合类型 |
+| `info.profile_kind`／第三构造字段 `profile_type` | `info.analysis_kind`，取 `'context'`／`'relationship'`；请求类元组从 `info.observation_types` 读取 |
+| `info.profile_type` 的单个请求类 | `info.observation_types` 中的可接受请求类元组，不再直接当作一个类调用 |
+
+`Zhu` 的成员为 `NIAN/YUE/RI/SHI` 与 `年/月/日/时`；TianganLayer 为 `MINGGAN/CANGGAN` 与 `明干/藏干`。
+原局 `ChartOccurrence.index` 为 0–3，流年为 4；流年 position 使用保存具体 `ganzhi_year` 的 `LiunianPosition`。
+关系组合用的 `bazi.utils.dizhi_utils.GanzhiOccurrence.index` 仍是调用方输入序列的位置，不限四柱。
+`KongwangResult.anchor` 只接受年、日；多锚选择策略 `Anchor.YEAR_AND_DAY` 不是柱位。
+
+`NatalObservation()` 供全部判据共用；`LiunianObservation(ganzhi_year=None)` 供原局加单流年，
+`TransitObservation(kinds, coordinate=None)` 供婚恋结构岁运查询。ScopeName 按 natal、natal_and_liunian、natal_and_transits 排序。
+年坐标使用 `YearCoordinate(ganzhi_year)`；月坐标使用 `MonthCoordinate(ganzhi_year, ganzhi_month)`，月为 `Dizhi`，
+两者的年份均拒绝 bool 与 int 子类。日期使用 `DateCoordinate(solar_date)`，只接受确切的 date，不接 datetime 或 date 子类；
+时刻使用 `MomentCoordinate(solar_moment)`，只接受确切、无时区的 datetime，保留微秒请求身份，求值按秒解释。
+四类从 `context_matching` 导入，日期与时刻按东八区解释。
+缺字段或多余字段抛 `TypeError`；畸形坐标、空／重复／不支持的种类立即失败，普通运行与 `-O` 一致。
+缺坐标仍是合法观察请求，求值为 UNKNOWN。这些严格请求不改变便捷入口 `TransitChart.at_year/at_month`
+的 `isinstance(year, int)` 检查；bool 和 int 子类在那里仍通过类型检查。
+
+当版结果的构造字段如下，派生属性不进入构造、`fields`、`asdict` 或位置模式：
+
+| 类型 | v2.4.0 构造字段 | 派生属性 |
+| --- | --- | --- |
+| `CriterionResult` | criterion_id、reason、observations | definition、status、scope_complete |
+| `EntryMatch` | claim_id、reason | status |
+| `ContextResult` | observation、criterion、evidence、references、_bazi、knowledge | bazi |
+| `PremiseMatches`／`ConditionReferences` | entries | 无 |
+
+`dataclasses.replace` 不能再传 status、definition、scope_complete；固定的 scope／entry 改为 ClassVar，
+不进入构造、repr、fields、asdict、相等／hash 或位置模式。需要派生结论时显式读属性，不把 asdict 当作完整导出记录。
+`ContextResult.evidence` 保存明藏干分类元组或 `RelationshipEvidence`，references 保存完整前提匹配或条件参考，
+即使 entries 为空也保留两种包装。旧总结果字段 occurrences／relationship／entries／related 删除。
+出生输入经 `_bazi` 构造参数验证并深拷，属性 `bazi` 每次返回新深拷；显式知识对象仍复用。
+部分流运不可取得时保留已取得证据。scope_complete 由 reason 派生，不认证手填原因与观察、请求年份或证据一致；
+实际求值由 `evaluate_context` 计算，直接构造仍校验婚恋范围与取得集合是否自洽。
+
+字段顺序同时改变 `__match_args__`。旧关键字或参数数量通常抛 `TypeError`，但**旧位置式类模式可能静默不匹配，
+或把新字段读成旧含义**：旧 `case CriterionResult(id, definition, status)` 会读取 criterion_id、reason、observations；
+旧 `case CriterionInfo(_, _, profile_type)` 会把类别字符串绑定给 profile_type，不能再把它当请求类。
+构造、解构与模式必须一起迁移。references 和 EntryMatch 等包装在后续版本还会变化，不要把此历史表当作当前接口清单。
+
+同名的 anchor／layer 字段改为不继承 str 的枚举，旧字符串比较、`in` 和关键字类模式不会报错，却不再命中：
+
+| 旧读取／模式 | v2.4.0 读取／模式 |
+| --- | --- |
+| `result.anchor == 'year'` | `result.anchor is Zhu.年` |
+| `result.anchor in ('year', 'day')` | `result.anchor in (Zhu.年, Zhu.日)` |
+| `appearance.layer == 'visible'` | `appearance.layer is TianganLayer.明干` |
+| `occurrence.layer == 'hidden'` | `occurrence.layer is TianganLayer.藏干` |
+| `case StarAppearance(layer='visible')` | `case StarAppearance(layer=TianganLayer.明干)` |
+
+判断用枚举成员，打印 Zhu／TianganLayer 用 `str(value)`，TransitKind 用 `.value`；位置和明藏层显示因此成为 `natal.月`、`藏干`。
+类型检查通过不证明旧字符串比较已迁移。钉版 mypy 对中文／拼音别名的 Literal 穷尽写法仍须覆盖两种拼写，
+当前可运行例见[枚举字段的读取与穷尽分支](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#枚举字段的读取与穷尽分支)。
+目录年月字段改为 ganzhi_year／ganzhi_month，CLI flags 保持；错误消息使用完整字段名，边界错误仍退出 2。
+`LunarYearInfo.__module__` 指向 calendar.dates，三个规范重导出仍是同一类型，不改变原字典／可变列表与独立副本行为。
 
 ### 输入、知识与来源
 
@@ -70,14 +168,31 @@
 
 ## bazi 2.3.0
 
-本版含旧记录与源码脚本调用的破坏性变更，升级前请保留原记录及出生输入，见 [迁移说明](https://github.com/0xf3cd/bazi/blob/main/README.md#从-v220-迁移到-v230)。
+本版含旧记录与源码脚本调用的破坏性变更，升级前请保留原记录及出生输入，迁移条件见下文。
 
 ### 兼容与迁移
 
 - `BaziSchool` 尾部新增 `kongwang_anchor`，默认 `Anchor.DAY`，也可选 `YEAR`、`YEAR_AND_DAY`。该字段进入命盘身份与 JSON。
 - 缺少 `kongwang_anchor` 的旧命盘或前提判别记录拒绝恢复，不自动补默认值。须按原出生输入、完整配置及显式选择的新锚重建命盘；前提判别记录须重新求值后另存。没有自动迁移接口，不要只补字段或改版本号。
 - 知识库的 `schema_version=1`、前提判别记录的 `record_version=4` 不变；版本值不变不表示缺字段的旧记录可恢复。
-- 源码脚本 `run_interpreter.py` 移除 v2.2.0 保留的旧平铺写法，裸调用只打印帮助。原 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`；其他对照见 [源码脚本兼容说明](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#源码脚本)。这些变化不新增安装后的 CLI；更新 bazi 包不会更新本地源码脚本。
+- 源码脚本 `run_interpreter.py` 移除 v2.2.0 保留的旧平铺写法，裸调用只打印帮助。原 `--seed 236` 改为 `chart --seed 236`，`--query-knowledge` 改为 `knowledge --all`；完整对照如下。这些变化不新增安装后的 CLI；更新 bazi 包不会更新本地源码脚本。
+
+### 源码脚本的平铺参数
+
+本表只适用于 v2.3.0 的源码脚本，参数均接在 `python run_interpreter.py` 之后。
+迁往安装命令的后续变化见上方“安装版命令与脚本迁移”。
+
+| 旧平铺写法（本版移除） | v2.3.0 子命令写法 |
+| --- | --- |
+| `--seed 236` | `chart --seed 236` |
+| `--query-knowledge --object tiangan.ding` | `knowledge --object tiangan.ding` |
+| `--query-knowledge` | `knowledge --all` |
+| `--match-context 判据ID …` | `match 判据ID …` |
+| `--seed 236 --output-dir out --export-knowledge-base` | 先运行 `chart --seed 236 --output-dir out`，再运行 `knowledge --export-knowledge-base --output-dir out` |
+
+裸调用返回 0，不生成随机命盘；随机盘须显式选择 chart。旧平铺选项报错并指向三个任务的新写法。
+表的最后一行是两条独立命令，各自检查导出目标，不提供跨命令冲突预检或整体回滚；
+当版各任务的 JSON／TXT 输出冲突与知识源覆盖保护仍保留。
 
 ### 六甲旬空、胎元与命宫
 
@@ -211,8 +326,8 @@
   源码导入改用 `bazi.*`，不再用 `src.*`。
 - 当时 wheel 包含两份 HKO 编码表与三份 celestial 表；源码包另含 HKO 原始输入和源码验证测试。
 - 当时历法后端、规则、流派默认值、JSON 恢复、流运、亲密关系分析及 Interpreter 均可直接使用，
-  无需重建数据。此处 Interpreter 指该版本的类，后续已退役；现役 runner 为 `run_interpreter.py`。
+   无需重建数据。此处 Interpreter 指该版本的类，后续已退役。
 - 标准 MIT 授权涵盖作者自有材料，第三方说明另列内嵌数据与引文的权利范围。
 - 手动发布 workflow 默认演练，正式发布须经受保护环境批准，只发布已测试 sdist 及其重建 wheel。
 
-不提供 src 兼容包、根类入口或安装命令行入口。模块接口见 README.md，发布前提见 RELEASING.md。
+该版本不提供 src 兼容包、根类入口或安装命令行入口。对应源码的 README.md 说明当时的模块接口，RELEASING.md 说明发布前提。

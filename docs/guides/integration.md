@@ -2,7 +2,7 @@
 
 这一页面向把 `bazi` 接进自己程序的开发者：怎么导入、读取内存结果，以及前提匹配返回什么。
 导入与行为承诺以对应版本源码根目录的 `API_CONTRACT.md` 为准；签名、字段和局部返回说明查 API 参考。
-第一次排盘及保存文本先看 {doc}`quickstart`；升级旧调用先看[发布说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
+第一次排盘及保存文本先看 {doc}`quickstart`；升级旧调用先看 {doc}`../release-notes`。
 
 ## 导入
 
@@ -198,4 +198,4 @@ editorial.tanyuan.wife_palace_xingchong.v1
 `asdict` 不包含这些派生属性，固定 scope／entry 标签也不属于 dataclass 构造字段。
 `ContextResult` 直接构造保留参考 ID 的顺序和重复，只检查类型与存在性，不要求其属于该判据的 claims。
 直接构造只检查结构，不认证观察、原因、请求年份和手填证据的事实对应关系；通常应使用 evaluate_context 取得结果。
-旧构造与位置模式的迁移细目见[结构接口迁移](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#结构接口迁移)。
+当前构造、枚举读取和位置模式的完整条件见[观察请求与结果对象](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#观察请求与结果对象)。

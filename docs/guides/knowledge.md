@@ -332,7 +332,8 @@ True
 
 当前编辑源由精确整数 `schema_version=3` 加四份注册表组成，加载时检查形状、状态和引用。
 条目用 JSON boolean `show_by_default`，拒绝旧 `output` 键以及 `0`、`1` 等非 bool 值。
-不接受旧 schema 1／2，也不提供运行时迁移、知识库 JSON 导出或历史结果恢复。升级自定义编辑源时，将版本改为整数 3，并把每条的 `output='default'`／`'reference_only'` 分别改成 `show_by_default=true`／`false`，再加载校验。字符串键和值中的孤立代理项会拒绝，不修复原文；
+不接受其他 schema 版本，不提供运行时迁移、知识库 JSON 导出或历史结果恢复；
+自定义编辑源的升级步骤见 {doc}`../release-notes`。字符串键和值中的孤立代理项会拒绝，不修复原文；
 知识渲染也检查 UTF-8，中文、非 BMP 字符与合法 JSON 转义仍可使用。
 
 ## 改一份本地副本
@@ -467,6 +468,6 @@ bazi knowledge \
 只给判据 ID 会说明它需要哪些输入；判据任务的选项见 `bazi match --help`。
 `bazi knowledge --export-knowledge-base` 默认将 TXT 写入调用时当前目录的 `output_data/knowledge_base/`，
 改用 `--output-dir out` 则写到 `out/knowledge_base/`。命盘展示与知识导出是独立命令，不做跨命令的冲突预检或整体回滚；
-每条命令仍拒绝覆盖知识编辑源。旧脚本与参数的迁移见[脚本迁移说明](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md#安装版命令与脚本迁移)。
+每条命令仍拒绝覆盖知识编辑源。
 
 字段与方法的完整说明见 {py:class}`~bazi.knowledge.KnowledgeBase` 和 {doc}`../api/index`，本文只讲上手路径。
