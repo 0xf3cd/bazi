@@ -15,7 +15,7 @@ from bazi.context_matching import (
   TransitCoordinate, YearCoordinate, _CRITERIA, evaluate_context,
 )
 from bazi.defines import Zhu, Tiangan, Ganzhi, DizhiRelation
-from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, DEFAULT_CONFIG
+from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, TuwangDef, DEFAULT_CONFIG
 from bazi.transits import TransitKind, TransitSet
 from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
 
@@ -27,10 +27,12 @@ def test_input_identity_includes_configuration() -> None:
   result = match()
   assert result.bazi.solar_datetime == datetime(2000, 1, 3, 12) and str(result.bazi.gender) == 'female'
   assert result.bazi.config == DEFAULT_CONFIG
-  assert len(fields(result.bazi.config.school)) == 24
+  assert len(fields(result.bazi.config.school)) == 25
   assert result.bazi.config.school.kongwang_anchor is Anchor.DAY
+  assert result.bazi.config.school.tuwang_def is TuwangDef.WHOLE_MONTH
   for config in (
     BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+    BaziConfig(school=BaziSchool(tuwang_def=TuwangDef.AFTER_TWELVE_DAYS)),
     BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
     BaziConfig.from_values(dayun_year_rule='fixed_decade'),
   ):

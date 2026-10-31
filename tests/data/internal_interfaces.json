@@ -22,6 +22,7 @@
     "bazi/chart_text.py|.bazi_chart|_check_chart": "文本展示入口共用同一处命盘类型检查与指路消息，不复制到每个入口。",
     "bazi/transit_chart.py|.bazi_chart|_check_chart": "接收命盘的入口共用同一处类型检查与指路消息，命盘类型由bazi_chart定义，不在各入口复制。",
     "bazi/analyzer/relationship.py|..bazi_chart|_check_chart": "分析入口与spouse_evidence共用命盘类型检查与指路消息，不复制到每个入口。",
+    "bazi/analyzer/facts.py|..bazi_chart|_check_chart": "通根透干事实查询复用命盘所有者的公开输入校验，不让事实层反向进入婚恋分析。",
     "bazi/utils/dizhi_utils.py|.relation_discovery|_ordered_combos": "关系结果的规范排序属于共同关系发现表示，不属于天干或地支某一侧。",
     "bazi/utils/dizhi_utils.py|.relation_discovery|_ordered_relation_pairs": "关系名与组合对的规范顺序归共同关系发现模块。",
     "bazi/utils/tiangan_utils.py|.relation_discovery|_ordered_combos": "天干与地支共用同一关系组合排序语义。",
@@ -31,7 +32,7 @@
     "cross_module": {
       "bazi/cli.py|parser._actions": "CLI 从同一 argparse 任务树取得子解析器，用于任务帮助与参数错误归属，不维护第二份任务映射。",
       "bazi/cli.py|argparse._SubParsersAction": "识别 argparse 的子命令动作，仅供 CLI 解析器自省，不成为库 API。",
-      "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由 Bazi 所有；BaziChart.minggong 复用同一时间归属政策，不读取地点私有状态。",
+      "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由 Bazi 所有；命宫与月令状态复用同一政策，不读取地点私有状态。",
       "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于包内流运数据库；TransitChart先校验坐标及历法可用性，再调用包内入口。",
       "bazi/transit_chart.py|self._transit_db._dayun_at_date": "按日期解释物理交运边界的包内入口，公开日期校验仍由TransitChart承担。",
@@ -48,6 +49,7 @@
     }
   },
   "repeated_members": {
+    "bazi/bazi_chart.py|self._bazi._attribution_reached": 2,
     "bazi/utils/bazi_utils.py|BaziRules._ZHANGSHENG_ROWS": 2
   }
 }

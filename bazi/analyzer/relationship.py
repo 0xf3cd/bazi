@@ -12,7 +12,7 @@ from itertools import combinations, product
 from typing import Final, Literal, TypedDict, assert_never, cast
 from collections.abc import Callable, Iterable, Sequence
 
-from ..common import frozendict
+from ..common import frozendict, check_declared_types
 from ..data_types import GanzhiData
 from ..defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRelation
 from ..rules import DizhiRules
@@ -142,6 +142,13 @@ _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
 从注册表推导，新增条目无需维护第二份列表。'''
 SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
   name: spec.label for name, spec in _REGISTRY.items()
+})
+
+
+'''原局的两个整柱神煞展示名；判断完整日柱，不进入按候选支求值的注册表。'''
+WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
+  'kuigang': '魁罡',
+  'tianshe': '天赦',
 })
 
 
@@ -280,6 +287,23 @@ def _check_position(position: Zhu | TransitKind) -> None:
   '''原局柱位与流运种类是命中位置的两个互斥分支。'''
   if not isinstance(position, (Zhu, TransitKind)):
     raise TypeError(f'Expected Zhu | TransitKind, got {type(position)}')
+
+
+@dataclass(frozen=True)
+class RelationParticipant:
+  '''地支关系的一处真实参与者，保留原局柱位或流运种类及完整干支。'''
+  position: Zhu | TransitKind
+  ganzhi:   Ganzhi
+
+  def __post_init__(self) -> None:
+    check_declared_types(self)
+    for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
+      if not isinstance(value, expected):
+        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
+
+
+class RelationPositionDiscovery(frozendict[DizhiRelation, tuple[frozenset[RelationParticipant], ...]]):
+  '''地支关系到具体位置组合的冻结映射；只替换低层序号，不重排或按干支值合并。'''
 
 
 @dataclass(frozen=True)
@@ -499,6 +523,32 @@ class TransitAnalysis:
     transit_tiangans = tuple(gz.tiangan for gz in transit_ganzhis)
 
     return tiangan_utils.discover_mutual([self._chart.bazi.day_master], transit_tiangans)
+
+  def all_relations(self, transits: TransitSet) -> RelationPositionDiscovery:
+    '''查全部原局与所选流运之间的地支关系，按本盘流派保留具体参与位置。
+
+    Args:
+    - transits: (TransitSet) 所选流运；错型抛 TypeError。
+
+    Return: (RelationPositionDiscovery) 与 discover_mutual_ganzhis 一一对应的跨组组合。
+    每个组合两侧都有参与者，位置为 Zhu 或 TransitKind，重复干支不合并；旧 house_relations 不变。
+    '''
+    self._check_transits(transits)
+    bazi = self._chart.bazi
+    definitions = bazi.config.school.relation_definitions
+    positions: tuple[Zhu | TransitKind, ...] = (*Zhu, *(kind for kind, _ in transits.items))
+    discovery = dizhi_utils.discover_mutual_ganzhis(
+      bazi.pillars,
+      transits.ganzhis,
+      definitions=definitions,
+    )
+    return RelationPositionDiscovery({
+      relation: tuple(frozenset(
+        RelationParticipant(positions[occurrence.index], occurrence.ganzhi)
+        for occurrence in combo
+      ) for combo in combos)
+      for relation, combos in discovery.items()
+    })
 
   def house_relations(self, transits: TransitSet) -> dizhi_utils.DizhiRelationDiscovery:
     '''

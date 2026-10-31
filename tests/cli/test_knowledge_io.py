@@ -87,8 +87,56 @@ def test_validation_alone_is_read_only(tmp_path: Path) -> None:
 
 
 def test_known_object_can_have_no_entries(tmp_path: Path) -> None:
-  empty = run_cli(tmp_path, 'knowledge', '--object', 'wuxing.mu')
+  empty = run_cli(tmp_path, 'knowledge', '--object', 'wuxing.tu')
   assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
+
+
+@pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('extra,hint', [
+  ((), True), (('--viewpoint', 'WUXING_JINGJI'), True),
+  (('--topic', '查法口径'), True), (('--source', 'repository_guoyin_variants'), True),
+  (('--applicability', 'unconditional'), True),
+  (('--topic', '定义'), False), (('--source', 'repository_wuxing_relations'), False),
+  (('--context', 'editorial.guansha_coexistence_female'), False),
+  (('--time-scope', '行运'), False),
+  (('--include-reference-only',), False),
+])
+def test_reference_hint_uses_all_filters(
+  tmp_path: Path, optimized: bool, extra: tuple[str, ...], hint: bool,
+) -> None:
+  result = run_cli(tmp_path, 'knowledge', '--object', 'shensha.guoyin', *extra, optimized=optimized)
+  assert result.returncode == 0, result.stderr
+  assert result.stderr == ''
+  message = '有仅供参考的条目，可加 --include-reference-only 查看。'
+  assert (message in result.stdout) is hint
+  if hint:
+    assert result.stdout == '无匹配条目。\n' + message + '\n'
+  elif '--include-reference-only' in extra:
+    assert '条目：shensha.guoyin.modern' in result.stdout
+  else:
+    assert result.stdout == '无匹配条目。\n'
+  assert list(tmp_path.iterdir()) == []
+
+
+def test_reference_hint_follows_custom_source(tmp_path: Path) -> None:
+  source = tmp_path / 'custom.json'
+  for mutation in ('unchanged', 'visible', 'absent'):
+    data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
+    visible_id = ''
+    if mutation == 'visible':
+      entry = next(entry for entry in data['entries'] if entry['show_by_default'])
+      entry['roles'].append({'name': '测试关联', 'object_id': 'shensha.guoyin'})
+      visible_id = entry['claim_id']
+    elif mutation == 'absent':
+      data['entries'] = [entry for entry in data['entries'] if not entry['claim_id'].startswith('shensha.guoyin.')]
+    source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+    result = run_cli(tmp_path, 'knowledge', '--object', 'shensha.guoyin', '--knowledge-source', str(source))
+    assert result.returncode == 0, result.stderr
+    assert ('可加 --include-reference-only 查看' in result.stdout) is (mutation == 'unchanged')
+    if mutation == 'visible':
+      assert f'条目：{visible_id}' in result.stdout
+    elif mutation == 'absent':
+      assert result.stdout == '无匹配条目。\n'
 
 
 def test_query_selects_reference_viewpoint(tmp_path: Path) -> None:

@@ -7,7 +7,7 @@ from .tiangan import Tiangan, 天干, TianganLayer, 天干层次
 from .dizhi import Dizhi, 地支
 from .ganzhi import Ganzhi, 干支
 from .jieqi import Jieqi, 节气
-from .wuxing import Wuxing, 五行
+from .wuxing import Wuxing, 五行, WuxingState, 五行状态
 from .yinyang import Yinyang, 阴阳
 from .shishen import Shishen, 十神
 from .shier_zhangsheng import ShierZhangsheng, 十二长生
@@ -16,7 +16,7 @@ from .relations import TianganRelation, 天干关系, DizhiRelation, 地支关�
 __all__ = [
   'Zhu', '柱', 'Tiangan', '天干', 'TianganLayer', '天干层次', 'Dizhi', '地支',
   'Ganzhi', '干支', 'Jieqi', '节气',
-  'Wuxing', '五行', 'Yinyang', '阴阳',
+  'Wuxing', '五行', 'WuxingState', '五行状态', 'Yinyang', '阴阳',
   'Shishen', '十神', 'ShierZhangsheng', '十二长生',
   'TianganRelation', '天干关系', 'DizhiRelation', '地支关系',
 ]

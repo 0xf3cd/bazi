@@ -11,7 +11,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.defines import Zhu, Dizhi, Ganzhi
 from bazi.analyzer.relationship import ShenshaAnalysis, AtBirthShenshaAnalysis, KongwangResult, KongwangHit
-from bazi.analyzer.relationship import RelationshipAnalyzer, SHENSHA_LABELS
+from bazi.analyzer.relationship import RelationshipAnalyzer, SHENSHA_LABELS, WHOLE_PILLAR_SHENSHA_LABELS
 from bazi.analyzer.relationship import AtBirthAnalysis, TransitAnalysis
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitSet
@@ -78,9 +78,10 @@ def test_shensha_labels() -> None:
 
   common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
   at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
-  assert tuple(cli._WHOLE_PILLAR_SHENSHA_LABELS) == ('kuigang', 'tianshe')
-  assert set(cli._WHOLE_PILLAR_SHENSHA_LABELS) == at_birth_keys - common_keys
-  assert tuple(cli._WHOLE_PILLAR_SHENSHA_LABELS.values()) == ('魁罡', '天赦')
+  assert tuple(WHOLE_PILLAR_SHENSHA_LABELS) == ('kuigang', 'tianshe')
+  assert set(WHOLE_PILLAR_SHENSHA_LABELS) == at_birth_keys - common_keys
+  assert tuple(WHOLE_PILLAR_SHENSHA_LABELS.values()) == ('魁罡', '天赦')
+  assert cli.WHOLE_PILLAR_SHENSHA_LABELS is WHOLE_PILLAR_SHENSHA_LABELS
 
   kuigang = Ganzhi.from_str('庚辰')
   tianshe = Ganzhi.from_str('戊寅')

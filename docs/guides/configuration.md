@@ -138,6 +138,49 @@ for name, config in (('晚子时', DEFAULT_CONFIG), ('子正', zizheng)):
 两种读法下时支都是子，时干跟随各自的日柱。其他流派选项（关系定义、神煞取锚、配偶星取法）
 的取值和出处写在 {py:class}`~bazi.school.BaziSchool` 的字段说明里；本库保留各家读法，不合成一个“正确”规则。
 
+## 月令五行状态与土旺口径
+
+`chart.wuxing_states` 返回五行到旺、相、休、囚、死的冻结映射。状态类型是
+{py:class}`~bazi.defines.wuxing.WuxingState`，也可从 `bazi.defines` 导入中文别名 `五行状态`。
+它描述出生月令下的五行状态，不是十二长生，也不表示综合得令或力量评分。
+
+非季月按春木、夏火、秋金、冬水取本令；辰、未、戌、丑月由 `BaziSchool.tuwang_def` 选择：
+
+| `TuwangDef` | 季月取法 |
+| --- | --- |
+| `WHOLE_MONTH`（默认） | 整月土旺；这是本库的简化约定，整月解释待考，不称为已核定古籍规则。 |
+| `AFTER_TWELVE_DAYS` | 开月节后十二日转土，此前按该季节本令。 |
+| `BEFORE_EIGHTEEN_DAYS` | 下一四立前十八日转土，此前按该季节本令。 |
+
+```{testcode} config-tuwang
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Wuxing
+from bazi.school import BaziConfig, BaziPrecision, BaziSchool, TuwangDef
+
+for definition in TuwangDef:
+  config = BaziConfig(precision=BaziPrecision.MINUTE, school=BaziSchool(tuwang_def=definition))
+  chart = BaziChart(Bazi.create('2026-04-17 12:00', 'male', config))
+  print(definition.value, ' '.join(f'{element}{chart.wuxing_states[element]}' for element in Wuxing))
+```
+
+```{testoutput} config-tuwang
+whole_month 木囚 火休 土旺 金相 水死
+after_twelve_days 木囚 火休 土旺 金相 水死
+before_eighteen_days 木旺 火相 土死 金囚 水休
+```
+
+真实节月不固定三十天，所以后十二日与前十八日不能合成同一阈值；上例在同一出生时刻得到不同状态。
+十二日读法见《三命通会》卷二醉醒子段；十八日见《协纪辨方书》转引，择日历书与近代四柱用法分记，
+不把同一传抄谱系算作多条独立来源。整月解释仍缺直接依据。出处与转录限制见
+{py:class}`~bazi.school.TuwangDef`。
+
+分段的一天按连续24小时：先在后端东八区节气标签上加十二天或减十八天，再沿用出生精度比较，
+相等归土旺。地点盘先把算出的边界转换到同一真太阳钟，不在太阳钟上直接加减天数。
+HKO 只支持日期级；其节气零点是占位，不是真实交节时刻。这些是本库的执行约定，不称为古文规定到秒。
+
+此属性只查原局；`TransitSet` 只有干支，不能据此恢复流运查询时刻。本功能不改默认命盘文本，也不增加 CLI 选项。
+
 ## 起运口径：只改年份标签
 
 `DayunYearRule` 只改变每步大运的年份标签，不改变四柱，也不改变大运的物理起止时刻。

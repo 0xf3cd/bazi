@@ -35,8 +35,8 @@ DOCTEST_PHASES = ('setup', 'cleanup')
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
   'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore', 'quickstart-transits', 'quickstart-liunian', 'quickstart-context'},
-  'guides/configuration': {'config-precision', 'config-overseas', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration'},
-  'guides/relations-transits': {'relations-day-master', 'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details'},
+  'guides/configuration': {'config-precision', 'config-overseas', 'config-rollover', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration', 'config-tuwang'},
+  'guides/relations-transits': {'relations-day-master', 'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details', 'relations-shensha-labels', 'relations-all-positions', 'relations-tonggen-tougan'},
   'guides/integration': {'integration-imports', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary'},
   'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'render', 'gate', 'source', 'edit', 'broken', 'criteria', 'auxiliary-knowledge'},
   'guides/rule-coverage': {'rule-coverage-guoyin'},

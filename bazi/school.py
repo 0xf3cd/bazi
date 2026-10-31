@@ -147,6 +147,27 @@ class Anchor(Enum):
   YEAR_AND_DAY = 2
 
 
+class TuwangDef(Enum):
+  '''季月土旺的三种可选口径，计日及精度政策见 BaziChart.wuxing_states。
+
+  - WHOLE_MONTH：辰、未、戌、丑整月土旺，默认的简化约定，整月解释待考。
+    《命理探源》卷三四季土旺表不能单独证明整月全时段：
+    https://zhonghuadiancang.com/xuanxuewushu/minglitanyuan/160972.html
+  - AFTER_TWELVE_DAYS：开月节后十二日转土，此前仍取该季节本令。
+    《三命通会》卷二醉醒子段载十二日，后文批评渊海／渊源的其他细分日数，不能混成同一主张：
+    https://zh.wikisource.org/w/index.php?oldid=761691
+  - BEFORE_EIGHTEEN_DAYS：下一四立前十八日转土，此前仍取该季节本令。
+    《协纪辨方书》卷一转引《神枢经》《历例》，原为择日历书材料，原书未核：
+    https://zh.wikisource.org/w/index.php?oldid=787334
+    《命理探源》同页亦转引该说，不能多算独立谱系。
+
+  电子转录未核影印。后两读在理想三十日节月可同界，真实节月不可据此合并。
+  '''
+  WHOLE_MONTH          = 'whole_month'
+  AFTER_TWELVE_DAYS    = 'after_twelve_days'
+  BEFORE_EIGHTEEN_DAYS = 'before_eighteen_days'
+
+
 '''各锚选项支持的取值，连同出处或已知出处缺口逐行记录。表外取值只表示本库不支持，不表示没有
 流派如此读（见驿马）；新增取值属于知识变更，须有出处。
 出处计数规则见 `ShenshaRules` 的 docstring。'''
@@ -254,6 +275,8 @@ class BaziSchool:
 
   # 六甲旬空整柱锚；尾部追加以保留既有位置参数次序。
   kongwang_anchor:  Anchor = Anchor.DAY
+
+  tuwang_def: TuwangDef = TuwangDef.WHOLE_MONTH
 
   def __post_init__(self) -> None:
     check_declared_types(self)

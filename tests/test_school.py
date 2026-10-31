@@ -19,7 +19,7 @@ from bazi.bazi_chart import BaziChart
 from bazi.rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from bazi.utils import dizhi_utils
 from bazi.school import (
-  BaziPrecision, DayunYearRule, DayRollover, Anchor, PeiouXingDef, BaziSchool, BaziConfig,
+  BaziPrecision, DayunYearRule, DayRollover, Anchor, PeiouXingDef, TuwangDef, BaziSchool, BaziConfig,
   DEFAULT_SCHOOL, DEFAULT_CONFIG, _ANCHOR_CHOICES,
 )
 from bazi.analyzer.relationship import _REGISTRY
@@ -107,7 +107,8 @@ def test_school_defaults() -> None:
 
 
 def test_kongwang_is_appended_and_in_identity() -> None:
-  assert tuple(field.name for field in dataclasses.fields(BaziSchool))[-2:] == ('peiou_xing_def', 'kongwang_anchor')
+  names = tuple(field.name for field in dataclasses.fields(BaziSchool))
+  assert names[names.index('peiou_xing_def') + 1] == 'kongwang_anchor'
   charts = tuple(BaziChart(Bazi.create(
     '1984-03-29 12:00', 'male', BaziConfig(school=BaziSchool(kongwang_anchor=anchor)),
   )) for anchor in (Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY))
@@ -565,6 +566,7 @@ def test_literal_default_school() -> None:
     'guoyin_anchor': 'YEAR_AND_DAY', 'guoyin_def': 'MODERN',
     'peiou_xing_def': 'ZHENGCAI_ZHENGGUAN',
     'kongwang_anchor': 'DAY',
+    'tuwang_def': 'WHOLE_MONTH',
   }
 
 def test_literal_non_default_school() -> None:
@@ -594,6 +596,7 @@ def test_literal_non_default_school() -> None:
     guoyin_def=ShenshaRules.GuoyinDef.WUXING_JINGJI,
     peiou_xing_def=PeiouXingDef.YINYANGGAN,
     kongwang_anchor=Anchor.YEAR,
+    tuwang_def=TuwangDef.AFTER_TWELVE_DAYS,
   )
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE,
                                            BaziConfig(school=school)))
@@ -613,6 +616,7 @@ def test_literal_non_default_school() -> None:
     'guoyin_anchor': 'YEAR', 'guoyin_def': 'WUXING_JINGJI',
     'peiou_xing_def': 'YINYANGGAN',
     'kongwang_anchor': 'YEAR',
+    'tuwang_def': 'AFTER_TWELVE_DAYS',
   }
 
   assert chart.bazi.config.school == school
