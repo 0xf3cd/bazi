@@ -6,7 +6,7 @@
 ## 从这里开始
 
 - 第一次使用：按下面的[安装包路线](#安装包排第一张盘)运行 Python 程序。
-- 想在终端操作：看[命令行](#命令行)，安装当前开发版的 `bazi` 命令；发布版暂未包含此命令。
+- 想在终端操作：看[命令行](#命令行)的安装与用法。
 
 ## 安装包：排第一张盘
 
@@ -34,7 +34,7 @@ python -m venv .venv
 python -m pip install bazi
 ```
 
-普通使用不需要安装 pytest、mypy 或文档工具。本文对应当前开发源码；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。当前开发版的源码安装与终端用法见[命令行](#命令行)。
+普通使用不需要安装 pytest、mypy 或文档工具。本文对应当前源码；`pip install bazi` 安装包索引中已发布的版本，其接口以[对应 tag](https://github.com/0xf3cd/bazi/tags) 下的说明为准。终端使用及源码安装见[命令行](#命令行)。
 
 ### 2. 填写出生信息
 
@@ -80,7 +80,7 @@ python first_chart.py
 
 上面的输出依次给出年、月、日、时四柱，日主为壬。`chart.txt` 是可直接打开的基本命盘文本，不含流运；文件写在运行命令时的当前目录，重复运行会覆盖同名文件，请先保留需要的旧结果。
 
-类型从定义模块导入；安装包没有根类入口。终端操作见下方开发版 `bazi` 命令的安装与用法。
+类型从定义模块导入；安装包没有根类入口。终端操作见下方 `bazi` 命令的安装与用法。
 
 在交互环境里直接输入对象会看到一行摘要；模块 `bazi.chart_text` 提供把命盘排成纯文本的函数，见[快速开始](https://github.com/0xf3cd/bazi/blob/main/docs/guides/quickstart.md)。
 
@@ -113,7 +113,13 @@ python first_chart.py
 
 ## 命令行
 
-安装包提供唯一的 `bazi` 命令，不额外安装终端着色库。此命令尚未正式发布；要试用当前开发版，下载或克隆[源码](https://github.com/0xf3cd/bazi)，进入源码根目录，在 Python 3.11+ 独立环境中安装：
+安装包提供唯一的 `bazi` 命令，不额外安装终端着色库。在上面的 Python 3.11+ 独立环境中，安装或更新到包含此命令的版本：
+
+```sh
+python -m pip install --upgrade "bazi>=2.5.0"
+```
+
+要使用仓库当前源码，下载或克隆[源码](https://github.com/0xf3cd/bazi)，进入源码根目录，在同一环境中安装：
 
 ```sh
 python -m pip install .
