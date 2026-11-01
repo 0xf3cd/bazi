@@ -1,6 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-from dataclasses import FrozenInstanceError, replace
+import json
+from dataclasses import FrozenInstanceError, asdict, replace
+from hashlib import sha256
 
 import pytest
 
@@ -143,3 +145,33 @@ def test_excerpts_keep_layers_and_original_chars() -> None:
       assert source.lineage == 'wenzhen_shensha' and '2026-11-01' in source.edition
   assert '果老星命' in KNOWLEDGE.sources['xingxue_dacheng.wenchang_xin_xu'].limitations
   assert '起源' in KNOWLEDGE.sources['click2macao.tianyi_geng_with_xin'].limitations
+
+
+def test_reference_entry_meanings_are_pinned() -> None:
+  expected = {
+    'shensha.tianyi.yinyang': ('shensha.tianyi', '三命通会', '《三命通会》所引通玄经推法以冬至用阳贵、夏至用阴贵，与昼夜说分列。'),
+    'shensha.taohua.table': ('shensha.taohua', '三命通会', '《三命通会》称咸池又名桃花煞，以三合组的沐浴位取支。'),
+    'shensha.yima.table': ('shensha.yima', '三命通会', '《三命通会》的驿马条载寅午戌生人马在申。'),
+    'shensha.huagai.table': ('shensha.huagai', '三命通会', '《三命通会》以三合库位称华盖。'),
+    'shensha.yangren.luming': ('shensha.yangren', '三命通会', '《三命通会》所载羊刃读法取禄前一辰。'),
+    'shensha.yangren.ziping': ('shensha.yangren', '三命通会', '《三命通会》另记子平五阳干有刃、五阴干无刃。'),
+    'shensha.wenchang.xin_xu': ('shensha.wenchang', 'XIN_XU', '《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。'),
+    'shensha.tianyi.lookup': ('shensha.tianyi', '现代问真', '问真《神煞大全》的天乙贵人条以日干或年干查四地支，庚与甲、戊同取丑、未。'),
+    'shensha.taohua.lookup': ('shensha.taohua', '现代问真', '问真《神煞大全》的桃花/咸池条以年支、日支查余三支，按申子辰见酉、寅午戌见卯、巳酉丑见午、亥卯未见子取值。'),
+    'shensha.yima.lookup': ('shensha.yima', '现代问真', '问真《神煞大全》的驿马条以年支、日支查余三支，按申子辰见寅、寅午戌见申、巳酉丑见亥、亥卯未见巳取值。'),
+    'shensha.wenchang.lookup': ('shensha.wenchang', '现代问真', '问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。'),
+    'shensha.huagai.lookup': ('shensha.huagai', '现代问真', '问真《神煞大全》的华盖条以年支、日支查余支，按寅午戌见戌、亥卯未见未、申子辰见辰、巳酉丑见丑取值。'),
+    'shensha.yangren.lookup': ('shensha.yangren', '现代问真', '问真《神煞大全》的羊刃条以日干查四地支；阴干列乙见寅、丁己见巳、辛见申、癸见亥，对应本库十干帝旺位读法。'),
+    'shensha.tianyi.geng_with_xin': ('shensha.tianyi', 'GENG_WITH_XIN', '林颂濰《天乙贵人口诀的真伪》列出庚辛同组、见寅午的另一首天乙口诀。'),
+  }
+  assert tuple(expected) == SHENSHA_ENTRY_IDS
+  for claim_id, (object_id, viewpoint, text) in expected.items():
+    entry = KNOWLEDGE.entry(claim_id)
+    assert (entry.roles[0].object_id, entry.viewpoint, entry.text) == (object_id, viewpoint, text)
+    assert entry.roles[0].name == '讨论对象' and entry.attribution == '本仓整理'
+
+
+def test_source_metadata_is_pinned() -> None:
+  records = [asdict(KNOWLEDGE.sources[identifier]) for identifier in SHENSHA_SOURCE_IDS]
+  payload = json.dumps(records, ensure_ascii=False, sort_keys=True).encode('utf-8')
+  assert sha256(payload).hexdigest() == '85ba304ca6bec1ca366e9aee1fd9b3cfb22a72e7394189a93303334cffbe12cc'

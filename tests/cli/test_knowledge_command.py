@@ -11,6 +11,7 @@ import pytest
 from bazi import cli
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
+from knowledge_additions import SHENSHA_OBJECT_IDS
 from cli_runner import run_cli
 
 
@@ -57,9 +58,8 @@ def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
   assert '日柱默认，年柱或年日双锚可选' in complete.stdout
 
 
-@pytest.mark.parametrize('name', ['tianyi', 'taohua', 'yima', 'wenchang', 'huagai', 'yangren'])
-def test_shensha_query_requires_reference_flag(tmp_path: Path, name: str) -> None:
-  identifier = 'shensha.' + name
+@pytest.mark.parametrize('identifier', SHENSHA_OBJECT_IDS)
+def test_shensha_query_requires_reference_flag(tmp_path: Path, identifier: str) -> None:
   default = run_cli(tmp_path, 'knowledge', '--object', identifier)
   complete = run_cli(tmp_path, 'knowledge', '--object', identifier, '--include-reference-only')
   assert default.returncode == complete.returncode == 0

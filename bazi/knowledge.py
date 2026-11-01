@@ -637,8 +637,8 @@ class KnowledgeBase:
 
 
 _GUOYIN_CLAIMS: Final[frozendict[ShenshaRules.GuoyinDef, str]] = frozendict({
-  ShenshaRules.GuoyinDef.MODERN: 'shensha.guoyin.modern',
-  ShenshaRules.GuoyinDef.WUXING_JINGJI: 'shensha.guoyin.wuxing_jingji',
+  ShenshaRules.GuoyinDef.MODERN        : 'shensha.guoyin.modern',
+  ShenshaRules.GuoyinDef.WUXING_JINGJI : 'shensha.guoyin.wuxing_jingji',
 })
 
 
@@ -663,9 +663,9 @@ def guoyin_def(knowledge: KnowledgeBase, claim_id: str) -> ShenshaRules.GuoyinDe
 
   Args:
   - knowledge: (KnowledgeBase) 使用的知识库。
-  - claim_id: (str) 该库中的条目标识；未知或空白标识抛 ValueError，参数错型抛 TypeError。
+  - claim_id: (str) 该库中的条目标识；未知或空白标识抛 ValueError。
 
-  Return: (ShenshaRules.GuoyinDef | None) 对应定义；条目已注册但没有国印关联时返回 None。
+  Return: (ShenshaRules.GuoyinDef | None) 对应定义；条目已注册但没有国印关联时返回 None，参数错型抛 TypeError。
   '''
   if not isinstance(knowledge, KnowledgeBase):
     raise TypeError(f'Expected KnowledgeBase, got {type(knowledge)}')

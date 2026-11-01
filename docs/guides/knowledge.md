@@ -117,13 +117,16 @@ print(kb.find_objects('文昌')[0].object_id)
 print(kb.query(object_id='shensha.wenchang'))
 for entry in kb.query(object_id='shensha.wenchang', include_reference_only=True):
   source = kb.sources[entry.sources[0]]
+  print(entry.text)
   print(entry.viewpoint, source.work, source.text_layer)
 ```
 
 ```{testoutput} shensha-knowledge
 shensha.wenchang
 ()
+《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。
 XIN_XU 星学大成 zhushi
+问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。
 现代问真 问真《神煞大全》 editorial
 ```
 

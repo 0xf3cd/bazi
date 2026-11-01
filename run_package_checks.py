@@ -387,7 +387,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   if installers is not None:
     observe_pip([str(python), '-I', '-m', 'pip'], 'target', installers)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom typing import assert_type\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
           'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime, LunarYearInfo\n'
           'from bazi.calendar.hko_data import LunarYearInfo as HkoInfo\n'
           'from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo\n'
@@ -420,8 +420,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'observation_types: tuple[type[NatalObservation] | type[LiunianObservation] | type[TransitObservation], ...] = info.observation_types\n'
           'source_path: Path = DEFAULT_SOURCE_PATH\n'
           'identifier: str = object_id(Tiangan.丁)\n'
-          'guoyin: KnowledgeEntry = guoyin_entry(knowledge, ShenshaRules.GuoyinDef.MODERN)\n'
-          'guoyin_definition: ShenshaRules.GuoyinDef | None = guoyin_def(knowledge, guoyin.claim_id)\n'
+          'guoyin = assert_type(guoyin_entry(knowledge, ShenshaRules.GuoyinDef.MODERN), KnowledgeEntry)\n'
+          'guoyin_definition = assert_type(guoyin_def(knowledge, guoyin.claim_id), ShenshaRules.GuoyinDef | None)\n'
           'witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]\n'
           'display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")\n'
           'subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)\n'
