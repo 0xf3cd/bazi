@@ -102,7 +102,7 @@ shensha.guoyin.modern
 True
 ```
 
-`True` 表示反查回到了传入的 `MODERN` 定义。把示例中的 `MODERN` 换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
+`True` 表示反查回到了传入的 `MODERN` 定义。把示例中两处 `MODERN` 都换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
 
 两个函数都使用传入的知识库。`guoyin_entry` 所需条目缺失、`guoyin_def` 查询未知或空白 ID 时抛 `ValueError`；`guoyin_def` 查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的 `viewpoint` 不参与关联识别。
 
