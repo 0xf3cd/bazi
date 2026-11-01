@@ -1,10 +1,29 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''五行枚举 Wuxing 及中文名称五行。'''
+'''五行及月令旺相休囚死状态。'''
 
 from typing import Final
 
 from .enum_base import BaziEnum
+
+
+class WuxingState(BaziEnum):
+  '''五行的月令状态：旺、相、休、囚、死。'''
+  WANG  = '旺'
+  XIANG = '相'
+  XIU   = '休'
+  QIU   = '囚'
+  SI    = '死'
+
+  旺 = WANG
+  相 = XIANG
+  休 = XIU
+  囚 = QIU
+  死 = SI
+
+  @classmethod
+  def _str_len(cls) -> int | None:
+    return 1
 
 
 class Wuxing(BaziEnum):
@@ -67,3 +86,4 @@ _DESTRUCTS: Final[dict[Wuxing, Wuxing]] = { wx : _CYCLE[(i + 2) % len(_CYCLE)] f
 
 
 五行 = Wuxing # 中文别名
+五行状态 = WuxingState

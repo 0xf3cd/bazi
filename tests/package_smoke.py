@@ -117,7 +117,7 @@ def main() -> None:
     check(name not in dir(bazi), 'Retired root module remains in dir')
   from bazi.bazi import Bazi, LocationTime
   from bazi.bazi_chart import BaziChart
-  from bazi.school import Anchor, BaziConfig, BaziSchool
+  from bazi.school import Anchor, BaziConfig, BaziSchool, TuwangDef
   from bazi.utils.shensha_utils import xunkong, kongwang
   from bazi.calendar import CalendarBackend, CalendarDate, CalendarType, calendar_utils_of
   from bazi.calendar.solar_time import apparent_solar_datetime
@@ -125,10 +125,11 @@ def main() -> None:
   from bazi.calendar.hko_data import LunarYearInfo as HkoInfo
   from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo
   from bazi.calendar.celestial_data.loader import LunarYearInfo as CelestialInfo
-  from bazi.defines import Zhu, TianganLayer, Ganzhi, Jieqi, Tiangan, Shishen, Dizhi
+  from bazi.defines import Zhu, TianganLayer, Ganzhi, Jieqi, Tiangan, Shishen, Dizhi, DizhiRelation, Wuxing, WuxingState
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
-  from bazi.analyzer.relationship import RelationshipAnalyzer, RelationshipEvidence
+  from bazi.analyzer.relationship import RelationshipAnalyzer, RelationshipEvidence, WHOLE_PILLAR_SHENSHA_LABELS
+  from bazi.analyzer.facts import tonggen, tougan, TianganMatch
   from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, LiunianPosition, TransitObservation, YearCoordinate,
@@ -350,6 +351,28 @@ def main() -> None:
   check(kongwang_analysis.transits.shensha(kongwang_transits)['kongwang'] == frozenset({Dizhi.戌}), 'Installed kongwang projection mismatch')
   check(kongwang_chart.bazi.config.school.kongwang_anchor is Anchor.YEAR_AND_DAY, 'Installed kongwang school mismatch')
   print('PASS xunkong/kongwang/natal/transit details and school identity')
+  fact_chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+  fact_transits = TransitSet(liunian=Ganzhi.from_str('甲辰'))
+  roots = tonggen(fact_chart, Tiangan.甲, fact_transits)
+  check(tuple((root.position, root.stem) for root in roots) == ((TransitKind.LIUNIAN, Tiangan.乙),), 'Installed tonggen actual stem mismatch')
+  check(tonggen(fact_chart, Tiangan.甲, fact_transits, condition=TianganMatch.SAME_TIANGAN) == (), 'Installed tonggen condition ignored')
+  exposed = tougan(fact_chart, Tiangan.癸, fact_transits, condition=TianganMatch.SAME_WUXING)
+  check(tuple((hit.hidden.position, hit.hidden.stem, hit.visible.position, hit.visible.stem) for hit in exposed)
+        == ((TransitKind.LIUNIAN, Tiangan.癸, Zhu.日, Tiangan.壬),), 'Installed tougan endpoints mismatch')
+  clashes = RelationshipAnalyzer(fact_chart).transits.all_relations(TransitSet(liunian=Ganzhi.from_str('庚子')))
+  check({frozenset(item.position for item in combo) for combo in clashes[DizhiRelation.冲]} == {
+    frozenset((Zhu.年, TransitKind.LIUNIAN)), frozenset((Zhu.日, TransitKind.LIUNIAN)),
+  }, 'Installed all_relations lost positions')
+  for definition, expected in ((TuwangDef.WHOLE_MONTH, WuxingState.旺),
+                               (TuwangDef.AFTER_TWELVE_DAYS, WuxingState.旺),
+                               (TuwangDef.BEFORE_EIGHTEEN_DAYS, WuxingState.死)):
+    state_chart = BaziChart(Bazi.create(
+      '2026-04-17 12:00', 'male',
+      BaziConfig.from_values(precision='minute', school=BaziSchool(tuwang_def=definition)),
+    ))
+    check(state_chart.wuxing_states[Wuxing.土] is expected, 'Installed tuwang definition ignored')
+  check(tuple(WHOLE_PILLAR_SHENSHA_LABELS.values()) == ('魁罡', '天赦'), 'Installed whole pillar labels mismatch')
+  print('PASS tonggen/tougan/all_relations/wuxing_states and public labels')
   knowledge = KnowledgeBase.load()
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   for value in Tiangan:

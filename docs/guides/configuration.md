@@ -138,6 +138,48 @@ for name, config in (('晚子时', DEFAULT_CONFIG), ('子正', zizheng)):
 两种读法下时支都是子，时干跟随各自的日柱。其他流派选项（关系定义、神煞取锚、配偶星取法）
 的取值和出处写在 {py:class}`~bazi.school.BaziSchool` 的字段说明里；本库保留各家读法，不合成一个“正确”规则。
 
+## 月令五行状态与土旺口径
+
+`chart.wuxing_states` 返回五行到旺、相、休、囚、死的冻结映射。状态类型是
+{py:class}`~bazi.defines.wuxing.WuxingState`，也可从 `bazi.defines` 导入中文别名 `五行状态`。
+它描述五行随出生月令变化的状态。
+
+非季月按春木、夏火、秋金、冬水取本令；辰、未、戌、丑月由 `BaziSchool.tuwang_def` 选择：
+
+| `TuwangDef` | 季月取法 |
+| --- | --- |
+| `WHOLE_MONTH`（默认） | 整月土旺，本库默认的简化取法。 |
+| `AFTER_TWELVE_DAYS` | 开月节后十二日转土，此前按该季节本令。 |
+| `BEFORE_EIGHTEEN_DAYS` | 下一四立前十八日转土，此前按该季节本令。 |
+
+```{testcode} config-tuwang
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Wuxing
+from bazi.school import BaziConfig, BaziPrecision, BaziSchool, TuwangDef
+
+for definition in TuwangDef:
+  config = BaziConfig(precision=BaziPrecision.MINUTE, school=BaziSchool(tuwang_def=definition))
+  chart = BaziChart(Bazi.create('2026-04-17 12:00', 'male', config))
+  print(definition.value, ' '.join(f'{element}{chart.wuxing_states[element]}' for element in Wuxing))
+```
+
+```{testoutput} config-tuwang
+whole_month 木囚 火休 土旺 金相 水死
+after_twelve_days 木囚 火休 土旺 金相 水死
+before_eighteen_days 木旺 火相 土死 金囚 水休
+```
+
+真实节月的长短不同，后十二日与前十八日的阈值也会不同；上例在同一出生时刻得到不同状态。
+十二日取法见《三命通会》卷二醉醒子段，十八日取法见《协纪辨方书》卷一。
+具体出处见 {py:class}`~bazi.school.TuwangDef`。
+
+分段的一天按连续24小时：先在后端东八区节气标签上加十二天或减十八天，得到转土阈值，
+再将出生时间与阈值按本盘精度比较，相等归土旺。地点盘会把算出的阈值转换到同一真太阳钟后比较。
+HKO 的节气数据只有日期精度，零点仅为占位。
+
+此属性使用原局的出生时刻与月令。
+
 ## 起运口径：只改年份标签
 
 `DayunYearRule` 只改变每步大运的年份标签，不改变四柱，也不改变大运的物理起止时刻。
@@ -299,7 +341,7 @@ assert config.school.kongwang_anchor is Anchor.YEAR_AND_DAY
 assert BaziSchool().kongwang_anchor is Anchor.DAY
 ```
 
-该字段位于流派字段末尾，参与命盘相等性与哈希。本库不提供命盘或前提判别记录的恢复、迁移接口；
+该字段参与命盘相等性与哈希。本库不提供命盘或前提判别记录的恢复、迁移接口；
 需要结论时，用原输入和完整配置重新构造命盘。不传 `kongwang_anchor` 则使用默认日柱 `Anchor.DAY`，
 所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置。旧调用的升级边界见 {doc}`../release-notes`。
 
@@ -313,6 +355,7 @@ assert BaziSchool().kongwang_anchor is Anchor.DAY
 | 起运年份 `DayunYearRule` | 大运年份标签的投影方式，不改变物理时刻 |
 | 流派 `BaziSchool` | 换日、关系与神煞取法等分歧项的集合，每个字段都参与相等性 |
 | 六甲旬空取锚 `kongwang_anchor` | 选择年柱、日柱或分别使用双锚 |
+| 季月土旺 `tuwang_def` | 整季月土旺，或按交节后十二日／下一四立前十八日分段 |
 | 真太阳时 | 由经度、民用偏移与均时差换算的钟；见 `Bazi.location_time` |
 | `civil_timezone` | 出生地民用时区，仅在启用经度时使用 |
 

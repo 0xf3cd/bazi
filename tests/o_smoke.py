@@ -55,8 +55,9 @@ def main() -> int:
   from bazi.transit_chart import TransitChart
   from bazi.transits import _TransitDatabase, TransitKind, TransitSet
   from bazi.analyzer.relationship import (
-    RelationshipAnalyzer, KongwangHit, KongwangResult, _REGISTRY, _AnchorKind, spouse_evidence,
+    RelationshipAnalyzer, KongwangHit, KongwangResult, RelationParticipant, _REGISTRY, _AnchorKind, spouse_evidence,
   )
+  from bazi.analyzer.facts import TianganMatch, TianganOccurrence, TouganHit, tonggen, tougan
   from bazi.utils import tiangan_utils, dizhi_utils, shensha_utils, bazi_utils
   from bazi.calendar import CalendarDate, CalendarType, hko_data, hko_data_utils
   from bazi.calendar.dates import GanzhiYearMonth, JieqiTime
@@ -533,6 +534,35 @@ def main() -> int:
   kongwang_transit_hit = KongwangHit(TransitKind.DAYUN, kongwang_target)
   KongwangResult(Zhu.日, kongwang_anchor, (kongwang_natal_hit,))
   KongwangResult(Zhu.年, kongwang_anchor, (kongwang_transit_hit,))
+  fact_ganzhi = Ganzhi.from_str('甲辰')
+  visible = TianganOccurrence(Zhu.年, fact_ganzhi, Tiangan.甲)
+  hidden = TianganOccurrence(TransitKind.LIUNIAN, fact_ganzhi, Tiangan.乙)
+  TouganHit(hidden, visible)
+  RelationParticipant(Zhu.年, fact_ganzhi)
+  for fact_query in (tonggen, tougan):
+    fact_query(chart, Tiangan.甲, condition=TianganMatch.SAME_WUXING)
+    for field in ('chart', 'target', 'transits', 'condition'):
+      arguments: dict[str, Any] = {
+        'chart': chart, 'target': Tiangan.甲, 'transits': None, 'condition': TianganMatch.SAME_WUXING,
+      }
+      arguments[field] = object()
+      checks.append((f'{fact_query.__name__} rejects wrong {field}', TypeError, partial(fact_query, **arguments)))
+  for constructor, sample in ((TianganOccurrence, visible), (RelationParticipant, RelationParticipant(Zhu.年, fact_ganzhi))):
+    for field in ('position', 'ganzhi'):
+      checks.append((f'{constructor.__name__} rejects wrong {field}', TypeError, partial(replace, sample, **{field: object()})))
+    for malformed in (Ganzhi('甲', Dizhi.辰), Ganzhi(Tiangan.甲, '辰')): # type: ignore[arg-type]
+      checks.append((f'{constructor.__name__} rejects malformed Ganzhi', TypeError, partial(replace, sample, ganzhi=malformed)))
+  checks.extend([
+    ('BaziSchool rejects wrong tuwang_def', TypeError, partial(BaziSchool, tuwang_def='whole_month')), # type: ignore[arg-type]
+    ('all_relations rejects wrong transits', TypeError, partial(RelationshipAnalyzer(chart).transits.all_relations, 2026)), # type: ignore[arg-type]
+    ('tougan requires condition', TypeError, partial(tougan, chart, Tiangan.甲)),
+    ('TianganOccurrence rejects wrong stem', TypeError, partial(replace, visible, stem='甲')),
+    ('TianganOccurrence rejects absent stem', ValueError, partial(replace, visible, stem=Tiangan.丙)),
+    ('TouganHit rejects wrong hidden type', TypeError, partial(TouganHit, None, visible)), # type: ignore[arg-type]
+    ('TouganHit rejects wrong visible type', TypeError, partial(TouganHit, hidden, None)), # type: ignore[arg-type]
+    ('TouganHit rejects non-hidden stem', ValueError, partial(TouganHit, visible, visible)),
+    ('TouganHit rejects non-visible stem', ValueError, partial(TouganHit, hidden, hidden)),
+  ])
   for rejected_anchor in (Zhu.月, Zhu.YUE, Zhu.时, Zhu.SHI):
     checks.append((
       'KongwangResult rejects month/hour aliases', ValueError,

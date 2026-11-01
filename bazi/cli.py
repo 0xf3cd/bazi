@@ -15,7 +15,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from .bazi import Bazi
 from .bazi_chart import BaziChart
 from .chart_text import TextStyle, basic_text, transit_text
-from .common import frozendict
 from .defines import Zhu, Tiangan, Shishen, Dizhi, Wuxing, Ganzhi
 from .knowledge import Applicability, DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
 from .context_matching import (
@@ -28,7 +27,7 @@ from .transit_chart import TransitChart
 from .transits import TransitKind
 from .utils.bazi_utils import traits
 from .analyzer.relationship import (
-  RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS,
+  RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS, WHOLE_PILLAR_SHENSHA_LABELS,
   KongwangResult,
 )
 
@@ -75,12 +74,6 @@ def _demo(seed: int | None) -> int:
   return 0
 
 
-_WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
-  'kuigang': '魁罡',
-  'tianshe': '天赦',
-})
-
-
 def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
   # TypedDict 用字面键索引；展示按 SHENSHA_LABELS 注册序读取，不包含原局的两个整柱神煞。
   dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)
@@ -98,7 +91,7 @@ def _shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
 def _at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
   result = _shensha_strs(shensha)
   whole_pillars = cast(Mapping[str, Ganzhi | None], shensha)
-  for name, label in _WHOLE_PILLAR_SHENSHA_LABELS.items():
+  for name, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
     if (ganzhi := whole_pillars[name]) is not None:
       result.append(f'{label}：{_colored_str(ganzhi)}')
   return result
@@ -106,7 +99,7 @@ def _at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
 
 def _no_shensha_str(shensha: AtBirthShenshaAnalysis) -> str:
   labels = tuple(label for label, _ in _named_shensha(shensha))
-  return f'原局无{"、".join(labels + tuple(_WHOLE_PILLAR_SHENSHA_LABELS.values()))}'
+  return f'原局无{"、".join(labels + tuple(WHOLE_PILLAR_SHENSHA_LABELS.values()))}'
 
 
 def _kongwang_strs(results: tuple[KongwangResult, ...]) -> list[str]:
@@ -301,6 +294,8 @@ def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace, *
       print()
     if not selection:
       print('无匹配条目。')
+      if not args.include_reference_only and knowledge.query(**filters, include_reference_only=True):
+        print('有仅供参考的条目，可加 --include-reference-only 查看。')
   return 0
 
 

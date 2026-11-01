@@ -122,7 +122,10 @@ def test_baseline_inventory() -> None:
     assert values['backend'] == 'celestial'
     assert values['precision'] == precision
     school = BaziSchool(day_rollover=DayRollover[rollover], kongwang_anchor=Anchor.DAY)
-    assert values['school'] == {field.name: getattr(school, field.name).name for field in fields(school) if field.name != 'kongwang_anchor'}
+    assert values['school'] == {
+      field.name: getattr(school, field.name).name for field in fields(school)
+      if field.name not in ('kongwang_anchor', 'tuwang_def')
+    }
     assert values['dayun_year_rule'] == year_rule
   for case in cases:
     assert set(case['reference']) == set(BASELINE['profiles'])

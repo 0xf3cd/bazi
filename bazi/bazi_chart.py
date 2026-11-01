@@ -8,16 +8,18 @@ from random import Random
 
 from calendar import monthrange
 from datetime import datetime, timedelta
-from typing import Final
+from typing import Final, assert_never
 from collections.abc import Generator
 
 from .data_types import (
   TraitTuple, DayunTuple, XiaoyunTuple, LiunianTuple,
   HiddenTianganDict, BaziData, GanzhiData,
 )
-from .defines import Zhu, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi
+from .common import frozendict
+from .defines import Zhu, Tiangan, Dizhi, Ganzhi, Shishen, ShierZhangsheng, Yinyang, Jieqi, Wuxing, WuxingState
 from .bazi import Bazi, BaziGender
-from .school import DayunYearRule, BaziConfig, PeiouXingDef, DEFAULT_CONFIG
+from .rules import BaziRules
+from .school import DayunYearRule, BaziConfig, PeiouXingDef, TuwangDef, DEFAULT_CONFIG
 
 from .calendar import CalendarUtilsProtocol, calendar_utils_of
 from .calendar.dates import GanzhiYearMonth
@@ -138,6 +140,48 @@ class BaziChart:
     if self._bazi._attribution_reached(boundary):
       month_dizhi = Dizhi.from_index((month_dizhi.index + 1) % 12)
     return minggong(self._bazi.year_pillar.tiangan, month_dizhi, self._bazi.hour_pillar.dizhi)
+
+  @functools.cached_property
+  def wuxing_states(self) -> frozendict[Wuxing, WuxingState]:
+    '''按出生月令及土旺口径给出五行的旺相休囚死状态。
+
+    非季月按四时本令；季月按 BaziSchool.tuwang_def，默认采用整月土旺的简化取法。
+    分段口径在转土前仍取该季节本令，取法与出处见 TuwangDef。
+
+    一天取连续24小时，先在后端 naive UTC+8 节气时刻上加十二天或减十八天，再按本盘
+    出生精度比较，相等归新。地点盘先把边界换为同一真太阳钟；HKO只作日期级，零点为占位。
+
+    Return: (frozendict[Wuxing, WuxingState]) 五行各有一个状态，结果不可变。
+    '''
+    bazi = self._bazi
+    dominant = BaziRules.MONTH_WUXING[bazi.month_commander]
+    if bazi.month_commander in (Dizhi.辰, Dizhi.未, Dizhi.戌, Dizhi.丑):
+      definition = bazi.config.school.tuwang_def
+      if definition is TuwangDef.WHOLE_MONTH:
+        dominant = Wuxing.土
+      else:
+        opening, following = bazi.month_jies
+        if definition is TuwangDef.AFTER_TWELVE_DAYS:
+          boundary = opening.moment + timedelta(days=12)
+        elif definition is TuwangDef.BEFORE_EIGHTEEN_DAYS:
+          boundary = following.moment - timedelta(days=18)
+        else:
+          assert_never(definition) # pragma: no cover # 配置已校验，穷尽守卫让新增成员触发静态检查。
+        if self._bazi._attribution_reached(boundary):
+          dominant = Wuxing.土
+    states = {}
+    for wuxing in Wuxing:
+      if wuxing is dominant:
+        states[wuxing] = WuxingState.旺
+      elif dominant.generates(wuxing):
+        states[wuxing] = WuxingState.相
+      elif wuxing.generates(dominant):
+        states[wuxing] = WuxingState.休
+      elif wuxing.destructs(dominant):
+        states[wuxing] = WuxingState.囚
+      else:
+        states[wuxing] = WuxingState.死
+    return frozendict(states)
 
   @property
   def house_of_relationship(self) -> Dizhi:

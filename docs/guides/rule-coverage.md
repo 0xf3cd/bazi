@@ -19,6 +19,7 @@
 | --- | --- | --- |
 | 年上起月、日上起时 | {py:attr}`~bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE`、{py:attr}`~bazi.rules.BaziRules.DAY_TO_HOUR_TABLE`；推算入口在 {py:mod}`~bazi.utils.bazi_utils` | 表旁说明起干与推算含义；当前知识对象目录没有这两类规则的专门对象。 |
 | 干支阴阳五行 | {py:attr}`~bazi.rules.BaziRules.TIANGAN_TRAITS`、{py:attr}`~bazi.rules.BaziRules.DIZHI_TRAITS` | `tiangan.*.definition` 已记录十干定义及出处；没有地支对象，不能把十干定义的覆盖扩大到地支表。 |
+| 月令五行状态 | {py:attr}`~bazi.rules.BaziRules.MONTH_WUXING`、{py:attr}`~bazi.bazi_chart.BaziChart.wuxing_states`；{py:attr}`~bazi.school.BaziSchool.tuwang_def` | 五状态与分段取法的出处见 {py:class}`~bazi.school.TuwangDef` 及表旁说明；默认整季月采用本库的简化取法。知识目录尚无对应的对象或 `KnowledgeSource`，用法见 {doc}`configuration`。 |
 | 藏干及比例 | {py:attr}`~bazi.rules.BaziRules.HIDDEN_TIANGANS` | 源码列成员与百分比，表旁未列各比例的出处；尚无专门知识对象。十神释义不能替这些比例作证。 |
 | 纳音 | {py:attr}`~bazi.rules.BaziRules.NAYIN` | 源码将六十甲子映射为纳音；尚无纳音对象及条目关联。 |
 | 十二长生 | {py:attr}`~bazi.rules.BaziRules.TIANGAN_ZHANGSHENG`；查询与逆查在 {py:mod}`~bazi.utils.bazi_utils` | 长生起点与阳顺阴逆的计算在源码；尚无十二长生对象及条目关联。 |
@@ -71,6 +72,7 @@
 | --- | --- | --- |
 | 五行、干支循环 | {py:class}`~bazi.defines.Wuxing`、{py:class}`~bazi.defines.Ganzhi`；{py:func}`~bazi.utils.bazi_utils.ganzhi_of_year`、{py:func}`~bazi.utils.bazi_utils.ganzhi_of_day` | 五行两条本仓署名示例已存在；年／日干支计算有源码定义与基准日期，但尚无相应规则到知识来源的关联。 |
 | 十神计算 | {py:func}`~bazi.utils.bazi_utils.shishen` | 已有 `shishen.*` 对象与定义条目，如 `shishen.bijian.definition`；定义条目不为地支取主气、藏干比例或全部解释作证，也不能由此假定十个对象都有默认定义条目。 |
+| 通根与透干 | {py:func}`~bazi.analyzer.facts.tonggen`、{py:func}`~bazi.analyzer.facts.tougan` | 同五行通根例与徐注墓库透干例见两函数的说明。知识目录尚无对应的对象或条目；用法见 {doc}`relations-transits`。 |
 | 四柱节界与换日 | {py:class}`~bazi.bazi.Bazi`；{py:attr}`~bazi.school.BaziConfig.precision`、{py:attr}`~bazi.school.BaziSchool.day_rollover` | {py:class}`~bazi.school.BaziPrecision`、{py:class}`~bazi.school.DayRollover` 与 {doc}`configuration` 说明边界。知识目录不是历法精度或换日出处目录。 |
 | 胎元与命宫附加查询 | {py:attr}`~bazi.bazi_chart.BaziChart.taiyuan`、{py:attr}`~bazi.bazi_chart.BaziChart.minggong`；纯函数在 {py:mod}`~bazi.utils.bazi_utils` | `concept.taiyuan`、`concept.minggong` 区分月柱顺移、掌诀、中气按语、本库执行政策与待核候选，均不默认展示（`show_by_default=False`）。三百日胎元及其他命宫月界未编码；不扩四柱、配置或旧分析，计算不认证解释。用法见 {doc}`integration`。 |
 | 历法、民用钟与真太阳钟 | {py:attr}`~bazi.school.BaziConfig.backend`；{py:class}`~bazi.calendar.backend.CalendarBackend`、`bazi/calendar/solar_time.py` 与地点输入 | 数据来源、精度及钟的边界见 {doc}`configuration` 和 {py:class}`~bazi.calendar.backend.CalendarBackend` 的说明。逐行历书／天文数据的独立定标不属本页评估；不因缺少知识条目就判计算无依据。 |

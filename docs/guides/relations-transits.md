@@ -1,6 +1,6 @@
 # 关系与流运
 
-本页先查原局日主关系和六甲旬空，再选取某一年的流运，查它与原局婚姻宫的地支关系；最后从命盘读取有限几步大运和流年。
+本页查询原局关系、神煞、通根与透干，再选取流运查跨组关系；最后从命盘读取有限几步大运和流年。
 结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。
 
 ## 原局日主关系：按天干值汇总
@@ -110,6 +110,41 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 `柱` 和 `天干层次`。打印原局柱位 `Zhu` 或明藏层 `TianganLayer` 用 `str(value)` 取得中文值，
 不依赖枚举的 repr；流运种类 `TransitKind` 用 `.value` 取得 `dayun`、`liunian` 等标签。
 
+## 原局神煞与中文名
+
+{py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
+{py:data}`~bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS` 保存魁罡、天赦两个整柱名称。
+两表均从 `relationship` 模块导入；整柱结果是完整日柱或 `None`。
+
+```{testcode} relations-shensha-labels
+from bazi.analyzer.relationship import (
+  RelationshipAnalyzer, SHENSHA_LABELS, WHOLE_PILLAR_SHENSHA_LABELS,
+)
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+result = RelationshipAnalyzer(chart).at_birth.shensha
+for key, label in SHENSHA_LABELS.items():
+  branches = result[key]
+  if branches:
+    print(label, ''.join(map(str, sorted(branches, key=lambda branch: branch.index))))
+for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
+  print(label, result[key] or '无')
+```
+
+```{testoutput} relations-shensha-labels
+飞刃 午
+天乙贵人 巳
+将星 午
+亡神 巳
+太极贵人 巳
+魁罡 无
+天赦 无
+```
+
+支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
+
 ## 查一年的流运和一个关系
 
 `TransitChart` 按干支年、月、日期或时刻返回一个 `TransitSet`；`RelationshipAnalyzer` 对它做关系查询。
@@ -193,6 +228,85 @@ for name, mutate in (('改流运', rewrite_year), ('改关系', rewrite_found)):
 改流运 FrozenInstanceError
 改关系 TypeError
 ```
+
+## 全部跨组地支关系：保留具体位置
+
+`house_relations` 只查婚姻宫，且按地支值汇总。要查全部原局与所选流运之间的关系，使用
+{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.all_relations`：
+
+```{testcode} relations-all-positions
+from bazi.analyzer.relationship import RelationshipAnalyzer
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import DizhiRelation
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+year = TransitChart(chart).at_year(2020)
+assert year is not None
+found = RelationshipAnalyzer(chart).transits.all_relations(year.select(TransitKind.LIUNIAN))
+for combo in found[DizhiRelation.冲]:
+  print(sorted(f'{item.position.value}:{item.ganzhi}' for item in combo))
+```
+
+```{testoutput} relations-all-positions
+['liunian:庚子', '年:庚午']
+['liunian:庚子', '日:壬午']
+```
+
+原局年、日两处午分别与流年子冲，不因同支合并。返回冻结映射 `RelationPositionDiscovery`，
+键是 `DizhiRelation`，值是 `tuple[frozenset[RelationParticipant], ...]`；参与者记录 `position` 和完整 `ganzhi`。
+原局位置用 `Zhu`，流运位置用 `TransitKind`。每个组合两侧都有参与者，不包含纯原局或纯流运组合。
+三支关系和拱局仍按本盘流派判断；结果顺序与低层 `discover_mutual_ganzhis` 一致，只把序号换成位置。
+
+## 通根与透干：明藏匹配事实
+
+{py:func}`~bazi.analyzer.facts.tonggen` 查目标干在原局与所选流运藏干中的匹配，默认同五行；同五行包括同干，
+`TianganMatch.SAME_TIANGAN` 则只取同干。返回 `TianganOccurrence` 元组，每条记录的 `position` 是位置，
+`ganzhi` 是完整干支，`stem` 是匹配的实际藏干。
+
+{py:func}`~bazi.analyzer.facts.tougan` 的 `target` 是要查的实际藏干，先按同干找到它，再按显式
+`condition` 匹配明干。省略条件会抛 `TypeError`；未找到目标藏干就不返回透干记录。
+返回 `TouganHit` 元组，每条分 `hidden`（藏干端）和 `visible`（明干端），两端都是 `TianganOccurrence`。
+
+```{testcode} relations-tonggen-tougan
+from bazi.analyzer.facts import TianganMatch, tonggen, tougan
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Tiangan
+from bazi.transit_chart import TransitChart
+from bazi.transits import TransitKind
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+year = TransitChart(chart).at_year(2024)
+assert year is not None
+transits = year.select(TransitKind.LIUNIAN)
+for root in tonggen(chart, Tiangan.甲, transits):
+  print('根', root.position.value, root.ganzhi, root.stem)
+print('严格同干', tonggen(chart, Tiangan.甲, transits, condition=TianganMatch.SAME_TIANGAN))
+for hit in tougan(chart, Tiangan.癸, transits, condition=TianganMatch.SAME_WUXING):
+  print('藏', hit.hidden.position.value, hit.hidden.ganzhi, hit.hidden.stem,
+        '明', hit.visible.position.value, hit.visible.ganzhi, hit.visible.stem)
+print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatch.SAME_TIANGAN))
+```
+
+```{testoutput} relations-tonggen-tougan
+根 liunian 甲辰 乙
+严格同干 ()
+藏 liunian 甲辰 癸 明 日 壬午 壬
+同干透出 ()
+```
+
+辰藏乙与甲同五行，严格同干则不匹配。辰中癸与日干壬同五行，结果两端仍分别是癸、壬。
+例中的 `position.value` 在原局给出中文柱位，在流运给出种类标签。
+
+不传 `transits` 只查原局；传入后，原局和所选流运共同参与，两端可在任一侧，也保留同柱匹配。
+位置先按年、月、日、时，随后按小运、大运、流年、流月、流日排列，只取实际传入的流运。
+通根在每个位置按 {py:attr}`~bazi.rules.BaziRules.HIDDEN_TIANGANS` 表顺序返回，透干按藏干位置优先、
+明干位置次序返回；相同干支的不同位置不合并，结果不可变。
+
+两种条件都以藏干表为依据，乙逢午、丁逢酉的阴长生根不在查询范围内。
 
 ## 取有限的几步大运和流年
 
@@ -283,5 +397,5 @@ print(transit_text(chart, dayun_count=2, liunian_count=10).strip())
 
 - 月、日期和时刻查询按东八区无时区标签和物理节气边界；`at_moment` 还要求 `celestial` 系后端和 `HOUR` / `MINUTE` 精度，否则返回 `None`。
 - `at_year` 在出生年之前返回 `None`，远年份仍可返回流年，不能用它的 `None` 判断历法表上界。月、日期与时刻查询不满足各自支持范围时返回 `None`；类型与取值校验另见各入口的 API 说明。
-- 这里的关系和神煞只说明“在所选流派的定义下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
+- 这里的关系、神煞与明藏匹配只说明“在所选流派或匹配条件下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
   要看某条知识条目的前提在这张盘上是否成立，见 {doc}`knowledge`。

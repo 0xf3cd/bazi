@@ -453,7 +453,7 @@ editorial.spouse_star_tougan.v1 condition relationship 1
 
 ## 命令行
 
-安装后的 `bazi` 命令可直接查询知识，无需创建命盘。开发版安装方法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)：
+安装后的 `bazi` 命令可直接查询知识，无需创建命盘。安装方法见 [README](https://github.com/0xf3cd/bazi/blob/main/README.md#命令行)：
 
 ```sh
 bazi knowledge --object tiangan.ding
@@ -464,6 +464,8 @@ bazi knowledge \
 ```
 
 只写 `knowledge` 会给出知识库概览和可用的查询条件；`--validate-knowledge` 校验完整知识源，`--knowledge-source` 指定你自己的 JSON，`--all` 列出全部默认可见的条目。
+默认查询为空时，若同一知识库、同一过滤条件下有仅供参考条目，会提示加 `--include-reference-only`；
+不会自动展示参考条目。确实没有匹配条目时只报空结果，自定义知识源也按自身内容判断。
 知识查询的完整选项见 `bazi knowledge --help`。判据目录用 `bazi match` 查看，
 只给判据 ID 会说明它需要哪些输入；判据任务的选项见 `bazi match --help`。
 `bazi knowledge --export-knowledge-base` 默认将 TXT 写入调用时当前目录的 `output_data/knowledge_base/`，

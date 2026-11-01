@@ -53,7 +53,7 @@ assert chart.bazi.day_master in Tiangan
 目标支是否命中。错误外层或内部干支字段类型抛 `TypeError`，阴阳不配锚抛 `ValueError`，在 `python -O`
 下同样检查；不改变 `Ganzhi` 自身的构造域。目标不附加天干、纳音或冲合条件。
 
-`BaziSchool.kongwang_anchor` 位于流派字段末尾，默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
+`BaziSchool.kongwang_anchor` 默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
 `AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
 逐锚记录 `anchor`（`Zhu.年`／`Zhu.日`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
 `KongwangHit(position, ganzhi)` 的 position 为原局柱位 `Zhu` 或流运种类 `TransitKind`；`ganzhi` 保留完整目标。
@@ -166,6 +166,35 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 正文、引文和来源说明的编辑不改变 `CriterionResult`，不再有条目层的 UNKNOWN 或识别状态。
 
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节说明范围和条目关联的合同。
+
+## 关系、明藏匹配、月令状态与神煞名称
+
+- `TransitAnalysis.all_relations(transits)` 返回 `RelationPositionDiscovery`，即地支关系到
+  `tuple[frozenset[RelationParticipant], ...]` 的冻结映射。参与者字段为 `position: Zhu | TransitKind`
+  和 `ganzhi: Ganzhi`；每个组合跨原局与所选流运两组。按本盘流派调用 `discover_mutual_ganzhis`，
+  原样映射其组合与顺序，只将序号改为位置；同干支不同位置不合并。
+- `bazi.analyzer.facts.tonggen(chart, target, transits=None, *, condition=TianganMatch.SAME_WUXING)`
+  返回 `tuple[TianganOccurrence, ...]`，记录匹配的实际藏干。`TianganOccurrence(position, ganzhi, stem)`
+  是冻结值，位置为 `Zhu | TransitKind`，stem 必须是该干支的明干或藏干；结果中的明藏角色由字段指定。
+- 同模块 `tougan(chart, target, transits=None, *, condition)` 没有默认条件；省略条件抛 `TypeError`。
+  `target` 先按同干定位实际藏干，再按显式条件与明干匹配，返回 `tuple[TouganHit, ...]`。
+  `TouganHit(hidden, visible)` 两端均为 `TianganOccurrence`：`hidden.stem` 须属 `hidden.ganzhi` 的藏干，
+  `visible.stem` 须等于 `visible.ganzhi.tiangan`；不强制两端同干。
+  两个函数的条件均为 `TianganMatch.SAME_TIANGAN` 或 `SAME_WUXING`。
+  不传流运只查原局；传入后两端均可来自原局或流运，保留同柱与重复干支位置。
+  位置按年、月、日、时，再按 `TransitSet.items` 的固定次序排列。通根在每个位置按
+  `BaziRules.HIDDEN_TIANGANS` 表顺序返回；透干按藏干位置优先、明干位置次序返回。没有匹配返回空元组。
+- `chart.wuxing_states` 是 `frozendict[Wuxing, WuxingState]`，覆盖五行各一个旺、相、休、囚、死状态；
+  `WuxingState` 及 `五行状态` 从 defines 重导出。季月取法由 `BaziSchool.tuwang_def`
+  决定，该字段参与配置相等与哈希；默认 `TuwangDef.WHOLE_MONTH` 为整月土旺的简化取法。
+  `AFTER_TWELVE_DAYS` 取开月节后十二日，`BEFORE_EIGHTEEN_DAYS` 取下一四立前十八日。
+  分段此前按季节本令；连续24小时计日，沿用出生精度、相等归新及地点钟政策。HKO只作日期级。
+  属性使用原局出生月令；用法见[配置指南](docs/guides/configuration.md#月令五行状态与土旺口径)。
+- `relationship.SHENSHA_LABELS`（22项）与 `WHOLE_PILLAR_SHENSHA_LABELS`（魁罡、天赦两项）
+  是公开冻结名称表，CLI 共同消费。
+
+上述入口的错型抛 `TypeError`，结果值的干支与明藏角色不符抛 `ValueError`；普通运行与 `-O` 一致。
+原局位置与流运种类、明藏两端实际值的示例见[关系与流运指南](docs/guides/relations-transits.md)。
 
 ## 观察请求与结果对象
 
@@ -296,6 +325,8 @@ def anchor_label(result: KongwangResult) -> str:
 地点与时区输入沿用库的时间口径。
 `knowledge --list-values topic` 对应 `filter_values('topic')`，`match` 与 `match 判据ID`
 对应 `criteria()` 与 `criterion(id)`；CLI 不提供名称精确匹配或关键词检索参数。
+`knowledge` 默认查询为空且同一知识库、同一过滤条件有参考条目时，提示 `--include-reference-only`，
+不自动展示参考条目；真空结果不提示，已有默认输出或已显式包含参考条目也不追加提示。
 
 裸调用与 `--help` 只打印帮助并返回 0，不写文件。未知任务／选项、缺项或非法输入由 argparse
 以退出码 2 报错；普通运行与优化模式保持相同的立即失败行为。`bazi.cli.main(argv=None)`
