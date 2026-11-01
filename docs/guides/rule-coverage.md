@@ -81,9 +81,34 @@
 | 流运查询与关系组合 | {py:mod}`~bazi.transits`、{py:mod}`~bazi.utils.tiangan_utils`、{py:mod}`~bazi.utils.dizhi_utils`、{py:mod}`~bazi.analyzer.relationship` | 查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。 |
 | 解释前提匹配 | {py:mod}`~bazi.context_matching` 与 {doc}`../catalog/criteria` | 已有可发现判据目录与知识引用；不等同于全库计算规则的来源索引，更不自动证明解释前提成立。 |
 
+(guoyin-knowledge)=
 ## 国印关联示例
 
 用 {py:func}`~bazi.knowledge.guoyin_entry` 从流派定义取得条目，再沿 `entry.sources` 查来源；用 {py:func}`~bazi.knowledge.guoyin_def` 从条目 ID 反查定义。
+
+```{testcode} guoyin-lookup
+from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
+from bazi.rules import ShenshaRules
+
+kb = KnowledgeBase.load()
+entry = guoyin_entry(kb, ShenshaRules.GuoyinDef.MODERN)
+definition = guoyin_def(kb, entry.claim_id)
+print(entry.claim_id)
+print(definition is ShenshaRules.GuoyinDef.MODERN)
+```
+
+```{testoutput} guoyin-lookup
+shensha.guoyin.modern
+True
+```
+
+`True` 表示反查回到了传入的 `MODERN` 定义。把示例中的 `MODERN` 换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
+
+两个函数都使用传入的知识库。`guoyin_entry` 所需条目缺失、`guoyin_def` 查询未知或空白 ID 时抛 `ValueError`；`guoyin_def` 查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的 `viewpoint` 不参与关联识别。
+
+### 核对规则表与条目
+
+下面同时检查两读的表值、条目及来源记录。
 
 ```{testcode} rule-coverage-guoyin
 from bazi.defines import Tiangan
@@ -105,7 +130,7 @@ for definition in (ShenshaRules.GuoyinDef.MODERN, ShenshaRules.GuoyinDef.WUXING_
   offset = (target.index - BaziRules.TIANGAN_LU[Tiangan.甲].index) % 12
   assert all((table[tg].index - lu.index) % 12 == offset
              for tg, lu in BaziRules.TIANGAN_LU.items())
-  # 对账当前条目措辞，不把解释文字当作结构化接口。
+  # 核对当前条目措辞，不把解释文字当作结构化接口。
   assert f'偏移 +{offset}' in entry.text
   assert entry.limits
   source = kb.sources[entry.sources[0]]
@@ -133,8 +158,6 @@ repository_guoyin_variants editorial repository_attributed
 
 `repository_guoyin_variants` 概述的是本仓说明，`supports` 及 `limitations` 都应保留阅读。该来源引用固定的仓内快照；当前表与条目对账成功，不会把历史快照变成新增的古籍见证。
 
-两个函数都使用传入的知识库。前向查询所需条目缺失、反向查询未知或空白 ID 时抛 `ValueError`；反向查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的展示口径不参与关联识别。
-
 ## 关联如何维护
 
 - 计算表仍归 `rules.py`，默认与允许的配置归 `school.py`，知识文字、来源及状态归 `KnowledgeBase` 的注册表。禄神共表、金舆／国印派生等已有共享关系继续从源码取值，不在知识库或本页复制十格表。
@@ -146,17 +169,17 @@ repository_guoyin_variants editorial repository_attributed
 
 常用神煞的参考条目分别记录名称、表值或查法，并明确系统归属。来源须有可核的作品、版本、位置与逐字摘录；正文、夹注、现代汇编和转引分别标注。单源条目保持 `show_by_default=False`，不把两个转录网站算作独立谱系。默认展示还须满足 {doc}`knowledge` 所列条件。
 
-古籍表值、现代锚点和流运使用范围分别记录在来源的 `supports`、`limitations` 中，不能用一段只说表值的原文证明整套查法。不同流派的读法分别保留；本批新增参考条目不改变计算表或默认配置。
+古籍表值、现代锚点和流运使用范围分别记录在来源的 `supports`、`limitations` 中，不能用一段只说表值的原文证明整套查法。不同流派的读法分别保留。
 
 | 项目 | 结论 | 后续条件 |
 | --- | --- | --- |
 | 六项常用神煞 | 已有专门对象和显式参考条目 | 查阅时按各来源记录的支持范围区分表值与查法。 |
 | 国印两读 | 由两个窄查询关联现有条目；来源等级不变 | 新增定义成员时同步其稳定条目 ID 和正反查询测试。 |
-| 地支 | 本批不建 | 先确定查询定义、藏干还是比例的来源，不只为与十干对象对称。 |
-| 地支关系 | 本批不建 | 先选择具体关系与读法，区分组合条件、合化及解释。 |
-| 纳音 | 本批不建 | 先确定查询表值来源、某名称的定义，还是带前提的解释，再决定对象粒度。 |
-| 十二长生 | 本批不建 | 先分起点、阴阳顺逆与查法，不把十二个名称直接当作已核知识。 |
-| 禄位 | 本批不建 | 国印关联复用既有禄位表即可；禄神知识按具体查询用途另行评估。 |
+| 地支 | 暂不新建 | 先确定查询定义、藏干还是比例的来源，不只为与十干对象对称。 |
+| 地支关系 | 暂不新建 | 先选择具体关系与读法，区分组合条件、合化及解释。 |
+| 纳音 | 暂不新建 | 先确定查询表值来源、某名称的定义，还是带前提的解释，再决定对象粒度。 |
+| 十二长生 | 暂不新建 | 先分起点、阴阳顺逆与查法，不把十二个名称直接当作已核知识。 |
+| 禄位 | 暂不新建 | 国印关联复用既有禄位表即可；禄神知识按具体查询用途另行评估。 |
 | 五行生克 | 可作为下一组较小候选 | 现有两条只是本仓署名示例；扩展前先定是否只关联形式定义，不能直接升级为古籍见证或全体生克解释。 |
 | 配偶星／宫 | 保留现有原文与前提边界，暂不作为机械关联的首个试点 | 先区分历史取法、默认计算、条件解释与消费者，不能把同对象的所有条目绑定为同一条计算规则。 |
 | 全量规则查询 API、知识迁移 | 暂缓；本页不实施 | 先用小样本确认规则身份、关联所有者、维护成本与来源粒度，再确定实施范围；结构化知识缺口不等于每项都应新增解释。 |

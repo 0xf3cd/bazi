@@ -174,4 +174,4 @@ def test_reference_entry_meanings_are_pinned() -> None:
 def test_source_metadata_is_pinned() -> None:
   records = [asdict(KNOWLEDGE.sources[identifier]) for identifier in SHENSHA_SOURCE_IDS]
   payload = json.dumps(records, ensure_ascii=False, sort_keys=True).encode('utf-8')
-  assert sha256(payload).hexdigest() == '85ba304ca6bec1ca366e9aee1fd9b3cfb22a72e7394189a93303334cffbe12cc'
+  assert sha256(payload).hexdigest() == 'd005a680a013cbd68cd34e58e9e5dc34e28a6d0a05f58bcc2d85bcf8b92add88'

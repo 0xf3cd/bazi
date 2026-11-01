@@ -130,8 +130,10 @@ XIN_XU 星学大成 zhushi
 现代问真 问真《神煞大全》 editorial
 ```
 
-上例分别查到辛戌与辛子读法。各来源的 `supports`、`limitations` 说明它支持表值、锚点或查找位置中的哪一部分。
-国印定义与条目的双向查询见 {doc}`rule-coverage`。
+上例分别查到辛戌与辛子读法。`viewpoint` 是条目的口径标签，不等同于规则定义的枚举名；两种读法的具体含义见条目正文。
+本例的 `text_layer` 区分文本层，`zhushi` 表示夹注、`editorial` 表示现代编者整理。
+各来源的 `supports`、`limitations` 说明它支持表值、锚点或查找位置中的哪一部分，读取方法见 {ref}`条目的来源 <knowledge-sources>`。
+国印定义与条目的双向查询见 {ref}`国印关联示例 <guoyin-knowledge>`。
 
 ## 胎元与命宫：已实现取法和待核候选
 
@@ -194,6 +196,7 @@ print(kb.search('tiangan.ding'))
 
 搜索不自动转换繁简字。条目引用按载体原字修订后，相关字面关键词的命中可能随之变化；这不改变默认查询资格。
 
+(knowledge-sources)=
 ## 条目的来源
 
 体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，

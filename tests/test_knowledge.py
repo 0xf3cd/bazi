@@ -513,7 +513,6 @@ def test_premises_organized_without_new_rules() -> None:
     if entry.legacy is None:
       assert entry.show_by_default is False
       if entry.claim_id in {*_NEW_RELATIONSHIP_IDS, 'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS, *SHENSHA_ENTRY_IDS}:
-        # These literal IDs retain witnessed source records.
         assert entry.source_state == 'witnessed'
       else:
         assert entry.source_state == 'repository_attributed'
