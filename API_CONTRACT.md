@@ -53,7 +53,7 @@ assert chart.bazi.day_master in Tiangan
 目标支是否命中。错误外层或内部干支字段类型抛 `TypeError`，阴阳不配锚抛 `ValueError`，在 `python -O`
 下同样检查；不改变 `Ganzhi` 自身的构造域。目标不附加天干、纳音或冲合条件。
 
-`BaziSchool.kongwang_anchor` 位于流派字段末尾，默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
+`BaziSchool.kongwang_anchor` 默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
 `AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
 逐锚记录 `anchor`（`Zhu.年`／`Zhu.日`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
 `KongwangHit(position, ganzhi)` 的 position 为原局柱位 `Zhu` 或流运种类 `TransitKind`；`ganzhi` 保留完整目标。
@@ -167,7 +167,7 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节说明范围和条目关联的合同。
 
-## 关系、明藏匹配与月令状态
+## 关系、明藏匹配、月令状态与神煞名称
 
 - `TransitAnalysis.all_relations(transits)` 返回 `RelationPositionDiscovery`，即地支关系到
   `tuple[frozenset[RelationParticipant], ...]` 的冻结映射。参与者字段为 `position: Zhu | TransitKind`
@@ -178,10 +178,12 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
   是冻结值，位置为 `Zhu | TransitKind`，stem 必须是该干支的明干或藏干；结果中的明藏角色由字段指定。
 - 同模块 `tougan(chart, target, transits=None, *, condition)` 没有默认条件；省略条件抛 `TypeError`。
   `target` 先按同干定位实际藏干，再按显式条件与明干匹配，返回 `tuple[TouganHit, ...]`。
-  `TouganHit(hidden, visible)` 两端均为 `TianganOccurrence`，分别校验藏干归属和明干一致；不强制两端同干。
+  `TouganHit(hidden, visible)` 两端均为 `TianganOccurrence`：`hidden.stem` 须属 `hidden.ganzhi` 的藏干，
+  `visible.stem` 须等于 `visible.ganzhi.tiangan`；不强制两端同干。
   两个函数的条件均为 `TianganMatch.SAME_TIANGAN` 或 `SAME_WUXING`，不计算根等级或强弱。
   不传流运只查原局；传入后两端均可来自原局或流运，保留同柱与重复干支位置。
-  通根按位置、藏干表顺序返回，透干按藏干位置、明干位置顺序返回；没有匹配返回空元组。
+  位置按年、月、日、时，再按 `TransitSet.items` 的固定次序排列。通根在每个位置按
+  `BaziRules.HIDDEN_TIANGANS` 表顺序返回；透干按藏干位置优先、明干位置次序返回。没有匹配返回空元组。
 - `chart.wuxing_states` 是 `frozendict[Wuxing, WuxingState]`，覆盖五行各一个旺、相、休、囚、死状态；
   `WuxingState` 及 `五行状态` 从 defines 重导出。季月选择由追加在 `BaziSchool` 尾部的 `tuwang_def`
   决定，纳入配置相等与哈希；默认 `TuwangDef.WHOLE_MONTH` 为整月土旺的简化约定／待考。

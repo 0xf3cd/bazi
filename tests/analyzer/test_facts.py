@@ -78,6 +78,16 @@ def test_natal_only_and_canggui_touren() -> None:
   assert tougan(chart, Tiangan.庚, condition=TianganMatch.SAME_TIANGAN)
 
 
+@pytest.mark.parametrize('target,ganzhi', [(Tiangan.乙, '甲午'), (Tiangan.丁, '乙酉')])
+@pytest.mark.parametrize('condition', list(TianganMatch))
+def test_yin_changsheng_is_not_a_hidden_root(
+  target: Tiangan, ganzhi: str, condition: TianganMatch,
+) -> None:
+  chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+  roots = tonggen(chart, target, TransitSet(liunian=Ganzhi.from_str(ganzhi)), condition=condition)
+  assert all(root.position is not TransitKind.LIUNIAN for root in roots)
+
+
 @pytest.mark.parametrize('query', [tonggen, tougan])
 @pytest.mark.parametrize('field,value', [
   ('chart', object()), ('target', '甲'), ('condition', 'same_wuxing'), ('condition', None),

@@ -2,12 +2,14 @@
 
 '''原局与所选流运的通根、透干匹配事实，不排根的强弱。
 
-同五行通根见《子平真诠》六的甲逢未、丙逢戌，与《滴天髓阐微》才德篇任注的庚在酉丑通根：
+同五行通根见《子平真诠》六、论十干得时不旺失时不弱的甲逢未、丙逢戌，
+与《滴天髓阐微》才德篇任注的庚在酉丑通根：
 https://www.donglishuzhai.net/chapter/3719.html
 https://www.zhyw.net/a/ditiansui/2020/11/09/23706.html
 两份电子转录未核影印；严格同干只作机械匹配，不另称古籍流派。
+沈氏同段还论乙逢午、丁逢酉的阴长生根；本查询只匹配藏干，不包含这些非藏干根。
 
-徐乐吾《子平真诠评注》三有辰藏癸而透壬的墓库例：
+徐乐吾《子平真诠评注》三、论阴阳生死有辰藏癸而透壬的墓库例：
 https://tianjihq.com/zh-CN/learn/books/ziping-zhenquan-pingzhu/14
 所用简体电子转录为注文、未核影印。该例不能推广为所有同五行匹配都具有相同命理含义，
 故透干必须显式选择条件；查询不加入墓库放宽、合会化根或得地判断。
@@ -16,6 +18,7 @@ https://tianjihq.com/zh-CN/learn/books/ziping-zhenquan-pingzhu/14
 from dataclasses import dataclass
 from enum import Enum
 from itertools import product
+from typing import assert_never
 
 from ..bazi_chart import BaziChart, _check_chart
 from ..common import check_declared_types
@@ -82,7 +85,12 @@ def _positions(
 
 
 def _matches(target: Tiangan, actual: Tiangan, condition: TianganMatch) -> bool:
-  return target is actual if condition is TianganMatch.SAME_TIANGAN else traits(target).wuxing is traits(actual).wuxing
+  if condition is TianganMatch.SAME_TIANGAN:
+    return target is actual
+  elif condition is TianganMatch.SAME_WUXING:
+    return traits(target).wuxing is traits(actual).wuxing
+  else:
+    assert_never(condition) # pragma: no cover # 输入已校验，穷尽守卫让新增成员触发静态检查。
 
 
 def tonggen(

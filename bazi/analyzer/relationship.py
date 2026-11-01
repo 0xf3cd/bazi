@@ -461,7 +461,7 @@ class AtBirthAnalysis:
 
 
 class TransitAnalysis:
-  '''流运亲密关系分析。'''
+  '''流运与原局的关系、神煞及婚恋结构查询。'''
   def __init__(self, chart: BaziChart) -> None:
     _check_chart(chart)
     self._chart: Final[BaziChart] = chart
@@ -531,7 +531,7 @@ class TransitAnalysis:
     - transits: (TransitSet) 所选流运；错型抛 TypeError。
 
     Return: (RelationPositionDiscovery) 与 discover_mutual_ganzhis 一一对应的跨组组合。
-    每个组合两侧都有参与者，位置为 Zhu 或 TransitKind，重复干支不合并；旧 house_relations 不变。
+    每个组合两侧都有参与者，位置为 Zhu 或 TransitKind，重复干支不合并。
     '''
     self._check_transits(transits)
     bazi = self._chart.bazi
@@ -958,7 +958,7 @@ def spouse_evidence(chart: BaziChart, transits: TransitSet | None) -> Relationsh
 
 
 class RelationshipAnalyzer:
-  '''组合 AtBirthAnalysis 与 TransitAnalysis 的亲密关系分析入口。'''
+  '''组合 AtBirthAnalysis 与 TransitAnalysis，查询关系、神煞及婚恋结构。'''
   def __init__(self, chart: BaziChart) -> None:
     _check_chart(chart)
     self._chart: Final[BaziChart] = chart

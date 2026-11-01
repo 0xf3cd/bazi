@@ -263,11 +263,13 @@ for combo in found[DizhiRelation.冲]:
 
 ## 通根与透干：明藏匹配事实
 
-{py:func}`~bazi.analyzer.facts.tonggen` 查目标干在哪些地支藏干中有匹配，默认同五行；
-`TianganMatch.SAME_TIANGAN` 只取同干。返回的 `TianganOccurrence` 保留实际藏干，而不是把它改写成目标干。
+{py:func}`~bazi.analyzer.facts.tonggen` 查目标干在各柱藏干中的匹配，默认同五行；同五行包括同干，
+`TianganMatch.SAME_TIANGAN` 则只取同干。返回 `TianganOccurrence` 元组，每条记录的 `position` 是位置，
+`ganzhi` 是完整干支，`stem` 是实际藏干，不会把它改写成目标干。
 
 {py:func}`~bazi.analyzer.facts.tougan` 的 `target` 是要查的实际藏干，先按同干找到它，再按显式
-`condition` 匹配明干。省略条件会抛 `TypeError`，没有藏干端时不报透出。
+`condition` 匹配明干。省略条件会抛 `TypeError`；未找到目标藏干就不返回透干记录。
+返回 `TouganHit` 元组，每条分 `hidden`（藏干端）和 `visible`（明干端），两端都是 `TianganOccurrence`。
 
 ```{testcode} relations-tonggen-tougan
 from bazi.analyzer.facts import TianganMatch, tonggen, tougan
@@ -298,13 +300,18 @@ print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatc
 ```
 
 辰藏乙与甲同五行，严格同干则不匹配。辰中癸与日干壬同五行，结果两端仍分别是癸、壬。
+例中的 `position.value` 在原局给出中文柱位，在流运给出种类标签。
 这只是所选条件下的明藏匹配，不认定所有同五行异干都具有相同命理含义。
 徐乐吾评注中的辰藏癸而透壬属于墓库语境，不能推广为一般规则；原文层次与来源限制见
 {py:mod}`bazi.analyzer.facts`。严格同干保留为机械条件，不另称已核定的古籍流派。
 
 不传 `transits` 只查原局；传入后，原局和所选流运共同参与，两端可在任一侧，也保留同柱匹配。
-通根按位置、藏干表顺序返回元组，透干按藏干位置优先、明干位置次序返回 `TouganHit` 元组；
-相同干支的不同位置不合并，结果不可变。这里不计算根等级、强弱分数、合会化根或综合得地。
+位置先按年、月、日、时，随后按小运、大运、流年、流月、流日排列，只取实际传入的流运。
+通根在每个位置按 {py:attr}`~bazi.rules.BaziRules.HIDDEN_TIANGANS` 表顺序返回，透干按藏干位置优先、
+明干位置次序返回；相同干支的不同位置不合并，结果不可变。
+
+这里仅查藏干匹配，不含沈氏同段所论乙逢午、丁逢酉的阴长生根；空结果不等于该原文读法下无根。
+也不计算根等级、强弱分数、合会化根或综合得地。
 
 ## 取有限的几步大运和流年
 
@@ -395,5 +402,5 @@ print(transit_text(chart, dayun_count=2, liunian_count=10).strip())
 
 - 月、日期和时刻查询按东八区无时区标签和物理节气边界；`at_moment` 还要求 `celestial` 系后端和 `HOUR` / `MINUTE` 精度，否则返回 `None`。
 - `at_year` 在出生年之前返回 `None`，远年份仍可返回流年，不能用它的 `None` 判断历法表上界。月、日期与时刻查询不满足各自支持范围时返回 `None`；类型与取值校验另见各入口的 API 说明。
-- 这里的关系和神煞只说明“在所选流派的定义下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
+- 这里的关系、神煞与明藏匹配只说明“在所选流派或匹配条件下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
   要看某条知识条目的前提在这张盘上是否成立，见 {doc}`knowledge`。

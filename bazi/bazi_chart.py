@@ -8,7 +8,7 @@ from random import Random
 
 from calendar import monthrange
 from datetime import datetime, timedelta
-from typing import Final
+from typing import Final, assert_never
 from collections.abc import Generator
 
 from .data_types import (
@@ -162,11 +162,12 @@ class BaziChart:
         dominant = Wuxing.土
       else:
         opening, following = bazi.month_jies
-        boundary = (
-          opening.moment + timedelta(days=12)
-          if definition is TuwangDef.AFTER_TWELVE_DAYS
-          else following.moment - timedelta(days=18)
-        )
+        if definition is TuwangDef.AFTER_TWELVE_DAYS:
+          boundary = opening.moment + timedelta(days=12)
+        elif definition is TuwangDef.BEFORE_EIGHTEEN_DAYS:
+          boundary = following.moment - timedelta(days=18)
+        else:
+          assert_never(definition) # pragma: no cover # 配置已校验，穷尽守卫让新增成员触发静态检查。
         if self._bazi._attribution_reached(boundary):
           dominant = Wuxing.土
     states = {}
