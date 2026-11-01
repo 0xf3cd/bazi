@@ -263,7 +263,7 @@ for combo in found[DizhiRelation.冲]:
 
 ## 通根与透干：明藏匹配事实
 
-{py:func}`~bazi.analyzer.facts.tonggen` 查目标干在各柱藏干中的匹配，默认同五行；同五行包括同干，
+{py:func}`~bazi.analyzer.facts.tonggen` 查目标干在原局与所选流运藏干中的匹配，默认同五行；同五行包括同干，
 `TianganMatch.SAME_TIANGAN` 则只取同干。返回 `TianganOccurrence` 元组，每条记录的 `position` 是位置，
 `ganzhi` 是完整干支，`stem` 是实际藏干，不会把它改写成目标干。
 
@@ -310,7 +310,7 @@ print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatc
 通根在每个位置按 {py:attr}`~bazi.rules.BaziRules.HIDDEN_TIANGANS` 表顺序返回，透干按藏干位置优先、
 明干位置次序返回；相同干支的不同位置不合并，结果不可变。
 
-这里仅查藏干匹配，不含沈氏同段所论乙逢午、丁逢酉的阴长生根；空结果不等于该原文读法下无根。
+这里仅查藏干匹配，不含《子平真诠》所论乙逢午、丁逢酉的阴长生根；空结果不等于该原文读法下无根。
 也不计算根等级、强弱分数、合会化根或综合得地。
 
 ## 取有限的几步大运和流年

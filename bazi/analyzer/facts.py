@@ -7,7 +7,7 @@
 https://www.donglishuzhai.net/chapter/3719.html
 https://www.zhyw.net/a/ditiansui/2020/11/09/23706.html
 两份电子转录未核影印；严格同干只作机械匹配，不另称古籍流派。
-沈氏同段还论乙逢午、丁逢酉的阴长生根；本查询只匹配藏干，不包含这些非藏干根。
+《子平真诠》同段还论乙逢午、丁逢酉的阴长生根；本查询只匹配藏干，不包含这些非藏干根。
 
 徐乐吾《子平真诠评注》三、论阴阳生死有辰藏癸而透壬的墓库例：
 https://tianjihq.com/zh-CN/learn/books/ziping-zhenquan-pingzhu/14
