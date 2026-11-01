@@ -54,7 +54,6 @@ class BaziRules:
   # 四时本令；季月分段的前段仍属该季节，转土时刻由命盘所选 TuwangDef 决定。
   # 五状态的生克次序见《三命通会》卷二〈論五行旺相休囚死並寄生十二宫〉：
   # https://zh.wikisource.org/w/index.php?oldid=761691
-  # 该段土旺行只写六月，不作辰戌丑未整月皆土旺的证据。
   MONTH_WUXING: Final[frozendict[Dizhi, Wuxing]] = frozendict({
     Dizhi.寅 : Wuxing.木, Dizhi.卯 : Wuxing.木, Dizhi.辰 : Wuxing.木,
     Dizhi.巳 : Wuxing.火, Dizhi.午 : Wuxing.火, Dizhi.未 : Wuxing.火,

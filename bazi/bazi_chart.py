@@ -143,14 +143,13 @@ class BaziChart:
 
   @functools.cached_property
   def wuxing_states(self) -> frozendict[Wuxing, WuxingState]:
-    '''按出生月令及土旺口径给五行旺相休囚死，不作综合得令或力量判断。
+    '''按出生月令及土旺口径给出五行的旺相休囚死状态。
 
-    非季月按四时本令；季月按 BaziSchool.tuwang_def，默认整月土旺是简化约定／待考，
-    不是已核定的古籍整月规则。分段此前仍取该季节本令，来源边界见 TuwangDef。
+    非季月按四时本令；季月按 BaziSchool.tuwang_def，默认采用整月土旺的简化取法。
+    分段口径在转土前仍取该季节本令，取法与出处见 TuwangDef。
 
     一天取连续24小时，先在后端 naive UTC+8 节气时刻上加十二天或减十八天，再按本盘
     出生精度比较，相等归新。地点盘先把边界换为同一真太阳钟；HKO只作日期级，零点为占位。
-    时间政策是本库执行约定，不称为古文规定到秒；不从流运干支反推查询时刻。
 
     Return: (frozendict[Wuxing, WuxingState]) 五行各有一个状态，结果不可变。
     '''

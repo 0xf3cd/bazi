@@ -150,18 +150,15 @@ class Anchor(Enum):
 class TuwangDef(Enum):
   '''季月土旺的三种可选口径，计日及精度政策见 BaziChart.wuxing_states。
 
-  - WHOLE_MONTH：辰、未、戌、丑整月土旺，默认的简化约定，整月解释待考。
-    《命理探源》卷三四季土旺表不能单独证明整月全时段：
-    https://zhonghuadiancang.com/xuanxuewushu/minglitanyuan/160972.html
+  - WHOLE_MONTH：辰、未、戌、丑整月土旺，本库默认的简化取法。
   - AFTER_TWELVE_DAYS：开月节后十二日转土，此前仍取该季节本令。
-    《三命通会》卷二醉醒子段载十二日，后文批评渊海／渊源的其他细分日数，不能混成同一主张：
+    出处：《三命通会》卷二醉醒子段，维基文库转录：
     https://zh.wikisource.org/w/index.php?oldid=761691
   - BEFORE_EIGHTEEN_DAYS：下一四立前十八日转土，此前仍取该季节本令。
-    《协纪辨方书》卷一转引《神枢经》《历例》，原为择日历书材料，原书未核：
+    出处：《协纪辨方书》卷一转引《神枢经》《历例》，维基文库转录：
     https://zh.wikisource.org/w/index.php?oldid=787334
-    《命理探源》同页亦转引该说，不能多算独立谱系。
-
-  电子转录未核影印。后两读在理想三十日节月可同界，真实节月不可据此合并。
+    《命理探源》卷三四季土旺表亦载此说：
+    https://zhonghuadiancang.com/xuanxuewushu/minglitanyuan/160972.html
   '''
   WHOLE_MONTH          = 'whole_month'
   AFTER_TWELVE_DAYS    = 'after_twelve_days'

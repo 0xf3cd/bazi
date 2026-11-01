@@ -8,7 +8,7 @@ from .enum_base import BaziEnum
 
 
 class WuxingState(BaziEnum):
-  '''五行的月令状态，不是十二长生，也不表示综合得令或五行力量。'''
+  '''五行的月令状态：旺、相、休、囚、死。'''
   WANG  = '旺'
   XIANG = '相'
   XIU   = '休'

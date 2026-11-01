@@ -145,7 +145,7 @@ SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
 })
 
 
-'''原局的两个整柱神煞展示名；判断完整日柱，不进入按候选支求值的注册表。'''
+'''原局整柱神煞的中文展示名。'''
 WHOLE_PILLAR_SHENSHA_LABELS: Final[frozendict[str, str]] = frozendict({
   'kuigang': '魁罡',
   'tianshe': '天赦',
@@ -303,7 +303,7 @@ class RelationParticipant:
 
 
 class RelationPositionDiscovery(frozendict[DizhiRelation, tuple[frozenset[RelationParticipant], ...]]):
-  '''地支关系到具体位置组合的冻结映射；只替换低层序号，不重排或按干支值合并。'''
+  '''地支关系到具体位置组合的冻结映射。'''
 
 
 @dataclass(frozen=True)

@@ -114,7 +114,7 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 
 {py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
 {py:data}`~bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS` 保存魁罡、天赦两个整柱名称。
-两表均从 `relationship` 模块公开取用；整柱结果是完整日柱或 `None`，不能当作地支集合遍历。
+两表均从 `relationship` 模块导入；整柱结果是完整日柱或 `None`。
 
 ```{testcode} relations-shensha-labels
 from bazi.analyzer.relationship import (
@@ -144,7 +144,6 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 ```
 
 支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
-标签表不参与规则计算，也不改变各神煞的流派配置。
 
 ## 查一年的流运和一个关系
 
@@ -265,7 +264,7 @@ for combo in found[DizhiRelation.冲]:
 
 {py:func}`~bazi.analyzer.facts.tonggen` 查目标干在原局与所选流运藏干中的匹配，默认同五行；同五行包括同干，
 `TianganMatch.SAME_TIANGAN` 则只取同干。返回 `TianganOccurrence` 元组，每条记录的 `position` 是位置，
-`ganzhi` 是完整干支，`stem` 是实际藏干，不会把它改写成目标干。
+`ganzhi` 是完整干支，`stem` 是匹配的实际藏干。
 
 {py:func}`~bazi.analyzer.facts.tougan` 的 `target` 是要查的实际藏干，先按同干找到它，再按显式
 `condition` 匹配明干。省略条件会抛 `TypeError`；未找到目标藏干就不返回透干记录。
@@ -301,17 +300,13 @@ print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatc
 
 辰藏乙与甲同五行，严格同干则不匹配。辰中癸与日干壬同五行，结果两端仍分别是癸、壬。
 例中的 `position.value` 在原局给出中文柱位，在流运给出种类标签。
-这只是所选条件下的明藏匹配，不认定所有同五行异干都具有相同命理含义。
-徐乐吾评注中的辰藏癸而透壬属于墓库语境，不能推广为一般规则；原文层次与来源限制见
-{py:mod}`bazi.analyzer.facts`。严格同干保留为机械条件，不另称已核定的古籍流派。
 
 不传 `transits` 只查原局；传入后，原局和所选流运共同参与，两端可在任一侧，也保留同柱匹配。
 位置先按年、月、日、时，随后按小运、大运、流年、流月、流日排列，只取实际传入的流运。
 通根在每个位置按 {py:attr}`~bazi.rules.BaziRules.HIDDEN_TIANGANS` 表顺序返回，透干按藏干位置优先、
 明干位置次序返回；相同干支的不同位置不合并，结果不可变。
 
-这里仅查藏干匹配，不含《子平真诠》所论乙逢午、丁逢酉的阴长生根；空结果不等于该原文读法下无根。
-也不计算根等级、强弱分数、合会化根或综合得地。
+两种条件都以藏干表为依据，乙逢午、丁逢酉的阴长生根不在查询范围内。
 
 ## 取有限的几步大运和流年
 
