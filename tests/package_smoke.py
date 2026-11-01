@@ -130,7 +130,8 @@ def main() -> None:
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer, RelationshipEvidence, WHOLE_PILLAR_SHENSHA_LABELS
   from bazi.analyzer.facts import tonggen, tougan, TianganMatch
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id, guoyin_entry, guoyin_def
+  from bazi.rules import ShenshaRules
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, LiunianPosition, TransitObservation, YearCoordinate,
     ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context,
@@ -405,7 +406,15 @@ def main() -> None:
       actual_complete_count == complete_count,
       f'Wrong complete Shishen projection: {shishen}',
     )
-  check(len(knowledge.entries) == 312 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  check(len(knowledge.entries) == 326 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
+  for guoyin_definition in ShenshaRules.GuoyinDef:
+    entry = guoyin_entry(knowledge, guoyin_definition)
+    check(entry is knowledge.entry(entry.claim_id) and guoyin_def(knowledge, entry.claim_id) is guoyin_definition, 'Installed Guoyin round trip mismatch')
+    check(entry.sources == ('repository_guoyin_variants',), 'Installed Guoyin sources changed')
+  check(guoyin_def(knowledge, 'shensha.kongwang.xunkong') is None, 'Installed unrelated entry gained Guoyin link')
+  for name in ('tianyi', 'taohua', 'yima', 'wenchang', 'huagai', 'yangren'):
+    identifier = 'shensha.' + name
+    check(bool(knowledge.query(object_id=identifier, include_reference_only=True)) and not knowledge.query(object_id=identifier), 'Installed Shensha references missing or promoted')
   for identifier, count in (('concept.taiyuan', 3), ('concept.minggong', 4)):
     entries = knowledge.query(object_id=identifier, include_reference_only=True)
     check(len(entries) == count and not knowledge.query(object_id=identifier), 'Installed auxiliary knowledge missing')
@@ -418,7 +427,7 @@ def main() -> None:
     check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
     for filter_value in values:
       check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
-  check(len(knowledge.sources) == 23, 'Installed source registry incomplete')
+  check(len(knowledge.sources) == 37, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
     check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')
@@ -438,6 +447,8 @@ def main() -> None:
     lambda: knowledge.search(1), # type: ignore[arg-type]
     lambda: knowledge.filter_values(1), # type: ignore[arg-type]
     lambda: object_id(Dizhi.子), # type: ignore[arg-type]
+    lambda: guoyin_entry(knowledge, 'MODERN'), # type: ignore[arg-type]
+    lambda: guoyin_def(knowledge, 1), # type: ignore[arg-type]
     lambda: knowledge.render(reference_entry, premise_verdict=1), # type: ignore[arg-type]
     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1), # type: ignore[arg-type]
   ):

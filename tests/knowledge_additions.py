@@ -15,3 +15,22 @@ AUXILIARY_WITNESSED_IDS = (
   'concept.taiyuan.month_shift', 'concept.taiyuan.three_hundred_days',
   'concept.minggong.palm', 'concept.minggong.zhongqi',
 )
+
+SHENSHA_OBJECT_IDS = (
+  'shensha.tianyi', 'shensha.taohua', 'shensha.yima', 'shensha.wenchang', 'shensha.huagai', 'shensha.yangren',
+)
+SHENSHA_SOURCE_IDS = (
+  'sanming_tonghui.tianyi.yinyang', 'sanming_tonghui.taohua.table', 'sanming_tonghui.yima.table',
+  'sanming_tonghui.huagai.table', 'sanming_tonghui.yangren.luming', 'sanming_tonghui.yangren.ziping',
+  'xingxue_dacheng.wenchang_xin_xu',
+  'wenzhen_shensha.tianyi', 'wenzhen_shensha.taohua', 'wenzhen_shensha.yima',
+  'wenzhen_shensha.wenchang', 'wenzhen_shensha.huagai', 'wenzhen_shensha.yangren',
+  'click2macao.tianyi_geng_with_xin',
+)
+SHENSHA_ENTRY_IDS = (
+  'shensha.tianyi.yinyang', 'shensha.taohua.table', 'shensha.yima.table', 'shensha.huagai.table',
+  'shensha.yangren.luming', 'shensha.yangren.ziping', 'shensha.wenchang.xin_xu',
+  'shensha.tianyi.lookup', 'shensha.taohua.lookup', 'shensha.yima.lookup',
+  'shensha.wenchang.lookup', 'shensha.huagai.lookup', 'shensha.yangren.lookup',
+  'shensha.tianyi.geng_with_xin',
+)

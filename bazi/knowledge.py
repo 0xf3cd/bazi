@@ -9,6 +9,7 @@ from typing import Any, Final, Literal, TypeVar, get_args, get_origin
 
 from .common import frozendict
 from .defines import Shishen, Tiangan
+from .rules import ShenshaRules
 from ._validation import _text, _choice, _tuple, _mapping, _json_loads, _utf8
 
 
@@ -633,3 +634,40 @@ class KnowledgeBase:
       for entry in self.query(object_id=object_id, include_reference_only=include_reference_only)
       if entry.legacy is None or entry.legacy.object_id == object_id
     ))
+
+
+_GUOYIN_CLAIMS: Final[frozendict[ShenshaRules.GuoyinDef, str]] = frozendict({
+  ShenshaRules.GuoyinDef.MODERN: 'shensha.guoyin.modern',
+  ShenshaRules.GuoyinDef.WUXING_JINGJI: 'shensha.guoyin.wuxing_jingji',
+})
+
+
+def guoyin_entry(knowledge: KnowledgeBase, definition: ShenshaRules.GuoyinDef) -> KnowledgeEntry:
+  '''按国印定义查阅传入知识库中的对应条目。
+
+  Args:
+  - knowledge: (KnowledgeBase) 使用的知识库。
+  - definition: (ShenshaRules.GuoyinDef) 国印查法定义。
+
+  Return: (KnowledgeEntry) 对应的不可变条目；库中缺少该条目时抛 ValueError，参数错型抛 TypeError。
+  '''
+  if not isinstance(knowledge, KnowledgeBase):
+    raise TypeError(f'Expected KnowledgeBase, got {type(knowledge)}')
+  if not isinstance(definition, ShenshaRules.GuoyinDef):
+    raise TypeError(f'Expected GuoyinDef, got {type(definition)}')
+  return knowledge.entry(_GUOYIN_CLAIMS[definition])
+
+
+def guoyin_def(knowledge: KnowledgeBase, claim_id: str) -> ShenshaRules.GuoyinDef | None:
+  '''由已注册条目反查国印定义。
+
+  Args:
+  - knowledge: (KnowledgeBase) 使用的知识库。
+  - claim_id: (str) 该库中的条目标识；未知或空白标识抛 ValueError，参数错型抛 TypeError。
+
+  Return: (ShenshaRules.GuoyinDef | None) 对应定义；条目已注册但没有国印关联时返回 None。
+  '''
+  if not isinstance(knowledge, KnowledgeBase):
+    raise TypeError(f'Expected KnowledgeBase, got {type(knowledge)}')
+  knowledge.entry(claim_id)
+  return next((definition for definition, identifier in _GUOYIN_CLAIMS.items() if identifier == claim_id), None)

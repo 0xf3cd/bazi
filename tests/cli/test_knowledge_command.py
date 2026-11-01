@@ -57,6 +57,19 @@ def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
   assert '日柱默认，年柱或年日双锚可选' in complete.stdout
 
 
+@pytest.mark.parametrize('name', ['tianyi', 'taohua', 'yima', 'wenchang', 'huagai', 'yangren'])
+def test_shensha_query_requires_reference_flag(tmp_path: Path, name: str) -> None:
+  identifier = 'shensha.' + name
+  default = run_cli(tmp_path, 'knowledge', '--object', identifier)
+  complete = run_cli(tmp_path, 'knowledge', '--object', identifier, '--include-reference-only')
+  assert default.returncode == complete.returncode == 0
+  assert default.stderr == complete.stderr == ''
+  assert default.stdout == '无匹配条目。\n有仅供参考的条目，可加 --include-reference-only 查看。\n'
+  k = KnowledgeBase.load()
+  assert complete.stdout == ''.join(k.render(entry) + '\n\n' for entry in k.query(object_id=identifier, include_reference_only=True))
+  assert '来源状态：witnessed' in complete.stdout and '支持范围：' in complete.stdout
+
+
 def test_exports_the_base_texts_only(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', 'out')
   assert result.returncode == 0 and result.stdout == '' and result.stderr == ''

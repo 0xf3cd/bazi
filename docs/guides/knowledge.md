@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-34 10 23 312
+40 10 37 326
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
@@ -104,6 +104,31 @@ ValueError Unknown object_id: tiangan.dingg
 - **默认与参考。** 默认只返回 `show_by_default=True` 的条目；加 `include_reference_only=True` 才包含仅供参考的条目。丁一共 8 条，默认只有 1 条。
 - **合法值不保证有结果。** `shensha.guoyin` 是合法对象，默认查询却为空，加上参考条目才有 2 条。可用的过滤值由 `filter_values(维度)` 列出。
 - **未知值与无匹配不同。** 值不在 `filter_values` 里会抛 `ValueError`；值合法但没有交集，只返回空元组。
+
+## 常用神煞的查法与出处
+
+天乙贵人、桃花、驿马、文昌、华盖、羊刃均有专门对象。它们的条目供显式参考查询，默认不展示：
+
+```{testcode} shensha-knowledge
+from bazi.knowledge import KnowledgeBase
+
+kb = KnowledgeBase.load()
+print(kb.find_objects('文昌')[0].object_id)
+print(kb.query(object_id='shensha.wenchang'))
+for entry in kb.query(object_id='shensha.wenchang', include_reference_only=True):
+  source = kb.sources[entry.sources[0]]
+  print(entry.viewpoint, source.work, source.text_layer)
+```
+
+```{testoutput} shensha-knowledge
+shensha.wenchang
+()
+XIN_XU 星学大成 zhushi
+现代问真 问真《神煞大全》 editorial
+```
+
+上例分别查到辛戌与辛子读法。各来源的 `supports`、`limitations` 说明它支持表值、锚点或查找位置中的哪一部分。
+国印定义与条目的双向查询见 {doc}`rule-coverage`。
 
 ## 胎元与命宫：已实现取法和待核候选
 
@@ -257,12 +282,12 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 (False, 'editorial') 22
 (False, 'repository_attributed') 8
 (False, 'unverified') 245
-(False, 'witnessed') 18
+(False, 'witnessed') 32
 (True, 'witnessed') 19
-[('unresolved', 264), ('unconditional', 36), ('described', 12)]
+[('unresolved', 264), ('unconditional', 50), ('described', 12)]
 ```
 
-`witnessed` 条目有 37 条，其中 18 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
+`witnessed` 条目有 51 条，其中 32 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -325,7 +350,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-3 312 34 23
+3 326 40 37
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'show_by_default', 'legacy']
 True
 ```
@@ -408,7 +433,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} broken
 ValueError Unknown source: no_such_source (tiangan.ding.definition)
-312
+326
 ```
 
 加载抛 `ValueError`，消息里带出未知的 ID 和出问题的条目。修法是让引用指回注册表里存在的 ID，要么改回，要么在 `sources` 里补上这条来源记录。对象和情境的引用同理；字段缺失、重复键、不支持的 `schema_version` 也都在加载时拒绝。

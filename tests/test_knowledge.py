@@ -14,7 +14,10 @@ from bazi.knowledge import (
   DEFAULT_SOURCE_PATH, LegacyDescription, KnowledgeContext, object_id,
 )
 
-from knowledge_additions import AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS
+from knowledge_additions import (
+  AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS,
+  SHENSHA_ENTRY_IDS, SHENSHA_SOURCE_IDS,
+)
 from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
@@ -393,7 +396,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
   assert set(_ids(KNOWLEDGE_BASE.query())) == {
     row['claim']['claim_id'] for row in baseline['rows'] if row['claim']['output'] == 'default'
   }
-  assert len(KNOWLEDGE_BASE.entries) == 312
+  assert len(KNOWLEDGE_BASE.entries) == 326
 
 
 def test_attribution_allowance_matches_entries() -> None:
@@ -509,8 +512,8 @@ def test_premises_organized_without_new_rules() -> None:
     assert not {'in_good_status', 'in_bad_status'} & set(entry.topics)
     if entry.legacy is None:
       assert entry.show_by_default is False
-      if entry.claim_id in {*_NEW_RELATIONSHIP_IDS, 'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS}:
-        # These literal IDs retain witnessed 古籍见证.
+      if entry.claim_id in {*_NEW_RELATIONSHIP_IDS, 'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', *AUXILIARY_WITNESSED_IDS, *SHENSHA_ENTRY_IDS}:
+        # These literal IDs retain witnessed source records.
         assert entry.source_state == 'witnessed'
       else:
         assert entry.source_state == 'repository_attributed'
@@ -956,7 +959,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 
 def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
-  assert len(k.entries) == 312 and len(k.sources) == 23 and len(k.contexts) == 10 and len(k.objects) == 34
+  assert len(k.entries) == 326 and len(k.sources) == 37 and len(k.contexts) == 10 and len(k.objects) == 40
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
@@ -1054,7 +1057,7 @@ def test_non_legacy_entries_fingerprint() -> None:
   for entry in KNOWLEDGE_BASE.entries.values():
     if entry.legacy is not None or entry.claim_id in {
       'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository',
-      *AUXILIARY_ENTRY_IDS,
+      *AUXILIARY_ENTRY_IDS, *SHENSHA_ENTRY_IDS,
     }:
       continue
     row = asdict(entry)
@@ -1080,7 +1083,7 @@ def test_non_oracle_sources_fingerprint() -> None:
     if source_id in oracle or source_id in {
       'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
       'wuxing_jingji.kongwang', 'repository.kongwang',
-      *AUXILIARY_SOURCE_IDS,
+      *AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS,
     }:
       continue
     row = before_errata(asdict(source), SOURCE_ERRATA['sources'].get(source_id, {}))

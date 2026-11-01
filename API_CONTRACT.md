@@ -353,3 +353,8 @@ JSON 解析错误保留 `JSONDecodeError` 的原文与位置，实际解析递�
 字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
 知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
 条目按稳定 ID 关联，编辑源版本不是条文真伪的认证。
+
+`bazi.knowledge.guoyin_entry(knowledge, definition)` 接受 `ShenshaRules.GuoyinDef`，返回传入库的对应条目；
+`guoyin_def(knowledge, claim_id)` 返回对应定义，已注册但没有国印关联时返回 `None`。
+所需条目缺失、ID 未注册或为空白时抛 `ValueError`，参数错型抛 `TypeError`；普通与 `-O` 一致。
+自定义库保持相同 ID 的领域含义；来源由 `entry.sources` 查阅，关联不改变条目内容、来源状态或默认展示。
