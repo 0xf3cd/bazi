@@ -132,6 +132,7 @@ def test_publish_dispatch_defaults() -> None:
 
 def test_publish_job_boundaries() -> None:
   jobs = PUBLISH['jobs']
+  assert jobs['build']['runs-on'] == 'ubuntu-latest'
   assert {name: job['permissions'] for name, job in jobs.items()} == {
     'build': {'contents': 'read'}, 'check': {}, 'archive': {'contents': 'write'},
     'deploy': {'pages': 'write', 'id-token': 'write'}, 'readback': {}}
@@ -452,6 +453,7 @@ def test_checkout_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change
 
 
 @pytest.mark.parametrize('failure', [None, 'v99.0.0', 'dev'])
+@pytest.mark.skipif(os.name == 'nt', reason='The Bash build steps run on ubuntu-latest, not Windows/WSL.')
 def test_build_steps_pack_both_candidates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None) -> None:
   # A stand-in builder checks source identity and checkout order; the shell commands and tar packing are the real workflow steps.
   stub = '''import argparse, json, os
