@@ -11,6 +11,7 @@ import tarfile
 import tempfile
 
 from pathlib import Path, PurePosixPath
+from datetime import datetime
 from typing import Any, Final, Literal, NamedTuple, get_args
 from collections.abc import Mapping, Sequence
 
@@ -22,9 +23,9 @@ COMMIT: Final[re.Pattern[str]] = re.compile(r'[0-9a-f]{40}')
 DIGEST: Final[re.Pattern[str]] = re.compile(r'[0-9a-f]{64}')
 SOURCE_URL: Final[str] = 'https://github.com/0xf3cd/bazi/tree/'
 SCHEMA_VERSION: Final[int] = 1
-# 归档根目录只有版本目录和下列由本脚本从版本记录生成的文件；归档里的这三份须与重新生成的字节一致。
-GENERATED: Final[frozenset[str]] = frozenset({'index.html', 'versions.json', 'versions/index.html'})
-# 与 run_docs.py 写出的 build.json 字段一致；字段增减须同步此处，否则组装拒绝。
+# latest/index.html 仅在有 ready 发布版时生成；整份生成文件须匹配新布局或旧布局。
+GENERATED: Final[frozenset[str]] = frozenset({'index.html', 'versions.json', 'versions/index.html', 'latest/index.html'})
+# 旧构建没有 built；新构建在这四项之外记录实际 UTC 构建时间。
 BUILD_FIELDS: Final[frozenset[str]] = frozenset({'version', 'commit', 'dirty', 'python'})
 
 State = Literal['pending', 'archived', 'ready']
@@ -70,7 +71,7 @@ def check_identity(label: str, commit: str) -> None:
 
 
 def label_key(label: str) -> tuple[int, ...]:
-  '''排序键：开发版在前，发布版按版本号从新到旧。'''
+  '''清单排序键：开发版在前，发布版按版本号从新到旧；不决定选择页的展示顺序。'''
   if label == DEV_LABEL:
     return ()
   return tuple(-int(part) for part in label[1:].split('.'))
@@ -127,10 +128,15 @@ def check_build(files: Mapping[str, bytes], label: str, commit: str) -> None:
   if 'build.json' not in files or 'index.html' not in files:
     raise ValueError(f'{label}: build.json or index.html is missing')
   data = load_json(files['build.json'])
-  if not isinstance(data, dict) or set(data) != BUILD_FIELDS:
+  if not isinstance(data, dict) or set(data) not in (BUILD_FIELDS, BUILD_FIELDS | {'built'}):
     raise ValueError(f'{label}: build.json fields differ from {sorted(BUILD_FIELDS)}')
   if data['version'] != label or data['commit'] != commit or data['dirty'] is not False or not isinstance(data['python'], str):
     raise ValueError(f'{label}: build.json does not describe a clean build of {commit}')
+  if 'built' in data:
+    built = data['built']
+    if not isinstance(built, str) or re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', built) is None:
+      raise ValueError(f'{label}: built must be a UTC timestamp YYYY-MM-DDTHH:MM:SSZ')
+    datetime.strptime(built, '%Y-%m-%dT%H:%M:%SZ')
 
 
 def check_entry(item: object) -> Version:
@@ -166,8 +172,8 @@ def render_manifest(entries: Sequence[Version]) -> bytes:
   return (json.dumps(data, indent=2) + '\n').encode('utf-8')
 
 
-def render_selector(entries: Sequence[Version]) -> bytes:
-  '''版本选择页 versions/index.html：每个登记版本一行，锚点为目录名；只有 ready 版本给出链接。'''
+def render_legacy_selector(entries: Sequence[Version]) -> bytes:
+  '''旧选择页的固定读兼容模板，不用于写出站点。'''
   latest = latest_release(entries)
   rows = []
   for entry in entries:
@@ -182,6 +188,10 @@ def render_selector(entries: Sequence[Version]) -> bytes:
       f'<li id="{label}"><a href="../{label}/index.html">{name}</a>{note}'
       f' · 源码 <a href="{SOURCE_URL}{commit}"><code>{commit[:12]}</code></a></li>\n'
     )
+  return selector_page(rows)
+
+
+def selector_page(rows: Sequence[str]) -> bytes:
   page = (
     '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
     '<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>bazi 文档版本</title>\n'
@@ -193,6 +203,24 @@ def render_selector(entries: Sequence[Version]) -> bytes:
   return page.encode('utf-8')
 
 
+def render_selector(entries: Sequence[Version], dev_built: str | None) -> bytes:
+  '''最新 ready 发布版排首位，开发版排末尾；仅 ready 版本给出文档链接。'''
+  latest = latest_release(entries)
+  rows = []
+  for entry in sorted(entries, key=lambda entry: (entry.label != latest, entry.label == DEV_LABEL, label_key(entry.label))):
+    label = html.escape(entry.label)
+    name = '开发版' if entry.label == DEV_LABEL else label
+    title = f'<a href="../{label}/index.html">{name}</a>' if entry.state == 'ready' else f'{name}：文档待就绪'
+    note = '（最新发布）' if entry.label == latest else ''
+    if entry.label == DEV_LABEL:
+      note += f' · 构建于 <time datetime="{html.escape(dev_built)}">{html.escape(dev_built)}</time>' if dev_built else ' · 构建日期未记录'
+    if entry.commit is not None:
+      commit = html.escape(entry.commit)
+      note += f' · 源码 <a href="{SOURCE_URL}{commit}"><code>{commit[:12]}</code></a>'
+    rows.append(f'<li id="{label}">{title}{note}</li>\n')
+  return selector_page(rows)
+
+
 ROOT_PAGE: Final[bytes] = (
   '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
   '<meta http-equiv="refresh" content="0; url=versions/">\n<title>bazi 文档</title>\n'
@@ -200,8 +228,27 @@ ROOT_PAGE: Final[bytes] = (
 ).encode()
 
 
-def render_root(entries: Sequence[Version]) -> dict[str, bytes]:
-  return {'index.html': ROOT_PAGE, 'versions.json': render_manifest(entries), 'versions/index.html': render_selector(entries)}
+def render_legacy_root(entries: Sequence[Version]) -> dict[str, bytes]:
+  return {'index.html': ROOT_PAGE, 'versions.json': render_manifest(entries), 'versions/index.html': render_legacy_selector(entries)}
+
+
+def redirect_page(target: str, title: str) -> bytes:
+  return (
+    '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
+    f'<meta http-equiv="refresh" content="0; url={target}">\n<title>bazi 文档</title>\n'
+    f'</head>\n<body>\n<p><a href="{target}">{title}</a></p>\n</body>\n</html>\n'
+  ).encode()
+
+
+def render_root(entries: Sequence[Version], dev_built: str | None) -> dict[str, bytes]:
+  latest = latest_release(entries)
+  generated = {
+    'index.html': redirect_page('latest/', 'bazi 最新发布版文档') if latest else ROOT_PAGE,
+    'versions.json': render_manifest(entries), 'versions/index.html': render_selector(entries, dev_built),
+  }
+  if latest:
+    generated['latest/index.html'] = redirect_page(f'../{latest}/', f'bazi {latest} 文档')
+  return generated
 
 
 def load_archive(tree: Mapping[str, bytes]) -> Archive:
@@ -227,9 +274,12 @@ def load_archive(tree: Mapping[str, bytes]) -> Archive:
     if digest(files) != entry.digest:
       raise ValueError(f'Archived {entry.label} differs from its recorded digest')
   ordered = sorted(entries, key=lambda entry: label_key(entry.label))
-  if {name: tree.get(name) for name in GENERATED} != render_root(ordered):
+  versions = {entry.label: (entry, directories.get(entry.label, {})) for entry in entries}
+  generated = {name: content for name, content in tree.items() if name in GENERATED}
+  current = {name: content for name, content in render_site(versions).items() if name in GENERATED}
+  if generated != current and generated != render_legacy_root(ordered):
     raise ValueError('Generated root files differ from those rendered from versions.json')
-  return {entry.label: (entry, directories.get(entry.label, {})) for entry in entries}
+  return versions
 
 
 def open_archive(tree: Mapping[str, bytes] | None) -> Archive:
@@ -239,7 +289,12 @@ def open_archive(tree: Mapping[str, bytes] | None) -> Archive:
 def render_site(versions: Archive) -> dict[str, bytes]:
   ordered = sorted(versions.values(), key=lambda item: label_key(item[0].label))
   site = {f'{entry.label}/{name}': content for entry, files in ordered for name, content in files.items()}
-  return site | render_root([entry for entry, _ in ordered])
+  dev_built = None
+  if DEV_LABEL in versions:
+    data = load_json(versions[DEV_LABEL][1]['build.json'])
+    assert isinstance(data, dict)
+    dev_built = data.get('built')
+  return site | render_root([entry for entry, _ in ordered], dev_built)
 
 
 def add_build(tree: Mapping[str, bytes] | None, candidate: Mapping[str, bytes], label: str, commit: str) -> tuple[str, dict[str, bytes]]:
@@ -297,7 +352,7 @@ def mark_ready(tree: Mapping[str, bytes] | None, label: str, verified_digest: st
 
 
 def keep_current(tree: Mapping[str, bytes] | None, label: str) -> tuple[str, dict[str, bytes]]:
-  '''不改归档，只核对后重新写出现有站点，供部署或回读失败后重新部署。'''
+  '''核对后重新写出站点入口，保留版本清单及各版目录，供重新部署。'''
   versions = open_archive(tree)
   if label not in versions:
     raise ValueError(f'{label} is not in the archive')

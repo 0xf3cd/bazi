@@ -81,7 +81,7 @@ jobs:
           LABEL: ${{ inputs.version }}
           COMMIT: ${{ steps.identity.outputs.commit }}
         shell: python
-        run: |
+        run: &verify_code |
           import os, subprocess
           from pathlib import Path
           if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != os.environ['COMMIT']:
@@ -92,7 +92,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install documentation requirements of the checked-out source
-        run: |
+        run: &install_code |
           python -m pip install -r docs/requirements.txt
           python -m pip install celestial-calendar==0.6.1
       - name: Build, check and pack the candidate
@@ -101,11 +101,37 @@ jobs:
         run: |
           python -B run_docs.py --version "$LABEL" --output-dir "$RUNNER_TEMP/docs"
           tar -cf "$RUNNER_TEMP/site.tar" -C "$RUNNER_TEMP/docs/html" .
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: inputs.version != 'dev'
+        with:
+          ref: ${{ github.sha }}
+          path: dev-source
+          persist-credentials: false
+      - name: Verify dev checkout and documentation runner
+        if: inputs.version != 'dev'
+        working-directory: dev-source
+        env:
+          LABEL: dev
+          COMMIT: ${{ github.sha }}
+        shell: python
+        run: *verify_code
+      - name: Install documentation requirements of the dev source
+        if: inputs.version != 'dev'
+        working-directory: dev-source
+        run: *install_code
+      - name: Build, check and pack the dev candidate
+        if: inputs.version != 'dev'
+        working-directory: dev-source
+        run: |
+          python -B run_docs.py --version dev --output-dir "$RUNNER_TEMP/dev-docs"
+          tar -cf "$RUNNER_TEMP/dev-site.tar" -C "$RUNNER_TEMP/dev-docs/html" .
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: upload
         with:
           name: docs-candidate
-          path: ${{ runner.temp }}/site.tar
+          path: |
+            ${{ runner.temp }}/site.tar
+            ${{ runner.temp }}/dev-site.tar
           if-no-files-found: error
           overwrite: false
           retention-days: 1
@@ -120,6 +146,7 @@ jobs:
     outputs:
       commit: ${{ steps.readback.outputs.commit }}
       digest: ${{ steps.readback.outputs.digest }}
+      dev-digest: ${{ steps.readback.outputs.dev-digest }}
     steps:
       - &readback
         name: Read back the live site against the archive commit
@@ -170,7 +197,7 @@ jobs:
               if digests[other] != entry['digest']:
                 raise SystemExit(f'Live {other} digest differs from versions.json')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-            output.write(f"commit={commit}\ndigest={digests.get(label, '')}\n")
+            output.write(f"commit={commit}\ndigest={digests.get(label, '')}\ndev-digest={digests.get('dev', '')}\n")
           print(f'All {len(paths)} files of archive {commit} are live; the digests of {len(digests)} archived versions match versions.json')
 
   archive:
@@ -240,18 +267,28 @@ jobs:
           LABEL: ${{ inputs.version }}
           COMMIT: ${{ steps.identity.outputs.commit }}
           DIGEST: ${{ needs.check.outputs.digest }}
+          DEV_DIGEST: ${{ needs.check.outputs.dev-digest }}
+          DEV_COMMIT: ${{ github.sha }}
           PARENT: ${{ steps.read.outputs.parent }}
         shell: python
         run: |
           import json, os, subprocess, sys
-          mode = os.environ['MODE']
+          mode, label = os.environ['MODE'], os.environ['LABEL']
           change = {
             'publish': ['archive', '--candidate', 'candidate/site.tar', '--commit', os.environ['COMMIT']],
             'pending': ['pending'], 'promote': ['promote', '--verified-digest', os.environ['DIGEST']], 'resume': ['current'],
           }[mode]
           source = ['--archive', 'archive.tar'] if os.environ['PARENT'] else ['--initialize']
-          command = [sys.executable, '-I', '-B', 'control/run_docs_site.py', change[0], *source, '--label', os.environ['LABEL'], '--output', 'site', *change[1:]]
-          print(json.dumps(json.loads(subprocess.check_output(command, text=True)), indent=2))
+          pair = label != 'dev' and (mode == 'publish' or (mode == 'promote' and bool(os.environ['DEV_DIGEST'])))
+          def apply(change, source, label, output):
+            command = [sys.executable, '-I', '-B', 'control/run_docs_site.py', change[0], *source, '--label', label, '--output', output, *change[1:]]
+            print(json.dumps(json.loads(subprocess.check_output(command, text=True)), indent=2))
+          apply(change, source, label, 'intermediate' if pair else 'site')
+          if pair:
+            subprocess.run(['tar', '-cf', 'intermediate.tar', '-C', 'intermediate', '.'], check=True)
+            dev_change = (['archive', '--candidate', 'candidate/dev-site.tar', '--commit', os.environ['DEV_COMMIT']] if mode == 'publish'
+              else ['promote', '--verified-digest', os.environ['DEV_DIGEST']])
+            apply(dev_change, ['--archive', 'intermediate.tar'], 'dev', 'site')
       - name: Commit on a staging branch through GraphQL, check it, then fast-forward docs-site
         id: commit
         env:
@@ -291,12 +328,13 @@ jobs:
           old = json.loads(Path('archive.json').read_text(encoding='utf-8'))
           site = {path.relative_to('site').as_posix(): path.read_bytes() for path in sorted(Path('site').rglob('*')) if path.is_file()}
           blobs = {name: blob_id(content) for name, content in site.items()}
-          generated = ('index.html', 'versions.json', 'versions/index.html')
+          generated = ('index.html', 'versions.json', 'versions/index.html', 'latest/index.html')
+          writable = ('index.html', 'versions/index.html', 'latest/index.html') if mode == 'resume' else generated
           for name in sorted(old.keys() | blobs.keys()):
             if old.get(name) == blobs.get(name):
               continue
-            own = mode == 'publish' and name.startswith(label + '/') and (label == 'dev' or name not in old)
-            if not ((mode != 'resume' and name in generated and name in blobs) or own):
+            own = mode == 'publish' and (name.startswith('dev/') or (name.startswith(label + '/') and name not in old))
+            if not ((name in writable and name in blobs) or own):
               raise SystemExit(f'Refusing archive change outside {label}/: {name}')
           commit = parent
           if blobs != old:

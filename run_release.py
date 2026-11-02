@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import urllib.error
 import urllib.request
 
@@ -174,8 +175,18 @@ def check_existing() -> None:
 def publish_github() -> None:
   '''核对 PyPI 原字节后创建 tag 和草稿，逐资产核摘要，最后发布；不覆盖已有对象。'''
   version, sha = os.environ['VERSION'], os.environ['SHA']
-  with urllib.request.urlopen(f'https://pypi.org/pypi/bazi/{version}/json', timeout=30) as response:
-    published = json.load(response)
+  for attempt in range(1, 4):
+    try:
+      with urllib.request.urlopen(f'https://pypi.org/pypi/bazi/{version}/json', timeout=30) as response:
+        published = json.load(response)
+      break
+    except urllib.error.HTTPError as error:
+      if error.code != 404:
+        raise
+      if attempt == 3:
+        raise SystemExit(f'PyPI version query failed after 3 attempts (2 retries); last response: HTTP 404 {error.reason}') from error
+      print(f'PyPI version query attempt {attempt}/3 returned HTTP 404; retry {attempt}/2 in 2 seconds')
+      time.sleep(2)
   actual = {entry['filename']: entry['digests']['sha256'] for entry in published['urls']}
   expected = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in Path('artifact/dist').iterdir()}
   if actual != expected:

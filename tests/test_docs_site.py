@@ -86,19 +86,22 @@ def test_dev_and_two_releases_are_retained(archive: dict[str, bytes]) -> None:
   assert [entry.label for entry in entries] == [DEV, V2, V1]
   assert [entry.commit for entry in entries] == [COMMITS[DEV], COMMITS[V2], COMMITS[V1]]
   assert {entry.state for entry in entries} == {'archived'}
-  assert {name.partition('/')[0] for name in archive} == {DEV, V1, V2} | ROOTS
+  assert {name.partition('/')[0] for name in archive} == {DEV, V1, V2} | (ROOTS - {'latest'})
   for label in (DEV, V1, V2):
     assert {name for name in archive if name.startswith(label + '/')} == {f'{label}/{name}' for name in build(label)}
   assert archive['index.html'] == run_docs_site.ROOT_PAGE and b'url=versions/' in archive['index.html']
+  assert 'latest/index.html' not in archive
+  with pytest.raises(ValueError, match='Generated root files differ'):
+    keep_current(archive | {'latest/index.html': b'fabricated'}, DEV)
 
 
 def test_archived_versions_listed_not_linked(archive: dict[str, bytes]) -> None:
   # The first archive commit must not compute latest or advertise unverified directories.
   page = selector(archive)
   assert latest(archive) is None
-  assert f'<li id="{DEV}">开发版：文档待就绪</li>' in page
+  assert f'<li id="{DEV}">开发版：文档待就绪 · 构建日期未记录 · 源码 ' in page
   for label in (V1, V2):
-    assert f'<li id="{label}">{label}：文档待就绪</li>' in page
+    assert f'<li id="{label}">{label}：文档待就绪 · 源码 ' in page
   assert '/index.html">' not in page and '最新发布' not in page
   assert '不表示该版软件没有发布' in page
 
@@ -111,7 +114,7 @@ def test_state_chain_pending_to_ready_latest() -> None:
 
   status, site = publish(site, build(V1), V1)
   assert status == 'added' and state(site, V1).state == 'archived' and latest(site) is None
-  assert f'<li id="{V1}">{V1}：文档待就绪</li>' in selector(site)
+  assert f'<li id="{V1}">{V1}：文档待就绪 · 源码 ' in selector(site)
   first = version_files(site, V1)
 
   site = ready(site, V1)
@@ -125,7 +128,7 @@ def test_state_chain_pending_to_ready_latest() -> None:
 
   _, site = publish(site, build(DEV), DEV)
   site = ready(site, DEV)
-  assert latest(site) == V2 and f'<a href="../{DEV}/index.html">开发版</a>（跟随 main 手动更新）' in selector(site)
+  assert latest(site) == V2 and f'<a href="../{DEV}/index.html">开发版</a> · 构建日期未记录' in selector(site)
   assert version_files(site, V1) == first
   assert [entry.label for entry in read_manifest(site['versions.json'])] == [DEV, V2, V1]
 
@@ -139,8 +142,61 @@ def test_latest_is_the_highest_ready_release() -> None:
   assert site is not None
   site = ready(site, 'v99.9.0')
   assert latest(site) == 'v99.9.0'
+  assert b'url=latest/' in site['index.html'] and b'url=../v99.9.0/' in site['latest/index.html']
+  assert selector(site).index('id="v99.9.0"') < selector(site).index('id="v99.11.0"')
   site = ready(site, 'v99.10.0')
   assert latest(site) == 'v99.10.0' and state(site, 'v99.11.0').state == 'archived'
+  assert b'url=../v99.10.0/' in site['latest/index.html']
+
+
+@pytest.mark.parametrize('operation', ['resume', 'publish', 'pending', 'promote'])
+def test_legacy_layout_migrates_only_root(operation: str) -> None:
+  fixture = json.loads((SCRIPT.parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
+  old = {name: content.encode('utf-8') for name, content in fixture['files'].items()}
+  run_docs_site.load_archive(old)
+  site = {
+    'resume': lambda: keep_current(old, DEV),
+    'publish': lambda: publish(old, build(V3), V3),
+    'pending': lambda: add_pending(old, V3),
+    'promote': lambda: mark_ready(old, V2, state(old, V2).digest or ''),
+  }[operation]()[1]
+  assert version_files(site, DEV, V1, V2) == version_files(old, DEV, V1, V2)
+  assert b'url=latest/' in site['index.html'] and f'url=../{V2}/'.encode() in site['latest/index.html']
+  assert selector(site).index(f'id="{V2}"') < selector(site).index(f'id="{V1}"') < selector(site).index('id="dev"')
+  assert '构建日期未记录' in selector(site)
+  assert keep_current(site, DEV) == ('unchanged', site)
+  if operation in ('resume', 'promote'):
+    assert site['versions.json'] == old['versions.json']
+    assert {name for name in site.keys() | old.keys() if site.get(name) != old.get(name)} == {
+      'index.html', 'versions/index.html', 'latest/index.html',
+    }
+  for name in ('index.html', 'versions/index.html'):
+    with pytest.raises(ValueError, match='Generated root files differ'):
+      keep_current(site | {name: old[name]}, DEV)
+  for bad in (old | {'latest/index.html': site['latest/index.html']}, site | {'latest/index.html': b'wrong'}, old | {'index.html': b'wrong'}):
+    with pytest.raises(ValueError, match='Generated root files differ'):
+      keep_current(bad, DEV)
+
+
+@pytest.mark.parametrize('built', ['2026-11-02T08:00:00Z', '2024-02-29T23:59:59Z'])
+def test_dev_build_time_follows_replacement(built: str) -> None:
+  _, site = publish(None, build(DEV, built=built), DEV)
+  assert f'<time datetime="{built}">{built}</time>' in selector(site)
+  assert '开发版：文档待就绪' in selector(site) and '../dev/index.html' not in selector(site)
+  site = ready(site, DEV)
+  assert '../dev/index.html' in selector(site)
+  assert b'url=versions/' in site['index.html'] and 'latest/index.html' not in site
+  assert keep_current(site, DEV) == ('unchanged', site)
+  _, replaced = publish(site, build(DEV), DEV)
+  assert '构建日期未记录' in selector(replaced) and built not in selector(replaced)
+  assert state(replaced, DEV).state == 'archived'
+
+
+@pytest.mark.parametrize('built', [None, 42, '', '2026-02-30T12:00:00Z', '2026-11-02',
+  '2026-11-02T00:00:00+00:00', '2026-11-02T00:00:00.000Z', '2026-11-02T24:00:00Z', '0000-01-01T00:00:00Z'])
+def test_invalid_build_time_is_rejected(built: object) -> None:
+  with pytest.raises(ValueError):
+    publish(None, build(DEV, built=built), DEV)
 
 
 def test_promotion_requires_the_read_back_digest(archive: dict[str, bytes]) -> None:
@@ -195,7 +251,7 @@ def test_dev_replacement_returns_to_archived(archive: dict[str, bytes]) -> None:
   assert status == 'replaced'
   assert site[f'{DEV}/index.html'] == SYNTHETIC + b'next'
   assert state(site, DEV) == (DEV, 'archived', 'd' * 40, digest(build(DEV, commit='d' * 40, body=b'next')))
-  assert f'<li id="{DEV}">开发版：文档待就绪</li>' in selector(site) and latest(site) == V1
+  assert f'<li id="{DEV}">开发版：文档待就绪 · 构建日期未记录' in selector(site) and latest(site) == V1
   assert version_files(site, V1, V2) == version_files(archive, V1, V2)
 
 
@@ -525,7 +581,7 @@ def test_cli_transitions_into_new_directory(tmp_path: Path, archive: dict[str, b
   result = run_cli(tmp_path, 'pending', '--initialize', '--label', V1, '--output', 'three')
   assert result.returncode == 0, result.stderr
   assert json.loads(result.stdout) == {'status': 'added', 'label': V1, 'state': 'pending', 'commit': None, 'digest': None, 'latest': None, 'versions': [V1]}
-  assert set(run_docs_site.read_directory(tmp_path / 'three')) == set(GENERATED)
+  assert set(run_docs_site.read_directory(tmp_path / 'three')) == set(GENERATED) - {'latest/index.html'}
 
   result = run_cli(tmp_path, 'current', '--archive', 'archive.tar', '--label', V1, '--output', 'four')
   assert result.returncode == 0, result.stderr

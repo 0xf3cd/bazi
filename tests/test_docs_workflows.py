@@ -7,10 +7,12 @@ import base64
 import hashlib
 import io
 import json
+import os
 import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tarfile
 import urllib.error
 import urllib.request
@@ -136,7 +138,7 @@ def test_publish_job_boundaries() -> None:
   assert {name: job.get('needs') for name, job in jobs.items()} == {
     'build': None, 'check': None, 'archive': ['build', 'check'], 'deploy': ['archive'], 'readback': ['archive', 'deploy']}
   assert {name: actions(name) for name in jobs} == {
-    'build': ['actions/checkout', 'actions/setup-python', 'actions/upload-artifact'], 'check': [],
+    'build': ['actions/checkout', 'actions/setup-python', 'actions/checkout', 'actions/upload-artifact'], 'check': [],
     'archive': ['actions/checkout', 'actions/download-artifact', 'actions/upload-pages-artifact'],
     'deploy': ['actions/deploy-pages'], 'readback': []}
   assert [name for name, job in jobs.items() if 'environment' in job] == ['deploy']
@@ -165,11 +167,14 @@ def test_publish_identity_and_artifacts() -> None:
   assert jobs['check']['steps'] == jobs['readback']['steps']
   assert jobs['check']['steps'][0]['id'] == 'readback'
   assert jobs['check']['outputs'] == {
-    'commit': '${{ steps.readback.outputs.commit }}', 'digest': '${{ steps.readback.outputs.digest }}'}
+    'commit': '${{ steps.readback.outputs.commit }}', 'digest': '${{ steps.readback.outputs.digest }}',
+    'dev-digest': '${{ steps.readback.outputs.dev-digest }}'}
   assert jobs['check']['env'] == {'LABEL': '${{ inputs.version }}', 'COMMIT': ''}
   assert jobs['readback']['env'] == {'LABEL': '${{ inputs.version }}', 'COMMIT': '${{ needs.archive.outputs.commit }}'}
   assert step('archive', 'Read the archive branch')['env']['EXPECTED'] == '${{ needs.check.outputs.commit }}'
   assert step('archive', 'Apply the requested archive change')['env']['DIGEST'] == '${{ needs.check.outputs.digest }}'
+  assert step('archive', 'Apply the requested archive change')['env']['DEV_DIGEST'] == '${{ needs.check.outputs.dev-digest }}'
+  assert step('archive', 'Apply the requested archive change')['env']['DEV_COMMIT'] == '${{ github.sha }}'
   assert jobs['archive']['outputs'] == {'commit': '${{ steps.commit.outputs.commit }}'}
   assert step('archive', COMMIT_STEP)['env']['GH_TOKEN'] == '${{ github.token }}'
   # Initialization starts from the commit this job checked out as control/, not from any branch named by an input.
@@ -181,6 +186,19 @@ def test_publish_identity_and_artifacts() -> None:
   assert download['if'] == "inputs.mode == 'publish'"
   assert download['with'] == {
     'artifact-ids': '${{ needs.build.outputs.artifact-id }}', 'path': 'candidate', 'merge-multiple': True, 'digest-mismatch': 'error'}
+  builds = jobs['build']['steps']
+  primary = next(i for i, item in enumerate(builds) if item.get('name') == 'Build, check and pack the candidate')
+  dev_checkout = next(i for i, item in enumerate(builds) if item.get('with', {}).get('path') == 'dev-source')
+  assert primary < dev_checkout < len(builds) - 1
+  assert builds[dev_checkout]['with']['ref'] == '${{ github.sha }}'
+  for item in builds[dev_checkout:-1]:
+    assert item['if'] == "inputs.version != 'dev'"
+    if 'run' in item:
+      assert item['working-directory'] == 'dev-source'
+  assert step('build', 'Verify dev checkout and documentation runner')['env'] == {'LABEL': 'dev', 'COMMIT': '${{ github.sha }}'}
+  assert step('build', 'Verify dev checkout and documentation runner')['run'] == step('build', 'Verify checkout and documentation runner')['run']
+  assert step('build', 'Install documentation requirements of the dev source')['run'] == step('build', 'Install documentation requirements of the checked-out source')['run']
+  assert builds[-1]['with']['path'].splitlines() == ['${{ runner.temp }}/site.tar', '${{ runner.temp }}/dev-site.tar']
 
 
 def test_publish_privileged_execution() -> None:
@@ -196,7 +214,7 @@ def test_publish_privileged_execution() -> None:
   # The privileged jobs install nothing and never run the built candidate.
   for name in ('archive', 'deploy'):
     for item in jobs[name]['steps']:
-      assert not re.search(r'\b(pip|run_docs\.py|import bazi|candidate/(?!site\.tar))', item.get('run', ''))
+      assert not re.search(r'\b(pip|run_docs\.py|import bazi|candidate/(?!(?:dev-)?site\.tar))', item.get('run', ''))
 
 
 def test_trust_boundary() -> None:
@@ -433,6 +451,65 @@ def test_checkout_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change
       run_policy(policy)
 
 
+@pytest.mark.parametrize('failure', [None, 'v99.0.0', 'dev'])
+def test_build_steps_pack_both_candidates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None) -> None:
+  # A stand-in builder checks source identity and checkout order; the shell commands and tar packing are the real workflow steps.
+  stub = '''import argparse, json, os
+from pathlib import Path
+p = argparse.ArgumentParser()
+p.add_argument('--version'); p.add_argument('--output-dir', type=Path)
+a = p.parse_args()
+assert a.version == Path('.fixture-label').read_text()
+assert a.version == 'dev' or not Path('dev-source').exists()
+if a.version == os.environ['FAIL_BUILD']: raise SystemExit(3)
+out = a.output_dir / 'html'; out.mkdir(parents=True)
+(out / 'index.html').write_text('synthetic ' + a.version)
+(out / '.buildinfo').write_text('synthetic hidden file')
+(out / 'build.json').write_text(json.dumps({'version': a.version, 'commit': Path('.fixture-commit').read_text(), 'dirty': False, 'python': '3.13'}))
+'''
+  def checkout(root: Path, label: str, commit: str) -> None:
+    (root / 'docs').mkdir(parents=True)
+    (root / 'run_docs.py').write_text(stub)
+    for name in ('run_doc_checks.py', 'docs/requirements.txt'):
+      (root / name).write_text('')
+    (root / '.fixture-label').write_text(label)
+    (root / '.fixture-commit').write_text(commit)
+  binary, temporary = tmp_path / 'bin', tmp_path / 'runner'
+  binary.mkdir()
+  temporary.mkdir()
+  python = binary / 'python'
+  python.write_text(f'#!/bin/sh\nexec {shlex.quote(sys.executable)} "$@"\n')
+  python.chmod(0o700)
+  monkeypatch.setenv('PATH', str(binary) + ':' + os.environ['PATH'])
+  monkeypatch.setenv('RUNNER_TEMP', str(temporary))
+  monkeypatch.setenv('FAIL_BUILD', failure or '')
+  monkeypatch.setenv('LABEL', 'v99.0.0')
+  monkeypatch.setenv('COMMIT', TAGGED)
+  checkout(tmp_path, 'v99.0.0', TAGGED)
+  monkeypatch.chdir(tmp_path)
+  monkeypatch.setattr(subprocess, 'check_output', lambda *args, **kwargs: Path('.fixture-commit').read_text())
+  def build_pair() -> None:
+    run_policy(code('build', 'Verify checkout and documentation runner'))
+    subprocess.run(['bash', '-e', '-c', code('build', 'Build, check and pack the candidate')], check=True)
+    checkout(tmp_path / 'dev-source', 'dev', SHA)
+    monkeypatch.chdir(tmp_path / 'dev-source')
+    monkeypatch.setenv('LABEL', 'dev')
+    monkeypatch.setenv('COMMIT', SHA)
+    run_policy(code('build', 'Verify dev checkout and documentation runner'))
+    subprocess.run(['bash', '-e', '-c', code('build', 'Build, check and pack the dev candidate')], check=True)
+  if failure:
+    with pytest.raises(subprocess.CalledProcessError):
+      build_pair()
+    assert not (temporary / 'dev-site.tar').exists()
+    assert (temporary / 'site.tar').exists() == (failure == 'dev')
+    return
+  build_pair()
+  for name, label, commit in (('site.tar', 'v99.0.0', TAGGED), ('dev-site.tar', 'dev', SHA)):
+    files = run_docs_site.read_tree(temporary / name)
+    run_docs_site.check_build(files, label, commit)
+    assert files['.buildinfo'] == b'synthetic hidden file'
+
+
 class FakeGit:
   '''Answers the git commands of the inline steps from an in-memory branch; anything else runs for real.'''
 
@@ -529,20 +606,28 @@ def test_read_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict
 
 
 @pytest.mark.parametrize('mode, parent, expected', [
-  ('publish', HEAD, ['archive', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
-  ('publish', '', ['archive', '--initialize', '--label', 'v99.0.0', '--output', 'site', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
+  ('publish', HEAD, ['archive', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'intermediate', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
+  ('publish', '', ['archive', '--initialize', '--label', 'v99.0.0', '--output', 'intermediate', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
   ('pending', HEAD, ['pending', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site']),
   ('promote', HEAD, ['promote', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site', '--verified-digest', 'f' * 64]),
   ('resume', HEAD, ['current', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site']),
 ])
 def test_apply_policy(monkeypatch: pytest.MonkeyPatch, mode: str, parent: str, expected: list[str]) -> None:
-  for key, value in {'MODE': mode, 'LABEL': 'v99.0.0', 'COMMIT': TAGGED, 'DIGEST': 'f' * 64, 'PARENT': parent}.items():
+  for key, value in {'MODE': mode, 'LABEL': 'v99.0.0', 'COMMIT': TAGGED, 'DIGEST': 'f' * 64, 'DEV_DIGEST': '', 'DEV_COMMIT': SHA, 'PARENT': parent}.items():
     monkeypatch.setenv(key, value)
   assembler = Mock(return_value='{}')
   monkeypatch.setattr(subprocess, 'check_output', assembler)
+  pack = Mock()
+  monkeypatch.setattr(subprocess, 'run', pack)
   run_policy(code('archive', 'Apply the requested archive change'))
-  command = assembler.call_args.args[0]
+  command = assembler.call_args_list[0].args[0]
   assert command[1:4] == ['-I', '-B', 'control/run_docs_site.py'] and command[4:] == expected
+  assert assembler.call_count == (2 if mode == 'publish' else 1)
+  if mode == 'publish':
+    pack.assert_called_once_with(['tar', '-cf', 'intermediate.tar', '-C', 'intermediate', '.'], check=True)
+    assert assembler.call_args.args[0][4:] == ['archive', '--archive', 'intermediate.tar', '--label', 'dev', '--output', 'site', '--candidate', 'candidate/dev-site.tar', '--commit', SHA]
+  else:
+    pack.assert_not_called()
 
 
 def git_tree(files: Mapping[str, bytes], modes: Mapping[str, str] | None = None) -> str:
@@ -998,7 +1083,7 @@ def test_readback_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: 
   result = readback(tmp_path, monkeypatch, git, pages, label, commit)
   entry = next(entry for entry in read_manifest(site['versions.json']) if entry.label == label)
   # The digest is recomputed from live bytes and must equal what the assembler recorded.
-  assert result == {'commit': HEAD, 'digest': entry.digest or ''}
+  assert result == {'commit': HEAD, 'digest': entry.digest or '', 'dev-digest': run_docs_site.digest(candidate('dev', SHA))}
   # Every archived file is read back, whichever version is being checked.
   assert set(pages.requests) == set(site)
 
@@ -1023,16 +1108,18 @@ class Platform:
   def check(self, label: str) -> dict[str, str]:
     return readback(self.job('check'), self.monkeypatch, self.git, self.pages, label, '')
 
-  def archive(self, mode: str, label: str, *, build: dict[str, bytes] | None = None, checked: Mapping[str, str] | None = None, initialize: bool | None = None) -> str:
+  def archive(self, mode: str, label: str, *, build: dict[str, bytes] | None = None, dev_build: dict[str, bytes] | None = None, checked: Mapping[str, str] | None = None, initialize: bool | None = None) -> str:
     path = self.job('archive')
     output = environment(self.monkeypatch, path, INITIALIZE='true' if (self.git.head is None if initialize is None else initialize) else 'false',
       EXPECTED=(checked or {}).get('commit', ''), MODE=mode, LABEL=label, COMMIT=json.loads(build['build.json'])['commit'] if build else '',
-      DIGEST=(checked or {}).get('digest', ''), CONTROL=CONTROL, GH_TOKEN='offline-fixture')
+      DIGEST=(checked or {}).get('digest', ''), DEV_DIGEST=(checked or {}).get('dev-digest', ''), DEV_COMMIT=SHA, CONTROL=CONTROL, GH_TOKEN='offline-fixture')
     (path / 'control').mkdir()
     shutil.copy(run_docs_site.__file__, path / 'control/run_docs_site.py')
     if build is not None:
       (path / 'candidate').mkdir()
       (path / 'candidate/site.tar').write_bytes(tar_bytes(build))
+      if label != 'dev':
+        (path / 'candidate/dev-site.tar').write_bytes(tar_bytes(dev_build if dev_build is not None else candidate('dev', SHA)))
     self.monkeypatch.setattr(subprocess, 'run', self.git.run)
     self.monkeypatch.setattr(subprocess, 'check_output', self.git.check_output)
     self.monkeypatch.setattr(urllib.request, 'urlopen', self.api)
@@ -1066,7 +1153,7 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
   # Declare v99.1.0 pending first; the selector anchor exists before any directory does.
   commit = platform.archive('pending', 'v99.1.0')
   platform.deploy(commit)
-  assert platform.readback('v99.1.0', commit) == {'commit': commit, 'digest': ''}
+  assert platform.readback('v99.1.0', commit) == {'commit': commit, 'digest': '', 'dev-digest': ''}
   assert '<li id="v99.1.0">v99.1.0：文档待就绪</li>' in platform.pages.files['versions/index.html'].decode()
 
   # Archive and deploy v99.0.0: live and read back, still not ready and not latest.
@@ -1074,7 +1161,7 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
   platform.deploy(commit)
   platform.readback('v99.0.0', commit)
   assert platform.manifest()['latest'] is None
-  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('v99.1.0', 'pending'), ('v99.0.0', 'archived')]
+  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('dev', 'archived'), ('v99.1.0', 'pending'), ('v99.0.0', 'archived')]
   with pytest.raises(subprocess.CalledProcessError):
     platform.archive('promote', 'v99.1.0', checked=platform.check('v99.1.0'))
   assert 'v99.1.0 has no archived directory to mark ready' in capfd.readouterr().err
@@ -1106,7 +1193,7 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
   checked = platform.check('v99.1.0')
 
   # A concurrent dev publication moves the branch between the live check and promotion.
-  moved = platform.archive('publish', 'dev', build=candidate('dev', SHA))
+  moved = platform.archive('publish', 'dev', build=candidate('dev', 'e' * 40, b'concurrent'))
   with pytest.raises(SystemExit, match='moved after the live check'):
     platform.archive('promote', 'v99.1.0', checked=checked)
   # The older run must not redeploy its superseded archive either.
@@ -1117,12 +1204,87 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
   platform.deploy(commit)
   platform.readback('v99.1.0', commit)
   assert platform.manifest()['latest'] == 'v99.1.0'
-  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('dev', 'archived'), ('v99.1.0', 'ready'), ('v99.0.0', 'ready')]
+  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('dev', 'ready'), ('v99.1.0', 'ready'), ('v99.0.0', 'ready')]
   # Every release directory is still byte-identical to its first build, and no staging branch is left.
   live = platform.pages.files
   assert {name.partition('/')[2]: content for name, content in live.items() if name.startswith('v99.0.0/')} == v1
   assert {name.partition('/')[2]: content for name, content in live.items() if name.startswith('v99.1.0/')} == v2
   assert platform.api.branches == {}
+
+
+def test_dual_publish_replaces_dev_atomically(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes]) -> None:
+  platform = Platform(tmp_path, monkeypatch)
+  platform.git.commits[HEAD], platform.git.head = site, HEAD
+  dev = changed(candidate('dev', SHA, b'current dispatch, not the old tag'), {'_static/style.css': None})
+  commit = platform.archive('publish', 'v99.1.0', build=candidate('v99.1.0', TAGGED), dev_build=dev)
+  stored = platform.git.commits[commit]
+  assert run_docs_site.load_archive(stored)['dev'][1] == dev
+  assert run_docs_site.load_archive(stored)['v99.1.0'][0].commit == TAGGED
+  assert stored['v99.0.0/index.html'] == site['v99.0.0/index.html']
+  assert 'dev/_static/style.css' not in stored
+  mutations = [body for _, path, body in platform.api.calls if path == '/graphql' and 'input' in body.get('variables', {})]
+  assert len(mutations) == 1 and platform.api.parents[commit] == [HEAD]
+  assert {entry.state for label, (entry, _) in run_docs_site.load_archive(stored).items() if label in ('dev', 'v99.1.0')} == {'archived'}
+  platform.deploy(commit)
+  checked = platform.check('v99.1.0')
+  assert checked['digest'] != checked['dev-digest'] == run_docs_site.digest(dev)
+  promoted = platform.archive('promote', 'v99.1.0', checked=checked)
+  final = platform.git.commits[promoted]
+  assert all(run_docs_site.load_archive(final)[label][0].state == 'ready' for label in ('dev', 'v99.1.0'))
+  assert {name: raw for name, raw in final.items() if name not in run_docs_site.GENERATED} == {
+    name: raw for name, raw in stored.items() if name not in run_docs_site.GENERATED}
+
+
+@pytest.mark.parametrize('failure', ['tag-dirty', 'dev-dirty', 'dev-wrong-commit', 'label-digest', 'dev-digest'])
+def test_dual_change_failure_commits_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], failure: str) -> None:
+  platform = Platform(tmp_path, monkeypatch)
+  platform.git.commits[HEAD], platform.git.head = site, HEAD
+  tag, dev = candidate('v99.1.0', TAGGED), candidate('dev', SHA)
+  checked = None
+  mode = 'publish'
+  if failure.endswith('dirty'):
+    target = tag if failure == 'tag-dirty' else dev
+    target['build.json'] = target['build.json'].replace(b'false', b'true')
+  elif failure == 'dev-wrong-commit':
+    dev = candidate('dev', TAGGED)
+  else:
+    commit = platform.archive('publish', 'v99.1.0', build=tag)
+    platform.deploy(commit)
+    checked = platform.check('v99.1.0')
+    checked['digest' if failure == 'label-digest' else 'dev-digest'] = 'f' * 64
+    mode = 'promote'
+  before, calls = platform.git.head, list(platform.api.calls)
+  with pytest.raises(subprocess.CalledProcessError):
+    platform.archive(mode, 'v99.1.0', build=tag if mode == 'publish' else None, dev_build=dev, checked=checked)
+  assert platform.git.head == before and platform.api.calls == calls
+  assert not (Path.cwd() / 'site').exists() and platform.api.branches == {}
+
+
+def test_promote_without_dev_creates_no_dev(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+  platform = Platform(tmp_path, monkeypatch)
+  _, tree = add_build(None, candidate('v99.0.0', TAGGED), 'v99.0.0', TAGGED)
+  platform.git.commits[HEAD], platform.git.head, platform.pages.files = tree, HEAD, tree
+  checked = platform.check('v99.0.0')
+  assert checked['dev-digest'] == ''
+  commit = platform.archive('promote', 'v99.0.0', checked=checked)
+  assert set(run_docs_site.load_archive(platform.git.commits[commit])) == {'v99.0.0'}
+
+
+def test_resume_migrates_only_three_html_pages(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+  fixture = json.loads((Path(run_docs_site.__file__).parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
+  old = {name: raw.encode() for name, raw in fixture['files'].items()}
+  platform = Platform(tmp_path, monkeypatch)
+  platform.git.commits[HEAD], platform.git.head = old, HEAD
+  commit = platform.archive('resume', 'v99.1.0')
+  new = platform.git.commits[commit]
+  assert {name for name in old.keys() | new.keys() if old.get(name) != new.get(name)} == {
+    'index.html', 'versions/index.html', 'latest/index.html'}
+  assert new['versions.json'] == old['versions.json']
+  assert platform.archive('resume', 'v99.1.0') == commit
+  for path in ('versions.json', 'dev/index.html', 'v99.0.0/index.html'):
+    with pytest.raises(SystemExit, match='Refusing archive change'):
+      commit_step(platform.job('bad-resume'), monkeypatch, platform.git, platform.api, 'resume', 'v99.1.0', new, new | {path: b'wrong'})
+    assert platform.git.head == commit
 
 
 @pytest.mark.parametrize('failure', ['control-unsigned', 'staging-moved', 'graphql-unavailable', 'unsigned', 'graphql-response-lost', 'create-response-lost', 'created-meanwhile'])
@@ -1161,5 +1323,5 @@ def test_interrupted_init_can_be_retried(tmp_path: Path, monkeypatch: pytest.Mon
     assert platform.git.head is None
     commit = platform.archive('publish', 'dev', build=build)
   platform.deploy(commit)
-  assert platform.readback('dev', commit) == {'commit': commit, 'digest': run_docs_site.digest(build)}
+  assert platform.readback('dev', commit) == {'commit': commit, 'digest': run_docs_site.digest(build), 'dev-digest': run_docs_site.digest(build)}
   assert platform.api.branches == {}

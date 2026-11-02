@@ -1,0 +1,15 @@
+{
+  "description": "Synthetic archive rendered by the unmodified predecessor; generated page bytes are a compatibility oracle, not rebuilt by the current renderer.",
+  "source_sha": "791875acbd034e7c512e7f1b22b5168bd28c1257",
+  "files": {
+    "dev/build.json": "{\n  \"version\": \"dev\",\n  \"commit\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n  \"dirty\": false,\n  \"python\": \"3.13.0\"\n}\n",
+    "dev/index.html": "SYNTHETIC LEGACY FIXTURE: dev\n",
+    "index.html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<meta http-equiv=\"refresh\" content=\"0; url=versions/\">\n<title>bazi 文档</title>\n</head>\n<body>\n<p><a href=\"versions/\">bazi 文档版本</a></p>\n</body>\n</html>\n",
+    "v99.0.0/build.json": "{\n  \"version\": \"v99.0.0\",\n  \"commit\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n  \"dirty\": false,\n  \"python\": \"3.13.0\"\n}\n",
+    "v99.0.0/index.html": "SYNTHETIC LEGACY FIXTURE: v99.0.0\n",
+    "v99.1.0/build.json": "{\n  \"version\": \"v99.1.0\",\n  \"commit\": \"cccccccccccccccccccccccccccccccccccccccc\",\n  \"dirty\": false,\n  \"python\": \"3.13.0\"\n}\n",
+    "v99.1.0/index.html": "SYNTHETIC LEGACY FIXTURE: v99.1.0\n",
+    "versions.json": "{\n  \"schema\": 1,\n  \"latest\": \"v99.1.0\",\n  \"versions\": [\n    {\n      \"label\": \"dev\",\n      \"state\": \"ready\",\n      \"commit\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n      \"digest\": \"2fae2c92dedb2b17ac61d4e31409ebc576506e8df3745371aecc1f4a73a7ed09\"\n    },\n    {\n      \"label\": \"v99.1.0\",\n      \"state\": \"ready\",\n      \"commit\": \"cccccccccccccccccccccccccccccccccccccccc\",\n      \"digest\": \"bb1954b27716cd58911e2a6b4871d8e095329877a9de5cd35a3b64bd1d2f7a51\"\n    },\n    {\n      \"label\": \"v99.0.0\",\n      \"state\": \"ready\",\n      \"commit\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n      \"digest\": \"7e649ecff76ab39a801038c09ef9ba9e4b5df43c882b58c60bceb438f3742c5a\"\n    }\n  ]\n}\n",
+    "versions/index.html": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>bazi 文档版本</title>\n</head>\n<body>\n<h1>bazi 文档版本</h1>\n<p>发布版文档按 tag 归档，归档后内容不再改变。</p>\n<p>“文档待就绪”表示该版文档还没有上线并通过核对，不表示该版软件没有发布。</p>\n<ul>\n<li id=\"dev\"><a href=\"../dev/index.html\">开发版</a>（跟随 main 手动更新） · 源码 <a href=\"https://github.com/0xf3cd/bazi/tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"><code>aaaaaaaaaaaa</code></a></li>\n<li id=\"v99.1.0\"><a href=\"../v99.1.0/index.html\">v99.1.0</a>（最新发布） · 源码 <a href=\"https://github.com/0xf3cd/bazi/tree/cccccccccccccccccccccccccccccccccccccccc\"><code>cccccccccccc</code></a></li>\n<li id=\"v99.0.0\"><a href=\"../v99.0.0/index.html\">v99.0.0</a> · 源码 <a href=\"https://github.com/0xf3cd/bazi/tree/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"><code>bbbbbbbbbbbb</code></a></li>\n</ul>\n<p><a href=\"../versions.json\">versions.json</a></p>\n</body>\n</html>\n"
+  }
+}

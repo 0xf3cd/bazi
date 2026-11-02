@@ -76,10 +76,15 @@ python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
    在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，
    上传同一字节及声明文件，核 asset 摘要后发布草稿。
    两个特权任务均不检出、构建或安装源码，也不执行工件中的代码。
+   发布后 PyPI 版本 JSON 查询若返回 404，最多请求三次，前两次各等两秒再试（总退避四秒，单次网络超时仍为三十秒）。
+   其他 HTTP／网络错误、坏 JSON 或工件哈希错配立即失败；tag、草稿、资产上传及发布写入均不自动重试。
    前置检查和两个特权任务均从本仓本次触发 SHA 的 HTTPS 地址取得 `run_release.py`，取用前要求该 SHA 与 workflow SHA 相同；
    只接受 HTTP 200，再按临时目录中的绝对路径以 `python -I` 执行，避免工件目录影响脚本选择或模块导入。
 4. 从 PyPI 与 GitHub 独立下载两份已发布工件，与保存的校验和比较，确认 tag SHA 与 Release 元数据。
    在新环境安装已发布 wheel，重跑消费者冒烟，并核对实际 PyPI Trusted Publisher 身份与 attestations。
+5. 文档归档与软件发行分开授权。在 main 手动运行 `Publish Documentation`，选择该发布 tag 和 `publish`；
+   该运行同时构建 tag 文档与触发 SHA 的 dev，归档后全站回读。随后以同一标签运行 `promote`，回读核对后同时提升发布版与 dev。
+   根页与 `latest/` 指向最新已就绪发布版，版本列表显示 dev 的实际构建日期；具体模式与恢复办法见[文档归档指南](docs/versioning.md)。
 
 ## 部分失败
 

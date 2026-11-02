@@ -468,8 +468,10 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
   ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
   ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
 ])
-@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes', 'network-error'])
-def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, notes: str, body: str) -> None:
+@pytest.mark.parametrize('retries', [0, 1, 2])
+@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes', 'network-error',
+  'pypi-404-limit', 'pypi-503', 'pypi-network', 'pypi-json', 'draft-fails', 'asset-fails', 'publish-fails'])
+def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, capsys: pytest.CaptureFixture[str], change: str, notes: str, body: str, retries: int) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
   root = tmp_path / 'artifact'
@@ -482,12 +484,26 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
   if change == 'notes-bytes':
     (root / 'RELEASE_NOTES.md').write_bytes(b'\xff')
   writes: list[tuple[str, object]] = []
+  calls: list[tuple[str, str]] = []
+  sleeps = Mock()
+  monkeypatch.setattr(run_release.time, 'sleep', sleeps)
   assets: set[str] = set()
   def request(url: str | urllib.request.Request, timeout: int) -> io.BytesIO:
     address = url if isinstance(url, str) else url.full_url
     method = 'GET' if isinstance(url, str) else url.get_method()
+    calls.append((method, address))
+    assert timeout == (60 if '/assets?' in address else 30)
     value: dict[str, Any] = {}
     if 'pypi.org' in address:
+      assert method == 'GET'
+      if len(calls) <= retries or change == 'pypi-404-limit':
+        raise urllib.error.HTTPError(address, 404, 'Not Found', {}, None)  # type: ignore[arg-type] # No headers needed.
+      if change == 'pypi-503':
+        raise urllib.error.HTTPError(address, 503, 'Unavailable', {}, None)  # type: ignore[arg-type] # No headers needed.
+      if change == 'pypi-network':
+        raise urllib.error.URLError('offline fixture')
+      if change == 'pypi-json':
+        return io.BytesIO(b'not JSON')
       value = {'urls': [{'filename': p.name, 'digests': {'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}}
         for p in (root / 'dist').iterdir()]}
       if change == 'pypi-bytes':
@@ -502,16 +518,22 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         if change == 'tag-race':
           raise urllib.error.HTTPError(address, 422, 'Already exists', {}, None)  # type: ignore[arg-type] # No headers needed.
       elif address.endswith('/releases'):
+        if change == 'draft-fails':
+          raise urllib.error.HTTPError(address, 404, 'Fixture write failure', {}, None)  # type: ignore[arg-type] # No headers needed.
         assert json.loads(url.data) == {'tag_name': 'v1.0.0', 'target_commitish': SHA,
           'name': 'bazi 1.0.0', 'body': body, 'draft': True}
         value = {'id': 1}
       elif '/assets?' in address:
+        if change == 'asset-fails':
+          raise urllib.error.HTTPError(address, 404, 'Fixture write failure', {}, None)  # type: ignore[arg-type] # No headers needed.
         name, = urllib.parse.parse_qs(urllib.parse.urlsplit(address).query)['name']
         assets.add(name)
         assert url.data == (root / ('dist/' if name.endswith(('.whl', '.tar.gz')) else '') / name).read_bytes()
         value = {'digest': 'sha256:' + ('0' * 64 if change == 'asset-bytes' else hashlib.sha256(url.data).hexdigest())}
       else:
         assert address.endswith('/releases/1') and method == 'PATCH'
+        if change == 'publish-fails':
+          raise urllib.error.HTTPError(address, 404, 'Fixture write failure', {}, None)  # type: ignore[arg-type] # No headers needed.
         assert json.loads(url.data) == {'draft': False}
       writes.append((method, address))
     return io.BytesIO(json.dumps(value).encode())
@@ -523,11 +545,23 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     assert assets == {'bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl',
       'RELEASE_NOTES.md', 'release.json', 'environments.json', 'SHA256SUMS'}
   else:
-    with pytest.raises((SystemExit, urllib.error.HTTPError, UnicodeDecodeError)):
+    with pytest.raises((SystemExit, urllib.error.URLError, UnicodeDecodeError, json.JSONDecodeError)) as failure:
       run_policy(code)
+    if change == 'pypi-404-limit':
+      assert '3 attempts (2 retries); last response: HTTP 404 Not Found' in str(failure.value)
     assert not any(method == 'PATCH' for method, _ in writes)
-    if change != 'asset-bytes':
+    if change not in ('asset-bytes', 'draft-fails', 'asset-fails', 'publish-fails'):
       assert writes == []
+  pypi_calls = [call for call in calls if 'pypi.org' in call[1]]
+  backoffs = 2 if change == 'pypi-404-limit' else retries
+  assert len(pypi_calls) == backoffs + 1
+  assert [call.args for call in sleeps.call_args_list] == [(2,)] * backoffs
+  log = capsys.readouterr().out
+  assert log.count('returned HTTP 404; retry') == backoffs
+  for attempt in range(1, backoffs + 1):
+    assert f'attempt {attempt}/3' in log and f'retry {attempt}/2 in 2 seconds' in log
+  github_calls = [call for call in calls if 'pypi.org' not in call[1]]
+  assert len(github_calls) == len(set(github_calls))
 
 
 @pytest.mark.parametrize('crlf', [False, True])

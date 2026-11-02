@@ -34,6 +34,7 @@ def test_source_selection() -> None:
   assert {f'bazi/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101)} <= files
   assert {'bazi/py.typed', 'tests/package_smoke.py', '.github/workflows/release.yml'} <= files
   assert {'bazi/cli.py', 'tests/package_cli_smoke.py'} <= files
+  assert {'tests/fixtures/type_consumer_good.txt', 'tests/fixtures/type_consumer_bad_extra.txt'} <= files
   assert not {'run_demo.py', 'run_interpreter.py', 'run_relationship_analyzer.py'} & files
   assert not any('/references/' in name or name.endswith('.ipynb') for name in files)
   assert {p.relative_to(ROOT).as_posix() for p in (ROOT / 'bazi').rglob('*.py')} <= files
@@ -434,7 +435,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   work.mkdir()
   source = {'README.md': b'# Fixture\n', 'pyproject.toml': b'[project]\nversion="1.0.0"\n',
     'LICENSE': b'license', 'THIRD_PARTY_NOTICES.md': b'notices', 'bazi/fixture.py': b'X = 1\n',
-    'tests/package_smoke.py': b'# Fixture consumer\n', 'tests/package_cli_smoke.py': b'# Fixture CLI consumer\n'}
+     'tests/package_smoke.py': b'# Fixture consumer\n', 'tests/package_cli_smoke.py': b'# Fixture CLI consumer\n'}
+  for name in ('type_consumer_good.txt', 'type_consumer_bad_extra.txt'):
+    source['tests/fixtures/' + name] = (ROOT / 'tests/fixtures' / name).read_bytes() + b'# Synthetic checkout input\n'
   for name, content in source.items():
     path = root / name
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -509,6 +512,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       assert command[1:5] == ['-I', '-X', 'utf8', '-m']
       assert '--show-traceback' in command and command[-1] == 'good.py'
       good = (cwd / 'good.py').read_text(encoding='utf-8')
+      assert good.encode() == source['tests/fixtures/type_consumer_good.txt']
       assert 'from bazi.cli import main as cli_main' in good and 'cli_exit: int = cli_main(["--help"])' in good
       for method in ('at_year', 'at_month', 'at_date', 'at_moment'):
         assert f': TransitSet | None = transits.{method}(' in good
@@ -530,7 +534,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     command, = args
     assert isinstance(command, list) and command[-1] == 'bad.py' and '--show-traceback' in command
     assert command[1:5] == ['-I', '-X', 'utf8', '-m']
-    bad = (work / 'consumer/bad.py').read_text(encoding='utf-8').splitlines()
+    combined = (work / 'consumer/bad.py').read_bytes()
+    assert combined == source['tests/fixtures/type_consumer_good.txt'] + source['tests/fixtures/type_consumer_bad_extra.txt']
+    bad = combined.decode('utf-8').splitlines()
     assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
     assert 'KongwangResult(Zhu.月, target, ())' not in bad
     messages = ['[assignment] [arg-type] "None"']
