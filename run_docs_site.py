@@ -129,7 +129,7 @@ def check_build(files: Mapping[str, bytes], label: str, commit: str) -> None:
     raise ValueError(f'{label}: build.json or index.html is missing')
   data = load_json(files['build.json'])
   if not isinstance(data, dict) or set(data) not in (BUILD_FIELDS, BUILD_FIELDS | {'built'}):
-    raise ValueError(f'{label}: build.json fields differ from {sorted(BUILD_FIELDS)}')
+    raise ValueError(f'{label}: build.json fields differ from {sorted(BUILD_FIELDS)} with optional built')
   if data['version'] != label or data['commit'] != commit or data['dirty'] is not False or not isinstance(data['python'], str):
     raise ValueError(f'{label}: build.json does not describe a clean build of {commit}')
   if 'built' in data:

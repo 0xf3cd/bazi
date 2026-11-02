@@ -333,8 +333,10 @@ def test_wrong_build_metadata_is_rejected(archive: dict[str, bytes], change: str
     candidate['build.json'] = b'\xff'
   elif change == 'array':
     candidate['build.json'] = b'[]'
-  with pytest.raises(ValueError, match=message):
+  with pytest.raises(ValueError, match=message) as failure:
     publish(archive, candidate, label)
+  if change in ('extra-field', 'missing-field', 'array'):
+    assert 'with optional built' in str(failure.value)
 
 
 @pytest.mark.parametrize('label', [

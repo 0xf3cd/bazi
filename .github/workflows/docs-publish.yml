@@ -9,7 +9,7 @@ on:
         default: dev
         required: true
       mode:
-        description: rehearsal only builds; publish archives a build; pending lists a release whose docs are not ready; promote marks a read-back version ready; resume redeploys the archive
+        description: rehearsal only builds; publish archives the selected build and dev for a tag; pending lists unready release docs; promote marks the read-back version and any dev ready for a release; resume redeploys and may upgrade three entry HTML pages
         type: choice
         options: [rehearsal, publish, pending, promote, resume]
         default: rehearsal
