@@ -76,7 +76,7 @@ python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
    在已测试 SHA 建 `v<version>`，以 RELEASE_NOTES.md 顶部一节为正文创建草稿，
    上传同一字节及声明文件，核 asset 摘要后发布草稿。
    两个特权任务均不检出、构建或安装源码，也不执行工件中的代码。
-   该任务开头核对已发布到 PyPI 的版本时，JSON 查询若返回 404，最多请求三次，前两次各等两秒再试（总退避四秒，单次网络超时仍为三十秒）。
+   该任务开头核对已发布到 PyPI 的版本时，JSON 查询若返回 404，最多请求三次，前两次各等两秒再试（总退避四秒，单次网络超时为三十秒）。
    三次均为 404 时，任务在创建 GitHub tag 之前失败。
    其他 HTTP／网络错误、坏 JSON 或工件哈希错配立即失败；tag、草稿、资产上传及发布写入均不自动重试。
    前置检查和两个特权任务均从本仓本次触发 SHA 的 HTTPS 地址取得 `run_release.py`，取用前要求该 SHA 与 workflow SHA 相同；
