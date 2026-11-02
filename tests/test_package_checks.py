@@ -437,7 +437,8 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     'LICENSE': b'license', 'THIRD_PARTY_NOTICES.md': b'notices', 'bazi/fixture.py': b'X = 1\n',
      'tests/package_smoke.py': b'# Fixture consumer\n', 'tests/package_cli_smoke.py': b'# Fixture CLI consumer\n'}
   for name in ('type_consumer_good.txt', 'type_consumer_bad_extra.txt'):
-    source['tests/fixtures/' + name] = (ROOT / 'tests/fixtures' / name).read_bytes() + b'# Synthetic checkout input\n'
+    fixture = (ROOT / 'tests/fixtures' / name).read_text(encoding='utf-8')
+    source['tests/fixtures/' + name] = (fixture + '# Synthetic checkout input\n').replace('\n', '\r\n').encode()
   for name, content in source.items():
     path = root / name
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -512,7 +513,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       assert command[1:5] == ['-I', '-X', 'utf8', '-m']
       assert '--show-traceback' in command and command[-1] == 'good.py'
       good = (cwd / 'good.py').read_text(encoding='utf-8')
-      assert good.encode() == source['tests/fixtures/type_consumer_good.txt']
+      assert good == source['tests/fixtures/type_consumer_good.txt'].decode().replace('\r\n', '\n')
       assert 'from bazi.cli import main as cli_main' in good and 'cli_exit: int = cli_main(["--help"])' in good
       for method in ('at_year', 'at_month', 'at_date', 'at_moment'):
         assert f': TransitSet | None = transits.{method}(' in good
@@ -534,9 +535,10 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     command, = args
     assert isinstance(command, list) and command[-1] == 'bad.py' and '--show-traceback' in command
     assert command[1:5] == ['-I', '-X', 'utf8', '-m']
-    combined = (work / 'consumer/bad.py').read_bytes()
-    assert combined == source['tests/fixtures/type_consumer_good.txt'] + source['tests/fixtures/type_consumer_bad_extra.txt']
-    bad = combined.decode('utf-8').splitlines()
+    combined = (work / 'consumer/bad.py').read_text(encoding='utf-8')
+    expected = source['tests/fixtures/type_consumer_good.txt'] + source['tests/fixtures/type_consumer_bad_extra.txt']
+    assert combined == expected.decode().replace('\r\n', '\n')
+    bad = combined.splitlines()
     assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
     assert 'KongwangResult(Zhu.月, target, ())' not in bad
     messages = ['[assignment] [arg-type] "None"']
