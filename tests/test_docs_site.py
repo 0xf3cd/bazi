@@ -99,6 +99,7 @@ def test_archived_versions_listed_not_linked(archive: dict[str, bytes]) -> None:
   # The first archive commit must not compute latest or advertise unverified directories.
   page = selector(archive)
   assert latest(archive) is None
+  assert page.index(f'id="{V2}"') < page.index(f'id="{V1}"') < page.index(f'id="{DEV}"')
   assert f'<li id="{DEV}">开发版：文档待就绪 · 构建日期未记录 · 源码 ' in page
   for label in (V1, V2):
     assert f'<li id="{label}">{label}：文档待就绪 · 源码 ' in page
@@ -178,6 +179,36 @@ def test_legacy_layout_migrates_only_root(operation: str) -> None:
       keep_current(bad, DEV)
 
 
+@pytest.mark.parametrize('unready', ['archived', 'pending'])
+def test_legacy_unready_layout_is_accepted(unready: str) -> None:
+  fixture = json.loads((SCRIPT.parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
+  old = {name: content.encode('utf-8') for name, content in fixture['files'].items()}
+  manifest = json.loads(old['versions.json'])
+  manifest['latest'] = V1
+  for entry in manifest['versions']:
+    if entry['label'] in (DEV, V2):
+      entry['state'] = 'archived' if entry['label'] == DEV else unready
+      if entry['state'] == 'pending':
+        entry['commit'] = entry['digest'] = None
+  old['versions.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
+  # These unready rows are literal bytes from the predecessor, not the current compatibility renderer.
+  rows = {DEV: f'<li id="{DEV}">开发版：文档待就绪</li>\n', V2: f'<li id="{V2}">{V2}：文档待就绪</li>\n'}
+  old['versions/index.html'] = ''.join(
+    next((row for label, row in rows.items() if line.startswith(f'<li id="{label}">')), line)
+    for line in selector(old).splitlines(keepends=True)
+  ).replace(f'{V1}</a> · ', f'{V1}</a>（最新发布） · ').encode()
+  if unready == 'pending':
+    old = {name: content for name, content in old.items() if not name.startswith(V2 + '/')}
+  versions = run_docs_site.load_archive(old)
+  assert versions[DEV][0].state == 'archived' and versions[V2][0].state == unready
+  _, site = keep_current(old, DEV)
+  assert site['versions.json'] == old['versions.json']
+  assert version_files(site, DEV, V1, V2) == version_files(old, DEV, V1, V2)
+  assert f'url=../{V1}/'.encode() in site['latest/index.html']
+  assert selector(site).index(f'id="{V1}"') < selector(site).index(f'id="{V2}"') < selector(site).index(f'id="{DEV}"')
+  assert keep_current(site, DEV) == ('unchanged', site)
+
+
 @pytest.mark.parametrize('built', ['2026-11-02T08:00:00Z', '2024-02-29T23:59:59Z'])
 def test_dev_build_time_follows_replacement(built: str) -> None:
   _, site = publish(None, build(DEV, built=built), DEV)
@@ -195,8 +226,10 @@ def test_dev_build_time_follows_replacement(built: str) -> None:
 @pytest.mark.parametrize('built', [None, 42, '', '2026-02-30T12:00:00Z', '2026-11-02',
   '2026-11-02T00:00:00+00:00', '2026-11-02T00:00:00.000Z', '2026-11-02T24:00:00Z', '0000-01-01T00:00:00Z'])
 def test_invalid_build_time_is_rejected(built: object) -> None:
-  with pytest.raises(ValueError):
+  with pytest.raises(ValueError, match='dev: built') as failure:
     publish(None, build(DEV, built=built), DEV)
+  if built in ('2026-02-30T12:00:00Z', '2026-11-02T24:00:00Z', '0000-01-01T00:00:00Z'):
+    assert isinstance(failure.value.__cause__, ValueError)
 
 
 def test_promotion_requires_the_read_back_digest(archive: dict[str, bytes]) -> None:

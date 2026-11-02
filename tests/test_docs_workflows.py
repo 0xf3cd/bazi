@@ -480,7 +480,7 @@ out = a.output_dir / 'html'; out.mkdir(parents=True)
   python = binary / 'python'
   python.write_text(f'#!/bin/sh\nexec {shlex.quote(sys.executable)} "$@"\n')
   python.chmod(0o700)
-  monkeypatch.setenv('PATH', str(binary) + ':' + os.environ['PATH'])
+  monkeypatch.setenv('PATH', str(binary) + os.pathsep + os.environ['PATH'])
   monkeypatch.setenv('RUNNER_TEMP', str(temporary))
   monkeypatch.setenv('FAIL_BUILD', failure or '')
   monkeypatch.setenv('LABEL', 'v99.0.0')

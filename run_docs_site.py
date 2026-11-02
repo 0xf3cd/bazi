@@ -124,7 +124,7 @@ def read_tree(path: Path) -> dict[str, bytes]:
 
 
 def check_build(files: Mapping[str, bytes], label: str, commit: str) -> None:
-  '''build.json 须声明同一版本、同一提交，且构建时工作树干净。'''
+  '''build.json 须声明同一版本、同一提交，且构建时工作树干净；若含 built，须为合法的 UTC 构建时间。'''
   if 'build.json' not in files or 'index.html' not in files:
     raise ValueError(f'{label}: build.json or index.html is missing')
   data = load_json(files['build.json'])
@@ -136,7 +136,10 @@ def check_build(files: Mapping[str, bytes], label: str, commit: str) -> None:
     built = data['built']
     if not isinstance(built, str) or re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', built) is None:
       raise ValueError(f'{label}: built must be a UTC timestamp YYYY-MM-DDTHH:MM:SSZ')
-    datetime.strptime(built, '%Y-%m-%dT%H:%M:%SZ')
+    try:
+      datetime.strptime(built, '%Y-%m-%dT%H:%M:%SZ')
+    except ValueError as error:
+      raise ValueError(f'{label}: built is not a valid UTC timestamp: {built!r}') from error
 
 
 def check_entry(item: object) -> Version:
