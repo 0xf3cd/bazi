@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-34 10 23 312
+40 10 37 326
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
@@ -105,6 +105,36 @@ ValueError Unknown object_id: tiangan.dingg
 - **合法值不保证有结果。** `shensha.guoyin` 是合法对象，默认查询却为空，加上参考条目才有 2 条。可用的过滤值由 `filter_values(维度)` 列出。
 - **未知值与无匹配不同。** 值不在 `filter_values` 里会抛 `ValueError`；值合法但没有交集，只返回空元组。
 
+## 常用神煞的查法与出处
+
+天乙贵人、桃花、驿马、文昌、华盖、羊刃均有专门对象。它们的条目供显式参考查询，默认不展示：
+
+```{testcode} shensha-knowledge
+from bazi.knowledge import KnowledgeBase
+
+kb = KnowledgeBase.load()
+print(kb.find_objects('文昌')[0].object_id)
+print(kb.query(object_id='shensha.wenchang'))
+for entry in kb.query(object_id='shensha.wenchang', include_reference_only=True):
+  source = kb.sources[entry.sources[0]]
+  print(entry.text)
+  print(entry.viewpoint, source.work, source.text_layer)
+```
+
+```{testoutput} shensha-knowledge
+shensha.wenchang
+()
+《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。
+XIN_XU 星学大成 zhushi
+问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。
+现代问真 问真《神煞大全》 editorial
+```
+
+上例分别查到辛戌与辛子读法。按输出中的 `viewpoint` 值过滤；读法的具体含义见条目正文。
+本例的 `text_layer` 区分文本层，`zhushi` 表示夹注、`editorial` 表示现代编者整理。
+各来源的 `supports`、`limitations` 说明它支持表值、锚点或查找位置中的哪一部分，读取方法见 {ref}`条目的来源 <knowledge-sources>`。
+国印定义与条目的双向查询见 {ref}`国印关联示例 <guoyin-knowledge>`。
+
 ## 胎元与命宫：已实现取法和待核候选
 
 `concept.taiyuan` 与 `concept.minggong` 是独立知识对象，所有条目均不默认展示（`show_by_default=False`），全库默认展示仍为 19 条。
@@ -166,6 +196,7 @@ print(kb.search('tiangan.ding'))
 
 搜索不自动转换繁简字。条目引用按载体原字修订后，相关字面关键词的命中可能随之变化；这不改变默认查询资格。
 
+(knowledge-sources)=
 ## 条目的来源
 
 体象诗来源的多段七字摘录、袁氏两节干枝摘录用〔……〕标明本仓省略，
@@ -257,12 +288,12 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 (False, 'editorial') 22
 (False, 'repository_attributed') 8
 (False, 'unverified') 245
-(False, 'witnessed') 18
+(False, 'witnessed') 32
 (True, 'witnessed') 19
-[('unresolved', 264), ('unconditional', 36), ('described', 12)]
+[('unresolved', 264), ('unconditional', 50), ('described', 12)]
 ```
 
-`witnessed` 条目有 37 条，其中 18 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
+`witnessed` 条目有 51 条，其中 32 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -325,7 +356,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-3 312 34 23
+3 326 40 37
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'show_by_default', 'legacy']
 True
 ```
@@ -408,7 +439,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} broken
 ValueError Unknown source: no_such_source (tiangan.ding.definition)
-312
+326
 ```
 
 加载抛 `ValueError`，消息里带出未知的 ID 和出问题的条目。修法是让引用指回注册表里存在的 ID，要么改回，要么在 `sources` 里补上这条来源记录。对象和情境的引用同理；字段缺失、重复键、不支持的 `schema_version` 也都在加载时拒绝。

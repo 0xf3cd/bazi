@@ -10,6 +10,7 @@ import pytest
 
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
+from knowledge_additions import SHENSHA_SOURCE_IDS
 from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
@@ -46,7 +47,10 @@ def _assert_source_errata(data: dict[str, Any], changes: dict[str, Any]) -> None
         assert new == current[key][field] and old != new, (key, field)
         reason = changes['reasons'][registry][key][field]
         assert isinstance(reason, str) and reason.strip(), (key, field)
-  old_sources = [before_errata(row, changes['sources'].get(row['source_id'], {})) for row in data['sources']]
+  old_sources = [
+    before_errata(row, changes['sources'].get(row['source_id'], {}))
+    for row in data['sources'] if row['source_id'] not in SHENSHA_SOURCE_IDS
+  ]
   old_entries = []
   for row in data['entries']:
     if row['claim_id'] not in changes['entries']:

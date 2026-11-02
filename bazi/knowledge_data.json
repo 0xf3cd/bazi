@@ -170,6 +170,36 @@
       "object_id": "concept.minggong",
       "kind": "concept",
       "name": "命宫"
+    },
+    {
+      "object_id": "shensha.tianyi",
+      "kind": "shensha",
+      "name": "天乙贵人"
+    },
+    {
+      "object_id": "shensha.taohua",
+      "kind": "shensha",
+      "name": "桃花"
+    },
+    {
+      "object_id": "shensha.yima",
+      "kind": "shensha",
+      "name": "驿马"
+    },
+    {
+      "object_id": "shensha.wenchang",
+      "kind": "shensha",
+      "name": "文昌"
+    },
+    {
+      "object_id": "shensha.huagai",
+      "kind": "shensha",
+      "name": "华盖"
+    },
+    {
+      "object_id": "shensha.yangren",
+      "kind": "shensha",
+      "name": "羊刃"
     }
   ],
   "contexts": [
@@ -582,6 +612,202 @@
       "supports": "本库已实现口径、精度与地点钟政策，以及尚未编码的其他读法候选。",
       "limitations": "软件政策不冒充古籍共识；附加干支不进入旧四柱、身份、JSON、关系或流运分析，不据计算结果认定解释前提成立。其他月界线索仍须核定系统归属、规则和查法。",
       "state": "repository_attributed"
+    },
+    {
+      "source_id": "sanming_tonghui.tianyi.yinyang",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 657369",
+      "locator": "卷3〈論天乙貴人〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "其曰陽貴陰貴乃冬至用陽夏至用陰非晝夜之說",
+      "supports": "三命通会所引通玄经推法的阴阳贵名称与冬夏至用法。",
+      "limitations": "这一句不同时支持全书另列的昼夜法，也没有替本库四种表选择使用时段。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.taohua.table",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 761691",
+      "locator": "卷2〈論咸池〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "寅午戍卯巳酉丑午申子辰酉亥卯未子即長生第二位沐浴之宫是也一名敗神一名桃花煞",
+      "supports": "咸池／桃花名称与三合组到沐浴支的排列。",
+      "limitations": "该页标题夹注另有纳音同类条件；现代四柱简表与该条件分开记录。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.yima.table",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 657369",
+      "locator": "卷3〈論驛馬〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "寅午戌生人馬在申而五陽干乘之",
+      "supports": "驿马火局取申的一个原文例。",
+      "limitations": "本摘录只展示这一组，不单独证明年日双锚及所有流运范围。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.huagai.table",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 761691",
+      "locator": "卷2〈論將星華葢〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=761691",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "故以三合底處得庫謂之華葢洞𤣥經云将星處乎中軍華葢張乎庫土是也",
+      "supports": "三命通会以三合库位解释华盖，并在本段转引洞玄经。",
+      "limitations": "直接见证是三命通会的转引；锚柱与其余柱的具体查法另有现代来源。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.yangren.luming",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 657369",
+      "locator": "卷3〈論羊刃〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "故羊刃常居祿前一辰",
+      "supports": "三命通会所载禄前一辰读法。",
+      "limitations": "这一句没有单独确定当前分析器固定日干锚的完整查法。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "sanming_tonghui.yangren.ziping",
+      "work": "三命通会",
+      "attribution": "明·万民英",
+      "edition": "维基文库四库全书本电子转录，revision 657369",
+      "locator": "卷3〈論羊刃〉",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=657369",
+      "text_layer": "baiwen",
+      "lineage": "sanming_tonghui",
+      "excerpt": "子平以甲丙戊庚壬五陽干有刃乙丁巳辛癸五陰干無刃",
+      "supports": "三命通会分记子平五阳干有刃与五阴干无刃。",
+      "limitations": "转录原有字形保持不变；不以这一句证明现代十干帝旺表。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "xingxue_dacheng.wenchang_xin_xu",
+      "work": "星学大成",
+      "attribution": "明·万民英辑",
+      "edition": "维基文库四库全书本电子转录，revision 626726",
+      "locator": "卷一〈論文昌〉夹注",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=626726",
+      "text_layer": "zhushi",
+      "lineage": "xingxue_dacheng",
+      "excerpt": "獨辛不以生而以戌為文昌戌在辛之方位",
+      "supports": "星学大成文昌夹注明确辛取戌，并以方位解释该格。",
+      "limitations": "果老星命文献的表值记录，不据此证明其原文采用本库四柱查法。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.tianyi",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "天乙贵人条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#天乙贵人",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n“甲戊庚牛羊, 乙己鼠猴乡, 丙丁猪鸡位, 壬癸兔蛇藏, 六辛逢虎马, 此是贵人方.”——《渊海子平》\n查法：以日/年干查四地支",
+      "supports": "问真神煞大全的天乙贵人表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.taohua",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "桃花/咸池条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#桃花-咸池",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n申子辰在酉, 寅午戌在卯, 巳酉丑在午, 亥卯未在子.\n查法：以年、日支查余三支",
+      "supports": "问真神煞大全的桃花表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.yima",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "驿马条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#驿马",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n申子辰马在寅, 寅午戌马在申,巳酉丑马在亥, 亥卯未马在巳\n查法：以年、日支查余三支",
+      "supports": "问真神煞大全的驿马表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.wenchang",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "文昌贵人条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#文昌贵人",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n甲乙巳午报君知, 丙戊申宫丁己鸡.庚猪辛鼠壬逢虎, 癸人见卯入云梯.\n甲日巳。乙日午。丙日申。丁日酉。戊日申。己日酉。庚日亥。辛日子。壬日寅。癸日卯。\n查法：以日/年干查四地支",
+      "supports": "问真神煞大全的文昌表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.huagai",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "华盖条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#华盖",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n寅午戌见戌, 亥卯未见未,申子辰见辰, 巳酉丑见丑.\n查法：以年、日支查余支",
+      "supports": "问真神煞大全的华盖表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "wenzhen_shensha.yangren",
+      "work": "问真《神煞大全》",
+      "attribution": "问真；太乙书局转录",
+      "edition": "太乙书局电子转录，2026-11-01取文",
+      "locator": "羊刃（阳刃）条的古诀与查法",
+      "url": "https://book.taiyi.me/命/神煞大全#羊刃-阳刃",
+      "text_layer": "editorial",
+      "lineage": "wenzhen_shensha",
+      "excerpt": "古诀：\n甲日卯。乙日寅。丙日午。丁日巳。戊日午。\n己日巳。庚日酉。辛日申。壬日子。癸日亥。\n查法：以日干查四地支",
+      "supports": "问真神煞大全的羊刃表值与所列现代查法。",
+      "limitations": "本条与 GitHub 仓库 gaorenyes/gaorenyes.github.io 的对应神煞材料合计一份证据；本摘录不作为所有流运查法的依据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "click2macao.tianyi_geng_with_xin",
+      "work": "天乙贵人口诀的真伪",
+      "attribution": "林颂濰",
+      "edition": "澳门捷报，2024-04-10",
+      "locator": "第二首天乙贵人口诀",
+      "url": "https://www.click2macao.com/2024/04/10/tygrkjdz/",
+      "text_layer": "editorial",
+      "lineage": "click2macao",
+      "excerpt": "庚辛逢馬虎，此是貴人方。",
+      "supports": "林颂濰文章列出的第二首口诀中，庚与辛同组取寅午。",
+      "limitations": "只记录该文列出的现代口诀，不采纳其对真伪、起源或两口诀优劣的裁定。",
+      "state": "witnessed"
     }
   ],
   "entries": [
@@ -11060,6 +11286,384 @@
       "limits": [
         "大寒后月序进正月不提前换八字年；HKO 仅支持 DAY，不把零点占位当真实时刻。结果不扩四柱，不改身份、school、JSON 或旧分析，也不认证解释前提。"
       ],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.tianyi.yinyang",
+      "text": "《三命通会》所引通玄经推法以冬至用阳贵、夏至用阴贵，与昼夜说分列。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.tianyi"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.tianyi.yinyang"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.taohua.table",
+      "text": "《三命通会》称咸池又名桃花煞，以三合组的沐浴位取支。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.taohua"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.taohua.table"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.yima.table",
+      "text": "《三命通会》的驿马条载寅午戌生人马在申。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.yima"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.yima.table"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.huagai.table",
+      "text": "《三命通会》以三合库位称华盖。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.huagai"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.huagai.table"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.yangren.luming",
+      "text": "《三命通会》所载羊刃读法取禄前一辰。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.yangren"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.yangren.luming"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.yangren.ziping",
+      "text": "《三命通会》另记子平五阳干有刃、五阴干无刃。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.yangren"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "sanming_tonghui.yangren.ziping"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "三命通会",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.wenchang.xin_xu",
+      "text": "《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.wenchang"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "xingxue_dacheng.wenchang_xin_xu"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "XIN_XU",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.tianyi.lookup",
+      "text": "问真《神煞大全》的天乙贵人条以日干或年干查四地支，庚与甲、戊同取丑、未。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.tianyi"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.tianyi"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.taohua.lookup",
+      "text": "问真《神煞大全》的桃花/咸池条以年支、日支查余三支，按申子辰见酉、寅午戌见卯、巳酉丑见午、亥卯未见子取值。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.taohua"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.taohua"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.yima.lookup",
+      "text": "问真《神煞大全》的驿马条以年支、日支查余三支，按申子辰见寅、寅午戌见申、巳酉丑见亥、亥卯未见巳取值。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.yima"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.yima"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.wenchang.lookup",
+      "text": "问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.wenchang"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.wenchang"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.huagai.lookup",
+      "text": "问真《神煞大全》的华盖条以年支、日支查余支，按寅午戌见戌、亥卯未见未、申子辰见辰、巳酉丑见丑取值。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.huagai"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.huagai"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.yangren.lookup",
+      "text": "问真《神煞大全》的羊刃条以日干查四地支；阴干列乙见寅、丁己见巳、辛见申、癸见亥，对应本库十干帝旺位读法。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.yangren"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "wenzhen_shensha.yangren"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "现代问真",
+      "exceptions": [],
+      "limits": [],
+      "show_by_default": false,
+      "legacy": null
+    },
+    {
+      "claim_id": "shensha.tianyi.geng_with_xin",
+      "text": "林颂濰《天乙贵人口诀的真伪》列出庚辛同组、见寅午的另一首天乙口诀。",
+      "roles": [
+        {
+          "name": "讨论对象",
+          "object_id": "shensha.tianyi"
+        }
+      ],
+      "relations": [],
+      "topics": [
+        "查法口径"
+      ],
+      "applicability": "unconditional",
+      "premise": "",
+      "contexts": [],
+      "sources": [
+        "click2macao.tianyi_geng_with_xin"
+      ],
+      "source_state": "witnessed",
+      "attribution": "本仓整理",
+      "viewpoint": "GENG_WITH_XIN",
+      "exceptions": [],
+      "limits": [],
       "show_by_default": false,
       "legacy": null
     }

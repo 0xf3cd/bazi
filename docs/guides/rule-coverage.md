@@ -1,12 +1,12 @@
 # 规则、知识与出处的覆盖
 
-能计算一条规则、能查到解释文字、能追溯该条规则的出处，是三件不同的事。本页对账现有实现与知识目录，并用国印两读说明如何把它们连起来；不增加规则、查询接口或来源见证。
+能计算一条规则、能查到解释文字、能追溯该条规则的出处，是三件不同的事。本页对账现有实现与知识目录，介绍常用神煞的参考条目，并用国印两读演示规则到条目、再到来源的查询。
 
 ## 读表口径
 
 - **实现**以规则表、定义枚举、计算入口与配置字段为准，不能从已有知识对象反推全部计算能力。
 - **知识关联**指现有对象、条目和来源 ID。文字提到某个词，不等于已经有该规则的专门对象或结构化关联。
-- **源码出处**包括规则旁的注释和定义 docstring。本页只记录这些说明的位置与支持边界，没有重新核验其外部古籍或天文数据。
+- **源码出处**包括规则旁的注释和定义 docstring；已有知识来源记录的部分，可沿条目 ID 读取作品、版本、摘录与支持范围。
 - `repository_attributed` 是本仓署名，`witnessed` 是已核原文出处，二者不互换；默认展示由 `show_by_default` 另管。状态与默认展示的完整含义见 {doc}`knowledge`。
 
 ## 规则与配置覆盖
@@ -44,7 +44,7 @@
 
 低层查法见 {py:mod}`~bazi.utils.shensha_utils`。表值及定义来源在 {py:class}`~bazi.rules.ShenshaRules`，锚点取值范围与出处在 `school.py` 的 `_ANCHOR_CHOICES`，分析器接入在 `analyzer/relationship.py` 的 `_REGISTRY`。固定锚点、被查位置和原局／流运使用范围还须读注册表及消费者，不能只看表值。
 
-当前神煞知识对象为 `shensha.guoyin` 与 `shensha.kongwang`。其余行尚无同类专门对象，不等于全库文字从未提到这些名称。源码所列古籍、现代汇编与本仓署名也不因出现在下表就成为新的 `KnowledgeSource` 记录。
+当前神煞知识对象包括国印、旬空，以及天乙贵人、桃花、驿马、文昌、华盖、羊刃。后六项以 `shensha.tianyi`、`shensha.taohua`、`shensha.yima`、`shensha.wenchang`、`shensha.huagai`、`shensha.yangren` 查询，所有条目均供显式参考，不默认展示。查询示例见 {doc}`knowledge`；其余神煞尚无专门对象。
 
 | 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
@@ -81,33 +81,56 @@
 | 流运查询与关系组合 | {py:mod}`~bazi.transits`、{py:mod}`~bazi.utils.tiangan_utils`、{py:mod}`~bazi.utils.dizhi_utils`、{py:mod}`~bazi.analyzer.relationship` | 查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。 |
 | 解释前提匹配 | {py:mod}`~bazi.context_matching` 与 {doc}`../catalog/criteria` | 已有可发现判据目录与知识引用；不等同于全库计算规则的来源索引，更不自动证明解释前提成立。 |
 
+(guoyin-knowledge)=
 ## 国印关联示例
 
-两条国印知识已经存在，不需要再次录入。默认过滤与来源访问的通用用法见 {doc}`knowledge`。这里补上当前流派字段到条目、再到来源的查阅路径。
+用 {py:func}`~bazi.knowledge.guoyin_entry` 从流派定义取得条目，再沿 `entry.sources` 查来源；用 {py:func}`~bazi.knowledge.guoyin_def` 从条目 ID 反查定义。
 
-**下面的定义成员与条目 ID 对应是文档中的设计例子，不是库提供的规则关联接口。** 源码规则层不依赖 `KnowledgeBase`。
+```{testcode} guoyin-lookup
+from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
+from bazi.rules import ShenshaRules
+
+kb = KnowledgeBase.load()
+entry = guoyin_entry(kb, ShenshaRules.GuoyinDef.MODERN)
+definition = guoyin_def(kb, entry.claim_id)
+print(entry.claim_id)
+print(definition is ShenshaRules.GuoyinDef.MODERN)
+```
+
+```{testoutput} guoyin-lookup
+shensha.guoyin.modern
+True
+```
+
+`True` 表示反查回到了传入的 `MODERN` 定义。把示例中两处 `MODERN` 都换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
+
+两个函数都使用传入的知识库。`guoyin_entry` 所需条目缺失、`guoyin_def` 查询未知或空白 ID 时抛 `ValueError`；`guoyin_def` 查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的 `viewpoint` 不参与关联识别。
+
+### 核对规则表与条目
+
+下面同时检查两读的表值、条目及来源记录。
 
 ```{testcode} rule-coverage-guoyin
 from bazi.defines import Tiangan
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
 from bazi.rules import BaziRules, ShenshaRules
 from bazi.school import BaziSchool
 
 kb = KnowledgeBase.load()
-assert {obj.object_id for obj in kb.objects.values() if obj.kind == 'shensha'} == {'shensha.guoyin', 'shensha.kongwang'}
-claims = {
-  ShenshaRules.GuoyinDef.MODERN: 'shensha.guoyin.modern',
-  ShenshaRules.GuoyinDef.WUXING_JINGJI: 'shensha.guoyin.wuxing_jingji',
+assert {obj.object_id for obj in kb.objects.values() if obj.kind == 'shensha'} == {
+  'shensha.guoyin', 'shensha.kongwang', 'shensha.tianyi', 'shensha.taohua',
+  'shensha.yima', 'shensha.wenchang', 'shensha.huagai', 'shensha.yangren',
 }
-for definition, claim_id in claims.items():
+for definition in (ShenshaRules.GuoyinDef.MODERN, ShenshaRules.GuoyinDef.WUXING_JINGJI):
   school = BaziSchool(guoyin_def=definition)
-  entry = kb.entry(claim_id)
+  entry = guoyin_entry(kb, school.guoyin_def)
+  assert guoyin_def(kb, entry.claim_id) is definition
   table = ShenshaRules.GUOYIN[school.guoyin_def]
   target = table[Tiangan.甲]
   offset = (target.index - BaziRules.TIANGAN_LU[Tiangan.甲].index) % 12
   assert all((table[tg].index - lu.index) % 12 == offset
              for tg, lu in BaziRules.TIANGAN_LU.items())
-  # 对账当前条目措辞，不把解释文字当作结构化接口。
+  # 核对当前条目措辞，不把解释文字当作结构化接口。
   assert f'偏移 +{offset}' in entry.text
   assert entry.limits
   source = kb.sources[entry.sources[0]]
@@ -140,13 +163,23 @@ repository_guoyin_variants editorial repository_attributed
 - 计算表仍归 `rules.py`，默认与允许的配置归 `school.py`，知识文字、来源及状态归 `KnowledgeBase` 的注册表。禄神共表、金舆／国印派生等已有共享关系继续从源码取值，不在知识库或本页复制十格表。
 - 不能从算法派生的原文、解释、锚点依据与支持限度继续独立保留。规则或文字变更时，对照条目 ID、定义成员、实际表值、锚点范围和消费者检查差异；上面的示例只校验当前两读的偏移与文字一致，不声称已自动维护全部语义。
 - 覆盖表漏掉规则属性或配置字段，由文档测试的集合核对报告；引用与示例由严格构建及文档示例检查验证。这些检查不裁定命理依据，也不证明表外计算已经穷尽。
-- 若将来增加可查询关联，建议先在知识侧验证一组“定义成员／配置字段 → 稳定条目 ID”的窄关联，保留表值、锚点、查找位置各自的支持来源。规则层不反向导入知识层，不把本页的手写对应直接宣布为公开接口。
+- 国印的定义成员到稳定条目 ID 的对应由 `knowledge.py` 维护，正反查询共用。来源继续从条目读取；规则层不反向导入知识层。
 
-## 评估结论与首批候选
+## 知识对象的准入与取舍
+
+常用神煞的参考条目分别记录名称、表值或查法，并明确系统归属。来源须有可核的作品、版本、位置与逐字摘录；正文、夹注、现代汇编和转引分别标注。单源条目保持 `show_by_default=False`，不把两个转录网站算作独立谱系。默认展示还须满足 {doc}`knowledge` 所列条件。
+
+古籍表值、现代锚点和流运使用范围分别记录在来源的 `supports`、`limitations` 中，不能用一段只说表值的原文证明整套查法。不同流派的读法分别保留。
 
 | 项目 | 结论 | 后续条件 |
 | --- | --- | --- |
-| 国印两读 | 作为首个关联设计例子；保留现有条目与来源等级 | 运行时关联的归属、稳定标识和查询形状须另定；不借本页裁定传抄关系或改变查法。 |
+| 六项常用神煞 | 已有专门对象和显式参考条目 | 查阅时按各来源记录的支持范围区分表值与查法。 |
+| 国印两读 | 由两个窄查询关联现有条目；来源等级不变 | 新增定义成员时同步其稳定条目 ID 和正反查询测试。 |
+| 地支 | 暂不新建 | 先确定查询定义、藏干还是比例的来源，不只为与十干对象对称。 |
+| 地支关系 | 暂不新建 | 先选择具体关系与读法，区分组合条件、合化及解释。 |
+| 纳音 | 暂不新建 | 先确定查询表值来源、某名称的定义，还是带前提的解释，再决定对象粒度。 |
+| 十二长生 | 暂不新建 | 先分起点、阴阳顺逆与查法，不把十二个名称直接当作已核知识。 |
+| 禄位 | 暂不新建 | 国印关联复用既有禄位表即可；禄神知识按具体查询用途另行评估。 |
 | 五行生克 | 可作为下一组较小候选 | 现有两条只是本仓署名示例；扩展前先定是否只关联形式定义，不能直接升级为古籍见证或全体生克解释。 |
 | 配偶星／宫 | 保留现有原文与前提边界，暂不作为机械关联的首个试点 | 先区分历史取法、默认计算、条件解释与消费者，不能把同对象的所有条目绑定为同一条计算规则。 |
 | 全量规则查询 API、知识迁移 | 暂缓；本页不实施 | 先用小样本确认规则身份、关联所有者、维护成本与来源粒度，再确定实施范围；结构化知识缺口不等于每项都应新增解释。 |

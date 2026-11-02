@@ -8,7 +8,10 @@ from pathlib import Path
 from bazi.defines import Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, object_id
 
-from knowledge_additions import AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS
+from knowledge_additions import (
+  AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS,
+  SHENSHA_OBJECT_IDS, SHENSHA_SOURCE_IDS, SHENSHA_ENTRY_IDS,
+)
 from knowledge_errata import SOURCE_ERRATA, before_errata
 
 
@@ -50,18 +53,21 @@ def test_historical_corpus_is_append_only() -> None:
     # The historical pretty-printed hash also fixes key order.
     legacy = row.pop('legacy')
     row['legacy'] = legacy
+  added_objects = (*AUXILIARY_OBJECT_IDS, *SHENSHA_OBJECT_IDS)
+  added_sources = (*AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS)
+  added_entries = (*AUXILIARY_ENTRY_IDS, *SHENSHA_ENTRY_IDS)
   for objects, sources, entries, fingerprint in (
     (
-      AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS,
+      added_objects, added_sources, added_entries,
       '64a1c29572de1d45e6e3a19361823af0da0b961eb25b9c3bcb19b6d5e29fa7f4',
     ),
     (
-      {'shensha.kongwang', *AUXILIARY_OBJECT_IDS},
+      {'shensha.kongwang', *added_objects},
       {
         'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
-        'wuxing_jingji.kongwang', 'repository.kongwang', *AUXILIARY_SOURCE_IDS,
+        'wuxing_jingji.kongwang', 'repository.kongwang', *added_sources,
       },
-      {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository', *AUXILIARY_ENTRY_IDS},
+      {'shensha.kongwang.xunkong', 'shensha.kongwang.lookup', 'shensha.kongwang.repository', *added_entries},
       '15eb6b066357e68b58996fcd603972cf4a94f4b6ded70d591ddfd8595a574fa7',
     ),
   ):
@@ -75,15 +81,15 @@ def test_historical_corpus_is_append_only() -> None:
       ]
       data[registry] = prefix
     assert sha256((json.dumps(data, ensure_ascii=False, indent=2) + '\n').encode()).hexdigest() == fingerprint
-  without_auxiliary = KnowledgeBase(
-    tuple(value for key, value in current.objects.items() if key not in AUXILIARY_OBJECT_IDS),
+  without_additions = KnowledgeBase(
+    tuple(value for key, value in current.objects.items() if key not in added_objects),
     tuple(current.contexts.values()),
-    tuple(value for key, value in current.sources.items() if key not in AUXILIARY_SOURCE_IDS),
-    tuple(value for key, value in current.entries.items() if key not in AUXILIARY_ENTRY_IDS),
+    tuple(value for key, value in current.sources.items() if key not in added_sources),
+    tuple(value for key, value in current.entries.items() if key not in added_entries),
   )
-  assert (len(without_auxiliary.objects), len(without_auxiliary.contexts), len(without_auxiliary.sources), len(without_auxiliary.entries), len(without_auxiliary.query())) == (32, 10, 18, 305, 19)
-  assert current.contexts == without_auxiliary.contexts
-  assert current.query() == without_auxiliary.query()
+  assert (len(without_additions.objects), len(without_additions.contexts), len(without_additions.sources), len(without_additions.entries), len(without_additions.query())) == (32, 10, 18, 305, 19)
+  assert current.contexts == without_additions.contexts
+  assert current.query() == without_additions.query()
 
 
 def test_text_order_fingerprints_conserved() -> None:

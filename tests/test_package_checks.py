@@ -426,6 +426,7 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
   'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
   'typing-internal-error', 'typing-missing-kongwang', 'typing-missing-cli', 'sdist-wrong-entrypoint',
   'typing-missing-dayun', 'typing-missing-transit', 'typing-missing-transit-chart',
+  'typing-missing-guoyin-entry', 'typing-missing-guoyin-def',
 ])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
   root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
@@ -538,7 +539,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance',
       'CriterionResult', 'KnowledgeEntry',
       'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
-      'object_id', 'render', 'render_subject'))
+      'object_id', 'guoyin_entry', 'guoyin_def', 'render', 'render_subject'))
     for owner, member, trigger in (
       ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
       ('Bazi', 'month_jies', 'local.month_jies = ()'), ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
@@ -562,6 +563,10 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       messages.remove('to "KongwangResult"')
     elif change == 'typing-missing-cli':
       messages.remove('to "main"')
+    elif change == 'typing-missing-guoyin-entry':
+      messages.remove('to "guoyin_entry"')
+    elif change == 'typing-missing-guoyin-def':
+      messages.remove('to "guoyin_def"')
     return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, '\n'.join(messages), '')
   monkeypatch.setattr(subprocess, 'run', diagnostics)
   if change == 'none':
@@ -572,7 +577,9 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       'role-missing': 'Environment role roster mismatch', 'report-race': '',
       'typing-internal-error': 'Installed typing negative control did not reach both type checks',
        'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult',
-       'typing-missing-cli': 'Installed typing negative control missed main',
+        'typing-missing-cli': 'Installed typing negative control missed main',
+        'typing-missing-guoyin-entry': 'Installed typing negative control missed guoyin_entry',
+        'typing-missing-guoyin-def': 'Installed typing negative control missed guoyin_def',
        'sdist-wrong-entrypoint': 'Sdist entrypoints mismatch',
       'typing-missing-dayun': r'Installed typing negative control missed removed bazi\.transits\.DayunDatabase',
       'typing-missing-transit': r'Installed typing negative control missed removed bazi\.transits\.TransitDatabase',

@@ -22,7 +22,7 @@ def test_references_keep_default_eligibility() -> None:
   assert '前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。' in default.render()
   assert len(knowledge.query()) == 19
   result = match()
-  assert result.knowledge == knowledge and len(result.knowledge.entries) == 312
+  assert result.knowledge == knowledge and len(result.knowledge.entries) == 326
   assert result.criterion.observations['observed_coexistence'] is True
   rendered = result.render()
   assert '来源状态：editorial' in rendered and '见证状态：editorial' in rendered

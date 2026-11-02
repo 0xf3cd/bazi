@@ -51,7 +51,7 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.defines.wuxing': 'Wuxing 五行 WuxingState 五行状态',
   'bazi.defines.yinyang': 'Yinyang 阴阳',
   'bazi.defines.zhu': 'Zhu 柱',
-  'bazi.knowledge': 'Applicability SourceState DEFAULT_SOURCE_PATH object_id KnowledgeObject KnowledgeRole KnowledgeRelation KnowledgeContext KnowledgeSource LegacyDescription KnowledgeEntry KnowledgeBase',
+  'bazi.knowledge': 'Applicability SourceState DEFAULT_SOURCE_PATH object_id KnowledgeObject KnowledgeRole KnowledgeRelation KnowledgeContext KnowledgeSource LegacyDescription KnowledgeEntry KnowledgeBase guoyin_entry guoyin_def',
   'bazi.rules': 'BaziRules TianganRules DizhiRules DizhiRelationDefinitions DEFAULT_DIZHI_RELATION_DEFINITIONS ShenshaRules',
   'bazi.school': 'BaziPrecision DayunYearRule DayRollover PeiouXingDef Anchor TuwangDef BaziSchool DEFAULT_SCHOOL BaziConfig DEFAULT_CONFIG',
   'bazi.transit_chart': 'TransitChart 流年大运',

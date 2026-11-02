@@ -11,6 +11,7 @@ import pytest
 from bazi import cli
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
+from knowledge_additions import SHENSHA_OBJECT_IDS
 from cli_runner import run_cli
 
 
@@ -55,6 +56,18 @@ def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
   assert '六甲旬空的基础二支' in complete.stdout
   assert '查法须与基础二支分开' in complete.stdout
   assert '日柱默认，年柱或年日双锚可选' in complete.stdout
+
+
+@pytest.mark.parametrize('identifier', SHENSHA_OBJECT_IDS)
+def test_shensha_query_requires_reference_flag(tmp_path: Path, identifier: str) -> None:
+  default = run_cli(tmp_path, 'knowledge', '--object', identifier)
+  complete = run_cli(tmp_path, 'knowledge', '--object', identifier, '--include-reference-only')
+  assert default.returncode == complete.returncode == 0
+  assert default.stderr == complete.stderr == ''
+  assert default.stdout == '无匹配条目。\n有仅供参考的条目，可加 --include-reference-only 查看。\n'
+  k = KnowledgeBase.load()
+  assert complete.stdout == ''.join(k.render(entry) + '\n\n' for entry in k.query(object_id=identifier, include_reference_only=True))
+  assert '来源状态：witnessed' in complete.stdout and '支持范围：' in complete.stdout
 
 
 def test_exports_the_base_texts_only(tmp_path: Path) -> None:

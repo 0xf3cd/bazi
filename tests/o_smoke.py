@@ -42,7 +42,7 @@ def main() -> int:
   from bazi.defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeRole, LegacyDescription, object_id
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeRole, LegacyDescription, object_id, guoyin_entry, guoyin_def
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, TransitObservation, LiunianPosition, ChartOccurrence,
     YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, ScopeName, CriterionReason,
@@ -50,7 +50,7 @@ def main() -> int:
     criterion as lookup_criterion, evaluate_context,
   )
   from bazi.common import frozendict
-  from bazi.rules import DizhiRules, DizhiRelationDefinitions
+  from bazi.rules import DizhiRules, DizhiRelationDefinitions, ShenshaRules
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import _TransitDatabase, TransitKind, TransitSet
@@ -115,6 +115,22 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
+    ('guoyin_entry rejects wrong knowledge', TypeError,
+     lambda: guoyin_entry(None, ShenshaRules.GuoyinDef.MODERN)), # type: ignore[arg-type]
+    ('guoyin_entry rejects string definition', TypeError,
+     lambda: guoyin_entry(knowledge, 'MODERN')), # type: ignore[arg-type]
+    ('guoyin_entry rejects foreign enum', TypeError,
+     lambda: guoyin_entry(knowledge, ShenshaRules.YangrenDef.ZIPING)), # type: ignore[arg-type]
+    ('guoyin_entry rejects missing entry', ValueError,
+     lambda: guoyin_entry(KnowledgeBase((), (), (), ()), ShenshaRules.GuoyinDef.MODERN)),
+    ('guoyin_def rejects wrong knowledge', TypeError,
+     lambda: guoyin_def(None, 'shensha.guoyin.modern')), # type: ignore[arg-type]
+    ('guoyin_def rejects wrong claim ID type', TypeError,
+     lambda: guoyin_def(knowledge, 1)), # type: ignore[arg-type]
+    ('guoyin_def rejects blank claim ID', ValueError,
+     lambda: guoyin_def(knowledge, ' ')),
+    ('guoyin_def rejects unknown claim ID', ValueError,
+     lambda: guoyin_def(knowledge, 'unknown')),
     ('Ganzhi.next rejects 甲丑', ValueError, lambda: Ganzhi.from_str('甲丑').next()),
     ('Ganzhi.prev rejects 甲丑 even at zero', ValueError, lambda: Ganzhi.from_str('甲丑').prev(0)),
     ('Jieqi.jies rejects int', TypeError, lambda: Jieqi.jies(1)), # type: ignore[arg-type]

@@ -387,7 +387,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   if installers is not None:
     observe_pip([str(python), '-I', '-m', 'pip'], 'target', installers)
   run([str(python), '-I', '-m', 'pip', 'install', 'mypy==' + importlib.metadata.version('mypy')], foreign)
-  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
+  good = ('from datetime import UTC, datetime, timedelta, timezone\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom typing import assert_type\nfrom bazi.bazi import Bazi, LocationTime\nfrom bazi.bazi_chart import BaziChart\n'
           'from bazi.calendar.dates import GanzhiYearMonth, JieqiTime, LunarYearInfo\n'
           'from bazi.calendar.hko_data import LunarYearInfo as HkoInfo\n'
           'from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo\n'
@@ -399,7 +399,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'from bazi.school import BaziConfig\n'
           'from bazi.cli import main as cli_main\n'
           'from bazi.common import frozendict\n'
-          'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id\n'
+          'from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id, guoyin_entry, guoyin_def\n'
+          'from bazi.rules import ShenshaRules\n'
           'from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context\n'
           'chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))\n'
           'cli_exit: int = cli_main(["--help"])\n'
@@ -419,6 +420,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
           'observation_types: tuple[type[NatalObservation] | type[LiunianObservation] | type[TransitObservation], ...] = info.observation_types\n'
           'source_path: Path = DEFAULT_SOURCE_PATH\n'
           'identifier: str = object_id(Tiangan.丁)\n'
+          'guoyin = assert_type(guoyin_entry(knowledge, ShenshaRules.GuoyinDef.MODERN), KnowledgeEntry)\n'
+          'guoyin_definition = assert_type(guoyin_def(knowledge, guoyin.claim_id), ShenshaRules.GuoyinDef | None)\n'
           'witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]\n'
           'display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")\n'
           'subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)\n'
@@ -462,7 +465,8 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
                 'knowledge.query(object_id=42)\nLiunianObservation("2024")\n'
                 'knowledge.find_objects(42)\nknowledge.search(42)\nknowledge.filter_values(42)\n'
                 'criterion(42)\ninfo.definition = "changed"\ncatalog["changed"] = info\n'
-                'object_id(Dizhi.子)\n'
+                 'object_id(Dizhi.子)\n'
+                 'guoyin_entry(knowledge, "MODERN")\nguoyin_def(knowledge, 42)\n'
                 'knowledge.render(entries[0], premise_verdict=1)\n'
                 'knowledge.render_subject(Tiangan.丁, include_reference_only=1)\n'
                 'knowledge.sources["editorial"] = witness\n'
@@ -501,7 +505,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'render', 'render_subject'):
+  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'guoyin_entry', 'guoyin_def', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('"None"',):
