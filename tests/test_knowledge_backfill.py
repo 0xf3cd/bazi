@@ -163,7 +163,7 @@ def test_followup_restores_previous_corpus() -> None:
 def test_followup_metadata_is_pinned() -> None:
   rows = [asdict(KNOWLEDGE.sources[key]) for key in FOLLOWUP_SOURCE_IDS]
   payload = json.dumps({'sources': rows, 'changes': SOURCE_FOLLOWUP}, ensure_ascii=False, sort_keys=True)
-  assert sha256(payload.encode('utf-8')).hexdigest() == '9f1a29b74957f653cb28a805b46fd1a19b4713e1cbcd8ba19ed8a0a657c035f4'
+  assert sha256(payload.encode('utf-8')).hexdigest() == 'cba5f60d9187957c66c6ea383e8e8471e112e41d2efc364fc783469cf92def7b'
   assert tuple(KNOWLEDGE.sources)[-2:] == FOLLOWUP_SOURCE_IDS
   for claim_id, source_id in zip(FOLLOWUP_ENTRY_IDS, FOLLOWUP_SOURCE_IDS):
     entry = KNOWLEDGE.entry(claim_id)
