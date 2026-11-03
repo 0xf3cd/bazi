@@ -59,6 +59,10 @@ def test_historical_corpus_is_append_only() -> None:
   added_objects = (*AUXILIARY_OBJECT_IDS, *SHENSHA_OBJECT_IDS)
   added_sources = (*AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS)
   added_entries = (*AUXILIARY_ENTRY_IDS, *SHENSHA_ENTRY_IDS)
+  for records, cohort in (
+    (current.objects, added_objects), (current.sources, added_sources), (current.entries, added_entries),
+  ):
+    assert tuple(identifier for identifier in records if identifier in cohort) == cohort
   for objects, sources, entries, fingerprint in (
     (
       added_objects, added_sources, added_entries,
