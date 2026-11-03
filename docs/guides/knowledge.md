@@ -239,7 +239,7 @@ yuanhai_ziping baiwen witnessed
 
 路径是：`kb.entry(条目 ID).sources` 给出来源 ID，再用 `kb.sources[来源 ID]` 取记录。记录里的 `work`、`attribution`、`edition`、`locator` 说明出处，`excerpt` 是摘录，`supports` 与 `limitations` 写明这段原文支持什么、不支持什么。读来源时请连 `limitations` 一起读。
 
-旧条目补上出处后，仍可只供参考。下面取己土词表，连同截句说明一起读取：
+以下己土条目有文字出处，但不默认展示。通过 `limits` 读取它的全部限度：
 
 ```{testcode} backfill
 from bazi.knowledge import KnowledgeBase
@@ -250,7 +250,8 @@ source = kb.sources[entry.sources[0]]
 print(source.work)
 print(entry.source_state, entry.applicability, entry.show_by_default)
 print(entry.text)
-print(entry.limits[-1])
+for limit in entry.limits:
+  print(limit)
 print(len(kb.query(source_id=source.source_id, include_reference_only=True)))
 ```
 
@@ -258,6 +259,7 @@ print(len(kb.query(source_id=source.source_id, include_reference_only=True)))
 〈十天干八字原始性格〉
 witnessed unresolved False
 个性谨慎，温和重义，外随和内坚忍。
+只见证原文按日干编列的性格词表，不据此判定具体人的性格。
 原页“外随和内坚忍”后接逗号与后文；本条保留旧文句号，按截句核定文字见证。
 10
 ```

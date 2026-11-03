@@ -21,6 +21,7 @@ KNOWLEDGE = KnowledgeBase.load()
 
 def _assert_backfill(data: dict[str, Any], changes: dict[str, Any]) -> None:
   assert set(changes) == {'base_sha', 'entries', 'reason'}
+  # ced09f2 is the corpus immediately before this eleven-entry backfill.
   assert changes['base_sha'] == 'ced09f24e6690d485386b91918db2a57f217de31'
   assert set(changes['entries']) == set(BACKFILL_ENTRY_IDS) and len(BACKFILL_ENTRY_IDS) == 11
   assert isinstance(changes['reason'], str) and changes['reason'].strip()
@@ -44,7 +45,7 @@ def test_backfill_allowance_is_exact() -> None:
 
 
 @pytest.mark.parametrize('mutation', [
-  'extra_id', 'unlisted_field', 'wrong_old', 'wrong_new', 'missing_pair', 'missing_reason',
+  'extra_id', 'unlisted_field', 'wrong_old', 'wrong_new', 'missing_pair', 'empty_reason',
 ])
 def test_backfill_rejects_wider_allowance(mutation: str) -> None:
   changes = deepcopy(SOURCE_BACKFILL)
@@ -60,7 +61,7 @@ def test_backfill_rejects_wider_allowance(mutation: str) -> None:
   elif mutation == 'missing_pair':
     first['sources'].pop()
   else:
-    assert mutation == 'missing_reason'
+    assert mutation == 'empty_reason'
     changes['reason'] = ''
   with pytest.raises(AssertionError):
     _assert_backfill(json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8')), changes)
@@ -69,7 +70,8 @@ def test_backfill_rejects_wider_allowance(mutation: str) -> None:
 def test_backfill_metadata_is_pinned() -> None:
   rows = [asdict(KNOWLEDGE.sources[key]) for key in BACKFILL_SOURCE_IDS]
   payload = json.dumps({'sources': rows, 'changes': SOURCE_BACKFILL}, ensure_ascii=False, sort_keys=True)
-  assert sha256(payload.encode('utf-8')).hexdigest() == '4aa9c73e88b8bcdcfc99b40fc29314825bff220a3f2b1451bd2f20fa2c6922dc'
+  # Captured from the two new source records and this batch's exact allowance.
+  assert sha256(payload.encode('utf-8')).hexdigest() == '31c10c6c7d14a65c3292c163dc7e73b6459a4d9a523be19e2eef72fa5a2514d9'
   selected = tuple(key for key in KNOWLEDGE.sources if key in BACKFILL_SOURCE_IDS)
   assert selected == BACKFILL_SOURCE_IDS
   positions = tuple(tuple(KNOWLEDGE.sources).index(key) for key in selected)
