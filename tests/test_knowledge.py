@@ -16,9 +16,9 @@ from bazi.knowledge import (
 
 from knowledge_additions import (
   AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS,
-  SHENSHA_ENTRY_IDS, SHENSHA_SOURCE_IDS,
+  SHENSHA_ENTRY_IDS, SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS,
 )
-from knowledge_errata import SOURCE_ERRATA, before_errata
+from knowledge_errata import SOURCE_ERRATA, SOURCE_BACKFILL, before_errata
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -370,11 +370,12 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
         for ordinal, claim in enumerate(claims):
           assert claim.legacy is not None
           assert claim.legacy.ordinal == ordinal
+          original = before_errata(asdict(claim), SOURCE_BACKFILL['entries'].get(claim.claim_id, {}))
           actual.append({
             'subject_kind': subjects.__name__, 'subject': str(subject), 'field': field,
             'claim': {
-              'claim_id': claim.claim_id, 'text': claim.text, 'sources': list(claim.sources),
-              'attribution': claim.attribution, 'conditions': list(claim.legacy.conditions),
+              'claim_id': claim.claim_id, 'text': claim.text, 'sources': original['sources'],
+              'attribution': original['attribution'], 'conditions': list(claim.legacy.conditions),
               'output': 'default' if claim.show_by_default else 'reference_only',
             },
           })
@@ -958,7 +959,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 
 def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
-  assert len(k.entries) == 326 and len(k.sources) == 37 and len(k.contexts) == 10 and len(k.objects) == 40
+  assert len(k.entries) == 326 and len(k.sources) == 39 and len(k.contexts) == 10 and len(k.objects) == 40
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
@@ -1019,12 +1020,12 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   for entry in KNOWLEDGE_BASE.entries.values():
     if entry.legacy is None:
       continue
-    row = _asdict(entry)
+    row = before_errata(_asdict(entry), SOURCE_BACKFILL['entries'].get(entry.claim_id, {}))
     row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
     if entry.claim_id in attribution_allowed:
       del row['attribution']
     else:
-      row['attribution'] = original_attribution.get(entry.attribution, entry.attribution)
+      row['attribution'] = original_attribution.get(row['attribution'], row['attribution'])
     if entry.claim_id in limits_allowed:
       del row['limits']
     rows.append(row)
@@ -1036,8 +1037,9 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   # 4 in-repo entries are pinned verbatim by test_reference_samples_keep_text_limits)
   # are not loosened by the allowance table.
   unchanged_nonempty = {
-    entry.claim_id: entry.limits for entry in KNOWLEDGE_BASE.entries.values()
-    if entry.legacy is not None and entry.limits and entry.claim_id not in limits_allowed
+    entry.claim_id: tuple(original['limits']) for entry in KNOWLEDGE_BASE.entries.values()
+    if entry.legacy is not None and entry.claim_id not in limits_allowed
+    and (original := before_errata(asdict(entry), SOURCE_BACKFILL['entries'].get(entry.claim_id, {})))['limits']
   }
   assert set(unchanged_nonempty) == {'legacy.shishen.SH-052', 'legacy.tiangan.ding.weak_state'}
   assert unchanged_nonempty['legacy.shishen.SH-052'] == (
@@ -1082,7 +1084,7 @@ def test_non_oracle_sources_fingerprint() -> None:
     if source_id in oracle or source_id in {
       'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
       'wuxing_jingji.kongwang', 'repository.kongwang',
-      *AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS,
+      *AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS,
     }:
       continue
     row = before_errata(asdict(source), SOURCE_ERRATA['sources'].get(source_id, {}))

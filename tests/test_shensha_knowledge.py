@@ -94,9 +94,13 @@ def test_guoyin_unknown_id_fails(claim_id: str) -> None:
 
 def test_additions_remain_reference_only() -> None:
   k = KNOWLEDGE
-  assert tuple(k.objects)[-len(SHENSHA_OBJECT_IDS):] == SHENSHA_OBJECT_IDS
-  assert tuple(k.sources)[-len(SHENSHA_SOURCE_IDS):] == SHENSHA_SOURCE_IDS
-  assert tuple(k.entries)[-len(SHENSHA_ENTRY_IDS):] == SHENSHA_ENTRY_IDS
+  for registry, cohort in (
+    (k.objects, SHENSHA_OBJECT_IDS), (k.sources, SHENSHA_SOURCE_IDS), (k.entries, SHENSHA_ENTRY_IDS),
+  ):
+    selected = tuple(identifier for identifier in registry if identifier in cohort)
+    assert selected == cohort
+    positions = tuple(tuple(registry).index(identifier) for identifier in selected)
+    assert positions == tuple(range(positions[0], positions[0] + len(cohort)))
   for identifier in SHENSHA_OBJECT_IDS:
     obj = k.objects[identifier]
     assert obj.kind == 'shensha' and obj.name == SHENSHA_LABELS[identifier.removeprefix('shensha.')]

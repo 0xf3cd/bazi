@@ -808,6 +808,34 @@
       "supports": "林颂濰文章列出的第二首口诀中，庚与辛同组取寅午。",
       "limitations": "只记录该文列出的现代口诀，不采纳其对真伪、起源或两口诀优劣的裁定。",
       "state": "witnessed"
+    },
+    {
+      "source_id": "guoguan_wenhua.tiangan_personality",
+      "work": "〈十天干八字原始性格〉",
+      "attribution": "国关文化（页面来源栏署名）",
+      "edition": "搜狐号2023-05-22 12:10发布正文，2026-11-03核读",
+      "locator": "正文甲日至癸日十段；原页丁、壬行首作“曰”，摘录取己日段",
+      "url": "https://www.sohu.com/a/677819742_120142689",
+      "text_layer": "editorial",
+      "lineage": "guoguan_wenhua",
+      "excerpt": "己日：个性谨慎，温和重义，外随和内坚忍，猜疑妒忌，懒怠固执，欠果断。",
+      "supports": "十段日干性格词表的现存文字见证；己土旧条目仅取该段前三个词项。",
+      "limitations": "一份现代发布载体，最初作者、首刊与转抄谱系未核；不是古籍出处，不因十干分段或不同转载网页增加独立成文数。原页结尾另说干支组合及生克制化会影响性格；本见证不证明现实性格或定义人物归类判据。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "ditiansui.bing_frost_snow",
+      "work": "《滴天髓阐微》",
+      "attribution": "歌诀层；不据电子页核定原刊作者署名",
+      "edition": "维基文库电子转录，固定修订2600158（2025-09-25T13:22:02Z）",
+      "locator": "〈通神论〉七〈天干〉丙火段歌诀；不含其后“原注”与“任氏曰”",
+      "url": "https://zh.wikisource.org/w/index.php?oldid=2600158",
+      "text_layer": "baiwen",
+      "lineage": "ditiansui",
+      "excerpt": "丙火猛烈，欺霜侮雪。",
+      "supports": "丙火不畏霜雪的近义历史象。",
+      "limitations": "仅同一作品的歌诀电子转录，未据影印校字；本书的注与异网页转录不另算独立成文。不支持现实耐寒、人物身份、性格或婚期判断。",
+      "state": "witnessed"
     }
   ],
   "entries": [
@@ -8419,12 +8447,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.jia",
@@ -8684,12 +8716,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.yi",
@@ -8844,12 +8880,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "ditiansui.bing_frost_snow"
+      ],
+      "source_state": "witnessed",
+      "attribution": "《滴天髓阐微》歌诀近义见证",
+      "viewpoint": "丙火历史象",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "近义见证“欺霜侮雪”的丙火历史象，不作现实耐寒或人物身份判断。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
@@ -8972,12 +9012,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
@@ -9198,12 +9242,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ding",
@@ -9459,12 +9507,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.wu",
@@ -9652,12 +9704,17 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。",
+        "原页“外随和内坚忍”后接逗号与后文；本条保留旧文句号，按截句核定文字见证。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ji",
@@ -9847,12 +9904,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",
@@ -10075,12 +10136,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.xin",
@@ -10239,12 +10304,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.ren",
@@ -10531,12 +10600,16 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "guoguan_wenhua.tiangan_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "国关文化发布文本",
+      "viewpoint": "现代日干性格词表",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.gui",

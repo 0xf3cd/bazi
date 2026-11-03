@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-40 10 37 326
+40 10 39 326
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
@@ -239,6 +239,31 @@ yuanhai_ziping baiwen witnessed
 
 路径是：`kb.entry(条目 ID).sources` 给出来源 ID，再用 `kb.sources[来源 ID]` 取记录。记录里的 `work`、`attribution`、`edition`、`locator` 说明出处，`excerpt` 是摘录，`supports` 与 `limitations` 写明这段原文支持什么、不支持什么。读来源时请连 `limitations` 一起读。
 
+旧条目补上出处后，仍可只供参考。下面取己土词表，连同截句说明一起读取：
+
+```{testcode} backfill
+from bazi.knowledge import KnowledgeBase
+
+kb = KnowledgeBase.load()
+entry = kb.entry('legacy.tiangan.ji.personality')
+source = kb.sources[entry.sources[0]]
+print(source.work)
+print(entry.source_state, entry.applicability, entry.show_by_default)
+print(entry.text)
+print(entry.limits[-1])
+print(len(kb.query(source_id=source.source_id, include_reference_only=True)))
+```
+
+```{testoutput} backfill
+〈十天干八字原始性格〉
+witnessed unresolved False
+个性谨慎，温和重义，外随和内坚忍。
+原页“外随和内坚忍”后接逗号与后文；本条保留旧文句号，按截句核定文字见证。
+10
+```
+
+最后的10是引用同一发布文本的条目数，不是独立来源数。
+
 渲染结果中，条目的 `source_state` 标为“来源状态”，来源记录的 `state` 标为“见证状态”。
 
 反向用 `query(source_id=...)` 找引用某个来源的条目。
@@ -287,13 +312,13 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 ```{testoutput} states
 (False, 'editorial') 22
 (False, 'repository_attributed') 8
-(False, 'unverified') 245
-(False, 'witnessed') 32
+(False, 'unverified') 234
+(False, 'witnessed') 43
 (True, 'witnessed') 19
 [('unresolved', 264), ('unconditional', 50), ('described', 12)]
 ```
 
-`witnessed` 条目有 51 条，其中 32 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
+`witnessed` 条目有 62 条，其中 43 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -356,7 +381,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-3 326 40 37
+3 326 40 39
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'show_by_default', 'legacy']
 True
 ```
