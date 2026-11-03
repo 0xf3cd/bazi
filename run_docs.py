@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from datetime import UTC, datetime
 
 if __name__ == '__main__' and sys.version_info < (3, 13):
   print('Documentation builds require Python 3.13 or later; running bazi still supports Python 3.11.', file=sys.stderr)
@@ -56,6 +57,7 @@ def git_output(*args: str) -> str:
 def build(output: Path, version_label: str) -> None:
   '''严格构建、执行示例并检查实际 HTML；只写构建产物，不部署站点。'''
   sha = git_output('rev-parse', 'HEAD')
+  built = datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
   dirty = bool(git_output('status', '--porcelain'))
   if version_label != 'dev':
     if RELEASE_LABEL.fullmatch(version_label) is None:
@@ -92,6 +94,7 @@ def build(output: Path, version_label: str) -> None:
 当前页面：{'开发版' if version_label == 'dev' else version_label}。
 
 对应源码提交：[{sha[:12]}](https://github.com/0xf3cd/bazi/tree/{sha})。
+构建时间（UTC）：{built}。
 {'本地包含未提交修改，不能作为版本归档。' if dirty else '构建时工作树干净。'}
 
 开发版单列在 `dev/`，可整目录更新；发布版文档按对应 tag 的名称归档，已有发布版目录不覆盖。
@@ -112,7 +115,7 @@ def build(output: Path, version_label: str) -> None:
     ], env=environment, check=True)
     metadata = {
       'version': version_label, 'commit': sha, 'dirty': dirty,
-      'python': sys.version.split()[0],
+      'python': sys.version.split()[0], 'built': built,
     }
     (candidate / 'html' / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8')
     if output.exists():

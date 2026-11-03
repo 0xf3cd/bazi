@@ -1,9 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
+from datetime import UTC, datetime
 from unittest.mock import Mock
 from typing import Any, cast
 
@@ -304,6 +306,7 @@ def test_build_checks_tag_records_source_state(
   build_environment, tmp_path, monkeypatch, label, status, tagged_sha, accepted,
 ):
   sha = 'a' * 40
+  timestamps = []
   git = Mock(side_effect=lambda *args: {
     ('rev-parse', 'HEAD'): sha,
     ('status', '--porcelain'): status,
@@ -316,17 +319,23 @@ def test_build_checks_tag_records_source_state(
       Path(command[-1]).mkdir(parents=True)
       version_page = (Path(command[-2]) / 'versions.md').read_text(encoding='utf-8')
       assert '](https://0xf3cd.github.io/bazi/versions/)' in version_page
+      timestamps.append(version_page.split('构建时间（UTC）：', 1)[1].split('。', 1)[0])
     return subprocess.CompletedProcess(command, 0)
 
   commands = Mock(side_effect=run)
   monkeypatch.setattr(run_docs.subprocess, 'run', commands)
   output = tmp_path / 'output'
   if accepted:
+    started = datetime.now(UTC).replace(microsecond=0)
     run_docs.build(output, label)
     assert json.loads((output / 'html/build.json').read_text(encoding='utf-8')) == {
       'version': label, 'commit': sha, 'dirty': bool(status), 'python': sys.version.split()[0],
+      'built': timestamps[0],
     }
     assert commands.call_count == 3
+    assert len(timestamps) == 2 and timestamps[0] == timestamps[1]
+    assert re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', timestamps[0])
+    assert started <= datetime.strptime(timestamps[0], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=UTC) <= datetime.now(UTC)
   else:
     with pytest.raises(ValueError, match='clean checkout of the matching tag'):
       run_docs.build(output, label)
