@@ -16,9 +16,9 @@ from bazi.knowledge import (
 
 from knowledge_additions import (
   AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS, AUXILIARY_WITNESSED_IDS,
-  SHENSHA_ENTRY_IDS, SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS,
+  SHENSHA_ENTRY_IDS, SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS, FOLLOWUP_SOURCE_IDS,
 )
-from knowledge_errata import SOURCE_ERRATA, SOURCE_BACKFILL, before_errata
+from knowledge_errata import SOURCE_ERRATA, before_errata, before_backfills
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -370,7 +370,7 @@ def test_frozen_oracle_conserves_claims_sources() -> None:
         for ordinal, claim in enumerate(claims):
           assert claim.legacy is not None
           assert claim.legacy.ordinal == ordinal
-          original = before_errata(asdict(claim), SOURCE_BACKFILL['entries'].get(claim.claim_id, {}))
+          original = before_backfills(asdict(claim))
           actual.append({
             'subject_kind': subjects.__name__, 'subject': str(subject), 'field': field,
             'claim': {
@@ -621,6 +621,7 @@ def test_migrated_field_premises_conserved() -> None:
 def test_edit_validate_query_render_reload(tmp_path: Path) -> None:
   data = _source_data()
   entry = next(value for value in data['entries'] if value['claim_id'] == 'legacy.tiangan.geng.regulated_transit')
+  original_limits = KNOWLEDGE_BASE.entry(entry['claim_id']).limits
   entry['limits'] = ['编辑者另记的适用限度。']
   entry['exceptions'] = ['编辑者另记的例外。']
   source = tmp_path / 'edited.json'
@@ -629,13 +630,14 @@ def test_edit_validate_query_render_reload(tmp_path: Path) -> None:
   selected = edited.query(object_id='tiangan.geng', time_scope='行运', topic='性格', include_reference_only=True)
   assert _ids(selected) == ('legacy.tiangan.geng.regulated_transit',)
   rendered = edited.render(selected[0], manual_context=True)
-  for text in ('后天有教养', '有制有化尚未定义', '来源尚未核实', '命盘适用性未判断', '人工给定情境', '编辑者另记的例外。', '编辑者另记的适用限度。'):
+  for text in ('后天有教养', '有制有化尚未定义', '老神婆', '命盘适用性未判断', '人工给定情境', '编辑者另记的例外。', '编辑者另记的适用限度。'):
     assert text in rendered
+  assert selected[0].source_state == 'witnessed' and '来源尚未核实' not in rendered
   restored = KnowledgeBase.load(source)
   assert restored.query(object_id='tiangan.geng', time_scope='行运', include_reference_only=True) == selected
   assert restored.render(selected[0], manual_context=True) == rendered
   assert restored == edited and hash(restored) == hash(edited)
-  assert KNOWLEDGE_BASE.entry(selected[0].claim_id).limits == ()
+  assert KNOWLEDGE_BASE.entry(selected[0].claim_id).limits == original_limits
   default = KnowledgeBase.load()
   assert default == KNOWLEDGE_BASE and default.entries == KNOWLEDGE_BASE.entries
   symbolic = default.query(topic='历史象', include_reference_only=True)
@@ -959,7 +961,7 @@ _GATED_CLAIM_IDS: tuple[str, ...] = (
 
 def test_relationship_additions_counts_surface() -> None:
   k = KNOWLEDGE_BASE
-  assert len(k.entries) == 326 and len(k.sources) == 39 and len(k.contexts) == 10 and len(k.objects) == 40
+  assert len(k.entries) == 326 and len(k.sources) == 41 and len(k.contexts) == 10 and len(k.objects) == 40
   assert len(k.query()) == 19 # all added entries are reference_only, so the default query surface is untouched.
   for claim_id in _NEW_RELATIONSHIP_IDS:
     entry = k.entry(claim_id)
@@ -1020,7 +1022,7 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   for entry in KNOWLEDGE_BASE.entries.values():
     if entry.legacy is None:
       continue
-    row = before_errata(_asdict(entry), SOURCE_BACKFILL['entries'].get(entry.claim_id, {}))
+    row = before_backfills(_asdict(entry))
     row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
     if entry.claim_id in attribution_allowed:
       del row['attribution']
@@ -1039,7 +1041,7 @@ def test_normalized_legacy_projection_fingerprint() -> None:
   unchanged_nonempty = {
     entry.claim_id: tuple(original['limits']) for entry in KNOWLEDGE_BASE.entries.values()
     if entry.legacy is not None and entry.claim_id not in limits_allowed
-    and (original := before_errata(asdict(entry), SOURCE_BACKFILL['entries'].get(entry.claim_id, {})))['limits']
+    and (original := before_backfills(asdict(entry)))['limits']
   }
   assert set(unchanged_nonempty) == {'legacy.shishen.SH-052', 'legacy.tiangan.ding.weak_state'}
   assert unchanged_nonempty['legacy.shishen.SH-052'] == (
@@ -1084,7 +1086,7 @@ def test_non_oracle_sources_fingerprint() -> None:
     if source_id in oracle or source_id in {
       'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
       'wuxing_jingji.kongwang', 'repository.kongwang',
-      *AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS,
+      *AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS, *FOLLOWUP_SOURCE_IDS,
     }:
       continue
     row = before_errata(asdict(source), SOURCE_ERRATA['sources'].get(source_id, {}))

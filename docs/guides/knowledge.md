@@ -23,7 +23,7 @@ print(len(kb.objects), len(kb.contexts), len(kb.sources), len(kb.entries))
 ```
 
 ```{testoutput} load
-40 10 39 326
+40 10 41 326
 ```
 
 `load()` 不需要出生信息。每次调用都会重新读取并校验随包的 `knowledge_data.json`，返回不可变的知识库对象。
@@ -314,13 +314,13 @@ print(Counter(e.applicability for e in kb.entries.values()).most_common())
 ```{testoutput} states
 (False, 'editorial') 22
 (False, 'repository_attributed') 8
-(False, 'unverified') 234
-(False, 'witnessed') 43
+(False, 'unverified') 232
+(False, 'witnessed') 45
 (True, 'witnessed') 19
 [('unresolved', 264), ('unconditional', 50), ('described', 12)]
 ```
 
-`witnessed` 条目有 62 条，其中 43 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
+`witnessed` 条目有 64 条，其中 45 条仍不默认展示，所以 `witnessed` 不单独推出默认展示。设置 `show_by_default=True` 要同时满足四个条件：
 
 1. `applicability` 为 `unconditional`；
 2. `source_state` 为 `witnessed`；
@@ -383,7 +383,7 @@ with tempfile.TemporaryDirectory() as folder:
 
 ```{testoutput} source
 ['schema_version', 'objects', 'contexts', 'sources', 'entries']
-3 326 40 39
+3 326 40 41
 ['claim_id', 'text', 'roles', 'relations', 'topics', 'applicability', 'premise', 'contexts', 'sources', 'source_state', 'attribution', 'viewpoint', 'exceptions', 'limits', 'show_by_default', 'legacy']
 True
 ```

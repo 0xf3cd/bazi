@@ -11,9 +11,9 @@ from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, o
 from knowledge_additions import (
   AUXILIARY_OBJECT_IDS, AUXILIARY_SOURCE_IDS, AUXILIARY_ENTRY_IDS,
   SHENSHA_OBJECT_IDS, SHENSHA_SOURCE_IDS, SHENSHA_ENTRY_IDS,
-  BACKFILL_SOURCE_IDS,
+  BACKFILL_SOURCE_IDS, FOLLOWUP_SOURCE_IDS,
 )
-from knowledge_errata import SOURCE_ERRATA, SOURCE_BACKFILL, before_errata
+from knowledge_errata import SOURCE_ERRATA, before_errata, before_backfills
 
 
 KNOWLEDGE_BASE = KnowledgeBase.load()
@@ -48,7 +48,7 @@ def test_historical_corpus_is_append_only() -> None:
   source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   for registry in ('objects', 'contexts', 'sources', 'entries'):
     assert json.loads(json.dumps([asdict(value) for value in getattr(current, registry).values()])) == source[registry]
-  source['entries'] = [before_errata(row, SOURCE_BACKFILL['entries'].get(row['claim_id'], {})) for row in source['entries']]
+  source['entries'] = list(map(before_backfills, source['entries']))
   restored = KnowledgeBase._from_data(source)
   source['sources'] = [before_errata(row, SOURCE_ERRATA['sources'].get(row['source_id'], {})) for row in source['sources']]
   for row in source['entries']:
@@ -57,7 +57,7 @@ def test_historical_corpus_is_append_only() -> None:
     legacy = row.pop('legacy')
     row['legacy'] = legacy
   added_objects = (*AUXILIARY_OBJECT_IDS, *SHENSHA_OBJECT_IDS)
-  added_sources = (*AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS)
+  added_sources = (*AUXILIARY_SOURCE_IDS, *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS, *FOLLOWUP_SOURCE_IDS)
   added_entries = (*AUXILIARY_ENTRY_IDS, *SHENSHA_ENTRY_IDS)
   for records, cohort in (
     (current.objects, added_objects), (current.sources, added_sources), (current.entries, added_entries),
@@ -112,7 +112,7 @@ def test_text_order_fingerprints_conserved() -> None:
           assert entry.legacy is not None
           rows.append(f'{prefix}:{subject}:{field}:{entry.text}')
           # Reverse source backfills before the earlier attribution migrations.
-          original = before_errata(asdict(entry), SOURCE_BACKFILL['entries'].get(entry.claim_id, {}))
+          original = before_backfills(asdict(entry))
           attribution = (
             OLD_ATTRIBUTION if entry.claim_id in ATTRIBUTION_ALLOWED
             else ORIGINAL_ATTRIBUTION.get(original['attribution'], original['attribution'])

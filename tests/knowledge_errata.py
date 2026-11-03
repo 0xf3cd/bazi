@@ -11,6 +11,9 @@ SOURCE_ERRATA: dict[str, Any] = json.loads(
 SOURCE_BACKFILL: dict[str, Any] = json.loads(
   (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
 )['source_backfill']
+SOURCE_FOLLOWUP: dict[str, Any] = json.loads(
+  (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+)['source_followup']
 
 
 def before_errata(record: dict[str, Any], changes: dict[str, Any]) -> dict[str, Any]:
@@ -19,3 +22,9 @@ def before_errata(record: dict[str, Any], changes: dict[str, Any]) -> dict[str, 
     assert original[field] == new, field
     original[field] = old
   return original
+
+
+def before_backfills(record: dict[str, Any]) -> dict[str, Any]:
+  for changes in (SOURCE_FOLLOWUP, SOURCE_BACKFILL):
+    record = before_errata(record, changes['entries'].get(record['claim_id'], {}))
+  return record
