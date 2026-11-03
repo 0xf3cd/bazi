@@ -811,5 +811,298 @@
         }
       }
     }
+  },
+  "source_backfill": {
+    "base_sha": "ced09f24e6690d485386b91918db2a57f217de31",
+    "entries": {
+      "legacy.tiangan.jia.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.yi.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.bing.sociability": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.ding.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.wu.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.ji.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。",
+            "原页“外随和内坚忍”后接逗号与后文；本条保留旧文句号，按截句核定文字见证。"
+          ]
+        ]
+      },
+      "legacy.tiangan.geng.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.xin.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.ren.personality": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.gui.resourcefulness": {
+        "sources": [
+          [],
+          [
+            "guoguan_wenhua.tiangan_personality"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "国关文化发布文本"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "现代日干性格词表"
+        ],
+        "limits": [
+          [],
+          [
+            "只见证原文按日干编列的性格词表，不据此判定具体人的性格。"
+          ]
+        ]
+      },
+      "legacy.tiangan.bing.frost_snow_image": {
+        "sources": [
+          [],
+          [
+            "ditiansui.bing_frost_snow"
+          ]
+        ],
+        "source_state": [
+          "unverified",
+          "witnessed"
+        ],
+        "attribution": [
+          "旧语料，出处未核",
+          "《滴天髓阐微》歌诀近义见证"
+        ],
+        "viewpoint": [
+          "旧语料（未核）",
+          "丙火历史象"
+        ],
+        "limits": [
+          [],
+          [
+            "近义见证“欺霜侮雪”的丙火历史象，不作现实耐寒或人物身份判断。"
+          ]
+        ]
+      }
+    },
+    "reason": "经作者核定的十一条非默认文字见证：十条现代单载体日干词表，一条单作品近义历史象；原有正文与其余字段不变。"
   }
 }

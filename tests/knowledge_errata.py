@@ -8,6 +8,9 @@ from typing import Any
 SOURCE_ERRATA: dict[str, Any] = json.loads(
   (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
 )['source_errata']
+SOURCE_BACKFILL: dict[str, Any] = json.loads(
+  (Path(__file__).with_name('data') / 'corpus_allowed_changes.json').read_text(encoding='utf-8')
+)['source_backfill']
 
 
 def before_errata(record: dict[str, Any], changes: dict[str, Any]) -> dict[str, Any]:

@@ -82,7 +82,7 @@ def test_ding_query_keeps_reference_text(tmp_path: Path) -> None:
 def test_validation_alone_is_read_only(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '--validate-knowledge')
   assert result.returncode == 0 and result.stderr == ''
-  assert result.stdout == '校验通过：326 条目，37 来源见证，10 情境。\n'
+  assert result.stdout == '校验通过：326 条目，39 来源见证，10 情境。\n'
   assert list(tmp_path.iterdir()) == []
 
 
@@ -159,7 +159,7 @@ def test_edit_validate_reload_cycle(tmp_path: Path) -> None:
     '--object', 'tiangan.ding', '--topic', '历史象', '--include-reference-only',
   )
   assert query.returncode == 0, query.stderr
-  assert '校验通过：326 条目，37 来源见证，10 情境。' in query.stdout
+  assert '校验通过：326 条目，39 来源见证，10 情境。' in query.stdout
   assert '本次编辑的限度。' in query.stdout
   restored = KnowledgeBase.load(source)
   assert restored.entry('tiangan.ding.lamp_symbol').limits == ('本次编辑的限度。',)

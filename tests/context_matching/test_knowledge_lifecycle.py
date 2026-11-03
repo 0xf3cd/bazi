@@ -22,7 +22,7 @@ def test_legacy_oracle_matches_frozen_hash() -> None:
 
 def test_corpus_organizes_reference_entries() -> None:
   knowledge = KnowledgeBase.load()
-  assert len(knowledge.entries) == 326 and len(knowledge.sources) == 37 and len(knowledge.query()) == 19
+  assert len(knowledge.entries) == 326 and len(knowledge.sources) == 39 and len(knowledge.query()) == 19
   for criterion, keys, context_id in ((GUANSHA, LEGAL, 'editorial.guansha_coexistence'), (FEMALE, RELATIONSHIP, 'editorial.guansha_coexistence_female')):
     assert tuple(e.claim_id for e in knowledge.query(context_id=context_id, include_reference_only=True)) == keys
     assert knowledge.query(context_id=context_id) == ()

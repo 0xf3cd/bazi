@@ -34,3 +34,11 @@ SHENSHA_ENTRY_IDS = (
   'shensha.wenchang.lookup', 'shensha.huagai.lookup', 'shensha.yangren.lookup',
   'shensha.tianyi.geng_with_xin',
 )
+
+BACKFILL_SOURCE_IDS = ('guoguan_wenhua.tiangan_personality', 'ditiansui.bing_frost_snow')
+BACKFILL_ENTRY_IDS = (
+  'legacy.tiangan.jia.personality', 'legacy.tiangan.yi.personality', 'legacy.tiangan.bing.sociability',
+  'legacy.tiangan.ding.personality', 'legacy.tiangan.wu.personality', 'legacy.tiangan.ji.personality',
+  'legacy.tiangan.geng.personality', 'legacy.tiangan.xin.personality', 'legacy.tiangan.ren.personality',
+  'legacy.tiangan.gui.resourcefulness', 'legacy.tiangan.bing.frost_snow_image',
+)
