@@ -45,16 +45,13 @@ print(
 需要按柱位比较时由 `chart.bazi.four_tiangans` 取年、月、日、时干，各柱十神见 `chart.shishen`。
 配偶星证据中的 `stem_relations` 仅覆盖含配偶星目标干的明干组合，不是通用的日主关系接口。
 
-## 六甲旬空：保留取锚依据与目标位置
+## 六甲旬空：先选结果，再查柱位
 
-低层 {py:func}`~bazi.utils.shensha_utils.xunkong` 接收合法六十甲子的完整锚并返回冻结二支，
-{py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。阴阳不配的锚会被拒绝，
-但不改变 `Ganzhi` 本身允许构造干支组合的合同。目标只按地支判断，不附加天干或纳音条件。
-
-分析层的 `shensha['kongwang']` 是命中地支的并集。要看依据哪一锚、命中哪个位置，使用
+只需要命中了哪些地支时，读取分析层的 `shensha['kongwang']`，结果是地支并集。
+需要知道“依据哪根柱查得、命中哪个位置”时，使用
 {py:attr}`~bazi.analyzer.relationship.AtBirthAnalysis.kongwang` 或
-{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。逐锚结果的 `anchor` 是 `Zhu.年`／`Zhu.日`，
-`ganzhi` 为完整锚，`xunkong` 为该旬二支；`hits` 中每项的 `position` 为原局柱位 `Zhu` 或流运种类 `TransitKind`，并保留完整目标干支。
+{py:meth}`~bazi.analyzer.relationship.TransitAnalysis.kongwang`。下面把年柱和日柱分别作为查法依据，
+先查原局，再查传入的大运与流年：
 
 ```{testcode} kongwang-details
 from bazi.analyzer.relationship import RelationshipAnalyzer
@@ -101,9 +98,22 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 日 []
 ```
 
-原局排除锚自身柱；流运只用本命锚查流运支，不反向查询。无命中仍保留二支；同支不同柱、
-同干支不同流运种类、同值的年日双锚均不合并。这里只标原始命中，不删除地支，不以冲合刑取消，
-不改变五行、十神、纳音或其他关系，也不判断出空、填实与吉凶。单支筛选、截路、四大空亡未在此接口实现。
+第一行表示：年柱甲子所属旬的空亡二支为亥、戌，原局日柱壬戌命中戌。
+流运例中，大运和流年虽然同为甲戌，仍分别保留两次命中；以日柱为依据的结果没有命中，仍返回一条记录。
+
+| 字段 | 读法 |
+| --- | --- |
+| `anchor`、`ganzhi` | 查法依据的柱位（`Zhu.年`／`Zhu.日`）及其完整干支 |
+| `xunkong` | 依据该干支查得的旬空二支，类型为 `frozenset[Dizhi]` |
+| `hits` | 每项保留目标的完整 `ganzhi`；`position` 是原局柱位 `Zhu` 或流运种类 `TransitKind` |
+
+原局查询排除作为依据的那根柱；流运查询只用本命年／日柱查传入流运，不反向以流运查原局。
+同支不同柱、同干支不同流运种类、同值的年日双锚均分别保留。这里只记录原始命中，不删除目标地支，
+不以冲合刑取消命中，也不改变五行、十神、纳音或其他关系；出空、填实、吉凶、单支筛选、截路及四大空亡均不在此接口中判断。
+
+若已持有干支，只需做一次低层查表，使用 {py:func}`~bazi.utils.shensha_utils.xunkong` 返回旬空二支，
+或用 {py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。两者要求查法依据是合法六十甲子，
+目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 `Ganzhi` 自身的构造范围不变。
 
 配偶星的 `StarAppearance` 同样用 `position` 区分原局柱位与流运种类；`layer` 为
 `TianganLayer.明干`／`TianganLayer.藏干`。这两个类型从 `bazi.defines` 导入，中文类别名分别为

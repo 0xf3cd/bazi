@@ -161,8 +161,14 @@ DAY 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollo
 男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
 只向男命返回的两条婚恋条目由 `claim_genders` 限制：女命不返回这些关联条目，不改变事实判别。
 
-`ContextResult.reference_ids` 按声明序省略缺失、被默认展示或性别门槛过滤的 ID，不另行去重。
-参考条目仍须显式选择，判据前提满足也不会授予默认展示资格。
+`ContextResult.reference_ids` 从判据的 `claim_ids` 依次选取条目 ID，跳过以下三种情况：
+
+- 传入的知识库中没有该条目；
+- `include_reference_only=False`，而该条目的 `show_by_default=False`；
+- 该条目要求的性别与输入命盘不符。
+
+返回的 ID 保留声明顺序和重复，不另行去重。`include_reference_only=True` 只放开参考条目的展示筛选，
+仍须通过存在性与性别检查。没有返回参考 ID 时，判据仍可为 `SATISFIED`；前提满足不改变条目的默认展示资格。
 正文、引文和来源说明的编辑不改变 `CriterionResult`，不再有条目层的 UNKNOWN 或识别状态。
 
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。本节说明范围和条目关联的合同。

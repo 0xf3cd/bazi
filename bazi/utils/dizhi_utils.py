@@ -29,9 +29,13 @@ DizhiCombo = frozenset[Dizhi]
 DizhiRelationCombos = tuple[DizhiCombo, ...]
 
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
-  '''地支关系到满足它的地支组合的冻结映射。拱局组合只含两个实支，不含所拱虚支；用
-  `gonghe` / `gonghui` 恢复虚支。若生成该结果的干支查法使用了
-  `gong_def`，调用 `gonghe` 时传 `DizhiRules.GONG_GONGHE_SCOPE[gong_def]`。'''
+  '''以地支关系为键、以满足该关系的地支组合元组为值的冻结映射。
+  每个组合是 frozenset[Dizhi]，只保存参与的地支值，不保存柱位。
+
+  拱合、拱会的组合只含两个实支。要取得所拱的第三支，分别把这两支传给 gonghe、gonghui。
+  若结果来自使用 gong_def 的干支查询，gonghe 的 definition 参数须传入
+  DizhiRules.GONG_GONGHE_SCOPE[gong_def]，与原查询的读法一致。
+  '''
 
 
 @dataclass(frozen=True)

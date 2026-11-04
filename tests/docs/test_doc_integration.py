@@ -5,6 +5,7 @@ import re
 import runpy
 import subprocess
 import sys
+from dataclasses import fields
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -23,6 +24,8 @@ import run_docs
 import run_docs_site
 from run_doc_checks import EXAMPLE_GROUPS
 from run_package_checks import source_files
+
+from bazi.school import BaziSchool
 
 
 def _check_navigation(source: Path, root: Path) -> None:
@@ -68,6 +71,14 @@ def test_quickstart_keeps_three_task_examples():
   source = (ROOT / 'docs/guides/quickstart.md').read_text(encoding='utf-8')
   assert expected <= set(re.findall(r'^```\{testcode\} (.+)$', source, flags=re.MULTILINE))
   assert expected <= EXAMPLE_GROUPS['guides/quickstart']
+
+
+def test_school_guide_covers_field_choices() -> None:
+  source = (ROOT / 'docs/guides/configuration.md').read_text(encoding='utf-8')
+  choices = source.split('## 流派选项：什么时候换取法\n', 1)[1].split('\n## ', 1)[0]
+  for field in fields(BaziSchool):
+    assert f'`{field.name}`' in choices, field.name
+  assert 'config-school-preset' in EXAMPLE_GROUPS['guides/configuration']
 
 
 @pytest.mark.parametrize('name', ['quickstart', 'configuration', 'integration', 'knowledge'])
