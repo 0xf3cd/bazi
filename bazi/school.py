@@ -232,8 +232,8 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
 @dataclass(frozen=True)
 class BaziSchool:
   '''
-  命盘采用的流派读法，只声明、不演算。`day_rollover` 在排盘期决定日柱，
-  其余字段在神煞与关系求值时读取。每个字段均参与相等性；
+  命盘采用的流派读法。day_rollover 在排盘期决定日柱，tuwang_def 用于月令五行状态，
+  其余字段选择神煞、关系与配偶星取法。每个字段均参与相等性；
   只差一个选项的命盘也不同，相等档案的哈希相等。
 
   出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。

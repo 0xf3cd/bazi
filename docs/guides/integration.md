@@ -126,6 +126,14 @@ result = evaluate_context(
 print(result.criterion.status, result.criterion.reason, result.criterion.scope_complete)
 print(dict(result.criterion.observations))
 print('默认返回的关联条目', len(result.reference_ids))
+with_references = evaluate_context(
+  chart,
+  criterion_id=info.criterion_id,
+  observation=NatalObservation(),
+  include_reference_only=True,
+)
+print('包含参考条目', len(with_references.reference_ids))
+print('判据状态相同', with_references.criterion.status == result.criterion.status)
 ```
 
 ```{testoutput} integration-context
@@ -133,12 +141,16 @@ print('默认返回的关联条目', len(result.reference_ids))
 SATISFIED premise_satisfied True
 {'observed_coexistence': True, 'female': True}
 默认返回的关联条目 0
+包含参考条目 2
+判据状态相同 True
 ```
 
-默认只返回 `show_by_default=True` 的条目，这里没有；加 `include_reference_only=True` 才会包含仅供参考的条目，
-但前提满足也不会授予默认展示资格。参考 ID 按判据声明序筛选，不按知识库条目顺序排列。
+上例的结构事实成立，所以状态为 `SATISFIED`；两个关联条目均不默认展示，因此第一次的参考 ID 元组为空。
+第二次传入 `include_reference_only=True` 后返回两个 ID，判据状态不变。空参考元组只说明本次没有返回关联条目，
+不能据此读成“前提不成立”：条目也可能因自定义知识库缺失或性别筛选而未返回。
+参考 ID 按判据声明序筛选，不按知识库条目顺序排列；筛选规则见[判据目录](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)。
 正文、引文与来源说明的编辑不改变判据状态；自定义库须保持同 ID 的领域含义，不再核对内容摘要。
-判据目录见[接口契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)；条目的来源状态见 {doc}`knowledge`。
+条目的来源状态见 {doc}`knowledge`。
 
 ### 选择观察范围与读取证据
 

@@ -135,8 +135,60 @@ for name, config in (('晚子时', DEFAULT_CONFIG), ('子正', zizheng)):
 子正 日柱 丙寅 时柱 戊子
 ```
 
-两种读法下时支都是子，时干跟随各自的日柱。其他流派选项（关系定义、神煞取锚、配偶星取法）
-的取值和出处写在 {py:class}`~bazi.school.BaziSchool` 的字段说明里；本库保留各家读法，不合成一个“正确”规则。
+两种读法下时支都是子，时干跟随各自的日柱。
+
+## 流派选项：什么时候换取法
+
+使用的书本或对照软件采用另一种查法时，再修改相应字段。一次只改要比较的选项，便于看出差异来自哪里。
+下面区分“换查表定义”和“换查法依据的柱位”；完整定义及出处见 {py:class}`~bazi.school.BaziSchool` 和{doc}`rule-coverage`。
+
+| 字段 | 什么时候需要改 |
+| --- | --- |
+| `day_rollover` | 出生在23时，采用子正00:00换日而非默认23:00换日时；示例见上节。 |
+| `anhe_def` | 对照的暗合表不同，例如是否加入寅丑，或使用盲派的三组暗合。 |
+| `xing_def` | 需要区分丑未戌、寅巳申必须三支齐现，还是三取二即成刑时。按序查法的方向与批量查法仍有区别。 |
+| `gong_def` | 需要选择同干、透化神或见禄字等拱局条件，以及狭义／广义拱合范围时。 |
+| `yangren_def`、`feiren_def` | 对照取法是否只收阳干、十干按禄前一辰，或十干按帝旺位；羊刃与飞刃两个字段可分别选择。 |
+| `tianyi_def` | 庚与甲戊同组还是与辛同组，或要显式查阳贵／阴贵表时。选表不自动决定使用时段。 |
+| `wenchang_def` | 采用辛子还是辛戌的文昌表时。 |
+| `taiji_def` | 壬癸都取巳申，还是壬取巳、癸取申时。 |
+| `guoyin_def` | 采用禄位偏移七位还是八位的国印表时；表值与取锚分开选择。 |
+| `peiou_xing_def` | 采用正财／正官，还是按阴阳干选择配偶星时。 |
+| `tuwang_def` | 季月要用整月土旺，或按十二日／十八日分段时；算法与时间边界见下节。 |
+| `hongyan_anchor` | 红艳要按年干而非默认日干查时；此字段支持年、日二选一。 |
+| `tianyi_anchor` | 天乙要只按年干、只按日干，或分别按年日两干查时。 |
+| `yima_anchor`、`huagai_anchor`、`jiangxing_anchor`、`jiesha_anchor`、`wangshen_anchor` | 驿马、华盖、将星、劫煞、亡神要只按日支查，而非默认分别按年日两支查时。各字段独立选择。 |
+| `wenchang_anchor` | 文昌要只按日干查，而非默认分别按年日两干查时。 |
+| `jinyu_anchor` | 金舆要从默认日干改为分别按年日两干查时。 |
+| `zaisha_anchor` | 灾煞要从默认年支改为分别按年日两支查时。 |
+| `taiji_anchor`、`guoyin_anchor` | 太极、国印要只按年干查，而非默认分别按年日两干查时。 |
+| `kongwang_anchor` | 旬空要改用年柱，或分别按年日两柱的完整干支查时；配置示例见本页后文。 |
+
+`Anchor.YEAR_AND_DAY` 表示分别查年、日两柱，不是把两柱合成一个条件。
+各字段支持的选项不同，传入不支持的锚会抛 `ValueError`；能构造某个选项与该读法的文献依据是两回事，出处见上述 API 参考。
+修改配置后须重建依赖它的命盘，见本页“替换一项配置”。
+
+## 使用《命理探原》日锚预设
+
+希望采用本库整理的日锚预设时，用 {py:meth}`~bazi.school.BaziSchool.mingli_tanyuan` 构造流派，再传给 `BaziConfig`：
+
+```{testcode} config-school-preset
+from bazi.school import BaziConfig, BaziSchool
+
+school = BaziSchool.mingli_tanyuan()
+config = BaziConfig(school=school)
+print('天乙、驿马、文昌', school.tianyi_anchor.name, school.yima_anchor.name, school.wenchang_anchor.name)
+print('羊刃取法未变', school.yangren_def is BaziSchool().yangren_def)
+assert config.school is school
+```
+
+```{testoutput} config-school-preset
+天乙、驿马、文昌 DAY DAY DAY
+羊刃取法未变 True
+```
+
+与默认流派相比，天乙、驿马、华盖、将星、劫煞、亡神、文昌改为日锚。
+金舆也显式取日干，但当前默认已经是日干；其余选项保持默认。该方法的 API 说明列出各锚的来源与限度。
 
 ## 月令五行状态与土旺口径
 
