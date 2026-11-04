@@ -15,7 +15,7 @@ from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.defines import Dizhi, Shishen, Tiangan
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
 
-from knowledge_additions import SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS
+from knowledge_additions import SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS, FOLLOWUP_SOURCE_IDS
 
 
 def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
@@ -30,7 +30,7 @@ def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
     'wuxing_jingji.kongwang', 'repository.kongwang',
     'youyilu.taiyuan_minggong', 'sanming_tonghui.taiyuan', 'sanming_tonghui.minggong',
     'mingli_tanyuan.minggong', 'repository.taiyuan_minggong',
-    *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS,
+    *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS, *FOLLOWUP_SOURCE_IDS,
   }
   # Both an unused source and a newly referenced source must survive reload.
   unused = replace(k.sources['yuanhai_ziping_relations'], source_id='future.unused', lineage='future.lineage', text_layer='zhushi')
@@ -47,7 +47,7 @@ def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
   next(entry for entry in data['entries'] if entry['claim_id'] == lamp.claim_id)['sources'] = ['future.used']
   path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
   loaded = KnowledgeBase.load(path)
-  assert len(loaded.sources) == 41
+  assert len(loaded.sources) == 43
   for source_id, record in edited.sources.items():
     assert isinstance(loaded.sources[source_id], KnowledgeSource)
     assert loaded.sources[source_id] == record

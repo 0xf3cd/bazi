@@ -427,7 +427,7 @@ def main() -> None:
     check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
     for filter_value in values:
       check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
-  check(len(knowledge.sources) == 39, 'Installed source registry incomplete')
+  check(len(knowledge.sources) == 41, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
     check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')

@@ -836,6 +836,34 @@
       "supports": "丙火不畏霜雪的近义历史象。",
       "limitations": "仅同一作品的歌诀电子转录，未据影印校字；本书的注与异网页转录不另算独立成文。不支持现实耐寒、人物身份、性格或婚期判断。",
       "state": "witnessed"
+    },
+    {
+      "source_id": "dayi.tiangan_bing_personality",
+      "work": "〈从出生日干看人的性格〉",
+      "attribution": "大易起名网（发布载体，首创作者未核）",
+      "edition": "页面标2004-10-12，2026-11-03核读；页面日期不作首刊证明",
+      "locator": "正文丙火段，前接丙为火、性阳的说明",
+      "url": "https://www.dayikaiyun.com/sizhubazi/bztgxg.html",
+      "text_layer": "editorial",
+      "lineage": "dayi_kaiyun",
+      "excerpt": "丙火之人性格急燥，喜欢争上风，对人热情大方，有礼貌，好打抱不平，但为人以自我为中心，多以七杀（偏官）出现。",
+      "supports": "旧丙火性格短句的现代近文；来源作“急燥”，旧文作“急躁”。",
+      "limitations": "只记录现存发布文字，首创、首刊及转抄谱系未核；近同转载不计独立成文。摘录末尾另有自我中心与七杀称谓的断语，本次不据此定义人物归类或补入旧句。本见证不证明现实性格、完整前提或命理规则正确。",
+      "state": "witnessed"
+    },
+    {
+      "source_id": "laoshenpo.geng_regulated_transit",
+      "work": "〈庚金：斧钺之金〉",
+      "attribution": "老神婆风水大师网（发布载体，首创作者未核）",
+      "edition": "页面标2023-06-13 22:25:40，2026-11-03核读",
+      "locator": "正文首段，庚金如为忌神之后的行运与教养句",
+      "url": "https://www.laoshenpo.com/465006613233664001",
+      "text_layer": "editorial",
+      "lineage": "laoshenpo",
+      "excerpt": "庚金如为忌神，为人好胜，言词尖刻，口不择言，容易树敌，好打抱不平无事惹祸。如果行运有制有化，后天有教养，性虽刚但不逼人，有义气但不鲁莽惹祸，还可能有成。",
+      "supports": "行运有制有化、后天有教养及刚而不逼人等结果在同一句内的现代文字见证。",
+      "limitations": "只据本载体核文字，首创及转抄谱系未核，不计成独立双源。前句有庚金如为忌神的语境，末尾另有还可能有成；不据此增删旧句前提。其他载体作有秩有序，不与本句有制有化拼接。不证明现实人格、行运效果或后天教养可由命盘计算。",
+      "state": "witnessed"
     }
   ],
   "entries": [
@@ -9047,12 +9075,17 @@
       "applicability": "unresolved",
       "premise": "",
       "contexts": [],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "dayi.tiangan_bing_personality"
+      ],
+      "source_state": "witnessed",
+      "attribution": "大易起名网现代近文见证",
+      "viewpoint": "现代丙火性情近文",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "来源作“急燥”，旧文“急躁”照旧保留；这里只记录近文，不认定逐字出处或首创作者。",
+        "来源另有自我中心与七杀称谓的断语，未据此补写旧句或定义人物前提；不证明具体人的性格。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.bing",
@@ -9941,12 +9974,18 @@
       "contexts": [
         "tiangan.geng_regulated_transit"
       ],
-      "sources": [],
-      "source_state": "unverified",
-      "attribution": "旧语料，出处未核",
-      "viewpoint": "旧语料（未核）",
+      "sources": [
+        "laoshenpo.geng_regulated_transit"
+      ],
+      "source_state": "witnessed",
+      "attribution": "老神婆风水大师网现代行运与教养句见证",
+      "viewpoint": "现代庚金性情近文",
       "exceptions": [],
-      "limits": [],
+      "limits": [
+        "来源同句包含行运有制有化、后天有教养及所述结果；旧文补出庚金日主主体并省略末尾还可能有成，不认定逐字同源。",
+        "来源前句另说庚金如为忌神；其与本句的条件关系未核定，不据此增删旧前提或声明完整前提已获支持。",
+        "有制有化、后天教养及所述性情尚无完整命盘判别定义；文字见证不证明现实人格或行运效果。"
+      ],
       "show_by_default": false,
       "legacy": {
         "object_id": "tiangan.geng",

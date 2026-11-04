@@ -42,3 +42,6 @@ BACKFILL_ENTRY_IDS = (
   'legacy.tiangan.geng.personality', 'legacy.tiangan.xin.personality', 'legacy.tiangan.ren.personality',
   'legacy.tiangan.gui.resourcefulness', 'legacy.tiangan.bing.frost_snow_image',
 )
+
+FOLLOWUP_SOURCE_IDS = ('dayi.tiangan_bing_personality', 'laoshenpo.geng_regulated_transit')
+FOLLOWUP_ENTRY_IDS = ('legacy.tiangan.bing.impatience', 'legacy.tiangan.geng.regulated_transit')
