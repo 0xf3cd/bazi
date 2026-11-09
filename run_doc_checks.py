@@ -34,12 +34,12 @@ DOCTEST_PHASES = ('setup', 'cleanup')
 
 EXAMPLE_GROUPS = {
   'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save', 'quickstart-explore', 'quickstart-transits', 'quickstart-liunian', 'quickstart-context'},
-  'guides/configuration': {'config-precision', 'config-overseas', 'config-rollover', 'config-school-preset', 'config-dayun-rule', 'config-location', 'config-location-errors', 'config-replace', 'kongwang-configuration', 'config-tuwang'},
-  'guides/relations-transits': {'relations-day-master', 'relations-house', 'relations-immutable', 'transits-generators', 'transits-text', 'kongwang-details', 'relations-shensha-labels', 'relations-all-positions', 'relations-tonggen-tougan'},
-  'guides/integration': {'integration-imports', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary'},
-  'guides/knowledge': {'load', 'find', 'search', 'query', 'states', 'sources', 'backfill', 'render', 'gate', 'source', 'edit', 'broken', 'criteria', 'auxiliary-knowledge', 'shensha-knowledge'},
-  'guides/rule-coverage': {'rule-coverage-guoyin', 'guoyin-lookup'},
+  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save'},
+  'guides/configuration': {'config-create', 'config-precision', 'config-overseas', 'config-backend', 'config-rollover', 'config-school-preset', 'config-dayun-rule', 'config-location', 'config-replace', 'kongwang-configuration', 'config-tuwang'},
+  'guides/relations-transits': {'transits-query', 'relations-day-master', 'relations-house', 'transits-generators', 'transits-text', 'kongwang-details', 'relations-shensha-labels', 'relations-all-positions', 'relations-tonggen-tougan'},
+  'guides/integration': {'integration-fields', 'integration-pillars', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary'},
+  'guides/knowledge': {'load', 'search', 'sources', 'render', 'edit', 'criteria', 'auxiliary-knowledge', 'shensha-knowledge'},
+  'guides/rule-coverage': {'guoyin-lookup'},
 }
 
 SOURCELESS_ALIAS_DESCRIPTIONS = {
@@ -59,6 +59,7 @@ class Page(HTMLParser):
     self.label_text: list[str] = []
     self.sections: dict[str, dict[str, str]] = {}
     self.blocks: dict[str, list[str]] = {}
+    self.code_blocks: list[str] = []
     self.rows: dict[str, list[list[str]]] = {}
     self.related: dict[str, list[tuple[str, str]]] = {}
     self.related_id: str | None = None
@@ -117,10 +118,10 @@ class Page(HTMLParser):
         self.dt = []
       elif tag == 'dd':
         self.dd = []
-      elif tag == 'pre':
-        self.pre = []
       elif tag == 'tr':
         self.row = []
+    if tag == 'pre':
+      self.pre = []
     if tag in ('th', 'td'):
       self.cell = []
     if tag == 'p':
@@ -165,8 +166,10 @@ class Page(HTMLParser):
       self.sections[self.section][self.field_name] = ''.join(self.dd)
       self.dd = None
     elif tag == 'pre' and self.pre is not None:
-      assert self.section is not None
-      self.blocks[self.section].append(''.join(self.pre))
+      text = ''.join(self.pre)
+      self.code_blocks.append(text)
+      if self.section is not None:
+        self.blocks[self.section].append(text)
       self.pre = None
     elif tag == 'section':
       self.section = self.section_stack.pop()
@@ -443,6 +446,28 @@ def check_release_notes(pages: dict[str, Page]) -> int:
   return len(reference.headings)
 
 
+def check_task_navigation(pages: dict[str, Page], version: str, sha: str) -> None:
+  '''使用路径留在当前构建；当前贡献政策是明确允许的跨版本链接。'''
+  for filename, page in pages.items():
+    for link in page.links:
+      url = urlsplit(link)
+      if url.netloc == 'github.com' and url.path.startswith('/0xf3cd/bazi/blob/main/'):
+        assert filename == 'contributing.html' and url.path == '/0xf3cd/bazi/blob/main/AGENTS.md', (filename, link)
+      if url.netloc == '0xf3cd.github.io':
+        assert not re.match(r'/bazi/(?:latest|dev|v[0-9.]+)/', url.path), (filename, link)
+  expected = {
+    'guides/quickstart.html', 'guides/cli.html', 'guides/configuration.html',
+    'guides/relations-transits.html', 'guides/knowledge.html', 'guides/integration.html', 'api-contract.html',
+  }
+  assert expected <= set(pages), ('Missing task pages', expected - set(pages))
+  index_links = {urlsplit(link).path for link in pages['index.html'].links if not urlsplit(link).scheme}
+  assert expected <= index_links, ('Missing task navigation', expected - index_links)
+  requirement = f'git+https://github.com/0xf3cd/bazi.git@{sha}' if version == 'dev' else 'bazi==' + version.removeprefix('v')
+  command = f'python -m pip install "{requirement}"'
+  for name in ('quickstart', 'knowledge', 'cli'):
+    assert any(block.strip() == command for block in pages[f'guides/{name}.html'].code_blocks), ('Installation identity', name)
+
+
 def check_attribute_descriptions(site: Path) -> int:
   docs = source_attribute_docs(ROOT / 'bazi')
   checked = 0
@@ -493,6 +518,7 @@ def main() -> None:
   result['header_paragraphs'] = check_header_paragraphs(pages)
   check_configuration_signatures(site)
   check_links(site, pages)
+  check_task_navigation(pages, sys.argv[3], sys.argv[4])
   result['release_sections'] = check_release_notes(pages)
   result['source_less_attributes'] = check_attribute_descriptions(site)
   result['doctests'] = check_doctests(doctest)

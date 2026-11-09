@@ -513,7 +513,7 @@ def _add_seed_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _add_chart_arguments(parser: argparse.ArgumentParser) -> None:
   basic = parser.add_argument_group('出生信息（都不给则随机生成一张盘）')
-  basic.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
+  basic.add_argument('--birth-time', help='公历出生时刻；默认按东八区钟填写，不换算时区。')
   basic.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）；与 --birth-time 成对给出。')
   more = parser.add_argument_group('更多选项（都可省略）')
   more.add_argument('--seed', type=int, help='重放随机命盘的种子；随机命盘的种子会打印在第一行。')
@@ -549,7 +549,7 @@ def _add_knowledge_arguments(parser: argparse.ArgumentParser) -> None:
 def _add_match_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument('criterion', nargs='?', metavar='判据ID', help='不给则列出全部判据；只给 ID 则说明该判据与所需输入；再给任何选项就是求值。')
   common = parser.add_argument_group('求值所需')
-  common.add_argument('--birth-time', help='公历出生时刻，如 "2000-01-01 12:00"。')
+  common.add_argument('--birth-time', help='公历出生时刻；默认按东八区钟填写，不换算时区。')
   common.add_argument('--gender', choices=('male', 'female'), help='male（男）或 female（女）。')
   common.add_argument('--observation-scope', choices=get_args(ScopeName), help='判别范围，须显式选择；各判据支持的范围见判据说明。')
   more = parser.add_argument_group('更多选项（按判据说明所需给出，其余可省略）')
@@ -572,14 +572,14 @@ def _command_parser() -> argparse.ArgumentParser:
     description='展示命盘、查询解释知识、判别判据前提。先选一个任务，再用「任务 --help」看它的选项。',
     epilog=(
       '示例：\n'
-      f'  {_PROG} demo --seed 236                        完整命盘与流运示例\n'
-      f'  {_PROG} relationship --seed 236                婚恋与十年流年报告\n'
-      f'  {_PROG} chart                                  随机命盘\n'
       f'  {_PROG} chart --birth-time "2000-01-01 12:00" --gender male\n'
       f'  {_PROG} knowledge                              知识库概览\n'
       f'  {_PROG} knowledge --object tiangan.ding\n'
       f'  {_PROG} match                                  列出全部判据\n'
       f'  {_PROG} match <判据ID>                         判据说明与所需输入\n'
+      f'  {_PROG} demo --seed 236                        随机命盘与流运示例\n'
+      f'  {_PROG} relationship --seed 236                婚恋与十年流年报告\n'
+      '时间与配置：https://0xf3cd.github.io/bazi/latest/guides/configuration.html\n'
     ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
   )

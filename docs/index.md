@@ -8,6 +8,7 @@
 :maxdepth: 1
 
 guides/quickstart
+guides/cli
 guides/configuration
 guides/relations-transits
 guides/knowledge
@@ -22,6 +23,14 @@ guides/integration
 api/index
 catalog/index
 guides/rule-coverage
+api-contract
+```
+
+## 贡献、升级与文档维护
+
+```{toctree}
+:maxdepth: 1
+
 contributing
 release-notes
 versions

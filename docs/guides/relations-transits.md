@@ -1,7 +1,91 @@
 # 关系与流运
 
-本页查询原局关系、神煞、通根与透干，再选取流运查跨组关系；最后从命盘读取有限几步大运和流年。
+本页先查询流运，再用原局或所选流运查关系、神煞、通根与透干。
 结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。
+
+## 查年、月、日或时刻的流运
+
+`TransitChart` 接收 `BaziChart`，返回指定坐标下的 `TransitSet`。下面显式使用 `minute` 精度，
+使四种入口都支持；默认 `DAY` 命盘不支持 `at_moment()`。
+所有出生输入和日期／时刻查询都按东八区参考钟填写，地点盘的流运查询也不改用真太阳钟。
+
+```{testcode} transits-query
+from datetime import date, datetime
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Dizhi
+from bazi.school import BaziConfig
+from bazi.transit_chart import TransitChart
+
+config = BaziConfig.from_values(precision='minute')
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female', config))
+transits = TransitChart(chart)
+queries = (
+  ('年', transits.at_year(2024)),
+  ('月', transits.at_month(2024, Dizhi.午)),
+  ('日', transits.at_date(date(2024, 6, 15))),
+  ('时刻', transits.at_moment(datetime(2024, 6, 15, 12))),
+)
+for label, result in queries:
+  if result is not None:
+    print(label, ' '.join(f'{kind.value}:{ganzhi}' for kind, ganzhi in result.items))
+```
+
+```{testoutput} transits-query
+年 dayun:丁丑 liunian:甲辰
+月 dayun:丁丑 liunian:甲辰 liuyue:庚午
+日 dayun:丁丑 liunian:甲辰 liuyue:庚午 liuri:庚戌
+时刻 dayun:丁丑 liunian:甲辰 liuyue:庚午 liuri:庚戌
+```
+
+本例各查询均能取得结果，但参数和边界各不相同：
+
+| 入口 | 参数含义 | 查询层级及 `None` 的含义 |
+| --- | --- | --- |
+| `at_year(gz_year)` | 干支年标签，以年份数字填写 | 返回该年流年及可取得的小运／大运；早于出生干支年为 `None`，远年份仍可有流年。大运按所选年份标签解释。 |
+| `at_month(gz_year, gz_month)` | 干支年和月份地支，如 `Dizhi.午` | 增加流月；出生干支月前或节令表范围外为 `None`，大运按物理交运月边界解释。午月不等于公历六月。 |
+| `at_date(solar_date)` | 东八区公历 `date`，不能传 `datetime` | 增加流月、流日；出生公历日前或历法范围外为 `None`，大运按物理交运日边界解释。 |
+| `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或配置不支持为 `None`；须用 celestial 系后端及 HOUR／MINUTE 精度。 |
+
+`None` 是整次查询不可取得；返回结果中某种流运的字段为 `None`，则只是缺这一层。
+流运种类从 `bazi.transits` 导入 `TransitKind`；例如 `result.select(TransitKind.LIUNIAN)` 只保留流年，
+所选种类有缺项时抛 `ValueError`。`at_moment` 按秒比较，流日应用所选换日点，可能与同公历日的 `at_date` 不同。
+完整时间与类型边界见 {py:class}`~bazi.transit_chart.TransitChart`。
+
+## 列出几步大运和流年
+
+大运生成器有限，流年生成器无限。用 `islice` 限定要读的数量，不要直接把 `chart.liunian` 转成 `list` 或 `tuple`：
+
+```{testcode} transits-generators
+from itertools import islice
+
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+for step in islice(chart.dayun, 2):
+  print('大运', step.ganzhi_year, step.ganzhi, step.start_moment.date(), step.end_moment.date())
+for step in islice(chart.liunian, 3):
+  print('流年', step.ganzhi_year, step.ganzhi)
+print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
+```
+
+```{testoutput} transits-generators
+大运 1994 庚辰 1994-02-23 2004-02-23
+大运 2004 己卯 2004-02-23 2014-02-23
+流年 1990 庚午
+流年 1991 辛未
+流年 1992 壬申
+小运 [(1, '甲辰'), (2, '癸卯')]
+```
+
+每步大运覆盖 `[start_moment, end_moment)`，年份是标签，不表示占据整个标签年；规则见 {doc}`configuration`。
+每次访问 `dayun`／`liunian` 都新建生成器，保存到变量后继续遍历会从上次位置接着读；大运数量取决于后端支持范围。
+`xiaoyun` 则是缓存元组，可反复遍历。排成流运文字的例子在本页{ref}`流运文本 <transits-text>`。
+
+后续按任务选择：原局关系看下节，神煞看{ref}`原局神煞 <relations-shensha>`，
+原局与流运的关系看{ref}`流运关系 <relations-transit-house>`，按位置查全部关系看{ref}`跨组位置 <relations-positions>`。
 
 ## 原局日主关系：按天干值汇总
 
@@ -12,31 +96,17 @@
 from bazi.analyzer.relationship import RelationshipAnalyzer
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import Tiangan
-from bazi.utils import tiangan_utils
 
 chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
 print('四柱', ' '.join(map(str, chart.bazi.pillars)))
 found = RelationshipAnalyzer(chart).at_birth.day_master_relations
 for relation, combos in found.items():
   print(relation, [''.join(map(str, sorted(combo, key=lambda stem: stem.index))) for combo in combos])
-print(
-  '庚生壬／壬生庚',
-  tiangan_utils.sheng(Tiangan.庚, Tiangan.壬),
-  tiangan_utils.sheng(Tiangan.壬, Tiangan.庚),
-)
-print(
-  '壬生乙／乙生壬',
-  tiangan_utils.sheng(Tiangan.壬, Tiangan.乙),
-  tiangan_utils.sheng(Tiangan.乙, Tiangan.壬),
-)
 ```
 
 ```{testoutput} relations-day-master
 四柱 庚午 辛巳 壬午 乙巳
 生 ['庚壬', '辛壬', '乙壬']
-庚生壬／壬生庚 True False
-壬生乙／乙生壬 True False
 ```
 
 每个组合是无序的 `frozenset`：庚生壬与壬生乙都归在“生”下，集合自身不保存方向。
@@ -86,9 +156,6 @@ for result in analyzer.transits.kongwang(transits):
     str(result.anchor),
     [(hit.position.value, str(hit.ganzhi)) for hit in result.hits],
   )
-assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
-  hit.ganzhi.dizhi for result in analyzer.transits.kongwang(transits) for hit in result.hits
-)
 ```
 
 ```{testoutput} kongwang-details
@@ -120,6 +187,7 @@ assert analyzer.transits.shensha(transits)['kongwang'] == frozenset(
 `柱` 和 `天干层次`。打印原局柱位 `Zhu` 或明藏层 `TianganLayer` 用 `str(value)` 取得中文值，
 不依赖枚举的 repr；流运种类 `TransitKind` 用 `.value` 取得 `dayun`、`liunian` 等标签。
 
+(relations-shensha)=
 ## 原局神煞与中文名
 
 {py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
@@ -155,7 +223,8 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 
 支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
 
-## 查一年的流运和一个关系
+(relations-transit-house)=
+## 查流运与婚姻宫的关系
 
 `TransitChart` 按干支年、月、日期或时刻返回一个 `TransitSet`；`RelationshipAnalyzer` 对它做关系查询。
 下面取 2024 年的流运，查它与婚姻宫的地支关系。
@@ -166,7 +235,6 @@ from datetime import datetime
 from bazi.analyzer.relationship import RelationshipAnalyzer
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import DizhiRelation
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind
 
@@ -182,7 +250,6 @@ found = RelationshipAnalyzer(chart).transits.house_relations(year)
 for relation, combos in found.items():
   for combo in combos:
     print(relation, ''.join(str(dizhi) for dizhi in sorted(combo, key=lambda dizhi: dizhi.index)))
-print(DizhiRelation.害 is DizhiRelation.HAI, DizhiRelation.害.value)
 ```
 
 ```{testoutput} relations-house
@@ -192,7 +259,6 @@ print(DizhiRelation.害 is DizhiRelation.HAI, DizhiRelation.害.value)
 害 丑午
 生 丑午
 生 辰午
-True 害
 ```
 
 几点读法：
@@ -200,45 +266,15 @@ True 害
 - `at_year` 在出生年之前返回 `None`，所以先判断再用。返回的 `TransitSet` 只含当前有的种类（这里是大运和流年），
   缺项就是 `None`。`select` 要求指定种类全部存在，缺项抛 `ValueError`。
 - `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.items` 按固定顺序给出种类与干支对。
-- 关系的键是 `DizhiRelation` 成员，有拉丁名和中文别名，二者是同一个对象（`DizhiRelation.害 is DizhiRelation.HAI`）。
+- 关系的键是 `DizhiRelation` 成员，可用中文别名，如 `DizhiRelation.害`。
 - 每个组合是一个 `frozenset` 的地支，不带次序，所以示例先按枚举序排序再打印。
   各关系的取法与流派定义看 {py:class}`~bazi.school.BaziSchool` 和 {py:class}`~bazi.defines.relations.DizhiRelation`。
-- 结果是不可变的：`TransitSet` 是 frozen dataclass，关系结果是冻结映射，赋值会抛错。
+- 结果不可变；需要另一组流运时重新查询或选择。精确约定见 {doc}`../api-contract`。
 
-```{testcode} relations-immutable
-from datetime import datetime
+地支低层批量查法见 {py:func}`~bazi.utils.dizhi_utils.discover`。查自刑要保留输入地支的重复次数，
+不能先转成集合再查；方向、按值合并与按位置保留是不同结果，不相互替代。
 
-from bazi.analyzer.relationship import RelationshipAnalyzer
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.defines import DizhiRelation
-from bazi.transit_chart import TransitChart
-
-chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
-year = TransitChart(chart).at_year(2024)
-assert year is not None
-found = RelationshipAnalyzer(chart).transits.house_relations(year)
-
-def rewrite_year():
-  year.liunian = None
-
-
-def rewrite_found():
-  found[DizhiRelation.害] = ()
-
-
-for name, mutate in (('改流运', rewrite_year), ('改关系', rewrite_found)):
-  try:
-    mutate()
-  except (AttributeError, TypeError) as error:
-    print(name, type(error).__name__)
-```
-
-```{testoutput} relations-immutable
-改流运 FrozenInstanceError
-改关系 TypeError
-```
-
+(relations-positions)=
 ## 全部跨组地支关系：保留具体位置
 
 `house_relations` 只查婚姻宫，且按地支值汇总。要查全部原局与所选流运之间的关系，使用
@@ -318,52 +354,8 @@ print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatc
 
 两种条件都以藏干表为依据，乙逢午、丁逢酉的阴长生根不在查询范围内。
 
-## 取有限的几步大运和流年
-
-`chart.dayun` 和 `chart.liunian` 是生成器属性，**每次访问都新建一个**。三点要记住：
-
-- 存进变量的生成器会被耗尽，之后再取是空的。要重新开始就再访问一次属性。
-- `chart.dayun` 是有限的，数量取决于出生时间和历法后端的节气范围。
-- `chart.liunian` 可以无限延续，不要对它直接调用 `list` 或 `tuple`。用 `itertools.islice` 取需要的个数。
-
-```{testcode} transits-generators
-from datetime import datetime
-from itertools import islice
-
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-
-chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
-
-for step in islice(chart.liunian, 3):
-  print(step.ganzhi_year, step.ganzhi)
-
-dayuns = chart.dayun
-first_two = list(islice(dayuns, 2))
-next_two = list(islice(dayuns, 2))
-print([step.ganzhi_year for step in first_two], [step.ganzhi_year for step in next_two])
-print(first_two[0].start_moment.date(), first_two[0].end_moment.date())
-
-list(dayuns)
-print('耗尽后', list(dayuns))
-print('重新访问', next(iter(chart.dayun)).ganzhi_year)
-print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
-```
-
-```{testoutput} transits-generators
-1990 庚午
-1991 辛未
-1992 壬申
-[1994, 2004] [2014, 2024]
-1994-02-23 2004-02-23
-耗尽后 []
-重新访问 1994
-小运 [(1, '甲辰'), (2, '癸卯')]
-```
-
-`chart.xiaoyun` 不同：它是缓存的元组，可以反复遍历。大运的 `ganzhi_year` 是起运年份标签，
-每步覆盖 `[start_moment, end_moment)`，不表示这步大运占据整个标签年；标签规则见 {doc}`configuration`。
-
+(transits-text)=
+## 把流运排成文本
 需要的是文字而不是对象时，`bazi.chart_text.transit_text` 把节、交运时间、大运、小运和流年排好。
 流年可以无限延续，所以数量由你给：`dayun_count` 取前几步大运，`liunian_count` 取从出生干支年起的几年，默认分别是 10 和 100。
 小运是有限的，全部列出。

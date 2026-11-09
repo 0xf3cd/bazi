@@ -11,8 +11,8 @@ body:
   - type: input
     id: claim_id
     attributes:
-      label: 条目 ID（claim_id）
-      description: 要更正或补出处的条目，如 `shishen.bijian.definition`；可在仓库的 bazi/knowledge_data.json 中查找，找不到可先描述条文，新增条目留空。
+      label: 条目 ID 或页面链接（claim_id）
+      description: 可从[知识目录](https://0xf3cd.github.io/bazi/latest/catalog/entries.html)复制 ID 或条目链接；找不到可先描述原文，新增条目留空。
     validations:
       required: false
   - type: textarea

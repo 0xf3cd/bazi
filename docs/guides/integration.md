@@ -1,34 +1,53 @@
 # 集成开发
 
-这一页面向把 `bazi` 接进自己程序的开发者：怎么导入、读取内存结果，以及前提匹配返回什么。
-导入与行为承诺以对应版本源码根目录的 `API_CONTRACT.md` 为准；签名、字段和局部返回说明查 API 参考。
+这一页面向把 `bazi` 接进自己程序的开发者：读取结构化命盘字段、定制文本，以及检查知识前提。
+精确的输入与行为约定见 {doc}`../api-contract`，签名与字段查 API 参考。
 第一次排盘及保存文本先看 {doc}`quickstart`；升级旧调用先看 {doc}`../release-notes`。
 
-## 导入
+## 读取十神、藏干和纳音
 
 库没有根类；类型和函数从定义模块导入。安装后的 `bazi` 命令用于终端操作，不改变这些导入路径：
 
-```{testcode} integration-imports
-from bazi import bazi as bazi_module
+```{testcode} integration-fields
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.school import BaziConfig
 
-print(Bazi is bazi_module.Bazi)
-
-try:
-  from bazi import Bazi as root_class
-except ImportError as error:
-  print('ImportError')
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+print('年干十神', chart.shishen.year.tiangan)
+print('月支藏干', ' '.join(map(str, chart.hidden_tiangan.month)))
+print('日柱纳音', chart.nayin.day)
 ```
 
-```{testoutput} integration-imports
-True
-ImportError
+```{testoutput} integration-fields
+年干十神 偏印
+月支藏干 丙 庚 戊
+日柱纳音 杨柳木
 ```
 
-包的 `__all__` 只列子模块，不是公开 API 的全集；`bazi.data_types` 等定义模块同样可以直接导入。
-带下划线的名字是包内约定，不承诺包外调用。
+这些属性以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，字段为 `year`、`month`、`day`、`hour`，
+也可按年、月、日、时顺序遍历。十神和阴阳五行的每柱结果再以 {py:class}`~bazi.data_types.GanzhiData`
+区分 `tiangan` 与 `dizhi`；日主自身的天干十神位置为 `None`。
+
+把四柱干支、纳音与天干十神放在一起遍历：
+
+```{testcode} integration-pillars
+from bazi.bazi import Bazi
+from bazi.bazi_chart import BaziChart
+from bazi.defines import Zhu
+
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+for position, pillar, nayin, shishen in zip(Zhu, chart.bazi.pillars, chart.nayin, chart.shishen):
+  print(position, pillar, nayin, shishen.tiangan or '日主')
+```
+
+```{testoutput} integration-pillars
+年 庚午 路旁土 偏印
+月 辛巳 白蜡金 正印
+日 壬午 杨柳木 日主
+时 乙巳 覆灯火 伤官
+```
+
+`BaziData` 支持字段访问和迭代，不提供下标访问。完整属性见 {py:class}`~bazi.bazi_chart.BaziChart`。
 
 ## 命盘文本与终端颜色
 
@@ -66,38 +85,23 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
 chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
-original = chart.bazi
-print(chart.taiyuan)
-print(chart.minggong)
-print(len(chart.bazi.pillars), chart.bazi == original)
+print('胎元', chart.taiyuan)
+print('命宫', chart.minggong)
 ```
 
 ```{testoutput} integration-auxiliary
-丁卯
-甲戌
-4 True
+胎元 丁卯
+命宫 甲戌
 ```
 
 胎元取月干顺移一、月支顺移三，只作符号派生，不倒推实际受孕时间。
 命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
-时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#胎元与命宫附加查询)。
+时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
 
 这两项不进入现有五行、十神、神煞、关系或流运分析，也不进入盘身份、`school` 或旧文本输出。
 低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；
 后者需要已调整的有效命宫月支，不接收裸整数月序。来源与其他读法候选可查知识对象
 `concept.taiyuan`、`concept.minggong`，均须显式包含参考条目，不自动认定解释成立。
-
-## 内存对象与输入隔离
-
-命盘与判别结果没有保存、恢复或格式迁移接口。`BaziChart.bazi` 每次返回独立深拷贝；
-`Bazi` 按完整输入身份比较，`BaziChart` 按对象身份比较。知识库按内容和顺序比较。
-知识 JSON 只作当前编辑来源，读取方法见 {doc}`knowledge`。
-
-`ContextResult` 是 frozen dataclass。构造参数 `_bazi` 接收 `Bazi` 输入并在构造时深拷贝；
-`bazi` 属性每次返回独立深拷贝。`dataclasses.replace(result, _bazi=...)`
-也会验证并复制输入。相等与哈希包括输入的性别、完整配置及地点时间身份，不使用显示文本作身份。
-`knowledge` 复用显式传入的不可变实例；未传时，每次求值独立加载当前编辑源，已有结果不随源文件变化。
-`ContextResult.render()` 直接读取结果持有的领域值，不重新排盘或重建知识对象。
 
 ## 前提匹配：结构事实，不是判断
 
@@ -123,38 +127,43 @@ result = evaluate_context(
   criterion_id=info.criterion_id,
   observation=NatalObservation(),
 )
-print(result.criterion.status, result.criterion.reason, result.criterion.scope_complete)
+print('状态', result.criterion.status, '范围完整', result.criterion.scope_complete)
 print(dict(result.criterion.observations))
-print('默认返回的关联条目', len(result.reference_ids))
 with_references = evaluate_context(
   chart,
   criterion_id=info.criterion_id,
   observation=NatalObservation(),
   include_reference_only=True,
 )
-print('包含参考条目', len(with_references.reference_ids))
-print('判据状态相同', with_references.criterion.status == result.criterion.status)
+for claim_id in with_references.reference_ids:
+  print(with_references.knowledge.entry(claim_id).text)
 ```
 
 ```{testoutput} integration-context
 选定范围内正官与七杀各至少出现一次。
-SATISFIED premise_satisfied True
+状态 SATISFIED 范围完整 True
 {'observed_coexistence': True, 'female': True}
-默认返回的关联条目 0
-包含参考条目 2
-判据状态相同 True
+如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。
+如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。
 ```
 
-上例的结构事实成立，所以状态为 `SATISFIED`；两个关联条目均不默认展示，因此第一次的参考 ID 元组为空。
-第二次传入 `include_reference_only=True` 后返回两个 ID，判据状态不变。空参考元组只说明本次没有返回关联条目，
+上例的结构事实成立，所以状态为 `SATISFIED`。最后两行是库中仅供参考的文字，前提满足不能推出这些职场或法律事件。
+两个关联条目均不默认展示，因此第一次的 `result.reference_ids` 为空；第二次传入 `include_reference_only=True`
+才读到文字，判据状态不变。空参考元组只说明本次没有返回关联条目，
 不能据此读成“前提不成立”：条目也可能因自定义知识库缺失或性别筛选而未返回。
-参考 ID 按判据声明序筛选，不按知识库条目顺序排列；筛选规则见[判据目录](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#判据目录)。
+参考 ID 按判据声明序筛选，不按知识库条目顺序排列；筛选规则见[判据目录](../api-contract.md#判据目录)。
 正文、引文与来源说明的编辑不改变判据状态；自定义库须保持同 ID 的领域含义，不再核对内容摘要。
 条目的来源状态见 {doc}`knowledge`。
 
 ### 选择观察范围与读取证据
 
-`observation=` 接收具体观察请求，没有隐式范围默认值：
+`observation=` 接收具体观察请求，没有隐式范围默认值。三种结果的读法是：
+
+| 状态 | 读法 |
+| --- | --- |
+| `SATISFIED` | 判据定义的结构事实满足。 |
+| `NOT_SATISFIED` | 所需观察完整，但事实或判据的性别条件不满足。 |
+| `UNKNOWN` | 所需年份、坐标或流运观察不完整；已有的部分证据仍保留。 |
 
 - `NatalObservation()` 只查原局，可供全部判据使用。
 - `LiunianObservation(ganzhi_year=2024)` 查原局加单流年，供明藏干分类判据使用；省略年份时求值为 UNKNOWN。
@@ -196,18 +205,22 @@ assert result.evidence.transits is not None
 print(result.criterion.status, result.criterion.scope_complete)
 print(tuple(kind.value for kind in result.evidence.transits))
 print(criterion(result.criterion.criterion_id).entry_role, len(result.reference_ids))
-print(result.knowledge.entry(result.reference_ids[0]).claim_id)
+for claim_id in result.reference_ids:
+  print(result.knowledge.entry(claim_id).text)
 ```
 
 ```{testoutput} integration-transits
 SATISFIED True
 ('dayun', 'liunian')
 condition 1
-editorial.tanyuan.wife_palace_xingchong.v1
+《命理探原·论妻子》：「又有妻透成格。或妻宮有用〔小標點〕而坐下刑衝。未免得美妻而難偕老。」（〔〕内为整理记号，非原书文字。）
 ```
 
-`CriterionResult` 只存 criterion_id、reason、observations，definition、status、scope_complete 从注册定义和原因派生；
-`asdict` 不包含这些派生属性，固定 scope／entry 标签也不属于 dataclass 构造字段。
-`ContextResult` 直接构造保留参考 ID 的顺序和重复，只检查类型与存在性，不要求其属于该判据的 claims。
-直接构造只检查结构，不认证观察、原因、请求年份和手填证据的事实对应关系；通常应使用 evaluate_context 取得结果。
-当前构造、枚举读取和位置模式的完整条件见[观察请求与结果对象](https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md#观察请求与结果对象)。
+本例 `entry_role='condition'`，只检查妻宫刑冲这个局部条件，不认证条目全文或其中的现实事件。
+想连同来源、前提和限度一起显示，用 `result.knowledge.render(entry)`；读取方法见 {doc}`knowledge`。
+
+## 内存结果与对象契约
+
+通常使用 `evaluate_context` 取得结果，不直接手填证据构造。命盘和判别结果没有保存、恢复或格式迁移接口，
+知识 JSON 只作当前编辑来源。命盘对输入作拷贝隔离，已创建结果不随源文件的修改变化。
+直接构造、拷贝、相等、`asdict` 与模式匹配的精确条件见 {doc}`../api-contract`。

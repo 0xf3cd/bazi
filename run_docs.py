@@ -54,6 +54,42 @@ def git_output(*args: str) -> str:
   return subprocess.check_output(['git', '-C', str(ROOT), *args], text=True, encoding='utf-8').strip()
 
 
+def copy_root_document(source: Path, filename: str, destination: str, sha: str) -> None:
+  '''根文档在站内使用同版本页面；必须读源码的链接绑定构建提交。'''
+  text = (ROOT / filename).read_text(encoding='utf-8')
+  repository = f'https://github.com/0xf3cd/bazi/blob/{sha}/'
+  for old, new in (
+    ('https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md', 'api-contract.md'),
+    ('https://github.com/0xf3cd/bazi/blob/main/RELEASING.md', repository + 'RELEASING.md'),
+    ('https://0xf3cd.github.io/bazi/latest/catalog/entries.html', 'catalog/entries.rst'),
+  ):
+    text = text.replace(old, new)
+  for old, new in (
+    ('docs/', ''), ('API_CONTRACT.md', 'api-contract.md'), ('RELEASE_NOTES.md', 'release-notes.md'),
+    ('README.md#命令行', 'guides/cli.md'), ('README.md', repository + 'README.md'),
+    ('RELEASING.md', repository + 'RELEASING.md'), ('bazi/', repository + 'bazi/'),
+    ('tests/', repository + 'tests/'),
+  ):
+    text = text.replace('](' + old, '](' + new)
+  (source / destination).write_text(text, encoding='utf-8')
+
+
+def generate_installation(source: Path, version_label: str, sha: str) -> None:
+  '''为本次构建生成安装片段，不修改仓内指南或旧版归档。'''
+  if version_label == 'dev':
+    identity = '本页为开发版，下面安装与文档相同提交的源码（需要 Git）：'
+    requirement = f'git+https://github.com/0xf3cd/bazi.git@{sha}'
+    extra = '\n也可下载该提交的源码，在源码根目录运行 `python -m pip install .`。最近发布版另见[版本入口](https://0xf3cd.github.io/bazi/)。\n'
+  else:
+    identity = f'本页对应发布版 {version_label}，安装相同版本：'
+    requirement = 'bazi==' + version_label.removeprefix('v')
+    extra = ''
+  (source / 'installation.inc').write_text(
+    identity + f'\n\n```sh\npython -m pip install "{requirement}"\n```\n' + extra,
+    encoding='utf-8',
+  )
+
+
 def build(output: Path, version_label: str) -> None:
   '''严格构建、执行示例并检查实际 HTML；只写构建产物，不部署站点。'''
   sha = git_output('rev-parse', 'HEAD')
@@ -83,12 +119,12 @@ def build(output: Path, version_label: str) -> None:
     shutil.copytree(ROOT / 'docs', source)
     generate_api(source)
     generate_readme_example(source)
-    contributing = (ROOT / 'CONTRIBUTING.md').read_text(encoding='utf-8')
-    contributing = contributing.replace('](bazi/', f'](https://github.com/0xf3cd/bazi/blob/{sha}/bazi/')
-    contributing = contributing.replace('](docs/versioning.md)', '](versioning.md)')
-    contributing = contributing.replace('](RELEASING.md', f'](https://github.com/0xf3cd/bazi/blob/{sha}/RELEASING.md')
-    (source / 'contributing.md').write_text(contributing, encoding='utf-8')
-    shutil.copyfile(ROOT / 'RELEASE_NOTES.md', source / 'release-notes.md')
+    generate_installation(source, version_label, sha)
+    for filename, destination in (
+      ('CONTRIBUTING.md', 'contributing.md'), ('API_CONTRACT.md', 'api-contract.md'),
+      ('RELEASE_NOTES.md', 'release-notes.md'),
+    ):
+      copy_root_document(source, filename, destination, sha)
     version_text = f'''# 文档版本
 
 当前页面：{'开发版' if version_label == 'dev' else version_label}。
@@ -111,7 +147,7 @@ def build(output: Path, version_label: str) -> None:
       ]
       subprocess.run(command, env=environment, check=True)
     subprocess.run([
-      sys.executable, '-B', str(ROOT / 'run_doc_checks.py'), str(candidate / 'html'), str(candidate / 'doctest'),
+      sys.executable, '-B', str(ROOT / 'run_doc_checks.py'), str(candidate / 'html'), str(candidate / 'doctest'), version_label, sha,
     ], env=environment, check=True)
     metadata = {
       'version': version_label, 'commit': sha, 'dirty': dirty,

@@ -24,7 +24,7 @@ def test_readme_has_python_examples() -> None:
   assert len(BLOCKS) == len(re.findall(r'^[ \t]*(?:`{3,}|~{3,})[ \t]*(?:python[0-9]*|py)\b', README, re.MULTILINE | re.IGNORECASE))
 
 
-def _run_readme(block: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run_example(block: str, cwd: Path) -> subprocess.CompletedProcess[str]:
   script = cwd / 'first_chart.py'
   script.write_text(block, encoding='utf-8')
   return subprocess.run(
@@ -37,16 +37,27 @@ def _run_readme(block: str, cwd: Path) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.parametrize('block', BLOCKS, ids=[f'example-{index}' for index in range(len(BLOCKS))])
 def test_readme_python_example(block: str, tmp_path: Path) -> None:
-  result = _run_readme(block, tmp_path)
+  result = _run_example(block, tmp_path)
   assert result.returncode == 0, result.stdout + result.stderr
   assert 'object at 0x' not in result.stdout
 
 
-def test_first_chart_saves_readable_records(tmp_path: Path) -> None:
-  result = _run_readme(BLOCKS[0], tmp_path)
+def test_readme_output_matches_the_example(tmp_path: Path) -> None:
+  result = _run_example(BLOCKS[0], tmp_path)
   assert result.returncode == 0, result.stdout + result.stderr
   expected = re.search(r'^```text\n(.*?)^```$', README, re.MULTILINE | re.DOTALL)
   assert expected is not None and result.stdout == expected[1]
+  assert {path.name for path in tmp_path.iterdir()} == {'first_chart.py'}
+
+
+def test_quickstart_saves_readable_text(tmp_path: Path) -> None:
+  guide = (ROOT / 'docs/guides/quickstart.md').read_text(encoding='utf-8')
+  code = re.search(r'^```\{testcode\} quickstart-save\n(.*?)^```$', guide, re.MULTILINE | re.DOTALL)
+  expected = re.search(r'^```\{testoutput\} quickstart-save\n(.*?)^```$', guide, re.MULTILINE | re.DOTALL)
+  assert code is not None and expected is not None
+  result = _run_example(code[1], tmp_path)
+  assert result.returncode == 0, result.stdout + result.stderr
+  assert result.stdout == expected[1]
   assert {path.name for path in tmp_path.iterdir()} == {'first_chart.py', 'chart.txt'}
   expected_chart = BaziChart(Bazi.create('1990-05-17T10:30:00', 'female'))
   assert tuple(map(str, expected_chart.bazi.pillars)) == ('庚午', '辛巳', '壬午', '乙巳')
@@ -86,8 +97,7 @@ def test_knowledge_guide_matches_the_corpus() -> None:
     row = next(line for line in guide.splitlines() if line.startswith(f'| `{field}` |'))
     values = re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1])
     assert sorted(values) == sorted(get_args(schema)), field
-  witnessed = sum(entry.source_state == 'witnessed' for entry in entries)
   row = next(line for line in guide.splitlines() if line.startswith('| `show_by_default` |'))
   assert re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1]) == ['True', 'False']
-  reference = sum(entry.source_state == 'witnessed' and not entry.show_by_default for entry in entries)
-  assert f'`witnessed` 条目有 {witnessed} 条，其中 {reference} 条仍不默认展示' in guide
+  assert all(entry.source_state == 'witnessed' and entry.applicability == 'unconditional'
+             for entry in entries if entry.show_by_default)

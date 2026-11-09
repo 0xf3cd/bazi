@@ -23,6 +23,13 @@ def test_top_level_help_lists_five_tasks(tmp_path: Path, args: tuple[str, ...]) 
     assert f'bazi {task}' in result.stdout
 
 
+@pytest.mark.parametrize('task', ['chart', 'match'])
+def test_birth_help_explains_the_default_clock(task):
+  parser = cli._subcommand_parsers(cli._command_parser())[task]
+  action = next(action for action in parser._actions if '--birth-time' in action.option_strings)
+  assert '东八区' in (action.help or '') and '不换算时区' in (action.help or '')
+
+
 @pytest.mark.parametrize('task', COMMANDS)
 def test_task_help_fits_one_screen(tmp_path: Path, task: str) -> None:
   result = run_cli(tmp_path, task, '--help', env={'COLUMNS': '80'})

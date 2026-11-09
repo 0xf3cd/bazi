@@ -11,6 +11,9 @@
 | 报告程序的可复现问题 | 开普通 issue，写明 Python 版本、最小代码和实际与预期结果 |
 | 改代码、文档或工具 | 开普通 issue 说明问题与方案，维护者回复同意后再写 PR |
 
+条目 ID 可在[知识目录](https://0xf3cd.github.io/bazi/latest/catalog/entries.html)查找，也可直接贴所读条目的页面链接。
+找不到 ID 时，描述原文及问题即可，不必下载 JSON。
+
 没有 issue 讨论的 PR 不会合并。讨论通过只表示接受这个方向，PR 仍须通过下文的门禁与审阅。
 
 ## 出处要求
@@ -37,7 +40,14 @@
 
 ## 提 PR 之前
 
-从 `main` 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面；条目 ID 也可在该文件中查找。
+从 `main` 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
+
+维护规则与知识关联时：
+
+- 计算表归 `rules.py`，默认及合法配置归 `school.py`，知识文字、来源和状态归知识注册表；共表和派生关系继续从计算定义取值。
+- 变更时核对条目 ID、定义成员、表值、锚点和实际查找位置。国印的定义成员与条目 ID 由 `knowledge.py` 统一维护，新增成员须同步正反查询测试。
+- 原文、解释、锚点依据及来源限度分别保留；单源不默认展示，不把转载网站当成独立谱系，也不因建立关联而升级来源状态。
+- 覆盖表的属性／字段集合与示例由文档检查核对；这些检查不裁定命理依据，也不证明表外规则穷尽。
 
 ### 准备环境
 
@@ -126,4 +136,4 @@ python run_docs.py --output-dir output_data/docs-preview
 
 ## 审阅与合并
 
-维护者负责安排独立的正确性与设计审阅，以及修复后的复验。代理按本次任务约定完成审阅与验证；外部贡献者无需自行安排独立审阅或购买工具订阅。仓级编码与代理执行约定见 [AGENTS.md](https://github.com/0xf3cd/bazi/blob/main/AGENTS.md)。合并及是否 squash 均由维护者决定。
+维护者负责安排独立的正确性与设计审阅，以及修复后的复验。代理按本次任务约定完成审阅与验证；外部贡献者无需自行安排独立审阅或购买工具订阅。仓级编码与代理执行约定见[当前主干的 AGENTS.md](https://github.com/0xf3cd/bazi/blob/main/AGENTS.md)，该链接用于查看现行贡献政策。合并及是否 squash 均由维护者决定。

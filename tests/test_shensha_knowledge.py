@@ -29,6 +29,7 @@ def test_guoyin_round_trip_keeps_sources(
   assert guoyin_def(KNOWLEDGE, claim_id) is definition
   assert entry.sources == ('repository_guoyin_variants',)
   assert entry.source_state == 'repository_attributed' and entry.show_by_default is False
+  assert f'偏移 +{offset}' in entry.text and entry.limits
   assert all((target.index - BaziRules.TIANGAN_LU[tg].index) % 12 == offset
              for tg, target in ShenshaRules.GUOYIN[definition].items())
   with pytest.raises(FrozenInstanceError):
@@ -120,6 +121,13 @@ def test_additions_remain_reference_only() -> None:
     promoted = replace(entry, show_by_default=True)
     with pytest.raises(ValueError, match='Default entry needs independent lineages'):
       KnowledgeBase(tuple(k.objects.values()), (), tuple(k.sources.values()), (promoted,))
+
+
+def test_shensha_objects_match_known_catalog() -> None:
+  assert {obj.object_id for obj in KNOWLEDGE.objects.values() if obj.kind == 'shensha'} == {
+    'shensha.guoyin', 'shensha.kongwang', 'shensha.tianyi', 'shensha.taohua',
+    'shensha.yima', 'shensha.wenchang', 'shensha.huagai', 'shensha.yangren',
+  }
 
 
 def test_excerpts_keep_layers_and_original_chars() -> None:

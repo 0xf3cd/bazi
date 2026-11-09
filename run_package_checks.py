@@ -50,7 +50,7 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'docs/_ext/api_reference.py', 'docs/_ext/house_docstrings.py', 'docs/_ext/typeddict_fields.py',
   'docs/_ext/knowledge_catalog.py', 'docs/_ext/source_links.py',
   'docs/_static/documentation.css',
-  'docs/guides/quickstart.md', 'docs/guides/configuration.md',
+  'docs/guides/quickstart.md', 'docs/guides/cli.md', 'docs/guides/configuration.md',
   'docs/guides/relations-transits.md', 'docs/guides/integration.md', 'docs/guides/knowledge.md',
   'docs/guides/rule-coverage.md',
   'docs/catalog/index.rst', 'docs/catalog/objects.rst', 'docs/catalog/contexts.rst',

@@ -316,7 +316,7 @@ def anchor_label(result: KongwangResult) -> str:
 ## 命令行
 
 `console_scripts` 中只有命令 `bazi`，对应 `bazi.cli:main`；不提供 `python -m bazi` 或根目录兼容脚本。
-调用方法见 [README](README.md#命令行)。
+调用方法见[命令行指南](docs/guides/cli.md)。
 
 | 任务 | 行为 |
 | --- | --- |
