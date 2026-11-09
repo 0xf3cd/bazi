@@ -61,7 +61,6 @@ def copy_root_document(source: Path, filename: str, destination: str, sha: str) 
   for old, new in (
     ('https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md', 'api-contract.md'),
     ('https://github.com/0xf3cd/bazi/blob/main/RELEASING.md', repository + 'RELEASING.md'),
-    ('https://0xf3cd.github.io/bazi/latest/catalog/entries.html', 'catalog/entries.rst'),
   ):
     text = text.replace(old, new)
   for old, new in (

@@ -34,7 +34,8 @@ def _check_navigation(source: Path, root: Path) -> None:
     for token in MarkdownIt('commonmark').parse(source.read_text(encoding='utf-8'))
     for child in token.children or () if child.type == 'link_open'
   ]
-  assert links or re.search(r'\{doc\}`[^`]+`', source.read_text(encoding='utf-8'))
+  text = source.read_text(encoding='utf-8')
+  assert links or re.search(r'\{doc\}`[^`]+`', text) or '```{toctree}' in text
   for link in links:
     assert isinstance(link, str)
     url = urlsplit(link)
@@ -66,6 +67,7 @@ def _check_navigation(source: Path, root: Path) -> None:
   'README.md', 'RELEASE_NOTES.md', 'API_CONTRACT.md', 'AGENTS.md', 'CONTRIBUTING.md', 'RELEASING.md',
   'docs/guides/quickstart.md', 'docs/guides/integration.md', 'docs/guides/configuration.md',
   'docs/guides/knowledge.md',
+  'docs/guides/cli.md', 'docs/guides/relations-transits.md', 'docs/guides/rule-coverage.md', 'docs/index.md',
 ])
 def test_navigation_links_resolve(name):
   _check_navigation(ROOT / name, ROOT)

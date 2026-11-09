@@ -109,13 +109,15 @@ def test_same_version_navigation_is_accepted(version):
   check_task_navigation(pages, version, 'a' * 40)
 
 
-@pytest.mark.parametrize('mutation', ['main', 'latest', 'missing-page', 'missing-link', 'wrong-install'])
+@pytest.mark.parametrize('mutation', ['main', 'latest', 'unversioned', 'missing-page', 'missing-link', 'wrong-install'])
 def test_task_navigation_detects_wrong_paths(mutation):
   pages = _task_pages()
   if mutation == 'main':
     pages['guides/integration.html'].feed('<a href="https://github.com/0xf3cd/bazi/blob/main/API_CONTRACT.md">contract</a>')
   elif mutation == 'latest':
     pages['guides/quickstart.html'].feed('<a href="https://0xf3cd.github.io/bazi/latest/guides/cli.html">cli</a>')
+  elif mutation == 'unversioned':
+    pages['guides/quickstart.html'].feed('<a href="https://0xf3cd.github.io/bazi/guides/cli.html">cli</a>')
   elif mutation == 'missing-page':
     del pages['api-contract.html']
   elif mutation == 'missing-link':
@@ -124,6 +126,30 @@ def test_task_navigation_detects_wrong_paths(mutation):
     pages['guides/knowledge.html'].code_blocks[:] = ['python -m pip install bazi']
   with pytest.raises(AssertionError):
     check_task_navigation(pages, 'dev', 'a' * 40)
+
+
+def _check_entry_alias_links(text: str) -> None:
+  suffixes = re.findall(r'''https://0xf3cd\.github\.io/bazi/latest/([^\s)'"<>`]*)''', text)
+  assert all(suffix in ('', 'index.html') for suffix in suffixes), suffixes
+
+
+@pytest.mark.parametrize('filename', [
+  'README.md', 'CONTRIBUTING.md', 'bazi/cli.py',
+  '.github/ISSUE_TEMPLATE/knowledge-correction.yml', '.github/ISSUE_TEMPLATE/school-reading.yml',
+])
+def test_entry_links_use_real_site_paths(filename):
+  _check_entry_alias_links((ROOT / filename).read_text(encoding='utf-8'))
+
+
+@pytest.mark.parametrize('suffix', ['', 'index.html'])
+def test_entry_alias_index_is_accepted(suffix):
+  _check_entry_alias_links(f'https://0xf3cd.github.io/bazi/latest/{suffix}')
+
+
+@pytest.mark.parametrize('suffix', ['guides/quickstart.html', 'catalog/entries.html'])
+def test_entry_alias_subpages_are_rejected(suffix):
+  with pytest.raises(AssertionError):
+    _check_entry_alias_links(f'https://0xf3cd.github.io/bazi/latest/{suffix}')
 
 
 def _run_example(code: str, expected: str, directory: Path, timeout: float = 15) -> None:

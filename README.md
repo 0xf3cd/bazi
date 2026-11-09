@@ -11,7 +11,7 @@
 python -m pip install bazi
 ```
 
-需要新建环境时，见[快速开始](https://0xf3cd.github.io/bazi/latest/guides/quickstart.html)。普通使用不需要测试或文档构建工具。
+需要新建环境时，可在[文档站](https://0xf3cd.github.io/bazi/)选择版本后查看“快速开始”。普通使用不需要测试或文档构建工具。
 
 ## 排第一张盘
 
@@ -36,14 +36,14 @@ print('年干十神', chart.shishen.year.tiangan)
 
 四柱依次为年、月、日、时。性别用 `female`（女）或 `male`（男）；类型从定义模块导入。
 默认采用 `DAY` 精度、`celestial` 后端和 23:00 换日柱。`DAY` 只按日期比较节气，出生小时仍用于时柱。
-海外当地钟与真太阳时的输入方法见[配置指南](https://0xf3cd.github.io/bazi/latest/guides/configuration.html)。
+海外当地钟与真太阳时的输入方法，见[文档站](https://0xf3cd.github.io/bazi/)中对应版本的“配置与时间口径”。
 
 ## 继续使用
 
-以下入口是最近发布版文档；当前源码的说明另见[开发版文档](https://0xf3cd.github.io/bazi/dev/)。
+从[文档站](https://0xf3cd.github.io/bazi/)选择发布版阅读；当前源码的说明另见[开发版文档](https://0xf3cd.github.io/bazi/dev/)。
 
-- [快速开始](https://0xf3cd.github.io/bazi/latest/guides/quickstart.html)：查看命盘文本、保存结果、按需准备环境。
-- [完整文档](https://0xf3cd.github.io/bazi/)：配置、关系与流运、集成开发、知识目录及 API 参考。
+快速开始介绍命盘文本、保存结果和可选的环境准备；其余指南提供配置、关系与流运、集成开发，
+知识目录与 API 参考供随时查阅。
 
 不写 Python 时可使用安装后的 `bazi` 命令，先运行 `bazi chart --help` 查看排盘选项。
 

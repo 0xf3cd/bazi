@@ -11,7 +11,7 @@
 | 报告程序的可复现问题 | 开普通 issue，写明 Python 版本、最小代码和实际与预期结果 |
 | 改代码、文档或工具 | 开普通 issue 说明问题与方案，维护者回复同意后再写 PR |
 
-条目 ID 可在[知识目录](https://0xf3cd.github.io/bazi/latest/catalog/entries.html)查找，也可直接贴所读条目的页面链接。
+先在[文档站](https://0xf3cd.github.io/bazi/versions/)选择版本，再进入“知识目录 → 条目”查找 ID，也可直接贴所读条目的页面链接。
 找不到 ID 时，描述原文及问题即可，不必下载 JSON。
 
 没有 issue 讨论的 PR 不会合并。讨论通过只表示接受这个方向，PR 仍须通过下文的门禁与审阅。

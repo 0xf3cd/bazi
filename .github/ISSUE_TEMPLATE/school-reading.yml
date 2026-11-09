@@ -12,7 +12,7 @@ body:
     id: claim_id
     attributes:
       label: 相关条目 ID 或页面链接（claim_id）
-      description: 可从[知识目录](https://0xf3cd.github.io/bazi/latest/catalog/entries.html)复制 ID 或条目链接；找不到可描述原文，没有则留空。
+      description: 在[文档站](https://0xf3cd.github.io/bazi/versions/)选择版本，进入“知识目录 → 条目”复制 ID 或链接；找不到可描述原文，没有则留空。
     validations:
       required: false
   - type: textarea

@@ -579,7 +579,7 @@ def _command_parser() -> argparse.ArgumentParser:
       f'  {_PROG} match <判据ID>                         判据说明与所需输入\n'
       f'  {_PROG} demo --seed 236                        随机命盘与流运示例\n'
       f'  {_PROG} relationship --seed 236                婚恋与十年流年报告\n'
-      '时间与配置：https://0xf3cd.github.io/bazi/latest/guides/configuration.html\n'
+      '文档与版本：https://0xf3cd.github.io/bazi/\n'
     ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
   )

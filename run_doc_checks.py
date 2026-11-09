@@ -454,7 +454,7 @@ def check_task_navigation(pages: dict[str, Page], version: str, sha: str) -> Non
       if url.netloc == 'github.com' and url.path.startswith('/0xf3cd/bazi/blob/main/'):
         assert filename == 'contributing.html' and url.path == '/0xf3cd/bazi/blob/main/AGENTS.md', (filename, link)
       if url.netloc == '0xf3cd.github.io':
-        assert not re.match(r'/bazi/(?:latest|dev|v[0-9.]+)/', url.path), (filename, link)
+        assert url.path in ('/bazi/', '/bazi/versions/'), (filename, link)
   expected = {
     'guides/quickstart.html', 'guides/cli.html', 'guides/configuration.html',
     'guides/relations-transits.html', 'guides/knowledge.html', 'guides/integration.html', 'api-contract.html',

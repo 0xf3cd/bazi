@@ -81,7 +81,8 @@ print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
 ```
 
 每步大运覆盖 `[start_moment, end_moment)`，年份是标签，不表示占据整个标签年；规则见 {doc}`configuration`。
-每次访问 `dayun`／`liunian` 都新建生成器，保存到变量后继续遍历会从上次位置接着读；大运数量取决于后端支持范围。
+每次访问 `dayun`／`liunian` 都新建生成器，从头开始读取。把生成器保存到变量后，继续遍历这个变量会从上次位置接着读。
+大运数量取决于后端支持范围。
 `xiaoyun` 则是缓存元组，可反复遍历。排成流运文字的例子在本页{ref}`流运文本 <transits-text>`。
 
 后续按任务选择：原局关系看下节，神煞看{ref}`原局神煞 <relations-shensha>`，

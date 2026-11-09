@@ -22,11 +22,10 @@
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
-bazi = Bazi.create('1990-05-17 10:30', 'female')
-chart = BaziChart(bazi)
-print('四柱', ' '.join(map(str, bazi.pillars)))
-print('日主', bazi.day_master)
-print('性别', bazi.gender)
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+print('四柱', ' '.join(map(str, chart.bazi.pillars)))
+print('日主', chart.bazi.day_master)
+print('性别', chart.bazi.gender)
 ```
 
 ```{testoutput} quickstart-chart
