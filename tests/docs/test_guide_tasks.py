@@ -182,4 +182,4 @@ def test_example_gate_rejects_missing_input(tmp_path):
 def test_example_gate_stops_an_infinite_loop(tmp_path):
   with pytest.raises(subprocess.TimeoutExpired) as stopped:
     _run_example("print('started', flush=True)\nwhile True:\n  pass\n", '', tmp_path, timeout=1)
-  assert stopped.value.stdout == b'started\n'
+  assert stopped.value.stdout in (b'started\n', 'started\n')
