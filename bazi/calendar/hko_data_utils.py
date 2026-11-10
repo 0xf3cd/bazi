@@ -541,12 +541,17 @@ def prev_jie(dt: datetime) -> JieqiTime:
   Return: (JieqiTime) 所属节及其公历时刻。
 
   Examples:
-  - prev_jie(jieqi_moment(2024, Jieqi.小寒))
-    - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
-  - prev_jie(jieqi_moment(2024, Jieqi.小寒) + timedelta(seconds=1))
-    - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
-  - prev_jie(jieqi_moment(2024, Jieqi.小寒) - timedelta(seconds=1))
-    - return: (Jieqi.大雪, jieqi_moment(2023, Jieqi.大雪))
+  ```python
+  from datetime import timedelta
+  from bazi.calendar.dates import JieqiTime
+  from bazi.calendar.hko_data_utils import jieqi_moment, prev_jie
+  from bazi.defines import Jieqi
+
+  xiaohan = jieqi_moment(2024, Jieqi.小寒)
+  assert prev_jie(xiaohan) == JieqiTime(Jieqi.小寒, xiaohan)
+  assert prev_jie(xiaohan + timedelta(seconds=1)) == JieqiTime(Jieqi.小寒, xiaohan)
+  assert prev_jie(xiaohan - timedelta(seconds=1)) == JieqiTime(Jieqi.大雪, jieqi_moment(2023, Jieqi.大雪))
+  ```
   '''
 
   if not isinstance(dt, datetime):
@@ -584,12 +589,18 @@ def next_jie(dt: datetime) -> JieqiTime:
   Return: (JieqiTime) 下一节及其公历时刻。
 
   Examples:
-  - next_jie(jieqi_moment(2024, Jieqi.小寒))
-    - return: (Jieqi.立春, jieqi_moment(2024, Jieqi.立春))
-  - next_jie(jieqi_moment(2024, Jieqi.小寒) + timedelta(seconds=1))
-    - return: (Jieqi.立春, jieqi_moment(2024, Jieqi.立春))
-  - next_jie(jieqi_moment(2024, Jieqi.小寒) - timedelta(seconds=1))
-    - return: (Jieqi.小寒, jieqi_moment(2024, Jieqi.小寒))
+  ```python
+  from datetime import timedelta
+  from bazi.calendar.dates import JieqiTime
+  from bazi.calendar.hko_data_utils import jieqi_moment, next_jie
+  from bazi.defines import Jieqi
+
+  xiaohan = jieqi_moment(2024, Jieqi.小寒)
+  lichun = jieqi_moment(2024, Jieqi.立春)
+  assert next_jie(xiaohan) == JieqiTime(Jieqi.立春, lichun)
+  assert next_jie(xiaohan + timedelta(seconds=1)) == JieqiTime(Jieqi.立春, lichun)
+  assert next_jie(xiaohan - timedelta(seconds=1)) == JieqiTime(Jieqi.小寒, xiaohan)
+  ```
   '''
 
   if not isinstance(dt, datetime):

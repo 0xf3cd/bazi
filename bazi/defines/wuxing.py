@@ -56,9 +56,13 @@ class Wuxing(BaziEnum):
     Return: (bool) 相生时为 True，否则为 False。
 
     Examples:
-    - Wuxing.水.generates(Wuxing.木) -> True  # 水生木
-    - Wuxing.木.generates(Wuxing.火) -> True  # 木生火
-    - Wuxing.火.generates(Wuxing.木) -> False # 火不生木
+    ```python
+    from bazi.defines import Wuxing
+
+    assert Wuxing.水.generates(Wuxing.木) is True
+    assert Wuxing.木.generates(Wuxing.火) is True
+    assert Wuxing.火.generates(Wuxing.木) is False
+    ```
     '''
     return _GENERATES[self] is wx
 
@@ -73,9 +77,13 @@ class Wuxing(BaziEnum):
     Return: (bool) 相克时为 True，否则为 False。
 
     Examples:
-    - Wuxing.金.destructs(Wuxing.木) -> True  # 金克木
-    - Wuxing.土.destructs(Wuxing.水) -> True  # 土克水
-    - Wuxing.水.destructs(Wuxing.土) -> False # 水不克土
+    ```python
+    from bazi.defines import Wuxing
+
+    assert Wuxing.金.destructs(Wuxing.木) is True
+    assert Wuxing.土.destructs(Wuxing.水) is True
+    assert Wuxing.水.destructs(Wuxing.土) is False
+    ```
     '''
     return _DESTRUCTS[self] is wx
 

@@ -98,10 +98,13 @@ def sanhui(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   Return: (Wuxing | None) 三会对应五行；不构成三会时为 None。
 
   Examples:
-  - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰)
-    - return: Wuxing.木
-  - sanhui(Dizhi.寅, Dizhi.卯, Dizhi.丑)
-    - return: None
+  ```python
+  from bazi.defines import Dizhi, Wuxing
+  from bazi.utils.dizhi_utils import sanhui
+
+  assert sanhui(Dizhi.寅, Dizhi.卯, Dizhi.辰) is Wuxing.木
+  assert sanhui(Dizhi.寅, Dizhi.卯, Dizhi.丑) is None
+  ```
   '''
 
   _validate_dizhis((dz1, dz2, dz3))
@@ -121,10 +124,13 @@ def liuhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   Return: (Wuxing | None) 六合对应五行；不构成六合时为 None。
 
   Examples:
-  - liuhe(Dizhi.寅, Dizhi.亥)
-    - return: Wuxing.木
-  - liuhe(Dizhi.寅, Dizhi.辰)
-    - return: None
+  ```python
+  from bazi.defines import Dizhi, Wuxing
+  from bazi.utils.dizhi_utils import liuhe
+
+  assert liuhe(Dizhi.寅, Dizhi.亥) is Wuxing.木
+  assert liuhe(Dizhi.寅, Dizhi.辰) is None
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -145,14 +151,16 @@ def anhe(dz1: Dizhi, dz2: Dizhi, *, definition: DizhiRules.AnheDef = DizhiRules.
   Return: (bool) 是否构成暗合。
 
   Examples:
-  - anhe(Dizhi.寅, Dizhi.午)
-    - return: True
-  - anhe(Dizhi.寅, Dizhi.丑)
-    - return: True
-  - anhe(Dizhi.寅, Dizhi.丑, definition=DizhiRules.AnheDef.NORMAL)
-    - return: False
-  - anhe(Dizhi.寅, Dizhi.午, definition=DizhiRules.AnheDef.MANGPAI)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.rules import DizhiRules
+  from bazi.utils.dizhi_utils import anhe
+
+  assert anhe(Dizhi.寅, Dizhi.午) is True
+  assert anhe(Dizhi.寅, Dizhi.丑) is True
+  assert anhe(Dizhi.寅, Dizhi.丑, definition=DizhiRules.AnheDef.NORMAL) is False
+  assert anhe(Dizhi.寅, Dizhi.午, definition=DizhiRules.AnheDef.MANGPAI) is False
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -174,10 +182,13 @@ def tonghe(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否构成通合。
 
   Examples:
-  - tonghe(Dizhi.寅, Dizhi.午)
-    - return: False
-  - tonghe(Dizhi.寅, Dizhi.丑)
-    - return: True
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import tonghe
+
+  assert tonghe(Dizhi.寅, Dizhi.午) is False
+  assert tonghe(Dizhi.寅, Dizhi.丑) is True
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -197,10 +208,13 @@ def tongluhe(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否构成通禄合。
 
   Examples:
-  - tongluhe(Dizhi.寅, Dizhi.午)
-    - return: True
-  - tongluhe(Dizhi.寅, Dizhi.丑)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import tongluhe
+
+  assert tongluhe(Dizhi.寅, Dizhi.午) is True
+  assert tongluhe(Dizhi.寅, Dizhi.丑) is False
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -220,10 +234,13 @@ def sanhe(dz1: Dizhi, dz2: Dizhi, dz3: Dizhi) -> Wuxing | None:
   Return: (Wuxing | None) 三合对应五行；不构成三合时为 None。
 
   Examples:
-  - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未)
-    - return: Wuxing.木
-  - sanhe(Dizhi.亥, Dizhi.卯, Dizhi.丑)
-    - return: None
+  ```python
+  from bazi.defines import Dizhi, Wuxing
+  from bazi.utils.dizhi_utils import sanhe
+
+  assert sanhe(Dizhi.亥, Dizhi.卯, Dizhi.未) is Wuxing.木
+  assert sanhe(Dizhi.亥, Dizhi.卯, Dizhi.丑) is None
+  ```
   '''
 
   _validate_dizhis((dz1, dz2, dz3))
@@ -242,12 +259,14 @@ def banhe(dz1: Dizhi, dz2: Dizhi) -> Wuxing | None:
   Return: (Wuxing | None) 半合对应五行；不构成半合时为 None。
 
   Examples:
-  - banhe(Dizhi.亥, Dizhi.卯)
-    - return: Wuxing.木
-  - banhe(Dizhi.卯, Dizhi.未)
-    - return: Wuxing.木
-  - banhe(Dizhi.亥, Dizhi.丑)
-    - return: None
+  ```python
+  from bazi.defines import Dizhi, Wuxing
+  from bazi.utils.dizhi_utils import banhe
+
+  assert banhe(Dizhi.亥, Dizhi.卯) is Wuxing.木
+  assert banhe(Dizhi.卯, Dizhi.未) is Wuxing.木
+  assert banhe(Dizhi.亥, Dizhi.丑) is None
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -271,12 +290,15 @@ def gonghe(dz1: Dizhi, dz2: Dizhi, *,
   Return: (Dizhi | None) 所拱之支；不符合所选定义时为 None。
 
   Examples:
-  - gonghe(Dizhi.申, Dizhi.辰)
-    - return: Dizhi.子
-  - gonghe(Dizhi.申, Dizhi.子)
-    - return: None
-  - gonghe(Dizhi.申, Dizhi.子, definition=DizhiRules.GongheDef.WIDE)
-    - return: Dizhi.辰
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.rules import DizhiRules
+  from bazi.utils.dizhi_utils import gonghe
+
+  assert gonghe(Dizhi.申, Dizhi.辰) is Dizhi.子
+  assert gonghe(Dizhi.申, Dizhi.子) is None
+  assert gonghe(Dizhi.申, Dizhi.子, definition=DizhiRules.GongheDef.WIDE) is Dizhi.辰
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -298,10 +320,13 @@ def gonghui(dz1: Dizhi, dz2: Dizhi) -> Dizhi | None:
   Return: (Dizhi | None) 所拱中神；结构不成立时为 None。
 
   Examples:
-  - gonghui(Dizhi.寅, Dizhi.辰)
-    - return: Dizhi.卯
-  - gonghui(Dizhi.寅, Dizhi.卯)
-    - return: None
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import gonghui
+
+  assert gonghui(Dizhi.寅, Dizhi.辰) is Dizhi.卯
+  assert gonghui(Dizhi.寅, Dizhi.卯) is None
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -325,22 +350,25 @@ def xing(*dizhis: Dizhi, definition: DizhiRules.XingDef = DizhiRules.XingDef.LOO
   Return: (DizhiRules.XingSubType | None) 相刑类型；不构成相刑时返回 `None`。
 
   Examples:
-  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申])
-    - return: XingSubType.SANXING
-  - xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.STRICT)
-    - return: None
-  - xing(*[Dizhi.寅, Dizhi.巳], definition=DizhiRules.XingDef.LOOSE)
-    - return: XingSubType.SANXING
-  - xing(Dizhi.午)
-    - return: None
-  - xing(Dizhi.午, Dizhi.午)
-    - return: XingSubType.ZIXING
-  - xing(Dizhi.午, definition=DizhiRules.XingDef.LOOSE)
-    - return: None
-  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午])
-    - raise: ValueError
-  - xing(*[Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午])
-    - raise: ValueError
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.rules import DizhiRules
+  from bazi.utils.dizhi_utils import xing
+
+  assert xing(Dizhi.寅, Dizhi.巳, Dizhi.申) is DizhiRules.XingSubType.SANXING
+  assert xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.STRICT) is None
+  assert xing(Dizhi.寅, Dizhi.巳, definition=DizhiRules.XingDef.LOOSE) is DizhiRules.XingSubType.SANXING
+  assert xing(Dizhi.午) is None
+  assert xing(Dizhi.午, Dizhi.午) is DizhiRules.XingSubType.ZIXING
+  assert xing(Dizhi.午, definition=DizhiRules.XingDef.LOOSE) is None
+  for branches in ([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午], [Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.午, Dizhi.午]):
+    try:
+      xing(*branches)
+    except ValueError:
+      pass
+    else:
+      raise AssertionError('超过三个地支应抛出 ValueError')
+  ```
   '''
 
   _validate_dizhis(dizhis)
@@ -364,12 +392,14 @@ def chong(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否相冲。
 
   Examples:
-  - chong(Dizhi.子, Dizhi.午)
-    - return: True
-  - chong(Dizhi.午, Dizhi.子)
-    - return: True
-  - chong(Dizhi.子, Dizhi.丑)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import chong
+
+  assert chong(Dizhi.子, Dizhi.午) is True
+  assert chong(Dizhi.午, Dizhi.子) is True
+  assert chong(Dizhi.子, Dizhi.丑) is False
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -387,14 +417,15 @@ def po(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否相破。
 
   Examples:
-  - po(Dizhi.卯, Dizhi.午)
-    - return: True
-  - po(Dizhi.午, Dizhi.卯)
-    - return: True
-  - po(Dizhi.丑, Dizhi.子)
-    - return: False
-  - po(Dizhi.丑, Dizhi.辰)
-    - return: True
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import po
+
+  assert po(Dizhi.卯, Dizhi.午) is True
+  assert po(Dizhi.午, Dizhi.卯) is True
+  assert po(Dizhi.丑, Dizhi.子) is False
+  assert po(Dizhi.丑, Dizhi.辰) is True
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -412,14 +443,15 @@ def hai(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否相害。
 
   Examples:
-  - hai(Dizhi.卯, Dizhi.辰)
-    - return: True
-  - hai(Dizhi.辰, Dizhi.卯)
-    - return: True
-  - hai(Dizhi.丑, Dizhi.子)
-    - return: False
-  - hai(Dizhi.丑, Dizhi.午)
-    - return: True
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import hai
+
+  assert hai(Dizhi.卯, Dizhi.辰) is True
+  assert hai(Dizhi.辰, Dizhi.卯) is True
+  assert hai(Dizhi.丑, Dizhi.子) is False
+  assert hai(Dizhi.丑, Dizhi.午) is True
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -438,16 +470,16 @@ def sheng(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否 dz1 生 dz2。
 
   Examples:
-  - sheng(Dizhi.卯, Dizhi.亥)
-    - return: False
-  - sheng(Dizhi.亥, Dizhi.卯)
-    - return: True
-  - sheng(Dizhi.丑, Dizhi.子)
-    - return: False
-  - sheng(Dizhi.丑, Dizhi.午)
-    - return: False
-  - sheng(Dizhi.午, Dizhi.丑)
-    - return: True
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import sheng
+
+  assert sheng(Dizhi.卯, Dizhi.亥) is False
+  assert sheng(Dizhi.亥, Dizhi.卯) is True
+  assert sheng(Dizhi.丑, Dizhi.子) is False
+  assert sheng(Dizhi.丑, Dizhi.午) is False
+  assert sheng(Dizhi.午, Dizhi.丑) is True
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -466,16 +498,16 @@ def ke(dz1: Dizhi, dz2: Dizhi) -> bool:
   Return: (bool) 是否 dz1 克 dz2。
 
   Examples:
-  - ke(Dizhi.子, Dizhi.巳)
-    - return: True
-  - ke(Dizhi.巳, Dizhi.子)
-    - return: False
-  - ke(Dizhi.丑, Dizhi.子)
-    - return: True
-  - ke(Dizhi.丑, Dizhi.午)
-    - return: False
-  - ke(Dizhi.午, Dizhi.丑)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.dizhi_utils import ke
+
+  assert ke(Dizhi.子, Dizhi.巳) is True
+  assert ke(Dizhi.巳, Dizhi.子) is False
+  assert ke(Dizhi.丑, Dizhi.子) is True
+  assert ke(Dizhi.丑, Dizhi.午) is False
+  assert ke(Dizhi.午, Dizhi.丑) is False
+  ```
   '''
 
   _validate_dizhis((dz1, dz2))
@@ -529,18 +561,30 @@ def search(dizhis: Sequence[Dizhi], relation: DizhiRelation, *,
   Return: (DizhiRelationCombos) 所有匹配组合，不包含作用方向。
 
   Examples:
-  - search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会)
-    - return: ({Dizhi.寅, Dizhi.卯, Dizhi.辰})
-  - search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合)
-    - return: ({ Dizhi.丑, Dizhi.寅}, { Dizhi.寅, Dizhi.午}, { Dizhi.卯, Dizhi.申})
-  - search([Dizhi.寅,Dizhi.巳, Dizhi.申, Dizhi.辰], DizhiRelation.刑)
-    - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })
-    - 输入只有一个辰，不构成自刑。
-  - search([Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰, Dizhi.辰], DizhiRelation.刑)
-    - return: ({ Dizhi.寅, Dizhi.巳, Dizhi.申 }, { Dizhi.辰 }, { Dizhi.寅, Dizhi.巳 }, { Dizhi.巳, Dizhi.申 }, { Dizhi.寅, Dizhi.申 })
-    - 输入两个辰构成自刑；返回组合的集合中只保留一个辰。
-  - search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑)
-    - return: ({ Dizhi.子, Dizhi.卯}, { Dizhi.寅, Dizhi.巳 })
+  ```python
+  from bazi.defines import Dizhi, DizhiRelation
+  from bazi.utils.dizhi_utils import search
+
+  assert search([Dizhi.寅, Dizhi.卯, Dizhi.辰, Dizhi.午, Dizhi.未], DizhiRelation.三会) == (
+    frozenset({Dizhi.寅, Dizhi.卯, Dizhi.辰}),
+  )
+  assert search([Dizhi.寅, Dizhi.卯, Dizhi.丑, Dizhi.午, Dizhi.申], DizhiRelation.暗合) == (
+    frozenset({Dizhi.丑, Dizhi.寅}), frozenset({Dizhi.寅, Dizhi.午}), frozenset({Dizhi.卯, Dizhi.申}),
+  )
+  branches = [Dizhi.寅, Dizhi.巳, Dizhi.申, Dizhi.辰]
+  assert search(branches, DizhiRelation.刑) == (
+    frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申}), frozenset({Dizhi.寅, Dizhi.巳}),
+    frozenset({Dizhi.巳, Dizhi.申}), frozenset({Dizhi.寅, Dizhi.申}),
+  )
+  # 单个辰不构成自刑；两个辰构成自刑，但返回的冻结集合只保留一个辰。
+  assert search(branches + [Dizhi.辰], DizhiRelation.刑) == (
+    frozenset({Dizhi.寅, Dizhi.巳, Dizhi.申}), frozenset({Dizhi.辰}),
+    frozenset({Dizhi.寅, Dizhi.巳}), frozenset({Dizhi.巳, Dizhi.申}), frozenset({Dizhi.寅, Dizhi.申}),
+  )
+  assert search([Dizhi.卯, Dizhi.子, Dizhi.寅, Dizhi.巳], DizhiRelation.刑) == (
+    frozenset({Dizhi.子, Dizhi.卯}), frozenset({Dizhi.寅, Dizhi.巳}),
+  )
+  ```
   '''
 
   if not isinstance(relation, DizhiRelation):
@@ -848,13 +892,19 @@ def discover_mutual(dizhis1: Sequence[Dizhi], dizhis2: Sequence[Dizhi], *,
   Return: (DizhiRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。
   
   Examples:
-  - discover_mutual([子], [丑])
-    - return: {
-      DizhiRelation.六合: DizhiRelationCombos({子, 丑},),
-      DizhiRelation.克: DizhiRelationCombos({子, 丑},)
-    }
-  - discover_mutual([子, 丑], [])
-    - return: {} // 空的冻结映射。
+  ```python
+  from bazi.defines import Dizhi, DizhiRelation
+  from bazi.utils.dizhi_utils import DizhiRelationDiscovery, discover_mutual
+
+  result = discover_mutual([Dizhi.子], [Dizhi.丑])
+  assert isinstance(result, DizhiRelationDiscovery)
+  assert result == {
+    DizhiRelation.六合: (frozenset({Dizhi.子, Dizhi.丑}),),
+    DizhiRelation.克: (frozenset({Dizhi.子, Dizhi.丑}),),
+  }
+  empty = discover_mutual([Dizhi.子, Dizhi.丑], [])
+  assert isinstance(empty, DizhiRelationDiscovery) and not empty
+  ```
   '''
 
   if not isinstance(dizhis1, Sequence):

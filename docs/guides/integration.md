@@ -103,6 +103,7 @@ print('命宫', chart.minggong)
 后者需要已调整的有效命宫月支，不接收裸整数月序。来源与其他读法候选可查知识对象
 `concept.taiyuan`、`concept.minggong`，均须显式包含参考条目，不自动认定解释成立。
 
+(context-matching)=
 ## 前提匹配：结构事实，不是判断
 
 `evaluate_context` 求值已注册的判据，例如“选定范围内正官与七杀各至少出现一次”。

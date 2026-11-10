@@ -6,6 +6,8 @@ import ast
 import inspect
 import re
 from collections.abc import Sequence
+from dataclasses import fields
+from enum import Enum
 from pathlib import Path
 from typing import Any, Final, cast
 
@@ -16,9 +18,12 @@ from markdown_it.renderer import RendererHTML
 from myst_parser.parsers.mdit import create_md_parser
 from myst_parser.parsers.sphinx_ import MystParser
 from sphinx.application import Sphinx
+from sphinx import addnodes
 from sphinx.util.docutils import SphinxDirective
 
 import bazi
+from bazi.rules import DizhiRelationDefinitions
+from bazi.school import BaziConfig, BaziSchool
 
 
 '''docstring 节标题词表；源码实际使用 Args / Return / Note / Examples / Usage，Returns / Raises 保持既有格式兼容。'''
@@ -117,8 +122,31 @@ def collect_attribute_docs(app: Sphinx) -> None:
   cast(Any, app.env).bazi_attribute_docs = source_attribute_docs(Path(bazi.__file__).resolve().parent)
 
 
+def render_attribute_values(app: Sphinx, document: nodes.document) -> None:
+  '''类型与源码入口保留；配置字段显示枚举成员，规则表不展开值。'''
+  defaults = {
+    cls.__module__ + '.' + cls.__qualname__ + '.' + field.name: type(field.default).__qualname__ + '.' + field.default.name
+    for cls in (BaziConfig, BaziSchool, DizhiRelationDefinitions)
+    for field in fields(cls) if isinstance(field.default, Enum)
+  }
+  for signature in document.findall(addnodes.desc_signature):
+    identifiers: list[str] = signature.get('ids', [])
+    if not identifiers:
+      continue
+    name = identifiers[0]
+    table = name.startswith('bazi.rules.') and name.count('.') == 3 and name.rsplit('.', 1)[-1].isupper()
+    for annotation in list(signature.findall(addnodes.desc_annotation)):
+      if not annotation.astext().lstrip().startswith('='):
+        continue
+      if table:
+        annotation.parent.remove(annotation)
+      elif name in defaults:
+        annotation.children[:] = [nodes.Text(' = ' + defaults[name])]
+
+
 def setup(app: Sphinx) -> dict[str, bool]:
   app.connect('builder-inited', collect_attribute_docs)
   app.add_directive('house-docstring', HouseDocstring)
   app.connect('autodoc-process-docstring', process_docstring)
+  app.connect('doctree-read', render_attribute_values)
   return {'parallel_read_safe': True, 'parallel_write_safe': True}

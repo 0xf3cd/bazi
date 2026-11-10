@@ -35,8 +35,19 @@ class TextStyle:
   - day_master_mark: (Callable[[str], str] | None) 日柱天干十神位置的“日主”标记。
 
   Examples:
-  - 不设样式即纯文本：`basic_text(chart)`。
-  - 脚本里用 `TextStyle(glyph=colored, day_master_mark=highlight)` 接入终端着色。
+  ```python
+  from bazi.bazi import Bazi
+  from bazi.bazi_chart import BaziChart
+  from bazi.chart_text import TextStyle, basic_text
+
+  chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+  plain = basic_text(chart)
+  assert plain == basic_text(chart, style=TextStyle())
+  style = TextStyle(day_master_mark=lambda text: '[' + text + ']')
+  assert '[日主]' in basic_text(chart, style=style)
+  ```
+
+  终端着色同样通过这两个钩子传入，例如让 `glyph` 为干支字形加 ANSI 色码。
   '''
   glyph:           Callable[[Tiangan | Dizhi], str] | None = None
   day_master_mark: Callable[[str], str] | None = None

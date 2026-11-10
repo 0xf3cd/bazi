@@ -3,7 +3,19 @@
 '''排盘、天干地支关系与神煞的规则表。
 
 BaziRules、TianganRules、DizhiRules 与 ShenshaRules 分别保存对应规则；
-DizhiRelationDefinitions 承载可选择的地支关系定义。'''
+DizhiRelationDefinitions 承载可选择的地支关系定义。
+API 页列出表的名称、类型与说明，完整表值可从源码入口或按键查阅。
+
+Examples:
+```python
+from bazi.defines import Tiangan, Dizhi, Ganzhi, Wuxing
+from bazi.rules import BaziRules, TianganRules, ShenshaRules
+
+assert BaziRules.NAYIN[Ganzhi.from_str('甲子')] == '海中金'
+assert TianganRules.TIANGAN_HE[frozenset({Tiangan.甲, Tiangan.己})] is Wuxing.土
+assert ShenshaRules.TAOHUA[Dizhi.申] is Dizhi.酉
+```
+'''
 
 import itertools
 from dataclasses import dataclass

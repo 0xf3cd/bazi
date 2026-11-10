@@ -14,14 +14,17 @@ import pytest
 pytest.importorskip('sphinx', reason='Documentation dependencies are checked by the separate docs task.')
 
 from markdown_it.renderer import RendererHTML
+from docutils import nodes
+from docutils.utils import new_document
 from myst_parser.config.main import MdParserConfig
 from myst_parser.parsers.mdit import create_md_parser
+from sphinx import addnodes
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'docs/_ext'))
 sys.path.insert(0, str(ROOT))
 
-from house_docstrings import HouseDocstring, prepare_markdown, source_attribute_docs
+from house_docstrings import HouseDocstring, prepare_markdown, render_attribute_values, source_attribute_docs
 from run_doc_checks import EXAMPLE_GROUPS, Page, check_doctests, check_header_paragraphs
 import run_docs
 
@@ -127,6 +130,28 @@ def test_ambiguous_source_ownership_is_rejected(tmp_path):
   (tmp_path / 'items.py').write_text("first = 1\n'''Ambiguous.'''\nsecond = 2\n", encoding='utf-8')
   with pytest.raises(ValueError, match='Ambiguous attribute description'):
     source_attribute_docs(tmp_path)
+
+
+@pytest.mark.parametrize('name, value, expected', [
+  ('bazi.school.BaziSchool.xing_def', '1', 'DizhiRules.XingDef.LOOSE'),
+  ('bazi.school.BaziSchool.wenchang_def', '0', 'ShenshaRules.WenchangDef.XIN_ZI'),
+  ('bazi.rules.DizhiRelationDefinitions.anhe_def', '1', 'DizhiRules.AnheDef.NORMAL_EXTENDED'),
+  ('bazi.rules.ShenshaRules.TIANYI', '{many entries}', None),
+  ('bazi.rules.ShenshaRules.TianyiDef.GENG_WITH_JIA_WU', '0', '0'),
+  ('bazi.defines.tiangan.Tiangan.JIA', "'甲'", "'甲'"),
+])
+def test_field_defaults_and_tables_render(name, value, expected):
+  document = new_document('api')
+  signature = addnodes.desc_signature(ids=[name])
+  annotation = addnodes.desc_annotation('', nodes.Text(' = ' + value))
+  type_annotation = addnodes.desc_annotation('', nodes.Text(': type'))
+  signature.extend([type_annotation, annotation])
+  document += signature
+  render_attribute_values(Mock(), document)
+  assert signature[0] is type_annotation
+  assert [node.astext() for node in signature.children] == (
+    [': type'] if expected is None else [': type', ' = ' + expected]
+  )
 
 
 def api_pages(*paragraphs: str) -> dict[str, Page]:

@@ -32,7 +32,7 @@ html_theme_options = {
 nitpicky = True
 nitpick_ignore = [('py:class', 'DataclassInstance')]
 autodoc_preserve_defaults = True
-autodoc_typehints = 'description'
+autodoc_typehints = 'signature'
 
 from source_links import linkcode_resolve as resolve_source, missing_reference
 

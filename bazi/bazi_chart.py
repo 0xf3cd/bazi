@@ -197,13 +197,20 @@ class BaziChart:
     「十神相等」与「主气等于目标干」等价。
 
     Usage:
-    ```
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     stars = chart.relationship_stars
+    print(stars.tiangan)
+    print(' '.join(map(str, stars.dizhi)))
+    assert 1 <= len(stars.dizhi) <= 2
+    ```
 
-    print(stars.tiangan) # 配偶星天干
-
-    print(stars.dizhi)   # 配偶星地支元组
-    assert 1 <= len(stars.dizhi) <= 2 # 对应一到两个地支
+    ```text
+    己
+    丑 未
     ```
     '''
     target = _peiou_xing_target(
@@ -253,16 +260,22 @@ class BaziChart:
     当前八字的所有地支中的藏干。
 
     Usage:
-    ```
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     hidden = chart.hidden_tiangan
+    for pillar_hidden in hidden: # 按年、月、日、时顺序遍历。
+      print(pillar_hidden)
+    assert hidden.year == hidden.day
+    ```
 
-    print(hidden.year)  # 年支藏干
-    print(hidden.month) # 月支藏干
-    print(hidden.day)   # 日支藏干
-    print(hidden.hour)  # 时支藏干
-
-    for h in hidden: # 按年、月、日、时顺序遍历
-      pass
+    ```text
+    丁:70,己:30
+    丙:60,庚:30,戊:10
+    丁:70,己:30
+    丙:60,庚:30,戊:10
     ```
     '''
     dizhi_hidden_tiangans: list[HiddenTianganDict] = [hidden_tiangans(dz) for dz in self._bazi.four_dizhis]
@@ -275,19 +288,22 @@ class BaziChart:
     年、月、日、时柱的天干地支所对应的十神。注意，日主没有十神。
 
     Usage:
-    ```
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     shishens = chart.shishen
+    for pillar_shishens in shishens:
+      print(pillar_shishens.tiangan, pillar_shishens.dizhi)
+    assert shishens.day.tiangan is None
+    ```
 
-    print(shishens.year.tiangan) # 年干十神
-    print(shishens.hour.dizhi)   # 时支十神
-
-    for idx, pillar_shishens in enumerate(shishens):
-      print(pillar_shishens.dizhi) # 此柱地支十神
-
-      if idx == Zhu.日.index: # 跳过日主
-        assert pillar_shishens.tiangan is None
-        continue
-      print(pillar_shishens.tiangan) # 此柱天干十神
+    ```text
+    偏印 正财
+    正印 偏财
+    None 正财
+    伤官 偏财
     ```
     '''
 
@@ -312,13 +328,19 @@ class BaziChart:
     年、月、日、时柱的纳音。
 
     Usage:
-    ```
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     nayins = chart.nayin
+    print(nayins.year)
+    print(*nayins) # 按年、月、日、时顺序。
+    ```
 
-    print(nayins.year) # 年柱纳音
-
-    for nayin in nayins: # 按年、月、日、时顺序遍历
-      print(nayin)
+    ```text
+    路旁土
+    路旁土 白蜡金 杨柳木 覆灯火
     ```
     '''
 
@@ -331,13 +353,19 @@ class BaziChart:
     年、月、日、时柱的十二长生。
 
     Usage:
-    ```
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     zhangshengs = chart.shier_zhangsheng
+    print(zhangshengs.day)
+    print(*zhangshengs) # 按年、月、日、时顺序。
+    ```
 
-    print(zhangshengs.day) # 日柱十二长生
-
-    for zs in zhangshengs: # 按年、月、日、时顺序遍历
-      pass
+    ```text
+    胎
+    胎 绝 胎 绝
     ```
     '''
 
@@ -423,18 +451,23 @@ class BaziChart:
     从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`，只生成落在所选历法
     后端半开节气窗口内的起点，因此结果可以为空。
 
-    Usage: 
-    ```
-    chart: BaziChart = BaziChart(bazi)
+    Usage:
+    ```python
+    from itertools import islice
 
-    gen = chart.dayun
-    first_ten_dayuns: list[DayunTuple] = list(itertools.islice(gen, 10))
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
 
-    next_ten_dayuns: list[DayunTuple] = list(itertools.islice(gen, 10))
-
-    for dayun in chart.dayun:
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+    for dayun in islice(chart.dayun, 3):
       print(dayun.start_moment, dayun.ganzhi)
-    ``` 
+    ```
+
+    ```text
+    1994-02-23 20:46:55 庚辰
+    2004-02-23 20:46:55 己卯
+    2014-02-23 20:46:55 戊寅
+    ```
     '''
 
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
@@ -467,11 +500,21 @@ class BaziChart:
     全部小运的元组。
 
     Usage:
-    ```
-    chart: BaziChart = BaziChart(bazi)
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
 
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
     for xusui_age, ganzhi in chart.xiaoyun:
-      print(f'虚岁: {xusui_age}, 小运: {ganzhi}')
+      print(xusui_age, ganzhi)
+    ```
+
+    ```text
+    1 甲辰
+    2 癸卯
+    3 壬寅
+    4 辛丑
+    5 庚子
     ```
     '''
 
