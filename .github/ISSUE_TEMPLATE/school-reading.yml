@@ -11,8 +11,8 @@ body:
   - type: input
     id: claim_id
     attributes:
-      label: 相关条目（claim_id）
-      description: 涉及的条目 ID，如 `shishen.bijian.definition`；可在 bazi/knowledge_data.json 中查找，没有则留空。
+      label: 相关条目 ID 或页面链接（claim_id）
+      description: 在[文档站](https://0xf3cd.github.io/bazi/versions/)选择版本，进入“知识目录 → 条目”复制 ID 或链接；找不到可描述原文，没有则留空。
     validations:
       required: false
   - type: textarea

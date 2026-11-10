@@ -34,7 +34,8 @@ def _check_navigation(source: Path, root: Path) -> None:
     for token in MarkdownIt('commonmark').parse(source.read_text(encoding='utf-8'))
     for child in token.children or () if child.type == 'link_open'
   ]
-  assert links
+  text = source.read_text(encoding='utf-8')
+  assert links or re.search(r'\{doc\}`[^`]+`', text) or '```{toctree}' in text
   for link in links:
     assert isinstance(link, str)
     url = urlsplit(link)
@@ -47,6 +48,11 @@ def _check_navigation(source: Path, root: Path) -> None:
       path = root / unquote(url.path.removeprefix('/0xf3cd/bazi/blob/main/'))
     else:
       path = source.parent / unquote(url.path)
+    generated = {
+      root / 'docs/api-contract.md': root / 'API_CONTRACT.md',
+      root / 'docs/release-notes.md': root / 'RELEASE_NOTES.md',
+    }
+    path = generated.get(path.resolve(), path)
     assert path.resolve().is_relative_to(root) and path.is_file(), link
     if url.fragment:
       headings = SyntaxTreeNode(MarkdownIt('commonmark').parse(path.read_text(encoding='utf-8')))
@@ -61,27 +67,30 @@ def _check_navigation(source: Path, root: Path) -> None:
   'README.md', 'RELEASE_NOTES.md', 'API_CONTRACT.md', 'AGENTS.md', 'CONTRIBUTING.md', 'RELEASING.md',
   'docs/guides/quickstart.md', 'docs/guides/integration.md', 'docs/guides/configuration.md',
   'docs/guides/knowledge.md',
+  'docs/guides/cli.md', 'docs/guides/relations-transits.md', 'docs/guides/rule-coverage.md', 'docs/index.md',
 ])
 def test_navigation_links_resolve(name):
   _check_navigation(ROOT / name, ROOT)
 
 
-def test_quickstart_keeps_three_task_examples():
-  expected = {'quickstart-transits', 'quickstart-liunian', 'quickstart-context'}
+def test_quickstart_keeps_the_first_chart_path():
+  expected = {'quickstart-chart', 'quickstart-text', 'quickstart-save'}
   source = (ROOT / 'docs/guides/quickstart.md').read_text(encoding='utf-8')
-  assert expected <= set(re.findall(r'^```\{testcode\} (.+)$', source, flags=re.MULTILINE))
-  assert expected <= EXAMPLE_GROUPS['guides/quickstart']
+  assert expected == set(re.findall(r'^```\{testcode\} (.+)$', source, flags=re.MULTILINE))
+  assert expected == EXAMPLE_GROUPS['guides/quickstart']
+  assert {'transits-query', 'transits-generators'} <= EXAMPLE_GROUPS['guides/relations-transits']
+  assert 'integration-context' in EXAMPLE_GROUPS['guides/integration']
 
 
 def test_school_guide_covers_field_choices() -> None:
   source = (ROOT / 'docs/guides/configuration.md').read_text(encoding='utf-8')
-  choices = source.split('## 流派选项：什么时候换取法\n', 1)[1].split('\n## ', 1)[0]
+  choices = source.split('## 配置速查\n', 1)[1].split('\n## 出生时间怎么填', 1)[0]
   for field in fields(BaziSchool):
     assert f'`{field.name}`' in choices, field.name
   assert 'config-school-preset' in EXAMPLE_GROUPS['guides/configuration']
 
 
-@pytest.mark.parametrize('name', ['quickstart', 'configuration', 'integration', 'knowledge'])
+@pytest.mark.parametrize('name', ['quickstart', 'configuration', 'integration', 'knowledge', 'cli'])
 def test_guides_link_to_release_notes(name: str) -> None:
   source = (ROOT / 'docs/guides' / (name + '.md')).read_text(encoding='utf-8')
   assert re.search(r'\{doc\}`(?:[^`<>]+<)?\.\./release-notes>?`', source)
@@ -196,6 +205,7 @@ def test_sdist_includes_doc_site_inputs():
     'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
     '.github/workflows/docs-publish.yml', 'docs/versioning.md',
     'tests/test_docs_site.py', 'tests/test_docs_workflows.py',
+    'docs/guides/cli.md',
   } <= set(source_files(ROOT))
 
 

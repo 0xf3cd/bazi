@@ -225,15 +225,20 @@ class BaziChart:
     年、月、日、时的天干地支的阴阳和五行。
 
     Usage:
-    ```
-    traits = chart.traits
-    
-    print(traits.year.tiangan) # 年柱天干的阴阳五行
-    assert traits.hour.dizhi == TraitTuple(Wuxing.木, Yinyang.阳) # 此例假设时支为寅
+    ```python
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
 
-    for pillar_traits in traits: # 按年、月、日、时顺序遍历
-      print(pillar_traits.tiangan) # 此柱天干的阴阳五行
-      print(pillar_traits.dizhi)   # 此柱地支的阴阳五行
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+    for pillar_traits in chart.traits:
+      print(pillar_traits.tiangan, pillar_traits.dizhi)
+    ```
+
+    ```text
+    阳金 阳火
+    阴金 阴火
+    阳水 阳火
+    阴木 阴火
     ```
     '''
     # 四柱天干与地支的阴阳五行。
@@ -486,11 +491,21 @@ class BaziChart:
     流年生成器（无限）。
 
     Usage:
-    ```
-    chart: BaziChart = BaziChart(bazi)
+    ```python
+    from itertools import islice
 
-    for year, ganzhi in chart.liunian: # 无限生成器
-      print(year, ganzhi) # 如 "2024 甲辰"
+    from bazi.bazi import Bazi
+    from bazi.bazi_chart import BaziChart
+
+    chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+    for year, ganzhi in islice(chart.liunian, 3):
+      print(year, ganzhi)
+    ```
+
+    ```text
+    1990 庚午
+    1991 辛未
+    1992 壬申
     ```
     '''
 

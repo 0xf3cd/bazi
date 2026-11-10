@@ -35,25 +35,27 @@ def _check_doc_command(tokens: list[str]) -> None:
 
 
 DOC_FILES = ('README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md', 'docs/guides/quickstart.md', 'docs/guides/integration.md',
-             'docs/guides/configuration.md', 'docs/guides/relations-transits.md', 'CONTRIBUTING.md')
+             'docs/guides/configuration.md', 'docs/guides/relations-transits.md', 'docs/guides/cli.md', 'CONTRIBUTING.md')
+
+CLI_GUIDE = ROOT / 'docs/guides/cli.md'
 
 
 def test_documented_commands_parse_as_subcommands() -> None:
   commands = [tokens for name in DOC_FILES for tokens in _doc_commands((ROOT / name).read_text(encoding='utf-8'))]
   assert len(commands) >= 3
-  assert len(_doc_commands((ROOT / 'README.md').read_text(encoding='utf-8'))) >= 3
+  assert len(_doc_commands(CLI_GUIDE.read_text(encoding='utf-8'))) >= 3
   for tokens in commands:
     _check_doc_command(tokens)
 
 
-@pytest.mark.parametrize('tokens', _doc_commands((ROOT / 'README.md').read_text(encoding='utf-8')))
-def test_readme_task_commands_execute(tokens: list[str], tmp_path: Path) -> None:
+@pytest.mark.parametrize('tokens', _doc_commands(CLI_GUIDE.read_text(encoding='utf-8')))
+def test_guide_task_commands_execute(tokens: list[str], tmp_path: Path) -> None:
   result = run_cli(tmp_path, *tokens)
   assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_readme_chart_saves_displayed_text(tmp_path: Path) -> None:
-  commands = _doc_commands((ROOT / 'README.md').read_text(encoding='utf-8'))
+def test_guide_chart_saves_displayed_text(tmp_path: Path) -> None:
+  commands = _doc_commands(CLI_GUIDE.read_text(encoding='utf-8'))
   exporting = [tokens for tokens in commands if tokens[0] == 'chart' and '--output-dir' in tokens]
   assert len(exporting) == 1
   result = run_cli(tmp_path, *exporting[0])
@@ -113,11 +115,17 @@ def _inline_task_commands(markdown: str) -> list[list[str]]:
   ]
 
 
-@pytest.mark.parametrize('name', ['README.md', 'API_CONTRACT.md', 'docs/guides/knowledge.md'])
+@pytest.mark.parametrize('name', ['API_CONTRACT.md', 'docs/guides/cli.md'])
 def test_inline_task_examples_are_parseable(name: str) -> None:
   commands = _inline_task_commands((ROOT / name).read_text(encoding='utf-8'))
   assert len(commands) >= 3
   for tokens in commands:
+    _check_doc_command(tokens)
+
+
+@pytest.mark.parametrize('name', DOC_FILES)
+def test_all_inline_task_examples_parse(name: str) -> None:
+  for tokens in _inline_task_commands((ROOT / name).read_text(encoding='utf-8')):
     _check_doc_command(tokens)
 
 

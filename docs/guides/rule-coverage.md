@@ -88,65 +88,32 @@
 
 ```{testcode} guoyin-lookup
 from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
+from bazi.defines import Tiangan
 from bazi.rules import ShenshaRules
 
 kb = KnowledgeBase.load()
 entry = guoyin_entry(kb, ShenshaRules.GuoyinDef.MODERN)
 definition = guoyin_def(kb, entry.claim_id)
-print(entry.claim_id)
-print(definition is ShenshaRules.GuoyinDef.MODERN)
+assert definition is not None
+print('取法', definition.name, '甲见' + str(ShenshaRules.GUOYIN[definition][Tiangan.甲]))
+print(kb.render(entry, show_sources=False))
+source = kb.sources[entry.sources[0]]
+print('支持', source.supports)
+print('限度', source.limitations)
 ```
 
 ```{testoutput} guoyin-lookup
-shensha.guoyin.modern
-True
+取法 MODERN 甲见戌
+国印的 MODERN 表按禄前第九位（含禄，偏移 +8）取值。【仅供参考】
+限度：表值与四柱查法的支持来源分开；古籍的守照身命表述不等于查四柱地支。
+限度：本条转述仓内来源边界，未新增已核古籍见证。
+支持 现有的两种表读法，以及另行说明的锚点／目标边界。
+限度 概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。
 ```
 
-`True` 表示反查回到了传入的 `MODERN` 定义。把示例中两处 `MODERN` 都换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
+把传入的 `MODERN` 换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
 
 两个函数都使用传入的知识库。`guoyin_entry` 所需条目缺失、`guoyin_def` 查询未知或空白 ID 时抛 `ValueError`；`guoyin_def` 查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的 `viewpoint` 不参与关联识别。
-
-### 核对规则表与条目
-
-下面同时检查两读的表值、条目及来源记录。
-
-```{testcode} rule-coverage-guoyin
-from bazi.defines import Tiangan
-from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
-from bazi.rules import BaziRules, ShenshaRules
-from bazi.school import BaziSchool
-
-kb = KnowledgeBase.load()
-assert {obj.object_id for obj in kb.objects.values() if obj.kind == 'shensha'} == {
-  'shensha.guoyin', 'shensha.kongwang', 'shensha.tianyi', 'shensha.taohua',
-  'shensha.yima', 'shensha.wenchang', 'shensha.huagai', 'shensha.yangren',
-}
-for definition in (ShenshaRules.GuoyinDef.MODERN, ShenshaRules.GuoyinDef.WUXING_JINGJI):
-  school = BaziSchool(guoyin_def=definition)
-  entry = guoyin_entry(kb, school.guoyin_def)
-  assert guoyin_def(kb, entry.claim_id) is definition
-  table = ShenshaRules.GUOYIN[school.guoyin_def]
-  target = table[Tiangan.甲]
-  offset = (target.index - BaziRules.TIANGAN_LU[Tiangan.甲].index) % 12
-  assert all((table[tg].index - lu.index) % 12 == offset
-             for tg, lu in BaziRules.TIANGAN_LU.items())
-  # 核对当前条目措辞，不把解释文字当作结构化接口。
-  assert f'偏移 +{offset}' in entry.text
-  assert entry.limits
-  source = kb.sources[entry.sources[0]]
-  print(definition.name, school.guoyin_anchor.name, '甲见' + str(target))
-  print(entry.claim_id, entry.source_state, entry.show_by_default)
-  print(source.source_id, source.text_layer, source.state)
-```
-
-```{testoutput} rule-coverage-guoyin
-MODERN YEAR_AND_DAY 甲见戌
-shensha.guoyin.modern repository_attributed False
-repository_guoyin_variants editorial repository_attributed
-WUXING_JINGJI YEAR_AND_DAY 甲见酉
-shensha.guoyin.wuxing_jingji repository_attributed False
-repository_guoyin_variants editorial repository_attributed
-```
 
 这段代码只查表与知识，不创建命盘，也不执行“以哪柱查哪些位置”的命盘求值。三层支持要分别读：
 
@@ -158,30 +125,5 @@ repository_guoyin_variants editorial repository_attributed
 
 `repository_guoyin_variants` 概述的是本仓说明，`supports` 及 `limitations` 都应保留阅读。该来源引用固定的仓内快照；当前表与条目对账成功，不会把历史快照变成新增的古籍见证。
 
-## 关联如何维护
-
-- 计算表仍归 `rules.py`，默认与允许的配置归 `school.py`，知识文字、来源及状态归 `KnowledgeBase` 的注册表。禄神共表、金舆／国印派生等已有共享关系继续从源码取值，不在知识库或本页复制十格表。
-- 不能从算法派生的原文、解释、锚点依据与支持限度继续独立保留。规则或文字变更时，对照条目 ID、定义成员、实际表值、锚点范围和消费者检查差异；上面的示例只校验当前两读的偏移与文字一致，不声称已自动维护全部语义。
-- 覆盖表漏掉规则属性或配置字段，由文档测试的集合核对报告；引用与示例由严格构建及文档示例检查验证。这些检查不裁定命理依据，也不证明表外计算已经穷尽。
-- 国印的定义成员到稳定条目 ID 的对应由 `knowledge.py` 维护，正反查询共用。来源继续从条目读取；规则层不反向导入知识层。
-
-## 知识对象的准入与取舍
-
-常用神煞的参考条目分别记录名称、表值或查法，并明确系统归属。来源须有可核的作品、版本、位置与逐字摘录；正文、夹注、现代汇编和转引分别标注。单源条目保持 `show_by_default=False`，不把两个转录网站算作独立谱系。默认展示还须满足 {doc}`knowledge` 所列条件。
-
-古籍表值、现代锚点和流运使用范围分别记录在来源的 `supports`、`limitations` 中，不能用一段只说表值的原文证明整套查法。不同流派的读法分别保留。
-
-| 项目 | 结论 | 后续条件 |
-| --- | --- | --- |
-| 六项常用神煞 | 已有专门对象和显式参考条目 | 查阅时按各来源记录的支持范围区分表值与查法。 |
-| 国印两读 | 由两个窄查询关联现有条目；来源等级不变 | 新增定义成员时同步其稳定条目 ID 和正反查询测试。 |
-| 地支 | 暂不新建 | 先确定查询定义、藏干还是比例的来源，不只为与十干对象对称。 |
-| 地支关系 | 暂不新建 | 先选择具体关系与读法，区分组合条件、合化及解释。 |
-| 纳音 | 暂不新建 | 先确定查询表值来源、某名称的定义，还是带前提的解释，再决定对象粒度。 |
-| 十二长生 | 暂不新建 | 先分起点、阴阳顺逆与查法，不把十二个名称直接当作已核知识。 |
-| 禄位 | 暂不新建 | 国印关联复用既有禄位表即可；禄神知识按具体查询用途另行评估。 |
-| 五行生克 | 可作为下一组较小候选 | 现有两条只是本仓署名示例；扩展前先定是否只关联形式定义，不能直接升级为古籍见证或全体生克解释。 |
-| 配偶星／宫 | 保留现有原文与前提边界，暂不作为机械关联的首个试点 | 先区分历史取法、默认计算、条件解释与消费者，不能把同对象的所有条目绑定为同一条计算规则。 |
-| 全量规则查询 API、知识迁移 | 暂缓；本页不实施 | 先用小样本确认规则身份、关联所有者、维护成本与来源粒度，再确定实施范围；结构化知识缺口不等于每项都应新增解释。 |
-
-新增来源或读法仍须分别确认系统归属、规则本身、锚点与查找对象。不同流派保留可选变体；来源未核或只有本仓署名的部分维持原状态，不因“已关联”就提高证据或默认展示资格。
+维护关联或补出处时，按 {doc}`../contributing` 分别说明规则、锚点、查找位置和来源的支持范围。
+表中未覆盖的知识表示当前没有专门关联，不表示该计算没有依据，也不自动成为新增知识对象的计划。

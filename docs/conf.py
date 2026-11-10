@@ -17,6 +17,7 @@ extensions = [
   'myst_parser', 'house_docstrings', 'typeddict_fields', 'knowledge_catalog',
 ]
 source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
+myst_heading_anchors = 3
 exclude_patterns = ['_build']
 html_theme = 'alabaster'
 html_title = 'bazi · ' + os.environ['BAZI_DOC_VERSION']

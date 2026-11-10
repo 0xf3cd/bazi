@@ -220,6 +220,7 @@ def build_environment(tmp_path, monkeypatch):
   (root / 'docs/index.md').write_text('# Example\n', encoding='utf-8')
   (root / 'CONTRIBUTING.md').write_text('# Contributing\n', encoding='utf-8')
   (root / 'RELEASE_NOTES.md').write_text('# Release notes\n', encoding='utf-8')
+  (root / 'API_CONTRACT.md').write_text('# Contract\n', encoding='utf-8')
   (root / 'README.md').write_text("```python\nprint('example')\n```\n\n```text\nexample\n```\n", encoding='utf-8')
   monkeypatch.setattr(run_docs, 'ROOT', root)
   monkeypatch.setattr(run_docs, 'git_output', lambda *args: 'a' * 40 if args[0] == 'rev-parse' else '')
