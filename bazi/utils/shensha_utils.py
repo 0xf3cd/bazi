@@ -99,10 +99,13 @@ def taohua(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的桃花。
 
   Examples:
-  - taohua(Dizhi.申, Dizhi.酉)
-    - return: True
-  - taohua(Dizhi.申, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import taohua
+
+  assert taohua(Dizhi.申, Dizhi.酉) is True
+  assert taohua(Dizhi.申, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.TAOHUA, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -119,10 +122,13 @@ def hongyan(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚干的红艳。
 
   Examples:
-  - hongyan(Tiangan.癸, Dizhi.申)
-    - return: True
-  - hongyan(Tiangan.癸, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.utils.shensha_utils import hongyan
+
+  assert hongyan(Tiangan.癸, Dizhi.申) is True
+  assert hongyan(Tiangan.癸, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.HONGYAN, key_tiangan, dizhi, Tiangan)
@@ -139,10 +145,13 @@ def hongluan(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为年支的红鸾。
 
   Examples:
-  - hongluan(Dizhi.申, Dizhi.未)
-    - return: True
-  - hongluan(Dizhi.申, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import hongluan
+
+  assert hongluan(Dizhi.申, Dizhi.未) is True
+  assert hongluan(Dizhi.申, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.HONGLUAN, year_dizhi, other_dizhi, Dizhi)
@@ -159,10 +168,13 @@ def tianxi(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为年支的天喜。
 
   Examples:
-  - tianxi(Dizhi.寅, Dizhi.未)
-    - return: True
-  - tianxi(Dizhi.寅, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import tianxi
+
+  assert tianxi(Dizhi.寅, Dizhi.未) is True
+  assert tianxi(Dizhi.寅, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.TIANXI, year_dizhi, other_dizhi, Dizhi)
@@ -179,10 +191,13 @@ def yima(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的驿马。
 
   Examples:
-  - yima(Dizhi.申, Dizhi.寅)
-    - return: True
-  - yima(Dizhi.申, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import yima
+
+  assert yima(Dizhi.申, Dizhi.寅) is True
+  assert yima(Dizhi.申, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.YIMA, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -199,10 +214,13 @@ def huagai(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的华盖。
 
   Examples:
-  - huagai(Dizhi.申, Dizhi.辰)
-    - return: True
-  - huagai(Dizhi.申, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import huagai
+
+  assert huagai(Dizhi.申, Dizhi.辰) is True
+  assert huagai(Dizhi.申, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.HUAGAI, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -219,10 +237,13 @@ def jiangxing(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的将星。
 
   Examples:
-  - jiangxing(Dizhi.申, Dizhi.子)
-    - return: True
-  - jiangxing(Dizhi.申, Dizhi.酉)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import jiangxing
+
+  assert jiangxing(Dizhi.申, Dizhi.子) is True
+  assert jiangxing(Dizhi.申, Dizhi.酉) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.JIANGXING, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -239,10 +260,13 @@ def zaisha(key_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的灾煞。
 
   Examples:
-  - zaisha(Dizhi.申, Dizhi.午)
-    - return: True
-  - zaisha(Dizhi.申, Dizhi.子)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import zaisha
+
+  assert zaisha(Dizhi.申, Dizhi.午) is True
+  assert zaisha(Dizhi.申, Dizhi.子) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.ZAISHA, key_dizhi, other_dizhi, Dizhi)
@@ -259,10 +283,13 @@ def jiesha(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的劫煞。
 
   Examples:
-  - jiesha(Dizhi.申, Dizhi.巳)
-    - return: True
-  - jiesha(Dizhi.申, Dizhi.亥)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import jiesha
+
+  assert jiesha(Dizhi.申, Dizhi.巳) is True
+  assert jiesha(Dizhi.申, Dizhi.亥) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.JIESHA, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -279,10 +306,13 @@ def wangshen(year_or_day_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚支的亡神。
 
   Examples:
-  - wangshen(Dizhi.申, Dizhi.亥)
-    - return: True
-  - wangshen(Dizhi.申, Dizhi.巳)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import wangshen
+
+  assert wangshen(Dizhi.申, Dizhi.亥) is True
+  assert wangshen(Dizhi.申, Dizhi.巳) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.WANGSHEN, year_or_day_dizhi, other_dizhi, Dizhi)
@@ -299,10 +329,13 @@ def guchen(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为年支的孤辰。
 
   Examples:
-  - guchen(Dizhi.子, Dizhi.寅)
-    - return: True
-  - guchen(Dizhi.子, Dizhi.戌)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import guchen
+
+  assert guchen(Dizhi.子, Dizhi.寅) is True
+  assert guchen(Dizhi.子, Dizhi.戌) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.GUCHEN, year_dizhi, other_dizhi, Dizhi)
@@ -319,10 +352,13 @@ def guasu(year_dizhi: Dizhi, other_dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为年支的寡宿。
 
   Examples:
-  - guasu(Dizhi.子, Dizhi.戌)
-    - return: True
-  - guasu(Dizhi.子, Dizhi.寅)
-    - return: False
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.utils.shensha_utils import guasu
+
+  assert guasu(Dizhi.子, Dizhi.戌) is True
+  assert guasu(Dizhi.子, Dizhi.寅) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.GUASU, year_dizhi, other_dizhi, Dizhi)
@@ -339,10 +375,13 @@ def lushen(day_master: Tiangan, dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为日干的禄神。
 
   Examples:
-  - lushen(Tiangan.甲, Dizhi.寅)
-    - return: True
-  - lushen(Tiangan.甲, Dizhi.卯)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.utils.shensha_utils import lushen
+
+  assert lushen(Tiangan.甲, Dizhi.寅) is True
+  assert lushen(Tiangan.甲, Dizhi.卯) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.LUSHEN, day_master, dizhi, Tiangan)
@@ -359,10 +398,13 @@ def jinyu(key_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   Return: (bool) 待查支是否为锚干的金舆。
 
   Examples:
-  - jinyu(Tiangan.甲, Dizhi.辰)
-    - return: True
-  - jinyu(Tiangan.甲, Dizhi.巳)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.utils.shensha_utils import jinyu
+
+  assert jinyu(Tiangan.甲, Dizhi.辰) is True
+  assert jinyu(Tiangan.甲, Dizhi.巳) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.JINYU, key_tiangan, dizhi, Tiangan)
@@ -378,10 +420,13 @@ def kuigang(day_ganzhi: Ganzhi) -> bool:
   Return: (bool) 是否为魁罡日柱。
 
   Examples:
-  - kuigang(Ganzhi.from_str('庚辰'))
-    - return: True
-  - kuigang(Ganzhi.from_str('甲辰'))
-    - return: False
+  ```python
+  from bazi.defines import Ganzhi
+  from bazi.utils.shensha_utils import kuigang
+
+  assert kuigang(Ganzhi.from_str('庚辰')) is True
+  assert kuigang(Ganzhi.from_str('甲辰')) is False
+  ```
   '''
 
   if not isinstance(day_ganzhi, Ganzhi):
@@ -400,10 +445,13 @@ def tianshe(month_dizhi: Dizhi, day_ganzhi: Ganzhi) -> bool:
   Return: (bool) 日柱是否为月令所属四时的天赦日。
 
   Examples:
-  - tianshe(Dizhi.寅, Ganzhi.from_str('戊寅'))
-    - return: True
-  - tianshe(Dizhi.申, Ganzhi.from_str('戊寅'))
-    - return: False
+  ```python
+  from bazi.defines import Dizhi, Ganzhi
+  from bazi.utils.shensha_utils import tianshe
+
+  assert tianshe(Dizhi.寅, Ganzhi.from_str('戊寅')) is True
+  assert tianshe(Dizhi.申, Ganzhi.from_str('戊寅')) is False
+  ```
   '''
 
   if not isinstance(month_dizhi, Dizhi):
@@ -430,12 +478,15 @@ def yangren(
   Return: (bool) 所选定义下是否为日干的羊刃。
 
   Examples:
-  - yangren(Tiangan.甲, Dizhi.卯)
-    - return: True
-  - yangren(Tiangan.乙, Dizhi.寅)
-    - return: False
-  - yangren(Tiangan.乙, Dizhi.寅, definition=ShenshaRules.YangrenDef.DIWANG)
-    - return: True
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import yangren
+
+  assert yangren(Tiangan.甲, Dizhi.卯) is True
+  assert yangren(Tiangan.乙, Dizhi.寅) is False
+  assert yangren(Tiangan.乙, Dizhi.寅, definition=ShenshaRules.YangrenDef.DIWANG) is True
+  ```
   '''
 
   return _defined_shensha(
@@ -464,12 +515,15 @@ def feiren(
   Return: (bool) 所选定义下是否为日干的飞刃。
 
   Examples:
-  - feiren(Tiangan.甲, Dizhi.酉)
-    - return: True
-  - feiren(Tiangan.乙, Dizhi.申)
-    - return: False
-  - feiren(Tiangan.乙, Dizhi.申, definition=ShenshaRules.YangrenDef.DIWANG)
-    - return: True
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import feiren
+
+  assert feiren(Tiangan.甲, Dizhi.酉) is True
+  assert feiren(Tiangan.乙, Dizhi.申) is False
+  assert feiren(Tiangan.乙, Dizhi.申, definition=ShenshaRules.YangrenDef.DIWANG) is True
+  ```
   '''
 
   return _defined_shensha(
@@ -499,12 +553,15 @@ def tianyi(
   Return: (bool) 所选定义下是否为锚干的天乙贵人。
 
   Examples:
-  - tianyi(Tiangan.甲, Dizhi.丑)
-    - return: True
-  - tianyi(Tiangan.庚, Dizhi.午)
-    - return: False
-  - tianyi(Tiangan.庚, Dizhi.午, definition=ShenshaRules.TianyiDef.GENG_WITH_XIN)
-    - return: True
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import tianyi
+
+  assert tianyi(Tiangan.甲, Dizhi.丑) is True
+  assert tianyi(Tiangan.庚, Dizhi.午) is False
+  assert tianyi(Tiangan.庚, Dizhi.午, definition=ShenshaRules.TianyiDef.GENG_WITH_XIN) is True
+  ```
   '''
 
   return _defined_shensha(
@@ -535,12 +592,15 @@ def wenchang(
   Return: (bool) 所选定义下是否为锚干的文昌。
 
   Examples:
-  - wenchang(Tiangan.甲, Dizhi.巳)
-    - return: True
-  - wenchang(Tiangan.辛, Dizhi.子)
-    - return: True
-  - wenchang(Tiangan.辛, Dizhi.子, definition=ShenshaRules.WenchangDef.XIN_XU)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import wenchang
+
+  assert wenchang(Tiangan.甲, Dizhi.巳) is True
+  assert wenchang(Tiangan.辛, Dizhi.子) is True
+  assert wenchang(Tiangan.辛, Dizhi.子, definition=ShenshaRules.WenchangDef.XIN_XU) is False
+  ```
   '''
 
   return _defined_shensha(
@@ -565,10 +625,13 @@ def wenchanggui(year_tiangan: Tiangan, dizhi: Dizhi) -> bool:
   Return: (bool) 是否为年干的文昌贵。
 
   Examples:
-  - wenchanggui(Tiangan.乙, Dizhi.亥)
-    - return: True
-  - wenchanggui(Tiangan.乙, Dizhi.午)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.utils.shensha_utils import wenchanggui
+
+  assert wenchanggui(Tiangan.乙, Dizhi.亥) is True
+  assert wenchanggui(Tiangan.乙, Dizhi.午) is False
+  ```
   '''
 
   return _table_shensha(ShenshaRules.WENCHANGGUI, year_tiangan, dizhi, Tiangan)
@@ -593,14 +656,16 @@ def taiji(
   Return: (bool) 所选定义下是否为锚干的太极贵人。
 
   Examples:
-  - taiji(Tiangan.甲, Dizhi.子)
-    - return: True
-  - taiji(Tiangan.戊, Dizhi.未)
-    - return: True
-  - taiji(Tiangan.壬, Dizhi.申)
-    - return: True
-  - taiji(Tiangan.壬, Dizhi.申, definition=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN)
-    - return: False
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import taiji
+
+  assert taiji(Tiangan.甲, Dizhi.子) is True
+  assert taiji(Tiangan.戊, Dizhi.未) is True
+  assert taiji(Tiangan.壬, Dizhi.申) is True
+  assert taiji(Tiangan.壬, Dizhi.申, definition=ShenshaRules.TaijiDef.REN_SI_GUI_SHEN) is False
+  ```
   '''
 
   return _defined_shensha(
@@ -629,12 +694,15 @@ def guoyin(
   Return: (bool) 所选定义下是否为锚干的国印贵人。
 
   Examples:
-  - guoyin(Tiangan.甲, Dizhi.戌)
-    - return: True
-  - guoyin(Tiangan.甲, Dizhi.酉)
-    - return: False
-  - guoyin(Tiangan.甲, Dizhi.酉, definition=ShenshaRules.GuoyinDef.WUXING_JINGJI)
-    - return: True
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.rules import ShenshaRules
+  from bazi.utils.shensha_utils import guoyin
+
+  assert guoyin(Tiangan.甲, Dizhi.戌) is True
+  assert guoyin(Tiangan.甲, Dizhi.酉) is False
+  assert guoyin(Tiangan.甲, Dizhi.酉, definition=ShenshaRules.GuoyinDef.WUXING_JINGJI) is True
+  ```
   '''
 
   return _defined_shensha(

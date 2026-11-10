@@ -47,7 +47,7 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   '.github/workflows/on_push.yml', '.github/workflows/pypy_compatibility.yml', '.github/workflows/docs-publish.yml',
   '.github/ISSUE_TEMPLATE/knowledge-correction.yml', '.github/ISSUE_TEMPLATE/school-reading.yml',
   'docs/requirements.txt', 'docs/conf.py', 'docs/index.md', 'docs/versioning.md',
-  'docs/_ext/api_reference.py', 'docs/_ext/house_docstrings.py', 'docs/_ext/typeddict_fields.py',
+  'docs/_ext/api_reference.py', 'docs/_ext/api_examples.py', 'docs/_ext/house_docstrings.py', 'docs/_ext/typeddict_fields.py',
   'docs/_ext/knowledge_catalog.py', 'docs/_ext/source_links.py',
   'docs/_static/documentation.css',
   'docs/guides/quickstart.md', 'docs/guides/cli.md', 'docs/guides/configuration.md',

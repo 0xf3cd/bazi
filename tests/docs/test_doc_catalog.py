@@ -14,8 +14,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'tests'))
 sys.path.insert(0, str(ROOT / 'docs/_ext'))
 
-from run_doc_checks import Page, check_related
-from knowledge_catalog import json_value
+from run_doc_checks import Page, check_entry_references, check_related
+from knowledge_catalog import catalog_label, entry_label, json_value
 from bazi.common import frozendict
 from bazi.context_matching import criteria
 from bazi.knowledge import KnowledgeBase
@@ -49,6 +49,21 @@ def test_unsupported_values_not_stringified():
     json_value(object())
 
 
+def test_entry_title_does_not_repeat_its_text():
+  kb = KnowledgeBase.load()
+  entry = kb.entry('tiangan.ding.definition')
+  assert catalog_label(kb, entry.claim_id, entry) == '丁 · 定义 [tiangan.ding.definition]'
+  assert entry_label(entry) == '丁为阴火。 [tiangan.ding.definition]'
+
+
+def test_chinese_fields_keep_original_keys():
+  page = Page()
+  page.feed('<section id="catalog-entries-example"><dl>'
+    '<dt class="catalog-field-text">条文:</dt><dd><p>原文</p></dd>'
+    '</dl></section>')
+  assert page.sections['catalog-entries-example'] == {'text': '原文'}
+
+
 def test_observation_metadata_serializes_as_names():
   for info in criteria().values():
     expected = (
@@ -65,9 +80,9 @@ def test_observation_metadata_serializes_as_names():
 
 
 @pytest.mark.parametrize('count, label, valid', [
-  (1, 'tiangan.ding.definition', True),
-  (0, 'tiangan.ding.definition', False),
-  (2, 'tiangan.ding.definition', False),
+  (1, '丁为阴火。 [tiangan.ding.definition]', True),
+  (0, '丁为阴火。 [tiangan.ding.definition]', False),
+  (2, '丁为阴火。 [tiangan.ding.definition]', False),
   (1, 'wrong-visible-label', False),
 ])
 def test_related_entries_must_match_exactly(count, label, valid):
@@ -87,3 +102,32 @@ def test_heading_permalink_not_related_entry():
   page = Page()
   page.feed('<section id="catalog-entries-example"><a class="headerlink" href="#catalog-entries-example">¶</a></section>')
   check_related(page, 'catalog-entries-example', ())
+
+
+@pytest.mark.parametrize('defect', [None, 'missing', 'wrong-target', 'wrong-label', 'duplicate'])
+def test_entry_source_links_are_required(defect):
+  kb = KnowledgeBase.load()
+  entry = kb.entry('tiangan.ding.definition')
+  identifier = 'catalog-entries-' + entry.claim_id
+  links = [('objects.html#catalog-objects-tiangan.ding', '丁 [tiangan.ding]')]
+  links.extend((
+    'sources.html#catalog-sources-' + source_id,
+    kb.sources[source_id].work + ' · ' + kb.sources[source_id].locator + ' [' + source_id + ']',
+  ) for source_id in entry.sources)
+  if defect == 'missing':
+    links.pop()
+  elif defect == 'wrong-target':
+    links[-1] = ('sources.html#catalog-sources-other', links[-1][1])
+  elif defect == 'wrong-label':
+    links[-1] = (links[-1][0], entry.sources[-1])
+  elif defect == 'duplicate':
+    links.append(links[-1])
+  page = Page()
+  page.feed(f'<section id="{identifier}">' + ''.join(
+    f'<a class="reference internal" href="{href}">{label}</a>' for href, label in links
+  ) + '</section>')
+  if defect is None:
+    check_entry_references(page, identifier, entry, kb)
+  else:
+    with pytest.raises(AssertionError, match='Entry references'):
+      check_entry_references(page, identifier, entry, kb)

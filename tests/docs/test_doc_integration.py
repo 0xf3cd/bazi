@@ -206,6 +206,7 @@ def test_sdist_includes_doc_site_inputs():
     '.github/workflows/docs-publish.yml', 'docs/versioning.md',
     'tests/test_docs_site.py', 'tests/test_docs_workflows.py',
     'docs/guides/cli.md',
+    'docs/_ext/api_examples.py',
   } <= set(source_files(ROOT))
 
 

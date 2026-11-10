@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 import api_reference
 from api_contract import DECLARED_MEMBERS
-from run_doc_checks import runtime_members
+from run_doc_checks import runtime_members, signature_defaults
 
 
 @pytest.mark.parametrize('base', ['RepeatedBase', 'NoSuchBase'])
@@ -90,3 +90,21 @@ def test_alias_reexport_pages_own_wording(tmp_path):
   assert '   :py:obj:`bazi.defines.tiangan.Tiangan` 的别名。' in defines
   assert '   :py:obj:`bazi.calendar.dates.CalendarType` 的重导出。' in calendar
   assert '的别名或重导出。' not in defines + calendar
+
+
+def test_task_index_keeps_all_module_pages(tmp_path):
+  api_reference.generate_api(tmp_path)
+  index = (tmp_path / 'api/index.rst').read_text(encoding='utf-8')
+  for heading in ('排盘、配置与文本', '关系、神煞与流运', '知识、出处与前提匹配', '离线数据工具', '完整模块索引'):
+    assert heading in index
+  assert [line.strip() for line in index.splitlines() if line.startswith('   bazi')] == [
+    name.replace('.', '-') for name in api_reference.PUBLIC_NAMES
+  ]
+
+
+@pytest.mark.parametrize('parameters', [
+  ['xing_def=DizhiRules.XingDef.LOOSE', 'location=None'],
+  ['xing_def: DizhiRules.XingDef = DizhiRules.XingDef.LOOSE', 'location: LocationTime | None = None'],
+])
+def test_signature_types_do_not_hide_defaults(parameters):
+  assert signature_defaults(parameters) == {'xing_def': 'DizhiRules.XingDef.LOOSE', 'location': 'None'}

@@ -83,5 +83,57 @@ def generate_api(source: Path) -> None:
         lines.append('   :no-value:')
       lines.append('')
     (out / (filename + '.rst')).write_text('\n'.join(lines), encoding='utf-8')
-  index = 'API Reference\n=============\n\n.. toctree::\n   :maxdepth: 1\n\n'
+  index = '''API 参考
+========
+
+按要完成的任务选择入口；完整模块索引在下方。函数签名给出类型，Args / Return 说明参数与结果的含义。
+示例可整块运行：带输出的代码后紧随 text 对照，其余代码用 assert 写出预期结果。
+
+排盘、配置与文本
+----------------
+
+- :py:class:`bazi.bazi.Bazi` 创建八字，:py:class:`bazi.bazi_chart.BaziChart` 读取四柱与派生结果。
+- :py:class:`bazi.school.BaziConfig` 和 :py:class:`bazi.school.BaziSchool` 选择精度、历法与流派。
+- :py:mod:`bazi.chart_text` 输出命盘文字；终端调用见 :doc:`../guides/cli`。
+
+关系、神煞与流运
+----------------
+
+- :py:mod:`bazi.utils.tiangan_utils`、:py:mod:`bazi.utils.dizhi_utils` 查询单组关系或搜索组合。
+- :py:mod:`bazi.utils.shensha_utils` 查单项神煞，:py:mod:`bazi.analyzer.relationship` 读取命盘分析。
+- :py:class:`bazi.transit_chart.TransitChart` 按年、月、日期或时刻查询流运；
+  :py:mod:`bazi.analyzer.facts` 保留通根、透干的具体位置。
+
+知识、出处与前提匹配
+--------------------
+
+- :py:class:`bazi.knowledge.KnowledgeBase` 查条文与出处；按中文名浏览见 :doc:`../catalog/index`。
+- :py:mod:`bazi.context_matching` 查判据、选择观察范围并求值；操作步骤见 :doc:`../guides/integration`。
+- :py:mod:`bazi.rules` 给出规则表及定义选项，表值按键查阅，不在页面展开全部内容。
+
+历法、领域值与结果结构
+----------------------
+
+- :py:mod:`bazi.calendar` 选择历法后端，:py:mod:`bazi.calendar.utils_protocol` 说明两后端的共同接口。
+- :py:mod:`bazi.defines` 定义天干、地支等领域值；:py:mod:`bazi.data_types` 定义四柱数据容器。
+- :py:mod:`bazi.utils.bazi_utils` 提供十神、纳音、藏干等纯查询。
+- :doc:`../api-contract` 说明对象身份、输入校验与结果不可变性。
+
+离线数据工具
+------------
+
+以下入口用于在源码仓重建随库表，不是排盘或修复安装的步骤；安装版缺表应重新安装。
+构建文档只导入这些模块读取说明，不执行下载或生成入口。
+
+- :py:mod:`bazi.calendar.hko_data.encoder` 下载并编码 HKO 历书；下载时另需 requests。
+- :py:mod:`bazi.calendar.celestial_data.generator` 生成 celestial 数据；另需与
+  :py:data:`bazi.calendar.celestial_data.generator.CELESTIAL_VERSION` 一致的 celestial-calendar。
+
+完整模块索引
+------------
+
+.. toctree::
+   :maxdepth: 1
+
+'''
   (out / 'index.rst').write_text(index + ''.join('   ' + page + '\n' for page in pages), encoding='utf-8')

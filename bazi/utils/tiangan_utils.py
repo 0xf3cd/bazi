@@ -47,12 +47,14 @@ def he(tg1: Tiangan, tg2: Tiangan) -> Wuxing | None:
   Return: (Wuxing | None) 合所对应的五行；不相合时为 None。
 
   Examples:
-  - he(Tiangan.甲, Tiangan.丙):
-    - return: None
-  - he(Tiangan.甲, Tiangan.己):
-    - return: Wuxing("土")
-  - he(Tiangan.己, Tiangan.甲):
-    - return: Wuxing("土")
+  ```python
+  from bazi.defines import Tiangan, Wuxing
+  from bazi.utils.tiangan_utils import he
+
+  assert he(Tiangan.甲, Tiangan.丙) is None
+  assert he(Tiangan.甲, Tiangan.己) is Wuxing.土
+  assert he(Tiangan.己, Tiangan.甲) is Wuxing.土
+  ```
   '''
 
   _validate_pair(tg1, tg2)
@@ -75,12 +77,14 @@ def chong(tg1: Tiangan, tg2: Tiangan) -> bool:
   Return: (bool) 是否相冲。
 
   Examples:
-  - chong(Tiangan.甲, Tiangan.丙):
-    - return: False
-  - chong(Tiangan.甲, Tiangan.庚):
-    - return: True
-  - chong(Tiangan.庚, Tiangan.甲):
-    - return: True
+  ```python
+  from bazi.defines import Tiangan
+  from bazi.utils.tiangan_utils import chong
+
+  assert chong(Tiangan.甲, Tiangan.丙) is False
+  assert chong(Tiangan.甲, Tiangan.庚) is True
+  assert chong(Tiangan.庚, Tiangan.甲) is True
+  ```
   '''
 
   _validate_pair(tg1, tg2)
@@ -99,12 +103,14 @@ def sheng(tg1: Tiangan, tg2: Tiangan) -> bool:
   Return: (bool) 是否 tg1 生 tg2。
 
   Examples:
-  - sheng(Tiangan.甲, Tiangan.丙):
-    - return: True
-  - sheng(Tiangan.丙, Tiangan.甲):
-    - return: False
-  - sheng(Tiangan.庚, Tiangan.甲):
-    - return: False
+  ```python
+  from bazi.defines import Tiangan
+  from bazi.utils.tiangan_utils import sheng
+
+  assert sheng(Tiangan.甲, Tiangan.丙) is True
+  assert sheng(Tiangan.丙, Tiangan.甲) is False
+  assert sheng(Tiangan.庚, Tiangan.甲) is False
+  ```
   '''
 
   _validate_pair(tg1, tg2)
@@ -123,12 +129,14 @@ def ke(tg1: Tiangan, tg2: Tiangan) -> bool:
   Return: (bool) 是否 tg1 克 tg2。
 
   Examples:
-  - ke(Tiangan.甲, Tiangan.丙):
-    - return: False
-  - ke(Tiangan.甲, Tiangan.庚):
-    - return: False
-  - ke(Tiangan.庚, Tiangan.甲):
-    - return: True
+  ```python
+  from bazi.defines import Tiangan
+  from bazi.utils.tiangan_utils import ke
+
+  assert ke(Tiangan.甲, Tiangan.丙) is False
+  assert ke(Tiangan.甲, Tiangan.庚) is False
+  assert ke(Tiangan.庚, Tiangan.甲) is True
+  ```
   '''
 
   _validate_pair(tg1, tg2)
@@ -159,15 +167,22 @@ def search(tiangans: Sequence[Tiangan], relation: TianganRelation) -> TianganRel
   Return: (TianganRelationCombos) 所有匹配组合，不包含作用方向。
 
   Examples:
-  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.合):
-    - return: ({丙, 辛})
-  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.冲):
-    - return: ({甲, 庚})
-  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.生):
-    - return: ({甲, 丙}, {甲, 丁})
-  - search([甲, 丙, 丁, 庚, 辛], TianganRelation.克):
-    - return: ({丙, 庚}, {丙, 辛}, {丁, 庚}, {丁, 辛},
-               {甲, 庚}, {甲, 辛})
+  ```python
+  from bazi.defines import Tiangan, TianganRelation
+  from bazi.utils.tiangan_utils import search
+
+  stems = [Tiangan.甲, Tiangan.丙, Tiangan.丁, Tiangan.庚, Tiangan.辛]
+  assert search(stems, TianganRelation.合) == (frozenset({Tiangan.丙, Tiangan.辛}),)
+  assert search(stems, TianganRelation.冲) == (frozenset({Tiangan.甲, Tiangan.庚}),)
+  assert search(stems, TianganRelation.生) == (
+    frozenset({Tiangan.甲, Tiangan.丙}), frozenset({Tiangan.甲, Tiangan.丁}),
+  )
+  assert search(stems, TianganRelation.克) == (
+    frozenset({Tiangan.丙, Tiangan.庚}), frozenset({Tiangan.丙, Tiangan.辛}),
+    frozenset({Tiangan.丁, Tiangan.庚}), frozenset({Tiangan.丁, Tiangan.辛}),
+    frozenset({Tiangan.甲, Tiangan.庚}), frozenset({Tiangan.甲, Tiangan.辛}),
+  )
+  ```
   '''
 
   if not isinstance(tiangans, Sequence):
@@ -226,13 +241,19 @@ def discover_mutual(tiangans1: Sequence[Tiangan], tiangans2: Sequence[Tiangan]) 
   Return: (TianganRelationDiscovery) 跨组匹配组合的冻结映射，不包含作用方向。
   
   Examples:
-  - discover_mutual([甲], [己])
-    - return: {
-      TianganRelation.合: TianganRelationCombos({甲, 己},),
-      TianganRelation.克: TianganRelationCombos({甲, 己},)
-    }
-  - discover_mutual([甲, 己], [])
-    - return: {} // 空的冻结映射。
+  ```python
+  from bazi.defines import Tiangan, TianganRelation
+  from bazi.utils.tiangan_utils import TianganRelationDiscovery, discover_mutual
+
+  result = discover_mutual([Tiangan.甲], [Tiangan.己])
+  assert isinstance(result, TianganRelationDiscovery)
+  assert result == {
+    TianganRelation.合: (frozenset({Tiangan.甲, Tiangan.己}),),
+    TianganRelation.克: (frozenset({Tiangan.甲, Tiangan.己}),),
+  }
+  empty = discover_mutual([Tiangan.甲, Tiangan.己], [])
+  assert isinstance(empty, TianganRelationDiscovery) and not empty
+  ```
   '''
 
   if not isinstance(tiangans1, Sequence):

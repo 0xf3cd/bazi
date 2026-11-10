@@ -12,7 +12,9 @@ python -m pip install celestial-calendar==0.6.1
 python run_docs.py --output-dir output_data/docs-preview
 ```
 
-输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接；全部成功后才交付成品。打开 `output_data/docs-preview/html/index.html` 查看。
+输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接。
+API 代码围栏逐项登记，先与实际页面核对，再各自在独立进程运行并校验断言或紧随的输出，每例限时 30 秒。
+出生精度的文字对照另列，不计作可执行示例。全部成功后才交付成品。打开 `output_data/docs-preview/html/index.html` 查看。
 
 仓库的完整检查另需开发依赖，见 {doc}`contributing`。在 Python 3.13+ 文档开发环境中，`python run_tests.py -a -v` 包含文档任务；只运行文档可用 `python run_tests.py -nt -docs`。Python 3.11／3.12 可用 `python run_tests.py -a -v --runtime-only` 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 `TMPDIR` 等环境设置。
 

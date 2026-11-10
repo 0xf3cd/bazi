@@ -233,9 +233,14 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
   Return: (Shishen) 对应十神。
 
   Examples:
-  - shishen(Tiangan("甲"), Tiangan("甲")) -> Shishen("比肩") # 甲为甲的比肩。
-  - shishen(Tiangan("甲"), Dizhi("寅")) -> Shishen("比肩")  # 寅为甲的比肩。
-  - shishen(Tiangan("壬"), Dizhi("戌")) -> Shishen("七杀")  # 戌为壬的七杀。
+  ```python
+  from bazi.defines import Tiangan, Dizhi, Shishen
+  from bazi.utils.bazi_utils import shishen
+
+  assert shishen(Tiangan.甲, Tiangan.甲) is Shishen.比肩
+  assert shishen(Tiangan.甲, Dizhi.寅) is Shishen.比肩
+  assert shishen(Tiangan.壬, Dizhi.戌) is Shishen.七杀
+  ```
   '''
 
   if not isinstance(day_master, Tiangan):
@@ -299,7 +304,12 @@ def nayin_str(gz: Ganzhi) -> str:
   Return: (str) 对应的纳音。
 
   Examples:
-  - nayin_str(Ganzhi.from_str("甲子")) -> "海中金"
+  ```python
+  from bazi.defines import Ganzhi
+  from bazi.utils.bazi_utils import nayin_str
+
+  assert nayin_str(Ganzhi.from_str('甲子')) == '海中金'
+  ```
   '''
 
   if not isinstance(gz, Ganzhi):
@@ -324,9 +334,14 @@ def shier_zhangsheng(tg: Tiangan, dz: Dizhi) -> ShierZhangsheng:
   Return: (ShierZhangsheng) 对应的十二长生。
 
   Examples:
-  - shier_zhangsheng(Tiangan.甲, Dizhi.子) -> ShierZhangsheng.沐浴
-  - shier_zhangsheng(Tiangan.丙, Dizhi.午) -> ShierZhangsheng.帝旺
-  - shier_zhangsheng(Tiangan.辛, Dizhi.丑) -> ShierZhangsheng.养
+  ```python
+  from bazi.defines import Tiangan, Dizhi, ShierZhangsheng
+  from bazi.utils.bazi_utils import shier_zhangsheng
+
+  assert shier_zhangsheng(Tiangan.甲, Dizhi.子) is ShierZhangsheng.沐浴
+  assert shier_zhangsheng(Tiangan.丙, Dizhi.午) is ShierZhangsheng.帝旺
+  assert shier_zhangsheng(Tiangan.辛, Dizhi.丑) is ShierZhangsheng.养
+  ```
   '''
   
   if not isinstance(tg, Tiangan):
@@ -348,9 +363,14 @@ def from_shier_zhangsheng(tg: Tiangan, place: ShierZhangsheng) -> Dizhi:
   Return: (Dizhi) 对应地支。
 
   Examples:
-  - from_shier_zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) -> Dizhi.子
-  - from_shier_zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) -> Dizhi.午
-  - from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) -> Dizhi.丑
+  ```python
+  from bazi.defines import Tiangan, Dizhi, ShierZhangsheng
+  from bazi.utils.bazi_utils import from_shier_zhangsheng
+
+  assert from_shier_zhangsheng(Tiangan.甲, ShierZhangsheng.沐浴) is Dizhi.子
+  assert from_shier_zhangsheng(Tiangan.丙, ShierZhangsheng.帝旺) is Dizhi.午
+  assert from_shier_zhangsheng(Tiangan.辛, ShierZhangsheng.养) is Dizhi.丑
+  ```
   '''
 
   if not isinstance(tg, Tiangan):
@@ -371,7 +391,12 @@ def lu(tg: Tiangan) -> Dizhi:
   Return: (Dizhi) 禄位地支。
 
   Examples:
-  - lu(Tiangan.甲) -> Dizhi.寅
+  ```python
+  from bazi.defines import Tiangan, Dizhi
+  from bazi.utils.bazi_utils import lu
+
+  assert lu(Tiangan.甲) is Dizhi.寅
+  ```
   '''
 
   if not isinstance(tg, Tiangan):

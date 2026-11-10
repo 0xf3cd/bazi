@@ -20,11 +20,12 @@ sys.path.insert(0, str(ROOT / 'tests'))
 sys.path.insert(0, str(ROOT / 'docs' / '_ext'))
 
 from api_contract import DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, PUBLIC_NAMES
+from api_examples import check_example_blocks, collect_examples, run_example
 from house_docstrings import HEADER_WORDS, source_attribute_docs
 from knowledge_catalog import json_value
 from bazi.context_matching import CriterionInfo, criteria
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry
-from bazi.rules import DizhiRelationDefinitions
+from bazi.rules import BaziRules, TianganRules, DizhiRules, ShenshaRules, DizhiRelationDefinitions
 from bazi.school import BaziConfig, BaziSchool
 
 
@@ -75,8 +76,13 @@ class Page(HTMLParser):
     self.paragraph: list[str] | None = None
     self.paragraphs: list[str] = []
     self.field_name: str | None = None
+    self.field_key: str | None = None
     self.heading: list[str] | None = None
     self.headings: list[str] = []
+    self.section_headings: dict[str, str] = {}
+    self.references: dict[str, list[tuple[str, str]]] = {}
+    self.reference_href: str | None = None
+    self.reference_text: list[str] = []
 
   def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
     attributes = dict(attrs)
@@ -94,11 +100,16 @@ class Page(HTMLParser):
       if tag == 'a' and self.section and 'reference' in (attributes.get('class') or '').split() and fragment.startswith('catalog-entries-'):
         self.related_id = fragment.removeprefix('catalog-entries-')
         self.related_text = []
+      if tag == 'a' and self.section and 'reference' in (attributes.get('class') or '').split():
+        self.reference_href = href
+        self.reference_text = []
     source = attributes.get('src')
     if tag in ('img', 'script') and source is not None:
       self.links.append(source)
     if tag == 'dt':
       self.current_id = identifier
+      self.field_key = next((value.removeprefix('catalog-field-')
+        for value in (attributes.get('class') or '').split() if value.startswith('catalog-field-')), None)
     if tag == 'span':
       if self.label_depth:
         self.label_depth += 1
@@ -113,6 +124,7 @@ class Page(HTMLParser):
         self.blocks[identifier] = []
         self.rows[identifier] = []
         self.related[identifier] = []
+        self.references[identifier] = []
     if self.section:
       if tag == 'dt':
         self.dt = []
@@ -134,6 +146,8 @@ class Page(HTMLParser):
       self.label_text.append(text)
     if self.related_id is not None:
       self.related_text.append(text)
+    if self.reference_href is not None:
+      self.reference_text.append(text)
     if self.paragraph is not None:
       self.paragraph.append(text)
     for target in (self.dt, self.dd, self.pre, self.cell):
@@ -142,8 +156,15 @@ class Page(HTMLParser):
 
   def handle_endtag(self, tag: str) -> None:
     if tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6') and self.heading is not None:
-      self.headings.append(''.join(self.heading).removesuffix('¶').strip())
+      heading = ''.join(self.heading).removesuffix('¶').strip()
+      self.headings.append(heading)
+      if self.section is not None:
+        self.section_headings[self.section] = heading
       self.heading = None
+    if tag == 'a' and self.reference_href is not None:
+      assert self.section is not None
+      self.references[self.section].append((self.reference_href, ''.join(self.reference_text)))
+      self.reference_href = None
     if tag == 'a' and self.related_id is not None:
       assert self.section is not None
       self.related[self.section].append((self.related_id, ''.join(self.related_text)))
@@ -158,7 +179,7 @@ class Page(HTMLParser):
     if tag == 'dt':
       self.current_id = None
       if self.dt is not None:
-        self.field_name = ''.join(self.dt).strip().removesuffix(':')
+        self.field_name = self.field_key or ''.join(self.dt).strip().removesuffix(':')
         self.dt = None
     elif tag == 'dd' and self.dd is not None:
       assert self.section is not None and self.field_name is not None
@@ -230,16 +251,21 @@ class Signatures(HTMLParser):
     self.parameter: list[str] | None = None
     self.parameters: list[str] = []
     self.result: dict[str, list[str]] = {}
+    self.texts: dict[str, str] = {}
+    self.text: list[str] = []
 
   def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
     attributes = dict(attrs)
     if tag == 'dt' and 'sig-object' in (attributes.get('class') or '').split():
       self.current = attributes.get('id')
       self.parameters = []
+      self.text = []
     if self.current and tag == 'em' and 'sig-param' in (attributes.get('class') or '').split():
       self.parameter = []
 
   def handle_data(self, data: str) -> None:
+    if self.current:
+      self.text.append(data)
     if self.parameter is not None:
       self.parameter.append(data)
 
@@ -249,7 +275,16 @@ class Signatures(HTMLParser):
       self.parameter = None
     if tag == 'dt' and self.current:
       self.result[self.current] = self.parameters
+      self.texts[self.current] = ''.join(self.text)
       self.current = None
+
+
+def signature_defaults(parameters: list[str]) -> dict[str, str]:
+  '''签名中的类型和排版空格不参与默认值比较；名字、顺序和值仍逐项核对。'''
+  return {
+    parameter.split('=', 1)[0].split(':', 1)[0].strip(): parameter.split('=', 1)[1].strip()
+    for parameter in parameters
+  }
 
 
 def check_configuration_signatures(site: Path) -> None:
@@ -260,16 +295,25 @@ def check_configuration_signatures(site: Path) -> None:
     qualified = cls.__module__ + '.' + cls.__name__
     parameters = signatures.result[qualified]
     expected = inspect.signature(cls).parameters
-    assert [parameter.split('=')[0].strip() for parameter in parameters] == list(expected), qualified
-    rendered = dict(parameter.split('=', 1) for parameter in parameters)
+    rendered = signature_defaults(parameters)
+    assert list(rendered) == list(expected), (qualified, parameters, list(expected))
     for name, parameter in expected.items():
       value = parameter.default
       default = f'{type(value).__name__}.{value.name}' if isinstance(value, Enum) else repr(value)
       assert rendered[name] == default, (qualified, name, rendered[name], default)
-  assert signatures.result['bazi.school.BaziConfig.from_values'] == [
-    'precision=BaziPrecision.DAY', 'backend=CalendarBackend.CELESTIAL',
-    'school=DEFAULT_SCHOOL', 'dayun_year_rule=DayunYearRule.JIE_PROJECTED',
-  ]
+      if isinstance(value, Enum):
+        member = qualified + '.' + name
+        assert '= ' + type(value).__qualname__ + '.' + value.name in signatures.texts[member], ('Field default', member)
+  assert signature_defaults(signatures.result['bazi.school.BaziConfig.from_values']) == {
+    'precision': 'BaziPrecision.DAY', 'backend': 'CalendarBackend.CELESTIAL',
+    'school': 'DEFAULT_SCHOOL', 'dayun_year_rule': 'DayunYearRule.JIE_PROJECTED',
+  }
+  for rule_class in (BaziRules, TianganRules, DizhiRules, ShenshaRules):
+    qualified = rule_class.__module__ + '.' + rule_class.__name__
+    for name in DECLARED_MEMBERS[qualified].split():
+      if name.isupper():
+        member = qualified + '.' + name
+        assert '=' not in signatures.texts[member], ('Rule table value', member)
 
 
 def normalized(text: str) -> str:
@@ -343,8 +387,26 @@ def check_api(site: Path, pages: dict[str, Page]) -> int:
 
 
 def check_related(page: Page, identifier: str, entries: tuple[KnowledgeEntry, ...]) -> None:
-  expected = sorted((entry.claim_id, entry.claim_id) for entry in entries)
+  expected = []
+  for entry in entries:
+    text = ' '.join(entry.text.split())
+    label = (text[:28] + '…' if len(text) > 28 else text) + ' [' + entry.claim_id + ']'
+    expected.append((entry.claim_id, label))
+  expected.sort()
   assert sorted(page.related[identifier]) == expected, ('Related entries', identifier)
+
+
+def check_entry_references(page: Page, identifier: str, entry: KnowledgeEntry, kb: KnowledgeBase) -> None:
+  '''检查必需链接，而不是仅检查页面上已经存在的链接是否可达。'''
+  expected = []
+  for object_id in dict.fromkeys(role.object_id for role in entry.roles):
+    expected.append(('objects.html#catalog-objects-' + object_id, kb.objects[object_id].name + ' [' + object_id + ']'))
+  for context_id in entry.contexts:
+    expected.append(('contexts.html#catalog-contexts-' + context_id, kb.contexts[context_id].label + ' [' + context_id + ']'))
+  for source_id in entry.sources:
+    source = kb.sources[source_id]
+    expected.append(('sources.html#catalog-sources-' + source_id, source.work + ' · ' + source.locator + ' [' + source_id + ']'))
+  assert page.references[identifier] == expected, ('Entry references', identifier)
 
 
 def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
@@ -380,9 +442,19 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
           assert actual_json == expected_json, (kind, key, name, actual_json, expected_json)
       selected: tuple[KnowledgeEntry, ...]
       if kind == 'entries':
-        assert page.blocks[identifier] == [kb.render(value, show_sources=False) + '\n'], key
+        assert not page.blocks[identifier], ('Repeated entry rendering', key)
+        assert list(section)[:2] == ['text', 'applicability'], ('Entry reading order', key)
+        if value.premise:
+          assert list(section)[2] == 'premise', ('Entry premise order', key)
+        check_entry_references(page, identifier, value, kb)
         selected = ()
       elif kind == 'criteria':
+        assert list(section)[:2] == ['definition', 'entry_role'], ('Criterion reading order', key)
+        assert any('guides/integration.html#' in href for href, _ in page.references[identifier]), ('Criterion guide', key)
+        for observation_type in value.observation_types:
+          qualified = observation_type.__module__ + '.' + observation_type.__qualname__
+          href = '../api/' + observation_type.__module__.replace('.', '-') + '.html#' + qualified
+          assert (href, observation_type.__name__) in page.references[identifier], ('Criterion observation', key, qualified)
         selected = tuple(kb.entries[claim_id] for claim_id in value.claim_ids if claim_id in kb.entries)
       elif kind == 'objects':
         selected = kb.query(object_id=key, include_reference_only=True)
@@ -391,6 +463,18 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
       else:
         selected = kb.query(source_id=key, include_reference_only=True)
       check_related(page, identifier, selected)
+      heading = page.section_headings[identifier]
+      assert '[' + key + ']' in heading, ('Stable ID in title', kind, key)
+      if kind == 'objects':
+        assert heading.startswith(value.name + ' ['), ('Object name', key)
+      elif kind == 'contexts':
+        assert heading.startswith(value.label + ' ['), ('Context name', key)
+      elif kind == 'sources':
+        assert heading.startswith(value.work + ' · ' + value.locator + ' ['), ('Source title', key)
+        assert (value.url, value.url) in page.references[identifier], ('Source original', key)
+      elif kind == 'entries':
+        object_names = '、'.join(dict.fromkeys(kb.objects[role.object_id].name for role in value.roles))
+        assert heading == object_names + ' · ' + '、'.join(value.topics) + ' [' + key + ']', ('Entry title', key)
     result[kind] = len(registry)
   for kind, dimension in (('topics', 'topic'), ('viewpoints', 'viewpoint')):
     expected_ids = {'catalog-' + kind + '-' + value for value in kb.filter_values(dimension)}
@@ -522,6 +606,11 @@ def main() -> None:
   result['release_sections'] = check_release_notes(pages)
   result['source_less_attributes'] = check_attribute_descriptions(site)
   result['doctests'] = check_doctests(doctest)
+  examples = collect_examples(ROOT / 'bazi')
+  check_example_blocks(examples, {name: page.code_blocks for name, page in pages.items()})
+  for example in examples:
+    run_example(example, ROOT)
+  result['api_examples'] = [example.owner for example in examples]
   (site.parent / 'checks.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
   print(json.dumps(result, ensure_ascii=False, indent=2))
 
