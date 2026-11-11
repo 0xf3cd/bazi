@@ -98,7 +98,7 @@ print('命宫', chart.minggong)
 命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
 时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
 
-这两项不进入现有五行、十神、神煞、关系或流运分析，也不进入盘身份、`school` 或旧文本输出。
+这两项供单独查询，不参与五行、十神、神煞、关系或流运分析，也不出现在 `basic_text` 等命盘文本中。
 低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；
 后者需要已调整的有效命宫月支，不接收裸整数月序。来源与其他读法候选可查知识对象
 `concept.taiyuan`、`concept.minggong`，均须显式包含参考条目，不自动认定解释成立。
@@ -148,13 +148,13 @@ for claim_id in with_references.reference_ids:
 如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。
 ```
 
-上例的结构事实成立，所以状态为 `SATISFIED`。最后两行是库中仅供参考的文字，前提满足不能推出这些职场或法律事件。
-两个关联条目均不默认展示，因此第一次的 `result.reference_ids` 为空；第二次传入 `include_reference_only=True`
-才读到文字，判据状态不变。空参考元组只说明本次没有返回关联条目，
-不能据此读成“前提不成立”：条目也可能因自定义知识库缺失或性别筛选而未返回。
-参考 ID 按判据声明序筛选，不按知识库条目顺序排列；筛选规则见[判据目录](../api-contract.md#判据目录)。
-正文、引文与来源说明的编辑不改变判据状态；自定义库须保持同 ID 的领域含义，不再核对内容摘要。
-条目的来源状态见 {doc}`knowledge`。
+上例的结构事实成立，所以状态为 `SATISFIED`。两个关联条目都不默认展示，所以第一次的 `result.reference_ids` 为空，
+第二次传入 `include_reference_only=True` 才读到文字；两次的判据状态相同。
+最后两行是库中仅供参考的文字，前提满足推不出这些职场或法律事件。
+
+`reference_ids` 为空只表示这次没有返回关联条目，不表示前提不成立。不默认展示的条目需要显式请求；
+自定义知识库里没有该条目，或条目要求的性别与命盘不符时，也不会返回。
+返回顺序与筛选规则见[判据目录](../api-contract.md#判据目录)，条目的来源状态见 {doc}`knowledge`。
 
 ### 选择观察范围与读取证据
 
@@ -172,9 +172,8 @@ for claim_id in with_references.reference_ids:
 
 多种岁运的坐标使用 `YearCoordinate(ganzhi_year)`、`MonthCoordinate(ganzhi_year, ganzhi_month)`、
 `DateCoordinate(solar_date)` 或 `MomentCoordinate(solar_moment)`，均从 `bazi.context_matching` 导入。
-年月是干支年月，日期和时刻均按东八区解释。日期不能传 datetime，时刻须是不带时区标签的 datetime；
-时刻保留请求微秒身份，计算仍按秒解释。
-这些严格请求不改变 `TransitChart.at_year/at_month` 原有的便捷输入政策。
+年月是干支年月，日期和时刻均按东八区解释。日期不能传 `datetime`，时刻须是不带时区标签的 `datetime`；
+各坐标的精确类型要求见[契约](../api-contract.md#位置观察与坐标)。
 
 `result.evidence` 在明藏干分类判据中为 `tuple[ChartOccurrence, ...]`，position 是 `Zhu` 或带年份的
 `LiunianPosition`，layer 是 `TianganLayer`；婚恋结构判据中则为 `RelationshipEvidence`。
@@ -219,6 +218,46 @@ condition 1
 
 本例 `entry_role='condition'`，只检查妻宫刑冲这个局部条件，不认证条目全文或其中的现实事件。
 想连同来源、前提和限度一起显示，用 `result.knowledge.render(entry)`；读取方法见 {doc}`knowledge`。
+
+## 读取枚举字段
+
+配偶星的 `StarAppearance` 以 `position` 区分原局柱位 `Zhu` 与流运种类 `TransitKind`，
+以 `layer` 区分 `TianganLayer.明干` 与 `TianganLayer.藏干`。`Zhu` 和 `TianganLayer` 从 `bazi.defines` 导入，
+中文类别名分别为 `柱` 和 `天干层次`；`TransitKind` 从 `bazi.transits` 导入。
+判断时使用枚举成员，如 `appearance.layer is TianganLayer.明干`；打印前两者用 `str(value)` 取得中文值，
+打印流运种类用 `.value` 取得 `dayun`、`liunian` 等标签，不依赖枚举的 repr。
+
+对只允许年、日两柱的 `KongwangResult.anchor` 写穷尽分支时，中文和拼音别名都要列出：
+
+```{testcode} integration-enum-fields
+from typing import assert_never
+
+from bazi.analyzer.relationship import KongwangResult
+from bazi.defines import Ganzhi, Zhu
+
+
+def anchor_label(result: KongwangResult) -> str:
+  anchor = result.anchor
+  if anchor is Zhu.年 or anchor is Zhu.NIAN:
+    return '年'
+  if anchor is Zhu.日 or anchor is Zhu.RI:
+    return '日'
+  assert_never(anchor)
+
+
+print(anchor_label(KongwangResult(Zhu.年, Ganzhi.from_str('甲子'), ())))
+print(anchor_label(KongwangResult(Zhu.日, Ganzhi.from_str('甲子'), ())))
+```
+
+```{testoutput} integration-enum-fields
+年
+日
+```
+
+运行时 `Zhu.年` 与 `Zhu.NIAN` 是同一成员，日柱的两种拼写也相同；当前钉版 mypy 却将它们视为不同的 Literal。
+上例让类型检查接受四种拼写，同时拒绝月、时。只写中文两支时，mypy 会在 `assert_never` 处报告
+`Literal[Zhu.NIAN, Zhu.RI]` 未覆盖，应补齐别名分支，保留穷尽断言和锚点类型限制。
+枚举与字符串比较的行为见[契约](../api-contract.md#枚举字段的读取与穷尽分支)。
 
 ## 内存结果与对象契约
 

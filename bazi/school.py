@@ -233,14 +233,22 @@ _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
 class BaziSchool:
   '''
   命盘采用的流派读法。day_rollover 在排盘期决定日柱，tuwang_def 用于月令五行状态，
-  其余字段选择神煞、关系与配偶星取法。每个字段均参与相等性；
-  只差一个选项的命盘也不同，相等档案的哈希相等。
+  其余字段选择神煞、关系与配偶星取法。
 
-  出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。
-  字段须为不可变类型（枚举或 frozen 值类型），不得用 dict / list 默认值，避免修改共享默认实例。
+  常见选择：
+  - day_rollover：按 23:00 换日柱用 WAN_ZISHI，按 00:00 换日柱用 ZIZHENG。
+  - tuwang_def：季月整月土旺用 WHOLE_MONTH；按开月节后十二日或下一四立前十八日分段时，
+    分别用 AFTER_TWELVE_DAYS 或 BEFORE_EIGHTEEN_DAYS。
+  - peiou_xing_def：男取正财、女取正官用 ZHENGCAI_ZHENGGUAN；男取所克阴干、女取克我阳干用 YINYANGGAN。
+  - kongwang_anchor：只查日柱旬空用 DAY，只查年柱用 YEAR，年、日各查一遍用 YEAR_AND_DAY。
+  - 其余 *_def 按对应枚举说明选择读法；*_anchor 按查法依据的柱位选择，合法范围见 _ANCHOR_CHOICES。
 
-  默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
-  `DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
+  Note:
+  - 出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。
+  - 每个字段均参与相等性；只差一个选项的命盘也不同，相等档案的哈希相等。
+  - 字段须为不可变类型（枚举或 frozen 值类型），不得用 dict / list 默认值，避免修改共享默认实例。
+  - 默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
+    `DEFAULT_SCHOOL` 构造即默认，`BaziConfig.school` 指向同一实例。
   '''
   day_rollover:  DayRollover = DayRollover.WAN_ZISHI
   anhe_def:      DizhiRules.AnheDef = DEFAULT_DIZHI_RELATION_DEFINITIONS.anhe_def

@@ -31,7 +31,7 @@ CLI 可选精度、经度和民用时区，其他历法后端、换日与流派�
 
 ## 查询知识与出处
 
-不排盘，直接查丁的知识，或列出可用主题：
+`bazi knowledge` 显示知识库概览。不排盘，直接查丁的知识，或列出可用主题：
 
 ```sh
 bazi knowledge --object tiangan.ding
@@ -55,7 +55,7 @@ bazi knowledge --export-knowledge-base --show-sources
 
 文件默认写在调用目录的 `output_data/knowledge_base/{tiangan,shishen}/`；
 加 `--output-dir out` 则写到 `out/knowledge_base/`。此导出命令不向终端打印结果。
-命盘展示与知识导出是独立命令，各自拒绝覆盖包内或自定义知识源，不提供跨命令整体回滚。
+两个写文件的命令都拒绝覆盖包内或自定义知识源。
 
 校验随包知识源：
 
@@ -100,7 +100,7 @@ bazi demo --seed 236
 bazi relationship --seed 236
 ```
 
-前者给完整命盘与流运文本；后者给夫妻宫、配偶星、原局神煞、旬空和连续十年流年报告。
+前者给带终端颜色的完整命盘与流运文本；后者给夫妻宫、配偶星、原局及整柱神煞、旬空和连续十年流年报告。
 每个任务有独立选项，完整列表见各自帮助，例如：
 
 ```sh

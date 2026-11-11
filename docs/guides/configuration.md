@@ -20,12 +20,12 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 日柱 丙寅 时柱 戊子
 ```
 
-配置只表示你选择了哪一种口径，不判断哪一种更对。库没有替你选“最准确”的读法。
+配置只表示你选择了哪一种口径。默认值是本库选定的取法，不判断哪一种更对，也不是文献结论。
 
 ## 配置速查
 
 构造器接收下表的枚举成员，导入路径列在各组前。`BaziConfig.from_values` 另外接受精度、后端与大运年份规则的字符串，
-如上例；`school` 仍须传 `BaziSchool`。省略字段时采用“默认”列，不会替你判断哪个流派更合适。
+如上例；`school` 仍须传 `BaziSchool`。省略的字段取“默认”列。
 
 ### 命盘配置 `BaziConfig`
 
@@ -80,9 +80,22 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 | `guoyin_anchor` | `Anchor` | `YEAR`、`YEAR_AND_DAY` | `YEAR_AND_DAY` | 年干或分别查年日干。 |
 | `kongwang_anchor` | `Anchor` | `YEAR`、`DAY`、`YEAR_AND_DAY` | `DAY` | 年柱、日柱或分别查完整两柱干支。 |
 
-这些表列合法配置，不把默认值当作文献结论；具体读法和出处见 {doc}`rule-coverage` 与
+这些表列出合法配置。各项读法和出处见 {doc}`rule-coverage` 与
 {py:class}`~bazi.school.BaziSchool`。`longitude` 和 `civil_timezone` 则是 `Bazi.create` 的出生入口参数，
 不属于配置字段，见{ref}`真太阳时输入 <configuration-location>`。
+
+要改哪一项，取决于你希望采用的取法。例如：
+
+- 按 00:00 换日柱时，将 `day_rollover` 设为 `ZIZHENG`；按 23:00 换日柱则用 `WAN_ZISHI`。
+- 季月按整月土旺处理时用 `WHOLE_MONTH`；要按开月节后十二日或下一四立前十八日分段，
+  将 `tuwang_def` 分别设为 `AFTER_TWELVE_DAYS` 或 `BEFORE_EIGHTEEN_DAYS`。
+- 配偶星按男命正财、女命正官取时用 `ZHENGCAI_ZHENGGUAN`；要按男取所克阴干、女取克我阳干的读法，
+  将 `peiou_xing_def` 设为 `YINYANGGAN`。这会改变阴男、阳女十格的目标，阳男、阴女十格相同。
+- 旬空以日柱为依据时用 `DAY`；以年柱为依据时设 `kongwang_anchor=Anchor.YEAR`；
+  需要年、日两柱各查一遍时用 `YEAR_AND_DAY`，两个结果分别保留。
+
+其余 `*_def` 字段按表中的组合或取值差别选择；`*_anchor` 则按查法依据的柱位选择，且只能用该字段支持的成员。
+例如文昌辛取戌时改 `wenchang_def`，只按日干查时改 `wenchang_anchor`；改变一个字段不会自动改另一个。
 
 ## 出生时间怎么填
 
@@ -97,7 +110,6 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 不再保留当地民用钟。需要真太阳时则使用{ref}`地点盘 <configuration-location>`，它会修正日时所读的钟。
 
 **当前没有“保留当地民用钟、按物理节界归年月、但不作太阳时修正”的对应入口。**
-不要只把带时区输入的 `tzinfo` 去掉，也不要把时区转换和真太阳时当成等价操作。
 
 ## 选择节气比较精度
 
@@ -129,8 +141,9 @@ for birth in (datetime(2000, 2, 4, 20, 39), datetime(2000, 2, 4, 20, 40)):
 ```
 
 `MINUTE` 从 20:40 这一分钟的起点便归新节，`HOUR` 从包含交节时刻的戌时起点归新，`DAY` 则整天归新。
-这三档只改变年月的交节归属，例中的日时柱不变。只知道日期时可选默认 `DAY`，但日时是否有可靠输入仍需另行判断；
-知道时分且在意交节当天归属时，再选择适合的粒度。完整边界约定见 {py:class}`~bazi.school.BaziPrecision`。
+这三档只改变年月的交节归属，例中的日时柱不变。只知道出生日期时，可按默认 `DAY` 判断年月归属；
+日柱、时柱仍依赖可靠的日期和小时输入，选择 `DAY` 不能补足未知时辰。
+知道时分、又在意交节当天的归属，再选 `HOUR` 或 `MINUTE`。完整边界约定见 {py:class}`~bazi.school.BaziPrecision`。
 
 ## 海外出生时间与夏令时
 
@@ -198,7 +211,7 @@ print(bazi.config.backend, ' '.join(map(str, bazi.pillars)))
 hko 庚午 辛巳 壬午 乙巳
 ```
 
-## 换日：23:00 还是 24:00
+## 换日：23:00 还是 00:00
 
 `BaziSchool.day_rollover` 决定子时前半段属于哪一天。默认 `WAN_ZISHI`（晚子时）在 23:00 就换日柱，
 `ZIZHENG`（子正）到 00:00 才换。年柱和月柱不受影响，它们按精度独立判断。
@@ -290,8 +303,6 @@ before_eighteen_days 木旺 火相 土死 金囚 水休
 再将出生时间与阈值按本盘精度比较，相等归土旺。地点盘会把算出的阈值转换到同一真太阳钟后比较。
 HKO 的节气数据只有日期精度，零点仅为占位。
 
-此属性使用原局的出生时刻与月令。
-
 ## 选择大运年份的标记方式
 
 `DayunYearRule` 只改变每步大运的年份标签，不改变四柱，也不改变大运的物理起止时刻。
@@ -337,7 +348,7 @@ fixed_decade [1919, 1929, 1939] ['辛巳', '壬午', '癸未']
 - **节气时刻**表以东八区无时区标签保存；地点盘会把节气时刻换到同一个真太阳钟上再与出生比较。
   大运起止和流运查询仍使用东八区标签（`reference_datetime`），不是真太阳钟。
 
-下面的经度是演示用的合成坐标，不对应任何真实个人的位置。同一个民用时刻，换一个经度，时柱就不同：
+同一个民用时刻，换一个经度，时柱就不同（经度同样只作演示）：
 
 ```{testcode} config-location
 from datetime import datetime, timedelta, timezone
@@ -364,7 +375,7 @@ for longitude in (87.6, 121.5):
 
 `solar_datetime` 只显示到分钟；完整的时间事实在 `location_time`，包含绝对时刻、民用钟、经度和未截断的真太阳钟。
 带时区却不给经度、有经度却没有时区，或地点盘使用 DAY 精度，均在创建时抛 `ValueError`。
-本入口不接受纬度参数。完整输入与错误条件见 {py:meth}`~bazi.bazi.Bazi.create`。
+完整输入与错误条件见 {py:meth}`~bazi.bazi.Bazi.create`。
 
 ## 替换一项配置
 
@@ -432,8 +443,6 @@ YEAR_AND_DAY 年 甲子 戌 亥
 YEAR_AND_DAY 日 壬戌 子 丑
 ```
 
-该字段参与命盘相等性与哈希。本库不提供命盘或前提判别记录的恢复、迁移接口；
-需要结论时，用原输入和完整配置重新构造命盘。不传 `kongwang_anchor` 则使用默认日柱 `Anchor.DAY`，
-所需读法为 `YEAR` 或 `YEAR_AND_DAY` 时需显式配置。旧调用的升级边界见 {doc}`../release-notes`。
+该字段参与命盘相等性与哈希。旧调用的升级边界见 {doc}`../release-notes`。
 
 双锚例子依次保留年柱和日柱的旬空二支。继续读取命中位置，见 {doc}`relations-transits`。

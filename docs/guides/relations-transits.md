@@ -1,7 +1,8 @@
 # 关系与流运
 
 本页先查询流运，再用原局或所选流运查关系、神煞、通根与透干。
-结果是结构事实，描述“哪些干支落在哪些位置、满足哪种关系”，不是对事件的预测。
+结果是结构事实，描述“哪些干支落在哪些位置、在所选流派或匹配条件下满足哪种关系”，不是旺衰、格局或对事件的预测。
+要检查某条知识条目的前提在一张盘上是否成立，见 {doc}`integration`。
 
 ## 查年、月、日或时刻的流运
 
@@ -43,7 +44,7 @@ for label, result in queries:
 
 | 入口 | 参数含义 | 查询层级及 `None` 的含义 |
 | --- | --- | --- |
-| `at_year(gz_year)` | 干支年标签，以年份数字填写 | 返回该年流年及可取得的小运／大运；早于出生干支年为 `None`，远年份仍可有流年。大运按所选年份标签解释。 |
+| `at_year(gz_year)` | 干支年标签，以年份数字填写 | 返回该年流年及可取得的小运／大运；早于出生干支年为 `None`。远年份仍可有流年，不能用 `None` 判断历法表上界。大运按所选年份标签解释。 |
 | `at_month(gz_year, gz_month)` | 干支年和月份地支，如 `Dizhi.午` | 增加流月；出生干支月前或节令表范围外为 `None`，大运按物理交运月边界解释。午月不等于公历六月。 |
 | `at_date(solar_date)` | 东八区公历 `date`，不能传 `datetime` | 增加流月、流日；出生公历日前或历法范围外为 `None`，大运按物理交运日边界解释。 |
 | `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或配置不支持为 `None`；须用 celestial 系后端及 HOUR／MINUTE 精度。 |
@@ -176,17 +177,17 @@ for result in analyzer.transits.kongwang(transits):
 | `hits` | 每项保留目标的完整 `ganzhi`；`position` 是原局柱位 `Zhu` 或流运种类 `TransitKind` |
 
 原局查询排除作为依据的那根柱；流运查询只用本命年／日柱查传入流运，不反向以流运查原局。
-同支不同柱、同干支不同流运种类、同值的年日双锚均分别保留。这里只记录原始命中，不删除目标地支，
+同支不同柱、同干支不同流运种类、同值的年日双锚均分别保留。
+
+这里只记录原始命中，不删除目标地支，
 不以冲合刑取消命中，也不改变五行、十神、纳音或其他关系；出空、填实、吉凶、单支筛选、截路及四大空亡均不在此接口中判断。
 
 若已持有干支，只需做一次低层查表，使用 {py:func}`~bazi.utils.shensha_utils.xunkong` 返回旬空二支，
 或用 {py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。两者要求查法依据是合法六十甲子，
 目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 `Ganzhi` 自身的构造范围不变。
 
-配偶星的 `StarAppearance` 同样用 `position` 区分原局柱位与流运种类；`layer` 为
-`TianganLayer.明干`／`TianganLayer.藏干`。这两个类型从 `bazi.defines` 导入，中文类别名分别为
-`柱` 和 `天干层次`。打印原局柱位 `Zhu` 或明藏层 `TianganLayer` 用 `str(value)` 取得中文值，
-不依赖枚举的 repr；流运种类 `TransitKind` 用 `.value` 取得 `dayun`、`liunian` 等标签。
+打印位置时，原局柱位 `Zhu` 用 `str(value)` 取得中文值，流运种类 `TransitKind` 用 `.value` 取得
+`dayun`、`liunian` 等标签。
 
 (relations-shensha)=
 ## 原局神煞与中文名
@@ -227,8 +228,7 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 (relations-transit-house)=
 ## 查流运与婚姻宫的关系
 
-`TransitChart` 按干支年、月、日期或时刻返回一个 `TransitSet`；`RelationshipAnalyzer` 对它做关系查询。
-下面取 2024 年的流运，查它与婚姻宫的地支关系。
+`RelationshipAnalyzer` 对查到的 `TransitSet` 做关系查询。下面取 2024 年的流运，查它与婚姻宫的地支关系。
 
 ```{testcode} relations-house
 from datetime import datetime
@@ -264,8 +264,7 @@ for relation, combos in found.items():
 
 几点读法：
 
-- `at_year` 在出生年之前返回 `None`，所以先判断再用。返回的 `TransitSet` 只含当前有的种类（这里是大运和流年），
-  缺项就是 `None`。`select` 要求指定种类全部存在，缺项抛 `ValueError`。
+- `at_year` 可能返回 `None`，所以先判断再用。这里的 `TransitSet` 含大运和流年两种。
 - `TransitKind` 是流运种类的枚举，成员值是英文小写的拼音；`year.items` 按固定顺序给出种类与干支对。
 - 关系的键是 `DizhiRelation` 成员，可用中文别名，如 `DizhiRelation.害`。
 - 每个组合是一个 `frozenset` 的地支，不带次序，所以示例先按枚举序排序再打印。
@@ -357,6 +356,7 @@ print('同干透出', tougan(chart, Tiangan.癸, transits, condition=TianganMatc
 
 (transits-text)=
 ## 把流运排成文本
+
 需要的是文字而不是对象时，`bazi.chart_text.transit_text` 把节、交运时间、大运、小运和流年排好。
 流年可以无限延续，所以数量由你给：`dayun_count` 取前几步大运，`liunian_count` 取从出生干支年起的几年，默认分别是 10 和 100。
 小运是有限的，全部列出。
@@ -395,10 +395,3 @@ print(transit_text(chart, dayun_count=2, liunian_count=10).strip())
 ```
 
 地点盘的节与大运区间仍用节气表时刻，文本会注明这一点，不采用真太阳时。
-
-## 范围提醒
-
-- 月、日期和时刻查询按东八区无时区标签和物理节气边界；`at_moment` 还要求 `celestial` 系后端和 `HOUR` / `MINUTE` 精度，否则返回 `None`。
-- `at_year` 在出生年之前返回 `None`，远年份仍可返回流年，不能用它的 `None` 判断历法表上界。月、日期与时刻查询不满足各自支持范围时返回 `None`；类型与取值校验另见各入口的 API 说明。
-- 这里的关系、神煞与明藏匹配只说明“在所选流派或匹配条件下，这些干支满足了某个结构条件”，不是旺衰、格局或某件事会不会发生。
-  要看某条知识条目的前提在这张盘上是否成立，见 {doc}`knowledge`。

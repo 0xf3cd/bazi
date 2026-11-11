@@ -33,8 +33,19 @@ class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   每个组合是 frozenset[Dizhi]，只保存参与的地支值，不保存柱位。
 
   拱合、拱会的组合只含两个实支。要取得所拱的第三支，分别把这两支传给 gonghe、gonghui。
-  若结果来自使用 gong_def 的干支查询，gonghe 的 definition 参数须传入
-  DizhiRules.GONG_GONGHE_SCOPE[gong_def]，与原查询的读法一致。
+  干支查询的 gong_def 包含完整成立条件，gonghe 的 definition 只选择拱合的结构范围。
+  用 DizhiRules.GONG_GONGHE_SCOPE[gong_def] 取得与原查询一致的范围，再查第三支。
+
+  Examples:
+  ```python
+  from bazi.defines import Dizhi
+  from bazi.rules import DizhiRules
+  from bazi.utils.dizhi_utils import gonghe
+
+  gong_def = DizhiRules.GongDef.SAME_STEM_WIDE
+  scope = DizhiRules.GONG_GONGHE_SCOPE[gong_def]
+  assert gonghe(Dizhi.申, Dizhi.子, definition=scope) is Dizhi.辰
+  ```
   '''
 
 
