@@ -27,7 +27,8 @@ assert chart.bazi.day_master in Tiangan
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
-  由 dataclass 生成的 `ContextResult` 构造函数及 `dataclasses.replace` 参数 `_bazi` 是公开构造接口，用于区别于每次返回独立深拷贝的 `bazi` 属性。
+- `ContextResult` 的 dataclass 构造函数及 `dataclasses.replace` 使用公开输入参数 `_bazi`。
+  读取结果时用 `bazi` 属性，每次取得独立深拷贝；输入参数与属性用不同名称区分。
 - 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
@@ -107,7 +108,8 @@ assert chart.bazi.day_master in Tiangan
 [`BaziChart.taiyuan`](bazi/bazi_chart.py)／`minggong` 的 docstring 为准。时支固定取本盘时柱，
 `DAY` 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollover`）不改变时支。
 
-中气按本盘出生精度相等归新：`DAY` 比日期，`HOUR` 比完整日期中的时辰起点，`MINUTE` 比分钟起点；
+命宫以中气判断月序是否进一，比较时按本盘出生精度处理，相等归新：
+`DAY` 比日期，`HOUR` 比日期及时辰起点，`MINUTE` 比日期及分钟起点；
 地点盘先把边界换到与出生相同的真太阳钟。HKO 只支持 `DAY`，零点仅为占位，不是真实交节时刻。
 时间政策是本库执行口径，不冒称古籍规定；300 日胎元和其他命宫月界仅存知识候选，未编码。
 
