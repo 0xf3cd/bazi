@@ -149,8 +149,13 @@ for entry in kb.query(object_id='concept.taiyuan', applicability='unresolved', i
 
 ## 来源、前提与默认展示
 
-`source_state` 记录出处核定到哪一步，`applicability` 记录前提整理到哪一步，
-`show_by_default` 决定默认查询是否返回。各项取值及中文解释见 {doc}`../catalog/entries`。
+| 字段 | 回答什么 | 取值 |
+| --- | --- | --- |
+| `source_state` | 出处核定到哪一步 | `witnessed`、`editorial`、`unverified`、`repository_attributed` |
+| `applicability` | 前提整理到哪一步 | `unconditional`、`described`、`unresolved` |
+| `show_by_default` | 默认查询是否返回 | `True`、`False` |
+
+各项取值的中文解释见 {doc}`../catalog/entries`。
 四种来源状态都不证明条文本身为真或适用于某张命盘；`unverified` 表示来源尚未核实，此时 `sources` 为空。
 
 例如旧条文的展示会保留来源和适用性提醒：
