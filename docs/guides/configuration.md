@@ -90,7 +90,8 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 - 季月按整月土旺处理时用 `WHOLE_MONTH`；要按开月节后十二日或下一四立前十八日分段，
   将 `tuwang_def` 分别设为 `AFTER_TWELVE_DAYS` 或 `BEFORE_EIGHTEEN_DAYS`。
 - 配偶星按男命正财、女命正官取时用 `ZHENGCAI_ZHENGGUAN`；要按男取所克阴干、女取克我阳干的读法，
-  将 `peiou_xing_def` 设为 `YINYANGGAN`。这会改变阴男、阳女十格的目标，阳男、阴女十格相同。
+  将 `peiou_xing_def` 设为 `YINYANGGAN`。两种取法在日主为阴干的男命、日主为阳干的女命这十种组合中不同，
+  其余十种组合相同。
 - 旬空以日柱为依据时用 `DAY`；以年柱为依据时设 `kongwang_anchor=Anchor.YEAR`；
   需要年、日两柱各查一遍时用 `YEAR_AND_DAY`，两个结果分别保留。
 
@@ -109,7 +110,7 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 若选择按北京时间排盘，先换为 UTC+8，再去掉时区交给默认入口；这样日时柱也会按北京时间读取，
 不再保留当地民用钟。需要真太阳时则使用{ref}`地点盘 <configuration-location>`，它会修正日时所读的钟。
 
-**当前没有“保留当地民用钟、按物理节界归年月、但不作太阳时修正”的对应入口。**
+目前没有这种入口：日时柱仍按当地民用钟读取，年月柱按出生时刻与实际交节时刻的先后判断，同时不作真太阳时修正。
 
 ## 选择节气比较精度
 

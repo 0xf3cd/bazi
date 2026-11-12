@@ -241,7 +241,8 @@ class BaziSchool:
     分别用 AFTER_TWELVE_DAYS 或 BEFORE_EIGHTEEN_DAYS。
   - peiou_xing_def：男取正财、女取正官用 ZHENGCAI_ZHENGGUAN；男取所克阴干、女取克我阳干用 YINYANGGAN。
   - kongwang_anchor：只查日柱旬空用 DAY，只查年柱用 YEAR，年、日各查一遍用 YEAR_AND_DAY。
-  - 其余 *_def 按对应枚举说明选择读法；*_anchor 按查法依据的柱位选择，合法范围见 _ANCHOR_CHOICES。
+  - 其余 *_def 按对应枚举说明选择读法；*_anchor 按查法依据的柱位选择，
+    每个字段支持的成员见{doc}`配置指南 </guides/configuration>`中的锚点取值表。
 
   Note:
   - 出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。

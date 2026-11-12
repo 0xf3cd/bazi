@@ -288,10 +288,9 @@ class CriterionInfo:
   - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
   - claim_ids 按判据声明序列出关联条目，不保证自定义知识库有这些条目。
     自定义库负责保持同 ID 的领域含义；目录不认证条文真伪或现实适用性。
-  - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
-    男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
-    不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。
-  - observation_keys 在两个官杀判据中都保留 female，是否有性别门槛另由 required_gender 表示。
+  - required_gender 是判据性别门槛；claim_genders 只限制关联条目，不改变事实判别。
+  - observation_keys 列出观察键；是否有性别门槛以 required_gender 为准。
+    具体判据及性别筛选规则见[判据目录](../api-contract.md#判据目录)。
   - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
   '''
 
@@ -738,8 +737,8 @@ def evaluate_context(
   - `NatalObservation` 供所有判据共用；`LiunianObservation` 用于原局加单流年观察，
     `TransitObservation` 用于婚恋结构的多种岁运查询。不支持的观察种类抛 `ValueError`。
   - 官杀两条判据判别关联条目的完整前提。其余判据只判可计算事实：婚恋两条判结构，丁火、
-    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／
-    喜忌／成格」等完整理论条件留在知识文本，程序不判断它们是否满足，也不因它们未被判断而返回 UNKNOWN。
+    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／成格」
+    等完整理论条件留在知识文本；这些条件和喜忌均不由程序判定，也不会因未判断它们而返回 UNKNOWN。
     所需流年缺失或不可查询时返回 UNKNOWN。
   - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
     与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联，静态查阅不受限。

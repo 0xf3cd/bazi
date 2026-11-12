@@ -23,7 +23,7 @@ bazi chart --birth-time "1990-05-17 10:30" --gender female --output-dir output_d
 `--birth-time` 与 `--gender` 必须同时给或同时不给；都不给则随机排盘并打印种子，
 可用 `bazi chart --seed 236` 重放。固定出生输入不与 `--seed` 或大于 1 的 `--count` 组合。
 
-默认精度是 `day`。需要真太阳时，传带时区出生时刻、经度和 `hour`／`minute` 精度；
+`--precision` 设置命盘精度，可选 `day`（默认）、`hour`、`minute`。需要真太阳时，传带时区出生时刻、经度和 `hour`／`minute` 精度；
 IANA 时区需要系统时区数据库，缺少时可安装 `tzdata`。合法输入与时间含义见 {doc}`configuration`。
 CLI 可选精度、经度和民用时区，其他历法后端、换日与流派字段使用 Python API 配置，不能作为 CLI 选项传入。
 
@@ -84,7 +84,14 @@ bazi match editorial.guansha_coexistence.v1 --birth-time "2000-01-01 12:00" --ge
 ```
 
 婚恋结构判据用 `natal_and_transits`，并按该判据的说明给出 `--transit-entry`、坐标和 `--transit-kinds`。
-时刻坐标按东八区填写，`at_moment` 还需要支持的命盘精度；默认 `day` 盘会得到 `UNKNOWN`。
+例如检查原局加指定时刻的大运、流年，时刻坐标按东八区填写：
+
+```sh
+bazi match editorial.spouse_palace_xingchong.v1 --birth-time "2000-01-01 12:00" --gender female --precision hour --observation-scope natal_and_transits --transit-entry at_moment --solar-moment "2024-04-10T12:00:00" --transit-kinds dayun,liunian
+```
+
+`at_moment` 需要 `hour` 或 `minute` 命盘精度，默认 `day` 盘会得到 `UNKNOWN`。
+这里的 `--precision hour` 设置整张命盘的精度，含义见 {doc}`configuration`。
 Python 请求与结果读取见 {doc}`integration`。
 
 `SATISFIED` 表示所选判据的结构事实满足；`NOT_SATISFIED` 表示不满足；`UNKNOWN` 表示所需观察不完整。

@@ -1,7 +1,6 @@
 # 查阅知识库
 
 不创建命盘，也可以按中文名找对象、读条文与出处、搜索文字，或编辑自己的知识文件。
-知识库记录文字及出处；`witnessed` 说明原文出处已经核定，不证明条文本身为真或适用于某张命盘。
 
 ```{include} ../installation.inc
 ```
@@ -150,15 +149,9 @@ for entry in kb.query(object_id='concept.taiyuan', applicability='unresolved', i
 
 ## 来源、前提与默认展示
 
-| 字段 | 回答什么 | 取值 |
-| --- | --- | --- |
-| `source_state` | 出处核定到哪一步 | `witnessed`、`editorial`、`unverified`、`repository_attributed` |
-| `applicability` | 前提整理到哪一步 | `unconditional`、`described`、`unresolved` |
-| `show_by_default` | 默认查询是否返回 | `True`、`False` |
-
-`witnessed` 是已核原文出处，`editorial` 是原作说明，`repository_attributed` 是仓内规则实现的归属，
-`unverified` 是出处尚未核定，此时 `sources` 为空。
-`described` 只说明前提已经用文字写下，术语仍可能没有计算定义。
+`source_state` 记录出处核定到哪一步，`applicability` 记录前提整理到哪一步，
+`show_by_default` 决定默认查询是否返回。各项取值及中文解释见 {doc}`../catalog/entries`。
+四种来源状态都不证明条文本身为真或适用于某张命盘；`unverified` 表示来源尚未核实，此时 `sources` 为空。
 
 例如旧条文的展示会保留来源和适用性提醒：
 
