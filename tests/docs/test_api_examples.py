@@ -30,7 +30,7 @@ def write_example(package, body):
 
 def test_registry_matches_all_source_examples():
   examples = collect_examples(ROOT / 'bazi')
-  assert len(examples) == len(api_examples.EXAMPLE_OWNERS) == 66
+  assert len(examples) == len(api_examples.EXAMPLE_OWNERS) == 67
   assert {example.owner for example in examples} == api_examples.EXAMPLE_OWNERS
 
 

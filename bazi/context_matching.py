@@ -282,16 +282,15 @@ _OBSERVATION_TYPES: Final[frozendict[Literal['context', 'relationship'], tuple[_
 
 @dataclass(frozen=True)
 class CriterionInfo:
-  '''判据的不可变查阅目录，不是一次命盘判别，也不认证条目适用于现实事件。
+  '''判据的不可变目录信息，供查阅定义及所需输入；具体命盘的判别由 evaluate_context 执行。
 
   Note:
   - premise 判关联条目的完整前提，condition 只判局部事实，不能据此认定条目全文前提成立。
   - claim_ids 按判据声明序列出关联条目，不保证自定义知识库有这些条目。
     自定义库负责保持同 ID 的领域含义；目录不认证条文真伪或现实适用性。
-  - required_gender 是判据门槛：仅 editorial.guansha_coexistence_female.v1 要求女命，范围完整时
-    男命得到 NOT_SATISFIED/female_gate_false。claim_genders 只限制关联条目；两条男命婚恋条目
-    不向女命返回，不改变事实判别。普通官杀并见判据没有性别门槛。
-  - observation_keys 在两个官杀判据中都保留 female，是否有性别门槛另由 required_gender 表示。
+  - required_gender 是判据性别门槛；claim_genders 只限制关联条目，不改变事实判别。
+  - observation_keys 列出观察键；是否有性别门槛以 required_gender 为准。
+    具体判据及性别筛选规则见[判据目录](../api-contract.md#判据目录)。
   - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
   '''
 
@@ -483,8 +482,8 @@ class ContextResult:
     正常求值则按声明序经过缺条目、默认展示与性别筛选，不去重。
   - 婚恋结构结果另核范围与取得集合的自洽：原局不能带已取得岁运，取得种类不能超出请求；
     岁运范围完整时须有查询坐标并取得全部所求种类，关系证据序号不得超出本次查询序列。
-  - 不重算或认证命盘、判别、证据真伪，也不认证输入与证据干支的一致性；
-    原局／单流年结果不认证手填证据年份与请求年份是否配对。
+  - 构造校验只检查上述结构，不重新排盘或求值，也不核实手填判别与证据是否符合命盘。
+    输入与证据的干支是否一致、原局／单流年证据中的年份是否与请求配对，均不在构造校验范围内。
   '''
 
   observation:    Observation
@@ -738,8 +737,8 @@ def evaluate_context(
   - `NatalObservation` 供所有判据共用；`LiunianObservation` 用于原局加单流年观察，
     `TransitObservation` 用于婚恋结构的多种岁运查询。不支持的观察种类抛 `ValueError`。
   - 官杀两条判据判别关联条目的完整前提。其余判据只判可计算事实：婚恋两条判结构，丁火、
-    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／
-    喜忌／成格」等完整理论条件留在知识文本，不为它们新增 UNKNOWN，也不认证其已满足；
+    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／成格」
+    等完整理论条件留在知识文本；这些条件和喜忌均不由程序判定，也不会因未判断它们而返回 UNKNOWN。
     所需流年缺失或不可查询时返回 UNKNOWN。
   - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
     与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联，静态查阅不受限。
@@ -753,7 +752,7 @@ def evaluate_context(
     部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
     SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
   - 关联按稳定 claim ID，不比较文字或来源摘要；自定义库负责同 ID 的领域含义。
-    编辑正文、引文或来源说明不改变判据状态，也不使参考条目变为 UNKNOWN。
+    编辑正文、引文或来源说明不改变判据状态；UNKNOWN 是判据的状态，不是参考条目的状态。
   - reference_ids 按判据声明序返回，省略缺失或被展示／性别门槛过滤的条目；
     前提满足不授予默认展示资格。
 

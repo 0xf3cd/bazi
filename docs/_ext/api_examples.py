@@ -21,6 +21,7 @@ from house_docstrings import source_attribute_docs
 
 '''每个具名对象恰有一个完整代码块；删除、增加或改变围栏语言均须更新并验证登记。'''
 EXAMPLE_OWNERS: Final[frozenset[str]] = frozenset({
+  'bazi.utils.dizhi_utils.DizhiRelationDiscovery',
   'bazi.bazi_chart.BaziChart.relationship_stars',
   'bazi.bazi_chart.BaziChart.traits',
   'bazi.bazi_chart.BaziChart.hidden_tiangan',

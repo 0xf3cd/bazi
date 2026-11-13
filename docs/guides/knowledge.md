@@ -1,7 +1,6 @@
 # 查阅知识库
 
 不创建命盘，也可以按中文名找对象、读条文与出处、搜索文字，或编辑自己的知识文件。
-知识库记录文字及出处；`witnessed` 说明原文出处已经核定，不证明条文本身为真或适用于某张命盘。
 
 ```{include} ../installation.inc
 ```
@@ -123,7 +122,7 @@ for entry in kb.search('火', object_id='tiangan.ding'):
 ## 胎元与命宫的取法与候选
 
 这两个对象的全部条目都仅供参考。按阅读目的选 ID，用 `kb.entry(claim_id)` 或下例读文字；
-取得文字不判断命盘适用性，计算入口另见 {doc}`integration`。
+计算入口见 {doc}`integration`。
 
 | 想了解什么 | 条目 ID |
 | --- | --- |
@@ -156,9 +155,8 @@ for entry in kb.query(object_id='concept.taiyuan', applicability='unresolved', i
 | `applicability` | 前提整理到哪一步 | `unconditional`、`described`、`unresolved` |
 | `show_by_default` | 默认查询是否返回 | `True`、`False` |
 
-`witnessed` 是已核原文出处，`editorial` 是原作说明，`repository_attributed` 是仓内规则实现的归属，
-`unverified` 是出处尚未核定，此时 `sources` 为空。它们都不认证条文为真。
-`described` 只说明前提已经用文字写下，术语仍可能没有计算定义。
+各项取值的中文解释见 {doc}`../catalog/entries`。
+四种来源状态都不证明条文本身为真或适用于某张命盘；`unverified` 表示来源尚未核实，此时 `sources` 为空。
 
 例如旧条文的展示会保留来源和适用性提醒：
 
@@ -237,9 +235,10 @@ finally:
 命令行可用 `bazi knowledge --knowledge-source edited.json --object tiangan.ding` 读取；完整用法见 {doc}`cli`。
 备注保留个人归属，不把它写成已核原文；原来的来源状态不认证新增备注。
 
-编辑时保留稳定 ID、原引文及来源信息。当前格式是精确整数 `schema_version=3` 和四份注册表，
+编辑时保留稳定 ID、原引文及来源信息；判据按 ID 关联条目，自定义库须保持同 ID 的领域含义。
+当前格式是精确整数 `schema_version=3` 和四份注册表，
 条目以 JSON boolean `show_by_default` 控制默认展示，不接受旧 `output` 键、其他 schema 或自动迁移。
-不提供知识 JSON 导出或命盘历史恢复；已有编辑源的升级见 {doc}`../release-notes`。
+已有编辑源的升级见 {doc}`../release-notes`。
 
 加载会检查字段、重复键、状态和引用。断引用时 `ValueError` 会指出未知 ID 与条目；
 把引用改回已有记录，或在相应注册表中补齐可核的记录后再加载。孤立代理项会被拒绝，不修复原文；
@@ -267,4 +266,3 @@ print('关联语义', info.entry_role)
 
 `entry_role='premise'` 检查关联条目的完整前提，`'condition'` 只检查局部事实。
 全部判据及所需输入见 {doc}`../catalog/criteria`；对命盘求值并读取结果见 {doc}`integration`。
-关联使用稳定 ID，自定义库须保持同 ID 的领域含义；命中条件不认证条文或现实适用性。

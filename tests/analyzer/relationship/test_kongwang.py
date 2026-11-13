@@ -31,10 +31,9 @@ def anchor_label(result: KongwangResult) -> str:
   assert_never(anchor)
 
 
-def test_anchor_narrowing_matches_contract() -> None:
-  contract = (Path(__file__).resolve().parents[3] / 'API_CONTRACT.md').read_text(encoding='utf-8')
-  examples = (part.split('```', 1)[0] for part in contract.split('```python\n')[1:])
-  example, = (code for code in examples if 'def anchor_label(' in code)
+def test_anchor_narrowing_matches_guide() -> None:
+  guide = (Path(__file__).resolve().parents[3] / 'docs/guides/integration.md').read_text(encoding='utf-8')
+  example = guide.split('```{testcode} integration-enum-fields\n', 1)[1].split('```', 1)[0]
   declared, = (node for node in ast.parse(example).body if isinstance(node, ast.FunctionDef))
   checked = ast.parse(inspect.getsource(anchor_label)).body[0]
   assert ast.dump(declared) == ast.dump(checked)

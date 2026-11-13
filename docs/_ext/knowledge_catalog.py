@@ -40,7 +40,7 @@ READING_FIELDS: Final[dict[str, tuple[tuple[str, str], ...]]] = {
     ('show_by_default', '默认展示'),
   ),
   'criteria': (
-    ('definition', '定义与未实现部分'), ('entry_role', '关联条目的前提关系'),
+    ('definition', '定义'), ('entry_role', '关联条目的前提关系'),
     ('required_gender', '判据性别门槛'),
     ('claim_genders', '关联条目的性别限制'),
   ),
