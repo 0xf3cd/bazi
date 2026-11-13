@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>公开接口契约 &#8212; bazi · 开发版</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=7838f881" />
+    <script src="_static/documentation_options.js?v=7d86a446"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="贡献指南" href="contributing.html" />
+    <link rel="prev" title="规则、知识与出处的覆盖" href="guides/rule-coverage.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>公开接口契约<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>本库从定义模块导入类型与函数，终端操作使用安装后的 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 命令。例如：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tiangan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">BaziConfig</span><span class="p">()))</span>
+<span class="k">assert</span> <span class="n">chart</span><span class="o">.</span><span class="n">bazi</span><span class="o">.</span><span class="n">day_master</span> <span class="ow">in</span> <span class="n">Tiangan</span>
+</pre></div>
+</div>
+<p>版本历史、旧新调用对照和升级条件见<a class="reference internal" href="release-notes.html"><span class="std std-doc">发布与迁移</span></a>。本页只说明当前接口。</p>
+<section id="id2">
+<h2>支持范围与导入路径<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p>完整名称、类成员、字段、枚举别名、继承关系及规范定义路径登记在
+<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/tests/api_contract.py"><code class="docutils literal notranslate"><span class="pre">tests/api_contract.py</span></code></a>，供测试和参考文档共同使用。
+<code class="docutils literal notranslate"><span class="pre">PUBLIC_NAMES</span></code> 登记定义模块的自有名称和既有包入口；<code class="docutils literal notranslate"><span class="pre">REEXPORTS</span></code>、<code class="docutils literal notranslate"><span class="pre">ALIASES</span></code> 区分重导出与别名。
+<code class="docutils literal notranslate"><span class="pre">DECLARED_MEMBERS</span></code> 包含方法、属性、类型别名和字段；继承关系另由 <code class="docutils literal notranslate"><span class="pre">BASES</span></code> 登记。</p>
+<ul class="simple">
+<li><p>包的 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> 不是公开 API 全集；<code class="docutils literal notranslate"><span class="pre">bazi.data_types</span></code> 等定义模块同样可直接导入。</p></li>
+<li><p>领域枚举的中文与拉丁成员别名共用值；中文类型别名也保留，如 <code class="docutils literal notranslate"><span class="pre">天干</span></code> 与 <code class="docutils literal notranslate"><span class="pre">Tiangan</span></code>。</p></li>
+<li><p>第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。</p></li>
+<li><p>下划线名字及 <code class="docutils literal notranslate"><span class="pre">_validation</span></code> 是包内约定，不承诺包外调用；共享接口的归属见
+<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/tests/data/internal_interfaces.json"><code class="docutils literal notranslate"><span class="pre">tests/data/internal_interfaces.json</span></code></a>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ContextResult</span></code> 的 dataclass 构造函数及 <code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code> 使用公开输入参数 <code class="docutils literal notranslate"><span class="pre">_bazi</span></code>。
+读取结果时用 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 属性，每次取得独立深拷贝；输入参数与属性用不同名称区分。</p></li>
+<li><p>命盘流运统一用 <code class="docutils literal notranslate"><span class="pre">TransitChart.at_year</span></code>、<code class="docutils literal notranslate"><span class="pre">at_month</span></code>、<code class="docutils literal notranslate"><span class="pre">at_date</span></code>、<code class="docutils literal notranslate"><span class="pre">at_moment</span></code> 查询；<code class="docutils literal notranslate"><span class="pre">bazi.transits</span></code> 提供流运种类 <code class="docutils literal notranslate"><span class="pre">TransitKind</span></code> 和结果 <code class="docutils literal notranslate"><span class="pre">TransitSet</span></code>，数据库类仅供包内使用。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">STATIC_MODULES</span></code> 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
+离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。</p></li>
+<li><p>清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。</p></li>
+</ul>
+<section id="id3">
+<h3>可接受的字符串输入<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code> 的性别字符串只接受 <code class="docutils literal notranslate"><span class="pre">男</span></code>、<code class="docutils literal notranslate"><span class="pre">女</span></code>、<code class="docutils literal notranslate"><span class="pre">male</span></code>、<code class="docutils literal notranslate"><span class="pre">female</span></code>（拉丁大小写不敏感），
+也可直接传 <code class="docutils literal notranslate"><span class="pre">BaziGender</span></code>。枚举中的 <code class="docutils literal notranslate"><span class="pre">乾</span></code>、<code class="docutils literal notranslate"><span class="pre">坤</span></code>、<code class="docutils literal notranslate"><span class="pre">阳</span></code>、<code class="docutils literal notranslate"><span class="pre">阴</span></code>、<code class="docutils literal notranslate"><span class="pre">YANG</span></code>、<code class="docutils literal notranslate"><span class="pre">YIN</span></code> 不是性别字符串入口。</p>
+<p><code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code> 构造函数接收声明类型；需要字符串解析时使用 <code class="docutils literal notranslate"><span class="pre">BaziConfig.from_values</span></code>。
+精度支持 <code class="docutils literal notranslate"><span class="pre">分</span></code>／<code class="docutils literal notranslate"><span class="pre">分钟</span></code>／<code class="docutils literal notranslate"><span class="pre">时</span></code>／<code class="docutils literal notranslate"><span class="pre">小时</span></code>／<code class="docutils literal notranslate"><span class="pre">天</span></code>／<code class="docutils literal notranslate"><span class="pre">日</span></code> 和
+<code class="docutils literal notranslate"><span class="pre">m</span></code>／<code class="docutils literal notranslate"><span class="pre">min</span></code>／<code class="docutils literal notranslate"><span class="pre">minute</span></code>／<code class="docutils literal notranslate"><span class="pre">h</span></code>／<code class="docutils literal notranslate"><span class="pre">hour</span></code>／<code class="docutils literal notranslate"><span class="pre">d</span></code>／<code class="docutils literal notranslate"><span class="pre">day</span></code>，拉丁大小写不敏感。
+后端与大运年份规则分别由 <code class="docutils literal notranslate"><span class="pre">CalendarBackend.from_str</span></code>、<code class="docutils literal notranslate"><span class="pre">DayunYearRule.from_str</span></code> 解释成员名或值；
+流派档案须传 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code>，不接受字符串。性别、精度、后端各有自己的字符串写法，互不通用。</p>
+</section>
+</section>
+<section id="id4">
+<h2>关系与附加查询<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<section id="id5">
+<h3>关系位置、通根与透干<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">TransitAnalysis.all_relations(transits)</span></code> 返回 <code class="docutils literal notranslate"><span class="pre">RelationPositionDiscovery</span></code>，即地支关系到
+<code class="docutils literal notranslate"><span class="pre">tuple[frozenset[RelationParticipant],</span> <span class="pre">...]</span></code> 的冻结映射。参与者字段为 <code class="docutils literal notranslate"><span class="pre">position:</span> <span class="pre">Zhu</span> <span class="pre">|</span> <span class="pre">TransitKind</span></code>
+和 <code class="docutils literal notranslate"><span class="pre">ganzhi:</span> <span class="pre">Ganzhi</span></code>；每个组合跨原局与所选流运两组。查询按本盘流派调用 <code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code>，
+保留其组合与顺序，只将序号改为位置；同干支不同位置不合并。</p>
+<p>通根与透干从 <code class="docutils literal notranslate"><span class="pre">bazi.analyzer.facts</span></code> 查询：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tonggen(chart,</span> <span class="pre">target,</span> <span class="pre">transits=None,</span> <span class="pre">*,</span> <span class="pre">condition=TianganMatch.SAME_WUXING)</span></code>
+返回 <code class="docutils literal notranslate"><span class="pre">tuple[TianganOccurrence,</span> <span class="pre">...]</span></code>，记录匹配的实际藏干。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tougan(chart,</span> <span class="pre">target,</span> <span class="pre">transits=None,</span> <span class="pre">*,</span> <span class="pre">condition)</span></code> 没有默认条件；省略条件抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。
+<code class="docutils literal notranslate"><span class="pre">target</span></code> 先按同干定位实际藏干，再按显式条件与明干匹配，返回 <code class="docutils literal notranslate"><span class="pre">tuple[TouganHit,</span> <span class="pre">...]</span></code>。</p></li>
+<li><p>两个函数的条件均为 <code class="docutils literal notranslate"><span class="pre">TianganMatch.SAME_TIANGAN</span></code> 或 <code class="docutils literal notranslate"><span class="pre">SAME_WUXING</span></code>。
+不传流运只查原局；传入后两端均可来自原局或流运，保留同柱与重复干支位置。
+位置按年、月、日、时，再按 <code class="docutils literal notranslate"><span class="pre">TransitSet.items</span></code> 的固定次序排列。通根在每个位置按
+<code class="docutils literal notranslate"><span class="pre">BaziRules.HIDDEN_TIANGANS</span></code> 表顺序返回；透干按藏干位置优先、明干位置次序返回。没有匹配返回空元组。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">TianganOccurrence(position,</span> <span class="pre">ganzhi,</span> <span class="pre">stem)</span></code> 是冻结值。直接构造时，位置为 <code class="docutils literal notranslate"><span class="pre">Zhu</span> <span class="pre">|</span> <span class="pre">TransitKind</span></code>，
+<code class="docutils literal notranslate"><span class="pre">stem</span></code> 必须是该干支的明干或藏干。<code class="docutils literal notranslate"><span class="pre">TouganHit(hidden,</span> <span class="pre">visible)</span></code> 的两端均为 <code class="docutils literal notranslate"><span class="pre">TianganOccurrence</span></code>：
+<code class="docutils literal notranslate"><span class="pre">hidden.stem</span></code> 须属 <code class="docutils literal notranslate"><span class="pre">hidden.ganzhi</span></code> 的藏干，<code class="docutils literal notranslate"><span class="pre">visible.stem</span></code> 须等于 <code class="docutils literal notranslate"><span class="pre">visible.ganzhi.tiangan</span></code>；
+不强制两端同干，结果中的明藏角色由字段指定。
+上述查询与构造入口的错型抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，构造值的干支与明藏角色不符抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>；普通运行与 <code class="docutils literal notranslate"><span class="pre">-O</span></code> 一致。
+原局位置、流运种类与明藏两端实际值的示例见<a class="reference internal" href="guides/relations-transits.html"><span class="std std-doc">关系与流运指南</span></a>。</p>
+</section>
+<section id="id6">
+<h3>月令五行状态与神煞名称<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">chart.wuxing_states</span></code> 是 <code class="docutils literal notranslate"><span class="pre">frozendict[Wuxing,</span> <span class="pre">WuxingState]</span></code>，按原局出生月令给出五行各自的旺、相、休、囚、死状态。
+五种状态各出现一次，<code class="docutils literal notranslate"><span class="pre">WuxingState</span></code> 及中文别名 <code class="docutils literal notranslate"><span class="pre">五行状态</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.defines</span></code> 重导出。
+季月取法由 <code class="docutils literal notranslate"><span class="pre">BaziSchool.tuwang_def</span></code> 决定，该字段参与配置相等与哈希：</p>
+<ul class="simple">
+<li><p>默认 <code class="docutils literal notranslate"><span class="pre">WHOLE_MONTH</span></code> 将整个季月作为土旺，是本库的简化取法。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AFTER_TWELVE_DAYS</span></code> 从开月节后十二日起取土旺，<code class="docutils literal notranslate"><span class="pre">BEFORE_EIGHTEEN_DAYS</span></code> 从下一四立前十八日起取土旺；
+两种分段取法在阈值之前均按季节本令。</p></li>
+</ul>
+<p>分段按连续 24 小时计日，比较阈值时使用出生精度、相等归新及地点钟政策；HKO 只作日期级比较。
+完整比较步骤与用法见<a class="reference internal" href="guides/configuration.html#id10"><span class="std std-ref">配置指南</span></a>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">relationship.SHENSHA_LABELS</span></code>（22 项）与 <code class="docutils literal notranslate"><span class="pre">WHOLE_PILLAR_SHENSHA_LABELS</span></code>（魁罡、天赦两项）
+是公开冻结名称表，CLI 也使用这两张表。</p>
+</section>
+<section id="id7">
+<h3>六甲旬空<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">shensha_utils.xunkong(ganzhi)</span></code> 返回该旬二支冻结集，<code class="docutils literal notranslate"><span class="pre">kongwang(anchor_ganzhi,</span> <span class="pre">target_dizhi)</span></code> 返回
+目标支是否命中。错误外层或内部干支字段类型抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，阴阳不配锚抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，在 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-O</span></code>
+下同样检查；不改变 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 自身的构造域。目标不附加天干、纳音或冲合条件。</p>
+<p><code class="docutils literal notranslate"><span class="pre">BaziSchool.kongwang_anchor</span></code> 默认 <code class="docutils literal notranslate"><span class="pre">Anchor.DAY</span></code>，支持 <code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code>。
+<code class="docutils literal notranslate"><span class="pre">AtBirthAnalysis.kongwang</span></code> 与 <code class="docutils literal notranslate"><span class="pre">TransitAnalysis.kongwang(transits)</span></code> 返回 <code class="docutils literal notranslate"><span class="pre">tuple[KongwangResult,</span> <span class="pre">...]</span></code>，
+逐锚记录 <code class="docutils literal notranslate"><span class="pre">anchor</span></code>（<code class="docutils literal notranslate"><span class="pre">Zhu.年</span></code>／<code class="docutils literal notranslate"><span class="pre">Zhu.日</span></code>）、<code class="docutils literal notranslate"><span class="pre">ganzhi</span></code>、由锚计算的 <code class="docutils literal notranslate"><span class="pre">xunkong</span></code> 和 <code class="docutils literal notranslate"><span class="pre">hits</span></code>。
+<code class="docutils literal notranslate"><span class="pre">KongwangHit(position,</span> <span class="pre">ganzhi)</span></code> 的 <code class="docutils literal notranslate"><span class="pre">position</span></code> 为原局柱位 <code class="docutils literal notranslate"><span class="pre">Zhu</span></code> 或流运种类 <code class="docutils literal notranslate"><span class="pre">TransitKind</span></code>；<code class="docutils literal notranslate"><span class="pre">ganzhi</span></code> 保留完整目标。
+无命中也返回该锚二支，双锚同值与重复目标位置不合并。原局排除锚自身柱，流运只从本命锚单向查询。
+详情命中投影为地支集合，等于 <code class="docutils literal notranslate"><span class="pre">shensha['kongwang']</span></code>。不删除支、不改其他关系，不实现解释性取消或吉凶判断。</p>
+</section>
+<section id="id8">
+<h3>胎元与命宫附加查询<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">chart.taiyuan</span></code> 与 <code class="docutils literal notranslate"><span class="pre">chart.minggong</span></code> 是无参缓存属性，返回不可变的 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code>，只在首次访问时计算。
+计算口径和可运行示例见<a class="reference internal" href="guides/integration.html#id4"><span class="std std-ref">集成指南</span></a>；字段说明以
+<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/bazi_chart.py"><code class="docutils literal notranslate"><span class="pre">BaziChart.taiyuan</span></code></a>／<code class="docutils literal notranslate"><span class="pre">minggong</span></code> 的 docstring 为准。时支固定取本盘时柱，
+<code class="docutils literal notranslate"><span class="pre">DAY</span></code> 也保留输入小时，地点盘取真太阳钟，换日设置（<code class="docutils literal notranslate"><span class="pre">day_rollover</span></code>）不改变时支。</p>
+<p>命宫以中气判断月序是否进一，比较时按本盘出生精度处理，相等归新：
+<code class="docutils literal notranslate"><span class="pre">DAY</span></code> 比日期，<code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 比日期及时辰起点，<code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 比日期及分钟起点；
+地点盘先把边界换到与出生相同的真太阳钟。HKO 只支持 <code class="docutils literal notranslate"><span class="pre">DAY</span></code>，零点仅为占位，不是真实交节时刻。
+时间政策是本库执行口径，不冒称古籍规定；300 日胎元和其他命宫月界仅存知识候选，未编码。</p>
+<p>纯函数从 <code class="docutils literal notranslate"><span class="pre">bazi.utils.bazi_utils</span></code> 导入：<code class="docutils literal notranslate"><span class="pre">taiyuan(month_pillar)</span></code> 先检查外层 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code>，再检查
+<code class="docutils literal notranslate"><span class="pre">tiangan</span></code>／<code class="docutils literal notranslate"><span class="pre">dizhi</span></code> 字段类型，错型立即抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；通过后检查是否属于合法六十甲子，
+阴阳不配的组合抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。<code class="docutils literal notranslate"><span class="pre">minggong(year_tiangan,</span> <span class="pre">month_dizhi,</span> <span class="pre">hour_dizhi)</span></code> 逐参接收
+<code class="docutils literal notranslate"><span class="pre">Tiangan</span></code>、已调整的有效命宫月支 <code class="docutils literal notranslate"><span class="pre">Dizhi</span></code>、本盘时支 <code class="docutils literal notranslate"><span class="pre">Dizhi</span></code>，非相应枚举抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。
+普通运行与 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-O</span></code> 下的校验行为相同；<code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 构造器本身仍接受全部 10×12 个干支组合。</p>
+<p>两值是四柱之外的单独查询结果，不扩展 <code class="docutils literal notranslate"><span class="pre">BaziData</span></code> 或柱位，不改变 <code class="docutils literal notranslate"><span class="pre">school</span></code> 和命盘身份。
+它们不出现在 <code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 等命盘文本中，不参与五行、十神、神煞、关系或流运分析。
+读取它们不使任何解释条目的前提自动成立。</p>
+</section>
+</section>
+<section id="id9">
+<h2>返回值、拷贝与相等性<a class="headerlink" href="#id9" title="链接到此标题。">¶</a></h2>
+<section id="id10">
+<h3>共享与输入<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h3>
+<ul class="simple">
+<li><p>查询结果和规则集合使用 <code class="docutils literal notranslate"><span class="pre">tuple</span></code>、<code class="docutils literal notranslate"><span class="pre">frozenset</span></code>、<code class="docutils literal notranslate"><span class="pre">frozendict</span></code> 等不可变结构；
+<code class="docutils literal notranslate"><span class="pre">frozendict</span></code> 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。</p></li>
+<li><p>命盘隔离传入的 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code>，<code class="docutils literal notranslate"><span class="pre">chart.bazi</span></code> 每次返回独立深拷贝；不把 Python 属性只读等同于所有对象都深冻结。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Bazi</span></code> 按值比较；<code class="docutils literal notranslate"><span class="pre">BaziChart</span></code> 按对象身份比较。两个命盘的 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 值可以相等，命盘对象本身仍不相等。
+知识库按内容及顺序比较，<code class="docutils literal notranslate"><span class="pre">ContextResult</span></code> 按其值字段比较。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ContextResult</span></code> 是 frozen dataclass；构造参数 <code class="docutils literal notranslate"><span class="pre">_bazi:</span> <span class="pre">Bazi</span></code> 验证后深拷贝，公开 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 属性每次返回独立深拷贝。
+构造及 <code class="docutils literal notranslate"><span class="pre">replace</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">_bazi</span></code>。相等／哈希使用 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code> 的完整身份，包含性别、完整配置，
+地点盘另含精确瞬间、固定民用偏移及经度。修改输入或属性返回的副本不改变已有结果。
+<code class="docutils literal notranslate"><span class="pre">ContextResult.render()</span></code> 直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。</p></li>
+<li><p>求值显式传入的 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase</span></code> 被共享；未传时每次独立加载编辑源。已有结果不随源文件修改而变化。</p></li>
+<li><p>每次访问 <code class="docutils literal notranslate"><span class="pre">chart.dayun</span></code>、<code class="docutils literal notranslate"><span class="pre">chart.liunian</span></code> 都获得新生成器。保存到变量的有限生成器会耗尽；
+流年生成器可无限延续，不要直接对它调用 <code class="docutils literal notranslate"><span class="pre">tuple</span></code>／<code class="docutils literal notranslate"><span class="pre">list</span></code>。<code class="docutils literal notranslate"><span class="pre">chart.xiaoyun</span></code> 是缓存元组，可重复遍历。</p></li>
+</ul>
+</section>
+<section id="id11">
+<h3>农历年信息<a class="headerlink" href="#id11" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">LunarYearInfo</span></code> 定义在 <code class="docutils literal notranslate"><span class="pre">bazi.calendar.dates</span></code>，<code class="docutils literal notranslate"><span class="pre">calendar.hko_data</span></code>、<code class="docutils literal notranslate"><span class="pre">calendar.hko_data.decoder</span></code>、
+<code class="docutils literal notranslate"><span class="pre">calendar.celestial_data.loader</span></code> 三条路径重导出同一类型，<code class="docutils literal notranslate"><span class="pre">__module__</span></code> 指向 <code class="docutils literal notranslate"><span class="pre">bazi.calendar.dates</span></code>。
+其 <code class="docutils literal notranslate"><span class="pre">first_solar_day</span></code>、<code class="docutils literal notranslate"><span class="pre">leap</span></code>、<code class="docutils literal notranslate"><span class="pre">leap_month</span></code>、<code class="docutils literal notranslate"><span class="pre">days_counts</span></code>、<code class="docutils literal notranslate"><span class="pre">ganzhi</span></code> 字段保留字典／可变列表行为，查询返回独立副本。</p>
+</section>
+<section id="id12">
+<h3>内存结果与重算<a class="headerlink" href="#id12" title="链接到此标题。">¶</a></h3>
+<p>命盘和前提判别结果没有保存恢复接口，知识库也不导出快照，不提供替代记录格式。
+需要当前结论时，用原出生输入与完整配置重新排盘、求值；本库不从历史记录猜补配置或重建当时结果。</p>
+</section>
+</section>
+<section id="id13">
+<h2>对象摘要、报错指路与文本展示<a class="headerlink" href="#id13" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p>不支持 <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">bazi</span> <span class="pre">import</span> <span class="pre">Bazi</span></code>。<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">bazi;</span> <span class="pre">bazi.Bazi</span></code> 的 <code class="docutils literal notranslate"><span class="pre">AttributeError</span></code> 会指出定义模块；
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">bazi</span> <span class="pre">import</span> <span class="pre">Bazi</span></code> 由解释器报 <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>，不带这条指路。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dir(bazi)</span></code> 列出 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> 声明的全部子模块，以及 <code class="docutils literal notranslate"><span class="pre">chart_text</span></code>、<code class="docutils literal notranslate"><span class="pre">cli</span></code>，包括尚未导入的按需子模块；<code class="docutils literal notranslate"><span class="pre">dir()</span></code> 本身不触发导入。
+<code class="docutils literal notranslate"><span class="pre">chart_text</span></code>、<code class="docutils literal notranslate"><span class="pre">cli</span></code> 不进 <code class="docutils literal notranslate"><span class="pre">__all__</span></code>，但同样按需导入。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Bazi</span></code>、<code class="docutils literal notranslate"><span class="pre">BaziChart</span></code>、<code class="docutils literal notranslate"><span class="pre">TransitChart</span></code>、<code class="docutils literal notranslate"><span class="pre">RelationshipAnalyzer</span></code>、<code class="docutils literal notranslate"><span class="pre">AtBirthAnalysis</span></code>、<code class="docutils literal notranslate"><span class="pre">TransitAnalysis</span></code> 的 <code class="docutils literal notranslate"><span class="pre">repr</span></code>
+是一行摘要：出生时刻、性别、四柱，配置不是默认值或是地点盘时再附加对应部分；后五个对象以所持命盘的摘要为主体。
+摘要大小与命盘数据无关，不计算流运或其他派生值。<strong>它只服务交互探索与调试，格式不属于兼容承诺，
+不是记录格式，也不应被程序解析</strong>。</p></li>
+<li><p>接收命盘的公开入口（<code class="docutils literal notranslate"><span class="pre">TransitChart</span></code>、三个分析类、<code class="docutils literal notranslate"><span class="pre">spouse_evidence</span></code>、<code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code>、
+<code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 的函数）在收到非 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code> 时立即抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；调用方须传真正的 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code>，不接受只具有同名属性的对象。</p></li>
+<li><p>类型错误消息保持 <code class="docutils literal notranslate"><span class="pre">Expected</span> <span class="pre">X,</span> <span class="pre">got</span> <span class="pre">&lt;type&gt;</span></code> 开头，对常见误用在其后以分号追加指路，如
+<code class="docutils literal notranslate"><span class="pre">Expected</span> <span class="pre">BaziChart,</span> <span class="pre">got</span> <span class="pre">&lt;class</span> <span class="pre">'bazi.bazi.Bazi'&gt;;</span> <span class="pre">wrap</span> <span class="pre">it</span> <span class="pre">with</span> <span class="pre">BaziChart(bazi)</span></code>。
+异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bazi.chart_text</span></code> 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
+<code class="docutils literal notranslate"><span class="pre">basic_text</span></code>（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、<code class="docutils literal notranslate"><span class="pre">transit_text</span></code>（节、交运、大运、小运、流年；
+流年无限延续，由 <code class="docutils literal notranslate"><span class="pre">dayun_count</span></code>、<code class="docutils literal notranslate"><span class="pre">liunian_count</span></code> 限定，默认 10 与 100）、<code class="docutils literal notranslate"><span class="pre">chart_text</span></code>（两者相接）。
+出生后没有大运起于历法支持范围内时，<code class="docutils literal notranslate"><span class="pre">transit_text</span></code> 与 <code class="docutils literal notranslate"><span class="pre">chart_text</span></code> 抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，与 <code class="docutils literal notranslate"><span class="pre">BaziChart.xiaoyun</span></code> 一致；<code class="docutils literal notranslate"><span class="pre">basic_text</span></code> 不受影响。
+<code class="docutils literal notranslate"><span class="pre">TextStyle</span></code> 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。</p></li>
+</ul>
+</section>
+<section id="id14">
+<h2>观察请求与结果对象<a class="headerlink" href="#id14" title="链接到此标题。">¶</a></h2>
+<section id="id15">
+<h3>位置、观察与坐标<a class="headerlink" href="#id15" title="链接到此标题。">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bazi.defines.Zhu</span></code>（中文类别名 <code class="docutils literal notranslate"><span class="pre">柱</span></code>）按年、月、日、时排列，成员为 <code class="docutils literal notranslate"><span class="pre">NIAN/YUE/RI/SHI</span></code> 与 <code class="docutils literal notranslate"><span class="pre">年/月/日/时</span></code>。
+<code class="docutils literal notranslate"><span class="pre">TianganLayer</span></code>（<code class="docutils literal notranslate"><span class="pre">天干层次</span></code>）成员为 <code class="docutils literal notranslate"><span class="pre">MINGGAN/CANGGAN</span></code> 与 <code class="docutils literal notranslate"><span class="pre">明干/藏干</span></code>。两个类都从 <code class="docutils literal notranslate"><span class="pre">bazi.defines</span></code> 重导出；
+定义模块分别是 <code class="docutils literal notranslate"><span class="pre">defines.zhu</span></code> 和 <code class="docutils literal notranslate"><span class="pre">defines.tiangan</span></code>。原局柱序与中文标签取自 <code class="docutils literal notranslate"><span class="pre">Zhu</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KongwangHit(position,</span> <span class="pre">ganzhi)</span></code> 和 <code class="docutils literal notranslate"><span class="pre">StarAppearance</span></code> 的 <code class="docutils literal notranslate"><span class="pre">position</span></code> 类型为 <code class="docutils literal notranslate"><span class="pre">Zhu</span> <span class="pre">|</span> <span class="pre">TransitKind</span></code>。
+<code class="docutils literal notranslate"><span class="pre">StarAppearance(position,</span> <span class="pre">ganzhi,</span> <span class="pre">layer,</span> <span class="pre">stem)</span></code> 的 <code class="docutils literal notranslate"><span class="pre">layer</span></code> 用 <code class="docutils literal notranslate"><span class="pre">TianganLayer</span></code>；构造时检查明干与干支一致、藏干属于地支。
+<code class="docutils literal notranslate"><span class="pre">KongwangResult.anchor</span></code> 只接受年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查和运行时均拒绝。
+配置 <code class="docutils literal notranslate"><span class="pre">Anchor.YEAR_AND_DAY</span></code> 仍是多锚选择策略，不是柱位。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ChartOccurrence(position,</span> <span class="pre">ganzhi,</span> <span class="pre">layer,</span> <span class="pre">stem,</span> <span class="pre">shishen)</span></code> 的 <code class="docutils literal notranslate"><span class="pre">position</span></code> 为 <code class="docutils literal notranslate"><span class="pre">Zhu</span> <span class="pre">|</span> <span class="pre">LiunianPosition</span></code>；
+后者保存具体 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code>。原局 <code class="docutils literal notranslate"><span class="pre">index</span></code> 为 0–3，流年为 4。
+另一类型 <code class="docutils literal notranslate"><span class="pre">bazi.utils.dizhi_utils.GanzhiOccurrence</span></code> 用于关系查询组合，<code class="docutils literal notranslate"><span class="pre">index</span></code> 是调用方输入序列中的位置，不受四柱限制。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">evaluate_context(...,</span> <span class="pre">observation=...)</span></code> 显式选择观察请求。<code class="docutils literal notranslate"><span class="pre">NatalObservation()</span></code> 供全部判据共用；
+<code class="docutils literal notranslate"><span class="pre">LiunianObservation(ganzhi_year=None)</span></code> 用于原局加单流年，<code class="docutils literal notranslate"><span class="pre">TransitObservation(kinds,</span> <span class="pre">coordinate=None)</span></code> 用于婚恋结构岁运查询。
+<code class="docutils literal notranslate"><span class="pre">ScopeName</span></code> 按 <code class="docutils literal notranslate"><span class="pre">natal</span></code>、<code class="docutils literal notranslate"><span class="pre">natal_and_liunian</span></code>、<code class="docutils literal notranslate"><span class="pre">natal_and_transits</span></code> 排序。</p></li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>具体坐标构造</p></th>
+<th class="head"><p>含义</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">YearCoordinate(ganzhi_year)</span></code></p></td>
+<td><p>干支年标签，年份须为确切 <code class="docutils literal notranslate"><span class="pre">int</span></code>，拒绝 <code class="docutils literal notranslate"><span class="pre">bool</span></code> 与子类。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MonthCoordinate(ganzhi_year,</span> <span class="pre">ganzhi_month)</span></code></p></td>
+<td><p>干支年月，月用 <code class="docutils literal notranslate"><span class="pre">Dizhi</span></code>；年份同上。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DateCoordinate(solar_date)</span></code></p></td>
+<td><p>东八区公历日，须为 <code class="docutils literal notranslate"><span class="pre">date</span></code> 本身，不接 <code class="docutils literal notranslate"><span class="pre">datetime</span></code> 或 <code class="docutils literal notranslate"><span class="pre">date</span></code> 子类。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MomentCoordinate(solar_moment)</span></code></p></td>
+<td><p>东八区无时区时刻，须为 <code class="docutils literal notranslate"><span class="pre">datetime</span></code> 本身；保留微秒请求身份，求值按秒解释。</p></td>
+</tr>
+</tbody>
+</table>
+<p>四类均从 <code class="docutils literal notranslate"><span class="pre">bazi.context_matching</span></code> 导入；<code class="docutils literal notranslate"><span class="pre">TransitCoordinate</span></code> 是四者联合类型，不能直接构造。
+直接构造时，缺字段／多余字段由构造器抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；值错型或带时区则由各类显式检查。
+坐标缺失是合法观察请求，在求值时为 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>；畸形坐标、空／重复／不支持的种类立即失败，普通与 <code class="docutils literal notranslate"><span class="pre">-O</span></code> 一致。
+<code class="docutils literal notranslate"><span class="pre">TransitChart.at_year/at_month</span></code> 的年份检查使用 <code class="docutils literal notranslate"><span class="pre">isinstance(value,</span> <span class="pre">int)</span></code>，因此接受 <code class="docutils literal notranslate"><span class="pre">bool</span></code> 和 <code class="docutils literal notranslate"><span class="pre">int</span></code> 子类；
+上表的严格坐标类则拒绝这两类输入。</p>
+</section>
+<section id="dataclass">
+<h3>结果构造与 dataclass 操作<a class="headerlink" href="#dataclass" title="链接到此标题。">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>类型</p></th>
+<th class="head"><p>实际构造字段</p></th>
+<th class="head"><p>派生属性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CriterionResult</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">criterion_id</span></code>、<code class="docutils literal notranslate"><span class="pre">reason</span></code>、<code class="docutils literal notranslate"><span class="pre">observations</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">definition</span></code>、<code class="docutils literal notranslate"><span class="pre">status</span></code>、<code class="docutils literal notranslate"><span class="pre">scope_complete</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ContextResult</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">observation</span></code>、<code class="docutils literal notranslate"><span class="pre">criterion</span></code>、<code class="docutils literal notranslate"><span class="pre">evidence</span></code>、<code class="docutils literal notranslate"><span class="pre">reference_ids</span></code>、<code class="docutils literal notranslate"><span class="pre">_bazi</span></code>、<code class="docutils literal notranslate"><span class="pre">knowledge</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bazi</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">CriterionInfo.analysis_kind</span></code> 是第三个构造字段，取 <code class="docutils literal notranslate"><span class="pre">'context'</span></code>／<code class="docutils literal notranslate"><span class="pre">'relationship'</span></code>；
+<code class="docutils literal notranslate"><span class="pre">observation_types</span></code> 给出可接受的观察请求类元组，不是单个请求类。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ContextResult.evidence</span></code> 保存 <code class="docutils literal notranslate"><span class="pre">tuple[ChartOccurrence,</span> <span class="pre">...]</span></code> 或 <code class="docutils literal notranslate"><span class="pre">RelationshipEvidence</span></code>，<code class="docutils literal notranslate"><span class="pre">reference_ids</span></code> 保存参考条目 ID。
+完整前提与条件参考由已注册判据的 <code class="docutils literal notranslate"><span class="pre">entry_role</span></code> 区分。部分种类不可取得时，结果仍保留已取得部分的证据。
+出生输入的拷贝、知识对象的共享及相等性见<a class="reference internal" href="#id10">共享与输入</a>。</p>
+<p>直接构造 <code class="docutils literal notranslate"><span class="pre">ContextResult</span></code> 或用 <code class="docutils literal notranslate"><span class="pre">replace</span></code> 时，<code class="docutils literal notranslate"><span class="pre">reference_ids</span></code> 保留顺序和重复，检查 <code class="docutils literal notranslate"><span class="pre">str</span></code> 类型、非空 ID
+和知识库中的存在性，不要求 ID 属于判据的 <code class="docutils literal notranslate"><span class="pre">claim_ids</span></code>。正常求值按<a class="reference internal" href="#id20">判据目录</a>的声明序与筛选规则返回 ID。</p>
+<p><code class="docutils literal notranslate"><span class="pre">CriterionReason</span></code> 有下表六种原因，<code class="docutils literal notranslate"><span class="pre">status</span></code> 与 <code class="docutils literal notranslate"><span class="pre">scope_complete</span></code> 由原因派生：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">CriterionReason</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">status</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">scope_complete</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>premise_satisfied</p></td>
+<td><p>SATISFIED</p></td>
+<td><p>True</p></td>
+</tr>
+<tr class="row-odd"><td><p>required_classification_absent</p></td>
+<td><p>NOT_SATISFIED</p></td>
+<td><p>True</p></td>
+</tr>
+<tr class="row-even"><td><p>day_master_differs</p></td>
+<td><p>NOT_SATISFIED</p></td>
+<td><p>True</p></td>
+</tr>
+<tr class="row-odd"><td><p>female_gate_false</p></td>
+<td><p>NOT_SATISFIED</p></td>
+<td><p>True</p></td>
+</tr>
+<tr class="row-even"><td><p>missing_transit_coordinate</p></td>
+<td><p>UNKNOWN</p></td>
+<td><p>False</p></td>
+</tr>
+<tr class="row-odd"><td><p>transit_unavailable</p></td>
+<td><p>UNKNOWN</p></td>
+<td><p>False</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">scope_complete</span></code> 不核实该原因与观察、请求年份或手填证据是否一致。
+例如直接构造结果时，原局观察可配缺流运原因，已给年份也可配缺坐标原因；结构校验不认证这些事实。
+实际判别由 <code class="docutils literal notranslate"><span class="pre">evaluate_context</span></code> 计算，婚恋范围与取得集合另有自洽检查。</p>
+<p><code class="docutils literal notranslate"><span class="pre">NatalObservation</span></code>、<code class="docutils literal notranslate"><span class="pre">LiunianObservation</span></code>、<code class="docutils literal notranslate"><span class="pre">TransitObservation</span></code> 的 <code class="docutils literal notranslate"><span class="pre">scope</span></code>，以及四个坐标类的 <code class="docutils literal notranslate"><span class="pre">entry</span></code>，
+均为固定的 <code class="docutils literal notranslate"><span class="pre">ClassVar</span></code>。它们可直接查阅，但不进入构造、<code class="docutils literal notranslate"><span class="pre">repr</span></code>、<code class="docutils literal notranslate"><span class="pre">fields</span></code>、<code class="docutils literal notranslate"><span class="pre">asdict</span></code>、相等／哈希或位置模式匹配。
+上表的派生属性也不进入 <code class="docutils literal notranslate"><span class="pre">fields</span></code>、<code class="docutils literal notranslate"><span class="pre">asdict</span></code> 或构造；<code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code> 不接受 <code class="docutils literal notranslate"><span class="pre">status</span></code>、<code class="docutils literal notranslate"><span class="pre">definition</span></code>、<code class="docutils literal notranslate"><span class="pre">scope_complete</span></code>。
+<code class="docutils literal notranslate"><span class="pre">__match_args__</span></code> 与上表构造字段的顺序一致；<code class="docutils literal notranslate"><span class="pre">ContextResult</span></code> 的第四字段是参考 ID 元组，
+<code class="docutils literal notranslate"><span class="pre">KnowledgeEntry</span></code> 的倒数第二字段是 <code class="docutils literal notranslate"><span class="pre">bool</span></code> 类型的 <code class="docutils literal notranslate"><span class="pre">show_by_default</span></code>。需要派生属性值时显式读取，
+不要把 <code class="docutils literal notranslate"><span class="pre">asdict</span></code> 当作包含派生结论的导出记录。</p>
+</section>
+<section id="id16">
+<h3>枚举字段的读取与穷尽分支<a class="headerlink" href="#id16" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">KongwangResult.anchor</span></code>、<code class="docutils literal notranslate"><span class="pre">StarAppearance.layer</span></code>、<code class="docutils literal notranslate"><span class="pre">ChartOccurrence.layer</span></code> 使用不继承 <code class="docutils literal notranslate"><span class="pre">str</span></code> 的枚举。
+判断用成员，如 <code class="docutils literal notranslate"><span class="pre">result.anchor</span> <span class="pre">is</span> <span class="pre">Zhu.年</span></code>、<code class="docutils literal notranslate"><span class="pre">appearance.layer</span> <span class="pre">is</span> <span class="pre">TianganLayer.明干</span></code>；
+与 <code class="docutils literal notranslate"><span class="pre">'year'</span></code>、<code class="docutils literal notranslate"><span class="pre">'visible'</span></code> 等字符串比较、作 <code class="docutils literal notranslate"><span class="pre">in</span></code> 判断或关键字类模式匹配不会命中，且不一定报错。
+当前仓级 mypy 参数不保证发现这种字符串比较。
+打印 <code class="docutils literal notranslate"><span class="pre">Zhu</span></code>／<code class="docutils literal notranslate"><span class="pre">TianganLayer</span></code> 用 <code class="docutils literal notranslate"><span class="pre">str(value)</span></code> 取得中文值，打印 <code class="docutils literal notranslate"><span class="pre">TransitKind</span></code> 用 <code class="docutils literal notranslate"><span class="pre">.value</span></code>。
+位置／明藏层显示使用枚举中文值，如 <code class="docutils literal notranslate"><span class="pre">natal.月</span></code>、<code class="docutils literal notranslate"><span class="pre">藏干</span></code>；<code class="docutils literal notranslate"><span class="pre">scope</span></code>、<code class="docutils literal notranslate"><span class="pre">origin</span></code>、<code class="docutils literal notranslate"><span class="pre">kind</span></code> 使用各自的标签。</p>
+<p>运行时中文／拼音别名是同一成员，当前钉版 mypy 却将它们作为不同的 <code class="docutils literal notranslate"><span class="pre">Literal</span></code> 处理。
+对 <code class="docutils literal notranslate"><span class="pre">anchor</span></code> 做穷尽缩窄时，年、日两个分支须各覆盖两种拼写，保留 <code class="docutils literal notranslate"><span class="pre">assert_never</span></code> 及月／时的类型拒绝。
+完整示例与类型检查说明见<a class="reference internal" href="guides/integration.html#id7"><span class="std std-ref">集成指南</span></a>。</p>
+</section>
+</section>
+<section id="id17">
+<h2>命令行<a class="headerlink" href="#id17" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">console_scripts</span></code> 中只有命令 <code class="docutils literal notranslate"><span class="pre">bazi</span></code>，对应 <code class="docutils literal notranslate"><span class="pre">bazi.cli:main</span></code>；不提供 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">bazi</span></code> 或根目录兼容脚本。
+五个任务的用途、参数示例与输出路径见<a class="reference internal" href="guides/cli.html"><span class="std std-doc">命令行指南</span></a>。本节列输入、失败与文件写入的约定。</p>
+<p><code class="docutils literal notranslate"><span class="pre">demo</span></code>、<code class="docutils literal notranslate"><span class="pre">relationship</span></code>、<code class="docutils literal notranslate"><span class="pre">chart</span></code> 默认随机生成，打印种子，可用 <code class="docutils literal notranslate"><span class="pre">--seed</span> <span class="pre">整数</span></code> 重放。
+固定 <code class="docutils literal notranslate"><span class="pre">chart</span></code> 输入须同时给 <code class="docutils literal notranslate"><span class="pre">--birth-time</span></code>、<code class="docutils literal notranslate"><span class="pre">--gender</span></code>，不能与 <code class="docutils literal notranslate"><span class="pre">--seed</span></code> 或大于 1 的 <code class="docutils literal notranslate"><span class="pre">--count</span></code> 组合。
+地点与时区输入沿用库的时间口径。
+<code class="docutils literal notranslate"><span class="pre">knowledge</span> <span class="pre">--list-values</span> <span class="pre">topic</span></code> 对应 <code class="docutils literal notranslate"><span class="pre">filter_values('topic')</span></code>，<code class="docutils literal notranslate"><span class="pre">match</span></code> 与 <code class="docutils literal notranslate"><span class="pre">match</span> <span class="pre">判据ID</span></code>
+对应 <code class="docutils literal notranslate"><span class="pre">criteria()</span></code> 与 <code class="docutils literal notranslate"><span class="pre">criterion(id)</span></code>；CLI 不提供名称精确匹配或关键词检索参数。
+<code class="docutils literal notranslate"><span class="pre">knowledge</span></code> 默认查询为空且同一知识库、同一过滤条件有参考条目时，提示 <code class="docutils literal notranslate"><span class="pre">--include-reference-only</span></code>，
+不自动展示参考条目；真空结果不提示，已有默认输出或已显式包含参考条目也不追加提示。</p>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.cli.main(argv=None)</span></code> 的 <code class="docutils literal notranslate"><span class="pre">argv</span></code> 列表不含程序名，<code class="docutils literal notranslate"><span class="pre">None</span></code> 表示读取 <code class="docutils literal notranslate"><span class="pre">sys.argv[1:]</span></code>；
+非列表或包含非字符串成员时抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。裸调用与 <code class="docutils literal notranslate"><span class="pre">--help</span></code> 只打印帮助并返回 0，不写文件。
+未知任务／选项、缺项或非法输入由 argparse 以退出码 2 报错；普通运行与优化模式保持相同的立即失败行为。</p>
+<p>目录的年月字段为 <code class="docutils literal notranslate"><span class="pre">ganzhi_year</span></code>／<code class="docutils literal notranslate"><span class="pre">ganzhi_month</span></code>，对应 CLI flags 为 <code class="docutils literal notranslate"><span class="pre">--ganzhi-year</span></code>／<code class="docutils literal notranslate"><span class="pre">--gz-month</span></code>。
+缺项／多余项错误使用完整字段名，如 <code class="docutils literal notranslate"><span class="pre">Missing</span> <span class="pre">coordinate</span> <span class="pre">field</span> <span class="pre">for</span> <span class="pre">at_year:</span> <span class="pre">ganzhi_year</span></code> 和
+<code class="docutils literal notranslate"><span class="pre">Unexpected</span> <span class="pre">coordinate</span> <span class="pre">field</span> <span class="pre">for</span> <span class="pre">at_year:</span> <span class="pre">ganzhi_month</span></code>，这些边界错误也以退出码 2 报错。</p>
+<p>两个写文件的任务遵守以下约定：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">chart</span></code> 只有显式传 <code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> 才写文件，文件名为 <code class="docutils literal notranslate"><span class="pre">interpretation_examples/{序号}.txt</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">knowledge</span> <span class="pre">--export-knowledge-base</span></code> 默认使用调用目录下的 <code class="docutils literal notranslate"><span class="pre">output_data/knowledge_base/</span></code>；
+<code class="docutils literal notranslate"><span class="pre">--output-dir</span> <span class="pre">out</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">out/knowledge_base/</span></code>。默认路径不取安装位置。</p></li>
+<li><p>TXT 剥除终端颜色码。同名导出目标会覆盖，其他文件保留；包内或自定义知识编辑源拒绝覆盖，
+指向该源的符号链接和硬链接也在保护范围内。</p></li>
+<li><p>两个任务独立检查各自目标，不提供跨命令冲突预检或整体回滚。</p></li>
+</ul>
+</section>
+<section id="id18">
+<h2>知识查询与编辑<a class="headerlink" href="#id18" title="链接到此标题。">¶</a></h2>
+<section id="id19">
+<h3>名称、关键词与过滤值发现<a class="headerlink" href="#id19" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">KnowledgeBase.find_objects</span></code>、<code class="docutils literal notranslate"><span class="pre">search</span></code> 的调用示例见<a class="reference internal" href="guides/knowledge.html#id"><span class="std std-ref">知识库指南</span></a>，
+完整签名与字段说明见定义模块的 API 参考。两个入口的输入检查相同：空或全空白字符串抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，
+错型抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，有效字符串的两侧空白不会被剥除。匹配方式与顺序分别为：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>入口</p></th>
+<th class="head"><p>匹配与返回顺序</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">find_objects(name)</span></code></p></td>
+<td><p>精确匹配对象名称，重名全部返回，无匹配返回 <code class="docutils literal notranslate"><span class="pre">()</span></code>；按对象注册顺序排列。中文名称不是唯一 ID，不作模糊匹配或大小写转换。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">search(keyword,</span> <span class="pre">...)</span></code></p></td>
+<td><p>先应用 <code class="docutils literal notranslate"><span class="pre">query</span></code> 的七维交集与参考条目政策，再作 Unicode <code class="docutils literal notranslate"><span class="pre">casefold</span></code> 字面子串匹配；按语料顺序排列，默认排除仅供参考的条目。</p></td>
+</tr>
+</tbody>
+</table>
+<p>关键词检索覆盖条目正文、前提、署名、主题、口径、例外、限度及角色对象名称，
+不搜对象／条目 ID、来源全文或情境标签，不解释正则，也不判断命盘适用性。
+来源全文从 <code class="docutils literal notranslate"><span class="pre">sources</span></code> 读取，关联条目用 <code class="docutils literal notranslate"><span class="pre">query(source_id=...)</span></code> 查询。</p>
+<p><code class="docutils literal notranslate"><span class="pre">filter_values(dimension)</span></code> 给出七维合法值全集，按 Unicode 字符串序排列：</p>
+<ul class="simple">
+<li><p>维度为 <code class="docutils literal notranslate"><span class="pre">object_id</span></code>、<code class="docutils literal notranslate"><span class="pre">context_id</span></code>、<code class="docutils literal notranslate"><span class="pre">source_id</span></code>、<code class="docutils literal notranslate"><span class="pre">topic</span></code>、<code class="docutils literal notranslate"><span class="pre">viewpoint</span></code>、<code class="docutils literal notranslate"><span class="pre">applicability</span></code>、<code class="docutils literal notranslate"><span class="pre">time_scope</span></code>，
+不包含布尔选项 <code class="docutils literal notranslate"><span class="pre">include_reference_only</span></code>；未知维度抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。</p></li>
+<li><p>目录包括仅参考条目独有值、未引用的注册对象／来源／情境及其时间范围；空库的 <code class="docutils literal notranslate"><span class="pre">applicability</span></code> 也有三个合法值。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query</span></code> 与该目录共用合法值定义，但合法值不保证默认输出有命中。</p></li>
+</ul>
+</section>
+<section id="id20">
+<h3>判据目录<a class="headerlink" href="#id20" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">context_matching.criteria()</span></code> 返回 <code class="docutils literal notranslate"><span class="pre">frozendict[str,</span> <span class="pre">CriterionInfo]</span></code>，<code class="docutils literal notranslate"><span class="pre">criterion(id)</span></code> 返回单项；
+未知 ID 抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，错型抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。两者不加载知识库、不创建命盘，也不执行判别。
+目录值冻结，直接构造 <code class="docutils literal notranslate"><span class="pre">CriterionInfo</span></code> 只校验值的形状，不将自填的 <code class="docutils literal notranslate"><span class="pre">definition</span></code> 当作已注册定义或据此派生结论；
+需要已注册定义时使用这两个查询入口。</p>
+<p>判据与国印查询均按稳定条目 ID 关联，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义，
+相同 ID 本身不能证明语义相同，目录也不认证条文真伪或现实适用性。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>目录信息</p></th>
+<th class="head"><p>含义</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">criterion_id</span></code>、<code class="docutils literal notranslate"><span class="pre">definition</span></code>、<code class="docutils literal notranslate"><span class="pre">observation_keys</span></code></p></td>
+<td><p>稳定标识、现有判据定义及实际观察键。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">analysis_kind</span></code>、<code class="docutils literal notranslate"><span class="pre">observation_types</span></code>、<code class="docutils literal notranslate"><span class="pre">scopes</span></code></p></td>
+<td><p>分析类别，以及由它派生的可接受观察请求类与合法范围；没有隐式范围默认值。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">required_inputs</span></code>、<code class="docutils literal notranslate"><span class="pre">optional_inputs</span></code>、<code class="docutils literal notranslate"><span class="pre">scope_inputs</span></code></p></td>
+<td><p>求值入口的必填／可选参数及各范围取得完整观察所需的额外输入；关系范围按 <code class="docutils literal notranslate"><span class="pre">coordinate</span></code>、<code class="docutils literal notranslate"><span class="pre">kinds</span></code> 排序。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">transit_entries</span></code>、<code class="docutils literal notranslate"><span class="pre">transit_kinds</span></code></p></td>
+<td><p>婚恋结构观察的坐标入口、必填字段及种类上限；不保证某盘实际可取得。单流年观察不接 <code class="docutils literal notranslate"><span class="pre">TransitCoordinate</span></code>。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">unknown_conditions</span></code></p></td>
+<td><p>缺所需年份／坐标或流运不可用等导致 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code> 的条件；范围完整性先于性别门槛与事实判别。关系流运范围的 <code class="docutils literal notranslate"><span class="pre">kinds=()</span></code> 在构造时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，不产生 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">entry_role</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">premise</span></code> 判关联条目的完整显式前提；<code class="docutils literal notranslate"><span class="pre">condition</span></code> 只判局部事实，不认定条目全文前提已成立。空参考元组也由此区分。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">required_gender</span></code>、<code class="docutils literal notranslate"><span class="pre">claim_genders</span></code></p></td>
+<td><p>分别限制判据和关联条目的性别；具体效果见下文。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">claim_ids</span></code></p></td>
+<td><p>按判据声明序排列的条目 ID；自定义库不保证有这些条目。</p></td>
+</tr>
+</tbody>
+</table>
+<p>只有 <code class="docutils literal notranslate"><span class="pre">editorial.guansha_coexistence_female.v1</span></code> 的 <code class="docutils literal notranslate"><span class="pre">required_gender</span></code> 为女命；范围完整时，
+男命得到 <code class="docutils literal notranslate"><span class="pre">NOT_SATISFIED/female_gate_false</span></code>。普通官杀并见判据没有此门槛，两者都保留 <code class="docutils literal notranslate"><span class="pre">female</span></code> 观察键。
+只向男命返回的两条婚恋条目由 <code class="docutils literal notranslate"><span class="pre">claim_genders</span></code> 限制：女命不返回这些关联条目，不改变事实判别。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ContextResult.reference_ids</span></code> 从判据的 <code class="docutils literal notranslate"><span class="pre">claim_ids</span></code> 依次选取条目 ID，跳过以下三种情况：</p>
+<ul class="simple">
+<li><p>传入的知识库中没有该条目；</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include_reference_only=False</span></code>，而该条目的 <code class="docutils literal notranslate"><span class="pre">show_by_default=False</span></code>；</p></li>
+<li><p>该条目要求的性别与输入命盘不符。</p></li>
+</ul>
+<p>返回的 ID 保留声明顺序和重复，不另行去重。<code class="docutils literal notranslate"><span class="pre">include_reference_only=True</span></code> 只放开参考条目的展示筛选，
+仍须通过存在性与性别检查。没有返回参考 ID 时，判据仍可为 <code class="docutils literal notranslate"><span class="pre">SATISFIED</span></code>；前提满足不改变条目的默认展示资格。
+状态只在 <code class="docutils literal notranslate"><span class="pre">CriterionResult</span></code> 上，条目没有 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code> 或识别状态；编辑正文、引文和来源说明不改变判据结果。
+目录使用示例见<a class="reference internal" href="guides/knowledge.html#id8"><span class="std std-ref">知识库指南</span></a>。</p>
+</section>
+<section id="id21">
+<h3>知识编辑源与文本边界<a class="headerlink" href="#id21" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">KnowledgeBase.load(Path</span> <span class="pre">|</span> <span class="pre">None)</span></code> 每次读取并校验当前编辑源；省略路径读取随库 <code class="docutils literal notranslate"><span class="pre">knowledge_data.json</span></code>。
+已有内存对象不随文件编辑变化。编辑源须含 <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> 及 <code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">contexts</span></code>、<code class="docutils literal notranslate"><span class="pre">sources</span></code>、<code class="docutils literal notranslate"><span class="pre">entries</span></code> 四份注册表；
+版本只接受精确整数 3，拒绝 <code class="docutils literal notranslate"><span class="pre">bool</span></code>、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+重复键、字段差异、断引用、不合法状态及无法按 UTF-8 编码的孤立代理项均拒绝，不修复原文。
+非整数版本的 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> 仅显示类型，不展开未知容器。类型错误抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>，值或引用错误抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>；
+JSON 解析错误保留 <code class="docutils literal notranslate"><span class="pre">JSONDecodeError</span></code> 的原文与位置，实际解析递归失败转为 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，不设固定深度上限。</p>
+<p>字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
+知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
+条目按稳定 ID 关联，编辑源版本不是条文真伪的认证。</p>
+<p><code class="docutils literal notranslate"><span class="pre">KnowledgeEntry.show_by_default</span></code> 只接受确切 <code class="docutils literal notranslate"><span class="pre">bool</span></code>；<code class="docutils literal notranslate"><span class="pre">0</span></code>、<code class="docutils literal notranslate"><span class="pre">1</span></code>、字符串和 <code class="docutils literal notranslate"><span class="pre">None</span></code> 均抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>。
+该字段只控制默认展示，不认证知识正确或适用于当前命盘。</p>
+</section>
+<section id="id22">
+<h3>国印条目查询<a class="headerlink" href="#id22" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">bazi.knowledge.guoyin_entry(knowledge,</span> <span class="pre">definition)</span></code> 接受 <code class="docutils literal notranslate"><span class="pre">ShenshaRules.GuoyinDef</span></code>，返回传入库的对应条目；
+<code class="docutils literal notranslate"><span class="pre">guoyin_def(knowledge,</span> <span class="pre">claim_id)</span></code> 返回对应定义，已注册但没有国印关联时返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>。
+所需条目缺失、ID 未注册或为空白时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，参数错型抛 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>；普通与 <code class="docutils literal notranslate"><span class="pre">-O</span></code> 一致。
+来源由 <code class="docutils literal notranslate"><span class="pre">entry.sources</span></code> 查阅，关联不改变条目内容、来源状态或默认展示。</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/cli.html">命令行</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API 参考</a></li>
+<li class="toctree-l1"><a class="reference internal" href="catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">公开接口契约</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">维护者：构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="guides/rule-coverage.html" title="上一章">规则、知识与出处的覆盖</a></li>
+      <li>Next: <a href="contributing.html" title="下一章">贡献指南</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

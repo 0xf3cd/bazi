@@ -2,7 +2,8 @@
 
 当前页面：开发版。
 
-对应源码提交：[aa51db99a2cc](https://github.com/0xf3cd/bazi/tree/aa51db99a2cc1a852b8acdf2efa073162cdc57b9)。
+对应源码提交：[e768b414bb1d](https://github.com/0xf3cd/bazi/tree/e768b414bb1dbaec63bbca224caf038bd2f13e48)。
+构建时间（UTC）：2026-11-13T20:36:12Z。
 构建时工作树干净。
 
 开发版单列在 `dev/`，可整目录更新；发布版文档按对应 tag 的名称归档，已有发布版目录不覆盖。

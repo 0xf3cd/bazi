@@ -23,8 +23,12 @@ bazi.school
    :members: DAY, YEAR, YEAR_AND_DAY
    :undoc-members:
 
+.. autoclass:: bazi.school.TuwangDef
+   :members: AFTER_TWELVE_DAYS, BEFORE_EIGHTEEN_DAYS, WHOLE_MONTH
+   :undoc-members:
+
 .. autoclass:: bazi.school.BaziSchool
-   :members: anhe_def, day_rollover, feiren_def, from_json, gong_def, guoyin_anchor, guoyin_def, hongyan_anchor, huagai_anchor, jiangxing_anchor, jiesha_anchor, jinyu_anchor, mingli_tanyuan, peiou_xing_def, relation_definitions, taiji_anchor, taiji_def, tianyi_anchor, tianyi_def, wangshen_anchor, wenchang_anchor, wenchang_def, xing_def, yangren_def, yima_anchor, zaisha_anchor
+   :members: anhe_def, day_rollover, feiren_def, gong_def, guoyin_anchor, guoyin_def, hongyan_anchor, huagai_anchor, jiangxing_anchor, jiesha_anchor, jinyu_anchor, kongwang_anchor, mingli_tanyuan, peiou_xing_def, relation_definitions, taiji_anchor, taiji_def, tianyi_anchor, tianyi_def, tuwang_def, wangshen_anchor, wenchang_anchor, wenchang_def, xing_def, yangren_def, yima_anchor, zaisha_anchor
    :undoc-members:
 
 .. autodata:: bazi.school.DEFAULT_SCHOOL

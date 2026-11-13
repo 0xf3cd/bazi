@@ -103,7 +103,7 @@ bazi.calendar.hko_data
 
 .. py:data:: LunarYearInfo
 
-   :py:obj:`bazi.calendar.hko_data.decoder.LunarYearInfo` 的重导出。
+   :py:obj:`bazi.calendar.dates.LunarYearInfo` 的重导出。
 
 .. py:currentmodule:: bazi.calendar.hko_data
 

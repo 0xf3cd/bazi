@@ -9,14 +9,14 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
     <script src="../_static/documentation_options.js?v=7d86a446"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/translations.js?v=540d3cec"></script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="贡献指南" href="../contributing.html" />
+    <link rel="next" title="规则、知识与出处的覆盖" href="../guides/rule-coverage.html" />
     <link rel="prev" title="知识条目" href="entries.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -38,488 +38,535 @@
   <section id="id1">
 <h1>前提判据<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
 <p>判据目录可独立浏览。部分判据只检查前提的一部分事实，其限度与未实现部分随条目列出。</p>
+<p><code class="docutils literal notranslate"><span class="pre">entry_role='premise'</span></code> 检查关联条目的完整前提；<code class="docutils literal notranslate"><span class="pre">entry_role='condition'</span></code> 只检查局部事实，
+不能据此认定条目全文前提成立。观察请求决定取哪些柱位或流运，判据本身不推断现实事件。</p>
+<p>统一使用 <a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.evaluate_context" title="bazi.context_matching.evaluate_context"><code class="xref py py-func docutils literal notranslate"><span class="pre">bazi.context_matching.evaluate_context()</span></code></a> 求值：必填 <code class="docutils literal notranslate"><span class="pre">chart</span></code>、<code class="docutils literal notranslate"><span class="pre">criterion_id</span></code> 和
+<code class="docutils literal notranslate"><span class="pre">observation</span></code>，可选 <code class="docutils literal notranslate"><span class="pre">knowledge</span></code> 与 <code class="docutils literal notranslate"><span class="pre">include_reference_only</span></code>。各项下方列出观察请求类及其范围，
+点击类名可查构造参数；完整操作见 <a class="reference internal" href="../guides/integration.html"><span class="doc">集成开发</span></a>。
+范围不完整或所需流运不可得时可能返回 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>，条件见
+<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.CriterionInfo.unknown_conditions" title="bazi.context_matching.CriterionInfo.unknown_conditions"><code class="xref py py-attr docutils literal notranslate"><span class="pre">bazi.context_matching.CriterionInfo.unknown_conditions</span></code></a>。</p>
 <section id="catalog-criteria-editorial.guansha_coexistence.v1">
-<h2>editorial.guansha_coexistence.v1<a class="headerlink" href="#catalog-criteria-editorial.guansha_coexistence.v1" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内正官与七杀各至少出现一次。 <code class="catalog-id docutils literal notranslate"><span class="pre">[editorial.guansha_coexistence.v1]</span></code><a class="headerlink" href="#catalog-criteria-editorial.guansha_coexistence.v1" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>editorial.guansha_coexistence.v1</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内正官与七杀各至少出现一次。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内正官与七杀各至少出现一次。</p>
-</dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>premise</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;observed_coexistence&quot;, &quot;female&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;editorial.shishen.zhengguan.legal_trouble&quot;, &quot;editorial.shishen.qisha.legal_trouble&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>entry_unknown</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>premise</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.zhengguan.legal_trouble">editorial.shishen.zhengguan.legal_trouble</a></p></li>
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.qisha.legal_trouble">editorial.shishen.qisha.legal_trouble</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.zhengguan.legal_trouble">如在命盘中也见七杀，则称为官杀混杂，也许代表在公司里受排… [editorial.shishen.zhengguan.legal_trouble]</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.qisha.legal_trouble">如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排… [editorial.shishen.qisha.legal_trouble]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>editorial.guansha_coexistence.v1</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;observed_coexistence&quot;, &quot;female&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;editorial.shishen.zhengguan.legal_trouble&quot;, &quot;editorial.shishen.qisha.legal_trouble&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-editorial.guansha_coexistence_female.v1">
-<h2>editorial.guansha_coexistence_female.v1<a class="headerlink" href="#catalog-criteria-editorial.guansha_coexistence_female.v1" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内正官与七杀各至少出现一次，且输入为女命。 <code class="catalog-id docutils literal notranslate"><span class="pre">[editorial.guansha_coexistence_female.v1]</span></code><a class="headerlink" href="#catalog-criteria-editorial.guansha_coexistence_female.v1" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>editorial.guansha_coexistence_female.v1</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内正官与七杀各至少出现一次，且输入为女命。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内正官与七杀各至少出现一次，且输入为女命。</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>premise</p>
 </dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>premise</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;observed_coexistence&quot;, &quot;female&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>&quot;女&quot;</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;editorial.shishen.zhengguan.infidelity&quot;, &quot;editorial.shishen.qisha.infidelity&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>entry_unknown</p>
+<dt class="field-odd catalog-field-required_gender">判据性别门槛<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_gender"><p>&quot;女&quot;</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.zhengguan.infidelity">editorial.shishen.zhengguan.infidelity</a></p></li>
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.qisha.infidelity">editorial.shishen.qisha.infidelity</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.zhengguan.infidelity">对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表… [editorial.shishen.zhengguan.infidelity]</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.shishen.qisha.infidelity">对女命而言，由于官杀代表男朋友/丈夫，所以官杀混杂也代表… [editorial.shishen.qisha.infidelity]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>editorial.guansha_coexistence_female.v1</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;observed_coexistence&quot;, &quot;female&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_ids"><p>[&quot;editorial.shishen.zhengguan.infidelity&quot;, &quot;editorial.shishen.qisha.infidelity&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-tiangan.ding_weak_and_overcontrolled">
-<h2>tiangan.ding_weak_and_overcontrolled<a class="headerlink" href="#catalog-criteria-tiangan.ding_weak_and_overcontrolled" title="链接到此标题。">¶</a></h2>
+<h2>日主为丁火 <code class="catalog-id docutils literal notranslate"><span class="pre">[tiangan.ding_weak_and_overcontrolled]</span></code><a class="headerlink" href="#catalog-criteria-tiangan.ding_weak_and_overcontrolled" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tiangan.ding_weak_and_overcontrolled</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>日主为丁火；身弱、克太多留在条目文字中，程序不判别。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>日主为丁火；身弱、克太多留在条目文字中，程序不判别。</p>
-</dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;day_master_ding&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;legacy.tiangan.ding.weak_state&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.tiangan.ding.weak_state">legacy.tiangan.ding.weak_state</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.tiangan.ding.weak_state">丁火日主若是身弱，就发挥不出丁火的优点，如果又见克太多，… [legacy.tiangan.ding.weak_state]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>tiangan.ding_weak_and_overcontrolled</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;day_master_ding&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;legacy.tiangan.ding.weak_state&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-tiangan.geng_regulated_transit">
-<h2>tiangan.geng_regulated_transit<a class="headerlink" href="#catalog-criteria-tiangan.geng_regulated_transit" title="链接到此标题。">¶</a></h2>
+<h2>日主为庚金 <code class="catalog-id docutils literal notranslate"><span class="pre">[tiangan.geng_regulated_transit]</span></code><a class="headerlink" href="#catalog-criteria-tiangan.geng_regulated_transit" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tiangan.geng_regulated_transit</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>日主为庚金；行运有制有化、后天有教养留在条目文字中，程序不判别；即使选了流年，也不视为条文中的行运。</p>
-</dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;day_master_geng&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;legacy.tiangan.geng.regulated_transit&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.tiangan.geng.regulated_transit">legacy.tiangan.geng.regulated_transit</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.tiangan.geng.regulated_transit">如果庚金日主盘中的庚金行运有制有化，后天有教养，性虽刚但… [legacy.tiangan.geng.regulated_transit]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>tiangan.geng_regulated_transit</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;day_master_geng&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;legacy.tiangan.geng.regulated_transit&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-shishen.pianyin_favorable_or_balanced">
-<h2>shishen.pianyin_favorable_or_balanced<a class="headerlink" href="#catalog-criteria-shishen.pianyin_favorable_or_balanced" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内偏印至少出现一次 <code class="catalog-id docutils literal notranslate"><span class="pre">[shishen.pianyin_favorable_or_balanced]</span></code><a class="headerlink" href="#catalog-criteria-shishen.pianyin_favorable_or_balanced" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>shishen.pianyin_favorable_or_balanced</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内偏印至少出现一次；喜用、不过旺、不受刑克冲害留在条目文字中，程序不判别。</p>
-</dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;pianyin_observed&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;legacy.shishen.SH-199&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.shishen.SH-199">legacy.shishen.SH-199</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.shishen.SH-199">偏印为喜用或状态良好（不过旺、不受刑克冲害）：善于观察，… [legacy.shishen.SH-199]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>shishen.pianyin_favorable_or_balanced</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;pianyin_observed&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;legacy.shishen.SH-199&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-shishen.xiaoyin_duoshi">
-<h2>shishen.xiaoyin_duoshi<a class="headerlink" href="#catalog-criteria-shishen.xiaoyin_duoshi" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内偏印与食神各至少出现一次 <code class="catalog-id docutils literal notranslate"><span class="pre">[shishen.xiaoyin_duoshi]</span></code><a class="headerlink" href="#catalog-criteria-shishen.xiaoyin_duoshi" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>shishen.xiaoyin_duoshi</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内偏印与食神各至少出现一次；共现不等于枭印夺食，夺食是否成立留在条目文字中。</p>
-</dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.ContextProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;pianyin_observed&quot;, &quot;shishen_observed&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;legacy.shishen.SH-066&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_liunian：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.LiunianObservation">LiunianObservation</a>；额外输入：ganzhi_year</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.shishen.SH-066">legacy.shishen.SH-066</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-legacy.shishen.SH-066">逢枭印夺食，求谋不顺利，处处阻逆，连谋温饱都很费力。可用… [legacy.shishen.SH-066]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>shishen.xiaoyin_duoshi</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>context</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;pianyin_observed&quot;, &quot;shishen_observed&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;legacy.shishen.SH-066&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-claim_genders">claim_genders<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-claim_genders"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.LiunianObservation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_liunian&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_liunian&quot;: [&quot;ganzhi_year&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_entries"><p>{}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_kinds"><p>{}</p>
+</dd>
+<dt class="field-even catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-editorial.spouse_palace_xingchong.v1">
-<h2>editorial.spouse_palace_xingchong.v1<a class="headerlink" href="#catalog-criteria-editorial.spouse_palace_xingchong.v1" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内，日柱地支作为具体参与者卷入刑或冲 <code class="catalog-id docutils literal notranslate"><span class="pre">[editorial.spouse_palace_xingchong.v1]</span></code><a class="headerlink" href="#catalog-criteria-editorial.spouse_palace_xingchong.v1" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>editorial.spouse_palace_xingchong.v1</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内，日柱地支作为具体参与者卷入刑或冲；刑按命盘流派的刑定义解释。</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.RelationshipProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;day_pillar_in_chong&quot;, &quot;day_pillar_in_xing&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;editorial.tanyuan.wife_palace_xingchong.v1&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;editorial.tanyuan.wife_palace_xingchong.v1&quot;: &quot;男&quot;}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>relationship</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_transits&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_transits&quot;: [&quot;coordinate&quot;, &quot;kinds&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;at_year&quot;: [&quot;gz_year&quot;], &quot;at_month&quot;: [&quot;gz_year&quot;, &quot;gz_month&quot;], &quot;at_date&quot;: [&quot;solar_date&quot;], &quot;at_moment&quot;: [&quot;solar_moment&quot;]}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;at_year&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;xiaoyun&quot;], &quot;at_month&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_date&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_moment&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;]}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-odd catalog-field-claim_genders">关联条目的性别限制<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_genders"><p>{&quot;editorial.tanyuan.wife_palace_xingchong.v1&quot;: &quot;男&quot;}</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_transits：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.TransitObservation">TransitObservation</a>；额外输入：coordinate、kinds</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.tanyuan.wife_palace_xingchong.v1">editorial.tanyuan.wife_palace_xingchong.v1</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.tanyuan.wife_palace_xingchong.v1">《命理探原·论妻子》：「又有妻透成格。或妻宮有用〔小標點… [editorial.tanyuan.wife_palace_xingchong.v1]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>editorial.spouse_palace_xingchong.v1</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>relationship</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;day_pillar_in_chong&quot;, &quot;day_pillar_in_xing&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;editorial.tanyuan.wife_palace_xingchong.v1&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.TransitObservation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_transits&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_transits&quot;: [&quot;coordinate&quot;, &quot;kinds&quot;]}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_entries"><p>{&quot;at_year&quot;: [&quot;ganzhi_year&quot;], &quot;at_month&quot;: [&quot;ganzhi_year&quot;, &quot;ganzhi_month&quot;], &quot;at_date&quot;: [&quot;solar_date&quot;], &quot;at_moment&quot;: [&quot;solar_moment&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_kinds"><p>{&quot;at_year&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;xiaoyun&quot;], &quot;at_month&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_date&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_moment&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;]}</p>
+</dd>
+<dt class="field-odd catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 <section id="catalog-criteria-editorial.spouse_star_tougan.v1">
-<h2>editorial.spouse_star_tougan.v1<a class="headerlink" href="#catalog-criteria-editorial.spouse_star_tougan.v1" title="链接到此标题。">¶</a></h2>
+<h2>选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。 <code class="catalog-id docutils literal notranslate"><span class="pre">[editorial.spouse_star_tougan.v1]</span></code><a class="headerlink" href="#catalog-criteria-editorial.spouse_star_tougan.v1" title="链接到此标题。">¶</a></h2>
 <dl class="field-list simple">
-<dt class="field-odd">criterion_id<span class="colon">:</span></dt>
-<dd class="field-odd"><p>editorial.spouse_star_tougan.v1</p>
+<dt class="field-odd catalog-field-definition">定义<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-definition"><p>选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。</p>
 </dd>
-<dt class="field-even">definition<span class="colon">:</span></dt>
-<dd class="field-even"><p>选定范围内，按命盘流派配置的配偶星目标干至少有一处明干实际出现。</p>
+<dt class="field-even catalog-field-entry_role">关联条目的前提关系<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-entry_role"><p>condition</p>
 </dd>
-<dt class="field-odd">profile_type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>&quot;bazi.context_matching.RelationshipProfile&quot;</p>
-</dd>
-<dt class="field-even">entry_role<span class="colon">:</span></dt>
-<dd class="field-even"><p>condition</p>
-</dd>
-<dt class="field-odd">observation_keys<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;target_stem_visible&quot;, &quot;target_stem_hidden&quot;]</p>
-</dd>
-<dt class="field-even">required_gender<span class="colon">:</span></dt>
-<dd class="field-even"><p>null</p>
-</dd>
-<dt class="field-odd">claim_ids<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;editorial.tanyuan.wife_star_gantou.v1&quot;]</p>
-</dd>
-<dt class="field-even">claim_genders<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;editorial.tanyuan.wife_star_gantou.v1&quot;: &quot;男&quot;}</p>
-</dd>
-<dt class="field-odd">profile_kind<span class="colon">:</span></dt>
-<dd class="field-odd"><p>relationship</p>
-</dd>
-<dt class="field-even">scopes<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;natal&quot;, &quot;natal_and_transits&quot;]</p>
-</dd>
-<dt class="field-odd">required_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;profile&quot;]</p>
-</dd>
-<dt class="field-even">optional_inputs<span class="colon">:</span></dt>
-<dd class="field-even"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
-</dd>
-<dt class="field-odd">scope_inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;natal&quot;: [], &quot;natal_and_transits&quot;: [&quot;coordinate&quot;, &quot;kinds&quot;]}</p>
-</dd>
-<dt class="field-even">transit_entries<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;at_year&quot;: [&quot;gz_year&quot;], &quot;at_month&quot;: [&quot;gz_year&quot;, &quot;gz_month&quot;], &quot;at_date&quot;: [&quot;solar_date&quot;], &quot;at_moment&quot;: [&quot;solar_moment&quot;]}</p>
-</dd>
-<dt class="field-odd">transit_kinds<span class="colon">:</span></dt>
-<dd class="field-odd"><p>{&quot;at_year&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;xiaoyun&quot;], &quot;at_month&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_date&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_moment&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;]}</p>
-</dd>
-<dt class="field-even">unknown_conditions<span class="colon">:</span></dt>
-<dd class="field-even"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
-</dd>
-<dt class="field-odd">binding_effect<span class="colon">:</span></dt>
-<dd class="field-odd"><p>related_unrecognized</p>
+<dt class="field-odd catalog-field-claim_genders">关联条目的性别限制<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_genders"><p>{&quot;editorial.tanyuan.wife_star_gantou.v1&quot;: &quot;男&quot;}</p>
 </dd>
 </dl>
+<p>观察请求、范围与额外输入：</p>
+<ul class="simple">
+<li><p>natal：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.NatalObservation">NatalObservation</a>；无额外输入</p></li>
+<li><p>natal_and_transits：<a class="reference internal" href="../api/bazi-context_matching.html#bazi.context_matching.TransitObservation">TransitObservation</a>；额外输入：coordinate、kinds</p></li>
+</ul>
+<p>求值步骤与结果读取：<a class="reference internal" href="../guides/integration.html#context-matching">前提匹配指南</a></p>
 <p>相关条目（包含仅供参考条目）：</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.tanyuan.wife_star_gantou.v1">editorial.tanyuan.wife_star_gantou.v1</a></p></li>
+<li><p><a class="reference internal" href="entries.html#catalog-entries-editorial.tanyuan.wife_star_gantou.v1">《命理探原·论妻子》：「妻星者。幹頭之財也。」 [editorial.tanyuan.wife_star_gantou.v1]</a></p></li>
 </ul>
-</section>
+<details class="catalog-metadata"><summary>登记信息（字段原值）</summary><dl class="field-list simple">
+<dt class="field-odd catalog-field-criterion_id">criterion_id<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-criterion_id"><p>editorial.spouse_star_tougan.v1</p>
+</dd>
+<dt class="field-even catalog-field-analysis_kind">analysis_kind<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-analysis_kind"><p>relationship</p>
+</dd>
+<dt class="field-odd catalog-field-observation_keys">observation_keys<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-observation_keys"><p>[&quot;target_stem_visible&quot;, &quot;target_stem_hidden&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_gender">required_gender<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_gender"><p>null</p>
+</dd>
+<dt class="field-odd catalog-field-claim_ids">claim_ids<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-claim_ids"><p>[&quot;editorial.tanyuan.wife_star_gantou.v1&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-observation_types">observation_types<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-observation_types"><p>[&quot;bazi.context_matching.NatalObservation&quot;, &quot;bazi.context_matching.TransitObservation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-scopes">scopes<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-scopes"><p>[&quot;natal&quot;, &quot;natal_and_transits&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-required_inputs">required_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-required_inputs"><p>[&quot;chart&quot;, &quot;criterion_id&quot;, &quot;observation&quot;]</p>
+</dd>
+<dt class="field-odd catalog-field-optional_inputs">optional_inputs<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-optional_inputs"><p>[&quot;knowledge&quot;, &quot;include_reference_only&quot;]</p>
+</dd>
+<dt class="field-even catalog-field-scope_inputs">scope_inputs<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-scope_inputs"><p>{&quot;natal&quot;: [], &quot;natal_and_transits&quot;: [&quot;coordinate&quot;, &quot;kinds&quot;]}</p>
+</dd>
+<dt class="field-odd catalog-field-transit_entries">transit_entries<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-transit_entries"><p>{&quot;at_year&quot;: [&quot;ganzhi_year&quot;], &quot;at_month&quot;: [&quot;ganzhi_year&quot;, &quot;ganzhi_month&quot;], &quot;at_date&quot;: [&quot;solar_date&quot;], &quot;at_moment&quot;: [&quot;solar_moment&quot;]}</p>
+</dd>
+<dt class="field-even catalog-field-transit_kinds">transit_kinds<span class="colon">:</span></dt>
+<dd class="field-even catalog-field-transit_kinds"><p>{&quot;at_year&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;xiaoyun&quot;], &quot;at_month&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_date&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;], &quot;at_moment&quot;: [&quot;dayun&quot;, &quot;liunian&quot;, &quot;liuri&quot;, &quot;liuyue&quot;, &quot;xiaoyun&quot;]}</p>
+</dd>
+<dt class="field-odd catalog-field-unknown_conditions">unknown_conditions<span class="colon">:</span></dt>
+<dd class="field-odd catalog-field-unknown_conditions"><p>{&quot;missing_transit_coordinate&quot;: &quot;选择含流运范围后未给所需年份或坐标；范围缺失先于性别门槛与事实判别。&quot;, &quot;transit_unavailable&quot;: &quot;流运查询不可用；关系范围也包括任一所求种类未取得，已取得证据仍保留。&quot;}</p>
+</dd>
+</dl>
+</details></section>
 </section>
 
 
@@ -552,17 +599,23 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API 参考</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
 </ul>
 
 
@@ -578,7 +631,7 @@
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">知识目录</a><ul>
       <li>Previous: <a href="entries.html" title="上一章">知识条目</a></li>
-      <li>Next: <a href="../contributing.html" title="下一章">贡献指南</a></li>
+      <li>Next: <a href="../guides/rule-coverage.html" title="下一章">规则、知识与出处的覆盖</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -599,7 +652,7 @@
       
       
       
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
     </div>

@@ -39,9 +39,11 @@ bazi.calendar.celestial_data.loader
 .. autodata:: bazi.calendar.celestial_data.loader.JIEQI_BY_INDEX
    :no-value:
 
-.. autoclass:: bazi.calendar.celestial_data.loader.LunarYearInfo
-   :members: days_counts, first_solar_day, ganzhi, leap, leap_month
-   :undoc-members:
+.. py:currentmodule:: bazi.calendar.celestial_data.loader
+
+.. py:data:: LunarYearInfo
+
+   :py:obj:`bazi.calendar.dates.LunarYearInfo` 的重导出。
 
 .. autoclass:: bazi.calendar.celestial_data.loader.EquationOfTimeTable
    :members: samples, seconds_at

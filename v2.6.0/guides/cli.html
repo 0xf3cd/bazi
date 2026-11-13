@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>命令行 &#8212; bazi · v2.6.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="配置与时间口径" href="configuration.html" />
+    <link rel="prev" title="快速开始" href="quickstart.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>命令行<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>安装包提供唯一的 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 命令，可以排盘、保存文本、查询知识和检查前提，无需编写 Python。</p>
+<p>本页对应发布版 v2.6.0，安装相同版本：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"bazi==2.6.0"</span>
+</pre></div>
+</div>
+<p>安装后可在自己的工作目录运行。未激活虚拟环境时，直接使用环境中的 <code class="docutils literal notranslate"><span class="pre">bin/bazi</span></code>（macOS／Linux）
+或 <code class="docutils literal notranslate"><span class="pre">Scripts\bazi.exe</span></code>（Windows）路径。裸调用 <code class="docutils literal notranslate"><span class="pre">bazi</span></code> 只打印帮助，不写文件。</p>
+<section id="id2">
+<h2>按出生信息排盘并保存<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p>下面仍用虚构的出生信息。默认按东八区（UTC+8）公历钟填写，不自动换算时区：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>chart<span class="w"> </span>--birth-time<span class="w"> </span><span class="s2">"1990-05-17 10:30"</span><span class="w"> </span>--gender<span class="w"> </span>female<span class="w"> </span>--output-dir<span class="w"> </span>output_data
+</pre></div>
+</div>
+<p>终端展示命盘与默认知识条目；不带终端颜色码的 TXT 保存为调用目录下的
+<code class="docutils literal notranslate"><span class="pre">output_data/interpretation_examples/0.txt</span></code>。省略 <code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> 就只展示，不保存。
+同名 TXT 会被覆盖，其他文件保留，需保留的旧结果请先另存。</p>
+<p><code class="docutils literal notranslate"><span class="pre">--birth-time</span></code> 与 <code class="docutils literal notranslate"><span class="pre">--gender</span></code> 必须同时给或同时不给；都不给则随机排盘并打印种子，
+可用 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">chart</span> <span class="pre">--seed</span> <span class="pre">236</span></code> 重放。固定出生输入不与 <code class="docutils literal notranslate"><span class="pre">--seed</span></code> 或大于 1 的 <code class="docutils literal notranslate"><span class="pre">--count</span></code> 组合。</p>
+<p><code class="docutils literal notranslate"><span class="pre">--precision</span></code> 设置命盘精度，可选 <code class="docutils literal notranslate"><span class="pre">day</span></code>（默认）、<code class="docutils literal notranslate"><span class="pre">hour</span></code>、<code class="docutils literal notranslate"><span class="pre">minute</span></code>。需要真太阳时，传带时区出生时刻，
+用 <code class="docutils literal notranslate"><span class="pre">--longitude</span></code> 给出经度，并选 <code class="docutils literal notranslate"><span class="pre">hour</span></code> 或 <code class="docutils literal notranslate"><span class="pre">minute</span></code> 精度；
+IANA 时区需要系统时区数据库，缺少时可安装 <code class="docutils literal notranslate"><span class="pre">tzdata</span></code>。合法输入与时间含义见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。
+CLI 可选精度、经度和民用时区，其他历法后端、换日与流派字段使用 Python API 配置，不能作为 CLI 选项传入。</p>
+<p>命盘中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。</p>
+</section>
+<section id="id3">
+<h2>查询知识与出处<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">knowledge</span></code> 显示知识库概览。不排盘，直接查丁的知识，或列出可用主题：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>knowledge<span class="w"> </span>--object<span class="w"> </span>tiangan.ding
+bazi<span class="w"> </span>knowledge<span class="w"> </span>--list-values<span class="w"> </span>topic
+</pre></div>
+</div>
+<p>对象 ID 可在 <a class="reference internal" href="../catalog/objects.html"><span class="doc">知识对象</span></a> 查到。默认只返回默认展示条目；例如文昌的条目均仅供参考，须显式包含：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>knowledge<span class="w"> </span>--object<span class="w"> </span>shensha.wenchang<span class="w"> </span>--include-reference-only
+</pre></div>
+</div>
+<p>默认查询为空而相同条件有参考条目时，命令会提示 <code class="docutils literal notranslate"><span class="pre">--include-reference-only</span></code>，不会自动放开展示。
+多个过滤条件取交集；CLI 不提供中文名称或关键词搜索参数，名称和字面搜索用 <a class="reference internal" href="knowledge.html"><span class="doc">查阅知识库</span></a> 的 Python API。</p>
+<p>导出天干与十神知识 TXT，并附来源详情：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>knowledge<span class="w"> </span>--export-knowledge-base<span class="w"> </span>--show-sources
+</pre></div>
+</div>
+<p>文件默认写在调用目录的 <code class="docutils literal notranslate"><span class="pre">output_data/knowledge_base/{tiangan,shishen}/</span></code>；
+加 <code class="docutils literal notranslate"><span class="pre">--output-dir</span> <span class="pre">out</span></code> 则写到 <code class="docutils literal notranslate"><span class="pre">out/knowledge_base/</span></code>。此导出命令不向终端打印结果。
+两个写文件的命令都拒绝覆盖包内或自定义知识源。</p>
+<p>校验随包知识源：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>knowledge<span class="w"> </span>--validate-knowledge
+</pre></div>
+</div>
+<p>自己的文件可用 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">knowledge</span> <span class="pre">--knowledge-source</span> <span class="pre">edited.json</span> <span class="pre">--validate-knowledge</span></code> 校验，
+再用 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">knowledge</span> <span class="pre">--knowledge-source</span> <span class="pre">edited.json</span> <span class="pre">--object</span> <span class="pre">tiangan.ding</span></code> 查询。
+先保存可继续编辑的副本，见 <a class="reference internal" href="knowledge.html#knowledge-edit"><span class="std std-ref">编辑知识文件</span></a>；<code class="docutils literal notranslate"><span class="pre">--knowledge-source</span></code> 也可用于 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">match</span></code>，不用于 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">chart</span></code>。</p>
+</section>
+<section id="id4">
+<h2>查看判据、检查命盘前提<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p>先列目录，只给 ID 时查看定义、支持范围和所需输入，补齐参数后才求值：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>match
+bazi<span class="w"> </span>match<span class="w"> </span>editorial.guansha_coexistence.v1
+bazi<span class="w"> </span>match<span class="w"> </span>editorial.guansha_coexistence.v1<span class="w"> </span>--birth-time<span class="w"> </span><span class="s2">"2000-01-01 12:00"</span><span class="w"> </span>--gender<span class="w"> </span>female<span class="w"> </span>--observation-scope<span class="w"> </span>natal
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--observation-scope</span></code> 须显式选择。增加单流年时使用 <code class="docutils literal notranslate"><span class="pre">natal_and_liunian</span></code> 与干支年标签：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>match<span class="w"> </span>editorial.guansha_coexistence.v1<span class="w"> </span>--birth-time<span class="w"> </span><span class="s2">"2000-01-01 12:00"</span><span class="w"> </span>--gender<span class="w"> </span>female<span class="w"> </span>--observation-scope<span class="w"> </span>natal_and_liunian<span class="w"> </span>--ganzhi-year<span class="w"> </span><span class="m">2024</span>
+</pre></div>
+</div>
+<p>婚恋结构判据用 <code class="docutils literal notranslate"><span class="pre">natal_and_transits</span></code>，并按该判据的说明给出 <code class="docutils literal notranslate"><span class="pre">--transit-entry</span></code>、坐标和 <code class="docutils literal notranslate"><span class="pre">--transit-kinds</span></code>。
+例如检查原局加指定时刻的大运、流年，时刻坐标按东八区填写：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>match<span class="w"> </span>editorial.spouse_palace_xingchong.v1<span class="w"> </span>--birth-time<span class="w"> </span><span class="s2">"2000-01-01 12:00"</span><span class="w"> </span>--gender<span class="w"> </span>female<span class="w"> </span>--precision<span class="w"> </span>hour<span class="w"> </span>--observation-scope<span class="w"> </span>natal_and_transits<span class="w"> </span>--transit-entry<span class="w"> </span>at_moment<span class="w"> </span>--solar-moment<span class="w"> </span><span class="s2">"2024-04-10T12:00:00"</span><span class="w"> </span>--transit-kinds<span class="w"> </span>dayun,liunian
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">at_moment</span></code> 需要 <code class="docutils literal notranslate"><span class="pre">hour</span></code> 或 <code class="docutils literal notranslate"><span class="pre">minute</span></code> 命盘精度，默认 <code class="docutils literal notranslate"><span class="pre">day</span></code> 盘会得到 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>。
+这里的 <code class="docutils literal notranslate"><span class="pre">--precision</span> <span class="pre">hour</span></code> 设置整张命盘的精度，含义见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。
+若要改查干支年 2024 的午月，将上例的 <code class="docutils literal notranslate"><span class="pre">--transit-entry</span> <span class="pre">at_moment</span></code> 改为 <code class="docutils literal notranslate"><span class="pre">--transit-entry</span> <span class="pre">at_month</span></code>，
+把 <code class="docutils literal notranslate"><span class="pre">--solar-moment</span> <span class="pre">&quot;2024-04-10T12:00:00&quot;</span></code> 替换为 <code class="docutils literal notranslate"><span class="pre">--ganzhi-year</span> <span class="pre">2024</span> <span class="pre">--gz-month</span> <span class="pre">午</span></code>，其余参数保留。
+Python 请求与结果读取见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">SATISFIED</span></code> 表示所选判据的结构事实满足；<code class="docutils literal notranslate"><span class="pre">NOT_SATISFIED</span></code> 表示不满足；<code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code> 表示所需观察不完整。
+部分证据存在时仍可能为 <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>。完整前提与局部条件由判据的 <code class="docutils literal notranslate"><span class="pre">entry_role</span></code> 区分，
+状态不认证条文本身为真，也不预测现实事件。<code class="docutils literal notranslate"><span class="pre">--include-reference-only</span></code> 只改变参考文字的展示，不改变判据状态。</p>
+</section>
+<section id="id5">
+<h2>随机演示与帮助<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p>两个演示任务不写文件，均支持种子重放：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>demo<span class="w"> </span>--seed<span class="w"> </span><span class="m">236</span>
+bazi<span class="w"> </span>relationship<span class="w"> </span>--seed<span class="w"> </span><span class="m">236</span>
+</pre></div>
+</div>
+<p>前者给带终端颜色的完整命盘与流运文本；后者给夫妻宫、配偶星、原局及整柱神煞、旬空和连续十年流年报告。
+每个任务有独立选项，完整列表见各自帮助，例如：</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>bazi<span class="w"> </span>chart<span class="w"> </span>--help
+bazi<span class="w"> </span>knowledge<span class="w"> </span>--help
+bazi<span class="w"> </span>match<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>接口的精确行为见 <a class="reference internal" href="../api-contract.html"><span class="doc">公开接口契约</span></a>；已有命令或旧脚本的升级条件见 <a class="reference internal" href="../release-notes.html"><span class="doc">发布说明</span></a>。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">命令行</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API 参考</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="quickstart.html" title="上一章">快速开始</a></li>
+      <li>Next: <a href="configuration.html" title="下一章">配置与时间口径</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

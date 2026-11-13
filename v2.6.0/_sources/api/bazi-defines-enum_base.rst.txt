@@ -1,0 +1,12 @@
+bazi.defines.enum_base
+======================
+
+.. automodule:: bazi.defines.enum_base
+
+.. autoclass:: bazi.defines.enum_base.BaziEnum
+   :members: as_list, from_str
+   :undoc-members:
+
+.. autoclass:: bazi.defines.enum_base.IndexedBaziEnum
+   :members: as_list, from_index, from_str, index
+   :undoc-members:

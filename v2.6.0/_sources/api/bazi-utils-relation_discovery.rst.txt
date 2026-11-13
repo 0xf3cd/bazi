@@ -1,0 +1,14 @@
+bazi.utils.relation_discovery
+=============================
+
+.. automodule:: bazi.utils.relation_discovery
+
+.. autodata:: bazi.utils.relation_discovery.RelationType
+   :no-value:
+
+.. autodata:: bazi.utils.relation_discovery.RelationItemType
+   :no-value:
+
+.. autoclass:: bazi.utils.relation_discovery.RelationDiscovery
+   :members: filter, merge, mutual_only
+   :undoc-members:

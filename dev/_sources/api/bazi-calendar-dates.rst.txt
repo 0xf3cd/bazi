@@ -3,6 +3,10 @@ bazi.calendar.dates
 
 .. automodule:: bazi.calendar.dates
 
+.. autoclass:: bazi.calendar.dates.LunarYearInfo
+   :members: days_counts, first_solar_day, ganzhi, leap, leap_month
+   :undoc-members:
+
 .. autoclass:: bazi.calendar.dates.CalendarType
    :members: GANZHI, LUNAR, SOLAR, 公历, 农历, 干支历
    :undoc-members:

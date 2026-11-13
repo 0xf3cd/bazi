@@ -1,0 +1,14 @@
+bazi.calendar.celestial_utils
+=============================
+
+.. automodule:: bazi.calendar.celestial_utils
+
+.. autoclass:: bazi.calendar.celestial_utils.CelestialCalendarUtils
+   :members: days_counts_in_ganzhi_year, ganzhi_to_lunar, ganzhi_to_solar, get_max_supported_date, get_min_supported_date, is_valid, is_valid_ganzhi_date, is_valid_lunar_date, is_valid_solar_date, jieqi_date, jieqi_moment, lunar_to_ganzhi, lunar_to_solar, next_jie, prev_jie, solar_to_ganzhi, solar_to_lunar, supported_jie_boundaries, to_date, to_ganzhi, to_lunar, to_solar
+   :undoc-members:
+
+.. autodata:: bazi.calendar.celestial_utils.ALGO1
+   :no-value:
+
+.. autodata:: bazi.calendar.celestial_utils.ALGO2
+   :no-value:

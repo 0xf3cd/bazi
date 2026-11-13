@@ -9,9 +9,6 @@ bazi.knowledge
 .. autodata:: bazi.knowledge.SourceState
    :no-value:
 
-.. autodata:: bazi.knowledge.OutputPolicy
-   :no-value:
-
 .. autodata:: bazi.knowledge.DEFAULT_SOURCE_PATH
    :no-value:
 
@@ -42,9 +39,13 @@ bazi.knowledge
    :undoc-members:
 
 .. autoclass:: bazi.knowledge.KnowledgeEntry
-   :members: applicability, attribution, claim_id, contexts, exceptions, legacy, limits, output, premise, relations, roles, source_state, sources, text, topics, viewpoint
+   :members: applicability, attribution, claim_id, contexts, exceptions, legacy, limits, premise, relations, roles, show_by_default, source_state, sources, text, topics, viewpoint
    :undoc-members:
 
 .. autoclass:: bazi.knowledge.KnowledgeBase
-   :members: contexts, entries, entry, export_json, filter_values, find_objects, from_json, load, objects, query, render, render_subject, search, sources
+   :members: contexts, entries, entry, filter_values, find_objects, load, objects, query, render, render_subject, search, sources
    :undoc-members:
+
+.. autofunction:: bazi.knowledge.guoyin_entry
+
+.. autofunction:: bazi.knowledge.guoyin_def

@@ -9,6 +9,10 @@ bazi.utils.bazi_utils
 
 .. autofunction:: bazi.utils.bazi_utils.month_tiangan
 
+.. autofunction:: bazi.utils.bazi_utils.taiyuan
+
+.. autofunction:: bazi.utils.bazi_utils.minggong
+
 .. autofunction:: bazi.utils.bazi_utils.hour_tiangan
 
 .. autofunction:: bazi.utils.bazi_utils.tiangan_traits

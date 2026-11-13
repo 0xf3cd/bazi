@@ -1,0 +1,20 @@
+bazi.analyzer.facts
+===================
+
+.. automodule:: bazi.analyzer.facts
+
+.. autoclass:: bazi.analyzer.facts.TianganMatch
+   :members: SAME_TIANGAN, SAME_WUXING
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.facts.TianganOccurrence
+   :members: ganzhi, position, stem
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.facts.TouganHit
+   :members: hidden, visible
+   :undoc-members:
+
+.. autofunction:: bazi.analyzer.facts.tonggen
+
+.. autofunction:: bazi.analyzer.facts.tougan

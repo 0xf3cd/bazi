@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>配置与时间口径 &#8212; bazi · v2.6.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="关系与流运" href="relations-transits.html" />
+    <link rel="prev" title="命令行" href="cli.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>配置与时间口径<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
+<p>本页说明出生时间怎么填、配置有哪些合法值，以及修改配置会改变什么。
+<code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code> 选择精度、历法后端和大运年份标记，<code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 选择换日及各项流派取法。
+先构造流派，再放进命盘配置，最后传给排盘入口：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span><span class="p">,</span> <span class="n">BaziSchool</span><span class="p">,</span> <span class="n">DayRollover</span>
+
+<span class="n">school</span> <span class="o">=</span> <span class="n">BaziSchool</span><span class="p">(</span><span class="n">day_rollover</span><span class="o">=</span><span class="n">DayRollover</span><span class="o">.</span><span class="n">ZIZHENG</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="s1">'minute'</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">'celestial'</span><span class="p">,</span> <span class="n">school</span><span class="o">=</span><span class="n">school</span><span class="p">)</span>
+<span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'1995-08-03 23:30'</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'精度'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">precision</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'日柱'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">day_pillar</span><span class="p">,</span> <span class="s1">'时柱'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">hour_pillar</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>精度 minute
+日柱 丙寅 时柱 戊子
+</pre></div>
+</div>
+<p>配置只表示你选择了哪一种口径。默认值是本库选定的取法，不判断哪一种更对，也不是文献结论。</p>
+<section id="id2">
+<h2>配置速查<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p>构造器接收下表的枚举成员，导入路径列在各组前。<code class="docutils literal notranslate"><span class="pre">BaziConfig.from_values</span></code> 另外接受精度、后端与大运年份规则的字符串，
+如上例；<code class="docutils literal notranslate"><span class="pre">school</span></code> 仍须传 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code>。省略的字段取“默认”列。</p>
+<section id="baziconfig">
+<h3>命盘配置 <code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code><a class="headerlink" href="#baziconfig" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code>、<code class="docutils literal notranslate"><span class="pre">BaziPrecision</span></code>、<code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code>、<code class="docutils literal notranslate"><span class="pre">DayunYearRule</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.school</span></code> 导入，
+<code class="docutils literal notranslate"><span class="pre">CalendarBackend</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.calendar.backend</span></code> 导入。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>字段</p></th>
+<th class="head"><p>类型</p></th>
+<th class="head"><p>可选成员</p></th>
+<th class="head"><p>默认成员／值</p></th>
+<th class="head"><p>影响</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">precision</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziPrecision</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">HOUR</span></code>、<code class="docutils literal notranslate"><span class="pre">MINUTE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code></p></td>
+<td><p>出生时刻与节气比较的粒度；小时仍用于时柱。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">backend</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CalendarBackend</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">HKO</span></code>、<code class="docutils literal notranslate"><span class="pre">CELESTIAL</span></code>、<code class="docutils literal notranslate"><span class="pre">CELESTIAL_ALGO2</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CELESTIAL</span></code></p></td>
+<td><p>历法数据来源；HKO 只能配合 DAY。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">school</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 实例</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHOOL</span></code></p></td>
+<td><p>下列流派字段的集合。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dayun_year_rule</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DayunYearRule</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JIE_PROJECTED</span></code>、<code class="docutils literal notranslate"><span class="pre">FIXED_DECADE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JIE_PROJECTED</span></code></p></td>
+<td><p>大运年份标签，不改变物理交运时刻。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="bazischool">
+<h3>流派取法 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code><a class="headerlink" href="#bazischool" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">DayRollover</span></code>、<code class="docutils literal notranslate"><span class="pre">PeiouXingDef</span></code>、<code class="docutils literal notranslate"><span class="pre">TuwangDef</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.school</span></code> 导入，
+<code class="docutils literal notranslate"><span class="pre">DizhiRules</span></code>、<code class="docutils literal notranslate"><span class="pre">ShenshaRules</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.rules</span></code> 导入。表中类型后的成员均使用该类型，例如 <code class="docutils literal notranslate"><span class="pre">ShenshaRules.WenchangDef.XIN_XU</span></code>。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>字段</p></th>
+<th class="head"><p>类型</p></th>
+<th class="head"><p>可选成员</p></th>
+<th class="head"><p>默认成员</p></th>
+<th class="head"><p>影响</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">day_rollover</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DayRollover</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WAN_ZISHI</span></code>、<code class="docutils literal notranslate"><span class="pre">ZIZHENG</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WAN_ZISHI</span></code></p></td>
+<td><p>23:00 或 00:00 换日柱。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">anhe_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DizhiRules.AnheDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NORMAL</span></code>、<code class="docutils literal notranslate"><span class="pre">NORMAL_EXTENDED</span></code>、<code class="docutils literal notranslate"><span class="pre">MANGPAI</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NORMAL_EXTENDED</span></code></p></td>
+<td><p>暗合组合。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xing_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DizhiRules.XingDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">STRICT</span></code>、<code class="docutils literal notranslate"><span class="pre">LOOSE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">LOOSE</span></code></p></td>
+<td><p>三刑须三支齐现，或三取二也成立。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gong_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DizhiRules.GongDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SAME_STEM_NARROW</span></code>、<code class="docutils literal notranslate"><span class="pre">SAME_STEM_WIDE</span></code>、<code class="docutils literal notranslate"><span class="pre">TRANSFORMING_NARROW</span></code>、<code class="docutils literal notranslate"><span class="pre">LU_NARROW</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SAME_STEM_NARROW</span></code></p></td>
+<td><p>拱局的同干、化神、禄字及结构范围条件。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">yangren_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.YangrenDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZIPING</span></code>、<code class="docutils literal notranslate"><span class="pre">LUMING</span></code>、<code class="docutils literal notranslate"><span class="pre">DIWANG</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZIPING</span></code></p></td>
+<td><p>羊刃取法。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">feiren_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.YangrenDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZIPING</span></code>、<code class="docutils literal notranslate"><span class="pre">LUMING</span></code>、<code class="docutils literal notranslate"><span class="pre">DIWANG</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZIPING</span></code></p></td>
+<td><p>以所选羊刃位的对冲支取飞刃，独立于上一字段。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tianyi_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.TianyiDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GENG_WITH_JIA_WU</span></code>、<code class="docutils literal notranslate"><span class="pre">GENG_WITH_XIN</span></code>、<code class="docutils literal notranslate"><span class="pre">YANGGUI</span></code>、<code class="docutils literal notranslate"><span class="pre">YINGUI</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GENG_WITH_JIA_WU</span></code></p></td>
+<td><p>庚的分组或显式阳贵／阴贵表，不按出生时刻自动选表。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">wenchang_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.WenchangDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">XIN_ZI</span></code>、<code class="docutils literal notranslate"><span class="pre">XIN_XU</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">XIN_ZI</span></code></p></td>
+<td><p>辛取子或辛取戌。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">taiji_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.TaijiDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">REN_GUI_BOTH</span></code>、<code class="docutils literal notranslate"><span class="pre">REN_SI_GUI_SHEN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">REN_GUI_BOTH</span></code></p></td>
+<td><p>壬癸都取巳申，或壬取巳、癸取申。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">guoyin_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ShenshaRules.GuoyinDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WUXING_JINGJI</span></code>、<code class="docutils literal notranslate"><span class="pre">MODERN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MODERN</span></code></p></td>
+<td><p>禄位偏移七位或八位。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">peiou_xing_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PeiouXingDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZHENGCAI_ZHENGGUAN</span></code>、<code class="docutils literal notranslate"><span class="pre">YINYANGGAN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ZHENGCAI_ZHENGGUAN</span></code></p></td>
+<td><p>正财／正官或按阴阳干选配偶星。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tuwang_def</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TuwangDef</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WHOLE_MONTH</span></code>、<code class="docutils literal notranslate"><span class="pre">AFTER_TWELVE_DAYS</span></code>、<code class="docutils literal notranslate"><span class="pre">BEFORE_EIGHTEEN_DAYS</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WHOLE_MONTH</span></code></p></td>
+<td><p>季月整月土旺，或按十二日／十八日分段。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h3>神煞查法依据的柱位<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code> 从 <code class="docutils literal notranslate"><span class="pre">bazi.school</span></code> 导入。<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code> 表示分别查年、日两柱，不把两柱合成一个条件。
+各字段只接受本行列出的成员；不能把所有 <code class="docutils literal notranslate"><span class="pre">Anchor</span></code> 值用于每个字段。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>字段</p></th>
+<th class="head"><p>类型</p></th>
+<th class="head"><p>可选成员</p></th>
+<th class="head"><p>默认成员</p></th>
+<th class="head"><p>依据</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hongyan_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code></p></td>
+<td><p>年干或日干。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tianyi_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>年干、日干或分别查两干。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">yima_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日支或分别查年日支。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">huagai_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日支或分别查年日支。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jiangxing_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日支或分别查年日支。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jiesha_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日支或分别查年日支。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wangshen_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日支或分别查年日支。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jinyu_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code></p></td>
+<td><p>日干或分别查年日干。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">zaisha_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code></p></td>
+<td><p>年支或分别查年日支。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">wenchang_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>日干或分别查年日干。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">taiji_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>年干或分别查年日干。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">guoyin_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p>年干或分别查年日干。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">kongwang_anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Anchor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YEAR</span></code>、<code class="docutils literal notranslate"><span class="pre">DAY</span></code>、<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DAY</span></code></p></td>
+<td><p>年柱、日柱或分别查完整两柱干支。</p></td>
+</tr>
+</tbody>
+</table>
+<p>这些表列出合法配置。各项读法和出处见 <a class="reference internal" href="rule-coverage.html"><span class="doc">规则、知识与出处的覆盖</span></a> 与
+<a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziSchool</span></code></a>。<code class="docutils literal notranslate"><span class="pre">longitude</span></code> 和 <code class="docutils literal notranslate"><span class="pre">civil_timezone</span></code> 则是 <code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code> 的出生入口参数，
+不属于配置字段，见<a class="reference internal" href="#configuration-location"><span class="std std-ref">真太阳时输入</span></a>。</p>
+<p>要改哪一项，取决于你希望采用的取法。例如：</p>
+<ul class="simple">
+<li><p>按 00:00 换日柱时，将 <code class="docutils literal notranslate"><span class="pre">day_rollover</span></code> 设为 <code class="docutils literal notranslate"><span class="pre">ZIZHENG</span></code>；按 23:00 换日柱则用 <code class="docutils literal notranslate"><span class="pre">WAN_ZISHI</span></code>。</p></li>
+<li><p>季月按整月土旺处理时用 <code class="docutils literal notranslate"><span class="pre">WHOLE_MONTH</span></code>；要按开月节后十二日或下一四立前十八日分段，
+将 <code class="docutils literal notranslate"><span class="pre">tuwang_def</span></code> 分别设为 <code class="docutils literal notranslate"><span class="pre">AFTER_TWELVE_DAYS</span></code> 或 <code class="docutils literal notranslate"><span class="pre">BEFORE_EIGHTEEN_DAYS</span></code>。</p></li>
+<li><p>配偶星按男命正财、女命正官取时用 <code class="docutils literal notranslate"><span class="pre">ZHENGCAI_ZHENGGUAN</span></code>；要按男取所克阴干、女取克我阳干的读法，
+将 <code class="docutils literal notranslate"><span class="pre">peiou_xing_def</span></code> 设为 <code class="docutils literal notranslate"><span class="pre">YINYANGGAN</span></code>。两种取法在日主为阴干的男命、日主为阳干的女命这十种组合中不同，
+其余十种组合相同。</p></li>
+<li><p>旬空以日柱为依据时用 <code class="docutils literal notranslate"><span class="pre">DAY</span></code>；以年柱为依据时设 <code class="docutils literal notranslate"><span class="pre">kongwang_anchor=Anchor.YEAR</span></code>；
+需要年、日两柱各查一遍时用 <code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code>，两个结果分别保留。</p></li>
+</ul>
+<p>其余 <code class="docutils literal notranslate"><span class="pre">*_def</span></code> 字段按表中的组合或取值差别选择；<code class="docutils literal notranslate"><span class="pre">*_anchor</span></code> 则按查法依据的柱位选择，且只能用该字段支持的成员。
+例如文昌辛取戌时改 <code class="docutils literal notranslate"><span class="pre">wenchang_def</span></code>，只按日干查时改 <code class="docutils literal notranslate"><span class="pre">wenchang_anchor</span></code>；改变一个字段不会自动改另一个。</p>
+</section>
+</section>
+<section id="id4">
+<h2>出生时间怎么填<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<p>不传 <code class="docutils literal notranslate"><span class="pre">longitude</span></code> 时，<code class="docutils literal notranslate"><span class="pre">Bazi.create</span></code> 接收无时区 <code class="docutils literal notranslate"><span class="pre">datetime</span></code> 或等价字符串，不从中推断地点或时区：</p>
+<ul class="simple">
+<li><p><strong>年月柱</strong>按选定精度，将输入标签与东八区（UTC+8）的节气表比较。默认示例因此按东八区公历钟填写。</p></li>
+<li><p><strong>日柱、时柱</strong>按输入标签的日时读取，再应用所选换日点；即使使用 <code class="docutils literal notranslate"><span class="pre">DAY</span></code>，小时也没有被丢弃。</p></li>
+<li><p><strong>起运与流运</strong>同样使用东八区参考标签；默认盘的 <code class="docutils literal notranslate"><span class="pre">reference_datetime</span></code> 就是输入钟时，不另作时区换算。</p></li>
+</ul>
+<p>非 UTC+8 地区的当地民用标签不能直接当作东八区标签，夏令时也不会由默认入口补算。
+若选择按北京时间排盘，先换为 UTC+8，再去掉时区交给默认入口；这样日时柱也会按北京时间读取，
+不再保留当地民用钟。需要真太阳时则使用<a class="reference internal" href="#configuration-location"><span class="std std-ref">地点盘</span></a>，它会修正日时所读的钟。</p>
+<p>目前没有这种入口：日时柱仍按当地民用钟读取，年月柱按出生时刻与实际交节时刻的先后判断，同时不作真太阳时修正。</p>
+</section>
+<section id="id5">
+<h2>选择节气比较精度<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BaziPrecision</span></code> 决定出生时间与节气比较到什么粒度。默认的 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 只比日期，整个交节日都归新一节；
+<code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 按两小时的时辰比，<code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 比到分钟。这是同一条规则的三个粒度，不是对同一真值的三种估计。</p>
+<p>下面以东八区 2000 年立春当天（20:40:23 交节）为例，分别读取年、月、日、时柱：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="k">for</span> <span class="n">birth</span> <span class="ow">in</span> <span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">39</span><span class="p">),</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">)):</span>
+  <span class="k">for</span> <span class="n">precision</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'day'</span><span class="p">,</span> <span class="s1">'hour'</span><span class="p">,</span> <span class="s1">'minute'</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">)</span>
+    <span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">birth</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">birth</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%H:%M'</span><span class="p">),</span> <span class="n">precision</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">pillars</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>20:39 day 庚辰 戊寅 壬辰 庚戌
+20:39 hour 庚辰 戊寅 壬辰 庚戌
+20:39 minute 己卯 丁丑 壬辰 庚戌
+20:40 day 庚辰 戊寅 壬辰 庚戌
+20:40 hour 庚辰 戊寅 壬辰 庚戌
+20:40 minute 庚辰 戊寅 壬辰 庚戌
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 从 20:40 这一分钟的起点便归新节，<code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 从包含交节时刻的戌时起点归新，<code class="docutils literal notranslate"><span class="pre">DAY</span></code> 则整天归新。
+这三档只改变年月的交节归属，例中的日时柱不变。只知道出生日期时，可按默认 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 判断年月归属；
+日柱、时柱仍依赖可靠的日期和小时输入，选择 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 不能补足未知时辰。
+知道时分、又在意交节当天的归属，再选 <code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 或 <code class="docutils literal notranslate"><span class="pre">MINUTE</span></code>。完整边界约定见 <a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziPrecision" title="bazi.school.BaziPrecision"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaziPrecision</span></code></a>。</p>
+</section>
+<section id="id6">
+<h2>海外出生时间与夏令时<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<p>以下使用纽约冬令时与夏令时的当地钟各一例。可以换成东八区钟排盘，或显式启用经度 −74 的真太阳时。
+经度只作演示，不对应真实个人。
+<code class="docutils literal notranslate"><span class="pre">ZoneInfo</span></code> 需要系统时区数据库；环境缺少时可安装 <code class="docutils literal notranslate"><span class="pre">tzdata</span></code>。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zoneinfo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZoneInfo</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="s1">'minute'</span><span class="p">)</span>
+<span class="n">zone</span> <span class="o">=</span> <span class="n">ZoneInfo</span><span class="p">(</span><span class="s1">'America/New_York'</span><span class="p">)</span>
+<span class="n">utc8</span> <span class="o">=</span> <span class="n">timezone</span><span class="p">(</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">civil</span> <span class="ow">in</span> <span class="p">(</span>
+  <span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">zone</span><span class="p">),</span>
+  <span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">zone</span><span class="p">),</span>
+<span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'当地民用钟'</span><span class="p">,</span> <span class="n">civil</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+  <span class="n">reference_label</span> <span class="o">=</span> <span class="n">civil</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">utc8</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+  <span class="n">cases</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'东八区标签'</span><span class="p">,</span> <span class="n">reference_label</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'地点盘真太阳时'</span><span class="p">,</span> <span class="n">civil</span><span class="p">,</span> <span class="o">-</span><span class="mi">74</span><span class="p">),</span>
+  <span class="p">)</span>
+  <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">birth</span><span class="p">,</span> <span class="n">longitude</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+    <span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">birth</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="n">longitude</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">pillars</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>当地民用钟 2000-02-04T08:30:00-05:00
+东八区标签 庚辰 戊寅 壬辰 辛亥
+地点盘真太阳时 庚辰 戊寅 壬辰 甲辰
+当地民用钟 2000-08-07T01:04:00-04:00
+东八区标签 庚辰 甲申 丁酉 丁未
+地点盘真太阳时 庚辰 甲申 丁酉 庚子
+</pre></div>
+</div>
+<p>这两个瞬间均已过相应物理节界，两条合法路径的年月柱一致，时柱按各自所用的钟读取。
+不要直接对当地时间调用 <code class="docutils literal notranslate"><span class="pre">replace(tzinfo=None)</span></code> 后交给默认入口：它会把纽约钟误当东八区钟，
+例中甚至会归到旧年月。时区换算与真太阳时修正是不同操作。</p>
+</section>
+<section id="id7">
+<h2>历法后端：节气数据从哪里来<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CalendarBackend</span></code> 选择历法数据。<code class="docutils literal notranslate"><span class="pre">celestial</span></code> 是默认，也是文档推荐的选择；
+<code class="docutils literal notranslate"><span class="pre">hko</span></code> 基于香港天文台数据，只有日期级精度，所以只能配合 <code class="docutils literal notranslate"><span class="pre">DAY</span></code>；
+<code class="docutils literal notranslate"><span class="pre">celestial-algo2</span></code> 采用第二套阴历算法，199 个支持年份中有 6 年与 <code class="docutils literal notranslate"><span class="pre">celestial</span></code> 不同。
+差异的来源和范围见 <a class="reference internal" href="../api/bazi-calendar-backend.html#bazi.calendar.backend.CalendarBackend" title="bazi.calendar.backend.CalendarBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalendarBackend</span></code></a>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 或 <code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 需要真实的节气时刻，因此和 <code class="docutils literal notranslate"><span class="pre">hko</span></code> 组合会被拒绝（<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>）。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s1">'hko'</span><span class="p">)</span>
+<span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'1990-05-17 10:30'</span><span class="p">,</span> <span class="s1">'female'</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bazi</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">pillars</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>hko 庚午 辛巳 壬午 乙巳
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h2>换日：23:00 还是 00:00<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BaziSchool.day_rollover</span></code> 决定子时前半段属于哪一天。默认 <code class="docutils literal notranslate"><span class="pre">WAN_ZISHI</span></code>（晚子时）在 23:00 就换日柱，
+<code class="docutils literal notranslate"><span class="pre">ZIZHENG</span></code>（子正）到 00:00 才换。年柱和月柱不受影响，它们按精度独立判断。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_CONFIG</span><span class="p">,</span> <span class="n">BaziSchool</span><span class="p">,</span> <span class="n">DayRollover</span>
+
+<span class="n">birth</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1995</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">zizheng</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">DEFAULT_CONFIG</span><span class="p">,</span> <span class="n">school</span><span class="o">=</span><span class="n">BaziSchool</span><span class="p">(</span><span class="n">day_rollover</span><span class="o">=</span><span class="n">DayRollover</span><span class="o">.</span><span class="n">ZIZHENG</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'晚子时'</span><span class="p">,</span> <span class="n">DEFAULT_CONFIG</span><span class="p">),</span> <span class="p">(</span><span class="s1">'子正'</span><span class="p">,</span> <span class="n">zizheng</span><span class="p">)):</span>
+  <span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">birth</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">'日柱'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">day_pillar</span><span class="p">,</span> <span class="s1">'时柱'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">hour_pillar</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>晚子时 日柱 丁卯 时柱 庚子
+子正 日柱 丙寅 时柱 戊子
+</pre></div>
+</div>
+<p>两种读法下时支都是子，时干跟随各自的日柱。</p>
+</section>
+<section id="id9">
+<h2>使用《命理探原》日锚预设<a class="headerlink" href="#id9" title="链接到此标题。">¶</a></h2>
+<p>希望采用本库整理的日锚预设时，用 <a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.mingli_tanyuan" title="bazi.school.BaziSchool.mingli_tanyuan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mingli_tanyuan()</span></code></a> 构造流派，再传给 <code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code>：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span><span class="p">,</span> <span class="n">BaziSchool</span>
+
+<span class="n">school</span> <span class="o">=</span> <span class="n">BaziSchool</span><span class="o">.</span><span class="n">mingli_tanyuan</span><span class="p">()</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="p">(</span><span class="n">school</span><span class="o">=</span><span class="n">school</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'天乙、驿马、文昌'</span><span class="p">,</span> <span class="n">school</span><span class="o">.</span><span class="n">tianyi_anchor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">school</span><span class="o">.</span><span class="n">yima_anchor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">school</span><span class="o">.</span><span class="n">wenchang_anchor</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'1990-05-17 10:30'</span><span class="p">,</span> <span class="s1">'female'</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+<span class="n">found</span> <span class="o">=</span> <span class="n">RelationshipAnalyzer</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">at_birth</span><span class="o">.</span><span class="n">shensha</span><span class="p">[</span><span class="s1">'tianyi'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'天乙贵人'</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">found</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">branch</span><span class="p">:</span> <span class="n">branch</span><span class="o">.</span><span class="n">index</span><span class="p">))))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>天乙、驿马、文昌 DAY DAY DAY
+天乙贵人 巳
+</pre></div>
+</div>
+<p>与默认流派相比，天乙、驿马、华盖、将星、劫煞、亡神、文昌改为日锚。
+金舆也显式取日干，但当前默认已经是日干；其余选项保持默认。该方法的 API 说明列出各锚的来源与限度。</p>
+</section>
+<section id="id10">
+<h2>月令五行状态与土旺口径<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">chart.wuxing_states</span></code> 返回五行到旺、相、休、囚、死的冻结映射。状态类型是
+<a class="reference internal" href="../api/bazi-defines-wuxing.html#bazi.defines.wuxing.WuxingState" title="bazi.defines.wuxing.WuxingState"><code class="xref py py-class docutils literal notranslate"><span class="pre">WuxingState</span></code></a>，也可从 <code class="docutils literal notranslate"><span class="pre">bazi.defines</span></code> 导入中文别名 <code class="docutils literal notranslate"><span class="pre">五行状态</span></code>。
+它描述五行随出生月令变化的状态。</p>
+<p>非季月按春木、夏火、秋金、冬水取本令；辰、未、戌、丑月由 <code class="docutils literal notranslate"><span class="pre">BaziSchool.tuwang_def</span></code> 选择：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">TuwangDef</span></code></p></th>
+<th class="head"><p>季月取法</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">WHOLE_MONTH</span></code>（默认）</p></td>
+<td><p>整月土旺，本库默认的简化取法。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AFTER_TWELVE_DAYS</span></code></p></td>
+<td><p>开月节后十二日转土，此前按该季节本令。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BEFORE_EIGHTEEN_DAYS</span></code></p></td>
+<td><p>下一四立前十八日转土，此前按该季节本令。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wuxing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span><span class="p">,</span> <span class="n">BaziPrecision</span><span class="p">,</span> <span class="n">BaziSchool</span><span class="p">,</span> <span class="n">TuwangDef</span>
+
+<span class="k">for</span> <span class="n">definition</span> <span class="ow">in</span> <span class="n">TuwangDef</span><span class="p">:</span>
+  <span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="n">BaziPrecision</span><span class="o">.</span><span class="n">MINUTE</span><span class="p">,</span> <span class="n">school</span><span class="o">=</span><span class="n">BaziSchool</span><span class="p">(</span><span class="n">tuwang_def</span><span class="o">=</span><span class="n">definition</span><span class="p">))</span>
+  <span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'2026-04-17 12:00'</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">element</span><span class="si">}{</span><span class="n">chart</span><span class="o">.</span><span class="n">wuxing_states</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">Wuxing</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>whole_month 木囚 火休 土旺 金相 水死
+after_twelve_days 木囚 火休 土旺 金相 水死
+before_eighteen_days 木旺 火相 土死 金囚 水休
+</pre></div>
+</div>
+<p>真实节月的长短不同，后十二日与前十八日的阈值也会不同；上例在同一出生时刻得到不同状态。
+十二日取法见《三命通会》卷二醉醒子段，十八日取法见《协纪辨方书》卷一。
+具体出处见 <a class="reference internal" href="../api/bazi-school.html#bazi.school.TuwangDef" title="bazi.school.TuwangDef"><code class="xref py py-class docutils literal notranslate"><span class="pre">TuwangDef</span></code></a>。</p>
+<p>分段的一天按连续24小时：先在后端东八区节气标签上加十二天或减十八天，得到转土阈值，
+再将出生时间与阈值按本盘精度比较，相等归土旺。地点盘会把算出的阈值转换到同一真太阳钟后比较。
+HKO 的节气数据只有日期精度，零点仅为占位。</p>
+</section>
+<section id="id11">
+<h2>选择大运年份的标记方式<a class="headerlink" href="#id11" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">DayunYearRule</span></code> 只改变每步大运的年份标签，不改变四柱，也不改变大运的物理起止时刻。
+<code class="docutils literal notranslate"><span class="pre">JIE_PROJECTED</span></code> 按每个边界所属的节投影干支年；<code class="docutils literal notranslate"><span class="pre">FIXED_DECADE</span></code> 从首个标签起固定每十年一步。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="n">birth</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1910</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'jie_projected'</span><span class="p">,</span> <span class="s1">'fixed_decade'</span><span class="p">):</span>
+  <span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">dayun_year_rule</span><span class="o">=</span><span class="n">rule</span><span class="p">)</span>
+  <span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">birth</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+  <span class="n">steps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">chart</span><span class="o">.</span><span class="n">dayun</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="p">[</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi_year</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">],</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ganzhi</span><span class="p">)</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>jie_projected [1919, 1930, 1939] ['辛巳', '壬午', '癸未']
+fixed_decade [1919, 1929, 1939] ['辛巳', '壬午', '癸未']
+</pre></div>
+</div>
+<p>大运干支和起止时刻在两种规则下相同；示例列出的前三步中，第二步的标签相差一年。</p>
+</section>
+<section id="configuration-location">
+<span id="id12"></span><h2>按真太阳时排盘<a class="headerlink" href="#configuration-location" title="链接到此标题。">¶</a></h2>
+<p>默认路径使用上文的无时区标签，不做太阳时修正。要启用真太阳时，需要同时满足：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">birth_time</span></code> 是带时区的 <code class="docutils literal notranslate"><span class="pre">datetime</span></code>，时区由你负责；库不会根据经度推断时区，夏令时和历史偏移也由调用方处理。</p></li>
+<li><p>传入 <code class="docutils literal notranslate"><span class="pre">longitude</span></code>，东经为正，范围 <code class="docutils literal notranslate"><span class="pre">[-180,</span> <span class="pre">180]</span></code>。库只使用经度，不接受纬度。</p></li>
+<li><p>配置使用 <code class="docutils literal notranslate"><span class="pre">celestial</span></code> 后端和 <code class="docutils literal notranslate"><span class="pre">HOUR</span></code> 或 <code class="docutils literal notranslate"><span class="pre">MINUTE</span></code> 精度。</p></li>
+<li><p>如果输入的时区不是出生地的民用时区，用 <code class="docutils literal notranslate"><span class="pre">civil_timezone</span></code> 另行指定。</p></li>
+</ul>
+<p>三个口径各管一件事：</p>
+<ul class="simple">
+<li><p><strong>时区</strong>把输入换成绝对时刻，并给出出生地的民用偏移。</p></li>
+<li><p><strong>经度与均时差</strong>把民用时刻换成真太阳钟。时柱和日柱按这个钟读取。</p></li>
+<li><p><strong>节气时刻</strong>表以东八区无时区标签保存；地点盘会把节气时刻换到同一个真太阳钟上再与出生比较。
+大运起止和流运查询仍使用东八区标签（<code class="docutils literal notranslate"><span class="pre">reference_datetime</span></code>），不是真太阳钟。</p></li>
+</ul>
+<p>同一个民用时刻，换一个经度，时柱就不同（经度同样只作演示）：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="s1">'minute'</span><span class="p">)</span>
+<span class="n">civil</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2001</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="p">(</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">8</span><span class="p">)))</span>
+<span class="k">for</span> <span class="n">longitude</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">87.6</span><span class="p">,</span> <span class="mf">121.5</span><span class="p">):</span>
+  <span class="n">bazi</span> <span class="o">=</span> <span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">civil</span><span class="p">,</span> <span class="s1">'female'</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="n">longitude</span><span class="p">)</span>
+  <span class="n">facts</span> <span class="o">=</span> <span class="n">bazi</span><span class="o">.</span><span class="n">location_time</span>
+  <span class="k">assert</span> <span class="n">facts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">longitude</span><span class="p">,</span> <span class="s1">'真太阳时'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">solar_datetime</span><span class="p">,</span> <span class="s1">'时柱'</span><span class="p">,</span> <span class="n">bazi</span><span class="o">.</span><span class="n">hour_pillar</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">' 民用时刻'</span><span class="p">,</span> <span class="n">facts</span><span class="o">.</span><span class="n">civil_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>87.6 真太阳时 2001-03-15 04:51:00 时柱 壬寅
+ 民用时刻 2001-03-15T07:10:00+08:00
+121.5 真太阳时 2001-03-15 07:06:00 时柱 甲辰
+ 民用时刻 2001-03-15T07:10:00+08:00
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">solar_datetime</span></code> 只显示到分钟；完整的时间事实在 <code class="docutils literal notranslate"><span class="pre">location_time</span></code>，包含绝对时刻、民用钟、经度和未截断的真太阳钟。
+带时区却不给经度、有经度却没有时区，或地点盘使用 DAY 精度，均在创建时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。
+完整输入与错误条件见 <a class="reference internal" href="../api/bazi-bazi.html#bazi.bazi.Bazi.create" title="bazi.bazi.Bazi.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a>。</p>
+</section>
+<section id="id13">
+<h2>替换一项配置<a class="headerlink" href="#id13" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BaziConfig</span></code> 和 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 都是 frozen dataclass，不能原地修改。要换一项，用 <code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code> 得到新对象；
+原对象和默认对象保持不变。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShenshaRules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziConfig</span><span class="p">,</span> <span class="n">BaziPrecision</span><span class="p">,</span> <span class="n">BaziSchool</span>
+
+<span class="n">base</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="p">(</span><span class="n">school</span><span class="o">=</span><span class="n">BaziSchool</span><span class="o">.</span><span class="n">mingli_tanyuan</span><span class="p">())</span>
+<span class="n">minute</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="n">BaziPrecision</span><span class="o">.</span><span class="n">MINUTE</span><span class="p">)</span>
+<span class="n">changed</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">minute</span><span class="p">,</span> <span class="n">school</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">minute</span><span class="o">.</span><span class="n">school</span><span class="p">,</span> <span class="n">wenchang_def</span><span class="o">=</span><span class="n">ShenshaRules</span><span class="o">.</span><span class="n">WenchangDef</span><span class="o">.</span><span class="n">XIN_XU</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'天乙锚、文昌表'</span><span class="p">,</span> <span class="n">changed</span><span class="o">.</span><span class="n">school</span><span class="o">.</span><span class="n">tianyi_anchor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">changed</span><span class="o">.</span><span class="n">school</span><span class="o">.</span><span class="n">wenchang_def</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+<span class="n">birth</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">changed</span><span class="p">):</span>
+  <span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">birth</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">precision</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">chart</span><span class="o">.</span><span class="n">bazi</span><span class="o">.</span><span class="n">pillars</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>天乙锚、文昌表 DAY XIN_XU
+day 庚辰 戊寅 壬辰 庚戌
+minute 己卯 丁丑 壬辰 庚戌
+</pre></div>
+</div>
+<p>配置属于 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code> 本身，所以换了配置就要重新生成依赖它的对象：</p>
+<ul class="simple">
+<li><p>新的 <code class="docutils literal notranslate"><span class="pre">Bazi</span></code>，再包成新的 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code>；<code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 和 <code class="docutils literal notranslate"><span class="pre">RelationshipAnalyzer</span></code> 也持有原来的命盘，需要对新命盘重建。</p></li>
+<li><p>已创建的判别结果保留当时的输入配置，不会随新对象变化。</p></li>
+<li><p>要修改已选流派中的一项，用 <code class="docutils literal notranslate"><span class="pre">replace(config.school,</span> <span class="pre">字段=成员)</span></code>，如上例；重新构造默认 <code class="docutils literal notranslate"><span class="pre">BaziSchool</span></code> 会重置其他选择。</p></li>
+</ul>
+<p>拷贝、相等与共享的精确约定见 <a class="reference internal" href="../api-contract.html"><span class="doc">公开接口契约</span></a>。</p>
+</section>
+<section id="id14">
+<h2>按年柱、日柱或两柱查旬空<a class="headerlink" href="#id14" title="链接到此标题。">¶</a></h2>
+<p><a class="reference internal" href="../api/bazi-school.html#bazi.school.BaziSchool.kongwang_anchor" title="bazi.school.BaziSchool.kongwang_anchor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">kongwang_anchor</span></code></a> 默认取 <code class="docutils literal notranslate"><span class="pre">Anchor.DAY</span></code>，也支持 <code class="docutils literal notranslate"><span class="pre">YEAR</span></code> 与
+<code class="docutils literal notranslate"><span class="pre">YEAR_AND_DAY</span></code>。它取完整干支，不只取日支；双锚分别保留年、日来源，即使两柱干支相同也不合并。
+基础二支定义不决定取哪根柱，古籍查法与本库默认的出处边界见 <a class="reference internal" href="rule-coverage.html"><span class="doc">规则、知识与出处的覆盖</span></a>。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bazi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziChart</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.school</span><span class="w"> </span><span class="kn">import</span> <span class="n">Anchor</span><span class="p">,</span> <span class="n">BaziConfig</span><span class="p">,</span> <span class="n">BaziSchool</span>
+
+<span class="k">for</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Anchor</span><span class="o">.</span><span class="n">YEAR</span><span class="p">,</span> <span class="n">Anchor</span><span class="o">.</span><span class="n">DAY</span><span class="p">,</span> <span class="n">Anchor</span><span class="o">.</span><span class="n">YEAR_AND_DAY</span><span class="p">):</span>
+  <span class="n">config</span> <span class="o">=</span> <span class="n">BaziConfig</span><span class="p">(</span><span class="n">school</span><span class="o">=</span><span class="n">BaziSchool</span><span class="p">(</span><span class="n">kongwang_anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">))</span>
+  <span class="n">chart</span> <span class="o">=</span> <span class="n">BaziChart</span><span class="p">(</span><span class="n">Bazi</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'1984-03-29 12:00'</span><span class="p">,</span> <span class="s1">'male'</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+  <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">RelationshipAnalyzer</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">at_birth</span><span class="o">.</span><span class="n">kongwang</span><span class="p">:</span>
+    <span class="n">branches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">xunkong</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">branch</span><span class="p">:</span> <span class="n">branch</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">anchor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">anchor</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">ganzhi</span><span class="p">,</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">branches</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>YEAR 年 甲子 戌 亥
+DAY 日 壬戌 子 丑
+YEAR_AND_DAY 年 甲子 戌 亥
+YEAR_AND_DAY 日 壬戌 子 丑
+</pre></div>
+</div>
+<p>该字段参与命盘相等性与哈希。旧调用的升级边界见 <a class="reference internal" href="../release-notes.html"><span class="doc">发布说明</span></a>。</p>
+<p>双锚例子依次保留年柱和日柱的旬空二支。继续读取命中位置，见 <a class="reference internal" href="relations-transits.html"><span class="doc">关系与流运</span></a>。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">命令行</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API 参考</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="cli.html" title="上一章">命令行</a></li>
+      <li>Next: <a href="relations-transits.html" title="下一章">关系与流运</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

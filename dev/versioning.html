@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=9effcd8b" />
+    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=7838f881" />
     <script src="_static/documentation_options.js?v=7d86a446"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
@@ -36,18 +36,21 @@
             
   <section id="id1">
 <h1>构建与归档文档<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
-<p>本地构建不会部署站点，也不会启用 GitHub Pages。站点由维护者另行启用后，开发版位于 <code class="docutils literal notranslate"><span class="pre">dev/</span></code>，发布版位于固定 tag 的同名目录，全部版本入口为 <code class="docutils literal notranslate"><span class="pre">versions/</span></code>。</p>
+<p>本地构建不会部署站点，也不会启用 GitHub Pages。站点根页经 <code class="docutils literal notranslate"><span class="pre">latest/</span></code> 跳到最新已就绪的发布版；尚无已就绪发布版时，根页打开 <code class="docutils literal notranslate"><span class="pre">versions/</span></code>，不生成 <code class="docutils literal notranslate"><span class="pre">latest/</span></code>。全部版本入口为 <code class="docutils literal notranslate"><span class="pre">versions/</span></code>，开发版位于 <code class="docutils literal notranslate"><span class="pre">dev/</span></code>，发布版位于固定 tag 的同名目录。</p>
 <section id="id2">
 <h2>本地检查<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
-<p>在源码根目录安装文档依赖和离线生成器模块所需的依赖：</p>
+<p>使用 Python 3.13+，在源码根目录安装文档依赖和历法测试工具 <code class="docutils literal notranslate"><span class="pre">celestial-calendar==0.6.1</span></code>。这个要求只适用于构建和检查文档；bazi 库仍支持 Python 3.11+，已生成的 HTML 用浏览器即可阅读，不需要 Python：</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>celestial-calendar<span class="o">==</span><span class="m">0</span>.6.1
 python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<span class="w"> </span>output_data/docs-preview
 </pre></div>
 </div>
-<p>输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接；全部成功后才交付成品。打开 <code class="docutils literal notranslate"><span class="pre">output_data/docs-preview/html/index.html</span></code> 查看。</p>
-<p>源码脚本的完整检查另需开发依赖，见 <a class="reference internal" href="contributing.html"><span class="doc">贡献指南</span></a>。<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span></code> 包含文档任务；只运行文档可用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-nt</span> <span class="pre">-docs</span></code>。临时目录遵循 Python 的标准 <code class="docutils literal notranslate"><span class="pre">TMPDIR</span></code> 等环境设置。</p>
+<p>输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接。
+API 代码围栏逐项登记，先与实际页面核对，再各自在独立进程运行并校验断言或紧随的输出，每例限时 30 秒。
+出生精度的文字对照另列，不计作可执行示例。全部成功后才交付成品。打开 <code class="docutils literal notranslate"><span class="pre">output_data/docs-preview/html/index.html</span></code> 查看。</p>
+<p>仓库的完整检查另需开发依赖，见 <a class="reference internal" href="contributing.html"><span class="doc">贡献指南</span></a>。在 Python 3.13+ 文档开发环境中，<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span></code> 包含文档任务；只运行文档可用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-nt</span> <span class="pre">-docs</span></code>。Python 3.11／3.12 可用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span> <span class="pre">--runtime-only</span></code> 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 <code class="docutils literal notranslate"><span class="pre">TMPDIR</span></code> 等环境设置。</p>
 <p><code class="docutils literal notranslate"><span class="pre">run_docs.py</span> <span class="pre">--version</span> <span class="pre">vX.Y.Z</span></code> 只接受干净检出且当前提交恰为该 tag 的源码；不接受把开发源码标成任意版本。开发版也记录实际提交和工作树状态，含未提交修改的构建不能进入归档。</p>
+<p>新构建在 <code class="docutils literal notranslate"><span class="pre">build.json</span></code> 的 <code class="docutils literal notranslate"><span class="pre">built</span></code> 字段记录实际 UTC 构建时间（<code class="docutils literal notranslate"><span class="pre">YYYY-MM-DDTHH:MM:SSZ</span></code>），版本信息页显示同一时间。版本列表先列最新已就绪发布版，开发版排最后，显示构建时间与源码提交；旧构建未记录时间时明确标为“构建日期未记录”，不以提交日期代替。</p>
 </section>
 <section id="id3">
 <h2>维护者手动归档<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
@@ -60,7 +63,7 @@ python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<sp
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rehearsal</span></code></p></td>
-<td><p>检出并检查选定源码，上传短期构建工件，不修改站点</p></td>
+<td><p>检出并检查选定源码；选发布 tag 时也构建本次触发提交的 dev，上传短期工件，不修改站点</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pending</span></code></p></td>
 <td><p>将发布版列为“文档待就绪”，不伪装该目录已经可用</p></td>
@@ -69,18 +72,20 @@ python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<sp
 <td><p>归档本次构建并部署完整站点，随后回读；不直接改成 <code class="docutils literal notranslate"><span class="pre">ready</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">promote</span></code></p></td>
-<td><p>重新核对线上字节，通过后将版本标为 <code class="docutils literal notranslate"><span class="pre">ready</span></code>，更新选择页及 <code class="docutils literal notranslate"><span class="pre">latest</span></code></p></td>
+<td><p>全站回读通过后将选定版本标为 <code class="docutils literal notranslate"><span class="pre">ready</span></code>；选发布版时也提升同一归档提交的 dev（如有），更新入口</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resume</span></code></p></td>
-<td><p>从持久归档重新部署，不重建版本 HTML</p></td>
+<td><p>从持久归档重新部署，可升级三份入口 HTML，不改版本清单或版本目录</p></td>
 </tr>
 </tbody>
 </table>
 <p><code class="docutils literal notranslate"><span class="pre">initialize</span></code> 仅在归档分支 <code class="docutils literal notranslate"><span class="pre">docs-site</span></code> 尚不存在时设为 <code class="docutils literal notranslate"><span class="pre">true</span></code>。初始化从已检出的固定控制提交起步，先核有效签名，再在运行专用临时分支创建归档提交；核父提交、完整树与新提交签名后才建立 <code class="docutils literal notranslate"><span class="pre">docs-site</span></code>。不改写原有源码历史，也不要求关闭签名保护。</p>
 <p>归档分支持久保存静态文件，不以短期 Actions 工件代替多版本保留。发布版目录已有内容时拒绝异字节覆盖；<code class="docutils literal notranslate"><span class="pre">dev/</span></code> 可整目录更新。后续发布只追加本版并保留旧版原字节，不重建旧 tag。</p>
+<p>选择发布 tag 执行 <code class="docutils literal notranslate"><span class="pre">publish</span></code> 时，同次运行先构建该 tag，再构建触发运行的固定源码提交（<code class="docutils literal notranslate"><span class="pre">github.sha</span></code>）作为 dev；两份候选由同一个工件 ID 传递，一次归档提交同时保存两版。即使补发符合下段前提的旧 tag，dev 也不取旧 tag 的源码。选 <code class="docutils literal notranslate"><span class="pre">dev</span></code> 时只更新开发版；<code class="docutils literal notranslate"><span class="pre">pending</span></code>、<code class="docutils literal notranslate"><span class="pre">promote</span></code> 和 <code class="docutils literal notranslate"><span class="pre">resume</span></code> 不重建源码。</p>
 <p>发布版构建还要求该 tag 已有正式 GitHub Release，并携带身份一致的 <code class="docutils literal notranslate"><span class="pre">release.json</span></code>；仅能归档自身带有文档构建器的版本，不修改旧 tag 来补文档。文档发布失败不表示软件尚未发布，<code class="docutils literal notranslate"><span class="pre">pending</span></code> 与 <code class="docutils literal notranslate"><span class="pre">archived</span></code> 都显示为待就绪。</p>
 <p><code class="docutils literal notranslate"><span class="pre">pending</span></code> 仅登记版本，尚无归档目录；<code class="docutils literal notranslate"><span class="pre">archived</span></code> 已归档，尚未通过线上回读；<code class="docutils literal notranslate"><span class="pre">ready</span></code> 已通过线上回读，选择页才提供链接。</p>
-<p>维护者确认平台前提后，通常先 <code class="docutils literal notranslate"><span class="pre">publish</span></code>，等自动回读完成，再运行 <code class="docutils literal notranslate"><span class="pre">promote</span></code>。<code class="docutils literal notranslate"><span class="pre">latest</span></code> 只指向已回读的 <code class="docutils literal notranslate"><span class="pre">ready</span></code> 发布版；开发版不参与。<code class="docutils literal notranslate"><span class="pre">resume</span></code> 用于归档已成功、部署或回读失败的重试；需要补归档时才重跑 <code class="docutils literal notranslate"><span class="pre">publish</span></code>。</p>
+<p>维护者确认平台前提后，通常先 <code class="docutils literal notranslate"><span class="pre">publish</span></code>，等自动回读完成，再运行 <code class="docutils literal notranslate"><span class="pre">promote</span></code>。全站回读逐文件核对同一归档提交，并分别计算各版摘要；提升发布版与 dev 使用各自摘要，归档分支在回读后指向了其他提交就须重新核对。新内容归档后先为 <code class="docutils literal notranslate"><span class="pre">archived</span></code>，通过回读和提升后才为 <code class="docutils literal notranslate"><span class="pre">ready</span></code>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">latest</span></code> 只指向已回读的 <code class="docutils literal notranslate"><span class="pre">ready</span></code> 发布版；开发版不参与。<code class="docutils literal notranslate"><span class="pre">resume</span></code> 用于归档已成功、部署或回读失败的重试；需要补归档时才重跑 <code class="docutils literal notranslate"><span class="pre">publish</span></code>。工具可读取完整旧入口布局，并将其升级为新布局；<code class="docutils literal notranslate"><span class="pre">resume</span></code> 仅可更新 <code class="docutils literal notranslate"><span class="pre">index.html</span></code>、<code class="docutils literal notranslate"><span class="pre">versions/index.html</span></code>、<code class="docutils literal notranslate"><span class="pre">latest/index.html</span></code>，旧版本目录与 <code class="docutils literal notranslate"><span class="pre">versions.json</span></code> 字节不变，不接受新旧入口混搭的归档。</p>
 </section>
 <section id="id4">
 <h2>平台前提与失败边界<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
@@ -120,17 +125,23 @@ python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<sp
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置与时间口径</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/relations-transits.html">关系与流运</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/knowledge.html">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/integration.html">集成开发</a></li>
 </ul>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API 参考</a></li>
 <li class="toctree-l1"><a class="reference internal" href="catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-contract.html">公开接口契约</a></li>
+</ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release-notes.html">发布说明</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versions.html">文档版本</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">构建与归档文档</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">维护者：构建与归档文档</a></li>
 </ul>
 
 
@@ -164,7 +175,7 @@ python<span class="w"> </span>run_docs.py<span class="w"> </span>--output-dir<sp
       
       
       
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
     </div>

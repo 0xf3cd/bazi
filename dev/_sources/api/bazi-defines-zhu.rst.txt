@@ -1,0 +1,14 @@
+bazi.defines.zhu
+================
+
+.. automodule:: bazi.defines.zhu
+
+.. autoclass:: bazi.defines.zhu.Zhu
+   :members: NIAN, RI, SHI, YUE, as_list, from_index, from_str, index, 年, 日, 时, 月
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.zhu
+
+.. py:data:: 柱
+
+   :py:obj:`bazi.defines.zhu.Zhu` 的别名。

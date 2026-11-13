@@ -11,12 +11,8 @@ bazi.bazi
    :members: config, create, day_master, day_pillar, four_dizhis, four_tiangans, ganzhi_date, ganzhi_year, ganzhi_year_month, gender, hour, hour_pillar, location_time, longitude, minute, month_commander, month_jies, month_pillar, pillars, random, reference_datetime, solar_date, solar_datetime, year_pillar
    :undoc-members:
 
-.. autoclass:: bazi.bazi.LocationTimeJson
-   :members: apparent_time, canonical_instant, civil_time, longitude, time_basis
-   :undoc-members:
-
 .. autoclass:: bazi.bazi.LocationTime
-   :members: apparent_time, canonical_instant, civil_time, json, longitude
+   :members: apparent_time, canonical_instant, civil_time, longitude
    :undoc-members:
 
 .. py:currentmodule:: bazi.bazi

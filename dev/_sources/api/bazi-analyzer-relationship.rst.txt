@@ -6,27 +6,44 @@ bazi.analyzer.relationship
 .. autodata:: bazi.analyzer.relationship.SHENSHA_LABELS
    :no-value:
 
+.. autodata:: bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS
+   :no-value:
+
 .. autoclass:: bazi.analyzer.relationship.ShenshaAnalysis
-   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, lushen, taiji, taohua, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
+   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kongwang, lushen, taiji, taohua, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
    :undoc-members:
 
 .. autoclass:: bazi.analyzer.relationship.AtBirthShenshaAnalysis
-   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kuigang, lushen, taiji, taohua, tianshe, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
+   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kongwang, kuigang, lushen, taiji, taohua, tianshe, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.RelationParticipant
+   :members: ganzhi, position
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.RelationPositionDiscovery
+
+.. autoclass:: bazi.analyzer.relationship.KongwangHit
+   :members: ganzhi, position
+   :undoc-members:
+
+.. autoclass:: bazi.analyzer.relationship.KongwangResult
+   :members: anchor, ganzhi, hits, xunkong
    :undoc-members:
 
 .. autoclass:: bazi.analyzer.relationship.AtBirthAnalysis
-   :members: day_master_relations, house_relations, shensha, star_relations
+   :members: day_master_relations, house_relations, kongwang, shensha, star_relations
    :undoc-members:
 
 .. autoclass:: bazi.analyzer.relationship.TransitAnalysis
-   :members: Level, day_master_relations, house_relations, shensha, star, star_relations, zhengyin
+   :members: Level, all_relations, day_master_relations, house_relations, kongwang, shensha, star, star_relations, zhengyin
    :undoc-members:
 
 .. autodata:: bazi.analyzer.relationship.StemRelationDiscovery
    :no-value:
 
 .. autoclass:: bazi.analyzer.relationship.StarAppearance
-   :members: ganzhi, kind, layer, origin, pillar, stem
+   :members: ganzhi, layer, position, stem
    :undoc-members:
 
 .. autoclass:: bazi.analyzer.relationship.RelationshipEvidence

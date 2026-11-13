@@ -1,0 +1,14 @@
+bazi.defines.shishen
+====================
+
+.. automodule:: bazi.defines.shishen
+
+.. autoclass:: bazi.defines.shishen.Shishen
+   :members: BIJIAN, JIECAI, PIANCAI, PIANYIN, QISHA, SHANGGUAN, SHISHEN, ZHENGCAI, ZHENGGUAN, ZHENGYIN, abbr, as_list, from_str, 七杀, 伤官, 偏印, 偏财, 劫财, 正印, 正官, 正财, 比肩, 食神
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.shishen
+
+.. py:data:: 十神
+
+   :py:obj:`bazi.defines.shishen.Shishen` 的别名。

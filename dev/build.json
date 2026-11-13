@@ -1,6 +1,7 @@
 {
   "version": "dev",
-  "commit": "aa51db99a2cc1a852b8acdf2efa073162cdc57b9",
+  "commit": "e768b414bb1dbaec63bbca224caf038bd2f13e48",
   "dirty": false,
-  "python": "3.12.15"
+  "python": "3.13.18",
+  "built": "2026-11-13T20:36:12Z"
 }

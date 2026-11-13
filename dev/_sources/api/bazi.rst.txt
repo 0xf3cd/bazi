@@ -28,3 +28,5 @@ bazi
 :py:mod:`bazi.transits`
 
 :py:mod:`bazi.transit_chart`
+
+:py:mod:`bazi.cli`

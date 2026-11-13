@@ -12,3 +12,13 @@ bazi.defines.tiangan
 .. py:data:: 天干
 
    :py:obj:`bazi.defines.tiangan.Tiangan` 的别名。
+
+.. autoclass:: bazi.defines.tiangan.TianganLayer
+   :members: CANGGAN, MINGGAN, as_list, from_str, 明干, 藏干
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.tiangan
+
+.. py:data:: 天干层次
+
+   :py:obj:`bazi.defines.tiangan.TianganLayer` 的别名。

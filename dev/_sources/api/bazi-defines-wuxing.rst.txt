@@ -12,3 +12,13 @@ bazi.defines.wuxing
 .. py:data:: 五行
 
    :py:obj:`bazi.defines.wuxing.Wuxing` 的别名。
+
+.. autoclass:: bazi.defines.wuxing.WuxingState
+   :members: QIU, SI, WANG, XIANG, XIU, as_list, from_str, 休, 囚, 旺, 死, 相
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.wuxing
+
+.. py:data:: 五行状态
+
+   :py:obj:`bazi.defines.wuxing.WuxingState` 的别名。

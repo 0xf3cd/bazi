@@ -1,0 +1,22 @@
+bazi.calendar.hko_data.encoder
+==============================
+
+.. automodule:: bazi.calendar.hko_data.encoder
+
+.. autofunction:: bazi.calendar.hko_data.encoder.download_one_year_data
+
+.. autofunction:: bazi.calendar.hko_data.encoder.do_download
+
+.. autofunction:: bazi.calendar.hko_data.encoder.extract_from_raw_txts
+
+.. autofunction:: bazi.calendar.hko_data.encoder.encode_jieqi
+
+.. autofunction:: bazi.calendar.hko_data.encoder.parse_lines_in_lunar_years
+
+.. autofunction:: bazi.calendar.hko_data.encoder.parse_ganzhis_in_lunar_years
+
+.. autofunction:: bazi.calendar.hko_data.encoder.encode_one_lunar_year_lines
+
+.. autofunction:: bazi.calendar.hko_data.encoder.encode_lunardate
+
+.. autofunction:: bazi.calendar.hko_data.encoder.do_encode

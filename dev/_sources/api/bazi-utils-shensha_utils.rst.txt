@@ -3,6 +3,10 @@ bazi.utils.shensha_utils
 
 .. automodule:: bazi.utils.shensha_utils
 
+.. autofunction:: bazi.utils.shensha_utils.xunkong
+
+.. autofunction:: bazi.utils.shensha_utils.kongwang
+
 .. autofunction:: bazi.utils.shensha_utils.taohua
 
 .. autofunction:: bazi.utils.shensha_utils.hongyan

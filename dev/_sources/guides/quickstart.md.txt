@@ -1,65 +1,63 @@
 # 快速开始
 
-这一页带你排出第一张盘，读出四柱，并指出下一步该去哪一页。
+这一页带你排盘、查看和保存结果。已有 Python 环境就从安装开始；需要新建环境时，可先看页尾的{ref}`环境准备 <quickstart-environment>`。
 
 ## 安装
 
-```sh
-python -m pip install bazi
+需要 Python 3.11 或更高版本。可直接使用已有的 Python、conda、虚拟环境或交互环境。
+
+```{include} ../installation.inc
 ```
 
-需要 Python 3.11 或更高版本。运行时只用标准库和随包数据，不联网。
-
-本页说明对应当前开发源码。已发布版本的接口以该版本 tag 下的文档为准，两者可能不同。
-
-```{note}
-本库没有安装后的命令行入口，也没有 `from bazi import Bazi` 这样的根类。
-请从定义模块导入，下面每个示例都这样写。
-```
+运行时只用标准库和随包数据，不联网。普通使用不需要测试或文档构建工具。
+终端操作见 {doc}`cli`；下面使用 Python API，类型从定义模块导入。
 
 ## 排第一张盘
 
-示例用虚构的出生时间。`Bazi.create` 接收无时区的民用时刻和性别，`BaziChart` 在它之上提供十神、大运等派生信息。
+示例用虚构的出生时间，按东八区（UTC+8）公历钟填写。默认入口的年月与东八区节气表比较，
+日时按输入的钟读取，不自动换算时区；海外当地钟的用法见 {doc}`configuration`。
+`BaziChart` 在 `Bazi` 之上提供十神、藏干、纳音和流运等信息。
 
 ```{testcode} quickstart-chart
-from datetime import datetime
-
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
-bazi = Bazi.create(datetime(1990, 5, 17, 10, 30), 'female')
-chart = BaziChart(bazi)
-
-print('四柱', ' '.join(str(pillar) for pillar in bazi.pillars))
-print('日主', bazi.day_master)
-print('性别', chart.json['gender'])
-print('精度与后端', chart.json['precision'], chart.json['backend'])
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+print('四柱', ' '.join(map(str, chart.bazi.pillars)))
+print('日主', chart.bazi.day_master)
+print('性别', chart.bazi.gender)
 ```
 
 ```{testoutput} quickstart-chart
 四柱 庚午 辛巳 壬午 乙巳
 日主 壬
 性别 female
-精度与后端 day celestial
 ```
 
-- `bazi.pillars` 依次是年、月、日、时柱，每柱是一个 `Ganzhi`。
-- 性别字符串接受 `男`、`女`、`male`、`female`；`chart.json` 里统一存拉丁写法。
-- `chart.json` 是每次新建的字典，字段和配置都在里面。需要保存或交换时见 {doc}`integration`。
+把出生时间换成你的公历出生钟时；也可传无时区的 `datetime(年, 月, 日, 时, 分)`。
+性别接受 `男`、`女`、`male`、`female`，输出为拉丁写法。
+四柱依次为年、月、日、时，日主是日柱的天干。
 
-## 把盘排成文本
+上例可直接在 Python 交互环境中运行；直接输入 `chart` 还会看到一行对象摘要。
+若喜欢脚本，把程序保存为 UTF-8 文件 `show_chart.py`，在该文件所在目录运行：
 
-`bazi.chart_text` 把命盘排成可读的纯文本：不写文件，不依赖终端着色库，同一张盘每次得到同样的文字。
-`basic_text` 给出日元、出生时刻，以及四柱各自的十神、阴阳五行、藏干、纳音和十二长生。
+```sh
+python show_chart.py
+```
+
+两种运行方式都使用刚才安装包的同一个环境。文件不要命名为 `bazi.py`，以免遮蔽安装包。
+
+## 查看完整命盘文本
+
+`basic_text(chart)` 返回纯文本，包含出生时刻、四柱十神、阴阳五行、藏干、纳音和十二长生。
+下面是完整的独立例子：
 
 ```{testcode} quickstart-text
-from datetime import datetime
-
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
 print(basic_text(chart).strip())
 ```
 
@@ -79,58 +77,78 @@ print(basic_text(chart).strip())
   -- 纳音：覆灯火  -- 十二长生：绝
 ```
 
-- 返回值是字符串，前后各有一个换行，可以直接 `print`。需要完整的文本，包括流运，用 `chart_text(chart)`。
-- 流运文本把流年的数量交给调用方，见 {doc}`relations-transits`；要加终端颜色，见 {doc}`integration`。
+藏干十神采用单字简称，如财、才、官、杀；完整名称见 {py:class}`~bazi.defines.shishen.Shishen`。
+文本用于阅读；程序要读取字段时直接使用命盘属性，不解析这些文字，见 {doc}`integration`。
 
-## 在交互里看一眼
+## 保存文本
 
-在 Python 交互环境里直接输入对象，会看到一行摘要：出生时刻、性别和四柱。配置不是默认值，或是地点盘时，摘要才会多出对应部分。
-摘要不会去算流运，也不展开整张盘；它只用来探索和调试，格式以后可能调整，要保存或交换请用 `chart.json`（见 {doc}`integration`）。
+下面把同一张盘存为 `chart.txt`。路径相对运行代码时的当前目录，重复运行会覆盖同名文件；需保留的旧结果请先另存。
 
-```{testcode} quickstart-explore
-from datetime import datetime
+```{testsetup} quickstart-save
+import os
+import tempfile
 
-import bazi
+_save_cwd = os.getcwd()
+_save_directory = tempfile.TemporaryDirectory()
+os.chdir(_save_directory.name)
+```
+
+```{testcode} quickstart-save
+from pathlib import Path
+
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.transit_chart import TransitChart
+from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create(datetime(1990, 5, 17, 10, 30), 'female'))
-print(repr(chart))
-print([name for name in dir(bazi) if name in ('knowledge', 'transit_chart')])
-
-try:
-  TransitChart(chart.bazi)
-except TypeError as error:
-  print(error)
-
-try:
-  bazi.Bazi
-except AttributeError as error:
-  print(error)
+chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+path = Path('chart.txt')
+path.write_text(basic_text(chart), encoding='utf-8')
+print('已保存', path)
 ```
 
-```{testoutput} quickstart-explore
-BaziChart(Bazi(1990-05-17T10:30:00, female, 庚午 辛巳 壬午 乙巳))
-['knowledge', 'transit_chart']
-Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)
-module 'bazi' has no attribute 'Bazi'; use: from bazi.bazi import Bazi
+```{testoutput} quickstart-save
+已保存 chart.txt
 ```
 
-`dir(bazi)` 会列出按需导入的子模块，导入后才加载它们；上面只筛出了其中两个，实际的列表更长。传错对象时，报错在原来的“期望什么，收到什么”之后，接着说明该用哪个入口。
+```{testcleanup} quickstart-save
+os.chdir(_save_cwd)
+_save_directory.cleanup()
+```
 
-## 默认值是一种选定的口径
-
-没有传配置时，库使用 `DAY` 精度、`celestial` 历法后端，晚子时 23:00 换日柱，以立春换年。
-这是本库选定的一套取法，不是八字唯一的读法：精度、历法后端和流派取法各有其他选项。
-
-出生在交节日前后、子时前后，或要采用其他流派时，先读 {doc}`configuration`，再决定要不要改默认值。
+打开 `chart.txt` 即可阅读。这是展示文本，不是可恢复的命盘记录；以后要重新排盘，保留出生输入和完整配置。
+不写 Python 也可用 `bazi chart` 保存 TXT，见 {doc}`cli`。
 
 ## 下一步
 
-- 想改变精度、换日点、大运年份口径，或使用真太阳时：{doc}`configuration`。
-- 想查流年、流月，或看原局与流运之间的关系：{doc}`relations-transits`。
-- 想把结果存成 JSON、重新加载，或接入自己的程序：{doc}`integration`。
-- 不排盘，只查知识条目和出处：{doc}`knowledge`。
+默认采用 `DAY` 精度、`celestial` 后端、23:00 换日柱，以立春换年；`DAY` 不会丢弃出生小时。
+这些是选定的口径，其他读法可以显式配置。
 
-逐个类和方法的签名在 API 参考中，入口见 {py:class}`~bazi.bazi.Bazi` 和 {py:class}`~bazi.bazi_chart.BaziChart`。
+| 想做什么 | 入口 |
+| --- | --- |
+| 选精度、换日点、历法后端、真太阳时或流派 | {doc}`configuration` |
+| 查某年／月／日／时刻的流运，列几步大运，再查关系 | {doc}`relations-transits` |
+| 读取十神、藏干、纳音或检查知识前提 | {doc}`integration` |
+| 不排盘，只读知识文字、出处或编辑本地副本 | {doc}`knowledge` |
+| 用命令排盘、查知识或求值 | {doc}`cli` |
+| 升级旧调用 | {doc}`../release-notes` |
+
+(quickstart-environment)=
+## 可选：新建环境
+
+如果已有合适环境，跳过本节即可。需要单独的工作目录和虚拟环境时，在终端运行：
+
+```sh
+mkdir bazi-example
+cd bazi-example
+python -m venv .venv
+```
+
+若系统只提供 `python3`，创建时用 `python3 -m venv .venv`。随后按终端激活：
+
+| 终端 | 命令 |
+| --- | --- |
+| macOS／Linux 的 sh、bash、zsh | `. .venv/bin/activate` |
+| Windows PowerShell | `.venv\Scripts\Activate.ps1` |
+| Windows cmd | `.venv\Scripts\activate.bat` |
+
+激活后回到本页“安装”。PowerShell 若不允许激活脚本，可不激活，直接用 `.venv\Scripts\python` 代替 `python`；无需修改执行策略。

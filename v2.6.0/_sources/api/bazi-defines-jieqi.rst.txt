@@ -1,0 +1,14 @@
+bazi.defines.jieqi
+==================
+
+.. automodule:: bazi.defines.jieqi
+
+.. autoclass:: bazi.defines.jieqi.Jieqi
+   :members: BAILU, CHUNFEN, CHUSHU, DAHAN, DASHU, DAXUE, DONGZHI, GUYU, HANLU, JINGZHE, LICHUN, LIDONG, LIQIU, LIXIA, MANGZHONG, QINGMING, QIUFEN, SHUANGJIANG, XIAOHAN, XIAOMAN, XIAOSHU, XIAOXUE, XIAZHI, YUSHUI, as_list, from_str, jies, 冬至, 处暑, 夏至, 大寒, 大暑, 大雪, 寒露, 小寒, 小暑, 小满, 小雪, 惊蛰, 春分, 清明, 白露, 秋分, 立冬, 立夏, 立春, 立秋, 芒种, 谷雨, 雨水, 霜降
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.jieqi
+
+.. py:data:: 节气
+
+   :py:obj:`bazi.defines.jieqi.Jieqi` 的别名。

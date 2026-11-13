@@ -1,0 +1,48 @@
+bazi.calendar
+=============
+
+.. automodule:: bazi.calendar
+
+:py:mod:`bazi.calendar.hko_data`
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarType
+
+   :py:obj:`bazi.calendar.dates.CalendarType` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarDate
+
+   :py:obj:`bazi.calendar.dates.CalendarDate` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: JieqiTime
+
+   :py:obj:`bazi.calendar.dates.JieqiTime` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarUtilsProtocol
+
+   :py:obj:`bazi.calendar.utils_protocol.CalendarUtilsProtocol` 的重导出。
+
+:py:mod:`bazi.calendar.hko_data_utils`
+
+:py:mod:`bazi.calendar.celestial_utils`
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarBackend
+
+   :py:obj:`bazi.calendar.backend.CalendarBackend` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: calendar_utils_of
+
+   :py:obj:`bazi.calendar.backend.calendar_utils_of` 的重导出。
+
+:py:mod:`bazi.calendar.solar_time`

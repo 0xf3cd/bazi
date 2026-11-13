@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; bazi · 开发版</title>
+    <title>API 参考 &#8212; bazi · 开发版</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=9effcd8b" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
     <script src="../_static/documentation_options.js?v=7d86a446"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
@@ -35,16 +35,66 @@
 
           <div class="body" role="main">
             
-  <section id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="链接到此标题。">¶</a></h1>
+  <section id="api">
+<h1>API 参考<a class="headerlink" href="#api" title="链接到此标题。">¶</a></h1>
+<p>按要完成的任务选择入口；完整模块索引在下方。函数签名给出类型，Args / Return 说明参数与结果的含义。
+示例可整块运行：带输出的代码后紧随 text 对照，其余代码用 assert 写出预期结果。</p>
+<section id="id1">
+<h2>排盘、配置与文本<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="bazi-bazi.html#bazi.bazi.Bazi" title="bazi.bazi.Bazi"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.bazi.Bazi</span></code></a> 创建八字，<a class="reference internal" href="bazi-bazi_chart.html#bazi.bazi_chart.BaziChart" title="bazi.bazi_chart.BaziChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.bazi_chart.BaziChart</span></code></a> 读取四柱与派生结果。</p></li>
+<li><p><a class="reference internal" href="bazi-school.html#bazi.school.BaziConfig" title="bazi.school.BaziConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.school.BaziConfig</span></code></a> 和 <a class="reference internal" href="bazi-school.html#bazi.school.BaziSchool" title="bazi.school.BaziSchool"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.school.BaziSchool</span></code></a> 选择精度、历法与流派。</p></li>
+<li><p><a class="reference internal" href="bazi-chart_text.html#module-bazi.chart_text" title="bazi.chart_text"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.chart_text</span></code></a> 输出命盘文字；终端调用见 <a class="reference internal" href="../guides/cli.html"><span class="doc">命令行</span></a>。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>关系、神煞与流运<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="bazi-utils-tiangan_utils.html#module-bazi.utils.tiangan_utils" title="bazi.utils.tiangan_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.utils.tiangan_utils</span></code></a>、<a class="reference internal" href="bazi-utils-dizhi_utils.html#module-bazi.utils.dizhi_utils" title="bazi.utils.dizhi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.utils.dizhi_utils</span></code></a> 查询单组关系或搜索组合。</p></li>
+<li><p><a class="reference internal" href="bazi-utils-shensha_utils.html#module-bazi.utils.shensha_utils" title="bazi.utils.shensha_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.utils.shensha_utils</span></code></a> 查单项神煞，<a class="reference internal" href="bazi-analyzer-relationship.html#module-bazi.analyzer.relationship" title="bazi.analyzer.relationship"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.analyzer.relationship</span></code></a> 读取命盘分析。</p></li>
+<li><p><a class="reference internal" href="bazi-transit_chart.html#bazi.transit_chart.TransitChart" title="bazi.transit_chart.TransitChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.transit_chart.TransitChart</span></code></a> 按年、月、日期或时刻查询流运；
+<a class="reference internal" href="bazi-analyzer-facts.html#module-bazi.analyzer.facts" title="bazi.analyzer.facts"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.analyzer.facts</span></code></a> 保留通根、透干的具体位置。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>知识、出处与前提匹配<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">bazi.knowledge.KnowledgeBase</span></code></a> 查条文与出处；按中文名浏览见 <a class="reference internal" href="../catalog/index.html"><span class="doc">知识目录</span></a>。</p></li>
+<li><p><a class="reference internal" href="bazi-context_matching.html#module-bazi.context_matching" title="bazi.context_matching"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.context_matching</span></code></a> 查判据、选择观察范围并求值；操作步骤见 <a class="reference internal" href="../guides/integration.html"><span class="doc">集成开发</span></a>。</p></li>
+<li><p><a class="reference internal" href="bazi-rules.html#module-bazi.rules" title="bazi.rules"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.rules</span></code></a> 给出规则表及定义选项，表值按键查阅，不在页面展开全部内容。</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>历法、领域值与结果结构<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="bazi-calendar.html#module-bazi.calendar" title="bazi.calendar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar</span></code></a> 选择历法后端，<a class="reference internal" href="bazi-calendar-utils_protocol.html#module-bazi.calendar.utils_protocol" title="bazi.calendar.utils_protocol"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.utils_protocol</span></code></a> 说明两后端的共同接口。</p></li>
+<li><p><a class="reference internal" href="bazi-defines.html#module-bazi.defines" title="bazi.defines"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.defines</span></code></a> 定义天干、地支等领域值；<a class="reference internal" href="bazi-data_types.html#module-bazi.data_types" title="bazi.data_types"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.data_types</span></code></a> 定义四柱数据容器。</p></li>
+<li><p><a class="reference internal" href="bazi-utils-bazi_utils.html#module-bazi.utils.bazi_utils" title="bazi.utils.bazi_utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.utils.bazi_utils</span></code></a> 提供十神、纳音、藏干等纯查询。</p></li>
+<li><p><a class="reference internal" href="../api-contract.html"><span class="doc">公开接口契约</span></a> 说明对象身份、输入校验与结果不可变性。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>离线数据工具<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<p>以下入口用于在源码仓重建随库表，不是排盘或修复安装的步骤；安装版缺表应重新安装。
+构建文档只导入这些模块读取说明，不执行下载或生成入口。</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="bazi-calendar-hko_data-encoder.html#module-bazi.calendar.hko_data.encoder" title="bazi.calendar.hko_data.encoder"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.hko_data.encoder</span></code></a> 下载并编码 HKO 历书；下载时另需 requests。</p></li>
+<li><p><a class="reference internal" href="bazi-calendar-celestial_data-generator.html#module-bazi.calendar.celestial_data.generator" title="bazi.calendar.celestial_data.generator"><code class="xref py py-mod docutils literal notranslate"><span class="pre">bazi.calendar.celestial_data.generator</span></code></a> 生成 celestial 数据；另需与
+<a class="reference internal" href="bazi-calendar-celestial_data-generator.html#bazi.calendar.celestial_data.generator.CELESTIAL_VERSION" title="bazi.calendar.celestial_data.generator.CELESTIAL_VERSION"><code class="xref py py-data docutils literal notranslate"><span class="pre">bazi.calendar.celestial_data.generator.CELESTIAL_VERSION</span></code></a> 一致的 celestial-calendar。</p></li>
+</ul>
+</section>
+<section id="id6">
+<h2>完整模块索引<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="bazi.html">bazi</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-analyzer.html">bazi.analyzer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-analyzer-facts.html">bazi.analyzer.facts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-analyzer-relationship.html">bazi.analyzer.relationship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-bazi.html">bazi.bazi</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-bazi_chart.html">bazi.bazi_chart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-chart_text.html">bazi.chart_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-cli.html">bazi.cli</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-calendar.html">bazi.calendar</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-calendar-backend.html">bazi.calendar.backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-calendar-celestial_data.html">bazi.calendar.celestial_data</a></li>
@@ -73,6 +123,7 @@
 <li class="toctree-l1"><a class="reference internal" href="bazi-defines-tiangan.html">bazi.defines.tiangan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-defines-wuxing.html">bazi.defines.wuxing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-defines-yinyang.html">bazi.defines.yinyang</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bazi-defines-zhu.html">bazi.defines.zhu</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-knowledge.html">bazi.knowledge</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-rules.html">bazi.rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bazi-school.html">bazi.school</a></li>
@@ -86,6 +137,7 @@
 <li class="toctree-l1"><a class="reference internal" href="bazi-utils-tiangan_utils.html">bazi.utils.tiangan_utils</a></li>
 </ul>
 </div>
+</section>
 </section>
 
 
@@ -118,17 +170,23 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API 参考</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../versioning.html">构建与归档文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
 </ul>
 
 
@@ -163,7 +221,7 @@
       
       
       
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
     </div>

@@ -71,6 +71,21 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+.catalog-metadata {
+  margin-block: 1.2em 2em;
+  padding-inline-start: 1em;
+  border-inline-start: 2px solid #d6e0e8;
+}
+
+.catalog-metadata summary {
+  cursor: pointer;
+}
+
+.catalog-id {
+  font-size: 0.875rem;
+  font-weight: normal;
+}
+
 @media (max-width: 875px) {
   div.document {
     margin: 0;

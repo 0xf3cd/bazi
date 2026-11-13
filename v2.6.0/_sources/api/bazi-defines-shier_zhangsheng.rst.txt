@@ -1,0 +1,14 @@
+bazi.defines.shier_zhangsheng
+=============================
+
+.. automodule:: bazi.defines.shier_zhangsheng
+
+.. autoclass:: bazi.defines.shier_zhangsheng.ShierZhangsheng
+   :members: BING, DIWANG, GUANDAI, JUE, LINGUAN, MU, MUYU, SHUAI, SI, TAI, YANG, ZHANGSHENG, as_list, from_index, from_str, index, 临官, 养, 冠带, 墓, 帝旺, 死, 沐浴, 病, 绝, 胎, 衰, 长生
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.shier_zhangsheng
+
+.. py:data:: 十二长生
+
+   :py:obj:`bazi.defines.shier_zhangsheng.ShierZhangsheng` 的别名。

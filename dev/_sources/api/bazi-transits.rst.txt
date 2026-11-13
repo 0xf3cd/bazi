@@ -3,16 +3,10 @@ bazi.transits
 
 .. automodule:: bazi.transits
 
-.. autoclass:: bazi.transits.DayunDatabase
-
 .. autoclass:: bazi.transits.TransitKind
    :members: DAYUN, LIUNIAN, LIURI, LIUYUE, XIAOYUN
    :undoc-members:
 
 .. autoclass:: bazi.transits.TransitSet
-   :members: dayun, ganzhis, items, json, liunian, liuri, liuyue, select, xiaoyun
-   :undoc-members:
-
-.. autoclass:: bazi.transits.TransitDatabase
-   :members: dayun, xiaoyun
+   :members: dayun, ganzhis, items, liunian, liuri, liuyue, select, xiaoyun
    :undoc-members:

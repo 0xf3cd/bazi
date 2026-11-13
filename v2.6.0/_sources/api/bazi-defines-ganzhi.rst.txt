@@ -1,0 +1,14 @@
+bazi.defines.ganzhi
+===================
+
+.. automodule:: bazi.defines.ganzhi
+
+.. autoclass:: bazi.defines.ganzhi.Ganzhi
+   :members: dizhi, from_str, from_strs, list_sexagenary_cycle, list_sexagenary_cycle_strs, next, prev, tiangan
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.ganzhi
+
+.. py:data:: 干支
+
+   :py:obj:`bazi.defines.ganzhi.Ganzhi` 的别名。

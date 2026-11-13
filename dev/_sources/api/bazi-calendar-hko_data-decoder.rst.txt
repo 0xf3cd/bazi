@@ -10,9 +10,11 @@ bazi.calendar.hko_data.decoder
    :members: date_bytes_len, end_year, get, start_year, supported_year_range
    :undoc-members:
 
-.. autoclass:: bazi.calendar.hko_data.decoder.LunarYearInfo
-   :members: days_counts, first_solar_day, ganzhi, leap, leap_month
-   :undoc-members:
+.. py:currentmodule:: bazi.calendar.hko_data.decoder
+
+.. py:data:: LunarYearInfo
+
+   :py:obj:`bazi.calendar.dates.LunarYearInfo` 的重导出。
 
 .. autoclass:: bazi.calendar.hko_data.decoder.DecodedLunarYears
    :members: end_year, get, sexagenary_cycle, start_year, supported_year_range
