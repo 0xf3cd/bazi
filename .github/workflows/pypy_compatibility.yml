@@ -2,7 +2,7 @@ name: Workflow for PyPy Compatibility - Run Partial Tests with pytest
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, 'milestone/**' ]
 
 permissions:
   contents: read
