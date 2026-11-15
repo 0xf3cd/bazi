@@ -15,6 +15,10 @@ owner `0xf3cd`、repository `bazi`、workflow `release.yml`、environment `relea
 
 workflow 须先存在于默认分支，才能手动触发。
 
+采用 `milestone/<版本>` 集成分支时，先按[贡献指南](CONTRIBUTING.md#提-pr-之前)完成阶段 PR，
+再将汇总 PR 以 merge commit 合入 `main`。集成分支可手动运行 `mode=rehearsal` 验证构建，
+正式发布只允许主仓的 `main`，仍须通过 `release` 环境审批。阶段 PR 或 push 不触发发行或文档部署。
+
 ## 本地保留已验证工件
 
 按[贡献指南](CONTRIBUTING.md#准备环境)准备独立开发环境，再从源码根目录运行：
@@ -38,8 +42,8 @@ python -m pip install ../bazi-tested/bazi-*-py3-none-any.whl
 并在受保护环境等待人工审批，就可以直接选择正式流程。需要单独验证构建或封装时，按以下步骤演练：
 
 1. 核对 pyproject.toml 静态版本与 RELEASE_NOTES.md；发布说明顶部一节须为 `## bazi <version>`，
-   否则构建即失败。将拟发布内容合入 main 后再触发，不提前建 tag。
-2. 在 main 触发 `Prepare or Publish Release`，取默认 `mode=rehearsal`。
+   否则构建即失败。不提前建 tag。
+2. 在待验证的 `main` 或集成分支触发 `Prepare or Publish Release`，取默认 `mode=rehearsal`。
    对触发 SHA 执行完整源码与工件验证，不绑定环境，也不取得写权限或 OIDC 权限。
 3. 检查该运行的 `tested-release` 工件：dist/ 下恰有一份 wheel 与 sdist，另含发布说明、
    release.json、environments.json 与 SHA256SUMS。核对源码 SHA、run ID、版本、许可证、文件内容及校验和。

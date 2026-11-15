@@ -46,7 +46,19 @@
 
 ## 提 PR 之前
 
-从 `main` 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
+默认从 `main` 开分支并向 `main` 提 PR。采用 `milestone/<版本>` 集成分支的阶段任务，
+从指定集成分支开施工分支，阶段 PR 以该集成分支为目标；例如 v3.0.0 使用 `milestone/v3.0.0`。
+一个 PR 只做 issue 中讨论过的事，逐张审阅合并后再开始下一张。
+
+阶段 PR 正文写 `Part of #<issue>`。阶段工作完成后，从集成分支向 `main` 提汇总 PR，
+只对已完成验收的代码任务写 `Closes #<issue>`，并使用 merge commit 保留阶段历史。
+来源收藏、真实发行等独立验收任务，在实际完成后关单。
+
+`main` 与 `milestone/**` 的 PR 都运行完整 CI 和 PyPy 检查，合并后的 push 运行快速检查。
+维护者另行配置并回读分支保护：必需检查须对应实际 CI job 名，禁止强推和删除；
+修改工作流不会自动启用这些设置。正式发布仍从 `main` 执行，见[发布说明](RELEASING.md)。
+
+知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
 
 维护规则与知识关联时：
 
@@ -144,4 +156,4 @@ python run_docs.py --output-dir output_data/docs-preview
 
 维护者负责安排独立的正确性与设计审阅，以及修复后的复验。外部贡献者无需自行安排独立审阅或购买工具订阅。
 仓级编码与执行约定见[当前主干的 AGENTS.md](https://github.com/0xf3cd/bazi/blob/main/AGENTS.md)，该链接用于查看现行贡献政策。
-合并及是否 squash 均由维护者决定。
+合并由维护者决定。普通与阶段 PR 可选择 squash；集成分支汇总到 `main` 时使用 merge commit。

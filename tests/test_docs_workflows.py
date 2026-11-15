@@ -257,6 +257,18 @@ def test_label_grammar_matches_the_assembler() -> None:
   assert f"re.fullmatch(r'{RELEASE_LABEL.pattern}', label)" in code('build', 'Resolve documentation source identity')
 
 
+@pytest.mark.parametrize('name, event', [
+  ('on_pull_request.yml', 'pull_request'),
+  ('on_push.yml', 'push'),
+  ('pypy_compatibility.yml', 'pull_request'),
+])
+def test_ci_covers_integration_branches(name: str, event: str) -> None:
+  workflow = yaml.safe_load((WORKFLOWS / name).read_text(encoding='utf-8'))
+  trigger = workflow.get('on', workflow.get(True))
+  assert trigger == {event: {'branches': ['main', 'milestone/**']}}
+  assert workflow['permissions'] == {'contents': 'read'}
+
+
 def check_python_ci(
   workflow: Mapping[str, Any], name: str, jobs: list[str], flags: set[str],
 ) -> None:

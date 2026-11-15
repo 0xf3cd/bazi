@@ -2,7 +2,7 @@ name: Workflow on Pull Request - Run All Tests with pytest
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, 'milestone/**' ]
 
 permissions:
   contents: read

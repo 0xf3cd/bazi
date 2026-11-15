@@ -2,7 +2,7 @@ name: Workflow on Push - Run Partial Tests with pytest
 
 on:
   push:
-    branches: [ main ] # post-merge sanity only; PR branches are covered by the PR workflow
+    branches: [ main, 'milestone/**' ] # post-merge sanity only; PR branches are covered by the PR workflow
 
 permissions:
   contents: read

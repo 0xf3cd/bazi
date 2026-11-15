@@ -325,7 +325,7 @@ def windows_path_order(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureR
     monkeypatch.setattr(Path, '__lt__', lambda left, right: PureWindowsPath(left) < PureWindowsPath(right))
 
 
-@pytest.mark.parametrize('change', ['none', 'missing', 'no-reviewer', 'empty-reviewer', 'wildcard', 'tag-policy', 'extra-branch', 'protected-only', 'ref', 'repo', 'sha', 'mode'])
+@pytest.mark.parametrize('change', ['none', 'missing', 'no-reviewer', 'empty-reviewer', 'wildcard', 'tag-policy', 'extra-branch', 'protected-only', 'ref', 'milestone', 'repo', 'sha', 'mode'])
 def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
   environment = {'name': 'release', 'protection_rules': [{'type': 'required_reviewers',
     'prevent_self_review': False, 'reviewers': [{'type': 'User', 'reviewer': {'id': 123}}]}],
@@ -343,6 +343,8 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
     policies['total_count'] = 2
   elif change == 'protected-only':
     environment['deployment_branch_policy'] = {'protected_branches': True, 'custom_branch_policies': False}
+  elif change == 'milestone':
+    monkeypatch.setenv('REF', 'refs/heads/milestone/v3.0.0')
   elif change in ('ref', 'repo', 'sha', 'mode'):
     monkeypatch.setenv({'ref': 'REF', 'repo': 'REPOSITORY', 'sha': 'SHA', 'mode': 'MODE'}[change], 'invalid')
   calls: list[str] = []
@@ -362,6 +364,8 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
   else:
     with pytest.raises((SystemExit, urllib.error.HTTPError)):
       run_policy(code)
+    if change == 'milestone':
+      assert calls == []
 
 
 @pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version',
@@ -697,13 +701,17 @@ def test_seal_requires_stable_version(tmp_path: Path, monkeypatch: pytest.Monkey
 
 
 @pytest.mark.parametrize('change, message', [
-  ('none', None), ('rehearsal', None),
+  ('none', None), ('rehearsal', None), ('milestone-rehearsal', None),
   ('mode', 'Invalid release mode or SHA'), ('sha', 'Invalid release mode or SHA'),
   ('ref', 'Real release is main-only'), ('repository', 'Real release is main-only'),
+  ('milestone-release', 'Real release is main-only'),
   ('checkout', 'Checkout SHA differs from dispatch SHA'),
 ])
 def test_source_identity(monkeypatch: pytest.MonkeyPatch, release_env: None, change: str, message: str | None) -> None:
-  if change == 'rehearsal':
+  if change.startswith('milestone-'):
+    monkeypatch.setenv('MODE', change.removeprefix('milestone-'))
+    monkeypatch.setenv('REF', 'refs/heads/milestone/v3.0.0')
+  elif change == 'rehearsal':
     monkeypatch.setenv('MODE', 'rehearsal')
     monkeypatch.setenv('REPOSITORY', 'example/bazi')
     monkeypatch.setenv('REF', 'refs/heads/feature')
@@ -717,7 +725,7 @@ def test_source_identity(monkeypatch: pytest.MonkeyPatch, release_env: None, cha
   else:
     with pytest.raises(SystemExit, match=message):
       run_policy(code)
-  if change in ('none', 'rehearsal', 'checkout'):
+  if change in ('none', 'rehearsal', 'milestone-rehearsal', 'checkout'):
     checkout.assert_called_once_with(['git', 'rev-parse', 'HEAD'], text=True)
   else:
     checkout.assert_not_called()
