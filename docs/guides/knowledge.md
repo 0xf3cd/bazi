@@ -155,7 +155,7 @@ for entry in kb.query('胎元', viewpoint='三百日候选待核'):
 条目必填 `claim_id`、`objects`、`text`；以下字段可选。表中类型指 JSON 写法；
 加载后，字符串数组成为不可变元组。
 
-| 条目字段 | JSON 类型 | 含义与显示标签 |
+| 条目字段 | JSON 类型 | 含义与文本输出标签 |
 | --- | --- | --- |
 | `topics` | 字符串数组 | 主题，可填多个；查询参数 `topic` 每次筛选其中一个主题。 |
 | `premise` | 字符串 | 前提：阅读这条文字所需的条件。 |
@@ -174,7 +174,7 @@ for entry in kb.query('胎元', viewpoint='三百日候选待核'):
 | `url` | 字符串 | 链接：所用版本的链接。 |
 | `excerpt` | 字符串 | 引文／记录：按原文保存的摘录。 |
 | `supports` | 字符串 | 支持范围：这份出处支持条目中的哪一部分。 |
-| `limitations` | 字符串 | 来源说明：出处的局限及摘录的文本层次，如正文、夹注、现代编者整理。 |
+| `limitations` | 字符串 | 来源说明：出处的局限及摘录的文本层次，如正文、夹注、原创说明。 |
 | `state` | 字符串或 `null` | 来源状态：`witnessed`、`editorial`、`unverified`、`repository_attributed`；可不填。 |
 
 省略的数组字段为空元组，省略的字符串字段为空串；`state` 省略或填 `null` 时为 `None`。
