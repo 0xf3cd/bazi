@@ -31,7 +31,7 @@ READING_FIELDS: Final[dict[str, tuple[tuple[str, str], ...]]] = {
   'sources': (
     ('work', '作品'), ('attribution', '署名'), ('edition', '版本'), ('locator', '位置'),
     ('url', '原文'), ('state', '来源状态'),
-    ('excerpt', '摘录'), ('supports', '支持内容'), ('limitations', '支持限度'),
+    ('excerpt', '摘录'), ('supports', '支持范围'), ('limitations', '来源说明'),
   ),
   'entries': (
     ('text', '条文'), ('premise', '前提'), ('viewpoint', '读法'),

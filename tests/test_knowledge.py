@@ -70,7 +70,7 @@ def test_ids_cannot_name_other_objects(tmp_path: Path, reverse: bool, name: str)
   data['objects'].append({'object_id': '丁', 'kind': 'concept', 'name': name})
   if reverse:
     data['objects'].reverse()
-  with pytest.raises(ValueError, match='Object ID conflicts with name: 丁'):
+  with pytest.raises(ValueError, match='Object ID conflicts with name: ID 丁'):
     _load(data, tmp_path)
 
 

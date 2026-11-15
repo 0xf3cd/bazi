@@ -109,7 +109,7 @@ def _hidden_tiangans(style: TextStyle, d: HiddenTianganDict, day_master: Tiangan
 def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
   '''
   命盘的基本展示：日元、出生时刻、四柱及其十神、阴阳五行、藏干、纳音与十二长生。
-  十神个数按三处非日主明干与四支本气统计，占比不表示力量。
+  十神个数按三处非日主明干与四支主气统计，占比不表示力量。
 
   Note:
   - 文本以换行开头、换行结尾，可直接 `print`；地点盘另列民用、真太阳与节气表出生时刻。
@@ -164,7 +164,7 @@ def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
     if pair.tiangan is not None:
       counts[pair.tiangan] += 1
     counts[pair.dizhi] += 1
-  s += '\n十神统计（三处明干与四支本气，不计力量）：\n'
+  s += '\n十神统计（三处明干与四支主气，不计力量）：\n'
   for ss, count in counts.items():
     if count:
       s += f'原局中，{ss}有{count}个，占比{count / sum(counts.values()):.2%}。\n'

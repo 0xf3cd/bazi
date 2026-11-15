@@ -149,7 +149,7 @@ class KnowledgeBase:
 
     for obj in objects:
       if obj.name in self.objects and obj.name != obj.object_id:
-        raise ValueError(f'Object ID conflicts with name: {obj.name} ({obj.object_id})')
+        raise ValueError(f'Object ID conflicts with name: ID {obj.name} is also the name of object {obj.object_id}')
 
     index: dict[tuple[str, str], set[str]] = {}
     for entry in entries:
@@ -207,7 +207,7 @@ class KnowledgeBase:
 
   @classmethod
   def load(cls, path: Path | None = None) -> 'KnowledgeBase':
-    '''读取并校验知识 JSON；省略路径时读取随库语料。
+    '''读取并校验知识 JSON；省略路径时读取随包语料。
 
     每次重新读取文件，不缓存共享实例；修改文件不影响已加载的知识库。
 

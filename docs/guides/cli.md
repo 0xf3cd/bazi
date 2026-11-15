@@ -19,6 +19,8 @@ bazi chart --birth-time "1990-05-17 10:30" --gender 女 --output chart.txt
 终端展示盘面事实，不读取知识文件。不带终端颜色码的完整输出保存为调用目录下的
 `chart.txt`。省略 `--output` 就只展示，不保存；终端输出恒带颜色码，直接重定向也会保留颜色码。
 同名 TXT 会被覆盖，其他文件保留，需保留的旧结果请先另存。
+`--output` 拒绝覆盖随包或本次指定的知识源；路径经 `Path.resolve()` 比较，
+可识别符号链接，不检查硬链接等文件身份别名。
 
 `--birth-time` 与 `--gender` 必须同时给或同时不给；都不给则随机排盘并打印种子，
 可用 `bazi chart --seed 236` 重放，保存时也包含种子。固定出生输入不与 `--seed` 组合。
@@ -68,8 +70,7 @@ bazi knowledge --search "枭印"
 bazi knowledge 丁 --show-sources
 ```
 
-知识查询不写文件。`chart --output chart.txt` 保存本次完整输出，拒绝覆盖随库或本次指定的知识源；
-路径经 `Path.resolve()` 比较，可识别符号链接，不检查硬链接等文件身份别名。
+知识查询不写文件。
 
 校验随包知识源：
 
@@ -92,7 +93,8 @@ bazi match editorial.guansha_coexistence.v1
 bazi match editorial.guansha_coexistence.v1 --birth-time "2000-01-01 12:00" --gender female --observation-scope natal
 ```
 
-`--observation-scope` 须显式选择。增加单流年时使用 `natal_and_liunian` 与干支年标签：
+`--observation-scope` 须显式选择；输出中的 `natal` 表示只观察原局。
+增加单流年时使用 `natal_and_liunian` 与干支年标签：
 
 ```sh
 bazi match editorial.guansha_coexistence.v1 --birth-time "2000-01-01 12:00" --gender female --observation-scope natal_and_liunian --ganzhi-year 2024
@@ -113,6 +115,7 @@ Python 请求与结果读取见 {doc}`integration`。
 
 `SATISFIED` 表示所选判据的结构事实满足；`NOT_SATISFIED` 表示不满足；`UNKNOWN` 表示所需观察不完整。
 部分证据存在时仍可能为 `UNKNOWN`。完整前提与局部条件由判据的 `entry_role` 区分，
+输出中的原因码 `premise_satisfied` 只表示当前判据的事实成立，局部条件判据也使用它。
 状态不认证条文本身为真，也不预测现实事件。默认只显示判别、证据与参考 ID；
 `--knowledge` 才读取并追加参考正文，不改变判据状态。自定义库缺项时显示该 ID 及“知识库未收录”。
 

@@ -163,7 +163,7 @@ assert chart.bazi.day_master in Tiangan
   `Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)`。
   异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
-  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生，以及三处非日主明干与四支本气的十神个数／占比；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
+  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生，以及三处非日主明干与四支主气的十神个数／占比；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
   出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun` 一致；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
@@ -226,6 +226,9 @@ assert chart.bazi.day_master in Tiangan
 | missing_transit_coordinate | UNKNOWN | False |
 | transit_unavailable | UNKNOWN | False |
 
+`premise_satisfied` 表示当前判据的事实成立，两种 `entry_role` 都使用此原因码；
+是否覆盖关联条目的完整前提，须看判据的 `entry_role`。
+
 `scope_complete` 不核实该原因与观察、请求年份或手填证据是否一致。
 例如直接构造结果时，原局观察可配缺流运原因，已给年份也可配缺坐标原因；结构校验不认证这些事实。
 实际判别由 `evaluate_context` 计算。
@@ -278,7 +281,7 @@ assert chart.bazi.day_master in Tiangan
 
 - 只有 `chart --output 文件` 写文件，保存本次完整显示内容，包括随机种子和已选的扩展文本。
 - 终端输出恒带颜色码，保存的 TXT 剥除颜色码；重定向终端输出不会自动去色。
-- 同名目标会覆盖。用 `Path.resolve()` 比较目标与随库／本次自定义知识源，拒绝覆盖这些路径及其符号链接；
+- 同名目标会覆盖。用 `Path.resolve()` 比较目标与随包／本次自定义知识源，拒绝覆盖这些路径及其符号链接；
   不检查硬链接等文件身份别名。输出父目录须已存在。
 
 ## 知识查询与编辑
@@ -341,7 +344,7 @@ assert chart.bazi.day_master in Tiangan
 
 ### 知识编辑源与文本边界
 
-`KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随库 `knowledge_data.json`。
+`KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随包 `knowledge_data.json`。
 已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`sources`、`entries` 三份注册表；
 版本只接受精确整数 4，拒绝 `bool`、浮点数、字符串、容器、旧版与未知版，不自动迁移。
 对象必填 `object_id`、`kind`、`name`；条目必填 `claim_id`、非空讨论对象列表 `objects`、正文 `text`；

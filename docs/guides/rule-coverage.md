@@ -100,8 +100,8 @@ print(entry.text)
 for limit in entry.limits:
   print('限度：' + limit)
 source = kb.sources[entry.sources[0]]
-print('支持', source.supports)
-print('限度', source.limitations)
+print('支持范围', source.supports)
+print('来源说明', source.limitations)
 ```
 
 ```{testoutput} guoyin-lookup
@@ -109,8 +109,8 @@ print('限度', source.limitations)
 国印的 MODERN 表按禄前第九位（含禄，偏移 +8）取值。
 限度：表值与四柱查法的支持来源分开；古籍的守照身命表述不等于查四柱地支。
 限度：本条转述仓内来源边界，未新增已核古籍见证。
-支持 现有的两种表读法，以及另行说明的锚点／目标边界。
-限度 原创说明。概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清。
+支持范围 现有的两种表读法，以及另行说明的锚点／目标边界。
+来源说明 原创说明。概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清。
 ```
 
 查询 `viewpoint='WUXING_JINGJI'` 可读另一条知识，计算表则用 `GuoyinDef.WUXING_JINGJI`。
