@@ -1,221 +1,120 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+import random
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from bazi import cli
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.knowledge import KnowledgeBase, object_id
+from bazi.chart_text import basic_text
+from bazi.defines import Shishen, Tiangan
+from bazi.knowledge import KnowledgeBase, KnowledgeObject
 
-from cli_runner import KNOWLEDGE_BASE, run_cli, assert_cli_error
-
-
-@pytest.mark.parametrize('include_reference_only', [False, True])
-def test_chart_display_uses_knowledge_topics(include_reference_only: bool) -> None:
-  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  text = cli._interpret(chart, include_reference_only=include_reference_only)
-  assert '定义：' + KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master))[0].text in text
-  assert '原局中，劫财有' in text
-  assert '当劫财状态不好时' not in text
-  assert '能量状态佳' not in text and 'in_good_status' not in text
-  assert ('仅供参考' in text) is include_reference_only
-  assert ('前提待梳理' in text) is include_reference_only
+from cli_runner import run_cli, MATCH_BIRTH
 
 
-def test_empty_projection_keeps_chart_counts(monkeypatch: pytest.MonkeyPatch) -> None:
-  empty = KnowledgeBase(tuple(KNOWLEDGE_BASE.objects.values()), tuple(KNOWLEDGE_BASE.contexts.values()), tuple(KNOWLEDGE_BASE.sources.values()), ())
-  monkeypatch.setattr(KnowledgeBase, 'load', staticmethod(lambda path=None: empty))
-  text = cli._interpret(BaziChart(Bazi.create('2000-01-01 12:00', 'male')))
-  assert '原局中，劫财有' in text
-  assert '定义：' not in text and '仅供参考' not in text
+def test_chart_default_does_not_load_knowledge(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+  def forbidden(*args: Any, **kwargs: Any) -> Any:
+    raise AssertionError('Default chart must not load knowledge')
+  monkeypatch.setattr(KnowledgeBase, 'load', forbidden)
+  assert cli.main(['chart', *MATCH_BIRTH]) == 0
+  text = capsys.readouterr().out
+  chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
+  assert re.sub(r'\x1b\[[0-9;]*m', '', text) == basic_text(chart) + '\n'
+  assert '占比' in text and '来源：' not in text and '\x1b[' in text
+
+
+@pytest.mark.parametrize('sources', [False, True])
+@pytest.mark.parametrize('birth,day_master,shishen', [
+  ('2000-01-03 12:00', Tiangan.庚, (
+    Shishen.比肩, Shishen.食神, Shishen.伤官, Shishen.正财,
+    Shishen.正官, Shishen.七杀, Shishen.正印, Shishen.偏印,
+  )),
+  ('1990-03-01 05:00', Tiangan.乙, (
+    Shishen.比肩, Shishen.劫财, Shishen.食神, Shishen.伤官, Shishen.正财,
+    Shishen.偏财, Shishen.正官, Shishen.七杀, Shishen.偏印,
+  )),
+])
+def test_chart_knowledge_deduplicates(
+  sources: bool, birth: str, day_master: Tiangan, shishen: tuple[Shishen, ...],
+) -> None:
+  chart = BaziChart(Bazi.create(birth, 'female'))
+  kb = KnowledgeBase.load()
+  text = cli._chart_knowledge(chart, kb, show_sources=sources)
+  subjects: tuple[Tiangan | Shishen, ...] = (day_master, *shishen)
+  expected = list(dict.fromkeys(entry.claim_id for subject in subjects for entry in kb.query(subject)))
+  assert re.findall(r'^条目：(.*)$', text, re.MULTILINE) == expected
+  for claim_id in expected:
+    entry = kb.entry(claim_id)
+    assert entry.text in text and entry.premise in text
+    assert all(limit in text for limit in entry.limits)
+  assert re.findall(r'^【.*】$', text, re.MULTILINE) == [f'【日主：{day_master}】', *(f'【十神：{ss}】' for ss in shishen)]
+  assert '命盘适用性未判断' in text
+  assert ('引文／记录：' in text) is sources
+  assert '出处未核' in text and '来源：' in text
+
+
+def test_missing_objects_and_empty_entries() -> None:
+  chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
+  assert '无法查阅：Unknown object: 庚' in cli._chart_knowledge(chart, KnowledgeBase((), (), ()))
+  kb = KnowledgeBase.load()
+  assert '无相关条目' in cli._chart_knowledge(chart, KnowledgeBase(tuple(kb.objects.values()), (), ()))
+
+
+def test_ambiguous_object_keeps_other_groups() -> None:
+  chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
+  kb = KnowledgeBase.load()
+  ambiguous = KnowledgeBase(
+    (*kb.objects.values(), KnowledgeObject('second.geng', 'tiangan', '庚')),
+    tuple(kb.sources.values()),
+    tuple(kb.entries.values()),
+  )
+  text = cli._chart_knowledge(chart, ambiguous)
+  assert '无法查阅：Ambiguous object: 庚; candidates: tiangan.geng, second.geng' in text
+  assert kb.query(Shishen.偏印)[0].text in text
 
 
 @pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('located', [False, True])
-def test_saved_txt_equals_display(tmp_path: Path, optimized: bool, located: bool) -> None:
+@pytest.mark.parametrize('reading', [False, True])
+def test_saved_txt_equals_complete_display(tmp_path: Path, optimized: bool, located: bool, reading: bool) -> None:
   birth = '2024-01-01T12:00:00+14:00' if located else '2024-01-01T12:00:00'
   location = ('--longitude', '-157.4') if located else ()
-  result = run_cli(tmp_path, 'chart', '--birth-time', birth, '--gender', 'female', '--precision', 'minute',
-                    *location, '--output-dir', str(tmp_path), optimized=optimized)
+  flags = ('--knowledge', '--show-sources') if reading else ()
+  result = run_cli(
+    tmp_path, 'chart', '--birth-time', birth, '--gender', '男', '--precision', '分',
+    *location, *flags, '--transits', '--relationship', '--output', 'chart.txt', optimized=optimized,
+  )
   assert result.returncode == 0, result.stderr
-  text = (tmp_path / 'interpretation_examples/0.txt').read_text(encoding='utf-8')
-  assert text == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
+  assert (tmp_path / 'chart.txt').read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
 
 
-@pytest.mark.parametrize('flag', ['-h', '--help'])
-def test_chart_help_with_input_is_read_only(tmp_path: Path, flag: str) -> None:
-  result = run_cli(tmp_path, 'chart', '--seed', '1', flag)
-  assert result.returncode == 0 and '--seed' in result.stdout and '--query-knowledge' not in result.stdout
-  assert list(tmp_path.iterdir()) == []
+@pytest.mark.parametrize('seed', [0, 42, -17])
+def test_seed_replays_one_chart(seed: int, capsys: pytest.CaptureFixture[str]) -> None:
+  state = random.getstate()
+  chart = BaziChart(Bazi.random(rng=random.Random(seed)))
+  assert cli.main(['chart', '--seed', str(seed)]) == 0
+  assert capsys.readouterr().out == f'random seed: {seed}\n{cli._get_basic_info(chart)}\n'
+  assert random.getstate() == state
 
 
-@pytest.fixture
-def terminal_columns(monkeypatch: pytest.MonkeyPatch, columns: str) -> None:
-  monkeypatch.setenv('COLUMNS', columns)
-
-
-@pytest.mark.usefixtures('terminal_columns')
-@pytest.mark.parametrize('columns', ['50', '80'])
-@pytest.mark.parametrize('optimized', [False, True])
-def test_help_is_read_only(tmp_path: Path, columns: str, optimized: bool) -> None:
-  help_result = run_cli(tmp_path, 'chart', '--seed', '1', '--help', optimized=optimized)
-  assert help_result.returncode == 0
-  assert '--show-sources' in help_result.stdout
-  assert '--civil-timezone=-05:00' in re.sub(r'\n\s*', '', help_result.stdout)
-  match_help = run_cli(tmp_path, 'match', '--help', optimized=optimized)
-  assert match_help.returncode == 0
-  for phrase in ('--observation-scope', '--ganzhi-year', '--transit-entry', '--transit-kinds'):
-    assert phrase in match_help.stdout
-  assert list(tmp_path.iterdir()) == []
-
-
-@pytest.mark.usefixtures('terminal_columns')
-@pytest.mark.parametrize('columns', ['50', '80'])
-@pytest.mark.parametrize('optimized', [False, True])
-def test_seeded_default_is_read_only(tmp_path: Path, columns: str, optimized: bool) -> None:
-  first = run_cli(tmp_path, 'chart', '--seed', '42', optimized=optimized)
-  second = run_cli(tmp_path, 'chart', '--seed', '42', optimized=optimized)
-  assert first.returncode == second.returncode == 0
+def test_random_seed_is_saved(tmp_path: Path) -> None:
+  first = run_cli(tmp_path, 'chart', '--output', 'chart.txt')
+  assert first.returncode == 0
+  seed = first.stdout.splitlines()[0].split(': ')[1]
+  second = run_cli(tmp_path, 'chart', '--seed', seed)
   assert first.stdout == second.stdout
-  assert first.stdout.count('出生时间：') == 1
-  assert '来源：' not in first.stdout
-  assert list(tmp_path.iterdir()) == []
+  assert (tmp_path / 'chart.txt').read_text(encoding='utf-8').startswith(f'random seed: {seed}\n')
 
 
-def test_source_display_keeps_reference_selection(tmp_path: Path) -> None:
-  result = run_cli(
-    tmp_path, 'chart', '--birth-time', '2000-01-01 12:00', '--gender', 'male', '--show-sources',
-  )
-  assert result.returncode == 0
-  assert '出生时间：2000-01-01, 12:0' in result.stdout
-  assert '来源：' in result.stdout
-  assert '支持范围：' in result.stdout
-  assert '局限：' in result.stdout
-  assert '条目：tiangan.wu.definition；署名：《渊海子平》与《命理探源》天干定义' in result.stdout
-  assert '仅供参考' not in result.stdout
-  assert 'legacy.' not in result.stdout
-
-
-def test_fixed_reference_display_is_read_only(tmp_path: Path) -> None:
-  result = run_cli(
-    tmp_path, 'chart', '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--precision', 'hour',
-    '--include-reference-only', '--show-sources',
-  )
-  assert result.returncode == 0 and result.stderr == ''
-  assert result.stdout.count('出生时间：') == 1
-  assert '仅供参考' in result.stdout and '来源：' in result.stdout
-  assert list(tmp_path.iterdir()) == []
-
-
-@pytest.mark.parametrize('chart_args', [
-  ('--birth-time', '2000-01-01 12:00', '--gender', 'male'),
-  ('--birth-time', '2000-01-01 12:00', '--gender', 'female', '--precision', 'hour'),
-  ('--seed', '42'),
-])
-def test_reference_export_keeps_unverified(tmp_path: Path, chart_args: tuple[str, ...]) -> None:
-  result = run_cli(
-    tmp_path, 'chart',
-    *chart_args,
-    '--include-reference-only', '--show-sources',
-    '--output-dir', str(tmp_path),
-  )
-  assert result.returncode == 0
-  assert '来源尚未核实' in result.stdout
-  assert '命盘适用性未判断' in result.stdout
-  assert '仅供参考' in result.stdout
-  saved = tmp_path / 'interpretation_examples' / '0.txt'
-  displayed = result.stdout
-  if chart_args[0] == '--seed':
-    assert displayed.startswith('random seed: 42\n')
-    displayed = displayed.removeprefix('random seed: 42\n')
-  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', displayed).removesuffix('\n')
-  knowledge = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', str(tmp_path),
-                      '--include-reference-only', '--show-sources')
-  assert knowledge.returncode == 0 and knowledge.stdout == '' and knowledge.stderr == ''
-  assert len(list((tmp_path / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
-  assert len(list((tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
-  ding = (tmp_path / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
-  assert '丁火有烛灯之象' in ding
-  assert '《刻京台增补渊海子平大全》' in ding
-  for path in (tmp_path / 'knowledge_base' / 'shishen').glob('*.txt'):
-    text = path.read_text(encoding='utf-8')
-    assert text.startswith(f'{path.stem}知识条目：\n')
-    assert '能量状态佳时所代表的特点' not in text
-    assert '能量状态不佳时所代表的特点' not in text
-
-
-def test_cli_exports_exact_displayed_chart_count(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'chart', '--seed', '42', '--count', '2', '--output-dir', str(tmp_path))
-  assert result.returncode == 0
-  assert result.stdout.count('出生时间：') == 2
-  assert {p.name for p in (tmp_path / 'interpretation_examples').iterdir()} == {'0.txt', '1.txt'}
-  assert not (tmp_path / 'knowledge_base').exists()
-
-
-def test_seeded_batch_without_export_is_read_only(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'chart', '--seed', '3', '--count', '2')
-  assert result.returncode == 0 and result.stderr == ''
-  assert result.stdout.startswith('random seed: 3\n')
-  assert result.stdout.count('出生时间：') == 2
-  assert list(tmp_path.iterdir()) == []
-
-
-@pytest.mark.parametrize('args,error', [
-  (('--birth-time', '2000-01-01 12:00'), '--birth-time and --gender must be supplied together'),
-  (('--gender', 'male'), '--birth-time and --gender must be supplied together'),
-  (('--gender', 'other'), 'invalid choice'),
-  (('--count', '0'), '--count must be positive'),
-  (('--count', '-1'), '--count must be positive'),
-  (('--count', 'invalid'), 'invalid int value'),
-  (('--birth-time', 'invalid', '--gender', 'male'), 'Invalid isoformat string'),
-  (('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--seed', '42'), 'require random input'),
-  (('--birth-time', '2000-01-01 12:00', '--gender', 'male', '--count', '2'), 'require random input'),
-  (('--unknown',), 'unrecognized arguments'),
-])
-def test_invalid_inputs_export_nothing(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
-  result = run_cli(tmp_path, 'chart', *args)
-  assert_cli_error(result, 'chart', error)
-  assert not result.stdout
-  assert list(tmp_path.iterdir()) == []
-
-
-def test_source_reference_rendering_independent() -> None:
-  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  text = cli._interpret(chart, include_reference_only=True)
-  assert '仅供参考' in text
-  assert '命盘适用性未判断' in text
-  assert '来源尚未核实' in text
-  assert '来源：' not in text
-
-
-def test_reference_claims_get_distinct_lines() -> None:
-  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  result = cli._interpret(chart, include_reference_only=True)
-  general = tuple(
-    entry for entry in KNOWLEDGE_BASE.query(object_id=object_id(chart.bazi.day_master), include_reference_only=True)
-    if entry.legacy is not None and entry.legacy.field == 'general'
-  )
-  assert len(general) > 1
-  lines = result.splitlines()
-  assert f'定义：{general[0].text}' in lines
-  assert any(general[1].text in line and '仅供参考' in line for line in lines)
-  assert '来源：' not in result
-
-
-def test_reference_only_without_source_display(tmp_path: Path) -> None:
-  result = run_cli(
-    tmp_path, 'chart',
-    '--birth-time', '2000-01-01 12:00', '--gender', 'female', '--include-reference-only',
-  )
-  assert result.returncode == 0
-  assert result.stdout.count('出生时间：') == 1
-  assert '性别：female' in result.stdout
-  assert '仅供参考' in result.stdout
-  assert '命盘适用性未判断' in result.stdout
-  assert '来源尚未核实' in result.stdout
-  assert '来源：' not in result.stdout
-  assert '条目：' not in result.stdout
-  assert list(tmp_path.iterdir()) == []
+@pytest.mark.parametrize('task', ['chart', 'match'])
+def test_reading_options_need_explicit_read(tmp_path: Path, task: str) -> None:
+  args = () if task == 'chart' else ('editorial.guansha_coexistence.v1', *MATCH_BIRTH, '--observation-scope', 'natal')
+  for flags in (('--knowledge-source', 'missing.json'), ('--show-sources',)):
+    result = run_cli(tmp_path, task, *args, *flags)
+    assert result.returncode == 2 and 'require --knowledge' in result.stderr
+    assert result.stdout == ''

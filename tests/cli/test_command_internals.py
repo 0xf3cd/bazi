@@ -30,34 +30,32 @@ def _call(monkeypatch: pytest.MonkeyPatch, cwd: Path, *args: str) -> int | str |
 def test_inprocess_commands_cover_every_branch(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
   prepare(tmp_path)
   cases: list[tuple[tuple[str, ...], int | None]] = [
-    (('-h',), 0), (('chart', '--seed', '1'), 0), (('chart', '--seed', '1', '--output-dir', 'o1'), 0),
+    (('-h',), 0), (('chart', '--seed', '1'), 0), (('chart', '--seed', '1', '--output', 'o1.txt'), 0),
     (('knowledge',), 0), (('knowledge', '--list-values', 'topic'), 0), (('knowledge', '--all'), 0),
     (('knowledge', '--object', 'tiangan.ding'), 0),
     (('knowledge', '--validate-knowledge'), 0),
-    (('knowledge', '--export-knowledge-base', '--output-dir', 'o3'), 0),
-    (('knowledge', '--output-dir', 'o4'), 2), (('knowledge', '--show-sources'), 2),
-    (('knowledge', '--export-knowledge-base', '--show-sources', '--output-dir', 'o6'), 0),
+    (('knowledge', '丁', '--show-sources'), 0), (('knowledge', '--show-sources'), 2),
+    (('knowledge', '--search', '枭印'), 0), (('knowledge', '--search', '没有匹配'), 0),
+    (('knowledge', '丁', '--object', '丁'), 2),
     (('match', '--knowledge-source', 'src.json'), 2), (('knowledge', '--seed', '1'), 2),
-    (('knowledge', '--knowledge-source', 'missing.json', '--export-knowledge-base', '--output-dir', 'o8'), 2),
+    (('knowledge', '--knowledge-source', 'missing.json', '--validate-knowledge'), 2),
     (('knowledge', '--list-values', 'topic', '--all'), 2), (('knowledge', '--all', '--object', 'tiangan.ding'), 2),
-    (('knowledge', '--knowledge-source', 'o10/knowledge_base/tiangan/甲.txt', '--export-knowledge-base', '--output-dir', 'o10'), 2),
+    (('chart', '--knowledge', '--knowledge-source', 'src.json', '--output', 'src.json'), 2),
     (('knowledge', '--knowledge-source', 'missing.json'), 2),
     (('knowledge', '--list-values', 'topic', '--knowledge-source', 'missing.json'), 2),
     (('match',), 0), (('match', GUANSHA), 0), (('match', XINGCHONG), 0), (('match', 'nope'), 2),
     (('match', GUANSHA, '--gender', 'female'), 2), (('match', '--gender', 'female'), 2),
     (('match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal'), 0),
     (('match', 'editorial.guansha_coexistence_female.v1'), 0),
-    (('knowledge', '--export-knowledge-base', '--output-dir', 'src.json'), 2),
-    (('chart', '--seed', '1'), 0), (('knowledge', '--topic', '定义'), 0), (('knowledge', '--object', 'tiangan.ding'), 0),
-    (('chart', '--seed', '1', '--output-dir', 'o5'), 0),
-    (('knowledge', '--export-knowledge-base', '--output-dir', 'o5'), 0),
-    (('match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal'), 0),
+    (('chart', '--seed', '1', '--knowledge', '--transits', '--relationship', '--output', 'o5.txt'), 0),
+    (('knowledge', '--topic', '定义'), 0),
+    (('match', GUANSHA, *BIRTH, '--gender', 'female', '--observation-scope', 'natal', '--knowledge'), 0),
     (('chart', '--birth-time', '2000-01-01T12:00:00+08:00', '--gender', 'male', '--precision', 'minute', '--longitude', '120', '--civil-timezone=+08:00'), 0),
     ((), 0),
   ]
   for args, code in cases:
     assert _call(monkeypatch, tmp_path, *args) in ((0, None) if code == 0 else (code,)), args
-  assert (tmp_path / 'o3' / 'knowledge_base').is_dir() and (tmp_path / 'o1' / 'interpretation_examples').is_dir()
+  assert (tmp_path / 'o1.txt').is_file() and (tmp_path / 'o5.txt').is_file()
   assert '提示：' not in capsys.readouterr().err
 
 

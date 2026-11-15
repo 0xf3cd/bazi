@@ -43,7 +43,7 @@ def test_parser_recursion_does_not_hide_bugs(monkeypatch: pytest.MonkeyPatch) ->
   def recursion(*args: object, **kwargs: object) -> Any:
     raise RecursionError('injected parser limit')
   monkeypatch.setattr(json, 'loads', recursion)
-  with pytest.raises(ValueError, match='parsing depth'):
+  with pytest.raises(RecursionError, match='injected parser limit'):
     _json_loads('{}')
   def bug(*args: object, **kwargs: object) -> Any:
     raise RuntimeError('programming error')

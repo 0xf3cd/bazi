@@ -222,13 +222,12 @@ def test_main_relationship_keeps_ten_years(
     if pillar is not None:
       natal_lines.append(f'{label}：{pillar}')
   lines = [
-    'random seed: 236', re.sub(r'\x1b\[[0-9;]*m', '', cli._get_basic_info(chart)), '\n' + '-' * 60 + '\n',
+    'random seed: 236', re.sub(r'\x1b\[[0-9;]*m', '', cli._get_basic_info(chart)),
     f'夫妻宫：{chart.house_of_relationship}', f'配偶星：{", ".join(map(str, (stars.tiangan, *stars.dizhi)))}',
-    '\n' + '-' * 60 + '\n',
     *(['原局神煞：', *natal_lines] if natal_lines else [
       '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、空亡、魁罡、天赦',
     ]),
-    '六甲旬空依据：', *_plain_kongwang(analyzer.at_birth.kongwang), '\n' + '-' * 60 + '\n',
+    '六甲旬空依据：', *_plain_kongwang(analyzer.at_birth.kongwang),
     f'流年神煞（{chart.bazi.ganzhi_year + 20} 起十年）：',
   ]
   transit_chart = TransitChart(chart)
@@ -242,7 +241,7 @@ def test_main_relationship_keeps_ten_years(
     lines.extend(f'  {line}' for line in shensha)
     lines.extend(f'  {line}' for line in _plain_kongwang(analyzer.transits.kongwang(liunian)))
   state = random.getstate()
-  assert cli.main(['relationship', '--seed', '236']) == 0
+  assert cli.main(['chart', '--relationship', '--seed', '236']) == 0
   output = capsys.readouterr()
   assert output.err == ''
   assert re.sub(r'\x1b\[[0-9;]*m', '', output.out) == '\n'.join(lines) + '\n'

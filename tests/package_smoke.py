@@ -130,8 +130,7 @@ def main() -> None:
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer, RelationshipEvidence, WHOLE_PILLAR_SHENSHA_LABELS
   from bazi.analyzer.facts import tonggen, tougan, TianganMatch
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, object_id, guoyin_entry, guoyin_def
-  from bazi.rules import ShenshaRules
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, LiunianPosition, TransitObservation, YearCoordinate,
     ContextResult, CriterionInfo, criteria, criterion as lookup_criterion, evaluate_context,
@@ -377,79 +376,54 @@ def main() -> None:
   knowledge = KnowledgeBase.load()
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   for value in Tiangan:
-    structured = knowledge.query(object_id=object_id(value))
-    check(len(structured) == 1, 'Missing Tiangan definition')
-    claim = structured[0]
-    check(claim.text in knowledge.render_subject(object_id(value)), 'Subject text differs')
-    check(bool(claim.sources) and claim.applicability == 'unconditional', 'Default claim eligibility differs')
+    structured = knowledge.query(value)
+    check(bool(structured), 'Missing Tiangan material')
+    claim, = knowledge.query(value, topic='定义')
+    check(claim.text in knowledge.render_subject(value), 'Subject text differs')
+    check(bool(claim.sources), 'Definition lost its source')
     for source_id in claim.sources:
       witness = knowledge.sources[source_id]
       check(bool(witness.work and witness.locator and witness.limitations), 'Incomplete witness')
-    check(hash(structured) == hash(knowledge.query(object_id=object_id(value))), 'Unhashable results')
-  check('仅供参考' not in knowledge.render_subject('tiangan.jia'), 'Reference-only text became default')
-  check('仅供参考' in knowledge.render_subject('tiangan.jia', include_reference_only=True), 'Reference-only text is inaccessible')
-  complete_shishen_counts = (25, 23, 23, 23, 20, 20, 22, 22, 19, 22)
-  for shishen, complete_count in zip(Shishen, complete_shishen_counts, strict=True):
-    default = knowledge.query(object_id=object_id(shishen))
-    complete = tuple(
-      entry for entry in knowledge.query(object_id=object_id(shishen), include_reference_only=True)
-      if entry.legacy is not None and entry.legacy.object_id == object_id(shishen)
-    )
-    expected_default_count = 0 if shishen is Shishen.劫财 else 1
-    default_count = len(default)
-    actual_complete_count = len(complete)
-    check(
-      default_count == expected_default_count,
-      f'Wrong default Shishen projection: {shishen}',
-    )
-    check(
-      actual_complete_count == complete_count,
-      f'Wrong complete Shishen projection: {shishen}',
-    )
-  check(len(knowledge.entries) == 326 and len(knowledge.query()) == 19, 'Knowledge corpus/eligibility mismatch')
-  for guoyin_definition in ShenshaRules.GuoyinDef:
-    entry = guoyin_entry(knowledge, guoyin_definition)
-    check(entry is knowledge.entry(entry.claim_id) and guoyin_def(knowledge, entry.claim_id) is guoyin_definition, 'Installed Guoyin round trip mismatch')
-    check(entry.sources == ('repository_guoyin_variants',), 'Installed Guoyin sources changed')
-  check(guoyin_def(knowledge, 'shensha.kongwang.xunkong') is None, 'Installed unrelated entry gained Guoyin link')
+    check(hash(structured) == hash(knowledge.query(str(value))), 'Enum/name query mismatch')
+  for shishen in Shishen:
+    check(knowledge.query(shishen) == knowledge.query(str(shishen)), 'Installed Shishen name query mismatch')
+  check(len(knowledge.entries) == len(knowledge.query()) == 326, 'Knowledge corpus mismatch')
+  check(len(knowledge.query('国印贵人')) == 2, 'Installed Guoyin readings missing')
   for name in ('tianyi', 'taohua', 'yima', 'wenchang', 'huagai', 'yangren'):
     identifier = 'shensha.' + name
-    check(bool(knowledge.query(object_id=identifier, include_reference_only=True)) and not knowledge.query(object_id=identifier), 'Installed Shensha references missing or promoted')
+    check(bool(knowledge.query(identifier)), 'Installed Shensha material missing')
   for identifier, count in (('concept.taiyuan', 3), ('concept.minggong', 4)):
-    entries = knowledge.query(object_id=identifier, include_reference_only=True)
-    check(len(entries) == count and not knowledge.query(object_id=identifier), 'Installed auxiliary knowledge missing')
-    check(all(entry.show_by_default is False and entry.contexts == () for entry in entries), 'Auxiliary knowledge gained eligibility')
+    entries = knowledge.query(identifier)
+    check(len(entries) == count, 'Installed auxiliary knowledge missing')
   for subject in knowledge.objects.values():
     check(knowledge.find_objects(subject.name) == tuple(obj for obj in knowledge.objects.values() if obj.name == subject.name), 'Installed name discovery mismatch')
-    check(knowledge.search(subject.name, object_id=subject.object_id, include_reference_only=True) == knowledge.query(object_id=subject.object_id, include_reference_only=True), 'Installed object-name search mismatch')
-  for dimension in ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope'):
-    values = knowledge.filter_values(dimension)
+    check(knowledge.search(subject.name, subject=subject.object_id) == knowledge.query(subject.object_id), 'Installed object-name search mismatch')
+  for dimension in ('subject', 'source_id', 'topic', 'viewpoint'):
+    values = knowledge.filter_values('object_id' if dimension == 'subject' else dimension)
     check(values == tuple(sorted(set(values))), 'Installed filter directory order mismatch')
     for filter_value in values:
-      check(isinstance(knowledge.query(**{dimension: filter_value}, include_reference_only=True), tuple), 'Installed filter directory disagrees with query') # type: ignore[arg-type]
-  check(len(knowledge.sources) == 41, 'Installed source registry incomplete')
+      check(isinstance(knowledge.query(**{dimension: filter_value}), tuple), 'Installed filter directory disagrees with query')
+  check(len(knowledge.sources) == 40, 'Installed source registry incomplete')
   for source_id, witness in knowledge.sources.items():
     check(witness.source_id == source_id, 'Source ID mismatch')
-    check(knowledge.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')
+    check(knowledge.query(source_id=source_id) == tuple(entry for entry in knowledge.entries.values() if source_id in entry.sources), 'Source query is incomplete')
   from dataclasses import replace
-  future = replace(knowledge.sources['editorial'], source_id='future', lineage='future')
-  expanded = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), (*knowledge.sources.values(), future), tuple(knowledge.entries.values()))
+  future = KnowledgeSource('future', '未来来源')
+  expanded = KnowledgeBase(tuple(knowledge.objects.values()), (*knowledge.sources.values(), future), tuple(knowledge.entries.values()))
   check(expanded.sources['future'] == future, 'New source needs a vocabulary mirror')
   reference_entry = knowledge.entry('editorial.shishen.zhengguan.legal_trouble')
-  display = knowledge.render(reference_entry, premise_verdict='SATISFIED')
-  check('前提判别：SATISFIED' in display and '默认展示：否' in display and '也许' in display, 'Verdict display changed eligibility or original modality')
-  check(reference_entry not in knowledge.query(), 'Verdict display granted default eligibility')
+  display = knowledge.render(reference_entry)
+  check('也许' in display and reference_entry.premise in display, 'Display lost original modality or premise')
   relation = knowledge.entry('legacy.shishen.SH-052')
-  check(relation.text not in knowledge.render_subject('shishen.qisha', include_reference_only=True), 'Subject projection became all-role query')
-  check(relation.text in knowledge.render_subject('shishen.shishen', include_reference_only=True), 'Subject projection lost its subject')
+  check(relation.text in knowledge.render_subject('shishen.qisha'), 'Multi-object query lost 七杀')
+  check(relation.text in knowledge.render_subject('shishen.shishen'), 'Multi-object query lost 食神')
   for knowledge_operation in (
     lambda: knowledge.find_objects(1), # type: ignore[arg-type]
     lambda: knowledge.search(1), # type: ignore[arg-type]
     lambda: knowledge.filter_values(1), # type: ignore[arg-type]
-    lambda: object_id(Dizhi.子), # type: ignore[arg-type]
-    lambda: guoyin_entry(knowledge, 'MODERN'), # type: ignore[arg-type]
-    lambda: guoyin_def(knowledge, 1), # type: ignore[arg-type]
-    lambda: knowledge.render(reference_entry, premise_verdict=1), # type: ignore[arg-type]
+    lambda: knowledge.query(Dizhi.子), # type: ignore[arg-type]
+    lambda: knowledge.entry(1), # type: ignore[arg-type]
+    lambda: knowledge.render(reference_entry, show_sources=1), # type: ignore[arg-type]
     lambda: knowledge.render_subject('shishen.jiecai', show_sources=1), # type: ignore[arg-type]
   ):
     try:
@@ -458,15 +432,15 @@ def main() -> None:
       pass
     else:
       raise RuntimeError('Installed knowledge boundary bypassed validation')
-  selected = knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True)
+  selected = knowledge.query('丁', topic='历史象')
   check(tuple(entry.claim_id for entry in selected) == ('tiangan.ding.lamp_symbol',), 'Installed knowledge lookup mismatch')
   restored_knowledge = KnowledgeBase.load(DEFAULT_SOURCE_PATH)
   check(restored_knowledge == knowledge and restored_knowledge is not knowledge, 'Knowledge editing-source reload mismatch')
-  check(restored_knowledge.query(object_id='tiangan.ding', topic='历史象', include_reference_only=True) == selected, 'Knowledge reload lost entries')
+  check(restored_knowledge.query('丁', topic='历史象') == selected, 'Knowledge reload lost entries')
   check(restored_knowledge.sources == knowledge.sources, 'Knowledge reload lost witnesses')
-  check('第 70 页' in restored_knowledge.render(selected[0]), 'Knowledge display lost source locator')
+  check('第 70 页' in restored_knowledge.render(selected[0], show_sources=True), 'Knowledge display lost source locator')
   try:
-    knowledge.query(object_id='typo')
+    knowledge.query('typo')
   except ValueError:
     pass
   else:
@@ -482,7 +456,6 @@ def main() -> None:
   for identifier, info in catalog.items():
     check(isinstance(info, CriterionInfo) and lookup_criterion(identifier) == info, 'Installed criterion metadata mismatch')
     check(bool(info.observation_keys) and bool(info.definition.strip()), 'Installed criterion metadata missing')
-    check(all(claim_id in knowledge.entries for claim_id in info.claim_ids), 'Installed default claim convention missing')
   for invalid_identifier in ('', 'unknown'):
     try:
       lookup_criterion(invalid_identifier)
@@ -499,21 +472,16 @@ def main() -> None:
   print('PASS installed immutable criterion directory')
   criterion = 'editorial.guansha_coexistence.v1'
   positive_chart = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female'))
-  matched = evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation(), include_reference_only=True)
+  matched = evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation())
   if not isinstance(matched.evidence, tuple) or not isinstance(matched.reference_ids, tuple):
     raise TypeError('Installed context evidence/reference types changed')
   check(matched.criterion.status == 'SATISFIED' and matched.reference_ids == ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble'), 'Installed context positive mismatch')
   check(any(o.position is Zhu.时 and o.layer is TianganLayer.藏干 and str(o.stem) == '丁' and str(o.shishen) == '正官' for o in matched.evidence), 'Installed context lost hidden witness')
-  check('也许' in matched.render() and '不确立古籍规则，也不作现实预测。' in matched.render(), 'Installed context lost modal/source limit')
+  check('参考条目：' in matched.render() and '完整前提' in matched.render(), 'Installed context lost reference semantics')
   check(matched.bazi == positive_chart.bazi, 'Installed context lost input identity')
-  fingerprint, rendered = hash(matched), matched.render()
   incoming = matched.bazi
-  copied = replace(matched, _bazi=incoming)
-  outgoing = copied.bazi
-  for input_copy in (incoming, outgoing):
-    object.__setattr__(input_copy, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
-  check(copied == matched and hash(copied) == fingerprint and copied.render() == rendered, 'Installed result input copy boundary failed')
-  check(evaluate_context(positive_chart, criterion_id=criterion, observation=NatalObservation()).reference_ids == (), 'Installed context promoted reference output')
+  copied = replace(matched, bazi=incoming)
+  check(copied.bazi is incoming and copied == matched and hash(copied) == hash(matched), 'Installed result input identity failed')
   missing = evaluate_context(positive_chart, criterion_id=criterion, observation=LiunianObservation())
   check(missing.criterion.status == 'UNKNOWN', 'Installed context missing year became false')
   first, second = (evaluate_context(chart, criterion_id=criterion, observation=LiunianObservation(year)) for year in (2024, 2084))
@@ -540,9 +508,9 @@ def main() -> None:
     raise RuntimeError('Installed relationship evidence missing transits')
   check(evidence.transits == TransitSet(dayun=Ganzhi.from_str('乙亥'), liunian=Ganzhi.from_str('丙申')), 'Installed relationship transit identity mismatch')
   check('宫·' in relationship.render(), 'Installed relationship render lost category labels')
-  check(relationship.reference_ids == (), 'Installed relationship references changed')
+  check(relationship.reference_ids == ('editorial.tanyuan.wife_palace_xingchong.v1',), 'Installed relationship references changed')
   check(lookup_criterion(relationship.criterion.criterion_id).entry_role == 'condition', 'Installed condition reference role changed')
-  check('事实判别不表示原文完整条件已满足' in relationship.render(), 'Installed empty references lost condition meaning')
+  check('事实判别不表示原文完整条件已满足' in relationship.render(), 'Installed references lost condition meaning')
   queried_2016 = TransitChart(relationship_chart).at_year(2016)
   check(queried_2016 is not None, 'Installed relationship transits missing')
   if queried_2016 is None:

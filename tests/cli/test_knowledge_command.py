@@ -1,17 +1,12 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_knowledge_command.py
 
-import json
-import os
-import shutil
 from pathlib import Path
 
 import pytest
 
 from bazi import cli
-from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
+from bazi.knowledge import KnowledgeBase
 
-from knowledge_additions import SHENSHA_OBJECT_IDS
 from cli_runner import run_cli
 
 
@@ -19,203 +14,64 @@ def test_bare_knowledge_gives_an_overview(tmp_path: Path) -> None:
   library = KnowledgeBase.load()
   result = run_cli(tmp_path, 'knowledge')
   assert result.returncode == 0 and result.stderr == ''
-  assert f'{len(library.entries)} 条目（默认可见 {len(library.query())} 条' in result.stdout
+  assert f'{len(library.entries)} 条目，{len(library.objects)} 对象，{len(library.sources)} 来源' in result.stdout
   for flag, dimension in cli._LIST_DIMENSIONS.items():
     assert f'--{flag}：{len(library.filter_values(dimension))} 个值' in result.stdout
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('flag, dimension', sorted(cli._LIST_DIMENSIONS.items()))
+@pytest.mark.parametrize('flag,dimension', sorted(cli._LIST_DIMENSIONS.items()))
 def test_list_values_matches_the_library(tmp_path: Path, flag: str, dimension: str) -> None:
   result = run_cli(tmp_path, 'knowledge', '--list-values', flag)
-  assert result.returncode == 0
+  assert result.returncode == 0 and result.stderr == ''
   assert result.stdout.splitlines() == list(KnowledgeBase.load().filter_values(dimension))
 
 
-def test_filters_query_without_a_flag(tmp_path: Path) -> None:
-  library = KnowledgeBase.load()
-  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding')
-  expected = ''.join(library.render(entry) + '\n\n' for entry in library.query(object_id='tiangan.ding'))
-  assert result.returncode == 0 and result.stdout == expected
-
-
-def test_all_lists_the_default_view(tmp_path: Path) -> None:
-  library = KnowledgeBase.load()
-  result = run_cli(tmp_path, 'knowledge', '--all')
-  assert result.returncode == 0 and result.stderr == ''
-  assert result.stdout == ''.join(library.render(entry) + '\n\n' for entry in library.query())
-  assert '比肩为与日主五行、阴阳皆相同者。' in result.stdout
-  assert list(tmp_path.iterdir()) == []
-
-
-def test_kongwang_query_requires_reference_flag(tmp_path: Path) -> None:
-  default = run_cli(tmp_path, 'knowledge', '--object', 'shensha.kongwang')
-  complete = run_cli(tmp_path, 'knowledge', '--object', 'shensha.kongwang', '--include-reference-only')
-  assert default.returncode == complete.returncode == 0
-  assert '六甲旬空的基础二支' not in default.stdout
-  assert '六甲旬空的基础二支' in complete.stdout
-  assert '查法须与基础二支分开' in complete.stdout
-  assert '日柱默认，年柱或年日双锚可选' in complete.stdout
-
-
-@pytest.mark.parametrize('identifier', SHENSHA_OBJECT_IDS)
-def test_shensha_query_requires_reference_flag(tmp_path: Path, identifier: str) -> None:
-  default = run_cli(tmp_path, 'knowledge', '--object', identifier)
-  complete = run_cli(tmp_path, 'knowledge', '--object', identifier, '--include-reference-only')
-  assert default.returncode == complete.returncode == 0
-  assert default.stderr == complete.stderr == ''
-  assert default.stdout == '无匹配条目。\n有仅供参考的条目，可加 --include-reference-only 查看。\n'
-  k = KnowledgeBase.load()
-  assert complete.stdout == ''.join(k.render(entry) + '\n\n' for entry in k.query(object_id=identifier, include_reference_only=True))
-  assert '来源状态：witnessed' in complete.stdout and '支持范围：' in complete.stdout
-
-
-def test_exports_the_base_texts_only(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', 'out')
-  assert result.returncode == 0 and result.stdout == '' and result.stderr == ''
-  assert len(list((tmp_path / 'out' / 'knowledge_base').rglob('*.txt'))) == 20
-  assert not (tmp_path / 'out' / 'interpretation_examples').exists()
-
-
-@pytest.mark.parametrize('args', [('--output-dir', 'out'), ('--show-sources',)])
-def test_export_options_need_the_export(tmp_path: Path, args: tuple[str, ...]) -> None:
-  result = run_cli(tmp_path, 'knowledge', *args)
-  assert result.returncode == 2 and f'{args[0]} only applies with --export-knowledge-base' in result.stderr
-  assert list(tmp_path.iterdir()) == []
-
-
-def test_export_shows_sources_on_request(tmp_path: Path) -> None:
-  for name, extra in (('plain', ()), ('sourced', ('--show-sources',))):
-    result = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', name, *extra)
-    assert result.returncode == 0 and result.stderr == ''
-  plain = (tmp_path / 'plain' / 'knowledge_base' / 'tiangan' / '甲.txt').read_text(encoding='utf-8')
-  sourced = (tmp_path / 'sourced' / 'knowledge_base' / 'tiangan' / '甲.txt').read_text(encoding='utf-8')
-  assert plain.startswith('甲知识条目：') and sourced.startswith('甲知识条目：') and len(sourced) > len(plain)
-
-
-def test_validate_and_export_combine(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--export-knowledge-base', '--output-dir', 'out')
-  assert result.returncode == 0
-  assert result.stdout.startswith('校验通过：')
-  assert len(list((tmp_path / 'out').rglob('*.txt'))) == 20
-
-
-def test_text_export_reads_the_given_source(tmp_path: Path) -> None:
-  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  record = next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')
-  record['limits'] = ['本次编辑的限度。']
-  (tmp_path / 'src.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  for name, extra in (('custom', ('--knowledge-source', 'src.json')), ('default', ())):
-    result = run_cli(tmp_path, 'knowledge', '--export-knowledge-base', '--output-dir', name, '--include-reference-only', *extra)
-    assert result.returncode == 0 and result.stderr == ''
-  assert '本次编辑的限度。' in (tmp_path / 'custom' / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
-  assert '本次编辑的限度。' not in (tmp_path / 'default' / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
-
-
-def test_text_export_bad_source_writes_nothing(tmp_path: Path) -> None:
-  (tmp_path / 'bad.json').write_text('{}', encoding='utf-8')
-  for source in ('missing.json', 'bad.json'):
-    result = run_cli(tmp_path, 'knowledge', '--knowledge-source', source, '--export-knowledge-base', '--output-dir', 'out')
-    assert result.returncode == 2 and 'error:' in result.stderr and 'Traceback' not in result.stderr
-    assert result.stdout == '' and not (tmp_path / 'out').exists()
-
-
-@pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
-def test_text_export_cannot_overwrite_source(tmp_path: Path, alias: str) -> None:
-  source = tmp_path / 'src.json'
-  target = tmp_path / 'out' / 'knowledge_base' / 'tiangan' / '甲.txt'
-  target.parent.mkdir(parents=True)
-  shutil.copyfile(DEFAULT_SOURCE_PATH, source)
-  if alias == 'direct':
-    source = target
-    shutil.copyfile(DEFAULT_SOURCE_PATH, source)
-  elif alias == 'symlink':
-    try:
-      target.symlink_to(source)
-    except (OSError, NotImplementedError):
-      pytest.skip('symlinks unavailable')
-  else:
-    os.link(source, target)
-  before = source.read_bytes()
-  result = run_cli(tmp_path, 'knowledge', '--knowledge-source', str(source), '--export-knowledge-base', '--output-dir', 'out')
-  assert result.returncode == 2 and 'Export must not overwrite the editing source' in result.stderr
-  assert result.stdout == '' and source.read_bytes() == before
-  assert [path.name for path in (tmp_path / 'out').rglob('*') if path.is_file()] == ['甲.txt']
-
-
-@pytest.mark.parametrize('alias', ['direct', 'symlink', 'hardlink'])
-@pytest.mark.parametrize('args, target', [
-  (('knowledge', '--export-knowledge-base'), 'knowledge_base/tiangan/甲.txt'),
-  (('knowledge', '--export-knowledge-base'), 'knowledge_base/shishen/正官.txt'),
-  (('chart', '--seed', '1'), 'interpretation_examples/0.txt'),
+@pytest.mark.parametrize('tokens,filters', [
+  (('丁',), {'subject': '丁'}),
+  (('--object', 'tiangan.ding'), {'subject': 'tiangan.ding'}),
+  (('文昌', '--viewpoint', 'XIN_XU'), {'subject': '文昌', 'viewpoint': 'XIN_XU'}),
+  (('--topic', '定义'), {'topic': '定义'}),
+  (('--source', 'repository_guoyin_variants'), {'source_id': 'repository_guoyin_variants'}),
+  (('--all',), {}),
 ])
-def test_text_exports_cannot_overwrite_bundled(
-  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
-  alias: str, args: tuple[str, ...], target: str,
+def test_queries_return_all_matching_material(
+  tmp_path: Path, tokens: tuple[str, ...], filters: dict[str, str],
 ) -> None:
-  out = tmp_path / 'out'
-  source, link = tmp_path / 'bundled.json', out / target
-  link.parent.mkdir(parents=True)
-  shutil.copyfile(DEFAULT_SOURCE_PATH, source)
-  if alias == 'direct':
-    source = link
-    shutil.copyfile(DEFAULT_SOURCE_PATH, source)
-  elif alias == 'symlink':
-    try:
-      link.symlink_to(source)
-    except (OSError, NotImplementedError):
-      pytest.skip('symlinks unavailable')
-  else:
-    os.link(source, link)
-  monkeypatch.setattr(cli, 'DEFAULT_SOURCE_PATH', source)
-  before = source.read_bytes()
-  with pytest.raises(SystemExit) as raised:
-    cli.main([*args, '--output-dir', str(out)])
-  assert raised.value.code == 2 and 'Export must not overwrite the editing source' in capsys.readouterr().err
-  assert source.read_bytes() == before
-
-
-@pytest.mark.parametrize('flag, dimension', sorted(cli._LIST_DIMENSIONS.items()))
-def test_all_does_not_combine_with_conditions(tmp_path: Path, flag: str, dimension: str) -> None:
-  value = KnowledgeBase.load().filter_values(dimension)[0]
-  result = run_cli(tmp_path, 'knowledge', '--all', f'--{flag}', value)
-  assert result.returncode == 2 and '--all cannot be combined with query conditions' in result.stderr
-  assert result.stdout == '' and list(tmp_path.iterdir()) == []
-
-
-def test_query_and_text_export_combine(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding',
-                '--export-knowledge-base', '--output-dir', 'out')
+  library = KnowledgeBase.load()
+  expected = library.query(**filters)
+  result = run_cli(tmp_path, 'knowledge', *tokens)
   assert result.returncode == 0 and result.stderr == ''
-  assert '丁为阴火。' in result.stdout
-  assert len(list((tmp_path / 'out' / 'knowledge_base').rglob('*.txt'))) == 20
+  assert result.stdout == ''.join(library.render(entry) + '\n\n' for entry in expected)
 
 
-@pytest.mark.parametrize('extra', [
-  ('--object', 'tiangan.ding'), ('--all',), ('--validate-knowledge',),
-  ('--export-knowledge-base',),
+@pytest.mark.parametrize('keyword', ['枭印', '没有这段文字', '丁.*火'])
+def test_literal_search_matches_library(tmp_path: Path, keyword: str) -> None:
+  library = KnowledgeBase.load()
+  expected = library.search(keyword)
+  result = run_cli(tmp_path, 'knowledge', '--search', keyword)
+  assert result.returncode == 0 and result.stderr == ''
+  assert result.stdout == (''.join(library.render(entry) + '\n\n' for entry in expected) if expected else '无匹配条目。\n')
+
+
+@pytest.mark.parametrize('tokens,error', [
+  (('',), 'non-empty'),
+  (('', '--topic', '定义'), 'non-empty'),
+  (('  ',), 'non-empty'),
+  (('--object', ''), 'non-empty'),
+  (('丁', '--object', '丁'), 'Use either'),
+  (('--all', '丁'), '--all'),
+  (('--all', '--search', '丁'), '--all'),
+  (('--list-values', 'topic', '--all'), '--list-values only lists'),
+  (('--list-values', 'source', '--validate-knowledge'), '--list-values only lists'),
+  (('--show-sources',), '--show-sources requires a query'),
+  (('不存在',), 'Unknown object'),
+  (('--topic', '不存在'), 'Unknown topic'),
+  (('--source', '不存在'), 'Unknown source_id'),
+  (('--viewpoint', '不存在'), 'Unknown viewpoint'),
 ])
-def test_list_values_stands_alone(tmp_path: Path, extra: tuple[str, ...]) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--list-values', 'topic', *extra)
-  assert result.returncode == 2 and '--list-values only lists values' in result.stderr
-  assert result.stdout == '' and list(tmp_path.iterdir()) == []
-
-
-def test_bad_values_exit_with_an_error(tmp_path: Path) -> None:
-  for args in (('--list-values', 'nope'), ('--applicability', 'maybe'), ('--knowledge-source', 'missing.json')):
-    result = run_cli(tmp_path, 'knowledge', *args)
-    assert result.returncode == 2 and 'error:' in result.stderr and 'Traceback' not in result.stderr
-
-
-@pytest.mark.parametrize('args', [
-  ('--validate-knowledge', '--export-knowledge-base'),
-  ('--validate-knowledge', '--topic', '历史象'),
-  ('--object', 'tiangan.ding'),
-])
-def test_knowledge_tasks_need_no_old_mode_flag(tmp_path: Path, args: tuple[str, ...], monkeypatch: pytest.MonkeyPatch) -> None:
-  monkeypatch.chdir(tmp_path)
-  assert cli.main(['knowledge', *args]) == 0
-  if '--export-knowledge-base' in args:
-    assert len(list((tmp_path / 'output_data' / 'knowledge_base').rglob('*.txt'))) == 20
-  else:
-    assert list(tmp_path.iterdir()) == []
+@pytest.mark.parametrize('optimized', [False, True])
+def test_invalid_query_options_fail(tmp_path: Path, tokens: tuple[str, ...], error: str, optimized: bool) -> None:
+  result = run_cli(tmp_path, 'knowledge', *tokens, optimized=optimized)
+  assert result.returncode == 2 and error in result.stderr
+  assert not result.stdout and not list(tmp_path.iterdir())

@@ -2,7 +2,6 @@
 
 '''仓内原作参考文字的显式范围前提判别；不判断现实事件、力量或有效制化。'''
 
-import copy
 import json
 from dataclasses import dataclass, field, fields
 from datetime import date, datetime
@@ -13,7 +12,6 @@ from .bazi_chart import BaziChart, _check_chart
 from .common import frozendict
 from .defines import Zhu, Dizhi, Ganzhi, Tiangan, TianganLayer, Shishen, DizhiRelation
 from .analyzer.relationship import RelationshipEvidence, spouse_evidence
-from .knowledge import KnowledgeBase
 from ._validation import _text, _choice, _tuple, _utf8
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
@@ -337,7 +335,7 @@ class CriterionInfo:
   @property
   def optional_inputs(self) -> tuple[str, ...]:
     '''evaluate_context 的可选参数；省略时沿用求值入口的默认值。'''
-    return ('knowledge', 'include_reference_only')
+    return ()
 
   @property
   def scope_inputs(self) -> frozendict[str, tuple[str, ...]]:
@@ -468,83 +466,24 @@ _NATAL_SEQUENCE_LENGTH: Final[int] = len(Zhu)
 
 @dataclass(frozen=True)
 class ContextResult:
-  '''保存观察请求、判别、证据及知识条目结果。
-
-  构造参数 `_bazi` 接收 `Bazi` 输入，验证后保存独立深拷贝；`bazi` 属性每次返回独立深拷贝。
-  输入的完整身份参与相等与哈希，`knowledge` 复用传入的已验证 `KnowledgeBase`。
-  `render()` 直接读取领域值，不重新排盘或重建知识对象。
+  '''保存观察请求、判别、证据、参考 ID 与命盘输入，不持有知识库。
 
   Note:
   - evidence 保存逐柱明藏出现或婚恋结构证据；reference_ids 保存参考条目 ID。
-    已注册判据的 entry_role 区分完整前提与条件参考，空元组也保留该区别。
-    构造期检查判据支持的观察类型、证据形状及条目 ID 是否存在于知识库。
-  - 直接构造保留 reference_ids 的顺序和重复，不要求 ID 属于判据声明的 claims；
-    正常求值则按声明序经过缺条目、默认展示与性别筛选，不去重。
-  - 婚恋结构结果另核范围与取得集合的自洽：原局不能带已取得岁运，取得种类不能超出请求；
-    岁运范围完整时须有查询坐标并取得全部所求种类，关系证据序号不得超出本次查询序列。
-  - 构造校验只检查上述结构，不重新排盘或求值，也不核实手填判别与证据是否符合命盘。
-    输入与证据的干支是否一致、原局／单流年证据中的年份是否与请求配对，均不在构造校验范围内。
+    已注册判据的 entry_role 区分完整前提与局部条件，空元组也保留该区别。
+  - bazi 直接持有传入的输入；手工构造不校验或重新求值，正常结果由 evaluate_context 返回。
+  - render() 读取领域值，展示判别、证据与参考 ID，不加载或渲染知识正文。
   '''
 
   observation:    Observation
   criterion:      CriterionResult
   evidence:       tuple[ChartOccurrence, ...] | RelationshipEvidence
   reference_ids:  tuple[str, ...]
-  _bazi:          Bazi = field(repr=False)
-  knowledge:      KnowledgeBase
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.observation, Observation):
-      raise TypeError(f'Expected Observation, got {type(self.observation)}')
-    _typed(self.criterion, CriterionResult)
-    if isinstance(self.evidence, tuple):
-      _tuple(self.evidence, ChartOccurrence)
-    elif not isinstance(self.evidence, RelationshipEvidence):
-      raise TypeError(f'Expected tuple of ChartOccurrence | RelationshipEvidence, got {type(self.evidence)}')
-    _tuple(self.reference_ids, str)
-    _typed(self._bazi, Bazi)
-    object.__setattr__(self, '_bazi', copy.deepcopy(self._bazi))
-    _typed(self.knowledge, KnowledgeBase)
-    for claim_id in self.reference_ids:
-      self.knowledge.entry(claim_id)
-
-    criterion = _CRITERIA[self.criterion.criterion_id]
-    if not isinstance(self.observation, _OBSERVATION_TYPES[criterion.analysis_kind]):
-      raise ValueError('Criterion does not support the observation type') # noqa: TRY004 # 已核为 Observation，此处检查判据支持集合。
-
-    if criterion.analysis_kind == 'relationship':
-      relationship = self.evidence
-      if not isinstance(relationship, RelationshipEvidence):
-        raise ValueError('Relationship criterion requires relationship evidence')
-      if isinstance(self.observation, NatalObservation) and relationship.transits is not None:
-        raise ValueError('Natal scope cannot carry obtained transits')
-      # 取得集合在 None 时为空；完整范围要求坐标与实际取得的岁运，取得集合恰等于非空所求。
-      obtained = frozenset() if relationship.transits is None else frozenset(relationship.transits)
-      requested = self.observation.kinds if isinstance(self.observation, TransitObservation) else ()
-      if not obtained <= frozenset(requested):
-        raise ValueError('Obtained transit kinds exceed the requested kinds')
-      if isinstance(self.observation, TransitObservation) and self.criterion.scope_complete:
-        if self.observation.coordinate is None or relationship.transits is None:
-          raise ValueError('Complete scope requires a queried coordinate and obtained transits')
-        if obtained != frozenset(requested):
-          raise ValueError('Complete scope must obtain every requested kind')
-      limit = _NATAL_SEQUENCE_LENGTH if relationship.transits is None else _NATAL_SEQUENCE_LENGTH + len(relationship.transits.items)
-      for discovery in (relationship.house_relations, relationship.star_relations, relationship.stem_relations):
-        for combos in discovery.values():
-          for combo in combos:
-            if any(occurrence.index >= limit for occurrence in combo):
-              raise ValueError('Evidence index exceeds the queried sequence')
-    elif not isinstance(self.evidence, tuple):
-      raise ValueError('Context criterion requires occurrences')
-
-  @property
-  def bazi(self) -> Bazi:
-    '''每次返回独立深拷贝，不暴露结果持有的输入实例。'''
-    return copy.deepcopy(self._bazi)
+  bazi:           Bazi = field(repr=False)
 
   def _render_input(self) -> str:
     '''各观察请求共用的出生输入说明，直接读取领域值，不重新排盘。'''
-    bazi = self._bazi
+    bazi = self.bazi
     parts = [f'性别={bazi.gender}', '四柱=' + '、'.join(map(str, bazi.pillars))]
     location = bazi.location_time
     if location is None:
@@ -560,14 +499,14 @@ class ContextResult:
     return '；'.join(parts)
 
   def render(self) -> str:
-    '''直接读取结果持有的领域值，展示判别、证据及完整参考原文和来源限度。
+    '''直接读取结果持有的领域值，展示判别、证据及参考 ID。
     不重新排盘，前提满足不表示事件成立。'''
     criterion = self.criterion
     if isinstance(self.evidence, RelationshipEvidence):
       return _utf8(self._render_relationship(self.evidence))
 
     observation = self.observation
-    assert isinstance(observation, (NatalObservation, LiunianObservation)) # 构造期已核证据与观察类型。
+    assert isinstance(observation, (NatalObservation, LiunianObservation)) # 正常求值按判据选择观察与证据类型。
     premise = _CRITERIA[criterion.criterion_id].entry_role == 'premise'
     verdict_label = '结构前提' if premise else '事实判别'
     scope = f'范围：全部明藏干；{observation.scope}'
@@ -581,8 +520,6 @@ class ContextResult:
       f'输入：{self._render_input()}',
       '已知观察：' + json.dumps(dict(criterion.observations), ensure_ascii=False),
     ]
-    if premise:
-      lines.append('前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。')
     for value in self.evidence:
       position = value.position
       origin = 'transit' if isinstance(position, LiunianPosition) else 'natal'
@@ -667,20 +604,10 @@ class ContextResult:
   def _render_references(self) -> list[str]:
     '''按已注册判据的 entry_role 展示参考，不把局部事实提升为完整前提。'''
     if _CRITERIA[self.criterion.criterion_id].entry_role == 'premise':
-      lines = []
-      for claim_id in self.reference_ids:
-        lines.append(f'原作参考前提：{claim_id}；{self.criterion.status}；{self.criterion.reason}')
-        lines.append(self.knowledge.render(self.knowledge.entry(claim_id), premise_verdict=self.criterion.status))
-      return lines
-    lines = ['事实判别不表示原文完整条件已满足，也不表示现实事件成立。']
-    header = '关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）'
-    for claim_id in self.reference_ids:
-      lines.append(f'{header}：{claim_id}')
-      lines.append(self.knowledge.render(
-        self.knowledge.entry(claim_id),
-        premise_verdict='完整前提未由程序判别',
-      ))
-    return lines
+      explanation = '本判据检查关联条目的完整前提；前提满足只表示本范围内的原作使用条件满足，不表示现实事件成立。'
+    else:
+      explanation = '本判据只检查关联条目的局部条件；事实判别不表示原文完整条件已满足，也不表示现实事件成立。'
+    return [explanation, *(f'参考条目：{claim_id}' for claim_id in self.reference_ids)]
 
 
 def _query_transits(chart: BaziChart, coordinate: TransitCoordinate) -> TransitSet | None:
@@ -695,23 +622,12 @@ def _query_transits(chart: BaziChart, coordinate: TransitCoordinate) -> TransitS
   return transit_chart.at_moment(coordinate.solar_moment)
 
 
-def _eligible_claims(
-  criterion_id: str,
-  knowledge: KnowledgeBase,
-  include_reference_only: bool,
-  gender: BaziGender,
-) -> tuple[str, ...]:
-  '''按判据声明序返回通过默认展示与性别筛选的现有条目 ID。'''
-  eligible: list[str] = []
-  for claim_id in _CRITERIA[criterion_id].claims:
-    entry = knowledge.entries.get(claim_id)
-    if entry is None or (not include_reference_only and not entry.show_by_default):
-      continue
-    required_gender = _RELATED_GENDERS.get(claim_id)
-    if required_gender is not None and gender is not required_gender:
-      continue
-    eligible.append(claim_id)
-  return tuple(eligible)
+def _reference_ids(criterion_id: str, gender: BaziGender) -> tuple[str, ...]:
+  '''按声明序和性别门槛返回参考 ID，不读取知识内容。'''
+  return tuple(
+    claim_id for claim_id in _CRITERIA[criterion_id].claims
+    if _RELATED_GENDERS.get(claim_id, gender) is gender
+  )
 
 
 def _select_transits(queried: TransitSet, requested: tuple[TransitKind, ...]) -> TransitSet | None:
@@ -728,48 +644,37 @@ def evaluate_context(
   *,
   criterion_id: str,
   observation: Observation,
-  knowledge: KnowledgeBase | None = None,
-  include_reference_only: bool = False,
 ) -> ContextResult:
   '''检查选定范围是否满足已注册判据，返回判别、观察、证据及参考条目 ID。
 
   Note:
   - `NatalObservation` 供所有判据共用；`LiunianObservation` 用于原局加单流年观察，
     `TransitObservation` 用于婚恋结构的多种岁运查询。不支持的观察种类抛 `ValueError`。
-  - 官杀两条判据判别关联条目的完整前提。其余判据只判可计算事实：婚恋两条判结构，丁火、
-    庚金两条判日主，偏印、枭印两条判十神是否出现。身弱、有制有化、喜用、夺食、「有用／成格」
-    等完整理论条件留在知识文本；这些条件和喜忌均不由程序判定，也不会因未判断它们而返回 UNKNOWN。
-    所需流年缺失或不可查询时返回 UNKNOWN。
-  - 参考条目须显式设置 include_reference_only=True。条件判据的关联条目只是条件参考，
+  - 各判据的事实定义及 entry_role 见 criteria()。premise 判据检查关联条目的完整前提，
+    condition 判据只检查局部事实；判据未包含的条件须另读知识条目。
+    判别不判断喜忌，也不会因未计算这些条件而返回 UNKNOWN；所需流年缺失或不可查询时返回 UNKNOWN。
+  - 条件判据的关联条目只是条件参考，
     与事实判别的状态无关；只向男命返回的关联条目对女命一律不关联，静态查阅不受限。
-  - 未传 knowledge 时，每次独立加载默认来源，已保存的修改在后续加载时可见；
-    传入知识库则直接复用。已有知识库和结果保留原内容，共享调用须显式重载才能取得更新。
   - 观察原局年、月、时明干与四支全部实际藏干；请求流年时加入该流年明干与藏干。
     不观察日主明干，但等于日主的藏干仍分类为比肩；藏干百分比不作权重，重复位置保留。
     不另加力量／次数阈值、相邻、去留或有效制化条件。
   - 范围完整性优先于女命条件与事实判别：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
     婚恋范围缺查询坐标为 UNKNOWN / missing_transit_coordinate；入口不可查询或所求种类
     部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
-    SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
+    SATISFIED / NOT_SATISFIED 只描述当前判据声明的事实，不证明现实事件成立。
   - 关联按稳定 claim ID，不比较文字或来源摘要；自定义库负责同 ID 的领域含义。
     编辑正文、引文或来源说明不改变判据状态；UNKNOWN 是判据的状态，不是参考条目的状态。
-  - reference_ids 按判据声明序返回，省略缺失或被展示／性别门槛过滤的条目；
-    前提满足不授予默认展示资格。
+  - reference_ids 按声明序与性别门槛给出，不检查知识库是否收录；正文须由调用方显式查阅。
 
-  Return: (ContextResult) 判据结果、逐柱观察或结构证据、参考条目 ID，
-  以及 `Bazi` 输入的独立副本和本次使用的 `KnowledgeBase` 对象。
+  Return: (ContextResult) 判据结果、逐柱观察或结构证据、参考条目 ID 与命盘输入。
   '''
   _check_chart(chart)
   if not isinstance(observation, Observation):
     raise TypeError(f'Expected Observation, got {type(observation)}')
   _choice(criterion_id, tuple(_CRITERIA))
-  _typed(include_reference_only, bool)
   expected_kind = _CRITERIA[criterion_id].analysis_kind
   if not isinstance(observation, _OBSERVATION_TYPES[expected_kind]):
     raise ValueError(f'Criterion {criterion_id} does not support {type(observation).__name__}') # noqa: TRY004 # 已核为 Observation，此处检查判据支持集合。
-  if knowledge is not None:
-    _typed(knowledge, KnowledgeBase)
-  knowledge = KnowledgeBase.load() if knowledge is None else knowledge
   bazi = chart.bazi
 
   if expected_kind == 'relationship':
@@ -809,14 +714,12 @@ def evaluate_context(
     else:
       reason = 'premise_satisfied' if target_stem_visible else 'required_classification_absent'
 
-    eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
     return ContextResult(
       observation,
       CriterionResult(criterion_id, reason, observations),
       evidence,
-      eligible,
+      _reference_ids(criterion_id, bazi.gender),
       bazi,
-      knowledge,
     )
 
   assert isinstance(observation, (NatalObservation, LiunianObservation)) # 上方已核判据接受的类型。
@@ -875,13 +778,10 @@ def evaluate_context(
       fact = 'premise_satisfied' if coexistence else 'required_classification_absent'
   reason = fact if unavailable is None else unavailable
 
-  eligible = _eligible_claims(criterion_id, knowledge, include_reference_only, bazi.gender)
-
   return ContextResult(
     observation,
     CriterionResult(criterion_id, reason, observations),
     tuple(occurrences),
-    eligible,
+    _reference_ids(criterion_id, bazi.gender),
     bazi,
-    knowledge,
   )

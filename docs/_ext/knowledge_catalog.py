@@ -15,12 +15,12 @@ from sphinx.util.docutils import SphinxDirective
 
 from api_contract import DECLARED_MEMBERS
 from bazi.context_matching import CriterionInfo, criteria
-from bazi.knowledge import KnowledgeBase, KnowledgeContext, KnowledgeEntry, KnowledgeObject, KnowledgeSource
+from bazi.knowledge import KnowledgeBase, KnowledgeEntry, KnowledgeObject, KnowledgeSource
 
 
 '''目录 kind 到相关条目查询维度的关系；criteria 与 entries 是显式特例。'''
 KIND_DIMENSIONS: Final[dict[str, str]] = {
-  'objects': 'object_id', 'contexts': 'context_id', 'sources': 'source_id',
+  'objects': 'subject', 'sources': 'source_id',
   'topics': 'topic', 'viewpoints': 'viewpoint',
 }
 
@@ -28,16 +28,14 @@ KIND_DIMENSIONS: Final[dict[str, str]] = {
 '''正文先呈现的字段；其余契约字段仍完整列在登记信息中。'''
 READING_FIELDS: Final[dict[str, tuple[tuple[str, str], ...]]] = {
   'objects': (('name', '名称'), ('kind', '类别')),
-  'contexts': (('label', '情境'), ('time_scope', '时间范围'), ('limits', '限度')),
   'sources': (
     ('work', '作品'), ('attribution', '署名'), ('edition', '版本'), ('locator', '位置'),
-    ('url', '原文'), ('text_layer', '文本层'), ('state', '来源状态'),
-    ('excerpt', '摘录'), ('supports', '支持内容'), ('limitations', '支持限度'),
+    ('url', '原文'), ('state', '来源状态'),
+    ('excerpt', '摘录'), ('supports', '支持范围'), ('limitations', '来源说明'),
   ),
   'entries': (
-    ('text', '条文'), ('applicability', '前提整理状态'), ('premise', '前提'),
-    ('exceptions', '例外'), ('limits', '限度'), ('source_state', '来源状态'),
-    ('show_by_default', '默认展示'),
+    ('text', '条文'), ('premise', '前提'), ('viewpoint', '读法'),
+    ('attribution', '署名'), ('limits', '限度'),
   ),
   'criteria': (
     ('definition', '定义'), ('entry_role', '关联条目的前提关系'),
@@ -55,15 +53,13 @@ def entry_label(entry: KnowledgeEntry) -> str:
 
 def catalog_label(
   kb: KnowledgeBase, identifier: str,
-  value: KnowledgeEntry | KnowledgeObject | KnowledgeContext | KnowledgeSource | CriterionInfo | str,
+  value: KnowledgeEntry | KnowledgeObject | KnowledgeSource | CriterionInfo | str,
 ) -> str:
   if isinstance(value, KnowledgeEntry):
-    names = '、'.join(dict.fromkeys(kb.objects[role.object_id].name for role in value.roles))
+    names = '、'.join(kb.objects[identifier].name for identifier in value.objects)
     return names + ' · ' + '、'.join(value.topics) + ' [' + identifier + ']'
   if isinstance(value, KnowledgeObject):
     return value.name + ' [' + identifier + ']'
-  if isinstance(value, KnowledgeContext):
-    return value.label + ' [' + identifier + ']'
   if isinstance(value, KnowledgeSource):
     return value.work + ' · ' + value.locator + ' [' + identifier + ']'
   if isinstance(value, CriterionInfo):
@@ -104,8 +100,7 @@ class KnowledgeCatalog(SphinxDirective):
     '''人读链接与原始引用字段分开呈现；无引用时明确说明。'''
     result: list[nodes.Node] = []
     for title, kind, identifiers, registry in (
-      ('讨论对象', 'objects', tuple(role.object_id for role in value.roles), kb.objects),
-      ('情境', 'contexts', value.contexts, kb.contexts),
+      ('讨论对象', 'objects', value.objects, kb.objects),
       ('来源', 'sources', value.sources, kb.sources),
     ):
       paragraph = nodes.paragraph(text=title + '：')
@@ -115,6 +110,14 @@ class KnowledgeCatalog(SphinxDirective):
         paragraph += self.reference(kind, identifier, catalog_label(kb, identifier, registry[identifier]))
       if not identifiers:
         paragraph += nodes.Text('未登记' if kind == 'sources' else '无')
+      result.append(paragraph)
+    linked = tuple(info for info in criteria().values() if value.claim_id in info.claim_ids)
+    if linked:
+      paragraph = nodes.paragraph(text='关联判据：')
+      for index, info in enumerate(linked):
+        if index:
+          paragraph += nodes.Text('；')
+        paragraph += self.reference('criteria', info.criterion_id, catalog_label(kb, info.criterion_id, info))
       result.append(paragraph)
     return result
 
@@ -140,7 +143,7 @@ class KnowledgeCatalog(SphinxDirective):
     if kind == 'filters':
       return filter_tables(kb)
     registries: dict[str, Mapping[str, Any]] = {
-      'objects': kb.objects, 'contexts': kb.contexts, 'sources': kb.sources, 'entries': kb.entries,
+      'objects': kb.objects, 'sources': kb.sources, 'entries': kb.entries,
     }
     items: Any
     if kind in registries:
@@ -175,7 +178,7 @@ class KnowledgeCatalog(SphinxDirective):
       elif kind == 'criteria':
         selected = tuple(kb.entries[claim_id] for claim_id in value.claim_ids if claim_id in kb.entries)
       else:
-        selected = query(**{KIND_DIMENSIONS[kind]: identifier}, include_reference_only=True)
+        selected = query(**{KIND_DIMENSIONS[kind]: identifier})
       primary = dict(READING_FIELDS.get(kind, ()))
       field_values = dict(fields)
       primary = {
@@ -205,7 +208,7 @@ class KnowledgeCatalog(SphinxDirective):
         paragraph += nodes.reference('', '前提匹配指南', refuri=path + '#context-matching', internal=True)
         section += paragraph
       if selected:
-        section += nodes.paragraph(text='相关条目（包含仅供参考条目）：')
+        section += nodes.paragraph(text='相关条目：')
         listing = nodes.bullet_list()
         for entry in selected:
           item = nodes.list_item()
@@ -224,30 +227,28 @@ class KnowledgeCatalog(SphinxDirective):
 
 
 def filter_tables(kb: KnowledgeBase) -> list[nodes.Node]:
-  '''合法值来自查询接口；默认与含参考命中数分别实际查询。'''
+  '''合法值来自查询接口，命中数由实际查询取得。'''
   sections: list[nodes.Node] = []
   query: Callable[..., tuple[KnowledgeEntry, ...]] = kb.query
   for dimension in inspect.signature(kb.query).parameters:
-    if dimension == 'include_reference_only':
-      continue
     section = nodes.section(ids=['catalog-filters-' + dimension])
     section += nodes.title(text=dimension)
     table = nodes.table()
-    group = nodes.tgroup(cols=3)
-    for width in (3, 1, 1):
+    group = nodes.tgroup(cols=2)
+    for width in (3, 1):
       group += nodes.colspec(colwidth=width)
     header = nodes.thead()
     row = nodes.row()
-    for title in ('合法值', '默认命中', '含参考命中'):
+    for title in ('合法值', '命中'):
       entry = nodes.entry()
       entry += nodes.paragraph(text=title)
       row += entry
     header += row
     group += header
     body = nodes.tbody()
-    for value in kb.filter_values(dimension):
+    for value in kb.filter_values('object_id' if dimension == 'subject' else dimension):
       row = nodes.row()
-      counts = (value, str(len(query(**{dimension: value}))), str(len(query(**{dimension: value}, include_reference_only=True))))
+      counts = (value, str(len(query(**{dimension: value}))))
       for text in counts:
         entry = nodes.entry()
         entry += nodes.paragraph(text=text)

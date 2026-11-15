@@ -30,19 +30,18 @@ def main() -> int:
   import json
   import os
   from tempfile import TemporaryDirectory
-  from dataclasses import fields, replace
+  from dataclasses import replace
   from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
   from collections.abc import Callable
   from functools import partial
   from fractions import Fraction
   from zoneinfo import ZoneInfo
-  from unittest.mock import patch
   from typing import Any, get_args
 
   from bazi.defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Jieqi, TianganRelation, DizhiRelation
   from bazi.bazi import Bazi, BaziGender
   from bazi.bazi_chart import BaziChart
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeRole, LegacyDescription, object_id, guoyin_entry, guoyin_def
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeEntry, KnowledgeObject, KnowledgeSource
   from bazi.context_matching import (
     NatalObservation, LiunianObservation, TransitObservation, LiunianPosition, ChartOccurrence,
     YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, ScopeName, CriterionReason,
@@ -50,7 +49,7 @@ def main() -> int:
     criterion as lookup_criterion, evaluate_context,
   )
   from bazi.common import frozendict
-  from bazi.rules import DizhiRules, DizhiRelationDefinitions, ShenshaRules
+  from bazi.rules import DizhiRules, DizhiRelationDefinitions
   from bazi.school import Anchor, BaziConfig, BaziSchool
   from bazi.transit_chart import TransitChart
   from bazi.transits import _TransitDatabase, TransitKind, TransitSet
@@ -84,7 +83,6 @@ def main() -> int:
   local_chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female', location_config, longitude=-157.4))
   local_result = evaluate_context(local_chart, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation())
   from bazi.analyzer.relationship import StarAppearance
-  relationship_result = evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', observation=NatalObservation())
   def load_source(text: str) -> KnowledgeBase:
     with TemporaryDirectory(prefix='bazi-source-', dir=os.environ.get('SCRATCH')) as directory:
       source = Path(directory) / 'knowledge.json'
@@ -115,22 +113,6 @@ def main() -> int:
       return hash(self.value)
 
   checks: list[tuple[str, type[Exception], Callable[[], object]]] = [
-    ('guoyin_entry rejects wrong knowledge', TypeError,
-     lambda: guoyin_entry(None, ShenshaRules.GuoyinDef.MODERN)), # type: ignore[arg-type]
-    ('guoyin_entry rejects string definition', TypeError,
-     lambda: guoyin_entry(knowledge, 'MODERN')), # type: ignore[arg-type]
-    ('guoyin_entry rejects foreign enum', TypeError,
-     lambda: guoyin_entry(knowledge, ShenshaRules.YangrenDef.ZIPING)), # type: ignore[arg-type]
-    ('guoyin_entry rejects missing entry', ValueError,
-     lambda: guoyin_entry(KnowledgeBase((), (), (), ()), ShenshaRules.GuoyinDef.MODERN)),
-    ('guoyin_def rejects wrong knowledge', TypeError,
-     lambda: guoyin_def(None, 'shensha.guoyin.modern')), # type: ignore[arg-type]
-    ('guoyin_def rejects wrong claim ID type', TypeError,
-     lambda: guoyin_def(knowledge, 1)), # type: ignore[arg-type]
-    ('guoyin_def rejects blank claim ID', ValueError,
-     lambda: guoyin_def(knowledge, ' ')),
-    ('guoyin_def rejects unknown claim ID', ValueError,
-     lambda: guoyin_def(knowledge, 'unknown')),
     ('Ganzhi.next rejects 甲丑', ValueError, lambda: Ganzhi.from_str('甲丑').next()),
     ('Ganzhi.prev rejects 甲丑 even at zero', ValueError, lambda: Ganzhi.from_str('甲丑').prev(0)),
     ('Jieqi.jies rejects int', TypeError, lambda: Jieqi.jies(1)), # type: ignore[arg-type]
@@ -174,10 +156,6 @@ def main() -> int:
      lambda: TransitObservation((TransitKind.LIUYUE,), YearCoordinate(2024))),
     ('evaluate_context rejects observation mismatch', ValueError,
      lambda: evaluate_context(chart, criterion_id='editorial.spouse_star_tougan.v1', observation=LiunianObservation())),
-    ('Relationship record rejects liunian observation', ValueError,
-     lambda: replace(relationship_result, observation=LiunianObservation())),
-    ('Context record rejects relationship evidence', ValueError,
-     lambda: replace(positive, evidence=relationship_result.evidence)),
     ('StarAppearance rejects string position', TypeError,
      lambda: StarAppearance('liuyue', Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.辛)), # type: ignore[arg-type]
     ('StarAppearance rejects integer position', TypeError,
@@ -202,10 +180,6 @@ def main() -> int:
      lambda: evaluate_context(chart, criterion_id='typo', observation=NatalObservation())),
     ('evaluate_context rejects wrong observation', TypeError,
      lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation='natal')), # type: ignore[arg-type]
-    ('evaluate_context rejects truthy reference flag', TypeError,
-     lambda: evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=NatalObservation(), include_reference_only=1)), # type: ignore[arg-type]
-    ('ContextResult rejects wrong Bazi input', TypeError,
-     lambda: replace(local_result, _bazi=42)), # type: ignore[arg-type]
     ('Bazi.create below window (1901-01-01)', ValueError,
      lambda: Bazi.create(datetime(1901, 1, 1, 12), 'male')),
     ('Bazi.create above window (2100-06-01)', ValueError,
@@ -265,12 +239,12 @@ def main() -> int:
      lambda: Bazi.random(BaziConfig.from_values(backend='hko', precision='hour'))),
     ('BaziChart.random unsupported config', ValueError,
      lambda: BaziChart.random(BaziConfig.from_values(backend='hko', precision='minute'))),
-    ('knowledge object_id raw subject', TypeError,
-     lambda: object_id('食神')), # type: ignore[arg-type]
-    ('knowledge object_id unrelated enum', TypeError,
-     lambda: object_id(Dizhi.子)), # type: ignore[arg-type]
+    ('knowledge query unrelated enum', TypeError,
+     lambda: knowledge.query(Dizhi.子)), # type: ignore[arg-type]
     ('KnowledgeBase.render_subject wrong identifier', TypeError,
-     lambda: knowledge.render_subject(Tiangan.甲)), # type: ignore[arg-type]
+     lambda: knowledge.render_subject(42)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject missing identifier', TypeError,
+     lambda: knowledge.render_subject(None)), # type: ignore[arg-type]
     ('Criterion directory wrong ID type', TypeError,
      lambda: lookup_criterion(1)), # type: ignore[arg-type]
     ('Criterion directory unknown ID', ValueError,
@@ -288,61 +262,36 @@ def main() -> int:
     ('KnowledgeBase.filter_values wrong dimension type', TypeError,
      lambda: knowledge.filter_values(1)), # type: ignore[arg-type]
     ('KnowledgeBase.filter_values unknown dimension', ValueError,
-     lambda: knowledge.filter_values('include_reference_only')),
+     lambda: knowledge.filter_values('unknown')),
     ('KnowledgeBase.render_subject unknown object', ValueError,
      lambda: knowledge.render_subject('missing')),
-    ('KnowledgeBase.render_subject truthy reference flag', TypeError,
-     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=1)), # type: ignore[arg-type]
-    ('KnowledgeBase.render_subject falsy reference flag', TypeError,
-     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=0)), # type: ignore[arg-type]
-    ('KnowledgeBase.render_subject null reference flag', TypeError,
-     lambda: knowledge.render_subject('tiangan.jia', include_reference_only=None)), # type: ignore[arg-type]
     ('KnowledgeBase.render_subject invalid display flag on empty selection', TypeError,
      lambda: knowledge.render_subject('shishen.jiecai', show_sources=1)), # type: ignore[arg-type]
-    ('KnowledgeBase.render wrong verdict type', TypeError,
-     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=1)), # type: ignore[arg-type]
-    ('KnowledgeBase.render empty verdict', ValueError,
-     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict='')),
-    ('KnowledgeBase.render whitespace verdict', ValueError,
-     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), premise_verdict=' \t\n\u3000')),
+    ('KnowledgeBase.render wrong display flag', TypeError,
+     lambda: knowledge.render(knowledge.entry('tiangan.jia.definition'), show_sources=1)), # type: ignore[arg-type]
     ('KnowledgeEntry mutable sources', TypeError,
      lambda: replace(knowledge.entry('tiangan.jia.definition'), sources=[])), # type: ignore[arg-type]
     ('KnowledgeBase unknown filter', ValueError,
-     lambda: knowledge.query(object_id='unknown')),
+     lambda: knowledge.query('unknown')),
     ('KnowledgeBase wrong filter type', TypeError,
-     lambda: knowledge.query(object_id=42)), # type: ignore[arg-type]
-    ('KnowledgeBase truthy reference flag', TypeError,
-     lambda: knowledge.query(include_reference_only=1)), # type: ignore[arg-type]
+     lambda: knowledge.query(42)), # type: ignore[arg-type]
     ('KnowledgeBase wrong source type', TypeError,
      lambda: KnowledgeBase.load([])), # type: ignore[arg-type]
     ('KnowledgeBase duplicate JSON keys', ValueError,
      lambda: load_source('{"schema_version":1,"schema_version":1}')),
-    ('KnowledgeRole wrong object type', TypeError,
-     lambda: KnowledgeRole('role', 1)), # type: ignore[arg-type]
-    ('KnowledgeEntry ineligible default', ValueError,
-     lambda: replace(knowledge.entry('legacy.shishen.SH-199'), show_by_default=True)),
-    ('KnowledgeEntry unconditional legacy condition', ValueError,
-     lambda: replace(
-       knowledge.entry('tiangan.ding.definition'),
-       legacy=LegacyDescription('tiangan.ding', 'general', 0, ('chart_context_required',), ''),
-     )),
-    ('KnowledgeEntry unconditional legacy field premise', ValueError,
-     lambda: replace(
-       knowledge.entry('tiangan.ding.definition'),
-       legacy=LegacyDescription('tiangan.ding', 'general', 0, (), 'Unexpected legacy field premise'),
-     )),
-    ('LegacyDescription wrong condition member', ValueError,
-     lambda: LegacyDescription('tiangan.jia', 'general', 0, ('invalid',), '')),
-    ('KnowledgeSource wrong text layer', ValueError,
-      lambda: replace(
-        knowledge.sources['editorial'],
-        text_layer='invalid',
-      )),
-    ('KnowledgeSource wrong lineage type', TypeError,
-      lambda: replace(
-        knowledge.sources['editorial'],
-        lineage=1, # type: ignore[arg-type]
-      )),
+    ('KnowledgeBase object ID/name conflict', ValueError,
+     lambda: KnowledgeBase((
+       KnowledgeObject('比肩', 'shishen', '正印'),
+       KnowledgeObject('shishen.bijian', 'shishen', '比肩'),
+     ), (), ())),
+    ('KnowledgeObject wrong name type', TypeError,
+     lambda: KnowledgeObject('object', 'concept', 1)), # type: ignore[arg-type]
+    ('KnowledgeEntry missing discussion object', ValueError,
+     lambda: KnowledgeEntry('entry', (), '正文')),
+    ('KnowledgeSource wrong state', ValueError,
+     lambda: KnowledgeSource('source', '作品', state='invalid')), # type: ignore[arg-type]
+    ('KnowledgeSource wrong locator type', TypeError,
+     lambda: KnowledgeSource('source', '作品', locator=1)), # type: ignore[arg-type]
     ('tiangan_utils.he on raw strings', TypeError,
      lambda: tiangan_utils.he('甲', '己')), # type: ignore
     ('GanzhiOccurrence negative index', ValueError,
@@ -728,35 +677,11 @@ def main() -> int:
   missing = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation())
   if missing.criterion.status != 'UNKNOWN' or missing.criterion.reason != 'missing_transit_coordinate':
     failures.append('Missing year became a false verdict')
-  positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation(2024), include_reference_only=True)
+  positive = evaluate_context(chart, criterion_id='editorial.guansha_coexistence.v1', observation=LiunianObservation(2024))
   if positive.criterion.status != 'SATISFIED' or positive.reference_ids != ('editorial.shishen.zhengguan.legal_trouble', 'editorial.shishen.qisha.legal_trouble') or positive.bazi != chart.bazi:
     failures.append('Optimized context evaluation/input failed')
-  condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', observation=NatalObservation(), include_reference_only=True)
-  range_evidence = spouse_evidence(chart, None)
-  obtained_evidence = replace(range_evidence, transits=liunian)
-  missing_scope = evaluate_context(
-    chart, criterion_id='editorial.spouse_star_tougan.v1',
-    observation=TransitObservation((TransitKind.LIUNIAN,)),
-  )
-  partial_scope = evaluate_context(
-    chart, criterion_id='editorial.spouse_star_tougan.v1',
-    observation=TransitObservation((TransitKind.XIAOYUN, TransitKind.DAYUN), YearCoordinate(2024)),
-  )
-  outside_evidence = replace(range_evidence, house_relations=dizhi_utils.GanzhiRelationDiscovery({
-    DizhiRelation.冲: (frozenset({dizhi_utils.GanzhiOccurrence(9, Ganzhi.from_str('甲子'))}),),
-  }))
+  condition = evaluate_context(chart, criterion_id='shishen.pianyin_favorable_or_balanced', observation=NatalObservation())
   checks.extend([
-    ('ContextResult rejects natal obtained transits', ValueError,
-     partial(replace, relationship_result, evidence=obtained_evidence)),
-    ('ContextResult rejects obtained kinds outside request', ValueError,
-     partial(replace, missing_scope, observation=TransitObservation((TransitKind.DAYUN,)), evidence=obtained_evidence)),
-    ('ContextResult rejects complete scope without query', ValueError,
-     partial(replace, missing_scope, criterion=replace(missing_scope.criterion, reason='premise_satisfied'), evidence=obtained_evidence)),
-    ('ContextResult rejects complete scope with partial kinds', ValueError,
-     partial(replace, partial_scope, criterion=replace(partial_scope.criterion, reason='premise_satisfied'))),
-    ('ContextResult rejects evidence outside sequence', ValueError,
-     partial(replace, relationship_result, evidence=outside_evidence)),
-    ('Context knowledge object type', TypeError, partial(replace, positive, knowledge=None)),
     ('CriterionResult rejects entry-only reason', ValueError,
      partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'binding_unrecognized', frozendict({}))), # type: ignore[arg-type]
     ('ChartOccurrence rejects foreign position', TypeError,
@@ -765,12 +690,6 @@ def main() -> int:
      partial(ChartOccurrence, Zhu.日, Ganzhi.from_str('甲子'), TianganLayer.明干, Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))),
     ('ChartOccurrence rejects string layer', TypeError,
      partial(ChartOccurrence, Zhu.年, Ganzhi.from_str('甲子'), '明干', Tiangan.甲, bazi_utils.shishen(Tiangan.甲, Tiangan.甲))), # type: ignore[arg-type]
-    ('ContextResult rejects mutable IDs', TypeError, partial(replace, positive, reference_ids=[])),
-    ('ContextResult rejects non-string ID', TypeError, partial(replace, positive, reference_ids=(1,))),
-    ('ContextResult rejects missing ID', ValueError, partial(replace, positive, reference_ids=('unknown',))),
-    ('ContextResult rejects empty ID', ValueError, partial(replace, positive, reference_ids=('',))),
-    ('ContextResult rejects old references field', TypeError, partial(replace, positive, references=())),
-    ('ContextResult rejects foreign evidence', TypeError, partial(replace, positive, evidence=object())),
     ('CriterionResult rejects non-bool observation', TypeError,
      partial(CriterionResult, 'editorial.guansha_coexistence.v1', 'premise_satisfied', frozendict({'known': 1}))), # type: ignore[dict-item]
   ])
@@ -821,42 +740,21 @@ def main() -> int:
     failures.append('Optimized auxiliary query changed the natal chart')
 
   source_data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  if source_data['schema_version'] != 3 or KnowledgeBase._from_data(source_data) != knowledge:
-    failures.append('Optimized schema3 source did not load')
-  display_entry = knowledge.entry('tiangan.ding.definition')
-  display_bad: Any
-  for display_bad in (1, 0, 'true', None):
-    bad_source = json.loads(json.dumps(source_data))
-    bad_source['entries'][0]['show_by_default'] = display_bad
-    checks.extend([
-      (f'KnowledgeEntry rejects non-bool display {display_bad!r}', TypeError, partial(replace, display_entry, show_by_default=display_bad)),
-      (f'KnowledgeEntry constructor rejects non-bool display {display_bad!r}', TypeError,
-       partial(KnowledgeEntry, **{**{f.name: getattr(display_entry, f.name) for f in fields(display_entry)}, 'show_by_default': display_bad})),
-      (f'Editing source rejects non-bool display {display_bad!r}', TypeError, partial(load_source, json.dumps(bad_source))),
-    ])
-  for version in (1, 2, 3.0, True, '3'):
+  if source_data['schema_version'] != 4 or KnowledgeBase._from_data(source_data) != knowledge:
+    failures.append('Optimized schema4 source did not load')
+  for version in (1, 2, 3, 4.0, True, '4'):
     checks.append((f'Knowledge rejects source version {version!r}', ValueError, partial(load_source, json.dumps({**source_data, 'schema_version': version}))))
-  for mutation in ('old', 'extra', 'missing'):
+  for mutation in ('extra', 'missing'):
     bad_source = json.loads(json.dumps(source_data))
     row = bad_source['entries'][0]
-    if mutation == 'old':
-      row['output'] = 'default' if row.pop('show_by_default') else 'reference_only'
-    elif mutation == 'extra':
-      row['output'] = 'default'
+    if mutation == 'extra':
+      row['unknown'] = 'value'
     else:
-      del row['show_by_default']
-    checks.append((f'Knowledge rejects {mutation} display fields', ValueError, partial(load_source, json.dumps(bad_source))))
-  bad_knowledge = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  bad_knowledge['entries'][0]['text'] = '\ud800'
-  def parser_limit(load: Callable[[str], object]) -> None:
-    with patch('json.loads', side_effect=RecursionError('injected parser limit')):
-      load('{}')
-
+      del row['text']
+    checks.append((f'Knowledge rejects {mutation} fields', ValueError, partial(load_source, json.dumps(bad_source))))
   checks.extend([
-    ('Knowledge rejects surrogate', ValueError, partial(load_source, json.dumps(bad_knowledge))),
     ('Context render rejects surrogate key', ValueError, lambda: replace(positive, criterion=replace(positive.criterion, observations=frozendict({'\ud800': True}))).render()),
   ])
-  checks.append(('Source parser limit remains a value error', ValueError, partial(parser_limit, load_source)))
 
   for relation_query in (tiangan_utils.he, tiangan_utils.chong, tiangan_utils.sheng, tiangan_utils.ke):
     for operands in ((True, Tiangan.甲), (Tiangan.甲, True)):

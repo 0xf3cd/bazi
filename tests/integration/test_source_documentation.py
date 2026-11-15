@@ -68,8 +68,7 @@ def test_quickstart_saves_readable_text(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize('arguments', [
   ('run_tests.py',), ('run_package_checks.py',),
-  ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'demo'),
-  ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'relationship'),
+  ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'chart'),
   ('-m', 'bazi.calendar.celestial_data.generator'),
 ])
 def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
@@ -84,20 +83,13 @@ def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
   assert re.search('[\u4e00-\u9fff]', result.stdout)
 
 
-def test_knowledge_guide_matches_the_corpus() -> None:
+def test_knowledge_guide_explains_source_states() -> None:
   from typing import get_args
 
-  from bazi.knowledge import Applicability, KnowledgeBase, SourceState
+  from bazi.knowledge import SourceState
 
   guide = (ROOT / 'docs/guides/knowledge.md').read_text(encoding='utf-8')
-  knowledge = KnowledgeBase.load()
-  entries = tuple(knowledge.entries.values())
   # Every declared value must remain documented, including values with zero corpus hits.
-  for field, schema in (('source_state', SourceState), ('applicability', Applicability)):
-    row = next(line for line in guide.splitlines() if line.startswith(f'| `{field}` |'))
-    values = re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1])
-    assert sorted(values) == sorted(get_args(schema)), field
-  row = next(line for line in guide.splitlines() if line.startswith('| `show_by_default` |'))
-  assert re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1]) == ['True', 'False']
-  assert all(entry.source_state == 'witnessed' and entry.applicability == 'unconditional'
-             for entry in entries if entry.show_by_default)
+  row = next(line for line in guide.splitlines() if line.startswith('| `state` |'))
+  values = re.findall(r'`([^`]+)`', row.strip('|').split('|')[-1])
+  assert sorted(values) == sorted(get_args(SourceState))

@@ -12,7 +12,7 @@ from bazi.knowledge import KnowledgeEntry, KnowledgeSource
 
 SOURCE_FIELDS: Final = {
   'work': True, 'attribution': True, 'edition': True, 'locator': True,
-  'url': False, 'text_layer': False, 'excerpt': True, 'supports': True, 'limitations': True,
+  'url': False, 'excerpt': True, 'supports': True, 'limitations': True,
 }
 
 

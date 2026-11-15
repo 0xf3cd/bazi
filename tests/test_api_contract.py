@@ -236,7 +236,7 @@ def test_modules_and_candidates_classified() -> None:
 @pytest.mark.parametrize('injection, rejected_name', [
   ('', None),
   ("importlib.import_module('bazi.knowledge').UnregisteredDynamic = type('UnregisteredDynamic', (), {'__module__': 'bazi.knowledge'})", 'UnregisteredDynamic'),
-  ("importlib.import_module('bazi.knowledge').KnowledgeRole.unregistered_dynamic = property(lambda self: None)", 'unregistered_dynamic'),
+  ("importlib.import_module('bazi.knowledge').KnowledgeObject.unregistered_dynamic = property(lambda self: None)", 'unregistered_dynamic'),
   ("importlib.import_module('bazi').__all__.append('Any')", 'Any'),
   ("importlib.import_module('bazi').__all__.remove('bazi_chart')", 'bazi_chart'),
   ("importlib.import_module('bazi.calendar').__all__.append('solar_time')", 'solar_time'),
@@ -374,12 +374,12 @@ class Public:
 
 
 @pytest.mark.parametrize('earlier', [
-  'class KnowledgeRole:\n  unregistered_dead_member: str\n',
-  'class KnowledgeRole(object):\n  name: str\n  object_id: str\n',
+  'class KnowledgeObject:\n  unregistered_dead_member: str\n',
+  'class KnowledgeObject(object):\n  name: str\n  object_id: str\n',
 ])
 def test_repeated_classes_cannot_hide_candidates(earlier: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
-  anchor = '@dataclass(frozen=True)\nclass KnowledgeRole:'
+  anchor = '@dataclass(frozen=True)\nclass KnowledgeObject:'
   assert source.count(anchor) == 1
   changed = source.replace(anchor, 'if False:\n' + '\n'.join('  ' + line for line in earlier.splitlines()) + '\n\n' + anchor)
   compile(changed, '<repeated-class-candidate>', 'exec')

@@ -8,14 +8,13 @@ from typing import get_args
 import pytest
 
 from bazi.context_matching import ScopeName, TransitEntry, criteria
-from bazi.knowledge import Applicability
 from bazi import cli
 
 from cli_runner import BIRTH, COMMANDS, run_cli, run_guarded_script
 
 
 @pytest.mark.parametrize('args', [('--help',), ('-h',)])
-def test_top_level_help_lists_five_tasks(tmp_path: Path, args: tuple[str, ...]) -> None:
+def test_top_level_help_lists_tasks(tmp_path: Path, args: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, *args)
   assert result.returncode == 0 and '提示：' not in result.stderr
   for task in COMMANDS:
@@ -35,11 +34,7 @@ def test_task_help_fits_one_screen(tmp_path: Path, task: str) -> None:
   result = run_cli(tmp_path, task, '--help', env={'COLUMNS': '80'})
   assert result.returncode == 0
   assert len(result.stdout.splitlines()) <= 45, result.stdout
-  if task in ('demo', 'relationship'):
-    assert '--seed' in result.stdout
-    assert '--birth-time' not in result.stdout
-  else:
-    assert '更多选项' in result.stdout
+  assert '更多选项' in result.stdout
 
 
 def test_chart_command_shows_a_seeded_chart(tmp_path: Path) -> None:
@@ -79,9 +74,9 @@ def test_removed_export_options_write_nothing(tmp_path: Path, optimized: bool, t
 
 def test_gz_month_help_names_the_year(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'match', 'editorial.spouse_star_tougan.v1', *BIRTH, '--gender', 'female',
-                '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month', '--gz-month', '午')
+                '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month', '--ganzhi-month', '午')
   assert result.returncode == 2 and 'ganzhi_year' in result.stderr
-  action = next(a for a in cli._subcommand_parsers(cli._command_parser())['match']._actions if '--gz-month' in a.option_strings)
+  action = next(a for a in cli._subcommand_parsers(cli._command_parser())['match']._actions if '--ganzhi-month' in a.option_strings)
   assert '--ganzhi-year' in (action.help or '')
 
 
@@ -89,7 +84,6 @@ def test_options_agree_with_library_directories() -> None:
   subparsers = cli._subcommand_parsers(cli._command_parser())
   assert tuple(subparsers) == COMMANDS
   dests = {name: {action.dest: action for action in sub._actions} for name, sub in subparsers.items()}
-  assert set(dests['knowledge']['applicability'].choices or ()) == set(get_args(Applicability))
   assert tuple(dests['knowledge']['list_values'].choices or ()) == tuple(cli._LIST_DIMENSIONS)
   scopes = tuple(dests['match']['observation_scope'].choices or ())
   assert scopes == get_args(ScopeName) == ('natal', 'natal_and_liunian', 'natal_and_transits')

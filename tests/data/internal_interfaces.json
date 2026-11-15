@@ -12,8 +12,7 @@
     "bazi/knowledge.py|._validation|_text": "知识对象共用非空文字检查，领域限制留在knowledge。",
     "bazi/knowledge.py|._validation|_choice": "通用成员值检查归包内validation，不公开新运行时接口。",
     "bazi/knowledge.py|._validation|_tuple": "知识对象使用通用元组形状检查。",
-    "bazi/knowledge.py|._validation|_json_loads": "编辑源读取复用 JSON 解析、重复键及 UTF-8 检查，引用和状态仍由知识模块校验。",
-    "bazi/knowledge.py|._validation|_utf8": "知识文字渲染检查输出可保存性，不把输出限制放进查询文字校验。",
+    "bazi/knowledge.py|._validation|_json_loads": "编辑源读取复用 JSON 解析及重复键检查，引用和状态仍由知识模块校验。",
     "bazi/knowledge.py|._validation|_mapping": "知识JSON共用字段集合检查，schema版本及引用校验留在knowledge。",
     "bazi/transit_chart.py|.utils.bazi_utils|_ganzhi_of_day_at_moment": "流运调用日柱算法所属模块，保留命盘换日点与现有精度。",
     "bazi/transit_chart.py|.transits|_TransitDatabase": "公开流运入口复用transits内的命盘小运与大运查询实现，不重新实现年份标签或物理边界。",
@@ -32,6 +31,7 @@
     "cross_module": {
       "bazi/cli.py|parser._actions": "CLI 从同一 argparse 任务树取得子解析器，用于任务帮助与参数错误归属，不维护第二份任务映射。",
       "bazi/cli.py|argparse._SubParsersAction": "识别 argparse 的子命令动作，仅供 CLI 解析器自省，不成为库 API。",
+      "bazi/cli.py|argparse._ActionsContainer": "共享阅读选项接收解析器或参数组；仅用 argparse 共同基类标注，不依赖私有方法。",
       "bazi/bazi_chart.py|self._bazi._attribution_reached": "出生时间的精度与地点钟归属由 Bazi 所有；命宫与月令状态复用同一政策，不读取地点私有状态。",
       "bazi/bazi.py|solar_time._canonical_longitude": "地点盘委托太阳时模块规范经度；经度精度及拒绝规则由太阳时模块定义。",
       "bazi/transit_chart.py|self._transit_db._dayun_at_month": "物理大运边界属于包内流运数据库；TransitChart先校验坐标及历法可用性，再调用包内入口。",

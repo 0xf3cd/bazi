@@ -35,7 +35,6 @@ def _tuple(value: object, member_type: type[_T]) -> None:
 def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
   result: dict[str, object] = {}
   for key, value in pairs:
-    _utf8(key)
     if key in result:
       raise ValueError(f'Duplicate JSON key: {key}')
     result[key] = value
@@ -60,19 +59,6 @@ def _utf8(text: str) -> str:
 
 
 def _json_loads(text: str) -> Any:
-  '''拒绝重复键和孤立代理项；键由解析 hook 检查，值使用显式栈遍历，避免深层值检查触发递归。'''
+  '''按标准 JSON 解析，并拒绝重复键。'''
   _text(text, empty=True)
-  try:
-    value = json.loads(text, object_pairs_hook=_pairs)
-  except RecursionError:
-    raise ValueError('JSON nesting exceeds the supported parsing depth') from None
-  pending = [value]
-  while pending:
-    current = pending.pop()
-    if isinstance(current, str):
-      _utf8(current)
-    elif isinstance(current, list):
-      pending.extend(current)
-    elif isinstance(current, dict):
-      pending.extend(current.values())
-  return value
+  return json.loads(text, object_pairs_hook=_pairs)

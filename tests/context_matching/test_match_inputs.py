@@ -14,13 +14,12 @@ from bazi.context_matching import (
   ContextResult, CriterionResult, MatchStatus, CriterionReason,
   TransitCoordinate, YearCoordinate, _CRITERIA, evaluate_context,
 )
-from bazi.defines import Zhu, Tiangan, Ganzhi, DizhiRelation
+from bazi.defines import Zhu, Tiangan
 from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, TuwangDef, DEFAULT_CONFIG
-from bazi.transits import TransitKind, TransitSet
-from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
+from bazi.transits import TransitKind
 
-from matching_samples import GUANSHA, LEGAL, PALACE, TOUGAN, chart, match, rel_match, Year, record
-from matching_samples import occurrences, relationship_evidence
+from matching_samples import GUANSHA, LEGAL, PALACE, chart, match, rel_match, Year, record
+from matching_samples import occurrences
 
 
 def test_input_identity_includes_configuration() -> None:
@@ -54,19 +53,11 @@ def test_result_components_are_immutable() -> None:
   assert result == match() and hash(result) == hash(match())
 
 
-def test_result_input_is_copied_in_and_out() -> None:
+def test_result_directly_holds_input() -> None:
   baseline = match()
   incoming = baseline.bazi
-  result = replace(baseline, _bazi=incoming)
-  expected_hash, rendered, pillars = hash(result), result.render(), result.bazi.pillars
-  outgoing = result.bazi
-  assert outgoing is not result.bazi and outgoing is not incoming
-  for value in (incoming, outgoing):
-    # Private mutation is a probe of the copy boundary, not a supported Bazi operation.
-    object.__setattr__(value, '_config', BaziConfig.from_values(dayun_year_rule='fixed_decade'))
-    object.__setattr__(value, '_solar_datetime', datetime(2001, 1, 1))
-  assert result == baseline and hash(result) == expected_hash
-  assert result.render() == rendered and result.bazi.pillars == pillars
+  result = replace(baseline, bazi=incoming)
+  assert result.bazi is incoming and result == baseline
 
 
 def test_result_render_rejects_surrogates() -> None:
@@ -87,7 +78,7 @@ def test_year_rejects_non_exact_int(value: Any) -> None:
 def test_bad_requests_fail_instead_of_unknown() -> None:
   c = chart()
   options: dict[str, Any]
-  for options in ({'criterion_id': 42}, {'observation': 'natal'}, {'knowledge': {}}, {'include_reference_only': 1}):
+  for options in ({'criterion_id': 42}, {'observation': 'natal'}):
     with pytest.raises(TypeError):
       evaluate_context(c, **{'criterion_id': GUANSHA, 'observation': NatalObservation(), **options}) # type: ignore[arg-type]
   with pytest.raises(TypeError):
@@ -116,13 +107,6 @@ def test_public_record_value_boundaries() -> None:
   for change in ({'observations': {}}, {'observations': frozendict({1: True})}, {'observations': frozendict({'a': 1})}, {'reason': 1}):
     with pytest.raises(TypeError):
       replace(result.criterion, **change)
-  for change in ({'observation': 'natal'}, {'criterion': {}}, {'evidence': []}, {'reference_ids': []}, {'reference_ids': (1,)}, {'_bazi': None}, {'knowledge': None}, {'evidence': (None,)}):
-    with pytest.raises(TypeError):
-      replace(result, **change)
-  with pytest.raises(ValueError):
-    replace(result, reference_ids=('unknown',))
-  with pytest.raises(ValueError):
-    replace(result, reference_ids=('',))
 
 
 @pytest.mark.parametrize('reason,status,complete', [
@@ -174,27 +158,6 @@ def test_criterion_matrix_rejects_corruption(criterion_id: str, observation: Obs
     replace(criterion, **{field: change[field]}) # type: ignore[arg-type]
 
 
-def test_result_cross_field_constraints() -> None:
-  result = rel_match(TOUGAN, birth='2000-01-29 06:00', include_reference_only=True)
-  evidence = relationship_evidence(result)
-  with pytest.raises(TypeError):
-    replace(result, evidence=object()) # type: ignore[arg-type]
-  with pytest.raises(ValueError, match='observation type'):
-    replace(result, observation=LiunianObservation())
-  with pytest.raises(ValueError):
-    replace(result, evidence=occurrences(match())[:1])
-  with pytest.raises(ValueError, match='Context criterion requires occurrences'):
-    replace(match(), evidence=evidence)
-  with pytest.raises(ValueError, match='Natal scope'):
-    replace(result, evidence=replace(evidence, transits=TransitSet(liunian=Ganzhi.from_str('甲辰'))))
-  with pytest.raises(ValueError, match='sequence'):
-    replace(result, evidence=replace(evidence, house_relations=GanzhiRelationDiscovery({
-      DizhiRelation.冲: (frozenset({GanzhiOccurrence(9, Ganzhi.from_str('甲子'))}),),
-    })))
-  with pytest.raises(ValueError, match='Unknown claim'):
-    replace(result, reference_ids=('unknown.claim',))
-
-
 def test_complete_scope_requires_obtained_kinds() -> None:
   def evaluate(coordinate: TransitCoordinate | None, kinds: tuple[TransitKind, ...]) -> ContextResult:
     return evaluate_context(chart(1, 'male'), criterion_id=PALACE, observation=TransitObservation(kinds, coordinate))
@@ -203,27 +166,21 @@ def test_complete_scope_requires_obtained_kinds() -> None:
   partial = evaluate(YearCoordinate(ganzhi_year=2024), (TransitKind.XIAOYUN, TransitKind.DAYUN))
   for result in (no_coordinate, partial):
     assert result.criterion.scope_complete is False
-    with pytest.raises(ValueError, match='Complete scope'):
-      replace(result, criterion=replace(result.criterion, reason='premise_satisfied'))
   complete = evaluate(YearCoordinate(ganzhi_year=2024), (TransitKind.DAYUN, TransitKind.LIUNIAN))
   assert isinstance(complete.observation, TransitObservation) and complete.criterion.scope_complete
-  with pytest.raises(ValueError, match='Complete scope'):
-    replace(complete, observation=replace(complete.observation, coordinate=None))
-  with pytest.raises(ValueError, match='requested kinds'):
-    replace(complete, observation=replace(complete.observation, kinds=(TransitKind.DAYUN,)))
 
 
 def test_result_fields_and_noncertification() -> None:
   result = match()
   assert tuple(asdict(result.criterion)) == ('criterion_id', 'reason', 'observations')
   assert CriterionResult.__match_args__ == ('criterion_id', 'reason', 'observations')
-  assert ContextResult.__match_args__ == ('observation', 'criterion', 'evidence', 'reference_ids', '_bazi', 'knowledge')
-  assert tuple(asdict(result)) == ('observation', 'criterion', 'evidence', 'reference_ids', '_bazi', 'knowledge')
+  assert ContextResult.__match_args__ == ('observation', 'criterion', 'evidence', 'reference_ids', 'bazi')
+  assert tuple(asdict(result)) == ('observation', 'criterion', 'evidence', 'reference_ids', 'bazi')
   assert asdict(result)['reference_ids'] == LEGAL
-  constructed = ContextResult(result.observation, result.criterion, result.evidence, LEGAL, result.bazi, result.knowledge)
+  constructed = ContextResult(result.observation, result.criterion, result.evidence, LEGAL, result.bazi)
   assert constructed == result and hash(constructed) == hash(result)
   match constructed:
-    case ContextResult(_, _, _, ids, _, _):
+    case ContextResult(_, _, _, ids, _):
       assert ids == LEGAL
     case _:
       pytest.fail('ContextResult positional pattern did not match')
@@ -246,8 +203,8 @@ def test_manual_reference_ids_keep_order_repeats() -> None:
   assert manual.reference_ids == ids
   assert asdict(manual)['reference_ids'] == ids
   rendered = manual.render()
-  assert rendered.index('原作参考前提：' + LEGAL[1]) < rendered.index('原作参考前提：' + LEGAL[0])
-  assert rendered.count('原作参考前提：' + LEGAL[1]) == 2
+  assert rendered.index('参考条目：' + LEGAL[1]) < rendered.index('参考条目：' + LEGAL[0])
+  assert rendered.count('参考条目：' + LEGAL[1]) == 2
   foreign = ('tiangan.ding.definition',)
   assert replace(result, reference_ids=foreign).reference_ids == foreign
   assert result.reference_ids == LEGAL

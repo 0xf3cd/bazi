@@ -399,13 +399,17 @@ def check_related(page: Page, identifier: str, entries: tuple[KnowledgeEntry, ..
 def check_entry_references(page: Page, identifier: str, entry: KnowledgeEntry, kb: KnowledgeBase) -> None:
   '''检查必需链接，而不是仅检查页面上已经存在的链接是否可达。'''
   expected = []
-  for object_id in dict.fromkeys(role.object_id for role in entry.roles):
+  for object_id in entry.objects:
     expected.append(('objects.html#catalog-objects-' + object_id, kb.objects[object_id].name + ' [' + object_id + ']'))
-  for context_id in entry.contexts:
-    expected.append(('contexts.html#catalog-contexts-' + context_id, kb.contexts[context_id].label + ' [' + context_id + ']'))
   for source_id in entry.sources:
     source = kb.sources[source_id]
     expected.append(('sources.html#catalog-sources-' + source_id, source.work + ' · ' + source.locator + ' [' + source_id + ']'))
+  for info in criteria().values():
+    if entry.claim_id in info.claim_ids:
+      expected.append((
+        'criteria.html#catalog-criteria-' + info.criterion_id,
+        info.definition.split('；', 1)[0] + ' [' + info.criterion_id + ']',
+      ))
   assert page.references[identifier] == expected, ('Entry references', identifier)
 
 
@@ -414,11 +418,11 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
   source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   records: dict[str, Mapping[str, typing.Any]] = {
     kind: {record[key_name]: record for record in source[kind]} for kind, key_name in (
-      ('objects', 'object_id'), ('contexts', 'context_id'), ('sources', 'source_id'), ('entries', 'claim_id'),
+      ('objects', 'object_id'), ('sources', 'source_id'), ('entries', 'claim_id'),
     )
   }
   registries: dict[str, typing.Mapping[str, typing.Any]] = {
-    'objects': kb.objects, 'contexts': kb.contexts, 'sources': kb.sources, 'entries': kb.entries, 'criteria': criteria(),
+    'objects': kb.objects, 'sources': kb.sources, 'entries': kb.entries, 'criteria': criteria(),
   }
   result = {}
   for kind, registry in registries.items():
@@ -433,7 +437,11 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
       assert set(section) == names, (kind, key, set(section), names)
       for name in names:
         rendered = getattr(value, name)
-        expected = json_value(rendered) if kind == 'criteria' else records[kind][key][name]
+        if kind == 'criteria':
+          expected = json_value(rendered)
+        else:
+          defaults = {field.name: json_value(field.default) for field in dataclasses.fields(value) if field.default is not dataclasses.MISSING}
+          expected = records[kind][key].get(name, defaults.get(name))
         if isinstance(rendered, str):
           assert normalized(section[name]) == normalized(expected), (kind, key, name)
         else:
@@ -443,9 +451,9 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
       selected: tuple[KnowledgeEntry, ...]
       if kind == 'entries':
         assert not page.blocks[identifier], ('Repeated entry rendering', key)
-        assert list(section)[:2] == ['text', 'applicability'], ('Entry reading order', key)
+        assert next(iter(section)) == 'text', ('Entry reading order', key)
         if value.premise:
-          assert list(section)[2] == 'premise', ('Entry premise order', key)
+          assert list(section)[1] == 'premise', ('Entry premise order', key)
         check_entry_references(page, identifier, value, kb)
         selected = ()
       elif kind == 'criteria':
@@ -457,23 +465,20 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
           assert (href, observation_type.__name__) in page.references[identifier], ('Criterion observation', key, qualified)
         selected = tuple(kb.entries[claim_id] for claim_id in value.claim_ids if claim_id in kb.entries)
       elif kind == 'objects':
-        selected = kb.query(object_id=key, include_reference_only=True)
-      elif kind == 'contexts':
-        selected = kb.query(context_id=key, include_reference_only=True)
+        selected = kb.query(key)
       else:
-        selected = kb.query(source_id=key, include_reference_only=True)
+        selected = kb.query(source_id=key)
       check_related(page, identifier, selected)
       heading = page.section_headings[identifier]
       assert '[' + key + ']' in heading, ('Stable ID in title', kind, key)
       if kind == 'objects':
         assert heading.startswith(value.name + ' ['), ('Object name', key)
-      elif kind == 'contexts':
-        assert heading.startswith(value.label + ' ['), ('Context name', key)
       elif kind == 'sources':
         assert heading.startswith(value.work + ' · ' + value.locator + ' ['), ('Source title', key)
-        assert (value.url, value.url) in page.references[identifier], ('Source original', key)
+        if value.url:
+          assert (value.url, value.url) in page.references[identifier], ('Source original', key)
       elif kind == 'entries':
-        object_names = '、'.join(dict.fromkeys(kb.objects[role.object_id].name for role in value.roles))
+        object_names = '、'.join(kb.objects[identifier].name for identifier in value.objects)
         assert heading == object_names + ' · ' + '、'.join(value.topics) + ' [' + key + ']', ('Entry title', key)
     result[kind] = len(registry)
   for kind, dimension in (('topics', 'topic'), ('viewpoints', 'viewpoint')):
@@ -481,17 +486,16 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
     assert set(pages[f'catalog/{kind}.html'].sections) == expected_ids, kind
     result[kind] = len(expected_ids)
     for value in kb.filter_values(dimension):
-      selected = (kb.query(topic=value, include_reference_only=True) if kind == 'topics'
-                  else kb.query(viewpoint=value, include_reference_only=True))
+      selected = kb.query(topic=value) if kind == 'topics' else kb.query(viewpoint=value)
       check_related(pages[f'catalog/{kind}.html'], 'catalog-' + kind + '-' + value, selected)
-  dimensions = ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope')
+  dimensions = ('subject', 'topic', 'source_id', 'viewpoint')
   filters = pages['catalog/filters.html']
   assert set(filters.sections) == {'catalog-filters-' + dimension for dimension in dimensions}
   query: Callable[..., tuple[KnowledgeEntry, ...]] = kb.query
   for dimension in dimensions:
-    expected_rows = [['合法值', '默认命中', '含参考命中']]
-    for value in kb.filter_values(dimension):
-      expected_rows.append([value, str(len(query(**{dimension: value}))), str(len(query(**{dimension: value}, include_reference_only=True)))])
+    expected_rows = [['合法值', '命中']]
+    for value in kb.filter_values('object_id' if dimension == 'subject' else dimension):
+      expected_rows.append([value, str(len(query(**{dimension: value})))])
     assert filters.rows['catalog-filters-' + dimension] == expected_rows, dimension
   result['filter_dimensions'] = len(dimensions)
   return result

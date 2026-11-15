@@ -13,7 +13,7 @@ from typing import TypeVar
 from .bazi_chart import BaziChart, _check_chart
 from .calendar import calendar_utils_of
 from .data_types import HiddenTianganDict
-from .defines import Zhu, Tiangan, Dizhi, Ganzhi
+from .defines import Zhu, Tiangan, Dizhi, Ganzhi, Shishen
 from .utils.bazi_utils import traits, shishen, hidden_tiangans, nayin_str, shier_zhangsheng
 
 
@@ -109,6 +109,7 @@ def _hidden_tiangans(style: TextStyle, d: HiddenTianganDict, day_master: Tiangan
 def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
   '''
   命盘的基本展示：日元、出生时刻、四柱及其十神、阴阳五行、藏干、纳音与十二长生。
+  十神个数按三处非日主明干与四支主气统计，占比不表示力量。
 
   Note:
   - 文本以换行开头、换行结尾，可直接 `print`；地点盘另列民用、真太阳与节气表出生时刻。
@@ -157,6 +158,16 @@ def basic_text(chart: BaziChart, *, style: TextStyle | None = None) -> str:
 
     s += f'{head}：  {tg_str}      {dz_str}     {hd_str}\n'
     s += f'  -- 纳音：{nayin[idx]}  -- 十二长生：{zhangsheng[idx]}\n'
+
+  counts = {ss: 0 for ss in Shishen}
+  for pair in shishens:
+    if pair.tiangan is not None:
+      counts[pair.tiangan] += 1
+    counts[pair.dizhi] += 1
+  s += '\n十神统计（三处明干与四支主气，不计力量）：\n'
+  for ss, count in counts.items():
+    if count:
+      s += f'原局中，{ss}有{count}个，占比{count / sum(counts.values()):.2%}。\n'
 
   return s
 

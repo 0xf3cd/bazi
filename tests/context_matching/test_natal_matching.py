@@ -57,7 +57,7 @@ def test_duplicate_pillars_keep_all_occurrences() -> None:
 
 
 def test_visible_guansha_satisfies_premise() -> None:
-  result = evaluate_context(chart(5, hour=16), criterion_id=GUANSHA, observation=NatalObservation(), include_reference_only=True)
+  result = evaluate_context(chart(5, hour=16), criterion_id=GUANSHA, observation=NatalObservation())
   assert tuple(map(str, result.bazi.pillars)) == ('己卯', '丙子', '壬戌', '戊申')
   assert {(o.position, str(o.stem), str(o.shishen)) for o in occurrences(result) if o.layer is TianganLayer.明干 and o.shishen in (Shishen.正官, Shishen.七杀)} == {
     (Zhu.年, '己', '正官'), (Zhu.时, '戊', '七杀'),

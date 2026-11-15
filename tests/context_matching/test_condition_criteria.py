@@ -4,11 +4,11 @@ from dataclasses import replace
 
 import pytest
 
-from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, criterion, evaluate_context
+from bazi.context_matching import NatalObservation, LiunianObservation, LiunianPosition, criterion
 from bazi.defines import Zhu
 from bazi.knowledge import KnowledgeBase
 
-from matching_samples import DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS, chart, match
+from matching_samples import DING, GENG, PIANYIN, XIAOYIN, CONDITION_CLAIMS, match
 from matching_samples import occurrences
 
 
@@ -49,17 +49,6 @@ def test_conditions_judge_only_computable_facts(
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_conditions_without_entry_still_judge(criterion_id: str) -> None:
-  knowledge = KnowledgeBase.load()
-  claim_id = CONDITION_CLAIMS[criterion_id]
-  custom = KnowledgeBase(tuple(knowledge.objects.values()), tuple(knowledge.contexts.values()), tuple(knowledge.sources.values()), tuple(e for e in knowledge.entries.values() if e.claim_id != claim_id))
-  result = match(3, criterion_id=criterion_id, knowledge=custom)
-  assert result.criterion == match(3, criterion_id=criterion_id).criterion
-  assert result.reference_ids == ()
-  assert '关联参考' not in result.render() and '事实判别不表示原文完整条件已满足' in result.render()
-
-
-@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
 @pytest.mark.parametrize('year,reason', [(None, 'missing_transit_coordinate'), (1998, 'transit_unavailable')])
 def test_conditions_keep_scope_reasons_apart(criterion_id: str, year: int | None, reason: str) -> None:
   # Day 3 makes the 丁 fact false and the other three true; incomplete scope overrides both.
@@ -72,42 +61,16 @@ def test_conditions_keep_scope_reasons_apart(criterion_id: str, year: int | None
 
 
 @pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_references_render_full_unevaluated_text(criterion_id: str) -> None:
+def test_references_identify_unevaluated_text(criterion_id: str) -> None:
   knowledge = KnowledgeBase.load()
   claim_id = CONDITION_CLAIMS[criterion_id]
   entry = knowledge.entry(claim_id)
-  result = match(3, criterion_id=criterion_id, knowledge=knowledge)
+  result = match(3, criterion_id=criterion_id)
   rendered = result.render()
-  block = rendered.split(f'关联参考（该判据的条件参考，不表示事实已成立或完整前提已满足）：{claim_id}\n', 1)[1]
-  assert block == knowledge.render(entry, premise_verdict='完整前提未由程序判别')
-  for text in (entry.text, entry.premise, *entry.limits, *(limit for key in entry.contexts for limit in knowledge.contexts[key].limits)):
-    assert text in block
-  assert entry.legacy is not None and entry.legacy.field_premise in block
+  assert f'参考条目：{claim_id}' in rendered and entry.text not in rendered
   assert '事实判别不表示原文完整条件已满足，也不表示现实事件成立。' in rendered
-  assert '前提满足只表示' not in rendered and '原作参考前提：' not in rendered
-  # Static lookup by the same context returns the same entry without a chart verdict.
-  assert tuple(value.claim_id for value in knowledge.query(context_id=criterion_id, include_reference_only=True)) == (claim_id,)
-  assert '前提判别：' not in knowledge.render(entry)
-  # Reference output stays opt-in: the default call judges the same fact and attaches nothing.
-  default = evaluate_context(chart(3), criterion_id=criterion_id, observation=NatalObservation(), knowledge=knowledge)
-  assert default.criterion == result.criterion and default.reference_ids == ()
-
-
-@pytest.mark.parametrize('criterion_id', CONDITION_CLAIMS)
-def test_custom_reference_leaves_the_fact(criterion_id: str) -> None:
-  claim_id = CONDITION_CLAIMS[criterion_id]
-  original = KnowledgeBase.load()
-  knowledge = KnowledgeBase(
-    tuple(original.objects.values()), tuple(original.contexts.values()), tuple(original.sources.values()),
-    tuple(replace(e, text='CUSTOM-REPLACEMENT-TEXT') if e.claim_id == claim_id else e for e in original.entries.values()),
-  )
-  result = match(3, criterion_id=criterion_id, knowledge=knowledge)
-  assert result.reference_ids == (claim_id,)
-  assert result.criterion == match(3, criterion_id=criterion_id).criterion
-  rendered = result.render()
-  assert f'：{claim_id}' in rendered and 'CUSTOM-REPLACEMENT-TEXT' in rendered
-  assert '前提判别：完整前提未由程序判别' in rendered
-  assert result.render() == rendered
+  for text in (entry.text, entry.premise, *entry.limits):
+    assert text in knowledge.render(entry)
 
 
 def test_entry_role_separates_premise_condition() -> None:

@@ -6,32 +6,34 @@
 ```
 
 排盘路径见 {doc}`quickstart`；不运行 Python 时可直接浏览 {doc}`../catalog/index`。
+旧版调用与知识文件的迁移见 {doc}`../release-notes`。
 
 ## 按名称或 ID 找对象
 
-先按中文名找到“丁”，再查询并读出条文：
+直接按中文名查询；下面只读定义主题：
 
 ```{testcode} load
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-for obj in kb.find_objects('丁'):
-  print(obj.name, obj.object_id)
-  for entry in kb.query(object_id=obj.object_id):
-    print(kb.render(entry, show_sources=False))
+for entry in kb.query('丁', topic='定义'):
+  print(entry.text)
 ```
 
 ```{testoutput} load
-丁 tiangan.ding
 丁为阴火。
 ```
 
-`find_objects` 精确匹配名称，重名会全部返回，无匹配则返回空元组。它不去掉名称两侧空格，也不作模糊搜索；
-`'丁火'` 或 `'丁 '` 不会匹配“丁”。已有 `Tiangan.丁` 或十神枚举时，可用 `bazi.knowledge.object_id(成员)` 得到稳定 ID。
+`kb.query('丁')` 返回丁的全部相关材料，也可传 `Tiangan.丁`、十神或五行枚举。
+枚举按类别和中文名称对应对象，例如 `Wuxing.WOOD` 对应“木”，不靠英文成员名拼 ID。
+字符串可以是对象 ID 或精确名称；重名时抛 `ValueError` 并列出候选，未知名称也报错。
+需要查看候选时，用 `find_objects(name)`，它返回全部同名对象，无匹配返回空元组。
+查询不去掉两侧空格，也不作模糊匹配；`'丁火'` 或 `'丁 '` 不会匹配“丁”。
 已知条目 ID 则用 `kb.entry(claim_id)` 直接读取。
 
-`load()` 每次读取并校验随包知识，返回不可变对象。`objects`、`contexts`、`sources`、`entries`
-分别保存对象、人工查阅情境、来源记录和条目；完整字段见 {py:class}`~bazi.knowledge.KnowledgeBase`。
+`load()` 每次读取并校验随包知识。`objects`、`sources`、`entries`
+分别保存 {py:class}`~bazi.knowledge.KnowledgeObject`、{py:class}`~bazi.knowledge.KnowledgeSource`
+和 {py:class}`~bazi.knowledge.KnowledgeEntry`，完整字段见各类型的 API 参考。
 
 (knowledge-sources)=
 ## 条目的来源
@@ -49,8 +51,8 @@ print(source.attribution)
 print(source.edition)
 print(source.locator)
 print(source.excerpt)
-print('支持', source.supports)
-print('限度', source.limitations)
+print('支持范围', source.supports)
+print('来源说明', source.limitations)
 ```
 
 ```{testoutput} sources
@@ -59,47 +61,48 @@ print('限度', source.limitations)
 明万历二十八年闽书林刘龙田乔山堂刊本
 PDF 第 70 页左右两半叶，「十干体象」
 丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼
-支持 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
-限度 丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
+支持范围 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
+来源说明 白文正文。丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
 ```
 
 这里读取第一份来源；遍历 `entry.sources` 可读到全部来源。`source.url` 是所用版本的链接，
-反向用 `kb.query(source_id=source.source_id, include_reference_only=True)` 找引用它的条目。
+反向用 `kb.query(source_id=source.source_id)` 找引用它的条目。
 来源记录可能尚无条目引用，不能从条目反推完整来源目录。
 
-`kb.render(entry)` 默认连同来源、前提和限度一起显示；`show_sources=False` 只关闭来源详情，不隐藏前提或限度。
-条目里的 `source_state` 显示为“来源状态”，来源自身的 `state` 显示为“见证状态”。
+`kb.render(entry)` 默认显示条目 ID、正文、前提、读法、署名、限度和简短出处。
+`show_sources=True` 追加版本、定位、链接、引文和支持范围；必要来源说明始终显示，包括正文／夹注的区别。
 
 ## 查询与过滤
 
-`query` 可组合七种条件：`object_id`、`context_id`、`topic`、`source_id`、`viewpoint`、`applicability`、`time_scope`。
-多个条件取交集，结果保持语料顺序。默认只返回 `show_by_default=True` 的条目；加 `include_reference_only=True` 才包含参考条目。
+`query(subject=None, *, topic=None, source_id=None, viewpoint=None)` 可组合对象、主题、来源和读法。
+多个条件取交集，结果保持语料顺序；不传条件返回全部条目。多对象条目在每个对象下都能查到，
+关系方向由正文说明，对象列表不区分主次。
 
-例如文昌的条目均仅供参考，须显式包含，再读取各读法的文字：
+例如查阅文昌的两种读法：
 
 ```{testcode} shensha-knowledge
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-for entry in kb.query(object_id='shensha.wenchang', include_reference_only=True):
+for entry in kb.query('文昌'):
   source = kb.sources[entry.sources[0]]
   print(entry.text)
-  print(entry.viewpoint, source.work, source.text_layer)
+  print(entry.viewpoint, source.work)
 ```
 
 ```{testoutput} shensha-knowledge
 《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。
-XIN_XU 星学大成 zhushi
+XIN_XU 星学大成
 问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。
-现代问真 问真《神煞大全》 editorial
+现代问真 问真《神煞大全》
 ```
 
-`viewpoint` 可用于进一步过滤。`text_layer` 中 `zhushi` 表示夹注，`editorial` 表示现代编者整理；
-各来源的 `supports`、`limitations` 分别说明它支持表值、锚点或查找位置中的哪一部分。
+`kb.query('文昌', viewpoint='XIN_XU')` 只取辛戌读法。
+来源的 `limitations` 说明摘录属于正文、夹注还是原创说明；`supports` 说明它支持表值、锚点或查找位置中的哪一部分。
 天乙、桃花、驿马、华盖、羊刃也有参考对象；规则与条目入口见 {doc}`rule-coverage`。
 
 用 `kb.filter_values('topic')` 等调用列出某个维度的全部合法值，或浏览 {doc}`../catalog/filters`。
-值合法但没有交集时返回空元组；未知值抛 `ValueError`，与无匹配不同。查阅 `context_id` 是人工过滤，不执行命盘前提判别。
+值合法但没有交集时返回空元组；未知值抛 `ValueError`，与无匹配不同。
 
 ## 字面关键词搜索
 
@@ -107,21 +110,21 @@ XIN_XU 星学大成 zhushi
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-for entry in kb.search('火', object_id='tiangan.ding'):
-  print(kb.render(entry, show_sources=False))
+for entry in kb.search('火', subject='丁', topic='定义'):
+  print(entry.text)
 ```
 
 ```{testoutput} search
 丁为阴火。
 ```
 
-`search` 先按 `query` 的条件过滤，再作不分大小写的字面子串匹配；也可显式包含参考条目。
-它搜索条文、前提、署名、主题、观点、例外、限度和对象名称，不搜 ID、情境标签或来源全文，
-不解释正则，也不自动转换繁简字。查对象 ID 请用 `query(object_id=...)`。
+`search` 先按 `query` 的条件过滤，再作不分大小写的字面子串匹配，无匹配返回空元组。
+它搜索条文、前提、署名、主题、读法、限度和对象名称，不搜 ID 或来源全文，
+不解释正则，也不自动转换繁简字。查对象 ID 请用 `query('tiangan.ding')`。
 
 ## 胎元与命宫的取法与候选
 
-这两个对象的全部条目都仅供参考。按阅读目的选 ID，用 `kb.entry(claim_id)` 或下例读文字；
+按阅读目的选 ID，用 `kb.entry(claim_id)` 或下例读文字；
 计算入口见 {doc}`integration`。
 
 | 想了解什么 | 条目 ID |
@@ -135,7 +138,7 @@ for entry in kb.search('火', object_id='tiangan.ding'):
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-for entry in kb.query(object_id='concept.taiyuan', applicability='unresolved', include_reference_only=True):
+for entry in kb.query('胎元', viewpoint='三百日候选待核'):
   print(entry.viewpoint)
   print(entry.text)
 ```
@@ -145,20 +148,45 @@ for entry in kb.query(object_id='concept.taiyuan', applicability='unresolved', i
 《三命通会》四库本转录有「惟有一法以當生前三百日為十月之氣乃是受胎之正」，同段末又问「然則貴人受胎定在三百日又豈可據乎」。保留三百日说为文献候选，不截句判成唯一正确规则。
 ```
 
-各条目的 `limits` 和来源的 `supports`、`limitations` 分别保存原文支持范围及版本、校读差异，读出处时一并读取。
+阅读这些候选时，条目的限度和来源说明须一并读取，字段区别见下节。
 
-## 来源、前提与默认展示
+## 来源与前提
 
-| 字段 | 回答什么 | 取值 |
+条目必填 `claim_id`、`objects`、`text`；以下字段可选。表中类型指 JSON 写法；
+加载后，字符串数组成为不可变元组。
+
+| 条目字段 | JSON 类型 | 含义与文本输出标签 |
 | --- | --- | --- |
-| `source_state` | 出处核定到哪一步 | `witnessed`、`editorial`、`unverified`、`repository_attributed` |
-| `applicability` | 前提整理到哪一步 | `unconditional`、`described`、`unresolved` |
-| `show_by_default` | 默认查询是否返回 | `True`、`False` |
+| `topics` | 字符串数组 | 主题，可填多个；查询参数 `topic` 每次筛选其中一个主题。 |
+| `premise` | 字符串 | 前提：阅读这条文字所需的条件。 |
+| `viewpoint` | 字符串 | 读法：区分同一对象的不同解释或取法。 |
+| `attribution` | 字符串 | 署名：这条文字归于谁；与出处引用分开填写。 |
+| `sources` | 字符串数组 | 来源 ID，按此顺序读取并显示对应的来源记录。 |
+| `limits` | 字符串数组 | 限度：这条文字的适用限制或尚未明确的条件，逐项显示。 |
 
-各项取值的中文解释见 {doc}`../catalog/entries`。
-四种来源状态都不证明条文本身为真或适用于某张命盘；`unverified` 表示来源尚未核实，此时 `sources` 为空。
+来源必填 `source_id`、`work`；以下字段可选：
 
-例如旧条文的展示会保留来源和适用性提醒：
+| 来源字段 | JSON 类型 | 含义与文本输出标签 |
+| --- | --- | --- |
+| `attribution` | 字符串 | 来源署名：来源的作者或归属。 |
+| `edition` | 字符串 | 版本：所用版本。 |
+| `locator` | 字符串 | 定位：页码、篇章等定位信息。 |
+| `url` | 字符串 | 链接：所用版本的链接。 |
+| `excerpt` | 字符串 | 引文／记录：按原文保存的摘录。 |
+| `supports` | 字符串 | 支持范围：这份出处支持条目中的哪一部分。 |
+| `limitations` | 字符串 | 来源说明：出处的局限及摘录的文本层次，如正文、夹注、原创说明。 |
+| `state` | 字符串或 `null` | 来源状态：`witnessed`、`editorial`、`unverified`、`repository_attributed`；可不填。 |
+
+省略的数组字段为空元组，省略的字符串字段为空串；`state` 省略或填 `null` 时为 `None`。
+
+`witnessed` 表示已核原文出处，`editorial` 表示原创说明，`unverified` 表示来源尚未核实，
+`repository_attributed` 表示仓内规则实现的归属。未填状态不表示已核实。
+这些状态均不证明条文本身为真或适用于某张命盘，同一条目可以引用不同状态的来源。
+来源说明中的“原创说明”描述摘录的文本层次，如现代编者整理，不是来源状态；
+这类材料也可以有已核原文出处，标为 `witnessed`。
+条目署名与来源引用分开记录；没有引用不等于内容为假，也不自动认定为作者原创。
+
+例如读一条尚无已核出处的文字：
 
 ```{testcode} render
 from bazi.knowledge import KnowledgeBase
@@ -168,12 +196,17 @@ print(kb.render(kb.entry('legacy.shishen.SH-001'), show_sources=False))
 ```
 
 ```{testoutput} render
-代表同辈、竞争、合作。【仅供参考；来源尚未核实；前提待梳理；命盘适用性未判断】
+条目：legacy.shishen.SH-001
+代表同辈、竞争、合作。
+主题：取象
+读法：旧语料（未核）
+署名：旧语料，出处未核
 ```
 
-默认展示要求 `applicability='unconditional'`、`source_state='witnessed'`，
-每份来源状态与条目一致，且来源至少属于两个不同 `lineage`。两个转载站点不自动构成独立谱系。
-已核来源的条目仍可不默认展示；加载器会校验这些条件，来源状态与命盘前提须分别理解。
+查到条目不表示命盘满足其前提；前提为空只表示未填写，空栏目在展示中省略。
+十神与天干的旧描述中，“须结合命盘条件阅读”以及旺衰、状态、喜用等前提文字，
+没有因此获得计算定义：这些条目尚未还原强弱、喜用或有效生克的完整条件。
+需要判断已实现的结构条件时，使用判据入口，见 {doc}`integration`。
 
 (knowledge-edit)=
 ## 保存并编辑自己的知识文件
@@ -200,7 +233,7 @@ from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
 data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
 entry = next(value for value in data['entries'] if value['claim_id'] == 'tiangan.ding.definition')
-entry['limits'].append('个人备注：此行不是来源内容。')
+entry.setdefault('limits', []).append('个人备注：此行不是来源内容。')
 path = Path('edited.json')
 path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
 
@@ -232,17 +265,28 @@ finally:
 ```
 
 文件会留在运行代码的目录，以后可用 `KnowledgeBase.load(Path('edited.json'))` 重新加载。
-命令行可用 `bazi knowledge --knowledge-source edited.json --object tiangan.ding` 读取；完整用法见 {doc}`cli`。
+命令行可用 `bazi knowledge 丁 --knowledge-source edited.json` 读取；完整用法见 {doc}`cli`。
 备注保留个人归属，不把它写成已核原文；原来的来源状态不认证新增备注。
 
 编辑时保留稳定 ID、原引文及来源信息；判据按 ID 关联条目，自定义库须保持同 ID 的领域含义。
-当前格式是精确整数 `schema_version=3` 和四份注册表，
-条目以 JSON boolean `show_by_default` 控制默认展示，不接受旧 `output` 键、其他 schema 或自动迁移。
-已有编辑源的升级见 {doc}`../release-notes`。
+当前格式是精确整数 `schema_version=4` 和 `objects`、`sources`、`entries` 三份注册表。
+条目只必填 `claim_id`、`objects`、`text`；来源只必填 `source_id`、`work`，其余字段按材料填写。
+例如下面是可独立加载的最小编辑源：
 
-加载会检查字段、重复键、状态和引用。断引用时 `ValueError` 会指出未知 ID 与条目；
-把引用改回已有记录，或在相应注册表中补齐可核的记录后再加载。孤立代理项会被拒绝，不修复原文；
-中文、非 BMP 字符和合法 JSON 转义仍可使用。精确条件见 {doc}`../api-contract`。
+```json
+{
+  "schema_version": 4,
+  "objects": [{"object_id": "my.ding", "kind": "tiangan", "name": "丁"}],
+  "sources": [],
+  "entries": [{"claim_id": "my.note", "objects": ["my.ding"], "text": "我的阅读笔记。"}]
+}
+```
+
+加载检查字段类型、重复键／ID和断引用，不要求来源数量或证明内容正确。
+对象名称可以重名，但一个对象的 ID 不能与另一个对象的名称相同；加载时会拒绝这种冲突，
+以保证按 ID 查询能准确定位对象。同一对象的 ID 与名称可以相同。
+断引用时 `ValueError` 会指出未知 ID 与条目；把引用改回已有记录，或补齐对应记录后再加载。
+精确条件见 {doc}`../api-contract`。
 
 ## 不建命盘浏览判据目录
 
