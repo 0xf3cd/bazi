@@ -279,6 +279,11 @@ def main() -> int:
      lambda: KnowledgeBase.load([])), # type: ignore[arg-type]
     ('KnowledgeBase duplicate JSON keys', ValueError,
      lambda: load_source('{"schema_version":1,"schema_version":1}')),
+    ('KnowledgeBase object ID/name conflict', ValueError,
+     lambda: KnowledgeBase((
+       KnowledgeObject('比肩', 'shishen', '正印'),
+       KnowledgeObject('shishen.bijian', 'shishen', '比肩'),
+     ), (), ())),
     ('KnowledgeObject wrong name type', TypeError,
      lambda: KnowledgeObject('object', 'concept', 1)), # type: ignore[arg-type]
     ('KnowledgeEntry missing discussion object', ValueError,

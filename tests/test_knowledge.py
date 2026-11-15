@@ -63,6 +63,28 @@ def test_names_enums_and_ambiguity(tmp_path: Path) -> None:
   assert bundled.query('文昌', viewpoint='XIN_XU') == (bundled.entry('shensha.wenchang.xin_xu'),)
 
 
+@pytest.mark.parametrize('reverse', [False, True])
+@pytest.mark.parametrize('name', ['另一个对象', '丁'])
+def test_ids_cannot_name_other_objects(tmp_path: Path, reverse: bool, name: str) -> None:
+  data = _data()
+  data['objects'].append({'object_id': '丁', 'kind': 'concept', 'name': name})
+  if reverse:
+    data['objects'].reverse()
+  with pytest.raises(ValueError, match='Object ID conflicts with name: 丁'):
+    _load(data, tmp_path)
+
+
+def test_object_id_can_equal_its_own_name(tmp_path: Path) -> None:
+  data = {
+    'schema_version': 4,
+    'objects': [{'object_id': '丁', 'kind': 'tiangan', 'name': '丁'}],
+    'sources': [],
+    'entries': [{'claim_id': 'entry', 'objects': ['丁'], 'text': '丁的资料。'}],
+  }
+  knowledge = _load(data, tmp_path)
+  assert knowledge.query('丁') == knowledge.query(Tiangan.丁) == (knowledge.entry('entry'),)
+
+
 def test_intersection_and_literal_search(tmp_path: Path) -> None:
   data = _data()
   data['entries'][0].update(

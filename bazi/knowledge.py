@@ -147,6 +147,10 @@ class KnowledgeBase:
     self._sources: Final = _registry(sources, 'source_id')
     self._entries: Final = _registry(entries, 'claim_id')
 
+    for obj in objects:
+      if obj.name in self.objects and obj.name != obj.object_id:
+        raise ValueError(f'Object ID conflicts with name: {obj.name} ({obj.object_id})')
+
     index: dict[tuple[str, str], set[str]] = {}
     for entry in entries:
       for dimension, registry, references in (
