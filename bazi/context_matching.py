@@ -661,7 +661,7 @@ def evaluate_context(
   - 范围完整性优先于女命条件与事实判别：男命缺必需年份仍为 UNKNOWN / missing_transit_coordinate。
     婚恋范围缺查询坐标为 UNKNOWN / missing_transit_coordinate；入口不可查询或所求种类
     部分缺失为 UNKNOWN / transit_unavailable，已取得种类的证据照常保留。
-    SATISFIED / NOT_SATISFIED 只描述完整的显式前提，不证明现实事件成立。
+    SATISFIED / NOT_SATISFIED 只描述当前判据声明的事实，不证明现实事件成立。
   - 关联按稳定 claim ID，不比较文字或来源摘要；自定义库负责同 ID 的领域含义。
     编辑正文、引文或来源说明不改变判据状态；UNKNOWN 是判据的状态，不是参考条目的状态。
   - reference_ids 按声明序与性别门槛给出，不检查知识库是否收录；正文须由调用方显式查阅。
