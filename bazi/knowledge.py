@@ -360,7 +360,7 @@ class KnowledgeBase:
     *,
     show_sources: bool = False,
   ) -> str:
-    '''按对象查询并展示全部相关条目；顺序与 query 相同，空查询返回空串。'''
+    '''按对象查询并展示全部相关条目；顺序与 query 相同，无相关条目时返回空串。'''
     if not isinstance(subject, (str, Tiangan, Shishen, Wuxing)):
       raise TypeError(f'Expected str | Tiangan | Shishen | Wuxing, got {type(subject)}')
     if not isinstance(show_sources, bool):

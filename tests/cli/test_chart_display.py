@@ -29,24 +29,30 @@ def test_chart_default_does_not_load_knowledge(monkeypatch: pytest.MonkeyPatch, 
 
 
 @pytest.mark.parametrize('sources', [False, True])
-def test_chart_knowledge_deduplicates(sources: bool) -> None:
-  chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
+@pytest.mark.parametrize('birth,day_master,shishen', [
+  ('2000-01-03 12:00', Tiangan.庚, (
+    Shishen.比肩, Shishen.食神, Shishen.伤官, Shishen.正财,
+    Shishen.正官, Shishen.七杀, Shishen.正印, Shishen.偏印,
+  )),
+  ('1990-03-01 05:00', Tiangan.乙, (
+    Shishen.比肩, Shishen.劫财, Shishen.食神, Shishen.伤官, Shishen.正财,
+    Shishen.偏财, Shishen.正官, Shishen.七杀, Shishen.偏印,
+  )),
+])
+def test_chart_knowledge_deduplicates(
+  sources: bool, birth: str, day_master: Tiangan, shishen: tuple[Shishen, ...],
+) -> None:
+  chart = BaziChart(Bazi.create(birth, 'female'))
   kb = KnowledgeBase.load()
   text = cli._chart_knowledge(chart, kb, show_sources=sources)
-  subjects: list[Tiangan | Shishen] = [
-    Tiangan.庚, Shishen.比肩, Shishen.食神, Shishen.伤官, Shishen.正财,
-    Shishen.正官, Shishen.七杀, Shishen.正印, Shishen.偏印,
-  ]
+  subjects: tuple[Tiangan | Shishen, ...] = (day_master, *shishen)
   expected = list(dict.fromkeys(entry.claim_id for subject in subjects for entry in kb.query(subject)))
   assert re.findall(r'^条目：(.*)$', text, re.MULTILINE) == expected
   for claim_id in expected:
     entry = kb.entry(claim_id)
     assert entry.text in text and entry.premise in text
     assert all(limit in text for limit in entry.limits)
-  assert re.findall(r'^【.*】$', text, re.MULTILINE) == [
-    '【日主：庚】', '【十神：比肩】', '【十神：食神】', '【十神：伤官】', '【十神：正财】',
-    '【十神：正官】', '【十神：七杀】', '【十神：正印】', '【十神：偏印】',
-  ]
+  assert re.findall(r'^【.*】$', text, re.MULTILINE) == [f'【日主：{day_master}】', *(f'【十神：{ss}】' for ss in shishen)]
   assert '命盘适用性未判断' in text
   assert ('引文／记录：' in text) is sources
   assert '出处未核' in text and '来源：' in text
