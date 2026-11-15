@@ -15,8 +15,7 @@ from bazi.analyzer.relationship import KongwangHit, KongwangResult, StarAppearan
 from bazi.school import BaziConfig
 from bazi.cli import main as cli_main
 from bazi.common import frozendict
-from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id, guoyin_entry, guoyin_def
-from bazi.rules import ShenshaRules
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource
 from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context
 chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))
 cli_exit: int = cli_main(["--help"])
@@ -26,27 +25,26 @@ month_transits: TransitSet | None = transits.at_month(2024, Dizhi.辰)
 date_transits: TransitSet | None = transits.at_date(datetime(2024, 4, 10).date())
 moment_transits: TransitSet | None = transits.at_moment(datetime(2024, 4, 10, 12))
 knowledge = KnowledgeBase.load()
-entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")
+entries: tuple[KnowledgeEntry, ...] = knowledge.query(Tiangan.丁)
 entry = entries[0]
-display_flag: bool = entry.show_by_default
+discussion: tuple[str, ...] = entry.objects
 objects: tuple[KnowledgeObject, ...] = knowledge.find_objects("丁")
-found: tuple[KnowledgeEntry, ...] = knowledge.search("丁", include_reference_only=True)
+found: tuple[KnowledgeEntry, ...] = knowledge.search("丁")
 topics: tuple[str, ...] = knowledge.filter_values("topic")
 catalog: frozendict[str, CriterionInfo] = criteria()
 info: CriterionInfo = criterion("editorial.guansha_coexistence.v1")
 observation_types: tuple[type[NatalObservation] | type[LiunianObservation] | type[TransitObservation], ...] = info.observation_types
 source_path: Path = DEFAULT_SOURCE_PATH
-identifier: str = object_id(Tiangan.丁)
-guoyin = assert_type(guoyin_entry(knowledge, ShenshaRules.GuoyinDef.MODERN), KnowledgeEntry)
-guoyin_definition = assert_type(guoyin_def(knowledge, guoyin.claim_id), ShenshaRules.GuoyinDef | None)
+identifier: str = "tiangan.ding"
+guoyin = assert_type(knowledge.entry("shensha.guoyin.modern"), KnowledgeEntry)
 witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]
-display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")
-subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)
+display: str = knowledge.render(entries[0], show_sources=True)
+subject_text: str = knowledge.render_subject(identifier, show_sources=True)
 matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", observation=NatalObservation())
 result_input: Bazi = matched.bazi
-copied: ContextResult = replace(matched, _bazi=result_input)
+copied: ContextResult = replace(matched, bazi=result_input)
 ids: tuple[str, ...] = matched.reference_ids
-constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, reference_ids=ids, _bazi=result_input, knowledge=knowledge)
+constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, reference_ids=ids, bazi=result_input)
 year_request = YearCoordinate(ganzhi_year=2024)
 month_request = MonthCoordinate(ganzhi_year=2024, ganzhi_month=Dizhi.辰)
 date_request = DateCoordinate(datetime(2024, 4, 10).date())

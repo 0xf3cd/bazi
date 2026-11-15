@@ -32,7 +32,7 @@ def test_east_and_west_location_inputs(
                    '--longitude', str(longitude), f'--civil-timezone={zone}')
   assert result.returncode == 0 and result.stderr == '', result.stderr
   assert '真太阳出生时刻' in result.stdout and birth in result.stdout
-  assert cli._interpret(chart) in result.stdout
+  assert cli._get_basic_info(chart) in result.stdout
   assert list(tmp_path.iterdir()) == []
 
 
@@ -49,12 +49,12 @@ def test_naive_cli_precision(tmp_path: Path, optimized: bool, precision: str, pi
   assert result.returncode == 0, result.stderr
   assert expected.bazi.solar_datetime.isoformat() == '2000-02-04T20:39:00'
   assert tuple(map(str, expected.bazi.pillars))[:2] == pillars
-  assert cli._interpret(expected) in result.stdout
+  assert cli._get_basic_info(expected) in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', '--include-reference-only', optimized=optimized)
+                    '--observation-scope', 'natal', optimized=optimized)
   assert result.returncode == 0, result.stderr
   expected_record = evaluate_context(expected, criterion_id='editorial.guansha_coexistence.v1',
-                                     observation=NatalObservation(), include_reference_only=True)
+                                     observation=NatalObservation())
   assert result.stdout == expected_record.render() + '\n'
   assert list(tmp_path.iterdir()) == []
 
@@ -110,21 +110,21 @@ def test_bad_civil_zone_is_an_argument_error(tmp_path: Path, optimized: bool, ma
 @pytest.mark.parametrize('optimized', [False, True])
 def test_location_midnight_labels_in_outputs(tmp_path: Path, optimized: bool) -> None:
   result = run_cli(tmp_path, 'chart', '--birth-time', '2024-06-01T23:50:00+08:00', '--gender', 'male',
-                    '--longitude', '125', '--precision', 'minute', '--output-dir', str(tmp_path), optimized=optimized)
+                    '--longitude', '125', '--precision', 'minute', '--output', str(tmp_path / 'chart.txt'), optimized=optimized)
   assert result.returncode == 0, result.stderr
   assert '真太阳时日期：2024-06-02' in result.stdout
-  assert '真太阳时（分钟显示）：2024-06-02T00:12:00' in result.stdout
+  assert '真太阳出生时刻：2024-06-02T00:12:' in result.stdout
   assert '民用出生时刻（固定出生地偏移）：2024-06-01T23:50:00+08:00' in result.stdout
   assert '生于 2024-06-02' not in result.stdout and '出生时间：2024-06-02' not in result.stdout
-  saved = tmp_path / 'interpretation_examples/0.txt'
-  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout).removesuffix('\n')
+  saved = tmp_path / 'chart.txt'
+  assert saved.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
 
 
 def test_legacy_renderer_keeps_birth_labels() -> None:
   chart = BaziChart(Bazi.create('2024-06-01T23:50:00', 'male', BaziConfig.from_values(precision='minute')))
   assert '生于 2024-06-01' in cli._get_basic_info(chart)
-  text = cli._interpret(chart)
-  assert text.startswith('出生时间：2024-06-01, 23:50\n')
+  text = cli._get_basic_info(chart)
+  assert '出生时刻：2024-06-01T23:50:00' in text
   assert '真太阳时' not in text and '民用出生时刻' not in cli._get_basic_info(chart)
 
 

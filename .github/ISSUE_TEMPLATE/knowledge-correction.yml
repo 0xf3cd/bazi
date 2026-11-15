@@ -7,7 +7,7 @@ body:
       value: |
         提交前请读 [CONTRIBUTING.md](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md) 的“出处要求”与“来源状态的含义”。
         本库不收没有出处的规则。表单只收集线索，不是可直接导入的 JSON；不完整信息可先讨论，入库前由维护者核对补齐，不编造链接或占位值。
-        来源分组（`lineage`）、`source_id`、来源状态（`state`）与文本层（`text_layer`）由维护者核定。
+        来源 ID（`source_id`）与来源状态（`state`）由维护者核定。
   - type: input
     id: claim_id
     attributes:
@@ -54,14 +54,7 @@ body:
     id: url
     attributes:
       label: 链接（url）
-      description: 所用版本的在线原文链接。没有链接时，在下方“现有内容的问题”中提供纸本版本与可查线索；正式来源记录仍须由维护者补齐真实的非空 url。
-    validations:
-      required: false
-  - type: input
-    id: text_layer
-    attributes:
-      label: 文本层（text_layer）
-      description: 描述摘录出自白文正文、注释或原创说明；不确定请写明。维护者核对后映射为 baiwen、zhushi 或 editorial，未说明不代表记录允许空值。
+      description: 所用版本的在线原文链接。没有链接时，可在下方“现有内容的问题”中提供纸本版本与可查线索。
     validations:
       required: false
   - type: textarea
@@ -82,7 +75,7 @@ body:
     id: limitations
     attributes:
       label: 限度（limitations）
-      description: 这段原文没有说什么，或不能推出什么。
+      description: 这段原文没有说什么，或不能推出什么；说明摘录属于白文正文、夹注还是原创说明，不确定请写明。
     validations:
       required: true
   - type: textarea

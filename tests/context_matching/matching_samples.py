@@ -39,7 +39,7 @@ def chart(day: int = 3, gender: str = 'female', hour: int = 12) -> BaziChart:
 
 
 def match(day: int = 3, gender: str = 'female', **kwargs: Any) -> ContextResult:
-  options = {'criterion_id': GUANSHA, 'observation': NatalObservation(), 'include_reference_only': True, **kwargs}
+  options = {'criterion_id': GUANSHA, 'observation': NatalObservation(), **kwargs}
   return evaluate_context(chart(day, gender), **options)
 
 

@@ -53,7 +53,7 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'docs/guides/quickstart.md', 'docs/guides/cli.md', 'docs/guides/configuration.md',
   'docs/guides/relations-transits.md', 'docs/guides/integration.md', 'docs/guides/knowledge.md',
   'docs/guides/rule-coverage.md',
-  'docs/catalog/index.rst', 'docs/catalog/objects.rst', 'docs/catalog/contexts.rst',
+  'docs/catalog/index.rst', 'docs/catalog/objects.rst',
   'docs/catalog/sources.rst', 'docs/catalog/entries.rst', 'docs/catalog/criteria.rst',
   'docs/catalog/topics.rst', 'docs/catalog/viewpoints.rst', 'docs/catalog/filters.rst',
   'bazi/py.typed', 'bazi/calendar/celestial_data/SCHEMA.md',
@@ -404,7 +404,7 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'guoyin_entry', 'guoyin_def', 'render', 'render_subject'):
+  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'KnowledgeSource', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'entry', 'render', 'render_subject'):
     if f'to "{interface}"' not in result.stdout:
       raise ValueError(f'Installed typing negative control missed {interface}')
   for message in ('"None"',):

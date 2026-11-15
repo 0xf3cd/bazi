@@ -27,8 +27,6 @@ assert chart.bazi.day_master in Tiangan
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
-- `ContextResult` 的 dataclass 构造函数及 `dataclasses.replace` 使用公开输入参数 `_bazi`。
-  读取结果时用 `bazi` 属性，每次取得独立深拷贝；输入参数与属性用不同名称区分。
 - 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
@@ -132,11 +130,9 @@ assert chart.bazi.day_master in Tiangan
 - 命盘隔离传入的 `Bazi`，`chart.bazi` 每次返回独立深拷贝；不把 Python 属性只读等同于所有对象都深冻结。
 - `Bazi` 按值比较；`BaziChart` 按对象身份比较。两个命盘的 `bazi` 值可以相等，命盘对象本身仍不相等。
   知识库按内容及顺序比较，`ContextResult` 按其值字段比较。
-- `ContextResult` 是 frozen dataclass；构造参数 `_bazi: Bazi` 验证后深拷贝，公开 `bazi` 属性每次返回独立深拷贝。
-  构造及 `replace` 使用 `_bazi`。相等／哈希使用 `Bazi` 的完整身份，包含性别、完整配置，
-  地点盘另含精确瞬间、固定民用偏移及经度。修改输入或属性返回的副本不改变已有结果。
-  `ContextResult.render()` 直接读取领域值，不重新排盘；直接构造只检查结构自洽，不认证输入、观察、证据之间的事实一致性。
-- 求值显式传入的 `KnowledgeBase` 被共享；未传时每次独立加载编辑源。已有结果不随源文件修改而变化。
+- `ContextResult` 是 frozen dataclass，`bazi: Bazi` 直接保存求值输入，构造与读取均不深拷贝。
+  相等／哈希使用全部字段，包括 `Bazi` 的完整身份。直接构造及 `replace` 不校验字段。
+  `ContextResult.render()` 直接读取领域值，不重新排盘，也不加载知识文件。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
 
@@ -208,17 +204,16 @@ assert chart.bazi.day_master in Tiangan
 | 类型 | 实际构造字段 | 派生属性 |
 | --- | --- | --- |
 | `CriterionResult` | `criterion_id`、`reason`、`observations` | `definition`、`status`、`scope_complete` |
-| `ContextResult` | `observation`、`criterion`、`evidence`、`reference_ids`、`_bazi`、`knowledge` | `bazi` |
+| `ContextResult` | `observation`、`criterion`、`evidence`、`reference_ids`、`bazi` | 无 |
 
 `CriterionInfo.analysis_kind` 是第三个构造字段，取 `'context'`／`'relationship'`；
 `observation_types` 给出可接受的观察请求类元组，不是单个请求类。
 
 `ContextResult.evidence` 保存 `tuple[ChartOccurrence, ...]` 或 `RelationshipEvidence`，`reference_ids` 保存参考条目 ID。
 完整前提与条件参考由已注册判据的 `entry_role` 区分。部分种类不可取得时，结果仍保留已取得部分的证据。
-出生输入的拷贝、知识对象的共享及相等性见[共享与输入](#共享与输入)。
+出生输入及相等性见[共享与输入](#共享与输入)。
 
-直接构造 `ContextResult` 或用 `replace` 时，`reference_ids` 保留顺序和重复，检查 `str` 类型、非空 ID
-和知识库中的存在性，不要求 ID 属于判据的 `claim_ids`。正常求值按[判据目录](#判据目录)的声明序与筛选规则返回 ID。
+正常求值按[判据目录](#判据目录)的声明序与性别筛选规则返回参考 ID；结果不检查知识库中是否有这些条目。
 
 `CriterionReason` 有下表六种原因，`status` 与 `scope_complete` 由原因派生：
 
@@ -233,13 +228,12 @@ assert chart.bazi.day_master in Tiangan
 
 `scope_complete` 不核实该原因与观察、请求年份或手填证据是否一致。
 例如直接构造结果时，原局观察可配缺流运原因，已给年份也可配缺坐标原因；结构校验不认证这些事实。
-实际判别由 `evaluate_context` 计算，婚恋范围与取得集合另有自洽检查。
+实际判别由 `evaluate_context` 计算。
 
 `NatalObservation`、`LiunianObservation`、`TransitObservation` 的 `scope`，以及四个坐标类的 `entry`，
 均为固定的 `ClassVar`。它们可直接查阅，但不进入构造、`repr`、`fields`、`asdict`、相等／哈希或位置模式匹配。
 上表的派生属性也不进入 `fields`、`asdict` 或构造；`dataclasses.replace` 不接受 `status`、`definition`、`scope_complete`。
-`__match_args__` 与上表构造字段的顺序一致；`ContextResult` 的第四字段是参考 ID 元组，
-`KnowledgeEntry` 的倒数第二字段是 `bool` 类型的 `show_by_default`。需要派生属性值时显式读取，
+`__match_args__` 与上表构造字段的顺序一致；`ContextResult` 的第四字段是参考 ID 元组。需要派生属性值时显式读取，
 不要把 `asdict` 当作包含派生结论的导出记录。
 
 ### 枚举字段的读取与穷尽分支
@@ -258,32 +252,32 @@ assert chart.bazi.day_master in Tiangan
 ## 命令行
 
 `console_scripts` 中只有命令 `bazi`，对应 `bazi.cli:main`；不提供 `python -m bazi` 或根目录兼容脚本。
-五个任务的用途、参数示例与输出路径见[命令行指南](docs/guides/cli.md)。本节列输入、失败与文件写入的约定。
+`chart`、`knowledge`、`match` 三个任务的用途、参数示例与输出路径见[命令行指南](docs/guides/cli.md)。
 
-`demo`、`relationship`、`chart` 默认随机生成，打印种子，可用 `--seed 整数` 重放。
-固定 `chart` 输入须同时给 `--birth-time`、`--gender`，不能与 `--seed` 或大于 1 的 `--count` 组合。
-地点与时区输入沿用库的时间口径。
+`chart` 默认随机生成，打印种子，可用 `--seed 整数` 重放。
+固定输入须同时给 `--birth-time`、`--gender`，不能与 `--seed` 组合。
+性别、精度、地点与时区输入沿用库的写法和时间口径。
 `knowledge --list-values topic` 对应 `filter_values('topic')`，`match` 与 `match 判据ID`
-对应 `criteria()` 与 `criterion(id)`；CLI 不提供名称精确匹配或关键词检索参数。
-`knowledge` 默认查询为空且同一知识库、同一过滤条件有参考条目时，提示 `--include-reference-only`，
-不自动展示参考条目；真空结果不提示，已有默认输出或已显式包含参考条目也不追加提示。
+对应 `criteria()` 与 `criterion(id)`。`knowledge 丁` 或 `knowledge --object tiangan.ding` 按名称或 ID 查询，
+`knowledge --search 枭印` 作字面搜索；无匹配输出“无匹配条目。”。
+`chart` 默认只展示盘面事实，`--transits`、`--relationship` 分别追加流运与婚恋报告。
+`chart` 与 `match` 只有加 `--knowledge` 才加载正文；`--knowledge-source`、`--show-sources` 须与它同用。
+`chart` 的知识按日主与实际出现的十神分组，同次输出按条目 ID 去重；`match` 的缺项显示 ID 与“知识库未收录”。
 
 `bazi.cli.main(argv=None)` 的 `argv` 列表不含程序名，`None` 表示读取 `sys.argv[1:]`；
 非列表或包含非字符串成员时抛 `TypeError`。裸调用与 `--help` 只打印帮助并返回 0，不写文件。
 未知任务／选项、缺项或非法输入由 argparse 以退出码 2 报错；普通运行与优化模式保持相同的立即失败行为。
 
-目录的年月字段为 `ganzhi_year`／`ganzhi_month`，对应 CLI flags 为 `--ganzhi-year`／`--gz-month`。
+目录的年月字段为 `ganzhi_year`／`ganzhi_month`，对应 CLI flags 为 `--ganzhi-year`／`--ganzhi-month`。
 缺项／多余项错误使用完整字段名，如 `Missing coordinate field for at_year: ganzhi_year` 和
 `Unexpected coordinate field for at_year: ganzhi_month`，这些边界错误也以退出码 2 报错。
 
-两个写文件的任务遵守以下约定：
+保存输出遵守以下约定：
 
-- `chart` 只有显式传 `--output-dir` 才写文件，文件名为 `interpretation_examples/{序号}.txt`。
-- `knowledge --export-knowledge-base` 默认使用调用目录下的 `output_data/knowledge_base/`；
-  `--output-dir out` 改为 `out/knowledge_base/`。默认路径不取安装位置。
-- TXT 剥除终端颜色码。同名导出目标会覆盖，其他文件保留；包内或自定义知识编辑源拒绝覆盖，
-  指向该源的符号链接和硬链接也在保护范围内。
-- 两个任务独立检查各自目标，不提供跨命令冲突预检或整体回滚。
+- 只有 `chart --output 文件` 写文件，保存本次完整显示内容，包括随机种子和已选的扩展文本。
+- 终端输出恒带颜色码，保存的 TXT 剥除颜色码；重定向终端输出不会自动去色。
+- 同名目标会覆盖。用 `Path.resolve()` 比较目标与随库／本次自定义知识源，拒绝覆盖这些路径及其符号链接；
+  不检查硬链接等文件身份别名。输出父目录须已存在。
 
 ## 知识查询与编辑
 
@@ -296,18 +290,21 @@ assert chart.bazi.day_master in Tiangan
 | 入口 | 匹配与返回顺序 |
 | --- | --- |
 | `find_objects(name)` | 精确匹配对象名称，重名全部返回，无匹配返回 `()`；按对象注册顺序排列。中文名称不是唯一 ID，不作模糊匹配或大小写转换。 |
-| `search(keyword, ...)` | 先应用 `query` 的七维交集与参考条目政策，再作 Unicode `casefold` 字面子串匹配；按语料顺序排列，默认排除仅供参考的条目。 |
+| `query(subject=None, *, topic=None, source_id=None, viewpoint=None)` | 多个条件取交集，返回全部相关条目，保持语料顺序；无条件返回全部条目。 |
+| `search(keyword, ...)` | 先应用 `query` 的交集，再作 Unicode `casefold` 字面子串匹配；按语料顺序排列。 |
 
-关键词检索覆盖条目正文、前提、署名、主题、口径、例外、限度及角色对象名称，
-不搜对象／条目 ID、来源全文或情境标签，不解释正则，也不判断命盘适用性。
+`subject` 接受精确名称、对象 ID、`Tiangan`、`Shishen` 或 `Wuxing`；枚举按类别与中文名称解析。
+字符串重名时抛 `ValueError` 并列候选 ID；未知对象或过滤值同样抛 `ValueError`，合法条件无交集返回空元组。
+多对象条目在每个对象下都能查到，关系方向由正文表达。
+关键词检索覆盖条目正文、前提、署名、主题、读法、限度及对象名称，
+不搜对象／条目 ID 或来源全文，不解释正则，也不判断命盘适用性。
 来源全文从 `sources` 读取，关联条目用 `query(source_id=...)` 查询。
 
-`filter_values(dimension)` 给出七维合法值全集，按 Unicode 字符串序排列：
+`filter_values(dimension)` 给出合法值全集，按 Unicode 字符串序排列：
 
-- 维度为 `object_id`、`context_id`、`source_id`、`topic`、`viewpoint`、`applicability`、`time_scope`，
-  不包含布尔选项 `include_reference_only`；未知维度抛 `ValueError`。
-- 目录包括仅参考条目独有值、未引用的注册对象／来源／情境及其时间范围；空库的 `applicability` 也有三个合法值。
-- `query` 与该目录共用合法值定义，但合法值不保证默认输出有命中。
+- 维度为 `object_id`、`source_id`、`topic`、`viewpoint`；未知维度抛 `ValueError`。
+- 目录包括未引用的注册对象与来源；主题与读法取自已有条目。
+- `query` 与该目录共用合法值定义，但合法值不保证有命中。
 
 ### 判据目录
 
@@ -316,7 +313,7 @@ assert chart.bazi.day_master in Tiangan
 目录值冻结，直接构造 `CriterionInfo` 只校验值的形状，不将自填的 `definition` 当作已注册定义或据此派生结论；
 需要已注册定义时使用这两个查询入口。
 
-判据与国印查询均按稳定条目 ID 关联，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义，
+判据按稳定条目 ID 关联，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义，
 相同 ID 本身不能证明语义相同，目录也不认证条文真伪或现实适用性。
 
 | 目录信息 | 含义 |
@@ -334,36 +331,23 @@ assert chart.bazi.day_master in Tiangan
 男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
 只向男命返回的两条婚恋条目由 `claim_genders` 限制：女命不返回这些关联条目，不改变事实判别。
 
-`ContextResult.reference_ids` 从判据的 `claim_ids` 依次选取条目 ID，跳过以下三种情况：
-
-- 传入的知识库中没有该条目；
-- `include_reference_only=False`，而该条目的 `show_by_default=False`；
-- 该条目要求的性别与输入命盘不符。
-
-返回的 ID 保留声明顺序和重复，不另行去重。`include_reference_only=True` 只放开参考条目的展示筛选，
-仍须通过存在性与性别检查。没有返回参考 ID 时，判据仍可为 `SATISFIED`；前提满足不改变条目的默认展示资格。
+`evaluate_context(chart, *, criterion_id, observation)` 只执行判据，不读取知识文件。
+`ContextResult.reference_ids` 从判据的 `claim_ids` 依次选取 ID，只跳过要求性别与输入命盘不符的条目。
+返回的 ID 保留声明顺序和重复，不另行去重。没有返回参考 ID 时，判据仍可为 `SATISFIED`。
 状态只在 `CriterionResult` 上，条目没有 `UNKNOWN` 或识别状态；编辑正文、引文和来源说明不改变判据结果。
 目录使用示例见[知识库指南](docs/guides/knowledge.md#不建命盘浏览判据目录)。
 
 ### 知识编辑源与文本边界
 
 `KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随库 `knowledge_data.json`。
-已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`contexts`、`sources`、`entries` 四份注册表；
-版本只接受精确整数 3，拒绝 `bool`、浮点数、字符串、容器、旧版与未知版，不自动迁移。
-重复键、字段差异、断引用、不合法状态及无法按 UTF-8 编码的孤立代理项均拒绝，不修复原文。
-非整数版本的 `ValueError` 仅显示类型，不展开未知容器。类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；
-JSON 解析错误保留 `JSONDecodeError` 的原文与位置，实际解析递归失败转为 `ValueError`，不设固定深度上限。
+已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`sources`、`entries` 三份注册表；
+版本只接受精确整数 4，拒绝 `bool`、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+对象必填 `object_id`、`kind`、`name`；条目必填 `claim_id`、非空讨论对象列表 `objects`、正文 `text`；
+来源必填 `source_id`、`work`。其余字段可省略，未填前提不表示无条件，未填来源状态不表示已核实。
 
-字符串键在解析时检查 UTF-8，值使用显式栈遍历，不对整树重新编码。中文、非 BMP 字符、合法 JSON 代理对转义及字面的反斜杠文字保留。
-知识和前提文字渲染同样检查 UTF-8，包括直接构造对象和展示参数；普通文字查询不因此收紧。
+加载检查类型、重复键／ID、未知字段、必填字段与断引用，不执行来源数量等收录政策。
+类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；JSON 解析、文件读取和文本编码错误沿用标准库异常。
 条目按稳定 ID 关联，编辑源版本不是条文真伪的认证。
 
-`KnowledgeEntry.show_by_default` 只接受确切 `bool`；`0`、`1`、字符串和 `None` 均抛 `TypeError`。
-该字段只控制默认展示，不认证知识正确或适用于当前命盘。
-
-### 国印条目查询
-
-`bazi.knowledge.guoyin_entry(knowledge, definition)` 接受 `ShenshaRules.GuoyinDef`，返回传入库的对应条目；
-`guoyin_def(knowledge, claim_id)` 返回对应定义，已注册但没有国印关联时返回 `None`。
-所需条目缺失、ID 未注册或为空白时抛 `ValueError`，参数错型抛 `TypeError`；普通与 `-O` 一致。
-来源由 `entry.sources` 查阅，关联不改变条目内容、来源状态或默认展示。
+`render(entry, *, show_sources=False)` 默认显示 ID、正文、必要前提、读法、署名、限度与简短出处；
+空字段省略，来源的 `limitations` 始终显示。`show_sources=True` 追加版本、位置、链接、摘录与支持范围。

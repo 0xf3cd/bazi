@@ -1,67 +1,12 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import importlib.util
-import json
-from dataclasses import FrozenInstanceError, asdict, fields, replace
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
 import bazi
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
-from bazi.context_matching import NatalObservation, evaluate_context
-from bazi.defines import Dizhi, Shishen, Tiangan
-from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeSource, object_id
-
-from knowledge_additions import SHENSHA_SOURCE_IDS, BACKFILL_SOURCE_IDS, FOLLOWUP_SOURCE_IDS
-
-
-def test_all_sources_accessible_without_mirrors(tmp_path: Path) -> None:
-  k = KnowledgeBase.load()
-  assert set(k.sources) == {
-    'editorial', 'yuanhai_ziping_relations', 'yuanhai_ziping_stem_table',
-    'yuanhai_ziping_stem_symbols_p69', 'yuanhai_ziping_stem_symbols_p70',
-    'mingli_tanyuan_stem_basics', 'mingli_tanyuan_shishen_definitions',
-    'repository_guoyin_variants', 'repository_wuxing_relations',
-    'sanming_liuqin', 'yuanhai_liuqin_charts', 'yuanhai_qiqie_note', 'tanyuan_qizi',
-    'yuanhai_ziping.kongwang', 'sanming_tonghui.kongwang', 'luoluzi_xiaoxifu.kongwang',
-    'wuxing_jingji.kongwang', 'repository.kongwang',
-    'youyilu.taiyuan_minggong', 'sanming_tonghui.taiyuan', 'sanming_tonghui.minggong',
-    'mingli_tanyuan.minggong', 'repository.taiyuan_minggong',
-    *SHENSHA_SOURCE_IDS, *BACKFILL_SOURCE_IDS, *FOLLOWUP_SOURCE_IDS,
-  }
-  # Both an unused source and a newly referenced source must survive reload.
-  unused = replace(k.sources['yuanhai_ziping_relations'], source_id='future.unused', lineage='future.lineage', text_layer='zhushi')
-  used = replace(unused, source_id='future.used')
-  lamp = replace(k.entry('tiangan.ding.lamp_symbol'), sources=('future.used',))
-  edited = KnowledgeBase(
-    tuple(k.objects.values()), tuple(k.contexts.values()),
-    (*k.sources.values(), unused, used),
-    tuple(lamp if entry.claim_id == lamp.claim_id else entry for entry in k.entries.values()),
-  )
-  path = tmp_path / 'edited.json'
-  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  data['sources'].extend((asdict(unused), asdict(used)))
-  next(entry for entry in data['entries'] if entry['claim_id'] == lamp.claim_id)['sources'] = ['future.used']
-  path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  loaded = KnowledgeBase.load(path)
-  assert len(loaded.sources) == 43
-  for source_id, record in edited.sources.items():
-    assert isinstance(loaded.sources[source_id], KnowledgeSource)
-    assert loaded.sources[source_id] == record
-    assert loaded.query(source_id=source_id, include_reference_only=True) == tuple(entry for entry in edited.entries.values() if source_id in entry.sources)
-    for field in fields(record):
-      with pytest.raises(TypeError):
-        replace(record, **{field.name: object()}) # type: ignore[arg-type]
-  assert loaded.query(source_id='future.unused', include_reference_only=True) == ()
-  assert loaded.query(source_id='future.used', include_reference_only=True) == (lamp,)
-  assert '文本层：zhushi；谱系：future.lineage' in loaded.render(lamp)
-  with pytest.raises(FrozenInstanceError):
-    loaded.sources['future.used'].work = 'changed' # type: ignore[misc]
-  with pytest.raises(TypeError):
-    loaded.sources['future.used'] = unused # type: ignore[index]
+from bazi.knowledge import DEFAULT_SOURCE_PATH
 
 
 def test_removed_modules_are_absent() -> None:
@@ -77,100 +22,3 @@ def test_root_lazily_resolves_a_runtime_module(monkeypatch: pytest.MonkeyPatch) 
   module = bazi.knowledge
   monkeypatch.delattr(bazi, 'knowledge')
   assert bazi.knowledge is module
-
-
-def test_context_result_consumes_public_render(monkeypatch: pytest.MonkeyPatch) -> None:
-  result = evaluate_context(
-    BaziChart(Bazi.create('2000-01-01 12:00', 'female')),
-    criterion_id='editorial.guansha_coexistence.v1',
-    observation=NatalObservation(),
-    include_reference_only=True,
-  )
-  consumer = Mock(wraps=KnowledgeBase.render)
-  def render(self: KnowledgeBase, *args: object, **kwargs: object) -> str:
-    return str(consumer(self, *args, **kwargs))
-  monkeypatch.setattr(KnowledgeBase, 'render', render)
-  text = result.render()
-  assert result.reference_ids
-  assert consumer.call_count == len(result.reference_ids)
-  for call, claim_id in zip(consumer.call_args_list, result.reference_ids):
-    knowledge, entry = call.args
-    assert isinstance(knowledge, KnowledgeBase)
-    assert entry == knowledge.entry(claim_id)
-    assert call.kwargs == {'premise_verdict': result.criterion.status}
-    assert entry.text in text
-    assert f'前提判别：{result.criterion.status}' in text
-
-
-def test_object_ids_keep_aliases_reject_others() -> None:
-  for subject in (*Tiangan, *Shishen):
-    identifier = object_id(subject)
-    record = KnowledgeBase.load().objects[identifier]
-    assert record.name == str(subject)
-    assert record.kind == ('tiangan' if isinstance(subject, Tiangan) else 'shishen')
-  assert object_id(Tiangan.甲) == object_id(Tiangan.JIA) == 'tiangan.jia'
-  assert object_id(Shishen.食神) == object_id(Shishen.SHISHEN) == 'shishen.shishen'
-  for bad in ('甲', 0, None, Dizhi.子):
-    with pytest.raises(TypeError, match='Expected Tiangan | Shishen'):
-      object_id(bad) # type: ignore[arg-type]
-
-
-@pytest.mark.parametrize('show_sources', [False, True])
-def test_subject_projection_keeps_roles_distinct(show_sources: bool) -> None:
-  k = KnowledgeBase.load()
-  relation = k.entry('legacy.shishen.SH-052')
-  assert relation in k.query(object_id='shishen.qisha', include_reference_only=True)
-  assert relation.text not in k.render_subject('shishen.qisha', include_reference_only=True)
-  assert relation.text in k.render_subject('shishen.shishen', include_reference_only=True)
-  # Corpus order is deliberately different from legacy placement order.
-  reversed_k = KnowledgeBase(
-    tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()),
-    tuple(reversed(tuple(k.entries.values()))),
-  )
-  text = reversed_k.render_subject('tiangan.ding', include_reference_only=True, show_sources=show_sources)
-  selected = reversed_k.query(object_id='tiangan.ding', include_reference_only=True)
-  positions = tuple(text.index(entry.text) for entry in selected)
-  assert positions == tuple(sorted(positions))
-  assert tuple(entry.legacy for entry in selected) == tuple(reversed(tuple(entry.legacy for entry in k.query(object_id='tiangan.ding', include_reference_only=True))))
-  for identifier in ('wuxing.mu', 'wuxing.huo', 'shensha.guoyin', 'shensha.kongwang', 'concept.taiyuan', 'concept.minggong'):
-    for entry in k.query(object_id=identifier, include_reference_only=True):
-      assert entry.text in k.render_subject(identifier, include_reference_only=True)
-  assert k.render_subject('shishen.jiecai') == ''
-  assert KnowledgeBase(tuple(k.objects.values()), tuple(k.contexts.values()), tuple(k.sources.values()), ()).render_subject('tiangan.ding') == ''
-  assert hash(selected) == hash(reversed_k.query(object_id='tiangan.ding', include_reference_only=True))
-
-
-@pytest.mark.parametrize('bad_flag', [None, 0, 1, 'true', ()])
-def test_subject_display_public_boundaries(bad_flag: object) -> None:
-  k = KnowledgeBase.load()
-  for identifier in ('tiangan.ding', 'shishen.jiecai'):
-    with pytest.raises(TypeError, match='Expected bool'):
-      k.render_subject(identifier, show_sources=bad_flag) # type: ignore[arg-type]
-    with pytest.raises(TypeError, match='Expected bool'):
-      k.render_subject(identifier, include_reference_only=bad_flag) # type: ignore[arg-type]
-  with pytest.raises(TypeError):
-    k.render_subject(Tiangan.丁) # type: ignore[arg-type]
-  with pytest.raises(ValueError, match='Unknown object_id'):
-    k.render_subject('missing')
-  with pytest.raises(TypeError):
-    k.render_subject('tiangan.ding', True) # type: ignore[call-arg]
-
-
-def test_render_verdict_is_display_only() -> None:
-  k = KnowledgeBase.load()
-  reference = k.entry('editorial.shishen.zhengguan.legal_trouble')
-  before = (k.objects, k.contexts, k.sources, k.entries)
-  rendered = k.render(reference, manual_context=True, premise_verdict='SATISFIED')
-  assert '前提判别：SATISFIED' in rendered
-  assert '默认展示：否' in rendered and '仅供参考' in rendered
-  assert '也许' in rendered and '不确立古籍规则，也不作现实预测。' in rendered
-  assert '人工给定情境' not in rendered
-  assert '人工给定情境' in k.render(reference, manual_context=True, premise_verdict=None)
-  assert reference not in k.query()
-  assert (k.objects, k.contexts, k.sources, k.entries) == before
-  for value in (1, False, (), object()):
-    with pytest.raises(TypeError, match='Expected str | None'):
-      k.render(reference, premise_verdict=value) # type: ignore[arg-type]
-  for value in ('', ' ', '\t\n', '\u3000'):
-    with pytest.raises(ValueError, match='non-empty text'):
-      k.render(reference, premise_verdict=value)

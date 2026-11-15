@@ -1,5 +1,51 @@
 # 发布说明
 
+## Unreleased
+
+以下为 v3.0.0 开发中的变化。
+
+### 知识查询与计算解耦
+
+知识库改为对象、条目、出处三份注册表。按中文名、对象 ID 或领域枚举直接查询，
+例如 `kb.query('丁')`、`kb.query(Tiangan.丁)`；默认返回全部相关材料。
+条目的前提、读法、署名、限度与简短出处随正文显示，来源定位和引文由 `show_sources=True` 展开。
+326 条正文及原有条目 ID 保留；原有未核出处和条件未整理的含义仍在文字中说明，查到不表示适用于命盘。
+
+| 原调用或结构 | 升级后 |
+| --- | --- |
+| `query(object_id=...)`、`object_id(枚举)` | `query(名称或ID或枚举)`；支持天干、十神、五行枚举 |
+| `include_reference_only`、默认展示资格 | 删除；查询返回全部相关条目，按主题、来源、读法过滤 |
+| `KnowledgeRole`、`KnowledgeRelation`、`KnowledgeContext`、`LegacyDescription` | 删除；条目以 `objects` 列讨论对象，方向由正文说明 |
+| `applicability`、条目 `source_state`、`show_by_default`、`legacy`、`exceptions` | 删除；必要前提、读法和限度保留为文字 |
+| 来源 `lineage`、`text_layer` | 删除；正文／夹注等区别写入来源 `limitations` |
+| 知识模块 `guoyin_entry`／`guoyin_def` | 按“国印贵人”、读法或条目 ID 查询；计算继续使用 `BaziSchool.guoyin_def` |
+| `evaluate_context(..., knowledge=..., include_reference_only=...)` | 删除两个参数；结果按声明返回参考 ID，只保留性别筛选 |
+| `result.knowledge.entry(id)` | 独立加载 `KnowledgeBase`，再调用 `kb.entry(id)` |
+| `ContextResult(_bazi=...)` | 改为 `bazi=...`；直接持有输入，手工构造不校验，也不深拷贝 |
+| `render(..., manual_context=..., premise_verdict=...)` | 删除两参数；判别与证据用 `result.render()`，正文用 `kb.render(entry)` |
+
+自定义知识文件须改为精确整数 `schema_version=4`，移除 `contexts` 注册表，并按上表调整字段。
+条目必填 `claim_id`、`objects`、`text`，来源必填 `source_id`、`work`；其余字段可省略。
+旧栏目前提与条件标记须先转为必要说明，不能直接丢弃。空前提不代表无条件，空来源状态不代表已核实。
+加载器仍拒绝重复键／ID、错误类型和断引用，不再检查独立来源数量，也不专门转换孤立代理项或解析递归错误。
+没有运行时兼容层或自动迁移；最小 JSON 见[知识指南](docs/guides/knowledge.md)。
+
+计算与结果渲染均不加载知识文件，默认结果也可包含参考 ID。自定义库缺项时，
+调用方可用 `kb.entries.get(id)` 检查；CLI 显示对应 ID 与“知识库未收录”，判据状态不受影响。
+原来的通用“编者”来源记录已撤回，其署名移入对应条目；其余 40 份来源保留。
+
+### 命令行迁移
+
+命令收为 `chart`、`knowledge`、`match`：
+
+- `demo` 改用 `chart --transits`，`relationship` 改用 `chart --relationship`，两项可组合并接固定出生输入。
+- `chart` 默认只读盘面事实，`chart --knowledge` 按日主与十神分组读知识，同次输出按条目 ID 去重。
+  `match --knowledge` 追加参考正文；两任务的 `--knowledge-source`、`--show-sources` 都须与 `--knowledge` 同用。
+- `--output-dir`、批量 `--count` 和知识 TXT 批量导出撤回。
+  `chart --output chart.txt` 保存本次完整无色输出；覆盖保护按解析后的路径比较，识别符号链接，不再检查硬链接身份。
+- `--gz-month` 改为 `--ganzhi-month`，不保留旧拼写。性别和精度接受库已有的中文写法，如 `女`、`分`。
+- 知识可用 `bazi knowledge 丁`、`bazi knowledge --search "枭印"` 查询，旧情境、状态和展示资格过滤撤回。
+
 ## bazi 2.6.0
 
 本版增加保留柱位的流运关系、通根与透干、月令五行状态查询，补充神煞知识与旧描述的文字出处，

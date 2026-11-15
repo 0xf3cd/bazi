@@ -46,17 +46,17 @@ def test_rng_binds_seed_without_global_state(
   print(f'verified base={base} effective={effective} nodeid={request.node.nodeid}')
 
 
-@pytest.mark.parametrize('task', ['demo', 'relationship'])
+@pytest.mark.parametrize('flag', ['--transits', '--relationship'])
 @pytest.mark.parametrize('seed', [0, 42, 236])
 @pytest.mark.parametrize('optimized', [False, True])
-def test_runner_seed_binds_birth_gender(task: str, seed: int, optimized: bool) -> None:
+def test_runner_seed_binds_birth_gender(flag: str, seed: int, optimized: bool) -> None:
   root = Path(__file__).resolve().parents[1]
   expected = Bazi.random(rng=random.Random(seed))
   outputs = []
   for hash_seed in ('0', '1'):
     result = subprocess.run(
       [sys.executable, *(['-O'] if optimized else []), '-c',
-       'from bazi.cli import main; raise SystemExit(main())', task, '--seed', str(seed)],
+       'from bazi.cli import main; raise SystemExit(main())', 'chart', flag, '--seed', str(seed)],
       cwd=root,
       env={**os.environ, 'PYTHONHASHSEED': hash_seed},
       capture_output=True,
@@ -72,22 +72,22 @@ def test_runner_seed_binds_birth_gender(task: str, seed: int, optimized: bool) -
   assert outputs[0] == outputs[1]
 
 
-@pytest.mark.parametrize('runner', ['demo', 'relationship'])
+@pytest.mark.parametrize('flag', ['--transits', '--relationship'])
 @pytest.mark.parametrize('sign', [-1, 1])
 def test_runner_binds_consumers_to_seeded_chart(
-  monkeypatch: pytest.MonkeyPatch, rng: random.Random, runner: str, sign: int,
+  monkeypatch: pytest.MonkeyPatch, rng: random.Random, flag: str, sign: int,
 ) -> None:
   seed = sign * rng.getrandbits(64)
   expected = Bazi.random(rng=random.Random(seed))
-  print(f'runner={runner} seed={seed}')
+  print(f'flag={flag} seed={seed}')
   state = random.getstate()
   basic = Mock(wraps=cli._get_basic_info)
   monkeypatch.setattr(cli, '_get_basic_info', basic)
   observed: list[BaziChart] = []
-  if runner == 'demo':
+  if flag == '--transits':
     transit = Mock(wraps=cli._get_transit_info)
     monkeypatch.setattr(cli, '_get_transit_info', transit)
-    assert cli.main(['demo', '--seed', str(seed)]) == 0
+    assert cli.main(['chart', flag, '--seed', str(seed)]) == 0
     for call in transit.call_args_list:
       chart = call.args[0]
       assert isinstance(chart, BaziChart)
@@ -118,7 +118,7 @@ def test_runner_binds_consumers_to_seeded_chart(
     monkeypatch.setattr(BaziChart, 'house_of_relationship', observed_property('house_of_relationship'))
     monkeypatch.setattr(BaziChart, 'relationship_stars', observed_property('relationship_stars'))
     monkeypatch.setattr(BaziChart, 'bazi', observed_property('bazi'))
-    assert cli.main(['relationship', '--seed', str(seed)]) == 0
+    assert cli.main(['chart', flag, '--seed', str(seed)]) == 0
   assert observed and basic.call_args_list
   for call in basic.call_args_list:
     chart = call.args[0]
@@ -130,13 +130,13 @@ def test_runner_binds_consumers_to_seeded_chart(
   assert random.getstate() == state
 
 
-@pytest.mark.parametrize('task', ['demo', 'relationship', 'chart'])
+@pytest.mark.parametrize('extra', [('--transits',), ('--relationship',), ()])
 @pytest.mark.parametrize('optimized', [False, True])
-def test_runner_auto_seed_is_replayable(tmp_path: Path, task: str, optimized: bool) -> None:
+def test_runner_auto_seed_is_replayable(tmp_path: Path, extra: tuple[str, ...], optimized: bool) -> None:
   root = Path(__file__).resolve().parents[1]
   command = [sys.executable, *(['-O'] if optimized else []), '-c',
              'import sys; sys.path.insert(0, sys.argv.pop(1)); from bazi.cli import main; raise SystemExit(main())',
-             str(root), task]
+              str(root), 'chart', *extra]
   first = subprocess.run(
     command,
     cwd=tmp_path,

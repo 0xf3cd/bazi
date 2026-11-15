@@ -7,7 +7,7 @@
 不能据此认定条目全文前提成立。观察请求决定取哪些柱位或流运，判据本身不推断现实事件。
 
 统一使用 :py:func:`bazi.context_matching.evaluate_context` 求值：必填 ``chart``、``criterion_id`` 和
-``observation``，可选 ``knowledge`` 与 ``include_reference_only``。各项下方列出观察请求类及其范围，
+``observation``。计算不加载知识库，结果给出参考 ID；各项下方列出观察请求类及其范围，
 点击类名可查构造参数；完整操作见 :doc:`../guides/integration`。
 范围不完整或所需流运不可得时可能返回 ``UNKNOWN``，条件见
 :py:attr:`bazi.context_matching.CriterionInfo.unknown_conditions`。

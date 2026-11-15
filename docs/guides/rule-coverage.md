@@ -7,7 +7,7 @@
 - **实现**以规则表、定义枚举、计算入口与配置字段为准，不能从已有知识对象反推全部计算能力。
 - **知识关联**指现有对象、条目和来源 ID。文字提到某个词，不等于已经有该规则的专门对象或结构化关联。
 - **源码出处**包括规则旁的注释和定义 docstring；已有知识来源记录的部分，可沿条目 ID 读取作品、版本、摘录与支持范围。
-- `repository_attributed` 是本仓署名，`witnessed` 是已核原文出处，二者不互换；默认展示由 `show_by_default` 另管。状态与默认展示的完整含义见 {doc}`knowledge`。
+- 来源的 `repository_attributed` 是本仓署名，`witnessed` 是已核原文出处，二者不互换。状态与条目前提的含义见 {doc}`knowledge`。
 - 表中写“尚无对象”或“没有关联”，只表示当前没有专门的知识关联，不表示该计算没有依据，也不是新增知识对象的计划。
 
 ## 规则与配置覆盖
@@ -45,7 +45,7 @@
 
 低层查法见 {py:mod}`~bazi.utils.shensha_utils`。表值及定义来源在 {py:class}`~bazi.rules.ShenshaRules`，锚点取值范围与出处在 `school.py` 的 `_ANCHOR_CHOICES`，分析器接入在 `analyzer/relationship.py` 的 `_REGISTRY`。固定锚点、被查位置和原局／流运使用范围还须读注册表及消费者，不能只看表值。
 
-当前神煞知识对象包括国印、旬空，以及天乙贵人、桃花、驿马、文昌、华盖、羊刃。后六项以 `shensha.tianyi`、`shensha.taohua`、`shensha.yima`、`shensha.wenchang`、`shensha.huagai`、`shensha.yangren` 查询，所有条目均供显式参考，不默认展示。查询示例见 {doc}`knowledge`；其余神煞尚无专门对象。
+当前神煞知识对象包括国印、旬空，以及天乙贵人、桃花、驿马、文昌、华盖、羊刃。后六项以 `shensha.tianyi`、`shensha.taohua`、`shensha.yima`、`shensha.wenchang`、`shensha.huagai`、`shensha.yangren` 查询，也可直接传中文名称。查询示例见 {doc}`knowledge`；其余神煞尚无专门对象。
 
 | 规则族 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
@@ -62,8 +62,8 @@
 | 文昌 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANG`；{py:attr}`~bazi.school.BaziSchool.wenchang_def`、{py:attr}`~bazi.school.BaziSchool.wenchang_anchor` | {py:class}`~bazi.rules.ShenshaRules.WenchangDef` 分列辛子／辛戌；表值、锚点与查找位置的来源边界分开保留。 |
 | 文昌贵 | {py:attr}`~bazi.rules.ShenshaRules.WENCHANGGUI` | 表旁列全表与年干锚出处；它与文昌分列，不把同名近亲并成一个变体。 |
 | 太极贵人 | {py:attr}`~bazi.rules.ShenshaRules.TAIJI`；{py:attr}`~bazi.school.BaziSchool.taiji_def`、{py:attr}`~bazi.school.BaziSchool.taiji_anchor` | {py:class}`~bazi.rules.ShenshaRules.TaijiDef` 保存壬癸两读、文字差异与戊己格矛盾；锚点依据另列。 |
-| 国印贵人 | {py:attr}`~bazi.rules.ShenshaRules.GUOYIN`；{py:attr}`~bazi.school.BaziSchool.guoyin_def`、{py:attr}`~bazi.school.BaziSchool.guoyin_anchor` | {py:class}`~bazi.rules.ShenshaRules.GuoyinDef` 分开两表、锚点、查找位置与传抄限度；已有两条不默认展示的条目（`show_by_default=False`），见下方示例。 |
-| 六甲旬空 | {py:attr}`~bazi.rules.ShenshaRules.KONGWANG`；{py:attr}`~bazi.school.BaziSchool.kongwang_anchor` | `shensha.kongwang.xunkong` 记基础二支，`.lookup` 记汇编转引与年日例，`.repository` 记本库默认和范围，均不默认展示。来源分列固定 revision 转录、下游白文、注释层与仓内政策；汇编所引原书尚未亲见。查法见 {doc}`relations-transits`，不含单支筛选、截路、四大或解释层。 |
+| 国印贵人 | {py:attr}`~bazi.rules.ShenshaRules.GUOYIN`；{py:attr}`~bazi.school.BaziSchool.guoyin_def`、{py:attr}`~bazi.school.BaziSchool.guoyin_anchor` | {py:class}`~bazi.rules.ShenshaRules.GuoyinDef` 分开两表、锚点、查找位置与传抄限度；已有两条知识条目，见下方示例。 |
+| 六甲旬空 | {py:attr}`~bazi.rules.ShenshaRules.KONGWANG`；{py:attr}`~bazi.school.BaziSchool.kongwang_anchor` | `shensha.kongwang.xunkong` 记基础二支，`.lookup` 记汇编转引与年日例，`.repository` 记本库默认和范围。来源分列固定 revision 转录、下游白文、注释层与仓内政策；汇编所引原书尚未亲见。查法见 {doc}`relations-transits`，不含单支筛选、截路、四大或解释层。 |
 
 ### 表外计算、配置与评估边界
 
@@ -72,12 +72,12 @@
 | 规则族／边界 | 实现与配置 | 知识、出处与缺口 |
 | --- | --- | --- |
 | 五行、干支循环 | {py:class}`~bazi.defines.Wuxing`、{py:class}`~bazi.defines.Ganzhi`；{py:func}`~bazi.utils.bazi_utils.ganzhi_of_year`、{py:func}`~bazi.utils.bazi_utils.ganzhi_of_day` | 五行两条本仓署名示例已存在；年／日干支计算有源码定义与基准日期，但尚无相应规则到知识来源的关联。 |
-| 十神计算 | {py:func}`~bazi.utils.bazi_utils.shishen` | 已有 `shishen.*` 对象与定义条目，如 `shishen.bijian.definition`；定义条目不为地支取主气、藏干比例或全部解释作证，也不能由此假定十个对象都有默认定义条目。 |
+| 十神计算 | {py:func}`~bazi.utils.bazi_utils.shishen` | 已有 `shishen.*` 对象与定义条目，如 `shishen.bijian.definition`；定义条目不为地支取主气、藏干比例或全部解释作证，也不能由此假定十个对象都有定义条目。 |
 | 通根与透干 | {py:func}`~bazi.analyzer.facts.tonggen`、{py:func}`~bazi.analyzer.facts.tougan` | 同五行通根例与徐注墓库透干例见两函数的说明。知识目录尚无对应的对象或条目；用法见 {doc}`relations-transits`。 |
 | 四柱节界与换日 | {py:class}`~bazi.bazi.Bazi`；{py:attr}`~bazi.school.BaziConfig.precision`、{py:attr}`~bazi.school.BaziSchool.day_rollover` | {py:class}`~bazi.school.BaziPrecision`、{py:class}`~bazi.school.DayRollover` 与 {doc}`configuration` 说明边界。知识目录不是历法精度或换日出处目录。 |
-| 胎元与命宫附加查询 | {py:attr}`~bazi.bazi_chart.BaziChart.taiyuan`、{py:attr}`~bazi.bazi_chart.BaziChart.minggong`；纯函数在 {py:mod}`~bazi.utils.bazi_utils` | `concept.taiyuan`、`concept.minggong` 区分月柱顺移、掌诀、中气按语、本库执行政策与待核候选，均不默认展示。三百日胎元及其他命宫月界未编码；两项只作附加查询，不扩展四柱、配置或其他分析，计算不认证解释。用法见 {doc}`integration`。 |
+| 胎元与命宫附加查询 | {py:attr}`~bazi.bazi_chart.BaziChart.taiyuan`、{py:attr}`~bazi.bazi_chart.BaziChart.minggong`；纯函数在 {py:mod}`~bazi.utils.bazi_utils` | `concept.taiyuan`、`concept.minggong` 区分月柱顺移、掌诀、中气按语、本库执行政策与待核候选。三百日胎元及其他命宫月界未编码；两项只作附加查询，不扩展四柱、配置或其他分析，计算不认证解释。用法见 {doc}`integration`。 |
 | 历法、民用钟与真太阳钟 | {py:attr}`~bazi.school.BaziConfig.backend`；{py:class}`~bazi.calendar.backend.CalendarBackend`、`bazi/calendar/solar_time.py` 与地点输入 | 数据来源、精度及钟的边界见 {doc}`configuration` 和 {py:class}`~bazi.calendar.backend.CalendarBackend` 的说明。逐行历书／天文数据的独立定标不属本页评估。 |
-| 配偶星与配偶宫 | {py:attr}`~bazi.school.BaziSchool.peiou_xing_def`；{py:class}`~bazi.school.PeiouXingDef` 与 {py:class}`~bazi.bazi_chart.BaziChart` | 已有 `concept.peiou_xing`、`concept.peiou_gong` 及带原文来源、不默认展示的条目；历史读法、软件默认与适用条件仍须分别读取。 |
+| 配偶星与配偶宫 | {py:attr}`~bazi.school.BaziSchool.peiou_xing_def`；{py:class}`~bazi.school.PeiouXingDef` 与 {py:class}`~bazi.bazi_chart.BaziChart` | 已有 `concept.peiou_xing`、`concept.peiou_gong` 及带原文来源的条目；历史读法、软件默认与适用条件仍须分别读取。 |
 | 交运、小运、大运与流年 | {py:class}`~bazi.bazi_chart.BaziChart`；{py:attr}`~bazi.school.BaziConfig.dayun_year_rule` 与 {py:class}`~bazi.school.DayunYearRule` | 顺逆、间隔折算、物理时刻线与年份标签在源码说明中；当前没有相应专门知识对象。标签规则不能代替物理边界规则。 |
 | 流运查询与关系组合 | {py:mod}`~bazi.transits`、{py:mod}`~bazi.utils.tiangan_utils`、{py:mod}`~bazi.utils.dizhi_utils`、{py:mod}`~bazi.analyzer.relationship` | 查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。 |
 | 解释前提匹配 | {py:mod}`~bazi.context_matching` 与 {doc}`../catalog/criteria` | 已有判据目录与知识引用，前提是否满足须另行求值；目录本身不证明前提成立，也不覆盖全库计算规则的来源。 |
@@ -85,19 +85,20 @@
 (guoyin-knowledge)=
 ## 国印关联示例
 
-用 {py:func}`~bazi.knowledge.guoyin_entry` 从流派定义取得条目，再沿 `entry.sources` 查来源；用 {py:func}`~bazi.knowledge.guoyin_def` 从条目 ID 反查定义。
+计算用 `GuoyinDef` 选择规则表；知识用对象和读法查询，再沿 `entry.sources` 查来源：
 
 ```{testcode} guoyin-lookup
-from bazi.knowledge import KnowledgeBase, guoyin_entry, guoyin_def
+from bazi.knowledge import KnowledgeBase
 from bazi.defines import Tiangan
 from bazi.rules import ShenshaRules
 
 kb = KnowledgeBase.load()
-entry = guoyin_entry(kb, ShenshaRules.GuoyinDef.MODERN)
-definition = guoyin_def(kb, entry.claim_id)
-assert definition is not None
+entry, = kb.query('国印贵人', viewpoint='MODERN')
+definition = ShenshaRules.GuoyinDef.MODERN
 print('取法', definition.name, '甲见' + str(ShenshaRules.GUOYIN[definition][Tiangan.甲]))
-print(kb.render(entry, show_sources=False))
+print(entry.text)
+for limit in entry.limits:
+  print('限度：' + limit)
 source = kb.sources[entry.sources[0]]
 print('支持', source.supports)
 print('限度', source.limitations)
@@ -105,16 +106,15 @@ print('限度', source.limitations)
 
 ```{testoutput} guoyin-lookup
 取法 MODERN 甲见戌
-国印的 MODERN 表按禄前第九位（含禄，偏移 +8）取值。【仅供参考】
+国印的 MODERN 表按禄前第九位（含禄，偏移 +8）取值。
 限度：表值与四柱查法的支持来源分开；古籍的守照身命表述不等于查四柱地支。
 限度：本条转述仓内来源边界，未新增已核古籍见证。
 支持 现有的两种表读法，以及另行说明的锚点／目标边界。
-限度 概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清（#194）。
+限度 原创说明。概述本仓署名，未增加已核实的古籍见证。文本源流仍未厘清。
 ```
 
-把传入的 `MODERN` 换成 `WUXING_JINGJI` 即查另一读法；已有流派配置时，可传入 `school.guoyin_def`。
-
-两个函数都使用传入的知识库。`guoyin_entry` 所需条目缺失、`guoyin_def` 查询未知或空白 ID 时抛 `ValueError`；`guoyin_def` 查询已注册但没有国印关联的条目时返回 `None`。参数错型抛 `TypeError`。自定义库须保持相同 ID 的领域含义，条目的 `viewpoint` 不参与关联识别。
+查询 `viewpoint='WUXING_JINGJI'` 可读另一条知识，计算表则用 `GuoyinDef.WUXING_JINGJI`。
+已有流派配置时，计算继续使用 `school.guoyin_def`。知识读法文字与枚举之间没有自动绑定。
 
 这段代码只查表与知识，不创建命盘，也不执行“以哪柱查哪些位置”的命盘求值。三层支持要分别读：
 

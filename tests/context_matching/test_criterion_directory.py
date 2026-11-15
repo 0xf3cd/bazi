@@ -86,7 +86,7 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
     assert lookup_criterion(identifier) == info and hash(lookup_criterion(identifier)) == hash(info)
     assert info.observation_types == ((NatalObservation, LiunianObservation) if info.analysis_kind == 'context' else (NatalObservation, TransitObservation))
     assert info.required_inputs == ('chart', 'criterion_id', 'observation')
-    assert info.optional_inputs == ('knowledge', 'include_reference_only')
+    assert info.optional_inputs == ()
     parameters = inspect.signature(evaluate_context).parameters
     assert info.required_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is inspect.Parameter.empty)
     assert info.optional_inputs == tuple(name for name, parameter in parameters.items() if parameter.default is not inspect.Parameter.empty)

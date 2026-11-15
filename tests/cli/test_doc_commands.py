@@ -54,17 +54,19 @@ def test_guide_task_commands_execute(tokens: list[str], tmp_path: Path) -> None:
   assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_guide_chart_saves_displayed_text(tmp_path: Path) -> None:
-  commands = _doc_commands(CLI_GUIDE.read_text(encoding='utf-8'))
-  exporting = [tokens for tokens in commands if tokens[0] == 'chart' and '--output-dir' in tokens]
-  assert len(exporting) == 1
-  result = run_cli(tmp_path, *exporting[0])
+@pytest.mark.parametrize('tokens', [
+  tokens for tokens in _doc_commands(CLI_GUIDE.read_text(encoding='utf-8'))
+  if tokens[0] == 'chart' and '--output' in tokens
+])
+def test_guide_chart_saves_displayed_text(tokens: list[str], tmp_path: Path) -> None:
+  result = run_cli(tmp_path, *tokens)
   assert result.returncode == 0, result.stdout + result.stderr
   paths = {path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob('*') if path.is_file()}
-  assert paths == {'output_data/interpretation_examples/0.txt'}
-  assert all(value in result.stdout for value in ('年柱：天干庚', '月柱：天干辛', '日柱：天干壬', '时柱：天干乙'))
-  text = (tmp_path / 'output_data/interpretation_examples/0.txt').read_text(encoding='utf-8')
-  assert '\x1b' not in text and text in re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+  target = tokens[tokens.index('--output') + 1]
+  assert paths == {target}
+  text = (tmp_path / target).read_text(encoding='utf-8')
+  assert '\x1b' not in text and text == re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+  assert all(value in text for value in ('年：  庚', '月：  辛', '日：  壬', '时：  乙'))
 
 
 def test_doc_gate_covers_every_file_with_commands() -> None:
@@ -130,8 +132,8 @@ def test_all_inline_task_examples_parse(name: str) -> None:
 
 
 @pytest.mark.parametrize('command,tokens', [
-  ('bazi demo --seed 236', ['demo', '--seed', '236']),
-  ('bazi relationship --seed 236', ['relationship', '--seed', '236']),
+  ('bazi chart --seed 236 --transits', ['chart', '--seed', '236', '--transits']),
+  ('bazi chart --seed 236 --relationship', ['chart', '--seed', '236', '--relationship']),
   ('bazi chart --seed 1', ['chart', '--seed', '1']),
   ('knowledge --all', ['knowledge', '--all']),
   ('bazi match <判据ID>', ['match', GUANSHA]),
@@ -164,10 +166,9 @@ def test_unknown_help_still_requires_a_task(task: str, flag: str, capsys: pytest
   assert captured.out == captured.err == ''
 
 
-def test_fenced_examples_cover_five_tasks() -> None:
-  commands = _doc_commands('```bash\nbazi demo --seed 1\nbazi relationship --seed 1\n'
-                           'bazi chart --seed 1\nbazi knowledge --all\nbazi match\n```')
-  assert [tokens[0] for tokens in commands] == ['demo', 'relationship', 'chart', 'knowledge', 'match']
+def test_fenced_examples_cover_three_tasks() -> None:
+  commands = _doc_commands('```bash\nbazi chart --seed 1\nbazi knowledge --all\nbazi match\n```')
+  assert [tokens[0] for tokens in commands] == ['chart', 'knowledge', 'match']
   for tokens in commands:
     _check_doc_command(tokens)
 
