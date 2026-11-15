@@ -25,7 +25,7 @@ from .context_matching import (
 from .school import BaziConfig
 from .transit_chart import TransitChart
 from .transits import TransitKind
-from .utils.bazi_utils import traits
+from .utils.bazi_utils import traits, shishen
 from .analyzer.relationship import (
   RelationshipAnalyzer, ShenshaAnalysis, AtBirthShenshaAnalysis, SHENSHA_LABELS, WHOLE_PILLAR_SHENSHA_LABELS,
   KongwangResult,
@@ -148,18 +148,23 @@ def _chart_knowledge(
   *,
   show_sources: bool = False,
 ) -> str:
+  observed = (
+    {pair.tiangan for pair in chart.shishen if pair.tiangan is not None} |
+    {shishen(chart.bazi.day_master, tg) for hidden in chart.hidden_tiangan for tg in hidden}
+  )
   subjects: tuple[Tiangan | Shishen, ...] = (
     chart.bazi.day_master,
-    *(ss for ss in Shishen if any(ss in (pair.tiangan, pair.dizhi) for pair in chart.shishen)),
+    *(ss for ss in Shishen if ss in observed),
   )
   lines = ['相关知识（按日主、十神分组；命盘适用性未判断）：']
   seen: set[str] = set()
   for subject in subjects:
     lines.append(f'\n【{"日主" if isinstance(subject, Tiangan) else "十神"}：{subject}】')
-    if not any(obj.kind == type(subject).__name__.lower() and obj.name == str(subject) for obj in knowledge.objects.values()):
-      lines.append('知识库未收录该对象。')
+    try:
+      entries = knowledge.query(subject)
+    except ValueError as error:
+      lines.append(f'无法查阅：{error}')
       continue
-    entries = knowledge.query(subject)
     for entry in entries:
       if entry.claim_id not in seen:
         seen.add(entry.claim_id)
@@ -177,7 +182,7 @@ def _reject_source_overwrite(parser: argparse.ArgumentParser, target: Path, know
 
 def _knowledge_main(parser: argparse.ArgumentParser, args: argparse.Namespace, *, query: bool) -> int:
   filters = {
-    'subject': args.subject or args.object_id, 'topic': args.topic,
+    'subject': args.subject if args.subject is not None else args.object_id, 'topic': args.topic,
     'source_id': args.source_id, 'viewpoint': args.viewpoint,
   }
   try:
@@ -214,7 +219,7 @@ def _fixed_chart(args: argparse.Namespace) -> BaziChart:
   return BaziChart(Bazi.create(
     args.birth_time,
     args.gender,
-    BaziConfig.from_values(precision=args.precision or 'day'),
+    BaziConfig.from_values(precision=args.precision if args.precision is not None else 'day'),
     longitude=args.longitude,
     civil_timezone=args.civil_timezone,
   ))
@@ -248,7 +253,7 @@ def _solar_moment(value: str) -> datetime:
 
 
 def _transit_kinds(parser: argparse.ArgumentParser, value: str) -> tuple[TransitKind, ...]:
-  '''解析逗号分隔的种类值；查重、拒未知名与空项，再按固定种类序规范化。'''
+  '''解析逗号分隔的种类值；查重，拒绝未知名与空项。'''
   kinds: list[TransitKind] = []
   for item in value.split(','):
     try:
@@ -257,7 +262,7 @@ def _transit_kinds(parser: argparse.ArgumentParser, value: str) -> tuple[Transit
       parser.error(f'Unsupported transit kind: {item}')
   if len(set(kinds)) != len(kinds):
     parser.error(f'Duplicate transit kinds: {value}')
-  return tuple(kind for kind in TransitKind if kind in frozenset(kinds))
+  return tuple(kinds)
 
 
 def _relationship_observation(

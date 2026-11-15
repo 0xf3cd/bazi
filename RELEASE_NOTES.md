@@ -39,12 +39,15 @@
 命令收为 `chart`、`knowledge`、`match`：
 
 - `demo` 改用 `chart --transits`，`relationship` 改用 `chart --relationship`，两项可组合并接固定出生输入。
-- `chart` 默认只读盘面事实，`chart --knowledge` 按日主与十神分组读知识，同次输出按条目 ID 去重。
+- `chart` 默认只读盘面事实，`chart --knowledge` 按日主与三处非日主明干、全部藏干对应的十神分组读知识，同次输出按条目 ID 去重。
   `match --knowledge` 追加参考正文；两任务的 `--knowledge-source`、`--show-sources` 都须与 `--knowledge` 同用。
 - `--output-dir`、批量 `--count` 和知识 TXT 批量导出撤回。
   `chart --output chart.txt` 保存本次完整无色输出；覆盖保护按解析后的路径比较，识别符号链接，不再检查硬链接身份。
 - `--gz-month` 改为 `--ganzhi-month`，不保留旧拼写。性别和精度接受库已有的中文写法，如 `女`、`分`。
 - 知识可用 `bazi knowledge 丁`、`bazi knowledge --search "枭印"` 查询，旧情境、状态和展示资格过滤撤回。
+
+`basic_text` 增加十神个数／占比段落，`chart` 直接复用这份文本。统计仍取三处非日主明干与四支本气，
+不计中气、余气，不代表旺衰或力量；知识阅读则包含全部藏干对应的十神。
 
 ## bazi 2.6.0
 

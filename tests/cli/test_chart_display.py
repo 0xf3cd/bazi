@@ -12,7 +12,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.chart_text import basic_text
 from bazi.defines import Shishen, Tiangan
-from bazi.knowledge import KnowledgeBase
+from bazi.knowledge import KnowledgeBase, KnowledgeObject
 
 from cli_runner import run_cli, MATCH_BIRTH
 
@@ -34,8 +34,8 @@ def test_chart_knowledge_deduplicates(sources: bool) -> None:
   kb = KnowledgeBase.load()
   text = cli._chart_knowledge(chart, kb, show_sources=sources)
   subjects: list[Tiangan | Shishen] = [
-    chart.bazi.day_master,
-    *(ss for ss in Shishen if any(ss in (pair.tiangan, pair.dizhi) for pair in chart.shishen)),
+    Tiangan.庚, Shishen.比肩, Shishen.食神, Shishen.伤官, Shishen.正财,
+    Shishen.正官, Shishen.七杀, Shishen.正印, Shishen.偏印,
   ]
   expected = list(dict.fromkeys(entry.claim_id for subject in subjects for entry in kb.query(subject)))
   assert re.findall(r'^条目：(.*)$', text, re.MULTILINE) == expected
@@ -43,16 +43,33 @@ def test_chart_knowledge_deduplicates(sources: bool) -> None:
     entry = kb.entry(claim_id)
     assert entry.text in text and entry.premise in text
     assert all(limit in text for limit in entry.limits)
-  assert '【日主：' in text and '【十神：' in text and '命盘适用性未判断' in text
+  assert re.findall(r'^【.*】$', text, re.MULTILINE) == [
+    '【日主：庚】', '【十神：比肩】', '【十神：食神】', '【十神：伤官】', '【十神：正财】',
+    '【十神：正官】', '【十神：七杀】', '【十神：正印】', '【十神：偏印】',
+  ]
+  assert '命盘适用性未判断' in text
   assert ('引文／记录：' in text) is sources
   assert '出处未核' in text and '来源：' in text
 
 
 def test_missing_objects_and_empty_entries() -> None:
   chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
-  assert '知识库未收录该对象' in cli._chart_knowledge(chart, KnowledgeBase((), (), ()))
+  assert '无法查阅：Unknown object: 庚' in cli._chart_knowledge(chart, KnowledgeBase((), (), ()))
   kb = KnowledgeBase.load()
   assert '无相关条目' in cli._chart_knowledge(chart, KnowledgeBase(tuple(kb.objects.values()), (), ()))
+
+
+def test_ambiguous_object_keeps_other_groups() -> None:
+  chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female'))
+  kb = KnowledgeBase.load()
+  ambiguous = KnowledgeBase(
+    (*kb.objects.values(), KnowledgeObject('second.geng', 'tiangan', '庚')),
+    tuple(kb.sources.values()),
+    tuple(kb.entries.values()),
+  )
+  text = cli._chart_knowledge(chart, ambiguous)
+  assert '无法查阅：Ambiguous object: 庚; candidates: tiangan.geng, second.geng' in text
+  assert kb.query(Shishen.偏印)[0].text in text
 
 
 @pytest.mark.parametrize('optimized', [False, True])
@@ -63,7 +80,7 @@ def test_saved_txt_equals_complete_display(tmp_path: Path, optimized: bool, loca
   location = ('--longitude', '-157.4') if located else ()
   flags = ('--knowledge', '--show-sources') if reading else ()
   result = run_cli(
-    tmp_path, 'chart', '--birth-time', birth, '--gender', '女', '--precision', '分',
+    tmp_path, 'chart', '--birth-time', birth, '--gender', '男', '--precision', '分',
     *location, *flags, '--transits', '--relationship', '--output', 'chart.txt', optimized=optimized,
   )
   assert result.returncode == 0, result.stderr

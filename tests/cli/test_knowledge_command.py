@@ -55,6 +55,10 @@ def test_literal_search_matches_library(tmp_path: Path, keyword: str) -> None:
 
 
 @pytest.mark.parametrize('tokens,error', [
+  (('',), 'non-empty'),
+  (('', '--topic', '定义'), 'non-empty'),
+  (('  ',), 'non-empty'),
+  (('--object', ''), 'non-empty'),
   (('丁', '--object', '丁'), 'Use either'),
   (('--all', '丁'), '--all'),
   (('--all', '--search', '丁'), '--all'),
@@ -66,7 +70,8 @@ def test_literal_search_matches_library(tmp_path: Path, keyword: str) -> None:
   (('--source', '不存在'), 'Unknown source_id'),
   (('--viewpoint', '不存在'), 'Unknown viewpoint'),
 ])
-def test_invalid_query_options_fail(tmp_path: Path, tokens: tuple[str, ...], error: str) -> None:
-  result = run_cli(tmp_path, 'knowledge', *tokens)
+@pytest.mark.parametrize('optimized', [False, True])
+def test_invalid_query_options_fail(tmp_path: Path, tokens: tuple[str, ...], error: str, optimized: bool) -> None:
+  result = run_cli(tmp_path, 'knowledge', *tokens, optimized=optimized)
   assert result.returncode == 2 and error in result.stderr
   assert not result.stdout and not list(tmp_path.iterdir())

@@ -163,7 +163,7 @@ assert chart.bazi.day_master in Tiangan
   `Expected BaziChart, got <class 'bazi.bazi.Bazi'>; wrap it with BaziChart(bazi)`。
   异常类型与开头不变；要判断错误种类，匹配开头，不要匹配全文。
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
-  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
+  `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生，以及三处非日主明干与四支本气的十神个数／占比；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
   出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun` 一致；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
@@ -262,7 +262,9 @@ assert chart.bazi.day_master in Tiangan
 `knowledge --search 枭印` 作字面搜索；无匹配输出“无匹配条目。”。
 `chart` 默认只展示盘面事实，`--transits`、`--relationship` 分别追加流运与婚恋报告。
 `chart` 与 `match` 只有加 `--knowledge` 才加载正文；`--knowledge-source`、`--show-sources` 须与它同用。
-`chart` 的知识按日主与实际出现的十神分组，同次输出按条目 ID 去重；`match` 的缺项显示 ID 与“知识库未收录”。
+`chart` 的知识按日主与三处非日主明干、全部藏干对应的十神分组，同次输出按条目 ID 去重。
+自定义库未收录某对象或对象名有歧义时，该组显示查询错误，其他组继续展示；
+`match` 的缺项显示 ID 与“知识库未收录”。
 
 `bazi.cli.main(argv=None)` 的 `argv` 列表不含程序名，`None` 表示读取 `sys.argv[1:]`；
 非列表或包含非字符串成员时抛 `TypeError`。裸调用与 `--help` 只打印帮助并返回 0，不写文件。

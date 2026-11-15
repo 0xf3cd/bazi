@@ -37,14 +37,16 @@ def test_east_and_west_location_inputs(
 
 
 @pytest.mark.parametrize('optimized', [False, True])
+@pytest.mark.parametrize('gender', ['female', '男'])
 @pytest.mark.parametrize('precision,pillars', [
   ('hour', ('庚辰', '戊寅')), ('minute', ('己卯', '丁丑')),
+  ('日', ('庚辰', '戊寅')), ('时', ('庚辰', '戊寅')), ('分', ('己卯', '丁丑')),
 ])
-def test_naive_cli_precision(tmp_path: Path, optimized: bool, precision: str, pillars: tuple[str, str]) -> None:
+def test_naive_cli_precision(tmp_path: Path, optimized: bool, gender: str, precision: str, pillars: tuple[str, str]) -> None:
   birth = '2000-02-04T20:39:59.123456'
   config = BaziConfig.from_values(precision=precision)
-  expected = BaziChart(Bazi.create(birth, 'female', config))
-  args = ('--birth-time', birth, '--gender', 'female', '--precision', precision)
+  expected = BaziChart(Bazi.create(birth, gender, config))
+  args = ('--birth-time', birth, '--gender', gender, '--precision', precision)
   result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
   assert result.returncode == 0, result.stderr
   assert expected.bazi.solar_datetime.isoformat() == '2000-02-04T20:39:00'
@@ -130,6 +132,8 @@ def test_legacy_renderer_keeps_birth_labels() -> None:
 
 @pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('args,error', [
+  (('chart', '--birth-time', '2000-01-03 12:00', '--gender', '男', '--precision', ''), 'Unsupported precision'),
+  ((*MATCH_ARGS, '--precision', ''), 'Unsupported precision'),
   (('chart', '--longitude', '0'), 'require fixed birth input'),
   (('chart', '--precision', 'hour'), 'require fixed birth input'),
   (('chart', '--civil-timezone', '+14:00'), 'require fixed birth input'),

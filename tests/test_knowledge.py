@@ -131,7 +131,7 @@ def test_result_order_and_immutability() -> None:
 @pytest.mark.parametrize('bad', [None, 0, True, (), [], {}, Dizhi.子])
 def test_text_inputs_reject_wrong_types(bad: Any) -> None:
   knowledge = KnowledgeBase.load()
-  for call in (knowledge.entry, knowledge.find_objects, knowledge.filter_values, knowledge.search):
+  for call in (knowledge.entry, knowledge.find_objects, knowledge.filter_values, knowledge.search, knowledge.render_subject):
     with pytest.raises(TypeError):
       call(bad)
   if bad is not None:
@@ -146,7 +146,7 @@ def test_text_inputs_reject_wrong_types(bad: Any) -> None:
 @pytest.mark.parametrize('bad', ['', ' ', '\t\n'])
 def test_blank_names_fail(bad: str) -> None:
   knowledge = KnowledgeBase.load()
-  for call in (knowledge.entry, knowledge.find_objects, knowledge.filter_values, knowledge.search, knowledge.query):
+  for call in (knowledge.entry, knowledge.find_objects, knowledge.filter_values, knowledge.search, knowledge.query, knowledge.render_subject):
     with pytest.raises(ValueError, match='non-empty'):
       call(bad)
 

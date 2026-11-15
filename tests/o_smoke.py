@@ -243,6 +243,8 @@ def main() -> int:
      lambda: knowledge.query(Dizhi.子)), # type: ignore[arg-type]
     ('KnowledgeBase.render_subject wrong identifier', TypeError,
      lambda: knowledge.render_subject(42)), # type: ignore[arg-type]
+    ('KnowledgeBase.render_subject missing identifier', TypeError,
+     lambda: knowledge.render_subject(None)), # type: ignore[arg-type]
     ('Criterion directory wrong ID type', TypeError,
      lambda: lookup_criterion(1)), # type: ignore[arg-type]
     ('Criterion directory unknown ID', ValueError,
