@@ -2,7 +2,6 @@
 
 '''Bazi 上的命盘派生信息：十神、藏干、纳音、十二长生与运限等。'''
 
-import copy
 import functools
 from random import Random
 
@@ -80,14 +79,12 @@ def _peiou_xing_target(day_master: Tiangan, gender: BaziGender, definition: Peio
 class BaziChart:
   '''
   提供原盘的阴阳五行、十神、十二长生、纳音、藏干等派生信息。
-  派生量首次访问后缓存；构造后不得重绑 `_bazi`，重绑不会刷新已有缓存。
+  直接共享传入的 Bazi，派生量首次访问后缓存；不得改写 Bazi 的私有状态或重绑 `_bazi`。
   '''
 
   def __init__(self, bazi: Bazi) -> None:
     _check_bazi(bazi)
-    # Bazi 并非 frozen，私有状态可被改写，因此持有隔离副本。
-    # test_malicious 验证修改调用方对象不会影响命盘。
-    self._bazi: Final[Bazi] = copy.deepcopy(bazi)
+    self._bazi: Final[Bazi] = bazi
 
   def __repr__(self) -> str:
     '''交互探索用的简短摘要，内容为所持 `Bazi` 的摘要；不触发派生计算，格式不是承诺。'''
@@ -108,14 +105,14 @@ class BaziChart:
 
   @property
   def bazi(self) -> Bazi:
-    '''每次返回独立深拷贝；不使用 `cached_property`，避免调用方修改缓存中的共享 Bazi。'''
-    return copy.deepcopy(self._bazi)
+    '''返回构造时传入的同一个 Bazi。'''
+    return self._bazi
 
   @property
   def _utils(self) -> CalendarUtilsProtocol:
     '''
     每次访问时解析底层 Bazi 所用的历法工具，实例上不存 HKO 模块或 celestial 单例。
-    不能改为 `cached_property`：存模块会使 deepcopy 失败，存单例会复制实例并分裂缓存。
+    这样显式 deepcopy 命盘时也不会复制历法工具。
     '''
     return calendar_utils_of(self._bazi.config.backend)
   

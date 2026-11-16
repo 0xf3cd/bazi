@@ -52,6 +52,7 @@ def test_criteria_partition_scope_and_entry_roles() -> None:
   assert set(_DAY_MASTER_CRITERIA) | set(_CLASS_CRITERIA) == context_conditions
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'evaluate_context')
 @pytest.mark.parametrize('criterion_id, observation', [
   (PALACE, LiunianObservation(2024)),
   (GUANSHA, TransitObservation((TransitKind.LIUNIAN,))),
@@ -62,6 +63,7 @@ def test_criterion_rejects_foreign_observation(criterion_id: str, observation: O
     evaluate_context(chart(), criterion_id=criterion_id, observation=observation)
 
 
+@pytest.mark.optimized
 def test_natal_observation_is_shared() -> None:
   observation = NatalObservation()
   for criterion_id in _CRITERIA:
@@ -69,6 +71,7 @@ def test_natal_observation_is_shared() -> None:
   assert get_args(ScopeName) == ('natal', 'natal_and_liunian', 'natal_and_transits')
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'TransitObservation')
 @pytest.mark.parametrize('kwargs, error', [
   ({'coordinate': 'at_year', 'kinds': (TransitKind.LIUNIAN,)}, TypeError),
   ({}, TypeError),
@@ -112,6 +115,7 @@ class DatetimeSubclass(datetime):
   pass
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'YearCoordinate MonthCoordinate DateCoordinate MomentCoordinate')
 @pytest.mark.parametrize('factory, kwargs, error', [
   (YearCoordinate, {}, TypeError),
   (YearCoordinate, {'ganzhi_month': _Dizhi.酉}, TypeError),
@@ -122,20 +126,33 @@ class DatetimeSubclass(datetime):
   (DateCoordinate, {'solar_date': _date_module(2024, 4, 10), 'ganzhi_year': 2024}, TypeError),
   (MomentCoordinate, {}, TypeError),
   (MomentCoordinate, {'solar_moment': datetime(2024, 4, 10, 12), 'ganzhi_month': _Dizhi.酉}, TypeError),
-  (YearCoordinate, {'ganzhi_year': True}, TypeError),
-  (YearCoordinate, {'ganzhi_year': Year(2024)}, TypeError),
-  (MonthCoordinate, {'ganzhi_year': True, 'ganzhi_month': _Dizhi.酉}, TypeError),
-  (MonthCoordinate, {'ganzhi_year': Year(2024), 'ganzhi_month': _Dizhi.酉}, TypeError),
+  (YearCoordinate, {'ganzhi_year': '2024'}, TypeError),
+  (MonthCoordinate, {'ganzhi_year': 2024.0, 'ganzhi_month': _Dizhi.酉}, TypeError),
   (MonthCoordinate, {'ganzhi_year': 2024, 'ganzhi_month': '酉'}, TypeError),
   (DateCoordinate, {'solar_date': datetime(2024, 4, 10, 12)}, TypeError),
   (DateCoordinate, {'solar_date': DateSubclass(2024, 4, 10)}, TypeError),
   (MomentCoordinate, {'solar_moment': _date_module(2024, 4, 10)}, TypeError),
-  (MomentCoordinate, {'solar_moment': DatetimeSubclass(2024, 4, 10, 12)}, TypeError),
   (MomentCoordinate, {'solar_moment': datetime(2024, 4, 10, 12, tzinfo=_UTC)}, ValueError),
 ])
 def test_transit_coordinate_request_errors(factory: Any, kwargs: dict[str, Any], error: type[Exception]) -> None:
   with pytest.raises(error):
     factory(**kwargs)
+
+
+@pytest.mark.parametrize('year', [True, False, Year(2024), 2024, -1])
+@pytest.mark.optimized
+def test_year_requests_keep_int_values(year: int) -> None:
+  assert YearCoordinate(year).ganzhi_year is year
+  assert MonthCoordinate(year, _Dizhi.酉).ganzhi_year is year
+  assert LiunianObservation(year).ganzhi_year is year
+
+
+@pytest.mark.input_contract('bazi.context_matching', 'MomentCoordinate')
+def test_moment_accepts_subclass_and_microseconds() -> None:
+  moment = DatetimeSubclass(2024, 4, 10, 12, 0, 0, 123456)
+  assert MomentCoordinate(moment).solar_moment is moment
+  with pytest.raises(ValueError):
+    MomentCoordinate(moment.replace(tzinfo=_UTC))
 
 
 @pytest.mark.parametrize('value', [

@@ -184,7 +184,7 @@ for result in analyzer.transits.kongwang(transits):
 
 若已持有干支，只需做一次低层查表，使用 {py:func}`~bazi.utils.shensha_utils.xunkong` 返回旬空二支，
 或用 {py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。两者要求查法依据是合法六十甲子，
-目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 `Ganzhi` 自身的构造范围不变。
+目标只按地支判断，不附加天干或纳音条件。阴阳不配的组合在 `Ganzhi` 构造时即被拒绝。
 
 打印位置时，原局柱位 `Zhu` 用 `str(value)` 取得中文值，流运种类 `TransitKind` 用 `.value` 取得
 `dayun`、`liunian` 等标签。

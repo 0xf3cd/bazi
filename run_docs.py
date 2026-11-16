@@ -146,7 +146,7 @@ def build(output: Path, version_label: str) -> None:
       ]
       subprocess.run(command, env=environment, check=True)
     subprocess.run([
-      sys.executable, '-B', str(ROOT / 'run_doc_checks.py'), str(candidate / 'html'), str(candidate / 'doctest'), version_label, sha,
+      sys.executable, '-B', str(ROOT / 'run_doc_checks.py'), str(candidate / 'html'), str(candidate / 'doctest'), str(source), version_label, sha,
     ], env=environment, check=True)
     metadata = {
       'version': version_label, 'commit': sha, 'dirty': dirty,

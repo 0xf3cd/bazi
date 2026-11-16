@@ -78,9 +78,10 @@ def test_ambiguous_object_keeps_other_groups() -> None:
   assert kb.query(Shishen.偏印)[0].text in text
 
 
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('located', [False, True])
-@pytest.mark.parametrize('reading', [False, True])
+@pytest.mark.parametrize('optimized,located,reading', [
+  (False, False, False), (False, False, True), (False, True, False), (False, True, True),
+  pytest.param(True, True, True, marks=pytest.mark.optimized),
+])
 def test_saved_txt_equals_complete_display(tmp_path: Path, optimized: bool, located: bool, reading: bool) -> None:
   birth = '2024-01-01T12:00:00+14:00' if located else '2024-01-01T12:00:00'
   location = ('--longitude', '-157.4') if located else ()

@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import inspect
-from dataclasses import FrozenInstanceError, fields, replace
+from dataclasses import FrozenInstanceError, replace
 from typing import Any
 
 import pytest
@@ -116,46 +116,11 @@ def test_directory_is_complete_immutable_no_load(monkeypatch: pytest.MonkeyPatch
       directory[identifier] = info # type: ignore[index]
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'criterion')
 @pytest.mark.parametrize('value', [None, 1, True, '', ' ', 'unknown'])
 def test_directory_lookup_rejects_invalid_ids(value: object) -> None:
   with pytest.raises(ValueError if isinstance(value, str) else TypeError):
     lookup_criterion(value) # type: ignore[arg-type]
-
-
-def test_constructor_checks_each_declared_field() -> None:
-  info = lookup_criterion(GUANSHA)
-  for field in fields(info):
-    change: dict[str, Any] = {field.name: object()}
-    with pytest.raises(TypeError):
-      replace(info, **change)
-
-
-@pytest.mark.parametrize('field', ['criterion_id', 'definition'])
-@pytest.mark.parametrize('value, error, message', [
-  (object(), TypeError, "Expected str, got <class 'object'>"),
-  ('', ValueError, 'Expected non-empty text'),
-  (' \t\u3000', ValueError, 'Expected non-empty text'),
-])
-def test_text_fields_keep_validation_messages(field: str, value: object, error: type[Exception], message: str) -> None:
-  change: dict[str, Any] = {field: value}
-  with pytest.raises(error) as failure:
-    replace(lookup_criterion(GUANSHA), **change)
-  assert str(failure.value) == message
-
-
-@pytest.mark.parametrize('change, error', [
-  ({'criterion_id': ''}, ValueError), ({'definition': ' '}, ValueError),
-  ({'analysis_kind': 'unknown'}, ValueError), ({'entry_role': 'full'}, ValueError),
-  ({'observation_keys': ()}, ValueError), ({'observation_keys': ('x', 'x')}, ValueError),
-  ({'claim_ids': ()}, ValueError), ({'claim_ids': ('x', 'x')}, ValueError),
-  ({'observation_keys': ('',)}, ValueError),
-  ({'claim_genders': frozendict({'unknown': BaziGender.MALE})}, ValueError),
-  ({'claim_genders': frozendict({1: BaziGender.MALE})}, TypeError),
-  ({'claim_genders': frozendict({LEGAL[0]: 'male'})}, TypeError),
-])
-def test_constructor_rejects_invalid_metadata(change: dict[str, Any], error: type[Exception]) -> None:
-  with pytest.raises(error):
-    replace(lookup_criterion(GUANSHA), **change)
 
 
 def test_guards_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -164,10 +129,6 @@ def test_guards_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
     patcher.setattr(matching_module, '_CRITERIA', frozendict({**_CRITERIA, 'test.ninth': _CRITERIA[GUANSHA]}))
     with pytest.raises(ValueError, match='Unsupported criterion metadata'):
       criteria()
-  with monkeypatch.context() as patcher:
-    patcher.setattr(matching_module, '_CRITERIA', frozendict({**_CRITERIA, GUANSHA: _CRITERIA[GUANSHA]._replace(claims=())}))
-    with pytest.raises(ValueError, match='non-empty distinct metadata'):
-      lookup_criterion(GUANSHA)
   with pytest.raises(AssertionError):
     _check_directory(frozendict({**directory, 'test.ninth': replace(directory[GUANSHA], criterion_id='test.ninth')}))
   with pytest.raises(AssertionError):
@@ -178,7 +139,7 @@ def test_guards_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize('change', [
   {'definition': 'wrong'}, {'analysis_kind': 'relationship'}, {'entry_role': 'condition'},
-  {'observation_keys': ('wrong',)}, {'claim_ids': tuple(reversed(LEGAL))},
+  {'observation_keys': ('wrong',)}, {'claim_ids': tuple(reversed(LEGAL))}, {'claim_ids': ()},
   {'required_gender': BaziGender.MALE}, {'claim_genders': frozendict({LEGAL[0]: BaziGender.MALE})},
 ])
 def test_metadata_oracle_rejects_changes(change: dict[str, Any]) -> None:

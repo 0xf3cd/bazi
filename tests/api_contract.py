@@ -1,13 +1,15 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-'''测试与参考文档共用的显式公开面清单，不改变运行时导出。
+'''按调用任务登记的公开 API，供测试与参考文档共用。
 
-PUBLIC_NAMES 记录自有定义、既有中文别名与包入口重导出；DECLARED_MEMBERS 记录类中声明的公开成员，
+保留排盘与配置、领域查询与规则、流运分析、知识编辑与查阅、判据求值、文本输出所需的入口，
+以及调用方读取的结果类型、领域枚举和不可变容器。内部类型参数、共用基类和校验函数不承诺包外调用。
+历法与离线数据入口的取舍随历法实现调整，此处仍登记当前支持的接口。
+PUBLIC_NAMES 是白名单，新增名字不自动成为 API；DECLARED_MEMBERS 记录类中声明的公开成员，
 继承成员沿 BASES 追溯。构造签名、生成的方法及容器协议仍由对应类型定义，不在此重复声明。
-新增自有对象、字段、枚举别名或继承关系须同步登记。
 REEXPORTS 与 ALIASES 区分重导出与别名；STATIC_MODULES 标记离线工具与导入即读表的后端实现。
-第三方偶然导入不是本库 API；离线工具仅作源码参考，清单检查不执行工具或加载数据表。
-普通模块的依赖导入不自动成为规范重导出；显式支持的重导出路径另行登记。
+普通模块的依赖导入不自动成为规范重导出。INTERNAL_NAMES 记录公开模块内尚用非下划线拼写的
+内部定义；整模块内部实现归 INTERNAL_MODULES。这些名字不生成 API 页，也不构成兼容承诺。
 '''
 
 from typing import Final
@@ -36,12 +38,11 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.calendar.hko_data_utils': 'jieqi_dates_db lunar_years_db get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid days_counts_in_ganzhi_year lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date jieqi_date jieqi_moment supported_jie_boundaries prev_jie next_jie',
   'bazi.calendar.solar_time': 'apparent_solar_datetime',
   'bazi.calendar.utils_protocol': 'CalendarUtilsProtocol',
-  'bazi.common': 'FrozenDictKeyType FrozenDictValueType frozendict check_declared_types',
+  'bazi.common': 'frozendict',
   'bazi.context_matching': 'MatchStatus CriterionReason ScopeName TransitEntry YearCoordinate MonthCoordinate DateCoordinate MomentCoordinate TransitCoordinate NatalObservation LiunianObservation TransitObservation Observation CriterionInfo criterion criteria LiunianPosition ChartOccurrence CriterionResult ContextResult evaluate_context',
-  'bazi.data_types': 'TraitTuple DayunTuple XiaoyunTuple LiunianTuple HiddenTianganDict PillarDataType BaziData TianganDataType DizhiDataType GanzhiData',
+  'bazi.data_types': 'TraitTuple DayunTuple XiaoyunTuple LiunianTuple HiddenTianganDict BaziData GanzhiData',
   'bazi.defines': 'Zhu 柱 Tiangan 天干 TianganLayer 天干层次 Dizhi 地支 Ganzhi 干支 Jieqi 节气 Wuxing 五行 WuxingState 五行状态 Yinyang 阴阳 Shishen 十神 ShierZhangsheng 十二长生 TianganRelation 天干关系 DizhiRelation 地支关系',
   'bazi.defines.dizhi': 'Dizhi 地支',
-  'bazi.defines.enum_base': 'BaziEnum IndexedBaziEnum',
   'bazi.defines.ganzhi': 'Ganzhi 干支',
   'bazi.defines.jieqi': 'Jieqi 节气',
   'bazi.defines.relations': 'TianganRelation 天干关系 DizhiRelation 地支关系',
@@ -59,13 +60,19 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.utils': 'bazi_utils tiangan_utils dizhi_utils shensha_utils',
   'bazi.utils.bazi_utils': 'ganzhi_of_day ganzhi_of_year month_tiangan taiyuan minggong hour_tiangan tiangan_traits dizhi_traits traits hidden_tiangans shishen nayin_str shier_zhangsheng from_shier_zhangsheng lu',
   'bazi.utils.dizhi_utils': 'DizhiCombo DizhiRelationCombos DizhiRelationDiscovery GanzhiOccurrence GanzhiRelationCombo GanzhiRelationCombos GanzhiRelationDiscovery sanhui liuhe anhe tonghe tongluhe sanhe banhe gonghe gonghui xing chong po hai sheng ke search discover search_ganzhis discover_ganzhis discover_mutual_ganzhis discover_mutual',
-  'bazi.utils.relation_discovery': 'RelationType RelationItemType RelationDiscovery',
   'bazi.utils.shensha_utils': 'xunkong kongwang taohua hongyan hongluan tianxi yima huagai jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu kuigang tianshe yangren feiren tianyi wenchang wenchanggui taiji guoyin',
   'bazi.utils.tiangan_utils': 'TianganCombo TianganRelationCombos TianganRelationDiscovery he chong sheng ke search discover discover_mutual',
 }
 
 INTERNAL_MODULES: Final[dict[str, str]] = {
   'bazi._validation': '知识编辑源、领域值与文字输出的共享校验；不承诺包外调用。',
+  'bazi.defines.enum_base': '领域枚举共用实现；调用方使用具体枚举上的转换与索引。',
+  'bazi.utils.relation_discovery': '天干、地支发现结果共用实现；调用方使用具体发现类型的过滤、合并与双侧筛选。',
+}
+
+INTERNAL_NAMES: Final[dict[str, str]] = {
+  'bazi.common': 'K V check_declared_types',
+  'bazi.data_types': 'T U',
 }
 
 STATIC_MODULES: Final[dict[str, str]] = {
@@ -81,8 +88,6 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.analyzer.facts.TouganHit': 'hidden visible',
   'bazi.analyzer.relationship.RelationParticipant': 'position ganzhi',
   'bazi.analyzer.relationship.RelationPositionDiscovery': '',
-  'bazi.analyzer.relationship.ShenshaAnalysis': 'taohua hongyan hongluan tianxi yima huagai yangren feiren tianyi jiangxing zaisha jiesha wangshen guchen guasu lushen jinyu wenchang wenchanggui taiji guoyin kongwang',
-  'bazi.analyzer.relationship.AtBirthShenshaAnalysis': 'kuigang tianshe',
   'bazi.analyzer.relationship.AtBirthAnalysis': 'shensha kongwang day_master_relations house_relations star_relations',
   'bazi.analyzer.relationship.TransitAnalysis': 'shensha kongwang day_master_relations all_relations house_relations Level star_relations zhengyin star',
   'bazi.analyzer.relationship.KongwangHit': 'position ganzhi',
@@ -132,9 +137,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.data_types.BaziData': 'year month day hour',
   'bazi.data_types.GanzhiData': 'tiangan dizhi',
   'bazi.defines.dizhi.Dizhi': 'ZI CHOU YIN MAO CHEN SI WU WEI SHEN YOU XU HAI 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥',
-  'bazi.defines.enum_base.BaziEnum': 'from_str as_list',
-  'bazi.defines.enum_base.IndexedBaziEnum': 'index from_index',
-  'bazi.defines.ganzhi.Ganzhi': 'tiangan dizhi from_strs from_str list_sexagenary_cycle list_sexagenary_cycle_strs next prev',
+  'bazi.defines.ganzhi.Ganzhi': 'from_strs from_str list_sexagenary_cycle list_sexagenary_cycle_strs next prev',
   'bazi.defines.jieqi.Jieqi': 'LICHUN YUSHUI JINGZHE CHUNFEN QINGMING GUYU LIXIA XIAOMAN MANGZHONG XIAZHI XIAOSHU DASHU LIQIU CHUSHU BAILU QIUFEN HANLU SHUANGJIANG LIDONG XIAOXUE DAXUE DONGZHI XIAOHAN DAHAN 立春 雨水 惊蛰 春分 清明 谷雨 立夏 小满 芒种 夏至 小暑 大暑 立秋 处暑 白露 秋分 寒露 霜降 立冬 小雪 大雪 冬至 小寒 大寒 as_list jies',
   'bazi.defines.relations.TianganRelation': 'HE CHONG SHENG KE 合 冲 生 克',
   'bazi.defines.relations.DizhiRelation': 'SANHUI GONGHUI LIUHE ANHE TONGHE TONGLUHE SANHE BANHE GONGHE XING CHONG PO HAI SHENG KE 三会 拱会 六合 暗合 通合 通禄合 三合 半合 拱合 刑 冲 破 害 生 克',
@@ -179,19 +182,21 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.utils.dizhi_utils.DizhiRelationDiscovery': '',
   'bazi.utils.dizhi_utils.GanzhiOccurrence': 'index ganzhi',
   'bazi.utils.dizhi_utils.GanzhiRelationDiscovery': 'to_dizhi_discovery',
-  'bazi.utils.relation_discovery.RelationDiscovery': 'filter merge mutual_only',
   'bazi.utils.tiangan_utils.TianganRelationDiscovery': '',
 }
 
-'''经公开子类继承的私有基类字段；当前无此类声明。'''
-PRIVATE_BASE_MEMBERS: Final[dict[str, str]] = {}
+'''公开子类继承的内部基类成员；登记继承语义，不开放基类导入。'''
+PRIVATE_BASE_MEMBERS: Final[dict[str, str]] = {
+  'bazi.defines.enum_base.BaziEnum': 'from_str as_list',
+  'bazi.defines.enum_base.IndexedBaziEnum': 'index from_index',
+  'bazi.defines.ganzhi._GanzhiFields': 'tiangan dizhi',
+  'bazi.utils.relation_discovery.RelationDiscovery': 'filter merge mutual_only',
+}
 
 '''源码基类表达式；显式登记继承关系，不能只查子类自己声明的字段。'''
 BASES: Final[dict[str, tuple[str, ...]]] = {
   'bazi.analyzer.facts.TianganMatch': ('Enum',),
   'bazi.analyzer.relationship.RelationPositionDiscovery': ('frozendict[DizhiRelation, tuple[frozenset[RelationParticipant], ...]]',),
-  'bazi.analyzer.relationship.ShenshaAnalysis': ('TypedDict',),
-  'bazi.analyzer.relationship.AtBirthShenshaAnalysis': ('ShenshaAnalysis',),
   'bazi.analyzer.relationship.TransitAnalysis.Level': ('IntFlag',),
   'bazi.bazi.BaziGender': ('Enum',),
   'bazi.bazi.LocationTime': ('NamedTuple',),
@@ -200,18 +205,19 @@ BASES: Final[dict[str, tuple[str, ...]]] = {
   'bazi.calendar.dates.CalendarType': ('Enum',),
   'bazi.calendar.dates.JieqiTime': ('NamedTuple',),
   'bazi.calendar.utils_protocol.CalendarUtilsProtocol': ('Protocol',),
-  'bazi.common.frozendict': ('Mapping[FrozenDictKeyType, FrozenDictValueType]',),
+  'bazi.common.frozendict': ('Mapping[K, V]',),
   'bazi.data_types.TraitTuple': ('NamedTuple',),
   'bazi.data_types.DayunTuple': ('NamedTuple',),
   'bazi.data_types.XiaoyunTuple': ('NamedTuple',),
   'bazi.data_types.LiunianTuple': ('NamedTuple',),
   'bazi.data_types.HiddenTianganDict': ('frozendict[Tiangan, int]',),
-  'bazi.data_types.BaziData': ('Generic[PillarDataType]',),
-  'bazi.data_types.GanzhiData': ('Generic[TianganDataType, DizhiDataType]',),
+  'bazi.data_types.BaziData': ('Generic[T]',),
+  'bazi.data_types.GanzhiData': ('Generic[T, U]',),
   'bazi.defines.dizhi.Dizhi': ('IndexedBaziEnum',),
   'bazi.defines.enum_base.BaziEnum': ('Enum',),
   'bazi.defines.enum_base.IndexedBaziEnum': ('BaziEnum',),
-  'bazi.defines.ganzhi.Ganzhi': ('NamedTuple',),
+  'bazi.defines.ganzhi._GanzhiFields': ('NamedTuple',),
+  'bazi.defines.ganzhi.Ganzhi': ('_GanzhiFields',),
   'bazi.defines.jieqi.Jieqi': ('BaziEnum',),
   'bazi.defines.relations.TianganRelation': ('BaziEnum',),
   'bazi.defines.relations.DizhiRelation': ('BaziEnum',),
@@ -242,7 +248,7 @@ BASES: Final[dict[str, tuple[str, ...]]] = {
   'bazi.transits.TransitKind': ('Enum',),
   'bazi.utils.dizhi_utils.DizhiRelationDiscovery': ('RelationDiscovery[DizhiRelation, Dizhi]',),
   'bazi.utils.dizhi_utils.GanzhiRelationDiscovery': ('frozendict[DizhiRelation, GanzhiRelationCombos]',),
-  'bazi.utils.relation_discovery.RelationDiscovery': ('frozendict[RelationType, tuple[frozenset[RelationItemType], ...]]', 'Generic[RelationType, RelationItemType]'),
+  'bazi.utils.relation_discovery.RelationDiscovery': ('frozendict[K, tuple[frozenset[T], ...]]', 'Generic[K, T]'),
   'bazi.utils.tiangan_utils.TianganRelationDiscovery': ('RelationDiscovery[TianganRelation, Tiangan]',),
 }
 
@@ -314,8 +320,51 @@ REEXPORTS: Final[dict[str, str]] = {
   )},
 }
 
-'''冻结 v2.0.0 显式导出之外，本次批准新增的名称；冻结文件不改写。'''
-EXPLICIT_EXPORT_ADDITIONS: Final[dict[str, frozenset[str]]] = {
-  'bazi.analyzer': frozenset({'facts'}),
-  'bazi.defines': frozenset({'Zhu', '柱', 'TianganLayer', '天干层次', 'WuxingState', '五行状态'}),
+'''支持星号导入的包入口；对象取自同一公开白名单，模块的普通属性不自动加入。'''
+EXPLICIT_EXPORTS: Final[dict[str, str]] = {
+  'bazi': 'common defines calendar school bazi bazi_chart rules utils analyzer knowledge context_matching transits transit_chart',
+  'bazi.analyzer': PUBLIC_NAMES['bazi.analyzer'],
+  'bazi.defines': PUBLIC_NAMES['bazi.defines'],
+  'bazi.utils': PUBLIC_NAMES['bazi.utils'],
+  'bazi.calendar': 'hko_data CalendarType CalendarDate JieqiTime CalendarUtilsProtocol hko_data_utils celestial_utils CalendarBackend calendar_utils_of',
+  'bazi.calendar.hko_data': ' '.join(name for name in PUBLIC_NAMES['bazi.calendar.hko_data'].split() if name != 'encoder'),
+}
+
+'''有显式拒绝语义的输入入口；pytest 的 input_contract 标记将它们关联到同源拒绝测试。
+
+结果记录不承诺手工构造校验，Python 参数绑定和容器协议也不另设优化合同。
+历法三种后端共用 CalendarUtilsProtocol 的输入合同，测试仍逐后端执行。
+'''
+INPUT_CONTRACTS: Final[dict[str, str]] = {
+  'bazi.bazi': 'Bazi Bazi.create Bazi.random',
+  'bazi.bazi_chart': 'BaziChart BaziChart.random',
+  'bazi.school': 'BaziConfig BaziConfig.from_values BaziSchool DayunYearRule.from_str',
+  'bazi.rules': 'DizhiRelationDefinitions',
+  'bazi.chart_text': 'TextStyle basic_text transit_text chart_text',
+  'bazi.cli': 'main',
+  'bazi.transits': 'TransitSet TransitSet.select',
+  'bazi.transit_chart': 'TransitChart TransitChart.at_year TransitChart.at_month TransitChart.at_date TransitChart.at_moment',
+  'bazi.analyzer.facts': 'tonggen tougan',
+  'bazi.analyzer.relationship': 'AtBirthAnalysis TransitAnalysis RelationshipAnalyzer spouse_evidence TransitAnalysis.shensha TransitAnalysis.day_master_relations TransitAnalysis.house_relations TransitAnalysis.star_relations TransitAnalysis.zhengyin TransitAnalysis.star TransitAnalysis.all_relations TransitAnalysis.kongwang',
+  'bazi.context_matching': 'YearCoordinate MonthCoordinate DateCoordinate MomentCoordinate LiunianObservation TransitObservation criterion evaluate_context ContextResult.render',
+  'bazi.knowledge': 'KnowledgeObject KnowledgeSource KnowledgeEntry KnowledgeBase KnowledgeBase.load KnowledgeBase.entry KnowledgeBase.find_objects KnowledgeBase.filter_values KnowledgeBase.query KnowledgeBase.search KnowledgeBase.render KnowledgeBase.render_subject',
+  'bazi.defines.ganzhi': 'Ganzhi Ganzhi.from_str Ganzhi.from_strs Ganzhi.next Ganzhi.prev Ganzhi._make Ganzhi._replace',
+  'bazi.defines.jieqi': 'Jieqi.jies',
+  **{
+    owner: 'from_str'
+    for owner, bases in BASES.items()
+    if owner in DECLARED_MEMBERS and any(base in ('BaziEnum', 'IndexedBaziEnum') for base in bases)
+  },
+  'bazi.utils.bazi_utils': PUBLIC_NAMES['bazi.utils.bazi_utils'],
+  'bazi.utils.shensha_utils': PUBLIC_NAMES['bazi.utils.shensha_utils'],
+  'bazi.utils.tiangan_utils': 'he chong sheng ke search discover discover_mutual',
+  'bazi.utils.dizhi_utils': 'sanhui liuhe anhe tonghe tongluhe sanhe banhe gonghe gonghui xing chong po hai sheng ke search discover search_ganzhis discover_ganzhis discover_mutual_ganzhis discover_mutual',
+  'bazi.utils.tiangan_utils.TianganRelationDiscovery': 'filter merge mutual_only',
+  'bazi.utils.dizhi_utils.DizhiRelationDiscovery': 'filter merge mutual_only',
+  'bazi.calendar.backend': 'calendar_utils_of CalendarBackend.from_str',
+  'bazi.calendar.dates': 'CalendarDate GanzhiYearMonth GanzhiYearMonth.from_dizhi GanzhiYearMonth.from_jie',
+  'bazi.calendar.utils_protocol.CalendarUtilsProtocol': 'get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date prev_jie next_jie days_counts_in_ganzhi_year jieqi_date jieqi_moment',
+  'bazi.calendar.hko_data.decoder': 'DecodedJieqiDates.get DecodedJieqiDates.__getitem__ DecodedLunarYears.get DecodedLunarYears.__getitem__',
+  'bazi.calendar.solar_time': 'apparent_solar_datetime',
+  'bazi.calendar.celestial_data.loader': 'EquationOfTimeTable.seconds_at',
 }

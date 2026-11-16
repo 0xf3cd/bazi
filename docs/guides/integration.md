@@ -260,6 +260,6 @@ print(anchor_label(KongwangResult(Zhu.日, Ganzhi.from_str('甲子'), ())))
 ## 内存结果与对象契约
 
 通常使用 `evaluate_context` 取得结果，不直接手填证据构造。命盘和判别结果没有保存、恢复或格式迁移接口，
-知识 JSON 只作当前编辑来源。`BaziChart` 对输入作拷贝隔离；`ContextResult.bazi` 直接持有求值所用的输入，
-不再深拷贝，手工构造结果也不校验。已创建知识库不随源文件的修改变化。
+知识 JSON 只作当前编辑来源。`BaziChart.bazi` 和 `ContextResult.bazi` 直接持有传入的 `Bazi`，
+构造和读取均不深拷贝；调用方不得改写它的私有状态。手工构造结果不校验。已创建知识库不随源文件的修改变化。
 直接构造、拷贝、相等、`asdict` 与模式匹配的精确条件见 {doc}`../api-contract`。

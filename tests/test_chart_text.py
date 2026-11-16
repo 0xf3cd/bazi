@@ -184,12 +184,14 @@ def test_each_hook_can_be_set_alone() -> None:
   assert '«' in glyphs and '日主' in glyphs and '«日主»' not in glyphs
 
 
+@pytest.mark.input_contract('bazi.chart_text', 'TextStyle')
 @pytest.mark.parametrize('field', ['glyph', 'day_master_mark'])
 def test_style_rejects_non_callables(field: str) -> None:
   with pytest.raises(TypeError, match=r'Expected callable \| None'):
     TextStyle(**{field: 'x'}) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.chart_text', 'basic_text transit_text chart_text')
 @pytest.mark.parametrize('func', [basic_text, transit_text, chart_text])
 def test_functions_reject_wrong_chart_with_hint(func: object) -> None:
   with pytest.raises(TypeError, match=r'Expected BaziChart, got .*; wrap it with BaziChart\(bazi\)'):
@@ -198,12 +200,14 @@ def test_functions_reject_wrong_chart_with_hint(func: object) -> None:
     func(None) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.chart_text', 'basic_text transit_text chart_text')
 @pytest.mark.parametrize('func', [basic_text, transit_text, chart_text])
 def test_functions_reject_wrong_style_type(func: object) -> None:
   with pytest.raises(TypeError, match=r'Expected TextStyle \| None'):
     func(DEFAULT_CHART, style=str) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.chart_text', 'transit_text chart_text')
 @pytest.mark.parametrize('func', [transit_text, chart_text])
 @pytest.mark.parametrize('name', ['dayun_count', 'liunian_count'])
 def test_counts_reject_wrong_values(func: object, name: str) -> None:

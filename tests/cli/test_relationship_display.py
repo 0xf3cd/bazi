@@ -2,7 +2,6 @@
 
 import random
 import re
-from typing import cast
 
 import pytest
 
@@ -19,7 +18,7 @@ from bazi.transits import TransitKind
 
 
 def test_shensha_labels() -> None:
-  shensha: ShenshaAnalysis = {
+  shensha = ShenshaAnalysis({
     'taohua'     : frozenset((Dizhi.子,)),
     'hongyan'    : frozenset((Dizhi.丑,)),
     'hongluan'   : frozenset((Dizhi.寅,)),
@@ -42,7 +41,7 @@ def test_shensha_labels() -> None:
     'taiji'      : frozenset((Dizhi.辰,)),
     'guoyin'     : frozenset((Dizhi.巳,)),
     'kongwang'   : frozenset((Dizhi.戌,)),
-  }
+  })
   expected = (
     ('桃花', frozenset((Dizhi.子,))),
     ('红鸾', frozenset((Dizhi.寅,))),
@@ -68,86 +67,60 @@ def test_shensha_labels() -> None:
     ('空亡', frozenset((Dizhi.戌,))),
   )
 
-  # Keep display labels exhaustive as ShenshaAnalysis grows.
-  assert len(expected) == len(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
+  assert len(expected) == len(SHENSHA_LABELS)
   assert cli._named_shensha(shensha) == expected
   assert cli._shensha_strs(shensha) == [
     f'{label}：{cli._colored_str(next(iter(dizhis)))}'
     for label, dizhis in expected
   ]
 
-  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
-  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
   assert tuple(WHOLE_PILLAR_SHENSHA_LABELS) == ('kuigang', 'tianshe')
-  assert set(WHOLE_PILLAR_SHENSHA_LABELS) == at_birth_keys - common_keys
+  assert set(WHOLE_PILLAR_SHENSHA_LABELS).isdisjoint(SHENSHA_LABELS)
   assert tuple(WHOLE_PILLAR_SHENSHA_LABELS.values()) == ('魁罡', '天赦')
   assert cli.WHOLE_PILLAR_SHENSHA_LABELS is WHOLE_PILLAR_SHENSHA_LABELS
 
   kuigang = Ganzhi.from_str('庚辰')
   tianshe = Ganzhi.from_str('戊寅')
-  at_birth_shensha: AtBirthShenshaAnalysis = {
+  at_birth_shensha = AtBirthShenshaAnalysis({
     **shensha,
     'kuigang': kuigang,
     'tianshe': tianshe,
-  }
+  })
   assert cli._at_birth_shensha_strs(at_birth_shensha) == [
     *cli._shensha_strs(shensha),
     f'魁罡：{cli._colored_str(kuigang)}',
     f'天赦：{cli._colored_str(tianshe)}',
   ]
-  assert cli._at_birth_shensha_strs({
+  assert cli._at_birth_shensha_strs(AtBirthShenshaAnalysis({
     **shensha,
     'kuigang': kuigang,
     'tianshe': None,
-  }) == [
+  })) == [
     *cli._shensha_strs(shensha),
     f'魁罡：{cli._colored_str(kuigang)}',
   ]
-  assert cli._at_birth_shensha_strs({
+  assert cli._at_birth_shensha_strs(AtBirthShenshaAnalysis({
     **shensha,
     'kuigang': None,
     'tianshe': tianshe,
-  }) == [
+  })) == [
     *cli._shensha_strs(shensha),
     f'天赦：{cli._colored_str(tianshe)}',
   ]
 
-  empty_shensha: ShenshaAnalysis = {
-    'taohua'     : frozenset(),
-    'hongyan'    : frozenset(),
-    'hongluan'   : frozenset(),
-    'tianxi'     : frozenset(),
-    'yima'       : frozenset(),
-    'huagai'     : frozenset(),
-    'yangren'    : frozenset(),
-    'feiren'     : frozenset(),
-    'tianyi'     : frozenset(),
-    'jiangxing'  : frozenset(),
-    'zaisha'     : frozenset(),
-    'jiesha'     : frozenset(),
-    'wangshen'   : frozenset(),
-    'guchen'     : frozenset(),
-    'guasu'      : frozenset(),
-    'lushen'     : frozenset(),
-    'jinyu'      : frozenset(),
-    'wenchang'   : frozenset(),
-    'wenchanggui': frozenset(),
-    'taiji'      : frozenset(),
-    'guoyin'     : frozenset(),
-    'kongwang'   : frozenset(),
-  }
-  empty_at_birth_shensha: AtBirthShenshaAnalysis = {
+  empty_shensha = ShenshaAnalysis({name: frozenset() for name in SHENSHA_LABELS})
+  empty_at_birth_shensha = AtBirthShenshaAnalysis({
     **empty_shensha,
     'kuigang': None,
     'tianshe': None,
-  }
+  })
   assert cli._shensha_strs(empty_shensha) == []
   assert cli._at_birth_shensha_strs(empty_at_birth_shensha) == []
-  assert cli._at_birth_shensha_strs({
+  assert cli._at_birth_shensha_strs(AtBirthShenshaAnalysis({
     **empty_shensha,
     'kuigang': None,
     'tianshe': tianshe,
-  }) == [f'天赦：{cli._colored_str(tianshe)}']
+  })) == [f'天赦：{cli._colored_str(tianshe)}']
   assert cli._no_shensha_str(empty_at_birth_shensha) == '原局无桃花、红鸾、红艳、天喜、驿马、华盖、羊刃、飞刃、天乙贵人、将星、灾煞、劫煞、亡神、孤辰、寡宿、禄神、金舆、文昌、文昌贵、太极贵人、国印贵人、空亡、魁罡、天赦'
 
   for selected, ordered in (
@@ -160,7 +133,7 @@ def test_shensha_labels() -> None:
   ):
     text = ', '.join(map(cli._colored_str, ordered))
     for name, label in SHENSHA_LABELS.items():
-      current = cast(ShenshaAnalysis, {**empty_shensha, name: frozenset(selected)})
+      current = ShenshaAnalysis({**empty_shensha, name: frozenset(selected)})
       assert cli._shensha_strs(current) == ([f'{label}：{text}'] if selected else [])
 
 
@@ -177,12 +150,16 @@ def test_kongwang_display_keeps_anchor_and_target() -> None:
   )),)) == ['日柱 甲子 → 旬空戌亥；命中：dayun 甲戌、liunian 甲戌']
 
 
-def _plain_shensha(shensha: ShenshaAnalysis) -> list[str]:
-  values = cast(dict[str, frozenset[Dizhi]], shensha)
-  return [
-    f'{label}：' + ', '.join(branch for branch in '子丑寅卯辰巳午未申酉戌亥' if branch in set(map(str, values[name])))
-    for name, label in SHENSHA_LABELS.items() if values[name]
-  ]
+def _plain_shensha(shensha: ShenshaAnalysis | AtBirthShenshaAnalysis) -> list[str]:
+  result = []
+  for name, label in SHENSHA_LABELS.items():
+    value = shensha[name]
+    assert isinstance(value, frozenset)
+    if value:
+      result.append(f'{label}：' + ', '.join(
+        branch for branch in '子丑寅卯辰巳午未申酉戌亥' if branch in set(map(str, value))
+      ))
+  return result
 
 
 def _plain_kongwang(results: tuple[KongwangResult, ...]) -> list[str]:
@@ -202,10 +179,10 @@ def test_main_relationship_keeps_ten_years(
   monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], empty: bool,
 ) -> None:
   if empty:
-    at_birth = cast(AtBirthShenshaAnalysis, {
+    at_birth = AtBirthShenshaAnalysis({
       **{name: frozenset() for name in SHENSHA_LABELS}, 'kuigang': None, 'tianshe': None,
     })
-    transits = cast(ShenshaAnalysis, {name: frozenset() for name in SHENSHA_LABELS})
+    transits = ShenshaAnalysis({name: frozenset() for name in SHENSHA_LABELS})
     monkeypatch.setattr(AtBirthAnalysis, 'shensha', property(lambda self: at_birth))
 
     def no_shensha(self: TransitAnalysis, selected: TransitSet) -> ShenshaAnalysis:

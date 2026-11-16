@@ -6,10 +6,9 @@ import argparse
 import sys
 from random import Random, SystemRandom
 import re
-from collections.abc import Mapping
 from datetime import date, datetime, tzinfo
 from pathlib import Path
-from typing import Final, cast, get_args
+from typing import Final, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .bazi import Bazi
@@ -65,13 +64,16 @@ def _get_transit_info(chart: BaziChart) -> str:
   return transit_text(chart, style=_TERMINAL_STYLE)
 
 
-def _named_shensha(shensha: ShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
-  # TypedDict 用字面键索引；展示按 SHENSHA_LABELS 注册序读取，不包含原局的两个整柱神煞。
-  dizhis = cast(Mapping[str, frozenset[Dizhi]], shensha)
-  return tuple((label, dizhis[name]) for name, label in SHENSHA_LABELS.items())
+def _named_shensha(shensha: ShenshaAnalysis | AtBirthShenshaAnalysis) -> tuple[tuple[str, frozenset[Dizhi]], ...]:
+  result = []
+  for name, label in SHENSHA_LABELS.items():
+    dizhis = shensha[name]
+    assert isinstance(dizhis, frozenset)
+    result.append((label, dizhis))
+  return tuple(result)
 
 
-def _shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
+def _shensha_strs(shensha: ShenshaAnalysis | AtBirthShenshaAnalysis) -> list[str]:
   return [
     f'{label}：{", ".join(map(_colored_str, sorted(dz_fs, key=lambda dz: dz.index)))}'
     for label, dz_fs in _named_shensha(shensha)
@@ -81,9 +83,9 @@ def _shensha_strs(shensha: ShenshaAnalysis) -> list[str]:
 
 def _at_birth_shensha_strs(shensha: AtBirthShenshaAnalysis) -> list[str]:
   result = _shensha_strs(shensha)
-  whole_pillars = cast(Mapping[str, Ganzhi | None], shensha)
   for name, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
-    if (ganzhi := whole_pillars[name]) is not None:
+    if (ganzhi := shensha[name]) is not None:
+      assert isinstance(ganzhi, Ganzhi)
       result.append(f'{label}：{_colored_str(ganzhi)}')
   return result
 

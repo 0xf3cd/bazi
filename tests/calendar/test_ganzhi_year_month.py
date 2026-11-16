@@ -40,6 +40,7 @@ def test_month_order_rejects_other_types() -> None:
     _ = value < (2024, 1) # type: ignore[operator]
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth')
 @pytest.mark.parametrize('year,month,error', [
   ('2024', 1, TypeError), (2024, '1', TypeError), (2024, None, TypeError),
   (2024, 0, ValueError), (2024, 13, ValueError), (2024, -1, ValueError),
@@ -49,6 +50,7 @@ def test_invalid_coordinate(year: object, month: object, error: type[Exception])
     GanzhiYearMonth(year, month) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth.from_jie')
 @pytest.mark.parametrize('jie,error', [
   (None, TypeError),
   (JieqiTime('立春', datetime(2024, 2, 4)), TypeError), # type: ignore[arg-type]
@@ -60,6 +62,7 @@ def test_invalid_opening_jie(jie: object, error: type[Exception]) -> None:
     GanzhiYearMonth.from_jie(jie) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth.from_dizhi')
 def test_invalid_month_branch() -> None:
   with pytest.raises(TypeError):
     GanzhiYearMonth.from_dizhi(2024, '寅') # type: ignore[arg-type]

@@ -174,6 +174,7 @@ def test_days_counts_validates_before_cache(year: int) -> None:
     assert str(type(bad_year)) in str(exc.value)
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'to_solar to_lunar to_ganzhi to_date')
 @pytest.mark.parametrize('date_type', [CalendarType.LUNAR, CalendarType.GANZHI])
 @pytest.mark.parametrize('day', [0, -1])
 def test_nonpositive_day_in_supported_year(date_type: CalendarType, day: int) -> None:
@@ -580,6 +581,7 @@ def test_get_jieqi_moment(rng: random.Random) -> None:
     assert d1 < d2
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'jieqi_date jieqi_moment')
 @pytest.mark.parametrize('query', [hko_data_utils.jieqi_date, hko_data_utils.jieqi_moment])
 @pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
 def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date], year: int) -> None:

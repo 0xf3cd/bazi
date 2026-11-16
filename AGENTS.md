@@ -44,7 +44,8 @@
     然后 `python -m coverage report --show-missing --fail-under=100`，覆盖率须为 **100%**。
     没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
     有意不可达的行须有 `# pragma: no cover` 及理由。
-  - `python -O tests/o_smoke.py`，公开输入的立即失败契约须在 `-O` 下保持；脚本拒绝无 `-O` 运行。
+  - `python -O -m pytest tests/ --input-contracts --ignore=tests/docs`，复用普通 pytest 中登记的
+    输入拒绝测试；选择集检查入口覆盖，测试 helper 的断言也须在 `-O` 下生效。
 - 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 `slow` 内。
   要验证这些测试须给 `-s -hko` 或完整调用；可用 `pytest tests/ --collect-only -q`
   对比带标记与不带标记的收集结果。
@@ -126,7 +127,8 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
   公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
   不支持为 `ValueError`；公开枚举参数的穷尽 `else` 是成员检查，使用 `ValueError`。
   消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
-  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`，门禁见 `tests/o_smoke.py`。
+  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`；
+  `tests/api_contract.py` 登记输入入口，测试用 `input_contract` 标记关联，`run_tests.py -osmoke` 执行。
 - 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。
 - 计算结果用 `property`；昂贵的不可变结果可用 `cached_property`。
 - 保留等号、字典冒号的纵向对齐。

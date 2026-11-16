@@ -73,6 +73,7 @@ def test_queries_use_attributed_boundary() -> None:
   assert chart.at_month(2009, Dizhi.寅) is not None
 
 
+@pytest.mark.input_contract('bazi.transit_chart', 'TransitChart.at_year TransitChart.at_month TransitChart.at_date TransitChart.at_moment')
 def test_query_types(rng: random.Random) -> None:
   chart = TransitChart(BaziChart.random(rng=rng))
   with pytest.raises(TypeError):
@@ -511,6 +512,7 @@ def test_repr_wraps_the_chart_summary() -> None:
   assert repr(TransitChart(chart)) == f'TransitChart({chart!r})'
 
 
+@pytest.mark.input_contract('bazi.transit_chart', 'TransitChart')
 @pytest.mark.parametrize('bad, hint', [
   (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
   (datetime(2000, 1, 1, 12), r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),

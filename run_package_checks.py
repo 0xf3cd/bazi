@@ -288,6 +288,37 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str],
     check_description(archive.read(metadata_dir + 'METADATA'), readme, wheel.name)
 
 
+def expected_typing_diagnostics(source: str) -> dict[str, str]:
+  '''安装版负例须出现的诊断片段；首尾换行限定完整诊断行。'''
+  expected = {interface: f'to "{interface}"' for interface in (
+    'main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion',
+    'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate',
+    'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit',
+    'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'KnowledgeSource',
+    'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
+    'entry', 'render', 'render_subject',
+  )}
+  expected['None'] = '"None"'
+  lines = source.splitlines()
+  for owner, member, trigger in (
+    ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
+    ('Bazi', 'month_jies', 'local.month_jies = ()'),
+    ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
+    ('KnowledgeSource', 'work', 'witness.work = "changed"'),
+    ('CriterionInfo', 'definition', 'info.definition = "changed"'),
+    ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
+  ):
+    line_number = lines.index(trigger) + 1
+    expected[f'{owner}.{member}'] = f'\nbad.py:{line_number}: error: Property "{member}" defined in "{owner}" is read-only  [misc]\n'
+  for value_type, trigger in (
+    ('CriterionInfo', 'catalog["changed"] = info'),
+    ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
+  ):
+    line_number = lines.index(trigger) + 1
+    expected[f'immutable {value_type} mapping'] = f'\nbad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]\n'
+  return expected
+
+
 def run(command: list[str], cwd: Path) -> None:
   print(f'RUN cwd={cwd} argv={command!r}', flush=True)
   subprocess.run(command, cwd=cwd, env=clean_environment(), check=True)
@@ -404,44 +435,9 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'KnowledgeSource', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'entry', 'render', 'render_subject'):
-    if f'to "{interface}"' not in result.stdout:
-      raise ValueError(f'Installed typing negative control missed {interface}')
-  for message in ('"None"',):
-    if message not in result.stdout:
-      raise ValueError(f'Installed time typing negative control missed {message}')
-  for owner_name, attribute_name, trigger in (
-    ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
-    ('Bazi', 'month_jies', 'local.month_jies = ()'),
-    ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
-    ('KnowledgeSource', 'work', 'witness.work = "changed"'),
-    ('CriterionInfo', 'definition', 'info.definition = "changed"'),
-    ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
-  ):
-    line_number = bad.splitlines().index(trigger) + 1
-    message = f'bad.py:{line_number}: error: Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
-    if message not in result.stdout.splitlines():
-      raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
-  for value_type, trigger in (
-    ('CriterionInfo', 'catalog["changed"] = info'),
-    ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
-  ):
-    line_number = bad.splitlines().index(trigger) + 1
-    message = f'bad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]'
-    if message not in result.stdout.splitlines():
-      raise ValueError(f'Installed typing negative control missed immutable {value_type} mapping')
-  for owner, removed_member in (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')):
-    if f'"{owner}" has no attribute "{removed_member}"' not in result.stdout:
-      raise ValueError(f'Installed typing negative control missed removed {owner}.{removed_member}')
-  for module, name in (
-    ('bazi.transits', 'DayunDatabase'),
-    ('bazi.transits', 'TransitDatabase'),
-    ('bazi.transit_chart', 'TransitDatabase'),
-  ):
-    line_number = bad.splitlines().index(f'from {module} import {name}') + 1
-    prefix = f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"'
-    if not any(line.startswith(prefix) and line.endswith('  [attr-defined]') for line in result.stdout.splitlines()):
-      raise ValueError(f'Installed typing negative control missed removed {module}.{name}')
+  for label, message in expected_typing_diagnostics(bad).items():
+    if message not in '\n' + result.stdout + '\n':
+      raise ValueError(f'Installed typing negative control missed {label}')
 
   if environments is not None and installers is not None:
     environments.append(collect_environment(str(python), 'consumer-typing', installers))

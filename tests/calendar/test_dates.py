@@ -133,6 +133,7 @@ def test_ganzhi_date() -> None:
   CalendarDate(2024, 1, 0, CalendarType.GANZHI) # Invalid day.
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'CalendarDate')
 def test_every_date_field_has_a_type_gate() -> None:
   # Mechanical binding: adding a field without a gate fails here.
   # 机械绑定：加字段不加闸会在这里响。

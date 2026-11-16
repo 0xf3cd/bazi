@@ -1,7 +1,11 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 # test_ganzhi.py
 
+import copy
+import pickle
 import random
+import sys
+from typing import Any
 
 import pytest
 
@@ -29,18 +33,19 @@ def test_basic() -> None:
   for _ in range(3):
     for tg in Tiangan:
       for dz in Dizhi:
-        gz_list.append(Ganzhi(tg, dz))
+        if tg.index % 2 == dz.index % 2:
+          gz_list.append(Ganzhi(tg, dz))
 
-  # In theory, 10 tiangans and 12 dizhis can produce 120 different Ganzhis.
-  assert len(set(gz_list)) == 120
+  assert len(set(gz_list)) == 60
 
 
 def test_alias() -> None:
   assert Ganzhi is 干支
   assert Ganzhi(Tiangan.WU, Dizhi.XU) == 干支(天干.戊, 地支.戌)
-  assert Ganzhi(Tiangan.WU, Dizhi.XU) != Ganzhi(Tiangan.WU, Dizhi.MAO)
+  assert Ganzhi(Tiangan.WU, Dizhi.XU) != Ganzhi(Tiangan.WU, Dizhi.CHEN)
 
 
+@pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi.from_strs')
 def test_from_strs() -> None:
   assert Ganzhi.from_strs('甲', '子') == Ganzhi(Tiangan.甲, Dizhi.子)
   assert Ganzhi.from_strs('戊', '午') == Ganzhi(Tiangan.戊, Dizhi.午)
@@ -68,6 +73,7 @@ def test_from_strs() -> None:
     Ganzhi.from_strs(0, 0) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi.from_str')
 def test_from_str() -> None:
   assert Ganzhi.from_str('甲子') == Ganzhi(Tiangan.甲, Dizhi.子)
   assert Ganzhi.from_str('戊午') == Ganzhi(Tiangan.戊, Dizhi.午)
@@ -92,11 +98,9 @@ def test_from_str() -> None:
 
 
 def test_str() -> None:
-  for tg in Tiangan.as_list():
-    for dz in Dizhi.as_list():
-      # `Ganzhi` should be able to hold all 120 possible Tiangan-Dizhi pairs
-      assert str(Ganzhi(tg, dz)) == f'{tg}{dz}'
-      assert Ganzhi.from_str(str(Ganzhi(tg, dz))) == Ganzhi(tg, dz)
+  for gz in Ganzhi.list_sexagenary_cycle():
+    assert str(gz) == f'{gz.tiangan}{gz.dizhi}'
+    assert Ganzhi.from_str(str(gz)) == gz
 
 
 def test_list_sexagenary_cycle() -> None:
@@ -180,23 +184,83 @@ def test_ganzhi_next_prev(rng: random.Random) -> None:
 
 @pytest.mark.parametrize('name', ['next', 'prev'])
 def test_sexagenary_step_domain(name: str) -> None:
-  # Holding all 120 values is distinct from stepping the 60 applicable values.
   cycle = Ganzhi.list_sexagenary_cycle()
-  held = {Ganzhi(tg, dz) for tg in Tiangan for dz in Dizhi}
-  assert len(held) == 120
-  applicable = set(cycle)
-  assert len(applicable) == 60
-  for gz in held:
+  for gz in cycle:
     method = getattr(gz, name)
     for step in (0, 1, -1, 60, -61, 10**100):
-      if gz not in applicable:
-        with pytest.raises(ValueError, match=f'^Unsupported sexagenary Ganzhi: {gz}$'):
-          method(step)
+      offset = step if name == 'next' else -step
+      assert method(step) == cycle[(cycle.index(gz) + offset) % 60]
+
+
+@pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi Ganzhi.from_str Ganzhi.from_strs')
+def test_constructor_and_factories_reject_pairs() -> None:
+  for tg in Tiangan:
+    for dz in Dizhi:
+      if tg.index % 2 != dz.index % 2:
+        for factory, args in (
+          (Ganzhi, (tg, dz)),
+          (Ganzhi.from_strs, (str(tg), str(dz))),
+          (Ganzhi.from_str, (f'{tg}{dz}',)),
+        ):
+          with pytest.raises(ValueError, match=f'^Unsupported sexagenary Ganzhi: {tg}{dz}$'):
+            factory(*args)
+
+
+@pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi')
+@pytest.mark.parametrize('tg,dz', [
+  ('甲', Dizhi.子), (Tiangan.甲, '子'), ([], Dizhi.子), (Tiangan.甲, None),
+])
+def test_constructor_rejects_field_types(tg: Any, dz: Any) -> None:
+  with pytest.raises(TypeError):
+    Ganzhi(tg, dz)
+
+
+@pytest.mark.parametrize('entry', [
+  pytest.param('make', marks=pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi._make')),
+  pytest.param('replace', marks=pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi._replace')),
+  pytest.param('copy_replace', marks=pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi._replace')),
+])
+def test_auxiliary_construction_preserves_domain(entry: str) -> None:
+  if entry == 'copy_replace' and sys.version_info < (3, 13):
+    pytest.skip('copy.replace requires Python 3.13')
+  base = Ganzhi.from_str('甲子')
+
+  def construct(tg: Any, dz: Any) -> Ganzhi:
+    if entry == 'make':
+      return Ganzhi._make(iter((tg, dz)))
+    if entry == 'replace':
+      return base._replace(tiangan=tg, dizhi=dz)
+    return copy.replace(base, tiangan=tg, dizhi=dz)
+
+  for tg in Tiangan:
+    for dz in Dizhi:
+      if tg.index % 2 == dz.index % 2:
+        assert construct(tg, dz) == (tg, dz)
       else:
-        offset = step if name == 'next' else -step
-        assert method(step) == cycle[(cycle.index(gz) + offset) % 60]
+        with pytest.raises(ValueError, match='Unsupported sexagenary Ganzhi'):
+          construct(tg, dz)
+  for bad_tg, bad_dz in (('甲', Dizhi.子), (Tiangan.甲, '子'), ([], Dizhi.子), (Tiangan.甲, None)):
+    with pytest.raises(TypeError):
+      construct(bad_tg, bad_dz)
 
 
+@pytest.mark.optimized
+def test_tuple_copy_and_pickle_roundtrips() -> None:
+  for gz in Ganzhi.list_sexagenary_cycle():
+    tg, dz = gz
+    assert gz == (tg, dz) and hash(gz) == hash((tg, dz))
+    assert gz._asdict() == {'tiangan': tg, 'dizhi': dz}
+    assert gz._replace() == gz
+    assert not hasattr(gz, '__dict__')
+    for restored in (copy.copy(gz), copy.deepcopy(gz), pickle.loads(pickle.dumps(gz))):
+      assert type(restored) is Ganzhi and restored == gz
+    with pytest.raises(AttributeError):
+      gz.tiangan = Tiangan.乙 # type: ignore[misc]
+    with pytest.raises(AttributeError):
+      gz.extra = 1 # type: ignore[attr-defined]
+
+
+@pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi.next Ganzhi.prev')
 @pytest.mark.parametrize('name', ['next', 'prev'])
 @pytest.mark.parametrize('form', ['positional', 'keyword', 'default'])
 @pytest.mark.parametrize('warm', [False, True], ids=['cold', 'warm'])

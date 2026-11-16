@@ -41,6 +41,7 @@ def _construct(
   )
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 def test_location_input_matrix(direct: bool) -> None:
   aware = datetime(2000, 1, 1, 12, tzinfo=UTC)
@@ -71,6 +72,7 @@ def test_location_input_matrix(direct: bool) -> None:
       _construct(direct, aware, config, 120.0)
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 @pytest.mark.parametrize('kind', ['integer', 'fraction'])
 @pytest.mark.parametrize('sign', [-1, 1])
@@ -82,6 +84,7 @@ def test_overflowing_longitude_is_value_error(direct: bool, kind: str, sign: int
   assert str(error.value) == 'Unsupported longitude: expected finite degrees in [-180, 180].'
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 def test_location_validation_precedence(direct: bool) -> None:
   unsupported = BaziConfig(precision=BaziPrecision.DAY, backend=CalendarBackend.HKO)

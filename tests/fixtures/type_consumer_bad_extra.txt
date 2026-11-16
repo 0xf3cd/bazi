@@ -32,13 +32,6 @@ StarAppearance(Zhu.月, target, "明干", Tiangan.甲)
 ChartOccurrence("年", target, TianganLayer.明干, Tiangan.甲, "比肩")
 CriterionResult(info.criterion_id, "invalid", frozendict({}))
 matched.bazi = chart.bazi
-chart.json
-BaziChart.from_json({})
-matched.input_json
-matched.export_json()
-ContextResult.from_json("")
-knowledge.export_json()
-KnowledgeBase.from_json("")
 GanzhiYearMonth(2000, "1")
 GanzhiYearMonth.from_dizhi(2000, 1)
 GanzhiYearMonth.from_jie(datetime.now())
@@ -47,6 +40,3 @@ local.month_jies = ()
 coordinate.month = 0
 def unsafe_time(value: Bazi) -> datetime:
   return value.location_time.canonical_instant
-from bazi.transits import DayunDatabase
-from bazi.transits import TransitDatabase
-from bazi.transit_chart import TransitDatabase

@@ -11,7 +11,7 @@ from itertools import combinations, product
 from typing import Final
 from collections.abc import Sequence, Iterable
 
-from ..common import frozendict, check_declared_types
+from ..common import frozendict
 from ..defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation
 from ..rules import BaziRules, DizhiRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from .relation_discovery import RelationDiscovery, _ordered_combos, _ordered_relation_pairs
@@ -60,11 +60,6 @@ class GanzhiOccurrence:
   '''
   index:  int
   ganzhi: Ganzhi
-
-  def __post_init__(self) -> None:
-    check_declared_types(self)
-    if self.index < 0:
-      raise ValueError(f'Expected a non-negative index, got {self.index}')
 
 
 '''地支满足某关系的具体干支位置组合。'''

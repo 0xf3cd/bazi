@@ -464,7 +464,7 @@ class Bazi:
   def _utils(self) -> CalendarUtilsProtocol:
     '''
     每次访问时解析当前后端的历法工具，实例上不存 HKO 模块或 celestial 单例。
-    不能改为 `cached_property`：存模块会使 deepcopy 失败，存单例会复制实例并分裂缓存。
+    这样显式 deepcopy 八字时也不会复制历法工具。
     '''
     return calendar_utils_of(self._config.backend)
   

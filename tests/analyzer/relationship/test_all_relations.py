@@ -2,14 +2,13 @@
 
 from dataclasses import FrozenInstanceError
 from random import Random
-from typing import Any
 
 import pytest
 
 from bazi.analyzer.relationship import RelationshipAnalyzer, RelationParticipant, RelationPositionDiscovery
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import Zhu, Tiangan, Dizhi, Ganzhi, DizhiRelation
+from bazi.defines import Zhu, Ganzhi, DizhiRelation
 from bazi.rules import DizhiRules
 from bazi.school import BaziConfig, BaziSchool
 from bazi.transits import TransitKind, TransitSet
@@ -74,6 +73,7 @@ def test_repeated_ganzhis_keep_each_position(monkeypatch: pytest.MonkeyPatch) ->
     first.position = Zhu.年 # type: ignore[misc]
 
 
+@pytest.mark.input_contract('bazi.analyzer.relationship', 'TransitAnalysis.all_relations')
 def test_all_relations_input_and_empty_result(monkeypatch: pytest.MonkeyPatch) -> None:
   chart = BaziChart(Bazi.random())
   monkeypatch.setattr(Bazi, 'pillars', property(lambda _: (Ganzhi.from_str('甲子'),) * 4))
@@ -81,12 +81,3 @@ def test_all_relations_input_and_empty_result(monkeypatch: pytest.MonkeyPatch) -
   with pytest.raises(TypeError):
     analysis.all_relations(2026) # type: ignore[arg-type]
   assert analysis.all_relations(TransitSet(liunian=Ganzhi.from_str('甲子'))) == {}
-
-
-@pytest.mark.parametrize('position,ganzhi', [
-  ('年', Ganzhi.from_str('甲子')), (Zhu.年, '甲子'),
-  (Zhu.年, Ganzhi('甲', Dizhi.子)), (Zhu.年, Ganzhi(Tiangan.甲, '子')), # type: ignore[arg-type]
-])
-def test_participant_type_gates(position: Any, ganzhi: Any) -> None:
-  with pytest.raises(TypeError):
-    RelationParticipant(position, ganzhi)

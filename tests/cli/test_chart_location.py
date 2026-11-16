@@ -36,24 +36,23 @@ def test_east_and_west_location_inputs(
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('gender', ['female', '男'])
 @pytest.mark.parametrize('precision,pillars', [
   ('hour', ('庚辰', '戊寅')), ('minute', ('己卯', '丁丑')),
   ('日', ('庚辰', '戊寅')), ('时', ('庚辰', '戊寅')), ('分', ('己卯', '丁丑')),
 ])
-def test_naive_cli_precision(tmp_path: Path, optimized: bool, gender: str, precision: str, pillars: tuple[str, str]) -> None:
+def test_naive_cli_precision(tmp_path: Path, gender: str, precision: str, pillars: tuple[str, str]) -> None:
   birth = '2000-02-04T20:39:59.123456'
   config = BaziConfig.from_values(precision=precision)
   expected = BaziChart(Bazi.create(birth, gender, config))
   args = ('--birth-time', birth, '--gender', gender, '--precision', precision)
-  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args)
   assert result.returncode == 0, result.stderr
   assert expected.bazi.solar_datetime.isoformat() == '2000-02-04T20:39:00'
   assert tuple(map(str, expected.bazi.pillars))[:2] == pillars
   assert cli._get_basic_info(expected) in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', optimized=optimized)
+                    '--observation-scope', 'natal')
   assert result.returncode == 0, result.stderr
   expected_record = evaluate_context(expected, criterion_id='editorial.guansha_coexistence.v1',
                                      observation=NatalObservation())
@@ -61,58 +60,54 @@ def test_naive_cli_precision(tmp_path: Path, optimized: bool, gender: str, preci
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('precision', ['hour', 'minute'])
 @pytest.mark.parametrize('basis', ['+14:00', 'Pacific/Kiritimati'])
-def test_location_chart_matching_text(tmp_path: Path, optimized: bool, precision: str, basis: str) -> None:
+def test_location_chart_matching_text(tmp_path: Path, precision: str, basis: str) -> None:
   args = ('--birth-time', '2023-12-31T22:00:00+00:00', '--gender', 'female',
           '--longitude', '-157.4', '--precision', precision, '--civil-timezone', basis)
-  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args)
   assert result.returncode == 0, result.stderr
   assert '2024-01-01T12:00:00+14:00' in result.stdout
   assert '2024-01-01T11:27:21.883333' in result.stdout
   assert '民用出生时刻' in result.stdout and '真太阳出生时刻' in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', optimized=optimized)
+                    '--observation-scope', 'natal')
   assert result.returncode == 0, result.stderr
   assert '民用时刻=2024-01-01T12:00:00+14:00' in result.stdout
   assert '真太阳时=2024-01-01T11:27:21.883333' in result.stdout
 
 
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('precision', ['hour', 'minute'])
-def test_negative_fixed_offset_equals_syntax(tmp_path: Path, optimized: bool, precision: str) -> None:
+def test_negative_fixed_offset_equals_syntax(tmp_path: Path, precision: str) -> None:
   args = ('--birth-time', '2024-01-02T01:00:00+00:00', '--gender', 'female',
           '--longitude', '-74', '--precision', precision, '--civil-timezone=-05:00')
-  result = run_cli(tmp_path, 'chart', *args, optimized=optimized)
+  result = run_cli(tmp_path, 'chart', *args)
   assert result.returncode == 0, result.stderr
   assert '2024-01-01T20:00:00-05:00' in result.stdout
   assert '2024-01-01T20:00:25.933333' in result.stdout
   result = run_cli(tmp_path, 'match', 'editorial.guansha_coexistence.v1', *args,
-                    '--observation-scope', 'natal', optimized=optimized)
+                    '--observation-scope', 'natal')
   assert result.returncode == 0, result.stderr
   assert '民用时刻=2024-01-01T20:00:00-05:00' in result.stdout
 
 
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('matching', [False, True])
 @pytest.mark.parametrize('zone', ['America', 'Asia', 'Etc', 'Unknown/Region', '+99:00'])
-def test_bad_civil_zone_is_an_argument_error(tmp_path: Path, optimized: bool, matching: bool, zone: str) -> None:
+def test_bad_civil_zone_is_an_argument_error(tmp_path: Path, matching: bool, zone: str) -> None:
   args = ('--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'female', '--longitude', '-157.4',
           '--precision', 'minute', '--civil-timezone', zone)
   task = ('match', 'editorial.guansha_coexistence.v1') if matching else ('chart',)
   extra = ('--observation-scope', 'natal') if matching else ()
-  result = run_cli(tmp_path, *task, *args, *extra, optimized=optimized)
+  result = run_cli(tmp_path, *task, *args, *extra)
   assert result.returncode == 2
   assert 'error: argument --civil-timezone:' in result.stderr
   assert 'Traceback' not in result.stderr
   assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('optimized', [False, True])
-def test_location_midnight_labels_in_outputs(tmp_path: Path, optimized: bool) -> None:
+def test_location_midnight_labels_in_outputs(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'chart', '--birth-time', '2024-06-01T23:50:00+08:00', '--gender', 'male',
-                    '--longitude', '125', '--precision', 'minute', '--output', str(tmp_path / 'chart.txt'), optimized=optimized)
+                    '--longitude', '125', '--precision', 'minute', '--output', str(tmp_path / 'chart.txt'))
   assert result.returncode == 0, result.stderr
   assert '真太阳时日期：2024-06-02' in result.stdout
   assert '真太阳出生时刻：2024-06-02T00:12:' in result.stdout
@@ -130,18 +125,15 @@ def test_legacy_renderer_keeps_birth_labels() -> None:
   assert '真太阳时' not in text and '民用出生时刻' not in cli._get_basic_info(chart)
 
 
-@pytest.mark.parametrize('optimized', [False, True])
 @pytest.mark.parametrize('args,error', [
   (('chart', '--birth-time', '2000-01-03 12:00', '--gender', '男', '--precision', ''), 'Unsupported precision'),
   ((*MATCH_ARGS, '--precision', ''), 'Unsupported precision'),
   (('chart', '--longitude', '0'), 'require fixed birth input'),
   (('chart', '--precision', 'hour'), 'require fixed birth input'),
   (('chart', '--civil-timezone', '+14:00'), 'require fixed birth input'),
-  (('chart', '--export-chart-json', 'out.json'), 'unrecognized arguments'),
+  (('chart', '--unknown-option', 'out.json'), 'unrecognized arguments'),
   (('knowledge', '--longitude', '0'), 'unrecognized arguments'),
   (('knowledge', '--validate-knowledge', '--precision', 'minute'), 'unrecognized arguments'),
-  (('knowledge', '--export-knowledge-json', 'out.json', '--civil-timezone', '+14:00'), 'unrecognized arguments'),
-  (('knowledge', '--export-chart-json', 'out.json'), 'unrecognized arguments'),
   (('chart', '--birth-time', '2024-01-01T12:00:00', '--gender', 'male', '--longitude', '0', '--precision', 'hour'), 'Longitude requires a timezone-aware birth_time'),
   (('chart', '--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male', '--longitude', '-157.4'), 'Longitude requires BaziPrecision.HOUR or BaziPrecision.MINUTE'),
   (('chart', '--birth-time', '2024-01-01T12:00:00', '--gender', 'male', '--civil-timezone', '+14:00'), 'civil_timezone requires longitude'),
@@ -149,10 +141,9 @@ def test_legacy_renderer_keeps_birth_labels() -> None:
   (('chart', '--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'male', '--longitude', '-157.4', '--precision', 'minute', '--civil-timezone', '+99:00'), 'argument --civil-timezone'),
   ((*MATCH_ARGS, '--longitude', '0'), 'Longitude requires a timezone-aware birth_time'),
   ((*MATCH_ARGS, '--civil-timezone', 'Unknown/Region'), 'argument --civil-timezone'),
-  ((*MATCH_ARGS, '--export-chart-json', 'out.json'), 'unrecognized arguments'),
 ])
-def test_invalid_task_inputs_fail_early(tmp_path: Path, optimized: bool, args: tuple[str, ...], error: str) -> None:
-  result = run_cli(tmp_path, *args, optimized=optimized)
+def test_invalid_task_inputs_fail_early(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
+  result = run_cli(tmp_path, *args)
   assert result.returncode == 2 and 'error:' in result.stderr
   assert_cli_error(result, args[0], error)
   assert 'Traceback' not in result.stderr

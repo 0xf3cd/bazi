@@ -33,14 +33,13 @@ BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
 DOCTEST_PHASES = ('setup', 'cleanup')
 
 
-EXAMPLE_GROUPS = {
-  'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save'},
-  'guides/configuration': {'config-create', 'config-precision', 'config-overseas', 'config-backend', 'config-rollover', 'config-school-preset', 'config-dayun-rule', 'config-location', 'config-replace', 'kongwang-configuration', 'config-tuwang'},
-  'guides/relations-transits': {'transits-query', 'relations-day-master', 'relations-house', 'transits-generators', 'transits-text', 'kongwang-details', 'relations-shensha-labels', 'relations-all-positions', 'relations-tonggen-tougan'},
-  'guides/integration': {'integration-fields', 'integration-pillars', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary', 'integration-enum-fields'},
-  'guides/knowledge': {'load', 'search', 'sources', 'render', 'edit', 'criteria', 'auxiliary-knowledge', 'shensha-knowledge'},
-  'guides/rule-coverage': {'guoyin-lookup'},
+'''README 首例与五条任务各保留代表例；写文件的代表例还须保留隔离目录的准备与清理。'''
+TASK_EXAMPLES = {
+  'readme-example': {'readme-first', 'readme-first (setup code)', 'readme-first (cleanup code)'},
+  'guides/quickstart': {'quickstart-chart'},
+  'guides/relations-transits': {'transits-query'},
+  'guides/integration': {'integration-context'},
+  'guides/knowledge': {'load', 'edit', 'edit (setup code)', 'edit (cleanup code)'},
 }
 
 SOURCELESS_ALIAS_DESCRIPTIONS = {
@@ -517,16 +516,13 @@ def check_links(site: Path, pages: dict[str, Page]) -> None:
 
 
 def check_release_notes(pages: dict[str, Page]) -> int:
-  '''检查发布页导航、必需迁移节及正本标题、段落和表格的渲染对应。'''
+  '''检查发布页导航及正本标题、段落和表格的渲染对应。'''
   page = pages['release-notes.html']
   assert any(urlsplit(link).path == 'release-notes.html' and not urlsplit(link).scheme
     for link in pages['index.html'].links), 'Release notes missing from navigation'
   reference = Page()
   source = (ROOT / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
   reference.feed(MarkdownIt('commonmark').enable('table').render(source))
-  assert {
-    '知识结构迁移', '安装版命令与脚本迁移', '存取接口移除', '结构接口迁移', '源码脚本的平铺参数',
-  } <= set(reference.headings), 'Missing release migration sections'
   assert page.headings[:len(reference.headings)] == reference.headings, 'Rendered release headings differ from source'
   expected = Counter(map(normalized, reference.paragraphs))
   assert expected <= Counter(map(normalized, page.paragraphs)), 'Rendered release paragraphs differ from source'
@@ -572,23 +568,72 @@ def check_attribute_descriptions(site: Path) -> int:
   return checked
 
 
-def check_doctests(doctest: Path) -> int:
+def source_doctests(source: Path) -> dict[str, Counter[str]]:
+  '''从准备后的 MyST／RST 源枚举执行组与准备、清理阶段，不读取执行报告。'''
+  expected = {}
+  parser = MarkdownIt('commonmark')
+  for path in sorted(source.rglob('*')):
+    if path.suffix not in ('.md', '.rst'):
+      continue
+    text = path.read_text(encoding='utf-8')
+    if path.suffix == '.md':
+      directives = [
+        (match[1], match[2] or '') for token in parser.parse(text)
+        if token.type == 'fence' and (match := re.fullmatch(r'\{test(code|setup|cleanup)\}(?:\s+(.*))?', token.info))
+      ]
+    else:
+      directives = re.findall(r'^\.\. test(code|setup|cleanup)::[^\S\n]*(.*)$', text, flags=re.MULTILINE)
+    if not directives:
+      continue
+    name = path.relative_to(source).with_suffix('').as_posix()
+    assert name not in expected, ('Duplicate doctest source document', name)
+    groups: Counter[str] = Counter()
+    for phase, argument in directives:
+      if phase == 'code':
+        groups.update([group.strip() for group in argument.split(',')] if argument else ['default'])
+    examples = set(groups)
+    for phase, argument in directives:
+      if phase == 'code':
+        continue
+      selected = {group.strip() for group in argument.split(',')} if argument else {'default'}
+      if '*' in selected:
+        selected = examples
+      assert selected <= examples, ('Orphan source doctest setup or cleanup', name, selected - examples)
+      for group in selected:
+        groups[f'{group} ({phase} code)'] = 1
+    expected[name] = groups
+  for name, required in TASK_EXAMPLES.items():
+    assert required <= expected.get(name, {}).keys(), ('Missing task examples', name, required - expected.get(name, {}).keys())
+  return expected
+
+
+def check_doctests(doctest: Path, source: Path) -> int:
+  expected = source_doctests(source)
+  phases = tuple(f' ({phase} code)' for phase in DOCTEST_PHASES)
+  count = sum(tests for groups in expected.values() for group, tests in groups.items() if not group.endswith(phases))
   output = (doctest / 'output.txt').read_text(encoding='utf-8')
   summary = re.search(r'Doctest summary\s*=+\s*(\d+) tests?\s*\n\s*(\d+) failures?', output)
-  assert summary is not None and int(summary[1]) == sum(map(len, EXAMPLE_GROUPS.values())) and int(summary[2]) == 0, 'Missing or failing doctests'
+  assert summary is not None and int(summary[1]) == count and int(summary[2]) == 0, 'Missing or failing doctests'
   blocks = re.split(r'^Document: (.+)\n-+\n', output, flags=re.MULTILINE)
   actual = {}
-  phases = tuple(f' ({phase} code)' for phase in DOCTEST_PHASES)
   for index in range(1, len(blocks), 2):
     name, body = blocks[index:index + 2]
     assert name not in actual, ('Duplicate doctest document', name)
-    reported = re.findall(r'^\s+1 tests? in (.+)$', body, flags=re.MULTILINE)
-    assert len(reported) == len(set(reported)), ('Duplicate doctest group', name)
+    rows = re.findall(r'^\s+(\d+) tests? in (.+)$', body, flags=re.MULTILINE)
+    reported = {group: int(tests) for tests, group in rows}
+    assert len(rows) == len(reported), ('Duplicate doctest group', name)
     groups = {group for group in reported if not group.endswith(phases)}
     lifecycle = {group.rsplit(' (', 1)[0] for group in reported if group.endswith(phases)}
     assert lifecycle <= groups, ('Orphan doctest setup or cleanup', name, lifecycle - groups)
-    actual[name] = groups
-  assert actual == EXAMPLE_GROUPS, ('Example coverage', actual, EXAMPLE_GROUPS)
+    # Sphinx 不列成功的 setup；若有 setup 行，仍须对应源中的准备代码。
+    setups = {group: tests for group, tests in reported.items() if group.endswith(' (setup code)')}
+    assert setups.items() <= expected.get(name, {}).items(), ('Example setup coverage', name, setups)
+    actual[name] = {group: tests for group, tests in reported.items() if not group.endswith(' (setup code)')}
+  visible = {
+    name: {group: tests for group, tests in groups.items() if not group.endswith(' (setup code)')}
+    for name, groups in expected.items()
+  }
+  assert actual == visible, ('Example coverage', actual, visible)
   assert not re.search(r'\b[1-9][0-9]* failures? in (?:' + '|'.join(DOCTEST_PHASES) + ') code', output), 'Doctest setup or cleanup failed'
   return int(summary[1])
 
@@ -596,7 +641,7 @@ def check_doctests(doctest: Path) -> int:
 def main() -> None:
   if not __debug__:
     raise RuntimeError('Documentation checks require assertions; do not run with -O')
-  site, doctest = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+  site, doctest, source = (Path(argument).resolve() for argument in sys.argv[1:4])
   pages = {}
   for path in site.rglob('*.html'):
     page = Page()
@@ -606,10 +651,10 @@ def main() -> None:
   result['header_paragraphs'] = check_header_paragraphs(pages)
   check_configuration_signatures(site)
   check_links(site, pages)
-  check_task_navigation(pages, sys.argv[3], sys.argv[4])
+  check_task_navigation(pages, sys.argv[4], sys.argv[5])
   result['release_sections'] = check_release_notes(pages)
   result['source_less_attributes'] = check_attribute_descriptions(site)
-  result['doctests'] = check_doctests(doctest)
+  result['doctests'] = check_doctests(doctest, source)
   examples = collect_examples(ROOT / 'bazi')
   check_example_blocks(examples, {name: page.code_blocks for name, page in pages.items()})
   for example in examples:

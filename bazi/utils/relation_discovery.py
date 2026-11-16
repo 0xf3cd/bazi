@@ -31,17 +31,18 @@ def _ordered_relation_pairs(
   return tuple(dict.fromkeys(frozenset(pair) for pair in ordered))
 
 
-RelationType = TypeVar('RelationType')
-RelationItemType = TypeVar('RelationItemType')
+K = TypeVar('K')
+T = TypeVar('T')
 class RelationDiscovery(
-  frozendict[RelationType, tuple[frozenset[RelationItemType], ...]],
-  Generic[RelationType, RelationItemType],
+  frozendict[K, tuple[frozenset[T], ...]],
+  Generic[K, T],
 ):
   '''
   天干/地支关系发现结果的泛型基类：关系到组合的冻结映射，支持按组合过滤与合并。
+  `K` 为关系种类的类型，`T` 为组合成员的类型。
   '''
 
-  def filter(self, f: Callable[[RelationType, frozenset[RelationItemType]], bool]) -> Self:
+  def filter(self, f: Callable[[K, frozenset[T]], bool]) -> Self:
     '''只保留 `f` 接受的组合；不再有组合的关系整键丢弃。'''
     if not callable(f):
       raise TypeError(f'Expected a callable, got {type(f)}')
@@ -55,14 +56,14 @@ class RelationDiscovery(
     '''合并两个发现结果；关系键与组合都按左侧、右侧的首次出现顺序保留，重复组合去重。'''
     if not isinstance(other, type(self)):
       raise TypeError(f'Expected {type(self).__name__}, got {type(other)}')
-    d: dict[RelationType, dict[frozenset[RelationItemType], None]] = {}
+    d: dict[K, dict[frozenset[T], None]] = {}
     for discovery in (self, other):
       for rel, combos in discovery.items():
         d.setdefault(rel, {}).update(dict.fromkeys(combos))
 
     return type(self)({ rel : tuple(combos) for rel, combos in d.items() })
 
-  def mutual_only(self, items1: AbstractSet[RelationItemType], items2: AbstractSet[RelationItemType]) -> Self:
+  def mutual_only(self, items1: AbstractSet[T], items2: AbstractSet[T]) -> Self:
     '''只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。
 
     Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。

@@ -43,17 +43,15 @@ def test_basic() -> None:
     BaziChart(date(2024, 1, 1))  # type: ignore
 
 
-def test_malicious(rng: random.Random) -> None:
-  # Modification attempt
+def test_shared_bazi_and_readonly_getter(rng: random.Random) -> None:
   bazi: Bazi = Bazi(
     birth_time=datetime(1984, 4, 2, 4, 2),
     gender=BaziGender.男,
   )
   chart: BaziChart = BaziChart(bazi)
 
-  bazi._day_pillar = Ganzhi.from_str('甲子') # type: ignore
-  assert chart.bazi._day_pillar == Ganzhi.from_str('丙寅')
-  assert bazi._day_pillar == Ganzhi.from_str('甲子')
+  assert chart.bazi is bazi
+  assert chart.bazi is chart.bazi
 
   with pytest.raises(AttributeError):
     BaziChart(Bazi.random(rng=rng)).bazi = Bazi.random(rng=rng)  # type: ignore
@@ -130,7 +128,7 @@ def test_relationship_stars_literal_forty_table(
     'male' if gender is BaziGender.男 else 'female',
     BaziConfig(school=BaziSchool(peiou_xing_def=definition)),
   )
-  bazi._day_pillar = Ganzhi.from_str(f'{day_master!s}子') # type: ignore[misc]
+  bazi._day_pillar = Ganzhi(day_master, Dizhi.子 if day_master.index % 2 == 0 else Dizhi.丑) # type: ignore[misc]
   stars = BaziChart(bazi).relationship_stars
   assert stars.tiangan is expected
   # Both readings agree on the Dizhi side: the major-stem Shishen equals the target stem's Shishen.
@@ -700,12 +698,14 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
       assert chart.bazi.config == expected.bazi.config
 
 
+@pytest.mark.input_contract('bazi.bazi_chart', 'BaziChart.random')
 @pytest.mark.parametrize('config', [None, False, 'day', {}])
 def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
     BaziChart.random(config, rng=rng) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.bazi_chart', 'BaziChart.random')
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
 def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
   with pytest.raises(ValueError, match='HKO'):
@@ -727,6 +727,8 @@ def test_random_local_source_keeps_global_state(cls: type[BaziChart]) -> None:
   assert random.getstate() == state
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.random')
+@pytest.mark.input_contract('bazi.bazi_chart', 'BaziChart.random')
 @pytest.mark.parametrize('bad', [False, 42, 'seed', object()])
 def test_random_rejects_wrong_rng(bad: object) -> None:
   for factory in (Bazi.random, BaziChart.random):
@@ -926,6 +928,7 @@ def test_repr_does_not_compute_derived_values(monkeypatch: pytest.MonkeyPatch) -
   assert repr(chart).startswith('BaziChart(Bazi(')
 
 
+@pytest.mark.input_contract('bazi.bazi_chart', 'BaziChart')
 @pytest.mark.parametrize('bad, hint', [
   (BaziChart(Bazi.create('2000-01-01 12:00', 'male')), 'pass chart.bazi'),
   (datetime(2000, 1, 1, 12), 'build one with Bazi.create(birth_time, gender)'),

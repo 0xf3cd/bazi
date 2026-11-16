@@ -16,43 +16,44 @@ from bazi.defines import Tiangan, Dizhi, Ganzhi
 from bazi.utils import dizhi_utils
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
+from bazi.common import frozendict
 from bazi.school import BaziConfig, BaziSchool, Anchor, _ANCHOR_CHOICES
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
 from bazi.analyzer import relationship as relationship_module
 from bazi.analyzer.relationship import (
-  RelationshipAnalyzer, TransitAnalysis, ShenshaAnalysis, AtBirthShenshaAnalysis, _REGISTRY,
+  RelationshipAnalyzer, TransitAnalysis, SHENSHA_LABELS, WHOLE_PILLAR_SHENSHA_LABELS, _REGISTRY,
 )
 
 from relationship_samples import at_year
 
 
-def test_registry_matches_shensha_analysis_keys() -> None:
-  '''The Shensha registry and `ShenshaAnalysis` must stay in sync / 神煞注册表和 ShenshaAnalysis 的键必须保持同步。'''
-  assert set(_REGISTRY.keys()) == set(ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__)
-
-
 def test_analyses_are_built_from_the_registry() -> None:
-  # Both analyses build their dicts by iterating the registry behind a `cast`, so mypy no
-  # longer checks the key set -- this is the executor. A registry entry that never lands in
-  # the result, or a declared key with no entry, fails here (issue #172).
-  # 两处分析都在 `cast` 之后按注册表推导，键集不再由 mypy 检查——这条测试就是执行者。
   chart: BaziChart = BaziChart(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE))
   analyzer = RelationshipAnalyzer(chart)
-
-  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
-  assert set(analyzer.at_birth.shensha) == set(at_birth_keys)
-
   transits = at_year(TransitChart(chart), chart.bazi.ganzhi_year).select(TransitKind.LIUNIAN)
-  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
-  assert set(analyzer.transits.shensha(transits)) == set(common_keys)
-
-
-def test_at_birth_extras_are_whole_pillar_only() -> None:
-  common_keys = ShenshaAnalysis.__required_keys__ | ShenshaAnalysis.__optional_keys__
-  at_birth_keys = AtBirthShenshaAnalysis.__required_keys__ | AtBirthShenshaAnalysis.__optional_keys__
-  assert at_birth_keys == common_keys | {'kuigang', 'tianshe'}
-  assert {'kuigang', 'tianshe'}.isdisjoint(_REGISTRY)
+  natal = analyzer.at_birth.shensha
+  transit = analyzer.transits.shensha(transits)
+  assert tuple(SHENSHA_LABELS) == tuple(_REGISTRY)
+  assert tuple(transit) == tuple(_REGISTRY)
+  assert tuple(natal) == (*_REGISTRY, *WHOLE_PILLAR_SHENSHA_LABELS)
+  assert set(WHOLE_PILLAR_SHENSHA_LABELS) == {'kuigang', 'tianshe'}
+  assert set(WHOLE_PILLAR_SHENSHA_LABELS).isdisjoint(_REGISTRY)
+  for result in (natal, transit):
+    assert isinstance(result, frozendict)
+    for name in _REGISTRY:
+      value = result[name]
+      assert isinstance(value, frozenset)
+      assert all(isinstance(dizhi, Dizhi) for dizhi in value)
+    with pytest.raises(TypeError):
+      result['taohua'] = frozenset() # type: ignore[index]
+    with pytest.raises(TypeError):
+      result['new'] = frozenset() # type: ignore[index]
+    with pytest.raises(TypeError):
+      del result['taohua'] # type: ignore[union-attr]
+  for name in WHOLE_PILLAR_SHENSHA_LABELS:
+    value = natal[name]
+    assert value is None or isinstance(value, Ganzhi)
 
 
 def test_at_birth_anchors_keep_kind_and_scope() -> None:

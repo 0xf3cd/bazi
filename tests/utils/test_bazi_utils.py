@@ -46,6 +46,7 @@ def test_ganzhi_of_day_basic() -> None:
     assert bazi_utils.ganzhi_of_day(d) == Ganzhi.list_sexagenary_cycle()[offset % 60]
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'ganzhi_of_day')
 def test_ganzhi_of_day_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.ganzhi_of_day('2024-03-01') # type: ignore
@@ -70,6 +71,7 @@ def test_ganzhi_of_day_at_moment() -> None:
   ) == Ganzhi.from_str('戊辰')
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'ganzhi_of_year')
 def test_ganzhi_of_year(rng: random.Random) -> None:
   with pytest.raises(TypeError):
     bazi_utils.ganzhi_of_year('2024') # type: ignore
@@ -114,6 +116,7 @@ def test_month_tiangan() -> None:
       assert bazi_utils.month_tiangan(year_tg, month_dz) == Tiangan(expected_tg)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'month_tiangan')
 def test_month_tiangan_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.month_tiangan('甲', Dizhi.寅) # type: ignore
@@ -124,11 +127,8 @@ def test_month_tiangan_negative() -> None:
 def test_taiyuan_covers_sixty_months() -> None:
   count = 0
   for tg, dz in itertools.product(Tiangan, Dizhi):
-    month = Ganzhi(tg, dz)
-    if tg.index % 2 != dz.index % 2:
-      with pytest.raises(ValueError):
-        bazi_utils.taiyuan(month)
-    else:
+    if tg.index % 2 == dz.index % 2:
+      month = Ganzhi(tg, dz)
       expected = Ganzhi(Tiangan.from_index((tg.index + 1) % 10), Dizhi.from_index((dz.index + 3) % 12))
       assert bazi_utils.taiyuan(month) == expected
       count += 1
@@ -136,22 +136,17 @@ def test_taiyuan_covers_sixty_months() -> None:
 
 
 @pytest.mark.parametrize('month,expected', [('己巳', '庚申'), ('壬午', '癸酉')])
+@pytest.mark.optimized
 def test_taiyuan_youyilu_examples(month: str, expected: str) -> None:
   assert bazi_utils.taiyuan(Ganzhi.from_str(month)) == Ganzhi.from_str(expected)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'taiyuan')
 @pytest.mark.parametrize('bad', ['甲', 1, None, [], True])
 def test_taiyuan_type_checks_precede_step(bad: object) -> None:
   with pytest.raises(TypeError) as error:
     bazi_utils.taiyuan(bad) # type: ignore[arg-type]
   assert str(error.value) == f'Expected Ganzhi, got {type(bad)}'
-  for month, name in (
-    (Ganzhi(bad, Dizhi.子), 'Tiangan'), # type: ignore[arg-type]
-    (Ganzhi(Tiangan.甲, bad), 'Dizhi'), # type: ignore[arg-type]
-  ):
-    with pytest.raises(TypeError) as error:
-      bazi_utils.taiyuan(month)
-    assert str(error.value) == f'Expected {name}, got {type(bad)}'
 
 
 def test_minggong_all_enum_combinations() -> None:
@@ -183,10 +178,12 @@ def test_minggong_all_enum_combinations() -> None:
   (Tiangan.甲, Dizhi.辰, Dizhi.酉, '戊辰'), # 游艺录: third month, 酉 hour.
   (Tiangan.丙, Dizhi.寅, Dizhi.申, '乙未'), # 命理探原: after 大寒, effective first month.
 ])
+@pytest.mark.optimized
 def test_minggong_transcribed_examples(year: Tiangan, month: Dizhi, hour: Dizhi, expected: str) -> None:
   assert bazi_utils.minggong(year, month, hour) == Ganzhi.from_str(expected)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'minggong')
 @pytest.mark.parametrize('bad', ['子', 0, 13, None, [], True])
 def test_minggong_checks_each_parameter(bad: object) -> None:
   for args, name in (
@@ -223,6 +220,7 @@ def test_hour_tiangan() -> None:
       assert bazi_utils.hour_tiangan(day_tg, hour_dz) == Tiangan(expected_tg)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'hour_tiangan')
 def test_hour_tiangan_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.hour_tiangan('甲', Dizhi.寅) # type: ignore
@@ -238,6 +236,7 @@ def test_tiangan_traits() -> None:
     assert str(bazi_utils.tiangan_traits(tg)) == str(expected_yinyang) + str(expected_wuxing)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'tiangan_traits')
 def test_tiangan_traits_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.tiangan_traits('甲') # type: ignore
@@ -267,11 +266,13 @@ def test_dizhi_traits() -> None:
     assert bazi_utils.dizhi_traits(dz) == TraitTuple(expected_wuxing, expected_yinyang)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'dizhi_traits')
 def test_dizhi_traits_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.dizhi_traits('子') # type: ignore
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'traits')
 def test_traits_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.traits('甲') # type: ignore
@@ -287,6 +288,7 @@ def test_hidden_tiangans() -> None:
       assert tg in Tiangan
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'hidden_tiangans')
 def test_hidden_tiangans_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.hidden_tiangans('子') # type: ignore
@@ -311,6 +313,7 @@ def test_shishen() -> None:
   assert bazi_utils.shishen(Tiangan.甲, Dizhi.子) == Shishen.正印
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'shishen')
 def test_shishen_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.shishen('甲', Tiangan.甲) # type: ignore
@@ -332,52 +335,45 @@ def test_nayin_str() -> None:
   assert bazi_utils.nayin_str(Ganzhi.from_str('壬戌')) == '大海水'
   assert bazi_utils.nayin_str(Ganzhi.from_str('癸亥')) == '大海水'
 
-  cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
-  for tg in Tiangan:
-    for dz in Dizhi:
-      gz: Ganzhi = Ganzhi(tg, dz)
-      if gz in cycle:
-        assert len(bazi_utils.nayin_str(gz)) == 3
-      else:
-        with pytest.raises(ValueError, match='Unsupported Ganzhi for Nayin'):
-          bazi_utils.nayin_str(gz) # Ganzhis not in the sexagenary cycle don't have nayin.
+  for gz in Ganzhi.list_sexagenary_cycle():
+    assert len(bazi_utils.nayin_str(gz)) == 3
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'nayin_str')
 def test_nayin_str_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.nayin_str('甲子') # type: ignore
 
 
 def test_shier_zhangsheng() -> None:
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('甲子')) == ShierZhangsheng.沐浴
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('甲亥')) == ShierZhangsheng.长生
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('甲午')) == ShierZhangsheng.死
+  assert bazi_utils.shier_zhangsheng(Tiangan.甲, Dizhi.子) == ShierZhangsheng.沐浴
+  assert bazi_utils.shier_zhangsheng(Tiangan.甲, Dizhi.亥) == ShierZhangsheng.长生
+  assert bazi_utils.shier_zhangsheng(Tiangan.甲, Dizhi.午) == ShierZhangsheng.死
 
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('乙亥')) == ShierZhangsheng.死
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('乙丑')) == ShierZhangsheng.衰
+  assert bazi_utils.shier_zhangsheng(Tiangan.乙, Dizhi.亥) == ShierZhangsheng.死
+  assert bazi_utils.shier_zhangsheng(Tiangan.乙, Dizhi.丑) == ShierZhangsheng.衰
 
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('丙午')) == ShierZhangsheng.帝旺
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('丙未')) == ShierZhangsheng.衰
+  assert bazi_utils.shier_zhangsheng(Tiangan.丙, Dizhi.午) == ShierZhangsheng.帝旺
+  assert bazi_utils.shier_zhangsheng(Tiangan.丙, Dizhi.未) == ShierZhangsheng.衰
 
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('丁未')) == ShierZhangsheng.冠带
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('丁戌')) == ShierZhangsheng.养
+  assert bazi_utils.shier_zhangsheng(Tiangan.丁, Dizhi.未) == ShierZhangsheng.冠带
+  assert bazi_utils.shier_zhangsheng(Tiangan.丁, Dizhi.戌) == ShierZhangsheng.养
 
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('戊戌')) == ShierZhangsheng.墓
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('戊亥')) == ShierZhangsheng.绝
+  assert bazi_utils.shier_zhangsheng(Tiangan.戊, Dizhi.戌) == ShierZhangsheng.墓
+  assert bazi_utils.shier_zhangsheng(Tiangan.戊, Dizhi.亥) == ShierZhangsheng.绝
 
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('己亥')) == ShierZhangsheng.胎
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('庚辰')) == ShierZhangsheng.养
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('辛酉')) == ShierZhangsheng.临官
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('壬申')) == ShierZhangsheng.长生
-  assert bazi_utils.shier_zhangsheng(*Ganzhi.from_str('癸卯')) == ShierZhangsheng.长生
+  assert bazi_utils.shier_zhangsheng(Tiangan.己, Dizhi.亥) == ShierZhangsheng.胎
+  assert bazi_utils.shier_zhangsheng(Tiangan.庚, Dizhi.辰) == ShierZhangsheng.养
+  assert bazi_utils.shier_zhangsheng(Tiangan.辛, Dizhi.酉) == ShierZhangsheng.临官
+  assert bazi_utils.shier_zhangsheng(Tiangan.壬, Dizhi.申) == ShierZhangsheng.长生
+  assert bazi_utils.shier_zhangsheng(Tiangan.癸, Dizhi.卯) == ShierZhangsheng.长生
 
   for dz in Dizhi:
-    assert (bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('丙', str(dz))) ==
-            bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('戊', str(dz))))
-    assert (bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('丁', str(dz))) ==
-            bazi_utils.shier_zhangsheng(*Ganzhi.from_strs('己', str(dz))))
+    assert bazi_utils.shier_zhangsheng(Tiangan.丙, dz) == bazi_utils.shier_zhangsheng(Tiangan.戊, dz)
+    assert bazi_utils.shier_zhangsheng(Tiangan.丁, dz) == bazi_utils.shier_zhangsheng(Tiangan.己, dz)
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'shier_zhangsheng')
 def test_shier_zhangsheng_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.shier_zhangsheng('甲', Dizhi.子) # type: ignore
@@ -415,6 +411,7 @@ def test_from_shier_zhangsheng() -> None:
             bazi_utils.from_shier_zhangsheng(Tiangan('己'), place))
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'from_shier_zhangsheng')
 def test_from_shier_zhangsheng_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.from_shier_zhangsheng('甲', ShierZhangsheng.沐浴) # type: ignore
@@ -460,6 +457,7 @@ def test_lu() -> None:
     assert bazi_utils.lu(tg) == bazi_utils.from_shier_zhangsheng(tg, ShierZhangsheng('临官'))
 
 
+@pytest.mark.input_contract('bazi.utils.bazi_utils', 'lu')
 def test_lu_negative() -> None:
   with pytest.raises(TypeError):
     bazi_utils.lu('甲') # type: ignore

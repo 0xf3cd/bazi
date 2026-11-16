@@ -63,11 +63,11 @@ assert chart.bazi.day_master in Tiangan
   位置按年、月、日、时，再按 `TransitSet.items` 的固定次序排列。通根在每个位置按
   `BaziRules.HIDDEN_TIANGANS` 表顺序返回；透干按藏干位置优先、明干位置次序返回。没有匹配返回空元组。
 
-`TianganOccurrence(position, ganzhi, stem)` 是冻结值。直接构造时，位置为 `Zhu | TransitKind`，
-`stem` 必须是该干支的明干或藏干。`TouganHit(hidden, visible)` 的两端均为 `TianganOccurrence`：
-`hidden.stem` 须属 `hidden.ganzhi` 的藏干，`visible.stem` 须等于 `visible.ganzhi.tiangan`；
+`TianganOccurrence(position, ganzhi, stem)` 是冻结结果，位置为 `Zhu | TransitKind`，
+查询返回的 `stem` 是该干支的明干或藏干。`TouganHit(hidden, visible)` 的两端均为 `TianganOccurrence`：
+`hidden.stem` 属于 `hidden.ganzhi` 的藏干，`visible.stem` 等于 `visible.ganzhi.tiangan`；
 不强制两端同干，结果中的明藏角色由字段指定。
-上述查询与构造入口的错型抛 `TypeError`，构造值的干支与明藏角色不符抛 `ValueError`；普通运行与 `-O` 一致。
+上述查询入口的错型抛 `TypeError`，普通运行与 `-O` 一致；直接构造结果不检查字段及明藏角色。
 原局位置、流运种类与明藏两端实际值的示例见[关系与流运指南](docs/guides/relations-transits.md)。
 
 ### 月令五行状态与神煞名称
@@ -86,11 +86,23 @@ assert chart.bazi.day_master in Tiangan
 `relationship.SHENSHA_LABELS`（22 项）与 `WHOLE_PILLAR_SHENSHA_LABELS`（魁罡、天赦两项）
 是公开冻结名称表，CLI 也使用这两张表。
 
+`ShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi]]` 别名，查询返回值按 `SHENSHA_LABELS` 的顺序列出各键。
+`AtBirthShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi] | Ganzhi | None]` 别名，
+共同键后按 `WHOLE_PILLAR_SHENSHA_LABELS` 的顺序列出整柱结果。两类映射均不能增删改键。
+本命结果取值后须按用途收窄类型：支集是 `frozenset[Dizhi]`，整柱值是命中的日柱或 `None`。
+
+### 干支值域
+
+`Ganzhi(tiangan, dizhi)` 只接受六十甲子：字段须分别为 `Tiangan`、`Dizhi`，错型抛 `TypeError`；
+阴阳不配（如甲丑）抛 `ValueError`。`from_strs`、`from_str`、`_make`、`_replace` 和
+Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致。
+合法值保留元组解包、相等、哈希、复制和 pickle 往返；不承诺绕过构造器的低层造值行为。
+
 ### 六甲旬空
 
 `shensha_utils.xunkong(ganzhi)` 返回该旬二支冻结集，`kongwang(anchor_ganzhi, target_dizhi)` 返回
-目标支是否命中。错误外层或内部干支字段类型抛 `TypeError`，阴阳不配锚抛 `ValueError`，在 `python -O`
-下同样检查；不改变 `Ganzhi` 自身的构造域。目标不附加天干、纳音或冲合条件。
+目标支是否命中。查法锚须为 `Ganzhi`，目标须为 `Dizhi`，错型抛 `TypeError`，在 `python -O`
+下同样检查；内部字段及阴阳配对由 `Ganzhi` 构造器检查。目标不附加天干、纳音或冲合条件。
 
 `BaziSchool.kongwang_anchor` 默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
 `AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
@@ -111,11 +123,10 @@ assert chart.bazi.day_master in Tiangan
 地点盘先把边界换到与出生相同的真太阳钟。HKO 只支持 `DAY`，零点仅为占位，不是真实交节时刻。
 时间政策是本库执行口径，不冒称古籍规定；300 日胎元和其他命宫月界仅存知识候选，未编码。
 
-纯函数从 `bazi.utils.bazi_utils` 导入：`taiyuan(month_pillar)` 先检查外层 `Ganzhi`，再检查
-`tiangan`／`dizhi` 字段类型，错型立即抛 `TypeError`；通过后检查是否属于合法六十甲子，
-阴阳不配的组合抛 `ValueError`。`minggong(year_tiangan, month_dizhi, hour_dizhi)` 逐参接收
+纯函数从 `bazi.utils.bazi_utils` 导入：`taiyuan(month_pillar)` 要求输入为 `Ganzhi`，错型立即抛 `TypeError`。
+`minggong(year_tiangan, month_dizhi, hour_dizhi)` 逐参接收
 `Tiangan`、已调整的有效命宫月支 `Dizhi`、本盘时支 `Dizhi`，非相应枚举抛 `TypeError`。
-普通运行与 `python -O` 下的校验行为相同；`Ganzhi` 构造器本身仍接受全部 10×12 个干支组合。
+普通运行与 `python -O` 下的校验行为相同；干支字段及阴阳配对由 `Ganzhi` 构造器检查。
 
 两值是四柱之外的单独查询结果，不扩展 `BaziData` 或柱位，不改变 `school` 和命盘身份。
 它们不出现在 `basic_text` 等命盘文本中，不参与五行、十神、神煞、关系或流运分析。
@@ -127,7 +138,7 @@ assert chart.bazi.day_master in Tiangan
 
 - 查询结果和规则集合使用 `tuple`、`frozenset`、`frozendict` 等不可变结构；
   `frozendict` 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。
-- 命盘隔离传入的 `Bazi`，`chart.bazi` 每次返回独立深拷贝；不把 Python 属性只读等同于所有对象都深冻结。
+- 命盘直接持有传入的 `Bazi`，`chart.bazi` 每次返回同一对象。调用方不得改写其私有状态，命盘缓存不会随这种改写刷新。
 - `Bazi` 按值比较；`BaziChart` 按对象身份比较。两个命盘的 `bazi` 值可以相等，命盘对象本身仍不相等。
   知识库按内容及顺序比较，`ContextResult` 按其值字段比较。
 - `ContextResult` 是 frozen dataclass，`bazi: Bazi` 直接保存求值输入，构造与读取均不深拷贝。
@@ -176,8 +187,8 @@ assert chart.bazi.day_master in Tiangan
   `TianganLayer`（`天干层次`）成员为 `MINGGAN/CANGGAN` 与 `明干/藏干`。两个类都从 `bazi.defines` 重导出；
   定义模块分别是 `defines.zhu` 和 `defines.tiangan`。原局柱序与中文标签取自 `Zhu`。
 - `KongwangHit(position, ganzhi)` 和 `StarAppearance` 的 `position` 类型为 `Zhu | TransitKind`。
-  `StarAppearance(position, ganzhi, layer, stem)` 的 `layer` 用 `TianganLayer`；构造时检查明干与干支一致、藏干属于地支。
-  `KongwangResult.anchor` 只接受年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查和运行时均拒绝。
+  `StarAppearance(position, ganzhi, layer, stem)` 的 `layer` 用 `TianganLayer`；查询返回的明干与干支一致、藏干属于地支。
+  `KongwangResult.anchor` 的查询结果为年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查时拒绝。
   配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
 - `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 `position` 为 `Zhu | LiunianPosition`；
   后者保存具体 `ganzhi_year`。原局 `index` 为 0–3，流年为 4。
@@ -188,18 +199,24 @@ assert chart.bazi.day_master in Tiangan
 
 | 具体坐标构造 | 含义 |
 | --- | --- |
-| `YearCoordinate(ganzhi_year)` | 干支年标签，年份须为确切 `int`，拒绝 `bool` 与子类。 |
+| `YearCoordinate(ganzhi_year)` | 干支年标签，年份接受 `int`（含 `bool` 与 `int` 子类）。 |
 | `MonthCoordinate(ganzhi_year, ganzhi_month)` | 干支年月，月用 `Dizhi`；年份同上。 |
 | `DateCoordinate(solar_date)` | 东八区公历日，须为 `date` 本身，不接 `datetime` 或 `date` 子类。 |
-| `MomentCoordinate(solar_moment)` | 东八区无时区时刻，须为 `datetime` 本身；保留微秒请求身份，求值按秒解释。 |
+| `MomentCoordinate(solar_moment)` | 东八区无时区时刻，接受 `datetime` 及其子类；保留微秒请求身份，求值按秒解释。 |
 
 四类均从 `bazi.context_matching` 导入；`TransitCoordinate` 是四者联合类型，不能直接构造。
 直接构造时，缺字段／多余字段由构造器抛 `TypeError`；值错型或带时区则由各类显式检查。
 坐标缺失是合法观察请求，在求值时为 `UNKNOWN`；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
-`TransitChart.at_year/at_month` 的年份检查使用 `isinstance(value, int)`，因此接受 `bool` 和 `int` 子类；
-上表的严格坐标类则拒绝这两类输入。
+坐标逐字段沿用对应 `TransitChart` 查询入口的类型口径；`LiunianObservation.ganzhi_year` 也接受
+`int`（含 `bool` 与 `int` 子类）或 `None`。坐标构造不检查历法支持范围。
 
 ### 结果构造与 dataclass 操作
+
+`TianganOccurrence`、`TouganHit`、`RelationParticipant`、`KongwangHit`、`KongwangResult`、
+`StarAppearance`、`RelationshipEvidence`、`GanzhiOccurrence`、`CriterionInfo`、`LiunianPosition`、
+`ChartOccurrence`、`CriterionResult` 和 `ContextResult` 是冻结结果记录；直接构造及 `replace` 不校验字段。
+正常结果的领域约束由生成它们的查询保证。`TransitSet`、观察请求、坐标、配置及知识库记录仍是输入，
+保留各自的校验；`GanzhiYearMonth` 的公开坐标构造与转换同样保留校验。
 
 | 类型 | 实际构造字段 | 派生属性 |
 | --- | --- | --- |
@@ -230,7 +247,7 @@ assert chart.bazi.day_master in Tiangan
 是否覆盖关联条目的完整前提，须看判据的 `entry_role`。
 
 `scope_complete` 不核实该原因与观察、请求年份或手填证据是否一致。
-例如直接构造结果时，原局观察可配缺流运原因，已给年份也可配缺坐标原因；结构校验不认证这些事实。
+例如直接构造结果时，原局观察可配缺流运原因，已给年份也可配缺坐标原因；手填结果不认证这些事实。
 实际判别由 `evaluate_context` 计算。
 
 `NatalObservation`、`LiunianObservation`、`TransitObservation` 的 `scope`，以及四个坐标类的 `entry`，
@@ -315,7 +332,7 @@ assert chart.bazi.day_master in Tiangan
 
 `context_matching.criteria()` 返回 `frozendict[str, CriterionInfo]`，`criterion(id)` 返回单项；
 未知 ID 抛 `ValueError`，错型抛 `TypeError`。两者不加载知识库、不创建命盘，也不执行判别。
-目录值冻结，直接构造 `CriterionInfo` 只校验值的形状，不将自填的 `definition` 当作已注册定义或据此派生结论；
+目录值冻结，直接构造 `CriterionInfo` 不校验字段，不将自填的 `definition` 当作已注册定义或据此派生结论；
 需要已注册定义时使用这两个查询入口。
 
 判据按稳定条目 ID 关联，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义，

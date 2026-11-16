@@ -232,9 +232,8 @@ def test_environment_export_requires_package(monkeypatch: pytest.MonkeyPatch, tm
   assert caught.value.code == 2
 
 
-@pytest.mark.parametrize('flag', ['-d', '--demo', '-i', '--interpreter'])
-def test_removed_script_flags_are_rejected(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
-  monkeypatch.setattr(sys, 'argv', ['run_tests.py', flag])
+def test_d_does_not_abbreviate_docs(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-d'])
   with pytest.raises(SystemExit) as caught:
     runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert caught.value.code == 2
@@ -245,7 +244,6 @@ def test_doc_flags_keep_their_current_meaning(monkeypatch: pytest.MonkeyPatch, f
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', flag])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert runner['do_docs'] and runner['skip_test']
-  assert 'do_demo' not in runner
 
 
 def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -259,8 +257,20 @@ def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) ->
   statuses = subtasks()
   assert list(statuses) == ['coverage with tests', 'o_smoke', 'ruff', 'mypy', 'docs', 'package']
   coverage.assert_called_once_with(runner['run_tests'])
-  assert not {'do_demo', 'do_interpreter', 'DEMO_SCRIPTS', 'run_demo', 'run_interpreter'} & runner.keys()
-  assert not {'-d', '--demo', '-i', '--interpreter'} & runner['argparser']._option_string_actions.keys()
+
+
+def test_optimized_runner_selects_input_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-osmoke'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  function = runner['run_o_smoke']
+  proc = Mock(return_value=7)
+  monkeypatch.setitem(function.__globals__, 'run_proc_and_print', proc)
+  assert function() == 7
+  root = Path(__file__).parents[1]
+  proc.assert_called_once_with([
+    sys.executable, '-O', '-m', 'pytest', str(root / 'tests'),
+    '--input-contracts', '--ignore=' + str(root / 'tests/docs'), '-q',
+  ], print_details=True)
 
 
 def test_pytest_args_keep_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -18,6 +18,7 @@ def test_repr_wraps_the_chart_summary(analysis: type) -> None:
   assert repr(analysis(chart)) == f'{analysis.__name__}({chart!r})'
 
 
+@pytest.mark.input_contract('bazi.analyzer.relationship', 'AtBirthAnalysis TransitAnalysis RelationshipAnalyzer')
 @pytest.mark.parametrize('analysis', _ANALYSIS_TYPES)
 @pytest.mark.parametrize('bad, hint', [
   (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
@@ -36,6 +37,7 @@ def test_repr_does_not_build_the_analyses(monkeypatch: pytest.MonkeyPatch) -> No
   assert repr(analyzer).startswith('RelationshipAnalyzer(BaziChart(')
 
 
+@pytest.mark.input_contract('bazi.analyzer.relationship', 'spouse_evidence')
 def test_spouse_evidence_hints_on_wrong_chart() -> None:
   with pytest.raises(TypeError, match=r'^Expected BaziChart, got .*; wrap it with BaziChart\(bazi\)$'):
     relationship_module.spouse_evidence(Bazi.create('2000-01-01 12:00', 'male'), None) # type: ignore

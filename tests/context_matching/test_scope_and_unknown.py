@@ -70,6 +70,7 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
 
 
+@pytest.mark.optimized
 def test_scope_matrix_covers_legal_reasons() -> None:
   results = [
     (observation, record(criterion_id, observation, day, gender))
