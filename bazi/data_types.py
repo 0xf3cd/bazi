@@ -70,10 +70,10 @@ class BaziData(Generic[T]):
   '''
   按年、月、日、时顺序存储四份数据的泛型容器；`T` 为每柱的数据类型。
   '''
-  year: T
+  year:  T
   month: T
-  day: T
-  hour: T
+  day:   T
+  hour:  T
 
   def __iter__(self) -> Iterator[T]:
     return iter((self.year, self.month, self.day, self.hour))
@@ -86,4 +86,4 @@ class GanzhiData(Generic[T, U]):
   `T`、`U` 分别为天干与地支的数据类型。
   '''
   tiangan: T
-  dizhi: U
+  dizhi:   U

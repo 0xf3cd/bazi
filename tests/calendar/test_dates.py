@@ -193,6 +193,7 @@ def test_date_cmp_operators(rng: random.Random) -> None:
     cur_date = next_date
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'CalendarDate')
 def test_date_cmp_operators_negative() -> None:
   # As expected, only the dates of the same `CalendarType` can be compared.
   calendar_dates: list[CalendarDate] = [
