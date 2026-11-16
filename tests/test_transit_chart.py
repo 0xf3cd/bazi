@@ -76,15 +76,15 @@ def test_queries_use_attributed_boundary() -> None:
 @pytest.mark.input_contract('bazi.transit_chart', 'TransitChart.at_year TransitChart.at_month TransitChart.at_date TransitChart.at_moment')
 def test_query_types(rng: random.Random) -> None:
   chart = TransitChart(BaziChart.random(rng=rng))
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected int, got'):
     chart.at_year('2024') # type: ignore
   with pytest.raises(TypeError):
     chart.at_month('2024', Dizhi.寅) # type: ignore
   with pytest.raises(TypeError):
     chart.at_month(2024, '寅') # type: ignore
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected date \\(not datetime\\), got'):
     chart.at_date('2024-01-01') # type: ignore
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected date \\(not datetime\\), got'):
     chart.at_date(datetime(2024, 1, 1))
   with pytest.raises(TypeError):
     chart.at_moment(date(2024, 1, 1)) # type: ignore

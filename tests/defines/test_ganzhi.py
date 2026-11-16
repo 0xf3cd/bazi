@@ -211,7 +211,8 @@ def test_constructor_and_factories_reject_pairs() -> None:
   ('甲', Dizhi.子), (Tiangan.甲, '子'), ([], Dizhi.子), (Tiangan.甲, None),
 ])
 def test_constructor_rejects_field_types(tg: Any, dz: Any) -> None:
-  with pytest.raises(TypeError):
+  expected = 'Tiangan' if not isinstance(tg, Tiangan) else 'Dizhi'
+  with pytest.raises(TypeError, match=f'^Expected {expected}, got'):
     Ganzhi(tg, dz)
 
 

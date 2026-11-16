@@ -183,7 +183,7 @@ def test_civil_timezone_invalid_inputs(direct: bool) -> None:
   create: Any = Bazi if direct else Bazi.create
   gender = BaziGender.男 if direct else 'male'
   config = BaziConfig(precision=BaziPrecision.MINUTE)
-  with pytest.raises(TypeError, match='tzinfo'):
+  with pytest.raises(TypeError, match='^Expected tzinfo, got'):
     create(datetime(2000, 1, 1, tzinfo=UTC), gender, config, longitude=0.0, civil_timezone='+08:00')
   with pytest.raises(ValueError, match='requires longitude'):
     create(datetime(2000, 1, 1), gender, config, civil_timezone=UTC)

@@ -105,8 +105,6 @@ def test_intersection_and_literal_search(tmp_path: Path) -> None:
   assert knowledge.filter_values('viewpoint') == ('CaseFold',)
   assert knowledge.filter_values('source_id') == ('source',)
   assert KnowledgeBase((), (), ()).filter_values('topic') == ()
-  with pytest.raises(ValueError, match='Unknown topic'):
-    knowledge.search('missing', topic='不存在')
 
 
 def test_mixed_sources_and_render_limits(tmp_path: Path) -> None:
@@ -176,12 +174,18 @@ def test_blank_names_fail(bad: str) -> None:
       call(bad)
 
 
-@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.render KnowledgeBase.render_subject')
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.entry KnowledgeBase.query KnowledgeBase.search KnowledgeBase.filter_values KnowledgeBase.render KnowledgeBase.render_subject')
 def test_unknown_values_and_foreign_entries() -> None:
   knowledge = KnowledgeBase.load()
   for call in (knowledge.entry, knowledge.query, knowledge.filter_values):
     with pytest.raises(ValueError, match='Unknown'):
       call('missing')
+  for dimension in ('topic', 'source_id', 'viewpoint'):
+    filters = {dimension: '不存在'}
+    with pytest.raises(ValueError, match=f'Unknown {dimension}:'):
+      knowledge.query(**filters)
+    with pytest.raises(ValueError, match=f'Unknown {dimension}:'):
+      knowledge.search('missing', **filters)
   entry = knowledge.query()[0]
   with pytest.raises(ValueError, match='Foreign entry'):
     knowledge.render(replace(entry, text='changed'))
@@ -249,6 +253,7 @@ def test_record_fields_and_typed_registries() -> None:
 @pytest.mark.parametrize('data,error', [
   ([], TypeError), ({}, ValueError),
   ({**_data(), 'schema_version': True}, ValueError), ({**_data(), 'schema_version': 3}, ValueError),
+  ({**_data(), 'schema_version': 4.0}, ValueError),
   ({**_data(), 'objects': {}}, TypeError), ({**_data(), 'objects': [None]}, TypeError),
   ({**_data(), 'entries': [{'objects': ['stem.ding'], 'text': '正文'}]}, ValueError),
 ])
