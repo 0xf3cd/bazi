@@ -222,8 +222,6 @@ def test_constructor_rejects_field_types(tg: Any, dz: Any) -> None:
   pytest.param('copy_replace', marks=pytest.mark.input_contract('bazi.defines.ganzhi', 'Ganzhi._replace')),
 ])
 def test_auxiliary_construction_preserves_domain(entry: str) -> None:
-  if entry == 'copy_replace' and sys.version_info < (3, 13):
-    pytest.skip('copy.replace requires Python 3.13')
   base = Ganzhi.from_str('甲子')
 
   def construct(tg: Any, dz: Any) -> Ganzhi:
@@ -231,7 +229,9 @@ def test_auxiliary_construction_preserves_domain(entry: str) -> None:
       return Ganzhi._make(iter((tg, dz)))
     if entry == 'replace':
       return base._replace(tiangan=tg, dizhi=dz)
-    return copy.replace(base, tiangan=tg, dizhi=dz)
+    if sys.version_info >= (3, 13):
+      return copy.replace(base, tiangan=tg, dizhi=dz)
+    pytest.skip('copy.replace requires Python 3.13')
 
   for tg in Tiangan:
     for dz in Dizhi:

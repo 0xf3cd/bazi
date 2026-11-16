@@ -2,6 +2,7 @@
 
 import ast
 import importlib
+import os
 import re
 import subprocess
 import sys
@@ -257,7 +258,12 @@ assert not any(name in sys.modules for name in STATIC_MODULES)
 print('PASS safe public imports, declared fields and aliases')
 '''
   script = script.replace('for module, words in PUBLIC_NAMES.items():', injection + '\nfor module, words in PUBLIC_NAMES.items():', 1)
-  result = subprocess.run([sys.executable, '-B', '-c', script], cwd=ROOT, text=True, capture_output=True, check=False)
+  result = subprocess.run(
+    [sys.executable, '-B', '-c', script],
+    cwd=ROOT,
+    env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
+    text=True, encoding='utf-8', capture_output=True, check=False,
+  )
   if rejected_name is None:
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'PASS safe public imports' in result.stdout
