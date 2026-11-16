@@ -67,7 +67,7 @@ class RelationDiscovery(
     '''只保留与两侧值集均相交的组合；与任一侧不相交即单侧组合。
 
     Note: 按值判定，不追踪具体出现：组合全由单侧凑成，只要另一侧也有相同值，就会被保留。
-    `discover_mutual([子, 丑], [子])` 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。'''
+    以地支为例，`discover_mutual([子, 丑], [子])` 仍保留六合{子,丑}（子出现在两侧值集里，尽管一侧就够凑）。'''
     if not isinstance(items1, AbstractSet):
       raise TypeError(f'Expected AbstractSet, got {type(items1)}')
     if not isinstance(items2, AbstractSet):

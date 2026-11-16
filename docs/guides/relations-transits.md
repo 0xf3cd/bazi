@@ -224,7 +224,8 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 天赦 无
 ```
 
-支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
+支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时，用
+`AtBirthAnalysis.kongwang` 或 `TransitAnalysis.kongwang(transits)`。
 
 (relations-transit-house)=
 ## 查流运与婚姻宫的关系

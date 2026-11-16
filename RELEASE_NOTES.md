@@ -62,7 +62,7 @@
 | 手工构造或 `replace` 纯结果时检查字段 | 撤回校验；通常通过查询取得结果，完整类型清单见[结果构造契约](API_CONTRACT.md#结果构造与-dataclass-操作) |
 | `BaziChart` 构造及读取时深拷贝 `Bazi` | `chart.bazi` 返回传入的同一个对象；调用方不得改写其私有状态，缓存不会随这种改写刷新 |
 | 年份坐标与 `LiunianObservation.ganzhi_year` 拒绝 `bool`、`int` 子类 | 与年份查询入口一致，接受 `int` 及其子类（含 `bool`） |
-| 日期／时刻坐标单独限定类型 | 与相应查询入口一致：日期只接受 `date` 本身，时刻接受无时区 `datetime` 及其子类；构造不检查历法支持范围 |
+| 时刻坐标只接受 `datetime` 本身 | 现在接受无时区 `datetime` 及其子类；日期坐标仍只接受 `date` 本身，两者构造时均不检查历法支持范围 |
 | `ShenshaAnalysis`、`AtBirthShenshaAnalysis` 为 `TypedDict` | 改为 `frozendict` 类型别名；查询键与顺序不变，不能增删改键。原局值为支集、日柱或 `None`，调用方取值后须收窄类型，不再按键提供静态类型保证 |
 | 导入非历法内部工具 | 这些工具不再属于兼容承诺；支持的调用入口见[公开接口契约](API_CONTRACT.md#支持范围与导入路径) |
 
