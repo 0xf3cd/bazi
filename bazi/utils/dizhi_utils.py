@@ -32,6 +32,8 @@ class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''以地支关系为键、以满足该关系的地支组合元组为值的冻结映射。
   每个组合是 frozenset[Dizhi]，只保存参与的地支值，不保存柱位。
 
+  继承签名中的 K 为 DizhiRelation，T 为 Dizhi，V 为 tuple[frozenset[Dizhi], ...]。
+
   拱合、拱会的组合只含两个实支。要取得所拱的第三支，分别把这两支传给 gonghe、gonghui。
   干支查询的 gong_def 包含完整成立条件，gonghe 的 definition 只选择拱合的结构范围。
   用 DizhiRules.GONG_GONGHE_SCOPE[gong_def] 取得与原查询一致的范围，再查第三支。
@@ -70,7 +72,10 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
-  生成该结果的入口所定义的查询序列解释，详见各入口说明。'''
+  生成该结果的入口所定义的查询序列解释，详见各入口说明。
+
+  继承的构造签名中，K 为 DizhiRelation，V 为 GanzhiRelationCombos。
+  '''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留

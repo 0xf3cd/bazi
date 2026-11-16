@@ -229,11 +229,13 @@ def _with_gong(
   return dizhi_utils.DizhiRelationDiscovery({**existing, **gong})
 
 
-'''神煞到命中地支集合的不可变映射；键及顺序见 SHENSHA_LABELS，旬空详情见 kongwang。'''
+'''流运神煞到命中地支集合的不可变映射；键及顺序见 SHENSHA_LABELS，
+旬空详情见 TransitAnalysis.kongwang。'''
 ShenshaAnalysis = frozendict[str, frozenset[Dizhi]]
 
-'''原局神煞的不可变映射；地支键同 SHENSHA_LABELS，随后为 WHOLE_PILLAR_SHENSHA_LABELS
-中的整柱神煞。整柱值为命中的日柱或 None，取值后须按用途收窄类型。'''
+'''原局神煞的不可变映射；支集键同 SHENSHA_LABELS，随后为 WHOLE_PILLAR_SHENSHA_LABELS
+中的整柱神煞。整柱值为命中的日柱或 None，调用方取值后用 isinstance 区分支集与整柱值。
+旬空详情见 AtBirthAnalysis.kongwang。'''
 AtBirthShenshaAnalysis = frozendict[str, frozenset[Dizhi] | Ganzhi | None]
 
 
@@ -245,7 +247,10 @@ class RelationParticipant:
 
 
 class RelationPositionDiscovery(frozendict[DizhiRelation, tuple[frozenset[RelationParticipant], ...]]):
-  '''地支关系到具体位置组合的冻结映射。'''
+  '''地支关系到具体位置组合的冻结映射。
+
+  继承的构造签名中，K 为 DizhiRelation，V 为 tuple[frozenset[RelationParticipant], ...]。
+  '''
 
 
 @dataclass(frozen=True)
@@ -303,6 +308,9 @@ class AtBirthAnalysis:
 
   @property
   def shensha(self) -> AtBirthShenshaAnalysis:
+    '''原局神煞映射；支集键按 SHENSHA_LABELS 排列，随后是 WHOLE_PILLAR_SHENSHA_LABELS
+    的整柱键。支集值为 frozenset[Dizhi]，整柱值为命中的日柱或 None；取值后须区分这两类。
+    '''
     bazi = self._chart.bazi
     return frozendict({
       **{name: _eval_at_birth(spec, bazi) for name, spec in _REGISTRY.items()},

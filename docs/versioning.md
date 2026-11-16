@@ -13,9 +13,9 @@ python run_docs.py --output-dir output_data/docs-preview
 ```
 
 输出目录必须为空。命令严格构建 HTML、执行教程与 README 示例，再核对 API 地址、知识目录和内部链接。
-教程与 README 的执行组从准备后的文档源枚举，再核对实际执行报告；README 首例及排盘、流运、查知识、判据求值、编辑各保留一个代表例。
+教程与 README 的执行组从准备后的文档源枚举，再核对实际执行报告；README 首例及排盘、流运、查知识、判据求值、编辑每项至少须有一个可执行代表例。
 API 示例从源码的 docstring 与属性说明发现，先与实际页面核对，再各自在独立进程运行并校验断言或紧随的输出，每例限时 30 秒。
-出生精度的文字对照另列，不计作可执行示例。全部成功后才交付成品。打开 `output_data/docs-preview/html/index.html` 查看。
+{py:class}`~bazi.school.BaziPrecision` 的 Examples 是出生精度的文字对照，不计作可执行示例。全部成功后才交付成品。打开 `output_data/docs-preview/html/index.html` 查看。
 
 仓库的完整检查另需开发依赖，见 {doc}`contributing`。在 Python 3.13+ 文档开发环境中，`python run_tests.py -a -v` 包含文档任务；只运行文档可用 `python run_tests.py -nt -docs`。Python 3.11／3.12 可用 `python run_tests.py -a -v --runtime-only` 检查运行时，但它不检查文档工具或构建文档，不能替代完整门禁。临时目录遵循 Python 的标准 `TMPDIR` 等环境设置。
 
@@ -49,7 +49,7 @@ API 示例从源码的 docstring 与属性说明发现，先与实际页面核�
 
 维护者确认平台前提后，通常先 `publish`，等自动回读完成，再运行 `promote`。全站回读逐文件核对同一归档提交，并分别计算各版摘要；提升发布版与 dev 使用各自摘要，归档分支在回读后指向了其他提交就须重新核对。新内容归档后先为 `archived`，通过回读和提升后才为 `ready`。
 
-`latest` 只指向已回读的 `ready` 发布版；开发版不参与。`resume` 用于归档已成功、部署或回读失败的重试；需要补归档时才重跑 `publish`。最新工具只接受完整的当前入口布局，拒绝旧布局及含 `pending` 状态的清单；恢复这些旧快照须使用与快照匹配的历史工具。
+`latest` 只指向已回读的 `ready` 发布版；开发版不参与。归档已成功、但部署或回读失败时用 `resume` 重试；需要补归档时才重跑 `publish`。最新工具只接受完整的当前入口布局，拒绝旧布局及含 `pending` 状态的清单；旧快照的恢复见下节。
 
 ## 手工重建归档分支
 
@@ -57,7 +57,11 @@ API 示例从源码的 docstring 与属性说明发现，先与实际页面核�
 
 1. 确认 `docs-site` 确实缺失，而不是查询或权限失败；暂停可能更新该分支的运行。保全可信归档提交或静态备份，记录提交身份、文件清单与摘要。
 2. 在独立目录恢复历史版本目录的原字节，包括隐藏文件与各版 `build.json`。不要重新构建旧 tag 来冒充原归档；没有可信静态备份的版本须明确列为无法保证恢复。
-3. 旧布局先用匹配的历史工具读取和核验，再整理成当前的 `archived`／`ready` 记录。旧 `pending` 条目没有目录，不能直接改成已归档版本，也不能带入新清单。保留已有版本的源码提交、目录摘要与回读状态；有静态字节但没有可信回读记录的版本用 `archived`。
+3. 旧布局先用生成该归档时的历史工具读取和核验。归档提交正文中的 `Workflow run` 编号可用于定位那次 Actions 运行；
+   从该运行的源码提交（`github.sha`）检出 `run_docs_site.py` 及其依赖，发布工作流从这一提交的 `control/` 目录运行工具。
+   各版 `build.json.commit` 标识文档的构建源码，不一定是归档工具版本；手工备份须另有工具版本记录。
+   核验后整理成当前的 `archived`／`ready` 记录。旧 `pending` 条目没有目录，不能直接改成已归档版本，也不能带入新清单。
+   保留已有版本的源码提交、目录摘要与回读状态；有静态字节但没有可信回读记录的版本用 `archived`。
 4. 用当前 `run_docs_site.render_site` 根据这些记录与原目录文件生成完整站点，入口文件一起生成，不混搭新旧模板。完全没有可恢复版本时，`render_site({})` 可生成空站点骨架：`index.html`、`versions.json` 与 `versions/index.html`；根页跳转版本列表。
 5. 用 `run_docs_site.load_archive` 核对完整站点的清单、构建身份、目录摘要与当前入口，并与备份逐文件对照历史目录。确认拟提交的 Git tree 全部为 `100644` 普通文件，tar 导出与 Git tree 一致；旧 `build.json` 可以没有 `built`，不要补写猜测的时间。
 6. 通过维护者批准的签名提交流程建立 `docs-site`，核对实际父提交、完整树和签名。不关闭分支保护，不覆盖维护期间其他人新建的分支。

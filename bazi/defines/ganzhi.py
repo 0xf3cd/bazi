@@ -12,8 +12,13 @@ from .dizhi import Dizhi
 
 
 class _GanzhiFields(NamedTuple):
+  '''供 Ganzhi 继承的元组字段。'''
+
   tiangan: Tiangan
+  '''天干。'''
+
   dizhi:   Dizhi
+  '''地支。'''
 
 
 class Ganzhi(_GanzhiFields):
@@ -36,10 +41,12 @@ class Ganzhi(_GanzhiFields):
 
   @classmethod
   def from_strs(cls, tiangan_str: str, dizhi_str: str) -> 'Ganzhi':
+    '''分别从天干、地支文字构造；无法识别或阴阳不配时抛 ValueError。'''
     return cls(Tiangan.from_str(tiangan_str), Dizhi.from_str(dizhi_str))
   
   @classmethod
   def from_str(cls, tiangan_dizhi_str: str) -> 'Ganzhi':
+    '''从两字干支（如“甲子”）构造；长度不为 2、无法识别或阴阳不配时抛 ValueError。'''
     if len(tiangan_dizhi_str) != 2:
       raise ValueError(f'Unsupported Ganzhi string: {tiangan_dizhi_str}')
     return cls(Tiangan.from_str(tiangan_dizhi_str[0]), Dizhi.from_str(tiangan_dizhi_str[1]))

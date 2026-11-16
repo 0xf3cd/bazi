@@ -4,12 +4,16 @@
 
 保留排盘与配置、领域查询与规则、流运分析、知识编辑与查阅、判据求值、文本输出所需的入口，
 以及调用方读取的结果类型、领域枚举和不可变容器。内部类型参数、共用基类和校验函数不承诺包外调用。
-历法与离线数据入口的取舍随历法实现调整，此处仍登记当前支持的接口。
-PUBLIC_NAMES 是白名单，新增名字不自动成为 API；DECLARED_MEMBERS 记录类中声明的公开成员，
-继承成员沿 BASES 追溯。构造签名、生成的方法及容器协议仍由对应类型定义，不在此重复声明。
-REEXPORTS 与 ALIASES 区分重导出与别名；STATIC_MODULES 标记离线工具与导入即读表的后端实现。
-普通模块的依赖导入不自动成为规范重导出。INTERNAL_NAMES 记录公开模块内尚用非下划线拼写的
-内部定义；整模块内部实现归 INTERNAL_MODULES。这些名字不生成 API 页，也不构成兼容承诺。
+新增或修改公开对象、字段、枚举别名及继承关系时，须同步登记：
+
+- PUBLIC_NAMES 是白名单，新增名字不自动成为 API。
+- DECLARED_MEMBERS 记录类中声明的公开成员，继承成员沿 BASES 追溯。
+- REEXPORTS 与 ALIASES 区分重导出与别名；普通模块的依赖导入不自动成为规范重导出。
+- STATIC_MODULES 标记离线工具与导入即读表的后端实现。
+- INTERNAL_NAMES 记录公开模块内尚用非下划线拼写的内部定义；整模块内部实现归
+  INTERNAL_MODULES。这些名字不生成 API 页，也不构成兼容承诺。
+
+构造签名、生成的方法及容器协议由对应类型定义，不在此重复声明。
 '''
 
 from typing import Final
@@ -332,7 +336,7 @@ EXPLICIT_EXPORTS: Final[dict[str, str]] = {
 
 '''有显式拒绝语义的输入入口；pytest 的 input_contract 标记将它们关联到同源拒绝测试。
 
-结果记录不承诺手工构造校验，Python 参数绑定和容器协议也不另设优化合同。
+结果记录不承诺手工构造校验，Python 参数绑定和容器协议也不另设 python -O 下的专门测试。
 历法三种后端共用 CalendarUtilsProtocol 的输入合同，测试仍逐后端执行。
 '''
 INPUT_CONTRACTS: Final[dict[str, str]] = {

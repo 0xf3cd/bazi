@@ -26,7 +26,8 @@ assert chart.bazi.day_master in Tiangan
 - 领域枚举的中文与拉丁成员别名共用值；中文类型别名也保留，如 `天干` 与 `Tiangan`。
 - 第三方模块在源码中的偶然导入不是本库提供的 API。普通模块的依赖导入不自动成为规范重导出。
 - 下划线名字及 `_validation` 是包内约定，不承诺包外调用；共享接口的归属见
-  [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)。
+  [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)：导入键为 `文件|来源模块|名字`，
+  成员键为 `文件|访问表达式`，`repeated_members` 记录同一成员键在源码中的出现次数，未列出的为一次。
 - 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
 - `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
   离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
@@ -86,10 +87,11 @@ assert chart.bazi.day_master in Tiangan
 `relationship.SHENSHA_LABELS`（22 项）与 `WHOLE_PILLAR_SHENSHA_LABELS`（魁罡、天赦两项）
 是公开冻结名称表，CLI 也使用这两张表。
 
-`ShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi]]` 别名，查询返回值按 `SHENSHA_LABELS` 的顺序列出各键。
+`ShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi]]` 别名，
+`TransitAnalysis.shensha(...)` 返回的映射按 `SHENSHA_LABELS` 的顺序排键。
 `AtBirthShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi] | Ganzhi | None]` 别名，
 共同键后按 `WHOLE_PILLAR_SHENSHA_LABELS` 的顺序列出整柱结果。两类映射均不能增删改键。
-本命结果取值后须按用途收窄类型：支集是 `frozenset[Dizhi]`，整柱值是命中的日柱或 `None`。
+调用方读取原局结果后须区分值的类型：支集是 `frozenset[Dizhi]`，整柱值是命中的日柱或 `None`。
 
 ### 干支值域
 
@@ -189,6 +191,7 @@ Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致
 - `KongwangHit(position, ganzhi)` 和 `StarAppearance` 的 `position` 类型为 `Zhu | TransitKind`。
   `StarAppearance(position, ganzhi, layer, stem)` 的 `layer` 用 `TianganLayer`；查询返回的明干与干支一致、藏干属于地支。
   `KongwangResult.anchor` 的查询结果为年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查时拒绝。
+  API 页面将同值别名去重，只显示 `Zhu.NIAN`、`Zhu.RI`，不影响使用中文成员。
   配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
 - `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 `position` 为 `Zhu | LiunianPosition`；
   后者保存具体 `ganzhi_year`。原局 `index` 为 0–3，流年为 4。

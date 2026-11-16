@@ -21,7 +21,8 @@ class TianganMatch(Enum):
 
 @dataclass(frozen=True)
 class TianganOccurrence:
-  '''某柱位或流运种类上的实际干；明藏角色由查询结果中的字段指定。
+  '''某柱位或流运种类上的实际干；TouganHit.hidden 与 visible 分别保存藏干端和明干端，
+  tonggen 返回的均为藏干端。
 
   查询返回的 stem 是该干支的明干或藏干；同干支的不同位置不合并。
   '''

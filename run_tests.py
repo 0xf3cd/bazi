@@ -383,7 +383,7 @@ def run_mypy() -> int:
 
 
 def run_o_smoke() -> int:
-  '''用 python -O 运行 pytest 中登记的输入拒绝测试。'''
+  '''用 python -O 运行已登记的输入拒绝测试及标为 optimized 的代表任务。'''
   print('\n' + devider())
   bold_print('>> Running o_smoke (`python -O` contract smoke)...')
 

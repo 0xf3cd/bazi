@@ -194,7 +194,7 @@ for result in analyzer.transits.kongwang(transits):
 
 {py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
 {py:data}`~bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS` 保存魁罡、天赦两个整柱名称。
-两表均从 `relationship` 模块导入；整柱结果是完整日柱或 `None`。
+两表均从 `relationship` 模块导入，键与结果映射对应，值为中文名；整柱结果是完整日柱或 `None`。
 
 ```{testcode} relations-shensha-labels
 from bazi.analyzer.relationship import (
@@ -207,6 +207,7 @@ chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
 result = RelationshipAnalyzer(chart).at_birth.shensha
 for key, label in SHENSHA_LABELS.items():
   branches = result[key]
+  assert isinstance(branches, frozenset)
   if branches:
     print(label, ''.join(map(str, sorted(branches, key=lambda branch: branch.index))))
 for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():

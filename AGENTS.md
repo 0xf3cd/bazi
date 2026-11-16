@@ -45,7 +45,8 @@
     没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
     有意不可达的行须有 `# pragma: no cover` 及理由。
   - `python -O -m pytest tests/ --input-contracts --ignore=tests/docs`，复用普通 pytest 中登记的
-    输入拒绝测试；选择集检查入口覆盖，测试 helper 的断言也须在 `-O` 下生效。
+    输入拒绝测试及标为 `optimized` 的代表任务。收集时核对 `INPUT_CONTRACTS` 中每个入口均有
+    `input_contract` 标记关联，未登记或缺失的入口报错；测试 helper 的断言也须在 `-O` 下生效。
 - 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 `slow` 内。
   要验证这些测试须给 `-s -hko` 或完整调用；可用 `pytest tests/ --collect-only -q`
   对比带标记与不带标记的收集结果。
