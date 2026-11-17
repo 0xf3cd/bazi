@@ -33,11 +33,12 @@ def test_external_bases_need_the_allowlist(monkeypatch):
     api_reference.inherited_members('bazi.bazi.BaziGender')
 
 
-def test_oracle_ignores_typeddict_bases(monkeypatch):
-  expected = runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis')
-  monkeypatch.setitem(api_reference.BASES, 'bazi.analyzer.relationship.AtBirthShenshaAnalysis', ('TypedDict',))
-  assert api_reference.inherited_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') != expected
-  assert runtime_members('bazi.analyzer.relationship.AtBirthShenshaAnalysis') == expected
+def test_oracle_reads_typeddict_annotations(monkeypatch):
+  qualified = 'bazi.calendar.dates.LunarYearInfo'
+  expected = runtime_members(qualified)
+  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, qualified, '')
+  assert api_reference.inherited_members(qualified) != expected
+  assert runtime_members(qualified) == expected
 
 
 def test_oracle_ignores_mro_base_table(monkeypatch):
@@ -74,13 +75,22 @@ def test_empty_member_lists_not_all_members(tmp_path):
   assert option_lines((tmp_path / 'api/bazi-data_types.rst').read_text(encoding='utf-8'), 'bazi.data_types.BaziData')
 
 
-def test_transit_page_omits_internal_databases(tmp_path):
+def test_transit_input_types_have_pages(tmp_path):
   api_reference.generate_api(tmp_path)
   text = (tmp_path / 'api/bazi-transits.rst').read_text(encoding='utf-8')
-  for name in ('DayunDatabase', 'TransitDatabase', '_DayunDatabase', '_TransitDatabase'):
-    assert '.. autoclass:: bazi.transits.' + name not in text
   assert '.. autoclass:: bazi.transits.TransitSet' in text
   assert '.. autoclass:: bazi.transits.TransitKind' in text
+
+
+def test_shensha_aliases_and_ganzhi_fields(tmp_path):
+  api_reference.generate_api(tmp_path)
+  text = (tmp_path / 'api/bazi-analyzer-relationship.rst').read_text()
+  for name in ('ShenshaAnalysis', 'AtBirthShenshaAnalysis'):
+    assert '.. autodata:: bazi.analyzer.relationship.' + name in text
+    assert 'bazi.analyzer.relationship.' + name not in DECLARED_MEMBERS
+  qualified = 'bazi.defines.ganzhi.Ganzhi'
+  assert {'tiangan', 'dizhi'} <= api_reference.inherited_members(qualified)
+  assert runtime_members(qualified) == api_reference.inherited_members(qualified)
 
 
 def test_alias_reexport_pages_own_wording(tmp_path):

@@ -2,7 +2,7 @@
 
 from dataclasses import FrozenInstanceError, asdict, fields, replace
 from datetime import datetime
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
@@ -10,15 +10,15 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.common import frozendict
 from bazi.context_matching import (
-  Observation, NatalObservation, LiunianObservation, TransitObservation, LiunianPosition,
+  NatalObservation, LiunianObservation, TransitObservation,
   ContextResult, CriterionResult, MatchStatus, CriterionReason,
-  TransitCoordinate, YearCoordinate, _CRITERIA, evaluate_context,
+  TransitCoordinate, YearCoordinate, evaluate_context,
 )
-from bazi.defines import Zhu, Tiangan
+from bazi.defines import Zhu
 from bazi.school import Anchor, BaziConfig, BaziSchool, DayRollover, TuwangDef, DEFAULT_CONFIG
 from bazi.transits import TransitKind
 
-from matching_samples import GUANSHA, LEGAL, PALACE, chart, match, rel_match, Year, record
+from matching_samples import GUANSHA, LEGAL, PALACE, chart, match, rel_match
 from matching_samples import occurrences
 
 
@@ -60,6 +60,7 @@ def test_result_directly_holds_input() -> None:
   assert result.bazi is incoming and result == baseline
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'ContextResult.render')
 def test_result_render_rejects_surrogates() -> None:
   for result in (match(), rel_match()):
     bad = replace(result, criterion=replace(result.criterion, observations=frozendict({'\ud800': True})))
@@ -67,14 +68,14 @@ def test_result_render_rejects_surrogates() -> None:
       bad.render()
 
 
-@pytest.mark.parametrize('value', [True, False, Year(2024), '2024', 2024.0, []])
-def test_year_rejects_non_exact_int(value: Any) -> None:
+@pytest.mark.input_contract('bazi.context_matching', 'LiunianObservation')
+@pytest.mark.parametrize('value', ['2024', 2024.0, []])
+def test_year_rejects_non_int(value: Any) -> None:
   with pytest.raises(TypeError):
     LiunianObservation(value)
-  with pytest.raises(TypeError):
-    LiunianPosition(value)
 
 
+@pytest.mark.input_contract('bazi.context_matching', 'evaluate_context')
 def test_bad_requests_fail_instead_of_unknown() -> None:
   c = chart()
   options: dict[str, Any]
@@ -89,50 +90,27 @@ def test_bad_requests_fail_instead_of_unknown() -> None:
     match(criterion_id='editorial.guansha_coexistance.v1')
 
 
-def test_public_record_value_boundaries() -> None:
-  result = match()
-  o = occurrences(result)[0]
-  change: dict[str, Any]
-  for change in ({'position': Zhu.日}, {'stem': Tiangan.甲}):
-    with pytest.raises(ValueError):
-      replace(o, **change)
-  for change in ({'index': True}, {'index': -1}, {'ganzhi': '己卯'}, {'stem': '己'}, {'shishen': '正印'}, {'position': '年'}, {'position': TransitKind.LIUNIAN}, {'layer': '明干'}):
-    with pytest.raises(TypeError):
-      replace(o, **change)
-  with pytest.raises(ValueError):
-    replace(occurrences(result)[1], stem=Tiangan.丁)
-  for change in ({'reason': 'bad'}, {'reason': 'binding_unrecognized'}, {'criterion_id': 'unknown'}):
-    with pytest.raises(ValueError):
-      replace(result.criterion, **change) # type: ignore[arg-type] # 故意传入非法原因与未注册 ID。
-  for change in ({'observations': {}}, {'observations': frozendict({1: True})}, {'observations': frozendict({'a': 1})}, {'reason': 1}):
-    with pytest.raises(TypeError):
-      replace(result.criterion, **change)
-
-
-@pytest.mark.parametrize('reason,status,complete', [
+REASON_CASES = (
   ('premise_satisfied', 'SATISFIED', True),
   ('required_classification_absent', 'NOT_SATISFIED', True),
   ('day_master_differs', 'NOT_SATISFIED', True),
   ('female_gate_false', 'NOT_SATISFIED', True),
   ('missing_transit_coordinate', 'UNKNOWN', False),
   ('transit_unavailable', 'UNKNOWN', False),
-])
+)
+
+
+@pytest.mark.optimized
+@pytest.mark.parametrize('reason,status,complete', REASON_CASES)
 def test_criterion_reasons_derive_scope(
   reason: CriterionReason, status: MatchStatus, complete: bool,
 ) -> None:
+  assert {case[0] for case in REASON_CASES} == set(get_args(CriterionReason))
   result = CriterionResult(GUANSHA, reason, frozendict({}))
   assert result.status == status and result.scope_complete is complete
 
 
-@pytest.mark.parametrize('value', [None, True, 1, 1.0, [], {}])
-def test_verdict_reason_types_raise_type_error(value: Any) -> None:
-  result = match()
-  with pytest.raises((TypeError, ValueError)) as error:
-    replace(result.criterion, reason=value)
-  assert type(error.value) is TypeError
-  assert str(error.value).startswith('Expected str, got ')
-
-
+@pytest.mark.input_contract('bazi.context_matching', 'evaluate_context')
 @pytest.mark.parametrize('bad, hint', [
   (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
   (None, r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),
@@ -140,22 +118,6 @@ def test_verdict_reason_types_raise_type_error(value: Any) -> None:
 def test_evaluate_context_hints_chart_input(bad: object, hint: str) -> None:
   with pytest.raises(TypeError, match=f'^Expected BaziChart, got <class .*>; {hint}$'):
     evaluate_context(bad, criterion_id=GUANSHA, observation=NatalObservation()) # type: ignore
-
-
-@pytest.mark.parametrize('observation', [NatalObservation(), LiunianObservation(2024), LiunianObservation(), LiunianObservation(1998)])
-@pytest.mark.parametrize('day,gender', [(3, 'female'), (5, 'male')])
-@pytest.mark.parametrize('criterion_id', [key for key, value in _CRITERIA.items() if value.analysis_kind == 'context'])
-@pytest.mark.parametrize('field,message', [
-  ('reason', 'predicate_undefined'), ('criterion_id', 'editorial.unregistered.v1'),
-])
-def test_criterion_matrix_rejects_corruption(criterion_id: str, observation: Observation, day: int, gender: str, field: str, message: str) -> None:
-  criterion = record(criterion_id, observation, day, gender).criterion
-  change = {
-    'reason': 'predicate_undefined',
-    'criterion_id': 'editorial.unregistered.v1',
-  }
-  with pytest.raises(ValueError, match=message):
-    replace(criterion, **{field: change[field]}) # type: ignore[arg-type]
 
 
 def test_complete_scope_requires_obtained_kinds() -> None:
@@ -196,6 +158,7 @@ def test_result_fields_and_noncertification() -> None:
   assert all(isinstance(value.position, Zhu) for value in occurrences(manual))
 
 
+@pytest.mark.optimized
 def test_manual_reference_ids_keep_order_repeats() -> None:
   result = match()
   ids = (LEGAL[1], LEGAL[0], LEGAL[1])

@@ -23,7 +23,7 @@ ELEMENT = {stem: index for index, stems in enumerate(('甲乙', '丙丁', '戊�
 def test_all_hidden_matches_preserve_actual_stems() -> None:
   chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
   for dizhi, target, condition in product(Dizhi, Tiangan, TianganMatch):
-    transits = TransitSet(liunian=Ganzhi(Tiangan.甲, dizhi))
+    transits = TransitSet(liunian=Ganzhi(Tiangan.甲 if dizhi.index % 2 == 0 else Tiangan.乙, dizhi))
     positions: tuple[tuple[Zhu | TransitKind, Ganzhi], ...] = (*zip(Zhu, chart.bazi.pillars, strict=True), *transits.items)
     def matches(stem: str) -> bool:
       return (
@@ -88,6 +88,7 @@ def test_yin_changsheng_is_not_a_hidden_root(
   assert all(root.position is not TransitKind.LIUNIAN for root in roots)
 
 
+@pytest.mark.input_contract('bazi.analyzer.facts', 'tonggen tougan')
 @pytest.mark.parametrize('query', [tonggen, tougan])
 @pytest.mark.parametrize('field,value', [
   ('chart', object()), ('target', '甲'), ('condition', 'same_wuxing'), ('condition', None),
@@ -107,27 +108,10 @@ def test_tougan_requires_an_explicit_condition() -> None:
     tougan(BaziChart.random(), Tiangan.甲) # type: ignore[call-arg]
 
 
-@pytest.mark.parametrize('position,ganzhi,stem,error', [
-  ('年', Ganzhi.from_str('甲辰'), Tiangan.甲, TypeError),
-  (Zhu.年, '甲辰', Tiangan.甲, TypeError),
-  (Zhu.年, Ganzhi.from_str('甲辰'), '甲', TypeError),
-  (Zhu.年, Ganzhi('甲', Dizhi.辰), Tiangan.甲, TypeError), # type: ignore[arg-type]
-  (Zhu.年, Ganzhi(Tiangan.甲, '辰'), Tiangan.甲, TypeError), # type: ignore[arg-type]
-  (Zhu.年, Ganzhi.from_str('甲辰'), Tiangan.丙, ValueError),
-])
-def test_occurrence_checks_actual_stem(position: Any, ganzhi: Any, stem: Any, error: type[Exception]) -> None:
-  with pytest.raises(error):
-    TianganOccurrence(position, ganzhi, stem)
-
-
-def test_tougan_roles_and_immutability() -> None:
+def test_tougan_immutability_and_hash() -> None:
   visible = TianganOccurrence(Zhu.日, Ganzhi.from_str('甲辰'), Tiangan.甲)
   hidden = replace(visible, stem=Tiangan.乙)
   valid = TouganHit(hidden, visible)
-  for left, right, error in ((visible, visible, ValueError), (hidden, hidden, ValueError),
-                             (None, visible, TypeError), (hidden, None, TypeError)):
-    with pytest.raises(error):
-      TouganHit(left, right) # type: ignore[arg-type]
   with pytest.raises(FrozenInstanceError):
     visible.stem = Tiangan.乙 # type: ignore[misc]
   with pytest.raises(FrozenInstanceError):

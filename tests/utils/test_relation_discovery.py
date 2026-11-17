@@ -9,29 +9,29 @@ from pathlib import Path
 import pytest
 
 from bazi.defines import Dizhi, Tiangan, DizhiRelation, TianganRelation
-from bazi.utils import tiangan_utils, dizhi_utils
 from bazi.utils.dizhi_utils import DizhiRelationDiscovery
 from bazi.utils.tiangan_utils import TianganRelationDiscovery
 
 
-def test_filter_negative() -> None:
-  discovery: TianganRelationDiscovery = tiangan_utils.discover([Tiangan.甲, Tiangan.己])
+@pytest.mark.parametrize('discovery_type,other_type', [
+  pytest.param(TianganRelationDiscovery, DizhiRelationDiscovery,
+               marks=pytest.mark.input_contract('bazi.utils.tiangan_utils.TianganRelationDiscovery', 'filter merge mutual_only')),
+  pytest.param(DizhiRelationDiscovery, TianganRelationDiscovery,
+               marks=pytest.mark.input_contract('bazi.utils.dizhi_utils.DizhiRelationDiscovery', 'filter merge mutual_only')),
+])
+def test_operations_reject_wrong_inputs(
+  discovery_type: type[TianganRelationDiscovery] | type[DizhiRelationDiscovery],
+  other_type: type[TianganRelationDiscovery] | type[DizhiRelationDiscovery],
+) -> None:
+  discovery = discovery_type({})
   with pytest.raises(TypeError):
-    discovery.filter('not a callable') # type: ignore
-
-
-def test_merge_negative() -> None:
-  discovery: TianganRelationDiscovery = tiangan_utils.discover([Tiangan.甲, Tiangan.己])
+    discovery.filter('not a callable') # type: ignore[arg-type]
   with pytest.raises(TypeError):
-    discovery.merge(dizhi_utils.discover([Dizhi.子, Dizhi.丑])) # type: ignore
-
-
-def test_mutual_only_negative() -> None:
-  discovery: TianganRelationDiscovery = tiangan_utils.discover([Tiangan.甲, Tiangan.己])
+    discovery.merge(other_type({})) # type: ignore[arg-type]
   with pytest.raises(TypeError):
-    discovery.mutual_only([Tiangan.甲], {Tiangan.己}) # type: ignore
+    discovery.mutual_only([], set()) # type: ignore[arg-type]
   with pytest.raises(TypeError):
-    discovery.mutual_only({Tiangan.甲}, [Tiangan.己]) # type: ignore
+    discovery.mutual_only(set(), []) # type: ignore[arg-type]
 
 
 def test_merge_tiangan_first_occurrence_order() -> None:

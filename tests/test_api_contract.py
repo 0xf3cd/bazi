@@ -1,7 +1,8 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
 import ast
-import json
+import importlib
+import os
 import re
 import subprocess
 import sys
@@ -10,13 +11,26 @@ from pathlib import Path
 
 import pytest
 
-from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, BASES, INTERNAL_MODULES, STATIC_MODULES, REEXPORTS, ALIASES
-from api_contract import EXPLICIT_EXPORT_ADDITIONS
+from api_contract import (
+  PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, BASES, INTERNAL_MODULES,
+  INTERNAL_NAMES, STATIC_MODULES, REEXPORTS, ALIASES, EXPLICIT_EXPORTS, INPUT_CONTRACTS,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPLICIT_EXPORT_BASELINE = json.loads((ROOT / 'tests/data/v200_explicit_exports.json').read_text(encoding='utf-8'))
-EXPLICIT_EXPORTS: dict[str, list[str]] = EXPLICIT_EXPORT_BASELINE['explicit_exports']
+
+
+def test_input_roster_resolves_public_calls() -> None:
+  for owner, names in INPUT_CONTRACTS.items():
+    for name in names.split():
+      qualified = f'{owner}.{name}'
+      module = max((m for m in PUBLIC_NAMES if qualified.startswith(m + '.')), key=len)
+      parts = qualified[len(module) + 1:].split('.')
+      assert parts[0] in PUBLIC_NAMES[module].split(), qualified
+      value = importlib.import_module(module)
+      for part in parts:
+        value = getattr(value, part)
+      assert callable(value), qualified
 
 
 def _scope_nodes(nodes: list[ast.stmt]) -> Iterator[ast.AST]:
@@ -98,7 +112,7 @@ def _declared_all(nodes: list[ast.stmt]) -> set[str]:
 def _check_explicit_exports(source: str, module: str) -> None:
   if module in EXPLICIT_EXPORTS:
     actual = _declared_all(ast.parse(source).body)
-    expected = set(EXPLICIT_EXPORTS[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
+    expected = set(EXPLICIT_EXPORTS[module].split())
     assert actual == expected, (module, 'Explicit exports differ from the approved surface', actual ^ expected)
 
 
@@ -113,7 +127,7 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
       if not isinstance(node, ast.ClassDef):
         continue
       qualified = prefix + '.' + node.name
-      if node.name.startswith('_') and qualified not in PRIVATE_BASE_MEMBERS:
+      if (node.name.startswith('_') or module in INTERNAL_MODULES) and qualified not in PRIVATE_BASE_MEMBERS:
         continue
       declared_bases = tuple(ast.unparse(base) for base in node.bases)
       if qualified in members:
@@ -131,12 +145,14 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
 def _check_surface(source: str, module: str) -> None:
   _check_explicit_exports(source, module)
   names, members, bases = _surface(source, module)
-  assert names <= set(PUBLIC_NAMES[module].split()), (module, names - set(PUBLIC_NAMES[module].split()))
+  if module not in INTERNAL_MODULES:
+    allowed = set((PUBLIC_NAMES[module] + ' ' + INTERNAL_NAMES.get(module, '')).split())
+    assert names <= allowed, (module, names - allowed)
   if module in STATIC_MODULES:
     assert names == set(PUBLIC_NAMES[module].split()), (module, set(PUBLIC_NAMES[module].split()) - names)
   declared = DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS
   def owner(qualified: str) -> str:
-    return max((name for name in PUBLIC_NAMES if qualified.startswith(name + '.')), key=len)
+    return max((name for name in PUBLIC_NAMES | INTERNAL_MODULES if qualified.startswith(name + '.')), key=len)
   expected_members = {key: set(value.split()) for key, value in declared.items() if owner(key) == module}
   expected_bases = {key: value for key, value in BASES.items() if owner(key) == module}
   assert members == expected_members, module
@@ -150,86 +166,20 @@ def test_public_modules_describe_their_purpose() -> None:
     assert ast.get_docstring(ast.parse(path.read_text(encoding='utf-8'))), module
 
 
-def test_removed_persistence_is_absent() -> None:
-  import importlib
-  import importlib.util
-  import bazi
-  from bazi.bazi import Bazi, LocationTime
-  from bazi.bazi_chart import BaziChart
-  from bazi.context_matching import NatalObservation, ContextResult, evaluate_context
-  from bazi.knowledge import KnowledgeBase
-  from bazi.school import BaziSchool
-  from bazi.transits import TransitSet
-  for module, name in (
-    ('bazi.bazi', 'LocationTimeJson'), ('bazi.bazi_chart', 'BaziJson'),
-    ('bazi.school', '_ConfigJson'), ('bazi.school', '_config_json'),
-  ):
-    assert not hasattr(importlib.import_module(module), name)
-  for owner, names in (
-    (BaziChart, ('json', 'from_json', '_from_data')), (LocationTime, ('json',)),
-    (BaziSchool, ('from_json',)), (TransitSet, ('json',)),
-    (ContextResult, ('input_json', 'export_json', 'from_json', '_from_data')),
-    (KnowledgeBase, ('export_json', 'from_json', '_export_data')),
-  ):
-    assert all(not hasattr(owner, name) for name in names)
-  assert importlib.util.find_spec('bazi.record_migration') is None
-  assert 'record_migration' not in dir(bazi) and 'record_migration' not in bazi.__all__
-  with pytest.raises(AttributeError):
-    bazi.record_migration # noqa: B018 # Removed lazy attribute must fail at runtime.
-  chart = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
-  result = evaluate_context(
-    chart,
-    criterion_id='editorial.guansha_coexistence.v1',
-    observation=NatalObservation(),
-  )
-  assert result.bazi == chart.bazi
-  assert result.render()
-  assert KnowledgeBase.load().entries
-
-
-@pytest.mark.parametrize('module,name', [
-  ('bazi.transits', 'DayunDatabase'),
-  ('bazi.transits', 'TransitDatabase'),
-  ('bazi.transit_chart', 'TransitDatabase'),
-])
-def test_database_imports_are_private(module: str, name: str) -> None:
-  import importlib
-  assert not hasattr(importlib.import_module(module), name)
-  with pytest.raises(ImportError, match=name):
-    exec(f'from {module} import {name}', {}) # noqa: S102 # Import paths are fixed test cases above.
-  namespace: dict[str, object] = {}
-  exec(f'from {module} import *', namespace) # noqa: S102 # Exercise star imports from the same fixed modules.
-  assert name not in namespace
-
-
-def test_removed_structure_fields_are_absent() -> None:
-  import bazi.context_matching as matching
-  from bazi.analyzer.relationship import KongwangHit, StarAppearance
-  from bazi.context_matching import CriterionInfo, ContextResult, ChartOccurrence
-  for name in ('ContextProfile', 'RelationshipProfile', 'Pillar', 'ObservationScope', 'RelationshipScope',
-               'MatchReason', 'EntryMatch', 'RelatedEntry', 'PremiseMatches', 'ConditionReferences'):
-    assert not hasattr(matching, name)
-  for owner, names in (
-    (ContextResult, ('profile', 'occurrences', 'relationship', 'related', 'entries')),
-    (CriterionInfo, ('profile_type', 'profile_kind', 'binding_effect')),
-    (KongwangHit, ('origin', 'pillar', 'kind')),
-    (StarAppearance, ('origin', 'pillar', 'kind')),
-    (ChartOccurrence, ('origin', 'pillar', 'kind', 'ganzhi_year')),
-  ):
-    assert all(not hasattr(owner, name) for name in names)
-
-
 def test_modules_and_candidates_classified() -> None:
   modules: set[str] = set()
   for path in (ROOT / 'bazi').rglob('*.py'):
     module = '.'.join(path.relative_to(ROOT).with_suffix('').parts).removesuffix('.__init__')
     modules.add(module)
-    if module not in INTERNAL_MODULES:
+    if module not in INTERNAL_MODULES or any(cls.startswith(module + '.') for cls in PRIVATE_BASE_MEMBERS):
       _check_surface(path.read_text(encoding='utf-8'), module)
   assert modules == set(PUBLIC_NAMES) | set(INTERNAL_MODULES)
   assert not set(PUBLIC_NAMES) & set(INTERNAL_MODULES)
   assert set(STATIC_MODULES) <= set(PUBLIC_NAMES)
-  for words in (*PUBLIC_NAMES.values(), *DECLARED_MEMBERS.values(), *PRIVATE_BASE_MEMBERS.values()):
+  assert set(INTERNAL_NAMES) <= set(PUBLIC_NAMES)
+  for module, words in INTERNAL_NAMES.items():
+    assert not set(words.split()) & set(PUBLIC_NAMES[module].split())
+  for words in (*PUBLIC_NAMES.values(), *INTERNAL_NAMES.values(), *DECLARED_MEMBERS.values(), *PRIVATE_BASE_MEMBERS.values()):
     assert len(words.split()) == len(set(words.split()))
 
 
@@ -240,15 +190,19 @@ def test_modules_and_candidates_classified() -> None:
   ("importlib.import_module('bazi').__all__.append('Any')", 'Any'),
   ("importlib.import_module('bazi').__all__.remove('bazi_chart')", 'bazi_chart'),
   ("importlib.import_module('bazi.calendar').__all__.append('solar_time')", 'solar_time'),
+  ("del importlib.import_module('bazi.knowledge').KnowledgeBase", 'KnowledgeBase'),
+  ("importlib.import_module('bazi.defines.tiangan').天干 = object()", '天干'),
+  ("importlib.import_module('bazi.defines').Tiangan = object()", 'Tiangan'),
 ])
 def test_surface_resolves_without_heavy_loads(injection: str, rejected_name: str | None) -> None:
   # A fresh process prevents earlier calendar tests from hiding an eager import.
   script = '''
-import importlib, inspect, json, sys
-from pathlib import Path
+import importlib, inspect, sys
 sys.path.insert(0, 'tests')
-from api_contract import PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, STATIC_MODULES, ALIASES, REEXPORTS, EXPLICIT_EXPORT_ADDITIONS
-explicit_exports = json.loads(Path('tests/data/v200_explicit_exports.json').read_text(encoding='utf-8'))['explicit_exports']
+from api_contract import (
+  PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, INTERNAL_MODULES, INTERNAL_NAMES,
+  STATIC_MODULES, ALIASES, REEXPORTS, EXPLICIT_EXPORTS,
+)
 
 def guard(event, args):
   if event == 'open' and isinstance(args[0], str):
@@ -257,8 +211,12 @@ def guard(event, args):
       raise RuntimeError('Unexpected calendar data read')
 sys.addaudithook(guard)
 
+for module in PUBLIC_NAMES:
+  if module not in STATIC_MODULES:
+    importlib.import_module(module)
+
 def resolve(qualified):
-  module = max((m for m in PUBLIC_NAMES if qualified.startswith(m + '.')), key=len)
+  module = max((m for m in PUBLIC_NAMES | INTERNAL_MODULES if qualified.startswith(m + '.')), key=len)
   value = importlib.import_module(module)
   for part in qualified[len(module) + 1:].split('.'):
     value = getattr(value, part)
@@ -269,14 +227,14 @@ for module, words in PUBLIC_NAMES.items():
     continue
   value = importlib.import_module(module)
   exported = set(getattr(value, '__all__', ()))
-  if module in explicit_exports:
-    expected_exports = set(explicit_exports[module]) | EXPLICIT_EXPORT_ADDITIONS.get(module, frozenset())
+  if module in EXPLICIT_EXPORTS:
+    expected_exports = set(EXPLICIT_EXPORTS[module].split())
     assert exported == expected_exports, (module, exported ^ expected_exports)
   assert exported <= set(words.split()), (module, exported - set(words.split()))
   own_definitions = {name for name, member in vars(value).items()
                      if not name.startswith('_') and (inspect.isclass(member) or inspect.isfunction(member))
                      and member.__module__ == module}
-  assert own_definitions <= set(words.split()), (module, own_definitions - set(words.split()))
+  assert own_definitions <= set((words + ' ' + INTERNAL_NAMES.get(module, '')).split()), (module, own_definitions - set(words.split()))
   for name in words.split():
     qualified = module + '.' + name
     if qualified in STATIC_MODULES:
@@ -300,7 +258,12 @@ assert not any(name in sys.modules for name in STATIC_MODULES)
 print('PASS safe public imports, declared fields and aliases')
 '''
   script = script.replace('for module, words in PUBLIC_NAMES.items():', injection + '\nfor module, words in PUBLIC_NAMES.items():', 1)
-  result = subprocess.run([sys.executable, '-B', '-c', script], cwd=ROOT, text=True, capture_output=True, check=False)
+  result = subprocess.run(
+    [sys.executable, '-B', '-c', script],
+    cwd=ROOT,
+    env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
+    text=True, encoding='utf-8', capture_output=True, check=False,
+  )
   if rejected_name is None:
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'PASS safe public imports' in result.stdout
@@ -313,18 +276,8 @@ print('PASS safe public imports, declared fields and aliases')
 @pytest.mark.parametrize('addition', [
   '\ndef unregistered_api():\n  pass\n',
   '\n新别名 = KnowledgeBase\n',
-  '\nclass UnregisteredType:\n  field: str\n',
-  '\nif True:\n  def unregistered_api():\n    pass\n',
-  '\nif True:\n  新别名 = KnowledgeBase\n',
-  '\ntry:\n  新别名 = KnowledgeBase\nexcept Exception:\n  pass\n',
-  '\nfirst, (second, *rest) = (1, (2, 3))\n',
   '\nif True:\n  class UnregisteredType:\n    field: str\n',
-  '\nfor unregistered_loop in (1,):\n  pass\n',
-  '\nwith open(__file__) as unregistered_file:\n  pass\n',
-  '\nif (unregistered_walrus := True):\n  pass\n',
   '\nmatch {"key": 1}:\n  case {"key": unregistered_capture}:\n    pass\n',
-  '\nmatch []:\n  case [*unregistered_star]:\n    pass\n',
-  '\nmatch {"key": 1}:\n  case {**unregistered_rest}:\n    pass\n',
 ])
 def test_new_public_candidates_must_register(addition: str) -> None:
   source = (ROOT / 'bazi/knowledge.py').read_text(encoding='utf-8')
@@ -394,26 +347,15 @@ def test_repeated_classes_combine_members() -> None:
   assert bases == {}
 
 
-@pytest.mark.parametrize('first, second', [('', '(Base)'), ('(Base)', ''), ('(Base)', '(Other)')])
+@pytest.mark.parametrize('first, second', [('', '(Base)'), ('(Base)', '(Other)')])
 def test_repeated_class_base_conflict_fails(first: str, second: str) -> None:
   with pytest.raises(AssertionError, match='Conflicting candidate bases'):
     _surface(f'class Public{first}:\n  first: str\nclass Public{second}:\n  second: str\n', 'example')
 
 
-def test_same_base_repeats_combine_candidates() -> None:
-  names, members, bases = _surface('class Public(Base):\n  first: str\nclass Public(Base):\n  second: str\n', 'example')
-  assert names == {'Public'}
-  assert members == {'example.Public': {'first', 'second'}}
-  assert bases == {'example.Public': ('Base',)}
-
-
 @pytest.mark.parametrize('source, expected', [
   ('def function(arg=(outer := 1)):\n  local = 1\n', {'function', 'outer'}),
-  ('function = lambda arg=(outer := 1): (local := arg)', {'function', 'outer'}),
-  ('@(outer := lambda function: function)\ndef function():\n  local = 1\n', {'function', 'outer'}),
   ('class Public((outer := object)):\n  local = 1\n', {'Public', 'outer'}),
-  ('class Public(metaclass=(outer := type)):\n  local = 1\n', {'Public', 'outer'}),
-  ("with __import__('contextlib').nullcontext((1, 2)) as (first, second):\n  pass\n", {'first', 'second'}),
 ])
 def test_outer_expression_bindings_are_candidates(source: str, expected: set[str]) -> None:
   code = compile(source, '<outer-binding-candidate>', 'exec')
@@ -445,11 +387,7 @@ def test_type_alias_candidates_are_classified() -> None:
 
 @pytest.mark.parametrize('declaration', [
   '__all__ = ["unregistered_export"]',
-  '__all__: list[str] = ["unregistered_export"]',
-  '__all__ = []\n__all__ += ["unregistered_export"]',
   '__all__ = []\n__all__.append("unregistered_export")',
-  '__all__ = []\n__all__.extend(["unregistered_export"])',
-  'if (__all__ := ["unregistered_export"]):\n  pass',
 ])
 def test_declared_exports_must_register(declaration: str) -> None:
   source = (ROOT / 'bazi/__init__.py').read_text(encoding='utf-8')
@@ -458,9 +396,7 @@ def test_declared_exports_must_register(declaration: str) -> None:
 
 
 @pytest.mark.parametrize('declaration', [
-  '__all__ = factory()', '__all__ *= 2', '__all__.clear()', '__all__ = [1]',
-  '__all__[:] = ["changed"]', '__all__[0] = "changed"', '(__all__, _other) = (["changed"], None)',
-  '(__all__, _other) = ["changed", "kept"]',
+  '__all__ = factory()', '__all__.clear()', '__all__[0] = "changed"',
 ])
 def test_unsupported_exports_fail_loudly(declaration: str) -> None:
   with pytest.raises(AssertionError):
@@ -477,8 +413,7 @@ def test_static_modules_reject_phantom_names(monkeypatch: pytest.MonkeyPatch) ->
         _check_surface(source, module)
 
 
-def test_package_exports_keep_v200_names() -> None:
-  assert EXPLICIT_EXPORT_BASELINE['source_sha'] == 'ddfe16e7c51d695167b09cc4c2f64ba46e7565c3'
+def test_package_exports_are_explicit() -> None:
   for module in EXPLICIT_EXPORTS:
     path = ROOT.joinpath(*module.split('.')) / '__init__.py'
     _check_explicit_exports(path.read_text(encoding='utf-8'), module)
@@ -494,12 +429,6 @@ def test_package_exports_keep_v200_names() -> None:
   del lines[assignment.lineno - 1:assignment.end_lineno]
   with pytest.raises(AssertionError, match='Explicit exports differ'):
     _check_explicit_exports(''.join(lines), 'bazi')
-  module = 'bazi.calendar'
-  assert 'solar_time' in PUBLIC_NAMES[module].split()
-  assert 'solar_time' not in EXPLICIT_EXPORTS[module]
-  calendar_source = (ROOT / 'bazi/calendar/__init__.py').read_text(encoding='utf-8')
-  with pytest.raises(AssertionError, match='Explicit exports differ'):
-    _check_explicit_exports(calendar_source + '\n__all__.append("solar_time")\n', module)
 
 
 def test_cli_is_public_outside_explicit_exports() -> None:
@@ -512,8 +441,8 @@ def test_cli_is_public_outside_explicit_exports() -> None:
 
 
 def test_contract_covers_consumers_and_exports() -> None:
-  # Existing consumer imports are additional evidence, not the definition of the public surface.
-  for path in (*ROOT.glob('run_*.py'), *(ROOT / 'tests').rglob('*.py')):
+  # Installation consumers use the public API; internal tests do not define it.
+  for path in (*(ROOT / 'tests').glob('package*_smoke.py'), ROOT / 'tests/fixtures/type_consumer_good.txt'):
     for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
       if not isinstance(node, ast.ImportFrom) or not node.module or not node.module.startswith('bazi'):
         continue

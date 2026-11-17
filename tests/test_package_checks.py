@@ -23,7 +23,8 @@ import run_package_checks as package_checks
 
 from run_package_checks import (
   ROOT, RUNTIME_DATA, Environment, Installer, _INSTALLATION, build_context, check_description,
-  check_packages, check_wheel, collect_environment, observe_build_installer, outer_installers, pip_version,
+  check_packages, check_wheel, collect_environment, expected_typing_diagnostics,
+  observe_build_installer, outer_installers, pip_version,
   run, source_files, source_identity,
 )
 
@@ -35,7 +36,6 @@ def test_source_selection() -> None:
   assert {'bazi/py.typed', 'tests/package_smoke.py', '.github/workflows/release.yml'} <= files
   assert {'bazi/cli.py', 'tests/package_cli_smoke.py'} <= files
   assert {'tests/fixtures/type_consumer_good.txt', 'tests/fixtures/type_consumer_bad_extra.txt'} <= files
-  assert not {'run_demo.py', 'run_interpreter.py', 'run_relationship_analyzer.py'} & files
   assert not any('/references/' in name or name.endswith('.ipynb') for name in files)
   assert {p.relative_to(ROOT).as_posix() for p in (ROOT / 'bazi').rglob('*.py')} <= files
 
@@ -425,9 +425,8 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize('change', [
   'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
-  'typing-internal-error', 'typing-missing-kongwang', 'typing-missing-cli', 'sdist-wrong-entrypoint',
-  'typing-missing-dayun', 'typing-missing-transit', 'typing-missing-transit-chart',
-  'typing-missing-entry', 'typing-missing-source',
+  'typing-internal-error', 'typing-not-reached', 'typing-missing-cli', 'typing-missing-readonly',
+  'typing-missing-mapping', 'sdist-wrong-entrypoint',
 ])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
   root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
@@ -541,41 +540,13 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     bad = combined.splitlines()
     assert bad.count('KongwangResult(Zhu.YUE, target, ())') == 1
     assert 'KongwangResult(Zhu.月, target, ())' not in bad
-    messages = ['[assignment] [arg-type] "None"']
-    messages.extend(f'to "{name}"' for name in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values',
-      'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate',
-      'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance',
-      'CriterionResult', 'KnowledgeEntry', 'KnowledgeSource',
-      'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
-      'entry', 'render', 'render_subject'))
-    for owner, member, trigger in (
-      ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
-      ('Bazi', 'month_jies', 'local.month_jies = ()'), ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
-      ('KnowledgeSource', 'work', 'witness.work = "changed"'), ('CriterionInfo', 'definition', 'info.definition = "changed"'),
-      ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
-    ):
-      messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Property "{member}" defined in "{owner}" is read-only  [misc]')
-    for value, trigger in (('CriterionInfo', 'catalog["changed"] = info'), ('KnowledgeSource', 'knowledge.sources["editorial"] = witness')):
-      messages.append(f'bad.py:{bad.index(trigger) + 1}: error: Unsupported target for indexed assignment ("frozendict[str, {value}]")  [index]')
-    messages.extend(f'"{owner}" has no attribute "{member}"' for owner, member in
-      (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')))
-    for module, name, missing in (
-      ('bazi.transits', 'DayunDatabase', 'typing-missing-dayun'),
-      ('bazi.transits', 'TransitDatabase', 'typing-missing-transit'),
-      ('bazi.transit_chart', 'TransitDatabase', 'typing-missing-transit-chart'),
-    ):
-      if change != missing:
-        line_number = bad.index(f'from {module} import {name}') + 1
-        messages.append(f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"  [attr-defined]')
-    if change == 'typing-missing-kongwang':
-      messages.remove('to "KongwangResult"')
-    elif change == 'typing-missing-cli':
-      messages.remove('to "main"')
-    elif change == 'typing-missing-entry':
-      messages.remove('to "entry"')
-    elif change == 'typing-missing-source':
-      messages.remove('to "KnowledgeSource"')
-    return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, '\n'.join(messages), '')
+    messages = expected_typing_diagnostics(combined)
+    missing = {'typing-missing-cli': 'main', 'typing-missing-readonly': 'ContextResult.bazi',
+      'typing-missing-mapping': 'immutable KnowledgeSource mapping'}.get(change)
+    if missing is not None:
+      del messages[missing]
+    stdout = '' if change == 'typing-not-reached' else '\n'.join(('[assignment] [arg-type]', *messages.values()))
+    return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, stdout, '')
   monkeypatch.setattr(subprocess, 'run', diagnostics)
   if change == 'none':
     check_packages(root, work, output, report, receipt)
@@ -584,14 +555,11 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     message = {'identity-changed': 'Source identity changed', 'source-changed': 'Source changed',
       'role-missing': 'Environment role roster mismatch', 'report-race': '',
       'typing-internal-error': 'Installed typing negative control did not reach both type checks',
-       'typing-missing-kongwang': 'Installed typing negative control missed KongwangResult',
-        'typing-missing-cli': 'Installed typing negative control missed main',
-         'typing-missing-entry': 'Installed typing negative control missed entry',
-         'typing-missing-source': 'Installed typing negative control missed KnowledgeSource',
-       'sdist-wrong-entrypoint': 'Sdist entrypoints mismatch',
-      'typing-missing-dayun': r'Installed typing negative control missed removed bazi\.transits\.DayunDatabase',
-      'typing-missing-transit': r'Installed typing negative control missed removed bazi\.transits\.TransitDatabase',
-      'typing-missing-transit-chart': r'Installed typing negative control missed removed bazi\.transit_chart\.TransitDatabase'}[change]
+      'typing-not-reached': 'Installed typing negative control did not reach both type checks',
+      'typing-missing-cli': 'Installed typing negative control missed main',
+      'typing-missing-readonly': r'Installed typing negative control missed ContextResult\.bazi',
+      'typing-missing-mapping': 'Installed typing negative control missed immutable KnowledgeSource mapping',
+      'sdist-wrong-entrypoint': 'Sdist entrypoints mismatch'}[change]
     with pytest.raises(exception, match=message or None):
       check_packages(root, work, output, report, receipt)
     if change == 'report-race':

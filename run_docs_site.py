@@ -23,26 +23,26 @@ COMMIT: Final[re.Pattern[str]] = re.compile(r'[0-9a-f]{40}')
 DIGEST: Final[re.Pattern[str]] = re.compile(r'[0-9a-f]{64}')
 SOURCE_URL: Final[str] = 'https://github.com/0xf3cd/bazi/tree/'
 SCHEMA_VERSION: Final[int] = 1
-# latest/index.html 仅在有 ready 发布版时生成；整份生成文件须匹配新布局或旧布局。
+# latest/index.html 仅在有 ready 发布版时生成；整份生成文件须匹配当前布局。
 GENERATED: Final[frozenset[str]] = frozenset({'index.html', 'versions.json', 'versions/index.html', 'latest/index.html'})
 # 旧构建没有 built；新构建在这四项之外记录实际 UTC 构建时间。
 BUILD_FIELDS: Final[frozenset[str]] = frozenset({'version', 'commit', 'dirty', 'python'})
 
-State = Literal['pending', 'archived', 'ready']
-'''版本条目状态：pending 只登记待就绪、没有目录；archived 目录已归档、尚未回读；ready 已回读，选择页才给出链接。'''
+State = Literal['archived', 'ready']
+'''版本条目状态：archived 目录已归档、尚未回读；ready 已回读，选择页才给出链接。'''
 STATES: Final[tuple[State, ...]] = get_args(State)
 
 
 class Version(NamedTuple):
-  '''versions.json 的一条记录：目录名、状态、源码提交与目录内容摘要；pending 条目没有后两项。'''
+  '''versions.json 的一条记录：目录名、状态、源码提交与目录内容摘要。'''
   label: str
   state: State
-  commit: str | None
-  digest: str | None
+  commit: str
+  digest: str
 
 
 Archive = dict[str, tuple[Version, dict[str, bytes]]]
-'''按目录名索引的版本记录与该版本目录内的文件；pending 版本的文件表为空。'''
+'''按目录名索引的版本记录与该版本目录内的文件。'''
 
 
 def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -56,11 +56,6 @@ def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 def load_json(content: bytes) -> object:
   value: object = json.loads(content.decode('utf-8'), object_pairs_hook=strict_object)
   return value
-
-
-def check_release(label: str) -> None:
-  if RELEASE_LABEL.fullmatch(label) is None:
-    raise ValueError(f'Expected vMAJOR.MINOR.PATCH, got {label!r}')
 
 
 def check_identity(label: str, commit: str) -> None:
@@ -143,16 +138,11 @@ def check_build(files: Mapping[str, bytes], label: str, commit: str) -> None:
 
 
 def check_entry(item: object) -> Version:
-  '''pending 只登记发布版，不带提交与摘要；archived 与 ready 须有 40 位提交和 64 位摘要。'''
+  '''archived 与 ready 须有 40 位提交和 64 位摘要。'''
   if (not isinstance(item, dict) or set(item) != set(Version._fields)
       or not isinstance(item['label'], str) or item['state'] not in STATES):
     raise ValueError(f'Invalid versions.json entry: {item!r}')
   entry = Version(**item)
-  if entry.state == 'pending':
-    check_release(entry.label)
-    if entry.commit is not None or entry.digest is not None:
-      raise ValueError(f'Pending {entry.label} must not record a commit or digest')
-    return entry
   if not isinstance(entry.commit, str) or not isinstance(entry.digest, str) or DIGEST.fullmatch(entry.digest) is None:
     raise ValueError(f'Invalid commit or digest for {entry.label}')
   check_identity(entry.label, entry.commit)
@@ -173,25 +163,6 @@ def read_manifest(content: bytes) -> list[Version]:
 def render_manifest(entries: Sequence[Version]) -> bytes:
   data = {'schema': SCHEMA_VERSION, 'latest': latest_release(entries), 'versions': [entry._asdict() for entry in entries]}
   return (json.dumps(data, indent=2) + '\n').encode('utf-8')
-
-
-def render_legacy_selector(entries: Sequence[Version]) -> bytes:
-  '''旧选择页的固定读兼容模板，不用于写出站点。'''
-  latest = latest_release(entries)
-  rows = []
-  for entry in entries:
-    label = html.escape(entry.label)
-    name = '开发版' if entry.label == DEV_LABEL else label
-    if entry.state != 'ready' or entry.commit is None:
-      rows.append(f'<li id="{label}">{name}：文档待就绪</li>\n')
-      continue
-    note = '（跟随 main 手动更新）' if entry.label == DEV_LABEL else '（最新发布）' if entry.label == latest else ''
-    commit = html.escape(entry.commit)
-    rows.append(
-      f'<li id="{label}"><a href="../{label}/index.html">{name}</a>{note}'
-      f' · 源码 <a href="{SOURCE_URL}{commit}"><code>{commit[:12]}</code></a></li>\n'
-    )
-  return selector_page(rows)
 
 
 def selector_page(rows: Sequence[str]) -> bytes:
@@ -217,9 +188,8 @@ def render_selector(entries: Sequence[Version], dev_built: str | None) -> bytes:
     note = '（最新发布）' if entry.label == latest else ''
     if entry.label == DEV_LABEL:
       note += f' · 构建于 <time datetime="{html.escape(dev_built)}">{html.escape(dev_built)}</time>' if dev_built else ' · 构建日期未记录'
-    if entry.commit is not None:
-      commit = html.escape(entry.commit)
-      note += f' · 源码 <a href="{SOURCE_URL}{commit}"><code>{commit[:12]}</code></a>'
+    commit = html.escape(entry.commit)
+    note += f' · 源码 <a href="{SOURCE_URL}{commit}"><code>{commit[:12]}</code></a>'
     rows.append(f'<li id="{label}">{title}{note}</li>\n')
   return selector_page(rows)
 
@@ -229,10 +199,6 @@ ROOT_PAGE: Final[bytes] = (
   '<meta http-equiv="refresh" content="0; url=versions/">\n<title>bazi 文档</title>\n'
   '</head>\n<body>\n<p><a href="versions/">bazi 文档版本</a></p>\n</body>\n</html>\n'
 ).encode()
-
-
-def render_legacy_root(entries: Sequence[Version]) -> dict[str, bytes]:
-  return {'index.html': ROOT_PAGE, 'versions.json': render_manifest(entries), 'versions/index.html': render_legacy_selector(entries)}
 
 
 def redirect_page(target: str, title: str) -> bytes:
@@ -267,26 +233,19 @@ def load_archive(tree: Mapping[str, bytes]) -> Archive:
   if 'versions.json' not in tree:
     raise ValueError('Archive has no versions.json')
   entries = read_manifest(tree['versions.json'])
-  if set(directories) != {entry.label for entry in entries if entry.state != 'pending'}:
+  if set(directories) != {entry.label for entry in entries}:
     raise ValueError(f'Archive directories {sorted(directories)} differ from the archived versions in versions.json')
   for entry in entries:
-    if entry.commit is None:
-      continue
     files = directories[entry.label]
     check_build(files, entry.label, entry.commit)
     if digest(files) != entry.digest:
       raise ValueError(f'Archived {entry.label} differs from its recorded digest')
-  ordered = sorted(entries, key=lambda entry: label_key(entry.label))
-  versions = {entry.label: (entry, directories.get(entry.label, {})) for entry in entries}
+  versions = {entry.label: (entry, directories[entry.label]) for entry in entries}
   generated = {name: content for name, content in tree.items() if name in GENERATED}
   current = {name: content for name, content in render_site(versions).items() if name in GENERATED}
-  if generated != current and generated != render_legacy_root(ordered):
+  if generated != current:
     raise ValueError('Generated root files differ from those rendered from versions.json')
   return versions
-
-
-def open_archive(tree: Mapping[str, bytes] | None) -> Archive:
-  return {} if tree is None else load_archive(tree)
 
 
 def render_site(versions: Archive) -> dict[str, bytes]:
@@ -300,19 +259,19 @@ def render_site(versions: Archive) -> dict[str, bytes]:
   return site | render_root([entry for entry, _ in ordered], dev_built)
 
 
-def add_build(tree: Mapping[str, bytes] | None, candidate: Mapping[str, bytes], label: str, commit: str) -> tuple[str, dict[str, bytes]]:
+def add_build(tree: Mapping[str, bytes], candidate: Mapping[str, bytes], label: str, commit: str) -> tuple[str, dict[str, bytes]]:
   '''登记一次已检查的构建，状态为 archived；返回 (added | replaced | unchanged, 完整站点)。
 
   Note:
-    未登记或 pending 的版本新增目录。已归档的发布版只接受字节完全相同的重复归档，状态保持不变；
+    未登记的版本新增目录。已归档的发布版只接受字节完全相同的重复归档，状态保持不变；
     dev 内容不同时整目录替换，状态回到 archived，等新的回读结果。
   '''
   check_identity(label, commit)
   check_build(candidate, label, commit)
-  versions = open_archive(tree)
+  versions = load_archive(tree)
   new = Version(label, 'archived', commit, digest(candidate))
   old = versions[label][0] if label in versions else None
-  if old is None or old.state == 'pending':
+  if old is None:
     status = 'added'
   elif (old.commit, old.digest) == (new.commit, new.digest):
     return 'unchanged', render_site(versions)
@@ -324,26 +283,14 @@ def add_build(tree: Mapping[str, bytes] | None, candidate: Mapping[str, bytes], 
   return status, render_site(versions)
 
 
-def add_pending(tree: Mapping[str, bytes] | None, label: str) -> tuple[str, dict[str, bytes]]:
-  '''登记一个文档待就绪的发布版：只进版本清单与选择页，不建目录；已归档的版本不能退回 pending。'''
-  check_release(label)
-  versions = open_archive(tree)
-  if label not in versions:
-    versions[label] = (Version(label, 'pending', None, None), {})
-    return 'added', render_site(versions)
-  if versions[label][0].state != 'pending':
-    raise ValueError(f'{label} is already archived; it cannot become pending again')
-  return 'unchanged', render_site(versions)
-
-
-def mark_ready(tree: Mapping[str, bytes] | None, label: str, verified_digest: str) -> tuple[str, dict[str, bytes]]:
+def mark_ready(tree: Mapping[str, bytes], label: str, verified_digest: str) -> tuple[str, dict[str, bytes]]:
   '''回读核对线上字节之后，把 archived 版本标为 ready；最新发布随之重新取值。
 
   Note:
     verified_digest 由无写权限的回读 job 从线上字节算出，须等于归档记录的摘要；本函数不访问网络。
   '''
-  versions = open_archive(tree)
-  if label not in versions or versions[label][0].state == 'pending':
+  versions = load_archive(tree)
+  if label not in versions:
     raise ValueError(f'{label} has no archived directory to mark ready')
   entry, files = versions[label]
   if verified_digest != entry.digest:
@@ -354,12 +301,12 @@ def mark_ready(tree: Mapping[str, bytes] | None, label: str, verified_digest: st
   return 'promoted', render_site(versions)
 
 
-def keep_current(tree: Mapping[str, bytes] | None, label: str) -> tuple[str, dict[str, bytes]]:
-  '''核对后重新写出站点入口，保留版本清单及各版目录，供重新部署。'''
-  versions = open_archive(tree)
+def keep_current(tree: Mapping[str, bytes], label: str) -> tuple[str, dict[str, bytes]]:
+  '''核对归档与标签后，返回原字节供重新部署。'''
+  versions = load_archive(tree)
   if label not in versions:
     raise ValueError(f'{label} is not in the archive')
-  return 'unchanged', render_site(versions)
+  return 'unchanged', dict(tree)
 
 
 def read_directory(root: Path) -> dict[str, bytes]:
@@ -395,9 +342,7 @@ def write_site(site: Mapping[str, bytes], output: Path) -> None:
 
 def main() -> None:
   common = argparse.ArgumentParser(add_help=False)
-  source = common.add_mutually_exclusive_group(required=True)
-  source.add_argument('--archive', type=Path, help='现有归档分支的 git archive --format=tar 输出。')
-  source.add_argument('--initialize', action='store_true', help='归档分支尚不存在，从空归档开始。')
+  common.add_argument('--archive', type=Path, required=True, help='现有归档分支的 git archive --format=tar 输出。')
   common.add_argument('--label', required=True, help='dev 或 vMAJOR.MINOR.PATCH。')
   common.add_argument('--output', type=Path, required=True, help='尚不存在的目录，写入完整新站点。')
   parser = argparse.ArgumentParser(description=__doc__)
@@ -405,16 +350,13 @@ def main() -> None:
   build = operations.add_parser('archive', parents=[common], help='登记一次已检查的构建，状态为 archived。')
   build.add_argument('--candidate', type=Path, required=True, help='本次构建 HTML 目录的 tar，根目录含 build.json。')
   build.add_argument('--commit', required=True, help='由调用方独立核定的 40 位源码提交。')
-  operations.add_parser('pending', parents=[common], help='登记文档待就绪的发布版。')
   promote = operations.add_parser('promote', parents=[common], help='回读通过后把 archived 版本标为 ready。')
   promote.add_argument('--verified-digest', required=True, help='回读 job 从线上字节算出的目录摘要。')
   operations.add_parser('current', parents=[common], help='不改归档，重新写出现有站点。')
   args = parser.parse_args()
-  tree = None if args.initialize else read_tree(args.archive)
+  tree = read_tree(args.archive)
   if args.operation == 'archive':
     status, site = add_build(tree, read_tree(args.candidate), args.label, args.commit)
-  elif args.operation == 'pending':
-    status, site = add_pending(tree, args.label)
   elif args.operation == 'promote':
     status, site = mark_ready(tree, args.label, args.verified_digest)
   else:

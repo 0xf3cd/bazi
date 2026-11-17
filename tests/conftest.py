@@ -5,9 +5,44 @@ from random import Random
 
 import pytest
 
+from api_contract import INPUT_CONTRACTS
+
+
+pytest.register_assert_rewrite('cli_runner', 'matching_samples', 'relationship_samples')
+
+
+def pytest_configure(config: pytest.Config) -> None:
+  config.addinivalue_line('markers', 'input_contract(owner, names): rejection tests for the named public inputs')
+  config.addinivalue_line('markers', 'optimized: helper controls and representative tasks required under -O')
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
   parser.addoption('--random-seed', type=int, default=236, help='Base seed for local random regression inputs and collection cases.')
+  parser.addoption('--input-contracts', action='store_true', help='Run the complete public-input selection under python -O.')
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+  expected = {f'{owner}.{name}' for owner, names in INPUT_CONTRACTS.items() for name in names.split()}
+  found: set[str] = set()
+  selected: list[pytest.Item] = []
+  deselected: list[pytest.Item] = []
+  for item in items:
+    contracts: set[str] = set()
+    for marker in item.iter_markers('input_contract'):
+      owner, names = marker.args
+      contracts.update(f'{owner}.{name}' for name in names.split())
+    if unknown := contracts - expected:
+      raise pytest.UsageError(f'{item.nodeid}: unknown input contracts: {sorted(unknown)}')
+    found.update(contracts)
+    (selected if contracts or item.get_closest_marker('optimized') else deselected).append(item)
+  if config.getoption('--input-contracts'):
+    if __debug__:
+      raise pytest.UsageError('--input-contracts requires python -O')
+    if missing := expected - found:
+      raise pytest.UsageError(f'Input contracts without rejection tests: {sorted(missing)}')
+    config.hook.pytest_deselected(items=deselected)
+    items[:] = selected
 
 
 def pytest_report_header(config: pytest.Config) -> str:

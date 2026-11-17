@@ -9,6 +9,8 @@ from bazi.defines import Tiangan, Dizhi, TianganRelation, DizhiRelation
 from bazi.utils import tiangan_utils, dizhi_utils
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'search discover discover_mutual')
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'search discover discover_mutual')
 @pytest.mark.parametrize('call', [
   pytest.param(lambda values: tiangan_utils.search(values, TianganRelation.合), id='tiangan-search'),
   pytest.param(tiangan_utils.discover, id='tiangan-discover'),
@@ -41,6 +43,8 @@ def test_non_sequences_fail_before_iteration(call: Callable[..., object], kind: 
     assert tuple(values) == (Tiangan.甲,) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'discover_mutual')
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_mutual')
 @pytest.mark.parametrize('call, value', [(tiangan_utils.discover_mutual, Tiangan.甲), (dizhi_utils.discover_mutual, Dizhi.辰)])
 @pytest.mark.parametrize('side', [0, 1])
 def test_mutual_checks_both_before_traversal(call: Callable[..., object], value: object, side: int) -> None:

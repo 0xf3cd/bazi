@@ -63,6 +63,7 @@ def test_names_enums_and_ambiguity(tmp_path: Path) -> None:
   assert bundled.query('文昌', viewpoint='XIN_XU') == (bundled.entry('shensha.wenchang.xin_xu'),)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase')
 @pytest.mark.parametrize('reverse', [False, True])
 @pytest.mark.parametrize('name', ['另一个对象', '丁'])
 def test_ids_cannot_name_other_objects(tmp_path: Path, reverse: bool, name: str) -> None:
@@ -104,8 +105,6 @@ def test_intersection_and_literal_search(tmp_path: Path) -> None:
   assert knowledge.filter_values('viewpoint') == ('CaseFold',)
   assert knowledge.filter_values('source_id') == ('source',)
   assert KnowledgeBase((), (), ()).filter_values('topic') == ()
-  with pytest.raises(ValueError, match='Unknown topic'):
-    knowledge.search('missing', topic='不存在')
 
 
 def test_mixed_sources_and_render_limits(tmp_path: Path) -> None:
@@ -150,6 +149,7 @@ def test_result_order_and_immutability() -> None:
     knowledge.entries[entry.claim_id] = entry # type: ignore[index]
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.entry KnowledgeBase.find_objects KnowledgeBase.filter_values KnowledgeBase.search KnowledgeBase.render_subject KnowledgeBase.query KnowledgeBase.load')
 @pytest.mark.parametrize('bad', [None, 0, True, (), [], {}, Dizhi.子])
 def test_text_inputs_reject_wrong_types(bad: Any) -> None:
   knowledge = KnowledgeBase.load()
@@ -165,6 +165,7 @@ def test_text_inputs_reject_wrong_types(bad: Any) -> None:
       KnowledgeBase.load(bad)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.entry KnowledgeBase.find_objects KnowledgeBase.filter_values KnowledgeBase.search KnowledgeBase.render_subject KnowledgeBase.query')
 @pytest.mark.parametrize('bad', ['', ' ', '\t\n'])
 def test_blank_names_fail(bad: str) -> None:
   knowledge = KnowledgeBase.load()
@@ -173,11 +174,18 @@ def test_blank_names_fail(bad: str) -> None:
       call(bad)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.entry KnowledgeBase.query KnowledgeBase.search KnowledgeBase.filter_values KnowledgeBase.render KnowledgeBase.render_subject')
 def test_unknown_values_and_foreign_entries() -> None:
   knowledge = KnowledgeBase.load()
   for call in (knowledge.entry, knowledge.query, knowledge.filter_values):
     with pytest.raises(ValueError, match='Unknown'):
       call('missing')
+  for dimension in ('topic', 'source_id', 'viewpoint'):
+    filters = {dimension: '不存在'}
+    with pytest.raises(ValueError, match=f'Unknown {dimension}:'):
+      knowledge.query(**filters)
+    with pytest.raises(ValueError, match=f'Unknown {dimension}:'):
+      knowledge.search('missing', **filters)
   entry = knowledge.query()[0]
   with pytest.raises(ValueError, match='Foreign entry'):
     knowledge.render(replace(entry, text='changed'))
@@ -190,6 +198,7 @@ def test_unknown_values_and_foreign_entries() -> None:
       knowledge.render_subject('丁', show_sources=bad) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.load')
 @pytest.mark.parametrize('registry', ['objects', 'sources', 'entries'])
 def test_duplicate_ids_and_value_order(registry: str, tmp_path: Path) -> None:
   data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
@@ -201,6 +210,7 @@ def test_duplicate_ids_and_value_order(registry: str, tmp_path: Path) -> None:
     _load(data, tmp_path)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.load')
 @pytest.mark.parametrize('field,value,error', [
   ('objects', [], ValueError), ('objects', ['missing'], ValueError), ('sources', ['missing'], ValueError),
   ('objects', ['stem.ding', 'stem.ding'], ValueError), ('topics', ['同', '同'], ValueError),
@@ -216,6 +226,7 @@ def test_entry_input_validation(field: str, value: Any, error: type[Exception], 
     _load(data, tmp_path)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeObject KnowledgeSource KnowledgeEntry KnowledgeBase')
 def test_record_fields_and_typed_registries() -> None:
   records = (KnowledgeObject('object', 'concept', '对象'), KnowledgeSource('source', '作品'), KnowledgeEntry('entry', ('object',), '正文'))
   for record in records:
@@ -238,9 +249,11 @@ def test_record_fields_and_typed_registries() -> None:
     KnowledgeEntry('entry', ['object'], '正文') # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.load')
 @pytest.mark.parametrize('data,error', [
   ([], TypeError), ({}, ValueError),
   ({**_data(), 'schema_version': True}, ValueError), ({**_data(), 'schema_version': 3}, ValueError),
+  ({**_data(), 'schema_version': 4.0}, ValueError),
   ({**_data(), 'objects': {}}, TypeError), ({**_data(), 'objects': [None]}, TypeError),
   ({**_data(), 'entries': [{'objects': ['stem.ding'], 'text': '正文'}]}, ValueError),
 ])
@@ -249,6 +262,7 @@ def test_json_structure(data: Any, error: type[Exception], tmp_path: Path) -> No
     _load(data, tmp_path)
 
 
+@pytest.mark.input_contract('bazi.knowledge', 'KnowledgeBase.load')
 def test_duplicate_keys_and_parse_position(tmp_path: Path) -> None:
   path = tmp_path / 'bad.json'
   path.write_text('{"objects": [], "objects": []}', encoding='utf-8')

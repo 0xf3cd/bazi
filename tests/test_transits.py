@@ -83,6 +83,7 @@ def test_transit_set() -> None:
   assert selected.ganzhis == (dayun, liuri)
 
 
+@pytest.mark.input_contract('bazi.transits', 'TransitSet TransitSet.select')
 def test_transit_set_negative() -> None:
   with pytest.raises(ValueError, match='^A TransitSet cannot be empty$'):
     TransitSet()

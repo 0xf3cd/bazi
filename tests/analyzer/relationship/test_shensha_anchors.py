@@ -3,14 +3,12 @@
 
 import pytest
 
-from collections.abc import Callable
-
 from bazi.defines import Tiangan, Dizhi, Ganzhi
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
 from bazi.school import BaziConfig, BaziSchool, Anchor
 from bazi.transits import TransitSet
-from bazi.analyzer.relationship import RelationshipAnalyzer, ShenshaAnalysis
+from bazi.analyzer.relationship import RelationshipAnalyzer
 
 
 def _five_anchor_school(anchor: Anchor) -> BaziSchool:
@@ -69,7 +67,7 @@ def repeated_zaisha_chart() -> BaziChart:
 def test_zaisha_deduplicates_transit_branches(repeated_zaisha_chart: BaziChart) -> None:
   chart = repeated_zaisha_chart
   assert RelationshipAnalyzer(chart).transits.shensha(TransitSet(
-    dayun=Ganzhi.from_str('甲卯'),
+    dayun=Ganzhi.from_str('丁卯'),
     liunian=Ganzhi.from_str('乙卯'),
   ))['zaisha'] == {Dizhi.卯}
 
@@ -225,25 +223,21 @@ def test_guchen_guasu_at_transits() -> None:
   assert no_hits['guasu'] == set()
 
 
-'''Getter type for one field of a Shensha analysis result.'''
-ShenshaGetter = Callable[[ShenshaAnalysis], frozenset[Dizhi]]
-
-
 # Each case isolates a year-anchor contribution; 亡神 also retains one day-anchor hit.
-@pytest.mark.parametrize('getter, birth_time, pillars, default_expected, day_expected', [
-  (lambda result: result['yima'], '1972-07-26 03:14', ('壬子', '丁未', '戊午', '甲寅'),
+@pytest.mark.parametrize('name, birth_time, pillars, default_expected, day_expected', [
+  ('yima', '1972-07-26 03:14', ('壬子', '丁未', '戊午', '甲寅'),
    frozenset((Dizhi.寅,)), frozenset()),
-  (lambda result: result['huagai'], '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
+  ('huagai', '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
    frozenset((Dizhi.辰,)), frozenset()),
-  (lambda result: result['jiangxing'], '2025-09-19 14:00', ('乙巳', '乙酉', '辛卯', '乙未'),
+  ('jiangxing', '2025-09-19 14:00', ('乙巳', '乙酉', '辛卯', '乙未'),
    frozenset((Dizhi.酉,)), frozenset()),
-  (lambda result: result['jiesha'], '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
+  ('jiesha', '2036-05-18 07:29', ('丙辰', '癸巳', '乙酉', '庚辰'),
    frozenset((Dizhi.巳,)), frozenset()),
-  (lambda result: result['wangshen'], '2061-08-20 12:04', ('辛巳', '丙申', '庚午', '壬午'),
+  ('wangshen', '2061-08-20 12:04', ('辛巳', '丙申', '庚午', '壬午'),
    frozenset((Dizhi.巳, Dizhi.申)), frozenset((Dizhi.巳,))),
 ])
 def test_five_dizhi_anchors_at_birth(
-  getter: ShenshaGetter,
+  name: str,
   birth_time: str,
   pillars: tuple[str, str, str, str],
   default_expected: frozenset[Dizhi],
@@ -259,8 +253,8 @@ def test_five_dizhi_anchors_at_birth(
 
   default_shensha = RelationshipAnalyzer(default_chart).at_birth.shensha
   day_shensha = RelationshipAnalyzer(day_chart).at_birth.shensha
-  assert getter(default_shensha) == default_expected
-  assert getter(day_shensha) == day_expected
+  assert default_shensha[name] == default_expected
+  assert day_shensha[name] == day_expected
   assert default_shensha['taohua'] == day_shensha['taohua']
 
 
@@ -279,15 +273,15 @@ def test_five_dizhi_anchors_move_independently() -> None:
 
 
 # Each pair supplies one year-anchor-only hit and one day-anchor hit.
-@pytest.mark.parametrize('getter, year_ganzhi, day_ganzhi', [
-  (lambda result: result['yima'], Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
-  (lambda result: result['huagai'], Ganzhi.from_str('甲戌'), Ganzhi.from_str('乙未')),
-  (lambda result: result['jiangxing'], Ganzhi.from_str('甲午'), Ganzhi.from_str('乙卯')),
-  (lambda result: result['jiesha'], Ganzhi.from_str('乙亥'), Ganzhi.from_str('甲申')),
-  (lambda result: result['wangshen'], Ganzhi.from_str('乙巳'), Ganzhi.from_str('甲寅')),
+@pytest.mark.parametrize('name, year_ganzhi, day_ganzhi', [
+  ('yima', Ganzhi.from_str('甲申'), Ganzhi.from_str('乙巳')),
+  ('huagai', Ganzhi.from_str('甲戌'), Ganzhi.from_str('乙未')),
+  ('jiangxing', Ganzhi.from_str('甲午'), Ganzhi.from_str('乙卯')),
+  ('jiesha', Ganzhi.from_str('乙亥'), Ganzhi.from_str('甲申')),
+  ('wangshen', Ganzhi.from_str('乙巳'), Ganzhi.from_str('甲寅')),
 ])
 def test_five_dizhi_anchors_at_transits(
-  getter: ShenshaGetter,
+  name: str,
   year_ganzhi: Ganzhi,
   day_ganzhi: Ganzhi,
 ) -> None:
@@ -302,8 +296,8 @@ def test_five_dizhi_anchors_at_transits(
 
   default_shensha = RelationshipAnalyzer(default_chart).transits.shensha(transits)
   day_shensha = RelationshipAnalyzer(day_chart).transits.shensha(transits)
-  assert getter(default_shensha) == {year_ganzhi.dizhi, day_ganzhi.dizhi}
-  assert getter(day_shensha) == {day_ganzhi.dizhi}
+  assert default_shensha[name] == {year_ganzhi.dizhi, day_ganzhi.dizhi}
+  assert day_shensha[name] == {day_ganzhi.dizhi}
   assert default_shensha['taohua'] == day_shensha['taohua']
 
 

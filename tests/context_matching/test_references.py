@@ -46,6 +46,7 @@ def test_reference_render_does_not_recalculate(monkeypatch: pytest.MonkeyPatch) 
 
 
 @pytest.mark.parametrize('criterion_id,relation', [(GUANSHA, '完整前提'), (DING, '局部条件')])
+@pytest.mark.optimized
 def test_empty_ids_keep_premise_relation(criterion_id: str, relation: str) -> None:
   result = replace(match(criterion_id=criterion_id), reference_ids=())
   assert relation in result.render()

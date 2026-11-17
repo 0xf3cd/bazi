@@ -7,7 +7,7 @@ import inspect
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 from urllib.parse import quote
 
 from docutils import nodes
@@ -15,6 +15,8 @@ from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
 
 import bazi
+
+from api_contract import INTERNAL_MODULES, INTERNAL_NAMES
 
 
 EXTERNAL_TYPES = {
@@ -26,8 +28,14 @@ EXTERNAL_TYPES = {
 
 def missing_reference(
   app: Sphinx, env: BuildEnvironment, node: nodes.Element, content: nodes.Node,
-) -> nodes.reference | None:
+) -> nodes.Node | None:
   target = node['reftarget']
+  module, _, name = target.rpartition('.')
+  if (
+    (module in INTERNAL_MODULES or name in INTERNAL_NAMES.get(module, '').split())
+    and isinstance(getattr(importlib.import_module(module), name, None), TypeVar)
+  ):
+    return content
   if target not in EXTERNAL_TYPES:
     return None
   version = f'{sys.version_info.major}.{sys.version_info.minor}'

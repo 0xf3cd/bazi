@@ -56,20 +56,9 @@ def test_chart_help_names_what_these_options_need(tmp_path: Path, flag: str, val
 
 
 def test_chart_command_has_no_knowledge_options(tmp_path: Path) -> None:
-  for flag in (('--object', 'tiangan.ding'), ('--export-knowledge-base',), ('--observation-scope', 'natal')):
+  for flag in (('--object', 'tiangan.ding'), ('--observation-scope', 'natal')):
     result = run_cli(tmp_path, 'chart', *flag)
     assert result.returncode == 2 and 'unrecognized arguments' in result.stderr
-
-
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('task,flag', [('chart', '--export-chart-json'), ('knowledge', '--export-knowledge-json'), ('match', '--export-context-json')])
-def test_removed_export_options_write_nothing(tmp_path: Path, optimized: bool, task: str, flag: str) -> None:
-  target = tmp_path / 'output/removed.json'
-  result = run_cli(tmp_path, task, flag, str(target), optimized=optimized)
-  assert result.returncode == 2 and 'unrecognized arguments' in result.stderr
-  assert flag in result.stderr and not target.exists() and list(tmp_path.iterdir()) == []
-  help_result = run_cli(tmp_path, task, '--help', optimized=optimized)
-  assert help_result.returncode == 0 and flag not in help_result.stdout
 
 
 def test_gz_month_help_names_the_year(tmp_path: Path) -> None:
@@ -91,14 +80,13 @@ def test_options_agree_with_library_directories() -> None:
   entries = tuple(dests['match']['transit_entry'].choices or ())
   assert entries == get_args(TransitEntry)
   assert set(entries) == {entry for info in criteria().values() for entry in info.transit_entries}
-  assert not {'object_id', 'observation_scope', 'export_knowledge_base'} & set(dests['chart'])
-  assert not {'seed', 'object_id', 'export_chart_json'} & set(dests['match'])
+  assert not {'object_id', 'observation_scope'} & set(dests['chart'])
+  assert not {'seed', 'object_id'} & set(dests['match'])
 
 
-@pytest.mark.parametrize('optimized', [False, True])
-def test_bare_call_is_identical_to_help(tmp_path: Path, optimized: bool) -> None:
-  bare = run_cli(tmp_path, optimized=optimized)
-  help_result = run_cli(tmp_path, '--help', optimized=optimized)
+def test_bare_call_is_identical_to_help(tmp_path: Path) -> None:
+  bare = run_cli(tmp_path)
+  help_result = run_cli(tmp_path, '--help')
   assert bare.returncode == help_result.returncode == 0
   assert bare.stdout == help_result.stdout and bare.stderr == help_result.stderr == ''
   assert 'random seed:' not in bare.stdout and '出生时间：' not in bare.stdout
@@ -107,8 +95,8 @@ def test_bare_call_is_identical_to_help(tmp_path: Path, optimized: bool) -> None
   assert guarded.returncode == 0 and guarded.stdout == bare.stdout and guarded.stderr == ''
 
 
-def test_unknown_task_is_not_a_removed_call(tmp_path: Path) -> None:
+def test_unknown_task_is_rejected(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'chrat')
   assert result.returncode == 2 and 'invalid choice' in result.stderr
-  assert 'v2.3.0' not in result.stderr and result.stdout == ''
+  assert result.stdout == ''
   assert list(tmp_path.iterdir()) == []

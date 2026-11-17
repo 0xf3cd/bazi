@@ -12,30 +12,30 @@ from bazi.rules import ShenshaRules
 from bazi.utils import shensha_utils
 
 
-def test_predicate_argument_types() -> None:
-  for name, predicate in inspect.getmembers(shensha_utils, inspect.isfunction):
-    if name.startswith('_') or predicate.__module__ != shensha_utils.__name__:
-      continue
-    # Whole-pillar predicates have their own negative tests below.
-    if predicate in (shensha_utils.kuigang, shensha_utils.tianshe, shensha_utils.xunkong):
-      continue
-    parameters = tuple(inspect.signature(predicate).parameters.values())
-    assert len(parameters) in (2, 3), name
-    key_type = parameters[0].annotation
-    assert key_type in (Tiangan, Dizhi, Ganzhi), name
-    assert parameters[1].annotation is Dizhi, name
-    key = {Tiangan: Tiangan.甲, Dizhi: Dizhi.子, Ganzhi: Ganzhi.from_str('甲子')}[key_type]
+@pytest.mark.parametrize('predicate', [
+  pytest.param(predicate, id=name, marks=pytest.mark.input_contract('bazi.utils.shensha_utils', name))
+  for name, predicate in inspect.getmembers(shensha_utils, inspect.isfunction)
+  if not name.startswith('_') and predicate.__module__ == shensha_utils.__name__
+  and predicate not in (shensha_utils.kuigang, shensha_utils.tianshe, shensha_utils.xunkong)
+])
+def test_predicate_argument_types(predicate: Callable[..., bool]) -> None:
+  parameters = tuple(inspect.signature(predicate).parameters.values())
+  assert len(parameters) in (2, 3)
+  key_type = parameters[0].annotation
+  assert key_type in (Tiangan, Dizhi, Ganzhi)
+  assert parameters[1].annotation is Dizhi
+  key = {Tiangan: Tiangan.甲, Dizhi: Dizhi.子, Ganzhi: Ganzhi.from_str('甲子')}[key_type]
 
-    with pytest.raises(TypeError, match=f'Expected {key_type.__name__}'):
-      predicate(str(key), Dizhi.子)
-    with pytest.raises(TypeError, match='Expected Dizhi'):
-      predicate(key, '子')
-    if len(parameters) == 3:
-      definition = parameters[2]
-      assert definition.name == 'definition', name
-      assert definition.kind is inspect.Parameter.KEYWORD_ONLY, name
-      with pytest.raises(TypeError, match=f'Expected {type(definition.default).__name__}'):
-        predicate(key, Dizhi.子, definition=object())
+  with pytest.raises(TypeError, match=f'Expected {key_type.__name__}'):
+    predicate(str(key), Dizhi.子)
+  with pytest.raises(TypeError, match='Expected Dizhi'):
+    predicate(key, '子')
+  if len(parameters) == 3:
+    definition = parameters[2]
+    assert definition.name == 'definition'
+    assert definition.kind is inspect.Parameter.KEYWORD_ONLY
+    with pytest.raises(TypeError, match=f'Expected {type(definition.default).__name__}'):
+      predicate(key, Dizhi.子, definition=object())
 
 
 def test_taohua() -> None:
@@ -258,6 +258,7 @@ def test_kuigang() -> None:
   assert not shensha_utils.kuigang(Ganzhi.from_str('甲辰'))
 
 
+@pytest.mark.input_contract('bazi.utils.shensha_utils', 'kuigang')
 def test_kuigang_negative() -> None:
   with pytest.raises(TypeError):
     shensha_utils.kuigang('庚辰') # type: ignore
@@ -288,6 +289,7 @@ def test_tianshe() -> None:
       )
 
 
+@pytest.mark.input_contract('bazi.utils.shensha_utils', 'tianshe')
 def test_tianshe_negative() -> None:
   with pytest.raises(TypeError):
     shensha_utils.tianshe('寅', Ganzhi.from_str('戊寅')) # type: ignore

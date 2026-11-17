@@ -6,7 +6,6 @@ import pytest
 import random
 
 from datetime import date, datetime
-from typing import cast
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, TianganRelation, DizhiRelation, Shishen
 from bazi.utils import tiangan_utils, dizhi_utils, bazi_utils, shensha_utils
@@ -468,7 +467,7 @@ def test_wenzhen_2020_relationship_analysis(rng: random.Random) -> None:
   }, at_birth.star_relations.dizhi)
 
   # transits - shensha
-  shensha_expected_dz: ShenshaAnalysis = {
+  shensha_expected_dz = ShenshaAnalysis({
     'taohua'     : frozenset([Dizhi.酉, Dizhi.卯]),
     'hongyan'    : frozenset([Dizhi.寅]),
     'hongluan'   : frozenset([Dizhi.卯]),
@@ -491,7 +490,7 @@ def test_wenzhen_2020_relationship_analysis(rng: random.Random) -> None:
     'taiji'      : frozenset([Dizhi.寅, Dizhi.亥, Dizhi.卯, Dizhi.酉]),
     'guoyin'     : frozenset([Dizhi.辰, Dizhi.丑]),
     'kongwang'   : frozenset([Dizhi.寅, Dizhi.卯]),
-  }
+  })
 
   for _ in range(50):
     random_year = rng.randint(birth_gz_year, birth_gz_year + 200)
@@ -500,7 +499,7 @@ def test_wenzhen_2020_relationship_analysis(rng: random.Random) -> None:
     transits_dz = {gz.dizhi for gz in transits_gz}
 
     assert transits.shensha(selected_transits) == {
-      name : cast(frozenset[Dizhi], fs) & transits_dz
+      name : fs & transits_dz
       for name, fs in shensha_expected_dz.items()
     }
 

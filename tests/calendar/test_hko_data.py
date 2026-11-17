@@ -24,6 +24,7 @@ class Year(int):
   pass
 
 
+@pytest.mark.input_contract('bazi.calendar.hko_data.decoder', 'DecodedJieqiDates.get DecodedJieqiDates.__getitem__ DecodedLunarYears.get DecodedLunarYears.__getitem__')
 @pytest.mark.parametrize('decoder_type, stop', [
   (hko_data.DecodedJieqiDates, 2101),
   (hko_data.DecodedLunarYears, 2100),
@@ -141,6 +142,7 @@ def test_year_type_precedes_range_access(
   assert accesses == [None, None]
 
 
+@pytest.mark.input_contract('bazi.calendar.hko_data.decoder', 'DecodedJieqiDates.get DecodedJieqiDates.__getitem__ DecodedLunarYears.get DecodedLunarYears.__getitem__')
 @pytest.mark.parametrize('decoder_type, cache_names', [
   (hko_data.DecodedJieqiDates, ('_DecodedJieqiDates__cached_date',)),
   (hko_data.DecodedLunarYears, ('_DecodedLunarYears__cached_info', '_DecodedLunarYears__read_bytes_for_lunar_year')),
@@ -318,6 +320,7 @@ def test_decode_jieqi_get_negative() -> None:
   assert decoded_jieqi.get(2024, Jieqi.立春) == lichun_2024_date
 
 
+@pytest.mark.input_contract('bazi.calendar.hko_data.decoder', 'DecodedJieqiDates.get')
 @pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
 def test_decode_jieqi_get_validates_before_cache(year: int) -> None:
   decoded = hko_data.DecodedJieqiDates()
@@ -332,6 +335,7 @@ def test_decode_jieqi_get_validates_before_cache(year: int) -> None:
     assert str(type(bad_year)) in str(exc.value)
 
 
+@pytest.mark.input_contract('bazi.calendar.hko_data.decoder', 'DecodedJieqiDates.get')
 @pytest.mark.parametrize('jieqi', ['立春', 0, None, []])
 def test_decode_jieqi_get_rejects_wrong_jieqi(jieqi: object) -> None:
   decoded = hko_data.DecodedJieqiDates()

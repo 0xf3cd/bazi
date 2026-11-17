@@ -8,8 +8,7 @@ from itertools import product
 from typing import assert_never
 
 from ..bazi_chart import BaziChart, _check_chart
-from ..common import check_declared_types
-from ..defines import Zhu, Tiangan, Dizhi, Ganzhi
+from ..defines import Zhu, Tiangan, Ganzhi
 from ..transits import TransitKind, TransitSet
 from ..utils.bazi_utils import hidden_tiangans, traits
 
@@ -22,21 +21,14 @@ class TianganMatch(Enum):
 
 @dataclass(frozen=True)
 class TianganOccurrence:
-  '''某柱位或流运种类上的实际干；明藏角色由查询结果中的字段指定。
+  '''某柱位或流运种类上的实际干；TouganHit.hidden 与 visible 分别保存藏干端和明干端，
+  tonggen 返回的均为藏干端。
 
-  stem 必须是该干支的明干或藏干；同干支的不同位置不合并。
+  查询返回的 stem 是该干支的明干或藏干；同干支的不同位置不合并。
   '''
   position: Zhu | TransitKind
   ganzhi:   Ganzhi
   stem:     Tiangan
-
-  def __post_init__(self) -> None:
-    check_declared_types(self)
-    for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
-      if not isinstance(value, expected):
-        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-    if self.stem is not self.ganzhi.tiangan and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
-      raise ValueError('Stem is absent from its Ganzhi')
 
 
 @dataclass(frozen=True)
@@ -44,13 +36,6 @@ class TouganHit:
   '''一处藏干与一处明干的匹配，保留两端的实际干和位置。'''
   hidden:  TianganOccurrence
   visible: TianganOccurrence
-
-  def __post_init__(self) -> None:
-    check_declared_types(self)
-    if self.hidden.stem not in hidden_tiangans(self.hidden.ganzhi.dizhi):
-      raise ValueError('Hidden stem is absent from its Ganzhi')
-    if self.visible.stem is not self.visible.ganzhi.tiangan:
-      raise ValueError('Visible stem differs from its Ganzhi')
 
 
 def _positions(

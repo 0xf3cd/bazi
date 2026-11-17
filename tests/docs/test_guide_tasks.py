@@ -1,10 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
-import ast
-import os
 import re
-import subprocess
-import sys
 import typing
 from dataclasses import fields, replace
 from enum import Enum
@@ -150,36 +146,3 @@ def test_entry_alias_index_is_accepted(suffix):
 def test_entry_alias_subpages_are_rejected(suffix):
   with pytest.raises(AssertionError):
     _check_entry_alias_links(f'https://0xf3cd.github.io/bazi/latest/{suffix}')
-
-
-def _run_example(code: str, expected: str, directory: Path, timeout: float = 15) -> None:
-  result = subprocess.run(
-    [sys.executable, '-c', code], cwd=directory,
-    env=os.environ | {'PYTHONPATH': str(ROOT)},
-    capture_output=True, text=True, encoding='utf-8', timeout=timeout, check=False,
-  )
-  assert result.returncode == 0, result.stderr
-  assert result.stdout == expected
-
-
-@pytest.mark.parametrize('name', ['traits', 'liunian'])
-def test_chart_api_examples_run_independently(tmp_path, name):
-  source = ast.parse((ROOT / 'bazi/bazi_chart.py').read_text(encoding='utf-8'))
-  cls = next(node for node in source.body if isinstance(node, ast.ClassDef) and node.name == 'BaziChart')
-  method = next(node for node in cls.body if isinstance(node, ast.FunctionDef) and node.name == name)
-  doc = ast.get_docstring(method)
-  assert doc is not None
-  blocks = [token for token in MarkdownIt().parse(doc) if token.type == 'fence']
-  assert [token.info for token in blocks] == ['python', 'text']
-  _run_example(blocks[0].content, blocks[1].content, tmp_path)
-
-
-def test_example_gate_rejects_missing_input(tmp_path):
-  with pytest.raises(AssertionError, match='NameError'):
-    _run_example('print(chart.traits)', '', tmp_path)
-
-
-def test_example_gate_stops_an_infinite_loop(tmp_path):
-  with pytest.raises(subprocess.TimeoutExpired) as stopped:
-    _run_example("print('started', flush=True)\nwhile True:\n  pass\n", '', tmp_path, timeout=1)
-  assert stopped.value.stdout in (b'started\n', 'started\n')

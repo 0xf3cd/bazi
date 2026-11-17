@@ -3,6 +3,7 @@
 import os
 import re
 import runpy
+import shutil
 import subprocess
 import sys
 from dataclasses import fields
@@ -22,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 import run_docs
 import run_docs_site
-from run_doc_checks import EXAMPLE_GROUPS
+from run_doc_checks import TASK_EXAMPLES, source_doctests
 from run_package_checks import source_files
 
 from bazi.school import BaziSchool
@@ -73,13 +74,13 @@ def test_navigation_links_resolve(name):
   _check_navigation(ROOT / name, ROOT)
 
 
-def test_quickstart_keeps_the_first_chart_path():
-  expected = {'quickstart-chart', 'quickstart-text', 'quickstart-save'}
-  source = (ROOT / 'docs/guides/quickstart.md').read_text(encoding='utf-8')
-  assert expected == set(re.findall(r'^```\{testcode\} (.+)$', source, flags=re.MULTILINE))
-  assert expected == EXAMPLE_GROUPS['guides/quickstart']
-  assert {'transits-query', 'transits-generators'} <= EXAMPLE_GROUPS['guides/relations-transits']
-  assert 'integration-context' in EXAMPLE_GROUPS['guides/integration']
+def test_task_examples_exist_in_prepared_source(tmp_path):
+  source = tmp_path / 'source'
+  shutil.copytree(ROOT / 'docs', source)
+  run_docs.generate_readme_example(source)
+  groups = source_doctests(source)
+  for name, required in TASK_EXAMPLES.items():
+    assert required <= groups[name].keys()
 
 
 def test_school_guide_covers_field_choices() -> None:
@@ -87,23 +88,12 @@ def test_school_guide_covers_field_choices() -> None:
   choices = source.split('## 配置速查\n', 1)[1].split('\n## 出生时间怎么填', 1)[0]
   for field in fields(BaziSchool):
     assert f'`{field.name}`' in choices, field.name
-  assert 'config-school-preset' in EXAMPLE_GROUPS['guides/configuration']
 
 
 @pytest.mark.parametrize('name', ['quickstart', 'configuration', 'integration', 'knowledge', 'cli'])
 def test_guides_link_to_release_notes(name: str) -> None:
   source = (ROOT / 'docs/guides' / (name + '.md')).read_text(encoding='utf-8')
   assert re.search(r'\{doc\}`(?:[^`<>]+<)?\.\./release-notes>?`', source)
-
-
-@pytest.mark.parametrize('name, moved', [
-  ('README.md', {'从 v2.2.0 迁移到 v2.3.0', '从 v2.3.0 升级到 v2.4.0'}),
-  ('API_CONTRACT.md', {'结构接口迁移', '知识结构：开发版迁移', '源码脚本', '已删除的存取接口'}),
-])
-def test_current_docs_omit_migration_history(name: str, moved: set[str]) -> None:
-  tokens = MarkdownIt('commonmark').parse((ROOT / name).read_text(encoding='utf-8'))
-  headings = {tokens[index + 1].content for index, token in enumerate(tokens) if token.type == 'heading_open'}
-  assert not headings & moved
 
 
 @pytest.mark.parametrize('heading, valid', [('从 v2.2.0 迁移到 v2.3.0', True), ('迁移指南', False)])

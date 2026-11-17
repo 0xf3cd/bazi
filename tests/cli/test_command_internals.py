@@ -92,10 +92,16 @@ def test_runner_preserves_subprocess_options(
   )]
 
 
-def test_error_helper_rejects_usage_only_match() -> None:
+@pytest.mark.optimized
+@pytest.mark.parametrize('code,stderr', [
+  (0, 'usage: bazi chart\nbazi chart: error: --longitude\n'),
+  (2, 'bazi chart: error: --longitude\n'),
+  (2, 'usage: bazi chart --longitude\nbazi chart: error: wrong reason\n'),
+  (2, 'usage: bazi chart\nbazi chart: error: --longitude\nTraceback'),
+])
+def test_error_helper_rejects_bad_diagnostics(code: int, stderr: str) -> None:
   result = subprocess.CompletedProcess(
-    ['script'], 2, '',
-    'usage: bazi chart --longitude\nbazi chart: error: wrong reason\n',
+    ['script'], code, '', stderr,
   )
   with pytest.raises(AssertionError):
     cli_runner.assert_cli_error(result, 'chart', '--longitude')
@@ -105,33 +111,20 @@ def test_error_helper_rejects_usage_only_match() -> None:
   ('chart', 'Expected list'), (('chart',), 'Expected list'), ({}, 'Expected list'),
   (1, 'Expected list'), ([1], 'Expected str'), (['chart', None], 'Expected str'),
 ])
+@pytest.mark.input_contract('bazi.cli', 'main')
 def test_main_rejects_invalid_argv(argv: object, expected: str) -> None:
   with pytest.raises(TypeError, match=expected):
     cli.main(cast(list[str], argv))
 
 
-@pytest.mark.parametrize('optimized', [False, True])
-def test_main_type_errors_survive_optimization(tmp_path: Path, optimized: bool) -> None:
-  code = '''
-import sys
-sys.path.insert(0, sys.argv[1])
-from bazi.cli import main
-for value, message in [('chart', 'Expected list'), (('chart',), 'Expected list'),
-                       ({}, 'Expected list'), (1, 'Expected list'),
-                       ([1], 'Expected str'), (['chart', None], 'Expected str')]:
-  try:
-    main(value)
-  except TypeError as error:
-    if message not in str(error):
-      raise RuntimeError(str(error))
-  else:
-    raise RuntimeError(f'Accepted invalid argv: {value!r}')
-print(f'checked=6 optimized={sys.flags.optimize}')
-'''
-  result = subprocess.run(
-    [sys.executable, *(['-O'] if optimized else []), '-c', code, str(cli_runner.ROOT)],
-    cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', timeout=45, check=False,
-  )
-  assert result.returncode == 0 and result.stderr == '', result.stderr
-  assert result.stdout == f'checked=6 optimized={int(optimized)}\n'
+@pytest.mark.optimized
+@pytest.mark.parametrize('args,error', [
+  (('chart', '--longitude', '0'), 'require fixed birth input'),
+  (('knowledge', '不存在'), 'Unknown object'),
+  (('match', 'unknown'), 'Unsupported value: unknown'),
+])
+def test_optimized_tasks_keep_error_exit(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
+  result = cli_runner.run_cli(tmp_path, *args, optimized=True)
+  cli_runner.assert_cli_error(result, args[0], error)
+  assert result.stdout == ''
   assert list(tmp_path.iterdir()) == []

@@ -47,6 +47,7 @@ def utils(request: pytest.FixtureRequest) -> CalendarUtilsProtocol:
   return backend
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date prev_jie next_jie')
 @pytest.mark.parametrize(('name', 'parameter', 'good', 'expected_type'), [
   ('get_min_supported_date', 'date_type', CalendarType.SOLAR, 'CalendarType'),
   ('get_max_supported_date', 'date_type', CalendarType.SOLAR, 'CalendarType'),
@@ -92,6 +93,7 @@ def test_date_types_before_cache(
     assert not hasattr(method, attribute)
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'to_solar to_lunar to_ganzhi to_date')
 @pytest.mark.parametrize('name', ['to_solar', 'to_lunar', 'to_ganzhi', 'to_date'])
 def test_to_date_nested_cache_boundary(utils: CalendarUtilsProtocol, name: str) -> None:
   good = date(2024, 3, 1)
@@ -170,6 +172,7 @@ def test_date_boundary_valid_values(utils: CalendarUtilsProtocol) -> None:
         jie(outside)
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'days_counts_in_ganzhi_year jieqi_date jieqi_moment')
 def test_year_cache_boundaries_unchanged(utils: CalendarUtilsProtocol) -> None:
   class Year(int):
     pass
@@ -195,6 +198,7 @@ def test_basic() -> None:
   assert str(CalendarBackend.CELESTIAL_ALGO2) == 'celestial-algo2'
 
 
+@pytest.mark.input_contract('bazi.calendar.backend', 'CalendarBackend.from_str')
 def test_from_str() -> None:
   for s in ['hko', 'HKO', 'Hko']:
     assert CalendarBackend.from_str(s) is CalendarBackend.HKO
@@ -211,6 +215,7 @@ def test_from_str() -> None:
     CalendarBackend.from_str(42) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.calendar.backend', 'calendar_utils_of')
 def test_calendar_utils_of() -> None:
   utils = calendar_utils_of(CalendarBackend.HKO)
   assert utils is hko_data_utils

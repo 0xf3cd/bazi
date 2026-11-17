@@ -175,6 +175,7 @@ def test_school_grouped_positional_arguments() -> None:
   )
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig')
 def test_config_type_gates() -> None:
   # The constructor takes the strict types only; coercion lives in `from_values`.
   with pytest.raises(TypeError):
@@ -187,6 +188,7 @@ def test_config_type_gates() -> None:
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig')
 def test_every_config_field_has_a_type_gate() -> None:
   # Mechanical binding, the same one `BaziSchool` has: adding a knob without a gate fails here.
   # 机械绑定，与 `BaziSchool` 同款：加字段不加闸会在这里响。
@@ -195,6 +197,7 @@ def test_every_config_field_has_a_type_gate() -> None:
       BaziConfig(**{f.name: object()}) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziSchool')
 def test_every_school_field_has_a_type_gate() -> None:
   # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
   # adding a knob without a gate fails here, no per-field test needed (issue #69).
@@ -218,6 +221,7 @@ def test_anchor_choices_bind_each_field() -> None:
     assert all(isinstance(a, Anchor) for a in allowed), name
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziSchool')
 def test_anchor_choices_are_only_accepted() -> None:
   # Both directions: a supported value constructs, one outside the table raises. Without
   # the second half a table that allowed everything would still pass.
@@ -363,12 +367,14 @@ def test_from_values_enum_passthrough() -> None:
   assert config.dayun_year_rule is DayunYearRule.FIXED_DECADE
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig.from_values')
 @pytest.mark.parametrize('bad', ['sec', '秒', 'hr', 'days', ''])
 def test_from_values_rejects_bad_precision(bad: str) -> None:
   with pytest.raises(ValueError):
     BaziConfig.from_values(precision=bad)
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig.from_values DayunYearRule.from_str')
 def test_from_values_rejection_face() -> None:
   with pytest.raises(ValueError):
     BaziConfig.from_values(backend='lunar')

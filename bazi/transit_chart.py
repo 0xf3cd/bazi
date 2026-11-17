@@ -47,7 +47,7 @@ class TransitChart:
 
   @property
   def bazi_chart(self) -> BaziChart:
-    '''直接共享的只读原盘；命盘自身已隔离非 frozen 的 Bazi，无需再复制。'''
+    '''返回构造时直接共享的原盘。'''
     return self._bazi_chart
 
   def _transits(

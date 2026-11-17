@@ -17,7 +17,7 @@ from bazi.school import BaziConfig, BaziSchool, PeiouXingDef
 from bazi.transit_chart import TransitChart
 from bazi.transits import TransitKind, TransitSet
 from bazi.analyzer.relationship import (
-  RelationshipEvidence, StarAppearance, StemRelationDiscovery, _discover_stem_occurrences, spouse_evidence,
+  RelationshipEvidence, StemRelationDiscovery, _discover_stem_occurrences, spouse_evidence,
 )
 
 
@@ -26,7 +26,7 @@ def _at(combo: frozenset) -> set[int]:
 
 
 def test_evidence_order_is_part_of_value() -> None:
-  from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
+  from bazi.utils.dizhi_utils import GanzhiRelationDiscovery
   c = BaziChart(Bazi.create('2000-01-01 12:00', 'male'))
   evidence = spouse_evidence(c, None)
   combos = evidence.star_relations[DizhiRelation.冲]
@@ -35,8 +35,6 @@ def test_evidence_order_is_part_of_value() -> None:
   assert shuffled == evidence.star_relations
   assert frozenset(reversed(tuple(combos[0]))) == combos[0]
   assert GanzhiRelationDiscovery({DizhiRelation.冲: tuple(reversed(combos))}) != GanzhiRelationDiscovery({DizhiRelation.冲: combos})
-  with pytest.raises(ValueError):
-    GanzhiOccurrence(-1, Ganzhi.from_str('甲子'))
   appearances = spouse_evidence(BaziChart(Bazi.create('2000-01-29 06:00', 'male')), None)
   assert replace(appearances, appearances=tuple(reversed(appearances.appearances))) != appearances
 
@@ -262,40 +260,7 @@ def test_evidence_keeps_appearance_positions(layer_evidence: tuple[BaziChart, Re
   ]
 
 
-def test_star_appearance_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
-  _, evidence = layer_evidence
-  # Visible stems must equal their pillar stem; hidden stems must live in its branch.
-  appearance = evidence.appearances[2]
-  assert appearance is not None
-  value_changes: tuple[dict[str, Any], ...] = (
-    {'layer': TianganLayer.藏干}, {'stem': Tiangan.庚},
-  )
-  for change in value_changes:
-    with pytest.raises(ValueError):
-      replace(appearance, **change)
-  type_changes: tuple[dict[str, Any], ...] = (
-    {'ganzhi': '辛卯'}, {'stem': '辛'}, {'position': 'liunian'},
-    {'position': 1}, {'layer': 1}, {'layer': '明干'},
-  )
-  for change in type_changes:
-    with pytest.raises(TypeError):
-      replace(appearance, **change)
-  assert StarAppearance(TransitKind.LIUNIAN, Ganzhi.from_str('辛亥'), TianganLayer.明干, Tiangan.辛)
-  assert all(not hasattr(appearance, name) for name in ('origin', 'pillar', 'kind'))
-
-
-def test_evidence_rejects_bad_fields(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
-  _, evidence = layer_evidence
-  # RelationshipEvidence's construction-time type gate; scope-style cross-field constraints belong to ContextResult.
-  change: dict[str, Any]
-  for change in (
-    {'star_target': '辛'}, {'appearances': (object(),)}, {'house_relations': {}},
-    {'stem_relations': {}}, {'transits': TransitChart},
-  ):
-    with pytest.raises(TypeError):
-      replace(evidence, **change)
-
-
+@pytest.mark.input_contract('bazi.analyzer.relationship', 'spouse_evidence')
 def test_evidence_rejects_invalid_inputs(layer_evidence: tuple[BaziChart, RelationshipEvidence]) -> None:
   chart, _ = layer_evidence
   assert spouse_evidence(chart, None).transits is None
@@ -326,7 +291,7 @@ def test_non_gong_full_equals_three_segments() -> None:
   from bazi.utils.dizhi_utils import GanzhiOccurrence, GanzhiRelationDiscovery
   rng = Random(20261015)
   non_gong = tuple(rel for rel in DizhiRelation if rel not in DizhiRules.GONG_RELATIONS)
-  cycle = tuple(Ganzhi.from_str(f'{tg}{dz}') for tg in Tiangan for dz in Dizhi)
+  cycle = Ganzhi.list_sexagenary_cycle()
 
   def __shifted(discovery: GanzhiRelationDiscovery, offset: int) -> dict[DizhiRelation, set[frozenset[GanzhiOccurrence]]]:
     return {

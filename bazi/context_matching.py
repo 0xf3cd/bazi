@@ -5,14 +5,14 @@
 import json
 from dataclasses import dataclass, field, fields
 from datetime import date, datetime
-from typing import ClassVar, Final, Literal, NamedTuple, TypeVar, get_args
+from typing import ClassVar, Final, Literal, NamedTuple, TypeVar
 
 from .bazi import Bazi, BaziGender
 from .bazi_chart import BaziChart, _check_chart
 from .common import frozendict
 from .defines import Zhu, Dizhi, Ganzhi, Tiangan, TianganLayer, Shishen, DizhiRelation
 from .analyzer.relationship import RelationshipEvidence, spouse_evidence
-from ._validation import _text, _choice, _tuple, _utf8
+from ._validation import _choice, _utf8
 from .transit_chart import TransitChart
 from .transits import TransitKind, TransitSet
 from .utils.bazi_utils import hidden_tiangans, shishen
@@ -149,30 +149,30 @@ def _typed(value: object, expected: type[_T]) -> _T:
 
 
 def _year(value: object) -> None:
-  if value is not None and type(value) is not int:
+  if value is not None and not isinstance(value, int):
     raise TypeError(f'Expected int | None, got {type(value)}')
 
 
 @dataclass(frozen=True)
 class YearCoordinate:
-  '''干支年查询坐标；年份须为确切 int，拒绝 bool 与子类。'''
+  '''干支年查询坐标；年份接受 int（含 bool 与 int 子类）。'''
   ganzhi_year: int
   entry: ClassVar[Literal['at_year']] = 'at_year'
 
   def __post_init__(self) -> None:
-    if type(self.ganzhi_year) is not int:
+    if not isinstance(self.ganzhi_year, int):
       raise TypeError(f'Expected int, got {type(self.ganzhi_year)}')
 
 
 @dataclass(frozen=True)
 class MonthCoordinate:
-  '''干支年月查询坐标；年份须为确切 int，月份用月支，不接受公历月份。'''
+  '''干支年月查询坐标；年份接受 int（含 bool 与 int 子类），月份用月支。'''
   ganzhi_year:  int
   ganzhi_month: Dizhi
   entry: ClassVar[Literal['at_month']] = 'at_month'
 
   def __post_init__(self) -> None:
-    if type(self.ganzhi_year) is not int:
+    if not isinstance(self.ganzhi_year, int):
       raise TypeError(f'Expected int, got {type(self.ganzhi_year)}')
     _typed(self.ganzhi_month, Dizhi)
 
@@ -190,12 +190,12 @@ class DateCoordinate:
 
 @dataclass(frozen=True)
 class MomentCoordinate:
-  '''东八区无时区时刻，类型须为 datetime 本身；保存微秒请求身份，求值按秒解释。'''
+  '''东八区无时区时刻，接受 datetime 及其子类；保存微秒请求身份，求值按秒解释。'''
   solar_moment: datetime
   entry: ClassVar[Literal['at_moment']] = 'at_moment'
 
   def __post_init__(self) -> None:
-    if type(self.solar_moment) is not datetime:
+    if not isinstance(self.solar_moment, datetime):
       raise TypeError(f'Expected datetime, got {type(self.solar_moment)}')
     if self.solar_moment.tzinfo is not None:
       raise ValueError('Timezone should be well-processed outside of this record')
@@ -224,7 +224,7 @@ class NatalObservation:
 
 @dataclass(frozen=True)
 class LiunianObservation:
-  '''原局加单流年；年份为干支年标签，须为确切 int，缺失时在求值期返回 UNKNOWN。'''
+  '''原局加单流年；年份接受 int（含 bool 与 int 子类），缺失时在求值期返回 UNKNOWN。'''
   ganzhi_year: int | None = None
   scope: ClassVar[Literal['natal_and_liunian']] = 'natal_and_liunian'
 
@@ -289,7 +289,7 @@ class CriterionInfo:
   - required_gender 是判据性别门槛；claim_genders 只限制关联条目，不改变事实判别。
   - observation_keys 列出观察键；是否有性别门槛以 required_gender 为准。
     具体判据及性别筛选规则见[判据目录](../api-contract.md#判据目录)。
-  - 直接构造只检查目录值的形状，不认证自填说明；已注册目录请从 criterion／criteria 取得。
+  - 已注册目录从 criterion／criteria 取得；直接构造不校验自填内容。
   '''
 
   criterion_id:     str
@@ -300,22 +300,6 @@ class CriterionInfo:
   required_gender:  BaziGender | None
   claim_ids:        tuple[str, ...]
   claim_genders:    frozendict[str, BaziGender]
-
-  def __post_init__(self) -> None:
-    for value in (self.criterion_id, self.definition):
-      _text(value)
-    _choice(self.analysis_kind, ('context', 'relationship'))
-    _choice(self.entry_role, ('premise', 'condition'))
-    for values in (self.observation_keys, self.claim_ids):
-      _tuple(values, str)
-      if not values or len(set(values)) != len(values):
-        raise ValueError('Expected non-empty distinct metadata values')
-    if self.required_gender is not None:
-      _typed(self.required_gender, BaziGender)
-    _typed(self.claim_genders, frozendict)
-    for claim_id, gender in self.claim_genders.items():
-      _choice(claim_id, self.claim_ids)
-      _typed(gender, BaziGender)
 
   @property
   def observation_types(self) -> tuple[_ObservationType, ...]:
@@ -391,12 +375,8 @@ def criteria() -> frozendict[str, CriterionInfo]:
 
 @dataclass(frozen=True)
 class LiunianPosition:
-  '''具体干支年的流年证据位置；年份须为确切 int，不是无年份的流运种类。'''
+  '''具体干支年的流年证据位置。'''
   ganzhi_year: int
-
-  def __post_init__(self) -> None:
-    if type(self.ganzhi_year) is not int:
-      raise TypeError(f'Expected int, got {type(self.ganzhi_year)}')
 
 
 @dataclass(frozen=True)
@@ -408,19 +388,6 @@ class ChartOccurrence:
   layer:    TianganLayer
   stem:     Tiangan
   shishen:  Shishen
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.position, (Zhu, LiunianPosition)):
-      raise TypeError(f'Expected Zhu | LiunianPosition, got {type(self.position)}')
-    _typed(self.layer, TianganLayer)
-    for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan), (self.shishen, Shishen)):
-      _typed(value, expected)
-    if self.position is Zhu.日 and self.layer is TianganLayer.明干:
-      raise ValueError('Day-master visible stem is excluded by convention')
-    if self.layer is TianganLayer.明干 and self.stem != self.ganzhi.tiangan:
-      raise ValueError('Visible stem differs from its Ganzhi')
-    if self.layer is TianganLayer.藏干 and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
-      raise ValueError('Hidden stem is absent from its Ganzhi')
 
   @property
   def index(self) -> int:
@@ -435,14 +402,6 @@ class CriterionResult:
   criterion_id: str
   reason:       CriterionReason
   observations: frozendict[str, bool]
-
-  def __post_init__(self) -> None:
-    _choice(self.criterion_id, tuple(_CRITERIA))
-    _choice(self.reason, get_args(CriterionReason))
-    _typed(self.observations, frozendict)
-    for name, value in self.observations.items():
-      _typed(name, str)
-      _typed(value, bool)
 
   @property
   def definition(self) -> str:

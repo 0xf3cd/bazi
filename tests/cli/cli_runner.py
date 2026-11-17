@@ -32,7 +32,7 @@ def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error:
   usage = '[-h] <任务>' if error == 'unrecognized arguments' else task
   assert result.returncode == 2 and f'usage: bazi {usage}' in result.stderr
   assert error in result.stderr.split(': error:', 1)[1]
-  assert 'v2.3.0' not in result.stderr and 'Traceback' not in result.stderr
+  assert 'Traceback' not in result.stderr
 
 
 def run_cli(

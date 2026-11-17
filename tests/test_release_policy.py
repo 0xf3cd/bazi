@@ -15,7 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, patch
 
@@ -319,12 +319,6 @@ def release_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(key, value)
 
 
-@pytest.fixture(params=[False, True])
-def windows_path_order(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
-  if request.param:
-    monkeypatch.setattr(Path, '__lt__', lambda left, right: PureWindowsPath(left) < PureWindowsPath(right))
-
-
 @pytest.mark.parametrize('change', ['none', 'missing', 'no-reviewer', 'empty-reviewer', 'wildcard', 'tag-policy', 'extra-branch', 'protected-only', 'ref', 'milestone', 'repo', 'sha', 'mode'])
 def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
   environment = {'name': 'release', 'protection_rules': [{'type': 'required_reviewers',
@@ -368,12 +362,12 @@ def test_environment_preflight(monkeypatch: pytest.MonkeyPatch, release_env: Non
       assert calls == []
 
 
-@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'id', 'sha', 'run', 'mode', 'extra', 'version',
+@pytest.mark.parametrize('change', ['none', 'checksum', 'manifest', 'manifest-crlf', 'id', 'sha', 'run', 'mode', 'extra', 'version',
   'environment-run', 'environment-source', 'environment-pair', 'environment-role', 'environment-duplicate', 'environment-schema',
   'environment-extra-record', 'environment-missing', 'environment-truncated',
   pytest.param('symlink-file', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.')),
   pytest.param('symlink-directory', marks=pytest.mark.skipif(os.name == 'nt', reason='Symlink creation requires extra privileges on Windows.'))])
-def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, change: str) -> None:
+def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   root = tmp_path / 'artifact'
   (root / 'dist').mkdir(parents=True)
@@ -409,6 +403,8 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     key=lambda p: p.relative_to(root).as_posix(),
   )
   checksums = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root).as_posix()}\n' for p in files)
+  if change == 'manifest-crlf':
+    checksums = checksums.replace('\n', '\r\n')
   (root / 'SHA256SUMS').write_bytes(checksums.encode('utf-8'))
   monkeypatch.setenv('MANIFEST_SHA', hashlib.sha256(checksums.encode()).hexdigest())
   if change == 'checksum':
@@ -433,21 +429,36 @@ def test_bundle_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_
     (root / 'linked-dist').symlink_to(root / 'dist', target_is_directory=True)
   code = workflow_code('pypi', 'Verify exact same-run bundle')
   assert code == workflow_code('github-release', 'Verify exact same-run bundle')
-  for job in ('pypi', 'github-release'):
-    code = workflow_code(job, 'Verify exact same-run bundle')
-    if change == 'none':
+  if change == 'none':
+    run_policy(code)
+  elif change == 'environment-truncated':
+    with pytest.raises(json.JSONDecodeError) as caught:
       run_policy(code)
-    elif change == 'environment-truncated':
-      with pytest.raises(json.JSONDecodeError) as caught:
-        run_policy(code)
-      assert caught.value.doc == '{' and caught.value.pos == 1
-    else:
-      message = ('Unexpected release bundle files' if change in ('environment-missing', 'symlink-file', 'symlink-directory') else
-        'Environment report role roster mismatch' if change in ('environment-role', 'environment-duplicate', 'environment-extra-record') else
-        'Environment report pair mismatch' if change == 'environment-pair' else
-        'Environment report identity mismatch' if change.startswith('environment-') else '')
-      with pytest.raises(SystemExit, match=message or None):
-        run_policy(code)
+    assert caught.value.doc == '{' and caught.value.pos == 1
+  else:
+    message = ('Unexpected release bundle files' if change in ('extra', 'version', 'environment-missing', 'symlink-file', 'symlink-directory') else
+      'Invalid publication identity' if change in ('id', 'mode') else
+      'Release bundle checksum mismatch' if change in ('checksum', 'manifest-crlf') else
+      'Manifest differs from tested build' if change == 'manifest' else
+      'Release metadata identity mismatch' if change in ('sha', 'run') else
+      'Environment report role roster mismatch' if change in ('environment-role', 'environment-duplicate', 'environment-extra-record') else
+      'Environment report pair mismatch' if change == 'environment-pair' else
+      'Environment report identity mismatch')
+    with pytest.raises(SystemExit, match='^' + message + '$'):
+      run_policy(code)
+
+
+@pytest.mark.parametrize('key, value', [
+  ('SHA', 'not-a-sha'), ('VERSION', '1.0.0rc1'),
+  ('REPOSITORY', 'example/bazi'), ('REF', 'refs/heads/other'),
+])
+def test_bundle_identity_precedes_files(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, key: str, value: str,
+) -> None:
+  monkeypatch.chdir(tmp_path)
+  monkeypatch.setenv(key, value)
+  with pytest.raises(SystemExit, match='^Invalid publication identity$'):
+    run_policy(workflow_code('pypi', 'Verify exact same-run bundle'))
 
 
 @pytest.mark.parametrize('existing', [None, 'pypi', 'git/ref', 'releases/tags', 'network-error'])
@@ -468,20 +479,28 @@ def test_existing_release_policy(monkeypatch: pytest.MonkeyPatch, release_env: N
       run_policy(code)
 
 
-@pytest.mark.parametrize('notes, body', [
-  ('# 发布说明\n\n## bazi 1.0.0\n\n- 本版\n', '- 本版'),
-  ('# 发布说明\n\n## bazi 1.0.0\n\n### 新增\n\n- 本版\n\n## bazi 0.9.0\n\n- 上一版\n', '### 新增\n\n- 本版'),
+@pytest.mark.parametrize('change, retries', [
+  ('none', 0), ('none', 1), ('none', 2), ('previous-notes', 0),
+  ('pypi-404-limit', 0),
+  ('pypi-503', 0), ('pypi-503', 1),
+  ('pypi-network', 0), ('pypi-network', 1),
+  ('pypi-json', 0), ('pypi-json', 1),
+  ('pypi-bytes', 0), ('tag', 0), ('release', 0), ('network-error', 0),
+  ('notes-bytes', 0), ('tag-race', 0), ('draft-fails', 0),
+  ('asset-fails', 0), ('asset-bytes', 0), ('publish-fails', 0),
+  ('asset-fails', 2),
 ])
-@pytest.mark.parametrize('retries', [0, 1, 2])
-@pytest.mark.parametrize('change', ['none', 'pypi-bytes', 'tag', 'release', 'notes-bytes', 'tag-race', 'asset-bytes', 'network-error',
-  'pypi-404-limit', 'pypi-503', 'pypi-network', 'pypi-json', 'draft-fails', 'asset-fails', 'publish-fails'])
-def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, capsys: pytest.CaptureFixture[str], change: str, notes: str, body: str, retries: int) -> None:
+def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, capsys: pytest.CaptureFixture[str], change: str, retries: int) -> None:
   monkeypatch.chdir(tmp_path)
   monkeypatch.setenv('GH_TOKEN', 'offline-fixture')
   root = tmp_path / 'artifact'
   (root / 'dist').mkdir(parents=True)
   (root / 'dist/bazi-1.0.0.tar.gz').write_bytes(b'tested sdist')
   (root / 'dist/bazi-1.0.0-py3-none-any.whl').write_bytes(b'tested wheel')
+  body = '### 新增\n\n- 本版' if change == 'previous-notes' else '- 本版'
+  notes = '# 发布说明\n\n## bazi 1.0.0\n\n' + body + '\n'
+  if change == 'previous-notes':
+    notes += '\n## bazi 0.9.0\n\n- 上一版\n'
   (root / 'RELEASE_NOTES.md').write_text(notes, encoding='utf-8')
   for name in ('release.json', 'environments.json', 'SHA256SUMS'):
     (root / name).write_bytes(b'fixture ' + name.encode())
@@ -543,7 +562,7 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     return io.BytesIO(json.dumps(value).encode())
   monkeypatch.setattr(urllib.request, 'urlopen', request)
   code = workflow_code('github-release', 'Verify PyPI bytes and create the tag and release without overwriting')
-  if change == 'none':
+  if change in ('none', 'previous-notes'):
     run_policy(code)
     assert [method for method, _ in writes] == ['POST'] * 8 + ['PATCH']
     assert assets == {'bazi-1.0.0.tar.gz', 'bazi-1.0.0-py3-none-any.whl',
@@ -553,9 +572,22 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
       run_policy(code)
     if change == 'pypi-404-limit':
       assert '3 attempts (2 retries); last response: HTTP 404 Not Found' in str(failure.value)
+    elif change in ('pypi-503', 'network-error', 'tag-race', 'draft-fails', 'asset-fails', 'publish-fails'):
+      assert isinstance(failure.value, urllib.error.HTTPError)
+      assert failure.value.code == (503 if change in ('pypi-503', 'network-error') else 422 if change == 'tag-race' else 404)
+    elif change == 'pypi-network':
+      assert type(failure.value) is urllib.error.URLError and failure.value.reason == 'offline fixture'
+    elif change == 'pypi-json':
+      assert isinstance(failure.value, json.JSONDecodeError) and failure.value.doc == 'not JSON'
+    elif change == 'notes-bytes':
+      assert isinstance(failure.value, UnicodeDecodeError)
+    else:
+      message = ('PyPI bytes differ from tested pair' if change == 'pypi-bytes' else
+        'Uploaded GitHub asset digest mismatch; release remains draft' if change == 'asset-bytes' else
+        'Existing tag/release; deliberate recovery required')
+      assert isinstance(failure.value, SystemExit) and str(failure.value) == message
     assert not any(method == 'PATCH' for method, _ in writes)
-    if change not in ('asset-bytes', 'draft-fails', 'asset-fails', 'publish-fails'):
-      assert writes == []
+    assert len(writes) == {'draft-fails': 1, 'asset-fails': 2, 'asset-bytes': 3, 'publish-fails': 8}.get(change, 0)
   pypi_calls = [call for call in calls if 'pypi.org' in call[1]]
   backoffs = 2 if change == 'pypi-404-limit' else retries
   assert len(pypi_calls) == backoffs + 1
@@ -566,16 +598,25 @@ def test_publication_api_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     assert f'attempt {attempt}/3' in log and f'retry {attempt}/2 in 2 seconds' in log
   github_calls = [call for call in calls if 'pypi.org' not in call[1]]
   assert len(github_calls) == len(set(github_calls))
+  base = 'https://api.github.com/repos/0xf3cd/bazi'
+  sequence = [('GET', base + '/git/ref/tags/v1.0.0'), ('GET', base + '/releases/tags/v1.0.0'),
+    ('POST', base + '/git/refs'), ('POST', base + '/releases'),
+    *[('POST', 'https://uploads.github.com/repos/0xf3cd/bazi/releases/1/assets?name=' + path.name)
+      for path in sorted(path for path in root.rglob('*') if path.is_file())],
+    ('PATCH', base + '/releases/1')]
+  stop = {'pypi-404-limit': 0, 'pypi-503': 0, 'pypi-network': 0, 'pypi-json': 0, 'pypi-bytes': 0,
+    'tag': 1, 'network-error': 1, 'release': 2, 'notes-bytes': 2, 'tag-race': 3,
+    'draft-fails': 4, 'asset-fails': 5, 'asset-bytes': 5}.get(change, len(sequence))
+  assert github_calls == sequence[:stop]
 
 
-@pytest.mark.parametrize('crlf', [False, True])
 @pytest.mark.parametrize('change', ['none', 'harmless-notes', 'unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing',
   'post-gate-swap', 'report-missing', 'report-truncated', 'report-source', 'report-role', 'report-duplicate',
   'report-extra-field', 'report-python-field', 'report-platform-field', 'report-installer-field', 'report-schema',
   'report-extra-record', 'report-python-value', 'report-platform-value', 'report-distribution-name',
   'report-distribution-version', 'report-installer-scope', 'report-installer-name', 'report-installers-empty',
   'report-value-type', 'report-installer-version'])
-def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, windows_path_order: None, crlf: bool, change: str) -> None:
+def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_env: None, change: str) -> None:
   monkeypatch.chdir(tmp_path)
   runner_temp = tmp_path / 'runner temp'
   bundle = runner_temp / 'bundle'
@@ -644,13 +685,6 @@ def test_seal_verify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release_en
   elif change == 'missing':
     wheel.unlink()
 
-  write_text = Path.write_text
-  def platform_write(path: Path, data: str, encoding: str | None = None, errors: str | None = None, newline: str | None = None) -> int:
-    # Simulate Windows translation without modifying the producer or its output afterward.
-    if crlf and path.name == 'SHA256SUMS' and newline is None:
-      newline = '\r\n'
-    return write_text(path, data, encoding=encoding, errors=errors, newline=newline)
-  monkeypatch.setattr(Path, 'write_text', platform_write)
   seal = workflow_code('build', 'Seal release bundle')
   if change in ('unreleased-notes', 'wrong-version-notes', 'extra', 'misnamed', 'missing'):
     message = 'top section must be "## bazi 1.0.0"' if change.endswith('-notes') else 'Expected exactly the tested sdist and rebuilt wheel'

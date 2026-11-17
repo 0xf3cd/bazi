@@ -27,6 +27,7 @@ def _tg_equal(l1: TgCmpType, l2: TgCmpType) -> bool:
   return True
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'he chong sheng ke')
 @pytest.mark.parametrize('query', [tiangan_utils.he, tiangan_utils.chong, tiangan_utils.sheng, tiangan_utils.ke])
 @pytest.mark.parametrize('args, bad', [
   ((True, Tiangan.甲), True),
@@ -114,6 +115,7 @@ def test_search_basic() -> None:
   )
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'search')
 def test_search_negative() -> None:
   with pytest.raises(TypeError):
     tiangan_utils.search(Tiangan.辛, TianganRelation.合) # type: ignore
@@ -354,6 +356,7 @@ def test_discover(rng: random.Random) -> None:
     assert discovery == discovery2
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'discover')
 def test_discover_negative() -> None:
   with pytest.raises(TypeError):
     tiangan_utils.discover((Tiangan.甲, Dizhi.子)) # type: ignore
@@ -413,6 +416,7 @@ def test_discover_mutual(rng: random.Random) -> None:
         assert len(expected_combos) == 0
 
 
+@pytest.mark.input_contract('bazi.utils.tiangan_utils', 'discover_mutual')
 def test_discover_mutual_negative() -> None:
   with pytest.raises(TypeError):
     tiangan_utils.discover_mutual((Tiangan.甲, Dizhi.子), (Tiangan.己,)) # type: ignore

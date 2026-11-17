@@ -26,7 +26,7 @@ import pytest
 import yaml
 
 import run_docs_site
-from run_docs_site import RELEASE_LABEL, add_build, add_pending, mark_ready, read_manifest
+from run_docs_site import RELEASE_LABEL, add_build, mark_ready, read_manifest
 
 
 WORKFLOWS = Path(__file__).parents[1] / '.github/workflows'
@@ -36,13 +36,6 @@ SHA, TAGGED, HEAD = 'a' * 40, 'b' * 40, '1' * 40
 LIVE = 'https://0xf3cd.github.io/bazi/'
 API, REPO = 'https://api.github.com', '/repos/0xf3cd/bazi'
 STAGING, MOVED = 'docs-site-staging-7-1', '2' * 40
-# The commit the archive job checked out as control/: nested sources, an executable, a symlink and a page at a path the site
-# also uses. Initialization starts the staging branch here.
-CONTROL = '3' * 40
-CONTROL_TREE: Final[dict[str, bytes]] = {
-  'README.md': b'synthetic source\n', 'run_tests.py': b'#!/usr/bin/env python3\n', 'docs/latest': b'index.rst',
-  'bazi/calendar/__init__.py': b'', '.github/workflows/docs-publish.yml': b'name: synthetic\n', 'index.html': b'a control page'}
-CONTROL_MODES: Final[dict[str, str]] = {'run_tests.py': '100755 blob', 'docs/latest': '120000 blob'}
 COMMIT_STEP = 'Commit on a staging branch through GraphQL, check it, then fast-forward docs-site'
 # The Pages actions are new to this repository; their tag-to-commit mapping was checked against upstream before pinning.
 PAGES_PINS = frozenset({
@@ -108,11 +101,10 @@ def environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, **values: str) 
 
 @pytest.fixture
 def site() -> dict[str, bytes]:
-  '''Synthetic archive: dev ready, v99.0.0 archived but not read back, v99.1.0 pending.'''
-  _, tree = add_build(None, candidate('dev', SHA), 'dev', SHA)
+  '''Synthetic archive: dev ready, v99.0.0 archived but not read back.'''
+  _, tree = add_build(run_docs_site.render_site({}), candidate('dev', SHA), 'dev', SHA)
   tree = mark_ready(tree, 'dev', run_docs_site.digest(candidate('dev', SHA)))[1]
   _, tree = add_build(tree, candidate('v99.0.0', TAGGED), 'v99.0.0', TAGGED)
-  _, tree = add_pending(tree, 'v99.1.0')
   return tree
 
 
@@ -122,8 +114,7 @@ def test_publish_dispatch_defaults() -> None:
   assert set(trigger) == {'workflow_dispatch'}
   inputs = trigger['workflow_dispatch']['inputs']
   assert inputs['mode']['default'] == 'rehearsal'
-  assert inputs['mode']['options'] == ['rehearsal', 'publish', 'pending', 'promote', 'resume']
-  assert inputs['initialize']['default'] is False
+  assert inputs['mode']['options'] == ['rehearsal', 'publish', 'promote', 'resume']
   assert PUBLISH['permissions'] == {}
   concurrency = PUBLISH['concurrency']
   assert isinstance(concurrency['group'], str) and concurrency['group'] and '${{' not in concurrency['group']
@@ -178,8 +169,8 @@ def test_publish_identity_and_artifacts() -> None:
   assert step('archive', 'Apply the requested archive change')['env']['DEV_COMMIT'] == '${{ github.sha }}'
   assert jobs['archive']['outputs'] == {'commit': '${{ steps.commit.outputs.commit }}'}
   assert step('archive', COMMIT_STEP)['env']['GH_TOKEN'] == '${{ github.token }}'
-  # Initialization starts from the commit this job checked out as control/, not from any branch named by an input.
-  assert step('archive', COMMIT_STEP)['env']['CONTROL'] == jobs['archive']['steps'][1]['with']['ref'] == '${{ github.sha }}'
+  # Privileged assembly uses the fixed dispatch commit, not source selected by an input.
+  assert jobs['archive']['steps'][1]['with']['ref'] == '${{ github.sha }}'
 
   assert jobs['build']['steps'][1]['with']['ref'] == '${{ steps.identity.outputs.ref }}'
   assert jobs['archive']['steps'][1]['with']['path'] == 'control'
@@ -310,7 +301,6 @@ def check_python_ci(
       index, command = commands[0]
       arguments = set(shlex.split(command))
       assert flags <= arguments, (name, job, version, command)
-      assert not {'-d', '--demo', '-i', '--interpreter'} & arguments, (name, job, version, command)
       assert ('--runtime-only' not in arguments) is docs, (name, job, version, command)
       assert bool(installations) is docs, (name, job, version, installations)
       assert all(installation < index for installation in installations)
@@ -328,7 +318,7 @@ def test_python_ci_keeps_runtime_and_docs_gates(
   check_python_ci(workflow, name, jobs, flags)
 
 
-@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'docs-on-312', 'skip-docs', 'no-docs-install', 'no-runtime-scope', 'no-312-runtime-scope', 'changed-check-name', 'retired-flag'])
+@pytest.mark.parametrize('defect', ['no-min-docs', 'docs-on-311', 'docs-on-312', 'skip-docs', 'no-docs-install', 'no-runtime-scope', 'no-312-runtime-scope', 'changed-check-name'])
 def test_python_ci_rejects_scope_regressions(defect: str) -> None:
   workflow = yaml.safe_load((WORKFLOWS / 'on_pull_request.yml').read_text(encoding='utf-8'))
   ubuntu = workflow['jobs']['test-on-ubuntu']
@@ -347,9 +337,6 @@ def test_python_ci_rejects_scope_regressions(defect: str) -> None:
   elif defect in ('no-runtime-scope', 'no-312-runtime-scope'):
     version = '3.11' if defect == 'no-runtime-scope' else '3.12'
     next(leg for leg in legs if leg['python-version'] == version)['scope'] = ''
-  elif defect == 'retired-flag':
-    testing = next(item for item in ubuntu['steps'] if 'run_tests.py' in item.get('run', ''))
-    testing['run'] = testing['run'].replace('-a -v', '-a -v -d')
   else:
     del ubuntu['name']
   with pytest.raises(AssertionError):
@@ -368,7 +355,6 @@ def test_pypy_keeps_test_and_optimized_gates() -> None:
   testing = next(item for item in workflow['jobs']['build']['steps'] if item.get('name') == 'Testing')
   arguments = set(shlex.split(testing['run']))
   assert {'pypy', './run_tests.py', '-s', '-hko', '-osmoke'} <= arguments
-  assert not {'-d', '--demo', '-i', '--interpreter'} & arguments
 
 
 def response(value: object) -> io.BytesIO:
@@ -528,11 +514,9 @@ class FakeGit:
   '''Answers the git commands of the inline steps from an in-memory branch; anything else runs for real.'''
 
   def __init__(self, commits: dict[str, dict[str, bytes]], head: str | None) -> None:
-    # The repository always holds the control commit the archive job checked out.
-    self.commits, self.head = {CONTROL: CONTROL_TREE} | commits, head
+    self.commits, self.head = commits, head
     self.fetched: str | None = None
     self.modes: dict[str, str] = {}
-    self.control_modes = dict(CONTROL_MODES)
     self.export: Callable[[dict[str, bytes]], dict[str, bytes]] = dict
     self.ls_remote_code: int | None = None
     self.real_run: Callable[..., Any] = subprocess.run
@@ -563,10 +547,6 @@ class FakeGit:
       return self.listing()
     if 'rev-parse' in command:
       return f'{self.fetched}\n'
-    if command[1:3] == ['-C', 'control']:
-      # Of the control checkout only the full recursive listing of one commit is read.
-      assert command[3:-1] == ['ls-tree', '-r', '-z', '--full-tree']
-      return ''.join(f'{self.control_modes.get(name, "100644 blob")} {blob_id(content)}\t{name}\0' for name, content in sorted(self.commits[command[-1]].items()))
     if 'ls-tree' in command:
       return ''.join(f'{self.modes.get(name, "100644 blob")} {blob_id(content)}\t{name}\0' for name, content in sorted(self.commits[command[-1]].items()))
     assert '--format=tar' in command
@@ -575,9 +555,8 @@ class FakeGit:
 
 @pytest.mark.parametrize('change, message', [
   ('exists', None),
-  ('absent', None),
-  ('absent-without-initialize', 'initialize must be true exactly'),
-  ('exists-with-initialize', 'initialize must be true exactly'),
+  ('absent', 'docs-site does not exist; follow the manual recovery steps'),
+  ('invalid-head', 'Invalid docs-site commit'),
   ('query-error', 'Cannot query'),
   ('expected', None),
   ('expected-mismatch', 'moved after the live check'),
@@ -590,10 +569,8 @@ class FakeGit:
 ])
 def test_read_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], change: str, message: str | None) -> None:
   monkeypatch.chdir(tmp_path)
-  absent = change.startswith('absent')
-  initialize = change in ('absent', 'exists-with-initialize')
-  output = environment(monkeypatch, tmp_path, INITIALIZE='true' if initialize else 'false', EXPECTED=HEAD if change == 'expected' else '2' * 40 if change == 'expected-mismatch' else '')
-  git = FakeGit({HEAD: site}, None if absent else HEAD)
+  output = environment(monkeypatch, tmp_path, EXPECTED=HEAD if change == 'expected' else '2' * 40 if change == 'expected-mismatch' else '')
+  git = FakeGit({HEAD: site}, None if change == 'absent' else 'wrong' if change == 'invalid-head' else HEAD)
   if change == 'query-error':
     git.ls_remote_code = 128
   elif change == 'moved-while-read':
@@ -613,21 +590,18 @@ def test_read_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict
     assert not output.exists()
     return
   run_policy(policy)
-  assert outputs(output) == {'parent': '' if absent else HEAD}
-  assert json.loads((tmp_path / 'archive.json').read_text(encoding='utf-8')) == ({} if absent else {name: blob_id(content) for name, content in site.items()})
-  if not absent:
-    assert run_docs_site.read_tree(tmp_path / 'archive.tar') == site
+  assert outputs(output) == {'parent': HEAD}
+  assert json.loads((tmp_path / 'archive.json').read_text(encoding='utf-8')) == {name: blob_id(content) for name, content in site.items()}
+  assert run_docs_site.read_tree(tmp_path / 'archive.tar') == site
 
 
-@pytest.mark.parametrize('mode, parent, expected', [
-  ('publish', HEAD, ['archive', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'intermediate', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
-  ('publish', '', ['archive', '--initialize', '--label', 'v99.0.0', '--output', 'intermediate', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
-  ('pending', HEAD, ['pending', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site']),
-  ('promote', HEAD, ['promote', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site', '--verified-digest', 'f' * 64]),
-  ('resume', HEAD, ['current', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site']),
+@pytest.mark.parametrize('mode, expected', [
+  ('publish', ['archive', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'intermediate', '--candidate', 'candidate/site.tar', '--commit', TAGGED]),
+  ('promote', ['promote', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site', '--verified-digest', 'f' * 64]),
+  ('resume', ['current', '--archive', 'archive.tar', '--label', 'v99.0.0', '--output', 'site']),
 ])
-def test_apply_policy(monkeypatch: pytest.MonkeyPatch, mode: str, parent: str, expected: list[str]) -> None:
-  for key, value in {'MODE': mode, 'LABEL': 'v99.0.0', 'COMMIT': TAGGED, 'DIGEST': 'f' * 64, 'DEV_DIGEST': '', 'DEV_COMMIT': SHA, 'PARENT': parent}.items():
+def test_apply_policy(monkeypatch: pytest.MonkeyPatch, mode: str, expected: list[str]) -> None:
+  for key, value in {'MODE': mode, 'LABEL': 'v99.0.0', 'COMMIT': TAGGED, 'DIGEST': 'f' * 64, 'DEV_DIGEST': '', 'DEV_COMMIT': SHA}.items():
     monkeypatch.setenv(key, value)
   assembler = Mock(return_value='{}')
   monkeypatch.setattr(subprocess, 'check_output', assembler)
@@ -677,7 +651,7 @@ SIGNED: Final[dict[str, bool]] = {'isValid': True, 'wasSignedByGitHub': True}
 
 
 class FakeApi:
-  '''The endpoints of the commit step over FakeGit's object store: refs, the GraphQL control commit lookup and createCommitOnBranch.
+  '''The endpoints of the commit step over FakeGit's object store: refs and createCommitOnBranch.
 
   Request and response shapes follow the published REST and GraphQL schemas; every platform answer is a per-test fixture choice.
   '''
@@ -688,14 +662,11 @@ class FakeApi:
     self.parents: dict[str, list[str]] = {}
     self.calls: list[tuple[str, str, dict[str, Any]]] = []
     self.signature: dict[str, bool] | None = SIGNED
-    # The control commit's signature: valid whether the user's own key or GitHub's made it. control_answer replaces the whole lookup.
-    self.control_signature: dict[str, bool] | None = {'isValid': True}
-    self.control_answer: dict[str, Any] | None = None
     self.stored: Callable[[dict[str, bytes]], dict[str, bytes]] = dict  # What the platform commits for the requested files.
     self.modes: dict[str, str] = {}
     self.reported_parent: str | None = None
     self.staging_moved: str | None = None  # Someone moves the staging branch right before the GraphQL call.
-    self.moved: str | None = None  # Someone moves or creates docs-site right before this run does.
+    self.moved: str | None = None  # Someone moves docs-site right before this run does.
     self.fail: set[str] = set()
 
   def head(self, branch: str) -> str | None:
@@ -713,22 +684,15 @@ class FakeApi:
     body = json.loads(request.data) if isinstance(request.data, bytes) else {}
     self.calls.append((method, path, body))
     if path == '/graphql':
-      if body['query'].startswith('query('):
-        return self.control_commit(body)
       return self.create_commit_on_branch(request.full_url, body)
     assert path.startswith(REPO + '/git/')
     path = path.removeprefix(REPO)
     if (method, path) == ('POST', '/git/refs'):
-      # Only docs-site and this run's staging branch are ever written; main, release branches and tags are not.
       branch = body['ref'].removeprefix('refs/heads/')
-      assert branch in ('docs-site', STAGING) and body['sha'] in self.git.commits
-      if branch == 'docs-site' and self.moved is not None:
-        self.git.head = self.moved
+      assert branch == STAGING and body['sha'] in self.git.commits
       if self.head(branch) is not None:
         raise http_error(request.full_url, 422, 'Reference already exists')
       self.point(branch, body['sha'])
-      if branch == 'docs-site' and 'create-response-lost' in self.fail:
-        raise http_error(request.full_url, 502, 'Bad Gateway')
       return response({'ref': body['ref'], 'object': {'sha': body['sha']}})
     if method == 'PATCH':
       assert path == '/git/refs/heads/docs-site' and body['force'] is False
@@ -743,16 +707,6 @@ class FakeApi:
       raise http_error(request.full_url, 502, 'Bad Gateway')
     del self.branches[STAGING]
     return io.BytesIO(b'')
-
-  def control_commit(self, body: dict[str, Any]) -> io.BytesIO:
-    # Repository.object(oid) is a GitObject; the step selects a commit's oid and whether its signature is valid, nothing more.
-    for selection in ('repository(owner: "0xf3cd", name: "bazi")', 'object(oid: $oid)', '... on Commit { oid signature { isValid } }'):
-      assert selection in body['query']
-    if self.control_answer is not None:
-      return response(self.control_answer)
-    oid = body['variables']['oid']
-    found = {'oid': oid, 'signature': self.control_signature} if oid in self.git.commits else None
-    return response({'data': {'repository': {'object': found}}})
 
   def create_commit_on_branch(self, url: str, body: dict[str, Any]) -> io.BytesIO:
     if 'graphql-unavailable' in self.fail:
@@ -793,7 +747,7 @@ class FakeApi:
 def commit_step(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, git: FakeGit, api: FakeApi, mode: str, label: str, old: Mapping[str, bytes], new: Mapping[str, bytes]) -> Path:
   monkeypatch.chdir(tmp_path)
   parent = git.head or ''
-  output = environment(monkeypatch, tmp_path, MODE=mode, LABEL=label, PARENT=parent, CONTROL=CONTROL, GH_TOKEN='offline-fixture')
+  output = environment(monkeypatch, tmp_path, MODE=mode, LABEL=label, PARENT=parent, GH_TOKEN='offline-fixture')
   shutil.rmtree(tmp_path / 'site', ignore_errors=True)
   write_tree(tmp_path / 'site', new)
   (tmp_path / 'archive.json').write_text(json.dumps({name: blob_id(content) for name, content in old.items()}), encoding='utf-8')
@@ -818,18 +772,16 @@ RELEASE = changed(candidate('v99.2.0', 'c' * 40), {'api.html': b'page', 'api/ind
 DEV = changed(candidate('dev', 'd' * 40, b'next'), {'_static/style.css': None, 'search.html': b'new page'})
 
 
-@pytest.mark.parametrize('case', ['publish-release', 'publish-dev', 'promote', 'pending', 'unchanged', 'initialize'])
+@pytest.mark.parametrize('case', ['publish-release', 'publish-dev', 'promote', 'unchanged'])
 def test_commit_policy_checks_staging_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], case: str) -> None:
-  old = {} if case == 'initialize' else site
+  old = site
   mode, label, new = {
     'publish-release': ('publish', 'v99.2.0', add_build(site, RELEASE, 'v99.2.0', 'c' * 40)[1]),
     'publish-dev': ('publish', 'dev', add_build(site, DEV, 'dev', 'd' * 40)[1]),
     'promote': ('promote', 'v99.0.0', mark_ready(site, 'v99.0.0', run_docs_site.digest(candidate('v99.0.0', TAGGED)))[1]),
-    'pending': ('pending', 'v99.3.0', add_pending(site, 'v99.3.0')[1]),
     'unchanged': ('resume', 'dev', site),
-    'initialize': ('pending', 'v99.1.0', add_pending(None, 'v99.1.0')[1]),
   }[case]
-  git = FakeGit({HEAD: site}, None if case == 'initialize' else HEAD)
+  git = FakeGit({HEAD: site}, HEAD)
   api = FakeApi(git)
   output = commit_step(tmp_path, monkeypatch, git, api, mode, label, old, new)
   commit = outputs(output)['commit']
@@ -838,12 +790,11 @@ def test_commit_policy_checks_staging_first(tmp_path: Path, monkeypatch: pytest.
     return
   # docs-site holds exactly the assembled site and the staging branch is gone.
   assert git.head == commit and git.commits[commit] == new and api.branches == {}
-  # Only initialization looks up the control commit; every other change is one GraphQL call.
   graphql = [body['variables'] for _, path, body in api.calls if path == '/graphql']
-  assert len(graphql) == (2 if case == 'initialize' else 1)
+  assert len(graphql) == 1
   request = graphql[-1]['input']
   (base,) = api.parents[commit]
-  assert request['expectedHeadOid'] == base == (CONTROL if case == 'initialize' else HEAD)
+  assert request['expectedHeadOid'] == base == HEAD
   assert request['message'] == {'headline': f'docs: {mode} {label}', 'body': 'Workflow run 7.'}
   # Only changed files are sent; files missing from the new site are deleted explicitly.
   additions = {item['path']: base64.b64decode(item['contents']) for item in request['fileChanges']['additions']}
@@ -852,13 +803,9 @@ def test_commit_policy_checks_staging_first(tmp_path: Path, monkeypatch: pytest.
   if case == 'publish-dev':
     assert deletions == ['dev/_static/style.css']
   writes = [(method, path.removeprefix(REPO), body.get('ref')) for method, path, body in api.calls if path != '/graphql']
-  update = ('PATCH', '/git/refs/heads/docs-site', None) if case != 'initialize' else ('POST', '/git/refs', 'refs/heads/docs-site')
+  update = ('PATCH', '/git/refs/heads/docs-site', None)
   assert writes == [('POST', '/git/refs', f'refs/heads/{STAGING}'), update, ('DELETE', f'/git/refs/heads/{STAGING}', None)]
-  if case == 'initialize':
-    # The first archive commit deletes every control path the site does not overwrite.
-    assert deletions == sorted(CONTROL_TREE.keys() - new.keys())
-  else:
-    assert deletions == sorted(old.keys() - new.keys())
+  assert deletions == sorted(old.keys() - new.keys())
 
 
 @pytest.mark.parametrize('case, mode, label', [
@@ -866,8 +813,6 @@ def test_commit_policy_checks_staging_first(tmp_path: Path, monkeypatch: pytest.
   ('release-deleted', 'publish', 'v99.0.0'),
   ('other-version', 'publish', 'v99.2.0'),
   ('promote-touches-directory', 'promote', 'v99.0.0'),
-  ('pending-touches-directory', 'pending', 'v99.1.0'),
-  ('resume-changes-anything', 'resume', 'dev'),
   ('generated-deleted', 'promote', 'v99.0.0'),
   ('lookalike-directory', 'publish', 'v99.0.0'),
   ('unknown-root-file', 'publish', 'dev'),
@@ -878,8 +823,6 @@ def test_commit_policy_refuses_stray_changes(tmp_path: Path, monkeypatch: pytest
     'release-deleted': changed(site, {'v99.0.0/build.json': None}),
     'other-version': changed(site, {'v99.2.0/index.html': b'new', 'v99.0.0/index.html': b'edited'}),
     'promote-touches-directory': changed(site, {'v99.0.0/extra.html': b'new'}),
-    'pending-touches-directory': changed(site, {'v99.1.0/index.html': b'new'}),
-    'resume-changes-anything': changed(site, {'versions.json': b'{}'}),
     'generated-deleted': changed(site, {'versions/index.html': None}),
     'lookalike-directory': changed(site, {'v99.0.0.evil/index.html': b'new'}),
     'unknown-root-file': changed(site, {'CNAME': b'example.com'}),
@@ -930,65 +873,6 @@ def test_commit_policy_keeps_site_on_failure(tmp_path: Path, monkeypatch: pytest
   assert git.head == (MOVED if case == 'docs-site-moved' else HEAD) and api.branches == {}
   docs_site_writes = [method for method, path, body in api.calls if path.endswith('/heads/docs-site') or body.get('ref') == 'refs/heads/docs-site']
   assert docs_site_writes == (['PATCH'] if case == 'docs-site-moved' else [])
-
-
-INITIAL = add_build(None, candidate('dev', SHA), 'dev', SHA)[1]
-
-
-@pytest.mark.parametrize('case, message', [
-  ('valid-signature', None),
-  ('replaced-mode-reset', None),
-  ('invalid-signature', 'no valid signature on control commit'),
-  ('unsigned', 'no valid signature on control commit'),
-  ('other-oid', 'no valid signature on control commit'),
-  ('not-found', 'no valid signature on control commit'),
-  ('lookup-error', 'no valid signature on control commit'),
-  ('deletion-dropped', 'tree that differs'),
-  ('replaced-mode-kept', 'tree that differs'),
-  ('staging-moved', 'createCommitOnBranch failed'),
-])
-def test_init_starts_from_signed_control_commit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str, message: str | None) -> None:
-  git = FakeGit({}, None)
-  api = FakeApi(git)
-  if case in ('invalid-signature', 'unsigned'):
-    api.control_signature = {'isValid': False} if case == 'invalid-signature' else None
-  elif case in ('other-oid', 'not-found', 'lookup-error'):
-    answers: dict[str, dict[str, Any]] = {
-      'other-oid': {'data': {'repository': {'object': {'oid': MOVED, 'signature': {'isValid': True}}}}},
-      'not-found': {'data': {'repository': {'object': None}}},
-      'lookup-error': {'data': None, 'errors': [{'type': 'NOT_FOUND', 'message': 'Could not resolve to a Repository'}]}}
-    api.control_answer = answers[case]
-  elif case == 'deletion-dropped':
-    # The platform leaves a control file behind; only the tree check notices.
-    api.stored = lambda files: files | {'README.md': CONTROL_TREE['README.md']}
-  elif case.startswith('replaced-mode'):
-    # The control page the site overwrites is executable. Whether GitHub keeps that mode is not documented; the step holds either way.
-    git.control_modes['index.html'] = '100755 blob'
-    api.modes = {'index.html': '100755'} if case == 'replaced-mode-kept' else {}
-  elif case == 'staging-moved':
-    api.staging_moved = MOVED
-  if message is not None:
-    with pytest.raises(SystemExit, match=message):
-      commit_step(tmp_path, monkeypatch, git, api, 'publish', 'dev', {}, INITIAL)
-    # docs-site is never created and no staging branch is left.
-    assert git.head is None and api.branches == {}
-    assert not [body for _, path, body in api.calls if body.get('ref') == 'refs/heads/docs-site']
-    if 'signature' in message:
-      # Nothing is written before GitHub vouches for the control commit.
-      assert [(method, path) for method, path, _ in api.calls] == [('POST', '/graphql')]
-    return
-  commit = outputs(commit_step(tmp_path, monkeypatch, git, api, 'publish', 'dev', {}, INITIAL))['commit']
-  # docs-site holds exactly the site, and its first archive commit sits directly on the control commit.
-  assert git.head == commit and git.commits[commit] == INITIAL and api.parents[commit] == [CONTROL] and api.branches == {}
-  lookup, change = [body['variables'] for _, path, body in api.calls if path == '/graphql']
-  assert lookup == {'oid': CONTROL} and change['input']['expectedHeadOid'] == CONTROL
-  additions = {item['path']: base64.b64decode(item['contents']) for item in change['input']['fileChanges']['additions']}
-  deletions = [item['path'] for item in change['input']['fileChanges']['deletions']]
-  # The whole site is written and every other control path deleted; index.html exists on both sides and is only overwritten.
-  assert additions == INITIAL and deletions == ['.github/workflows/docs-publish.yml', 'README.md', 'bazi/calendar/__init__.py', 'docs/latest', 'run_tests.py']
-  calls = [(method, path.removeprefix(REPO), body.get('ref'), body.get('sha')) for method, path, body in api.calls]
-  assert calls == [('POST', '/graphql', None, None), ('POST', '/git/refs', f'refs/heads/{STAGING}', CONTROL), ('POST', '/graphql', None, None),
-    ('POST', '/git/refs', 'refs/heads/docs-site', commit), ('DELETE', f'/git/refs/heads/{STAGING}', None, None)]
 
 
 def test_commit_policy_warns_if_branch_stays(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], capsys: pytest.CaptureFixture[str]) -> None:
@@ -1052,14 +936,13 @@ def readback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, git: FakeGit, page
   ('none', 'v99.0.0', None),
   ('check', 'v99.0.0', None),
   ('late', 'v99.0.0', None),
-  ('pending-label', 'v99.1.0', None),
   ('own-file-differs', 'v99.0.0', 'still differs'),
   ('own-hidden-file-missing', 'v99.0.0', 'still differs'),
   ('manifest-differs', 'v99.0.0', 'still differs'),
   ('selector-differs', 'v99.0.0', 'still differs'),
   ('root-page-missing', 'v99.0.0', 'still differs'),
   ('retained-version-differs', 'v99.0.0', 'still differs'),
-  ('retained-version-missing', 'v99.1.0', 'still differs'),
+  ('retained-version-missing', 'dev', 'still differs'),
   ('retained-page-differs', 'v99.0.0', 'still differs'),
   ('retained-hidden-file-missing', 'v99.0.0', 'still differs'),
   ('retained-digest-differs', 'v99.0.0', 'Live dev digest differs'),
@@ -1072,7 +955,6 @@ def test_readback_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: 
   if change.endswith('digest-differs'):
     # The archive records a digest its own files do not have: byte equality with the archive alone would let it through.
     recorded = next(entry for entry in read_manifest(site['versions.json']) if entry.label == ('dev' if change.startswith('retained') else 'v99.0.0')).digest
-    assert recorded is not None
     archive = changed(site, {'versions.json': site['versions.json'].replace(recorded.encode(), b'0' * 64)})
   git = FakeGit({HEAD: archive}, HEAD)
   if change == 'branch-moved':
@@ -1097,7 +979,7 @@ def test_readback_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: 
   result = readback(tmp_path, monkeypatch, git, pages, label, commit)
   entry = next(entry for entry in read_manifest(site['versions.json']) if entry.label == label)
   # The digest is recomputed from live bytes and must equal what the assembler recorded.
-  assert result == {'commit': HEAD, 'digest': entry.digest or '', 'dev-digest': run_docs_site.digest(candidate('dev', SHA))}
+  assert result == {'commit': HEAD, 'digest': entry.digest, 'dev-digest': run_docs_site.digest(candidate('dev', SHA))}
   # Every archived file is read back, whichever version is being checked.
   assert set(pages.requests) == set(site)
 
@@ -1107,7 +989,7 @@ class Platform:
 
   def __init__(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     self.tmp_path, self.monkeypatch = tmp_path, monkeypatch
-    self.git = FakeGit({}, None)
+    self.git = FakeGit({HEAD: run_docs_site.render_site({})}, HEAD)
     self.api = FakeApi(self.git)
     self.pages = FakePages({})
     self.runs = 0
@@ -1122,11 +1004,11 @@ class Platform:
   def check(self, label: str) -> dict[str, str]:
     return readback(self.job('check'), self.monkeypatch, self.git, self.pages, label, '')
 
-  def archive(self, mode: str, label: str, *, build: dict[str, bytes] | None = None, dev_build: dict[str, bytes] | None = None, checked: Mapping[str, str] | None = None, initialize: bool | None = None) -> str:
+  def archive(self, mode: str, label: str, *, build: dict[str, bytes] | None = None, dev_build: dict[str, bytes] | None = None, checked: Mapping[str, str] | None = None) -> str:
     path = self.job('archive')
-    output = environment(self.monkeypatch, path, INITIALIZE='true' if (self.git.head is None if initialize is None else initialize) else 'false',
+    output = environment(self.monkeypatch, path,
       EXPECTED=(checked or {}).get('commit', ''), MODE=mode, LABEL=label, COMMIT=json.loads(build['build.json'])['commit'] if build else '',
-      DIGEST=(checked or {}).get('digest', ''), DEV_DIGEST=(checked or {}).get('dev-digest', ''), DEV_COMMIT=SHA, CONTROL=CONTROL, GH_TOKEN='offline-fixture')
+      DIGEST=(checked or {}).get('digest', ''), DEV_DIGEST=(checked or {}).get('dev-digest', ''), DEV_COMMIT=SHA, GH_TOKEN='offline-fixture')
     (path / 'control').mkdir()
     shutil.copy(run_docs_site.__file__, path / 'control/run_docs_site.py')
     if build is not None:
@@ -1164,21 +1046,12 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
   platform = Platform(tmp_path, monkeypatch)
   v1, v2 = candidate('v99.0.0', TAGGED), candidate('v99.1.0', 'c' * 40)
 
-  # Declare v99.1.0 pending first; the selector anchor exists before any directory does.
-  commit = platform.archive('pending', 'v99.1.0')
-  platform.deploy(commit)
-  assert platform.readback('v99.1.0', commit) == {'commit': commit, 'digest': '', 'dev-digest': ''}
-  assert '<li id="v99.1.0">v99.1.0：文档待就绪</li>' in platform.pages.files['versions/index.html'].decode()
-
   # Archive and deploy v99.0.0: live and read back, still not ready and not latest.
   commit = platform.archive('publish', 'v99.0.0', build=v1)
   platform.deploy(commit)
   platform.readback('v99.0.0', commit)
   assert platform.manifest()['latest'] is None
-  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('dev', 'archived'), ('v99.1.0', 'pending'), ('v99.0.0', 'archived')]
-  with pytest.raises(subprocess.CalledProcessError):
-    platform.archive('promote', 'v99.1.0', checked=platform.check('v99.1.0'))
-  assert 'v99.1.0 has no archived directory to mark ready' in capfd.readouterr().err
+  assert [(entry['label'], entry['state']) for entry in platform.manifest()['versions']] == [('dev', 'archived'), ('v99.0.0', 'archived')]
 
   # Promotion needs a fresh live check; afterwards v99.0.0 is ready and latest.
   commit = platform.archive('promote', 'v99.0.0', checked=platform.check('v99.0.0'))
@@ -1201,7 +1074,7 @@ def test_state_chain_through_the_workflow_steps(tmp_path: Path, monkeypatch: pyt
 
   # Resume redeploys the archive as it is; then promotion succeeds and latest moves.
   commit = platform.archive('resume', 'v99.1.0')
-  assert commit == archived
+  assert commit == archived and platform.artifact == platform.git.commits[archived]
   platform.deploy(commit)
   platform.readback('v99.1.0', commit)
   checked = platform.check('v99.1.0')
@@ -1276,7 +1149,7 @@ def test_dual_change_failure_commits_nothing(tmp_path: Path, monkeypatch: pytest
 
 def test_promote_without_dev_creates_no_dev(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
   platform = Platform(tmp_path, monkeypatch)
-  _, tree = add_build(None, candidate('v99.0.0', TAGGED), 'v99.0.0', TAGGED)
+  _, tree = add_build(run_docs_site.render_site({}), candidate('v99.0.0', TAGGED), 'v99.0.0', TAGGED)
   platform.git.commits[HEAD], platform.git.head, platform.pages.files = tree, HEAD, tree
   checked = platform.check('v99.0.0')
   assert checked['dev-digest'] == ''
@@ -1284,58 +1157,19 @@ def test_promote_without_dev_creates_no_dev(tmp_path: Path, monkeypatch: pytest.
   assert set(run_docs_site.load_archive(platform.git.commits[commit])) == {'v99.0.0'}
 
 
-def test_resume_migrates_only_three_html_pages(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-  fixture = json.loads((Path(run_docs_site.__file__).parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
-  old = {name: raw.encode() for name, raw in fixture['files'].items()}
-  platform = Platform(tmp_path, monkeypatch)
-  platform.git.commits[HEAD], platform.git.head = old, HEAD
-  commit = platform.archive('resume', 'v99.1.0')
-  new = platform.git.commits[commit]
-  assert {name for name in old.keys() | new.keys() if old.get(name) != new.get(name)} == {
-    'index.html', 'versions/index.html', 'latest/index.html'}
-  assert new['versions.json'] == old['versions.json']
-  assert platform.archive('resume', 'v99.1.0') == commit
-  for path in ('versions.json', 'dev/index.html', 'v99.0.0/index.html'):
-    with pytest.raises(SystemExit, match='Refusing archive change'):
-      commit_step(platform.job('bad-resume'), monkeypatch, platform.git, platform.api, 'resume', 'v99.1.0', new, new | {path: b'wrong'})
-    assert platform.git.head == commit
-
-
-@pytest.mark.parametrize('failure', ['control-unsigned', 'staging-moved', 'graphql-unavailable', 'unsigned', 'graphql-response-lost', 'create-response-lost', 'created-meanwhile'])
-def test_interrupted_init_can_be_retried(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
-  platform = Platform(tmp_path, monkeypatch)
-  build = candidate('dev', SHA)
-  if failure == 'control-unsigned':
-    platform.api.control_signature = None
-  elif failure == 'staging-moved':
-    platform.api.staging_moved = MOVED
-  elif failure == 'unsigned':
-    platform.api.signature = None
-  elif failure == 'created-meanwhile':
-    platform.git.commits[MOVED] = {'index.html': b'another writer'}
-    platform.api.moved = MOVED
-  else:
-    platform.api.fail = {failure}
-  with pytest.raises((SystemExit, urllib.error.HTTPError)):
-    platform.archive('publish', 'dev', build=build)
-  # No staging branch is left; docs-site is absent, the concurrent writer's, or a first archive that passed every check.
-  assert platform.api.branches == {}
-  # The retry finds GitHub vouching for the control commit, as a dispatch from a signed main commit would.
-  platform.api.signature, platform.api.control_signature, platform.api.moved, platform.api.staging_moved, platform.api.fail = SIGNED, {'isValid': True}, None, None, set()
-  if failure == 'created-meanwhile':
-    assert platform.git.head == MOVED
-    return
-  if failure == 'create-response-lost':
-    commit = platform.git.head
-    assert commit is not None and run_docs_site.load_archive(platform.git.commits[commit])['dev'][1] == build
-    with pytest.raises(SystemExit, match='initialize must be true exactly'):
-      platform.archive('publish', 'dev', build=build, initialize=True)
-    # Dispatching again without initialize finds the build archived and writes nothing.
-    calls = len(platform.api.calls)
-    assert platform.archive('publish', 'dev', build=build) == commit and len(platform.api.calls) == calls
-  else:
-    assert platform.git.head is None
-    commit = platform.archive('publish', 'dev', build=build)
-  platform.deploy(commit)
-  assert platform.readback('dev', commit) == {'commit': commit, 'digest': run_docs_site.digest(build), 'dev-digest': run_docs_site.digest(build)}
-  assert platform.api.branches == {}
+@pytest.mark.parametrize('path', [
+  'index.html', 'versions/index.html', 'latest/index.html', 'versions.json', 'dev/index.html', 'v99.0.0/index.html',
+])
+@pytest.mark.parametrize('change', ['edit', 'add', 'delete'])
+def test_resume_refuses_file_changes(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: dict[str, bytes], path: str, change: str,
+) -> None:
+  old = mark_ready(site, 'v99.0.0', run_docs_site.digest(candidate('v99.0.0', TAGGED)))[1]
+  if change == 'add':
+    del old[path]
+  new = changed(old, {path: None if change == 'delete' else b'wrong'})
+  git = FakeGit({HEAD: old}, HEAD)
+  api = FakeApi(git)
+  with pytest.raises(SystemExit, match='Refusing archive change'):
+    commit_step(tmp_path, monkeypatch, git, api, 'resume', 'dev', old, new)
+  assert git.head == HEAD and api.calls == []

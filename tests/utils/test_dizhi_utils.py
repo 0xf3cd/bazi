@@ -93,6 +93,7 @@ def test_tongluhe_literal_order() -> None:
     assert dizhi_utils.tongluhe(first, second) == (frozenset((first, second)) in expected)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'liuhe anhe tonghe tongluhe banhe gonghe gonghui chong po hai sheng ke')
 @pytest.mark.parametrize('query', [
   dizhi_utils.liuhe, dizhi_utils.anhe, dizhi_utils.tonghe, dizhi_utils.tongluhe,
   dizhi_utils.banhe, dizhi_utils.gonghe, dizhi_utils.gonghui,
@@ -167,19 +168,10 @@ def test_search_sanhui(rng: random.Random) -> None:
     assert _dz_equal(result, expected_result)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'sanhui')
 def test_sanhui() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.sanhui(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhui(Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.sanhui(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhui((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhui({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhui([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sanhui('亥', '子', '丑') # type: ignore
 
@@ -226,15 +218,7 @@ def test_search_liuhe(rng: random.Random) -> None:
 
 def test_liuhe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.liuhe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.liuhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.liuhe((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.liuhe({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.liuhe([Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.liuhe('亥', '子') # type: ignore
 
@@ -312,15 +296,7 @@ def test_search_anhe(rng: random.Random) -> None:
 
 def test_anhe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.anhe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.anhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.anhe((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.anhe({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.anhe([Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.anhe('亥', '子') # type: ignore
   with pytest.raises(TypeError):
@@ -388,15 +364,7 @@ def test_search_tonghe(rng: random.Random) -> None:
 
 def test_tonghe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.tonghe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.tonghe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tonghe((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tonghe({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tonghe([Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.tonghe('亥', '子') # type: ignore
 
@@ -438,15 +406,7 @@ def test_search_tongluhe(rng: random.Random) -> None:
 
 def test_tongluhe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.tongluhe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.tongluhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tongluhe((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tongluhe({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.tongluhe([Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.tongluhe('亥', '子') # type: ignore
 
@@ -490,19 +450,10 @@ def test_search_sanhe(rng: random.Random) -> None:
     assert _dz_equal(result, expected_result)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'sanhe')
 def test_sanhe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.sanhe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhe(Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.sanhe(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhe((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhe({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sanhe([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sanhe('亥', '子', '丑') # type: ignore
 
@@ -551,15 +502,7 @@ def test_search_banhe(rng: random.Random) -> None:
 
 def test_banhe() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.banhe(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.banhe(Dizhi.子, Dizhi.辰, Dizhi.申) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.banhe((Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.banhe({Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.banhe([Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.banhe('亥', '子') # type: ignore
 
@@ -695,6 +638,7 @@ def test_search_xing(rng: random.Random) -> None:
       assert _dz_equal(result, expected_result)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'search')
 def test_search_def_type_gates() -> None:
   # Every batch entry requires the validated definition object, including empty queries.
   with pytest.raises(TypeError):
@@ -750,6 +694,7 @@ def test_discover_def_passthrough() -> None:
   assert DizhiRelation.刑 not in mutual_strict
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'xing')
 def test_xing_negative(rng: random.Random) -> None:
   with pytest.raises(ValueError):
     dizhi_utils.xing(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰)
@@ -908,17 +853,9 @@ def test_search_chong(rng: random.Random) -> None:
 
 def test_chong() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.chong(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.chong(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.chong(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.chong((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.chong({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.chong([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.chong('亥', '子') # type: ignore
   with pytest.raises(TypeError):
@@ -958,17 +895,9 @@ def test_search_po(rng: random.Random) -> None:
 
 def test_po() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.po(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.po(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.po(Dizhi.子, Dizhi.辰, Dizhi.子, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.po((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.po({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.po([Dizhi.亥, Dizhi.子, Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.po([Dizhi.亥, Dizhi.子], [Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
@@ -1017,13 +946,7 @@ def test_search_hai(rng: random.Random) -> None:
 
 def test_hai() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.hai(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.hai(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.hai((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.hai({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.hai([Dizhi.亥], [Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
@@ -1059,13 +982,7 @@ def test_search_sheng_ke(rng: random.Random) -> None:
 
 def test_sheng() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.sheng(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.sheng(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sheng((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.sheng({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.sheng([Dizhi.亥], [Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
@@ -1082,13 +999,7 @@ def test_sheng() -> None:
 
 def test_ke() -> None:
   with pytest.raises(TypeError):
-    dizhi_utils.ke(Dizhi.子) # type: ignore
-  with pytest.raises(TypeError):
     dizhi_utils.ke(Dizhi.子, Dizhi.辰, Dizhi.辰) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.ke((Dizhi.亥, Dizhi.子, Dizhi.丑)) # type: ignore
-  with pytest.raises(TypeError):
-    dizhi_utils.ke({Dizhi.亥, Dizhi.子, Dizhi.丑}) # type: ignore
   with pytest.raises(TypeError):
     dizhi_utils.ke([Dizhi.亥], [Dizhi.丑]) # type: ignore
   with pytest.raises(TypeError):
@@ -1103,9 +1014,8 @@ def test_ke() -> None:
       assert not dizhi_utils.ke(dz1, dz2)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'search')
 def test_search_negative() -> None:
-  with pytest.raises(TypeError):
-    dizhi_utils.search([Dizhi.子, Dizhi.午]) # type: ignore
 
   for tg_relation in TianganRelation:
     with pytest.raises(TypeError):
@@ -1134,21 +1044,8 @@ def test_ganzhi_occurrence() -> None:
   assert occurrence != GanzhiOccurrence(0, Ganzhi.from_str('庚申'))
   assert hash(occurrence) == hash(GanzhiOccurrence(2, Ganzhi.from_str('庚申')))
 
-  with pytest.raises(TypeError):
-    GanzhiOccurrence('2', Ganzhi.from_str('庚申')) # type: ignore
-  with pytest.raises(ValueError):
-    GanzhiOccurrence(-1, Ganzhi.from_str('庚申'))
-  with pytest.raises(TypeError):
-    GanzhiOccurrence(2, Dizhi.申) # type: ignore
-
-
-def test_every_occurrence_field_has_type_gate() -> None:
-  # Mechanical binding: adding a field without a gate fails here.
-  # 机械绑定：加字段不加闸会在这里响。
-  valid: dict[str, object] = {'index': 0, 'ganzhi': Ganzhi.from_str('庚申')}
-  for f in dataclasses.fields(GanzhiOccurrence):
-    with pytest.raises(TypeError):
-      GanzhiOccurrence(**{**valid, f.name: object()}) # type: ignore
+  with pytest.raises(dataclasses.FrozenInstanceError):
+    occurrence.index = 0 # type: ignore[misc]
 
 
 def test_search_ganzhis_occurrence_identity() -> None:
@@ -1325,7 +1222,7 @@ def test_search_ganzhis_covers_gong_rule_tables() -> None:
 
 @pytest.mark.parametrize('ganzhi_strs', [
   ('乙丑', '癸亥', '己未'),
-  ('丁丑', '癸寅', '己戌'),
+  ('丁丑', '甲寅', '庚戌'),
   ('辛卯', '癸巳', '己丑'),
   ('癸亥', '庚申', '戊辰'),
 ])
@@ -1359,6 +1256,7 @@ def test_search_lu_profile_rejects_yang(
   ) == ()
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_mutual_ganzhis')
 def test_discover_mutual_scope_identity() -> None:
   first = (Ganzhi.from_str('庚申'), Ganzhi.from_str('丙午'))
   second = (Ganzhi.from_str('甲寅'), Ganzhi.from_str('庚辰'))
@@ -1420,7 +1318,7 @@ def test_joint_relation_definitions(
   gong_def: DizhiRules.GongDef,
 ) -> None:
   definitions = DizhiRelationDefinitions(anhe_def=anhe_def, xing_def=xing_def, gong_def=gong_def)
-  ganzhis = tuple(Ganzhi.from_str(value) for value in ('甲寅', '甲午', '甲巳', '甲子'))
+  ganzhis = tuple(Ganzhi.from_str(value) for value in ('甲寅', '甲午', '乙巳', '甲子'))
   anhe_expected = set() if anhe_def is DizhiRules.AnheDef.MANGPAI else {
     frozenset({Dizhi.寅, Dizhi.午}), frozenset({Dizhi.子, Dizhi.巳}),
   }
@@ -1528,6 +1426,8 @@ def test_discovery_relation_selection(monkeypatch: pytest.MonkeyPatch) -> None:
   assert tuple(non_gong) == (DizhiRelation.六合,)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_ganzhis')
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_mutual_ganzhis')
 @pytest.mark.parametrize('mutual', [False, True])
 def test_discovery_relation_selection_negative(mutual: bool) -> None:
   query: Callable[..., GanzhiRelationDiscovery] = (
@@ -1563,6 +1463,7 @@ def test_search_ganzhis_projection() -> None:
     assert _project_ganzhi_combos(positioned) == set(original)
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'search_ganzhis')
 def test_search_ganzhis_negative() -> None:
   relation = DizhiRelation.六合
   with pytest.raises(TypeError):
@@ -1610,6 +1511,7 @@ def test_discover_ganzhis_projection() -> None:
   )
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_ganzhis')
 def test_discover_ganzhis_negative() -> None:
   ganzhis = [Ganzhi.from_str('甲子')]
   with pytest.raises(TypeError):
@@ -1727,6 +1629,7 @@ def test_discover(rng: random.Random) -> None:
     assert discovery == discovery2
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover')
 def test_discover_negative() -> None:
   with pytest.raises(TypeError):
     dizhi_utils.discover([Dizhi.子, '午']) # type: ignore
@@ -1794,6 +1697,7 @@ def test_discover_mutual(rng: random.Random) -> None:
         assert len(expected_combos) == 0
 
 
+@pytest.mark.input_contract('bazi.utils.dizhi_utils', 'discover_mutual')
 def test_discover_mutual_negative() -> None:
   with pytest.raises(TypeError):
     dizhi_utils.discover_mutual([Dizhi.亥, '子'], [Dizhi.丑]) # type: ignore

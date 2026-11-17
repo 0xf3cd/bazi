@@ -184,7 +184,7 @@ for result in analyzer.transits.kongwang(transits):
 
 若已持有干支，只需做一次低层查表，使用 {py:func}`~bazi.utils.shensha_utils.xunkong` 返回旬空二支，
 或用 {py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。两者要求查法依据是合法六十甲子，
-目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 `Ganzhi` 自身的构造范围不变。
+目标只按地支判断，不附加天干或纳音条件。阴阳不配的组合在 `Ganzhi` 构造时即被拒绝。
 
 打印位置时，原局柱位 `Zhu` 用 `str(value)` 取得中文值，流运种类 `TransitKind` 用 `.value` 取得
 `dayun`、`liunian` 等标签。
@@ -194,7 +194,7 @@ for result in analyzer.transits.kongwang(transits):
 
 {py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
 {py:data}`~bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS` 保存魁罡、天赦两个整柱名称。
-两表均从 `relationship` 模块导入；整柱结果是完整日柱或 `None`。
+两表均从 `relationship` 模块导入，键与结果映射对应，值为中文名；整柱结果是完整日柱或 `None`。
 
 ```{testcode} relations-shensha-labels
 from bazi.analyzer.relationship import (
@@ -207,6 +207,7 @@ chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
 result = RelationshipAnalyzer(chart).at_birth.shensha
 for key, label in SHENSHA_LABELS.items():
   branches = result[key]
+  assert isinstance(branches, frozenset)
   if branches:
     print(label, ''.join(map(str, sorted(branches, key=lambda branch: branch.index))))
 for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
@@ -223,7 +224,8 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 天赦 无
 ```
 
-支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
+支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时，用
+`AtBirthAnalysis.kongwang` 或 `TransitAnalysis.kongwang(transits)`。
 
 (relations-transit-house)=
 ## 查流运与婚姻宫的关系

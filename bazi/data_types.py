@@ -63,27 +63,27 @@ class HiddenTianganDict(frozendict[Tiangan, int]):
     return ','.join([f'{k}:{v}' for k, v in sorted_kv])
 
 
-PillarDataType = TypeVar('PillarDataType')
+T = TypeVar('T')
+U = TypeVar('U')
 @dataclass(frozen=True)
-class BaziData(Generic[PillarDataType]):
+class BaziData(Generic[T]):
   '''
-  按年、月、日、时顺序存储四份 `PillarDataType` 数据的泛型容器。
+  按年、月、日、时顺序存储四份数据的泛型容器；`T` 为每柱的数据类型。
   '''
-  year: PillarDataType
-  month: PillarDataType
-  day: PillarDataType
-  hour: PillarDataType
+  year:  T
+  month: T
+  day:   T
+  hour:  T
 
-  def __iter__(self) -> Iterator[PillarDataType]:
+  def __iter__(self) -> Iterator[T]:
     return iter((self.year, self.month, self.day, self.hour))
 
 
-TianganDataType = TypeVar('TianganDataType')
-DizhiDataType = TypeVar('DizhiDataType')
 @dataclass(frozen=True)
-class GanzhiData(Generic[TianganDataType, DizhiDataType]):
+class GanzhiData(Generic[T, U]):
   '''
   存储一柱天干与地支数据的容器，可作为 `BaziData` 的柱数据类型。
+  `T`、`U` 分别为天干与地支的数据类型。
   '''
-  tiangan: TianganDataType
-  dizhi: DizhiDataType
+  tiangan: T
+  dizhi:   U

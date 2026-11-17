@@ -197,6 +197,7 @@ def test_hko_still_rejects_subday_precision(precision: str) -> None:
 
 
 @pytest.mark.parametrize('located', [False, True])
+@pytest.mark.optimized
 def test_auxiliary_reads_preserve_old_contracts(located: bool) -> None:
   original = Bazi.create('2024-04-10T23:30:12+08:00' if located else '2024-04-10 23:30',
                          'male', BaziConfig.from_values(precision='minute'), longitude=0.0 if located else None)

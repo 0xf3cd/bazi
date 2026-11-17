@@ -26,18 +26,12 @@ def xunkong(ganzhi: Ganzhi) -> frozenset[Dizhi]:
   '''返回干支所在旬的空亡二支；只实现六甲旬空，不含单支筛选或吉凶解释。
 
   Args:
-  - ganzhi: (Ganzhi) 完整查法锚。外层或内部干支字段错型抛 TypeError，阴阳不配抛 ValueError。
+  - ganzhi: (Ganzhi) 完整查法锚；错型抛 TypeError。
 
   Return: (frozenset[Dizhi]) 所在旬未配天干的二支；取锚柱由调用方决定。
   '''
   if not isinstance(ganzhi, Ganzhi):
     raise TypeError(f'Expected Ganzhi, got {type(ganzhi)}')
-  if not isinstance(ganzhi.tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(ganzhi.tiangan)}')
-  if not isinstance(ganzhi.dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(ganzhi.dizhi)}')
-  if ganzhi not in ShenshaRules.KONGWANG:
-    raise ValueError(f'Unsupported sexagenary Ganzhi: {ganzhi}')
   return ShenshaRules.KONGWANG[ganzhi]
 
 

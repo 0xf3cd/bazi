@@ -17,7 +17,7 @@ from collections.abc import Callable, Mapping
 import pytest
 
 import run_docs_site
-from run_docs_site import GENERATED, add_build, add_pending, digest, keep_current, mark_ready, read_manifest, read_tree, write_site
+from run_docs_site import GENERATED, add_build, digest, keep_current, mark_ready, read_manifest, read_tree, write_site
 
 
 SCRIPT = Path(run_docs_site.__file__).resolve()
@@ -46,12 +46,12 @@ def make_tar(path: Path, files: Mapping[str, bytes], extra: Callable[[tarfile.Ta
   return path
 
 
-def publish(archive: Mapping[str, bytes] | None, candidate: Mapping[str, bytes], label: str, commit: str | None = None) -> tuple[str, dict[str, bytes]]:
+def publish(archive: Mapping[str, bytes], candidate: Mapping[str, bytes], label: str, commit: str | None = None) -> tuple[str, dict[str, bytes]]:
   return add_build(archive, candidate, label, commit or COMMITS[label])
 
 
 def ready(archive: Mapping[str, bytes], label: str) -> dict[str, bytes]:
-  status, site = mark_ready(archive, label, state(archive, label).digest or '')
+  status, site = mark_ready(archive, label, state(archive, label).digest)
   assert status == 'promoted'
   return site
 
@@ -75,7 +75,7 @@ def version_files(site: Mapping[str, bytes], *labels: str) -> dict[str, bytes]:
 @pytest.fixture
 def archive() -> dict[str, bytes]:
   '''A synthetic archive holding dev and two releases, all archived but not yet read back.'''
-  _, site = publish(None, build(DEV), DEV)
+  _, site = publish(run_docs_site.render_site({}), build(DEV), DEV)
   _, site = publish(site, build(V1), V1)
   _, site = publish(site, build(V2), V2)
   return site
@@ -107,12 +107,10 @@ def test_archived_versions_listed_not_linked(archive: dict[str, bytes]) -> None:
   assert '不表示该版软件没有发布' in page
 
 
-def test_state_chain_pending_to_ready_latest() -> None:
-  status, site = add_pending(None, V1)
-  assert status == 'added' and state(site, V1) == (V1, 'pending', None, None)
-  assert not any(name.startswith(V1 + '/') for name in site)
-  assert f'<li id="{V1}">{V1}：文档待就绪</li>' in selector(site) and latest(site) is None
-
+def test_state_chain_archived_to_ready_latest() -> None:
+  site = run_docs_site.render_site({})
+  assert run_docs_site.load_archive(site) == {}
+  assert site['index.html'] == run_docs_site.ROOT_PAGE and latest(site) is None
   status, site = publish(site, build(V1), V1)
   assert status == 'added' and state(site, V1).state == 'archived' and latest(site) is None
   assert f'<li id="{V1}">{V1}：文档待就绪 · 源码 ' in selector(site)
@@ -137,10 +135,9 @@ def test_state_chain_pending_to_ready_latest() -> None:
 def test_latest_is_the_highest_ready_release() -> None:
   # v99.10.0 sorts numerically above v99.9.0, and an archived higher release does not count.
   labels = {'v99.9.0': '9' * 40, 'v99.10.0': 'e' * 40, 'v99.11.0': 'f' * 40}
-  site = None
+  site = run_docs_site.render_site({})
   for label, commit in labels.items():
     _, site = add_build(site, build(label, commit=commit), label, commit)
-  assert site is not None
   site = ready(site, 'v99.9.0')
   assert latest(site) == 'v99.9.0'
   assert b'url=latest/' in site['index.html'] and b'url=../v99.9.0/' in site['latest/index.html']
@@ -150,68 +147,23 @@ def test_latest_is_the_highest_ready_release() -> None:
   assert b'url=../v99.10.0/' in site['latest/index.html']
 
 
-@pytest.mark.parametrize('operation', ['resume', 'publish', 'pending', 'promote'])
-def test_legacy_layout_migrates_only_root(operation: str) -> None:
-  fixture = json.loads((SCRIPT.parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
-  old = {name: content.encode('utf-8') for name, content in fixture['files'].items()}
-  run_docs_site.load_archive(old)
-  site = {
-    'resume': lambda: keep_current(old, DEV),
-    'publish': lambda: publish(old, build(V3), V3),
-    'pending': lambda: add_pending(old, V3),
-    'promote': lambda: mark_ready(old, V2, state(old, V2).digest or ''),
-  }[operation]()[1]
-  assert version_files(site, DEV, V1, V2) == version_files(old, DEV, V1, V2)
-  assert b'url=latest/' in site['index.html'] and f'url=../{V2}/'.encode() in site['latest/index.html']
-  assert selector(site).index(f'id="{V2}"') < selector(site).index(f'id="{V1}"') < selector(site).index('id="dev"')
-  assert '构建日期未记录' in selector(site)
-  assert keep_current(site, DEV) == ('unchanged', site)
-  if operation in ('resume', 'promote'):
-    assert site['versions.json'] == old['versions.json']
-    assert {name for name in site.keys() | old.keys() if site.get(name) != old.get(name)} == {
-      'index.html', 'versions/index.html', 'latest/index.html',
-    }
-  for name in ('index.html', 'versions/index.html'):
-    with pytest.raises(ValueError, match='Generated root files differ'):
-      keep_current(site | {name: old[name]}, DEV)
-  for bad in (old | {'latest/index.html': site['latest/index.html']}, site | {'latest/index.html': b'wrong'}, old | {'index.html': b'wrong'}):
-    with pytest.raises(ValueError, match='Generated root files differ'):
-      keep_current(bad, DEV)
-
-
-@pytest.mark.parametrize('unready', ['archived', 'pending'])
-def test_legacy_unready_layout_is_accepted(unready: str) -> None:
-  fixture = json.loads((SCRIPT.parent / 'tests/fixtures/docs_site_v1.json').read_text(encoding='utf-8'))
-  old = {name: content.encode('utf-8') for name, content in fixture['files'].items()}
-  manifest = json.loads(old['versions.json'])
-  manifest['latest'] = V1
-  for entry in manifest['versions']:
-    if entry['label'] in (DEV, V2):
-      entry['state'] = 'archived' if entry['label'] == DEV else unready
-      if entry['state'] == 'pending':
-        entry['commit'] = entry['digest'] = None
-  old['versions.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
-  # These unready rows are literal bytes from the predecessor, not the current compatibility renderer.
-  rows = {DEV: f'<li id="{DEV}">开发版：文档待就绪</li>\n', V2: f'<li id="{V2}">{V2}：文档待就绪</li>\n'}
-  old['versions/index.html'] = ''.join(
-    next((row for label, row in rows.items() if line.startswith(f'<li id="{label}">')), line)
-    for line in selector(old).splitlines(keepends=True)
-  ).replace(f'{V1}</a> · ', f'{V1}</a>（最新发布） · ').encode()
-  if unready == 'pending':
-    old = {name: content for name, content in old.items() if not name.startswith(V2 + '/')}
-  versions = run_docs_site.load_archive(old)
-  assert versions[DEV][0].state == 'archived' and versions[V2][0].state == unready
-  _, site = keep_current(old, DEV)
-  assert site['versions.json'] == old['versions.json']
-  assert version_files(site, DEV, V1, V2) == version_files(old, DEV, V1, V2)
-  assert f'url=../{V1}/'.encode() in site['latest/index.html']
-  assert selector(site).index(f'id="{V1}"') < selector(site).index(f'id="{V2}"') < selector(site).index(f'id="{DEV}"')
-  assert keep_current(site, DEV) == ('unchanged', site)
+@pytest.mark.parametrize('name', ['index.html', 'versions/index.html', 'latest/index.html'])
+@pytest.mark.parametrize('change', ['edited', 'missing'])
+def test_ready_entry_pages_must_match(
+  archive: dict[str, bytes], name: str, change: str,
+) -> None:
+  site = ready(archive, V1)
+  if change == 'edited':
+    site[name] = b'wrong'
+  else:
+    del site[name]
+  with pytest.raises(ValueError, match='Generated root files differ'):
+    keep_current(site, DEV)
 
 
 @pytest.mark.parametrize('built', ['2026-11-02T08:00:00Z', '2024-02-29T23:59:59Z'])
 def test_dev_build_time_follows_replacement(built: str) -> None:
-  _, site = publish(None, build(DEV, built=built), DEV)
+  _, site = publish(run_docs_site.render_site({}), build(DEV, built=built), DEV)
   assert f'<time datetime="{built}">{built}</time>' in selector(site)
   assert '开发版：文档待就绪' in selector(site) and '../dev/index.html' not in selector(site)
   site = ready(site, DEV)
@@ -227,7 +179,7 @@ def test_dev_build_time_follows_replacement(built: str) -> None:
   '2026-11-02T00:00:00+00:00', '2026-11-02T00:00:00.000Z', '2026-11-02T24:00:00Z', '0000-01-01T00:00:00Z'])
 def test_invalid_build_time_is_rejected(built: object) -> None:
   with pytest.raises(ValueError, match='dev: built') as failure:
-    publish(None, build(DEV, built=built), DEV)
+    publish(run_docs_site.render_site({}), build(DEV, built=built), DEV)
   if built in ('2026-02-30T12:00:00Z', '2026-11-02T24:00:00Z', '0000-01-01T00:00:00Z'):
     assert isinstance(failure.value.__cause__, ValueError)
 
@@ -239,25 +191,8 @@ def test_promotion_requires_the_read_back_digest(archive: dict[str, bytes]) -> N
     mark_ready(archive, V1, '')
   with pytest.raises(ValueError, match='no archived directory'):
     mark_ready(archive, V3, 'f' * 64)
-  _, pending = add_pending(archive, V3)
-  with pytest.raises(ValueError, match='no archived directory'):
-    mark_ready(pending, V3, digest({}))
-  with pytest.raises(ValueError, match='no archived directory'):
-    mark_ready(None, V1, 'f' * 64)
   site = ready(archive, V1)
-  assert mark_ready(site, V1, state(site, V1).digest or '') == ('unchanged', site)
-
-
-def test_pending_is_only_for_unarchived_releases(archive: dict[str, bytes]) -> None:
-  with pytest.raises(ValueError, match='Expected vMAJOR.MINOR.PATCH'):
-    add_pending(archive, DEV)
-  with pytest.raises(ValueError, match='already archived'):
-    add_pending(archive, V1)
-  with pytest.raises(ValueError, match='already archived'):
-    add_pending(ready(archive, V1), V1)
-  _, site = add_pending(archive, V3)
-  assert add_pending(site, V3) == ('unchanged', site)
-  assert version_files(site, DEV, V1, V2) == version_files(archive, DEV, V1, V2)
+  assert mark_ready(site, V1, state(site, V1).digest) == ('unchanged', site)
 
 
 def test_same_content_idempotent_keeps_state(archive: dict[str, bytes]) -> None:
@@ -344,15 +279,13 @@ def test_wrong_build_metadata_is_rejected(archive: dict[str, bytes], change: str
 ])
 def test_invalid_labels_are_rejected(label: str) -> None:
   with pytest.raises(ValueError, match='Expected dev or vMAJOR'):
-    add_build(None, build(DEV), label, COMMITS[DEV])
-  with pytest.raises(ValueError, match='Expected vMAJOR'):
-    add_pending(None, label)
+    add_build(run_docs_site.render_site({}), build(DEV), label, COMMITS[DEV])
 
 
 @pytest.mark.parametrize('commit', ['a' * 39, 'A' * 40, 'g' * 40, 'a' * 40 + '\n', 'a' * 41])
 def test_invalid_commits_are_rejected(commit: str) -> None:
   with pytest.raises(ValueError, match='40-hex commit'):
-    add_build(None, build(DEV), DEV, commit)
+    add_build(run_docs_site.render_site({}), build(DEV), DEV, commit)
 
 
 def rewrite(archive: dict[str, bytes], manifest: dict[str, object]) -> None:
@@ -366,7 +299,7 @@ def rewrite(archive: dict[str, bytes], manifest: dict[str, object]) -> None:
   ('old-commit', 'does not describe a clean build'),
   ('unlisted-directory', 'differ from the archived versions'),
   ('missing-directory', 'differ from the archived versions'),
-  ('pending-with-directory', 'differ from the archived versions'),
+  ('pending', 'Invalid versions.json entry'),
   ('selector-extra-file', 'differ from the archived versions'),
   ('unknown-root-file', 'Unexpected archive root file'),
   ('no-manifest', 'no versions.json'),
@@ -380,8 +313,6 @@ def rewrite(archive: dict[str, bytes], manifest: dict[str, object]) -> None:
   ('label-type', 'Invalid versions.json entry'),
   ('bad-digest', 'Invalid commit or digest'),
   ('ready-without-digest', 'Invalid commit or digest'),
-  ('pending-with-commit', 'must not record a commit'),
-  ('pending-dev', 'Expected vMAJOR'),
   ('bad-label', 'Expected dev or vMAJOR'),
   ('duplicate-label', 'Duplicate label'),
   ('hand-set-latest', 'Generated root files differ'),
@@ -404,8 +335,10 @@ def test_wrong_archive_metadata_is_rejected(archive: dict[str, bytes], change: s
   elif change == 'missing-directory':
     for name in [name for name in archive if name.startswith(V1 + '/')]:
       del archive[name]
-  elif change == 'pending-with-directory':
+  elif change == 'pending':
     versions[2] |= {'state': 'pending', 'commit': None, 'digest': None}
+    for name in [name for name in archive if name.startswith(V1 + '/')]:
+      del archive[name]
   elif change == 'selector-extra-file':
     archive['versions/extra.html'] = b''
   elif change == 'unknown-root-file':
@@ -432,10 +365,6 @@ def test_wrong_archive_metadata_is_rejected(archive: dict[str, bytes], change: s
     versions[1]['digest'] = 'f' * 63
   elif change == 'ready-without-digest':
     versions[1] |= {'state': 'ready', 'digest': None}
-  elif change == 'pending-with-commit':
-    versions[2]['state'] = 'pending'
-  elif change == 'pending-dev':
-    versions[0] |= {'state': 'pending', 'commit': None, 'digest': None}
   elif change == 'bad-label':
     versions[1]['label'] = 'latest'
   elif change == 'duplicate-label':
@@ -582,7 +511,6 @@ def run_cli(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
   ['archive', '--archive', 'archive.tar', '--label', V2, '--output', 'site', '--candidate', 'v1.tar', '--commit', COMMITS[V2]],
   ['promote', '--archive', 'archive.tar', '--label', V1, '--output', 'site', '--verified-digest', 'f' * 64],
   ['promote', '--archive', 'archive.tar', '--label', V3, '--output', 'site', '--verified-digest', 'f' * 64],
-  ['pending', '--archive', 'archive.tar', '--label', V1, '--output', 'site'],
   ['current', '--archive', 'archive.tar', '--label', V3, '--output', 'site'],
 ])
 def test_failed_operation_keeps_old_archive(tmp_path: Path, archive: dict[str, bytes], args: list[str]) -> None:
@@ -613,21 +541,15 @@ def test_cli_transitions_into_new_directory(tmp_path: Path, archive: dict[str, b
   assert result.returncode == 0, result.stderr
   assert json.loads(result.stdout) | {'versions': None} == report | {'status': 'promoted', 'state': 'ready', 'latest': V3, 'versions': None}
 
-  result = run_cli(tmp_path, 'pending', '--initialize', '--label', V1, '--output', 'three')
+  result = run_cli(tmp_path, 'current', '--archive', 'archive.tar', '--label', V1, '--output', 'three')
   assert result.returncode == 0, result.stderr
-  assert json.loads(result.stdout) == {'status': 'added', 'label': V1, 'state': 'pending', 'commit': None, 'digest': None, 'latest': None, 'versions': [V1]}
-  assert set(run_docs_site.read_directory(tmp_path / 'three')) == set(GENERATED) - {'latest/index.html'}
-
-  result = run_cli(tmp_path, 'current', '--archive', 'archive.tar', '--label', V1, '--output', 'four')
-  assert result.returncode == 0, result.stderr
-  assert run_docs_site.read_directory(tmp_path / 'four') == archive
+  assert run_docs_site.read_directory(tmp_path / 'three') == archive
 
 
 @pytest.mark.parametrize('args', [
   [],
-  ['archive', '--initialize', '--archive', 'archive.tar', '--label', DEV, '--output', 'site', '--candidate', 'candidate.tar', '--commit', COMMITS[DEV]],
   ['archive', '--label', DEV, '--output', 'site', '--candidate', 'candidate.tar', '--commit', COMMITS[DEV]],
-  ['archive', '--initialize', '--label', DEV, '--output', 'site', '--commit', COMMITS[DEV]],
+  ['archive', '--archive', 'archive.tar', '--label', DEV, '--output', 'site', '--commit', COMMITS[DEV]],
   ['promote', '--archive', 'archive.tar', '--label', DEV, '--output', 'site'],
   ['latest', '--archive', 'archive.tar', '--label', DEV, '--output', 'site'],
 ])

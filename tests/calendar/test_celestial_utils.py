@@ -253,6 +253,7 @@ def test_to_family() -> None:
     assert ALGO1.to_date(d) == date(2024, 2, 4)
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'to_solar to_lunar to_ganzhi to_date')
 def test_to_family_negative() -> None:
   # Both checks live in the shared funnel, so every `to_*` carries the same contract.
   with pytest.raises(ValueError):
@@ -293,6 +294,7 @@ def test_out_of_range_year() -> None:
     ALGO1.jieqi_moment(2024, '立春') # type: ignore
 
 
+@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'jieqi_date jieqi_moment')
 @pytest.mark.parametrize('query', [ALGO1.jieqi_date, ALGO1.jieqi_moment, ALGO2.jieqi_date, ALGO2.jieqi_moment],
                          ids=['ALGO1-date', 'ALGO1-moment', 'ALGO2-date', 'ALGO2-moment'])
 @pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])

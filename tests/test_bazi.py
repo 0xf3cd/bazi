@@ -48,6 +48,7 @@ def test_gender_input_choices(gender: str | BaziGender, expected: BaziGender) ->
   assert Bazi.create('2000-01-01 12:00', gender).gender is expected
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.create')
 @pytest.mark.parametrize('gender', ['YANG', 'YIN', 'M', ' male', 'male ', 'ｍale'])
 def test_gender_error_points_to_accepted_values(gender: str) -> None:
   with pytest.raises(ValueError, match='Unsupported gender:') as error:
@@ -80,12 +81,14 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
     assert Bazi.random(config) == Bazi.create(birth_time, gender, config)
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.random')
 @pytest.mark.parametrize('config', [None, False, 'day', {}])
 def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
     Bazi.random(config, rng=rng) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.random')
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
 def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
   with pytest.raises(ValueError, match='HKO'):
@@ -296,6 +299,7 @@ def test_day_and_hour_pillars_ignore_precision() -> None:
       assert bazi.hour_pillar == day_bazi.hour_pillar
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi')
 def test_hko_backend_rejected() -> None:
   '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
   for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
@@ -479,6 +483,7 @@ def test_chinese(rng: random.Random) -> None:
     assert bazi.config.precision == BaziPrecision.DAY
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi')
 def test_invalid_arguments(rng: random.Random) -> None:
   random_dt: datetime = datetime(
     year=rng.randint(1950, 2000),
@@ -678,6 +683,7 @@ def test_deepcopy() -> None:
   assert bazi._day_pillar != bazi2._day_pillar
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.create')
 def test_create() -> None:
   with pytest.raises(ValueError):
     Bazi.create('WrongDatetimeFormat', BaziGender.FEMALE)
@@ -737,6 +743,7 @@ def test_create() -> None:
       Bazi.create(dt, g, BaziConfig.from_values(precision=p, backend='hko')) # HKO has no real jieqi moments.
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi')
 def test_supported_date_window_edges() -> None:
   '''
   The supported date window, pinned as a `Bazi`-level contract: one day outside either
@@ -840,6 +847,7 @@ def test_constructor_points_strings_to_create(args: tuple[object, ...], hint: st
     Bazi(*args) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi.create')
 def test_create_hints_from_values_for_config() -> None:
   with pytest.raises(TypeError, match='^Expected BaziConfig, got <class .str.>; BaziConfig.from_values builds one from strings$'):
     Bazi.create('2000-01-01 12:00', 'male', 'hko') # type: ignore

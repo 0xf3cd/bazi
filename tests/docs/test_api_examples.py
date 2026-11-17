@@ -18,7 +18,6 @@ from api_examples import ApiExample, check_example_blocks, collect_examples, run
 def example_package(tmp_path, monkeypatch):
   package = tmp_path / 'sample'
   package.mkdir()
-  monkeypatch.setattr(api_examples, 'EXAMPLE_OWNERS', frozenset({'sample.demo'}))
   monkeypatch.setattr(api_examples, 'PROSE_EXAMPLES', frozenset())
   monkeypatch.setattr(api_examples, 'QUOTED_BLOCKS', {})
   return package
@@ -28,10 +27,19 @@ def write_example(package, body):
   (package / '__init__.py').write_text("def demo():\n  '''Examples:\n" + body + "\n  '''\n", encoding='utf-8')
 
 
-def test_registry_matches_all_source_examples():
-  examples = collect_examples(ROOT / 'bazi')
-  assert len(examples) == len(api_examples.EXAMPLE_OWNERS) == 67
-  assert {example.owner for example in examples} == api_examples.EXAMPLE_OWNERS
+@pytest.mark.parametrize('definition, owner', [
+  ("'''{doc}'''", 'sample'),
+  ("def demo():\n  '''{doc}'''", 'sample.demo'),
+  ("async def demo():\n  '''{doc}'''", 'sample.demo'),
+  ("class Demo:\n  '''{doc}'''", 'sample.Demo'),
+  ("class Demo:\n  @property\n  def value(self):\n    '''{doc}'''", 'sample.Demo.value'),
+  ("value = 1\n'''{doc}'''", 'sample.value'),
+  ("raise RuntimeError('Do not import this source')\n'''{doc}'''\nvalue = 1", 'sample.value'),
+])
+def test_source_shapes_are_discovered(example_package, definition, owner):
+  doc = '```python\nassert True\n```'
+  (example_package / '__init__.py').write_text(definition.format(doc=doc), encoding='utf-8')
+  assert collect_examples(example_package) == (ApiExample('sample', owner, 'assert True\n', None),)
 
 
 @pytest.mark.parametrize('body, message', [
@@ -53,17 +61,17 @@ def test_each_example_needs_code_and_expectation(example_package, body, message)
       collect_examples(example_package)
 
 
-def test_removed_examples_do_not_shrink_registry(example_package):
+def test_removed_examples_leave_no_registration(example_package):
+  write_example(example_package, '  ```python\n  assert True\n  ```')
+  assert len(collect_examples(example_package)) == 1
   (example_package / '__init__.py').write_text('def demo():\n  pass\n', encoding='utf-8')
-  with pytest.raises(AssertionError, match='API example coverage'):
-    collect_examples(example_package)
+  assert collect_examples(example_package) == ()
 
 
-def test_new_examples_cannot_skip_registration(example_package):
+def test_new_examples_are_discovered(example_package):
   write_example(example_package, '  ```python\n  assert True\n  ```')
   (example_package / 'extra.py').write_text("'''```python\nassert True\n```'''", encoding='utf-8')
-  with pytest.raises(AssertionError, match='Unregistered API example'):
-    collect_examples(example_package)
+  assert {example.owner for example in collect_examples(example_package)} == {'sample.demo', 'sample.extra'}
 
 
 @pytest.mark.parametrize('defect', [None, 'missing-page', 'missing-code', 'changed-output', 'extra-code'])
@@ -95,7 +103,6 @@ def test_indented_programs_are_not_filtered(example_package):
 
 @pytest.mark.parametrize('text', ['原文\n', '改写后的原文\n'])
 def test_quoted_blocks_are_checked(example_package, monkeypatch, text):
-  monkeypatch.setattr(api_examples, 'EXAMPLE_OWNERS', frozenset())
   monkeypatch.setattr(api_examples, 'QUOTED_BLOCKS', {'sample.demo': ('sample', '原文\n')})
   write_example(example_package, '  Quoted text:\n\n      ' + text.rstrip())
   if text == '原文\n':

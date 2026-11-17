@@ -189,6 +189,7 @@ def test_demo_reads_time_facts(
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
+@pytest.mark.optimized
 def test_time_facts_are_readonly() -> None:
   bazi = Bazi.create('2000-02-04T07:40:12.123456-05:00', 'male',
                      BaziConfig.from_values(precision='minute'), longitude=0.0)

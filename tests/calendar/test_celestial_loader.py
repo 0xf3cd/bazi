@@ -389,6 +389,7 @@ def test_equation_of_time_normalizes_offsets() -> None:
     assert table.seconds_at(utc.astimezone(zone)) == table.seconds_at(utc)
 
 
+@pytest.mark.input_contract('bazi.calendar.celestial_data.loader', 'EquationOfTimeTable.seconds_at')
 def test_interpolation_range_is_half_open() -> None:
   table = EquationOfTimeTable()
   first = datetime.combine(EOT_START_DATE, datetime.min.time(), UTC)

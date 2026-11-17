@@ -100,9 +100,6 @@ def main() -> None:
       (('chart', '--unknown'), 'unrecognized arguments'),
       (('chart', '--birth-time', '2000-01-01 12:00'), '--gender'),
       (('knowledge', '--object', 'typo'), 'Unknown object'),
-      (('chart', '--export-chart-json', 'removed.json'), 'unrecognized arguments'),
-      (('knowledge', '--export-knowledge-json', 'removed.json'), 'unrecognized arguments'),
-      (('match', '--export-context-json', 'removed.json'), 'unrecognized arguments'),
     ):
       run(*tokens, error=reason)
     check(files == {path.relative_to(cwd): path.read_bytes() for path in cwd.rglob('*') if path.is_file()},
