@@ -55,7 +55,7 @@ def test_bounds_reject_wrong_type() -> None:
 ])
 def test_invalid_dates_are_rejected(invalid: CalendarDate) -> None:
   for convert in (utils.to_solar, utils.to_lunar, utils.to_ganzhi, utils.to_date):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=f'is not a valid {invalid.date_type.name} date in the supported range'):
       convert(invalid)
 
 
@@ -150,7 +150,7 @@ def test_jieqi_queries_validate_before_lookup() -> None:
   for supported_year in (1901, 2200):
     assert utils.jieqi_moment(Year(supported_year), Jieqi.小寒) == utils.jieqi_moment(supported_year, Jieqi.小寒)
   for bad_value in (1900, 2201, True, False):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='out of the supported range'):
       utils.jieqi_moment(bad_value, Jieqi.立春)
 
 
@@ -164,12 +164,22 @@ def test_supported_jie_boundaries() -> None:
 def test_jie_range_is_enforced() -> None:
   first, last = utils.supported_jie_boundaries()
   for fn in (utils.prev_jie, utils.next_jie):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='first available Jie'):
       fn(first - timedelta(seconds=1))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='last available Jie'):
       fn(last)
     with pytest.raises(TypeError):
       fn(date(2024, 2, 4)) # type: ignore[arg-type] # A date is not a datetime.
+
+
+def test_short_window_ignores_warm_cache(request: pytest.FixtureRequest) -> None:
+  outside = utils.jieqi_moment(2150, Jieqi.立春)
+  for query in (utils.prev_jie, utils.next_jie):
+    query(outside)
+  request.getfixturevalue('short_jie_window')
+  for query in (utils.prev_jie, utils.next_jie):
+    with pytest.raises(ValueError, match='last available Jie'):
+      query(outside)
 
 
 def test_exactly_on_a_jie_belongs_to_it() -> None:
