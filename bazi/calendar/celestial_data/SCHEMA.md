@@ -62,7 +62,7 @@ columns: year jq_idx name date time
 - 截断到整秒，不四舍五入：23:59:59.6 舍入会变为次日，改变日期归属；截断不变日期，
   存储时刻比真实时刻提前不超过一秒。
 - Y 年的小寒、大寒（序号 22/23）在 Y 年一月，年内行不按日期排序。
-  与 `tests/calendar/hko_data/decoder.py` 的公历年序一致。
+  小寒、大寒归入所在的公历年，与 HKO 解码器（`tests/calendar/hko_data/decoder.py`）的约定相同。
 - 1972 年起 UT1−UTC ≤ 0.9s；此前以 UT1 代理，沿 celestial Phase C 约定。
   通常只影响节时刻前后 ±0.9s 的出生，但节本身接近午夜时可改变整日归属。
   1979 大寒距午夜四秒。

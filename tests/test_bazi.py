@@ -108,8 +108,8 @@ def test_random_default_keeps_seed_draw_order() -> None:
 
 
 @pytest.mark.parametrize('moment, year_pillar, month_dizhi', [
-  # 立春 2000 is 02-04 20:40:23. At DAY precision, every
-  # moment of 02-04 gives 庚辰/寅 -- including 00:00, which precedes the jieqi by 20 hours.
+  # 立春 2000 is 02-04 20:40:23. At DAY precision, every moment of 02-04 gives 庚辰/寅 --
+  # including 00:00, which precedes the jieqi by 20 hours.
   ('2000-02-03 12:00', '己卯', Dizhi.丑),
   ('2000-02-04 00:00', '庚辰', Dizhi.寅), # 20h40m before the jieqi, still the new pillar.
   ('2000-02-04 20:40', '庚辰', Dizhi.寅),

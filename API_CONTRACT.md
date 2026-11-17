@@ -197,7 +197,8 @@ Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致
 - `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
   `basic_text`（日元、出生时刻，四柱及其十神、阴阳五行、藏干、纳音、十二长生，以及三处非日主明干与四支主气的十神个数／占比；地点盘另列民用、真太阳与节气表出生时刻）、`transit_text`（节、交运、大运、小运、流年；
   流年无限延续，由 `dayun_count`、`liunian_count` 限定，默认 10 与 100）、`chart_text`（两者相接）。
-  出生后没有大运起于历法支持范围内时，`transit_text` 与 `chart_text` 抛 `ValueError`，与 `BaziChart.xiaoyun` 一致；`basic_text` 不受影响。
+  首步大运起点不在 `supported_jie_boundaries()` 给出的 `[首端, 末端)` 内时，
+  `transit_text`、`chart_text` 与 `BaziChart.xiaoyun` 都抛 `ValueError`；`basic_text` 不受影响。
   `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
 
 ## 观察请求与结果对象
@@ -230,7 +231,7 @@ Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致
 直接构造时，缺字段／多余字段由构造器抛 `TypeError`；值错型或带时区则由各类显式检查。
 坐标缺失是合法观察请求，在求值时为 `UNKNOWN`；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
 坐标逐字段沿用对应 `TransitChart` 查询入口的类型口径；`LiunianObservation.ganzhi_year` 也接受
-`int`（含 `bool` 与 `int` 子类）或 `None`。坐标构造不检查历法支持范围。
+`int`（含 `bool` 与 `int` 子类）或 `None`。坐标构造不检查日期换算或流运查询的支持范围。
 
 ### 结果构造与 dataclass 操作
 

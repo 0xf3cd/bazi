@@ -37,7 +37,7 @@ TransitEntry = Literal['at_year', 'at_month', 'at_date', 'at_moment']
 
 _T = TypeVar('_T')
 
-'''各入口结构上能取得的流运种类；取得与否还取决于命盘与历法支持范围，这张表只是上限。'''
+'''各入口可查询的流运种类；具体坐标上是否有对应流运，由 TransitChart 查询结果决定。'''
 _ENTRY_KINDS: Final[frozendict[TransitEntry, frozenset[TransitKind]]] = frozendict({
   'at_year':   frozenset((TransitKind.XIAOYUN, TransitKind.DAYUN, TransitKind.LIUNIAN)),
   'at_month':  frozenset((TransitKind.XIAOYUN, TransitKind.DAYUN, TransitKind.LIUNIAN, TransitKind.LIUYUE)),

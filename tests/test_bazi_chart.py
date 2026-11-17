@@ -348,7 +348,7 @@ def test_dayun_order(rng: random.Random) -> None:
 
 def test_dayun_start_moment() -> None:
   # Golden values from 测测, kept as provenance: 2009-12-30 / 1985-03-05 / 1993-05-25.
-  # The expectations use the shipped tables:
+  # The expectations are pinned to the shipped tables:
   # the 3-days-to-1-year rule amplifies jieqi-moment drift ~122x (1s -> ~2min), so any
   # re-bake that moves a jieqi goes red here -- and trips the frozen table hash first.
   delta: timedelta = timedelta(seconds=1)
@@ -554,7 +554,8 @@ def test_xiaoyun() -> None:
   __check(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE),
             '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
 
-  # The dayun starts past 立春 1985; china95 lists exactly '辛卯 壬辰' for this birth.
+  # The dayun starts past 立春 1985, so xiaoyun has two entries.
+  # china95 lists exactly '辛卯 壬辰' for this birth.
   __check(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE),
             '辛卯 壬辰')
 
