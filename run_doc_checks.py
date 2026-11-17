@@ -33,10 +33,11 @@ BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
 DOCTEST_PHASES = ('setup', 'cleanup')
 
 
-'''README 首例与五条任务各保留代表例；写文件的代表例还须保留隔离目录的准备与清理。'''
+'''README 首例与各项任务保留代表例；写文件的代表例还须保留隔离目录的准备与清理。'''
 TASK_EXAMPLES = {
   'readme-example': {'readme-first', 'readme-first (setup code)', 'readme-first (cleanup code)'},
   'guides/quickstart': {'quickstart-chart'},
+  'guides/calendar': {'calendar-lunar-roundtrip'},
   'guides/relations-transits': {'transits-query'},
   'guides/integration': {'integration-context'},
   'guides/knowledge': {'load', 'edit', 'edit (setup code)', 'edit (cleanup code)'},
@@ -304,7 +305,7 @@ def check_configuration_signatures(site: Path) -> None:
         member = qualified + '.' + name
         assert '= ' + type(value).__qualname__ + '.' + value.name in signatures.texts[member], ('Field default', member)
   assert signature_defaults(signatures.result['bazi.school.BaziConfig.from_values']) == {
-    'precision': 'BaziPrecision.DAY', 'backend': 'CalendarBackend.CELESTIAL',
+    'precision': 'BaziPrecision.DAY',
     'school': 'DEFAULT_SCHOOL', 'dayun_year_rule': 'DayunYearRule.JIE_PROJECTED',
   }
   for rule_class in (BaziRules, TianganRules, DizhiRules, ShenshaRules):
@@ -352,12 +353,10 @@ def contract_class(qualified: str) -> type[typing.Any]:
 
 
 def runtime_members(cls: str) -> set[str]:
-  '''沿实际 __mro__／TypedDict 合并注解求继承期望，不复用生成器的名字解析。'''
+  '''沿实际 __mro__ 求继承期望，不复用生成器的名字解析。'''
   declared = DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS
   names = set(declared.get(cls, '').split())
   value = contract_class(cls)
-  if typing.is_typeddict(value):
-    return names | set(value.__annotations__)
   for base in value.__mro__[1:]:
     names |= set(declared.get(base.__module__ + '.' + base.__qualname__, '').split())
   return names

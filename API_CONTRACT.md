@@ -29,8 +29,8 @@ assert chart.bazi.day_master in Tiangan
   [`tests/data/internal_interfaces.json`](tests/data/internal_interfaces.json)：导入键为 `文件|来源模块|名字`，
   成员键为 `文件|访问表达式`，`repeated_members` 记录同一成员键在源码中的出现次数，未列出的为一次。
 - 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
-- `STATIC_MODULES` 单独标记离线编码／生成工具与导入即读取数据表的后端实现。
-  离线工具按源码入口查阅，不是安装 CLI；检查清单不执行下载、生成或数据表加载。
+- 历法换算从 `bazi.calendar.utils` 导入；数据加载器、表类与离线工具不属于公开 API。
+  换算示例和数据来源见[历法指南](docs/guides/calendar.md)。
 - 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。
 
 ### 可接受的字符串输入
@@ -41,8 +41,33 @@ assert chart.bazi.day_master in Tiangan
 `BaziConfig` 构造函数接收声明类型；需要字符串解析时使用 `BaziConfig.from_values`。
 精度支持 `分`／`分钟`／`时`／`小时`／`天`／`日` 和
 `m`／`min`／`minute`／`h`／`hour`／`d`／`day`，拉丁大小写不敏感。
-后端与大运年份规则分别由 `CalendarBackend.from_str`、`DayunYearRule.from_str` 解释成员名或值；
-流派档案须传 `BaziSchool`，不接受字符串。性别、精度、后端各有自己的字符串写法，互不通用。
+大运年份规则由 `DayunYearRule.from_str` 解释成员名或值；
+流派档案须传 `BaziSchool`，不接受字符串。性别、精度各有自己的字符串写法，互不通用。
+
+## 历法日期与节气
+
+`bazi.calendar.utils` 提供以下十个函数：
+
+| 函数 | 参数与结果 |
+| --- | --- |
+| `get_min_supported_date(date_type)`、`get_max_supported_date(date_type)` | 接收 `CalendarType`，返回该历法的首末 `CalendarDate`，两端都可用于日期换算。 |
+| `to_solar(d)`、`to_lunar(d)`、`to_ganzhi(d)` | 接收 `date` 或 `CalendarDate`，返回相应历法的 `CalendarDate`。 |
+| `to_date(d)` | 接收 `date` 或 `CalendarDate`，返回公历 `date`。 |
+| `jieqi_moment(solar_year, jieqi)` | 接收公历年份 `int` 和 `Jieqi`，返回东八区无时区 `datetime` 标签，截断到秒。 |
+| `supported_jie_boundaries()` | 返回首末支持节的时刻元组；节查询的输入范围为 `[首端, 末端)`。 |
+| `prev_jie(dt)`、`next_jie(dt)` | 接收东八区无时区 `datetime`，返回 `JieqiTime`；前者取不晚于输入的最近一节，后者取严格晚于输入的下一节，均不含中气。 |
+
+日期类型从 `bazi.calendar.dates` 导入。`CalendarDate` 是不可变值，构造时检查字段类型，
+换算入口再检查日期是否合法及是否在支持范围内。错型抛 `TypeError`，无效或越界日期抛 `ValueError`，
+普通运行与 `python -O` 一致。
+
+农历 `month` 按年内实际月序从 1 编号，闰月占独立序号，不能直接当作农历月名。
+例如 2023 年的第 3 个月是闰二月，第 4 个月才是三月。公历与农历往返见[历法指南](docs/guides/calendar.md)。
+
+日期换算支持的公历范围是 1901-02-19 至 2099-12-31；节气表覆盖公历 1901 至 2200 年，
+不因此扩大日期换算或出生输入的范围。`datetime` 是 `date` 子类，四个 `to_*` 入口接受它，
+但只读取年月日，不换算时区；`to_ganzhi` 按交节日划分年月，不能代替时刻级排盘。
+`BaziPrecision` 的出生比较规则另见[配置指南](docs/guides/configuration.md#选择节气比较精度)。
 
 ## 关系与附加查询
 
@@ -81,7 +106,7 @@ assert chart.bazi.day_master in Tiangan
 - `AFTER_TWELVE_DAYS` 从开月节后十二日起取土旺，`BEFORE_EIGHTEEN_DAYS` 从下一四立前十八日起取土旺；
   两种分段取法在阈值之前均按季节本令。
 
-分段按连续 24 小时计日，比较阈值时使用出生精度、相等归新及地点钟政策；HKO 只作日期级比较。
+分段按连续 24 小时计日，比较阈值时使用出生精度、相等归新及地点钟政策。
 完整比较步骤与用法见[配置指南](docs/guides/configuration.md#月令五行状态与土旺口径)。
 
 `relationship.SHENSHA_LABELS`（22 项）与 `WHOLE_PILLAR_SHENSHA_LABELS`（魁罡、天赦两项）
@@ -122,7 +147,7 @@ Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致
 
 命宫以中气判断月序是否进一，比较时按本盘出生精度处理，相等归新：
 `DAY` 比日期，`HOUR` 比日期及时辰起点，`MINUTE` 比日期及分钟起点；
-地点盘先把边界换到与出生相同的真太阳钟。HKO 只支持 `DAY`，零点仅为占位，不是真实交节时刻。
+地点盘先把边界换到与出生相同的真太阳钟。
 时间政策是本库执行口径，不冒称古籍规定；300 日胎元和其他命宫月界仅存知识候选，未编码。
 
 纯函数从 `bazi.utils.bazi_utils` 导入：`taiyuan(month_pillar)` 要求输入为 `Ganzhi`，错型立即抛 `TypeError`。
@@ -148,12 +173,6 @@ Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致
   `ContextResult.render()` 直接读取领域值，不重新排盘，也不加载知识文件。
 - 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
   流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
-
-### 农历年信息
-
-`LunarYearInfo` 定义在 `bazi.calendar.dates`，`calendar.hko_data`、`calendar.hko_data.decoder`、
-`calendar.celestial_data.loader` 三条路径重导出同一类型，`__module__` 指向 `bazi.calendar.dates`。
-其 `first_solar_day`、`leap`、`leap_month`、`days_counts`、`ganzhi` 字段保留字典／可变列表行为，查询返回独立副本。
 
 ### 内存结果与重算
 

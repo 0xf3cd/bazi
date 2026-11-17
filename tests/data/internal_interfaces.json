@@ -1,5 +1,9 @@
 {
   "imports": {
+    "bazi/calendar/celestial_data/loader.py|..dates|LunarYearInfo": "加载器用冻结农历年记录保存首日、月长和干支，记录不构成公开 API。",
+    "bazi/calendar/utils.py|.celestial_data.loader|JieqiMomentTable": "历法查询在首次使用时加载节气时刻表，调用方只使用模块函数。",
+    "bazi/calendar/utils.py|.celestial_data.loader|LunarYearTable": "日期换算共用一张农历年表，表的加载与格式校验留在 loader。",
+    "bazi/calendar/solar_time.py|.celestial_data.loader|EquationOfTimeTable": "太阳时计算复用内部均时差表，调用方使用 apparent_solar_datetime。",
     "bazi/calendar/dates.py|..common|check_declared_types": "历法日期与年月坐标在构造边界复用声明类型检查。",
     "bazi/rules.py|.common|check_declared_types": "关系定义配置在输入边界复用声明类型检查。",
     "bazi/school.py|.common|check_declared_types": "排盘配置与流派选项在输入边界复用声明类型检查。",

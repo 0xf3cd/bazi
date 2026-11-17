@@ -32,7 +32,7 @@ def test_input_identity_includes_configuration() -> None:
   for config in (
     BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
     BaziConfig(school=BaziSchool(tuwang_def=TuwangDef.AFTER_TWELVE_DAYS)),
-    BaziConfig.from_values(precision='hour'), BaziConfig.from_values(backend='hko'),
+    BaziConfig.from_values(precision='hour'),
     BaziConfig.from_values(dayun_year_rule='fixed_decade'),
   ):
     changed = BaziChart(Bazi.create(datetime(2000, 1, 3, 12), 'female', config))

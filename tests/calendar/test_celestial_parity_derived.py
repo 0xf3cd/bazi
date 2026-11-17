@@ -2,41 +2,35 @@
 # test_celestial_parity_derived.py
 
 '''
-Parity between the HKO and celestial backends, layer (c): the ganzhi-derived methods.
+Compare runtime conversions with dates derived directly from the HKO decoder.
 
-The contract is deliberately not "100% identical, with known exceptions allowed" -- that
-is unfalsifiable, and it is also false.  Instead:
+Lunar dates must agree throughout the supported range. The seven frozen 节气 date
+differences include two 节; moving those month starts explains exactly 61 days of
+干支 date differences. No HKO runtime conversion implementation is used here.
 
-  (a) the lunar surface is strictly identical (celestial's algo1 *is* the HKO almanac);
-  (b) `jieqi_date` disagrees on exactly the frozen whitelist below -- celestial knows the
-      real moment, HKO only the official date, so a moment near midnight can land on the
-      other side of it;
-  (c) every ganzhi-derived method's expected disagreement is *computed* from that
-      whitelist here.  No hand-written exemptions: if a table changes, the derivation
-      moves with it and an unattributed difference turns the suite red.
-
-What this proves is *equivalence, not truth*.  Both backends descend from the HKO
-almanac, so they agree by construction wherever the almanac made a call (the 2033 problem
-being the famous one).  The truth side is covered upstream, by celestial-calendar's own
-HKO x DE441 dual-axis golden tests (0.525 min agreement over 2022-2028).
+This checks equivalence with the HKO almanac, not independent astronomical truth:
+the runtime lunar table and the decoded HKO data share the same source.
 '''
 
 from datetime import date, datetime, time, timedelta
+from itertools import pairwise
+from typing import Final
 
-from bazi.calendar import hko_data_utils as HKO
+import pytest
+
+from bazi.calendar import utils
 from bazi.calendar.dates import CalendarType, CalendarDate
-from bazi.calendar.celestial_utils import ALGO1 as CEL
-from bazi.calendar.celestial_data.loader import JIEQI_BY_INDEX
 from bazi.defines import Jieqi
 
-# The whitelist's single source of truth, shared with parity layers a/b.  Imported as a
-# bare sibling module: the test suite has no `__init__.py`, so pytest puts this directory
-# on `sys.path` -- and `from tests.calendar...` would be shadowed at runtime by a stray
-# regular `tests` package in site-packages.
+from hko_data import DecodedJieqiDates, DecodedLunarYears
 from celestial_parity_data import JIEQI_DATE_DIVERGENCES, JieqiDateDivergence
 
 
-JIES: list[Jieqi] = Jieqi.as_list()[::2] # The 12 节: only these start ganzhi months.
+JIES: Final[tuple[Jieqi, ...]] = tuple(Jieqi.as_list()[::2])
+HKO_JIEQI: Final[DecodedJieqiDates] = DecodedJieqiDates()
+HKO_LUNAR: Final[DecodedLunarYears] = DecodedLunarYears()
+FIRST_DAY: Final[date] = HKO_LUNAR.get(HKO_LUNAR.start_year).first_solar_day
+LAST_DAY: Final[date] = date(HKO_LUNAR.end_year, 12, 31)
 
 
 def solar(day: date) -> CalendarDate:
@@ -44,230 +38,209 @@ def solar(day: date) -> CalendarDate:
 
 
 def jieqi_of(row: JieqiDateDivergence) -> Jieqi:
-  return JIEQI_BY_INDEX[row.jq_idx]
+  return Jieqi.as_list()[row.jq_idx]
 
 
-def flipped_jies() -> list[JieqiDateDivergence]:
-  '''The whitelist rows that are 节. Only these can move a ganzhi month boundary.'''
-  return [row for row in JIEQI_DATE_DIVERGENCES if row.is_jie]
+def flipped_jies() -> tuple[JieqiDateDivergence, ...]:
+  return tuple(row for row in JIEQI_DATE_DIVERGENCES if row.is_jie)
+
+
+def hko_month_starts(year: int) -> tuple[date, ...]:
+  # 小寒 belongs to the following Gregorian year; the final 立春 closes month 12.
+  return tuple(
+    HKO_JIEQI.get(year + (jieqi is Jieqi.小寒), jieqi) for jieqi in JIES
+  ) + (HKO_JIEQI.get(year + 1, Jieqi.立春),)
+
+
+def celestial_month_starts(year: int) -> tuple[date, ...]:
+  return tuple(
+    utils.jieqi_moment(year + (jieqi is Jieqi.小寒), jieqi).date() for jieqi in JIES
+  ) + (utils.jieqi_moment(year + 1, Jieqi.立春).date(),)
+
+
+@pytest.fixture(scope='module')
+def hko_lunar_dates() -> dict[date, CalendarDate]:
+  # Expand each decoded month by counting forward from the recorded lunar new year.
+  dates: dict[date, CalendarDate] = {}
+  for year in HKO_LUNAR.supported_year_range():
+    info = HKO_LUNAR.get(year)
+    day: date = info.first_solar_day
+    for month, count in enumerate(info.days_counts, start=1):
+      for index in range(1, count + 1):
+        if FIRST_DAY <= day <= LAST_DAY:
+          assert day not in dates
+          dates[day] = CalendarDate(year, month, index, CalendarType.LUNAR)
+        day += timedelta(days=1)
+  assert len(dates) == (LAST_DAY - FIRST_DAY).days + 1
+  return dates
 
 
 def affected_solar_days() -> set[date]:
-  '''
-  Derived, not listed: a moved 节 shifts the start of its ganzhi month, so every day from
-  the earlier of the two candidate dates up to (but excluding) the next 节 gets a different
-  ganzhi month or day index.
-  '''
   days: set[date] = set()
   for row in flipped_jies():
-    end: date = CEL.next_jie(CEL.jieqi_moment(row.year, jieqi_of(row))).moment.date()
-    day: date = min(row.celestial_moment.date(), row.hko_date)
-    while day < end:
-      days.add(day)
-      day += timedelta(days=1)
+    index = JIES.index(jieqi_of(row))
+    next_jie = JIES[(index + 1) % len(JIES)]
+    year = row.year + (next_jie is Jieqi.小寒)
+    end = HKO_JIEQI.get(year, next_jie)
+    assert end == utils.jieqi_moment(year, next_jie).date()
+    start = min(row.celestial_moment.date(), row.hko_date)
+    days.update(start + timedelta(days=i) for i in range((end - start).days))
   return days
 
 
 def affected_ganzhi_months() -> set[tuple[int, int]]:
-  '''The (ganzhi year, ganzhi month) pairs that a moved 节 starts.'''
-  months: set[tuple[int, int]] = set()
-  for row in flipped_jies():
-    # 立春 starts ganzhi month 1; 小寒, the twelfth 节, starts month 12 of the *previous*
-    # ganzhi year, since it falls in January.
-    jieqi: Jieqi = jieqi_of(row)
-    months.add((row.year - 1 if jieqi is Jieqi.小寒 else row.year, JIES.index(jieqi) + 1))
-  return months
+  return {
+    (row.year - (jieqi_of(row) is Jieqi.小寒), JIES.index(jieqi_of(row)) + 1)
+    for row in flipped_jies()
+  }
 
 
-def test_whitelist_is_exact_through_the_backend() -> None:
-  '''
-  The anchor for layer (c).  Layer (b) checks the same whitelist against the raw table
-  with its own minimal parser; this one goes through `loader` + `CelestialCalendarUtils`,
-  so the two together also prove that the consumer path reproduces the table faithfully.
-  '''
-  measured: list[tuple[int, int, date]] = []
-  for year in range(1901, 2101):
-    for jq_idx, jq in enumerate(JIEQI_BY_INDEX):
-      cel, hko = CEL.jieqi_date(year, jq), HKO.jieqi_date(year, jq)
-      if cel != hko:
-        measured.append((year, jq_idx, cel))
-  # Sorted: the signal is the key set, not the scan order (layer (b) compares as a set too).
-  assert sorted(measured) == sorted(
+def test_whitelist_is_exact_through_runtime() -> None:
+  measured: set[tuple[int, int, date]] = set()
+  for year in HKO_JIEQI.supported_year_range():
+    for jq_idx, jq in enumerate(Jieqi):
+      cel = utils.jieqi_moment(year, jq).date()
+      if cel != HKO_JIEQI.get(year, jq):
+        measured.add((year, jq_idx, cel))
+  assert measured == {
     (row.year, row.jq_idx, row.celestial_moment.date()) for row in JIEQI_DATE_DIVERGENCES
-  )
+  }
 
 
 def test_moments_match_the_whitelist() -> None:
-  # Not just the dates: the stored moments themselves, so a re-baked table with a
-  # different rounding policy cannot pass by accident.
   for row in JIEQI_DATE_DIVERGENCES:
-    assert CEL.jieqi_moment(row.year, jieqi_of(row)) == row.celestial_moment
-    assert HKO.jieqi_date(row.year, jieqi_of(row)) == row.hko_date
+    assert utils.jieqi_moment(row.year, jieqi_of(row)) == row.celestial_moment
+    assert HKO_JIEQI.get(row.year, jieqi_of(row)) == row.hko_date
 
 
 def test_only_two_of_them_are_jie() -> None:
-  # Only 节 start ganzhi months, so only these two can propagate into ganzhi methods.
   assert [(row.year, row.name) for row in flipped_jies()] == [(1917, '大雪'), (1927, '白露')]
 
 
-def test_prev_next_jie_diverge_in_moment_window() -> None:
-  '''
-  `prev_jie`/`next_jie` escape layer (c) by design (see the protocol's carve-out): inside
-  the window between the two backends' ideas of when a jie starts, they legitimately name
-  different jie. DAY birth attribution does not use this physical bracket.
-  Both backends answer over the 12 节 only; for every 节, the window is
-  [min(hko_date, true date) midnight, true moment); inside it the backends are exactly one
-  节 apart, outside it they agree.  A day-level regression that *narrows* a window turns
-  red here; a widening one moves the probes along with it and is caught by the whitelist
-  tests above instead.
-  '''
-  cel_first, cel_last = CEL.supported_jie_boundaries()
-  hko_first, hko_last = HKO.supported_jie_boundaries()
-  cycle: list[Jieqi] = JIES
-  for year in range(1901, 2101):
-    for jq_idx, jq in enumerate(cycle):
-      moment: datetime = CEL.jieqi_moment(year, jq)
-      window_start: datetime = datetime.combine(
-        min(HKO.jieqi_date(year, jq), moment.date()),
-        time.min,
-      )
-      prev_jq: Jieqi = cycle[(jq_idx - 1) % len(cycle)]
-      next_jq: Jieqi = cycle[(jq_idx + 1) % len(cycle)]
-
-      inside: datetime = window_start + (moment - window_start) / 2
-      if inside >= cel_first: # else both queries fall off the table edge (小寒 1901)
-        assert CEL.prev_jie(inside).jieqi == prev_jq, (year, jq)
-        assert CEL.next_jie(inside).jieqi == jq, (year, jq)
-      if inside < hko_last: # else both queries fall off the table edge (大雪 2100)
-        assert HKO.prev_jie(inside).jieqi == jq, (year, jq)
-        assert HKO.next_jie(inside).jieqi == next_jq, (year, jq)
-
-      before: datetime = window_start - timedelta(seconds=1)
-      if before >= cel_first and before >= hko_first:
-        assert CEL.prev_jie(before).jieqi == HKO.prev_jie(before).jieqi, (year, jq)
-        assert CEL.next_jie(before).jieqi == HKO.next_jie(before).jieqi, (year, jq)
-      after: datetime = moment + timedelta(seconds=1)
-      if after < cel_last and after < hko_last:
-        assert CEL.prev_jie(after).jieqi == HKO.prev_jie(after).jieqi, (year, jq)
-        assert CEL.next_jie(after).jieqi == HKO.next_jie(after).jieqi, (year, jq)
+def test_prev_next_jie_use_the_real_moment() -> None:
+  # HKO records midnight placeholders. The runtime keeps the preceding 节 until the
+  # real moment, including the two cases where that moment falls on the next date.
+  first, last = utils.supported_jie_boundaries()
+  for year in HKO_JIEQI.supported_year_range():
+    for index, jieqi in enumerate(JIES):
+      moment = utils.jieqi_moment(year, jieqi)
+      start = datetime.combine(min(HKO_JIEQI.get(year, jieqi), moment.date()), time.min)
+      previous = JIES[(index - 1) % len(JIES)]
+      following = JIES[(index + 1) % len(JIES)]
+      for probe in (start - timedelta(seconds=1), start + (moment - start) / 2, moment - timedelta(seconds=1)):
+        if first <= probe < last:
+          assert utils.prev_jie(probe).jieqi == previous, (year, jieqi, probe)
+          assert utils.next_jie(probe).jieqi == jieqi, (year, jieqi, probe)
+      for probe in (moment, moment + timedelta(seconds=1)):
+        if first <= probe < last:
+          assert utils.prev_jie(probe).jieqi == jieqi, (year, jieqi, probe)
+          assert utils.next_jie(probe).jieqi == following, (year, jieqi, probe)
 
 
 def test_the_derivations_preconditions_hold() -> None:
-  '''
-  `affected_ganzhi_months` models a flipped 节 as moving the start of exactly one ganzhi
-  month.  That holds for every 节 except 立春, which is also the *end* of the previous
-  ganzhi year's twelfth month: a flipped 立春 would perturb `(Y - 1, 12)` too, and would
-  falsify the "yearly totals unchanged" check below, since the day gained and the day lost
-  would land in different ganzhi years.
-
-  No shipped table flips 立春, so rather than carry untested branches for a configuration
-  that does not exist, the assumption is asserted here: if a re-baked table ever flips one,
-  this fails first and names what to generalise.  Layer (c) stays *sound* either way --
-  every test there compares a measured set against the derived one, so an unmodelled
-  divergence still turns the suite red.  What this guard protects is the diagnosis.
-  '''
-  assert Jieqi.立春 not in {jieqi_of(row) for row in flipped_jies()}, (
-    'a flipped 立春 also moves (Y - 1, 12): generalise `affected_ganzhi_months` and the '
-    'yearly-total assertion before deleting this guard')
-
-  # The same reasoning at the window edge: the derived days are checked against a scan
-  # bounded by the supported solar range, so a flip in the final month would push the
-  # derived set past where that scan can see it.
-  last: date = HKO.to_date(HKO.get_max_supported_date(CalendarType.SOLAR))
-  assert max(affected_solar_days()) <= last
+  # A moved 立春 would transfer a day between years, not just between months.
+  assert Jieqi.立春 not in {jieqi_of(row) for row in flipped_jies()}
+  days = affected_solar_days()
+  assert FIRST_DAY <= min(days) <= max(days) <= LAST_DAY
 
 
-# Layer (a): celestial's algo1 is the same HKO almanac data, so this is strict.
+def test_lunar_dates_agree_throughout_range(hko_lunar_dates: dict[date, CalendarDate]) -> None:
+  for day, lunar in hko_lunar_dates.items():
+    assert utils.to_lunar(day) == lunar, day
+    assert utils.to_lunar(solar(day)) == lunar, day
+    assert utils.to_solar(lunar) == solar(day), lunar
+    assert utils.to_date(lunar) == day, lunar
 
 
-def test_no_disagreement_anywhere() -> None:
-  day: date = HKO.to_date(HKO.get_min_supported_date(CalendarType.SOLAR))
-  last: date = HKO.to_date(HKO.get_max_supported_date(CalendarType.SOLAR))
-  while day <= last:
-    d: CalendarDate = solar(day)
-    assert CEL.solar_to_lunar(d) == HKO.solar_to_lunar(d), day
-    day += timedelta(days=1)
+def test_bounds(hko_lunar_dates: dict[date, CalendarDate]) -> None:
+  expected = (
+    (CalendarType.SOLAR, solar(FIRST_DAY), solar(LAST_DAY)),
+    (CalendarType.LUNAR, hko_lunar_dates[FIRST_DAY], hko_lunar_dates[LAST_DAY]),
+    (
+      CalendarType.GANZHI,
+      CalendarDate(1901, 1, (FIRST_DAY - HKO_JIEQI.get(1901, Jieqi.立春)).days + 1, CalendarType.GANZHI),
+      CalendarDate(2099, 11, (LAST_DAY - HKO_JIEQI.get(2099, Jieqi.大雪)).days + 1, CalendarType.GANZHI),
+    ),
+  )
+  for date_type, first, last in expected:
+    assert utils.get_min_supported_date(date_type) == first
+    assert utils.get_max_supported_date(date_type) == last
+    assert utils.to_date(first) == FIRST_DAY
+    assert utils.to_date(last) == LAST_DAY
+  for day in (FIRST_DAY - timedelta(days=1), LAST_DAY + timedelta(days=1)):
+    with pytest.raises(ValueError):
+      utils.to_lunar(day)
+    with pytest.raises(ValueError):
+      utils.to_ganzhi(day)
 
 
-def test_lunar_dates_round_trip_identically() -> None:
-  for year in range(1901, 2100):
-    for month in range(1, 14):
-      d: CalendarDate = CalendarDate(year, month, 1, CalendarType.LUNAR)
-      assert CEL.is_valid_lunar_date(d) == HKO.is_valid_lunar_date(d)
-      if CEL.is_valid_lunar_date(d):
-        assert CEL.lunar_to_solar(d) == HKO.lunar_to_solar(d)
-
-
-def test_bounds() -> None:
-  # celestial derives these from its tables, HKO hardcodes them; they must still agree,
-  # because the two backends cover the same physical window.
-  for date_type in CalendarType:
-    assert CEL.get_min_supported_date(date_type) == HKO.get_min_supported_date(date_type)
-    assert CEL.get_max_supported_date(date_type) == HKO.get_max_supported_date(date_type)
-
-
-# Layer (c): every expectation below is computed from the whitelist.
-
-
-def test_solar_disagreements_are_exactly_derived() -> None:
-  expected: set[date] = affected_solar_days()
+def test_solar_disagreements_are_exactly_derived(hko_lunar_dates: dict[date, CalendarDate]) -> None:
+  expected = affected_solar_days()
   measured_ganzhi: set[date] = set()
   measured_via_lunar: set[date] = set()
+  checked: int = 0
+  for year in HKO_LUNAR.supported_year_range():
+    for month, (start, end) in enumerate(pairwise(hko_month_starts(year)), start=1):
+      for index in range((end - start).days):
+        day = start + timedelta(days=index)
+        if not FIRST_DAY <= day <= LAST_DAY:
+          continue
+        hko = CalendarDate(year, month, index + 1, CalendarType.GANZHI)
+        if utils.to_ganzhi(solar(day)) != hko:
+          measured_ganzhi.add(day)
+        if utils.to_ganzhi(hko_lunar_dates[day]) != hko:
+          measured_via_lunar.add(day)
+        checked += 1
 
-  day: date = HKO.to_date(HKO.get_min_supported_date(CalendarType.SOLAR))
-  last: date = HKO.to_date(HKO.get_max_supported_date(CalendarType.SOLAR))
-  while day <= last:
-    d: CalendarDate = solar(day)
-    if CEL.solar_to_ganzhi(d) != HKO.solar_to_ganzhi(d):
-      measured_ganzhi.add(day)
-    if CEL.lunar_to_ganzhi(CEL.solar_to_lunar(d)) != HKO.lunar_to_ganzhi(HKO.solar_to_lunar(d)):
-      measured_via_lunar.add(day)
-    day += timedelta(days=1)
-
+  assert checked == len(hko_lunar_dates)
   assert measured_ganzhi == expected
   assert measured_via_lunar == expected
-  # Two moved 节, each shifting one ganzhi month: 30 and 31 days.
-  assert len(expected) == 61
+  assert len(expected) == 61 # Two moved 节 affect 30 and 31 days.
 
 
 def test_days_counts_differ_on_derived_years() -> None:
-  expected: set[int] = {year for year, _ in affected_ganzhi_months()}
-  measured: set[int] = {year for year in range(1901, 2100)
-                        if CEL.days_counts_in_ganzhi_year(year) != HKO.days_counts_in_ganzhi_year(year)}
+  expected = {year for year, _ in affected_ganzhi_months()}
+  measured: set[int] = set()
+  for year in HKO_LUNAR.supported_year_range():
+    hko_counts = tuple((end - start).days for start, end in pairwise(hko_month_starts(year)))
+    cel_counts = tuple((end - start).days for start, end in pairwise(celestial_month_starts(year)))
+    if cel_counts != hko_counts:
+      measured.add(year)
+    assert sum(cel_counts) == sum(hko_counts)
   assert measured == expected
-  # A moved 节 makes one month longer and its neighbour shorter, so the year still adds up.
-  for year in expected:
-    assert sum(CEL.days_counts_in_ganzhi_year(year)) == sum(HKO.days_counts_in_ganzhi_year(year))
 
 
-def test_ganzhi_disagreements_in_derived_months() -> None:
-  expected_months: set[tuple[int, int]] = affected_ganzhi_months()
+def test_ganzhi_disagreements_in_derived_months(hko_lunar_dates: dict[date, CalendarDate]) -> None:
+  expected_months = affected_ganzhi_months()
   measured_months: set[tuple[int, int]] = set()
   measured_validity: set[tuple[int, int, int]] = set()
+  expected_validity: set[tuple[int, int, int]] = set()
 
-  for year in range(1901, 2100):
-    cel_counts: list[int] = CEL.days_counts_in_ganzhi_year(year)
-    hko_counts: list[int] = HKO.days_counts_in_ganzhi_year(year)
+  for year in HKO_LUNAR.supported_year_range():
+    hko_starts = hko_month_starts(year)
+    cel_starts = celestial_month_starts(year)
     for month in range(1, 13):
-      for day in range(1, max(cel_counts[month - 1], hko_counts[month - 1]) + 1):
-        d: CalendarDate = CalendarDate(year, month, day, CalendarType.GANZHI)
-        cel_valid, hko_valid = CEL.is_valid_ganzhi_date(d), HKO.is_valid_ganzhi_date(d)
+      hko_count = (hko_starts[month] - hko_starts[month - 1]).days
+      cel_count = (cel_starts[month] - cel_starts[month - 1]).days
+      if year in {y for y, _ in expected_months}:
+        lo, hi = sorted((hko_count, cel_count))
+        expected_validity.update((year, month, day) for day in range(lo + 1, hi + 1))
+      for day in range(1, max(hko_count, cel_count) + 1):
+        d = CalendarDate(year, month, day, CalendarType.GANZHI)
+        hko_day = hko_starts[month - 1] + timedelta(days=day - 1)
+        cel_day = cel_starts[month - 1] + timedelta(days=day - 1)
+        hko_valid = day <= hko_count and FIRST_DAY <= hko_day <= LAST_DAY
+        cel_valid = day <= cel_count and FIRST_DAY <= cel_day <= LAST_DAY
+        if cel_valid:
+          actual = utils.to_solar(d)
+          assert actual == solar(cel_day)
+        else:
+          with pytest.raises(ValueError):
+            utils.to_solar(d)
         if cel_valid != hko_valid:
           measured_validity.add((year, month, day))
-          continue
-        if not cel_valid:
-          continue
-        if (CEL.ganzhi_to_solar(d) != HKO.ganzhi_to_solar(d)
-            or CEL.ganzhi_to_lunar(d) != HKO.ganzhi_to_lunar(d)):
+        elif cel_valid and (actual != solar(hko_day) or utils.to_lunar(d) != hko_lunar_dates[hko_day]):
           measured_months.add((year, month))
 
   assert measured_months == expected_months
-  # Validity can only differ where the month lengths do: the days in between the two.
-  expected_validity: set[tuple[int, int, int]] = set()
-  for year, _ in expected_months:
-    cel_counts = CEL.days_counts_in_ganzhi_year(year)
-    hko_counts = HKO.days_counts_in_ganzhi_year(year)
-    for month in range(1, 13):
-      lo, hi = sorted((cel_counts[month - 1], hko_counts[month - 1]))
-      expected_validity |= {(year, month, day) for day in range(lo + 1, hi + 1)}
   assert measured_validity == expected_validity

@@ -13,7 +13,7 @@ import pytest
 
 from api_contract import (
   PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, BASES, INTERNAL_MODULES,
-  INTERNAL_NAMES, STATIC_MODULES, REEXPORTS, ALIASES, EXPLICIT_EXPORTS, INPUT_CONTRACTS,
+  INTERNAL_NAMES, REEXPORTS, ALIASES, EXPLICIT_EXPORTS, INPUT_CONTRACTS,
 )
 
 
@@ -127,7 +127,8 @@ def _surface(source: str, module: str) -> tuple[set[str], dict[str, set[str]], d
       if not isinstance(node, ast.ClassDef):
         continue
       qualified = prefix + '.' + node.name
-      if (node.name.startswith('_') or module in INTERNAL_MODULES) and qualified not in PRIVATE_BASE_MEMBERS:
+      internal = node.name.startswith('_') or module in INTERNAL_MODULES or node.name in INTERNAL_NAMES.get(module, '').split()
+      if internal and qualified not in PRIVATE_BASE_MEMBERS:
         continue
       declared_bases = tuple(ast.unparse(base) for base in node.bases)
       if qualified in members:
@@ -148,8 +149,6 @@ def _check_surface(source: str, module: str) -> None:
   if module not in INTERNAL_MODULES:
     allowed = set((PUBLIC_NAMES[module] + ' ' + INTERNAL_NAMES.get(module, '')).split())
     assert names <= allowed, (module, names - allowed)
-  if module in STATIC_MODULES:
-    assert names == set(PUBLIC_NAMES[module].split()), (module, set(PUBLIC_NAMES[module].split()) - names)
   declared = DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS
   def owner(qualified: str) -> str:
     return max((name for name in PUBLIC_NAMES | INTERNAL_MODULES if qualified.startswith(name + '.')), key=len)
@@ -175,7 +174,6 @@ def test_modules_and_candidates_classified() -> None:
       _check_surface(path.read_text(encoding='utf-8'), module)
   assert modules == set(PUBLIC_NAMES) | set(INTERNAL_MODULES)
   assert not set(PUBLIC_NAMES) & set(INTERNAL_MODULES)
-  assert set(STATIC_MODULES) <= set(PUBLIC_NAMES)
   assert set(INTERNAL_NAMES) <= set(PUBLIC_NAMES)
   for module, words in INTERNAL_NAMES.items():
     assert not set(words.split()) & set(PUBLIC_NAMES[module].split())
@@ -189,7 +187,7 @@ def test_modules_and_candidates_classified() -> None:
   ("importlib.import_module('bazi.knowledge').KnowledgeObject.unregistered_dynamic = property(lambda self: None)", 'unregistered_dynamic'),
   ("importlib.import_module('bazi').__all__.append('Any')", 'Any'),
   ("importlib.import_module('bazi').__all__.remove('bazi_chart')", 'bazi_chart'),
-  ("importlib.import_module('bazi.calendar').__all__.append('solar_time')", 'solar_time'),
+  ("importlib.import_module('bazi.calendar').__all__.remove('solar_time')", 'solar_time'),
   ("del importlib.import_module('bazi.knowledge').KnowledgeBase", 'KnowledgeBase'),
   ("importlib.import_module('bazi.defines.tiangan').天干 = object()", '天干'),
   ("importlib.import_module('bazi.defines').Tiangan = object()", 'Tiangan'),
@@ -201,7 +199,7 @@ import importlib, inspect, sys
 sys.path.insert(0, 'tests')
 from api_contract import (
   PUBLIC_NAMES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS, INTERNAL_MODULES, INTERNAL_NAMES,
-  STATIC_MODULES, ALIASES, REEXPORTS, EXPLICIT_EXPORTS,
+  ALIASES, REEXPORTS, EXPLICIT_EXPORTS,
 )
 
 def guard(event, args):
@@ -212,8 +210,7 @@ def guard(event, args):
 sys.addaudithook(guard)
 
 for module in PUBLIC_NAMES:
-  if module not in STATIC_MODULES:
-    importlib.import_module(module)
+  importlib.import_module(module)
 
 def resolve(qualified):
   module = max((m for m in PUBLIC_NAMES | INTERNAL_MODULES if qualified.startswith(m + '.')), key=len)
@@ -223,8 +220,6 @@ def resolve(qualified):
   return value
 
 for module, words in PUBLIC_NAMES.items():
-  if module in STATIC_MODULES:
-    continue
   value = importlib.import_module(module)
   exported = set(getattr(value, '__all__', ()))
   if module in EXPLICIT_EXPORTS:
@@ -237,15 +232,11 @@ for module, words in PUBLIC_NAMES.items():
   assert own_definitions <= set((words + ' ' + INTERNAL_NAMES.get(module, '')).split()), (module, own_definitions - set(words.split()))
   for name in words.split():
     qualified = module + '.' + name
-    if qualified in STATIC_MODULES:
-      continue
     if qualified in PUBLIC_NAMES:
       importlib.import_module(qualified)
     else:
       assert hasattr(value, name), qualified
 for qualified, words in (DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS).items():
-  if any(qualified.startswith(module + '.') for module in STATIC_MODULES):
-    continue
   value = resolve(qualified)
   annotations = getattr(value, '__annotations__', {})
   actual_members = {name for name in vars(value) if not name.startswith('_')}
@@ -254,7 +245,6 @@ for qualified, words in (DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS).items():
     assert name in annotations or inspect.getattr_static(value, name, None) is not None, (qualified, name)
 for alias, canonical in (ALIASES | REEXPORTS).items():
   assert resolve(alias) is resolve(canonical), alias
-assert not any(name in sys.modules for name in STATIC_MODULES)
 print('PASS safe public imports, declared fields and aliases')
 '''
   script = script.replace('for module, words in PUBLIC_NAMES.items():', injection + '\nfor module, words in PUBLIC_NAMES.items():', 1)
@@ -299,6 +289,19 @@ def test_new_field_enum_alias_must_register() -> None:
     lines.insert(declaration.end_lineno, '  unregistered_field: str\n' if class_name == 'KnowledgeObject' else '  新别名 = JIA\n')
     with pytest.raises(AssertionError):
       _check_surface(''.join(lines), module)
+
+
+def test_internal_class_fields_are_not_public(monkeypatch: pytest.MonkeyPatch) -> None:
+  source = 'class Internal:\n  detail: str\nclass Public:\n  value: int\n'
+  monkeypatch.setitem(PUBLIC_NAMES, 'example', 'Public')
+  monkeypatch.setitem(INTERNAL_NAMES, 'example', 'Internal')
+  monkeypatch.setitem(DECLARED_MEMBERS, 'example.Public', 'value')
+  _check_surface(source, 'example')
+  with pytest.raises(AssertionError):
+    _check_surface(source + '  extra: int\n', 'example')
+  monkeypatch.delitem(INTERNAL_NAMES, 'example')
+  with pytest.raises(AssertionError, match='Internal'):
+    _check_surface(source, 'example')
 
 
 def test_scope_candidates_skip_function_locals() -> None:
@@ -401,16 +404,6 @@ def test_declared_exports_must_register(declaration: str) -> None:
 def test_unsupported_exports_fail_loudly(declaration: str) -> None:
   with pytest.raises(AssertionError):
     _declared_all(ast.parse(declaration).body)
-
-
-def test_static_modules_reject_phantom_names(monkeypatch: pytest.MonkeyPatch) -> None:
-  for module in STATIC_MODULES:
-    source = ROOT.joinpath(*module.split('.')).with_suffix('.py').read_text(encoding='utf-8')
-    _check_surface(source, module)
-    with monkeypatch.context() as patcher:
-      patcher.setitem(PUBLIC_NAMES, module, PUBLIC_NAMES[module] + ' phantom_func')
-      with pytest.raises(AssertionError, match='phantom_func'):
-        _check_surface(source, module)
 
 
 def test_package_exports_are_explicit() -> None:

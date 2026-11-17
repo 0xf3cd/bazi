@@ -5,6 +5,7 @@ import hashlib
 import struct
 
 from datetime import UTC, date, datetime, timedelta, timezone
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
@@ -15,10 +16,11 @@ from bazi.calendar.celestial_data.loader import (
   EOT_SENTINEL_DATE, EOT_START_DATE, EquationOfTimeTable, JieqiMomentTable, LunarYearTable,
 )
 from bazi.defines import Ganzhi, Jieqi
+from bazi.common import frozendict
 
 
 FIXTURES: Path = Path(__file__).parent / 'celestial_fixtures'
-TABLE_NAMES: list[str] = ['jieqi_moments.txt', 'lunar_years_algo1.txt', 'lunar_years_algo2.txt']
+TABLE_NAMES: list[str] = ['jieqi_moments.txt', 'lunar_years.txt']
 
 
 def data_lines(path: Path) -> list[str]:
@@ -30,9 +32,7 @@ def data_lines(path: Path) -> list[str]:
 
 def test_they_cover_the_whole_window() -> None:
   assert JieqiMomentTable().supported_year_range() == range(1901, 2201)
-  for algo in (1, 2):
-    table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
-    assert table.supported_year_range() == range(1901, 2100)
+  assert LunarYearTable().supported_year_range() == range(1901, 2100)
 
 
 def test_data_sections_are_frozen() -> None:
@@ -45,8 +45,7 @@ def test_data_sections_are_frozen() -> None:
   '''
   digests: dict[str, str] = {
     'jieqi_moments.txt':     'da0ab657f3c89cbdcc1354cacdf1949f5964cd630256cff288db603b7ba90e50',
-    'lunar_years_algo1.txt': '3e238a2e0494b5af8a53f24e2cae150406972e7ecaa3ce673ceba785bbf3b51d',
-    'lunar_years_algo2.txt': '787229f4d253280f5fc0fc5b47adeb9292228ca503aab7032307d6dbde83bb53',
+    'lunar_years.txt':      '3e238a2e0494b5af8a53f24e2cae150406972e7ecaa3ce673ceba785bbf3b51d',
   }
   assert sorted(digests) == sorted(TABLE_NAMES) # Every shipped table is covered.
   for name, digest in digests.items():
@@ -66,16 +65,14 @@ def test_package_provenance_value_is_pinned() -> None:
     'release_asset': 'celestial-calendar==0.6.1 / PyPI wheel',
   }
   assert {key: JieqiMomentTable().provenance[key] for key in expected} == expected
-  for algo in (1, 2):
-    table = LunarYearTable(DATA_DIR / f'lunar_years_algo{algo}.txt')
-    assert {key: table.provenance[key] for key in expected} == expected
+  assert {key: LunarYearTable().provenance[key] for key in expected} == expected
 
 
 def test_fixture_rows_match_shipped_tables() -> None:
   '''
   The fixtures and the shipped tables were written by two generators that never shared
   code (the fixtures came from a throwaway script, the tables from
-  `celestial_data/generator.py`).  Byte-identical data lines on
+  `run_calendar_generation.py`).  Byte-identical data lines on
   the overlapping years is therefore a check on `SCHEMA.md` itself, not just on the data.
   '''
   for name in TABLE_NAMES:
@@ -111,48 +108,39 @@ def test_jieqi_provenance() -> None:
   assert provenance['schema_version'] == SCHEMA_VERSION
   assert provenance['celestial_version'] == '0.6.1'
   assert provenance['columns'] == JIEQI_COLUMNS
-  # A copy, so a caller cannot mutate the table's own record.
-  provenance['celestial_version'] = 'tampered'
-  assert table.provenance['celestial_version'] == '0.6.1'
+  assert isinstance(provenance, frozendict)
+  with pytest.raises(TypeError):
+    provenance['celestial_version'] = 'tampered' # type: ignore[index]
 
 
 def test_lunar_fixture() -> None:
-  for algo in (1, 2):
-    table = LunarYearTable(FIXTURES / f'lunar_years_algo{algo}.txt', contiguous_years=False)
-    assert table.provenance['columns'] == LUNAR_COLUMNS
-    assert table.provenance['algo'] == str(algo)
+  table = LunarYearTable(FIXTURES / 'lunar_years.txt', contiguous_years=False)
+  assert table.provenance['columns'] == LUNAR_COLUMNS
+  assert table.provenance['algo'] == '1'
 
-    info = table.get(1901)
-    assert info['first_solar_day'] == date(1901, 2, 19)
-    assert not info['leap']
-    assert info['leap_month'] is None # The table spells this as 0; hko_data as None.
-    assert len(info['days_counts']) == 12
-    assert info['ganzhi'] == Ganzhi.from_str('辛丑')
-
-    leap = table.get(1917)
-    assert leap['leap']
-    assert leap['leap_month'] == 2
-    assert len(leap['days_counts']) == 13
-
-
-def test_lunar_get_returns_a_copy() -> None:
-  # A copy, so a caller's in-place edit cannot corrupt the table's own record (issue #92).
-  table = LunarYearTable(FIXTURES / 'lunar_years_algo1.txt', contiguous_years=False)
   info = table.get(1901)
-  assert info is not table.get(1901)
-  assert info['days_counts'] is not table.get(1901)['days_counts']
+  assert info.first_solar_day == date(1901, 2, 19)
+  assert not info.leap
+  assert info.leap_month is None
+  assert len(info.days_counts) == 12
+  assert info.ganzhi == Ganzhi.from_str('辛丑')
 
-  original = list(info['days_counts'])
-  info['days_counts'][0] = 999
-  assert table.get(1901)['days_counts'] == original
+  leap = table.get(1917)
+  assert leap.leap
+  assert leap.leap_month == 2
+  assert len(leap.days_counts) == 13
 
 
-def test_the_two_algos_differ_on_1914() -> None:
-  # 1914 is one of the six years celestial's own diff_test.cpp records as divergent.
-  algo1 = LunarYearTable(FIXTURES / 'lunar_years_algo1.txt', contiguous_years=False).get(1914)
-  algo2 = LunarYearTable(FIXTURES / 'lunar_years_algo2.txt', contiguous_years=False).get(1914)
-  assert algo1['first_solar_day'] == algo2['first_solar_day']
-  assert algo1['days_counts'] != algo2['days_counts']
+def test_lunar_results_are_immutable() -> None:
+  table = LunarYearTable()
+  info = table.get(1901)
+  assert isinstance(info.days_counts, tuple)
+  with pytest.raises(FrozenInstanceError):
+    info.leap = True # type: ignore[misc]
+  with pytest.raises(TypeError):
+    info.days_counts[0] = 999 # type: ignore[index]
+  with pytest.raises(TypeError):
+    table.provenance['algo'] = '2' # type: ignore[index]
 
 
 def test_index_matches_the_jieqi_enum() -> None:
@@ -175,7 +163,7 @@ def jieqi_lines() -> list[str]:
 
 @pytest.fixture
 def lunar_lines() -> list[str]:
-  return (FIXTURES / 'lunar_years_algo1.txt').read_text(encoding='utf-8').splitlines()
+  return (FIXTURES / 'lunar_years.txt').read_text(encoding='utf-8').splitlines()
 
 
 def _write(tmp_path: Path, lines: list[str], name: str = 'table.txt') -> Path:
@@ -196,7 +184,7 @@ def _replace(lines: list[str], old_prefix: str, new: str) -> list[str]:
 def test_missing_file() -> None:
   with pytest.raises(RuntimeError) as ctx:
     JieqiMomentTable(FIXTURES / 'does_not_exist.txt')
-  assert 'generator' in str(ctx.value) # Tell the reader how to regenerate it.
+  assert 'run_calendar_generation.py' in str(ctx.value)
 
 
 def test_schema_version_mismatch(jieqi_lines: list[str], tmp_path: Path) -> None:
@@ -389,7 +377,6 @@ def test_equation_of_time_normalizes_offsets() -> None:
     assert table.seconds_at(utc.astimezone(zone)) == table.seconds_at(utc)
 
 
-@pytest.mark.input_contract('bazi.calendar.celestial_data.loader', 'EquationOfTimeTable.seconds_at')
 def test_interpolation_range_is_half_open() -> None:
   table = EquationOfTimeTable()
   first = datetime.combine(EOT_START_DATE, datetime.min.time(), UTC)

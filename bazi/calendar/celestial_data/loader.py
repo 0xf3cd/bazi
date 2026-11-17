@@ -3,11 +3,9 @@
 '''
 读取 `SCHEMA.md` 所述的预生成 celestial-calendar 表。
 
-加载层只解析、校验表并按键查询，不解释八字历法语义；上层 `CelestialCalendarUtils`
+加载层只解析、校验表并按键查询，不解释八字历法语义；上层 `calendar.utils`
 负责历法查询，使数据格式或来源变更与历法语义分开。
 运行时只用纯 Python 读取已提交表，不导入离线生成器所用的 celestial-calendar 包。
-两个后端共用 bazi.calendar.dates 中定义的 LunarYearInfo。
-也可继续从本模块导入，取得的是同一个类型。
 '''
 
 import hashlib
@@ -18,8 +16,9 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Final
 
+from ...common import frozendict
 from ...defines import Ganzhi, Jieqi
-from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 这里的 as 让 mypy 接受调用方从本模块导入这个类型。
+from ..dates import LunarYearInfo
 
 
 SCHEMA_VERSION: Final[str] = '2'
@@ -61,7 +60,7 @@ def _require_table(path: Path) -> None:
   if not path.is_file():
     raise RuntimeError(
       f'Celestial data table is missing: {path}. '
-      'Reinstall bazi; in a source checkout, run `python -m bazi.calendar.celestial_data.generator` '
+      'Reinstall bazi; in a source checkout, run `python run_calendar_generation.py` '
       'with the optional generation tools.'
     )
 
@@ -165,8 +164,9 @@ class JieqiMomentTable:
       随库表为 True，避免支持范围内缺行而抛 KeyError；稀疏测试切片用 False。
       此项是构造参数，不是文件头部键，编辑数据文件不能放宽检查。
     '''
-    self._provenance, rows = _parse(path, JIEQI_COLUMNS)
-    self._moments: dict[tuple[int, Jieqi], datetime] = {}
+    provenance, rows = _parse(path, JIEQI_COLUMNS)
+    self._provenance: Final[frozendict[str, str]] = frozendict(provenance)
+    moments: dict[tuple[int, Jieqi], datetime] = {}
 
     for year_str, idx_str, name, date_str, time_str in rows:
       # 先查范围再取下标，保证错误为 ValueError；直接取下标会抛 IndexError，负数还会从末尾取值。
@@ -177,18 +177,19 @@ class JieqiMomentTable:
       if name != jieqi.value:
         raise ValueError(f'{path}: jq_idx {idx_str} is {jieqi.value}, but the row says {name!r}')
       key = (int(year_str), jieqi)
-      if key in self._moments:
+      if key in moments:
         raise ValueError(f'{path}: duplicate row for {key[0]} {name}')
-      self._moments[key] = datetime.fromisoformat(f'{date_str} {time_str}')
+      moments[key] = datetime.fromisoformat(f'{date_str} {time_str}')
 
-    years = {year for year, _ in self._moments}
+    years = {year for year, _ in moments}
     self._year_range: Final[range] = range(min(years), max(years) + 1)
-    if contiguous_years and len(self._moments) != len(self._year_range) * 24:
-      raise ValueError(f'{path}: {len(self._moments)} moments do not cover {self._year_range} x 24')
+    if contiguous_years and len(moments) != len(self._year_range) * 24:
+      raise ValueError(f'{path}: {len(moments)} moments do not cover {self._year_range} x 24')
+    self._moments: Final[frozendict[tuple[int, Jieqi], datetime]] = frozendict(moments)
 
   @property
-  def provenance(self) -> dict[str, str]:
-    return dict(self._provenance)
+  def provenance(self) -> frozendict[str, str]:
+    return self._provenance
 
   def supported_year_range(self) -> range:
     '''支持的公历年份范围。'''
@@ -201,19 +202,20 @@ class JieqiMomentTable:
 class LunarYearTable:
   '''各支持农历年的首日公历日期、闰月及月长。'''
 
-  def __init__(self, path: Path, contiguous_years: bool = True) -> None:
+  def __init__(self, path: Path = DATA_DIR / 'lunar_years.txt', contiguous_years: bool = True) -> None:
     '''
     Args:
     - contiguous_years: (bool) 连续年份检查，见 `JieqiMomentTable.__init__`。
     '''
-    self._provenance, rows = _parse(path, LUNAR_COLUMNS)
-    self._years: dict[int, LunarYearInfo] = {}
+    provenance, rows = _parse(path, LUNAR_COLUMNS)
+    self._provenance: Final[frozendict[str, str]] = frozendict(provenance)
+    years: dict[int, LunarYearInfo] = {}
 
     for year_str, first_str, leap_str, bits_str, counts_str, ganzhi_str in rows:
       leap_month: int = int(leap_str)
-      days_counts: list[int] = [int(c) for c in counts_str.split(',')]
+      days_counts: tuple[int, ...] = tuple(int(c) for c in counts_str.split(','))
       bits: int = int(bits_str, 16)
-      decoded: list[int] = [30 if (bits >> i) & 1 else 29 for i in range(len(days_counts))]
+      decoded: tuple[int, ...] = tuple(30 if (bits >> i) & 1 else 29 for i in range(len(days_counts)))
       if decoded != days_counts:
         raise ValueError(f'{path}: year {year_str} has month_len_bits {bits_str} '
                          f'(= {decoded}) but days_counts {days_counts}')
@@ -222,36 +224,29 @@ class LunarYearTable:
                          f'but {len(days_counts)} months')
 
       year: int = int(year_str)
-      if year in self._years:
+      if year in years:
         raise ValueError(f'{path}: duplicate row for year {year}')
-      self._years[year] = LunarYearInfo(
+      years[year] = LunarYearInfo(
         first_solar_day=date.fromisoformat(first_str),
         leap=leap_month != 0,
-        # 无闰月在表中为 0，在 HKO 记录中为 None；转为 None，供两后端直接比较字典。
+        # 表中以 0 表示无闰月，记录中以 None 表示。
         leap_month=leap_month if leap_month else None,
         days_counts=days_counts,
         ganzhi=Ganzhi.from_str(ganzhi_str),
       )
 
-    self._year_range: Final[range] = range(min(self._years), max(self._years) + 1)
-    if contiguous_years and len(self._years) != len(self._year_range):
-      raise ValueError(f'{path}: {len(self._years)} years do not cover {self._year_range}')
+    self._year_range: Final[range] = range(min(years), max(years) + 1)
+    if contiguous_years and len(years) != len(self._year_range):
+      raise ValueError(f'{path}: {len(years)} years do not cover {self._year_range}')
+    self._years: Final[frozendict[int, LunarYearInfo]] = frozendict(years)
 
   @property
-  def provenance(self) -> dict[str, str]:
-    return dict(self._provenance)
+  def provenance(self) -> frozendict[str, str]:
+    return self._provenance
 
   def supported_year_range(self) -> range:
     '''支持的农历年份范围。'''
     return self._year_range
 
   def get(self, lunar_year: int) -> LunarYearInfo:
-    info: LunarYearInfo = self._years[lunar_year]
-    # 每次返回新记录及独立 days_counts 列表，避免调用方修改内部表；其他值不可变，可共享。
-    return LunarYearInfo(
-      first_solar_day=info['first_solar_day'],
-      leap=info['leap'],
-      leap_month=info['leap_month'],
-      days_counts=list(info['days_counts']),
-      ganzhi=info['ganzhi'],
-    )
+    return self._years[lunar_year]

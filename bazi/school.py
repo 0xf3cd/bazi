@@ -7,7 +7,6 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Final
 
-from .calendar import CalendarBackend
 from .common import check_declared_types, frozendict, _compact_dataclass_repr
 from .rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 
@@ -25,7 +24,7 @@ class BaziPrecision(Enum):
   - MINUTE：知道到分，比到日期、小时与分钟。
 
   Examples:
-  celestial 后端的 2000 年立春为 2000-02-04 20:40:23，HKO 只提供日期。
+  2000 年立春为 2000-02-04 20:40:23。
   - DAY：02-04 全天取年柱庚辰、月支寅，包括 20:40:23 之前；02-03 取己卯、丑。
   - HOUR：戌时 [19:00, 21:00) 与节同一时辰，取庚辰、寅；酉时 [17:00, 19:00) 及当日更早时辰取己卯、丑。
   - MINUTE：20:40 起取庚辰、寅，之前取己卯、丑。
@@ -36,9 +35,6 @@ class BaziPrecision(Enum):
   子时跨午夜，相等时辰窗口可始于前一公历日：2009 年立春为 2009-02-04 00:49:48，
   所属子时始于 02-03 23:00，因此 HOUR 的 02-03 23:30 归新，DAY 的同日却归旧。
   三档不构成嵌套细化。
-
-  HOUR 与 MINUTE 需要真实节时刻；`Bazi.__init__` 拒绝这两档使用 HKO，
-  因为它的 `jieqi_moment` 只有午夜占位，见 `CalendarUtilsProtocol`。
   '''
   DAY    = 0
   HOUR   = 1
@@ -245,7 +241,7 @@ class BaziSchool:
     每个字段支持的成员见{doc}`配置指南 </guides/configuration>`中的锚点取值表。
 
   Note:
-  - 出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。
+  - 出生精度见 `BaziConfig`；性别由 `Bazi` 输入。
   - 每个字段均参与相等性；只差一个选项的命盘也不同，相等档案的哈希相等。
   - 字段须为不可变类型（枚举或 frozen 值类型），不得用 dict / list 默认值，避免修改共享默认实例。
   - 默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
@@ -345,13 +341,12 @@ DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 @dataclass(frozen=True)
 class BaziConfig:
   '''
-  命盘级不可变配置，包括出生精度、历法后端、大运年份投影及求值时读取的流派档案。
+  命盘级不可变配置，包括出生精度、大运年份投影及求值时读取的流派档案。
   Bazi 持有整个配置，配置参与相等性。大运年份投影虽不改变四柱与大运物理时刻线，
   仍属于命盘身份；相等配置的哈希相等。
 
   Args:
   - precision: (BaziPrecision) 出生时间精度。
-  - backend: (CalendarBackend) 所有历法换算所用的后端。
   - school: (BaziSchool) 流派档案，默认 `DEFAULT_SCHOOL`。
   - dayun_year_rule: (DayunYearRule) 默认大运年份投影。
 
@@ -360,7 +355,6 @@ class BaziConfig:
   - 构造只收声明类型，字符串解析由 `from_values` 提供。
   '''
   precision:        BaziPrecision   = BaziPrecision.DAY
-  backend:          CalendarBackend = CalendarBackend.CELESTIAL
   school:           BaziSchool      = DEFAULT_SCHOOL
   dayun_year_rule:  DayunYearRule   = DayunYearRule.JIE_PROJECTED
 
@@ -373,7 +367,6 @@ class BaziConfig:
 
   @classmethod
   def from_values(cls, precision: BaziPrecision | str = BaziPrecision.DAY,
-                  backend: CalendarBackend | str = CalendarBackend.CELESTIAL,
                   school: BaziSchool = DEFAULT_SCHOOL,
                   dayun_year_rule: DayunYearRule | str = DayunYearRule.JIE_PROJECTED) -> 'BaziConfig':
     '''
@@ -383,8 +376,6 @@ class BaziConfig:
     - precision: (BaziPrecision | str) 出生精度。字符串支持
       "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day"，
       大小写不敏感，其他值抛 `ValueError`。
-    - backend: (CalendarBackend | str) 历法后端；`CalendarBackend.from_str` 接受成员名或值，
-      如 "HKO"/"hko"，大小写不敏感，其他值抛 `ValueError`。
     - school: (BaziSchool) 流派档案，不接受字符串；类型错误由构造函数抛 `TypeError`。
     - dayun_year_rule: (DayunYearRule | str) 大运年份投影；`DayunYearRule.from_str` 接受成员名或值，
       如 "FIXED_DECADE"/"fixed_decade"，大小写不敏感，其他值抛 `ValueError`。
@@ -394,8 +385,6 @@ class BaziConfig:
 
     if not isinstance(precision, (BaziPrecision, str)):
       raise TypeError(f'Expected BaziPrecision or str, got {type(precision)}')
-    if not isinstance(backend, (CalendarBackend, str)):
-      raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
     if not isinstance(dayun_year_rule, (DayunYearRule, str)):
       raise TypeError(f'Expected DayunYearRule or str, got {type(dayun_year_rule)}')
 
@@ -406,7 +395,6 @@ class BaziConfig:
 
     return cls(
       precision=_precision,
-      backend=CalendarBackend.from_str(backend) if isinstance(backend, str) else backend,
       school=school,
       dayun_year_rule=DayunYearRule.from_str(dayun_year_rule) if isinstance(dayun_year_rule, str) else dayun_year_rule,
     )

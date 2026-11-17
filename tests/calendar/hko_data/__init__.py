@@ -1,4 +1,4 @@
-'''HKO 随包数据的读取与格式类型。
+'''HKO 测试对照数据的读取与格式类型。
 
 JieqiDates 与 LunarYearInfo 提供解码后的节气、阴历信息；离线编码另见 encoder 模块。'''
 

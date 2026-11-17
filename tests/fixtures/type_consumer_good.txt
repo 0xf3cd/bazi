@@ -1,13 +1,11 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from dataclasses import replace
 from typing import assert_type
 from bazi.bazi import Bazi, LocationTime
 from bazi.bazi_chart import BaziChart
-from bazi.calendar.dates import GanzhiYearMonth, JieqiTime, LunarYearInfo
-from bazi.calendar.hko_data import LunarYearInfo as HkoInfo
-from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo
-from bazi.calendar.celestial_data.loader import LunarYearInfo as CelestialInfo
+from bazi.calendar.dates import CalendarDate, GanzhiYearMonth, JieqiTime
+from bazi.calendar.utils import to_lunar, to_date
 from bazi.defines import Zhu, TianganLayer, Dizhi, Jieqi, Tiangan, Ganzhi
 from bazi.transits import TransitKind, TransitSet
 from bazi.transit_chart import TransitChart
@@ -58,10 +56,8 @@ target = Ganzhi.from_str("甲子")
 hit = KongwangHit(Zhu.月, target)
 anchor = KongwangResult(Zhu.日, target, ())
 appearance = StarAppearance(Zhu.月, target, TianganLayer.明干, Tiangan.甲)
-lunar: LunarYearInfo = {"first_solar_day": datetime(2000, 2, 5).date(), "leap": False, "leap_month": None, "days_counts": [30] * 12, "ganzhi": target}
-hko: HkoInfo = lunar
-decoder: DecoderInfo = hko
-celestial: CelestialInfo = decoder
+lunar: CalendarDate = to_lunar(date(2023, 3, 22))
+solar: date = to_date(lunar)
 local: Bazi = Bazi.create(datetime(2023, 12, 31, 22, tzinfo=UTC), "female", BaziConfig.from_values(precision="minute"), longitude=-157.4, civil_timezone=timezone(timedelta(hours=14)))
 local_chart: BaziChart = BaziChart(local)
 local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", observation=NatalObservation())

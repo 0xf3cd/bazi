@@ -14,7 +14,7 @@ project = 'bazi'
 language = 'zh_CN'
 extensions = [
   'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.linkcode',
-  'myst_parser', 'house_docstrings', 'typeddict_fields', 'knowledge_catalog',
+  'myst_parser', 'house_docstrings', 'knowledge_catalog',
 ]
 source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
 myst_heading_anchors = 3

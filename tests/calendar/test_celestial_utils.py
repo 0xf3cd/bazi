@@ -1,23 +1,12 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# test_celestial_utils.py
+
+from datetime import date, datetime, timedelta
 
 import pytest
 
-from datetime import date, datetime, timedelta
-from collections.abc import Callable
-
-from bazi.calendar import CalendarUtilsProtocol
+from bazi.calendar import utils
 from bazi.calendar.dates import CalendarType, CalendarDate
-from bazi.calendar.celestial_utils import ALGO1, ALGO2, CelestialCalendarUtils
 from bazi.defines import Jieqi
-
-# The whitelist's single source of truth.  Bare sibling import -- see the NOTE in
-# `test_celestial_tables.py` for why `from tests.calendar...` is not used.
-from celestial_parity_data import ALGO2_DIVERGENT_YEARS
-
-
-class Year(int):
-  pass
 
 
 def solar(year: int, month: int, day: int) -> CalendarDate:
@@ -32,380 +21,181 @@ def ganzhi(year: int, month: int, day: int) -> CalendarDate:
   return CalendarDate(year, month, day, CalendarType.GANZHI)
 
 
-def test_conforms() -> None:
-  for utils in (ALGO1, ALGO2):
-    assert isinstance(utils, CalendarUtilsProtocol)
-
-
-def test_the_two_algos_are_separate_objects() -> None:
-  # A shared mutable switch plus `lru_cache` would let a switch return results computed
-  # under the previous algorithm; separate instances make that impossible.
-  assert ALGO1 is not ALGO2
-
-
 def test_derived_bounds() -> None:
-  # Derived from the tables, not hardcoded: the solar bounds are the anchor and the
-  # other four are conversions of them.
-  assert ALGO1.get_min_supported_date(CalendarType.SOLAR) == solar(1901, 2, 19)
-  assert ALGO1.get_max_supported_date(CalendarType.SOLAR) == solar(2099, 12, 31)
-  assert ALGO1.get_min_supported_date(CalendarType.LUNAR) == lunar(1901, 1, 1)
-  assert ALGO1.get_max_supported_date(CalendarType.LUNAR) == lunar(2099, 12, 20)
-  assert ALGO1.get_min_supported_date(CalendarType.GANZHI) == ganzhi(1901, 1, 16)
-  assert ALGO1.get_max_supported_date(CalendarType.GANZHI) == ganzhi(2099, 11, 25)
+  assert utils.get_min_supported_date(CalendarType.SOLAR) == solar(1901, 2, 19)
+  assert utils.get_max_supported_date(CalendarType.SOLAR) == solar(2099, 12, 31)
+  assert utils.get_min_supported_date(CalendarType.LUNAR) == lunar(1901, 1, 1)
+  assert utils.get_max_supported_date(CalendarType.LUNAR) == lunar(2099, 12, 20)
+  assert utils.get_min_supported_date(CalendarType.GANZHI) == ganzhi(1901, 1, 16)
+  assert utils.get_max_supported_date(CalendarType.GANZHI) == ganzhi(2099, 11, 25)
 
 
 def test_the_three_bounds_are_one_physical_day() -> None:
-  # This is why per-date-type ranges would be wrong: they are the same day, spelled three
-  # ways.  A conversion of either bound must stay inside the window on all three axes.
-  for bound in (ALGO1.get_min_supported_date, ALGO1.get_max_supported_date):
-    day: date = ALGO1.to_date(bound(CalendarType.SOLAR))
-    assert ALGO1.to_date(bound(CalendarType.LUNAR)) == day
-    assert ALGO1.to_date(bound(CalendarType.GANZHI)) == day
+  for bound in (utils.get_min_supported_date, utils.get_max_supported_date):
+    day = utils.to_date(bound(CalendarType.SOLAR))
+    assert utils.to_date(bound(CalendarType.LUNAR)) == day
+    assert utils.to_date(bound(CalendarType.GANZHI)) == day
 
 
-def test_get_min_supported_date_negative() -> None:
-  with pytest.raises(TypeError):
-    ALGO1.get_min_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
+@pytest.mark.input_contract('bazi.calendar.utils', 'get_min_supported_date get_max_supported_date')
+def test_bounds_reject_wrong_type() -> None:
+  for bound in (utils.get_min_supported_date, utils.get_max_supported_date):
+    with pytest.raises(TypeError):
+      bound(42) # type: ignore[arg-type] # Deliberately invalid input.
 
 
-def test_get_max_supported_date_negative() -> None:
-  with pytest.raises(TypeError):
-    ALGO1.get_max_supported_date(42) # type: ignore[arg-type] # Deliberately invalid input.
+@pytest.mark.input_contract('bazi.calendar.utils', 'to_solar to_lunar to_ganzhi to_date')
+@pytest.mark.parametrize('invalid', [
+  solar(1901, 2, 18), solar(2100, 1, 1), solar(2023, 2, 29), solar(2024, 13, 1),
+  solar(2024, 0, 1), solar(2024, 1, 0),
+  lunar(1900, 12, 1), lunar(2099, 12, 21), lunar(2024, 13, 1), lunar(2024, 0, 1),
+  lunar(2024, 1, 0), lunar(2024, 1, 31), lunar(2023, 3, 30),
+  ganzhi(1901, 1, 15), ganzhi(2099, 11, 26), ganzhi(2024, 13, 1), ganzhi(2024, 0, 1),
+  ganzhi(2024, 1, 0), ganzhi(2024, 1, 33),
+])
+def test_invalid_dates_are_rejected(invalid: CalendarDate) -> None:
+  for convert in (utils.to_solar, utils.to_lunar, utils.to_ganzhi, utils.to_date):
+    with pytest.raises(ValueError):
+      convert(invalid)
 
 
-def test_solar() -> None:
-  assert ALGO1.is_valid_solar_date(solar(2024, 2, 4))
-  assert not ALGO1.is_valid_solar_date(lunar(2024, 2, 4)) # Wrong date type.
-  assert not ALGO1.is_valid_solar_date(solar(1901, 2, 18)) # One day before min.
-  assert not ALGO1.is_valid_solar_date(solar(2100, 1, 1)) # Past max.
-  assert not ALGO1.is_valid_solar_date(solar(2023, 2, 29)) # Not a leap year.
-  assert ALGO1.is_valid_solar_date(solar(2024, 2, 29)) # A leap year.
-  assert not ALGO1.is_valid_solar_date(solar(2024, 13, 1)) # No such month.
-
-
-def test_lunar() -> None:
-  assert ALGO1.is_valid_lunar_date(lunar(2024, 1, 1))
-  assert not ALGO1.is_valid_lunar_date(solar(2024, 1, 1)) # Wrong date type.
-  assert not ALGO1.is_valid_lunar_date(lunar(1900, 12, 1)) # Before min.
-  assert not ALGO1.is_valid_lunar_date(lunar(2099, 12, 21)) # Past max.
-  assert not ALGO1.is_valid_lunar_date(lunar(2024, 13, 1)) # 2024 has 12 lunar months.
-  assert ALGO1.is_valid_lunar_date(lunar(2023, 13, 1)) # 2023 is a leap lunar year.
-  assert not ALGO1.is_valid_lunar_date(lunar(2024, 1, 0))
-  assert not ALGO1.is_valid_lunar_date(lunar(2024, 1, 31))
-
-
-def test_lunar_leap_month_boundary() -> None:
-  # A readable sample of the slot-3 numbering convention, plus the boundary: 2023's leap
-  # month is 闰二月, slot 3 in this numbering (it shifts the later months -- slot 13 is
-  # 腊月, not the leap month), running 29 days from 2023-03-22 to 2023-04-19.  The data
-  # itself is regression-pinned by `test_data_sections_are_frozen` (table hash) and
-  # `test_algo1_matches_hko_strictly`; this test does not guard that class alone.
-  assert ALGO1.is_valid_lunar_date(lunar(2023, 3, 29)) # Last day of the leap month.
-  assert not ALGO1.is_valid_lunar_date(lunar(2023, 3, 30)) # One past the leap month's end.
-
-
-def test_ganzhi() -> None:
-  assert ALGO1.is_valid_ganzhi_date(ganzhi(2024, 1, 1))
-  assert not ALGO1.is_valid_ganzhi_date(solar(2024, 1, 1)) # Wrong date type.
-  assert not ALGO1.is_valid_ganzhi_date(ganzhi(1901, 1, 15)) # Before min.
-  assert not ALGO1.is_valid_ganzhi_date(ganzhi(2099, 11, 26)) # Past max.
-  assert not ALGO1.is_valid_ganzhi_date(ganzhi(2024, 13, 1)) # 12 ganzhi months only.
-  assert not ALGO1.is_valid_ganzhi_date(ganzhi(2024, 1, 0))
-  assert not ALGO1.is_valid_ganzhi_date(ganzhi(2024, 1, 33))
-
-
-def test_dispatch() -> None:
-  assert ALGO1.is_valid(solar(2024, 2, 4))
-  assert ALGO1.is_valid(lunar(2024, 1, 1))
-  assert ALGO1.is_valid(ganzhi(2024, 1, 1))
-  assert not ALGO1.is_valid(solar(2100, 1, 1))
+def test_valid_leap_days() -> None:
+  assert utils.to_date(solar(2024, 2, 29)) == date(2024, 2, 29)
+  assert utils.to_lunar(lunar(2023, 13, 1)) == lunar(2023, 13, 1)
+  assert utils.to_date(lunar(2023, 3, 29)) == date(2023, 4, 19)
 
 
 def test_ganzhi_month_lengths() -> None:
   for year in (2024, 2100):
-    counts: list[int] = ALGO1.days_counts_in_ganzhi_year(year)
+    counts = utils._days_counts_in_ganzhi_year(year)
+    assert isinstance(counts, tuple)
     assert len(counts) == 12
-    # A ganzhi year runs 立春 to 立春, so the months must add up to exactly that span.
-    span: int = (ALGO1.jieqi_date(year + 1, Jieqi.立春) - ALGO1.jieqi_date(year, Jieqi.立春)).days
+    span = (utils.jieqi_moment(year + 1, Jieqi.立春).date()
+            - utils.jieqi_moment(year, Jieqi.立春).date()).days
     assert sum(counts) == span
 
 
-def test_month_lengths_cannot_poison_cache() -> None:
-  '''
-  The lengths come from a cache, so handing back the cached list itself would let one
-  caller's in-place edit corrupt every later answer.  Worse, it would not stay contained:
-  `is_valid_ganzhi_date` caches verdicts computed from these lengths, so the wrong answers
-  would outlive the edit and no `cache_clear` would bring them back.
-  '''
-  counts: list[int] = ALGO1.days_counts_in_ganzhi_year(2000)
-  assert counts is not ALGO1.days_counts_in_ganzhi_year(2000)
-
-  counts[0] = 999
-  assert ALGO1.days_counts_in_ganzhi_year(2000)[0] == 30
-  assert ALGO1.is_valid_ganzhi_date(ganzhi(2000, 1, 29))
-
-
-def test_days_counts_in_ganzhi_year_negative() -> None:
-  with pytest.raises(ValueError):
-    ALGO1.days_counts_in_ganzhi_year(1900) # Before the first jieqi-table year.
-  with pytest.raises(ValueError):
-    ALGO1.days_counts_in_ganzhi_year(2200) # The last jieqi-table year: no 立春 of 2201 to close it.
-
-
-@pytest.mark.parametrize('utils', [ALGO1, ALGO2], ids=['ALGO1', 'ALGO2'])
-@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
-def test_days_counts_validates_before_cache(utils: CelestialCalendarUtils, year: int) -> None:
-  counts = utils.days_counts_in_ganzhi_year(year)
-  assert len(counts) == 12
-  assert counts == utils.days_counts_in_ganzhi_year(2024)
-  assert counts is not utils.days_counts_in_ganzhi_year(year)
-
-  bad_year: object
-  for bad_year in (2024.0, '2024', []):
-    with pytest.raises(TypeError, match='Expected int') as exc:
-      utils.days_counts_in_ganzhi_year(bad_year) # type: ignore
-    assert str(type(bad_year)) in str(exc.value)
-
-  for supported_year in (1901, 2100, 2199):
-    assert len(utils.days_counts_in_ganzhi_year(Year(supported_year))) == 12
-
-  for bad_value in (1900, 2200, 2201, True, False):
+def test_month_lengths_require_next_lichun() -> None:
+  for year in (1900, 2200):
     with pytest.raises(ValueError):
-      utils.days_counts_in_ganzhi_year(bad_value)
+      utils._days_counts_in_ganzhi_year(year)
 
 
 def test_round_trips() -> None:
   # Every day of a leap lunar year and of a plain one, both ways round.
   for year in (2023, 2024):
-    day: date = date(year, 1, 1)
+    day = date(year, 1, 1)
     while day.year == year:
-      d: CalendarDate = solar(day.year, day.month, day.day)
-      assert ALGO1.lunar_to_solar(ALGO1.solar_to_lunar(d)) == d
-      assert ALGO1.ganzhi_to_solar(ALGO1.solar_to_ganzhi(d)) == d
-      assert ALGO1.ganzhi_to_lunar(ALGO1.solar_to_ganzhi(d)) == ALGO1.solar_to_lunar(d)
-      assert ALGO1.lunar_to_ganzhi(ALGO1.solar_to_lunar(d)) == ALGO1.solar_to_ganzhi(d)
+      d = solar(day.year, day.month, day.day)
+      assert utils.to_solar(utils.to_lunar(d)) == d
+      assert utils.to_solar(utils.to_ganzhi(d)) == d
+      assert utils.to_lunar(utils.to_ganzhi(d)) == utils.to_lunar(d)
+      assert utils.to_ganzhi(utils.to_lunar(d)) == utils.to_ganzhi(d)
       day += timedelta(days=1)
 
 
 def test_lunar_leap_month_round_trips() -> None:
-  # Lunar-anchored: `test_round_trips` reaches the leap month only via solar dates, so
-  # walk the leap month from the lunar side.  Like the boundary test above, this is a
-  # readable sample of the slot-3 convention; the data-side regression belongs to
-  # `test_data_sections_are_frozen` (table hash) and `test_algo1_matches_hko_strictly`.
+  # 2023's 闰二月 occupies slot 3, shifting later months; slot 13 is 腊月.
   for d, expected in ((1, solar(2023, 3, 22)), (15, solar(2023, 4, 5)), (29, solar(2023, 4, 19))):
-    leap: CalendarDate = lunar(2023, 3, d)
-    assert ALGO1.lunar_to_solar(leap) == expected
-    assert ALGO1.solar_to_lunar(ALGO1.lunar_to_solar(leap)) == leap
+    leap = lunar(2023, 3, d)
+    assert utils.to_solar(leap) == expected
+    assert utils.to_lunar(utils.to_solar(leap)) == leap
 
 
 def test_dates_before_the_year_boundaries() -> None:
-  # A solar date before 立春 belongs to the previous ganzhi year; before the lunar new
-  # year, to the previous lunar year.  Both are the `-= 1` branches.
-  assert ALGO1.solar_to_ganzhi(solar(2024, 1, 1)).year == 2023
-  assert ALGO1.solar_to_lunar(solar(2024, 1, 1)).year == 2023
-  assert ALGO1.solar_to_ganzhi(solar(2024, 2, 5)).year == 2024
-
-
-def test_date_conversions_negative() -> None:
-  with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_lunar(ganzhi(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_lunar(solar(2024, 1, 1))
-
-  with pytest.raises(ValueError):
-    ALGO1.lunar_to_ganzhi(lunar(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.lunar_to_ganzhi(solar(2024, 1, 1))
-
-  with pytest.raises(ValueError):
-    ALGO1.solar_to_lunar(solar(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.solar_to_lunar(ganzhi(2024, 1, 1))
-
-  with pytest.raises(ValueError):
-    ALGO1.lunar_to_solar(lunar(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.lunar_to_solar(ganzhi(2024, 1, 1))
-
-  with pytest.raises(ValueError):
-    ALGO1.solar_to_ganzhi(solar(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.solar_to_ganzhi(ganzhi(2024, 1, 1))
-
-  with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_solar(ganzhi(1, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.ganzhi_to_solar(solar(2024, 1, 1))
+  assert utils.to_ganzhi(solar(2024, 1, 1)).year == 2023
+  assert utils.to_lunar(solar(2024, 1, 1)).year == 2023
+  assert utils.to_ganzhi(solar(2024, 2, 5)).year == 2024
 
 
 def test_to_family() -> None:
-  day: date = date(2024, 2, 4)
-  assert ALGO1.to_solar(day) == solar(2024, 2, 4)
-  assert ALGO1.to_date(day) == day
-  assert ALGO1.to_lunar(day) == ALGO1.solar_to_lunar(solar(2024, 2, 4))
-  assert ALGO1.to_ganzhi(day) == ALGO1.solar_to_ganzhi(solar(2024, 2, 4))
-
-  # Each `to_*` is the identity on its own type, and converts from the other two.
-  for d in (solar(2024, 2, 4), lunar(2023, 13, 25), ganzhi(2024, 1, 1)):
-    assert ALGO1.to_solar(d).date_type == CalendarType.SOLAR
-    assert ALGO1.to_lunar(d).date_type == CalendarType.LUNAR
-    assert ALGO1.to_ganzhi(d).date_type == CalendarType.GANZHI
-    assert ALGO1.to_date(d) == date(2024, 2, 4)
+  day = date(2024, 2, 4)
+  for d in (day, solar(2024, 2, 4), lunar(2023, 13, 25), ganzhi(2024, 1, 1)):
+    assert utils.to_solar(d) == solar(2024, 2, 4)
+    assert utils.to_lunar(d) == lunar(2023, 13, 25)
+    assert utils.to_ganzhi(d) == ganzhi(2024, 1, 1)
+    assert utils.to_date(d) == day
 
 
-@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'to_solar to_lunar to_ganzhi to_date')
+@pytest.mark.input_contract('bazi.calendar.utils', 'to_solar to_lunar to_ganzhi to_date')
 def test_to_family_negative() -> None:
-  # Both checks live in the shared funnel, so every `to_*` carries the same contract.
-  with pytest.raises(ValueError):
-    ALGO1.to_solar(date(1901, 1, 1)) # An in-window year, yet before the first supported day.
-  with pytest.raises(ValueError):
-    ALGO1.to_lunar(lunar(9999, 1, 1))
-  with pytest.raises(ValueError):
-    ALGO1.to_ganzhi(solar(1901, 1, 1)) # Before the first supported day.
-  with pytest.raises(TypeError):
-    ALGO1.to_solar('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
-  with pytest.raises(TypeError):
-    ALGO1.to_lunar('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
-  with pytest.raises(TypeError):
-    ALGO1.to_ganzhi('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
+  for convert in (utils.to_solar, utils.to_lunar, utils.to_ganzhi, utils.to_date):
+    with pytest.raises(ValueError):
+      convert(date(1901, 1, 1))
+    with pytest.raises(ValueError):
+      convert(lunar(9999, 1, 1))
+    with pytest.raises(TypeError):
+      convert('2024-01-01') # type: ignore[arg-type] # Not a date or CalendarDate.
 
 
 def test_real_moments_not_placeholders() -> None:
-  # The whole point of this backend: HKO can only say 00:00:00.
-  assert ALGO1.jieqi_moment(2024, Jieqi.立春) == datetime(2024, 2, 4, 16, 27, 6)
-  assert ALGO1.jieqi_moment(2000, Jieqi.立春) == datetime(2000, 2, 4, 20, 40, 23)
-  assert ALGO1.jieqi_moment(2024, Jieqi.立春).time() != datetime.min.time()
+  assert utils.jieqi_moment(2024, Jieqi.立春) == datetime(2024, 2, 4, 16, 27, 6)
+  assert utils.jieqi_moment(2000, Jieqi.立春) == datetime(2000, 2, 4, 20, 40, 23)
 
 
-def test_date_is_the_moment_truncated() -> None:
-  for year in (1901, 1979, 2024, 2100):
-    for jq in Jieqi.as_list():
-      assert ALGO1.jieqi_date(year, jq) == ALGO1.jieqi_moment(year, jq).date()
+@pytest.mark.input_contract('bazi.calendar.utils', 'jieqi_moment')
+def test_jieqi_queries_validate_before_lookup() -> None:
+  class Year(int):
+    pass
 
-
-def test_out_of_range_year() -> None:
-  with pytest.raises(ValueError):
-    ALGO1.jieqi_moment(2201, Jieqi.立春)
-  with pytest.raises(ValueError):
-    ALGO1.jieqi_moment(1900, Jieqi.立春)
-  with pytest.raises(TypeError):
-    ALGO1.jieqi_moment('2024', Jieqi.立春) # type: ignore
-  with pytest.raises(TypeError):
-    ALGO1.jieqi_moment(2024, '立春') # type: ignore
-
-
-@pytest.mark.input_contract('bazi.calendar.utils_protocol.CalendarUtilsProtocol', 'jieqi_date jieqi_moment')
-@pytest.mark.parametrize('query', [ALGO1.jieqi_date, ALGO1.jieqi_moment, ALGO2.jieqi_date, ALGO2.jieqi_moment],
-                         ids=['ALGO1-date', 'ALGO1-moment', 'ALGO2-date', 'ALGO2-moment'])
-@pytest.mark.parametrize('year', [2024, Year(2024)], ids=['int', 'int-subclass'])
-def test_jieqi_queries_validate_before_cache(query: Callable[[int, Jieqi], date], year: int) -> None:
-  result = query(year, Jieqi.立春)
-  assert result is query(year, Jieqi.LICHUN)
-  assert result == query(2024, Jieqi.立春)
-
-  bad_year: object
-  for bad_year in (2024.0, '2024', []):
-    with pytest.raises(TypeError, match='Expected int') as exc:
-      query(bad_year, Jieqi.立春) # type: ignore
-    assert str(type(bad_year)) in str(exc.value)
-
-  bad_jieqi: object
-  for bad_jieqi in ('立春', 0, None, []):
-    with pytest.raises(TypeError, match='Expected Jieqi') as exc:
-      query(2024, bad_jieqi) # type: ignore
-    assert str(type(bad_jieqi)) in str(exc.value)
-
+  result = utils.jieqi_moment(2024, Jieqi.立春)
+  assert result is utils.jieqi_moment(Year(2024), Jieqi.LICHUN)
+  bad: object
+  for bad in (2024.0, '2024', []):
+    with pytest.raises(TypeError, match='Expected int'):
+      utils.jieqi_moment(bad, Jieqi.立春) # type: ignore[arg-type]
+  for bad in ('立春', 0, None, []):
+    with pytest.raises(TypeError, match='Expected Jieqi'):
+      utils.jieqi_moment(2024, bad) # type: ignore[arg-type]
   for supported_year in (1901, 2200):
-    assert query(Year(supported_year), Jieqi.小寒) == query(supported_year, Jieqi.小寒)
-
+    assert utils.jieqi_moment(Year(supported_year), Jieqi.小寒) == utils.jieqi_moment(supported_year, Jieqi.小寒)
   for bad_value in (1900, 2201, True, False):
     with pytest.raises(ValueError):
-      query(bad_value, Jieqi.立春)
+      utils.jieqi_moment(bad_value, Jieqi.立春)
 
 
 def test_supported_jie_boundaries() -> None:
-  first, last = ALGO1.supported_jie_boundaries()
-  assert first == ALGO1.jieqi_moment(1901, Jieqi.小寒)
-  assert last == ALGO1.jieqi_moment(2200, Jieqi.大雪)
+  first, last = utils.supported_jie_boundaries()
+  assert first == utils.jieqi_moment(1901, Jieqi.小寒)
+  assert last == utils.jieqi_moment(2200, Jieqi.大雪)
 
 
+@pytest.mark.input_contract('bazi.calendar.utils', 'prev_jie next_jie')
 def test_jie_range_is_enforced() -> None:
-  first, last = ALGO1.supported_jie_boundaries()
-  for fn in (ALGO1.prev_jie, ALGO1.next_jie):
+  first, last = utils.supported_jie_boundaries()
+  for fn in (utils.prev_jie, utils.next_jie):
     with pytest.raises(ValueError):
       fn(first - timedelta(seconds=1))
     with pytest.raises(ValueError):
-      fn(last) # The upper bound is exclusive.
+      fn(last)
     with pytest.raises(TypeError):
       fn(date(2024, 2, 4)) # type: ignore[arg-type] # A date is not a datetime.
 
 
 def test_exactly_on_a_jie_belongs_to_it() -> None:
-  '''
-  The `>=` convention.  #72's golden cases are all comfortably away from a boundary, so
-  this hole is not covered by them -- and with real moments it is now reachable.
-  '''
-  moment: datetime = ALGO1.jieqi_moment(2024, Jieqi.立春)
-
-  assert ALGO1.prev_jie(moment) == (Jieqi.立春, moment)
-  assert ALGO1.next_jie(moment) == (Jieqi.惊蛰, ALGO1.jieqi_moment(2024, Jieqi.惊蛰))
-
-  # One second earlier, the previous Jie is still 小寒 and the next one is 立春 itself.
-  assert ALGO1.prev_jie(moment - timedelta(seconds=1)).jieqi == Jieqi.小寒
-  assert ALGO1.next_jie(moment - timedelta(seconds=1)) == (Jieqi.立春, moment)
-
-  # One second later, both have moved past 立春.
-  assert ALGO1.prev_jie(moment + timedelta(seconds=1)) == (Jieqi.立春, moment)
-  assert ALGO1.next_jie(moment + timedelta(seconds=1)).jieqi == Jieqi.惊蛰
+  moment = utils.jieqi_moment(2024, Jieqi.立春)
+  assert utils.prev_jie(moment) == (Jieqi.立春, moment)
+  assert utils.next_jie(moment) == (Jieqi.惊蛰, utils.jieqi_moment(2024, Jieqi.惊蛰))
+  assert utils.prev_jie(moment - timedelta(seconds=1)).jieqi == Jieqi.小寒
+  assert utils.next_jie(moment - timedelta(seconds=1)) == (Jieqi.立春, moment)
+  assert utils.prev_jie(moment + timedelta(seconds=1)) == (Jieqi.立春, moment)
+  assert utils.next_jie(moment + timedelta(seconds=1)).jieqi == Jieqi.惊蛰
 
 
 def test_jie_across_year_boundaries() -> None:
-  # Before 小寒 of its own year, the previous Jie is last year's 大雪.
-  assert ALGO1.prev_jie(datetime(2024, 1, 1)) == (Jieqi.大雪, ALGO1.jieqi_moment(2023, Jieqi.大雪))
-  # On or after 大雪, the next Jie is next year's 小寒.
-  assert ALGO1.next_jie(datetime(2024, 12, 20)) == (Jieqi.小寒, ALGO1.jieqi_moment(2025, Jieqi.小寒))
+  assert utils.prev_jie(datetime(2024, 1, 1)) == (Jieqi.大雪, utils.jieqi_moment(2023, Jieqi.大雪))
+  assert utils.next_jie(datetime(2024, 12, 20)) == (Jieqi.小寒, utils.jieqi_moment(2025, Jieqi.小寒))
 
 
 def test_prev_and_next_bracket_every_jie() -> None:
-  # Walking the whole window: `prev_jie` and `next_jie` must always be adjacent 节.
-  first, last = ALGO1.supported_jie_boundaries()
-  moment: datetime = first
-  seen: int = 0
+  first, last = utils.supported_jie_boundaries()
+  moment = first
+  seen = 0
   while moment < last:
-    assert ALGO1.prev_jie(moment).moment == moment
-    nxt = ALGO1.next_jie(moment)
+    assert utils.prev_jie(moment).moment == moment
+    nxt = utils.next_jie(moment)
     assert nxt.moment > moment
-    assert ALGO1.prev_jie(nxt.moment - timedelta(seconds=1)).moment == moment
+    assert utils.prev_jie(nxt.moment - timedelta(seconds=1)).moment == moment
     moment = nxt.moment
     seen += 1
-  # 12 节 per year over 1901..2200, minus 大雪 2200 itself (the bound is exclusive).
   assert seen == len(range(1901, 2201)) * 12 - 1
-
-
-def test_divergence_is_exactly_the_known_years() -> None:
-  '''
-  Scanned over the whole window rather than over month starts: 1915's difference is in
-  the length of its *last* month, so no month start inside 1915 moves -- it surfaces as
-  lunar 1916 starting a day later.
-  '''
-  diverging_days: list[date] = []
-  diverging_years: set[int] = set()
-  day: date = ALGO1.to_date(ALGO1.get_min_supported_date(CalendarType.SOLAR))
-  last: date = ALGO1.to_date(ALGO1.get_max_supported_date(CalendarType.SOLAR))
-  while day <= last:
-    d: CalendarDate = solar(day.year, day.month, day.day)
-    algo1_lunar, algo2_lunar = ALGO1.solar_to_lunar(d), ALGO2.solar_to_lunar(d)
-    if algo1_lunar != algo2_lunar:
-      diverging_days.append(day)
-      diverging_years |= {algo1_lunar.year, algo2_lunar.year}
-    day += timedelta(days=1)
-
-  assert tuple(sorted(diverging_years)) == ALGO2_DIVERGENT_YEARS
-  # Each divergence is one lunar month shifted by a day, so it spans exactly 30 days.
-  assert len(diverging_days) == 150
-
-
-def test_the_jieqi_surface_is_shared() -> None:
-  # Only the lunar tables differ; everything jieqi-derived is identical.
-  assert ALGO1.jieqi_moment(2024, Jieqi.立春) == ALGO2.jieqi_moment(2024, Jieqi.立春)
-  assert ALGO1.days_counts_in_ganzhi_year(2024) == ALGO2.days_counts_in_ganzhi_year(2024)

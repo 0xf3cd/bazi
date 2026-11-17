@@ -1,16 +1,16 @@
 # celestial_data 数据格式（schema_version 2）
 
-本文件规定离线生成器 `generator.py` 与运行时加载器 `loader.py` 的冻结数据契约。
+本文件规定根目录离线生成器 `run_calendar_generation.py` 与运行时加载器 `loader.py` 的冻结数据契约。
 两侧各自实现，偏离下述约定的一侧须修复。生成器需要 celestial-calendar Python 包；
-运行时只用纯 Python，不依赖该包，与 HKO 的离线 `encoder.py`／运行时 `decoder.py` 分工相同。
+运行时只用纯 Python，不依赖该包。HKO 原件、编码与解码工具位于 `tests/calendar/hko_data/`，
+用于独立对拍。
 
 ## 文件
 
 | 路径 | 行／样本数 | 来源 API |
 | --- | --- | --- |
 | `data/jieqi_moments.txt` | 7200 | `celestial_calendar.jieqi_moment(year, jieqi)` |
-| `data/lunar_years_algo1.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO1, year)` |
-| `data/lunar_years_algo2.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO2, year)` |
+| `data/lunar_years.txt` | 199 | `celestial_calendar.lunar_year_info(ALGO1, year)` |
 | `data/equation_of_time.bin` | 72643 | `celestial_calendar.apparent_solar_time(utc_midnight, 0)` |
 
 `tests/calendar/celestial_fixtures/` 中的文本夹具同名同格式，标有 `fixture: true`，
@@ -33,7 +33,7 @@ UTF-8 文本，末尾换行，磁盘采用 LF；读取时 `splitlines()` 规范�
 | `generated_by` | 生成脚本路径 |
 | `generated_on` | YYYY-MM-DD |
 | `source_api` | 产生记录的公共 Python 调用 |
-| `timescale` | 按文本表规定，三表的约定不同 |
+| `timescale` | 按文本表规定，节气表与农历表的约定不同 |
 | `rounding` | 仅节气表 |
 | `year_range` | 两端包含 |
 | `rows` | 确切行数，加载器与解析所得数据行核对 |
@@ -69,29 +69,27 @@ columns: year jq_idx name date time
 - TT 节时刻仍由太阳黄经求根。2101–2200 年转 UT1 使用 Stephenson-Morrison-Hohenkerk
   integrated-lod ΔT 外推，连续但无精度保证，也无独立 HKO 对照。
 
-## lunar_years_algo{1,2}.txt
+## lunar_years.txt
+
+此表由原 `lunar_years_algo1.txt` 改名，数据行及来源头原样保留；头中的旧脚本路径和双算法说明
+记录生成当时的情况，不表示当前仍提供算法选择。
 
 ```text
 columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi
 1901 1901-02-19 0 0x0752 29,30,29,29,30,29,30,29,30,30,30,29 辛丑
 ```
 
-- `lunar_year`：1901..2099，两端包含，两算法都限制于此窗口。algo2 原生支持 [410, 2500]；
-  当前共用一个范围契约，避免四种范围语义，扩大范围另立议题。
+- `lunar_year`：1901..2099，两端包含。
 - `first_solar_date`：农历正月初一的公历日期。
 - `leap_month`：1..12，无闰月为 0；HKO 记录用 `None`，加载器统一为 `None` 后比较。
 - `month_len_bits`：由公共 `month_lengths` 元组编码为十六进制，低位优先。
   位 i 表示顺序第 i+1 个月，闰月独占一位；1 为三十日，0 为二十九日。
-  algo1 与 HKO `days_counts` 相符 199/199，由 `tests/calendar/test_celestial_tables.py` 核对，不是生成检查。
+  与 HKO `days_counts` 相符 199/199，由 `tests/calendar/test_celestial_tables.py` 核对，不是生成检查。
 - `days_counts`：从位图解码的十二或十三项月长，保留冗余；加载器核两列相等，任改一列导致不一致即失败。
 - `ganzhi`：在 `Ganzhi.list_sexagenary_cycle()` 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
   HKO `LunarYearInfo` 含此字段，所以差异比较保留它；199/199 相符由测试验证，不是生成检查。
   生成器不导入 `hko_data`，其检查范围见下节。
-- 默认 algo1，沿 HKO 官方历书体系；农历为展示数据，四柱以节气为基础，不读取农历。
-  algo2 经 `jde_to_utc8` 采用考虑闰秒的 UTC+8（celestial #84），须显式选择。
-- 窗口内两算法恰有六年不同：1914、1915、1916、1920、2057、2097，见 celestial
-  `src/test/lunar/diff_test.cpp`。测试另对 HKO 独立复现；algo1 匹配 HKO 199/199，
-  因此 algo2 对 HKO 的差异恰等于对 algo1 的差异。
+- 沿用 celestial ALGO1 的 HKO 官方历书体系；农历用于日期换算，四柱以节气为基础，不读取农历。
 
 ## equation_of_time.bin
 
@@ -114,7 +112,7 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 生成时立即拒绝不满足契约的表：
 
 1. 版本：导入包的公共 `__version__` 须为固定 0.6.1；ΔT 或 celestial 更新可改变全部时刻。
-2. 行数：7200 / 199 / 199 行及 72,643 个 EOT 样本；文本 `rows` 头部与 EOT 字节数须与写出内容相符。
+2. 行数：7200 / 199 行及 72,643 个 EOT 样本；文本 `rows` 头部与 EOT 字节数须与写出内容相符。
 3. 交叉校验：全部二十四项满足 `jieqi_name(Jieqi(idx)) == list(Jieqi)[idx].value`，
    公共 `month_lengths` 元组须能经磁盘位图往返。
 4. EOT 完整性：各源值编码为十分之一秒后须能存入有符号 int16，载荷摘要写入固定头部。

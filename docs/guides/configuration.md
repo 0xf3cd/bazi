@@ -1,7 +1,7 @@
 # 配置与时间口径
 
 本页说明出生时间怎么填、配置有哪些合法值，以及修改配置会改变什么。
-`BaziConfig` 选择精度、历法后端和大运年份标记，`BaziSchool` 选择换日及各项流派取法。
+`BaziConfig` 选择精度和大运年份标记，`BaziSchool` 选择换日及各项流派取法。
 先构造流派，再放进命盘配置，最后传给排盘入口：
 
 ```{testcode} config-create
@@ -9,7 +9,7 @@ from bazi.bazi import Bazi
 from bazi.school import BaziConfig, BaziSchool, DayRollover
 
 school = BaziSchool(day_rollover=DayRollover.ZIZHENG)
-config = BaziConfig.from_values(precision='minute', backend='celestial', school=school)
+config = BaziConfig.from_values(precision='minute', school=school)
 bazi = Bazi.create('1995-08-03 23:30', 'male', config)
 print('精度', bazi.config.precision)
 print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
@@ -24,18 +24,16 @@ print('日柱', bazi.day_pillar, '时柱', bazi.hour_pillar)
 
 ## 配置速查
 
-构造器接收下表的枚举成员，导入路径列在各组前。`BaziConfig.from_values` 另外接受精度、后端与大运年份规则的字符串，
+构造器接收下表的枚举成员，导入路径列在各组前。`BaziConfig.from_values` 另外接受精度与大运年份规则的字符串，
 如上例；`school` 仍须传 `BaziSchool`。省略的字段取“默认”列。
 
 ### 命盘配置 `BaziConfig`
 
-`BaziConfig`、`BaziPrecision`、`BaziSchool`、`DayunYearRule` 从 `bazi.school` 导入，
-`CalendarBackend` 从 `bazi.calendar.backend` 导入。
+`BaziConfig`、`BaziPrecision`、`BaziSchool`、`DayunYearRule` 从 `bazi.school` 导入。
 
 | 字段 | 类型 | 可选成员 | 默认成员／值 | 影响 |
 | --- | --- | --- | --- | --- |
 | `precision` | `BaziPrecision` | `DAY`、`HOUR`、`MINUTE` | `DAY` | 出生时刻与节气比较的粒度；小时仍用于时柱。 |
-| `backend` | `CalendarBackend` | `HKO`、`CELESTIAL`、`CELESTIAL_ALGO2` | `CELESTIAL` | 历法数据来源；HKO 只能配合 DAY。 |
 | `school` | `BaziSchool` | `BaziSchool` 实例 | `DEFAULT_SCHOOL` | 下列流派字段的集合。 |
 | `dayun_year_rule` | `DayunYearRule` | `JIE_PROJECTED`、`FIXED_DECADE` | `JIE_PROJECTED` | 大运年份标签，不改变物理交运时刻。 |
 
@@ -190,27 +188,11 @@ for civil in (
 不要直接对当地时间调用 `replace(tzinfo=None)` 后交给默认入口：它会把纽约钟误当东八区钟，
 例中甚至会归到旧年月。时区换算与真太阳时修正是不同操作。
 
-## 历法后端：节气数据从哪里来
+## 节气数据从哪里来
 
-`CalendarBackend` 选择历法数据。`celestial` 是默认，也是文档推荐的选择；
-`hko` 基于香港天文台数据，只有日期级精度，所以只能配合 `DAY`；
-`celestial-algo2` 采用第二套阴历算法，199 个支持年份中有 6 年与 `celestial` 不同。
-差异的来源和范围见 {py:class}`~bazi.calendar.backend.CalendarBackend`。
-
-`HOUR` 或 `MINUTE` 需要真实的节气时刻，因此和 `hko` 组合会被拒绝（`ValueError`）。
-
-```{testcode} config-backend
-from bazi.bazi import Bazi
-from bazi.school import BaziConfig
-
-config = BaziConfig.from_values(backend='hko')
-bazi = Bazi.create('1990-05-17 10:30', 'female', config)
-print(bazi.config.backend, ' '.join(map(str, bazi.pillars)))
-```
-
-```{testoutput} config-backend
-hko 庚午 辛巳 壬午 乙巳
-```
+节气、农历和均时差使用随包的预生成天文表，运行时不联网，也不需要安装生成工具。
+节气时刻以东八区无时区标签保存，截断到秒；这表示表的记录粒度，不是误差保证。
+数据来源、时标限制与节气查询示例见 {doc}`calendar`。
 
 ## 换日：23:00 还是 00:00
 
@@ -300,9 +282,8 @@ before_eighteen_days 木旺 火相 土死 金囚 水休
 十二日取法见《三命通会》卷二醉醒子段，十八日取法见《协纪辨方书》卷一。
 具体出处见 {py:class}`~bazi.school.TuwangDef`。
 
-分段的一天按连续24小时：先在后端东八区节气标签上加十二天或减十八天，得到转土阈值，
+分段的一天按连续24小时：先在东八区节气标签上加十二天或减十八天，得到转土阈值，
 再将出生时间与阈值按本盘精度比较，相等归土旺。地点盘会把算出的阈值转换到同一真太阳钟后比较。
-HKO 的节气数据只有日期精度，零点仅为占位。
 
 ## 选择大运年份的标记方式
 
@@ -339,7 +320,7 @@ fixed_decade [1919, 1929, 1939] ['辛巳', '壬午', '癸未']
 
 - `birth_time` 是带时区的 `datetime`，时区由你负责；库不会根据经度推断时区，夏令时和历史偏移也由调用方处理。
 - 传入 `longitude`，东经为正，范围 `[-180, 180]`。库只使用经度，不接受纬度。
-- 配置使用 `celestial` 后端和 `HOUR` 或 `MINUTE` 精度。
+- 配置使用 `HOUR` 或 `MINUTE` 精度。
 - 如果输入的时区不是出生地的民用时区，用 `civil_timezone` 另行指定。
 
 三个口径各管一件事：

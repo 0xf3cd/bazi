@@ -15,7 +15,7 @@ from bazi.calendar import JieqiTime
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi
 from bazi.bazi import BaziGender, Bazi, 八字
 from bazi.school import BaziPrecision, DayRollover, DayunYearRule, BaziSchool, BaziConfig, DEFAULT_CONFIG
-from bazi.calendar import CalendarBackend, calendar_utils_of
+from bazi.calendar import utils
 
 
 def test_bazi_gender_basic() -> None:
@@ -69,12 +69,9 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
   monkeypatch.setattr(random, 'choice', lambda choices: gender)
   assert Bazi.random() == Bazi.create(birth_time, gender, DEFAULT_CONFIG)
 
-  for backend, precision in product(CalendarBackend, BaziPrecision):
-    if backend is CalendarBackend.HKO and precision is not BaziPrecision.DAY:
-      continue
+  for precision in BaziPrecision:
     config = BaziConfig(
       precision=precision,
-      backend=backend,
       school=BaziSchool(day_rollover=DayRollover.ZIZHENG),
       dayun_year_rule=DayunYearRule.FIXED_DECADE,
     )
@@ -86,13 +83,6 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
 def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
     Bazi.random(config, rng=rng) # type: ignore
-
-
-@pytest.mark.input_contract('bazi.bazi', 'Bazi.random')
-@pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
-def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
-  with pytest.raises(ValueError, match='HKO'):
-    Bazi.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO), rng=rng)
 
 
 def test_random_default_keeps_seed_draw_order() -> None:
@@ -117,16 +107,15 @@ def test_random_default_keeps_seed_draw_order() -> None:
     random.setstate(state)
 
 
-@pytest.mark.parametrize('backend', ('hko', 'celestial'))
 @pytest.mark.parametrize('moment, year_pillar, month_dizhi', [
-  # 立春 2000 is 02-04 20:40:23 (celestial); the HKO almanac publishes 02-04.  So every
+  # 立春 2000 is 02-04 20:40:23. At DAY precision, every
   # moment of 02-04 gives 庚辰/寅 -- including 00:00, which precedes the jieqi by 20 hours.
   ('2000-02-03 12:00', '己卯', Dizhi.丑),
   ('2000-02-04 00:00', '庚辰', Dizhi.寅), # 20h40m before the jieqi, still the new pillar.
   ('2000-02-04 20:40', '庚辰', Dizhi.寅),
   ('2000-02-04 23:59', '庚辰', Dizhi.寅),
 ])
-def test_day_precision_compares_dates_not_moments(backend: str, moment: str, year_pillar: str, month_dizhi: Dizhi) -> None:
+def test_day_precision_compares_dates_not_moments(moment: str, year_pillar: str, month_dizhi: Dizhi) -> None:
   '''
   `DAY` compares dates, so the whole of a jieqi's day falls on the new side of it -- the tie
   at day granularity resolves to the new pillar, as `BaziPrecision` documents.
@@ -137,7 +126,7 @@ def test_day_precision_compares_dates_not_moments(backend: str, moment: str, yea
   stayed open long enough to become issue #72. Changing the rule should mean deleting this
   test on purpose.
   '''
-  bazi: Bazi = Bazi.create(moment, 'male', BaziConfig.from_values(backend=backend))
+  bazi: Bazi = Bazi.create(moment, 'male')
   assert str(bazi.year_pillar) == year_pillar
   assert bazi.month_commander == month_dizhi
 
@@ -299,15 +288,6 @@ def test_day_and_hour_pillars_ignore_precision() -> None:
       assert bazi.hour_pillar == day_bazi.hour_pillar
 
 
-@pytest.mark.input_contract('bazi.bazi', 'Bazi')
-def test_hko_backend_rejected() -> None:
-  '''HOUR / MINUTE need real jieqi moments; the HKO backend's are midnight placeholders.'''
-  for precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
-    with pytest.raises(ValueError):
-      Bazi(datetime(2000, 2, 4, 19, 30), BaziGender.MALE, BaziConfig(precision=precision, backend=CalendarBackend.HKO))
-  assert str(Bazi.create('2000-02-04 19:30', 'male', BaziConfig.from_values(backend='hko')).year_pillar) == '庚辰'
-
-
 def test_year_month_jies_are_the_attribution() -> None:
   '''`ganzhi_year` / `month_jies` expose exactly what the pillars were derived from.'''
   bazi: Bazi = Bazi.create('2009-02-04 00:30', 'male', BaziConfig.from_values(precision='hour'))
@@ -341,7 +321,6 @@ def test_attribution_matches_scan_oracle() -> None:
   or advancing (previous-day 晚子时 birth tying a 00:xx jie across midnight). Both windows
   are sampled densely by biasing half the moments to fall near a jie.
   '''
-  utils = calendar_utils_of(CalendarBackend.CELESTIAL)
   rng = random.Random(6) # Deterministic sampling; seeded with the issue number.
 
   all_jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
@@ -411,7 +390,6 @@ def test_minute_vs_moment_level_prev_jie() -> None:
   sampling must actually produce ties -- without the floor assertion, an implementation
   degenerated to pure moment-level `prev_jie` would sail through green.
   '''
-  utils = calendar_utils_of(CalendarBackend.CELESTIAL)
   rng = random.Random(72) # Seeded with the issue this rule closes.
 
   all_jies: list[Jieqi] = Jieqi.as_list(ganzhi_year=False)[::2]
@@ -594,17 +572,13 @@ def test_four_tiangans_correctness() -> None:
 
 
 def test_ganzhi_date(rng: random.Random) -> None:
-  # The oracle must follow the chart's own backend: `ganzhi_date` is the day-level label
-  # through `Bazi`'s resolved calendar utils. The two backends legitimately diverge inside
-  # the 1917/1927 jieqi-shift windows (pinned by the parity whitelist), so an oracle bound
-  # to the wrong backend false-reds there -- the #114 CI failure was exactly that.
   bazi: Bazi = _create_bazi(datetime(1984, 4, 2, 4, 2))
-  assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(date(1984, 4, 2))
+  assert bazi.ganzhi_date == utils.to_ganzhi(date(1984, 4, 2))
 
   for _ in range(10):
     bazi = Bazi.random(rng=rng)
     print(f'birth={bazi.solar_datetime.isoformat()} gender={bazi.gender}')
-    assert bazi.ganzhi_date == calendar_utils_of(bazi.config.backend).to_ganzhi(bazi.solar_date)
+    assert bazi.ganzhi_date == utils.to_ganzhi(bazi.solar_date)
 
 
 def test_date_time(rng: random.Random) -> None:
@@ -737,10 +711,8 @@ def test_create() -> None:
 
   finer_precision_options: list = [BaziPrecision.HOUR, BaziPrecision.MINUTE, 'hour', 'minute', 'H', 'm', '时', '小时', '分', '分钟']
   for dt, g, p in product(dt_options, male_options + female_options, finer_precision_options):
-    bazi = Bazi.create(dt, g, BaziConfig.from_values(precision=p)) # Supported since issue #6 -- on the celestial backend only.
+    bazi = Bazi.create(dt, g, BaziConfig.from_values(precision=p))
     assert bazi.config.precision in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
-    with pytest.raises(ValueError):
-      Bazi.create(dt, g, BaziConfig.from_values(precision=p, backend='hko')) # HKO has no real jieqi moments.
 
 
 @pytest.mark.input_contract('bazi.bazi', 'Bazi')
@@ -748,7 +720,7 @@ def test_supported_date_window_edges() -> None:
   '''
   The supported date window, pinned as a `Bazi`-level contract: one day outside either
   edge raises (the calendar funnel validates the converted date), the edges themselves
-  construct. The window itself is the celestial backend's, pinned in its own tests.
+  construct. Calendar tests pin the same window.
   '''
   with pytest.raises(ValueError):
     Bazi.create(datetime(1901, 2, 18, 12), 'male')

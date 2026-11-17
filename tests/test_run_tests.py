@@ -76,21 +76,17 @@ def test_coverage_result(
   options = run_coverage.__globals__['coverage'].Coverage.call_args.kwargs
   package = Path(__file__).parents[1] / 'bazi'
   assert options['source'] == [str(package)]
-  assert options['omit'] == [
-    str(package / 'calendar/hko_data/encoder.py'),
-    str(package / 'calendar/celestial_data/generator.py'),
-  ]
+  assert not options.get('omit')
 
 
 @pytest.mark.parametrize('complete', [False, True])
 def test_coverage_enumerates_unimported_modules(tmp_path: Path, complete: bool) -> None:
   shutil.copyfile(Path(__file__).parents[1] / 'run_tests.py', tmp_path / 'run_tests.py')
   package = tmp_path / 'bazi'
-  for directory in (package, package / 'nested', package / 'calendar/hko_data', package / 'calendar/celestial_data'):
+  for directory in (package, package / 'nested'):
     directory.mkdir(parents=True, exist_ok=True)
     (directory / '__init__.py').write_text('', encoding='utf-8')
-  for relative in ('executed.py', 'unimported.py', 'nested/unimported_runtime.py',
-                   'nested/__init__.py', 'calendar/hko_data/encoder.py', 'calendar/celestial_data/generator.py'):
+  for relative in ('executed.py', 'unimported.py', 'nested/unimported_runtime.py', 'nested/__init__.py'):
     (package / relative).write_text('VALUE = 1\n', encoding='utf-8')
   script = '''
 import importlib
@@ -123,8 +119,7 @@ sys.exit(runner['run_coverage'](execute))
   assert result.returncode == (0 if complete else 0x42), result.stdout + result.stderr
   for module in ('executed.py', 'unimported.py', 'unimported_runtime.py', '__init__.py'):
     assert module in result.stdout
-  for omitted in ('encoder.py', 'generator.py', 'run_tests.py'):
-    assert omitted not in result.stdout
+  assert 'run_tests.py' not in result.stdout
   assert ('100%' in result.stdout.split('TOTAL')[1]) is complete
 
 

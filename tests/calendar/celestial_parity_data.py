@@ -114,8 +114,3 @@ JIEQI_DATE_DIVERGENCES: Final[tuple[JieqiDateDivergence, ...]] = (
     ),
   ),
 )
-
-# The lunar years where algo2 disagrees with HKO (and therefore with algo1, which
-# matches HKO 199/199) on `first_solar_date` / `leap_month` / `days_counts`.
-# Matches celestial `src/test/lunar/diff_test.cpp`; independently reproduced against hko_data.
-ALGO2_DIVERGENT_YEARS: Final[tuple[int, ...]] = (1914, 1915, 1916, 1920, 2057, 2097)

@@ -12,7 +12,7 @@ from .common import check_declared_types, frozendict
 from .data_types import DayunTuple
 from .defines import Ganzhi
 from .bazi_chart import BaziChart, _check_chart
-from .calendar import CalendarUtilsProtocol, calendar_utils_of
+from .calendar import utils
 from .calendar.dates import GanzhiYearMonth
 
 
@@ -125,7 +125,6 @@ class _TransitDatabase:
     # HOUR 跨午夜相等窗口内，日期级 ganzhi_date.year 可与它不同，误用会使所有小运年错一位。
     self._birth_ganzhi_year: Final[int] = bazi.ganzhi_year
     self._birth_month_key: Final[GanzhiYearMonth] = bazi.ganzhi_year_month
-    self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(bazi.config.backend)
     self._dayun_db: Final[_DayunDatabase] = _DayunDatabase(chart)
     self._dayuns: Final[tuple[DayunTuple, ...]] = self._dayun_db._dayuns
 
@@ -170,7 +169,7 @@ class _TransitDatabase:
     assert isinstance(query_key, GanzhiYearMonth)
 
     def __start_key(index: int, dayun: DayunTuple) -> GanzhiYearMonth:
-      key = GanzhiYearMonth.from_jie(self._utils.prev_jie(dayun.start_moment))
+      key = GanzhiYearMonth.from_jie(utils.prev_jie(dayun.start_moment))
       return max(key, self._birth_month_key) if index == 0 else key
 
     return self._physical_dayun(

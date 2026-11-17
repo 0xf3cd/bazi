@@ -11,7 +11,7 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import calendar_utils_of
+from bazi.calendar import utils
 from bazi.chart_text import TextStyle, basic_text, chart_text, transit_text
 from bazi.defines import Tiangan, Dizhi
 from bazi.school import BaziConfig
@@ -113,7 +113,6 @@ def test_transit_rows_follow_requested_counts(dayun_count: int, liunian_count: i
 
 def test_transit_header_names_the_counted_jie() -> None:
   chart = DEFAULT_CHART
-  utils = calendar_utils_of(chart.bazi.config.backend)
   before = utils.prev_jie(chart.bazi.reference_datetime)
   after = utils.next_jie(chart.bazi.reference_datetime)
   lines = transit_text(chart).splitlines()
@@ -244,9 +243,8 @@ def test_chart_text_forwards_transit_counts() -> None:
   assert chart_text(chart, dayun_count=2, liunian_count=11).count('年标签：') == 2
 
 
-def test_text_follows_the_hko_backend() -> None:
-  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', BaziConfig.from_values(backend='hko')))
-  utils = calendar_utils_of(chart.bazi.config.backend)
+def test_text_shows_real_jieqi_moments() -> None:
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
   before, after = utils.prev_jie(chart.bazi.reference_datetime), utils.next_jie(chart.bazi.reference_datetime)
   lines = chart_text(chart).splitlines()
   assert f'出生时刻前一节：{before.jieqi} - {before.moment.isoformat()}' in lines
@@ -262,8 +260,9 @@ def test_basic_text_keeps_the_precision_pillars(precision: str) -> None:
     assert line.split('  ')[1].startswith(str(pillar.tiangan)) and f' {pillar.dizhi} [' in line
 
 
+@pytest.mark.usefixtures('short_jie_window')
 def test_transit_text_empty_dayun_timeline() -> None:
-  chart = BaziChart(Bazi.create(datetime(2099, 12, 31, 23, 59), 'male', BaziConfig.from_values(backend='hko')))
+  chart = BaziChart(Bazi.create(datetime(2099, 12, 31, 23, 59), 'male'))
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range') as expected:
     chart.xiaoyun # noqa: B018
   assert '日元' in basic_text(chart)

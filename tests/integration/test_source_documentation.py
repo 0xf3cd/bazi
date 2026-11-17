@@ -69,10 +69,10 @@ def test_quickstart_saves_readable_text(tmp_path: Path) -> None:
 @pytest.mark.parametrize('arguments', [
   ('run_tests.py',), ('run_package_checks.py',),
   ('-c', 'from bazi.cli import main; raise SystemExit(main())', 'chart'),
-  ('-m', 'bazi.calendar.celestial_data.generator'),
+  ('run_calendar_generation.py',),
 ])
 def test_source_cli_help_rendering(arguments: tuple[str, ...]) -> None:
-  if arguments[0] == '-m' and importlib.util.find_spec('celestial_calendar') is None:
+  if arguments[0] == 'run_calendar_generation.py' and importlib.util.find_spec('celestial_calendar') is None:
     pytest.skip('The offline generator requires optional celestial-calendar.')
   result = subprocess.run(
     [sys.executable, '-B', *arguments, '--help'],

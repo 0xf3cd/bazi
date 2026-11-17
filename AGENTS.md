@@ -40,7 +40,7 @@
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     （裸 `mypy .` 缺少 `--warn-unreachable`。）
-  - `python -m coverage run --source=bazi --omit='bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --source=bazi -m pytest tests/`
     然后 `python -m coverage report --show-missing --fail-under=100`，覆盖率须为 **100%**。
     没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
     有意不可达的行须有 `# pragma: no cover` 及理由。
@@ -128,7 +128,7 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
   公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
   不支持为 `ValueError`；公开枚举参数的穷尽 `else` 是成员检查，使用 `ValueError`。
   消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
-  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`；
+  立即失败契约须在 `python -O` 下成立；
   `tests/api_contract.py` 登记输入入口，测试用 `input_contract` 标记关联，`run_tests.py -osmoke` 执行。
 - 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。
 - 计算结果用 `property`；昂贵的不可变结果可用 `cached_property`。

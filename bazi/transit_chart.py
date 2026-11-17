@@ -9,8 +9,7 @@ from typing import Final
 
 from .defines import Ganzhi, Dizhi
 from .bazi_chart import BaziChart, _check_chart
-from .calendar import CalendarBackend, calendar_utils_of
-from .calendar.utils_protocol import CalendarUtilsProtocol
+from .calendar import utils
 from .calendar.dates import GanzhiYearMonth
 from .school import BaziPrecision
 from .utils.bazi_utils import (
@@ -39,7 +38,6 @@ class TransitChart:
     _check_chart(bazi_chart)
     self._bazi_chart: Final[BaziChart] = bazi_chart
     self._transit_db: Final[_TransitDatabase] = _TransitDatabase(self._bazi_chart)
-    self._utils: Final[CalendarUtilsProtocol] = calendar_utils_of(self._bazi_chart.bazi.config.backend)
 
   def __repr__(self) -> str:
     '''交互探索用的简短摘要，内容为所依据命盘的摘要；不构造流运，格式不是承诺。'''
@@ -107,11 +105,11 @@ class TransitChart:
 
     query_key = GanzhiYearMonth.from_dizhi(gz_year, gz_month)
 
-    first, last = self._utils.supported_jie_boundaries()
-    supported_first_key = GanzhiYearMonth.from_jie(self._utils.prev_jie(first))
+    first, last = utils.supported_jie_boundaries()
+    supported_first_key = GanzhiYearMonth.from_jie(utils.prev_jie(first))
     last_supported = last - timedelta(microseconds=1)
     supported_last_key = GanzhiYearMonth.from_jie(
-      self._utils.next_jie(last_supported)
+      utils.next_jie(last_supported)
     )
     if query_key < max(self._bazi_chart.bazi.ganzhi_year_month, supported_first_key) or query_key >= supported_last_key:
       return None
@@ -136,7 +134,7 @@ class TransitChart:
     if solar_date < self._bazi_chart.bazi.reference_datetime.date():
       return None
     try:
-      ganzhi_date = self._utils.to_ganzhi(solar_date)
+      ganzhi_date = utils.to_ganzhi(solar_date)
     except ValueError:
       return None
     year_month = GanzhiYearMonth(ganzhi_date.year, ganzhi_date.month)
@@ -148,7 +146,7 @@ class TransitChart:
     )
 
   def at_moment(self, solar_moment: datetime) -> TransitSet | None:
-    '''返回东八区无时区公历标签下的流运；后端或命盘精度不支持、出生前、节令表范围外时返回 `None`。
+    '''返回东八区无时区公历标签下的流运；命盘精度不支持、出生前、节令表范围外时返回 `None`。
     地点盘出生下界取规范绝对时刻；查询时刻不做地点修正。
     查询、出生与大运边界均截到秒比较，相等归新。
 
@@ -167,19 +165,16 @@ class TransitChart:
 
     bazi = self._bazi_chart.bazi
     config = bazi.config
-    if (
-      config.backend not in (CalendarBackend.CELESTIAL, CalendarBackend.CELESTIAL_ALGO2)
-      or config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE)
-    ):
+    if config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
       return None
 
     moment = solar_moment.replace(microsecond=0)
     birth_moment = bazi.reference_datetime.replace(microsecond=0)
-    first, last = self._utils.supported_jie_boundaries()
+    first, last = utils.supported_jie_boundaries()
     if moment < birth_moment or not first <= moment < last:
       return None
 
-    year_month = GanzhiYearMonth.from_jie(self._utils.prev_jie(moment))
+    year_month = GanzhiYearMonth.from_jie(utils.prev_jie(moment))
     return self._transits(
       year_month.year,
       dayun=self._transit_db._dayun_at_moment(moment),

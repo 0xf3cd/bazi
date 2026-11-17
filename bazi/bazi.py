@@ -14,9 +14,7 @@ from typing import Final, NamedTuple
 
 from .common import frozendict
 from .defines import Tiangan, Dizhi, Ganzhi
-from .calendar import (
-  CalendarDate, CalendarType, CalendarUtilsProtocol, CalendarBackend, calendar_utils_of, JieqiTime,
-)
+from .calendar import CalendarDate, CalendarType, JieqiTime, utils
 from .calendar.celestial_data.loader import _EquationOfTimeRangeError
 from .calendar.dates import GanzhiYearMonth
 from .calendar import solar_time
@@ -146,9 +144,9 @@ class Bazi:
     Args:
     - birth_time: (datetime) 默认路径的无时区钟时标签；给定 `longitude` 时为带时区的绝对瞬间。
     - gender: (BaziGender) 性别。
-    - config: (BaziConfig) 出生精度、历法后端、流派档案及默认大运年份投影。
+    - config: (BaziConfig) 出生精度、流派档案及默认大运年份投影。
     - longitude: (float | None) 东经为正的角度，范围 `[-180, 180]`。地点路径只支持
-      `CalendarBackend.CELESTIAL` 的 `HOUR` 或 `MINUTE` 精度。
+      `HOUR` 或 `MINUTE` 精度。
     - civil_timezone: (tzinfo | None) 出生地民用时区基准，默认采用输入时区；
       模型只保存该时区在出生瞬间生效的固定偏移，时区规则与有效性由调用方负责。
     '''
@@ -173,8 +171,6 @@ class Bazi:
     else:
       if birth_time.tzinfo is None or birth_time.utcoffset() is None:
         raise ValueError('Longitude requires a timezone-aware birth_time.')
-      if config.backend is not CalendarBackend.CELESTIAL:
-        raise ValueError('Longitude requires CalendarBackend.CELESTIAL.')
       if config.precision not in (BaziPrecision.HOUR, BaziPrecision.MINUTE):
         raise ValueError('Longitude requires BaziPrecision.HOUR or BaziPrecision.MINUTE.')
 
@@ -191,16 +187,14 @@ class Bazi:
 
         clock_datetime = location.apparent(canonical_utc)
       except (_EquationOfTimeRangeError, OverflowError) as error:
-        window_utils = calendar_utils_of(config.backend)
-        first = window_utils.to_date(window_utils.get_min_supported_date(CalendarType.SOLAR))
-        last = window_utils.to_date(window_utils.get_max_supported_date(CalendarType.SOLAR))
+        first = utils.to_date(utils.get_min_supported_date(CalendarType.SOLAR))
+        last = utils.to_date(utils.get_max_supported_date(CalendarType.SOLAR))
         raise ValueError(f'Unsupported apparent-solar birth date: expected [{first}, {last}].') from error
 
     self._config: Final[BaziConfig] = config
     self._location: Final[_Location | None] = location
     self._clock_datetime: Final[datetime] = clock_datetime
 
-    utils: Final[CalendarUtilsProtocol] = calendar_utils_of(config.backend)
     # to_solar 同时检查支持窗口；超出窗口的出生时刻在此抛 ValueError。
     self._solar_date: Final[CalendarDate] = utils.to_solar(self._clock_datetime)
 
@@ -217,12 +211,6 @@ class Bazi:
       owning_jie = JieqiTime(jie, utils.jieqi_moment(solar_year, jie))
       month_jies = (owning_jie, utils.next_jie(owning_jie.moment))
     else:
-      if self._config.backend is CalendarBackend.HKO:
-        raise ValueError(
-          f'{self._config.precision} needs real jieqi moments, which the HKO backend cannot provide '
-          '(its `jieqi_moment` is a midnight placeholder). Use `CalendarBackend.CELESTIAL`.'
-        )
-
       # 截断单调，出生截断值不会超过下一节截断值，>= 只可能相等，此时归下一节。
       # 真实节时刻可晚于出生最多一个粒度单位；子时跨午夜，HOUR 的相等窗口可始于前一民用日。
       birth_moment: Final[datetime] = self.reference_datetime
@@ -312,7 +300,7 @@ class Bazi:
       未给经度时须无时区：年月与东八区节气表比较，日时按输入钟读取，不自动换算时区。
       给定经度时须带时区，并将出生与节界换到同一真太阳钟；这不等同于保留当地民用钟。
     - gender: (BaziGender | str) 性别枚举，或 "男"/"女"/"male"/"female"（大小写不敏感）。
-    - config: (BaziConfig) 出生精度、历法后端、流派档案及大运年份投影；
+    - config: (BaziConfig) 出生精度、流派档案及大运年份投影；
       可用 `BaziConfig.from_values` 从字符串构造。
     - longitude: (float | None) 东经为正的经度，显式启用带时区输入的真太阳时路径；不使用纬度。
     - civil_timezone: (tzinfo | None) 显式出生地民用时区基准；模型保存其在出生瞬间生效的固定偏移。
@@ -368,7 +356,7 @@ class Bazi:
   @property
   def solar_date(self) -> date:
     '''地点盘的真太阳时公历出生日期；默认路径为输入钟时标签所在日期。'''
-    return self._utils.to_date(self._solar_date)
+    return utils.to_date(self._solar_date)
   
   @property
   def ganzhi_date(self) -> CalendarDate:
@@ -378,7 +366,7 @@ class Bazi:
     Note: 此入口只按日期归属。HOUR / MINUTE 精度下，交节相等窗口内可与
     `ganzhi_year` 及年/月柱不同；需要出生精度归属时使用 `ganzhi_year`。
     '''
-    return self._utils.to_ganzhi(self._solar_date)
+    return utils.to_ganzhi(self._solar_date)
 
   @property
   def ganzhi_year(self) -> int:
@@ -398,7 +386,7 @@ class Bazi:
     按 `self.config.precision` 归属的开月节与下一节，供年/月柱和大运数节共同使用。
 
     Note:
-    - `[0]` 是出生月所属节，`[1]` 是其下一节，均保留后端原始节时刻。
+    - `[0]` 是出生月所属节，`[1]` 是其下一节，均保留节气表的真实时刻。
     - DAY 的整个交节日归新；HOUR/MINUTE 按各自粒度相等归新。提前归属窗口中，
       所属节的真实时刻可以在出生之后；逆排大运的负间隔钳为零。
     - 真实出生时刻前后节仍应以 `reference_datetime` 查询历法 `prev_jie` / `next_jie`。
@@ -457,17 +445,9 @@ class Bazi:
   
   @property
   def config(self) -> BaziConfig:
-    '''此命盘的配置：出生精度、历法后端、流派档案及默认大运年份投影。'''
+    '''此命盘的配置：出生精度、流派档案及默认大运年份投影。'''
     return self._config
 
-  @property
-  def _utils(self) -> CalendarUtilsProtocol:
-    '''
-    每次访问时解析当前后端的历法工具，实例上不存 HKO 模块或 celestial 单例。
-    这样显式 deepcopy 八字时也不会复制历法工具。
-    '''
-    return calendar_utils_of(self._config.backend)
-  
   @property
   def four_dizhis(self) -> tuple[Dizhi, Dizhi, Dizhi, Dizhi]:
     '''

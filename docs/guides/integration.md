@@ -96,7 +96,7 @@ print('命宫', chart.minggong)
 
 胎元取月干顺移一、月支顺移三，只作符号派生，不倒推实际受孕时间。
 命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
-时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
+时支、精度与地点盘的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
 
 这两项供单独查询，不参与五行、十神、神煞、关系或流运分析，也不出现在 `basic_text` 等命盘文本中。
 低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；

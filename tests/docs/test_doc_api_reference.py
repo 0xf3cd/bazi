@@ -33,14 +33,6 @@ def test_external_bases_need_the_allowlist(monkeypatch):
     api_reference.inherited_members('bazi.bazi.BaziGender')
 
 
-def test_oracle_reads_typeddict_annotations(monkeypatch):
-  qualified = 'bazi.calendar.dates.LunarYearInfo'
-  expected = runtime_members(qualified)
-  monkeypatch.setitem(api_reference.DECLARED_MEMBERS, qualified, '')
-  assert api_reference.inherited_members(qualified) != expected
-  assert runtime_members(qualified) == expected
-
-
 def test_oracle_ignores_mro_base_table(monkeypatch):
   expected = runtime_members('bazi.defines.dizhi.Dizhi')
   monkeypatch.setitem(api_reference.BASES, 'bazi.defines.dizhi.Dizhi', ('Enum',))
@@ -105,7 +97,7 @@ def test_alias_reexport_pages_own_wording(tmp_path):
 def test_task_index_keeps_all_module_pages(tmp_path):
   api_reference.generate_api(tmp_path)
   index = (tmp_path / 'api/index.rst').read_text(encoding='utf-8')
-  for heading in ('排盘、配置与文本', '关系、神煞与流运', '知识、出处与前提匹配', '离线数据工具', '完整模块索引'):
+  for heading in ('排盘、配置与文本', '关系、神煞与流运', '知识、出处与前提匹配', '历法、领域值与结果结构', '完整模块索引'):
     assert heading in index
   assert [line.strip() for line in index.splitlines() if line.startswith('   bazi')] == [
     name.replace('.', '-') for name in api_reference.PUBLIC_NAMES
