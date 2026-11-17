@@ -1,6 +1,7 @@
 '''历法日期、换算与真太阳时入口。
 
-CalendarDate 与 JieqiTime 承载历法日期与节气时刻，utils 提供日期换算和节气查询。'''
+CalendarDate 与 JieqiTime 承载历法日期与节气时刻，utils 提供日期换算和节气查询，
+solar_time 提供真太阳时换算。'''
 
 from importlib import import_module
 from typing import Any

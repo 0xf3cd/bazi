@@ -186,8 +186,8 @@ def transit_text(
   - 流年可以无限延续，必须限定数量：大运取前 `dayun_count` 步，流年取自出生干支年起的
     `liunian_count` 年；小运是有限序列，全部列出。
   - 节与大运区间用节气表时刻（UTC+08:00），地点盘也不采用真太阳时。
-  - 出生后没有大运起于历法支持范围内时，抛 `ValueError`，
-    与 `chart.xiaoyun` 一致；`basic_text` 不受影响。
+  - 首步大运起点不在 `utils.supported_jie_boundaries()` 给出的半开范围内时，
+    本函数与 `chart.xiaoyun` 都抛 `ValueError`；`basic_text` 不受影响。
   - 文本以换行开头、换行结尾，可直接 `print`。
 
   Args:

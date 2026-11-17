@@ -65,6 +65,7 @@ def copy_root_document(source: Path, filename: str, destination: str, sha: str) 
     text = text.replace(old, new)
   for old, new in (
     ('docs/', ''), ('API_CONTRACT.md', 'api-contract.md'), ('RELEASE_NOTES.md', 'release-notes.md'),
+    ('CONTRIBUTING.md', 'contributing.md'),
     ('README.md#命令行', 'guides/cli.md'), ('README.md', repository + 'README.md'),
     ('RELEASING.md', repository + 'RELEASING.md'), ('bazi/', repository + 'bazi/'),
     ('tests/', repository + 'tests/'),

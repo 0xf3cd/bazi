@@ -30,7 +30,7 @@ assert chart.bazi.day_master in Tiangan
   成员键为 `文件|访问表达式`，`repeated_members` 记录同一成员键在源码中的出现次数，未列出的为一次。
 - 命盘流运统一用 `TransitChart.at_year`、`at_month`、`at_date`、`at_moment` 查询；`bazi.transits` 提供流运种类 `TransitKind` 和结果 `TransitSet`，数据库类仅供包内使用。
 - 历法换算从 `bazi.calendar.utils` 导入；数据加载器、表类与离线工具不属于公开 API。
-  换算示例和数据来源见[历法指南](docs/guides/calendar.md)。
+  换算示例和数据来源见[公历、农历与节气](docs/guides/calendar.md)。
 - 清单记录公开面，不决定运行时导出；运行时签名和类型以定义模块为准。
 
 ### 可接受的字符串输入
@@ -62,7 +62,7 @@ assert chart.bazi.day_master in Tiangan
 普通运行与 `python -O` 一致。
 
 农历 `month` 按年内实际月序从 1 编号，闰月占独立序号，不能直接当作农历月名。
-例如 2023 年的第 3 个月是闰二月，第 4 个月才是三月。公历与农历往返见[历法指南](docs/guides/calendar.md)。
+例如 2023 年的第 3 个月是闰二月，第 4 个月才是三月。公历与农历往返见[公历、农历与节气](docs/guides/calendar.md)。
 
 日期换算支持的公历范围是 1901-02-19 至 2099-12-31；节气表覆盖公历 1901 至 2200 年，
 不因此扩大日期换算或出生输入的范围。`datetime` 是 `date` 子类，四个 `to_*` 入口接受它，

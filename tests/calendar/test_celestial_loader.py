@@ -37,7 +37,7 @@ def test_they_cover_the_whole_window() -> None:
 
 def test_data_sections_are_frozen() -> None:
   '''
-  The real moments are the reason this backend exists, yet only a handful of the 7,200 are
+  The real moments are the reason these tables exist, yet only a handful of the 7,200 are
   pinned by value anywhere else in the suite -- the parity whitelist plus a few directed
   cases.  So the data sections are hashed: a re-bake stays possible, but it has to come
   with a deliberate update to this expectation instead of slipping through.  `#` lines are

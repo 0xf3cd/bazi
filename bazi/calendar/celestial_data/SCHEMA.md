@@ -62,7 +62,7 @@ columns: year jq_idx name date time
 - 截断到整秒，不四舍五入：23:59:59.6 舍入会变为次日，改变日期归属；截断不变日期，
   存储时刻比真实时刻提前不超过一秒。
 - Y 年的小寒、大寒（序号 22/23）在 Y 年一月，年内行不按日期排序。
-  与 HKO 的 `jieqi_date(Y, 小寒)` 约定一致，已核 1901 / 2024 / 2099。
+  与 `tests/calendar/hko_data/decoder.py` 的公历年序一致。
 - 1972 年起 UT1−UTC ≤ 0.9s；此前以 UT1 代理，沿 celestial Phase C 约定。
   通常只影响节时刻前后 ±0.9s 的出生，但节本身接近午夜时可改变整日归属。
   1979 大寒距午夜四秒。
@@ -71,7 +71,7 @@ columns: year jq_idx name date time
 
 ## lunar_years.txt
 
-此表由原 `lunar_years_algo1.txt` 改名，数据行及来源头原样保留；头中的旧脚本路径和双算法说明
+来源头保留生成时的原文；其中的旧脚本路径和双算法说明
 记录生成当时的情况，不表示当前仍提供算法选择。
 
 ```text
@@ -84,11 +84,10 @@ columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzh
 - `leap_month`：1..12，无闰月为 0；HKO 记录用 `None`，加载器统一为 `None` 后比较。
 - `month_len_bits`：由公共 `month_lengths` 元组编码为十六进制，低位优先。
   位 i 表示顺序第 i+1 个月，闰月独占一位；1 为三十日，0 为二十九日。
-  与 HKO `days_counts` 相符 199/199，由 `tests/calendar/test_celestial_tables.py` 核对，不是生成检查。
+  与 HKO `days_counts` 的一致性由 `tests/calendar/test_celestial_tables.py` 核对。
 - `days_counts`：从位图解码的十二或十三项月长，保留冗余；加载器核两列相等，任改一列导致不一致即失败。
 - `ganzhi`：在 `Ganzhi.list_sexagenary_cycle()` 上按 `(lunar_year - 4) mod 60` 取值，运行时不使用。
-  HKO `LunarYearInfo` 含此字段，所以差异比较保留它；199/199 相符由测试验证，不是生成检查。
-  生成器不导入 `hko_data`，其检查范围见下节。
+  HKO `LunarYearInfo` 含此字段，所以差异比较保留它；一致性由测试核对。
 - 沿用 celestial ALGO1 的 HKO 官方历书体系；农历用于日期换算，四柱以节气为基础，不读取农历。
 
 ## equation_of_time.bin

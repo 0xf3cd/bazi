@@ -79,19 +79,19 @@
 
 | 原入口或结构 | 升级后 |
 | --- | --- |
-| `BaziConfig.backend`、`BaziConfig.from_values(backend=...)` | 删除该字段和参数；构造、`replace`、`asdict` 与位置式解构须一并调整 |
+| `BaziConfig.backend`、`BaziConfig.from_values(backend=...)`，原取值 `hko`／`celestial`／`celestial-algo2` | 删除该字段和参数；构造、`replace`、`asdict` 与位置式解构须一并调整 |
 | `CalendarBackend`、`calendar_utils_of`、`CalendarUtilsProtocol`，包括 `bazi.calendar` 的重导出 | 删除后端选择、解析和协议；直接导入历法函数 |
 | `bazi.calendar.celestial_utils` 的 `CelestialCalendarUtils`、`ALGO1`、`ALGO2`，以及 `bazi.calendar.hko_data_utils` | 改用 `bazi.calendar.utils`；不再提供 HKO 排盘或第二套农历算法 |
 | `lunar_to_solar`、`ganzhi_to_solar`，以及 `solar_to_lunar`、`ganzhi_to_lunar`、`solar_to_ganzhi`、`lunar_to_ganzhi` | 按目标历法调用 `to_solar`、`to_lunar`、`to_ganzhi`；需要标准库公历日期用 `to_date` |
 | `jieqi_date` | 用 `jieqi_moment(...).date()` |
 | `is_valid`、`is_valid_solar_date`、`is_valid_lunar_date`、`is_valid_ganzhi_date`、`days_counts_in_ganzhi_year` | 撤回公开查询；日期换算入口继续拒绝非法或越界输入 |
 | `bazi.calendar.celestial_data.loader` 的全部导入，包括 `EquationOfTimeTable`、`JieqiMomentTable`、`LunarYearTable` 及常量 | 改为内部实现，不再作为公开 API |
-| `LunarYearInfo` 及其在 `dates`、`hko_data`、`hko_data.decoder`、`celestial_data.loader` 的导入 | 撤回公开类型及可变字典／列表结果合同；内部农历年记录改为冻结记录，月长为元组 |
+| `LunarYearInfo` 及其在 `dates`、`hko_data`、`hko_data.decoder`、`celestial_data.loader` 的导入 | 撤回公开类型；不再提供可按字典访问、修改字段或修改月长列表的年记录 |
 | `bazi.calendar.hko_data` 及其 `common`、`decoder`、`encoder`，`bazi.calendar.celestial_data.generator` | 退出安装包；离线维护位置见下文，不提供新的公开导入 |
 
 保留的十个函数与范围见[历法契约](API_CONTRACT.md#历法日期与节气)。
 公历与农历往返改为 `from bazi.calendar.utils import to_lunar, to_date`；
-农历月号仍按年内实际月序编号，闰月占独立序号，不是农历月名，示例见[历法指南](docs/guides/calendar.md)。
+农历月号仍按年内实际月序编号，闰月占独立序号，不是农历月名，示例见[公历、农历与节气](docs/guides/calendar.md)。
 `CalendarDate` 的构造输入检查仍保留。
 
 原来显式选择 `hko` 时，升级后使用天文表中的交节日期及真实交节时刻。`DAY` 精度下，
@@ -102,16 +102,14 @@
 | 1917-12-07 | 壬子 | 辛亥 |
 | 1927-09-08 | 己酉 | 戊申 |
 
-这两天在原有[交节日期差异记录](tests/calendar/celestial_parity_data.py)内。大运起点的变化不限于这两个日期：
+大运起点的变化不限于这两个日期：
 原 HKO 以交节日零点占位计算间隔，现在改用真实交节时刻，故即使四柱相同也可能得到不同交运时刻。
 若原来选择 `celestial-algo2`，农历换算现在使用原默认算法；旧算法在 1914、1915、1916、1920、2057、2097
 这六年与默认算法有差异，不能假定旧农历结果全部相同。
 
-农历表由 `lunar_years_algo1.txt` 改名为 `lunar_years.txt`，保留来源头与全部数值，没有重新生成。
 日期换算的支持窗口仍由农历表限定，四柱仍按节气计算。
-天文表生成器移至根目录 `run_calendar_generation.py`，HKO 原件、编码表与编解码工具移至
-`tests/calendar/hko_data/`。源码与 sdist 保留这些重建及独立对拍材料；wheel 只带运行时代码与数据，
-不含 HKO 材料或离线生成器，两套数据的独立对拍保留。
+wheel 只带运行时代码与数据，不含 HKO 材料或离线生成器。
+源码与 sdist 保留重建工具及 HKO 对照材料，维护入口见[历法数据维护](CONTRIBUTING.md#历法数据维护)。
 
 ## bazi 2.6.0
 

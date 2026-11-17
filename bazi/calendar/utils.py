@@ -4,7 +4,7 @@
 读取预生成 celestial-calendar 表的历法工具，数据契约见 `celestial_data/SCHEMA.md`。
 
 `jieqi_moment` 提供秒级真实时刻。CalendarDate 只表示日期，干支历正月初一为立春日；
-时刻的四柱归属由调用方决定（#72）。农历月号按年内实际月序编号，闰月占独立序号。
+时刻的四柱归属由调用方决定。农历月号按年内实际月序编号，闰月占独立序号。
 '''
 
 import functools
@@ -193,7 +193,7 @@ def to_solar(d: date | CalendarDate) -> CalendarDate:
   把输入转换为公历 CalendarDate。
 
   Args:
-  - d: (date | CalendarDate) 输入日期；date 按公历解释，datetime 只取民用年月日。
+  - d: (date | CalendarDate) 输入日期；date 按公历解释，datetime 只取自身的年月日，不换算时区。
 
   Return: (CalendarDate) SOLAR 类型日期。
   '''
@@ -216,7 +216,7 @@ def to_lunar(d: date | CalendarDate) -> CalendarDate:
   把输入转换为农历 CalendarDate。
 
   Args:
-  - d: (date | CalendarDate) 输入日期；date 按公历解释，datetime 只取民用年月日。
+  - d: (date | CalendarDate) 输入日期；date 按公历解释，datetime 只取自身的年月日，不换算时区。
 
   Return: (CalendarDate) LUNAR 类型日期，月号按年内实际月序编号，闰月占独立序号。
   '''
@@ -239,7 +239,7 @@ def to_ganzhi(d: date | CalendarDate) -> CalendarDate:
 
   Return: (CalendarDate) GANZHI 类型日期。
 
-  Note: datetime 是 date 子类，此处接受但丢弃日内时刻，同日各时刻的结果相同。
+  Note: datetime 是 date 子类，只取自身的年月日，不换算时区，同日各时刻的结果相同。
   此入口只按日期归属；出生比较粒度由 BaziPrecision 决定。
   '''
   return _to_ganzhi(_to_calendardate(d))
@@ -257,7 +257,7 @@ def to_date(d: date | CalendarDate) -> date:
   把输入转换为公历 date。
 
   Args:
-  - d: (date | CalendarDate) 输入日期；datetime 为 date 子类，接受但丢弃日内时刻。
+  - d: (date | CalendarDate) 输入日期；datetime 只取自身的年月日，不换算时区。
 
   Return: (date) 公历日期。
   '''
@@ -284,7 +284,7 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
 
   Note:
   - 时刻为东八区（北京时间），精度到秒（截断）。1929 年前同样按东八区表达，
-    而非北京地方平时，见 issue #118。
+    而非北京地方平时。
 
   Return: (datetime) 指定公历年的节气时刻。
   '''
@@ -300,8 +300,8 @@ def jieqi_moment(solar_year: int, jieqi: Jieqi) -> datetime:
 @functools.cache
 def supported_jie_boundaries() -> tuple[datetime, datetime]:
   '''
-  返回首末支持节的时刻。prev_jie / next_jie 的输入须位于半开区间
-  `[returned_tuple[0], returned_tuple[1])`，含首端、不含末端。
+  返回首末支持节的时刻元组。prev_jie / next_jie 的输入须在这两个时刻之间，
+  含首端、不含末端。
   '''
   years = _jieqi_table().supported_year_range()
   return (

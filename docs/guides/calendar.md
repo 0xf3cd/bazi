@@ -50,15 +50,19 @@ from bazi.calendar.utils import get_min_supported_date, get_max_supported_date, 
 
 print(to_date(get_min_supported_date(CalendarType.公历)))
 print(to_date(get_max_supported_date(CalendarType.公历)))
+print(get_min_supported_date(CalendarType.农历))
+print(get_max_supported_date(CalendarType.农历))
 ```
 
 ```{testoutput} calendar-date-range
 1901-02-19
 2099-12-31
+(1901-1-1, LUNAR)
+(2099-12-20, LUNAR)
 ```
 
-日期换算包含上述两端。将参数换成 `CalendarType.农历` 或 `CalendarType.干支历`，可取得同一范围在
-相应历法下的端点。`CalendarDate` 构造时检查字段类型，换算时再检查日期是否合法、是否在支持范围内；
+日期换算包含上述两端。后两行直接打印农历端点；换成 `CalendarType.干支历` 可查看干支历端点。
+套上 `to_date(...)` 则都会转回公历。`CalendarDate` 构造时检查字段类型，换算时再检查日期是否合法、是否在支持范围内；
 错型抛 `TypeError`，非法或越界日期抛 `ValueError`。
 
 ## 查询节气与相邻的节
@@ -82,9 +86,24 @@ print(prev_jie(moment).jieqi, next_jie(moment).jieqi)
 不含中气，返回 `JieqiTime`，可读 `.jieqi` 和 `.moment`。
 恰好交节时，`prev_jie` 返回当前节，`next_jie` 返回下一节。
 
-相邻节查询接收同一东八区无时区标签。`supported_jie_boundaries()` 返回首末节时刻，
-查询输入须在 `[首端, 末端)` 内；节气表覆盖公历 1901 至 2200 年，
-不因此扩大上面的日期换算或出生输入范围。
+相邻节查询接收同一东八区无时区标签。用 `supported_jie_boundaries()` 取得首末节时刻：
+
+```{testcode} calendar-jie-range
+from bazi.calendar.utils import supported_jie_boundaries
+
+first, last = supported_jie_boundaries()
+print(first)
+print(last)
+```
+
+```{testoutput} calendar-jie-range
+1901-01-06 07:53:29
+2200-12-07 16:13:37
+```
+
+`prev_jie`／`next_jie` 的输入须在 `[first, last)` 内，含首端、不含末端，越界抛 `ValueError`。
+`jieqi_moment` 可查公历 1901 至 2200 年，年份越界也抛 `ValueError`。
+节气表的范围不扩大上面的日期换算或出生输入范围。
 
 ## 数据来源与精度
 
@@ -95,8 +114,8 @@ print(prev_jie(moment).jieqi, next_jie(moment).jieqi)
 
 节气标签由计算所得的 UT1 时刻加八小时得到，1929 年前也按东八区表达，不改为北京地方平时。
 表中截断到秒只是记录粒度，不表示天文计算误差小于一秒。
-1972 年起 UT1 与 UTC 的差不超过 0.9 秒；此前采用 UT1 代理。
-2101 至 2200 年使用 ΔT 外推，连续性不等于精度保证，也没有 HKO 独立对照。
+1972 年起 UT1 与 UTC 的差不超过 0.9 秒；此前的标签同样用 UT1 加八小时表示，不适用这一差值上限。
+2101 至 2200 年使用 ΔT 外推，连续性不等于精度保证。
 出生归属还受 `DAY`／`HOUR`／`MINUTE` 比较粒度影响，见 {doc}`configuration`。
 
 来源头、时标和编码约定见[历法数据维护](../contributing.md#历法数据维护)所列的数据格式说明。

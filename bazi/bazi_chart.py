@@ -437,8 +437,9 @@ class BaziChart:
   @property
   def dayun(self) -> Generator[DayunTuple, None, None]:
     '''
-    从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`，只生成落在历法
-    半开节气窗口内的起点，因此结果可以为空。
+    从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`。
+    只生成起点位于 `utils.supported_jie_boundaries()` 首末节时刻之间的大运，含首端、不含末端；
+    每步终点可以超出该范围。若首步起点已越界，结果为空。
 
     Usage:
     ```python
